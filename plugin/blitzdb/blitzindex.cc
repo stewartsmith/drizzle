@@ -150,6 +150,36 @@ char *BlitzTree::prev_key(int *key_len) {
   return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
 
+char *BlitzTree::next_logical_key(int *key_len) {
+  int origin_len, a_cmp_len, b_cmp_len;
+  char *rv, *origin;
+
+  /* Get the key to scan away from. */
+  if ((origin = (char *)tcbdbcurkey(bt_cursor, &origin_len)) == NULL)
+    return NULL;
+
+  rv = NULL;
+
+  /* Traverse the tree from the cursor position until we hit
+     a key greater than the origin or EOF. */
+  while (1) {
+    /* Move the cursor and get the next key. */
+    if (!tcbdbcurnext(bt_cursor))
+      break;
+  
+    rv = (char *)tcbdbcurkey(bt_cursor, key_len);
+
+    /* Compare the fetched key with origin. */
+    if (packed_key_cmp(this, rv, origin, &a_cmp_len, &b_cmp_len) > 0)
+      break;
+
+    free(rv);
+  }
+
+  free(origin);
+  return rv;
+}
+
 /* A cursor based lookup on a B+Tree doesn't guarantee that the
    returned key is identical. This is because it would return the
    next logical key if one exists. */
@@ -170,8 +200,19 @@ char *BlitzTree::find_key(const int search_mode, const char *key,
       rv = NULL;
     }
     break;
+  case drizzled::HA_READ_AFTER_KEY:
+    /* Means that TC got the next logical key in one shot. */
+    if (cmp > 0) {
+      break;
+    } else if (cmp == 0) {
+      free(rv);
+      rv = this->next_logical_key(rv_len);
+    } else {
+      free(rv);
+      rv = NULL;
+    }
+    break;
   //case drizzled::HA_READ_KEY_OR_NEXT:
-  //case drizzled::HA_READ_AFTER_KEY:
   //case drizzled::HA_READ_BEFORE_KEY:
   //case drizzled::HA_READ_KEY_OR_PREV:
   //case drizzled::HA_READ_PREFIX:
@@ -180,7 +221,6 @@ char *BlitzTree::find_key(const int search_mode, const char *key,
   default:
      break;
   }
-
 
   return rv;
 }

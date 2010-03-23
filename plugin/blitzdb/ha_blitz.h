@@ -43,7 +43,7 @@
 #define BLITZ_MAX_META_LEN     128
 #define BLITZ_MAX_ROW_STACK    2048
 #define BLITZ_MAX_KEY_LEN      1024 
-#define BLITZ_WORST_CASE_RANGE 10
+#define BLITZ_WORST_CASE_RANGE 4
 
 const std::string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const std::string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
@@ -202,7 +202,8 @@ public:
   char *first_key(int *key_len);
   char *final_key(int *key_len);
   char *next_key(int *key_len);
-  char *prev_key(int *key_key);
+  char *prev_key(int *key_ken);
+  char *next_logical_key(int *key_len);
   char *find_key(const int search_mode, const char *key,
                  const int klen, int *rv_len);
 
@@ -394,6 +395,7 @@ public:
     return (HA_READ_NEXT |
             HA_READ_PREV |
             HA_READ_ORDER |
+            HA_READ_RANGE |
             HA_ONLY_WHOLE_INDEX |
             HA_KEYREAD_ONLY);
   }
