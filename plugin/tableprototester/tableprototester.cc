@@ -102,6 +102,11 @@ public:
   }
 
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+
+  int doRenameTable(drizzled::Session *, const char *, const char *)
+  {
+    return EPERM;
+  }
 };
 
 

@@ -139,8 +139,25 @@ public:
   }
 
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  int doRenameTable(drizzled::Session *, const char *from, const char *to);
 };
 
+
+int BlackholeEngine::doRenameTable(Session *, const char *from, const char *to)
+{
+  int error= 0;
+
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from, to, *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
+  }
+  return error;
+}
 
 BlackholeShare *BlackholeEngine::findOpenTable(const string table_name)
 {

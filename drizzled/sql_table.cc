@@ -1631,38 +1631,41 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 */
 
 bool
-mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
-                   const char *old_name, const char *new_db,
-                   const char *new_name, uint32_t flags)
+mysql_rename_table(plugin::StorageEngine *base,
+                   TableIdentifier &from,
+                   TableIdentifier &to,
+                   uint32_t )
 {
   Session *session= current_session;
-  string from;
-  string to;
   int error= 0;
 
   assert(base);
 
-  build_table_filename(from, old_db, old_name,
-                       flags & FN_FROM_IS_TMP);
-  build_table_filename(to, new_db, new_name,
-                       flags & FN_TO_IS_TMP);
-
-  if (!(error= base->renameTable(session, from.c_str(), to.c_str())))
+  if (not (error= base->renameTable(*session, from, to)))
   {
-    if (base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
-       && rename_table_proto_file(from.c_str(), to.c_str()))
+    if (not base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
     {
-      error= errno;
-      base->renameTable(session, to.c_str(), from.c_str());
+      if ((error= rename_table_proto_file(from.getPath().c_str(), to.getPath().c_str())))
+      {
+        error= errno;
+        base->renameTable(*session, to, from);
+      }
     }
   }
 
   if (error == HA_ERR_WRONG_COMMAND)
+  {
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
+  }
   else if (error)
-    my_error(ER_ERROR_ON_RENAME, MYF(0), from.c_str(), to.c_str(), error);
+  {
+    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str();
+    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str();
 
-  return(error != 0);
+    my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
+  }
+
+  return error ? true : false; 
 }
 
 
@@ -2046,7 +2049,7 @@ static bool replicateCreateTableLike(Session *session, TableList *table, Table *
     during the call to plugin::StorageEngine::createTable().
     See bug #28614 for more info.
   */
-static bool create_table_wrapper(Session &session, message::Table& create_table_proto,
+static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
                                  TableIdentifier &destination_identifier,
                                  TableIdentifier &src_table,
                                  bool lex_identified_temp_table, bool is_engine_set)
@@ -2075,6 +2078,12 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
     protoengine= new_proto.mutable_engine();
     protoengine->set_name(create_table_proto.engine().name());
+  }
+
+  { // We now do a selective copy of elements on to the new table.
+    new_proto.set_name(create_table_proto.name());
+    new_proto.set_schema(create_table_proto.schema());
+    new_proto.set_catalog(create_table_proto.catalog());
   }
 
   if (protoerr && protoerr != EEXIST)
@@ -2117,7 +2126,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 bool mysql_create_like_table(Session* session,
                              TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
-                             message::Table& create_table_proto,
+                             message::Table &create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {

@@ -161,8 +161,26 @@ public:
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  int doRenameTable(Session *, const char *from, const char *to);
 };
 
+
+int Tina::doRenameTable(Session *,
+                        const char *from,
+                        const char *to)
+{
+  int error= 0;
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from, to, *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
+  }
+  return error;
+}
 
 bool Tina::doDoesTableExist(Session &session, TableIdentifier &identifier)
 {

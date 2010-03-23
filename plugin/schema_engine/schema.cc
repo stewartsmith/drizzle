@@ -415,7 +415,7 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
 
 bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (not strcasecmp(identifier.getSchemaName().c_str(), "temporary_tables"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "temporary"))
   {
     return false;
   }

@@ -85,6 +85,11 @@ public:
   bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
 
   bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &schema_message);
+
+  int doRenameTable(drizzled::Session *, const char *, const char *)
+  {
+    return EPERM;
+  }
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */

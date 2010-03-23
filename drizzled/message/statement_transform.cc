@@ -819,7 +819,7 @@ transformCreateTableStatementToSql(const CreateTableStatement &statement,
 enum TransformSqlError
 transformTableDefinitionToSql(const Table &table,
                               string &destination,
-                              enum TransformSqlVariant sql_variant)
+                              enum TransformSqlVariant sql_variant, bool with_schema)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -831,6 +831,13 @@ transformTableDefinitionToSql(const Table &table,
     destination.append("TEMPORARY ", 10);
   
   destination.append("TABLE ", 6);
+  if (with_schema)
+  {
+    destination.push_back(quoted_identifier);
+    destination.append(table.schema());
+    destination.push_back(quoted_identifier);
+    destination.push_back('.');
+  }
   destination.push_back(quoted_identifier);
   destination.append(table.name());
   destination.push_back(quoted_identifier);
