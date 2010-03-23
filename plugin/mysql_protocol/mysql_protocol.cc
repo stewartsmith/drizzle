@@ -719,18 +719,27 @@ bool ClientMySQLProtocol::checkConnection(void)
   char *l_db= passwd;
 
   /*
-    Old clients send null-terminated string as password; new clients send
-    the size (1 byte) + string (not null-terminated). Hence in case of empty
-    password both send '\0'.
-
-    This strlen() can't be easily deleted without changing client.
+    Only support new password format.
 
     Cast *passwd to an unsigned char, so that it doesn't extend the sign for
     *passwd > 127 and become 2**32-127+ after casting to uint.
   */
-  uint32_t passwd_len= client_capabilities & CLIENT_SECURE_CONNECTION ?
-    (unsigned char)(*passwd++) : strlen(passwd);
-  l_db= client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
+  uint32_t passwd_len;
+  if (client_capabilities & CLIENT_SECURE_CONNECTION &&
+      passwd < (char *) net.read_pos + pkt_len)
+  {
+    passwd_len= (unsigned char)(*passwd++);
+  }
+  else
+    passwd_len= 0;
+
+  if (client_capabilities & CLIENT_CONNECT_WITH_DB &&
+      passwd < (char *) net.read_pos + pkt_len)
+  {
+    l_db= l_db + passwd_len + 1;
+  }
+  else
+    l_db= NULL;
 
   /* strlen() can't be easily deleted without changing client */
   uint32_t db_len= l_db ? strlen(l_db) : 0;
