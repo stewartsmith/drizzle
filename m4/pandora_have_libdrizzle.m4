@@ -39,7 +39,10 @@ AC_DEFUN([PANDORA_REQUIRE_LIBDRIZZLE],[
   AS_IF([test "x${ac_cv_libdrizzle}" = "xno"],[
     AC_MSG_ERROR([libdrizzle is required for ${PACKAGE}])
   ],[
-    PANDORA_LIBDRIZZLE_RECENT
+    dnl We need at least 0.8 on Solaris non-sparc
+    AS_IF([test "$target_cpu" != "sparc" -a "x${TARGET_SOLARIS}" = "xtrue"],[
+      PANDORA_LIBDRIZZLE_RECENT
+    ])
   ])
 ])
 
