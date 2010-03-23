@@ -4947,7 +4947,7 @@ show_param:
                }
              }
 
-             if (prepare_new_schema_table(session, lex, "show_indexes"))
+             if (prepare_new_schema_table(session, lex, "SHOW_INDEXES"))
                DRIZZLE_YYABORT;
 
              if (session->add_item_to_list( new Item_field(&session->lex->current_select->
