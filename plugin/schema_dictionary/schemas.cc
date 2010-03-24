@@ -48,9 +48,6 @@ bool SchemasTool::Generator::checkSchema()
   if (isWild(schema_name()))
     return true;
 
-  if (not schema_predicate.empty() && schema_predicate.compare(schema_name()))
-    return true;
-
   return false;
 }
 
