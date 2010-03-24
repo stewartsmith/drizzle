@@ -62,21 +62,22 @@ Scoreboard::Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets)
 
     /* insert the vector into the vector of scoreboard vectors */
     vector<vector<ScoreboardSlot* >* >::iterator vector_of_scoreboard_vectors_iterator= 
-      vector_of_scoreboard_vectors->begin();
+      vector_of_scoreboard_vectors.begin();
 
     vector_of_scoreboard_vectors_iterator= 
-      vector_of_scoreboard_vectors->insert(vector_of_scoreboard_vectors_iterator, scoreboard_vector); 
+      vector_of_scoreboard_vectors.insert(vector_of_scoreboard_vectors_iterator, scoreboard_vector); 
   }
-  vector_of_scoreboard_vectors->resize(number_buckets);
+  vector_of_scoreboard_vectors.resize(number_buckets);
   
   /* populate the scoreboard locks vector each ScoreboardSlot vector gets a lock */
-  vector<pthread_rwlock_t* >::iterator vector_of_scoreboard_locks_iterator= vector_of_scoreboard_locks->begin();
+  vector<pthread_rwlock_t* >::iterator vector_of_scoreboard_locks_iterator= vector_of_scoreboard_locks.begin();
   for (uint32_t k= 0; k < number_buckets; k++)
   {
     pthread_rwlock_t* lock= new pthread_rwlock_t();
-    vector_of_scoreboard_locks->insert(vector_of_scoreboard_locks_iterator, lock);   
+    vector_of_scoreboard_locks_iterator= 
+      vector_of_scoreboard_locks.insert(vector_of_scoreboard_locks_iterator, lock);   
   } 
-  vector_of_scoreboard_locks->resize(number_buckets);
+  vector_of_scoreboard_locks.resize(number_buckets);
 }
 
 Scoreboard::~Scoreboard()
@@ -91,10 +92,10 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
   uint32_t bucket_number= session->getSessionId() % number_buckets; 
 
   /* our vector corresponding to bucket_number */
-  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors->at(bucket_number); 
+  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number); 
 
   /* out lock corresponding to bucket_number */
-  pthread_rwlock_t *LOCK_scoreboard_vector= vector_of_scoreboard_locks->at(bucket_number);
+  pthread_rwlock_t *LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
 
   pthread_rwlock_wrlock(LOCK_scoreboard_vector);
   ScoreboardSlot *scoreboard_slot= NULL;
@@ -160,7 +161,7 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToReset(Session *session)
   uint32_t bucket_number= session->getSessionId() % number_buckets;
 
   /* our vector corresponding to bucket_number */
-  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors->at(bucket_number);
+  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
 
   /* no lock is taken as nothing is being reserved here */
 

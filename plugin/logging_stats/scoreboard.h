@@ -54,12 +54,12 @@ public:
 
   std::vector<pthread_rwlock_t* >* getVectorOfScoreboardLocks()
   {
-    return vector_of_scoreboard_locks;
+    return &vector_of_scoreboard_locks;
   }
 
   std::vector<std::vector<ScoreboardSlot* >* >* getVectorOfScoreboardVectors()
   {
-    return vector_of_scoreboard_vectors; 
+    return &vector_of_scoreboard_vectors; 
   }
 
 private:
@@ -67,8 +67,8 @@ private:
   uint32_t number_sessions;
   uint32_t number_buckets;
 
-  std::vector<std::vector<ScoreboardSlot* >* > *vector_of_scoreboard_vectors;
-  std::vector<pthread_rwlock_t* > *vector_of_scoreboard_locks;
+  std::vector<std::vector<ScoreboardSlot* >* > vector_of_scoreboard_vectors;
+  std::vector<pthread_rwlock_t* > vector_of_scoreboard_locks;
 };
 
 #endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_H */

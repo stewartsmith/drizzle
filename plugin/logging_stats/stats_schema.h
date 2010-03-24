@@ -59,9 +59,14 @@ public:
    
     Scoreboard *current_scoreboard; 
     uint32_t current_bucket;
+    bool isEnabled;
     uint32_t number_buckets;
-    std::vector<ScoreboardSlot *>::iterator it;
-    std::vector<ScoreboardSlot *>::iterator end;
+    std::vector<ScoreboardSlot *>::iterator scoreboard_vector_it;
+    std::vector<ScoreboardSlot *>::iterator scoreboard_vector_end;
+
+    std::vector<std::vector<ScoreboardSlot* >* >::iterator vector_of_scoreboard_vectors_it;
+    std::vector<std::vector<ScoreboardSlot* >* >::iterator vector_of_scoreboard_vectors_end; 
+
     pthread_rwlock_t* current_lock;
   };
 

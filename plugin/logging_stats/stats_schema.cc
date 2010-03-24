@@ -56,9 +56,15 @@ CurrentCommandsTool::CurrentCommandsTool(LoggingStats *in_logging_stats) :
 CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
+
+  isEnabled= logging_stats->isEnabled();
   current_scoreboard= logging_stats->getCurrentScoreboard();
   current_bucket= 0;
   number_buckets= current_scoreboard->getNumberBuckets();
+
+  vector_of_scoreboard_vectors_it= current_scoreboard->getVectorOfScoreboardVectors()->begin();
+  vector_of_scoreboard_vectors_end= current_scoreboard->getVectorOfScoreboardVectors()->end();
+
   setVectorIteratorsAndLock(current_bucket);
 }
 
@@ -73,46 +79,52 @@ void CurrentCommandsTool::Generator::setVectorIteratorsAndLock(uint32_t bucket_n
 
   current_lock= current_scoreboard->getVectorOfScoreboardLocks()->at(bucket_number);
 
-  it= scoreboard_vector->begin();
-  end= scoreboard_vector->end();
+  scoreboard_vector_it= scoreboard_vector->begin();
+  scoreboard_vector_end= scoreboard_vector->end();
 }
 
 bool CurrentCommandsTool::Generator::populate()
 {
-  if ((it == end) && (current_bucket == (number_buckets - 1 ))) 
+  if (isEnabled == false)
   {
     return false;
   }
 
-  if (it == end)
+  while (vector_of_scoreboard_vectors_it != vector_of_scoreboard_vectors_end)
   {
+    while (scoreboard_vector_it != scoreboard_vector_end)
+    {
+      ScoreboardSlot *scoreboard_slot= *scoreboard_vector_it; 
+      if (scoreboard_slot->isInUse())
+      {
+        UserCommands *user_commands= scoreboard_slot->getUserCommands();
+        push(scoreboard_slot->getUser());
+        push(scoreboard_slot->getIp());
+        push(user_commands->getSelectCount());
+        push(user_commands->getDeleteCount());
+        push(user_commands->getUpdateCount());
+        push(user_commands->getInsertCount());
+        push(user_commands->getRollbackCount());
+        push(user_commands->getCommitCount());
+        push(user_commands->getCreateCount());
+        push(user_commands->getAlterCount());
+        push(user_commands->getDropCount());
+        push(user_commands->getAdminCount());
+        scoreboard_vector_it++;
+        return true;
+      }
+      scoreboard_vector_it++;
+    }
+    
+    vector_of_scoreboard_vectors_it++;
     current_bucket++;
-    setVectorIteratorsAndLock(current_bucket);
+    if (vector_of_scoreboard_vectors_it != vector_of_scoreboard_vectors_end)
+    {
+      setVectorIteratorsAndLock(current_bucket); 
+    } 
   }
 
-  pthread_rwlock_rdlock(current_lock);
-  ScoreboardSlot *scoreboard_slot= *it; 
-
-  if (scoreboard_slot->isInUse())
-  {
-    UserCommands *user_commands= scoreboard_slot->getUserCommands();
-    push(scoreboard_slot->getUser());
-    push(scoreboard_slot->getIp());
-    push(user_commands->getSelectCount());
-    push(user_commands->getDeleteCount());
-    push(user_commands->getUpdateCount());
-    push(user_commands->getInsertCount());
-    push(user_commands->getRollbackCount());
-    push(user_commands->getCommitCount());
-    push(user_commands->getCreateCount());
-    push(user_commands->getAlterCount());
-    push(user_commands->getDropCount());
-    push(user_commands->getAdminCount());
-  }
-  pthread_rwlock_unlock(current_lock);
-
-  it++;
-  return true;
+  return false;
 }
 
 CumulativeCommandsTool::CumulativeCommandsTool(LoggingStats *logging_stats) :
