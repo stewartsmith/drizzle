@@ -405,7 +405,9 @@ delete from t1 where a = 'f';
 select * from t1;
 drop table t1;
 
-# Test INDEX insertion and NULL values
+# +------------+
+# | INDEX: INT |
+# +------------+
 create table t1 (a int, index(a)) engine = blitzdb;
 insert into t1 values (1), (2), (3), (4);
 insert into t1 values (1), (2), (3), (4);
