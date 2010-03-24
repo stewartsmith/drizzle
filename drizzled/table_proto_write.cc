@@ -148,20 +148,20 @@ static int fill_table_proto(message::Table &table_proto,
       }
     case message::Table::Field::ENUM:
       {
-        message::Table::Field::EnumeratorValues *enumerator_options;
+        message::Table::Field::EnumerationValues *enumeration_options;
 
         assert(field_arg->interval);
 
-        enumerator_options= attribute->mutable_enumerator_values();
+        enumeration_options= attribute->mutable_enumeration_values();
 
         for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
         {
           const char *src= field_arg->interval->type_names[pos];
 
-          enumerator_options->add_field_value(src);
+          enumeration_options->add_field_value(src);
         }
-	enumerator_options->set_collation_id(field_arg->charset->number);
-        enumerator_options->set_collation(field_arg->charset->name);
+	enumeration_options->set_collation_id(field_arg->charset->number);
+        enumeration_options->set_collation(field_arg->charset->name);
         break;
       }
     case message::Table::Field::BLOB:
