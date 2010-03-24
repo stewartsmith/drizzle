@@ -90,7 +90,7 @@ public:
 
   bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
 
-  int doRenameTable(drizzled::Session *, const char *, const char *)
+  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &, drizzled::TableIdentifier &)
   {
     return EPERM;
   }

@@ -86,7 +86,7 @@ public:
 
   bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &schema_message);
 
-  int doRenameTable(drizzled::Session *, const char *, const char *)
+  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &, drizzled::TableIdentifier &)
   {
     return EPERM;
   }

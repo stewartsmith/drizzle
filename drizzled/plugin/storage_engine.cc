@@ -96,7 +96,7 @@ int StorageEngine::renameTable(Session &session, TableIdentifier &from, TableIde
 {
   setTransactionReadWrite(session);
 
-  return doRenameTable(&session, from.getPath().c_str(), to.getPath().c_str());
+  return doRenameTable(session, from, to);
 }
 
 /**

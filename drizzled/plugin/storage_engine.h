@@ -285,8 +285,8 @@ protected:
                             TableIdentifier &identifier,
                             message::Table& proto)= 0;
 
-  virtual int doRenameTable(Session* session,
-                            const char *from, const char *to)= 0;
+  virtual int doRenameTable(Session &session,
+                            TableIdentifier &from, TableIdentifier &to)= 0;
 
 public:
 

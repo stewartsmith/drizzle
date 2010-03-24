@@ -110,7 +110,7 @@ public:
   }
 
   bool doDoesTableExist(drizzled::Session&, drizzled::TableIdentifier &identifier);
-  int doRenameTable(drizzled::Session *, const char *from, const char *to);
+  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &from, drizzled::TableIdentifier &to);
 };
 
 #endif /* PLUGIN_ARCHIVE_ARCHIVE_ENGINE_H */

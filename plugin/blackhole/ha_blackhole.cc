@@ -139,17 +139,17 @@ public:
   }
 
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
-  int doRenameTable(drizzled::Session *, const char *from, const char *to);
+  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
 };
 
 
-int BlackholeEngine::doRenameTable(Session *, const char *from, const char *to)
+int BlackholeEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
 {
   int error= 0;
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    if (rename_file_ext(from, to, *ext))
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
     {
       if ((error=errno) != ENOENT)
         break;

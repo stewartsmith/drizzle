@@ -1424,6 +1424,7 @@ public:
   bool removeTableMessage(TableIdentifier &identifier);
   bool getTableMessage(TableIdentifier &identifier, message::Table &table_message);
   bool doesTableMessageExist(TableIdentifier &identifier);
+  bool rename(TableIdentifier &from, TableIdentifier &to);
 
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);

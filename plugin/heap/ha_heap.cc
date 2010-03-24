@@ -89,7 +89,7 @@ public:
                         message::Table &create_proto,
                         HP_SHARE **internal_share);
 
-  int doRenameTable(Session*, const char * from, const char * to);
+  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
 
   int doDropTable(Session&, TableIdentifier &identifier);
 
@@ -639,10 +639,9 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::doRenameTable(Session*,
-                              const char *from, const char *to)
+int HeapEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
 {
-  return heap_rename(from,to);
+  return heap_rename(from.getPath().c_str(), to.getPath().c_str());
 }
 
 
