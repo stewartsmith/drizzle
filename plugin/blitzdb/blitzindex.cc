@@ -180,6 +180,33 @@ char *BlitzTree::next_logical_key(int *key_len) {
   return rv;
 }
 
+char *BlitzTree::prev_logical_key(int *key_len) {
+  int origin_len, a_cmp_len, b_cmp_len;
+  char *rv, *origin;
+
+  /* Get the key to scan away from. */
+  if ((origin = (char *)tcbdbcurkey(bt_cursor, &origin_len)) == NULL)
+    return NULL;
+
+  rv = NULL;
+
+  while (1) {
+    if (!tcbdbcurprev(bt_cursor))
+      break;
+  
+    rv = (char *)tcbdbcurkey(bt_cursor, key_len);
+
+    /* Compare the fetched key with origin. */
+    if (packed_key_cmp(this, rv, origin, &a_cmp_len, &b_cmp_len) < 0)
+      break;
+
+    free(rv);
+  }
+
+  free(origin);
+  return rv;
+}
+
 /* A cursor based lookup on a B+Tree doesn't guarantee that the
    returned key is identical. This is because it would return the
    next logical key if one exists. */
@@ -189,6 +216,9 @@ char *BlitzTree::find_key(const int search_mode, const char *key,
     return NULL;
 
   char *rv = (char *)tcbdbcurkey(bt_cursor, rv_len);
+
+  if (rv == NULL)
+    return NULL;
 
   int cmp, a_cmp_len, b_cmp_len;
   cmp = packed_key_cmp(this, rv, key, &a_cmp_len, &b_cmp_len);
@@ -201,7 +231,6 @@ char *BlitzTree::find_key(const int search_mode, const char *key,
     }
     break;
   case drizzled::HA_READ_AFTER_KEY:
-    /* Means that TC got the next logical key in one shot. */
     if (cmp > 0) {
       break;
     } else if (cmp == 0) {
@@ -212,8 +241,11 @@ char *BlitzTree::find_key(const int search_mode, const char *key,
       rv = NULL;
     }
     break;
+  case drizzled::HA_READ_BEFORE_KEY:
+    free(rv);
+    rv = this->prev_logical_key(rv_len);
+    break;
   //case drizzled::HA_READ_KEY_OR_NEXT:
-  //case drizzled::HA_READ_BEFORE_KEY:
   //case drizzled::HA_READ_KEY_OR_PREV:
   //case drizzled::HA_READ_PREFIX:
   //case drizzled::HA_READ_PREFIX_LAST:

@@ -204,6 +204,7 @@ public:
   char *next_key(int *key_len);
   char *prev_key(int *key_ken);
   char *next_logical_key(int *key_len);
+  char *prev_logical_key(int *key_len);
   char *find_key(const int search_mode, const char *key,
                  const int klen, int *rv_len);
 

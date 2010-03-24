@@ -488,7 +488,7 @@ int ha_blitz::index_prev(unsigned char *buf) {
   bt_key = share->btrees[active_index].prev_key(&bt_klen);
 
   if (bt_key == NULL)
-    return HA_ERR_KEY_NOT_FOUND;
+    return HA_ERR_END_OF_FILE;
 
   prefix_len = btree_key_length(bt_key, active_index);
   dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
