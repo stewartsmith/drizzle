@@ -3981,7 +3981,7 @@ com_status(string *, const char *)
     tee_fprintf(stdout, "Insert id:\t\t%s\n", internal::llstr(id, buff));
 */
 
-  if (strcmp(drizzle_con_uds(&con), ""))
+  if (drizzle_con_uds(&con))
     tee_fprintf(stdout, "UNIX socket:\t\t%s\n", drizzle_con_uds(&con));
   else
     tee_fprintf(stdout, "TCP port:\t\t%d\n", drizzle_con_port(&con));
@@ -4330,7 +4330,7 @@ static const char * construct_prompt()
           break;
         }
 
-        if (strcmp(drizzle_con_uds(&con), ""))
+        if (drizzle_con_uds(&con))
         {
           const char *pos=strrchr(drizzle_con_uds(&con),'/');
           processed_prompt->append(pos ? pos+1 : drizzle_con_uds(&con));
