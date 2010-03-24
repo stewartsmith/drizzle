@@ -639,8 +639,9 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+int HeapEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
+  session.rename(from, to);
   return heap_rename(from.getPath().c_str(), to.getPath().c_str());
 }
 

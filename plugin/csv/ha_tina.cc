@@ -165,7 +165,7 @@ public:
 };
 
 
-int Tina::doRenameTable(Session&,
+int Tina::doRenameTable(Session &session,
                         TableIdentifier &from, TableIdentifier &to)
 {
   int error= 0;
@@ -178,6 +178,9 @@ int Tina::doRenameTable(Session&,
       error= 0;
     }
   }
+
+  session.rename(from, to);
+
   return error;
 }
 
