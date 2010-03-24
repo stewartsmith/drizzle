@@ -60,7 +60,6 @@ public:
     Scoreboard *current_scoreboard; 
     uint32_t current_bucket;
     bool isEnabled;
-    uint32_t number_buckets;
     std::vector<ScoreboardSlot *>::iterator scoreboard_vector_it;
     std::vector<ScoreboardSlot *>::iterator scoreboard_vector_end;
 

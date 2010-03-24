@@ -60,7 +60,6 @@ CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_sta
   isEnabled= logging_stats->isEnabled();
   current_scoreboard= logging_stats->getCurrentScoreboard();
   current_bucket= 0;
-  number_buckets= current_scoreboard->getNumberBuckets();
 
   vector_of_scoreboard_vectors_it= current_scoreboard->getVectorOfScoreboardVectors()->begin();
   vector_of_scoreboard_vectors_end= current_scoreboard->getVectorOfScoreboardVectors()->end();
@@ -81,6 +80,7 @@ void CurrentCommandsTool::Generator::setVectorIteratorsAndLock(uint32_t bucket_n
 
   scoreboard_vector_it= scoreboard_vector->begin();
   scoreboard_vector_end= scoreboard_vector->end();
+  pthread_rwlock_rdlock(current_lock);
 }
 
 bool CurrentCommandsTool::Generator::populate()
@@ -117,6 +117,7 @@ bool CurrentCommandsTool::Generator::populate()
     }
     
     vector_of_scoreboard_vectors_it++;
+    pthread_rwlock_unlock(current_lock); 
     current_bucket++;
     if (vector_of_scoreboard_vectors_it != vector_of_scoreboard_vectors_end)
     {
