@@ -298,4 +298,10 @@ const std::string &TableIdentifier::getPath()
   return path;
 }
 
+void TableIdentifier::copyToTableMessage(message::Table &message)
+{
+  message.set_name(table_name);
+  message.set_schema(db);
+}
+
 } /* namespace drizzled */

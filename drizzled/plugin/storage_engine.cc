@@ -1207,6 +1207,48 @@ int StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifi
   src_path.append(DEFAULT_DEFINITION_FILE_EXT);
   dest_path.append(DEFAULT_DEFINITION_FILE_EXT);
 
+  int fd= open(src_path.c_str(), O_RDONLY);
+
+  if (fd == -1)
+  {
+    perror(src_path.c_str());
+    return errno;
+  }
+
+  google::protobuf::io::ZeroCopyInputStream* input=
+    new google::protobuf::io::FileInputStream(fd);
+
+  if (not input)
+    return HA_ERR_CRASHED_ON_USAGE;
+
+  message::Table table_message;
+  if (not table_message.ParseFromZeroCopyStream(input))
+  {
+    close(fd);
+    delete input;
+    if (not table_message.IsInitialized())
+    {
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_message.InitializationErrorString().c_str());
+      return ER_CORRUPT_TABLE_DEFINITION;
+    }
+
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+  close(fd);
+  delete input;
+
+  dest.copyToTableMessage(table_message);
+
+  // We have to update the source to have the right information before we
+  // make it the master.
+  int error=  StorageEngine::writeDefinitionFromPath(src, table_message);
+  if (error)
+  {
+    perror(src_path.c_str());
+    return error;
+  }
+
   return internal::my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
 }
 
@@ -1219,7 +1261,10 @@ int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message:
   int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
 
   if (fd == -1)
+  {
+    perror(file_name.c_str());
     return errno;
+  }
 
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
@@ -1228,11 +1273,13 @@ int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message:
   {
     delete output;
     close(fd);
+    perror(file_name.c_str());
     return errno;
   }
 
   delete output;
   close(fd);
+
   return 0;
 }
 

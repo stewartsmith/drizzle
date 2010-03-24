@@ -1398,7 +1398,7 @@ int MyisamEngine::doCreateTable(Session *session,
 
 int MyisamEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
-  session.rename(from, to);
+  session.renameTableMessage(from, to);
 
   return mi_rename(from.getPath().c_str(), to.getPath().c_str());
 }

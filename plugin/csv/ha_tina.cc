@@ -179,7 +179,7 @@ int Tina::doRenameTable(Session &session,
     }
   }
 
-  session.rename(from, to);
+  session.renameTableMessage(from, to);
 
   return error;
 }
