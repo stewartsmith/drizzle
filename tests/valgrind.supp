@@ -743,6 +743,17 @@
    fun:rw_lock_x_lock_func
 }
 
+{
+  Yet another InnoDB leak
+  Memcheck:Leak
+  fun:malloc
+  fun:mem_heap_create_block
+  fun:thr_local_create
+  fun:srv_master_thread
+  fun:start_thread
+  fun:clone
+}
+
 #
 # Innodb initialize two main memory areas in static space: thr_local_hash and mem_comm_pool.
 #
@@ -1088,6 +1099,19 @@
    fun:dlopen
    fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
    fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+}
+
+
+{
+   Leak in dlopen()
+   Memcheck:Leak
+   fun:malloc
+   fun:add_to_global
+   ...
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:plugin_init
+   fun:main
 }
 
 
