@@ -51,8 +51,9 @@ public:
 } /* namespace statement */
 
 
-bool alter_table(Session *session, char *new_db, char *new_name,
+bool alter_table(Session *session,
                  drizzled::TableIdentifier &original_table_identifier,
+                 drizzled::TableIdentifier &new_table_identifier,
                  HA_CREATE_INFO *create_info,
                  message::Table &create_proto,
                  TableList *table_list,

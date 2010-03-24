@@ -1351,6 +1351,7 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
+  void close_data_files_and_morph_locks(TableIdentifier &identifier);
   void close_data_files_and_morph_locks(const char *db, const char *table_name);
 
 private:
