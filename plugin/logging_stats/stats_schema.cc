@@ -34,10 +34,10 @@ using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
-CurrentCommandsTool::CurrentCommandsTool(LoggingStats *logging_stats) :
+CurrentCommandsTool::CurrentCommandsTool(LoggingStats *in_logging_stats) :
   plugin::TableFunction("DATA_DICTIONARY", "CURRENT_SQL_COMMANDS")
 {
-  outer_logging_stats= logging_stats;  
+  logging_stats= in_logging_stats;
 
   add_field("USER");
   add_field("IP");
@@ -53,65 +53,66 @@ CurrentCommandsTool::CurrentCommandsTool(LoggingStats *logging_stats) :
   add_field("COUNT_ADMIN", TableFunction::NUMBER);
 }
 
-CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
+CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
-  pthread_rwlock_rdlock(&LOCK_current_scoreboard_vector);
-  logging_stats= in_logging_stats;
-
-  if (logging_stats->isEnabled())
-  {
-    record_number= 0;
-  } 
-  else 
-  {
-    record_number= logging_stats->getCurrentScoreboardVector()->size(); 
-  }
+  current_scoreboard= logging_stats->getCurrentScoreboard();
+  current_bucket= 0;
+  number_buckets= current_scoreboard->getNumberBuckets();
+  setVectorIteratorsAndLock(current_bucket);
 }
 
 CurrentCommandsTool::Generator::~Generator()
 {
-  pthread_rwlock_unlock(&LOCK_current_scoreboard_vector);
+}
+
+void CurrentCommandsTool::Generator::setVectorIteratorsAndLock(uint32_t bucket_number)
+{
+  vector<ScoreboardSlot* > *scoreboard_vector= 
+    current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number); 
+
+  current_lock= current_scoreboard->getVectorOfScoreboardLocks()->at(bucket_number);
+
+  it= scoreboard_vector->begin();
+  end= scoreboard_vector->end();
 }
 
 bool CurrentCommandsTool::Generator::populate()
 {
-  uint32_t current_scoreboard_vector_size= 
-    logging_stats->getCurrentScoreboardVector()->size();
-
-  if (record_number == current_scoreboard_vector_size)
+  if ((it == end) && (current_bucket == (number_buckets - 1 ))) 
   {
     return false;
   }
-  
-  while (record_number < current_scoreboard_vector_size)
+
+  if (it == end)
   {
-    ScoreboardSlot *score_board_slot= logging_stats->getCurrentScoreboardVector()->at(record_number);
-    if (score_board_slot->isInUse())
-    {
-      UserCommands *user_commands= score_board_slot->getUserCommands();
-      push(score_board_slot->getUser());
-      push(score_board_slot->getIp());
-      push(user_commands->getSelectCount());
-      push(user_commands->getDeleteCount());
-      push(user_commands->getUpdateCount());
-      push(user_commands->getInsertCount());
-      push(user_commands->getRollbackCount());
-      push(user_commands->getCommitCount());
-      push(user_commands->getCreateCount());
-      push(user_commands->getAlterCount());
-      push(user_commands->getDropCount());
-      push(user_commands->getAdminCount());
-      record_number++;
-      return true;
-    }
-    else 
-    {
-      record_number++;
-    }
+    current_bucket++;
+    setVectorIteratorsAndLock(current_bucket);
   }
 
-  return false;
+  pthread_rwlock_rdlock(current_lock);
+  ScoreboardSlot *scoreboard_slot= *it; 
+
+  if (scoreboard_slot->isInUse())
+  {
+    UserCommands *user_commands= scoreboard_slot->getUserCommands();
+    push(scoreboard_slot->getUser());
+    push(scoreboard_slot->getIp());
+    push(user_commands->getSelectCount());
+    push(user_commands->getDeleteCount());
+    push(user_commands->getUpdateCount());
+    push(user_commands->getInsertCount());
+    push(user_commands->getRollbackCount());
+    push(user_commands->getCommitCount());
+    push(user_commands->getCreateCount());
+    push(user_commands->getAlterCount());
+    push(user_commands->getDropCount());
+    push(user_commands->getAdminCount());
+  }
+  pthread_rwlock_unlock(current_lock);
+
+  it++;
+  return true;
 }
 
 CumulativeCommandsTool::CumulativeCommandsTool(LoggingStats *logging_stats) :
@@ -140,7 +141,7 @@ CumulativeCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_loggi
 
   if (logging_stats->isEnabled())
   {
-    total_records= logging_stats->getCumulativeScoreboardIndex();
+    total_records= logging_stats->getCumulativeStatsByUserIndex();
   }
   else
   {
@@ -156,7 +157,7 @@ bool CumulativeCommandsTool::Generator::populate()
   }
 
   ScoreboardSlot *cumulative_scoreboard_slot= 
-    logging_stats->getCumulativeScoreboardVector()->at(record_number);
+    logging_stats->getCumulativeStatsByUserVector()->at(record_number);
 
   push(cumulative_scoreboard_slot->getUser());
   push(cumulative_scoreboard_slot->getUserCommands()->getSelectCount());

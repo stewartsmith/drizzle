@@ -73,50 +73,47 @@ static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
 static uint32_t sysvar_logging_stats_max_user_count= 10000;
 
-pthread_rwlock_t LOCK_current_scoreboard_vector;
+static uint32_t sysvar_logging_stats_bucket_count= 10;
 
 pthread_rwlock_t LOCK_cumulative_scoreboard_index;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
-  cumulative_scoreboard_index= 0;
+  cumulative_stats_by_user_index= 0;
 
-  current_scoreboard_vector= new vector<ScoreboardSlot *>(sysvar_logging_stats_scoreboard_size);
-  preAllocateScoreboardVector(sysvar_logging_stats_scoreboard_size, 
-                              current_scoreboard_vector);
+  current_scoreboard= new Scoreboard(sysvar_logging_stats_scoreboard_size, sysvar_logging_stats_bucket_count);
 
-  cumulative_scoreboard_vector= new vector<ScoreboardSlot *>(sysvar_logging_stats_max_user_count);
-  preAllocateScoreboardVector(sysvar_logging_stats_max_user_count, 
-                              cumulative_scoreboard_vector);
+  cumulative_stats_by_user_vector= new vector<ScoreboardSlot *>(sysvar_logging_stats_max_user_count);
+  preAllocateScoreboardSlotVector(sysvar_logging_stats_max_user_count, 
+                              cumulative_stats_by_user_vector);
 }
 
 LoggingStats::~LoggingStats()
 {
-  deleteScoreboardVector(current_scoreboard_vector);
-  deleteScoreboardVector(cumulative_scoreboard_vector);
+  deleteScoreboardSlotVector(cumulative_stats_by_user_vector);
 }
 
-void LoggingStats::preAllocateScoreboardVector(uint32_t size, 
-                                               vector<ScoreboardSlot *> *scoreboard_vector)
+void LoggingStats::preAllocateScoreboardSlotVector(uint32_t size, 
+                                                   vector<ScoreboardSlot *> *scoreboard_slot_vector)
 {
-  vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+  vector<ScoreboardSlot *>::iterator it= scoreboard_slot_vector->begin();
   for (uint32_t j=0; j < size; j++)
   {
     ScoreboardSlot *scoreboard_slot= new ScoreboardSlot();
-    it= scoreboard_vector->insert(it, scoreboard_slot);
+    it= scoreboard_slot_vector->insert(it, scoreboard_slot);
   }
-  scoreboard_vector->resize(size);
+  scoreboard_slot_vector->resize(size);
 }
 
-void LoggingStats::deleteScoreboardVector(vector<ScoreboardSlot *> *scoreboard_vector)
+void LoggingStats::deleteScoreboardSlotVector(vector<ScoreboardSlot *> *scoreboard_slot_vector)
 {
-  vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
-  for (; it < scoreboard_vector->end(); it++)
+  vector<ScoreboardSlot *>::iterator it= scoreboard_slot_vector->begin();
+  for (; it < scoreboard_slot_vector->end(); it++)
   {
     delete *it;
   }
-  scoreboard_vector->clear();
-  delete scoreboard_vector;
+  scoreboard_slot_vector->clear();
+  delete scoreboard_slot_vector;
 }
 
 bool LoggingStats::isBeingLogged(Session *session)
@@ -194,62 +191,7 @@ bool LoggingStats::post(Session *session)
     return false;
   }
 
-  /* Find a slot that is unused */
-
-  pthread_rwlock_wrlock(&LOCK_current_scoreboard_vector);
-  ScoreboardSlot *scoreboard_slot;
-  int32_t our_slot= UNINITIALIZED; 
-  int32_t open_slot= UNINITIALIZED;
-
-  uint32_t current_slot= 0;
-  for (vector<ScoreboardSlot *>::iterator it= current_scoreboard_vector->begin();
-       it != current_scoreboard_vector->end(); ++it, current_slot++)
-  {
-    scoreboard_slot= *it;
-
-    if (scoreboard_slot->isInUse() == true) 
-    {
-      /* Check if this session is the one using this slot */
-      if (scoreboard_slot->getSessionId() == session->getSessionId())
-      {
-        our_slot= current_slot;
-        break;
-      }
-      else
-      {
-        continue;
-      }
-    }
-    else
-    {
-      /* save off the open slot */
-      if (open_slot == UNINITIALIZED)
-      {
-        open_slot= current_slot;
-      }
-      continue;
-    }
-  }
-
-  if (our_slot != UNINITIALIZED)
-  {
-    pthread_rwlock_unlock(&LOCK_current_scoreboard_vector); 
-  }
-  else if (open_slot != UNINITIALIZED)
-  {
-    scoreboard_slot= current_scoreboard_vector->at(open_slot);  
-    scoreboard_slot->setInUse(true);
-    scoreboard_slot->setSessionId(session->getSessionId());
-    scoreboard_slot->setUser(session->getSecurityContext().getUser());
-    scoreboard_slot->setIp(session->getSecurityContext().getIp());
-    pthread_rwlock_unlock(&LOCK_current_scoreboard_vector);
-  }
-  else 
-  {
-    pthread_rwlock_unlock(&LOCK_current_scoreboard_vector);
-    /* there was no available slot for this session */
-    return false;
-  }
+  ScoreboardSlot *scoreboard_slot= current_scoreboard->findScoreboardSlotToLog(session);
 
   updateCurrentScoreboard(scoreboard_slot, session);
 
@@ -263,56 +205,45 @@ bool LoggingStats::postEnd(Session *session)
     return false;
   }
 
-  /* do not pull a lock when we write this is the only thread that
-     can write to a particular sessions slot. */
+  ScoreboardSlot *scoreboard_slot= current_scoreboard->findScoreboardSlotToReset(session);
 
-  ScoreboardSlot *scoreboard_slot;
-
-  for (vector<ScoreboardSlot *>::iterator it= current_scoreboard_vector->begin();
-       it != current_scoreboard_vector->end(); ++it)
+  if (scoreboard_slot != NULL)
   {
-    scoreboard_slot= *it; 
-
-    if (scoreboard_slot->getSessionId() == session->getSessionId())
+    vector<ScoreboardSlot *>::iterator cumulative_it= cumulative_stats_by_user_vector->begin();
+    bool found= false;
+    for (uint32_t h= 0; h < cumulative_stats_by_user_index; h++)
     {
-      /* copy over statistics to the cumulative_scoreboard_vector */
-      vector<ScoreboardSlot *>::iterator cumulative_it= cumulative_scoreboard_vector->begin();
-      bool found= false;
-      for (uint32_t h= 0; h < cumulative_scoreboard_index; h++)
+      ScoreboardSlot *cumulative_scoreboard_slot= *cumulative_it;
+      string user= cumulative_scoreboard_slot->getUser();
+      if (user.compare(scoreboard_slot->getUser()) == 0)
       {
-        ScoreboardSlot *cumulative_scoreboard_slot= *cumulative_it;
-        string user= cumulative_scoreboard_slot->getUser();
-        if (user.compare(scoreboard_slot->getUser()) == 0)
-        {
-          found= true;
-          cumulative_scoreboard_slot->merge(scoreboard_slot);
-          break;
-        }
-        cumulative_it++;
+        found= true;
+        cumulative_scoreboard_slot->merge(scoreboard_slot);
+        break;
       }
-
-      if (! found)
-      {
-        updateCumulativeScoreboard(scoreboard_slot);
-      }
-
-      scoreboard_slot->reset();
-      break;
+      cumulative_it++;
     }
+
+    if (! found)
+    {
+      updateCumulativeStatsByUserVector(scoreboard_slot);
+    }
+
+    scoreboard_slot->reset();
   }
 
   return false;
 }
 
-void LoggingStats::updateCumulativeScoreboard(ScoreboardSlot *current_scoreboard_slot)
+void LoggingStats::updateCumulativeStatsByUserVector(ScoreboardSlot *current_scoreboard_slot)
 {
   pthread_rwlock_wrlock(&LOCK_cumulative_scoreboard_index);
   ScoreboardSlot *cumulative_scoreboard_slot=
-    cumulative_scoreboard_vector->at(cumulative_scoreboard_index);
+    cumulative_stats_by_user_vector->at(cumulative_stats_by_user_index);
   string cumulative_scoreboard_user(current_scoreboard_slot->getUser());
   cumulative_scoreboard_slot->setUser(cumulative_scoreboard_user);
   cumulative_scoreboard_slot->merge(current_scoreboard_slot);
-  cumulative_scoreboard_index++;
+  cumulative_stats_by_user_index++;
   pthread_rwlock_unlock(&LOCK_cumulative_scoreboard_index);
 }
 
@@ -411,6 +342,17 @@ static DRIZZLE_SYSVAR_UINT(max_user_count,
                            50000,
                            0);
 
+static DRIZZLE_SYSVAR_UINT(max_bucket_count,
+                           sysvar_logging_stats_bucket_count,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Max number of vector buckets to construct for logging"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           10, /* default */
+                           5, /* minimum */
+                           100,
+                           0);
+
 static DRIZZLE_SYSVAR_UINT(scoreboard_size,
                            sysvar_logging_stats_scoreboard_size,
                            PLUGIN_VAR_RQCMDARG,
@@ -432,6 +374,7 @@ static DRIZZLE_SYSVAR_BOOL(enable,
 
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(max_user_count),
+  DRIZZLE_SYSVAR(max_bucket_count),
   DRIZZLE_SYSVAR(scoreboard_size),
   DRIZZLE_SYSVAR(enable),
   NULL

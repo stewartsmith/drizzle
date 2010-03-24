@@ -35,10 +35,12 @@
 
 #include "logging_stats.h"
 
+#include <vector>
+
 class CurrentCommandsTool : public drizzled::plugin::TableFunction
 {
 private:
-  LoggingStats *outer_logging_stats;
+  LoggingStats *logging_stats;
 
 public:
 
@@ -53,13 +55,19 @@ public:
 
     bool populate();
   private:
-    LoggingStats *logging_stats;
-    uint32_t record_number;
+    void setVectorIteratorsAndLock(uint32_t bucket_number);
+   
+    Scoreboard *current_scoreboard; 
+    uint32_t current_bucket;
+    uint32_t number_buckets;
+    std::vector<ScoreboardSlot *>::iterator it;
+    std::vector<ScoreboardSlot *>::iterator end;
+    pthread_rwlock_t* current_lock;
   };
 
   Generator *generator(drizzled::Field **arg)
   {
-    return new Generator(arg, outer_logging_stats);
+    return new Generator(arg, logging_stats);
   }
 };
 
