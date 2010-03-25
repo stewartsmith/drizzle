@@ -1366,7 +1366,7 @@ static void store_key_value_from_innodb(KEY *key_info, unsigned char* ref, int r
       *ref++= (char)((str.length()>>8) & 0x000000ff);
 
       memcpy(ref, str.ptr(), str.length());
-      ref+= str.length();
+      ref+= key_part->length;
     }
     // FIXME: blobs.
     else
