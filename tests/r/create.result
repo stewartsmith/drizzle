@@ -1450,7 +1450,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB
 drop table t1;
 create temporary table t1 like data_dictionary.processlist;
-ERROR HY000: Can't create table 'test.t1' (errno: 138)
+ERROR HY000: Can't create table 'test.#t1' (errno: 138)
 create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 Table	Create Table

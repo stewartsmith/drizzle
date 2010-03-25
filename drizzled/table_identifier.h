@@ -60,6 +60,8 @@ class TableIdentifier
   std::string lower_table_name;
   std::string sql_path;
 
+  void primeLower();
+
 public:
   TableIdentifier( const std::string &db_arg,
                    const std::string &table_name_arg,
@@ -68,17 +70,8 @@ public:
     db(db_arg),
     table_name(table_name_arg),
     lower_db(db_arg),
-    lower_table_name(table_name_arg),
-    sql_path(db_arg)
+    lower_table_name(table_name_arg)
   { 
-    std::transform(lower_table_name.begin(), lower_table_name.end(),
-                   lower_table_name.begin(), ::tolower);
-
-    std::transform(lower_db.begin(), lower_db.end(),
-                   lower_db.begin(), ::tolower);
-
-    sql_path.append(".");
-    sql_path.append(table_name);
   }
 
   /**
@@ -90,9 +83,6 @@ public:
     db(path_arg),
     table_name(path_arg)
   { 
-    sql_path.append("temporary");
-    sql_path.append(".");
-    sql_path.append(table_name);
   }
 
   TableIdentifier(const char *schema_name_arg, const char *table_name_arg, const char *path_arg ) :
@@ -101,9 +91,6 @@ public:
     db(schema_name_arg),
     table_name(table_name_arg)
   { 
-    sql_path.append("temporary");
-    sql_path.append(".");
-    sql_path.append(table_name);
   }
 
   bool isTmp() const
@@ -111,10 +98,7 @@ public:
     return type == STANDARD_TABLE ? false  : true;
   }
 
-  const std::string &getSQLPath()
-  {
-    return sql_path;
-  }
+  const std::string &getSQLPath();
 
   const std::string &getPath();
 
@@ -163,13 +147,16 @@ public:
     return output;  // for multiple << operators.
   }
 
-  friend bool operator==(const TableIdentifier &left, const TableIdentifier &right)
+  friend bool operator==(TableIdentifier &left, TableIdentifier &right)
   {
+    left.primeLower();
+    right.primeLower();
+
     if (left.type == right.type)
     {
-      if (left.db == right.db)
+      if (left.lower_db == right.lower_db)
       {
-        if (left.table_name == right.table_name)
+        if (left.lower_table_name == right.lower_table_name)
         {
           return true;
         }

@@ -273,12 +273,27 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
   return false;
 }
 
+void TableIdentifier::primeLower()
+{
+  if (lower_db.empty())
+  {
+    lower_db.append(db);
+    lower_table_name.append(table_name);
+
+    std::transform(lower_table_name.begin(), lower_table_name.end(),
+                   lower_table_name.begin(), ::tolower);
+
+    std::transform(lower_db.begin(), lower_db.end(),
+                   lower_db.begin(), ::tolower);
+  }
+}
 
 
 const std::string &TableIdentifier::getPath()
 {
   if (path.empty())
   {
+    primeLower();
     switch (type) {
     case STANDARD_TABLE:
       build_table_filename(path, lower_db.c_str(), lower_table_name.c_str(), false);
@@ -295,6 +310,33 @@ const std::string &TableIdentifier::getPath()
 
   return path;
 }
+
+
+const std::string &TableIdentifier::getSQLPath()
+{
+  if (sql_path.empty())
+  {
+    switch (type) {
+    case STANDARD_TABLE:
+      sql_path.append(db);
+      sql_path.append(".");
+      sql_path.append(table_name);
+      break;
+    case INTERNAL_TMP_TABLE:
+      sql_path.append("temporary.");
+      sql_path.append(table_name);
+      break;
+    case TEMP_TABLE:
+      sql_path.append(db);
+      sql_path.append(".#");
+      sql_path.append(table_name);
+      break;
+    }
+  }
+
+  return sql_path;
+}
+
 
 void TableIdentifier::copyToTableMessage(message::Table &message)
 {
