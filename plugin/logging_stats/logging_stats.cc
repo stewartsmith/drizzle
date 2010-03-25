@@ -91,6 +91,7 @@ LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 LoggingStats::~LoggingStats()
 {
   deleteScoreboardSlotVector(cumulative_stats_by_user_vector);
+  delete current_scoreboard;
 }
 
 void LoggingStats::preAllocateScoreboardSlotVector(uint32_t size, 

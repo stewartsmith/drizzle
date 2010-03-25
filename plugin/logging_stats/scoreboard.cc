@@ -82,8 +82,31 @@ Scoreboard::Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets)
 
 Scoreboard::~Scoreboard()
 {
+  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_begin_it= vector_of_scoreboard_vectors.begin();
+  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_end_it= vector_of_scoreboard_vectors.end();
 
+  for (; v_of_scoreboard_v_begin_it != v_of_scoreboard_v_end_it; ++v_of_scoreboard_v_begin_it)
+  {
+    vector<ScoreboardSlot* > *scoreboard_vector= *v_of_scoreboard_v_begin_it; 
 
+    vector<ScoreboardSlot* >::iterator scoreboard_vector_it= scoreboard_vector->begin();
+    vector<ScoreboardSlot* >::iterator scoreboard_vector_end= scoreboard_vector->end();
+    for (; scoreboard_vector_it != scoreboard_vector_end; ++scoreboard_vector_it)
+    {
+      delete *scoreboard_vector_it; 
+    }
+    
+    scoreboard_vector->clear();
+    delete scoreboard_vector;
+  } // vector_of_scoreboard_vectors is not on the stack and does not deletion
+  
+  vector<pthread_rwlock_t* >::iterator vector_of_scoreboard_locks_it= vector_of_scoreboard_locks.begin();
+  vector<pthread_rwlock_t* >::iterator vector_of_scoreboard_locks_end= vector_of_scoreboard_locks.end();
+
+  for (; vector_of_scoreboard_locks_it != vector_of_scoreboard_locks_end; ++vector_of_scoreboard_locks_it)
+  {
+    delete *vector_of_scoreboard_locks_it;
+  }
 }
 
 ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)

@@ -66,7 +66,6 @@ private:
   static const int32_t UNINITIALIZED= -1;
   uint32_t number_sessions;
   uint32_t number_buckets;
-
   std::vector<std::vector<ScoreboardSlot* >* > vector_of_scoreboard_vectors;
   std::vector<pthread_rwlock_t* > vector_of_scoreboard_locks;
 };

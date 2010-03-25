@@ -56,7 +56,6 @@ CurrentCommandsTool::CurrentCommandsTool(LoggingStats *in_logging_stats) :
 CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
-
   isEnabled= logging_stats->isEnabled();
   current_scoreboard= logging_stats->getCurrentScoreboard();
   current_bucket= 0;
@@ -187,4 +186,3 @@ bool CumulativeCommandsTool::Generator::populate()
   record_number++;
   return true;
 }
-

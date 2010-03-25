@@ -62,10 +62,8 @@ public:
     bool isEnabled;
     std::vector<ScoreboardSlot *>::iterator scoreboard_vector_it;
     std::vector<ScoreboardSlot *>::iterator scoreboard_vector_end;
-
     std::vector<std::vector<ScoreboardSlot* >* >::iterator vector_of_scoreboard_vectors_it;
     std::vector<std::vector<ScoreboardSlot* >* >::iterator vector_of_scoreboard_vectors_end; 
-
     pthread_rwlock_t* current_lock;
   };
 
