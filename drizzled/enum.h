@@ -218,8 +218,7 @@ enum tmp_table_type
 {
   STANDARD_TABLE,
   TEMP_TABLE,
-  INTERNAL_TMP_TABLE,
-  SYSTEM_TMP_TABLE
+  INTERNAL_TMP_TABLE
 };
 
 /*

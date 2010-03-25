@@ -155,8 +155,6 @@ public:
     case TEMP_TABLE:
       type_str= "temporary";
       break;
-    case SYSTEM_TMP_TABLE:
-      type_str= "system";
     }
 
     output << type_str;

@@ -289,8 +289,6 @@ const std::string &TableIdentifier::getPath()
     case TEMP_TABLE:
       build_tmptable_filename(path);
       break;
-    case SYSTEM_TMP_TABLE:
-      assert(0);
     }
     assert(path.length()); // TODO throw exception, this is a possibility
   }
