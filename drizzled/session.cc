@@ -1760,13 +1760,13 @@ void Session::close_temporary_tables()
   Table *table;
   Table *tmp_next;
 
-  if (!temporary_tables)
+  if (not temporary_tables)
     return;
 
   for (table= temporary_tables; table; table= tmp_next)
   {
     tmp_next= table->next;
-    close_temporary(table);
+    nukeTable(table);
   }
   temporary_tables= NULL;
 }
@@ -1796,18 +1796,18 @@ void Session::close_temporary_table(Table *table)
     if (temporary_tables)
       table->next->prev= NULL;
   }
-  close_temporary(table);
+  nukeTable(table);
 }
 
 /*
-  Close and delete a temporary table
+  Close and drop a temporary table
 
   NOTE
   This dosn't unlink table from session->temporary
   If this is needed, use close_temporary_table()
 */
 
-void Session::close_temporary(Table *table)
+void Session::nukeTable(Table *table)
 {
   plugin::StorageEngine *table_type= table->s->db_type();
 

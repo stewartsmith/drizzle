@@ -1447,7 +1447,7 @@ public:
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
 private:
-  void close_temporary(Table *table);
+  void nukeTable(Table *table);
 public:
 
   int drop_temporary_table(TableList *table_list);
