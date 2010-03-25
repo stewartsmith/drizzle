@@ -65,7 +65,7 @@ public:
     max_rows(0),
     table_proto(NULL),
     storage_engine(NULL),
-    tmp_table(STANDARD_TABLE),
+    tmp_table(message::Table::STANDARD),
     ref_count(0),
     null_bytes(0),
     last_null_bit_pos(0),
@@ -126,7 +126,7 @@ public:
     max_rows(0),
     table_proto(NULL),
     storage_engine(NULL),
-    tmp_table(STANDARD_TABLE),
+    tmp_table(message::Table::STANDARD),
     ref_count(0),
     null_bytes(0),
     last_null_bit_pos(0),
@@ -337,7 +337,7 @@ public:
   {
     return storage_engine;
   }
-  enum tmp_table_type tmp_table;
+  message::Table::TableType tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */
   uint32_t getTableCount()
@@ -499,7 +499,7 @@ public:
     memset(this, 0, sizeof(TableShare));
     memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     table_category=         TABLE_CATEGORY_TEMPORARY;
-    tmp_table=              INTERNAL_TMP_TABLE;
+    tmp_table=              message::Table::INTERNAL;
     db.str=                 (char*) key;
     db.length=		 strlen(key);
     table_cache_key.str=    (char*) key;
@@ -533,7 +533,7 @@ public:
       If someone is waiting for this to be deleted, inform it about this.
       Don't do a delete until we know that no one is refering to this anymore.
     */
-    if (tmp_table == STANDARD_TABLE)
+    if (tmp_table == message::Table::STANDARD)
     {
       /* share->mutex is locked in release_table_share() */
       while (waiting_on_cond)

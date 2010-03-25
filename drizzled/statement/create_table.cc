@@ -95,7 +95,7 @@ bool statement::CreateTable::execute()
 
   TableIdentifier new_table_identifier(create_table->db,
                                        create_table->table_name,
-                                       create_table_message.type() != message::Table::TEMPORARY ? STANDARD_TABLE : TEMP_TABLE);
+                                       create_table_message.type());
 
   if (create_table_precheck(new_table_identifier))
   {

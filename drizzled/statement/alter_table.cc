@@ -994,8 +994,8 @@ static bool internal_alter_table(Session *session,
   */
   TableIdentifier new_table_as_temporary(original_table_identifier.getSchemaName(),
                                          tmp_name,
-                                         create_proto.type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
-                                         TEMP_TABLE);
+                                         create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
+                                         message::Table::TEMPORARY);
 
   error= create_temporary_table(session, new_table_as_temporary, create_info, create_proto, alter_info);
 
@@ -1191,7 +1191,7 @@ static bool internal_alter_table(Session *session,
       compare_table(). Then, we need one additional call to
     */
     TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
-                                           old_name, TEMP_TABLE);
+                                           old_name, message::Table::TEMPORARY);
 
     if (mysql_rename_table(original_engine, original_table_identifier, original_table_to_drop, FN_TO_IS_TMP))
     {

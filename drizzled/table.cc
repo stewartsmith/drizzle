@@ -1546,7 +1546,7 @@ int Table::closefrm(bool free_share)
   cursor= 0;				/* For easier errorchecking */
   if (free_share)
   {
-    if (s->tmp_table == STANDARD_TABLE)
+    if (s->tmp_table == message::Table::STANDARD)
       TableShare::release(s);
     else
       s->free_table_share();

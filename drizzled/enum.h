@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_ENUM_H
 #define DRIZZLED_ENUM_H
 
+#include "drizzled/message/table.pb.h"
+
 namespace drizzled
 {
 
@@ -214,12 +216,7 @@ enum find_item_error_report_type
   IGNORE_EXCEPT_NON_UNIQUE
 };
 
-enum tmp_table_type
-{
-  STANDARD_TABLE,
-  TEMP_TABLE,
-  INTERNAL_TMP_TABLE
-};
+typedef message::Table::TableType tmp_table_type;
 
 /*
   Values in this enum are used to indicate how a tables TIMESTAMP field

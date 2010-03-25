@@ -295,14 +295,19 @@ const std::string &TableIdentifier::getPath()
   {
     primeLower();
     switch (type) {
-    case STANDARD_TABLE:
+    case message::Table::STANDARD:
       build_table_filename(path, lower_db.c_str(), lower_table_name.c_str(), false);
       break;
-    case INTERNAL_TMP_TABLE:
+    case message::Table::INTERNAL:
       build_table_filename(path, lower_db.c_str(), lower_table_name.c_str(), true);
       break;
-    case TEMP_TABLE:
+    case message::Table::TEMPORARY:
       build_tmptable_filename(path);
+      break;
+    case message::Table::FUNCTION:
+      path.append(db);
+      path.append(".");
+      path.append(table_name);
       break;
     }
     assert(path.length()); // TODO throw exception, this is a possibility
@@ -317,16 +322,17 @@ const std::string &TableIdentifier::getSQLPath()
   if (sql_path.empty())
   {
     switch (type) {
-    case STANDARD_TABLE:
+    case message::Table::FUNCTION:
+    case message::Table::STANDARD:
       sql_path.append(db);
       sql_path.append(".");
       sql_path.append(table_name);
       break;
-    case INTERNAL_TMP_TABLE:
+    case message::Table::INTERNAL:
       sql_path.append("temporary.");
       sql_path.append(table_name);
       break;
-    case TEMP_TABLE:
+    case message::Table::TEMPORARY:
       sql_path.append(db);
       sql_path.append(".#");
       sql_path.append(table_name);

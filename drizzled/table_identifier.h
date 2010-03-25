@@ -65,7 +65,7 @@ class TableIdentifier
 public:
   TableIdentifier( const std::string &db_arg,
                    const std::string &table_name_arg,
-                   tmp_table_type tmp_arg= STANDARD_TABLE) :
+                   tmp_table_type tmp_arg= message::Table::STANDARD) :
     type(tmp_arg),
     db(db_arg),
     table_name(table_name_arg),
@@ -78,7 +78,7 @@ public:
     This is only used in scavenging lost tables. Once the temp schema engine goes in, this should go away.
   */
   TableIdentifier( const char *path_arg ) :
-    type(TEMP_TABLE),
+    type(message::Table::TEMPORARY),
     path(path_arg),
     db(path_arg),
     table_name(path_arg)
@@ -86,7 +86,7 @@ public:
   }
 
   TableIdentifier(const char *schema_name_arg, const char *table_name_arg, const char *path_arg ) :
-    type(TEMP_TABLE),
+    type(message::Table::TEMPORARY),
     path(path_arg),
     db(schema_name_arg),
     table_name(table_name_arg)
@@ -95,7 +95,9 @@ public:
 
   bool isTmp() const
   {
-    return type == STANDARD_TABLE ? false  : true;
+    if (type == message::Table::TEMPORARY || type == message::Table::INTERNAL)
+      return true;
+    return false;
   }
 
   const std::string &getSQLPath();
@@ -130,14 +132,17 @@ public:
     output << ", ";
 
     switch (identifier.type) {
-    case STANDARD_TABLE:
+    case message::Table::STANDARD:
       type_str= "standard";
       break;
-    case INTERNAL_TMP_TABLE:
+    case message::Table::INTERNAL:
       type_str= "internal";
       break;
-    case TEMP_TABLE:
+    case message::Table::TEMPORARY:
       type_str= "temporary";
+      break;
+    case message::Table::FUNCTION:
+      type_str= "function";
       break;
     }
 
