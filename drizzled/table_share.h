@@ -337,7 +337,8 @@ public:
   {
     return storage_engine;
   }
-  message::Table::TableType tmp_table;
+
+  TableIdentifier::Type tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */
   uint32_t getTableCount()

@@ -894,7 +894,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     message::Table definition;
     if (StorageEngine::readTableFile(path, definition))
     {
-      TableIdentifier identifier(definition.schema().c_str(), definition.name().c_str(), path.c_str());
+      TableIdentifier identifier(definition.schema(), definition.name(), path);
       table_identifiers.push_back(identifier);
     }
   }

@@ -49,10 +49,13 @@ namespace drizzled {
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
 
-
 class TableIdentifier
 {
-  tmp_table_type type;
+public:
+  typedef message::Table::TableType Type;
+private:
+
+  Type type;
   std::string path;
   std::string db;
   std::string table_name;
@@ -65,7 +68,7 @@ class TableIdentifier
 public:
   TableIdentifier( const std::string &db_arg,
                    const std::string &table_name_arg,
-                   tmp_table_type tmp_arg= message::Table::STANDARD) :
+                   Type tmp_arg= message::Table::STANDARD) :
     type(tmp_arg),
     db(db_arg),
     table_name(table_name_arg),
@@ -74,7 +77,7 @@ public:
   { 
   }
 
-  TableIdentifier(const char *schema_name_arg, const char *table_name_arg, const char *path_arg ) :
+  TableIdentifier(const std::string &schema_name_arg, const std::string &table_name_arg, const std::string &path_arg ) :
     type(message::Table::TEMPORARY),
     path(path_arg),
     db(schema_name_arg),
@@ -87,6 +90,11 @@ public:
     if (type == message::Table::TEMPORARY || type == message::Table::INTERNAL)
       return true;
     return false;
+  }
+
+  Type getType() const
+  {
+    return type;
   }
 
   const std::string &getSQLPath();

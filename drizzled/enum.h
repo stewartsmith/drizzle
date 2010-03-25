@@ -216,8 +216,6 @@ enum find_item_error_report_type
   IGNORE_EXCEPT_NON_UNIQUE
 };
 
-typedef message::Table::TableType tmp_table_type;
-
 /*
   Values in this enum are used to indicate how a tables TIMESTAMP field
   should be treated. It can be set to the current timestamp on insert or

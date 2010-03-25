@@ -809,16 +809,8 @@ static bool internal_alter_table(Session *session,
   new_engine= create_info->db_type;
 
 
-  create_proto.set_schema(new_table_identifier.getSchemaName().c_str());
-
-  if (new_table_identifier.isTmp())
-  {
-    create_proto.set_type(message::Table::TEMPORARY);
-  }
-  else
-  {
-    create_proto.set_type(message::Table::STANDARD);
-  }
+  create_proto.set_schema(new_table_identifier.getSchemaName());
+  create_proto.set_type(new_table_identifier.getType());
 
   /**
     @todo Have a check on the table definition for FK in the future 
