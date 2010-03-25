@@ -1526,6 +1526,11 @@ end:
   the strings are used in a loop even after the share may be freed.
 */
 
+void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
+{
+  close_data_files_and_morph_locks(identifier.getSchemaName().c_str(), identifier.getTableName().c_str());
+}
+
 void Session::close_data_files_and_morph_locks(const char *new_db, const char *new_table_name)
 {
   Table *table;
