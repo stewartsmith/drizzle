@@ -97,20 +97,13 @@ public:
 
 AuthTest *auth_test= NULL;
 
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
   auth_test= new AuthTest("auth_test");
-  registry.add(auth_test);
-  return 0;
-}
-
-static int deinit(plugin::Registry &registry)
-{
-  registry.remove(auth_test);
-  delete auth_test;
+  context.add(auth_test);
   return 0;
 }
 
 } /* namespace auth_test */
 
-DRIZZLE_PLUGIN(auth_test::init, auth_test::deinit, NULL);
+DRIZZLE_PLUGIN(auth_test::init, NULL);

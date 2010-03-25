@@ -32,7 +32,7 @@
 #include "drizzled/gettext.h"
 #include "drizzled/probes.h"
 #include "drizzled/sql_parse.h"
-#include "drizzled/cost_vect.h"
+#include "drizzled/optimizer/cost_vector.h"
 #include "drizzled/session.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/transaction_services.h"
@@ -962,7 +962,7 @@ ha_rows
 Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                      void *seq_init_param,
                                      uint32_t ,
-                                     uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
+                                     uint32_t *bufsz, uint32_t *flags, optimizer::CostVector *cost)
 {
   KEY_MULTI_RANGE range;
   range_seq_t seq_it;
@@ -1005,12 +1005,12 @@ Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
     /* The following calculation is the same as in multi_range_read_info(): */
     *flags |= HA_MRR_USE_DEFAULT_IMPL;
     cost->zero();
-    cost->avg_io_cost= 1; /* assume random seeks */
+    cost->setAvgIOCost(1); /* assume random seeks */
     if ((*flags & HA_MRR_INDEX_ONLY) && total_rows > 2)
-      cost->io_count= index_only_read_time(keyno, (uint32_t)total_rows);
+      cost->setIOCount(index_only_read_time(keyno, (uint32_t)total_rows));
     else
-      cost->io_count= read_time(keyno, n_ranges, total_rows);
-    cost->cpu_cost= (double) total_rows / TIME_FOR_COMPARE + 0.01;
+      cost->setIOCount(read_time(keyno, n_ranges, total_rows));
+    cost->setCpuCost((double) total_rows / TIME_FOR_COMPARE + 0.01);
   }
   return total_rows;
 }
@@ -1051,20 +1051,20 @@ Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
 */
 
 int Cursor::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_rows,
-                                   uint32_t *bufsz, uint32_t *flags, COST_VECT *cost)
+                                   uint32_t *bufsz, uint32_t *flags, optimizer::CostVector *cost)
 {
   *bufsz= 0; /* Default implementation doesn't need a buffer */
 
   *flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   cost->zero();
-  cost->avg_io_cost= 1; /* assume random seeks */
+  cost->setAvgIOCost(1); /* assume random seeks */
 
   /* Produce the same cost as non-MRR code does */
   if (*flags & HA_MRR_INDEX_ONLY)
-    cost->io_count= index_only_read_time(keyno, n_rows);
+    cost->setIOCount(index_only_read_time(keyno, n_rows));
   else
-    cost->io_count= read_time(keyno, n_ranges, n_rows);
+    cost->setIOCount(read_time(keyno, n_ranges, n_rows));
   return 0;
 }
 
@@ -1450,18 +1450,18 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
   {
     if (lock_type == F_RDLCK)
     {
-      DRIZZLE_CURSOR_RDLOCK_START(table_share->db.str,
-                                  table_share->table_name.str);
+      DRIZZLE_CURSOR_RDLOCK_START(table_share->getSchemaName(),
+                                  table_share->getTableName());
     }
     else if (lock_type == F_WRLCK)
     {
-      DRIZZLE_CURSOR_WRLOCK_START(table_share->db.str,
-                                  table_share->table_name.str);
+      DRIZZLE_CURSOR_WRLOCK_START(table_share->getSchemaName(),
+                                  table_share->getTableName());
     }
     else if (lock_type == F_UNLCK)
     {
-      DRIZZLE_CURSOR_UNLOCK_START(table_share->db.str,
-                                  table_share->table_name.str);
+      DRIZZLE_CURSOR_UNLOCK_START(table_share->getSchemaName(),
+                                  table_share->getTableName());
     }
   }
 
@@ -1528,7 +1528,7 @@ int Cursor::ha_write_row(unsigned char *buf)
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
 
-  DRIZZLE_INSERT_ROW_START(table_share->db.str, table_share->table_name.str);
+  DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   error= write_row(buf);
   DRIZZLE_INSERT_ROW_DONE(error);
@@ -1555,7 +1555,7 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
    */
   assert(new_data == table->record[0]);
 
-  DRIZZLE_UPDATE_ROW_START(table_share->db.str, table_share->table_name.str);
+  DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   error= update_row(old_data, new_data);
   DRIZZLE_UPDATE_ROW_DONE(error);
@@ -1575,7 +1575,7 @@ int Cursor::ha_delete_row(const unsigned char *buf)
 {
   int error;
 
-  DRIZZLE_DELETE_ROW_START(table_share->db.str, table_share->table_name.str);
+  DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   error= delete_row(buf);
   DRIZZLE_DELETE_ROW_DONE(error);

@@ -727,24 +727,32 @@ bool ClientMySQLProtocol::checkConnection(void)
   char *l_db= passwd;
 
   /*
-    Old clients send null-terminated string as password; new clients send
-    the size (1 byte) + string (not null-terminated). Hence in case of empty
-    password both send '\0'.
-
-    This strlen() can't be easily deleted without changing client.
+    Only support new password format.
 
     Cast *passwd to an unsigned char, so that it doesn't extend the sign for
     *passwd > 127 and become 2**32-127+ after casting to uint.
   */
-  uint32_t passwd_len= client_capabilities & CLIENT_SECURE_CONNECTION ?
-    (unsigned char)(*passwd++) : strlen(passwd);
-  if (passwd_len > 0)
+  uint32_t passwd_len;
+  if (client_capabilities & CLIENT_SECURE_CONNECTION &&
+      passwd < (char *) net.read_pos + pkt_len)
   {
-    session->getSecurityContext().setPasswordType(SecurityContext::MYSQL_HASH);
-    session->getSecurityContext().setPasswordContext(scramble, SCRAMBLE_LENGTH);
+    passwd_len= (unsigned char)(*passwd++);
+    if (passwd_len > 0)
+    {
+      session->getSecurityContext().setPasswordType(SecurityContext::MYSQL_HASH);
+      session->getSecurityContext().setPasswordContext(scramble, SCRAMBLE_LENGTH);
+    }
   }
+  else
+    passwd_len= 0;
 
-  l_db= client_capabilities & CLIENT_CONNECT_WITH_DB ? l_db + passwd_len + 1 : 0;
+  if (client_capabilities & CLIENT_CONNECT_WITH_DB &&
+      passwd < (char *) net.read_pos + pkt_len)
+  {
+    l_db= l_db + passwd_len + 1;
+  }
+  else
+    l_db= NULL;
 
   /* strlen() can't be easily deleted without changing client */
   uint32_t db_len= l_db ? strlen(l_db) : 0;
@@ -873,7 +881,7 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
 static ListenMySQLProtocol *listen_obj= NULL;
 plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   /* Initialize random seeds for the MySQL algorithm with minimal changes. */
   time_t seed_time= time(NULL);
@@ -881,18 +889,11 @@ static int init(drizzled::plugin::Registry &registry)
   random_seed2= (seed_time / 2) % random_max;
 
   mysql_password= new plugin::Create_function<MySQLPassword>(MySQLPasswordName);
-  registry.add(mysql_password);
+  context.add(mysql_password);
 
   listen_obj= new ListenMySQLProtocol("mysql_protocol", true);
-  registry.add(listen_obj); 
+  context.add(listen_obj); 
 
-  return 0;
-}
-
-static int deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(listen_obj);
-  delete listen_obj;
   return 0;
 }
 
@@ -935,7 +936,6 @@ DRIZZLE_DECLARE_PLUGIN
   "MySQL Protocol Module",
   PLUGIN_LICENSE_GPL,
   init,             /* Plugin Init */
-  deinit,           /* Plugin Deinit */
   sys_variables, /* system variables */
   NULL              /* config options */
 }

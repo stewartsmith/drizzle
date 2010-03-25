@@ -39,8 +39,6 @@
 /* Bits to show what an alter table will do */
 #include <drizzled/sql_bitmap.h>
 
-#include <drizzled/cursor.h>
-
 #include <bitset>
 #include <algorithm>
 
@@ -90,7 +88,10 @@ typedef class Item COND;
 
 typedef struct system_status_var system_status_var;
 
-class COST_VECT;
+namespace optimizer
+{
+  class CostVector;
+}
 
 uint32_t calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
@@ -298,9 +299,9 @@ public:
   virtual ha_rows multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
                                               void *seq_init_param,
                                               uint32_t n_ranges, uint32_t *bufsz,
-                                              uint32_t *flags, COST_VECT *cost);
+                                              uint32_t *flags, optimizer::CostVector *cost);
   virtual int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
-                                    uint32_t *bufsz, uint32_t *flags, COST_VECT *cost);
+                                    uint32_t *bufsz, uint32_t *flags, optimizer::CostVector *cost);
   virtual int multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
                                     uint32_t n_ranges, uint32_t mode,
                                     HANDLER_BUFFER *buf);
@@ -720,8 +721,7 @@ bool mysql_create_table_no_lock(Session *session,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
-                                bool tmp_table,
-                                uint32_t select_field_count,
+                                bool tmp_table, uint32_t select_field_count,
                                 bool is_if_not_exists);
 
 bool mysql_create_like_table(Session* session,
@@ -731,9 +731,10 @@ bool mysql_create_like_table(Session* session,
                              bool is_if_not_exists,
                              bool is_engine_set);
 
-bool mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
-                        const char * old_name, const char *new_db,
-                        const char * new_name, uint32_t flags);
+bool mysql_rename_table(plugin::StorageEngine *base,
+                        TableIdentifier &old_identifier,
+                        TableIdentifier &new_identifier,
+                        uint32_t flags);
 
 bool mysql_prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, order_st *order);
