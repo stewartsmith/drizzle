@@ -205,14 +205,10 @@ bool LoggingStats::post(Session *session)
   else if (open_slot != UNINITIALIZED)
   {
     score_board_slot= &score_board_slots[open_slot];
-    score_board_slot->setInUse();
+    score_board_slot->setInUse(true);
     score_board_slot->setSessionId(session->getSessionId());
-    string user(session->getSecurityContext().getUser());
-    //score_board_slot->setUser(session->getSecurityContext().getUser());
-    score_board_slot->setUser(user);
-    string ip(session->getSecurityContext().getIp());
-    //score_board_slot->setIp(session->getSecurityContext().getIp());
-    score_board_slot->setIp(ip);
+    score_board_slot->setUser(session->getSecurityContext().getUser());
+    score_board_slot->setIp(session->getSecurityContext().getIp());
     pthread_rwlock_unlock(&LOCK_scoreboard);
   }
   else 
@@ -234,12 +230,10 @@ bool LoggingStats::postEnd(Session *session)
     return false;
   }
 
-  /* do not pull a lock when we write this is the only thread that
-     can write to a particular sessions slot. */
-
   ScoreBoardSlot *score_board_slot;
 
-  //pthread_rwlock_wrlock(&LOCK_scoreboard);
+  pthread_rwlock_wrlock(&LOCK_scoreboard);
+
   for (uint32_t j=0; j < scoreboard_size; j++)
   {
     score_board_slot= &score_board_slots[j];
@@ -250,7 +244,9 @@ bool LoggingStats::postEnd(Session *session)
       break;
     }
   }
-  //pthread_rwlock_unlock(&LOCK_scoreboard);
+
+  pthread_rwlock_unlock(&LOCK_scoreboard);
+
   return false;
 }
 

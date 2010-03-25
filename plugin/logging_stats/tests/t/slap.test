@@ -1,11 +1,4 @@
 
 --exec $DRIZZLE_SLAP --silent --concurrency=10 --iterations=20 --query="SELECT * FROM t1" --create="CREATE TABLE t1 (id int, name varchar(64)); INSERT INTO t1 VALUES (1, 'This is a test')" --delimiter=";" --commit=10
 
---disable_warnings
-DROP TABLE IF EXISTS b;
---enable_warnings
-
-
-CREATE TABLE b (i int,  PRIMARY KEY (i));
-
-#SELECT * FROM DATA_DICTIONARY.SQL_COMMANDS_BY_USER;
+SELECT * FROM DATA_DICTIONARY.SQL_COMMANDS_BY_USER;
