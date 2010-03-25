@@ -32,6 +32,7 @@
 #define PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H
 
 #include "user_commands.h"
+#include <drizzled/atomics.h>
 
 #include <string>
 
@@ -40,9 +41,10 @@ class ScoreBoardSlot
 public:
   ScoreBoardSlot() 
     :
-      in_use(false),
       session_id(0)
-  {}
+  {
+    in_use= false;
+  }
 
   ~ScoreBoardSlot() 
   {
@@ -69,12 +71,12 @@ public:
     return session_id;
   }
 
-  void setInUse(bool in_in_use)
+  void setInUse()
   {
-    in_use= in_in_use;
+    in_use= true;
   }
 
-  bool isInUse()
+  bool isInUse() const
   {
     return in_use;
   }
@@ -113,7 +115,7 @@ private:
   UserCommands *user_commands;
   std::string user;
   std::string ip;
-  bool in_use;
+  drizzled::atomic<bool> in_use;
   uint64_t session_id;
 };
  
