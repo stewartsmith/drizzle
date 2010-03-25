@@ -1440,7 +1440,7 @@ void plugin_opt_set_limits(struct my_option *options,
     options->arg_type= OPT_ARG;
 }
 
-static bool get_one_plugin_option(int, const struct my_option *, char *)
+static int get_one_plugin_option(int, const struct my_option *, char *)
 {
   return 0;
 }
