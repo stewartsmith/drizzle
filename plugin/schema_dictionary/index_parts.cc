@@ -46,11 +46,6 @@ IndexPartsTool::Generator::Generator(Field **arg) :
   index_part_iterator(0),
   is_index_part_primed(false)
 {
-  Session *session= current_session;
-  drizzled::statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
-
-  setSchemaPredicate(select->getShowSchema());
-  setTablePredicate(select->getShowTable());
 }
 
 

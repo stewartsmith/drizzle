@@ -285,29 +285,17 @@ protected:
                             TableIdentifier &identifier,
                             message::Table& proto)= 0;
 
-  virtual int doRenameTable(Session* session,
-                            const char *from, const char *to);
+  virtual int doRenameTable(Session &session,
+                            TableIdentifier &from, TableIdentifier &to)= 0;
 
 public:
 
-  int renameTable(Session *session, const char *from, const char *to) 
-  {
-    setTransactionReadWrite(*session);
-
-    return doRenameTable(session, from, to);
-  }
+  int renameTable(Session &session, TableIdentifier &from, TableIdentifier &to);
 
   // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
-  int doDropTable(Session &session,
-                  TableIdentifier &identifier,
-                  const std::string &table_path)
-  {
-    assert(not table_path.compare(identifier.getPath()));
-    return doDropTable(session, identifier);
-  }
 
   virtual int doDropTable(Session &session,
                           TableIdentifier &identifier)= 0;
@@ -326,9 +314,9 @@ public:
 
   virtual bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 
-  static plugin::StorageEngine *findByName(std::string find_str);
-  static plugin::StorageEngine *findByName(Session& session,
-                                           std::string find_str);
+  static plugin::StorageEngine *findByName(const std::string &find_str);
+  static plugin::StorageEngine *findByName(Session& session, const std::string &find_str);
+
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
@@ -404,7 +392,6 @@ public:
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
   /* TODO-> Make private */
-  static int readDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);

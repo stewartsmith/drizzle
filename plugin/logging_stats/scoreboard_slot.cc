@@ -45,6 +45,17 @@ ScoreboardSlot::~ScoreboardSlot()
   delete user_commands;
 }
 
+ScoreboardSlot::ScoreboardSlot(const ScoreboardSlot &scoreboard_slot)
+{
+  user_commands= new UserCommands(*scoreboard_slot.user_commands);
+  string tmp_user(scoreboard_slot.user);
+  user= tmp_user;
+  string tmp_ip(scoreboard_slot.ip);
+  ip= tmp_ip;
+  in_use= scoreboard_slot.in_use;
+  session_id= scoreboard_slot.session_id;
+}
+
 UserCommands* ScoreboardSlot::getUserCommands()
 {
   return user_commands;

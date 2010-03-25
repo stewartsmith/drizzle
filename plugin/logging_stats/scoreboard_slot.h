@@ -42,6 +42,8 @@ public:
 
   ~ScoreboardSlot(); 
 
+  ScoreboardSlot(const ScoreboardSlot &scoreboad_slot);
+
   UserCommands* getUserCommands();
 
   void setSessionId(uint64_t in_session_id);

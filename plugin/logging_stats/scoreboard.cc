@@ -164,8 +164,10 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
     scoreboard_slot= scoreboard_vector->at(open_slot);
     scoreboard_slot->setInUse(true);
     scoreboard_slot->setSessionId(session->getSessionId());
-    scoreboard_slot->setUser(session->getSecurityContext().getUser());
-    scoreboard_slot->setIp(session->getSecurityContext().getIp());
+    string user(session->getSecurityContext().getUser());
+    scoreboard_slot->setUser(user);
+    string ip(session->getSecurityContext().getIp());
+    scoreboard_slot->setIp(ip);
     pthread_rwlock_unlock(LOCK_scoreboard_vector);
   }
   else
@@ -178,7 +180,7 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
   return scoreboard_slot;
 }
 
-ScoreboardSlot* Scoreboard::findScoreboardSlotToReset(Session *session)
+ScoreboardSlot* Scoreboard::findAndResetScoreboardSlot(Session *session)
 {
   /* our bucket */
   uint32_t bucket_number= session->getSessionId() % number_buckets;
@@ -186,9 +188,13 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToReset(Session *session)
   /* our vector corresponding to bucket_number */
   vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
 
-  /* no lock is taken as nothing is being reserved here */
+  /* out lock corresponding to bucket_number */
+  pthread_rwlock_t *LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
+
+  pthread_rwlock_wrlock(LOCK_scoreboard_vector);
 
   ScoreboardSlot *scoreboard_slot;
+  ScoreboardSlot *return_scoreboard_slot;
 
   for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
        it != scoreboard_vector->end(); ++it)
@@ -197,9 +203,12 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToReset(Session *session)
 
     if (scoreboard_slot->getSessionId() == session->getSessionId())
     {
+      return_scoreboard_slot = new ScoreboardSlot(*scoreboard_slot);
+      scoreboard_slot->reset(); 
       break;
     }
   }
+  pthread_rwlock_unlock(LOCK_scoreboard_vector);   
 
-  return scoreboard_slot;
+  return return_scoreboard_slot;
 }

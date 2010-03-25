@@ -206,7 +206,7 @@ bool LoggingStats::postEnd(Session *session)
     return false;
   }
 
-  ScoreboardSlot *scoreboard_slot= current_scoreboard->findScoreboardSlotToReset(session);
+  ScoreboardSlot *scoreboard_slot= current_scoreboard->findAndResetScoreboardSlot(session);
 
   if (scoreboard_slot != NULL)
   {
@@ -229,9 +229,9 @@ bool LoggingStats::postEnd(Session *session)
     {
       updateCumulativeStatsByUserVector(scoreboard_slot);
     }
-
-    scoreboard_slot->reset();
   }
+
+  delete scoreboard_slot;
 
   return false;
 }
@@ -296,7 +296,7 @@ static bool initTable()
   return false;
 }
 
-static int init(Registry &registry)
+static int init(Context &context)
 {
   logging_stats= new LoggingStats("logging_stats");
 
@@ -305,30 +305,15 @@ static int init(Registry &registry)
     return 1;
   }
 
-  registry.add(logging_stats);
-  registry.add(current_commands_tool);
-  registry.add(cumulative_commands_tool);
+  context.add(logging_stats);
+  context.add(current_commands_tool);
+  context.add(cumulative_commands_tool);
 
   if (sysvar_logging_stats_enabled)
   {
     logging_stats->enable();
   }
 
-  return 0;
-}
-
-static int deinit(Registry &registry)
-{
-  if (logging_stats)
-  {
-    registry.remove(current_commands_tool);
-    registry.remove(cumulative_commands_tool);
-    registry.remove(logging_stats);
-
-    delete current_commands_tool;
-    delete cumulative_commands_tool;
-    delete logging_stats;
-  }
   return 0;
 }
 
@@ -390,7 +375,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("User Statistics as DATA_DICTIONARY tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  deinit, /* Plugin Deinit    */
   system_var, /* system variables */
   NULL    /* config options   */
 }

@@ -40,6 +40,8 @@ public:
 
   UserCommands();
 
+  UserCommands(const UserCommands &user_commands);
+
   uint64_t getSelectCount();
 
   void incrementSelectCount(int i= 1);

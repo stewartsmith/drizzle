@@ -57,6 +57,20 @@ void UserCommands::reset()
   admin_count= 0;
 }
 
+UserCommands::UserCommands(const UserCommands &user_commands)
+{
+  update_count= user_commands.update_count;
+  delete_count= user_commands.delete_count;
+  insert_count= user_commands.insert_count;
+  select_count= user_commands.select_count;
+  rollback_count= user_commands.rollback_count;
+  commit_count= user_commands.commit_count;
+  create_count= user_commands.create_count;
+  alter_count= user_commands.alter_count;
+  drop_count= user_commands.drop_count;
+  admin_count= user_commands.admin_count;
+}
+
 void UserCommands::merge(UserCommands *user_commands)
 {
   incrementUpdateCount(user_commands->getUpdateCount());

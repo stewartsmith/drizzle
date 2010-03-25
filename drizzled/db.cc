@@ -231,6 +231,17 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     return -1;
   }
 
+  // Lets delete the temporary tables first outside of locks.  
+  set<string> set_of_names;
+  session->doGetTableNames(schema_name, set_of_names);
+
+  for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
+  {
+    TableIdentifier identifier(schema_name, *iter, TEMP_TABLE);
+    Table *table= session->find_temporary_table(identifier);
+    session->close_temporary_table(table);
+  }
+
   pthread_mutex_lock(&LOCK_create_db);
 
 
@@ -348,10 +359,13 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   for (table= tables; table; table= table->next_local)
   {
+    TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
     table->db_type= NULL;
-    if ((share= TableShare::getShare(table->db, table->table_name)))
+    if ((share= TableShare::getShare(identifier)))
+    {
       table->db_type= share->db_type();
+    }
   }
 
   if (lock_table_names_exclusively(session, tables))

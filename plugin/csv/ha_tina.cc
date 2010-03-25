@@ -124,6 +124,11 @@ public:
                                      HTON_FILE_BASED),
     tina_open_tables()
   {}
+  virtual ~Tina()
+  {
+    pthread_mutex_destroy(&tina_mutex);
+  }
+
   virtual Cursor *create(TableShare &table,
                          drizzled::memory::Root *mem_root)
   {
@@ -156,33 +161,41 @@ public:
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
 };
 
 
-bool Tina::doDoesTableExist(Session&, TableIdentifier &identifier)
+int Tina::doRenameTable(Session &session,
+                        TableIdentifier &from, TableIdentifier &to)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter != proto_cache.end())
+  int error= 0;
+  for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    return true;
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
   }
-  pthread_mutex_unlock(&proto_cache_mutex);
 
-  return false;
+  session.rename(from, to);
+
+  return error;
+}
+
+bool Tina::doDoesTableExist(Session &session, TableIdentifier &identifier)
+{
+  return session.doesTableMessageExist(identifier);
 }
 
 
-int Tina::doDropTable(Session&,
+int Tina::doDropTable(Session &session,
                       TableIdentifier &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
   char buff[FN_REFLEN];
-  ProtoCache::iterator iter;
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
@@ -198,12 +211,7 @@ int Tina::doDropTable(Session&,
     error= enoent_or_zero;
   }
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.removeTableMessage(identifier);
 
   return error;
 }
@@ -230,48 +238,29 @@ void Tina::deleteOpenTable(const string &table_name)
 }
 
 
-int Tina::doGetTableDefinition(Session&,
+int Tina::doGetTableDefinition(Session &session,
                                drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
+  if (session.getTableMessage(identifier, table_message))
+    return EEXIST;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-  {
-    table_message.CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  return ENOENT;
 }
 
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(drizzled::plugin::Registry &registry)
+static int tina_init_func(drizzled::plugin::Context &context)
 {
 
   tina_engine= new Tina("CSV");
-  registry.add(tina_engine);
+  context.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-static int tina_done_func(drizzled::plugin::Registry &registry)
-{
-  registry.remove(tina_engine);
-  delete tina_engine;
-
-  pthread_mutex_destroy(&tina_mutex);
-
-  return 0;
-}
 
 
 TinaShare::TinaShare(const char *table_name_arg)
@@ -1397,10 +1386,10 @@ int ha_tina::delete_all_rows()
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::doCreateTable(Session *,
+int Tina::doCreateTable(Session *session,
                         Table& table_arg,
                         drizzled::TableIdentifier &identifier,
-                        drizzled::message::Table& create_proto)
+                        drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];
   int create_file;
@@ -1433,9 +1422,7 @@ int Tina::doCreateTable(Session *,
 
   internal::my_close(create_file, MYF(0));
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(identifier.getPath(), create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session->storeTableMessage(identifier, create_proto);
 
   return 0;
 }
@@ -1450,7 +1437,6 @@ DRIZZLE_DECLARE_PLUGIN
   "CSV storage engine",
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
-  tina_done_func, /* Plugin Deinit */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

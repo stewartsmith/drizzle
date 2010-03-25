@@ -253,10 +253,17 @@ bool Schema::doDropSchema(const std::string &schema_name)
   }
 
   if (unlink(schema_file.c_str()))
+  {
     perror(schema_file.c_str());
+    return false;
+  }
 
   if (rmdir(path.c_str()))
+  {
     perror(path.c_str());
+    CachedDirectory dir(path);
+    cerr << dir;
+  }
 
   if (not pthread_rwlock_wrlock(&schema_lock))
   {
@@ -328,12 +335,15 @@ bool Schema::writeSchemaFile(const char *path, const message::Schema &db)
   int fd= mkstemp(schema_file_tmp);
 
   if (fd == -1)
+  {
+    perror(schema_file_tmp);
     return false;
+  }
 
   if (not db.SerializeToFileDescriptor(fd))
   {
+    cerr << "Couldn't write " << path << "\n";
     close(fd);
-    unlink(schema_file_tmp);
 
     return false;
   }
@@ -405,7 +415,7 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
 
 bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (not strcasecmp(identifier.getSchemaName().c_str(), "temporary_tables"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "temporary"))
   {
     return false;
   }
