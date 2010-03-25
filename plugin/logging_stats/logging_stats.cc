@@ -207,8 +207,12 @@ bool LoggingStats::post(Session *session)
     score_board_slot= &score_board_slots[open_slot];
     score_board_slot->setInUse(true);
     score_board_slot->setSessionId(session->getSessionId());
-    score_board_slot->setUser(session->getSecurityContext().getUser());
-    score_board_slot->setIp(session->getSecurityContext().getIp());
+    string user(session->getSecurityContext().getUser());
+    //score_board_slot->setUser(session->getSecurityContext().getUser());
+    score_board_slot->setUser(user);
+    string ip(session->getSecurityContext().getIp());
+    //score_board_slot->setIp(session->getSecurityContext().getIp());
+    score_board_slot->setIp(ip);
     pthread_rwlock_unlock(&LOCK_scoreboard);
   }
   else 
