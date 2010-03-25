@@ -1268,10 +1268,11 @@ int main(int argc,char *argv[])
   glob_buffer= new string();
   glob_buffer->reserve(512);
 
-  char * output_buff= (char *)malloc(512);
-  memset(output_buff, '\0', 512);
+	size_t output_buff_size = 512;
+  char * output_buff= (char *)malloc(output_buff_size);
+  memset(output_buff, '\0', output_buff_size);
 
-  sprintf(output_buff,
+  snprintf(output_buff, output_buff_size,
           _("Your Drizzle connection id is %u\nServer version: %s\n"),
           drizzle_con_thread_id(&con),
           server_version_string(&con));
@@ -1285,9 +1286,11 @@ int main(int argc,char *argv[])
       histfile= strdup(getenv("DRIZZLE_HISTFILE"));
     else if (getenv("HOME"))
     {
-      histfile=(char*) malloc(strlen(getenv("HOME")) + strlen("/.drizzle_history") + 2);
+			size_t histfile_size = strlen(getenv("HOME")) +
+				strlen("/.drizzle_history") + 2;
+      histfile=(char*) malloc(histfile_size);
       if (histfile)
-        sprintf(histfile,"%s/.drizzle_history",getenv("HOME"));
+        snprintf(histfile, histfile_size, "%s/.drizzle_history",getenv("HOME"));
       char link_name[FN_REFLEN];
       ssize_t sym_link_size= readlink(histfile,link_name,FN_REFLEN-1);
       if (sym_link_size >= 0)
@@ -1306,12 +1309,13 @@ int main(int argc,char *argv[])
       if (verbose)
         tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
-      if (!(histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5)))
+			size_t histfile_tmp_size = strlen(histfile) + 5;
+      if (!(histfile_tmp= (char*) malloc(histfile_tmp_size)))
       {
         fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
         exit(1);
       }
-      sprintf(histfile_tmp, "%s.TMP", histfile);
+      snprintf(histfile_tmp, histfile_tmp_size, "%s.TMP", histfile);
     }
   }
 
@@ -1388,7 +1392,7 @@ void handle_sigint(int sig)
   }
 
   /* kill_buffer is always big enough because max length of %lu is 15 */
-  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u",
+  snprintf(kill_buffer, sizeof(kill_buffer), "KILL /*!50000 QUERY */ %u",
           drizzle_con_thread_id(&con));
 
   if (drizzle_query_str(&kill_drizzle, &res, kill_buffer, &ret) != NULL)
@@ -2759,7 +2763,7 @@ com_go(string *buffer, const char *)
           print_tab_data(&result);
         else
           print_table_data(&result);
-        sprintf(buff,
+        snprintf(buff, sizeof(buff), 
                 ngettext("%ld row in set","%ld rows in set",
                          (long) drizzle_result_row_count(&result)),
                 (long) drizzle_result_row_count(&result));
@@ -2771,7 +2775,7 @@ com_go(string *buffer, const char *)
     else if (drizzle_result_affected_rows(&result) == ~(uint64_t) 0)
       strcpy(buff,_("Query OK"));
     else
-      sprintf(buff, ngettext("Query OK, %ld row affected",
+      snprintf(buff, sizeof(buff), ngettext("Query OK, %ld row affected",
                              "Query OK, %ld rows affected",
                              (long) drizzle_result_affected_rows(&result)),
               (long) drizzle_result_affected_rows(&result));
@@ -2783,7 +2787,7 @@ com_go(string *buffer, const char *)
       *pos++= ' ';
       char warnings_buff[20];
       memset(warnings_buff,0,20);
-      sprintf(warnings_buff, "%d", warnings);
+      snprintf(warnings_buff, sizeof(warnings_buff), "%d", warnings);
       strcpy(pos, warnings_buff);
       pos+= strlen(warnings_buff);
       pos= strcpy(pos, " warning")+8;
@@ -2942,7 +2946,7 @@ static char *fieldflags2str(uint32_t f) {
   ff2s_check_flag(ON_UPDATE_NOW);
 #undef ff2s_check_flag
   if (f)
-    sprintf(s, " unknows=0x%04x", f);
+    snprintf(s, sizeof(buf), " unknows=0x%04x", f);
   return buf;
 }
 
@@ -3599,9 +3603,9 @@ com_connect(string *buffer, const char *line)
 
   if (connected)
   {
-    sprintf(buff,"Connection id:    %u",drizzle_con_thread_id(&con));
+    snprintf(buff, sizeof(buff), "Connection id:    %u",drizzle_con_thread_id(&con));
     put_info(buff,INFO_INFO,0,0);
-    sprintf(buff,"Current database: %.128s\n",
+    snprintf(buff, sizeof(buff), "Current database: %.128s\n",
             current_db ? current_db : "*** NONE ***");
     put_info(buff,INFO_INFO,0,0);
   }
@@ -3637,7 +3641,7 @@ static int com_source(string *, const char *line)
   if (!(sql_file = fopen(source_name, "r")))
   {
     char buff[FN_REFLEN+60];
-    sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);
+    snprintf(buff, sizeof(buff), "Failed to open file '%s', error: %d", source_name,errno);
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
