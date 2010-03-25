@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <fstream>
 #include <algorithm>
 #include <functional>
 
@@ -831,28 +832,27 @@ void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_
 class DropTables: public unary_function<StorageEngine *, void>
 {
   Session &session;
-  TableNameList &set_of_names;
+  TableIdentifierList &table_identifiers;
 
 public:
 
-  DropTables(Session &session_arg, set<string>& of_names) :
+  DropTables(Session &session_arg, TableIdentifierList &table_identifiers_arg) :
     session(session_arg),
-    set_of_names(of_names)
+    table_identifiers(table_identifiers_arg)
   { }
 
   result_type operator() (argument_type engine)
   {
-    for (TableNameList::iterator iter= set_of_names.begin();
-         iter != set_of_names.end();
+    for (TableIdentifierList::iterator iter= table_identifiers.begin();
+         iter != table_identifiers.end();
          iter++)
     {
-      TableIdentifier dummy((*iter).c_str());
-      int error= engine->doDropTable(session, dummy);
+      int error= engine->doDropTable(session, const_cast<TableIdentifier&>(*iter));
 
       // On a return of zero we know we found and deleted the table. So we
       // remove it from our search.
       if (not error)
-        set_of_names.erase(iter);
+        table_identifiers.erase(iter);
     }
   }
 };
@@ -865,7 +865,7 @@ public:
 void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
-  set<string> set_of_table_names;
+  TableIdentifierList table_identifiers;
 
   if (dir.fail())
   {
@@ -891,11 +891,16 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     path+= directory;
     path+= FN_LIBCHAR;
     path+= entry->filename;
-    set_of_table_names.insert(path);
+    message::Table definition;
+    if (StorageEngine::readTableFile(path, definition))
+    {
+      TableIdentifier identifier(definition.schema().c_str(), definition.name().c_str(), path.c_str());
+      table_identifiers.push_back(identifier);
+    }
   }
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           DropTables(session, set_of_table_names));
+           DropTables(session, table_identifiers));
   
   /*
     Now we just clean up anything that might left over.
@@ -1315,6 +1320,27 @@ bool StorageEngine::canCreateTable(drizzled::TableIdentifier &identifier)
 
   return false;
 }
+
+bool StorageEngine::readTableFile(const std::string &path, message::Table &table_message)
+{
+  fstream input(path.c_str(), ios::in | ios::binary);
+
+  if (input.good())
+  {
+    if (table_message.ParseFromIstream(&input))
+    {
+      return true;
+    }
+  }
+  else
+  {
+    perror(path.c_str());
+  }
+
+  return false;
+}
+
+
 
 } /* namespace plugin */
 } /* namespace drizzled */

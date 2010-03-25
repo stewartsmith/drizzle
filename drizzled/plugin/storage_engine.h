@@ -397,6 +397,7 @@ public:
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
+  static bool readTableFile(const std::string &path, message::Table &table_message);
 
 public:
   /* 

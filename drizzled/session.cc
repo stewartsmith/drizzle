@@ -1814,7 +1814,8 @@ void Session::close_temporary(Table *table)
   table->free_io_cache();
   table->closefrm(false);
 
-  rm_temporary_table(table_type, table->s->path.str);
+  TableIdentifier identifier(table->s->getSchemaName(), table->s->table_name.str, table->s->path.str);
+  rm_temporary_table(table_type, identifier);
 
   table->s->free_table_share();
 
@@ -2044,21 +2045,20 @@ bool Session::rm_temporary_table(TableIdentifier &identifier)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
+bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
 {
   bool error= false;
-  TableIdentifier dummy(path);
 
   assert(base);
 
-  if (delete_table_proto_file(path))
+  if (delete_table_proto_file(identifier.getPath().c_str()))
     error= true;
 
-  if (base->doDropTable(*this, dummy))
+  if (base->doDropTable(*this, identifier))
   {
     error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path, errno);
+                  identifier.getPath().c_str(), errno);
   }
   return error;
 }

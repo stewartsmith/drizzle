@@ -1451,7 +1451,7 @@ private:
 public:
 
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);

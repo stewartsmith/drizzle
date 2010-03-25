@@ -74,17 +74,6 @@ public:
   { 
   }
 
-  /**
-    This is only used in scavenging lost tables. Once the temp schema engine goes in, this should go away.
-  */
-  TableIdentifier( const char *path_arg ) :
-    type(message::Table::TEMPORARY),
-    path(path_arg),
-    db(path_arg),
-    table_name(path_arg)
-  { 
-  }
-
   TableIdentifier(const char *schema_name_arg, const char *table_name_arg, const char *path_arg ) :
     type(message::Table::TEMPORARY),
     path(path_arg),
@@ -173,7 +162,7 @@ public:
 
 };
 
-typedef std::set <TableIdentifier> TableIdentifierList;
+typedef std::vector <TableIdentifier> TableIdentifierList;
 
 } /* namespace drizzled */
 
