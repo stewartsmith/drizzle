@@ -1336,7 +1336,7 @@ static bool locked_create_event(Session *session,
       */
       if (TableShare::getShare(identifier))
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
         return error;
       }
     }
@@ -1496,7 +1496,7 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
       result= true;
     }
   }
