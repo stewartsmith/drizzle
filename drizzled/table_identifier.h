@@ -71,13 +71,13 @@ public:
                    Type tmp_arg= message::Table::STANDARD) :
     type(tmp_arg),
     db(db_arg),
-    table_name(table_name_arg),
-    lower_db(db_arg),
-    lower_table_name(table_name_arg)
+    table_name(table_name_arg)
   { 
   }
 
-  TableIdentifier(const std::string &schema_name_arg, const std::string &table_name_arg, const std::string &path_arg ) :
+  TableIdentifier( const std::string &schema_name_arg,
+                   const std::string &table_name_arg,
+                   const std::string &path_arg ) :
     type(message::Table::TEMPORARY),
     path(path_arg),
     db(schema_name_arg),
@@ -100,6 +100,11 @@ public:
   const std::string &getSQLPath();
 
   const std::string &getPath();
+
+  void setPath(const std::string &new_path)
+  {
+    path= new_path;
+  }
 
   const std::string &getDBName() const
   {
@@ -144,6 +149,8 @@ public:
     }
 
     output << type_str;
+    output << ", ";
+    output << identifier.path;
     output << ")";
 
     return output;  // for multiple << operators.

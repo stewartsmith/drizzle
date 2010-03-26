@@ -1317,7 +1317,7 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
       return error;
     }
 

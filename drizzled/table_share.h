@@ -213,6 +213,11 @@ public:
     return table_name.str;
   }
 
+  const char *getPath() const
+  {
+    return path.str;
+  }
+
   const std::string &getTableName(std::string &name_arg) const
   {
     name_arg.clear();
@@ -619,6 +624,21 @@ public:
   static TableShare *getShare(Session *session, 
                               TableList *table_list, char *key,
                               uint32_t key_length, uint32_t, int *error);
+
+  friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
+  {
+    output << "TableShare:(";
+    output <<  share.getSchemaName();
+    output << ", ";
+    output << share.getTableName();
+    output << ", ";
+    output << share.getTableTypeAsString();
+    output << ", ";
+    output << share.getPath();
+    output << ")";
+
+    return output;  // for multiple << operators.
+  }
 };
 
 } /* namespace drizzled */

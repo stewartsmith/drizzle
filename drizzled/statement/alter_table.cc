@@ -1122,6 +1122,13 @@ static bool internal_alter_table(Session *session,
 
       return true;
     }
+
+    new_table_identifier.setPath(new_table_as_temporary.getPath());
+
+    if (mysql_rename_table(new_engine, new_table_as_temporary, new_table_identifier, FN_FROM_IS_TMP) != 0)
+    {
+      return true;
+    }
   }
   // Normal table success
   else
