@@ -293,17 +293,17 @@ public:
    */
   void rawStatement(Session *in_session, const std::string &query);
   /* transactions: interface to plugin::StorageEngine functions */
-  int ha_commit_one_phase(Session *session, bool all);
-  int ha_rollback_trans(Session *session, bool all);
+  int commitPhaseOne(Session *session, bool all);
+  int rollbackTransaction(Session *session, bool all);
 
   /* transactions: these functions never call plugin::StorageEngine functions directly */
-  int ha_commit_trans(Session *session, bool all);
-  int ha_autocommit_or_rollback(Session *session, int error);
+  int commitTransaction(Session *session, bool all);
+  int autocommitOrRollback(Session *session, int error);
 
   /* savepoints */
-  int ha_rollback_to_savepoint(Session *session, NamedSavepoint &sv);
-  int ha_savepoint(Session *session, NamedSavepoint &sv);
-  int ha_release_savepoint(Session *session, NamedSavepoint &sv);
+  int rollbackToSavepoint(Session *session, NamedSavepoint &sv);
+  int setSavepoint(Session *session, NamedSavepoint &sv);
+  int releaseSavepoint(Session *session, NamedSavepoint &sv);
 
   /**
    * Marks a storage engine as participating in a statement

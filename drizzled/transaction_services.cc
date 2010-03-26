@@ -499,7 +499,7 @@ ha_check_and_coalesce_trx_read_only(Session *session,
     stored functions or triggers. So we simply do nothing now.
     TODO: This should be fixed in later ( >= 5.1) releases.
 */
-int TransactionServices::ha_commit_trans(Session *session, bool normal_transaction)
+int TransactionServices::commitTransaction(Session *session, bool normal_transaction)
 {
   int error= 0, cookie= 0;
   /*
@@ -526,7 +526,7 @@ int TransactionServices::ha_commit_trans(Session *session, bool normal_transacti
 
     if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
     {
-      ha_rollback_trans(session, normal_transaction);
+      rollbackTransaction(session, normal_transaction);
       return 1;
     }
 
@@ -565,12 +565,12 @@ int TransactionServices::ha_commit_trans(Session *session, bool normal_transacti
       }
       if (error)
       {
-        ha_rollback_trans(session, normal_transaction);
+        rollbackTransaction(session, normal_transaction);
         error= 1;
         goto end;
       }
     }
-    error= ha_commit_one_phase(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
+    error= commitPhaseOne(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
 end:
     if (is_real_trans)
       start_waiting_global_read_lock(session);
@@ -582,7 +582,7 @@ end:
   @note
   This function does not care about global read lock. A caller should.
 */
-int TransactionServices::ha_commit_one_phase(Session *session, bool normal_transaction)
+int TransactionServices::commitPhaseOne(Session *session, bool normal_transaction)
 {
   int error=0;
   TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
@@ -652,7 +652,7 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
   return error;
 }
 
-int TransactionServices::ha_rollback_trans(Session *session, bool normal_transaction)
+int TransactionServices::rollbackTransaction(Session *session, bool normal_transaction)
 {
   int error= 0;
   TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
@@ -751,20 +751,20 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
     the user has used LOCK TABLES then that mechanism does not know to do the
     commit.
 */
-int TransactionServices::ha_autocommit_or_rollback(Session *session, int error)
+int TransactionServices::autocommitOrRollback(Session *session, int error)
 {
   if (session->transaction.stmt.getResourceContexts().empty() == false)
   {
     if (! error)
     {
-      if (ha_commit_trans(session, false))
+      if (commitTransaction(session, false))
         error= 1;
     }
     else
     {
-      (void) ha_rollback_trans(session, false);
+      (void) rollbackTransaction(session, false);
       if (session->transaction_rollback_request)
-        (void) ha_rollback_trans(session, true);
+        (void) rollbackTransaction(session, true);
     }
 
     session->variables.tx_isolation= session->session_tx_isolation;
@@ -782,7 +782,7 @@ struct ResourceContextCompare : public std::binary_function<ResourceContext *, R
   }
 };
 
-int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
   TransactionContext *trans= &session->transaction.all;
@@ -878,7 +878,7 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
   section "4.33.4 SQL-statements and transaction states",
   NamedSavepoint is *not* transaction-initiating SQL-statement
 */
-int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
   TransactionContext *trans= &session->transaction.all;
@@ -916,7 +916,7 @@ int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
   return error;
 }
 
-int TransactionServices::ha_release_savepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
 

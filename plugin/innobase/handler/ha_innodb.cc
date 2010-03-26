@@ -8032,7 +8032,7 @@ InnobaseEngine::doXaPrepare(
 		To ensure this will not happen we're taking the mutex on
 		prepare, and releasing it on commit.
 
-		Note: only do it for normal commits, done via ha_commit_trans.
+		Note: only do it for normal commits, done via commitTransaction.
 		If 2pc protocol is executed by external transaction
 		coordinator, it will be just a regular MySQL client
 		executing XA PREPARE and XA COMMIT commands.
