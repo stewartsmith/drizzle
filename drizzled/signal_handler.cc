@@ -21,6 +21,7 @@
 
 #include <signal.h>
 
+#include "drizzled/signal_handler.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/session.h"
 #include "drizzled/internal/my_sys.h"
@@ -49,7 +50,7 @@ void drizzled_print_signal_warning(int sig)
     errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64),
                   sig, global_thread_id);
 #ifndef HAVE_BSD_SIGNALS
-  my_sigset(sig,drizzled_print_signal_warning);		/* int. thread system calls */
+  set_signal(sig,drizzled_print_signal_warning);		/* int. thread system calls */
 #endif
   if (sig == SIGALRM)
     alarm(2);					/* reschedule alarm */

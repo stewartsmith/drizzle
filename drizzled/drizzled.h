@@ -25,10 +25,6 @@
 
 #include "drizzled/atomics.h"
 
-extern "C" void drizzled_print_signal_warning(int sig);
-extern "C" void drizzled_handle_segfault(int sig);
-extern "C" void drizzled_end_thread_signal(int sig);
-
 struct passwd;
 
 namespace drizzled

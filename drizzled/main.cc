@@ -54,6 +54,7 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/tztime.h"
+#include "drizzled/signal_handler.h"
 
 using namespace drizzled;
 using namespace std;
@@ -152,7 +153,7 @@ static void init_signals(void)
                         "core file on signals"));
   }
   (void) sigemptyset(&set);
-  my_sigset(SIGPIPE,SIG_IGN);
+  set_signal(SIGPIPE,SIG_IGN);
   sigaddset(&set,SIGPIPE);
 #ifndef IGNORE_SIGHUP_SIGQUIT
   sigaddset(&set,SIGQUIT);
@@ -173,7 +174,7 @@ static void init_signals(void)
 #endif
   if (test_flags.test(TEST_SIGINT))
   {
-    my_sigset(thr_kill_signal, drizzled_end_thread_signal);
+    set_signal(thr_kill_signal, drizzled_end_thread_signal);
     // May be SIGINT
     sigdelset(&set, thr_kill_signal);
   }
