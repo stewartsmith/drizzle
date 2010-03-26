@@ -1604,7 +1604,7 @@ static void usage(int version)
 }
 
 
-static bool get_one_option(int optid, const struct my_option *, char *argument)
+static int get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -1629,7 +1629,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
       {
         put_info(_("DELIMITER cannot contain a backslash character"),
                  INFO_ERROR,0,0);
-        return false;
+        return EXIT_ARGUMENT_INVALID;
       }
     }
     delimiter_length= (uint32_t)strlen(delimiter);
@@ -1704,7 +1704,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
     if (strlen(endchar) != 0)
     {
       put_info(_("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead."), INFO_ERROR, 0, 0);
-      return false;
+      return EXIT_ARGUMENT_INVALID;
     }
     /* If the port number is > 65535 it is not a valid port
        This also helps with potential data loss casting unsigned long to a
@@ -1712,7 +1712,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
     if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
-      return false;
+      return EXIT_ARGUMENT_INVALID;
     }
     else
     {

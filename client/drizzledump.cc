@@ -514,7 +514,7 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;\n");
 } /* write_footer */
 
 
-static bool get_one_option(int optid, const struct my_option *, char *argument)
+static int get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -526,7 +526,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
     if (strlen(endchar) != 0)
     {
       fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
-      exit(EX_USAGE);
+      return EXIT_ARGUMENT_INVALID;
     }
     /* If the port number is > 65535 it is not a valid port
  *        This also helps with potential data loss casting unsigned long to a
@@ -534,7 +534,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
     if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       fprintf(stderr, _("Value supplied for port is not valid.\n"));
-      exit(EX_USAGE);
+      return EXIT_ARGUMENT_INVALID;
     }
     else
     {
@@ -552,7 +552,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
       {
         fprintf(stderr, _("Memory allocation error while copying password. "
                         "Aborting.\n"));
-        exit(ENOMEM);
+        return EXIT_OUT_OF_MEMORY;
       }
       while (*argument)
       {
@@ -589,7 +589,8 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
         a crash even if the input destination buffer is large enough
         to hold the output.
       */
-      die(EX_USAGE, _("Input filename too long: %s"), argument);
+      fprintf(stderr, _("Input filename too long: %s"), argument);
+      return EXIT_ARGUMENT_INVALID;
     }
 
     break;
@@ -625,7 +626,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
     if (!strchr(argument, '.'))
     {
       fprintf(stderr, _("Illegal use of option --ignore-table=<database>.<table>\n"));
-      exit(1);
+      return EXIT_ARGUMENT_INVALID;
     }
     string tmpptr(argument);
     ignore_table.insert(tmpptr); 
@@ -649,7 +650,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
       {
         strncpy(buff, err_ptr, min((uint32_t)sizeof(buff), error_len+1));
         fprintf(stderr, _("Invalid mode to --compatible: %s\n"), buff);
-        exit(1);
+        return EXIT_ARGUMENT_INVALID;
       }
       mode= opt_compatible_mode;
       for (i= 0, mode= opt_compatible_mode; mode; mode>>= 1, i++)
