@@ -33,7 +33,15 @@ namespace drizzled
 
 class SecurityContext {
 public:
-  SecurityContext() {}
+  enum PasswordType
+  {
+    PLAIN_TEXT,
+    MYSQL_HASH
+  };
+
+  SecurityContext():
+    password_type(PLAIN_TEXT)
+  { }
 
   const std::string& getIp() const
   {
@@ -55,9 +63,31 @@ public:
     user.assign(newuser);
   }
 
+  PasswordType getPasswordType(void) const
+  {
+    return password_type;
+  }
+
+  void setPasswordType(PasswordType newpassword_type)
+  {
+    password_type= newpassword_type;
+  }
+
+  const std::string& getPasswordContext() const
+  {
+    return password_context;
+  }
+
+  void setPasswordContext(const char *newpassword_context, size_t size)
+  {
+    password_context.assign(newpassword_context, size);
+  }
+
 private:
+  PasswordType password_type;
   std::string user;
   std::string ip;
+  std::string password_context;
 };
 
 } /* namespace drizzled */
