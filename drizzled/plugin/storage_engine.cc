@@ -132,7 +132,10 @@ int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
         break;
     }
     else
+    {
       enoent_or_zero= 0;                        // No error for ENOENT
+    }
+
     error= enoent_or_zero;
   }
   return error;
@@ -294,9 +297,7 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    int ret= engine->doGetTableDefinition(session,
-                                          identifier,
-                                          table_message);
+    int ret= engine->doGetTableDefinition(session, identifier, table_message);
 
     if (ret != ENOENT)
       err= ret;
@@ -449,14 +450,20 @@ int StorageEngine::dropTable(Session& session,
   int error= 0;
   int error_proto;
   message::Table src_proto;
-  StorageEngine* engine;
+  StorageEngine *engine;
 
   error_proto= StorageEngine::getTableDefinition(session, identifier, src_proto);
 
   if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             src_proto.InitializationErrorString().c_str());
+    string error_message;
+
+    error_message.append(identifier.getSQLPath());
+    error_message.append(" : ");
+    error_message.append(src_proto.InitializationErrorString());
+
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str());
+
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
@@ -464,24 +471,34 @@ int StorageEngine::dropTable(Session& session,
 
   if (engine)
   {
-    std::string path(identifier.getPath());
-    engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, identifier);
-
-    if (not error)
-    {
-      if (not engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-      {
-        uint64_t counter; // @todo We need to refactor to check that.
-
-        for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
-                 DropTable(session, identifier, counter));
-      }
-    }
+    error= StorageEngine::dropTable(session, *engine, identifier);
   }
 
   if (error_proto && error == 0)
     return 0;
+
+  return error;
+}
+
+int StorageEngine::dropTable(Session& session,
+                             StorageEngine &engine,
+                             TableIdentifier &identifier)
+{
+  int error;
+
+  engine.setTransactionReadWrite(session);
+  error= engine.doDropTable(session, identifier);
+
+  if (not error)
+  {
+    if (not engine.check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+    {
+      uint64_t counter; // @todo We need to refactor to check that.
+
+      for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+               DropTable(session, identifier, counter));
+    }
+  }
 
   return error;
 }
@@ -627,15 +644,18 @@ void StorageEngine::getSchemaNames(SchemaNameList &set_of_names)
 
 class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
 {
-  const std::string &schema_name;
+  std::string schema_name;
   message::Schema &schema_proto;
 
 public:
-  StorageEngineGetSchemaDefinition(const std::string &schema_name_arg,
+  StorageEngineGetSchemaDefinition(const std::string schema_name_arg,
                                   message::Schema &schema_proto_arg) :
     schema_name(schema_name_arg),
     schema_proto(schema_proto_arg) 
-  { }
+  {
+    transform(schema_name.begin(), schema_name.end(),
+              schema_name.begin(), ::tolower);
+  }
 
   result_type operator() (argument_type engine)
   {
@@ -646,6 +666,11 @@ public:
 /*
   Return value is "if parsed"
 */
+bool StorageEngine::getSchemaDefinition(TableIdentifier &identifier, message::Schema &proto)
+{
+  return StorageEngine::getSchemaDefinition(identifier.getSchemaName(), proto);
+}
+
 bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
 {
   proto.Clear();
@@ -667,6 +692,13 @@ bool StorageEngine::doesSchemaExist(const std::string &schema_name)
   message::Schema proto;
 
   return StorageEngine::getSchemaDefinition(schema_name, proto);
+}
+
+bool StorageEngine::doesSchemaExist(TableIdentifier &identifier)
+{
+  message::Schema proto;
+
+  return StorageEngine::getSchemaDefinition(identifier.getSchemaName(), proto);
 }
 
 

@@ -1450,6 +1450,7 @@ private:
   void nukeTable(Table *table);
 public:
 
+  void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(TableList *table_list);
   bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier);

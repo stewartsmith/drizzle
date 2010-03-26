@@ -139,7 +139,12 @@ int HeapEngine::doDropTable(Session &session, TableIdentifier &identifier)
 {
   session.removeTableMessage(identifier);
 
-  return heap_delete_table(identifier.getPath().c_str());
+  int error= heap_delete_table(identifier.getPath().c_str());
+
+  if (error == ENOENT)
+    error= 0;
+
+  return error;
 }
 
 static HeapEngine *heap_storage_engine= NULL;

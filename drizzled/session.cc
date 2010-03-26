@@ -2034,10 +2034,11 @@ bool Session::openTables(TableList *tables, uint32_t flags)
 
 bool Session::rm_temporary_table(TableIdentifier &identifier)
 {
-  if (not plugin::StorageEngine::dropTable(*this, identifier))
+  if (plugin::StorageEngine::dropTable(*this, identifier))
   {
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getPath().c_str(), errno);
+                  identifier.getSQLPath().c_str(), errno);
+    dumpTemporaryTableNames("rm_temporary_table()");
 
     return true;
   }
@@ -2047,20 +2048,50 @@ bool Session::rm_temporary_table(TableIdentifier &identifier)
 
 bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
 {
-  bool error= false;
-
   assert(base);
 
-  if (delete_table_proto_file(identifier.getPath().c_str()))
-    error= true;
-
-  if (base->doDropTable(*this, identifier))
+  if (plugin::StorageEngine::dropTable(*this, *base, identifier))
   {
-    error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getPath().c_str(), errno);
+                  identifier.getSQLPath().c_str(), errno);
+    dumpTemporaryTableNames("rm_temporary_table()");
+
+    return true;
   }
-  return error;
+
+  return false;
+}
+
+/**
+  @note this will be removed, I am looking through Hudson to see if it is finding
+  any tables that are missed during cleanup.
+*/
+void Session::dumpTemporaryTableNames(const char *foo)
+{
+  Table *table;
+
+  if (not temporary_tables)
+    return;
+
+  cerr << "Begin Run: " << foo << "\n";
+  for (table= temporary_tables; table; table= table->next)
+  {
+    bool have_proto= false;
+
+    message::Table *proto= table->s->getTableProto();
+    if (table->s->getTableProto())
+      have_proto= true;
+
+    const char *answer= have_proto ? "true" : "false";
+
+    if (have_proto)
+    {
+      cerr << "\tTable Name " << table->s->getSchemaName() << "." << table->s->table_name.str << " : " << answer << "\n";
+      cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
+    }
+    else
+      cerr << "\tTabl;e Name " << table->s->getSchemaName() << "." << table->s->table_name.str << " : " << answer << "\n";
+  }
 }
 
 bool Session::storeTableMessage(TableIdentifier &identifier, message::Table &table_message)
@@ -2125,9 +2156,8 @@ bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
     return false;
   }
 
-  to.copyToTableMessage((*iter).second);
-
-  (void)removeTableMessage(from);
+  (*iter).second.set_schema(to.getSchemaName());
+  (*iter).second.set_name(to.getTableName());
 
   return true;
 }
