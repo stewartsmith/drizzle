@@ -433,16 +433,16 @@ lib_LTLIBRARIES+= drizzled/libdrizzled.la
 drizzled_libdrizzled_la_LIBADD= \
 				drizzled/algorithm/libhash.la \
 				drizzled/util/libutil.la \
-                                drizzled/internal/libinternal.la \
-                                drizzled/message/libdrizzledmessage.la \
+				drizzled/internal/libinternal.la \
+				drizzled/message/libdrizzledmessage.la \
 				gnulib/libgnu.la \
-                                $(LIBZ) \
-                                $(LIBINTL) \
-                                ${LIBC_P} \
-			        $(pandora_plugin_libs) \
-			        $(LDADD) $(LIBUUID) \
-			        $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-			        $(GCOV_LIBS) 
+				$(LIBZ) \
+				$(LIBINTL) \
+				${LIBC_P} \
+				$(pandora_plugin_libs) \
+				$(LDADD) $(LIBUUID) \
+				$(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
+				$(GCOV_LIBS) 
 
 drizzled_libdrizzled_la_DEPENDENCIES= \
                                       drizzled/message/libdrizzledmessage.la \
