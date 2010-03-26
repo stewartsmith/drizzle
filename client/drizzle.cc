@@ -1268,7 +1268,7 @@ int main(int argc,char *argv[])
   glob_buffer= new string();
   glob_buffer->reserve(512);
 
-  const size_t output_buff_size = 512;
+  const size_t output_buff_size= 512;
   char * output_buff= (char *)calloc(output_buff_size, sizeof(char));
 
   snprintf(output_buff, output_buff_size,
