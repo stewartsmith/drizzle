@@ -470,10 +470,7 @@ xsi:type to define an element's data type.
 
     if (path == NULL)
     {
-      fprintf(md_result_file,"\
-              SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\n\
-              SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;\n\
-              ");
+      fprintf(md_result_file,"SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\nSET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;\n");
     }
     check_io(sql_file);
   }
@@ -491,9 +488,7 @@ static void write_footer(FILE *sql_file)
   {
     if (path == NULL)
     {
-      fprintf(md_result_file,"\
-              SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;\n\
-              SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;\n");
+      fprintf(md_result_file,"SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;\nSET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;\n");
     }
     if (opt_set_charset)
       fprintf(sql_file, "SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;\n");
