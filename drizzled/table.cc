@@ -512,7 +512,7 @@ int parse_table_proto(Session& session,
       break;
     case DRIZZLE_TYPE_ENUM:
       {
-        message::Table::Field::SetFieldOptions field_options= pfield.set_options();
+        message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
         field_pack_length[fieldnr]=
           get_enum_pack_length(field_options.field_value_size());
@@ -614,7 +614,7 @@ int parse_table_proto(Session& session,
     if (pfield.type() != message::Table::Field::ENUM)
       continue;
 
-    message::Table::Field::SetFieldOptions field_options= pfield.set_options();
+    message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
     const CHARSET_INFO *charset= get_charset(field_options.has_collation_id() ?
                                              field_options.collation_id() : 0);
@@ -761,7 +761,7 @@ int parse_table_proto(Session& session,
 
     if (field_type == DRIZZLE_TYPE_ENUM)
     {
-      message::Table::Field::SetFieldOptions field_options= pfield.set_options();
+      message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
       charset= get_charset(field_options.has_collation_id()?
 			   field_options.collation_id() : 0);
@@ -873,19 +873,21 @@ int parse_table_proto(Session& session,
     {
       field_length= 0;
 
-      message::Table::Field::SetFieldOptions fo= pfield.set_options();
+      message::Table::Field::EnumerationValues fo= pfield.enumeration_values();
 
-      for(int valnr= 0; valnr < fo.field_value_size(); valnr++)
+      for (int valnr= 0; valnr < fo.field_value_size(); valnr++)
       {
         if (fo.field_value(valnr).length() > field_length)
+        {
           field_length= charset->cset->numchars(charset,
                                                 fo.field_value(valnr).c_str(),
                                                 fo.field_value(valnr).c_str()
                                                 + fo.field_value(valnr).length())
             * charset->mbmaxlen;
+        }
       }
     }
-      break;
+    break;
     case DRIZZLE_TYPE_LONG:
       {
         uint32_t sign_len= pfield.constraints().is_unsigned() ? 0 : 1;
@@ -1237,12 +1239,10 @@ err:
    6    Unknown .frm version
 */
 
-int open_table_def(Session& session, TableShare *share)
+int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share)
 {
   int error;
   bool error_given;
-
-  TableIdentifier identifier(share->normalized_path.str);
 
   error= 1;
   error_given= 0;
@@ -3303,7 +3303,7 @@ void Table::free_tmp_table(Session *session)
       cursor->closeMarkForDelete(s->table_name.str);
 
     TableIdentifier identifier(s->table_name.str);
-    s->db_type()->doDropTable(*session, identifier, s->table_name.str);
+    s->db_type()->doDropTable(*session, identifier);
 
     delete cursor;
   }
@@ -3418,7 +3418,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
  err1:
   {
     TableIdentifier identifier(new_table.s->table_name.str);
-    new_table.s->db_type()->doDropTable(*session, identifier, new_table.s->table_name.str);
+    new_table.s->db_type()->doDropTable(*session, identifier);
   }
 
  err2:
@@ -3679,16 +3679,16 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   session->slave_proxy_id, separated by '\0'.
 */
 
-bool Table::rename_temporary_table(const char *db, const char *table_name)
+bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
 {
   char *key;
   uint32_t key_length;
   TableShare *share= s;
 
-  if (!(key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
+  if (not (key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
     return true;
 
-  key_length= TableShare::createKey(key, db, table_name);
+  key_length= TableShare::createKey(key, identifier);
   share->set_table_cache_key(key, key_length);
 
   return false;

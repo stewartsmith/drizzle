@@ -37,11 +37,29 @@ namespace drizzled
 
 plugin::Registry::~Registry()
 {
-  map<string, plugin::Library *>::iterator iter= library_map.begin();
-  while (iter != library_map.end())
+  map<string, plugin::Plugin *>::iterator plugin_iter= plugin_registry.begin();
+  while (plugin_iter != plugin_registry.end())
   {
-    delete (*iter).second;
-    ++iter;
+    delete (*plugin_iter).second;
+    ++plugin_iter;
+  }
+  plugin_registry.clear();
+
+  /*
+    @TODO When we delete modules here, we segfault on a bad string. Why?
+    map<string, plugin::Module *>::iterator module_iter= module_map.begin();
+  while (module_iter != module_map.end())
+  {
+    delete (*module_iter).second;
+    ++module_iter;
+  }
+  module_map.clear();
+  */
+  map<string, plugin::Library *>::iterator library_iter= library_map.begin();
+  while (library_iter != library_map.end())
+  {
+    delete (*library_iter).second;
+    ++library_iter;
   }
   library_map.clear();
 }

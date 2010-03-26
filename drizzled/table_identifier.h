@@ -34,6 +34,7 @@
 
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
+#include "drizzled/message/table.pb.h"
 #include <string.h>
 
 #include <assert.h>
@@ -87,9 +88,20 @@ public:
     type(TEMP_TABLE),
     path(path_arg),
     db(path_arg),
-    table_name(path_arg),
-    sql_path(db)
+    table_name(path_arg)
   { 
+    sql_path.append("temporary");
+    sql_path.append(".");
+    sql_path.append(table_name);
+  }
+
+  TableIdentifier(const char *schema_name_arg, const char *table_name_arg, const char *path_arg ) :
+    type(TEMP_TABLE),
+    path(path_arg),
+    db(schema_name_arg),
+    table_name(table_name_arg)
+  { 
+    sql_path.append("temporary");
     sql_path.append(".");
     sql_path.append(table_name);
   }
@@ -120,6 +132,8 @@ public:
   {
     return table_name;
   }
+
+  void copyToTableMessage(message::Table &message);
 
   friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
   {
