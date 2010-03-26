@@ -215,7 +215,8 @@ void FilteredReplicator::disable()
 }
 
 plugin::ReplicationReturnCode
-FilteredReplicator::replicate(plugin::TransactionApplier *in_applier, 
+FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
+                              const Session &in_session,
                               message::Transaction &to_replicate)
 {
   string schema_name;
@@ -288,7 +289,7 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
      */
     message::TransactionContext *tc= filtered_transaction.mutable_transaction_context();
     *tc= to_replicate.transaction_context(); /* copy construct */
-    return in_applier->apply(filtered_transaction);
+    return in_applier->apply(in_session, filtered_transaction);
   }
   return plugin::SUCCESS;
 }

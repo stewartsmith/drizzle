@@ -80,8 +80,10 @@ TransactionLogApplier::~TransactionLogApplier()
 }
 
 plugin::ReplicationReturnCode
-TransactionLogApplier::apply(const message::Transaction &to_apply)
+TransactionLogApplier::apply(const Session &in_session,
+                             const message::Transaction &to_apply)
 {
+  (void) in_session;
   uint8_t *buffer; /* Buffer we will write serialized header, 
                       message and trailing checksum to */
   uint8_t *orig_buffer;

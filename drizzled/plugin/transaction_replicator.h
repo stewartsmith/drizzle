@@ -46,6 +46,8 @@ namespace message
   class Statement;
 }
 
+class Session;
+
 namespace plugin
 {
 
@@ -85,6 +87,7 @@ public:
    * @param Transaction message to be replicated
    */
   virtual ReplicationReturnCode replicate(TransactionApplier *in_applier, 
+                                          const Session &session,
                                           message::Transaction &to_replicate)= 0;
   static bool addPlugin(TransactionReplicator *replicator);
   static void removePlugin(TransactionReplicator *replicator);

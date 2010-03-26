@@ -1052,7 +1052,7 @@ void TransactionServices::commitTransactionMessage(Session *in_session)
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  (void) replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1114,7 +1114,7 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
 
     finalizeTransactionMessage(*transaction, in_session);
     
-    (void) replication_services.pushTransactionMessage(*transaction);
+    (void) replication_services.pushTransactionMessage(*in_session, *transaction);
   }
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1552,7 +1552,7 @@ void TransactionServices::createTable(Session *in_session,
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  (void) replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 
@@ -1582,7 +1582,7 @@ void TransactionServices::createSchema(Session *in_session,
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  (void) replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 
@@ -1611,7 +1611,7 @@ void TransactionServices::dropSchema(Session *in_session, const string &schema_n
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  (void) replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1647,7 +1647,7 @@ void TransactionServices::dropTable(Session *in_session,
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  (void) replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1682,7 +1682,7 @@ void TransactionServices::truncateTable(Session *in_session, Table *in_table)
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  (void) replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1702,7 +1702,7 @@ void TransactionServices::rawStatement(Session *in_session, const string &query)
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  (void) replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }

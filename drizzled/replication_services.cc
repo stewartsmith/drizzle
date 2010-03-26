@@ -143,7 +143,8 @@ bool ReplicationServices::isActive() const
   return is_active;
 }
 
-plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(message::Transaction &to_push)
+plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(Session &in_session,
+                                                                          message::Transaction &to_push)
 {
   vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
   vector<plugin::TransactionApplier *>::iterator appl_start_iter, appl_iter;
@@ -174,7 +175,7 @@ plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(messag
         continue;
       }
 
-      result= cur_repl->replicate(cur_appl, to_push);
+      result= cur_repl->replicate(cur_appl, in_session, to_push);
 
       if (result == plugin::SUCCESS)
       {

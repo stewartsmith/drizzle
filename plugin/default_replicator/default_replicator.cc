@@ -64,13 +64,14 @@ void DefaultReplicator::disable()
 
 plugin::ReplicationReturnCode
 DefaultReplicator::replicate(plugin::TransactionApplier *in_applier,
+                             const Session &in_session,
                              message::Transaction &to_replicate)
 {
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
    * along the supplied Transaction.  Yep, told you it was simple...
    */
-  return in_applier->apply(to_replicate);
+  return in_applier->apply(in_session, to_replicate);
 }
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */

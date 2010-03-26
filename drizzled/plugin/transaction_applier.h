@@ -40,6 +40,8 @@
 namespace drizzled
 {
 
+class Session;
+
 namespace message { class Transaction; }
 
 namespace plugin
@@ -76,7 +78,8 @@ public:
    *
    * @param Transaction message to be replicated
    */
-  virtual ReplicationReturnCode apply(const message::Transaction &to_apply)= 0;
+  virtual ReplicationReturnCode apply(const Session &in_session,
+                                      const message::Transaction &to_apply)= 0;
 
   static bool addPlugin(TransactionApplier *applier);
   static void removePlugin(TransactionApplier *applier);

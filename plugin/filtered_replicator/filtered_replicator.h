@@ -84,10 +84,13 @@ public:
    * the supplied message to their own controlled memory storage
    * area.
    *
+   * @param Applier to replicate to
+   * @param Session descriptor
    * @param Transaction message to be replicated
    */
   drizzled::plugin::ReplicationReturnCode
-  replicate(drizzled::plugin::TransactionApplier *in_applier, 
+  replicate(drizzled::plugin::TransactionApplier *in_applier,
+            const drizzled::Session &in_session,
             drizzled::message::Transaction &to_replicate);
   
   /**
