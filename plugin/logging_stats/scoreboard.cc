@@ -28,6 +28,22 @@
  *
  */
 
+/**
+ * @details
+ *
+ * The scoreboard is a pre-allocated vector of vectors of ScoreBoardSlots. It
+ * can be thought of as each as a vector of buckets where each bucket contains
+ * pre-allocated ScoreBoardSlots. To determine which bucket gets used for
+ * recording statistics the modulus operator is used on the session_id. This 
+ * will result in a bucket to search for a unused ScoreBoardSlot. 
+ * 
+ * Locking  
+ *   
+ * Each bucket has a its own lock this allows a search of bucket 1 and bucket 2
+ * to happen concurrently.  
+ *
+ */
+
 #include "config.h"
 #include "scoreboard.h"
 

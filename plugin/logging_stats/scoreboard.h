@@ -43,8 +43,28 @@ public:
 
   ~Scoreboard();
 
+  /**
+   * Locates a ScoreboardSlot that is not in use, marks the slot
+   * as being used and returns a pointer to it. The caller can
+   * update individual statistics via the pointer without having
+   * to lock or worry about concurrent updates.  
+   * 
+   * @param Pointer to the session 
+   * @return Pointer to the ScoreboardSlot whose individual statistics 
+   *   be updated
+   */
   ScoreboardSlot* findScoreboardSlotToLog(drizzled::Session *session);
 
+  /**
+   * Resets the ScoreboardSlot this session was using. The pointer
+   * returned is a copy of the ScoreboardSlot that has now been
+   * reclaimed. This must be deallocated by the caller, when the caller
+   * is finished. 
+   * 
+   * @param Pointer to the session
+   * @return Pointer to a copy of the ScoreboardSlot that has been
+   *   reclaimed
+   */
   ScoreboardSlot* findAndResetScoreboardSlot(drizzled::Session *session);
 
   uint32_t getNumberBuckets()

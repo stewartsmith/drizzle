@@ -42,13 +42,16 @@
  * Locking  
  *
  * A RW lock is taken to locate a open slot for a session or to locate the
- * slot that the current session has claimed.  
+ * slot that the current session has claimed. A RW lock is taken to reset
+ * the slot when the session has terminated.  
  * 
  * A read lock is taken when the table is queried in the data_dictionary.
  *
  * A RW lock is taken when a new user is added to the cumulative vector
  * repeat connections with a already used user will not use a lock. 
- *  
+ * 
+ * Additional locking information can be found in the Scoreboard class.  
+ * 
  * TODO 
  *
  * A pointer to the scoreboard slot could be added to the Session object.
