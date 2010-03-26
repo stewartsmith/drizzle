@@ -427,65 +427,6 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 }
 
 /**
-  Check if we can skip the two-phase commit.
-
-  A helper function to evaluate if two-phase commit is mandatory.
-  As a side effect, propagates the read-only/read-write flags
-  of the statement transaction to its enclosing normal transaction.
-
-  @retval true   we must run a two-phase commit. Returned
-                 if we have at least two engines with read-write changes.
-  @retval false  Don't need two-phase commit. Even if we have two
-                 transactional engines, we can run two independent
-                 commits if changes in one of the engines are read-only.
-*/
-static
-bool
-ha_check_and_coalesce_trx_read_only(Session *session,
-                                    TransactionContext::ResourceContexts &resource_contexts,
-                                    bool normal_transaction)
-{
-  /* The number of storage engines that have actual changes. */
-  unsigned num_resources_modified_data= 0;
-  ResourceContext *resource_context;
-
-  for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-       it != resource_contexts.end();
-       ++it)
-  {
-    resource_context= *it;
-    if (resource_context->hasModifiedData())
-      ++num_resources_modified_data;
-
-    if (! normal_transaction)
-    {
-      ResourceContext *resource_context_normal= session->getResourceContext(resource_context->getMonitored(), true);
-      assert(resource_context != resource_context_normal);
-      /*
-        Merge read-only/read-write information about statement
-        transaction to its enclosing normal transaction. Do this
-        only if in a real transaction -- that is, if we know
-        that resource_context_all is registered in session->transaction.all.
-        Since otherwise we only clutter the normal transaction flags.
-      */
-      if (resource_context_normal->isStarted()) /* false if autocommit. */
-        resource_context_normal->coalesceWith(resource_context);
-    }
-    else if (num_resources_modified_data > 1)
-    {
-      /*
-        It is a normal transaction, so we don't need to merge read/write
-        information up, and the need for two-phase commit has been
-        already established. Break the loop prematurely.
-      */
-      break;
-    }
-  }
-  return num_resources_modified_data > 1;
-}
-
-
-/**
   @retval
     0   ok
   @retval
@@ -522,17 +463,18 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
 
   if (resource_contexts.empty() == false)
   {
-    bool must_2pc;
-
     if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
     {
       rollbackTransaction(session, normal_transaction);
       return 1;
     }
 
-    must_2pc= ha_check_and_coalesce_trx_read_only(session, resource_contexts, normal_transaction);
-
-    if (! trans->no_2pc && must_2pc)
+    /*
+     * If replication is on, we do a PREPARE on the resource managers, push the
+     * Transaction message across the replication stream, and then COMMIT if the
+     * replication stream returned successfully.
+     */
+    if (shouldConstructMessages())
     {
       for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
            it != resource_contexts.end() && ! error;
@@ -562,6 +504,14 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
             status_var_increment(session->status_var.ha_prepare_count);
           }
         }
+      }
+      if (error == 0 && is_real_trans)
+      {
+        /*
+         * Push the constructed Transaction messages across to
+         * replicators and appliers.
+         */
+        error= commitTransactionMessage(session);
       }
       if (error)
       {
@@ -638,17 +588,6 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
     }
   }
   trans->reset();
-  if (error == 0)
-  {
-    if (is_real_trans)
-    {
-      /* 
-       * We commit the normal transaction by finalizing the transaction message
-       * and propogating the message to all registered replicators.
-       */
-      commitTransactionMessage(session);
-    }
-  }
   return error;
 }
 
@@ -943,6 +882,12 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
   return error;
 }
 
+inline bool TransactionServices::shouldConstructMessages()
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  return replication_services.isActive();
+}
+
 message::Transaction *TransactionServices::getActiveTransactionMessage(Session *in_session)
 {
   message::Transaction *transaction= in_session->getTransactionMessage();
@@ -987,11 +932,11 @@ void TransactionServices::cleanupTransactionMessage(message::Transaction *in_tra
   in_session->setTransactionMessage(NULL);
 }
 
-void TransactionServices::commitTransactionMessage(Session *in_session)
+int TransactionServices::commitTransactionMessage(Session *in_session)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
-    return;
+    return 0;
 
   /* If there is an active statement message, finalize it */
   message::Statement *statement= in_session->getStatementMessage();
@@ -1001,15 +946,17 @@ void TransactionServices::commitTransactionMessage(Session *in_session)
     finalizeStatementMessage(*statement, in_session);
   }
   else
-    return; /* No data modification occurred inside the transaction */
+    return 0; /* No data modification occurred inside the transaction */
   
   message::Transaction* transaction= getActiveTransactionMessage(in_session);
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
+  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
+
+  return static_cast<int>(result);
 }
 
 void TransactionServices::initStatementMessage(message::Statement &statement,

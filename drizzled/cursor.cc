@@ -36,7 +36,6 @@
 #include "drizzled/session.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/transaction_services.h"
-#include "drizzled/replication_services.h"
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
@@ -44,7 +43,6 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/transaction_services.h"
 
 using namespace std;
 
@@ -1347,10 +1345,9 @@ static bool log_row_for_replication(Table* table,
                                     const unsigned char *after_record)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
-  ReplicationServices &replication_services= ReplicationServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->s->tmp_table || not replication_services.isActive())
+  if (table->s->tmp_table || not transaction_services.shouldConstructMessages())
     return false;
 
   bool result= false;

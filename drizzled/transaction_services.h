@@ -63,6 +63,12 @@ public:
     static TransactionServices transaction_services;
     return transaction_services;
   }
+
+  /**
+   * Returns true if the transaction manager should construct
+   * Transaction and Statement messages, false otherwise.
+   */
+  bool shouldConstructMessages();
   /**
    * Method which returns the active Transaction message
    * for the supplied Session.  If one is not found, a new Transaction
@@ -189,7 +195,7 @@ public:
    *
    * @param Pointer to the Session committing the transaction
    */
-  void commitTransactionMessage(Session *in_session);
+  int commitTransactionMessage(Session *in_session);
   /** 
    * Marks the current active transaction message as being rolled back and
    * pushes the transaction message out to replicators.
