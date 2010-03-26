@@ -1118,15 +1118,7 @@ static bool internal_alter_table(Session *session,
     /* Should pass the 'new_name' as we store table name in the cache */
     if (new_table->renameAlterTemporaryTable(new_table_identifier))
     {
-      if (new_table)
-      {
-        /* close_temporary_table() frees the new_table pointer. */
-        session->close_temporary_table(new_table);
-      }
-      else
-      {
-        quick_rm_table(*session, new_table_as_temporary);
-      }
+      session->close_temporary_table(new_table);
 
       return true;
     }
