@@ -1128,7 +1128,7 @@ void Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level,
   {
     /* DBL_DIG is enough to print '-[digits].E+###' */
     char str_nr[DBL_DIG + 8];
-    uint32_t str_len= sprintf(str_nr, "%g", nr);
+    uint32_t str_len= snprintf(str_nr, sizeof(str_nr), "%g", nr);
     make_truncated_value_warning(session, level, str_nr, str_len, ts_type,
                                  field_name);
   }
