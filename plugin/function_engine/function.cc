@@ -45,13 +45,10 @@ Cursor *Function::create(TableShare &table, memory::Root *mem_root)
 }
 
 int Function::doGetTableDefinition(Session &,
-                                     const char *path,
-                                     const char *,
-                                     const char *,
-                                     const bool,
-                                     message::Table *table_proto)
+                                   TableIdentifier &identifier,
+                                   message::Table &table_proto)
 {
-  string tab_name(path);
+  string tab_name(identifier.getPath());
   transform(tab_name.begin(), tab_name.end(),
             tab_name.begin(), ::tolower);
 
@@ -62,10 +59,7 @@ int Function::doGetTableDefinition(Session &,
     return ENOENT;
   }
 
-  if (table_proto)
-  {
-    function->define(*table_proto);
-  }
+  function->define(table_proto);
 
   return EEXIST;
 }
@@ -106,12 +100,12 @@ bool Function::doGetSchemaDefinition(const std::string &schema_name, message::Sc
 
 bool Function::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (not strcasecmp(identifier.getSchemaName(), "information_schema"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "information_schema"))
   {
     return false;
   }
 
-  if (not strcasecmp(identifier.getSchemaName(), "data_dictionary"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "data_dictionary"))
   {
     return false;
   }
@@ -119,10 +113,20 @@ bool Function::doCanCreateTable(const drizzled::TableIdentifier &identifier)
   return true;
 }
 
+bool Function::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
+
+  if (function)
+    return true;
+
+  return false;
+}
+
 
 static drizzled::plugin::StorageEngine *function_plugin= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   function_plugin= new(std::nothrow) Function("FunctionEngine");
 
@@ -131,15 +135,7 @@ static int init(drizzled::plugin::Registry &registry)
     return 1;
   }
 
-  registry.add(function_plugin);
-
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(function_plugin);
-  delete function_plugin;
+  context.add(function_plugin);
 
   return 0;
 }
@@ -153,7 +149,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Function Engine provides the infrastructure for Table Functions,etc.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  finalize,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

@@ -20,6 +20,7 @@
 
 import ConfigParser, os, sys
 import datetime, time
+import subprocess
 
 top_srcdir='.'
 top_builddir='.'
@@ -35,6 +36,7 @@ extra_cxxflags=''
 root_plugin_dir='plugin'
 pkgplugindir='$(libdir)/drizzle'
 default_install='True'
+default_plugin_version=''
 
 class ChangeProtectedFile(object):
 
@@ -88,8 +90,6 @@ AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 AC_INIT([%(name)s],[%(version)s],[%(url)s])
 AC_CONFIG_SRCDIR([%(main_source)s])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_MACRO_DIR([m4])
 
 PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42,skip-visibility)
 
@@ -284,6 +284,10 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
 
 
 def expand_plugin_ini(plugin, plugin_dir):
+    if plugin['name'] == "**OUT-OF-TREE**":
+      print "Out of tree plugins require the name field to be specified in plugin.ini"
+      sys.exit(1)
+
     if plugin_dir == ".":
       plugin['rel_path']= plugin_dir
       plugin['unconditional']=True
@@ -300,16 +304,21 @@ def expand_plugin_ini(plugin, plugin_dir):
         if not src.startswith(plugin['rel_path']):
           src= os.path.join(plugin['rel_path'], src)
           new_sources= "%s %s" % (new_sources, src)
-      if new_sources != "":
-        plugin['sources']= new_sources
+    else:
+      new_sources= " ".join(plugin['sources'].split())
+    if new_sources != "":
+      plugin['sources']= new_sources
     plugin['main_source']= plugin['sources'].split()[0]
     
+    new_headers=""
     if plugin_dir != ".":
-      new_headers=""
       for header in plugin['headers'].split():
         if not header.startswith(plugin['rel_path']):
           header= os.path.join(plugin['rel_path'], header)
           new_headers= "%s %s" % (new_headers, header)
+    else:
+      new_headers= " ".join(plugin['headers'].split())
+    if new_headers != "":
       plugin['headers']= new_headers
     
     # Make a yes/no version for autoconf help messages
@@ -342,6 +351,11 @@ def find_testsuite(plugin_dir):
   return None
 
 def read_plugin_ini(plugin_dir):
+    if plugin_dir == ".":
+      plugin_name="**OUT-OF-TREE**"
+    else:
+      plugin_name=os.path.basename(plugin_dir)
+
     plugin_file= os.path.join(plugin_dir,plugin_ini_fname)
     plugin_defaults= dict(sources="",
                           headers="",
@@ -354,7 +368,7 @@ def read_plugin_ini(plugin_dir):
                           title="",
                           description="",
                           license="PLUGIN_LICENSE_GPL",
-                          name=os.path.basename(plugin_dir),
+                          name=plugin_name,
                           load_by_default="False",
                           disabled="False",
                           static="False",
@@ -371,7 +385,7 @@ def read_plugin_ini(plugin_dir):
         print "External Plugins are required to specifiy a version"
         sys.exit(1)
     if not plugin.has_key('version'):
-      plugin['version']=datetime.date.fromtimestamp(time.time()).isoformat()
+      plugin['version'] = default_plugin_version
    
     if plugin.has_key('load_by_default'):
       plugin['load_by_default']=parser.getboolean('plugin','load_by_default')
@@ -467,6 +481,28 @@ endif
     plugin_am.write('include %s\n' % plugin_am_file)
 
 #MAIN STARTS HERE:
+
+# I'm 3 seconds away from writing a comprehensive build solution
+if not os.path.exists('config/pandora_vc_revinfo'):
+  if os.path.exists('.bzr'):
+    bzr_revno= subprocess.Popen(["bzr", "revno"], stdout=subprocess.PIPE).communicate()[0].strip()
+    rev_date= datetime.date.fromtimestamp(time.time())
+    default_plugin_version = "%d.%02d.%s" % (rev_date.year, rev_date.month, bzr_revno)
+  else:
+    default_plugin_version=datetime.date.fromtimestamp(time.time()).isoformat()
+else:
+  # need to read config/pandora_vc_revno
+  pandora_vc_revno=open('config/pandora_vc_revinfo','r').read().split()
+  rev_date=""
+  bzr_revno=""
+  for revno_line in pandora_vc_revno:
+    (revno_key,revno_val)= revno_line.split("=")
+    if revno_key == 'PANDORA_VC_REVNO':
+      bzr_revno=revno_val.strip()
+    elif revno_key == 'PANDORA_RELEASE_DATE':
+      rev_date=revno_val.strip()
+
+  default_plugin_version = "%s.%s" % (rev_date, bzr_revno)
 
 actions=[]
 for arg in sys.argv:

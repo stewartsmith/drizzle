@@ -62,7 +62,7 @@ ShowColumns::Generator::Generator(Field **arg) :
 
   is_tables_primed= plugin::StorageEngine::getTableDefinition(*session,
                                                               identifier,
-                                                              &table_proto);
+                                                              table_proto);
 }
 
 bool ShowColumns::Generator::nextColumnCore()

@@ -40,7 +40,7 @@ using namespace std;
 namespace drizzled {
 
 static int fill_table_proto(message::Table &table_proto,
-                            const char *table_name,
+                            const std::string &table_name,
                             List<CreateField> &create_fields,
                             HA_CREATE_INFO *create_info,
                             uint32_t keys,
@@ -59,7 +59,7 @@ static int fill_table_proto(message::Table &table_proto,
   assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
 
-  assert(strcmp(table_proto.name().c_str(),table_name)==0);
+  assert(table_proto.name() == table_name);
 
   int field_number= 0;
   bool use_existing_fields= table_proto.field_size() > 0;
@@ -78,7 +78,7 @@ static int fill_table_proto(message::Table &table_proto,
       /* Other code paths still have to fill out the proto */
       attribute= table_proto.add_field();
 
-      if(field_arg->flags & NOT_NULL_FLAG)
+      if (field_arg->flags & NOT_NULL_FLAG)
       {
         message::Table::Field::FieldConstraints *constraints;
 
@@ -148,21 +148,20 @@ static int fill_table_proto(message::Table &table_proto,
       }
     case message::Table::Field::ENUM:
       {
-        message::Table::Field::SetFieldOptions *set_field_options;
+        message::Table::Field::EnumerationValues *enumeration_options;
 
         assert(field_arg->interval);
 
-        set_field_options= attribute->mutable_set_options();
+        enumeration_options= attribute->mutable_enumeration_values();
 
         for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
         {
           const char *src= field_arg->interval->type_names[pos];
 
-          set_field_options->add_field_value(src);
+          enumeration_options->add_field_value(src);
         }
-        set_field_options->set_count_elements(set_field_options->field_value_size());
-	set_field_options->set_collation_id(field_arg->charset->number);
-        set_field_options->set_collation(field_arg->charset->name);
+	enumeration_options->set_collation_id(field_arg->charset->number);
+        enumeration_options->set_collation(field_arg->charset->name);
         break;
       }
     case message::Table::Field::BLOB:
@@ -224,14 +223,14 @@ static int fill_table_proto(message::Table &table_proto,
       assert(strcmp(attribute->comment().c_str(), field_arg->comment.str)==0);
     }
 
-    if(field_arg->unireg_check == Field::NEXT_NUMBER)
+    if (field_arg->unireg_check == Field::NEXT_NUMBER)
     {
       message::Table::Field::NumericFieldOptions *field_options;
       field_options= attribute->mutable_numeric_options();
       field_options->set_is_autoincrement(true);
     }
 
-    if(field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
+    if (field_arg->unireg_check == Field::TIMESTAMP_DN_FIELD
        || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD)
     {
       message::Table::Field::FieldOptions *field_options;
@@ -239,7 +238,7 @@ static int fill_table_proto(message::Table &table_proto,
       field_options->set_default_value("NOW()");
     }
 
-    if(field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
+    if (field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
        || field_arg->unireg_check == Field::TIMESTAMP_DNUN_FIELD)
     {
       message::Table::Field::FieldOptions *field_options;
@@ -254,12 +253,12 @@ static int fill_table_proto(message::Table &table_proto,
 
       field_options->set_default_null(true);
     }
-    if(field_arg->def)
+    if (field_arg->def)
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
  
-      if(field_arg->def->is_null())
+      if (field_arg->def->is_null())
       {
 	field_options->set_default_null(true);
       }
@@ -270,7 +269,7 @@ static int fill_table_proto(message::Table &table_proto,
 
 	assert(default_value);
 
-	if((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
+	if ((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
 	   || field_arg->sql_type==DRIZZLE_TYPE_BLOB)
 	   && ((field_arg->length / field_arg->charset->mbmaxlen)
 	   < default_value->length()))
@@ -279,7 +278,7 @@ static int fill_table_proto(message::Table &table_proto,
 	  return 1;
 	}
 
-	if((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
+	if ((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
 	    && field_arg->charset==&my_charset_bin)
 	   || (field_arg->sql_type==DRIZZLE_TYPE_BLOB
 	    && field_arg->charset==&my_charset_bin))
@@ -305,33 +304,6 @@ static int fill_table_proto(message::Table &table_proto,
   }
 
   assert(! use_existing_fields || (field_number == table_proto.field_size()));
-
-  switch(create_info->row_type)
-  {
-  case ROW_TYPE_DEFAULT:
-    /* No use setting a default row type... just adds redundant info to message */
-    break;
-  case ROW_TYPE_FIXED:
-    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_FIXED);
-    break;
-  case ROW_TYPE_DYNAMIC:
-    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_DYNAMIC);
-    break;
-  case ROW_TYPE_COMPRESSED:
-    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPRESSED);
-    break;
-  case ROW_TYPE_REDUNDANT:
-    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_REDUNDANT);
-    break;
-  case ROW_TYPE_COMPACT:
-    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPACT);
-    break;
-  case ROW_TYPE_PAGE:
-    table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_PAGE);
-    break;
-  default:
-    abort();
-  }
 
   if (create_info->table_options & HA_OPTION_PACK_RECORD)
     table_options->set_pack_record(true);
@@ -377,7 +349,7 @@ static int fill_table_proto(message::Table &table_proto,
 
     idx->set_key_length(key_info[i].key_length);
 
-    if(is_primary_key_name(key_info[i].name))
+    if (is_primary_key_name(key_info[i].name))
       idx->set_is_primary(true);
     else
       idx->set_is_primary(false);
@@ -407,25 +379,25 @@ static int fill_table_proto(message::Table &table_proto,
 
     message::Table::Index::IndexOptions *index_options= idx->mutable_options();
 
-    if(key_info[i].flags & HA_USES_BLOCK_SIZE)
+    if (key_info[i].flags & HA_USES_BLOCK_SIZE)
       index_options->set_key_block_size(key_info[i].block_size);
 
-    if(key_info[i].flags & HA_PACK_KEY)
+    if (key_info[i].flags & HA_PACK_KEY)
       index_options->set_pack_key(true);
 
-    if(key_info[i].flags & HA_BINARY_PACK_KEY)
+    if (key_info[i].flags & HA_BINARY_PACK_KEY)
       index_options->set_binary_pack_key(true);
 
-    if(key_info[i].flags & HA_VAR_LENGTH_PART)
+    if (key_info[i].flags & HA_VAR_LENGTH_PART)
       index_options->set_var_length_key(true);
 
-    if(key_info[i].flags & HA_NULL_PART_KEY)
+    if (key_info[i].flags & HA_NULL_PART_KEY)
       index_options->set_null_part_key(true);
 
-    if(key_info[i].flags & HA_KEY_HAS_PART_KEY_SEG)
+    if (key_info[i].flags & HA_KEY_HAS_PART_KEY_SEG)
       index_options->set_has_partial_segments(true);
 
-    if(key_info[i].flags & HA_GENERATED_KEY)
+    if (key_info[i].flags & HA_GENERATED_KEY)
       index_options->set_auto_generated_key(true);
 
     if (key_info[i].flags & HA_USES_COMMENT)
@@ -471,18 +443,6 @@ static int fill_table_proto(message::Table &table_proto,
   return 0;
 }
 
-int rename_table_proto_file(const char *from, const char* to)
-{
-  string from_path(from);
-  string to_path(to);
-  string file_ext = ".dfe";
-
-  from_path.append(file_ext);
-  to_path.append(file_ext);
-
-  return internal::my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
-}
-
 int delete_table_proto_file(const char *file_name)
 {
   string new_path(file_name);
@@ -511,25 +471,25 @@ int delete_table_proto_file(const char *file_name)
     1  error
 */
 
-int rea_create_table(Session *session,
-                     TableIdentifier &identifier,
-		     message::Table &table_proto,
-                     HA_CREATE_INFO *create_info,
-                     List<CreateField> &create_fields,
-                     uint32_t keys, KEY *key_info)
+bool rea_create_table(Session *session,
+                      TableIdentifier &identifier,
+                      message::Table &table_proto,
+                      HA_CREATE_INFO *create_info,
+                      List<CreateField> &create_fields,
+                      uint32_t keys, KEY *key_info)
 {
   if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
-		      keys, key_info))
-    return 1;
+                       keys, key_info))
+    return false;
 
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,
                                          false, table_proto))
   {
-    return 1;
+    return false;
   }
 
-  return 0;
+  return true;
 
 } /* rea_create_table */
 

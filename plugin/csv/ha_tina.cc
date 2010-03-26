@@ -124,6 +124,11 @@ public:
                                      HTON_FILE_BASED),
     tina_open_tables()
   {}
+  virtual ~Tina()
+  {
+    pthread_mutex_destroy(&tina_mutex);
+  }
+
   virtual Cursor *create(TableShare &table,
                          drizzled::memory::Root *mem_root)
   {
@@ -135,21 +140,18 @@ public:
   }
 
   int doCreateTable(Session *,
-                    const char *table_name,
                     Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           TableIdentifier &identifier,
+                           drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
-  int doDropTable(Session&, const string &table_path);
+  int doDropTable(Session&, TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -158,20 +160,47 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
 };
 
-int Tina::doDropTable(Session&,
-                        const string &table_path)
+
+int Tina::doRenameTable(Session &session,
+                        TableIdentifier &from, TableIdentifier &to)
+{
+  int error= 0;
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
+  }
+
+  session.renameTableMessage(from, to);
+
+  return error;
+}
+
+bool Tina::doDoesTableExist(Session &session, TableIdentifier &identifier)
+{
+  return session.doesTableMessageExist(identifier);
+}
+
+
+int Tina::doDropTable(Session &session,
+                      TableIdentifier &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
   char buff[FN_REFLEN];
-  ProtoCache::iterator iter;
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    internal::fn_format(buff, table_path.c_str(), "", *ext,
-              MY_UNPACK_FILENAME|MY_APPEND_EXT);
+    internal::fn_format(buff, identifier.getPath().c_str(), "", *ext,
+                        MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
       if ((error= errno) != ENOENT)
@@ -182,12 +211,7 @@ int Tina::doDropTable(Session&,
     error= enoent_or_zero;
   }
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.removeTableMessage(identifier);
 
   return error;
 }
@@ -214,52 +238,29 @@ void Tina::deleteOpenTable(const string &table_name)
 }
 
 
-int Tina::doGetTableDefinition(Session&,
-                               const char* path,
-                               const char *,
-                               const char *,
-                               const bool,
-                               drizzled::message::Table *table_proto)
+int Tina::doGetTableDefinition(Session &session,
+                               drizzled::TableIdentifier &identifier,
+                               drizzled::message::Table &table_message)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
+  if (session.getTableMessage(identifier, table_message))
+    return EEXIST;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
-
-  if (iter!= proto_cache.end())
-  {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  return ENOENT;
 }
 
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(drizzled::plugin::Registry &registry)
+static int tina_init_func(drizzled::plugin::Context &context)
 {
 
   tina_engine= new Tina("CSV");
-  registry.add(tina_engine);
+  context.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-static int tina_done_func(drizzled::plugin::Registry &registry)
-{
-  registry.remove(tina_engine);
-  delete tina_engine;
-
-  pthread_mutex_destroy(&tina_mutex);
-
-  return 0;
-}
 
 
 TinaShare::TinaShare(const char *table_name_arg)
@@ -1385,9 +1386,10 @@ int ha_tina::delete_all_rows()
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::doCreateTable(Session *, const char *table_name,
+int Tina::doCreateTable(Session *session,
                         Table& table_arg,
-                        drizzled::message::Table& create_proto)
+                        drizzled::TableIdentifier &identifier,
+                        drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];
   int create_file;
@@ -1405,24 +1407,22 @@ int Tina::doCreateTable(Session *, const char *table_name,
   }
 
 
-  if ((create_file= internal::my_create(internal::fn_format(name_buff, table_name, "", CSM_EXT,
-                                        MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
-                              O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath().c_str(), "", CSM_EXT,
+                                                            MY_REPLACE_EXT|MY_UNPACK_FILENAME), 0,
+                                        O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
 
   write_meta_file(create_file, 0, false);
   internal::my_close(create_file, MYF(0));
 
-  if ((create_file= internal::my_create(internal::fn_format(name_buff, table_name, "", CSV_EXT,
-                                        MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
-                              O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
+  if ((create_file= internal::my_create(internal::fn_format(name_buff, identifier.getPath().c_str(), "", CSV_EXT,
+                                                            MY_REPLACE_EXT|MY_UNPACK_FILENAME),0,
+                                        O_RDWR | O_TRUNC,MYF(MY_WME))) < 0)
     return(-1);
 
   internal::my_close(create_file, MYF(0));
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(table_name, create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session->storeTableMessage(identifier, create_proto);
 
   return 0;
 }
@@ -1437,7 +1437,6 @@ DRIZZLE_DECLARE_PLUGIN
   "CSV storage engine",
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
-  tina_done_func, /* Plugin Deinit */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

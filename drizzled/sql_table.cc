@@ -179,10 +179,14 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   for (table= tables; table; table= table->next_local)
   {
+    TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
     table->db_type= NULL;
-    if ((share= TableShare::getShare(table->db, table->table_name)))
+
+    if ((share= TableShare::getShare(identifier)))
+    {
       table->db_type= share->db_type();
+    }
   }
 
   if (not drop_temporary && lock_table_names_exclusively(session, tables))
@@ -1277,6 +1281,105 @@ static bool prepare_blob_field(Session *,
   return 0;
 }
 
+static bool locked_create_event(Session *session,
+                                TableIdentifier &identifier,
+                                HA_CREATE_INFO *create_info,
+                                message::Table &table_proto,
+                                AlterInfo *alter_info,
+                                bool is_if_not_exists,
+                                bool lex_identified_temp_table,
+                                bool internal_tmp_table,
+                                uint db_options,
+                                uint key_count,
+                                KEY *key_info_buffer)
+{
+  bool error= true;
+
+  {
+
+    /*
+      @note if we are building a temp table we need to check to see if a temp table
+      already exists, otherwise we just need to find out if a normal table exists (aka it is fine
+      to create a table under a temporary table.
+    */
+    bool exists= 
+      plugin::StorageEngine::doesTableExist(*session, identifier, lex_identified_temp_table);
+
+    if (exists)
+    {
+      if (is_if_not_exists)
+      {
+        error= false;
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                            identifier.getTableName().c_str());
+        create_info->table_existed= 1;		// Mark that table existed
+        return error;
+      }
+
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+      return error;
+    }
+
+    if (not lex_identified_temp_table) // We have a real table
+    {
+      /*
+        We don't assert here, but check the result, because the table could be
+        in the table definition cache and in the same time the .frm could be
+        missing from the disk, in case of manual intervention which deletes
+        the .frm cursor. The user has to use FLUSH TABLES; to clear the cache.
+        Then she could create the table. This case is pretty obscure and
+        therefore we don't introduce a new error message only for it.
+      */
+      /*
+        @todo improve this error condition.
+      */
+      if (TableShare::getShare(identifier))
+      {
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+        return error;
+      }
+    }
+  }
+
+  session->set_proc_info("creating table");
+  create_info->table_existed= 0;		// Mark that table is created
+
+  create_info->table_options= db_options;
+
+  if (not rea_create_table(session, identifier,
+                           table_proto,
+                           create_info, alter_info->create_list,
+                           key_count, key_info_buffer))
+  {
+    return error;
+  }
+
+  if (lex_identified_temp_table)
+  {
+    /* Open table and put in temporary table list */
+    if (not (session->open_temporary_table(identifier)))
+    {
+      (void) session->rm_temporary_table(identifier);
+      return error;
+    }
+  }
+
+  /* 
+    We keep this behind the lock to make sure ordering is correct for a table.
+    This is a very unlikely problem where before we would write out to the
+    trans log, someone would do a delete/create operation.
+  */
+
+  if (table_proto.type() == message::Table::STANDARD && not internal_tmp_table)
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.createTable(session, table_proto);
+  }
+
+  return false;
+}
+
 
 /*
   Ignore the name of this function... it locks :(
@@ -1331,148 +1434,101 @@ bool mysql_create_table_no_lock(Session *session,
                MYF(0));
     return true;
   }
-  assert(strcmp(identifier.getTableName(), table_proto.name().c_str())==0);
+  assert(identifier.getTableName() == table_proto.name());
   db_options= create_info->table_options;
 
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
 
-  set_table_default_charset(create_info, identifier.getDBName());
+  set_table_default_charset(create_info, identifier.getDBName().c_str());
 
-  /* Check if table exists */
-  if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
+  /* Build a Table object to pass down to the engine, and the do the actual create. */
+  if (not mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options,
                                  &key_info_buffer, &key_count,
                                  select_field_count))
-    goto err;
-
-  /* Check if table already exists */
-  if (lex_identified_temp_table &&
-      session->find_temporary_table(identifier.getDBName(), identifier.getTableName()))
   {
-    if (is_if_not_exists)
-    {
-      create_info->table_existed= 1;		// Mark that table existed
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                          ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                          identifier.getTableName());
-      error= 0;
-      goto err;
-    }
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-    goto err;
+    pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
+    error= locked_create_event(session,
+                               identifier,
+                               create_info,
+                               table_proto,
+                               alter_info,
+                               is_if_not_exists,
+                               lex_identified_temp_table,
+                               internal_tmp_table,
+                               db_options, key_count,
+                               key_info_buffer);
+    pthread_mutex_unlock(&LOCK_open);
   }
 
-  pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
-  if (not internal_tmp_table && not lex_identified_temp_table)
-  {
-    if (plugin::StorageEngine::doesTableExist(*session,
-                                              identifier, false)==EEXIST)
-    {
-      if (is_if_not_exists)
-      {
-        error= false;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            identifier.getTableName());
-        create_info->table_existed= 1;		// Mark that table existed
-      }
-      else 
-      {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-      }
-
-      goto unlock_and_end;
-    }
-    /*
-      We don't assert here, but check the result, because the table could be
-      in the table definition cache and in the same time the .frm could be
-      missing from the disk, in case of manual intervention which deletes
-      the .frm cursor. The user has to use FLUSH TABLES; to clear the cache.
-      Then she could create the table. This case is pretty obscure and
-      therefore we don't introduce a new error message only for it.
-    */
-    if (TableShare::getShare(identifier.getDBName(), identifier.getTableName()))
-    {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-      goto unlock_and_end;
-    }
-  }
-
-  /*
-    Check that table with given name does not already
-    exist in any storage engine. In such a case it should
-    be discovered and the error ER_TABLE_EXISTS_ERROR be returned
-    unless user specified CREATE TABLE IF EXISTS
-    The LOCK_open mutex has been locked to make sure no
-    one else is attempting to discover the table. Since
-    it's not on disk as a frm cursor, no one could be using it!
-  */
-  if (not lex_identified_temp_table)
-  {
-    bool exists= plugin::StorageEngine::doesTableExist(*session, identifier, false);
-
-    if (exists)
-    {
-      if (is_if_not_exists)
-      {
-        error= false;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            identifier.getTableName());
-        create_info->table_existed= 1;		// Mark that table existed
-        goto unlock_and_end;
-      }
-
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-      goto unlock_and_end;
-    }
-  }
-
-  session->set_proc_info("creating table");
-  create_info->table_existed= 0;		// Mark that table is created
-
-  create_info->table_options= db_options;
-
-  if (rea_create_table(session, identifier,
-		       table_proto,
-                       create_info, alter_info->create_list,
-                       key_count, key_info_buffer))
-  {
-    goto unlock_and_end;
-  }
-
-  if (lex_identified_temp_table)
-  {
-    /* Open table and put in temporary table list */
-    if (not (session->open_temporary_table(identifier)))
-    {
-      (void) session->rm_temporary_table(identifier);
-      goto unlock_and_end;
-    }
-  }
-
-  if (not internal_tmp_table && not lex_identified_temp_table)
-  {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(session, table_proto);
-  }
-  error= false;
-unlock_and_end:
-  pthread_mutex_unlock(&LOCK_open);
-
-err:
   session->set_proc_info("After create");
 
   return(error);
+}
+
+/**
+  @note the following two methods implement create [temporary] table.
+*/
+static bool drizzle_create_table(Session *session,
+                                 TableIdentifier &identifier,
+                                 HA_CREATE_INFO *create_info,
+                                 message::Table &table_proto,
+                                 AlterInfo *alter_info,
+                                 bool internal_tmp_table,
+                                 uint32_t select_field_count,
+                                 bool is_if_not_exists)
+{
+  Table *name_lock= NULL;
+  bool result;
+
+  if (session->lock_table_name_if_not_cached(identifier, &name_lock))
+  {
+    result= true;
+  }
+  else if (name_lock == NULL)
+  {
+    if (is_if_not_exists)
+    {
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                          ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                          identifier.getTableName().c_str());
+      create_info->table_existed= 1;
+      result= false;
+    }
+    else
+    {
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+      result= true;
+    }
+  }
+  else
+  {
+    result= mysql_create_table_no_lock(session,
+                                       identifier,
+                                       create_info,
+                                       table_proto,
+                                       alter_info,
+                                       internal_tmp_table,
+                                       select_field_count,
+                                       is_if_not_exists);
+  }
+
+  if (name_lock)
+  {
+    pthread_mutex_lock(&LOCK_open); /* Lock for removing name_lock during table create */
+    session->unlink_open_table(name_lock);
+    pthread_mutex_unlock(&LOCK_open);
+  }
+
+  return(result);
 }
 
 
 /*
   Database locking aware wrapper for mysql_create_table_no_lock(),
 */
-
 bool mysql_create_table(Session *session,
                         TableIdentifier &identifier,
                         HA_CREATE_INFO *create_info,
@@ -1482,57 +1538,31 @@ bool mysql_create_table(Session *session,
                         uint32_t select_field_count,
                         bool is_if_not_exists)
 {
-  Table *name_lock= NULL;
-  bool result;
   bool lex_identified_temp_table=
     (table_proto.type() == message::Table::TEMPORARY);
 
-  if (not lex_identified_temp_table)
+  if (lex_identified_temp_table)
   {
-    if (session->lock_table_name_if_not_cached(identifier.getDBName(),
-                                               identifier.getTableName(),
-                                               &name_lock))
-    {
-      result= true;
-      goto unlock;
-    }
-    if (name_lock == NULL)
-    {
-      if (is_if_not_exists)
-      {
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            identifier.getTableName());
-        create_info->table_existed= 1;
-        result= false;
-      }
-      else
-      {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-        result= true;
-      }
-      goto unlock;
-    }
+    return mysql_create_table_no_lock(session,
+                                      identifier,
+                                      create_info,
+                                      table_proto,
+                                      alter_info,
+                                      internal_tmp_table,
+                                      select_field_count,
+                                      is_if_not_exists);
   }
-
-  result= mysql_create_table_no_lock(session,
-                                     identifier,
-                                     create_info,
-                                     table_proto,
-                                     alter_info,
-                                     internal_tmp_table,
-                                     select_field_count,
-                                     is_if_not_exists);
-
-unlock:
-  if (name_lock)
+  else
   {
-    pthread_mutex_lock(&LOCK_open); /* Lock for removing name_lock during table create */
-    session->unlink_open_table(name_lock);
-    pthread_mutex_unlock(&LOCK_open);
+    return drizzle_create_table(session,
+                                identifier,
+                                create_info,
+                                table_proto,
+                                alter_info,
+                                internal_tmp_table,
+                                select_field_count,
+                                is_if_not_exists);
   }
-
-  return(result);
 }
 
 
@@ -1601,37 +1631,41 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 */
 
 bool
-mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
-                   const char *old_name, const char *new_db,
-                   const char *new_name, uint32_t flags)
+mysql_rename_table(plugin::StorageEngine *base,
+                   TableIdentifier &from,
+                   TableIdentifier &to,
+                   uint32_t )
 {
   Session *session= current_session;
-  char from[FN_REFLEN], to[FN_REFLEN];
-  char *from_base= from, *to_base= to;
   int error= 0;
 
   assert(base);
 
-  build_table_filename(from, sizeof(from), old_db, old_name,
-                       flags & FN_FROM_IS_TMP);
-  build_table_filename(to, sizeof(to), new_db, new_name,
-                       flags & FN_TO_IS_TMP);
-
-  if (!(error= base->renameTable(session, from_base, to_base)))
+  if (not (error= base->renameTable(*session, from, to)))
   {
-    if (base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
-       && rename_table_proto_file(from_base, to_base))
+    if (not base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
     {
-      error= errno;
-      base->renameTable(session, to_base, from_base);
+      if ((error= plugin::StorageEngine::renameDefinitionFromPath(to, from)))
+      {
+        error= errno;
+        base->renameTable(*session, to, from);
+      }
     }
   }
 
   if (error == HA_ERR_WRONG_COMMAND)
+  {
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
+  }
   else if (error)
-    my_error(ER_ERROR_ON_RENAME, MYF(0), from, to, error);
-  return(error != 0);
+  {
+    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str();
+    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str();
+
+    my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
+  }
+
+  return error ? true : false; 
 }
 
 
@@ -2015,7 +2049,7 @@ static bool replicateCreateTableLike(Session *session, TableList *table, Table *
     during the call to plugin::StorageEngine::createTable().
     See bug #28614 for more info.
   */
-static bool create_table_wrapper(Session &session, message::Table& create_table_proto,
+static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
                                  TableIdentifier &destination_identifier,
                                  TableIdentifier &src_table,
                                  bool lex_identified_temp_table, bool is_engine_set)
@@ -2026,7 +2060,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
   protoerr= plugin::StorageEngine::getTableDefinition(session,
                                                       src_table,
-                                                      &src_proto);
+                                                      src_proto);
   new_proto.CopyFrom(src_proto);
 
   if (lex_identified_temp_table)
@@ -2046,12 +2080,18 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
     protoengine->set_name(create_table_proto.engine().name());
   }
 
+  { // We now do a selective copy of elements on to the new table.
+    new_proto.set_name(create_table_proto.name());
+    new_proto.set_schema(create_table_proto.schema());
+    new_proto.set_catalog(create_table_proto.catalog());
+  }
+
   if (protoerr && protoerr != EEXIST)
   {
     if (errno == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0), destination_identifier.getSchemaName());
+      my_error(ER_BAD_DB_ERROR,MYF(0), destination_identifier.getSchemaName().c_str());
     else
-      my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), errno);
+      my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath().c_str(), errno);
 
     return false;
   }
@@ -2086,7 +2126,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 bool mysql_create_like_table(Session* session,
                              TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
-                             message::Table& create_table_proto,
+                             message::Table &create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {

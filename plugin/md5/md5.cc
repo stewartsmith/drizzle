@@ -16,15 +16,10 @@
 
 #include "config.h"
 
-/* Include these before the openssl headers, because they are BROKEN AS CRAP */
 #include <cstdio>
 #include <cstddef>
 
-#if defined(HAVE_LIBGNUTLS_OPENSSL)
-# include <gnutls/openssl.h>
-#else
-# include <openssl/md5.h>
-#endif /* HAVE_GNUTLS_OPENSSL */
+#include <gcrypt.h>
 
 #include <drizzled/plugin/function.h>
 #include <drizzled/item/func.h>
@@ -75,10 +70,8 @@ String *Md5Function::val_str(String *str)
 
   unsigned char digest[16];
   str->set_charset(&my_charset_bin);
-  MD5_CTX context;
-  MD5_Init(&context);
-  MD5_Update(&context, (unsigned char *) sptr->ptr(), sptr->length());
-  MD5_Final(digest, &context);
+
+  gcry_md_hash_buffer(GCRY_MD_MD5, digest, sptr->ptr(), sptr->length());
 
   snprintf((char *) str->ptr(), 33,
     "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
@@ -94,17 +87,10 @@ String *Md5Function::val_str(String *str)
 
 plugin::Create_function<Md5Function> *md5udf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(plugin::Context &context)
 {
   md5udf= new plugin::Create_function<Md5Function>("md5");
-  registry.add(md5udf);
-  return 0;
-}
-
-static int finalize(plugin::Registry &registry)
-{
-  registry.remove(md5udf);
-  delete md5udf;
+  context.add(md5udf);
   return 0;
 }
 
@@ -117,7 +103,6 @@ DRIZZLE_DECLARE_PLUGIN
   "UDF for computing md5sum",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

@@ -26,11 +26,11 @@ Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	show_indexes	show_indexes	Table	Table	8	256	2	N	1	0	45
-def	data_dictionary	show_indexes	show_indexes	Unique	Unique	8	20	5	N	1	0	45
-def	data_dictionary	show_indexes	show_indexes	Key_name	Key_name	8	256	7	N	1	0	45
-def	data_dictionary	show_indexes	show_indexes	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
-def	data_dictionary	show_indexes	show_indexes	Column_name	Column_name	8	256	1	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Table	Table	8	256	2	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	8	20	5	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Key_name	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	show_indexes	SHOW_INDEXES	Column_name	Column_name	8	256	1	N	1	0	45
 Table	Unique	Key_name	Seq_in_index	Column_name
 t1	TRUE	PRIMARY	1	a
 t1	FALSE	b	1	b
@@ -145,9 +145,9 @@ t1	CREATE TABLE `t1` (
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 name	VARCHAR	TRUE	O'Brien	FALSE	
-c	INTEGER	FALSE	O'Brien	FALSE	
-c-b	INTEGER	TRUE	O'Brien	TRUE	
-space 2	INTEGER	TRUE	O'Brien	TRUE	
+c	INTEGER	FALSE		FALSE	
+c-b	INTEGER	TRUE		TRUE	
+space 2	INTEGER	TRUE		TRUE	
 drop table t1;
 create table t1 (a int not null, unique aa (a));
 show create table t1;
@@ -446,11 +446,11 @@ PRIMARY KEY(field1(180))
 );
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	data_dictionary	show_indexes	show_indexes	Table	Table	8	256	2	N	1	0	45
-def	data_dictionary	show_indexes	show_indexes	Unique	Unique	8	20	4	N	1	0	45
-def	data_dictionary	show_indexes	show_indexes	Key_name	Key_name	8	256	7	N	1	0	45
-def	data_dictionary	show_indexes	show_indexes	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
-def	data_dictionary	show_indexes	show_indexes	Column_name	Column_name	8	256	6	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Table	Table	8	256	2	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	8	20	4	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Key_name	Key_name	8	256	7	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
+def	data_dictionary	show_indexes	SHOW_INDEXES	Column_name	Column_name	8	256	6	N	1	0	45
 Table	Unique	Key_name	Seq_in_index	Column_name
 t1	TRUE	PRIMARY	1	field1
 drop table t1;

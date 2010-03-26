@@ -34,42 +34,74 @@
 
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
+#include "drizzled/message/table.pb.h"
 #include <string.h>
 
 #include <assert.h>
 
 #include <ostream>
 #include <set>
+#include <algorithm>
+#include <functional>
 
 namespace drizzled {
 
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-bool tablename_to_filename(const char *from, char *to, size_t to_length);
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
 
 
 class TableIdentifier
 {
-private:
-  bool path_inited;
-
   tmp_table_type type;
-  char path[FN_REFLEN];
+  std::string path;
   std::string db;
   std::string table_name;
+  std::string lower_db;
+  std::string lower_table_name;
   std::string sql_path;
 
 public:
-  TableIdentifier( const char *db_arg,
-                   const char *table_name_arg,
+  TableIdentifier( const std::string &db_arg,
+                   const std::string &table_name_arg,
                    tmp_table_type tmp_arg= STANDARD_TABLE) :
-    path_inited(false),
     type(tmp_arg),
     db(db_arg),
     table_name(table_name_arg),
-    sql_path(db)
+    lower_db(db_arg),
+    lower_table_name(table_name_arg),
+    sql_path(db_arg)
   { 
+    std::transform(lower_table_name.begin(), lower_table_name.end(),
+                   lower_table_name.begin(), ::tolower);
+
+    std::transform(lower_db.begin(), lower_db.end(),
+                   lower_db.begin(), ::tolower);
+
+    sql_path.append(".");
+    sql_path.append(table_name);
+  }
+
+  /**
+    This is only used in scavenging lost tables. Once the temp schema engine goes in, this should go away.
+  */
+  TableIdentifier( const char *path_arg ) :
+    type(TEMP_TABLE),
+    path(path_arg),
+    db(path_arg),
+    table_name(path_arg)
+  { 
+    sql_path.append("temporary");
+    sql_path.append(".");
+    sql_path.append(table_name);
+  }
+
+  TableIdentifier(const char *schema_name_arg, const char *table_name_arg, const char *path_arg ) :
+    type(TEMP_TABLE),
+    path(path_arg),
+    db(schema_name_arg),
+    table_name(table_name_arg)
+  { 
+    sql_path.append("temporary");
     sql_path.append(".");
     sql_path.append(table_name);
   }
@@ -84,22 +116,24 @@ public:
     return sql_path;
   }
 
-  const char *getPath();
+  const std::string &getPath();
 
-  const char *getDBName() const
+  const std::string &getDBName() const
   {
-    return db.c_str();
+    return db;
   }
 
-  const char *getSchemaName() const
+  const std::string &getSchemaName() const
   {
-    return db.c_str();
+    return db;
   }
 
-  const char *getTableName() const
+  const std::string getTableName() const
   {
-    return table_name.c_str();
+    return table_name;
   }
+
+  void copyToTableMessage(message::Table &message);
 
   friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
   {
@@ -135,9 +169,9 @@ public:
   {
     if (left.type == right.type)
     {
-      if (not strcmp(left.db.c_str(), right.db.c_str()))
+      if (left.db == right.db)
       {
-        if (not strcmp(left.table_name.c_str(), right.table_name.c_str()))
+        if (left.table_name == right.table_name)
         {
           return true;
         }

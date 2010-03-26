@@ -71,18 +71,11 @@ int64_t Crc32Function::val_int()
 
 plugin::Create_function<Crc32Function> *crc32udf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(plugin::Context &context)
 {
   crc32udf= new plugin::Create_function<Crc32Function>("crc32");
-  registry.add(crc32udf);
+  context.add(crc32udf);
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)  
-{
-  registry.remove(crc32udf);
-  delete crc32udf;
-  return 0;
-}
-
-DRIZZLE_PLUGIN(initialize, finalize, NULL);
+DRIZZLE_PLUGIN(initialize, NULL);

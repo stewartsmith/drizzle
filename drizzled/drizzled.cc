@@ -369,7 +369,7 @@ bool drizzle_rm_tmp_tables();
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
-bool drizzled_get_one_option(int, const struct my_option *, char *);
+int drizzled_get_one_option(int, const struct my_option *, char *);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string &progname);
@@ -1637,7 +1637,7 @@ static void drizzle_init_variables(void)
 }
 
 
-bool drizzled_get_one_option(int optid, const struct my_option *opt,
+int drizzled_get_one_option(int optid, const struct my_option *opt,
                              char *argument)
 {
   switch(optid) {
@@ -1705,14 +1705,14 @@ bool drizzled_get_one_option(int optid, const struct my_option *opt,
       if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
       {
           errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: cannot resolve hostname!"));
-        exit(1);
+        return EXIT_ARGUMENT_INVALID;
       }
 
       if (res_lst->ai_next)
       {
           errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: bind-address refers to "
                           "multiple interfaces!"));
-        exit(1);
+        return EXIT_ARGUMENT_INVALID;
       }
       freeaddrinfo(res_lst);
     }

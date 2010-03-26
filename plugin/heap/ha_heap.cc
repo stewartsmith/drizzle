@@ -20,6 +20,7 @@
 #include <drizzled/current_session.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
+#include "drizzled/plugin/daemon.h"
 
 #include "heap.h"
 #include "ha_heap.h"
@@ -41,16 +42,26 @@ static const char *ha_heap_exts[] = {
 class HeapEngine : public plugin::StorageEngine
 {
 public:
-  HeapEngine(string name_arg)
-   : plugin::StorageEngine(name_arg,
-                                     HTON_STATS_RECORDS_IS_EXACT |
-                                     HTON_NULL_IN_KEY |
-                                     HTON_FAST_KEY_READ |
-                                     HTON_NO_BLOBS |
-                                     HTON_HAS_RECORDS |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_TEMPORARY_ONLY)
-  { }
+  explicit HeapEngine(string name_arg) :
+    plugin::StorageEngine(name_arg,
+                          HTON_STATS_RECORDS_IS_EXACT |
+                          HTON_NULL_IN_KEY |
+                          HTON_FAST_KEY_READ |
+                          HTON_NO_BLOBS |
+                          HTON_HAS_RECORDS |
+                          HTON_HAS_DATA_DICTIONARY |
+                          HTON_SKIP_STORE_LOCK |
+                          HTON_TEMPORARY_ONLY)
+  {
+    pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
+  }
+
+  virtual ~HeapEngine()
+  {
+    hp_panic(HA_PANIC_CLOSE);
+
+    pthread_mutex_destroy(&THR_LOCK_heap);
+  }
 
   virtual Cursor *create(TableShare &table,
                           memory::Root *mem_root)
@@ -63,8 +74,8 @@ public:
   }
 
   int doCreateTable(Session *session,
-                    const char *table_name,
                     Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
                     message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
@@ -78,16 +89,13 @@ public:
                         message::Table &create_proto,
                         HP_SHARE **internal_share);
 
-  int doRenameTable(Session*, const char * from, const char * to);
+  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
 
-  int doDropTable(Session&, const string &table_path);
+  int doDropTable(Session&, TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           message::Table *table_proto);
+                           TableIdentifier &identifier,
+                           message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
@@ -106,71 +114,42 @@ public:
             HA_KEY_SCAN_NOT_ROR);
   }
 
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
-int HeapEngine::doGetTableDefinition(Session&,
-                                     const char* path,
-                                     const char *,
-                                     const char *,
-                                     const bool,
-                                     message::Table *table_proto)
+bool HeapEngine::doDoesTableExist(Session& session, TableIdentifier &identifier)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
+  return session.doesTableMessageExist(identifier);
+}
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
+int HeapEngine::doGetTableDefinition(Session &session,
+                                     TableIdentifier &identifier,
+                                     message::Table &table_proto)
+{
+  if (session.getTableMessage(identifier, table_proto))
+    return EEXIST;
 
-  if (iter!= proto_cache.end())
-  {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  return ENOENT;
 }
 /*
   We have to ignore ENOENT entries as the MEMORY table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDropTable(Session&, const string &table_path)
+int HeapEngine::doDropTable(Session &session, TableIdentifier &identifier)
 {
-  ProtoCache::iterator iter;
+  session.removeTableMessage(identifier);
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return heap_delete_table(table_path.c_str());
+  return heap_delete_table(identifier.getPath().c_str());
 }
 
 static HeapEngine *heap_storage_engine= NULL;
 
-static int heap_init(plugin::Registry &registry)
+static int heap_init(plugin::Context &context)
 {
   heap_storage_engine= new HeapEngine(engine_name);
-  registry.add(heap_storage_engine);
-  pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
+  context.add(heap_storage_engine);
   return 0;
 }
-
-static int heap_deinit(plugin::Registry &registry)
-{
-  registry.remove(heap_storage_engine);
-  delete heap_storage_engine;
-
-  int ret= hp_panic(HA_PANIC_CLOSE);
-
-  pthread_mutex_destroy(&THR_LOCK_heap);
-
-  return ret;
-}
-
 
 
 /*****************************************************************************
@@ -660,10 +639,10 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::doRenameTable(Session*,
-                              const char *from, const char *to)
+int HeapEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
-  return heap_rename(from,to);
+  session.renameTableMessage(from, to);
+  return heap_rename(from.getPath().c_str(), to.getPath().c_str());
 }
 
 
@@ -690,12 +669,13 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 }
 
 int HeapEngine::doCreateTable(Session *session,
-                              const char *table_name,
                               Table &table_arg,
+                              drizzled::TableIdentifier &identifier,
                               message::Table& create_proto)
 {
   int error;
   HP_SHARE *internal_share;
+  const char *table_name= identifier.getPath().c_str();
 
   error= heap_create_table(session, table_name, &table_arg,
                            false, 
@@ -704,9 +684,7 @@ int HeapEngine::doCreateTable(Session *session,
 
   if (error == 0)
   {
-    pthread_mutex_lock(&proto_cache_mutex);
-    proto_cache.insert(make_pair(table_name, create_proto));
-    pthread_mutex_unlock(&proto_cache_mutex);
+    session->storeTableMessage(identifier, create_proto);
   }
 
   return error;
@@ -937,7 +915,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
-  heap_deinit,
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

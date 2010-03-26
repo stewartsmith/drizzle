@@ -54,7 +54,7 @@ namespace drizzled
 {
 
 static long mysql_rm_known_files(Session *session,
-                                 const string &db, const char *path,
+                                 const string &db,
                                  plugin::TableNameList &dropped_tables);
 static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
 
@@ -211,8 +211,6 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 {
   long deleted=0;
   int error= false;
-  char	path[FN_REFLEN+16];
-  uint32_t length;
   plugin::TableNameList dropped_tables;
   message::Schema schema_proto;
 
@@ -233,12 +231,19 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     return -1;
   }
 
+  // Lets delete the temporary tables first outside of locks.  
+  set<string> set_of_names;
+  session->doGetTableNames(schema_name, set_of_names);
+
+  for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
+  {
+    TableIdentifier identifier(schema_name, *iter, TEMP_TABLE);
+    Table *table= session->find_temporary_table(identifier);
+    session->close_temporary_table(table);
+  }
+
   pthread_mutex_lock(&LOCK_create_db);
 
-
-  length= build_table_filename(path, sizeof(path),
-                               schema_name.c_str(), "", false);
-  path[length]= '\0';				// Remove file name
 
   /* See if the schema exists */
   if (not plugin::StorageEngine::doesSchemaExist(schema_name))
@@ -247,12 +252,12 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     {
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-                          path);
+                          schema_name.c_str());
     }
     else
     {
       error= -1;
-      my_error(ER_DB_DROP_EXISTS, MYF(0), path);
+      my_error(ER_DB_DROP_EXISTS, MYF(0), schema_name.c_str());
       goto exit;
     }
   }
@@ -264,8 +269,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 
 
     error= -1;
-    deleted= mysql_rm_known_files(session, schema_name,
-                                  path, dropped_tables);
+    deleted= mysql_rm_known_files(session, schema_name, dropped_tables);
     if (deleted >= 0)
     {
       error= 0;
@@ -355,10 +359,13 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   for (table= tables; table; table= table->next_local)
   {
+    TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
     table->db_type= NULL;
-    if ((share= TableShare::getShare(table->db, table->table_name)))
+    if ((share= TableShare::getShare(identifier)))
+    {
       table->db_type= share->db_type();
+    }
   }
 
   if (lock_table_names_exclusively(session, tables))
@@ -481,13 +488,8 @@ err_with_placeholders:
 
 static long mysql_rm_known_files(Session *session,
                                  const string &db,
-				 const char *org_path,
                                  plugin::TableNameList &dropped_tables)
 {
-  CachedDirectory dirp(org_path);
-  if (dirp.fail())
-    return 0;
-
   long deleted= 0;
   TableList *tot_list= NULL, **tot_list_next;
 

@@ -107,7 +107,7 @@ static void fill_table(message::Table *table, const char *name)
   message::Table::Field::FieldConstraints *field_constraints;
   message::Table::Field::StringFieldOptions *string_field_options;
   message::Table::Field::NumericFieldOptions *numeric_field_options;
-  message::Table::Field::SetFieldOptions *set_field_options;
+  message::Table::Field::EnumerationValues *enumeration_options;
 
   table->set_name(name);
   table->set_type(message::Table::STANDARD);
@@ -147,11 +147,10 @@ static void fill_table(message::Table *table, const char *name)
     field->set_type(message::Table::Field::ENUM);
     field->set_name("colors");
 
-    set_field_options= field->mutable_set_options();
-    set_field_options->add_field_value("red");
-    set_field_options->add_field_value("blue");
-    set_field_options->add_field_value("green");
-    set_field_options->set_count_elements(set_field_options->field_value_size());
+    enumeration_options= field->mutable_enumeration_values();
+    enumeration_options->add_field_value("red");
+    enumeration_options->add_field_value("blue");
+    enumeration_options->add_field_value("green");
   }
   /* Write out a BLOB */
   {

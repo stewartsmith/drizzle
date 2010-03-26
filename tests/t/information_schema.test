@@ -3,7 +3,6 @@
 
 --disable_warnings
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
-DROP SCHEMA IF EXISTS data_dictionary;
 --enable_warnings
 
 # Test for data_dictionary.tables &

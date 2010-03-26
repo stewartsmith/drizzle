@@ -50,7 +50,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/check_stack_overrun.h \
 			      drizzled/common.h \
 			      drizzled/comp_creator.h \
-			      drizzled/cost_vect.h \
 			      drizzled/create_field.h \
 			      drizzled/current_session.h \
 			      drizzled/data_home.h \
@@ -156,7 +155,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/str/str_conv.h \
 			      drizzled/function/str/strfunc.h \
 			      drizzled/function/str/trim.h \
-			      drizzled/function/str/user.h \
 			      drizzled/function/time/curdate.h \
 			      drizzled/function/time/date.h \
 			      drizzled/function/time/date_add_interval.h \
@@ -268,6 +266,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/natural_join_column.h \
 			      drizzled/nested_join.h \
 			      drizzled/open_tables_state.h \
+			      drizzled/optimizer/cost_vector.h \
 			      drizzled/optimizer/key_field.h \
 			      drizzled/optimizer/key_use.h \
 			      drizzled/optimizer/explain_plan.h \
@@ -292,6 +291,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/authentication.h \
 			      drizzled/plugin/authorization.h \
 			      drizzled/plugin/client.h \
+			      drizzled/plugin/context.h \
+			      drizzled/plugin/daemon.h \
 			      drizzled/plugin/error_message.h \
 			      drizzled/plugin/function.h \
 			      drizzled/plugin/library.h \
@@ -551,7 +552,6 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/function/str/str_conv.cc \
 				 drizzled/function/str/strfunc.cc \
 				 drizzled/function/str/trim.cc \
-				 drizzled/function/str/user.cc \
 				 drizzled/function/time/curdate.cc \
 				 drizzled/function/time/date.cc \
 				 drizzled/function/time/date_add_interval.cc \

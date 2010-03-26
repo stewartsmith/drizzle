@@ -74,13 +74,10 @@ Schema::~Schema()
 }
 
 int Schema::doGetTableDefinition(Session &,
-                                 const char *path,
-                                 const char *,
-                                 const char *,
-                                 const bool,
-                                 message::Table *table_proto)
+                                 drizzled::TableIdentifier &identifier,
+                                 message::Table &table_proto)
 {
-  string proto_path(path);
+  string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
 
   if (access(proto_path.c_str(), F_OK))
@@ -88,15 +85,10 @@ int Schema::doGetTableDefinition(Session &,
     return errno;
   }
 
-  if (table_proto)
-  {
-    if (readTableFile(proto_path, *table_proto))
-      return EEXIST;
+  if (readTableFile(proto_path, table_proto))
+    return EEXIST;
 
-    return -1;
-  }
-
-  return EEXIST;
+  return -1;
 }
 
 void Schema::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
@@ -207,18 +199,17 @@ bool Schema::doGetSchemaDefinition(const std::string &schema_name, message::Sche
 
 bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 {
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
+  std::string path;
+  drizzled::build_table_filename(path, schema_message.name().c_str(), "", false);
 
-  path_len= drizzled::build_table_filename(path, sizeof(path), schema_message.name().c_str(), "", false);
-  path[path_len-1]= 0;                    // remove last '/' from path
+  path.erase(path.length()-1);
 
-  if (mkdir(path, 0777) == -1)
+  if (mkdir(path.c_str(), 0777) == -1)
     return false;
 
-  if (not writeSchemaFile(path, schema_message))
+  if (not writeSchemaFile(path.c_str(), schema_message))
   {
-    rmdir(path);
+    rmdir(path.c_str());
 
     return false;
   }
@@ -241,12 +232,11 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 
 bool Schema::doDropSchema(const std::string &schema_name)
 {
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
+  string path;
   message::Schema schema_message;
 
-  path_len= drizzled::build_table_filename(path, sizeof(path), schema_name.c_str(), "", false);
-  path[path_len-1]= 0;                    // remove last '/' from path
+  drizzled::build_table_filename(path, schema_name.c_str(), "", false);
+  path.erase(path.length()-1);
 
   string schema_file(path);
   schema_file.append(1, FN_LIBCHAR);
@@ -263,10 +253,17 @@ bool Schema::doDropSchema(const std::string &schema_name)
   }
 
   if (unlink(schema_file.c_str()))
+  {
     perror(schema_file.c_str());
+    return false;
+  }
 
-  if (rmdir(path))
-    perror(path);
+  if (rmdir(path.c_str()))
+  {
+    perror(path.c_str());
+    CachedDirectory dir(path);
+    cerr << dir;
+  }
 
   if (not pthread_rwlock_wrlock(&schema_lock))
   {
@@ -277,9 +274,9 @@ bool Schema::doDropSchema(const std::string &schema_name)
   return true;
 }
 
-int Schema::doDropTable(Session&, const string &table_path)
+int Schema::doDropTable(Session&, TableIdentifier &identifier)
 {
-  string path(table_path);
+  string path(identifier.getPath());
 
   path.append(DEFAULT_FILE_EXTENSION);
 
@@ -288,15 +285,14 @@ int Schema::doDropTable(Session&, const string &table_path)
 
 bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 {
-  char	 path[FN_REFLEN+16];
-  uint32_t path_len;
-  path_len= drizzled::build_table_filename(path, sizeof(path), schema_message.name().c_str(), "", false);
-  path[path_len-1]= 0;                    // remove last '/' from path
+  string path;
+  drizzled::build_table_filename(path, schema_message.name().c_str(), "", false);
+  path.erase(path.length()-1);
 
-  if (access(path, F_OK))
+  if (access(path.c_str(), F_OK))
     return false;
 
-  if (writeSchemaFile(path, schema_message))
+  if (writeSchemaFile(path.c_str(), schema_message))
   {
     if (not pthread_rwlock_wrlock(&schema_lock))
     {
@@ -339,12 +335,15 @@ bool Schema::writeSchemaFile(const char *path, const message::Schema &db)
   int fd= mkstemp(schema_file_tmp);
 
   if (fd == -1)
+  {
+    perror(schema_file_tmp);
     return false;
+  }
 
   if (not db.SerializeToFileDescriptor(fd))
   {
+    cerr << "Couldn't write " << path << "\n";
     close(fd);
-    unlink(schema_file_tmp);
 
     return false;
   }
@@ -383,18 +382,16 @@ bool Schema::readTableFile(const std::string &path, message::Table &table_messag
 
 bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::Schema &schema_message)
 {
-  char db_opt_path[FN_REFLEN];
-  size_t length;
+  string db_opt_path;
 
   /*
     Pass an empty file name, and the database options file name as extension
     to avoid table name to file name encoding.
   */
-  length= build_table_filename(db_opt_path, sizeof(db_opt_path),
-                               schema_name.c_str(), "", false);
-  strcpy(db_opt_path + length, MY_DB_OPT_FILE);
+  build_table_filename(db_opt_path, schema_name.c_str(), "", false);
+  db_opt_path.append(MY_DB_OPT_FILE);
 
-  fstream input(db_opt_path, ios::in | ios::binary);
+  fstream input(db_opt_path.c_str(), ios::in | ios::binary);
 
   /**
     @note If parsing fails, either someone has done a "mkdir" or has deleted their opt file.
@@ -410,7 +407,7 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
   }
   else
   {
-    perror(db_opt_path);
+    perror(db_opt_path.c_str());
   }
 
   return false;
@@ -418,7 +415,7 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
 
 bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (not strcasecmp(identifier.getSchemaName(), "temporary_tables"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "temporary"))
   {
     return false;
   }
@@ -426,4 +423,15 @@ bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
   return true;
 }
 
+bool Schema::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(DEFAULT_FILE_EXTENSION);
 
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}

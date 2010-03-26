@@ -3,7 +3,6 @@
 
 --disable_warnings
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
-DROP SCHEMA IF EXISTS data_dictionary;
 --enable_warnings
 
 --replace_column 1 #
@@ -145,7 +144,7 @@ drop table t1;
 #
 create table t1 (a int not null, b int);
 use data_dictionary;
-select column_name, column_default from columns
+select column_name, column_default,column_default_is_null from columns
   where table_schema='test' and table_name='t1';
 use test;
 show columns from t1;
@@ -332,7 +331,7 @@ create table t1 (
   f7 datetime not null,
   f8 datetime default '2006-01-01'
 );
-select column_default from data_dictionary.columns where table_name= 't1';
+select column_name,column_default,column_default_is_null from data_dictionary.columns where table_name= 't1';
 show columns from t1;
 drop table t1;
 

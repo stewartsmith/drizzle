@@ -44,14 +44,14 @@ public:
   drizzled::plugin::TableFunction *getTool(const char *name_arg);
 
   int doCreateTable(drizzled::Session *,
-                    const char *,
                     drizzled::Table&,
+                    drizzled::TableIdentifier &,
                     drizzled::message::Table&)
   {
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, const std::string&) 
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier&)
   { 
     return EPERM; 
   }
@@ -77,15 +77,19 @@ public:
                        std::set<std::string> &set_of_names);
 
   int doGetTableDefinition(drizzled::Session &session,
-                           const char *path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_message);
 
   void doGetSchemaNames(std::set<std::string>& set_of_names);
 
+  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
+
   bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &schema_message);
+
+  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &, drizzled::TableIdentifier &)
+  {
+    return EPERM;
+  }
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */

@@ -124,8 +124,7 @@ message Table {
       optional string collation = 4;
     }
 
-    message SetFieldOptions {
-      required uint32 count_elements = 1;
+    message EnumerationValues {
       optional uint32 collation_id = 2;
       optional string collation = 3;
       repeated string field_value = 4;
@@ -140,7 +139,7 @@ message Table {
     optional StringFieldOptions string_options = 7;
 
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
-    optional SetFieldOptions set_options = 17;
+    optional EnumerationValues enumeration_values = 17;
     optional TimestampFieldOptions timestamp_options = 18;
   }
 
@@ -184,6 +183,7 @@ message Table {
   }
 
   required string name = 1;
+  required string schema = 6;
   required TableType type = 5;
   required StorageEngine engine = 2;
   repeated Field field = 3;
@@ -194,6 +194,7 @@ message Table {
   optional TableStats stats = 10;
   required uint64 creation_timestamp= 11 [default = 0];
   required uint64 update_timestamp= 12 [default = 0];
+  optional string catalog = 13;
 }
 
 message AlterTable {

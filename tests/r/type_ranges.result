@@ -47,20 +47,20 @@ medium	INTEGER	FALSE	0	FALSE
 long_int	INTEGER	FALSE	0	FALSE	
 longlong	BIGINT	FALSE	0	FALSE	
 real_float	DOUBLE	FALSE	0.0	FALSE	
-real_double	DOUBLE	TRUE	0.0	TRUE	
+real_double	DOUBLE	TRUE		TRUE	
 utiny	INTEGER	FALSE	0	FALSE	
 ushort	INTEGER	FALSE	00000	FALSE	
 umedium	INTEGER	FALSE	0	FALSE	
 ulong	INTEGER	FALSE	0	FALSE	
 ulonglong	BIGINT	FALSE	0	FALSE	
-time_stamp	TIMESTAMP	TRUE	0	TRUE	
-date_field	DATE	TRUE	0	TRUE	
-date_time	DATETIME	TRUE	0	TRUE	
-blob_col	BLOB	TRUE	0	TRUE	
-tinyblob_col	BLOB	TRUE	0	TRUE	
-mediumblob_col	BLOB	FALSE	0	FALSE	
-longblob_col	BLOB	FALSE	0	FALSE	
-options	ENUM	FALSE	0	FALSE	
+time_stamp	TIMESTAMP	TRUE		TRUE	
+date_field	DATE	TRUE		TRUE	
+date_time	DATETIME	TRUE		TRUE	
+blob_col	BLOB	TRUE		TRUE	
+tinyblob_col	BLOB	TRUE		TRUE	
+mediumblob_col	BLOB	FALSE		FALSE	
+longblob_col	BLOB	FALSE		FALSE	
+options	ENUM	FALSE		FALSE	
 flags	ENUM	FALSE	one	FALSE	
 show keys from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
@@ -138,20 +138,20 @@ medium	INTEGER	FALSE	0	FALSE
 long_int	INTEGER	FALSE	0	FALSE	
 longlong	BIGINT	FALSE	0	FALSE	
 real_float	DOUBLE	FALSE	0	FALSE	
-real_double	DOUBLE	TRUE	0	TRUE	
+real_double	DOUBLE	TRUE		TRUE	
 utiny	INTEGER	FALSE	0	FALSE	
 ushort	INTEGER	FALSE	0	FALSE	
 umedium	INTEGER	FALSE	0	FALSE	
 ulong	INTEGER	FALSE	0	FALSE	
 ulonglong	BIGINT	FALSE	0	FALSE	
-time_stamp	TIMESTAMP	TRUE	0	TRUE	
-date_field	DATE	TRUE	0	TRUE	
-date_time	DATETIME	TRUE	0	TRUE	
-blob_col	BLOB	TRUE	0	TRUE	
-tinyblob_col	BLOB	TRUE	0	TRUE	
-mediumblob_col	BLOB	FALSE	0	FALSE	
-longblob_col	BLOB	FALSE	0	FALSE	
-options	ENUM	FALSE	0	FALSE	
+time_stamp	TIMESTAMP	TRUE		TRUE	
+date_field	DATE	TRUE		TRUE	
+date_time	DATETIME	TRUE		TRUE	
+blob_col	BLOB	TRUE		TRUE	
+tinyblob_col	BLOB	TRUE		TRUE	
+mediumblob_col	BLOB	FALSE		FALSE	
+longblob_col	BLOB	FALSE		FALSE	
+options	ENUM	FALSE		FALSE	
 flags	ENUM	FALSE	one	FALSE	
 show columns from t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -163,20 +163,20 @@ medium	INTEGER	FALSE	0	FALSE
 long_int	INTEGER	FALSE	0	FALSE	
 longlong	BIGINT	FALSE	0	FALSE	
 real_float	DOUBLE	FALSE	0	FALSE	
-real_double	DOUBLE	TRUE	0	TRUE	
+real_double	DOUBLE	TRUE		TRUE	
 utiny	INTEGER	FALSE	0	FALSE	
 ushort	INTEGER	FALSE	0	FALSE	
 umedium	INTEGER	FALSE	0	FALSE	
 ulong	INTEGER	FALSE	0	FALSE	
 ulonglong	BIGINT	FALSE	0	FALSE	
-time_stamp	TIMESTAMP	TRUE	0	TRUE	
-date_field	DATE	TRUE	0	TRUE	
-date_time	DATETIME	TRUE	0	TRUE	
-blob_col	BLOB	TRUE	0	TRUE	
-tinyblob_col	BLOB	TRUE	0	TRUE	
-mediumblob_col	BLOB	FALSE	0	FALSE	
-longblob_col	BLOB	FALSE	0	FALSE	
-options	ENUM	FALSE	0	FALSE	
+time_stamp	TIMESTAMP	TRUE		TRUE	
+date_field	DATE	TRUE		TRUE	
+date_time	DATETIME	TRUE		TRUE	
+blob_col	BLOB	TRUE		TRUE	
+tinyblob_col	BLOB	TRUE		TRUE	
+mediumblob_col	BLOB	FALSE		FALSE	
+longblob_col	BLOB	FALSE		FALSE	
+options	ENUM	FALSE		FALSE	
 flags	ENUM	FALSE	one	FALSE	
 select t1.auto,t2.auto from t1,t2 where t1.auto=t2.auto and ((t1.string<>t2.string and (t1.string is not null or t2.string is not null)) or (t1.tiny<>t2.tiny and (t1.tiny is not null or t2.tiny is not null)) or (t1.short<>t2.short and (t1.short is not null or t2.short is not null)) or (t1.medium<>t2.medium and (t1.medium is not null or t2.medium is not null)) or (t1.long_int<>t2.long_int and (t1.long_int is not null or t2.long_int is not null)) or (t1.longlong<>t2.longlong and (t1.longlong is not null or t2.longlong is not null)) or (t1.real_float<>t2.real_float and (t1.real_float is not null or t2.real_float is not null)) or (t1.real_double<>t2.real_double and (t1.real_double is not null or t2.real_double is not null)) or (t1.utiny<>t2.utiny and (t1.utiny is not null or t2.utiny is not null)) or (t1.ushort<>t2.ushort and (t1.ushort is not null or t2.ushort is not null)) or (t1.umedium<>t2.umedium and (t1.umedium is not null or t2.umedium is not null)) or (t1.ulong<>t2.ulong and (t1.ulong is not null or t2.ulong is not null)) or (t1.ulonglong<>t2.ulonglong and (t1.ulonglong is not null or t2.ulonglong is not null)) or (t1.time_stamp<>t2.time_stamp and (t1.time_stamp is not null or t2.time_stamp is not null)) or (t1.date_field<>t2.date_field and (t1.date_field is not null or t2.date_field is not null)) or (t1.date_time<>t2.date_time and (t1.date_time is not null or t2.date_time is not null)) or (t1.tinyblob_col<>t2.tinyblob_col and (t1.tinyblob_col is not null or t2.tinyblob_col is not null)) or (t1.mediumblob_col<>t2.mediumblob_col and (t1.mediumblob_col is not null or t2.mediumblob_col is not null)) or (t1.options<>t2.options and (t1.options is not null or t2.options is not null)) or (t1.flags<>t2.flags and (t1.flags is not null or t2.flags is not null)));
 auto	auto

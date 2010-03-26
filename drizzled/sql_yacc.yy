@@ -1260,10 +1260,38 @@ create_table_option:
         | ROW_FORMAT_SYM opt_equal row_types
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            message::Table::TableOptions *table_options= statement->createTableMessage().mutable_options();
 
             statement->create_info.row_type= $3;
             statement->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
             statement->alter_info.flags.set(ALTER_ROW_FORMAT);
+
+            switch(statement->create_info.row_type)
+            {
+            case ROW_TYPE_DEFAULT:
+              /* No use setting a default row type... just adds redundant info to message */
+              break;
+            case ROW_TYPE_FIXED:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_FIXED);
+              break;
+            case ROW_TYPE_DYNAMIC:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_DYNAMIC);
+              break;
+            case ROW_TYPE_COMPRESSED:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPRESSED);
+              break;
+            case ROW_TYPE_REDUNDANT:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_REDUNDANT);
+              break;
+            case ROW_TYPE_COMPACT:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPACT);
+              break;
+            case ROW_TYPE_PAGE:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_PAGE);
+              break;
+            default:
+              abort();
+            }
           }
         | default_collation
         | KEY_BLOCK_SIZE opt_equal ulong_num
@@ -1587,11 +1615,18 @@ type:
               $$=DRIZZLE_TYPE_BLOB;
               Lex->length=(char*) 0; /* use default length */
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
+              statement::CreateTable *statement=
+                (statement::CreateTable *)Lex->statement;
 
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::BLOB);
+              if (statement->current_proto_field)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::BLOB);
+                message::Table::Field::StringFieldOptions *string_field_options;
+
+                string_field_options= statement->current_proto_field->mutable_string_options();
+                string_field_options->set_collation_id(my_charset_bin.number);
+                string_field_options->set_collation(my_charset_bin.name);
+              }
             }
           | TEXT_SYM
             {
@@ -2979,7 +3014,11 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_char(*$3); }
         | CURRENT_USER optional_braces
           {
-            $$= new (YYSession->mem_root) Item_func_current_user(Lex->current_context());
+            std::string user_str("user");
+            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         | DATE_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_date_typecast($3); }
@@ -3036,7 +3075,11 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_trim($5,$3); }
         | USER '(' ')'
           {
-            $$= new (YYSession->mem_root) Item_func_user();
+            std::string user_str("user");
+            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         | YEAR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_year($3); }
@@ -4699,13 +4742,13 @@ show_param:
            DATABASES show_wild
            {
              LEX *lex= Lex;
+             Session *session= YYSession;
+
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Select(session);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-
-             Session *session= YYSession;
 
              std::string column_name= "Database";
              if (Lex->wild)
@@ -4717,12 +4760,12 @@ show_param:
 
              if (Lex->current_select->where)
              {
-               if (prepare_new_schema_table(YYSession, lex, "SCHEMAS"))
+               if (prepare_new_schema_table(session, lex, "SCHEMAS"))
                  DRIZZLE_YYABORT;
              }
              else
              {
-               if (prepare_new_schema_table(YYSession, lex, "SCHEMA_NAMES"))
+               if (prepare_new_schema_table(session, lex, "SCHEMA_NAMES"))
                  DRIZZLE_YYABORT;
              }
 
@@ -4736,13 +4779,18 @@ show_param:
          | TABLES opt_db show_wild
            {
              LEX *lex= Lex;
+             Session *session= YYSession;
+
              lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
+
+             statement::Select *select=
                new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
-              Session *session= YYSession;
 
               std::string column_name= "Tables_in_";
 
@@ -4754,11 +4802,18 @@ show_param:
                 {
                   my_error(ER_BAD_DB_ERROR, MYF(0), $2);
                 }
+                select->setShowPredicate($2, "");
+              }
+              else if (not session->db.empty())
+              {
+                column_name.append(session->db);
+                select->setShowPredicate(session->db, "");
               }
               else
               {
-                column_name.append(session->db);
+                 my_error(ER_NO_DB_ERROR, MYF(0));
               }
+
 
              if (Lex->wild)
              {
@@ -4767,16 +4822,8 @@ show_param:
                column_name.append(")");
              }
 
-             if (Lex->current_select->where)
-             {
-               if (prepare_new_schema_table(YYSession, lex, "TABLES"))
-                 DRIZZLE_YYABORT;
-             }
-             else
-             {
-               if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
-                 DRIZZLE_YYABORT;
-             }
+             if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
+               DRIZZLE_YYABORT;
 
              Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "TABLE_NAME");
              my_field->is_autogenerated_name= false;
@@ -4900,7 +4947,7 @@ show_param:
                }
              }
 
-             if (prepare_new_schema_table(session, lex, "show_indexes"))
+             if (prepare_new_schema_table(session, lex, "SHOW_INDEXES"))
                DRIZZLE_YYABORT;
 
              if (session->add_item_to_list( new Item_field(&session->lex->current_select->

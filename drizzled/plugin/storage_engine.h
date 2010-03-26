@@ -83,6 +83,7 @@ enum engine_flag_bits {
   HTON_BIT_HAS_CHECKSUM,
   HTON_BIT_SKIP_STORE_LOCK,
   HTON_BIT_SCHEMA_DICTIONARY,
+  HTON_BIT_FOREIGN_KEYS,
   HTON_BIT_SIZE
 };
 
@@ -115,6 +116,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_N
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
 static const std::bitset<HTON_BIT_SIZE> HTON_SKIP_STORE_LOCK(1 << HTON_BIT_SKIP_STORE_LOCK);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT_SCHEMA_DICTIONARY);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_FOREIGN_KEYS(1 << HTON_BIT_FOREIGN_KEYS);
 
 
 class Table;
@@ -211,19 +213,13 @@ public:
 
   virtual ~StorageEngine();
 
-  virtual int doGetTableDefinition(Session& session,
-                                   const char *path,
-                                   const char *db,
-                                   const char *table_name,
-                                   const bool is_tmp,
-                                   message::Table *table_proto)
+  virtual int doGetTableDefinition(Session &session,
+                                   TableIdentifier &identifier,
+                                   message::Table &table_message)
   {
     (void)session;
-    (void)path;
-    (void)db;
-    (void)table_name;
-    (void)is_tmp;
-    (void)table_proto;
+    (void)identifier;
+    (void)table_message;
 
     return ENOENT;
   }
@@ -287,30 +283,24 @@ public:
 
 protected:
   virtual int doCreateTable(Session *session,
-                            const char *table_name,
                             Table& table_arg,
+                            TableIdentifier &identifier,
                             message::Table& proto)= 0;
 
-  virtual int doRenameTable(Session* session,
-                            const char *from, const char *to);
+  virtual int doRenameTable(Session &session,
+                            TableIdentifier &from, TableIdentifier &to)= 0;
 
 public:
 
-  int renameTable(Session *session, const char *from, const char *to) 
-  {
-    setTransactionReadWrite(*session);
-
-    return doRenameTable(session, from, to);
-  }
+  int renameTable(Session &session, TableIdentifier &from, TableIdentifier &to);
 
   // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
-  virtual int doDropTable(Session& session,
-                          const std::string &table_path)= 0;
 
-  const char *checkLowercaseNames(const char *path, char *tmp_path);
+  virtual int doDropTable(Session &session,
+                          TableIdentifier &identifier)= 0;
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
@@ -318,22 +308,17 @@ public:
 
   static int getTableDefinition(Session& session,
                                 TableIdentifier &identifier,
-                                message::Table *table_proto= NULL,
+                                message::Table &table_proto,
                                 bool include_temporary_tables= true);
-  static int getTableDefinition(Session& session,
-                                const char* path,
-                                const char *db,
-                                const char *table_name,
-                                const bool is_tmp,
-                                message::Table *table_proto= NULL,
-                                bool include_temporary_tables= true);
-  static bool doesTableExist(Session& session,
+  static bool doesTableExist(Session &session,
                              TableIdentifier &identifier,
                              bool include_temporary_tables= true);
 
-  static plugin::StorageEngine *findByName(std::string find_str);
-  static plugin::StorageEngine *findByName(Session& session,
-                                           std::string find_str);
+  virtual bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+
+  static plugin::StorageEngine *findByName(const std::string &find_str);
+  static plugin::StorageEngine *findByName(Session& session, const std::string &find_str);
+
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
@@ -409,7 +394,6 @@ public:
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
   /* TODO-> Make private */
-  static int readDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
