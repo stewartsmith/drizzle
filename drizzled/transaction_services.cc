@@ -772,51 +772,6 @@ int TransactionServices::ha_autocommit_or_rollback(Session *session, int error)
   return error;
 }
 
-/**
-  return the list of XID's to a client, the same way SHOW commands do.
-
-  @note
-    I didn't find in XA specs that an RM cannot return the same XID twice,
-    so mysql_xa_recover does not filter XID's to ensure uniqueness.
-    It can be easily fixed later, if necessary.
-*/
-bool TransactionServices::mysql_xa_recover(Session *session)
-{
-  List<Item> field_list;
-  int i= 0;
-  XID_STATE *xs;
-
-  field_list.push_back(new Item_int("formatID", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_int("gtrid_length", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_int("bqual_length", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_empty_string("data", DRIZZLE_XIDDATASIZE));
-
-  if (session->client->sendFields(&field_list))
-    return 1;
-
-  pthread_mutex_lock(&LOCK_xid_cache);
-  while ((xs= (XID_STATE*)hash_element(&xid_cache, i++)))
-  {
-    if (xs->xa_state==XA_PREPARED)
-    {
-      session->client->store((int64_t)xs->xid.formatID);
-      session->client->store((int64_t)xs->xid.gtrid_length);
-      session->client->store((int64_t)xs->xid.bqual_length);
-      session->client->store(xs->xid.data,
-                             xs->xid.gtrid_length+xs->xid.bqual_length);
-      if (session->client->flush())
-      {
-        pthread_mutex_unlock(&LOCK_xid_cache);
-        return 1;
-      }
-    }
-  }
-
-  pthread_mutex_unlock(&LOCK_xid_cache);
-  session->my_eof();
-  return 0;
-}
-
 struct ResourceContextCompare : public std::binary_function<ResourceContext *, ResourceContext *, bool>
 {
   result_type operator()(const ResourceContext *lhs, const ResourceContext *rhs) const

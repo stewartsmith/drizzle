@@ -304,7 +304,6 @@ public:
   int ha_rollback_to_savepoint(Session *session, NamedSavepoint &sv);
   int ha_savepoint(Session *session, NamedSavepoint &sv);
   int ha_release_savepoint(Session *session, NamedSavepoint &sv);
-  bool mysql_xa_recover(Session *session);
 
   /**
    * Marks a storage engine as participating in a statement
