@@ -1672,7 +1672,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
       my_error(ER_NO_SUCH_TABLE, MYF(0), db.str, table_name.str);
     else
     {
-      sprintf(buff,"%s",normalized_path.str);
+      snprintf(buff, sizeof(buff), "%s",normalized_path.str);
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
                errortype, buff, db_errno);
     }
@@ -1692,7 +1692,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     }
     err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
       ER_FILE_USED : ER_CANT_OPEN_FILE;
-    sprintf(buff,"%s%s", normalized_path.str,datext);
+    snprintf(buff, sizeof(buff), "%s%s", normalized_path.str,datext);
     my_error(err_no,errortype, buff, db_errno);
     delete cursor;
     break;
@@ -1712,7 +1712,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   }
   case 6:
-    sprintf(buff,"%s", normalized_path.str);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
                     "of Drizzle and cannot be read"),
@@ -1722,7 +1722,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   default:				/* Better wrong error than none */
   case 4:
-    sprintf(buff,"%s", normalized_path.str);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
