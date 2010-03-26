@@ -307,7 +307,7 @@ static int write_to_table(char *filename, drizzle_con_st *con)
       fprintf(stdout, "Loading data from SERVER file: %s into %s\n",
         hard_path, tablename);
   }
-  sprintf(sql_statement, sizeof(sql_statement), "LOAD DATA %s %s INFILE '%s'",
+  snprintf(sql_statement, sizeof(sql_statement), "LOAD DATA %s %s INFILE '%s'",
     opt_low_priority ? "LOW_PRIORITY" : "",
     opt_local_file ? "LOCAL" : "", hard_path);
   end= strchr(sql_statement, '\0');
