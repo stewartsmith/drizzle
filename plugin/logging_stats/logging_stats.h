@@ -90,6 +90,8 @@ private:
 
   std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
 
+  uint32_t cumulative_stats_by_user_max;
+
   uint32_t cumulative_stats_by_user_index;
 
   Scoreboard *current_scoreboard;

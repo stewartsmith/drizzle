@@ -86,9 +86,11 @@ LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 
   current_scoreboard= new Scoreboard(sysvar_logging_stats_scoreboard_size, sysvar_logging_stats_bucket_count);
 
-  cumulative_stats_by_user_vector= new vector<ScoreboardSlot *>(sysvar_logging_stats_max_user_count);
+  cumulative_stats_by_user_max= sysvar_logging_stats_max_user_count;
+
+  cumulative_stats_by_user_vector= new vector<ScoreboardSlot *>(cumulative_stats_by_user_max);
   preAllocateScoreboardSlotVector(sysvar_logging_stats_max_user_count, 
-                              cumulative_stats_by_user_vector);
+                                  cumulative_stats_by_user_vector);
 }
 
 LoggingStats::~LoggingStats()
@@ -215,6 +217,8 @@ bool LoggingStats::postEnd(Session *session)
   {
     vector<ScoreboardSlot *>::iterator cumulative_it= cumulative_stats_by_user_vector->begin();
     bool found= false;
+
+    /* Search if this is a pre-existing user */
     for (uint32_t h= 0; h < cumulative_stats_by_user_index; h++)
     {
       ScoreboardSlot *cumulative_scoreboard_slot= *cumulative_it;
@@ -228,6 +232,7 @@ bool LoggingStats::postEnd(Session *session)
       cumulative_it++;
     }
 
+    /* this will add a new user */
     if (! found)
     {
       updateCumulativeStatsByUserVector(scoreboard_slot);
@@ -240,14 +245,23 @@ bool LoggingStats::postEnd(Session *session)
 
 void LoggingStats::updateCumulativeStatsByUserVector(ScoreboardSlot *current_scoreboard_slot)
 {
-  pthread_rwlock_wrlock(&LOCK_cumulative_scoreboard_index);
-  ScoreboardSlot *cumulative_scoreboard_slot=
-    cumulative_stats_by_user_vector->at(cumulative_stats_by_user_index);
-  string cumulative_scoreboard_user(current_scoreboard_slot->getUser());
-  cumulative_scoreboard_slot->setUser(cumulative_scoreboard_user);
-  cumulative_scoreboard_slot->merge(current_scoreboard_slot);
-  cumulative_stats_by_user_index++;
-  pthread_rwlock_unlock(&LOCK_cumulative_scoreboard_index);
+  /* Check twice if the user table is full, do not grab a lock each time */
+  if (cumulative_stats_by_user_max > cumulative_stats_by_user_index)
+  {
+    pthread_rwlock_wrlock(&LOCK_cumulative_scoreboard_index);
+
+    if (cumulative_stats_by_user_max > cumulative_stats_by_user_index)
+    { 
+      ScoreboardSlot *cumulative_scoreboard_slot=
+        cumulative_stats_by_user_vector->at(cumulative_stats_by_user_index);
+      string cumulative_scoreboard_user(current_scoreboard_slot->getUser());
+      cumulative_scoreboard_slot->setUser(cumulative_scoreboard_user);
+      cumulative_scoreboard_slot->merge(current_scoreboard_slot);
+      cumulative_stats_by_user_index++;
+    }
+
+    pthread_rwlock_unlock(&LOCK_cumulative_scoreboard_index);
+  }
 }
 
 
