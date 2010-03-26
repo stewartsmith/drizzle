@@ -2,10 +2,11 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (c) 2010 Jay Pipes
  *
  *  Authors:
  *
- *    Jay Pipes <joinfu@sun.com>
+ *    Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +34,7 @@
  */
 
 #include "drizzled/plugin/plugin.h"
+#include "drizzled/plugin/replication.h"
 #include "drizzled/atomics.h"
 
 namespace drizzled
@@ -74,7 +76,7 @@ public:
    *
    * @param Transaction message to be replicated
    */
-  virtual void apply(const message::Transaction &to_apply)= 0;
+  virtual ReplicationReturnCode apply(const message::Transaction &to_apply)= 0;
 
   static bool addPlugin(TransactionApplier *applier);
   static void removePlugin(TransactionApplier *applier);

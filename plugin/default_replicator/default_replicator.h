@@ -68,7 +68,9 @@ public:
    *
    * @param Transaction message to be replicated
    */
-  void replicate(drizzled::plugin::TransactionApplier *in_applier, drizzled::message::Transaction &to_replicate);
+  drizzled::plugin::ReplicationReturnCode
+  replicate(drizzled::plugin::TransactionApplier *in_applier, 
+            drizzled::message::Transaction &to_replicate);
   
 };
 

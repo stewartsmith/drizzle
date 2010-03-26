@@ -26,6 +26,7 @@
 #define DRIZZLED_REPLICATION_SERVICES_H
 
 #include "drizzled/atomics.h"
+#include "drizzled/plugin/replication.h"
 
 #include <vector>
 
@@ -98,7 +99,7 @@ public:
    *
    * @param Message to push out
    */
-  void pushTransactionMessage(message::Transaction &to_push);
+  plugin::ReplicationReturnCode pushTransactionMessage(message::Transaction &to_push);
   /**
    * Constructor
    */

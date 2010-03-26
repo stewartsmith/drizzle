@@ -70,7 +70,8 @@ public:
    *
    * @param Transaction message to be replicated
    */
-  void apply(const drizzled::message::Transaction &to_apply);
+  drizzled::plugin::ReplicationReturnCode
+  apply(const drizzled::message::Transaction &to_apply);
 private:
   /* Don't allows these */
   TransactionLogApplier();

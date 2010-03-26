@@ -2,10 +2,11 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (c) 2010 Jay Pipes
  *
  *  Authors:
  *
- *    Jay Pipes <joinfu@sun.com>
+ *    Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 #define DRIZZLED_PLUGIN_TRANSACTION_REPLICATOR_H
 
 #include "drizzled/atomics.h"
+#include "drizzled/plugin/replication.h"
 #include "drizzled/plugin/plugin.h"
 
 /**
@@ -35,7 +37,6 @@
  *
  * An applier is responsible for applying events, not a replicator...
  */
-
 
 namespace drizzled
 {
@@ -83,8 +84,8 @@ public:
    * @param Pointer to the applier of the command message
    * @param Transaction message to be replicated
    */
-  virtual void replicate(TransactionApplier *in_applier, 
-                         message::Transaction &to_replicate)= 0;
+  virtual ReplicationReturnCode replicate(TransactionApplier *in_applier, 
+                                          message::Transaction &to_replicate)= 0;
   static bool addPlugin(TransactionReplicator *replicator);
   static void removePlugin(TransactionReplicator *replicator);
 
