@@ -48,7 +48,7 @@ using namespace std;
 using namespace google;
 using namespace drizzled;
 
-int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
+int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
                                                 const drizzled::KEY *key_info,
                                                 const unsigned char *key_ptr,
@@ -1263,9 +1263,10 @@ int EmbeddedInnoDBCursor::rnd_init(bool)
   return(0);
 }
 
-int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
+int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
 {
   ib_err_t err;
+  ptrdiff_t row_offset= buf - table->record[0];
 
   err= ib_cursor_read_row(cursor, tuple);
 
@@ -1278,6 +1279,8 @@ int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
   {
     if (! (**field).isReadSet())
       continue;
+
+    (**field).move_field_offset(row_offset);
 
     (**field).setWriteSet();
 
@@ -1300,18 +1303,21 @@ int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
     {
       ib_col_copy_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
     }
+
+    (**field).move_field_offset(-row_offset);
+
   }
 
   return 0;
 }
 
-int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
+int EmbeddedInnoDBCursor::rnd_next(unsigned char *buf)
 {
   ib_err_t err;
   int ret;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
 
   err= ib_cursor_next(cursor);
 
@@ -1329,7 +1335,7 @@ int EmbeddedInnoDBCursor::rnd_end()
   return 0;
 }
 
-int EmbeddedInnoDBCursor::rnd_pos(unsigned char *, unsigned char *pos)
+int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ib_err_t err;
   int res;
@@ -1345,7 +1351,7 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *, unsigned char *pos)
   ib_tuple_delete(search_tuple);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
 
   err= ib_cursor_next(cursor);
 
@@ -1572,7 +1578,6 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
   ib_err_t err;
   int ret;
   ib_srch_mode_t search_mode;
-  (void)buf;
 
   search_mode= ha_rkey_function_to_ib_srch_mode(find_flag);
 
@@ -1592,13 +1597,13 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
     return HA_ERR_END_OF_FILE;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
   err= ib_cursor_next(cursor);
 
   return 0;
 }
 
-int EmbeddedInnoDBCursor::index_next(unsigned char *)
+int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
 
@@ -1606,7 +1611,7 @@ int EmbeddedInnoDBCursor::index_next(unsigned char *)
     return HA_ERR_END_OF_FILE;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
   next_innodb_error= ib_cursor_next(cursor);
 
   return ret;
@@ -1619,7 +1624,7 @@ int EmbeddedInnoDBCursor::index_end()
   return rnd_end();
 }
 
-int EmbeddedInnoDBCursor::index_prev(unsigned char *)
+int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -1627,7 +1632,7 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *)
   if (active_index == 0)
   {
     tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(cursor, tuple, table);
+    ret= read_row_from_innodb(buf, cursor, tuple, table);
     err= ib_cursor_prev(cursor);
   }
 
@@ -1635,7 +1640,7 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *)
 }
 
 
-int EmbeddedInnoDBCursor::index_first(unsigned char *)
+int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -1650,14 +1655,14 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *)
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
   next_innodb_error= ib_cursor_next(cursor);
 
   return ret;
 }
 
 
-int EmbeddedInnoDBCursor::index_last(unsigned char *)
+int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -1674,7 +1679,7 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *)
   if (active_index == 0)
   {
     tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(cursor, tuple, table);
+    ret= read_row_from_innodb(buf, cursor, tuple, table);
     err= ib_cursor_prev(cursor);
   }
 
