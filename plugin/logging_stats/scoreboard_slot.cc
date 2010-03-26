@@ -48,10 +48,8 @@ ScoreboardSlot::~ScoreboardSlot()
 ScoreboardSlot::ScoreboardSlot(const ScoreboardSlot &scoreboard_slot)
 {
   user_commands= new UserCommands(*scoreboard_slot.user_commands);
-  string tmp_user(scoreboard_slot.user);
-  user= tmp_user;
-  string tmp_ip(scoreboard_slot.ip);
-  ip= tmp_ip;
+  user.assign(scoreboard_slot.user);
+  ip.assign(scoreboard_slot.ip);
   in_use= scoreboard_slot.in_use;
   session_id= scoreboard_slot.session_id;
 }
@@ -83,7 +81,7 @@ bool ScoreboardSlot::isInUse()
 
 void ScoreboardSlot::setUser(string in_user)
 {
-  user= in_user;
+  user.assign(in_user);
 }
 
 const string& ScoreboardSlot::getUser()

@@ -164,10 +164,8 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
     scoreboard_slot= scoreboard_vector->at(open_slot);
     scoreboard_slot->setInUse(true);
     scoreboard_slot->setSessionId(session->getSessionId());
-    string user(session->getSecurityContext().getUser());
-    scoreboard_slot->setUser(user);
-    string ip(session->getSecurityContext().getIp());
-    scoreboard_slot->setIp(ip);
+    scoreboard_slot->setUser(session->getSecurityContext().getUser());
+    scoreboard_slot->setIp(session->getSecurityContext().getIp());
     pthread_rwlock_unlock(LOCK_scoreboard_vector);
   }
   else
@@ -194,7 +192,7 @@ ScoreboardSlot* Scoreboard::findAndResetScoreboardSlot(Session *session)
   pthread_rwlock_wrlock(LOCK_scoreboard_vector);
 
   ScoreboardSlot *scoreboard_slot;
-  ScoreboardSlot *return_scoreboard_slot;
+  ScoreboardSlot *return_scoreboard_slot= NULL;
 
   for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
        it != scoreboard_vector->end(); ++it)

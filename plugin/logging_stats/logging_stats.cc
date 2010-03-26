@@ -208,7 +208,7 @@ bool LoggingStats::postEnd(Session *session)
 
   ScoreboardSlot *scoreboard_slot= current_scoreboard->findAndResetScoreboardSlot(session);
 
-  if (scoreboard_slot != NULL)
+  if (scoreboard_slot)
   {
     vector<ScoreboardSlot *>::iterator cumulative_it= cumulative_stats_by_user_vector->begin();
     bool found= false;
@@ -229,9 +229,8 @@ bool LoggingStats::postEnd(Session *session)
     {
       updateCumulativeStatsByUserVector(scoreboard_slot);
     }
+    delete scoreboard_slot;
   }
-
-  delete scoreboard_slot;
 
   return false;
 }
