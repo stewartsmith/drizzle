@@ -2795,7 +2795,8 @@ static char *primary_key_fields(const char *table_name)
   {
     char *end;
     /* result (terminating \0 is already in result_length) */
-		size_t result_length_alloc = result_length + 10;
+
+    size_t result_length_alloc= result_length + 10;
     result= (char *)malloc(result_length_alloc);
     if (!result)
     {
@@ -2807,12 +2808,12 @@ static char *primary_key_fields(const char *table_name)
     row= drizzle_row_next(&res);
     quoted_field= quote_name(row[4], buff, 0);
     end= strcpy(result, quoted_field) + strlen(quoted_field);
-		result_length_alloc -= strlen(quoted_field);
+    resutl_length_alloc-= strlen(quoted_field);
     while ((row= drizzle_row_next(&res)) && atoi(row[3]) > 1)
     {
       quoted_field= quote_name(row[4], buff, 0);
       end+= snprintf(end, result_length_alloc, ",%s",quoted_field);
-			result_length_alloc -= strlen(quoted_field);
+      resutl_length_alloc-= strlen(quoted_field);
     }
   }
 

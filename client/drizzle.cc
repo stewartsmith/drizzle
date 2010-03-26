@@ -1268,9 +1268,8 @@ int main(int argc,char *argv[])
   glob_buffer= new string();
   glob_buffer->reserve(512);
 
-	size_t output_buff_size = 512;
-  char * output_buff= (char *)malloc(output_buff_size);
-  memset(output_buff, '\0', output_buff_size);
+  const size_t output_buff_size = 512;
+  char * output_buff= (char *)calloc(output_buff_size, sizeof(char));
 
   snprintf(output_buff, output_buff_size,
           _("Your Drizzle connection id is %u\nServer version: %s\n"),
