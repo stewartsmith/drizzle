@@ -695,7 +695,7 @@ void create_select_for_variable(const char *var_name)
   */
   if ((var= get_system_var(session, OPT_SESSION, tmp, null_lex_string)))
   {
-    end+= sprintf(buff, "@@session.%s", var_name);
+    end+= snprintf(buff, sizeof(buff), "@@session.%s", var_name);
     var->set_name(buff, end-buff, system_charset_info);
     session->add_item_to_list(var);
   }
