@@ -3691,6 +3691,11 @@ bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
   key_length= TableShare::createKey(key, identifier);
   share->set_table_cache_key(key, key_length);
 
+  message::Table *message= share->getTableProto();
+
+  message->set_name(identifier.getTableName());
+  message->set_schema(identifier.getSchemaName());
+
   return false;
 }
 
