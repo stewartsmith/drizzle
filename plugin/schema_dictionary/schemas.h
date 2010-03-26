@@ -32,7 +32,7 @@ public:
   { }
 
   SchemasTool(const char *table_arg) :
-    drizzled::plugin::TableFunction("data_dictionary", table_arg)
+    drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
   { }
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
@@ -52,7 +52,7 @@ public:
     const std::string &schema_name()
     {
       assert(is_schema_primed);
-      return is_schema_parsed ? schema.name() : (*schema_iterator);
+      return schema.name();
     }
 
     bool populate();
