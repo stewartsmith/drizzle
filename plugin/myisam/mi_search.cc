@@ -175,7 +175,7 @@ int _mi_bin_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *pa
 {
   (void)buff;
   register int start,mid,end,save_end;
-  int flag;
+  int flag=0;
   uint32_t totlength,nod_flag,not_used[2];
 
   totlength=keyinfo->keylength+(nod_flag=mi_test_if_nod(page));
