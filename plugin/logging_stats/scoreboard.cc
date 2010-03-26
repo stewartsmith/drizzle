@@ -43,7 +43,7 @@ Scoreboard::Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets)
 {
 
   /* calculate the number of elements in each bucket */
-  uint32_t number_per_bucket= ceil( (double)number_sessions / (double)number_buckets );
+  uint32_t number_per_bucket= static_cast<uint32_t> ( ceil( static_cast<double>(number_sessions) / static_cast<double>(number_buckets) ) );
 
   /* populate the vector of scoreboard vectors */
   for (uint32_t j= 0; j < number_buckets; j++)
