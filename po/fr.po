@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-03-15 21:00+0000\n"
-"PO-Revision-Date: 2010-03-23 20:58+0000\n"
+"PO-Revision-Date: 2010-03-25 16:33+0000\n"
 "Last-Translator: Damien Seguy <damien.seguy@gmail.com>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-03-24 04:51+0000\n"
+"X-Launchpad-Export-Date: 2010-03-26 04:47+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -4494,23 +4494,23 @@ msgid "Received an invalid enum value '%s'."
 msgstr "Réception d'une valeur invalide pour une ENUM : '%s'"
 
 msgid "Tables which are replicated require a primary key."
-msgstr ""
+msgstr "Les tables qui sont répliquées doivent avoir une clé primaire."
 
 #, c-format
 msgid "Corrupt or invalid table definition: %s"
-msgstr ""
+msgstr "Définition de table invalide ou corrompue : %s"
 
 #, c-format
 msgid "Schema does not exist: %s"
-msgstr ""
+msgstr "La base de données n'existe pas : %s"
 
 #, c-format
 msgid "Error altering schema: %s"
-msgstr ""
+msgstr "Erreur lors de la modification de la base de données : %s"
 
 #, c-format
 msgid "Error droppping Schema : %s"
-msgstr ""
+msgstr "Erreur lors de l'effacement de la base de données : %s"
 
 #, c-format
 msgid "Can't create/write to file '%s' (Errcode: %d)"
@@ -4650,7 +4650,7 @@ msgstr "erreur: impossible d'ouvrir le dossier : %s\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
-msgstr ""
+msgstr "Utilisation : %s TRANSACTION_LOG [--checksum] \n"
 
 #, c-format
 msgid "Cannot open file: %s\n"
@@ -4659,10 +4659,12 @@ msgstr "Impossible d'ouvrir le fichier : %s\n"
 #, c-format
 msgid "Found a non-transaction message in log.  Currently, not supported.\n"
 msgstr ""
+"Un message non-transactionnel a été trouvé dans les logs. Actuellement, ils "
+"ne sont pas supportés.\n"
 
 #, c-format
 msgid "Attempted to read record bigger than INT_MAX\n"
-msgstr ""
+msgstr "Tentative de lecture d'un entier plus grand que INT_MAX\n"
 
 #, c-format
 msgid "Memory allocation failure trying to allocate %<PRIu64> bytes.\n"
@@ -4670,11 +4672,11 @@ msgstr "Échec d'allocation de mémoire de %<PRIu64> octets.\n"
 
 #, c-format
 msgid "Could not read transaction message.\n"
-msgstr ""
+msgstr "Impossible de lire le message de transaction.\n"
 
 #, c-format
 msgid "GPB ERROR: %s.\n"
-msgstr ""
+msgstr "GPB ERROR : %s.\n"
 
 #, c-format
 msgid ""
@@ -4682,6 +4684,9 @@ msgid ""
 "\n"
 "%s\n"
 msgstr ""
+"HEXDUMP : \n"
+"\n"
+"%s\n"
 
 #, c-format
 msgid "Unable to parse command. Got error: %s.\n"
@@ -4690,10 +4695,11 @@ msgstr "Impossible d'analyser la commande. Erreur : %s.\n"
 #, c-format
 msgid "Checksum failed. Wanted %<PRIu32> got %<PRIu32>\n"
 msgstr ""
+"La somme de contrôle a échoué. On attendait %<PRIu32> et on a eu %<PRIu32>\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
-msgstr ""
+msgstr "Utilisation : %s TRANSACTION_LOG\n"
 
 msgid "Warning: "
 msgstr "Attention : "
@@ -4760,10 +4766,10 @@ msgstr "La fonction errmsg() du plugin errmsg plugin '%s'  a échoué"
 
 #, c-format
 msgid "A function named %s already exists!\n"
-msgstr ""
+msgstr "Une fonction appelée %s existe déjà!\n"
 
 msgid "Could not add Function!\n"
-msgstr ""
+msgstr "Impossible d'ajouter la fonction!\n"
 
 msgid "No sockets could be bound for listening"
 msgstr "Aucune socket n'a pu être mise en écoute"
@@ -4839,11 +4845,11 @@ msgstr "la fonction init du plugin '%s' a retourné une erreur\n"
 
 #, c-format
 msgid "Couldn't load plugin library named '%s'.\n"
-msgstr ""
+msgstr "Impossible de charger la bibliothèque de module appelée '%s'.\n"
 
 #, c-format
 msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
+msgstr "Impossible de charger le module appelé '%s'.\n"
 
 msgid "Out of memory."
 msgstr "Dépassement de capacité mémoire."
@@ -4895,7 +4901,7 @@ msgstr "le log de '%s' post() a échoué"
 
 #, c-format
 msgid "logging '%s' postEnd() failed"
-msgstr ""
+msgstr "L'enregistrement '%s' postEnd() a échoué"
 
 #, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
@@ -4907,11 +4913,11 @@ msgstr "set() du plugin de qcache '%s' a échoué"
 
 #, c-format
 msgid "qcache plugin '%s' invalidateTable() failed"
-msgstr ""
+msgstr "La fonction invalidateTable() du module qcache '%s'  a échoué"
 
 #, c-format
 msgid "qcache plugin '%s' invalidateDb() failed"
-msgstr ""
+msgstr "La fonction invalidateDb() du moudle qcache '%s' a échoué"
 
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
@@ -4945,6 +4951,8 @@ msgstr "Erreur lors du chargement des options de la base de données: '%s':"
 #, c-format
 msgid "Found %d prepared transaction(s) in resource manager."
 msgstr ""
+"%d transaction(s) préparée(s) ont été trouvées dans le gestionnaire de "
+"ressources."
 
 msgid "Starting crash recovery..."
 msgstr "Lancement de la restauration après crash..."
@@ -4976,15 +4984,15 @@ msgstr "La table temporaire '%s' n'a pas pu être supprimée, erreur: %d"
 
 #, c-format
 msgid "Variable named %s already exists!\n"
-msgstr ""
+msgstr "La variable %s existe déjà!\n"
 
 #, c-format
 msgid "Could not add Variable: %s\n"
-msgstr ""
+msgstr "Impossible d'ajouter la variable : %s\n"
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
-msgstr ""
+msgstr "La table %s avait un curseur de données ouvert lors de reopen_table"
 
 #, c-format
 msgid "Unknown - internal error %d during operation"
@@ -5084,13 +5092,13 @@ msgid "Turn on extra debugging."
 msgstr "Activation d'informations de débogage supplémentaires."
 
 msgid "User to use for auth."
-msgstr ""
+msgstr "Utilisateur nécessaire pour l'authentification."
 
 msgid "Password to use for auth."
-msgstr ""
+msgstr "Mot de passe nécessaire pour l'authentification."
 
 msgid "Default database to use."
-msgstr ""
+msgstr "Base de données à utiliser par défaut."
 
 msgid "Enable default replicator"
 msgstr "Active le réplicateur par défaut"
