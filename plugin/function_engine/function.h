@@ -43,7 +43,7 @@ public:
 
   drizzled::plugin::TableFunction *getTool(const char *name_arg);
 
-  int doCreateTable(drizzled::Session *,
+  int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
                     drizzled::TableIdentifier &,
                     drizzled::message::Table&)

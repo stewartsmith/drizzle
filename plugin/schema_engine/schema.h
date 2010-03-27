@@ -96,7 +96,7 @@ public:
     return EPERM;
   }
 
-  int doCreateTable(drizzled::Session*,
+  int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
                     drizzled::TableIdentifier&,
                     drizzled::message::Table&)

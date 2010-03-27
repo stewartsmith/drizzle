@@ -78,7 +78,7 @@ public:
     return ha_blackhole_exts;
   }
 
-  int doCreateTable(Session*,
+  int doCreateTable(Session&,
                     Table&,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
@@ -206,7 +206,7 @@ int ha_blackhole::close(void)
   return 0;
 }
 
-int BlackholeEngine::doCreateTable(Session*,
+int BlackholeEngine::doCreateTable(Session&,
                                    Table&,
                                    drizzled::TableIdentifier &identifier,
                                    drizzled::message::Table& proto)

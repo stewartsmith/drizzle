@@ -83,8 +83,8 @@ public:
     return ha_archive_exts;
   }
 
-  int doCreateTable(drizzled::Session *session,
-                    drizzled::Table& table_arg,
+  int doCreateTable(drizzled::Session &session,
+                    drizzled::Table &table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table& proto);
 

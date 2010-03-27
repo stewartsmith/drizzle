@@ -421,12 +421,12 @@ public:
 	return(ha_innobase_exts);
   }
 
-  UNIV_INTERN int doCreateTable(Session *session,
-                                Table& form,
+  UNIV_INTERN int doCreateTable(Session &session,
+                                Table &form,
                                 drizzled::TableIdentifier &identifier,
                                 message::Table&);
   UNIV_INTERN int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
-  UNIV_INTERN int doDropTable(Session& session, TableIdentifier &identifier);
+  UNIV_INTERN int doDropTable(Session &session, TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -5515,7 +5515,7 @@ UNIV_INTERN
 int
 InnobaseEngine::doCreateTable(
 /*================*/
-	Session*	session,	/*!< in: Session */
+	Session         &session,	/*!< in: Session */
 	Table&		form,		/*!< in: information on table columns and indexes */
         drizzled::TableIdentifier &identifier,
         message::Table& create_proto)
@@ -5536,8 +5536,6 @@ InnobaseEngine::doCreateTable(
         bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
 
 	const char *table_name= identifier.getPath().c_str();
-
-	assert(session != NULL);
 
 #ifdef __WIN__
 	/* Names passed in from server are in two formats:
@@ -5571,14 +5569,14 @@ InnobaseEngine::doCreateTable(
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
 
-	parent_trx = check_trx_exists(session);
+	parent_trx = check_trx_exists(&session);
 
 	/* In case MySQL calls this in the middle of a SELECT query, release
 	possible adaptive hash latch to avoid deadlocks of threads */
 
 	trx_search_latch_release_if_reserved(parent_trx);
 
-	trx = innobase_trx_allocate(session);
+	trx = innobase_trx_allocate(&session);
 
 	srv_lower_case_table_names = TRUE;
 
@@ -5597,7 +5595,7 @@ InnobaseEngine::doCreateTable(
 	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
-	if (! create_options_are_valid(session, form, create_proto)) {
+	if (! create_options_are_valid(&session, form, create_proto)) {
 		error = ER_ILLEGAL_HA_CREATE_OPTION;
 		goto cleanup;
 	}
@@ -5621,7 +5619,7 @@ InnobaseEngine::doCreateTable(
 		}
 
 		if (!srv_file_per_table) {
-			push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+			push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 				     ER_ILLEGAL_HA_CREATE_OPTION,
 				     "InnoDB: KEY_BLOCK_SIZE"
 				     " requires innodb_file_per_table.");
@@ -5629,7 +5627,7 @@ InnobaseEngine::doCreateTable(
 		}
 
 		if (file_format < DICT_TF_FORMAT_ZIP) {
-			push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+			push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 				     ER_ILLEGAL_HA_CREATE_OPTION,
 				     "InnoDB: KEY_BLOCK_SIZE"
 				     " requires innodb_file_format >"
@@ -5638,7 +5636,7 @@ InnobaseEngine::doCreateTable(
 		}
 
 		if (!iflags) {
-			push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+			push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					    ER_ILLEGAL_HA_CREATE_OPTION,
 					    "InnoDB: ignoring"
 					    " KEY_BLOCK_SIZE=%lu.",
@@ -5657,7 +5655,7 @@ InnobaseEngine::doCreateTable(
 				such combinations can be obtained
 				with ALTER TABLE anyway. */
 				push_warning_printf(
-					session,
+					&session,
 					DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
@@ -5695,7 +5693,7 @@ InnobaseEngine::doCreateTable(
 
 			if (!srv_file_per_table) {
 				push_warning_printf(
-					session,
+					&session,
 					DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ROW_FORMAT=%s"
@@ -5703,7 +5701,7 @@ InnobaseEngine::doCreateTable(
 					row_format_name);
 			} else if (file_format < DICT_TF_FORMAT_ZIP) {
 				push_warning_printf(
-					session,
+					&session,
 					DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ROW_FORMAT=%s"
@@ -5829,7 +5827,7 @@ InnobaseEngine::doCreateTable(
 	this is an ALTER TABLE. */
 
 	if ((create_proto.options().has_auto_increment_value()
-	    || session_sql_command(session) == SQLCOM_ALTER_TABLE)
+	    || session_sql_command(&session) == SQLCOM_ALTER_TABLE)
 	    && create_proto.options().auto_increment_value() != 0) {
 
 		/* Query was ALTER TABLE...AUTO_INCREMENT = x; or

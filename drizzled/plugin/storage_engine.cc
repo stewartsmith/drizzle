@@ -513,7 +513,7 @@ int StorageEngine::createTable(Session &session,
     {
       share.storage_engine->setTransactionReadWrite(session);
 
-      error= share.storage_engine->doCreateTable(&session,
+      error= share.storage_engine->doCreateTable(session,
                                                  table,
                                                  identifier,
                                                  table_message);
@@ -582,13 +582,13 @@ public:
   }
 };
 
-void StorageEngine::getSchemaNames(SchemaNameList &set_of_names)
+void StorageEngine::getSchemaNames(Session &session, SchemaNameList &set_of_names)
 {
   // Add hook here for engines to register schema.
   for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
            AddSchemaNames(set_of_names));
 
-  plugin::Authorization::pruneSchemaNames(current_session->getSecurityContext(),
+  plugin::Authorization::pruneSchemaNames(session.getSecurityContext(),
                                           set_of_names);
 }
 
@@ -599,7 +599,7 @@ class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, b
 
 public:
   StorageEngineGetSchemaDefinition(const std::string schema_name_arg,
-                                  message::Schema &schema_proto_arg) :
+                                   message::Schema &schema_proto_arg) :
     schema_name(schema_name_arg),
     schema_proto(schema_proto_arg) 
   {
@@ -776,7 +776,7 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 }
 
 
-void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_of_names)
+void StorageEngine::getTableNames(Session &session, const string &schema_name, TableNameList &set_of_names)
 {
   string tmp_path;
 
@@ -804,9 +804,7 @@ void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
            AddTableName(directory, schema_name, set_of_names));
 
-  Session *session= current_session;
-
-  session->doGetTableNames(directory, schema_name, set_of_names);
+  session.doGetTableNames(directory, schema_name, set_of_names);
 
 }
 

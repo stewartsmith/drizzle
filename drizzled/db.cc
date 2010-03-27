@@ -495,7 +495,7 @@ static long mysql_rm_known_files(Session *session,
 
   tot_list_next= &tot_list;
 
-  plugin::StorageEngine::getTableNames(db, dropped_tables);
+  plugin::StorageEngine::getTableNames(*session, db, dropped_tables);
 
   for (plugin::TableNameList::iterator it= dropped_tables.begin();
        it != dropped_tables.end();

@@ -107,7 +107,7 @@ public:
     return ha_myisam_exts;
   }
 
-  int doCreateTable(Session *,
+  int doCreateTable(Session&,
                     Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     message::Table&);
@@ -1348,7 +1348,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-int MyisamEngine::doCreateTable(Session *session,
+int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
                                 drizzled::TableIdentifier &identifier,
                                 message::Table& create_proto)
@@ -1390,7 +1390,7 @@ int MyisamEngine::doCreateTable(Session *session,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
 
-  session->storeTableMessage(identifier, create_proto);
+  session.storeTableMessage(identifier, create_proto);
 
   return error;
 }

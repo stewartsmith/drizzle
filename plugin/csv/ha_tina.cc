@@ -139,8 +139,8 @@ public:
     return ha_tina_exts;
   }
 
-  int doCreateTable(Session *,
-                    Table& table_arg,
+  int doCreateTable(Session &,
+                    Table &table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
@@ -1386,7 +1386,7 @@ int ha_tina::delete_all_rows()
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::doCreateTable(Session *session,
+int Tina::doCreateTable(Session &session,
                         Table& table_arg,
                         drizzled::TableIdentifier &identifier,
                         drizzled::message::Table &create_proto)
@@ -1422,7 +1422,7 @@ int Tina::doCreateTable(Session *session,
 
   internal::my_close(create_file, MYF(0));
 
-  session->storeTableMessage(identifier, create_proto);
+  session.storeTableMessage(identifier, create_proto);
 
   return 0;
 }

@@ -73,8 +73,8 @@ public:
     return ha_heap_exts;
   }
 
-  int doCreateTable(Session *session,
-                    Table& table_arg,
+  int doCreateTable(Session &session,
+                    Table &table_arg,
                     drizzled::TableIdentifier &identifier,
                     message::Table &create_proto);
 
@@ -673,7 +673,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
   return key->rec_per_key[key->key_parts-1];
 }
 
-int HeapEngine::doCreateTable(Session *session,
+int HeapEngine::doCreateTable(Session &session,
                               Table &table_arg,
                               drizzled::TableIdentifier &identifier,
                               message::Table& create_proto)
@@ -682,14 +682,14 @@ int HeapEngine::doCreateTable(Session *session,
   HP_SHARE *internal_share;
   const char *table_name= identifier.getPath().c_str();
 
-  error= heap_create_table(session, table_name, &table_arg,
+  error= heap_create_table(&session, table_name, &table_arg,
                            false, 
                            create_proto,
                            &internal_share);
 
   if (error == 0)
   {
-    session->storeTableMessage(identifier, create_proto);
+    session.storeTableMessage(identifier, create_proto);
   }
 
   return error;
