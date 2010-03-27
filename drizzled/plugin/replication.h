@@ -34,11 +34,11 @@ namespace drizzled
 namespace plugin
 {
 
-typedef enum replication_return_code_t
+enum ReplicationReturnCode
 {
   SUCCESS= 0, /* no error */
   UNKNOWN_ERROR= 1
-} ReplicationReturnCode;
+};
 
 } /* namespace plugin */
 } /* namespace drizzled */

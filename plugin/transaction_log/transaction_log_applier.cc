@@ -80,7 +80,7 @@ TransactionLogApplier::~TransactionLogApplier()
 }
 
 plugin::ReplicationReturnCode
-TransactionLogApplier::apply(const Session &in_session,
+TransactionLogApplier::apply(Session &in_session,
                              const message::Transaction &to_apply)
 {
   (void) in_session;
