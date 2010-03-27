@@ -59,7 +59,7 @@ sub mtr_report_test_name ($) {
   if ($::opt_subunit) {
     printf "test: $tname\n";
   } else {
-    printf "%-30s ", $tname;
+    printf "%-60s ", $tname;
   }
 }
 
@@ -121,14 +121,14 @@ sub mtr_report_test_passed ($) {
   {
     $timer= mtr_fromfile("$::opt_vardir/log/timer");
     $tot_real_time += ($timer/1000);
-    $timer= sprintf "%12s", $timer;
+    $timer= sprintf "%7s", $timer;
     ### XXX: How to format this as iso6801 datetime?
   }
   $tinfo->{'result'}= 'MTR_RES_PASSED';
   if ($::opt_subunit) {
     mtr_report("success: $tname");
   } else {
-    mtr_report("[ pass ]   $timer");
+    mtr_report("[ pass ] $timer");
   }
 }
 
@@ -164,7 +164,7 @@ sub mtr_report_test_failed ($) {
   if ($::opt_subunit) {
     mtr_report("failure: $tname [\n$comment\n]");
   } else {
-    mtr_report("[ fail ]   $comment");
+    mtr_report("[ fail ]\n$comment");
   }
 }
 
@@ -538,18 +538,18 @@ sub mtr_report_stats ($) {
 ##############################################################################
 
 sub mtr_print_line () {
-  print '-' x 55, "\n";
+  print '-' x 80, "\n";
 }
 
 sub mtr_print_thick_line () {
-  print '=' x 55, "\n";
+  print '=' x 80, "\n";
 }
 
 sub mtr_print_header () {
   print "DEFAULT STORAGE ENGINE: $::opt_engine\n";
   if ( $::opt_timer )
   {
-    print "TEST                           RESULT         TIME (ms)\n";
+    printf "%-61s%-9s%10s\n","TEST","RESULT","TIME (ms)";
   }
   else
   {

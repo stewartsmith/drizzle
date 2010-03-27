@@ -2112,11 +2112,20 @@ bool Session::doesTableMessageExist(TableIdentifier &identifier)
   return true;
 }
 
-bool Session::rename(TableIdentifier &from, TableIdentifier &to)
+bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
 {
   TableMessageCache::iterator iter;
 
   table_message_cache[to.getPath()]= table_message_cache[from.getPath()];
+
+  iter= table_message_cache.find(to.getPath());
+
+  if (iter == table_message_cache.end())
+  {
+    return false;
+  }
+
+  to.copyToTableMessage((*iter).second);
 
   (void)removeTableMessage(from);
 
