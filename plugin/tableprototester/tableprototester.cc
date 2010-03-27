@@ -52,8 +52,7 @@ public:
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY)
+                                     HTON_AUTO_PART_KEY)
   {
     table_definition_ext= TABLEPROTOTESTER_EXT;
   }

@@ -271,7 +271,6 @@ public:
                             HTON_PRIMARY_KEY_IN_READ_INDEX |
                             HTON_PARTIAL_COLUMN_READ |
                             HTON_TABLE_SCAN_ON_INDEX |
-                            HTON_HAS_DATA_DICTIONARY |
                             HTON_HAS_FOREIGN_KEYS |
                             HTON_HAS_DOES_TRANSACTIONS)
   {

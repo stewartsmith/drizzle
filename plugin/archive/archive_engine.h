@@ -66,8 +66,7 @@ public:
     drizzled::plugin::StorageEngine("ARCHIVE",
                                     drizzled::HTON_FILE_BASED |
                                     drizzled::HTON_STATS_RECORDS_IS_EXACT |
-                                    drizzled::HTON_HAS_RECORDS |
-                                    drizzled::HTON_HAS_DATA_DICTIONARY),
+                                    drizzled::HTON_HAS_RECORDS),
     archive_open_tables()
   {
     table_definition_ext= ARZ;

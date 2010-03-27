@@ -32,7 +32,6 @@ Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_HAS_SCHEMA_DICTIONARY |
-                                  HTON_HAS_DATA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED)
 {

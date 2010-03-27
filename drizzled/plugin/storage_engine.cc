@@ -67,7 +67,6 @@ namespace plugin
 
 static EngineVector vector_of_engines;
 static EngineVector vector_of_schema_engines;
-static EngineVector vector_of_data_dictionary;
 
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
@@ -155,9 +154,6 @@ bool StorageEngine::addPlugin(StorageEngine *engine)
   if (engine->check_flag(HTON_BIT_SCHEMA_DICTIONARY))
     vector_of_schema_engines.push_back(engine);
 
-  if (engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-    vector_of_data_dictionary.push_back(engine);
-
   return false;
 }
 
@@ -167,7 +163,6 @@ void StorageEngine::removePlugin(StorageEngine *)
   {
     vector_of_engines.clear();
     vector_of_schema_engines.clear();
-    vector_of_data_dictionary.clear();
 
     shutdown_has_begun= true;
   }
@@ -337,10 +332,10 @@ bool plugin::StorageEngine::doesTableExist(Session &session,
   }
 
   EngineVector::iterator iter=
-    find_if(vector_of_data_dictionary.begin(), vector_of_data_dictionary.end(),
+    find_if(vector_of_engines.begin(), vector_of_engines.end(),
             StorageEngineDoesTableExist(session, identifier));
 
-  if (iter == vector_of_data_dictionary.end())
+  if (iter == vector_of_engines.end())
   {
     return false;
   }

@@ -50,7 +50,6 @@ using namespace drizzled;
 Schema::Schema():
   drizzled::plugin::StorageEngine("schema",
                                   HTON_ALTER_NOT_SUPPORTED |
-                                  HTON_HAS_DATA_DICTIONARY |
                                   HTON_HAS_SCHEMA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED),
