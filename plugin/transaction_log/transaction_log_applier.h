@@ -43,14 +43,20 @@
 #include <vector>
 #include <string>
 
+namespace drizzled
+{
+  class Session;
+}
+
 class TransactionLog;
+class WriteBuffer;
 
 class TransactionLogApplier: public drizzled::plugin::TransactionApplier 
 {
 public:
   TransactionLogApplier(const std::string name_arg,
                         TransactionLog &in_transaction_log,
-                        bool in_do_checksum);
+                        uint32_t in_num_write_buffers);
 
   /** Destructor */
   ~TransactionLogApplier();
@@ -80,7 +86,15 @@ private:
   TransactionLogApplier(const TransactionLogApplier &other);
   TransactionLogApplier &operator=(const TransactionLogApplier &other);
   TransactionLog &transaction_log;
-  bool do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
+  uint32_t num_write_buffers; ///< Number of write buffers used
+  std::vector<WriteBuffer *> write_buffers; ///< array of write buffers
+
+  /**
+   * Returns the write buffer for the supplied session
+   *
+   * @param Session descriptor
+   */
+  WriteBuffer *getWriteBuffer(const drizzled::Session &session);
 };
 
 #endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_APPLIER_H */

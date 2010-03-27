@@ -6,7 +6,7 @@
  *
  *  Authors:
  *
- *  Jay Pipes <jaypipes@gmail.com.com>
+ *    Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,24 +43,19 @@
  */
 
 #include "config.h"
+#include "write_buffer.h"
 #include "transaction_log.h"
 #include "transaction_log_applier.h"
 #include "transaction_log_index.h"
 
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
+#include <vector>
 
-#include <drizzled/errmsg_print.h>
-#include <drizzled/gettext.h>
-#include <drizzled/algorithm/crc32.h>
 #include <drizzled/message/transaction.pb.h>
-#include <google/protobuf/io/coded_stream.h>
+#include <drizzled/util/functors.h>
+#include <drizzled/session.h>
 
 using namespace std;
 using namespace drizzled;
-using namespace google;
 
 TransactionLogApplier *transaction_log_applier= NULL; /* The singleton transaction log applier */
 
@@ -68,81 +63,58 @@ extern TransactionLogIndex *transaction_log_index;
 
 TransactionLogApplier::TransactionLogApplier(const string name_arg,
                                              TransactionLog &in_transaction_log,
-                                             bool in_do_checksum) :
+                                             uint32_t in_num_write_buffers) :
   plugin::TransactionApplier(name_arg),
   transaction_log(in_transaction_log),  
-  do_checksum(in_do_checksum)
+  num_write_buffers(in_num_write_buffers),
+  write_buffers()
 {
+  /* 
+   * Create each of the buffers we need for undo log entries 
+   */
+  write_buffers.reserve(num_write_buffers);
+  for (size_t x= 0; x < num_write_buffers; ++x)
+  {
+    write_buffers.push_back(new WriteBuffer());
+  }
 }
 
 TransactionLogApplier::~TransactionLogApplier()
 {
+  for_each(write_buffers.begin(),
+           write_buffers.end(),
+           DeletePtr());
+  write_buffers.clear();
+}
+
+WriteBuffer *TransactionLogApplier::getWriteBuffer(const Session &session)
+{
+  return write_buffers[session.getSessionId() % num_write_buffers];
 }
 
 plugin::ReplicationReturnCode
 TransactionLogApplier::apply(const Session &in_session,
                              const message::Transaction &to_apply)
 {
-  (void) in_session;
-  uint8_t *buffer; /* Buffer we will write serialized header, 
-                      message and trailing checksum to */
-  uint8_t *orig_buffer;
+  size_t entry_size= TransactionLog::getLogEntrySize(to_apply);
+  WriteBuffer *write_buffer= getWriteBuffer(in_session);
 
-  size_t message_byte_length= to_apply.ByteSize();
-  size_t total_envelope_length= TransactionLog::HEADER_TRAILER_BYTES + message_byte_length;
+  uint32_t checksum;
 
-  /* 
-   * Attempt allocation of raw memory buffer for the header, 
-   * message and trailing checksum bytes.
-   */
-  buffer= static_cast<uint8_t *>(malloc(total_envelope_length));
-  if (buffer == NULL)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to allocate enough memory to buffer header, "
-                    "transaction message, and trailing checksum bytes. Tried to allocate %" PRId64
-                    " bytes.  Error: %s\n"), 
-                  static_cast<int64_t>(total_envelope_length),
-                  strerror(errno));
-    return plugin::UNKNOWN_ERROR;
-  }
-  else
-    orig_buffer= buffer; /* We will free() orig_buffer, as buffer is moved during write */
+  write_buffer->lock();
+  write_buffer->resize(entry_size);
+  uint8_t *bytes= write_buffer->getRawBytes();
+  bytes= transaction_log.packTransactionIntoLogEntry(to_apply,
+                                                     bytes,
+                                                     &checksum);
 
-  /*
-   * Write the header information, which is the message type and
-   * the length of the transaction message into the buffer
-   */
-  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(
-      static_cast<uint32_t>(ReplicationServices::TRANSACTION), buffer);
-  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(
-      static_cast<uint32_t>(message_byte_length), buffer);
-  
-  /*
-   * Now write the serialized transaction message, followed
-   * by the optional checksum into the buffer.
-   */
-  buffer= to_apply.SerializeWithCachedSizesToArray(buffer);
-
-  uint32_t checksum= 0;
-  if (do_checksum)
-  {
-    checksum= drizzled::algorithm::crc32(
-        reinterpret_cast<char *>(buffer) - message_byte_length, message_byte_length);
-  }
-
-  /* We always write in network byte order */
-  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(checksum, buffer);
-
-  /* Ask the transaction log to write the entry and return where it wrote it */
-  off_t written_to= transaction_log.writeEntry(orig_buffer, total_envelope_length);
-
-  free(orig_buffer);
+  off_t written_to= transaction_log.writeEntry(bytes, entry_size);
+  write_buffer->unlock();
 
   /* Add an entry to the index describing what was just applied */
   transaction_log_index->addEntry(TransactionLogEntry(ReplicationServices::TRANSACTION,
                                                       written_to,
-                                                      total_envelope_length),
+                                                      entry_size),
                                   to_apply,
                                   checksum);
   return plugin::SUCCESS;
