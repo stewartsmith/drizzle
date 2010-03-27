@@ -139,7 +139,12 @@ int HeapEngine::doDropTable(Session &session, TableIdentifier &identifier)
 {
   session.removeTableMessage(identifier);
 
-  return heap_delete_table(identifier.getPath().c_str());
+  int error= heap_delete_table(identifier.getPath().c_str());
+
+  if (error == ENOENT)
+    error= 0;
+
+  return error;
 }
 
 static HeapEngine *heap_storage_engine= NULL;
@@ -356,7 +361,7 @@ int ha_heap::delete_row(const unsigned char * buf)
   int res;
   ha_statistic_increment(&system_status_var::ha_delete_count);
   res= heap_delete(file,buf);
-  if (!res && table->s->tmp_table == STANDARD_TABLE &&
+  if (!res && table->s->tmp_table == message::Table::STANDARD &&
       ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)
   {
     /*
@@ -514,7 +519,7 @@ int ha_heap::reset()
 int ha_heap::delete_all_rows()
 {
   heap_clear(file);
-  if (table->s->tmp_table == STANDARD_TABLE)
+  if (table->s->tmp_table == message::Table::STANDARD)
   {
     /*
        We can perform this safely since only one writer at the time is

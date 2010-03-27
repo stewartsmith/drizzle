@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <fstream>
 #include <algorithm>
 #include <functional>
 
@@ -131,7 +132,10 @@ int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
         break;
     }
     else
+    {
       enoent_or_zero= 0;                        // No error for ENOENT
+    }
+
     error= enoent_or_zero;
   }
   return error;
@@ -293,9 +297,7 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    int ret= engine->doGetTableDefinition(session,
-                                          identifier,
-                                          table_message);
+    int ret= engine->doGetTableDefinition(session, identifier, table_message);
 
     if (ret != ENOENT)
       err= ret;
@@ -448,14 +450,20 @@ int StorageEngine::dropTable(Session& session,
   int error= 0;
   int error_proto;
   message::Table src_proto;
-  StorageEngine* engine;
+  StorageEngine *engine;
 
   error_proto= StorageEngine::getTableDefinition(session, identifier, src_proto);
 
   if (error_proto == ER_CORRUPT_TABLE_DEFINITION)
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             src_proto.InitializationErrorString().c_str());
+    string error_message;
+
+    error_message.append(identifier.getSQLPath());
+    error_message.append(" : ");
+    error_message.append(src_proto.InitializationErrorString());
+
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), error_message.c_str());
+
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
@@ -463,24 +471,34 @@ int StorageEngine::dropTable(Session& session,
 
   if (engine)
   {
-    std::string path(identifier.getPath());
-    engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, identifier);
-
-    if (not error)
-    {
-      if (not engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-      {
-        uint64_t counter; // @todo We need to refactor to check that.
-
-        for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
-                 DropTable(session, identifier, counter));
-      }
-    }
+    error= StorageEngine::dropTable(session, *engine, identifier);
   }
 
   if (error_proto && error == 0)
     return 0;
+
+  return error;
+}
+
+int StorageEngine::dropTable(Session& session,
+                             StorageEngine &engine,
+                             TableIdentifier &identifier)
+{
+  int error;
+
+  engine.setTransactionReadWrite(session);
+  error= engine.doDropTable(session, identifier);
+
+  if (not error)
+  {
+    if (not engine.check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
+    {
+      uint64_t counter; // @todo We need to refactor to check that.
+
+      for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
+               DropTable(session, identifier, counter));
+    }
+  }
 
   return error;
 }
@@ -626,15 +644,18 @@ void StorageEngine::getSchemaNames(SchemaNameList &set_of_names)
 
 class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
 {
-  const std::string &schema_name;
+  std::string schema_name;
   message::Schema &schema_proto;
 
 public:
-  StorageEngineGetSchemaDefinition(const std::string &schema_name_arg,
+  StorageEngineGetSchemaDefinition(const std::string schema_name_arg,
                                   message::Schema &schema_proto_arg) :
     schema_name(schema_name_arg),
     schema_proto(schema_proto_arg) 
-  { }
+  {
+    transform(schema_name.begin(), schema_name.end(),
+              schema_name.begin(), ::tolower);
+  }
 
   result_type operator() (argument_type engine)
   {
@@ -645,6 +666,11 @@ public:
 /*
   Return value is "if parsed"
 */
+bool StorageEngine::getSchemaDefinition(TableIdentifier &identifier, message::Schema &proto)
+{
+  return StorageEngine::getSchemaDefinition(identifier.getSchemaName(), proto);
+}
+
 bool StorageEngine::getSchemaDefinition(const std::string &schema_name, message::Schema &proto)
 {
   proto.Clear();
@@ -666,6 +692,13 @@ bool StorageEngine::doesSchemaExist(const std::string &schema_name)
   message::Schema proto;
 
   return StorageEngine::getSchemaDefinition(schema_name, proto);
+}
+
+bool StorageEngine::doesSchemaExist(TableIdentifier &identifier)
+{
+  message::Schema proto;
+
+  return StorageEngine::getSchemaDefinition(identifier.getSchemaName(), proto);
 }
 
 
@@ -831,28 +864,27 @@ void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_
 class DropTables: public unary_function<StorageEngine *, void>
 {
   Session &session;
-  TableNameList &set_of_names;
+  TableIdentifierList &table_identifiers;
 
 public:
 
-  DropTables(Session &session_arg, set<string>& of_names) :
+  DropTables(Session &session_arg, TableIdentifierList &table_identifiers_arg) :
     session(session_arg),
-    set_of_names(of_names)
+    table_identifiers(table_identifiers_arg)
   { }
 
   result_type operator() (argument_type engine)
   {
-    for (TableNameList::iterator iter= set_of_names.begin();
-         iter != set_of_names.end();
+    for (TableIdentifierList::iterator iter= table_identifiers.begin();
+         iter != table_identifiers.end();
          iter++)
     {
-      TableIdentifier dummy((*iter).c_str());
-      int error= engine->doDropTable(session, dummy);
+      int error= engine->doDropTable(session, const_cast<TableIdentifier&>(*iter));
 
       // On a return of zero we know we found and deleted the table. So we
       // remove it from our search.
       if (not error)
-        set_of_names.erase(iter);
+        table_identifiers.erase(iter);
     }
   }
 };
@@ -865,7 +897,7 @@ public:
 void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
-  set<string> set_of_table_names;
+  TableIdentifierList table_identifiers;
 
   if (dir.fail())
   {
@@ -891,11 +923,16 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
     path+= directory;
     path+= FN_LIBCHAR;
     path+= entry->filename;
-    set_of_table_names.insert(path);
+    message::Table definition;
+    if (StorageEngine::readTableFile(path, definition))
+    {
+      TableIdentifier identifier(definition.schema(), definition.name(), path);
+      table_identifiers.push_back(identifier);
+    }
   }
 
   for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           DropTables(session, set_of_table_names));
+           DropTables(session, table_identifiers));
   
   /*
     Now we just clean up anything that might left over.
@@ -1201,84 +1238,91 @@ int StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
 
 int StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src)
 {
+  message::Table table_message;
   string src_path(src.getPath());
   string dest_path(dest.getPath());
 
   src_path.append(DEFAULT_DEFINITION_FILE_EXT);
   dest_path.append(DEFAULT_DEFINITION_FILE_EXT);
 
-  int fd= open(src_path.c_str(), O_RDONLY);
+  bool was_read= StorageEngine::readTableFile(src_path.c_str(), table_message);
 
-  if (fd == -1)
+  if (not was_read)
   {
-    perror(src_path.c_str());
-    return errno;
+    return ENOENT;
   }
-
-  google::protobuf::io::ZeroCopyInputStream* input=
-    new google::protobuf::io::FileInputStream(fd);
-
-  if (not input)
-    return HA_ERR_CRASHED_ON_USAGE;
-
-  message::Table table_message;
-  if (not table_message.ParseFromZeroCopyStream(input))
-  {
-    close(fd);
-    delete input;
-    if (not table_message.IsInitialized())
-    {
-      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-               table_message.InitializationErrorString().c_str());
-      return ER_CORRUPT_TABLE_DEFINITION;
-    }
-
-    return HA_ERR_CRASHED_ON_USAGE;
-  }
-  close(fd);
-  delete input;
 
   dest.copyToTableMessage(table_message);
 
-  // We have to update the source to have the right information before we
-  // make it the master.
-  int error=  StorageEngine::writeDefinitionFromPath(src, table_message);
-  if (error)
+  int error= StorageEngine::writeDefinitionFromPath(dest, table_message);
+
+  if (not error)
   {
-    perror(src_path.c_str());
-    return error;
+    if (unlink(src_path.c_str()))
+      perror(src_path.c_str());
   }
 
-  return internal::my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
+  return error;
 }
 
 int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_message)
 {
+  char definition_file_tmp[FN_REFLEN];
   string file_name(identifier.getPath());
 
   file_name.append(DEFAULT_DEFINITION_FILE_EXT);
 
-  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
+  snprintf(definition_file_tmp, sizeof(definition_file_tmp), "%s.%sXXXXXX", file_name.c_str(), DEFAULT_DEFINITION_FILE_EXT.c_str());
+
+  int fd= mkstemp(definition_file_tmp);
 
   if (fd == -1)
   {
-    perror(file_name.c_str());
+    perror(definition_file_tmp);
     return errno;
   }
 
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (table_message.SerializeToZeroCopyStream(output) == false)
+  if (not table_message.SerializeToZeroCopyStream(output))
   {
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             table_message.InitializationErrorString().c_str());
     delete output;
-    close(fd);
-    perror(file_name.c_str());
-    return errno;
+
+    if (close(fd) == -1)
+      perror(definition_file_tmp);
+
+    if (unlink(definition_file_tmp) == -1)
+      perror(definition_file_tmp);
+
+    return ER_CORRUPT_TABLE_DEFINITION;
   }
 
   delete output;
-  close(fd);
+
+  if (close(fd) == -1)
+  {
+    int error= errno;
+    perror(definition_file_tmp);
+
+    if (unlink(definition_file_tmp))
+      perror(definition_file_tmp);
+
+    return error;
+  }
+
+  if (rename(definition_file_tmp, file_name.c_str()) == -1)
+  {
+    int error= errno;
+    perror(definition_file_tmp);
+
+    if (unlink(definition_file_tmp))
+      perror(definition_file_tmp);
+
+    return error;
+  }
 
   return 0;
 }
@@ -1315,6 +1359,30 @@ bool StorageEngine::canCreateTable(drizzled::TableIdentifier &identifier)
 
   return false;
 }
+
+bool StorageEngine::readTableFile(const std::string &path, message::Table &table_message)
+{
+  fstream input(path.c_str(), ios::in | ios::binary);
+
+  if (input.good())
+  {
+    if (table_message.ParseFromIstream(&input))
+    {
+      return true;
+    }
+
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             table_message.InitializationErrorString().c_str());
+  }
+  else
+  {
+    perror(path.c_str());
+  }
+
+  return false;
+}
+
+
 
 } /* namespace plugin */
 } /* namespace drizzled */

@@ -237,7 +237,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 
   for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
-    TableIdentifier identifier(schema_name, *iter, TEMP_TABLE);
+    TableIdentifier identifier(schema_name, *iter, message::Table::TEMPORARY);
     Table *table= session->find_temporary_table(identifier);
     session->close_temporary_table(table);
   }

@@ -809,16 +809,8 @@ static bool internal_alter_table(Session *session,
   new_engine= create_info->db_type;
 
 
-  create_proto.set_schema(new_table_identifier.getSchemaName().c_str());
-
-  if (new_table_identifier.isTmp())
-  {
-    create_proto.set_type(message::Table::TEMPORARY);
-  }
-  else
-  {
-    create_proto.set_type(message::Table::STANDARD);
-  }
+  create_proto.set_schema(new_table_identifier.getSchemaName());
+  create_proto.set_type(new_table_identifier.getType());
 
   /**
     @todo Have a check on the table definition for FK in the future 
@@ -994,8 +986,8 @@ static bool internal_alter_table(Session *session,
   */
   TableIdentifier new_table_as_temporary(original_table_identifier.getSchemaName(),
                                          tmp_name,
-                                         create_proto.type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
-                                         TEMP_TABLE);
+                                         create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
+                                         message::Table::TEMPORARY);
 
   error= create_temporary_table(session, new_table_as_temporary, create_info, create_proto, alter_info);
 
@@ -1126,16 +1118,15 @@ static bool internal_alter_table(Session *session,
     /* Should pass the 'new_name' as we store table name in the cache */
     if (new_table->renameAlterTemporaryTable(new_table_identifier))
     {
-      if (new_table)
-      {
-        /* close_temporary_table() frees the new_table pointer. */
-        session->close_temporary_table(new_table);
-      }
-      else
-      {
-        quick_rm_table(*session, new_table_as_temporary);
-      }
+      session->close_temporary_table(new_table);
 
+      return true;
+    }
+
+    new_table_identifier.setPath(new_table_as_temporary.getPath());
+
+    if (mysql_rename_table(new_engine, new_table_as_temporary, new_table_identifier, FN_FROM_IS_TMP) != 0)
+    {
       return true;
     }
   }
@@ -1191,7 +1182,7 @@ static bool internal_alter_table(Session *session,
       compare_table(). Then, we need one additional call to
     */
     TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
-                                           old_name, TEMP_TABLE);
+                                           old_name, message::Table::TEMPORARY);
 
     if (mysql_rename_table(original_engine, original_table_identifier, original_table_to_drop, FN_TO_IS_TMP))
     {
