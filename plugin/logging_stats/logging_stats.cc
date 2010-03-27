@@ -84,7 +84,8 @@ LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
   cumulative_stats_by_user_index= 0;
 
-  current_scoreboard= new Scoreboard(sysvar_logging_stats_scoreboard_size, sysvar_logging_stats_bucket_count);
+  current_scoreboard= new Scoreboard(sysvar_logging_stats_scoreboard_size, 
+                                     sysvar_logging_stats_bucket_count);
 
   cumulative_stats_by_user_max= sysvar_logging_stats_max_user_count;
 
@@ -199,8 +200,12 @@ bool LoggingStats::post(Session *session)
 
   ScoreboardSlot *scoreboard_slot= current_scoreboard->findScoreboardSlotToLog(session);
 
-  updateCurrentScoreboard(scoreboard_slot, session);
-
+  /* Its possible that the scoreboard is full with active sessions in which case 
+     this could be null */
+  if (scoreboard_slot)
+  {
+    updateCurrentScoreboard(scoreboard_slot, session);
+  }
   return false;
 }
 
@@ -344,7 +349,7 @@ static DRIZZLE_SYSVAR_UINT(max_user_count,
                            50000,
                            0);
 
-static DRIZZLE_SYSVAR_UINT(max_bucket_count,
+static DRIZZLE_SYSVAR_UINT(bucket_count,
                            sysvar_logging_stats_bucket_count,
                            PLUGIN_VAR_RQCMDARG,
                            N_("Max number of vector buckets to construct for logging"),
@@ -362,7 +367,7 @@ static DRIZZLE_SYSVAR_UINT(scoreboard_size,
                            NULL, /* check func */
                            NULL, /* update func */
                            2000, /* default */
-                           1000, /* minimum */
+                           10, /* minimum */
                            50000, 
                            0);
 
@@ -376,7 +381,7 @@ static DRIZZLE_SYSVAR_BOOL(enable,
 
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(max_user_count),
-  DRIZZLE_SYSVAR(max_bucket_count),
+  DRIZZLE_SYSVAR(bucket_count),
   DRIZZLE_SYSVAR(scoreboard_size),
   DRIZZLE_SYSVAR(enable),
   NULL
