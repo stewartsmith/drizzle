@@ -51,8 +51,6 @@ public:
   public:
     Generator(drizzled::Field **arg, LoggingStats *logging_stats);
 
-    ~Generator();
-
     bool populate();
   private:
     void setVectorIteratorsAndLock(uint32_t bucket_number);

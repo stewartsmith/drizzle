@@ -51,7 +51,7 @@ public:
    * 
    * @param Pointer to the session 
    * @return Pointer to the ScoreboardSlot whose individual statistics 
-   *   be updated
+   *   can be updated
    */
   ScoreboardSlot* findScoreboardSlotToLog(drizzled::Session *session);
 
@@ -59,7 +59,7 @@ public:
    * Resets the ScoreboardSlot this session was using. The pointer
    * returned is a copy of the ScoreboardSlot that has now been
    * reclaimed. This must be deallocated by the caller, when the caller
-   * is finished. 
+   * is finished. This allows cumulative collection of statistics.  
    * 
    * @param Pointer to the session
    * @return Pointer to a copy of the ScoreboardSlot that has been

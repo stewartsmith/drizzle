@@ -32,7 +32,7 @@
  * @details
  *
  * The scoreboard is a pre-allocated vector of vectors of ScoreBoardSlots. It
- * can be thought of as each as a vector of buckets where each bucket contains
+ * can be thought of as a vector of buckets where each bucket contains
  * pre-allocated ScoreBoardSlots. To determine which bucket gets used for
  * recording statistics the modulus operator is used on the session_id. This 
  * will result in a bucket to search for a unused ScoreBoardSlot. 

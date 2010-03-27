@@ -37,20 +37,38 @@
  * size to the value set by logging_stats_scoreboard_size.
  * Each ScoreboardSlot wraps a UserCommand object containing the commands
  * for a particular session. As other statistics are added they
- * can then be added to the ScoreboardSlot object.
+ * can then be added to the ScoreboardSlot class.
  *
  * Locking  
  *
- * A RW lock is taken to locate a open slot for a session or to locate the
- * slot that the current session has claimed. A RW lock is taken to reset
- * the slot when the session has terminated.  
+ * A RW lock is taken to locate a open slot in the scoreboard for a session 
+ * or to locate the slot that the current session has claimed. A RW lock
+ * is taken to reset the slot when the session has terminated. 
  * 
- * A read lock is taken when the table is queried in the data_dictionary.
+ * A read lock is taken on the scoreboard when the table is queried 
+ * in the data_dictionary.
  *
  * A RW lock is taken when a new user is added to the cumulative vector
  * repeat connections with a already used user will not use a lock. 
  * 
- * Additional locking information can be found in the Scoreboard class.  
+ * Additional locking information can be found in the Scoreboard class. The 
+ * scoreboard is split into several buckets where each bucket has a lock, this
+ * allows multiple sessions to not have to wait for the other session to locate
+ * their slot (in many cases).  
+ *
+ * System Variables
+ * 
+ * logging_stats_scoreboard_size - the size of the scoreboard this corresponds
+ *   to the maximum number of concurrent connections that can be tracked
+ *
+ * logging_stats_max_user_count - this is used for cumulative statistics it 
+ *   represents the maximum users that can be tracked 
+ * 
+ * logging_stats_bucket_count - the number of buckets to have in the scoreboard
+ *   this splits up locking across several buckets so the entire scoreboard is 
+ *   not locked at a single point in time.
+ * 
+ * logging_stats_enabled - enable/disable plugin 
  * 
  * TODO 
  *

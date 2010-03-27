@@ -57,6 +57,12 @@ CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_sta
   plugin::TableFunction::Generator(arg)
 {
   isEnabled= logging_stats->isEnabled();
+
+  if (isEnabled == false)
+  {
+    return;
+  }
+
   current_scoreboard= logging_stats->getCurrentScoreboard();
   current_bucket= 0;
 
@@ -64,10 +70,6 @@ CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_sta
   vector_of_scoreboard_vectors_end= current_scoreboard->getVectorOfScoreboardVectors()->end();
 
   setVectorIteratorsAndLock(current_bucket);
-}
-
-CurrentCommandsTool::Generator::~Generator()
-{
 }
 
 void CurrentCommandsTool::Generator::setVectorIteratorsAndLock(uint32_t bucket_number)
