@@ -255,6 +255,8 @@ static const char* ha_innobase_exts[] = {
   NULL
 };
 
+#define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
+
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
@@ -269,6 +271,7 @@ public:
                             HTON_PRIMARY_KEY_IN_READ_INDEX |
                             HTON_PARTIAL_COLUMN_READ |
                             HTON_TABLE_SCAN_ON_INDEX |
+                            HTON_HAS_DATA_DICTIONARY |
                             HTON_HAS_FOREIGN_KEYS |
                             HTON_HAS_DOES_TRANSACTIONS)
   {
@@ -440,7 +443,78 @@ public:
             HA_READ_RANGE |
             HA_KEYREAD_ONLY);
   }
+
+  int doGetTableDefinition(drizzled::Session& session,
+                           drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
+
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       std::string &db_name,
+                       std::set<std::string> &set_of_names);
+
+  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
 };
+
+bool InnobaseEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(DEFAULT_FILE_EXTENSION);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+int InnobaseEngine::doGetTableDefinition(Session &,
+                                         drizzled::TableIdentifier &identifier,
+                                         message::Table &table_proto)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(DEFAULT_FILE_EXTENSION);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return errno;
+  }
+
+  if (StorageEngine::readTableFile(proto_path, table_proto))
+    return EEXIST;
+
+  return -1;
+}
+
+void InnobaseEngine::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+{
+  CachedDirectory::Entries entries= directory.getEntries();
+
+  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+       entry_iter != entries.end(); ++entry_iter)
+  {
+    CachedDirectory::Entry *entry= *entry_iter;
+    const string *filename= &entry->filename;
+
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_FILE_EXTENSION) ||
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
+    { }
+    else
+    {
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
+      set_of_names.insert(uname);
+    }
+  }
+}
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
 
@@ -5779,6 +5853,8 @@ InnobaseEngine::doCreateTable(
 
 	trx_free_for_mysql(trx);
 
+        StorageEngine::writeDefinitionFromPath(identifier, create_proto);
+
 	return(0);
 
 cleanup:
@@ -5922,6 +5998,15 @@ InnobaseEngine::doDropTable(
 	if(error!=ENOENT)
 	  error = convert_error_code_to_mysql(error, 0, NULL);
 
+        if (error == 0 || error == ENOENT)
+        {
+          string path(identifier.getPath());
+
+          path.append(DEFAULT_FILE_EXTENSION);
+
+          (void)internal::my_delete(path.c_str(), MYF(0));
+        }
+
 	return(error);
 }
 
@@ -6047,7 +6132,7 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier 
         // definition needs to be updated.
         if (to.getType() == message::Table::TEMPORARY && from.getType() == message::Table::TEMPORARY)
         {
-          return 0;
+          return plugin::StorageEngine::renameDefinitionFromPath(to, from);
         }
 
 	trx_t*	trx;
@@ -6077,6 +6162,9 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier 
 	trx_free_for_mysql(trx);
 
 	error = convert_error_code_to_mysql(error, 0, NULL);
+
+        if (not error)
+          plugin::StorageEngine::renameDefinitionFromPath(to, from);
 
 	return(error);
 }

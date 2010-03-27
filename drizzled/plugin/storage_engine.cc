@@ -415,32 +415,6 @@ handle_error(uint32_t ,
   return true;
 }
 
-class DropTable : 
-  public unary_function<StorageEngine *, void>
-{
-  uint64_t &success_count;
-  TableIdentifier &identifier;
-  Session &session;
-
-public:
-
-  DropTable(Session &session_arg, TableIdentifier &arg, uint64_t &count_arg) :
-    success_count(count_arg),
-    identifier(arg),
-    session(session_arg)
-  {
-  }
-
-  result_type operator() (argument_type engine)
-  {
-    bool success= engine->doDropTable(session, identifier);
-
-    if (success)
-      success_count++;
-  }
-};
-
-
 /**
    returns ENOENT if the file doesn't exists.
 */
@@ -469,10 +443,14 @@ int StorageEngine::dropTable(Session& session,
 
   engine= StorageEngine::findByName(session, src_proto.engine().name());
 
-  if (engine)
+  if (not engine)
   {
-    error= StorageEngine::dropTable(session, *engine, identifier);
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), identifier.getSQLPath().c_str());
+
+    return ER_CORRUPT_TABLE_DEFINITION;
   }
+
+  error= StorageEngine::dropTable(session, *engine, identifier);
 
   if (error_proto && error == 0)
     return 0;
@@ -489,19 +467,9 @@ int StorageEngine::dropTable(Session& session,
   engine.setTransactionReadWrite(session);
   error= engine.doDropTable(session, identifier);
 
-  if (not error)
-  {
-    if (not engine.check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-    {
-      uint64_t counter; // @todo We need to refactor to check that.
-
-      for_each(vector_of_schema_engines.begin(), vector_of_schema_engines.end(),
-               DropTable(session, identifier, counter));
-    }
-  }
-
   return error;
 }
+
 
 /**
   Initiates table-file and calls appropriate database-creator.
@@ -543,34 +511,16 @@ int StorageEngine::createTable(Session &session,
     }
     else
     {
-      bool do_create= true;
-      if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-      {
-        int protoerr= StorageEngine::writeDefinitionFromPath(identifier, table_message);
+      share.storage_engine->setTransactionReadWrite(session);
 
-        if (protoerr)
-        {
-          error= protoerr;
-          do_create= false;
-        }
-      }
-
-      if (do_create)
-      {
-        share.storage_engine->setTransactionReadWrite(session);
-
-        error= share.storage_engine->doCreateTable(&session,
-                                                   table,
-                                                   identifier,
-                                                   table_message);
-      }
+      error= share.storage_engine->doCreateTable(&session,
+                                                 table,
+                                                 identifier,
+                                                 table_message);
     }
 
     if (error)
     {
-      if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-        plugin::StorageEngine::deleteDefinitionFromPath(identifier);
-
       my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
     }
 

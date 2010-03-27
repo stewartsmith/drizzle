@@ -66,54 +66,6 @@ Schema::~Schema()
   pthread_rwlock_destroy(&schema_lock);
 }
 
-int Schema::doGetTableDefinition(Session &,
-                                 drizzled::TableIdentifier &identifier,
-                                 message::Table &table_proto)
-{
-  string proto_path(identifier.getPath());
-  proto_path.append(DEFAULT_FILE_EXTENSION);
-
-  if (access(proto_path.c_str(), F_OK))
-  {
-    return errno;
-  }
-
-  if (readTableFile(proto_path, table_proto))
-    return EEXIST;
-
-  return -1;
-}
-
-void Schema::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
-{
-  CachedDirectory::Entries entries= directory.getEntries();
-
-  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
-       entry_iter != entries.end(); ++entry_iter)
-  {
-    CachedDirectory::Entry *entry= *entry_iter;
-    const string *filename= &entry->filename;
-
-    assert(filename->size());
-
-    const char *ext= strchr(filename->c_str(), '.');
-
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_FILE_EXTENSION) ||
-        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
-    { }
-    else
-    {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
-
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      // TODO: Remove need for memory copy here
-      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
-      set_of_names.insert(uname);
-    }
-  }
-}
-
 void Schema::prime()
 {
   CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
@@ -267,15 +219,6 @@ bool Schema::doDropSchema(const std::string &schema_name)
   return true;
 }
 
-int Schema::doDropTable(Session&, TableIdentifier &identifier)
-{
-  string path(identifier.getPath());
-
-  path.append(DEFAULT_FILE_EXTENSION);
-
-  return internal::my_delete(path.c_str(), MYF(0));
-}
-
 bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 {
   string path;
@@ -370,26 +313,6 @@ bool Schema::writeSchemaFile(const char *path, const message::Schema &db)
 }
 
 
-bool Schema::readTableFile(const std::string &path, message::Table &table_message)
-{
-  fstream input(path.c_str(), ios::in | ios::binary);
-
-  if (input.good())
-  {
-    if (table_message.ParseFromIstream(&input))
-    {
-      return true;
-    }
-  }
-  else
-  {
-    perror(path.c_str());
-  }
-
-  return false;
-}
-
-
 bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::Schema &schema_message)
 {
   string db_opt_path;
@@ -426,19 +349,6 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
 bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
   if (not strcasecmp(identifier.getSchemaName().c_str(), "temporary"))
-  {
-    return false;
-  }
-
-  return true;
-}
-
-bool Schema::doDoesTableExist(Session&, TableIdentifier &identifier)
-{
-  string proto_path(identifier.getPath());
-  proto_path.append(DEFAULT_FILE_EXTENSION);
-
-  if (access(proto_path.c_str(), F_OK))
   {
     return false;
   }

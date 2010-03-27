@@ -284,11 +284,14 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   */
   pthread_mutex_unlock(&LOCK_open);
   error= 0;
+
   if (wrong_tables.length())
   {
-    if (!foreign_key_error)
+    if (not foreign_key_error)
+    {
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
                       wrong_tables.c_ptr());
+    }
     else
     {
       my_message(ER_ROW_IS_REFERENCED, ER(ER_ROW_IS_REFERENCED), MYF(0));
@@ -297,12 +300,13 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   }
 
   pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
+
 err_with_placeholders:
   unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
   session->no_warnings_for_error= 0;
 
-  return(error);
+  return error;
 }
 
 
@@ -1633,17 +1637,7 @@ mysql_rename_table(plugin::StorageEngine *base,
 
   assert(base);
 
-  if (not (error= base->renameTable(*session, from, to)))
-  {
-    if (not base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-    {
-      if ((error= plugin::StorageEngine::renameDefinitionFromPath(to, from)))
-      {
-        error= errno;
-        base->renameTable(*session, to, from);
-      }
-    }
-  }
+  error= base->renameTable(*session, from, to);
 
   if (error == HA_ERR_WRONG_COMMAND)
   {
