@@ -78,7 +78,7 @@ public:
    *
    * @param Transaction message to be replicated
    */
-  virtual ReplicationReturnCode apply(const Session &in_session,
+  virtual ReplicationReturnCode apply(Session &in_session,
                                       const message::Transaction &to_apply)= 0;
 
   static bool addPlugin(TransactionApplier *applier);

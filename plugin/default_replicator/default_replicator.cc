@@ -64,7 +64,7 @@ void DefaultReplicator::disable()
 
 plugin::ReplicationReturnCode
 DefaultReplicator::replicate(plugin::TransactionApplier *in_applier,
-                             const Session &in_session,
+                             Session &in_session,
                              message::Transaction &to_replicate)
 {
   /* 

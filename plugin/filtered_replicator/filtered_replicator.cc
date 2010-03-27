@@ -216,7 +216,7 @@ void FilteredReplicator::disable()
 
 plugin::ReplicationReturnCode
 FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
-                              const Session &in_session,
+                              Session &in_session,
                               message::Transaction &to_replicate)
 {
   string schema_name;

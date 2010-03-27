@@ -90,7 +90,7 @@ public:
    */
   drizzled::plugin::ReplicationReturnCode
   replicate(drizzled::plugin::TransactionApplier *in_applier,
-            const drizzled::Session &in_session,
+            drizzled::Session &in_session,
             drizzled::message::Transaction &to_replicate);
   
   /**

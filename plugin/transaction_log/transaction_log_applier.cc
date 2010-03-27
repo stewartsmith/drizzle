@@ -93,7 +93,7 @@ WriteBuffer *TransactionLogApplier::getWriteBuffer(const Session &session)
 }
 
 plugin::ReplicationReturnCode
-TransactionLogApplier::apply(const Session &in_session,
+TransactionLogApplier::apply(Session &in_session,
                              const message::Transaction &to_apply)
 {
   size_t entry_size= TransactionLog::getLogEntrySize(to_apply);

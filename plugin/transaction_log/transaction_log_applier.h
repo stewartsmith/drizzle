@@ -78,7 +78,7 @@ public:
    * @param Transaction message to be replicated
    */
   drizzled::plugin::ReplicationReturnCode
-  apply(const drizzled::Session &in_session,
+  apply(drizzled::Session &in_session,
         const drizzled::message::Transaction &to_apply);
 private:
   /* Don't allows these */
