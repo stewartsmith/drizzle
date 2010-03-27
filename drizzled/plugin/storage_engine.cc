@@ -1238,84 +1238,91 @@ int StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
 
 int StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src)
 {
+  message::Table table_message;
   string src_path(src.getPath());
   string dest_path(dest.getPath());
 
   src_path.append(DEFAULT_DEFINITION_FILE_EXT);
   dest_path.append(DEFAULT_DEFINITION_FILE_EXT);
 
-  int fd= open(src_path.c_str(), O_RDONLY);
+  bool was_read= StorageEngine::readTableFile(src_path.c_str(), table_message);
 
-  if (fd == -1)
+  if (not was_read)
   {
-    perror(src_path.c_str());
-    return errno;
+    return ENOENT;
   }
-
-  google::protobuf::io::ZeroCopyInputStream* input=
-    new google::protobuf::io::FileInputStream(fd);
-
-  if (not input)
-    return HA_ERR_CRASHED_ON_USAGE;
-
-  message::Table table_message;
-  if (not table_message.ParseFromZeroCopyStream(input))
-  {
-    close(fd);
-    delete input;
-    if (not table_message.IsInitialized())
-    {
-      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-               table_message.InitializationErrorString().c_str());
-      return ER_CORRUPT_TABLE_DEFINITION;
-    }
-
-    return HA_ERR_CRASHED_ON_USAGE;
-  }
-  close(fd);
-  delete input;
 
   dest.copyToTableMessage(table_message);
 
-  // We have to update the source to have the right information before we
-  // make it the master.
-  int error=  StorageEngine::writeDefinitionFromPath(src, table_message);
-  if (error)
+  int error= StorageEngine::writeDefinitionFromPath(dest, table_message);
+
+  if (not error)
   {
-    perror(src_path.c_str());
-    return error;
+    if (unlink(src_path.c_str()))
+      perror(src_path.c_str());
   }
 
-  return internal::my_rename(src_path.c_str(), dest_path.c_str(), MYF(MY_WME));
+  return error;
 }
 
 int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_message)
 {
+  char definition_file_tmp[FN_REFLEN];
   string file_name(identifier.getPath());
 
   file_name.append(DEFAULT_DEFINITION_FILE_EXT);
 
-  int fd= open(file_name.c_str(), O_RDWR|O_CREAT|O_TRUNC, internal::my_umask);
+  snprintf(definition_file_tmp, sizeof(definition_file_tmp), "%s.%sXXXXXX", file_name.c_str(), DEFAULT_DEFINITION_FILE_EXT.c_str());
+
+  int fd= mkstemp(definition_file_tmp);
 
   if (fd == -1)
   {
-    perror(file_name.c_str());
+    perror(definition_file_tmp);
     return errno;
   }
 
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (table_message.SerializeToZeroCopyStream(output) == false)
+  if (not table_message.SerializeToZeroCopyStream(output))
   {
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             table_message.InitializationErrorString().c_str());
     delete output;
-    close(fd);
-    perror(file_name.c_str());
-    return errno;
+
+    if (close(fd) == -1)
+      perror(definition_file_tmp);
+
+    if (unlink(definition_file_tmp) == -1)
+      perror(definition_file_tmp);
+
+    return ER_CORRUPT_TABLE_DEFINITION;
   }
 
   delete output;
-  close(fd);
+
+  if (close(fd) == -1)
+  {
+    int error= errno;
+    perror(definition_file_tmp);
+
+    if (unlink(definition_file_tmp))
+      perror(definition_file_tmp);
+
+    return error;
+  }
+
+  if (rename(definition_file_tmp, file_name.c_str()) == -1)
+  {
+    int error= errno;
+    perror(definition_file_tmp);
+
+    if (unlink(definition_file_tmp))
+      perror(definition_file_tmp);
+
+    return error;
+  }
 
   return 0;
 }
@@ -1363,6 +1370,9 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
     {
       return true;
     }
+
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             table_message.InitializationErrorString().c_str());
   }
   else
   {
