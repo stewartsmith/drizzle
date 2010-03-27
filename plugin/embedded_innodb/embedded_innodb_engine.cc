@@ -1337,7 +1337,7 @@ static int create_table_message_table()
   ib_idx_sch_t index_schema;
   ib_trx_t transaction;
   ib_id_t table_id;
-  ib_err_t err;
+  ib_err_t err, rollback_err;
   ib_bool_t create_db_err;
 
   create_db_err= ib_database_create("data_dictionary");
@@ -1352,22 +1352,22 @@ static int create_table_message_table()
   err= ib_table_schema_add_col(schema, "table_name", IB_VARCHAR, IB_COL_NONE, 0,
                                IB_MAX_TABLE_NAME_LEN);
   if (err != DB_SUCCESS)
-    goto rollback;
+    goto free_err;
 
   err= ib_table_schema_add_col(schema, "message", IB_BLOB, IB_COL_NONE, 0, 0);
   if (err != DB_SUCCESS)
-    goto rollback;
+    goto free_err;
 
   err= ib_table_schema_add_index(schema, "PRIMARY_KEY", &index_schema);
   if (err != DB_SUCCESS)
-    goto rollback;
+    goto free_err;
 
   err= ib_index_schema_add_col(index_schema, "table_name", 0);
   if (err != DB_SUCCESS)
-    goto rollback;
+    goto free_err;
   err= ib_index_schema_set_clustered(index_schema);
   if (err != DB_SUCCESS)
-    goto rollback;
+    goto free_err;
 
   transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
   err= ib_schema_lock_exclusive(transaction);
@@ -1387,9 +1387,10 @@ static int create_table_message_table()
   return 0;
 rollback:
   ib_schema_unlock(transaction);
-  ib_table_schema_delete(schema);
-  ib_err_t rollback_err= ib_trx_rollback(transaction);
+  rollback_err= ib_trx_rollback(transaction);
   assert(rollback_err == DB_SUCCESS);
+free_err:
+  ib_table_schema_delete(schema);
   return err;
 }
 
