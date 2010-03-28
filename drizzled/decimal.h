@@ -18,8 +18,6 @@
 #include <assert.h>
 #include <drizzled/sql_string.h>
 #include "drizzled/definitions.h"
-//#include "drizzled/error.h"
-//#include "drizzled/field.h"
 #include "drizzled/my_time.h"
 namespace drizzled
 {
