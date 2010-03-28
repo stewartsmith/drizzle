@@ -30,32 +30,35 @@
 /**
  * @details
  *
- * This plugin tracks the current user commands, and copies them
- * into a cumulative vector of all commands run by a user over time. 
+ * This plugin tracks the current user commands for a session, and copies
+ * them into a cumulative vector of all commands run by a user over time. 
  * The commands are logged using the post() and postEnd() logging APIs.
- * It uses a scoreboard approach that initializes the scoreboard
- * size to the value set by logging_stats_scoreboard_size.
- * Each ScoreboardSlot wraps a UserCommand object containing the commands
- * for a particular session. As other statistics are added they
- * can then be added to the ScoreboardSlot class.
+ * User commands are stored in a Scoreboard where each active session
+ * owns a ScoreboardSlot.  
+ *
+ * Scoreboard
+ *
+ * The scoreboard is a pre-allocated vector of vectors of ScoreboardSlots. It
+ * can be thought of as a vector of buckets where each bucket contains
+ * pre-allocated ScoreboardSlots. To determine which bucket gets used for
+ * recording statistics the modulus operator is used on the session_id. This
+ * will result in a bucket to search for a unused ScoreboardSlot.
  *
  * Locking  
- *
- * A RW lock is taken to locate a open slot in the scoreboard for a session 
- * or to locate the slot that the current session has claimed. A RW lock
- * is taken to reset the slot when the session has terminated. 
  * 
- * A read lock is taken on the scoreboard when the table is queried 
+ * Each vector in the Scoreboard has its own lock. This allows session 2 
+ * to not have to wait for session 1 to locate a slot to use, as they
+ * will be in different buckets.  A lock is taken to locate a open slot
+ * in the scoreboard for a session or to locate the slot that the current
+ * session has claimed. A lock is taken to reset the slot when the session 
+ * has terminated.
+ *
+ * A read lock is taken on the scoreboard vector when the table is queried 
  * in the data_dictionary.
  *
- * A RW lock is taken when a new user is added to the cumulative vector
+ * A lock is taken when a new user is added to the cumulative vector
  * repeat connections with a already used user will not use a lock. 
  * 
- * Additional locking information can be found in the Scoreboard class. The 
- * scoreboard is split into several buckets where each bucket has a lock, this
- * allows multiple sessions to not have to wait for the other session to locate
- * their slot (in many cases).  
- *
  * System Variables
  * 
  * logging_stats_scoreboard_size - the size of the scoreboard this corresponds
@@ -76,7 +79,9 @@
  * This will avoid the session having to do multiple lookups in the scoreboard,
  * this will also avoid having to take a lock to locate the scoreboard slot 
  * being used by a particular session. 
- * 
+ *
+ * Allow expansion of Scoreboard and cumulative vector 
+ *  
  */
 
 #include "config.h"
