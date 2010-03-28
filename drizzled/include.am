@@ -631,7 +631,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/key_map.cc \
 			   drizzled/lock.cc \
 			   drizzled/lookup_symbol.cc \
-			   drizzled/my_decimal.cc \
 			   drizzled/my_getsystime.cc \
 			   drizzled/my_hash.cc \
 			   drizzled/my_time.cc \
