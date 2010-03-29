@@ -142,8 +142,6 @@ class Time_zone;
 #define Session_SENTRY_MAGIC 0xfeedd1ff
 #define Session_SENTRY_GONE  0xdeadbeef
 
-#define Session_CHECK_SENTRY(session) assert(session->dbug_sentry == Session_SENTRY_MAGIC)
-
 struct system_variables
 {
   system_variables() {};
@@ -465,6 +463,11 @@ public:
 
 private:
   SecurityContext security_ctx;
+
+  inline void checkSentry() const
+  {
+    assert(this->dbug_sentry == Session_SENTRY_MAGIC);
+  }
 public:
   const SecurityContext& getSecurityContext() const
   {
