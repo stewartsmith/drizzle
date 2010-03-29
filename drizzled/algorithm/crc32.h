@@ -38,8 +38,6 @@
 # include <sys/types.h>
 #endif
 
-#include "config.h"
-
 namespace drizzled
 {
 namespace algorithm
