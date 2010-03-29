@@ -454,7 +454,12 @@ public:
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
-                                  uint64_t *nb_reserved_values);
+                                  uint64_t *nb_reserved_values)
+  {
+    (void)offset; (void)increment; (void)nb_desired_values;
+    (void)first_value; (void)nb_reserved_values;
+  }
+
   void set_next_insert_id(uint64_t id)
   {
     next_insert_id= id;
