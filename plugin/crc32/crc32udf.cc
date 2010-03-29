@@ -66,7 +66,7 @@ int64_t Crc32Function::val_int()
   }
 
   null_value= false;
-  return static_cast<int64_t>(drizzled::algorithm::crc32(res->ptr(), res->length()));
+  return static_cast<int64_t>(drizzled::algorithm::crc32<char *>(res->ptr(), res->length()));
 }
 
 plugin::Create_function<Crc32Function> *crc32udf= NULL;
