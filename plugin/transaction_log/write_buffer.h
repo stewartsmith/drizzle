@@ -32,7 +32,7 @@
 #define PLUGIN_TRANSACTION_LOG_WRITE_BUFFER_H
 
 #include <stdint.h>
-#include <string>
+#include <vector>
 #include <pthread.h>
 
 class WriteBuffer
@@ -69,22 +69,21 @@ public:
    */
   uint8_t *getRawBytes()
   {
-    return buffer;
+    return &buffer[0];
   }
   /**
    * Returns the size of the write buffer
    */
   size_t getCapacity()
   {
-    return buffer_size;
+    return buffer.size();
   }
 private:
   /* Prohibit these */
   WriteBuffer(const WriteBuffer&);
   WriteBuffer &operator=(const WriteBuffer&);
 
-  uint8_t *buffer; ///< Raw memory buffer managed by the log
-  size_t buffer_size; ///< Current size of write buffer
+  std::vector<uint8_t> buffer; ///< Raw memory buffer managed by the log
   pthread_mutex_t latch; ///< Lock around the synchronized parts of the log (the write buffer)
 };
 

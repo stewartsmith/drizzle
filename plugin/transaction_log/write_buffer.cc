@@ -39,24 +39,21 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
 
-#include <string.h>
+#include <vector>
 
 using namespace std;
 using namespace drizzled;
 
 WriteBuffer::WriteBuffer() :
-  buffer(NULL),
-  buffer_size(DEFAULT_WRITE_BUFFER_SIZE)
+  buffer()
 {
-  buffer= static_cast<uint8_t *>(malloc(DEFAULT_WRITE_BUFFER_SIZE));
+  buffer.reserve(DEFAULT_WRITE_BUFFER_SIZE);
   pthread_mutex_init(&latch, NULL);
 }
 
 WriteBuffer::~WriteBuffer()
 {
-  if (buffer)
-    free(buffer);
-
+  buffer.clear();
   pthread_mutex_destroy(&latch);
 }
 
@@ -67,24 +64,8 @@ void WriteBuffer::resize(size_t new_size)
    * requested size.  Does nothing if already allocated size
    * if greater...
    */
-  if (buffer_size >= new_size)
+  if (buffer.capacity() >= new_size)
     return;
 
-  uint8_t *orig_buffer= buffer;
-  uint8_t *new_buffer= static_cast<uint8_t *>(realloc(static_cast<void *>(buffer), new_size));
-  if (new_buffer == NULL)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, 
-                  _("Failed to reallocate enough memory to buffer header, "
-                    "transaction message, and trailing checksum bytes. "
-                    "Tried to allocate %" PRId64 " bytes.  Error: %s\n"), 
-                  static_cast<int64_t>(new_size),
-                  strerror(errno));
-    buffer= orig_buffer;
-  }
-  else
-  {
-    buffer= new_buffer;
-    buffer_size= new_size;
-  }
+  buffer.reserve(new_size);
 }
