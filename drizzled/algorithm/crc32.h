@@ -43,7 +43,17 @@ namespace drizzled
 namespace algorithm
 {
 
-uint32_t crc32(const char *key, size_t key_length);
+template <class T>
+uint32_t crc32(T key, size_t key_length)
+{
+  uint64_t x;
+  uint32_t crc= UINT32_MAX;
+
+  for (x= 0; x < key_length; x++)
+    crc= (crc >> 8) ^ crc32tab[(crc ^ static_cast<uint8_t>(key[x])) & 0xff];
+
+  return ~crc;
+}
 
 } /* namespace algorithm */
 } /* namespace drizzled */
