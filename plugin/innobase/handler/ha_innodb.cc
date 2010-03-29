@@ -6043,6 +6043,13 @@ Renames an InnoDB table.
 @return	0 or error code */
 UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
+        // A temp table alter table/rename is a shallow rename and only the
+        // definition needs to be updated.
+        if (to.getType() == message::Table::TEMPORARY && from.getType() == message::Table::TEMPORARY)
+        {
+          return 0;
+        }
+
 	trx_t*	trx;
 	int	error;
 	trx_t*	parent_trx;

@@ -59,13 +59,6 @@ Schema::Schema():
   table_definition_ext= DEFAULT_FILE_EXTENSION;
   pthread_rwlock_init(&schema_lock, NULL);
   prime();
-#if 0
-  message::Schema schema_message;
-
-  schema_message.set_name("temporary_tables");
-
-  doCreateSchema(schema_message);
-#endif
 }
 
 Schema::~Schema()
@@ -327,34 +320,51 @@ bool Schema::writeSchemaFile(const char *path, const message::Schema &db)
   char schema_file_tmp[FN_REFLEN];
   string schema_file(path);
 
-  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
 
   schema_file.append(1, FN_LIBCHAR);
   schema_file.append(MY_DB_OPT_FILE);
+
+  snprintf(schema_file_tmp, FN_REFLEN, "%sXXXXXX", schema_file.c_str());
 
   int fd= mkstemp(schema_file_tmp);
 
   if (fd == -1)
   {
     perror(schema_file_tmp);
+
     return false;
   }
 
   if (not db.SerializeToFileDescriptor(fd))
   {
     cerr << "Couldn't write " << path << "\n";
-    close(fd);
+
+    if (close(fd) == -1)
+      perror(schema_file_tmp);
+
+    if (unlink(schema_file_tmp))
+      perror(schema_file_tmp);
+
+    return false;
+  }
+
+  if (close(fd) == -1)
+  {
+    perror(schema_file_tmp);
+
+    if (unlink(schema_file_tmp))
+      perror(schema_file_tmp);
 
     return false;
   }
 
   if (rename(schema_file_tmp, schema_file.c_str()) == -1)
   {
-    close(fd);
+    if (unlink(schema_file_tmp))
+      perror(schema_file_tmp);
 
     return false;
   }
-  close(fd);
 
   return true;
 }

@@ -1546,7 +1546,7 @@ int Table::closefrm(bool free_share)
   cursor= 0;				/* For easier errorchecking */
   if (free_share)
   {
-    if (s->tmp_table == STANDARD_TABLE)
+    if (s->tmp_table == message::Table::STANDARD)
       TableShare::release(s);
     else
       s->free_table_share();
@@ -3302,7 +3302,7 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       cursor->closeMarkForDelete(s->table_name.str);
 
-    TableIdentifier identifier(s->table_name.str);
+    TableIdentifier identifier(s->getSchemaName(), s->table_name.str, s->table_name.str);
     s->db_type()->doDropTable(*session, identifier);
 
     delete cursor;
@@ -3417,7 +3417,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
 
  err1:
   {
-    TableIdentifier identifier(new_table.s->table_name.str);
+    TableIdentifier identifier(new_table.s->getSchemaName(), new_table.s->table_name.str, new_table.s->table_name.str);
     new_table.s->db_type()->doDropTable(*session, identifier);
   }
 
@@ -3690,6 +3690,11 @@ bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
 
   key_length= TableShare::createKey(key, identifier);
   share->set_table_cache_key(key, key_length);
+
+  message::Table *message= share->getTableProto();
+
+  message->set_name(identifier.getTableName());
+  message->set_schema(identifier.getSchemaName());
 
   return false;
 }

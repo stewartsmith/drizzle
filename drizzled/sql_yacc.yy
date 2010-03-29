@@ -1040,7 +1040,7 @@ create:
 	    message::Table &proto= statement->create_table_message;
 	   
 	    proto.set_name($5->table.str);
-	    if($2)
+	    if ($2)
 	      proto.set_type(message::Table::TEMPORARY);
 	    else
 	      proto.set_type(message::Table::STANDARD);

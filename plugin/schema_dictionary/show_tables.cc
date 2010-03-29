@@ -104,5 +104,5 @@ bool ShowTables::Generator::populate()
 void ShowTables::Generator::fill()
 {
   /* TABLE_NAME */
-  push(*table_iterator);
+  push(table_message.name());
 }
