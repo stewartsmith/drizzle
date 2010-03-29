@@ -226,9 +226,9 @@ int main(int argc, char* argv[])
 
     if (do_checksum)
     {
-      if (checksum != drizzled::algorithm::crc32<char *>(buffer, static_cast<size_t>(length)))
+      if (checksum != drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)))
       {
-        fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::algorithm::crc32<char *>(buffer, static_cast<size_t>(length)));
+        fprintf(stderr, _("Checksum failed. Wanted %" PRIu32 " got %" PRIu32 "\n"), checksum, drizzled::algorithm::crc32(buffer, static_cast<size_t>(length)));
       }
     }
 

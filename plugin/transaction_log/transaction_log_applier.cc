@@ -124,7 +124,7 @@ void TransactionLogApplier::apply(const message::Transaction &to_apply)
   uint32_t checksum= 0;
   if (do_checksum)
   {
-    checksum= drizzled::algorithm::crc32<uint8_t *>(
+    checksum= drizzled::algorithm::crc32(
         buffer - message_byte_length, message_byte_length);
   }
 

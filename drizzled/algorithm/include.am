@@ -16,4 +16,4 @@
 nobase_dist_include_HEADERS+= drizzled/algorithm/crc32.h drizzled/algorithm/sha1.h
 
 noinst_LTLIBRARIES+= drizzled/algorithm/libhash.la
-drizzled_algorithm_libhash_la_SOURCES= drizzled/algorithm/crc32.cc drizzled/algorithm/sha1.cc
+drizzled_algorithm_libhash_la_SOURCES=  drizzled/algorithm/sha1.cc

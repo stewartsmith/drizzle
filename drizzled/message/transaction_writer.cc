@@ -352,7 +352,7 @@ static void writeTransaction(protobuf::io::CodedOutputStream *output, message::T
   output->WriteLittleEndian32(static_cast<uint32_t>(ReplicationServices::TRANSACTION));
   output->WriteLittleEndian32(static_cast<uint32_t>(length));
   output->WriteString(buffer);
-  output->WriteLittleEndian32(drizzled::algorithm::crc32<const char *>(buffer.c_str(), length)); /* checksum */
+  output->WriteLittleEndian32(drizzled::algorithm::crc32(buffer.c_str(), length)); /* checksum */
 }
 
 int main(int argc, char* argv[])
