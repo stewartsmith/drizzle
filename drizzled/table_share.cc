@@ -225,7 +225,7 @@ TableShare *TableShare::getShare(Session *session,
     return NULL;
   }
   
-  TableIdentifier identifier(share->normalized_path.str);
+  TableIdentifier identifier(share->getSchemaName(), share->getTableName());
   if (open_table_def(*session, identifier, share))
   {
     *error= share->error;

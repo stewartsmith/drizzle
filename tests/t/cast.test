@@ -45,15 +45,15 @@ create table t1 select
   cast('a  ' AS char(2)) as c4,
   cast('a'   AS char(2)) as c5;
 
-#
-# CAST to NCHAR with/without length
-#
-select
-  cast('ÆÇ'  AS char)    as c1,
-  cast('Æ '  AS char)    as c2,
-  cast('ÆÇÈ' AS char(2)) as c3,
-  cast('Æ  ' AS char(2)) as c4,
-  cast('Æ'   AS char(2)) as c5;
+##
+## CAST to NCHAR with/without length
+##
+#select
+#  cast('ÆÇ'  AS char)    as c1,
+#  cast('Æ '  AS char)    as c2,
+#  cast('ÆÇÈ' AS char(2)) as c3,
+#  cast('Æ  ' AS char(2)) as c4,
+#  cast('Æ'   AS char(2)) as c5;
 
 # BUG in drizzletest - can't handle these chars right
 # # Should throw an error about incorrect
