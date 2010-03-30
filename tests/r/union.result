@@ -1027,7 +1027,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `'test' collate utf8_bin` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
+  `'test' collate utf8_bin` varchar(4) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
 select count(*) from t1;
 count(*)
@@ -1040,7 +1040,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
+  `test` varchar(4) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
 select count(*) from t1;
 count(*)
@@ -1053,7 +1053,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
+  `test` varchar(4) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
 select count(*) from t1;
 count(*)
@@ -1081,7 +1081,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_swedish_ci DEFAULT NULL
+  `a` varchar(1) COLLATE utf8_swedish_ci DEFAULT NULL
 ) ENGINE=DEFAULT
 drop table t1;
 create table t1 as
@@ -1091,7 +1091,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) CHARACTER SET utf8 COLLATE utf8_spanish_ci DEFAULT NULL
+  `a` varchar(1) COLLATE utf8_spanish_ci DEFAULT NULL
 ) ENGINE=DEFAULT
 drop table t1;
 drop table t2;

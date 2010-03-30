@@ -178,18 +178,10 @@ public:
 
 static Logging_syslog *handler= NULL;
 
-static int logging_syslog_plugin_init(drizzled::plugin::Registry &registry)
+static int logging_syslog_plugin_init(drizzled::plugin::Context &context)
 {
   handler= new Logging_syslog();
-  registry.add(handler);
-
-  return 0;
-}
-
-static int logging_syslog_plugin_deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(handler);
-  delete handler;
+  context.add(handler);
 
   return 0;
 }
@@ -286,7 +278,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Log to syslog"),
   PLUGIN_LICENSE_GPL,
   logging_syslog_plugin_init,
-  logging_syslog_plugin_deinit,
   logging_syslog_system_variables,
   NULL
 }
