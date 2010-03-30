@@ -22,6 +22,7 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/plugin/daemon.h"
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -199,68 +200,81 @@ pthread_handler_t signal_hand(void *)
   }
 }
 
-
-static int init(drizzled::plugin::Registry&)
+class SignalHandler :
+  public drizzled::plugin::Daemon
 {
-  int error;
-  pthread_attr_t thr_attr;
-  size_t my_thread_stack_size= 65536;
-
-  (void) pthread_attr_init(&thr_attr);
-  pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
-  (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
+  SignalHandler(const SignalHandler &);
+  SignalHandler& operator=(const SignalHandler &);
+public:
+  SignalHandler()
+    : drizzled::plugin::Daemon("Signal Handler")
   {
-    struct sched_param tmp_sched_param;
+    int error;
+    pthread_attr_t thr_attr;
+    size_t my_thread_stack_size= 65536;
 
-    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-    tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
-    (void)pthread_attr_setschedparam(&thr_attr, &tmp_sched_param);
-  }
+    (void) pthread_attr_init(&thr_attr);
+    pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
+    (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
+    {
+      struct sched_param tmp_sched_param;
+
+      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+      tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
+      (void)pthread_attr_setschedparam(&thr_attr, &tmp_sched_param);
+    }
 #if defined(__ia64__) || defined(__ia64)
-  /*
-    Peculiar things with ia64 platforms - it seems we only have half the
-    stack size in reality, so we have to double it here
-  */
-  pthread_attr_setstacksize(&thr_attr, my_thread_stack_size*2);
+    /*
+      Peculiar things with ia64 platforms - it seems we only have half the
+      stack size in reality, so we have to double it here
+    */
+    pthread_attr_setstacksize(&thr_attr, my_thread_stack_size*2);
 # else
-  pthread_attr_setstacksize(&thr_attr, my_thread_stack_size);
+    pthread_attr_setstacksize(&thr_attr, my_thread_stack_size);
 #endif
 
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  if ((error=pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
-  {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create interrupt-thread (error %d, errno: %d)"),
+    (void) pthread_mutex_lock(&LOCK_thread_count);
+    if ((error=pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Can't create interrupt-thread (error %d, errno: %d)"),
                     error,errno);
-    exit(1);
+      exit(1);
+    }
+    (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
+    pthread_mutex_unlock(&LOCK_thread_count);
+
+    (void) pthread_attr_destroy(&thr_attr);
   }
-  (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-  pthread_mutex_unlock(&LOCK_thread_count);
 
-  (void) pthread_attr_destroy(&thr_attr);
-
-  return 0;
-}
-
-/**
-  This is mainly needed when running with purify, but it's still nice to
-  know that all child threads have died when drizzled exits.
-*/
-static int deinit(drizzled::plugin::Registry&)
-{
-  uint32_t i;
-  /*
-    Wait up to 10 seconds for signal thread to die. We use this mainly to
-    avoid getting warnings that internal::my_thread_end has not been called
+  /**
+    This is mainly needed when running with purify, but it's still nice to
+    know that all child threads have died when drizzled exits.
   */
-  for (i= 0 ; i < 100 && signal_thread_in_use; i++)
+  ~SignalHandler()
   {
-    if (pthread_kill(signal_thread, SIGTERM) != ESRCH)
-      break;
-    usleep(100);				// Give it time to die
-  }
+    uint32_t i;
+    /*
+      Wait up to 10 seconds for signal thread to die. We use this mainly to
+      avoid getting warnings that internal::my_thread_end has not been called
+    */
+    for (i= 0 ; i < 100 && signal_thread_in_use; i++)
+    {
+      if (pthread_kill(signal_thread, SIGTERM) != ESRCH)
+        break;
+      usleep(100);				// Give it time to die
+    }
 
+  }
+};
+
+static int init(drizzled::plugin::Context& context)
+{
+  SignalHandler *handler= new SignalHandler;
+  context.add(handler);
   return 0;
 }
+
 
 static drizzle_sys_var* system_variables[]= {
   NULL
@@ -275,7 +289,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Default Signal Handler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
   system_variables,   /* system variables */
   NULL    /* config options */
 }
