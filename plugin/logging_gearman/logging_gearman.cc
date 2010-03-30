@@ -290,18 +290,10 @@ public:
 
 static LoggingGearman *handler= NULL;
 
-static int logging_gearman_plugin_init(plugin::Registry &registry)
+static int logging_gearman_plugin_init(plugin::Context &context)
 {
   handler= new LoggingGearman();
-  registry.add(handler);
-
-  return 0;
-}
-
-static int logging_gearman_plugin_deinit(plugin::Registry &registry)
-{
-  registry.remove(handler);
-  delete handler;
+  context.add(handler);
 
   return 0;
 }
@@ -349,7 +341,6 @@ DRIZZLE_DECLARE_PLUGIN
     N_("Log queries to a Gearman server"),
     PLUGIN_LICENSE_GPL,
     logging_gearman_plugin_init,
-    logging_gearman_plugin_deinit,
     logging_gearman_system_variables,
     NULL
 }

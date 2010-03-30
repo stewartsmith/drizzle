@@ -63,18 +63,11 @@ String *UuidFunction::val_str(String *str)
 
 plugin::Create_function<UuidFunction> *uuid_function= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   uuid_function= new plugin::Create_function<UuidFunction>("uuid");
-  registry.add(uuid_function);
+  context.add(uuid_function);
   return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-   registry.remove(uuid_function);
-   delete uuid_function;
-   return 0;
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -86,7 +79,6 @@ DRIZZLE_DECLARE_PLUGIN
   "UUID() function using libuuid",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }
