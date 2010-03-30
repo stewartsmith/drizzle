@@ -24,10 +24,10 @@
 
 #include "drizzled/plugin/plugin.h"
 
-class Session;
-
 namespace drizzled
 {
+class Session;
+
 namespace plugin
 {
 

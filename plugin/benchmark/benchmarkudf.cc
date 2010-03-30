@@ -118,18 +118,11 @@ void BenchmarkFunction::print(String *str, enum_query_type query_type)
 
 plugin::Create_function<BenchmarkFunction> *benchmarkudf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(plugin::Context &context)
 {
   benchmarkudf= new plugin::Create_function<BenchmarkFunction>("benchmark");
-  registry.add(benchmarkudf);
+  context.add(benchmarkudf);
   return 0;
-}
-
-static int finalize(plugin::Registry &registry)
-{
-   registry.remove(benchmarkudf);
-   delete benchmarkudf;
-   return 0;
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -141,7 +134,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Measure time for repeated calls to a function.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }
