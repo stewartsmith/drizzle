@@ -63,20 +63,13 @@ public:
 
 Authz *authz= NULL;
 
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
   authz= new Authz();
-  registry.add(authz);
-  return 0;
-}
-
-static int deinit(plugin::Registry &registry)
-{
-  registry.remove(authz);
-  delete authz;
+  context.add(authz);
   return 0;
 }
 
 } /* namespace authz */
 
-DRIZZLE_PLUGIN(authz::init, authz::deinit, NULL);
+DRIZZLE_PLUGIN(authz::init, NULL);

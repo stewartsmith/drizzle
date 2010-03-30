@@ -90,6 +90,11 @@ public:
 
   bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
 
+  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &, drizzled::TableIdentifier &)
+  {
+    return EPERM;
+  }
+
   const char **bas_ext() const 
   {
     return schema_exts;
