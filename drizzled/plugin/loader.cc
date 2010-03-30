@@ -154,7 +154,7 @@ static void plugin_prune_list(vector<string> &plugin_list,
                               const vector<string> &plugins_to_remove);
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             const vector<string> &plugin_list);
+                             const set<string> &plugin_list);
 static int test_plugin_options(memory::Root *, plugin::Module *,
                                int *, char **);
 static void unlock_variables(Session *session, struct system_variables *vars);
@@ -281,16 +281,8 @@ static bool plugin_add(plugin::Registry &registry, memory::Root *tmp_root,
 }
 
 
-static void delete_module(plugin::Registry &registry, plugin::Module *module)
+static void delete_module(plugin::Module *module)
 {
-  plugin::Manifest manifest= module->getManifest();
-
-  if (module->isInited)
-  {
-    if (manifest.deinit)
-      manifest.deinit(registry);
-  }
-
   /* Free allocated strings before deleting the plugin. */
   plugin_vars_free_values(module->system_vars);
   module->isInited= false;
@@ -303,17 +295,16 @@ static void delete_module(plugin::Registry &registry, plugin::Module *module)
 
 static void reap_plugins(plugin::Registry &registry)
 {
-  plugin::Module *module;
-
   std::map<std::string, plugin::Module *>::const_iterator modules=
     registry.getModulesMap().begin();
-    
+
   while (modules != registry.getModulesMap().end())
   {
-    module= (*modules).second;
-    delete_module(registry, module);
+    plugin::Module *module= (*modules).second;
+    delete_module(module);
     ++modules;
   }
+
   drizzle_del_plugin_sysvar();
 }
 
@@ -343,10 +334,10 @@ static bool plugin_initialize(plugin::Registry &registry,
 {
   assert(module->isInited == false);
 
-  registry.setCurrentModule(module);
+  plugin::Context loading_context(registry, module);
   if (module->getManifest().init)
   {
-    if (module->getManifest().init(registry))
+    if (module->getManifest().init(loading_context))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Plugin '%s' init function returned error.\n"),
@@ -354,7 +345,6 @@ static bool plugin_initialize(plugin::Registry &registry,
       return true;
     }
   }
-  registry.clearCurrentModule();
   module->isInited= true;
 
 
@@ -456,10 +446,13 @@ bool plugin_init(plugin::Registry &registry,
     tokenize(opt_plugin_remove, plugins_to_remove, ",", true);
     plugin_prune_list(plugin_list, plugins_to_remove);
   }
+
+  /* Uniquify the list */
+  const set<string> plugin_list_set(plugin_list.begin(), plugin_list.end());
   
   /* Register all dynamic plugins */
   load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                plugin_list);
+                                plugin_list_set);
   if (load_failed)
   {
     free_root(&tmp_root, MYF(0));
@@ -487,7 +480,7 @@ bool plugin_init(plugin::Registry &registry,
       plugin_initialize_vars(module);
 
       if (plugin_initialize(registry, module))
-        delete_module(registry, module);
+        delete_module(module);
     }
   }
 
@@ -533,11 +526,11 @@ static void plugin_prune_list(vector<string> &plugin_list,
 */
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             const vector<string> &plugin_list)
+                             const set<string> &plugin_list)
 {
   plugin::Library *library= NULL;
 
-  for (vector<string>::const_iterator iter= plugin_list.begin();
+  for (set<string>::const_iterator iter= plugin_list.begin();
        iter != plugin_list.end();
        ++iter)
   {
@@ -1450,7 +1443,7 @@ void plugin_opt_set_limits(struct my_option *options,
     options->arg_type= OPT_ARG;
 }
 
-static bool get_one_plugin_option(int, const struct my_option *, char *)
+static int get_one_plugin_option(int, const struct my_option *, char *)
 {
   return 0;
 }
