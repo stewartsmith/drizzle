@@ -55,18 +55,11 @@ String *DatabaseFunction::val_str(String *str)
 
 plugin::Create_function<DatabaseFunction> *database_function= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   database_function= new plugin::Create_function<DatabaseFunction>("database");
-  registry.add(database_function);
+  context.add(database_function);
   return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-   registry.remove(database_function);
-   delete database_function;
-   return 0;
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -78,7 +71,6 @@ DRIZZLE_DECLARE_PLUGIN
   "returns the current database",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }
