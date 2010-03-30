@@ -75,6 +75,10 @@ public:
 
   int doDropTable(Session&, TableIdentifier &identifier);
 
+  int doRenameTable(drizzled::Session&,
+                    drizzled::TableIdentifier&,
+                    drizzled::TableIdentifier&);
+
   int doGetTableDefinition(Session&,
                            TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
@@ -127,6 +131,11 @@ int EmbeddedInnoDBEngine::doCreateTable(Session *,
 int EmbeddedInnoDBEngine::doDropTable(Session&, TableIdentifier &)
 {
   return EPERM;
+}
+
+int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
+{
+  return ENOENT;
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
@@ -226,19 +235,11 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *)
 
 static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
 
-static int embedded_innodb_init(drizzled::plugin::Registry &registry)
+static int embedded_innodb_init(drizzled::plugin::Context &context)
 {
 
   embedded_innodb_engine= new EmbeddedInnoDBEngine("EmbeddedInnoDB");
-  registry.add(embedded_innodb_engine);
-
-  return 0;
-}
-
-static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
-{
-  registry.remove(embedded_innodb_engine);
-  delete embedded_innodb_engine;
+  context.add(embedded_innodb_engine);
 
   return 0;
 }
@@ -252,7 +253,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Transactional Storage Engine using the Embedded InnoDB Library",
   PLUGIN_LICENSE_GPL,
   embedded_innodb_init,     /* Plugin Init */
-  embedded_innodb_fini,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }
