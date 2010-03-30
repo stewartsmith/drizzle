@@ -285,7 +285,7 @@ void LoggingStats::updateCumulativeStatsByUserVector(ScoreboardSlot *current_sco
       string cumulative_scoreboard_user(current_scoreboard_slot->getUser());
       cumulative_scoreboard_slot->setUser(cumulative_scoreboard_user);
       cumulative_scoreboard_slot->merge(current_scoreboard_slot);
-      cumulative_stats_by_user_index++;
+      ++cumulative_stats_by_user_index;
     }
 
     pthread_rwlock_unlock(&LOCK_cumulative_scoreboard_index);

@@ -119,7 +119,7 @@ bool CurrentCommandsTool::Generator::populate()
     
     ++vector_of_scoreboard_vectors_it;
     pthread_rwlock_unlock(current_lock); 
-    current_bucket++;
+    ++current_bucket;
     if (vector_of_scoreboard_vectors_it != vector_of_scoreboard_vectors_end)
     {
       setVectorIteratorsAndLock(current_bucket); 
