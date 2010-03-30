@@ -20,7 +20,16 @@
 #ifndef DRIZZLED_PLUGIN_MODULE_H
 #define DRIZZLED_PLUGIN_MODULE_H
 
-#include "drizzled/lex_string.h"
+/**
+ * @file Defines a Plugin Module
+ *
+ * A plugin::Module is the fundamental functional element of the plugin system.
+ * Plugins are inited and deinited by module. A module init can register one
+ * or more plugin::Plugin objects. 
+ */
+
+#include <cassert>
+
 #include "drizzled/plugin/manifest.h"
 
 namespace drizzled
@@ -44,12 +53,18 @@ public:
   Module(const Manifest *manifest_arg, Library *library_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(library_arg),
       isInited(false),
-      system_vars(NULL) {}
+      system_vars(NULL)
+  {
+    assert(manifest != NULL);
+  }
       
   Module(const Manifest *manifest_arg)
     : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(NULL),
       isInited(false),
-      system_vars(NULL) {}
+      system_vars(NULL)
+  {
+    assert(manifest != NULL);
+  }
       
   const std::string& getName() const
   {

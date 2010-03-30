@@ -38,7 +38,7 @@ static ShowTableStatus *table_status;
 static ShowTemporaryTables *show_temporary_tables;
 
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   columns= new(std::nothrow)ColumnsTool;
   index_parts= new(std::nothrow)IndexPartsTool;
@@ -54,52 +54,20 @@ static int init(drizzled::plugin::Registry &registry)
   table_status= new(std::nothrow)ShowTableStatus;
   tables= new(std::nothrow)TablesTool;
 
-  registry.add(columns);
-  registry.add(index_parts);
-  registry.add(indexes);
-  registry.add(local_tables);
-  registry.add(referential_constraints);
-  registry.add(schema_names);
-  registry.add(schemas);
-  registry.add(show_columns);
-  registry.add(show_indexes);
-  registry.add(show_temporary_tables);
-  registry.add(table_constraints);
-  registry.add(table_status);
-  registry.add(tables);
+  context.add(columns);
+  context.add(index_parts);
+  context.add(indexes);
+  context.add(local_tables);
+  context.add(referential_constraints);
+  context.add(schema_names);
+  context.add(schemas);
+  context.add(show_columns);
+  context.add(show_indexes);
+  context.add(show_temporary_tables);
+  context.add(table_constraints);
+  context.add(table_status);
+  context.add(tables);
   
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(columns);
-  registry.remove(index_parts);
-  registry.remove(indexes);
-  registry.remove(local_tables);
-  registry.remove(referential_constraints);
-  registry.remove(schema_names);
-  registry.remove(schemas);
-  registry.remove(show_columns);
-  registry.remove(show_indexes);
-  registry.remove(show_temporary_tables);
-  registry.remove(table_constraints);
-  registry.remove(table_status);
-  registry.remove(tables);
-  delete columns;
-  delete index_parts;
-  delete indexes;
-  delete local_tables;
-  delete referential_constraints;
-  delete schema_names;
-  delete schemas;
-  delete show_columns;
-  delete show_indexes;
-  delete show_temporary_tables;
-  delete table_constraints;
-  delete table_status;
-  delete tables;
-
   return 0;
 }
 
@@ -112,7 +80,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Data Dictionary for schema, table, column, indexes, etc",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }

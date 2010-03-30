@@ -20,6 +20,14 @@
 #ifndef DRIZZLED_PLUGIN_LIBRARY_H
 #define DRIZZLED_PLUGIN_LIBRARY_H
 
+/**
+ * @file Defines a Plugin Library Wrapper
+ *
+ * A plugin::Library is a wrapper object around a plugin .so file. It owns
+ * the void * returned by dlopen and contains the knowledge of how to load
+ * and unload plugin libraries via dlopen().
+ */
+
 #include <string>
 
 namespace drizzled

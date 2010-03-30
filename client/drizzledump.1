@@ -1,43 +1,36 @@
-.\"     Title: \fBmysqldump\fR
+.\"     Title: \fBdrizzledump\fR
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.70.1 <http://docbook.sf.net/>
 .\"      Date: 05/23/2009
-.\"    Manual: MySQL Database System
-.\"    Source: MySQL 6.0
+.\"    Manual: drizzle Database System
+.\"    Source: drizzle 6.0
 .\"
-.TH "\fBMYSQLDUMP\fR" "1" "05/23/2009" "MySQL 6.0" "MySQL Database System"
+.TH "\fBMYSQLDUMP\fR" "1" "05/23/2009" "drizzle" "drizzle Database System"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
 .ad l
 .SH "NAME"
-mysqldump \- a database backup program
+drizzledump \- a database backup program
 .SH "SYNOPSIS"
 .HP 45
-\fBmysqldump [\fR\fB\fIoptions\fR\fR\fB] [\fR\fB\fIdb_name\fR\fR\fB [\fR\fB\fItbl_name\fR\fR\fB ...]]\fR
+\fBdrizzledump [\fR\fB\fIoptions\fR\fR\fB] [\fR\fB\fIdb_name\fR\fR\fB [\fR\fB\fItbl_name\fR\fR\fB ...]]\fR
 .SH "DESCRIPTION"
 .PP
 The
-\fBmysqldump\fR
-client is a backup program originally written by Igor Romanenko. It can be used to dump a database or a collection of databases for backup or transfer to another SQL server (not necessarily a MySQL server). The dump typically contains SQL statements to create the table, populate it, or both. However,
-\fBmysqldump\fR
+\fBdrizzledump\fR
+client is a backup program originally written by Igor Romanenko. It can be used to dump a database or a collection of databases for backup or transfer to another SQL server (not necessarily a drizzle server). The dump typically contains SQL statements to create the table, populate it, or both. However,
+\fBdrizzledump\fR
 can also be used to generate files in CSV, other delimited text, or XML format.
 .PP
-If you are doing a backup on the server and your tables all are
-MyISAM
-tables, consider using the
-\fBmysqlhotcopy\fR
-instead because it can accomplish faster backups and faster restores. See
-\fBmysqlhotcopy\fR(1).
-.PP
 There are three general ways to invoke
-\fBmysqldump\fR:
+\fBdrizzledump\fR:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump [\fR\fB\fIoptions\fR\fR\fB] \fR\fB\fIdb_name\fR\fR\fB [\fR\fB\fItables\fR\fR\fB]\fR
-shell> \fBmysqldump [\fR\fB\fIoptions\fR\fR\fB] \-\-databases \fR\fB\fIdb_name1\fR\fR\fB [\fR\fB\fIdb_name2\fR\fR\fB \fR\fB\fIdb_name3\fR\fR\fB...]\fR
-shell> \fBmysqldump [\fR\fB\fIoptions\fR\fR\fB] \-\-all\-databases\fR
+shell> \fBdrizzledump [\fR\fB\fIoptions\fR\fR\fB] \fR\fB\fIdb_name\fR\fR\fB [\fR\fB\fItables\fR\fR\fB]\fR
+shell> \fBdrizzledump [\fR\fB\fIoptions\fR\fR\fB] \-\-databases \fR\fB\fIdb_name1\fR\fR\fB [\fR\fB\fIdb_name2\fR\fR\fB \fR\fB\fIdb_name3\fR\fR\fB...]\fR
+shell> \fBdrizzledump [\fR\fB\fIoptions\fR\fR\fB] \-\-all\-databases\fR
 .fi
 .RE
 .PP
@@ -49,20 +42,20 @@ or
 \fB\-\-all\-databases\fR
 option, entire databases are dumped.
 .PP
-\fBmysqldump\fR
+\fBdrizzledump\fR
 does not dump the
 INFORMATION_SCHEMA
 database. If you name that database explicitly on the command line,
-\fBmysqldump\fR
+\fBdrizzledump\fR
 silently ignores it.
 .PP
 To get a list of the options your version of
-\fBmysqldump\fR
+\fBdrizzledump\fR
 supports, execute
-\fBmysqldump \-\-help\fR.
+\fBdrizzledump \-\-help\fR.
 .PP
 Some
-\fBmysqldump\fR
+\fBdrizzledump\fR
 options are shorthand for groups of other options.
 \fB\-\-opt\fR
 and
@@ -97,7 +90,7 @@ except for some features, use the
 option for each feature. For example, to disable extended inserts and memory buffering, use
 \fB\-\-opt\fR
 \fB\-\-skip\-extended\-insert\fR
-\fB\-\-skip\-quick\fR. (As of MySQL 6.0,
+\fB\-\-skip\-quick\fR. (
 \fB\-\-skip\-extended\-insert\fR
 \fB\-\-skip\-quick\fR
 is sufficient because
@@ -122,7 +115,7 @@ would not have the intended effect; it is the same as
 \fB\-\-skip\-opt\fR
 by itself.
 .PP
-\fBmysqldump\fR
+\fBdrizzledump\fR
 can retrieve and dump table contents row by row, or it can retrieve the entire content from a table and buffer it in memory before dumping it. Buffering in memory can be a problem if you are dumping large tables. To dump tables row by row, use the
 \fB\-\-quick\fR
 option (or
@@ -130,12 +123,12 @@ option (or
 \fB\-\-quick\fR). The
 \fB\-\-opt\fR
 option (and hence
-\fB\-\-quick\fR) is enabled by default in MySQL 6.0; to enable memory buffering, use
+\fB\-\-quick\fR) is enabled by default; to enable memory buffering, use
 \fB\-\-skip\-quick\fR.
 .PP
 If you are using a recent version of
-\fBmysqldump\fR
-to generate a dump to be reloaded into a very old MySQL server, you should not use the
+\fBdrizzledump\fR
+to generate a dump to be reloaded into a very old drizzle server, you should not use the
 \fB\-\-opt\fR
 or
 \fB\-\-extended\-insert\fR
@@ -143,9 +136,8 @@ option. Use
 \fB\-\-skip\-opt\fR
 instead.
 .PP
-\fBmysqldump\fR
-supports the options in the following list. It also reads option files and supports the options for processing them described at
-Section\ 4.2.3.2.1, \(lqCommand\-Line Options that Affect Option\-File Handling\(rq.
+\fBdrizzledump\fR
+supports the options in the following list.
 .TP 3n
 \(bu
 \fB\-\-help\fR,
@@ -178,8 +170,7 @@ Surround each table dump with
 LOCK TABLES
 and
 UNLOCK TABLES
-statements. This results in faster inserts when the dump file is reloaded. See
-Section\ 7.2.25, \(lqSpeed of INSERT Statements\(rq.
+statements. This results in faster inserts when the dump file is reloaded.
 .TP 3n
 \(bu
 \fB\-\-all\-databases\fR,
@@ -205,13 +196,12 @@ statement before the
 CHANGE MASTER TO
 statement and a
 START SLAVE
-statement at the end of the output. This option was added in MySQL 6.0.4.
+statement at the end of the output.
 .TP 3n
 \(bu
 \fB\-\-character\-sets\-dir=\fR\fB\fIpath\fR\fR
 .sp
-The directory where character sets are installed. See
-Section\ 9.2, \(lqThe Character Set Used for Data and Sorting\(rq.
+The directory where character sets are installed.
 .TP 3n
 \(bu
 \fB\-\-comments\fR,
@@ -234,7 +224,7 @@ options.
 \(bu
 \fB\-\-compatible=\fR\fB\fIname\fR\fR
 .sp
-Produce output that is more compatible with other database systems or with older MySQL servers. The value of
+Produce output that is more compatible with other database systems or with older drizzle servers. The value of
 name
 can be
 ansi,
@@ -247,8 +237,7 @@ db2,
 maxdb,
 no_key_options,
 no_table_options, or
-no_field_options. To use several values, separate them by commas. These values have the same meaning as the corresponding options for setting the server SQL mode. See
-Section\ 5.1.7, \(lqServer SQL Modes\(rq.
+no_field_options. To use several values, separate them by commas. These values have the same meaning as the corresponding options for setting the server SQL mode.
 .sp
 This option does not guarantee compatibility with other servers. It only enables those SQL mode values that are currently available for making dump output more compatible. For example,
 \fB\-\-compatible=oracle\fR
@@ -273,7 +262,7 @@ Compress all information sent between the client and the server if both support 
 \(bu
 \fB\-\-create\-options\fR
 .sp
-Include all MySQL\-specific table options in the
+Include all drizzle\-specific table options in the
 CREATE TABLE
 statements.
 .TP 3n
@@ -282,7 +271,7 @@ statements.
 \fB\-B\fR
 .sp
 Dump several databases. Normally,
-\fBmysqldump\fR
+\fBdrizzledump\fR
 treats the first name argument on the command line as a database name and following names as table names. With this option, it treats all name arguments as database names.
 CREATE DATABASE
 and
@@ -297,7 +286,7 @@ Write a debugging log. A typical
 \fIdebug_options\fR
 string is
 \'d:t:o,\fIfile_name\fR'. The default value is
-\'d:t:o,/tmp/mysqldump.trace'.
+\'d:t:o,/tmp/drizzledump.trace'.
 .TP 3n
 \(bu
 \fB\-\-debug\-check\fR
@@ -314,12 +303,10 @@ Print debugging information and memory and CPU usage statistics when the program
 .sp
 Use
 \fIcharset_name\fR
-as the default character set. See
-Section\ 9.2, \(lqThe Character Set Used for Data and Sorting\(rq. If no character set is specified,
-\fBmysqldump\fR
+as the default character set. If no character set is specified,
+\fBdrizzledump\fR
 uses
-utf8, and earlier versions use
-latin1.
+utf8
 .sp
 This option has no effect for output data files produced by using the
 \fB\-\-tab\fR
@@ -357,7 +344,7 @@ tables.
 \(bu
 \fB\-\-dump\-date\fR
 .sp
-\fBmysqldump\fR
+\fBdrizzledump\fR
 produces a
 \-\- Dump completed on \fIDATE\fR
 comment at the end of the dump if the
@@ -370,7 +357,7 @@ control whether the date is added to the comment. The default is
 \fB\-\-dump\-date\fR
 (include the date in the comment).
 \fB\-\-skip\-dump\-date\fR
-suppresses date printing. This option was added in MySQL 6.0.4.
+suppresses date printing.
 .TP 3n
 \(bu
 \fB\-\-dump\-slave[=\fR\fB\fIvalue\fR\fR\fB]\fR
@@ -381,7 +368,7 @@ except that it is used to dump a replication slave server to produce a dump file
 CHANGE MASTER TO
 statement that indicates the binary log coordinates (file name and position) of the dumped slave's master (rather than the coordinates of the dumped server, as is done by the
 \fB\-\-master\-data\fR
-option). These are the master server coordinates from which the slave should start replicating. This option was added in MySQL 6.0.4.
+option). These are the master server coordinates from which the slave should start replicating.
 .sp
 The option value is handled the same way as for
 \fB\-\-master\-data\fR
@@ -421,8 +408,7 @@ lists. This results in a smaller dump file and speeds up inserts when the file i
 These options are used with the
 \fB\-T\fR
 option and have the same meaning as the corresponding clauses for
-LOAD DATA INFILE. See
-Section\ 12.2.6, \(lqLOAD DATA INFILE Syntax\(rq.
+LOAD DATA INFILE. 
 .TP 3n
 \(bu
 \fB\-\-first\-slave\fR,
@@ -435,7 +421,7 @@ Deprecated. Now renamed to
 \fB\-\-flush\-logs\fR,
 \fB\-F\fR
 .sp
-Flush the MySQL server log files before starting the dump. This option requires the
+Flush the drizzle server log files before starting the dump. This option requires the
 RELOAD
 privilege. Note that if you use this option in combination with the
 \fB\-\-all\-databases\fR
@@ -457,11 +443,11 @@ or
 Emit a
 FLUSH PRIVILEGES
 statement after dumping the
-mysql
+drizzle
 database. This option should be used any time the dump contains the
-mysql
+drizzle
 database and any other database that depends on the data in the
-mysql
+drizzle
 database for proper restoration.
 .TP 3n
 \(bu
@@ -471,20 +457,20 @@ database for proper restoration.
 Continue even if an SQL error occurs during a table dump.
 .sp
 One use for this option is to cause
-\fBmysqldump\fR
+\fBdrizzledump\fR
 to continue executing even when it encounters a view that has become invalid because the definition refers to a table that has been dropped. Without
 \fB\-\-force\fR,
-\fBmysqldump\fR
+\fBdrizzledump\fR
 exits with an error message. With
 \fB\-\-force\fR,
-\fBmysqldump\fR
+\fBdrizzledump\fR
 prints the error message, but it also writes an SQL comment containing the view definition to the dump output and continues executing.
 .TP 3n
 \(bu
 \fB\-\-host=\fR\fB\fIhost_name\fR\fR,
 \fB\-h \fR\fB\fIhost_name\fR\fR
 .sp
-Dump data from the MySQL server on the given host. The default host is
+Dump data from the drizzle server on the given host. The default host is
 localhost.
 .TP 3n
 \(bu
@@ -510,7 +496,7 @@ option, add
 MASTER_PORT
 and
 MASTER_PORT
-options for the host name and TCP/IP port number of the slave's master. This option was added in MySQL 6.0.4.
+options for the host name and TCP/IP port number of the slave's master.
 .TP 3n
 \(bu
 \fB\-\-ignore\-table=\fR\fB\fIdb_name.tbl_name\fR\fR
@@ -532,8 +518,7 @@ option.
 This option is used with the
 \fB\-T\fR
 option and has the same meaning as the corresponding clause for
-LOAD DATA INFILE. See
-Section\ 12.2.6, \(lqLOAD DATA INFILE Syntax\(rq.
+LOAD DATA INFILE. 
 .TP 3n
 \(bu
 \fB\-\-lock\-all\-tables\fR,
@@ -652,7 +637,7 @@ This option is shorthand; it is the same as specifying
 \fB\-\-extended\-insert\fR
 \fB\-\-lock\-tables\fR
 \fB\-\-quick\fR
-\fB\-\-set\-charset\fR. It should give you a fast dump operation and produce a dump file that can be reloaded into a MySQL server quickly.
+\fB\-\-set\-charset\fR. It should give you a fast dump operation and produce a dump file that can be reloaded into a drizzle server quickly.
 .sp
 \fIThe \fR\fI\fB\-\-opt\fR\fR\fI option is enabled by default. Use \fR\fI\fB\-\-skip\-opt\fR\fR\fI to disable it.\fR
 See the discussion at the beginning of this section for information about selectively enabling or disabling certain of the options affected by
@@ -681,8 +666,7 @@ or
 \fB\-p\fR
 option on the command line, you are prompted for one.
 .sp
-Specifying a password on the command line should be considered insecure. See
-Section\ 5.5.6.2, \(lqEnd\-User Guidelines for Password Security\(rq.
+Specifying a password on the command line should be considered insecure. 
 .TP 3n
 \(bu
 \fB\-\-pipe\fR,
@@ -699,15 +683,14 @@ The TCP/IP port number to use for the connection.
 \(bu
 \fB\-\-protocol={TCP|SOCKET|PIPE|MEMORY}\fR
 .sp
-The connection protocol to use for connecting to the server. It is useful when the other connection parameters normally would cause a protocol to be used other than the one you want. For details on the allowable values, see
-Section\ 4.2.2, \(lqConnecting to the MySQL Server\(rq.
+The connection protocol to use for connecting to the server. It is useful when the other connection parameters normally would cause a protocol to be used other than the one you want.
 .TP 3n
 \(bu
 \fB\-\-quick\fR,
 \fB\-q\fR
 .sp
 This option is useful for dumping large tables. It forces
-\fBmysqldump\fR
+\fBdrizzledump\fR
 to retrieve rows for a table from the server a row at a time rather than retrieving the entire row set and buffering it in memory before writing it out.
 .TP 3n
 \(bu
@@ -752,7 +735,7 @@ carriage return/newline sequences. The result file is created and its contents o
 Dump stored routines (procedures and functions) from the dumped databases. Use of this option requires the
 SELECT
 privilege for the
-mysql.proc
+drizzle.proc
 table. The output generated by using
 \fB\-\-routines\fR
 contains
@@ -763,9 +746,9 @@ statements to re\-create the routines. However, these statements do not include 
 .sp
 If you require routines to be re\-created with their original timestamp attributes, do not use
 \fB\-\-routines\fR. Instead, dump and reload the contents of the
-mysql.proc
-table directly, using a MySQL account that has appropriate privileges for the
-mysql
+drizzle.proc
+table directly, using a drizzle account that has appropriate privileges for the
+drizzle
 database.
 .TP 3n
 \(bu
@@ -807,7 +790,7 @@ RENAME TABLE,
 TRUNCATE TABLE. A consistent read is not isolated from those statements, so use of them on a table to be dumped can cause the
 SELECT
 performed by
-\fBmysqldump\fR
+\fBdrizzledump\fR
 to retrieve the table contents to obtain incorrect contents or fail.
 .sp
 The
@@ -847,15 +830,14 @@ localhost, the Unix socket file to use, or, on Windows, the name of the named pi
 .sp
 Options that begin with
 \fB\-\-ssl\fR
-specify whether to connect to the server via SSL and indicate where to find SSL keys and certificates. See
-Section\ 5.5.7.3, \(lqSSL Command Options\(rq.
+specify whether to connect to the server via SSL and indicate where to find SSL keys and certificates. 
 .TP 3n
 \(bu
 \fB\-\-tab=\fR\fB\fIpath\fR\fR,
 \fB\-T \fR\fB\fIpath\fR\fR
 .sp
 Produce tab\-separated data files. For each dumped table,
-\fBmysqldump\fR
+\fBdrizzledump\fR
 creates a
 \fI\fItbl_name\fR\fR\fI.sql\fR
 file that contains the
@@ -884,9 +866,9 @@ option is ignored. In effect, there is no character set conversion. If a table c
 .br
 \fBNote\fR
 This option should be used only when
-\fBmysqldump\fR
+\fBdrizzledump\fR
 is run on the same machine as the
-\fBmysqld\fR
+\fBdrizzled\fR
 server. You must have the
 FILE
 privilege, and the server must have permission to write files in the directory that you specify.
@@ -899,7 +881,7 @@ Override the
 or
 \fB\-B\fR
 option.
-\fBmysqldump\fR
+\fBdrizzledump\fR
 regards all name arguments following the option as table names.
 .TP 3n
 \(bu
@@ -914,7 +896,7 @@ Dump triggers for each dumped table. This option is enabled by default; disable 
 This option enables
 TIMESTAMP
 columns to be dumped and reloaded between servers in different time zones.
-\fBmysqldump\fR
+\fBdrizzledump\fR
 sets its connection time zone to UTC and adds
 SET TIME_ZONE='+00:00'
 to the dump file. Without this option,
@@ -930,7 +912,7 @@ is enabled by default. To disable it, use
 \fB\-\-user=\fR\fB\fIuser_name\fR\fR,
 \fB\-u \fR\fB\fIuser_name\fR\fR
 .sp
-The MySQL user name to use when connecting to the server.
+The drizzle user name to use when connecting to the server.
 .TP 3n
 \(bu
 \fB\-\-verbose\fR,
@@ -1007,21 +989,21 @@ T}
 .TE
 .sp
 The output from the
-\fBmysql\fR
+\fBdrizzle\fR
 client when run using the
 \fB\-\-xml\fR
 option also follows these rules. (See
 the section called \(lq\fBMYSQL\fR OPTIONS\(rq.)
 .sp
 XML output from
-\fBmysqldump\fR
+\fBdrizzledump\fR
 includes the XML namespace, as shown here:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump \-\-xml \-u root world City\fR
+shell> \fBdrizzledump \-\-xml \-u root world City\fR
 <?xml version="1.0"?>
-<mysqldump xmlns:xsi="http://www.w3.org/2001/XMLSchema\-instance">
+<drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema\-instance">
 <database name="world">
 <table_structure name="City">
 <field Field="ID" Type="int(11)" Null="NO" Key="PRI" Extra="auto_increment" />
@@ -1053,7 +1035,7 @@ e_time="2007\-03\-31 01:47:02" Collation="latin1_swedish_ci" Create_options="" C
 </row>
 </table_data>
 </database>
-</mysqldump>
+</drizzledump>
 .fi
 .RE
 .sp
@@ -1076,22 +1058,22 @@ The initial size of the buffer for client/server communication. When creating mu
 \fB\-\-extended\-insert\fR
 or
 \fB\-\-opt\fR),
-\fBmysqldump\fR
+\fBdrizzledump\fR
 creates rows up to
 net_buffer_length
 length. If you increase this variable, you should also ensure that the
 net_buffer_length
-variable in the MySQL server is at least this large.
+variable in the drizzle server is at least this large.
 .sp
 .RE
 .PP
 The most common use of
-\fBmysqldump\fR
+\fBdrizzledump\fR
 is probably for making a backup of an entire database:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump \fR\fB\fIdb_name\fR\fR\fB > \fR\fB\fIbackup\-file.sql\fR\fR
+shell> \fBdrizzledump \fR\fB\fIdb_name\fR\fR\fB > \fR\fB\fIbackup\-file.sql\fR\fR
 .fi
 .RE
 .PP
@@ -1099,7 +1081,7 @@ You can read the dump file back into the server like this:
 .sp
 .RS 3n
 .nf
-shell> \fBmysql \fR\fB\fIdb_name\fR\fR\fB < \fR\fB\fIbackup\-file.sql\fR\fR
+shell> \fBdrizzle \fR\fB\fIdb_name\fR\fR\fB < \fR\fB\fIbackup\-file.sql\fR\fR
 .fi
 .RE
 .PP
@@ -1107,16 +1089,16 @@ Or like this:
 .sp
 .RS 3n
 .nf
-shell> \fBmysql \-e "source \fR\fB\fI/path\-to\-backup/backup\-file.sql\fR\fR\fB" \fR\fB\fIdb_name\fR\fR
+shell> \fBdrizzle \-e "source \fR\fB\fI/path\-to\-backup/backup\-file.sql\fR\fR\fB" \fR\fB\fIdb_name\fR\fR
 .fi
 .RE
 .PP
-\fBmysqldump\fR
-is also very useful for populating databases by copying data from one MySQL server to another:
+\fBdrizzledump\fR
+is also very useful for populating databases by copying data from one drizzle server to another:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump \-\-opt \fR\fB\fIdb_name\fR\fR\fB | mysql \-\-host=\fR\fB\fIremote_host\fR\fR\fB \-C \fR\fB\fIdb_name\fR\fR
+shell> \fBdrizzledump \-\-opt \fR\fB\fIdb_name\fR\fR\fB | drizzle \-\-host=\fR\fB\fIremote_host\fR\fR\fB \-C \fR\fB\fIdb_name\fR\fR
 .fi
 .RE
 .PP
@@ -1124,7 +1106,7 @@ It is possible to dump several databases with one command:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump \-\-databases \fR\fB\fIdb_name1\fR\fR\fB [\fR\fB\fIdb_name2\fR\fR\fB ...] > my_databases.sql\fR
+shell> \fBdrizzledump \-\-databases \fR\fB\fIdb_name1\fR\fR\fB [\fR\fB\fIdb_name2\fR\fR\fB ...] > my_databases.sql\fR
 .fi
 .RE
 .PP
@@ -1134,35 +1116,34 @@ option:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump \-\-all\-databases > all_databases.sql\fR
+shell> \fBdrizzledump \-\-all\-databases > all_databases.sql\fR
 .fi
 .RE
 .PP
 For
 InnoDB
 tables,
-\fBmysqldump\fR
+\fBdrizzledump\fR
 provides a way of making an online backup:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump \-\-all\-databases \-\-single\-transaction > all_databases.sql\fR
+shell> \fBdrizzledump \-\-all\-databases \-\-single\-transaction > all_databases.sql\fR
 .fi
 .RE
 .PP
 This backup acquires a global read lock on all tables (using
 FLUSH TABLES WITH READ LOCK) at the beginning of the dump. As soon as this lock has been acquired, the binary log coordinates are read and the lock is released. If long updating statements are running when the
 FLUSH
-statement is issued, the MySQL server may get stalled until those statements finish. After that, the dump becomes lock\-free and does not disturb reads and writes on the tables. If the update statements that the MySQL server receives are short (in terms of execution time), the initial lock period should not be noticeable, even with many updates.
+statement is issued, the drizzle server may get stalled until those statements finish. After that, the dump becomes lock\-free and does not disturb reads and writes on the tables. If the update statements that the drizzle server receives are short (in terms of execution time), the initial lock period should not be noticeable, even with many updates.
 .PP
 For point\-in\-time recovery (also known as
 \(lqroll\-forward,\(rq
-when you need to restore an old backup and replay the changes that happened since that backup), it is often useful to rotate the binary log (see
-Section\ 5.2.4, \(lqThe Binary Log\(rq) or at least know the binary log coordinates to which the dump corresponds:
+when you need to restore an old backup and replay the changes that happened since that backup), it is often useful to rotate the binary log , \(lqThe Binary Log\(rq) or at least know the binary log coordinates to which the dump corresponds:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump \-\-all\-databases \-\-master\-data=2 > all_databases.sql\fR
+shell> \fBdrizzledump \-\-all\-databases \-\-master\-data=2 > all_databases.sql\fR
 .fi
 .RE
 .PP
@@ -1170,7 +1151,7 @@ Or:
 .sp
 .RS 3n
 .nf
-shell> \fBmysqldump \-\-all\-databases \-\-flush\-logs \-\-master\-data=2\fR
+shell> \fBdrizzledump \-\-all\-databases \-\-flush\-logs \-\-master\-data=2\fR
               \fB> all_databases.sql\fR
 .fi
 .RE
@@ -1183,15 +1164,11 @@ options can be used simultaneously, which provides a convenient way to make an o
 InnoDB
 storage engine.
 .PP
-For more information on making backups, see
-Section\ 6.1, \(lqDatabase Backups\(rq, and
-Section\ 6.2, \(lqExample Backup and Recovery Strategy\(rq.
-.PP
-If you encounter problems backing up views, please read the section that covers restrictions on views which describes a workaround for backing up views when this fails due to insufficient privileges. See
-Section\ D.5, \(lqRestrictions on Views\(rq.
+If you encounter problems backing up views, please read the section that covers restrictions on views which describes a workaround for backing up views when this fails due to insufficient privileges. 
 .SH "COPYRIGHT"
 .PP
 Copyright 2007\-2008 MySQL AB, 2009 Sun Microsystems, Inc.
+Copyright 2010 Drizzle Team
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP
@@ -1199,8 +1176,6 @@ This documentation is distributed in the hope that it will be useful, but WITHOU
 .PP
 You should have received a copy of the GNU General Public License along with the program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110\-1301 USA or see http://www.gnu.org/licenses/.
 .SH "SEE ALSO"
-For more information, please refer to the MySQL Reference Manual,
-which may already be installed locally and which is also available
-online at http://dev.mysql.com/doc/.
+For more information, please refer to http://www.drizzle.org/wiki.
 .SH AUTHOR
-Sun Microsystems, Inc. (http://www.mysql.com/).
+Sun Microsystems, Inc. (http://www.mysql.com/), Drizzle Team

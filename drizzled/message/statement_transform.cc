@@ -819,7 +819,7 @@ transformCreateTableStatementToSql(const CreateTableStatement &statement,
 enum TransformSqlError
 transformTableDefinitionToSql(const Table &table,
                               string &destination,
-                              enum TransformSqlVariant sql_variant)
+                              enum TransformSqlVariant sql_variant, bool with_schema)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -831,6 +831,13 @@ transformTableDefinitionToSql(const Table &table,
     destination.append("TEMPORARY ", 10);
   
   destination.append("TABLE ", 6);
+  if (with_schema)
+  {
+    destination.push_back(quoted_identifier);
+    destination.append(table.schema());
+    destination.push_back(quoted_identifier);
+    destination.push_back('.');
+  }
   destination.push_back(quoted_identifier);
   destination.append(table.name());
   destination.push_back(quoted_identifier);
@@ -1112,11 +1119,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
     break;
   case Table::Field::ENUM:
     {
-      size_t num_field_values= field.set_options().field_value_size();
+      size_t num_field_values= field.enumeration_values().field_value_size();
       destination.append(" ENUM(", 6);
       for (size_t x= 0; x < num_field_values; ++x)
       {
-        const string &type= field.set_options().field_value(x);
+        const string &type= field.enumeration_values().field_value(x);
 
         if (x != 0)
           destination.push_back(',');
