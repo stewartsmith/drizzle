@@ -126,7 +126,7 @@ bool Function::doDoesTableExist(Session&, TableIdentifier &identifier)
 
 static drizzled::plugin::StorageEngine *function_plugin= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   function_plugin= new(std::nothrow) Function("FunctionEngine");
 
@@ -135,15 +135,7 @@ static int init(drizzled::plugin::Registry &registry)
     return 1;
   }
 
-  registry.add(function_plugin);
-
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(function_plugin);
-  delete function_plugin;
+  context.add(function_plugin);
 
   return 0;
 }
@@ -157,7 +149,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Function Engine provides the infrastructure for Table Functions,etc.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  finalize,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

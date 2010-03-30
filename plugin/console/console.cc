@@ -310,17 +310,10 @@ public:
 
 static ListenConsole *listen_obj= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   listen_obj= new ListenConsole("console");
-  registry.add(listen_obj);
-  return 0;
-}
-
-static int deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(listen_obj);
-  delete listen_obj;
+  context.add(listen_obj);
   return 0;
 }
 
@@ -354,7 +347,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Console Client",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init */
-  deinit, /* Plugin Deinit */
   vars,   /* system variables */
   NULL    /* config options */
 }

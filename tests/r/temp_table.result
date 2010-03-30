@@ -26,9 +26,9 @@ create TEMPORARY TABLE IF NOT EXISTS t2 (a int) engine=MEMORY;
 Warnings:
 Note	1050	Table 't2' already exists
 CREATE TEMPORARY TABLE t1 (a int not null, b char (10) not null);
-ERROR 42S01: Table 't1' already exists
+ERROR 42S01: Table 'test.#t1' already exists
 ALTER TABLE t1 RENAME t2;
-ERROR 42S01: Table 't2' already exists
+ERROR 42S01: Table 'test.#t2' already exists
 select * from t2;
 a	b
 4	e

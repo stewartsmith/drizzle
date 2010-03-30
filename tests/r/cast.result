@@ -72,17 +72,6 @@ cast('abc' AS char(2)) as c3,
 cast('a  ' AS char(2)) as c4,
 cast('a'   AS char(2)) as c5;
 ERROR 22007: Truncated incorrect CHAR(2) value: 'abc'
-select
-cast('ÆÇ'  AS char)    as c1,
-cast('Æ '  AS char)    as c2,
-cast('ÆÇÈ' AS char(2)) as c3,
-cast('Æ  ' AS char(2)) as c4,
-cast('Æ'   AS char(2)) as c5;
-c1	c2	c3	c4	c5
-ÆÇ	Æ 	ÆÇ	Æ 	Æ
-Warnings:
-Warning	1292	Truncated incorrect CHAR(2) value: 'ÆÇÈ'
-Warning	1292	Truncated incorrect CHAR(2) value: 'Æ  '
 select cast("2001-1-1" as date) = "2001-01-01";
 cast("2001-1-1" as date) = "2001-01-01"
 1
