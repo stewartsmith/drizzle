@@ -36,7 +36,6 @@ static PoolOfThreadsScheduler *scheduler= NULL;
 static volatile bool kill_pool_threads= false;
 
 static volatile uint32_t created_threads= 0;
-static int deinit(drizzled::plugin::Registry &registry);
 
 static struct event session_add_event;
 static struct event session_kill_event;
@@ -637,24 +636,12 @@ bool PoolOfThreadsScheduler::libevent_init(void)
  * 
  * @param[in] registry holding the record of the plugins
  */
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   assert(size != 0);
 
   scheduler= new PoolOfThreadsScheduler("pool_of_threads");
-  registry.add(scheduler);
-
-  return 0;
-}
-
-/**
- * @brief
- *  Waits until all pool threads have been deleted for clean shutdown
- */
-static int deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(scheduler);
-  delete scheduler;
+  context.add(scheduler);
 
   return 0;
 }
@@ -682,7 +669,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Pool of Threads Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
   sys_variables,   /* system variables */
   NULL    /* config options */
 }

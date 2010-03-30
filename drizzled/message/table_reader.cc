@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
   }
 
   string output;
-  (void) message::transformTableDefinitionToSql(table, output);
+  (void) message::transformTableDefinitionToSql(table, output, message::DRIZZLE, true);
 
   cout << output << endl;
 
