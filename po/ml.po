@@ -30,8 +30,8 @@ msgstr "സെര്‍വറിലേക്കു വീണ്ടും കണ�
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
-"റ്റേറ്റ്മെന്റ് ശരിയായി അവസ്സാനിപ്പിക്കുക. ശ്രദ്ധിക്കുക: വരിയുടെ ബാക്കിയുള്ള "
-"ഭാഗം delimiter ആയി എടുക്കുന്നു."
+"റ്റേറ്റ്മെന്റ് ശരിയായി അവസ്സാനിപ്പിക്കുക. ശ്രദ്ധിക്കുക: വരിയുടെ ബാക്കിയുള്ള ഭാഗം delimiter "
+"ആയി എടുക്കുന്നു."
 
 msgid "Send command to drizzle server, display result vertically."
 msgstr "കമാന്റ് സെര്‍വറിലേക്കു അയക്കുകയും ഫലം കുത്തനെ കാണിക്കുകയും ചെയ്യുക."
@@ -68,21 +68,17 @@ msgstr "completion hash പുനര്നിര്മിക്കുക"
 
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
-"സ്ക്രിപ്റ്റ് ഫയല്‍ ഓടിക്കുക (എക്സിക്യുട് ചെയ്യുക). ഒരു ഫയലിന്റെ പേരു "
-"എടുക്കും (പറഞ്ഞു കൊടുക്കണം )"
+"സ്ക്രിപ്റ്റ് ഫയല്‍ ഓടിക്കുക (എക്സിക്യുട് ചെയ്യുക). ഒരു ഫയലിന്റെ പേരു എടുക്കും (പറഞ്ഞു കൊടുക്കണം )"
 
 msgid "Get status information from the server."
 msgstr "സ്ഥിതിവിവരം ​സെര്‍വറില്‍ നിന്നു എടുക്കുക"
 
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
-"outfile [to_outfile] സെറ്റ് ചെയ്യുക. ഏല്ലാം പറഞ്ഞിരിക്കുന്ന outfile ലേക്കു "
-"ചേര്‍ ക്കുക"
+"outfile [to_outfile] സെറ്റ് ചെയ്യുക. ഏല്ലാം പറഞ്ഞിരിക്കുന്ന outfile ലേക്കു ചേര്‍ ക്കുക"
 
 msgid "Use another database. Takes database name as argument."
-msgstr ""
-"വേറെ ഒരു ഡറ്റാബേസ് ഉപയോഗിക്കുക. ഒരു ഡേറ്റാബേസ്സിന്റെ പേരു എടുക്കും (പറഞ്ഞു "
-"കൊടുക്കണം)"
+msgstr "വേറെ ഒരു ഡറ്റാബേസ് ഉപയോഗിക്കുക. ഒരു ഡേറ്റാബേസ്സിന്റെ പേരു എടുക്കും (പറഞ്ഞു കൊടുക്കണം)"
 
 msgid "Show warnings after every statement."
 msgstr "ഓരോ സ്റ്ററ്റ്മെന്റിന്റ്യും അവസ്സാനം ​സൂചനകള്‍ കാണിക്കുക"
@@ -91,16 +87,12 @@ msgid "Don't show warnings after every statement."
 msgstr "ഓരോ സ്റ്ററ്റ്മെന്റിന്റ്യും അവസ്സാനം ​സൂചനകള്‍ കാണിക്കേണ്ടതില്ല"
 
 #, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
-"തുടങ്ങുന്നതിന്റെ ഭാഗമായി മെമ്മറി കൊടുത്തില്‍ കുഴപ്പമുണ്ടായി. അടിയന്തിരമായി "
-"പുറത്തുകടക്കുന്നു\n"
+"തുടങ്ങുന്നതിന്റെ ഭാഗമായി മെമ്മറി കൊടുത്തില്‍ കുഴപ്പമുണ്ടായി. അടിയന്തിരമായി പുറത്തുകടക്കുന്നു\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr ""
-"ഡ്രിസ്സില്‍ ക്ലയ്ന്റിലേക്കു സ്വാഗതം.കമാന്റുകള്‍ ; അല്ലെങ്കില്‍ \\g വച്ച് "
-"അവസ്സാനിപ്പിക്കണം."
+msgstr "ഡ്രിസ്സില്‍ ക്ലയ്ന്റിലേക്കു സ്വാഗതം.കമാന്റുകള്‍ ; അല്ലെങ്കില്‍ \\g വച്ച് അവസ്സാനിപ്പിക്കണം."
 
 #, c-format
 msgid ""
@@ -120,8 +112,8 @@ msgstr "temp histfile നു മെമ്മറി കൊടുക്കാന�
 
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
-"സഹായം കിട്ടാന്‍ help; അല്ല്ലെങ്കില്‍ \\h എന്നു ടയ്പ് ചെയ്യുക. ബഫറില്‍ ഉള്ളതു "
-"വൃത്തിയാക്കാന്‍ \\c എന്നു ടയ്പ് ചെയ്യുക\n"
+"സഹായം കിട്ടാന്‍ help; അല്ല്ലെങ്കില്‍ \\h എന്നു ടയ്പ് ചെയ്യുക. ബഫറില്‍ ഉള്ളതു വൃത്തിയാക്കാന്‍ \\c "
+"എന്നു ടയ്പ് ചെയ്യുക\n"
 
 #, c-format
 msgid "Writing history-file %s\n"
@@ -147,32 +139,32 @@ msgid ""
 "and field completion, but startup and reconnecting may take a longer time. "
 "Disable with --disable-auto-rehash."
 msgstr ""
-"ഓട്ടോമാറ്റിക് റീഹാഷിങ് എനേബിള്‍ ചെയ്യുക. 'rehash' എന്നു പറയേണ്ടതില്ല. പക്ഷെ "
-"സ്റ്റാര്‍ ട്ടു ചെയ്യുന്നതിനും വീണ്ടും കണക്റ്റ് ചെയ്യുന്നതിനും താമസം "
-"ഉണ്ടാവും. --disable-auto-rehash വച്ചു ഡിസ്സേബിള്‍ ചെയ്യാം"
+"ഓട്ടോമാറ്റിക് റീഹാഷിങ് എനേബിള്‍ ചെയ്യുക. 'rehash' എന്നു പറയേണ്ടതില്ല. പക്ഷെ സ്റ്റാര്‍ ട്ടു "
+"ചെയ്യുന്നതിനും വീണ്ടും കണക്റ്റ് ചെയ്യുന്നതിനും താമസം ഉണ്ടാവും. --disable-auto-rehash വച്ചു "
+"ഡിസ്സേബിള്‍ ചെയ്യാം"
 
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
 "on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
-"ഓട്ടോമാറ്റിക് റീഹാഷിങ് ഇല്ല. റ്റേബിളും ഫീല്ഡും കമ്പ്ലീറ്റ് ചെയ്യുന്നതിനു "
-"'rehash' എന്നു പ്രത്യേകം പറയണം . ഇതു വീണ്ടും കണക്റ്റുചെയ്യുമ്പോള്‍ റീഹാഷിങ് "
-"ഒഴിവാക്കാനും പെട്ടെന്നു സ്റ്റാര്‍ ട്ടുചെയ്യാന്‍ സഹായിക്കും. \r\n"
+"ഓട്ടോമാറ്റിക് റീഹാഷിങ് ഇല്ല. റ്റേബിളും ഫീല്ഡും കമ്പ്ലീറ്റ് ചെയ്യുന്നതിനു 'rehash' എന്നു പ്രത്യേകം "
+"പറയണം . ഇതു വീണ്ടും കണക്റ്റുചെയ്യുമ്പോള്‍ റീഹാഷിങ് ഒഴിവാക്കാനും പെട്ടെന്നു സ്റ്റാര്‍ ട്ടുചെയ്യാന്‍ "
+"സഹായിക്കും. \r\n"
 "സൂചന: ഈ ഒപ്ഷന്‍ പഴഞ്ചനായി. പകരം --disable-auto-rehash എന്നു ഉപയോഗിക്കുക"
 
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
-"റിസ്സള്‍റ്റ് റ്റെര്മിനലിന്റെ വീതിയെക്കാളും കൂടുതല്‍ ഉണ്ടെങ്കില്‍ കുത്തനെ "
-"കാണിക്കുന്ന രീതിയിലോട്ടു തനിയെ മാറുക."
+"റിസ്സള്‍റ്റ് റ്റെര്മിനലിന്റെ വീതിയെക്കാളും കൂടുതല്‍ ഉണ്ടെങ്കില്‍ കുത്തനെ കാണിക്കുന്ന രീതിയിലോട്ടു "
+"തനിയെ മാറുക."
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
-"ഹിസ്റ്ററി ഫയല്‍ ഉപയോഗിക്കരുത്. ഒരുമിച്ചു (interact) ചെയ്യുന്നത് "
-"അവസാനിപ്പിക്കുക. ( --silent  ഇനേബിള്‍ ചെയ്യും)"
+"ഹിസ്റ്ററി ഫയല്‍ ഉപയോഗിക്കരുത്. ഒരുമിച്ചു (interact) ചെയ്യുന്നത് അവസാനിപ്പിക്കുക. ( --silent  "
+"ഇനേബിള്‍ ചെയ്യും)"
 
 msgid "Display column type information."
 msgstr "കോളത്തിന്റെ ടൈപ്പ് വിവരം കാണിക്കുക"
@@ -181,9 +173,8 @@ msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
-"കമന്റുകള്‍ സൂഷിച്ചു വക്കുക. കമന്റുകള്‍ സെര്‍വര്‍ ലേക്ക് അയക്കുക. "
-"സ്വാഭാവികമായി കമന്റുകള്‍ ഉപേക്ഷിക്കും (--skip-comments). --comments  "
-"ഉപയോഗിച്ച് ഇനേബിള്‍ചെയ്യാവുന്നതാണ്."
+"കമന്റുകള്‍ സൂഷിച്ചു വക്കുക. കമന്റുകള്‍ സെര്‍വര്‍ ലേക്ക് അയക്കുക. സ്വാഭാവികമായി കമന്റുകള്‍ ഉപേക്ഷിക്കും (--"
+"skip-comments). --comments  ഉപയോഗിച്ച് ഇനേബിള്‍ചെയ്യാവുന്നതാണ്."
 
 msgid "Use compression in server/client protocol."
 msgstr "സെര്‍വര്‍ / ക്ലയെന്റ്റ് പ്രോടോകോളില്‍ കമ്പ്രഷന്‍ ഉപയോഗിക്കുക."
@@ -199,13 +190,12 @@ msgstr "ഡീലിമിറ്റെര്‍ ഉപയോഗിക്കണ�
 
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
-"കമാന്‍ഡ് എക്സിക്യൂട്ട് ചെയ്തതിനു ശേഷം പുറത്തു കടക്കുക (--force ഉം ഹിസ്റ്ററി "
-"ഫയലും ഒഴിവാക്കുക)"
+"കമാന്‍ഡ് എക്സിക്യൂട്ട് ചെയ്തതിനു ശേഷം പുറത്തു കടക്കുക (--force ഉം ഹിസ്റ്ററി ഫയലും ഒഴിവാക്കുക)"
 
 msgid "Print the output of a query (rows) vertically."
 msgstr ""
-"ക്വറി (query) യുടെ ഫലം (റിസള്‍ട്ട്‌, അതായത് വരികള്‍ (rows) ) കുത്തനെ  "
-"(ഒന്നിന് താഴെ ഒന്നായി) പ്രിന്റ്‌ ചെയ്യുക."
+"ക്വറി (query) യുടെ ഫലം (റിസള്‍ട്ട്‌, അതായത് വരികള്‍ (rows) ) കുത്തനെ  (ഒന്നിന് താഴെ "
+"ഒന്നായി) പ്രിന്റ്‌ ചെയ്യുക."
 
 msgid "Continue even if we get an sql error."
 msgstr "സീക്ക്വല്‍ (SQL) എറര്‍ കിട്ടിയാലും തുടരുക."
@@ -216,13 +206,11 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
-"പേരുള്ള കമാന്റുകള്‍ (named commands) എനേബിള്‍ ചെയ്യുക. പേരുള്ള കമാന്റുകള്‍ "
-"എന്ന് പറഞ്ഞാല്‍ ഈ പ്രോഗ്രാമിന്റെ ഉള്ളിലുള്ള കമാന്റുകള്‍ ആണ്; കൂടുതല്‍ "
-"വിവരങ്ങള്‍ക്ക് drizzle> help കാണുക.ഇത് എനേബിള്‍ ചെയ്താല്‍, പേരുള്ള "
-"കമാന്റുകള്‍ ക്വറിയുടെ ഇതു വരിയിലും ഉപയോഗിക്കാം. അല്ലെങ്കില്‍ എന്റര്‍ നു "
-"മുന്‍പുള്ള ആദ്യ വരിയില്‍ മാത്രമേ ഉപയോഗിക്കാന്‍ പറ്റുകയുള്ളൂ.  --disable-"
-"named-commands  ഉപയോഗിച്ച് ഇതിനെ ഡിസേബിള്‍ (disable) ചെയ്യാം. ഇത് "
-"സ്വാഭാവികമായി ഡിസേബിള്‍ (disable) ആണ്."
+"പേരുള്ള കമാന്റുകള്‍ (named commands) എനേബിള്‍ ചെയ്യുക. പേരുള്ള കമാന്റുകള്‍ എന്ന് പറഞ്ഞാല്‍ ഈ "
+"പ്രോഗ്രാമിന്റെ ഉള്ളിലുള്ള കമാന്റുകള്‍ ആണ്; കൂടുതല്‍ വിവരങ്ങള്‍ക്ക് drizzle> help കാണുക.ഇത് എനേബിള്‍ "
+"ചെയ്താല്‍, പേരുള്ള കമാന്റുകള്‍ ക്വറിയുടെ ഇതു വരിയിലും ഉപയോഗിക്കാം. അല്ലെങ്കില്‍ എന്റര്‍ നു മുന്‍പുള്ള "
+"ആദ്യ വരിയില്‍ മാത്രമേ ഉപയോഗിക്കാന്‍ പറ്റുകയുള്ളൂ.  --disable-named-commands  ഉപയോഗിച്ച് "
+"ഇതിനെ ഡിസേബിള്‍ (disable) ചെയ്യാം. ഇത് സ്വാഭാവികമായി ഡിസേബിള്‍ (disable) ആണ്."
 
 msgid ""
 "Named commands are disabled. Use \\* form only, or use named commands only "
@@ -231,13 +219,11 @@ msgid ""
 "G'. Long format commands still work from the first line. WARNING: option "
 "deprecated; use --disable-named-commands instead."
 msgstr ""
-"പേരുള്ള കമാന്റ്സ് ഡിസേബിള്‍ ചെയ്തിരിക്കുകയാണ്.  \\* ഫോം മാത്രം "
-"ഉപയോഗിക്കുകയോ, സെമികോലെന്‍ (;) വച്ച് അവസാനിപ്പിക്കുന്ന വരിയുടെ തുടക്കത്തില്‍ "
-"മാത്രം പേരുള്ള കമാന്റ്സ് ഉപയോഗിക്കുകയോ ചെയ്യുക. വെര്‍ഷന്‍ 10.9 മുതല്‍ "
-"ക്ലയെന്റുകള്‍ തുടങ്ങുന്നത് സ്വാഭാവികമായി ഈ ഒപ്ഷന്‍ എനേബിള്‍ "
-"ചെയ്തുകൊണ്ടായിരിക്കും. '-G' ഉപയോഗിച്ച് ഡിസേബിള്‍ ചെയ്യാം. ആദ്യ വരി മുതല്‍ "
-"ലോങ്ങ്‌ ഫോര്‍മാറ്റില്‍ (Long format) ഉള്ള  കമാന്റുകള്‍ അപ്പോഴും "
-"പ്രവര്‍ത്തിക്കും. മുന്നറിയിപ്പ്: ഈ ഒപ്ഷന്‍ കാലഹരണപെട്ടു.ഇതിനു പകരം --disable-"
+"പേരുള്ള കമാന്റ്സ് ഡിസേബിള്‍ ചെയ്തിരിക്കുകയാണ്.  \\* ഫോം മാത്രം ഉപയോഗിക്കുകയോ, സെമികോലെന്‍ "
+"(;) വച്ച് അവസാനിപ്പിക്കുന്ന വരിയുടെ തുടക്കത്തില്‍ മാത്രം പേരുള്ള കമാന്റ്സ് ഉപയോഗിക്കുകയോ ചെയ്യുക. "
+"വെര്‍ഷന്‍ 10.9 മുതല്‍ ക്ലയെന്റുകള്‍ തുടങ്ങുന്നത് സ്വാഭാവികമായി ഈ ഒപ്ഷന്‍ എനേബിള്‍ ചെയ്തുകൊണ്ടായിരിക്കും. "
+"'-G' ഉപയോഗിച്ച് ഡിസേബിള്‍ ചെയ്യാം. ആദ്യ വരി മുതല്‍ ലോങ്ങ്‌ ഫോര്‍മാറ്റില്‍ (Long format) ഉള്ള  "
+"കമാന്റുകള്‍ അപ്പോഴും പ്രവര്‍ത്തിക്കും. മുന്നറിയിപ്പ്: ഈ ഒപ്ഷന്‍ കാലഹരണപെട്ടു.ഇതിനു പകരം --disable-"
 "named-commands ഉപയോഗിക്കു."
 
 msgid "Ignore space after function names."
@@ -259,8 +245,8 @@ msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr ""
-"തെറ്റിന്റെ (എറോര്‍) കൂടെ ലൈന്‍ നമ്പര്‍ എഴുതേണ്ടതില്ല. മുന്നറിയിപ്പ്: -L  "
-"എന്ന ഒപ്ഷന്‍ കാലഹരണപെട്ടു. പകരം ഇതിന്റെ നീളത്തില്‍ ഉള്ള വെര്‍ഷന്‍ഉപയോഗിക്കൂ"
+"തെറ്റിന്റെ (എറോര്‍) കൂടെ ലൈന്‍ നമ്പര്‍ എഴുതേണ്ടതില്ല. മുന്നറിയിപ്പ്: -L  എന്ന ഒപ്ഷന്‍ കാലഹരണപെട്ടു. "
+"പകരം ഇതിന്റെ നീളത്തില്‍ ഉള്ള വെര്‍ഷന്‍ഉപയോഗിക്കൂ"
 
 msgid "Flush buffer after each query."
 msgstr "എല്ലാ ക്വറിയുടെയും അവസ്സാനം ബഫെര്‍ കളയൂ (ഫ്ലെഷ് ചെയ്യൂ)"
@@ -272,15 +258,15 @@ msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
-"ഫലത്തിന്റെ കൂടെ വരികളുടെ പേരു എഴുതരുത്. WARNING: -N തരം "
-"താഴ്തപ്പെട്ടിരിക്കുന്നു, പകരം ഇതിന്റെ നീണ്ട രൂപം ഉപയോഗിക്കുക."
+"ഫലത്തിന്റെ കൂടെ വരികളുടെ പേരു എഴുതരുത്. WARNING: -N തരം താഴ്തപ്പെട്ടിരിക്കുന്നു, പകരം "
+"ഇതിന്റെ നീണ്ട രൂപം ഉപയോഗിക്കുക."
 
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
-"വേരിയബ്ലിന്റെ വാല്യൂ മാറ്റുക. ഈ ഓപ്ഷന്‍ കാലഹരന്നപെട്ടു എന്ന് ഓര്‍ക്കുക. --"
-"variable-name=value എന്ന രീതിയില്‍ വേരിയബിള്‍ സെറ്റ് ചെയ്യാവുന്നതാന്നു."
+"വേരിയബ്ലിന്റെ വാല്യൂ മാറ്റുക. ഈ ഓപ്ഷന്‍ കാലഹരന്നപെട്ടു എന്ന് ഓര്‍ക്കുക. --variable-name=value "
+"എന്ന രീതിയില്‍ വേരിയബിള്‍ സെറ്റ് ചെയ്യാവുന്നതാന്നു."
 
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "SIGINT (CTRL-C) അവഗണിക്കുക"
@@ -289,8 +275,8 @@ msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
-"സ്വതവേ നിര്‍വചിക്കപ്പെട്ട ഡാറ്റാബേസ് മാത്രം പുതുക്കുക. പുതുക്കല്‍ നിരയിലുള്ള "
-"മറ്റു ഡാറ്റാബേസുകള്‍ പുതുക്കലില്‍ നിനന്‍ ഒഴിവാക്കുന്നതിനു ഇതു സഹായകം ആകുന്നു."
+"സ്വതവേ നിര്‍വചിക്കപ്പെട്ട ഡാറ്റാബേസ് മാത്രം പുതുക്കുക. പുതുക്കല്‍ നിരയിലുള്ള മറ്റു ഡാറ്റാബേസുകള്‍ "
+"പുതുക്കലില്‍ നിനന്‍ ഒഴിവാക്കുന്നതിനു ഇതു സഹായകം ആകുന്നു."
 
 msgid ""
 "Pager to use to display results. If you don't supply an option the default "
@@ -309,8 +295,8 @@ msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
-"ശൃംഖലയിലേക്കു ബന്ധപ്പെടുന്നതിന്‍ രഹസ്യാടയാളവാക്ക് ഉപയോഗിക്കുക. "
-"രഹസ്യാടയാളവാക്ക് നല്കിയില്ലെന്കില്‍  tty-യിലൂടെ അതു ചോദിക്കപ്പെടുന്നതാണ്‍."
+"ശൃംഖലയിലേക്കു ബന്ധപ്പെടുന്നതിന്‍ രഹസ്യാടയാളവാക്ക് ഉപയോഗിക്കുക. രഹസ്യാടയാളവാക്ക് "
+"നല്കിയില്ലെന്കില്‍  tty-യിലൂടെ അതു ചോദിക്കപ്പെടുന്നതാണ്‍."
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -387,8 +373,7 @@ msgstr ""
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
-msgid ""
-"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 
 msgid "Number of lines before each import progress report."
@@ -446,8 +431,10 @@ msgid "Unknown command: "
 msgstr "അറിയപ്പെടാത്ത ആജ്ഞ: "
 
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
 
@@ -487,8 +474,7 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "ചോദ്യം(Query) ശരിയാണ്‍, %ld വരിയെ ബാധിച്ചു"
 msgstr[1] "ചോദ്യം(Query) ശരിയാണ്‍, %ld വരികളെ ബാധിച്ചു"
 
-msgid ""
-"Number of rows before each output progress report (requires --verbose)."
+msgid "Number of rows before each output progress report (requires --verbose)."
 msgstr ""
 
 #, c-format
@@ -683,6 +669,14 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
 #, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr ""
+
+#, c-format
+msgid "Out of memory"
+msgstr "സ്മൃതി ലഭ്യമല്ല"
+
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr ""
 
@@ -775,9 +769,6 @@ msgstr ""
 msgid "Can't create thread-keys"
 msgstr ""
 
-msgid "Out of memory"
-msgstr "സ്മൃതി ലഭ്യമല്ല"
-
 msgid "Failed to initialize plugins."
 msgstr ""
 
@@ -801,8 +792,8 @@ msgid "Auto-increment columns are incremented by this"
 msgstr ""
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment "
-"!= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment !"
+"= 1"
 msgstr ""
 
 msgid ""
@@ -1063,7 +1054,8 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-msgid "UNUSED"
+#, c-format
+msgid "Unknown error %d"
 msgstr ""
 
 msgid "NO"
@@ -1543,8 +1535,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column '%-"
-".192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column "
+"'%-.192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #, c-format
@@ -1793,8 +1785,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
-"(%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
+"'%-.64s' (%-.64s)"
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
@@ -2117,8 +2109,7 @@ msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
 
 #, c-format
-msgid ""
-"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #, c-format
@@ -2127,8 +2118,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as "
-"XXXX.variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as XXXX."
+"variable_name)"
 msgstr ""
 
 #, c-format
@@ -2153,8 +2144,7 @@ msgid ""
 "SELECT #%d"
 msgstr ""
 
-msgid ""
-"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 msgid ""
@@ -2421,8 +2411,7 @@ msgstr ""
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
-msgid ""
-"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #, c-format
@@ -2454,14 +2443,13 @@ msgid ""
 "View merge algorithm can't be used here for now (assumed undefined algorithm)"
 msgstr ""
 
-msgid ""
-"View being updated does not have complete key of underlying table in it"
+msgid "View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
-"function(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
+"(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #, c-format
@@ -2734,8 +2722,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
-".192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
+"'%-.192s')."
 msgstr ""
 
 msgid ""
@@ -2766,8 +2754,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"The data source connection string '%-.64s' is not in the correct format"
+msgid "The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #, c-format
@@ -2809,8 +2796,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table '%-"
-".192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table "
+"'%-.192s'."
 msgstr ""
 
 msgid ""
@@ -2887,8 +2874,7 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 msgid "AGGREGATE is not supported for stored functions"
@@ -2896,8 +2882,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: "
-"%lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: %"
+"lu)"
 msgstr ""
 
 #, c-format
@@ -2974,8 +2960,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 msgid "MAXVALUE can only be used in last partition definition"
@@ -2993,8 +2978,7 @@ msgstr ""
 msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
-msgid ""
-"Constant/Random expression in (sub)partitioning function is not allowed"
+msgid "Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -3055,8 +3039,7 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr ""
 
 #, c-format
-msgid ""
-"A %-.192s must include all columns in the table's partitioning function"
+msgid "A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #, c-format
@@ -3113,8 +3096,7 @@ msgstr ""
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
-msgid ""
-"When reorganizing a set of partitions they must be in consecutive order"
+msgid "When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 msgid ""
@@ -3244,8 +3226,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
-"%s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
+"s instead"
 msgstr ""
 
 msgid "You can't write-lock a log table. Only read access is possible"
@@ -3256,8 +3238,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #, c-format
@@ -3654,8 +3636,7 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr ""
 
 #, c-format
-msgid ""
-"Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #, c-format
@@ -3798,51 +3779,7 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr ""
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
 msgstr ""
 
 #, c-format
@@ -3854,23 +3791,11 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr ""
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr ""
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
-msgstr ""
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
 msgstr ""
 
 #, c-format
@@ -3910,15 +3835,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
-msgstr ""
-
-#, c-format
-msgid "Unknown error %d"
 msgstr ""
 
 #, c-format
@@ -4729,9 +4646,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr ""
 
-msgid "Undefined handler error 125"
-msgstr ""
-
 msgid "Index file is crashed"
 msgstr ""
 
@@ -4739,9 +4653,6 @@ msgid "Record file is crashed"
 msgstr ""
 
 msgid "Out of memory in engine"
-msgstr ""
-
-msgid "Undefined handler error 129"
 msgstr ""
 
 msgid "Incorrect file format"
@@ -4918,8 +4829,7 @@ msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
 msgstr ""
 
 #, c-format
-msgid ""
-"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 #, c-format

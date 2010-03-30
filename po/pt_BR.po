@@ -36,8 +36,7 @@ msgstr ""
 "delimitador"
 
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
-"Enviar comando para servidor Drizzle, exibir resultado verticalmente."
+msgstr "Enviar comando para servidor Drizzle, exibir resultado verticalmente."
 
 msgid "Exit drizzle. Same as quit."
 msgstr "Sair do Drizzle. Mesmo que quit."
@@ -93,8 +92,7 @@ msgid "Don't show warnings after every statement."
 msgstr "Não exibir avisos de perigos depois de cada comando."
 
 #, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr "Erro de alocação de memória enquanto construia prompt inicial\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -379,11 +377,9 @@ msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr "Limite automatico para SELECT quando usando --safe-updates"
 
 msgid "Automatic limit for rows in a join when using --safe-updates"
-msgstr ""
-"Limite automatico para linhas em um join quando usando --safe-updates"
+msgstr "Limite automatico para linhas em um join quando usando --safe-updates"
 
-msgid ""
-"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Recusa conexão do cliente para o servidor se ele usar protocolo anterior a "
 "(pre-4.1.1)."
@@ -447,9 +443,12 @@ msgstr "Processando linha: %<PRIu32>\n"
 msgid "Unknown command: "
 msgstr "Comando desconhecido: "
 
+#, fuzzy
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
 "Lendo informações das tabelas para auto-completar nomes de tabelas e "
@@ -495,8 +494,7 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Query OK, %ld linha afetada"
 msgstr[1] "Query OK, %ld linhas afetadas"
 
-msgid ""
-"Number of rows before each output progress report (requires --verbose)."
+msgid "Number of rows before each output progress report (requires --verbose)."
 msgstr "Número de linhas antes de cada relatório de progresso de saída"
 
 #, c-format
@@ -701,12 +699,20 @@ msgstr "Tabela não encontrada: \"%s\""
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
 msgstr ""
-"Alerta: Não pôde ler chaves da tabela %s: registros não estão ordenados "
-"(%s)\n"
+"Alerta: Não pôde ler chaves da tabela %s: registros não estão ordenados (%"
+"s)\n"
 
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Erro: Memória insuficiente para armazenar cláusula ORDER BY\n"
+
+#, fuzzy, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr "Não foi possivel abrir a tabela %s.%s depois de renomea-la\n"
+
+#, c-format
+msgid "Out of memory"
+msgstr "Memória insuficiente"
 
 #, c-format
 msgid "Got signal %d from thread %<PRIu64>"
@@ -803,8 +809,8 @@ msgstr ""
 "\n"
 "Você está rodando o binario LinuxThread vinculado estaticamente em um "
 "sistema NPTL.\n"
-"Isto pode resultar em problemas em algumas distribuições por conflitos "
-"LT/NPTL.\n"
+"Isto pode resultar em problemas em algumas distribuições por conflitos LT/"
+"NPTL.\n"
 "Você deve compilar um binário vinculado dinamicamente, ou forçar o "
 "LinuxThreads\n"
 "a ser usado definindo a variavel de ambiente LD_ASSUME_KERNEL. Por favor "
@@ -825,9 +831,6 @@ msgstr "Locale desconhecido: '%s'"
 
 msgid "Can't create thread-keys"
 msgstr "Não é possível criar thread-keys"
-
-msgid "Out of memory"
-msgstr "Memória insuficiente"
 
 msgid "Failed to initialize plugins."
 msgstr "Falha ao inicializar os plugins."
@@ -854,8 +857,8 @@ msgid "Auto-increment columns are incremented by this"
 msgstr "Colunas de auto-incremento são incrementadas com isto"
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment "
-"!= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment !"
+"= 1"
 msgstr ""
 
 msgid ""
@@ -993,8 +996,8 @@ msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
 msgstr ""
-"O numero máximo de bytes usados para ordenar dados do tipo BLOB ou TEXT ( "
-"apenas o primeiro byte max_sort_length de cada valor é usado; o resto é "
+"O numero máximo de bytes usados para ordenar dados do tipo BLOB ou TEXT "
+"( apenas o primeiro byte max_sort_length de cada valor é usado; o resto é "
 "ignorado)."
 
 msgid "After this many write locks, allow some read locks to run in between."
@@ -1130,8 +1133,9 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr "Dados do diretório %s não exitem\n"
 
-msgid "UNUSED"
-msgstr ""
+#, c-format
+msgid "Unknown error %d"
+msgstr "Erro desconhecido %d"
 
 msgid "NO"
 msgstr "NÃO"
@@ -1161,14 +1165,13 @@ msgstr "Não pode remover banco de dados '%-.192s'; pois não existe"
 
 #, c-format
 msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
-msgstr ""
-"Erro removendo banco de dados (não pôde deletar '%-.192s', errno: %d)"
+msgstr "Erro removendo banco de dados (não pôde deletar '%-.192s', errno: %d)"
 
 #, c-format
 msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
 msgstr ""
-"Erro removendo banco de dados (não pôde remover diretório '%-.192s', errno: "
-"%d)"
+"Erro removendo banco de dados (não pôde remover diretório '%-.192s', errno: %"
+"d)"
 
 #, c-format
 msgid "Error on delete of '%-.192s' (errno: %d)"
@@ -1614,8 +1617,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column '%-"
-".192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column "
+"'%-.192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #, c-format
@@ -1864,8 +1867,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
-"(%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
+"'%-.64s' (%-.64s)"
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
@@ -2188,8 +2191,7 @@ msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
 
 #, c-format
-msgid ""
-"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #, c-format
@@ -2198,8 +2200,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as "
-"XXXX.variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as XXXX."
+"variable_name)"
 msgstr ""
 
 #, c-format
@@ -2224,8 +2226,7 @@ msgid ""
 "SELECT #%d"
 msgstr ""
 
-msgid ""
-"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 msgid ""
@@ -2492,8 +2493,7 @@ msgstr ""
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
-msgid ""
-"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #, c-format
@@ -2525,14 +2525,13 @@ msgid ""
 "View merge algorithm can't be used here for now (assumed undefined algorithm)"
 msgstr ""
 
-msgid ""
-"View being updated does not have complete key of underlying table in it"
+msgid "View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
-"function(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
+"(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #, c-format
@@ -2805,8 +2804,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
-".192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
+"'%-.192s')."
 msgstr ""
 
 msgid ""
@@ -2837,8 +2836,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"The data source connection string '%-.64s' is not in the correct format"
+msgid "The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #, c-format
@@ -2880,8 +2878,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table '%-"
-".192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table "
+"'%-.192s'."
 msgstr ""
 
 msgid ""
@@ -2958,8 +2956,7 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 msgid "AGGREGATE is not supported for stored functions"
@@ -2967,8 +2964,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: "
-"%lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: %"
+"lu)"
 msgstr ""
 
 #, c-format
@@ -3045,8 +3042,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 msgid "MAXVALUE can only be used in last partition definition"
@@ -3064,8 +3060,7 @@ msgstr ""
 msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
-msgid ""
-"Constant/Random expression in (sub)partitioning function is not allowed"
+msgid "Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -3126,8 +3121,7 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr ""
 
 #, c-format
-msgid ""
-"A %-.192s must include all columns in the table's partitioning function"
+msgid "A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #, c-format
@@ -3184,8 +3178,7 @@ msgstr ""
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
-msgid ""
-"When reorganizing a set of partitions they must be in consecutive order"
+msgid "When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 msgid ""
@@ -3315,8 +3308,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
-"%s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
+"s instead"
 msgstr ""
 
 msgid "You can't write-lock a log table. Only read access is possible"
@@ -3327,8 +3320,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #, c-format
@@ -3725,8 +3718,7 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr ""
 
 #, c-format
-msgid ""
-"Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #, c-format
@@ -3869,54 +3861,8 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Não foi possível criar/escrever no arquivo '%s' (Código do erro: %d)"
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Erro lendo o arquivo '%s' (Código do erro: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Erro escrevendo no arquivo '%s' (Código do erro: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr "Erro no fechamento de '%s' (Código do erro: %d)"
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Memória insuficiente (Necessário %u bytes)"
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Erro ao apagar '%s' (Código do erro: %d)"
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Erro ao renomear '%s' para '%s' (Código do erro: %d)"
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-"Fim-de-arquivo encontrado inesperadamente ao ler arquivo '%s' (Código do "
-"erro: %d)"
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Não é possível travar o arquivo (Código do erro: %d)"
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "Não é possível destravar o arquivo (Código do erro: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Impossível ler o diretório '%s' (Código do erro: %d)"
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr "Impossível obter status de '%s' (Errcode: %d)"
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -3927,26 +3873,12 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr "Impossível abrir fluxo do apontador (Errcode: %d)"
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Impossível determinar o diretório atual (Código do erro: %d)"
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Impossível mudar para o diretório '%s' (Código do erro: %d)"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr "Aviso: '%s' tinha '%d' links"
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
 msgstr "Aviso: %d arquivos e %d streams foram deixados abertos\n"
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr ""
-"Disco ficou cheio enquanto escrevi '%s'. Aguardando que alguém libere algum "
-"espaço..."
 
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
@@ -3962,8 +3894,7 @@ msgstr ""
 
 #, c-format
 msgid "Out of resources when opening file '%s' (Errcode: %d)"
-msgstr ""
-"Fiquei sem recursos enquanto abria o arquivo '%s' (Código do erro: %d)"
+msgstr "Fiquei sem recursos enquanto abria o arquivo '%s' (Código do erro: %d)"
 
 #, c-format
 msgid "Can't read value for symlink '%s' (Error %d)"
@@ -3989,16 +3920,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "Arquivo '%s' não encontrado (Errcode: %d)"
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr "Arquivo '%s' (numero do arquivo: %d) não foi fechado"
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Erro desconhecido %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -4469,8 +4392,8 @@ msgstr "Não é possível criar o socket UNIX(%d)"
 #, c-format
 msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
 msgstr ""
-"Não é possível conectar ao servidor local do Drizzle através do socket '%-"
-".100s' (%d)"
+"Não é possível conectar ao servidor local do Drizzle através do socket "
+"'%-.100s' (%d)"
 
 #, c-format
 msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
@@ -4842,9 +4765,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr "Indíce incorreto fornecido para a função"
 
-msgid "Undefined handler error 125"
-msgstr "Erro de handler indefinido 125"
-
 msgid "Index file is crashed"
 msgstr "Arquivo de índice está corrompido"
 
@@ -4853,9 +4773,6 @@ msgstr "Arquivo de registro está corrompido"
 
 msgid "Out of memory in engine"
 msgstr "Sem memória na engine"
-
-msgid "Undefined handler error 129"
-msgstr ""
 
 msgid "Incorrect file format"
 msgstr "Formato de arquivo incorreto"
@@ -5034,8 +4951,7 @@ msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
 msgstr ""
 
 #, c-format
-msgid ""
-"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 #, c-format
@@ -5098,6 +5014,59 @@ msgstr ""
 msgid "BUFFER: %s\n"
 msgstr "BUFFER: %s\n"
 
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "Não foi possível criar/escrever no arquivo '%s' (Código do erro: %d)"
+
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Erro lendo o arquivo '%s' (Código do erro: %d)"
+
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Erro escrevendo no arquivo '%s' (Código do erro: %d)"
+
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Erro no fechamento de '%s' (Código do erro: %d)"
+
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Memória insuficiente (Necessário %u bytes)"
+
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Erro ao apagar '%s' (Código do erro: %d)"
+
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Erro ao renomear '%s' para '%s' (Código do erro: %d)"
+
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "Fim-de-arquivo encontrado inesperadamente ao ler arquivo '%s' (Código do "
+#~ "erro: %d)"
+
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Não é possível travar o arquivo (Código do erro: %d)"
+
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Impossível ler o diretório '%s' (Código do erro: %d)"
+
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Impossível obter status de '%s' (Errcode: %d)"
+
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Impossível determinar o diretório atual (Código do erro: %d)"
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Impossível mudar para o diretório '%s' (Código do erro: %d)"
+
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Disco ficou cheio enquanto escrevi '%s'. Aguardando que alguém libere "
+#~ "algum espaço..."
+
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Arquivo '%s' não encontrado (Errcode: %d)"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Erro de handler indefinido 125"
+
 #~ msgid "Set the default character set."
 #~ msgstr "Define o conjunto de caracteres padrão."
 
@@ -5110,44 +5079,33 @@ msgstr "BUFFER: %s\n"
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "Verifica memória e arquivos abertos ao sair do programa."
 
-#, c-format
 #~ msgid "Unknown command '\\%c'."
 #~ msgstr "Comando desconhecido '\\%c'."
 
-#, c-format
 #~ msgid "Invalid (old?) table or database name '%s'"
 #~ msgstr "Nome de tabela ou banco de dados %s invalido(Antigo?)"
 
-#, c-format
-#~ msgid "Could not open table %s.%s after rename\n"
-#~ msgstr "Não foi possivel abrir a tabela %s.%s depois de renomea-la\n"
-
-#, c-format
 #~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 #~ msgstr "%s Ver %s Distrib %s, para %s(%s) usando %s %s\n"
 
-#, c-format
 #~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
-#~ "have type %s  but the column is not found."
+#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
+#~ "to have type %s  but the column is not found."
 #~ msgstr ""
-#~ "Definição incorreta da tabela %s.%s: é esperado que a coluna '%s' na posição "
-#~ "%d  tenha um tipo %s porém a coluna não foi encontrada."
+#~ "Definição incorreta da tabela %s.%s: é esperado que a coluna '%s' na "
+#~ "posição %d  tenha um tipo %s porém a coluna não foi encontrada."
 
-#, c-format
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 #~ "position %d to have character set '%s' but found character set '%s'."
 #~ msgstr ""
-#~ "Definição incorreta da tabela %s.%s: é esperado que o tipo da coluna '%s' na "
-#~ "posição %d  tenha um conjunto de caracteres '%s' porém o conjunto '%s' foi "
-#~ "encontrado."
+#~ "Definição incorreta da tabela %s.%s: é esperado que o tipo da coluna '%s' "
+#~ "na posição %d  tenha um conjunto de caracteres '%s' porém o conjunto '%s' "
+#~ "foi encontrado."
 
-#, c-format
 #~ msgid "Plugin '%s' init function returned error."
 #~ msgstr "A função init do plugin '%s' retornou um erro."
 
-#, c-format
 #~ msgid "Retrying bind on TCP/IP port %u"
 #~ msgstr "Tentando novamente o bind na porta TCP/IP %u"
 
@@ -5157,44 +5115,37 @@ msgstr "BUFFER: %s\n"
 #~ msgid "Can't start server: listen() on TCP/IP port"
 #~ msgstr "Impossível iniciar o servidor: listen() na porta TCP/IP"
 
-#, c-format
 #~ msgid "Fatal "
 #~ msgstr "Fatal "
 
-#, c-format
 #~ msgid "listen() on TCP/IP failed with error %d"
 #~ msgstr "listen() no TCP/IP falhou com o erro %d"
 
-#, c-format
 #~ msgid "Do you already have another drizzled server running on port: %d ?"
 #~ msgstr ""
-#~ "Você já possui uma outra instância do servidor drizzled rodando na porta: %d?"
+#~ "Você já possui uma outra instância do servidor drizzled rodando na porta: "
+#~ "%d?"
 
-#, c-format
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 #~ "position %d to have character set '%s' but the type has no character set."
 #~ msgstr ""
-#~ "Definição incorreta da tabela %s.%s: é esperado que o tipo de coluna '%s' na "
-#~ "posição %d tenha um conjunto de caracteres '%s' porém o tipo não tem um "
-#~ "conjunto de caracteres."
+#~ "Definição incorreta da tabela %s.%s: é esperado que o tipo de coluna '%s' "
+#~ "na posição %d tenha um conjunto de caracteres '%s' porém o tipo não tem "
+#~ "um conjunto de caracteres."
 
-#, c-format
 #~ msgid "Unknown/unsupported table type: %s"
 #~ msgstr "Tipo de tabela desconhecido/não suportado: %s"
 
-#, c-format
 #~ msgid "Failed to lock memory. Errno: %d\n"
 #~ msgstr "Falha ao fazer lock na memória. Código do erro: %d\n"
 
-#, c-format
 #~ msgid "Default storage engine (%s) is not available"
 #~ msgstr "O engine de armazenamento padrão (%s) está indisponível"
 
 #~ msgid "Can't init databases"
 #~ msgstr "Impossível inicializar os bancos de dados"
 
-#, c-format
 #~ msgid "drizzled: Got error %d from select"
 #~ msgstr "drizzled: Recebi o erro %d do select"
 

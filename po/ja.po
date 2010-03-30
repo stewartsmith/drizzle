@@ -29,7 +29,9 @@ msgstr "サーバへ再接続する。任意の引数としてdbとhostを指定
 
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr "ステートメントの区切り文字を指定する。注意：以降の行から区切り文字が変更されます。"
+msgstr ""
+"ステートメントの区切り文字を指定する。注意：以降の行から区切り文字が変更され"
+"ます。"
 
 msgid "Send command to drizzle server, display result vertically."
 msgstr "drizzleサーバへコマンドを送信し、結果を垂直に表示する。"
@@ -65,13 +67,15 @@ msgid "Rebuild completion hash."
 msgstr "補完ハッシュを再構築する。"
 
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr "SQLスクリプトファイルを実行する。ファイル名を引数として指定して下さい。"
+msgstr ""
+"SQLスクリプトファイルを実行する。ファイル名を引数として指定して下さい。"
 
 msgid "Get status information from the server."
 msgstr "サーバから情報を取得する。"
 
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
-msgstr "outfileを[to_outfile]に設定する。以降の出力はすべてoutfileへ追加されます。"
+msgstr ""
+"outfileを[to_outfile]に設定する。以降の出力はすべてoutfileへ追加されます。"
 
 msgid "Use another database. Takes database name as argument."
 msgstr "他のデータベースを使用する。データベース名を引数として指定して下さい。"
@@ -83,12 +87,14 @@ msgid "Don't show warnings after every statement."
 msgstr "各ステートメントの後で警告を表示しない。"
 
 #, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr "プロンプトを初期化中にメモリアロケーションエラーが発生しました。プログラムを終了します。\n"
+msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+"プロンプトを初期化中にメモリアロケーションエラーが発生しました。プログラムを"
+"終了します。\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "Drizzleクライアントへようこそ！コマンドの区切りは「;」または「\\g」です。"
+msgstr ""
+"Drizzleクライアントへようこそ！コマンドの区切りは「;」または「\\g」です。"
 
 #, c-format
 msgid ""
@@ -104,10 +110,13 @@ msgstr "履歴ファイル「%s」を読み込んでいます。\n"
 
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "一時的な履歴ファイルのためにメモリを割り当てることができませんでした。\n"
+msgstr ""
+"一時的な履歴ファイルのためにメモリを割り当てることができませんでした。\n"
 
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
-msgstr "ヘルプを表示するには「help;」または「\\h」、バッファをクリアするには「\\c」と入力してください。\n"
+msgstr ""
+"ヘルプを表示するには「help;」または「\\h」、バッファをクリアするには「\\c」と"
+"入力してください。\n"
 
 #, c-format
 msgid "Writing history-file %s\n"
@@ -133,17 +142,19 @@ msgid ""
 "and field completion, but startup and reconnecting may take a longer time. "
 "Disable with --disable-auto-rehash."
 msgstr ""
-"自動的な再ハッシュを有効にする。テーブルやフィールドの補完のために「rehash」する必要がなくなりますが、起動時間が長くなる場合があります。--"
-"disable-auto-rehashオプションで無効にすることができます。"
+"自動的な再ハッシュを有効にする。テーブルやフィールドの補完のために「rehash」"
+"する必要がなくなりますが、起動時間が長くなる場合があります。--disable-auto-"
+"rehashオプションで無効にすることができます。"
 
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
 "on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
-"自動的な再ハッシュを行わない。テーブルの補完を行うには、「rehash」コマンドを利用する必要がある。これにより、drizzle_stの起動を高速化し、再"
-"接続時のrehashを行わないようにする効果がある。警告：このオプションは廃止予定です。代わりに--disable-auto-"
-"rehashを指定して下さい。"
+"自動的な再ハッシュを行わない。テーブルの補完を行うには、「rehash」コマンドを"
+"利用する必要がある。これにより、drizzle_stの起動を高速化し、再接続時のrehash"
+"を行わないようにする効果がある。警告：このオプションは廃止予定です。代わり"
+"に--disable-auto-rehashを指定して下さい。"
 
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
@@ -152,7 +163,9 @@ msgstr "出力結果がターミナルの幅よりも広い場合、自動的に
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr "履歴ファイルを使用しない。インタラクティブな振る舞いを無効にする。（--silentオプションを有効にします。）"
+msgstr ""
+"履歴ファイルを使用しない。インタラクティブな振る舞いを無効にする。（--silent"
+"オプションを有効にします。）"
 
 msgid "Display column type information."
 msgstr "カラムのデータ型に関する情報を表示する。"
@@ -161,8 +174,8 @@ msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
-"コメントを保存し、コメントをサーバへ送信する。デフォルトは--skip-comments（コメント機能は無効）で、--"
-"commentsオプションをつけることにより有効になります。"
+"コメントを保存し、コメントをサーバへ送信する。デフォルトは--skip-comments（コ"
+"メント機能は無効）で、--commentsオプションをつけることにより有効になります。"
 
 msgid "Use compression in server/client protocol."
 msgstr "サーバ・クライアントプロトコルにおいて圧縮を利用する。"
@@ -191,9 +204,11 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
-"指定コマンドを有効にする。指定コマンドとは本プログラムの名言うコマンドのことです。詳細は「drizzle> "
-"help」を参照してください。有効である場合、指定コマンドは複数行にクエリがまたがる場合にどの行においても使用することができます。無効である場合は、先頭行"
-"のみで使用することが可能です。--disable-named-commandsオプションにより無効にすることが可能です。デフォルトは無効です。"
+"指定コマンドを有効にする。指定コマンドとは本プログラムの名言うコマンドのこと"
+"です。詳細は「drizzle> help」を参照してください。有効である場合、指定コマンド"
+"は複数行にクエリがまたがる場合にどの行においても使用することができます。無効"
+"である場合は、先頭行のみで使用することが可能です。--disable-named-commandsオ"
+"プションにより無効にすることが可能です。デフォルトは無効です。"
 
 msgid ""
 "Named commands are disabled. Use \\* form only, or use named commands only "
@@ -202,11 +217,12 @@ msgid ""
 "G'. Long format commands still work from the first line. WARNING: option "
 "deprecated; use --disable-named-commands instead."
 msgstr ""
-"指定コマンドを無効にする。「\\"
-"*」という書式のものをお使い頂くか、指定コマンドを先頭行（セミコロン「;」まで）のみで使用して下さい。バージョン10.9から、このオプションはデフォルトに"
-"なっています。「-"
-"G」オプションを指定すると、このオプションが無効になります。長い書式のコマンドは、先頭行においては使用することが可能です。警告：このオプションは廃止予定で"
-"す。--disable-named-commandsを代わりに使用して下さい。"
+"指定コマンドを無効にする。「\\*」という書式のものをお使い頂くか、指定コマンド"
+"を先頭行（セミコロン「;」まで）のみで使用して下さい。バージョン10.9から、この"
+"オプションはデフォルトになっています。「-G」オプションを指定すると、このオプ"
+"ションが無効になります。長い書式のコマンドは、先頭行においては使用することが"
+"可能です。警告：このオプションは廃止予定です。--disable-named-commandsを代わ"
+"りに使用して下さい。"
 
 msgid "Ignore space after function names."
 msgstr "関数の後のスペースを無視する。"
@@ -226,7 +242,9 @@ msgstr "エラーに行番号を表示する。"
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
-msgstr "エラーに行番号を表示しない。警告：「-L」は廃止予定です。長い書式のオプションを代わりに使用して下さい。"
+msgstr ""
+"エラーに行番号を表示しない。警告：「-L」は廃止予定です。長い書式のオプション"
+"を代わりに使用して下さい。"
 
 msgid "Flush buffer after each query."
 msgstr "クエリの後に毎回バッファをフラッシュする。"
@@ -237,12 +255,16 @@ msgstr "結果においてカラム名を記載する。"
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
-msgstr "カラム名を結果に表示しない。警告：「-N」は廃止予定です。長い書式のオプションを使用して下さい。"
+msgstr ""
+"カラム名を結果に表示しない。警告：「-N」は廃止予定です。長い書式のオプション"
+"を使用して下さい。"
 
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
-msgstr "変数の値を変更する。このオプションは廃止予定です。変数は「--変数名=値」という書式を用いて直接設定することが出来ます。"
+msgstr ""
+"変数の値を変更する。このオプションは廃止予定です。変数は「--変数名=値」という"
+"書式を用いて直接設定することが出来ます。"
 
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "SIGINT（CTRL-C）を無視する。"
@@ -250,7 +272,9 @@ msgstr "SIGINT（CTRL-C）を無視する。"
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
-msgstr "デフォルトデータベースのみを更新する。このオプションはバイナリログを適用する際に他のデータベースへの更新を止めたい場合などに便利です。"
+msgstr ""
+"デフォルトデータベースのみを更新する。このオプションはバイナリログを適用する"
+"際に他のデータベースへの更新を止めたい場合などに便利です。"
 
 msgid ""
 "Pager to use to display results. If you don't supply an option the default "
@@ -259,28 +283,33 @@ msgid ""
 "work in batch mode. Disable with --disable-pager. This option is disabled by "
 "default."
 msgstr ""
-"結果を表示するためのページャを指定する。もしこのオプションが指定されなかった場合には、PAGER環境変数で指定されたものが使われる。使用可能なページャはl"
-"ess、more、cat [> ファイル名]などです。ヘルプ「\\h」も合わせて参照して下さい。このオプションはバッチモードでは作用しません。「--"
-"disable-pager」オプションで無効にすることができます。このオプションはデフォルトで無効になっています。"
+"結果を表示するためのページャを指定する。もしこのオプションが指定されなかった"
+"場合には、PAGER環境変数で指定されたものが使われる。使用可能なページャはless、"
+"more、cat [> ファイル名]などです。ヘルプ「\\h」も合わせて参照して下さい。この"
+"オプションはバッチモードでは作用しません。「--disable-pager」オプションで無効"
+"にすることができます。このオプションはデフォルトで無効になっています。"
 
 msgid ""
 "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
 "option deprecated; use --disable-pager instead."
 msgstr ""
-"ページャを無効にして標準出力へ表示する。ヘルプ「\\h」も合わせて参照して下さい。警告：このオプションは廃止予定です。代わりに「--disable-"
-"pager」を使用して下さい。"
+"ページャを無効にして標準出力へ表示する。ヘルプ「\\h」も合わせて参照して下さ"
+"い。警告：このオプションは廃止予定です。代わりに「--disable-pager」を使用して"
+"下さい。"
 
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
-msgstr "サーバーに接続する際のパスワード。パスワードの入力がない場合、端末での入力が要求されます。"
+msgstr ""
+"サーバーに接続する際のパスワード。パスワードの入力がない場合、端末での入力が"
+"要求されます。"
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
-"接続に利用するポート番号を指定。0にすることでデフォルト値を利用。設定の優先順位はdrizzle.cnf、$DRIZZLE_TCP_PORTの順で決まりま"
-"す。 "
+"接続に利用するポート番号を指定。0にすることでデフォルト値を利用。設定の優先順"
+"位はdrizzle.cnf、$DRIZZLE_TCP_PORTの順で決まります。 "
 
 msgid "built-in default"
 msgstr "組み込まれたデフォルト"
@@ -292,15 +321,19 @@ msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
 msgstr ""
-"結果をキャッシュしないで一行ずつ表示する。これは、出力が一時的に停止された場合にサーバーの処理を低下させます。履歴ファイルには使用しないで下さい。"
+"結果をキャッシュしないで一行ずつ表示する。これは、出力が一時的に停止された場"
+"合にサーバーの処理を低下させます。履歴ファイルには使用しないで下さい。"
 
 msgid "Write fields without conversion. Used with --batch."
-msgstr "コンバージョン無しでフィールドを出力する。--batch オプションで使用されます。"
+msgstr ""
+"コンバージョン無しでフィールドを出力する。--batch オプションで使用されます。"
 
 msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
-msgstr "接続が切れた際に再接続をする。--disable-recconect オプションで無効になります。規定では有効になっています。"
+msgstr ""
+"接続が切れた際に再接続をする。--disable-recconect オプションで無効になりま"
+"す。規定では有効になっています。"
 
 msgid "Shutdown the server."
 msgstr "サーバーをシャットダウンする。"
@@ -317,15 +350,15 @@ msgid ""
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
 "default."
 msgstr ""
-"出力ファイルに追記する。help(\\h)を参照して下さい。batchモードでは機能しません。--disable-tee "
-"オプションで無効となります。規定では無効になっています。"
+"出力ファイルに追記する。help(\\h)を参照して下さい。batchモードでは機能しませ"
+"ん。--disable-tee オプションで無効となります。規定では無効になっています。"
 
 msgid ""
 "Disable outfile. See interactive help (\\h) also. WARNING: option "
 "deprecated; use --disable-tee instead"
 msgstr ""
-"outfileを無効にする。help(\\h)を参照して下さい。警告: このオプションは廃止予定です; 代わりに --disable-tee "
-"オプションを使用して下さい。"
+"outfileを無効にする。help(\\h)を参照して下さい。警告: このオプションは廃止予"
+"定です; 代わりに --disable-tee オプションを使用して下さい。"
 
 msgid "User for login if not current user."
 msgstr "別のユーザでログインする際のユーザ名。"
@@ -357,8 +390,7 @@ msgstr "--safe-updates を使用した時のSELECTに対して自動的に設定
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr "--safe-updatesを使用した特のjoinに対して自動的に設定される行数の上限"
 
-msgid ""
-"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr "古いプロトコル(4.1.1以前)を使用している場合は接続を拒否"
 
 msgid "Number of lines before each import progress report."
@@ -381,8 +413,10 @@ msgid ""
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
 "Copyright (C) 2008 Sun Microsystems\n"
-"このソフトウェアは全くの無保証で提供されています。このソフトウェアはフリーソフトウェア、\n"
-"つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布することができます。\n"
+"このソフトウェアは全くの無保証で提供されています。このソフトウェアはフリーソ"
+"フトウェア、\n"
+"つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布すること"
+"ができます。\n"
 
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
@@ -393,11 +427,15 @@ msgstr "DELIMITER にはバックスラッシュを含めることはできま�
 
 #, c-format
 msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr "警告: このオプションは廃止予定です。代わりに --disable-tee を使用してください。\n"
+msgstr ""
+"警告: このオプションは廃止予定です。代わりに --disable-tee を使用してくださ"
+"い。\n"
 
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr "警告: このオプションは廃止予定です。代わりに --disable-pager を使用してください。\n"
+msgstr ""
+"警告: このオプションは廃止予定です。代わりに --disable-pager を使用してくださ"
+"い。\n"
 
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
@@ -407,7 +445,8 @@ msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead."
 msgstr ""
-"ポート番号に対して整数でない値が指定されました。もしパスワードを指定したいのなら、代わりに--paswordオプションを使用してください。"
+"ポート番号に対して整数でない値が指定されました。もしパスワードを指定したいの"
+"なら、代わりに--paswordオプションを使用してください。"
 
 msgid "Value supplied for port is not valid."
 msgstr "ポート番号に指定された値は無効です。"
@@ -419,9 +458,12 @@ msgstr "%<PRIu32> 行目を処理中・・・\n"
 msgid "Unknown command: "
 msgstr "無効なコマンド "
 
+#, fuzzy
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
 "テーブル名およびカラム名補完のためにテーブル情報を読み込み中。\n"
@@ -439,7 +481,9 @@ msgid "List of all Drizzle commands:"
 msgstr "すべてのコマンドの一覧:"
 
 msgid "Note that all text commands must be first on line and end with ';'"
-msgstr "次のコマンド（短縮形でないもの）は行の最初から始まりセミコロン（;）で終了する必要があります。"
+msgstr ""
+"次のコマンド（短縮形でないもの）は行の最初から始まりセミコロン（;）で終了する"
+"必要があります。"
 
 msgid "No query specified\n"
 msgstr "クエリがありません\n"
@@ -463,8 +507,7 @@ msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "クエリ OK, %ld 行が変更されました"
 
-msgid ""
-"Number of rows before each output progress report (requires --verbose)."
+msgid "Number of rows before each output progress report (requires --verbose)."
 msgstr "進捗が報告されるまでの行数（--verboseオプションが必要です。）"
 
 #, c-format
@@ -491,8 +534,10 @@ msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
-"このソフトウェアは全くの無保証で提供されています。このソフトウェアはフリーソフトウェア、\n"
-"つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布することができます。\n"
+"このソフトウェアは全くの無保証で提供されています。このソフトウェアはフリーソ"
+"フトウェア、\n"
+"つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布すること"
+"ができます。\n"
 
 msgid "Dumps definitions and data from a Drizzle database server"
 msgstr "Drizzleデータベースサーバから定義とデータをダンプ"
@@ -506,7 +551,8 @@ msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
 "please use --password instead.\n"
 msgstr ""
-"ポート番号に対して整数でない値が指定されました。もしパスワードを指定したいのなら、代わりに--paswordオプションを使用してください。\n"
+"ポート番号に対して整数でない値が指定されました。もしパスワードを指定したいの"
+"なら、代わりに--paswordオプションを使用してください。\n"
 
 #, c-format
 msgid "Value supplied for port is not valid.\n"
@@ -514,7 +560,9 @@ msgstr "ポート番号に指定された値は無効です。\n"
 
 #, c-format
 msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr "プロンプトを初期化中にメモリアロケーションエラーが発生しました。プログラムを終了します。\n"
+msgstr ""
+"プロンプトを初期化中にメモリアロケーションエラーが発生しました。プログラムを"
+"終了します。\n"
 
 #, c-format
 msgid "Input filename too long: %s"
@@ -537,17 +585,22 @@ msgid ""
 "%s: You can't use --single-transaction and --lock-all-tables at the same "
 "time.\n"
 msgstr ""
-"%s: --single-transactionオプションと--lock-all-tablesオプションを同時に指定することはできません。\n"
+"%s: --single-transactionオプションと--lock-all-tablesオプションを同時に指定す"
+"ることはできません。\n"
 
 #, c-format
 msgid ""
 "%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same "
 "time.\n"
-msgstr "%s: ..enclosed..と..optionally-enclosed..オプションを同時に指定することはできません。\n"
+msgstr ""
+"%s: ..enclosed..と..optionally-enclosed..オプションを同時に指定することはでき"
+"ません。\n"
 
 #, c-format
 msgid "%s: --databases or --all-databases can't be used with --tab.\n"
-msgstr "%s: --databasesまたは--all-databasesオプションは--tabオプションと同時に指定することはできません。\n"
+msgstr ""
+"%s: --databasesまたは--all-databasesオプションは--tabオプションと同時に指定す"
+"ることはできません。\n"
 
 #, c-format
 msgid "Got error: %s (%d) %s"
@@ -577,7 +630,8 @@ msgid ""
 "-- Warning: Unable to use delayed inserts for table '%s' because it's of "
 "type %s\n"
 msgstr ""
-"-- 警告: テーブル %s は、%s ストレージエンジンで定義されているため DELAYED INSERT を実行することは出来ません。\n"
+"-- 警告: テーブル %s は、%s ストレージエンジンで定義されているため DELAYED "
+"INSERT を実行することは出来ません。\n"
 
 #, c-format
 msgid "-- Retrieving table structure for table %s...\n"
@@ -585,7 +639,8 @@ msgstr "-- テーブル %s の定義を取得しています・・・\n"
 
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
-msgstr "%s: 警告: SQL_QUOTE_SHOW_CREATEオプションを指定することはできません(%s)\n"
+msgstr ""
+"%s: 警告: SQL_QUOTE_SHOW_CREATEオプションを指定することはできません(%s)\n"
 
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
@@ -593,7 +648,8 @@ msgstr "%s: テーブル %s のキーを取得することが出来ません。\
 
 #, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr "エラー: テーブル %s のステータス情報を取得することが出来ませんでした。\n"
+msgstr ""
+"エラー: テーブル %s のステータス情報を取得することが出来ませんでした。\n"
 
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
@@ -601,15 +657,20 @@ msgstr "テーブル定義を取得中にエラーが発生しました。: \"%s
 
 #, c-format
 msgid "-- Skipping dump data for table '%s', --no-data was used\n"
-msgstr "-- テーブル '%s' のデータのダンプをスキップしています。--no-data オプションが指定されています。\n"
+msgstr ""
+"-- テーブル '%s' のデータのダンプをスキップしています。--no-data オプションが"
+"指定されています。\n"
 
 #, c-format
 msgid "-- Warning: Skipping data for table '%s' because it's of type %s\n"
-msgstr "-- 警告: テーブル '%s' をスキップしています。%s ストレージエンジンが利用されています。\n"
+msgstr ""
+"-- 警告: テーブル '%s' をスキップしています。%s ストレージエンジンが利用され"
+"ています。\n"
 
 #, c-format
 msgid "-- Skipping dump data for table '%s', it has no fields\n"
-msgstr "-- テーブル '%s' をスキップしています。テーブルにはフィールドがありません。\n"
+msgstr ""
+"-- テーブル '%s' をスキップしています。テーブルにはフィールドがありません。\n"
 
 msgid "-- Sending SELECT query...\n"
 msgstr "-- SELECTクエリを送信しています・・・\n"
@@ -634,19 +695,24 @@ msgstr "-- 行データを取得しています・・・\n"
 
 #, c-format
 msgid "%s: Error in field count for table: %s !  Aborting.\n"
-msgstr "%s: テーブル %s のフィールド数が一致しません。プログラムを終了します。\n"
+msgstr ""
+"%s: テーブル %s のフィールド数が一致しません。プログラムを終了します。\n"
 
 #, c-format
 msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
-msgstr "%s: テーブルから行を読み込んでいる最中にエラーが発生しました: %s (%d:%s)! 終了します。\n"
+msgstr ""
+"%s: テーブルから行を読み込んでいる最中にエラーが発生しました: %s (%d:%s)! 終"
+"了します。\n"
 
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
-msgstr "-- %<PRIu32> 行（トータル ~%<PRIu64>行中）をダンプしました。テーブル: %s\n"
+msgstr ""
+"-- %<PRIu32> 行（トータル ~%<PRIu64>行中）をダンプしました。テーブル: %s\n"
 
 #, c-format
 msgid "Not enough fields from table %s! Aborting.\n"
-msgstr "テーブル（%s）のフィールド数が不足しています。プログラムを終了します。\n"
+msgstr ""
+"テーブル（%s）のフィールド数が不足しています。プログラムを終了します。\n"
 
 msgid "when doing refresh"
 msgstr "FLUSHコマンド実行中。"
@@ -661,11 +727,21 @@ msgstr "テーブル「%s」が見つかりません。"
 #, c-format
 msgid ""
 "Warning: Couldn't read keys from table %s; records are NOT sorted (%s)\n"
-msgstr "警告: テーブル「%s」からインデックスを読み込むことが出来ませんでした。レコードが記録されていません（%s）\n"
+msgstr ""
+"警告: テーブル「%s」からインデックスを読み込むことが出来ませんでした。レコー"
+"ドが記録されていません（%s）\n"
 
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "エラー: ORDER BY句を保持するためのメモリを確保することが出来ません。\n"
+
+#, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr ""
+
+#, c-format
+msgid "Out of memory"
+msgstr "メモリが不足しています。"
 
 #, c-format
 msgid "Got signal %d from thread %<PRIu64>"
@@ -680,13 +756,17 @@ msgstr "--userによるユーザ変更はroot権限でのみ使用可能です�
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run drizzled as root!\n"
-msgstr "致命的なエラー: drizzleをrootユーザで実行するために必要な情報はマニュアルの「セキュリティ」の章に記載されています。\n"
+msgstr ""
+"致命的なエラー: drizzleをrootユーザで実行するために必要な情報はマニュアルの"
+"「セキュリティ」の章に記載されています。\n"
 
 #, c-format
 msgid ""
 "Fatal error: Can't change to run as user '%s' ;  Please check that the user "
 "exists!\n"
-msgstr "致命的なエラー: ユーザーを「%s」に変更出来ません。ユーザーが存在しているか確認してください。\n"
+msgstr ""
+"致命的なエラー: ユーザーを「%s」に変更出来ません。ユーザーが存在しているか確"
+"認してください。\n"
 
 #, c-format
 msgid "Fatal signal %d while backtracing\n"
@@ -701,8 +781,10 @@ msgid ""
 "and this may fail.\n"
 "\n"
 msgstr ""
-"診断に必要な情報を収集しようと試みましたが、本プログラムは既にクラッシュしており、\n"
-"何らかの決定的な問題が生じたため、情報の収集は失敗している可能性があります。\n"
+"診断に必要な情報を収集しようと試みましたが、本プログラムは既にクラッシュして"
+"おり、\n"
+"何らかの決定的な問題が生じたため、情報の収集は失敗している可能性がありま"
+"す。\n"
 "\n"
 
 #, c-format
@@ -721,7 +803,8 @@ msgid ""
 "terribly wrong...\n"
 msgstr ""
 "バックトレースを取得しています。drizzledがどこで終了したのかを知るために、\n"
-"次の情報を利用出来ます。もし、以下に何もメッセージが表示されないようでしたら\n"
+"次の情報を利用出来ます。もし、以下に何もメッセージが表示されないようでした"
+"ら\n"
 "システムが異常を来していた可能性があります。\n"
 
 #, c-format
@@ -730,7 +813,8 @@ msgid ""
 "Some pointers may be invalid and cause the dump to abort...\n"
 msgstr ""
 "いくつかのシステム変数を取得しています。\n"
-"ポインタが不正な値になっている可能性がありますので、値のダンプが停止する可能性があります。\n"
+"ポインタが不正な値になっている可能性がありますので、値のダンプが停止する可能"
+"性があります。\n"
 
 #, c-format
 msgid ""
@@ -746,9 +830,12 @@ msgstr ""
 "サーバがinitgroups()を処理している最中にクラッシュが発生しました。\n"
 "この問題は、drizzledがglibcに対して静的にリンクされ、/etc/nsswitch.conf\n"
 "においてLDAPが利用されるように設定されている場合に起きることがあります。\n"
-"この問題が発生しないようにするには、glibcを新しいバージョン（nscdを利用している\n"
-"場合には2.3.4以降）にアップグレードするか、nsswitch.confにおいてLDAPを使用しない\n"
-"ように設定するか、もしくは静的にリンクされていないdrizzledを利用して下さい。\n"
+"この問題が発生しないようにするには、glibcを新しいバージョン（nscdを利用してい"
+"る\n"
+"場合には2.3.4以降）にアップグレードするか、nsswitch.confにおいてLDAPを使用し"
+"ない\n"
+"ように設定するか、もしくは静的にリンクされていないdrizzledを利用して下さ"
+"い。\n"
 
 #, c-format
 msgid ""
@@ -760,11 +847,14 @@ msgid ""
 "the documentation for your distribution on how to do that.\n"
 msgstr ""
 "\n"
-"NPTLをサポートしているシステムにおいて、LinuxThreadsが静的にリンクされています。\n"
+"NPTLをサポートしているシステムにおいて、LinuxThreadsが静的にリンクされていま"
+"す。\n"
 "LinuxThreadsとNPTLの競合が発生するとクラッシュが発生する場合があります。\n"
-"この問題を回避するために、動的にリンクされたバイナリを利用するか、LinuxThreadsが\n"
+"この問題を回避するために、動的にリンクされたバイナリを利用するか、"
+"LinuxThreadsが\n"
 "強制的に使われるようにLD_ASSUME_KERNEL環境変数を設定する必要があります。\n"
-"具体的にどのようにするべきかということについては、お使いのdrizzleのドキュメントを\n"
+"具体的にどのようにするべきかということについては、お使いのdrizzleのドキュメン"
+"トを\n"
 "参照して下さい。\n"
 
 #, c-format
@@ -781,9 +871,6 @@ msgstr "不明なロケールです: 「%s」"
 
 msgid "Can't create thread-keys"
 msgstr "thead-keysを作成できません"
-
-msgid "Out of memory"
-msgstr "メモリが不足しています。"
 
 msgid "Failed to initialize plugins."
 msgstr "プラグインの初期化に失敗しました。"
@@ -810,15 +897,18 @@ msgid "Auto-increment columns are incremented by this"
 msgstr "AUTO_INCREMENTが指定されたカラムは、この値によって増分されます。"
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment "
-"!= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment !"
+"= 1"
 msgstr ""
-"AUTO_INCREMENTカラムに対して追加されるオフセット。auto-increment-increment != 1のとき使用される。"
+"AUTO_INCREMENTカラムに対して追加されるオフセット。auto-increment-increment !"
+"= 1のとき使用される。"
 
 msgid ""
 "Path to installation directory. All paths are usually resolved relative to "
 "this."
-msgstr "インストールディレクトリへのパス。全てのパスは通常このディレクトリからの相対パスとして解決される。"
+msgstr ""
+"インストールディレクトリへのパス。全てのパスは通常このディレクトリからの相対"
+"パスとして解決される。"
 
 msgid "Chroot drizzled daemon during startup."
 msgstr "drizzledデーモンが起動時にchrootするかどうか。"
@@ -842,7 +932,8 @@ msgid "Set the default time zone."
 msgstr "デフォルトのタイムゾーン。"
 
 msgid "Print a symbolic stack trace on failure."
-msgstr "障害発生時にスタックトレースを文字列で（バイナリダンプではなく）表示する。"
+msgstr ""
+"障害発生時にスタックトレースを文字列で（バイナリダンプではなく）表示する。"
 
 msgid "Used for debugging;  Use at your own risk!"
 msgstr "デバッグに用いるフラグ。自己責任で使用すること。"
@@ -865,18 +956,21 @@ msgstr "safe_mysqldによって利用されるpidファイル。"
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
-msgstr "TCP/IPのポートがフリーになるまで待つ最大の秒数（デフォルト: ウェイト無し）"
+msgstr ""
+"TCP/IPのポートがフリーになるまで待つ最大の秒数（デフォルト: ウェイト無し）"
 
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
 "specified directory"
 msgstr ""
-"LOAD DATA、SELECT ... OUTFILEおよびLOAD_FILE()コマンドがアクセスするファイルを、特定のディレクトリに限定する。"
+"LOAD DATA、SELECT ... OUTFILEおよびLOAD_FILE()コマンドがアクセスするファイル"
+"を、特定のディレクトリに限定する。"
 
 msgid ""
 "Uniquely identifies the server instance in the community of replication "
 "partners."
-msgstr "レプリケーションサーバ群においてこのサーバを特定するためのユニークなID。"
+msgstr ""
+"レプリケーションサーバ群においてこのサーバを特定するためのユニークなID。"
 
 msgid "Don't print a stack trace on failure."
 msgstr "問題発生時にスタックトレースを表示しない。"
@@ -886,7 +980,9 @@ msgstr "シンボリックリンクのサポートを有効にする。"
 
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
-msgstr "mutexの時間を計測するかどうかを指定する。（現時点このオプションをサポートしているのはInnoDBのみ）"
+msgstr ""
+"mutexの時間を計測するかどうかを指定する。（現時点このオプションをサポートして"
+"いるのはInnoDBのみ）"
 
 msgid "Path for temporary files."
 msgstr "テンポラリファイルのパス。"
@@ -902,12 +998,15 @@ msgid ""
 "into play when the main Drizzle thread gets very many connection requests in "
 "a very short time."
 msgstr ""
-"Drizzleが保留することができる接続数。このオプションはDrizzleのメインスレッドが短時間のうちに大量の接続要求を受け取った場合に作用する。"
+"Drizzleが保留することができる接続数。このオプションはDrizzleのメインスレッド"
+"が短時間のうちに大量の接続要求を受け取った場合に作用する。"
 
 msgid ""
 "Size of tree cache used in bulk insert optimization. Note that this is a "
 "limit per thread!"
-msgstr "バルクインサート最適化のために利用されるツリー状キャッシュのサイズ。スレッドごとの制限である。"
+msgstr ""
+"バルクインサート最適化のために利用されるツリー状キャッシュのサイズ。スレッド"
+"ごとの制限である。"
 
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
@@ -925,7 +1024,9 @@ msgstr "このサーバが送信/受信する最大のパケット長。"
 msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
-msgstr "このオプションで指定される回数よりも多く特定のホストからの接続が切れてしまった場合には、そのホストからの接続を遮断する。"
+msgstr ""
+"このオプションで指定される回数よりも多く特定のホストからの接続が切れてしまっ"
+"た場合には、そのホストからの接続を遮断する。"
 
 msgid "Max number of errors/warnings to store for a statement."
 msgstr "SQLステートメント実行時に発生するエラーまたは警告の最大保存数。"
@@ -936,27 +1037,36 @@ msgstr "この値よりも大きなMEMORYテーブルを作成出来ないよう
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
-msgstr "max_join_size行よりも多くの行が読み込まれる可能性のあるJOINがエラーを返すようにする。"
+msgstr ""
+"max_join_size行よりも多くの行が読み込まれる可能性のあるJOINがエラーを返すよう"
+"にする。"
 
 msgid "Max number of bytes in sorted records."
 msgstr "ソートされたレコードの最大サイズ（単位はバイト）"
 
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
-msgstr "キーに基づいてルックアップを実行する際に実行される最大のシーク回数の仮想的な制限値。"
+msgstr ""
+"キーに基づいてルックアップを実行する際に実行される最大のシーク回数の仮想的な"
+"制限値。"
 
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
 msgstr ""
-"BLOBまたはTEXT型の値をソートする際に利用されるバイト数。（先頭のmax_sort_lengthバイトだけが利用され、残りは無視される。）"
+"BLOBまたはTEXT型の値をソートする際に利用されるバイト数。（先頭の"
+"max_sort_lengthバイトだけが利用され、残りは無視される。）"
 
 msgid "After this many write locks, allow some read locks to run in between."
-msgstr "Writeロックがこの回数だけ行われると、次のWriteロックがかけられるまでReadロックを数回実行できる。"
+msgstr ""
+"Writeロックがこの回数だけ行われると、次のWriteロックがかけられるまでReadロッ"
+"クを数回実行できる。"
 
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
-msgstr "テーブルからフェッチされた行数がmin_examined_row_limitより少ない場合はスロークエリログに記録しない。"
+msgstr ""
+"テーブルからフェッチされた行数がmin_examined_row_limitより少ない場合はスロー"
+"クエリログに記録しない。"
 
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
@@ -974,9 +1084,12 @@ msgid ""
 "if set to MAX_TABLES+2, the optimizer will switch to the original find_best "
 "(used for testing/comparison)."
 msgstr ""
-"クエリオプティマイザが検索する最大深度．クエリのリレーション数よりも大きな値はより良いクエリプランを提示するでしょうが，クエリのコンパイルには時間がかかり"
-"ます．リレーションの中のテーブル数よりも小さな値は最適化が高速ですが，とても悪いクエリプランを提示するでしょう．もし0にセットすると，システムは自動的に適"
-"切な値を使用します; もしMAX_TABLES+2にセットすると，オプティマイザはオリジナルのfind_bestになります（テストや比較に使われます）"
+"クエリオプティマイザが検索する最大深度．クエリのリレーション数よりも大きな値"
+"はより良いクエリプランを提示するでしょうが，クエリのコンパイルには時間がかか"
+"ります．リレーションの中のテーブル数よりも小さな値は最適化が高速ですが，とて"
+"も悪いクエリプランを提示するでしょう．もし0にセットすると，システムは自動的に"
+"適切な値を使用します; もしMAX_TABLES+2にセットすると，オプティマイザはオリジ"
+"ナルのfind_bestになります（テストや比較に使われます）"
 
 msgid "Directory for plugins."
 msgstr "プラグイン用ディレクトリ"
@@ -984,7 +1097,9 @@ msgstr "プラグイン用ディレクトリ"
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
-msgstr "デフォルトのプラグインに加えてスタートアップ時にロードされる，オプショナルなプラグインのカンマ区切りリスト"
+msgstr ""
+"デフォルトのプラグインに加えてスタートアップ時にロードされる，オプショナルな"
+"プラグインのカンマ区切りリスト"
 
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
@@ -1074,15 +1189,16 @@ msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
 msgstr ""
-"setrlimit()によってコアファイルのサイズを「無限」に設定することができませんでした。シグナルが発生した場合にコアファイルを生成できない場合があり"
-"ます。"
+"setrlimit()によってコアファイルのサイズを「無限」に設定することができませんで"
+"した。シグナルが発生した場合にコアファイルを生成できない場合があります。"
 
 #, c-format
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-msgid "UNUSED"
-msgstr ""
+#, c-format
+msgid "Unknown error %d"
+msgstr "未知のエラー %d"
 
 msgid "NO"
 msgstr ""
@@ -1561,8 +1677,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column '%-"
-".192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column "
+"'%-.192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #, c-format
@@ -1811,8 +1927,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
-"(%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
+"'%-.64s' (%-.64s)"
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
@@ -2135,8 +2251,7 @@ msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
 
 #, c-format
-msgid ""
-"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #, c-format
@@ -2145,8 +2260,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as "
-"XXXX.variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as XXXX."
+"variable_name)"
 msgstr ""
 
 #, c-format
@@ -2171,8 +2286,7 @@ msgid ""
 "SELECT #%d"
 msgstr ""
 
-msgid ""
-"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 msgid ""
@@ -2439,8 +2553,7 @@ msgstr ""
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
-msgid ""
-"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #, c-format
@@ -2472,14 +2585,13 @@ msgid ""
 "View merge algorithm can't be used here for now (assumed undefined algorithm)"
 msgstr ""
 
-msgid ""
-"View being updated does not have complete key of underlying table in it"
+msgid "View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
-"function(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
+"(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #, c-format
@@ -2752,8 +2864,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
-".192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
+"'%-.192s')."
 msgstr ""
 
 msgid ""
@@ -2784,8 +2896,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"The data source connection string '%-.64s' is not in the correct format"
+msgid "The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #, c-format
@@ -2827,8 +2938,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table '%-"
-".192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table "
+"'%-.192s'."
 msgstr ""
 
 msgid ""
@@ -2905,8 +3016,7 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 msgid "AGGREGATE is not supported for stored functions"
@@ -2914,8 +3024,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: "
-"%lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: %"
+"lu)"
 msgstr ""
 
 #, c-format
@@ -2992,8 +3102,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 msgid "MAXVALUE can only be used in last partition definition"
@@ -3011,8 +3120,7 @@ msgstr ""
 msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
-msgid ""
-"Constant/Random expression in (sub)partitioning function is not allowed"
+msgid "Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -3073,8 +3181,7 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr ""
 
 #, c-format
-msgid ""
-"A %-.192s must include all columns in the table's partitioning function"
+msgid "A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #, c-format
@@ -3131,8 +3238,7 @@ msgstr ""
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
-msgid ""
-"When reorganizing a set of partitions they must be in consecutive order"
+msgid "When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 msgid ""
@@ -3262,8 +3368,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
-"%s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
+"s instead"
 msgstr ""
 
 msgid "You can't write-lock a log table. Only read access is possible"
@@ -3274,8 +3380,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #, c-format
@@ -3672,8 +3778,7 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr ""
 
 #, c-format
-msgid ""
-"Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #, c-format
@@ -3816,52 +3921,8 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "ファイル'%s'を書き込み中にエラー (エラーコード: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr ""
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "ファイルをアンロックできません(エラーコード: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr ""
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -3872,23 +3933,11 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr ""
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "'%s' ディレクトリに移動できません (Errcode: %d)"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr ""
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
-msgstr ""
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
 msgstr ""
 
 #, c-format
@@ -3928,16 +3977,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "未知のエラー %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -4702,8 +4743,10 @@ msgid ""
 "specifies the percentage ratio of that number of hits to the total number of "
 "blocks in key cache"
 msgstr ""
-"キーキャッシュにおいて、活発なブロックがアクセスされずに時間が経過することによって活発でないブロックへとダウングレードするときのヒット数に関する特性。この"
-"オプションは、キーキャッシュの全ブロック数に対するヒット率のパーセンテージとして表される。"
+"キーキャッシュにおいて、活発なブロックがアクセスされずに時間が経過することに"
+"よって活発でないブロックへとダウングレードするときのヒット数に関する特性。こ"
+"のオプションは、キーキャッシュの全ブロック数に対するヒット率のパーセンテージ"
+"として表される。"
 
 msgid "The minimum percentage of warm blocks in key cache"
 msgstr "キーキャッシュ内の活発でないブロックの最小の比率（パーセンテージ）。"
@@ -4713,8 +4756,8 @@ msgid ""
 "this to get better index handling (for all reads and multiple writes) to as "
 "much as you can afford;"
 msgstr ""
-"MyISAMのインデックスブロック用のバッファサイズ。インデックスの処理（全ての参照系しょりおよび複数の更新系処理）をできるだけ高速化するにはこの値を増や"
-"す。"
+"MyISAMのインデックスブロック用のバッファサイズ。インデックスの処理（全ての参"
+"照系しょりおよび複数の更新系処理）をできるだけ高速化するにはこの値を増やす。"
 
 msgid ""
 "Number of threads to use when repairing MyISAM tables. The value of 1 "
@@ -4751,9 +4794,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr ""
 
-msgid "Undefined handler error 125"
-msgstr ""
-
 msgid "Index file is crashed"
 msgstr ""
 
@@ -4761,9 +4801,6 @@ msgid "Record file is crashed"
 msgstr ""
 
 msgid "Out of memory in engine"
-msgstr ""
-
-msgid "Undefined handler error 129"
 msgstr ""
 
 msgid "Incorrect file format"
@@ -4940,8 +4977,7 @@ msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
 msgstr ""
 
 #, c-format
-msgid ""
-"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 #, c-format
@@ -5004,6 +5040,12 @@ msgstr ""
 msgid "BUFFER: %s\n"
 msgstr ""
 
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "ファイル'%s'を書き込み中にエラー (エラーコード: %d)"
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "'%s' ディレクトリに移動できません (Errcode: %d)"
+
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "メモリとオープンしているファイルの使用量を表示して終了する。"
 
@@ -5016,18 +5058,15 @@ msgstr ""
 #~ msgid "Socket file to use for connection."
 #~ msgstr "接続に使用するソケットファイル。"
 
-#, c-format
 #~ msgid "Unknown command '\\%c'."
 #~ msgstr "不明なコマンド '\\%c'。"
 
-#, c-format
 #~ msgid "Plugin '%s' init function returned error."
 #~ msgstr "プラグイン'%s\"の初期化関数がエラーを返しました"
 
 #~ msgid "Can't start server: Bind on TCP/IP port"
 #~ msgstr "サーバを起動できません: Bind on TCP/IP port"
 
-#, c-format
 #~ msgid "Fatal "
 #~ msgstr "致命的 "
 
