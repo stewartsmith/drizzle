@@ -389,7 +389,8 @@ transformCreateTableStatementToSql(const CreateTableStatement &statement,
 enum TransformSqlError
 transformTableDefinitionToSql(const Table &table,
                               std::string &destination,
-                              enum TransformSqlVariant sql_variant= DRIZZLE);
+                              enum TransformSqlVariant sql_variant= DRIZZLE,
+                              bool with_schema= false);
 
 /**
  * Appends to the supplied string an SQL expression

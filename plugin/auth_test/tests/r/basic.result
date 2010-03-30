@@ -1,0 +1,19 @@
+connect(localhost,,,test,MASTER_PORT,);
+ERROR 28000: Access denied for user ''@'LOCALHOST' (using password: NO)
+connect(localhost,password_ok,,test,MASTER_PORT,);
+ERROR 28000: Access denied for user 'password_ok'@'LOCALHOST' (using password: NO)
+SELECT 1;
+1
+1
+connect(localhost,no_password_ok,test,test,MASTER_PORT,);
+ERROR 28000: Access denied for user 'no_password_ok'@'LOCALHOST' (using password: YES)
+SELECT 1;
+1
+1
+connect(localhost,scramble_ok,,test,MASTER_PORT,);
+ERROR 28000: Access denied for user 'scramble_ok'@'LOCALHOST' (using password: NO)
+connect(localhost,scramble_ok,bad_scramble,test,MASTER_PORT,);
+ERROR 28000: Access denied for user 'scramble_ok'@'LOCALHOST' (using password: YES)
+SELECT 1;
+1
+1

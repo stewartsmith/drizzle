@@ -53,18 +53,11 @@ String *VersionFunction::val_str(String *str)
 
 plugin::Create_function<VersionFunction> *versionudf= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(plugin::Context &context)
 {
   versionudf= new plugin::Create_function<VersionFunction>("version");
-  registry.add(versionudf);
+  context.add(versionudf);
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)
-{
-   registry.remove(versionudf);
-   delete versionudf;
-   return 0;
-}
-
-DRIZZLE_PLUGIN(initialize, finalize, NULL);
+DRIZZLE_PLUGIN(initialize, NULL);

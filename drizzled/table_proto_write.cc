@@ -148,20 +148,20 @@ static int fill_table_proto(message::Table &table_proto,
       }
     case message::Table::Field::ENUM:
       {
-        message::Table::Field::SetFieldOptions *set_field_options;
+        message::Table::Field::EnumerationValues *enumeration_options;
 
         assert(field_arg->interval);
 
-        set_field_options= attribute->mutable_set_options();
+        enumeration_options= attribute->mutable_enumeration_values();
 
         for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
         {
           const char *src= field_arg->interval->type_names[pos];
 
-          set_field_options->add_field_value(src);
+          enumeration_options->add_field_value(src);
         }
-	set_field_options->set_collation_id(field_arg->charset->number);
-        set_field_options->set_collation(field_arg->charset->name);
+	enumeration_options->set_collation_id(field_arg->charset->number);
+        enumeration_options->set_collation(field_arg->charset->name);
         break;
       }
     case message::Table::Field::BLOB:
@@ -443,27 +443,6 @@ static int fill_table_proto(message::Table &table_proto,
   return 0;
 }
 
-int rename_table_proto_file(const char *from, const char* to)
-{
-  string from_path(from);
-  string to_path(to);
-  string file_ext = ".dfe";
-
-  from_path.append(file_ext);
-  to_path.append(file_ext);
-
-  return internal::my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
-}
-
-int delete_table_proto_file(const char *file_name)
-{
-  string new_path(file_name);
-  string file_ext = ".dfe";
-
-  new_path.append(file_ext);
-  return internal::my_delete(new_path.c_str(), MYF(0));
-}
-
 /*
   Create a table definition proto file and the tables
 
@@ -491,7 +470,7 @@ bool rea_create_table(Session *session,
                       uint32_t keys, KEY *key_info)
 {
   if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
-		      keys, key_info))
+                       keys, key_info))
     return false;
 
   if (plugin::StorageEngine::createTable(*session,

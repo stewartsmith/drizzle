@@ -63,26 +63,26 @@ ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary'
 WHEN IS_INDEXED = 'TRUE' THEN 'indexed' 
 ELSE 'indexed' END 
 
-data_dictionary	CHARACTER_SETS	function	CHARACTER_SET_NAME	indexed
-data_dictionary	CHARACTER_SETS	function	DEFAULT_COLLATE_NAME	indexed
-data_dictionary	CHARACTER_SETS	function	DESCRIPTION	indexed
-data_dictionary	CHARACTER_SETS	function	MAXLEN	indexed
-data_dictionary	COLLATIONS	function	CHARACTER_SET_NAME	indexed
-data_dictionary	COLLATIONS	function	COLLATION_NAME	indexed
-data_dictionary	COLLATIONS	function	DESCRIPTION	indexed
-data_dictionary	COLLATIONS	function	ID	indexed
-data_dictionary	COLLATIONS	function	IS_DEFAULT	indexed
-data_dictionary	COLLATIONS	function	IS_COMPILED	indexed
-data_dictionary	COLLATIONS	function	SORTLEN	indexed
-data_dictionary	COLUMNS	function	TABLE_SCHEMA	indexed
-data_dictionary	COLUMNS	function	TABLE_NAME	indexed
-data_dictionary	COLUMNS	function	COLUMN_NAME	indexed
-data_dictionary	COLUMNS	function	COLUMN_TYPE	indexed
-data_dictionary	COLUMNS	function	ORDINAL_POSITION	indexed
-data_dictionary	COLUMNS	function	COLUMN_DEFAULT	indexed
-data_dictionary	COLUMNS	function	COLUMN_DEFAULT_IS_NULL	indexed
-data_dictionary	COLUMNS	function	COLUMN_DEFAULT_UPDATE	indexed
-data_dictionary	COLUMNS	function	IS_NULLABLE	indexed
+DATA_DICTIONARY	CHARACTER_SETS	function	CHARACTER_SET_NAME	indexed
+DATA_DICTIONARY	CHARACTER_SETS	function	DEFAULT_COLLATE_NAME	indexed
+DATA_DICTIONARY	CHARACTER_SETS	function	DESCRIPTION	indexed
+DATA_DICTIONARY	CHARACTER_SETS	function	MAXLEN	indexed
+DATA_DICTIONARY	COLLATIONS	function	CHARACTER_SET_NAME	indexed
+DATA_DICTIONARY	COLLATIONS	function	COLLATION_NAME	indexed
+DATA_DICTIONARY	COLLATIONS	function	DESCRIPTION	indexed
+DATA_DICTIONARY	COLLATIONS	function	ID	indexed
+DATA_DICTIONARY	COLLATIONS	function	IS_DEFAULT	indexed
+DATA_DICTIONARY	COLLATIONS	function	IS_COMPILED	indexed
+DATA_DICTIONARY	COLLATIONS	function	SORTLEN	indexed
+DATA_DICTIONARY	COLUMNS	function	TABLE_SCHEMA	indexed
+DATA_DICTIONARY	COLUMNS	function	TABLE_NAME	indexed
+DATA_DICTIONARY	COLUMNS	function	COLUMN_NAME	indexed
+DATA_DICTIONARY	COLUMNS	function	COLUMN_TYPE	indexed
+DATA_DICTIONARY	COLUMNS	function	ORDINAL_POSITION	indexed
+DATA_DICTIONARY	COLUMNS	function	COLUMN_DEFAULT	indexed
+DATA_DICTIONARY	COLUMNS	function	COLUMN_DEFAULT_IS_NULL	indexed
+DATA_DICTIONARY	COLUMNS	function	COLUMN_DEFAULT_UPDATE	indexed
+DATA_DICTIONARY	COLUMNS	function	IS_NULLABLE	indexed
 select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
 (SUM(`col_int_key`) + SUM(`col_int`)) / COUNT(*) AS average2,
 COUNT(*) AS count FROM t1;
