@@ -38,6 +38,9 @@ using namespace drizzled;
 
 #define BLACKHOLE_EXT ".blk"
 
+static pthread_mutex_t blackhole_mutex;
+
+
 static const char *ha_blackhole_exts[] = {
   NULL
 };
@@ -58,6 +61,11 @@ public:
     blackhole_open_tables()
   {
     table_definition_ext= BLACKHOLE_EXT;
+  }
+
+  virtual ~BlackholeEngine()
+  {
+    pthread_mutex_destroy(&blackhole_mutex);
   }
 
   virtual Cursor *create(TableShare &table,
@@ -131,8 +139,25 @@ public:
   }
 
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
 };
 
+
+int BlackholeEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+{
+  int error= 0;
+
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
+  }
+  return error;
+}
 
 BlackholeShare *BlackholeEngine::findOpenTable(const string table_name)
 {
@@ -155,10 +180,6 @@ void BlackholeEngine::deleteOpenTable(const string &table_name)
   blackhole_open_tables.erase(table_name);
 }
 
-
-/* Static declarations for shared structures */
-
-static pthread_mutex_t blackhole_mutex;
 
 
 /*****************************************************************************
@@ -425,26 +446,17 @@ BlackholeShare::~BlackholeShare()
 
 static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 
-static int blackhole_init(drizzled::plugin::Registry &registry)
+static int blackhole_init(drizzled::plugin::Context &context)
 {
 
   blackhole_engine= new BlackholeEngine("BLACKHOLE");
-  registry.add(blackhole_engine);
+  context.add(blackhole_engine);
   
   pthread_mutex_init(&blackhole_mutex, MY_MUTEX_INIT_FAST);
 
   return 0;
 }
 
-static int blackhole_fini(drizzled::plugin::Registry &registry)
-{
-  registry.remove(blackhole_engine);
-  delete blackhole_engine;
-
-  pthread_mutex_destroy(&blackhole_mutex);
-
-  return 0;
-}
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -455,7 +467,6 @@ DRIZZLE_DECLARE_PLUGIN
   "/dev/null storage engine (anything you write to it disappears)",
   PLUGIN_LICENSE_GPL,
   blackhole_init,     /* Plugin Init */
-  blackhole_fini,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }
