@@ -62,11 +62,6 @@ ColumnsTool::Generator::Generator(Field **arg) :
   column_iterator(0),
   is_columns_primed(false)
 {
-  Session *session= current_session;
-  drizzled::statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
-
-  setSchemaPredicate(select->getShowSchema());
-  setTablePredicate(select->getShowTable());
 }
 
 
@@ -120,10 +115,10 @@ bool ColumnsTool::Generator::populate()
 void ColumnsTool::Generator::fill()
 {
   /* TABLE_SCHEMA */
-  push(schema_name());
+  push(getTableProto().schema());
 
   /* TABLE_NAME */
-  push(table_name());
+  push(getTableProto().name());
 
   /* COLUMN_NAME */
   push(column.name());

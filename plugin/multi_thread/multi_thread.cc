@@ -87,18 +87,10 @@ MultiThreadScheduler::~MultiThreadScheduler()
 }
 
   
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   scheduler= new MultiThreadScheduler("multi_thread");
-  registry.add(scheduler);
-
-  return 0;
-}
-
-static int deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(scheduler);
-  delete scheduler;
+  context.add(scheduler);
 
   return 0;
 }
@@ -122,7 +114,6 @@ DRIZZLE_DECLARE_PLUGIN
   "One Thread Per Session Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
   sys_variables,   /* system variables */
   NULL    /* config options */
 }
