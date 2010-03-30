@@ -111,13 +111,13 @@ bool CurrentCommandsTool::Generator::populate()
         push(user_commands->getAlterCount());
         push(user_commands->getDropCount());
         push(user_commands->getAdminCount());
-        scoreboard_vector_it++;
+        ++scoreboard_vector_it;
         return true;
       }
-      scoreboard_vector_it++;
+      ++scoreboard_vector_it;
     }
     
-    vector_of_scoreboard_vectors_it++;
+    ++vector_of_scoreboard_vectors_it;
     pthread_rwlock_unlock(current_lock); 
     current_bucket++;
     if (vector_of_scoreboard_vectors_it != vector_of_scoreboard_vectors_end)
@@ -185,6 +185,6 @@ bool CumulativeCommandsTool::Generator::populate()
   push(cumulative_scoreboard_slot->getUserCommands()->getDropCount());
   push(cumulative_scoreboard_slot->getUserCommands()->getAdminCount());
 
-  record_number++;
+  ++record_number;
   return true;
 }

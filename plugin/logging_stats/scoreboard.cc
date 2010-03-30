@@ -62,13 +62,13 @@ Scoreboard::Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets)
   uint32_t number_per_bucket= static_cast<uint32_t> ( ceil( static_cast<double>(number_sessions) / static_cast<double>(number_buckets) ) );
 
   /* populate the vector of scoreboard vectors */
-  for (uint32_t j= 0; j < number_buckets; j++)
+  for (uint32_t j= 0; j < number_buckets; ++j)
   {
     vector<ScoreboardSlot* > *scoreboard_vector= new vector<ScoreboardSlot* >();
 
     /* preallocate the individual vectors */
     vector<ScoreboardSlot* >::iterator scoreboard_vector_iterator= scoreboard_vector->begin();
-    for (uint32_t h= 0; h < number_per_bucket; h++)
+    for (uint32_t h= 0; h < number_per_bucket; ++h)
     {
       ScoreboardSlot *scoreboard_slot= new ScoreboardSlot();
       scoreboard_vector_iterator= scoreboard_vector->insert(scoreboard_vector_iterator, scoreboard_slot);
@@ -87,7 +87,7 @@ Scoreboard::Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets)
   
   /* populate the scoreboard locks vector each ScoreboardSlot vector gets a lock */
   vector<pthread_rwlock_t* >::iterator vector_of_scoreboard_locks_iterator= vector_of_scoreboard_locks.begin();
-  for (uint32_t k= 0; k < number_buckets; k++)
+  for (uint32_t k= 0; k < number_buckets; ++k)
   {
     pthread_rwlock_t* lock= new pthread_rwlock_t();
     vector_of_scoreboard_locks_iterator= 

@@ -127,7 +127,7 @@ void LoggingStats::preAllocateScoreboardSlotVector(uint32_t size,
                                                    vector<ScoreboardSlot *> *scoreboard_slot_vector)
 {
   vector<ScoreboardSlot *>::iterator it= scoreboard_slot_vector->begin();
-  for (uint32_t j=0; j < size; j++)
+  for (uint32_t j=0; j < size; ++j)
   {
     ScoreboardSlot *scoreboard_slot= new ScoreboardSlot();
     it= scoreboard_slot_vector->insert(it, scoreboard_slot);
@@ -138,7 +138,7 @@ void LoggingStats::preAllocateScoreboardSlotVector(uint32_t size,
 void LoggingStats::deleteScoreboardSlotVector(vector<ScoreboardSlot *> *scoreboard_slot_vector)
 {
   vector<ScoreboardSlot *>::iterator it= scoreboard_slot_vector->begin();
-  for (; it < scoreboard_slot_vector->end(); it++)
+  for (; it < scoreboard_slot_vector->end(); ++it)
   {
     delete *it;
   }
@@ -247,7 +247,7 @@ bool LoggingStats::postEnd(Session *session)
     bool found= false;
 
     /* Search if this is a pre-existing user */
-    for (uint32_t h= 0; h < cumulative_stats_by_user_index; h++)
+    for (uint32_t h= 0; h < cumulative_stats_by_user_index; ++h)
     {
       ScoreboardSlot *cumulative_scoreboard_slot= *cumulative_it;
       string user= cumulative_scoreboard_slot->getUser();
@@ -257,7 +257,7 @@ bool LoggingStats::postEnd(Session *session)
         cumulative_scoreboard_slot->merge(scoreboard_slot);
         break;
       }
-      cumulative_it++;
+      ++cumulative_it;
     }
 
     /* this will add a new user */
