@@ -292,6 +292,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/authentication.h \
 			      drizzled/plugin/authorization.h \
 			      drizzled/plugin/client.h \
+			      drizzled/plugin/context.h \
+			      drizzled/plugin/daemon.h \
 			      drizzled/plugin/error_message.h \
 			      drizzled/plugin/function.h \
 			      drizzled/plugin/library.h \
