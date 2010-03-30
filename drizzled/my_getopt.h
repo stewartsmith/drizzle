@@ -71,7 +71,7 @@ struct my_option
 };
 
 
-typedef bool (* my_get_one_option) (int, const struct my_option *, char * );
+typedef int (* my_get_one_option) (int, const struct my_option *, char * );
 typedef void (* my_error_reporter) (enum loglevel level, const char *format, ... );
 typedef char ** (*getopt_get_addr_func)(const char *, uint32_t, const struct my_option *);
 
