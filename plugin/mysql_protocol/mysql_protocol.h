@@ -52,6 +52,7 @@ private:
   bool netStoreData(const unsigned char *from, size_t length);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
   unsigned char *storeLength(unsigned char *packet, uint64_t length);
+  void makeScramble(char *scramble);
 
 public:
   ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg);

@@ -68,7 +68,12 @@ plugin::Library *plugin::Library::loadLibrary(const string &plugin_name)
   dlpath.append("/");
   dlpath.append("lib");
   dlpath.append(plugin_name);
-  dlpath.append("_plugin.so");
+  dlpath.append("_plugin");
+#if defined(TARGET_OS_OSX)
+  dlpath.append(".dylib");
+#else
+  dlpath.append(".so");
+#endif
 
   /* Open new dll handle */
   void *handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);

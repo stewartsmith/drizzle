@@ -36,7 +36,7 @@ Note	1051	Unknown table 't1'
 create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=MEMORY;
 ERROR 42000: Incorrect table definition; there can be only one auto column and it must be defined as a key
 create table not_existing_database.test (a int);
-ERROR HY000: Can't create table 'not_existing_database.test' (errno: 2)
+ERROR 42000: Unknown database 'not_existing_database'
 create table `a/a` (a int);
 show create table `a/a`;
 Table	Create Table
@@ -356,7 +356,7 @@ ERROR 42S01: Table 't3' already exists
 create table t3 like mysqltest.t3;
 ERROR 42S01: Table 't3' already exists
 create table non_existing_database.t1 like t1;
-ERROR HY000: Can't create table 'non_existing_database.t1' (errno: 2)
+ERROR 42000: Unknown database 'non_existing_database'
 create table t3 like non_existing_table;
 ERROR 42S02: Table 'test.non_existing_table' doesn't exist
 create temporary table t3 like t1;
@@ -556,7 +556,7 @@ primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(112) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(112) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
 drop table t1;
@@ -571,7 +571,7 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) COLLATE utf8_bin NOT NULL,
   `b` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
@@ -589,7 +589,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `b` int DEFAULT NULL,
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) COLLATE utf8_bin NOT NULL,
   `c` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
@@ -601,7 +601,7 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) COLLATE utf8_bin NOT NULL,
   `b` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
@@ -613,7 +613,7 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `a` varchar(12) COLLATE utf8_bin NOT NULL,
   `b` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT
@@ -1450,7 +1450,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=InnoDB
 drop table t1;
 create temporary table t1 like data_dictionary.processlist;
-ERROR HY000: Can't create table 'test.t1' (errno: 138)
+ERROR HY000: Can't create table 'test.#t1' (errno: 138)
 create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 Table	Create Table
@@ -1490,7 +1490,7 @@ t1	CREATE TABLE `t1` (
   `c2` int DEFAULT NULL COMMENT 'column2',
   `c3` int NOT NULL COMMENT 'column3',
   `c4` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
-  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c5` varchar(255) COLLATE utf8_unicode_ci DEFAULT 'b',
   `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
 
@@ -1502,9 +1502,9 @@ t2	CREATE TABLE `t2` (
   `c1` int DEFAULT '12' COMMENT 'column1',
   `c2` int DEFAULT NULL COMMENT 'column2',
   `c3` int NOT NULL COMMENT 'column3',
-  `c4` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT 'a',
-  `c5` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT 'b',
-  `c6` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
+  `c4` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
+  `c5` varchar(255) COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
 
 DROP TABLE t2;

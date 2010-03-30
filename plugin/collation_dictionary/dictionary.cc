@@ -26,24 +26,14 @@ using namespace drizzled;
 static CharacterSetsTool *character_sets;
 static CollationsTool *collations;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   character_sets= new(std::nothrow)CharacterSetsTool;
   collations= new(std::nothrow)CollationsTool;
 
-  registry.add(character_sets);
-  registry.add(collations);
+  context.add(character_sets);
+  context.add(collations);
   
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(character_sets);
-  registry.remove(collations);
-  delete character_sets;
-  delete collations;
-
   return 0;
 }
 
@@ -56,7 +46,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Data Dictionary for schema, table, column, indexes, etc",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }
