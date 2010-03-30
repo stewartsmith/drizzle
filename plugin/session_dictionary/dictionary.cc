@@ -25,19 +25,11 @@ using namespace drizzled;
 
 static ProcesslistTool *processlist;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   processlist= new(std::nothrow)ProcesslistTool;
-  registry.add(processlist);
+  context.add(processlist);
   
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(processlist);
-  delete processlist;
-
   return 0;
 }
 
@@ -50,7 +42,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Dictionary for session information, aka proccesslist, etc.",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }

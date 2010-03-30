@@ -1450,18 +1450,18 @@ int Cursor::ha_external_lock(Session *session, int lock_type)
   {
     if (lock_type == F_RDLCK)
     {
-      DRIZZLE_CURSOR_RDLOCK_START(table_share->db.str,
-                                  table_share->table_name.str);
+      DRIZZLE_CURSOR_RDLOCK_START(table_share->getSchemaName(),
+                                  table_share->getTableName());
     }
     else if (lock_type == F_WRLCK)
     {
-      DRIZZLE_CURSOR_WRLOCK_START(table_share->db.str,
-                                  table_share->table_name.str);
+      DRIZZLE_CURSOR_WRLOCK_START(table_share->getSchemaName(),
+                                  table_share->getTableName());
     }
     else if (lock_type == F_UNLCK)
     {
-      DRIZZLE_CURSOR_UNLOCK_START(table_share->db.str,
-                                  table_share->table_name.str);
+      DRIZZLE_CURSOR_UNLOCK_START(table_share->getSchemaName(),
+                                  table_share->getTableName());
     }
   }
 
@@ -1528,7 +1528,7 @@ int Cursor::ha_write_row(unsigned char *buf)
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
 
-  DRIZZLE_INSERT_ROW_START(table_share->db.str, table_share->table_name.str);
+  DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   error= write_row(buf);
   DRIZZLE_INSERT_ROW_DONE(error);
@@ -1555,7 +1555,7 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
    */
   assert(new_data == table->record[0]);
 
-  DRIZZLE_UPDATE_ROW_START(table_share->db.str, table_share->table_name.str);
+  DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   error= update_row(old_data, new_data);
   DRIZZLE_UPDATE_ROW_DONE(error);
@@ -1575,7 +1575,7 @@ int Cursor::ha_delete_row(const unsigned char *buf)
 {
   int error;
 
-  DRIZZLE_DELETE_ROW_START(table_share->db.str, table_share->table_name.str);
+  DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   error= delete_row(buf);
   DRIZZLE_DELETE_ROW_DONE(error);

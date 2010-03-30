@@ -8,7 +8,7 @@ insert into t1 values(1);
 create temporary table t1( n int);
 insert into t1 values(2);
 create table t1(n int);
-ERROR 42S01: Table 't1' already exists
+ERROR 42S01: Table 'test.t1' already exists
 drop table t1;
 select * from t1;
 n

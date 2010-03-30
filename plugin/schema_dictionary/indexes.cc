@@ -93,10 +93,10 @@ bool IndexesTool::Generator::populate()
 void IndexesTool::Generator::fill()
 {
   /* TABLE_SCHEMA */
-  push(schema_name());
+  push(getTableProto().schema());
 
   /* TABLE_NAME */
-  push(table_name());
+  push(getTableProto().name());
 
   /* INDEX_NAME */
   push(index.name());
