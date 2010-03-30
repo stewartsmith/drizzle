@@ -29,7 +29,7 @@ using namespace drizzled;
 
 static drizzled::plugin::StorageEngine *schema_plugin= NULL;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   schema_plugin= new(std::nothrow) Schema();
 
@@ -38,15 +38,7 @@ static int init(drizzled::plugin::Registry &registry)
     return 1;
   }
 
-  registry.add(schema_plugin);
-
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(schema_plugin);
-  delete schema_plugin;
+  context.add(schema_plugin);
 
   return 0;
 }
@@ -60,7 +52,6 @@ DRIZZLE_DECLARE_PLUGIN
   "This implements the default file based Schema engine.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  finalize,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

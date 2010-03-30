@@ -1043,6 +1043,28 @@ sub command_line_setup () {
   }
 }
 
+sub gimme_a_good_port($)
+{
+  my $port_to_test= shift;
+  my $is_port_bad= 1;
+  while ($is_port_bad) {
+    my $sock = new IO::Socket::INET( PeerAddr => 'localhost',
+                                     PeerPort => $port_to_test,
+                                     Proto => 'tcp' );
+    if ($sock) {
+      close($sock);
+      $port_to_test += 1;
+      if ($port_to_test >= 32767) {
+        $port_to_test = 5001;
+      }
+
+    } else {
+      $is_port_bad= 0;
+    }
+  }
+  return $port_to_test;
+
+}
 #
 # To make it easier for different devs to work on the same host,
 # an environment variable can be used to control all ports. A small
@@ -1072,9 +1094,11 @@ sub set_mtr_build_thread_ports($) {
 
   # Up to two masters, up to three slaves
   # A magic value in command_line_setup depends on these equations.
-  $opt_master_myport=         $mtr_build_thread + 9000; # and 1
-  $opt_slave_myport=          $opt_master_myport + 2;  # and 3 4
-  $opt_memc_myport= $opt_master_myport + 10;
+  $opt_master_myport=         gimme_a_good_port($mtr_build_thread + 9000); # and 1
+
+
+  $opt_slave_myport=          gimme_a_good_port($opt_master_myport + 2);  # and 3 4
+  $opt_memc_myport= gimme_a_good_port($opt_master_myport + 10);
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {

@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_ENUM_H
 #define DRIZZLED_ENUM_H
 
+#include "drizzled/message/table.pb.h"
+
 namespace drizzled
 {
 
@@ -212,14 +214,6 @@ enum find_item_error_report_type
   IGNORE_ERRORS,
   REPORT_EXCEPT_NON_UNIQUE,
   IGNORE_EXCEPT_NON_UNIQUE
-};
-
-enum tmp_table_type
-{
-  STANDARD_TABLE,
-  TEMP_TABLE,
-  INTERNAL_TMP_TABLE,
-  SYSTEM_TMP_TABLE
 };
 
 /*

@@ -33,36 +33,13 @@ bool archive_aio_state(void)
   return archive_use_aio;
 }
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
 
   archive_engine= new ArchiveEngine();
-  registry.add(archive_engine);
+  context.add(archive_engine);
 
   return false;
-}
-
-/*
-  Release the archive Cursor.
-
-  SYNOPSIS
-    archive_db_done()
-    void
-
-  RETURN
-    false       OK
-*/
-
-extern pthread_mutex_t archive_mutex;
-
-static int done(drizzled::plugin::Registry &registry)
-{
-  registry.remove(archive_engine);
-  delete archive_engine;
-
-  pthread_mutex_destroy(&archive_mutex);
-
-  return 0;
 }
 
 
@@ -85,7 +62,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Archive storage engine",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  done, /* Plugin Deinit */
   archive_system_variables,   /* system variables                */
   NULL                        /* config options                  */
 }
