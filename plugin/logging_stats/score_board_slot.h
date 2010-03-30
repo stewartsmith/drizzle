@@ -81,24 +81,26 @@ public:
 
   void setUser(std::string in_user)
   {
-    user.assign(in_user);
+    //user.assign(in_user);
+    user= new std::string(in_user.c_str());
     //user= in_user;
   }
 
-  const std::string& getUser()
+  const std::string getUser()
   {
-    return user; 
+    return *user; 
   }
 
   void setIp(std::string in_ip)
   {
-    ip.assign(in_ip);
+    ip= new std::string(in_ip.c_str());
+    //ip.assign(in_ip);
     //ip= in_ip;
   }
 
-  const std::string& getIp()
+  const std::string getIp()
   {
-    return ip;
+    return *ip;
   }
 
   void reset()
@@ -113,8 +115,8 @@ public:
 
 private:
   UserCommands *user_commands;
-  std::string user;
-  std::string ip;
+  std::string *user;
+  std::string *ip;
   bool in_use;
   uint64_t session_id;
 };
