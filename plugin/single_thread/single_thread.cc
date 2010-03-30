@@ -24,18 +24,10 @@ using namespace drizzled;
 static SingleThreadScheduler *scheduler= NULL;
 
 
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
   scheduler= new SingleThreadScheduler("single_thread");
-  registry.add(scheduler);
-  return 0;
-}
-
-static int deinit(plugin::Registry &registry)
-{
-  registry.remove(scheduler);
-  delete scheduler;
-
+  context.add(scheduler);
   return 0;
 }
 
@@ -48,7 +40,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Single Thread Scheduler",
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
-  deinit, /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }
