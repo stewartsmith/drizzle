@@ -92,7 +92,7 @@ static void usage(bool version)
   printf("\nExample usage:\n%s --defaults-file=example.cnf client mysql\n", internal::my_progname);
 }
 
-static bool get_one_option(int optid, const struct my_option *, char *)
+static int get_one_option(int optid, const struct my_option *, char *)
 {
   switch (optid) {
     case 'c':

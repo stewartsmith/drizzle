@@ -40,7 +40,7 @@ drop table if exists t1;
 --error 1075
 create temporary table t1 (ordid int not null auto_increment, ord  varchar(50) not null, primary key (ord,ordid)) engine=MEMORY;
 
--- error 1005
+-- error 1049
 create table not_existing_database.test (a int);
 create table `a/a` (a int);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -320,7 +320,7 @@ select * from t2;
 create table t3 like t1;
 --error 1050
 create table t3 like mysqltest.t3;
---error 1005
+--error 1049
 create table non_existing_database.t1 like t1;
 --error ER_NO_SUCH_TABLE
 create table t3 like non_existing_table;

@@ -106,8 +106,8 @@ CASE WHEN 1 THEN 0.1e1 else '1' END AS c12
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` varchar(1) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,
-  `c2` varchar(1) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,
+  `c1` varchar(1) COLLATE utf8_bin DEFAULT NULL,
+  `c2` varchar(1) COLLATE utf8_bin DEFAULT NULL,
   `c3` varbinary(4) NOT NULL,
   `c4` varbinary(4) NOT NULL,
   `c5` varbinary(4) NOT NULL,
@@ -162,7 +162,7 @@ t1	CREATE TABLE `t1` (
   `COALESCE(1,1.0)` decimal(2,1) NOT NULL,
   `COALESCE(1,'1')` varbinary(4) NOT NULL,
   `COALESCE(1.1,'1')` varbinary(4) NOT NULL,
-  `COALESCE('a' COLLATE utf8_bin,'b')` varchar(1) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL
+  `COALESCE('a' COLLATE utf8_bin,'b')` varchar(1) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
 DROP TABLE t1;
 SELECT 'case+union+test'
