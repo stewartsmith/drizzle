@@ -22,33 +22,27 @@
 #define PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLES_H
 
 
-class ShowTables : public TablesTool
+class ShowTables : public drizzled::plugin::TableFunction
 {
 public:
-  ShowTables(const char *table_arg) :
-    TablesTool(table_arg)
-  { }
+  ShowTables();
 
-  ShowTables() :
-    TablesTool("SHOW_TABLES")
+  class Generator : public drizzled::plugin::TableFunction::Generator
   {
-    add_field("TABLE_NAME");
-  }
+    bool is_primed;
+    drizzled::message::Table table_message;
+    std::set<std::string> table_names;
+    std::set<std::string>::iterator table_iterator;
+    std::string schema_name;
 
-  class Generator : public TablesTool::Generator 
-  {
-    void fill()
-    {
-      /* TABLE_NAME */
-      push(table_name());
-    }
-
-    bool checkSchema();
+    void fill();
+    bool next();
+    bool nextCore();
 
   public:
-    Generator(drizzled::Field **arg) :
-      TablesTool::Generator(arg)
-    { }
+    Generator(drizzled::Field **arg);
+
+    bool populate();
   };
 
   Generator *generator(drizzled::Field **arg)

@@ -148,7 +148,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
-  DRIZZLE_FILESORT_START(table->s->db.str, table->s->table_name.str);
+  DRIZZLE_FILESORT_START(table->s->getSchemaName(), table->s->getTableName());
 
   /*
    Release InnoDB's adaptive hash index latch (if holding) before

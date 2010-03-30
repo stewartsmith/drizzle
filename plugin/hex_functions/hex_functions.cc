@@ -165,22 +165,13 @@ String *UnHexFunction::val_str(String *str)
 plugin::Create_function<HexFunction> *hex_function= NULL;
 plugin::Create_function<UnHexFunction> *unhex_function= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   hex_function= new plugin::Create_function<HexFunction>("hex");
   unhex_function= new plugin::Create_function<UnHexFunction>("unhex");
-  registry.add(hex_function);
-  registry.add(unhex_function);
+  context.add(hex_function);
+  context.add(unhex_function);
   return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-   registry.remove(hex_function);
-   registry.remove(unhex_function);
-   delete hex_function;
-   delete unhex_function;
-   return 0;
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -192,7 +183,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Convert a string to HEX() or from UNHEX()",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }
