@@ -285,6 +285,7 @@ ArchiveShare::~ArchiveShare()
   */
   if (archive_write_open == true)
     (void)azclose(&archive_write);
+  pthread_mutex_destroy(&archive_mutex);
 }
 
 bool ArchiveShare::prime(uint64_t *auto_increment)
@@ -1319,6 +1320,23 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   free((char*) r->buffer);
   free((char*) r);
   return;
+}
+
+int ArchiveEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+{
+  int error= 0;
+
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
+  }
+
+  return error;
 }
 
 bool ArchiveEngine::doDoesTableExist(Session&,

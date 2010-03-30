@@ -28,7 +28,7 @@ public:
   CharacterSetsTool();
 
   CharacterSetsTool(const char *table_arg) :
-    drizzled::plugin::TableFunction("data_dictionary", table_arg)
+    drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
   { }
 
   ~CharacterSetsTool() {}

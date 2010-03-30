@@ -156,7 +156,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     memset(share, 0, sizeof(*share));
     share->set_table_cache_key(key_buff, old_share->table_cache_key.str,
                                old_share->table_cache_key.length);
-    share->tmp_table= INTERNAL_TMP_TABLE;       // for intern_close_table()
+    share->tmp_table= message::Table::INTERNAL;       // for intern_close_table()
   }
 
   table->cursor->close();
@@ -491,7 +491,7 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->s->tmp_table == STANDARD_TABLE) &&
+    if ((table->table == 0 || table->table->s->tmp_table == message::Table::STANDARD) &&
         strcmp(table->db, db_name) == 0 &&
         strcmp(table->table_name, table_name) == 0)
       break;
@@ -555,7 +555,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   if (table->table)
   {
     /* temporary table is always unique */
-    if (table->table && table->table->s->tmp_table != STANDARD_TABLE)
+    if (table->table && table->table->s->tmp_table != message::Table::STANDARD)
       return 0;
     table= table->find_underlying_table(table->table);
     /*
@@ -586,8 +586,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
-void Session::doGetTableNames(CachedDirectory &,
-                              const std::string& db_name,
+void Session::doGetTableNames(const std::string& db_name,
                               std::set<std::string>& set_of_names)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
@@ -599,11 +598,18 @@ void Session::doGetTableNames(CachedDirectory &,
   }
 }
 
+void Session::doGetTableNames(CachedDirectory &,
+                              const std::string &db_name,
+                              std::set<std::string> &set_of_names)
+{
+  doGetTableNames(db_name, set_of_names);
+}
+
 bool Session::doDoesTableExist(TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->tmp_table == TEMP_TABLE)
+    if (table->s->tmp_table == message::Table::TEMPORARY)
     {
       if (not identifier.getSchemaName().compare(table->s->getSchemaName()))
       {
@@ -623,7 +629,7 @@ int Session::doGetTableDefinition(TableIdentifier &identifier,
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->tmp_table == TEMP_TABLE)
+    if (table->s->tmp_table == message::Table::TEMPORARY)
     {
       if (not identifier.getSchemaName().compare(table->s->getSchemaName()))
       {
@@ -999,7 +1005,7 @@ Table *Session::table_cache_insert_placeholder(const char *key, uint32_t key_len
 
   table->s= share;
   share->set_table_cache_key(key_buff, key, key_length);
-  share->tmp_table= INTERNAL_TMP_TABLE;  // for intern_close_table
+  share->tmp_table= message::Table::INTERNAL;  // for intern_close_table
   table->in_use= this;
   table->locked_by_name=1;
 
@@ -1325,7 +1331,7 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, STANDARD_TABLE);
+      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, message::Table::STANDARD);
 
       if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
       {
@@ -1379,7 +1385,7 @@ c2: open t1; -- blocks
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->s->ref_count > 0 || table->s->tmp_table != STANDARD_TABLE);
+  assert(table->s->ref_count > 0 || table->s->tmp_table != message::Table::STANDARD);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -1519,6 +1525,11 @@ end:
   @note Must not use TableShare::table_name/db of the table being closed,
   the strings are used in a loop even after the share may be freed.
 */
+
+void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
+{
+  close_data_files_and_morph_locks(identifier.getSchemaName().c_str(), identifier.getTableName().c_str());
+}
 
 void Session::close_data_files_and_morph_locks(const char *new_db, const char *new_table_name)
 {
@@ -2124,7 +2135,7 @@ restart:
     {
       if (tables->lock_type == TL_WRITE_DEFAULT)
         tables->table->reginfo.lock_type= update_lock_default;
-      else if (tables->table->s->tmp_table == STANDARD_TABLE)
+      else if (tables->table->s->tmp_table == message::Table::STANDARD)
         tables->table->reginfo.lock_type= tables->lock_type;
     }
   }
@@ -2322,7 +2333,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  share->tmp_table= TEMP_TABLE;
+  share->tmp_table= message::Table::TEMPORARY;
 
   if (link_in_list)
   {
