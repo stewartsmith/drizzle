@@ -20,7 +20,13 @@
 #ifndef DRIZZLED_PLUGIN_MANIFEST_H
 #define DRIZZLED_PLUGIN_MANIFEST_H
 
-#include <drizzled/plugin/registry.h>
+/**
+ * @file Defines a Plugin Manifest
+ *
+ * A plugin::Manifest is the struct contained in every Plugin Library.
+ */
+
+#include "drizzled/plugin/context.h"
 
 namespace drizzled
 {
@@ -41,7 +47,7 @@ enum plugin_license_type {
 namespace plugin
 {
 
-typedef int (*initialize_func_t)(Registry &);
+typedef int (*initialize_func_t)(Context &);
 
 /**
  * Plugin Manfiest
@@ -60,7 +66,6 @@ struct Manifest
   const char *descr;         /* general descriptive text (for SHOW PLUGINS ) */
   plugin_license_type license; /* plugin license (PLUGIN_LICENSE_XXX)          */
   initialize_func_t init;     /* function to invoke when plugin is loaded     */
-  initialize_func_t deinit;   /* function to invoke when plugin is unloaded   */
   drizzle_sys_var **system_vars;
   void *reserved1;           /* reserved for dependency checking             */
 };
