@@ -1,3 +1,4 @@
+drop table if exists t1;
 One column less than MAX_FIELDS
 CREATE TABLE t1 (
 f1 int,

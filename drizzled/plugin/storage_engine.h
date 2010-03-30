@@ -83,6 +83,7 @@ enum engine_flag_bits {
   HTON_BIT_HAS_CHECKSUM,
   HTON_BIT_SKIP_STORE_LOCK,
   HTON_BIT_SCHEMA_DICTIONARY,
+  HTON_BIT_FOREIGN_KEYS,
   HTON_BIT_SIZE
 };
 
@@ -115,6 +116,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_N
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
 static const std::bitset<HTON_BIT_SIZE> HTON_SKIP_STORE_LOCK(1 << HTON_BIT_SKIP_STORE_LOCK);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT_SCHEMA_DICTIONARY);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_FOREIGN_KEYS(1 << HTON_BIT_FOREIGN_KEYS);
 
 
 class Table;
@@ -285,17 +287,12 @@ protected:
                             TableIdentifier &identifier,
                             message::Table& proto)= 0;
 
-  virtual int doRenameTable(Session* session,
-                            const char *from, const char *to);
+  virtual int doRenameTable(Session &session,
+                            TableIdentifier &from, TableIdentifier &to)= 0;
 
 public:
 
-  int renameTable(Session *session, const char *from, const char *to) 
-  {
-    setTransactionReadWrite(*session);
-
-    return doRenameTable(session, from, to);
-  }
+  int renameTable(Session &session, TableIdentifier &from, TableIdentifier &to);
 
   // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
@@ -319,13 +316,16 @@ public:
 
   virtual bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 
-  static plugin::StorageEngine *findByName(std::string find_str);
-  static plugin::StorageEngine *findByName(Session& session,
-                                           std::string find_str);
+  static plugin::StorageEngine *findByName(const std::string &find_str);
+  static plugin::StorageEngine *findByName(Session& session, const std::string &find_str);
+
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int dropTable(Session& session,
+                       TableIdentifier &identifier);
+  static int dropTable(Session& session,
+                       StorageEngine &engine,
                        TableIdentifier &identifier);
   static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
 
@@ -336,8 +336,10 @@ public:
 
   // @note All schema methods defined here
   static void getSchemaNames(SchemaNameList &set_of_names);
+  static bool getSchemaDefinition(TableIdentifier &identifier, message::Schema &proto);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
   static bool doesSchemaExist(const std::string &schema_name);
+  static bool doesSchemaExist(TableIdentifier &identifier);
   static const CHARSET_INFO *getSchemaCollation(const std::string &schema_name);
   static bool createSchema(const drizzled::message::Schema &schema_message);
   static bool dropSchema(const std::string &schema_name);
@@ -400,6 +402,7 @@ public:
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
+  static bool readTableFile(const std::string &path, message::Table &table_message);
 
 public:
   /* 
