@@ -1351,6 +1351,7 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
+  void close_data_files_and_morph_locks(TableIdentifier &identifier);
   void close_data_files_and_morph_locks(const char *db, const char *table_name);
 
 private:
@@ -1417,21 +1418,26 @@ public:
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
-  typedef std::map <std::string, message::Table> TableMessageCache;
+  typedef drizzled::hash_map<std::string, message::Table> TableMessageCache;
   TableMessageCache table_message_cache;
 
   bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);
   bool removeTableMessage(TableIdentifier &identifier);
   bool getTableMessage(TableIdentifier &identifier, message::Table &table_message);
   bool doesTableMessageExist(TableIdentifier &identifier);
+  bool renameTableMessage(TableIdentifier &from, TableIdentifier &to);
 
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
   Table *find_temporary_table(TableIdentifier &identifier);
+
   void doGetTableNames(CachedDirectory &directory,
                        const std::string& db_name,
                        std::set<std::string>& set_of_names);
+  void doGetTableNames(const std::string& db_name,
+                       std::set<std::string>& set_of_names);
+
   int doGetTableDefinition(drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
   bool doDoesTableExist(TableIdentifier &identifier);
@@ -1441,11 +1447,12 @@ public:
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
 private:
-  void close_temporary(Table *table);
+  void nukeTable(Table *table);
 public:
 
+  void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);

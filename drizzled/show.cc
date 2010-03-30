@@ -404,12 +404,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
     if (field->has_charset())
     {
-      if (field->charset() != share->table_charset)
-      {
-        packet->append(STRING_WITH_LEN(" CHARACTER SET "));
-        packet->append(field->charset()->csname);
-      }
-
       /*
         For string types dump collation name only if
         collation is not primary for the given charset

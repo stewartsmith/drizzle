@@ -814,17 +814,10 @@ void ClientDrizzleProtocol::writeEOFPacket(uint32_t server_status,
 
 static ListenDrizzleProtocol *listen_obj= NULL;
 
-static int init(plugin::Registry &registry)
+static int init(plugin::Context &context)
 {
   listen_obj= new ListenDrizzleProtocol("drizzle_protocol", false);
-  registry.add(listen_obj); 
-  return 0;
-}
-
-static int deinit(plugin::Registry &registry)
-{
-  registry.remove(listen_obj);
-  delete listen_obj;
+  context.add(listen_obj); 
   return 0;
 }
 
@@ -862,4 +855,4 @@ static drizzle_sys_var* sys_variables[]= {
 
 } /* namespace drizzle_protocol */
 
-DRIZZLE_PLUGIN(drizzle_protocol::init, drizzle_protocol::deinit, drizzle_protocol::sys_variables);
+DRIZZLE_PLUGIN(drizzle_protocol::init, drizzle_protocol::sys_variables);

@@ -155,6 +155,22 @@ private:
   bool open(const std::string &in_path, std::set<std::string> &allowable_exts);
   bool open(const std::string &in_path, std::set<std::string> &allowed_exts, enum CachedDirectory::FILTER filter);
 
+  friend std::ostream& operator<<(std::ostream& output, CachedDirectory &directory)
+  {
+    output << "CachedDirectory:(Path: " << directory.getPath() << ")\n";
+
+    CachedDirectory::Entries files= directory.getEntries();
+
+    for (CachedDirectory::Entries::iterator fileIter= files.begin();
+         fileIter != files.end(); fileIter++)
+    {
+      CachedDirectory::Entry *entry= *fileIter;
+      output << "\t(" << entry->filename << ")\n";
+    }
+
+    return output;  // for multiple << operators.
+  }
+
 };
 
 } /* namespace drizzled */

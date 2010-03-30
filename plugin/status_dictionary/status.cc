@@ -154,7 +154,7 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_LONG:
-    oss << *(int64_t*) value;
+    oss << *(long*) value;
     return_value= oss.str();
     break;
   case SHOW_LONGLONG_STATUS:
