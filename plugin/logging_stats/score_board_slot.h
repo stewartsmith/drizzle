@@ -81,7 +81,8 @@ public:
 
   void setUser(std::string in_user)
   {
-    user= in_user;
+    user.assign(in_user);
+    //user= in_user;
   }
 
   const std::string& getUser()
@@ -91,7 +92,8 @@ public:
 
   void setIp(std::string in_ip)
   {
-    ip= in_ip;
+    ip.assign(in_ip);
+    //ip= in_ip;
   }
 
   const std::string& getIp()
