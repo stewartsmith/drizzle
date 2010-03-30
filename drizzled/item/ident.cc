@@ -82,21 +82,22 @@ bool Item_ident::remove_dependence_processor(unsigned char * arg)
 const char *Item_ident::full_name() const
 {
   char *tmp;
+	size_t tmp_len;
   if (!table_name || !field_name)
     return field_name ? field_name : name ? name : "tmp_field";
   if (db_name && db_name[0])
   {
-    tmp=(char*) memory::sql_alloc((uint32_t) strlen(db_name)+(uint32_t) strlen(table_name)+
-                          (uint32_t) strlen(field_name)+3);
-    sprintf(tmp,"%s.%s.%s",db_name,table_name,field_name);
+		tmp_len=strlen(db_name)+strlen(table_name)+strlen(field_name)+3;
+    tmp=(char*) memory::sql_alloc(tmp_len);
+    snprintf(tmp, tmp_len, "%s.%s.%s",db_name,table_name,field_name);
   }
   else
   {
     if (table_name[0])
     {
-      tmp= (char*) memory::sql_alloc((uint32_t) strlen(table_name) +
-                             (uint32_t) strlen(field_name) + 2);
-      sprintf(tmp, "%s.%s", table_name, field_name);
+			tmp_len=strlen(table_name)+strlen(field_name)+2;
+      tmp= (char*) memory::sql_alloc(tmp_len);
+      snprintf(tmp, tmp_len, "%s.%s", table_name, field_name);
     }
     else
       tmp= (char*) field_name;
