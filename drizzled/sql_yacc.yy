@@ -4336,7 +4336,7 @@ select_var_ident:
           {
             LEX *lex=Lex;
             if (lex->result)
-              ((select_dumpvar *)lex->result)->var_list.push_back( new my_var($2,0,0,(enum_field_types)0));
+              ((select_dumpvar *)lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
             else
               /*
                 The parser won't create select_result instance only

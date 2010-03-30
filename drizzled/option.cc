@@ -20,7 +20,7 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/error.h"
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,27 +32,27 @@ using namespace std;
 namespace drizzled
 {
 
-  typedef void (*init_func_p)(const struct my_option *option, char **variable,
+  typedef void (*init_func_p)(const struct option *option, char **variable,
       int64_t value);
 
   void default_reporter(enum loglevel level, const char *format, ...);
   my_error_reporter my_getopt_error_reporter= &default_reporter;
 
   static int findopt(char *optpat, uint32_t length,
-      const struct my_option **opt_res,
+      const struct option **opt_res,
       char **ffname);
-  static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err);
-  static uint64_t getopt_ull(char *arg, const struct my_option *optp,
+  static int64_t getopt_ll(char *arg, const struct option *optp, int *err);
+  static uint64_t getopt_ull(char *arg, const struct option *optp,
       int *err);
-  static size_t getopt_size(char *arg, const struct my_option *optp, int *err);
-  static double getopt_double(char *arg, const struct my_option *optp, int *err);
-  static void init_variables(const struct my_option *options,
+  static size_t getopt_size(char *arg, const struct option *optp, int *err);
+  static double getopt_double(char *arg, const struct option *optp, int *err);
+  static void init_variables(const struct option *options,
       init_func_p init_one_value);
-  static void init_one_value(const struct my_option *option, char **variable,
+  static void init_one_value(const struct option *option, char **variable,
       int64_t value);
-  static void fini_one_value(const struct my_option *option, char **variable,
+  static void fini_one_value(const struct option *option, char **variable,
       int64_t value);
-  static int setval(const struct my_option *opts, char* *value, char *argument,
+  static int setval(const struct option *opts, char* *value, char *argument,
       bool set_maximum_value);
   static char *check_struct_option(char *cur_arg, char *key_name);
 
@@ -95,7 +95,7 @@ function: handle_options
 
 Sort options; put options first, until special end of options (--), or
 until end of argv. Parse options; check that the given option matches with
-one of the options in struct 'my_option', return error in case of ambiguous
+one of the options in struct 'option', return error in case of ambiguous
 or unknown option. Check that option was given an argument if it requires
 one. Call function 'get_one_option()' once for each option.
    */
@@ -103,7 +103,7 @@ one. Call function 'get_one_option()' once for each option.
   static getopt_get_addr_func getopt_get_addr;
 
   int handle_options(int *argc, char ***argv,
-      const struct my_option *longopts,
+      const struct option *longopts,
       my_get_one_option get_one_option)
   {
     uint32_t opt_found, argvpos= 0, length;
@@ -111,7 +111,7 @@ one. Call function 'get_one_option()' once for each option.
          option_is_loose;
     char **pos, **pos_end, *optend, *prev_found=NULL,
          *opt_str, key_name[FN_REFLEN];
-    const struct my_option *optp;
+    const struct option *optp;
     char* *value;
     int error, i;
 
@@ -590,7 +590,7 @@ Arguments: opts, argument
 Will set the option value to given value
    */
 
-  static int setval(const struct my_option *opts, char **value, char *argument,
+  static int setval(const struct option *opts, char **value, char *argument,
       bool set_maximum_value)
   {
     int err= 0;
@@ -672,7 +672,7 @@ Will set the option value to given value
      ffname	Place for pointer to first found name
 
      IMPLEMENTATION
-     Go through all options in the my_option struct. Return number
+     Go through all options in the option struct. Return number
      of options found that match the pattern and in the argument
      list the option found, if any. In case of ambiguous option, store
      the name in ffname argument
@@ -684,11 +684,11 @@ ffname points to first matching option
    */
 
   static int findopt(char *optpat, uint32_t length,
-      const struct my_option **opt_res,
+      const struct option **opt_res,
       char **ffname)
   {
     uint32_t count;
-    struct my_option *opt= (struct my_option *) *opt_res;
+    struct option *opt= (struct option *) *opt_res;
 
     for (count= 0; opt->name; opt++)
     {
@@ -780,12 +780,12 @@ function: getopt_ll
 Evaluates and returns the value that user gave as an argument
 to a variable. Recognizes (case insensitive) K as KILO, M as MEGA
 and G as GIGA bytes. Some values must be in certain blocks, as
-defined in the given my_option struct, this function will check
+defined in the given option struct, this function will check
 that those values are honored.
 In case of an error, set error value in *err.
    */
 
-  static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err)
+  static int64_t getopt_ll(char *arg, const struct option *optp, int *err)
   {
     int64_t num=eval_num_suffix(arg, err, (char*) optp->name);
     return getopt_ll_limit_value(num, optp, NULL);
@@ -798,7 +798,7 @@ Applies min/max/block_size to a numeric value of an option.
 Returns "fixed" value.
    */
 
-  int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
+  int64_t getopt_ll_limit_value(int64_t num, const struct option *optp,
       bool *fix)
   {
     int64_t old= num;
@@ -858,21 +858,21 @@ This is the same as getopt_ll, but is meant for uint64_t
 values.
    */
 
-  static uint64_t getopt_ull(char *arg, const struct my_option *optp, int *err)
+  static uint64_t getopt_ull(char *arg, const struct option *optp, int *err)
   {
     uint64_t num= eval_num_suffix(arg, err, (char*) optp->name);
     return getopt_ull_limit_value(num, optp, NULL);
   }
 
 
-  static size_t getopt_size(char *arg, const struct my_option *optp, int *err)
+  static size_t getopt_size(char *arg, const struct option *optp, int *err)
   {
     return (size_t)getopt_ull(arg, optp, err);
   }
 
 
 
-  uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
+  uint64_t getopt_ull_limit_value(uint64_t num, const struct option *optp,
       bool *fix)
   {
     bool adjusted= false;
@@ -950,7 +950,7 @@ values.
      EXIT_ARGUMENT_INVALID.  Otherwise err is not touched
    */
 
-  static double getopt_double(char *arg, const struct my_option *optp, int *err)
+  static double getopt_double(char *arg, const struct option *optp, int *err)
   {
     double num;
     int error;
@@ -978,7 +978,7 @@ values.
      value		Pointer to variable
    */
 
-  static void init_one_value(const struct my_option *option, char** variable,
+  static void init_one_value(const struct option *option, char** variable,
       int64_t value)
   {
     switch ((option->var_type & GET_TYPE_MASK)) {
@@ -1056,7 +1056,7 @@ so that the value has the same size as a pointer.
      value		Pointer to variable
    */
 
-  static void fini_one_value(const struct my_option *option, char **variable,
+  static void fini_one_value(const struct option *option, char **variable,
       int64_t)
   {
     switch ((option->var_type & GET_TYPE_MASK)) {
@@ -1071,7 +1071,7 @@ so that the value has the same size as a pointer.
   }
 
 
-  void my_cleanup_options(const struct my_option *options)
+  void my_cleanup_options(const struct option *options)
   {
     init_variables(options, fini_one_value);
   }
@@ -1090,7 +1090,7 @@ so that the value has the same size as a pointer.
      for a value and initialize.
    */
 
-  static void init_variables(const struct my_option *options,
+  static void init_variables(const struct option *options,
       init_func_p init_one_value)
   {
     for (; options->name; options++)
@@ -1119,11 +1119,11 @@ function: my_print_options
 Print help for all options and variables.
    */
 
-  void my_print_help(const struct my_option *options)
+  void my_print_help(const struct option *options)
   {
     uint32_t col, name_space= 22, comment_space= 57;
     const char *line_end;
-    const struct my_option *optp;
+    const struct option *optp;
 
     for (optp= options; optp->id; optp++)
     {
@@ -1204,12 +1204,12 @@ function: my_print_options
 Print variables.
    */
 
-  void my_print_variables(const struct my_option *options)
+  void my_print_variables(const struct option *options)
   {
     uint32_t name_space= 34, length, nr;
     uint64_t bit, llvalue;
     char buff[255];
-    const struct my_option *optp;
+    const struct option *optp;
 
     printf(_("\nVariables (--variable-name=value)\n"
           "and boolean options {false|true}  Value (after reading options)\n"

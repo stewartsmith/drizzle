@@ -64,7 +64,7 @@
 /* Added this for string translation. */
 #include "drizzled/gettext.h"
 #include "drizzled/hash.h"
-#include "drizzled/my_time.h"
+#include "drizzled/drizzle_time.h"
 #include "drizzled/charset.h"
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
@@ -77,7 +77,7 @@ using namespace drizzled;
 extern "C"
 unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
 
-int get_one_option(int optid, const struct my_option *, char *argument);
+int get_one_option(int optid, const struct option *, char *argument);
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -4578,7 +4578,7 @@ static int read_command(struct st_command** command_ptr)
 }
 
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"help", '?', "Display this help and exit.", 0, 0, 0, GET_NO_ARG, NO_ARG,
    0, 0, 0, 0, 0, 0},
@@ -4666,7 +4666,7 @@ static void usage(void)
   my_print_variables(my_long_options);
 }
 
-int get_one_option(int optid, const struct my_option *, char *argument)
+int get_one_option(int optid, const struct option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
