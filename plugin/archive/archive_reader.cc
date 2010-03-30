@@ -34,7 +34,7 @@
 
 using namespace drizzled;
 
-bool get_one_option(int optid, const struct my_option *opt, char *argument);
+int get_one_option(int optid, const struct my_option *opt, char *argument);
 
 static void get_options(int *argc,char * * *argv);
 static void print_version(void);
@@ -258,7 +258,7 @@ end:
   return 0;
 }
 
-bool get_one_option(int optid, const struct my_option *opt, char *argument)
+int get_one_option(int optid, const struct my_option *opt, char *argument)
 {
   (void)opt;
   switch (optid) {
