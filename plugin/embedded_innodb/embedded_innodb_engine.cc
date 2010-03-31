@@ -90,9 +90,6 @@ public:
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table& proto);
 
-  int doRenameTable(Session* session,
-                    const char *from, const char *to);
-
   int doDropTable(Session&, TableIdentifier &identifier);
 
   int doRenameTable(drizzled::Session&,
@@ -758,7 +755,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session &session,
   return 0;
 }
 
-static ib_err_t rename_table_message(ib_trx_t transaction, const char* from, const char* to)
+static ib_err_t rename_table_message(ib_trx_t transaction, TableIdentifier &from_identifier, TableIdentifier &to_identifier)
 {
   ib_crsr_t cursor;
   ib_tpl_t search_tuple;
@@ -767,6 +764,21 @@ static ib_err_t rename_table_message(ib_trx_t transaction, const char* from, con
   int res;
   ib_err_t err;
   ib_err_t rollback_err;
+  const char *message;
+  ib_ulint_t message_len;
+  drizzled::message::Table table_message;
+  string from_innodb_table_name;
+  string to_innodb_table_name;
+  const char *from;
+  const char *to;
+  string serialized_message;
+  ib_col_meta_t col_meta;
+
+  TableIdentifier_to_innodb_name(from_identifier, &from_innodb_table_name);
+  TableIdentifier_to_innodb_name(to_identifier, &to_innodb_table_name);
+
+  from= from_innodb_table_name.c_str();
+  to= to_innodb_table_name.c_str();
 
   err= ib_cursor_open_table(INNODB_TABLE_DEFINITIONS_TABLE, transaction, &cursor);
   if (err != DB_SUCCESS)
@@ -793,12 +805,27 @@ static ib_err_t rename_table_message(ib_trx_t transaction, const char* from, con
   if (err == DB_RECORD_NOT_FOUND || res != 0)
     goto rollback;
 
+  message= (const char*)ib_col_get_value(read_tuple, 1);
+  message_len= ib_col_get_meta(read_tuple, 1, &col_meta);
+
+  if (table_message.ParseFromArray(message, message_len) == false)
+    goto rollback;
+
+  table_message.set_name(to_identifier.getTableName());
+  table_message.set_schema(to_identifier.getSchemaName());
+
   update_tuple= ib_clust_read_tuple_create(cursor);
 
   err= ib_tuple_copy(update_tuple, read_tuple);
   assert(err == DB_SUCCESS);
 
   err= ib_col_set_value(update_tuple, 0, to, strlen(to));
+
+  table_message.SerializeToString(&serialized_message);
+
+  err= ib_col_set_value(update_tuple, 1, serialized_message.c_str(),
+                        serialized_message.length());
+
   err= ib_cursor_update_row(cursor, read_tuple, update_tuple);
 
 
@@ -812,17 +839,23 @@ rollback:
   return err;
 }
 
-int EmbeddedInnoDBEngine::doRenameTable(Session* session,
-                                        const char *from, const char *to)
+int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session &session,
+                                        drizzled::TableIdentifier &from,
+                                        drizzled::TableIdentifier &to)
 {
   ib_trx_t innodb_schema_transaction;
   ib_err_t err;
+  string from_innodb_table_name;
+  string to_innodb_table_name;
+
+  TableIdentifier_to_innodb_name(from, &from_innodb_table_name);
+  TableIdentifier_to_innodb_name(to, &to_innodb_table_name);
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
   err= ib_schema_lock_exclusive(innodb_schema_transaction);
   if (err != DB_SUCCESS)
   {
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
                         _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
                         err, ib_strerror(err));
@@ -831,12 +864,13 @@ int EmbeddedInnoDBEngine::doRenameTable(Session* session,
   }
 
   err= ib_table_rename(innodb_schema_transaction,
-                       from+2,
-                       to+2);
+                       from_innodb_table_name.c_str(),
+                       to_innodb_table_name.c_str());
   if (err != DB_SUCCESS)
     goto rollback;
 
-  err= rename_table_message(innodb_schema_transaction, from+2, to+2);
+  err= rename_table_message(innodb_schema_transaction, from, to);
+
   if (err != DB_SUCCESS)
     goto rollback;
 
@@ -1038,11 +1072,6 @@ rollback_close_err:
   }
 
   return -1;
-}
-
-int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
-{
-  return ENOENT;
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
