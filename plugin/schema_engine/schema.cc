@@ -81,7 +81,7 @@ int Schema::doGetTableDefinition(Session &,
   if (readTableFile(proto_path, table_proto))
     return EEXIST;
 
-  return -1;
+  return ENOENT;
 }
 
 void Schema::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
