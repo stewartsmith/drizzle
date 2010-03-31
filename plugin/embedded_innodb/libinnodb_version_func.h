@@ -19,7 +19,6 @@
 #ifndef PLUGIN_EMBEDDED_INNODB_LIBINNODB_VERSION_FUNC_H
 #define PLUGIN_EMBEDDED_INNODB_LIBINNODB_VERSION_FUNC_H
 
-int libinnodb_version_func_initialize(drizzled::plugin::Registry &registry);
-int libinnodb_version_func_finalize(drizzled::plugin::Registry &registry);
+int libinnodb_version_func_initialize(drizzled::plugin::Context &context);
 
 #endif /* PLUGIN_EMBEDDED_INNODB_LIBINNODB_VERSION_FUNC_H */
