@@ -37,11 +37,13 @@
  * offset into the log file for writing the next log entry.  The log
  * entries are written, one after the other, in the following way:
  *
+ * <pre>
  * --------------------------------------
  * |<- 4 bytes ->|<- # Bytes of Entry ->|
  * --------------------------------------
  * |  Entry Type |  Serialized Entry    |
  * --------------------------------------
+ * </pre>
  *
  * The Entry Type is an integer defined as an enumeration in the 
  * /drizzled/message/transaction.proto file called TransactionLogEntry::Type.
@@ -51,12 +53,14 @@
  *
  * Committed and Prepared Transaction Log Entries
  * -----------------------------------------------
- *
+ * 
+ * <pre>
  * ------------------------------------------------------------------
  * |<- 4 bytes ->|<- # Bytes of Transaction Message ->|<- 4 bytes ->|
  * ------------------------------------------------------------------
  * |   Length    |   Serialized Transaction Message   |   Checksum  |
  * ------------------------------------------------------------------
+ * </pre>
  *
  * @todo
  *
