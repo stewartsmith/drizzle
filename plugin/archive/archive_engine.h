@@ -91,7 +91,7 @@ public:
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory, std::string& , std::set<std::string>& set_of_names);
+  void doGetTableNames(drizzled::CachedDirectory &directory, drizzled::SchemaIdentifier&, std::set<std::string>& set_of_names);
 
   int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier);
 

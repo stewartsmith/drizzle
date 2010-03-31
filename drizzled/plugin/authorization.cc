@@ -120,7 +120,7 @@ public:
 } /* namespace */
 
 bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
-                                         const string &schema,
+                                         SchemaIdentifier &schema_identifier,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
@@ -131,7 +131,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
   vector<plugin::Authorization *>::const_iterator iter=
     find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
-            RestrictDbFunctor(user_ctx, schema));
+            RestrictDbFunctor(user_ctx, schema_identifier.getPath()));
 
   /*
    * If iter is == end() here, that means that all of the plugins returned
@@ -145,7 +145,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
       my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
                user_ctx.getUser().c_str(),
                user_ctx.getIp().c_str(),
-               schema.c_str());
+               schema_identifier.getSQLPath().c_str());
     }
     return false;
   }
@@ -220,10 +220,9 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 }
 
 void plugin::Authorization::pruneSchemaNames(const SecurityContext &user_ctx,
-                                             set<string> &set_of_names)
+                                             SchemaIdentifierList &set_of_schemas)
 {
-
-  set<string> pruned_set_of_names;
+  SchemaIdentifierList pruned_set_of_names;
 
   /* If we never loaded any authorization plugins, just return true */
   if (authorization_plugins.empty())
@@ -233,16 +232,14 @@ void plugin::Authorization::pruneSchemaNames(const SecurityContext &user_ctx,
    * @TODO: It would be stellar if we could find a way to do this with a
    * functor and an STL algoritm
    */
-  for(set<string>::const_iterator iter= set_of_names.begin();
-      iter != set_of_names.end();
-      ++iter)
+  for (SchemaIdentifierList::iterator iter; iter != set_of_schemas.end(); iter++)
   {
-    if (plugin::Authorization::isAuthorized(user_ctx, *iter, false))
+    if (not plugin::Authorization::isAuthorized(user_ctx, *iter, false))
     {
-      pruned_set_of_names.insert(*iter);
+      iter= pruned_set_of_names.erase(iter);
     }
   }
-  set_of_names.swap(pruned_set_of_names);
+  set_of_schemas.swap(pruned_set_of_names);
 }
 
 } /* namespace drizzled */

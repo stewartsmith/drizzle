@@ -79,7 +79,8 @@ public:
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       string&, set<string>& set_of_names)
+		       SchemaIdentifier &,
+		       set<string>& set_of_names)
   {
     (void)directory;
     set_of_names.insert("t1");

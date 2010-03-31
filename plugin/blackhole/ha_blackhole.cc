@@ -93,7 +93,8 @@ public:
                            drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       string&, set<string>& set_of_names)
+		       SchemaIdentifier &,
+                       set<string>& set_of_names)
   {
     drizzled::CachedDirectory::Entries entries= directory.getEntries();
 

@@ -60,7 +60,8 @@ bool SchemasTool::Generator::nextSchemaCore()
   else
   {
     Session *session= current_session;
-    plugin::StorageEngine::getSchemaNames(*session, schema_names);
+    plugin::StorageEngine::getSchemaIdentifiers(*session, schema_names);
+    schema_names.sort();
     schema_iterator= schema_names.begin();
     is_schema_primed= true;
   }
@@ -69,11 +70,11 @@ bool SchemasTool::Generator::nextSchemaCore()
     return false;
 
   schema.Clear();
-  is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(*schema_iterator, schema);
+  SchemaIdentifier schema_identifier(*schema_iterator);
+  is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
 
   if (not is_schema_parsed)
   {
-    cerr << "Failure to parse " << *schema_iterator << "\n";
     return false;
   }
 

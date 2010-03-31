@@ -38,8 +38,10 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     drizzled::message::Schema schema;
-    std::set<std::string> schema_names;
-    std::set<std::string>::const_iterator schema_iterator;
+
+    drizzled::SchemaIdentifierList schema_names;
+    drizzled::SchemaIdentifierList::const_iterator schema_iterator;
+
     bool is_schema_primed;
     bool is_schema_parsed;
 

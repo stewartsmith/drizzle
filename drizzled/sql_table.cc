@@ -84,8 +84,9 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     let's fetch the database default character set and
     apply it to the table.
   */
+  SchemaIdentifier identifier(db);
   if (create_info->default_table_charset == NULL)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(db);
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 }
 
 /*
@@ -1442,7 +1443,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
 
-  set_table_default_charset(create_info, identifier.getDBName().c_str());
+  set_table_default_charset(create_info, identifier.getSchemaName().c_str());
 
   /* Build a Table object to pass down to the engine, and the do the actual create. */
   if (not mysql_prepare_create_table(session, create_info, table_proto, alter_info,
@@ -1636,6 +1637,12 @@ mysql_rename_table(plugin::StorageEngine *base,
   int error= 0;
 
   assert(base);
+
+  if (not plugin::StorageEngine::doesSchemaExist(to))
+  {
+    my_error(ER_NO_DB_ERROR, MYF(0), to.getSchemaName().c_str());
+    return true;
+  }
 
   error= base->renameTable(*session, from, to);
 

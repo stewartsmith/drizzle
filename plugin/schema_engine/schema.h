@@ -36,8 +36,8 @@ static const char *schema_exts[] = {
 
 class Schema : public drizzled::plugin::StorageEngine
 {
-  bool writeSchemaFile(const char *path, const drizzled::message::Schema &db);
-  bool readSchemaFile(const std::string &path, drizzled::message::Schema &schema);
+  bool writeSchemaFile(drizzled::SchemaIdentifier &schema_identifier, const drizzled::message::Schema &db);
+  bool readSchemaFile(const std::string &schema_file_name, drizzled::message::Schema &schema);
 
   void prime();
 
@@ -53,7 +53,7 @@ public:
   ~Schema();
 
 
-  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
+  bool doCanCreateTable(drizzled::TableIdentifier &identifier);
 
   drizzled::Cursor *create(drizzled::TableShare &,
                            drizzled::memory::Root *)
@@ -61,14 +61,14 @@ public:
     return NULL;
   }
 
-  void doGetSchemaNames(std::set<std::string>& set_of_names);
-  bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto);
+  void doGetSchemaIdentifiers(drizzled::SchemaIdentifierList &set_of_names);
+  bool doGetSchemaDefinition(drizzled::SchemaIdentifier&, drizzled::message::Schema &proto);
 
   bool doCreateSchema(const drizzled::message::Schema &schema_message);
 
   bool doAlterSchema(const drizzled::message::Schema &schema_message);
 
-  bool doDropSchema(const std::string &schema_name);
+  bool doDropSchema(drizzled::SchemaIdentifier&);
 
   // Below are table methods that we don't implement (and don't need)
 
@@ -81,7 +81,7 @@ public:
 
 
   void doGetTableNames(drizzled::CachedDirectory&,
-                       std::string&,
+                       drizzled::SchemaIdentifier&,
                        std::set<std::string>&)
   {
   }
