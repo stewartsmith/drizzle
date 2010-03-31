@@ -4765,7 +4765,7 @@ show_param:
              }
              else
              {
-               if (prepare_new_schema_table(session, lex, "SCHEMA_NAMES"))
+               if (prepare_new_schema_table(session, lex, "SHOW_SCHEMAS"))
                  DRIZZLE_YYABORT;
              }
 
