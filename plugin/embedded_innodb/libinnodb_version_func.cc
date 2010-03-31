@@ -79,16 +79,9 @@ String *LibinnodbVersionFunction::val_str(String *str)
 
 plugin::Create_function<LibinnodbVersionFunction> *libinnodb_version_func= NULL;
 
-int libinnodb_version_func_initialize(plugin::Registry &registry)
+int libinnodb_version_func_initialize(plugin::Context &context)
 {
   libinnodb_version_func= new plugin::Create_function<LibinnodbVersionFunction>("libinnodb_version");
-  registry.add(libinnodb_version_func);
-  return 0;
-}
-
-int libinnodb_version_func_finalize(plugin::Registry &registry)
-{
-  registry.remove(libinnodb_version_func);
-  delete libinnodb_version_func;
+  context.add(libinnodb_version_func);
   return 0;
 }
