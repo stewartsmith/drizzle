@@ -68,6 +68,8 @@ public:
     table_definition_ext= EMBEDDED_INNODB_EXT;
   }
 
+  ~EmbeddedInnoDBEngine();
+
   virtual Cursor *create(TableShare &table,
                          drizzled::memory::Root *mem_root)
   {
@@ -85,6 +87,10 @@ public:
 
   int doDropTable(Session&, TableIdentifier &identifier);
 
+  int doRenameTable(drizzled::Session&,
+                    drizzled::TableIdentifier&,
+                    drizzled::TableIdentifier&);
+
   int doGetTableDefinition(Session& session,
                            TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
@@ -92,7 +98,8 @@ public:
   bool doDoesTableExist(Session&, TableIdentifier &identifier);
 
   void doGetTableNames(drizzled::CachedDirectory &,
-                       string& database_name, set<string>& set_of_names);
+                       string& database_name,
+                       drizzled::plugin::TableNameList &set_of_names);
 
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 64; }
@@ -476,7 +483,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session &session,
 
 void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
                                            string& database_name,
-                                           set<string>& set_of_names)
+                                           drizzled::plugin::TableNameList &set_of_names)
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
@@ -658,6 +665,11 @@ rollback_close_err:
   }
 
   return -1;
+}
+
+int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
+{
+  return ENOENT;
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
@@ -1144,7 +1156,7 @@ static char* innodb_data_file_path= NULL;
 static int64_t innodb_log_file_size;
 static int64_t innodb_log_files_in_group;
 
-static int embedded_innodb_init(drizzled::plugin::Registry &registry)
+static int embedded_innodb_init(drizzled::plugin::Context &context)
 {
   ib_err_t err;
 
@@ -1174,10 +1186,10 @@ static int embedded_innodb_init(drizzled::plugin::Registry &registry)
   create_table_message_table();
 
   embedded_innodb_engine= new EmbeddedInnoDBEngine("InnoDB");
-  registry.add(embedded_innodb_engine);
+  context.add(embedded_innodb_engine);
 
-  libinnodb_version_func_initialize(registry);
-  libinnodb_datadict_dump_func_initialize(registry);
+  libinnodb_version_func_initialize(context);
+  libinnodb_datadict_dump_func_initialize(context);
 
   return 0;
 innodb_error:
@@ -1186,25 +1198,17 @@ innodb_error:
   return -1;
 }
 
-static int embedded_innodb_fini(drizzled::plugin::Registry &registry)
+
+EmbeddedInnoDBEngine::~EmbeddedInnoDBEngine()
 {
-  int err;
-
-  registry.remove(embedded_innodb_engine);
-  delete embedded_innodb_engine;
-
-  libinnodb_version_func_finalize(registry);
-  libinnodb_datadict_dump_func_finalize(registry);
+  ib_err_t err;
 
   err= ib_shutdown(IB_SHUTDOWN_NORMAL);
 
   if (err != DB_SUCCESS)
   {
-    fprintf(stderr,"Error %d shutting down Embedded InnoDB!", err);
-    return err;
+    fprintf(stderr,"Error %d shutting down Embedded InnoDB!\n", err);
   }
-
-  return 0;
 }
 
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
@@ -1244,7 +1248,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Transactional Storage Engine using the Embedded InnoDB Library",
   PLUGIN_LICENSE_GPL,
   embedded_innodb_init,     /* Plugin Init */
-  embedded_innodb_fini,     /* Plugin Deinit */
   innobase_system_variables, /* system variables */
   NULL                /* config options   */
 }
