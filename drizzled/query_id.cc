@@ -27,7 +27,7 @@ namespace drizzled
 
 Query_id::Query_id()
 {
-  the_query_id= 0;
+  the_query_id= 1;
 }
 
 Query_id::~Query_id()
