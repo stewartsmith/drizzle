@@ -28,6 +28,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/data_home.h"
 
+#include "drizzled/table.h"
+
 #include <algorithm>
 #include <sstream>
 #include <cstdio>
@@ -271,6 +273,17 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
     length+= 3;
   }
   return false;
+}
+
+TableIdentifier::TableIdentifier(const drizzled::Table &table) :
+  SchemaIdentifier(table.s->getTableProto()->schema()),
+  type(table.s->getTableProto()->type()),
+  table_name(table.s->getTableProto()->name())
+{
+  if (type == message::Table::TEMPORARY)
+    path= table.s->path.str;
+
+  init();
 }
 
 void TableIdentifier::init()

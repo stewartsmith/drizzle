@@ -49,6 +49,8 @@
 
 namespace drizzled {
 
+class Table;
+
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
 
@@ -67,6 +69,8 @@ private:
   void init();
 
 public:
+  TableIdentifier(const Table &table);
+                   
   TableIdentifier( const SchemaIdentifier &schema,
                    const std::string &table_name_arg,
                    Type tmp_arg= message::Table::STANDARD) :
