@@ -1224,7 +1224,7 @@ int ha_myisam::info(uint32_t flag)
     stats.block_size= myisam_key_cache_block_size;        /* record block size */
 
     /* Update share */
-    if (share->tmp_table == STANDARD_TABLE)
+    if (share->tmp_table == message::Table::STANDARD)
       pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->keys);
     /*
@@ -1278,7 +1278,7 @@ int ha_myisam::info(uint32_t flag)
       memcpy(table->key_info[0].rec_per_key,
 	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
-    if (share->tmp_table == STANDARD_TABLE)
+    if (share->tmp_table == message::Table::STANDARD)
       pthread_mutex_unlock(&share->mutex);
 
    /*
@@ -1398,7 +1398,7 @@ int MyisamEngine::doCreateTable(Session *session,
 
 int MyisamEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
-  session.rename(from, to);
+  session.renameTableMessage(from, to);
 
   return mi_rename(from.getPath().c_str(), to.getPath().c_str());
 }

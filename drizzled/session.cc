@@ -1760,13 +1760,13 @@ void Session::close_temporary_tables()
   Table *table;
   Table *tmp_next;
 
-  if (!temporary_tables)
+  if (not temporary_tables)
     return;
 
   for (table= temporary_tables; table; table= tmp_next)
   {
     tmp_next= table->next;
-    close_temporary(table);
+    nukeTable(table);
   }
   temporary_tables= NULL;
 }
@@ -1796,25 +1796,26 @@ void Session::close_temporary_table(Table *table)
     if (temporary_tables)
       table->next->prev= NULL;
   }
-  close_temporary(table);
+  nukeTable(table);
 }
 
 /*
-  Close and delete a temporary table
+  Close and drop a temporary table
 
   NOTE
   This dosn't unlink table from session->temporary
   If this is needed, use close_temporary_table()
 */
 
-void Session::close_temporary(Table *table)
+void Session::nukeTable(Table *table)
 {
   plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
   table->closefrm(false);
 
-  rm_temporary_table(table_type, table->s->path.str);
+  TableIdentifier identifier(table->s->getSchemaName(), table->s->table_name.str, table->s->path.str);
+  rm_temporary_table(table_type, identifier);
 
   table->s->free_table_share();
 
@@ -2033,10 +2034,11 @@ bool Session::openTables(TableList *tables, uint32_t flags)
 
 bool Session::rm_temporary_table(TableIdentifier &identifier)
 {
-  if (not plugin::StorageEngine::dropTable(*this, identifier))
+  if (plugin::StorageEngine::dropTable(*this, identifier))
   {
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getPath().c_str(), errno);
+                  identifier.getSQLPath().c_str(), errno);
+    dumpTemporaryTableNames("rm_temporary_table()");
 
     return true;
   }
@@ -2044,23 +2046,52 @@ bool Session::rm_temporary_table(TableIdentifier &identifier)
   return false;
 }
 
-bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
+bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier)
 {
-  bool error= false;
-  TableIdentifier dummy(path);
-
   assert(base);
 
-  if (delete_table_proto_file(path))
-    error= true;
-
-  if (base->doDropTable(*this, dummy))
+  if (plugin::StorageEngine::dropTable(*this, *base, identifier))
   {
-    error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  path, errno);
+                  identifier.getSQLPath().c_str(), errno);
+    dumpTemporaryTableNames("rm_temporary_table()");
+
+    return true;
   }
-  return error;
+
+  return false;
+}
+
+/**
+  @note this will be removed, I am looking through Hudson to see if it is finding
+  any tables that are missed during cleanup.
+*/
+void Session::dumpTemporaryTableNames(const char *foo)
+{
+  Table *table;
+
+  if (not temporary_tables)
+    return;
+
+  cerr << "Begin Run: " << foo << "\n";
+  for (table= temporary_tables; table; table= table->next)
+  {
+    bool have_proto= false;
+
+    message::Table *proto= table->s->getTableProto();
+    if (table->s->getTableProto())
+      have_proto= true;
+
+    const char *answer= have_proto ? "true" : "false";
+
+    if (have_proto)
+    {
+      cerr << "\tTable Name " << table->s->getSchemaName() << "." << table->s->table_name.str << " : " << answer << "\n";
+      cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
+    }
+    else
+      cerr << "\tTabl;e Name " << table->s->getSchemaName() << "." << table->s->table_name.str << " : " << answer << "\n";
+  }
 }
 
 bool Session::storeTableMessage(TableIdentifier &identifier, message::Table &table_message)
@@ -2112,13 +2143,21 @@ bool Session::doesTableMessageExist(TableIdentifier &identifier)
   return true;
 }
 
-bool Session::rename(TableIdentifier &from, TableIdentifier &to)
+bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
 {
   TableMessageCache::iterator iter;
 
   table_message_cache[to.getPath()]= table_message_cache[from.getPath()];
 
-  (void)removeTableMessage(from);
+  iter= table_message_cache.find(to.getPath());
+
+  if (iter == table_message_cache.end())
+  {
+    return false;
+  }
+
+  (*iter).second.set_schema(to.getSchemaName());
+  (*iter).second.set_name(to.getTableName());
 
   return true;
 }

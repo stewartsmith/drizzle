@@ -1119,11 +1119,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
     break;
   case Table::Field::ENUM:
     {
-      size_t num_field_values= field.enumerator_values().field_value_size();
+      size_t num_field_values= field.enumeration_values().field_value_size();
       destination.append(" ENUM(", 6);
       for (size_t x= 0; x < num_field_values; ++x)
       {
-        const string &type= field.enumerator_values().field_value(x);
+        const string &type= field.enumeration_values().field_value(x);
 
         if (x != 0)
           destination.push_back(',');

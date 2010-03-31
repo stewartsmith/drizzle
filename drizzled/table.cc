@@ -512,7 +512,7 @@ int parse_table_proto(Session& session,
       break;
     case DRIZZLE_TYPE_ENUM:
       {
-        message::Table::Field::EnumeratorValues field_options= pfield.enumerator_values();
+        message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
         field_pack_length[fieldnr]=
           get_enum_pack_length(field_options.field_value_size());
@@ -614,7 +614,7 @@ int parse_table_proto(Session& session,
     if (pfield.type() != message::Table::Field::ENUM)
       continue;
 
-    message::Table::Field::EnumeratorValues field_options= pfield.enumerator_values();
+    message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
     const CHARSET_INFO *charset= get_charset(field_options.has_collation_id() ?
                                              field_options.collation_id() : 0);
@@ -761,7 +761,7 @@ int parse_table_proto(Session& session,
 
     if (field_type == DRIZZLE_TYPE_ENUM)
     {
-      message::Table::Field::EnumeratorValues field_options= pfield.enumerator_values();
+      message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
       charset= get_charset(field_options.has_collation_id()?
 			   field_options.collation_id() : 0);
@@ -873,7 +873,7 @@ int parse_table_proto(Session& session,
     {
       field_length= 0;
 
-      message::Table::Field::EnumeratorValues fo= pfield.enumerator_values();
+      message::Table::Field::EnumerationValues fo= pfield.enumeration_values();
 
       for (int valnr= 0; valnr < fo.field_value_size(); valnr++)
       {
@@ -1546,7 +1546,7 @@ int Table::closefrm(bool free_share)
   cursor= 0;				/* For easier errorchecking */
   if (free_share)
   {
-    if (s->tmp_table == STANDARD_TABLE)
+    if (s->tmp_table == message::Table::STANDARD)
       TableShare::release(s);
     else
       s->free_table_share();
@@ -3302,7 +3302,7 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       cursor->closeMarkForDelete(s->table_name.str);
 
-    TableIdentifier identifier(s->table_name.str);
+    TableIdentifier identifier(s->getSchemaName(), s->table_name.str, s->table_name.str);
     s->db_type()->doDropTable(*session, identifier);
 
     delete cursor;
@@ -3417,7 +3417,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
 
  err1:
   {
-    TableIdentifier identifier(new_table.s->table_name.str);
+    TableIdentifier identifier(new_table.s->getSchemaName(), new_table.s->table_name.str, new_table.s->table_name.str);
     new_table.s->db_type()->doDropTable(*session, identifier);
   }
 
@@ -3690,6 +3690,11 @@ bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
 
   key_length= TableShare::createKey(key, identifier);
   share->set_table_cache_key(key, key_length);
+
+  message::Table *message= share->getTableProto();
+
+  message->set_name(identifier.getTableName());
+  message->set_schema(identifier.getSchemaName());
 
   return false;
 }

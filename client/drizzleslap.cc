@@ -727,7 +727,7 @@ static void usage(void)
   my_print_help(my_long_options);
 }
 
-static bool get_one_option(int optid, const struct my_option *, char *argument)
+static int get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -742,7 +742,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
     if (strlen(endchar) != 0)
     {
       fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
-      exit(1);
+      return EXIT_ARGUMENT_INVALID;
     }
     /* If the port number is > 65535 it is not a valid port
        This also helps with potential data loss casting unsigned long to a
@@ -750,7 +750,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
     if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       fprintf(stderr, _("Value supplied for port is not valid.\n"));
-      exit(1);
+      return EXIT_ARGUMENT_INVALID;
     }
     else
     {
@@ -768,7 +768,7 @@ static bool get_one_option(int optid, const struct my_option *, char *argument)
       {
         fprintf(stderr, "Memory allocation error while copying password. "
                         "Aborting.\n");
-        exit(ENOMEM);
+        return EXIT_OUT_OF_MEMORY;
       }
       while (*argument)
       {

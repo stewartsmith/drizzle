@@ -68,8 +68,7 @@ bool statement::CreateIndex::execute()
     TableIdentifier identifier(first_table->db, first_table->table_name);
 
     res= alter_table(session, 
-                     first_table->db, 
-                     first_table->table_name,
+                     identifier,
                      identifier,
                      &create_info, 
                      create_table_message, 
@@ -85,8 +84,7 @@ bool statement::CreateIndex::execute()
       TableIdentifier identifier(first_table->db, first_table->table_name, table->s->path.str);
 
       res= alter_table(session, 
-                       first_table->db, 
-                       first_table->table_name,
+                       identifier,
                        identifier,
                        &create_info, 
                        create_table_message, 

@@ -148,20 +148,20 @@ static int fill_table_proto(message::Table &table_proto,
       }
     case message::Table::Field::ENUM:
       {
-        message::Table::Field::EnumeratorValues *enumerator_options;
+        message::Table::Field::EnumerationValues *enumeration_options;
 
         assert(field_arg->interval);
 
-        enumerator_options= attribute->mutable_enumerator_values();
+        enumeration_options= attribute->mutable_enumeration_values();
 
         for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
         {
           const char *src= field_arg->interval->type_names[pos];
 
-          enumerator_options->add_field_value(src);
+          enumeration_options->add_field_value(src);
         }
-	enumerator_options->set_collation_id(field_arg->charset->number);
-        enumerator_options->set_collation(field_arg->charset->name);
+	enumeration_options->set_collation_id(field_arg->charset->number);
+        enumeration_options->set_collation(field_arg->charset->name);
         break;
       }
     case message::Table::Field::BLOB:
@@ -441,27 +441,6 @@ static int fill_table_proto(message::Table &table_proto,
   }
 
   return 0;
-}
-
-int rename_table_proto_file(const char *from, const char* to)
-{
-  string from_path(from);
-  string to_path(to);
-  string file_ext = ".dfe";
-
-  from_path.append(file_ext);
-  to_path.append(file_ext);
-
-  return internal::my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
-}
-
-int delete_table_proto_file(const char *file_name)
-{
-  string new_path(file_name);
-  string file_ext = ".dfe";
-
-  new_path.append(file_ext);
-  return internal::my_delete(new_path.c_str(), MYF(0));
 }
 
 /*
