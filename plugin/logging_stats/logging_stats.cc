@@ -200,6 +200,7 @@ bool LoggingStats::post(Session *session)
 
   if (our_slot != UNINITIALIZED)
   {
+    updateScoreBoard(score_board_slot, session);
     pthread_rwlock_unlock(&LOCK_scoreboard); 
   }
   else if (open_slot != UNINITIALIZED)
@@ -209,6 +210,7 @@ bool LoggingStats::post(Session *session)
     score_board_slot->setSessionId(session->getSessionId());
     score_board_slot->setUser(session->getSecurityContext().getUser());
     score_board_slot->setIp(session->getSecurityContext().getIp());
+    updateScoreBoard(score_board_slot, session);
     pthread_rwlock_unlock(&LOCK_scoreboard);
   }
   else 
@@ -218,7 +220,7 @@ bool LoggingStats::post(Session *session)
     return false;
   }
 
-  updateScoreBoard(score_board_slot, session);
+  //updateScoreBoard(score_board_slot, session);
 
   return false;
 }
