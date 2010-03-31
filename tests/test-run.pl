@@ -3281,7 +3281,7 @@ sub dbx_arguments {
   {
     # write init file for drizzled
     mtr_tofile($dbx_init_file,
-               "stop in drizzled::mysql_parse\n" .
+               "stop in __1cIdrizzledLmysql_parse6Fpn0AHSession_pkcI_v_\n" .
                "runargs $str\n" .
                "run\n" .
                "\n");
