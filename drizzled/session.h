@@ -1447,11 +1447,12 @@ public:
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
 private:
-  void close_temporary(Table *table);
+  void nukeTable(Table *table);
 public:
 
+  void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);

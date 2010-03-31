@@ -1599,6 +1599,12 @@ bool create_table_precheck(TableIdentifier &identifier)
     return true;
   }
 
+  if (not plugin::StorageEngine::doesSchemaExist(identifier))
+  {
+    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
+    return true;
+  }
+
   return false;
 }
 
