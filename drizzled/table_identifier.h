@@ -102,6 +102,7 @@ public:
     init();
   }
 
+  using SchemaIdentifier::compare;
   bool compare(std::string schema_arg, std::string table_arg);
 
   bool isTmp() const

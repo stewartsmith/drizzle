@@ -64,10 +64,9 @@ public:
 
 public:
   SchemaIdentifier(const std::string &db_arg) :
-    db(db_arg)
+    db(db_arg),
+    lower_db(db_arg)
   { 
-    lower_db.append(db_arg);
-
     std::transform(lower_db.begin(), lower_db.end(),
                    lower_db.begin(), ::tolower);
   }
@@ -84,14 +83,15 @@ public:
   }
 
   bool isValid();
-  bool compare(std::string arg);
+  bool compare(std::string arg) const;
 
-  friend bool operator<(SchemaIdentifier &left, SchemaIdentifier &right)
+  friend bool operator<(const SchemaIdentifier &left, const SchemaIdentifier &right)
   {
     return left.lower_db < right.lower_db;
   }
 
-  friend std::ostream& operator<<(std::ostream& output, SchemaIdentifier &identifier)
+  friend std::ostream& operator<<(std::ostream& output,
+                                  SchemaIdentifier &identifier)
   {
     output << "SchemaIdentifier:(";
     output <<  identifier.db;
@@ -102,7 +102,8 @@ public:
     return output;  // for multiple << operators.
   }
 
-  friend bool operator==(SchemaIdentifier &left, SchemaIdentifier &right)
+  friend bool operator==(const SchemaIdentifier &left,
+                         const SchemaIdentifier &right)
   {
     if (left.lower_db == right.lower_db)
     {
