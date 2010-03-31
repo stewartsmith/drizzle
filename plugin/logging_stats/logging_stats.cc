@@ -152,8 +152,7 @@ void LoggingStats::updateScoreBoard(ScoreBoardSlot *score_board_slot,
 
 bool LoggingStats::post(Session *session)
 {
-  //if (! isEnabled() || (session->getSessionId() == 0))
-  if (! isEnabled())
+  if (! isEnabled() || (session->getSessionId() == 0))
   {
     return false;
   }
@@ -226,8 +225,7 @@ bool LoggingStats::post(Session *session)
 
 bool LoggingStats::postEnd(Session *session)
 {
-  //if (! isEnabled() || (session->getSessionId() == 0)) 
-  if (! isEnabled())
+  if (! isEnabled() || (session->getSessionId() == 0)) 
   {
     return false;
   }
