@@ -170,6 +170,8 @@ bool LoggingStats::post(Session *session)
   int our_slot= UNINITIALIZED; 
   int open_slot= UNINITIALIZED;
 
+  cout << "searching for slot for session=" << session->getSessionId() << endl;
+
   for (uint32_t j=0; j < scoreboard_size; j++)
   {
     score_board_slot= &score_board_slots[j];
@@ -200,27 +202,28 @@ bool LoggingStats::post(Session *session)
 
   if (our_slot != UNINITIALIZED)
   {
-    updateScoreBoard(score_board_slot, session);
+    cout << "using our slot at=" << our_slot << endl;
     pthread_rwlock_unlock(&LOCK_scoreboard); 
   }
   else if (open_slot != UNINITIALIZED)
   {
+    cout << "using open slot at=" << open_slot << endl;
     score_board_slot= &score_board_slots[open_slot];
     score_board_slot->setInUse(true);
     score_board_slot->setSessionId(session->getSessionId());
     score_board_slot->setUser(session->getSecurityContext().getUser());
     score_board_slot->setIp(session->getSecurityContext().getIp());
-    updateScoreBoard(score_board_slot, session);
     pthread_rwlock_unlock(&LOCK_scoreboard);
   }
   else 
   {
+    cout << "no slot to use" << endl;
     pthread_rwlock_unlock(&LOCK_scoreboard);
     /* there was no available slot for this session */
     return false;
   }
 
-  //updateScoreBoard(score_board_slot, session);
+  updateScoreBoard(score_board_slot, session);
 
   return false;
 }
@@ -242,6 +245,9 @@ bool LoggingStats::postEnd(Session *session)
 
     if (score_board_slot->getSessionId() == session->getSessionId())
     {
+                                     
+      cout << "closing slot=" << j << " for session=" << session->getSessionId() << endl;
+
       score_board_slot->reset();
       break;
     }
