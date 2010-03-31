@@ -272,14 +272,14 @@ drop table t1, t2;
 #select * from t1;
 #drop table t1;
 
-create table t1 (rowid int not null auto_increment, val int not null,primary
-key (rowid), unique(val));
-replace into t1 (val) values ('1'),('2');
-replace into t1 (val) values ('1'),('2');
---error ER_DUP_ENTRY
-insert into t1 (val) values ('1'),('2');
-select * from t1;
-drop table t1;
+#create table t1 (rowid int not null auto_increment, val int not null,primary
+#key (rowid), unique(val));
+#replace into t1 (val) values ('1'),('2');
+#replace into t1 (val) values ('1'),('2');
+#--error ER_DUP_ENTRY
+#insert into t1 (val) values ('1'),('2');
+#select * from t1;
+#drop table t1;
 
 #
 # Test that update changes internal auto-increment value
