@@ -149,7 +149,7 @@ const std::string &SchemaIdentifier::getPath()
   return db_path;
 }
 
-bool SchemaIdentifier::compare(std::string arg)
+bool SchemaIdentifier::compare(std::string arg) const
 {
   std::transform(arg.begin(), arg.end(),
                  arg.begin(), ::tolower);
