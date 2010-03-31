@@ -2299,8 +2299,8 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   uint32_t key_length, path_length;
   TableList table_list;
 
-  table_list.db=         (char*) identifier.getDBName().c_str();
-  table_list.table_name= (char*) identifier.getTableName().c_str();
+  table_list.db=         const_cast<char*>(identifier.getSchemaName().c_str());
+  table_list.table_name= const_cast<char*>(identifier.getTableName().c_str());
   /* Create the cache_key for temporary tables */
   key_length= table_list.create_table_def_key(cache_key);
   path_length= identifier.getPath().length();

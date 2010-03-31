@@ -106,17 +106,12 @@ public:
     path= new_path;
   }
 
-  const std::string &getDBName() const
-  {
-    return db;
-  }
-
   const std::string &getSchemaName() const
   {
     return db;
   }
 
-  const std::string getTableName() const
+  const std::string &getTableName() const
   {
     return table_name;
   }
@@ -128,7 +123,7 @@ public:
     const char *type_str;
 
     output << "TableIdentifier:(";
-    output <<  identifier.getDBName();
+    output <<  identifier.getSchemaName();
     output << ", ";
     output << identifier.getTableName();
     output << ", ";

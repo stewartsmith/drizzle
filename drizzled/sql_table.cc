@@ -1438,7 +1438,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
 
-  set_table_default_charset(create_info, identifier.getDBName().c_str());
+  set_table_default_charset(create_info, identifier.getSchemaName().c_str());
 
   /* Build a Table object to pass down to the engine, and the do the actual create. */
   if (not mysql_prepare_create_table(session, create_info, table_proto, alter_info,
