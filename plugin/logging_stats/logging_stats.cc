@@ -105,6 +105,7 @@ pthread_rwlock_t LOCK_cumulative_scoreboard_index;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
+  (void) pthread_rwlock_init(&LOCK_cumulative_scoreboard_index, NULL);
   cumulative_stats_by_user_index= 0;
 
   current_scoreboard= new Scoreboard(sysvar_logging_stats_scoreboard_size, 
@@ -119,6 +120,7 @@ LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 
 LoggingStats::~LoggingStats()
 {
+  (void) pthread_rwlock_destroy(&LOCK_cumulative_scoreboard_index); 
   deleteScoreboardSlotVector(cumulative_stats_by_user_vector);
   delete current_scoreboard;
 }

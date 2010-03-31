@@ -90,6 +90,7 @@ Scoreboard::Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets)
   for (uint32_t k= 0; k < number_buckets; ++k)
   {
     pthread_rwlock_t* lock= new pthread_rwlock_t();
+    (void) pthread_rwlock_init(lock, NULL);
     vector_of_scoreboard_locks_iterator= 
       vector_of_scoreboard_locks.insert(vector_of_scoreboard_locks_iterator, lock);   
   } 
@@ -121,7 +122,9 @@ Scoreboard::~Scoreboard()
 
   for (; vector_of_scoreboard_locks_it != vector_of_scoreboard_locks_end; ++vector_of_scoreboard_locks_it)
   {
-    delete *vector_of_scoreboard_locks_it;
+    pthread_rwlock_t* lock= *vector_of_scoreboard_locks_it;
+    (void) pthread_rwlock_destroy(lock);
+    delete lock;
   }
 }
 
@@ -202,11 +205,6 @@ ScoreboardSlot* Scoreboard::findAndResetScoreboardSlot(Session *session)
   /* our vector corresponding to bucket_number */
   vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
 
-  /* out lock corresponding to bucket_number */
-  pthread_rwlock_t *LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
-
-  pthread_rwlock_wrlock(LOCK_scoreboard_vector);
-
   ScoreboardSlot *scoreboard_slot;
   ScoreboardSlot *return_scoreboard_slot= NULL;
 
@@ -222,7 +220,6 @@ ScoreboardSlot* Scoreboard::findAndResetScoreboardSlot(Session *session)
       break;
     }
   }
-  pthread_rwlock_unlock(LOCK_scoreboard_vector);   
 
   return return_scoreboard_slot;
 }
