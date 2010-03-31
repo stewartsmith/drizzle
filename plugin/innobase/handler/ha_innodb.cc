@@ -482,7 +482,7 @@ int InnobaseEngine::doGetTableDefinition(Session &,
   if (StorageEngine::readTableFile(proto_path, table_proto))
     return EEXIST;
 
-  return -1;
+  return ENOENT;
 }
 
 void InnobaseEngine::doGetTableNames(CachedDirectory &directory, SchemaIdentifier&, set<string>& set_of_names)

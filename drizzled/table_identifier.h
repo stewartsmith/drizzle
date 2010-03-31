@@ -125,7 +125,7 @@ public:
     path= new_path;
   }
 
-  const std::string getTableName() const
+  const std::string &getTableName() const
   {
     return table_name;
   }

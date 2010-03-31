@@ -569,7 +569,7 @@ private:
     the corresponding 'ha_*' method above.
   */
 
-  virtual int open(TableIdentifier &identifier, int mode, uint32_t test_if_locked)=0;
+  virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
   virtual int index_init(uint32_t idx, bool)
   { active_index= idx; return 0; }
   virtual int index_end() { active_index= MAX_KEY; return 0; }
