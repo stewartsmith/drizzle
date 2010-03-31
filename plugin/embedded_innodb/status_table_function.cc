@@ -146,18 +146,10 @@ bool LibInnoDBStatusTool::Generator::populate()
 
 static LibInnoDBStatusTool *status_tool;
 
-int status_table_function_initialize(drizzled::plugin::Registry &registry)
+int status_table_function_initialize(drizzled::plugin::Context &context)
 {
   status_tool= new(std::nothrow)LibInnoDBStatusTool();
-  registry.add(status_tool);
-
-  return 0;
-}
-
-int status_table_function_finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(status_tool);
-  delete status_tool;
+  context.add(status_tool);
 
   return 0;
 }
