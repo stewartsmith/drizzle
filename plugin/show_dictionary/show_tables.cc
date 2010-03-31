@@ -20,7 +20,7 @@
 
 
 #include "config.h"
-#include "plugin/schema_dictionary/dictionary.h"
+#include "plugin/show_dictionary/dictionary.h"
 #include "drizzled/table_identifier.h"
 
 using namespace std;

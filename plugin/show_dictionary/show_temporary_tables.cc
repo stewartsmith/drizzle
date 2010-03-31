@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "plugin/schema_dictionary/dictionary.h"
+#include "plugin/show_dictionary/dictionary.h"
 
 using namespace std;
 using namespace drizzled;

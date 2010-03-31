@@ -18,31 +18,51 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLES_H
-#define PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLES_H
+#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_COLUMNS_H
+#define PLUGIN_SHOW_DICTIONARY_SHOW_COLUMNS_H
 
-
-class ShowTables : public drizzled::plugin::TableFunction
+class ShowColumns : public drizzled::plugin::TableFunction
 {
 public:
-  ShowTables();
+  ShowColumns();
 
-  class Generator : public drizzled::plugin::TableFunction::Generator
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    bool is_primed;
-    drizzled::message::Table table_message;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator table_iterator;
-    std::string schema_name;
+    bool is_tables_primed;
+    bool is_columns_primed;
+
+    int32_t column_iterator;
+    drizzled::message::Table table_proto;
+    drizzled::message::Table::Field column;
+
+    bool nextColumnCore();
+    bool nextColumn();
+
+    std::string table_name;
+
+    const drizzled::message::Table& getTableProto()
+    {
+      return table_proto;
+    }
+
+    bool isTablesPrimed()
+    {
+      return is_tables_primed;
+    }
+
+    const std::string &getTableName()
+    {
+      return table_name;
+    }
+
+    void pushType(drizzled::message::Table::Field::FieldType type);
 
     void fill();
-    bool next();
-    bool nextCore();
 
   public:
     Generator(drizzled::Field **arg);
-
     bool populate();
+
   };
 
   Generator *generator(drizzled::Field **arg)
@@ -51,4 +71,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLES_H */
+#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_COLUMNS_H */
