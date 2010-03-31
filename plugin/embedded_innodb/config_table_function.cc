@@ -148,18 +148,10 @@ bool LibInnoDBConfigTool::Generator::populate()
 
 static LibInnoDBConfigTool *config_tool;
 
-int config_table_function_initialize(drizzled::plugin::Registry &registry)
+int config_table_function_initialize(drizzled::plugin::Context &context)
 {
   config_tool= new(std::nothrow)LibInnoDBConfigTool();
-  registry.add(config_tool);
-
-  return 0;
-}
-
-int config_table_function_finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(config_tool);
-  delete config_tool;
+  context.add(config_tool);
 
   return 0;
 }
