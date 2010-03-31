@@ -167,16 +167,9 @@ String *LibinnodbDatadictDumpFunction::val_str(String *str)
 
 plugin::Create_function<LibinnodbDatadictDumpFunction> *libinnodb_datadict_dump_func= NULL;
 
-int libinnodb_datadict_dump_func_initialize(plugin::Registry &registry)
+int libinnodb_datadict_dump_func_initialize(plugin::Context &context)
 {
   libinnodb_datadict_dump_func= new plugin::Create_function<LibinnodbDatadictDumpFunction>("libinnodb_datadict_dump");
-  registry.add(libinnodb_datadict_dump_func);
-  return 0;
-}
-
-int libinnodb_datadict_dump_func_finalize(plugin::Registry &registry)
-{
-  registry.remove(libinnodb_datadict_dump_func);
-  delete libinnodb_datadict_dump_func;
+  context.add(libinnodb_datadict_dump_func);
   return 0;
 }

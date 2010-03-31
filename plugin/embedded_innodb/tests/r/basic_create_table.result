@@ -1,8 +1,8 @@
 CREATE TABLE t1 (a int);
 SHOW CREATE TABLE t1;
-ERROR HY000: Corrupt or invalid table definition: name, schema, type, creation_timestamp, update_timestamp
+ERROR HY000: Corrupt or invalid table definition: type, creation_timestamp, update_timestamp
 CREATE TABLE t1 (a int);
-ERROR 42S01: Table 't1' already exists
+ERROR 42S01: Table 'test.t1' already exists
 CREATE TABLE t2 (a int, b varchar(20), c bigint);
 CREATE TABLE t3 (d datetime);
 ERROR 42000: The storage engine for the table doesn't support Column Type
