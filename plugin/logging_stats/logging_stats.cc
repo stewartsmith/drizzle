@@ -73,6 +73,7 @@ pthread_rwlock_t LOCK_scoreboard;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
+  (void) pthread_rwlock_init(&LOCK_scoreboard, NULL);
   scoreboard_size= sysvar_logging_stats_scoreboard_size;
   score_board_slots= new ScoreBoardSlot[scoreboard_size];
   for (uint32_t j=0; j < scoreboard_size; j++)
@@ -85,6 +86,7 @@ LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 
 LoggingStats::~LoggingStats()
 {
+  (void) pthread_rwlock_destroy(&LOCK_scoreboard);
   delete[] score_board_slots;
 }
 
