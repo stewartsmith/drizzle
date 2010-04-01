@@ -116,8 +116,15 @@ static const uint32_t year_lengths[2]=
   DAYS_PER_NYEAR, DAYS_PER_LYEAR
 };
 
-#define LEAPS_THRU_END_OF(y)  ((y) / 4 - (y) / 100 + (y) / 400)
+static inline int leaps_thru_end_of(int year)
+{
+  return ((year) / 4 - (year) / 100 + (year) / 400);
+}
 
+static inline bool isleap(int year)
+{
+  return (((year) % 4) == 0 && (((year) % 100) != 0 || ((year) % 400) == 0));
+}
 
 /*
   Converts time from time_t representation (seconds in UTC since Epoch)
@@ -181,8 +188,8 @@ sec_to_TIME(DRIZZLE_TIME * tmp, time_t t, long offset)
     if (days < 0)
       newy--;
     days-= (newy - y) * DAYS_PER_NYEAR +
-           LEAPS_THRU_END_OF(newy - 1) -
-           LEAPS_THRU_END_OF(y - 1);
+           leaps_thru_end_of(newy - 1) -
+           leaps_thru_end_of(y - 1);
     y= newy;
   }
   tmp->year= y;
@@ -388,15 +395,15 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
   */
   assert(mon > 0 && mon < 13);
   long days= year * DAYS_PER_NYEAR - EPOCH_YEAR * DAYS_PER_NYEAR +
-             LEAPS_THRU_END_OF(year - 1) -
-             LEAPS_THRU_END_OF(EPOCH_YEAR - 1);
+             leaps_thru_end_of(year - 1) -
+             leaps_thru_end_of(EPOCH_YEAR - 1);
   days+= mon_starts[isleap(year)][mon - 1];
 #else
   long norm_month= (mon - 1) % MONS_PER_YEAR;
   long a_year= year + (mon - 1)/MONS_PER_YEAR - (int)(norm_month < 0);
   long days= a_year * DAYS_PER_NYEAR - EPOCH_YEAR * DAYS_PER_NYEAR +
-             LEAPS_THRU_END_OF(a_year - 1) -
-             LEAPS_THRU_END_OF(EPOCH_YEAR - 1);
+             leaps_thru_end_of(a_year - 1) -
+             leaps_thru_end_of(EPOCH_YEAR - 1);
   days+= mon_starts[isleap(a_year)]
                     [norm_month + (norm_month < 0 ? MONS_PER_YEAR : 0)];
 #endif
