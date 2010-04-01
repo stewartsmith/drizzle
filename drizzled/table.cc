@@ -1918,27 +1918,18 @@ uint32_t calculate_key_len(Table *table, uint32_t key,
     org_name		Name of database and length
 
   RETURN
-    0	ok
-    1   error
+    false error
+    true ok
 */
 
-bool check_db_name(LEX_STRING *org_name)
+bool check_db_name(SchemaIdentifier &schema_identifier)
 {
-  char *name= org_name->str;
-  uint32_t name_length= org_name->length;
-
-  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
-                                              string(name, name_length)))
+  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(), schema_identifier))
   {
-    return 1;
+    return false;
   }
 
-  if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
-    return 1;
-
-  my_casedn_str(files_charset_info, name);
-
-  return check_identifier_name(org_name);
+  return schema_identifier.isValid();
 }
 
 /*
