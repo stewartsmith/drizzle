@@ -23,50 +23,20 @@
 
 using namespace drizzled;
 
-static ColumnsTool *columns;
-static IndexPartsTool *index_parts;
-static IndexesTool *indexes;
-static ReferentialConstraintsTool *referential_constraints;
-static SchemasTool *schemas;
-static SchemaNames *schema_names;
-static ShowColumns *show_columns;
-static ShowIndexes *show_indexes;
-static TableConstraintsTool *table_constraints;
-static TablesTool *tables;
-static ShowTables *local_tables;
-static ShowTableStatus *table_status;
-static ShowTemporaryTables *show_temporary_tables;
-
-
 static int init(drizzled::plugin::Context &context)
 {
-  columns= new(std::nothrow)ColumnsTool;
-  index_parts= new(std::nothrow)IndexPartsTool;
-  indexes= new(std::nothrow)IndexesTool;
-  local_tables= new(std::nothrow)ShowTables;
-  referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
-  schema_names= new(std::nothrow)SchemaNames;
-  schemas= new(std::nothrow)SchemasTool;
-  show_columns= new(std::nothrow)ShowColumns;
-  show_indexes= new(std::nothrow)ShowIndexes;
-  show_temporary_tables= new(std::nothrow)ShowTemporaryTables;
-  table_constraints= new(std::nothrow)TableConstraintsTool;
-  table_status= new(std::nothrow)ShowTableStatus;
-  tables= new(std::nothrow)TablesTool;
-
-  context.add(columns);
-  context.add(index_parts);
-  context.add(indexes);
-  context.add(local_tables);
-  context.add(referential_constraints);
-  context.add(schema_names);
-  context.add(schemas);
-  context.add(show_columns);
-  context.add(show_indexes);
-  context.add(show_temporary_tables);
-  context.add(table_constraints);
-  context.add(table_status);
-  context.add(tables);
+  context.add(new ColumnsTool());
+  context.add(new IndexPartsTool());
+  context.add(new IndexesTool());
+  context.add(new ShowTables());
+  context.add(new ReferentialConstraintsTool());
+  context.add(new SchemasTool());
+  context.add(new ShowColumns());
+  context.add(new ShowIndexes());
+  context.add(new ShowTemporaryTables());
+  context.add(new TableConstraintsTool());
+  context.add(new ShowTableStatus());
+  context.add(new TablesTool());
 
   context.add(new ShowSchemas());
   

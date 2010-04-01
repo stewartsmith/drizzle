@@ -22,7 +22,7 @@
 
 #include <drizzled/dtcollation.h>
 #include <drizzled/my_time.h>
-#include <drizzled/my_decimal.h>
+#include <drizzled/decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
 #include "drizzled/memory/sql_alloc.h"
