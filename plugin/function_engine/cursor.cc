@@ -42,9 +42,14 @@ FunctionCursor::FunctionCursor(plugin::StorageEngine &engine_arg,
 
 int FunctionCursor::open(const char *name, int, uint32_t)
 {
-  (void)name;
-  string temp_name= name;
-  tool= static_cast<Function *>(engine)->getFunction(temp_name); 
+  string tab_name(name);
+  transform(tab_name.begin(), tab_name.end(),
+            tab_name.begin(), ::tolower);
+  tool= static_cast<Function *>(engine)->getFunction(tab_name); 
+//  assert(tool);
+
+  if (not tool)
+    return HA_ERR_NO_SUCH_TABLE;
 
   return 0;
 }

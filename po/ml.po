@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2010-02-09 11:51+0000\n"
-"Last-Translator: Rino Tom Thomas <rinotomthomas@gmail.com>\n"
+"POT-Creation-Date: 2010-03-15 21:00+0000\n"
+"PO-Revision-Date: 2010-03-22 11:58+0000\n"
+"Last-Translator: Jobin Augustine <Unknown>\n"
 "Language-Team: Malayalam <ml@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-03-23 04:46+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -265,6 +265,8 @@ msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+"വേരിയബ്ലിന്റെ വാല്യൂ മാറ്റുക. ഈ ഓപ്ഷന്‍ കാലഹരന്നപെട്ടു എന്ന് ഓര്‍ക്കുക. --variable-name=value "
+"എന്ന രീതിയില്‍ വേരിയബിള്‍ സെറ്റ് ചെയ്യാവുന്നതാന്നു."
 
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "SIGINT (CTRL-C) അവഗണിക്കുക"
@@ -429,8 +431,10 @@ msgid "Unknown command: "
 msgstr "അറിയപ്പെടാത്ത ആജ്ഞ: "
 
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
 
@@ -665,6 +669,14 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
 #, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr ""
+
+#, c-format
+msgid "Out of memory"
+msgstr "സ്മൃതി ലഭ്യമല്ല"
+
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr ""
 
@@ -756,9 +768,6 @@ msgstr ""
 
 msgid "Can't create thread-keys"
 msgstr ""
-
-msgid "Out of memory"
-msgstr "സ്മൃതി ലഭ്യമല്ല"
 
 msgid "Failed to initialize plugins."
 msgstr ""
@@ -1045,7 +1054,8 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-msgid "UNUSED"
+#, c-format
+msgid "Unknown error %d"
 msgstr ""
 
 msgid "NO"
@@ -3769,51 +3779,7 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr ""
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
 msgstr ""
 
 #, c-format
@@ -3825,23 +3791,11 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr ""
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr ""
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
-msgstr ""
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
 msgstr ""
 
 #, c-format
@@ -3881,15 +3835,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
-msgstr ""
-
-#, c-format
-msgid "Unknown error %d"
 msgstr ""
 
 #, c-format
@@ -4208,9 +4154,9 @@ msgstr ""
 msgid "Variable named %s already exists!\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not add Variable: %s\n"
-msgstr "പട്ടിക കണ്ടെത്താന്‍ സാധിക്കുന്നില്ല: \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
@@ -4312,9 +4258,8 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "ഉപയോഗിക്കേണ്ട ഡാറ്റാബേസ്."
+msgstr ""
 
 msgid "Enable default replicator"
 msgstr ""
@@ -4701,9 +4646,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr ""
 
-msgid "Undefined handler error 125"
-msgstr ""
-
 msgid "Index file is crashed"
 msgstr ""
 
@@ -4711,9 +4653,6 @@ msgid "Record file is crashed"
 msgstr ""
 
 msgid "Out of memory in engine"
-msgstr ""
-
-msgid "Undefined handler error 129"
 msgstr ""
 
 msgid "Incorrect file format"
@@ -4907,9 +4846,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "ബന്ധപ്പെടുന്നതിനായി ഉപയോഗിക്കുന്ന സോക്കറ്റ്(socket) രചന."
+msgstr ""
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
@@ -4953,9 +4891,3 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr ""
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "പുറത്തു കടക്കുമ്പോള്‍  തുറന്ന ഫയലുകളുടെയും മെമ്മോറിയുടെയും ഉപയോഗം പരിശോധിക്കുക."
-
-#~ msgid "Print some debug info at exit."
-#~ msgstr "പുറത്തു കടക്കുമ്പോള്‍  കുറച്ചു debug വിവരം പ്രിന്റ്‌ ചെയ്യുക"
