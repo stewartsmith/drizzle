@@ -46,7 +46,6 @@ public:
     bool is_schema_parsed;
 
     virtual void fill();
-    virtual bool checkSchema();
 
   public:
     Generator(drizzled::Field **arg);
@@ -71,35 +70,5 @@ public:
     return new Generator(arg);
   }
 };
-
-class SchemaNames : public SchemasTool
-{
-public:
-  SchemaNames() :
-    SchemasTool("SCHEMA_NAMES")
-  {
-    add_field("SCHEMA_NAME");
-  }
-
-  class Generator : public SchemasTool::Generator 
-  {
-    void fill()
-    {
-      /* SCHEMA_NAME */
-      push(schema_name());
-    }
-
-  public:
-    Generator(drizzled::Field **arg) :
-      SchemasTool::Generator(arg)
-    { }
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
 
 #endif /* PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H */

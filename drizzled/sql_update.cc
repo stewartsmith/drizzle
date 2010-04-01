@@ -542,7 +542,7 @@ int mysql_update(Session *session, TableList *table_list,
   if (error < 0)
   {
     char buff[STRING_BUFFER_USUAL_SIZE];
-    sprintf(buff, ER(ER_UPDATE_INFO), (ulong) found, (ulong) updated,
+    snprintf(buff, sizeof(buff), ER(ER_UPDATE_INFO), (ulong) found, (ulong) updated,
 	    (ulong) session->cuted_fields);
     session->row_count_func= updated;
     /**

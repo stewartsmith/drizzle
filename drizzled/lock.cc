@@ -1048,9 +1048,12 @@ void unlock_global_read_lock(Session *session)
   session->global_read_lock= 0;
 }
 
-#define must_wait (global_read_lock &&                             \
-                   (is_not_commit ||                               \
-                    global_read_lock_blocks_commit))
+static inline bool must_wait(bool is_not_commit)
+{
+  return (global_read_lock &&
+          (is_not_commit ||
+          global_read_lock_blocks_commit));
+}
 
 bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
                               bool is_not_commit)
@@ -1066,7 +1069,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
   safe_mutex_assert_not_owner(&LOCK_open);
 
   (void) pthread_mutex_lock(&LOCK_global_read_lock);
-  if ((need_exit_cond= must_wait))
+  if ((need_exit_cond= must_wait(is_not_commit)))
   {
     if (session->global_read_lock)		// This thread had the read locks
     {
@@ -1083,7 +1086,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     }
     old_message=session->enter_cond(&COND_global_read_lock, &LOCK_global_read_lock,
 				"Waiting for release of readlock");
-    while (must_wait && ! session->killed &&
+    while (must_wait(is_not_commit) && ! session->killed &&
 	   (!abort_on_refresh || session->version == refresh_version))
     {
       (void) pthread_cond_wait(&COND_global_read_lock, &LOCK_global_read_lock);
