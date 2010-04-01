@@ -787,7 +787,7 @@ void mark_as_dependent(Session *session, Select_Lex *last, Select_Lex *current,
   if (session->lex->describe & DESCRIBE_EXTENDED)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
-    sprintf(warn_buff, ER(ER_WARN_FIELD_RESOLVED),
+    snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_FIELD_RESOLVED),
             db_name, (db_name[0] ? "." : ""),
             table_name, (table_name [0] ? "." : ""),
             resolved_item->field_name,

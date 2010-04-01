@@ -20,7 +20,7 @@
 #ifndef DRIZZLED_HYBRID_TYPE_H
 #define DRIZZLED_HYBRID_TYPE_H
 
-#include <drizzled/my_decimal.h>
+#include <drizzled/decimal.h>
 
 namespace drizzled
 {
