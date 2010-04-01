@@ -46,8 +46,8 @@ unlock tables;
 create database mysqltest;
 show databases;
 Database
-data_dictionary
-information_schema
+DATA_DICTIONARY
+INFORMATION_SCHEMA
 mysql
 mysqltest
 test
@@ -58,8 +58,8 @@ unlock tables;
 drop database mysqltest;
 show databases;
 Database
-data_dictionary
-information_schema
+DATA_DICTIONARY
+INFORMATION_SCHEMA
 mysql
 test
 drop database mysqltest;

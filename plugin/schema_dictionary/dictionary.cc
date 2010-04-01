@@ -67,6 +67,8 @@ static int init(drizzled::plugin::Context &context)
   context.add(table_constraints);
   context.add(table_status);
   context.add(tables);
+
+  context.add(new ShowSchemas());
   
   return 0;
 }

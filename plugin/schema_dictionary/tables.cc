@@ -81,7 +81,9 @@ bool TablesTool::Generator::nextTableCore()
      return false;
 
     table_names.clear();
-    plugin::StorageEngine::getTableNames(schema_name(), table_names);
+    Session *session= current_session;
+    SchemaIdentifier identifier(schema_name());
+    plugin::StorageEngine::getTableNames(*session, identifier, table_names);
     table_iterator= table_names.begin();
     is_tables_primed= true;
   }
