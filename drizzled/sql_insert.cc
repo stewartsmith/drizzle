@@ -458,10 +458,10 @@ bool mysql_insert(Session *session,TableList *table_list,
   {
     char buff[160];
     if (ignore)
-      sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+      snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
               (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
     else
-      sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+      snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + info.updated;
     session->my_ok((ulong) session->row_count_func,
@@ -1343,10 +1343,10 @@ bool select_insert::send_eof()
   }
   char buff[160];
   if (info.ignore)
-    sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+    snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	    (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
   else
-    sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+    snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	    (ulong) (info.deleted+info.updated), (ulong) session->cuted_fields);
   session->row_count_func= info.copied + info.deleted + info.updated;
 
