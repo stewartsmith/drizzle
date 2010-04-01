@@ -286,9 +286,9 @@ static int write_to_table(char *filename, drizzle_con_st *con)
     if (verbose)
       fprintf(stdout, "Deleting the old data from table %s\n", tablename);
 #ifdef HAVE_SNPRINTF
-    snprintf(sql_statement, FN_REFLEN*16+256, "DELETE FROM %s", tablename);
+    snprintf(sql_statement, sizeof(sql_statement), "DELETE FROM %s", tablename);
 #else
-    sprintf(sql_statement, "DELETE FROM %s", tablename);
+    snprintf(sql_statement, sizeof(sql_statement), "DELETE FROM %s", tablename);
 #endif
     if (drizzle_query_str(con, &result, sql_statement, &ret) == NULL ||
         ret != DRIZZLE_RETURN_OK)
@@ -307,7 +307,7 @@ static int write_to_table(char *filename, drizzle_con_st *con)
       fprintf(stdout, "Loading data from SERVER file: %s into %s\n",
         hard_path, tablename);
   }
-  sprintf(sql_statement, "LOAD DATA %s %s INFILE '%s'",
+  snprintf(sql_statement, sizeof(sql_statement), "LOAD DATA %s %s INFILE '%s'",
     opt_low_priority ? "LOW_PRIORITY" : "",
     opt_local_file ? "LOCAL" : "", hard_path);
   end= strchr(sql_statement, '\0');
