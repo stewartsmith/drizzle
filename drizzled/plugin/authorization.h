@@ -85,7 +85,7 @@ public:
 
   /** Server API method for checking schema authorization */
   static bool isAuthorized(const SecurityContext &user_ctx,
-                           const std::string &schema,
+                           SchemaIdentifier &schema_identifier,
                            bool send_error= true);
 
   /** Server API method for checking table authorization */
@@ -104,7 +104,7 @@ public:
    * to a set of schema names (for use in the context of getSchemaNames
    */
   static void pruneSchemaNames(const SecurityContext &user_ctx,
-                               std::set<std::string> &set_of_names);
+                               SchemaIdentifierList &set_of_schemas);
   
   /**
    * Standard plugin system registration hooks
