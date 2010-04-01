@@ -57,6 +57,18 @@ public:
   ~select_export();
   int prepare(List<Item> &list, Select_Lex_Unit *u);
   bool send_data(List<Item> &items);
+private:
+  inline bool needs_escaping(char character, bool enclosed)
+  {
+    if ((character == escape_char) ||
+        (enclosed ? character == field_sep_char : character == field_term_char) ||
+        character == line_sep_char  ||
+        (character == 0))
+      return true;
+
+    return false;
+
+  }
 };
 
 } /* namespace drizzled */
