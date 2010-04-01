@@ -204,10 +204,10 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   assert(table->s == table_share);
   assert(alloc_root_inited(&table->mem_root));
 
-  if ((error=open(name,mode,test_if_locked)))
+  if ((error=open(name, mode, test_if_locked)))
   {
     if ((error == EACCES || error == EROFS) && mode == O_RDWR &&
-	(table->db_stat & HA_TRY_READ_ONLY))
+        (table->db_stat & HA_TRY_READ_ONLY))
     {
       table->db_stat|=HA_READ_ONLY;
       error=open(name,O_RDONLY,test_if_locked);

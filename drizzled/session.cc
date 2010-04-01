@@ -383,7 +383,7 @@ void Session::cleanup(void)
 
 Session::~Session()
 {
-  Session_CHECK_SENTRY(this);
+  this->checkSentry();
   add_to_status(&global_status_var, &status_var);
 
   if (client->isConnected())
@@ -470,7 +470,7 @@ void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
 
 void Session::awake(Session::killed_state state_to_set)
 {
-  Session_CHECK_SENTRY(this);
+  this->checkSentry();
   safe_mutex_assert_owner(&LOCK_delete);
 
   killed= state_to_set;
@@ -687,7 +687,8 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   /* Change database if necessary */
   if (in_db && in_db[0])
   {
-    if (mysql_change_db(this, in_db))
+    SchemaIdentifier identifier(in_db);
+    if (mysql_change_db(this, identifier))
     {
       /* mysql_change_db() has pushed the error message. */
       return false;
@@ -1142,13 +1143,6 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
   return 0;
 }
 
-
-#define NEED_ESCAPING(x) ((int) (unsigned char) (x) == escape_char    || \
-                          (enclosed ? (int) (unsigned char) (x) == field_sep_char      \
-                                    : (int) (unsigned char) (x) == field_term_char) || \
-                          (int) (unsigned char) (x) == line_sep_char  || \
-                          !(x))
-
 bool select_export::send_data(List<Item> &items)
 {
   char buff[MAX_FIELD_WIDTH],null_buff[2],space[MAX_FIELD_WIDTH];
@@ -1265,11 +1259,11 @@ bool select_export::send_data(List<Item> &items)
             assert before the loop makes that sure.
           */
 
-          if ((NEED_ESCAPING(*pos) ||
+          if ((needs_escaping(*pos, enclosed) ||
                (check_second_byte &&
                 my_mbcharlen(character_set_client, (unsigned char) *pos) == 2 &&
                 pos + 1 < end &&
-                NEED_ESCAPING(pos[1]))) &&
+                needs_escaping(pos[1], enclosed))) &&
               /*
                 Don't escape field_term_char by doubling - doubling is only
                 valid for ENCLOSED BY characters:
@@ -1623,10 +1617,10 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
   set_open_tables_state(backup);
 }
 
-bool Session::set_db(const char *new_db, size_t length)
+bool Session::set_db(const std::string &new_db)
 {
   /* Do not reallocate memory if current chunk is big enough. */
-  if (length)
+  if (new_db.length())
     db= new_db;
   else
     db.clear();
@@ -2007,9 +2001,9 @@ bool Session::openTablesLock(TableList *tables)
     if (open_tables_from_list(&tables, &counter))
       return true;
 
-    if (!lock_tables(tables, counter, &need_reopen))
+    if (not lock_tables(tables, counter, &need_reopen))
       break;
-    if (!need_reopen)
+    if (not need_reopen)
       return true;
     close_tables_for_reopen(&tables);
   }

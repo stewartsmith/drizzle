@@ -120,7 +120,7 @@ static void fill_table(message::Table *table, const char *name)
     field_constraints= field->mutable_constraints();
     string_field_options= field->mutable_string_options();
 
-    sprintf(buffer, "sample%u", x);
+    snprintf(buffer, sizeof(buffer), "sample%u", x);
 
     field->set_name(buffer);
     field->set_type(message::Table::Field::VARCHAR);

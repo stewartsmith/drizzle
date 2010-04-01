@@ -191,11 +191,11 @@ bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_no
   @returns true if errors are detected, false otherwise.
 */
 
-static bool store_db_create_info(const char *dbname, string &buffer, bool if_not_exists)
+static bool store_db_create_info(SchemaIdentifier &schema_identifier, string &buffer, bool if_not_exists)
 {
   message::Schema schema;
 
-  bool found= plugin::StorageEngine::getSchemaDefinition(dbname, schema);
+  bool found= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
   if (not found)
     return false;
 
@@ -217,17 +217,28 @@ static bool store_db_create_info(const char *dbname, string &buffer, bool if_not
   return true;
 }
 
-bool mysqld_show_create_db(Session *session, const char *dbname, bool if_not_exists)
+bool mysqld_show_create_db(Session &session, SchemaIdentifier &schema_identifier, bool if_not_exists)
 {
+  message::Schema schema_message;
   string buffer;
 
-  if (not store_db_create_info(dbname, buffer, if_not_exists))
+  if (not plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema_message))
   {
     /*
       This assumes that the only reason for which store_db_create_info()
       can fail is incorrect database name (which is the case now).
     */
-    my_error(ER_BAD_DB_ERROR, MYF(0), dbname);
+    my_error(ER_BAD_DB_ERROR, MYF(0), schema_identifier.getSQLPath().c_str());
+    return true;
+  }
+
+  if (not store_db_create_info(schema_identifier, buffer, if_not_exists))
+  {
+    /*
+      This assumes that the only reason for which store_db_create_info()
+      can fail is incorrect database name (which is the case now).
+    */
+    my_error(ER_BAD_DB_ERROR, MYF(0), schema_identifier.getSQLPath().c_str());
     return true;
   }
 
@@ -235,16 +246,16 @@ bool mysqld_show_create_db(Session *session, const char *dbname, bool if_not_exi
   field_list.push_back(new Item_empty_string("Database",NAME_CHAR_LEN));
   field_list.push_back(new Item_empty_string("Create Database",1024));
 
-  if (session->client->sendFields(&field_list))
+  if (session.client->sendFields(&field_list))
     return true;
 
-  session->client->store(dbname, strlen(dbname));
-  session->client->store(buffer);
+  session.client->store(schema_message.name());
+  session.client->store(buffer);
 
-  if (session->client->flush())
+  if (session.client->flush())
     return true;
 
-  session->my_eof();
+  session.my_eof();
 
   return false;
 }
