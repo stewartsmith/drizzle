@@ -308,6 +308,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/query_cache.h \
 		              drizzled/plugin/query_rewrite.h \
 			      drizzled/plugin/registry.h \
+			      drizzled/plugin/replication.h \
 			      drizzled/plugin/scheduler.h \
 			      drizzled/plugin/storage_engine.h \
 			      drizzled/plugin/table_function.h \
