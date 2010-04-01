@@ -134,14 +134,6 @@ pthread_handler_t signal_hand(void *)
   /* Save pid to this process (or thread on Linux) */
   create_pid_file();
 
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-  if (opt_do_pstack)
-  {
-    sprintf(pstack_file_name,"drizzled-%lu-%%d-%%d.backtrace", (uint32_t)getpid());
-    pstack_install_segv_action(pstack_file_name);
-  }
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
-
   /*
     signal to init that we are ready
     This works by waiting for init to free mutex,
