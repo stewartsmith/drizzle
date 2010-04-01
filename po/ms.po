@@ -409,8 +409,10 @@ msgid "Unknown command: "
 msgstr ""
 
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
 
@@ -645,6 +647,14 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
 #, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr ""
+
+#, c-format
+msgid "Out of memory"
+msgstr ""
+
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr ""
 
@@ -735,9 +745,6 @@ msgid "Unknown locale: '%s'"
 msgstr ""
 
 msgid "Can't create thread-keys"
-msgstr ""
-
-msgid "Out of memory"
 msgstr ""
 
 msgid "Failed to initialize plugins."
@@ -1025,7 +1032,8 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-msgid "UNUSED"
+#, c-format
+msgid "Unknown error %d"
 msgstr ""
 
 msgid "NO"
@@ -3749,51 +3757,7 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr ""
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
 msgstr ""
 
 #, c-format
@@ -3805,23 +3769,11 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr ""
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr ""
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
-msgstr ""
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
 msgstr ""
 
 #, c-format
@@ -3861,15 +3813,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
-msgstr ""
-
-#, c-format
-msgid "Unknown error %d"
 msgstr ""
 
 #, c-format
@@ -4680,9 +4624,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr ""
 
-msgid "Undefined handler error 125"
-msgstr ""
-
 msgid "Index file is crashed"
 msgstr ""
 
@@ -4690,9 +4631,6 @@ msgid "Record file is crashed"
 msgstr ""
 
 msgid "Out of memory in engine"
-msgstr ""
-
-msgid "Undefined handler error 129"
 msgstr ""
 
 msgid "Incorrect file format"

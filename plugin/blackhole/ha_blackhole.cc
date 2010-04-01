@@ -56,8 +56,7 @@ public:
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY),
+                                     HTON_AUTO_PART_KEY),
     blackhole_open_tables()
   {
     table_definition_ext= BLACKHOLE_EXT;
@@ -78,7 +77,7 @@ public:
     return ha_blackhole_exts;
   }
 
-  int doCreateTable(Session*,
+  int doCreateTable(Session&,
                     Table&,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
@@ -94,7 +93,8 @@ public:
                            drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       string&, set<string>& set_of_names)
+		       SchemaIdentifier &,
+                       set<string>& set_of_names)
   {
     drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
@@ -206,7 +206,7 @@ int ha_blackhole::close(void)
   return 0;
 }
 
-int BlackholeEngine::doCreateTable(Session*,
+int BlackholeEngine::doCreateTable(Session&,
                                    Table&,
                                    drizzled::TableIdentifier &identifier,
                                    drizzled::message::Table& proto)
