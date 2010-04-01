@@ -4765,7 +4765,7 @@ show_param:
              }
              else
              {
-               if (prepare_new_schema_table(session, lex, "SCHEMA_NAMES"))
+               if (prepare_new_schema_table(session, lex, "SHOW_SCHEMAS"))
                  DRIZZLE_YYABORT;
              }
 
@@ -4796,9 +4796,10 @@ show_param:
 
               if ($2)
               {
+		SchemaIdentifier identifier($2);
                 column_name.append($2);
                 lex->select_lex.db= $2;
-                if (not plugin::StorageEngine::doesSchemaExist($2))
+                if (not plugin::StorageEngine::doesSchemaExist(identifier))
                 {
                   my_error(ER_BAD_DB_ERROR, MYF(0), $2);
                 }
@@ -4852,7 +4853,8 @@ show_param:
              {
                lex->select_lex.db= $3;
 
-               if (not plugin::StorageEngine::doesSchemaExist($3))
+	       SchemaIdentifier identifier($3);
+               if (not plugin::StorageEngine::doesSchemaExist(identifier))
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);
                }

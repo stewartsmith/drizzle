@@ -84,8 +84,9 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     let's fetch the database default character set and
     apply it to the table.
   */
+  SchemaIdentifier identifier(db);
   if (create_info->default_table_charset == NULL)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(db);
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 }
 
 /*
@@ -284,11 +285,14 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   */
   pthread_mutex_unlock(&LOCK_open);
   error= 0;
+
   if (wrong_tables.length())
   {
-    if (!foreign_key_error)
+    if (not foreign_key_error)
+    {
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
                       wrong_tables.c_ptr());
+    }
     else
     {
       my_message(ER_ROW_IS_REFERENCED, ER(ER_ROW_IS_REFERENCED), MYF(0));
@@ -297,12 +301,13 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   }
 
   pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
+
 err_with_placeholders:
   unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
   session->no_warnings_for_error= 0;
 
-  return(error);
+  return error;
 }
 
 
@@ -1438,7 +1443,7 @@ bool mysql_create_table_no_lock(Session *session,
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
 
-  set_table_default_charset(create_info, identifier.getDBName().c_str());
+  set_table_default_charset(create_info, identifier.getSchemaName().c_str());
 
   /* Build a Table object to pass down to the engine, and the do the actual create. */
   if (not mysql_prepare_create_table(session, create_info, table_proto, alter_info,
@@ -1633,17 +1638,13 @@ mysql_rename_table(plugin::StorageEngine *base,
 
   assert(base);
 
-  if (not (error= base->renameTable(*session, from, to)))
+  if (not plugin::StorageEngine::doesSchemaExist(to))
   {
-    if (not base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-    {
-      if ((error= plugin::StorageEngine::renameDefinitionFromPath(to, from)))
-      {
-        error= errno;
-        base->renameTable(*session, to, from);
-      }
-    }
+    my_error(ER_NO_DB_ERROR, MYF(0), to.getSchemaName().c_str());
+    return true;
   }
+
+  error= base->renameTable(*session, from, to);
 
   if (error == HA_ERR_WRONG_COMMAND)
   {
