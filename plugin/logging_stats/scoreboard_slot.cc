@@ -91,7 +91,7 @@ const string& ScoreboardSlot::getUser()
 
 void ScoreboardSlot::setIp(string in_ip)
 {
-  ip= in_ip;
+  ip.assign(in_ip);
 }
 
 const string& ScoreboardSlot::getIp()
