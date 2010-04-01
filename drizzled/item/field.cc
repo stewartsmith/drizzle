@@ -365,7 +365,7 @@ bool Item_field::eq(const Item *item, bool) const
 	   (!my_strcasecmp(table_alias_charset, item_field->table_name,
 			   table_name) &&
 	    (!item_field->db_name || !db_name ||
-	     (item_field->db_name && !strcmp(item_field->db_name,
+	     (item_field->db_name && !strcasecmp(item_field->db_name,
 					     db_name))))));
 }
 

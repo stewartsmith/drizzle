@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-08-13 06:40+0000\n"
-"Last-Translator: Yasuhiko Isaki <isaki@videx.co.jp>\n"
+"POT-Creation-Date: 2010-03-15 21:00+0000\n"
+"PO-Revision-Date: 2010-03-19 15:13+0000\n"
+"Last-Translator: tetu-s <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-03-20 04:41+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -400,7 +400,7 @@ msgid "Ping the server to check if it's alive."
 msgstr "サーバーの生存を確認するために接続試験を行う。"
 
 msgid "Use MySQL Protocol."
-msgstr ""
+msgstr "MySQLプロトコルを使用"
 
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
@@ -456,11 +456,14 @@ msgid "Processing line: %<PRIu32>\n"
 msgstr "%<PRIu32> 行目を処理中・・・\n"
 
 msgid "Unknown command: "
-msgstr ""
+msgstr "無効なコマンド "
 
+#, fuzzy
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
 "テーブル名およびカラム名補完のためにテーブル情報を読み込み中。\n"
@@ -537,7 +540,7 @@ msgstr ""
 "ができます。\n"
 
 msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
+msgstr "Drizzleデータベースサーバから定義とデータをダンプ"
 
 #, c-format
 msgid "For more options, use %s --help\n"
@@ -601,11 +604,11 @@ msgstr ""
 
 #, c-format
 msgid "Got error: %s (%d) %s"
-msgstr ""
+msgstr "エラーが発生しました： %s (%d) %s"
 
 #, c-format
 msgid "Got error: %d %s"
-msgstr ""
+msgstr "エラーが発生しました： %d %s"
 
 #, c-format
 msgid "Couldn't execute '%s': %s (%d)"
@@ -732,7 +735,15 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "エラー: ORDER BY句を保持するためのメモリを確保することが出来ません。\n"
 
-#, fuzzy, c-format
+#, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr ""
+
+#, c-format
+msgid "Out of memory"
+msgstr "メモリが不足しています。"
+
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "シグナル %d がスレッド %<PRIu64> で発生しました。"
 
@@ -759,7 +770,7 @@ msgstr ""
 
 #, c-format
 msgid "Fatal signal %d while backtracing\n"
-msgstr ""
+msgstr "バックトレース中の致命的なシグナル %d\n"
 
 #, c-format
 msgid ""
@@ -861,9 +872,6 @@ msgstr "不明なロケールです: 「%s」"
 msgid "Can't create thread-keys"
 msgstr "thead-keysを作成できません"
 
-msgid "Out of memory"
-msgstr "メモリが不足しています。"
-
 msgid "Failed to initialize plugins."
 msgstr "プラグインの初期化に失敗しました。"
 
@@ -876,14 +884,14 @@ msgstr ""
 "利用可能なオプションの詳細については、--verbose --helpを利用下さい。\n"
 
 msgid "No scheduler found, cannot continue!\n"
-msgstr ""
+msgstr "スケジューラが見つかりません．処理を継続できません！\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr "不明もしくはサポートされていないテーブルタイプです: %s"
+msgstr ""
 
 msgid "Display this help and exit after initializing plugins."
-msgstr ""
+msgstr "プラグインを初期化した後，このヘルプを表示して終了します．"
 
 msgid "Auto-increment columns are incremented by this"
 msgstr "AUTO_INCREMENTが指定されたカラムは、この値によって増分されます。"
@@ -1076,14 +1084,22 @@ msgid ""
 "if set to MAX_TABLES+2, the optimizer will switch to the original find_best "
 "(used for testing/comparison)."
 msgstr ""
+"クエリオプティマイザが検索する最大深度．クエリのリレーション数よりも大きな値"
+"はより良いクエリプランを提示するでしょうが，クエリのコンパイルには時間がかか"
+"ります．リレーションの中のテーブル数よりも小さな値は最適化が高速ですが，とて"
+"も悪いクエリプランを提示するでしょう．もし0にセットすると，システムは自動的に"
+"適切な値を使用します; もしMAX_TABLES+2にセットすると，オプティマイザはオリジ"
+"ナルのfind_bestになります（テストや比較に使われます）"
 
 msgid "Directory for plugins."
-msgstr ""
+msgstr "プラグイン用ディレクトリ"
 
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
 msgstr ""
+"デフォルトのプラグインに加えてスタートアップ時にロードされる，オプショナルな"
+"プラグインのカンマ区切りリスト"
 
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
@@ -1097,16 +1113,16 @@ msgid ""
 msgstr ""
 
 msgid "The size of the buffer that is allocated when preloading indexes"
-msgstr ""
+msgstr "インデックスのプレロード時に割り当てられるバッファのサイズ"
 
 msgid "Allocation block size for query parsing and execution"
-msgstr ""
+msgstr "クエリのパースや実行のための割り当てブロックサイズ"
 
 msgid "Persistent buffer for query parsing and execution"
 msgstr ""
 
 msgid "Allocation block size for storing ranges during optimization"
-msgstr ""
+msgstr "最適化中にレンジを保存する割り当てブロックサイズ"
 
 msgid ""
 "Each thread that does a sequential scan allocates a buffer of this size for "
@@ -1180,8 +1196,9 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-msgid "UNUSED"
-msgstr ""
+#, c-format
+msgid "Unknown error %d"
+msgstr "未知のエラー %d"
 
 msgid "NO"
 msgstr ""
@@ -3904,52 +3921,8 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "ファイル'%s'を書き込み中にエラー (エラーコード: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr ""
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "ファイルをアンロックできません(エラーコード: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr ""
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -3960,23 +3933,11 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr ""
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "'%s' ディレクトリに移動できません (Errcode: %d)"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr ""
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
-msgstr ""
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
 msgstr ""
 
 #, c-format
@@ -4016,16 +3977,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "未知のエラー %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -4295,9 +4248,9 @@ msgstr ""
 msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr "プラグインの初期化に失敗しました。"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -4343,9 +4296,9 @@ msgstr ""
 msgid "Variable named %s already exists!\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not add Variable: %s\n"
-msgstr "テーブル「%s」が見つかりません。"
+msgstr ""
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
@@ -4447,9 +4400,8 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "使用するデータベース。"
+msgstr ""
 
 msgid "Enable default replicator"
 msgstr ""
@@ -4457,14 +4409,10 @@ msgstr ""
 msgid "Default Replicator"
 msgstr ""
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
 msgstr ""
-"接続に利用するポート番号を指定。0にすることでデフォルト値を利用。設定の優先順"
-"位はdrizzle.cnf、$DRIZZLE_TCP_PORT、組み込まれたデフォルト値の順で決まりま"
-"す。"
 
 msgid "Connect Timeout."
 msgstr ""
@@ -4481,9 +4429,8 @@ msgstr ""
 msgid "Buffer length."
 msgstr ""
 
-#, fuzzy
 msgid "Address to bind to."
-msgstr "バインドするIPアドレス。"
+msgstr ""
 
 msgid "Unknown Drizzle error"
 msgstr "未知のDrizzleエラー"
@@ -4847,9 +4794,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr ""
 
-msgid "Undefined handler error 125"
-msgstr ""
-
 msgid "Index file is crashed"
 msgstr ""
 
@@ -4857,9 +4801,6 @@ msgid "Record file is crashed"
 msgstr ""
 
 msgid "Out of memory in engine"
-msgstr ""
-
-msgid "Undefined handler error 129"
 msgstr ""
 
 msgid "Incorrect file format"
@@ -5015,12 +4956,9 @@ msgstr ""
 msgid "Tablespace not empty"
 msgstr "テーブルスペースが空です"
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
-"接続に利用するポート番号を指定。0にすることでデフォルト値を利用。設定の優先順"
-"位はdrizzle.cnf、$DRIZZLE_TCP_PORTの順で決まります。 "
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
@@ -5056,9 +4994,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "接続に使用するソケットファイル。"
+msgstr ""
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
@@ -5083,9 +5020,9 @@ msgid ""
 "offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to sync log file. Got error: %s\n"
-msgstr "メモリのロックに失敗しました。Errno: %d\n"
+msgstr ""
 
 #, c-format
 msgid "Failed to open transaction log file %s.  Got error: %s\n"
@@ -5103,53 +5040,23 @@ msgstr ""
 msgid "BUFFER: %s\n"
 msgstr ""
 
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "ファイル'%s'を書き込み中にエラー (エラーコード: %d)"
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "'%s' ディレクトリに移動できません (Errcode: %d)"
+
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "メモリとオープンしているファイルの使用量を表示して終了する。"
+
+#~ msgid "Set the default character set."
+#~ msgstr "規定の文字セットを設定する。"
 
 #~ msgid "Print some debug info at exit."
 #~ msgstr "デバッグ情報を出力して終了する。"
 
-#~ msgid ""
-#~ "\n"
-#~ "The '--memlock' argument, which was enabled, uses system calls that are\n"
-#~ "unreliable and unstable on some operating systems and operating-system\n"
-#~ "versions (notably, some versions of Linux).  This crash could be due to "
-#~ "use\n"
-#~ "of those buggy OS calls.  You should consider whether you really need "
-#~ "the\n"
-#~ "'--memlock' parameter and/or consult the OS distributor about 'mlockall'\n"
-#~ " bugs.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "「--memlock」オプションが有効になっていますが、このオプションはいくつかの"
-#~ "OSまたは\n"
-#~ "OSのバージョンにおいて信頼性が低く安定していないシステムコールを利用してい"
-#~ "ます。\n"
-#~ "（特にいくつかのバージョンのLinuxなどで問題が確認されています。）そのよう"
-#~ "な問題のある\n"
-#~ "OSのシステムコールを利用したためクラッシュが発生した可能性があります。問題"
-#~ "を回避する\n"
-#~ "ために、「--memlock」オプションが必要かどうかを検討して下さい。また、OSの"
-#~ "配布先に\n"
-#~ "「mlockall()」に関するバグが存在するかどうかを確認してください。\n"
-
-#~ msgid "Can't init databases"
-#~ msgstr "データベースの初期化に失敗しました。"
-
-#~ msgid "Default storage engine (%s) is not available"
-#~ msgstr "デフォルトストレージエンジン(%s)を利用できません。"
-
-#~ msgid "Lock drizzled in memory."
-#~ msgstr "drizzledをメモリにロックする。"
-
-#~ msgid "The default size of key cache blocks"
-#~ msgstr "キーキャッシュのデフォルトのブロックサイズ。"
-
-#~ msgid "Buffer length for TCP/IP and socket communication."
-#~ msgstr "TCP/IPまたはソケット経由で通信が行われる場合のバッファ長。"
-
-#~ msgid "Set the default character set."
-#~ msgstr "規定の文字セットを設定する。"
+#~ msgid "Socket file to use for connection."
+#~ msgstr "接続に使用するソケットファイル。"
 
 #~ msgid "Unknown command '\\%c'."
 #~ msgstr "不明なコマンド '\\%c'。"
