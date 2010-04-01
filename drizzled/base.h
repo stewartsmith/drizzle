@@ -506,6 +506,7 @@ typedef uint64_t	ha_rows;
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)
 
+
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_BASE_H */
