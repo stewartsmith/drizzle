@@ -59,7 +59,7 @@ int wild_case_compare(const CHARSET_INFO * const cs,
                       const char *str,const char *wildstr);
 
 bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists);
-bool mysqld_show_create_db(Session *session, const char *dbname, bool if_not_exists);
+bool mysqld_show_create_db(Session &session, SchemaIdentifier &, bool if_not_exists);
 
 bool mysqld_show_column_types(Session *session);
 void calc_sum_of_all_status(struct system_status_var *to);
