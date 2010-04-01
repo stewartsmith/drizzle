@@ -44,6 +44,15 @@ ShowTemporaryTables::Generator::Generator(Field **arg) :
 
 bool ShowTemporaryTables::Generator::populate()
 {
+  while (table)
+  {
+    if (not isWild(table->s->getTableName()))
+    {
+      break;
+    }
+    table= table->next;
+  }
+
   if (not table)
     return false;
 
