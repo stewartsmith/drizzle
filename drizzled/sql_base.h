@@ -129,7 +129,7 @@ TableList *find_table_in_list(TableList *table,
                                const char *table_name);
 TableList *unique_table(TableList *table, TableList *table_list,
                         bool check_alias= false);
-void remove_db_from_cache(const std::string schema_name);
+void remove_db_from_cache(SchemaIdentifier &schema_identifier);
 
 /* bits for last argument to remove_table_from_cache() */
 #define RTFC_NO_FLAG                0x0000

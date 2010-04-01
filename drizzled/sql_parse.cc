@@ -204,7 +204,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     string tmp(packet, packet_length);
 
-    if (not mysql_change_db(session, tmp))
+    SchemaIdentifier identifier(tmp);
+
+    if (not mysql_change_db(session, identifier))
     {
       session->my_ok();
     }
@@ -506,7 +508,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= session->openTablesLock(all_tables)))
+  if (not (res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
     {
@@ -896,11 +898,17 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str &&
-      check_db_name(&table->db))
+  if (table->is_derived_table() == false && table->db.str)
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
-    return NULL;
+    my_casedn_str(files_charset_info, table->db.str);
+
+    SchemaIdentifier schema_identifier(string(table->db.str, table->db.length));
+    if (not check_db_name(schema_identifier))
+    {
+
+      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
+      return NULL;
+    }
   }
 
   if (!alias)					/* Alias is case sensitive */
@@ -949,7 +957,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables=tables->next_local)
     {
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcmp(ptr->db, tables->db))
+	  !strcasecmp(ptr->db, tables->db))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;
