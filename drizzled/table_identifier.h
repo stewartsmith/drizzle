@@ -35,6 +35,9 @@
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
 #include "drizzled/message/table.pb.h"
+
+#include "drizzled/schema_identifier.h"
+
 #include <string.h>
 
 #include <assert.h>
@@ -46,10 +49,12 @@
 
 namespace drizzled {
 
+class Table;
+
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
 size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
 
-class TableIdentifier
+class TableIdentifier : public SchemaIdentifier
 {
 public:
   typedef message::Table::TableType Type;
@@ -57,33 +62,48 @@ private:
 
   Type type;
   std::string path;
-  std::string db;
   std::string table_name;
-  std::string lower_db;
   std::string lower_table_name;
   std::string sql_path;
 
-  void primeLower();
+  void init();
 
 public:
+  TableIdentifier(const Table &table);
+                   
+  TableIdentifier( const SchemaIdentifier &schema,
+                   const std::string &table_name_arg,
+                   Type tmp_arg= message::Table::STANDARD) :
+    SchemaIdentifier(schema),
+    type(tmp_arg),
+    table_name(table_name_arg)
+  { 
+    init();
+  }
+
   TableIdentifier( const std::string &db_arg,
                    const std::string &table_name_arg,
                    Type tmp_arg= message::Table::STANDARD) :
+    SchemaIdentifier(db_arg),
     type(tmp_arg),
-    db(db_arg),
     table_name(table_name_arg)
   { 
+    init();
   }
 
   TableIdentifier( const std::string &schema_name_arg,
                    const std::string &table_name_arg,
                    const std::string &path_arg ) :
+    SchemaIdentifier(schema_name_arg),
     type(message::Table::TEMPORARY),
     path(path_arg),
-    db(schema_name_arg),
     table_name(table_name_arg)
   { 
+    init();
   }
+
+  using SchemaIdentifier::compare;
+  bool compare(std::string schema_arg, std::string table_arg);
 
   bool isTmp() const
   {
@@ -106,17 +126,7 @@ public:
     path= new_path;
   }
 
-  const std::string &getDBName() const
-  {
-    return db;
-  }
-
-  const std::string &getSchemaName() const
-  {
-    return db;
-  }
-
-  const std::string getTableName() const
+  const std::string &getTableName() const
   {
     return table_name;
   }
@@ -128,7 +138,7 @@ public:
     const char *type_str;
 
     output << "TableIdentifier:(";
-    output <<  identifier.getDBName();
+    output <<  identifier.getSchemaName();
     output << ", ";
     output << identifier.getTableName();
     output << ", ";
@@ -158,12 +168,9 @@ public:
 
   friend bool operator==(TableIdentifier &left, TableIdentifier &right)
   {
-    left.primeLower();
-    right.primeLower();
-
     if (left.type == right.type)
     {
-      if (left.lower_db == right.lower_db)
+      if (static_cast<SchemaIdentifier &>(left) == static_cast<SchemaIdentifier &>(right))
       {
         if (left.lower_table_name == right.lower_table_name)
         {
