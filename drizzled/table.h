@@ -470,7 +470,7 @@ public:
   */
   bool operator<(const Table &right) const
   {
-    int result= strcmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
+    int result= strcasecmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
 
     if (result <  0)
       return true;
@@ -478,7 +478,7 @@ public:
     if (result >  0)
       return false;
 
-    result= strcmp(this->getShare()->getTableName(), right.getShare()->getTableName());
+    result= strcasecmp(this->getShare()->getTableName(), right.getShare()->getTableName());
 
     if (result <  0)
       return true;
@@ -486,8 +486,7 @@ public:
     if (result >  0)
       return false;
 
-    if (this->getShare()->getTableProto()->type()  < 
-        right.getShare()->getTableProto()->type())
+    if (this->getShare()->getTableProto()->type()  < right.getShare()->getTableProto()->type())
       return true;
 
     return false;
@@ -593,7 +592,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
-bool check_db_name(LEX_STRING *org_name);
+bool check_db_name(SchemaIdentifier &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */
