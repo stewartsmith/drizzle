@@ -329,19 +329,19 @@ int get_defaults_options(int argc, char **argv,
     /* Skip program name or previously handled argument */
     argv++;
     prev_argc= argc;                            /* To check if we found */
-    if (!*defaults && (strncmp(*argv,"--defaults-file=", sizeof("--defaults-file=")) == 0))
+    if (!*defaults && (strncmp(*argv,"--defaults-file=", strlen("--defaults-file=")) == 0))
     {
       *defaults= *argv + sizeof("--defaults-file=")-1;
        argc--;
        continue;
     }
-    if (!*extra_defaults && (strncmp(*argv, "--defaults-extra-file=", sizeof("--defaults-extra-file=")) == 0))
+    if (!*extra_defaults && (strncmp(*argv, "--defaults-extra-file=", strlen("--defaults-extra-file=")) == 0))
     {
       *extra_defaults= *argv + sizeof("--defaults-extra-file=")-1;
       argc--;
       continue;
     }
-    if (!*group_suffix && (strncmp(*argv, "--defaults-group-suffix=", sizeof("--defaults-group-suffix=")) == 0))
+    if (!*group_suffix && (strncmp(*argv, "--defaults-group-suffix=", strlen("--defaults-group-suffix=")) == 0))
     {
       *group_suffix= *argv + sizeof("--defaults-group-suffix=")-1;
       argc--;
