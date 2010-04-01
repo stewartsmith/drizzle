@@ -113,6 +113,12 @@ public:
   {
     return schema_exts;
   }
+
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
 };
 
 #endif /* PLUGIN_SCHEMA_ENGINE_SCHEMA_H */
