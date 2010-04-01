@@ -297,12 +297,6 @@ namespace drizzled
  * transaction after all DDLs, just like the statement transaction
  * is always committed at the end of all statements.
  */
-inline bool TransactionServices::shouldConstructMessages()
-{
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  return replication_services.isActive();
-}
-
 void TransactionServices::registerResourceForStatement(Session *session,
                                                        plugin::MonitoredInTransaction *monitored,
                                                        plugin::TransactionalStorageEngine *engine)
@@ -886,6 +880,12 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
     }
   }
   return error;
+}
+
+bool TransactionServices::shouldConstructMessages()
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  return replication_services.isActive();
 }
 
 message::Transaction *TransactionServices::getActiveTransactionMessage(Session *in_session)
