@@ -2791,7 +2791,8 @@ static char *primary_key_fields(const char *table_name)
   {
     char *end;
     /* result (terminating \0 is already in result_length) */
-    size_t result_length_alloc = result_length + 10;
+
+    size_t result_length_alloc= result_length + 10;
     result= (char *)malloc(result_length_alloc);
     if (!result)
     {
