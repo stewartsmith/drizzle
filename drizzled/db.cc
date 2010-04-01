@@ -54,9 +54,10 @@ namespace drizzled
 {
 
 static long mysql_rm_known_files(Session *session,
-                                 const string &db,
+                                 SchemaIdentifier &schema_identifier,
                                  plugin::TableNameList &dropped_tables);
-static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name);
+static void mysql_change_db_impl(Session *session);
+static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
 
 /*
   Create a database
@@ -107,8 +108,9 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
   // @todo push this lock down into the engine
   pthread_mutex_lock(&LOCK_create_db);
 
-  // Check to see if it exists already.
-  if (plugin::StorageEngine::doesSchemaExist(schema_message.name()))
+  // Check to see if it exists already.  
+  SchemaIdentifier schema_identifier(schema_message.name());
+  if (plugin::StorageEngine::doesSchemaExist(schema_identifier))
   {
     if (not is_if_not_exists)
     {
@@ -164,7 +166,8 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
 
   pthread_mutex_lock(&LOCK_create_db);
 
-  if (not plugin::StorageEngine::doesSchemaExist(schema_message.name()))
+  SchemaIdentifier schema_idenifier(schema_message.name());
+  if (not plugin::StorageEngine::doesSchemaExist(schema_idenifier))
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), schema_message.name().c_str());
     return false;
@@ -207,7 +210,7 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
     ERROR Error
 */
 
-bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if_exists)
+bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bool if_exists)
 {
   long deleted=0;
   int error= false;
@@ -233,11 +236,11 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 
   // Lets delete the temporary tables first outside of locks.  
   set<string> set_of_names;
-  session->doGetTableNames(schema_name, set_of_names);
+  session->doGetTableNames(schema_identifier, set_of_names);
 
   for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
-    TableIdentifier identifier(schema_name, *iter, message::Table::TEMPORARY);
+    TableIdentifier identifier(schema_identifier, *iter, message::Table::TEMPORARY);
     Table *table= session->find_temporary_table(identifier);
     session->close_temporary_table(table);
   }
@@ -246,30 +249,30 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 
 
   /* See if the schema exists */
-  if (not plugin::StorageEngine::doesSchemaExist(schema_name))
+  if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
   {
     if (if_exists)
     {
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-                          schema_name.c_str());
+                          schema_identifier.getSQLPath().c_str());
     }
     else
     {
       error= -1;
-      my_error(ER_DB_DROP_EXISTS, MYF(0), schema_name.c_str());
+      my_error(ER_DB_DROP_EXISTS, MYF(0), schema_identifier.getSQLPath().c_str());
       goto exit;
     }
   }
   else
   {
     pthread_mutex_lock(&LOCK_open); /* After deleting database, remove all cache entries related to schema */
-    remove_db_from_cache(schema_name);
+    remove_db_from_cache(schema_identifier);
     pthread_mutex_unlock(&LOCK_open);
 
 
     error= -1;
-    deleted= mysql_rm_known_files(session, schema_name, dropped_tables);
+    deleted= mysql_rm_known_files(session, schema_identifier, dropped_tables);
     if (deleted >= 0)
     {
       error= 0;
@@ -280,7 +283,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
     assert(! session->query.empty());
 
     TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.dropSchema(session, schema_name);
+    transaction_services.dropSchema(session, schema_identifier.getSchemaName());
     session->clear_error();
     session->server_status|= SERVER_STATUS_DB_DROPPED;
     session->my_ok((uint32_t) deleted);
@@ -289,13 +292,11 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
   else
   {
     char *query, *query_pos, *query_end, *query_data_start;
-    uint32_t db_len;
 
     if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
       goto exit; /* not much else we can do */
     query_pos= query_data_start= strcpy(query,"drop table ")+11;
     query_end= query + MAX_DROP_TABLE_Q_LEN;
-    db_len= schema_name.length();
 
     TransactionServices &transaction_services= TransactionServices::singleton();
     for (plugin::TableNameList::iterator it= dropped_tables.begin();
@@ -333,8 +334,8 @@ exit:
     SELECT DATABASE() in the future). For this we free() session->db and set
     it to 0.
   */
-  if (not session->db.empty() && session->db.compare(schema_name) == 0)
-    mysql_change_db_impl(session, NULL);
+  if (schema_identifier.compare(session->db))
+    mysql_change_db_impl(session);
   pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
 
@@ -419,6 +420,7 @@ static int rm_table_part2(Session *session, TableList *tables)
     }
 
     TableIdentifier identifier(db, table->table_name);
+    identifier.getPath();
 
     if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -487,7 +489,7 @@ err_with_placeholders:
 */
 
 static long mysql_rm_known_files(Session *session,
-                                 const string &db,
+                                 SchemaIdentifier &schema_identifier,
                                  plugin::TableNameList &dropped_tables)
 {
   long deleted= 0;
@@ -495,13 +497,13 @@ static long mysql_rm_known_files(Session *session,
 
   tot_list_next= &tot_list;
 
-  plugin::StorageEngine::getTableNames(db, dropped_tables);
+  plugin::StorageEngine::getTableNames(*session, schema_identifier, dropped_tables);
 
   for (plugin::TableNameList::iterator it= dropped_tables.begin();
        it != dropped_tables.end();
        it++)
   {
-    size_t db_len= db.size();
+    size_t db_len= schema_identifier.getSchemaName().size();
 
     /* Drop the table nicely */
     TableList *table_list=(TableList*)
@@ -513,7 +515,7 @@ static long mysql_rm_known_files(Session *session,
       return -1;
 
     table_list->db= (char*) (table_list+1);
-    table_list->table_name= strcpy(table_list->db, db.c_str()) + db_len + 1;
+    table_list->table_name= strcpy(table_list->db, schema_identifier.getSchemaName().c_str()) + db_len + 1;
     filename_to_tablename((*it).c_str(), table_list->table_name,
                           (*it).size() + 1);
     table_list->alias= table_list->table_name;  // If lower_case_table_names=2
@@ -534,9 +536,10 @@ static long mysql_rm_known_files(Session *session,
       return -1;
   }
 
-  if (not plugin::StorageEngine::dropSchema(db))
+
+  if (not plugin::StorageEngine::dropSchema(schema_identifier))
   {
-    my_error(ER_DROP_SCHEMA, MYF(0), db.c_str());
+    my_error(ER_DROP_SCHEMA, MYF(0), schema_identifier.getSQLPath().c_str());
     return -1;
   }
 
@@ -605,66 +608,34 @@ static long mysql_rm_known_files(Session *session,
     @retval true  Error
 */
 
-bool mysql_change_db(Session *session, const std::string &new_db_name)
+bool mysql_change_db(Session *session, SchemaIdentifier &schema_identifier)
 {
 
-  assert(not new_db_name.empty());
-
-  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(),
-                                              new_db_name))
+  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(), schema_identifier))
   {
     /* Error message is set in isAuthorized */
     return true;
   }
 
-
-  /*
-    Now we need to make a copy because check_db_name requires a
-    non-constant argument. Actually, it takes database file name.
-
-    TODO: fix check_db_name().
-  */
-
-  LEX_STRING new_db_file_name;
-  new_db_file_name.length= new_db_name.length();
-  new_db_file_name.str= (char *)malloc(new_db_name.length() + 1);
-  if (new_db_file_name.str == NULL)
-    return true;                             /* the error is set */
-  memcpy(new_db_file_name.str, new_db_name.c_str(), new_db_name.length());
-  new_db_file_name.str[new_db_name.length()]= 0;
-
-
-  /*
-    NOTE: if check_db_name() fails, we should throw an error in any case,
-    even if we are called from sp_head::execute().
-
-    It's next to impossible however to get this error when we are called
-    from sp_head::execute(). But let's switch the current database to NULL
-    in this case to be sure.
-  */
-
-  if (check_db_name(&new_db_file_name))
+  if (not check_db_name(schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), new_db_file_name.str);
-    free(new_db_file_name.str);
+    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
 
     return true;
   }
 
-  if (not plugin::StorageEngine::doesSchemaExist(new_db_file_name.str))
+  if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
   {
     /* Report an error and free new_db_file_name. */
 
-    my_error(ER_BAD_DB_ERROR, MYF(0), new_db_file_name.str);
-    free(new_db_file_name.str);
+    my_error(ER_BAD_DB_ERROR, MYF(0), schema_identifier.getSQLPath().c_str());
 
     /* The operation failed. */
 
     return true;
   }
 
-  mysql_change_db_impl(session, &new_db_file_name);
-  free(new_db_file_name.str);
+  mysql_change_db_impl(session, schema_identifier);
 
   return false;
 }
@@ -680,10 +651,11 @@ bool mysql_change_db(Session *session, const std::string &new_db_name)
   @param new_db_charset Character set of the new database.
 */
 
-static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
+static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_identifier)
 {
   /* 1. Change current database in Session. */
 
+#if 0
   if (new_db_name == NULL)
   {
     /*
@@ -694,6 +666,7 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
     session->set_db(NULL, 0);
   }
   else
+#endif
   {
     /*
       Here we already have a copy of database name to be used in Session. So,
@@ -701,8 +674,13 @@ static void mysql_change_db_impl(Session *session, LEX_STRING *new_db_name)
       the previous database name, we should do it explicitly.
     */
 
-    session->set_db(new_db_name->str, new_db_name->length);
+    session->set_db(schema_identifier.getLower());
   }
+}
+
+static void mysql_change_db_impl(Session *session)
+{
+  session->set_db(string());
 }
 
 } /* namespace drizzled */
