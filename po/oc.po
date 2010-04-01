@@ -1,188 +1,180 @@
-# Simplified Chinese translation for drizzle
-# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# Occitan (post 1500) translation for drizzle
+# Copyright (c) 2010 Rosetta Contributors and Canonical Ltd 2010
 # This file is distributed under the same license as the drizzle package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
-"Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-14 15:03+0000\n"
-"Last-Translator: 冯超 <rainofchaos@gmail.com>\n"
-"Language-Team: Simplified Chinese <zh_CN@li.org>\n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2010-03-15 21:00+0000\n"
+"PO-Revision-Date: 2010-03-24 22:19+0000\n"
+"Last-Translator: Cédric VALMARY (Per Tot en òc) <cvalmary@yahoo.fr>\n"
+"Language-Team: Occitan (post 1500) <oc@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Launchpad-Export-Date: 2010-03-25 04:53+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
-msgstr "同\"help\"命令。"
+msgstr "Sinonim per 'help'."
 
 msgid "Clear command."
-msgstr "清除命令。"
+msgstr ""
 
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "重新连接到服务器。数据库(db)和主机(host)为可选参数。"
+msgstr ""
 
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
-msgstr "设置查询语句的分界符。注意:将把本行全部剩余字符串视为新的分界符。"
+msgstr ""
 
 msgid "Send command to drizzle server, display result vertically."
-msgstr "发送指令到drizzle服务器，直排显示结果。"
+msgstr ""
 
 msgid "Exit drizzle. Same as quit."
-msgstr "结束drizzle。与\"quit\"命令相同。"
+msgstr ""
 
 msgid "Send command to drizzle server."
-msgstr "发送指令到drizzle服务器。"
+msgstr ""
 
 msgid "Display this help."
-msgstr "显示此帮助信息。"
+msgstr "Aficha aquesta ajuda."
 
 msgid "Disable pager, print to stdout."
-msgstr "禁用当前指定的结果文字处理程序(pager)，直接在标准输出上打印结果"
+msgstr ""
 
 msgid "Don't write into outfile."
-msgstr "不写入输出文件。"
+msgstr ""
 
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
 
 msgid "Print current command."
-msgstr "输出当前命令。"
+msgstr "Aficha la comanda actuala."
 
 msgid "Change your drizzle prompt."
-msgstr "更改drizzle提示符。"
+msgstr ""
 
 msgid "Quit drizzle."
-msgstr "退出drizzle。"
+msgstr "Quitar drizzle"
 
 msgid "Rebuild completion hash."
-msgstr "重建整个hash值。"
+msgstr ""
 
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr "执行SQL脚本文件。参数为文件名。"
+msgstr ""
 
 msgid "Get status information from the server."
-msgstr "从服务器获取状态信息。"
+msgstr "Obténer l'estatut del servidor."
 
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
-msgstr "设置输出文件 [to_outfile]。将所有内容追加输出到指定文件。"
+msgstr ""
 
 msgid "Use another database. Takes database name as argument."
-msgstr "使用其他数据库。参数为数据库名称。"
+msgstr ""
 
 msgid "Show warnings after every statement."
-msgstr "每条语句后显示警告。"
+msgstr ""
 
 msgid "Don't show warnings after every statement."
-msgstr "每个指令句后不要显示警告。"
+msgstr ""
 
 #, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr "构建初始提示符时内存分配失败。正在退出。\n"
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "欢迎来到Drizzle客户端。请使用;或\\g指示当前命令结束。"
+msgstr ""
 
 #, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
-"当前的Drizzle会话的连接ID为%u\n"
-"服务器版本: %s\n"
 
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr "正在读取历史文件%s\n"
+msgstr ""
 
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "无法为临时历史文件分配内存空间！\n"
+msgstr ""
 
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
-msgstr "欲获取帮助请键入‘help;’或‘\\h’。键入’\\c‘将清除缓冲。\n"
+msgstr ""
 
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr "正在写入历史文件%s\n"
+msgstr ""
 
 msgid "Aborted"
-msgstr "会话终止"
+msgstr "Abandonat"
 
 msgid "Bye"
-msgstr "再见"
+msgstr "Al reveire"
 
 msgid "Query aborted by Ctrl+C\n"
-msgstr "用户使用Ctrl+C放弃查询。\n"
+msgstr ""
 
 msgid "Display this help and exit."
-msgstr "显示此帮助信息并退出。"
+msgstr "Afichar aquesta ajuda e sortir."
 
 msgid "Synonym for -?"
-msgstr "同-?。"
+msgstr ""
 
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
 "and field completion, but startup and reconnecting may take a longer time. "
 "Disable with --disable-auto-rehash."
 msgstr ""
-"开启自动更新。不必使用rehash命令来开启键入表和字段时的自动补全功能，但是"
-"Drizzle客户端的启动和重连需要更长时间。可使用--disable-auto-rehash关闭之。"
 
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
 "on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
-"不提供自动更新。请使用rehash命令来开启键入表和字段时的自动补全功能。开启此选"
-"项可以加速Drizzle客户端的启动和重连过程。警告：此选项已过时；请使用--disable-"
-"auto-rehash选项。"
 
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
-msgstr "如果结果比终端宽度更宽，则自动调整为直排输出模式。"
+msgstr ""
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr "不使用历史文件。禁用交互模式。（开启--silent选项)"
+msgstr ""
 
 msgid "Display column type information."
-msgstr "显示列类型信息。"
+msgstr ""
 
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
-"保留注释。发送注释到服务器。缺省为 --skip--comments (不保留注释），使用--"
-"comments开启之。"
 
 msgid "Use compression in server/client protocol."
-msgstr "在服务器/客户端通讯协议中启用压缩。"
+msgstr ""
 
 msgid "Database to use."
-msgstr "要使用的数据库。"
+msgstr "Banca de donadas d'utilizar"
 
 msgid "(not used)"
-msgstr "(尚未指定)"
+msgstr ""
 
 msgid "Delimiter to be used."
-msgstr "要使用的定义符号。"
+msgstr ""
 
 msgid "Execute command and quit. (Disables --force and history file)"
-msgstr "执行命令并退出。(禁用 --force 和历史文件)"
+msgstr ""
 
 msgid "Print the output of a query (rows) vertically."
-msgstr "打印查询结果"
+msgstr ""
 
 msgid "Continue even if we get an sql error."
-msgstr "忽略SQL错误继续执行"
+msgstr ""
 
 msgid ""
 "Enable named commands. Named commands mean this program's internal commands; "
@@ -200,50 +192,48 @@ msgid ""
 msgstr ""
 
 msgid "Ignore space after function names."
-msgstr "忽略函数名字后的空格。"
+msgstr ""
 
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "激活/禁止 LOAD DATA LOCAL INFILE （从本地读取数据文件）"
+msgstr "Activa/desactiva LOAD DATA LOCAL INFILE."
 
 msgid "Turn off beep on error."
-msgstr "发生错误时关闭"
+msgstr ""
 
 msgid "Connect to host."
-msgstr "链接到主机。"
+msgstr ""
 
 msgid "Write line numbers for errors."
-msgstr "显示发生错误的行号"
+msgstr ""
 
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
-msgstr "不显示发生错误的行号。警告：-L 不建议使用，请在long版中使用该选项。"
+msgstr ""
 
 msgid "Flush buffer after each query."
-msgstr "每次查询之后刷新缓存。"
+msgstr ""
 
 msgid "Write column names in results."
-msgstr "在结果中显示列名"
+msgstr ""
 
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
-msgstr "不在结果中显示列名。警告：-N 不推荐使用，请在long版中使用改选项。"
+msgstr ""
 
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
-"变更一个变量的值。不推荐使用此选项；可以用 --variable-name=value 直接赋值变"
-"量。"
 
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr "忽略 SIGINT （CTRL-C）"
+msgstr "Ignora SIGINT (CTRL-C)"
 
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
-msgstr "仅更新默认数据库。使用这个选项在更新日志时，跳过其它数据库。"
+msgstr ""
 
 msgid ""
 "Pager to use to display results. If you don't supply an option the default "
@@ -269,7 +259,7 @@ msgid ""
 msgstr ""
 
 msgid "built-in default"
-msgstr "内建默认值"
+msgstr "per defaut, natiu."
 
 msgid "Set the drizzle prompt to this value."
 msgstr ""
@@ -288,14 +278,14 @@ msgid ""
 msgstr ""
 
 msgid "Shutdown the server."
-msgstr "关闭服务器。"
+msgstr "Arrestar lo servidor."
 
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
 
 msgid "Output in table format."
-msgstr "以表格结构输出"
+msgstr ""
 
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
@@ -309,10 +299,10 @@ msgid ""
 msgstr ""
 
 msgid "User for login if not current user."
-msgstr "无当前用户时的登陆用户"
+msgstr ""
 
 msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr "只允许使用了键值的 UPDATE 和 DELETE。"
+msgstr ""
 
 msgid "Synonym for option --safe-updates, -U."
 msgstr ""
@@ -321,16 +311,16 @@ msgid "Write more. (-v -v -v gives the table output format)."
 msgstr ""
 
 msgid "Output version information and exit."
-msgstr "输出版本信息并退出。"
+msgstr ""
 
 msgid "Wait and retry if connection is down."
-msgstr "断开连接时等待并重试。"
+msgstr ""
 
 msgid "Number of seconds before connection timeout."
-msgstr "连接超时前的秒数"
+msgstr ""
 
 msgid "Max length of input line"
-msgstr "输入行的最大长度"
+msgstr ""
 
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr ""
@@ -338,11 +328,12 @@ msgstr ""
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr "使用旧协议 (4.1.1之前) 时，拒绝客户端连接到服务器。"
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr ""
 
 msgid "Number of lines before each import progress report."
-msgstr "每次导入进度报告前的行数。"
+msgstr ""
 
 msgid "Ping the server to check if it's alive."
 msgstr ""
@@ -359,11 +350,11 @@ msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr "版权所有 (C) 2008 Sun Microsystem\n"
+msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr "用法: %s [选项] [数据库]\n"
+msgstr ""
 
 msgid "DELIMITER cannot contain a backslash character"
 msgstr ""
@@ -386,20 +377,18 @@ msgid ""
 msgstr ""
 
 msgid "Value supplied for port is not valid."
-msgstr "给出的端口值不合法。"
+msgstr ""
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
-msgstr "处理行： %<PRIu32>\n"
+msgstr ""
 
 msgid "Unknown command: "
-msgstr "未知命令： "
+msgstr ""
 
 msgid ""
-"                              Reading table information for completion of "
-"table and column names\n"
-"                                  You can turn off this feature to get a "
-"quicker startup with -A\n"
+"Reading table information for completion of table and column names\n"
+"    You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 
@@ -439,7 +428,8 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr ""
 
 #, c-format
@@ -634,14 +624,6 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
 #, c-format
-msgid "Could not open '%s' for reading: errno = %d"
-msgstr ""
-
-#, c-format
-msgid "Out of memory"
-msgstr ""
-
-#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr ""
 
@@ -734,6 +716,9 @@ msgstr ""
 msgid "Can't create thread-keys"
 msgstr ""
 
+msgid "Out of memory"
+msgstr ""
+
 msgid "Failed to initialize plugins."
 msgstr ""
 
@@ -757,8 +742,8 @@ msgid "Auto-increment columns are incremented by this"
 msgstr ""
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
 
 msgid ""
@@ -1019,8 +1004,7 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-#, c-format
-msgid "Unknown error %d"
+msgid "UNUSED"
 msgstr ""
 
 msgid "NO"
@@ -1500,8 +1484,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #, c-format
@@ -1750,8 +1734,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
@@ -2074,7 +2058,8 @@ msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
 
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #, c-format
@@ -2083,8 +2068,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 
 #, c-format
@@ -2109,7 +2094,8 @@ msgid ""
 "SELECT #%d"
 msgstr ""
 
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 msgid ""
@@ -2376,7 +2362,8 @@ msgstr ""
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #, c-format
@@ -2408,13 +2395,14 @@ msgid ""
 "View merge algorithm can't be used here for now (assumed undefined algorithm)"
 msgstr ""
 
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #, c-format
@@ -2687,8 +2675,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
 
 msgid ""
@@ -2719,7 +2707,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #, c-format
@@ -2761,8 +2750,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
 
 msgid ""
@@ -2839,7 +2828,8 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr ""
 
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 msgid "AGGREGATE is not supported for stored functions"
@@ -2847,8 +2837,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 
 #, c-format
@@ -2925,7 +2915,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 msgid "MAXVALUE can only be used in last partition definition"
@@ -2943,7 +2934,8 @@ msgstr ""
 msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -3004,7 +2996,8 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr ""
 
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #, c-format
@@ -3061,7 +3054,8 @@ msgstr ""
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 msgid ""
@@ -3191,8 +3185,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 
 msgid "You can't write-lock a log table. Only read access is possible"
@@ -3203,8 +3197,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #, c-format
@@ -3601,7 +3595,8 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr ""
 
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #, c-format
@@ -3744,7 +3739,51 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
+msgid "Can't create/write to file '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Error writing file '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Error on close of '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Out of memory (Needed %u bytes)"
+msgstr ""
+
+#, c-format
+msgid "Error on delete of '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't lock file (Errcode: %d)"
+msgstr ""
+
+#, c-format
 msgid "Can't unlock file (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't read dir of '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't get stat of '%s' (Errcode: %d)"
 msgstr ""
 
 #, c-format
@@ -3756,11 +3795,23 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr ""
 
 #, c-format
+msgid "Can't get working dirctory (Errcode: %d)"
+msgstr ""
+
+#, c-format
+msgid "Can't change dir to '%s' (Errcode: %d)"
+msgstr ""
+
+#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr ""
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
+msgstr ""
+
+#, c-format
+msgid "Disk is full writing '%s'. Waiting for someone to free space..."
 msgstr ""
 
 #, c-format
@@ -3800,7 +3851,15 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr ""
+
+#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
+msgstr ""
+
+#, c-format
+msgid "Unknown error %d"
 msgstr ""
 
 #, c-format
@@ -4223,9 +4282,8 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "要使用的数据库。"
+msgstr ""
 
 msgid "Enable default replicator"
 msgstr ""
@@ -4612,6 +4670,9 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr ""
 
+msgid "Undefined handler error 125"
+msgstr ""
+
 msgid "Index file is crashed"
 msgstr ""
 
@@ -4619,6 +4680,9 @@ msgid "Record file is crashed"
 msgstr ""
 
 msgid "Out of memory in engine"
+msgstr ""
+
+msgid "Undefined handler error 129"
 msgstr ""
 
 msgid "Incorrect file format"
@@ -4736,7 +4800,7 @@ msgid "Failed to set row auto increment value"
 msgstr ""
 
 msgid "Unknown (generic) error from engine"
-msgstr "引擎产生未知（一般）错误。"
+msgstr ""
 
 msgid "Record is the same"
 msgstr ""
@@ -4745,7 +4809,7 @@ msgid "It is not possible to log this statement"
 msgstr ""
 
 msgid "Tablespace exists"
-msgstr "表已经存在"
+msgstr ""
 
 msgid "The event was corrupt, leading to illegal data being read"
 msgstr ""
@@ -4766,13 +4830,13 @@ msgid "Read page with wrong checksum"
 msgstr ""
 
 msgid "Lock or active transaction"
-msgstr "锁定或激活事务"
+msgstr ""
 
 msgid "No such table space"
-msgstr "分配表空间错误"
+msgstr ""
 
 msgid "Tablespace not empty"
-msgstr "表非空"
+msgstr ""
 
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
@@ -4795,7 +4859,8 @@ msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
 msgstr ""
 
 #, c-format
-msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgid ""
+"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 #, c-format
@@ -4812,9 +4877,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "供连接用的 Socket 文件。"
+msgstr ""
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
@@ -4858,12 +4922,3 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr ""
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "退出时检查物理内存和已开启文件的使用情况。"
-
-#~ msgid "Print some debug info at exit."
-#~ msgstr "退出时打印部份调试信息。"
-
-#~ msgid "Set the default character set."
-#~ msgstr "设置默认字符集。"

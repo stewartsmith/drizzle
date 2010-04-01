@@ -39,7 +39,7 @@ bool statement::DropIndex::execute()
     TableIdentifier identifier(first_table->db, first_table->table_name);
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
       return true;
     }
   }
@@ -64,12 +64,13 @@ bool statement::DropIndex::execute()
   memset(&create_info, 0, sizeof(create_info));
   create_info.db_type= 0;
   create_info.row_type= ROW_TYPE_NOT_USED;
-  create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(session->db.c_str());
 
   bool res;
   if (original_table_message.type() == message::Table::STANDARD )
   {
     TableIdentifier identifier(first_table->db, first_table->table_name);
+
+    create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
     res= alter_table(session, 
                      identifier,
@@ -86,6 +87,7 @@ bool statement::DropIndex::execute()
     assert(table);
     {
       TableIdentifier identifier(first_table->db, first_table->table_name, table->s->path.str);
+      create_info.default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 
       res= alter_table(session, 
                        identifier,
