@@ -255,7 +255,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/memory/sql_alloc.h \
 			      drizzled/memory/multi_malloc.h \
 			      drizzled/memory/root.h \
-			      drizzled/my_decimal.h \
 			      drizzled/my_getopt.h \
 			      drizzled/my_hash.h \
 			      drizzled/my_time.h \
@@ -633,7 +632,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/key_map.cc \
 			   drizzled/lock.cc \
 			   drizzled/lookup_symbol.cc \
-			   drizzled/my_decimal.cc \
 			   drizzled/my_getsystime.cc \
 			   drizzled/my_hash.cc \
 			   drizzled/my_time.cc \
