@@ -110,6 +110,10 @@ public:
 
   bool doDoesTableExist(drizzled::Session&, drizzled::TableIdentifier &identifier);
   int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &from, drizzled::TableIdentifier &to);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 #endif /* PLUGIN_ARCHIVE_ARCHIVE_ENGINE_H */

@@ -21,7 +21,6 @@
 #ifndef PLUGIN_SHOW_DICTIONARY_SHOW_TABLES_H
 #define PLUGIN_SHOW_DICTIONARY_SHOW_TABLES_H
 
-
 class ShowTables : public drizzled::plugin::TableFunction
 {
 public:
@@ -30,9 +29,8 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
     bool is_primed;
-    drizzled::message::Table table_message;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator table_iterator;
+    drizzled::TableIdentifiers set_of_identifiers;
+    drizzled::TableIdentifiers::iterator table_iterator;
     std::string schema_name;
 
     void fill();

@@ -53,28 +53,16 @@ bool ShowTables::Generator::nextCore()
   {
     Session *session= current_session;
     SchemaIdentifier identifier(schema_name);
-    plugin::StorageEngine::getTableNames(*session, identifier, table_names);
-    table_iterator= table_names.begin();
+    plugin::StorageEngine::getTableIdentifiers(*session, identifier, set_of_identifiers);
+    set_of_identifiers.sort();
+    table_iterator= set_of_identifiers.begin();
     is_primed= true;
   }
 
-  if (table_iterator == table_names.end())
+  if (table_iterator == set_of_identifiers.end())
     return false;
 
-  table_message.Clear();
-  {
-    Session *session= current_session;
-    TableIdentifier identifier(schema_name, *table_iterator);
-
-    if (not plugin::StorageEngine::getTableDefinition(*session,
-                                                      identifier,
-                                                      table_message))
-    {
-      return false;
-    }
-  }
-
-  if (isWild(*table_iterator))
+  if (isWild((*table_iterator).getTableName()))
     return false;
 
   return true;
@@ -84,7 +72,7 @@ bool ShowTables::Generator::next()
 {
   while (not nextCore())
   {
-    if (table_iterator != table_names.end())
+    if (table_iterator != set_of_identifiers.end())
       continue;
 
     return false;
@@ -106,5 +94,5 @@ bool ShowTables::Generator::populate()
 void ShowTables::Generator::fill()
 {
   /* TABLE_NAME */
-  push(table_message.name());
+  push((*table_iterator).getTableName());
 }
