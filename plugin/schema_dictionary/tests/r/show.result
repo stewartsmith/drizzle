@@ -1,4 +1,5 @@
 create schema everything;
+use everything;
 DROP TABLE IF EXISTS `branch`;
 Warnings:
 Note	1051	Unknown table 'branch'
@@ -336,7 +337,7 @@ CREATE TABLE `workspace` (
 PRIMARY KEY  (`workspace_id`)
 ) ;
 show tables;
-Tables_in_test
+Tables_in_everything
 branch
 container
 document

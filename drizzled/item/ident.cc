@@ -87,15 +87,15 @@ const char *Item_ident::full_name() const
     return field_name ? field_name : name ? name : "tmp_field";
   if (db_name && db_name[0])
   {
-		tmp_len=strlen(db_name)+strlen(table_name)+strlen(field_name)+3;
-    tmp=(char*) memory::sql_alloc(tmp_len);
+    tmp_len= strlen(db_name)+strlen(table_name)+strlen(field_name)+3;
+    tmp= (char*) memory::sql_alloc(tmp_len);
     snprintf(tmp, tmp_len, "%s.%s.%s",db_name,table_name,field_name);
   }
   else
   {
     if (table_name[0])
     {
-			tmp_len=strlen(table_name)+strlen(field_name)+2;
+      tmp_len=strlen(table_name)+strlen(field_name)+2;
       tmp= (char*) memory::sql_alloc(tmp_len);
       snprintf(tmp, tmp_len, "%s.%s", table_name, field_name);
     }

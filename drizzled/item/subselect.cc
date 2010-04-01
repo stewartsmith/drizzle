@@ -524,7 +524,7 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
     if (session->lex->describe)
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
-      sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
+      snprintf(warn_buff, sizeof(warn_buff), ER(ER_SELECT_REDUCED), select_lex->select_number);
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		   ER_SELECT_REDUCED, warn_buff);
     }
@@ -1320,7 +1320,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
 	if (session->lex->describe)
 	{
 	  char warn_buff[DRIZZLE_ERRMSG_SIZE];
-	  sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
+	  snprintf(warn_buff, sizeof(warn_buff), ER(ER_SELECT_REDUCED), select_lex->select_number);
 	  push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		       ER_SELECT_REDUCED, warn_buff);
 	}

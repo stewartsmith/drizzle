@@ -51,7 +51,7 @@ char * my_load_path(char * to, const char *path,
       strcpy(buff,path);			/* Return org file name */
   }
   else
-    sprintf(buff,"%s%s",own_path_prefix,path);
+    snprintf(buff, sizeof(buff), "%s%s",own_path_prefix,path);
   strcpy(to,buff);
   return(to);
 } /* my_load_path */
