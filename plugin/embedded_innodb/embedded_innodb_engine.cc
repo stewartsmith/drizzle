@@ -124,13 +124,11 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
-private:
   virtual int doStartTransaction(Session *session,
                                  start_transaction_option_t options);
   virtual void doStartStatement(Session *session);
   virtual void doEndStatement(Session *session);
 
-public:
   virtual int doSetSavepoint(Session* session,
                                  drizzled::NamedSavepoint &savepoint);
   virtual int doRollbackToSavepoint(Session* session,
@@ -146,6 +144,7 @@ public:
   void addOpenTable(const std::string &table_name, EmbeddedInnoDBTableShare *);
   void deleteOpenTable(const std::string &table_name);
 
+  uint64_t getInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor);
 };
 
 static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
@@ -286,6 +285,59 @@ void EmbeddedInnoDBEngine::deleteOpenTable(const string &table_name)
 
 static pthread_mutex_t embedded_innodb_mutex= PTHREAD_MUTEX_INITIALIZER;
 
+uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
+{
+  uint64_t nr;
+  int error;
+
+  (void) extra(HA_EXTRA_KEYREAD);
+  table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
+  index_init(table->s->next_number_index, 1);
+  if (table->s->next_number_keypart == 0)
+  {						// Autoincrement at key-start
+    error=index_last(table->record[1]);
+  }
+  else
+  {
+    unsigned char key[MAX_KEY_LENGTH];
+    key_copy(key, table->record[0],
+             table->key_info + table->s->next_number_index,
+             table->s->next_number_key_offset);
+    error= index_read_map(table->record[1], key,
+                          make_prev_keypart_map(table->s->next_number_keypart),
+                          HA_READ_PREFIX_LAST);
+  }
+
+  if (error)
+    nr=1;
+  else
+    nr= ((uint64_t) table->found_next_number_field->
+         val_int_offset(table->s->rec_buff_length)+1);
+  index_end();
+  (void) extra(HA_EXTRA_NO_KEYREAD);
+
+  if (table->s->getTableProto()->options().auto_increment_value() > nr)
+    nr= table->s->getTableProto()->options().auto_increment_value();
+
+  return nr;
+}
+
+EmbeddedInnoDBTableShare::EmbeddedInnoDBTableShare(const char* name, uint64_t initial_auto_increment_value)
+ : use_count(0)
+{
+  table_name.assign(name);
+  auto_increment_value.fetch_and_store(initial_auto_increment_value);
+}
+
+uint64_t EmbeddedInnoDBEngine::getInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor)
+{
+  doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
+  uint64_t initial_auto_increment_value= cursor->getInitialAutoIncrementValue();
+  doCommit(current_session, true);
+
+  return initial_auto_increment_value;
+}
+
 EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name, int *rc)
 {
   pthread_mutex_lock(&embedded_innodb_mutex);
@@ -295,7 +347,11 @@ EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name
 
   if (!share)
   {
-    share= new EmbeddedInnoDBTableShare(table_name);
+    uint64_t initial_auto_increment_value= 0;
+    if (table->found_next_number_field)
+      initial_auto_increment_value= a_engine->getInitialAutoIncrementValue(this);
+
+    share= new EmbeddedInnoDBTableShare(table_name, initial_auto_increment_value);
 
     if (share == NULL)
     {
@@ -390,15 +446,24 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
   return to;
 }
 
+void EmbeddedInnoDBCursor::get_auto_increment(uint64_t, //offset,
+                                              uint64_t, //increment,
+                                              uint64_t, //nb_dis,
+                                              uint64_t *first_value,
+                                              uint64_t *nb_reserved_values)
+{
+  *first_value= share->auto_increment_value.fetch_and_increment();
+  (*first_value)--;
+  *nb_reserved_values= 1;
+}
+
 static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
 {
   str->reserve(identifier.getSchemaName().length() + identifier.getTableName().length() + 1);
-  str->append(identifier.getPath().c_str()+2);
-/*
+//  str->append(identifier.getPath().c_str()+2);
   str->assign(identifier.getSchemaName());
   str->append("/");
   str->append(identifier.getTableName());
-*/
 }
 
 EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
@@ -1166,9 +1231,6 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
 
 int EmbeddedInnoDBCursor::write_row(unsigned char *)
 {
-  if (table->next_number_field)
-    update_auto_increment();
-
   ib_err_t err;
   int ret= 0;
 
@@ -1180,6 +1242,32 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
 
   err= ib_cursor_first(cursor);
   assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
+
+
+  if (table->next_number_field)
+  {
+    update_auto_increment();
+
+    uint64_t temp_auto= table->next_number_field->val_int();
+
+    while (true)
+    {
+      uint64_t fetched_auto= share->auto_increment_value;
+
+      if (temp_auto >= fetched_auto)
+      {
+        uint64_t store_value= temp_auto+1;
+        if (store_value == 0)
+          store_value++;
+
+        if (share->auto_increment_value.compare_and_swap(store_value, fetched_auto) == fetched_auto)
+          break;
+      }
+      else
+        break;
+    }
+
+  }
 
   write_row_to_innodb_tuple(table->field, tuple);
 
@@ -1214,9 +1302,13 @@ int EmbeddedInnoDBCursor::update_row(const unsigned char * ,
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
   ib_tuple_delete(update_tuple);
+  ib_err_t err2= ib_cursor_next(cursor);
+  (void)err2;
 
   if (err == DB_SUCCESS)
     return 0;
+  else if (err == DB_DUPLICATE_KEY)
+    return HA_ERR_FOUND_DUPP_KEY;
   else
     return -1;
 }
@@ -1291,7 +1383,15 @@ err:
 
 int EmbeddedInnoDBCursor::rnd_init(bool)
 {
-  ib_trx_t transaction= *get_trx(ha_session());
+  ib_trx_t transaction;
+
+  if(*get_trx(current_session) == NULL)
+  {
+    EmbeddedInnoDBEngine *innodb_engine= static_cast<EmbeddedInnoDBEngine*>(engine);
+    innodb_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
+  }
+
+  transaction= *get_trx(ha_session());
 
   ib_cursor_attach_trx(cursor, transaction);
 
