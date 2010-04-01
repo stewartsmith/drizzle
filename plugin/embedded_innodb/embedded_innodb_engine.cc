@@ -72,8 +72,7 @@ public:
                                                   HTON_NULL_IN_KEY |
                                                   HTON_CAN_INDEX_BLOBS |
                                                   HTON_AUTO_PART_KEY |
-                                                  HTON_HAS_DOES_TRANSACTIONS |
-                                                  HTON_HAS_DATA_DICTIONARY)
+                                                  HTON_HAS_DOES_TRANSACTIONS)
   {
     table_definition_ext= EMBEDDED_INNODB_EXT;
   }
@@ -90,7 +89,7 @@ public:
     return EmbeddedInnoDBCursor_exts;
   }
 
-  int doCreateTable(Session*,
+  int doCreateTable(Session&,
                     Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table& proto);
@@ -108,7 +107,7 @@ public:
   bool doDoesTableExist(Session&, TableIdentifier &identifier);
 
   void doGetTableNames(drizzled::CachedDirectory &,
-                       string& database_name,
+                       drizzled::SchemaIdentifier &schema,
                        drizzled::plugin::TableNameList &set_of_names);
 
   /* The following defines can be increased if necessary */
@@ -502,7 +501,8 @@ cleanup:
   return err;
 }
 
-int EmbeddedInnoDBEngine::doCreateTable(Session* session,
+
+int EmbeddedInnoDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
                                         drizzled::TableIdentifier &identifier,
                                         drizzled::message::Table& table_message)
@@ -523,7 +523,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session,
 
   if (innodb_err != DB_SUCCESS)
   {
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
                         innodb_table_name.c_str(), innodb_err, ib_strerror(innodb_err));
@@ -542,7 +542,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session,
 
     if (innodb_err != DB_SUCCESS)
     {
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_CANT_CREATE_TABLE,
                           _("Cannot create field %s on table %s."
                             " InnoDB Error %d (%s)\n"),
@@ -599,7 +599,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session,
     ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
     ib_table_schema_delete(innodb_table_schema);
 
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
                         innodb_err, ib_strerror(innodb_err));
@@ -620,7 +620,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session* session,
     if (innodb_err == DB_TABLE_IS_BEING_USED)
       return EEXIST;
 
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
                         innodb_table_name.c_str(),
@@ -644,7 +644,7 @@ schema_error:
 
   if (innodb_err != DB_SUCCESS)
   {
-    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
                         innodb_table_name.c_str(),
@@ -899,12 +899,12 @@ rollback:
 
 
 void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
-                                           string& database_name,
+                                           drizzled::SchemaIdentifier &schema,
                                            drizzled::plugin::TableNameList &set_of_names)
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
-  string search_string(database_name);
+  string search_string(schema.getLower());
 
   search_string.append("/");
 
