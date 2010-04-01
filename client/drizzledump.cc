@@ -35,8 +35,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
-#include "drizzled/hash.h"
 #include <stdarg.h>
+#include <drizzled/unordered_set.h>
 #include <algorithm>
 
 #include <drizzled/gettext.h>
@@ -153,7 +153,7 @@ static const char *compatible_mode_names[]=
 static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
   "", compatible_mode_names, NULL};
 
-drizzled::hash_set<string> ignore_table;
+unordered_set<string> ignore_table;
 
 static struct my_option my_long_options[] =
 {
@@ -2341,7 +2341,7 @@ static int init_dumping(char *database, int init_func(char*))
 static bool include_table(const char *hash_key, size_t key_size)
 {
   string match(hash_key, key_size);
-  drizzled::hash_set<string>::iterator iter= ignore_table.find(match);
+  unordered_set<string>::iterator iter= ignore_table.find(match);
   return (iter == ignore_table.end());
 }
 

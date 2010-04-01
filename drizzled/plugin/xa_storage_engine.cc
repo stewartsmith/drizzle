@@ -30,8 +30,6 @@
 #include <drizzled/plugin/xa_storage_engine.h>
 #include "drizzled/xid.h"
 
-#include "drizzled/hash.h"
-
 #include <string>
 #include <vector>
 #include <algorithm>
