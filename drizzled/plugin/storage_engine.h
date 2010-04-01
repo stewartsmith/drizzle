@@ -33,7 +33,7 @@
 #include "drizzled/cached_directory.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 
-#include "drizzled/hash.h"
+#include <drizzled/unordered_map.h>
 
 #include <bitset>
 #include <string>
@@ -122,7 +122,7 @@ class NamedSavepoint;
 namespace plugin
 {
 
-typedef hash_map<std::string, StorageEngine *> EngineMap;
+typedef unordered_map<std::string, StorageEngine *> EngineMap;
 typedef std::vector<StorageEngine *> EngineVector;
 
 typedef std::set<std::string> TableNameList;

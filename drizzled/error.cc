@@ -27,8 +27,8 @@
 #include "drizzled/definitions.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
-#include "drizzled/hash.h"
 
+#include <drizzled/unordered_map.h>
 #include <exception>
 
 namespace drizzled
@@ -70,7 +70,7 @@ private:
   ErrorMap(const ErrorMap &e);
   ErrorMap& operator=(const ErrorMap &e);
 
-  typedef drizzled::hash_map<uint32_t, std::string> ErrorMessageMap;
+  typedef unordered_map<uint32_t, std::string> ErrorMessageMap;
   ErrorMessageMap mapping_;
 };
 
