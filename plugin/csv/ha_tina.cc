@@ -119,7 +119,6 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_TEMPORARY_ONLY |
                                      HTON_NO_AUTO_INCREMENT |
-                                     HTON_HAS_DATA_DICTIONARY |
                                      HTON_SKIP_STORE_LOCK |
                                      HTON_FILE_BASED),
     tina_open_tables()
@@ -139,8 +138,8 @@ public:
     return ha_tina_exts;
   }
 
-  int doCreateTable(Session *,
-                    Table& table_arg,
+  int doCreateTable(Session &,
+                    Table &table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
@@ -149,7 +148,7 @@ public:
                            drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, SchemaIdentifier&, set<string>&) { };
 
   int doDropTable(Session&, TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
@@ -1386,7 +1385,7 @@ int ha_tina::delete_all_rows()
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::doCreateTable(Session *session,
+int Tina::doCreateTable(Session &session,
                         Table& table_arg,
                         drizzled::TableIdentifier &identifier,
                         drizzled::message::Table &create_proto)
@@ -1422,7 +1421,7 @@ int Tina::doCreateTable(Session *session,
 
   internal::my_close(create_file, MYF(0));
 
-  session->storeTableMessage(identifier, create_proto);
+  session.storeTableMessage(identifier, create_proto);
 
   return 0;
 }
