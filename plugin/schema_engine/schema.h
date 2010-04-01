@@ -119,6 +119,9 @@ public:
                           uint64_t *,
                           uint64_t *)
   {}
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 #endif /* PLUGIN_SCHEMA_ENGINE_SCHEMA_H */

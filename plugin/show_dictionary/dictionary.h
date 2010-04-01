@@ -18,34 +18,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_SHOW_TEMPORARY_TABLES_H
-#define PLUGIN_SCHEMA_DICTIONARY_SHOW_TEMPORARY_TABLES_H
+#ifndef PLUGIN_SHOW_DICTIONARY_DICTIONARY_H
+#define PLUGIN_SHOW_DICTIONARY_DICTIONARY_H
 
-class ShowTemporaryTables : public drizzled::plugin::TableFunction
-{
-public:
-  ShowTemporaryTables();
+#include <set>
 
-  class Generator : public drizzled::plugin::TableFunction::Generator
-  {
-    drizzled::Session *session;
-    drizzled::Table *table;
+#include "drizzled/plugin/table_function.h"
+#include "drizzled/plugin/storage_engine.h"
+#include "drizzled/statement/select.h"
 
-    void fill();
+#include "drizzled/session.h"
+#include "drizzled/current_session.h"
+#include "drizzled/message/schema.pb.h"
 
-    bool checkSchema();
+#include "plugin/show_dictionary/show_columns.h"
+#include "plugin/show_dictionary/show_indexes.h"
+#include "plugin/show_dictionary/show_schemas.h"
+#include "plugin/show_dictionary/show_tables.h"
+#include "plugin/show_dictionary/show_table_status.h"
+#include "plugin/show_dictionary/show_temporary_tables.h"
 
-  public:
-    Generator(drizzled::Field **arg);
-
-    bool populate();
-
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
-#endif /* PLUGIN_SCHEMA_DICTIONARY_SHOW_TEMPORARY_TABLES_H */
+#endif /* PLUGIN_SHOW_DICTIONARY_DICTIONARY_H */
