@@ -50,8 +50,7 @@
  * to not have to wait for session 1 to locate a slot to use, as they
  * will be in different buckets.  A lock is taken to locate a open slot
  * in the scoreboard for a session or to locate the slot that the current
- * session has claimed. A lock is taken to reset the slot when the session 
- * has terminated.
+ * session has claimed. 
  *
  * A read lock is taken on the scoreboard vector when the table is queried 
  * in the data_dictionary.
