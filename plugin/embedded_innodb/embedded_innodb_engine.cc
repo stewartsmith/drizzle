@@ -56,8 +56,7 @@ public:
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY)
+                                     HTON_AUTO_PART_KEY)
   {
     table_definition_ext= EMBEDDED_INNODB_EXT;
   }
@@ -74,7 +73,7 @@ public:
     return EmbeddedInnoDBCursor_exts;
   }
 
-  int doCreateTable(Session*,
+  int doCreateTable(Session&,
                     Table&,
                     drizzled::TableIdentifier &,
                     drizzled::message::Table&);
@@ -90,7 +89,8 @@ public:
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &,
-                       string&, set<string>& )
+                       drizzled::SchemaIdentifier &,
+                       drizzled::plugin::TableNameList &)
   {
   }
 
@@ -125,7 +125,7 @@ int EmbeddedInnoDBCursor::close(void)
   return 0;
 }
 
-int EmbeddedInnoDBEngine::doCreateTable(Session *,
+int EmbeddedInnoDBEngine::doCreateTable(Session &,
                                         Table& ,
                                         drizzled::TableIdentifier &,
                                         drizzled::message::Table&)

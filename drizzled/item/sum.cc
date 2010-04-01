@@ -3031,7 +3031,7 @@ void Item_func_group_concat::cleanup()
   if (warning)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
-    sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
+    snprintf(warn_buff, sizeof(warn_buff), ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
     warning->set_msg(current_session, warn_buff);
     warning= 0;
   }
@@ -3062,7 +3062,7 @@ void Item_func_group_concat::cleanup()
       if (warning)
       {
         char warn_buff[DRIZZLE_ERRMSG_SIZE];
-        sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
+        snprintf(warn_buff, sizeof(warn_buff), ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
         warning->set_msg(session, warn_buff);
         warning= 0;
       }
