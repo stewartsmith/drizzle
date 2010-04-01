@@ -1775,7 +1775,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     char* db = table->db;
     bool fatal_error=0;
 
-    sprintf(table_name,"%s.%s",db,table->table_name);
+    snprintf(table_name, sizeof(table_name), "%s.%s",db,table->table_name);
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {
@@ -2289,7 +2289,7 @@ bool mysql_checksum_table(Session *session, TableList *tables,
     char table_name[NAME_LEN*2+2];
     Table *t;
 
-    sprintf(table_name,"%s.%s",table->db,table->table_name);
+    snprintf(table_name, sizeof(table_name), "%s.%s",table->db,table->table_name);
 
     t= table->table= session->openTableLock(table, TL_READ);
     session->clear_error();			// these errors shouldn't get client
