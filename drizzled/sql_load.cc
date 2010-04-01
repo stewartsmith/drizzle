@@ -308,9 +308,10 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   info.handle_duplicates=handle_duplicates;
   info.escape_char=escaped->length() ? (*escaped)[0] : INT_MAX;
 
+  SchemaIdentifier identifier(session->db);
   READ_INFO read_info(file, tot_length,
-                      ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(session->db.c_str()),
-		      *field_term,*ex->line_start, *ex->line_term, *enclosed,
+                      ex->cs ? ex->cs : plugin::StorageEngine::getSchemaCollation(identifier),
+		      *field_term, *ex->line_start, *ex->line_term, *enclosed,
 		      info.escape_char, is_fifo);
   if (read_info.error)
   {
