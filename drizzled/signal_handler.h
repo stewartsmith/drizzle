@@ -36,20 +36,19 @@ extern "C" void drizzled_end_thread_signal(int sig);
   such as SA_RESTART being set, and we want to make sure that no such
   flags are set.
 */
-static inline void set_signal(int sig, sighandler_t disp)
+static inline void ignore_signal(int sig)
 {
   /* Wow. There is a function sigaction which takes a pointer to a
     struct sigaction. */
   struct sigaction l_s;
   sigset_t l_set;
-  int l_rc;
+  sigemptyset(&l_set);
 
   assert(sig != 0);
-  sigemptyset(&l_set);
-  l_s.sa_handler= disp;
+  l_s.sa_handler= SIG_IGN;
   l_s.sa_mask= l_set;
   l_s.sa_flags= 0;
-  l_rc= sigaction(sig, &l_s, NULL);
+  int l_rc= sigaction(sig, &l_s, NULL);
   assert(l_rc == 0);
 }
 

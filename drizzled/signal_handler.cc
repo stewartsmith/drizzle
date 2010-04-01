@@ -50,7 +50,14 @@ void drizzled_print_signal_warning(int sig)
     errmsg_printf(ERRMSG_LVL_WARN, _("Got signal %d from thread %"PRIu64),
                   sig, global_thread_id);
 #ifndef HAVE_BSD_SIGNALS
-  set_signal(sig,drizzled_print_signal_warning);		/* int. thread system calls */
+  sigset_t set;
+  sigemptyset(&set);
+
+  struct sigaction sa;
+  sa.sa_handler= drizzled_print_signal_warning;
+  sa.sa_mask= set;
+  sa.sa_flags= 0;
+  sigaction(sig, &sa, NULL);  /* int. thread system calls */
 #endif
   if (sig == SIGALRM)
     alarm(2);					/* reschedule alarm */

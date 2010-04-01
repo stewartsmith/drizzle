@@ -153,7 +153,7 @@ static void init_signals(void)
                         "core file on signals"));
   }
   (void) sigemptyset(&set);
-  set_signal(SIGPIPE,SIG_IGN);
+  ignore_signal(SIGPIPE);
   sigaddset(&set,SIGPIPE);
 #ifndef IGNORE_SIGHUP_SIGQUIT
   sigaddset(&set,SIGQUIT);
@@ -165,16 +165,19 @@ static void init_signals(void)
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
   sa.sa_handler = drizzled_print_signal_warning;
-  sigaction(SIGTERM, &sa, (struct sigaction*) 0);
+  sigaction(SIGTERM, &sa, NULL);
   sa.sa_flags = 0;
   sa.sa_handler = drizzled_print_signal_warning;
-  sigaction(SIGHUP, &sa, (struct sigaction*) 0);
+  sigaction(SIGHUP, &sa, NULL);
 #ifdef SIGTSTP
   sigaddset(&set,SIGTSTP);
 #endif
   if (test_flags.test(TEST_SIGINT))
   {
-    set_signal(thr_kill_signal, drizzled_end_thread_signal);
+    sa.sa_flags= 0;
+    sa.sa_handler= drizzled_end_thread_signal;
+    sigaction(thr_kill_signal, &sa, NULL);
+
     // May be SIGINT
     sigdelset(&set, thr_kill_signal);
   }
@@ -182,7 +185,7 @@ static void init_signals(void)
     sigaddset(&set,SIGINT);
   sigprocmask(SIG_SETMASK,&set,NULL);
   pthread_sigmask(SIG_SETMASK,&set,NULL);
-  return;;
+  return;
 }
 
 

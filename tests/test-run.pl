@@ -3337,10 +3337,12 @@ sub gdb_arguments {
     # write init file for mysqld
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
+               "set breakpoint pending on\n" .
 	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end\n" .
+               "set breakpoint pending off\n" .
 	       "run");
   }
 

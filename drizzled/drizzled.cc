@@ -342,9 +342,6 @@ pthread_cond_t  COND_server_end;
 
 /* Static variables */
 
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-static bool opt_do_pstack;
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
 int cleanup_done;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;

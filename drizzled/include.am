@@ -441,8 +441,12 @@ drizzled_libdrizzled_la_LIBADD= \
 				$(LIBINTL) \
 				${LIBC_P} \
 				$(pandora_plugin_libs) \
-				$(LDADD) $(LIBUUID) \
-				$(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
+				$(LDADD) \
+				$(LIBUUID) \
+				$(LIBDL_LIBS) \
+				$(LIBPROTOBUF) \
+				$(LIBPCRE) \
+				$(LIBTBB) \
 				$(GCOV_LIBS) 
 
 drizzled_libdrizzled_la_DEPENDENCIES= \
@@ -759,7 +763,9 @@ sbin_PROGRAMS+= drizzled/drizzled
 drizzled_drizzled_SOURCES= \
                            drizzled/main.cc
 drizzled_drizzled_LDADD= \
-                         drizzled/libdrizzled.la
+			 $(LIBPCRE) \
+			 $(LIBINTL) \
+			 drizzled/libdrizzled.la
 
 drizzled_drizzled_LDFLAGS= -export-dynamic
 
