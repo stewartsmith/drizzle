@@ -443,15 +443,6 @@ static int fill_table_proto(message::Table &table_proto,
   return 0;
 }
 
-int delete_table_proto_file(const char *file_name)
-{
-  string new_path(file_name);
-  string file_ext = ".dfe";
-
-  new_path.append(file_ext);
-  return internal::my_delete(new_path.c_str(), MYF(0));
-}
-
 /*
   Create a table definition proto file and the tables
 

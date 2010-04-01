@@ -28,6 +28,8 @@
 
 #include <string>
 
+#include <drizzled/unordered_map.h>
+
 #include "drizzled/typelib.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/memory/root.h"
@@ -36,7 +38,7 @@
 namespace drizzled
 {
 
-typedef drizzled::hash_map<std::string, TableShare *> TableDefinitionCache;
+typedef unordered_map<std::string, TableShare *> TableDefinitionCache;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
@@ -65,7 +67,7 @@ public:
     max_rows(0),
     table_proto(NULL),
     storage_engine(NULL),
-    tmp_table(STANDARD_TABLE),
+    tmp_table(message::Table::STANDARD),
     ref_count(0),
     null_bytes(0),
     last_null_bit_pos(0),
@@ -126,7 +128,7 @@ public:
     max_rows(0),
     table_proto(NULL),
     storage_engine(NULL),
-    tmp_table(STANDARD_TABLE),
+    tmp_table(message::Table::STANDARD),
     ref_count(0),
     null_bytes(0),
     last_null_bit_pos(0),
@@ -211,6 +213,11 @@ public:
   const char *getTableName() const
   {
     return table_name.str;
+  }
+
+  const char *getPath() const
+  {
+    return path.str;
   }
 
   const std::string &getTableName(std::string &name_arg) const
@@ -337,7 +344,8 @@ public:
   {
     return storage_engine;
   }
-  enum tmp_table_type tmp_table;
+
+  TableIdentifier::Type tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */
   uint32_t getTableCount()
@@ -499,7 +507,7 @@ public:
     memset(this, 0, sizeof(TableShare));
     memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     table_category=         TABLE_CATEGORY_TEMPORARY;
-    tmp_table=              INTERNAL_TMP_TABLE;
+    tmp_table=              message::Table::INTERNAL;
     db.str=                 (char*) key;
     db.length=		 strlen(key);
     table_cache_key.str=    (char*) key;
@@ -533,7 +541,7 @@ public:
       If someone is waiting for this to be deleted, inform it about this.
       Don't do a delete until we know that no one is refering to this anymore.
     */
-    if (tmp_table == STANDARD_TABLE)
+    if (tmp_table == message::Table::STANDARD)
     {
       /* share->mutex is locked in release_table_share() */
       while (waiting_on_cond)
@@ -618,6 +626,21 @@ public:
   static TableShare *getShare(Session *session, 
                               TableList *table_list, char *key,
                               uint32_t key_length, uint32_t, int *error);
+
+  friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
+  {
+    output << "TableShare:(";
+    output <<  share.getSchemaName();
+    output << ", ";
+    output << share.getTableName();
+    output << ", ";
+    output << share.getTableTypeAsString();
+    output << ", ";
+    output << share.getPath();
+    output << ")";
+
+    return output;  // for multiple << operators.
+  }
 };
 
 } /* namespace drizzled */

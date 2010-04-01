@@ -9,8 +9,7 @@ dnl are set.
 
 AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
 
-  dnl We need to turn on our CXXFLAGS to make sure it shows up correctly
-  PANDORA_CXX_STL_HASH
+  PANDORA_HAVE_CXX_UNORDERED
 
   PANDORA_CXX_CSTDINT
   PANDORA_CXX_CINTTYPES

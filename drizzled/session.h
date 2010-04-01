@@ -142,8 +142,6 @@ class Time_zone;
 #define Session_SENTRY_MAGIC 0xfeedd1ff
 #define Session_SENTRY_GONE  0xdeadbeef
 
-#define Session_CHECK_SENTRY(session) assert(session->dbug_sentry == Session_SENTRY_MAGIC)
-
 struct system_variables
 {
   system_variables() {};
@@ -465,6 +463,11 @@ public:
 
 private:
   SecurityContext security_ctx;
+
+  inline void checkSentry() const
+  {
+    assert(this->dbug_sentry == Session_SENTRY_MAGIC);
+  }
 public:
   const SecurityContext& getSecurityContext() const
   {
@@ -1125,7 +1128,7 @@ public:
       @retval false Success
       @retval true  Out-of-memory error
   */
-  bool set_db(const char *new_db, size_t new_db_len);
+  bool set_db(const std::string &new_db);
 
   /*
     Copy the current database to the argument. Use the current arena to
@@ -1418,7 +1421,7 @@ public:
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
-  typedef drizzled::hash_map<std::string, message::Table> TableMessageCache;
+  typedef unordered_map<std::string, message::Table> TableMessageCache;
   TableMessageCache table_message_cache;
 
   bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);
@@ -1433,9 +1436,9 @@ public:
   Table *find_temporary_table(TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
-                       const std::string& db_name,
+                       SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
-  void doGetTableNames(const std::string& db_name,
+  void doGetTableNames(SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
 
   int doGetTableDefinition(drizzled::TableIdentifier &identifier,
@@ -1447,11 +1450,12 @@ public:
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
 private:
-  void close_temporary(Table *table);
+  void nukeTable(Table *table);
 public:
 
+  void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);

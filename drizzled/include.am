@@ -192,7 +192,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/ha_statistics.h \
 			      drizzled/cursor.h \
 			      drizzled/handler_structs.h \
-			      drizzled/hash.h \
 			      drizzled/hybrid_type.h \
 			      drizzled/hybrid_type_traits.h \
 			      drizzled/hybrid_type_traits_decimal.h \
@@ -254,7 +253,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/memory/sql_alloc.h \
 			      drizzled/memory/multi_malloc.h \
 			      drizzled/memory/root.h \
-			      drizzled/my_decimal.h \
 			      drizzled/my_getopt.h \
 			      drizzled/my_hash.h \
 			      drizzled/my_time.h \
@@ -324,6 +322,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
+			      drizzled/schema_identifier.h \
 			      drizzled/security_context.h \
 			      drizzled/select_create.h \
 			      drizzled/select_dump.h \
@@ -421,6 +420,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
+			      drizzled/unordered_map.h \
+			      drizzled/unordered_set.h \
 			      drizzled/user_var_entry.h \
 			      drizzled/utf8.h \
 			      drizzled/utf8/checked.h \
@@ -632,7 +633,6 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/key_map.cc \
 				 drizzled/lock.cc \
 				 drizzled/lookup_symbol.cc \
-				 drizzled/my_decimal.cc \
 				 drizzled/my_getsystime.cc \
 				 drizzled/my_hash.cc \
 				 drizzled/my_time.cc \
@@ -668,6 +668,7 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/plugin/query_rewrite.cc \
 				 drizzled/plugin/registry.cc \
 				 drizzled/plugin/scheduler.cc \
+				 drizzled/plugin/schema_engine.cc \
 				 drizzled/plugin/storage_engine.cc \
 				 drizzled/plugin/table_function.cc \
 				 drizzled/plugin/transaction_applier.cc \
@@ -678,6 +679,7 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/records.cc \
 				 drizzled/replication_services.cc \
 				 drizzled/resource_context.cc \
+				 drizzled/schema_identifier.cc \
 				 drizzled/session.cc \
 				 drizzled/session_list.cc \
 				 drizzled/set_var.cc \

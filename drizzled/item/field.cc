@@ -199,9 +199,6 @@ void Item_field::set_field(Field *field_par)
   unsigned_flag=test(field_par->flags & UNSIGNED_FLAG);
   collation.set(field_par->charset(), field_par->derivation());
   fixed= 1;
-
-  if (field->table->s->tmp_table == SYSTEM_TMP_TABLE)
-    any_privileges= 0;
 }
 
 
@@ -368,7 +365,7 @@ bool Item_field::eq(const Item *item, bool) const
 	   (!my_strcasecmp(table_alias_charset, item_field->table_name,
 			   table_name) &&
 	    (!item_field->db_name || !db_name ||
-	     (item_field->db_name && !strcmp(item_field->db_name,
+	     (item_field->db_name && !strcasecmp(item_field->db_name,
 					     db_name))))));
 }
 

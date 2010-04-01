@@ -51,7 +51,9 @@ bool ShowTables::Generator::nextCore()
   }
   else
   {
-    plugin::StorageEngine::getTableNames(schema_name, table_names);
+    Session *session= current_session;
+    SchemaIdentifier identifier(schema_name);
+    plugin::StorageEngine::getTableNames(*session, identifier, table_names);
     table_iterator= table_names.begin();
     is_primed= true;
   }
@@ -104,5 +106,5 @@ bool ShowTables::Generator::populate()
 void ShowTables::Generator::fill()
 {
   /* TABLE_NAME */
-  push(*table_iterator);
+  push(table_message.name());
 }

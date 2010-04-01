@@ -312,7 +312,6 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/message/statement_transform.h
 %{_includedir}/drizzled/message/table.pb.h
 %{_includedir}/drizzled/message/transaction.pb.h
-%{_includedir}/drizzled/my_decimal.h
 %{_includedir}/drizzled/my_error.h
 %{_includedir}/drizzled/my_getopt.h
 %{_includedir}/drizzled/my_hash.h

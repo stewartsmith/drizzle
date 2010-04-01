@@ -1458,7 +1458,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
-  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
+  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'drizzle-protocol-port'};
 
   $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
 
@@ -3281,7 +3281,7 @@ sub dbx_arguments {
   {
     # write init file for drizzled
     mtr_tofile($dbx_init_file,
-               "stop in drizzled::mysql_parse\n" .
+               "stop in __1cIdrizzledLmysql_parse6Fpn0AHSession_pkcI_v_\n" .
                "runargs $str\n" .
                "run\n" .
                "\n");
