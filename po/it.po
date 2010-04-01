@@ -461,9 +461,12 @@ msgstr "Elaborazione riga: %<PRIu32>\n"
 msgid "Unknown command: "
 msgstr "Comando sconosciuto: "
 
+#, fuzzy
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
 "Sto leggendo le informazioni dalle tabelle per il completamento automatico "
@@ -733,6 +736,14 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Errore: Memoria non sufficiente per memorizzare clausola ORDER BY\n"
 
 #, fuzzy, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr "Impossibile aprire la tabella %s.%s dopo rinominazione\n"
+
+#, c-format
+msgid "Out of memory"
+msgstr "Memoria esaurita"
+
+#, fuzzy, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "Ricevuto segnale %d dal thread %<PRIu64>"
 
@@ -859,9 +870,6 @@ msgstr "'locale' sconosciuta: '%s'"
 
 msgid "Can't create thread-keys"
 msgstr "Impossibile creare i thread per le chiavi"
-
-msgid "Out of memory"
-msgstr "Memoria esaurita"
 
 msgid "Failed to initialize plugins."
 msgstr "Impossibile inizializzare i plugin."
@@ -1234,8 +1242,9 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr "%s %s non esiste"
 
-msgid "UNUSED"
-msgstr ""
+#, c-format
+msgid "Unknown error %d"
+msgstr "Errore sconosciuto %d"
 
 msgid "NO"
 msgstr "NO"
@@ -4369,54 +4378,8 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Impossibile creare/scrivere sul file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Errore di lettura dal file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Errore di scrittura sul file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr "Errore durante la chiusura di '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Memoria esaurita (richiesti %u bytes)"
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Errore durante la cancellazione di '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Errore nel tentativo di rinominare '%s' a '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-"EOF (fine del file) inaspettato durante la lettura di '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Impossibile il lock del file (Errcode: %d)"
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "impossibile togliere il lock dal file (Errcode: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Impossibile leggere la directory di '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr ""
-"Impossibile eseguire stat (informazioni sul file) di '%s' (Errcode: %d)"
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -4427,26 +4390,12 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr "Impossibile aprire il flusso dal descrittore [handle] (Errcode: %d)"
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Impossibile recuperare il percorso corrente [wd] (Errcode: %d)"
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Impossibile cambiare percorso a '%s' (Errcode: %d)1"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr "Attenzione: '%s' ha %d collegamenti"
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
 msgstr "Attenzione: %d files e %d flussi sono rimasti aperti\n"
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr ""
-"Disco pieno durante la scrittura di '%s'. Aspetto che qualcuno liberi "
-"spazio..."
 
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
@@ -4492,16 +4441,8 @@ msgstr ""
 "nel file '%s'"
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "File '%s' non trovato (Errcode: %d)"
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr "File '%s' (filenum: %d) non è stato chiuso"
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Errore sconosciuto %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -5381,9 +5322,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr "Indice sbagliato fornito alla funzione"
 
-msgid "Undefined handler error 125"
-msgstr "Errore handler indefinito 125"
-
 msgid "Index file is crashed"
 msgstr "File degli indici corrotto"
 
@@ -5392,9 +5330,6 @@ msgstr "File dei record corrotto"
 
 msgid "Out of memory in engine"
 msgstr "Memoria esaurita nel motore di memorizzazione"
-
-msgid "Undefined handler error 129"
-msgstr "Errore handler indefinito 129"
 
 msgid "Incorrect file format"
 msgstr "Il file ha un formato errato"
@@ -5644,6 +5579,61 @@ msgstr ""
 msgid "BUFFER: %s\n"
 msgstr ""
 
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Impossibile creare/scrivere sul file '%s' (Errcode: %d)"
+
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Errore di lettura dal file '%s' (Errcode: %d)"
+
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Errore di scrittura sul file '%s' (Errcode: %d)"
+
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Errore durante la chiusura di '%s' (Errcode: %d)"
+
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Memoria esaurita (richiesti %u bytes)"
+
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Errore durante la cancellazione di '%s' (Errcode: %d)"
+
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Errore nel tentativo di rinominare '%s' a '%s' (Errcode: %d)"
+
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "EOF (fine del file) inaspettato durante la lettura di '%s' (Errcode: %d)"
+
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Impossibile il lock del file (Errcode: %d)"
+
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Impossibile leggere la directory di '%s' (Errcode: %d)"
+
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "Impossibile eseguire stat (informazioni sul file) di '%s' (Errcode: %d)"
+
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Impossibile recuperare il percorso corrente [wd] (Errcode: %d)"
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Impossibile cambiare percorso a '%s' (Errcode: %d)1"
+
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Disco pieno durante la scrittura di '%s'. Aspetto che qualcuno liberi "
+#~ "spazio..."
+
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "File '%s' non trovato (Errcode: %d)"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Errore handler indefinito 125"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Errore handler indefinito 129"
+
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "Controlla l'utilizzo della memoria e dei file all'uscita."
 
@@ -5709,9 +5699,6 @@ msgstr ""
 
 #~ msgid "plugin-load parameter too long"
 #~ msgstr "parametro plugin-load troppo lungo"
-
-#~ msgid "Could not open table %s.%s after rename\n"
-#~ msgstr "Impossibile aprire la tabella %s.%s dopo rinominazione\n"
 
 #~ msgid "Maximum number of user threads available."
 #~ msgstr "Massimo numero disponibile di thread utente."
