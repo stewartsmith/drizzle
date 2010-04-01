@@ -20,18 +20,18 @@
 #define PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H
 
 #include <drizzled/cursor.h>
+#include <drizzled/atomics.h>
 
 class EmbeddedInnoDBTableShare
 {
 public:
-  EmbeddedInnoDBTableShare(const char* name) : use_count(0)
-  {
-    table_name.assign(name);
-  }
+  EmbeddedInnoDBTableShare(const char* name, uint64_t intial_auto_increment_value);
 
   drizzled::THR_LOCK lock;
   int use_count;
   std::string table_name;
+
+  drizzled::atomic<uint64_t> auto_increment_value;
 };
 
 class EmbeddedInnoDBCursor: public drizzled::Cursor
@@ -79,6 +79,13 @@ public:
   drizzled::THR_LOCK_DATA **store_lock(drizzled::Session *,
                                        drizzled::THR_LOCK_DATA **to,
                                        drizzled::thr_lock_type);
+
+  uint64_t getInitialAutoIncrementValue();
+  void get_auto_increment(uint64_t ,
+                          uint64_t ,
+                          uint64_t ,
+                          uint64_t *first_value,
+                          uint64_t *nb_reserved_values);
 
 private:
   ib_crsr_t cursor;
