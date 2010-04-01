@@ -40,17 +40,6 @@ SchemasTool::Generator::Generator(Field **arg) :
 {
 }
 
-/**
-  @note return true if a match occurs.
-*/
-bool SchemasTool::Generator::checkSchema()
-{
-  if (isWild(schema_name()))
-    return true;
-
-  return false;
-}
-
 bool SchemasTool::Generator::nextSchemaCore()
 {
   if (is_schema_primed)
@@ -77,9 +66,6 @@ bool SchemasTool::Generator::nextSchemaCore()
   {
     return false;
   }
-
-  if (checkSchema())
-      return false;
 
   return true;
 }
