@@ -383,7 +383,7 @@ void Session::cleanup(void)
 
 Session::~Session()
 {
-  Session_CHECK_SENTRY(this);
+  this->checkSentry();
   add_to_status(&global_status_var, &status_var);
 
   if (client->isConnected())
@@ -470,7 +470,7 @@ void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
 
 void Session::awake(Session::killed_state state_to_set)
 {
-  Session_CHECK_SENTRY(this);
+  this->checkSentry();
   safe_mutex_assert_owner(&LOCK_delete);
 
   killed= state_to_set;
@@ -1143,13 +1143,6 @@ select_export::prepare(List<Item> &list, Select_Lex_Unit *u)
   return 0;
 }
 
-
-#define NEED_ESCAPING(x) ((int) (unsigned char) (x) == escape_char    || \
-                          (enclosed ? (int) (unsigned char) (x) == field_sep_char      \
-                                    : (int) (unsigned char) (x) == field_term_char) || \
-                          (int) (unsigned char) (x) == line_sep_char  || \
-                          !(x))
-
 bool select_export::send_data(List<Item> &items)
 {
   char buff[MAX_FIELD_WIDTH],null_buff[2],space[MAX_FIELD_WIDTH];
@@ -1266,11 +1259,11 @@ bool select_export::send_data(List<Item> &items)
             assert before the loop makes that sure.
           */
 
-          if ((NEED_ESCAPING(*pos) ||
+          if ((needs_escaping(*pos, enclosed) ||
                (check_second_byte &&
                 my_mbcharlen(character_set_client, (unsigned char) *pos) == 2 &&
                 pos + 1 < end &&
-                NEED_ESCAPING(pos[1]))) &&
+                needs_escaping(pos[1], enclosed))) &&
               /*
                 Don't escape field_term_char by doubling - doubling is only
                 valid for ENCLOSED BY characters:

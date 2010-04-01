@@ -1268,15 +1268,13 @@ int main(int argc,char *argv[])
   glob_buffer= new string();
   glob_buffer->reserve(512);
 
-  size_t output_buff_size = 512;
-  char * output_buff= (char *)malloc(output_buff_size);
-  memset(output_buff, '\0', output_buff_size);
-
-  snprintf(output_buff, output_buff_size,
-           _("Your Drizzle connection id is %u\nServer version: %s\n"),
-           drizzle_con_thread_id(&con),
-           server_version_string(&con));
-  put_info(output_buff, INFO_INFO, 0, 0);
+  ostringstream output_buff;
+  output_buff << _("Your Drizzle connection id is ");
+  output_buff << drizzle_con_thread_id(&con);
+  output_buff << "\n";
+  output_buff << _("Server version: ");
+  output_buff << server_version_string(&con) << "\n";
+  put_info(output_buff.str().c_str(), INFO_INFO, 0, 0);
 
   initialize_readline(current_prompt);
   if (!status.batch && !quick)
