@@ -464,7 +464,6 @@ COLUMN_NAME
 #
 #
 #
-#
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 count(*)
 #
@@ -545,11 +544,6 @@ SCHEMAS	CREATE TABLE `schemas` (
   `DEFAULT_COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
   `SCHEMA_CREATION_TIME` varchar(64) NOT NULL DEFAULT '',
   `SCHEMA_UPDATE_TIME` varchar(64) NOT NULL DEFAULT ''
-) ENGINE=FunctionEngine
-show create table SCHEMA_NAMES;
-Table	Create Table
-SCHEMA_NAMES	CREATE TABLE `schema_names` (
-  `SCHEMA_NAME` varchar(64) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 show create table TABLES ;
 Table	Create Table
