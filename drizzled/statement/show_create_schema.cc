@@ -33,12 +33,14 @@ namespace drizzled
 
 bool statement::ShowCreateSchema::execute()
 {
-  if (check_db_name(&session->lex->name))
+  SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
+
+  if (not check_db_name(schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
+    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
     return false;
   }
-  bool res= mysqld_show_create_db(session, session->lex->name.str,
+  bool res= mysqld_show_create_db(*session, schema_identifier,
                                   is_if_not_exists);
   return res;
 }

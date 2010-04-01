@@ -687,7 +687,8 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
   /* Change database if necessary */
   if (in_db && in_db[0])
   {
-    if (mysql_change_db(this, in_db))
+    SchemaIdentifier identifier(in_db);
+    if (mysql_change_db(this, identifier))
     {
       /* mysql_change_db() has pushed the error message. */
       return false;
@@ -1623,10 +1624,10 @@ void Session::restore_backup_open_tables_state(Open_tables_state *backup)
   set_open_tables_state(backup);
 }
 
-bool Session::set_db(const char *new_db, size_t length)
+bool Session::set_db(const std::string &new_db)
 {
   /* Do not reallocate memory if current chunk is big enough. */
-  if (length)
+  if (new_db.length())
     db= new_db;
   else
     db.clear();
@@ -2007,9 +2008,9 @@ bool Session::openTablesLock(TableList *tables)
     if (open_tables_from_list(&tables, &counter))
       return true;
 
-    if (!lock_tables(tables, counter, &need_reopen))
+    if (not lock_tables(tables, counter, &need_reopen))
       break;
-    if (!need_reopen)
+    if (not need_reopen)
       return true;
     close_tables_for_reopen(&tables);
   }
