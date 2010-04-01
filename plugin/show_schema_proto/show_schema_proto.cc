@@ -82,7 +82,8 @@ String *ShowSchemaProtoFunction::val_str(String *str)
   message::Schema proto;
 
 
-  if (not plugin::StorageEngine::getSchemaDefinition(db, proto))
+  SchemaIdentifier schema_identifier(db);
+  if (not plugin::StorageEngine::getSchemaDefinition(schema_identifier, proto))
   {
     my_error(ER_BAD_DB_ERROR, MYF(0), db);
     return NULL;
