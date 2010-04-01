@@ -52,8 +52,7 @@ public:
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY)
+                                     HTON_AUTO_PART_KEY)
   {
     table_definition_ext= TABLEPROTOTESTER_EXT;
   }
@@ -68,19 +67,20 @@ public:
     return TableProtoTesterCursor_exts;
   }
 
-  int doCreateTable(Session*,
+  int doCreateTable(Session&,
                     Table&,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
-  int doGetTableDefinition(Session& session,
+  int doGetTableDefinition(Session &session,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       string&, set<string>& set_of_names)
+		       SchemaIdentifier &,
+		       set<string>& set_of_names)
   {
     (void)directory;
     set_of_names.insert("t1");
@@ -101,9 +101,9 @@ public:
             HA_KEYREAD_ONLY);
   }
 
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  bool doDoesTableExist(Session &session, TableIdentifier &identifier);
 
-  int doRenameTable(Session&, TableIdentifier &, TableIdentifier &)
+  int doRenameTable(Session&, TableIdentifier&, TableIdentifier&)
   {
     return EPERM;
   }
@@ -133,9 +133,9 @@ int TableProtoTesterCursor::close(void)
   return 0;
 }
 
-int TableProtoTesterEngine::doCreateTable(Session*,
+int TableProtoTesterEngine::doCreateTable(Session&,
                                           Table&,
-                                          drizzled::TableIdentifier &,
+                                          drizzled::TableIdentifier&,
                                           drizzled::message::Table&)
 {
   return EEXIST;

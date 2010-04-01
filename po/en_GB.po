@@ -441,9 +441,12 @@ msgstr "Processing line: %<PRIu32>\n"
 msgid "Unknown command: "
 msgstr "Unknown command: "
 
+#, fuzzy
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
 "Reading table information for completion of table and column names\n"
@@ -697,6 +700,14 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Error: Not enough memory to store ORDER BY clause\n"
 
 #, fuzzy, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr "Could not open table %s.%s after rename\n"
+
+#, c-format
+msgid "Out of memory"
+msgstr "Out of memory"
+
+#, fuzzy, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "Got signal %d from thread %<PRIu64>"
 
@@ -821,9 +832,6 @@ msgstr "Unknown locale: '%s'"
 
 msgid "Can't create thread-keys"
 msgstr "Can't create thread-keys"
-
-msgid "Out of memory"
-msgstr "Out of memory"
 
 msgid "Failed to initialize plugins."
 msgstr "Failed to initialise plugins."
@@ -1176,8 +1184,9 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr "%s %s does not exist"
 
-msgid "UNUSED"
-msgstr "UNUSED"
+#, c-format
+msgid "Unknown error %d"
+msgstr "Unknown error %d"
 
 msgid "NO"
 msgstr "NO"
@@ -4141,52 +4150,8 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Can't create/write to file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Error reading file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Error writing file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr "Error on close of '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Out of memory (Needed %u bytes)"
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Error on delete of '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Error on rename of '%s' to '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr "Unexpected eof found when reading file '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Can't lock file (Errcode: %d)"
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "Can't unlock file (Errcode: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Can't read dir of '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr "Can't get stat of '%s' (Errcode: %d)"
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -4197,24 +4162,12 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr "Can't open stream from handle (Errcode: %d)"
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Can't get working directory (Errcode: %d)"
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Can't change dir to '%s' (Errcode: %d)"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr "Warning: '%s' had %d links"
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
 msgstr "Warning: %d files and %d streams is left open\n"
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr "Disk is full writing '%s'. Waiting for someone to free space..."
 
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
@@ -4257,16 +4210,8 @@ msgstr ""
 "file"
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "File '%s' not found (Errcode: %d)"
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr "File '%s' (fileno: %d) was not closed"
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Unknown error %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -5129,9 +5074,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr "Wrong index given to function"
 
-msgid "Undefined handler error 125"
-msgstr "Undefined handler error 125"
-
 msgid "Index file is crashed"
 msgstr "Index file is crashed"
 
@@ -5140,9 +5082,6 @@ msgstr "Record file is crashed"
 
 msgid "Out of memory in engine"
 msgstr "Out of memory in engine"
-
-msgid "Undefined handler error 129"
-msgstr "Undefined handler error 129"
 
 msgid "Incorrect file format"
 msgstr "Incorrect file format"
@@ -5390,6 +5329,60 @@ msgstr "Unable to parse command. Got error: %s.\n"
 msgid "BUFFER: %s\n"
 msgstr "BUFFER: %s\n"
 
+#~ msgid "UNUSED"
+#~ msgstr "UNUSED"
+
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Can't create/write to file '%s' (Errcode: %d)"
+
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Error reading file '%s' (Errcode: %d)"
+
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Error writing file '%s' (Errcode: %d)"
+
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Error on close of '%s' (Errcode: %d)"
+
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Out of memory (Needed %u bytes)"
+
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Error on delete of '%s' (Errcode: %d)"
+
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Error on rename of '%s' to '%s' (Errcode: %d)"
+
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr "Unexpected eof found when reading file '%s' (Errcode: %d)"
+
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Can't lock file (Errcode: %d)"
+
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Can't read dir of '%s' (Errcode: %d)"
+
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Can't get stat of '%s' (Errcode: %d)"
+
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Can't get working directory (Errcode: %d)"
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Can't change dir to '%s' (Errcode: %d)"
+
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr "Disk is full writing '%s'. Waiting for someone to free space..."
+
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "File '%s' not found (Errcode: %d)"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Undefined handler error 125"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Undefined handler error 129"
+
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "Check memory and open file usage at exit ."
 
@@ -5494,9 +5487,6 @@ msgstr "BUFFER: %s\n"
 #~ msgstr ""
 #~ "Schema name cannot be encoded and fit within file-system name length "
 #~ "restrictions."
-
-#~ msgid "Could not open table %s.%s after rename\n"
-#~ msgstr "Could not open table %s.%s after rename\n"
 
 #~ msgid ""
 #~ "Failed to write full serialized command.  Tried to write %<PRId64> bytes "
