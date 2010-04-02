@@ -347,9 +347,6 @@ pthread_cond_t  COND_server_end;
 /* Static variables */
 
 static bool segfaulted;
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-static bool opt_do_pstack;
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
 int cleanup_done;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
@@ -376,7 +373,7 @@ bool drizzle_rm_tmp_tables();
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
-bool drizzled_get_one_option(int, const struct my_option *, char *);
+int drizzled_get_one_option(int, const struct my_option *, char *);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string &progname);
@@ -1458,12 +1455,6 @@ struct my_option my_long_options[] =
    N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-  {"enable-pstack", OPT_DO_PSTACK,
-   N_("Print a symbolic stack trace on failure."),
-   (char**) &opt_do_pstack, (char**) &opt_do_pstack, 0, GET_BOOL, NO_ARG, 0, 0,
-   0, 0, 0, 0},
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
   /* See how it's handled in get_one_option() */
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),
@@ -1870,7 +1861,7 @@ static void drizzle_init_variables(void)
 }
 
 
-bool drizzled_get_one_option(int optid, const struct my_option *opt,
+int drizzled_get_one_option(int optid, const struct my_option *opt,
                              char *argument)
 {
   switch(optid) {
@@ -1938,14 +1929,14 @@ bool drizzled_get_one_option(int optid, const struct my_option *opt,
       if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
       {
           errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: cannot resolve hostname!"));
-        exit(1);
+        return EXIT_ARGUMENT_INVALID;
       }
 
       if (res_lst->ai_next)
       {
           errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: bind-address refers to "
                           "multiple interfaces!"));
-        exit(1);
+        return EXIT_ARGUMENT_INVALID;
       }
       freeaddrinfo(res_lst);
     }

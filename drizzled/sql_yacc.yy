@@ -1040,7 +1040,7 @@ create:
 	    message::Table &proto= statement->create_table_message;
 	   
 	    proto.set_name($5->table.str);
-	    if($2)
+	    if ($2)
 	      proto.set_type(message::Table::TEMPORARY);
 	    else
 	      proto.set_type(message::Table::STANDARD);
@@ -4765,7 +4765,7 @@ show_param:
              }
              else
              {
-               if (prepare_new_schema_table(session, lex, "SCHEMA_NAMES"))
+               if (prepare_new_schema_table(session, lex, "SHOW_SCHEMAS"))
                  DRIZZLE_YYABORT;
              }
 
@@ -4796,9 +4796,10 @@ show_param:
 
               if ($2)
               {
+		SchemaIdentifier identifier($2);
                 column_name.append($2);
                 lex->select_lex.db= $2;
-                if (not plugin::StorageEngine::doesSchemaExist($2))
+                if (not plugin::StorageEngine::doesSchemaExist(identifier))
                 {
                   my_error(ER_BAD_DB_ERROR, MYF(0), $2);
                 }
@@ -4832,6 +4833,32 @@ show_param:
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
            }
+         | TEMPORARY_SYM TABLES show_wild
+           {
+             LEX *lex= Lex;
+             Session *session= YYSession;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             statement::Select *select=
+               new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+
+             if (prepare_new_schema_table(YYSession, lex, "SHOW_TEMPORARY_TABLES"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
+           }
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
              LEX *lex= Lex;
@@ -4852,7 +4879,8 @@ show_param:
              {
                lex->select_lex.db= $3;
 
-               if (not plugin::StorageEngine::doesSchemaExist($3))
+	       SchemaIdentifier identifier($3);
+               if (not plugin::StorageEngine::doesSchemaExist(identifier))
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);
                }

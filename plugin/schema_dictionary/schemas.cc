@@ -40,17 +40,6 @@ SchemasTool::Generator::Generator(Field **arg) :
 {
 }
 
-/**
-  @note return true if a match occurs.
-*/
-bool SchemasTool::Generator::checkSchema()
-{
-  if (isWild(schema_name()))
-    return true;
-
-  return false;
-}
-
 bool SchemasTool::Generator::nextSchemaCore()
 {
   if (is_schema_primed)
@@ -59,7 +48,9 @@ bool SchemasTool::Generator::nextSchemaCore()
   }
   else
   {
-    plugin::StorageEngine::getSchemaNames(schema_names);
+    Session *session= current_session;
+    plugin::StorageEngine::getSchemaIdentifiers(*session, schema_names);
+    schema_names.sort();
     schema_iterator= schema_names.begin();
     is_schema_primed= true;
   }
@@ -68,16 +59,13 @@ bool SchemasTool::Generator::nextSchemaCore()
     return false;
 
   schema.Clear();
-  is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(*schema_iterator, schema);
+  SchemaIdentifier schema_identifier(*schema_iterator);
+  is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
 
   if (not is_schema_parsed)
   {
-    cerr << "Failure to parse " << *schema_iterator << "\n";
     return false;
   }
-
-  if (checkSchema())
-      return false;
 
   return true;
 }

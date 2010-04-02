@@ -458,10 +458,10 @@ bool mysql_insert(Session *session,TableList *table_list,
   {
     char buff[160];
     if (ignore)
-      sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+      snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
               (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
     else
-      sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+      snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + info.updated;
     session->my_ok((ulong) session->row_count_func,
@@ -1343,10 +1343,10 @@ bool select_insert::send_eof()
   }
   char buff[160];
   if (info.ignore)
-    sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+    snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	    (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
   else
-    sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+    snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	    (ulong) (info.deleted+info.updated), (ulong) session->cuted_fields);
   session->row_count_func= info.copied + info.deleted + info.updated;
 
@@ -1471,10 +1471,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Field *tmp_field;
   bool not_used;
 
-  bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
-
-  if (not (lex_identified_temp_table) &&
-      create_table->table->db_stat)
+  if (not (identifier.isTmp()) && create_table->table->db_stat)
   {
     /* Table already exists and was open at openTablesLock() stage. */
     if (is_if_not_exists)
@@ -1545,8 +1542,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				       select_field_count,
 				       is_if_not_exists))
     {
-      if (create_info->table_existed &&
-          !(lex_identified_temp_table))
+      if (create_info->table_existed && not identifier.isTmp())
       {
         /*
           This means that someone created table underneath server
@@ -1557,7 +1553,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         return NULL;
       }
 
-      if (not lex_identified_temp_table)
+      if (not identifier.isTmp())
       {
         pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (session->reopen_name_locked_table(create_table, false))
@@ -1609,8 +1605,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 int
 select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
-  bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
-
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
     For replication, the CREATE-SELECT statement is written
@@ -1635,7 +1629,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   {
     assert(m_plock == NULL);
 
-    if (lex_identified_temp_table)
+    if (identifier.isTmp())
       m_plock= &m_lock;
     else
       m_plock= &session->extra_lock;

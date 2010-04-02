@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "plugin/schema_dictionary/dictionary.h"
+#include "plugin/show_dictionary/dictionary.h"
 
 using namespace std;
 using namespace drizzled;
@@ -44,6 +44,15 @@ ShowTemporaryTables::Generator::Generator(Field **arg) :
 
 bool ShowTemporaryTables::Generator::populate()
 {
+  while (table)
+  {
+    if (not isWild(table->s->getTableName()))
+    {
+      break;
+    }
+    table= table->next;
+  }
+
   if (not table)
     return false;
 
