@@ -28,6 +28,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/data_home.h"
 
+#include "drizzled/table.h"
+
 #include <algorithm>
 #include <sstream>
 #include <cstdio>
@@ -251,7 +253,7 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
         (*from == ' ') ||
         (*from == '-'))
     {
-      to[length]= *from;
+      to[length]= tolower(*from);
       continue;
     }
    
@@ -273,24 +275,46 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
   return false;
 }
 
+TableIdentifier::TableIdentifier(const drizzled::Table &table) :
+  SchemaIdentifier(table.s->getTableProto()->schema()),
+  type(table.s->getTableProto()->type()),
+  table_name(table.s->getTableProto()->name())
+{
+  if (type == message::Table::TEMPORARY)
+    path= table.s->path.str;
+
+  init();
+}
+
+void TableIdentifier::init()
+{
+  lower_table_name.append(table_name);
+  std::transform(lower_table_name.begin(), lower_table_name.end(),
+                 lower_table_name.begin(), ::tolower);
+}
 
 
 const std::string &TableIdentifier::getPath()
 {
+  assert(not lower_table_name.empty());
+
   if (path.empty())
   {
     switch (type) {
-    case STANDARD_TABLE:
-      build_table_filename(path, lower_db.c_str(), lower_table_name.c_str(), false);
+    case message::Table::STANDARD:
+      build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), false);
       break;
-    case INTERNAL_TMP_TABLE:
-      build_table_filename(path, lower_db.c_str(), lower_table_name.c_str(), true);
+    case message::Table::INTERNAL:
+      build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), true);
       break;
-    case TEMP_TABLE:
+    case message::Table::TEMPORARY:
       build_tmptable_filename(path);
       break;
-    case SYSTEM_TMP_TABLE:
-      assert(0);
+    case message::Table::FUNCTION:
+      path.append(getSchemaName());
+      path.append(".");
+      path.append(table_name);
+      break;
     }
     assert(path.length()); // TODO throw exception, this is a possibility
   }
@@ -298,10 +322,53 @@ const std::string &TableIdentifier::getPath()
   return path;
 }
 
+bool TableIdentifier::compare(std::string schema_arg, std::string table_arg)
+{
+  std::transform(schema_arg.begin(), schema_arg.end(),
+                 schema_arg.begin(), ::tolower);
+
+  std::transform(table_arg.begin(), table_arg.end(),
+                 table_arg.begin(), ::tolower);
+
+  if (schema_arg == getLower() && table_arg == lower_table_name)
+  {
+    return true;
+  }
+
+  return false;
+}
+
+const std::string &TableIdentifier::getSQLPath()
+{
+  if (sql_path.empty())
+  {
+    switch (type) {
+    case message::Table::FUNCTION:
+    case message::Table::STANDARD:
+      sql_path.append(getLower());
+      sql_path.append(".");
+      sql_path.append(table_name);
+      break;
+    case message::Table::INTERNAL:
+      sql_path.append("temporary.");
+      sql_path.append(table_name);
+      break;
+    case message::Table::TEMPORARY:
+      sql_path.append(getLower());
+      sql_path.append(".#");
+      sql_path.append(table_name);
+      break;
+    }
+  }
+
+  return sql_path;
+}
+
+
 void TableIdentifier::copyToTableMessage(message::Table &message)
 {
   message.set_name(table_name);
-  message.set_schema(db);
+  message.set_schema(getSchemaName());
 }
 
 } /* namespace drizzled */

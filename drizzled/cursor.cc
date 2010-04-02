@@ -206,10 +206,10 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   assert(table->s == table_share);
   assert(alloc_root_inited(&table->mem_root));
 
-  if ((error=open(name,mode,test_if_locked)))
+  if ((error=open(name, mode, test_if_locked)))
   {
     if ((error == EACCES || error == EROFS) && mode == O_RDWR &&
-	(table->db_stat & HA_TRY_READ_ONLY))
+        (table->db_stat & HA_TRY_READ_ONLY))
     {
       table->db_stat|=HA_READ_ONLY;
       error=open(name,O_RDONLY,test_if_locked);
@@ -599,56 +599,6 @@ int Cursor::update_auto_increment()
   @param first_value         (OUT) the first value reserved by the Cursor
   @param nb_reserved_values  (OUT) how many values the Cursor reserved
 */
-void Cursor::get_auto_increment(uint64_t ,
-                                 uint64_t ,
-                                 uint64_t ,
-                                 uint64_t *first_value,
-                                 uint64_t *nb_reserved_values)
-{
-  uint64_t nr;
-  int error;
-
-  (void) extra(HA_EXTRA_KEYREAD);
-  table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
-  index_init(table->s->next_number_index, 1);
-  if (table->s->next_number_keypart == 0)
-  {						// Autoincrement at key-start
-    error=index_last(table->record[1]);
-    /*
-      MySQL implicitely assumes such method does locking (as MySQL decides to
-      use nr+increment without checking again with the Cursor, in
-      Cursor::update_auto_increment()), so reserves to infinite.
-    */
-    *nb_reserved_values= UINT64_MAX;
-  }
-  else
-  {
-    unsigned char key[MAX_KEY_LENGTH];
-    key_copy(key, table->record[0],
-             table->key_info + table->s->next_number_index,
-             table->s->next_number_key_offset);
-    error= index_read_map(table->record[1], key,
-                          make_prev_keypart_map(table->s->next_number_keypart),
-                          HA_READ_PREFIX_LAST);
-    /*
-      MySQL needs to call us for next row: assume we are inserting ("a",null)
-      here, we return 3, and next this statement will want to insert
-      ("b",null): there is no reason why ("b",3+1) would be the good row to
-      insert: maybe it already exists, maybe 3+1 is too large...
-    */
-    *nb_reserved_values= 1;
-  }
-
-  if (error)
-    nr=1;
-  else
-    nr= ((uint64_t) table->next_number_field->
-         val_int_offset(table->s->rec_buff_length)+1);
-  index_end();
-  (void) extra(HA_EXTRA_NO_KEYREAD);
-  *first_value= nr;
-}
-
 
 void Cursor::ha_release_auto_increment()
 {

@@ -97,10 +97,10 @@ bool IndexPartsTool::Generator::populate()
 void IndexPartsTool::Generator::fill()
 {
   /* TABLE_SCHEMA */
-  push(schema_name());
+  push(getTableProto().schema());
 
   /* TABLE_NAME */
-  push(table_name());
+  push(getTableProto().name());
 
   /* INDEX_NAME */
   push(getIndex().name());

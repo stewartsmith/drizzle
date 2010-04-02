@@ -2147,7 +2147,7 @@ static int open_file(const char *name)
 
   if (!internal::test_if_hard_path(name))
   {
-    sprintf(buff,"%s%s",opt_basedir,name);
+    snprintf(buff, sizeof(buff), "%s%s",opt_basedir,name);
     name=buff;
   }
   internal::fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -3121,7 +3121,7 @@ static void do_sync_with_master2(long offset)
   if (!master_pos.file[0])
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
-  sprintf(query_buf, "select master_pos_wait('%s', %ld)", master_pos.file,
+  snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file,
           master_pos.pos + offset);
 
 wait_for_position:
@@ -4680,7 +4680,7 @@ int get_one_option(int optid, const struct option *, char *argument)
     char buff[FN_REFLEN];
     if (!internal::test_if_hard_path(argument))
     {
-      sprintf(buff,"%s%s",opt_basedir,argument);
+      snprintf(buff, sizeof(buff), "%s%s",opt_basedir,argument);
       argument= buff;
     }
     internal::fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4703,7 +4703,7 @@ int get_one_option(int optid, const struct option *, char *argument)
     static char buff[FN_REFLEN];
     if (!internal::test_if_hard_path(argument))
     {
-      sprintf(buff,"%s%s",opt_basedir,argument);
+      snprintf(buff, sizeof(buff), "%s%s",opt_basedir,argument);
       argument= buff;
     }
     internal::fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4806,7 +4806,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   int flags= O_WRONLY | O_CREAT;
   if (!internal::test_if_hard_path(fname))
   {
-    sprintf(buff,"%s%s",opt_basedir,fname);
+    snprintf(buff, sizeof(buff), "%s%s",opt_basedir,fname);
     fname= buff;
   }
   internal::fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);

@@ -347,9 +347,6 @@ pthread_cond_t  COND_server_end;
 /* Static variables */
 
 static bool segfaulted;
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-static bool opt_do_pstack;
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
 int cleanup_done;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
@@ -1458,12 +1455,6 @@ struct option my_long_options[] =
    N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-#ifdef HAVE_STACK_TRACE_ON_SEGV
-  {"enable-pstack", OPT_DO_PSTACK,
-   N_("Print a symbolic stack trace on failure."),
-   (char**) &opt_do_pstack, (char**) &opt_do_pstack, 0, GET_BOOL, NO_ARG, 0, 0,
-   0, 0, 0, 0},
-#endif /* HAVE_STACK_TRACE_ON_SEGV */
   /* See how it's handled in get_one_option() */
   {"exit-info", 'T',
    N_("Used for debugging;  Use at your own risk!"),

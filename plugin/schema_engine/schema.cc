@@ -44,13 +44,14 @@
 using namespace std;
 using namespace drizzled;
 
+static SchemaIdentifier TEMPORARY_IDENTIFIER("TEMPORARY");
+
 #define MY_DB_OPT_FILE "db.opt"
 #define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
 
 Schema::Schema():
   drizzled::plugin::StorageEngine("schema",
                                   HTON_ALTER_NOT_SUPPORTED |
-                                  HTON_HAS_DATA_DICTIONARY |
                                   HTON_HAS_SCHEMA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED),
@@ -59,66 +60,11 @@ Schema::Schema():
   table_definition_ext= DEFAULT_FILE_EXTENSION;
   pthread_rwlock_init(&schema_lock, NULL);
   prime();
-#if 0
-  message::Schema schema_message;
-
-  schema_message.set_name("temporary_tables");
-
-  doCreateSchema(schema_message);
-#endif
 }
 
 Schema::~Schema()
 {
   pthread_rwlock_destroy(&schema_lock);
-}
-
-int Schema::doGetTableDefinition(Session &,
-                                 drizzled::TableIdentifier &identifier,
-                                 message::Table &table_proto)
-{
-  string proto_path(identifier.getPath());
-  proto_path.append(DEFAULT_FILE_EXTENSION);
-
-  if (access(proto_path.c_str(), F_OK))
-  {
-    return errno;
-  }
-
-  if (readTableFile(proto_path, table_proto))
-    return EEXIST;
-
-  return -1;
-}
-
-void Schema::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
-{
-  CachedDirectory::Entries entries= directory.getEntries();
-
-  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
-       entry_iter != entries.end(); ++entry_iter)
-  {
-    CachedDirectory::Entry *entry= *entry_iter;
-    const string *filename= &entry->filename;
-
-    assert(filename->size());
-
-    const char *ext= strchr(filename->c_str(), '.');
-
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_FILE_EXTENSION) ||
-        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
-    { }
-    else
-    {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
-
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      // TODO: Remove need for memory copy here
-      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
-      set_of_names.insert(uname);
-    }
-  }
 }
 
 void Schema::prime()
@@ -136,11 +82,13 @@ void Schema::prime()
 
     if (readSchemaFile(entry->filename, schema_message))
     {
+      SchemaIdentifier schema_identifier(schema_message.name());
+
       pair<SchemaCache::iterator, bool> ret=
-        schema_cache.insert(make_pair(schema_message.name(), schema_message));
+        schema_cache.insert(make_pair(schema_identifier.getPath(), schema_message));
 
       if (ret.second == false)
-      {
+     {
         abort(); // If this has happened, something really bad is going down.
       }
     }
@@ -148,7 +96,7 @@ void Schema::prime()
   pthread_rwlock_unlock(&schema_lock);
 }
 
-void Schema::doGetSchemaNames(std::set<std::string>& set_of_names)
+void Schema::doGetSchemaIdentifiers(SchemaIdentifierList &set_of_names)
 {
   if (not pthread_rwlock_rdlock(&schema_lock))
   {
@@ -156,7 +104,7 @@ void Schema::doGetSchemaNames(std::set<std::string>& set_of_names)
          iter != schema_cache.end();
          iter++)
     {
-      set_of_names.insert((*iter).first);
+      set_of_names.push_back(SchemaIdentifier((*iter).second.name()));
     }
     pthread_rwlock_unlock(&schema_lock);
 
@@ -173,15 +121,16 @@ void Schema::doGetSchemaNames(std::set<std::string>& set_of_names)
        fileIter != files.end(); fileIter++)
   {
     CachedDirectory::Entry *entry= *fileIter;
-    set_of_names.insert(entry->filename);
+    set_of_names.push_back(entry->filename);
   }
 }
 
-bool Schema::doGetSchemaDefinition(const std::string &schema_name, message::Schema &schema_message)
+bool Schema::doGetSchemaDefinition(SchemaIdentifier &schema_identifier, message::Schema &schema_message)
 {
   if (not pthread_rwlock_rdlock(&schema_lock))
   {
-    SchemaCache::iterator iter= schema_cache.find(schema_name);
+    SchemaCache::iterator iter= schema_cache.find(schema_identifier.getPath());
+
     if (iter != schema_cache.end())
     {
       schema_message.CopyFrom(((*iter).second));
@@ -194,22 +143,19 @@ bool Schema::doGetSchemaDefinition(const std::string &schema_name, message::Sche
   }
 
   // Fail to disk based means
-  return readSchemaFile(schema_name, schema_message);
+  return readSchemaFile(schema_identifier.getPath(), schema_message);
 }
 
 bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
 {
-  std::string path;
-  drizzled::build_table_filename(path, schema_message.name().c_str(), "", false);
+  SchemaIdentifier schema_identifier(schema_message.name());
 
-  path.erase(path.length()-1);
-
-  if (mkdir(path.c_str(), 0777) == -1)
+  if (mkdir(schema_identifier.getPath().c_str(), 0777) == -1)
     return false;
 
-  if (not writeSchemaFile(path.c_str(), schema_message))
+  if (not writeSchemaFile(schema_identifier, schema_message))
   {
-    rmdir(path.c_str());
+    rmdir(schema_identifier.getPath().c_str());
 
     return false;
   }
@@ -217,7 +163,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   if (not pthread_rwlock_wrlock(&schema_lock))
   {
       pair<SchemaCache::iterator, bool> ret=
-        schema_cache.insert(make_pair(schema_message.name(), schema_message));
+        schema_cache.insert(make_pair(schema_identifier.getPath(), schema_message));
 
 
       if (ret.second == false)
@@ -230,19 +176,15 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   return true;
 }
 
-bool Schema::doDropSchema(const std::string &schema_name)
+bool Schema::doDropSchema(SchemaIdentifier &schema_identifier)
 {
-  string path;
   message::Schema schema_message;
 
-  drizzled::build_table_filename(path, schema_name.c_str(), "", false);
-  path.erase(path.length()-1);
-
-  string schema_file(path);
+  string schema_file(schema_identifier.getPath());
   schema_file.append(1, FN_LIBCHAR);
   schema_file.append(MY_DB_OPT_FILE);
 
-  if (not doGetSchemaDefinition(schema_name, schema_message))
+  if (not doGetSchemaDefinition(schema_identifier, schema_message))
     return false;
 
   // No db.opt file, no love from us.
@@ -258,48 +200,39 @@ bool Schema::doDropSchema(const std::string &schema_name)
     return false;
   }
 
-  if (rmdir(path.c_str()))
+  if (rmdir(schema_identifier.getPath().c_str()))
   {
-    perror(path.c_str());
-    CachedDirectory dir(path);
+    perror(schema_identifier.getPath().c_str());
+    //@todo If this happens, we want a report of it. For the moment I dump
+    //to stderr so I can catch it in Hudson.
+    CachedDirectory dir(schema_identifier.getPath());
     cerr << dir;
   }
 
   if (not pthread_rwlock_wrlock(&schema_lock))
   {
-    schema_cache.erase(schema_message.name());
+    schema_cache.erase(schema_identifier.getPath());
     pthread_rwlock_unlock(&schema_lock);
   }
 
   return true;
 }
 
-int Schema::doDropTable(Session&, TableIdentifier &identifier)
-{
-  string path(identifier.getPath());
-
-  path.append(DEFAULT_FILE_EXTENSION);
-
-  return internal::my_delete(path.c_str(), MYF(0));
-}
-
 bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 {
-  string path;
-  drizzled::build_table_filename(path, schema_message.name().c_str(), "", false);
-  path.erase(path.length()-1);
+  SchemaIdentifier schema_identifier(schema_message.name());
 
-  if (access(path.c_str(), F_OK))
+  if (access(schema_identifier.getPath().c_str(), F_OK))
     return false;
 
-  if (writeSchemaFile(path.c_str(), schema_message))
+  if (writeSchemaFile(schema_identifier, schema_message))
   {
     if (not pthread_rwlock_wrlock(&schema_lock))
     {
-      schema_cache.erase(schema_message.name());
+      schema_cache.erase(schema_identifier.getPath());
 
       pair<SchemaCache::iterator, bool> ret=
-        schema_cache.insert(make_pair(schema_message.name(), schema_message));
+        schema_cache.insert(make_pair(schema_identifier.getPath(), schema_message));
 
       if (ret.second == false)
       {
@@ -322,73 +255,71 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   @note we do the rename to make it crash safe.
 */
-bool Schema::writeSchemaFile(const char *path, const message::Schema &db)
+bool Schema::writeSchemaFile(SchemaIdentifier &schema_identifier, const message::Schema &db)
 {
   char schema_file_tmp[FN_REFLEN];
-  string schema_file(path);
+  string schema_file(schema_identifier.getPath());
 
-  snprintf(schema_file_tmp, FN_REFLEN, "%s%c%s.tmpXXXXXX", path, FN_LIBCHAR, MY_DB_OPT_FILE);
 
   schema_file.append(1, FN_LIBCHAR);
   schema_file.append(MY_DB_OPT_FILE);
+
+  snprintf(schema_file_tmp, FN_REFLEN, "%sXXXXXX", schema_file.c_str());
 
   int fd= mkstemp(schema_file_tmp);
 
   if (fd == -1)
   {
     perror(schema_file_tmp);
+
     return false;
   }
 
   if (not db.SerializeToFileDescriptor(fd))
   {
-    cerr << "Couldn't write " << path << "\n";
-    close(fd);
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             db.InitializationErrorString().c_str());
+
+    if (close(fd) == -1)
+      perror(schema_file_tmp);
+
+    if (unlink(schema_file_tmp))
+      perror(schema_file_tmp);
+
+    return false;
+  }
+
+  if (close(fd) == -1)
+  {
+    perror(schema_file_tmp);
+
+    if (unlink(schema_file_tmp))
+      perror(schema_file_tmp);
 
     return false;
   }
 
   if (rename(schema_file_tmp, schema_file.c_str()) == -1)
   {
-    close(fd);
+    if (unlink(schema_file_tmp))
+      perror(schema_file_tmp);
 
     return false;
   }
-  close(fd);
 
   return true;
 }
 
 
-bool Schema::readTableFile(const std::string &path, message::Table &table_message)
+bool Schema::readSchemaFile(const std::string &schema_file_name, drizzled::message::Schema &schema_message)
 {
-  fstream input(path.c_str(), ios::in | ios::binary);
-
-  if (input.good())
-  {
-    if (table_message.ParseFromIstream(&input))
-    {
-      return true;
-    }
-  }
-  else
-  {
-    perror(path.c_str());
-  }
-
-  return false;
-}
-
-
-bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::Schema &schema_message)
-{
-  string db_opt_path;
+  string db_opt_path(schema_file_name);
 
   /*
     Pass an empty file name, and the database options file name as extension
     to avoid table name to file name encoding.
   */
-  build_table_filename(db_opt_path, schema_name.c_str(), "", false);
+  db_opt_path.append(1, FN_LIBCHAR);
   db_opt_path.append(MY_DB_OPT_FILE);
 
   fstream input(db_opt_path.c_str(), ios::in | ios::binary);
@@ -404,6 +335,9 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
     {
       return true;
     }
+
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+             schema_message.InitializationErrorString().c_str());
   }
   else
   {
@@ -413,9 +347,9 @@ bool Schema::readSchemaFile(const std::string &schema_name, drizzled::message::S
   return false;
 }
 
-bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
+bool Schema::doCanCreateTable(drizzled::TableIdentifier &identifier)
 {
-  if (not strcasecmp(identifier.getSchemaName().c_str(), "temporary"))
+  if (static_cast<SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
   {
     return false;
   }
@@ -423,15 +357,8 @@ bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
   return true;
 }
 
-bool Schema::doDoesTableExist(Session&, TableIdentifier &identifier)
+void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                   drizzled::SchemaIdentifier&,
+                                   drizzled::TableIdentifiers&)
 {
-  string proto_path(identifier.getPath());
-  proto_path.append(DEFAULT_FILE_EXTENSION);
-
-  if (access(proto_path.c_str(), F_OK))
-  {
-    return false;
-  }
-
-  return true;
 }

@@ -37,9 +37,10 @@ bool statement::DropSchema::execute()
   {
     return true;
   }
-  if (check_db_name(&session->lex->name))
+  SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
+  if (not check_db_name(schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), session->lex->name.str);
+    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
     return false;
   }
   if (session->inTransaction())
@@ -49,7 +50,8 @@ bool statement::DropSchema::execute()
         MYF(0));
     return true;
   }
-  bool res= mysql_rm_db(session, session->lex->name.str, drop_if_exists);
+  bool res= mysql_rm_db(session, schema_identifier, drop_if_exists);
+
   return res;
 }
 
