@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2010-03-15 21:00+0000\n"
-"PO-Revision-Date: 2010-03-27 18:23+0000\n"
-"Last-Translator: slock <slock@live.fr>\n"
+"POT-Creation-Date: 2010-03-31 06:13+0000\n"
+"PO-Revision-Date: 2010-04-01 08:04+0000\n"
+"Last-Translator: Damien Seguy <damien.seguy@gmail.com>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-03-28 03:46+0000\n"
+"X-Launchpad-Export-Date: 2010-04-02 03:40+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -480,14 +480,16 @@ msgid "Unknown command: "
 msgstr "Commande inconnue : "
 
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
-"Lecture des informations de la table pour compléter les noms de table et de "
-"colonne\n"
-"    Vous pouvez désactiver cette fonctionnalité pour un démarrage plus "
-"rapide avec -A\n"
+"                              Lecture des tables d'informations pour la "
+"complétion de nom de tables et colonnes\n"
+"                                  Vous pouvez désactiver cette "
+"fonctionnalité pour accélérer le lancement avec l'option -A\n"
 "\n"
 
 msgid "No connection. Trying to reconnect..."
@@ -755,6 +757,14 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Erreur : pas assez de mémoire pour stocker la clause ORDER BY\n"
 
 #, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr "Impossible d'ouvrir '%s' pour la lecture : errno = %d"
+
+#, c-format
+msgid "Out of memory"
+msgstr "Mémoire insuffisante"
+
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "Reçu un signal %d du thread %<PRIu64>"
 
@@ -890,9 +900,6 @@ msgstr "Locale inconnue : '%s'"
 
 msgid "Can't create thread-keys"
 msgstr "Impossible de créer un thread de clés"
-
-msgid "Out of memory"
-msgstr "Mémoire insuffisante"
 
 msgid "Failed to initialize plugins."
 msgstr "Échec à l'initialisation des plugins."
@@ -1260,8 +1267,9 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr "Le dossier de données %s n'existe pas\n"
 
-msgid "UNUSED"
-msgstr "NON UTILISE"
+#, c-format
+msgid "Unknown error %d"
+msgstr "Erreur inconnue %d"
 
 msgid "NO"
 msgstr "NON"
@@ -4513,54 +4521,8 @@ msgid "Error droppping Schema : %s"
 msgstr "Erreur lors de l'effacement de la base de données : %s"
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Ne peux créer/écrire le fichier '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Erreur de lecture sur le fichier '%s' (Errcode: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Erreur durant l'écriture du fichier '%s' (Errcode : %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr "Erreur durant la fermeture de '%s' (Errcode : %d)"
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Plus de mémoire (besoin de %u bytes)"
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Erreur durant l'effacement de '%s' (Errcode : %d)"
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Erreur durant le changement de nom de '%s' en '%s' (Errcode : %d)"
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-"Fin de fichier (eof) inattendue lors de la lecture du fichier '%s' (Errcode: "
-"%d)"
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Impossible de verrouiller le fichier (Errcode : %d)"
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "Impossible de déverrouiller le fichier (Errcode : %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Impossible de lire le dossier '%s' (Errcode : %d)"
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr "Impossible d'accéder à '%s' (Errcode: %d)"
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -4571,26 +4533,12 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr "Impossible d'ouvrir le flux à partir de son pointeur (Errcode: %d)"
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Ne peux atteindre le répértoire de travail (Errcode: %d)"
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Impossible de changer le dossier vers '%s' (Errcode : %d)"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr "Attention: '%s' avait %d liens"
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
 msgstr "Attention: %d fichiers et %d flux sont restés ouverts.\n"
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr ""
-"Le disque a atteint sa taille limite en écrivant '%s'. En attente de "
-"libération d'espace..."
 
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
@@ -4633,16 +4581,8 @@ msgstr ""
 "%s."
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "Fichier '%s' non trouvé (Errcode: %d)"
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr "Fichier '%s' (fileno: %d) n'a pas été fermé"
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Erreur inconnue %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -4838,6 +4778,8 @@ msgid ""
 "Plugin '%s' contains the name '%s' in its manifest, which has already been "
 "registered.\n"
 msgstr ""
+"Le module '%s' contient le nom '%s' dans son manifest, qui a déjà été "
+"enregistré.\n"
 
 #, c-format
 msgid "Plugin '%s' init function returned error.\n"
@@ -5111,6 +5053,9 @@ msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
 msgstr ""
+"Le numéro de port à utiliser pour la connexion, ou 0 pour utiliser par "
+"défaut, et par ordre de préférence, drizzle.cnf, $DRIZZLE_TCP_PORT, le "
+"numéro de port par défaut (4427)."
 
 msgid "Connect Timeout."
 msgstr "Délai d'expiration de connexion."
@@ -5128,7 +5073,7 @@ msgid "Buffer length."
 msgstr "taille de la mémoire tampon."
 
 msgid "Address to bind to."
-msgstr ""
+msgstr "L'adresse à laquelle se connecter."
 
 msgid "Unknown Drizzle error"
 msgstr "Erreur Drizzle inconnue"
@@ -5351,7 +5296,7 @@ msgstr "Commande fermée indirectement à cause d'un appel %s() antérieur"
 
 #, c-format
 msgid "Failed to send error message to libnotify\n"
-msgstr ""
+msgstr "Impossible d'envoyer le message d'erreur à libnotify\n"
 
 msgid "Error Messages to stderr"
 msgstr "Messages d'erreurs vers stderr"
@@ -5443,10 +5388,10 @@ msgid "Log to syslog"
 msgstr "Enregistre vers syslog"
 
 msgid "List of memcached servers."
-msgstr ""
+msgstr "Liste des serveurs memcached"
 
 msgid "Memcached Stats as I_S tables"
-msgstr ""
+msgstr "Statistiques memcached sous forme de tables I_S"
 
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
@@ -5528,9 +5473,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr "Index erroné passé à la fonction"
 
-msgid "Undefined handler error 125"
-msgstr "Erreur indéfinie de gestionnaire 125"
-
 msgid "Index file is crashed"
 msgstr "Le fichier d'index a crashé"
 
@@ -5539,9 +5481,6 @@ msgstr "Le fichier d'enregistrement a craché"
 
 msgid "Out of memory in engine"
 msgstr "Mémoire insuffisante dans le moteur"
-
-msgid "Undefined handler error 129"
-msgstr "Erreur indéfinie de gestionnaire 129"
 
 msgid "Incorrect file format"
 msgstr "Format de fichier incorrect"
@@ -5712,6 +5651,8 @@ msgstr "L'espace de tables n'est pas vide"
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
+"Le numéro de port à utiliser pour la connexion, ou 0 pour utiliser celui par "
+"défaut du protocole MySQL."
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
@@ -5720,36 +5661,42 @@ msgstr "Impossible de créer un thread d'interruption (erreur %d, errno : %d)"
 #, c-format
 msgid "Unable to create background worker thread. Got error %s.\n"
 msgstr ""
+"Impossible de créer un thread de travail en tâche de fond. Réception d'une "
+"erreur %s.\n"
 
 #, c-format
 msgid "Failed to allocate the TransactionLog instance.  Got error: %s\n"
 msgstr ""
+"Impossible d'allouer l'instance de TransactionLog. Erreur reçue : %s\n"
 
 #, c-format
 msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
-msgstr ""
+msgstr "Impossible d'initialiser le Transaction Log. Erreur reçue : %s\n"
 
 #, c-format
 msgid ""
 "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
+"Impossible d'allouer l'instance de TransactionLogApplier. Erreur reçue : %s\n"
 
 #, c-format
 msgid "Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"
 msgstr ""
+"Impossible d'allouer l'instance de TransactionLogIndex. Erreur reçue : %s\n"
 
 #, c-format
 msgid "Failed to initialize the Transaction Log Index.  Got error: %s\n"
 msgstr ""
+"Impossible d'initialiser l'index de Transaction Log. Erreur reçue : %s\n"
 
 msgid "Enable transaction log"
-msgstr ""
+msgstr "Active le log de transactions"
 
 msgid "DEBUGGING - Truncate transaction log"
-msgstr ""
+msgstr "Débogage : tronque le log de transactions"
 
 msgid "Path to the file to use for transaction log"
-msgstr ""
+msgstr "Chemin jusqu'au fichier de log de transactions."
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
@@ -5813,8 +5760,67 @@ msgstr "BUFFER : %s\n"
 #~ msgstr "Commande inconnue '%c'."
 
 #, c-format
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Ne peux créer/écrire le fichier '%s' (Errcode: %d)"
+
+#, c-format
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Erreur de lecture sur le fichier '%s' (Errcode: %d)"
+
+#~ msgid ""
+#~ "Reading table information for completion of table and column names\n"
+#~ "    You can turn off this feature to get a quicker startup with -A\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Lecture des informations de la table pour compléter les noms de table et de "
+#~ "colonne\n"
+#~ "    Vous pouvez désactiver cette fonctionnalité pour un démarrage plus "
+#~ "rapide avec -A\n"
+#~ "\n"
+
+#, c-format
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Impossible de verrouiller le fichier (Errcode : %d)"
+
+#, c-format
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Erreur durant l'effacement de '%s' (Errcode : %d)"
+
+#, c-format
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Erreur durant le changement de nom de '%s' en '%s' (Errcode : %d)"
+
+#, c-format
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Erreur durant l'écriture du fichier '%s' (Errcode : %d)"
+
+#, c-format
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Plus de mémoire (besoin de %u bytes)"
+
+#, c-format
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Impossible de lire le dossier '%s' (Errcode : %d)"
+
+#, c-format
 #~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 #~ msgstr "%s Ver %s Distrib %s, pour %s (%s) en utilisant %s %s\n"
+
+#, c-format
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Fichier '%s' non trouvé (Errcode: %d)"
+
+#, c-format
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "Fin de fichier (eof) inattendue lors de la lecture du fichier '%s' (Errcode: "
+#~ "%d)"
+
+#, c-format
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Le disque a atteint sa taille limite en écrivant '%s'. En attente de "
+#~ "libération d'espace..."
 
 #, c-format
 #~ msgid ""
@@ -5824,8 +5830,26 @@ msgstr "BUFFER : %s\n"
 #~ "Définition incorrecte de la table %s.%s: la colonne '%s' à la position %d  "
 #~ "devrait être de type %s, type trouvé %s."
 
+#, c-format
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Ne peux atteindre le répértoire de travail (Errcode: %d)"
+
+#, c-format
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Impossible d'accéder à '%s' (Errcode: %d)"
+
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "Vérifie le niveau de mémoire et de fichiers ouverts à l'extinction."
+
+#, c-format
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Impossible de changer le dossier vers '%s' (Errcode : %d)"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Erreur indéfinie de gestionnaire 125"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Erreur indéfinie de gestionnaire 129"
 
 #~ msgid "hashchk"
 #~ msgstr "hashchk"
@@ -5876,6 +5900,10 @@ msgstr "BUFFER : %s\n"
 
 #~ msgid "Type of DELAY_KEY_WRITE."
 #~ msgstr "Type de DELAY_KEY_WRITE."
+
+#, c-format
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Erreur durant la fermeture de '%s' (Errcode : %d)"
 
 #, c-format
 #~ msgid ""
