@@ -153,7 +153,7 @@ plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(Sessio
   plugin::TransactionReplicator *cur_repl;
   plugin::TransactionApplier *cur_appl;
 
-  plugin::ReplicationReturnCode result;
+  plugin::ReplicationReturnCode result= plugin::SUCCESS;
 
   while (repl_iter != replicators.end())
   {
