@@ -795,7 +795,7 @@ CREATE TEMPORARY TABLE `tt+1` (c1 INT);
 ALTER TABLE  `tt+1` RENAME `tt+2`;
 CREATE TEMPORARY TABLE `tt+1` (c1 INT);
 ALTER TABLE  `tt+1` RENAME `tt+2`;
-ERROR 42S01: Table 'temporary.tt+2' already exists
+ERROR 42S01: Table 'test.#tt+2' already exists
 SHOW CREATE TABLE `tt+1`;
 Table	Create Table
 tt+1	CREATE TEMPORARY TABLE `tt+1` (

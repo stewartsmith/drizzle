@@ -1546,7 +1546,7 @@ int Table::closefrm(bool free_share)
   cursor= 0;				/* For easier errorchecking */
   if (free_share)
   {
-    if (s->tmp_table == STANDARD_TABLE)
+    if (s->tmp_table == message::Table::STANDARD)
       TableShare::release(s);
     else
       s->free_table_share();
@@ -1672,7 +1672,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
       my_error(ER_NO_SUCH_TABLE, MYF(0), db.str, table_name.str);
     else
     {
-      sprintf(buff,"%s",normalized_path.str);
+      snprintf(buff, sizeof(buff), "%s",normalized_path.str);
       my_error((db_errno == EMFILE) ? ER_CANT_OPEN_FILE : ER_FILE_NOT_FOUND,
                errortype, buff, db_errno);
     }
@@ -1692,7 +1692,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     }
     err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
       ER_FILE_USED : ER_CANT_OPEN_FILE;
-    sprintf(buff,"%s%s", normalized_path.str,datext);
+    snprintf(buff, sizeof(buff), "%s%s", normalized_path.str,datext);
     my_error(err_no,errortype, buff, db_errno);
     delete cursor;
     break;
@@ -1712,7 +1712,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   }
   case 6:
-    sprintf(buff,"%s", normalized_path.str);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
     my_printf_error(ER_NOT_FORM_FILE,
                     _("Table '%-.64s' was created with a different version "
                     "of Drizzle and cannot be read"),
@@ -1722,7 +1722,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   default:				/* Better wrong error than none */
   case 4:
-    sprintf(buff,"%s", normalized_path.str);
+    snprintf(buff, sizeof(buff), "%s", normalized_path.str);
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
@@ -1918,27 +1918,18 @@ uint32_t calculate_key_len(Table *table, uint32_t key,
     org_name		Name of database and length
 
   RETURN
-    0	ok
-    1   error
+    false error
+    true ok
 */
 
-bool check_db_name(LEX_STRING *org_name)
+bool check_db_name(SchemaIdentifier &schema_identifier)
 {
-  char *name= org_name->str;
-  uint32_t name_length= org_name->length;
-
-  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(),
-                                              string(name, name_length)))
+  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(), schema_identifier))
   {
-    return 1;
+    return false;
   }
 
-  if (!name_length || name_length > NAME_LEN || name[name_length - 1] == ' ')
-    return 1;
-
-  my_casedn_str(files_charset_info, name);
-
-  return check_identifier_name(org_name);
+  return schema_identifier.isValid();
 }
 
 /*
@@ -3302,7 +3293,7 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       cursor->closeMarkForDelete(s->table_name.str);
 
-    TableIdentifier identifier(s->table_name.str);
+    TableIdentifier identifier(s->getSchemaName(), s->table_name.str, s->table_name.str);
     s->db_type()->doDropTable(*session, identifier);
 
     delete cursor;
@@ -3417,7 +3408,7 @@ bool create_myisam_from_heap(Session *session, Table *table,
 
  err1:
   {
-    TableIdentifier identifier(new_table.s->table_name.str);
+    TableIdentifier identifier(new_table.s->getSchemaName(), new_table.s->table_name.str, new_table.s->table_name.str);
     new_table.s->db_type()->doDropTable(*session, identifier);
   }
 
@@ -3690,6 +3681,11 @@ bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
 
   key_length= TableShare::createKey(key, identifier);
   share->set_table_cache_key(key, key_length);
+
+  message::Table *message= share->getTableProto();
+
+  message->set_name(identifier.getTableName());
+  message->set_schema(identifier.getSchemaName());
 
   return false;
 }

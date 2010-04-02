@@ -30,7 +30,6 @@ show create table INDEXES ;
 show create table INDEX_PARTS ;
 show create table REFERENTIAL_CONSTRAINTS ;
 show create table SCHEMAS ;
-show create table SCHEMA_NAMES;
 show create table TABLES ;
 show create table TABLE_CONSTRAINTS ;
 

@@ -156,7 +156,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     memset(share, 0, sizeof(*share));
     share->set_table_cache_key(key_buff, old_share->table_cache_key.str,
                                old_share->table_cache_key.length);
-    share->tmp_table= INTERNAL_TMP_TABLE;       // for intern_close_table()
+    share->tmp_table= message::Table::INTERNAL;       // for intern_close_table()
   }
 
   table->cursor->close();
@@ -491,9 +491,9 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->s->tmp_table == STANDARD_TABLE) &&
-        strcmp(table->db, db_name) == 0 &&
-        strcmp(table->table_name, table_name) == 0)
+    if ((table->table == 0 || table->table->s->tmp_table == message::Table::STANDARD) &&
+        strcasecmp(table->db, db_name) == 0 &&
+        strcasecmp(table->table_name, table_name) == 0)
       break;
   }
   return table;
@@ -555,7 +555,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   if (table->table)
   {
     /* temporary table is always unique */
-    if (table->table && table->table->s->tmp_table != STANDARD_TABLE)
+    if (table->table && table->table->s->tmp_table != message::Table::STANDARD)
       return 0;
     table= table->find_underlying_table(table->table);
     /*
@@ -586,12 +586,12 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
-void Session::doGetTableNames(const std::string& db_name,
+void Session::doGetTableNames(SchemaIdentifier &schema_identifier,
                               std::set<std::string>& set_of_names)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (not db_name.compare(table->s->getSchemaName()))
+    if (schema_identifier.compare(table->s->getSchemaName()))
     {
       set_of_names.insert(table->s->table_name.str);
     }
@@ -599,24 +599,42 @@ void Session::doGetTableNames(const std::string& db_name,
 }
 
 void Session::doGetTableNames(CachedDirectory &,
-                              const std::string &db_name,
+			      SchemaIdentifier &schema_identifier,
                               std::set<std::string> &set_of_names)
 {
-  doGetTableNames(db_name, set_of_names);
+  doGetTableNames(schema_identifier, set_of_names);
+}
+
+void Session::doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+                                    TableIdentifiers &set_of_identifiers)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (schema_identifier.compare(table->s->getSchemaName()))
+    {
+      set_of_identifiers.push_back(TableIdentifier(table->getShare()->getSchemaName(),
+                                                   table->getShare()->getTableName(),
+                                                   table->getShare()->getPath()));
+    }
+  }
+}
+
+void Session::doGetTableIdentifiers(CachedDirectory &,
+                                    SchemaIdentifier &schema_identifier,
+                                    TableIdentifiers &set_of_identifiers)
+{
+  doGetTableIdentifiers(schema_identifier, set_of_identifiers);
 }
 
 bool Session::doDoesTableExist(TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->tmp_table == TEMP_TABLE)
+    if (table->s->tmp_table == message::Table::TEMPORARY)
     {
-      if (not identifier.getSchemaName().compare(table->s->getSchemaName()))
+      if (identifier.compare(table->s->getSchemaName(), table->s->table_name.str))
       {
-        if (not identifier.getTableName().compare(table->s->table_name.str))
-        {
-          return true;
-        }
+        return true;
       }
     }
   }
@@ -629,16 +647,13 @@ int Session::doGetTableDefinition(TableIdentifier &identifier,
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->tmp_table == TEMP_TABLE)
+    if (table->s->tmp_table == message::Table::TEMPORARY)
     {
-      if (not identifier.getSchemaName().compare(table->s->getSchemaName()))
+      if (identifier.compare(table->s->getSchemaName(), table->s->table_name.str))
       {
-        if (not identifier.getTableName().compare(table->s->table_name.str))
-        {
-          table_proto.CopyFrom(*(table->s->getTableProto()));
+        table_proto.CopyFrom(*(table->s->getTableProto()));
 
-          return EEXIST;
-        }
+        return EEXIST;
       }
     }
   }
@@ -1005,7 +1020,7 @@ Table *Session::table_cache_insert_placeholder(const char *key, uint32_t key_len
 
   table->s= share;
   share->set_table_cache_key(key_buff, key, key_length);
-  share->tmp_table= INTERNAL_TMP_TABLE;  // for intern_close_table
+  share->tmp_table= message::Table::INTERNAL;  // for intern_close_table
   table->in_use= this;
   table->locked_by_name=1;
 
@@ -1331,7 +1346,7 @@ c2: open t1; -- blocks
 
     if (table_list->create)
     {
-      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, STANDARD_TABLE);
+      TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, message::Table::STANDARD);
 
       if (not plugin::StorageEngine::doesTableExist(*this, lock_table_identifier))
       {
@@ -1385,7 +1400,7 @@ c2: open t1; -- blocks
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->s->ref_count > 0 || table->s->tmp_table != STANDARD_TABLE);
+  assert(table->s->ref_count > 0 || table->s->tmp_table != message::Table::STANDARD);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -1555,7 +1570,7 @@ void Session::close_data_files_and_morph_locks(const char *new_db, const char *n
   for (table= open_tables; table ; table=table->next)
   {
     if (!strcmp(table->s->table_name.str, new_table_name) &&
-        !strcmp(table->s->getSchemaName(), new_db))
+        !strcasecmp(table->s->getSchemaName(), new_db))
     {
       table->open_placeholder= true;
       close_handle_and_leave_table_as_lock(table);
@@ -1871,7 +1886,7 @@ Table *drop_locked_tables(Session *session,const char *db, const char *table_nam
   {
     next=table->next;
     if (!strcmp(table->s->table_name.str, table_name) &&
-        !strcmp(table->s->getSchemaName(), db))
+        !strcasecmp(table->s->getSchemaName(), db))
     {
       mysql_lock_remove(session, table);
 
@@ -2135,7 +2150,7 @@ restart:
     {
       if (tables->lock_type == TL_WRITE_DEFAULT)
         tables->table->reginfo.lock_type= update_lock_default;
-      else if (tables->table->s->tmp_table == STANDARD_TABLE)
+      else if (tables->table->s->tmp_table == message::Table::STANDARD)
         tables->table->reginfo.lock_type= tables->lock_type;
     }
   }
@@ -2299,8 +2314,8 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   uint32_t key_length, path_length;
   TableList table_list;
 
-  table_list.db=         (char*) identifier.getDBName().c_str();
-  table_list.table_name= (char*) identifier.getTableName().c_str();
+  table_list.db=         const_cast<char*>(identifier.getSchemaName().c_str());
+  table_list.table_name= const_cast<char*>(identifier.getTableName().c_str());
   /* Create the cache_key for temporary tables */
   key_length= table_list.create_table_def_key(cache_key);
   path_length= identifier.getPath().length();
@@ -2333,7 +2348,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  share->tmp_table= TEMP_TABLE;
+  share->tmp_table= message::Table::TEMPORARY;
 
   if (link_in_list)
   {
@@ -4090,7 +4105,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
     assert(tables->is_leaf_for_name_resolution());
 
     if ((table_name && my_strcasecmp(table_alias_charset, table_name, tables->alias)) ||
-        (db_name && strcmp(tables->db,db_name)))
+        (db_name && strcasecmp(tables->db,db_name)))
       continue;
 
     /*
@@ -4443,14 +4458,14 @@ We can't use hash_delete when looping hash_elements. We mark them first
 and afterwards delete those marked unused.
 */
 
-void remove_db_from_cache(const std::string schema_name)
+void remove_db_from_cache(SchemaIdentifier &schema_identifier)
 {
   safe_mutex_assert_owner(&LOCK_open);
 
   for (uint32_t idx=0 ; idx < open_cache.records ; idx++)
   {
     Table *table=(Table*) hash_element(&open_cache,idx);
-    if (not schema_name.compare(table->s->getSchemaName()))
+    if (not schema_identifier.getPath().compare(table->s->getSchemaName()))
     {
       table->s->version= 0L;			/* Free when thread is ready */
       if (not table->in_use)

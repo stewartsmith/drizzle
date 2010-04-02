@@ -77,7 +77,7 @@ using namespace drizzled;
 extern "C"
 unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
 
-bool get_one_option(int optid, const struct my_option *, char *argument);
+int get_one_option(int optid, const struct my_option *, char *argument);
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -2147,7 +2147,7 @@ static int open_file(const char *name)
 
   if (!internal::test_if_hard_path(name))
   {
-    sprintf(buff,"%s%s",opt_basedir,name);
+    snprintf(buff, sizeof(buff), "%s%s",opt_basedir,name);
     name=buff;
   }
   internal::fn_format(buff, name, "", "", MY_UNPACK_FILENAME);
@@ -3121,7 +3121,7 @@ static void do_sync_with_master2(long offset)
   if (!master_pos.file[0])
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
-  sprintf(query_buf, "select master_pos_wait('%s', %ld)", master_pos.file,
+  snprintf(query_buf, sizeof(query_buf), "select master_pos_wait('%s', %ld)", master_pos.file,
           master_pos.pos + offset);
 
 wait_for_position:
@@ -4666,7 +4666,7 @@ static void usage(void)
   my_print_variables(my_long_options);
 }
 
-bool get_one_option(int optid, const struct my_option *, char *argument)
+int get_one_option(int optid, const struct my_option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -4680,15 +4680,21 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     char buff[FN_REFLEN];
     if (!internal::test_if_hard_path(argument))
     {
-      sprintf(buff,"%s%s",opt_basedir,argument);
+      snprintf(buff, sizeof(buff), "%s%s",opt_basedir,argument);
       argument= buff;
     }
     internal::fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
     assert(cur_file == file_stack && cur_file->file == 0);
     if (!(cur_file->file= fopen(buff, "r")))
-      die("Could not open '%s' for reading: errno = %d", buff, errno);
+    {
+      fprintf(stderr, _("Could not open '%s' for reading: errno = %d"), buff, errno);
+      return EXIT_ARGUMENT_INVALID;
+    }
     if (!(cur_file->file_name= strdup(buff)))
-      die("Out of memory");
+    {
+      fprintf(stderr, _("Out of memory"));
+      return EXIT_OUT_OF_MEMORY;
+    }
     cur_file->lineno= 1;
     break;
   }
@@ -4697,7 +4703,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     static char buff[FN_REFLEN];
     if (!internal::test_if_hard_path(argument))
     {
-      sprintf(buff,"%s%s",opt_basedir,argument);
+      snprintf(buff, sizeof(buff), "%s%s",opt_basedir,argument);
       argument= buff;
     }
     internal::fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
@@ -4711,7 +4717,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     if (strlen(endchar) != 0)
     {
       fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
-      exit(1);
+      return EXIT_ARGUMENT_INVALID;
     }
     /* If the port number is > 65535 it is not a valid port
        This also helps with potential data loss casting unsigned long to a
@@ -4719,7 +4725,7 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
     if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       fprintf(stderr, _("Value supplied for port is not valid.\n"));
-      exit(1);
+      return EXIT_ARGUMENT_INVALID;
     }
     else
     {
@@ -4733,7 +4739,10 @@ bool get_one_option(int optid, const struct my_option *, char *argument)
         free(opt_pass);
       opt_pass = strdup(argument);
       if (opt_pass == NULL)
-        die("Out of memory");
+      {
+        fprintf(stderr, _("Out of memory"));
+        return EXIT_OUT_OF_MEMORY;
+      }
       while (*argument)
       {
         /* Overwriting password with 'x' */
@@ -4797,7 +4806,7 @@ void str_to_file2(const char *fname, const char *str, int size, bool append)
   int flags= O_WRONLY | O_CREAT;
   if (!internal::test_if_hard_path(fname))
   {
-    sprintf(buff,"%s%s",opt_basedir,fname);
+    snprintf(buff, sizeof(buff), "%s%s",opt_basedir,fname);
     fname= buff;
   }
   internal::fn_format(buff, fname, "", "", MY_UNPACK_FILENAME);

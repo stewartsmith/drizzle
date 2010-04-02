@@ -22,6 +22,8 @@
 #include "drizzled/plugin/table_function.h"
 #include "drizzled/table_function_container.h"
 
+#include <iostream>
+
 using namespace std;
 
 namespace drizzled
