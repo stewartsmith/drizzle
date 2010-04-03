@@ -71,12 +71,6 @@ public:
   int delete_all_rows(void);
   int update_row(const unsigned char * old_data, unsigned char * new_data);
 
-  void get_auto_increment(uint64_t, uint64_t,
-                          uint64_t,
-                          uint64_t *,
-                          uint64_t *)
-  {}
-
   EmbeddedInnoDBTableShare *get_share(const char *table_name, int *rc);
   int free_share();
 
