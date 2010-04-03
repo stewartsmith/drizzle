@@ -983,11 +983,6 @@ void EmbeddedInnoDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
   getTableNamesInSchemaFromInnoDB(schema, NULL, &identifiers);
 }
 
-int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
-{
-  return ENOENT;
-}
-
 static int read_table_message_from_innodb(const char* table_name, drizzled::message::Table *table_message)
 {
   ib_trx_t transaction;
