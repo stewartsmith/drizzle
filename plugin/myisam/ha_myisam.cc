@@ -135,7 +135,17 @@ public:
             HA_KEYREAD_ONLY);
   }
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
+
+void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                         drizzled::SchemaIdentifier&,
+                                         drizzled::TableIdentifiers&)
+{
+}
 
 bool MyisamEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
 {
