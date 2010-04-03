@@ -2617,7 +2617,11 @@ int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
     return 0;
 
   if (drizzle_con_error(&con)[0])
-    return put_error(&con, result);
+  {
+    int ret = put_error(&con, result);
+    drizzle_result_free(result);
+    return ret;
+  }
   return 0;
 }
 
