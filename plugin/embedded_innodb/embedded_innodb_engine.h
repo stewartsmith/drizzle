@@ -55,6 +55,12 @@ public:
   void position(const unsigned char *record);
   int info(uint32_t flag);
 
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
+
 private:
   ib_trx_t transaction;
   ib_crsr_t cursor;

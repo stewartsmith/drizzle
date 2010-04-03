@@ -161,8 +161,17 @@ public:
   uint32_t max_key_length()    const { return 0; }
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
   int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
+void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                 drizzled::SchemaIdentifier&,
+                                 drizzled::TableIdentifiers&)
+{
+}
 
 int Tina::doRenameTable(Session &session,
                         TableIdentifier &from, TableIdentifier &to)
