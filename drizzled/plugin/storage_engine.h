@@ -297,7 +297,11 @@ public:
   // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                drizzled::SchemaIdentifier &schema_identifier,
-                               TableNameList &set_of_names);
+                               TableNameList &set_of_names)= 0;
+
+  virtual void doGetTableIdentifiers(CachedDirectory &directory,
+                                     drizzled::SchemaIdentifier &schema_identifier,
+                                     TableIdentifiers &set_of_identifiers)= 0;
 
   virtual int doDropTable(Session &session,
                           TableIdentifier &identifier)= 0;
@@ -328,6 +332,7 @@ public:
                        StorageEngine &engine,
                        TableIdentifier &identifier);
   static void getTableNames(Session &session, drizzled::SchemaIdentifier& schema_identifier, TableNameList &set_of_names);
+  static void getTableIdentifiers(Session &session, SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(drizzled::TableIdentifier &identifier);
