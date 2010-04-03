@@ -1,0 +1,36 @@
+create schema a;
+create schema b;
+create schema c;
+
+use a;
+create temporary table a ( a int );
+create temporary table b ( a int );
+create temporary table c ( a int );
+create temporary table d ( a int );
+
+use b;
+create temporary table a ( a int );
+create temporary table c ( a int );
+create temporary table d ( a int );
+
+use c;
+create temporary table a ( a int );
+create temporary table b ( a int );
+create temporary table d ( a int );
+
+--replace_column 3 # 4 # 5 #
+show temporary tables;
+--replace_column 3 # 4 # 5 #
+show temporary tables LIKE "a";
+--replace_column 3 # 4 # 5 #
+show temporary tables WHERE TABLE_SCHEMA="b";
+
+drop schema b;
+--replace_column 3 # 4 # 5 #
+show temporary tables WHERE TABLE_SCHEMA="b";
+
+drop schema a;
+drop schema c;
+
+--replace_column 3 # 4 # 5 #
+show temporary tables;
