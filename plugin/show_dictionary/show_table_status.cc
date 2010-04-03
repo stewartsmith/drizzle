@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "plugin/schema_dictionary/dictionary.h"
+#include "plugin/show_dictionary/dictionary.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/my_hash.h"
 
