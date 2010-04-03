@@ -40,14 +40,55 @@
 
 #include "drizzled/calendar.h"
 
+
 namespace drizzled
 {
 
+#define JULIAN_DAY_NUMBER_AT_ABSOLUTE_DAY_ONE INT64_C(1721425)
+
+#define UNIX_EPOCH_MAX_YEARS 2038
+#define UNIX_EPOCH_MIN_YEARS 1970
+
+#define CALENDAR_YY_PART_YEAR 70
+
+/**
+ * Simple macro returning whether the supplied year
+ * is a leap year in the supplied calendar.
+ *
+ * @param Year to evaluate
+ * @param Calendar to use
+ */
+#define IS_LEAP_YEAR(y, c) (days_in_year((y),(c)) == 366)
+  
 /** Static arrays for number of days in a month and their "day ends" */
 static const uint32_t __leap_days_in_month[12]=       {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static const uint32_t __normal_days_in_month[12]=     {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static const uint32_t __leap_days_to_end_month[13]=   {0, 31, 60, 91, 121, 151, 182, 213, 244, 274, 305, 335, 366};
 static const uint32_t __normal_days_to_end_month[13]= {0, 31, 59, 90, 120, 150, 181, 212, 243, 273, 304, 334, 365};
+
+/**
+ * Returns the number of days in a particular year.
+ *
+ * @param year to evaluate
+ * @param calendar to use
+ */
+static inline uint32_t days_in_year(uint32_t year, enum calendar calendar);
+
+/**
+ * Returns the number of days in a particular Gregorian Proleptic calendar year.
+ *
+ * @param year to evaluate
+ */
+static inline uint32_t days_in_year_gregorian(uint32_t year);
+
+/**
+ * Returns the number of days in a particular Julian Proleptic calendar year.
+ *
+ * @param year to evaluate
+ */
+static inline uint32_t days_in_year_julian(uint32_t year);
+
+static inline int64_t absolute_day_number_to_julian_day_number(int64_t absolute_day);
 
 /** 
  * Private utility macro for enabling a switch between
@@ -97,30 +138,6 @@ int64_t julian_day_number_from_gregorian_date(uint32_t year, uint32_t month, uin
 }
 
 /**
- * Translates an absolute day number to a 
- * Julian day number.  Note that a Julian day number
- * is not the same as a date in the Julian proleptic calendar.
- *
- * @param The absolute day number
- */
-int64_t absolute_day_number_to_julian_day_number(int64_t absolute_day)
-{
-  return absolute_day + JULIAN_DAY_NUMBER_AT_ABSOLUTE_DAY_ONE;
-}
-
-/**
- * Translates a Julian day number to an 
- * absolute day number.  Note that a Julian day number
- * is not the same as a date in the Julian proleptic calendar.
- *
- * @param The Julian day number
- */
-int64_t julian_day_number_to_absolute_day_number(int64_t julian_day)
-{
-  return julian_day - JULIAN_DAY_NUMBER_AT_ABSOLUTE_DAY_ONE;
-}
-
-/**
  * Given a supplied Julian Day Number, populates a year, month, and day
  * with the date in the Gregorian Proleptic calendar which corresponds to
  * the given Julian Day Number.
@@ -157,6 +174,18 @@ void gregorian_date_from_julian_day_number(int64_t julian_day
   *year_out= (uint32_t) Y;
   *month_out= (uint32_t) M;
   *day_out= (uint32_t) D;
+}
+
+/**
+ * Translates an absolute day number to a 
+ * Julian day number.  Note that a Julian day number
+ * is not the same as a date in the Julian proleptic calendar.
+ *
+ * @param The absolute day number
+ */
+inline int64_t absolute_day_number_to_julian_day_number(int64_t absolute_day)
+{
+  return absolute_day + JULIAN_DAY_NUMBER_AT_ABSOLUTE_DAY_ONE;
 }
 
 /**
@@ -271,27 +300,6 @@ uint32_t day_of_week(int64_t day_number
   if (sunday_is_first_day_of_week)
     tmp= (tmp == 6 ? 0 : tmp + 1);
   return tmp;
-}
-
-/**
- * Given a year, month, and day, returns whether the date is 
- * valid for the Gregorian proleptic calendar.
- *
- * @param The year
- * @param The month
- * @param The day
- */
-bool is_valid_gregorian_date(uint32_t year, uint32_t month, uint32_t day)
-{
-  if (year < 1)
-    return false;
-  if (month != 2)
-    return (day <= __normal_days_in_month[month - 1]);
-  else
-  {
-    const uint32_t *p_months= __DAYS_IN_MONTH(year, (enum calendar) GREGORIAN);
-    return (day <= p_months[1]);
-  }
 }
 
 /**

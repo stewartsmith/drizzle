@@ -143,6 +143,7 @@ include client/include.am
 include extra/include.am
 include support-files/include.am
 include tests/include.am
+include unittests/include.am
 
 merge-clean:
 	find ./ | $(GREP) \.orig | xargs rm -f
