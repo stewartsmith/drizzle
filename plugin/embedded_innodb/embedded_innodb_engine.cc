@@ -93,6 +93,12 @@ public:
   {
   }
 
+  void doGetTableIdentifiers(drizzled::CachedDirectory &,
+                             drizzled::SchemaIdentifier &,
+                             drizzled::TableIdentifiers &)
+  {
+  }
+
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 64; }
   uint32_t max_supported_key_length()    const { return 1000; }
