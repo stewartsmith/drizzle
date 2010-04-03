@@ -18,9 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLES_H
-#define PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLES_H
-
+#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_TABLES_H
+#define PLUGIN_SHOW_DICTIONARY_SHOW_TABLES_H
 
 class ShowTables : public drizzled::plugin::TableFunction
 {
@@ -30,9 +29,8 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
     bool is_primed;
-    drizzled::message::Table table_message;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator table_iterator;
+    drizzled::TableIdentifiers set_of_identifiers;
+    drizzled::TableIdentifiers::iterator table_iterator;
     std::string schema_name;
 
     void fill();
@@ -51,4 +49,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLES_H */
+#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_TABLES_H */
