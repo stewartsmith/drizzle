@@ -535,12 +535,6 @@ Cursor *StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
   return create(share, alloc);
 }
 
-/**
-  TODO -> Remove this to force all engines to implement their own file. Solves the "we only looked at dfe" problem.
-*/
-void StorageEngine::doGetTableNames(CachedDirectory&, SchemaIdentifier&, set<string>&)
-{ }
-
 class AddTableName : 
   public unary_function<StorageEngine *, void>
 {
@@ -560,6 +554,28 @@ public:
   result_type operator() (argument_type engine)
   {
     engine->doGetTableNames(directory, identifier, set_of_names);
+  }
+};
+
+class AddTableIdentifier : 
+  public unary_function<StorageEngine *, void>
+{
+  CachedDirectory &directory;
+  SchemaIdentifier &identifier;
+  TableIdentifiers &set_of_identifiers;
+
+public:
+
+  AddTableIdentifier(CachedDirectory &directory_arg, SchemaIdentifier &identifier_arg, TableIdentifiers &of_names) :
+    directory(directory_arg),
+    identifier(identifier_arg),
+    set_of_identifiers(of_names)
+  {
+  }
+
+  result_type operator() (argument_type engine)
+  {
+    engine->doGetTableIdentifiers(directory, identifier, set_of_identifiers);
   }
 };
 
@@ -592,6 +608,33 @@ void StorageEngine::getTableNames(Session &session, SchemaIdentifier &schema_ide
            AddTableName(directory, schema_identifier, set_of_names));
 
   session.doGetTableNames(directory, schema_identifier, set_of_names);
+}
+
+void StorageEngine::getTableIdentifiers(Session &session, SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
+{
+  CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
+
+  if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
+  { }
+  else if (schema_identifier == DATA_DICTIONARY_IDENTIFIER)
+  { }
+  else
+  {
+    if (directory.fail())
+    {
+      errno= directory.getError();
+      if (errno == ENOENT)
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_identifier.getSQLPath().c_str());
+      else
+        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
+      return;
+    }
+  }
+
+  for_each(vector_of_engines.begin(), vector_of_engines.end(),
+           AddTableIdentifier(directory, schema_identifier, set_of_identifiers));
+
+  session.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 }
 
 /* This will later be converted to TableIdentifiers */
