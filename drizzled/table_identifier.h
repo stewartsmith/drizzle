@@ -133,6 +133,42 @@ public:
 
   void copyToTableMessage(message::Table &message);
 
+  bool operator<(TableIdentifier &right)
+  {
+    int first= getLower().compare(right.getLower());
+
+    if (first < 0)
+    {
+      return true;
+    }
+    else if (first > 0)
+    {
+      return false;
+    }
+    else
+    {
+      int val= lower_table_name.compare(right.lower_table_name);
+
+      if (val < 0)
+      {
+        return true;
+      }
+      else if (val > 0)
+      {
+        return false;
+      }
+      else
+      {
+        if (type < right.type)
+        {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
   friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
   {
     const char *type_str;
@@ -185,6 +221,7 @@ public:
 };
 
 typedef std::vector <TableIdentifier> TableIdentifierList;
+typedef std::list <TableIdentifier> TableIdentifiers;
 
 } /* namespace drizzled */
 
