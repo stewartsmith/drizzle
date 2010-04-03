@@ -114,7 +114,16 @@ public:
   }
 
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
+
+void HeapEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                       drizzled::SchemaIdentifier&,
+                                       drizzled::TableIdentifiers&)
+{
+}
 
 bool HeapEngine::doDoesTableExist(Session& session, TableIdentifier &identifier)
 {

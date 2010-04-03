@@ -53,6 +53,12 @@ public:
   int index_last(unsigned char * buf);
   void position(const unsigned char *record);
   int info(uint32_t flag);
+
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
 };
 
 #endif /* PLUGIN_TABLEPROTOTESTER_TABLEPROTOTESTER_H */

@@ -18,39 +18,35 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_SHOW_SCHEMAS_H
-#define PLUGIN_SCHEMA_DICTIONARY_SHOW_SCHEMAS_H
+#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_TABLE_STATUS_H
+#define PLUGIN_SHOW_DICTIONARY_SHOW_TABLE_STATUS_H
 
-class ShowSchemas : public drizzled::plugin::TableFunction
+class ShowTableStatus : public  drizzled::plugin::TableFunction
 {
 public:
-
-  ShowSchemas();
-
-  ShowSchemas(const char *schema_arg, const char *table_arg) :
-    drizzled::plugin::TableFunction(schema_arg, table_arg)
-  { }
+  ShowTableStatus();
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::SchemaIdentifierList schema_names;
-    drizzled::SchemaIdentifierList::const_iterator schema_iterator;
+    bool is_primed;
+    drizzled::Table *table;
+    std::string schema_predicate;
+    std::vector<drizzled::Table *> table_list;
+    std::vector<drizzled::Table *>::iterator table_list_iterator;
 
-    bool is_schema_primed;
+    void fill();
 
-    virtual void fill();
-    virtual bool checkSchema();
+    const char *schema_name();
+    bool checkSchemaName();
+
+    bool nextCore();
+    bool next();
 
   public:
-    Generator(drizzled::Field **arg);
-
     bool populate();
-    bool nextSchemaCore();
-    bool nextSchema();
-    bool isSchemaPrimed()
-    {
-      return is_schema_primed;
-    }
+
+    Generator(drizzled::Field **arg);
+    ~Generator();
   };
 
   Generator *generator(drizzled::Field **arg)
@@ -59,5 +55,4 @@ public:
   }
 };
 
-
-#endif /* PLUGIN_SCHEMA_DICTIONARY_SHOW_SCHEMAS_H */
+#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_TABLE_STATUS_H */
