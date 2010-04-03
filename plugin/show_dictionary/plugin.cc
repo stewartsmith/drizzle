@@ -18,41 +18,33 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLE_STATUS_H
-#define PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLE_STATUS_H
+#include "config.h"
+#include "plugin/show_dictionary/dictionary.h"
 
-class ShowTableStatus : public  drizzled::plugin::TableFunction
+using namespace drizzled;
+
+static int init(drizzled::plugin::Context &context)
 {
-public:
-  ShowTableStatus();
+  context.add(new ShowColumns());
+  context.add(new ShowIndexes());
+  context.add(new ShowSchemas());
+  context.add(new ShowTableStatus());
+  context.add(new ShowTables());
+  context.add(new ShowTemporaryTables());
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-    bool is_primed;
-    drizzled::Table *table;
-    std::string schema_predicate;
-    std::vector<drizzled::Table *> table_list;
-    std::vector<drizzled::Table *>::iterator table_list_iterator;
+  return 0;
+}
 
-    void fill();
-
-    const char *schema_name();
-    bool checkSchemaName();
-
-    bool nextCore();
-    bool next();
-
-  public:
-    bool populate();
-
-    Generator(drizzled::Field **arg);
-    ~Generator();
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-};
-
-#endif /* PLUGIN_SCHEMA_DICTIONARY_SHOW_TABLE_STATUS_H */
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "show_dictionary",
+  "1.0",
+  "Brian Aker",
+  "Dictionary for show commands.",
+  PLUGIN_LICENSE_GPL,
+  init,
+  NULL,
+  NULL
+}
+DRIZZLE_DECLARE_PLUGIN_END;

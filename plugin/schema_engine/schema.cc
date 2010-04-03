@@ -356,3 +356,9 @@ bool Schema::doCanCreateTable(drizzled::TableIdentifier &identifier)
 
   return true;
 }
+
+void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                   drizzled::SchemaIdentifier&,
+                                   drizzled::TableIdentifiers&)
+{
+}

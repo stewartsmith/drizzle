@@ -28,17 +28,10 @@ static int init(drizzled::plugin::Context &context)
   context.add(new ColumnsTool());
   context.add(new IndexPartsTool());
   context.add(new IndexesTool());
-  context.add(new ShowTables());
   context.add(new ReferentialConstraintsTool());
   context.add(new SchemasTool());
-  context.add(new ShowColumns());
-  context.add(new ShowIndexes());
-  context.add(new ShowTemporaryTables());
   context.add(new TableConstraintsTool());
-  context.add(new ShowTableStatus());
   context.add(new TablesTool());
-
-  context.add(new ShowSchemas());
   
   return 0;
 }
