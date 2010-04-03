@@ -65,6 +65,12 @@ public:
   {
     return estimate_of_rows;
   }
+
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_CURSOR_H */
