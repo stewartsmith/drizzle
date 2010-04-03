@@ -100,9 +100,19 @@ public:
 
   bool doDoesTableExist(Session&, TableIdentifier &identifier);
 
+private:
+  void getTableNamesInSchemaFromInnoDB(drizzled::SchemaIdentifier &schema,
+                                       drizzled::plugin::TableNameList *set_of_names,
+                                       drizzled::TableIdentifiers *identifiers);
+
+public:
   void doGetTableNames(drizzled::CachedDirectory &,
                        drizzled::SchemaIdentifier &schema,
                        drizzled::plugin::TableNameList &set_of_names);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &,
+                             drizzled::SchemaIdentifier &schema,
+                             drizzled::TableIdentifiers &identifiers);
 
   /* The following defines can be increased if necessary */
   uint32_t max_supported_keys()          const { return 64; }
@@ -754,9 +764,10 @@ int EmbeddedInnoDBEngine::doDropTable(Session &session,
   return 0;
 }
 
-void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
-                                           drizzled::SchemaIdentifier &schema,
-                                           drizzled::plugin::TableNameList &set_of_names)
+void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
+                                 drizzled::SchemaIdentifier &schema,
+                                 drizzled::plugin::TableNameList *set_of_names,
+                                 drizzled::TableIdentifiers *identifiers)
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
@@ -803,7 +814,10 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
       const char *just_table_name= strchr(table_name, '/');
       assert(just_table_name);
       just_table_name++; /* skip over '/' */
-      set_of_names.insert(just_table_name);
+      if (set_of_names)
+        set_of_names->insert(just_table_name);
+      if (identifiers)
+        identifiers->push_back(TableIdentifier(schema.getLower(), just_table_name));
     }
 
 
@@ -819,6 +833,25 @@ void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
 
   innodb_err= ib_trx_commit(transaction);
   assert(innodb_err == DB_SUCCESS); // FIXME
+}
+
+void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
+                                           drizzled::SchemaIdentifier &schema,
+                                           drizzled::plugin::TableNameList &set_of_names)
+{
+  getTableNamesInSchemaFromInnoDB(schema, &set_of_names, NULL);
+}
+
+void EmbeddedInnoDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
+                                                 drizzled::SchemaIdentifier &schema,
+                                                 drizzled::TableIdentifiers &identifiers)
+{
+  getTableNamesInSchemaFromInnoDB(schema, NULL, &identifiers);
+}
+
+int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
+{
+  return ENOENT;
 }
 
 static int read_table_message_from_innodb(const char* table_name, drizzled::message::Table *table_message)
@@ -938,11 +971,6 @@ rollback_close_err:
   }
 
   return -1;
-}
-
-int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
-{
-  return ENOENT;
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
