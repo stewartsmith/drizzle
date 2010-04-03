@@ -4833,6 +4833,32 @@ show_param:
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
            }
+         | TEMPORARY_SYM TABLES show_wild
+           {
+             LEX *lex= Lex;
+             Session *session= YYSession;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             statement::Select *select=
+               new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+
+             if (prepare_new_schema_table(YYSession, lex, "SHOW_TEMPORARY_TABLES"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
+           }
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
              LEX *lex= Lex;
