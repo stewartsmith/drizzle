@@ -324,26 +324,37 @@ int get_defaults_options(int argc, char **argv,
   int org_argc= argc, prev_argc= 0;
   *defaults= *extra_defaults= *group_suffix= 0;
 
+  const std::string DEFAULTS_FILE("--defaults-file=");
+  const std::string DEFAULTS_EXTRA_FILE("--defaults-extra-file=");
+  const std::string DEFAULTS_GROUP_SUFFIX("--defaults-group-suffix=");
+
   while (argc >= 2 && argc != prev_argc)
   {
     /* Skip program name or previously handled argument */
     argv++;
     prev_argc= argc;                            /* To check if we found */
-    if (!*defaults && (strncmp(*argv,"--defaults-file=", sizeof("--defaults-file=")) == 0))
+    if (!*defaults && (strncmp(*argv,
+                               DEFAULTS_FILE.c_str(),
+                               DEFAULTS_FILE.size()) == 0))
     {
-      *defaults= *argv + sizeof("--defaults-file=")-1;
+      *defaults= *argv + DEFAULTS_FILE.size();
        argc--;
        continue;
     }
-    if (!*extra_defaults && (strncmp(*argv, "--defaults-extra-file=", sizeof("--defaults-extra-file=")) == 0))
+    if (!*extra_defaults && (strncmp(*argv, 
+                                     DEFAULTS_EXTRA_FILE.c_str(),
+                                     DEFAULTS_EXTRA_FILE.size()) == 0))
     {
-      *extra_defaults= *argv + sizeof("--defaults-extra-file=")-1;
+      *extra_defaults= *argv + DEFAULTS_EXTRA_FILE.size();
       argc--;
       continue;
     }
-    if (!*group_suffix && (strncmp(*argv, "--defaults-group-suffix=", sizeof("--defaults-group-suffix=")) == 0))
+    if (!*group_suffix && (strncmp(*argv, 
+                                   DEFAULTS_GROUP_SUFFIX.c_str(),
+                                   DEFAULTS_GROUP_SUFFIX.size()) == 0))
+
     {
-      *group_suffix= *argv + sizeof("--defaults-group-suffix=")-1;
+      *group_suffix= *argv + DEFAULTS_GROUP_SUFFIX.size();
       argc--;
       continue;
     }
