@@ -57,6 +57,12 @@ public:
   int delete_row(const unsigned char *);
   int delete_all_rows(void);
 
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
+
 private:
   ib_trx_t transaction;
   ib_crsr_t cursor;

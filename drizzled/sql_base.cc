@@ -605,6 +605,27 @@ void Session::doGetTableNames(CachedDirectory &,
   doGetTableNames(schema_identifier, set_of_names);
 }
 
+void Session::doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+                                    TableIdentifiers &set_of_identifiers)
+{
+  for (Table *table= temporary_tables ; table ; table= table->next)
+  {
+    if (schema_identifier.compare(table->s->getSchemaName()))
+    {
+      set_of_identifiers.push_back(TableIdentifier(table->getShare()->getSchemaName(),
+                                                   table->getShare()->getTableName(),
+                                                   table->getShare()->getPath()));
+    }
+  }
+}
+
+void Session::doGetTableIdentifiers(CachedDirectory &,
+                                    SchemaIdentifier &schema_identifier,
+                                    TableIdentifiers &set_of_identifiers)
+{
+  doGetTableIdentifiers(schema_identifier, set_of_identifiers);
+}
+
 bool Session::doDoesTableExist(TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
