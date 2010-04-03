@@ -125,7 +125,7 @@ void TransactionLogApplier::apply(const message::Transaction &to_apply)
   if (do_checksum)
   {
     checksum= drizzled::algorithm::crc32(
-        reinterpret_cast<char *>(buffer) - message_byte_length, message_byte_length);
+        buffer - message_byte_length, message_byte_length);
   }
 
   /* We always write in network byte order */

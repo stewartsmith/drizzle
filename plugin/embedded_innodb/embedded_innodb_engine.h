@@ -69,6 +69,11 @@ public:
   double scan_time();
   int delete_row(const unsigned char *);
   int delete_all_rows(void);
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
 
   EmbeddedInnoDBTableShare *get_share(const char *table_name, int *rc);
   int free_share();
