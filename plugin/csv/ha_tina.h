@@ -140,6 +140,11 @@ public:
   void position(const unsigned char *record);
   int info(uint);
   int delete_all_rows(void);
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
 
   /*
     These functions used to get/update status of the Cursor.
