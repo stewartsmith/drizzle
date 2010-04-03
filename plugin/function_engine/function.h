@@ -90,6 +90,10 @@ public:
   {
     return EPERM;
   }
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 #endif /* PLUGIN_FUNCTION_ENGINE_FUNCTION_H */
