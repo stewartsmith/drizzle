@@ -22,8 +22,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_RABBITMQ_HANDLER_RABBITMQ_HANDLER_H
-#define PLUGIN_RABBITMQ_HANDLER_RABBITMQ_HANDLER_H
+#ifndef PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H
+#define PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H
 #include <string>
 #include <amqp.h>
 #include <amqp_framing.h>
@@ -120,4 +120,4 @@ public:
   void handleAMQPError(amqp_rpc_reply_t x, std::string context) throw(rabbitmq_handler_exception);
 };
 
-#endif
+#endif /* PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H */
