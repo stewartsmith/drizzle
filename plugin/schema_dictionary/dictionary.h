@@ -38,12 +38,5 @@
 #include "plugin/schema_dictionary/index_parts.h"
 #include "plugin/schema_dictionary/referential_constraints.h"
 #include "plugin/schema_dictionary/table_constraints.h"
-#include "plugin/schema_dictionary/show_columns.h"
-#include "plugin/schema_dictionary/show_indexes.h"
-// Show tables needs to be first.
-#include "plugin/schema_dictionary/show_schemas.h"
-#include "plugin/schema_dictionary/show_tables.h"
-#include "plugin/schema_dictionary/show_table_status.h"
-#include "plugin/schema_dictionary/show_temporary_tables.h"
 
 #endif /* PLUGIN_SCHEMA_DICTIONARY_DICTIONARY_H */

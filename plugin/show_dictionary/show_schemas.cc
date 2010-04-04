@@ -19,7 +19,7 @@
  */
 
 #include "config.h"
-#include "plugin/schema_dictionary/dictionary.h"
+#include "plugin/show_dictionary/dictionary.h"
 
 using namespace std;
 using namespace drizzled;
@@ -55,8 +55,7 @@ bool ShowSchemas::Generator::nextSchemaCore()
   }
   else
   {
-    Session *session= current_session;
-    plugin::StorageEngine::getSchemaIdentifiers(*session, schema_names);
+    plugin::StorageEngine::getSchemaIdentifiers(getSession(), schema_names);
     schema_names.sort();
     schema_iterator= schema_names.begin();
     is_schema_primed= true;

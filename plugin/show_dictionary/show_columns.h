@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,51 +18,51 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H
-#define PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H
+#ifndef PLUGIN_SHOW_DICTIONARY_SHOW_COLUMNS_H
+#define PLUGIN_SHOW_DICTIONARY_SHOW_COLUMNS_H
 
-class SchemasTool : public drizzled::plugin::TableFunction
+class ShowColumns : public drizzled::plugin::TableFunction
 {
 public:
-
-  SchemasTool();
-
-  SchemasTool(const char *schema_arg, const char *table_arg) :
-    drizzled::plugin::TableFunction(schema_arg, table_arg)
-  { }
-
-  SchemasTool(const char *table_arg) :
-    drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
-  { }
+  ShowColumns();
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::message::Schema schema;
+    bool is_tables_primed;
+    bool is_columns_primed;
 
-    drizzled::SchemaIdentifierList schema_names;
-    drizzled::SchemaIdentifierList::const_iterator schema_iterator;
+    int32_t column_iterator;
+    drizzled::message::Table table_proto;
+    drizzled::message::Table::Field column;
 
-    bool is_schema_primed;
-    bool is_schema_parsed;
+    bool nextColumnCore();
+    bool nextColumn();
 
-    virtual void fill();
+    std::string table_name;
+
+    const drizzled::message::Table& getTableProto()
+    {
+      return table_proto;
+    }
+
+    bool isTablesPrimed()
+    {
+      return is_tables_primed;
+    }
+
+    const std::string &getTableName()
+    {
+      return table_name;
+    }
+
+    void pushType(drizzled::message::Table::Field::FieldType type);
+
+    void fill();
 
   public:
     Generator(drizzled::Field **arg);
-
-    const std::string &schema_name()
-    {
-      assert(is_schema_primed);
-      return schema.name();
-    }
-
     bool populate();
-    bool nextSchemaCore();
-    bool nextSchema();
-    bool isSchemaPrimed()
-    {
-      return is_schema_primed;
-    }
+
   };
 
   Generator *generator(drizzled::Field **arg)
@@ -71,4 +71,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_SCHEMA_DICTIONARY_SCHEMAS_H */
+#endif /* PLUGIN_SHOW_DICTIONARY_SHOW_COLUMNS_H */

@@ -175,7 +175,7 @@ int _mi_bin_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *pa
 {
   (void)buff;
   register int start,mid,end,save_end;
-  int flag;
+  int flag= 0;
   uint32_t totlength,nod_flag,not_used[2];
 
   totlength=keyinfo->keylength+(nod_flag=mi_test_if_nod(page));
@@ -234,7 +234,7 @@ int _mi_seq_search(MI_INFO *info, register MI_KEYDEF *keyinfo, unsigned char *pa
                    unsigned char *key, uint32_t key_len, uint32_t comp_flag, unsigned char **ret_pos,
                    unsigned char *buff, bool *last_key)
 {
-  int flag=0;
+  int flag= 0;
   uint32_t nod_flag,length=0,not_used[2];
   unsigned char t_buff[MI_MAX_KEY_BUFF],*end;
 

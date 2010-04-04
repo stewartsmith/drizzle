@@ -20,7 +20,7 @@
 
 
 #include "config.h"
-#include "plugin/schema_dictionary/dictionary.h"
+#include "plugin/show_dictionary/dictionary.h"
 #include "drizzled/table_identifier.h"
 
 using namespace std;
@@ -36,8 +36,7 @@ ShowTables::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false)
 {
-  Session *session= current_session;
-  statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
+  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
 
   schema_name.append(select->getShowSchema());
   assert(not schema_name.empty());
@@ -51,30 +50,17 @@ bool ShowTables::Generator::nextCore()
   }
   else
   {
-    Session *session= current_session;
     SchemaIdentifier identifier(schema_name);
-    plugin::StorageEngine::getTableNames(*session, identifier, table_names);
-    table_iterator= table_names.begin();
+    plugin::StorageEngine::getTableIdentifiers(getSession(), identifier, set_of_identifiers);
+    set_of_identifiers.sort();
+    table_iterator= set_of_identifiers.begin();
     is_primed= true;
   }
 
-  if (table_iterator == table_names.end())
+  if (table_iterator == set_of_identifiers.end())
     return false;
 
-  table_message.Clear();
-  {
-    Session *session= current_session;
-    TableIdentifier identifier(schema_name, *table_iterator);
-
-    if (not plugin::StorageEngine::getTableDefinition(*session,
-                                                      identifier,
-                                                      table_message))
-    {
-      return false;
-    }
-  }
-
-  if (isWild(*table_iterator))
+  if (isWild((*table_iterator).getTableName()))
     return false;
 
   return true;
@@ -84,7 +70,7 @@ bool ShowTables::Generator::next()
 {
   while (not nextCore())
   {
-    if (table_iterator != table_names.end())
+    if (table_iterator != set_of_identifiers.end())
       continue;
 
     return false;
@@ -106,5 +92,5 @@ bool ShowTables::Generator::populate()
 void ShowTables::Generator::fill()
 {
   /* TABLE_NAME */
-  push(table_message.name());
+  push((*table_iterator).getTableName());
 }

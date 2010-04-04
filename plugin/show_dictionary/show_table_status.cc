@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "plugin/schema_dictionary/dictionary.h"
+#include "plugin/show_dictionary/dictionary.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/my_hash.h"
 
@@ -46,8 +46,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false)
 {
-  Session *session= current_session;
-  statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
+  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
 
   schema_predicate.append(select->getShowSchema());
 
@@ -62,7 +61,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
     table_list.push_back(table);
   }
 
-  for (table= session->temporary_tables; table; table= table->next)
+  for (table= getSession().temporary_tables; table; table= table->next)
   {
     if (table->getShare())
     {
