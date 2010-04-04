@@ -28,70 +28,89 @@
 namespace drizzled
 {
 
-/* Structure describing local time type (e.g. Moscow summer time (MSD)) */
+/**
+ * @brief
+ *  Structure describing local time type (e.g. Moscow summer time (MSD))
+ *
+ * @details 
+ *  We don't use tt_ttisstd and tt_ttisgmt members of original elsie-code
+ *  struct since we don't support POSIX-style TZ descriptions in variables.
+ */
 typedef struct ttinfo
 {
-  long tt_gmtoff; // Offset from UTC in seconds
-  uint32_t tt_isdst;   // Is daylight saving time or not. Used to set tm_isdst
-  uint32_t tt_abbrind; // Index of start of abbreviation for this time type.
-  /*
-    We don't use tt_ttisstd and tt_ttisgmt members of original elsie-code
-    struct since we don't support POSIX-style TZ descriptions in variables.
-  */
+  long tt_gmtoff; ///< Offset from UTC in seconds
+
+  uint32_t tt_isdst; ///< Is daylight saving time or not. Used to set tm_isdst
+
+  uint32_t tt_abbrind; ///< Index of start of abbreviation for this time type.
 } TRAN_TYPE_INFO;
 
-/* Structure describing leap-second corrections. */
+/**
+ * @brief
+ * Structure describing leap-second corrections.
+ */
 typedef struct lsinfo
 {
   time_t ls_trans; // Transition time
   long      ls_corr;  // Correction to apply
 } LS_INFO;
 
-/*
-  Structure with information describing ranges of time_t shifted to local
-  time (time_t + offset). Used for local DRIZZLE_TIME -> time_t conversion.
-  See comments for TIME_to_gmt_sec() for more info.
-*/
+/**
+ * @brief
+ * Structure with information describing ranges of time_t shifted to local
+ * time (time_t + offset).
+ *
+ * @details
+ * Used for local DRIZZLE_TIME -> time_t conversion.
+ * See comments for TIME_to_gmt_sec() for more info.
+ */
 typedef struct revtinfo
 {
-  long rt_offset; // Offset of local time from UTC in seconds
-  uint32_t rt_type;    // Type of period 0 - Normal period. 1 - Spring time-gap
+  long rt_offset; ///< Offset of local time from UTC in seconds
+
+  uint32_t rt_type;    ///< Type of period 0 - Normal period. 1 - Spring time-gap
 } REVT_INFO;
 
 
-/*
-  Structure which fully describes time zone which is
-  described in our db or in zoneinfo files.
-*/
+/**
+ * @brief
+ * Structure which fully describes time zone which is
+ * described in our db or in zoneinfo files.
+ */
 typedef struct st_time_zone_info
 {
-  uint32_t leapcnt;  // Number of leap-second corrections
-  uint32_t timecnt;  // Number of transitions between time types
-  uint32_t typecnt;  // Number of local time types
-  uint32_t charcnt;  // Number of characters used for abbreviations
-  uint32_t revcnt;   // Number of transition descr. for TIME->time_t conversion
+  uint32_t leapcnt;  ///< Number of leap-second corrections
+  uint32_t timecnt;  ///< Number of transitions between time types
+  uint32_t typecnt;  ///< Number of local time types
+  uint32_t charcnt;  ///< Number of characters used for abbreviations
+  uint32_t revcnt;   ///< Number of transition descr. for TIME->time_t conversion
+
   /* The following are dynamical arrays are allocated in memory::Root */
-  time_t *ats;       // Times of transitions between time types
-  unsigned char	*types; // Local time types for transitions
-  TRAN_TYPE_INFO *ttis; // Local time types descriptions
+  time_t *ats;       ///< Times of transitions between time types
+  unsigned char	*types; ///< Local time types for transitions
+  TRAN_TYPE_INFO *ttis; ///< Local time types descriptions
   /* Storage for local time types abbreviations. They are stored as ASCIIZ */
   char *chars;
-  /*
-    Leap seconds corrections descriptions, this array is shared by
-    all time zones who use leap seconds.
-  */
+
+  /**
+   * Leap seconds corrections descriptions, this array is shared by
+   * all time zones who use leap seconds.
+   */
   LS_INFO *lsis;
-  /*
-    Starting points and descriptions of shifted time_t (time_t + offset)
-    ranges on which shifted time_t -> time_t mapping is linear or undefined.
-    Used for tm -> time_t conversion.
-  */
+
+  /**
+   * Starting points and descriptions of shifted time_t (time_t + offset)
+   * ranges on which shifted time_t -> time_t mapping is linear or undefined.
+   * Used for tm -> time_t conversion.
+   */
   time_t *revts;
+
   REVT_INFO *revtis;
-  /*
-    Time type which is used for times smaller than first transition or if
-    there are no transitions at all.
-  */
+
+  /**
+   * Time type which is used for times smaller than first transition or if
+   * there are no transitions at all.
+   */
   TRAN_TYPE_INFO *fallback_tti;
 
 } TIME_ZONE_INFO;
@@ -126,23 +145,22 @@ static inline bool isleap(int year)
   return (((year) % 4) == 0 && (((year) % 100) != 0 || ((year) % 400) == 0));
 }
 
-/*
-  Converts time from time_t representation (seconds in UTC since Epoch)
-  to broken down representation using given local time zone offset.
-
-  SYNOPSIS
-    sec_to_TIME()
-      tmp    - pointer to structure for broken down representation
-      t      - time_t value to be converted
-      offset - local time zone offset
-
-  DESCRIPTION
-    Convert time_t with offset to DRIZZLE_TIME struct. Differs from timesub
-    (from elsie code) because doesn't contain any leap correction and
-    TM_GMTOFF and is_dst setting and contains some MySQL specific
-    initialization. Funny but with removing of these we almost have
-    glibc's offtime function.
-*/
+/**
+ * @brief
+ * Converts time from time_t representation (seconds in UTC since Epoch)
+ * to broken down representation using given local time zone offset.
+ *
+ * @details
+ *  Convert time_t with offset to DRIZZLE_TIME struct. Differs from timesub
+ *  (from elsie code) because doesn't contain any leap correction and
+ *  TM_GMTOFF and is_dst setting and contains some MySQL specific
+ *  initialization. Funny but with removing of these we almost have
+ *  glibc's offtime function.
+ *
+ * @param tmp     pointer to structure for broken down representation
+ * @param t       time_t value to be converted
+ * @param offset  local time zone offset
+ */
 static void
 sec_to_TIME(DRIZZLE_TIME * tmp, time_t t, long offset)
 {
