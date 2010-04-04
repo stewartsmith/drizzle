@@ -382,23 +382,20 @@ gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t sec_in_utc, const TIME_ZONE_INFO *sp)
 }
 
 
-/*
-  Converts local time in broken down representation to local
-  time zone analog of time_t represenation.
-
-  SYNOPSIS
-    sec_since_epoch()
-      year, mon, mday, hour, min, sec - broken down representation.
-
-  DESCRIPTION
-    Converts time in broken down representation to time_t representation
-    ignoring time zone. Note that we cannot convert back some valid _local_
-    times near ends of time_t range because of time_t overflow. But we
-    ignore this fact now since MySQL will never pass such argument.
-
-  RETURN VALUE
-    Seconds since epoch time representation.
-*/
+/**
+ * @brief
+ * Converts local time in broken down representation to local
+ * time zone analog of time_t represenation.
+ *
+ * @details
+ * Converts time in broken down representation to time_t representation
+ * ignoring time zone. Note that we cannot convert back some valid _local_
+ * times near ends of time_t range because of time_t overflow. But we
+ * ignore this fact now since MySQL will never pass such argument.
+ *
+ * @return
+ * Seconds since epoch time representation.
+ */
 static time_t
 sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 {
@@ -429,78 +426,77 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
          SECS_PER_MIN + sec;
 }
 
-/*
-  Converts local time in broken down DRIZZLE_TIME representation to time_t
-  representation.
-
-  SYNOPSIS
-    TIME_to_gmt_sec()
-      t               - pointer to structure for broken down represenatation
-      sp              - pointer to struct with time zone description
-      in_dst_time_gap - pointer to bool which is set to true if datetime
-                        value passed doesn't really exist (i.e. falls into
-                        spring time-gap) and is not touched otherwise.
-
-  DESCRIPTION
-    This is mktime analog for MySQL. It is essentially different
-    from mktime (or hypotetical my_mktime) because:
-    - It has no idea about tm_isdst member so if it
-      has two answers it will give the smaller one
-    - If we are in spring time gap then it will return
-      beginning of the gap
-    - It can give wrong results near the ends of time_t due to
-      overflows, but we are safe since in MySQL we will never
-      call this function for such dates (its restriction for year
-      between 1970 and 2038 gives us several days of reserve).
-    - By default it doesn't support un-normalized input. But if
-      sec_since_epoch() function supports un-normalized dates
-      then this function should handle un-normalized input right,
-      altough it won't normalize structure TIME.
-
-    Traditional approach to problem of conversion from broken down
-    representation to time_t is iterative. Both elsie's and glibc
-    implementation try to guess what time_t value should correspond to
-    this broken-down value. They perform localtime_r function on their
-    guessed value and then calculate the difference and try to improve
-    their guess. Elsie's code guesses time_t value in bit by bit manner,
-    Glibc's code tries to add difference between broken-down value
-    corresponding to guess and target broken-down value to current guess.
-    It also uses caching of last found correction... So Glibc's approach
-    is essentially faster but introduces some undetermenism (in case if
-    is_dst member of broken-down representation (tm struct) is not known
-    and we have two possible answers).
-
-    We use completely different approach. It is better since it is both
-    faster than iterative implementations and fully determenistic. If you
-    look at time_t to DRIZZLE_TIME conversion then you'll find that it consist
-    of two steps:
-    The first is calculating shifted time_t value and the second - TIME
-    calculation from shifted time_t value (well it is a bit simplified
-    picture). The part in which we are interested in is time_t -> shifted
-    time_t conversion. It is piecewise linear function which is defined
-    by combination of transition times as break points and times offset
-    as changing function parameter. The possible inverse function for this
-    converison would be ambiguos but with MySQL's restrictions we can use
-    some function which is the same as inverse function on unambigiuos
-    ranges and coincides with one of branches of inverse function in
-    other ranges. Thus we just need to build table which will determine
-    this shifted time_t -> time_t conversion similar to existing
-    (time_t -> shifted time_t table). We do this in
-    prepare_tz_info function.
-
-  TODO
-    If we can even more improve this function. For doing this we will need to
-    build joined map of transitions and leap corrections for gmt_sec_to_TIME()
-    function (similar to revts/revtis). Under realistic assumptions about
-    frequency of transitions we can use the same array for TIME_to_gmt_sec().
-    We need to implement special version of binary search for this. Such step
-    will be beneficial to CPU cache since we will decrease data-set used for
-    conversion twice.
-
-  RETURN VALUE
-    Seconds in UTC since Epoch.
-    0 in case of error.
-*/
+/**
+ * @brief
+ * Converts local time in broken down DRIZZLE_TIME representation to time_t
+ * representation.
+ *
+ * @details
+ *  This is mktime analog for MySQL. It is essentially different
+ *   from mktime (or hypotetical my_mktime) because:
+ *  - It has no idea about tm_isdst member so if it
+ *    has two answers it will give the smaller one
+ *  - If we are in spring time gap then it will return
+ *    beginning of the gap
+ *  - It can give wrong results near the ends of time_t due to
+ *    overflows, but we are safe since in MySQL we will never
+ *    call this function for such dates (its restriction for year
+ *    between 1970 and 2038 gives us several days of reserve).
+ *  - By default it doesn't support un-normalized input. But if
+ *    sec_since_epoch() function supports un-normalized dates
+ *    then this function should handle un-normalized input right,
+ *    altough it won't normalize structure TIME.
+ *
+ *  Traditional approach to problem of conversion from broken down
+ *  representation to time_t is iterative. Both elsie's and glibc
+ *  implementation try to guess what time_t value should correspond to
+ *  this broken-down value. They perform localtime_r function on their
+ *  guessed value and then calculate the difference and try to improve
+ *  their guess. Elsie's code guesses time_t value in bit by bit manner,
+ *  Glibc's code tries to add difference between broken-down value
+ *  corresponding to guess and target broken-down value to current guess.
+ *  It also uses caching of last found correction... So Glibc's approach
+ *  is essentially faster but introduces some undetermenism (in case if
+ *  is_dst member of broken-down representation (tm struct) is not known
+ *  and we have two possible answers).
+ *
+ *  We use completely different approach. It is better since it is both
+ *  faster than iterative implementations and fully determenistic. If you
+ *  look at time_t to DRIZZLE_TIME conversion then you'll find that it consist
+ *  of two steps:
+ *  The first is calculating shifted time_t value and the second - TIME
+ *  calculation from shifted time_t value (well it is a bit simplified
+ *  picture). The part in which we are interested in is time_t -> shifted
+ *  time_t conversion. It is piecewise linear function which is defined
+ *  by combination of transition times as break points and times offset
+ *  as changing function parameter. The possible inverse function for this
+ *  converison would be ambiguos but with MySQL's restrictions we can use
+ *  some function which is the same as inverse function on unambigiuos
+ *  ranges and coincides with one of branches of inverse function in
+ *  other ranges. Thus we just need to build table which will determine
+ *  this shifted time_t -> time_t conversion similar to existing
+ *  (time_t -> shifted time_t table). We do this in
+ *  prepare_tz_info function.
+ *
+ * @param  t               pointer to structure for broken down represenatation
+ * @param  sp              pointer to struct with time zone description
+ * @param  in_dst_time_gap pointer to bool which is set to true if datetime
+ *                         value passed doesn't really exist (i.e. falls into
+ *                         spring time-gap) and is not touched otherwise.
+ *
+ * @todo
+ * If we can even more improve this function. For doing this we will need to
+ * build joined map of transitions and leap corrections for gmt_sec_to_TIME()
+ * function (similar to revts/revtis). Under realistic assumptions about
+ * frequency of transitions we can use the same array for TIME_to_gmt_sec().
+ * We need to implement special version of binary search for this. Such step
+ * will be beneficial to CPU cache since we will decrease data-set used for
+ * conversion twice.
+ *
+ * @return
+ * Seconds in UTC since Epoch.
+ * 0 in case of error.
+ */
 static time_t
 TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
                 bool *in_dst_time_gap)
@@ -605,22 +601,22 @@ TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
 #endif /* !defined(TZINFO2SQL) */
 
 
-/*
-  String with names of SYSTEM time zone.
-*/
+/**
+ * String with names of SYSTEM time zone.
+ */
 static const String tz_SYSTEM_name("SYSTEM", 6, &my_charset_utf8_general_ci);
 
 
-/*
-  Instance of this class represents local time zone used on this system
-  (specified by TZ environment variable or via any other system mechanism).
-  It uses system functions (localtime_r, my_system_gmt_sec) for conversion
-  and is always available. Because of this it is used by default - if there
-  were no explicit time zone specified. On the other hand because of this
-  conversion methods provided by this class is significantly slower and
-  possibly less multi-threaded-friendly than corresponding Time_zone_db
-  methods so the latter should be preffered there it is possible.
-*/
+/**
+ * Instance of this class represents local time zone used on this system
+ * (specified by TZ environment variable or via any other system mechanism).
+ * It uses system functions (localtime_r, my_system_gmt_sec) for conversion
+ * and is always available. Because of this it is used by default - if there
+ * were no explicit time zone specified. On the other hand because of this
+ * conversion methods provided by this class is significantly slower and
+ * possibly less multi-threaded-friendly than corresponding Time_zone_db
+ * methods so the latter should be preffered there it is possible.
+ */
 class Time_zone_system : public Time_zone
 {
 public:
@@ -632,31 +628,30 @@ public:
 };
 
 
-/*
-  Converts local time in system time zone in DRIZZLE_TIME representation
-  to its time_t representation.
-
-  SYNOPSIS
-    TIME_to_gmt_sec()
-      t               - pointer to DRIZZLE_TIME structure with local time in
-                        broken-down representation.
-      in_dst_time_gap - pointer to bool which is set to true if datetime
-                        value passed doesn't really exist (i.e. falls into
-                        spring time-gap) and is not touched otherwise.
-
-  DESCRIPTION
-    This method uses system function (localtime_r()) for conversion
-    local time in system time zone in DRIZZLE_TIME structure to its time_t
-    representation. Unlike the same function for Time_zone_db class
-    it it won't handle unnormalized input properly. Still it will
-    return lowest possible time_t in case of ambiguity or if we
-    provide time corresponding to the time-gap.
-
-    You should call init_time() function before using this function.
-
-  RETURN VALUE
-    Corresponding time_t value or 0 in case of error
-*/
+/**
+ * @brief
+ * Converts local time in system time zone in DRIZZLE_TIME representation
+ * to its time_t representation.
+ *
+ * @details
+ * This method uses system function (localtime_r()) for conversion
+ * local time in system time zone in DRIZZLE_TIME structure to its time_t
+ * representation. Unlike the same function for Time_zone_db class
+ * it it won't handle unnormalized input properly. Still it will
+ * return lowest possible time_t in case of ambiguity or if we
+ * provide time corresponding to the time-gap.
+ *
+ * You should call init_time() function before using this function.
+ *
+ * @param   t               pointer to DRIZZLE_TIME structure with local time in
+ *                          broken-down representation.
+ * @param   in_dst_time_gap pointer to bool which is set to true if datetime
+ *                          value passed doesn't really exist (i.e. falls into
+ *                          spring time-gap) and is not touched otherwise.
+ *
+ * @return
+ * Corresponding time_t value or 0 in case of error
+ */
 time_t
 Time_zone_system::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
 {
@@ -665,22 +660,20 @@ Time_zone_system::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) 
 }
 
 
-/*
-  Converts time from UTC seconds since Epoch (time_t) representation
-  to system local time zone broken-down representation.
-
-  SYNOPSIS
-    gmt_sec_to_TIME()
-      tmp - pointer to DRIZZLE_TIME structure to fill-in
-      t   - time_t value to be converted
-
-  NOTE
-    We assume that value passed to this function will fit into time_t range
-    supported by localtime_r. This conversion is putting restriction on
-    TIMESTAMP range in MySQL. If we can get rid of SYSTEM time zone at least
-    for interaction with client then we can extend TIMESTAMP range down to
-    the 1902 easily.
-*/
+/**
+ * @brief
+ * Converts time from UTC seconds since Epoch (time_t) representation
+ * to system local time zone broken-down representation.
+ *
+ * @param    tmp   pointer to DRIZZLE_TIME structure to fill-in
+ * @param    t     time_t value to be converted
+ *
+ * Note: We assume that value passed to this function will fit into time_t range
+ * supported by localtime_r. This conversion is putting restriction on
+ * TIMESTAMP range in MySQL. If we can get rid of SYSTEM time zone at least
+ * for interaction with client then we can extend TIMESTAMP range down to
+ * the 1902 easily.
+ */
 void
 Time_zone_system::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
@@ -693,15 +686,13 @@ Time_zone_system::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 }
 
 
-/*
-  Get name of time zone
-
-  SYNOPSIS
-    get_name()
-
-  RETURN VALUE
-    Name of time zone as String
-*/
+/**
+ * @brief
+ * Get name of time zone
+ *
+ * @return
+ * Name of time zone as String
+ */
 const String *
 Time_zone_system::get_name() const
 {
@@ -709,12 +700,12 @@ Time_zone_system::get_name() const
 }
 
 
-/*
-  Instance of this class represents UTC time zone. It uses system gmtime_r
-  function for conversions and is always available. It is used only for
-  time_t -> DRIZZLE_TIME conversions in various UTC_...  functions, it is not
-  intended for DRIZZLE_TIME -> time_t conversions and shouldn't be exposed to user.
-*/
+/**
+ * Instance of this class represents UTC time zone. It uses system gmtime_r
+ * function for conversions and is always available. It is used only for
+ * time_t -> DRIZZLE_TIME conversions in various UTC_...  functions, it is not
+ * intended for DRIZZLE_TIME -> time_t conversions and shouldn't be exposed to user.
+ */
 class Time_zone_utc : public Time_zone
 {
 public:
@@ -726,25 +717,23 @@ public:
 };
 
 
-/*
-  Convert UTC time from DRIZZLE_TIME representation to its time_t representation.
-
-  SYNOPSIS
-    TIME_to_gmt_sec()
-      t               - pointer to DRIZZLE_TIME structure with local time
-                        in broken-down representation.
-      in_dst_time_gap - pointer to bool which is set to true if datetime
-                        value passed doesn't really exist (i.e. falls into
-                        spring time-gap) and is not touched otherwise.
-
-  DESCRIPTION
-    Since Time_zone_utc is used only internally for time_t -> TIME
-    conversions, this function of Time_zone interface is not implemented for
-    this class and should not be called.
-
-  RETURN VALUE
-    0
-*/
+/**
+ * @brief
+ * Convert UTC time from DRIZZLE_TIME representation to its time_t representation.
+ *
+ * @details
+ * Since Time_zone_utc is used only internally for time_t -> TIME
+ * conversions, this function of Time_zone interface is not implemented for
+ * this class and should not be called.
+ *
+ * @param  t               pointer to DRIZZLE_TIME structure with local time
+ *                         in broken-down representation.
+ * @param  in_dst_time_gap pointer to bool which is set to true if datetime
+ *                         value passed doesn't really exist (i.e. falls into
+ *                         spring time-gap) and is not touched otherwise.
+ * @return
+ * 0
+ */
 time_t
 Time_zone_utc::TIME_to_gmt_sec(const DRIZZLE_TIME *,
                                bool *) const
@@ -755,18 +744,17 @@ Time_zone_utc::TIME_to_gmt_sec(const DRIZZLE_TIME *,
 }
 
 
-/*
-  Converts time from UTC seconds since Epoch (time_t) representation
-  to broken-down representation (also in UTC).
-
-  SYNOPSIS
-    gmt_sec_to_TIME()
-      tmp - pointer to DRIZZLE_TIME structure to fill-in
-      t   - time_t value to be converted
-
-  NOTE
-    See note for apropriate Time_zone_system method.
-*/
+/**
+ * @brief
+ * Converts time from UTC seconds since Epoch (time_t) representation
+ * to broken-down representation (also in UTC).
+ *
+ * @param   tmp  pointer to DRIZZLE_TIME structure to fill-in
+ * @param   t    time_t value to be converted
+ *
+ * Note:
+ * See note for apropriate Time_zone_system method.
+ */
 void
 Time_zone_utc::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
@@ -778,20 +766,15 @@ Time_zone_utc::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 }
 
 
-/*
-  Get name of time zone
-
-  SYNOPSIS
-    get_name()
-
-  DESCRIPTION
-    Since Time_zone_utc is used only internally by SQL's UTC_* functions it
-    is not accessible directly, and hence this function of Time_zone
-    interface is not implemented for this class and should not be called.
-
-  RETURN VALUE
-    0
-*/
+/**
+ * @brief
+ * Get name of time zone
+ *
+ * @details
+ * Since Time_zone_utc is used only internally by SQL's UTC_* functions it
+ * is not accessible directly, and hence this function of Time_zone
+ * interface is not implemented for this class and should not be called.
+ */
 const String *
 Time_zone_utc::get_name() const
 {
@@ -801,10 +784,10 @@ Time_zone_utc::get_name() const
 }
 
 
-/*
-  Instance of this class represents some time zone which is
-  described in mysql.time_zone family of tables.
-*/
+/**
+ * Instance of this class represents some time zone which is
+ * described in mysql.time_zone family of tables.
+ */
 class Time_zone_db : public Time_zone
 {
 public:
@@ -819,19 +802,18 @@ private:
 };
 
 
-/*
-  Initializes object representing time zone described by mysql.time_zone
-  tables.
-
-  SYNOPSIS
-    Time_zone_db()
-      tz_info_arg - pointer to TIME_ZONE_INFO structure which is filled
-                    according to db or other time zone description
-                    (for example by my_tz_init()).
-                    Several Time_zone_db instances can share one
-                    TIME_ZONE_INFO structure.
-      tz_name_arg - name of time zone.
-*/
+/**
+ * @brief
+ * Initializes object representing time zone described by mysql.time_zone
+ * tables.
+ *
+ * @param tz_info_arg  pointer to TIME_ZONE_INFO structure which is filled
+ *                     according to db or other time zone description
+ *                     (for example by my_tz_init()).
+ *                     Several Time_zone_db instances can share one
+ *                     TIME_ZONE_INFO structure.
+ * @param tz_name_arg  name of time zone.
+ */
 Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
                            const String *tz_name_arg):
   tz_info(tz_info_arg), tz_name(tz_name_arg)
@@ -839,25 +821,24 @@ Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
 }
 
 
-/*
-  Converts local time in time zone described from TIME
-  representation to its time_t representation.
-
-  SYNOPSIS
-    TIME_to_gmt_sec()
-      t               - pointer to DRIZZLE_TIME structure with local time
-                        in broken-down representation.
-      in_dst_time_gap - pointer to bool which is set to true if datetime
-                        value passed doesn't really exist (i.e. falls into
-                        spring time-gap) and is not touched otherwise.
-
-  DESCRIPTION
-    Please see ::TIME_to_gmt_sec for function description and
-    parameter restrictions.
-
-  RETURN VALUE
-    Corresponding time_t value or 0 in case of error
-*/
+/**
+ * @brief
+ * Converts local time in time zone described from TIME
+ * representation to its time_t representation.
+ *
+ * @details
+ * Please see ::TIME_to_gmt_sec for function description and
+ * parameter restrictions.
+ * 
+ * @param    t               pointer to DRIZZLE_TIME structure with local time
+ *                           in broken-down representation.
+ * @param    in_dst_time_gap pointer to bool which is set to true if datetime
+ *                           value passed doesn't really exist (i.e. falls into
+ *                           spring time-gap) and is not touched otherwise.
+ *
+ * @return
+ * Corresponding time_t value or 0 in case of error
+ */
 time_t
 Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
 {
@@ -865,15 +846,14 @@ Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) cons
 }
 
 
-/*
-  Converts time from UTC seconds since Epoch (time_t) representation
-  to local time zone described in broken-down representation.
-
-  SYNOPSIS
-    gmt_sec_to_TIME()
-      tmp - pointer to DRIZZLE_TIME structure to fill-in
-      t   - time_t value to be converted
-*/
+/**
+ * @brief
+ * Converts time from UTC seconds since Epoch (time_t) representation
+ * to local time zone described in broken-down representation.
+ *
+ * @param  tmp   pointer to DRIZZLE_TIME structure to fill-in
+ * @param  t     time_t value to be converted
+ */
 void
 Time_zone_db::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
@@ -881,15 +861,13 @@ Time_zone_db::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 }
 
 
-/*
-  Get name of time zone
-
-  SYNOPSIS
-    get_name()
-
-  RETURN VALUE
-    Name of time zone as ASCIIZ-string
-*/
+/**
+ * @brief
+ * Get name of time zone
+ * 
+ * @return
+ * Name of time zone as ASCIIZ-string
+ */
 const String *
 Time_zone_db::get_name() const
 {
@@ -897,10 +875,10 @@ Time_zone_db::get_name() const
 }
 
 
-/*
-  Instance of this class represents time zone which
-  was specified as offset from UTC.
-*/
+/**
+ * Instance of this class represents time zone which
+ * was specified as offset from UTC.
+ */
 class Time_zone_offset : public Time_zone
 {
 public:
@@ -909,11 +887,13 @@ public:
                                     bool *in_dst_time_gap) const;
   virtual void   gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const;
   virtual const String * get_name() const;
-  /*
-    This have to be public because we want to be able to access it from
-    my_offset_tzs_get_key() function
-  */
+
+  /**
+   * This has to be public because we want to be able to access it from
+   * my_offset_tzs_get_key() function
+   */
   long offset;
+
 private:
   /* Extra reserve because of snprintf */
   char name_buff[7+16];
@@ -921,14 +901,13 @@ private:
 };
 
 
-/*
-  Initializes object representing time zone described by its offset from UTC.
-
-  SYNOPSIS
-    Time_zone_offset()
-      tz_offset_arg - offset from UTC in seconds.
-                      Positive for direction to east.
-*/
+/**
+ * @brief
+ * Initializes object representing time zone described by its offset from UTC.
+ *
+ * @param  tz_offset_arg   offset from UTC in seconds.
+ *                         Positive for direction to east.
+ */
 Time_zone_offset::Time_zone_offset(long tz_offset_arg):
   offset(tz_offset_arg)
 {
@@ -940,23 +919,22 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
 }
 
 
-/*
-  Converts local time in time zone described as offset from UTC
-  from DRIZZLE_TIME representation to its time_t representation.
-
-  SYNOPSIS
-    TIME_to_gmt_sec()
-      t               - pointer to DRIZZLE_TIME structure with local time
-                        in broken-down representation.
-      in_dst_time_gap - pointer to bool which should be set to true if
-                        datetime  value passed doesn't really exist
-                        (i.e. falls into spring time-gap) and is not
-                        touched otherwise.
-                        It is not really used in this class.
-
-  RETURN VALUE
-    Corresponding time_t value or 0 in case of error
-*/
+/**
+ * @brief
+ * Converts local time in time zone described as offset from UTC
+ * from DRIZZLE_TIME representation to its time_t representation.
+ *
+ * @param  t                 pointer to DRIZZLE_TIME structure with local time
+ *                           in broken-down representation.
+ * @param  in_dst_time_gap   pointer to bool which should be set to true if
+ *                           datetime  value passed doesn't really exist
+ *                           (i.e. falls into spring time-gap) and is not
+ *                           touched otherwise.
+ *                           It is not really used in this class.
+ *
+ * @return
+ * Corresponding time_t value or 0 in case of error
+ */
 time_t
 Time_zone_offset::TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                   bool *) const
@@ -997,16 +975,15 @@ Time_zone_offset::TIME_to_gmt_sec(const DRIZZLE_TIME *t,
 }
 
 
-/*
-  Converts time from UTC seconds since Epoch (time_t) representation
-  to local time zone described as offset from UTC and in broken-down
-  representation.
-
-  SYNOPSIS
-    gmt_sec_to_TIME()
-      tmp - pointer to DRIZZLE_TIME structure to fill-in
-      t   - time_t value to be converted
-*/
+/**
+ * @brief
+ * Converts time from UTC seconds since Epoch (time_t) representation
+ * to local time zone described as offset from UTC and in broken-down
+ * representation.
+ *
+ * @param  tmp   pointer to DRIZZLE_TIME structure to fill-in
+ * @param  t     time_t value to be converted
+ */
 void
 Time_zone_offset::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 {
@@ -1014,15 +991,13 @@ Time_zone_offset::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
 }
 
 
-/*
-  Get name of time zone
-
-  SYNOPSIS
-    get_name()
-
-  RETURN VALUE
-    Name of time zone as pointer to String object
-*/
+/**
+ * @brief
+ * Get name of time zone
+ *
+ * @return
+ * Name of time zone as pointer to String object
+ */
 const String *
 Time_zone_offset::get_name() const
 {
@@ -1044,31 +1019,30 @@ public:
 };
 
 
-/*
-  Initialize time zone support infrastructure.
-
-  SYNOPSIS
-    my_tz_init()
-      session            - current thread object
-      default_tzname - default time zone or 0 if none.
-      bootstrap      - indicates whenever we are in bootstrap mode
-
-  DESCRIPTION
-    This function will init memory structures needed for time zone support,
-    it will register mandatory SYSTEM time zone in them. It will try to open
-    mysql.time_zone* tables and load information about default time zone and
-    information which further will be shared among all time zones loaded.
-    If system tables with time zone descriptions don't exist it won't fail
-    (unless default_tzname is time zone from tables). If bootstrap parameter
-    is true then this routine assumes that we are in bootstrap mode and won't
-    load time zone descriptions unless someone specifies default time zone
-    which is supposedly stored in those tables.
-    It'll also set default time zone if it is specified.
-
-  RETURN VALUES
-    0 - ok
-    1 - Error
-*/
+/**
+ * @brief
+ * Initialize time zone support infrastructure.
+ *
+ * @details
+ * This function will init memory structures needed for time zone support,
+ * it will register mandatory SYSTEM time zone in them. It will try to open
+ * mysql.time_zone* tables and load information about default time zone and
+ * information which further will be shared among all time zones loaded.
+ * If system tables with time zone descriptions don't exist it won't fail
+ * (unless default_tzname is time zone from tables). If bootstrap parameter
+ * is true then this routine assumes that we are in bootstrap mode and won't
+ * load time zone descriptions unless someone specifies default time zone
+ * which is supposedly stored in those tables.
+ * It'll also set default time zone if it is specified.
+ *
+ * @param   session            current thread object
+ * @param   default_tzname     default time zone or 0 if none.
+ * @param   bootstrap          indicates whenever we are in bootstrap mode
+ *
+ * @return
+ *  0 - ok
+ *  1 - Error
+ */
 bool
 my_tz_init(Session *session, const char *default_tzname)
 {
@@ -1092,12 +1066,13 @@ my_tz_init(Session *session, const char *default_tzname)
   return false;
 }
 
-/*
-  Get Time_zone object for specified time zone.
-
-  Not implemented yet. This needs to hook into some sort of OS system call.
-
-*/
+/**
+ * @brief
+ * Get Time_zone object for specified time zone.
+ *
+ * @todo
+ * Not implemented yet. This needs to hook into some sort of OS system call.
+ */
 Time_zone *
 my_tz_find(Session *,
            const String *)
