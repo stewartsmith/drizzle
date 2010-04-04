@@ -224,27 +224,26 @@ sec_to_TIME(DRIZZLE_TIME * tmp, time_t t, long offset)
 }
 
 
-/*
-  Find time range wich contains given time_t value
-
-  SYNOPSIS
-    find_time_range()
-      t                - time_t value for which we looking for range
-      range_boundaries - sorted array of range starts.
-      higher_bound     - number of ranges
-
-  DESCRIPTION
-    Performs binary search for range which contains given time_t value.
-    It has sense if number of ranges is greater than zero and time_t value
-    is greater or equal than beginning of first range. It also assumes that
-    t belongs to some range specified.
-
-    With this localtime_r on real data may takes less time than with linear
-    search (I've seen 30% speed up).
-
-  RETURN VALUE
-    Index of range to which t belongs
-*/
+/**
+ * @brief 
+ * Find time range wich contains given time_t value
+ *
+ * @details
+ * Performs binary search for range which contains given time_t value.
+ * It has sense if number of ranges is greater than zero and time_t value
+ * is greater or equal than beginning of first range. It also assumes that
+ * t belongs to some range specified.
+ *
+ * With this localtime_r on real data may takes less time than with linear
+ * search (I've seen 30% speed up).
+ *
+ * @param  t                time_t value for which we looking for range
+ * @param  range_boundaries sorted array of range starts.
+ * @param  higher_bound     number of ranges
+ *
+ * @return
+ * Index of range to which t belongs
+ */
 static uint
 find_time_range(time_t t, const time_t *range_boundaries,
                 uint32_t higher_bound)
@@ -274,18 +273,17 @@ find_time_range(time_t t, const time_t *range_boundaries,
   return lower_bound;
 }
 
-/*
-  Find local time transition for given time_t.
-
-  SYNOPSIS
-    find_transition_type()
-      t   - time_t value to be converted
-      sp  - pointer to struct with time zone description
-
-  RETURN VALUE
-    Pointer to structure in time zone description describing
-    local time type for given time_t.
-*/
+/**
+ * @brief
+ *  Find local time transition for given time_t.
+ *
+ * @param  t  time_t value to be converted
+ * @param  sp pointer to struct with time zone description
+ *
+ * @return
+ * Pointer to structure in time zone description describing
+ * local time type for given time_t.
+ */
 static
 const TRAN_TYPE_INFO *
 find_transition_type(time_t t, const TIME_ZONE_INFO *sp)
@@ -308,27 +306,27 @@ find_transition_type(time_t t, const TIME_ZONE_INFO *sp)
 }
 
 
-/*
-  Converts time in time_t representation (seconds in UTC since Epoch) to
-  broken down DRIZZLE_TIME representation in local time zone.
-
-  SYNOPSIS
-    gmt_sec_to_TIME()
-      tmp          - pointer to structure for broken down represenatation
-      sec_in_utc   - time_t value to be converted
-      sp           - pointer to struct with time zone description
-
-  TODO
-    We can improve this function by creating joined array of transitions and
-    leap corrections. This will require adding extra field to TRAN_TYPE_INFO
-    for storing number of "extra" seconds to minute occured due to correction
-    (60th and 61st second, look how we calculate them as "hit" in this
-    function).
-    Under realistic assumptions about frequency of transitions the same array
-    can be used for DRIZZLE_TIME -> time_t conversion. For this we need to
-    implement tweaked binary search which will take into account that some
-    DRIZZLE_TIME has two matching time_t ranges and some of them have none.
-*/
+/**
+ * @brief
+ * Converts time in time_t representation (seconds in UTC since Epoch) to
+ * broken down DRIZZLE_TIME representation in local time zone.
+ *
+ * @param  tmp          pointer to structure for broken down represenatation
+ * @param  sec_in_utc   time_t value to be converted
+ * @param  sp           pointer to struct with time zone description
+ *
+ * @todo
+ * We can improve this function by creating joined array of transitions and
+ * leap corrections. This will require adding extra field to TRAN_TYPE_INFO
+ * for storing number of "extra" seconds to minute occured due to correction
+ * (60th and 61st second, look how we calculate them as "hit" in this
+ * function).
+ *
+ * Under realistic assumptions about frequency of transitions the same array
+ * can be used for DRIZZLE_TIME -> time_t conversion. For this we need to
+ * implement tweaked binary search which will take into account that some
+ * DRIZZLE_TIME has two matching time_t ranges and some of them have none.
+ */
 static void
 gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t sec_in_utc, const TIME_ZONE_INFO *sp)
 {
