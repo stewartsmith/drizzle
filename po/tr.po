@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-12-23 08:49+0000\n"
-"Last-Translator: Serdar KAHYA <Unknown>\n"
+"POT-Creation-Date: 2010-03-31 06:13+0000\n"
+"PO-Revision-Date: 2010-04-04 22:17+0000\n"
+"Last-Translator: Göksel GÜREN <Unknown>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-04-05 03:52+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -85,7 +85,8 @@ msgid "Don't show warnings after every statement."
 msgstr "Her ifadeden sonra uyarı gösterme"
 
 #, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr "Başlartılırken hafıza ayırma problemi. İptal ediliyor\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -356,9 +357,11 @@ msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr "--safe-updates kullanırken SELECT için otomatik limit."
 
 msgid "Automatic limit for rows in a join when using --safe-updates"
-msgstr "--safe-updates kullanırken satırları birleştirmek için otomatik limit."
+msgstr ""
+"--safe-updates kullanırken satırları birleştirmek için otomatik limit."
 
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Sunucuya bağlanmak için eski tip protokol (pre-4.1.1) kullanan istemcileri "
 "reddet"
@@ -400,7 +403,8 @@ msgstr "UYARI: seçenek eski; onun yerine --disable-pager kullan.\n"
 
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr "UYARI: --server-arg seçeneği bu konfigurasyonda desteklenmemektedir.\n"
+msgstr ""
+"UYARI: --server-arg seçeneği bu konfigurasyonda desteklenmemektedir.\n"
 
 msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
@@ -420,13 +424,12 @@ msgid "Unknown command: "
 msgstr "Bilinmeyen komut: "
 
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
-"Tablo ve kolon adlarının tamamlamak için tablo bilgilerini okuyor\n"
-"    Bu seçeneği -A ile iptal edebilirsiniz.\n"
-"\n"
 
 msgid "No connection. Trying to reconnect..."
 msgstr "Bağlantı yok. Tekrar bağlanılıyor..."
@@ -462,7 +465,8 @@ msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Sorgu bitti %ld satır etkilendi"
 
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr "Çıktı ilerleme raporundan önceki satır sayısı (--verbose gerektirir)"
 
 #, c-format
@@ -592,7 +596,7 @@ msgstr "%s: %s tablosu için indeksleri alamıyor\n"
 
 #, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr ""
+msgstr "Hata: %s tablosu için durum bilgisi okunamadı\n"
 
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
@@ -665,6 +669,14 @@ msgstr ""
 #, c-format
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Hata: ORDER BY ifadesini depolamak için yeterli hafıza yok\n"
+
+#, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr ""
+
+#, c-format
+msgid "Out of memory"
+msgstr ""
 
 #, c-format
 msgid "Got signal %d from thread %<PRIu64>"
@@ -759,9 +771,6 @@ msgstr "Bilinmeyen locale: '%s'"
 msgid "Can't create thread-keys"
 msgstr ""
 
-msgid "Out of memory"
-msgstr ""
-
 msgid "Failed to initialize plugins."
 msgstr "Eklentileri başlatılamadı"
 
@@ -774,9 +783,9 @@ msgstr ""
 msgid "No scheduler found, cannot continue!\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr "Bilinmeyen/desteklenmeyen tablo tipi: %s"
+msgstr ""
 
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
@@ -785,8 +794,8 @@ msgid "Auto-increment columns are incremented by this"
 msgstr ""
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
 
 msgid ""
@@ -1047,8 +1056,9 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-msgid "UNUSED"
-msgstr ""
+#, c-format
+msgid "Unknown error %d"
+msgstr "Bilinmeyen hata %d"
 
 msgid "NO"
 msgstr "HAYIR"
@@ -1527,8 +1537,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #, c-format
@@ -1777,8 +1787,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
@@ -2101,7 +2111,8 @@ msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
 
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #, c-format
@@ -2110,8 +2121,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 
 #, c-format
@@ -2136,7 +2147,8 @@ msgid ""
 "SELECT #%d"
 msgstr ""
 
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 msgid ""
@@ -2403,7 +2415,8 @@ msgstr ""
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #, c-format
@@ -2435,13 +2448,14 @@ msgid ""
 "View merge algorithm can't be used here for now (assumed undefined algorithm)"
 msgstr ""
 
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #, c-format
@@ -2714,8 +2728,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
 
 msgid ""
@@ -2746,7 +2760,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #, c-format
@@ -2788,8 +2803,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
 
 msgid ""
@@ -2866,7 +2881,8 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr ""
 
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 msgid "AGGREGATE is not supported for stored functions"
@@ -2874,8 +2890,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 
 #, c-format
@@ -2952,7 +2968,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 msgid "MAXVALUE can only be used in last partition definition"
@@ -2970,7 +2987,8 @@ msgstr ""
 msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -3031,7 +3049,8 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr ""
 
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #, c-format
@@ -3088,7 +3107,8 @@ msgstr ""
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 msgid ""
@@ -3218,8 +3238,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 
 msgid "You can't write-lock a log table. Only read access is possible"
@@ -3230,8 +3250,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #, c-format
@@ -3628,7 +3648,8 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr ""
 
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #, c-format
@@ -3771,51 +3792,7 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "'%s' dosyası okunurken hata oluştu (Errcode: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "'%s' dosyasına yazarken hata oluştu(Errcode: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr ""
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
 msgstr ""
 
 #, c-format
@@ -3827,23 +3804,11 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr ""
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr ""
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
-msgstr ""
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
 msgstr ""
 
 #, c-format
@@ -3883,16 +3848,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "'%s' dosyası bulunamadı (Errcode: %d)"
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Bilinmeyen hata %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -4162,9 +4119,9 @@ msgstr ""
 msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr "Eklentileri başlatılamadı"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -4210,9 +4167,9 @@ msgstr ""
 msgid "Variable named %s already exists!\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not add Variable: %s\n"
-msgstr "\"%s\" tablosu bulunamıyor"
+msgstr ""
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
@@ -4314,9 +4271,8 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "Kullanılacak veritabanı."
+msgstr ""
 
 msgid "Enable default replicator"
 msgstr ""
@@ -4324,13 +4280,10 @@ msgstr ""
 msgid "Default Replicator"
 msgstr ""
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
 msgstr ""
-"Bağlantı için kullanılacak port numarası ya da öntanımlı değerin kullanıması "
-"için 0,  erişilme önceliğine göre, drizzle.cnf, $DRIZZLE_TCP_PORT "
 
 msgid "Connect Timeout."
 msgstr ""
@@ -4347,9 +4300,8 @@ msgstr ""
 msgid "Buffer length."
 msgstr ""
 
-#, fuzzy
 msgid "Address to bind to."
-msgstr "Bağlanılacak IP adresi."
+msgstr ""
 
 msgid "Unknown Drizzle error"
 msgstr ""
@@ -4707,9 +4659,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr ""
 
-msgid "Undefined handler error 125"
-msgstr ""
-
 msgid "Index file is crashed"
 msgstr ""
 
@@ -4717,9 +4666,6 @@ msgid "Record file is crashed"
 msgstr ""
 
 msgid "Out of memory in engine"
-msgstr ""
-
-msgid "Undefined handler error 129"
 msgstr ""
 
 msgid "Incorrect file format"
@@ -4875,12 +4821,9 @@ msgstr ""
 msgid "Tablespace not empty"
 msgstr ""
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
-"Bağlantı için kullanılacak port numarası ya da öntanımlı değerin kullanıması "
-"için 0,  erişilme önceliğine göre, drizzle.cnf, $DRIZZLE_TCP_PORT "
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
@@ -4899,7 +4842,8 @@ msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
 msgstr ""
 
 #, c-format
-msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgid ""
+"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 #, c-format
@@ -4916,9 +4860,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "Bağlantı için kullanılacak socket dosyası"
+msgstr ""
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
@@ -4962,18 +4905,3 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr ""
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "Çıkışta hafıza ve açık dosya kullanımını kontrol et."
-
-#~ msgid "Print some debug info at exit."
-#~ msgstr "Çıkışta debug bilgisi yazdır."
-
-#~ msgid "Can't init databases"
-#~ msgstr "Veritabanları başlatılamıyor"
-
-#~ msgid "Buffer length for TCP/IP and socket communication."
-#~ msgstr "TCP/IP ve soket iltişimi için tampon uzunluğu."
-
-#~ msgid "Size of Pool."
-#~ msgstr "Havuzun boyutu"
