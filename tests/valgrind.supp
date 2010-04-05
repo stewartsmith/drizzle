@@ -277,7 +277,7 @@
    fun:deflate
    fun:azwrite_row
    ...
-   fun:_ZN7Session3runEv
+   fun:_ZN8drizzled7Session3runEv
 }
 
 {
@@ -289,7 +289,30 @@
    fun:deflate
    fun:azwrite_row
    ...
-   fun:_ZN7Session3runEv
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   32-bit versoin of the suppression
+   Memcheck:Value4
+   fun:memcpy
+   obj:/lib/libz.so.1.2.3.3
+   obj:/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   32-bit versoin of the suppression
+   Memcheck:Value4
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN8drizzled7Session3runEv
 }
 
 {
@@ -801,6 +824,26 @@
 }
 
 {
+   32bit InnoDB garbage
+   Memcheck:Value4
+   ...
+   fun:ut_print_buf
+   fun:dtuple_print
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+}
+
+
+{
    InnoDB makes babies cry
    Memcheck:Cond
    ...
@@ -815,6 +858,35 @@
    fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
    fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
    fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+}
+
+{
+   InnoDB Issue
+   Memcheck:Param
+   ...
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+}
+
+{
+   Static leak fun in innodb
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_pessimistic_insert
+   fun:row_ins_index_entry_low
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   ...
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
 }
 
