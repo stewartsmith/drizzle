@@ -36,14 +36,21 @@ namespace drizzled
  *  We don't use tt_ttisstd and tt_ttisgmt members of original elsie-code
  *  struct since we don't support POSIX-style TZ descriptions in variables.
  */
-typedef struct ttinfo
+class TransitionTypeInfo
 {
-  long tt_gmtoff; ///< Offset from UTC in seconds
+public:
+  TransitionTypeInfo(int32_t offset, uint32_t isDST, uint32_t abbrind) :
+    tt_gmtoff(offset),
+    tt_isdst(isDST),
+    tt_abbrind(abbrind)
+    {}
+
+  int32_t tt_gmtoff; ///< Offset from UTC in seconds
 
   uint32_t tt_isdst; ///< Is daylight saving time or not. Used to set tm_isdst
 
   uint32_t tt_abbrind; ///< Index of start of abbreviation for this time type.
-} TRAN_TYPE_INFO;
+};
 
 /**
  * @brief
@@ -88,7 +95,9 @@ typedef struct st_time_zone_info
   /* The following are dynamical arrays are allocated in memory::Root */
   time_t *ats;       ///< Times of transitions between time types
   unsigned char	*types; ///< Local time types for transitions
-  TRAN_TYPE_INFO *ttis; ///< Local time types descriptions
+
+  TransitionTypeInfo *ttis; ///< Local time types descriptions
+
   /* Storage for local time types abbreviations. They are stored as ASCIIZ */
   char *chars;
 
@@ -111,7 +120,7 @@ typedef struct st_time_zone_info
    * Time type which is used for times smaller than first transition or if
    * there are no transitions at all.
    */
-  TRAN_TYPE_INFO *fallback_tti;
+  TransitionTypeInfo *fallback_tti;
 
 } TIME_ZONE_INFO;
 
@@ -224,163 +233,6 @@ sec_to_TIME(DRIZZLE_TIME * tmp, time_t t, long offset)
 }
 
 
-/**
- * @brief 
- * Find time range wich contains given time_t value
- *
- * @details
- * Performs binary search for range which contains given time_t value.
- * It has sense if number of ranges is greater than zero and time_t value
- * is greater or equal than beginning of first range. It also assumes that
- * t belongs to some range specified.
- *
- * With this localtime_r on real data may takes less time than with linear
- * search (I've seen 30% speed up).
- *
- * @param  t                time_t value for which we looking for range
- * @param  range_boundaries sorted array of range starts.
- * @param  higher_bound     number of ranges
- *
- * @return
- * Index of range to which t belongs
- */
-static uint
-find_time_range(time_t t, const time_t *range_boundaries,
-                uint32_t higher_bound)
-{
-  uint32_t i, lower_bound= 0;
-
-  /*
-    Function will work without this assertion but result would be meaningless.
-  */
-  assert(higher_bound > 0 && t >= range_boundaries[0]);
-
-  /*
-    Do binary search for minimal interval which contain t. We preserve:
-    range_boundaries[lower_bound] <= t < range_boundaries[higher_bound]
-    invariant and decrease this higher_bound - lower_bound gap twice
-    times on each step.
-  */
-
-  while (higher_bound - lower_bound > 1)
-  {
-    i= (lower_bound + higher_bound) >> 1;
-    if (range_boundaries[i] <= t)
-      lower_bound= i;
-    else
-      higher_bound= i;
-  }
-  return lower_bound;
-}
-
-/**
- * @brief
- *  Find local time transition for given time_t.
- *
- * @param  t  time_t value to be converted
- * @param  sp pointer to struct with time zone description
- *
- * @return
- * Pointer to structure in time zone description describing
- * local time type for given time_t.
- */
-static
-const TRAN_TYPE_INFO *
-find_transition_type(time_t t, const TIME_ZONE_INFO *sp)
-{
-  if (unlikely(sp->timecnt == 0 || t < sp->ats[0]))
-  {
-    /*
-      If we have not any transitions or t is before first transition let
-      us use fallback time type.
-    */
-    return sp->fallback_tti;
-  }
-
-  /*
-    Do binary search for minimal interval between transitions which
-    contain t. With this localtime_r on real data may takes less
-    time than with linear search (I've seen 30% speed up).
-  */
-  return &(sp->ttis[sp->types[find_time_range(t, sp->ats, sp->timecnt)]]);
-}
-
-
-/**
- * @brief
- * Converts time in time_t representation (seconds in UTC since Epoch) to
- * broken down DRIZZLE_TIME representation in local time zone.
- *
- * @param  tmp          pointer to structure for broken down represenatation
- * @param  sec_in_utc   time_t value to be converted
- * @param  sp           pointer to struct with time zone description
- *
- * @todo
- * We can improve this function by creating joined array of transitions and
- * leap corrections. This will require adding extra field to TRAN_TYPE_INFO
- * for storing number of "extra" seconds to minute occured due to correction
- * (60th and 61st second, look how we calculate them as "hit" in this
- * function).
- *
- * Under realistic assumptions about frequency of transitions the same array
- * can be used for DRIZZLE_TIME -> time_t conversion. For this we need to
- * implement tweaked binary search which will take into account that some
- * DRIZZLE_TIME has two matching time_t ranges and some of them have none.
- */
-static void
-gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t sec_in_utc, const TIME_ZONE_INFO *sp)
-{
-  const TRAN_TYPE_INFO *ttisp;
-  const LS_INFO *lp;
-  long  corr= 0;
-  int   hit= 0;
-  int   i;
-
-  /*
-    Find proper transition (and its local time type) for our sec_in_utc value.
-    Funny but again by separating this step in function we receive code
-    which very close to glibc's code. No wonder since they obviously use
-    the same base and all steps are sensible.
-  */
-  ttisp= find_transition_type(sec_in_utc, sp);
-
-  /*
-    Let us find leap correction for our sec_in_utc value and number of extra
-    secs to add to this minute.
-    This loop is rarely used because most users will use time zones without
-    leap seconds, and even in case when we have such time zone there won't
-    be many iterations (we have about 22 corrections at this moment (2004)).
-  */
-  for ( i= sp->leapcnt; i-- > 0; )
-  {
-    lp= &sp->lsis[i];
-    if (sec_in_utc >= lp->ls_trans)
-    {
-      if (sec_in_utc == lp->ls_trans)
-      {
-        hit= ((i == 0 && lp->ls_corr > 0) ||
-              lp->ls_corr > sp->lsis[i - 1].ls_corr);
-        if (hit)
-        {
-          while (i > 0 &&
-                 sp->lsis[i].ls_trans == sp->lsis[i - 1].ls_trans + 1 &&
-                 sp->lsis[i].ls_corr == sp->lsis[i - 1].ls_corr + 1)
-          {
-            hit++;
-            i--;
-          }
-        }
-      }
-      corr= lp->ls_corr;
-      break;
-    }
-  }
-
-  sec_to_TIME(tmp, sec_in_utc, ttisp->tt_gmtoff - corr);
-
-  tmp->second+= hit;
-}
-
 
 /**
  * @brief
@@ -424,174 +276,6 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 
   return ((days * HOURS_PER_DAY + hour) * MINS_PER_HOUR + min) *
          SECS_PER_MIN + sec;
-}
-
-/**
- * @brief
- * Converts local time in broken down DRIZZLE_TIME representation to time_t
- * representation.
- *
- * @details
- *  This is mktime analog for MySQL. It is essentially different
- *   from mktime (or hypotetical my_mktime) because:
- *  - It has no idea about tm_isdst member so if it
- *    has two answers it will give the smaller one
- *  - If we are in spring time gap then it will return
- *    beginning of the gap
- *  - It can give wrong results near the ends of time_t due to
- *    overflows, but we are safe since in MySQL we will never
- *    call this function for such dates (its restriction for year
- *    between 1970 and 2038 gives us several days of reserve).
- *  - By default it doesn't support un-normalized input. But if
- *    sec_since_epoch() function supports un-normalized dates
- *    then this function should handle un-normalized input right,
- *    altough it won't normalize structure TIME.
- *
- *  Traditional approach to problem of conversion from broken down
- *  representation to time_t is iterative. Both elsie's and glibc
- *  implementation try to guess what time_t value should correspond to
- *  this broken-down value. They perform localtime_r function on their
- *  guessed value and then calculate the difference and try to improve
- *  their guess. Elsie's code guesses time_t value in bit by bit manner,
- *  Glibc's code tries to add difference between broken-down value
- *  corresponding to guess and target broken-down value to current guess.
- *  It also uses caching of last found correction... So Glibc's approach
- *  is essentially faster but introduces some undetermenism (in case if
- *  is_dst member of broken-down representation (tm struct) is not known
- *  and we have two possible answers).
- *
- *  We use completely different approach. It is better since it is both
- *  faster than iterative implementations and fully determenistic. If you
- *  look at time_t to DRIZZLE_TIME conversion then you'll find that it consist
- *  of two steps:
- *  The first is calculating shifted time_t value and the second - TIME
- *  calculation from shifted time_t value (well it is a bit simplified
- *  picture). The part in which we are interested in is time_t -> shifted
- *  time_t conversion. It is piecewise linear function which is defined
- *  by combination of transition times as break points and times offset
- *  as changing function parameter. The possible inverse function for this
- *  converison would be ambiguos but with MySQL's restrictions we can use
- *  some function which is the same as inverse function on unambigiuos
- *  ranges and coincides with one of branches of inverse function in
- *  other ranges. Thus we just need to build table which will determine
- *  this shifted time_t -> time_t conversion similar to existing
- *  (time_t -> shifted time_t table). We do this in
- *  prepare_tz_info function.
- *
- * @param  t               pointer to structure for broken down represenatation
- * @param  sp              pointer to struct with time zone description
- * @param  in_dst_time_gap pointer to bool which is set to true if datetime
- *                         value passed doesn't really exist (i.e. falls into
- *                         spring time-gap) and is not touched otherwise.
- *
- * @todo
- * If we can even more improve this function. For doing this we will need to
- * build joined map of transitions and leap corrections for gmt_sec_to_TIME()
- * function (similar to revts/revtis). Under realistic assumptions about
- * frequency of transitions we can use the same array for TIME_to_gmt_sec().
- * We need to implement special version of binary search for this. Such step
- * will be beneficial to CPU cache since we will decrease data-set used for
- * conversion twice.
- *
- * @return
- * Seconds in UTC since Epoch.
- * 0 in case of error.
- */
-static time_t
-TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
-                bool *in_dst_time_gap)
-{
-  time_t local_t;
-  uint32_t saved_seconds;
-  uint32_t i;
-  int shift= 0;
-
-  if (!validate_timestamp_range(t))
-    return(0);
-
-
-  /* We need this for correct leap seconds handling */
-  if (t->second < SECS_PER_MIN)
-    saved_seconds= 0;
-  else
-    saved_seconds= t->second;
-
-  /*
-    NOTE: to convert full time_t range we do a shift of the
-    boundary dates here to avoid overflow of time_t.
-    We use alike approach in my_system_gmt_sec().
-
-    However in that function we also have to take into account
-    overflow near 0 on some platforms. That's because my_system_gmt_sec
-    uses localtime_r(), which doesn't work with negative values correctly
-    on platforms with unsigned time_t (QNX). Here we don't use localtime()
-    => we negative values of local_t are ok.
-  */
-
-  if ((t->year == TIMESTAMP_MAX_YEAR) && (t->month == 1) && t->day > 4)
-  {
-    /*
-      We will pass (t->day - shift) to sec_since_epoch(), and
-      want this value to be a positive number, so we shift
-      only dates > 4.01.2038 (to avoid owerflow).
-    */
-    shift= 2;
-  }
-
-
-  local_t= sec_since_epoch(t->year, t->month, (t->day - shift),
-                           t->hour, t->minute,
-                           saved_seconds ? 0 : t->second);
-
-  /* We have at least one range */
-  assert(sp->revcnt >= 1);
-
-  if (local_t < sp->revts[0] || local_t > sp->revts[sp->revcnt])
-  {
-    /*
-      This means that source time can't be represented as time_t due to
-      limited time_t range.
-    */
-    return(0);
-  }
-
-  /* binary search for our range */
-  i= find_time_range(local_t, sp->revts, sp->revcnt);
-
-  /*
-    As there are no offset switches at the end of TIMESTAMP range,
-    we could simply check for overflow here (and don't need to bother
-    about DST gaps etc)
-  */
-  if (shift)
-  {
-    if (local_t > (time_t) (TIMESTAMP_MAX_VALUE - shift * SECS_PER_DAY +
-                            sp->revtis[i].rt_offset - saved_seconds))
-    {
-      return(0);                           /* time_t overflow */
-    }
-    local_t+= shift * SECS_PER_DAY;
-  }
-
-  if (sp->revtis[i].rt_type)
-  {
-    /*
-      Oops! We are in spring time gap.
-      May be we should return error here?
-      Now we are returning time_t value corresponding to the
-      beginning of the gap.
-    */
-    *in_dst_time_gap= 1;
-    local_t= sp->revts[i] - sp->revtis[i].rt_offset + saved_seconds;
-  }
-  else
-    local_t= local_t - sp->revtis[i].rt_offset + saved_seconds;
-
-  /* check for TIMESTAMP_MAX_VALUE was already done above */
-  if (local_t < TIMESTAMP_MIN_VALUE)
-    local_t= 0;
-
-  return(local_t);
 }
 
 
@@ -782,98 +466,6 @@ Time_zone_utc::get_name() const
   assert(0);
   return 0;
 }
-
-
-/**
- * Instance of this class represents some time zone which is
- * described in mysql.time_zone family of tables.
- */
-class Time_zone_db : public Time_zone
-{
-public:
-  Time_zone_db(TIME_ZONE_INFO *tz_info_arg, const String * tz_name_arg);
-  virtual time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
-                                    bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const;
-  virtual const String * get_name() const;
-private:
-  TIME_ZONE_INFO *tz_info;
-  const String *tz_name;
-};
-
-
-/**
- * @brief
- * Initializes object representing time zone described by mysql.time_zone
- * tables.
- *
- * @param tz_info_arg  pointer to TIME_ZONE_INFO structure which is filled
- *                     according to db or other time zone description
- *                     (for example by my_tz_init()).
- *                     Several Time_zone_db instances can share one
- *                     TIME_ZONE_INFO structure.
- * @param tz_name_arg  name of time zone.
- */
-Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
-                           const String *tz_name_arg):
-  tz_info(tz_info_arg), tz_name(tz_name_arg)
-{
-}
-
-
-/**
- * @brief
- * Converts local time in time zone described from TIME
- * representation to its time_t representation.
- *
- * @details
- * Please see ::TIME_to_gmt_sec for function description and
- * parameter restrictions.
- * 
- * @param    t               pointer to DRIZZLE_TIME structure with local time
- *                           in broken-down representation.
- * @param    in_dst_time_gap pointer to bool which is set to true if datetime
- *                           value passed doesn't really exist (i.e. falls into
- *                           spring time-gap) and is not touched otherwise.
- *
- * @return
- * Corresponding time_t value or 0 in case of error
- */
-time_t
-Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
-{
-  return ::drizzled::TIME_to_gmt_sec(t, tz_info, in_dst_time_gap);
-}
-
-
-/**
- * @brief
- * Converts time from UTC seconds since Epoch (time_t) representation
- * to local time zone described in broken-down representation.
- *
- * @param  tmp   pointer to DRIZZLE_TIME structure to fill-in
- * @param  t     time_t value to be converted
- */
-void
-Time_zone_db::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
-{
-  ::drizzled::gmt_sec_to_TIME(tmp, t, tz_info);
-}
-
-
-/**
- * @brief
- * Get name of time zone
- * 
- * @return
- * Name of time zone as ASCIIZ-string
- */
-const String *
-Time_zone_db::get_name() const
-{
-  return tz_name;
-}
-
 
 /**
  * Instance of this class represents time zone which
