@@ -26,3 +26,5 @@ connection default;
 # so its possible a query could be missed if we do not wait
 --sleep 1 
 SELECT * FROM DATA_DICTIONARY.CUMULATIVE_SQL_COMMANDS;
+
+DROP TABLE a; 

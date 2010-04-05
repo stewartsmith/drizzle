@@ -21,3 +21,5 @@ while ($1)
 --enable_query_log
 --sleep 1
 SELECT * FROM DATA_DICTIONARY.CUMULATIVE_SQL_COMMANDS ORDER BY USER + 0 ASC;
+
+DROP TABLE a;
