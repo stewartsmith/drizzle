@@ -1,0 +1,4 @@
+use data_dictionary;
+SELECT count(*) FROM data_dictionary.plugins;
+count(*)
+#

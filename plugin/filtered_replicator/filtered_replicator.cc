@@ -50,7 +50,6 @@
 using namespace std;
 using namespace drizzled;
 
-static bool sysvar_filtered_replicator_enabled= false;
 static char *sysvar_filtered_replicator_sch_filters= NULL;
 static char *sysvar_filtered_replicator_tab_filters= NULL;
 static char *sysvar_filtered_replicator_sch_regex= NULL;
@@ -126,11 +125,6 @@ FilteredReplicator::FilteredReplicator(string name_arg,
   pthread_mutex_init(&sysvar_tab_lock, NULL);
 }
 
-bool FilteredReplicator::isEnabled() const
-{
-  return sysvar_filtered_replicator_enabled;
-}
-
 void FilteredReplicator::parseStatementTableMetadata(const message::Statement &in_statement,
                                                      string &in_schema_name,
                                                      string &in_table_name) const
@@ -203,15 +197,6 @@ void FilteredReplicator::parseStatementTableMetadata(const message::Statement &i
       break;
     }
   }  
-}
-void FilteredReplicator::enable()
-{
-  sysvar_filtered_replicator_enabled= true;
-}
-
-void FilteredReplicator::disable()
-{
-  sysvar_filtered_replicator_enabled= false;
 }
 
 plugin::ReplicationReturnCode
@@ -511,18 +496,15 @@ static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicato
 
 static int init(plugin::Context &context)
 {
-  if (sysvar_filtered_replicator_enabled)
+  filtered_replicator= new(std::nothrow) 
+    FilteredReplicator("filtered_replicator",
+                       sysvar_filtered_replicator_sch_filters,
+                       sysvar_filtered_replicator_tab_filters);
+  if (filtered_replicator == NULL)
   {
-    filtered_replicator= new(std::nothrow) 
-      FilteredReplicator("filtered_replicator",
-                         sysvar_filtered_replicator_sch_filters,
-                         sysvar_filtered_replicator_tab_filters);
-    if (filtered_replicator == NULL)
-    {
-      return 1;
-    }
-    context.add(filtered_replicator);
+    return 1;
   }
+  context.add(filtered_replicator);
   return 0;
 }
 
@@ -592,13 +574,6 @@ static void set_filtered_tables(Session *,
   }
 }
 
-static DRIZZLE_SYSVAR_BOOL(enable,
-                           sysvar_filtered_replicator_enabled,
-                           PLUGIN_VAR_NOCMDARG,
-                           N_("Enable filtered replicator"),
-                           NULL, /* check func */
-                           NULL, /* update func */
-                           false /*default */);
 static DRIZZLE_SYSVAR_STR(filteredschemas,
                           sysvar_filtered_replicator_sch_filters,
                           PLUGIN_VAR_OPCMDARG,
@@ -629,7 +604,6 @@ static DRIZZLE_SYSVAR_STR(tableregex,
                           NULL);
 
 static drizzle_sys_var* filtered_replicator_system_variables[]= {
-  DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(filteredschemas),
   DRIZZLE_SYSVAR(filteredtables),
   DRIZZLE_SYSVAR(schemaregex),
@@ -637,16 +611,4 @@ static drizzle_sys_var* filtered_replicator_system_variables[]= {
   NULL
 };
 
-DRIZZLE_DECLARE_PLUGIN
-{
-  DRIZZLE_VERSION_ID,
-  "filtered_replicator",
-  "0.2",
-  "Padraig O'Sullivan",
-  N_("Filtered Replicator"),
-  PLUGIN_LICENSE_GPL,
-  init, /* Plugin Init */
-  filtered_replicator_system_variables, /* system variables */
-  NULL    /* config options */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
+DRIZZLE_PLUGIN(init, filtered_replicator_system_variables);

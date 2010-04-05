@@ -1,0 +1,26 @@
+use data_dictionary;
+SELECT count(*) FROM plugins;
+count(*)
+#
+SELECT count(*) FROM modules;
+count(*)
+#
+show create table MODULES ;
+Table	Create Table
+MODULES	CREATE TABLE `modules` (
+  `MODULE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `MODULE_VERSION` varchar(20) NOT NULL DEFAULT '',
+  `MODULE_AUTHOR` varchar(64) NOT NULL DEFAULT '',
+  `IS_BUILTIN` varchar(5) NOT NULL DEFAULT '',
+  `MODULE_LIBRARY` varchar(254) NOT NULL DEFAULT '',
+  `MODULE_DESCRIPTION` varchar(254) NOT NULL DEFAULT '',
+  `MODULE_LICENSE` varchar(80) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
+show create table PLUGINS ;
+Table	Create Table
+PLUGINS	CREATE TABLE `plugins` (
+  `PLUGIN_NAME` varchar(64) NOT NULL DEFAULT '',
+  `PLUGIN_TYPE` varchar(64) NOT NULL DEFAULT '',
+  `IS_ACTIVE` varchar(5) NOT NULL DEFAULT '',
+  `MODULE_NAME` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
