@@ -28,41 +28,6 @@
 namespace drizzled
 {
 
-#if !defined(TZINFO2SQL)
-
-static const uint32_t mon_lengths[2][MONS_PER_YEAR]=
-{
-  { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
-  { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
-};
-
-static const uint32_t mon_starts[2][MONS_PER_YEAR]=
-{
-  { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 },
-  { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 }
-};
-
-static const uint32_t year_lengths[2]=
-{
-  DAYS_PER_NYEAR, DAYS_PER_LYEAR
-};
-
-static inline int leaps_thru_end_of(int year)
-{
-  return ((year) / 4 - (year) / 100 + (year) / 400);
-}
-
-static inline bool isleap(int year)
-{
-  return (((year) % 4) == 0 && (((year) % 100) != 0 || ((year) % 400) == 0));
-}
-
-/*
-  End of elsie derived code.
-*/
-#endif /* !defined(TZINFO2SQL) */
-
-
 /**
  * String with names of SYSTEM time zone.
  */
@@ -160,8 +125,6 @@ Time_zone_system::get_name() const
 {
   return &tz_SYSTEM_name;
 }
-
-
 
 static Time_zone_system tz_SYSTEM;
 
