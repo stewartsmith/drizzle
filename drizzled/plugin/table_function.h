@@ -105,6 +105,14 @@ public:
   {
     Field **columns;
     Field **columns_iterator;
+    Session *session;
+
+  protected:
+
+    drizzled::Session &getSession()
+    {
+      return *session;
+    }
 
   public:
     const CHARSET_INFO *scs;
