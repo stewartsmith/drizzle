@@ -288,89 +288,6 @@ Time_zone_system::get_name() const
 
 
 /**
- * Instance of this class represents UTC time zone. It uses system gmtime_r
- * function for conversions and is always available. It is used only for
- * time_t -> DRIZZLE_TIME conversions in various UTC_...  functions, it is not
- * intended for DRIZZLE_TIME -> time_t conversions and shouldn't be exposed to user.
- */
-class Time_zone_utc : public Time_zone
-{
-public:
-  Time_zone_utc() {}                          /* Remove gcc warning */
-  virtual time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
-                                    bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const;
-  virtual const String * get_name() const;
-};
-
-
-/**
- * @brief
- * Convert UTC time from DRIZZLE_TIME representation to its time_t representation.
- *
- * @details
- * Since Time_zone_utc is used only internally for time_t -> TIME
- * conversions, this function of Time_zone interface is not implemented for
- * this class and should not be called.
- *
- * @param  t               pointer to DRIZZLE_TIME structure with local time
- *                         in broken-down representation.
- * @param  in_dst_time_gap pointer to bool which is set to true if datetime
- *                         value passed doesn't really exist (i.e. falls into
- *                         spring time-gap) and is not touched otherwise.
- * @return
- * 0
- */
-time_t
-Time_zone_utc::TIME_to_gmt_sec(const DRIZZLE_TIME *,
-                               bool *) const
-{
-  /* Should be never called */
-  assert(0);
-  return 0;
-}
-
-
-/**
- * @brief
- * Converts time from UTC seconds since Epoch (time_t) representation
- * to broken-down representation (also in UTC).
- *
- * @param   tmp  pointer to DRIZZLE_TIME structure to fill-in
- * @param   t    time_t value to be converted
- *
- * Note:
- * See note for apropriate Time_zone_system method.
- */
-void
-Time_zone_utc::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, time_t t) const
-{
-  struct tm tmp_tm;
-  time_t tmp_t= (time_t)t;
-  gmtime_r(&tmp_t, &tmp_tm);
-  localtime_to_TIME(tmp, &tmp_tm);
-  tmp->time_type= DRIZZLE_TIMESTAMP_DATETIME;
-}
-
-
-/**
- * @brief
- * Get name of time zone
- *
- * @details
- * Since Time_zone_utc is used only internally by SQL's UTC_* functions it
- * is not accessible directly, and hence this function of Time_zone
- * interface is not implemented for this class and should not be called.
- */
-const String *
-Time_zone_utc::get_name() const
-{
-  /* Should be never called */
-  assert(0);
-  return 0;
-}
-
-/**
  * Instance of this class represents time zone which
  * was specified as offset from UTC.
  */
@@ -500,7 +417,6 @@ Time_zone_offset::get_name() const
 }
 
 
-static Time_zone_utc tz_UTC;
 static Time_zone_system tz_SYSTEM;
 static Time_zone_offset tz_OFFSET0(0);
 
