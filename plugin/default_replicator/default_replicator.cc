@@ -62,13 +62,16 @@ void DefaultReplicator::disable()
   sysvar_default_replicator_enable= false;
 }
 
-void DefaultReplicator::replicate(plugin::TransactionApplier *in_applier, message::Transaction &to_replicate)
+plugin::ReplicationReturnCode
+DefaultReplicator::replicate(plugin::TransactionApplier *in_applier,
+                             Session &in_session,
+                             message::Transaction &to_replicate)
 {
   /* 
    * We do absolutely nothing but call the applier's apply() method, passing
    * along the supplied Transaction.  Yep, told you it was simple...
    */
-  in_applier->apply(to_replicate);
+  return in_applier->apply(in_session, to_replicate);
 }
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */

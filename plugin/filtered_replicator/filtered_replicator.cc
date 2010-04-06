@@ -214,8 +214,10 @@ void FilteredReplicator::disable()
   sysvar_filtered_replicator_enabled= false;
 }
 
-void FilteredReplicator::replicate(plugin::TransactionApplier *in_applier, 
-                                   message::Transaction &to_replicate)
+plugin::ReplicationReturnCode
+FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
+                              Session &in_session,
+                              message::Transaction &to_replicate)
 {
   string schema_name;
   string table_name;
@@ -287,8 +289,9 @@ void FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
      */
     message::TransactionContext *tc= filtered_transaction.mutable_transaction_context();
     *tc= to_replicate.transaction_context(); /* copy construct */
-    in_applier->apply(filtered_transaction);
+    return in_applier->apply(in_session, filtered_transaction);
   }
+  return plugin::SUCCESS;
 }
 
 void FilteredReplicator::populateFilter(std::string input,

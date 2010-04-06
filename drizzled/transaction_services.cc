@@ -427,65 +427,6 @@ void TransactionServices::registerResourceForTransaction(Session *session,
 }
 
 /**
-  Check if we can skip the two-phase commit.
-
-  A helper function to evaluate if two-phase commit is mandatory.
-  As a side effect, propagates the read-only/read-write flags
-  of the statement transaction to its enclosing normal transaction.
-
-  @retval true   we must run a two-phase commit. Returned
-                 if we have at least two engines with read-write changes.
-  @retval false  Don't need two-phase commit. Even if we have two
-                 transactional engines, we can run two independent
-                 commits if changes in one of the engines are read-only.
-*/
-static
-bool
-ha_check_and_coalesce_trx_read_only(Session *session,
-                                    TransactionContext::ResourceContexts &resource_contexts,
-                                    bool normal_transaction)
-{
-  /* The number of storage engines that have actual changes. */
-  unsigned num_resources_modified_data= 0;
-  ResourceContext *resource_context;
-
-  for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
-       it != resource_contexts.end();
-       ++it)
-  {
-    resource_context= *it;
-    if (resource_context->hasModifiedData())
-      ++num_resources_modified_data;
-
-    if (! normal_transaction)
-    {
-      ResourceContext *resource_context_normal= session->getResourceContext(resource_context->getMonitored(), true);
-      assert(resource_context != resource_context_normal);
-      /*
-        Merge read-only/read-write information about statement
-        transaction to its enclosing normal transaction. Do this
-        only if in a real transaction -- that is, if we know
-        that resource_context_all is registered in session->transaction.all.
-        Since otherwise we only clutter the normal transaction flags.
-      */
-      if (resource_context_normal->isStarted()) /* false if autocommit. */
-        resource_context_normal->coalesceWith(resource_context);
-    }
-    else if (num_resources_modified_data > 1)
-    {
-      /*
-        It is a normal transaction, so we don't need to merge read/write
-        information up, and the need for two-phase commit has been
-        already established. Break the loop prematurely.
-      */
-      break;
-    }
-  }
-  return num_resources_modified_data > 1;
-}
-
-
-/**
   @retval
     0   ok
   @retval
@@ -499,7 +440,7 @@ ha_check_and_coalesce_trx_read_only(Session *session,
     stored functions or triggers. So we simply do nothing now.
     TODO: This should be fixed in later ( >= 5.1) releases.
 */
-int TransactionServices::ha_commit_trans(Session *session, bool normal_transaction)
+int TransactionServices::commitTransaction(Session *session, bool normal_transaction)
 {
   int error= 0, cookie= 0;
   /*
@@ -522,17 +463,18 @@ int TransactionServices::ha_commit_trans(Session *session, bool normal_transacti
 
   if (resource_contexts.empty() == false)
   {
-    bool must_2pc;
-
     if (is_real_trans && wait_if_global_read_lock(session, 0, 0))
     {
-      ha_rollback_trans(session, normal_transaction);
+      rollbackTransaction(session, normal_transaction);
       return 1;
     }
 
-    must_2pc= ha_check_and_coalesce_trx_read_only(session, resource_contexts, normal_transaction);
-
-    if (! trans->no_2pc && must_2pc)
+    /*
+     * If replication is on, we do a PREPARE on the resource managers, push the
+     * Transaction message across the replication stream, and then COMMIT if the
+     * replication stream returned successfully.
+     */
+    if (shouldConstructMessages())
     {
       for (TransactionContext::ResourceContexts::iterator it= resource_contexts.begin();
            it != resource_contexts.end() && ! error;
@@ -563,14 +505,22 @@ int TransactionServices::ha_commit_trans(Session *session, bool normal_transacti
           }
         }
       }
+      if (error == 0 && is_real_trans)
+      {
+        /*
+         * Push the constructed Transaction messages across to
+         * replicators and appliers.
+         */
+        error= commitTransactionMessage(session);
+      }
       if (error)
       {
-        ha_rollback_trans(session, normal_transaction);
+        rollbackTransaction(session, normal_transaction);
         error= 1;
         goto end;
       }
     }
-    error= ha_commit_one_phase(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
+    error= commitPhaseOne(session, normal_transaction) ? (cookie ? 2 : 1) : 0;
 end:
     if (is_real_trans)
       start_waiting_global_read_lock(session);
@@ -582,7 +532,7 @@ end:
   @note
   This function does not care about global read lock. A caller should.
 */
-int TransactionServices::ha_commit_one_phase(Session *session, bool normal_transaction)
+int TransactionServices::commitPhaseOne(Session *session, bool normal_transaction)
 {
   int error=0;
   TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
@@ -638,21 +588,10 @@ int TransactionServices::ha_commit_one_phase(Session *session, bool normal_trans
     }
   }
   trans->reset();
-  if (error == 0)
-  {
-    if (is_real_trans)
-    {
-      /* 
-       * We commit the normal transaction by finalizing the transaction message
-       * and propogating the message to all registered replicators.
-       */
-      commitTransactionMessage(session);
-    }
-  }
   return error;
 }
 
-int TransactionServices::ha_rollback_trans(Session *session, bool normal_transaction)
+int TransactionServices::rollbackTransaction(Session *session, bool normal_transaction)
 {
   int error= 0;
   TransactionContext *trans= normal_transaction ? &session->transaction.all : &session->transaction.stmt;
@@ -751,70 +690,25 @@ int TransactionServices::ha_rollback_trans(Session *session, bool normal_transac
     the user has used LOCK TABLES then that mechanism does not know to do the
     commit.
 */
-int TransactionServices::ha_autocommit_or_rollback(Session *session, int error)
+int TransactionServices::autocommitOrRollback(Session *session, int error)
 {
   if (session->transaction.stmt.getResourceContexts().empty() == false)
   {
     if (! error)
     {
-      if (ha_commit_trans(session, false))
+      if (commitTransaction(session, false))
         error= 1;
     }
     else
     {
-      (void) ha_rollback_trans(session, false);
+      (void) rollbackTransaction(session, false);
       if (session->transaction_rollback_request)
-        (void) ha_rollback_trans(session, true);
+        (void) rollbackTransaction(session, true);
     }
 
     session->variables.tx_isolation= session->session_tx_isolation;
   }
   return error;
-}
-
-/**
-  return the list of XID's to a client, the same way SHOW commands do.
-
-  @note
-    I didn't find in XA specs that an RM cannot return the same XID twice,
-    so mysql_xa_recover does not filter XID's to ensure uniqueness.
-    It can be easily fixed later, if necessary.
-*/
-bool TransactionServices::mysql_xa_recover(Session *session)
-{
-  List<Item> field_list;
-  int i= 0;
-  XID_STATE *xs;
-
-  field_list.push_back(new Item_int("formatID", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_int("gtrid_length", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_int("bqual_length", 0, MY_INT32_NUM_DECIMAL_DIGITS));
-  field_list.push_back(new Item_empty_string("data", DRIZZLE_XIDDATASIZE));
-
-  if (session->client->sendFields(&field_list))
-    return 1;
-
-  pthread_mutex_lock(&LOCK_xid_cache);
-  while ((xs= (XID_STATE*)hash_element(&xid_cache, i++)))
-  {
-    if (xs->xa_state==XA_PREPARED)
-    {
-      session->client->store((int64_t)xs->xid.formatID);
-      session->client->store((int64_t)xs->xid.gtrid_length);
-      session->client->store((int64_t)xs->xid.bqual_length);
-      session->client->store(xs->xid.data,
-                             xs->xid.gtrid_length+xs->xid.bqual_length);
-      if (session->client->flush())
-      {
-        pthread_mutex_unlock(&LOCK_xid_cache);
-        return 1;
-      }
-    }
-  }
-
-  pthread_mutex_unlock(&LOCK_xid_cache);
-  session->my_eof();
-  return 0;
 }
 
 struct ResourceContextCompare : public std::binary_function<ResourceContext *, ResourceContext *, bool>
@@ -827,7 +721,7 @@ struct ResourceContextCompare : public std::binary_function<ResourceContext *, R
   }
 };
 
-int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
   TransactionContext *trans= &session->transaction.all;
@@ -923,7 +817,7 @@ int TransactionServices::ha_rollback_to_savepoint(Session *session, NamedSavepoi
   section "4.33.4 SQL-statements and transaction states",
   NamedSavepoint is *not* transaction-initiating SQL-statement
 */
-int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
   TransactionContext *trans= &session->transaction.all;
@@ -961,7 +855,7 @@ int TransactionServices::ha_savepoint(Session *session, NamedSavepoint &sv)
   return error;
 }
 
-int TransactionServices::ha_release_savepoint(Session *session, NamedSavepoint &sv)
+int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
 {
   int error= 0;
 
@@ -986,6 +880,12 @@ int TransactionServices::ha_release_savepoint(Session *session, NamedSavepoint &
     }
   }
   return error;
+}
+
+inline bool TransactionServices::shouldConstructMessages()
+{
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  return replication_services.isActive();
 }
 
 message::Transaction *TransactionServices::getActiveTransactionMessage(Session *in_session)
@@ -1032,11 +932,11 @@ void TransactionServices::cleanupTransactionMessage(message::Transaction *in_tra
   in_session->setTransactionMessage(NULL);
 }
 
-void TransactionServices::commitTransactionMessage(Session *in_session)
+int TransactionServices::commitTransactionMessage(Session *in_session)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
-    return;
+    return 0;
 
   /* If there is an active statement message, finalize it */
   message::Statement *statement= in_session->getStatementMessage();
@@ -1046,15 +946,17 @@ void TransactionServices::commitTransactionMessage(Session *in_session)
     finalizeStatementMessage(*statement, in_session);
   }
   else
-    return; /* No data modification occurred inside the transaction */
+    return 0; /* No data modification occurred inside the transaction */
   
   message::Transaction* transaction= getActiveTransactionMessage(in_session);
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  replication_services.pushTransactionMessage(*transaction);
+  plugin::ReplicationReturnCode result= replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
+
+  return static_cast<int>(result);
 }
 
 void TransactionServices::initStatementMessage(message::Statement &statement,
@@ -1114,7 +1016,7 @@ void TransactionServices::rollbackTransactionMessage(Session *in_session)
 
     finalizeTransactionMessage(*transaction, in_session);
     
-    replication_services.pushTransactionMessage(*transaction);
+    (void) replication_services.pushTransactionMessage(*in_session, *transaction);
   }
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1552,7 +1454,7 @@ void TransactionServices::createTable(Session *in_session,
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 
@@ -1582,7 +1484,7 @@ void TransactionServices::createSchema(Session *in_session,
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 
@@ -1611,7 +1513,7 @@ void TransactionServices::dropSchema(Session *in_session, const string &schema_n
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1647,7 +1549,7 @@ void TransactionServices::dropTable(Session *in_session,
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1682,7 +1584,7 @@ void TransactionServices::truncateTable(Session *in_session, Table *in_table)
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }
@@ -1702,7 +1604,7 @@ void TransactionServices::rawStatement(Session *in_session, const string &query)
 
   finalizeTransactionMessage(*transaction, in_session);
   
-  replication_services.pushTransactionMessage(*transaction);
+  (void) replication_services.pushTransactionMessage(*in_session, *transaction);
 
   cleanupTransactionMessage(transaction, in_session);
 }

@@ -79,8 +79,11 @@ TransactionLogApplier::~TransactionLogApplier()
 {
 }
 
-void TransactionLogApplier::apply(const message::Transaction &to_apply)
+plugin::ReplicationReturnCode
+TransactionLogApplier::apply(Session &in_session,
+                             const message::Transaction &to_apply)
 {
+  (void) in_session;
   uint8_t *buffer; /* Buffer we will write serialized header, 
                       message and trailing checksum to */
   uint8_t *orig_buffer;
@@ -101,7 +104,7 @@ void TransactionLogApplier::apply(const message::Transaction &to_apply)
                     " bytes.  Error: %s\n"), 
                   static_cast<int64_t>(total_envelope_length),
                   strerror(errno));
-    return;
+    return plugin::UNKNOWN_ERROR;
   }
   else
     orig_buffer= buffer; /* We will free() orig_buffer, as buffer is moved during write */
@@ -142,5 +145,5 @@ void TransactionLogApplier::apply(const message::Transaction &to_apply)
                                                       total_envelope_length),
                                   to_apply,
                                   checksum);
-
+  return plugin::SUCCESS;
 }

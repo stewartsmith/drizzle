@@ -39,8 +39,6 @@
 #include "drizzled/plugin/transaction_replicator.h"
 #include "drizzled/plugin/transaction_applier.h"
 #include "drizzled/message/transaction.pb.h"
-#include "drizzled/message/table.pb.h"
-#include "drizzled/message/statement_transform.h"
 #include "drizzled/gettext.h"
 #include "drizzled/session.h"
 #include "drizzled/error.h"
@@ -145,7 +143,8 @@ bool ReplicationServices::isActive() const
   return is_active;
 }
 
-void ReplicationServices::pushTransactionMessage(message::Transaction &to_push)
+plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(Session &in_session,
+                                                                          message::Transaction &to_push)
 {
   vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
   vector<plugin::TransactionApplier *>::iterator appl_start_iter, appl_iter;
@@ -153,6 +152,8 @@ void ReplicationServices::pushTransactionMessage(message::Transaction &to_push)
 
   plugin::TransactionReplicator *cur_repl;
   plugin::TransactionApplier *cur_appl;
+
+  plugin::ReplicationReturnCode result= plugin::SUCCESS;
 
   while (repl_iter != replicators.end())
   {
@@ -174,19 +175,25 @@ void ReplicationServices::pushTransactionMessage(message::Transaction &to_push)
         continue;
       }
 
-      cur_repl->replicate(cur_appl, to_push);
-      
-      /* 
-       * We update the timestamp for the last applied Transaction so that
-       * publisher plugins can ask the replication services when the
-       * last known applied Transaction was using the getLastAppliedTimestamp()
-       * method.
-       */
-      last_applied_timestamp.fetch_and_store(to_push.transaction_context().end_timestamp());
-      ++appl_iter;
+      result= cur_repl->replicate(cur_appl, in_session, to_push);
+
+      if (result == plugin::SUCCESS)
+      {
+        /* 
+         * We update the timestamp for the last applied Transaction so that
+         * publisher plugins can ask the replication services when the
+         * last known applied Transaction was using the getLastAppliedTimestamp()
+         * method.
+         */
+        last_applied_timestamp.fetch_and_store(to_push.transaction_context().end_timestamp());
+        ++appl_iter;
+      }
+      else
+        return result;
     }
     ++repl_iter;
   }
+  return result;
 }
 
 } /* namespace drizzled */

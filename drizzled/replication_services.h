@@ -26,6 +26,7 @@
 #define DRIZZLED_REPLICATION_SERVICES_H
 
 #include "drizzled/atomics.h"
+#include "drizzled/plugin/replication.h"
 
 #include <vector>
 
@@ -96,9 +97,11 @@ public:
    * Helper method which pushes a constructed message out to the registered
    * replicator and applier plugins.
    *
+   * @param Session descriptor
    * @param Message to push out
    */
-  void pushTransactionMessage(message::Transaction &to_push);
+  plugin::ReplicationReturnCode pushTransactionMessage(Session &in_session,
+                                                       message::Transaction &to_push);
   /**
    * Constructor
    */
