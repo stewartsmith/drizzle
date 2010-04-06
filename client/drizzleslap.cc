@@ -528,7 +528,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr
 }
 
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"help", '?', "Display this help and exit.", 0, 0, 0, GET_NO_ARG, NO_ARG,
    0, 0, 0, 0, 0, 0},
@@ -727,7 +727,7 @@ static void usage(void)
   my_print_help(my_long_options);
 }
 
-static int get_one_option(int optid, const struct my_option *, char *argument)
+static int get_one_option(int optid, const struct option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
