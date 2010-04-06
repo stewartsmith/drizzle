@@ -31,7 +31,7 @@ namespace drizzled
 class select_dumpvar :public select_result_interceptor {
   ha_rows row_count;
 public:
-  std::vector<my_var *> var_list;
+  std::vector<var *> var_list;
   select_dumpvar()  { var_list.clear(); row_count= 0;}
   ~select_dumpvar() {}
 
@@ -57,11 +57,11 @@ public:
   bool send_data(List<Item> &items)
   {
     
-    std::vector<my_var *>::const_iterator iter= var_list.begin();
+    std::vector<var *>::const_iterator iter= var_list.begin();
 
     List_iterator<Item> it(items);
     Item *item;
-    my_var *current_var;
+    var *current_var;
 
     if (unit->offset_limit_cnt)
     {						// using limit offset,count

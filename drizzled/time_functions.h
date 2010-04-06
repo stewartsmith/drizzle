@@ -21,7 +21,7 @@
 #define DRIZZLED_TIME_FUNCTIONS_H
 
 #include "drizzled/sql_error.h"
-#include "drizzled/my_time.h"
+#include "drizzled/drizzle_time.h"
 
 namespace drizzled
 {
