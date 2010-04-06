@@ -115,15 +115,15 @@ void RabbitMQLog::apply(const message::Transaction &to_apply)
   free(buffer);
 }
 
-RabbitMQLog *rabbitmqLogger; ///< the actual plugin
-RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
+extern RabbitMQLog *rabbitmqLogger; ///< the actual plugin
+extern RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
 
 /**
  * Initialize the rabbitmq logger - instanciates the dependencies (the handler)
  * and creates the log handler with the dependency - makes it easier to swap out
  * handler implementation
  */
-static int init(plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   if(sysvar_rabbitmq_log_enabled)
   {
@@ -152,25 +152,11 @@ static int init(plugin::Registry &registry)
       return 1;
     }
 
-    registry.add(rabbitmqLogger);
+    context.add(rabbitmqLogger);
     return 0;
   }
   return 0;
 }
-
-static int deinit(plugin::Registry &registry)
-{
-  /* Cleanup the logger itself - delete the logger first, then handler, to avoid NPEs */
-  if (rabbitmqLogger)
-  {
-    registry.remove(rabbitmqLogger);
-    delete rabbitmqLogger;
-    delete rabbitmqHandler;
-  }
-
-  return 0;
-}
-
 
 
 static DRIZZLE_SYSVAR_BOOL(enable,
@@ -255,5 +241,5 @@ static drizzle_sys_var* system_variables[]= {
   NULL
 };
 
-DRIZZLE_PLUGIN(init, deinit, NULL, system_variables);
+DRIZZLE_PLUGIN(init, system_variables);
 
