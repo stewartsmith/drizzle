@@ -25,6 +25,7 @@
 #ifndef DRIZZLED_TRANSACTION_SERVICES_H
 #define DRIZZLED_TRANSACTION_SERVICES_H
 
+#include "drizzled/atomics.h"
 #include "drizzled/message/transaction.pb.h"
 
 namespace drizzled
@@ -49,10 +50,17 @@ class TransactionServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
+  typedef uint64_t TransactionId;
   /**
    * Constructor
    */
-  TransactionServices() {}
+  TransactionServices()
+  {
+    /**
+     * @todo set transaction ID to the last one from an applier...
+     */
+    current_transaction_id= 0;
+  }
 
   /**
    * Singleton method
@@ -388,6 +396,23 @@ public:
                                       plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine,
                                       plugin::XaResourceManager *resource_manager);
+  TransactionId getNextTransactionId()
+  {
+    return current_transaction_id.increment();
+  }
+  TransactionId getCurrentTransactionId()
+  {
+    return current_transaction_id;
+  }
+  /**
+   * DEBUG ONLY.  See plugin::TransactionLog::truncate()
+   */
+  void resetTransactionId()
+  {
+    current_transaction_id= 0;
+  }
+private:
+  atomic<TransactionId> current_transaction_id;
 };
 
 } /* namespace drizzled */

@@ -1,17 +1,7 @@
-#
-# Tests the DATA_DICTIONARY views which come with the transaction
-# log
-#
-
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc
 
-# Populate log with some records...
---source ../plugin/transaction_log/tests/t/insert.inc
-
-# Query the DATA_DICTIONARY views and verify
-# that the information contained in them matches
-# the transaction log.
+--source ../plugin/transaction_log/tests/t/ddl_transaction_id.inc
 
 --replace_column 2 X 7 X 8 X 9 X
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
