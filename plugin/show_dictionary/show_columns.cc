@@ -54,13 +54,12 @@ ShowColumns::Generator::Generator(Field **arg) :
   is_columns_primed(false),
   column_iterator(0)
 {
-  Session *session= current_session;
-  statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
+  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
 
   table_name.append(select->getShowTable().c_str());
   TableIdentifier identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
 
-  is_tables_primed= plugin::StorageEngine::getTableDefinition(*session,
+  is_tables_primed= plugin::StorageEngine::getTableDefinition(getSession(),
                                                               identifier,
                                                               table_proto);
 }
