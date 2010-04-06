@@ -18,24 +18,24 @@
  */
 
 
-#ifndef DRIZZLED_MY_VAR_H
-#define DRIZZLED_MY_VAR_H
+#ifndef DRIZZLED_VAR_H
+#define DRIZZLED_VAR_H
 
 namespace drizzled
 {
 
-class my_var : public memory::SqlAlloc  {
+class var : public memory::SqlAlloc  {
 public:
   LEX_STRING s;
   bool local;
   uint32_t offset;
   enum_field_types type;
-  my_var (LEX_STRING& j, bool i, uint32_t o, enum_field_types t)
+  var (LEX_STRING& j, bool i, uint32_t o, enum_field_types t)
     :s(j), local(i), offset(o), type(t)
   {}
-  ~my_var() {}
+  ~var() {}
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MY_VAR_H */
+#endif /* DRIZZLED_VAR_H */
