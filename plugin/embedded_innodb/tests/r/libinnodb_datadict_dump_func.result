@@ -1,5 +1,5 @@
-CREATE table t1 (a int);
-CREATE TABLE t2 (a int, b varchar(30), c bigint);
+CREATE table t1 (a int primary key);
+CREATE TABLE t2 (a int primary key, b varchar(30), c bigint);
 SELECT LIBINNODB_datadict_dump();
 LIBINNODB_datadict_dump()
 InnoDB Data Dictionary Contents
@@ -7,7 +7,7 @@ InnoDB Data Dictionary Contents
 SYS_FOREIGN Format: REDUNDANT Page size: 0 Columns: 7 Indexes: 3
 SYS_FOREIGN_COLS Format: REDUNDANT Page size: 0 Columns: 7 Indexes: 1
 data_dictionary/innodb_table_definitions Format: COMPACT Page size: 0 Columns: 5 Indexes: 1
-test/t1 Format: COMPACT Page size: 0 Columns: 4 Indexes: 0
-test/t2 Format: COMPACT Page size: 0 Columns: 6 Indexes: 0
+test/t1 Format: COMPACT Page size: 0 Columns: 4 Indexes: 1
+test/t2 Format: COMPACT Page size: 0 Columns: 6 Indexes: 1
 
 DROP TABLE t1, t2;
