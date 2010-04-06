@@ -23,7 +23,7 @@
 */
 
 #include "config.h"
-#include "drizzled/my_time.h"
+#include "drizzled/drizzle_time.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
