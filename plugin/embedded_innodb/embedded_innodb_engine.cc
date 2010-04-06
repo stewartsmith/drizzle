@@ -72,6 +72,7 @@ public:
                                                   HTON_NULL_IN_KEY |
                                                   HTON_CAN_INDEX_BLOBS |
                                                   HTON_AUTO_PART_KEY |
+                                                  HTON_REQUIRE_PRIMARY_KEY |
                                                   HTON_HAS_DOES_TRANSACTIONS)
   {
     table_definition_ext= EMBEDDED_INNODB_EXT;
