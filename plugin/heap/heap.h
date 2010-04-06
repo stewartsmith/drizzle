@@ -25,7 +25,7 @@
 #include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
-#include "drizzled/my_tree.h"
+#include "drizzled/tree.h"
 
 	/* defines used by heap-funktions */
 
