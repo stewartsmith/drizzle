@@ -21,7 +21,7 @@
 #define DRIZZLED_ITEM_H
 
 #include <drizzled/dtcollation.h>
-#include <drizzled/my_time.h>
+#include <drizzled/drizzle_time.h>
 #include <drizzled/decimal.h>
 #include <drizzled/sql_bitmap.h>
 #include <drizzled/sql_list.h>
