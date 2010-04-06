@@ -1418,7 +1418,7 @@ void window_resize(int)
 }
 #endif
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"help", '?', N_("Display this help and exit."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
     0, 0, 0, 0, 0},
@@ -1606,7 +1606,7 @@ static void usage(int version)
 }
 
 
-static int get_one_option(int optid, const struct my_option *, char *argument)
+static int get_one_option(int optid, const struct option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
