@@ -43,7 +43,7 @@ struct charset_info_st;
 
 class sys_var;
 typedef drizzle_lex_string LEX_STRING;
-struct my_option;
+struct option;
 
 extern char *opt_plugin_add;
 extern char *opt_plugin_remove;
@@ -356,7 +356,7 @@ struct drizzle_sys_var
   DRIZZLE_PLUGIN_VAR_HEADER;
 };
 
-void plugin_opt_set_limits(my_option *options, const drizzle_sys_var *opt);
+void plugin_opt_set_limits(option *options, const drizzle_sys_var *opt);
 
 struct drizzle_value
 {
@@ -379,7 +379,7 @@ extern bool plugin_init(plugin::Registry &registry,
                         int *argc, char **argv,
                         bool skip_init);
 extern void plugin_shutdown(plugin::Registry &plugins);
-extern void my_print_help_inc_plugins(my_option *options);
+extern void my_print_help_inc_plugins(option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
