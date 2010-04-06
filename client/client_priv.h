@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <libdrizzle/drizzle_client.h>
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 #include "drizzled/internal/my_sys.h"
 
 #include "client/get_password.h"
