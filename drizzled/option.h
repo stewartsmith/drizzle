@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef DRIZZLED_MY_GETOPT_H
-#define DRIZZLED_MY_GETOPT_H
+#ifndef DRIZZLED_OPTION_H
+#define DRIZZLED_OPTION_H
 
 #include "drizzled/typelib.h"
 
@@ -52,7 +52,7 @@ enum get_opt_arg_type { NO_ARG, OPT_ARG, REQUIRED_ARG };
 
 struct st_typelib;
 
-struct my_option
+struct option
 {
   const char *name;                     /* Name of the option */
   int        id;                        /* unique id or short option */
@@ -71,27 +71,27 @@ struct my_option
 };
 
 
-typedef int (* my_get_one_option) (int, const struct my_option *, char * );
+typedef int (* my_get_one_option) (int, const struct option *, char * );
 typedef void (* my_error_reporter) (enum loglevel level, const char *format, ... );
-typedef char ** (*getopt_get_addr_func)(const char *, uint32_t, const struct my_option *);
+typedef char ** (*getopt_get_addr_func)(const char *, uint32_t, const struct option *);
 
 extern char *disabled_my_option;
 extern bool my_getopt_skip_unknown;
 extern my_error_reporter my_getopt_error_reporter;
 
 extern int handle_options (int *argc, char ***argv,
-			   const struct my_option *longopts, my_get_one_option);
-extern void my_cleanup_options(const struct my_option *options);
-extern void my_print_help(const struct my_option *options);
-extern void my_print_variables(const struct my_option *options);
+			   const struct option *longopts, my_get_one_option);
+extern void my_cleanup_options(const struct option *options);
+extern void my_print_help(const struct option *options);
+extern void my_print_variables(const struct option *options);
 
-uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
+uint64_t getopt_ull_limit_value(uint64_t num, const struct option *optp,
                                  bool *fix);
-int64_t getopt_ll_limit_value(int64_t, const struct my_option *,
+int64_t getopt_ll_limit_value(int64_t, const struct option *,
                                bool *fix);
 bool getopt_compare_strings(const char *s, const char *t, uint32_t length);
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_MY_GETOPT_H */
+#endif /* DRIZZLED_OPTION_H */
 

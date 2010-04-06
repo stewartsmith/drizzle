@@ -135,7 +135,7 @@ ERROR HY000: Incorrect string value: '\xFF' for column 's1' at row 1
 select hex(s1) from t1;
 hex(s1)
 drop table t1;
-create table t1 (a text, primary key(a(360)));
+create table t1 (a text, primary key(a(360))) engine=innodb;
 ERROR 42000: Specified key was too long; max key length is 767 bytes
 CREATE TABLE t1 ( a varchar(10) );
 INSERT INTO t1 VALUES ( 'test' );
