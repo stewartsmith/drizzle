@@ -267,7 +267,6 @@ public:
     plugin::XaStorageEngine(name_arg,
                             HTON_NULL_IN_KEY |
                             HTON_CAN_INDEX_BLOBS |
-                            HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
                             HTON_PRIMARY_KEY_IN_READ_INDEX |
                             HTON_PARTIAL_COLUMN_READ |
                             HTON_TABLE_SCAN_ON_INDEX |
