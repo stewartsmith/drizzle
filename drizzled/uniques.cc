@@ -576,7 +576,7 @@ end:
   SYNOPSIS
     Unique:walk()
   All params are 'IN':
-    action  function-visitor, typed in include/my_tree.h
+    action  function-visitor, typed in include/tree.h
             function is called for each unique element
     arg     argument for visitor, which is passed to it on each call
   RETURN VALUE
