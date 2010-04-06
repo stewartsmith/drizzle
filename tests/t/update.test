@@ -356,4 +356,5 @@ UPDATE t1 SET col1 = "crash" WHERE col2 = now() ;
 connection default;
 disconnect con1;
 
+drop table t1;
 --echo End of 5.0 tests

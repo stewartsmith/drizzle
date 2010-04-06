@@ -35,12 +35,12 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10) COLLATE utf8_bin DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=DEFAULT
 select count(*) from t1 where a='a';
 count(*)
 1
