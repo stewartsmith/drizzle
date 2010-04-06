@@ -155,7 +155,7 @@ static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) -
 
 drizzled::hash_set<string> ignore_table;
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"all", 'a', "Deprecated. Use --create-options instead.",
     (char**) &create_options, (char**) &create_options, 0, GET_BOOL, NO_ARG, 1,
@@ -509,7 +509,7 @@ static void write_footer(FILE *sql_file)
 } /* write_footer */
 
 
-static int get_one_option(int optid, const struct my_option *, char *argument)
+static int get_one_option(int optid, const struct option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;

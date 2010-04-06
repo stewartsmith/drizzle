@@ -36,8 +36,7 @@ ShowTables::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false)
 {
-  Session *session= current_session;
-  statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
+  statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
 
   schema_name.append(select->getShowSchema());
   assert(not schema_name.empty());
@@ -51,9 +50,8 @@ bool ShowTables::Generator::nextCore()
   }
   else
   {
-    Session *session= current_session;
     SchemaIdentifier identifier(schema_name);
-    plugin::StorageEngine::getTableIdentifiers(*session, identifier, set_of_identifiers);
+    plugin::StorageEngine::getTableIdentifiers(getSession(), identifier, set_of_identifiers);
     set_of_identifiers.sort();
     table_iterator= set_of_identifiers.begin();
     is_primed= true;
