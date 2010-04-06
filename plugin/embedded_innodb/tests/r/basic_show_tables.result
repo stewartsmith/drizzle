@@ -1,4 +1,4 @@
-CREATE TABLE t1 (a int);
+CREATE TABLE t1 (a int primary key);
 show tables;
 Tables_in_test
 t1
