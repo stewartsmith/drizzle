@@ -67,7 +67,7 @@ static char  *opt_password= NULL, *current_user= NULL,
 static uint32_t opt_drizzle_port= 0;
 static int64_t opt_ignore_lines= -1;
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"columns", 'c',
    "Use only these columns to import the data to. Give the column names in a comma separated list. This is same as giving columns to LOAD DATA INFILE.",
@@ -170,7 +170,7 @@ file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
   my_print_variables(my_long_options);
 }
 
-static int get_one_option(int optid, const struct my_option *, char *argument)
+static int get_one_option(int optid, const struct option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
