@@ -313,11 +313,11 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/message/table.pb.h
 %{_includedir}/drizzled/message/transaction.pb.h
 %{_includedir}/drizzled/my_error.h
-%{_includedir}/drizzled/my_getopt.h
+%{_includedir}/drizzled/option.h
 %{_includedir}/drizzled/my_hash.h
-%{_includedir}/drizzled/my_time.h
-%{_includedir}/drizzled/my_tree.h
-%{_includedir}/drizzled/my_var.h
+%{_includedir}/drizzled/drizzle_time.h
+%{_includedir}/drizzled/tree.h
+%{_includedir}/drizzled/var.h
 %{_includedir}/drizzled/name_resolution_context.h
 %{_includedir}/drizzled/name_resolution_context_state.h
 %{_includedir}/drizzled/named_savepoint.h

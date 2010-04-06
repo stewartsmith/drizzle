@@ -400,4 +400,5 @@ count(*)
 drop table t1,t2;
 CREATE TABLE t1(col1 enum('a','b') NOT NULL, col2 enum('a','b') DEFAULT NULL, KEY col2 (col2));
 UPDATE t1 SET col1 = "crash" WHERE col2 = now() ;
+drop table t1;
 End of 5.0 tests

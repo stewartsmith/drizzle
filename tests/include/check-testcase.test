@@ -11,7 +11,7 @@
 #
 # Dump all global variables
 #
-show global variables;
+select * from data_dictionary.GLOBAL_VARIABLES where VARIABLE_NAME != 'timestamp';
 
 #
 # Dump all databases
@@ -21,31 +21,6 @@ show databases;
 #
 # Dump the "test" database, all it's tables and their data
 #
---exec $DRIZZLE_DUMP --skip-comments --skip-lock-tables test
-
-#
-# Dump the "mysql" database and it's tables
-# Select data separately to add "order by"
-#
---exec $DRIZZLE_DUMP --skip-comments --skip-lock-tables --no-data mysql
-use mysql;
-select * from columns_priv;
-select * from db order by host, db, user;
-select * from func;
-select * from help_category;
-select * from help_keyword;
-select * from help_relation;
-select * from help_relation;
-select * from host;
-select * from proc;
-select * from procs_priv;
-select * from tables_priv;
-select * from time_zone;
-select * from time_zone_leap_second;
-select * from time_zone_name;
-select * from time_zone_transition;
-select * from time_zone_transition_type;
-select * from user;
-
+--exec $DRIZZLE_DUMP --skip-comments test
 
 

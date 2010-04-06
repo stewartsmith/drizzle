@@ -144,7 +144,8 @@ void plugin::TableFunction::add_field(const char *label,
 }
 
 plugin::TableFunction::Generator::Generator(Field **arg) :
-  columns(arg)
+  columns(arg),
+  session(current_session)
 {
   scs= system_charset_info;
 }
@@ -220,14 +221,12 @@ void plugin::TableFunction::Generator::push(bool arg)
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  Session *session= current_session;
-
-  if (not session->lex->wild)
+  if (not getSession().lex->wild)
     return false;
 
   bool match= wild_case_compare(system_charset_info,
                                 predicate.c_str(),
-                                session->lex->wild->ptr());
+                                getSession().lex->wild->ptr());
 
   return match;
 }
