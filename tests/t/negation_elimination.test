@@ -67,6 +67,7 @@ select * from t1 where ((a between 5 and 15) and (not(a like 10)));
 
 delete from t1 where a > 3;
 select a, not(not(a)) from t1;
+--replace_column 9 #
 explain extended select a, not(not(a)), not(a <= 2 and not(a)), not(a not like "1"), not (a not in (1,2)), not(a != 2) from t1 where not(not(a)) having not(not(a));
 
 drop table t1;
