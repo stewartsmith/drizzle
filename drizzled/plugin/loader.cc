@@ -22,7 +22,7 @@
 #include <map>
 #include <algorithm>
 
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/internal/m_string.h"
 
@@ -667,7 +667,7 @@ static int check_func_int(Session *session, drizzle_sys_var *var,
 {
   bool fixed;
   int64_t tmp;
-  struct my_option options;
+  struct option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
 
@@ -687,7 +687,7 @@ static int check_func_long(Session *session, drizzle_sys_var *var,
 {
   bool fixed;
   int64_t tmp;
-  struct my_option options;
+  struct option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
 
@@ -707,7 +707,7 @@ static int check_func_int64_t(Session *session, drizzle_sys_var *var,
 {
   bool fixed;
   int64_t tmp;
-  struct my_option options;
+  struct option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
 
@@ -1370,7 +1370,7 @@ bool sys_var_pluginvar::update(Session *session, set_var *var)
   options->block_size= (long) (opt)->blk_sz
 
 
-void plugin_opt_set_limits(struct my_option *options,
+void plugin_opt_set_limits(struct option *options,
 													 const drizzle_sys_var *opt)
 {
   options->sub_size= 0;
@@ -1443,14 +1443,14 @@ void plugin_opt_set_limits(struct my_option *options,
     options->arg_type= OPT_ARG;
 }
 
-static int get_one_plugin_option(int, const struct my_option *, char *)
+static int get_one_plugin_option(int, const struct option *, char *)
 {
   return 0;
 }
 
 
 static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
-                             my_option *options)
+                             option *options)
 {
   
   int localoptionid= 256;
@@ -1620,19 +1620,19 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
 }
 
 
-static my_option *construct_help_options(memory::Root *mem_root, plugin::Module *p)
+static option *construct_help_options(memory::Root *mem_root, plugin::Module *p)
 {
   drizzle_sys_var **opt;
-  my_option *opts;
+  option *opts;
   uint32_t count= EXTRA_OPTIONS;
 
   for (opt= p->getManifest().system_vars; opt && *opt; opt++, count++) {};
 
-  opts= (my_option*)alloc_root(mem_root, (sizeof(my_option) * count));
+  opts= (option*)alloc_root(mem_root, (sizeof(option) * count));
   if (opts == NULL)
     return NULL;
 
-  memset(opts, 0, sizeof(my_option) * count);
+  memset(opts, 0, sizeof(option) * count);
 
   if (construct_options(mem_root, p, opts))
     return NULL;
@@ -1674,7 +1674,7 @@ static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
 {
   struct sys_var_chain chain= { NULL, NULL };
   drizzle_sys_var **opt;
-  my_option *opts= NULL;
+  option *opts= NULL;
   int error;
   drizzle_sys_var *o;
   struct st_bookmark *var;
@@ -1686,12 +1686,12 @@ static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
   {
-    if (!(opts= (my_option*) alloc_root(tmp_root, sizeof(my_option) * count)))
+    if (!(opts= (option*) alloc_root(tmp_root, sizeof(option) * count)))
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory for plugin '%s'."), tmp->getName().c_str());
       return(-1);
     }
-    memset(opts, 0, sizeof(my_option) * count);
+    memset(opts, 0, sizeof(option) * count);
 
     if (construct_options(tmp_root, tmp, opts))
     {
@@ -1776,20 +1776,20 @@ err:
 class OptionCmp
 {
 public:
-  bool operator() (const my_option &a, const my_option &b)
+  bool operator() (const option &a, const option &b)
   {
     return my_strcasecmp(&my_charset_utf8_general_ci, a.name, b.name);
   }
 };
 
 
-void my_print_help_inc_plugins(my_option *main_options)
+void my_print_help_inc_plugins(option *main_options)
 {
   plugin::Registry &registry= plugin::Registry::singleton();
-  vector<my_option> all_options;
+  vector<option> all_options;
   plugin::Module *p;
   memory::Root mem_root;
-  my_option *opt= NULL;
+  option *opt= NULL;
 
   init_alloc_root(&mem_root, 4096);
 
@@ -1831,7 +1831,7 @@ void my_print_help_inc_plugins(my_option *main_options)
   }
 
   /** 
-   * @TODO: Fix the my_option building so that it doens't break sort
+   * @TODO: Fix the option building so that it doens't break sort
    *
    * sort(all_options.begin(), all_options.end(), OptionCmp());
    */
