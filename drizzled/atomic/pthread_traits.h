@@ -127,9 +127,9 @@ public:
 
   inline value_type fetch(const volatile value_type *value) const volatile
   {
-    const_cast<mutex_wrapper>(my_lock).lock();
+    const_cast<pthread_traits *>(this)->my_lock.lock();
     value_type ret= *value;
-    const_cast<mutex_wrapper>(my_lock).unlock();
+    const_cast<pthread_traits *>(this)->my_lock.unlock();
     return ret;
   }
 
