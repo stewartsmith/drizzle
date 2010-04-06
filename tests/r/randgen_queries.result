@@ -116,3 +116,4 @@ binary	binary
 select COUNT(*) from data_dictionary.tables;
 COUNT(*)
 ####.##.####
+DROP TABLE t1;
