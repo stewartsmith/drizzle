@@ -84,7 +84,7 @@ extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern char *default_tz_name;
 
-uint64_t fix_unsigned(Session *, uint64_t, const struct my_option *);
+uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 
 struct sys_var_chain
 {
@@ -101,7 +101,7 @@ class sys_var
 protected:
   const std::string name; /**< The name of the variable */
   sys_after_update_func after_update; /**< Function pointer triggered after the variable's value is updated */
-  struct my_option *option_limits; /**< Updated by by set_var_init() */
+  struct option *option_limits; /**< Updated by by set_var_init() */
   bool m_allow_empty_value; /**< Does variable allow an empty value? */
   sys_var *next;
 public:
@@ -159,16 +159,16 @@ public:
   /**
    * Returns a pointer to the variable's option limits
    */
-  inline struct my_option *getOptionLimits() const
+  inline struct option *getOptionLimits() const
   {
     return option_limits;
   }
   /**
    * Sets the pointer to the variable's option limits
    *
-   * @param Pointer to the option limits my_option variable
+   * @param Pointer to the option limits option variable
    */
-  inline void setOptionLimits(struct my_option *in_option_limits)
+  inline void setOptionLimits(struct option *in_option_limits)
   {
     option_limits= in_option_limits;
   }
@@ -916,7 +916,7 @@ void set_var_free();
 drizzle_show_var* enumerate_sys_vars(Session *session, bool sorted);
 void drizzle_add_plugin_sysvar(sys_var_pluginvar *var);
 void drizzle_del_plugin_sysvar();
-int mysql_add_sys_var_chain(sys_var *chain, struct my_option *long_options);
+int mysql_add_sys_var_chain(sys_var *chain, struct option *long_options);
 int mysql_del_sys_var_chain(sys_var *chain);
 sys_var *find_sys_var(Session *session, const char *str, uint32_t length=0);
 int sql_set_variables(Session *session, List<set_var_base> *var_list);
