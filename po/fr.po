@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-03-31 06:13+0000\n"
-"PO-Revision-Date: 2010-04-01 08:04+0000\n"
+"PO-Revision-Date: 2010-04-06 13:37+0000\n"
 "Last-Translator: Damien Seguy <damien.seguy@gmail.com>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-04-02 03:40+0000\n"
+"X-Launchpad-Export-Date: 2010-04-07 03:45+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -5700,42 +5700,54 @@ msgstr "Chemin jusqu'au fichier de log de transactions."
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
+"Active la somme de vérification CRC32 pour chaque entrée dans le log de "
+"transactions"
 
 msgid ""
 "0 == rely on operating system to sync log file (default), 1 == sync file at "
 "each transaction write, 2 == sync log file once per second"
 msgstr ""
+"0 == fait confiance au système d'exploitation pour synchroniser les fichiers "
+"de log (par défaut), 1 == assure la synchronisation à chaque écriture dans "
+"le log, 2 == assure la synchronisation une fois par seconde"
 
 #, c-format
 msgid ""
 "Failed to allocate enough memory to buffer header, transaction message, and "
 "trailing checksum bytes. Tried to allocate %<PRId64> bytes.  Error: %s\n"
 msgstr ""
+"Impossible d'allouer suffisamment de mémoire pour mettre en buffer l'entête, "
+"le message de transaction, et la somme de contrôle finale. Il fallait "
+"%<PRId64> octets. Erreur : %s\n"
 
 msgid "Failed to open transaction log file "
-msgstr ""
+msgstr "Impossible d'ouvrir le fichier de log de transactions "
 
 #, c-format
 msgid ""
 "Failed to write full size of log entry.  Tried to write %<PRId64> bytes at "
 "offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
 msgstr ""
+"Impossible d'écrire la totalité de l'entrée de log. Tentative d'écrire "
+"%<PRId64> octets, à l'offset %<PRId64>, mais seuls %<PRId32> octets ont pu "
+"être écrits. Erreur : %s\n"
 
 #, c-format
 msgid "Failed to sync log file. Got error: %s\n"
 msgstr ""
+"Impossible de synchroniser le fichier de log sur le disque. Erreur : %s\n"
 
 #, c-format
 msgid "Failed to open transaction log file %s.  Got error: %s\n"
-msgstr ""
+msgstr "Impossible d'ouvrir le fichier de log %s. Erreur : %s\n"
 
 #, c-format
 msgid "Raw buffer read: %s.\n"
-msgstr ""
+msgstr "Lecture du buffer brut : %s\n"
 
 #, c-format
 msgid "Unable to parse transaction. Got error: %s.\n"
-msgstr ""
+msgstr "Impossible d'analyser la transaction. Erreur : %s\n"
 
 #, c-format
 msgid "BUFFER: %s\n"
