@@ -1,0 +1,1 @@
+--plugin-add=rabbitmq --rabbitmq-host=serialcoder --rabbitmq-username=guest --rabbitmq-password=guest

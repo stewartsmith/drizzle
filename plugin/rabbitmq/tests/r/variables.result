@@ -1,0 +1,5 @@
+SELECT * FROM data_dictionary.modules WHERE module_name = 'rabbitmq';
+MODULE_NAME	MODULE_VERSION	MODULE_AUTHOR	IS_BUILTIN	MODULE_LIBRARY	MODULE_DESCRIPTION	MODULE_LICENSE
+rabbitmq	0.1	Marcus Eriksson	FALSE	rabbitmq	RabbitMQ Replicator	GPL
+SELECT * FROM data_dictionary.plugins WHERE module_name = 'rabbitmq';
+PLUGIN_NAME	PLUGIN_TYPE	IS_ACTIVE	MODULE_NAME

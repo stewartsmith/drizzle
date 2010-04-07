@@ -115,8 +115,8 @@ void RabbitMQLog::apply(const message::Transaction &to_apply)
   free(buffer);
 }
 
-extern RabbitMQLog *rabbitmqLogger; ///< the actual plugin
-extern RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
+static RabbitMQLog *rabbitmqLogger; ///< the actual plugin
+static RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
 
 /**
  * Initialize the rabbitmq logger - instanciates the dependencies (the handler)
