@@ -18,3 +18,5 @@ CREATE TABLE t1 (
 
 INSERT INTO t1 VALUES (1, "I love testing.");
 INSERT INTO t1 VALUES (2, "I hate testing.");
+
+DROP TABLE t1;

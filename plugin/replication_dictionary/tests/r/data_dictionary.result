@@ -1,0 +1,10 @@
+use data_dictionary;
+SELECT count(*) FROM replication_streams;
+count(*)
+#
+show create table replication_streams;
+Table	Create Table
+replication_streams	CREATE TABLE `replication_streams` (
+  `REPLICATOR` varchar(64) NOT NULL DEFAULT '',
+  `APPLIER` varchar(64) NOT NULL DEFAULT ''
+) ENGINE=FunctionEngine
