@@ -1,0 +1,5 @@
+create table t1 (a int primary key);
+insert into t1 values (1);
+--error 1022
+insert into t1 values (1);
+drop table t1;

@@ -1,0 +1,12 @@
+CREATE TABLE t1 (a int);
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int DEFAULT NULL
+) ENGINE=InnoDB
+CREATE TABLE t1 (a int);
+ERROR 42S01: Table 'test.t1' already exists
+CREATE TABLE t2 (a int, b varchar(20), c bigint);
+CREATE TABLE t3 (d datetime);
+ERROR 42000: The storage engine for the table doesn't support Column Type
+DROP TABLE t1, t2;
