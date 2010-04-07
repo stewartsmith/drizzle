@@ -28,7 +28,9 @@
 #include "drizzled/atomics.h"
 #include "drizzled/plugin/replication.h"
 
+#include <string>
 #include <vector>
+#include <utility>
 
 namespace drizzled
 {
@@ -67,32 +69,21 @@ public:
     TRANSACTION= 1, /* A GPB Transaction Message */
     BLOB= 2 /* A BLOB value */
   };
-  typedef std::vector<plugin::TransactionReplicator *> Replicators;
-  typedef std::vector<plugin::TransactionApplier *> Appliers;
-private:
-  /** 
-   * Atomic boolean set to true if any *active* replicators
-   * or appliers are actually registered.
-   */
-  atomic<bool> is_active;
+  typedef std::pair<plugin::TransactionReplicator *, plugin::TransactionApplier *> ReplicationPair;
+  typedef std::vector<ReplicationPair> ReplicationStreams;
   /**
-   * The timestamp of the last time a Transaction message was successfully
-   * applied (sent to an Applier)
+   * Method which is called after plugins have been loaded but
+   * before the first client connects.  It determines if the registration
+   * of applier and replicator plugins is proper and pairs
+   * the applier and requested replicator plugins into the replication
+   * streams.
+   *
+   * @todo
+   *
+   * This is only necessary because we don't yet have plugin dependency
+   * tracking...
    */
-  atomic<uint64_t> last_applied_timestamp;
-  /** Our collection of replicator plugins */
-  Replicators replicators;
-  /** Our collection of applier plugins */
-  Appliers appliers;
-  /**
-   * Helper method which is called after any change in the
-   * registered appliers or replicators to evaluate whether
-   * any remaining plugins are actually active.
-   * 
-   * This method properly sets the is_active member variable.
-   */
-  void evaluateActivePlugins();
-public:
+  bool evaluateRegisteredPlugins();
   /** 
    * Helper method which pushes a constructed message out to the registered
    * replicator and applier plugins.
@@ -123,6 +114,12 @@ public:
    * a replicator and an applier that are *active*?
    */
   bool isActive() const;
+
+  /**
+   * Returns the list of replication streams
+   */
+  ReplicationStreams &getReplicationStreams();
+
   /**
    * Attaches a replicator to our internal collection of
    * replicators.
@@ -130,6 +127,7 @@ public:
    * @param Pointer to a replicator to attach/register
    */
   void attachReplicator(plugin::TransactionReplicator *in_replicator);
+  
   /**
    * Detaches/unregisters a replicator with our internal
    * collection of replicators.
@@ -137,13 +135,16 @@ public:
    * @param Pointer to the replicator to detach
    */
   void detachReplicator(plugin::TransactionReplicator *in_replicator);
+  
   /**
    * Attaches a applier to our internal collection of
    * appliers.
    *
    * @param Pointer to a applier to attach/register
+   * @param The name of the replicator to pair with
    */
-  void attachApplier(plugin::TransactionApplier *in_applier);
+  void attachApplier(plugin::TransactionApplier *in_applier, const std::string &requested_replicator);
+  
   /**
    * Detaches/unregisters a applier with our internal
    * collection of appliers.
@@ -151,10 +152,36 @@ public:
    * @param Pointer to the applier to detach
    */
   void detachApplier(plugin::TransactionApplier *in_applier);
-  /** Returns the timestamp of the last Transaction which was sent to an
+
+  /** 
+   * Returns the timestamp of the last Transaction which was sent to an
    * applier.
    */
   uint64_t getLastAppliedTimestamp() const;
+private:
+  typedef std::vector<plugin::TransactionReplicator *> Replicators;
+  typedef std::vector<std::pair<std::string, plugin::TransactionApplier *> > Appliers;
+  /** 
+   * Atomic boolean set to true if any *active* replicators
+   * or appliers are actually registered.
+   */
+  bool is_active;
+  /**
+   * The timestamp of the last time a Transaction message was successfully
+   * applied (sent to an Applier)
+   */
+  atomic<uint64_t> last_applied_timestamp;
+  /** Our collection of registered replicator plugins */
+  Replicators replicators;
+  /** Our collection of registered applier plugins and their requested replicator plugin names */
+  Appliers appliers;
+  /** Our replication streams */
+  ReplicationStreams replication_streams;
+  /**
+   * Strips underscores and lowercases supplied replicator name
+   * or requested name, and appends the suffix "replicator" if missing...
+   */
+  void normalizeReplicatorName(std::string &name);
 };
 
 } /* namespace drizzled */

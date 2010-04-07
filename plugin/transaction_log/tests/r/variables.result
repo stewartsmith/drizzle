@@ -7,3 +7,4 @@ transaction_log_file	transaction.log
 transaction_log_num_write_buffers	8
 transaction_log_sync_method	1
 transaction_log_truncate_debug	OFF
+transaction_log_use_replicator	default

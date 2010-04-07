@@ -43,99 +43,120 @@
 #include "drizzled/session.h"
 #include "drizzled/error.h"
 
+#include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
 namespace drizzled
 {
 
-ReplicationServices::ReplicationServices()
+ReplicationServices::ReplicationServices() :
+  is_active(false)
 {
-  is_active= false;
 }
 
-void ReplicationServices::evaluateActivePlugins()
+void ReplicationServices::normalizeReplicatorName(string &name)
 {
-  /* 
-   * We loop through replicators and appliers, evaluating
-   * whether or not there is at least one active replicator
-   * and one active applier.  If not, we set is_active
-   * to false.
-   */
-  bool tmp_is_active= false;
-
-  if (replicators.empty() || appliers.empty())
+  transform(name.begin(),
+            name.end(),
+            name.begin(),
+            ::tolower);
+  if (name.find("replicator") == string::npos)
+    name.append("replicator", 10);
   {
-    is_active= false;
-    return;
-  }
-
-  /* 
-   * Determine if any remaining replicators and if those
-   * replicators are active...if not, set is_active
-   * to false
-   */
-  for (Replicators::iterator repl_iter= replicators.begin();
-       repl_iter != replicators.end();
-       ++repl_iter)
-  {
-    if ((*repl_iter)->isEnabled())
+    size_t found_underscore= name.find('_');
+    while (found_underscore != string::npos)
     {
-      tmp_is_active= true;
-      break;
+      name.erase(found_underscore, 1);
+      found_underscore= name.find('_');
     }
   }
-  if (! tmp_is_active)
+}
+
+bool ReplicationServices::evaluateRegisteredPlugins()
+{
+  /* 
+   * We loop through appliers that have registered with us
+   * and attempts to pair the applier with its requested
+   * replicator.  If an applier has requested a replicator
+   * that has either not been built or has not registered
+   * with the replication services, we print an error and
+   * return false
+   */
+  if (appliers.empty())
+    return true;
+
+  if (replicators.empty() && not appliers.empty())
   {
-    /* No active replicators. Set is_active to false and exit. */
-    is_active= false;
-    return;
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  N_("You registered a TransactionApplier plugin but no "
+                     "TransactionReplicator plugins were registered.\n"));
+    return false;
   }
 
-  /* 
-   * OK, we know there's at least one active replicator.
-   *
-   * Now determine if any remaining replicators and if those
-   * replicators are active...if not, set is_active
-   * to false
-   */
   for (Appliers::iterator appl_iter= appliers.begin();
        appl_iter != appliers.end();
        ++appl_iter)
   {
-    if ((*appl_iter)->isEnabled())
+    plugin::TransactionApplier *applier= (*appl_iter).second;
+    string requested_replicator_name= (*appl_iter).first;
+    normalizeReplicatorName(requested_replicator_name);
+
+    bool found= false;
+    Replicators::iterator repl_iter;
+    for (repl_iter= replicators.begin();
+         repl_iter != replicators.end();
+         ++repl_iter)
     {
-      is_active= true;
-      return;
+      string replicator_name= (*repl_iter)->getName();
+      normalizeReplicatorName(replicator_name);
+
+      if (requested_replicator_name.compare(replicator_name) == 0)
+      {
+        found= true;
+        break;
+      }
+    }
+    if (not found)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    N_("You registered a TransactionApplier plugin but no "
+                       "TransactionReplicator plugins were registered that match the "
+                       "requested replicator name of '%s'.\n"
+                       "We have deactivated the TransactionApplier '%s'.\n"),
+                       requested_replicator_name.c_str(),
+                       applier->getName().c_str());
+      applier->deactivate();
+      return false;
+    }
+    else
+    {
+      replication_streams.push_back(make_pair(*repl_iter, applier));
     }
   }
-  /* If we get here, there are no active appliers */
-  is_active= false;
+  is_active= true;
+  return true;
 }
 
 void ReplicationServices::attachReplicator(plugin::TransactionReplicator *in_replicator)
 {
   replicators.push_back(in_replicator);
-  evaluateActivePlugins();
 }
 
 void ReplicationServices::detachReplicator(plugin::TransactionReplicator *in_replicator)
 {
   replicators.erase(std::find(replicators.begin(), replicators.end(), in_replicator));
-  evaluateActivePlugins();
 }
 
-void ReplicationServices::attachApplier(plugin::TransactionApplier *in_applier)
+void ReplicationServices::attachApplier(plugin::TransactionApplier *in_applier, const string &requested_replicator_name)
 {
-  appliers.push_back(in_applier);
-  evaluateActivePlugins();
+  appliers.push_back(make_pair(requested_replicator_name, in_applier));
 }
 
-void ReplicationServices::detachApplier(plugin::TransactionApplier *in_applier)
+void ReplicationServices::detachApplier(plugin::TransactionApplier *)
 {
-  appliers.erase(std::find(appliers.begin(), appliers.end(), in_applier));
-  evaluateActivePlugins();
 }
 
 bool ReplicationServices::isActive() const
@@ -146,54 +167,36 @@ bool ReplicationServices::isActive() const
 plugin::ReplicationReturnCode ReplicationServices::pushTransactionMessage(Session &in_session,
                                                                           message::Transaction &to_push)
 {
-  vector<plugin::TransactionReplicator *>::iterator repl_iter= replicators.begin();
-  vector<plugin::TransactionApplier *>::iterator appl_start_iter, appl_iter;
-  appl_start_iter= appliers.begin();
-
-  plugin::TransactionReplicator *cur_repl;
-  plugin::TransactionApplier *cur_appl;
-
   plugin::ReplicationReturnCode result= plugin::SUCCESS;
 
-  while (repl_iter != replicators.end())
+  for (ReplicationStreams::iterator iter= replication_streams.begin();
+       iter != replication_streams.end();
+       ++iter)
   {
-    cur_repl= *repl_iter;
-    if (! cur_repl->isEnabled())
+    plugin::TransactionReplicator *cur_repl= (*iter).first;
+    plugin::TransactionApplier *cur_appl= (*iter).second;
+
+    result= cur_repl->replicate(cur_appl, in_session, to_push);
+
+    if (result == plugin::SUCCESS)
     {
-      ++repl_iter;
-      continue;
+      /* 
+       * We update the timestamp for the last applied Transaction so that
+       * publisher plugins can ask the replication services when the
+       * last known applied Transaction was using the getLastAppliedTimestamp()
+       * method.
+       */
+      last_applied_timestamp.fetch_and_store(to_push.transaction_context().end_timestamp());
     }
-    
-    appl_iter= appl_start_iter;
-    while (appl_iter != appliers.end())
-    {
-      cur_appl= *appl_iter;
-
-      if (! cur_appl->isEnabled())
-      {
-        ++appl_iter;
-        continue;
-      }
-
-      result= cur_repl->replicate(cur_appl, in_session, to_push);
-
-      if (result == plugin::SUCCESS)
-      {
-        /* 
-         * We update the timestamp for the last applied Transaction so that
-         * publisher plugins can ask the replication services when the
-         * last known applied Transaction was using the getLastAppliedTimestamp()
-         * method.
-         */
-        last_applied_timestamp.fetch_and_store(to_push.transaction_context().end_timestamp());
-        ++appl_iter;
-      }
-      else
-        return result;
-    }
-    ++repl_iter;
+    else
+      return result;
   }
   return result;
+}
+
+ReplicationServices::ReplicationStreams &ReplicationServices::getReplicationStreams()
+{
+  return replication_streams;
 }
 
 } /* namespace drizzled */
