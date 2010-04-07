@@ -554,6 +554,10 @@ static int create_table_add_field(ib_tbl_sch_t schema,
     }
     break;
   }
+  case message::Table::Field::TIMESTAMP:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                  column_attr, 0, 4);
+    break;
   default:
     my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "Column Type");
     return(HA_ERR_UNSUPPORTED);
