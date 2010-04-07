@@ -25,87 +25,53 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_USER_COMMANDS_H
-#define PLUGIN_LOGGING_STATS_USER_COMMANDS_H
+#ifndef PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
+#define PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
 
-#include <drizzled/common.h>
+#include "user_commands.h"
 
 #include <string>
 
-class UserCommands
+class ScoreboardSlot
 {
 public:
+  ScoreboardSlot(); 
 
-  UserCommands();
+  ~ScoreboardSlot(); 
 
-  UserCommands(const UserCommands &user_commands);
+  ScoreboardSlot(const ScoreboardSlot &scoreboad_slot);
 
-  uint64_t getSelectCount();
+  UserCommands* getUserCommands();
 
-  void incrementSelectCount(int i= 1);
+  void setSessionId(uint64_t in_session_id);
 
+  uint64_t getSessionId();
 
-  uint64_t getUpdateCount();
+  void setInUse(bool in_in_use);
 
-  void incrementUpdateCount(int i= 1);
+  bool isInUse();
 
+  void setUser(std::string in_user);
 
-  uint64_t getDeleteCount();
+  const std::string& getUser();
 
-  void incrementDeleteCount(int i= 1);
+  void setIp(std::string in_ip);
 
-
-  uint64_t getInsertCount();
-
-  void incrementInsertCount(int i= 1);
-
-
-  uint64_t getRollbackCount();
-
-  void incrementRollbackCount(int i= 1);
-
-
-  uint64_t getCommitCount();
-
-  void incrementCommitCount(int i= 1);
-
-
-  uint64_t getCreateCount();
-
-  void incrementCreateCount(int i= 1);
-
-
-  uint64_t getAlterCount();
-
-  void incrementAlterCount(int i= 1);
-
-
-  uint64_t getDropCount();
-
-  void incrementDropCount(int i= 1);
-
-
-  uint64_t getAdminCount();
-
-  void incrementAdminCount(int i= 1);
-
-  void merge(UserCommands *user_commands);
+  const std::string& getIp();
 
   void reset();
 
-private:
-  uint64_t update_count;
-  uint64_t delete_count;
-  uint64_t insert_count;
-  uint64_t select_count;
-  uint64_t rollback_count;
-  uint64_t commit_count;
-  uint64_t create_count;
-  uint64_t alter_count;
-  uint64_t drop_count;
-  uint64_t admin_count;
-};
+  void merge(ScoreboardSlot *score_board_slot);
 
-#endif /* PLUGIN_LOGGING_STATS_USER_COMMANDS_H */
+private:
+  UserCommands *user_commands;
+  std::string user;
+  std::string ip;
+  bool in_use;
+  uint64_t session_id;
+};
+ 
+#endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H */

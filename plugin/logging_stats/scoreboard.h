@@ -25,89 +25,69 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
-#define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
+#ifndef PLUGIN_LOGGING_STATS_SCOREBOARD_H
+#define PLUGIN_LOGGING_STATS_SCOREBOARD_H
 
 #include "scoreboard_slot.h"
-#include "user_commands.h"
-#include "scoreboard.h"
-#include <drizzled/atomics.h>
-#include <drizzled/enum.h>
 #include <drizzled/session.h>
-#include <drizzled/plugin/logging.h>
 
-#include <string>
 #include <vector>
 
-extern pthread_rwlock_t LOCK_current_scoreboard_vector;
-
-class LoggingStats: public drizzled::plugin::Logging
+class Scoreboard
 {
 public:
+  Scoreboard(uint32_t in_number_sessions, uint32_t in_number_buckets);
 
-  LoggingStats(std::string name_arg);
+  ~Scoreboard();
 
-  ~LoggingStats();
+  /**
+   * Locates a ScoreboardSlot that is not in use, marks the slot
+   * as being used and returns a pointer to it. The caller can
+   * update individual statistics via the pointer without having
+   * to lock or worry about concurrent updates.  
+   * 
+   * @param Pointer to the session 
+   * @return Pointer to the ScoreboardSlot whose individual statistics 
+   *   can be updated
+   */
+  ScoreboardSlot* findScoreboardSlotToLog(drizzled::Session *session);
 
-  virtual bool post(drizzled::Session *session);
+  /**
+   * Resets the ScoreboardSlot this session was using. The pointer
+   * returned is a copy of the ScoreboardSlot that has now been
+   * reclaimed. This must be deallocated by the caller, when the caller
+   * is finished. This allows cumulative collection of statistics.  
+   * 
+   * @param Pointer to the session
+   * @return Pointer to a copy of the ScoreboardSlot that has been
+   *   reclaimed
+   */
+  ScoreboardSlot* findAndResetScoreboardSlot(drizzled::Session *session);
 
-  virtual bool postEnd(drizzled::Session *session);
-
-  bool isEnabled() const
+  uint32_t getNumberBuckets()
   {
-    return is_enabled;
+    return number_buckets;
   }
 
-  void enable()
+  std::vector<pthread_rwlock_t* >* getVectorOfScoreboardLocks()
   {
-    is_enabled= true;
+    return &vector_of_scoreboard_locks;
   }
 
-  void disable()
+  std::vector<std::vector<ScoreboardSlot* >* >* getVectorOfScoreboardVectors()
   {
-    is_enabled= false;
-  }
-
-  Scoreboard *getCurrentScoreboard()
-  {          
-    return current_scoreboard;
-  }
-
-  std::vector<ScoreboardSlot* > *getCumulativeStatsByUserVector()
-  {
-    return cumulative_stats_by_user_vector; 
-  }
-
-  uint32_t getCumulativeStatsByUserIndex()
-  {
-    return cumulative_stats_by_user_index;
+    return &vector_of_scoreboard_vectors; 
   }
 
 private:
   static const int32_t UNINITIALIZED= -1;
-
-  std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
-
-  uint32_t cumulative_stats_by_user_max;
-
-  uint32_t cumulative_stats_by_user_index;
-
-  Scoreboard *current_scoreboard;
-
-  bool isBeingLogged(drizzled::Session *session);
-
-  void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
-
-  void updateCumulativeStatsByUserVector(ScoreboardSlot *current_scoreboard_slot);
-
-  void preAllocateScoreboardSlotVector(uint32_t size,
-                                       std::vector<ScoreboardSlot *> *scoreboard_slot_vector);
-
-  void deleteScoreboardSlotVector(std::vector<ScoreboardSlot *> *scoreboard_slot_vector);
-
-  drizzled::atomic<bool> is_enabled;
-
+  uint32_t number_sessions;
+  uint32_t number_buckets;
+  std::vector<std::vector<ScoreboardSlot* >* > vector_of_scoreboard_vectors;
+  std::vector<pthread_rwlock_t* > vector_of_scoreboard_locks;
 };
-#endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */
+
+#endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_H */
