@@ -15,7 +15,7 @@
 
 #include "config.h"
 
-#include "drizzled/my_time.h"
+#include "drizzled/drizzle_time.h"
 
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
@@ -75,7 +75,7 @@ uint32_t calc_days_in_year(uint32_t year)
   @param[in]  ltime          Date to check.
   @param[in]  not_zero_date  ltime is not the zero date
   @param[in]  flags          flags to check
-                             (see str_to_datetime() flags in my_time.h)
+                             (see str_to_datetime() flags in drizzle_time.h)
   @param[out] was_cut        set to 2 if value was invalid according to flags.
                              (Feb 29 in non-leap etc.)  This remains unchanged
                              if value is not invalid.

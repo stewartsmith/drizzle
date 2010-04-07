@@ -29,7 +29,7 @@
   - If the variable is thread specific, add it to 'system_variables' struct.
     If not, add it to mysqld.cc and an declaration in 'mysql_priv.h'
   - If the variable should be changed from the command line, add a definition
-    of it in the my_option structure list in mysqld.cc
+    of it in the option structure list in mysqld.cc
   - Don't forget to initialize new fields in global_system_variables and
     max_system_variables!
 
@@ -44,7 +44,7 @@
 */
 
 #include "config.h"
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 #include <drizzled/error.h>
 #include <drizzled/gettext.h>
 #include <drizzled/tztime.h>
@@ -80,7 +80,7 @@ extern bool timed_mutexes;
 extern plugin::StorageEngine *myisam_engine;
 extern bool timed_mutexes;
 
-extern struct my_option my_long_options[];
+extern struct option my_long_options[];
 extern const CHARSET_INFO *character_set_filesystem;
 extern size_t my_thread_stack_size;
 
@@ -430,7 +430,7 @@ bool throw_bounds_warning(Session *session, bool fixed, bool unsignd,
 }
 
 uint64_t fix_unsigned(Session *session, uint64_t num,
-                              const struct my_option *option_limits)
+                              const struct option *option_limits)
 {
   bool fixed= false;
   uint64_t out= getopt_ull_limit_value(num, option_limits, &fixed);
@@ -441,7 +441,7 @@ uint64_t fix_unsigned(Session *session, uint64_t num,
 
 
 static size_t fix_size_t(Session *session, size_t num,
-                           const struct my_option *option_limits)
+                           const struct option *option_limits)
 {
   bool fixed= false;
   size_t out= (size_t)getopt_ull_limit_value(num, option_limits, &fixed);
@@ -1455,7 +1455,7 @@ static unsigned char *get_tmpdir(Session *)
     ptr		pointer to option structure
 */
 
-static struct my_option *find_option(struct my_option *opt, const char *name)
+static struct option *find_option(struct option *opt, const char *name)
 {
   uint32_t length=strlen(name);
   for (; opt->name; opt++)
@@ -1488,7 +1488,7 @@ static struct my_option *find_option(struct my_option *opt, const char *name)
 */
 
 
-int mysql_add_sys_var_chain(sys_var *first, struct my_option *long_options)
+int mysql_add_sys_var_chain(sys_var *first, struct option *long_options)
 {
   sys_var *var;
   /* A write lock should be held on LOCK_system_variables_hash */
