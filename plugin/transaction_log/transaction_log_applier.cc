@@ -62,10 +62,11 @@ TransactionLogApplier *transaction_log_applier= NULL; /* The singleton transacti
 extern TransactionLogIndex *transaction_log_index;
 
 TransactionLogApplier::TransactionLogApplier(const string name_arg,
-                                             TransactionLog &in_transaction_log,
+                                             TransactionLog *in_transaction_log,
                                              uint32_t in_num_write_buffers) :
   plugin::TransactionApplier(name_arg),
-  transaction_log(in_transaction_log),  
+  transaction_log(*in_transaction_log),  
+  transaction_log_ptr(in_transaction_log),
   num_write_buffers(in_num_write_buffers),
   write_buffers()
 {
@@ -85,6 +86,7 @@ TransactionLogApplier::~TransactionLogApplier()
            write_buffers.end(),
            DeletePtr());
   write_buffers.clear();
+  delete transaction_log_ptr;
 }
 
 WriteBuffer *TransactionLogApplier::getWriteBuffer(const Session &session)
