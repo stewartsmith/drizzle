@@ -619,7 +619,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     goto err;
 
   /* The ALTER Table is always in its own transaction */
-  error= transaction_services.ha_autocommit_or_rollback(session, false);
+  error= transaction_services.autocommitOrRollback(session, false);
   if (! session->endActiveTransaction())
     error=1;
   if (error)
@@ -627,7 +627,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
   write_bin_log(session, session->query.c_str());
 
 err:
-  (void) transaction_services.ha_autocommit_or_rollback(session, error);
+  (void) transaction_services.autocommitOrRollback(session, error);
   session->tablespace_op=false;
 
   if (error == 0)
@@ -1480,7 +1480,7 @@ copy_data_between_tables(Table *from, Table *to,
     Ensure that the new table is saved properly to disk so that we
     can do a rename
   */
-  if (transaction_services.ha_autocommit_or_rollback(session, false))
+  if (transaction_services.autocommitOrRollback(session, false))
     error=1;
   if (! session->endActiveTransaction())
     error=1;
