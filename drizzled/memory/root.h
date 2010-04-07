@@ -50,23 +50,33 @@ static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::Use
 class Root
 {
 public:
-  /* blocks with free memory in it */
+  /**
+   * blocks with free memory in it 
+   */
   internal::UsedMemory *free;
 
-  /* blocks almost without free memory */
+  /**
+   * blocks almost without free memory 
+   */
   internal::UsedMemory *used;
 
-  /* preallocated block */
+  /**
+   * preallocated block 
+   */
   internal::UsedMemory *pre_alloc;
 
-  /* if block have less memory it will be put in 'used' list */
+  /**
+   * if block have less memory it will be put in 'used' list 
+   */
   size_t min_malloc;
-  size_t block_size;               /* initial block size */
-  unsigned int block_num;          /* allocated blocks counter */
-  /*
-     first free block in queue test counter (if it exceed
-     MAX_BLOCK_USAGE_BEFORE_DROP block will be dropped in 'used' list)
-  */
+
+  size_t block_size;         ///< initial block size
+  unsigned int block_num;    ///< allocated blocks counter 
+
+  /**
+   * first free block in queue test counter (if it exceed
+   * MAX_BLOCK_USAGE_BEFORE_DROP block will be dropped in 'used' list)
+   */
   unsigned int first_block_usage;
 
   void (*error_handler)(void);

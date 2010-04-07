@@ -30,25 +30,24 @@ namespace drizzled
 static const unsigned int MAX_BLOCK_TO_DROP= 4096;
 static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
 
-/*
-  Initialize memory root
-
-  SYNOPSIS
-    memory::init_alloc_root()
-      mem_root       - memory root to initialize
-      block_size     - size of chunks (blocks) used for memory allocation
-                       (It is external size of chunk i.e. it should include
-                        memory required for internal structures, thus it
-                        should be no less than memory::ROOT_MIN_BLOCK_SIZE)
-
-  DESCRIPTION
-    This function prepares memory root for further use, sets initial size of
-    chunk for memory allocation and pre-allocates first block if specified.
-    Altough error can happen during execution of this function if
-    pre_alloc_size is non-0 it won't be reported. Instead it will be
-    reported as error in first alloc_root() on this memory root.
-*/
-
+/**
+ * @brief
+ * Initialize memory root
+ *
+ * @details
+ * This function prepares memory root for further use, sets initial size of
+ * chunk for memory allocation and pre-allocates first block if specified.
+ * Altough error can happen during execution of this function if
+ * pre_alloc_size is non-0 it won't be reported. Instead it will be
+ * reported as error in first alloc_root() on this memory root.
+ *
+ * @param  mem_root       memory root to initialize
+ * @param  block_size     size of chunks (blocks) used for memory allocation
+ *                       (It is external size of chunk i.e. it should include
+ *                      memory required for internal structures, thus it
+ *                      should be no less than memory::ROOT_MIN_BLOCK_SIZE)
+ *
+ */
 void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
 {
   mem_root->free= mem_root->used= mem_root->pre_alloc= 0;
@@ -62,23 +61,21 @@ void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
 }
 
 
-/*
-  SYNOPSIS
-    reset_root_defaults()
-    mem_root        memory root to change defaults of
-    block_size      new value of block size. Must be greater or equal
-                    than ALLOC_ROOT_MIN_BLOCK_SIZE (this value is about
-                    68 bytes and depends on platform and compilation flags)
-    pre_alloc_size  new size of preallocated block. If not zero,
-                    must be equal to or greater than block size,
-                    otherwise means 'no prealloc'.
-  DESCRIPTION
-    Function aligns and assigns new value to block size; then it tries to
-    reuse one of existing blocks as prealloc block, or malloc new one of
-    requested size. If no blocks can be reused, all unused blocks are freed
-    before allocation.
-*/
-
+/**
+ * @details
+ * Function aligns and assigns new value to block size; then it tries to
+ * reuse one of existing blocks as prealloc block, or malloc new one of
+ * requested size. If no blocks can be reused, all unused blocks are freed
+ * before allocation.
+ *
+ * @param  mem_root        memory root to change defaults of
+ * @param  block_size      new value of block size. Must be greater or equal
+ *                         than ALLOC_ROOT_MIN_BLOCK_SIZE (this value is about
+ *                         68 bytes and depends on platform and compilation flags)
+ * @param pre_alloc_size  new size of preallocated block. If not zero,
+ *                        must be equal to or greater than block size,
+ *                        otherwise means 'no prealloc'.
+ */
 void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
                                  size_t pre_alloc_size)
 {
@@ -178,7 +175,7 @@ void *memory::alloc_root(memory::Root *mem_root, size_t length)
   }
 
   point= (unsigned char*) ((char*) next+ (next->size-next->left));
-  /*TODO: next part may be unneded due to mem_root->first_block_usage counter*/
+  /** @todo next part may be unneeded due to mem_root->first_block_usage counter*/
   if ((next->left-= length) < mem_root->min_malloc)
   {						/* Full block */
     *prev= next->next;				/* Remove block from list */
