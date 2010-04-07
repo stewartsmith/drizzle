@@ -1273,6 +1273,31 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   ib_cursor_attach_trx(cursor, transaction);
 
   err= ib_cursor_first(cursor);
+  if (current_session->lex->sql_command == SQLCOM_CREATE_TABLE
+      && err == DB_MISSING_HISTORY)
+  {
+    /* See https://bugs.launchpad.net/drizzle/+bug/556978
+     *
+     * In CREATE SELECT, transaction is started in ::store_lock
+     * at the start of the statement, before the table is created.
+     * This means the table doesn't exist in our snapshot,
+     * and we get a DB_MISSING_HISTORY error on ib_cursor_first().
+     * The way to get around this is to here, restart the transaction
+     * and continue.
+     *
+     * yuck.
+     */
+
+    EmbeddedInnoDBEngine *innodb_engine= static_cast<EmbeddedInnoDBEngine*>(engine);
+    err= ib_cursor_reset(cursor);
+    innodb_engine->doCommit(current_session, true);
+    innodb_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
+    transaction= *get_trx(ha_session());
+    assert(err == DB_SUCCESS);
+    ib_cursor_attach_trx(cursor, transaction);
+    err= ib_cursor_first(cursor);
+  }
+
   assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
 
