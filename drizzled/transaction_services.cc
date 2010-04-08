@@ -882,7 +882,7 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
   return error;
 }
 
-inline bool TransactionServices::shouldConstructMessages()
+bool TransactionServices::shouldConstructMessages()
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   return replication_services.isActive();
@@ -913,7 +913,7 @@ void TransactionServices::initTransactionMessage(message::Transaction &in_transa
 {
   message::TransactionContext *trx= in_transaction.mutable_transaction_context();
   trx->set_server_id(in_session->getServerId());
-  trx->set_transaction_id(in_session->getQueryId());
+  trx->set_transaction_id(getNextTransactionId());
   trx->set_start_timestamp(in_session->getCurrentTimestamp());
 }
 

@@ -37,11 +37,13 @@
  * offset into the log file for writing the next log entry.  The log
  * entries are written, one after the other, in the following way:
  *
+ * <pre>
  * --------------------------------------
  * |<- 4 bytes ->|<- # Bytes of Entry ->|
  * --------------------------------------
  * |  Entry Type |  Serialized Entry    |
  * --------------------------------------
+ * </pre>
  *
  * The Entry Type is an integer defined as an enumeration in the 
  * /drizzled/message/transaction.proto file called TransactionLogEntry::Type.
@@ -51,12 +53,14 @@
  *
  * Committed and Prepared Transaction Log Entries
  * -----------------------------------------------
- *
+ * 
+ * <pre>
  * ------------------------------------------------------------------
  * |<- 4 bytes ->|<- # Bytes of Transaction Message ->|<- 4 bytes ->|
  * ------------------------------------------------------------------
  * |   Length    |   Serialized Transaction Message   |   Checksum  |
  * ------------------------------------------------------------------
+ * </pre>
  *
  * @todo
  *
@@ -80,6 +84,7 @@
 #include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
 #include <drizzled/message/transaction.pb.h>
+#include <drizzled/transaction_services.h>
 #include <drizzled/algorithm/crc32.h>
 
 #include <google/protobuf/io/coded_stream.h>
@@ -188,12 +193,6 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
    */
   off_t cur_offset= log_offset.fetch_and_add(static_cast<off_t>(data_length));
 
-  /*
-   * We adjust cur_offset back to the original log_offset before
-   * the increment above...
-   */
-  cur_offset-= static_cast<off_t>(data_length);
-
   /* 
    * Quick safety...if an error occurs above in another writer, the log 
    * file will be in a crashed state.
@@ -289,6 +288,7 @@ void TransactionLog::truncate()
     result= ftruncate(log_file, log_offset);
   }
   while (result == -1 && errno == EINTR);
+  drizzled::TransactionServices::singleton().resetTransactionId();
 }
 
 bool TransactionLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,

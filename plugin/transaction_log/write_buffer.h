@@ -87,4 +87,4 @@ private:
   pthread_mutex_t latch; ///< Lock around the synchronized parts of the log (the write buffer)
 };
 
-#endif /* PLUGIN_TRANSACTION_LOG_UNDO_LOG_H */
+#endif /* PLUGIN_TRANSACTION_LOG_WRITE_BUFFER_H */

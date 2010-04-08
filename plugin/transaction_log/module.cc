@@ -85,6 +85,12 @@ static uint32_t sysvar_transaction_log_sync_method= 0;
  * for managing write buffers
  */
 static uint32_t sysvar_transaction_log_num_write_buffers= 8;
+/**
+ * Transaction Log plugin system variable - The name of the replicator plugin
+ * to pair the transaction log's applier with.  Defaults to "default"
+ */
+static char *sysvar_transaction_log_use_replicator= NULL;
+static const char DEFAULT_USE_REPLICATOR[]= "default";
 
 /** DATA_DICTIONARY views */
 static TransactionLogTool *transaction_log_tool;
@@ -129,7 +135,7 @@ static int init(drizzled::plugin::Context &context)
     }
     /* Create the applier plugin and register it */
     transaction_log_applier= new (nothrow) TransactionLogApplier("transaction_log_applier",
-                                                                 *transaction_log, 
+                                                                 transaction_log, 
                                                                  sysvar_transaction_log_num_write_buffers);
     if (transaction_log_applier == NULL)
     {
@@ -138,6 +144,9 @@ static int init(drizzled::plugin::Context &context)
       return 1;
     }
     context.add(transaction_log_applier);
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    string replicator_name(sysvar_transaction_log_use_replicator);
+    replication_services.attachApplier(transaction_log_applier, replicator_name);
 
     /* Setup DATA_DICTIONARY views */
 
@@ -230,6 +239,14 @@ static DRIZZLE_SYSVAR_STR(file,
                           NULL, /* update func*/
                           DEFAULT_LOG_FILE_PATH /* default */);
 
+static DRIZZLE_SYSVAR_STR(use_replicator,
+                          sysvar_transaction_log_use_replicator,
+                          PLUGIN_VAR_READONLY,
+                          N_("Name of the replicator plugin to use (default='default_replicator')"),
+                          NULL, /* check func */
+                          NULL, /* update func*/
+                          DEFAULT_USE_REPLICATOR /* default */);
+
 static DRIZZLE_SYSVAR_BOOL(enable_checksum,
                            sysvar_transaction_log_checksum_enabled,
                            PLUGIN_VAR_NOCMDARG,
@@ -269,6 +286,7 @@ static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(enable_checksum),
   DRIZZLE_SYSVAR(sync_method),
   DRIZZLE_SYSVAR(num_write_buffers),
+  DRIZZLE_SYSVAR(use_replicator),
   NULL
 };
 

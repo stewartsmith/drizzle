@@ -46,14 +46,6 @@ public:
   ~DefaultReplicator() {}
 
   /**
-   * Returns whether the replicator is active
-   */
-  virtual bool isEnabled() const;
-
-  virtual void enable();
-  virtual void disable();
-
-  /**
    * Replicate a Transaction message to an Applier.
    *
    * @note
