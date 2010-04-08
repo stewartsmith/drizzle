@@ -109,6 +109,7 @@ public:
 
 	/* override */ bool doDoesTableExist(Session&, TableIdentifier &identifier);
 
+        ~PBXTStorageEngine();
 };
 
 typedef PBXTStorageEngine handlerton;

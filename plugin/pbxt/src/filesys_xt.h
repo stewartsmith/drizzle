@@ -69,7 +69,7 @@ struct XTOpenFile;
  * XT_FT_HEAP - File not on disk, only in RAM
  * XT_FT_REWRITE_FLUSH - Standard file with re-write flushing
  */
-typedef enum XTFileType { XT_FT_NONE, XT_FT_STANDARD, XT_FT_MEM_MAP, XT_FT_HEAP, XT_FT_REWRITE_FLUSH };
+enum XTFileType { XT_FT_NONE, XT_FT_STANDARD, XT_FT_MEM_MAP, XT_FT_HEAP, XT_FT_REWRITE_FLUSH };
 
 xtBool			xt_fs_exists(char *path);
 xtBool			xt_fs_delete(struct XTThread *self, char *path);

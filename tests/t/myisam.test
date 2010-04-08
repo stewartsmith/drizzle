@@ -498,9 +498,6 @@ create table t1 (a int, b varchar(200), c text not null);
 create table t2 (a int, b varchar(200), c text not null);
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
-checksum table t1, t2, t3;
-checksum table t1, t2, t3;
-checksum table t1, t2, t3;
 --replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 drop table t1,t2;
@@ -549,22 +546,6 @@ insert into t1 values (1,'A'), (2, 'B'), (3, 'A');
 update t1 set c2='A  B' where c1=2;
 check table t1;
 drop table t1;
-
-
-#
-# Bug#12296 - CHECKSUM TABLE reports 0 for the table
-# This happened if the first record was marked as deleted.
-#
-create table t1 (c1 int);
-insert into t1 values (1),(2),(3),(4);
-checksum table t1;
-delete from t1 where c1 = 1;
-create table t2 as select * from t1;
-# The following returns 0 with the bug in place.
-checksum table t1;
-# The above should give the same number as the following.
-checksum table t2;
-drop table t1, t2;
 
 # BUG#13814 - key value packed incorrectly for TINYBLOBs
 

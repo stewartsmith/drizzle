@@ -101,7 +101,6 @@ using drizzled::Field;
 #define IND_FLUSH_THRESHOLD					(512 * 1024 * 1024)
 
 struct XTDictionary;
-STRUCT_TABLE;
 struct XTTable;
 struct XTOpenTable;
 struct XTIndex;

@@ -1292,7 +1292,7 @@ static int tab_new_handle(XTThreadPtr self, XTTableHPtr *r_tab, XTDatabaseHPtr d
 	XTOpenFilePtr	of_rec, of_ind;
 	XTTableEntryPtr	te_ptr;
 	size_t			tab_format_offset;
-	size_t			tab_head_size;
+	size_t			tab_head_size= 0;
 
 	enter_();
 

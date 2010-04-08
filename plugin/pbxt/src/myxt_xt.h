@@ -37,7 +37,6 @@
 
 struct XTDictionary;
 struct XTDatabase;
-STRUCT_TABLE;
 struct charset_info_st;
 
 u_int		myxt_create_key_from_key(XTIndexPtr ind, xtWord1 *key, xtWord1 *old, u_int k_length);

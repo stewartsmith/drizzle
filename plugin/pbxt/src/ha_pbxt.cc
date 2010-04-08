@@ -1308,11 +1308,7 @@ static int pbxt_init(void *p)
 	XT_RETURN(1);
 }
 
-#ifdef DRIZZLED
-int pbxt_end(Registry &registry)
-#else
 static int pbxt_end(void *)
-#endif
 {
 	XTThreadPtr		self;
 	int				err = 0;
@@ -1331,10 +1327,12 @@ static int pbxt_end(void *)
 		}
 	}
 
-#ifdef DRIZZLED
-	registry.remove(pbxt_hton);
-#endif
 	XT_RETURN(err);
+}
+
+PBXTStorageEngine::~PBXTStorageEngine()
+{
+  pbxt_end(NULL);
 }
 
 #ifndef DRIZZLED

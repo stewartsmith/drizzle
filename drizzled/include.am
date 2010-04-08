@@ -366,7 +366,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/analyze.h \
 			      drizzled/statement/change_schema.h \
 			      drizzled/statement/check.h \
-			      drizzled/statement/checksum.h \
 			      drizzled/statement/commit.h \
 			      drizzled/statement/create_index.h \
 			      drizzled/statement/create_schema.h \
@@ -709,7 +708,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/statement/analyze.cc \
 			   drizzled/statement/change_schema.cc \
 			   drizzled/statement/check.cc \
-			   drizzled/statement/checksum.cc \
 			   drizzled/statement/commit.cc \
 			   drizzled/statement/create_index.cc \
 			   drizzled/statement/create_schema.cc \

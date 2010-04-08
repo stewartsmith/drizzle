@@ -34,8 +34,8 @@
 #include <drizzled/sql_table.h>
 #include <algorithm>
 #include <sstream>
-extern pid_t drizzled::current_pid;
 namespace drizzled { 
+extern pid_t current_pid;
 namespace internal {
 size_t unpack_filename(char * to, const char *from);
 }
