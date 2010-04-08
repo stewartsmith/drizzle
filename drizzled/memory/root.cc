@@ -13,7 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* Routines to handle mallocing of results which will be freed the same time */
+/**
+ * @file
+ * Routines to handle mallocing of results which will be freed the same time 
+ */
 
 #include "config.h"
 
@@ -187,25 +190,28 @@ void *memory::alloc_root(memory::Root *mem_root, size_t length)
 }
 
 
-/*
-  Allocate many pointers at the same time.
-
-  DESCRIPTION
-    ptr1, ptr2, etc all point into big allocated memory area.
-
-  SYNOPSIS
-    multi_alloc_root()
-      root               Memory root
-      ptr1, length1      Multiple arguments terminated by a NULL pointer
-      ptr2, length2      ...
-      ...
-      NULL
-
-  RETURN VALUE
-    A pointer to the beginning of the allocated memory block
-    in case of success or NULL if out of memory.
-*/
-
+/**
+ * @brief
+ * Allocate many pointers at the same time.
+ *
+ * @details
+ * The variable arguments are a list of alternating pointers and lengths,
+ * terminated by a null pointer:
+ * @li <tt>char ** pointer1</tt>
+ * @li <tt>uint length1</tt>
+ * @li <tt>char ** pointer2</tt>
+ * @li <tt>uint length2</tt>
+ * @li <tt>...</tt>
+ * @li <tt>NULL</tt>
+ *
+ * @c pointer1, @c pointer2 etc. all point into big allocated memory area
+ *
+ * @param root  Memory root
+ *
+ * @return
+ * A pointer to the beginning of the allocated memory block in case of 
+ * success or NULL if out of memory
+ */
 void *memory::multi_alloc_root(memory::Root *root, ...)
 {
   va_list args;
@@ -238,8 +244,10 @@ void *memory::multi_alloc_root(memory::Root *root, ...)
 
 #define TRASH_MEM(X) TRASH(((char*)(X) + ((X)->size-(X)->left)), (X)->left)
 
-/* Mark all data in blocks free for reusage */
-
+/**
+ * @brief
+ * Mark all data in blocks free for reusage 
+*/
 static inline void mark_blocks_free(memory::Root* root)
 {
   memory::internal::UsedMemory *next;
@@ -268,26 +276,22 @@ static inline void mark_blocks_free(memory::Root* root)
   root->first_block_usage= 0;
 }
 
-
-/*
-  Deallocate everything used by memory::alloc_root or just move
-  used blocks to free list if called with MY_USED_TO_FREE
-
-  SYNOPSIS
-    free_root()
-      root		Memory root
-      MyFlags		Flags for what should be freed:
-
-        MARK_BLOCKS_FREED	Don't free blocks, just mark them free
-        KEEP_PREALLOC		If this is not set, then free also the
-        		        preallocated block
-
-  NOTES
-    One can call this function either with root block initialised with
-    init_alloc_root() or with a zero:ed block.
-    It's also safe to call this multiple times with the same mem_root.
-*/
-
+/**
+ * @brief
+ * Deallocate everything used by memory::alloc_root or just move
+ * used blocks to free list if called with MY_USED_TO_FREE
+ *
+ * @note
+ * One can call this function either with root block initialised with
+ * init_alloc_root() or with a zero:ed block.
+ * It's also safe to call this multiple times with the same mem_root.
+ *
+ * @param   root     Memory root
+ * @param   MyFlags  Flags for what should be freed:
+ *   @li   MARK_BLOCKS_FREED	Don't free blocks, just mark them free
+ *   @li   KEEP_PREALLOC        If this is not set, then free also the
+ *        		        preallocated block
+ */
 void memory::free_root(memory::Root *root, myf MyFlags)
 {
   memory::internal::UsedMemory *next,*old;
@@ -325,10 +329,10 @@ void memory::free_root(memory::Root *root, myf MyFlags)
   return;
 }
 
-/*
-  Find block that contains an object and set the pre_alloc to it
-*/
-
+/**
+ * @brief
+ * Find block that contains an object and set the pre_alloc to it
+ */
 void memory::set_prealloc_root(memory::Root *root, char *ptr)
 {
   memory::internal::UsedMemory *next;
