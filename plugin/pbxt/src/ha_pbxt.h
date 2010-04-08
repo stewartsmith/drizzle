@@ -99,13 +99,13 @@ public:
 	/* override */ uint32_t max_supported_keys(void) const { return -1; }
 	/* override */ uint32_t max_supported_key_part_length(void) const { return MAX_KEY_LENGTH; }
 
-	/* override */ void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                           drizzled::SchemaIdentifier &schema_identifier,
-                                           drizzled::TableIdentifiers &set_of_identifiers);
+	/* override */ void doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                           drizzled::SchemaIdentifier&,
+                                           drizzled::TableIdentifiers&) {}
 
-	/* override */ void doGetTableNames(CachedDirectory &directory, 
+	/* override */ void doGetTableNames(CachedDirectory&, 
 					SchemaIdentifier&, 
-					std::set<std::string>& set_of_names);
+					std::set<std::string>&) {}
 
 	/* override */ bool doDoesTableExist(Session&, TableIdentifier &identifier);
 

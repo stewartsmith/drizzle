@@ -39,6 +39,7 @@
 
 #ifdef DRIZZLED
 #include <fcntl.h>
+#include <drizzled/internal/my_sys.h>
 #include <drizzled/common.h>
 #include <drizzled/plugin.h>
 #include <drizzled/field.h>
@@ -5368,6 +5369,12 @@ int ha_pbxt::delete_table(const char *table_path)
 	}
 #endif
 
+#ifdef DRIZZLED
+          std::string path2(ident.getPath());
+          path2.append(DEFAULT_FILE_EXTENSION);
+          (void)internal::my_delete(path2.c_str(), MYF(0));
+#endif
+
 	return err;
 }
 
@@ -5841,6 +5848,7 @@ int PBXTStorageEngine::doRollback(drizzled::Session* thd, bool)
         return err;
 }
 
+#if 0
 void PBXTStorageEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                                            drizzled::SchemaIdentifier &schema_identifier,
                                            drizzled::TableIdentifiers &set_of_identifiers)
@@ -5906,6 +5914,7 @@ void PBXTStorageEngine::doGetTableNames(
     }
   }
 }
+#endif
 
 bool PBXTStorageEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
 {
