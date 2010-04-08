@@ -46,12 +46,15 @@ ShowIndexes::Generator::Generator(Field **arg) :
 {
   statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
 
-  table_name.append(select->getShowTable().c_str());
-  TableIdentifier identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
+  if (not select->getShowTable().empty() && not select->getShowSchema().empty())
+  {
+    table_name.append(select->getShowTable().c_str());
+    TableIdentifier identifier(select->getShowSchema().c_str(), select->getShowTable().c_str());
 
-  is_tables_primed= plugin::StorageEngine::getTableDefinition(getSession(),
-                                                              identifier,
-                                                              table_proto);
+    is_tables_primed= plugin::StorageEngine::getTableDefinition(getSession(),
+                                                                identifier,
+                                                                table_proto);
+  }
 }
 
 bool ShowIndexes::Generator::nextIndexCore()
