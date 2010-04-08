@@ -1,0 +1,13 @@
+drop database if exists mysqltest1;
+create schema foo;
+show create schema foo;
+Database	Create Database
+foo	CREATE DATABASE `foo`
+show schemas;
+Database
+information_schema
+foo
+mysql
+pbxt
+test
+drop schema foo;
