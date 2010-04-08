@@ -538,15 +538,15 @@ int prepare_create_field(CreateField *sql_field,
   return 0;
 }
 
-static int mysql_prepare_create_table(Session *session,
-                                      HA_CREATE_INFO *create_info,
-                                      message::Table &create_proto,
-                                      AlterInfo *alter_info,
-                                      bool tmp_table,
-                                      uint32_t *db_options,
-                                      KEY **key_info_buffer,
-                                      uint32_t *key_count,
-                                      int select_field_count)
+int mysql_prepare_create_table(Session *session,
+                               HA_CREATE_INFO *create_info,
+                               message::Table &create_proto,
+                               AlterInfo *alter_info,
+                               bool tmp_table,
+                               uint32_t *db_options,
+                               KEY **key_info_buffer,
+                               uint32_t *key_count,
+                               int select_field_count)
 {
   const char	*key_name;
   CreateField	*sql_field,*dup_field;
