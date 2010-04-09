@@ -1,1 +1,0 @@
---default-replicator-enable --transaction-log-enable --transaction-log-sync-method=1 --scheduler=multi_thread
