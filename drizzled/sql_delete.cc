@@ -396,7 +396,7 @@ bool mysql_truncate(Session& session, TableList *table_list)
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
-  error= transaction_services.ha_autocommit_or_rollback(&session, error);
+  error= transaction_services.autocommitOrRollback(&session, error);
   session.options= save_options;
 
   return error;

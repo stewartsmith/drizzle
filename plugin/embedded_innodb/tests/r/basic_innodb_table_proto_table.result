@@ -2,7 +2,8 @@ show create table data_dictionary.innodb_table_definitions;
 Table	Create Table
 innodb_table_definitions	CREATE TABLE `innodb_table_definitions` (
   `table_name` varbinary(192) DEFAULT NULL,
-  `message` blob
+  `message` blob,
+  PRIMARY KEY (`table_name`) USING BTREE
 ) ENGINE=InnoDB
 select * from data_dictionary.innodb_table_definitions;
 table_name	message

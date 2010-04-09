@@ -57,6 +57,34 @@ void UserCommands::reset()
   admin_count= 0;
 }
 
+UserCommands::UserCommands(const UserCommands &user_commands)
+{
+  update_count= user_commands.update_count;
+  delete_count= user_commands.delete_count;
+  insert_count= user_commands.insert_count;
+  select_count= user_commands.select_count;
+  rollback_count= user_commands.rollback_count;
+  commit_count= user_commands.commit_count;
+  create_count= user_commands.create_count;
+  alter_count= user_commands.alter_count;
+  drop_count= user_commands.drop_count;
+  admin_count= user_commands.admin_count;
+}
+
+void UserCommands::merge(UserCommands *user_commands)
+{
+  incrementUpdateCount(user_commands->getUpdateCount());
+  incrementDeleteCount(user_commands->getDeleteCount());
+  incrementInsertCount(user_commands->getInsertCount());
+  incrementSelectCount(user_commands->getSelectCount());
+  incrementRollbackCount(user_commands->getRollbackCount());
+  incrementCommitCount(user_commands->getCommitCount());
+  incrementCreateCount(user_commands->getCreateCount());
+  incrementAlterCount(user_commands->getAlterCount());
+  incrementDropCount(user_commands->getDropCount());
+  incrementAdminCount(user_commands->getAdminCount());
+}
+
 uint64_t UserCommands::getSelectCount()
 {
   return select_count;
