@@ -1,0 +1,32 @@
+create table t1 (a int);
+begin;
+insert into t1 values (1);
+savepoint A;
+insert into t1 values (2);
+select count(*) from t1;
+count(*)
+2
+rollback to savepoint A;
+select count(*) from t1;
+count(*)
+1
+commit;
+select count(*) from t1;
+count(*)
+1
+begin;
+insert into t1 values (2);
+insert into t1 values (2);
+savepoint A;
+insert into t1 values (2);
+insert into t1 values (2);
+savepoint B;
+insert into t1 values (2);
+savepoint C;
+insert into t1 values (2);
+rollback to savepoint A;
+select count(*) from t1;
+count(*)
+3
+commit;
+drop table t1;
