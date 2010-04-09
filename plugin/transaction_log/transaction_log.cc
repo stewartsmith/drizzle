@@ -6,7 +6,7 @@
  *
  *  Authors:
  *
- *  Jay Pipes <jaypipes@gmail.com.com>
+ *    Jay Pipes <jaypipes@gmail.com.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,31 +30,37 @@
  *
  * @details
  *
- * Currently, the log file uses this implementation:
+ * Currently, the transaction log file uses a simple, single-file, append-only
+ * format.
  *
  * We have an atomic off_t called log_offset which keeps track of the 
- * offset into the log file for writing the next Transaction.
+ * offset into the log file for writing the next log entry.  The log
+ * entries are written, one after the other, in the following way:
  *
- * We write Transaction message encapsulated in an 8-byte length/type header and a
- * 4-byte checksum trailer.
+ * <pre>
+ * --------------------------------------
+ * |<- 4 bytes ->|<- # Bytes of Entry ->|
+ * --------------------------------------
+ * |  Entry Type |  Serialized Entry    |
+ * --------------------------------------
+ * </pre>
  *
- * When writing a Transaction to the log, we calculate the length of the 
- * Transaction to be written.  We then increment log_offset by the length
- * of the Transaction plus 2 * sizeof(uint32_t) plus sizeof(uint32_t) and store 
- * this new offset in a local off_t called cur_offset (see TransactionLog::apply().  
- * This compare and set is done in an atomic instruction.
+ * The Entry Type is an integer defined as an enumeration in the 
+ * /drizzled/message/transaction.proto file called TransactionLogEntry::Type.
  *
- * We then adjust the local off_t (cur_offset) back to the original
- * offset by subtracting the length and sizeof(uint32_t) and sizeof(uint32_t).
+ * Each transaction log entry type is written to the log differently.  Here,
+ * we cover the format of each log entry type.
  *
- * We then first write a 64-bit length and then the serialized transaction/transaction
- * and optional checksum to our log file at our local cur_offset.
- *
- * --------------------------------------------------------------------------------
- * |<- 4 bytes ->|<- 4 bytes ->|<- # Bytes of Transaction Message ->|<- 4 bytes ->|
- * --------------------------------------------------------------------------------
- * |  Msg Type   |   Length    |   Serialized Transaction Message   |   Checksum  |
- * --------------------------------------------------------------------------------
+ * Committed and Prepared Transaction Log Entries
+ * -----------------------------------------------
+ * 
+ * <pre>
+ * ------------------------------------------------------------------
+ * |<- 4 bytes ->|<- # Bytes of Transaction Message ->|<- 4 bytes ->|
+ * ------------------------------------------------------------------
+ * |   Length    |   Serialized Transaction Message   |   Checksum  |
+ * ------------------------------------------------------------------
+ * </pre>
  *
  * @todo
  *
@@ -77,19 +83,27 @@
 #include <drizzled/internal/my_sys.h> /* for internal::my_sync */
 #include <drizzled/errmsg_print.h>
 #include <drizzled/gettext.h>
+#include <drizzled/message/transaction.pb.h>
+#include <drizzled/transaction_services.h>
+#include <drizzled/algorithm/crc32.h>
+
+#include <google/protobuf/io/coded_stream.h>
 
 using namespace std;
 using namespace drizzled;
+using namespace google;
 
 TransactionLog *transaction_log= NULL; /* The singleton transaction log */
 
 TransactionLog::TransactionLog(const string in_log_file_path,
-                               uint32_t in_sync_method) : 
+                               uint32_t in_sync_method,
+                               bool in_do_checksum) : 
     state(OFFLINE),
     log_file_path(in_log_file_path),
     has_error(false),
     error_message(),
-    sync_method(in_sync_method)
+    sync_method(in_sync_method),
+    do_checksum(in_do_checksum)
 {
   /* Setup our log file and determine the next write offset... */
   log_file= open(log_file_path.c_str(), O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
@@ -133,6 +147,43 @@ TransactionLog::~TransactionLog()
   }
 }
 
+uint8_t *TransactionLog::packTransactionIntoLogEntry(const message::Transaction &trx,
+                                                     uint8_t *buffer,
+                                                     uint32_t *checksum_out)
+{
+  uint8_t *orig_buffer= buffer;
+  size_t message_byte_length= trx.ByteSize();
+
+  /*
+   * Write the header information, which is the message type and
+   * the length of the transaction message into the buffer
+   */
+  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(
+      static_cast<uint32_t>(ReplicationServices::TRANSACTION), buffer);
+  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(
+      static_cast<uint32_t>(message_byte_length), buffer);
+  
+  /*
+   * Now write the serialized transaction message, followed
+   * by the optional checksum into the buffer.
+   */
+  buffer= trx.SerializeWithCachedSizesToArray(buffer);
+
+  if (do_checksum)
+  {
+    *checksum_out= drizzled::algorithm::crc32(
+        reinterpret_cast<char *>(buffer) - message_byte_length, message_byte_length);
+  }
+  else
+    *checksum_out= 0;
+
+  /* We always write in network byte order */
+  buffer= protobuf::io::CodedOutputStream::WriteLittleEndian32ToArray(*checksum_out, buffer);
+  /* Reset the pointer back to its original location... */
+  buffer= orig_buffer;
+  return orig_buffer;
+}
+
 off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
 {
   ssize_t written= 0;
@@ -141,12 +192,6 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
    * Do an atomic increment on the offset of the log file position
    */
   off_t cur_offset= log_offset.fetch_and_add(static_cast<off_t>(data_length));
-
-  /*
-   * We adjust cur_offset back to the original log_offset before
-   * the increment above...
-   */
-  cur_offset-= static_cast<off_t>(data_length);
 
   /* 
    * Quick safety...if an error occurs above in another writer, the log 
@@ -243,6 +288,7 @@ void TransactionLog::truncate()
     result= ftruncate(log_file, log_offset);
   }
   while (result == -1 && errno == EINTR);
+  drizzled::TransactionServices::singleton().resetTransactionId();
 }
 
 bool TransactionLog::findLogFilenameContainingTransactionId(const ReplicationServices::GlobalTransactionId&,
@@ -271,4 +317,9 @@ void TransactionLog::clearError()
 const string &TransactionLog::getErrorMessage() const
 {
   return error_message;
+}
+
+size_t TransactionLog::getLogEntrySize(const message::Transaction &trx)
+{
+  return trx.ByteSize() + HEADER_TRAILER_BYTES;
 }
