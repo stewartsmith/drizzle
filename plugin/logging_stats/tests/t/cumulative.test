@@ -1,0 +1,30 @@
+
+connect (con1, localhost, drizzle,,);
+connection con1;
+--disable_warnings
+DROP TABLE IF EXISTS a;
+--enable_warnings
+CREATE TABLE a (i int,  PRIMARY KEY (i));
+INSERT INTO a VALUES (1);
+disconnect con1;
+
+
+connect (con2, localhost, drizzle,,);
+connection con2;
+INSERT INTO a VALUES (2);
+disconnect con2;
+
+
+connect (con3, localhost, drizzle_test,,);
+connection con3;
+INSERT INTO a VALUES (3);
+disconnect con3;
+
+connection default;
+
+# The statistics are incremented after the statements have already returned
+# so its possible a query could be missed if we do not wait
+--sleep 1 
+SELECT * FROM DATA_DICTIONARY.CUMULATIVE_SQL_COMMANDS;
+
+DROP TABLE a; 

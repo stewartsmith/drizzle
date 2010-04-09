@@ -20,6 +20,7 @@
 #include <drizzled/table.h>
 #include <drizzled/error.h>
 #include "drizzled/internal/my_pthread.h"
+#include <drizzled/plugin/transactional_storage_engine.h>
 
 #include <fcntl.h>
 
@@ -39,6 +40,7 @@
 #include "embedded_innodb_engine.h"
 
 #include <drizzled/field.h>
+#include <drizzled/session.h>
 
 using namespace std;
 using namespace google;
@@ -49,20 +51,22 @@ int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
 #define EMBEDDED_INNODB_EXT ".EID"
 
 const char INNODB_TABLE_DEFINITIONS_TABLE[]= "data_dictionary/innodb_table_definitions";
+const string statement_savepoint_name("STATEMENT");
+
 
 static const char *EmbeddedInnoDBCursor_exts[] = {
   NULL
 };
 
-class EmbeddedInnoDBEngine : public drizzled::plugin::StorageEngine
+class EmbeddedInnoDBEngine : public drizzled::plugin::TransactionalStorageEngine
 {
 public:
   EmbeddedInnoDBEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg,
-                                     HTON_NULL_IN_KEY |
-                                     HTON_CAN_INDEX_BLOBS |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY)
+   : drizzled::plugin::TransactionalStorageEngine(name_arg,
+                                                  HTON_NULL_IN_KEY |
+                                                  HTON_CAN_INDEX_BLOBS |
+                                                  HTON_AUTO_PART_KEY |
+                                                  HTON_HAS_DOES_TRANSACTIONS)
   {
     table_definition_ext= EMBEDDED_INNODB_EXT;
   }
@@ -123,8 +127,271 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
+private:
+  virtual int doStartTransaction(Session *session,
+                                 start_transaction_option_t options);
+  virtual void doStartStatement(Session *session);
+  virtual void doEndStatement(Session *session);
+
+public:
+  virtual int doSetSavepoint(Session* session,
+                                 drizzled::NamedSavepoint &savepoint);
+  virtual int doRollbackToSavepoint(Session* session,
+                                     drizzled::NamedSavepoint &savepoint);
+  virtual int doReleaseSavepoint(Session* session,
+                                     drizzled::NamedSavepoint &savepoint);
+  virtual int doCommit(Session* session, bool all);
+  virtual int doRollback(Session* session, bool all);
+
+  typedef std::map<std::string, EmbeddedInnoDBTableShare*> EmbeddedInnoDBMap;
+  EmbeddedInnoDBMap embedded_innodb_open_tables;
+  EmbeddedInnoDBTableShare *findOpenTable(const std::string table_name);
+  void addOpenTable(const std::string &table_name, EmbeddedInnoDBTableShare *);
+  void deleteOpenTable(const std::string &table_name);
 
 };
+
+static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
+
+
+static ib_trx_t* get_trx(Session* session)
+{
+  return (ib_trx_t*) session->getEngineData(embedded_innodb_engine);
+}
+
+int EmbeddedInnoDBEngine::doStartTransaction(Session *session,
+                                             start_transaction_option_t options)
+{
+  ib_trx_t *transaction;
+
+  (void)options;
+
+  transaction= get_trx(session);
+  *transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  return 0;
+}
+
+void EmbeddedInnoDBEngine::doStartStatement(Session *session)
+{
+  if(*get_trx(session) == NULL)
+    doStartTransaction(session, START_TRANS_NO_OPTIONS);
+
+  ib_savepoint_take(*get_trx(session), statement_savepoint_name.c_str(),
+                    statement_savepoint_name.length());
+}
+
+void EmbeddedInnoDBEngine::doEndStatement(Session *session)
+{
+  doCommit(session, false);
+}
+
+int EmbeddedInnoDBEngine::doSetSavepoint(Session* session,
+                                         drizzled::NamedSavepoint &savepoint)
+{
+  ib_trx_t *transaction= get_trx(session);
+  ib_savepoint_take(*transaction, savepoint.getName().c_str(),
+                    savepoint.getName().length());
+  return 0;
+}
+
+int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
+                                                drizzled::NamedSavepoint &savepoint)
+{
+  ib_trx_t *transaction= get_trx(session);
+  ib_err_t err;
+
+  err= ib_savepoint_rollback(*transaction, savepoint.getName().c_str(),
+                             savepoint.getName().length());
+  if (err != DB_SUCCESS)
+    return -1;
+
+  return 0;
+}
+
+int EmbeddedInnoDBEngine::doReleaseSavepoint(Session* session,
+                                             drizzled::NamedSavepoint &savepoint)
+{
+  ib_trx_t *transaction= get_trx(session);
+  ib_err_t err;
+
+  err= ib_savepoint_release(*transaction, savepoint.getName().c_str(),
+                            savepoint.getName().length());
+  if (err != DB_SUCCESS)
+    return -1;
+
+  return 0;
+}
+
+int EmbeddedInnoDBEngine::doCommit(Session* session, bool all)
+{
+  ib_err_t err;
+  ib_trx_t *transaction= get_trx(session);
+
+  if (all || (!session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+  {
+    err= ib_trx_commit(*transaction);
+
+    if (err != DB_SUCCESS)
+      return -1;
+
+    *transaction= NULL;
+  }
+
+  return 0;
+}
+
+int EmbeddedInnoDBEngine::doRollback(Session* session, bool all)
+{
+  ib_err_t err;
+  ib_trx_t *transaction= get_trx(session);
+
+  if (all || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
+  {
+    err= ib_trx_rollback(*transaction);
+
+    if (err != DB_SUCCESS)
+      return -1;
+
+    *transaction= NULL;
+  }
+  else
+  {
+    err= ib_savepoint_rollback(*transaction, statement_savepoint_name.c_str(),
+                               statement_savepoint_name.length());
+    if (err != DB_SUCCESS)
+      return -1;
+  }
+
+  return 0;
+}
+
+EmbeddedInnoDBTableShare *EmbeddedInnoDBEngine::findOpenTable(const string table_name)
+{
+  EmbeddedInnoDBMap::iterator find_iter=
+    embedded_innodb_open_tables.find(table_name);
+
+  if (find_iter != embedded_innodb_open_tables.end())
+    return (*find_iter).second;
+  else
+    return NULL;
+}
+
+void EmbeddedInnoDBEngine::addOpenTable(const string &table_name, EmbeddedInnoDBTableShare *share)
+{
+  embedded_innodb_open_tables[table_name]= share;
+}
+
+void EmbeddedInnoDBEngine::deleteOpenTable(const string &table_name)
+{
+  embedded_innodb_open_tables.erase(table_name);
+}
+
+static pthread_mutex_t embedded_innodb_mutex= PTHREAD_MUTEX_INITIALIZER;
+
+EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name, int *rc)
+{
+  pthread_mutex_lock(&embedded_innodb_mutex);
+
+  EmbeddedInnoDBEngine *a_engine= static_cast<EmbeddedInnoDBEngine *>(engine);
+  share= a_engine->findOpenTable(table_name);
+
+  if (!share)
+  {
+    share= new EmbeddedInnoDBTableShare(table_name);
+
+    if (share == NULL)
+    {
+      pthread_mutex_unlock(&embedded_innodb_mutex);
+      *rc= HA_ERR_OUT_OF_MEM;
+      return(NULL);
+    }
+
+    a_engine->addOpenTable(share->table_name, share);
+    thr_lock_init(&share->lock);
+  }
+  share->use_count++;
+
+  pthread_mutex_unlock(&embedded_innodb_mutex);
+
+  return(share);
+}
+
+int EmbeddedInnoDBCursor::free_share()
+{
+  pthread_mutex_lock(&embedded_innodb_mutex);
+  if (!--share->use_count)
+  {
+    EmbeddedInnoDBEngine *a_engine= static_cast<EmbeddedInnoDBEngine *>(engine);
+    a_engine->deleteOpenTable(share->table_name);
+    delete share;
+  }
+  pthread_mutex_unlock(&embedded_innodb_mutex);
+
+  return 0;
+}
+
+
+THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
+                                                 THR_LOCK_DATA **to,
+                                                 thr_lock_type lock_type)
+{
+  /* Currently, we can get a transaction start by ::store_lock
+     instead of beginTransaction, startStatement.
+
+     See https://bugs.launchpad.net/drizzle/+bug/535528
+
+     all stemming from the transactional engine interface needing
+     a severe amount of immodium.
+   */
+
+  if(*get_trx(session) == NULL)
+  {
+    ib_trx_t *transaction= get_trx(session);
+    *transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  }
+
+  if (lock_type != TL_UNLOCK)
+  {
+    ib_savepoint_take(*get_trx(session), statement_savepoint_name.c_str(),
+                      statement_savepoint_name.length());
+  }
+
+  /* the below is just copied from ha_archive.cc in some dim hope it's
+     kinda right. */
+
+  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
+  {
+    /*
+      Here is where we get into the guts of a row level lock.
+      If TL_UNLOCK is set
+      If we are not doing a LOCK Table or DISCARD/IMPORT
+      TABLESPACE, then allow multiple writers
+    */
+
+    if ((lock_type >= TL_WRITE_CONCURRENT_INSERT &&
+         lock_type <= TL_WRITE)
+        && !session_tablespace_op(session))
+      lock_type = TL_WRITE_ALLOW_WRITE;
+
+    /*
+      In queries of type INSERT INTO t1 SELECT ... FROM t2 ...
+      MySQL would use the lock TL_READ_NO_INSERT on t2, and that
+      would conflict with TL_WRITE_ALLOW_WRITE, blocking all inserts
+      to t2. Convert the lock to a normal read lock to allow
+      concurrent inserts to t2.
+    */
+
+    if (lock_type == TL_READ_NO_INSERT)
+      lock_type = TL_READ;
+
+    lock.type=lock_type;
+  }
+
+  *to++= &lock;
+
+  return to;
+}
 
 static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
 {
@@ -147,6 +414,10 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
   ib_err_t err= ib_cursor_open_table(name+2, NULL, &cursor);
   assert (err == DB_SUCCESS);
 
+  int rc;
+  share= get_share(name, &rc);
+  thr_lock_data_init(&share->lock, &lock, NULL);
+
   return(0);
 }
 
@@ -155,6 +426,8 @@ int EmbeddedInnoDBCursor::close(void)
   ib_err_t err= ib_cursor_close(cursor);
   if (err != DB_SUCCESS)
     return -1; // FIXME
+
+  free_share();
 
   return 0;
 }
@@ -752,7 +1025,7 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   int colnr= 0;
   int ret= 0;
 
-  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  ib_trx_t transaction= *get_trx(ha_session());
 
   tuple= ib_clust_read_tuple_create(cursor);
 
@@ -797,7 +1070,6 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   tuple= ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
   err= ib_cursor_reset(cursor);
-  err= ib_trx_commit(transaction);
 
   return ret;
 }
@@ -819,9 +1091,60 @@ int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
   return 0;
 }
 
+int EmbeddedInnoDBCursor::delete_all_rows(void)
+{
+  /* I *think* ib_truncate is non-transactional....
+     so only support TRUNCATE and not DELETE FROM t;
+     (this is what ha_innodb does)
+  */
+  if (session_sql_command(ha_session()) != SQLCOM_TRUNCATE)
+    return HA_ERR_WRONG_COMMAND;
+
+  ib_id_t id;
+  ib_err_t err;
+
+  ib_trx_t transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+
+  ib_cursor_attach_trx(cursor, transaction);
+
+  err= ib_schema_lock_exclusive(transaction);
+  if (err != DB_SUCCESS)
+  {
+    ib_err_t rollback_err= ib_trx_rollback(transaction);
+
+    push_warning_printf(ha_session(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+                        ER_CANT_DELETE_FILE,
+                        _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
+                        err, ib_strerror(err));
+
+    assert (rollback_err == DB_SUCCESS);
+
+    return HA_ERR_GENERIC;
+  }
+
+  err= ib_cursor_truncate(&cursor, &id);
+  if (err != DB_SUCCESS)
+    goto err;
+
+  ib_schema_unlock(transaction);
+  /* ib_cursor_truncate commits on success */
+
+  err= ib_cursor_open_table_using_id(id, NULL, &cursor);
+  if (err != DB_SUCCESS)
+    goto err;
+
+  return 0;
+
+err:
+  ib_schema_unlock(transaction);
+  ib_err_t rollback_err= ib_trx_rollback(transaction);
+  assert(rollback_err == DB_SUCCESS);
+  return err;
+}
+
 int EmbeddedInnoDBCursor::rnd_init(bool)
 {
-  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  ib_trx_t transaction= *get_trx(ha_session());
 
   ib_cursor_attach_trx(cursor, transaction);
 
@@ -897,9 +1220,6 @@ int EmbeddedInnoDBCursor::rnd_end()
   ib_tuple_delete(tuple);
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
-  err= ib_trx_commit(transaction);
-  if (err != DB_SUCCESS)
-    return -1; // FIXME
 
   return 0;
 }
@@ -933,12 +1253,11 @@ int EmbeddedInnoDBCursor::info(uint32_t flag)
 
 int EmbeddedInnoDBCursor::index_init(uint32_t keynr, bool)
 {
+  ib_trx_t transaction= *get_trx(ha_session());
+
   active_index= keynr;
 
-  transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
-
   ib_cursor_attach_trx(cursor, transaction);
-
 
   if (active_index == 0)
   {
@@ -1124,8 +1443,6 @@ free_err:
   ib_table_schema_delete(schema);
   return err;
 }
-
-static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
 
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
