@@ -50,25 +50,33 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
   schema_predicate.append(select->getShowSchema());
 
-  pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
-
-  drizzled::HASH *open_cache=
-    get_open_cache();
-
-  for (uint32_t idx= 0; idx < open_cache->records; idx++ )
+  if (schema_predicate.empty())
   {
-    table= (Table*) hash_element(open_cache, idx);
-    table_list.push_back(table);
+    schema_predicate.append(getSession().db);
   }
 
-  for (table= getSession().temporary_tables; table; table= table->next)
+  if (not schema_predicate.empty())
   {
-    if (table->getShare())
+    pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+
+    drizzled::HASH *open_cache=
+      get_open_cache();
+
+    for (uint32_t idx= 0; idx < open_cache->records; idx++ )
     {
+      table= (Table*) hash_element(open_cache, idx);
       table_list.push_back(table);
     }
+
+    for (table= getSession().temporary_tables; table; table= table->next)
+    {
+      if (table->getShare())
+      {
+        table_list.push_back(table);
+      }
+    }
+    std::sort(table_list.begin(), table_list.end(), Table::compare);
   }
-  std::sort(table_list.begin(), table_list.end(), Table::compare);
 }
 
 ShowTableStatus::Generator::~Generator()

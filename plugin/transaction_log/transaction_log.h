@@ -49,10 +49,6 @@
 class TransactionLog
 {
 public:
-  static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint32_t) + /* 4-byte msg type header */
-                                              sizeof(uint32_t) + /* 4-byte length header */
-                                              sizeof(uint32_t); /* 4 byte checksum trailer */
-
   typedef std::vector<TransactionLogEntry> Entries;
   typedef std::vector<TransactionLogTransactionEntry> TransactionEntries;
   /**
@@ -70,7 +66,8 @@ public:
   static const uint32_t SYNC_METHOD_EVERY_SECOND= 2; ///< Sync no more than once a second
 public:
   TransactionLog(const std::string in_log_file_path,
-                 uint32_t in_sync_method);
+                 uint32_t in_sync_method,
+                 bool in_do_checksum);
 
   /** Destructor */
   ~TransactionLog();
@@ -100,6 +97,31 @@ public:
   {
     return state;
   }
+
+  /**
+   * Static helper method which returns the transaction
+   * log entry size in bytes of a given transaction
+   * message.
+   *
+   * @param[in] Transaction message
+   */
+  static size_t getLogEntrySize(const drizzled::message::Transaction &trx);
+
+  /**
+   * Method which packs into a raw byte buffer
+   * a transaction log entry.  Supplied buffer should
+   * be of adequate size.
+   *
+   * Returns a pointer to the start of the original
+   * buffer.
+   *
+   * @param[in]   Transaction message to pack
+   * @param[in]   Raw byte buffer
+   * @param[out]  Pointer to storage for checksum of message
+   */
+  uint8_t *packTransactionIntoLogEntry(const drizzled::message::Transaction &trx,
+                                       uint8_t *buffer,
+                                       uint32_t *checksum_out);
 
   /**
    * Writes a chunk of data to the log file of a specified
@@ -153,6 +175,10 @@ public:
    */
   const std::string &getErrorMessage() const;
 private:
+  static const uint32_t HEADER_TRAILER_BYTES= sizeof(uint32_t) + /* 4-byte msg type header */
+                                              sizeof(uint32_t) + /* 4-byte length header */
+                                              sizeof(uint32_t); /* 4 byte checksum trailer */
+
   /* Don't allows these */
   TransactionLog();
   TransactionLog(const TransactionLog &other);
@@ -181,6 +207,7 @@ private:
   std::string error_message; ///< Current error message
   uint32_t sync_method; ///< Determines behaviour of syncing log file
   time_t last_sync_time; ///< Last time the log file was synced (only set in SYNC_METHOD_EVERY_SECOND)
+  bool do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
 };
 
 #endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_H */

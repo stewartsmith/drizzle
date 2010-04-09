@@ -76,6 +76,14 @@ static char* sysvar_rabbitmq_routingkey= NULL;
  */
 static bool sysvar_rabbitmq_log_enabled= false;
 
+/**
+ * The name of the replicator plugin
+ * to pair the rabbitmq log's applier with.
+ * Defaults to "default"
+ */
+static char *sysvar_rabbitmq_use_replicator= NULL;
+static const char DEFAULT_USE_REPLICATOR[]= "default";
+
 
 RabbitMQLog::RabbitMQLog(const string name_arg, 
 			 RabbitMQHandler* mqHandler)
@@ -88,7 +96,8 @@ RabbitMQLog::~RabbitMQLog()
 {
 }
 
-void RabbitMQLog::apply(const message::Transaction &to_apply)
+plugin::ReplicationReturnCode
+RabbitMQLog::apply(Session &, const message::Transaction &to_apply)
 {
   size_t message_byte_length= to_apply.ByteSize();
   uint8_t* buffer= static_cast<uint8_t *>(malloc(message_byte_length));
@@ -96,7 +105,7 @@ void RabbitMQLog::apply(const message::Transaction &to_apply)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate enough memory to transaction message\n"));
     deactivate();
-    return;
+    return plugin::UNKNOWN_ERROR;
   }
 
   to_apply.SerializeWithCachedSizesToArray(buffer);
@@ -111,19 +120,21 @@ void RabbitMQLog::apply(const message::Transaction &to_apply)
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _(e.what()));
     deactivate();
+    return plugin::UNKNOWN_ERROR;
   }
   free(buffer);
+  return plugin::SUCCESS;
 }
 
-RabbitMQLog *rabbitmqLogger; ///< the actual plugin
-RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
+static RabbitMQLog *rabbitmqLogger; ///< the actual plugin
+static RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
 
 /**
  * Initialize the rabbitmq logger - instanciates the dependencies (the handler)
  * and creates the log handler with the dependency - makes it easier to swap out
  * handler implementation
  */
-static int init(plugin::Registry &registry)
+static int init(drizzled::plugin::Context &context)
 {
   if(sysvar_rabbitmq_log_enabled)
   {
@@ -143,7 +154,7 @@ static int init(plugin::Registry &registry)
     }
     try 
     {
-      rabbitmqLogger= new RabbitMQLog("rabbit-log", rabbitmqHandler);
+      rabbitmqLogger= new RabbitMQLog("rabbit_log_applier", rabbitmqHandler);
     } 
     catch (exception& e) 
     {
@@ -152,25 +163,14 @@ static int init(plugin::Registry &registry)
       return 1;
     }
 
-    registry.add(rabbitmqLogger);
+    context.add(rabbitmqLogger);
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    string replicator_name(sysvar_rabbitmq_use_replicator);
+    replication_services.attachApplier(rabbitmqLogger, replicator_name);
     return 0;
   }
   return 0;
 }
-
-static int deinit(plugin::Registry &registry)
-{
-  /* Cleanup the logger itself - delete the logger first, then handler, to avoid NPEs */
-  if (rabbitmqLogger)
-  {
-    registry.remove(rabbitmqLogger);
-    delete rabbitmqLogger;
-    delete rabbitmqHandler;
-  }
-
-  return 0;
-}
-
 
 
 static DRIZZLE_SYSVAR_BOOL(enable,
@@ -242,6 +242,13 @@ static DRIZZLE_SYSVAR_STR(routingkey,
                           NULL, /* update func*/
                           "ReplicationRoutingKey" /* default */);
 
+static DRIZZLE_SYSVAR_STR(use_replicator,
+                          sysvar_rabbitmq_use_replicator,
+                          PLUGIN_VAR_READONLY,
+                          N_("Name of the replicator plugin to use (default='default_replicator')"),
+                          NULL, /* check func */
+                          NULL, /* update func*/
+                          DEFAULT_USE_REPLICATOR /* default */);
 
 static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(enable),
@@ -252,8 +259,9 @@ static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(virtualhost),
   DRIZZLE_SYSVAR(exchange),
   DRIZZLE_SYSVAR(routingkey),
+  DRIZZLE_SYSVAR(use_replicator),
   NULL
 };
 
-DRIZZLE_PLUGIN(init, deinit, NULL, system_variables);
+DRIZZLE_PLUGIN(init, system_variables);
 
