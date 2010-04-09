@@ -30,16 +30,18 @@
 #ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
 #define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
 
-#include "score_board_slot.h"
-
+#include "scoreboard_slot.h"
+#include "user_commands.h"
+#include "scoreboard.h"
 #include <drizzled/atomics.h>
 #include <drizzled/enum.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin/logging.h>
 
 #include <string>
+#include <vector>
 
-extern pthread_rwlock_t LOCK_scoreboard;
+extern pthread_rwlock_t LOCK_current_scoreboard_vector;
 
 class LoggingStats: public drizzled::plugin::Logging
 {
@@ -68,27 +70,44 @@ public:
     is_enabled= false;
   }
 
-  uint32_t getScoreBoardSize()
-  {
-    return scoreboard_size;
+  Scoreboard *getCurrentScoreboard()
+  {          
+    return current_scoreboard;
   }
 
-  ScoreBoardSlot *getScoreBoardSlots()
+  std::vector<ScoreboardSlot* > *getCumulativeStatsByUserVector()
   {
-    return score_board_slots;
+    return cumulative_stats_by_user_vector; 
+  }
+
+  uint32_t getCumulativeStatsByUserIndex()
+  {
+    return cumulative_stats_by_user_index;
   }
 
 private:
   static const int32_t UNINITIALIZED= -1;
 
+  std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
+
+  uint32_t cumulative_stats_by_user_max;
+
+  uint32_t cumulative_stats_by_user_index;
+
+  Scoreboard *current_scoreboard;
+
   bool isBeingLogged(drizzled::Session *session);
 
-  void updateScoreBoard(ScoreBoardSlot *score_board_slot, drizzled::Session *session);
+  void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
+
+  void updateCumulativeStatsByUserVector(ScoreboardSlot *current_scoreboard_slot);
+
+  void preAllocateScoreboardSlotVector(uint32_t size,
+                                       std::vector<ScoreboardSlot *> *scoreboard_slot_vector);
+
+  void deleteScoreboardSlotVector(std::vector<ScoreboardSlot *> *scoreboard_slot_vector);
 
   drizzled::atomic<bool> is_enabled;
 
-  ScoreBoardSlot *score_board_slots;
-
-  uint32_t scoreboard_size;
 };
 #endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */
