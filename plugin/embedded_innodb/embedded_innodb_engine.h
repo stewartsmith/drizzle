@@ -21,6 +21,19 @@
 
 #include <drizzled/cursor.h>
 
+class EmbeddedInnoDBTableShare
+{
+public:
+  EmbeddedInnoDBTableShare(const char* name) : use_count(0)
+  {
+    table_name.assign(name);
+  }
+
+  drizzled::THR_LOCK lock;
+  int use_count;
+  std::string table_name;
+};
+
 class EmbeddedInnoDBCursor: public drizzled::Cursor
 {
 public:
@@ -43,12 +56,9 @@ public:
   int rnd_pos(unsigned char * buf, unsigned char *pos);
 
   int index_init(uint32_t, bool);
-  int index_read_map(unsigned char * buf, const unsigned char * key, drizzled::key_part_map keypart_map,
-                     drizzled::ha_rkey_function find_flag);
-  int index_read_idx_map(unsigned char * buf, uint32_t idx, const unsigned char * key,
-                         drizzled::key_part_map keypart_map,
-                         drizzled::ha_rkey_function find_flag);
-  int index_read_last_map(unsigned char * buf, const unsigned char * key, drizzled::key_part_map keypart_map);
+  int index_read(unsigned char *buf, const unsigned char *key_ptr,
+                 uint32_t key_len, drizzled::ha_rkey_function find_flag);
+
   int index_next(unsigned char * buf);
   int index_end();
   int index_prev(unsigned char * buf);
@@ -57,15 +67,24 @@ public:
   void position(const unsigned char *record);
   int info(uint32_t flag);
   double scan_time();
-
+  int delete_row(const unsigned char *);
+  int delete_all_rows(void);
   void get_auto_increment(uint64_t, uint64_t,
                           uint64_t,
                           uint64_t *,
                           uint64_t *)
   {}
 
+  EmbeddedInnoDBTableShare *get_share(const char *table_name, int *rc);
+  int free_share();
+
+  EmbeddedInnoDBTableShare *share;
+  drizzled::THR_LOCK_DATA lock;  /* lock for store_lock. this is ass. */
+  drizzled::THR_LOCK_DATA **store_lock(drizzled::Session *,
+                                       drizzled::THR_LOCK_DATA **to,
+                                       drizzled::thr_lock_type);
+
 private:
-  ib_trx_t transaction;
   ib_crsr_t cursor;
   ib_tpl_t tuple;
 };

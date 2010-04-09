@@ -267,7 +267,6 @@ public:
     plugin::XaStorageEngine(name_arg,
                             HTON_NULL_IN_KEY |
                             HTON_CAN_INDEX_BLOBS |
-                            HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
                             HTON_PRIMARY_KEY_IN_READ_INDEX |
                             HTON_PARTIAL_COLUMN_READ |
                             HTON_TABLE_SCAN_ON_INDEX |
@@ -2257,11 +2256,6 @@ retry:
 			commit_threads--;
 			pthread_cond_signal(&commit_cond);
 			pthread_mutex_unlock(&commit_cond_m);
-		}
-
-		if (trx->conc_state == TRX_PREPARED) {
-
-			pthread_mutex_unlock(&prepare_commit_mutex);
 		}
 
 		/* Now do a write + flush of logs. */
@@ -8150,31 +8144,6 @@ InnobaseEngine::doXaPrepare(
 
 	srv_active_wake_master_thread();
 
-	if (all || !session_test_options(session, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
-	{
-
-		/* For ibbackup to work the order of transactions in binlog
-		and InnoDB must be the same. Consider the situation
-
-		  thread1> prepare; write to binlog; ...
-			  <context switch>
-		  thread2> prepare; write to binlog; commit
-		  thread1>			     ... commit
-
-		To ensure this will not happen we're taking the mutex on
-		prepare, and releasing it on commit.
-
-		Note: only do it for normal commits, done via ha_commit_trans.
-		If 2pc protocol is executed by external transaction
-		coordinator, it will be just a regular MySQL client
-		executing XA PREPARE and XA COMMIT commands.
-		In this case we cannot know how many minutes or hours
-		will be between XA PREPARE and XA COMMIT, and we don't want
-		to block for undefined period of time.
-		*/
-		pthread_mutex_lock(&prepare_commit_mutex);
-		trx->conc_state = TRX_PREPARED;
-	}
 	return(error);
 }
 
