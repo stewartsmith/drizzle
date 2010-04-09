@@ -189,17 +189,22 @@ void EmbeddedInnoDBEngine::doEndStatement(Session *session)
 int EmbeddedInnoDBEngine::doSetSavepoint(Session* session,
                                          drizzled::NamedSavepoint &savepoint)
 {
-  (void)session;
-  (void)savepoint;
-
+  ib_trx_t *transaction= get_trx(session);
+  ib_savepoint_take(*transaction, savepoint.getName().c_str(),
+                    savepoint.getName().length());
   return 0;
 }
 
 int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
                                                 drizzled::NamedSavepoint &savepoint)
 {
-  (void)session;
-  (void)savepoint;
+  ib_trx_t *transaction= get_trx(session);
+  ib_err_t err;
+
+  err= ib_savepoint_rollback(*transaction, savepoint.getName().c_str(),
+                             savepoint.getName().length());
+  if (err != DB_SUCCESS)
+    return -1;
 
   return 0;
 }
@@ -207,8 +212,13 @@ int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
 int EmbeddedInnoDBEngine::doReleaseSavepoint(Session* session,
                                              drizzled::NamedSavepoint &savepoint)
 {
-  (void)session;
-  (void)savepoint;
+  ib_trx_t *transaction= get_trx(session);
+  ib_err_t err;
+
+  err= ib_savepoint_release(*transaction, savepoint.getName().c_str(),
+                            savepoint.getName().length());
+  if (err != DB_SUCCESS)
+    return -1;
 
   return 0;
 }

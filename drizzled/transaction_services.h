@@ -25,6 +25,7 @@
 #ifndef DRIZZLED_TRANSACTION_SERVICES_H
 #define DRIZZLED_TRANSACTION_SERVICES_H
 
+#include "drizzled/atomics.h"
 #include "drizzled/message/transaction.pb.h"
 
 namespace drizzled
@@ -49,10 +50,17 @@ class TransactionServices
 {
 public:
   static const size_t DEFAULT_RECORD_SIZE= 100;
+  typedef uint64_t TransactionId;
   /**
    * Constructor
    */
-  TransactionServices() {}
+  TransactionServices()
+  {
+    /**
+     * @todo set transaction ID to the last one from an applier...
+     */
+    current_transaction_id= 0;
+  }
 
   /**
    * Singleton method
@@ -63,6 +71,12 @@ public:
     static TransactionServices transaction_services;
     return transaction_services;
   }
+
+  /**
+   * Returns true if the transaction manager should construct
+   * Transaction and Statement messages, false otherwise.
+   */
+  bool shouldConstructMessages();
   /**
    * Method which returns the active Transaction message
    * for the supplied Session.  If one is not found, a new Transaction
@@ -189,7 +203,7 @@ public:
    *
    * @param Pointer to the Session committing the transaction
    */
-  void commitTransactionMessage(Session *in_session);
+  int commitTransactionMessage(Session *in_session);
   /** 
    * Marks the current active transaction message as being rolled back and
    * pushes the transaction message out to replicators.
@@ -293,18 +307,17 @@ public:
    */
   void rawStatement(Session *in_session, const std::string &query);
   /* transactions: interface to plugin::StorageEngine functions */
-  int ha_commit_one_phase(Session *session, bool all);
-  int ha_rollback_trans(Session *session, bool all);
+  int commitPhaseOne(Session *session, bool all);
+  int rollbackTransaction(Session *session, bool all);
 
   /* transactions: these functions never call plugin::StorageEngine functions directly */
-  int ha_commit_trans(Session *session, bool all);
-  int ha_autocommit_or_rollback(Session *session, int error);
+  int commitTransaction(Session *session, bool all);
+  int autocommitOrRollback(Session *session, int error);
 
   /* savepoints */
-  int ha_rollback_to_savepoint(Session *session, NamedSavepoint &sv);
-  int ha_savepoint(Session *session, NamedSavepoint &sv);
-  int ha_release_savepoint(Session *session, NamedSavepoint &sv);
-  bool mysql_xa_recover(Session *session);
+  int rollbackToSavepoint(Session *session, NamedSavepoint &sv);
+  int setSavepoint(Session *session, NamedSavepoint &sv);
+  int releaseSavepoint(Session *session, NamedSavepoint &sv);
 
   /**
    * Marks a storage engine as participating in a statement
@@ -383,6 +396,23 @@ public:
                                       plugin::MonitoredInTransaction *monitored,
                                       plugin::TransactionalStorageEngine *engine,
                                       plugin::XaResourceManager *resource_manager);
+  TransactionId getNextTransactionId()
+  {
+    return current_transaction_id.increment();
+  }
+  TransactionId getCurrentTransactionId()
+  {
+    return current_transaction_id;
+  }
+  /**
+   * DEBUG ONLY.  See plugin::TransactionLog::truncate()
+   */
+  void resetTransactionId()
+  {
+    current_transaction_id= 0;
+  }
+private:
+  atomic<TransactionId> current_transaction_id;
 };
 
 } /* namespace drizzled */
