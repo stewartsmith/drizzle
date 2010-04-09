@@ -3,3 +3,8 @@ select * from data_dictionary.innodb_table_definitions;
 use data_dictionary;
 show tables like 'innodb%';
 use test;
+create table t1 (a int primary key);
+select table_name from data_dictionary.innodb_table_definitions;
+drop table t1;
+select count(table_name) from data_dictionary.innodb_table_definitions;
+
