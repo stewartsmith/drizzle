@@ -1,0 +1,14 @@
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+
+--source ../plugin/transaction_log/tests/t/ddl_transaction_id.inc
+
+--replace_column 2 X 7 X 8 X 9 X
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+--replace_column 1 X 3 X
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+--replace_column 1 X 4 X 5 X
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc

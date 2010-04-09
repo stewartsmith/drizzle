@@ -24,6 +24,8 @@
 
 #ifndef PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H
 #define PLUGIN_RABBITMQ_RABBITMQ_HANDLER_H
+
+#include <exception>
 #include <string>
 #include <amqp.h>
 #include <amqp_framing.h>

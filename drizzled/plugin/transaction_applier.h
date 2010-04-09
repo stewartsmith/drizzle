@@ -2,10 +2,11 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008-2009 Sun Microsystems
+ *  Copyright (c) 2010 Jay Pipes
  *
  *  Authors:
  *
- *    Jay Pipes <joinfu@sun.com>
+ *    Jay Pipes <jaypipes@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,10 +34,12 @@
  */
 
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/atomics.h"
+#include "drizzled/plugin/replication.h"
 
 namespace drizzled
 {
+
+class Session;
 
 namespace message { class Transaction; }
 
@@ -51,12 +54,10 @@ class TransactionApplier : public Plugin
   TransactionApplier();
   TransactionApplier(const TransactionApplier &);
   TransactionApplier& operator=(const TransactionApplier &);
-  atomic<bool> is_enabled;
 public:
   explicit TransactionApplier(std::string name_arg)
     : Plugin(name_arg, "TransactionApplier")
   {
-    is_enabled= true;
   }
   virtual ~TransactionApplier() {}
   /**
@@ -74,24 +75,11 @@ public:
    *
    * @param Transaction message to be replicated
    */
-  virtual void apply(const message::Transaction &to_apply)= 0;
+  virtual ReplicationReturnCode apply(Session &in_session,
+                                      const message::Transaction &to_apply)= 0;
 
   static bool addPlugin(TransactionApplier *applier);
   static void removePlugin(TransactionApplier *applier);
-  virtual bool isEnabled() const
-  {
-    return is_enabled;
-  }
-
-  virtual void enable()
-  {
-    is_enabled= true;
-  }
-
-  virtual void disable()
-  {
-    is_enabled= false;
-  }
 };
 
 } /* namespace plugin */

@@ -1829,7 +1829,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
       session->client->store(buff, length);
-      transaction_services.ha_autocommit_or_rollback(session, false);
+      transaction_services.autocommitOrRollback(session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
@@ -1952,7 +1952,7 @@ send_result:
         }
       }
     }
-    transaction_services.ha_autocommit_or_rollback(session, false);
+    transaction_services.autocommitOrRollback(session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -1964,7 +1964,7 @@ send_result:
   return(false);
 
 err:
-  transaction_services.ha_autocommit_or_rollback(session, true);
+  transaction_services.autocommitOrRollback(session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
