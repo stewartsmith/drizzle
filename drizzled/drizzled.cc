@@ -49,6 +49,7 @@
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/xa_resource_manager.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
+#include "drizzled/replication_services.h" /* For ReplicationServices::evaluateRegisteredPlugins() */
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/charset.h"
@@ -2298,6 +2299,20 @@ int main(int argc, char **argv)
 
   if (init_server_components(plugins))
     unireg_abort(1);
+
+  /**
+   * This check must be done after init_server_components for now
+   * because we don't yet have plugin dependency tracking...
+   *
+   * ReplicationServices::evaluateRegisteredPlugins() will print error messages to stderr
+   * via errmsg_printf().
+   *
+   * @todo
+   *
+   * not checking return since unireg_abort() hangs
+   */
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  (void) replication_services.evaluateRegisteredPlugins();
 
   if (plugin::Listen::setup())
     unireg_abort(1);

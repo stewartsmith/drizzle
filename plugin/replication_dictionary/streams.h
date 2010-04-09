@@ -1,5 +1,7 @@
-/*
- * Copyright (c) 2010, Joseph Daly <skinny.moey@gmail.com>
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ * Copyright (c) 2010 Jay Pipes <jaypipes@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,7 +12,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice,
  *     this list of conditions and the following disclaimer in the documentation
  *     and/or other materials provided with the distribution.
- *   * Neither the name of Joseph Daly nor the names of its contributors
+ *   * Neither the name of Drizzle nor the names of its contributors
  *     may be used to endorse or promote products derived from this software
  *     without specific prior written permission.
  *
@@ -25,96 +27,34 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H
-#define PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H
+#ifndef PLUGIN_REPLICATION_DICTIONARY_STREAMS_H
+#define PLUGIN_REPLICATION_DICTIONARY_STREAMS_H
 
-#include "user_commands.h"
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/replication_services.h>
 
-#include <string>
-
-class ScoreBoardSlot
+class ReplicationStreamsTool : public drizzled::plugin::TableFunction
 {
 public:
-  ScoreBoardSlot() 
-    :
-      in_use(false),
-      session_id(0)
-  {}
+  ReplicationStreamsTool();
 
-  ~ScoreBoardSlot() 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    delete user_commands;
-  }
+    drizzled::ReplicationServices::ReplicationStreams::iterator it;
+    drizzled::ReplicationServices::ReplicationStreams::iterator end;
 
-  void setUserCommands(UserCommands *in_user_commands)
+  public:
+    Generator(drizzled::Field **arg);
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
   {
-    user_commands= in_user_commands;
+    return new Generator(arg);
   }
-
-  UserCommands* getUserCommands()
-  {
-    return user_commands;
-  }
-
-  void setSessionId(uint64_t in_session_id)
-  {
-    session_id= in_session_id;
-  }
-
-  uint64_t getSessionId()
-  {
-    return session_id;
-  }
-
-  void setInUse(bool in_in_use)
-  {
-    in_use= in_in_use;
-  }
-
-  bool isInUse()
-  {
-    return in_use;
-  }
-
-  void setUser(std::string in_user)
-  {
-    user= in_user;
-  }
-
-  const std::string& getUser()
-  {
-    return user; 
-  }
-
-  void setIp(std::string in_ip)
-  {
-    ip= in_ip;
-  }
-
-  const std::string& getIp()
-  {
-    return ip;
-  }
-
-  void reset()
-  {
-    in_use= false;
-    session_id= 0;
-    if (user_commands)
-    {
-      user_commands->reset();
-    }
-  }
-
-private:
-  UserCommands *user_commands;
-  std::string user;
-  std::string ip;
-  bool in_use;
-  uint64_t session_id;
 };
- 
-#endif /* PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H */
+
+#endif /* PLUGIN_REPLICATION_DICTIONARY_STREAMS_H */
