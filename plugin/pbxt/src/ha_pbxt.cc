@@ -5429,6 +5429,10 @@ int PBXTStorageEngine::doRenameTable(Session&,
 {
 	const char *from = from_ident.getPath().c_str();
 	const char *to = to_ident.getPath().c_str();
+
+        if (strcmp(from, to) == 0)
+                return 0;
+
 #else
 int ha_pbxt::rename_table(const char *from, const char *to)
 {
