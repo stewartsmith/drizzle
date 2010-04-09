@@ -40,6 +40,8 @@ public:
 
   UserCommands();
 
+  UserCommands(const UserCommands &user_commands);
+
   uint64_t getSelectCount();
 
   void incrementSelectCount(int i= 1);
@@ -88,6 +90,8 @@ public:
   uint64_t getAdminCount();
 
   void incrementAdminCount(int i= 1);
+
+  void merge(UserCommands *user_commands);
 
   void reset();
 
