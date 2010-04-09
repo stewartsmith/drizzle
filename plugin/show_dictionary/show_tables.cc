@@ -38,8 +38,11 @@ ShowTables::Generator::Generator(drizzled::Field **arg) :
 {
   statement::Select *select= static_cast<statement::Select *>(getSession().lex->statement);
 
-  schema_name.append(select->getShowSchema());
-  assert(not schema_name.empty());
+  if (not select->getShowSchema().empty())
+  {
+    schema_name.append(select->getShowSchema());
+    assert(not schema_name.empty());
+  }
 }
 
 bool ShowTables::Generator::nextCore()
@@ -50,6 +53,12 @@ bool ShowTables::Generator::nextCore()
   }
   else
   {
+    if (schema_name.empty())
+    {
+      is_primed= true;
+      return false;
+    }
+
     SchemaIdentifier identifier(schema_name);
     plugin::StorageEngine::getTableIdentifiers(getSession(), identifier, set_of_identifiers);
     set_of_identifiers.sort();
