@@ -1,0 +1,19 @@
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (bad_user,localhost,bad_user,,,);
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (auth_file,localhost,auth_file,,,);
+connection auth_file;
+SELECT 1;
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+connect (auth_file_password,localhost,auth_file_password,test_password,,);
+connection auth_file_password;
+SELECT 1;
+
+--replace_result $MASTER_MYSOCK MASTER_SOCKET $MASTER_MYPORT MASTER_PORT
+--replace_regex /@'.*?'/@'LOCALHOST'/
+--error ER_ACCESS_DENIED_ERROR
+connect (bad_user_password,localhost,auth_file_password,bad_password,,);
