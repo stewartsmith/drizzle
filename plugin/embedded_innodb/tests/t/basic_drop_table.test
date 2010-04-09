@@ -1,0 +1,7 @@
+CREATE TABLE t1 (a int);
+CREATE TABLE t2 (a int);
+DROP TABLE t1;
+DROP TABLE t2;
+--error 1051
+DROP TABLE t3;
+
