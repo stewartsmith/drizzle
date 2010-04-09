@@ -51,6 +51,8 @@ int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
 #define EMBEDDED_INNODB_EXT ".EID"
 
 const char INNODB_TABLE_DEFINITIONS_TABLE[]= "data_dictionary/innodb_table_definitions";
+const string statement_savepoint_name("STATEMENT");
+
 
 static const char *EmbeddedInnoDBCursor_exts[] = {
   NULL
@@ -174,6 +176,9 @@ void EmbeddedInnoDBEngine::doStartStatement(Session *session)
 {
   if(*get_trx(session) == NULL)
     doStartTransaction(session, START_TRANS_NO_OPTIONS);
+
+  ib_savepoint_take(*get_trx(session), statement_savepoint_name.c_str(),
+                    statement_savepoint_name.length());
 }
 
 void EmbeddedInnoDBEngine::doEndStatement(Session *session)
@@ -184,17 +189,22 @@ void EmbeddedInnoDBEngine::doEndStatement(Session *session)
 int EmbeddedInnoDBEngine::doSetSavepoint(Session* session,
                                          drizzled::NamedSavepoint &savepoint)
 {
-  (void)session;
-  (void)savepoint;
-
+  ib_trx_t *transaction= get_trx(session);
+  ib_savepoint_take(*transaction, savepoint.getName().c_str(),
+                    savepoint.getName().length());
   return 0;
 }
 
 int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
                                                 drizzled::NamedSavepoint &savepoint)
 {
-  (void)session;
-  (void)savepoint;
+  ib_trx_t *transaction= get_trx(session);
+  ib_err_t err;
+
+  err= ib_savepoint_rollback(*transaction, savepoint.getName().c_str(),
+                             savepoint.getName().length());
+  if (err != DB_SUCCESS)
+    return -1;
 
   return 0;
 }
@@ -202,8 +212,13 @@ int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
 int EmbeddedInnoDBEngine::doReleaseSavepoint(Session* session,
                                              drizzled::NamedSavepoint &savepoint)
 {
-  (void)session;
-  (void)savepoint;
+  ib_trx_t *transaction= get_trx(session);
+  ib_err_t err;
+
+  err= ib_savepoint_release(*transaction, savepoint.getName().c_str(),
+                            savepoint.getName().length());
+  if (err != DB_SUCCESS)
+    return -1;
 
   return 0;
 }
@@ -239,6 +254,13 @@ int EmbeddedInnoDBEngine::doRollback(Session* session, bool all)
       return -1;
 
     *transaction= NULL;
+  }
+  else
+  {
+    err= ib_savepoint_rollback(*transaction, statement_savepoint_name.c_str(),
+                               statement_savepoint_name.length());
+    if (err != DB_SUCCESS)
+      return -1;
   }
 
   return 0;
@@ -327,6 +349,12 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
   {
     ib_trx_t *transaction= get_trx(session);
     *transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  }
+
+  if (lock_type != TL_UNLOCK)
+  {
+    ib_savepoint_take(*get_trx(session), statement_savepoint_name.c_str(),
+                      statement_savepoint_name.length());
   }
 
   /* the below is just copied from ha_archive.cc in some dim hope it's
