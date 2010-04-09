@@ -29,6 +29,7 @@
 #ifdef DRIZZLED
 #include <drizzled/plugin.h>
 #include <drizzled/show.h>
+#include <drizzled/data_home.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/field/enum.h>
 #include <drizzled/field/varstring.h>
@@ -2079,10 +2080,17 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 			std::string(tab_name, tab_name_len), 
 			message::Table::STANDARD);
 	} else {
-        	ident = new TableIdentifier(
-			std::string(db_name), 
-			std::string(tab_name, tab_name_len), 
-			message::Table::INTERNAL);
+		std::string n;
+		n.append(drizzle_data_home);
+		n.append("/");
+		n.append(db_name);
+		n.append("/");
+		n.append(table_file_name);
+		//ident = new TableIdentifier(
+		//	std::string(db_name), 
+		//	std::string(tab_name, tab_name_len), 
+		//	message::Table::INTERNAL);
+		ident = new TableIdentifier(db_name, tab_name, n);
 	}
 	share->init(db_name, 0, name, path);
 	if ((error = open_table_def(*thd, *ident, share)) ||
@@ -3099,8 +3107,12 @@ xtPublic xtBool myxt_temp_table_name(const char *table)
 	xtBool	yup = FALSE;
 
 	name = xt_last_name_of_path(table);
+#ifdef DRIZZED
+	yup = (strncmp(name, "#sql", 4) == 0);
+#else
 	if (*name == '#')
 		yup = (strncmp(name, "#sql-", 5) == 0) || (strncmp(name, "#sql2-", 6) == 0);
+#endif
 	return yup;
 }
 

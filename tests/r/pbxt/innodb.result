@@ -164,14 +164,12 @@ level	id	parent_id
 1	1005	101
 1	1006	101
 1	1007	101
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 ENGINE=innodb;
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	id	A	#	NULL	NULL		BTREE		
-t1	1	parent_id	1	parent_id	A	#	NULL	NULL		BTREE		
-t1	1	level	1	level	A	#	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	id
+t1	FALSE	parent_id	1	parent_id
+t1	FALSE	level	1	level
 drop table t1;
 CREATE TABLE t1 (
 gesuchnr int DEFAULT '0' NOT NULL,
@@ -188,9 +186,7 @@ gesuchnr	benutzer_id
 drop table t1;
 create table t1 (a int) engine=innodb;
 insert into t1 values (1), (2);
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 engine=innodb;
 delete from t1 where a = 1;
 select * from t1;
 a
@@ -211,8 +207,8 @@ analyze table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	skr	1	a	A	#	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	FALSE	skr	1	a
 drop table t1;
 create table t1 (a int,b varchar(20),key(a)) engine=innodb;
 insert into t1 values (1,""), (2,"testing");
@@ -277,7 +273,6 @@ n
 rollback to savepoint `my_savepoint`;
 ERROR 42000: SAVEPOINT my_savepoint does not exist
 rollback to savepoint savept2;
-ERROR 42000: SAVEPOINT savept2 does not exist
 insert into t1 values (8);
 savepoint sv;
 commit;
@@ -399,13 +394,13 @@ drop table t1;
 CREATE TABLE t1 (a int not null, b int not null,c int not null,
 key(a),primary key(a,b), unique(c),key(a),unique(b));
 show index from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	A	#	NULL	NULL		BTREE		
-t1	0	PRIMARY	2	b	A	#	NULL	NULL		BTREE		
-t1	0	c	1	c	A	#	NULL	NULL		BTREE		
-t1	0	b	1	b	A	#	NULL	NULL		BTREE		
-t1	1	a	1	a	A	#	NULL	NULL		BTREE		
-t1	1	a_2	1	a	A	#	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
+t1	TRUE	PRIMARY	2	b
+t1	TRUE	c	1	c
+t1	TRUE	b	1	b
+t1	FALSE	a	1	a
+t1	FALSE	a_2	1	a
 drop table t1;
 create table t1 (col1 int not null, col2 char(4) not null, primary key(col1));
 alter table t1 engine=innodb;
@@ -735,12 +730,10 @@ select * from t1 order by b desc;
 a	b
 world	2
 hello	1
-optimize table t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+alter table t1 engine=innodb;
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	A	#	NULL	NULL		BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
 drop table t1;
 create table t1 (i int, j int ) ENGINE=innodb;
 insert into t1 values (1,2);
@@ -825,7 +818,7 @@ create table mysqltest.t1 (a int not null) engine= innodb;
 insert into mysqltest.t1 values(1);
 create TEMPORARY table mysqltest.t2 (a int not null) engine= myisam;
 insert into mysqltest.t2 values(1);
-create temporary table mysqltest.t3 (a int not null) engine= heap;
+create temporary table mysqltest.t3 (a int not null) engine= MEMORY;
 insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;
@@ -890,8 +883,8 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 drop table t1;
 create table t1 (t int not null default 1, key (t)) engine=innodb;
 desc t1;
-Field	Type	Null	Key	Default	Extra
-t	int	NO	MUL	1	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+t	INTEGER	FALSE	1	FALSE	
 drop table t1;
 create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=innodb;
 BEGIN;
@@ -1134,30 +1127,6 @@ create table t3 (a int, b varchar(200), c text not null) engine=innodb;
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
 insert t3 select * from t1;
-checksum table t1, t2, t3, t4 quick;
-Table	Checksum
-test.t1	NULL
-test.t2	NULL
-test.t3	NULL
-test.t4	NULL
-Warnings:
-Error	1146	Table 'test.t4' doesn't exist
-checksum table t1, t2, t3, t4;
-Table	Checksum
-test.t1	2948697075
-test.t2	2948697075
-test.t3	2948697075
-test.t4	NULL
-Warnings:
-Error	1146	Table 'test.t4' doesn't exist
-checksum table t1, t2, t3, t4 extended;
-Table	Checksum
-test.t1	2948697075
-test.t2	2948697075
-test.t3	2948697075
-test.t4	NULL
-Warnings:
-Error	1146	Table 'test.t4' doesn't exist
 drop table t1,t2,t3;
 create table t1 (id int,  name char(10) not null,  name2 char(10) not null) engine=innodb;
 insert into t1 values(1,'first','fff'),(2,'second','sss'),(3,'third','ttt');
@@ -1435,6 +1404,26 @@ select count(*) from t1 where x = 1152921504606846961;
 count(*)
 1
 drop table t1;
+show status like "Innodb_buffer_pool_pages_total";
+Variable_name	Value
+show status like "Innodb_page_size";
+Variable_name	Value
+show status like "Innodb_rows_deleted";
+Variable_name	Value
+show status like "Innodb_rows_inserted";
+Variable_name	Value
+show status like "Innodb_rows_updated";
+Variable_name	Value
+show status like "Innodb_row_lock_waits";
+Variable_name	Value
+show status like "Innodb_row_lock_current_waits";
+Variable_name	Value
+show status like "Innodb_row_lock_time";
+Variable_name	Value
+show status like "Innodb_row_lock_time_max";
+Variable_name	Value
+show status like "Innodb_row_lock_time_avg";
+Variable_name	Value
 show variables like "innodb_sync_spin_loops";
 Variable_name	Value
 innodb_sync_spin_loops	30
@@ -2048,15 +2037,13 @@ t1	CREATE TABLE `t1` (
   `v` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
-create  table t1 (v varchar(10), c char(10)) row_format=fixed;
-Warnings:
-Warning	1478	InnoDB: assuming ROW_FORMAT=COMPACT.
+create  table t1 (v varchar(10), c char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL
-) ENGINE=InnoDB ROW_FORMAT=FIXED
+) ENGINE=InnoDB
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
 concat('*',v,'*',c,'*')
@@ -2278,34 +2265,6 @@ SET FOREIGN_KEY_CHECKS=1;
 INSERT INTO t2 VALUES(3);
 ERROR 23000: Cannot add or update a child row: a foreign key constraint fails (`test`.`t2`, CONSTRAINT `c1` FOREIGN KEY (`v`) REFERENCES `t1` (`id`))
 DROP TABLE t2;
-create table t1(a int not null) engine=innodb;
-insert into t1 values (1),(2);
-set autocommit=0;
-checksum table t1;
-Table	Checksum
-test.t1	1531596814
-insert into t1 values(3);
-checksum table t1;
-Table	Checksum
-test.t1	1531596814
-commit;
-checksum table t1;
-Table	Checksum
-test.t1	2050879373
-commit;
-drop table t1;
-create table t1(a int not null) engine=innodb;
-insert into t1 values (1),(2);
-set autocommit=1;
-checksum table t1;
-Table	Checksum
-test.t1	1531596814
-set autocommit=1;
-insert into t1 values(3);
-checksum table t1;
-Table	Checksum
-test.t1	2050879373
-drop table t1;
 set foreign_key_checks=0;
 create table t2 (a int primary key, b int, foreign key (b) references t1(a)) engine = innodb;
 create table t1(a char(10) primary key, b varchar(20)) engine = innodb;
@@ -2367,8 +2326,8 @@ e varchar(255),
 key (a,b,c,d,e)) engine=innodb;
 ERROR 42000: Specified key was too long; max key length is 3500 bytes
 create table t1 (s1 varbinary(2),primary key (s1)) engine=innodb;
-create table t3 (s1 varchar(2) binary,primary key (s1)) engine=innodb;
-create table t4 (s1 char(2) binary,primary key (s1)) engine=innodb;
+create table t3 (s1 varchar(2) ,primary key (s1)) engine=innodb;
+create table t4 (s1 char(2) ,primary key (s1)) engine=innodb;
 insert into t1 values (0x41),(0x4120),(0x4100);
 insert into t3 values (0x41),(0x4120),(0x4100);
 ERROR 23000: Duplicate entry 'A ' for key 'PRIMARY'
@@ -2437,8 +2396,8 @@ hex(s1)
 4120
 4120
 drop table t2,t1;
-create table t1 (a int primary key,s1 varchar(2) binary not null unique) engine=innodb;
-create table t2 (s1 char(2) binary not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=innodb;
+create table t1 (a int primary key,s1 varchar(2) not null unique) engine=innodb;
+create table t2 (s1 char(2) not null, constraint c foreign key(s1) references t1(s1) on update cascade) engine=innodb;
 insert into t1 values(1,0x4100),(2,0x41);
 insert into t2 values(0x41);
 select hex(s1) from t2;
@@ -2700,9 +2659,7 @@ drop table t2, t1;
 CREATE TABLE t1 ( a int ) ENGINE=innodb;
 BEGIN;
 INSERT INTO t1 VALUES (1);
-OPTIMIZE TABLE t1;
-Table	Op	Msg_type	Msg_text
-test.t1	optimize	status	OK
+ALTER TABLE t1 ENGINE=innodb;
 DROP TABLE t1;
 CREATE TABLE t1 (id int PRIMARY KEY, f int NOT NULL, INDEX(f)) ENGINE=InnoDB;
 CREATE TABLE t2 (id int PRIMARY KEY, f INT NOT NULL,
@@ -2727,7 +2684,7 @@ INSERT INTO t1 VALUES (1);
 INSERT INTO t2 VALUES (1);
 ALTER TABLE t2 ADD FOREIGN KEY (a) REFERENCES t1 (a) ON DELETE SET NULL;
 ALTER TABLE t2 MODIFY a INT NOT NULL;
-ERROR HY000: Error on rename of '#sql-temporary' to './test/t2' (errno: 150)
+ERROR HY000: Error on rename of '#sql-temporary' to 'test.t2' (errno: 150)
 DELETE FROM t1;
 DROP TABLE t2,t1;
 CREATE TABLE t1 (a VARCHAR(5) COLLATE utf8_unicode_ci PRIMARY KEY)

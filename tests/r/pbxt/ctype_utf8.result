@@ -264,7 +264,7 @@ drop table t1;
 create TEMPORARY table t1 (
 c char(10),
 unique key a using hash (c(2))
-) engine=heap;
+) engine=MEMORY;
 insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
 insert into t1 values ('a');
 insert into t1 values ('aa');
@@ -303,7 +303,7 @@ drop table t1;
 create TEMPORARY table t1 (
 c char(10),
 unique key a using btree (c(2))
-) engine=heap;
+) engine=MEMORY;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
@@ -368,7 +368,7 @@ drop table t1;
 create temporary table t1 (
 str varchar(255) not null,
 key str using btree (str(2))
-) engine=heap;
+) engine=MEMORY;
 INSERT INTO t1 VALUES ('str');
 INSERT INTO t1 VALUES ('str2');
 select * from t1 where str='str';
@@ -378,7 +378,7 @@ drop table t1;
 create temporary table t1 (
 str varchar(255) not null,
 key str using hash (str(2))
-) engine=heap;
+) engine=MEMORY;
 INSERT INTO t1 VALUES ('str');
 INSERT INTO t1 VALUES ('str2');
 select * from t1 where str='str';
@@ -395,7 +395,7 @@ select * from t1 where str='str';
 str
 str
 drop table t1;
-CREATE TABLE t1 (a varchar(32) BINARY);
+CREATE TABLE t1 (a varchar(32));
 INSERT INTO t1 VALUES ('test');
 SELECT a FROM t1 WHERE a LIKE '%te';
 a
@@ -505,7 +505,7 @@ utf8_general_ci	61
 utf8_general_ci	6109
 utf8_general_ci	6120
 drop table t1;
-create table t1 ROW_FORMAT=DYNAMIC select repeat('a',50) as c1 ;
+create table t1 select repeat('a',50) as c1 ;
 insert into t1 values('abcdef');
 insert into t1 values('_bcdef');
 insert into t1 values('a_cdef');
@@ -564,7 +564,7 @@ utf8_general_ci	61
 utf8_general_ci	6109
 utf8_general_ci	6120
 drop table t1;
-create table t1 ROW_FORMAT=DYNAMIC select repeat('a',50) as c1 ;
+create table t1 select repeat('a',50) as c1 ;
 insert into t1 values('abcdef');
 insert into t1 values('_bcdef');
 insert into t1 values('a_cdef');
@@ -1234,96 +1234,6 @@ predicted_order	hex(utf8_encoding)
 101	E0B78AE2808DE0B6BB
 DROP TABLE t1;
 End of 5.1 tests
-select hex(weight_string('a'));
-hex(weight_string('a'))
-0041
-select hex(weight_string('A'));
-hex(weight_string('A'))
-0041
-select hex(weight_string('abc'));
-hex(weight_string('abc'))
-004100420043
-select hex(weight_string('abc' as char(2)));
-hex(weight_string('abc' as char(2)))
-00410042
-select hex(weight_string('abc' as char(3)));
-hex(weight_string('abc' as char(3)))
-004100420043
-select hex(weight_string('abc' as char(5)));
-hex(weight_string('abc' as char(5)))
-00410042004300200020
-select hex(weight_string('a' LEVEL 1));
-hex(weight_string('a' LEVEL 1))
-0041
-select hex(weight_string('A' LEVEL 1));
-hex(weight_string('A' LEVEL 1))
-0041
-select hex(weight_string('abc' LEVEL 1));
-hex(weight_string('abc' LEVEL 1))
-004100420043
-select hex(weight_string('abc' as char(2) LEVEL 1));
-hex(weight_string('abc' as char(2) LEVEL 1))
-00410042
-select hex(weight_string('abc' as char(3) LEVEL 1));
-hex(weight_string('abc' as char(3) LEVEL 1))
-004100420043
-select hex(weight_string('abc' as char(5) LEVEL 1));
-hex(weight_string('abc' as char(5) LEVEL 1))
-00410042004300200020
-select hex(weight_string('abc' as char(5) LEVEL 1 REVERSE));
-hex(weight_string('abc' as char(5) LEVEL 1 REVERSE))
-20002000430042004100
-select hex(weight_string('abc' as char(5) LEVEL 1 DESC));
-hex(weight_string('abc' as char(5) LEVEL 1 DESC))
-FFBEFFBDFFBCFFDFFFDF
-select hex(weight_string('abc' as char(5) LEVEL 1 DESC REVERSE));
-hex(weight_string('abc' as char(5) LEVEL 1 DESC REVERSE))
-DFFFDFFFBCFFBDFFBEFF
-select hex(weight_string('a'));
-hex(weight_string('a'))
-0041
-select hex(weight_string('A'));
-hex(weight_string('A'))
-0041
-select hex(weight_string('abc'));
-hex(weight_string('abc'))
-004100420043
-select hex(weight_string('abc' as char(2)));
-hex(weight_string('abc' as char(2)))
-00410042
-select hex(weight_string('abc' as char(3)));
-hex(weight_string('abc' as char(3)))
-004100420043
-select hex(weight_string('abc' as char(5)));
-hex(weight_string('abc' as char(5)))
-00410042004300200020
-select hex(weight_string('a' LEVEL 1));
-hex(weight_string('a' LEVEL 1))
-0041
-select hex(weight_string('A' LEVEL 1));
-hex(weight_string('A' LEVEL 1))
-0041
-select hex(weight_string('abc' LEVEL 1));
-hex(weight_string('abc' LEVEL 1))
-004100420043
-select hex(weight_string('abc' as char(2) LEVEL 1));
-hex(weight_string('abc' as char(2) LEVEL 1))
-00410042
-select hex(weight_string('abc' as char(3) LEVEL 1));
-hex(weight_string('abc' as char(3) LEVEL 1))
-004100420043
-select hex(weight_string('abc' as char(5) LEVEL 1));
-hex(weight_string('abc' as char(5) LEVEL 1))
-00410042004300200020
-select hex(weight_string('abc' as char(5) LEVEL 1 REVERSE));
-hex(weight_string('abc' as char(5) LEVEL 1 REVERSE))
-20002000430042004100
-select hex(weight_string('abc' as char(5) LEVEL 1 DESC));
-hex(weight_string('abc' as char(5) LEVEL 1 DESC))
-FFBEFFBDFFBCFFDFFFDF
-select hex(weight_string('abc' as char(5) LEVEL 1 DESC REVERSE));
-hex(weight_string('abc' as char(5) LEVEL 1 DESC REVERSE))
-DFFFDFFFBCFFBDFFBEFF
 set max_sort_length=5;
 select @@max_sort_length;
 @@max_sort_length

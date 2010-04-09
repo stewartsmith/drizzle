@@ -1,10 +1,13 @@
 drop table if exists t1,t2,t3;
-create temporary table t1 (a int not null,b int not null, primary key (a)) engine=heap comment="testing heaps";
+create temporary table t1 (a int not null,b int not null, primary key (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 delete from t1 where a=1 or a=0;
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	a	NULL	3	NULL	NULL		HASH		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	a
 select * from t1;
 a	b
 2	2
@@ -29,9 +32,12 @@ delete from t1 where a > 0;
 select * from t1;
 a	b
 drop table t1;
-create temporary table t1 (a int not null,b int not null, primary key (a)) engine=heap comment="testing heaps";
+create temporary table t1 (a int not null,b int not null, primary key (a)) engine=MEMORY comment="testing heaps";
 insert into t1 values(1,1),(2,2),(3,3),(4,4);
 alter table t1 modify a int not null auto_increment, engine=innodb, comment="new innodb table";
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	InnoDB	#	#	#	#	#
 select * from t1;
 a	b
 1	1
@@ -39,7 +45,7 @@ a	b
 3	3
 4	4
 drop table t1;
-create temporary table t1 (a int not null) engine=heap;
+create temporary table t1 (a int not null) engine=MEMORY;
 insert into t1 values (869751),(736494),(226312),(802616),(728912);
 select * from t1 where a > 736494;
 a
@@ -69,7 +75,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	5	Using where
 drop table t1,t2;
 create temporary table t1 (x int not null, y int not null, key x (x), unique y (y))
-engine=heap;
+engine=MEMORY;
 insert into t1 values (1,1),(2,2),(1,3),(2,4),(2,5),(2,6);
 select * from t1 where x=1;
 x	y
@@ -80,13 +86,13 @@ ERROR HY000: Can't reopen table: 't1'
 explain select * from t1,t1 as t2 where t1.x=t2.y;
 ERROR HY000: Can't reopen table: 't1'
 drop table t1;
-create temporary table t1 (a int) engine=heap;
+create temporary table t1 (a int) engine=MEMORY;
 insert into t1 values(1);
 select max(a) from t1;
 max(a)
 1
 drop table t1;
-CREATE TEMPORARY TABLE t1 ( a int not null default 0, b int not null default 0,  key(a),  key(b)  ) ENGINE=HEAP;
+CREATE TEMPORARY TABLE t1 ( a int not null default 0, b int not null default 0,  key(a),  key(b)  ) ENGINE=MEMORY;
 insert into t1 values(1,1),(1,2),(2,3),(1,3),(1,4),(1,5),(1,6);
 select * from t1 where a=1;
 a	b
@@ -112,7 +118,7 @@ a	b
 1	2
 1	1
 drop table t1;
-create temporary table t1 (id int not null, primary key (id)) engine=HEAP;
+create temporary table t1 (id int not null, primary key (id)) engine=MEMORY;
 insert into t1 values(1);
 select max(id) from t1;
 max(id)
@@ -123,12 +129,12 @@ max(id)
 2
 replace into t1 values(1);
 drop table t1;
-create temporary table t1 (n int) engine=heap;
+create temporary table t1 (n int) engine=MEMORY;
 drop table t1;
-create temporary table t1 (n int) engine=heap;
+create temporary table t1 (n int) engine=MEMORY;
 drop table if exists t1;
 CREATE TEMPORARY table t1(f1 int not null,f2 char(20) not 
-null,index(f2)) engine=heap;
+null,index(f2)) engine=MEMORY;
 INSERT into t1 set f1=12,f2="bill";
 INSERT into t1 set f1=13,f2="bill";
 INSERT into t1 set f1=14,f2="bill";
@@ -147,7 +153,7 @@ f1	f2
 12	ted
 12	ted
 drop table t1;
-create temporary table t1 (btn char(10) not null, key(btn)) engine=heap;
+create temporary table t1 (btn char(10) not null, key(btn)) engine=MEMORY;
 insert into t1 values ("hello"),("hello"),("hello"),("hello"),("hello"),("a"),("b"),("c"),("d"),("e"),("f"),("g"),("h"),("i");
 explain select * from t1 where btn like "q%";
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
@@ -168,7 +174,7 @@ a int default NULL,
 b int default NULL,
 KEY a (a),
 UNIQUE b (b)
-) engine=heap;
+) engine=MEMORY;
 INSERT INTO t1 VALUES (NULL,99),(99,NULL),(1,1),(2,2),(1,3);
 SELECT * FROM t1 WHERE a=NULL;
 a	b
@@ -192,7 +198,7 @@ DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (
 a int default NULL,
 key a (a)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 INSERT INTO t1 VALUES (10), (10), (10);
 EXPLAIN SELECT * FROM t1 WHERE a=10;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
@@ -203,7 +209,7 @@ a
 10
 10
 DROP TABLE t1;
-CREATE TEMPORARY TABLE t1 (a int not null, primary key(a)) engine=heap;
+CREATE TEMPORARY TABLE t1 (a int not null, primary key(a)) engine=MEMORY;
 INSERT into t1 values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11);
 DELETE from t1 where a < 100;
 SELECT * from t1;
@@ -214,18 +220,18 @@ CREATE TEMPORARY TABLE `job_titles` (
 `job_title` char(18) NOT NULL default '',
 PRIMARY KEY  (`job_title_id`),
 UNIQUE KEY `job_title_id` (`job_title_id`,`job_title`)
-) ENGINE=HEAP;
+) ENGINE=MEMORY;
 SELECT MAX(job_title_id) FROM job_titles;
 MAX(job_title_id)
 NULL
 DROP TABLE job_titles;
-CREATE TEMPORARY TABLE t1 (a INT NOT NULL, B INT, KEY(B)) ENGINE=HEAP;
+CREATE TEMPORARY TABLE t1 (a INT NOT NULL, B INT, KEY(B)) ENGINE=MEMORY;
 INSERT INTO t1 VALUES(1,1), (1,NULL);
 SELECT * FROM t1 WHERE B is not null;
 a	B
 1	1
 DROP TABLE t1;
-CREATE TEMPORARY TABLE t1 (pseudo char(35) PRIMARY KEY, date int NOT NULL) ENGINE=HEAP;
+CREATE TEMPORARY TABLE t1 (pseudo char(35) PRIMARY KEY, date int NOT NULL) ENGINE=MEMORY;
 INSERT INTO t1 VALUES ('massecot',1101106491),('altec',1101106492),('stitch+',1101106304),('Seb Corgan',1101106305),('beerfilou',1101106263),('flaker',1101106529),('joce8',5),('M4vrick',1101106418),('gabay008',1101106525),('Vamp irX',1101106291),('ZoomZip',1101106546),('rip666',1101106502),('CBP ',1101106397),('guezpard',1101106496);
 DELETE FROM t1 WHERE date<1101106546;
 SELECT * FROM t1;
@@ -241,7 +247,7 @@ a
 3
 2
 drop table t1;
-set storage_engine=HEAP;
+set storage_engine=MEMORY;
 create temporary table t1 (v varchar(10), c char(10), t varchar(50));
 insert into t1 values('+ ', '+ ', '+ ');
 set @a=repeat(' ',20);
@@ -603,7 +609,7 @@ explain select * from t1 where v='a';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	v	v	43	const	#	Using where
 drop table t1;
-create temporary table t1 (a char(10), unique using btree (a)) engine=heap;
+create temporary table t1 (a char(10), unique using btree (a)) engine=MEMORY;
 insert into t1 values ('a');
 insert into t1 values ('a ');
 ERROR 23000: Duplicate entry 'a ' for key 'a'
@@ -645,7 +651,7 @@ length(v)
 drop table t1;
 set storage_engine=PBXT;
 create temporary table t1 (a bigint auto_increment primary key, b int,
-key (b, a)) engine=heap;
+key (b, a)) engine=MEMORY;
 insert t1 (b) values (1),(1),(1),(1),(1),(1),(1),(1);
 select * from t1;
 a	b
@@ -659,7 +665,7 @@ a	b
 8	1
 drop table t1;
 create temporary table t1 (a int not null, b int not null auto_increment,
-primary key(a, b), key(b)) engine=heap;
+primary key(a, b), key(b)) engine=MEMORY;
 insert t1 (a) values (1),(1),(1),(1),(1),(1),(1),(1);
 select * from t1;
 a	b
@@ -673,14 +679,14 @@ a	b
 1	8
 drop table t1;
 create temporary table t1 (a int not null, b int not null auto_increment,
-primary key(a, b)) engine=heap;
+primary key(a, b)) engine=MEMORY;
 ERROR 42000: Incorrect table definition; there can be only one auto column and it must be defined as a key
 create temporary table t1 (c char(255), primary key(c(90)));
 insert into t1 values ("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
 insert into t1 values ("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
 ERROR 23000: Duplicate entry 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl' for key 'PRIMARY'
 drop table t1;
-CREATE TEMPORARY TABLE t1 (a int, key(a)) engine=heap;
+CREATE TEMPORARY TABLE t1 (a int, key(a)) engine=MEMORY;
 insert into t1 values (0);
 delete from t1;
 select * from t1;
@@ -693,7 +699,9 @@ drop table t1;
 create temporary table t1 (c char(10)) engine=memory;
 create temporary table t2 (c varchar(10)) engine=memory;
 show table status like 't_';
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
+#	test	t2	TEMPORARY	MEMORY	#	#	#	#	#
 drop table t1, t2;
 CREATE TEMPORARY TABLE t1(a VARCHAR(1), b VARCHAR(2), c VARCHAR(256),
 KEY(a), KEY(b), KEY(c)) ENGINE=MEMORY;

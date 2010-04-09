@@ -52,7 +52,7 @@ PRIMARY KEY  (`i`)
 drop table t1;
 CREATE TEMPORARY TABLE t1 (
 bool     char(0) default NULL,
-not_null varchar(20) binary NOT NULL default '',
+not_null varchar(20) NOT NULL default '',
 misc     integer not null,
 PRIMARY KEY  (not_null)
 ) ENGINE=MyISAM;
@@ -216,3 +216,6 @@ CREATE TABLE db2.t1 AS SELECT * FROM db1.t2;
 CREATE TABLE db2.t2 AS SELECT * FROM db2.t1;
 CREATE TABLE t1 AS SELECT * FROM db2.t2;
 CREATE TABLE t2 AS SELECT * FROM t1;
+DROP DATABASE db1;
+DROP DATABASE db2;
+DROP TABLE t1, t2;

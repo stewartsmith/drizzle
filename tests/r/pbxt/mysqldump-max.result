@@ -2,7 +2,7 @@ drop table if exists t1, t2, t3, t4, t5, t6;
 create table t1 (id int, name varchar(32));
 create table t2 (id int, name varchar(32)) ENGINE="ARCHIVE";
 create temporary table t3 (id int, name varchar(32)) ENGINE="MEMORY";
-create temporary table t4 (id int, name varchar(32)) ENGINE="HEAP";
+create temporary table t4 (id int, name varchar(32)) ENGINE="MEMORY";
 create table t6 (id int, name varchar(32)) ENGINE="InnoDB";
 insert into t1 values (1, 'first value');
 insert into t1 values (2, 'first value');
@@ -86,7 +86,7 @@ CREATE TABLE `t2` (
 ) ENGINE=ARCHIVE;
 
 ALTER TABLE `t2` DISABLE KEYS;
-INSERT  DELAYED IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+INSERT  IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t2` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
@@ -121,7 +121,7 @@ CREATE TABLE `t2` (
 ) ENGINE=ARCHIVE;
 
 ALTER TABLE `t2` DISABLE KEYS;
-INSERT  DELAYED INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
+INSERT INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4,'first value'),(5,'first value');
 ALTER TABLE `t2` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (

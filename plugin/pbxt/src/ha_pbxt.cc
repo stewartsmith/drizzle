@@ -5505,6 +5505,11 @@ int ha_pbxt::rename_table(const char *from, const char *to)
 	pbms_completed(NULL, (err == 0));
 #endif
 
+#ifdef DRIZZLED
+	if (err == 0)
+		plugin::StorageEngine::renameDefinitionFromPath(to_ident, from_ident);
+#endif
+
 	XT_RETURN(err);
 }
 
