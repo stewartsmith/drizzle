@@ -69,7 +69,8 @@ public:
    *
    * @param[in] to_apply the transaction to send
    */
-  void apply(const drizzled::message::Transaction &to_apply);
+  drizzled::plugin::ReplicationReturnCode
+  apply(drizzled::Session &session, const drizzled::message::Transaction &to_apply);
 
 };
 
