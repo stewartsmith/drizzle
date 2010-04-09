@@ -96,7 +96,7 @@ static bool sysvar_logging_stats_enabled= false;
 
 static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
-static uint32_t sysvar_logging_stats_max_user_count= 10000;
+static uint32_t sysvar_logging_stats_max_user_count= 1000;
 
 static uint32_t sysvar_logging_stats_bucket_count= 10;
 
@@ -368,8 +368,8 @@ static DRIZZLE_SYSVAR_UINT(max_user_count,
                            N_("Max number of users that will be logged"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           10000, /* default */
-                           500, /* minimum */
+                           1000, /* default */
+                           100, /* minimum */
                            50000,
                            0);
 
