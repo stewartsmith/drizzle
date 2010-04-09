@@ -1325,7 +1325,7 @@ bool select_insert::send_eof()
   {
     /*
       We must invalidate the table in the query cache before binlog writing
-      and ha_autocommit_or_rollback.
+      and autocommitOrRollback.
     */
     if (session->transaction.stmt.hasModifiedNonTransData())
       session->transaction.all.markModifiedNonTransData();
@@ -1711,7 +1711,7 @@ bool select_create::send_eof()
     if (!table->s->tmp_table)
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.ha_autocommit_or_rollback(session, 0);
+      transaction_services.autocommitOrRollback(session, 0);
       (void) session->endActiveTransaction();
     }
 
