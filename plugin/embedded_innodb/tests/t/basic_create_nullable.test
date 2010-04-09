@@ -1,0 +1,9 @@
+create table t1 (a int, b int not null, c int null, d int not null);
+show create table t1;
+insert into t1 values (0,0, 0, 0);
+--error 1048
+insert into t1 values (NULL, NULL, NULL, NULL);
+insert into t1 values (NULL, 1, NULL, 1);
+--error 1048
+insert into t1 values (1,2,3,NULL);
+drop table t1;
