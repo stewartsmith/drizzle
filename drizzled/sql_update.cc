@@ -523,7 +523,7 @@ int mysql_update(Session *session, TableList *table_list,
     last one without error. error > 0 means an error (e.g. unique key
     violation and no IGNORE or REPLACE). error == 0 is also an error (if
     preparing the record or invoking before triggers fails). See
-    ha_autocommit_or_rollback(error>=0) and return(error>=0) below.
+    autocommitOrRollback(error>=0) and return(error>=0) below.
     Sometimes we want to binlog even if we updated no rows, in case user used
     it to be sure master and slave are in same state.
   */
