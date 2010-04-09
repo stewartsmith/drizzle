@@ -21,6 +21,19 @@
 
 #include <drizzled/cursor.h>
 
+class EmbeddedInnoDBTableShare
+{
+public:
+  EmbeddedInnoDBTableShare(const char* name) : use_count(0)
+  {
+    table_name.assign(name);
+  }
+
+  drizzled::THR_LOCK lock;
+  int use_count;
+  std::string table_name;
+};
+
 class EmbeddedInnoDBCursor: public drizzled::Cursor
 {
 public:
@@ -56,15 +69,22 @@ public:
   double scan_time();
   int delete_row(const unsigned char *);
   int delete_all_rows(void);
-
   void get_auto_increment(uint64_t, uint64_t,
                           uint64_t,
                           uint64_t *,
                           uint64_t *)
   {}
 
+  EmbeddedInnoDBTableShare *get_share(const char *table_name, int *rc);
+  int free_share();
+
+  EmbeddedInnoDBTableShare *share;
+  drizzled::THR_LOCK_DATA lock;  /* lock for store_lock. this is ass. */
+  drizzled::THR_LOCK_DATA **store_lock(drizzled::Session *,
+                                       drizzled::THR_LOCK_DATA **to,
+                                       drizzled::thr_lock_type);
+
 private:
-  ib_trx_t transaction;
   ib_crsr_t cursor;
   ib_tpl_t tuple;
 };

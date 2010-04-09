@@ -1381,7 +1381,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
       session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
       TransactionServices &transaction_services= TransactionServices::singleton();
-      if (transaction_services.ha_commit_trans(session, true))
+      if (transaction_services.commitTransaction(session, true))
         return 1;
     }
     else
