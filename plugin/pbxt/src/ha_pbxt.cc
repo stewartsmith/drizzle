@@ -667,6 +667,7 @@ xtPublic XTThreadPtr xt_ha_thd_to_self(THD *thd)
 #endif
 }
 
+#ifndef DRIZZLED
 /* The first bit is 1. */
 static u_int ha_get_max_bit(MX_BITMAP *map)
 {
@@ -676,7 +677,7 @@ static u_int ha_get_max_bit(MX_BITMAP *map)
 
 	for (uint32_t i = 0; i < cnt; i++)
 		if (map->isBitSet(i))
-			max_bit = i;
+			max_bit = i+1;
 
 	return max_bit;
 #else
@@ -710,6 +711,7 @@ static u_int ha_get_max_bit(MX_BITMAP *map)
 	return 0;
 #endif
 }
+#endif
 
 /*
  * -----------------------------------------------------------------------
@@ -3205,7 +3207,8 @@ int ha_pbxt::index_init(uint idx, bool XT_UNUSED(sorted))
 		 */
 	}
 	else {
-		pb_open_tab->ot_cols_req = ha_get_max_bit(table->read_set);
+		//pb_open_tab->ot_cols_req = ha_get_max_bit(table->read_set);
+		pb_open_tab->ot_cols_req = table->read_set->MX_BIT_SIZE();
 
 		/* Check for index coverage!
 		 *
@@ -3698,7 +3701,8 @@ int ha_pbxt::rnd_init(bool scan)
 		 */
 	}
 	else {
-		pb_open_tab->ot_cols_req = ha_get_max_bit(table->read_set);
+		//pb_open_tab->ot_cols_req = ha_get_max_bit(table->read_set);
+		pb_open_tab->ot_cols_req = table->read_set->MX_BIT_SIZE();
 
 		/*
 		 * in case of queries like SELECT COUNT(*) FROM t
