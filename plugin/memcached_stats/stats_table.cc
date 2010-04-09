@@ -43,7 +43,7 @@ typedef memcached_server_function memcached_server_fn;
 
 extern "C"
 memcached_return  server_function(const memcached_st *ptr,
-                                  memcached_server_st *server,
+                                  const memcached_server_st *server,
                                   void *context);
 
 
@@ -58,13 +58,13 @@ struct server_function_context
 
 extern "C"
 memcached_return  server_function(const memcached_st *memc,
-                                  memcached_server_st *server,
+                                  const memcached_server_st *server,
                                   void *context)
 {
   server_function_context *ctx= static_cast<server_function_context *>(context);
 
-  char *server_name= memcached_server_name(memc, *server);
-  in_port_t server_port= memcached_server_port(memc, *server);
+  const char *server_name= memcached_server_name(server);
+  in_port_t server_port= memcached_server_port(server);
 
   memcached_stat_st stats;
   memcached_return ret= memcached_stat_servername(&stats, NULL,
