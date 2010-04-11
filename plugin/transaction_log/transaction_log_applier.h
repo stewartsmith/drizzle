@@ -55,7 +55,7 @@ class TransactionLogApplier: public drizzled::plugin::TransactionApplier
 {
 public:
   TransactionLogApplier(const std::string name_arg,
-                        TransactionLog &in_transaction_log,
+                        TransactionLog *in_transaction_log,
                         uint32_t in_num_write_buffers);
 
   /** Destructor */
@@ -86,6 +86,9 @@ private:
   TransactionLogApplier(const TransactionLogApplier &other);
   TransactionLogApplier &operator=(const TransactionLogApplier &other);
   TransactionLog &transaction_log;
+  /* This Applier owns the memory of the associated TransactionLog - so we
+    have to track it. */
+  TransactionLog *transaction_log_ptr;
   uint32_t num_write_buffers; ///< Number of write buffers used
   std::vector<WriteBuffer *> write_buffers; ///< array of write buffers
 

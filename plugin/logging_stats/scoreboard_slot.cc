@@ -28,93 +28,85 @@
  *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H
-#define PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H
+#include "scoreboard_slot.h"
 
-#include "user_commands.h"
+using namespace std;
 
-#include <string>
-
-class ScoreBoardSlot
+ScoreboardSlot::ScoreboardSlot()
+  :
+    in_use(false),
+    session_id(0)
 {
-public:
-  ScoreBoardSlot() 
-    :
-      in_use(false),
-      session_id(0)
-  {}
+  user_commands= new UserCommands();
+}
 
-  ~ScoreBoardSlot() 
-  {
-    delete user_commands;
-  }
+ScoreboardSlot::~ScoreboardSlot()
+{
+  delete user_commands;
+}
 
-  void setUserCommands(UserCommands *in_user_commands)
-  {
-    user_commands= in_user_commands;
-  }
+ScoreboardSlot::ScoreboardSlot(const ScoreboardSlot &scoreboard_slot)
+{
+  user_commands= new UserCommands(*scoreboard_slot.user_commands);
+  user.assign(scoreboard_slot.user);
+  ip.assign(scoreboard_slot.ip);
+  in_use= scoreboard_slot.in_use;
+  session_id= scoreboard_slot.session_id;
+}
 
-  UserCommands* getUserCommands()
-  {
-    return user_commands;
-  }
+UserCommands* ScoreboardSlot::getUserCommands()
+{
+  return user_commands;
+}
 
-  void setSessionId(uint64_t in_session_id)
-  {
-    session_id= in_session_id;
-  }
+void ScoreboardSlot::setSessionId(uint64_t in_session_id)
+{
+  session_id= in_session_id;
+}
 
-  uint64_t getSessionId()
-  {
-    return session_id;
-  }
+uint64_t ScoreboardSlot::getSessionId()
+{
+  return session_id;
+}
 
-  void setInUse(bool in_in_use)
-  {
-    in_use= in_in_use;
-  }
+void ScoreboardSlot::setInUse(bool in_in_use)
+{
+  in_use= in_in_use;
+}
 
-  bool isInUse()
-  {
-    return in_use;
-  }
+bool ScoreboardSlot::isInUse()
+{
+  return in_use;
+}
 
-  void setUser(std::string in_user)
-  {
-    user= in_user;
-  }
+void ScoreboardSlot::setUser(string in_user)
+{
+  user.assign(in_user);
+}
 
-  const std::string& getUser()
-  {
-    return user; 
-  }
+const string& ScoreboardSlot::getUser()
+{
+  return user;
+}
 
-  void setIp(std::string in_ip)
-  {
-    ip= in_ip;
-  }
+void ScoreboardSlot::setIp(string in_ip)
+{
+  ip.assign(in_ip);
+}
 
-  const std::string& getIp()
-  {
-    return ip;
-  }
+const string& ScoreboardSlot::getIp()
+{
+  return ip;
+}
 
-  void reset()
-  {
-    in_use= false;
-    session_id= 0;
-    if (user_commands)
-    {
-      user_commands->reset();
-    }
-  }
+void ScoreboardSlot::merge(ScoreboardSlot *score_board_slot)
+{
+  user_commands->merge(score_board_slot->getUserCommands());
+}
 
-private:
-  UserCommands *user_commands;
-  std::string user;
-  std::string ip;
-  bool in_use;
-  uint64_t session_id;
-};
- 
-#endif /* PLUGIN_LOGGING_STATS_SCORE_BOARD_SLOT_H */
+void ScoreboardSlot::reset()
+{
+  in_use= false;
+  session_id= 0;
+  user_commands->reset();
+}

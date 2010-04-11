@@ -135,7 +135,7 @@ static int init(drizzled::plugin::Context &context)
     }
     /* Create the applier plugin and register it */
     transaction_log_applier= new (nothrow) TransactionLogApplier("transaction_log_applier",
-                                                                 *transaction_log, 
+                                                                 transaction_log, 
                                                                  sysvar_transaction_log_num_write_buffers);
     if (transaction_log_applier == NULL)
     {
