@@ -4481,10 +4481,11 @@ int ha_pbxt::check(THD* thd, HA_CHECK_OPT* XT_UNUSED(check_opt))
  */
 xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 {
-	int				err = 0;
+	/* Some compiler complain that: variable 'err' might be clobbered by 'longjmp' or 'vfork' */
+	volatile int				err = 0;
 	XTThreadPtr		self;
 	
-	if (!(self = ha_set_current_thread(thd, &err)))
+	if (!(self = ha_set_current_thread(thd, (int *) &err)))
 		return xt_ha_pbxt_to_mysql_error(err);
 
 	/* F_UNLCK is set when this function is called at end
