@@ -23,6 +23,8 @@
 
 #include "xt_config.h"
 
+#ifdef PBXT_SYS_TAB
+
 #ifndef DRIZZLED
 #include "mysql_priv.h"
 #include "item_create.h"
@@ -1687,4 +1689,6 @@ int xt_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *
 	thd->lex = save_lex;
 	return err;
 }
+
+#endif
 

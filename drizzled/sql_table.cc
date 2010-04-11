@@ -538,7 +538,7 @@ int prepare_create_field(CreateField *sql_field,
   return 0;
 }
 
-int mysql_prepare_create_table(Session *session,
+static int mysql_prepare_create_table(Session *session,
                                HA_CREATE_INFO *create_info,
                                message::Table &create_proto,
                                AlterInfo *alter_info,

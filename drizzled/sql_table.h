@@ -73,15 +73,6 @@ bool is_primary_key(KEY *key_info);
 const char* is_primary_key_name(const char* key_name);
 bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);
-int mysql_prepare_create_table(Session *session,
-                               HA_CREATE_INFO *create_info,
-                               message::Table &create_proto,
-                               AlterInfo *alter_info,
-                               bool tmp_table,
-                               uint32_t *db_options,
-                               KEY **key_info_buffer,
-                               uint32_t *key_count,
-                               int select_field_count);
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_SQL_TABLE_H */

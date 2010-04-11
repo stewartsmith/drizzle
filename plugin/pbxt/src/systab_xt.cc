@@ -590,6 +590,7 @@ bool XTSystemTableShare::doesSystemTableExist()
 
 void XTSystemTableShare::createSystemTables(XTThreadPtr XT_UNUSED(self), XTDatabaseHPtr XT_UNUSED(db))
 {
+#ifdef PBXT_SYS_TAB
 	int		i = 0;
 
 	while (xt_internal_tables[i].sts_path) {
@@ -610,6 +611,7 @@ void XTSystemTableShare::createSystemTables(XTThreadPtr XT_UNUSED(self), XTDatab
 		session->main_da.reset_diagnostics_area();	
 #endif
 	}
+#endif
 }
 
 XTOpenSystemTable *XTSystemTableShare::openSystemTable(XTThreadPtr self, const char *table_path, TABLE *table)
