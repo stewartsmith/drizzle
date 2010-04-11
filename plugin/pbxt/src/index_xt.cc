@@ -34,7 +34,8 @@
 #include <strings.h>
 #endif
 #include <zlib.h>
-#include <bzlib.h>
+/* This header not available on suse-11-amd64, ubuntu-9.10-amd64 */
+//#include <bzlib.h>
 
 #ifdef DRIZZLED
 #include <drizzled/base.h>
