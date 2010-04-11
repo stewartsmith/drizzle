@@ -56,7 +56,7 @@ userid	MIN(t1.score+0.0)
 EXPLAIN SELECT t2.userid, MIN(t1.score+0.0) FROM t1, t2 WHERE t1.userID=t2.userID AND t1.spID=2  GROUP BY t2.userid ORDER BY NULL;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	4	Using where; Using temporary
-1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	4	test.t1.userID	1	Using index
+1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	4	test.t1.userID	1	
 drop table t1,t2;
 CREATE TABLE t1 (
 PID int NOT NULL auto_increment,
@@ -68,7 +68,7 @@ amount int DEFAULT '0' NOT NULL,
 operator int,
 method enum('unknown','cash','dealer','check','card','lazy','delayed','test') DEFAULT 'unknown' NOT NULL,
 DIID int,
-reason char(1) binary DEFAULT '' NOT NULL,
+reason char(1) DEFAULT '' NOT NULL,
 code_id int,
 qty int DEFAULT '0' NOT NULL,
 PRIMARY KEY (PID),
@@ -144,13 +144,13 @@ select userid,count(*) from t1 group by userid desc having 3  IN (1,COUNT(*));
 userid	count(*)
 explain select spid,count(*) from t1 where spid between 1 and 2 group by spid desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	spID	spID	5	NULL	1	Using where; Using index
+1	SIMPLE	t1	ALL	spID	NULL	NULL	NULL	8	Using where; Using temporary; Using filesort
 explain select spid,count(*) from t1 where spid between 1 and 2 group by spid;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	spID	spID	5	NULL	1	Using where; Using index
+1	SIMPLE	t1	ALL	spID	NULL	NULL	NULL	8	Using where; Using temporary; Using filesort
 explain select spid,count(*) from t1 where spid between 1 and 2 group by spid order by null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	spID	spID	5	NULL	1	Using where; Using index
+1	SIMPLE	t1	ALL	spID	NULL	NULL	NULL	8	Using where; Using temporary
 select spid,count(*) from t1 where spid between 1 and 2 group by spid;
 spid	count(*)
 1	1
@@ -178,10 +178,10 @@ spid	sum(userid)
 1	1
 explain select sql_big_result score,count(*) from t1 group by score desc;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	score	5	NULL	8	Using index; Using filesort
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	8	Using filesort
 explain select sql_big_result score,count(*) from t1 group by score desc order by null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	score	5	NULL	8	Using index; Using filesort
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	8	Using filesort
 select sql_big_result score,count(*) from t1 group by score desc;
 score	count(*)
 3	5
@@ -205,34 +205,6 @@ a	count(*)
 NULL	3
 A	5
 B	5
-SELECT a FROM t1 GROUP BY binary a;
-a
-NULL
-A
-B
-a
-b
-SELECT a,count(*) FROM t1 GROUP BY binary a;
-a	count(*)
-NULL	3
-A	4
-B	4
-a	1
-b	1
-SELECT binary a FROM t1 GROUP BY 1;
-binary a 
-NULL
-A
-B
-a
-b
-SELECT binary a,count(*) FROM t1 GROUP BY 1;
-binary a	count(*)
-NULL	3
-A	4
-B	4
-a	1
-b	1
 SELECT a FROM t1 GROUP BY a;
 a
 NULL
@@ -243,34 +215,46 @@ a	count(*)
 NULL	3
 A	5
 B	5
-SELECT a FROM t1 GROUP BY binary a;
+SELECT a FROM t1 GROUP BY 1;
 a
 NULL
 A
 B
-a
-b
-SELECT a,count(*) FROM t1 GROUP BY binary a;
+SELECT a,count(*) FROM t1 GROUP BY 1;
 a	count(*)
 NULL	3
-A	4
-B	4
-a	1
-b	1
-SELECT binary a FROM t1 GROUP BY 1;
-binary a 
+A	5
+B	5
+SELECT a FROM t1 GROUP BY a;
+a
 NULL
 A
 B
-a
-b
-SELECT binary a,count(*) FROM t1 GROUP BY 1;
-binary a	count(*)
+SELECT a,count(*) FROM t1 GROUP BY a;
+a	count(*)
 NULL	3
-A	4
-B	4
-a	1
-b	1
+A	5
+B	5
+SELECT a FROM t1 GROUP BY a;
+a
+NULL
+A
+B
+SELECT a,count(*) FROM t1 GROUP BY a;
+a	count(*)
+NULL	3
+A	5
+B	5
+SELECT a FROM t1 GROUP BY 1;
+a
+NULL
+A
+B
+SELECT a,count(*) FROM t1 GROUP BY 1;
+a	count(*)
+NULL	3
+A	5
+B	5
 drop table t1;
 CREATE TABLE t1 (
 `a` char(193) default NULL,
@@ -568,7 +552,7 @@ from t1 x3, t1 x4, t1 C, t1 D where x3.a < 3 and x4.a < 4 and D.a < 4;
 delete from t2  where a = 2 and b = 'val-2' order by a,b,c,d limit 30;
 explain select c from t2 where a = 2 and b = 'val-2' group by c;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	PRIMARY,a	PRIMARY	534	const,const	1	Using where
+1	SIMPLE	t2	ref	PRIMARY,a	PRIMARY	534	const,const	1	Using where; Using temporary; Using filesort
 select c from t2 where a = 2 and b = 'val-2' group by c;
 c
 val-74
@@ -745,10 +729,10 @@ MIN(b)	MAX(b)
 0	19
 EXPLAIN SELECT b, sum(1) FROM t1 GROUP BY b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	b	5	NULL	128	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	128	Using temporary; Using filesort
 EXPLAIN SELECT SQL_BIG_RESULT b, sum(1) FROM t1 GROUP BY b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	b	5	NULL	128	Using index; Using filesort
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	128	Using filesort
 SELECT b, sum(1) FROM t1 GROUP BY b;
 b	sum(1)
 0	6
@@ -1166,16 +1150,16 @@ INSERT INTO t1 SELECT a + 64,b FROM t1;
 INSERT INTO t1 SELECT a + 128,b FROM t1 limit 16;
 ANALYZE TABLE t1;
 Table	Op	Msg_type	Msg_text
-test.t1	analyze	status	OK
+test.t1	analyze	note	The storage engine for the table doesn't support analyze
 EXPLAIN SELECT a FROM t1 WHERE a < 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY,i2	PRIMARY	4	NULL	1	Using where; Using index
+1	SIMPLE	t1	ALL	PRIMARY,i2	NULL	NULL	NULL	144	Using where
 EXPLAIN SELECT a FROM t1 WHERE a < 2 ORDER BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY,i2	PRIMARY	4	NULL	1	Using where; Using index
+1	SIMPLE	t1	ALL	PRIMARY,i2	NULL	NULL	NULL	144	Using where; Using filesort
 EXPLAIN SELECT a FROM t1 WHERE a < 2 GROUP BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY,i2	PRIMARY	4	NULL	1	Using where; Using index for group-by
+1	SIMPLE	t1	ALL	PRIMARY,i2	NULL	NULL	NULL	144	Using where; Using filesort
 EXPLAIN SELECT a FROM t1 IGNORE INDEX (PRIMARY,i2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
@@ -1184,10 +1168,10 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
 EXPLAIN SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (PRIMARY,i2) GROUP BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	144	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	Using filesort
 EXPLAIN SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (PRIMARY,i2) ORDER BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	144	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	Using filesort
 SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (PRIMARY,i2) ORDER BY a;
 a
 1
@@ -1337,13 +1321,13 @@ a
 EXPLAIN SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (PRIMARY)
 IGNORE INDEX FOR GROUP BY (i2) GROUP BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	144	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	Using filesort
 EXPLAIN SELECT a FROM t1 IGNORE INDEX (PRIMARY) IGNORE INDEX FOR ORDER BY (i2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	i2	9	NULL	144	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
 EXPLAIN SELECT a FROM t1 FORCE INDEX (i2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	i2	9	NULL	144	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
 EXPLAIN SELECT a FROM t1 USE INDEX ();
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
@@ -1358,7 +1342,7 @@ USE INDEX (i2);
 ERROR HY000: Incorrect usage of USE INDEX and FORCE INDEX
 EXPLAIN SELECT a FROM t1 USE INDEX (i2) USE INDEX ();
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	i2	9	NULL	144	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
 EXPLAIN SELECT a FROM t1 FORCE INDEX ();
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near ')' at line 1
 EXPLAIN SELECT a FROM t1 IGNORE INDEX ();
@@ -1366,11 +1350,11 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 EXPLAIN SELECT a FROM t1 USE INDEX FOR JOIN (i2) 
 USE INDEX FOR GROUP BY (i2) GROUP BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	#	NULL	i2	#	NULL	#	#
+1	SIMPLE	t1	#	NULL	NULL	#	NULL	#	#
 EXPLAIN SELECT a FROM t1 FORCE INDEX FOR JOIN (i2) 
 FORCE INDEX FOR GROUP BY (i2) GROUP BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	NULL	i2	4	NULL	145	Using index for group-by
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	Using filesort
 EXPLAIN SELECT a FROM t1 USE INDEX () IGNORE INDEX (i2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
@@ -1382,30 +1366,30 @@ USE INDEX FOR GROUP BY (i2)
 USE INDEX FOR ORDER BY (i2)
 USE INDEX FOR JOIN (i2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	i2	9	NULL	144	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
 EXPLAIN SELECT a FROM t1 
 USE INDEX FOR JOIN (i2) 
 USE INDEX FOR JOIN (i2) 
 USE INDEX FOR JOIN (i2,i2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	i2	9	NULL	144	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	144	
 EXPLAIN SELECT 1 FROM t1 WHERE a IN
 (SELECT a FROM t1 USE INDEX (i2) IGNORE INDEX (i2));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	index	NULL	PRIMARY	4	NULL	144	Using where; Using index
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	144	Using where
 2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	144	
 CREATE TABLE t2 (a INT, b INT, KEY(a));
 INSERT INTO t2 VALUES (1, 1), (2, 2), (3,3), (4,4);
 EXPLAIN SELECT a, SUM(b) FROM t2 GROUP BY a LIMIT 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	NULL	a	5	NULL	2	
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	4	Using temporary; Using filesort
 EXPLAIN SELECT a, SUM(b) FROM t2 IGNORE INDEX (a) GROUP BY a LIMIT 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	4	Using temporary; Using filesort
 EXPLAIN SELECT 1 FROM t2 WHERE a IN
 (SELECT a FROM t1 USE INDEX (i2) IGNORE INDEX (i2));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t2	index	NULL	a	5	NULL	4	Using where; Using index
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	4	Using where
 2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	144	
 DROP TABLE t1, t2;
 CREATE TABLE t1(
@@ -1456,7 +1440,7 @@ c	b	d
 3	2	40
 EXPLAIN SELECT c,b   FROM t1 GROUP BY c,b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	c	8	NULL	3	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	3	Using filesort
 SELECT c,b   FROM t1 GROUP BY c,b;
 c	b
 1	1
@@ -1464,7 +1448,7 @@ c	b
 3	2
 EXPLAIN SELECT a,b from t2 ORDER BY a,b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	NULL	a	10	NULL	6	Using index
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	6	Using filesort
 SELECT a,b from t2 ORDER BY a,b;
 a	b
 NULL	NULL
@@ -1475,7 +1459,7 @@ NULL	1
 1	2
 EXPLAIN SELECT a,b from t2 GROUP BY a,b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	NULL	a	10	NULL	6	Using index
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	6	Using temporary; Using filesort
 SELECT a,b from t2 GROUP BY a,b;
 a	b
 NULL	NULL
@@ -1485,14 +1469,14 @@ NULL	1
 1	2
 EXPLAIN SELECT a from t2 GROUP BY a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	NULL	a	10	NULL	6	Using index
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	6	Using temporary; Using filesort
 SELECT a from t2 GROUP BY a;
 a
 NULL
 1
 EXPLAIN SELECT b from t2 GROUP BY b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	NULL	a	10	NULL	6	Using index; Using temporary; Using filesort
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	6	Using temporary; Using filesort
 SELECT b from t2 GROUP BY b;
 b
 NULL

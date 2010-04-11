@@ -62,11 +62,12 @@ id	id
 NULL	75
 explain select t1.id,t2.id from t2 left join t1 on t1.id>=74 and t1.id<=0 where t2.id=75 and t1.id is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	const	PRIMARY	NULL	NULL	NULL	1	Impossible ON condition
 1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	3	Using where
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	13	Using where; Not exists
 explain select t1.id, t2.id from t1, t2 where t2.id = t1.id and t1.id <0 and t1.id > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	3	Using where
+1	SIMPLE	t1	eq_ref	PRIMARY	PRIMARY	4	test.t2.id	1	
 drop table t1,t2;
 CREATE TABLE t1 (
 id int NOT NULL auto_increment,
@@ -763,17 +764,17 @@ a	b	a	a
 explain select * from t1, t2, t3 where t3.a=t1.a and t2.a=t1.b;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	4	
-1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	4	test.t1.b	1	Using index
-1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	4	test.t1.a	1	Using index
+1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	4	test.t1.b	1	
+1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	4	test.t1.a	1	
 We expect rnd_next=5, and read_key must be 0 because of short-cutting:
 show status like 'Handler_read%';
 Variable_name	Value
-Handler_read_first	0
-Handler_read_key	0
-Handler_read_next	0
-Handler_read_prev	0
-Handler_read_rnd	0
-Handler_read_rnd_next	0
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
 drop table t1, t2, t3;
 create table t1 (a int);
 insert into t1 values (0),(1),(2),(3),(4),(5),(6),(7),(8),(9);
@@ -792,7 +793,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	
 show status like '%cost%';
 Variable_name	Value
-Last_query_cost	4.262158
+Last_query_cost	#
 select 'The cost of accessing t1 (dont care if it changes' '^';
 The cost of accessing t1 (dont care if it changes
 The cost of accessing t1 (dont care if it changes^
@@ -806,7 +807,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	B	eq_ref	PRIMARY	PRIMARY	4	test.A.b	1	
 show status like '%cost%';
 Variable_name	Value
-Last_query_cost	24.262158
+Last_query_cost	#
 select '^^: The above should be ~= 20 + cost(select * from t1). Value less than 20 is an error' Z;
 Z
 ^^: The above should be ~= 20 + cost(select * from t1). Value less than 20 is an error
@@ -822,11 +823,11 @@ INSERT INTO t1 SELECT a + 64, b FROM t1;
 INSERT INTO t2 SELECT a, b FROM t1;
 EXPLAIN SELECT * FROM t1 JOIN t2 ON b=c ORDER BY a LIMIT 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	PRIMARY	4	NULL	2	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	128	Using filesort
 1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	4	test.t1.b	1	
 EXPLAIN SELECT * FROM t1 JOIN t2 ON a=c ORDER BY a LIMIT 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	PRIMARY	PRIMARY	4	NULL	2	
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	128	Using filesort
 1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	4	test.t1.a	1	
 SELECT * FROM t1 JOIN t2 ON b=c ORDER BY a LIMIT 2;
 a	b	c	d

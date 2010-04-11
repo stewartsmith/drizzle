@@ -12,6 +12,9 @@ a	b
 5	5
 6	6
 delete from t1 where a=6;
+show table status like "t1";
+Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
+#	test	t1	TEMPORARY	MyISAM	#	#	#	#	#
 replace t1 values (3,1);
 ALTER TABLE t1 add c int;
 replace t1 values (3,3,3);
@@ -60,11 +63,11 @@ last_insert_id()
 insert into t1 values (NULL);
 select * from t1;
 a
--1
 1
+-1
 2
 drop table t1;
-create temporary table t1 (a int not null auto_increment primary key) /*!40102 engine=heap */;
+create temporary table t1 (a int not null auto_increment primary key) /*!40102 engine=MEMORY */;
 insert into t1 values (NULL);
 insert into t1 values (-1);
 select last_insert_id();

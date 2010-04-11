@@ -8,8 +8,8 @@ INSERT INTO t1 VALUES (1), (2);
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="test">
 	<table_structure name="t1">
-		<field Field="a" Type="int" Null="YES" Key="MUL" Extra="" />
-		<key Table="t1" Non_unique="1" Key_name="a" Seq_in_index="1" Column_name="a" Collation="A" Cardinality="2" Null="YES" Index_type="BTREE" Comment="" Index_Comment="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
+		<key Table="t1" Unique="FALSE" Key_name="a" Seq_in_index="1" Column_name="a" />
 	</table_structure>
 	<table_data name="t1">
 	<row>
@@ -42,7 +42,7 @@ INSERT INTO t1 VALUES ("1\""), ("\"2");
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="test">
 	<table_structure name="t1">
-		<field Field="a&quot;b&quot;" Type="varchar(2)" Null="YES" Key="" Extra="" />
+		<field Field="a&quot;b&quot;" Type="VARCHAR" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 	<table_data name="t1">
 	<row>
@@ -168,7 +168,7 @@ CREATE TABLE `t1` (
 ) ENGINE=PBXT;
 
 ALTER TABLE `t1` DISABLE KEYS;
-INSERT INTO `t1` VALUES ('` \');
+INSERT INTO `t1` VALUES (0x602010000280100005E71A);
 ALTER TABLE `t1` ENABLE KEYS;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
@@ -943,10 +943,10 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="mysqldump_test_db">
 	<table_structure name="t1">
-		<field Field="a" Type="int" Null="YES" Key="" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 	<table_structure name="t2">
-		<field Field="a" Type="int" Null="YES" Key="" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 </database>
 </drizzledump>
@@ -954,10 +954,10 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="mysqldump_test_db">
 	<table_structure name="t1">
-		<field Field="a" Type="int" Null="YES" Key="" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 	<table_structure name="t2">
-		<field Field="a" Type="int" Null="YES" Key="" Extra="" />
+		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
 	</table_structure>
 </database>
 </drizzledump>
@@ -1124,6 +1124,7 @@ drop table t1, t2, t3;
 # Bug #21288: mysqldump segmentation fault when using --where
 #
 create table t1 (a int);
+Error: Couldn't read status information for table t1
 drizzledump: Couldn't execute 'SELECT * FROM `t1` WHERE xx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx': You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' at line 1 (1064)
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -1138,45 +1139,6 @@ drop table t1;
 #
 # BUG#13926: --order-by-primary fails if PKEY contains quote character
 #
-DROP TABLE IF EXISTS `t1`;
-CREATE TABLE `t1` (
-`a b` INT,
-`c"d` INT,
-`e``f` INT,
-PRIMARY KEY (`a b`, `c"d`, `e``f`)
-);
-insert into t1 values (0815, 4711, 2006);
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-DROP TABLE IF EXISTS `t1`;
-CREATE TABLE `t1` (
-  `a b` int NOT NULL,
-  `c"d` int NOT NULL,
-  `e``f` int NOT NULL,
-  PRIMARY KEY (`a b`,`c"d`,`e``f`)
-) ENGINE=PBXT;
-
-ALTER TABLE `t1` DISABLE KEYS;
-INSERT INTO `t1` VALUES (815,4711,2006);
-ALTER TABLE `t1` ENABLE KEYS;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-DROP TABLE IF EXISTS `t1`;
-CREATE TABLE `t1` (
-  `a b` int NOT NULL,
-  `c"d` int NOT NULL,
-  `e``f` int NOT NULL,
-  PRIMARY KEY (`a b`,`c"d`,`e``f`)
-) ENGINE=PBXT;
-
-ALTER TABLE `t1` DISABLE KEYS;
-INSERT INTO `t1` VALUES (815,4711,2006);
-ALTER TABLE `t1` ENABLE KEYS;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-DROP TABLE `t1`;
 End of 4.1 tests
 #
 # Bug#29815: new option for suppressing last line of mysqldump:

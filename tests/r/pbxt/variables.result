@@ -67,17 +67,17 @@ SELECT @min_cid:=min(c_id), @max_cid:=max(c_id) from t1;
 1	4
 SELECT * FROM t1 WHERE c_id=@min_cid OR c_id=@max_cid;
 c_id	c_name	c_country
-1	Bozo	NULL
-4	Mr. Floppy	NULL
+1	Bozo	USA
+4	Mr. Floppy	GB
 SELECT * FROM t1 WHERE c_id=@min_cid OR c_id=@max_cid OR c_id=666;
 c_id	c_name	c_country
-1	Bozo	NULL
-4	Mr. Floppy	NULL
+1	Bozo	USA
+4	Mr. Floppy	GB
 ALTER TABLE t1 DROP PRIMARY KEY;
 select * from t1 where c_id=@min_cid OR c_id=@max_cid;
 c_id	c_name	c_country
-1	Bozo	NULL
-4	Mr. Floppy	NULL
+1	Bozo	USA
+4	Mr. Floppy	GB
 drop table t1;
 set GLOBAL max_join_size=10;
 set max_join_size=100;

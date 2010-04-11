@@ -95,7 +95,7 @@ name_id	name
 create table t2
 (
 name_id int not null auto_increment,
-name char(255) binary,
+name char(255),
 INDEX name_idx (name(5)),
 primary key (name_id)
 );
@@ -143,12 +143,12 @@ a	2
 drop table t1;
 create table t1 (a int not null unique, b int unique, c int, d int not null primary key, key(c), e int not null unique);
 show keys from t1;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	0	PRIMARY	1	d	A	0	NULL	NULL		BTREE		
-t1	0	a	1	a	A	0	NULL	NULL		BTREE		
-t1	0	e	1	e	A	0	NULL	NULL		BTREE		
-t1	0	b	1	b	A	0	NULL	NULL	YES	BTREE		
-t1	1	c	1	c	A	0	NULL	NULL	YES	BTREE		
+Table	Unique	Key_name	Seq_in_index	Column_name
+t1	TRUE	PRIMARY	1	d
+t1	TRUE	a	1	a
+t1	TRUE	e	1	e
+t1	TRUE	b	1	b
+t1	FALSE	c	1	c
 drop table t1;
 CREATE TABLE t1 (c VARCHAR(10) NOT NULL,i INT PRIMARY KEY NOT NULL AUTO_INCREMENT, UNIQUE (c,i));
 INSERT INTO t1 (c) VALUES (NULL),(NULL);
@@ -198,7 +198,7 @@ numeropost
 1
 EXPLAIN SELECT numeropost FROM t1 WHERE numreponse='1';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	const	numreponse	numreponse	4	const	1	Using index
+1	SIMPLE	t1	const	numreponse	numreponse	4	const	1	
 FLUSH TABLES;
 SELECT numeropost FROM t1 WHERE numreponse='1';
 numeropost
@@ -301,9 +301,9 @@ i2 INT NOT NULL,
 UNIQUE i1idx (i1),
 UNIQUE i2idx (i2));
 desc t1;
-Field	Type	Null	Key	Default	Extra
-i1	int	NO	PRI	NULL	
-i2	int	NO	UNI	NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+i1	INTEGER	FALSE		FALSE	
+i2	INTEGER	FALSE		FALSE	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -357,28 +357,28 @@ t1	CREATE TABLE `t1` (
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null unique);
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	PRI	NULL	
-b	varchar(20)	NO	UNI	NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
 drop table t1;
 create table t1 (a int not null primary key, b int not null unique);
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	PRI	NULL	
-b	int	NO	UNI	NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	FALSE		FALSE	
+b	INTEGER	FALSE		FALSE	
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null, unique (b(10)));
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	PRI	NULL	
-b	varchar(20)	NO	UNI	NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null, c varchar(20) not null, unique(b(10),c(10)));
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	PRI	NULL	
-b	varchar(20)	NO	MUL	NULL	
-c	varchar(20)	NO		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
+c	VARCHAR	FALSE		FALSE	
 drop table t1;
 create table t1 (
 c1 int,
@@ -493,10 +493,10 @@ create table t1(a int not null, key aa(a),
 b char(10) not null, unique key bb(b(1)), 
 c char(4) not null, unique key cc(c));
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	MUL	NULL	
-b	varchar(10)	NO	UNI	NULL	
-c	varchar(4)	NO	PRI	NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
+c	VARCHAR	FALSE		FALSE	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -512,16 +512,16 @@ create table t1(a int not null, key aa(a),
 b char(10) not null, unique key bb(b(1)),
 c char(4) not null);
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	MUL	NULL	
-b	varchar(10)	NO	UNI	NULL	
-c	varchar(4)	NO		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
+c	VARCHAR	FALSE		FALSE	
 alter table t1 add unique key cc(c);
 desc t1;
-Field	Type	Null	Key	Default	Extra
-a	int	NO	MUL	NULL	
-b	varchar(10)	NO	UNI	NULL	
-c	varchar(4)	NO	PRI	NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	INTEGER	FALSE		FALSE	
+b	VARCHAR	FALSE		FALSE	
+c	VARCHAR	FALSE		FALSE	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -558,7 +558,7 @@ EXPLAIN SELECT 1 FROM t1 AS t1_outer WHERE
 (SELECT max(b) FROM t1 GROUP BY a HAVING a < 2) > 12;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-2	SUBQUERY	t1	index	NULL	a	10	NULL	15	Using index
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	15	Using temporary; Using filesort
 SELECT 1 as RES FROM t1 AS t1_outer WHERE 
 (SELECT max(b) FROM t1 GROUP BY a HAVING a < 2) > 12;
 RES

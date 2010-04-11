@@ -184,10 +184,11 @@ max(t2.a2)	max(t1.a1)
 NULL	NULL
 explain select min(a2) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	4	
 explain select max(t1.a1), max(t2.a2) from t1, t2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No matching min/max row
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	0	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	4	Using join buffer
 insert into t2 values('AAA', 10, 0.5);
 insert into t2 values('BBB', 20, 1.0);
 select t1.a1, t1.a2, t2.a1, t2.a2 from t1,t2;
@@ -305,126 +306,129 @@ TKF	Seattle	WA	AME
 explain 
 select min(a1) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	
 select min(a1) from t1;
 min(a1)
 AME
 explain 
 select max(a4) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	
 select max(a4) from t1;
 max(a4)
 0.1
 explain 
 select min(a5), max(a5) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	
 select min(a5), max(a5) from t1;
 min(a5)	max(a5)
 1942-02-19	1977-09-23
 explain 
 select min(a3) from t1 where a2 = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	
 select min(a3) from t1 where a2 = 2;
 min(a3)
 CHI
 explain 
 select min(a1), max(a1) from t1 where a4 = 0.080;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k2	k2	9	const	1	Using where
 select min(a1), max(a1) from t1 where a4 = 0.080;
 min(a1)	max(a1)
 BDL	TWU
 explain 
 select min(t1.a5), max(t2.a3) from t1, t2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	7	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	Using join buffer
 select min(t1.a5), max(t2.a3) from t1, t2;
 min(t1.a5)	max(t2.a3)
 1942-02-19	WA
 explain 
 select min(t1.a3), max(t2.a2) from t1, t2 where t1.a2 = 0 and t2.a3 = 'CA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	
+1	SIMPLE	t2	ref	k1	k1	11	const	1	Using where
 select min(t1.a3), max(t2.a2) from t1, t2 where t1.a2 = 0 and t2.a3 = 'CA';
 min(t1.a3)	max(t2.a2)
 DEN	San Diego
 explain 
 select min(a1) from t1 where a1 > 'KKK';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	15	Using where
 select min(a1) from t1 where a1 > 'KKK';
 min(a1)
 PLS
 explain 
 select min(a1) from t1 where a1 >= 'KKK';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	15	Using where
 select min(a1) from t1 where a1 >= 'KKK';
 min(a1)
 KKK
 explain 
 select max(a3) from t1 where a2 = 2 and a3 < 'SEA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select max(a3) from t1 where a2 = 2 and a3 < 'SEA';
 max(a3)
 MIN
 explain 
 select max(a5) from t1 where a5 < date'1970-01-01';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	k3	NULL	NULL	NULL	15	Using where
 select max(a5) from t1 where a5 < date'1970-01-01';
 max(a5)
 1969-10-05
 explain 
 select max(a3) from t1 where a2 is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select max(a3) from t1 where a2 is null;
 max(a3)
 MIN
 explain 
 select max(a3) from t1 where a2 = 0 and a3 between 'K' and 'Q';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select max(a3) from t1 where a2 = 0 and a3 between 'K' and 'Q';
 max(a3)
 LAX
 explain
 select min(a1), max(a1) from t1 where a1 between 'A' and 'P';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	15	Using where
 select min(a1), max(a1) from t1 where a1 between 'A' and 'P';
 min(a1)	max(a1)
 AME	KKK
 explain 
 select max(a3) from t1 where a3 < 'SEA' and a2 = 2 and a3 <= 'MIN';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select max(a3) from t1 where a3 < 'SEA' and a2 = 2 and a3 <= 'MIN';
 max(a3)
 MIN
 explain 
 select max(a3) from t1 where a3 = 'MIN' and a2 = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	20	const,const	1	Using where
 select max(a3) from t1 where a3 = 'MIN' and a2 = 2;
 max(a3)
 MIN
 explain 
 select max(a3) from t1 where a3 = 'DEN' and a2 = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No matching min/max row
+1	SIMPLE	t1	ref	k1	k1	20	const,const	1	Using where
 select max(a3) from t1 where a3 = 'DEN' and a2 = 2;
 max(a3)
 NULL
 explain
 select max(t1.a3), min(t2.a2) from t1, t2 where t1.a2 = 2 and t1.a3 < 'MIN' and t2.a3 = 'CA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
+1	SIMPLE	t2	ref	k1	k1	11	const	1	Using where
 select max(t1.a3), min(t2.a2) from t1, t2 where t1.a2 = 2 and t1.a3 < 'MIN' and t2.a3 = 'CA';
 max(t1.a3)	min(t2.a2)
 CHI	Los Angeles
@@ -438,77 +442,77 @@ NULL
 explain
 select max(a2) from t1 where a2 >= 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	k1	NULL	NULL	NULL	15	Using where
 select max(a2) from t1 where a2 >= 1;
 max(a2)
 3
 explain
 select min(a3) from t1 where a2 = 2 and a3 < 'SEA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select min(a3) from t1 where a2 = 2 and a3 < 'SEA';
 min(a3)
 CHI
 explain
 select min(a3) from t1 where a2 = 4;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No matching min/max row
+1	SIMPLE	t1	ref	k1	k1	5	const	1	
 select min(a3) from t1 where a2 = 4;
 min(a3)
 NULL
 explain
 select min(a3) from t1 where a2 = 2 and a3 > 'SEA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No matching min/max row
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select min(a3) from t1 where a2 = 2 and a3 > 'SEA';
 min(a3)
 NULL
 explain
 select (min(a4)+max(a4))/2 from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	
 select (min(a4)+max(a4))/2 from t1;
 (min(a4)+max(a4))/2
 0.085
 explain
 select min(a3) from t1 where 2 = a2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	
 select min(a3) from t1 where 2 = a2;
 min(a3)
 CHI
 explain
 select max(a3) from t1 where a2 = 2 and 'SEA' > a3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select max(a3) from t1 where a2 = 2 and 'SEA' > a3;
 max(a3)
 MIN
 explain
 select max(a3) from t1 where a2 = 2 and 'SEA' < a3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No matching min/max row
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select max(a3) from t1 where a2 = 2 and 'SEA' < a3;
 max(a3)
 NULL
 explain
 select min(a3) from t1 where a2 = 2 and a3 >= 'CHI';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select min(a3) from t1 where a2 = 2 and a3 >= 'CHI';
 min(a3)
 CHI
 explain
 select min(a3) from t1 where a2 = 2 and a3 >= 'CHI' and a3 < 'SEA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
 select min(a3) from t1 where a2 = 2 and a3 >= 'CHI' and a3 < 'SEA';
 min(a3)
 CHI
 explain
 select min(a3) from t1 where a2 = 2 and a3 >= 'CHI' and a3 = 'MIN';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t1	ref	k1	k1	20	const,const	1	Using where
 select min(a3) from t1 where a2 = 2 and a3 >= 'CHI' and a3 = 'MIN';
 min(a3)
 MIN
@@ -522,51 +526,52 @@ NULL
 explain
 select min(t1.a1), min(t2.a4) from t1,t2 where t1.a1 < 'KKK' and t2.a4 < 'KKK';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t2	ALL	k2	NULL	NULL	NULL	7	Using where
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	15	Using where; Using join buffer
 select min(t1.a1), min(t2.a4) from t1,t2 where t1.a1 < 'KKK' and t2.a4 < 'KKK';
 min(t1.a1)	min(t2.a4)
 AME	AME
 explain 
 select min(a1) from t1 where a1 > 'KKK' or a1 < 'XXX';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY	PRIMARY	0	NULL	1	Using where; Using index
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	15	Using where
 explain 
 select min(a1) from t1 where a1 != 'KKK';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	PRIMARY	PRIMARY	14	NULL	15	Using where; Using index
+1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	15	Using where
 explain
 select max(a3) from t1 where a2 < 2 and a3 < 'SEA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	k1	k1	5	NULL	1	Using where; Using index
+1	SIMPLE	t1	ALL	k1	NULL	NULL	NULL	15	Using where
 explain
 select max(t1.a3), min(t2.a2) from t1, t2 where t1.a2 = 2 and t1.a3 < 'MIN' and t2.a3 > 'CA';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	k1	k1	20	NULL	1	Using where; Using index
-1	SIMPLE	t2	range	k1	k1	11	NULL	1	Using where; Using index; Using join buffer
+1	SIMPLE	t1	ref	k1	k1	5	const	1	Using where
+1	SIMPLE	t2	ALL	k1	NULL	NULL	NULL	7	Using where; Using join buffer
 explain
 select min(a4 - 0.01) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k2	23	NULL	15	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	
 explain
 select max(a4 + 0.01) from t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k2	23	NULL	15	Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	
 explain
 select min(a3) from t1 where (a2 +1 ) is null;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k1	20	NULL	15	Using where; Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	Using where
 explain
 select min(a3) from t1 where (a2 + 1) = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k1	20	NULL	15	Using where; Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	Using where
 explain
 select min(a3) from t1 where 2 = (a2 + 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k1	20	NULL	15	Using where; Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	Using where
 explain
 select min(a2) from t1 where a2 < 2 * a2 - 8;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k1	20	NULL	15	Using where; Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	Using where
 explain
 select min(a1) from t1  where a1 between a3 and 'KKK';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
@@ -574,12 +579,12 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 explain
 select min(a4) from t1  where (a4 + 0.01) between 0.07 and 0.08;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	k2	23	NULL	15	Using where; Using index
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	Using where
 explain
 select concat(min(t1.a1),min(t2.a4)) from t1, t2 where t2.a4 <> 'AME';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	k2	k2	15	NULL	7	Using where; Using index
-1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	Using index; Using join buffer
+1	SIMPLE	t2	ALL	k2	NULL	NULL	NULL	7	Using where
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	15	Using join buffer
 drop table t1, t2;
 create table t1 (a char(10));
 insert into t1 values ('a'),('b'),('c');
@@ -685,13 +690,13 @@ create table t1(f1 datetime);
 insert into t1 values (now());
 create table t2 select f2 from (select max(now()) f2 from t1) a;
 show columns from t2;
-Field	Type	Null	Key	Default	Extra
-f2	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f2	DATETIME	TRUE		TRUE	
 drop table t2;
 create table t2 select f2 from (select now() f2 from t1) a;
 show columns from t2;
-Field	Type	Null	Key	Default	Extra
-f2	datetime	YES		NULL	
+Field	Type	Null	Default	Default_is_NULL	On_Update
+f2	DATETIME	TRUE		TRUE	
 drop table t2, t1;
 CREATE TABLE t1(
 id int PRIMARY KEY,
@@ -1235,7 +1240,7 @@ CREATE TABLE t3 (a INT, b INT, c int, KEY(a, b));
 INSERT INTO t3 VALUES (1, NULL, 1), (2, NULL, 2),  (2, NULL, 2),  (3, NULL, 3);
 EXPLAIN SELECT MIN(a), MIN(b) FROM t3 where a = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t3	ref	a	a	5	const	1	
 SELECT MIN(a), MIN(b) FROM t3 where a = 2;
 MIN(a)	MIN(b)
 2	NULL
@@ -1243,7 +1248,7 @@ CREATE TABLE t4 (a INT, b INT, c int, KEY(a, b));
 INSERT INTO t4 VALUES (1, 1, 1), (2, NULL, 2),  (2, NULL, 2),  (3, 1, 3);
 EXPLAIN SELECT MIN(a), MIN(b) FROM t4 where a = 2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t4	ref	a	a	5	const	1	
 SELECT MIN(a), MIN(b) FROM t4 where a = 2;
 MIN(a)	MIN(b)
 2	NULL
@@ -1254,7 +1259,7 @@ CREATE TABLE t5( a INT, b INT, KEY( a, b) );
 INSERT INTO t5 VALUES( 1, 1 ), ( 1, 2 );
 EXPLAIN SELECT MIN(a), MIN(b) FROM t5 WHERE a = 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
+1	SIMPLE	t5	ref	a	a	5	const	1	
 SELECT MIN(a), MIN(b) FROM t5 WHERE a = 1;
 MIN(a)	MIN(b)
 1	1
