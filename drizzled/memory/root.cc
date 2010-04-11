@@ -133,7 +133,20 @@ void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
   }
 }
 
-
+/**
+ * @brief 
+ * Allocate a chunk of memory from the Root structure provided, 
+ * obtaining more memory from the heap if necessary
+ *
+ * @pre
+ * mem_root must have been initialised via init_alloc_root()
+ *
+ * @param  mem_root  The memory Root to allocate from
+ * @param  length    The size of the block to allocate
+ *
+ * @todo Would this be more suitable as a member function on the
+ * Root class?
+ */
 void *memory::alloc_root(memory::Root *mem_root, size_t length)
 {
   size_t get_size, block_size;
@@ -186,7 +199,8 @@ void *memory::alloc_root(memory::Root *mem_root, size_t length)
     mem_root->used= next;
     mem_root->first_block_usage= 0;
   }
-  return((void*) point);
+
+  return point;
 }
 
 
@@ -247,7 +261,7 @@ void *memory::multi_alloc_root(memory::Root *root, ...)
 /**
  * @brief
  * Mark all data in blocks free for reusage 
-*/
+ */
 static inline void mark_blocks_free(memory::Root* root)
 {
   memory::internal::UsedMemory *next;
@@ -354,13 +368,27 @@ void memory::set_prealloc_root(memory::Root *root, char *ptr)
   }
 }
 
-
+/**
+ * @brief
+ * Duplicate a null-terminated string into memory allocated from within the
+ * specified Root
+ */
 char *memory::strdup_root(memory::Root *root, const char *str)
 {
   return strmake_root(root, str, strlen(str));
 }
 
-
+/**
+ * @brief
+ * Copy the (not necessarily null-terminated) string into memory allocated
+ * from within the specified Root
+ *
+ * @details
+ * Note that the string is copied according to the length specified, so
+ * null-termination is ignored. The duplicated string will be null-terminated,
+ * even if the original string wasn't (one additional byte is allocated for
+ * this purpose).
+ */
 char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
 {
   char *pos;
@@ -372,7 +400,15 @@ char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
   return pos;
 }
 
-
+/**
+ * @brief
+ * Duplicate the provided block into memory allocated from within the specified
+ * Root
+ *
+ * @return
+ * non-NULL pointer to a copy of the data if memory could be allocated, otherwise
+ * NULL
+ */
 void *memory::memdup_root(memory::Root *root, const void *str, size_t len)
 {
   void *pos;

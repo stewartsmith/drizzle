@@ -31,6 +31,10 @@ namespace drizzled
 /**
  * @namespace drizzled::memory
  * Memory allocation utils
+ *
+ * NB: This namespace documentation may not seem very useful, but without a
+ * comment on the namespace Doxygen won't extract any documentation for
+ * namespace members.
  */
 namespace memory
 {
