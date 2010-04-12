@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2010-03-15 21:00+0000\n"
-"PO-Revision-Date: 2010-03-16 21:15+0000\n"
+"POT-Creation-Date: 2010-03-31 06:13+0000\n"
+"PO-Revision-Date: 2010-04-11 13:00+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-17 04:38+0000\n"
+"X-Launchpad-Export-Date: 2010-04-12 03:52+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -470,12 +470,16 @@ msgid "Unknown command: "
 msgstr "Onbekende opdracht: "
 
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
-"Leest tabel informatie voor het vervolledigen van tabel- en kolomnamen\n"
-"    Je kan deze functie uitschakelen om sneller op te starten met -A\n"
+"                              Leest tabel informatie voor het aanvullen van "
+"tabel- en kolomnamen\n"
+"                                  Om sneller op te starten kan je deze "
+"feature uitschakelen met -A\n"
 "\n"
 
 msgid "No connection. Trying to reconnect..."
@@ -734,6 +738,14 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Fout: Niet genoeg geheugen om de ORDER BY clausule op te slaan\n"
 
 #, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr "Kon '%s' niet openen om te lezen: errno = %d"
+
+#, c-format
+msgid "Out of memory"
+msgstr "Te weinig geheugen"
+
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "Kreeg signaal %d van thread %<PRIu64>"
 
@@ -865,9 +877,6 @@ msgstr "Onbekende locale: '%s'"
 
 msgid "Can't create thread-keys"
 msgstr "Kan geen thread-keys aanmaken"
-
-msgid "Out of memory"
-msgstr "Te weinig geheugen"
 
 msgid "Failed to initialize plugins."
 msgstr "Initialiseren van plugins mislukte."
@@ -1236,8 +1245,9 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr "Gegevens directory %s bestaat niet\n"
 
-msgid "UNUSED"
-msgstr "ONGEBRUIKT"
+#, c-format
+msgid "Unknown error %d"
+msgstr "Onbekende fout %d"
 
 msgid "NO"
 msgstr "NEE"
@@ -4365,54 +4375,8 @@ msgid "Error droppping Schema : %s"
 msgstr "Fout bij verwijderen van schema : %s"
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Kan bestand '%s' niet aanmaken/wijzigen (Foutcode: %d)"
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Fout bij lezen van bestand '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Fout bij schrijven van bestand '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr "Fout bij sluiten van '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Geheugen is op (Had %u bytes nodig)"
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Fout bij wissen van '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Fout bij hernoemen van '%s' naar '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-"Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%s' "
-"(Foutcode: %d)"
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Kan bestand niet vergrendelen (Foutcode: %d)"
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "Kan bestand niet ontgrendelen (Foutcode: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Kan dir van '%s' niet lezen (Foutcode: %d)"
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr "Kan stat van '%s' niet lezen (Foutcode: %d)"
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -4423,26 +4387,12 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr "Kan geen stream openen met deze handle (Foutcode: %d)"
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Kan de werkdirectory niet vinden (Foutcode: %d)"
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Kan directory niet veranderen in '%s' (Foutcode: %d)"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr "Waarschuwing: '%s' had %d links"
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
 msgstr "Waarschuwing: %d bestanden and %d streams zijn nog geopend\n"
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr ""
-"Disk is vol bij het schrijven van '%s'. Aan het wachten tot iemand ruimte "
-"vrijmaakt..."
 
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
@@ -4486,16 +4436,8 @@ msgstr ""
 "het bestand %s"
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "Bestand '%s' niet gevonden (Foutcode: %d)"
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr "Bestand '%s' (fileno: %d) werd niet afgesloten"
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Onbekende fout %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -5373,9 +5315,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr "Verkeerde index gegeven aan de functie"
 
-msgid "Undefined handler error 125"
-msgstr "Ongedefinieerde handler fout 125"
-
 msgid "Index file is crashed"
 msgstr "Index bestand is gecrashed"
 
@@ -5384,9 +5323,6 @@ msgstr "Record bestand is gecrashed"
 
 msgid "Out of memory in engine"
 msgstr "Geheugen tekort in engine"
-
-msgid "Undefined handler error 129"
-msgstr "Ongedefinieerde handler fout 129"
 
 msgid "Incorrect file format"
 msgstr "Bestand heeft onjuiste indeling"
@@ -5663,9 +5599,88 @@ msgstr "BUFFER: %s\n"
 #~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 #~ msgstr "%s Ver %s Distrib %s, voor %s (%s) gebruik makend van %s %s\n"
 
+#~ msgid ""
+#~ "Reading table information for completion of table and column names\n"
+#~ "    You can turn off this feature to get a quicker startup with -A\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Leest tabel informatie voor het vervolledigen van tabel- en kolomnamen\n"
+#~ "    Je kan deze functie uitschakelen om sneller op te starten met -A\n"
+#~ "\n"
+
 #, c-format
 #~ msgid "Unknown command '\\%c'."
 #~ msgstr "Onbekende opdracht '\\%c'."
+
+#, c-format
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Fout bij wissen van '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Fout bij hernoemen van '%s' naar '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Kan bestand '%s' niet aanmaken/wijzigen (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Fout bij lezen van bestand '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Fout bij schrijven van bestand '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Geheugen is op (Had %u bytes nodig)"
+
+#, c-format
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Kan directory niet veranderen in '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Kan bestand niet vergrendelen (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%s' "
+#~ "(Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Kan dir van '%s' niet lezen (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Kan stat van '%s' niet lezen (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Kan de werkdirectory niet vinden (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Disk is vol bij het schrijven van '%s'. Aan het wachten tot iemand ruimte "
+#~ "vrijmaakt..."
+
+#, c-format
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Bestand '%s' niet gevonden (Foutcode: %d)"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Ongedefinieerde handler fout 125"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Ongedefinieerde handler fout 129"
+
+#, c-format
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Fout bij sluiten van '%s' (Foutcode: %d)"
 
 #~ msgid "Buffer length for TCP/IP and socket communication."
 #~ msgstr "Buffer lengte voor TCP/IP en socket communicatie"
