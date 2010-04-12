@@ -133,9 +133,30 @@ static int init(drizzled::plugin::Context &context)
         return 1;
       }
     }
+
+    /* Create and initialize the transaction log index */
+    transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
+    if (transaction_log_index == NULL)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"), 
+                    strerror(errno));
+      return 1;
+    }
+    else
+    {
+      /* Check to see if the index was not created properly */
+      if (transaction_log_index->hasError())
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the Transaction Log Index.  Got error: %s\n"), 
+                      transaction_log_index->getErrorMessage().c_str());
+        return 1;
+      }
+    }
+
     /* Create the applier plugin and register it */
     transaction_log_applier= new (nothrow) TransactionLogApplier("transaction_log_applier",
                                                                  transaction_log, 
+                                                                 transaction_log_index, 
                                                                  sysvar_transaction_log_num_write_buffers);
     if (transaction_log_applier == NULL)
     {
@@ -165,25 +186,6 @@ static int init(drizzled::plugin::Context &context)
     hexdump_transaction_message_func_factory=
       new plugin::Create_function<HexdumpTransactionMessageFunction>("hexdump_transaction_message");
     context.add(hexdump_transaction_message_func_factory);
-
-    /* Create and initialize the transaction log index */
-    transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
-    if (transaction_log_index == NULL)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"), 
-                    strerror(errno));
-      return 1;
-    }
-    else
-    {
-      /* Check to see if the index was not created properly */
-      if (transaction_log_index->hasError())
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize the Transaction Log Index.  Got error: %s\n"), 
-                      transaction_log_index->getErrorMessage().c_str());
-        return 1;
-      }
-    }
 
     /* 
      * Setup the background worker thread which maintains
