@@ -2037,3 +2037,11 @@
    fun:main
 }
 
+{
+   InnoDB allocing out of its internal heap is always confusing to valgrind
+   Memcheck:Leak
+   ...
+   fun:mem_heap_create_block
+   ...
+}
+
