@@ -3,7 +3,7 @@
 noinst_LTLIBRARIES+= 		plugin/pbxt/libpbxt.la
 
 noinst_HEADERS+= \
-		plugin/pbxt/src/bsearch_xt.h
+		plugin/pbxt/src/bsearch_xt.h \
 		plugin/pbxt/src/cache_xt.h \
 		plugin/pbxt/src/ccutils_xt.h \
 		plugin/pbxt/src/database_xt.h \
@@ -39,7 +39,7 @@ noinst_HEADERS+= \
 
 
 plugin_pbxt_libpbxt_la_CXXFLAGS=	${AM_CXXFLAGS} -DDRIZZLED -Wno-long-long -Wno-overloaded-virtual -Wno-sign-compare -Wno-unused-function
-plugin_pbxt_libpbxt_la_CFLAGS=		${AM_CFLAGS} -DDRIZZLED -std=c99
+plugin_pbxt_libpbxt_la_CFLAGS=		${AM_CFLAGS} -DDRIZZLED
 
 plugin_pbxt_libpbxt_la_SOURCES= \
 		plugin/pbxt/src/bsearch_xt.cc \
@@ -70,6 +70,3 @@ plugin_pbxt_libpbxt_la_SOURCES= \
 		plugin/pbxt/src/xaction_xt.cc \
 		plugin/pbxt/src/xactlog_xt.cc \
 		plugin/pbxt/src/lock_xt.cc
-
-
-EXTRA_DIST+=			CMakeLists.txt
