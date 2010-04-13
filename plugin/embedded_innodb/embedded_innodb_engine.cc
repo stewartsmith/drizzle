@@ -463,7 +463,6 @@ void EmbeddedInnoDBCursor::get_auto_increment(uint64_t, //offset,
                                               uint64_t *nb_reserved_values)
 {
   *first_value= share->auto_increment_value.fetch_and_increment();
-  (*first_value)--;
   *nb_reserved_values= 1;
 }
 
