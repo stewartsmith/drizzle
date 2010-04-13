@@ -73,4 +73,6 @@ plugin_pbxt_libpbxt_la_SOURCES= \
                                 plugin/pbxt/src/xaction_xt.cc \
                                 plugin/pbxt/src/xactlog_xt.cc
 
-EXTRA_DIST += plugin/pbxt/bin/xtstat_xt.cc
+EXTRA_DIST+= \
+             plugin/pbxt/bin/xtstat_xt.cc \
+             plugin/pbxt/src/backup_xt.cc
