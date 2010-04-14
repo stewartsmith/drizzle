@@ -82,8 +82,7 @@ public:
                           HTON_HAS_RECORDS |
                           HTON_DUPLICATE_POS |
                           HTON_AUTO_PART_KEY |
-                          HTON_SKIP_STORE_LOCK |
-                          HTON_FILE_BASED )
+                          HTON_SKIP_STORE_LOCK)
   {
     pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
   }
