@@ -68,7 +68,6 @@ public:
 					HTON_FAST_KEY_READ | 
 					HTON_NULL_IN_KEY | 
 					HTON_CAN_INDEX_BLOBS |
-					HTON_FILE_BASED | 
 					HTON_AUTO_PART_KEY) 
 	{}
 
