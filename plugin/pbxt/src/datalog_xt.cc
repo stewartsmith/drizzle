@@ -377,7 +377,7 @@ static xtBool dl_write_log_header(XTDataLogFilePtr data_log, XTOpenFilePtr of, x
 	return OK;
 }
 
-static void dl_free_seq_read(XTThreadPtr self __attribute__((unused)), XTDataSeqReadPtr seq_read)
+static void dl_free_seq_read(XTThreadPtr XT_UNUSED(self), XTDataSeqReadPtr seq_read)
 {
 	seq_read->sl_seq_exit();
 }

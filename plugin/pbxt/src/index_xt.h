@@ -248,7 +248,15 @@ typedef void (*XTLastItemFunc)(struct XTTable *tab, struct XTIndex *ind, XTIdxBr
 
 typedef int (*XTSimpleCompFunc)(struct XTIndex *ind, u_int key_length, xtWord1 *key_value, xtWord1 *b_value);
 
+#ifdef DRIZZLED
+namespace drizzled
+{
+  struct charset_info_st;
+}
+using drizzled::charset_info_st;
+#else
 struct charset_info_st;
+#endif
 
 typedef struct XTIndexSeg		/* Key-portion */
 {
