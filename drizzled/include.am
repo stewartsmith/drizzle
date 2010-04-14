@@ -193,7 +193,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/ha_statistics.h \
 			      drizzled/cursor.h \
 			      drizzled/handler_structs.h \
-			      drizzled/hash.h \
 			      drizzled/hybrid_type.h \
 			      drizzled/hybrid_type_traits.h \
 			      drizzled/hybrid_type_traits_decimal.h \
@@ -421,6 +420,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
+			      drizzled/unordered_map.h \
+			      drizzled/unordered_set.h \
 			      drizzled/user_var_entry.h \
 			      drizzled/utf8.h \
 			      drizzled/utf8/checked.h \
