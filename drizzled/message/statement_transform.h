@@ -390,7 +390,7 @@ enum TransformSqlError
 transformTableDefinitionToSql(const Table &table,
                               std::string &destination,
                               enum TransformSqlVariant sql_variant= DRIZZLE,
-                              bool with_schema= false);
+                              bool with_schema= true);
 
 /**
  * Appends to the supplied string an SQL expression
