@@ -25,6 +25,7 @@
 #define __xt_thread_h__
 
 #include <stdio.h>
+#include <limits.h>
 #ifndef XT_WIN
 #include <sys/param.h>
 #endif

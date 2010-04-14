@@ -4338,7 +4338,11 @@ int ha_pbxt::delete_all_rows()
  * now agree with the MyISAM strategy.
  * 
  */
+#ifdef DRIZZLED
+int ha_pbxt::analyze(THD *thd)
+#else
 int ha_pbxt::analyze(THD *thd, HA_CHECK_OPT *XT_UNUSED(check_opt))
+#endif
 {
 	int				err = 0;
 	XTDatabaseHPtr	db;
@@ -4440,7 +4444,11 @@ int ha_pbxt::optimize(THD *XT_UNUSED(thd), HA_CHECK_OPT *XT_UNUSED(check_opt))
 extern int pbxt_mysql_trace_on;
 #endif
 
+#ifdef DRIZZLED
+int ha_pbxt::check(THD* thd)
+#else
 int ha_pbxt::check(THD* thd, HA_CHECK_OPT* XT_UNUSED(check_opt))
+#endif
 {
 	int				err = 0;
 	XTThreadPtr		self;

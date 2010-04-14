@@ -51,6 +51,7 @@ using namespace drizzled;
 #ifdef HAVE_ISNAN
 #include <math.h>
 #endif
+#include <strings.h>
 
 #include "ha_pbxt.h"
 
