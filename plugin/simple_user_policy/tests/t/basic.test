@@ -51,7 +51,7 @@ connect (con2,localhost,user2,,user2,);
 connection con1;
 
 # Check that we don't see other people's connections
---replace_column 3 # 5 # 6 # 7 #
+--replace_column 3 # 5 # 6 # 7 # 8 #
 show processlist;
 
 # Check that we can kill a process that is owned by our user
@@ -81,7 +81,7 @@ update t1 set kill_id = connection_id();
 
 # Test that we cannot kill a process owned by someone else
 connection con2;
---replace_column 3 # 5 # 6 # 7 #
+--replace_column 3 # 5 # 6 # 7 # 8 #
 show processlist;
 select ((@id := kill_id) - kill_id) from t1;
 
@@ -90,7 +90,7 @@ kill @id;
 
 # Test that root can see everybody
 connection default;
---replace_column 3 # 5 # 6 # 7 #
+--replace_column 3 # 5 # 6 # 7 # 8 #
 show processlist;
 
 # Test that root can kill someone else
