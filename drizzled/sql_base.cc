@@ -2102,9 +2102,9 @@ restart:
      * to see if it exists so that an unauthorized user cannot phish for
      * table/schema information via error messages
      */
+    TableIdentifier the_table(tables->db, tables->table_name);
     if (not plugin::Authorization::isAuthorized(getSecurityContext(),
-                                                string(tables->db),
-                                                string(tables->table_name)))
+                                                TableIdentifier(tables->db, tables->table_name)))
     {
       result= -1;                               // Fatal error
       break;
