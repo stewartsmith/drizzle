@@ -2104,7 +2104,7 @@ restart:
      */
     TableIdentifier the_table(tables->db, tables->table_name);
     if (not plugin::Authorization::isAuthorized(getSecurityContext(),
-                                                TableIdentifier(tables->db, tables->table_name)))
+                                                the_table))
     {
       result= -1;                               // Fatal error
       break;
