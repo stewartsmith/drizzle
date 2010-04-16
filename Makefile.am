@@ -66,19 +66,7 @@ include config/pandora-plugin.am
 EXTRA_DIST+=	${man_MANS}
 
 .PHONY: \
-	indent \
-	test
-
-
-# Target 'test' will run the regression test suite using the built server.
-#
-# If you are running in a shared environment, users can avoid clashing
-# port numbers by setting individual small numbers 1-100 to the
-# environment variable MTR_BUILD_THREAD. The script "test-run"
-# will then calculate the various port numbers it needs from this,
-# making sure each user use different ports.
-
-test: test-drizzle
+	indent
 
 doxygen:
 	doxygen Doxyfile
