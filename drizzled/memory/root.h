@@ -13,6 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+/**
+ * @file
+ * @brief Memory root declarations
+ */
 
 #ifndef DRIZZLED_MEMORY_ROOT_H
 #define DRIZZLED_MEMORY_ROOT_H
@@ -23,6 +27,15 @@
 
 namespace drizzled
 {
+
+/**
+ * @namespace drizzled::memory
+ * Memory allocation utils
+ *
+ * NB: This namespace documentation may not seem very useful, but without a
+ * comment on the namespace Doxygen won't extract any documentation for
+ * namespace members.
+ */
 namespace memory
 {
 
@@ -50,23 +63,33 @@ static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::Use
 class Root
 {
 public:
-  /* blocks with free memory in it */
+  /**
+   * blocks with free memory in it 
+   */
   internal::UsedMemory *free;
 
-  /* blocks almost without free memory */
+  /**
+   * blocks almost without free memory 
+   */
   internal::UsedMemory *used;
 
-  /* preallocated block */
+  /**
+   * preallocated block 
+   */
   internal::UsedMemory *pre_alloc;
 
-  /* if block have less memory it will be put in 'used' list */
+  /**
+   * if block have less memory it will be put in 'used' list 
+   */
   size_t min_malloc;
-  size_t block_size;               /* initial block size */
-  unsigned int block_num;          /* allocated blocks counter */
-  /*
-     first free block in queue test counter (if it exceed
-     MAX_BLOCK_USAGE_BEFORE_DROP block will be dropped in 'used' list)
-  */
+
+  size_t block_size;         ///< initial block size
+  unsigned int block_num;    ///< allocated blocks counter 
+
+  /**
+   * first free block in queue test counter (if it exceed
+   * MAX_BLOCK_USAGE_BEFORE_DROP block will be dropped in 'used' list)
+   */
   unsigned int first_block_usage;
 
   void (*error_handler)(void);
