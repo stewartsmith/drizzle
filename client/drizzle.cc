@@ -2478,9 +2478,11 @@ static void build_completion_hash(bool rehash, bool write_info)
     {
       if (drizzle_result_row_count(&tables) > 0 && !opt_silent && write_info)
       {
-        tee_fprintf(stdout, _("\
-                              Reading table information for completion of table and column names\n    \
-                              You can turn off this feature to get a quicker startup with -A\n\n"));
+        tee_fprintf(stdout,
+                    _("Reading table information for completion of "
+                      "table and column names\n"
+                      "You can turn off this feature to get a quicker "
+                      "startup with -A\n\n"));
       }
       while ((table_row=drizzle_row_next(&tables)))
       {
