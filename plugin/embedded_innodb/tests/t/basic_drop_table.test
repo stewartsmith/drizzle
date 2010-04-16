@@ -1,5 +1,5 @@
-CREATE TABLE t1 (a int);
-CREATE TABLE t2 (a int);
+CREATE TABLE t1 (a int primary key);
+CREATE TABLE t2 (a int primary key);
 DROP TABLE t1;
 DROP TABLE t2;
 --error 1051
