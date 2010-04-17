@@ -272,11 +272,6 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
                                                         bool *are_all_covering);
 
 static
-optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Parameter *param,
-                                                                 optimizer::SEL_TREE *tree,
-                                                                 double read_time);
-
-static
 optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
                                                   optimizer::SEL_IMERGE *imerge,
                                                   double read_time);
@@ -816,14 +811,6 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
           {
             best_trp= rori_trp;
             best_read_time= best_trp->read_cost;
-            /*
-              Try constructing covering ROR-intersect only if it looks possible
-              and worth doing.
-            */
-            if (rori_trp->isRowRetrievalNecessary() && can_build_covering &&
-                (rori_trp= get_best_covering_ror_intersect(&param, tree,
-                                                           best_read_time)))
-              best_trp= rori_trp;
           }
         }
       }
@@ -1274,40 +1261,6 @@ static int cmp_ror_scan_info(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
   double val1= rows2double((*a)->records) * (*a)->key_rec_length;
   double val2= rows2double((*b)->records) * (*b)->key_rec_length;
   return (val1 < val2)? -1: (val1 == val2)? 0 : 1;
-}
-
-/*
-  Compare two ROR_SCAN_INFO** by
-   (#covered fields in F desc,
-    #components asc,
-    number of first not covered component asc)
-
-  SYNOPSIS
-    cmp_ror_scan_info_covering()
-      a ptr to first compared value
-      b ptr to second compared value
-
-  RETURN
-   -1 a < b
-    0 a = b
-    1 a > b
-*/
-
-static int cmp_ror_scan_info_covering(ROR_SCAN_INFO** a, ROR_SCAN_INFO** b)
-{
-  if ((*a)->used_fields_covered > (*b)->used_fields_covered)
-    return -1;
-  if ((*a)->used_fields_covered < (*b)->used_fields_covered)
-    return 1;
-  if ((*a)->key_components < (*b)->key_components)
-    return -1;
-  if ((*a)->key_components > (*b)->key_components)
-    return 1;
-  if ((*a)->first_uncovered_field < (*b)->first_uncovered_field)
-    return -1;
-  if ((*a)->first_uncovered_field > (*b)->first_uncovered_field)
-    return 1;
-  return 0;
 }
 
 
@@ -1826,140 +1779,6 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     trp->cpk_scan= cpk_scan_used? cpk_scan: NULL;
   }
   return trp;
-}
-
-
-/*
-  Get best covering ROR-intersection.
-  SYNOPSIS
-    get_best_covering_ror_intersect()
-      param     Parameter from test_quick_select function.
-      tree      optimizer::SEL_TREE with sets of intervals for different keys.
-      read_time Don't return table read plans with cost > read_time.
-
-  RETURN
-    Best covering ROR-intersection plan
-    NULL if no plan found.
-
-  NOTES
-    get_best_ror_intersect must be called for a tree before calling this
-    function for it.
-    This function invalidates tree->ror_scans member values.
-
-  The following approximate algorithm is used:
-    I=set of all covering indexes
-    F=set of all fields to cover
-    S={}
-
-    do
-    {
-      Order I by (#covered fields in F desc,
-                  #components asc,
-                  number of first not covered component asc);
-      F=F-covered by first(I);
-      S=S+first(I);
-      I=I-first(I);
-    } while F is not empty.
-*/
-
-static
-optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Parameter *param,
-                                                            optimizer::SEL_TREE *tree,
-                                                            double read_time)
-{
-  ROR_SCAN_INFO **ror_scan_mark;
-  ROR_SCAN_INFO **ror_scans_end= tree->ror_scans_end;
-
-  for (ROR_SCAN_INFO **scan= tree->ror_scans; scan != ror_scans_end; ++scan)
-    (*scan)->key_components=
-      param->table->key_info[(*scan)->keynr].key_parts;
-
-  /*
-    Run covering-ROR-search algorithm.
-    Assume set I is [ror_scan .. ror_scans_end)
-  */
-
-  /*I=set of all covering indexes */
-  ror_scan_mark= tree->ror_scans;
-
-  MyBitmap *covered_fields= &param->tmp_covered_fields;
-  if (! covered_fields->getBitmap())
-  {
-    my_bitmap_map *tmp_bitmap= (my_bitmap_map*)alloc_root(param->mem_root,
-                                               param->fields_bitmap_size);
-    covered_fields->setBitmap(tmp_bitmap);
-  }
-  if (! covered_fields->getBitmap() ||
-      covered_fields->init(covered_fields->getBitmap(),
-                           param->table->s->fields))
-    return 0;
-  covered_fields->clearAll();
-
-  double total_cost= 0.0f;
-  ha_rows records=0;
-  bool all_covered;
-
-  do
-  {
-    /*
-      Update changed sorting info:
-        #covered fields,
-	number of first not covered component
-      Calculate and save these values for each of remaining scans.
-    */
-    for (ROR_SCAN_INFO **scan= ror_scan_mark; scan != ror_scans_end; ++scan)
-    {
-      bitmap_subtract(&(*scan)->covered_fields, covered_fields);
-      (*scan)->used_fields_covered=
-        (*scan)->covered_fields.getBitsSet();
-      (*scan)->first_uncovered_field=
-        (*scan)->covered_fields.getFirst();
-    }
-
-    internal::my_qsort(ror_scan_mark, ror_scans_end-ror_scan_mark,
-                       sizeof(ROR_SCAN_INFO*),
-                       (qsort_cmp)cmp_ror_scan_info_covering);
-
-    /* I=I-first(I) */
-    total_cost += (*ror_scan_mark)->index_read_cost;
-    records += (*ror_scan_mark)->records;
-    if (total_cost > read_time)
-      return NULL;
-    /* F=F-covered by first(I) */
-    bitmap_union(covered_fields, &(*ror_scan_mark)->covered_fields);
-    all_covered= bitmap_is_subset(&param->needed_fields, covered_fields);
-  } while ((++ror_scan_mark < ror_scans_end) && !all_covered);
-
-  if (!all_covered || (ror_scan_mark - tree->ror_scans) == 1)
-    return NULL;
-
-  /*
-    Ok, [tree->ror_scans .. ror_scan) holds covering index_intersection with
-    cost total_cost.
-  */
-  /* Add priority queue use cost. */
-  total_cost += rows2double(records)*
-                log((double)(ror_scan_mark - tree->ror_scans)) /
-                (TIME_FOR_COMPARE_ROWID * M_LN2);
-
-  if (total_cost > read_time)
-    return NULL;
-
-  optimizer::RorIntersectReadPlan *trp= NULL;
-  if (! (trp= new (param->mem_root) optimizer::RorIntersectReadPlan))
-  {
-    return trp;
-  }
-
-  uint32_t best_num= (ror_scan_mark - tree->ror_scans);
-  trp->ror_range_scans.assign(tree->ror_scans, tree->ror_scans + best_num);
-  trp->setRowRetrievalNecessary(true);
-  trp->read_cost= total_cost;
-  trp->records= records;
-  trp->cpk_scan= NULL;
-  set_if_smaller(param->table->quick_condition_rows, records);
-
-  return(trp);
 }
 
 
