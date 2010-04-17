@@ -35,6 +35,7 @@
 #include "drizzled/error.h"
 
 #include <libmemcached/memcached.h>
+#include <libmemcached/server.h>
 
 using namespace std;
 using namespace drizzled;
@@ -93,11 +94,11 @@ bool AnalysisTableTool::Generator::populate()
 
     push(static_cast<uint64_t>(server_count));
     push(static_cast<uint64_t>(report->average_item_size));
-    push(memcached_server_name(&servers[report->most_consumed_server]));
+    push(memcached_server_name(serv, servers[report->most_consumed_server]));
     push(report->most_used_bytes);
-    push(memcached_server_name(&servers[report->least_free_server]));
+    push(memcached_server_name(serv, servers[report->least_free_server]));
     push(report->least_remaining_bytes);
-    push(memcached_server_name(&servers[report->oldest_server]));
+    push(memcached_server_name(serv, servers[report->oldest_server]));
     push(static_cast<uint64_t>(report->longest_uptime));
     push(static_cast<int64_t>(report->pool_hit_ratio));
     free(report);

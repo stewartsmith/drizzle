@@ -21,13 +21,13 @@
 #ifndef DRIZZLED_TABLE_FUNCTION_CONTAINER_H
 #define DRIZZLED_TABLE_FUNCTION_CONTAINER_H
 
-#include "drizzled/hash.h"
+#include <drizzled/unordered_map.h>
 #include <set>
 
 namespace drizzled {
 
 class TableFunctionContainer {
-  typedef hash_map<std::string, plugin::TableFunction *> ToolMap;
+  typedef unordered_map<std::string, plugin::TableFunction *> ToolMap;
 
   ToolMap table_map;
 

@@ -28,6 +28,8 @@
 
 #include <string>
 
+#include <drizzled/unordered_map.h>
+
 #include "drizzled/typelib.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/memory/root.h"
@@ -36,7 +38,7 @@
 namespace drizzled
 {
 
-typedef drizzled::hash_map<std::string, TableShare *> TableDefinitionCache;
+typedef unordered_map<std::string, TableShare *> TableDefinitionCache;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
