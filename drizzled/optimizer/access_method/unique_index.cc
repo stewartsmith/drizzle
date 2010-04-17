@@ -18,6 +18,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/join_table.h"
 #include "drizzled/sql_select.h"
@@ -44,7 +45,7 @@ bool optimizer::UniqueIndex::getStats(Table *table,
       ! table->no_keyread)
   {
     table->key_read= 1;
-    table->file->extra(HA_EXTRA_KEYREAD);
+    table->cursor->extra(HA_EXTRA_KEYREAD);
   }
   return false;
 }

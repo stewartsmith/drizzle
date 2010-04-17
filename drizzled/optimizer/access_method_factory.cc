@@ -18,6 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
 #include "drizzled/sql_select.h"
 #include "drizzled/join_table.h"
 #include "drizzled/optimizer/access_method.h"

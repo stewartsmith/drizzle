@@ -18,9 +18,12 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
 #include "drizzled/session.h"
 #include "drizzled/join_table.h"
+#include "drizzled/table.h"
 #include "drizzled/sql_select.h"
+#include "drizzled/internal/my_sys.h"
 #include "drizzled/optimizer/access_method/scan.h"
 
 using namespace drizzled;
@@ -117,7 +120,7 @@ bool optimizer::Scan::getStats(Table *table,
           table->covering_keys.test(join_tab->select->quick->index))
       {
         table->key_read= 1;
-        table->file->extra(HA_EXTRA_KEYREAD);
+        table->cursor->extra(HA_EXTRA_KEYREAD);
       }
       else if (! table->covering_keys.none() &&
                ! (join_tab->select && join_tab->select->quick))
@@ -129,7 +132,7 @@ bool optimizer::Scan::getStats(Table *table,
              is always faster than using a secondary index".
            */
           if (table->s->primary_key != MAX_KEY &&
-              table->file->primary_key_is_clustered())
+              table->cursor->primary_key_is_clustered())
           {
             join_tab->index= table->s->primary_key;
           }
@@ -157,16 +160,18 @@ bool optimizer::Scan::getStats(Table *table,
 */
 static uint32_t make_join_orderinfo(JOIN *join)
 {
-  uint32_t i;
+  uint32_t i= 0;
   if (join->need_tmp)
-    return join->tables;
-
-  for (i=join->const_tables ; i < join->tables ; i++)
   {
-    JoinTable *tab= join->join_tab+i;
+    return join->tables;
+  }
+
+  for (i= join->const_tables ; i < join->tables ; i++)
+  {
+    JoinTable *tab= join->join_tab + i;
     Table *table= tab->table;
     if ((table == join->sort_by_table &&
-        (!join->order || join->skip_sort_order)) ||
+        (! join->order || join->skip_sort_order)) ||
         (join->sort_by_table == (Table *) 1 &&  i != join->const_tables))
     {
       break;

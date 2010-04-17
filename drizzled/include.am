@@ -265,6 +265,13 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/natural_join_column.h \
 			      drizzled/nested_join.h \
 			      drizzled/open_tables_state.h \
+                              drizzled/optimizer/access_method.h \
+                              drizzled/optimizer/access_method/const.h \
+                              drizzled/optimizer/access_method/index.h \
+                              drizzled/optimizer/access_method/scan.h \
+                              drizzled/optimizer/access_method/system.h \
+                              drizzled/optimizer/access_method/unique_index.h \
+                              drizzled/optimizer/access_method_factory.h \
                               drizzled/optimizer/cost_vector.h \
 			      drizzled/optimizer/key_field.h \
 			      drizzled/optimizer/key_use.h \
@@ -639,6 +646,12 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/tree.cc \
 			   drizzled/name_resolution_context_state.cc \
 			   drizzled/natural_join_column.cc \
+                           drizzled/optimizer/access_method/const.cc \
+                           drizzled/optimizer/access_method/index.cc \
+                           drizzled/optimizer/access_method/scan.cc \
+                           drizzled/optimizer/access_method/system.cc \
+                           drizzled/optimizer/access_method/unique_index.cc \
+                           drizzled/optimizer/access_method_factory.cc \
 			   drizzled/optimizer/explain_plan.cc \
 			   drizzled/optimizer/key_field.cc \
 			   drizzled/optimizer/quick_group_min_max_select.cc \
