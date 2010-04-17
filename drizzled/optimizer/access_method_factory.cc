@@ -30,30 +30,32 @@
 #include "drizzled/optimizer/access_method/index.h"
 #include "drizzled/optimizer/access_method/scan.h"
 
+#include <boost/shared_ptr.hpp>
+
 using namespace drizzled;
 
-optimizer::AccessMethod *
+boost::shared_ptr<optimizer::AccessMethod>
 optimizer::AccessMethodFactory::createAccessMethod(enum access_method type)
 {
-  optimizer::AccessMethod *am_ret= NULL;
+  boost::shared_ptr<optimizer::AccessMethod> am_ret;
 
   switch (type)
   {
   case AM_SYSTEM:
-    am_ret= new(std::nothrow) optimizer::System();
+    am_ret.reset(new optimizer::System());
     break;
   case AM_CONST:
-    am_ret= new(std::nothrow) optimizer::Const();
+    am_ret.reset(new optimizer::Const());
     break;
   case AM_EQ_REF:
-    am_ret= new(std::nothrow) optimizer::UniqueIndex();
+    am_ret.reset(new optimizer::UniqueIndex());
     break;
   case AM_REF_OR_NULL:
   case AM_REF:
-    am_ret= new(std::nothrow) optimizer::Index();
+    am_ret.reset(new optimizer::Index());
     break;
   case AM_ALL:
-    am_ret= new(std::nothrow) optimizer::Scan();
+    am_ret.reset(new optimizer::Scan());
     break;
   default:
     break;

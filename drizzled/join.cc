@@ -4896,7 +4896,7 @@ static bool make_join_readinfo(JOIN *join)
     }
 
     optimizer::AccessMethodFactory &factory= optimizer::AccessMethodFactory::singleton();
-    optimizer::AccessMethod *access_method= factory.createAccessMethod(tab->type);
+    boost::shared_ptr<optimizer::AccessMethod> access_method(factory.createAccessMethod(tab->type));
 
     if (! access_method)
     {
@@ -4909,8 +4909,6 @@ static bool make_join_readinfo(JOIN *join)
     }
 
     access_method->getStats(table, tab);
-
-    delete access_method;
   }
 
   join->join_tab[join->tables-1].next_select= NULL; /* Set by do_select */

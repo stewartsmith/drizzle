@@ -28,6 +28,8 @@
 #include "drizzled/join_table.h"
 #include "drizzled/optimizer/access_method.h"
 
+#include <boost/shared_ptr.hpp>
+
 /* Forward declarations */
 class Table;
 class JoinTable;
@@ -51,7 +53,7 @@ public:
     return fact;
   }
 
-  AccessMethod *createAccessMethod(enum access_method type);
+  boost::shared_ptr<AccessMethod> createAccessMethod(enum access_method type);
 
 private:
   
