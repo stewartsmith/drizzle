@@ -59,8 +59,6 @@ void close_cached_table(Session *session, Table *table);
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_checksum_table(Session* session, TableList* table_list,
-                          HA_CHECK_OPT* check_opt);
 bool mysql_check_table(Session* session, TableList* table_list,
                        HA_CHECK_OPT* check_opt);
 bool mysql_analyze_table(Session* session, TableList* table_list,

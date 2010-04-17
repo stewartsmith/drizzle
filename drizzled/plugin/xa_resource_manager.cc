@@ -30,7 +30,6 @@
 #include <drizzled/plugin/xa_resource_manager.h>
 #include "drizzled/xid.h"
 
-#include "drizzled/hash.h"
 
 #include <string>
 #include <vector>

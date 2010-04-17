@@ -68,7 +68,6 @@
 #include <drizzled/statement/analyze.h>
 #include <drizzled/statement/change_schema.h>
 #include <drizzled/statement/check.h>
-#include <drizzled/statement/checksum.h>
 #include <drizzled/statement/commit.h>
 #include <drizzled/statement/create_index.h>
 #include <drizzled/statement/create_schema.h>
