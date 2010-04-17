@@ -43,8 +43,11 @@ plugin::Library::Library(const std::string &name_arg,
 
 plugin::Library::~Library()
 {
+  /**
+   * @TODO: This breaks valgrind at the moment. 
   if (handle)
     dlclose(handle);
+  */
 }
 
 plugin::Library *plugin::Library::loadLibrary(const string &plugin_name)

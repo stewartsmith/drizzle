@@ -488,27 +488,6 @@ create table t1 (a int, b varchar(200), c text not null);
 create table t2 (a int, b varchar(200), c text not null);
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
-checksum table t1, t2, t3;
-Table	Checksum
-test.t1	3505595080
-test.t2	3505595080
-test.t3	NULL
-Warnings:
-Error	1146	Table 'test.t3' doesn't exist
-checksum table t1, t2, t3;
-Table	Checksum
-test.t1	3505595080
-test.t2	3505595080
-test.t3	NULL
-Warnings:
-Error	1146	Table 'test.t3' doesn't exist
-checksum table t1, t2, t3;
-Table	Checksum
-test.t1	3505595080
-test.t2	3505595080
-test.t3	NULL
-Warnings:
-Error	1146	Table 'test.t3' doesn't exist
 show table status;
 Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
 #	test	t1	STANDARD	InnoDB	#	#	#	#	#
@@ -531,20 +510,6 @@ check table t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK
 drop table t1;
-create table t1 (c1 int);
-insert into t1 values (1),(2),(3),(4);
-checksum table t1;
-Table	Checksum
-test.t1	149057747
-delete from t1 where c1 = 1;
-create table t2 as select * from t1;
-checksum table t1;
-Table	Checksum
-test.t1	984116287
-checksum table t2;
-Table	Checksum
-test.t2	984116287
-drop table t1, t2;
 create table t1(
 cip INT NOT NULL,
 score INT NOT NULL DEFAULT 0,

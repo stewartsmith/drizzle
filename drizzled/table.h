@@ -278,12 +278,12 @@ public:
     return s->storage_engine->index_flags(s->key_info[idx].algorithm);
   }
 
-  inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  inline plugin::StorageEngine *getEngine() const   /* table_type for handler */
   {
     return s->storage_engine;
   }
 
-  Cursor &getCursor() const	/* table_type for handler */
+  Cursor &getCursor() const /* table_type for handler */
   {
     assert(cursor);
     return *cursor;
@@ -514,24 +514,183 @@ public:
 
 Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);
 
-typedef struct st_foreign_key_info
+/**
+ * @class
+ *  ForeignKeyInfo
+ *
+ * @brief
+ *  This class defines the information for foreign keys.
+ */
+class ForeignKeyInfo
 {
-  LEX_STRING *forein_id;
-  LEX_STRING *referenced_db;
-  LEX_STRING *referenced_table;
-  LEX_STRING *update_method;
-  LEX_STRING *delete_method;
-  LEX_STRING *referenced_key_name;
-  List<LEX_STRING> foreign_fields;
-  List<LEX_STRING> referenced_fields;
-} FOREIGN_KEY_INFO;
+public:
+    /**
+     * @brief
+     *  This is the constructor with all properties set.
+     *
+     * @param[in] in_foreign_id The id of the foreign key
+     * @param[in] in_referenced_db The referenced database name of the foreign key
+     * @param[in] in_referenced_table The referenced table name of the foreign key
+     * @param[in] in_update_method The update method of the foreign key.
+     * @param[in] in_delete_method The delete method of the foreign key.
+     * @param[in] in_referenced_key_name The name of referenced key
+     * @param[in] in_foreign_fields The foreign fields
+     * @param[in] in_referenced_fields The referenced fields
+     */
+    ForeignKeyInfo(LEX_STRING *in_foreign_id,
+                   LEX_STRING *in_referenced_db,
+                   LEX_STRING *in_referenced_table,
+                   LEX_STRING *in_update_method,
+                   LEX_STRING *in_delete_method,
+                   LEX_STRING *in_referenced_key_name,
+                   List<LEX_STRING> in_foreign_fields,
+                   List<LEX_STRING> in_referenced_fields)
+    :
+      foreign_id(in_foreign_id),
+      referenced_db(in_referenced_db),
+      referenced_table(in_referenced_table),
+      update_method(in_update_method),
+      delete_method(in_delete_method),
+      referenced_key_name(in_referenced_key_name),
+      foreign_fields(in_foreign_fields),
+      referenced_fields(in_referenced_fields)
+    {}
 
+    /**
+     * @brief
+     *  This is the default constructor. All properties are set to default values for their types.
+     */
+    ForeignKeyInfo()
+    : foreign_id(NULL), referenced_db(NULL), referenced_table(NULL),
+      update_method(NULL), delete_method(NULL), referenced_key_name(NULL)
+    {}
 
+    /**
+     * @brief
+     *  Gets the foreign id.
+     *
+     * @ retval  the foreign id
+     */
+    const LEX_STRING *getForeignId() const
+    {
+        return foreign_id;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced database.
+     *
+     * @ retval  the name of the referenced database
+     */
+    const LEX_STRING *getReferencedDb() const
+    {
+        return referenced_db;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced table.
+     *
+     * @ retval  the name of the referenced table
+     */
+    const LEX_STRING *getReferencedTable() const
+    {
+        return referenced_table;
+    }
+
+    /**
+     * @brief
+     *  Gets the update method.
+     *
+     * @ retval  the update method
+     */
+    const LEX_STRING *getUpdateMethod() const
+    {
+        return update_method;
+    }
+
+    /**
+     * @brief
+     *  Gets the delete method.
+     *
+     * @ retval  the delete method
+     */
+    const LEX_STRING *getDeleteMethod() const
+    {
+        return delete_method;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced key.
+     *
+     * @ retval  the name of the referenced key
+     */
+    const LEX_STRING *getReferencedKeyName() const
+    {
+        return referenced_key_name;
+    }
+
+    /**
+     * @brief
+     *  Gets the foreign fields.
+     *
+     * @ retval  the foreign fields
+     */
+    const List<LEX_STRING> &getForeignFields() const
+    {
+        return foreign_fields;
+    }
+
+    /**
+     * @brief
+     *  Gets the referenced fields.
+     *
+     * @ retval  the referenced fields
+     */
+    const List<LEX_STRING> &getReferencedFields() const
+    {
+        return referenced_fields;
+    }
+private:
+    /**
+     * The foreign id.
+     */
+    LEX_STRING *foreign_id;
+    /**
+     * The name of the reference database.
+     */
+    LEX_STRING *referenced_db;
+    /**
+     * The name of the reference table.
+     */
+    LEX_STRING *referenced_table;
+    /**
+     * The update method.
+     */
+    LEX_STRING *update_method;
+    /**
+     * The delete method.
+     */
+    LEX_STRING *delete_method;
+    /**
+     * The name of the referenced key.
+     */
+    LEX_STRING *referenced_key_name;
+    /**
+     * The foreign fields.
+     */
+    List<LEX_STRING> foreign_fields;
+    /**
+     * The referenced fields.
+     */
+    List<LEX_STRING> referenced_fields;
+};
 
 class TableList;
 
-#define JOIN_TYPE_LEFT	1
-#define JOIN_TYPE_RIGHT	2
+#define JOIN_TYPE_LEFT  1
+#define JOIN_TYPE_RIGHT 2
 
 struct st_lex;
 class select_union;
@@ -539,8 +698,8 @@ class Tmp_Table_Param;
 
 struct open_table_list_st
 {
-  std::string	db;
-  std::string	table;
+  std::string   db;
+  std::string   table;
   uint32_t in_use;
   uint32_t locked;
 
