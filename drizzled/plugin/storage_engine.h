@@ -33,7 +33,7 @@
 #include "drizzled/cached_directory.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 
-#include "drizzled/hash.h"
+#include <drizzled/unordered_map.h>
 
 #include <bitset>
 #include <string>
@@ -61,7 +61,6 @@ enum engine_flag_bits {
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
   HTON_BIT_TEMPORARY_ONLY,
-  HTON_BIT_FILE_BASED, // use for check_lowercase_names
   HTON_BIT_DOES_TRANSACTIONS,
   HTON_BIT_STATS_RECORDS_IS_EXACT,
   HTON_BIT_NULL_IN_KEY,
@@ -92,7 +91,6 @@ static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
-static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DOES_TRANSACTIONS(1 << HTON_BIT_DOES_TRANSACTIONS);
 static const std::bitset<HTON_BIT_SIZE> HTON_STATS_RECORDS_IS_EXACT(1 << HTON_BIT_STATS_RECORDS_IS_EXACT);
 static const std::bitset<HTON_BIT_SIZE> HTON_NULL_IN_KEY(1 << HTON_BIT_NULL_IN_KEY);
@@ -122,7 +120,7 @@ class NamedSavepoint;
 namespace plugin
 {
 
-typedef hash_map<std::string, StorageEngine *> EngineMap;
+typedef unordered_map<std::string, StorageEngine *> EngineMap;
 typedef std::vector<StorageEngine *> EngineVector;
 
 typedef std::set<std::string> TableNameList;

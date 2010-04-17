@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/data_home.h>
-#include <drizzled/hash.h>
+#include <drizzled/unordered_map.h>
 
 #include <pthread.h>
 
@@ -41,7 +41,7 @@ class Schema : public drizzled::plugin::StorageEngine
 
   void prime();
 
-  typedef drizzled::hash_map<std::string, drizzled::message::Schema> SchemaCache;
+  typedef drizzled::unordered_map<std::string, drizzled::message::Schema> SchemaCache;
   SchemaCache schema_cache;
   bool schema_cache_filled;
 
