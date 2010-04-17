@@ -46,7 +46,7 @@ public:
 
 String *VersionFunction::val_str(String *str)
 {
-  str->set(version().c_str(), version().size(),
+  str->set(::drizzled::version().c_str(), ::drizzled::version().size(),
            system_charset_info);
   return str;
 }

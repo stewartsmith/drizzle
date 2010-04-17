@@ -1,0 +1,13 @@
+drop database if exists mysqltest1;
+create schema foo;
+show create schema foo;
+Database	Create Database
+foo	CREATE DATABASE `foo` COLLATE = utf8_general_ci
+show schemas;
+Database
+DATA_DICTIONARY
+foo
+INFORMATION_SCHEMA
+mysql
+test
+drop schema foo;
