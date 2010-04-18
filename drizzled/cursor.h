@@ -733,8 +733,7 @@ bool mysql_create_like_table(Session* session,
 
 bool mysql_rename_table(plugin::StorageEngine *base,
                         TableIdentifier &old_identifier,
-                        TableIdentifier &new_identifier,
-                        uint32_t flags);
+                        TableIdentifier &new_identifier);
 
 bool mysql_prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, order_st *order);

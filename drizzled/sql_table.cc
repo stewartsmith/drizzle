@@ -54,7 +54,6 @@ using namespace std;
 namespace drizzled
 {
 
-extern plugin::StorageEngine *myisam_engine;
 extern pid_t current_pid;
 
 bool is_primary_key(KEY *key_info)
@@ -1618,9 +1617,6 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
       old_name                  The old table name.
       new_db                    The new database name.
       new_name                  The new table name.
-      flags                     flags for build_table_filename().
-                                FN_FROM_IS_TMP old_name is temporary.
-                                FN_TO_IS_TMP   new_name is temporary.
 
   RETURN
     false   OK
@@ -1630,8 +1626,7 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 bool
 mysql_rename_table(plugin::StorageEngine *base,
                    TableIdentifier &from,
-                   TableIdentifier &to,
-                   uint32_t )
+                   TableIdentifier &to)
 {
   Session *session= current_session;
   int error= 0;
