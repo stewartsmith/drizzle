@@ -1885,32 +1885,6 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
 }
 
 /*
-  DESCRIPTION
-    given a buffer with a key value, and a map of keyparts
-    that are present in this value, returns the length of the value
-*/
-uint32_t calculate_key_len(Table *table, uint32_t key,
-                       const unsigned char *,
-                       key_part_map keypart_map)
-{
-  /* works only with key prefixes */
-  assert(((keypart_map + 1) & keypart_map) == 0);
-
-  KEY *key_info= table->s->key_info+key;
-  KEY_PART_INFO *key_part= key_info->key_part;
-  KEY_PART_INFO *end_key_part= key_part + key_info->key_parts;
-  uint32_t length= 0;
-
-  while (key_part < end_key_part && keypart_map)
-  {
-    length+= key_part->store_length;
-    keypart_map >>= 1;
-    key_part++;
-  }
-  return length;
-}
-
-/*
   Check if database name is valid
 
   SYNPOSIS
