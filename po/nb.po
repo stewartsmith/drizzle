@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-03-05 21:56+0000\n"
-"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
+"POT-Creation-Date: 2010-03-31 06:13+0000\n"
+"PO-Revision-Date: 2010-04-17 09:12+0000\n"
+"Last-Translator: johnb <Unknown>\n"
 "Language-Team: Norwegian Bokmal <nb@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-04-18 03:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -89,7 +89,8 @@ msgid "Don't show warnings after every statement."
 msgstr "Ikke vis advarsler etter hvert uttrykk."
 
 #, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -159,7 +160,8 @@ msgstr ""
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr "Ikke bruk en historiefil. Skru av interaktivitet. (Skrur på --silent)"
+msgstr ""
+"Ikke bruk en historiefil. Skru av interaktivitet. (Skrur på --silent)"
 
 msgid "Display column type information."
 msgstr "Vis typeinformasjon for kolonnene"
@@ -390,7 +392,8 @@ msgstr ""
 "Automatisk begrensning av antall (LIMIT) rader i en JOIN når --safe-updates "
 "er skrudd på."
 
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Avbryt tilkoblingen til serveren dersom den bruker den gamle (før 4.1.1) "
 "protokollen."
@@ -452,14 +455,12 @@ msgid "Unknown command: "
 msgstr ""
 
 msgid ""
-"Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"                              Reading table information for completion of "
+"table and column names\n"
+"                                  You can turn off this feature to get a "
+"quicker startup with -A\n"
 "\n"
 msgstr ""
-"Leser tabellinformasjon for automatisk utfylling av tabell- og kolonnenavn\n"
-"    Du kan skru av denne egenskapen ved å angi -A for å få en raskere "
-"oppstart.\n"
-"\n"
 
 msgid "No connection. Trying to reconnect..."
 msgstr "Ingen tilkobling. Prøver å koble til på nytt..."
@@ -499,7 +500,8 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Spørring OK, %ld rad påvirket"
 msgstr[1] "Spørring OK, %ld rader påvirket"
 
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr ""
 
 #, c-format
@@ -696,6 +698,14 @@ msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
 #, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr ""
+
+#, c-format
+msgid "Out of memory"
+msgstr ""
+
+#, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr ""
 
@@ -788,9 +798,6 @@ msgstr ""
 msgid "Can't create thread-keys"
 msgstr ""
 
-msgid "Out of memory"
-msgstr ""
-
 msgid "Failed to initialize plugins."
 msgstr ""
 
@@ -814,8 +821,8 @@ msgid "Auto-increment columns are incremented by this"
 msgstr ""
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
 
 msgid ""
@@ -1076,8 +1083,9 @@ msgstr ""
 msgid "Data directory %s does not exist\n"
 msgstr ""
 
-msgid "UNUSED"
-msgstr ""
+#, c-format
+msgid "Unknown error %d"
+msgstr "Ukjent feil %d"
 
 msgid "NO"
 msgstr "NEI"
@@ -1559,8 +1567,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #, c-format
@@ -1582,9 +1590,9 @@ msgstr ""
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find symbol '%-.128s' in library '%-.128s'"
-msgstr "Klarte ikke å finne raden i '%-192s'"
+msgstr ""
 
 #, c-format
 msgid "Function '%-.192s' is not defined"
@@ -1809,8 +1817,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
@@ -2133,7 +2141,8 @@ msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
 
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #, c-format
@@ -2142,8 +2151,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 
 #, c-format
@@ -2168,7 +2177,8 @@ msgid ""
 "SELECT #%d"
 msgstr ""
 
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 msgid ""
@@ -2435,7 +2445,8 @@ msgstr ""
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #, c-format
@@ -2467,13 +2478,14 @@ msgid ""
 "View merge algorithm can't be used here for now (assumed undefined algorithm)"
 msgstr ""
 
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #, c-format
@@ -2746,8 +2758,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
 
 msgid ""
@@ -2778,7 +2790,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #, c-format
@@ -2820,8 +2833,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
 
 msgid ""
@@ -2898,7 +2911,8 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr ""
 
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 msgid "AGGREGATE is not supported for stored functions"
@@ -2906,8 +2920,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 
 #, c-format
@@ -2984,7 +2998,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 msgid "MAXVALUE can only be used in last partition definition"
@@ -3002,7 +3017,8 @@ msgstr ""
 msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -3063,7 +3079,8 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr ""
 
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #, c-format
@@ -3120,7 +3137,8 @@ msgstr ""
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 msgid ""
@@ -3250,8 +3268,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 
 msgid "You can't write-lock a log table. Only read access is possible"
@@ -3262,8 +3280,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #, c-format
@@ -3660,7 +3678,8 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr ""
 
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #, c-format
@@ -3790,9 +3809,9 @@ msgstr ""
 msgid "Corrupt or invalid table definition: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Schema does not exist: %s"
-msgstr "Tabellen eksisterer ikke i databasemotoren"
+msgstr ""
 
 #, c-format
 msgid "Error altering schema: %s"
@@ -3803,52 +3822,8 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 #, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr ""
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Tomt for minne (Trengte %u bytes)"
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Klarte ikke å bytte navn på '%s' til '%s' (Feilkode: %d)"
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr "Uventet slutt-på-fil (EOF) inntraff da vi leste '%s' (Feilkode: %d)"
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Kan ikke låse filen (Feilkode: %d)"
-
-#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "Kan ikke låse opp filen (Feilkode: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Kan ikke lese katalogen '%s' (Feilkode: %d)"
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr "Kan ikke 'stat'-e '%s' (Feilkode: %d)"
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -3859,26 +3834,12 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr "Kan ikke åpne strømmen fra pekeren (Feilkode: %d)"
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Fikk ikke tak i arbeidskatalogen (Feilkode: %d)"
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr "Advarsel: '%s' hadde %d lenker."
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
 msgstr "Advarsel: %d filer og %d strømmer er fortsatt åpne\n"
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr ""
-"Disken er full når vi prøver å skrive '%s'. Venter på at noen skal frigi "
-"plass..."
 
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
@@ -3920,16 +3881,8 @@ msgstr ""
 "ikke spesifisert i filen %s"
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr "Filen '%s' (filnummer: %d) ble ikke lukket"
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Ukjent feil %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
@@ -4357,9 +4310,8 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "Databasen som skal brukes."
+msgstr ""
 
 msgid "Enable default replicator"
 msgstr ""
@@ -4400,8 +4352,8 @@ msgstr "Klarte ikke å lage UNIX-socketen (%d)"
 #, c-format
 msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
 msgstr ""
-"Klarer ikke å koble til den lokale Drizzle-serveren gjennom socketen "
-"'%-.100s' (%d)"
+"Klarer ikke å koble til den lokale Drizzle-serveren gjennom socketen '%-"
+".100s' (%d)"
 
 #, c-format
 msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
@@ -4750,9 +4702,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr "Feil indeks gitt til funksjonen"
 
-msgid "Undefined handler error 125"
-msgstr "Udefinert håndteringsfeil 125"
-
 msgid "Index file is crashed"
 msgstr "Indeksfilen har kræsjet"
 
@@ -4761,9 +4710,6 @@ msgstr "Radfilen har kræsjet"
 
 msgid "Out of memory in engine"
 msgstr "Databasemotoren er tom for minne"
-
-msgid "Undefined handler error 129"
-msgstr "Udefinert håndteringsfeil 129"
 
 msgid "Incorrect file format"
 msgstr "Feil filformat"
@@ -4946,7 +4892,8 @@ msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
 msgstr ""
 
 #, c-format
-msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgid ""
+"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 #, c-format
@@ -4963,9 +4910,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "Socket-fil som skal brukes for tilkobling"
+msgstr "Sti til filen du vil bruke som transaksjonslogg"
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
@@ -4982,7 +4928,7 @@ msgid ""
 msgstr ""
 
 msgid "Failed to open transaction log file "
-msgstr ""
+msgstr "Åpning av transaksjonsloggen feilet "
 
 #, c-format
 msgid ""
@@ -5004,11 +4950,14 @@ msgstr ""
 
 #, c-format
 msgid "Unable to parse transaction. Got error: %s.\n"
-msgstr ""
+msgstr "Klarte ikke analysere transaksjonen. Feil: %s.\n"
 
 #, c-format
 msgid "BUFFER: %s\n"
-msgstr ""
+msgstr "BUFFER: %s\n"
+
+#~ msgid "Set the default character set."
+#~ msgstr "Setter standardtegnsett."
 
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "Sjekk minnebruk og bruk av åpne filer ved avslutning"
@@ -5016,22 +4965,90 @@ msgstr ""
 #~ msgid "Print some debug info at exit."
 #~ msgstr "Vis litt debug-informasjon og avslutt."
 
-#~ msgid "Set the default character set."
-#~ msgstr "Setter standardtegnsett."
+#~ msgid "Socket file to use for connection."
+#~ msgstr "Socket-fil som skal brukes for tilkobling"
 
+#, c-format
 #~ msgid "Unknown command '\\%c'."
 #~ msgstr "Ukjent kommando '\\%c'."
 
+#, c-format
 #~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 #~ msgstr "%s Ver %s Distrib %s, for %s (%s) bruker %s %s\n"
 
-#~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
-#~ "to have type %s  but the column is not found."
-#~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %"
-#~ "d hadde typen %s, men kolonna ble ikke funnet."
+#, c-format
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
 
+#, c-format
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Klarte ikke å bytte navn på '%s' til '%s' (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Tomt for minne (Trengte %u bytes)"
+
+#, c-format
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Kan ikke låse filen (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr "Uventet slutt-på-fil (EOF) inntraff da vi leste '%s' (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Kan ikke lese katalogen '%s' (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Kan ikke 'stat'-e '%s' (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Disken er full når vi prøver å skrive '%s'. Venter på at noen skal frigi "
+#~ "plass..."
+
+#, c-format
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
+
+#, c-format
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Fikk ikke tak i arbeidskatalogen (Feilkode: %d)"
+
+#, c-format
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Udefinert håndteringsfeil 129"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Udefinert håndteringsfeil 125"
+
+#, c-format
+#~ msgid ""
+#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
+#~ "have type %s  but the column is not found."
+#~ msgstr ""
+#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
+#~ "hadde typen %s, men kolonna ble ikke funnet."
+
+#, c-format
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
 #~ "found '%s'."
@@ -5039,27 +5056,39 @@ msgstr ""
 #~ "Gal definisjon av tabellen %s.%s: forventet kolonnen '%s' i posisjon %d, "
 #~ "fant '%s'."
 
+#, c-format
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 #~ "position %d to have character set '%s' but the type has no character set."
 #~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%"
-#~ "s' i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe "
-#~ "tegnsett."
+#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
+#~ "i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe tegnsett."
 
+#, c-format
 #~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
-#~ "to have type %s, found type %s."
+#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
+#~ "have type %s, found type %s."
 #~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %"
-#~ "d hadde typen %s, fant typen %s."
+#~ "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
+#~ "hadde typen %s, fant typen %s."
 
+#, c-format
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 #~ "position %d to have character set '%s' but found character set '%s'."
 #~ msgstr ""
-#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%"
-#~ "s' i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
+#~ "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
+#~ "i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
+
+#~ msgid ""
+#~ "Reading table information for completion of table and column names\n"
+#~ "    You can turn off this feature to get a quicker startup with -A\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Leser tabellinformasjon for automatisk utfylling av tabell- og kolonnenavn\n"
+#~ "    Du kan skru av denne egenskapen ved å angi -A for å få en raskere "
+#~ "oppstart.\n"
+#~ "\n"
 
 #~ msgid "hashchk"
 #~ msgstr "hashchk"
