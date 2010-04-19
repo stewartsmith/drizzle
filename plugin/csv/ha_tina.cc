@@ -704,7 +704,7 @@ int ha_tina::find_current_row(unsigned char *buf)
   int eoln_len;
   int error;
 
-  free_root(&blobroot, MYF(drizzled::memory::MARK_BLOCKS_FREE));
+  blobroot.free_root(MYF(drizzled::memory::MARK_BLOCKS_FREE));
 
   /*
     We do not read further then local_saved_data_file_length in order
@@ -1127,7 +1127,7 @@ int ha_tina::rnd_init(bool)
   records_is_known= 0;
   chain_ptr= chain;
 
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE);
+  blobroot.init_alloc_root(BLOB_MEMROOT_ALLOC_SIZE);
 
   return(0);
 }
@@ -1236,7 +1236,7 @@ int ha_tina::rnd_end()
   char updated_fname[FN_REFLEN];
   off_t file_buffer_start= 0;
 
-  free_root(&blobroot, MYF(0));
+  blobroot.free_root(MYF(0));
   records_is_known= 1;
 
   if ((chain_ptr - chain)  > 0)

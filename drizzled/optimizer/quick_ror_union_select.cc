@@ -159,8 +159,7 @@ optimizer::QuickRorUnionSelect::~QuickRorUnionSelect()
   {
     head->cursor->ha_rnd_end();
   }
-  free_root(&alloc,MYF(0));
-  return;
+  alloc.free_root(MYF(0));
 }
 
 

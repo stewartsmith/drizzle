@@ -178,7 +178,7 @@ optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
              DeletePtr());
   }
   min_max_ranges.clear();
-  free_root(&alloc,MYF(0));
+  alloc.free_root(MYF(0));
   delete min_functions_it;
   delete max_functions_it;
   delete quick_prefix_select;

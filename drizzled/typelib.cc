@@ -219,7 +219,7 @@ TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
   to->count= from->count;
   if (from->name)
   {
-    if (!(to->name= strdup_root(root, from->name)))
+    if (!(to->name= root->strdup_root(from->name)))
       return NULL;
   }
   else
@@ -227,8 +227,7 @@ TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
 
   for (i= 0; i < from->count; i++)
   {
-    if (!(to->type_names[i]= strmake_root(root, from->type_names[i],
-                                          from->type_lengths[i])))
+    if (!(to->type_names[i]= root->strmake_root(from->type_names[i], from->type_lengths[i])))
       return NULL;
     to->type_lengths[i]= from->type_lengths[i];
   }

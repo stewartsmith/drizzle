@@ -38,7 +38,7 @@ static void sql_alloc_error_handler(void)
 
 void memory::init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)
 {
-  memory::init_alloc_root(mem_root, block_size);
+  mem_root->init_alloc_root(block_size);
   mem_root->error_handler= sql_alloc_error_handler;
 }
 

@@ -383,7 +383,7 @@ bool plugin_init(plugin::Registry &registry,
   if (hash_init(&bookmark_hash, &my_charset_bin, 16, 0, 0,
                   get_bookmark_hash_key, NULL, HASH_UNIQUE))
   {
-    free_root(&tmp_root, MYF(0));
+    tmp_root.free_root(MYF(0));
     return true;
   }
 
@@ -402,7 +402,7 @@ bool plugin_init(plugin::Registry &registry,
       if (module == NULL)
         return true;
 
-      free_root(&tmp_root, MYF(memory::MARK_BLOCKS_FREE));
+      tmp_root.free_root(MYF(memory::MARK_BLOCKS_FREE));
       if (test_plugin_options(&tmp_root, module, argc, argv))
         continue;
 
@@ -414,7 +414,7 @@ bool plugin_init(plugin::Registry &registry,
       {
         if (plugin_initialize(registry, module))
         {
-          free_root(&tmp_root, MYF(0));
+          tmp_root.free_root(MYF(0));
           return true;
         }
       }
@@ -452,13 +452,13 @@ bool plugin_init(plugin::Registry &registry,
                                 plugin_list_set);
   if (load_failed)
   {
-    free_root(&tmp_root, MYF(0));
+    tmp_root.free_root(MYF(0));
     return true;
   }
 
   if (skip_init)
   {
-    free_root(&tmp_root, MYF(0));
+    tmp_root.free_root(MYF(0));
     return false;
   }
 
@@ -482,7 +482,7 @@ bool plugin_init(plugin::Registry &registry,
   }
 
 
-  free_root(&tmp_root, MYF(0));
+  tmp_root.free_root(MYF(0));
 
   return false;
 }
@@ -541,7 +541,7 @@ static bool plugin_load_list(plugin::Registry &registry,
       return true;
     }
 
-    free_root(tmp_root, MYF(memory::MARK_BLOCKS_FREE));
+    tmp_root->free_root(MYF(memory::MARK_BLOCKS_FREE));
     if (plugin_add(registry, tmp_root, library, argc, argv))
     {
       registry.removeLibrary(plugin_name);
@@ -576,7 +576,7 @@ void plugin_shutdown(plugin::Registry &registry)
   /* Dispose of the memory */
 
   hash_free(&bookmark_hash);
-  free_root(&plugin_mem_root, MYF(0));
+  plugin_mem_root.free_root(MYF(0));
 
   global_variables_dynamic_size= 0;
 }
@@ -1587,8 +1587,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
       if (opt->flags & PLUGIN_VAR_NOCMDOPT)
         continue;
 
-      optname= (char*) memdup_root(mem_root, v->key + 1,
-                                   (optnamelen= v->name_len) + 1);
+      optname= (char*) mem_root->memdup_root(v->key + 1, (optnamelen= v->name_len) + 1);
     }
 
     /* convert '_' to '-' */
@@ -1836,8 +1835,7 @@ void my_print_help_inc_plugins(option *main_options)
   my_print_help(&*(all_options.begin()));
   my_print_variables(&*(all_options.begin()));
 
-  free_root(&mem_root, MYF(0));
-
+  mem_root.free_root(MYF(0));
 }
 
 } /* namespace drizzled */

@@ -138,7 +138,7 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
       }
     }
     delete_dynamic(&ranges); /* ranges are allocated in alloc */
-    free_root(&alloc,MYF(0));
+    alloc.free_root(MYF(0));
   }
   head->column_bitmaps_set(save_read_set, save_write_set);
   assert(mrr_buf_desc == NULL);

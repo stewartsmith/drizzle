@@ -108,21 +108,19 @@ public:
   void reset_root_defaults(size_t block_size, size_t prealloc_size);
   void *alloc_root(size_t Size);
   void mark_blocks_free();
+  void *memdup_root(const void *str, size_t len);
+  char *strdup_root(const char *str);
+  char *strmake_root(const char *str,size_t len);
+  void init_alloc_root(size_t block_size= ROOT_MIN_BLOCK_SIZE);
 
+  inline bool alloc_root_inited()
+  {
+    return min_malloc != 0;
+  }
+  void free_root(myf MyFLAGS);
 };
 
-inline static bool alloc_root_inited(Root *root)
-{
-  return root->min_malloc != 0;
-}
-
-void init_alloc_root(Root *mem_root,
-                     size_t block_size= ROOT_MIN_BLOCK_SIZE);
 void *multi_alloc_root(Root *mem_root, ...);
-void free_root(Root *root, myf MyFLAGS);
-char *strdup_root(Root *root,const char *str);
-char *strmake_root(Root *root,const char *str,size_t len);
-void *memdup_root(Root *root,const void *str, size_t len);
 
 } /* namespace memory */
 } /* namespace drizzled */

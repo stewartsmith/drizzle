@@ -226,7 +226,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
 
   table= table_arg;
   assert(table->s == table_share);
-  assert(alloc_root_inited(&table->mem_root));
+  assert(table->mem_root.alloc_root_inited());
 
   if ((error=open(name, mode, test_if_locked)))
   {

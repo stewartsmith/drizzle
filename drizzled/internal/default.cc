@@ -500,7 +500,7 @@ void free_defaults(char **argv)
 {
   memory::Root ptr;
   memcpy(&ptr, (char*) argv - sizeof(ptr), sizeof(ptr));
-  free_root(&ptr,MYF(0));
+  ptr.free_root(MYF(0));
 }
 
 

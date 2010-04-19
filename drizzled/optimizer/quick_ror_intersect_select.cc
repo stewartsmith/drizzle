@@ -73,7 +73,7 @@ optimizer::QuickRorIntersectSelect::~QuickRorIntersectSelect()
            DeletePtr());
   quick_selects.clear();
   delete cpk_quick;
-  free_root(&alloc,MYF(0));
+  alloc.free_root(MYF(0));
   if (need_to_fetch_row && head->cursor->inited != Cursor::NONE)
   {
     head->cursor->ha_rnd_end();

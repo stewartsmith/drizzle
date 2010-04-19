@@ -439,14 +439,10 @@ int parse_table_proto(Session& session,
     {
       keyinfo->flags|= HA_USES_COMMENT;
       keyinfo->comment.length= indx.comment().length();
-      keyinfo->comment.str= strmake_root(&share->mem_root,
-					 indx.comment().c_str(),
-					 keyinfo->comment.length);
+      keyinfo->comment.str= share->mem_root.strmake_root(indx.comment().c_str(), keyinfo->comment.length);
     }
 
-    keyinfo->name= strmake_root(&share->mem_root,
-				indx.name().c_str(),
-				indx.name().length());
+    keyinfo->name= share->mem_root.strmake_root(indx.name().c_str(), indx.name().length());
 
     share->keynames.type_names[keynr]= keyinfo->name;
     share->keynames.type_lengths[keynr]= indx.name().length();
@@ -595,9 +591,7 @@ int parse_table_proto(Session& session,
     message::Table::Field pfield= table.field(fieldnr);
 
     /* field names */
-    share->fieldnames.type_names[fieldnr]= strmake_root(&share->mem_root,
-                                                        pfield.name().c_str(),
-                                                        pfield.name().length());
+    share->fieldnames.type_names[fieldnr]= share->mem_root.strmake_root(pfield.name().c_str(), pfield.name().length());
 
     share->fieldnames.type_lengths[fieldnr]= pfield.name().length();
 
@@ -627,9 +621,7 @@ int parse_table_proto(Session& session,
 
     for (int n= 0; n < field_options.field_value_size(); n++)
     {
-      t->type_names[n]= strmake_root(&share->mem_root,
-                                     field_options.field_value(n).c_str(),
-                                     field_options.field_value(n).length());
+      t->type_names[n]= share->mem_root.strmake_root(field_options.field_value(n).c_str(), field_options.field_value(n).length());
 
       /* 
        * Go ask the charset what the length is as for "" length=1
@@ -726,7 +718,7 @@ int parse_table_proto(Session& session,
       size_t len= pfield.comment().length();
       const char* str= pfield.comment().c_str();
 
-      comment.str= strmake_root(&share->mem_root, str, len);
+      comment.str= share->mem_root.strmake_root(str, len);
       comment.length= len;
     }
 
@@ -1496,7 +1488,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   delete outparam->cursor;
   outparam->cursor= 0;				// For easier error checking
   outparam->db_stat= 0;
-  free_root(&outparam->mem_root, MYF(0));       // Safe to call on zeroed root
+  outparam->mem_root.free_root(MYF(0));       // Safe to call on zeroed root
   free((char*) outparam->alias);
   return (error);
 }
@@ -1539,7 +1531,7 @@ int Table::closefrm(bool free_share)
     else
       s->free_table_share();
   }
-  free_root(&mem_root, MYF(0));
+  mem_root.free_root(MYF(0));
 
   return error;
 }
@@ -2411,7 +2403,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) CopyField[field_count]))
   {
-    free_root(&own_root, MYF(0));
+    own_root.free_root(MYF(0));
     return NULL;
   }
   param->items_to_copy= copy_func;
@@ -3266,7 +3258,7 @@ void Table::free_tmp_table(Session *session)
     (*ptr)->free();
   free_io_cache();
 
-  free_root(&own_root, MYF(0)); /* the table is allocated in its own root */
+  own_root.free_root(MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
 }
 

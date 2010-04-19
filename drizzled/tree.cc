@@ -127,7 +127,7 @@ void init_tree(TREE *tree, size_t default_alloc_size, uint32_t memory_limit,
   }
   if (! (tree->with_delete= with_delete))
   {
-    init_alloc_root(&tree->mem_root, default_alloc_size);
+    tree->mem_root.init_alloc_root(default_alloc_size);
     tree->mem_root.min_malloc= (sizeof(TREE_ELEMENT)+tree->size_of_element);
   }
 }
@@ -148,7 +148,7 @@ static void free_tree(TREE *tree, myf free_flags)
         if (tree->memory_limit)
           (*tree->free)(NULL, free_end, tree->custom_arg);
       }
-      free_root(&tree->mem_root, free_flags);
+      tree->mem_root.free_root(free_flags);
     }
   }
   tree->root= &tree->null_element;

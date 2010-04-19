@@ -665,8 +665,7 @@ static int mysql_prepare_create_table(Session *session,
           {
             uint32_t cnv_errs;
             conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
-            interval->type_names[i]= strmake_root(session->mem_root, conv.ptr(),
-                                                  conv.length());
+            interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
             interval->type_lengths[i]= conv.length();
           }
 

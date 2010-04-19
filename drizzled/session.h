@@ -378,15 +378,15 @@ public:
   }
   inline char *strdup(const char *str)
   {
-    return strdup_root(mem_root,str);
+    return mem_root->strdup_root(str);
   }
   inline char *strmake(const char *str, size_t size)
   {
-    return strmake_root(mem_root,str,size);
+    return mem_root->strmake_root(str,size);
   }
   inline void *memdup(const void *str, size_t size)
   {
-    return memdup_root(mem_root,str,size);
+    return mem_root->memdup_root(str, size);
   }
   inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
   {

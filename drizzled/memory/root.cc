@@ -51,14 +51,14 @@ static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
  *                      should be no less than memory::ROOT_MIN_BLOCK_SIZE)
  *
  */
-void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
+void memory::Root::init_alloc_root(size_t block_size_arg)
 {
-  mem_root->free= mem_root->used= mem_root->pre_alloc= 0;
-  mem_root->min_malloc= 32;
-  mem_root->block_size= block_size - memory::ROOT_MIN_BLOCK_SIZE;
-  mem_root->error_handler= 0;
-  mem_root->block_num= 4;			/* We shift this with >>2 */
-  mem_root->first_block_usage= 0;
+  free= used= pre_alloc= 0;
+  min_malloc= 32;
+  block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
+  error_handler= 0;
+  block_num= 4;			/* We shift this with >>2 */
+  first_block_usage= 0;
 }
 
 
@@ -147,7 +147,7 @@ void *memory::Root::alloc_root(size_t length)
   unsigned char* point;
   memory::internal::UsedMemory *next= NULL;
   memory::internal::UsedMemory **prev;
-  assert(alloc_root_inited(this));
+  assert(alloc_root_inited());
 
   length= ALIGN_SIZE(length);
   if ((*(prev= &this->free)) != NULL)
@@ -302,40 +302,40 @@ void memory::Root::mark_blocks_free()
  *   @li   KEEP_PREALLOC        If this is not set, then free also the
  *        		        preallocated block
  */
-void memory::free_root(memory::Root *root, myf MyFlags)
+void memory::Root::free_root(myf MyFlags)
 {
   memory::internal::UsedMemory *next,*old;
 
   if (MyFlags & memory::MARK_BLOCKS_FREE)
   {
-    root->mark_blocks_free();
+    this->mark_blocks_free();
     return;
   }
   if (!(MyFlags & memory::KEEP_PREALLOC))
-    root->pre_alloc=0;
+    this->pre_alloc=0;
 
-  for (next=root->used; next ;)
+  for (next=this->used; next ;)
   {
     old=next; next= next->next ;
-    if (old != root->pre_alloc)
-      free(old);
+    if (old != this->pre_alloc)
+      std::free(old);
   }
-  for (next=root->free ; next ;)
+  for (next=this->free ; next ;)
   {
     old=next; next= next->next;
-    if (old != root->pre_alloc)
-      free(old);
+    if (old != this->pre_alloc)
+      std::free(old);
   }
-  root->used=root->free=0;
-  if (root->pre_alloc)
+  this->used=this->free=0;
+  if (this->pre_alloc)
   {
-    root->free=root->pre_alloc;
-    root->free->left=root->pre_alloc->size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    TRASH_MEM(root->pre_alloc);
-    root->free->next=0;
+    this->free=this->pre_alloc;
+    this->free->left=this->pre_alloc->size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
+    TRASH_MEM(this->pre_alloc);
+    this->free->next=0;
   }
-  root->block_num= 4;
-  root->first_block_usage= 0;
+  this->block_num= 4;
+  this->first_block_usage= 0;
 }
 
 /**
@@ -343,9 +343,9 @@ void memory::free_root(memory::Root *root, myf MyFlags)
  * Duplicate a null-terminated string into memory allocated from within the
  * specified Root
  */
-char *memory::strdup_root(memory::Root *root, const char *str)
+char *memory::Root::strdup_root(const char *str)
 {
-  return strmake_root(root, str, strlen(str));
+  return strmake_root(str, strlen(str));
 }
 
 /**
@@ -359,10 +359,10 @@ char *memory::strdup_root(memory::Root *root, const char *str)
  * even if the original string wasn't (one additional byte is allocated for
  * this purpose).
  */
-char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
+char *memory::Root::strmake_root(const char *str, size_t len)
 {
   char *pos;
-  if ((pos=(char *)root->alloc_root(len+1)))
+  if ((pos= (char *)alloc_root(len+1)))
   {
     memcpy(pos,str,len);
     pos[len]=0;
@@ -379,11 +379,13 @@ char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
  * non-NULL pointer to a copy of the data if memory could be allocated, otherwise
  * NULL
  */
-void *memory::memdup_root(memory::Root *root, const void *str, size_t len)
+void *memory::Root::memdup_root(const void *str, size_t len)
 {
   void *pos;
-  if ((pos= root->alloc_root(len)))
+
+  if ((pos= this->alloc_root(len)))
     memcpy(pos,str,len);
+
   return pos;
 }
 
