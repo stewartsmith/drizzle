@@ -90,6 +90,30 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   return NULL;
 }
 
+/*
+  DESCRIPTION
+    given a buffer with a key value, and a map of keyparts
+    that are present in this value, returns the length of the value
+*/
+uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_map_arg)
+{
+  /* works only with key prefixes */
+  assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
+
+  KEY *key_info_found= table->s->key_info + key_position;
+  KEY_PART_INFO *key_part_found= key_info_found->key_part;
+  KEY_PART_INFO *end_key_part_found= key_part_found + key_info_found->key_parts;
+  uint32_t length= 0;
+
+  while (key_part_found < end_key_part_found && keypart_map_arg)
+  {
+    length+= key_part_found->store_length;
+    keypart_map_arg >>= 1;
+    key_part_found++;
+  }
+  return length;
+}
+
 int Cursor::ha_index_init(uint32_t idx, bool sorted)
 {
   int result;
