@@ -656,8 +656,8 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
      insertion load. TODO: Optimize this block. PK should not need
      to go through merge_key() since this information is redundant. */
   if (share->primary_key_exists) {
-    char *key;
-    size_t klen;
+    char *key = NULL;
+    size_t klen = 0;
 
     key = merge_key(temp_pkbuf, pk_len, temp_pkbuf, pk_len, &klen);
 
@@ -673,9 +673,10 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
   /* Loop over the keys and write them to it's exclusive tree. */
   while (curr_key < share->nkeys) {
-    char *key;
+    char *key = NULL;
     size_t prefix_len, klen;
 
+    klen = 0;
     prefix_len = make_index_key(key_buffer, curr_key, drizzle_row);
     key = merge_key(key_buffer, prefix_len, temp_pkbuf, pk_len, &klen);
 
@@ -741,6 +742,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
       char *key;
       size_t prefix_len, klen;
 
+      klen = 0;
       prefix_len = make_index_key(key_buffer, i, old_row);
       key = merge_key(key_buffer, prefix_len, suffix, suffix_len, &klen);
 
