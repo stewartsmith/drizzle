@@ -886,9 +886,8 @@ extern xtBool				pbxt_crash_debug;
 
 #define thd_charset							session_charset
 #define thd_slave_thread					session_slave_thread
-#define thd_non_transactional_update		session_non_transactional_update
 #define thd_binlog_format					session_binlog_format
-#define thd_mark_transaction_to_rollback	session_mark_transaction_to_rollback
+#define thd_mark_transaction_to_rollback	::drizzled::session_mark_transaction_to_rollback
 #define thd_ha_data							session_ha_data
 #define current_thd							current_session
 #define thd_sql_command						session_sql_command
@@ -922,7 +921,6 @@ namespace drizzled {
 class Session;
 }
 
-extern "C" void session_mark_transaction_to_rollback(drizzled::Session *session, bool all);
 
 #else // DRIZZLED
 /* The MySQL case: */

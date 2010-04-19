@@ -371,10 +371,6 @@ struct drizzle_value
   Miscellaneous functions for plugin implementors
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern bool plugin_init(plugin::Registry &registry,
                         int *argc, char **argv,
                         bool skip_init);
@@ -426,16 +422,7 @@ int mysql_tmpfile(const char *prefix);
 int session_killed(const Session *session);
 
 
-/**
-  Return the thread id of a user thread
-
-  @param session  user thread connection handle
-  @return  thread id
-*/
-unsigned long session_get_thread_id(const Session *session);
-
 const charset_info_st *session_charset(Session *session);
-int session_non_transactional_update(const Session *session);
 void session_mark_transaction_to_rollback(Session *session, bool all);
 
 
@@ -464,10 +451,6 @@ char *session_strdup(Session *session, const char *str);
   @see session_alloc()
 */
 char *session_strmake(Session *session, const char *str, unsigned int size);
-/**
-  @see session_alloc()
-*/
-void *session_memdup(Session *session, const void* str, unsigned int size);
 
 /**
   Get the XID for this connection's transaction
@@ -488,10 +471,6 @@ void session_get_xid(const Session *session, DRIZZLE_XID *xid);
 void mysql_query_cache_invalidate4(Session *session,
                                    const char *key, unsigned int key_length,
                                    int using_trx);
-
-#ifdef __cplusplus
-}
-#endif
 
 } /* namespace drizzled */
 
