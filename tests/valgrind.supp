@@ -816,6 +816,17 @@
    Innodb Garbage
    Memcheck:Leak
    fun:malloc
+   ...
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
+   Innodb Garbage
+   Memcheck:Leak
+   fun:malloc
    fun:ut_malloc_low
    fun:ut_malloc
    fun:os_aio_array_create
