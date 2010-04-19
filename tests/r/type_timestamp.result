@@ -151,8 +151,8 @@ t1	CREATE TABLE `t1` (
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	2003-01-01 00:00:00	FALSE	
-t2	DATETIME	TRUE	2003-01-01 00:00:00	TRUE	
-t3	TIMESTAMP	TRUE	2003-01-01 00:00:00	TRUE	
+t2	DATETIME	TRUE		TRUE	
+t3	TIMESTAMP	TRUE		TRUE	
 drop table t1;
 create table t1 (t1 timestamp default now(), t2 datetime, t3 timestamp);
 SET TIMESTAMP=1000000002;
@@ -175,8 +175,8 @@ t1	CREATE TABLE `t1` (
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	
-t2	DATETIME	TRUE	NOW()	TRUE	
-t3	TIMESTAMP	TRUE	NOW()	TRUE	
+t2	DATETIME	TRUE		TRUE	
+t3	TIMESTAMP	TRUE		TRUE	
 drop table t1;
 create table t1 (t1 timestamp default '2003-01-01 00:00:00' on update now(), t2 datetime);
 SET TIMESTAMP=1000000004;
@@ -201,7 +201,7 @@ t1	CREATE TABLE `t1` (
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	2003-01-01 00:00:00	FALSE	NOW()
-t2	DATETIME	TRUE	2003-01-01 00:00:00	TRUE	NOW()
+t2	DATETIME	TRUE		TRUE	
 drop table t1;
 create table t1 (t1 timestamp default now() on update now(), t2 datetime);
 SET TIMESTAMP=1000000006;
@@ -226,7 +226,7 @@ t1	CREATE TABLE `t1` (
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	NOW()
-t2	DATETIME	TRUE	NOW()	TRUE	NOW()
+t2	DATETIME	TRUE		TRUE	
 drop table t1;
 create table t1 (t1 timestamp, t2 datetime, t3 timestamp);
 SET TIMESTAMP=1000000007;
@@ -278,7 +278,7 @@ t1	CREATE TABLE `t1` (
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	NOW()
-t2	DATETIME	TRUE	NOW()	TRUE	NOW()
+t2	DATETIME	TRUE		TRUE	
 truncate table t1;
 insert into t1 values ('2004-04-01 00:00:00', '2004-04-01 00:00:00');
 SET TIMESTAMP=1000000012;

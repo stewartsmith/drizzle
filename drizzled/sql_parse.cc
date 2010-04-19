@@ -21,6 +21,7 @@
 #include <drizzled/error.h>
 #include <drizzled/nested_join.h>
 #include <drizzled/query_id.h>
+#include "drizzled/transaction_services.h"
 #include <drizzled/sql_parse.h>
 #include <drizzled/data_home.h>
 #include <drizzled/sql_base.h>
@@ -40,7 +41,6 @@
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/global_charset_info.h"
-#include "drizzled/transaction_services.h"
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/query_rewrite.h"
@@ -196,6 +196,12 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   case COM_INIT_DB:
   {
     status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
+    if (packet_length == 0)
+    {
+      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+      break;
+    }
+
     string tmp(packet, packet_length);
 
     if (not mysql_change_db(session, tmp))

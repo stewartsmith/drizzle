@@ -137,6 +137,7 @@ public:
   int doCreateTable(Session *,
                     const char *table_name,
                     Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
@@ -144,12 +145,13 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           TableIdentifier &identifier,
+                           drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
 
-  int doDropTable(Session&, const string &table_path);
+  int doDropTable(Session&, TableIdentifier &identifier, const string &table_path);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -158,10 +160,30 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
+
+bool Tina::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(identifier.getPath());
+
+  if (iter != proto_cache.end())
+  {
+    return true;
+  }
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return false;
+}
+
+
 int Tina::doDropTable(Session&,
-                        const string &table_path)
+                      TableIdentifier &,
+                      const string &table_path)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -219,7 +241,8 @@ int Tina::doGetTableDefinition(Session&,
                                const char *,
                                const char *,
                                const bool,
-                               drizzled::message::Table *table_proto)
+                               drizzled::TableIdentifier &,
+                               drizzled::message::Table &table_message)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
@@ -229,8 +252,7 @@ int Tina::doGetTableDefinition(Session&,
 
   if (iter!= proto_cache.end())
   {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
+    table_message.CopyFrom(((*iter).second));
     error= EEXIST;
   }
   pthread_mutex_unlock(&proto_cache_mutex);
@@ -1387,6 +1409,7 @@ int ha_tina::delete_all_rows()
 
 int Tina::doCreateTable(Session *, const char *table_name,
                         Table& table_arg,
+                        drizzled::TableIdentifier &,
                         drizzled::message::Table& create_proto)
 {
   char name_buff[FN_REFLEN];

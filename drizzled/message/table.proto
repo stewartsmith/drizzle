@@ -125,7 +125,6 @@ message Table {
     }
 
     message SetFieldOptions {
-      required uint32 count_elements = 1;
       optional uint32 collation_id = 2;
       optional string collation = 3;
       repeated string field_value = 4;
@@ -184,6 +183,7 @@ message Table {
   }
 
   required string name = 1;
+  required string schema = 6;
   required TableType type = 5;
   required StorageEngine engine = 2;
   repeated Field field = 3;

@@ -26,9 +26,8 @@
 #include "drizzled/internal/m_string.h"
 #include <algorithm>
 
-#include "pack.h"
 #include "errmsg.h"
-#include "oldlibdrizzle.h"
+#include "mysql_protocol.h"
 #include "options.h"
 
 using namespace std;
@@ -78,7 +77,7 @@ ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg
   if (fd == -1)
     return;
 
-  if (drizzleclient_net_init_sock(&net, fd, 0, buffer_length))
+  if (drizzleclient_net_init_sock(&net, fd, buffer_length))
     throw bad_alloc();
 
   drizzleclient_net_set_read_timeout(&net, read_timeout);
@@ -89,7 +88,7 @@ ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg
 ClientMySQLProtocol::~ClientMySQLProtocol()
 {
   if (net.vio)
-    drizzleclient_vio_close(net.vio);
+    vio_close(net.vio);
 }
 
 int ClientMySQLProtocol::getFileDescriptor(void)
@@ -177,7 +176,7 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
   {
     /* Check if we can continue without closing the connection */
 
-    if(net.last_errno== CR_NET_PACKET_TOO_LARGE)
+    if(net.last_errno== ER_NET_PACKET_TOO_LARGE)
       my_error(ER_NET_PACKET_TOO_LARGE, MYF(0));
     if (session->main_da.status() == Diagnostics_area::DA_ERROR)
       sendError(session->main_da.sql_errno(), session->main_da.message());
@@ -230,8 +229,8 @@ bool ClientMySQLProtocol::readCommand(char **l_packet, uint32_t *packet_length)
 
 
     default:
-      /* Just drop connection for MySQL commands we don't support. */
-      (*l_packet)[0]= (unsigned char) COM_QUIT;
+      /* Respond with unknown command for MySQL commands we don't support. */
+      (*l_packet)[0]= (unsigned char) COM_END;
       *packet_length= 1;
       break;
     }
@@ -286,10 +285,10 @@ void ClientMySQLProtocol::sendOK()
   if (session->main_da.status() == Diagnostics_area::DA_OK)
   {
     if (client_capabilities & CLIENT_FOUND_ROWS && session->main_da.found_rows())
-      pos=drizzleclient_net_store_length(buff+1,session->main_da.found_rows());
+      pos=storeLength(buff+1,session->main_da.found_rows());
     else
-      pos=drizzleclient_net_store_length(buff+1,session->main_da.affected_rows());
-    pos=drizzleclient_net_store_length(pos, session->main_da.last_insert_id());
+      pos=storeLength(buff+1,session->main_da.affected_rows());
+    pos=storeLength(pos, session->main_da.last_insert_id());
     int2store(pos, session->main_da.server_status());
     pos+=2;
     tmp= min(session->main_da.total_warn_count(), (uint32_t)65535);
@@ -297,8 +296,8 @@ void ClientMySQLProtocol::sendOK()
   }
   else
   {
-    pos=drizzleclient_net_store_length(buff+1,0);
-    pos=drizzleclient_net_store_length(pos, 0);
+    pos=storeLength(buff+1,0);
+    pos=storeLength(pos, 0);
     int2store(pos, session->server_status);
     pos+=2;
     tmp= min(session->total_warn_count, (uint32_t)65535);
@@ -313,7 +312,7 @@ void ClientMySQLProtocol::sendOK()
   if (message && message[0])
   {
     size_t length= strlen(message);
-    pos=drizzleclient_net_store_length(pos,length);
+    pos=storeLength(pos,length);
     memcpy(pos,(unsigned char*) message,length);
     pos+=length;
   }
@@ -430,7 +429,7 @@ bool ClientMySQLProtocol::sendFields(List<Item> *list)
   unsigned char buff[80];
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
 
-  unsigned char *row_pos= drizzleclient_net_store_length(buff, list->elements);
+  unsigned char *row_pos= storeLength(buff, list->elements);
   (void) drizzleclient_net_write(&net, buff, (size_t) (row_pos-buff));
 
   while ((item=it++))
@@ -690,7 +689,11 @@ bool ClientMySQLProtocol::checkConnection(void)
     return false; /* The error is set by alloc(). */
 
   client_capabilities= uint2korr(net.read_pos);
-
+  if (!(client_capabilities & CLIENT_PROTOCOL_MYSQL41))
+  {
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), session->getSecurityContext().getIp().c_str());
+    return false;
+  }
 
   client_capabilities|= ((uint32_t) uint2korr(net.read_pos + 2)) << 16;
   session->max_client_packet_length= uint4korr(net.read_pos + 4);
@@ -756,12 +759,12 @@ bool ClientMySQLProtocol::netStoreData(const unsigned char *from, size_t length)
   size_t packet_length= packet.length();
   /*
      The +9 comes from that strings of length longer than 16M require
-     9 bytes to be stored (see drizzleclient_net_store_length).
+     9 bytes to be stored (see storeLength).
   */
   if (packet_length+9+length > packet.alloced_length() &&
       packet.realloc(packet_length+9+length))
     return 1;
-  unsigned char *to= drizzleclient_net_store_length((unsigned char*) packet.ptr()+packet_length, length);
+  unsigned char *to= storeLength((unsigned char*) packet.ptr()+packet_length, length);
   memcpy(to,from,length);
   packet.length((size_t) (to+length-(unsigned char*) packet.ptr()));
   return 0;
@@ -792,6 +795,44 @@ void ClientMySQLProtocol::writeEOFPacket(uint32_t server_status,
     server_status&= ~SERVER_MORE_RESULTS_EXISTS;
   int2store(buff + 3, server_status);
   drizzleclient_net_write(&net, buff, 5);
+}
+
+/*
+  Store an integer with simple packing into a output package
+
+  buffer      Store the packed integer here
+  length    integers to store
+
+  This is mostly used to store lengths of strings.  We have to cast
+  the result for the LL() becasue of a bug in Forte CC compiler.
+
+  RETURN
+  Position in 'buffer' after the packed length
+*/
+
+unsigned char *ClientMySQLProtocol::storeLength(unsigned char *buffer, uint64_t length)
+{
+  if (length < (uint64_t) 251LL)
+  {
+    *buffer=(unsigned char) length;
+    return buffer+1;
+  }
+  /* 251 is reserved for NULL */
+  if (length < (uint64_t) 65536LL)
+  {
+    *buffer++=252;
+    int2store(buffer,(uint32_t) length);
+    return buffer+2;
+  }
+  if (length < (uint64_t) 16777216LL)
+  {
+    *buffer++=253;
+    int3store(buffer,(uint32_t) length);
+    return buffer+3;
+  }
+  *buffer++=254;
+  int8store(buffer,length);
+  return buffer+8;
 }
 
 static ListenMySQLProtocol *listen_obj= NULL;

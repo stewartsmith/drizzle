@@ -27,6 +27,29 @@ AC_DEFUN([_PANDORA_SEARCH_LIBINNODB],[
     ac_cv_libinnodb="no"
   ])
 
+
+  AC_CACHE_CHECK([if libinnodb is recent enough],
+    [ac_cv_recent_innodb_h],[
+      save_LIBS=${LIBS}
+      LIBS="${LIBS} ${LTLIBINNODB}"
+      AC_LINK_IFELSE(
+          [AC_LANG_PROGRAM([[
+      #include <embedded_innodb-1.0/innodb.h>
+        ]],[[
+      /* Make sure we have the two-arg version */
+      ib_table_drop(NULL, "nothing");
+        ]])],[
+        ac_cv_recent_innodb_h=yes
+      ],[
+        ac_cv_recent_innodb_h=no
+      ])
+      LIBS="${save_LIBS}"
+    ])
+  AS_IF([test "x${ac_cv_recent_innodb_h}" = "xno"],[
+    AC_MSG_WARN([${PACKAGE} requires at least version 1.0.6 of Embedded InnoDB])
+    ac_cv_libinnodb=no
+  ])
+        
   AM_CONDITIONAL(HAVE_LIBINNODB, [test "x${ac_cv_libinnodb}" = "xyes"])
 ])
 

@@ -78,7 +78,8 @@ int Schema::doGetTableDefinition(Session &,
                                  const char *,
                                  const char *,
                                  const bool,
-                                 message::Table *table_proto)
+                                 drizzled::TableIdentifier &,
+                                 message::Table &table_proto)
 {
   string proto_path(path);
   proto_path.append(DEFAULT_FILE_EXTENSION);
@@ -88,15 +89,10 @@ int Schema::doGetTableDefinition(Session &,
     return errno;
   }
 
-  if (table_proto)
-  {
-    if (readTableFile(proto_path, *table_proto))
-      return EEXIST;
+  if (readTableFile(proto_path, table_proto))
+    return EEXIST;
 
-    return -1;
-  }
-
-  return EEXIST;
+  return -1;
 }
 
 void Schema::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
@@ -277,7 +273,7 @@ bool Schema::doDropSchema(const std::string &schema_name)
   return true;
 }
 
-int Schema::doDropTable(Session&, const string &table_path)
+int Schema::doDropTable(Session&, TableIdentifier &, const string &table_path)
 {
   string path(table_path);
 
@@ -426,4 +422,15 @@ bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
   return true;
 }
 
+bool Schema::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(DEFAULT_FILE_EXTENSION);
 
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}

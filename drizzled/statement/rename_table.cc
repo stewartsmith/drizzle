@@ -156,7 +156,7 @@ bool statement::RenameTable::rename(TableList *ren_table,
 
   TableIdentifier old_identifier(ren_table->db, old_alias, STANDARD_TABLE);
 
-  if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, &table_proto) != EEXIST)
+  if (plugin::StorageEngine::getTableDefinition(*session, old_identifier, table_proto) != EEXIST)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), ren_table->db, old_alias);
     return true;

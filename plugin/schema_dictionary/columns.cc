@@ -34,7 +34,7 @@ ColumnsTool::ColumnsTool() :
   add_field("COLUMN_NAME");
   add_field("COLUMN_TYPE");
   add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER);
-  add_field("COLUMN_DEFAULT");
+  add_field("COLUMN_DEFAULT", plugin::TableFunction::VARBINARY, 65535, true);
   add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN);
   add_field("COLUMN_DEFAULT_UPDATE");
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
@@ -135,7 +135,12 @@ void ColumnsTool::Generator::fill()
   push(static_cast<int64_t>(column_iterator));
 
   /* COLUMN_DEFAULT */
-  push(column.options().default_value());
+  if (column.options().has_default_value())
+    push(column.options().default_value());
+  else if (column.options().has_default_bin_value())
+    push(column.options().default_bin_value().c_str(), column.options().default_bin_value().length());
+  else
+    push();
 
   /* COLUMN_DEFAULT_IS_NULL */
   push(column.options().default_null());

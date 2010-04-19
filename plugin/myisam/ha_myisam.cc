@@ -70,17 +70,17 @@ class MyisamEngine : public plugin::StorageEngine
 {
 public:
   MyisamEngine(string name_arg)
-   : plugin::StorageEngine(name_arg,
-                                     HTON_HAS_DATA_DICTIONARY |
-                                     HTON_CAN_INDEX_BLOBS |
-                                     HTON_STATS_RECORDS_IS_EXACT |
-                                     HTON_TEMPORARY_ONLY |
-                                     HTON_NULL_IN_KEY |
-                                     HTON_HAS_RECORDS |
-                                     HTON_DUPLICATE_POS |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_FILE_BASED ) {}
+    : plugin::StorageEngine(name_arg,
+                            HTON_HAS_DATA_DICTIONARY |
+                            HTON_CAN_INDEX_BLOBS |
+                            HTON_STATS_RECORDS_IS_EXACT |
+                            HTON_TEMPORARY_ONLY |
+                            HTON_NULL_IN_KEY |
+                            HTON_HAS_RECORDS |
+                            HTON_DUPLICATE_POS |
+                            HTON_AUTO_PART_KEY |
+                            HTON_SKIP_STORE_LOCK |
+                            HTON_FILE_BASED ) {}
 
   ~MyisamEngine()
   { }
@@ -97,18 +97,20 @@ public:
 
   int doCreateTable(Session *, const char *table_name,
                     Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
                     message::Table&);
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int doDropTable(Session&, const string &table_name);
+  int doDropTable(Session&, drizzled::TableIdentifier &, const string &table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           message::Table *table_proto);
+                           drizzled::TableIdentifier &identifier,
+                           message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
@@ -125,14 +127,32 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
+
+bool MyisamEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  ProtoCache::iterator iter;
+
+  pthread_mutex_lock(&proto_cache_mutex);
+  iter= proto_cache.find(identifier.getPath());
+
+  if (iter != proto_cache.end())
+  {
+    return true;
+  }
+  pthread_mutex_unlock(&proto_cache_mutex);
+
+  return false;
+}
 
 int MyisamEngine::doGetTableDefinition(Session&,
                                        const char* path,
                                        const char *,
                                        const char *,
                                        const bool,
-                                       message::Table *table_proto)
+                                       drizzled::TableIdentifier&,
+                                       message::Table &table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
@@ -142,8 +162,7 @@ int MyisamEngine::doGetTableDefinition(Session&,
 
   if (iter!= proto_cache.end())
   {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
+    table_proto.CopyFrom(((*iter).second));
     error= EEXIST;
   }
   pthread_mutex_unlock(&proto_cache_mutex);
@@ -1330,7 +1349,9 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDropTable(Session&, const string &table_path)
+int MyisamEngine::doDropTable(Session&,
+                              drizzled::TableIdentifier &,
+                              const string &table_path)
 {
   ProtoCache::iterator iter;
 
@@ -1356,6 +1377,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 
 int MyisamEngine::doCreateTable(Session *, const char *table_name,
                                 Table& table_arg,
+                                drizzled::TableIdentifier &,
                                 message::Table& create_proto)
 {
   int error;

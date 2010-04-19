@@ -45,7 +45,7 @@ AC_DEFUN([PANDORA_PLUGINS],[
   AC_SUBST(pandora_plugin_defs)
 
   AC_SUBST(PANDORA_PLUGIN_DEP_LIBS)
-  AC_SUBST(pkgplugindir,"\$(pkglibdir)/plugin")
+  AC_SUBST(pkgplugindir,"\$(pkglibdir)")
 ])
 
 AC_DEFUN([PANDORA_ADD_PLUGIN_DEP_LIB],[

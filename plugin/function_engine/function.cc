@@ -45,11 +45,12 @@ Cursor *Function::create(TableShare &table, memory::Root *mem_root)
 }
 
 int Function::doGetTableDefinition(Session &,
-                                     const char *path,
-                                     const char *,
-                                     const char *,
-                                     const bool,
-                                     message::Table *table_proto)
+                                   const char *path,
+                                   const char *,
+                                   const char *,
+                                   const bool,
+                                   TableIdentifier &,
+                                   message::Table &table_proto)
 {
   string tab_name(path);
   transform(tab_name.begin(), tab_name.end(),
@@ -62,10 +63,7 @@ int Function::doGetTableDefinition(Session &,
     return ENOENT;
   }
 
-  if (table_proto)
-  {
-    function->define(*table_proto);
-  }
+  function->define(table_proto);
 
   return EEXIST;
 }
@@ -117,6 +115,16 @@ bool Function::doCanCreateTable(const drizzled::TableIdentifier &identifier)
   }
 
   return true;
+}
+
+bool Function::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
+
+  if (function)
+    return true;
+
+  return false;
 }
 
 

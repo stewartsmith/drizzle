@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H
-#define PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H
+#ifndef PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H
+#define PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
@@ -51,6 +51,7 @@ private:
   bool checkConnection(void);
   bool netStoreData(const unsigned char *from, size_t length);
   void writeEOFPacket(uint32_t server_status, uint32_t total_warn_count);
+  unsigned char *storeLength(unsigned char *packet, uint64_t length);
 
 public:
   ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg);
@@ -87,4 +88,4 @@ public:
   virtual bool wasAborted(void);
 };
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_OLDLIBDRIZZLE_H */
+#endif /* PLUGIN_MYSQL_PROTOCOL_MYSQL_PROTOCOL_H */

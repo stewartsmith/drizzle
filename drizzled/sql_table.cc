@@ -32,7 +32,7 @@
 #include <drizzled/unireg.h>
 #include <drizzled/item/int.h>
 #include <drizzled/item/empty_string.h>
-#include <drizzled/replication_services.h>
+#include <drizzled/transaction_services.h>
 #include "drizzled/transaction_services.h"
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
@@ -106,15 +106,15 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
 void write_bin_log(Session *session,
                    char const *query)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  replication_services.rawStatement(session, query);
+  TransactionServices &transaction_services= TransactionServices::singleton();
+  transaction_services.rawStatement(session, query);
 }
 
 
 /* Should should be refactored to go away */
 void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_name, const char *table_name)
 {
-  ReplicationServices &replication_services= ReplicationServices::singleton();
+  TransactionServices &transaction_services= TransactionServices::singleton();
   string built_query;
 
   if (if_exists)
@@ -131,7 +131,7 @@ void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_n
 
   built_query.append(table_name);
   built_query.append("`");
-  replication_services.rawStatement(session, built_query);
+  transaction_services.rawStatement(session, built_query);
 }
 
 /*
@@ -263,8 +263,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
     if (error == 0 || (if_exists && foreign_key_error == false))
     {
-      ReplicationServices &replication_services= ReplicationServices::singleton();
-      replication_services.dropTable(session, string(db), string(table->table_name), if_exists);
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.dropTable(session, string(db), string(table->table_name), if_exists);
     }
 
     if (error)
@@ -1455,8 +1455,8 @@ bool mysql_create_table_no_lock(Session *session,
 
   if (not internal_tmp_table && not lex_identified_temp_table)
   {
-    ReplicationServices &replication_services= ReplicationServices::singleton();
-    replication_services.createTable(session, table_proto);
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.createTable(session, table_proto);
   }
   error= false;
 unlock_and_end:
@@ -2026,7 +2026,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
   protoerr= plugin::StorageEngine::getTableDefinition(session,
                                                       src_table,
-                                                      &src_proto);
+                                                      src_proto);
   new_proto.CopyFrom(src_proto);
 
   if (lex_identified_temp_table)

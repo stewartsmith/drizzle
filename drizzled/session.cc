@@ -2047,19 +2047,64 @@ bool Session::rm_temporary_table(TableIdentifier &identifier)
 bool Session::rm_temporary_table(plugin::StorageEngine *base, const char *path)
 {
   bool error= false;
+  TableIdentifier dummy(path);
 
   assert(base);
 
   if (delete_table_proto_file(path))
     error= true;
 
-  if (base->doDropTable(*this, path))
+  if (base->doDropTable(*this, dummy, path))
   {
     error= true;
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   path, errno);
   }
   return error;
+}
+
+bool Session::storeTableMessage(TableIdentifier &identifier, message::Table &table_message)
+{
+  table_message_cache.insert(make_pair(identifier.getPath(), table_message));
+
+  return true;
+}
+
+bool Session::removeTableMessage(TableIdentifier &identifier)
+{
+  TableMessageCache::iterator iter;
+
+  iter= table_message_cache.find(identifier.getPath());
+
+  if (iter != table_message_cache.end())
+    table_message_cache.erase(iter);
+
+  return true;
+}
+
+bool Session::getTableMessage(TableIdentifier &identifier, message::Table &table_message)
+{
+  TableMessageCache::iterator iter;
+
+  iter= table_message_cache.find(identifier.getPath());
+
+  table_message.CopyFrom(((*iter).second));
+
+  return true;
+}
+
+bool Session::doesTableMessageExist(TableIdentifier &identifier)
+{
+  TableMessageCache::iterator iter;
+
+  iter= table_message_cache.find(identifier.getPath());
+
+  if (iter != table_message_cache.end())
+  {
+    return true;
+  }
+
+  return false;
 }
 
 } /* namespace drizzled */

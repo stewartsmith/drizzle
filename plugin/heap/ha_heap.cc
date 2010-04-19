@@ -65,6 +65,7 @@ public:
   int doCreateTable(Session *session,
                     const char *table_name,
                     Table& table_arg,
+                    drizzled::TableIdentifier &identifier,
                     message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
@@ -80,14 +81,16 @@ public:
 
   int doRenameTable(Session*, const char * from, const char * to);
 
-  int doDropTable(Session&, const string &table_path);
+  int doDropTable(Session&, TableIdentifier &identifier,
+                  const string &table_path);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           message::Table *table_proto);
+                           TableIdentifier &identifier,
+                           message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
@@ -113,7 +116,8 @@ int HeapEngine::doGetTableDefinition(Session&,
                                      const char *,
                                      const char *,
                                      const bool,
-                                     message::Table *table_proto)
+                                     TableIdentifier &,
+                                     message::Table &table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
@@ -123,8 +127,7 @@ int HeapEngine::doGetTableDefinition(Session&,
 
   if (iter!= proto_cache.end())
   {
-    if (table_proto)
-      table_proto->CopyFrom(((*iter).second));
+    table_proto.CopyFrom(((*iter).second));
     error= EEXIST;
   }
   pthread_mutex_unlock(&proto_cache_mutex);
@@ -135,7 +138,7 @@ int HeapEngine::doGetTableDefinition(Session&,
   We have to ignore ENOENT entries as the MEMORY table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDropTable(Session&, const string &table_path)
+int HeapEngine::doDropTable(Session&, TableIdentifier &, const string &table_path)
 {
   ProtoCache::iterator iter;
 
@@ -692,6 +695,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 int HeapEngine::doCreateTable(Session *session,
                               const char *table_name,
                               Table &table_arg,
+                              drizzled::TableIdentifier &,
                               message::Table& create_proto)
 {
   int error;

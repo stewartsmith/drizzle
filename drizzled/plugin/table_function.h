@@ -44,6 +44,20 @@ extern int wild_case_compare(const CHARSET_INFO * const cs,
 namespace plugin
 {
 
+// Not thread safe, but plugins are just loaded in a single thread right
+// now.
+static const char *local_string_append(const char *arg1, const char *arg2)
+{
+  static char buffer[1024];
+  char *buffer_ptr= buffer;
+  strcpy(buffer_ptr, arg1);
+  buffer_ptr+= strlen(arg1);
+  buffer_ptr[0]= '-';
+  buffer_ptr++;
+  strcpy(buffer_ptr, arg2);
+
+  return buffer;
+}
 
 class TableFunction : public Plugin
 {
@@ -55,6 +69,8 @@ class TableFunction : public Plugin
   TableIdentifier identifier;
   std::string local_path;
   std::string local_schema;
+  std::string local_table_name;
+  std::string original_table_label;
 
   void setName(); // init name
 
@@ -62,8 +78,9 @@ class TableFunction : public Plugin
 
 public:
   TableFunction(const char *schema_arg, const char *table_arg) :
-    Plugin(table_arg, "TableFunction"),
-    identifier(schema_arg, table_arg)
+    Plugin(local_string_append(schema_arg, table_arg) , "TableFunction"),
+    identifier(schema_arg, table_arg),
+    original_table_label(table_arg)
   {
     init();
   }
@@ -80,7 +97,8 @@ public:
   enum ColumnType {
     BOOLEAN,
     NUMBER,
-    STRING
+    STRING,
+    VARBINARY
   };
 
   class Generator 
@@ -120,9 +138,26 @@ public:
     arg.CopyFrom(proto);
   }
 
+  const std::string &getTableLabel()
+  { 
+    return original_table_label;
+  }
+
+  const std::string &getIdentifierTableName()
+  { 
+    if (local_table_name.empty())
+    {
+      local_table_name= identifier.getTableName();
+      std::transform(local_table_name.begin(), local_table_name.end(),
+                     local_table_name.begin(), ::tolower);
+    }
+
+    return local_table_name;
+  }
+
   const std::string &getSchemaHome()
   { 
-    if (local_schema.length() == 0)
+    if (local_schema.empty())
     {
       local_schema= identifier.getSchemaName();
       std::transform(local_schema.begin(), local_schema.end(),
@@ -134,7 +169,7 @@ public:
 
   const std::string &getPath()
   { 
-    if (local_path.length() == 0)
+    if (local_path.empty())
     {
       local_path= identifier.getPath();
       std::transform(local_path.begin(), local_path.end(),

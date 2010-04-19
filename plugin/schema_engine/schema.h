@@ -56,12 +56,13 @@ public:
   int doCreateTable(drizzled::Session *,
                     const char *,
                     drizzled::Table&,
+                    drizzled::TableIdentifier &,
                     drizzled::message::Table&)
   {
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, const std::string &table_path);
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier, const std::string &table_path);
 
   bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 
@@ -85,11 +86,14 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
                        std::string &db_name,
                        std::set<std::string> &set_of_names);
+
+  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
 
   const char **bas_ext() const 
   {

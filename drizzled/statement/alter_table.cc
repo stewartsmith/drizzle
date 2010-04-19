@@ -813,6 +813,8 @@ bool alter_table(Session *session,
     create_info->db_type= old_db_type;
   }
 
+  create_proto.set_schema(new_db);
+
   if (table->s->tmp_table != STANDARD_TABLE)
   {
     create_proto.set_type(message::Table::TEMPORARY);
@@ -932,7 +934,8 @@ bool alter_table(Session *session,
         we don't take this name-lock and where this order really matters.
         TODO: Investigate if we need this access() check at all.
       */
-      if (plugin::StorageEngine::getTableDefinition(*session, new_name, db, table_name, false) == EEXIST)
+      TableIdentifier identifier(db, table_name);
+      if (not plugin::StorageEngine::doesTableExist(*session, identifier))
       {
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
         error= -1;

@@ -39,7 +39,7 @@ plugin::TableFunction *TableFunctionContainer::getFunction(const std::string &pa
 }
 
 void TableFunctionContainer::getNames(const string &predicate,
-				      std::set<std::string> &set_of_names)
+                                      std::set<std::string> &set_of_names)
 {
   for (ToolMap::iterator it= table_map.begin();
        it != table_map.end();
@@ -51,12 +51,12 @@ void TableFunctionContainer::getNames(const string &predicate,
     {
       if (not predicate.compare(tool->getSchemaHome()))
       {
-        set_of_names.insert(tool->getName());
+        set_of_names.insert(tool->getTableLabel());
       }
     }
     else
     {
-      set_of_names.insert(tool->getName());
+      set_of_names.insert(tool->getTableLabel());
     }
   }
 }

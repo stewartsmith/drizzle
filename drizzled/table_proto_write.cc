@@ -160,7 +160,6 @@ static int fill_table_proto(message::Table &table_proto,
 
           set_field_options->add_field_value(src);
         }
-        set_field_options->set_count_elements(set_field_options->field_value_size());
 	set_field_options->set_collation_id(field_arg->charset->number);
         set_field_options->set_collation(field_arg->charset->name);
         break;

@@ -73,9 +73,12 @@ public:
   int doCreateTable(Session*,
                     const char *,
                     Table&,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string &table_name);
+  int doDropTable(Session&,
+                  TableIdentifier &identifier,
+                  const string &table_name);
 
   BlackholeShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, BlackholeShare *);
@@ -86,7 +89,8 @@ public:
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           TableIdentifier &identifier,
+                           drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
                        string&, set<string>& set_of_names)
@@ -133,6 +137,7 @@ public:
             HA_KEYREAD_ONLY);
   }
 
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
 
@@ -189,6 +194,7 @@ int ha_blackhole::close(void)
 
 int BlackholeEngine::doCreateTable(Session*, const char *path,
                                    Table&,
+                                   drizzled::TableIdentifier &,
                                    drizzled::message::Table& proto)
 {
   string serialized_proto;
@@ -213,7 +219,9 @@ int BlackholeEngine::doCreateTable(Session*, const char *path,
 }
 
 
-int BlackholeEngine::doDropTable(Session&, const string &path)
+int BlackholeEngine::doDropTable(Session&,
+                                 TableIdentifier&,
+                                 const string &path)
 {
   string new_path(path);
 
@@ -230,12 +238,28 @@ int BlackholeEngine::doDropTable(Session&, const string &path)
 }
 
 
+bool BlackholeEngine::doDoesTableExist(Session&,
+                                       TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(BLACKHOLE_EXT);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+
 int BlackholeEngine::doGetTableDefinition(Session&,
                                           const char* path,
                                           const char *,
                                           const char *,
                                           const bool,
-                                          drizzled::message::Table *table_proto)
+                                          TableIdentifier &,
+                                          drizzled::message::Table &table_proto)
 {
   string new_path;
 
@@ -252,17 +276,17 @@ int BlackholeEngine::doGetTableDefinition(Session&,
   google::protobuf::io::ZeroCopyInputStream* input=
     new google::protobuf::io::FileInputStream(fd);
 
-  if (! input)
+  if (not input)
     return HA_ERR_CRASHED_ON_USAGE;
 
-  if (table_proto && ! table_proto->ParseFromZeroCopyStream(input))
+  if (not table_proto.ParseFromZeroCopyStream(input))
   {
     close(fd);
     delete input;
-    if (! table_proto->IsInitialized())
+    if (not table_proto.IsInitialized())
     {
       my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-               table_proto->InitializationErrorString().c_str());
+               table_proto.InitializationErrorString().c_str());
       return ER_CORRUPT_TABLE_DEFINITION;
     }
 
@@ -270,6 +294,7 @@ int BlackholeEngine::doGetTableDefinition(Session&,
   }
 
   delete input;
+
   return EEXIST;
 }
 

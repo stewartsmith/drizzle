@@ -71,16 +71,18 @@ public:
   int doCreateTable(Session*,
                     const char *,
                     Table&,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string &table_name);
+  int doDropTable(Session&, drizzled::TableIdentifier &identifier, const string &table_name);
 
   int doGetTableDefinition(Session& session,
                            const char* path,
                            const char *db,
                            const char *table_name,
                            const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
                        string&, set<string>& set_of_names)
@@ -104,16 +106,26 @@ public:
             HA_KEYREAD_ONLY);
   }
 
+  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
+
+bool TableProtoTesterEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  if (strcmp(identifier.getPath(), "./test/t1") == 0)
+    return true;
+
+  return false;
+}
+
 TableProtoTesterCursor::TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg)
-  :Cursor(engine_arg, table_arg)
+                           TableShare &table_arg) :
+  Cursor(engine_arg, table_arg)
 { }
 
 int TableProtoTesterCursor::open(const char *, int, uint32_t)
 {
-  return(0);
+  return 0;
 }
 
 int TableProtoTesterCursor::close(void)
@@ -122,31 +134,32 @@ int TableProtoTesterCursor::close(void)
 }
 
 int TableProtoTesterEngine::doCreateTable(Session*, const char *,
-                                   Table&,
-                                   drizzled::message::Table&)
+                                          Table&,
+                                          drizzled::TableIdentifier &,
+                                          drizzled::message::Table&)
 {
   return EEXIST;
 }
 
 
-int TableProtoTesterEngine::doDropTable(Session&, const string&)
+int TableProtoTesterEngine::doDropTable(Session&, drizzled::TableIdentifier&, const string&)
 {
   return EPERM;
 }
 
-static void fill_table1(message::Table *table)
+static void fill_table1(message::Table &table)
 {
   message::Table::Field *field;
   message::Table::TableOptions *tableopts;
 
-  table->set_name("t1");
-  table->set_type(message::Table::INTERNAL);
+  table.set_name("t1");
+  table.set_type(message::Table::INTERNAL);
 
-  tableopts= table->mutable_options();
+  tableopts= table.mutable_options();
   tableopts->set_comment("Table without a StorageEngine message");
 
   {
-    field= table->add_field();
+    field= table.add_field();
     field->set_name("number");
     field->set_type(message::Table::Field::INTEGER);
   }
@@ -157,12 +170,12 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                           const char *,
                                           const char *,
                                           const bool,
-                                          drizzled::message::Table *table_proto)
+                                          drizzled::TableIdentifier &,
+                                          drizzled::message::Table &table_proto)
 {
   if (strcmp(path, "./test/t1") == 0)
   {
-    if (table_proto)
-      fill_table1(table_proto);
+    fill_table1(table_proto);
     return EEXIST;
   }
   return ENOENT;

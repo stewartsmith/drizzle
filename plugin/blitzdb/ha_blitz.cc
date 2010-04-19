@@ -41,6 +41,7 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
                             int *return_klen);
 
 int BlitzEngine::doCreateTable(Session *, const char *path, Table &table,
+                               drizzled::TableIdentifier &,
                                drizzled::message::Table &proto) {
   BlitzData dict;
   BlitzTree btree;
@@ -92,7 +93,8 @@ int BlitzEngine::doRenameTable(Session *, const char *from, const char *to) {
   return (dict.rename_table(from, to)) ? 0 : -1;
 }
 
-int BlitzEngine::doDropTable(Session &, const string &path) {
+int BlitzEngine::doDropTable(Session &, drizzled::TableIdentifier &,
+                             const string &path) {
   BlitzData dict;
   BlitzTree btree;
   char buf[FN_REFLEN];
@@ -133,7 +135,8 @@ int BlitzEngine::doDropTable(Session &, const string &path) {
 int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
                                       const char *, const char *,
                                       const bool,
-                                      drizzled::message::Table *proto) {
+                                      drizzled::TableIdentifier &,
+                                      drizzled::message::Table &proto) {
   char name_buffer[FN_REFLEN];
   struct stat stat_info;
 
@@ -146,38 +149,36 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
     return errno;
   }
 
-  if (proto) {
-    BlitzData db;
-    char *proto_string;
-    int proto_string_len;
+  BlitzData db;
+  char *proto_string;
+  int proto_string_len;
 
-    if (db.open_system_table(file_path, HDBOREADER) != 0) {
-      pthread_mutex_unlock(&proto_cache_mutex);
-      return HA_ERR_CRASHED_ON_USAGE;
-    }
-
-    proto_string = db.get_system_entry(BLITZ_TABLE_PROTO_KEY.c_str(),
-                                       BLITZ_TABLE_PROTO_KEY.length(),
-                                       &proto_string_len);
-            
-    if (db.close_system_table() != 0) {
-      pthread_mutex_unlock(&proto_cache_mutex);
-      return HA_ERR_CRASHED_ON_USAGE;
-    }
-
-    if (proto_string == NULL) {
-      pthread_mutex_unlock(&proto_cache_mutex);
-      return ENOMEM;
-    }
-
-    if (!proto->ParseFromArray(proto_string, proto_string_len)) {
-      free(proto_string);
-      pthread_mutex_unlock(&proto_cache_mutex);
-      return HA_ERR_CRASHED_ON_USAGE;      
-    }
-
-    free(proto_string);
+  if (db.open_system_table(file_path, HDBOREADER) != 0) {
+    pthread_mutex_unlock(&proto_cache_mutex);
+    return HA_ERR_CRASHED_ON_USAGE;
   }
+
+  proto_string = db.get_system_entry(BLITZ_TABLE_PROTO_KEY.c_str(),
+                                     BLITZ_TABLE_PROTO_KEY.length(),
+                                     &proto_string_len);
+          
+  if (db.close_system_table() != 0) {
+    pthread_mutex_unlock(&proto_cache_mutex);
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  if (proto_string == NULL) {
+    pthread_mutex_unlock(&proto_cache_mutex);
+    return ENOMEM;
+  }
+
+  if (!proto.ParseFromArray(proto_string, proto_string_len)) {
+    free(proto_string);
+    pthread_mutex_unlock(&proto_cache_mutex);
+    return HA_ERR_CRASHED_ON_USAGE;      
+  }
+
+  free(proto_string);
 
   pthread_mutex_unlock(&proto_cache_mutex);
   return EEXIST;
@@ -208,6 +209,15 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory, string&,
     }
   }
 }
+
+bool BlitzEngine::doDoesTableExist(drizzled::Session &,
+                                   drizzled::TableIdentifier &identifier) {
+  std::string proto_path(identifier.getPath());
+  proto_path.append(BLITZ_DATA_EXT);
+
+  return (access(proto_path.c_str(), F_OK)) ? false : true;
+}
+
 
 ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
                    TableShare &table_arg) : Cursor(engine_arg, table_arg),

@@ -166,6 +166,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 
 
 int ArchiveEngine::doDropTable(Session&,
+                               TableIdentifier &,
                                const string &table_path)
 {
   string new_path(table_path);
@@ -187,7 +188,8 @@ int ArchiveEngine::doGetTableDefinition(Session&,
                                         const char *,
                                         const char *,
                                         const bool,
-                                        drizzled::message::Table *table_proto)
+                                        TableIdentifier &,
+                                        drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
   int error= ENOENT;
@@ -203,7 +205,6 @@ int ArchiveEngine::doGetTableDefinition(Session&,
   else
     error= EEXIST;
 
-  if (table_proto)
   {
     azio_stream proto_stream;
     char* proto_string;
@@ -219,7 +220,7 @@ int ArchiveEngine::doGetTableDefinition(Session&,
 
     azread_frm(&proto_stream, proto_string);
 
-    if (table_proto->ParseFromArray(proto_string, proto_stream.frm_length) == false)
+    if (table_proto.ParseFromArray(proto_string, proto_stream.frm_length) == false)
       error= HA_ERR_CRASHED_ON_USAGE;
 
     azclose(&proto_stream);
@@ -534,6 +535,7 @@ int ha_archive::close(void)
 int ArchiveEngine::doCreateTable(Session *,
                                  const char *table_name,
                                  Table& table_arg,
+                                 drizzled::TableIdentifier &,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
@@ -1324,4 +1326,18 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   free((char*) r->buffer);
   free((char*) r);
   return;
+}
+
+bool ArchiveEngine::doDoesTableExist(Session&,
+                                     TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(ARZ);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
 }

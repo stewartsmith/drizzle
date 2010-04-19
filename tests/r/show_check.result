@@ -145,9 +145,9 @@ t1	CREATE TABLE `t1` (
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 name	VARCHAR	TRUE	O'Brien	FALSE	
-c	INTEGER	FALSE	O'Brien	FALSE	
-c-b	INTEGER	TRUE	O'Brien	TRUE	
-space 2	INTEGER	TRUE	O'Brien	TRUE	
+c	INTEGER	FALSE		FALSE	
+c-b	INTEGER	TRUE		TRUE	
+space 2	INTEGER	TRUE		TRUE	
 drop table t1;
 create table t1 (a int not null, unique aa (a));
 show create table t1;

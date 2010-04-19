@@ -43,6 +43,7 @@ namespace drizzled
 namespace message
 {
 /* some forward declarations */
+class Transaction;
 class Statement;
 class InsertHeader;
 class InsertData;
@@ -459,6 +460,15 @@ transformFieldDefinitionToSql(const Table::Field &field,
 bool shouldQuoteFieldValue(Table::Field::FieldType in_type);
 
 drizzled::message::Table::Field::FieldType internalFieldTypeToFieldProtoType(enum enum_field_types type);
+
+/**
+ * Returns true if the transaction contains any Statement
+ * messages which are not end segments (i.e. a bulk statement has
+ * previously been sent to replicators).
+ *
+ * @param The transaction to check
+ */
+bool transactionContainsBulkSegment(const Transaction &transaction);
 
 } /* namespace message */
 } /* namespace drizzled */

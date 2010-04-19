@@ -1244,6 +1244,8 @@ int open_table_def(Session& session, TableShare *share)
   int error;
   bool error_given;
 
+  TableIdentifier identifier(share->normalized_path.str);
+
   error= 1;
   error_given= 0;
 
@@ -1253,7 +1255,8 @@ int open_table_def(Session& session, TableShare *share)
                                                    share->getSchemaName(),
                                                    share->table_name.str,
                                                    false,
-                                                   &table);
+                                                   identifier,
+                                                   table);
 
   if (error != EEXIST)
   {
@@ -3306,7 +3309,8 @@ void Table::free_tmp_table(Session *session)
     if (db_stat)
       cursor->closeMarkForDelete(s->table_name.str);
 
-    s->db_type()->doDropTable(*session, s->table_name.str);
+    TableIdentifier identifier(s->table_name.str);
+    s->db_type()->doDropTable(*session, identifier, s->table_name.str);
 
     delete cursor;
   }
@@ -3417,8 +3421,13 @@ bool create_myisam_from_heap(Session *session, Table *table,
   table->print_error(write_err, MYF(0));
   (void) table->cursor->ha_rnd_end();
   (void) new_table.cursor->close();
+
  err1:
-  new_table.s->db_type()->doDropTable(*session, new_table.s->table_name.str);
+  {
+    TableIdentifier identifier(new_table.s->table_name.str);
+    new_table.s->db_type()->doDropTable(*session, identifier, new_table.s->table_name.str);
+  }
+
  err2:
   delete new_table.cursor;
   session->set_proc_info(save_proc_info);

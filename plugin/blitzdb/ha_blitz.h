@@ -160,7 +160,7 @@ public:
 };
 
 /* Class that reprensents a BTREE index. Takes care of all I/O
-   to the b+tree index structure */
+   to the B+Tree index structure */
 class BlitzTree {
 private:
   TCBDB *btree;
@@ -208,7 +208,6 @@ public:
   char *find_key(const int search_mode, const char *key,
                  const int klen, int *rv_len);
 
-  //int count_to_last_occurrence(const char *key, const int klen);
   bool move_cursor(const char *key, const int klen, const int search_mode);
   int count_duplicates_from_cursor(void);
   
@@ -374,19 +373,26 @@ public:
   }
 
   int doCreateTable(drizzled::Session *session, const char *table_name,
-                    drizzled::Table &table_arg, drizzled::message::Table&);
+                    drizzled::Table &table_arg,
+                    drizzled::TableIdentifier &identifier,
+                    drizzled::message::Table &table_proto);
 
   int doRenameTable(drizzled::Session *session, const char *from, const char *to);
 
-  int doDropTable(drizzled::Session&, const std::string &table_name); 
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier,
+                  const std::string &table_name); 
 
-  int doGetTableDefinition(drizzled::Session& session,
+  int doGetTableDefinition(drizzled::Session &session,
                            const char *path, const char *db,
                            const char *table_name, const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+                           drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory, std::string&,
+  void doGetTableNames(drizzled::CachedDirectory &directory, std::string &,
                        std::set<std::string>& set_of_names);
+
+  bool doDoesTableExist(drizzled::Session &session,
+                        drizzled::TableIdentifier &identifier);
 
   uint32_t max_supported_keys() const { return BLITZ_MAX_INDEX; }
   uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LEN; }
