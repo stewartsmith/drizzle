@@ -118,7 +118,6 @@ inline static bool alloc_root_inited(Root *root)
 
 void init_alloc_root(Root *mem_root,
                      size_t block_size= ROOT_MIN_BLOCK_SIZE);
-void *alloc_root(Root *mem_root, size_t Size);
 void *multi_alloc_root(Root *mem_root, ...);
 void free_root(Root *root, myf MyFLAGS);
 char *strdup_root(Root *root,const char *str);

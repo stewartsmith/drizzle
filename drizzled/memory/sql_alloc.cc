@@ -46,15 +46,17 @@ void memory::init_sql_alloc(memory::Root *mem_root, size_t block_size, size_t)
 void *memory::sql_alloc(size_t Size)
 {
   memory::Root *root= current_mem_root();
-  return memory::alloc_root(root,Size);
+  return root->alloc_root(Size);
 }
 
 
 void *memory::sql_calloc(size_t size)
 {
   void *ptr;
+
   if ((ptr=memory::sql_alloc(size)))
     memset(ptr, 0, size);
+
   return ptr;
 }
 
@@ -101,12 +103,12 @@ void *memory::SqlAlloc::operator new[](size_t size)
 
 void *memory::SqlAlloc::operator new[](size_t size, memory::Root *mem_root)
 {
-  return memory::alloc_root(mem_root, size);
+  return mem_root->alloc_root(size);
 }
 
 void *memory::SqlAlloc::operator new(size_t size, memory::Root *mem_root)
 {
-  return memory::alloc_root(mem_root, size);
+  return mem_root->alloc_root(size);
 }
 
 } /* namespace drizzled */

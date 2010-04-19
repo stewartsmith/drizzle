@@ -144,46 +144,42 @@ void memory::Root::reset_root_defaults(size_t block_size_arg, size_t pre_alloc_s
  */
 void *memory::Root::alloc_root(size_t length)
 {
-  return memory::alloc_root(this, length);
-}
-
-void *memory::alloc_root(memory::Root *mem_root, size_t length)
-{
-  size_t get_size, block_size;
   unsigned char* point;
   memory::internal::UsedMemory *next= NULL;
   memory::internal::UsedMemory **prev;
-  assert(alloc_root_inited(mem_root));
+  assert(alloc_root_inited(this));
 
   length= ALIGN_SIZE(length);
-  if ((*(prev= &mem_root->free)) != NULL)
+  if ((*(prev= &this->free)) != NULL)
   {
     if ((*prev)->left < length &&
-	mem_root->first_block_usage++ >= MAX_BLOCK_USAGE_BEFORE_DROP &&
+	this->first_block_usage++ >= MAX_BLOCK_USAGE_BEFORE_DROP &&
 	(*prev)->left < MAX_BLOCK_TO_DROP)
     {
       next= *prev;
       *prev= next->next;			/* Remove block from list */
-      next->next= mem_root->used;
-      mem_root->used= next;
-      mem_root->first_block_usage= 0;
+      next->next= this->used;
+      this->used= next;
+      this->first_block_usage= 0;
     }
     for (next= *prev ; next && next->left < length ; next= next->next)
       prev= &next->next;
   }
   if (! next)
   {						/* Time to alloc new block */
-    block_size= mem_root->block_size * (mem_root->block_num >> 2);
+    size_t get_size, tmp_block_size;
+
+    tmp_block_size= this->block_size * (this->block_num >> 2);
     get_size= length+ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    get_size= max(get_size, block_size);
+    get_size= max(get_size, tmp_block_size);
 
     if (!(next = static_cast<memory::internal::UsedMemory *>(malloc(get_size))))
     {
-      if (mem_root->error_handler)
-	(*mem_root->error_handler)();
+      if (this->error_handler)
+	(*this->error_handler)();
       return NULL;
     }
-    mem_root->block_num++;
+    this->block_num++;
     next->next= *prev;
     next->size= get_size;
     next->left= get_size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
@@ -191,13 +187,13 @@ void *memory::alloc_root(memory::Root *mem_root, size_t length)
   }
 
   point= (unsigned char*) ((char*) next+ (next->size-next->left));
-  /** @todo next part may be unneeded due to mem_root->first_block_usage counter*/
-  if ((next->left-= length) < mem_root->min_malloc)
+  /** @todo next part may be unneeded due to this->first_block_usage counter*/
+  if ((next->left-= length) < this->min_malloc)
   {						/* Full block */
     *prev= next->next;				/* Remove block from list */
-    next->next= mem_root->used;
-    mem_root->used= next;
-    mem_root->first_block_usage= 0;
+    next->next= this->used;
+    this->used= next;
+    this->first_block_usage= 0;
   }
 
   return point;
@@ -366,7 +362,7 @@ char *memory::strdup_root(memory::Root *root, const char *str)
 char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
 {
   char *pos;
-  if ((pos=(char *)memory::alloc_root(root,len+1)))
+  if ((pos=(char *)root->alloc_root(len+1)))
   {
     memcpy(pos,str,len);
     pos[len]=0;
@@ -386,7 +382,7 @@ char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
 void *memory::memdup_root(memory::Root *root, const void *str, size_t len)
 {
   void *pos;
-  if ((pos=memory::alloc_root(root,len)))
+  if ((pos= root->alloc_root(len)))
     memcpy(pos,str,len);
   return pos;
 }
