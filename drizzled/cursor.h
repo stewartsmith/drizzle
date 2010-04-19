@@ -189,11 +189,6 @@ public:
   bool mrr_have_range;
 
   bool eq_range;
-  /*
-    true <=> the engine guarantees that returned records are within the range
-    being scanned.
-  */
-  bool in_range_check_pushed_down;
 
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
@@ -402,7 +397,6 @@ public:
                                bool eq_range, bool sorted);
   virtual int read_range_next();
   int compare_key(key_range *range);
-  int compare_key2(key_range *range);
   virtual int rnd_next(unsigned char *)=0;
   virtual int rnd_pos(unsigned char *, unsigned char *)=0;
   /**
