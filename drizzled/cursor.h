@@ -301,8 +301,7 @@ public:
   virtual int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
                                     uint32_t *bufsz, uint32_t *flags, optimizer::CostVector *cost);
   virtual int multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                                    uint32_t n_ranges, uint32_t mode,
-                                    HANDLER_BUFFER *buf);
+                                    uint32_t n_ranges, uint32_t mode);
   virtual int multi_range_read_next(char **range_info);
 
 

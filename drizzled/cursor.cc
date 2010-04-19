@@ -1083,13 +1083,13 @@ int Cursor::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_
 
 int
 Cursor::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
-                               uint32_t n_ranges, uint32_t mode,
-                               HANDLER_BUFFER *)
+                               uint32_t n_ranges, uint32_t mode)
 {
   mrr_iter= seq_funcs->init(seq_init_param, n_ranges, mode);
   mrr_funcs= *seq_funcs;
   mrr_is_output_sorted= test(mode & HA_MRR_SORTED);
   mrr_have_range= false;
+
   return 0;
 }
 

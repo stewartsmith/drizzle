@@ -258,7 +258,6 @@ int optimizer::QuickRangeSelect::reset()
   uint32_t buf_size= 0;
   unsigned char *mrange_buff= NULL;
   int error= 0;
-  HANDLER_BUFFER empty_buf;
   last_range= NULL;
   cur_range= (optimizer::QuickRange**) ranges.buffer;
 
@@ -292,13 +291,6 @@ int optimizer::QuickRangeSelect::reset()
     mrr_buf_desc->end_of_used_area= mrange_buff;
   }
 
-  if (! mrr_buf_desc)
-  {
-    empty_buf.buffer= NULL;
-    empty_buf.buffer_end= NULL;
-    empty_buf.end_of_used_area= NULL;
-  }
-
   if (sorted)
   {
      mrr_flags|= HA_MRR_SORTED;
@@ -310,8 +302,7 @@ int optimizer::QuickRangeSelect::reset()
   error= cursor->multi_range_read_init(&seq_funcs,
                                        (void*) this,
                                        ranges.elements,
-                                       mrr_flags,
-                                       mrr_buf_desc ? mrr_buf_desc : &empty_buf);
+                                       mrr_flags);
   return error;
 }
 
