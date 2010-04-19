@@ -54,8 +54,15 @@ optimizer::QuickRorIntersectSelect::QuickRorIntersectSelect(Session *session_par
   {
     memset(&alloc, 0, sizeof(memory::Root));
   }
-  last_rowid= (unsigned char*) alloc_root(parent_alloc ? parent_alloc : &alloc,
-                                          head->cursor->ref_length);
+
+  if (parent_alloc)
+  {
+    last_rowid= (unsigned char*) parent_alloc->alloc_root(head->cursor->ref_length);
+  }
+  else
+  {
+    last_rowid= (unsigned char*) alloc.alloc_root(head->cursor->ref_length);
+  }
 }
 
 

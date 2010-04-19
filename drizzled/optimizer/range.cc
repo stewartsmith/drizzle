@@ -537,10 +537,11 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
   uint32_t pk;
   param->tmp_covered_fields.setBitmap(0);
   param->fields_bitmap_size= table->s->column_bitmap_size;
-  if (!(tmp= (my_bitmap_map*) alloc_root(param->mem_root,
-                                  param->fields_bitmap_size)) ||
+  if (!(tmp= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)) ||
       param->needed_fields.init(tmp, table->s->fields))
+  {
     return 1;
+  }
 
   param->needed_fields= *table->read_set;
   bitmap_union(&param->needed_fields, table->write_set);
@@ -681,9 +682,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 
     session->no_errors=1;				// Don't warn about NULL
     memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-    if (!(param.key_parts= (KEY_PART*) alloc_root(&alloc,
-                                                  sizeof(KEY_PART)*
-                                                  head->s->key_parts)) ||
+    if (!(param.key_parts= (KEY_PART*) alloc.alloc_root( sizeof(KEY_PART) * head->s->key_parts)) ||
         fill_used_fields_bitmap(&param))
     {
       session->no_errors=0;
@@ -952,10 +951,11 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
   ha_rows roru_total_records;
   double roru_intersect_part= 1.0;
 
-  if (! (range_scans= (optimizer::RangeReadPlan**)alloc_root(param->mem_root,
-                                                             sizeof(optimizer::RangeReadPlan*)*
-                                                             n_child_scans)))
+  if (! (range_scans= (optimizer::RangeReadPlan**)param->mem_root->alloc_root(sizeof(optimizer::RangeReadPlan*)* n_child_scans)))
+  {
     return NULL;
+  }
+
   /*
     Collect best 'range' scan for each of disjuncts, and, while doing so,
     analyze possibility of ROR scans. Also calculate some values needed by
@@ -1034,9 +1034,11 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
                                     param->session->variables.sortbuff_size);
   if (param->imerge_cost_buff_size < unique_calc_buff_size)
   {
-    if (!(param->imerge_cost_buff= (uint*)alloc_root(param->mem_root,
-                                                     unique_calc_buff_size)))
+    if (!(param->imerge_cost_buff= (uint*)param->mem_root->alloc_root(unique_calc_buff_size)))
+    {
       return NULL;
+    }
+
     param->imerge_cost_buff_size= unique_calc_buff_size;
   }
 
@@ -1065,10 +1067,10 @@ build_ror_index_merge:
   /* Ok, it is possible to build a ROR-union, try it. */
   bool dummy;
   if (! (roru_read_plans=
-          (optimizer::TableReadPlan **) alloc_root(param->mem_root,
-                                                   sizeof(optimizer::TableReadPlan*)*
-                                                   n_child_scans)))
+          (optimizer::TableReadPlan **) param->mem_root->alloc_root(sizeof(optimizer::TableReadPlan*) * n_child_scans)))
+  {
     return imerge_trp;
+  }
 skip_to_ror_scan:
   roru_index_costs= 0.0;
   roru_total_records= 0;
@@ -1208,8 +1210,7 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
 
   uint32_t keynr;
 
-  if (!(ror_scan= (ROR_SCAN_INFO*)alloc_root(param->mem_root,
-                                             sizeof(ROR_SCAN_INFO))))
+  if (!(ror_scan= (ROR_SCAN_INFO*)param->mem_root->alloc_root(sizeof(ROR_SCAN_INFO))))
     return NULL;
 
   ror_scan->idx= idx;
@@ -1219,13 +1220,15 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
   ror_scan->sel_arg= sel_arg;
   ror_scan->records= param->table->quick_rows[keynr];
 
-  if (!(bitmap_buf= (my_bitmap_map*) alloc_root(param->mem_root,
-                                                param->fields_bitmap_size)))
+  if (!(bitmap_buf= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)))
+  {
     return NULL;
+  }
 
-  if (ror_scan->covered_fields.init(bitmap_buf,
-                                    param->table->s->fields))
+  if (ror_scan->covered_fields.init(bitmap_buf, param->table->s->fields))
+  {
     return NULL;
+  }
   ror_scan->covered_fields.clearAll();
 
   KEY_PART_INFO *key_part= param->table->key_info[keynr].key_part;
@@ -1301,12 +1304,10 @@ ROR_INTERSECT_INFO* ror_intersect_init(const optimizer::Parameter *param)
 {
   ROR_INTERSECT_INFO *info;
   my_bitmap_map* buf;
-  if (!(info= (ROR_INTERSECT_INFO*)alloc_root(param->mem_root,
-                                              sizeof(ROR_INTERSECT_INFO))))
+  if (!(info= (ROR_INTERSECT_INFO*)param->mem_root->alloc_root(sizeof(ROR_INTERSECT_INFO))))
     return NULL;
   info->param= param;
-  if (!(buf= (my_bitmap_map*) alloc_root(param->mem_root,
-                                         param->fields_bitmap_size)))
+  if (!(buf= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)))
     return NULL;
   if (info->covered_fields.init(buf, param->table->s->fields))
     return NULL;
@@ -1664,10 +1665,10 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
   uint32_t cpk_no= 0;
   bool cpk_scan_used= false;
 
-  if (! (tree->ror_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                                      sizeof(ROR_SCAN_INFO*)*
-                                                      param->keys)))
+  if (! (tree->ror_scans= (ROR_SCAN_INFO**)param->mem_root->alloc_root(sizeof(ROR_SCAN_INFO*)* param->keys)))
+  {
     return NULL;
+  }
   cpk_no= ((param->table->cursor->primary_key_is_clustered()) ?
            param->table->s->primary_key : MAX_KEY);
 
@@ -1698,9 +1699,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
 
   ROR_SCAN_INFO **intersect_scans= NULL; /* ROR scans used in index intersection */
   ROR_SCAN_INFO **intersect_scans_end= NULL;
-  if (! (intersect_scans= (ROR_SCAN_INFO**)alloc_root(param->mem_root,
-                                                      sizeof(ROR_SCAN_INFO*)*
-                                                      tree->n_ror_scans)))
+  if (! (intersect_scans= (ROR_SCAN_INFO**)param->mem_root->alloc_root(sizeof(ROR_SCAN_INFO*) * tree->n_ror_scans)))
     return NULL;
   intersect_scans_end= intersect_scans;
 
@@ -2738,18 +2737,20 @@ get_mm_leaf(optimizer::RangeParameter *param,
     {
       if (unlikely(length < field_length))
       {
-	/*
-	  This can only happen in a table created with UNIREG where one key
-	  overlaps many fields
-	*/
-	length= field_length;
+        /*
+          This can only happen in a table created with UNIREG where one key
+          overlaps many fields
+        */
+        length= field_length;
       }
       else
-	field_length= length;
+        field_length= length;
     }
     length+=offset;
-    if (!(min_str= (unsigned char*) alloc_root(alloc, length*2)))
+    if (!(min_str= (unsigned char*) alloc->alloc_root(length*2)))
+    {
       goto end;
+    }
 
     max_str=min_str+length;
     if (maybe_null)
@@ -2968,7 +2969,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
     tree= &optimizer::null_element;                        // cmp with NULL is never true
     goto end;
   }
-  str= (unsigned char*) alloc_root(alloc, key_part->store_length+1);
+  str= (unsigned char*) alloc->alloc_root(key_part->store_length+1);
   if (!str)
     goto end;
   if (maybe_null)
@@ -4109,7 +4110,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
 
 
   if (!(quick->key_parts=key_part=(KEY_PART *)
-	alloc_root(&quick->alloc,sizeof(KEY_PART)*ref->key_parts)))
+        quick->alloc.alloc_root(sizeof(KEY_PART)*ref->key_parts)))
     goto err;
 
   for (part=0 ; part < ref->key_parts ;part++,key_part++)

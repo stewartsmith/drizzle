@@ -803,7 +803,7 @@ int ha_tina::find_current_row(unsigned char *buf)
         memcpy(&src, blob->ptr + packlength, sizeof(char*));
         if (src)
         {
-          tgt= (unsigned char*) alloc_root(&blobroot, length);
+          tgt= (unsigned char*) blobroot.alloc_root(length);
           memmove(tgt, src, length);
           memcpy(blob->ptr + packlength, &tgt, sizeof(char*));
         }

@@ -59,8 +59,6 @@ void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
   mem_root->error_handler= 0;
   mem_root->block_num= 4;			/* We shift this with >>2 */
   mem_root->first_block_usage= 0;
-
-  return;
 }
 
 
@@ -79,18 +77,15 @@ void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
  *                        must be equal to or greater than block size,
  *                        otherwise means 'no prealloc'.
  */
-void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
-                                 size_t pre_alloc_size)
+void memory::Root::reset_root_defaults(size_t block_size_arg, size_t pre_alloc_size)
 {
-  assert(alloc_root_inited(mem_root));
-
-  mem_root->block_size= block_size - memory::ROOT_MIN_BLOCK_SIZE;
+  block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
   if (pre_alloc_size)
   {
     size_t size= pre_alloc_size + ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    if (!mem_root->pre_alloc || mem_root->pre_alloc->size != size)
+    if (not pre_alloc || pre_alloc->size != size)
     {
-      memory::internal::UsedMemory *mem, **prev= &mem_root->free;
+      memory::internal::UsedMemory *mem, **prev= &this->free;
       /*
         Free unused blocks, so that consequent calls
         to reset_root_defaults won't eat away memory.
@@ -101,14 +96,14 @@ void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
         if (mem->size == size)
         {
           /* We found a suitable block, no need to do anything else */
-          mem_root->pre_alloc= mem;
+          pre_alloc= mem;
           return;
         }
         if (mem->left + ALIGN_SIZE(sizeof(memory::internal::UsedMemory)) == mem->size)
         {
           /* remove block from the list and free it */
           *prev= mem->next;
-          free(mem);
+          std::free(mem);
         }
         else
           prev= &mem->next;
@@ -119,17 +114,17 @@ void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
         mem->size= size;
         mem->left= pre_alloc_size;
         mem->next= *prev;
-        *prev= mem_root->pre_alloc= mem;
+        *prev= pre_alloc= mem;
       }
       else
       {
-        mem_root->pre_alloc= 0;
+        pre_alloc= 0;
       }
     }
   }
   else
   {
-    mem_root->pre_alloc= 0;
+    pre_alloc= 0;
   }
 }
 
@@ -147,6 +142,11 @@ void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
  * @todo Would this be more suitable as a member function on the
  * Root class?
  */
+void *memory::Root::alloc_root(size_t length)
+{
+  return memory::alloc_root(this, length);
+}
+
 void *memory::alloc_root(memory::Root *mem_root, size_t length)
 {
   size_t get_size, block_size;
@@ -241,7 +241,7 @@ void *memory::multi_alloc_root(memory::Root *root, ...)
   }
   va_end(args);
 
-  if (!(start= (char*) memory::alloc_root(root, tot_length)))
+  if (!(start= (char*) root->alloc_root(tot_length)))
     return(0);
 
   va_start(args, root);
@@ -262,21 +262,21 @@ void *memory::multi_alloc_root(memory::Root *root, ...)
  * @brief
  * Mark all data in blocks free for reusage 
  */
-static inline void mark_blocks_free(memory::Root* root)
+void memory::Root::mark_blocks_free()
 {
   memory::internal::UsedMemory *next;
   memory::internal::UsedMemory **last;
 
   /* iterate through (partially) free blocks, mark them free */
-  last= &root->free;
-  for (next= root->free; next; next= *(last= &next->next))
+  last= &free;
+  for (next= free; next; next= *(last= &next->next))
   {
     next->left= next->size - ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     TRASH_MEM(next);
   }
 
   /* Combine the free and the used list */
-  *last= next=root->used;
+  *last= next= used;
 
   /* now go through the used blocks and mark them free */
   for (; next; next= next->next)
@@ -286,8 +286,8 @@ static inline void mark_blocks_free(memory::Root* root)
   }
 
   /* Now everything is set; Indicate that nothing is used anymore */
-  root->used= 0;
-  root->first_block_usage= 0;
+  used= 0;
+  first_block_usage= 0;
 }
 
 /**
@@ -312,7 +312,7 @@ void memory::free_root(memory::Root *root, myf MyFlags)
 
   if (MyFlags & memory::MARK_BLOCKS_FREE)
   {
-    mark_blocks_free(root);
+    root->mark_blocks_free();
     return;
   }
   if (!(MyFlags & memory::KEEP_PREALLOC))
@@ -340,32 +340,6 @@ void memory::free_root(memory::Root *root, myf MyFlags)
   }
   root->block_num= 4;
   root->first_block_usage= 0;
-  return;
-}
-
-/**
- * @brief
- * Find block that contains an object and set the pre_alloc to it
- */
-void memory::set_prealloc_root(memory::Root *root, char *ptr)
-{
-  memory::internal::UsedMemory *next;
-  for (next=root->used; next ; next=next->next)
-  {
-    if ((char*) next <= ptr && (char*) next + next->size > ptr)
-    {
-      root->pre_alloc=next;
-      return;
-    }
-  }
-  for (next=root->free ; next ; next=next->next)
-  {
-    if ((char*) next <= ptr && (char*) next + next->size > ptr)
-    {
-      root->pre_alloc=next;
-      return;
-    }
-  }
 }
 
 /**

@@ -72,7 +72,7 @@ int optimizer::QuickRorUnionSelect::init()
     new priority_queue<optimizer::QuickSelectInterface *,
                        vector<optimizer::QuickSelectInterface *>,
                        optimizer::compare_functor >(optimizer::compare_functor(this));
-  if (! (cur_rowid= (unsigned char*) alloc_root(&alloc, 2*head->cursor->ref_length)))
+  if (! (cur_rowid= (unsigned char*) alloc.alloc_root(2 * head->cursor->ref_length)))
   {
     return 0;
   }

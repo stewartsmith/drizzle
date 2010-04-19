@@ -314,9 +314,7 @@ int parse_table_proto(Session& session,
   for (int indx= 0; indx < table.indexes_size(); indx++)
     share->key_parts+= table.indexes(indx).index_part_size();
 
-  share->key_info= (KEY*) alloc_root(&share->mem_root,
-				     table.indexes_size() * sizeof(KEY)
-				     +share->key_parts*sizeof(KEY_PART_INFO));
+  share->key_info= (KEY*) share->mem_root.alloc_root( table.indexes_size() * sizeof(KEY) +share->key_parts*sizeof(KEY_PART_INFO));
 
   KEY_PART_INFO *key_part;
 
@@ -324,17 +322,15 @@ int parse_table_proto(Session& session,
     (share->key_info+table.indexes_size());
 
 
-  ulong *rec_per_key= (ulong*) alloc_root(&share->mem_root,
-					    sizeof(ulong*)*share->key_parts);
+  ulong *rec_per_key= (ulong*) share->mem_root.alloc_root(sizeof(ulong*)*share->key_parts);
 
   share->keynames.count= table.indexes_size();
   share->keynames.name= NULL;
   share->keynames.type_names= (const char**)
-    alloc_root(&share->mem_root, sizeof(char*) * (table.indexes_size()+1));
+    share->mem_root.alloc_root(sizeof(char*) * (table.indexes_size()+1));
 
   share->keynames.type_lengths= (unsigned int*)
-    alloc_root(&share->mem_root,
-	       sizeof(unsigned int) * (table.indexes_size()+1));
+    share->mem_root.alloc_root(sizeof(unsigned int) * (table.indexes_size()+1));
 
   share->keynames.type_names[share->keynames.count]= NULL;
   share->keynames.type_lengths[share->keynames.count]= 0;
@@ -461,8 +457,7 @@ int parse_table_proto(Session& session,
 
   share->fields= table.field_size();
 
-  share->field= (Field**) alloc_root(&share->mem_root,
-				     ((share->fields+1) * sizeof(Field*)));
+  share->field= (Field**) share->mem_root.alloc_root(((share->fields+1) * sizeof(Field*)));
   share->field[share->fields]= NULL;
 
   uint32_t null_fields= 0;
@@ -558,8 +553,7 @@ int parse_table_proto(Session& session,
 
   unsigned char* record= NULL;
 
-  if (! (record= (unsigned char *) alloc_root(&share->mem_root,
-                                              rec_buff_length)))
+  if (! (record= (unsigned char *) share->mem_root.alloc_root(rec_buff_length)))
     abort();
 
   memset(record, 0, rec_buff_length);
@@ -576,17 +570,14 @@ int parse_table_proto(Session& session,
 
   if (interval_count)
   {
-    share->intervals= (TYPELIB *) alloc_root(&share->mem_root,
-                                           interval_count*sizeof(TYPELIB));
+    share->intervals= (TYPELIB *) share->mem_root.alloc_root(interval_count*sizeof(TYPELIB));
   }
   else
     share->intervals= NULL;
 
-  share->fieldnames.type_names= (const char **) alloc_root(&share->mem_root,
-                                                          (share->fields + 1) * sizeof(char*));
+  share->fieldnames.type_names= (const char **) share->mem_root.alloc_root((share->fields + 1) * sizeof(char*));
 
-  share->fieldnames.type_lengths= (unsigned int *) alloc_root(&share->mem_root,
-                                                             (share->fields + 1) * sizeof(unsigned int));
+  share->fieldnames.type_lengths= (unsigned int *) share->mem_root.alloc_root((share->fields + 1) * sizeof(unsigned int));
 
   share->fieldnames.type_names[share->fields]= NULL;
   share->fieldnames.type_lengths[share->fields]= 0;
@@ -624,11 +615,9 @@ int parse_table_proto(Session& session,
 
     TYPELIB *t= &(share->intervals[interval_nr]);
 
-    t->type_names= (const char**)alloc_root(&share->mem_root,
-                                            (field_options.field_value_size() + 1) * sizeof(char*));
+    t->type_names= (const char**)share->mem_root.alloc_root((field_options.field_value_size() + 1) * sizeof(char*));
 
-    t->type_lengths= (unsigned int*) alloc_root(&share->mem_root,
-                                                (field_options.field_value_size() + 1) * sizeof(unsigned int));
+    t->type_lengths= (unsigned int*) share->mem_root.alloc_root((field_options.field_value_size() + 1) * sizeof(unsigned int));
 
     t->type_names[field_options.field_value_size()]= NULL;
     t->type_lengths[field_options.field_value_size()]= 0;
@@ -1177,8 +1166,7 @@ int parse_table_proto(Session& session,
 
     /* Store offsets to blob fields to find them fast */
     if (!(share->blob_field= save=
-	  (uint*) alloc_root(&share->mem_root,
-                             (uint32_t) (share->blob_fields* sizeof(uint32_t)))))
+	  (uint*) share->mem_root.alloc_root((uint32_t) (share->blob_fields* sizeof(uint32_t)))))
       goto err;
     for (k= 0, ptr= share->field ; *ptr ; ptr++, k++)
     {
@@ -1192,8 +1180,7 @@ int parse_table_proto(Session& session,
 
   my_bitmap_map *bitmaps;
 
-  if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
-                                             share->column_bitmap_size)))
+  if (!(bitmaps= (my_bitmap_map*) share->mem_root.alloc_root(share->column_bitmap_size)))
     goto err;
   share->all_set.init(bitmaps, share->fields);
   share->all_set.setAll();
@@ -1338,8 +1325,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   records++;
 
-  if (!(record= (unsigned char*) alloc_root(&outparam->mem_root,
-                                   share->rec_buff_length * records)))
+  if (!(record= (unsigned char*) outparam->mem_root.alloc_root(share->rec_buff_length * records)))
     goto err;
 
   if (records == 0)
@@ -1371,10 +1357,10 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   }
 #endif
 
-  if (!(field_ptr = (Field **) alloc_root(&outparam->mem_root,
-                                          (uint32_t) ((share->fields+1)*
-                                                  sizeof(Field*)))))
+  if (!(field_ptr = (Field **) outparam->mem_root.alloc_root( (uint32_t) ((share->fields+1)* sizeof(Field*)))))
+  {
     goto err;
+  }
 
   outparam->field= field_ptr;
 
@@ -1404,7 +1390,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
     KEY_PART_INFO *key_part;
     uint32_t n_length;
     n_length= share->keys*sizeof(KEY) + share->key_parts*sizeof(KEY_PART_INFO);
-    if (!(key_info= (KEY*) alloc_root(&outparam->mem_root, n_length)))
+    if (!(key_info= (KEY*) outparam->mem_root.alloc_root(n_length)))
       goto err;
     outparam->key_info= key_info;
     key_part= (reinterpret_cast<KEY_PART_INFO*> (key_info+share->keys));
@@ -1446,8 +1432,10 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   /* Allocate bitmaps */
 
   bitmap_size= share->column_bitmap_size;
-  if (!(bitmaps= (unsigned char*) alloc_root(&outparam->mem_root, bitmap_size*3)))
+  if (!(bitmaps= (unsigned char*) outparam->mem_root.alloc_root(bitmap_size*3)))
+  {
     goto err;
+  }
   outparam->def_read_set.init((my_bitmap_map*) bitmaps, share->fields);
   outparam->def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
   outparam->tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
@@ -1732,14 +1720,14 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
 
 TYPELIB *typelib(memory::Root *mem_root, List<String> &strings)
 {
-  TYPELIB *result= (TYPELIB*) alloc_root(mem_root, sizeof(TYPELIB));
+  TYPELIB *result= (TYPELIB*) mem_root->alloc_root(sizeof(TYPELIB));
   if (!result)
     return 0;
   result->count= strings.elements;
   result->name= "";
   uint32_t nbytes= (sizeof(char*) + sizeof(uint32_t)) * (result->count + 1);
   
-  if (!(result->type_names= (const char**) alloc_root(mem_root, nbytes)))
+  if (!(result->type_names= (const char**) mem_root->alloc_root(nbytes)))
     return 0;
     
   result->type_lengths= (uint*) (result->type_names + result->count + 1);
@@ -2655,8 +2643,10 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
     if (!(table->record[0]= (unsigned char*)
-                            alloc_root(&table->mem_root, alloc_length*3)))
+                            table->mem_root.alloc_root(alloc_length*3)))
+    {
       goto err;
+    }
     table->record[1]= table->record[0]+alloc_length;
     share->default_values= table->record[1]+alloc_length;
   }
@@ -2873,8 +2863,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     table->distinct= 1;
     share->keys= 1;
     if (!(key_part_info= (KEY_PART_INFO*)
-          alloc_root(&table->mem_root,
-                     keyinfo->key_parts * sizeof(KEY_PART_INFO))))
+         table->mem_root.alloc_root(keyinfo->key_parts * sizeof(KEY_PART_INFO))))
       goto err;
     memset(key_part_info, 0, keyinfo->key_parts * sizeof(KEY_PART_INFO));
     table->key_info=keyinfo;
@@ -3157,8 +3146,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
   if (share->keys)
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
-    HA_KEYSEG *seg= (HA_KEYSEG*) alloc_root(&this->mem_root,
-                                            sizeof(*seg) * keyinfo->key_parts);
+    HA_KEYSEG *seg= (HA_KEYSEG*) this->mem_root.alloc_root(sizeof(*seg) * keyinfo->key_parts);
     if (!seg)
       goto err;
 
@@ -3650,7 +3638,7 @@ bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
   uint32_t key_length;
   TableShare *share= s;
 
-  if (not (key=(char*) alloc_root(&share->mem_root, MAX_DBKEY_LENGTH)))
+  if (not (key=(char*) share->mem_root.alloc_root(MAX_DBKEY_LENGTH)))
     return true;
 
   key_length= TableShare::createKey(key, identifier);

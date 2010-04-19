@@ -2453,7 +2453,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     return(1);
 
   init_alloc_root(&root, 8192);
-  if (!(dump_tables= pos= (char**) alloc_root(&root, tables * sizeof(char *))))
+  if (!(dump_tables= pos= (char**) root.alloc_root(tables * sizeof(char *))))
     die(EX_EOM, _("alloc_root failure."));
 
   for (; tables > 0 ; tables-- , table_names++)

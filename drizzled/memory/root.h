@@ -63,6 +63,18 @@ static const size_t ROOT_MIN_BLOCK_SIZE= (MALLOC_OVERHEAD + sizeof(internal::Use
 class Root
 {
 public:
+
+  Root() { }
+  Root(size_t block_size_arg)
+  {
+    free= used= pre_alloc= 0;
+    min_malloc= 32;
+    block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
+    error_handler= 0;
+    block_num= 4;			/* We shift this with >>2 */
+    first_block_usage= 0;
+  }
+
   /**
    * blocks with free memory in it 
    */
@@ -93,6 +105,10 @@ public:
   unsigned int first_block_usage;
 
   void (*error_handler)(void);
+  void reset_root_defaults(size_t block_size, size_t prealloc_size);
+  void *alloc_root(size_t Size);
+  void mark_blocks_free();
+
 };
 
 inline static bool alloc_root_inited(Root *root)
@@ -105,9 +121,6 @@ void init_alloc_root(Root *mem_root,
 void *alloc_root(Root *mem_root, size_t Size);
 void *multi_alloc_root(Root *mem_root, ...);
 void free_root(Root *root, myf MyFLAGS);
-void set_prealloc_root(Root *root, char *ptr);
-void reset_root_defaults(Root *mem_root, size_t block_size,
-                         size_t prealloc_size);
 char *strdup_root(Root *root,const char *str);
 char *strmake_root(Root *root,const char *str,size_t len);
 void *memdup_root(Root *root,const void *str, size_t len);

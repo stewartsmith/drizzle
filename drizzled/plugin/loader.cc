@@ -84,7 +84,7 @@ static bool reap_needed= false;
   write-lock on LOCK_system_variables_hash is required before modifying
   the following variables/structures
 */
-static memory::Root plugin_mem_root;
+static memory::Root plugin_mem_root(4096);
 static uint32_t global_variables_dynamic_size= 0;
 static HASH bookmark_hash;
 
@@ -375,13 +375,10 @@ bool plugin_init(plugin::Registry &registry,
   plugin::Manifest **builtins;
   plugin::Manifest *manifest;
   plugin::Module *module;
-  memory::Root tmp_root;
+  memory::Root tmp_root(4096);
 
   if (initialized)
     return false;
-
-  init_alloc_root(&plugin_mem_root, 4096);
-  init_alloc_root(&tmp_root, 4096);
 
   if (hash_init(&bookmark_hash, &my_charset_bin, 16, 0, 0,
                   get_bookmark_hash_key, NULL, HASH_UNIQUE))
@@ -899,8 +896,7 @@ static st_bookmark *register_var(const string &plugin, const char *name,
   {
     const string varname(make_bookmark_name(plugin, name, flags));
 
-    result= static_cast<st_bookmark*>(alloc_root(&plugin_mem_root,
-                                      sizeof(struct st_bookmark) + varname.size() + 1));
+    result= static_cast<st_bookmark*>(plugin_mem_root.alloc_root(sizeof(struct st_bookmark) + varname.size() + 1));
     memset(result->key, 0, varname.size()+1);
     memcpy(result->key, varname.c_str(), varname.size());
     result->name_len= varname.size() - 2;
@@ -1572,7 +1568,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
     if (!(opt->flags & PLUGIN_VAR_SessionLOCAL))
     {
       optnamelen= strlen(opt->name);
-      optname= (char*) alloc_root(mem_root, namelen + optnamelen + 2);
+      optname= (char*) mem_root->alloc_root(namelen + optnamelen + 2);
       sprintf(optname, "%s-%s", name.c_str(), opt->name);
       optnamelen= namelen + optnamelen + 1;
     }
@@ -1628,7 +1624,7 @@ static option *construct_help_options(memory::Root *mem_root, plugin::Module *p)
 
   for (opt= p->getManifest().system_vars; opt && *opt; opt++, count++) {};
 
-  opts= (option*)alloc_root(mem_root, (sizeof(option) * count));
+  opts= (option*)mem_root->alloc_root((sizeof(option) * count));
   if (opts == NULL)
     return NULL;
 
@@ -1686,7 +1682,7 @@ static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
   {
-    if (!(opts= (option*) alloc_root(tmp_root, sizeof(option) * count)))
+    if (!(opts= (option*) tmp_root->alloc_root(sizeof(option) * count)))
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory for plugin '%s'."), tmp->getName().c_str());
       return(-1);
@@ -1788,10 +1784,8 @@ void my_print_help_inc_plugins(option *main_options)
   plugin::Registry &registry= plugin::Registry::singleton();
   vector<option> all_options;
   plugin::Module *p;
-  memory::Root mem_root;
+  memory::Root mem_root(4096);
   option *opt= NULL;
-
-  init_alloc_root(&mem_root, 4096);
 
   if (initialized)
   {

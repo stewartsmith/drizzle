@@ -367,12 +367,12 @@ public:
   enum enum_mark_columns mark_used_columns;
   inline void* alloc(size_t size)
   {
-    return alloc_root(mem_root,size);
+    return mem_root->alloc_root(size);
   }
   inline void* calloc(size_t size)
   {
     void *ptr;
-    if ((ptr= alloc_root(mem_root,size)))
+    if ((ptr= mem_root->alloc_root(size)))
       memset(ptr, 0, size);
     return ptr;
   }
@@ -391,7 +391,7 @@ public:
   inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
   {
     void *ptr;
-    if ((ptr= alloc_root(mem_root,size+gap)))
+    if ((ptr= mem_root->alloc_root(size + gap)))
       memcpy(ptr,str,size);
     return ptr;
   }

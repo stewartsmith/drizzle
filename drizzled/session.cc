@@ -559,8 +559,8 @@ void Session::prepareForQueries()
   command= COM_SLEEP;
   set_time();
 
-  reset_root_defaults(mem_root, variables.query_alloc_block_size,
-                      variables.query_prealloc_size);
+  mem_root->reset_root_defaults(variables.query_alloc_block_size,
+                                variables.query_prealloc_size);
   transaction.xid_state.xid.null();
   transaction.xid_state.in_session=1;
 }
