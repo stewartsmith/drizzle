@@ -182,6 +182,7 @@ static int deinit(drizzled::plugin::Registry &registry)
   if (transaction_log)
   {
     registry.remove(transaction_log_applier);
+    delete transaction_log_applier;
     delete transaction_log;
     delete transaction_log_index;
 

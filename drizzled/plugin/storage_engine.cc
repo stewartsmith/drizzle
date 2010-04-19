@@ -1112,7 +1112,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     break;
   case HA_ERR_NO_SUCH_TABLE:
     assert(table);
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table->s->db.str,
+    my_error(ER_NO_SUCH_TABLE, MYF(0), table->s->getSchemaName(),
              table->s->table_name.str);
     return;
   case HA_ERR_RBR_LOGGING_FAILED:

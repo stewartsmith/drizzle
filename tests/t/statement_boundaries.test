@@ -1,0 +1,87 @@
+# This is a test of various SQL statements
+# and looks at the statement and transaction
+# boundaries (start/end) to ensure they are sane
+
+SET AUTOCOMMIT= 0;
+
+# Expect 0 commit count since nothing 
+# has yet happened...
+
+SHOW STATUS LIKE 'Handler_commit%';
+
+BEGIN;
+
+# Expect 0 commit count since nothing 
+# has yet been committed...
+
+SHOW STATUS LIKE 'Handler_commit%';
+
+DROP SCHEMA IF EXISTS boundaries;
+
+# Expect 1 commit count since above DROP SCHEMA
+# will implicitly call COMMIT.
+#
+# When we get transactional DDL, should be 0.
+SHOW STATUS LIKE 'Handler_commit%';
+
+COMMIT;
+
+# Expect 1 commit count since 
+# an explicit call to COMMIT was made
+# even though nothing was changed...
+
+SHOW STATUS LIKE 'Handler_commit%';
+
+
+## Enable AUOTOCOMMIT
+#
+SET AUTOCOMMIT= 1;
+
+SHOW STATUS LIKE 'Handler_commit%';
+BEGIN;
+DROP SCHEMA IF EXISTS boundaries;
+COMMIT;
+
+SHOW STATUS LIKE 'Handler_commit%';
+CREATE TABLE commit_test (a int);
+SHOW STATUS LIKE 'Handler_commit%';
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+INSERT into commit_test VALUES (10), (20);
+SHOW STATUS LIKE 'Handler_commit%';
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+
+BEGIN;
+
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+
+COMMIT;
+
+SHOW STATUS LIKE 'Handler_commit%';
+BEGIN;
+
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+
+ROLLBACK;
+
+SHOW STATUS LIKE 'Handler_commit%';
+BEGIN;
+
+
+INSERT into commit_test VALUES (10);
+SHOW STATUS LIKE 'Handler_commit%';
+
+COMMIT;
+SHOW STATUS LIKE 'Handler_commit%';
+
+SET AUTOCOMMIT= 0;
+INSERT into commit_test VALUES (10);
+INSERT into commit_test VALUES (10);
+
+
+SHOW STATUS LIKE 'Handler_commit%';
+drop table commit_test;
+SHOW STATUS LIKE 'Handler_commit%';

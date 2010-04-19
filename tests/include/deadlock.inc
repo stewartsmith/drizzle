@@ -37,7 +37,6 @@ set autocommit=0;
 # The following query should hang because con1 is locking the record
 --send
 update t1 set x=2 where id = 0;
---sleep 2
 
 --echo # Switch to connection con1
 connection con1;
@@ -81,7 +80,6 @@ set autocommit=0;
 # The following query should hang because con1 is locking the record
 --send
 update t1 set x=2 where id = 0;
---sleep 2
 
 --echo # Switch to connection con1
 connection con1;
@@ -120,7 +118,6 @@ update t2 set a=2 where b = 0;
 select * from t2;
 --send
 update t1 set x=2 where id = 0;
---sleep 2
 
 --echo # Switch to connection con1
 connection con1;

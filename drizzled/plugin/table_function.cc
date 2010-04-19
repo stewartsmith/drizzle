@@ -43,6 +43,8 @@ void plugin::TableFunction::init()
 
   proto.set_name(identifier.getTableName());
   proto.set_type(drizzled::message::Table::FUNCTION);
+  proto.set_creation_timestamp(0);
+  proto.set_update_timestamp(0);
 
   table_options= proto.mutable_options();
   table_options->set_collation_id(default_charset_info->number);

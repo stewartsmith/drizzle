@@ -58,6 +58,8 @@ TablesTool::TablesTool() :
   add_field("ENGINE");
   add_field("ROW_FORMAT", 10);
   add_field("TABLE_COLLATION");
+  add_field("TABLE_CREATION_TIME");
+  add_field("TABLE_UPDATE_TIME");
   add_field("TABLE_COMMENT", 2048);
 }
 
@@ -213,6 +215,10 @@ void TablesTool::Generator::pushType(message::Table::Field::FieldType type)
 void TablesTool::Generator::fill()
 {
 
+  /**
+    @note use --replace-column
+  */
+
   /* TABLE_SCHEMA */
   push(schema_name());
 
@@ -247,6 +253,21 @@ void TablesTool::Generator::fill()
 
   /* TABLE_COLLATION */
   push(table_proto.options().collation());
+
+  /* TABLE_CREATION_TIME */
+  time_t time_arg= table_proto.creation_timestamp();
+  char buffer[40];
+  struct tm tm_buffer;
+
+  localtime_r(&time_arg, &tm_buffer);
+  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+  push(buffer);
+
+  /* TABLE_UPDATE_TIME */
+  time_arg= table_proto.update_timestamp();
+  localtime_r(&time_arg, &tm_buffer);
+  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
+  push(buffer);
 
   /* TABLE_COMMENT */
   push(table_proto.options().comment());

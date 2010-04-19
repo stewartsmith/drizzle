@@ -62,7 +62,6 @@ bool my_init(void)
   mysys_usage_id++;
   my_umask= 0660;                       /* Default umask for new files */
   my_umask_dir= 0700;                   /* Default umask for new directories */
-  init_glob_errs();
 #if defined(HAVE_PTHREAD_INIT)
   pthread_init();
 #endif
@@ -91,7 +90,6 @@ bool my_init(void)
 void my_end()
 {
   free_charsets();
-  my_error_unregister_all();
 
   my_thread_end();
   my_thread_global_end();

@@ -57,7 +57,7 @@ bool ShowTemporaryTables::Generator::populate()
 void ShowTemporaryTables::Generator::fill()
 {
   /* TABLE_SCHEMA */
-  push(table->s->db.str);
+  push(table->s->getSchemaName());
 
   /* TABLE_NAME */
   push(table->s->table_name.str);

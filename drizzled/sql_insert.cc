@@ -1458,7 +1458,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       AlterInfo *alter_info,
                                       List<Item> *items,
                                       bool is_if_not_exists,
-                                      DRIZZLE_LOCK **lock)
+                                      DRIZZLE_LOCK **lock,
+				      TableIdentifier &identifier)
 {
   Table tmp_table;		// Used during 'CreateField()'
   TableShare share;
@@ -1527,12 +1528,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     alter_info->create_list.push_back(cr_field);
   }
 
-  TableIdentifier identifier(create_table->db,
-                             create_table->table_name,
-                             lex_identified_temp_table ?  TEMP_TABLE :
-                             STANDARD_TABLE);
-
-
   /*
     Create and lock table.
 
@@ -1542,13 +1537,13 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   */
   {
     if (not mysql_create_table_no_lock(session,
-                                    identifier,
-                                    create_info,
-				    table_proto,
-				    alter_info,
-                                    false,
-                                    select_field_count,
-                                    is_if_not_exists))
+				       identifier,
+				       create_info,
+				       table_proto,
+				       alter_info,
+				       false,
+				       select_field_count,
+				       is_if_not_exists))
     {
       if (create_info->table_existed &&
           !(lex_identified_temp_table))
@@ -1629,11 +1624,11 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 
   unit= u;
 
-  if (!(table= create_table_from_items(session, create_info, create_table,
-				       table_proto,
-                                       alter_info, &values,
-                                       is_if_not_exists,
-                                       &extra_lock)))
+  if (not (table= create_table_from_items(session, create_info, create_table,
+					  table_proto,
+					  alter_info, &values,
+					  is_if_not_exists,
+					  &extra_lock, identifier)))
     return(-1);				// abort() deletes table
 
   if (extra_lock)

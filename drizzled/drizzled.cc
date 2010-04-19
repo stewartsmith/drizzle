@@ -528,7 +528,6 @@ static void clean_up(bool print_message)
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  ha_end();
   plugin::Registry &plugins= plugin::Registry::singleton();
   plugin_shutdown(plugins);
   xid_cache_free();
@@ -549,12 +548,6 @@ static void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
-  /* Returns NULL on globerrs, we don't want to try to free that */
-  //void *freeme=
-  (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
-  // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
-/*  if (freeme != NULL)
-    free(freeme);  */
   (void) pthread_mutex_lock(&LOCK_thread_count);
   ready_to_exit=1;
   /* do the broadcast inside the lock to ensure that my_end() is not called */
@@ -970,30 +963,9 @@ static int show_flushstatustime(drizzle_show_var *var, char *buff)
   return 0;
 }
 
-static int show_open_tables(drizzle_show_var *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_open_tables();
-  return 0;
-}
+static st_show_var_func_container show_starttime_cont= { &show_starttime };
 
-static int show_table_definitions(drizzle_show_var *var, char *buff)
-{
-  var->type= SHOW_LONG;
-  var->value= buff;
-  *((long *)buff)= (long)cached_table_definitions();
-  return 0;
-}
-
-static st_show_var_func_container
-show_open_tables_cont= { &show_open_tables };
-static st_show_var_func_container
-show_table_definitions_cont= { &show_table_definitions };
-static st_show_var_func_container
-show_starttime_cont= { &show_starttime };
-static st_show_var_func_container
-show_flushstatustime_cont= { &show_flushstatustime };
+static st_show_var_func_container show_flushstatustime_cont= { &show_flushstatustime };
 
 /*
   Variables shown by SHOW STATUS in alphabetical order
@@ -1072,10 +1044,6 @@ static drizzle_show_var status_vars[]= {
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(system_status_var, last_query_cost), SHOW_DOUBLE_STATUS},
   {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
-  {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
-  {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
-  {"Opened_tables",            (char*) offsetof(system_status_var, opened_tables), SHOW_LONG_STATUS},
-  {"Opened_table_definitions", (char*) offsetof(system_status_var, opened_shares), SHOW_LONG_STATUS},
   {"Questions",                (char*) offsetof(system_status_var, questions), SHOW_LONG_STATUS},
   {"Select_full_join",         (char*) offsetof(system_status_var, select_full_join_count), SHOW_LONG_STATUS},
   {"Select_full_range_join",   (char*) offsetof(system_status_var, select_full_range_join_count), SHOW_LONG_STATUS},
@@ -1159,8 +1127,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
 
-  if (init_errmessage())	/* Read error messages from file */
-    return 1;
   if (item_create_init())
     return 1;
   if (set_var_init())
@@ -1269,8 +1235,7 @@ static int init_server_components(plugin::Registry &plugins)
   }
 
   /* Allow storage engine to give real error messages */
-  if (ha_init_errors())
-    return(1);
+  ha_init_errors();
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv,
                   ((opt_help) ? true : false)))

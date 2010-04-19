@@ -43,8 +43,7 @@ namespace drizzled
 {
 
 extern size_t table_def_size;
-typedef hash_map<string, TableShare *> TableDefCache;
-TableDefCache table_def_cache;
+TableDefinitionCache table_def_cache;
 static pthread_mutex_t LOCK_table_share;
 bool table_def_inited= false;
 
@@ -110,7 +109,7 @@ void TableShare::release(TableShare *share)
   {
     const string key_string(share->table_cache_key.str,
                             share->table_cache_key.length);
-    TableDefCache::iterator iter= table_def_cache.find(key_string);
+    TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
     if (iter != table_def_cache.end())
     {
       (*iter).second->free_table_share();
@@ -125,7 +124,7 @@ void TableShare::release(const char *key, uint32_t key_length)
 {
   const string key_string(key, key_length);
 
-  TableDefCache::iterator iter= table_def_cache.find(key_string);
+  TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
   if (iter != table_def_cache.end())
   {
     TableShare *share= (*iter).second;
@@ -197,7 +196,7 @@ TableShare *TableShare::getShare(Session *session,
   *error= 0;
 
   /* Read table definition from cache */
-  TableDefCache::iterator iter= table_def_cache.find(key_string);
+  TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
   if (iter != table_def_cache.end())
   {
     share= (*iter).second;
@@ -218,7 +217,7 @@ TableShare *TableShare::getShare(Session *session,
   /**
    * @TODO: we need to eject something if we exceed table_def_size
    */
-  pair<TableDefCache::iterator, bool> ret=
+  pair<TableDefinitionCache::iterator, bool> ret=
     table_def_cache.insert(make_pair(key_string, share));
   if (ret.second == false)
   {
@@ -262,7 +261,7 @@ TableShare *TableShare::getShare(const char *db, const char *table_name)
   key_length= TableShare::createKey(key, db, table_name);
 
   const string key_string(key, key_length);
-  TableDefCache::iterator iter= table_def_cache.find(key_string);
+  TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
   if (iter != table_def_cache.end())
   {
     return (*iter).second;
@@ -298,6 +297,11 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
     }
   }
   return false;
+}
+
+TableDefinitionCache &TableShare::getCache()
+{
+  return table_def_cache;
 }
 
 } /* namespace drizzled */

@@ -675,7 +675,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
     return(HA_ADMIN_FAILED);
   }
 
-  param.db_name=    table->s->db.str;
+  param.db_name=    table->s->getSchemaName();
   param.table_name= table->alias;
   param.tmpfile_createflag = O_RDWR | O_TRUNC;
   param.using_global_keycache = 1;

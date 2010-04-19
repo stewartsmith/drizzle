@@ -63,7 +63,6 @@ let $max_used = `SELECT @max_used_connections`;
 let $wait_left= `SELECT @wait_left`;
 while ($max_used != 1 && $wait_left > 0)
 {
-  sleep 1;
   FLUSH STATUS;
   SET @wait_left = @wait_left - 1;
   let $max_used_connections = `SHOW STATUS LIKE 'max_used_connections'`;

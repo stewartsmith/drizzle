@@ -261,8 +261,6 @@ typedef struct system_status_var
   /* END OF KEY_CACHE parts */
 
   ulong net_big_packet_count;
-  ulong opened_tables;
-  ulong opened_shares;
   ulong select_full_join_count;
   ulong select_full_range_join_count;
   ulong select_range_count;

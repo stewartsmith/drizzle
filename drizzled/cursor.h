@@ -682,8 +682,7 @@ private:
 extern const char *ha_row_type[];
 
 /* basic stuff */
-int ha_init_errors(void);
-int ha_end(void);
+void ha_init_errors(void);
 
 SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
                                    SORT_FIELD *sortorder);
@@ -726,6 +725,7 @@ bool mysql_create_table_no_lock(Session *session,
                                 bool is_if_not_exists);
 
 bool mysql_create_like_table(Session* session,
+                             TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
                              message::Table &create_table_proto,
                              bool is_if_not_exists,

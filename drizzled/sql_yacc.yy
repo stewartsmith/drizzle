@@ -1037,7 +1037,7 @@ create:
             statement->create_info.default_table_charset= NULL;
             lex->name.str= 0;
 
-	    message::Table &proto= statement->create_table_proto;
+	    message::Table &proto= statement->create_table_message;
 	   
 	    proto.set_name($5->table.str);
 	    if($2)
@@ -1224,7 +1224,7 @@ create_table_option:
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
             message::Table::StorageEngine *protoengine;
-            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_engine();
+            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine();
 
             statement->is_engine_set= true;
 
@@ -1234,7 +1234,7 @@ create_table_option:
           {
 	    message::Table::TableOptions *tableopts;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
 
             tableopts->set_block_size($3);
             statement->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
@@ -1242,7 +1242,7 @@ create_table_option:
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
 	    message::Table::TableOptions *tableopts;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
 
 	    tableopts->set_comment($3.str);
           }
@@ -1251,7 +1251,7 @@ create_table_option:
 	    message::Table::TableOptions *tableopts;
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
 
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
+	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
 
             statement->create_info.auto_increment_value=$3;
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
@@ -1273,7 +1273,7 @@ create_table_option:
             statement->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
 
             message::Table::TableOptions *tableopts;
-            tableopts= ((statement::CreateTable *)Lex->statement)->create_table_proto.mutable_options();
+            tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
             tableopts->set_key_block_size($3);
           }
         ;

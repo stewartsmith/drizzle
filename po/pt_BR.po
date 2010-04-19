@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-05-08 17:16+0000\n"
-"Last-Translator: Keylly Eyglys <Unknown>\n"
+"PO-Revision-Date: 2009-10-28 22:21+0000\n"
+"Last-Translator: Waldir Bertazzi Junior <Unknown>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2009-09-23 09:48+0000\n"
+"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -440,9 +440,8 @@ msgstr "Valor fornecido para porta não é válido"
 msgid "Processing line: %<PRIu32>\n"
 msgstr "Processando linha: %<PRIu32>\n"
 
-#, fuzzy
 msgid "Unknown command: "
-msgstr "Comando desconhecido '\\%c'."
+msgstr "Comando desconhecido: "
 
 msgid ""
 "Reading table information for completion of table and column names\n"
@@ -704,11 +703,7 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Erro: Memória insuficiente para armazenar cláusula ORDER BY\n"
 
-#, c-format
-msgid "Error while loading database options: '%s':"
-msgstr "Erro ao carregar opções do banco de dados: '%s':"
-
-#, c-format
+#, fuzzy, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr "Sinal %d recebido da thread %<PRIu64>"
 
@@ -735,7 +730,7 @@ msgstr ""
 
 #, c-format
 msgid "Fatal signal %d while backtracing\n"
-msgstr ""
+msgstr "Sinal fatal %d durante o backtracing\n"
 
 #, c-format
 msgid ""
@@ -812,24 +807,8 @@ msgstr ""
 "a documentação da sua distribuição para saber como fazer isto.\n"
 
 #, c-format
-msgid ""
-"\n"
-"The '--memlock' argument, which was enabled, uses system calls that are\n"
-"unreliable and unstable on some operating systems and operating-system\n"
-"versions (notably, some versions of Linux).  This crash could be due to use\n"
-"of those buggy OS calls.  You should consider whether you really need the\n"
-"'--memlock' parameter and/or consult the OS distributor about 'mlockall'\n"
-" bugs.\n"
-msgstr ""
-
-#, c-format
 msgid "Writing a core file\n"
 msgstr "Gerando um arquivo core (informações sobre falha)\n"
-
-msgid ""
-"setrlimit could not change the size of core files to 'infinity';  We may not "
-"be able to generate a core file on signals"
-msgstr ""
 
 #, c-format
 msgid "gethostname failed, using '%s' as hostname"
@@ -859,27 +838,12 @@ msgstr ""
 msgid "No scheduler found, cannot continue!\n"
 msgstr ""
 
-msgid "Can't init databases"
-msgstr "Impossível inicializar os bancos de dados"
-
-#, c-format
-msgid "Unknown/unsupported table type: %s"
+#, fuzzy, c-format
+msgid "Unknown/unsupported storage engine: %s"
 msgstr "Tipo de tabela desconhecido/não suportado: %s"
 
-#, c-format
-msgid "Default storage engine (%s) is not available"
-msgstr "O engine de armazenamento padrão (%s) está indisponível"
-
-#, c-format
-msgid "Failed to lock memory. Errno: %d\n"
-msgstr "Falha ao fazer lock na memória. Código do erro: %d\n"
-
-#, c-format
-msgid "Data directory %s does not exist\n"
-msgstr ""
-
 msgid "Display this help and exit after initializing plugins."
-msgstr ""
+msgstr "Exibe essa ajuda e sai depois de inicializar os plugins."
 
 msgid "Auto-increment columns are incremented by this"
 msgstr "Colunas de auto-incremento são incrementadas com isto"
@@ -934,9 +898,6 @@ msgstr "Configure o idioma usado para os nomes de mês e dias da semana"
 
 msgid "Log some not critical warnings to the log file."
 msgstr ""
-
-msgid "Lock drizzled in memory."
-msgstr "Travar drizzled na memória"
 
 msgid "Pid file used by safe_mysqld."
 msgstr "Arquivo Pid usado por safe_mysqld"
@@ -1027,6 +988,9 @@ msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
 msgstr ""
+"O numero máximo de bytes usados para ordenar dados do tipo BLOB ou TEXT "
+"( apenas o primeiro byte max_sort_length de cada valor é usado; o resto é "
+"ignorado)."
 
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
@@ -1062,12 +1026,18 @@ msgid ""
 msgstr ""
 
 msgid ""
+"Optional comma separated list of plugins to not load at startup. Effectively "
+"removes a plugin from the list of plugins to be loaded. [for example: --"
+"plugin_remove=crc32,logger_gearman]"
+msgstr ""
+
+msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
 
 msgid "The size of the buffer that is allocated when preloading indexes"
-msgstr ""
+msgstr "Tamanho do buffer alocado ao carregar os indices"
 
 msgid "Allocation block size for query parsing and execution"
 msgstr ""
@@ -1115,12 +1085,6 @@ msgid ""
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
 
-msgid "Allocation block size for transactions to be stored in binary log"
-msgstr ""
-
-msgid "Persistent buffer for transactions to be stored in binary log"
-msgstr ""
-
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -1151,6 +1115,15 @@ msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
 "Não pode iniciar o servidor: bind-address referencia para múltiplas "
 "interfaces"
+
+msgid ""
+"setrlimit could not change the size of core files to 'infinity';  We may not "
+"be able to generate a core file on signals"
+msgstr ""
+
+#, c-format
+msgid "Data directory %s does not exist\n"
+msgstr ""
 
 msgid "UNUSED"
 msgstr ""
@@ -3861,6 +3834,153 @@ msgstr ""
 msgid "Tables which are replicated require a primary key."
 msgstr ""
 
+#, fuzzy, c-format
+msgid "Corrupt or invalid table definition: %s"
+msgstr "O número de denifições de tabela em cache."
+
+#, fuzzy, c-format
+msgid "Schema does not exist: %s"
+msgstr "A tabela não existe no engine"
+
+#, c-format
+msgid "Error altering schema: %s"
+msgstr ""
+
+#, c-format
+msgid "Error droppping Schema : %s"
+msgstr ""
+
+#, c-format
+msgid "Can't create/write to file '%s' (Errcode: %d)"
+msgstr "Não foi possível criar/escrever no arquivo '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr "Erro lendo o arquivo '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Error writing file '%s' (Errcode: %d)"
+msgstr "Erro escrevendo no arquivo '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Error on close of '%s' (Errcode: %d)"
+msgstr "Erro no fechamento de '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Out of memory (Needed %u bytes)"
+msgstr "Memória insuficiente (Necessário %u bytes)"
+
+#, c-format
+msgid "Error on delete of '%s' (Errcode: %d)"
+msgstr "Erro ao apagar '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+msgstr "Erro ao renomear '%s' para '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+msgstr ""
+"Fim-de-arquivo encontrado inesperadamente ao ler arquivo '%s' (Código do "
+"erro: %d)"
+
+#, c-format
+msgid "Can't lock file (Errcode: %d)"
+msgstr "Não é possível travar o arquivo (Código do erro: %d)"
+
+#, c-format
+msgid "Can't unlock file (Errcode: %d)"
+msgstr "Não é possível destravar o arquivo (Código do erro: %d)"
+
+#, c-format
+msgid "Can't read dir of '%s' (Errcode: %d)"
+msgstr "Impossível ler o diretório '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Can't get stat of '%s' (Errcode: %d)"
+msgstr "Impossível obter status de '%s' (Errcode: %d)"
+
+#, c-format
+msgid "Can't change size of file (Errcode: %d)"
+msgstr "Impossível mudar o tamanho do arquivo (Código do erro: %d)"
+
+#, c-format
+msgid "Can't open stream from handle (Errcode: %d)"
+msgstr "Impossível abrir fluxo do apontador (Errcode: %d)"
+
+#, c-format
+msgid "Can't get working dirctory (Errcode: %d)"
+msgstr "Impossível determinar o diretório atual (Código do erro: %d)"
+
+#, c-format
+msgid "Can't change dir to '%s' (Errcode: %d)"
+msgstr "Impossível mudar para o diretório '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Warning: '%s' had %d links"
+msgstr "Aviso: '%s' tinha '%d' links"
+
+#, c-format
+msgid "Warning: %d files and %d streams is left open\n"
+msgstr "Aviso: %d arquivos e %d streams foram deixados abertos\n"
+
+#, c-format
+msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+msgstr ""
+"Disco ficou cheio enquanto escrevi '%s'. Aguardando que alguém libere algum "
+"espaço..."
+
+#, c-format
+msgid "Can't create directory '%s' (Errcode: %d)"
+msgstr "Impossível criar o diretório '%s' (Código do erro: %d)"
+
+#, c-format
+msgid ""
+"Character set '%s' is not a compiled character set and is not specified in "
+"the %s file"
+msgstr ""
+"Conjunto de caracteres '%s' não é um conjunto de caracteres compilado e não "
+"foi especificado no arquivo %s"
+
+#, c-format
+msgid "Out of resources when opening file '%s' (Errcode: %d)"
+msgstr "Fiquei sem recursos enquanto abria o arquivo '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Can't read value for symlink '%s' (Error %d)"
+msgstr "Impossível ler o valor do link simbólico '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
+msgstr ""
+"Impossível criar link simbólico '%s' apontando para '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Error on realpath() on '%s' (Error %d)"
+msgstr "Erro em realpath() em '%s' (Código do erro: %d)"
+
+#, c-format
+msgid "Can't sync file '%s' to disk (Errcode: %d)"
+msgstr "Impossível sincronizar arquivo '%s' no disco (Código do erro: %d)"
+
+#, c-format
+msgid ""
+"Collation '%s' is not a compiled collation and is not specified in the %s "
+"file"
+msgstr ""
+
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr "Arquivo '%s' não encontrado (Errcode: %d)"
+
+#, c-format
+msgid "File '%s' (fileno: %d) was not closed"
+msgstr "Arquivo '%s' (numero do arquivo: %d) não foi fechado"
+
+#, c-format
+msgid "Unknown error %d"
+msgstr "Erro desconhecido %d"
+
 #, c-format
 msgid "error: could not open directory: %s\n"
 msgstr ""
@@ -3869,9 +3989,9 @@ msgstr ""
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open file: %s\n"
-msgstr "Não pôde abrir arquivo: '%-.200s' (errno: %d)"
+msgstr ""
 
 #, c-format
 msgid "Found a non-transaction message in log.  Currently, not supported.\n"
@@ -4043,15 +4163,21 @@ msgid "Listening on %s:%s\n"
 msgstr ""
 
 #, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+
+#, c-format
 msgid "Plugin '%s' init function returned error.\n"
 msgstr ""
 
 #, c-format
-msgid "Couldn't load plugin library named '%s'."
+msgid "Couldn't load plugin library named '%s'.\n"
 msgstr ""
 
 #, c-format
-msgid "Couldn't load plugin named '%s'."
+msgid "Couldn't load plugin named '%s'.\n"
 msgstr ""
 
 msgid "Out of memory."
@@ -4100,6 +4226,10 @@ msgid "logging '%s' post() failed"
 msgstr ""
 
 #, c-format
+msgid "logging '%s' postEnd() failed"
+msgstr ""
+
+#, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
 msgstr ""
 
@@ -4138,7 +4268,11 @@ msgid "Attempted to configure %s as the scheduler, which did not exist.\n"
 msgstr ""
 
 #, c-format
-msgid "Found %d prepared transaction(s) in %s"
+msgid "Error while loading database options: '%s':"
+msgstr "Erro ao carregar opções do banco de dados: '%s':"
+
+#, c-format
+msgid "Found %d prepared transaction(s) in resource manager."
 msgstr ""
 
 msgid "Starting crash recovery..."
@@ -4173,16 +4307,6 @@ msgstr "Tabela não encontrada: \"%s\""
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
-msgstr ""
-
-msgid ""
-"Table name cannot be encoded and fit within filesystem name length "
-"restrictions."
-msgstr ""
-
-msgid ""
-"Schema name cannot be encoded and fit within filesystem name length "
-"restrictions."
 msgstr ""
 
 #, c-format
@@ -4278,11 +4402,48 @@ msgstr ""
 msgid "Turn on extra debugging."
 msgstr ""
 
+msgid "User to use for auth."
+msgstr ""
+
+msgid "Password to use for auth."
+msgstr ""
+
+#, fuzzy
+msgid "Default database to use."
+msgstr "Banco de dados a usar."
+
 msgid "Enable default replicator"
 msgstr ""
 
 msgid "Default Replicator"
 msgstr ""
+
+#, fuzzy
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
+msgstr ""
+"Número da porta a ser usada para conexão, ou 0 para usar o padrão de, em "
+"ordem de preferência, drizzle.cnf, $DRIZZLE_TCP_PORT, padrão interno ("
+
+msgid "Connect Timeout."
+msgstr ""
+
+msgid "Read Timeout."
+msgstr ""
+
+msgid "Write Timeout."
+msgstr ""
+
+msgid "Retry Count."
+msgstr ""
+
+msgid "Buffer length."
+msgstr ""
+
+#, fuzzy
+msgid "Address to bind to."
+msgstr "Endereço IP para conexão."
 
 msgid "Unknown Drizzle error"
 msgstr "Erro desconhecido do Drizzle"
@@ -4500,33 +4661,6 @@ msgstr ""
 #, c-format
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
-
-#, fuzzy
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
-msgstr ""
-"Número da porta a ser usada para conexão, ou 0 para usar o padrão de, em "
-"ordem de preferência, drizzle.cnf, $DRIZZLE_TCP_PORT, padrão interno ("
-
-msgid "Connect Timeout."
-msgstr ""
-
-msgid "Read Timeout."
-msgstr ""
-
-msgid "Write Timeout."
-msgstr ""
-
-msgid "Retry Count."
-msgstr ""
-
-msgid "Buffer length."
-msgstr ""
-
-#, fuzzy
-msgid "Address to bind to."
-msgstr "Endereço IP para conexão."
 
 #, c-format
 msgid "Failed to send error message to libnotify\n"
@@ -4880,41 +5014,25 @@ msgstr ""
 msgid "Unable to create background worker thread. Got error %s.\n"
 msgstr ""
 
-#, fuzzy
-msgid "Failed to open transaction log file "
-msgstr "Arquivo de socket a usar para conexão."
-
 #, c-format
-msgid ""
-"Failed to allocate enough memory to buffer header, transaction message, and "
-"trailing checksum bytes. Tried to allocate %<PRId64> bytes.  Error: %s\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Failed to write full size of transaction.  Tried to write %<PRId64> bytes at "
-"offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
-msgstr ""
-
-#, fuzzy, c-format
-msgid "Failed to sync log file. Got error: %s\n"
-msgstr "Falha ao fazer lock na memória. Código do erro: %d\n"
-
-#, fuzzy, c-format
 msgid "Failed to allocate the TransactionLog instance.  Got error: %s\n"
-msgstr "Falha ao fazer lock na memória. Código do erro: %d\n"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
-msgstr "Falha ao fazer lock na memória. Código do erro: %d\n"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
+msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgstr ""
+
+#, c-format
 msgid "Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"
-msgstr "Falha ao fazer lock na memória. Código do erro: %d\n"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to initialize the Transaction Log Index.  Got error: %s\n"
-msgstr "Falha ao fazer lock na memória. Código do erro: %d\n"
+msgstr ""
 
 msgid "Enable transaction log"
 msgstr ""
@@ -4933,6 +5051,25 @@ msgid ""
 "0 == rely on operating system to sync log file (default), 1 == sync file at "
 "each transaction write, 2 == sync log file once per second"
 msgstr ""
+
+#, c-format
+msgid ""
+"Failed to allocate enough memory to buffer header, transaction message, and "
+"trailing checksum bytes. Tried to allocate %<PRId64> bytes.  Error: %s\n"
+msgstr ""
+
+msgid "Failed to open transaction log file "
+msgstr ""
+
+#, c-format
+msgid ""
+"Failed to write full size of log entry.  Tried to write %<PRId64> bytes at "
+"offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Failed to sync log file. Got error: %s\n"
+msgstr "Falha ao fazer lock na memória. Código do erro: %d\n"
 
 #, c-format
 msgid "Failed to open transaction log file %s.  Got error: %s\n"
@@ -4956,123 +5093,29 @@ msgstr ""
 #~ msgid "Print some debug info at exit."
 #~ msgstr "Imprimir alguma informação de debug na saída."
 
-#~ msgid "Socket file to use for connection."
-#~ msgstr "Arquivo de socket a usar para conexão."
+#~ msgid "Can't init databases"
+#~ msgstr "Impossível inicializar os bancos de dados"
+
+#~ msgid "Default storage engine (%s) is not available"
+#~ msgstr "O engine de armazenamento padrão (%s) está indisponível"
+
+#~ msgid "Lock drizzled in memory."
+#~ msgstr "Travar drizzled na memória"
 
 #~ msgid "The default size of key cache blocks"
 #~ msgstr "Tamanho padrão dos blocks de cache de chave"
 
-#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
-#~ msgstr ""
-#~ "Não foi possível criar/escrever no arquivo '%s' (Código do erro: %d)"
-
-#~ msgid "Error reading file '%s' (Errcode: %d)"
-#~ msgstr "Erro lendo o arquivo '%s' (Código do erro: %d)"
-
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "Erro escrevendo no arquivo '%s' (Código do erro: %d)"
-
-#~ msgid "Error on close of '%s' (Errcode: %d)"
-#~ msgstr "Erro no fechamento de '%s' (Código do erro: %d)"
-
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "Memória insuficiente (Necessário %u bytes)"
-
-#~ msgid "Error on delete of '%s' (Errcode: %d)"
-#~ msgstr "Erro ao apagar '%s' (Código do erro: %d)"
-
-#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-#~ msgstr "Erro ao renomear '%s' para '%s' (Código do erro: %d)"
-
-#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-#~ msgstr ""
-#~ "Fim-de-arquivo encontrado inesperadamente ao ler arquivo '%s' (Código do "
-#~ "erro: %d)"
-
-#~ msgid "Can't lock file (Errcode: %d)"
-#~ msgstr "Não é possível travar o arquivo (Código do erro: %d)"
-
-#~ msgid "Can't unlock file (Errcode: %d)"
-#~ msgstr "Não é possível destravar o arquivo (Código do erro: %d)"
-
-#~ msgid "Can't read dir of '%s' (Errcode: %d)"
-#~ msgstr "Impossível ler o diretório '%s' (Código do erro: %d)"
-
-#~ msgid "Can't get stat of '%s' (Errcode: %d)"
-#~ msgstr "Impossível obter status de '%s' (Errcode: %d)"
-
-#~ msgid "Can't change size of file (Errcode: %d)"
-#~ msgstr "Impossível mudar o tamanho do arquivo (Código do erro: %d)"
-
-#~ msgid "Can't open stream from handle (Errcode: %d)"
-#~ msgstr "Impossível abrir fluxo do apontador (Errcode: %d)"
-
-#~ msgid "Can't get working dirctory (Errcode: %d)"
-#~ msgstr "Impossível determinar o diretório atual (Código do erro: %d)"
-
-#~ msgid "Can't change dir to '%s' (Errcode: %d)"
-#~ msgstr "Impossível mudar para o diretório '%s' (Código do erro: %d)"
-
-#~ msgid "Warning: '%s' had %d links"
-#~ msgstr "Aviso: '%s' tinha '%d' links"
-
-#~ msgid "Warning: %d files and %d streams is left open\n"
-#~ msgstr "Aviso: %d arquivos e %d streams foram deixados abertos\n"
-
-#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-#~ msgstr ""
-#~ "Disco ficou cheio enquanto escrevi '%s'. Aguardando que alguém libere "
-#~ "algum espaço..."
-
-#~ msgid "Can't create directory '%s' (Errcode: %d)"
-#~ msgstr "Impossível criar o diretório '%s' (Código do erro: %d)"
-
-#~ msgid ""
-#~ "Character set '%s' is not a compiled character set and is not specified "
-#~ "in the %s file"
-#~ msgstr ""
-#~ "Conjunto de caracteres '%s' não é um conjunto de caracteres compilado e "
-#~ "não foi especificado no arquivo %s"
-
-#~ msgid "Out of resources when opening file '%s' (Errcode: %d)"
-#~ msgstr ""
-#~ "Fiquei sem recursos enquanto abria o arquivo '%s' (Código do erro: %d)"
-
-#~ msgid "Can't read value for symlink '%s' (Error %d)"
-#~ msgstr "Impossível ler o valor do link simbólico '%s' (Código do erro: %d)"
-
-#~ msgid "Can't create symlink '%s' pointing at '%s' (Error %d)"
-#~ msgstr ""
-#~ "Impossível criar link simbólico '%s' apontando para '%s' (Código do erro: "
-#~ "%d)"
-
-#~ msgid "Error on realpath() on '%s' (Error %d)"
-#~ msgstr "Erro em realpath() em '%s' (Código do erro: %d)"
-
-#~ msgid "Can't sync file '%s' to disk (Errcode: %d)"
-#~ msgstr "Impossível sincronizar arquivo '%s' no disco (Código do erro: %d)"
-
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Arquivo '%s' não encontrado (Errcode: %d)"
-
-#~ msgid "File '%s' (fileno: %d) was not closed"
-#~ msgstr "Arquivo '%s' (numero do arquivo: %d) não foi fechado"
-
-#~ msgid "Unknown error %d"
-#~ msgstr "Erro desconhecido %d"
-
 #~ msgid "Buffer length for TCP/IP and socket communication."
 #~ msgstr "Tamanho do buffer para comunicação TCP/IP e soquete."
-
-#, fuzzy
-#~ msgid "Failed to read initial length header\n"
-#~ msgstr "Falha ao inicializar os plugins."
 
 #~ msgid "Could not open table %s.%s after rename\n"
 #~ msgstr "Não foi possivel abrir a tabela %s.%s depois de renomea-la\n"
 
 #~ msgid "Set the default character set."
 #~ msgstr "Define o conjunto de caracteres padrão."
+
+#~ msgid "Unknown command '\\%c'."
+#~ msgstr "Comando desconhecido '\\%c'."
 
 #~ msgid "Invalid (old?) table or database name '%s'"
 #~ msgstr "Nome de tabela ou banco de dados %s invalido(Antigo?)"

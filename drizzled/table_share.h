@@ -36,6 +36,13 @@
 namespace drizzled
 {
 
+typedef drizzled::hash_map<std::string, TableShare *> TableDefinitionCache;
+
+const static std::string STANDARD_STRING("STANDARD");
+const static std::string TEMPORARY_STRING("TEMPORARY");
+const static std::string INTERNAL_STRING("INTERNAL");
+const static std::string FUNCTION_STRING("FUNCTION");
+
 class TableShare
 {
 public:
@@ -194,7 +201,9 @@ public:
     To ensure this one can use set_table_cache() methods.
   */
   LEX_STRING table_cache_key;
+private:
   LEX_STRING db;                        /* Pointer to db */
+public:
   LEX_STRING table_name;                /* Table name (for open) */
   LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
@@ -204,13 +213,35 @@ public:
     return table_name.str;
   }
 
+  const std::string &getTableName(std::string &name_arg) const
+  {
+    name_arg.clear();
+    name_arg.append(table_name.str, table_name.length);
+
+    return name_arg;
+  }
+
   const char *getSchemaName() const
   {
     return db.str;
   }
 
+  const std::string &getSchemaName(std::string &schema_name_arg) const
+  {
+    schema_name_arg.clear();
+    schema_name_arg.append(db.str, db.length);
+
+    return schema_name_arg;
+  }
+
   uint32_t   block_size;                   /* create information */
+
   uint64_t   version;
+  uint64_t getVersion()
+  {
+    return version;
+  }
+
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
   uint32_t   reclength;			/* Recordlength */
   uint32_t   stored_rec_length;         /* Stored record length*/
@@ -228,19 +259,19 @@ private:
   message::Table *table_proto;
 public:
 
-  const char * getTableTypeAsString() const
+  const std::string &getTableTypeAsString() const
   {
     switch (table_proto->type())
     {
     default:
     case message::Table::STANDARD:
-      return "STANDARD";
+      return STANDARD_STRING;
     case message::Table::TEMPORARY:
-      return "TEMPORARY";
+      return TEMPORARY_STRING;
     case message::Table::INTERNAL:
-      return "INTERNAL";
+      return INTERNAL_STRING;
     case message::Table::FUNCTION:
-      return "FUNCTION";
+      return FUNCTION_STRING;
     }
   }
 
@@ -309,6 +340,11 @@ public:
   enum tmp_table_type tmp_table;
 
   uint32_t ref_count;       /* How many Table objects uses this */
+  uint32_t getTableCount()
+  {
+    return ref_count;
+  }
+
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
@@ -343,9 +379,20 @@ public:
 
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
+
   bool name_lock;
+  bool isNameLock() const
+  {
+    return name_lock;
+  }
+
   bool replace_with_name_lock;
+
   bool waiting_on_cond;                 /* Protection against free */
+  bool isWaitingOnCondition()
+  {
+    return waiting_on_cond;
+  }
 
   /*
     Set of keys in use, implemented as a Bitmap.
@@ -561,6 +608,7 @@ public:
   static void cacheStop(void);
   static void release(TableShare *share);
   static void release(const char *key, uint32_t key_length);
+  static TableDefinitionCache &getCache();
   static TableShare *getShare(const char *db, const char *table_name);
   static TableShare *getShare(Session *session, 
                               TableList *table_list, char *key,

@@ -78,11 +78,9 @@ connection con1;
 
 connection con2;
 send flush tables with read lock;
---sleep 1
 
 connection con3;
 send insert into t2 values(1);
---sleep 1
 
 connection con1;
 unlock tables;

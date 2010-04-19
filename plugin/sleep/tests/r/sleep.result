@@ -34,18 +34,3 @@ sleep(1)
 select sleep(1.5);
 sleep(1.5)
 0
-select sleep(2);
-sleep(2)
-0
-select sleep(2.23);
-sleep(2.23)
-0
-select sleep(2.9);
-sleep(2.9)
-0
-select sleep(5);
-sleep(5)
-0
-select sleep(5.7);
-sleep(5.7)
-0

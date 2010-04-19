@@ -716,9 +716,9 @@ my_decimal *Field::val_decimal(my_decimal *)
 
 void Field::make_field(SendField *field)
 {
-  if (orig_table && orig_table->s->db.str && *orig_table->s->db.str)
+  if (orig_table && orig_table->s->getSchemaName() && *orig_table->s->getSchemaName())
   {
-    field->db_name= orig_table->s->db.str;
+    field->db_name= orig_table->s->getSchemaName();
     field->org_table_name= orig_table->s->table_name.str;
   }
   else

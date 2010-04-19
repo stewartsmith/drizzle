@@ -283,6 +283,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/optimizer/range_param.h \
 			      drizzled/optimizer/sargable_param.h \
 			      drizzled/optimizer/sel_arg.h \
+			      drizzled/optimizer/sel_imerge.h \
+			      drizzled/optimizer/sel_tree.h \
 			      drizzled/optimizer/sum.h \
 			      drizzled/optimizer/table_read_plan.h \
 			      drizzled/order.h \
@@ -647,6 +649,8 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/optimizer/quick_ror_union_select.cc \
 			   drizzled/optimizer/range.cc \
 			   drizzled/optimizer/sel_arg.cc \
+			   drizzled/optimizer/sel_imerge.cc \
+			   drizzled/optimizer/sel_tree.cc \
 			   drizzled/optimizer/sum.cc \
 			   drizzled/plugin/authentication.cc \
 			   drizzled/plugin/authorization.cc \

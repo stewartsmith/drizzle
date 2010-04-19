@@ -36,6 +36,8 @@
 #include "drizzled/definitions.h"
 #include <string.h>
 
+#include <assert.h>
+
 #include <ostream>
 #include <set>
 
@@ -54,8 +56,8 @@ private:
 
   tmp_table_type type;
   char path[FN_REFLEN];
-  const char *db;
-  const char *table_name;
+  std::string db;
+  std::string table_name;
   std::string sql_path;
 
 public:
@@ -86,17 +88,17 @@ public:
 
   const char *getDBName() const
   {
-    return db;
+    return db.c_str();
   }
 
   const char *getSchemaName() const
   {
-    return db;
+    return db.c_str();
   }
 
   const char *getTableName() const
   {
-    return table_name;
+    return table_name.c_str();
   }
 
   friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
@@ -133,9 +135,9 @@ public:
   {
     if (left.type == right.type)
     {
-      if (! strcmp(left.db, right.db))
+      if (not strcmp(left.db.c_str(), right.db.c_str()))
       {
-        if (! strcmp(left.table_name, right.table_name))
+        if (not strcmp(left.table_name.c_str(), right.table_name.c_str()))
         {
           return true;
         }

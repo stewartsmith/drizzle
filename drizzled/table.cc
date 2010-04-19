@@ -80,14 +80,6 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
   return (unsigned char*) (*buff)->field_name;
 }
 
-static TABLE_CATEGORY get_table_category(const LEX_STRING *db)
-{
-  assert(db != NULL);
-
-  return TABLE_CATEGORY_USER;
-}
-
-
 /*
   Allocate a setup TableShare structure
 
@@ -1258,7 +1250,7 @@ int open_table_def(Session& session, TableShare *share)
   message::Table table;
 
   error= plugin::StorageEngine::getTableDefinition(session, share->normalized_path.str,
-                                                   share->db.str,
+                                                   share->getSchemaName(),
                                                    share->table_name.str,
                                                    false,
                                                    &table);
@@ -1282,10 +1274,7 @@ int open_table_def(Session& session, TableShare *share)
 
   error= parse_table_proto(session, table, share);
 
-  share->table_category= get_table_category(& share->db);
-
-  if (not error)
-    session.status_var.opened_shares++;
+  share->table_category= TABLE_CATEGORY_USER;
 
 err_not_open:
   if (error && !error_given)
@@ -1515,9 +1504,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   memset(bitmaps, 0, bitmap_size*3);
 #endif
 
-  session->status_var.opened_tables++;
-
-  return (0);
+  return 0;
 
  err:
   if (!error_reported)

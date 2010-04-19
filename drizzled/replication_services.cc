@@ -373,7 +373,7 @@ void ReplicationServices::setInsertHeader(message::Statement &statement,
   message::InsertHeader *header= statement.mutable_insert_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  const char *schema_name= in_table->getShare()->db.str;
+  const char *schema_name= in_table->getShare()->getSchemaName();
   const char *table_name= in_table->getShare()->table_name.str;
 
   table_metadata->set_schema_name(schema_name);
@@ -488,7 +488,7 @@ void ReplicationServices::setUpdateHeader(message::Statement &statement,
   message::UpdateHeader *header= statement.mutable_update_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  const char *schema_name= in_table->getShare()->db.str;
+  const char *schema_name= in_table->getShare()->getSchemaName();
   const char *table_name= in_table->getShare()->table_name.str;
 
   table_metadata->set_schema_name(schema_name);
@@ -664,7 +664,7 @@ void ReplicationServices::setDeleteHeader(message::Statement &statement,
   message::DeleteHeader *header= statement.mutable_delete_header();
   message::TableMetadata *table_metadata= header->mutable_table_metadata();
 
-  const char *schema_name= in_table->getShare()->db.str;
+  const char *schema_name= in_table->getShare()->getSchemaName();
   const char *table_name= in_table->getShare()->table_name.str;
 
   table_metadata->set_schema_name(schema_name);
@@ -864,7 +864,7 @@ void ReplicationServices::truncateTable(Session *in_session, Table *in_table)
   message::TruncateTableStatement *truncate_statement= statement->mutable_truncate_table_statement();
   message::TableMetadata *table_metadata= truncate_statement->mutable_table_metadata();
 
-  const char *schema_name= in_table->getShare()->db.str;
+  const char *schema_name= in_table->getShare()->getSchemaName();
   const char *table_name= in_table->getShare()->table_name.str;
 
   table_metadata->set_schema_name(schema_name);
