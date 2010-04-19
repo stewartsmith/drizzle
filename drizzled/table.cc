@@ -3005,7 +3005,7 @@ Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list)
   while ((cdef= it++))
   {
     *field= make_field(share,
-                       NULL,
+                       session->mem_root,
                        0,
                        cdef->length,
                        (cdef->flags & NOT_NULL_FLAG) ? false : true,

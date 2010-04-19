@@ -931,8 +931,7 @@ Field *make_field(TableShare *share,
                   TYPELIB *interval,
                   const char *field_name)
 {
-  if(! root)
-    root= current_mem_root();
+  assert(root);
 
   if (! is_nullable)
   {
