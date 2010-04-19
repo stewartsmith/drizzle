@@ -6982,7 +6982,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
         tmp_foreign_fields, tmp_referenced_fields);
 
     ForeignKeyInfo *pf_key_info = (ForeignKeyInfo *)
-      session_memdup(session, &f_key_info, sizeof(ForeignKeyInfo));
+      session->memdup(&f_key_info, sizeof(ForeignKeyInfo));
     f_key_list->push_back(pf_key_info);
     foreign = UT_LIST_GET_NEXT(foreign_list, foreign);
   }
@@ -8113,7 +8113,7 @@ InnobaseEngine::doXaPrepare(
     return(0);
   }
 
-  session_get_xid(session, reinterpret_cast<DRIZZLE_XID*>(&trx->xid));
+  session->get_xid(reinterpret_cast<DRIZZLE_XID*>(&trx->xid));
 
   /* Release a possible FIFO ticket and search latch. Since we will
   reserve the kernel mutex, we have to release the search system latch

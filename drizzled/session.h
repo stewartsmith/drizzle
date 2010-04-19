@@ -1493,6 +1493,7 @@ public:
 
   static void unlink(Session *session);
 
+  void get_xid(DRIZZLE_XID *xid); // Innodb only
 };
 
 class JOIN;

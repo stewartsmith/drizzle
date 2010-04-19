@@ -438,45 +438,6 @@ const charset_info_st *session_charset(Session *session);
 int session_non_transactional_update(const Session *session);
 void session_mark_transaction_to_rollback(Session *session, bool all);
 
-
-/**
-  Allocate memory in the connection's local memory pool
-
-  @details
-  When properly used in place of @c malloc(), this can significantly
-  improve concurrency. Don't use this or related functions to allocate
-  large chunks of memory. Use for temporary storage only. The memory
-  will be freed automatically at the end of the statement; no explicit
-  code is required to prevent memory leaks.
-
-  @see alloc_root()
-*/
-void *session_alloc(Session *session, unsigned int size);
-/**
-  @see session_alloc()
-*/
-void *session_calloc(Session *session, unsigned int size);
-/**
-  @see session_alloc()
-*/
-char *session_strdup(Session *session, const char *str);
-/**
-  @see session_alloc()
-*/
-char *session_strmake(Session *session, const char *str, unsigned int size);
-/**
-  @see session_alloc()
-*/
-void *session_memdup(Session *session, const void* str, unsigned int size);
-
-/**
-  Get the XID for this connection's transaction
-
-  @param session  user thread connection handle
-  @param xid  location where identifier is stored
-*/
-void session_get_xid(const Session *session, DRIZZLE_XID *xid);
-
 /**
   Invalidate the query cache for a given table.
 

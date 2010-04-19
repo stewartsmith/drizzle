@@ -315,43 +315,11 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-void *session_alloc(Session *session, unsigned int size)
+void Session::get_xid(DRIZZLE_XID *xid)
 {
-  return session->alloc(size);
+  *xid = *(DRIZZLE_XID *) &transaction.xid_state.xid;
 }
 
-void *session_calloc(Session *session, unsigned int size)
-{
-  return session->calloc(size);
-}
-
-char *session_strdup(Session *session, const char *str)
-{
-  return session->strdup(str);
-}
-
-char *session_strmake(Session *session, const char *str, unsigned int size)
-{
-  return session->strmake(str, size);
-}
-
-void *session_memdup(Session *session, const void* str, unsigned int size)
-{
-  return session->memdup(str, size);
-}
-
-void session_get_xid(const Session *session, DRIZZLE_XID *xid)
-{
-  *xid = *(DRIZZLE_XID *) &session->transaction.xid_state.xid;
-}
-
-#if defined(__cplusplus)
-}
-#endif
 
 /* Do operations that may take a long time */
 

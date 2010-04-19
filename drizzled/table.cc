@@ -97,14 +97,13 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
 TableShare *alloc_table_share(TableList *table_list, char *key,
                                uint32_t key_length)
 {
-  memory::Root mem_root;
+  memory::Root mem_root(TABLE_ALLOC_BLOCK_SIZE);
   TableShare *share;
   char *key_buff, *path_buff;
   std::string path;
 
   build_table_filename(path, table_list->db, table_list->table_name, false);
 
-  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   if (multi_alloc_root(&mem_root,
                        &share, sizeof(*share),
                        &key_buff, key_length,
@@ -2311,7 +2310,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
-  memory::Root *mem_root_save, own_root;
+  memory::Root *mem_root_save, own_root(TABLE_ALLOC_BLOCK_SIZE);
   Table *table;
   TableShare *share;
   uint	i,field_count,null_count,null_pack_length;
@@ -2376,8 +2375,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   */
   if (param->precomputed_group_by)
     copy_func_count+= param->sum_func_count;
-
-  memory::init_sql_alloc(&own_root, TABLE_ALLOC_BLOCK_SIZE, 0);
 
   if (!multi_alloc_root(&own_root,
                         &table, sizeof(*table),
