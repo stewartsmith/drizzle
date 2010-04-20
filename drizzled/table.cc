@@ -238,9 +238,9 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-int parse_table_proto(Session& session,
-                      message::Table &table,
-                      TableShare *share)
+static int inner_parse_table_proto(Session& session,
+				   message::Table &table,
+				   TableShare *share)
 {
   int error= 0;
 
@@ -458,10 +458,11 @@ int parse_table_proto(Session& session,
   uint32_t null_fields= 0;
   share->reclength= 0;
 
-  uint32_t *field_offsets= (uint32_t*)malloc(share->fields * sizeof(uint32_t));
-  uint32_t *field_pack_length=(uint32_t*)malloc(share->fields*sizeof(uint32_t));
+  vector<uint32_t> field_offsets;
+  vector<uint32_t> field_pack_length;
 
-  assert(field_offsets && field_pack_length); // TODO: fixme
+  field_offsets.resize(share->fields);
+  field_pack_length.resize(share->fields);
 
   uint32_t interval_count= 0;
   uint32_t interval_parts= 0;
@@ -568,7 +569,9 @@ int parse_table_proto(Session& session,
     share->intervals= (TYPELIB *) share->mem_root.alloc_root(interval_count*sizeof(TYPELIB));
   }
   else
+  {
     share->intervals= NULL;
+  }
 
   share->fieldnames.type_names= (const char **) share->mem_root.alloc_root((share->fields + 1) * sizeof(char*));
 
@@ -769,7 +772,8 @@ int parse_table_proto(Session& session,
         if (fo.scale() > DECIMAL_MAX_SCALE)
         {
           error= 4;
-          goto err;
+
+	  return error;
         }
         decimals= static_cast<uint8_t>(fo.scale());
       }
@@ -830,7 +834,8 @@ int parse_table_proto(Session& session,
       {
         my_error(ER_M_BIGGER_THAN_D, MYF(0), pfield.name().c_str());
         error= 1;
-        goto err;
+
+	return error;
       }
       break;
     }
@@ -919,7 +924,8 @@ int parse_table_proto(Session& session,
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
         error= 1;
-        goto err;
+
+	return error;
       }
     }
     else if (f->real_type() == DRIZZLE_TYPE_ENUM &&
@@ -929,7 +935,9 @@ int parse_table_proto(Session& session,
       f->store((int64_t) 1, true);
     }
     else
+    {
       f->reset();
+    }
 
     /* hack to undo f->init() */
     f->table= NULL;
@@ -987,11 +995,6 @@ int parse_table_proto(Session& session,
 
   share->last_null_bit_pos= null_bit_pos;
 
-  free(field_offsets);
-  field_offsets= NULL;
-  free(field_pack_length);
-  field_pack_length= NULL;
-
   /* Fix key stuff */
   if (share->key_parts)
   {
@@ -1007,105 +1010,104 @@ int parse_table_proto(Session& session,
 
       if (primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
       {
-        /*
-          If the UNIQUE key doesn't have NULL columns and is not a part key
-          declare this as a primary key.
-        */
-        primary_key=key;
-        for (uint32_t i= 0; i < keyinfo->key_parts; i++)
-        {
-          uint32_t fieldnr= key_part[i].fieldnr;
-          if (! fieldnr ||
-              share->field[fieldnr-1]->null_ptr ||
-              share->field[fieldnr-1]->key_length() != key_part[i].length)
-          {
-            primary_key= MAX_KEY; // Can't be used
-            break;
-          }
-        }
+	/*
+	  If the UNIQUE key doesn't have NULL columns and is not a part key
+	  declare this as a primary key.
+	*/
+	primary_key=key;
+	for (uint32_t i= 0; i < keyinfo->key_parts; i++)
+	{
+	  uint32_t fieldnr= key_part[i].fieldnr;
+	  if (! fieldnr ||
+	      share->field[fieldnr-1]->null_ptr ||
+	      share->field[fieldnr-1]->key_length() != key_part[i].length)
+	  {
+	    primary_key= MAX_KEY; // Can't be used
+	    break;
+	  }
+	}
       }
 
       for (uint32_t i= 0 ; i < keyinfo->key_parts ; key_part++,i++)
       {
-        Field *field;
-        if (! key_part->fieldnr)
-        {
-          abort(); // goto err;
-        }
-        field= key_part->field= share->field[key_part->fieldnr-1];
-        key_part->type= field->key_type();
-        if (field->null_ptr)
-        {
-          key_part->null_offset=(uint32_t) ((unsigned char*) field->null_ptr -
-                                        share->default_values);
-          key_part->null_bit= field->null_bit;
-          key_part->store_length+=HA_KEY_NULL_LENGTH;
-          keyinfo->flags|=HA_NULL_PART_KEY;
-          keyinfo->extra_length+= HA_KEY_NULL_LENGTH;
-          keyinfo->key_length+= HA_KEY_NULL_LENGTH;
-        }
-        if (field->type() == DRIZZLE_TYPE_BLOB ||
-            field->real_type() == DRIZZLE_TYPE_VARCHAR)
-        {
-          if (field->type() == DRIZZLE_TYPE_BLOB)
-            key_part->key_part_flag|= HA_BLOB_PART;
-          else
-            key_part->key_part_flag|= HA_VAR_LENGTH_PART;
-          keyinfo->extra_length+=HA_KEY_BLOB_LENGTH;
-          key_part->store_length+=HA_KEY_BLOB_LENGTH;
-          keyinfo->key_length+= HA_KEY_BLOB_LENGTH;
-        }
-        if (i == 0 && key != primary_key)
-          field->flags |= (((keyinfo->flags & HA_NOSAME) &&
-                           (keyinfo->key_parts == 1)) ?
-                           UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
-        if (i == 0)
-          field->key_start.set(key);
-        if (field->key_length() == key_part->length &&
-            !(field->flags & BLOB_FLAG))
-        {
-          enum ha_key_alg algo= share->key_info[key].algorithm;
-          if (share->db_type()->index_flags(algo) & HA_KEYREAD_ONLY)
-          {
-            share->keys_for_keyread.set(key);
-            field->part_of_key.set(key);
-            field->part_of_key_not_clustered.set(key);
-          }
-          if (share->db_type()->index_flags(algo) & HA_READ_ORDER)
-            field->part_of_sortkey.set(key);
-        }
-        if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
-            usable_parts == i)
-          usable_parts++;			// For FILESORT
-        field->flags|= PART_KEY_FLAG;
-        if (key == primary_key)
-        {
-          field->flags|= PRI_KEY_FLAG;
-          /*
-            If this field is part of the primary key and all keys contains
-            the primary key, then we can use any key to find this column
-          */
-          if (share->storage_engine->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX))
-          {
-            field->part_of_key= share->keys_in_use;
-            if (field->part_of_sortkey.test(key))
-              field->part_of_sortkey= share->keys_in_use;
-          }
-        }
-        if (field->key_length() != key_part->length)
-        {
-          key_part->key_part_flag|= HA_PART_KEY_SEG;
-        }
+	Field *field;
+	if (! key_part->fieldnr)
+	{
+	  return ENOMEM;
+	}
+	field= key_part->field= share->field[key_part->fieldnr-1];
+	key_part->type= field->key_type();
+	if (field->null_ptr)
+	{
+	  key_part->null_offset=(uint32_t) ((unsigned char*) field->null_ptr - share->default_values);
+	  key_part->null_bit= field->null_bit;
+	  key_part->store_length+=HA_KEY_NULL_LENGTH;
+	  keyinfo->flags|=HA_NULL_PART_KEY;
+	  keyinfo->extra_length+= HA_KEY_NULL_LENGTH;
+	  keyinfo->key_length+= HA_KEY_NULL_LENGTH;
+	}
+	if (field->type() == DRIZZLE_TYPE_BLOB ||
+	    field->real_type() == DRIZZLE_TYPE_VARCHAR)
+	{
+	  if (field->type() == DRIZZLE_TYPE_BLOB)
+	    key_part->key_part_flag|= HA_BLOB_PART;
+	  else
+	    key_part->key_part_flag|= HA_VAR_LENGTH_PART;
+	  keyinfo->extra_length+=HA_KEY_BLOB_LENGTH;
+	  key_part->store_length+=HA_KEY_BLOB_LENGTH;
+	  keyinfo->key_length+= HA_KEY_BLOB_LENGTH;
+	}
+	if (i == 0 && key != primary_key)
+	  field->flags |= (((keyinfo->flags & HA_NOSAME) &&
+			    (keyinfo->key_parts == 1)) ?
+			   UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
+	if (i == 0)
+	  field->key_start.set(key);
+	if (field->key_length() == key_part->length &&
+	    !(field->flags & BLOB_FLAG))
+	{
+	  enum ha_key_alg algo= share->key_info[key].algorithm;
+	  if (share->db_type()->index_flags(algo) & HA_KEYREAD_ONLY)
+	  {
+	    share->keys_for_keyread.set(key);
+	    field->part_of_key.set(key);
+	    field->part_of_key_not_clustered.set(key);
+	  }
+	  if (share->db_type()->index_flags(algo) & HA_READ_ORDER)
+	    field->part_of_sortkey.set(key);
+	}
+	if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
+	    usable_parts == i)
+	  usable_parts++;			// For FILESORT
+	field->flags|= PART_KEY_FLAG;
+	if (key == primary_key)
+	{
+	  field->flags|= PRI_KEY_FLAG;
+	  /*
+	    If this field is part of the primary key and all keys contains
+	    the primary key, then we can use any key to find this column
+	  */
+	  if (share->storage_engine->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX))
+	  {
+	    field->part_of_key= share->keys_in_use;
+	    if (field->part_of_sortkey.test(key))
+	      field->part_of_sortkey= share->keys_in_use;
+	  }
+	}
+	if (field->key_length() != key_part->length)
+	{
+	  key_part->key_part_flag|= HA_PART_KEY_SEG;
+	}
       }
       keyinfo->usable_key_parts= usable_parts; // Filesort
 
       set_if_bigger(share->max_key_length,keyinfo->key_length+
-                    keyinfo->key_parts);
+		    keyinfo->key_parts);
       share->total_key_length+= keyinfo->key_length;
 
       if (keyinfo->flags & HA_NOSAME)
       {
-        set_if_bigger(share->max_unique_length,keyinfo->key_length);
+	set_if_bigger(share->max_unique_length,keyinfo->key_length);
       }
     }
     if (primary_key < MAX_KEY &&
@@ -1128,10 +1130,14 @@ int parse_table_proto(Session& session,
       }
     }
     else
+    {
       share->primary_key = MAX_KEY; // we do not have a primary key
+    }
   }
   else
+  {
     share->primary_key= MAX_KEY;
+  }
 
   if (share->found_next_number_field)
   {
@@ -1144,10 +1150,13 @@ int parse_table_proto(Session& session,
     {
       /* Wrong field definition */
       error= 4;
-      goto err;
+
+      return error;
     }
     else
+    {
       reg_field->flags |= AUTO_INCREMENT_FLAG;
+    }
   }
 
   if (share->blob_fields)
@@ -1158,7 +1167,9 @@ int parse_table_proto(Session& session,
     /* Store offsets to blob fields to find them fast */
     if (!(share->blob_field= save=
 	  (uint*) share->mem_root.alloc_root((uint32_t) (share->blob_fields* sizeof(uint32_t)))))
-      goto err;
+    {
+      return error;
+    }
     for (k= 0, ptr= share->field ; *ptr ; ptr++, k++)
     {
       if ((*ptr)->flags & BLOB_FLAG)
@@ -1172,17 +1183,26 @@ int parse_table_proto(Session& session,
   my_bitmap_map *bitmaps;
 
   if (!(bitmaps= (my_bitmap_map*) share->mem_root.alloc_root(share->column_bitmap_size)))
-    goto err;
-  share->all_set.init(bitmaps, share->fields);
-  share->all_set.setAll();
+  { }
+  else
+  {
+    share->all_set.init(bitmaps, share->fields);
+    share->all_set.setAll();
 
-  return (0);
+    return (0);
+  }
 
-err:
-  if (field_offsets)
-    free(field_offsets);
-  if (field_pack_length)
-    free(field_pack_length);
+  return error;
+}
+
+int parse_table_proto(Session& session,
+                      message::Table &table,
+                      TableShare *share)
+{
+  int error= inner_parse_table_proto(session, table, share);
+
+  if (not error)
+    return 0;
 
   share->error= error;
   share->open_errno= errno;
@@ -1192,6 +1212,7 @@ err:
 
   return error;
 }
+
 
 /*
   Read table definition from a binary / text based .frm cursor
@@ -1648,7 +1669,9 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   case 7:
   case 1:
     if (db_errno == ENOENT)
+    {
       my_error(ER_NO_SUCH_TABLE, MYF(0), db.str, table_name.str);
+    }
     else
     {
       snprintf(buff, sizeof(buff), "%s",normalized_path.str);
