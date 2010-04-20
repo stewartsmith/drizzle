@@ -1,0 +1,7 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
+noinst_PROGRAMS+= unittests/unittests
+
+unittests_unittests_SOURCES=	unittests/calendar_test.cc drizzled/calendar.cc
