@@ -399,9 +399,8 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_session_mem_root(Session *session, sql_var_t type)
 {
   if (type != OPT_GLOBAL)
-    reset_root_defaults(session->mem_root,
-                        session->variables.query_alloc_block_size,
-                        session->variables.query_prealloc_size);
+    session->mem_root->reset_root_defaults(session->variables.query_alloc_block_size,
+                                           session->variables.query_prealloc_size);
 }
 
 

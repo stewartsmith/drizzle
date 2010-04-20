@@ -2193,7 +2193,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
     }
     /* No need to calculate checksum again. */
     sort_param.calc_checksum= 0;
-    free_root(&sort_param.wordroot, MYF(0));
+    sort_param.wordroot.free_root(MYF(0));
 
     /* Set for next loop */
     sort_info.max_records= (ha_rows) info->state->records;

@@ -683,17 +683,25 @@ xtPublic void xt_tab_init_db(XTThreadPtr self, XTDatabaseHPtr db)
 	 * Previously we only caclulated statistics when a handler was opened
 	 * and the underlying table was also opened.
 	 */
+	/* This (hack) fixes: warning: variable 'edx' might be clobbered by 'longjmp' or 'vfork' */
+	u_int save_edx;
+
 	xt_enum_tables_init(&edx);
 	while ((te_ptr = xt_enum_tables_next(self, db, &edx))) {
+		save_edx = edx;
+
 		xt_strcpy(PATH_MAX, pbuf, te_ptr->te_tab_path->tp_path);
 		xt_add_dir_char(PATH_MAX, pbuf);
 		xt_strcat(PATH_MAX, pbuf, te_ptr->te_tab_name);
 		try_(a) {
+			edx = 0;
 			xt_heap_release(self, xt_use_table_no_lock(self, db, (XTPathStrPtr)pbuf, FALSE, FALSE, NULL));
 		} catch_(a) {
+			edx = 0;
 			/* ignore errors */
 			xt_log_and_clear_warning(self);
 		} cont_(a);
+		edx = save_edx;
 	}
 
 	popr_(); // Discard xt_tab_exit_db(db)

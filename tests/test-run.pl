@@ -3349,7 +3349,7 @@ sub gdb_arguments {
   if ( $opt_manual_gdb )
   {
      print "\nTo start gdb for $type, type in another window:\n";
-     print "gdb -cd $glob_mysql_test_dir -x $gdb_init_file $$exe\n";
+     print "$glob_mysql_test_dir/../libtool --mode=execute gdb -cd $glob_mysql_test_dir -x $gdb_init_file $$exe\n";
 
      # Indicate the exe should not be started
      $$exe= undef;

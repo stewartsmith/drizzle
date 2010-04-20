@@ -80,7 +80,7 @@ Cursor *Cursor::clone(memory::Root *mem_root)
     on this->table->mem_root and we will not be able to reclaim that memory
     when the clone Cursor object is destroyed.
   */
-  if (!(new_handler->ref= (unsigned char*) alloc_root(mem_root, ALIGN_SIZE(ref_length)*2)))
+  if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
   if (new_handler && !new_handler->ha_open(table,
                                            table->s->normalized_path.str,
@@ -88,6 +88,30 @@ Cursor *Cursor::clone(memory::Root *mem_root)
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
+}
+
+/*
+  DESCRIPTION
+    given a buffer with a key value, and a map of keyparts
+    that are present in this value, returns the length of the value
+*/
+uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_map_arg)
+{
+  /* works only with key prefixes */
+  assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
+
+  KEY *key_info_found= table->s->key_info + key_position;
+  KEY_PART_INFO *key_part_found= key_info_found->key_part;
+  KEY_PART_INFO *end_key_part_found= key_part_found + key_info_found->key_parts;
+  uint32_t length= 0;
+
+  while (key_part_found < end_key_part_found && keypart_map_arg)
+  {
+    length+= key_part_found->store_length;
+    keypart_map_arg >>= 1;
+    key_part_found++;
+  }
+  return length;
 }
 
 int Cursor::ha_index_init(uint32_t idx, bool sorted)
@@ -202,7 +226,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
 
   table= table_arg;
   assert(table->s == table_share);
-  assert(alloc_root_inited(&table->mem_root));
+  assert(table->mem_root.alloc_root_inited());
 
   if ((error=open(name, mode, test_if_locked)))
   {
@@ -224,8 +248,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from Cursor::clone() */
-    if (!ref && !(ref= (unsigned char*) alloc_root(&table->mem_root,
-                                          ALIGN_SIZE(ref_length)*2)))
+    if (!ref && !(ref= (unsigned char*) table->mem_root.alloc_root(ALIGN_SIZE(ref_length)*2)))
     {
       close();
       error=HA_ERR_OUT_OF_MEM;
@@ -1060,13 +1083,13 @@ int Cursor::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_
 
 int
 Cursor::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
-                               uint32_t n_ranges, uint32_t mode,
-                               HANDLER_BUFFER *)
+                               uint32_t n_ranges, uint32_t mode)
 {
   mrr_iter= seq_funcs->init(seq_init_param, n_ranges, mode);
   mrr_funcs= *seq_funcs;
   mrr_is_output_sorted= test(mode & HA_MRR_SORTED);
   mrr_have_range= false;
+
   return 0;
 }
 

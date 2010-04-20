@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2009 Sun Microsystems
+ *  Copyright (C) 2010 Monty Taylor <mordred@inaugust.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,25 +19,21 @@
 
 #include "config.h"
 
-#include <vector>
+#include <drizzled/plugin/authorization.h>
 
-#include "drizzled/session_list.h"
-#include "drizzled/session.h"
-#include "drizzled/current_session.h"
-#include "drizzled/plugin/authorization.h"
+#include "policy.h"
 
-class Session;
+using namespace drizzled;
 
-using namespace std;
-
-namespace drizzled
+namespace simple_user_policy
 {
 
-SessionList session_list;
-
-SessionList &getSessionList()
+static int init(plugin::Context &context)
 {
-  return session_list;
+  context.add(new Policy);
+  return 0;
 }
 
-} /* namespace drizzled */
+} /* namespace simple_user_policy */
+
+DRIZZLE_PLUGIN(simple_user_policy::init, NULL);

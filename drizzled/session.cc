@@ -303,9 +303,9 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-void session_get_xid(const Session *session, DRIZZLE_XID *xid)
+void Session::get_xid(DRIZZLE_XID *xid)
 {
-  *xid = *(DRIZZLE_XID *) &session->transaction.xid_state.xid;
+  *xid = *(DRIZZLE_XID *) &transaction.xid_state.xid;
 }
 
 /* Do operations that may take a long time */
@@ -360,11 +360,11 @@ Session::~Session()
   plugin::StorageEngine::closeConnection(this);
   plugin_sessionvar_cleanup(this);
 
-  free_root(&warn_root,MYF(0));
+  warn_root.free_root(MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
   dbug_sentry= Session_SENTRY_GONE;
 
-  free_root(&main_mem_root, MYF(0));
+  main_mem_root.free_root(MYF(0));
   pthread_setspecific(THR_Session,  0);
 
   plugin::Logging::postEndDo(this);
@@ -514,8 +514,8 @@ void Session::prepareForQueries()
   command= COM_SLEEP;
   set_time();
 
-  reset_root_defaults(mem_root, variables.query_alloc_block_size,
-                      variables.query_prealloc_size);
+  mem_root->reset_root_defaults(variables.query_alloc_block_size,
+                                variables.query_prealloc_size);
   transaction.xid_state.xid.null();
   transaction.xid_state.in_session=1;
 }
@@ -853,7 +853,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
   if (allocate_lex_string)
     if (!(lex_str= (LEX_STRING *)alloc(sizeof(LEX_STRING))))
       return 0;
-  if (!(lex_str->str= strmake_root(mem_root, str, length)))
+  if (!(lex_str->str= mem_root->strmake_root(str, length)))
     return 0;
   lex_str->length= length;
   return lex_str;
