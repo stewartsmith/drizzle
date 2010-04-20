@@ -47,18 +47,9 @@ namespace drizzled
 
 #define HA_MAX_ALTER_FLAGS 40
 
-
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 extern uint64_t refresh_version;  /* Increments on each reload */
-
-
-typedef bool (*qc_engine_callback)(Session *session, char *table_key,
-                                      uint32_t key_length,
-                                      uint64_t *engine_data);
-
-
-/* The Cursor for a table type.  Will be included in the Table structure */
 
 class Table;
 class TableList;
@@ -68,7 +59,6 @@ class ForeignKeyInfo;
 struct order_st;
 
 class Item;
-struct st_table_log_memory_entry;
 
 class LEX;
 class Select_Lex;
@@ -159,7 +149,6 @@ inline key_part_map make_prev_keypart_map(T a)
   If a blob column has NULL value, then its length and blob data pointer
   must be set to 0.
 */
-
 class Cursor :public memory::SqlAlloc
 {
 protected:
