@@ -212,18 +212,10 @@ public:
   virtual ~StorageEngine();
 
   virtual int doGetTableDefinition(Session &session,
-                                   const char *path,
-                                   const char *db,
-                                   const char *table_name,
-                                   const bool is_tmp,
                                    TableIdentifier &identifier,
                                    message::Table &table_message)
   {
     (void)session;
-    (void)path;
-    (void)db;
-    (void)table_name;
-    (void)is_tmp;
     (void)identifier;
     (void)table_message;
 
@@ -289,7 +281,6 @@ public:
 
 protected:
   virtual int doCreateTable(Session *session,
-                            const char *table_name,
                             Table& table_arg,
                             TableIdentifier &identifier,
                             message::Table& proto)= 0;
@@ -310,25 +301,15 @@ public:
   virtual void doGetTableNames(CachedDirectory &directory,
                                std::string& db_name,
                                TableNameList &set_of_names);
-  virtual int doDropTable(Session &session,
-                          TableIdentifier &identifier,
-                          const std::string &table_path)= 0;
 
-  const char *checkLowercaseNames(const char *path, char *tmp_path);
+  virtual int doDropTable(Session &session,
+                          TableIdentifier &identifier)= 0;
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
   static void removePlugin(plugin::StorageEngine *engine);
 
   static int getTableDefinition(Session& session,
-                                TableIdentifier &identifier,
-                                message::Table &table_proto,
-                                bool include_temporary_tables= true);
-  static int getTableDefinition(Session& session,
-                                const char* path,
-                                const char *db,
-                                const char *table_name,
-                                const bool is_tmp,
                                 TableIdentifier &identifier,
                                 message::Table &table_proto,
                                 bool include_temporary_tables= true);
@@ -416,7 +397,6 @@ public:
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
   /* TODO-> Make private */
-  static int readDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);

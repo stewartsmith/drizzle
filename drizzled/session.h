@@ -1408,12 +1408,12 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, const char *db_name,
-                       const char *table_name);
+  void drop_open_table(Table *table, TableIdentifier &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
   Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
@@ -1428,13 +1428,11 @@ public:
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+  Table *find_temporary_table(TableIdentifier &identifier);
   void doGetTableNames(CachedDirectory &directory,
                        const std::string& db_name,
                        std::set<std::string>& set_of_names);
-  int doGetTableDefinition(const char *path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
+  int doGetTableDefinition(drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
   bool doDoesTableExist(TableIdentifier &identifier);
 

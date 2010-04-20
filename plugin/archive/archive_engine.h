@@ -83,22 +83,18 @@ public:
     return ha_archive_exts;
   }
 
-  int doCreateTable(drizzled::Session *session, const char *table_name,
+  int doCreateTable(drizzled::Session *session,
                     drizzled::Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table& proto);
 
   int doGetTableDefinition(drizzled::Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory, std::string& , std::set<std::string>& set_of_names);
 
-  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier, const std::string &table_path);
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier);
 
   ArchiveShare *findOpenTable(const std::string table_name);
   void addOpenTable(const std::string &table_name, ArchiveShare *);

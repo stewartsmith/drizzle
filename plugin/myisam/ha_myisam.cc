@@ -95,20 +95,16 @@ public:
     return ha_myisam_exts;
   }
 
-  int doCreateTable(Session *, const char *table_name,
+  int doCreateTable(Session *,
                     Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     message::Table&);
 
   int doRenameTable(Session*, const char *from, const char *to);
 
-  int doDropTable(Session&, drizzled::TableIdentifier &, const string &table_name);
+  int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            message::Table &table_message);
 
@@ -147,20 +143,16 @@ bool MyisamEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
 }
 
 int MyisamEngine::doGetTableDefinition(Session&,
-                                       const char* path,
-                                       const char *,
-                                       const char *,
-                                       const bool,
-                                       drizzled::TableIdentifier&,
+                                       drizzled::TableIdentifier &identifier,
                                        message::Table &table_proto)
 {
   int error= ENOENT;
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(path);
+  iter= proto_cache.find(identifier.getPath());
 
-  if (iter!= proto_cache.end())
+  if (iter != proto_cache.end())
   {
     table_proto.CopyFrom(((*iter).second));
     error= EEXIST;
@@ -1350,20 +1342,19 @@ int ha_myisam::delete_all_rows()
 }
 
 int MyisamEngine::doDropTable(Session&,
-                              drizzled::TableIdentifier &,
-                              const string &table_path)
+                              drizzled::TableIdentifier &identifier)
 {
   ProtoCache::iterator iter;
 
   pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(table_path.c_str());
+  iter= proto_cache.find(identifier.getPath());
 
   if (iter!= proto_cache.end())
     proto_cache.erase(iter);
 
   pthread_mutex_unlock(&proto_cache_mutex);
 
-  return mi_delete_table(table_path.c_str());
+  return mi_delete_table(identifier.getPath().c_str());
 }
 
 
@@ -1375,9 +1366,9 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-int MyisamEngine::doCreateTable(Session *, const char *table_name,
+int MyisamEngine::doCreateTable(Session *,
                                 Table& table_arg,
-                                drizzled::TableIdentifier &,
+                                drizzled::TableIdentifier &identifier,
                                 message::Table& create_proto)
 {
   int error;
@@ -1409,8 +1400,8 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
     create_flags|= HA_PACK_RECORD;
 
   /* TODO: Check that the following internal::fn_format is really needed */
-  error= mi_create(internal::fn_format(buff, table_name, "", "",
-                             MY_UNPACK_FILENAME|MY_APPEND_EXT),
+  error= mi_create(internal::fn_format(buff, identifier.getPath().c_str(), "", "",
+                                       MY_UNPACK_FILENAME|MY_APPEND_EXT),
                    share->keys, keydef,
                    create_records, recinfo,
                    0, (MI_UNIQUEDEF*) 0,
@@ -1418,7 +1409,7 @@ int MyisamEngine::doCreateTable(Session *, const char *table_name,
   free((unsigned char*) recinfo);
 
   pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(table_name, create_proto));
+  proto_cache.insert(make_pair(identifier.getPath(), create_proto));
   pthread_mutex_unlock(&proto_cache_mutex);
 
   return error;

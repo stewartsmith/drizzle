@@ -372,19 +372,16 @@ public:
     return ha_blitz_exts;
   }
 
-  int doCreateTable(drizzled::Session *session, const char *table_name,
+  int doCreateTable(drizzled::Session *session,
                     drizzled::Table &table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table &table_proto);
 
   int doRenameTable(drizzled::Session *session, const char *from, const char *to);
 
-  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier,
-                  const std::string &table_name); 
+  int doDropTable(drizzled::Session &, drizzled::TableIdentifier &identifier); 
 
   int doGetTableDefinition(drizzled::Session &session,
-                           const char *path, const char *db,
-                           const char *table_name, const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 

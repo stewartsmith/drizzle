@@ -45,14 +45,10 @@ Cursor *Function::create(TableShare &table, memory::Root *mem_root)
 }
 
 int Function::doGetTableDefinition(Session &,
-                                   const char *path,
-                                   const char *,
-                                   const char *,
-                                   const bool,
-                                   TableIdentifier &,
+                                   TableIdentifier &identifier,
                                    message::Table &table_proto)
 {
-  string tab_name(path);
+  string tab_name(identifier.getPath());
   transform(tab_name.begin(), tab_name.end(),
             tab_name.begin(), ::tolower);
 
@@ -104,12 +100,12 @@ bool Function::doGetSchemaDefinition(const std::string &schema_name, message::Sc
 
 bool Function::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (not strcasecmp(identifier.getSchemaName(), "information_schema"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "information_schema"))
   {
     return false;
   }
 
-  if (not strcasecmp(identifier.getSchemaName(), "data_dictionary"))
+  if (not strcasecmp(identifier.getSchemaName().c_str(), "data_dictionary"))
   {
     return false;
   }

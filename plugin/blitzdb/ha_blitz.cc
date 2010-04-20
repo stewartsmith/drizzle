@@ -40,8 +40,9 @@ static TCMAP *blitz_table_cache;
 static char *skip_btree_key(const char *key, const size_t skip_len,
                             int *return_klen);
 
-int BlitzEngine::doCreateTable(Session *, const char *path, Table &table,
-                               drizzled::TableIdentifier &,
+int BlitzEngine::doCreateTable(drizzled::Session *,
+                               drizzled::Table &table,
+                               drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &proto) {
   BlitzData dict;
   BlitzTree btree;
@@ -49,20 +50,20 @@ int BlitzEngine::doCreateTable(Session *, const char *path, Table &table,
 
   /* Create relevant files for a new table and close them immediately.
      All we want to do here is somewhat like UNIX touch(1). */
-  if ((ecode = dict.create_data_table(proto, table, path)) != 0)
+  if ((ecode = dict.create_data_table(proto, table, identifier.getPath().c_str())) != 0)
     return ecode;
 
-  if ((ecode = dict.create_system_table(path)) != 0)
+  if ((ecode = dict.create_system_table(identifier.getPath().c_str())) != 0)
     return ecode;
 
   /* Create b+tree index(es) for this table. */
   for (uint32_t i = 0; i < table.s->keys; i++) {
-    if ((ecode = btree.create(path, i)) != 0)
+    if ((ecode = btree.create(identifier.getPath().c_str(), i)) != 0)
       return ecode;
   }
 
   /* Write the table definition to system table. */
-  if ((ecode = dict.open_system_table(path, HDBOWRITER)) != 0)
+  if ((ecode = dict.open_system_table(identifier.getPath().c_str(), HDBOWRITER)) != 0)
     return ecode; 
 
   if (!dict.write_table_definition(proto)) {
@@ -93,8 +94,8 @@ int BlitzEngine::doRenameTable(Session *, const char *from, const char *to) {
   return (dict.rename_table(from, to)) ? 0 : -1;
 }
 
-int BlitzEngine::doDropTable(Session &, drizzled::TableIdentifier &,
-                             const string &path) {
+int BlitzEngine::doDropTable(drizzled::Session &,
+                             drizzled::TableIdentifier &identifier) {
   BlitzData dict;
   BlitzTree btree;
   char buf[FN_REFLEN];
@@ -102,7 +103,7 @@ int BlitzEngine::doDropTable(Session &, drizzled::TableIdentifier &,
   int err;
 
   /* We open the dictionary to extract meta data from it */
-  if ((err = dict.open_data_table(path.c_str(), HDBOREADER)) != 0)
+  if ((err = dict.open_data_table(identifier.getPath().c_str(), HDBOREADER)) != 0)
     return err;
 
   nkeys = dict.read_meta_keycount();
@@ -111,20 +112,20 @@ int BlitzEngine::doDropTable(Session &, drizzled::TableIdentifier &,
   dict.close_data_table();
 
   /* Drop the Data Dictionary */
-  snprintf(buf, FN_REFLEN, "%s%s", path.c_str(), BLITZ_DATA_EXT);
+  snprintf(buf, FN_REFLEN, "%s%s", identifier.getPath().c_str(), BLITZ_DATA_EXT);
   if ((err = unlink(buf)) == -1) {
     return err;
   }
 
   /* Drop the System Table */
-  snprintf(buf, FN_REFLEN, "%s%s", path.c_str(), BLITZ_SYSTEM_EXT);
+  snprintf(buf, FN_REFLEN, "%s%s", identifier.getPath().c_str(), BLITZ_SYSTEM_EXT);
   if ((err = unlink(buf)) == -1) {
     return err;
   }
 
   /* Drop Index file(s) */
   for (uint32_t i = 0; i < nkeys; i++) {
-    if ((err = btree.drop(path.c_str(), i)) != 0) {
+    if ((err = btree.drop(identifier.getPath().c_str(), i)) != 0) {
       return err;
     }
   }
@@ -132,17 +133,15 @@ int BlitzEngine::doDropTable(Session &, drizzled::TableIdentifier &,
   return 0;
 }
 
-int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
-                                      const char *, const char *,
-                                      const bool,
-                                      drizzled::TableIdentifier &,
+int BlitzEngine::doGetTableDefinition(drizzled::Session &,
+                                      drizzled::TableIdentifier &identifier,
                                       drizzled::message::Table &proto) {
   char name_buffer[FN_REFLEN];
   struct stat stat_info;
 
   pthread_mutex_lock(&proto_cache_mutex);
 
-  snprintf(name_buffer, FN_REFLEN, "%s%s", file_path, BLITZ_SYSTEM_EXT);
+  snprintf(name_buffer, FN_REFLEN, "%s%s", identifier.getPath().c_str(), BLITZ_SYSTEM_EXT);
 
   if (stat(name_buffer, &stat_info)) {
     pthread_mutex_unlock(&proto_cache_mutex);
@@ -153,7 +152,7 @@ int BlitzEngine::doGetTableDefinition(Session&, const char *file_path,
   char *proto_string;
   int proto_string_len;
 
-  if (db.open_system_table(file_path, HDBOREADER) != 0) {
+  if (db.open_system_table(identifier.getPath().c_str(), HDBOREADER) != 0) {
     pthread_mutex_unlock(&proto_cache_mutex);
     return HA_ERR_CRASHED_ON_USAGE;
   }

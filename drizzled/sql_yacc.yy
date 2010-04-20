@@ -1260,10 +1260,38 @@ create_table_option:
         | ROW_FORMAT_SYM opt_equal row_types
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+            message::Table::TableOptions *table_options= statement->createTableMessage().mutable_options();
 
             statement->create_info.row_type= $3;
             statement->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
             statement->alter_info.flags.set(ALTER_ROW_FORMAT);
+
+            switch(statement->create_info.row_type)
+            {
+            case ROW_TYPE_DEFAULT:
+              /* No use setting a default row type... just adds redundant info to message */
+              break;
+            case ROW_TYPE_FIXED:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_FIXED);
+              break;
+            case ROW_TYPE_DYNAMIC:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_DYNAMIC);
+              break;
+            case ROW_TYPE_COMPRESSED:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPRESSED);
+              break;
+            case ROW_TYPE_REDUNDANT:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_REDUNDANT);
+              break;
+            case ROW_TYPE_COMPACT:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPACT);
+              break;
+            case ROW_TYPE_PAGE:
+              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_PAGE);
+              break;
+            default:
+              abort();
+            }
           }
         | default_collation
         | KEY_BLOCK_SIZE opt_equal ulong_num
@@ -2979,7 +3007,11 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_char(*$3); }
         | CURRENT_USER optional_braces
           {
-            $$= new (YYSession->mem_root) Item_func_current_user(Lex->current_context());
+            std::string user_str("user");
+            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         | DATE_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_date_typecast($3); }
@@ -3036,7 +3068,11 @@ function_call_keyword:
           { $$= new (YYSession->mem_root) Item_func_trim($5,$3); }
         | USER '(' ')'
           {
-            $$= new (YYSession->mem_root) Item_func_user();
+            std::string user_str("user");
+            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            {
+              DRIZZLE_YYABORT;
+            }
           }
         | YEAR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_year($3); }

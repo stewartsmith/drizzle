@@ -584,13 +584,6 @@ public:
     RETURN
     Length of key
   */
-
-  static inline uint32_t createKey(char *key, std::string& db_arg,
-                                   std::string& table_name_arg)
-  {
-    return createKey(key, db_arg.c_str(), table_name_arg.c_str());
-  }
-
   static inline uint32_t createKey(char *key, const char *db_arg, const char *table_name_arg)
   {
     uint32_t key_length;
@@ -604,12 +597,24 @@ public:
     return key_length;
   }
 
+  static inline uint32_t createKey(char *key, TableIdentifier &identifier)
+  {
+    uint32_t key_length;
+    char *key_pos= key;
+
+    key_pos= strcpy(key_pos, identifier.getSchemaName().c_str()) + identifier.getSchemaName().length();
+    key_pos= strcpy(key_pos + 1, identifier.getTableName().c_str()) + identifier.getTableName().length();
+    key_length= (uint32_t)(key_pos-key)+1;
+
+    return key_length;
+  }
+
   static void cacheStart(void);
   static void cacheStop(void);
   static void release(TableShare *share);
   static void release(const char *key, uint32_t key_length);
   static TableDefinitionCache &getCache();
-  static TableShare *getShare(const char *db, const char *table_name);
+  static TableShare *getShare(TableIdentifier &identifier);
   static TableShare *getShare(Session *session, 
                               TableList *table_list, char *key,
                               uint32_t key_length, uint32_t, int *error);

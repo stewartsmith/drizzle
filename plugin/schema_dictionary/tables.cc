@@ -92,14 +92,10 @@ bool TablesTool::Generator::nextTableCore()
   table_proto.Clear();
   {
     Session *session= current_session;
-    char path[FN_REFLEN];
-    build_table_filename(path, sizeof(path), schema_name().c_str(), table_name().c_str(), false);
+    string path;
+    build_table_filename(path, schema_name().c_str(), table_name().c_str(), false);
     TableIdentifier identifier(schema_name().c_str(), table_name().c_str());
     plugin::StorageEngine::getTableDefinition(*session,
-                                             path,
-                                             schema_name().c_str(),
-                                             table_name().c_str(),
-                                             false,
                                              identifier,
                                              table_proto);
   }

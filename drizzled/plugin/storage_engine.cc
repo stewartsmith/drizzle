@@ -103,7 +103,7 @@ int StorageEngine::doRenameTable(Session *,
     if (rename_file_ext(from, to, *ext))
     {
       if ((error=errno) != ENOENT)
-	break;
+        break;
       error= 0;
     }
   }
@@ -126,9 +126,8 @@ int StorageEngine::doRenameTable(Session *,
   @retval
     !0  Error
 */
-int StorageEngine::doDropTable(Session&,
-                               TableIdentifier &,
-                               const string &table_path)
+int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
+                               
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -136,12 +135,12 @@ int StorageEngine::doDropTable(Session&,
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    internal::fn_format(buff, table_path.c_str(), "", *ext,
-              MY_UNPACK_FILENAME|MY_APPEND_EXT);
+    internal::fn_format(buff, identifier.getPath().c_str(), "", *ext,
+                        MY_UNPACK_FILENAME|MY_APPEND_EXT);
     if (internal::my_delete_with_symlink(buff, MYF(0)))
     {
       if ((error= errno) != ENOENT)
-	break;
+        break;
     }
     else
       enoent_or_zero= 0;                        // No error for ENOENT
@@ -149,29 +148,6 @@ int StorageEngine::doDropTable(Session&,
   }
   return error;
 }
-
-const char *StorageEngine::checkLowercaseNames(const char *path,
-                                                       char *tmp_path)
-{
-  if (flags.test(HTON_BIT_FILE_BASED))
-    return path;
-
-  /* Ensure that table Cursor get path in lower case */
-  if (tmp_path != path)
-    strcpy(tmp_path, path);
-
-  /*
-    we only should turn into lowercase database/table part
-    so start the process after homedirectory
-  */
-  if (strstr(tmp_path, drizzle_tmpdir) == tmp_path)
-    my_casedn_str(files_charset_info, tmp_path + strlen(drizzle_tmpdir));
-  else
-    my_casedn_str(files_charset_info, tmp_path + drizzle_data_home_len);
-
-  return tmp_path;
-}
-
 
 bool StorageEngine::addPlugin(StorageEngine *engine)
 {
@@ -242,8 +218,7 @@ StorageEngine *StorageEngine::findByName(string find_str)
   return NULL;
 }
 
-StorageEngine *StorageEngine::findByName(Session& session,
-                                                         string find_str)
+StorageEngine *StorageEngine::findByName(Session& session, string find_str)
 {
   
   transform(find_str.begin(), find_str.end(),
@@ -312,28 +287,16 @@ bool StorageEngine::flushLogs(StorageEngine *engine)
 class StorageEngineGetTableDefinition: public unary_function<StorageEngine *,bool>
 {
   Session& session;
-  const char* path;
-  const char *db;
-  const char *table_name;
-  const bool is_tmp;
   TableIdentifier &identifier;
   message::Table &table_message;
-  int *err;
+  int &err;
 
 public:
   StorageEngineGetTableDefinition(Session& session_arg,
-                                  const char* path_arg,
-                                  const char *db_arg,
-                                  const char *table_name_arg,
-                                  const bool is_tmp_arg,
                                   TableIdentifier &identifier_arg,
                                   message::Table &table_message_arg,
-                                  int *err_arg) :
+                                  int &err_arg) :
     session(session_arg), 
-    path(path_arg), 
-    db(db_arg),
-    table_name(table_name_arg),
-    is_tmp(is_tmp_arg),
     identifier(identifier_arg),
     table_message(table_message_arg), 
     err(err_arg) {}
@@ -341,17 +304,13 @@ public:
   result_type operator() (argument_type engine)
   {
     int ret= engine->doGetTableDefinition(session,
-                                          path, 
-                                          db,
-                                          table_name,
-                                          is_tmp,
                                           identifier,
                                           table_message);
 
     if (ret != ENOENT)
-      *err= ret;
+      err= ret;
 
-    return *err == EEXIST || *err != ENOENT;
+    return err == EEXIST || err != ENOENT;
   }
 };
 
@@ -414,33 +373,17 @@ int StorageEngine::getTableDefinition(Session& session,
                                       message::Table &table_message,
                                       bool include_temporary_tables)
 {
-  return getTableDefinition(session,
-                            identifier.getPath(), identifier.getDBName(), identifier.getTableName(), identifier.isTmp(),
-                            identifier,
-                            table_message,
-                            include_temporary_tables);
-}
-
-int StorageEngine::getTableDefinition(Session& session,
-                                      const char* path,
-                                      const char *schema_name,
-                                      const char *table_name,
-                                      const bool,
-                                      TableIdentifier &identifier,
-                                      message::Table &table_message,
-                                      bool include_temporary_tables)
-{
   int err= ENOENT;
 
   if (include_temporary_tables)
   {
-    if (session.doGetTableDefinition(path, schema_name, table_name, false, table_message) == EEXIST)
+    if (session.doGetTableDefinition(identifier, table_message) == EEXIST)
       return EEXIST;
   }
 
   EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
-            StorageEngineGetTableDefinition(session, path, NULL, NULL, true, identifier, table_message, &err));
+            StorageEngineGetTableDefinition(session, identifier, table_message, err));
 
   if (iter == vector_of_engines.end())
   {
@@ -498,9 +441,7 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    // @todo someday check that at least one engine said "true"
-    std::string path(identifier.getPath());
-    bool success= engine->doDropTable(session, identifier, path);
+    bool success= engine->doDropTable(session, identifier);
 
     if (success)
       success_count++;
@@ -534,7 +475,7 @@ int StorageEngine::dropTable(Session& session,
   {
     std::string path(identifier.getPath());
     engine->setTransactionReadWrite(session);
-    error= engine->doDropTable(session, identifier, path);
+    error= engine->doDropTable(session, identifier);
 
     if (not error)
     {
@@ -571,7 +512,7 @@ int StorageEngine::createTable(Session& session,
 {
   int error= 1;
   Table table;
-  TableShare share(identifier.getDBName(), 0, identifier.getTableName(), identifier.getPath());
+  TableShare share(identifier.getDBName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
   message::Table tmp_proto;
 
   if (parse_table_proto(session, table_message, &share))
@@ -599,11 +540,6 @@ int StorageEngine::createTable(Session& session,
   }
 
   {
-    char name_buff[FN_REFLEN];
-    const char *table_name_arg;
-
-    table_name_arg= share.storage_engine->checkLowercaseNames(identifier.getPath(), name_buff);
-
     if (not share.storage_engine->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
     {
       int protoerr= StorageEngine::writeDefinitionFromPath(identifier, table_message);
@@ -618,7 +554,6 @@ int StorageEngine::createTable(Session& session,
     share.storage_engine->setTransactionReadWrite(session);
 
     error= share.storage_engine->doCreateTable(&session,
-                                               table_name_arg,
                                                table,
                                                identifier,
                                                table_message);
@@ -872,9 +807,9 @@ bool StorageEngine::alterSchema(const drizzled::message::Schema &schema_message)
 
 void StorageEngine::getTableNames(const string &schema_name, TableNameList &set_of_names)
 {
-  char tmp_path[FN_REFLEN];
+  string tmp_path;
 
-  build_table_filename(tmp_path, sizeof(tmp_path), schema_name.c_str(), "", false);
+  build_table_filename(tmp_path, schema_name.c_str(), "", false);
 
   CachedDirectory directory(tmp_path, set_of_table_definition_ext);
 
@@ -924,7 +859,7 @@ public:
          iter++)
     {
       TableIdentifier dummy((*iter).c_str());
-      int error= engine->doDropTable(session, dummy, *iter);
+      int error= engine->doDropTable(session, dummy);
 
       // On a return of zero we know we found and deleted the table. So we
       // remove it from our search.

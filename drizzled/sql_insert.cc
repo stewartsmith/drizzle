@@ -1597,8 +1597,8 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
       *lock= 0;
     }
 
-    if (!create_info->table_existed)
-      session->drop_open_table(table, create_table->db, create_table->table_name);
+    if (not create_info->table_existed)
+      session->drop_open_table(table, identifier);
     return NULL;
   }
 
@@ -1764,8 +1764,8 @@ void select_create::abort()
   {
     table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
     table->cursor->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
-    if (!create_info->table_existed)
-      session->drop_open_table(table, create_table->db, create_table->table_name);
+    if (not create_info->table_existed)
+      session->drop_open_table(table, identifier);
     table= NULL;                                    // Safety
   }
 }

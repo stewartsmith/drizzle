@@ -746,6 +746,8 @@ bool alter_table(Session *session,
   
   table->use_all_columns();
 
+  bool error_on_rename= false;
+
   /* Check that we are not trying to rename to an existing table */
   if (new_name)
   {
@@ -773,7 +775,9 @@ bool alter_table(Session *session,
     {
       if (table->s->tmp_table != STANDARD_TABLE)
       {
-        if (session->find_temporary_table(new_db, lower_case_table_name))
+        TableIdentifier identifier(new_db, lower_case_table_name);
+
+        if (session->find_temporary_table(identifier))
         {
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), lower_case_table_name);
           return true;
@@ -797,6 +801,7 @@ bool alter_table(Session *session,
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
           goto err;
+          error_on_rename= true;
         }
       }
     }
@@ -807,391 +812,402 @@ bool alter_table(Session *session,
     new_name= table_name;
   }
 
-  old_db_type= table->s->db_type();
-  if (not create_info->db_type)
+  if (not error_on_rename)
   {
-    create_info->db_type= old_db_type;
-  }
-
-  create_proto.set_schema(new_db);
-
-  if (table->s->tmp_table != STANDARD_TABLE)
-  {
-    create_proto.set_type(message::Table::TEMPORARY);
-  }
-  else
-  {
-    create_proto.set_type(message::Table::STANDARD);
-  }
-
-  new_db_type= create_info->db_type;
-
-  /**
-    @todo Have a check on the table definition for FK in the future 
-    to remove the need for the cursor. (aka can_switch_engines())
-  */
-  if (new_db_type != old_db_type &&
-      not table->cursor->can_switch_engines())
-  {
-    assert(0);
-    my_error(ER_ROW_IS_REFERENCED, MYF(0));
-    goto err;
-  }
-
-  if (create_info->row_type == ROW_TYPE_NOT_USED)
-  {
-    message::Table::TableOptions *table_options;
-    table_options= create_proto.mutable_options();
-
-    create_info->row_type= table->s->row_type;
-    table_options->set_row_type((message::Table_TableOptions_RowType)table->s->row_type);
-  }
-
-  if (old_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
-      new_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED))
-  {
-    my_error(ER_ILLEGAL_HA, MYF(0), table_name);
-    goto err;
-  }
-
-  session->set_proc_info("setup");
-  
-  /*
-   * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
-   */
-  tmp.set();
-  tmp.reset(ALTER_RENAME);
-  tmp.reset(ALTER_KEYS_ONOFF);
-  tmp&= alter_info->flags;
-  if (! (tmp.any()) &&
-      ! table->s->tmp_table) // no need to touch frm
-  {
-    switch (alter_info->keys_onoff)
+    old_db_type= table->s->db_type();
+    if (not create_info->db_type)
     {
-    case LEAVE_AS_IS:
-      break;
-    case ENABLE:
-      /*
-        wait_while_table_is_used() ensures that table being altered is
-        opened only by this thread and that Table::TableShare::version
-        of Table object corresponding to this table is 0.
-        The latter guarantees that no DML statement will open this table
-        until ALTER Table finishes (i.e. until close_thread_tables())
-        while the fact that the table is still open gives us protection
-        from concurrent DDL statements.
-      */
-      pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
-      wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-      pthread_mutex_unlock(&LOCK_open);
-      error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-      /* COND_refresh will be signaled in close_thread_tables() */
-      break;
-    case DISABLE:
-      pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
-      wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-      pthread_mutex_unlock(&LOCK_open);
-      error=table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
-      /* COND_refresh will be signaled in close_thread_tables() */
-      break;
-    default:
-      assert(false);
-      error= 0;
-      break;
+      create_info->db_type= old_db_type;
     }
 
-    if (error == HA_ERR_WRONG_COMMAND)
+    create_proto.set_schema(new_db);
+
+    if (table->s->tmp_table != STANDARD_TABLE)
     {
-      error= 0;
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-			  table->alias);
+      create_proto.set_type(message::Table::TEMPORARY);
+    }
+    else
+    {
+      create_proto.set_type(message::Table::STANDARD);
     }
 
-    pthread_mutex_lock(&LOCK_open); /* Lock to remove all instances of table from table cache before ALTER */
-    /*
-      Unlike to the above case close_cached_table() below will remove ALL
-      instances of Table from table cache (it will also remove table lock
-      held by this thread). So to make actual table renaming and writing
-      to binlog atomic we have to put them into the same critical section
-      protected by LOCK_open mutex. This also removes gap for races between
-      access() and mysql_rename_table() calls.
+    new_db_type= create_info->db_type;
+
+    /**
+      @todo Have a check on the table definition for FK in the future 
+      to remove the need for the cursor. (aka can_switch_engines())
     */
-
-    if (error == 0 && 
-        (new_name != table_name || new_db != db))
+    if (new_db_type != old_db_type &&
+        not table->cursor->can_switch_engines())
     {
-      session->set_proc_info("rename");
-      /*
-        Then do a 'simple' rename of the table. First we need to close all
-        instances of 'source' table.
-      */
-      session->close_cached_table(table);
-      /*
-        Then, we want check once again that target table does not exist.
-        Actually the order of these two steps does not matter since
-        earlier we took name-lock on the target table, so we do them
-        in this particular order only to be consistent with 5.0, in which
-        we don't take this name-lock and where this order really matters.
-        TODO: Investigate if we need this access() check at all.
-      */
-      TableIdentifier identifier(db, table_name);
-      if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+      assert(0);
+      my_error(ER_ROW_IS_REFERENCED, MYF(0));
+      goto err;
+    }
+
+    if (create_info->row_type == ROW_TYPE_NOT_USED)
+    {
+      message::Table::TableOptions *table_options;
+      table_options= create_proto.mutable_options();
+
+      create_info->row_type= table->s->row_type;
+      table_options->set_row_type((message::Table_TableOptions_RowType)table->s->row_type);
+    }
+
+    if (old_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED) ||
+        new_db_type->check_flag(HTON_BIT_ALTER_NOT_SUPPORTED))
+    {
+      my_error(ER_ILLEGAL_HA, MYF(0), table_name);
+      goto err;
+    }
+
+    session->set_proc_info("setup");
+
+    /*
+     * test if no other bits except ALTER_RENAME and ALTER_KEYS_ONOFF are set
+   */
+    tmp.set();
+    tmp.reset(ALTER_RENAME);
+    tmp.reset(ALTER_KEYS_ONOFF);
+    tmp&= alter_info->flags;
+    if (! (tmp.any()) &&
+        ! table->s->tmp_table) // no need to touch frm
+    {
+      switch (alter_info->keys_onoff)
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
+      case LEAVE_AS_IS:
+        break;
+      case ENABLE:
+        /*
+          wait_while_table_is_used() ensures that table being altered is
+          opened only by this thread and that Table::TableShare::version
+          of Table object corresponding to this table is 0.
+          The latter guarantees that no DML statement will open this table
+          until ALTER Table finishes (i.e. until close_thread_tables())
+          while the fact that the table is still open gives us protection
+          from concurrent DDL statements.
+        */
+        pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
+        wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+        pthread_mutex_unlock(&LOCK_open);
+        error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+        /* COND_refresh will be signaled in close_thread_tables() */
+        break;
+      case DISABLE:
+        pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
+        wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
+        pthread_mutex_unlock(&LOCK_open);
+        error=table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
+        /* COND_refresh will be signaled in close_thread_tables() */
+        break;
+      default:
+        assert(false);
+        error= 0;
+        break;
+      }
+
+      if (error == HA_ERR_WRONG_COMMAND)
+      {
+        error= 0;
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
+                            table->alias);
+      }
+
+      pthread_mutex_lock(&LOCK_open); /* Lock to remove all instances of table from table cache before ALTER */
+      /*
+        Unlike to the above case close_cached_table() below will remove ALL
+        instances of Table from table cache (it will also remove table lock
+        held by this thread). So to make actual table renaming and writing
+        to binlog atomic we have to put them into the same critical section
+        protected by LOCK_open mutex. This also removes gap for races between
+        access() and mysql_rename_table() calls.
+      */
+
+      if (error == 0 && 
+          (new_name != table_name || new_db != db))
+      {
+        session->set_proc_info("rename");
+        /*
+          Then do a 'simple' rename of the table. First we need to close all
+          instances of 'source' table.
+        */
+        session->close_cached_table(table);
+        /*
+          Then, we want check once again that target table does not exist.
+          Actually the order of these two steps does not matter since
+          earlier we took name-lock on the target table, so we do them
+          in this particular order only to be consistent with 5.0, in which
+          we don't take this name-lock and where this order really matters.
+TODO: Investigate if we need this access() check at all.
+      */
+        TableIdentifier identifier(db, table_name);
+        if (not plugin::StorageEngine::doesTableExist(*session, identifier))
+        {
+          my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name);
+          error= -1;
+        }
+        else
+        {
+          *internal::fn_ext(new_name)= 0;
+          if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
+            error= -1;
+        }
+      }
+
+      if (error == HA_ERR_WRONG_COMMAND)
+      {
+        error= 0;
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
+                            table->alias);
+      }
+
+      if (error == 0)
+      {
+        write_bin_log(session, session->query.c_str());
+        session->my_ok();
+      }
+      else if (error > 0)
+      {
+        table->print_error(error, MYF(0));
         error= -1;
+      }
+
+      if (name_lock)
+        session->unlink_open_table(name_lock);
+
+      pthread_mutex_unlock(&LOCK_open);
+      table_list->table= NULL;
+      return error;
+    }
+
+    /* We have to do full alter table. */
+    new_db_type= create_info->db_type;
+
+    if (mysql_prepare_alter_table(session, table, create_info, create_proto, alter_info))
+      goto err;
+
+    set_table_default_charset(create_info, db);
+
+    alter_info->build_method= HA_BUILD_OFFLINE;
+
+    snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
+
+    /* Safety fix for innodb */
+    my_casedn_str(files_charset_info, tmp_name);
+
+    /* Create a temporary table with the new format */
+    {
+      /**
+        @note we make an internal temporary table unless the table is a temporary table. In last
+        case we just use it as is. Neither of these tables require locks in order to  be
+        filled.
+      */
+      TableIdentifier new_table_temp(new_db,
+                                     tmp_name,
+                                     create_proto.type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
+                                     TEMP_TABLE);
+
+      error= create_temporary_table(session, new_table_temp, create_info, create_proto, alter_info);
+
+      if (error != 0)
+        goto err;
+    }
+
+    /* Open the table so we need to copy the data to it. */
+    new_table= open_alter_table(session, table, new_db, tmp_name);
+
+    if (new_table == NULL)
+      goto err1;
+
+    /* Copy the data if necessary. */
+    session->count_cuted_fields= CHECK_FIELD_WARN;	// calc cuted fields
+    session->cuted_fields= 0L;
+    session->set_proc_info("copy to tmp table");
+    copied= deleted= 0;
+
+    assert(new_table);
+
+    /* We don't want update TIMESTAMP fields during ALTER Table. */
+    new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+    new_table->next_number_field= new_table->found_next_number_field;
+    error= copy_data_between_tables(table,
+                                    new_table,
+                                    alter_info->create_list,
+                                    ignore,
+                                    order_num,
+                                    order,
+                                    &copied,
+                                    &deleted,
+                                    alter_info->keys_onoff,
+                                    alter_info->error_if_not_empty);
+
+    /* We must not ignore bad input! */
+    session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
+
+    if (table->s->tmp_table != STANDARD_TABLE)
+    {
+      /* We changed a temporary table */
+      if (error)
+        goto err1;
+
+      /* Close lock if this is a transactional table */
+      if (session->lock)
+      {
+        mysql_unlock_tables(session, session->lock);
+        session->lock= 0;
+      }
+
+      /* Remove link to old table and rename the new one */
+      session->close_temporary_table(table);
+
+      /* Should pass the 'new_name' as we store table name in the cache */
+      TableIdentifier alter_identifier(new_db, new_name);
+      if (new_table->renameAlterTemporaryTable(alter_identifier))
+        goto err1;
+    }
+    else
+    {
+      if (new_table)
+      {
+        /*
+          Close the intermediate table that will be the new table.
+          Note that MERGE tables do not have their children attached here.
+        */
+        new_table->intern_close_table();
+        free(new_table);
+      }
+
+      pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
+
+      if (error)
+      {
+        TableIdentifier identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+        quick_rm_table(*session, identifier);
+        pthread_mutex_unlock(&LOCK_open);
+        goto err;
+      }
+
+      /*
+        Data is copied. Now we:
+        1) Wait until all other threads close old version of table.
+        2) Close instances of table open by this thread and replace them
+        with exclusive name-locks.
+        3) Rename the old table to a temp name, rename the new one to the
+        old name.
+        4) If we are under LOCK TABLES and don't do ALTER Table ... RENAME
+        we reopen new version of table.
+        5) Write statement to the binary log.
+        6) If we are under LOCK TABLES and do ALTER Table ... RENAME we
+        remove name-locks from list of open tables and table cache.
+        7) If we are not not under LOCK TABLES we rely on close_thread_tables()
+        call to remove name-locks from table cache and list of open table.
+      */
+
+      session->set_proc_info("rename result table");
+
+      snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
+
+      my_casedn_str(files_charset_info, old_name);
+
+      wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
+      session->close_data_files_and_morph_locks(db, table_name);
+
+      error= 0;
+      save_old_db_type= old_db_type;
+
+      /*
+        This leads to the storage engine (SE) not being notified for renames in
+        mysql_rename_table(), because we just juggle with the FRM and nothing
+        more. If we have an intermediate table, then we notify the SE that
+        it should become the actual table. Later, we will recycle the old table.
+        However, in case of ALTER Table RENAME there might be no intermediate
+        table. This is when the old and new tables are compatible, according to
+        compare_table(). Then, we need one additional call to
+      */
+      if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
+      {
+        error= 1;
+        TableIdentifier identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+        quick_rm_table(*session, identifier);
       }
       else
       {
-        *internal::fn_ext(new_name)= 0;
-        if (mysql_rename_table(old_db_type, db, table_name, new_db, new_alias, 0))
-          error= -1;
+        if (mysql_rename_table(new_db_type, new_db, tmp_name, new_db, new_alias, FN_FROM_IS_TMP) != 0)
+        {
+          /* Try to get everything back. */
+          error= 1;
+
+          TableIdentifier alias_identifier(new_db, new_alias, STANDARD_TABLE);
+          quick_rm_table(*session, alias_identifier);
+
+          TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+          quick_rm_table(*session, tmp_identifier);
+
+          mysql_rename_table(old_db_type, db, old_name, db, table_name, FN_FROM_IS_TMP);
+        }
       }
-    }
 
-    if (error == HA_ERR_WRONG_COMMAND)
-    {
-      error= 0;
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                          ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                          table->alias);
-    }
+      if (error)
+      {
+        /*
+          An error happened while we were holding exclusive name-lock on table
+          being altered. To be safe under LOCK TABLES we should remove placeholders
+          from list of open tables list and table cache.
+        */
+        session->unlink_open_table(table);
+        if (name_lock)
+          session->unlink_open_table(name_lock);
+        pthread_mutex_unlock(&LOCK_open);
+        return true;
+      }
 
-    if (error == 0)
-    {
+      {
+        TableIdentifier old_identifier(db, old_name, INTERNAL_TMP_TABLE);
+        quick_rm_table(*session, old_identifier);
+      }
+
+
+      pthread_mutex_unlock(&LOCK_open);
+
+      session->set_proc_info("end");
+
       write_bin_log(session, session->query.c_str());
-      session->my_ok();
-    }
-    else if (error > 0)
-    {
-      table->print_error(error, MYF(0));
-      error= -1;
+      table_list->table= NULL;
     }
 
-    if (name_lock)
-      session->unlink_open_table(name_lock);
-
-    pthread_mutex_unlock(&LOCK_open);
-    table_list->table= NULL;
-    return error;
-  }
-
-  /* We have to do full alter table. */
-  new_db_type= create_info->db_type;
-
-  if (mysql_prepare_alter_table(session, table, create_info, create_proto, alter_info))
-      goto err;
-
-  set_table_default_charset(create_info, db);
-
-  alter_info->build_method= HA_BUILD_OFFLINE;
-
-  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
-
-  /* Safety fix for innodb */
-  my_casedn_str(files_charset_info, tmp_name);
-
-  /* Create a temporary table with the new format */
-  {
-    /**
-      @note we make an internal temporary table unless the table is a temporary table. In last
-      case we just use it as is. Neither of these tables require locks in order to  be
-      filled.
-    */
-    TableIdentifier new_table_temp(new_db,
-                                   tmp_name,
-                                   create_proto.type() != message::Table::TEMPORARY ? INTERNAL_TMP_TABLE :
-                                   TEMP_TABLE);
-
-    error= create_temporary_table(session, new_table_temp, create_info, create_proto, alter_info);
-
-    if (error != 0)
-      goto err;
-  }
-
-  /* Open the table so we need to copy the data to it. */
-  new_table= open_alter_table(session, table, new_db, tmp_name);
-
-  if (new_table == NULL)
-    goto err1;
-
-  /* Copy the data if necessary. */
-  session->count_cuted_fields= CHECK_FIELD_WARN;	// calc cuted fields
-  session->cuted_fields= 0L;
-  session->set_proc_info("copy to tmp table");
-  copied= deleted= 0;
-
-  assert(new_table);
-
-  /* We don't want update TIMESTAMP fields during ALTER Table. */
-  new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
-  new_table->next_number_field= new_table->found_next_number_field;
-  error= copy_data_between_tables(table,
-                                  new_table,
-                                  alter_info->create_list,
-                                  ignore,
-                                  order_num,
-                                  order,
-                                  &copied,
-                                  &deleted,
-                                  alter_info->keys_onoff,
-                                  alter_info->error_if_not_empty);
-
-  /* We must not ignore bad input! */
-  session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
-
-  if (table->s->tmp_table != STANDARD_TABLE)
-  {
-    /* We changed a temporary table */
-    if (error)
-      goto err1;
-
-    /* Close lock if this is a transactional table */
-    if (session->lock)
-    {
-      mysql_unlock_tables(session, session->lock);
-      session->lock= 0;
-    }
-
-    /* Remove link to old table and rename the new one */
-    session->close_temporary_table(table);
-
-    /* Should pass the 'new_name' as we store table name in the cache */
-    if (new_table->rename_temporary_table(new_db, new_name))
-      goto err1;
-
-    goto end_temporary;
-  }
-
-  if (new_table)
-  {
     /*
-      Close the intermediate table that will be the new table.
-      Note that MERGE tables do not have their children attached here.
-    */
-    new_table->intern_close_table();
-    free(new_table);
-  }
-
-  pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
-
-  if (error)
-  {
-    TableIdentifier identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
-    quick_rm_table(*session, identifier);
-    pthread_mutex_unlock(&LOCK_open);
-    goto err;
-  }
-
-  /*
-    Data is copied. Now we:
-    1) Wait until all other threads close old version of table.
-    2) Close instances of table open by this thread and replace them
-       with exclusive name-locks.
-    3) Rename the old table to a temp name, rename the new one to the
-       old name.
-    4) If we are under LOCK TABLES and don't do ALTER Table ... RENAME
-       we reopen new version of table.
-    5) Write statement to the binary log.
-    6) If we are under LOCK TABLES and do ALTER Table ... RENAME we
-       remove name-locks from list of open tables and table cache.
-    7) If we are not not under LOCK TABLES we rely on close_thread_tables()
-       call to remove name-locks from table cache and list of open table.
-  */
-
-  session->set_proc_info("rename result table");
-
-  snprintf(old_name, sizeof(old_name), "%s2-%lx-%"PRIx64, TMP_FILE_PREFIX, (unsigned long) current_pid, session->thread_id);
-
-  my_casedn_str(files_charset_info, old_name);
-
-  wait_while_table_is_used(session, table, HA_EXTRA_PREPARE_FOR_RENAME);
-  session->close_data_files_and_morph_locks(db, table_name);
-
-  error= 0;
-  save_old_db_type= old_db_type;
-
-  /*
-    This leads to the storage engine (SE) not being notified for renames in
-    mysql_rename_table(), because we just juggle with the FRM and nothing
-    more. If we have an intermediate table, then we notify the SE that
-    it should become the actual table. Later, we will recycle the old table.
-    However, in case of ALTER Table RENAME there might be no intermediate
-    table. This is when the old and new tables are compatible, according to
-    compare_table(). Then, we need one additional call to
-  */
-  if (mysql_rename_table(old_db_type, db, table_name, db, old_name, FN_TO_IS_TMP))
-  {
-    error= 1;
-    TableIdentifier identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
-    quick_rm_table(*session, identifier);
-  }
-  else
-  {
-    if (mysql_rename_table(new_db_type, new_db, tmp_name, new_db, new_alias, FN_FROM_IS_TMP) != 0)
-    {
-      /* Try to get everything back. */
-      error= 1;
-
-      TableIdentifier alias_identifier(new_db, new_alias, STANDARD_TABLE);
-      quick_rm_table(*session, alias_identifier);
-
-      TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
-      quick_rm_table(*session, tmp_identifier);
-
-      mysql_rename_table(old_db_type, db, old_name, db, table_name, FN_FROM_IS_TMP);
-    }
-  }
-
-  if (error)
-  {
-    /* This shouldn't happen. But let us play it safe. */
-    goto err_with_placeholders;
-  }
-
-  {
-    TableIdentifier old_identifier(db, old_name, INTERNAL_TMP_TABLE);
-    quick_rm_table(*session, old_identifier);
-  }
-  
-
-  pthread_mutex_unlock(&LOCK_open);
-
-  session->set_proc_info("end");
-
-  write_bin_log(session, session->query.c_str());
-  table_list->table= NULL;
-
-end_temporary:
-  /*
-   * Field::store() may have called my_error().  If this is 
-   * the case, we must not send an ok packet, since 
-   * Diagnostics_area::is_set() will fail an assert.
+     * Field::store() may have called my_error().  If this is 
+     * the case, we must not send an ok packet, since 
+     * Diagnostics_area::is_set() will fail an assert.
    */
-  if (! session->is_error())
-  {
-    snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
-            (ulong) (copied + deleted), (ulong) deleted,
-            (ulong) session->cuted_fields);
-    session->my_ok(copied + deleted, 0, 0L, tmp_name);
-    session->some_tables_deleted=0;
-    return false;
-  }
-  else
-  {
-    /* my_error() was called.  Return true (which means error...) */
-    return true;
-  }
+    if (! session->is_error())
+    {
+      snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
+               (ulong) (copied + deleted), (ulong) deleted,
+               (ulong) session->cuted_fields);
+      session->my_ok(copied + deleted, 0, 0L, tmp_name);
+      session->some_tables_deleted=0;
+      return false;
+    }
+    else
+    {
+      /* my_error() was called.  Return true (which means error...) */
+      return true;
+    }
 
 err1:
-  if (new_table)
-  {
-    /* close_temporary_table() frees the new_table pointer. */
-    session->close_temporary_table(new_table);
-  }
-  else
-  {
-    TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
-    quick_rm_table(*session, tmp_identifier);
+    if (new_table)
+    {
+      /* close_temporary_table() frees the new_table pointer. */
+      session->close_temporary_table(new_table);
+    }
+    else
+    {
+      TableIdentifier tmp_identifier(new_db, tmp_name, INTERNAL_TMP_TABLE);
+      quick_rm_table(*session, tmp_identifier);
+    }
   }
 
 err:
@@ -1226,24 +1242,14 @@ err:
                                  alter_info->datetime_field->field_name);
     session->abort_on_warning= save_abort_on_warning;
   }
+
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* ALTER TABLe */
     session->unlink_open_table(name_lock);
     pthread_mutex_unlock(&LOCK_open);
   }
-  return true;
 
-err_with_placeholders:
-  /*
-    An error happened while we were holding exclusive name-lock on table
-    being altered. To be safe under LOCK TABLES we should remove placeholders
-    from list of open tables list and table cache.
-  */
-  session->unlink_open_table(table);
-  if (name_lock)
-    session->unlink_open_table(name_lock);
-  pthread_mutex_unlock(&LOCK_open);
   return true;
 }
 /* alter_table */

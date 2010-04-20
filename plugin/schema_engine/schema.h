@@ -54,7 +54,6 @@ public:
   ~Schema();
 
   int doCreateTable(drizzled::Session *,
-                    const char *,
                     drizzled::Table&,
                     drizzled::TableIdentifier &,
                     drizzled::message::Table&)
@@ -62,7 +61,7 @@ public:
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier, const std::string &table_path);
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier);
 
   bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 
@@ -82,10 +81,6 @@ public:
   bool doDropSchema(const std::string &schema_name);
 
   int doGetTableDefinition(drizzled::Session& session,
-                           const char *path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 

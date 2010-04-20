@@ -720,8 +720,7 @@ bool mysql_create_table_no_lock(Session *session,
                                 HA_CREATE_INFO *create_info,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
-                                bool tmp_table,
-                                uint32_t select_field_count,
+                                bool tmp_table, uint32_t select_field_count,
                                 bool is_if_not_exists);
 
 bool mysql_create_like_table(Session* session,
