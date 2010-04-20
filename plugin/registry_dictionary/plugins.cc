@@ -38,7 +38,7 @@ PluginsTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
   plugin::Registry &registry= plugin::Registry::singleton();
-  const map<string, const plugin::Plugin *> &plugin_map=
+  const map<string, plugin::Plugin *> &plugin_map=
     registry.getPluginsMap();
 
   it= plugin_map.begin();

@@ -262,19 +262,11 @@ int TableProtoTesterCursor::index_last(unsigned char *)
 
 static drizzled::plugin::StorageEngine *tableprototester_engine= NULL;
 
-static int tableprototester_init(drizzled::plugin::Registry &registry)
+static int tableprototester_init(drizzled::plugin::Context &context)
 {
 
   tableprototester_engine= new TableProtoTesterEngine("TABLEPROTOTESTER");
-  registry.add(tableprototester_engine);
-
-  return 0;
-}
-
-static int tableprototester_fini(drizzled::plugin::Registry &registry)
-{
-  registry.remove(tableprototester_engine);
-  delete tableprototester_engine;
+  context.add(tableprototester_engine);
 
   return 0;
 }
@@ -288,7 +280,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Used to test rest of server with various table proto messages",
   PLUGIN_LICENSE_GPL,
   tableprototester_init,     /* Plugin Init */
-  tableprototester_fini,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

@@ -512,7 +512,7 @@ int parse_table_proto(Session& session,
       break;
     case DRIZZLE_TYPE_ENUM:
       {
-        message::Table::Field::SetFieldOptions field_options= pfield.set_options();
+        message::Table::Field::EnumeratorValues field_options= pfield.enumerator_values();
 
         field_pack_length[fieldnr]=
           get_enum_pack_length(field_options.field_value_size());
@@ -614,7 +614,7 @@ int parse_table_proto(Session& session,
     if (pfield.type() != message::Table::Field::ENUM)
       continue;
 
-    message::Table::Field::SetFieldOptions field_options= pfield.set_options();
+    message::Table::Field::EnumeratorValues field_options= pfield.enumerator_values();
 
     const CHARSET_INFO *charset= get_charset(field_options.has_collation_id() ?
                                              field_options.collation_id() : 0);
@@ -761,7 +761,7 @@ int parse_table_proto(Session& session,
 
     if (field_type == DRIZZLE_TYPE_ENUM)
     {
-      message::Table::Field::SetFieldOptions field_options= pfield.set_options();
+      message::Table::Field::EnumeratorValues field_options= pfield.enumerator_values();
 
       charset= get_charset(field_options.has_collation_id()?
 			   field_options.collation_id() : 0);
@@ -873,19 +873,21 @@ int parse_table_proto(Session& session,
     {
       field_length= 0;
 
-      message::Table::Field::SetFieldOptions fo= pfield.set_options();
+      message::Table::Field::EnumeratorValues fo= pfield.enumerator_values();
 
       for (int valnr= 0; valnr < fo.field_value_size(); valnr++)
       {
         if (fo.field_value(valnr).length() > field_length)
+        {
           field_length= charset->cset->numchars(charset,
                                                 fo.field_value(valnr).c_str(),
                                                 fo.field_value(valnr).c_str()
                                                 + fo.field_value(valnr).length())
             * charset->mbmaxlen;
+        }
       }
     }
-      break;
+    break;
     case DRIZZLE_TYPE_LONG:
       {
         uint32_t sign_len= pfield.constraints().is_unsigned() ? 0 : 1;

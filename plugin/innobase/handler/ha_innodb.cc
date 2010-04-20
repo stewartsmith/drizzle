@@ -80,6 +80,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/varstring.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/plugin/xa_storage_engine.h"
+#include "drizzled/plugin/daemon.h"
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/named_savepoint.h"
@@ -260,19 +261,43 @@ static void free_share(INNOBASE_SHARE *share);
 class InnobaseEngine : public plugin::XaStorageEngine
 {
 public:
-  InnobaseEngine(string name_arg) :
+  explicit InnobaseEngine(string name_arg) :
     plugin::XaStorageEngine(name_arg,
-                          HTON_NULL_IN_KEY |
-                          HTON_CAN_INDEX_BLOBS |
-                          HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
-                          HTON_PRIMARY_KEY_IN_READ_INDEX |
-                          HTON_PARTIAL_COLUMN_READ |
-                          HTON_TABLE_SCAN_ON_INDEX |
-                          HTON_HAS_DOES_TRANSACTIONS)
+                            HTON_NULL_IN_KEY |
+                            HTON_CAN_INDEX_BLOBS |
+                            HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION |
+                            HTON_PRIMARY_KEY_IN_READ_INDEX |
+                            HTON_PARTIAL_COLUMN_READ |
+                            HTON_TABLE_SCAN_ON_INDEX |
+                            HTON_HAS_DOES_TRANSACTIONS)
   {
     table_definition_ext= plugin::DEFAULT_DEFINITION_FILE_EXT;
     addAlias("INNOBASE");
   }
+
+  virtual ~InnobaseEngine()
+  {
+    int	err= 0;
+    if (innodb_inited) {
+
+      srv_fast_shutdown = (ulint) innobase_fast_shutdown;
+      innodb_inited = 0;
+      hash_table_free(innobase_open_tables);
+      innobase_open_tables = NULL;
+      if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
+        err = 1;
+      }
+      srv_free_paths_and_sizes();
+      if (internal_innobase_data_file_path)
+        free(internal_innobase_data_file_path);
+      pthread_mutex_destroy(&innobase_share_mutex);
+      pthread_mutex_destroy(&prepare_commit_mutex);
+      pthread_mutex_destroy(&commit_threads_m);
+      pthread_mutex_destroy(&commit_cond_m);
+      pthread_cond_destroy(&commit_cond);
+    }
+  }
+
 private:
   virtual int doStartTransaction(Session *session, start_transaction_option_t options);
   virtual void doStartStatement(Session *session);
@@ -510,12 +535,6 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
-
-/***********************************************************************
-Closes an InnoDB database. */
-static
-int
-innobase_deinit(plugin::Registry &registry);
 
 /*****************************************************************//**
 Commits a transaction in an InnoDB database. */
@@ -1680,7 +1699,7 @@ static
 int
 innobase_init(
 /*==========*/
-	plugin::Registry	&registry)	/*!< in: Drizzle Plugin Registry */
+	plugin::Context	&context)	/*!< in: Drizzle Plugin Context */
 {
 	static char	current_dir[3];		/*!< Set if using current lib */
 	int		err;
@@ -1689,7 +1708,6 @@ innobase_init(
 	uint		format_id;
 
 	innodb_engine_ptr= new InnobaseEngine(innobase_engine_name);
-
 
 	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)DRIZZLE_TYPE_VARCHAR);
 
@@ -1961,30 +1979,30 @@ innobase_change_buffering_inited_ok:
 
         status_table_function_ptr= new InnodbStatusTool;
 
-	registry.add(innodb_engine_ptr);
+	context.add(innodb_engine_ptr);
 
-	registry.add(status_table_function_ptr);
+	context.add(status_table_function_ptr);
 
 	cmp_tool= new(std::nothrow)CmpTool(false);
-	registry.add(cmp_tool);
+	context.add(cmp_tool);
 
 	cmp_reset_tool= new(std::nothrow)CmpTool(true);
-	registry.add(cmp_reset_tool);
+	context.add(cmp_reset_tool);
 
 	cmp_mem_tool= new(std::nothrow)CmpmemTool(false);
-	registry.add(cmp_mem_tool);
+	context.add(cmp_mem_tool);
 
 	cmp_mem_reset_tool= new(std::nothrow)CmpmemTool(true);
-	registry.add(cmp_mem_reset_tool);
+	context.add(cmp_mem_reset_tool);
 
 	innodb_trx_tool= new(std::nothrow)InnodbTrxTool("INNODB_TRX");
-	registry.add(innodb_trx_tool);
+	context.add(innodb_trx_tool);
 
 	innodb_locks_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCKS");
-	registry.add(innodb_locks_tool);
+	context.add(innodb_locks_tool);
 
 	innodb_lock_waits_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS");
-	registry.add(innodb_lock_waits_tool);
+	context.add(innodb_lock_waits_tool);
 
 	/* Get the current high water mark format. */
 	innobase_file_format_check = (char*) trx_sys_file_format_max_get();
@@ -1994,63 +2012,6 @@ error:
 	return(TRUE);
 }
 
-/*******************************************************************//**
-Closes an InnoDB database.
-@return	TRUE if error */
-static
-int
-innobase_deinit(plugin::Registry &registry)
-{
-	int	err= 0;
-
-	registry.remove(status_table_function_ptr);
- 	delete status_table_function_ptr;
-
-	registry.remove(cmp_tool);
-	delete cmp_tool;
-
-	registry.remove(cmp_reset_tool);
-	delete cmp_reset_tool;
-
- 	registry.remove(cmp_mem_tool);
-	delete cmp_mem_tool;
-
-	registry.remove(cmp_mem_reset_tool);
-	delete cmp_mem_reset_tool;
-
-	registry.remove(innodb_trx_tool);
-	delete innodb_trx_tool;
-
- 	registry.remove(innodb_locks_tool);
-	delete innodb_locks_tool;
-
-	registry.remove(innodb_lock_waits_tool);
-	delete innodb_lock_waits_tool;
-
-	registry.remove(innodb_engine_ptr);
- 	delete innodb_engine_ptr;
-
-	if (innodb_inited) {
-
-		srv_fast_shutdown = (ulint) innobase_fast_shutdown;
-		innodb_inited = 0;
-		hash_table_free(innobase_open_tables);
-		innobase_open_tables = NULL;
-		if (innobase_shutdown_for_mysql() != DB_SUCCESS) {
-			err = 1;
-		}
-		srv_free_paths_and_sizes();
-		if (internal_innobase_data_file_path)
-		  free(internal_innobase_data_file_path);
-		pthread_mutex_destroy(&innobase_share_mutex);
-		pthread_mutex_destroy(&prepare_commit_mutex);
-		pthread_mutex_destroy(&commit_threads_m);
-		pthread_mutex_destroy(&commit_cond_m);
-		pthread_cond_destroy(&commit_cond);
-	}
-
-	return(err);
-}
 
 /****************************************************************//**
 Flushes InnoDB logs to disk and makes a checkpoint. Really, a commit flushes
@@ -8839,7 +8800,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Supports transactions, row-level locking, and foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
-  innobase_deinit, /* Plugin Deinit */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }

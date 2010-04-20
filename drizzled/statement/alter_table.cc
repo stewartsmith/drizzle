@@ -795,12 +795,10 @@ bool alter_table(Session *session,
         }
 
         TableIdentifier identifier(new_db, lower_case_table_name);
-
         if (plugin::StorageEngine::doesTableExist(*session, identifier))
         {
           /* Table will be closed by Session::executeCommand() */
           my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
-          goto err;
           error_on_rename= true;
         }
       }
@@ -1221,6 +1219,7 @@ err:
   {
     const char *f_val= 0;
     enum enum_drizzle_timestamp_type t_type= DRIZZLE_TIMESTAMP_DATE;
+
     switch (alter_info->datetime_field->sql_type)
     {
       case DRIZZLE_TYPE_DATE:

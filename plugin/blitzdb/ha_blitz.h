@@ -48,13 +48,6 @@
 const std::string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const std::string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
 
-static const char *ha_blitz_exts[] = {
-  BLITZ_DATA_EXT,
-  BLITZ_INDEX_EXT,
-  BLITZ_SYSTEM_EXT,
-  NULL
-};
-
 /* Multi Reader-Writer lock responsible for controlling concurrency
    at the handler level. This class is implemented in blitzlock.cc */
 class BlitzLock {
@@ -351,60 +344,6 @@ public:
   /* COMAPARISON LOGIC (BLITZDB SPECIFIC) */
   int compare_rows_for_unique_violation(const unsigned char *old_row,
                                         const unsigned char *new_row);
-};
-
-class BlitzEngine : public drizzled::plugin::StorageEngine {
-public:
-  BlitzEngine(const std::string &name_arg)
-    : drizzled::plugin::StorageEngine(name_arg,
-                                      drizzled::HTON_FILE_BASED |
-                                      drizzled::HTON_NULL_IN_KEY |
-                                      drizzled::HTON_PRIMARY_KEY_IN_READ_INDEX |
-                                      drizzled::HTON_STATS_RECORDS_IS_EXACT |
-                                      drizzled::HTON_SKIP_STORE_LOCK) {
-    table_definition_ext = BLITZ_SYSTEM_EXT;
-  }
-
-  virtual drizzled::Cursor *create(drizzled::TableShare &table,
-                                   drizzled::memory::Root *mem_root) {
-    return new (mem_root) ha_blitz(*this, table);
-  }
-
-  const char **bas_ext() const {
-    return ha_blitz_exts;
-  }
-
-  int doCreateTable(drizzled::Session *session,
-                    drizzled::Table &table_arg,
-                    drizzled::TableIdentifier &identifier,
-                    drizzled::message::Table &table_proto);
-
-  int doRenameTable(drizzled::Session *session, const char *from, const char *to);
-
-  int doDropTable(drizzled::Session &, drizzled::TableIdentifier &identifier); 
-
-  int doGetTableDefinition(drizzled::Session &session,
-                           drizzled::TableIdentifier &identifier,
-                           drizzled::message::Table &table_proto);
-
-  void doGetTableNames(drizzled::CachedDirectory &directory, std::string &,
-                       std::set<std::string>& set_of_names);
-
-  bool doDoesTableExist(drizzled::Session &session,
-                        drizzled::TableIdentifier &identifier);
-
-  uint32_t max_supported_keys() const { return BLITZ_MAX_INDEX; }
-  uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LEN; }
-  uint32_t max_supported_key_part_length() const { return BLITZ_MAX_KEY_LEN; }
-
-  uint32_t index_flags(enum drizzled::ha_key_alg) const {
-    return (HA_READ_NEXT |
-            HA_READ_PREV |
-            HA_READ_ORDER |
-            HA_READ_RANGE |
-            HA_ONLY_WHOLE_INDEX |
-            HA_KEYREAD_ONLY);
-  }
 };
 
 #endif /* PLUGIN_BLITZDB_HA_BLITZ_H */

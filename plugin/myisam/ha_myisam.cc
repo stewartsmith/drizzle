@@ -34,6 +34,7 @@
 #include "drizzled/table.h"
 #include "drizzled/field/timestamp.h"
 #include "drizzled/memory/multi_malloc.h"
+#include "drizzled/plugin/daemon.h"
 
 #include <string>
 #include <sstream>
@@ -68,22 +69,33 @@ static const char *ha_myisam_exts[] = {
 
 class MyisamEngine : public plugin::StorageEngine
 {
+  MyisamEngine();
+  MyisamEngine(const MyisamEngine&);
+  MyisamEngine& operator=(const MyisamEngine&);
 public:
-  MyisamEngine(string name_arg)
-    : plugin::StorageEngine(name_arg,
-                            HTON_HAS_DATA_DICTIONARY |
-                            HTON_CAN_INDEX_BLOBS |
-                            HTON_STATS_RECORDS_IS_EXACT |
-                            HTON_TEMPORARY_ONLY |
-                            HTON_NULL_IN_KEY |
-                            HTON_HAS_RECORDS |
-                            HTON_DUPLICATE_POS |
-                            HTON_AUTO_PART_KEY |
-                            HTON_SKIP_STORE_LOCK |
-                            HTON_FILE_BASED ) {}
+  explicit MyisamEngine(string name_arg) :
+    plugin::StorageEngine(name_arg,
+                          HTON_HAS_DATA_DICTIONARY |
+                          HTON_CAN_INDEX_BLOBS |
+                          HTON_STATS_RECORDS_IS_EXACT |
+                          HTON_TEMPORARY_ONLY |
+                          HTON_NULL_IN_KEY |
+                          HTON_HAS_RECORDS |
+                          HTON_DUPLICATE_POS |
+                          HTON_AUTO_PART_KEY |
+                          HTON_SKIP_STORE_LOCK |
+                          HTON_FILE_BASED )
+  {
+    pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
+  }
 
-  ~MyisamEngine()
-  { }
+  virtual ~MyisamEngine()
+  { 
+    pthread_mutex_destroy(&THR_LOCK_myisam);
+    end_key_cache(dflt_key_cache, 1);		// Can never fail
+
+    mi_panic(HA_PANIC_CLOSE);
+  }
 
   virtual Cursor *create(TableShare &table,
                          memory::Root *mem_root)
@@ -126,40 +138,18 @@ public:
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
 };
 
-bool MyisamEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+bool MyisamEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter != proto_cache.end())
-  {
-    return true;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return false;
+  return session.doesTableMessageExist(identifier);
 }
 
-int MyisamEngine::doGetTableDefinition(Session&,
+int MyisamEngine::doGetTableDefinition(Session &session,
                                        drizzled::TableIdentifier &identifier,
-                                       message::Table &table_proto)
+                                       message::Table &table_message)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter != proto_cache.end())
-  {
-    table_proto.CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  if (session.getTableMessage(identifier, table_message))
+    return EEXIST;
+  return ENOENT;
 }
 
 /* 
@@ -1341,18 +1331,10 @@ int ha_myisam::delete_all_rows()
   return mi_delete_all_rows(file);
 }
 
-int MyisamEngine::doDropTable(Session&,
+int MyisamEngine::doDropTable(Session &session,
                               drizzled::TableIdentifier &identifier)
 {
-  ProtoCache::iterator iter;
-
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.removeTableMessage(identifier);
 
   return mi_delete_table(identifier.getPath().c_str());
 }
@@ -1366,7 +1348,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-int MyisamEngine::doCreateTable(Session *,
+int MyisamEngine::doCreateTable(Session *session,
                                 Table& table_arg,
                                 drizzled::TableIdentifier &identifier,
                                 message::Table& create_proto)
@@ -1408,9 +1390,7 @@ int MyisamEngine::doCreateTable(Session *,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(identifier.getPath(), create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session->storeTableMessage(identifier, create_proto);
 
   return error;
 }
@@ -1511,20 +1491,17 @@ uint32_t ha_myisam::checksum() const
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(plugin::Registry &registry)
+static int myisam_init(plugin::Context &context)
 {
-  int error;
   engine= new MyisamEngine(engine_name);
-  registry.add(engine);
-
-  pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
+  context.add(engine);
 
   /* call ha_init_key_cache() on all key caches to init them */
-  error= init_key_cache(dflt_key_cache,
-                        myisam_key_cache_block_size,
-                        myisam_key_cache_size,
-                        myisam_key_cache_division_limit, 
-                        myisam_key_cache_age_threshold);
+  int error= init_key_cache(dflt_key_cache,
+                            myisam_key_cache_block_size,
+                            myisam_key_cache_size,
+                            myisam_key_cache_division_limit, 
+                            myisam_key_cache_age_threshold);
 
   if (error == 0)
     exit(1); /* Memory Allocation Failure */
@@ -1532,16 +1509,6 @@ static int myisam_init(plugin::Registry &registry)
   return 0;
 }
 
-static int myisam_deinit(plugin::Registry &registry)
-{
-  registry.remove(engine);
-  delete engine;
-
-  pthread_mutex_destroy(&THR_LOCK_myisam);
-  end_key_cache(dflt_key_cache, 1);		// Can never fail
-
-  return mi_panic(HA_PANIC_CLOSE);
-}
 
 static void sys_var_key_cache_size_update(Session *session, drizzle_sys_var *var, void *, const void *save)
 {
@@ -1734,7 +1701,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
-  myisam_deinit, /* Plugin Deinit */
   sys_variables,           /* system variables */
   NULL                        /* config options                  */
 }

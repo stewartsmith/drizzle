@@ -93,18 +93,11 @@ void ReverseFunction::fix_length_and_dec()
 
 plugin::Create_function<ReverseFunction> *reverse_function= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::plugin::Context &context)
 {
   reverse_function= new plugin::Create_function<ReverseFunction>("reverse");
-  registry.add(reverse_function);
+  context.add(reverse_function);
   return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-   registry.remove(reverse_function);
-   delete reverse_function;
-   return 0;
 }
 
 DRIZZLE_DECLARE_PLUGIN
@@ -116,7 +109,6 @@ DRIZZLE_DECLARE_PLUGIN
   "reverses a string",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

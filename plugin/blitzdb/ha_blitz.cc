@@ -18,15 +18,79 @@
  */
 
 #include <config.h>
-#include "ha_blitz.h"
 #include <sys/stat.h>
+#include "ha_blitz.h"
 
 using namespace std;
 using namespace drizzled;
 
-static int free_share(BlitzShare *share);
 static pthread_mutex_t blitz_utility_mutex;
 static TCMAP *blitz_table_cache;
+
+static int free_share(BlitzShare *share);
+
+static const char *ha_blitz_exts[] = {
+  BLITZ_DATA_EXT,
+  BLITZ_INDEX_EXT,
+  BLITZ_SYSTEM_EXT,
+  NULL
+};
+
+class BlitzEngine : public drizzled::plugin::StorageEngine {
+public:
+  BlitzEngine(const std::string &name_arg) :
+    drizzled::plugin::StorageEngine(name_arg,
+                                    drizzled::HTON_FILE_BASED |
+                                    drizzled::HTON_NULL_IN_KEY |
+                                    drizzled::HTON_PRIMARY_KEY_IN_READ_INDEX |
+                                    drizzled::HTON_STATS_RECORDS_IS_EXACT |
+                                    drizzled::HTON_SKIP_STORE_LOCK) {
+    table_definition_ext = BLITZ_SYSTEM_EXT;
+  }
+
+  virtual ~BlitzEngine() {
+    pthread_mutex_destroy(&blitz_utility_mutex);
+    tcmapdel(blitz_table_cache);
+  }
+
+  virtual drizzled::Cursor *create(drizzled::TableShare &table,
+                                   drizzled::memory::Root *mem_root) {
+    return new (mem_root) ha_blitz(*this, table);
+  }
+
+  const char **bas_ext() const {
+    return ha_blitz_exts;
+  }
+
+  int doCreateTable(drizzled::Session *session,
+                    drizzled::Table &table_arg,
+                    drizzled::TableIdentifier &identifier,
+                    drizzled::message::Table &table_proto);
+
+  int doRenameTable(drizzled::Session *session, const char *from, const char *to);
+
+  int doDropTable(drizzled::Session &session,
+                  drizzled::TableIdentifier &identifier);
+
+  int doGetTableDefinition(drizzled::Session &session,
+                           drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
+
+  void doGetTableNames(drizzled::CachedDirectory &directory, std::string &,
+                       std::set<std::string>& set_of_names);
+
+  bool doDoesTableExist(drizzled::Session &session,
+                        drizzled::TableIdentifier &identifier);
+
+  uint32_t max_supported_keys() const { return BLITZ_MAX_INDEX; }
+  uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LEN; }
+  uint32_t max_supported_key_part_length() const { return BLITZ_MAX_KEY_LEN; }
+
+  uint32_t index_flags(enum drizzled::ha_key_alg) const {
+    return (HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER |
+            HA_READ_RANGE | HA_ONLY_WHOLE_INDEX | HA_KEYREAD_ONLY);
+  }
+};
 
 /* A key stored in BlitzDB's B+Tree is a byte array that also includes
    a key to that row in the data dictionary. Two keys are merged and
@@ -141,12 +205,9 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
   struct stat stat_info;
   std::string path(identifier.getPath());
 
-  pthread_mutex_lock(&proto_cache_mutex);
-
   path.append(BLITZ_SYSTEM_EXT);
 
   if (stat(path.c_str(), &stat_info)) {
-    pthread_mutex_unlock(&proto_cache_mutex);
     return errno;
   }
 
@@ -155,7 +216,6 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
   int proto_string_len;
 
   if (db.open_system_table(identifier.getPath(), HDBOREADER) != 0) {
-    pthread_mutex_unlock(&proto_cache_mutex);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
@@ -164,24 +224,20 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
                                      &proto_string_len);
           
   if (db.close_system_table() != 0) {
-    pthread_mutex_unlock(&proto_cache_mutex);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
   if (proto_string == NULL) {
-    pthread_mutex_unlock(&proto_cache_mutex);
     return ENOMEM;
   }
 
   if (!proto.ParseFromArray(proto_string, proto_string_len)) {
     free(proto_string);
-    pthread_mutex_unlock(&proto_cache_mutex);
     return HA_ERR_CRASHED_ON_USAGE;      
   }
 
   free(proto_string);
 
-  pthread_mutex_unlock(&proto_cache_mutex);
   return EEXIST;
 }
 
@@ -1251,27 +1307,16 @@ static int free_share(BlitzShare *share) {
   return 0;
 }
 
-static int blitz_init(drizzled::plugin::Registry &registry) {
+static int blitz_init(drizzled::plugin::Context &context) {
   blitz_engine = new BlitzEngine("BLITZDB"); 
+
   if ((blitz_table_cache = tcmapnew()) == NULL) {
     delete blitz_engine;
     return HA_ERR_OUT_OF_MEM;
   }
-  /**
-   * If MY_MUTEX_INIT_FAST becomes exposed in the API, then turn this
-   * back on.
-   */
-  //pthread_mutex_init(&blitz_utility_mutex, MY_MUTEX_INIT_FAST);
-  pthread_mutex_init(&blitz_utility_mutex, NULL);
-  registry.add(blitz_engine);
-  return 0;
-}
 
-static int blitz_deinit(drizzled::plugin::Registry &registry) {
-  pthread_mutex_destroy(&blitz_utility_mutex);
-  tcmapdel(blitz_table_cache);
-  registry.remove(blitz_engine);
-  delete blitz_engine;
+  pthread_mutex_init(&blitz_utility_mutex, NULL);
+  context.add(blitz_engine);
   return 0;
 }
 
@@ -1283,4 +1328,4 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
   return pos + skip_len + sizeof(uint16_t);
 }
 
-DRIZZLE_PLUGIN(blitz_init, blitz_deinit, NULL);
+DRIZZLE_PLUGIN(blitz_init, NULL);

@@ -2076,8 +2076,10 @@ bool Session::removeTableMessage(TableIdentifier &identifier)
 
   iter= table_message_cache.find(identifier.getPath());
 
-  if (iter != table_message_cache.end())
-    table_message_cache.erase(iter);
+  if (iter == table_message_cache.end())
+    return false;
+
+  table_message_cache.erase(iter);
 
   return true;
 }
@@ -2087,6 +2089,9 @@ bool Session::getTableMessage(TableIdentifier &identifier, message::Table &table
   TableMessageCache::iterator iter;
 
   iter= table_message_cache.find(identifier.getPath());
+
+  if (iter == table_message_cache.end())
+    return false;
 
   table_message.CopyFrom(((*iter).second));
 
@@ -2099,12 +2104,12 @@ bool Session::doesTableMessageExist(TableIdentifier &identifier)
 
   iter= table_message_cache.find(identifier.getPath());
 
-  if (iter != table_message_cache.end())
+  if (iter == table_message_cache.end())
   {
-    return true;
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 } /* namespace drizzled */

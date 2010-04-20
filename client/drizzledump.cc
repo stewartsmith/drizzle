@@ -322,7 +322,7 @@ static struct my_option my_long_options[] =
    "Disable --opt. Disables --add-drop-table, --add-locks, --create-options, --quick, --extended-insert, --lock-tables, --set-charset, and --disable-keys.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"tab",'T',
-   "Creates tab separated textfile for each table to given path. (creates .sql and .txt files). NOTE: This only works if mysqldump is run on the same machine as the mysqld daemon.",
+   "Creates tab separated textfile for each table to given path. (creates .sql and .txt files). NOTE: This only works if drizzledump is run on the same machine as the drizzled daemon.",
    (char**) &path, (char**) &path, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tables", OPT_TABLES, "Overrides option --databases (-B).",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -2516,7 +2516,7 @@ static int do_flush_tables_read_lock(drizzle_con_st *drizzle_con)
     We do first a FLUSH TABLES. If a long update is running, the FLUSH TABLES
     will wait but will not stall the whole mysqld, and when the long update is
     done the FLUSH TABLES WITH READ LOCK will start and succeed quickly. So,
-    FLUSH TABLES is to lower the probability of a stage where both mysqldump
+    FLUSH TABLES is to lower the probability of a stage where both drizzled
     and most client connections are stalled. Of course, if a second long
     update starts between the two FLUSHes, we have that bad stall.
   */
