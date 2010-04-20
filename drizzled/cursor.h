@@ -249,12 +249,12 @@ public:
     These functions represent the public interface to *users* of the
     Cursor class, hence they are *not* virtual. For the inheritance
     interface, see the (private) functions doInsertRecord(), doUpdateRecord(),
-    and delete_row() below.
+    and doDeleteRecord() below.
   */
   int ha_external_lock(Session *session, int lock_type);
   int insertRecord(unsigned char * buf);
   int updateRecord(const unsigned char * old_data, unsigned char * new_data);
-  int ha_delete_row(const unsigned char * buf);
+  int deleteRecord(const unsigned char * buf);
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
@@ -584,7 +584,7 @@ private:
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int delete_row(const unsigned char *)
+  virtual int doDeleteRecord(const unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }

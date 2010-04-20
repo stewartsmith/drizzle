@@ -54,7 +54,7 @@ public:
   void set_keys_for_scanning(void);
   int doInsertRecord(unsigned char * buf);
   int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
-  int delete_row(const unsigned char * buf);
+  int doDeleteRecord(const unsigned char * buf);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,

@@ -4307,7 +4307,7 @@ Deletes a row given as the parameter.
 @return error number or 0 */
 UNIV_INTERN
 int
-ha_innobase::delete_row(
+ha_innobase::doDeleteRecord(
 /*====================*/
   const unsigned char*  record) /*!< in: a row in MySQL format */
 {
@@ -5944,7 +5944,7 @@ ha_innobase::delete_all_rows(void)
   if (session_sql_command(user_session) != SQLCOM_TRUNCATE) {
   fallback:
     /* We only handle TRUNCATE TABLE t as a special case.
-    DELETE FROM t will have to use ha_innobase::delete_row(),
+    DELETE FROM t will have to use ha_innobase::doDeleteRecord(),
     because DELETE is transactional while TRUNCATE is not. */
     return(errno=HA_ERR_WRONG_COMMAND);
   }
@@ -5953,7 +5953,7 @@ ha_innobase::delete_all_rows(void)
 
   error = row_truncate_table_for_mysql(prebuilt->table, prebuilt->trx);
   if (error == DB_ERROR) {
-    /* Cannot truncate; resort to ha_innobase::delete_row() */
+    /* Cannot truncate; resort to ha_innobase::doDeleteRecord() */
     goto fallback;
   }
 

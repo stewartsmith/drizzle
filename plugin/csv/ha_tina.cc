@@ -1043,7 +1043,7 @@ err:
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
 */
-int ha_tina::delete_row(const unsigned char *)
+int ha_tina::doDeleteRecord(const unsigned char *)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
 

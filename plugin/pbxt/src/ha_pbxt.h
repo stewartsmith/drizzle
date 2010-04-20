@@ -246,7 +246,7 @@ class ha_pbxt: public handler
 
 	int		doInsertRecord(byte * buf);
 	int		doUpdateRecord(const byte * old_data, byte * new_data);
-	int		delete_row(const byte * buf);
+	int		doDeleteRecord(const byte * buf);
 
 	/* Index access functions: */
 	int		xt_index_in_range(register XTOpenTablePtr ot, register XTIndexPtr ind, register XTIdxSearchKeyPtr search_key, byte *buf);

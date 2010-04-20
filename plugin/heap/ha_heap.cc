@@ -364,7 +364,7 @@ int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_
   return res;
 }
 
-int ha_heap::delete_row(const unsigned char * buf)
+int ha_heap::doDeleteRecord(const unsigned char * buf)
 {
   int res;
   ha_statistic_increment(&system_status_var::ha_delete_count);

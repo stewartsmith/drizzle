@@ -1039,7 +1039,7 @@ int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_
   return mi_update(file,old_data,new_data);
 }
 
-int ha_myisam::delete_row(const unsigned char *buf)
+int ha_myisam::doDeleteRecord(const unsigned char *buf)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
   return mi_delete(file,buf);

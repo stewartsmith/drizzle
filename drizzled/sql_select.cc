@@ -5345,7 +5345,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
       error=cursor->rnd_next(record);
       continue;
@@ -5372,7 +5372,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
       }
       if (table->compare_record(first_field) == 0)
       {
-        if ((error=cursor->ha_delete_row(record)))
+        if ((error=cursor->deleteRecord(record)))
           goto err;
       }
       else if (!found)
@@ -5467,7 +5467,7 @@ int remove_dup_with_hash_index(Session *session,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
       continue;
     }
@@ -5484,7 +5484,7 @@ int remove_dup_with_hash_index(Session *session,
     if (hash_search(&hash, org_key_pos, key_length))
     {
       /* Duplicated found ; Remove the row */
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
     }
     else

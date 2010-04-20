@@ -892,7 +892,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         }
         else
         {
-          if ((error=table->cursor->ha_delete_row(table->record[1])))
+          if ((error=table->cursor->deleteRecord(table->record[1])))
             goto err;
           info->deleted++;
           if (!table->cursor->has_transactions())

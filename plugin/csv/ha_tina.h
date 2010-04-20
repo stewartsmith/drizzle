@@ -128,7 +128,7 @@ public:
   int close(void);
   int doInsertRecord(unsigned char * buf);
   int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
-  int delete_row(const unsigned char * buf);
+  int doDeleteRecord(const unsigned char * buf);
   int rnd_init(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);

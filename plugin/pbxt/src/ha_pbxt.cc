@@ -2850,7 +2850,7 @@ int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
  * Called in sql_delete.cc, sql_insert.cc, and sql_select.cc. In sql_select it is
  * used for removing duplicates while in insert it is used for REPLACE calls.
 */
-int ha_pbxt::delete_row(const byte * buf)
+int ha_pbxt::doDeleteRecord(const byte * buf)
 {
 	int err = 0;
 

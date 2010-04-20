@@ -132,7 +132,7 @@ class ha_innobase: public Cursor
 
 	UNIV_INTERN int doInsertRecord(unsigned char * buf);
 	UNIV_INTERN int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
-	UNIV_INTERN int delete_row(const unsigned char * buf);
+	UNIV_INTERN int doDeleteRecord(const unsigned char * buf);
 	UNIV_INTERN bool was_semi_consistent_read();
 	UNIV_INTERN void try_semi_consistent_read(bool yes);
 	UNIV_INTERN void unlock_row();
