@@ -2742,14 +2742,23 @@ ha_innobase::open(
         table->s->stored_rec_length
         + table->s->max_key_length
         + MAX_REF_PARTS * 3;
-  if (!(unsigned char*) memory::multi_malloc(false,
-      &upd_buff, upd_and_key_val_buff_len,
-      &key_val_buff, upd_and_key_val_buff_len,
-      NULL)) {
-    free_share(share);
 
+  upd_buff= (unsigned char*)malloc(upd_and_key_val_buff_len);
+
+  if (upd_buff == NULL)
+  {
+    free_share(share);
+  }
+
+  key_val_buff= (unsigned char*)malloc(upd_and_key_val_buff_len);
+  if (key_val_buff == NULL)
+  {
+    free_share(share);
+    free(upd_buff);
     return(1);
   }
+
+
 
   /* We look for pattern #P# to see if the table is partitioned
   MySQL table. The retry logic for partitioned tables is a
@@ -2791,6 +2800,7 @@ retry:
         norm_name);
     free_share(share);
     free(upd_buff);
+    free(key_val_buff);
     errno = ENOENT;
 
     return(HA_ERR_NO_SUCH_TABLE);
@@ -2807,6 +2817,7 @@ retry:
         norm_name);
     free_share(share);
     free(upd_buff);
+    free(key_val_buff);
     errno = ENOENT;
 
     dict_table_decrement_handle_count(ib_table, FALSE);
@@ -2942,6 +2953,7 @@ ha_innobase::close(void)
   row_prebuilt_free(prebuilt, FALSE);
 
   free(upd_buff);
+  free(key_val_buff);
   free_share(share);
 
   /* Tell InnoDB server that there might be work for
