@@ -59,14 +59,13 @@ using namespace drizzled;
 
 TransactionLogApplier *transaction_log_applier= NULL; /* The singleton transaction log applier */
 
-extern TransactionLogIndex *transaction_log_index;
-
 TransactionLogApplier::TransactionLogApplier(const string name_arg,
                                              TransactionLog *in_transaction_log,
+                                             TransactionLogIndex *in_transaction_log_index,
                                              uint32_t in_num_write_buffers) :
   plugin::TransactionApplier(name_arg),
-  transaction_log(*in_transaction_log),  
-  transaction_log_ptr(in_transaction_log),
+  transaction_log(in_transaction_log),
+  transaction_log_index(in_transaction_log_index),
   num_write_buffers(in_num_write_buffers),
   write_buffers()
 {
@@ -86,7 +85,8 @@ TransactionLogApplier::~TransactionLogApplier()
            write_buffers.end(),
            DeletePtr());
   write_buffers.clear();
-  delete transaction_log_ptr;
+  delete transaction_log;
+  delete transaction_log_index;
 }
 
 WriteBuffer *TransactionLogApplier::getWriteBuffer(const Session &session)
@@ -106,11 +106,11 @@ TransactionLogApplier::apply(Session &in_session,
   write_buffer->lock();
   write_buffer->resize(entry_size);
   uint8_t *bytes= write_buffer->getRawBytes();
-  bytes= transaction_log.packTransactionIntoLogEntry(to_apply,
+  bytes= transaction_log->packTransactionIntoLogEntry(to_apply,
                                                      bytes,
                                                      &checksum);
 
-  off_t written_to= transaction_log.writeEntry(bytes, entry_size);
+  off_t written_to= transaction_log->writeEntry(bytes, entry_size);
   write_buffer->unlock();
 
   /* Add an entry to the index describing what was just applied */

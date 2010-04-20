@@ -1,0 +1,6 @@
+create table t1 (a int primary key);
+rename table t1 to t2;
+show tables;
+Tables_in_test
+t2
+drop table t2;

@@ -1421,7 +1421,7 @@ public:
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
-  typedef drizzled::hash_map<std::string, message::Table> TableMessageCache;
+  typedef unordered_map<std::string, message::Table> TableMessageCache;
   TableMessageCache table_message_cache;
 
   bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);

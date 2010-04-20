@@ -46,6 +46,7 @@
 #include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/drizzled.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
@@ -58,12 +59,6 @@ using namespace std;
 namespace drizzled
 {
 
-extern "C"
-{
-  unsigned char *get_var_key(user_var_entry *entry, size_t *length, bool );
-  void free_user_var(user_var_entry *entry);
-}
-
 /*
   The following is used to initialise Table_ident with a internal
   table name
@@ -74,20 +69,18 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
-extern uint32_t max_used_connections;
-extern atomic<uint32_t> connection_count;
 
 
 /****************************************************************************
 ** User variables
 ****************************************************************************/
-unsigned char *get_var_key(user_var_entry *entry, size_t *length, bool )
+static unsigned char *get_var_key(user_var_entry *entry, size_t *length, bool)
 {
   *length= entry->name.length;
   return (unsigned char*) entry->name.str;
 }
 
-void free_user_var(user_var_entry *entry)
+static void free_user_var(user_var_entry *entry)
 {
   delete entry;
 }
@@ -108,7 +101,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg)
 /*
   The following functions form part of the C plugin API
 */
-extern "C" int mysql_tmpfile(const char *prefix)
+int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
   int fd = internal::create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
@@ -119,7 +112,6 @@ extern "C" int mysql_tmpfile(const char *prefix)
   return fd;
 }
 
-extern "C"
 int session_tablespace_op(const Session *session)
 {
   return test(session->tablespace_op);
@@ -133,13 +125,11 @@ int session_tablespace_op(const Session *session)
 
    @see Session::set_proc_info
  */
-extern "C" void
-set_session_proc_info(Session *session, const char *info)
+void set_session_proc_info(Session *session, const char *info)
 {
   session->set_proc_info(info);
 }
 
-extern "C"
 const char *get_session_proc_info(Session *session)
 {
   return session->get_proc_info();
@@ -156,19 +146,16 @@ ResourceContext *Session::getResourceContext(const plugin::MonitoredInTransactio
   return &ha_data[monitored->getId()].resource_context[index];
 }
 
-extern "C"
 int64_t session_test_options(const Session *session, int64_t test_options)
 {
   return session->options & test_options;
 }
 
-extern "C"
 int session_sql_command(const Session *session)
 {
   return (int) session->lex->sql_command;
 }
 
-extern "C"
 int session_tx_isolation(const Session *session)
 {
   return (int) session->variables.tx_isolation;
@@ -316,43 +303,10 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-void *session_alloc(Session *session, unsigned int size)
-{
-  return session->alloc(size);
-}
-
-void *session_calloc(Session *session, unsigned int size)
-{
-  return session->calloc(size);
-}
-
-char *session_strdup(Session *session, const char *str)
-{
-  return session->strdup(str);
-}
-
-char *session_strmake(Session *session, const char *str, unsigned int size)
-{
-  return session->strmake(str, size);
-}
-
-void *session_memdup(Session *session, const void* str, unsigned int size)
-{
-  return session->memdup(str, size);
-}
-
 void session_get_xid(const Session *session, DRIZZLE_XID *xid)
 {
   *xid = *(DRIZZLE_XID *) &session->transaction.xid_state.xid;
 }
-
-#if defined(__cplusplus)
-}
-#endif
 
 /* Do operations that may take a long time */
 
@@ -1048,13 +1002,13 @@ static int create_file(Session *session, char *path, file_exchange *exchange, in
 
   if (!internal::dirname_length(exchange->file_name))
   {
-    strcpy(path, drizzle_real_data_home);
+    strcpy(path, data_home_real);
     if (! session->db.empty())
-      strncat(path, session->db.c_str(), FN_REFLEN-strlen(drizzle_real_data_home)-1);
+      strncat(path, session->db.c_str(), FN_REFLEN-strlen(data_home_real)-1);
     (void) internal::fn_format(path, exchange->file_name, path, "", option);
   }
   else
-    (void) internal::fn_format(path, exchange->file_name, drizzle_real_data_home, "", option);
+    (void) internal::fn_format(path, exchange->file_name, data_home_real, "", option);
 
   if (opt_secure_file_priv &&
       strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
@@ -1637,35 +1591,15 @@ bool Session::set_db(const std::string &new_db)
   @retval 0 the user thread is active
   @retval 1 the user thread has been killed
 */
-extern "C" int session_killed(const Session *session)
+int session_killed(const Session *session)
 {
   return(session->killed);
-}
-
-/**
-  Return the session id of a user session
-  @param pointer to Session object
-  @return session's id
-*/
-extern "C" unsigned long session_get_thread_id(const Session *session)
-{
-  return (unsigned long) session->getSessionId();
 }
 
 
 const struct charset_info_st *session_charset(Session *session)
 {
   return(session->charset());
-}
-
-int session_non_transactional_update(const Session *session)
-{
-  return(session->transaction.all.hasModifiedNonTransData());
-}
-
-void session_mark_transaction_to_rollback(Session *session, bool all)
-{
-  mark_transaction_to_rollback(session, all);
 }
 
 /**

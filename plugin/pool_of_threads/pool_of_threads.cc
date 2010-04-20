@@ -56,7 +56,7 @@ extern "C" {
   void libevent_kill_session_callback(int Fd, short Operation, void *ctx);
 }
 
-static uint32_t size= 0;
+static uint32_t pool_size= 0;
 
 /**
  * @brief 
@@ -322,7 +322,7 @@ void *PoolOfThreadsScheduler::mainLoop()
   */
   (void) pthread_mutex_lock(&LOCK_thread_count);
   created_threads++;
-  if (created_threads == size)
+  if (created_threads == pool_size)
     (void) pthread_cond_signal(&COND_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -608,7 +608,7 @@ bool PoolOfThreadsScheduler::libevent_init(void)
   /* Set up the thread pool */
   pthread_mutex_lock(&LOCK_thread_count);
 
-  for (x= 0; x < size; x++)
+  for (x= 0; x < pool_size; x++)
   {
     pthread_t thread;
     int error;
@@ -622,7 +622,7 @@ bool PoolOfThreadsScheduler::libevent_init(void)
   }
 
   /* Wait until all threads are created */
-  while (created_threads != size)
+  while (created_threads != pool_size)
     pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -638,7 +638,7 @@ bool PoolOfThreadsScheduler::libevent_init(void)
  */
 static int init(drizzled::plugin::Context &context)
 {
-  assert(size != 0);
+  assert(pool_size != 0);
 
   scheduler= new PoolOfThreadsScheduler("pool_of_threads");
   context.add(scheduler);
@@ -650,7 +650,7 @@ static int init(drizzled::plugin::Context &context)
  The defaults here were picked based on what I see (aka Brian). They should
  be vetted across a larger audience.
 */
-static DRIZZLE_SYSVAR_UINT(size, size,
+static DRIZZLE_SYSVAR_UINT(size, pool_size,
                            PLUGIN_VAR_RQCMDARG,
                            N_("Size of Pool."),
                            NULL, NULL, 8, 1, 1024, 0);

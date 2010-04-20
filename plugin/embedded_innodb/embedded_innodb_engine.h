@@ -69,6 +69,8 @@ public:
   double scan_time();
   int delete_row(const unsigned char *);
   int delete_all_rows(void);
+  int update_row(const unsigned char * old_data, unsigned char * new_data);
+
   void get_auto_increment(uint64_t, uint64_t,
                           uint64_t,
                           uint64_t *,
@@ -87,6 +89,8 @@ public:
 private:
   ib_crsr_t cursor;
   ib_tpl_t tuple;
+
+  ib_err_t next_innodb_error;
 };
 
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */

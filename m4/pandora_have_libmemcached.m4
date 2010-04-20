@@ -62,7 +62,7 @@ AC_DEFUN([_PANDORA_RECENT_LIBMEMCACHED],[
     ],[
       AS_IF([test "x$1" != "x"],[
         pandora_need_libmemcached_version=`echo "$1" | perl -nle '/(\d+)\.(\d+)/; printf "%d%0.3d000", $[]1, $[]2 ;'`
-        AS_IF([test "x${pandora_need_libmemcached_version}" = "x00039000"],[
+        AS_IF([test "x${pandora_need_libmemcached_version}" = "x0000000"],[
           pandora_cv_recent_libmemcached=yes
         ],[
           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[

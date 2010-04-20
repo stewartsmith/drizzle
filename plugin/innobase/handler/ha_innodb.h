@@ -171,7 +171,7 @@ class ha_innobase: public Cursor
 	UNIV_INTERN int check(Session* session);
 	UNIV_INTERN char* update_table_comment(const char* comment);
 	UNIV_INTERN char* get_foreign_key_create_info();
-	UNIV_INTERN int get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_key_list);
+	UNIV_INTERN int get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_list);
 	UNIV_INTERN bool can_switch_engines();
 	UNIV_INTERN uint referenced_by_foreign_key();
 	UNIV_INTERN void free_foreign_key_create_info(char* str);
@@ -218,14 +218,6 @@ uint64_t drizzle_bin_log_file_pos(void);
   @retval 1 the user thread is a replication slave thread
 */
 int session_slave_thread(const Session *session);
-
-/**
-  Check if a user thread is running a non-transactional update
-  @param session  user thread
-  @retval 0 the user thread is not running a non-transactional update
-  @retval 1 the user thread is running a non-transactional update
-*/
-int session_non_transactional_update(const Session *session);
 
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.

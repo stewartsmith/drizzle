@@ -119,8 +119,7 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_TEMPORARY_ONLY |
                                      HTON_NO_AUTO_INCREMENT |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_FILE_BASED),
+                                     HTON_SKIP_STORE_LOCK),
     tina_open_tables()
   {}
   virtual ~Tina()
