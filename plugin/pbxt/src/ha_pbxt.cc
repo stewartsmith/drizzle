@@ -2628,7 +2628,7 @@ static void dump_buf(unsigned char *buf, int len)
 */
 
 /*
- * write_row() inserts a row. No extra() hint is given currently if a bulk load
+ * doInsertRecord() inserts a row. No extra() hint is given currently if a bulk load
  * is happeneding. buf() is a byte array of data. You can use the field
  * information to extract the data from the native byte array type.
  * Example of this would be:
@@ -2642,25 +2642,25 @@ static void dump_buf(unsigned char *buf, int len)
  * for ha_berkeley's own native storage type.
 
  * See the note for update_row() on auto_increments and timestamps. This
- * case also applied to write_row().
+ * case also applied to doInsertRecord().
 
  * Called from item_sum.cc, item_sum.cc, sql_acl.cc, sql_insert.cc,
  * sql_insert.cc, sql_select.cc, sql_table.cc, sql_udf.cc, and sql_update.cc.
  */
-int ha_pbxt::write_row(byte *buf)
+int ha_pbxt::doInsertRecord(byte *buf)
 {
 	int err = 0;
 
 	ASSERT_NS(pb_ex_in_use);
 
-	XT_PRINT1(pb_open_tab->ot_thread, "write_row (%s)\n", pb_share->sh_table_path->ps_path);
+	XT_PRINT1(pb_open_tab->ot_thread, "doInsertRecord (%s)\n", pb_share->sh_table_path->ps_path);
 	XT_DISABLED_TRACE(("INSERT tx=%d val=%d\n", (int) pb_open_tab->ot_thread->st_xact_data->xd_start_xn_id, (int) XT_GET_DISK_4(&buf[1])));
 	//statistic_increment(ha_write_count,&LOCK_status);
 #ifdef PBMS_ENABLED
 	PBMSResultRec result;
-	err = pbms_write_row_blobs(table, buf, &result);
+	err = pbms_doInsertRecord_blobs(table, buf, &result);
 	if (err) {
-		xt_logf(XT_NT_ERROR, "pbms_write_row_blobs() Error: %s", result.mr_message);
+		xt_logf(XT_NT_ERROR, "pbms_doInsertRecord_blobs() Error: %s", result.mr_message);
 		return err;
 	}
 #endif
@@ -2673,12 +2673,12 @@ int ha_pbxt::write_row(byte *buf)
 			/* Commit and restart the transaction. */
 			XTThreadPtr thread = pb_open_tab->ot_thread;
 
-			XT_PRINT0(thread, "xt_xn_commit in write_row\n");
+			XT_PRINT0(thread, "xt_xn_commit in doInsertRecord\n");
 			if (!xt_xn_commit(thread)) {
 				err = xt_ha_pbxt_thread_error_for_mysql(pb_mysql_thd, thread, pb_ignore_dup_key);
 				return err;
 			}
-			XT_PRINT0(thread, "xt_xn_begin in write_row\n");
+			XT_PRINT0(thread, "xt_xn_begin in doInsertRecord\n");
 			if (!xt_xn_begin(thread)) {
 				err = xt_ha_pbxt_thread_error_for_mysql(pb_mysql_thd, thread, pb_ignore_dup_key);
 				return err;
@@ -2803,9 +2803,9 @@ int ha_pbxt::update_row(const byte * old_data, byte * new_data)
 		xt_logf(XT_NT_ERROR, "update_row:pbms_delete_row_blobs() Error: %s", result.mr_message);
 		return err;
 	}
-	err = pbms_write_row_blobs(table, new_data, &result);
+	err = pbms_doInsertRecord_blobs(table, new_data, &result);
 	if (err) { 
-		xt_logf(XT_NT_ERROR, "update_row:pbms_write_row_blobs() Error: %s", result.mr_message);
+		xt_logf(XT_NT_ERROR, "update_row:pbms_doInsertRecord_blobs() Error: %s", result.mr_message);
 		goto pbms_done;
 	}
 #endif
@@ -4735,7 +4735,7 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 						 * this avoids taking locks on the rows that are read
 						 * Which leads to the assertion failure:
 						 * int XTRowLocks::xt_make_lock_permanent(XTOpenTable*, XTRowLockList*)(lock_xt.cc:646) item
-						 * after the transaction is committed in write_row.
+						 * after the transaction is committed in doInsertRecord.
 						 */
 						pb_open_tab->ot_for_update = FALSE;
 						break;
@@ -4874,9 +4874,9 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 		 *
 		 * So, this is the correct place to start a statement transaction.
 		 *
-		 * Note: if trans_register_ha() is not called before ha_write_row(), then 
+		 * Note: if trans_register_ha() is not called before insertRecord(), then 
 		 * PBXT is not registered correctly as a modification transaction.
-		 * (mark_trx_read_write call in ha_write_row).
+		 * (mark_trx_read_write call in insertRecord).
 		 * This leads to 2-phase commit not being called as it should when
 		 * binary logging is enabled.
 		 */

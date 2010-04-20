@@ -721,7 +721,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 
   if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE)
   {
-    while ((error=table->cursor->ha_write_row(table->record[0])))
+    while ((error=table->cursor->insertRecord(table->record[0])))
     {
       uint32_t key_nr;
       /*
@@ -910,7 +910,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         table->write_set != save_write_set)
       table->column_bitmaps_set(save_read_set, save_write_set);
   }
-  else if ((error=table->cursor->ha_write_row(table->record[0])))
+  else if ((error=table->cursor->insertRecord(table->record[0])))
   {
     if (!info->ignore ||
         table->cursor->is_fatal_error(error, HA_CHECK_DUP))

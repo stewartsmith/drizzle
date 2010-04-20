@@ -49,7 +49,7 @@ public:
   uint32_t index_flags(uint32_t inx) const;
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
-  int write_row(unsigned char * buf);
+  int doInsertRecord(unsigned char * buf);
   int rnd_init(bool scan);
   int rnd_next(unsigned char *buf);
   int rnd_end();

@@ -244,7 +244,7 @@ class ha_pbxt: public handler
                                  MX_ULONGLONG_T *nb_reserved_values);
 	void	set_auto_increment(Field *nr);
 
-	int		write_row(byte * buf);
+	int		doInsertRecord(byte * buf);
 	int		update_row(const byte * old_data, byte * new_data);
 	int		delete_row(const byte * buf);
 

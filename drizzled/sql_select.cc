@@ -4216,7 +4216,7 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_reco
         copy_sum_funcs(join->sum_funcs, join->sum_funcs_end[send_group_parts]);
         if (!join->having || join->having->val_int())
         {
-          int error= table->cursor->ha_write_row(table->record[0]);
+          int error= table->cursor->insertRecord(table->record[0]);
           if (error && create_myisam_from_heap(join->session, table,
                                               join->tmp_table_param.start_recinfo,
                                                 &join->tmp_table_param.recinfo,

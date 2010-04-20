@@ -323,7 +323,7 @@ void ha_heap::update_key_stats()
 }
 
 
-int ha_heap::write_row(unsigned char * buf)
+int ha_heap::doInsertRecord(unsigned char * buf)
 {
   int res;
   ha_statistic_increment(&system_status_var::ha_write_count);

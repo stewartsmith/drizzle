@@ -640,7 +640,7 @@ int ha_myisam::close(void)
   return mi_close(tmp);
 }
 
-int ha_myisam::write_row(unsigned char *buf)
+int ha_myisam::doInsertRecord(unsigned char *buf)
 {
   ha_statistic_increment(&system_status_var::ha_write_count);
 

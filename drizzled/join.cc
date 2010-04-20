@@ -2360,7 +2360,7 @@ int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
           item->save_in_result_field(1);
       }
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
-      if ((write_error= table_arg->cursor->ha_write_row(table_arg->record[0])))
+      if ((write_error= table_arg->cursor->insertRecord(table_arg->record[0])))
       {
   if (create_myisam_from_heap(session, table_arg,
                                     tmp_table_param.start_recinfo,
@@ -2817,7 +2817,7 @@ enum_nested_loop_state end_write(JOIN *join, JoinTable *, bool end_of_records)
     {
       int error;
       join->found_records++;
-      if ((error=table->cursor->ha_write_row(table->record[0])))
+      if ((error=table->cursor->insertRecord(table->record[0])))
       {
         if (!table->cursor->is_fatal_error(error, HA_CHECK_DUP))
           goto end;
@@ -2899,7 +2899,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
   }
   init_tmptable_sum_functions(join->sum_funcs);
   copy_funcs(join->tmp_table_param.items_to_copy);
-  if ((error=table->cursor->ha_write_row(table->record[0])))
+  if ((error=table->cursor->insertRecord(table->record[0])))
   {
     if (create_myisam_from_heap(join->session, table,
                                 join->tmp_table_param.start_recinfo,
@@ -2932,7 +2932,7 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
   copy_fields(&join->tmp_table_param);		// Groups are copied twice.
   copy_funcs(join->tmp_table_param.items_to_copy);
 
-  if (!(error= table->cursor->ha_write_row(table->record[0])))
+  if (!(error= table->cursor->insertRecord(table->record[0])))
     join->send_records++;			// New group
   else
   {

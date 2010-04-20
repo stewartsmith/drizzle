@@ -938,7 +938,7 @@ int ha_tina::close(void)
   of the file and appends the data. In an error case it really should
   just truncate to the original position (this is not done yet).
 */
-int ha_tina::write_row(unsigned char * buf)
+int ha_tina::doInsertRecord(unsigned char * buf)
 {
   int size;
 

@@ -1344,10 +1344,10 @@ static bool log_row_for_replication(Table* table,
     /*
      * This is a total hack because of the code that is
      * in write_record() in sql_insert.cc. During
-     * a REPLACE statement, a call to ha_write_row() is
+     * a REPLACE statement, a call to insertRecord() is
      * called.  If it fails, then a call to ha_delete_row()
      * is called, followed by a repeat of the original
-     * call to ha_write_row().  So, log_row_for_replication
+     * call to insertRecord().  So, log_row_for_replication
      * could be called either once or twice for a REPLACE
      * statement.  The below looks at the values of before_record
      * and after_record to determine which call to this
@@ -1485,7 +1485,7 @@ int Cursor::ha_reset()
 }
 
 
-int Cursor::ha_write_row(unsigned char *buf)
+int Cursor::insertRecord(unsigned char *buf)
 {
   int error;
 
@@ -1500,7 +1500,7 @@ int Cursor::ha_write_row(unsigned char *buf)
 
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= write_row(buf);
+  error= doInsertRecord(buf);
   DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(error))
