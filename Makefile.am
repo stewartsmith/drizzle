@@ -136,6 +136,8 @@ include support-files/include.am
 include tests/include.am
 include unittests/include.am
 
+TESTS += ${check_PROGRAMS}
+
 merge-clean:
 	find ./ | $(GREP) \.orig | xargs rm -f
 	find ./ | $(GREP) \.rej | xargs rm -f
