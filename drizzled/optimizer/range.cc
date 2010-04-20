@@ -135,8 +135,6 @@
 
 #include "drizzled/temporal.h" /* Needed in get_mm_leaf() for timestamp -> datetime comparisons */
 
-#include "drizzled/memory/multi_malloc.h"
-
 using namespace std;
 namespace drizzled
 {
@@ -4161,8 +4159,8 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
 
   quick->mrr_buf_size= session->variables.read_rnd_buff_size;
   if (table->cursor->multi_range_read_info(quick->index, 1, (uint32_t)records,
-                                         &quick->mrr_buf_size,
-                                         &quick->mrr_flags, &cost))
+                                           &quick->mrr_buf_size,
+                                           &quick->mrr_flags, &cost))
     goto err;
 
   return quick;

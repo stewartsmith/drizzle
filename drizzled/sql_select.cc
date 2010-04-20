@@ -5417,12 +5417,10 @@ int remove_dup_with_hash_index(Session *session,
   HASH hash;
 
   if (! memory::multi_malloc(false,
-		       &key_buffer,
-		       (uint32_t) ((key_length + extra_length) *
-			       (long) cursor->stats.records),
-		       &field_lengths,
-		       (uint32_t) (field_count*sizeof(*field_lengths)),
-		       NULL))
+			     &key_buffer,
+			     (uint32_t) ((key_length + extra_length) * (long) cursor->stats.records),
+			     &field_lengths, (uint32_t) (field_count*sizeof(*field_lengths)),
+			     NULL))
     return(1);
 
   {
@@ -5447,7 +5445,7 @@ int remove_dup_with_hash_index(Session *session,
   }
 
   cursor->ha_rnd_init(1);
-  key_pos=key_buffer;
+  key_pos= key_buffer;
   for (;;)
   {
     unsigned char *org_key_pos;
