@@ -761,12 +761,8 @@ TableShare *get_cached_table_share(const char *db, const char *table_name);
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);
 Table *table_cache_insert_placeholder(Session *session, const char *key,
                                       uint32_t key_length);
-bool lock_table_name_if_not_cached(Session *session, const char *db,
-                                   const char *table_name, Table **table);
 bool reopen_table(Table *table);
 bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
-void close_data_files_and_morph_locks(Session *session, const char *db,
-                                      const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
