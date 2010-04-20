@@ -384,20 +384,12 @@ Unique::reset()
   BUFFPEK.
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static int buffpek_compare(void *arg, unsigned char *key_ptr1, unsigned char *key_ptr2)
 {
   BUFFPEK_COMPARE_CONTEXT *ctx= (BUFFPEK_COMPARE_CONTEXT *) arg;
   return ctx->key_compare(ctx->key_compare_arg,
                           *((unsigned char **) key_ptr1), *((unsigned char **)key_ptr2));
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 /*
  The comparison function object, passed to a priority_queue in merge_walk()

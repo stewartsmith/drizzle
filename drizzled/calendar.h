@@ -91,10 +91,6 @@
 namespace drizzled
 {
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Different calendars supported by the temporal library
  */
@@ -334,10 +330,6 @@ uint32_t year_month_to_months(uint32_t year_month);
  * @param Number of months
  */
 uint32_t months_to_year_month(uint32_t months);
-
-#ifdef __cplusplus
-}
-#endif
 
 } /* namespace drizzled */
 

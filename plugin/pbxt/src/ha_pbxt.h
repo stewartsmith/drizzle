@@ -346,14 +346,12 @@ void			ha_set_auto_increment(XTOpenTablePtr ot, Field *nr);
 extern "C" struct charset_info_st *thd_charset(MYSQL_THD thd);
 extern "C" char **thd_query(MYSQL_THD thd);
 extern "C" int thd_slave_thread(const MYSQL_THD thd);
-extern "C" int thd_non_transactional_update(const MYSQL_THD thd);
 extern "C" int thd_binlog_format(const MYSQL_THD thd);
 extern "C" void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all);
 #else
 #define thd_charset(t)						(t)->charset()
 #define thd_query(t)						&(t)->query
 #define thd_slave_thread(t)					(t)->slave_thread
-#define thd_non_transactional_update(t)		(t)->transaction.all.modified_non_trans_table
 #define thd_binlog_format(t)				(t)->variables.binlog_format
 #define thd_mark_transaction_to_rollback(t)	mark_transaction_to_rollback(t, all)
 #endif // INNODB_COMPATIBILITY_HOOKS */
