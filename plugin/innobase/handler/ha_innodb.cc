@@ -4200,7 +4200,7 @@ if its index columns are updated!
 @return error number or 0 */
 UNIV_INTERN
 int
-ha_innobase::update_row(
+ha_innobase::doUpdateRecord(
 /*====================*/
   const unsigned char*  old_row,/*!< in: old row in MySQL format */
   unsigned char*    new_row)/*!< in: new row in MySQL format */
@@ -7828,7 +7828,7 @@ ha_innobase::get_auto_increment(
   }
 
   /* The increment to be used to increase the AUTOINC value, we use
-  this in doInsertRecord() and update_row() to increase the autoinc counter
+  this in doInsertRecord() and doUpdateRecord() to increase the autoinc counter
   for columns that are filled by the user. We need the offset and
   the increment. */
   prebuilt->autoinc_offset = offset;

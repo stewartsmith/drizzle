@@ -248,12 +248,12 @@ public:
   /**
     These functions represent the public interface to *users* of the
     Cursor class, hence they are *not* virtual. For the inheritance
-    interface, see the (private) functions doInsertRecord(), update_row(),
+    interface, see the (private) functions doInsertRecord(), doUpdateRecord(),
     and delete_row() below.
   */
   int ha_external_lock(Session *session, int lock_type);
   int insertRecord(unsigned char * buf);
-  int ha_update_row(const unsigned char * old_data, unsigned char * new_data);
+  int updateRecord(const unsigned char * old_data, unsigned char * new_data);
   int ha_delete_row(const unsigned char * buf);
   void ha_release_auto_increment();
 
@@ -579,7 +579,7 @@ private:
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int update_row(const unsigned char *, unsigned char *)
+  virtual int doUpdateRecord(const unsigned char *, unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }

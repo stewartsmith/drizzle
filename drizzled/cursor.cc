@@ -1515,7 +1515,7 @@ int Cursor::insertRecord(unsigned char *buf)
 }
 
 
-int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data)
+int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
   int error;
 
@@ -1527,7 +1527,7 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= update_row(old_data, new_data);
+  error= doUpdateRecord(old_data, new_data);
   DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(error))

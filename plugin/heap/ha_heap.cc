@@ -345,7 +345,7 @@ int ha_heap::doInsertRecord(unsigned char * buf)
   return res;
 }
 
-int ha_heap::update_row(const unsigned char * old_data, unsigned char * new_data)
+int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_data)
 {
   int res;
   ha_statistic_increment(&system_status_var::ha_update_count);

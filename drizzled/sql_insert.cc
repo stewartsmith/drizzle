@@ -820,7 +820,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
              !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
-          if ((error=table->cursor->ha_update_row(table->record[1],
+          if ((error=table->cursor->updateRecord(table->record[1],
                                                 table->record[0])) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
           {
@@ -875,7 +875,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             (table->timestamp_field_type == TIMESTAMP_NO_AUTO_SET ||
              table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
         {
-          if ((error=table->cursor->ha_update_row(table->record[1],
+          if ((error=table->cursor->updateRecord(table->record[1],
 					        table->record[0])) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
             goto err;

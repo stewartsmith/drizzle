@@ -2641,7 +2641,7 @@ static void dump_buf(unsigned char *buf, int len)
  * ha_berekly.cc has an example of how to store it intact by "packing" it
  * for ha_berkeley's own native storage type.
 
- * See the note for update_row() on auto_increments and timestamps. This
+ * See the note for doUpdateRecord() on auto_increments and timestamps. This
  * case also applied to doInsertRecord().
 
  * Called from item_sum.cc, item_sum.cc, sql_acl.cc, sql_insert.cc,
@@ -2764,14 +2764,14 @@ static void dump_bin(const byte *a_in, int offset, int len_in)
 #endif
 
 /*
- * Yes, update_row() does what you expect, it updates a row. old_data will have
+ * Yes, doUpdateRecord() does what you expect, it updates a row. old_data will have
  * the previous row record in it, while new_data will have the newest data in
  * it. Keep in mind that the server can do updates based on ordering if an ORDER BY
  * clause was used. Consecutive ordering is not guarenteed.
  *
  * Called from sql_select.cc, sql_acl.cc, sql_update.cc, and sql_insert.cc.
  */
-int ha_pbxt::update_row(const byte * old_data, byte * new_data)
+int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 {
 	int						err = 0;
 	register XTThreadPtr	self = pb_open_tab->ot_thread;

@@ -245,7 +245,7 @@ class ha_pbxt: public handler
 	void	set_auto_increment(Field *nr);
 
 	int		doInsertRecord(byte * buf);
-	int		update_row(const byte * old_data, byte * new_data);
+	int		doUpdateRecord(const byte * old_data, byte * new_data);
 	int		delete_row(const byte * buf);
 
 	/* Index access functions: */

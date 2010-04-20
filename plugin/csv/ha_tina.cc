@@ -998,7 +998,7 @@ int ha_tina::open_update_temp_file_if_needed()
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
-int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
+int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
 {
   int size;
   int rc= -1;

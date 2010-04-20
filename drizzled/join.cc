@@ -2875,7 +2875,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
   {						/* Update old record */
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
-    if ((error= table->cursor->ha_update_row(table->record[1],
+    if ((error= table->cursor->updateRecord(table->record[1],
                                           table->record[0])))
     {
       table->print_error(error,MYF(0));
@@ -2948,7 +2948,7 @@ enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *, bool end_of_re
     }
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
-    if ((error= table->cursor->ha_update_row(table->record[1],
+    if ((error= table->cursor->updateRecord(table->record[1],
                                           table->record[0])))
     {
       table->print_error(error,MYF(0));

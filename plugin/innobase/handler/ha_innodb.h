@@ -131,7 +131,7 @@ class ha_innobase: public Cursor
 	UNIV_INTERN double read_time(uint index, uint ranges, ha_rows rows);
 
 	UNIV_INTERN int doInsertRecord(unsigned char * buf);
-	UNIV_INTERN int update_row(const unsigned char * old_data, unsigned char * new_data);
+	UNIV_INTERN int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
 	UNIV_INTERN int delete_row(const unsigned char * buf);
 	UNIV_INTERN bool was_semi_consistent_read();
 	UNIV_INTERN void try_semi_consistent_read(bool yes);
