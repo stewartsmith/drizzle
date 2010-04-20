@@ -50,10 +50,10 @@ int BlitzEngine::doCreateTable(drizzled::Session *,
 
   /* Create relevant files for a new table and close them immediately.
      All we want to do here is somewhat like UNIX touch(1). */
-  if ((ecode = dict.create_data_table(proto, table, identifier.getPath().c_str())) != 0)
+  if ((ecode = dict.create_data_table(proto, table, identifier)) != 0)
     return ecode;
 
-  if ((ecode = dict.create_system_table(identifier.getPath().c_str())) != 0)
+  if ((ecode = dict.create_system_table(identifier.getPath())) != 0)
     return ecode;
 
   /* Create b+tree index(es) for this table. */
@@ -63,7 +63,7 @@ int BlitzEngine::doCreateTable(drizzled::Session *,
   }
 
   /* Write the table definition to system table. */
-  if ((ecode = dict.open_system_table(identifier.getPath().c_str(), HDBOWRITER)) != 0)
+  if ((ecode = dict.open_system_table(identifier.getPath(), HDBOWRITER)) != 0)
     return ecode; 
 
   if (!dict.write_table_definition(proto)) {
@@ -103,8 +103,10 @@ int BlitzEngine::doDropTable(drizzled::Session &,
   int err;
 
   /* We open the dictionary to extract meta data from it */
-  if ((err = dict.open_data_table(identifier.getPath().c_str(), HDBOREADER)) != 0)
+  if ((err = dict.open_data_table(identifier.getPath().c_str(),
+                                  HDBOREADER)) != 0) {
     return err;
+  }
 
   nkeys = dict.read_meta_keycount();
 
@@ -136,14 +138,14 @@ int BlitzEngine::doDropTable(drizzled::Session &,
 int BlitzEngine::doGetTableDefinition(drizzled::Session &,
                                       drizzled::TableIdentifier &identifier,
                                       drizzled::message::Table &proto) {
-  char name_buffer[FN_REFLEN];
   struct stat stat_info;
+  std::string path(identifier.getPath());
 
   pthread_mutex_lock(&proto_cache_mutex);
 
-  snprintf(name_buffer, FN_REFLEN, "%s%s", identifier.getPath().c_str(), BLITZ_SYSTEM_EXT);
+  path.append(BLITZ_SYSTEM_EXT);
 
-  if (stat(name_buffer, &stat_info)) {
+  if (stat(path.c_str(), &stat_info)) {
     pthread_mutex_unlock(&proto_cache_mutex);
     return errno;
   }
@@ -152,7 +154,7 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
   char *proto_string;
   int proto_string_len;
 
-  if (db.open_system_table(identifier.getPath().c_str(), HDBOREADER) != 0) {
+  if (db.open_system_table(identifier.getPath(), HDBOREADER) != 0) {
     pthread_mutex_unlock(&proto_cache_mutex);
     return HA_ERR_CRASHED_ON_USAGE;
   }

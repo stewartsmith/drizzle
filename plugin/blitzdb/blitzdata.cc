@@ -59,17 +59,19 @@ int BlitzData::shutdown() {
 
 /* Similar to UNIX touch(1) but generates a TCHDB file. */
 int BlitzData::create_data_table(drizzled::message::Table &proto,
-                                 Table &table_info, const char *path) {
+                                 drizzled::Table &table_info,
+                                 drizzled::TableIdentifier &identifier) {
+  uint64_t autoinc = 0;
+  int mode = (HDBOWRITER | HDBOCREAT);
   int rv;
-  uint64_t autoinc;
 
-  if ((rv = open_data_table(path, (HDBOWRITER | HDBOCREAT))) != 0)
+  if ((rv = open_data_table(identifier.getPath().c_str(), mode)) != 0)
     return rv;
 
   autoinc = (proto.options().has_auto_increment_value())
             ? proto.options().auto_increment_value() - 1 : 0;
 
-  write_meta_autoinc(autoinc); 
+  write_meta_autoinc(autoinc);
   write_meta_keycount(table_info.s->keys);
 
   if ((rv = close_data_table()) != 0)
@@ -253,16 +255,17 @@ bool BlitzData::delete_all_rows() {
    It is deliberately separated from the data dictionary code because we
    might move to a simple flat file structure in the future. For now we
    use a micro Tokyo Cabinet database for this. */
-int BlitzData::create_system_table(const char *path) {
+int BlitzData::create_system_table(const std::string &path) {
   int rv = 0;
+  int mode = (HDBOWRITER | HDBOCREAT);
 
-  if ((rv = open_system_table(path, (HDBOWRITER | HDBOCREAT))) != 0)
+  if ((rv = open_system_table(path.c_str(), mode)) != 0)
     return rv;
 
   return close_system_table();
 }
 
-int BlitzData::open_system_table(const char *path, const int mode) {
+int BlitzData::open_system_table(const std::string &path, const int mode) {
   char buf[FN_REFLEN];
   const int BUCKETS = 7;
 
@@ -279,7 +282,7 @@ int BlitzData::open_system_table(const char *path, const int mode) {
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
-  snprintf(buf, FN_REFLEN, "%s%s", path, BLITZ_SYSTEM_EXT);
+  snprintf(buf, FN_REFLEN, "%s%s", path.c_str(), BLITZ_SYSTEM_EXT);
 
   if (!tchdbopen(system_table, buf, mode)) {
     tchdbdel(system_table);

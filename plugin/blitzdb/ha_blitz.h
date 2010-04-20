@@ -101,7 +101,9 @@ public:
 
   /* DATA DICTIONARY CREATION RELATED */
   int create_data_table(drizzled::message::Table &proto,
-                        drizzled::Table &table, const char *path);
+                        drizzled::Table &table,
+                        drizzled::TableIdentifier &identifier);
+
   int open_data_table(const char *path, const int mode);
   int close_data_table(void);
   bool rename_table(const char *from, const char *to);
@@ -133,8 +135,8 @@ public:
   bool delete_all_rows(void);
 
   /* SYSTEM TABLE RELATED */
-  int create_system_table(const char *path);
-  int open_system_table(const char *path, const int mode);
+  int create_system_table(const std::string &path);
+  int open_system_table(const std::string &path, const int mode);
   int close_system_table(void);
   bool write_table_definition(drizzled::message::Table &proto);
   char *get_system_entry(const char *key, const size_t klen, int *vlen);
