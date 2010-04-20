@@ -10,7 +10,7 @@ AC_DEFUN([PANDORA_ENABLE_DTRACE],[
   AC_ARG_ENABLE([dtrace],
     [AS_HELP_STRING([--disable-dtrace],
             [Build with support for the DTRACE. @<:@default=on@:>@])],
-    [ac_cv_enable_dtrace="$enableval
+    [ac_cv_enable_dtrace="$enableval"],
     [ac_cv_enable_dtrace="yes"])
 
   AS_IF([test "$ac_cv_enable_dtrace" = "yes"],[
