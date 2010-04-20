@@ -5409,23 +5409,25 @@ int remove_dup_with_hash_index(Session *session,
                                uint32_t key_length,
                                Item *having)
 {
-  unsigned char *key_buffer, *key_pos, *record=table->record[0];
+  unsigned char *key_pos, *record=table->record[0];
   int error;
   Cursor *cursor= table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
   uint32_t *field_lengths,*field_length;
   HASH hash;
+  std::vector<unsigned char>key_buffer;
 
-  if (! memory::multi_malloc(false,
-			     &key_buffer,
-			     (uint32_t) ((key_length + extra_length) * (long) cursor->stats.records),
-			     &field_lengths, (uint32_t) (field_count*sizeof(*field_lengths)),
-			     NULL))
+  key_buffer.resize((key_length + extra_length) * (long) cursor->stats.records);
+
+  field_lengths= (uint32_t *)std::malloc(field_count * sizeof(*field_lengths));
+
+  if (field_lengths == NULL)
     return(1);
 
   {
     Field **ptr;
     uint32_t total_length= 0;
+
     for (ptr= first_field, field_length=field_lengths ; *ptr ; ptr++)
     {
       uint32_t length= (*ptr)->sort_length();
@@ -5440,12 +5442,12 @@ int remove_dup_with_hash_index(Session *session,
   if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor->stats.records, 0,
 		key_length, (hash_get_key) 0, 0, 0))
   {
-    free((char*) key_buffer);
+    free((char*) field_lengths);
     return(1);
   }
 
   cursor->ha_rnd_init(1);
-  key_pos= key_buffer;
+  key_pos= &key_buffer[0];
   for (;;)
   {
     unsigned char *org_key_pos;
@@ -5489,14 +5491,14 @@ int remove_dup_with_hash_index(Session *session,
       (void) my_hash_insert(&hash, org_key_pos);
     key_pos+=extra_length;
   }
-  free((char*) key_buffer);
+  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->ha_rnd_end();
   return(0);
 
 err:
-  free((char*) key_buffer);
+  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->ha_rnd_end();
