@@ -4215,7 +4215,7 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_reco
         copy_sum_funcs(join->sum_funcs, join->sum_funcs_end[send_group_parts]);
         if (!join->having || join->having->val_int())
         {
-          int error= table->cursor->ha_write_row(table->record[0]);
+          int error= table->cursor->insertRecord(table->record[0]);
           if (error && create_myisam_from_heap(join->session, table,
                                               join->tmp_table_param.start_recinfo,
                                                 &join->tmp_table_param.recinfo,
@@ -5344,7 +5344,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
       error=cursor->rnd_next(record);
       continue;
@@ -5371,7 +5371,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
       }
       if (table->compare_record(first_field) == 0)
       {
-        if ((error=cursor->ha_delete_row(record)))
+        if ((error=cursor->deleteRecord(record)))
           goto err;
       }
       else if (!found)
@@ -5466,7 +5466,7 @@ int remove_dup_with_hash_index(Session *session,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
       continue;
     }
@@ -5483,7 +5483,7 @@ int remove_dup_with_hash_index(Session *session,
     if (hash_search(&hash, org_key_pos, key_length))
     {
       /* Duplicated found ; Remove the row */
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
     }
     else

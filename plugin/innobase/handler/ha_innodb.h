@@ -80,7 +80,7 @@ class ha_innobase: public Cursor
 	uint		last_match_mode;/* match mode of the latest search:
 					ROW_SEL_EXACT, ROW_SEL_EXACT_PREFIX,
 					or undefined */
-	uint		num_write_row;	/*!< number of write_row() calls */
+	uint		num_doInsertRecord;	/*!< number of doInsertRecord() calls */
 
 	UNIV_INTERN uint store_key_val_for_row(uint keynr, char* buff, 
                                    uint buff_len, const unsigned char* record);
@@ -130,9 +130,9 @@ class ha_innobase: public Cursor
 	UNIV_INTERN double scan_time();
 	UNIV_INTERN double read_time(uint index, uint ranges, ha_rows rows);
 
-	UNIV_INTERN int write_row(unsigned char * buf);
-	UNIV_INTERN int update_row(const unsigned char * old_data, unsigned char * new_data);
-	UNIV_INTERN int delete_row(const unsigned char * buf);
+	UNIV_INTERN int doInsertRecord(unsigned char * buf);
+	UNIV_INTERN int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+	UNIV_INTERN int doDeleteRecord(const unsigned char * buf);
 	UNIV_INTERN bool was_semi_consistent_read();
 	UNIV_INTERN void try_semi_consistent_read(bool yes);
 	UNIV_INTERN void unlock_row();

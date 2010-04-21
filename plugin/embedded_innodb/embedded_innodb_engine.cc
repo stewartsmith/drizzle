@@ -1192,7 +1192,7 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
   return err;
 }
 
-int EmbeddedInnoDBCursor::write_row(unsigned char *)
+int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *)
 {
   if (table->next_number_field)
     update_auto_increment();

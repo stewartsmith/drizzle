@@ -3343,12 +3343,12 @@ bool create_myisam_from_heap(Session *session, Table *table,
   */
   while (!table->cursor->rnd_next(new_table.record[1]))
   {
-    write_err= new_table.cursor->ha_write_row(new_table.record[1]);
+    write_err= new_table.cursor->insertRecord(new_table.record[1]);
     if (write_err)
       goto err;
   }
   /* copy row that filled HEAP table */
-  if ((write_err=new_table.cursor->ha_write_row(table->record[0])))
+  if ((write_err=new_table.cursor->insertRecord(table->record[0])))
   {
     if (new_table.cursor->is_fatal_error(write_err, HA_CHECK_DUP) ||
 	!ignore_last_dupp_key_error)
