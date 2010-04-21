@@ -2345,7 +2345,7 @@ int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
   {
     /* Get reference pointers to sum functions in place */
     memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
-     ref_pointer_array_size);
+           ref_pointer_array_size);
     if ((!having || having->val_int()))
     {
       int write_error;
@@ -2359,11 +2359,8 @@ int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
       if ((write_error= table_arg->cursor->insertRecord(table_arg->record[0])))
       {
-  if (create_myisam_from_heap(session, table_arg,
-                                    tmp_table_param.start_recinfo,
-                                    &tmp_table_param.recinfo,
-                                    write_error, 0))
-    return 1;
+        my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+        return 1;
       }
     }
   }
@@ -2818,12 +2815,9 @@ enum_nested_loop_state end_write(JOIN *join, JoinTable *, bool end_of_records)
       {
         if (!table->cursor->is_fatal_error(error, HA_CHECK_DUP))
           goto end;
-        if (create_myisam_from_heap(join->session, table,
-                                          join->tmp_table_param.start_recinfo,
-                                          &join->tmp_table_param.recinfo,
-                  error, 1))
-          return NESTED_LOOP_ERROR;        // Not a table_is_full error
-        table->s->uniques= 0;			// To ensure rows are the same
+
+        my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+        return NESTED_LOOP_ERROR;        // Table is_full error
       }
       if (++join->send_records >= join->tmp_table_param.end_write_records && join->do_send_rows)
       {
@@ -2898,14 +2892,8 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
   copy_funcs(join->tmp_table_param.items_to_copy);
   if ((error=table->cursor->insertRecord(table->record[0])))
   {
-    if (create_myisam_from_heap(join->session, table,
-                                join->tmp_table_param.start_recinfo,
-                                &join->tmp_table_param.recinfo,
-				error, 0))
-      return NESTED_LOOP_ERROR;            // Not a table_is_full error
-    /* Change method to update rows */
-    table->cursor->ha_index_init(0, 0);
-    join->join_tab[join->tables-1].next_select= end_unique_update;
+    my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+    return NESTED_LOOP_ERROR;        // Table is_full error
   }
   join->send_records++;
   return NESTED_LOOP_OK;

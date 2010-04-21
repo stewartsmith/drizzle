@@ -118,8 +118,10 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
+  {
     res= drizzle_union(session, lex, result, &lex->unit,
 		       setup_tables_done_option);
+  }
   else
   {
     Select_Lex_Unit *unit= &lex->unit;
@@ -3230,11 +3232,11 @@ Next_select_func setup_end_select_func(JOIN *join)
     }
     else if (join->sort_and_group && !tmp_tbl->precomputed_group_by)
     {
-      end_select=end_write_group;
+      end_select= end_write_group;
     }
     else
     {
-      end_select=end_write;
+      end_select= end_write;
       if (tmp_tbl->precomputed_group_by)
       {
         /*
@@ -4216,11 +4218,12 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_reco
         if (!join->having || join->having->val_int())
         {
           int error= table->cursor->insertRecord(table->record[0]);
-          if (error && create_myisam_from_heap(join->session, table,
-                                              join->tmp_table_param.start_recinfo,
-                                                &join->tmp_table_param.recinfo,
-                                              error, 0))
-          return NESTED_LOOP_ERROR;
+
+          if (error)
+          {
+            my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+            return NESTED_LOOP_ERROR;
+          }
         }
         if (join->rollup.state != ROLLUP::STATE_NONE)
         {

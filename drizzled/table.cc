@@ -2367,7 +2367,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (group)
   {
     if (! param->quick_group)
+    {
       group= 0;					// Can't use group key
+    }
     else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
     {
       /*
@@ -2609,7 +2611,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   /* If result table is small; use a heap */
   /* future: storage engine selection can be made dynamic? */
-  if (blob_count || using_unique_constraint ||
+  if (blob_count || using_unique_constraint || 
+      (session->lex->select_lex.options & SELECT_BIG_RESULT) ||
+      (session->lex->current_select->olap == ROLLUP_TYPE) ||
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     share->storage_engine= myisam_engine;
@@ -2617,7 +2621,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
+    {
       using_unique_constraint= true;
+    }
   }
   else
   {
@@ -3280,117 +3286,6 @@ void Table::free_tmp_table(Session *session)
 
   own_root.free_root(MYF(0)); /* the table is allocated in its own root */
   session->set_proc_info(save_proc_info);
-}
-
-/**
-  If a HEAP table gets full, create a MyISAM table and copy all rows
-  to this.
-*/
-
-bool create_myisam_from_heap(Session *session, Table *table,
-                             MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo,
-			     int error, bool ignore_last_dupp_key_error)
-{
-  Table new_table;
-  TableShare share;
-  const char *save_proc_info;
-  int write_err;
-
-  if (table->s->db_type() != heap_engine ||
-      error != HA_ERR_RECORD_FILE_FULL)
-  {
-    table->print_error(error, MYF(0));
-    return true;
-  }
-
-  // Release latches since this can take a long time
-  plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
-
-  new_table= *table;
-  share= *table->s;
-  new_table.s= &share;
-  new_table.s->storage_engine= myisam_engine;
-  if (not (new_table.cursor= new_table.s->db_type()->getCursor(share, &new_table.mem_root)))
-    return true;				// End of memory
-
-  save_proc_info=session->get_proc_info();
-  session->set_proc_info("converting HEAP to MyISAM");
-
-  if (new_table.create_myisam_tmp_table(table->key_info, start_recinfo,
-					recinfo, session->lex->select_lex.options |
-					session->options))
-    goto err2;
-  if (new_table.open_tmp_table())
-    goto err1;
-  if (table->cursor->indexes_are_disabled())
-    new_table.cursor->ha_disable_indexes(HA_KEY_SWITCH_ALL);
-  table->cursor->ha_index_or_rnd_end();
-  table->cursor->ha_rnd_init(1);
-  if (table->no_rows)
-  {
-    new_table.cursor->extra(HA_EXTRA_NO_ROWS);
-    new_table.no_rows=1;
-  }
-
-  /* HA_EXTRA_WRITE_CACHE can stay until close, no need to disable it */
-  new_table.cursor->extra(HA_EXTRA_WRITE_CACHE);
-
-  /*
-    copy all old rows from heap table to MyISAM table
-    This is the only code that uses record[1] to read/write but this
-    is safe as this is a temporary MyISAM table without timestamp/autoincrement.
-  */
-  while (!table->cursor->rnd_next(new_table.record[1]))
-  {
-    write_err= new_table.cursor->insertRecord(new_table.record[1]);
-    if (write_err)
-      goto err;
-  }
-  /* copy row that filled HEAP table */
-  if ((write_err=new_table.cursor->insertRecord(table->record[0])))
-  {
-    if (new_table.cursor->is_fatal_error(write_err, HA_CHECK_DUP) ||
-	!ignore_last_dupp_key_error)
-      goto err;
-  }
-
-  /* remove heap table and change to use myisam table */
-  (void) table->cursor->ha_rnd_end();
-  (void) table->cursor->close();                  // This deletes the table !
-  delete table->cursor;
-  table->cursor= NULL;
-  new_table.s= table->s;                       // Keep old share
-  *table= new_table;
-  *table->s= share;
-
-  table->cursor->change_table_ptr(table, table->s);
-  table->use_all_columns();
-  if (save_proc_info)
-  {
-    const char *new_proc_info=
-      (!strcmp(save_proc_info,"Copying to tmp table") ?
-      "Copying to tmp table on disk" : save_proc_info);
-    session->set_proc_info(new_proc_info);
-  }
-  return false;
-
- err:
-  table->print_error(write_err, MYF(0));
-  (void) table->cursor->ha_rnd_end();
-  (void) new_table.cursor->close();
-
- err1:
-  {
-    TableIdentifier identifier(new_table.s->getSchemaName(), new_table.s->table_name.str, new_table.s->table_name.str);
-    new_table.s->db_type()->doDropTable(*session, identifier);
-  }
-
- err2:
-  delete new_table.cursor;
-  session->set_proc_info(save_proc_info);
-  table->mem_root= new_table.mem_root;
-  return true;
 }
 
 my_bitmap_map *Table::use_all_columns(MyBitmap *bitmap)
