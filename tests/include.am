@@ -52,7 +52,7 @@ EXTRA_DIST += \
 	${srcdir}/tests/lib/*.pl \
 	${srcdir}/tests/lib/My/*.pm
 
-check: test-drizzle
+check-local: test-drizzle
 
 # dtr - a shortcut for executing test-run.pl
 tests/dtr:
@@ -86,7 +86,7 @@ tests/test-run: tests/var
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
-test: test-drizzle
+test: check
 
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification

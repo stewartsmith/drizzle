@@ -19,7 +19,6 @@
 #define DRIZZLED_INTERNAL_MY_PTHREAD_H
 
 #include <unistd.h>
-#include <signal.h>
 
 #ifndef ETIME
 #define ETIME ETIMEDOUT				/* For FreeBSD */
@@ -44,29 +43,6 @@ namespace internal
 #define pthread_key(T,V) pthread_key_t V
 #define pthread_handler_t void *
 typedef void *(* pthread_handler)(void *);
-
-
-/*
-  We define my_sigset() and use that instead of the system sigset() so that
-  we can favor an implementation based on sigaction(). On some systems, such
-  as Mac OS X, sigset() results in flags such as SA_RESTART being set, and
-  we want to make sure that no such flags are set.
-*/
-#if !defined(my_sigset)
-#define my_sigset(A,B) do { struct sigaction l_s; sigset_t l_set; int l_rc; \
-                            assert((A) != 0);                          \
-                            sigemptyset(&l_set);                            \
-                            l_s.sa_handler = (B);                           \
-                            l_s.sa_mask   = l_set;                          \
-                            l_s.sa_flags   = 0;                             \
-                            l_rc= sigaction((A), &l_s, (struct sigaction *) NULL);\
-                            assert(l_rc == 0);                         \
-                          } while (0)
-#elif defined(HAVE_SIGSET) && !defined(my_sigset)
-#define my_sigset(A,B) sigset((A),(B))
-#elif !defined(my_sigset)
-#define my_sigset(A,B) signal((A),(B))
-#endif
 
 #ifndef my_pthread_attr_setprio
 #ifdef HAVE_PTHREAD_ATTR_SETPRIO

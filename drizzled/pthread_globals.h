@@ -36,6 +36,7 @@ extern pthread_rwlock_t LOCK_system_variables_hash;
 extern pthread_cond_t COND_refresh;
 extern pthread_cond_t COND_thread_count;
 extern pthread_cond_t COND_global_read_lock;
+extern pthread_cond_t  COND_server_end;
 extern pthread_attr_t connection_attrib;
 extern pthread_t signal_thread;
 
