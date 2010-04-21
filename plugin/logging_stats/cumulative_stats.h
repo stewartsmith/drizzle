@@ -27,71 +27,64 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
-#define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
+#ifndef PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H
+#define PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H
 
 #include "scoreboard_slot.h"
-#include "cumulative_stats.h"
-#include "user_commands.h"
-#include "scoreboard.h"
+#include "global_stats.h"
 
 #include <drizzled/atomics.h>
-#include <drizzled/enum.h>
-#include <drizzled/session.h>
-#include <drizzled/plugin/logging.h>
 
-#include <string>
 #include <vector>
 
-class LoggingStats: public drizzled::plugin::Logging
+class CumulativeStats
 {
 public:
+  CumulativeStats(uint32_t in_cumulative_stats_by_user_max);
 
-  LoggingStats(std::string name_arg);
+  ~CumulativeStats();
 
-  ~LoggingStats();
+  void logUserStats(ScoreboardSlot* scoreboard_slot);
 
-  virtual bool post(drizzled::Session *session);
+  void logGlobalStats(ScoreboardSlot* scoreboard_slot);
 
-  virtual bool postEnd(drizzled::Session *session);
-
-  bool isEnabled() const
+  std::vector<ScoreboardSlot* > *getCumulativeStatsByUserVector()
   {
-    return is_enabled;
+    return cumulative_stats_by_user_vector;
   }
 
-  void enable()
+  const GlobalStats *getGlobalStats()
   {
-    is_enabled= true;
+    return global_stats;
   }
 
-  void disable()
+  uint32_t getCumulativeStatsByUserMax()
   {
-    is_enabled= false;
+    return cumulative_stats_by_user_max; 
   }
 
-  Scoreboard *getCurrentScoreboard()
-  {          
-    return current_scoreboard;
+  uint32_t getUserWritingIndex()
+  {
+    return user_index_writing;
   }
 
-  CumulativeStats *getCumulativeStats()
+  uint32_t getUserReadingIndex()
   {
-    return cumulative_stats;
+    return user_index_reading;
+  }
+
+  bool hasOpenUserSlots()
+  {
+    return isOpenUserSlots;
   }
 
 private:
-  static const int32_t UNINITIALIZED= -1;
-
-  Scoreboard *current_scoreboard;
-
-  CumulativeStats *cumulative_stats;
-
-  bool isBeingLogged(drizzled::Session *session);
-
-  void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
-
-  drizzled::atomic<bool> is_enabled;
-
+  std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
+  GlobalStats *global_stats; 
+  uint32_t cumulative_stats_by_user_max;
+  drizzled::atomic<uint32_t> user_index_writing;
+  drizzled::atomic<uint32_t> user_index_reading;
+  bool isOpenUserSlots;
 };
-#endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */
+
+#endif /* PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H */

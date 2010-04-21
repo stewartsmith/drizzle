@@ -155,7 +155,7 @@ CumulativeCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_loggi
 
   if (logging_stats->isEnabled())
   {
-    total_records= logging_stats->getCumulativeStatsByUserIndex();
+    total_records= logging_stats->getCumulativeStats()->getUserReadingIndex();
   }
   else
   {
@@ -171,7 +171,7 @@ bool CumulativeCommandsTool::Generator::populate()
   }
 
   ScoreboardSlot *cumulative_scoreboard_slot= 
-    logging_stats->getCumulativeStatsByUserVector()->at(record_number);
+    logging_stats->getCumulativeStats()->getCumulativeStatsByUserVector()->at(record_number);
 
   push(cumulative_scoreboard_slot->getUser());
   push(cumulative_scoreboard_slot->getUserCommands()->getSelectCount());
