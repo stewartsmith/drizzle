@@ -769,20 +769,11 @@ int ha_archive::index_init(uint32_t keynr, bool)
   the optimizer that we have unique indexes, we scan
 */
 int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
-                             uint32_t key_len, enum ha_rkey_function find_flag)
-{
-  int rc;
-  rc= index_read_idx(buf, active_index, key, key_len, find_flag);
-  return(rc);
-}
-
-
-int ha_archive::index_read_idx(unsigned char *buf, uint32_t index, const unsigned char *key,
-                               uint32_t key_len, enum ha_rkey_function)
+                             uint32_t key_len, enum ha_rkey_function)
 {
   int rc;
   bool found= 0;
-  KEY *mkey= &table->s->key_info[index];
+  KEY *mkey= &table->s->key_info[0];
   current_k_offset= mkey->key_part->offset;
   current_key= key;
   current_key_len= key_len;

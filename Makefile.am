@@ -22,6 +22,7 @@ check_PROGRAMS =
 noinst_HEADERS =
 nobase_nodist_include_HEADERS =
 nobase_dist_include_HEADERS =
+sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
@@ -66,19 +67,7 @@ include config/pandora-plugin.am
 EXTRA_DIST+=	${man_MANS}
 
 .PHONY: \
-	indent \
-	test
-
-
-# Target 'test' will run the regression test suite using the built server.
-#
-# If you are running in a shared environment, users can avoid clashing
-# port numbers by setting individual small numbers 1-100 to the
-# environment variable MTR_BUILD_THREAD. The script "test-run"
-# will then calculate the various port numbers it needs from this,
-# making sure each user use different ports.
-
-test: test-drizzle
+	indent
 
 doxygen:
 	doxygen Doxyfile
@@ -136,11 +125,11 @@ clean-local:
 
 include config/lint-source.am
 
+include drizzled/message/include.am
 include drizzled/include.am
 include drizzled/internal/include.am
 include drizzled/algorithm/include.am
 include drizzled/util/include.am
-include drizzled/message/include.am
 include client/include.am
 include extra/include.am
 include support-files/include.am

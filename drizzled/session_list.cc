@@ -35,7 +35,7 @@ namespace drizzled
 
 SessionList session_list;
 
-vector<Session*> &getSessionList()
+SessionList &getSessionList()
 {
   return session_list;
 }

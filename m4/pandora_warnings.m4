@@ -146,6 +146,8 @@ uint16_t x= htons(80);
         BASE_WARNINGS_FULL="-Wformat=2 ${W_CONVERSION} -Wstrict-aliasing"
         CC_WARNINGS_FULL="-Wswitch-default -Wswitch-enum -Wwrite-strings"
         CXX_WARNINGS_FULL="-Weffc++ -Wold-style-cast"
+        NO_OLD_STYLE_CAST="-Wno-old-style-cast"
+        NO_EFF_CXX="-Wno-effc++"
       ],[
         BASE_WARNINGS_FULL="-Wformat ${NO_STRICT_ALIASING}"
       ])
@@ -342,6 +344,8 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
   AC_SUBST(NO_UNREACHED)
   AC_SUBST(NO_SHADOW)
   AC_SUBST(NO_STRICT_ALIASING)
+  AC_SUBST(NO_EFF_CXX)
+  AC_SUBST(NO_OLD_STYLE_CAST)
   AC_SUBST(PROTOSKIP_WARNINGS)
   AC_SUBST(INNOBASE_SKIP_WARNINGS)
   AC_SUBST(NO_WERROR)
