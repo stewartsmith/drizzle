@@ -479,6 +479,12 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/version.h
 %{_includedir}/drizzled/visibility.h
 %{_includedir}/drizzled/xid.h
+%{_libdir}/libdrizzled.la
+%{_libdir}/libdrizzled.so
+%{_libdir}/libdrizzled.so.*
+%{_libdir}/libdrizzledmessage.la
+%{_libdir}/libdrizzledmessage.so
+%{_libdir}/libdrizzledmessage.so.*
 %{_libdir}/drizzle/libarchive_plugin.la
 %{_libdir}/drizzle/libarchive_plugin.so
 %{_libdir}/drizzle/libascii_plugin.la

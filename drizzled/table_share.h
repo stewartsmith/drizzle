@@ -563,7 +563,7 @@ public:
 
     /* We must copy mem_root from share because share is allocated through it */
     memcpy(&new_mem_root, &mem_root, sizeof(new_mem_root));
-    free_root(&new_mem_root, MYF(0));                 // Free's share
+    new_mem_root.free_root(MYF(0));                 // Free's share
   }
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);

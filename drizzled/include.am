@@ -18,8 +18,6 @@
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
-sbin_PROGRAMS= drizzled/drizzled
-
 DTRACEFILES= \
 	     drizzled/cursor.o \
 	     drizzled/drizzled.o \
@@ -54,12 +52,15 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/comp_creator.h \
 			      drizzled/create_field.h \
 			      drizzled/current_session.h \
+			      drizzled/cursor.h \
 			      drizzled/data_home.h \
 			      drizzled/db.h \
 			      drizzled/decimal.h \
 			      drizzled/definitions.h \
 			      drizzled/diagnostics_area.h \
 			      drizzled/discrete_interval.h \
+			      drizzled/drizzle_time.h \
+			      drizzled/drizzled.h \
 			      drizzled/dtcollation.h \
 			      drizzled/dynamic_array.h \
 			      drizzled/enum.h \
@@ -184,14 +185,12 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/time/unix_timestamp.h \
 			      drizzled/function/time/weekday.h \
 			      drizzled/function/time/year.h  \
-			      drizzled/typelib.h \
 			      drizzled/function/units.h \
 			      drizzled/function/user_var_as_out_param.h \
 			      drizzled/function_hash.h \
 			      drizzled/gettext.h \
 			      drizzled/global_charset_info.h \
 			      drizzled/ha_statistics.h \
-			      drizzled/cursor.h \
 			      drizzled/handler_structs.h \
 			      drizzled/hybrid_type.h \
 			      drizzled/hybrid_type_traits.h \
@@ -200,7 +199,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/index_hint.h \
 			      drizzled/internal_error_handler.h \
 			      drizzled/item.h \
-			      drizzled/item_result.h \
 			      drizzled/item/basic_constant.h \
 			      drizzled/item/bin_string.h \
 			      drizzled/item/blob.h \
@@ -238,6 +236,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/item/sum.h \
 			      drizzled/item/type_holder.h \
 			      drizzled/item/uint.h \
+			      drizzled/item_result.h \
 			      drizzled/join.h \
 			      drizzled/join_cache.h \
 			      drizzled/join_table.h \
@@ -251,24 +250,20 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/lex_symbol.h \
 			      drizzled/lock.h \
 			      drizzled/lookup_symbol.h \
-			      drizzled/memory/sql_alloc.h \
 			      drizzled/memory/multi_malloc.h \
 			      drizzled/memory/root.h \
-			      drizzled/option.h \
+			      drizzled/memory/sql_alloc.h \
 			      drizzled/my_hash.h \
-			      drizzled/drizzle_time.h \
-			      drizzled/tree.h \
-			      drizzled/var.h \
 			      drizzled/name_resolution_context.h \
 			      drizzled/name_resolution_context_state.h \
 			      drizzled/named_savepoint.h \
 			      drizzled/natural_join_column.h \
 			      drizzled/nested_join.h \
 			      drizzled/open_tables_state.h \
-                              drizzled/optimizer/cost_vector.h \
+			      drizzled/optimizer/cost_vector.h \
+			      drizzled/optimizer/explain_plan.h \
 			      drizzled/optimizer/key_field.h \
 			      drizzled/optimizer/key_use.h \
-			      drizzled/optimizer/explain_plan.h \
 			      drizzled/optimizer/position.h \
 			      drizzled/optimizer/quick_group_min_max_select.h \
 			      drizzled/optimizer/quick_index_merge_select.h \
@@ -284,6 +279,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/optimizer/sel_tree.h \
 			      drizzled/optimizer/sum.h \
 			      drizzled/optimizer/table_read_plan.h \
+			      drizzled/option.h \
 			      drizzled/order.h \
 			      drizzled/parser.h \
 			      drizzled/plugin.h \
@@ -304,9 +300,9 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/null_client.h \
 			      drizzled/plugin/plugin.h \
 			      drizzled/plugin/query_cache.h \
-		              drizzled/plugin/query_rewrite.h \
-			      drizzled/plugin/registry.h \
+			      drizzled/plugin/query_rewrite.h \
 			      drizzled/plugin/replication.h \
+			      drizzled/plugin/registry.h \
 			      drizzled/plugin/scheduler.h \
 			      drizzled/plugin/storage_engine.h \
 			      drizzled/plugin/table_function.h \
@@ -314,11 +310,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/transaction_reader.h \
 			      drizzled/plugin/transaction_replicator.h \
 			      drizzled/plugin/transactional_storage_engine.h \
-			      drizzled/plugin/xa_storage_engine.h \
-			      drizzled/plugin/xa_resource_manager.h \
 			      drizzled/plugin/version.h \
-			      drizzled/pthread_globals.h \
+			      drizzled/plugin/xa_resource_manager.h \
+			      drizzled/plugin/xa_storage_engine.h \
 			      drizzled/probes.h \
+			      drizzled/pthread_globals.h \
 			      drizzled/qsort_cmp.h \
 			      drizzled/query_id.h \
 			      drizzled/records.h \
@@ -344,6 +340,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/session_list.h \
 			      drizzled/set_var.h \
 			      drizzled/show.h \
+			      drizzled/signal_handler.h \
 			      drizzled/sql_base.h \
 			      drizzled/sql_bitmap.h \
 			      drizzled/sql_error.h \
@@ -414,8 +411,10 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/thr_lock.h \
 			      drizzled/time_functions.h \
 			      drizzled/tmp_table_param.h \
-			      drizzled/transaction_services.h \
 			      drizzled/transaction_context.h \
+			      drizzled/transaction_services.h \
+			      drizzled/tree.h \
+			      drizzled/typelib.h \
 			      drizzled/tzfile.h \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
@@ -427,336 +426,349 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/utf8/checked.h \
 			      drizzled/utf8/core.h \
 			      drizzled/utf8/unchecked.h \
+			      drizzled/var.h \
 			      drizzled/version.h \
 			      drizzled/visibility.h \
 			      drizzled/xid.h
 
-DRIZZLED_LDADD= \
-		drizzled/internal/libinternal.la \
-		$(LIBZ) \
-		$(LIBINTL) \
-		${LIBC_P}
+lib_LTLIBRARIES+= drizzled/libdrizzled.la
+drizzled_libdrizzled_la_LIBADD= \
+				drizzled/algorithm/libhash.la \
+				drizzled/util/libutil.la \
+				drizzled/internal/libinternal.la \
+				drizzled/message/libdrizzledmessage.la \
+				gnulib/libgnu.la \
+				$(LIBZ) \
+				$(LIBINTL) \
+				${LIBC_P} \
+				$(pandora_plugin_libs) \
+				$(LDADD) \
+				$(LIBUUID) \
+				$(LIBDL_LIBS) \
+				$(LIBPROTOBUF) \
+				$(LIBPCRE) \
+				$(LIBTBB) \
+				$(GCOV_LIBS) 
 
-drizzled_drizzled_LDADD= \
-			 ${DRIZZLED_LDADD} \
-			 ${noinst_LTLIBRARIES} \
-			 drizzled/algorithm/libhash.la \
-			 drizzled/util/libutil.la \
-			 drizzled/message/libdrizzledmessage.la \
-			 drizzled/libcached_directory.la \
-			 drizzled/liberror.la \
-			 drizzled/libmemory.la \
-			 $(pandora_plugin_libs) \
-			 $(LDADD) $(LIBUUID) gnulib/libgnu.la \
-			 $(LIBDL_LIBS) $(LIBPROTOBUF) $(LIBPCRE) $(LIBTBB) \
-			 $(PANDORA_PLUGIN_DEP_LIBS) $(GCOV_LIBS) 
+drizzled_libdrizzled_la_DEPENDENCIES= \
+                                      drizzled/message/libdrizzledmessage.la \
+                                      ${noinst_LTLIBRARIES} \
+                                      $(pandora_plugin_libs)
 
-drizzled_drizzled_DEPENDENCIES= ${noinst_LTLIBRARIES} $(pandora_plugin_libs)
+drizzled_libdrizzled_la_SOURCES= \
+				 drizzled/alter_info.cc \
+				 drizzled/cached_item.cc \
+				 drizzled/calendar.cc \
+				 drizzled/check_stack_overrun.cc \
+				 drizzled/comp_creator.cc \
+				 drizzled/create_field.cc \
+				 drizzled/current_session.cc \
+				 drizzled/cursor.cc \
+				 drizzled/decimal.cc \
+				 drizzled/diagnostics_area.cc \
+				 drizzled/drizzle_time.cc \
+				 drizzled/drizzled.cc \
+				 drizzled/dtcollation.cc \
+				 drizzled/errmsg_print.cc \
+				 drizzled/field.cc \
+				 drizzled/field/blob.cc \
+				 drizzled/field/date.cc \
+				 drizzled/field/datetime.cc \
+				 drizzled/field/decimal.cc \
+				 drizzled/field/double.cc \
+				 drizzled/field/enum.cc \
+				 drizzled/field/int64_t.cc \
+				 drizzled/field/long.cc \
+				 drizzled/field/null.cc \
+				 drizzled/field/num.cc \
+				 drizzled/field/real.cc \
+				 drizzled/field/str.cc \
+				 drizzled/field/timestamp.cc \
+				 drizzled/field/varstring.cc \
+				 drizzled/field_conv.cc \
+				 drizzled/field_iterator.cc \
+				 drizzled/file_exchange.cc \
+				 drizzled/filesort.cc \
+				 drizzled/foreign_key.cc \
+				 drizzled/function/additive_op.cc \
+				 drizzled/function/coercibility.cc \
+				 drizzled/function/field.cc \
+				 drizzled/function/find_in_set.cc \
+				 drizzled/function/found_rows.cc \
+				 drizzled/function/func.cc \
+				 drizzled/function/get_system_var.cc \
+				 drizzled/function/get_user_var.cc \
+				 drizzled/function/last_insert.cc \
+				 drizzled/function/locate.cc \
+				 drizzled/function/math/abs.cc \
+				 drizzled/function/math/acos.cc \
+				 drizzled/function/math/asin.cc \
+				 drizzled/function/math/atan.cc \
+				 drizzled/function/math/ceiling.cc \
+				 drizzled/function/math/cos.cc \
+				 drizzled/function/math/decimal_typecast.cc \
+				 drizzled/function/math/divide.cc \
+				 drizzled/function/math/exp.cc \
+				 drizzled/function/math/floor.cc \
+				 drizzled/function/math/int.cc \
+				 drizzled/function/math/int_divide.cc \
+				 drizzled/function/math/int_val.cc \
+				 drizzled/function/math/integer.cc \
+				 drizzled/function/math/ln.cc \
+				 drizzled/function/math/log.cc \
+				 drizzled/function/math/minus.cc \
+				 drizzled/function/math/mod.cc \
+				 drizzled/function/math/multiply.cc \
+				 drizzled/function/math/neg.cc \
+				 drizzled/function/math/ord.cc \
+				 drizzled/function/math/plus.cc \
+				 drizzled/function/math/pow.cc \
+				 drizzled/function/math/rand.cc \
+				 drizzled/function/math/real.cc \
+				 drizzled/function/math/round.cc \
+				 drizzled/function/math/sin.cc \
+				 drizzled/function/math/sqrt.cc \
+				 drizzled/function/math/tan.cc \
+				 drizzled/function/min_max.cc \
+				 drizzled/function/num1.cc \
+				 drizzled/function/num_op.cc \
+				 drizzled/function/numhybrid.cc \
+				 drizzled/function/row_count.cc \
+				 drizzled/function/set_user_var.cc \
+				 drizzled/function/sign.cc \
+				 drizzled/function/str/alloc_buffer.cc \
+				 drizzled/function/str/binary.cc \
+				 drizzled/function/str/char.cc \
+				 drizzled/function/str/collation.cc \
+				 drizzled/function/str/concat.cc \
+				 drizzled/function/str/conv.cc \
+				 drizzled/function/str/conv_charset.cc \
+				 drizzled/function/str/elt.cc \
+				 drizzled/function/str/export_set.cc \
+				 drizzled/function/str/format.cc \
+				 drizzled/function/str/insert.cc \
+				 drizzled/function/str/left.cc \
+				 drizzled/function/str/load_file.cc \
+				 drizzled/function/str/make_set.cc \
+				 drizzled/function/str/pad.cc \
+				 drizzled/function/str/quote.cc \
+				 drizzled/function/str/repeat.cc \
+				 drizzled/function/str/replace.cc \
+				 drizzled/function/str/right.cc \
+				 drizzled/function/str/set_collation.cc \
+				 drizzled/function/str/str_conv.cc \
+				 drizzled/function/str/strfunc.cc \
+				 drizzled/function/str/trim.cc \
+				 drizzled/function/time/curdate.cc \
+				 drizzled/function/time/date.cc \
+				 drizzled/function/time/date_add_interval.cc \
+				 drizzled/function/time/date_format.cc \
+				 drizzled/function/time/dayname.cc \
+				 drizzled/function/time/dayofmonth.cc \
+				 drizzled/function/time/dayofyear.cc \
+				 drizzled/function/time/extract.cc \
+				 drizzled/function/time/from_days.cc \
+				 drizzled/function/time/from_unixtime.cc \
+				 drizzled/function/time/hour.cc \
+				 drizzled/function/time/last_day.cc \
+				 drizzled/function/time/makedate.cc \
+				 drizzled/function/time/microsecond.cc \
+				 drizzled/function/time/minute.cc \
+				 drizzled/function/time/month.cc \
+				 drizzled/function/time/now.cc \
+				 drizzled/function/time/period_add.cc \
+				 drizzled/function/time/period_diff.cc \
+				 drizzled/function/time/quarter.cc \
+				 drizzled/function/time/second.cc \
+				 drizzled/function/time/sysdate_local.cc \
+				 drizzled/function/time/timestamp_diff.cc \
+				 drizzled/function/time/to_days.cc \
+				 drizzled/function/time/typecast.cc \
+				 drizzled/function/time/unix_timestamp.cc \
+				 drizzled/function/time/weekday.cc \
+				 drizzled/function/time/year.cc \
+				 drizzled/function/units.cc \
+				 drizzled/function/user_var_as_out_param.cc \
+				 drizzled/ha_commands.cc \
+				 drizzled/hybrid_type_traits.cc \
+				 drizzled/hybrid_type_traits_decimal.cc \
+				 drizzled/hybrid_type_traits_integer.cc \
+				 drizzled/index_hint.cc \
+				 drizzled/item.cc \
+				 drizzled/item/bin_string.cc \
+				 drizzled/item/cache.cc \
+				 drizzled/item/cache_decimal.cc \
+				 drizzled/item/cache_int.cc \
+				 drizzled/item/cache_real.cc \
+				 drizzled/item/cache_row.cc \
+				 drizzled/item/cache_str.cc \
+				 drizzled/item/cmpfunc.cc \
+				 drizzled/item/copy_string.cc \
+				 drizzled/item/create.cc \
+				 drizzled/item/decimal.cc \
+				 drizzled/item/default_value.cc \
+				 drizzled/item/direct_ref.cc \
+				 drizzled/item/empty_string.cc \
+				 drizzled/item/field.cc \
+				 drizzled/item/float.cc \
+				 drizzled/item/hex_string.cc \
+				 drizzled/item/ident.cc \
+				 drizzled/item/insert_value.cc \
+				 drizzled/item/int.cc \
+				 drizzled/item/int_with_ref.cc \
+				 drizzled/item/null.cc \
+				 drizzled/item/num.cc \
+				 drizzled/item/outer_ref.cc \
+				 drizzled/item/ref.cc \
+				 drizzled/item/ref_null_helper.cc \
+				 drizzled/item/row.cc \
+				 drizzled/item/string.cc \
+				 drizzled/item/subselect.cc \
+				 drizzled/item/sum.cc \
+				 drizzled/item/type_holder.cc \
+				 drizzled/item/uint.cc \
+				 drizzled/join.cc \
+				 drizzled/join_cache.cc \
+				 drizzled/join_table.cc \
+				 drizzled/key.cc \
+				 drizzled/key_map.cc \
+				 drizzled/lock.cc \
+				 drizzled/lookup_symbol.cc \
+				 drizzled/my_getsystime.cc \
+				 drizzled/my_hash.cc \
+				 drizzled/name_resolution_context_state.cc \
+				 drizzled/natural_join_column.cc \
+				 drizzled/optimizer/explain_plan.cc \
+				 drizzled/optimizer/key_field.cc \
+				 drizzled/optimizer/quick_group_min_max_select.cc \
+				 drizzled/optimizer/quick_index_merge_select.cc \
+				 drizzled/optimizer/quick_range.cc \
+				 drizzled/optimizer/quick_range_select.cc \
+				 drizzled/optimizer/quick_ror_intersect_select.cc \
+				 drizzled/optimizer/quick_ror_union_select.cc \
+				 drizzled/optimizer/range.cc \
+				 drizzled/optimizer/sel_arg.cc \
+				 drizzled/optimizer/sel_imerge.cc \
+				 drizzled/optimizer/sel_tree.cc \
+				 drizzled/optimizer/sum.cc \
+				 drizzled/plugin/authentication.cc \
+				 drizzled/plugin/authorization.cc \
+				 drizzled/plugin/client.cc \
+				 drizzled/plugin/error_message.cc \
+				 drizzled/plugin/function.cc \
+				 drizzled/plugin/library.cc \
+				 drizzled/plugin/listen.cc \
+				 drizzled/plugin/listen_tcp.cc \
+				 drizzled/plugin/loader.cc \
+				 drizzled/plugin/logging.cc \
+				 drizzled/plugin/monitored_in_transaction.cc \
+				 drizzled/plugin/plugin.cc \
+				 drizzled/plugin/query_cache.cc \
+				 drizzled/plugin/query_rewrite.cc \
+				 drizzled/plugin/registry.cc \
+				 drizzled/plugin/scheduler.cc \
+				 drizzled/plugin/schema_engine.cc \
+				 drizzled/plugin/storage_engine.cc \
+				 drizzled/plugin/table_function.cc \
+				 drizzled/plugin/transaction_applier.cc \
+				 drizzled/plugin/transaction_replicator.cc \
+				 drizzled/plugin/transactional_storage_engine.cc \
+				 drizzled/plugin/xa_resource_manager.cc \
+				 drizzled/plugin/xa_storage_engine.cc \
+				 drizzled/query_id.cc \
+				 drizzled/records.cc \
+				 drizzled/replication_services.cc \
+				 drizzled/resource_context.cc \
+				 drizzled/schema_identifier.cc \
+				 drizzled/session.cc \
+				 drizzled/session_list.cc \
+				 drizzled/set_var.cc \
+				 drizzled/show.cc \
+				 drizzled/signal_handler.cc \
+				 drizzled/sql_base.cc \
+				 drizzled/sql_bitmap.cc \
+				 drizzled/sql_delete.cc \
+				 drizzled/sql_derived.cc \
+				 drizzled/sql_error.cc \
+				 drizzled/sql_insert.cc \
+				 drizzled/sql_lex.cc \
+				 drizzled/sql_list.cc \
+				 drizzled/sql_load.cc \
+				 drizzled/sql_locale.cc \
+				 drizzled/sql_parse.cc \
+				 drizzled/sql_select.cc \
+				 drizzled/sql_state.cc \
+				 drizzled/sql_string.cc \
+				 drizzled/sql_table.cc \
+				 drizzled/sql_union.cc \
+				 drizzled/sql_update.cc \
+				 drizzled/sql_yacc.yy \
+				 drizzled/stacktrace.cc \
+				 drizzled/statement/alter_schema.cc \
+				 drizzled/statement/alter_table.cc \
+				 drizzled/statement/analyze.cc \
+				 drizzled/statement/change_schema.cc \
+				 drizzled/statement/check.cc \
+				 drizzled/statement/commit.cc \
+				 drizzled/statement/create_index.cc \
+				 drizzled/statement/create_schema.cc \
+				 drizzled/statement/create_table.cc \
+				 drizzled/statement/delete.cc \
+				 drizzled/statement/drop_index.cc \
+				 drizzled/statement/drop_schema.cc \
+				 drizzled/statement/drop_table.cc \
+				 drizzled/statement/empty_query.cc \
+				 drizzled/statement/flush.cc \
+				 drizzled/statement/insert.cc \
+				 drizzled/statement/insert_select.cc \
+				 drizzled/statement/kill.cc \
+				 drizzled/statement/load.cc \
+				 drizzled/statement/release_savepoint.cc \
+				 drizzled/statement/rename_table.cc \
+				 drizzled/statement/replace.cc \
+				 drizzled/statement/replace_select.cc \
+				 drizzled/statement/rollback.cc \
+				 drizzled/statement/rollback_to_savepoint.cc \
+				 drizzled/statement/savepoint.cc \
+				 drizzled/statement/select.cc \
+				 drizzled/statement/set_option.cc \
+				 drizzled/statement/show_create.cc \
+				 drizzled/statement/show_create_schema.cc \
+				 drizzled/statement/show_errors.cc \
+				 drizzled/statement/show_warnings.cc \
+				 drizzled/statement/start_transaction.cc \
+				 drizzled/statement/truncate.cc \
+				 drizzled/statement/unlock_tables.cc \
+				 drizzled/statement/update.cc \
+				 drizzled/strfunc.cc \
+				 drizzled/table.cc \
+				 drizzled/table_function_container.cc \
+				 drizzled/table_identifier.cc \
+				 drizzled/table_list.cc \
+				 drizzled/table_share.cc \
+				 drizzled/temporal.cc \
+				 drizzled/temporal_format.cc \
+				 drizzled/temporal_interval.cc \
+				 drizzled/thr_lock.cc \
+				 drizzled/time_functions.cc \
+				 drizzled/transaction_services.cc \
+				 drizzled/tree.cc \
+				 drizzled/tztime.cc \
+				 drizzled/uniques.cc \
+				 drizzled/user_var_entry.cc \
+				 drizzled/version.cc \
+				 drizzled/xid.cc
 
-drizzled_drizzled_LDFLAGS= -export-dynamic
+sbin_PROGRAMS+= drizzled/drizzled
 
 drizzled_drizzled_SOURCES= \
-			   drizzled/alter_info.cc \
-			   drizzled/cached_item.cc \
-			   drizzled/calendar.cc \
-			   drizzled/check_stack_overrun.cc \
-			   drizzled/comp_creator.cc \
-			   drizzled/create_field.cc \
-			   drizzled/current_session.cc \
-			   drizzled/cursor.cc \
-			   drizzled/decimal.cc \
-			   drizzled/diagnostics_area.cc \
-			   drizzled/drizzled.cc \
-			   drizzled/dtcollation.cc \
-			   drizzled/errmsg_print.cc \
-			   drizzled/field.cc \
-			   drizzled/field/blob.cc \
-			   drizzled/field/date.cc \
-			   drizzled/field/datetime.cc \
-			   drizzled/field/decimal.cc \
-			   drizzled/field/double.cc \
-			   drizzled/field/enum.cc \
-			   drizzled/field/int64_t.cc \
-			   drizzled/field/long.cc \
-			   drizzled/field/null.cc \
-			   drizzled/field/num.cc \
-			   drizzled/field/real.cc \
-			   drizzled/field/str.cc \
-			   drizzled/field/timestamp.cc \
-			   drizzled/field/varstring.cc \
-			   drizzled/field_conv.cc \
-			   drizzled/field_iterator.cc \
-			   drizzled/file_exchange.cc \
-			   drizzled/filesort.cc \
-			   drizzled/foreign_key.cc \
-			   drizzled/function/additive_op.cc \
-			   drizzled/function/coercibility.cc \
-			   drizzled/function/field.cc \
-			   drizzled/function/find_in_set.cc \
-			   drizzled/function/found_rows.cc \
-			   drizzled/function/func.cc \
-			   drizzled/function/get_system_var.cc \
-			   drizzled/function/get_user_var.cc \
-			   drizzled/function/last_insert.cc \
-			   drizzled/function/locate.cc \
-			   drizzled/function/math/abs.cc \
-			   drizzled/function/math/acos.cc \
-			   drizzled/function/math/asin.cc \
-			   drizzled/function/math/atan.cc \
-			   drizzled/function/math/ceiling.cc \
-			   drizzled/function/math/cos.cc \
-			   drizzled/function/math/decimal_typecast.cc \
-			   drizzled/function/math/divide.cc \
-			   drizzled/function/math/exp.cc \
-			   drizzled/function/math/floor.cc \
-			   drizzled/function/math/int.cc \
-			   drizzled/function/math/int_divide.cc \
-			   drizzled/function/math/int_val.cc \
-			   drizzled/function/math/integer.cc \
-			   drizzled/function/math/ln.cc \
-			   drizzled/function/math/log.cc \
-			   drizzled/function/math/minus.cc \
-			   drizzled/function/math/mod.cc \
-			   drizzled/function/math/multiply.cc \
-			   drizzled/function/math/neg.cc \
-			   drizzled/function/math/ord.cc \
-			   drizzled/function/math/plus.cc \
-			   drizzled/function/math/pow.cc \
-			   drizzled/function/math/rand.cc \
-			   drizzled/function/math/real.cc \
-			   drizzled/function/math/round.cc \
-			   drizzled/function/math/sin.cc \
-			   drizzled/function/math/sqrt.cc \
-			   drizzled/function/math/tan.cc \
-			   drizzled/function/min_max.cc \
-			   drizzled/function/num1.cc \
-			   drizzled/function/num_op.cc \
-			   drizzled/function/numhybrid.cc \
-			   drizzled/function/row_count.cc \
-			   drizzled/function/set_user_var.cc \
-			   drizzled/function/sign.cc \
-			   drizzled/function/str/alloc_buffer.cc \
-			   drizzled/function/str/binary.cc \
-			   drizzled/function/str/char.cc \
-			   drizzled/function/str/collation.cc \
-			   drizzled/function/str/concat.cc \
-			   drizzled/function/str/conv.cc \
-			   drizzled/function/str/conv_charset.cc \
-			   drizzled/function/str/elt.cc \
-			   drizzled/function/str/export_set.cc \
-			   drizzled/function/str/format.cc \
-			   drizzled/function/str/insert.cc \
-			   drizzled/function/str/left.cc \
-			   drizzled/function/str/load_file.cc \
-			   drizzled/function/str/make_set.cc \
-			   drizzled/function/str/pad.cc \
-			   drizzled/function/str/quote.cc \
-			   drizzled/function/str/repeat.cc \
-			   drizzled/function/str/replace.cc \
-			   drizzled/function/str/right.cc \
-			   drizzled/function/str/set_collation.cc \
-			   drizzled/function/str/str_conv.cc \
-			   drizzled/function/str/strfunc.cc \
-			   drizzled/function/str/trim.cc \
-			   drizzled/function/time/curdate.cc \
-			   drizzled/function/time/date.cc \
-			   drizzled/function/time/date_add_interval.cc \
-			   drizzled/function/time/date_format.cc \
-			   drizzled/function/time/dayname.cc \
-			   drizzled/function/time/dayofmonth.cc \
-			   drizzled/function/time/dayofyear.cc \
-			   drizzled/function/time/extract.cc \
-			   drizzled/function/time/from_days.cc \
-			   drizzled/function/time/from_unixtime.cc \
-			   drizzled/function/time/hour.cc \
-			   drizzled/function/time/last_day.cc \
-			   drizzled/function/time/makedate.cc \
-			   drizzled/function/time/microsecond.cc \
-			   drizzled/function/time/minute.cc \
-			   drizzled/function/time/month.cc \
-			   drizzled/function/time/now.cc \
-			   drizzled/function/time/period_add.cc \
-			   drizzled/function/time/period_diff.cc \
-			   drizzled/function/time/quarter.cc \
-			   drizzled/function/time/second.cc \
-			   drizzled/function/time/sysdate_local.cc \
-			   drizzled/function/time/timestamp_diff.cc \
-			   drizzled/function/time/to_days.cc \
-			   drizzled/function/time/typecast.cc \
-			   drizzled/function/time/unix_timestamp.cc \
-			   drizzled/function/time/weekday.cc \
-			   drizzled/function/time/year.cc \
-			   drizzled/function/units.cc \
-			   drizzled/function/user_var_as_out_param.cc \
-			   drizzled/ha_commands.cc \
-			   drizzled/hybrid_type_traits.cc \
-			   drizzled/hybrid_type_traits_decimal.cc \
-			   drizzled/hybrid_type_traits_integer.cc \
-			   drizzled/index_hint.cc \
-			   drizzled/item.cc \
-			   drizzled/item/bin_string.cc \
-			   drizzled/item/cache.cc \
-			   drizzled/item/cache_decimal.cc \
-			   drizzled/item/cache_int.cc \
-			   drizzled/item/cache_real.cc \
-			   drizzled/item/cache_row.cc \
-			   drizzled/item/cache_str.cc \
-			   drizzled/item/cmpfunc.cc \
-			   drizzled/item/copy_string.cc \
-			   drizzled/item/create.cc \
-			   drizzled/item/decimal.cc \
-			   drizzled/item/default_value.cc \
-			   drizzled/item/direct_ref.cc \
-			   drizzled/item/empty_string.cc \
-			   drizzled/item/field.cc \
-			   drizzled/item/float.cc \
-			   drizzled/item/hex_string.cc \
-			   drizzled/item/ident.cc \
-			   drizzled/item/insert_value.cc \
-			   drizzled/item/int.cc \
-			   drizzled/item/int_with_ref.cc \
-			   drizzled/item/null.cc \
-			   drizzled/item/num.cc \
-			   drizzled/item/outer_ref.cc \
-			   drizzled/item/ref.cc \
-			   drizzled/item/ref_null_helper.cc \
-			   drizzled/item/row.cc \
-			   drizzled/item/string.cc \
-			   drizzled/item/subselect.cc \
-			   drizzled/item/sum.cc \
-			   drizzled/item/type_holder.cc \
-			   drizzled/item/uint.cc \
-			   drizzled/join.cc \
-			   drizzled/join_cache.cc \
-			   drizzled/join_table.cc \
-			   drizzled/key.cc \
-			   drizzled/key_map.cc \
-			   drizzled/lock.cc \
-			   drizzled/lookup_symbol.cc \
-			   drizzled/my_getsystime.cc \
-			   drizzled/my_hash.cc \
-			   drizzled/drizzle_time.cc \
-			   drizzled/tree.cc \
-			   drizzled/name_resolution_context_state.cc \
-			   drizzled/natural_join_column.cc \
-			   drizzled/optimizer/explain_plan.cc \
-			   drizzled/optimizer/key_field.cc \
-			   drizzled/optimizer/quick_group_min_max_select.cc \
-			   drizzled/optimizer/quick_index_merge_select.cc \
-			   drizzled/optimizer/quick_range.cc \
-			   drizzled/optimizer/quick_range_select.cc \
-			   drizzled/optimizer/quick_ror_intersect_select.cc \
-			   drizzled/optimizer/quick_ror_union_select.cc \
-			   drizzled/optimizer/range.cc \
-			   drizzled/optimizer/sel_arg.cc \
-			   drizzled/optimizer/sel_imerge.cc \
-			   drizzled/optimizer/sel_tree.cc \
-			   drizzled/optimizer/sum.cc \
-			   drizzled/plugin/authentication.cc \
-			   drizzled/plugin/authorization.cc \
-			   drizzled/plugin/client.cc \
-			   drizzled/plugin/error_message.cc \
-			   drizzled/plugin/function.cc \
-			   drizzled/plugin/library.cc \
-			   drizzled/plugin/listen.cc \
-			   drizzled/plugin/listen_tcp.cc \
-			   drizzled/plugin/loader.cc \
-			   drizzled/plugin/logging.cc \
-			   drizzled/plugin/monitored_in_transaction.cc \
-			   drizzled/plugin/plugin.cc \
-			   drizzled/plugin/query_cache.cc \
-			   drizzled/plugin/query_rewrite.cc \
-			   drizzled/plugin/registry.cc \
-			   drizzled/plugin/scheduler.cc \
-			   drizzled/plugin/schema_engine.cc \
-			   drizzled/plugin/storage_engine.cc \
-			   drizzled/plugin/table_function.cc \
-			   drizzled/plugin/transaction_applier.cc \
-			   drizzled/plugin/transaction_replicator.cc \
-			   drizzled/plugin/transactional_storage_engine.cc \
-			   drizzled/plugin/xa_resource_manager.cc \
-			   drizzled/plugin/xa_storage_engine.cc \
-			   drizzled/query_id.cc \
-			   drizzled/records.cc \
-			   drizzled/replication_services.cc \
-			   drizzled/resource_context.cc \
-			   drizzled/schema_identifier.cc \
-			   drizzled/session.cc \
-			   drizzled/session_list.cc \
-			   drizzled/set_var.cc \
-			   drizzled/show.cc \
-			   drizzled/sql_base.cc \
-			   drizzled/sql_bitmap.cc \
-			   drizzled/sql_delete.cc \
-			   drizzled/sql_derived.cc \
-			   drizzled/sql_error.cc \
-			   drizzled/sql_insert.cc \
-			   drizzled/sql_lex.cc \
-			   drizzled/sql_list.cc \
-			   drizzled/sql_load.cc \
-			   drizzled/sql_locale.cc \
-			   drizzled/sql_parse.cc \
-			   drizzled/sql_select.cc \
-			   drizzled/sql_state.cc \
-			   drizzled/sql_string.cc \
-			   drizzled/sql_table.cc \
-			   drizzled/sql_union.cc \
-			   drizzled/sql_update.cc \
-			   drizzled/sql_yacc.yy \
-			   drizzled/stacktrace.cc \
-			   drizzled/statement/alter_schema.cc \
-			   drizzled/statement/alter_table.cc \
-			   drizzled/statement/analyze.cc \
-			   drizzled/statement/change_schema.cc \
-			   drizzled/statement/check.cc \
-			   drizzled/statement/commit.cc \
-			   drizzled/statement/create_index.cc \
-			   drizzled/statement/create_schema.cc \
-			   drizzled/statement/create_table.cc \
-			   drizzled/statement/delete.cc \
-			   drizzled/statement/drop_index.cc \
-			   drizzled/statement/drop_schema.cc \
-			   drizzled/statement/drop_table.cc \
-			   drizzled/statement/empty_query.cc \
-			   drizzled/statement/flush.cc \
-			   drizzled/statement/insert.cc \
-			   drizzled/statement/insert_select.cc \
-			   drizzled/statement/kill.cc \
-			   drizzled/statement/load.cc \
-			   drizzled/statement/release_savepoint.cc \
-			   drizzled/statement/rename_table.cc \
-			   drizzled/statement/replace.cc \
-			   drizzled/statement/replace_select.cc \
-			   drizzled/statement/rollback.cc \
-			   drizzled/statement/rollback_to_savepoint.cc \
-			   drizzled/statement/savepoint.cc \
-			   drizzled/statement/select.cc \
-			   drizzled/statement/set_option.cc \
-			   drizzled/statement/show_create.cc \
-			   drizzled/statement/show_create_schema.cc \
-			   drizzled/statement/show_errors.cc \
-			   drizzled/statement/show_warnings.cc \
-			   drizzled/statement/start_transaction.cc \
-			   drizzled/statement/truncate.cc \
-			   drizzled/statement/unlock_tables.cc \
-			   drizzled/statement/update.cc \
-			   drizzled/strfunc.cc \
-			   drizzled/table.cc \
-			   drizzled/table_function_container.cc \
-			   drizzled/table_identifier.cc \
-			   drizzled/table_list.cc \
-			   drizzled/table_share.cc \
-			   drizzled/temporal.cc \
-			   drizzled/temporal_format.cc \
-			   drizzled/temporal_interval.cc \
-			   drizzled/thr_lock.cc \
-			   drizzled/time_functions.cc \
-			   drizzled/transaction_services.cc \
-			   drizzled/tztime.cc \
-			   drizzled/uniques.cc \
-			   drizzled/user_var_entry.cc \
-			   drizzled/version.cc \
-			   drizzled/xid.cc
+                           drizzled/main.cc
+drizzled_drizzled_LDADD= \
+			 $(LIBPCRE) \
+			 $(LIBINTL) \
+			 drizzled/libdrizzled.la
+
+drizzled_drizzled_LDFLAGS= -export-dynamic
 
 noinst_LTLIBRARIES+= \
 		     drizzled/libcached_directory.la \

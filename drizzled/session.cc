@@ -46,6 +46,7 @@
 #include "drizzled/db.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/transaction_services.h"
+#include "drizzled/drizzled.h"
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
@@ -74,8 +75,6 @@ char empty_c_string[1]= {0};    /* used for not defined db */
 const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
-extern uint32_t max_used_connections;
-extern atomic<uint32_t> connection_count;
 
 
 /****************************************************************************
@@ -316,43 +315,11 @@ void Session::pop_internal_handler()
   m_internal_handler= NULL;
 }
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-void *session_alloc(Session *session, unsigned int size)
+void Session::get_xid(DRIZZLE_XID *xid)
 {
-  return session->alloc(size);
+  *xid = *(DRIZZLE_XID *) &transaction.xid_state.xid;
 }
 
-void *session_calloc(Session *session, unsigned int size)
-{
-  return session->calloc(size);
-}
-
-char *session_strdup(Session *session, const char *str)
-{
-  return session->strdup(str);
-}
-
-char *session_strmake(Session *session, const char *str, unsigned int size)
-{
-  return session->strmake(str, size);
-}
-
-void *session_memdup(Session *session, const void* str, unsigned int size)
-{
-  return session->memdup(str, size);
-}
-
-void session_get_xid(const Session *session, DRIZZLE_XID *xid)
-{
-  *xid = *(DRIZZLE_XID *) &session->transaction.xid_state.xid;
-}
-
-#if defined(__cplusplus)
-}
-#endif
 
 /* Do operations that may take a long time */
 
@@ -406,11 +373,11 @@ Session::~Session()
   plugin::StorageEngine::closeConnection(this);
   plugin_sessionvar_cleanup(this);
 
-  free_root(&warn_root,MYF(0));
+  warn_root.free_root(MYF(0));
   mysys_var=0;					// Safety (shouldn't be needed)
   dbug_sentry= Session_SENTRY_GONE;
 
-  free_root(&main_mem_root, MYF(0));
+  main_mem_root.free_root(MYF(0));
   pthread_setspecific(THR_Session,  0);
 
   plugin::Logging::postEndDo(this);
@@ -560,8 +527,8 @@ void Session::prepareForQueries()
   command= COM_SLEEP;
   set_time();
 
-  reset_root_defaults(mem_root, variables.query_alloc_block_size,
-                      variables.query_prealloc_size);
+  mem_root->reset_root_defaults(variables.query_alloc_block_size,
+                                variables.query_prealloc_size);
   transaction.xid_state.xid.null();
   transaction.xid_state.in_session=1;
 }
@@ -899,7 +866,7 @@ LEX_STRING *Session::make_lex_string(LEX_STRING *lex_str,
   if (allocate_lex_string)
     if (!(lex_str= (LEX_STRING *)alloc(sizeof(LEX_STRING))))
       return 0;
-  if (!(lex_str->str= strmake_root(mem_root, str, length)))
+  if (!(lex_str->str= mem_root->strmake_root(str, length)))
     return 0;
   lex_str->length= length;
   return lex_str;
@@ -1048,13 +1015,13 @@ static int create_file(Session *session, char *path, file_exchange *exchange, in
 
   if (!internal::dirname_length(exchange->file_name))
   {
-    strcpy(path, drizzle_real_data_home);
+    strcpy(path, data_home_real);
     if (! session->db.empty())
-      strncat(path, session->db.c_str(), FN_REFLEN-strlen(drizzle_real_data_home)-1);
+      strncat(path, session->db.c_str(), FN_REFLEN-strlen(data_home_real)-1);
     (void) internal::fn_format(path, exchange->file_name, path, "", option);
   }
   else
-    (void) internal::fn_format(path, exchange->file_name, drizzle_real_data_home, "", option);
+    (void) internal::fn_format(path, exchange->file_name, data_home_real, "", option);
 
   if (opt_secure_file_priv &&
       strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
