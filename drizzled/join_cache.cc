@@ -86,9 +86,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     }
   }
   if (!(cache->field=(CACHE_FIELD*)
-	memory::sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)*
-
-		  sizeof(CACHE_FIELD*))))
+        memory::sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)* sizeof(CACHE_FIELD*))))
   {
     free((unsigned char*) cache->buff);
     cache->buff=0;

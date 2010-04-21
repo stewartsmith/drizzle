@@ -181,7 +181,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
     TYPELIB *group= ctx->group;
 
     if (!(extra_groups=
-	  (const char**)alloc_root(ctx->alloc,
+	  (const char**)ctx->alloc->alloc_root(
                                    (2*group->count+1)*sizeof(char*))))
       goto err;
 
@@ -191,7 +191,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
       extra_groups[i]= group->type_names[i]; /** copy group */
 
       len= strlen(extra_groups[i]);
-      if (!(ptr= (char *)alloc_root(ctx->alloc, len+instance_len+1)))
+      if (!(ptr= (char *)ctx->alloc->alloc_root( len+instance_len+1)))
 	goto err;
 
       extra_groups[i+group->count]= ptr;
@@ -289,7 +289,7 @@ int handle_default_option(void *in_ctx, const char *group_name,
 
   if (find_type((char *)group_name, ctx->group, 3))
   {
-    if (!(tmp= (char *)alloc_root(ctx->alloc, strlen(option) + 1)))
+    if (!(tmp= (char *)ctx->alloc->alloc_root(strlen(option) + 1)))
       return 1;
     if (insert_dynamic(ctx->args, (unsigned char*) &tmp))
       return 1;
@@ -402,12 +402,11 @@ int load_defaults(const char *conf_file, const char **groups,
   bool found_print_defaults= 0;
   uint32_t args_used= 0;
   int error= 0;
-  memory::Root alloc;
+  memory::Root alloc(512);
   char *ptr,**res;
   struct handle_option_ctx ctx;
 
   init_default_directories();
-  init_alloc_root(&alloc,512);
   /*
     Check if the user doesn't want any default option processing
     --no-defaults is always the first option
@@ -416,8 +415,7 @@ int load_defaults(const char *conf_file, const char **groups,
   {
     /* remove the --no-defaults argument and return only the other arguments */
     uint32_t i;
-    if (!(ptr=(char*) alloc_root(&alloc,sizeof(alloc)+
-				 (*argc + 1)*sizeof(char*))))
+    if (!(ptr=(char*) alloc.alloc_root(sizeof(alloc)+ (*argc + 1)*sizeof(char*))))
       goto err;
     res= (char**) (ptr+sizeof(alloc));
     memset(res,0,(*argc + 1));
@@ -451,8 +449,7 @@ int load_defaults(const char *conf_file, const char **groups,
     Here error contains <> 0 only if we have a fully specified conf_file
     or a forced default file
   */
-  if (!(ptr=(char*) alloc_root(&alloc,sizeof(alloc)+
-			       (args.elements + *argc +1) *sizeof(char*))))
+  if (!(ptr=(char*) alloc.alloc_root(sizeof(alloc)+ (args.elements + *argc +1) *sizeof(char*))))
     goto err;
   res= (char**) (ptr+sizeof(alloc));
 
@@ -503,7 +500,7 @@ void free_defaults(char **argv)
 {
   memory::Root ptr;
   memcpy(&ptr, (char*) argv - sizeof(ptr), sizeof(ptr));
-  free_root(&ptr,MYF(0));
+  ptr.free_root(MYF(0));
 }
 
 
