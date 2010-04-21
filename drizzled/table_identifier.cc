@@ -145,8 +145,7 @@ static size_t build_tmptable_filename(std::string &buffer)
      db                         Database name
      table_name                 Table name
      ext                        File extension.
-     flags                      FN_FROM_IS_TMP or FN_TO_IS_TMP
-                                table_name is temporary, do not change.
+     flags                      table_name is temporary, do not change.
 
   NOTES
 
@@ -174,7 +173,7 @@ size_t build_table_filename(std::string &path, const char *db, const char *table
   bool conversion_error= false;
 
   memset(tbbuff, 0, sizeof(tbbuff));
-  if (is_tmp) // FN_FROM_IS_TMP | FN_TO_IS_TMP
+  if (is_tmp) // It a conversion tmp
   {
     strncpy(tbbuff, table_name, sizeof(tbbuff));
   }
@@ -201,7 +200,7 @@ size_t build_table_filename(std::string &path, const char *db, const char *table
    
 
   int rootdir_len= strlen(FN_ROOTDIR);
-  path.append(drizzle_data_home);
+  path.append(data_home);
   ssize_t without_rootdir= path.length() - rootdir_len;
 
   /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */

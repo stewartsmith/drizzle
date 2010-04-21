@@ -69,7 +69,7 @@ Schema::~Schema()
 
 void Schema::prime()
 {
-  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+  CachedDirectory directory(data_home, CachedDirectory::DIRECTORY);
   CachedDirectory::Entries files= directory.getEntries();
 
   pthread_rwlock_wrlock(&schema_lock);
@@ -113,7 +113,7 @@ void Schema::doGetSchemaIdentifiers(SchemaIdentifierList &set_of_names)
 
   // If for some reason getting a lock should fail, we resort to disk
 
-  CachedDirectory directory(drizzle_data_home, CachedDirectory::DIRECTORY);
+  CachedDirectory directory(data_home, CachedDirectory::DIRECTORY);
 
   CachedDirectory::Entries files= directory.getEntries();
 

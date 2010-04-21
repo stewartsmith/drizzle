@@ -51,6 +51,7 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/drizzled.h"
 #include "drizzled/plugin/authorization.h"
 
 using namespace std;
@@ -59,8 +60,6 @@ namespace drizzled
 {
 
 extern bool volatile shutdown_in_progress;
-
-bool drizzle_rm_tmp_tables();
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -2102,9 +2101,9 @@ restart:
      * to see if it exists so that an unauthorized user cannot phish for
      * table/schema information via error messages
      */
+    TableIdentifier the_table(tables->db, tables->table_name);
     if (not plugin::Authorization::isAuthorized(getSecurityContext(),
-                                                string(tables->db),
-                                                string(tables->table_name)))
+                                                the_table))
     {
       result= -1;                               // Fatal error
       break;

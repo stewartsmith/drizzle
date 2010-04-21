@@ -92,7 +92,6 @@ namespace optimizer
   class CostVector;
 }
 
-uint32_t calculate_key_len(Table *, uint, const unsigned char *, key_part_map);
 /*
   bitmap with first N+1 bits set
   (keypart_map for a key prefix of [0..N] keyparts)
@@ -190,11 +189,6 @@ public:
   bool mrr_have_range;
 
   bool eq_range;
-  /*
-    true <=> the engine guarantees that returned records are within the range
-    being scanned.
-  */
-  bool in_range_check_pushed_down;
 
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
@@ -302,8 +296,7 @@ public:
   virtual int multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t keys,
                                     uint32_t *bufsz, uint32_t *flags, optimizer::CostVector *cost);
   virtual int multi_range_read_init(RANGE_SEQ_IF *seq, void *seq_init_param,
-                                    uint32_t n_ranges, uint32_t mode,
-                                    HANDLER_BUFFER *buf);
+                                    uint32_t n_ranges, uint32_t mode);
   virtual int multi_range_read_next(char **range_info);
 
 
@@ -357,11 +350,11 @@ public:
      row if available. If the key value is null, begin at the first key of the
      index.
   */
-  virtual int index_read_map(unsigned char * buf, const unsigned char * key,
+  virtual int index_read_map(unsigned char * buf, const unsigned char *key,
                              key_part_map keypart_map,
                              enum ha_rkey_function find_flag)
   {
-    uint32_t key_len= calculate_key_len(table, active_index, key, keypart_map);
+    uint32_t key_len= calculate_key_len(active_index, keypart_map);
     return  index_read(buf, key, key_len, find_flag);
   }
   /**
@@ -383,6 +376,11 @@ public:
   virtual int index_last(unsigned char *)
    { return  HA_ERR_WRONG_COMMAND; }
   virtual int index_next_same(unsigned char *, const unsigned char *, uint32_t);
+
+private:
+  uint32_t calculate_key_len(uint32_t key_position, key_part_map keypart_map_arg);
+public:
+
   /**
      @brief
      The following functions works like index_read, but it find the last
@@ -391,7 +389,7 @@ public:
   virtual int index_read_last_map(unsigned char * buf, const unsigned char * key,
                                   key_part_map keypart_map)
   {
-    uint32_t key_len= calculate_key_len(table, active_index, key, keypart_map);
+    uint32_t key_len= calculate_key_len(active_index, keypart_map);
     return index_read_last(buf, key, key_len);
   }
   virtual int read_range_first(const key_range *start_key,
@@ -399,7 +397,6 @@ public:
                                bool eq_range, bool sorted);
   virtual int read_range_next();
   int compare_key(key_range *range);
-  int compare_key2(key_range *range);
   virtual int rnd_next(unsigned char *)=0;
   virtual int rnd_pos(unsigned char *, unsigned char *)=0;
   /**
@@ -733,8 +730,7 @@ bool mysql_create_like_table(Session* session,
 
 bool mysql_rename_table(plugin::StorageEngine *base,
                         TableIdentifier &old_identifier,
-                        TableIdentifier &new_identifier,
-                        uint32_t flags);
+                        TableIdentifier &new_identifier);
 
 bool mysql_prepare_update(Session *session, TableList *table_list,
                           Item **conds, uint32_t order_num, order_st *order);
@@ -763,14 +759,8 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);
-Table *table_cache_insert_placeholder(Session *session, const char *key,
-                                      uint32_t key_length);
-bool lock_table_name_if_not_cached(Session *session, const char *db,
-                                   const char *table_name, Table **table);
 bool reopen_table(Table *table);
 bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
-void close_data_files_and_morph_locks(Session *session, const char *db,
-                                      const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);

@@ -40,10 +40,6 @@ typedef struct st_ha_create_information HA_CREATE_INFO;
 class AlterInfo;
 class Cursor;
 
-/* Flags for conversion functions. */
-static const uint32_t FN_FROM_IS_TMP(1 << 0);
-static const uint32_t FN_TO_IS_TMP(1 << 0);
-
 namespace message { class Table; }
 class TableIdentifier;
 
