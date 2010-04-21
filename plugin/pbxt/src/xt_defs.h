@@ -903,7 +903,7 @@ extern xtBool				pbxt_crash_debug;
 
 #define my_pthread_setspecific_ptr(T, V)	pthread_setspecific(T, (void*) (V))
 
-#define mysql_real_data_home				drizzle_real_data_home
+#define mysql_real_data_home				::drizzled::data_home
 
 #define mi_int4store(T,A)   { uint32_t def_temp= (uint32_t) (A);\
                               ((unsigned char*) (T))[3]= (unsigned char) (def_temp);\

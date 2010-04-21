@@ -964,6 +964,30 @@
 }
 
 {
+   thr_local_hash static initialization
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_heap_create_block
+   ...
+   fun:_ZL13innobase_initR14PluginRegistry
+   fun:_Z11plugin_initPiPPci
+   fun:_ZL22init_server_componentsv
+   fun:main
+}
+
+{
+   thr_local_hash static initialization
+   Memcheck:Leak
+   fun:malloc
+   fun:ut_malloc_low
+   ...
+   fun:_ZL13innobase_initR14PluginRegistry
+   fun:_Z11plugin_initPiPPci
+   fun:_ZL22init_server_componentsv
+   fun:main
+}
+
+{
    InnoDB Garbage
    Memcheck:Value8
    ...

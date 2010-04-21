@@ -44,8 +44,7 @@ bool TableList::set_insert_values(memory::Root *mem_root)
   if (table)
   {
     if (!table->insert_values &&
-        !(table->insert_values= (unsigned char *)alloc_root(mem_root,
-                                                   table->s->rec_buff_length)))
+        !(table->insert_values= (unsigned char *)mem_root->alloc_root(table->s->rec_buff_length)))
       return true;
   }
 

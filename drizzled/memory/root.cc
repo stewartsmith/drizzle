@@ -51,16 +51,14 @@ static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
  *                      should be no less than memory::ROOT_MIN_BLOCK_SIZE)
  *
  */
-void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
+void memory::Root::init_alloc_root(size_t block_size_arg)
 {
-  mem_root->free= mem_root->used= mem_root->pre_alloc= 0;
-  mem_root->min_malloc= 32;
-  mem_root->block_size= block_size - memory::ROOT_MIN_BLOCK_SIZE;
-  mem_root->error_handler= 0;
-  mem_root->block_num= 4;			/* We shift this with >>2 */
-  mem_root->first_block_usage= 0;
-
-  return;
+  free= used= pre_alloc= 0;
+  min_malloc= 32;
+  block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
+  error_handler= 0;
+  block_num= 4;			/* We shift this with >>2 */
+  first_block_usage= 0;
 }
 
 
@@ -79,18 +77,15 @@ void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
  *                        must be equal to or greater than block size,
  *                        otherwise means 'no prealloc'.
  */
-void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
-                                 size_t pre_alloc_size)
+void memory::Root::reset_root_defaults(size_t block_size_arg, size_t pre_alloc_size)
 {
-  assert(alloc_root_inited(mem_root));
-
-  mem_root->block_size= block_size - memory::ROOT_MIN_BLOCK_SIZE;
+  block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
   if (pre_alloc_size)
   {
     size_t size= pre_alloc_size + ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    if (!mem_root->pre_alloc || mem_root->pre_alloc->size != size)
+    if (not pre_alloc || pre_alloc->size != size)
     {
-      memory::internal::UsedMemory *mem, **prev= &mem_root->free;
+      memory::internal::UsedMemory *mem, **prev= &this->free;
       /*
         Free unused blocks, so that consequent calls
         to reset_root_defaults won't eat away memory.
@@ -101,14 +96,14 @@ void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
         if (mem->size == size)
         {
           /* We found a suitable block, no need to do anything else */
-          mem_root->pre_alloc= mem;
+          pre_alloc= mem;
           return;
         }
         if (mem->left + ALIGN_SIZE(sizeof(memory::internal::UsedMemory)) == mem->size)
         {
           /* remove block from the list and free it */
           *prev= mem->next;
-          free(mem);
+          std::free(mem);
         }
         else
           prev= &mem->next;
@@ -119,17 +114,17 @@ void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
         mem->size= size;
         mem->left= pre_alloc_size;
         mem->next= *prev;
-        *prev= mem_root->pre_alloc= mem;
+        *prev= pre_alloc= mem;
       }
       else
       {
-        mem_root->pre_alloc= 0;
+        pre_alloc= 0;
       }
     }
   }
   else
   {
-    mem_root->pre_alloc= 0;
+    pre_alloc= 0;
   }
 }
 
@@ -147,43 +142,44 @@ void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
  * @todo Would this be more suitable as a member function on the
  * Root class?
  */
-void *memory::alloc_root(memory::Root *mem_root, size_t length)
+void *memory::Root::alloc_root(size_t length)
 {
-  size_t get_size, block_size;
   unsigned char* point;
   memory::internal::UsedMemory *next= NULL;
   memory::internal::UsedMemory **prev;
-  assert(alloc_root_inited(mem_root));
+  assert(alloc_root_inited());
 
   length= ALIGN_SIZE(length);
-  if ((*(prev= &mem_root->free)) != NULL)
+  if ((*(prev= &this->free)) != NULL)
   {
     if ((*prev)->left < length &&
-	mem_root->first_block_usage++ >= MAX_BLOCK_USAGE_BEFORE_DROP &&
+	this->first_block_usage++ >= MAX_BLOCK_USAGE_BEFORE_DROP &&
 	(*prev)->left < MAX_BLOCK_TO_DROP)
     {
       next= *prev;
       *prev= next->next;			/* Remove block from list */
-      next->next= mem_root->used;
-      mem_root->used= next;
-      mem_root->first_block_usage= 0;
+      next->next= this->used;
+      this->used= next;
+      this->first_block_usage= 0;
     }
     for (next= *prev ; next && next->left < length ; next= next->next)
       prev= &next->next;
   }
   if (! next)
   {						/* Time to alloc new block */
-    block_size= mem_root->block_size * (mem_root->block_num >> 2);
+    size_t get_size, tmp_block_size;
+
+    tmp_block_size= this->block_size * (this->block_num >> 2);
     get_size= length+ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    get_size= max(get_size, block_size);
+    get_size= max(get_size, tmp_block_size);
 
     if (!(next = static_cast<memory::internal::UsedMemory *>(malloc(get_size))))
     {
-      if (mem_root->error_handler)
-	(*mem_root->error_handler)();
+      if (this->error_handler)
+	(*this->error_handler)();
       return NULL;
     }
-    mem_root->block_num++;
+    this->block_num++;
     next->next= *prev;
     next->size= get_size;
     next->left= get_size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
@@ -191,13 +187,13 @@ void *memory::alloc_root(memory::Root *mem_root, size_t length)
   }
 
   point= (unsigned char*) ((char*) next+ (next->size-next->left));
-  /** @todo next part may be unneeded due to mem_root->first_block_usage counter*/
-  if ((next->left-= length) < mem_root->min_malloc)
+  /** @todo next part may be unneeded due to this->first_block_usage counter*/
+  if ((next->left-= length) < this->min_malloc)
   {						/* Full block */
     *prev= next->next;				/* Remove block from list */
-    next->next= mem_root->used;
-    mem_root->used= next;
-    mem_root->first_block_usage= 0;
+    next->next= this->used;
+    this->used= next;
+    this->first_block_usage= 0;
   }
 
   return point;
@@ -241,7 +237,7 @@ void *memory::multi_alloc_root(memory::Root *root, ...)
   }
   va_end(args);
 
-  if (!(start= (char*) memory::alloc_root(root, tot_length)))
+  if (!(start= (char*) root->alloc_root(tot_length)))
     return(0);
 
   va_start(args, root);
@@ -262,21 +258,21 @@ void *memory::multi_alloc_root(memory::Root *root, ...)
  * @brief
  * Mark all data in blocks free for reusage 
  */
-static inline void mark_blocks_free(memory::Root* root)
+void memory::Root::mark_blocks_free()
 {
   memory::internal::UsedMemory *next;
   memory::internal::UsedMemory **last;
 
   /* iterate through (partially) free blocks, mark them free */
-  last= &root->free;
-  for (next= root->free; next; next= *(last= &next->next))
+  last= &free;
+  for (next= free; next; next= *(last= &next->next))
   {
     next->left= next->size - ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
     TRASH_MEM(next);
   }
 
   /* Combine the free and the used list */
-  *last= next=root->used;
+  *last= next= used;
 
   /* now go through the used blocks and mark them free */
   for (; next; next= next->next)
@@ -286,8 +282,8 @@ static inline void mark_blocks_free(memory::Root* root)
   }
 
   /* Now everything is set; Indicate that nothing is used anymore */
-  root->used= 0;
-  root->first_block_usage= 0;
+  used= 0;
+  first_block_usage= 0;
 }
 
 /**
@@ -306,66 +302,40 @@ static inline void mark_blocks_free(memory::Root* root)
  *   @li   KEEP_PREALLOC        If this is not set, then free also the
  *        		        preallocated block
  */
-void memory::free_root(memory::Root *root, myf MyFlags)
+void memory::Root::free_root(myf MyFlags)
 {
   memory::internal::UsedMemory *next,*old;
 
   if (MyFlags & memory::MARK_BLOCKS_FREE)
   {
-    mark_blocks_free(root);
+    this->mark_blocks_free();
     return;
   }
   if (!(MyFlags & memory::KEEP_PREALLOC))
-    root->pre_alloc=0;
+    this->pre_alloc=0;
 
-  for (next=root->used; next ;)
+  for (next=this->used; next ;)
   {
     old=next; next= next->next ;
-    if (old != root->pre_alloc)
-      free(old);
+    if (old != this->pre_alloc)
+      std::free(old);
   }
-  for (next=root->free ; next ;)
+  for (next=this->free ; next ;)
   {
     old=next; next= next->next;
-    if (old != root->pre_alloc)
-      free(old);
+    if (old != this->pre_alloc)
+      std::free(old);
   }
-  root->used=root->free=0;
-  if (root->pre_alloc)
+  this->used=this->free=0;
+  if (this->pre_alloc)
   {
-    root->free=root->pre_alloc;
-    root->free->left=root->pre_alloc->size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
-    TRASH_MEM(root->pre_alloc);
-    root->free->next=0;
+    this->free=this->pre_alloc;
+    this->free->left=this->pre_alloc->size-ALIGN_SIZE(sizeof(memory::internal::UsedMemory));
+    TRASH_MEM(this->pre_alloc);
+    this->free->next=0;
   }
-  root->block_num= 4;
-  root->first_block_usage= 0;
-  return;
-}
-
-/**
- * @brief
- * Find block that contains an object and set the pre_alloc to it
- */
-void memory::set_prealloc_root(memory::Root *root, char *ptr)
-{
-  memory::internal::UsedMemory *next;
-  for (next=root->used; next ; next=next->next)
-  {
-    if ((char*) next <= ptr && (char*) next + next->size > ptr)
-    {
-      root->pre_alloc=next;
-      return;
-    }
-  }
-  for (next=root->free ; next ; next=next->next)
-  {
-    if ((char*) next <= ptr && (char*) next + next->size > ptr)
-    {
-      root->pre_alloc=next;
-      return;
-    }
-  }
+  this->block_num= 4;
+  this->first_block_usage= 0;
 }
 
 /**
@@ -373,9 +343,9 @@ void memory::set_prealloc_root(memory::Root *root, char *ptr)
  * Duplicate a null-terminated string into memory allocated from within the
  * specified Root
  */
-char *memory::strdup_root(memory::Root *root, const char *str)
+char *memory::Root::strdup_root(const char *str)
 {
-  return strmake_root(root, str, strlen(str));
+  return strmake_root(str, strlen(str));
 }
 
 /**
@@ -389,10 +359,10 @@ char *memory::strdup_root(memory::Root *root, const char *str)
  * even if the original string wasn't (one additional byte is allocated for
  * this purpose).
  */
-char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
+char *memory::Root::strmake_root(const char *str, size_t len)
 {
   char *pos;
-  if ((pos=(char *)memory::alloc_root(root,len+1)))
+  if ((pos= (char *)alloc_root(len+1)))
   {
     memcpy(pos,str,len);
     pos[len]=0;
@@ -409,11 +379,13 @@ char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
  * non-NULL pointer to a copy of the data if memory could be allocated, otherwise
  * NULL
  */
-void *memory::memdup_root(memory::Root *root, const void *str, size_t len)
+void *memory::Root::memdup_root(const void *str, size_t len)
 {
   void *pos;
-  if ((pos=memory::alloc_root(root,len)))
+
+  if ((pos= this->alloc_root(len)))
     memcpy(pos,str,len);
+
   return pos;
 }
 
