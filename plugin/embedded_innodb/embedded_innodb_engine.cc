@@ -16,6 +16,61 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+/* innobase_get_int_col_max_value() comes from ha_innodb.cc which is under
+   the following license and Copyright */
+
+/*****************************************************************************
+
+Copyright (c) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
+Copyright (c) 2008, 2009 Google Inc.
+
+Portions of this file contain modifications contributed and copyrighted by
+Google, Inc. Those modifications are gratefully acknowledged and are described
+briefly in the InnoDB documentation. The contributions by Google are
+incorporated with their permission, and subject to the conditions contained in
+the file COPYING.Google.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place, Suite 330, Boston, MA 02111-1307 USA
+
+*****************************************************************************/
+/***********************************************************************
+
+Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 2009, Percona Inc.
+
+Portions of this file contain modifications contributed and copyrighted
+by Percona Inc.. Those modifications are
+gratefully acknowledged and are described briefly in the InnoDB
+documentation. The contributions by Percona Inc. are incorporated with
+their permission, and subject to the conditions contained in the file
+COPYING.Percona.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+***********************************************************************/
+
+
 #include "config.h"
 #include <drizzled/table.h>
 #include <drizzled/error.h>
@@ -462,7 +517,18 @@ void EmbeddedInnoDBCursor::get_auto_increment(uint64_t, //offset,
                                               uint64_t *first_value,
                                               uint64_t *nb_reserved_values)
 {
+fetch:
   *first_value= share->auto_increment_value.fetch_and_increment();
+  if (*first_value == 0)
+  {
+    /* if it's zero, then we skip it... why? because of ass.
+       set auto-inc to -1 and the sequence is:
+       -1, 1.
+       Zero is still "magic".
+    */
+    share->auto_increment_value.compare_and_swap(1, 0);
+    goto fetch;
+  }
   *nb_reserved_values= 1;
 }
 
@@ -1288,6 +1354,44 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
   return err;
 }
 
+static uint64_t innobase_get_int_col_max_value(const Field* field)
+{
+  uint64_t	max_value = 0;
+
+  switch(field->key_type()) {
+    /* TINY */
+  case HA_KEYTYPE_BINARY:
+    max_value = 0xFFULL;
+    break;
+    /* MEDIUM */
+  case HA_KEYTYPE_UINT24:
+    max_value = 0xFFFFFFULL;
+    break;
+    /* LONG */
+  case HA_KEYTYPE_ULONG_INT:
+    max_value = 0xFFFFFFFFULL;
+    break;
+  case HA_KEYTYPE_LONG_INT:
+    max_value = 0x7FFFFFFFULL;
+    break;
+    /* BIG */
+  case HA_KEYTYPE_ULONGLONG:
+    max_value = 0xFFFFFFFFFFFFFFFFULL;
+    break;
+  case HA_KEYTYPE_LONGLONG:
+    max_value = 0x7FFFFFFFFFFFFFFFULL;
+    break;
+  case HA_KEYTYPE_DOUBLE:
+    /* We use the maximum as per IEEE754-2008 standard, 2^53 */
+    max_value = 0x20000000000000ULL;
+    break;
+  default:
+    assert(false);
+  }
+
+  return(max_value);
+}
+
 int EmbeddedInnoDBCursor::write_row(unsigned char *)
 {
   ib_err_t err;
@@ -1334,21 +1438,24 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
 
     uint64_t temp_auto= table->next_number_field->val_int();
 
-    while (true)
+    if (temp_auto <= innobase_get_int_col_max_value(table->next_number_field))
     {
-      uint64_t fetched_auto= share->auto_increment_value;
-
-      if (temp_auto >= fetched_auto)
+      while (true)
       {
-        uint64_t store_value= temp_auto+1;
-        if (store_value == 0)
-          store_value++;
+        uint64_t fetched_auto= share->auto_increment_value;
 
-        if (share->auto_increment_value.compare_and_swap(store_value, fetched_auto) == fetched_auto)
+        if (temp_auto >= fetched_auto)
+        {
+          uint64_t store_value= temp_auto+1;
+          if (store_value == 0)
+            store_value++;
+
+          if (share->auto_increment_value.compare_and_swap(store_value, fetched_auto) == fetched_auto)
+            break;
+        }
+        else
           break;
       }
-      else
-        break;
     }
 
   }
