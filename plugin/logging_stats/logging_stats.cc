@@ -224,6 +224,8 @@ static CurrentCommandsTool *current_commands_tool= NULL;
 
 static CumulativeCommandsTool *cumulative_commands_tool= NULL;
 
+static GlobalStatsTool *global_stats_tool= NULL;
+
 static void enable(Session *,
                    drizzle_sys_var *,
                    void *var_ptr,
@@ -260,6 +262,13 @@ static bool initTable()
     return true;
   }
 
+  global_stats_tool= new(nothrow)GlobalStatsTool(logging_stats);
+
+  if (! global_stats_tool)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -275,6 +284,7 @@ static int init(Context &context)
   context.add(logging_stats);
   context.add(current_commands_tool);
   context.add(cumulative_commands_tool);
+  context.add(global_stats_tool);
 
   if (sysvar_logging_stats_enabled)
   {

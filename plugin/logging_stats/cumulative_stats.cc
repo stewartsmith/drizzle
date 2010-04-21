@@ -39,13 +39,15 @@ CumulativeStats::CumulativeStats(uint32_t in_cumulative_stats_by_user_max)
   cumulative_stats_by_user_vector= new vector<ScoreboardSlot *>(cumulative_stats_by_user_max);
 
   vector<ScoreboardSlot *>::iterator it= cumulative_stats_by_user_vector->begin();
-  for (uint32_t j=0; j < cumulative_stats_by_user_max; ++j)
+  for (int32_t j=0; j < cumulative_stats_by_user_max; ++j)
   {
     ScoreboardSlot *scoreboard_slot= new ScoreboardSlot();
     it= cumulative_stats_by_user_vector->insert(it, scoreboard_slot);
   }
   cumulative_stats_by_user_vector->resize(cumulative_stats_by_user_max);
 
+  last_valid_index= INVALID_INDEX;
+  hasOpenUserSlots= true;
   global_stats= new GlobalStats();
 }
 
@@ -68,9 +70,14 @@ void CumulativeStats::logUserStats(ScoreboardSlot *scoreboard_slot)
 
   /* Search if this is a pre-existing user */
 
-  uint32_t read_index= user_index_reading;
+  int32_t current_index= last_valid_index;
 
-  for (uint32_t j=0; j < read_index; ++j)
+  if (cumulative_stats_by_user_max <= current_index)
+  {
+    current_index= cumulative_stats_by_user_max;
+  }
+
+  for (int32_t j=0; j <= current_index; ++j)
   {
     ScoreboardSlot *cumulative_scoreboard_slot= *cumulative_it;
     string user= cumulative_scoreboard_slot->getUser();
@@ -92,18 +99,19 @@ void CumulativeStats::logUserStats(ScoreboardSlot *scoreboard_slot)
     
     if (hasOpenUserSlots())
     { 
-      uint32_t our_index= user_index_writing.fetch_and_increment();
+      int32_t our_index= last_valid_index.add_and_fetch(1);
       if (our_index < cumulative_stats_by_user_max)
       {
         ScoreboardSlot *cumulative_scoreboard_slot=
           cumulative_stats_by_user_vector->at(our_index);
         cumulative_scoreboard_slot->setUser(scoreboard_slot->getUser());
         cumulative_scoreboard_slot->merge(scoreboard_slot);
-        user_index_reading.increment();
+        cumulative_scoreboard_slot->setInUse(true);
       } 
       else 
       {
-        isOpenUserSlots= false;
+        last_valid_index= cumulative_stats_by_user_max - 1; 
+        hasOpenUserSlots= false;
       }
     } 
   }
@@ -112,4 +120,16 @@ void CumulativeStats::logUserStats(ScoreboardSlot *scoreboard_slot)
 void CumulativeStats::logGlobalStats(ScoreboardSlot* scoreboard_slot)
 {
   global_stats->updateUserCommands(scoreboard_slot); 
+}
+
+int32_t  CumulativeStats::getCumulativeStatsLastValidIndex()
+{
+  if (last_valid_index < cumulative_stats_by_user_max)
+  {
+    return last_valid_index;
+  } 
+  else 
+  {
+    return cumulative_stats_by_user_max;
+  }
 }

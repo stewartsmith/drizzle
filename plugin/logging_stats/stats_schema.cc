@@ -34,6 +34,35 @@ using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
+GlobalStatsTool::GlobalStatsTool(LoggingStats *in_logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATEMENTS_NEW")
+{   
+  logging_stats= in_logging_stats;
+  add_field("VARIABLE_NAME");
+  add_field("VARIABLE_VALUE", TableFunction::NUMBER);
+}
+
+GlobalStatsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  count= 0;
+  global_stats= logging_stats->getCumulativeStats()->getGlobalStats();
+}
+
+bool GlobalStatsTool::Generator::populate()
+{
+  if (count == 1)
+  {
+    return false;
+  }
+
+  push("COUNT_SELECT");
+  push(global_stats->getUserCommands()->getSelectCount());
+
+  ++count;
+  return true;
+}
+
 CurrentCommandsTool::CurrentCommandsTool(LoggingStats *in_logging_stats) :
   plugin::TableFunction("DATA_DICTIONARY", "CURRENT_SQL_COMMANDS")
 {
@@ -155,36 +184,47 @@ CumulativeCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_loggi
 
   if (logging_stats->isEnabled())
   {
-    total_records= logging_stats->getCumulativeStats()->getUserReadingIndex();
+    last_valid_index= logging_stats->getCumulativeStats()->getCumulativeStatsLastValidIndex();
   }
   else
   {
-    total_records= 0; 
+    last_valid_index= INVALID_INDEX; 
   }
 }
 
 bool CumulativeCommandsTool::Generator::populate()
 {
-  if (record_number == total_records)
+  if ((record_number > last_valid_index) || (last_valid_index == INVALID_INDEX))
   {
     return false;
   }
 
-  ScoreboardSlot *cumulative_scoreboard_slot= 
-    logging_stats->getCumulativeStats()->getCumulativeStatsByUserVector()->at(record_number);
+  while (record_number <= last_valid_index)
+  {
+    ScoreboardSlot *cumulative_scoreboard_slot= 
+      logging_stats->getCumulativeStats()->getCumulativeStatsByUserVector()->at(record_number);
 
-  push(cumulative_scoreboard_slot->getUser());
-  push(cumulative_scoreboard_slot->getUserCommands()->getSelectCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getDeleteCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getUpdateCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getInsertCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getRollbackCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getCommitCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getCreateCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getAlterCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getDropCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getAdminCount());
+    if (cumulative_scoreboard_slot->isInUse())
+    {
+      push(cumulative_scoreboard_slot->getUser());
+      push(cumulative_scoreboard_slot->getUserCommands()->getSelectCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getDeleteCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getUpdateCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getInsertCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getRollbackCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getCommitCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getCreateCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getAlterCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getDropCount());
+      push(cumulative_scoreboard_slot->getUserCommands()->getAdminCount());
+      ++record_number;
+      return true;
+    } 
+    else 
+    {
+      ++record_number;
+    }
+  }
 
-  ++record_number;
-  return true;
+  return false;
 }

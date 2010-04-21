@@ -37,6 +37,8 @@
 
 #include <vector>
 
+static const int32_t INVALID_INDEX= -1;
+
 class CumulativeStats
 {
 public:
@@ -53,38 +55,29 @@ public:
     return cumulative_stats_by_user_vector;
   }
 
-  const GlobalStats *getGlobalStats()
+  GlobalStats *getGlobalStats()
   {
     return global_stats;
   }
 
-  uint32_t getCumulativeStatsByUserMax()
+  int32_t getCumulativeStatsByUserMax()
   {
     return cumulative_stats_by_user_max; 
   }
 
-  uint32_t getUserWritingIndex()
-  {
-    return user_index_writing;
-  }
-
-  uint32_t getUserReadingIndex()
-  {
-    return user_index_reading;
-  }
+  int32_t getCumulativeStatsLastValidIndex();
 
   bool hasOpenUserSlots()
   {
-    return isOpenUserSlots;
+    return hasOpenUserSlots;
   }
 
 private:
   std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
   GlobalStats *global_stats; 
-  uint32_t cumulative_stats_by_user_max;
-  drizzled::atomic<uint32_t> user_index_writing;
-  drizzled::atomic<uint32_t> user_index_reading;
-  bool isOpenUserSlots;
+  int32_t cumulative_stats_by_user_max;
+  drizzled::atomic<int32_t> last_valid_index;
+  bool hasOpenUserSlots;
 };
 
 #endif /* PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H */
