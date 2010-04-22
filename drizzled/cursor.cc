@@ -56,7 +56,7 @@ Cursor::Cursor(plugin::StorageEngine &engine_arg,
                TableShare &share_arg)
   : table_share(&share_arg), table(0),
     estimation_rows_to_insert(0), engine(&engine_arg),
-    ref(0), in_range_check_pushed_down(false),
+    ref(0),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(internal::my_off_t)),
     inited(NONE),
@@ -1112,7 +1112,7 @@ int Cursor::multi_range_read_next(char **range_info)
   int result= 0;
   int range_res= 0;
 
-  if (!mrr_have_range)
+  if (not mrr_have_range)
   {
     mrr_have_range= true;
     goto start;
@@ -1266,25 +1266,8 @@ int Cursor::read_range_next()
 int Cursor::compare_key(key_range *range)
 {
   int cmp;
-  if (!range || in_range_check_pushed_down)
+  if (not range)
     return 0;					// No max range
-  cmp= key_cmp(range_key_part, range->key, range->length);
-  if (!cmp)
-    cmp= key_compare_result_on_equal;
-  return cmp;
-}
-
-
-/*
-  Same as compare_key() but doesn't check have in_range_check_pushed_down.
-  This is used by index condition pushdown implementation.
-*/
-
-int Cursor::compare_key2(key_range *range)
-{
-  int cmp;
-  if (!range)
-    return 0;					// no max range
   cmp= key_cmp(range_key_part, range->key, range->length);
   if (!cmp)
     cmp= key_compare_result_on_equal;

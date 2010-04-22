@@ -40,3 +40,17 @@ Created November 07, 2007 Vasil Dimov
 
 #include "mysql_addons.h"
 #include "univ.i"
+#include "drizzled/session.h"
+
+/**
+  Return the session id of a user session
+  @param pointer to Session object
+  @return session's id
+*/
+extern "C"
+unsigned long session_get_thread_id(const void *ptr)
+{
+  const drizzled::Session *session= (const drizzled::Session *)ptr;
+  return (unsigned long) session->getSessionId();
+}
+

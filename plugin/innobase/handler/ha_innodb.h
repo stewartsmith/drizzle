@@ -220,14 +220,6 @@ uint64_t drizzle_bin_log_file_pos(void);
 int session_slave_thread(const Session *session);
 
 /**
-  Check if a user thread is running a non-transactional update
-  @param session  user thread
-  @retval 0 the user thread is not running a non-transactional update
-  @retval 1 the user thread is running a non-transactional update
-*/
-int session_non_transactional_update(const Session *session);
-
-/**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
   @param  session   Thread handle
   @param  all   TRUE <=> rollback main transaction.

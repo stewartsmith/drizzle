@@ -51,6 +51,8 @@
 #include "drizzled/optimizer/range.h"
 #include "drizzled/optimizer/sum.h"
 #include "drizzled/optimizer/explain_plan.h"
+#include "drizzled/optimizer/access_method_factory.h"
+#include "drizzled/optimizer/access_method.h"
 #include "drizzled/records.h"
 #include "drizzled/probes.h"
 #include "drizzled/internal/my_bit.h"
@@ -98,7 +100,7 @@ static uint32_t determine_search_depth(JOIN* join);
 static bool make_simple_join(JOIN *join,Table *tmp_table);
 static void make_outerjoin_info(JOIN *join);
 static bool make_join_select(JOIN *join, optimizer::SqlSelect *select,COND *item);
-static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after);
+static bool make_join_readinfo(JOIN *join);
 static void update_depend_map(JOIN *join);
 static void update_depend_map(JOIN *join, order_st *order);
 static order_st *remove_constants(JOIN *join,order_st *first_order,COND *cond, bool change_list, bool *simple_order);
@@ -128,7 +130,6 @@ static Table *get_sort_by_table(order_st *a,order_st *b,TableList *tables);
 static void reset_nj_counters(List<TableList> *join_list);
 static bool test_if_subpart(order_st *a,order_st *b);
 static void restore_prev_nj_state(JoinTable *last);
-static uint32_t make_join_orderinfo(JOIN *join);
 static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab);
 static void free_blobs(Field **ptr); /* Rename this method...conflicts with another in global namespace... */
 
@@ -835,12 +836,8 @@ int JOIN::optimize()
         (group_list && order) ||
         test(select_options & OPTION_BUFFER_RESULT)));
 
-  uint32_t no_jbuf_after= make_join_orderinfo(this);
-  uint64_t select_opts_for_readinfo=
-    (select_options & (SELECT_DESCRIBE | SELECT_NO_JOIN_CACHE)) | (0);
-
   // No cache for MATCH == 'Don't use join buffering when we use MATCH'.
-  if (make_join_readinfo(this, select_opts_for_readinfo, no_jbuf_after))
+  if (make_join_readinfo(this))
     return 1;
 
   /* Create all structures needed for materialized subquery execution. */
@@ -2348,7 +2345,7 @@ int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
   {
     /* Get reference pointers to sum functions in place */
     memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
-     ref_pointer_array_size);
+           ref_pointer_array_size);
     if ((!having || having->val_int()))
     {
       int write_error;
@@ -2362,11 +2359,8 @@ int JOIN::rollup_write_data(uint32_t idx, Table *table_arg)
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
       if ((write_error= table_arg->cursor->insertRecord(table_arg->record[0])))
       {
-  if (create_myisam_from_heap(session, table_arg,
-                                    tmp_table_param.start_recinfo,
-                                    &tmp_table_param.recinfo,
-                                    write_error, 0))
-    return 1;
+        my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+        return 1;
       }
     }
   }
@@ -2821,12 +2815,9 @@ enum_nested_loop_state end_write(JOIN *join, JoinTable *, bool end_of_records)
       {
         if (!table->cursor->is_fatal_error(error, HA_CHECK_DUP))
           goto end;
-        if (create_myisam_from_heap(join->session, table,
-                                          join->tmp_table_param.start_recinfo,
-                                          &join->tmp_table_param.recinfo,
-                  error, 1))
-          return NESTED_LOOP_ERROR;        // Not a table_is_full error
-        table->s->uniques= 0;			// To ensure rows are the same
+
+        my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+        return NESTED_LOOP_ERROR;        // Table is_full error
       }
       if (++join->send_records >= join->tmp_table_param.end_write_records && join->do_send_rows)
       {
@@ -2901,14 +2892,8 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
   copy_funcs(join->tmp_table_param.items_to_copy);
   if ((error=table->cursor->insertRecord(table->record[0])))
   {
-    if (create_myisam_from_heap(join->session, table,
-                                join->tmp_table_param.start_recinfo,
-                                &join->tmp_table_param.recinfo,
-				error, 0))
-      return NESTED_LOOP_ERROR;            // Not a table_is_full error
-    /* Change method to update rows */
-    table->cursor->startIndexScan(0, 0);
-    join->join_tab[join->tables-1].next_select= end_unique_update;
+    my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+    return NESTED_LOOP_ERROR;        // Table is_full error
   }
   join->send_records++;
   return NESTED_LOOP_OK;
@@ -4872,17 +4857,14 @@ static bool make_join_select(JOIN *join,
     false - OK
     true  - Out of memory
 */
-static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_after)
+static bool make_join_readinfo(JOIN *join)
 {
-  uint32_t i;
-  bool statistics= test(!(join->select_options & SELECT_DESCRIBE));
-  bool sorted= 1;
+  bool sorted= true;
 
-  for (i=join->const_tables ; i < join->tables ; i++)
+  for (uint32_t i= join->const_tables ; i < join->tables ; i++)
   {
     JoinTable *tab=join->join_tab+i;
     Table *table=tab->table;
-    bool using_join_cache;
     tab->read_record.table= table;
     tab->read_record.cursor= table->cursor;
     tab->next_select=sub_select;		/* normal select */
@@ -4891,172 +4873,35 @@ static bool make_join_readinfo(JOIN *join, uint64_t options, uint32_t no_jbuf_af
       produce sorted output.
     */
     tab->sorted= sorted;
-    sorted= 0;                                  // only first must be sorted
+    sorted= false; // only first must be sorted
+
     if (tab->insideout_match_tab)
     {
-      if (!(tab->insideout_buf= (unsigned char*)join->session->alloc(tab->table->key_info
-                                                         [tab->index].
-                                                         key_length)))
+      if (! (tab->insideout_buf= (unsigned char*) join->session->alloc(tab->table->key_info
+                                                                       [tab->index].
+                                                                       key_length)))
         return true;
     }
-    switch (tab->type) {
-    case AM_SYSTEM:				// Only happens with left join
-      table->status=STATUS_NO_RECORD;
-      tab->read_first_record= join_read_system;
-      tab->read_record.read_record= join_no_more_records;
-      break;
-    case AM_CONST:				// Only happens with left join
-      table->status=STATUS_NO_RECORD;
-      tab->read_first_record= join_read_const;
-      tab->read_record.read_record= join_no_more_records;
-      if (table->covering_keys.test(tab->ref.key) &&
-          !table->no_keyread)
-      {
-        table->key_read=1;
-        table->cursor->extra(HA_EXTRA_KEYREAD);
-      }
-      break;
-    case AM_EQ_REF:
-      table->status=STATUS_NO_RECORD;
-      if (tab->select)
-      {
-        delete tab->select->quick;
-        tab->select->quick=0;
-      }
-      delete tab->quick;
-      tab->quick=0;
-      tab->read_first_record= join_read_key;
-      tab->read_record.read_record= join_no_more_records;
-      if (table->covering_keys.test(tab->ref.key) && !table->no_keyread)
-      {
-        table->key_read=1;
-        table->cursor->extra(HA_EXTRA_KEYREAD);
-      }
-      break;
-    case AM_REF_OR_NULL:
-    case AM_REF:
-      table->status=STATUS_NO_RECORD;
-      if (tab->select)
-      {
-        delete tab->select->quick;
-        tab->select->quick=0;
-      }
-      delete tab->quick;
-      tab->quick=0;
-      if (table->covering_keys.test(tab->ref.key) && !table->no_keyread)
-      {
-        table->key_read=1;
-        table->cursor->extra(HA_EXTRA_KEYREAD);
-      }
-      if (tab->type == AM_REF)
-      {
-        tab->read_first_record= join_read_always_key;
-        tab->read_record.read_record= tab->insideout_match_tab?
-           join_read_next_same_diff : join_read_next_same;
-      }
-      else
-      {
-        tab->read_first_record= join_read_always_key_or_null;
-        tab->read_record.read_record= join_read_next_same_or_null;
-      }
-      break;
-    case AM_ALL:
-      /*
-	If previous table use cache
-        If the incoming data set is already sorted don't use cache.
-      */
-      table->status=STATUS_NO_RECORD;
-      using_join_cache= false;
-      if (i != join->const_tables && !(options & SELECT_NO_JOIN_CACHE) &&
-          tab->use_quick != 2 && !tab->first_inner && i <= no_jbuf_after &&
-          !tab->insideout_match_tab)
-      {
-        if ((options & SELECT_DESCRIBE) ||
-            !join_init_cache(join->session,join->join_tab+join->const_tables,
-                i-join->const_tables))
-        {
-                using_join_cache= true;
-          tab[-1].next_select=sub_select_cache; /* Patch previous */
-        }
-      }
-      /* These init changes read_record */
-      if (tab->use_quick == 2)
-      {
-        join->session->server_status|=SERVER_QUERY_NO_GOOD_INDEX_USED;
-        tab->read_first_record= join_init_quick_read_record;
-        if (statistics)
-          status_var_increment(join->session->status_var.select_range_check_count);
-      }
-      else
-      {
-        tab->read_first_record= join_init_read_record;
-        if (i == join->const_tables)
-        {
-          if (tab->select && tab->select->quick)
-          {
-            if (statistics)
-              status_var_increment(join->session->status_var.select_range_count);
-          }
-          else
-          {
-            join->session->server_status|=SERVER_QUERY_NO_INDEX_USED;
-            if (statistics)
-              status_var_increment(join->session->status_var.select_scan_count);
-          }
-        }
-        else
-        {
-          if (tab->select && tab->select->quick)
-          {
-            if (statistics)
-              status_var_increment(join->session->status_var.select_full_range_join_count);
-          }
-          else
-          {
-            join->session->server_status|=SERVER_QUERY_NO_INDEX_USED;
-            if (statistics)
-              status_var_increment(join->session->status_var.select_full_join_count);
-          }
-        }
-        if (!table->no_keyread)
-        {
-          if (tab->select && tab->select->quick &&
-                    tab->select->quick->index != MAX_KEY && //not index_merge
-              table->covering_keys.test(tab->select->quick->index))
-          {
-            table->key_read=1;
-            table->cursor->extra(HA_EXTRA_KEYREAD);
-          }
-          else if (!table->covering_keys.none() &&
-            !(tab->select && tab->select->quick))
-          {					// Only read index tree
-                  if (!tab->insideout_match_tab)
-                  {
-                    /*
-                      See bug #26447: "Using the clustered index for a table scan
-                      is always faster than using a secondary index".
-                    */
-                    if (table->s->primary_key != MAX_KEY &&
-                        table->cursor->primary_key_is_clustered())
-                      tab->index= table->s->primary_key;
-                    else
-                      tab->index= table->find_shortest_key(&table->covering_keys);
-                  }
-            tab->read_first_record= join_read_first;
-            tab->type= AM_NEXT;		// Read with index_first / index_next
-          }
-        }
-      }
-      break;
-    default:
-      break;
-    case AM_UNKNOWN:
-    case AM_MAYBE_REF:
+
+    optimizer::AccessMethodFactory &factory= optimizer::AccessMethodFactory::singleton();
+    boost::shared_ptr<optimizer::AccessMethod> access_method(factory.createAccessMethod(tab->type));
+
+    if (! access_method)
+    {
+      /**
+       * @todo
+       * Is abort() the correct thing to call here? I call this here because it was what was called in
+       * the default case for the switch statement that used to be here.
+       */
       abort();
     }
+
+    access_method->getStats(table, tab);
   }
-  join->join_tab[join->tables-1].next_select=0; /* Set by do_select */
-  return(false);
+
+  join->join_tab[join->tables-1].next_select= NULL; /* Set by do_select */
+
+  return false;
 }
 
 /** Update the dependency map for the tables. */
@@ -6171,34 +6016,6 @@ static void restore_prev_nj_state(JoinTable *last)
   }
 }
 
-/**
-  Determine if the set is already ordered for order_st BY, so it can
-  disable join cache because it will change the ordering of the results.
-  Code handles sort table that is at any location (not only first after
-  the const tables) despite the fact that it's currently prohibited.
-  We must disable join cache if the first non-const table alone is
-  ordered. If there is a temp table the ordering is done as a last
-  operation and doesn't prevent join cache usage.
-*/
-static uint32_t make_join_orderinfo(JOIN *join)
-{
-  uint32_t i;
-  if (join->need_tmp)
-    return join->tables;
-
-  for (i=join->const_tables ; i < join->tables ; i++)
-  {
-    JoinTable *tab= join->join_tab+i;
-    Table *table= tab->table;
-    if ((table == join->sort_by_table &&
-        (!join->order || join->skip_sort_order)) ||
-        (join->sort_by_table == (Table *) 1 &&  i != join->const_tables))
-    {
-      break;
-    }
-  }
-  return i;
-}
 
 /**
   Create a condition for a const reference and add this to the

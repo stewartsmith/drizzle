@@ -886,7 +886,7 @@ thd_has_edited_nontrans_tables(
 /*===========================*/
   void*   session)  /*!< in: thread handle (Session*) */
 {
-  return((ibool) session_non_transactional_update((Session*) session));
+  return((ibool)((Session *)session)->transaction.all.hasModifiedNonTransData());
 }
 
 /******************************************************************//**
@@ -1024,7 +1024,7 @@ convert_error_code_to_mysql(
     tell it also to MySQL so that MySQL knows to empty the
     cached binlog for this transaction */
 
-                session_mark_transaction_to_rollback(session, TRUE);
+    mark_transaction_to_rollback(session, TRUE);
 
     return(HA_ERR_LOCK_DEADLOCK);
 
@@ -1033,8 +1033,7 @@ convert_error_code_to_mysql(
     latest SQL statement in a lock wait timeout. Previously, we
     rolled back the whole transaction. */
 
-                session_mark_transaction_to_rollback(session,
-                                             (bool)row_rollback_on_timeout);
+    mark_transaction_to_rollback(session, (bool)row_rollback_on_timeout);
 
     return(HA_ERR_LOCK_WAIT_TIMEOUT);
 
@@ -1080,7 +1079,7 @@ convert_error_code_to_mysql(
     tell it also to MySQL so that MySQL knows to empty the
     cached binlog for this transaction */
 
-    session_mark_transaction_to_rollback(session, TRUE);
+    mark_transaction_to_rollback(session, TRUE);
 
     return(HA_ERR_LOCK_TABLE_FULL);
 
@@ -1157,7 +1156,7 @@ innobase_mysql_print_thd(
   Session *session= reinterpret_cast<Session *>(in_session);
   fprintf(f,
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
-          static_cast<uint64_t>(session_get_thread_id( session)),
+          static_cast<uint64_t>(session->getSessionId()),
           static_cast<uint64_t>(session->getQueryId()),
           glob_hostname,
           session->getSecurityContext().getIp().c_str(),
@@ -2742,14 +2741,23 @@ ha_innobase::open(
         table->s->stored_rec_length
         + table->s->max_key_length
         + MAX_REF_PARTS * 3;
-  if (!(unsigned char*) memory::multi_malloc(false,
-      &upd_buff, upd_and_key_val_buff_len,
-      &key_val_buff, upd_and_key_val_buff_len,
-      NULL)) {
-    free_share(share);
 
+  upd_buff= (unsigned char*)malloc(upd_and_key_val_buff_len);
+
+  if (upd_buff == NULL)
+  {
+    free_share(share);
+  }
+
+  key_val_buff= (unsigned char*)malloc(upd_and_key_val_buff_len);
+  if (key_val_buff == NULL)
+  {
+    free_share(share);
+    free(upd_buff);
     return(1);
   }
+
+
 
   /* We look for pattern #P# to see if the table is partitioned
   MySQL table. The retry logic for partitioned tables is a
@@ -2791,6 +2799,7 @@ retry:
         norm_name);
     free_share(share);
     free(upd_buff);
+    free(key_val_buff);
     errno = ENOENT;
 
     return(HA_ERR_NO_SUCH_TABLE);
@@ -2807,6 +2816,7 @@ retry:
         norm_name);
     free_share(share);
     free(upd_buff);
+    free(key_val_buff);
     errno = ENOENT;
 
     dict_table_decrement_handle_count(ib_table, FALSE);
@@ -2942,6 +2952,7 @@ ha_innobase::close(void)
   row_prebuilt_free(prebuilt, FALSE);
 
   free(upd_buff);
+  free(key_val_buff);
   free_share(share);
 
   /* Tell InnoDB server that there might be work for

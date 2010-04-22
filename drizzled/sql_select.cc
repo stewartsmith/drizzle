@@ -49,7 +49,6 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
-#include "drizzled/memory/multi_malloc.h"
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
 
@@ -119,8 +118,10 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
+  {
     res= drizzle_union(session, lex, result, &lex->unit,
 		       setup_tables_done_option);
+  }
   else
   {
     Select_Lex_Unit *unit= &lex->unit;
@@ -3231,11 +3232,11 @@ Next_select_func setup_end_select_func(JOIN *join)
     }
     else if (join->sort_and_group && !tmp_tbl->precomputed_group_by)
     {
-      end_select=end_write_group;
+      end_select= end_write_group;
     }
     else
     {
-      end_select=end_write;
+      end_select= end_write;
       if (tmp_tbl->precomputed_group_by)
       {
         /*
@@ -4217,11 +4218,12 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_reco
         if (!join->having || join->having->val_int())
         {
           int error= table->cursor->insertRecord(table->record[0]);
-          if (error && create_myisam_from_heap(join->session, table,
-                                              join->tmp_table_param.start_recinfo,
-                                                &join->tmp_table_param.recinfo,
-                                              error, 0))
-          return NESTED_LOOP_ERROR;
+
+          if (error)
+          {
+            my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+            return NESTED_LOOP_ERROR;
+          }
         }
         if (join->rollup.state != ROLLUP::STATE_NONE)
         {
@@ -5409,25 +5411,25 @@ int remove_dup_with_hash_index(Session *session,
                                uint32_t key_length,
                                Item *having)
 {
-  unsigned char *key_buffer, *key_pos, *record=table->record[0];
+  unsigned char *key_pos, *record=table->record[0];
   int error;
   Cursor *cursor= table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
   uint32_t *field_lengths,*field_length;
   HASH hash;
+  std::vector<unsigned char>key_buffer;
 
-  if (! memory::multi_malloc(false,
-		       &key_buffer,
-		       (uint32_t) ((key_length + extra_length) *
-			       (long) cursor->stats.records),
-		       &field_lengths,
-		       (uint32_t) (field_count*sizeof(*field_lengths)),
-		       NULL))
+  key_buffer.resize((key_length + extra_length) * (long) cursor->stats.records);
+
+  field_lengths= (uint32_t *)std::malloc(field_count * sizeof(*field_lengths));
+
+  if (field_lengths == NULL)
     return(1);
 
   {
     Field **ptr;
     uint32_t total_length= 0;
+
     for (ptr= first_field, field_length=field_lengths ; *ptr ; ptr++)
     {
       uint32_t length= (*ptr)->sort_length();
@@ -5442,12 +5444,12 @@ int remove_dup_with_hash_index(Session *session,
   if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor->stats.records, 0,
 		key_length, (hash_get_key) 0, 0, 0))
   {
-    free((char*) key_buffer);
+    free((char*) field_lengths);
     return(1);
   }
 
   cursor->ha_rnd_init(1);
-  key_pos=key_buffer;
+  key_pos= &key_buffer[0];
   for (;;)
   {
     unsigned char *org_key_pos;
@@ -5491,14 +5493,14 @@ int remove_dup_with_hash_index(Session *session,
       (void) my_hash_insert(&hash, org_key_pos);
     key_pos+=extra_length;
   }
-  free((char*) key_buffer);
+  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->ha_rnd_end();
   return(0);
 
 err:
-  free((char*) key_buffer);
+  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->ha_rnd_end();
