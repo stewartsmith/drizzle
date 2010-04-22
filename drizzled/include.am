@@ -875,7 +875,7 @@ DISTCLEANFILES+= \
 MAINTAINERCLEANFILES+= $(BUILT_MAINT_SRC)
 
 drizzled/generated_probes.h : drizzled/probes.d
-	$(DTRACE) $(DTRACEFLAGS) -h -s drizzled/probes.d -o drizzled/generated_probes.h
+	$(DTRACE) $(DTRACEFLAGS) -h -s ${top_srcdir}/drizzled/probes.d -o drizzled/generated_probes.h
 	mv drizzled/generated_probes.h drizzled/generated_probes.h.bak
 	sed "s/#include <unistd.h>//g" drizzled/generated_probes.h.bak > drizzled/generated_probes.h
 	rm drizzled/generated_probes.h.bak
