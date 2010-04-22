@@ -128,6 +128,7 @@ def should_lint(path):
         'drizzled/function_hash.h', 'drizzled/symbol_hash.h',
         'util/dummy.cc', 'drizzled/sql_yacc.h', 'drizzled/configmake.h',
 	'drizzled/plugin/version.h',
+        'drizzled/generated_probes.h',
         'drizzled/plugin/load_list.h']:
         if exclude in path:
             return False
