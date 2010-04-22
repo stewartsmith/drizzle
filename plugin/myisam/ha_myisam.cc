@@ -1185,11 +1185,6 @@ int ha_myisam::rnd_next(unsigned char *buf)
   return error;
 }
 
-int ha_myisam::restart_rnd_next(unsigned char *buf, unsigned char *pos)
-{
-  return rnd_pos(buf,pos);
-}
-
 int ha_myisam::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);

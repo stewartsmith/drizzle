@@ -61,7 +61,6 @@ class ha_myisam: public drizzled::Cursor
   int rnd_init(bool scan);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
-  int restart_rnd_next(unsigned char *buf, unsigned char *pos);
   void position(const unsigned char *record);
   int info(uint);
   int extra(enum drizzled::ha_extra_function operation);

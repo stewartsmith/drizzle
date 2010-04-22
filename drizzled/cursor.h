@@ -402,12 +402,6 @@ public:
   */
   virtual int rnd_pos_by_record(unsigned char *record);
   virtual int read_first_row(unsigned char *buf, uint32_t primary_key);
-  /**
-    The following function is only needed for tables that may be temporary
-    tables during joins.
-  */
-  virtual int restart_rnd_next(unsigned char *, unsigned char *)
-    { return HA_ERR_WRONG_COMMAND; }
   virtual int rnd_same(unsigned char *, uint32_t)
     { return HA_ERR_WRONG_COMMAND; }
   virtual ha_rows records_in_range(uint32_t, key_range *, key_range *)

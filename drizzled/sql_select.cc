@@ -5383,8 +5383,8 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     if (!found)
       break;					// End of cursor
-    /* Restart search on next row */
-    error=cursor->restart_rnd_next(record,cursor->ref);
+    /* Move current position to the next row */
+    error= cursor->rnd_pos(record, cursor->ref);
   }
 
   cursor->extra(HA_EXTRA_NO_CACHE);
