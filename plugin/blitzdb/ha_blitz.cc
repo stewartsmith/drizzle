@@ -27,8 +27,6 @@ using namespace drizzled;
 static pthread_mutex_t blitz_utility_mutex;
 static TCMAP *blitz_table_cache;
 
-static int free_share(BlitzShare *share);
-
 static const char *ha_blitz_exts[] = {
   BLITZ_DATA_EXT,
   BLITZ_INDEX_EXT,
@@ -295,19 +293,19 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
   pthread_mutex_lock(&blitz_utility_mutex);
 
   if ((key_buffer = (char *)malloc(BLITZ_MAX_KEY_LEN)) == NULL) {
-    free_share(share);
+    free_share();
     pthread_mutex_unlock(&blitz_utility_mutex);
     return HA_ERR_OUT_OF_MEM;
   }
 
   if ((key_merge_buffer = (char *)malloc(BLITZ_MAX_KEY_LEN)) == NULL) {
-    free_share(share);
+    free_share();
     pthread_mutex_unlock(&blitz_utility_mutex);
     return HA_ERR_OUT_OF_MEM;
   }
 
   if ((held_key_buf = (char *)malloc(BLITZ_MAX_KEY_LEN)) == NULL) {
-    free_share(share);
+    free_share();
     free(key_buffer);
     free(key_merge_buffer);
     pthread_mutex_unlock(&blitz_utility_mutex);
@@ -336,7 +334,7 @@ int ha_blitz::close(void) {
   free(key_merge_buffer);
   free(held_key_buf);
   free(secondary_row_buffer);
-  return free_share(share);
+  return free_share();
 }
 
 int ha_blitz::info(uint32_t flag) {
@@ -1280,7 +1278,7 @@ BlitzShare *ha_blitz::get_share(const char *path) {
   return share_ptr;
 }
 
-static int free_share(BlitzShare *share) {
+int ha_blitz::free_share(void) {
   pthread_mutex_lock(&blitz_utility_mutex);
 
   /* BlitzShare could still be used by another thread. Check the

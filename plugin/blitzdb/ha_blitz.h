@@ -320,6 +320,7 @@ public:
 
   /* UTILITY FUNCTIONS (BLITZDB SPECIFIC) */
   BlitzShare *get_share(const char *table_name);
+  int free_share(void);
 
   /* LOCK RELATED FUNCTIONS (BLITZDB SPECIFIC) */
   int critical_section_enter();
