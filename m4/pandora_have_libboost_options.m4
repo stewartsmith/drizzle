@@ -18,11 +18,20 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST_PROGRAM_OPTIONS],[
     boost::program_options::options_description d;
     d.add_options()("a","some option");
   ])
+  AS_IF([test "x${ac_cv_libboost_program_options}" = "xno"],[
+    AC_LIB_HAVE_LINKFLAGS(boost_program_options-mt,,[
+      #include <boost/program_options.hpp>
+    ],[
+      boost::program_options::options_description d;
+      d.add_options()("a","some option");
+    ])
+  ])
   AC_LANG_POP()
   
   AM_CONDITIONAL(HAVE_BOOST_PROGRAM_OPTIONS,
-    [test "x${ac_cv_boost_program_options}" = "xyes"])
-  
+    [test "x${ac_cv_libboost_program_options}" = "xyes" -o "x${ac_cv_libboost_program_options_mt}" = "xyes"])
+  BOOST_LIBS="${BOOST_LIBS} ${LTLIBBOOST_PROGRAM_OPTIONS} ${LTLIBBOOST_PROGRAM_OPTIONS_MT}"
+  AC_SUBST(BOOST_LIBS) 
 ])
 
 AC_DEFUN([PANDORA_HAVE_BOOST_PROGRAM_OPTIONS],[
@@ -33,7 +42,7 @@ AC_DEFUN([PANDORA_HAVE_BOOST_PROGRAM_OPTIONS],[
 AC_DEFUN([PANDORA_REQUIRE_BOOST_PROGRAM_OPTIONS],[
   PANDORA_REQUIRE_BOOST($1)
   _PANDORA_SEARCH_BOOST_PROGRAM_OPTIONS($1)
-  AS_IF([test x$ac_cv_libboost_program_options = xno],
+  AS_IF([test "x${ac_cv_libboost_program_options}" = "xno" -a "x${ac_cv_libboost_program_options_mt}" = "xno"],
       AC_MSG_ERROR([boost::program_options is required for ${PACKAGE}]))
 ])
 
