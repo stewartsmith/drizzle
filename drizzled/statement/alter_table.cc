@@ -1091,6 +1091,7 @@ static bool internal_alter_table(Session *session,
           Note that MERGE tables do not have their children attached here.
         */
         new_table->intern_close_table();
+        free(new_table->s);
         free(new_table);
       }
 
@@ -1140,6 +1141,7 @@ static bool internal_alter_table(Session *session,
         Note that MERGE tables do not have their children attached here.
       */
       new_table->intern_close_table();
+      free(new_table->s);
       free(new_table);
     }
 

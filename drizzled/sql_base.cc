@@ -2307,12 +2307,12 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   key_length= table_list.create_table_def_key(cache_key);
   path_length= identifier.getPath().length();
 
-  if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) + sizeof(*share) +
+  share= (TableShare *)malloc(sizeof(TableShare));
+  if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) +
                                        path_length + 1 + key_length)))
     return NULL;
 
-  share= (TableShare*) (new_tmp_table+1);
-  tmp_path= (char*) (share+1);
+  tmp_path= (char*) (new_tmp_table+1);
   saved_cache_key= strcpy(tmp_path, identifier.getPath().c_str())+path_length+1;
   memcpy(saved_cache_key, cache_key, key_length);
 
@@ -2330,6 +2330,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     share->free_table_share();
+    free(share);
     free((char*) new_tmp_table);
     return 0;
   }
