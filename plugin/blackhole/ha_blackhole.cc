@@ -348,7 +348,7 @@ const char *ha_blackhole::index_type(uint32_t)
   return("BTREE");
 }
 
-int ha_blackhole::write_row(unsigned char *)
+int ha_blackhole::doInsertRecord(unsigned char *)
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
