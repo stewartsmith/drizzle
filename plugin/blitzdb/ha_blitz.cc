@@ -25,7 +25,6 @@ using namespace std;
 using namespace drizzled;
 
 static pthread_mutex_t blitz_utility_mutex;
-static TCMAP *blitz_table_cache;
 
 static const char *ha_blitz_exts[] = {
   BLITZ_DATA_EXT,
@@ -35,6 +34,9 @@ static const char *ha_blitz_exts[] = {
 };
 
 class BlitzEngine : public drizzled::plugin::StorageEngine {
+private:
+  TCMAP *blitz_table_cache;
+
 public:
   BlitzEngine(const std::string &name_arg) :
     drizzled::plugin::StorageEngine(name_arg,
@@ -79,6 +81,12 @@ public:
 
   bool doDoesTableExist(drizzled::Session &session,
                         drizzled::TableIdentifier &identifier);
+
+  bool doCreateTableCache(void);
+
+  BlitzShare *getTableShare(const std::string &name);
+  void cacheTableShare(const std::string &name, BlitzShare *share);
+  void deleteTableShare(const std::string &name);
 
   uint32_t max_supported_keys() const { return BLITZ_MAX_INDEX; }
   uint32_t max_supported_key_length() const { return BLITZ_MAX_KEY_LEN; }
@@ -273,6 +281,35 @@ bool BlitzEngine::doDoesTableExist(drizzled::Session &,
   return (access(proto_path.c_str(), F_OK)) ? false : true;
 }
 
+bool BlitzEngine::doCreateTableCache(void) {
+  return ((blitz_table_cache = tcmapnew()) == NULL) ? false : true;
+}
+
+BlitzShare *BlitzEngine::getTableShare(const std::string &table_name) {
+  int vlen;
+  const void *fetched;
+  BlitzShare *rv = NULL;
+
+  fetched = tcmapget(blitz_table_cache, table_name.c_str(),
+                     table_name.length(), &vlen);
+
+  /* dereference the object */
+  if (fetched)
+    rv = *(BlitzShare **)fetched;
+
+  return rv;
+}
+
+void BlitzEngine::cacheTableShare(const std::string &table_name,
+                                  BlitzShare *share) {
+  /* Cache the memory address of the share object */
+  tcmapput(blitz_table_cache, table_name.c_str(), table_name.length(),
+           &share, sizeof(share));
+}
+
+void BlitzEngine::deleteTableShare(const std::string &table_name) {
+  tcmapout2(blitz_table_cache, table_name.c_str());
+}
 
 ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
                    TableShare &table_arg) : Cursor(engine_arg, table_arg),
@@ -1195,18 +1232,17 @@ unsigned char *ha_blitz::get_pack_buffer(const size_t size) {
 static BlitzEngine *blitz_engine = NULL;
 
 BlitzShare *ha_blitz::get_share(const char *path) {
-  int len, vlen;
+  int len;
   BlitzShare *share_ptr;
+  BlitzEngine *bz_engine = (BlitzEngine *)engine;
 
   pthread_mutex_lock(&blitz_utility_mutex);
   len = (int)strlen(path);
 
   /* Look up the table cache to see if the table resource is available */
-  const void *cached = tcmapget(blitz_table_cache, path, len, &vlen);
-  
-  /* Check before dereferencing */
-  if (cached) {
-    share_ptr = *(BlitzShare **)cached;
+  share_ptr = bz_engine->getTableShare(path);
+
+  if (share_ptr) {
     share_ptr->use_count++;
     pthread_mutex_unlock(&blitz_utility_mutex);
     return share_ptr;
@@ -1272,8 +1308,10 @@ BlitzShare *ha_blitz::get_share(const char *path) {
   else
     share_ptr->primary_key_exists = true;
 
-  /* Cache the memory address of the object */
-  tcmapput(blitz_table_cache, path, len, &share_ptr, sizeof(share_ptr));
+  /* Done creating the share object. Cache it for later
+     use by another cursor object.*/
+  bz_engine->cacheTableShare(path, share_ptr);
+
   pthread_mutex_unlock(&blitz_utility_mutex);
   return share_ptr;
 }
@@ -1296,7 +1334,9 @@ int ha_blitz::free_share(void) {
       share->btrees[i].close();
     }
 
-    tcmapout2(blitz_table_cache, share->table_name.c_str());
+    BlitzEngine *bz_engine = (BlitzEngine *)engine;
+    bz_engine->deleteTableShare(share->table_name);
+
     delete[] share->btrees;
     delete share;
   }
@@ -1308,7 +1348,7 @@ int ha_blitz::free_share(void) {
 static int blitz_init(drizzled::plugin::Context &context) {
   blitz_engine = new BlitzEngine("BLITZDB"); 
 
-  if ((blitz_table_cache = tcmapnew()) == NULL) {
+  if (!blitz_engine->doCreateTableCache()) {
     delete blitz_engine;
     return HA_ERR_OUT_OF_MEM;
   }
