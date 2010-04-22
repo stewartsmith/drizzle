@@ -246,8 +246,9 @@ public:
    * Free information allocated by openfrm
    *
    * @param If true if we also want to free table_share
+   * @note this should all be the destructor
    */
-  int closefrm(bool free_share);
+  int delete_table(bool free_share);
 
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
@@ -711,7 +712,7 @@ int open_table_def(Session& session, TableIdentifier &identifier, TableShare *sh
 void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,
                           uint32_t db_stat, uint32_t ha_open_flags,
-                          Table *outparam);
+                          Table &outparam);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);

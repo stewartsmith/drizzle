@@ -1992,7 +1992,7 @@ static void my_close_table(TABLE *table)
 	share = (TABLE_SHARE *) ((char *) table + sizeof(TABLE));
 	share->free_table_share();
 #else
-	closefrm(table, 1);  // TODO: Q, why did Stewart remove this?
+	delete_table(table, true);  // TODO: Q, why did Stewart remove this?
 #endif
 	xt_free_ns(table);
 }
@@ -2095,15 +2095,15 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 	}
 	share->init(db_name, 0, name, path);
 	if ((error = open_table_def(*thd, *ident, share)) ||
-		(error = open_table_from_share(thd, share, "", 0, 0, table)))
-	{
-		xt_free(self, table);
-		lex_end(&new_lex);
-		thd->lex = old_lex;
-		xt_throw_sulxterr(XT_CONTEXT, XT_ERR_LOADING_MYSQL_DIC, tab_path->ps_path, (u_long) error);
-		delete ident;
-		return NULL;
-	}
+		(error = open_table_from_share(thd, share, "", 0, 0, *table)))
+        {
+          xt_free(self, table);
+          lex_end(&new_lex);
+          thd->lex = old_lex;
+          xt_throw_sulxterr(XT_CONTEXT, XT_ERR_LOADING_MYSQL_DIC, tab_path->ps_path, (u_long) error);
+          delete ident;
+          return NULL;
+        }
 	delete ident;
 #else
 #if MYSQL_VERSION_ID < 60000

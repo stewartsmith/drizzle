@@ -178,7 +178,7 @@ void Table::intern_close_table()
 {						// Free all structures
   free_io_cache();
   if (cursor)                              // Not true if name lock
-    closefrm(true);			// close cursor
+    delete_table(true);			// close cursor
 }
 
 /*
@@ -1501,7 +1501,7 @@ bool reopen_table(Table *table)
   tmp.prev=		table->prev;
 
   if (table->cursor)
-    table->closefrm(true);		// close cursor, free everything
+    table->delete_table(true);		// close cursor, free everything
 
   *table= tmp;
   table->default_column_bitmaps();
@@ -1970,7 +1970,7 @@ retry:
                                                    HA_OPEN_RNDFILE |
                                                    HA_GET_INDEX |
                                                    HA_TRY_READ_ONLY),
-                                       session->open_options, entry)))
+                                       session->open_options, *entry)))
   {
     if (error == 7)                             // Table def changed
     {
@@ -2326,7 +2326,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
                             ha_open_options,
-                            new_tmp_table))
+                            *new_tmp_table))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     share->free_table_share();

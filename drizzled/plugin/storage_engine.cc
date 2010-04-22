@@ -488,7 +488,7 @@ int StorageEngine::createTable(Session &session,
   TableShare share(identifier.getSchemaName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
   message::Table tmp_proto;
 
-  if (parse_table_proto(session, table_message, &share) || open_table_from_share(&session, &share, "", 0, 0, &table))
+  if (parse_table_proto(session, table_message, &share) || open_table_from_share(&session, &share, "", 0, 0, table))
   { 
     // @note Error occured, we should probably do a little more here.
   }
@@ -523,7 +523,7 @@ int StorageEngine::createTable(Session &session,
       my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
     }
 
-    table.closefrm(false);
+    table.delete_table(false);
   }
 
   share.free_table_share();

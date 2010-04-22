@@ -1740,7 +1740,7 @@ void Session::nukeTable(Table *table)
   plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
-  table->closefrm(false);
+  table->delete_table(false);
 
   TableIdentifier identifier(table->s->getSchemaName(), table->s->table_name.str, table->s->path.str);
   rm_temporary_table(table_type, identifier);
