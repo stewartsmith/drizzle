@@ -55,6 +55,12 @@
  * A read lock is taken on the scoreboard vector when the table is queried 
  * in the data_dictionary.
  *
+ * Atomics
+ * 
+ * The cumulative statistics use atomics, for the index into the vector 
+ * containing statistics by user. The statistics themselves though are 
+ * not atomics.  
+ * 
  * System Variables
  * 
  * logging_stats_scoreboard_size - the size of the scoreboard this corresponds
