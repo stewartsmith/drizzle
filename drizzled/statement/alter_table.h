@@ -52,6 +52,7 @@ public:
 
 
 bool alter_table(Session *session, char *new_db, char *new_name,
+                 drizzled::TableIdentifier &original_table_identifier,
                  HA_CREATE_INFO *create_info,
                  message::Table &create_proto,
                  TableList *table_list,

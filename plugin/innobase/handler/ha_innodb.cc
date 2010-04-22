@@ -421,9 +421,7 @@ public:
                                 Table& form,
                                 drizzled::TableIdentifier &identifier,
                                 message::Table&);
-  UNIV_INTERN int doRenameTable(Session* session,
-                                const char* from,
-                                const char* to);
+  UNIV_INTERN int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
   UNIV_INTERN int doDropTable(Session& session, TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
@@ -6042,13 +6040,7 @@ innobase_rename_table(
 /*********************************************************************//**
 Renames an InnoDB table.
 @return	0 or error code */
-UNIV_INTERN
-int
-InnobaseEngine::doRenameTable(
-/*======================*/
-	Session*	session,
-	const char*	from,	/*!< in: old name of the table */
-	const char*	to)	/*!< in: new name of the table */
+UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
 	trx_t*	trx;
 	int	error;
@@ -6057,16 +6049,16 @@ InnobaseEngine::doRenameTable(
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
 
-	parent_trx = check_trx_exists(session);
+	parent_trx = check_trx_exists(&session);
 
 	/* In case MySQL calls this in the middle of a SELECT query, release
 	possible adaptive hash latch to avoid deadlocks of threads */
 
 	trx_search_latch_release_if_reserved(parent_trx);
 
-	trx = innobase_trx_allocate(session);
+	trx = innobase_trx_allocate(&session);
 
-	error = innobase_rename_table(trx, from, to, TRUE);
+	error = innobase_rename_table(trx, from.getPath().c_str(), to.getPath().c_str(), TRUE);
 
 	/* Tell the InnoDB server that there might be work for
 	utility threads: */

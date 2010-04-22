@@ -102,6 +102,11 @@ public:
   }
 
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+
+  int doRenameTable(Session&, TableIdentifier &, TableIdentifier &)
+  {
+    return EPERM;
+  }
 };
 
 

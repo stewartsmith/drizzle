@@ -112,7 +112,7 @@ public:
                     drizzled::TableIdentifier &identifier,
                     message::Table&);
 
-  int doRenameTable(Session*, const char *from, const char *to);
+  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
 
   int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
@@ -1396,10 +1396,11 @@ int MyisamEngine::doCreateTable(Session *session,
 }
 
 
-int MyisamEngine::doRenameTable(Session*,
-                                const char *from, const char *to)
+int MyisamEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
-  return mi_rename(from,to);
+  session.rename(from, to);
+
+  return mi_rename(from.getPath().c_str(), to.getPath().c_str());
 }
 
 

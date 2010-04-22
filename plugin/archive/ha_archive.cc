@@ -1322,6 +1322,23 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   return;
 }
 
+int ArchiveEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+{
+  int error= 0;
+
+  for (const char **ext= bas_ext(); *ext ; ext++)
+  {
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
+  }
+
+  return error;
+}
+
 bool ArchiveEngine::doDoesTableExist(Session&,
                                      TableIdentifier &identifier)
 {

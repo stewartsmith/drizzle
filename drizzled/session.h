@@ -1424,14 +1424,19 @@ public:
   bool removeTableMessage(TableIdentifier &identifier);
   bool getTableMessage(TableIdentifier &identifier, message::Table &table_message);
   bool doesTableMessageExist(TableIdentifier &identifier);
+  bool rename(TableIdentifier &from, TableIdentifier &to);
 
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
   Table *find_temporary_table(TableIdentifier &identifier);
+
   void doGetTableNames(CachedDirectory &directory,
                        const std::string& db_name,
                        std::set<std::string>& set_of_names);
+  void doGetTableNames(const std::string& db_name,
+                       std::set<std::string>& set_of_names);
+
   int doGetTableDefinition(drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
   bool doDoesTableExist(TableIdentifier &identifier);

@@ -285,17 +285,12 @@ protected:
                             TableIdentifier &identifier,
                             message::Table& proto)= 0;
 
-  virtual int doRenameTable(Session* session,
-                            const char *from, const char *to);
+  virtual int doRenameTable(Session &session,
+                            TableIdentifier &from, TableIdentifier &to)= 0;
 
 public:
 
-  int renameTable(Session *session, const char *from, const char *to) 
-  {
-    setTransactionReadWrite(*session);
-
-    return doRenameTable(session, from, to);
-  }
+  int renameTable(Session &session, TableIdentifier &from, TableIdentifier &to);
 
   // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,

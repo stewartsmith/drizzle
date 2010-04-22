@@ -100,9 +100,6 @@ bool TablesTool::Generator::nextTableCore()
                                              table_proto);
   }
 
-  if (checkTableName())
-    return false;
-
   return true;
 }
 
@@ -116,21 +113,11 @@ bool TablesTool::Generator::nextTable()
 
     if (not nextSchema())
       return false;
+
     is_tables_primed= false;
   }
 
   return true;
-}
-
-bool TablesTool::Generator::checkTableName()
-{
-  if (isWild(table_name()))
-    return true;
-
-  if (not table_predicate.empty() && table_predicate.compare(table_name()))
-    return true;
-
-  return false;
 }
 
 bool TablesTool::Generator::populate()
@@ -269,15 +256,4 @@ void TablesTool::Generator::fill()
 
   /* TABLE_COMMENT */
   push(table_proto.options().comment());
-}
-
-bool ShowTables::Generator::checkSchema()
-{
-  Session *session= current_session;
-
-  if (session->lex->select_lex.db)
-  {
-    return schema_name().compare(session->lex->select_lex.db);
-  }
-  return session->db.compare(schema_name());
 }

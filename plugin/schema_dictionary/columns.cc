@@ -62,11 +62,6 @@ ColumnsTool::Generator::Generator(Field **arg) :
   column_iterator(0),
   is_columns_primed(false)
 {
-  Session *session= current_session;
-  drizzled::statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
-
-  setSchemaPredicate(select->getShowSchema());
-  setTablePredicate(select->getShowTable());
 }
 
 

@@ -32,11 +32,6 @@ int BlitzData::startup(const char *path) {
   if ((rv = open_data_table(path, HDBOWRITER)) != 0)
     return rv;
 
-  if ((rv = open_system_table(path, HDBOWRITER)) != 0) {
-    close_data_table();
-    return rv;
-  }
-
   current_hidden_row_id = read_meta_row_id();
   return rv;
 }
@@ -49,9 +44,6 @@ int BlitzData::shutdown() {
   write_meta_row_id(current_hidden_row_id);
 
   if ((rv = close_data_table()) != 0)
-    return rv;
-
-  if ((rv = close_system_table()) != 0)
     return rv;
 
   return rv;
@@ -306,7 +298,7 @@ int BlitzData::close_system_table(void) {
 bool BlitzData::write_table_definition(drizzled::message::Table &proto) {
   assert(system_table);
 
-  string serialized_proto;
+  std::string serialized_proto;
   proto.SerializeToString(&serialized_proto);
 
   if (!tchdbput(system_table, BLITZ_TABLE_PROTO_KEY.c_str(),

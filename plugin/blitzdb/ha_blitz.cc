@@ -67,7 +67,9 @@ public:
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table &table_proto);
 
-  int doRenameTable(drizzled::Session *session, const char *from, const char *to);
+  int doRenameTable(drizzled::Session &session,
+                    drizzled::TableIdentifier &from_identifier,
+                    drizzled::TableIdentifier &to_identifier);
 
   int doDropTable(drizzled::Session &session,
                   drizzled::TableIdentifier &identifier);
@@ -134,7 +136,7 @@ int BlitzEngine::doCreateTable(drizzled::Session *,
 
   /* Write the table definition to system table. */
   if ((ecode = dict.open_system_table(identifier.getPath(), HDBOWRITER)) != 0)
-    return ecode; 
+    return ecode;
 
   if (!dict.write_table_definition(proto)) {
     dict.close_system_table();
@@ -145,23 +147,47 @@ int BlitzEngine::doCreateTable(drizzled::Session *,
   return 0;
 }
 
-int BlitzEngine::doRenameTable(Session *, const char *from, const char *to) {
-  BlitzData dict;
-  BlitzTree btree;
-  int err;
+int BlitzEngine::doRenameTable(drizzled::Session &,
+                               drizzled::TableIdentifier &from,
+                               drizzled::TableIdentifier &to) {
+  int rv = 0;
 
-  if ((err = dict.open_data_table(from, HDBOREADER)) != 0)
-    return err;
+  BlitzData blitz_table;
+  uint32_t nkeys;
 
-  uint32_t nkeys = dict.read_meta_keycount();
-  dict.close_data_table();
+  /* Find out the number of indexes in this table. This information
+     is required because BlitzDB creates a file for each indexes.*/
+  if (blitz_table.open_data_table(from.getPath().c_str(), HDBOREADER) != 0)
+    return HA_ERR_CRASHED_ON_USAGE;
 
-  for (uint32_t i = 0; i < nkeys; i++) {
-    if ((err = btree.rename(from, to, i)) != 0)
-      return err;
+  nkeys = blitz_table.read_meta_keycount();
+
+  if (blitz_table.close_data_table() != 0)
+    return HA_ERR_CRASHED_ON_USAGE;
+
+  /* We're now ready to rename the file(s) for this table. Start by
+     attempting to rename the data and system files. */
+  if (rename_file_ext(from.getPath().c_str(),
+                      to.getPath().c_str(), BLITZ_DATA_EXT)) {
+    if ((rv = errno) != ENOENT)
+      return rv;
   }
 
-  return (dict.rename_table(from, to)) ? 0 : -1;
+  if (rename_file_ext(from.getPath().c_str(),
+                      to.getPath().c_str(), BLITZ_SYSTEM_EXT)) {
+    if ((rv = errno) != ENOENT)
+      return rv;
+  }
+
+  /* So far so good. Rename the index file(s) and we're done. */
+  BlitzTree btree;
+
+  for (uint32_t i = 0; i < nkeys; i++) {
+    if (btree.rename(from.getPath().c_str(), to.getPath().c_str(), i) != 0)
+      return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  return rv;
 }
 
 int BlitzEngine::doDropTable(drizzled::Session &,
@@ -228,7 +254,7 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
   proto_string = db.get_system_entry(BLITZ_TABLE_PROTO_KEY.c_str(),
                                      BLITZ_TABLE_PROTO_KEY.length(),
                                      &proto_string_len);
-          
+
   if (db.close_system_table() != 0) {
     return HA_ERR_CRASHED_ON_USAGE;
   }
@@ -239,7 +265,7 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
 
   if (!proto.ParseFromArray(proto_string, proto_string_len)) {
     free(proto_string);
-    return HA_ERR_CRASHED_ON_USAGE;      
+    return HA_ERR_CRASHED_ON_USAGE;
   }
 
   free(proto_string);
@@ -267,7 +293,7 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory, string&,
 
       file_name_len = filename_to_tablename(filename->c_str(), uname,
                                             sizeof(uname));
-      uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';  
+      uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';
       set_of_names.insert(uname);
     }
   }
@@ -376,7 +402,7 @@ int ha_blitz::close(void) {
 
 int ha_blitz::info(uint32_t flag) {
   if (flag & HA_STATUS_VARIABLE) {
-    stats.records = share->dict.nrecords(); 
+    stats.records = share->dict.nrecords();
     stats.data_file_length = share->dict.table_size();
   }
 
@@ -467,7 +493,7 @@ int ha_blitz::rnd_end() {
   held_key_len = 0;
   table_scan = false;
   table_based = false;
-  
+
   if (thread_locked)
     critical_section_exit();
 
@@ -546,10 +572,10 @@ int ha_blitz::index_first(unsigned char *buf) {
     free(bt_key);
     return HA_ERR_KEY_NOT_FOUND;
   }
-  
+
   unpack_row(buf, row, rlen);
   keep_track_of_key(bt_key, bt_klen);
-  
+
   free(bt_key);
   free(row);
   return 0;
@@ -565,7 +591,7 @@ int ha_blitz::index_next(unsigned char *buf) {
     table->status = STATUS_NOT_FOUND;
     return HA_ERR_END_OF_FILE;
   }
-  
+
   prefix_len = btree_key_length(bt_key, active_index);
   dict_key = skip_btree_key(bt_key, prefix_len, &dict_klen);
 
@@ -709,7 +735,7 @@ ha_rows ha_blitz::records_in_range(uint32_t /*key_num*/,
 
 int ha_blitz::write_row(unsigned char *drizzle_row) {
   int rv;
-  
+
   ha_statistic_increment(&system_status_var::ha_write_count);
 
   /* Prepare Auto Increment field if one exists. This logic is borrowed
@@ -720,7 +746,7 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
 
     KEY *key = &table->s->key_info[0];
     uint64_t next_val = table->next_number_field->val_int();
-    
+
     if (next_val <= share->auto_increment_value && key->flags & HA_NOSAME)
       return HA_ERR_FOUND_DUPP_KEY;
 
@@ -1346,7 +1372,7 @@ int ha_blitz::free_share(void) {
 }
 
 static int blitz_init(drizzled::plugin::Context &context) {
-  blitz_engine = new BlitzEngine("BLITZDB"); 
+  blitz_engine = new BlitzEngine("BLITZDB");
 
   if (!blitz_engine->doCreateTableCache()) {
     delete blitz_engine;

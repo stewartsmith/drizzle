@@ -586,8 +586,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
-void Session::doGetTableNames(CachedDirectory &,
-                              const std::string& db_name,
+void Session::doGetTableNames(const std::string& db_name,
                               std::set<std::string>& set_of_names)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
@@ -597,6 +596,13 @@ void Session::doGetTableNames(CachedDirectory &,
       set_of_names.insert(table->s->table_name.str);
     }
   }
+}
+
+void Session::doGetTableNames(CachedDirectory &,
+                              const std::string &db_name,
+                              std::set<std::string> &set_of_names)
+{
+  doGetTableNames(db_name, set_of_names);
 }
 
 bool Session::doDoesTableExist(TableIdentifier &identifier)

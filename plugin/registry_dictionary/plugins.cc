@@ -47,10 +47,10 @@ PluginsTool::Generator::Generator(Field **arg) :
 
 bool PluginsTool::Generator::populate()
 {
-  const plugin::Plugin *plugin= (*it).second;
-
   if (it == end)
     return false;
+
+  const plugin::Plugin *plugin= (*it).second;
 
   /* PLUGIN_NAME */
   push(plugin->getName());
@@ -62,7 +62,7 @@ bool PluginsTool::Generator::populate()
   push(plugin->isActive());
 
   /* MODULE_NAME */
-  push();
+  push(plugin->getModuleName());
 
   it++;
 

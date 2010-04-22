@@ -2112,4 +2112,15 @@ bool Session::doesTableMessageExist(TableIdentifier &identifier)
   return true;
 }
 
+bool Session::rename(TableIdentifier &from, TableIdentifier &to)
+{
+  TableMessageCache::iterator iter;
+
+  table_message_cache[to.getPath()]= table_message_cache[from.getPath()];
+
+  (void)removeTableMessage(from);
+
+  return true;
+}
+
 } /* namespace drizzled */

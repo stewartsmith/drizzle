@@ -91,23 +91,13 @@ void StorageEngine::setTransactionReadWrite(Session& session)
   statement_ctx.markModifiedNonTransData();
 }
 
-int StorageEngine::doRenameTable(Session *,
-                                 const char *from,
-                                 const char *to)
-{
-  int error= 0;
-  for (const char **ext= bas_ext(); *ext ; ext++)
-  {
-    if (rename_file_ext(from, to, *ext))
-    {
-      if ((error=errno) != ENOENT)
-        break;
-      error= 0;
-    }
-  }
-  return error;
-}
 
+int StorageEngine::renameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+{
+  setTransactionReadWrite(session);
+
+  return doRenameTable(session, from, to);
+}
 
 /**
   Delete all files with extension from bas_ext().

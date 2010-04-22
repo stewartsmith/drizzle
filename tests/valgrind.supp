@@ -743,6 +743,17 @@
    fun:rw_lock_x_lock_func
 }
 
+{
+  Yet another InnoDB leak
+  Memcheck:Leak
+  fun:malloc
+  fun:mem_heap_create_block
+  fun:thr_local_create
+  fun:srv_master_thread
+  fun:start_thread
+  fun:clone
+}
+
 #
 # Innodb initialize two main memory areas in static space: thr_local_hash and mem_comm_pool.
 #
@@ -763,8 +774,8 @@
    fun:srv_general_init
    fun:srv_boot
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initR14PluginRegistry
-   fun:_ZL17plugin_initializeP13st_plugin_int
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
    fun:_Z11plugin_initPiPPci
    fun:_ZL22init_server_componentsv
    fun:main
@@ -907,8 +918,8 @@
    fun:srv_general_init
    fun:srv_boot
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initR14PluginRegistry
-   fun:_ZL17plugin_initializeP13st_plugin_int
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
    fun:_Z11plugin_initPiPPci
    fun:_ZL22init_server_componentsv
    fun:main
@@ -1092,11 +1103,24 @@
 
 
 {
+   Leak in dlopen()
+   Memcheck:Leak
+   fun:malloc
+   fun:add_to_global
+   ...
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:plugin_init
+   fun:main
+}
+
+
+{
    Valgrind has issues tracking the deallocation of plugin objects.
    Memcheck:Leak
    fun:malloc
    ...
-   fun:_ZL17plugin_initializeRN8drizzled6plugin8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
    fun:plugin_init
    fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
    fun:main
@@ -1105,10 +1129,46 @@
 {
    Valgrind has issues tracking the deallocation of plugin objects.
    Memcheck:Leak
+   fun:new
+   ...
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
+   fun:main
+}
+
+{
+   Weird std::String leak errors.
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   obj:/usr/lib/libstdc++.so.6.0.10
+   fun:_ZNSsC1EPKcRKSaIcE
+   obj:*
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+
+{
+   Valgrind has issues tracking the deallocation of plugin objects.
+   Memcheck:Leak
    fun:malloc
    ...
-   fun:_ZL17plugin_initializeRN8drizzled6plugin8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
    fun:plugin_init
+   fun:main
+}
+
+{
+   Valgrind has issues tracking the deallocation of plugin objects.
+   Memcheck:Leak
+   fun:_ZnwmRKSt9nothrow_t
+   ...
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
    fun:main
 }
 
