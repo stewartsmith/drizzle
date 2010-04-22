@@ -1046,7 +1046,7 @@ int ha_myisam::doDeleteRecord(const unsigned char *buf)
 }
 
 
-int ha_myisam::index_init(uint32_t idx, bool )
+int ha_myisam::doStartIndexScan(uint32_t idx, bool )
 {
   active_index=idx;
   //in_range_read= false;
@@ -1054,7 +1054,7 @@ int ha_myisam::index_init(uint32_t idx, bool )
 }
 
 
-int ha_myisam::index_end()
+int ha_myisam::doEndIndexScan()
 {
   active_index=MAX_KEY;
   return 0;

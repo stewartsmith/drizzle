@@ -757,7 +757,7 @@ void ha_archive::get_auto_increment(uint64_t, uint64_t, uint64_t,
 }
 
 /* Initialized at each key walk (called multiple times unlike rnd_init()) */
-int ha_archive::index_init(uint32_t keynr, bool)
+int ha_archive::doStartIndexScan(uint32_t keynr, bool)
 {
   active_index= keynr;
   return(0);

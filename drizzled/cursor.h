@@ -236,8 +236,8 @@ public:
   /* ha_ methods: pubilc wrappers for private virtual API */
 
   int ha_open(Table *table, const char *name, int mode, int test_if_locked);
-  int ha_index_init(uint32_t idx, bool sorted);
-  int ha_index_end();
+  int startIndexScan(uint32_t idx, bool sorted);
+  int endIndexScan();
   int ha_rnd_init(bool scan);
   int ha_rnd_end();
   int ha_reset();
@@ -556,9 +556,9 @@ private:
   */
 
   virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
-  virtual int index_init(uint32_t idx, bool)
+  virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
-  virtual int index_end() { active_index= MAX_KEY; return 0; }
+  virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }
   /**
     rnd_init() can be called two times without rnd_end() in between
     (it only makes sense if scan=1).

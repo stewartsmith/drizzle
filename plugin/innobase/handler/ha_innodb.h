@@ -137,8 +137,8 @@ class ha_innobase: public Cursor
 	UNIV_INTERN void try_semi_consistent_read(bool yes);
 	UNIV_INTERN void unlock_row();
 
-	UNIV_INTERN int index_init(uint index, bool sorted);
-	UNIV_INTERN int index_end();
+	UNIV_INTERN int doStartIndexScan(uint index, bool sorted);
+	UNIV_INTERN int doEndIndexScan();
 	UNIV_INTERN int index_read(unsigned char * buf, const unsigned char * key,
 		uint key_len, enum ha_rkey_function find_flag);
 	UNIV_INTERN int index_read_idx(unsigned char * buf, uint index, const unsigned char * key,

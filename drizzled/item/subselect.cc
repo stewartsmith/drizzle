@@ -1971,7 +1971,7 @@ void subselect_uniquesubquery_engine::cleanup()
 {
   /* Tell handler we don't need the index anymore */
   if (tab->table->cursor->inited)
-    tab->table->cursor->ha_index_end();
+    tab->table->cursor->endIndexScan();
   return;
 }
 
@@ -2278,7 +2278,7 @@ int subselect_uniquesubquery_engine::scan_table()
   Table *table= tab->table;
 
   if (table->cursor->inited)
-    table->cursor->ha_index_end();
+    table->cursor->endIndexScan();
 
   table->cursor->ha_rnd_init(1);
   table->cursor->extra_opt(HA_EXTRA_CACHE,
@@ -2457,7 +2457,7 @@ int subselect_uniquesubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, 0);
+    table->cursor->startIndexScan(tab->ref.key, 0);
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),
@@ -2570,7 +2570,7 @@ int subselect_indexsubquery_engine::exec()
     return(scan_table());
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, 1);
+    table->cursor->startIndexScan(tab->ref.key, 1);
   error= table->cursor->index_read_map(table->record[0],
                                      tab->ref.key_buff,
                                      make_prev_keypart_map(tab->ref.key_parts),

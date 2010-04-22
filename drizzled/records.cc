@@ -58,7 +58,7 @@ void init_read_record_idx(READ_RECORD *info,
 
   table->status=0;			/* And it's always found */
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(idx, 1);
+    table->cursor->startIndexScan(idx, 1);
   /* read_record will be changed to rr_index in rr_index_first */
   info->read_record= rr_index_first;
 }

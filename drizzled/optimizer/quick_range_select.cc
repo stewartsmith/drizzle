@@ -106,7 +106,7 @@ int optimizer::QuickRangeSelect::init()
 {
   if (cursor->inited != Cursor::NONE)
     cursor->ha_index_or_rnd_end();
-  return (cursor->ha_index_init(index, 1));
+  return (cursor->startIndexScan(index, 1));
 }
 
 
@@ -261,7 +261,7 @@ int optimizer::QuickRangeSelect::reset()
   last_range= NULL;
   cur_range= (optimizer::QuickRange**) ranges.buffer;
 
-  if (cursor->inited == Cursor::NONE && (error= cursor->ha_index_init(index, 1)))
+  if (cursor->inited == Cursor::NONE && (error= cursor->startIndexScan(index, 1)))
   {
     return error;
   }

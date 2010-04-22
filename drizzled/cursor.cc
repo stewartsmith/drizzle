@@ -114,22 +114,22 @@ uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_m
   return length;
 }
 
-int Cursor::ha_index_init(uint32_t idx, bool sorted)
+int Cursor::startIndexScan(uint32_t idx, bool sorted)
 {
   int result;
   assert(inited == NONE);
-  if (!(result= index_init(idx, sorted)))
+  if (!(result= doStartIndexScan(idx, sorted)))
     inited=INDEX;
   end_range= NULL;
   return result;
 }
 
-int Cursor::ha_index_end()
+int Cursor::endIndexScan()
 {
   assert(inited==INDEX);
   inited=NONE;
   end_range= NULL;
-  return(index_end());
+  return(doEndIndexScan());
 }
 
 int Cursor::ha_rnd_init(bool scan)
@@ -150,7 +150,7 @@ int Cursor::ha_rnd_end()
 
 int Cursor::ha_index_or_rnd_end()
 {
-  return inited == INDEX ? ha_index_end() : inited == RND ? ha_rnd_end() : 0;
+  return inited == INDEX ? endIndexScan() : inited == RND ? ha_rnd_end() : 0;
 }
 
 void Cursor::ha_start_bulk_insert(ha_rows rows)
@@ -271,7 +271,7 @@ int Cursor::rnd_pos_by_record(unsigned char *record)
   register int error;
 
   position(record);
-  if (inited && (error= ha_index_end()))
+  if (inited && (error= endIndexScan()))
     return error;
   if ((error= ha_rnd_init(false)))
     return error;
@@ -306,9 +306,9 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
   else
   {
     /* Find the first row through the primary key */
-    (void) ha_index_init(primary_key, 0);
+    (void) startIndexScan(primary_key, 0);
     error=index_first(buf);
-    (void) ha_index_end();
+    (void) endIndexScan();
   }
   return error;
 }
@@ -1059,7 +1059,7 @@ int Cursor::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_
   @param buf             INOUT: memory buffer to be used
 
   @note
-    One must have called index_init() before calling this function. Several
+    One must have called doStartIndexScan() before calling this function. Several
     multi_range_read_init() calls may be made in course of one query.
 
     Until WL#2623 is done (see its text, section 3.2), the following will
@@ -1074,7 +1074,7 @@ int Cursor::multi_range_read_info(uint32_t keyno, uint32_t n_ranges, uint32_t n_
     The callee consumes all or some fraction of the provided buffer space, and
     sets the HANDLER_BUFFER members accordingly.
     The callee may use the buffer memory until the next multi_range_read_init()
-    call is made, all records have been read, or until index_end() call is
+    call is made, all records have been read, or until doEndIndexScan() call is
     made, whichever comes first.
 
   @retval 0  OK
@@ -1297,11 +1297,11 @@ int Cursor::index_read_idx_map(unsigned char * buf, uint32_t index,
                                 enum ha_rkey_function find_flag)
 {
   int error, error1;
-  error= index_init(index, 0);
+  error= doStartIndexScan(index, 0);
   if (!error)
   {
     error= index_read_map(buf, key, keypart_map, find_flag);
-    error1= index_end();
+    error1= doEndIndexScan();
   }
   return error ?  error : error1;
 }

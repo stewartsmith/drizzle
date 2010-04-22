@@ -4414,7 +4414,7 @@ Initializes a handle to use an index.
 @return 0 or error number */
 UNIV_INTERN
 int
-ha_innobase::index_init(
+ha_innobase::doStartIndexScan(
 /*====================*/
   uint  keynr,  /*!< in: key (index) number */
   bool )    /*!< in: 1 if result MUST be sorted according to index */
@@ -4427,7 +4427,7 @@ Currently does nothing.
 @return 0 */
 UNIV_INTERN
 int
-ha_innobase::index_end(void)
+ha_innobase::doEndIndexScan(void)
 /*========================*/
 {
   int error = 0;
@@ -4985,7 +4985,7 @@ int
 ha_innobase::rnd_end(void)
 /*======================*/
 {
-  return(index_end());
+  return(doEndIndexScan());
 }
 
 /*****************************************************************//**

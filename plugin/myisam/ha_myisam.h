@@ -38,8 +38,8 @@ class ha_myisam: public drizzled::Cursor
   ~ha_myisam() {}
   Cursor *clone(drizzled::memory::Root *mem_root);
   const char *index_type(uint32_t key_number);
-  int index_init(uint32_t idx, bool sorted);
-  int index_end();
+  int doStartIndexScan(uint32_t idx, bool sorted);
+  int doEndIndexScan();
   uint32_t checksum() const;
 
   int open(const char *name, int mode, uint32_t test_if_locked);

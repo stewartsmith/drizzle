@@ -2466,7 +2466,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		extra(HA_EXTRA_KEYREAD);
 		table->mark_columns_used_by_index_no_reset(TS(table)->next_number_index, table->read_set);
 		column_bitmaps_signal();
- 		index_init(TS(table)->next_number_index, 0);
+ 		doStartIndexScan(TS(table)->next_number_index, 0);
 		if (!TS(table)->next_number_key_offset) {
 			// Autoincrement at key-start
 			err = index_last(table->record[1]);
@@ -2492,7 +2492,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			}
 		}
 
-		index_end();
+		doEndIndexScan();
 		extra(HA_EXTRA_NO_KEYREAD);
 
 		/* {PRE-INC}
@@ -3173,7 +3173,7 @@ int ha_pbxt::xt_index_prev_read(XTOpenTablePtr ot, XTIndexPtr ind, xtBool key_on
 	return ha_log_pbxt_thread_error_for_mysql(FALSE);
 }
 
-int ha_pbxt::index_init(uint idx, bool XT_UNUSED(sorted))
+int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 {
 	XTIndexPtr	ind;
 	XTThreadPtr	thread = pb_open_tab->ot_thread;
@@ -3262,7 +3262,7 @@ int ha_pbxt::index_init(uint idx, bool XT_UNUSED(sorted))
 	return 0;
 }
 
-int ha_pbxt::index_end()
+int ha_pbxt::doEndIndexScan()
 {
 	int err = 0;
 
@@ -3571,7 +3571,7 @@ int ha_pbxt::index_first(byte * buf)
 	 * init init_index sometimes, for example:
 	 *
      * if (!table->file->inited)
-     *    table->file->ha_index_init(tab->index, tab->sorted);
+     *    table->file->startIndexScan(tab->index, tab->sorted);
      *  if ((error=tab->table->file->index_first(tab->table->record[0])))
 	 */
 	if (active_index == MAX_KEY) {

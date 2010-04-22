@@ -2907,7 +2907,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
 				error, 0))
       return NESTED_LOOP_ERROR;            // Not a table_is_full error
     /* Change method to update rows */
-    table->cursor->ha_index_init(0, 0);
+    table->cursor->startIndexScan(0, 0);
     join->join_tab[join->tables-1].next_select= end_unique_update;
   }
   join->send_records++;

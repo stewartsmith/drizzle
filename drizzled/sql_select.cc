@@ -3288,7 +3288,7 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
         table->s->keys && !table->cursor->inited)
-      table->cursor->ha_index_init(0, 0);
+      table->cursor->startIndexScan(0, 0);
   }
   /* Set up select_end */
   Next_select_func end_select= setup_end_select_func(join);
@@ -3766,7 +3766,7 @@ int join_read_key(JoinTable *tab)
 
   if (!table->cursor->inited)
   {
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
   }
 
   /* TODO: Why don't we do "Late NULLs Filtering" here? */
@@ -3814,7 +3814,7 @@ int join_read_always_key(JoinTable *tab)
 
   /* Initialize the index first */
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
 
   /* Perform "Late NULLs Filtering" (see internals manual for explanations) */
   for (uint32_t i= 0 ; i < tab->ref.key_parts ; i++)
@@ -3848,7 +3848,7 @@ int join_read_last_key(JoinTable *tab)
   Table *table= tab->table;
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
   if ((error=table->cursor->index_read_last_map(table->record[0],
@@ -3995,7 +3995,7 @@ int join_read_first(JoinTable *tab)
   }
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->index, tab->sorted);
+    table->cursor->startIndexScan(tab->index, tab->sorted);
   if ((error=tab->table->cursor->index_first(tab->table->record[0])))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
@@ -4054,7 +4054,7 @@ int join_read_last(JoinTable *tab)
   tab->read_record.index=tab->index;
   tab->read_record.record=table->record[0];
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->index, 1);
+    table->cursor->startIndexScan(tab->index, 1);
   if ((error= tab->table->cursor->index_last(tab->table->record[0])))
     return table->report_error(error);
 
