@@ -34,6 +34,7 @@
 #include "cumulative_stats.h"
 #include "user_commands.h"
 #include "scoreboard.h"
+#include "identifiers.h"
 
 #include <drizzled/atomics.h>
 #include <drizzled/enum.h>
@@ -87,11 +88,10 @@ private:
 
   CumulativeStats *cumulative_stats;
 
+  drizzled::atomic<bool> is_enabled;
+
   bool isBeingLogged(drizzled::Session *session);
 
   void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
-
-  drizzled::atomic<bool> is_enabled;
-
 };
 #endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */

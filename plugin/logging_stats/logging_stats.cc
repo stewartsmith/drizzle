@@ -145,38 +145,7 @@ void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
 
   UserCommands *user_commands= scoreboard_slot->getUserCommands();
 
-  switch(sql_command)
-  {
-    case SQLCOM_UPDATE:
-      user_commands->incrementUpdateCount();
-      break;
-    case SQLCOM_DELETE:
-      user_commands->incrementDeleteCount();
-      break;
-    case SQLCOM_INSERT:
-      user_commands->incrementInsertCount();
-      break;
-    case SQLCOM_ROLLBACK:
-      user_commands->incrementRollbackCount();
-      break;
-    case SQLCOM_COMMIT:
-      user_commands->incrementCommitCount();
-      break;
-    case SQLCOM_CREATE_TABLE:
-      user_commands->incrementCreateCount();
-      break;
-    case SQLCOM_ALTER_TABLE:
-      user_commands->incrementAlterCount();
-      break;
-    case SQLCOM_DROP_TABLE:
-      user_commands->incrementDropCount();
-      break;
-    case SQLCOM_SELECT:
-      user_commands->incrementSelectCount();
-      break;
-    default:
-      return;
-  }
+  user_commands->logCommand(sql_command);
 }
 
 bool LoggingStats::post(Session *session)

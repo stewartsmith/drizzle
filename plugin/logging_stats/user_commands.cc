@@ -29,158 +29,113 @@
 
 #include "user_commands.h"
 
-UserCommands::UserCommands()
-    :
-      update_count(0),
-      delete_count(0),
-      insert_count(0),
-      select_count(0),
-      rollback_count(0),
-      commit_count(0),
-      create_count(0),
-      alter_count(0),
-      drop_count(0),
-      admin_count(0)
-{}
+using namespace drizzled;
 
-void UserCommands::reset()
+UserCommands::UserCommands()
 {
-  update_count= 0;
-  delete_count= 0;
-  insert_count= 0;
+  init();
+}
+
+void UserCommands::init()
+{
   select_count= 0;
+  delete_count= 0;
+  update_count= 0;
+  insert_count= 0;
   rollback_count= 0;
   commit_count= 0;
   create_count= 0;
   alter_count= 0;
   drop_count= 0;
   admin_count= 0;
+  vector_of_command_counts.push_back(&select_count);
+  vector_of_command_counts.push_back(&delete_count);
+  vector_of_command_counts.push_back(&update_count);
+  vector_of_command_counts.push_back(&insert_count);
+  vector_of_command_counts.push_back(&rollback_count);
+  vector_of_command_counts.push_back(&commit_count);
+  vector_of_command_counts.push_back(&create_count);
+  vector_of_command_counts.push_back(&alter_count);
+  vector_of_command_counts.push_back(&drop_count);
+  vector_of_command_counts.push_back(&admin_count);
+  size= vector_of_command_counts.size();
+}
+
+void UserCommands::incrementCount(uint32_t index, uint32_t i)
+{
+  uint64_t *count= vector_of_command_counts.at(index);
+  *count= *count + i;
+}
+
+uint64_t UserCommands::getCount(uint32_t index)
+{
+  uint64_t *count= vector_of_command_counts.at(index);
+  return *count;
+}
+
+void UserCommands::reset()
+{
+  for (uint32_t j= 0; j < size; ++j)
+  {
+    uint64_t *count= vector_of_command_counts.at(j);
+    *count= 0;
+  }
 }
 
 UserCommands::UserCommands(const UserCommands &user_commands)
 {
-  update_count= user_commands.update_count;
-  delete_count= user_commands.delete_count;
-  insert_count= user_commands.insert_count;
-  select_count= user_commands.select_count;
-  rollback_count= user_commands.rollback_count;
-  commit_count= user_commands.commit_count;
-  create_count= user_commands.create_count;
-  alter_count= user_commands.alter_count;
-  drop_count= user_commands.drop_count;
-  admin_count= user_commands.admin_count;
+  init();  
+
+  for (uint32_t j= 0; j < size; ++j)
+  {
+    uint64_t *my_count= vector_of_command_counts.at(j);
+    uint64_t *other_count= user_commands.vector_of_command_counts.at(j);
+    *my_count= *other_count;
+  }
 }
 
 void UserCommands::merge(UserCommands *user_commands)
 {
-  incrementUpdateCount(user_commands->getUpdateCount());
-  incrementDeleteCount(user_commands->getDeleteCount());
-  incrementInsertCount(user_commands->getInsertCount());
-  incrementSelectCount(user_commands->getSelectCount());
-  incrementRollbackCount(user_commands->getRollbackCount());
-  incrementCommitCount(user_commands->getCommitCount());
-  incrementCreateCount(user_commands->getCreateCount());
-  incrementAlterCount(user_commands->getAlterCount());
-  incrementDropCount(user_commands->getDropCount());
-  incrementAdminCount(user_commands->getAdminCount());
+  for (uint32_t j= 0; j < size; ++j)
+  {
+    uint64_t *my_count= vector_of_command_counts.at(j);
+    uint64_t *other_count= user_commands->vector_of_command_counts.at(j);
+    *my_count= *my_count + *other_count;
+  }
 }
 
-uint64_t UserCommands::getSelectCount()
+void UserCommands::logCommand(enum_sql_command sql_command)
 {
-  return select_count;
-}
-
-void UserCommands::incrementSelectCount(int i)
-{
-  select_count= select_count + i;
-}
-
-uint64_t UserCommands::getUpdateCount()
-{
-  return update_count;
-}
-
-void UserCommands::incrementUpdateCount(int i)
-{
-  update_count= update_count + i;
-}
-
-uint64_t UserCommands::getDeleteCount()
-{
-  return delete_count;
-}
-
-void UserCommands::incrementDeleteCount(int i)
-{
-  delete_count= delete_count + i;
-}
-
-uint64_t UserCommands::getInsertCount()
-{
-  return insert_count;
-}
-
-void UserCommands::incrementInsertCount(int i)
-{
-  insert_count= insert_count + i;
-}
-
-uint64_t UserCommands::getRollbackCount()
-{
-  return rollback_count;
-}
-
-void UserCommands::incrementRollbackCount(int i)
-{
-  rollback_count= rollback_count + i;
-}
-
-uint64_t UserCommands::getCommitCount()
-{
-  return commit_count;
-}
-
-void UserCommands::incrementCommitCount(int i)
-{
-  commit_count= commit_count + i;
-}
-
-uint64_t UserCommands::getCreateCount()
-{
-  return create_count;
-}
-
-void UserCommands::incrementCreateCount(int i)
-{
-  create_count= create_count + i;
-}
-
-uint64_t UserCommands::getAlterCount()
-{
-  return alter_count;
-}
-
-void UserCommands::incrementAlterCount(int i)
-{
-  alter_count= alter_count + i;
-}
-
-uint64_t UserCommands::getDropCount()
-{
-  return drop_count;
-}
-
-void UserCommands::incrementDropCount(int i)
-{
-  drop_count= drop_count + i;
-}
-
-uint64_t UserCommands::getAdminCount()
-{
-  return admin_count;
-}
-
-void UserCommands::incrementAdminCount(int i)
-{
-  admin_count= admin_count + i;
+  switch(sql_command)
+  {
+    case SQLCOM_UPDATE:
+      incrementCount(COUNT_UPDATE);
+      break;
+    case SQLCOM_DELETE:
+      incrementCount(COUNT_DELETE);
+      break;
+    case SQLCOM_INSERT:
+      incrementCount(COUNT_INSERT);
+      break;
+    case SQLCOM_ROLLBACK:
+      incrementCount(COUNT_ROLLBACK);
+      break;
+    case SQLCOM_COMMIT:
+      incrementCount(COUNT_COMMIT);
+      break;
+    case SQLCOM_CREATE_TABLE:
+      incrementCount(COUNT_CREATE);
+      break;
+    case SQLCOM_ALTER_TABLE:
+      incrementCount(COUNT_ALTER);
+      break;
+    case SQLCOM_DROP_TABLE:
+      incrementCount(COUNT_DROP);
+      break;
+    case SQLCOM_SELECT:
+      incrementCount(COUNT_SELECT);
+      break;
+    default:
+      return;
+  }
 }

@@ -69,7 +69,7 @@ public:
 
   bool hasOpenUserSlots()
   {
-    return hasOpenUserSlots;
+    return isOpenUserSlots;
   }
 
 private:
@@ -77,7 +77,7 @@ private:
   GlobalStats *global_stats; 
   int32_t cumulative_stats_by_user_max;
   drizzled::atomic<int32_t> last_valid_index;
-  bool hasOpenUserSlots;
+  bool isOpenUserSlots;
 };
 
 #endif /* PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H */

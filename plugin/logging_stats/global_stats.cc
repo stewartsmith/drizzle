@@ -47,5 +47,5 @@ UserCommands* GlobalStats::getUserCommands()
 
 void GlobalStats::updateUserCommands(ScoreboardSlot *scoreboard_slot)
 {
-  user_commands->incrementSelectCount(scoreboard_slot->getUserCommands()->getSelectCount());
+  user_commands->merge(scoreboard_slot->getUserCommands());
 }

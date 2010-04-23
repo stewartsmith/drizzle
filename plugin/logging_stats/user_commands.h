@@ -31,8 +31,10 @@
 #define PLUGIN_LOGGING_STATS_USER_COMMANDS_H
 
 #include <drizzled/common.h>
-
+#include <drizzled/enum.h>
 #include <string>
+#include <vector>
+
 
 class UserCommands
 {
@@ -42,64 +44,39 @@ public:
 
   UserCommands(const UserCommands &user_commands);
 
-  uint64_t getSelectCount();
+  enum command_count_index {
+    COUNT_SELECT,
+    COUNT_DELETE,
+    COUNT_UPDATE,
+    COUNT_INSERT,
+    COUNT_ROLLBACK,
+    COUNT_COMMIT,
+    COUNT_CREATE,
+    COUNT_ALTER,
+    COUNT_DROP,
+    COUNT_ADMIN
+  }; 
 
-  void incrementSelectCount(int i= 1);
+  void incrementCount(uint32_t index, uint32_t i= 1);
 
-
-  uint64_t getUpdateCount();
-
-  void incrementUpdateCount(int i= 1);
-
-
-  uint64_t getDeleteCount();
-
-  void incrementDeleteCount(int i= 1);
-
-
-  uint64_t getInsertCount();
-
-  void incrementInsertCount(int i= 1);
-
-
-  uint64_t getRollbackCount();
-
-  void incrementRollbackCount(int i= 1);
-
-
-  uint64_t getCommitCount();
-
-  void incrementCommitCount(int i= 1);
-
-
-  uint64_t getCreateCount();
-
-  void incrementCreateCount(int i= 1);
-
-
-  uint64_t getAlterCount();
-
-  void incrementAlterCount(int i= 1);
-
-
-  uint64_t getDropCount();
-
-  void incrementDropCount(int i= 1);
-
-
-  uint64_t getAdminCount();
-
-  void incrementAdminCount(int i= 1);
+  uint64_t getCount(uint32_t index);
 
   void merge(UserCommands *user_commands);
 
   void reset();
 
+  void logCommand(drizzled::enum_sql_command sql_command);
+
+  void init();
+
 private:
-  uint64_t update_count;
-  uint64_t delete_count;
-  uint64_t insert_count;
+  std::vector<uint64_t*> vector_of_command_counts;
+  
+  uint32_t size;
   uint64_t select_count;
+  uint64_t delete_count;
+  uint64_t update_count;
+  uint64_t insert_count;
   uint64_t rollback_count;
   uint64_t commit_count;
   uint64_t create_count;

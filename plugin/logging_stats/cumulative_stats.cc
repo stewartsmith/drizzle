@@ -47,7 +47,7 @@ CumulativeStats::CumulativeStats(uint32_t in_cumulative_stats_by_user_max)
   cumulative_stats_by_user_vector->resize(cumulative_stats_by_user_max);
 
   last_valid_index= INVALID_INDEX;
-  hasOpenUserSlots= true;
+  isOpenUserSlots= true;
   global_stats= new GlobalStats();
 }
 
@@ -111,7 +111,7 @@ void CumulativeStats::logUserStats(ScoreboardSlot *scoreboard_slot)
       else 
       {
         last_valid_index= cumulative_stats_by_user_max - 1; 
-        hasOpenUserSlots= false;
+        isOpenUserSlots= false;
       }
     } 
   }
