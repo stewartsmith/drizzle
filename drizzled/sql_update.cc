@@ -456,7 +456,7 @@ int mysql_update(Session *session, TableList *table_list,
       if (!can_compare_record || table->compare_record())
       {
         /* Non-batched update */
-        error= table->cursor->ha_update_row(table->record[1],
+        error= table->cursor->updateRecord(table->record[1],
                                             table->record[0]);
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
 	{

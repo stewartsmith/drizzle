@@ -44,9 +44,9 @@ class ha_myisam: public drizzled::Cursor
 
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
-  int write_row(unsigned char * buf);
-  int update_row(const unsigned char * old_data, unsigned char * new_data);
-  int delete_row(const unsigned char * buf);
+  int doInsertRecord(unsigned char * buf);
+  int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int doDeleteRecord(const unsigned char * buf);
   int index_read_map(unsigned char *buf, const unsigned char *key, drizzled::key_part_map keypart_map,
                      enum drizzled::ha_rkey_function find_flag);
   int index_read_idx_map(unsigned char *buf, uint32_t index, const unsigned char *key,

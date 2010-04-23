@@ -364,14 +364,12 @@ uint64_t refresh_version;  /* Increments on each reload */
 /* Function declarations */
 bool drizzle_rm_tmp_tables();
 
-extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 int drizzled_get_one_option(int, const struct option *, char *);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string &progname);
-extern "C" pthread_handler_t handle_slave(void *arg);
 
 static void usage(void);
 void close_connections(void);
