@@ -1327,10 +1327,10 @@ static bool log_row_for_replication(Table* table,
     /*
      * This is a total hack because of the code that is
      * in write_record() in sql_insert.cc. During
-     * a REPLACE statement, a call to ha_write_row() is
-     * called.  If it fails, then a call to ha_delete_row()
+     * a REPLACE statement, a call to insertRecord() is
+     * called.  If it fails, then a call to deleteRecord()
      * is called, followed by a repeat of the original
-     * call to ha_write_row().  So, log_row_for_replication
+     * call to insertRecord().  So, log_row_for_replication
      * could be called either once or twice for a REPLACE
      * statement.  The below looks at the values of before_record
      * and after_record to determine which call to this
@@ -1468,7 +1468,7 @@ int Cursor::ha_reset()
 }
 
 
-int Cursor::ha_write_row(unsigned char *buf)
+int Cursor::insertRecord(unsigned char *buf)
 {
   int error;
 
@@ -1483,7 +1483,7 @@ int Cursor::ha_write_row(unsigned char *buf)
 
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= write_row(buf);
+  error= doInsertRecord(buf);
   DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1498,7 +1498,7 @@ int Cursor::ha_write_row(unsigned char *buf)
 }
 
 
-int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data)
+int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
   int error;
 
@@ -1510,7 +1510,7 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= update_row(old_data, new_data);
+  error= doUpdateRecord(old_data, new_data);
   DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1524,13 +1524,13 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
   return 0;
 }
 
-int Cursor::ha_delete_row(const unsigned char *buf)
+int Cursor::deleteRecord(const unsigned char *buf)
 {
   int error;
 
   DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= delete_row(buf);
+  error= doDeleteRecord(buf);
   DRIZZLE_DELETE_ROW_DONE(error);
 
   if (unlikely(error))

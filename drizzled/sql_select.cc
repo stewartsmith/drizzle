@@ -118,8 +118,10 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
+  {
     res= drizzle_union(session, lex, result, &lex->unit,
 		       setup_tables_done_option);
+  }
   else
   {
     Select_Lex_Unit *unit= &lex->unit;
@@ -3230,11 +3232,11 @@ Next_select_func setup_end_select_func(JOIN *join)
     }
     else if (join->sort_and_group && !tmp_tbl->precomputed_group_by)
     {
-      end_select=end_write_group;
+      end_select= end_write_group;
     }
     else
     {
-      end_select=end_write;
+      end_select= end_write;
       if (tmp_tbl->precomputed_group_by)
       {
         /*
@@ -4215,12 +4217,13 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_reco
         copy_sum_funcs(join->sum_funcs, join->sum_funcs_end[send_group_parts]);
         if (!join->having || join->having->val_int())
         {
-          int error= table->cursor->ha_write_row(table->record[0]);
-          if (error && create_myisam_from_heap(join->session, table,
-                                              join->tmp_table_param.start_recinfo,
-                                                &join->tmp_table_param.recinfo,
-                                              error, 0))
-          return NESTED_LOOP_ERROR;
+          int error= table->cursor->insertRecord(table->record[0]);
+
+          if (error)
+          {
+            my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+            return NESTED_LOOP_ERROR;
+          }
         }
         if (join->rollup.state != ROLLUP::STATE_NONE)
         {
@@ -5344,7 +5347,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
       error=cursor->rnd_next(record);
       continue;
@@ -5371,7 +5374,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
       }
       if (table->compare_record(first_field) == 0)
       {
-        if ((error=cursor->ha_delete_row(record)))
+        if ((error=cursor->deleteRecord(record)))
           goto err;
       }
       else if (!found)
@@ -5466,7 +5469,7 @@ int remove_dup_with_hash_index(Session *session,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
       continue;
     }
@@ -5483,7 +5486,7 @@ int remove_dup_with_hash_index(Session *session,
     if (hash_search(&hash, org_key_pos, key_length))
     {
       /* Duplicated found ; Remove the row */
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
     }
     else
