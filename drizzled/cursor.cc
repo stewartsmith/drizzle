@@ -60,7 +60,7 @@ Cursor::Cursor(plugin::StorageEngine &engine_arg,
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(internal::my_off_t)),
     inited(NONE),
-    locked(false), implicit_emptied(0),
+    locked(false),
     next_insert_id(0), insert_id_for_cur_row(0)
 { }
 

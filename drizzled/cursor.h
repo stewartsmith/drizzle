@@ -194,7 +194,6 @@ public:
   uint32_t ref_length;
   enum {NONE=0, INDEX, RND} inited;
   bool locked;
-  bool implicit_emptied;                /* Can be !=0 only if HEAP */
 
   /**
     next_insert_id is the next value which should be inserted into the

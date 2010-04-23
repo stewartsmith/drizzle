@@ -214,7 +214,6 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
         hp_free(internal_share);
         pthread_mutex_unlock(&THR_LOCK_heap);
       }
-      implicit_emptied= 1;
     }
   }
   ref_length= sizeof(HEAP_PTR);
