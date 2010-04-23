@@ -448,7 +448,7 @@ int ha_heap::index_last(unsigned char * buf)
   return error;
 }
 
-int ha_heap::rnd_init(bool scan)
+int ha_heap::doStartTableScan(bool scan)
 {
   return scan ? heap_scan_init(file) : 0;
 }

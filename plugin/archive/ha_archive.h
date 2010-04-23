@@ -102,7 +102,7 @@ public:
   int doInsertRecord(unsigned char * buf);
   int real_write_row(unsigned char *buf, azio_stream *writer);
   int delete_all_rows();
-  int rnd_init(bool scan=1);
+  int doStartTableScan(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   ArchiveShare *get_share(const char *table_name, int *rc);

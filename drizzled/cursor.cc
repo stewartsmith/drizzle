@@ -132,25 +132,25 @@ int Cursor::endIndexScan()
   return(doEndIndexScan());
 }
 
-int Cursor::ha_rnd_init(bool scan)
+int Cursor::startTableScan(bool scan)
 {
   int result;
   assert(inited==NONE || (inited==RND && scan));
-  inited= (result= rnd_init(scan)) ? NONE: RND;
+  inited= (result= doStartTableScan(scan)) ? NONE: RND;
 
   return result;
 }
 
-int Cursor::ha_rnd_end()
+int Cursor::endTableScan()
 {
   assert(inited==RND);
   inited=NONE;
-  return(rnd_end());
+  return(doEndTableScan());
 }
 
 int Cursor::ha_index_or_rnd_end()
 {
-  return inited == INDEX ? endIndexScan() : inited == RND ? ha_rnd_end() : 0;
+  return inited == INDEX ? endIndexScan() : inited == RND ? endTableScan() : 0;
 }
 
 void Cursor::ha_start_bulk_insert(ha_rows rows)
@@ -273,7 +273,7 @@ int Cursor::rnd_pos_by_record(unsigned char *record)
   position(record);
   if (inited && (error= endIndexScan()))
     return error;
-  if ((error= ha_rnd_init(false)))
+  if ((error= startTableScan(false)))
     return error;
 
   return rnd_pos(record, ref);
@@ -299,9 +299,9 @@ int Cursor::read_first_row(unsigned char * buf, uint32_t primary_key)
   if (stats.deleted < 10 || primary_key >= MAX_KEY ||
       !(table->index_flags(primary_key) & HA_READ_ORDER))
   {
-    (void) ha_rnd_init(1);
+    (void) startTableScan(1);
     while ((error= rnd_next(buf)) == HA_ERR_RECORD_DELETED) ;
-    (void) ha_rnd_end();
+    (void) endTableScan();
   }
   else
   {
@@ -1458,7 +1458,7 @@ int Cursor::ha_reset()
               (unsigned char*) table->def_write_set.getBitmap());
   assert(table->s->all_set.isSetAll());
   assert(table->key_read == 0);
-  /* ensure that ha_index_end / ha_rnd_end has been called */
+  /* ensure that ha_index_end / endTableScan has been called */
   assert(inited == NONE);
   /* Free cache used by filesort */
   table->free_io_cache();

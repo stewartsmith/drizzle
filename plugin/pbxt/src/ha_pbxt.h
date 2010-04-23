@@ -268,8 +268,8 @@ class ha_pbxt: public handler
 	int		index_read_last(byte * buf, const byte * key, uint key_len);
 
 	/* Sequential scan functions: */
-	int		rnd_init(bool scan);								//required
-	int		rnd_end();
+	int		doStartTableScan(bool scan);								//required
+	int		doEndTableScan();
 	int		rnd_next(byte *buf);								//required
 	int		rnd_pos(byte * buf, byte *pos);													 //required
 	void	position(const byte *record);			//required

@@ -507,7 +507,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
   if (! indexfile && ! quick_select)
   {
     next_pos=(unsigned char*) 0;			/* Find records in sequence */
-    file->ha_rnd_init(1);
+    file->startTableScan(1);
     file->extra_opt(HA_EXTRA_CACHE,
 		    current_session->variables.read_buff_size);
   }
@@ -577,7 +577,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
       if (!indexfile && !quick_select)
       {
         (void) file->extra(HA_EXTRA_NO_CACHE);
-        file->ha_rnd_end();
+        file->endTableScan();
       }
       return(HA_POS_ERROR);
     }
@@ -612,7 +612,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
   {
     (void) file->extra(HA_EXTRA_NO_CACHE);	/* End cacheing of records */
     if (!next_pos)
-      file->ha_rnd_end();
+      file->endTableScan();
   }
 
   if (session->is_error())

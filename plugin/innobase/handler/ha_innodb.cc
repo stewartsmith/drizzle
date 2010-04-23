@@ -1586,7 +1586,7 @@ ha_innobase::ha_innobase(plugin::StorageEngine &engine_arg,
                      value here because it doesn't matter if we return the
                      HA_DO_INDEX_COND_PUSHDOWN bit from those "early" calls */
   start_of_scan(0),
-  num_doInsertRecord(0)
+  num_write_row(0)
 {}
 
 /*********************************************************************//**
@@ -3860,7 +3860,7 @@ ha_innobase::doInsertRecord(
   if ((sql_command == SQLCOM_ALTER_TABLE
        || sql_command == SQLCOM_CREATE_INDEX
        || sql_command == SQLCOM_DROP_INDEX)
-      && num_doInsertRecord >= 10000) {
+      && num_write_row >= 10000) {
     /* ALTER TABLE is COMMITted at every 10000 copied rows.
     The IX table lock for the original table has to be re-issued.
     As this method will be called on a temporary table where the
@@ -3873,7 +3873,7 @@ ha_innobase::doInsertRecord(
     dict_table_t* src_table;
     enum lock_mode  mode;
 
-    num_doInsertRecord = 0;
+    num_write_row = 0;
 
     /* Commit the transaction.  This will release the table
     locks, so they have to be acquired again. */
@@ -3920,7 +3920,7 @@ no_commit:
     }
   }
 
-  num_doInsertRecord++;
+  num_write_row++;
 
   /* This is the case where the table has an auto-increment column */
   if (table->next_number_field && record == table->record[0]) {
@@ -4961,7 +4961,7 @@ Initialize a table scan.
 @return 0 or error number */
 UNIV_INTERN
 int
-ha_innobase::rnd_init(
+ha_innobase::doStartTableScan(
 /*==================*/
   bool  scan) /*!< in: TRUE if table/index scan FALSE otherwise */
 {
@@ -4993,7 +4993,7 @@ Ends a table scan.
 @return 0 or error number */
 UNIV_INTERN
 int
-ha_innobase::rnd_end(void)
+ha_innobase::doEndTableScan(void)
 /*======================*/
 {
   return(doEndIndexScan());

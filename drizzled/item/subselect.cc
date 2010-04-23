@@ -2280,7 +2280,7 @@ int subselect_uniquesubquery_engine::scan_table()
   if (table->cursor->inited)
     table->cursor->endIndexScan();
 
-  table->cursor->ha_rnd_init(1);
+  table->cursor->startTableScan(1);
   table->cursor->extra_opt(HA_EXTRA_CACHE,
                          current_session->variables.read_buff_size);
   table->null_row= 0;
@@ -2303,7 +2303,7 @@ int subselect_uniquesubquery_engine::scan_table()
     }
   }
 
-  table->cursor->ha_rnd_end();
+  table->cursor->endTableScan();
   return(error != 0);
 }
 

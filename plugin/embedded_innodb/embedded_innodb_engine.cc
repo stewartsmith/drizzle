@@ -1317,7 +1317,7 @@ err:
   return err;
 }
 
-int EmbeddedInnoDBCursor::rnd_init(bool)
+int EmbeddedInnoDBCursor::doStartTableScan(bool)
 {
   ib_trx_t transaction= *get_trx(ha_session());
 
@@ -1387,7 +1387,7 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::rnd_end()
+int EmbeddedInnoDBCursor::doEndTableScan()
 {
   ib_err_t err;
 
@@ -1685,7 +1685,7 @@ int EmbeddedInnoDBCursor::doEndIndexScan()
 {
   active_index= MAX_KEY;
 
-  return rnd_end();
+  return doEndTableScan();
 }
 
 int EmbeddedInnoDBCursor::index_prev(unsigned char *)

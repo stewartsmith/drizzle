@@ -80,7 +80,7 @@ class ha_innobase: public Cursor
 	uint		last_match_mode;/* match mode of the latest search:
 					ROW_SEL_EXACT, ROW_SEL_EXACT_PREFIX,
 					or undefined */
-	uint		num_doInsertRecord;	/*!< number of doInsertRecord() calls */
+	uint		num_write_row;	/*!< number of doInsertRecord() calls */
 
 	UNIV_INTERN uint store_key_val_for_row(uint keynr, char* buff, 
                                    uint buff_len, const unsigned char* record);
@@ -150,8 +150,8 @@ class ha_innobase: public Cursor
 	UNIV_INTERN int index_first(unsigned char * buf);
 	UNIV_INTERN int index_last(unsigned char * buf);
 
-	UNIV_INTERN int rnd_init(bool scan);
-	UNIV_INTERN int rnd_end();
+	UNIV_INTERN int doStartTableScan(bool scan);
+	UNIV_INTERN int doEndTableScan();
 	UNIV_INTERN int rnd_next(unsigned char *buf);
 	UNIV_INTERN int rnd_pos(unsigned char * buf, unsigned char *pos);
 

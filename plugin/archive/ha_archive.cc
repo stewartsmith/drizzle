@@ -756,7 +756,7 @@ void ha_archive::get_auto_increment(uint64_t, uint64_t, uint64_t,
   *first_value= share->archive_write.auto_increment + 1;
 }
 
-/* Initialized at each key walk (called multiple times unlike rnd_init()) */
+/* Initialized at each key walk (called multiple times unlike doStartTableScan()) */
 int ha_archive::doStartIndexScan(uint32_t keynr, bool)
 {
   active_index= keynr;
@@ -778,7 +778,7 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
   current_key= key;
   current_key_len= key_len;
 
-  rc= rnd_init(true);
+  rc= doStartTableScan(true);
 
   if (rc)
     goto error;
@@ -822,7 +822,7 @@ int ha_archive::index_next(unsigned char * buf)
   we assume the position will be set.
 */
 
-int ha_archive::rnd_init(bool scan)
+int ha_archive::doStartTableScan(bool scan)
 {
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);

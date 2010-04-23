@@ -228,8 +228,8 @@ public:
   int ha_open(Table *table, const char *name, int mode, int test_if_locked);
   int startIndexScan(uint32_t idx, bool sorted);
   int endIndexScan();
-  int ha_rnd_init(bool scan);
-  int ha_rnd_end();
+  int startTableScan(bool scan);
+  int endTableScan();
   int ha_reset();
 
   /* this is necessary in many places, e.g. in HANDLER command */
@@ -539,14 +539,14 @@ private:
   { active_index= idx; return 0; }
   virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }
   /**
-    rnd_init() can be called two times without rnd_end() in between
+    doStartTableScan() can be called two times without doEndTableScan() in between
     (it only makes sense if scan=1).
     then the second call should prepare for the new table scan (e.g
     if rnd_init allocates the cursor, second call should position it
     to the start of the table, no need to deallocate and allocate it again
   */
-  virtual int rnd_init(bool scan)= 0;
-  virtual int rnd_end() { return 0; }
+  virtual int doStartTableScan(bool scan)= 0;
+  virtual int doEndTableScan() { return 0; }
   virtual int doInsertRecord(unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;

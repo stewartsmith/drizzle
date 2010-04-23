@@ -1170,7 +1170,7 @@ int ha_myisam::read_range_next()
 }
 
 
-int ha_myisam::rnd_init(bool scan)
+int ha_myisam::doStartTableScan(bool scan)
 {
   if (scan)
     return mi_scan_init(file);

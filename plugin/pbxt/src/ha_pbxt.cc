@@ -3659,15 +3659,15 @@ int ha_pbxt::index_last(byte * buf)
  */
  
 /*
- * rnd_init() is called when the system wants the storage engine to do a table
+ * doStartTableScan() is called when the system wants the storage engine to do a table
  * scan.
  * See the example in the introduction at the top of this file to see when
- * rnd_init() is called.
+ * doStartTableScan() is called.
  *
  * Called from filesort.cc, records.cc, sql_handler.cc, sql_select.cc, sql_table.cc,
  * and sql_update.cc.
  */
-int ha_pbxt::rnd_init(bool scan)
+int ha_pbxt::doStartTableScan(bool scan)
 {
 	int			err = 0;
 	XTThreadPtr	thread = pb_open_tab->ot_thread;
@@ -3677,15 +3677,15 @@ int ha_pbxt::rnd_init(bool scan)
 
 	/* Call xt_tab_seq_exit() to make sure the resources used by the previous
 	 * scan are freed. In particular make sure cache page ref count is decremented.
-	 * This is needed as rnd_init() can be called mulitple times w/o matching calls 
-	 * to rnd_end(). Our experience is that currently this is done in queries like:
+	 * This is needed as doStartTableScan() can be called mulitple times w/o matching calls 
+	 * to doEndTableScan(). Our experience is that currently this is done in queries like:
 	 *
 	 * SELECT t1.c1,t2.c1 FROM t1 LEFT JOIN t2 USING (c1);
 	 * UPDATE t1 LEFT JOIN t2 USING (c1) SET t1.c1 = t2.c1 WHERE t1.c1 = t2.c1;
 	 *
 	 * when scanning inner tables. It is important to understand that in such case
-	 * multiple calls to rnd_init() are not semantically equal to a new query. For
-	 * example we cannot make row locks permanent as we do in rnd_end(), as 
+	 * multiple calls to doStartTableScan() are not semantically equal to a new query. For
+	 * example we cannot make row locks permanent as we do in doEndTableScan(), as 
 	 * ha_pbxt::unlock_row still can be called.
 	 */
 	xt_tab_seq_exit(pb_open_tab);
@@ -3730,7 +3730,7 @@ int ha_pbxt::rnd_init(bool scan)
 	return err;
 }
 
-int ha_pbxt::rnd_end()
+int ha_pbxt::doEndTableScan()
 {
 	XT_TRACE_METHOD();
 

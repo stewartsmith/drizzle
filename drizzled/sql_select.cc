@@ -3946,7 +3946,7 @@ int rr_sequential(READ_RECORD *info);
 int init_read_record_seq(JoinTable *tab)
 {
   tab->read_record.read_record= rr_sequential;
-  if (tab->read_record.cursor->ha_rnd_init(1))
+  if (tab->read_record.cursor->startTableScan(1))
     return 1;
   return (*tab->read_record.read_record)(&tab->read_record);
 }
@@ -5327,7 +5327,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   org_record=(char*) (record=table->record[0])+offset;
   new_record=(char*) table->record[1]+offset;
 
-  cursor->ha_rnd_init(1);
+  cursor->startTableScan(1);
   error=cursor->rnd_next(record);
   for (;;)
   {
@@ -5448,7 +5448,7 @@ int remove_dup_with_hash_index(Session *session,
     return(1);
   }
 
-  cursor->ha_rnd_init(1);
+  cursor->startTableScan(1);
   key_pos= &key_buffer[0];
   for (;;)
   {
@@ -5496,14 +5496,14 @@ int remove_dup_with_hash_index(Session *session,
   free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->ha_rnd_end();
+  (void) cursor->endTableScan();
   return(0);
 
 err:
   free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->ha_rnd_end();
+  (void) cursor->endTableScan();
   if (error)
     table->print_error(error,MYF(0));
   return(1);
