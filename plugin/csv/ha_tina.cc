@@ -119,7 +119,6 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_TEMPORARY_ONLY |
                                      HTON_NO_AUTO_INCREMENT |
-                                     HTON_HAS_DATA_DICTIONARY |
                                      HTON_SKIP_STORE_LOCK |
                                      HTON_FILE_BASED),
     tina_open_tables()
@@ -149,7 +148,7 @@ public:
                            drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, SchemaIdentifier&, set<string>&) { };
 
   int doDropTable(Session&, TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);

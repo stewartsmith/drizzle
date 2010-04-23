@@ -5,9 +5,9 @@ Database	Create Database
 foo	CREATE DATABASE `foo` COLLATE = utf8_general_ci
 show schemas;
 Database
-data_dictionary
+DATA_DICTIONARY
 foo
-information_schema
+INFORMATION_SCHEMA
 mysql
 test
 drop schema foo;

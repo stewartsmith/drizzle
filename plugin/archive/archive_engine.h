@@ -66,8 +66,7 @@ public:
     drizzled::plugin::StorageEngine("ARCHIVE",
                                     drizzled::HTON_FILE_BASED |
                                     drizzled::HTON_STATS_RECORDS_IS_EXACT |
-                                    drizzled::HTON_HAS_RECORDS |
-                                    drizzled::HTON_HAS_DATA_DICTIONARY),
+                                    drizzled::HTON_HAS_RECORDS),
     archive_open_tables()
   {
     table_definition_ext= ARZ;
@@ -92,7 +91,7 @@ public:
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory, std::string& , std::set<std::string>& set_of_names);
+  void doGetTableNames(drizzled::CachedDirectory &directory, drizzled::SchemaIdentifier&, std::set<std::string>& set_of_names);
 
   int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier);
 

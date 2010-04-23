@@ -271,7 +271,6 @@ public:
                             HTON_PRIMARY_KEY_IN_READ_INDEX |
                             HTON_PARTIAL_COLUMN_READ |
                             HTON_TABLE_SCAN_ON_INDEX |
-                            HTON_HAS_DATA_DICTIONARY |
                             HTON_HAS_FOREIGN_KEYS |
                             HTON_HAS_DOES_TRANSACTIONS)
   {
@@ -384,7 +383,7 @@ public:
   doDropSchema(
   /*===================*/
   			/* out: error number */
-  	const std::string	&schema_name);	/* in: database path; inside InnoDB the name
+  	SchemaIdentifier	&identifier);	/* in: database path; inside InnoDB the name
   			of the last directory in the path is used as
   			the database name: for example, in 'mysql/data/test'
   			the database name is 'test' */
@@ -449,7 +448,7 @@ public:
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       std::string &db_name,
+		       drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string> &set_of_names);
 
   bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
@@ -483,10 +482,10 @@ int InnobaseEngine::doGetTableDefinition(Session &,
   if (StorageEngine::readTableFile(proto_path, table_proto))
     return EEXIST;
 
-  return -1;
+  return ENOENT;
 }
 
-void InnobaseEngine::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+void InnobaseEngine::doGetTableNames(CachedDirectory &directory, SchemaIdentifier&, set<string>& set_of_names)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -6013,7 +6012,7 @@ Removes all tables in the named database inside InnoDB. */
 bool
 InnobaseEngine::doDropSchema(
 /*===================*/
-                             const std::string &schema_name)
+                             SchemaIdentifier &identifier)
 		/*!< in: database path; inside InnoDB the name
 			of the last directory in the path is used as
 			the database name: for example, in 'mysql/data/test'
@@ -6021,7 +6020,7 @@ InnobaseEngine::doDropSchema(
 {
 	trx_t*	trx;
 	int	error;
-	string schema_path(schema_name);
+	string schema_path(identifier.getPath());
 	Session*	session		= current_session;
 
 	/* Get the transaction associated with the current session, or create one
@@ -6162,7 +6161,10 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier 
 	error = convert_error_code_to_mysql(error, 0, NULL);
 
         if (not error)
+        {
+          // If this fails, we are in trouble
           plugin::StorageEngine::renameDefinitionFromPath(to, from);
+        }
 
 	return(error);
 }

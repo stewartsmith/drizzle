@@ -133,7 +133,7 @@ void ArchiveEngine::deleteOpenTable(const string &table_name)
 
 
 void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory, 
-                                    string&, 
+				    SchemaIdentifier&,
                                     set<string>& set_of_names)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();

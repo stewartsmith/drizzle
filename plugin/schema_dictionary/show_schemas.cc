@@ -1,7 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2010 Brian Aker
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,23 +24,30 @@
 using namespace std;
 using namespace drizzled;
 
-SchemasTool::SchemasTool() :
-  plugin::TableFunction("DATA_DICTIONARY", "SCHEMAS")
+ShowSchemas::ShowSchemas() :
+  plugin::TableFunction("DATA_DICTIONARY", "SHOW_SCHEMAS")
 {
   add_field("SCHEMA_NAME");
-  add_field("DEFAULT_COLLATION_NAME");
-  add_field("SCHEMA_CREATION_TIME");
-  add_field("SCHEMA_UPDATE_TIME");
 }
 
-SchemasTool::Generator::Generator(Field **arg) :
+ShowSchemas::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
-  is_schema_primed(false),
-  is_schema_parsed(false)
+  is_schema_primed(false)
 {
 }
 
-bool SchemasTool::Generator::nextSchemaCore()
+/**
+  @note return true if a match occurs.
+*/
+bool ShowSchemas::Generator::checkSchema()
+{
+  if (isWild((*schema_iterator).getSchemaName()))
+    return true;
+
+  return false;
+}
+
+bool ShowSchemas::Generator::nextSchemaCore()
 {
   if (is_schema_primed)
   {
@@ -58,19 +65,13 @@ bool SchemasTool::Generator::nextSchemaCore()
   if (schema_iterator == schema_names.end())
     return false;
 
-  schema.Clear();
-  SchemaIdentifier schema_identifier(*schema_iterator);
-  is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
-
-  if (not is_schema_parsed)
-  {
-    return false;
-  }
+  if (checkSchema())
+      return false;
 
   return true;
 }
   
-bool SchemasTool::Generator::nextSchema()
+bool ShowSchemas::Generator::nextSchema()
 {
   while (not nextSchemaCore())
   {
@@ -82,7 +83,7 @@ bool SchemasTool::Generator::nextSchema()
 }
 
 
-bool SchemasTool::Generator::populate()
+bool ShowSchemas::Generator::populate()
 {
   if (nextSchema())
   {
@@ -96,29 +97,8 @@ bool SchemasTool::Generator::populate()
 /**
   A lack of a parsed schema file means we are using defaults.
 */
-void SchemasTool::Generator::fill()
+void ShowSchemas::Generator::fill()
 {
-  /* SCHEMA_NAME */
-  push(schema.name());
-
-  /* DEFAULT_COLLATION_NAME */
-  if (is_schema_parsed)
-    push(schema.collation());
-  else
-    push(scs->name);
-
-  /* SCHEMA_CREATION_TIME */
-  time_t time_arg= schema.creation_timestamp();
-  char buffer[40];
-  struct tm tm_buffer;
-
-  localtime_r(&time_arg, &tm_buffer);
-  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
-  push(buffer);
-
-  /* SCHEMA_UPDATE_TIME */
-  time_arg= schema.update_timestamp();
-  localtime_r(&time_arg, &tm_buffer);
-  strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
-  push(buffer);
+  /* Schema */
+  push((*schema_iterator).getSchemaName());
 }

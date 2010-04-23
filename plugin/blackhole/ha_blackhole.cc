@@ -56,8 +56,7 @@ public:
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY),
+                                     HTON_AUTO_PART_KEY),
     blackhole_open_tables()
   {
     table_definition_ext= BLACKHOLE_EXT;
@@ -94,7 +93,8 @@ public:
                            drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       string&, set<string>& set_of_names)
+		       SchemaIdentifier &,
+                       set<string>& set_of_names)
   {
     drizzled::CachedDirectory::Entries entries= directory.getEntries();
 

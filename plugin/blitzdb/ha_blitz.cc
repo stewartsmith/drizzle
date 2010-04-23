@@ -44,8 +44,7 @@ public:
                                     drizzled::HTON_NULL_IN_KEY |
                                     drizzled::HTON_PRIMARY_KEY_IN_READ_INDEX |
                                     drizzled::HTON_STATS_RECORDS_IS_EXACT |
-                                    drizzled::HTON_SKIP_STORE_LOCK |
-                                    drizzled::HTON_HAS_DATA_DICTIONARY) {
+                                    drizzled::HTON_SKIP_STORE_LOCK) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
   }
 
@@ -79,7 +78,8 @@ public:
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory, std::string &,
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       drizzled::SchemaIdentifier &schema_ident,
                        std::set<std::string>& set_of_names);
 
   bool doDoesTableExist(drizzled::Session &session,
@@ -274,8 +274,9 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
   return EEXIST;
 }
 
-void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory, string&,
-                                  set<string> &set_of_names) {
+void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory,
+                                  drizzled::SchemaIdentifier &,
+                                  std::set<string> &set_of_names) {
   drizzled::CachedDirectory::Entries entries = directory.getEntries();
 
   for (drizzled::CachedDirectory::Entries::iterator entry_iter = entries.begin();

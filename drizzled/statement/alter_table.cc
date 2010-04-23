@@ -91,7 +91,7 @@ bool statement::AlterTable::execute()
     if (create_info.db_type == NULL)
     {
       my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               create_table_message.name().c_str());
+               create_table_message.engine().name().c_str());
 
       return true;
     }
@@ -107,7 +107,7 @@ bool statement::AlterTable::execute()
     TableIdentifier identifier(first_table->db, first_table->table_name);
     if (plugin::StorageEngine::getTableDefinition(*session, identifier, original_table_message) != EEXIST)
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
       return true;
     }
   }
@@ -1220,7 +1220,6 @@ static bool internal_alter_table(Session *session,
 
       return true;
     }
-
 
     pthread_mutex_unlock(&LOCK_open);
 

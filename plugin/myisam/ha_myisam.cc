@@ -75,7 +75,6 @@ class MyisamEngine : public plugin::StorageEngine
 public:
   explicit MyisamEngine(string name_arg) :
     plugin::StorageEngine(name_arg,
-                          HTON_HAS_DATA_DICTIONARY |
                           HTON_CAN_INDEX_BLOBS |
                           HTON_STATS_RECORDS_IS_EXACT |
                           HTON_TEMPORARY_ONLY |
@@ -121,7 +120,7 @@ public:
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(CachedDirectory &, SchemaIdentifier &, set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
