@@ -98,6 +98,15 @@ const int max_connections = 500;
 
 #ifdef __sun
 #define XT_SOLARIS
+#ifdef __sparc__
+#define BYTE_ORDER BIG_ENDIAN
+#endif
+#ifdef __i386__
+#define BYTE_ORDER LITTLE_ENDIAN
+#endif
+#if defined(__amd64___) || defined(__x86_64__)
+#define BYTE_ORDER LITTLE_ENDIAN
+#endif
 #endif
 
 /*
