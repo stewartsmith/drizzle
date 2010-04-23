@@ -223,7 +223,7 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
       set<size_t> involved_slots;
       for (size_t x= 1; x <= num_tables; x++, tables++)
       {
-        engine= (*tables)->cursor->engine;
+        engine= (*tables)->cursor->getEngine();
         if (involved_slots.count(engine->getId()) > 0)
           continue; /* already added to involved engines */
         involved_engines.push_back(engine);
@@ -348,7 +348,7 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 
     if ((error=(*tables)->cursor->ha_external_lock(session,lock_type)))
     {
-      print_lock_error(error, (*tables)->cursor->engine->getName().c_str());
+      print_lock_error(error, (*tables)->cursor->getEngine()->getName().c_str());
       while (--i)
       {
         tables--;
@@ -543,7 +543,7 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
       if ((error=(*table)->cursor->ha_external_lock(session, F_UNLCK)))
       {
 	error_code=error;
-	print_lock_error(error_code, (*table)->cursor->engine->getName().c_str());
+	print_lock_error(error_code, (*table)->cursor->getEngine()->getName().c_str());
       }
     }
     table++;
