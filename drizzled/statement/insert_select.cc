@@ -75,6 +75,7 @@ bool statement::InsertSelect::execute()
                          session->lex, 
                          sel_result, 
                          OPTION_SETUP_TABLES_DONE);
+
       /*
          Invalidate the table in the query cache if something changed
          after unlocking when changes become visible.
