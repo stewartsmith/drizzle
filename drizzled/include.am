@@ -296,6 +296,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/context.h \
 			      drizzled/plugin/daemon.h \
 			      drizzled/plugin/error_message.h \
+			      drizzled/plugin/event.h \
 			      drizzled/plugin/function.h \
 			      drizzled/plugin/library.h \
 			      drizzled/plugin/listen.h \
@@ -668,6 +669,7 @@ drizzled_libdrizzled_la_SOURCES= \
 				 drizzled/plugin/authorization.cc \
 				 drizzled/plugin/client.cc \
 				 drizzled/plugin/error_message.cc \
+				 drizzled/plugin/event.cc  \
 				 drizzled/plugin/function.cc \
 				 drizzled/plugin/library.cc \
 				 drizzled/plugin/listen.cc \

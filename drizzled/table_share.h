@@ -45,6 +45,11 @@ const static std::string TEMPORARY_STRING("TEMPORARY");
 const static std::string INTERNAL_STRING("INTERNAL");
 const static std::string FUNCTION_STRING("FUNCTION");
 
+namespace plugin
+{
+class TableEventObservers;
+}
+
 class TableShare
 {
 public:
@@ -101,7 +106,8 @@ public:
     replace_with_name_lock(false),
     waiting_on_cond(false),
     keys_in_use(0),
-    keys_for_keyread(0)
+    keys_for_keyread(0),
+    event_observers(NULL)
   {
     init();
   }
@@ -162,7 +168,8 @@ public:
     replace_with_name_lock(false),
     waiting_on_cond(false),
     keys_in_use(0),
-    keys_for_keyread(0)
+    keys_for_keyread(0),
+    event_observers(NULL)
   {
     init(key, key_length, new_table_name, new_path);
   }
@@ -409,6 +416,23 @@ public:
   key_map keys_in_use;
   key_map keys_for_keyread;
 
+  /* 
+    event_observers is a class containing all the event plugins that have 
+    registered an interest in this table.
+  */
+  private:
+  plugin::TableEventObservers *event_observers;
+  public:
+  plugin::TableEventObservers *getTableObservers() 
+  { 
+    return event_observers;
+  }
+  
+  void setTableObservers(plugin::TableEventObservers *observers) 
+  { 
+    event_observers= observers;
+  }
+  
   /*
     Set share's table cache key and update its db and table name appropriately.
 

@@ -23,6 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/drop_schema.h>
 #include <drizzled/db.h>
+#include <drizzled/plugin/event.h>
 
 #include <string>
 
@@ -50,7 +51,15 @@ bool statement::DropSchema::execute()
         MYF(0));
     return true;
   }
-  bool res= mysql_rm_db(session, schema_identifier, drop_if_exists);
+  
+  bool res = true;
+  if (unlikely(plugin::Event::preDropDatabaseDo(session, schema_identifier.getSQLPath().c_str())))
+    my_error(ER_EVENT_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
+  else
+  {
+    res= mysql_rm_db(session, schema_identifier, drop_if_exists);
+    plugin::Event::postDropDatabaseDo(session, schema_identifier.getSQLPath().c_str(), res);
+  }
 
   return res;
 }

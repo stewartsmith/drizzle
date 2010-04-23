@@ -35,6 +35,7 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
+#include "drizzled/plugin/event.h"
 
 using namespace std;
 
@@ -108,6 +109,9 @@ void TableShare::release(TableShare *share)
   {
     const string key_string(share->table_cache_key.str,
                             share->table_cache_key.length);
+                            
+    plugin::Event::deregisterTableEventsDo(share);
+   
     TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
     if (iter != table_def_cache.end())
     {
@@ -131,6 +135,7 @@ void TableShare::release(const char *key, uint32_t key_length)
     if (share->ref_count == 0)
     {
       pthread_mutex_lock(&share->mutex);
+      plugin::Event::deregisterTableEventsDo(share);
       share->free_table_share();
       table_def_cache.erase(key_string);
     }
@@ -233,6 +238,9 @@ TableShare *TableShare::getShare(Session *session,
     return NULL;
   }
   share->ref_count++;				// Mark in use
+  
+  plugin::Event::registerTableEventsDo(share);
+  
   (void) pthread_mutex_unlock(&share->mutex);
 
   return share;

@@ -50,6 +50,7 @@
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/event.h"
 
 #include <fcntl.h>
 #include <algorithm>
@@ -189,7 +190,8 @@ Session::Session(plugin::Client *client_arg)
   m_lip(NULL),
   cached_table(0),
   transaction_message(NULL),
-  statement_message(NULL)
+  statement_message(NULL),
+  session_event_observers(NULL)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
@@ -263,6 +265,8 @@ Session::Session(plugin::Client *client_arg)
   thr_lock_owner_init(&main_lock_id, &lock_info);
 
   m_internal_handler= NULL;
+  
+  plugin::Event::registerSessionEventsDo(this); 
 }
 
 void Session::free_items()
@@ -368,6 +372,7 @@ Session::~Session()
   pthread_setspecific(THR_Session,  0);
 
   plugin::Logging::postEndDo(this);
+  plugin::Event::deregisterSessionEventsDo(this); 
 
   /* Ensure that no one is using Session */
   pthread_mutex_unlock(&LOCK_delete);

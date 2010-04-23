@@ -53,6 +53,7 @@
 #include "drizzled/db.h"
 
 #include <drizzled/table_proto.h>
+#include <drizzled/plugin/event.h>
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
@@ -98,9 +99,18 @@ void StorageEngine::setTransactionReadWrite(Session& session)
 
 int StorageEngine::renameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
+  int error;
   setTransactionReadWrite(session);
 
-  return doRenameTable(session, from, to);
+  if (unlikely(plugin::Event::preRenameTableDo(&session, &from, &to)))
+    error= ER_EVENT_PLUGIN;
+  else
+  {
+    error =  doRenameTable(session, from, to);
+    plugin::Event::postRenameTableDo(&session, &from, &to, error);
+  }
+  
+  return error;
 }
 
 /**
@@ -464,7 +474,10 @@ int StorageEngine::dropTable(Session& session,
   int error;
 
   engine.setTransactionReadWrite(session);
+  
+  plugin::Event::preDropTableDo(&session, &identifier);
   error= engine.doDropTable(session, identifier);
+  plugin::Event::postDropTableDo(&session, &identifier, error);
 
   return error;
 }
