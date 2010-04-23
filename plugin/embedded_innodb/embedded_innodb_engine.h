@@ -67,9 +67,9 @@ public:
   void position(const unsigned char *record);
   int info(uint32_t flag);
   double scan_time();
-  int delete_row(const unsigned char *);
+  int doDeleteRecord(const unsigned char *);
   int delete_all_rows(void);
-  int update_row(const unsigned char * old_data, unsigned char * new_data);
+  int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
 
   void get_auto_increment(uint64_t, uint64_t,
                           uint64_t,

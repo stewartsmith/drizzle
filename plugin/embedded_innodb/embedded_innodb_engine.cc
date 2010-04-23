@@ -1223,8 +1223,8 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::update_row(const unsigned char * ,
-                                     unsigned char * )
+int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char * ,
+                                         unsigned char * )
 {
   ib_tpl_t update_tuple;
   ib_err_t err;
@@ -1249,7 +1249,7 @@ int EmbeddedInnoDBCursor::update_row(const unsigned char * ,
     return -1;
 }
 
-int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
+int EmbeddedInnoDBCursor::doDeleteRecord(const unsigned char *)
 {
   ib_err_t err;
 
