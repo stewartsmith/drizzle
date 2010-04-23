@@ -35,8 +35,6 @@ int parse_table_proto(Session& session,
                       message::Table &table,
                       TableShare *share);
 
-int delete_table_proto_file(const char *file_name);
-
 bool rea_create_table(Session *session,
                       TableIdentifier &identifier,
                       message::Table &table_proto,

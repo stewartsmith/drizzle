@@ -115,10 +115,10 @@ bool ColumnsTool::Generator::populate()
 void ColumnsTool::Generator::fill()
 {
   /* TABLE_SCHEMA */
-  push(schema_name());
+  push(getTableProto().schema());
 
   /* TABLE_NAME */
-  push(table_name());
+  push(getTableProto().name());
 
   /* COLUMN_NAME */
   push(column.name());

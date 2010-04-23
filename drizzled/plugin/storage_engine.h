@@ -282,10 +282,10 @@ public:
   virtual const char **bas_ext() const =0;
 
 protected:
-  virtual int doCreateTable(Session *session,
-                            Table& table_arg,
+  virtual int doCreateTable(Session &session,
+                            Table &table_arg,
                             TableIdentifier &identifier,
-                            message::Table& proto)= 0;
+                            message::Table &message)= 0;
 
   virtual int doRenameTable(Session &session,
                             TableIdentifier &from, TableIdentifier &to)= 0;
@@ -324,7 +324,10 @@ public:
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int dropTable(Session& session,
                        TableIdentifier &identifier);
-  static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
+  static int dropTable(Session& session,
+                       StorageEngine &engine,
+                       TableIdentifier &identifier);
+  static void getTableNames(Session &session, const std::string& db_name, TableNameList &set_of_names);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(drizzled::TableIdentifier &identifier);
@@ -332,9 +335,11 @@ public:
   { (void)identifier;  return true; }
 
   // @note All schema methods defined here
-  static void getSchemaNames(SchemaNameList &set_of_names);
+  static void getSchemaNames(Session &session, SchemaNameList &set_of_names);
+  static bool getSchemaDefinition(TableIdentifier &identifier, message::Schema &proto);
   static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
   static bool doesSchemaExist(const std::string &schema_name);
+  static bool doesSchemaExist(TableIdentifier &identifier);
   static const CHARSET_INFO *getSchemaCollation(const std::string &schema_name);
   static bool createSchema(const drizzled::message::Schema &schema_message);
   static bool dropSchema(const std::string &schema_name);
@@ -397,6 +402,7 @@ public:
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
+  static bool readTableFile(const std::string &path, message::Table &table_message);
 
 public:
   /* 

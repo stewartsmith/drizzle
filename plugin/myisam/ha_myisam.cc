@@ -107,7 +107,7 @@ public:
     return ha_myisam_exts;
   }
 
-  int doCreateTable(Session *,
+  int doCreateTable(Session&,
                     Table& table_arg,
                     drizzled::TableIdentifier &identifier,
                     message::Table&);
@@ -1224,7 +1224,7 @@ int ha_myisam::info(uint32_t flag)
     stats.block_size= myisam_key_cache_block_size;        /* record block size */
 
     /* Update share */
-    if (share->tmp_table == STANDARD_TABLE)
+    if (share->tmp_table == message::Table::STANDARD)
       pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->keys);
     /*
@@ -1278,7 +1278,7 @@ int ha_myisam::info(uint32_t flag)
       memcpy(table->key_info[0].rec_per_key,
 	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
-    if (share->tmp_table == STANDARD_TABLE)
+    if (share->tmp_table == message::Table::STANDARD)
       pthread_mutex_unlock(&share->mutex);
 
    /*
@@ -1348,7 +1348,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-int MyisamEngine::doCreateTable(Session *session,
+int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
                                 drizzled::TableIdentifier &identifier,
                                 message::Table& create_proto)
@@ -1390,7 +1390,7 @@ int MyisamEngine::doCreateTable(Session *session,
                    &create_info, create_flags);
   free((unsigned char*) recinfo);
 
-  session->storeTableMessage(identifier, create_proto);
+  session.storeTableMessage(identifier, create_proto);
 
   return error;
 }

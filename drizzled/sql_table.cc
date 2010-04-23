@@ -236,7 +236,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
     }
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : STANDARD_TABLE);
+    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? message::Table::INTERNAL : message::Table::STANDARD);
 
     if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -284,11 +284,14 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   */
   pthread_mutex_unlock(&LOCK_open);
   error= 0;
+
   if (wrong_tables.length())
   {
-    if (!foreign_key_error)
+    if (not foreign_key_error)
+    {
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
                       wrong_tables.c_ptr());
+    }
     else
     {
       my_message(ER_ROW_IS_REFERENCED, ER(ER_ROW_IS_REFERENCED), MYF(0));
@@ -297,12 +300,13 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   }
 
   pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
+
 err_with_placeholders:
   unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
   session->no_warnings_for_error= 0;
 
-  return(error);
+  return error;
 }
 
 
@@ -1287,7 +1291,6 @@ static bool locked_create_event(Session *session,
                                 message::Table &table_proto,
                                 AlterInfo *alter_info,
                                 bool is_if_not_exists,
-                                bool lex_identified_temp_table,
                                 bool internal_tmp_table,
                                 uint db_options,
                                 uint key_count,
@@ -1303,7 +1306,8 @@ static bool locked_create_event(Session *session,
       to create a table under a temporary table.
     */
     bool exists= 
-      plugin::StorageEngine::doesTableExist(*session, identifier, lex_identified_temp_table);
+      plugin::StorageEngine::doesTableExist(*session, identifier, 
+                                            identifier.getType() != message::Table::STANDARD );
 
     if (exists)
     {
@@ -1317,11 +1321,11 @@ static bool locked_create_event(Session *session,
         return error;
       }
 
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
       return error;
     }
 
-    if (not lex_identified_temp_table) // We have a real table
+    if (identifier.getType() == message::Table::STANDARD) // We have a real table
     {
       /*
         We don't assert here, but check the result, because the table could be
@@ -1336,7 +1340,7 @@ static bool locked_create_event(Session *session,
       */
       if (TableShare::getShare(identifier))
       {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
         return error;
       }
     }
@@ -1355,7 +1359,7 @@ static bool locked_create_event(Session *session,
     return error;
   }
 
-  if (lex_identified_temp_table)
+  if (identifier.getType() == message::Table::TEMPORARY)
   {
     /* Open table and put in temporary table list */
     if (not (session->open_temporary_table(identifier)))
@@ -1424,8 +1428,6 @@ bool mysql_create_table_no_lock(Session *session,
   KEY		*key_info_buffer;
   bool		error= true;
   TableShare share;
-  bool lex_identified_temp_table=
-    (table_proto.type() == message::Table::TEMPORARY);
 
   /* Check for duplicate fields and check type of table to create */
   if (not alter_info->create_list.elements)
@@ -1456,7 +1458,6 @@ bool mysql_create_table_no_lock(Session *session,
                                table_proto,
                                alter_info,
                                is_if_not_exists,
-                               lex_identified_temp_table,
                                internal_tmp_table,
                                db_options, key_count,
                                key_info_buffer);
@@ -1499,7 +1500,7 @@ static bool drizzle_create_table(Session *session,
     }
     else
     {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName().c_str());
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
       result= true;
     }
   }
@@ -1538,10 +1539,7 @@ bool mysql_create_table(Session *session,
                         uint32_t select_field_count,
                         bool is_if_not_exists)
 {
-  bool lex_identified_temp_table=
-    (table_proto.type() == message::Table::TEMPORARY);
-
-  if (lex_identified_temp_table)
+  if (identifier.isTmp())
   {
     return mysql_create_table_no_lock(session,
                                       identifier,
@@ -1552,17 +1550,15 @@ bool mysql_create_table(Session *session,
                                       select_field_count,
                                       is_if_not_exists);
   }
-  else
-  {
-    return drizzle_create_table(session,
-                                identifier,
-                                create_info,
-                                table_proto,
-                                alter_info,
-                                internal_tmp_table,
-                                select_field_count,
-                                is_if_not_exists);
-  }
+
+  return drizzle_create_table(session,
+                              identifier,
+                              create_info,
+                              table_proto,
+                              alter_info,
+                              internal_tmp_table,
+                              select_field_count,
+                              is_if_not_exists);
 }
 
 
@@ -1641,17 +1637,7 @@ mysql_rename_table(plugin::StorageEngine *base,
 
   assert(base);
 
-  if (not (error= base->renameTable(*session, from, to)))
-  {
-    if (not base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
-    {
-      if ((error= plugin::StorageEngine::renameDefinitionFromPath(to, from)))
-      {
-        error= errno;
-        base->renameTable(*session, to, from);
-      }
-    }
-  }
+  error= base->renameTable(*session, from, to);
 
   if (error == HA_ERR_WRONG_COMMAND)
   {
@@ -2052,7 +2038,7 @@ static bool replicateCreateTableLike(Session *session, TableList *table, Table *
 static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
                                  TableIdentifier &destination_identifier,
                                  TableIdentifier &src_table,
-                                 bool lex_identified_temp_table, bool is_engine_set)
+                                 bool is_engine_set)
 {
   int protoerr= EEXIST;
   message::Table new_proto;
@@ -2063,7 +2049,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
                                                       src_proto);
   new_proto.CopyFrom(src_proto);
 
-  if (lex_identified_temp_table)
+  if (destination_identifier.isTmp())
   {
     new_proto.set_type(message::Table::TEMPORARY);
   }
@@ -2135,8 +2121,6 @@ bool mysql_create_like_table(Session* session,
   char *table_name= table->table_name;
   bool res= true;
   uint32_t not_used;
-  bool lex_identified_temp_table=
-    (create_table_proto.type() == message::Table::TEMPORARY);
   bool was_created;
 
   /*
@@ -2161,7 +2145,7 @@ bool mysql_create_like_table(Session* session,
     was already checked when it was added to the table list.
   */
   bool table_exists= false;
-  if (lex_identified_temp_table)
+  if (destination_identifier.isTmp())
   {
     if (session->find_temporary_table(db, table_name))
     {
@@ -2212,14 +2196,14 @@ bool mysql_create_like_table(Session* session,
   {
     pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
     was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                      src_identifier, lex_identified_temp_table, is_engine_set);
+                                      src_identifier, is_engine_set);
     pthread_mutex_unlock(&LOCK_open);
 
     // So we blew the creation of the table, and we scramble to clean up
     // anything that might have been created (read... it is a hack)
     if (not was_created)
     {
-      if (lex_identified_temp_table)
+      if (destination_identifier.isTmp())
       {
         (void) session->rm_temporary_table(destination_identifier);
       }
@@ -2228,14 +2212,14 @@ bool mysql_create_like_table(Session* session,
         quick_rm_table(*session, destination_identifier);
       }
     } 
-    else if (lex_identified_temp_table && not session->open_temporary_table(destination_identifier))
+    else if (destination_identifier.isTmp() && not session->open_temporary_table(destination_identifier))
     {
       // We created, but we can't open... also, a hack.
       (void) session->rm_temporary_table(destination_identifier);
     }
     else
     {
-      if (not lex_identified_temp_table)
+      if (not destination_identifier.isTmp())
       {
         bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->s->tmp_table), is_if_not_exists);
         (void)rc;

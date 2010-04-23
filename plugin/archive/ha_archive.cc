@@ -527,7 +527,7 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ArchiveEngine::doCreateTable(Session *,
+int ArchiveEngine::doCreateTable(Session &,
                                  Table& table_arg,
                                  drizzled::TableIdentifier &identifier,
                                  drizzled::message::Table& proto)

@@ -255,6 +255,8 @@ static const char* ha_innobase_exts[] = {
   NULL
 };
 
+#define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
+
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 
@@ -269,6 +271,7 @@ public:
                             HTON_PRIMARY_KEY_IN_READ_INDEX |
                             HTON_PARTIAL_COLUMN_READ |
                             HTON_TABLE_SCAN_ON_INDEX |
+                            HTON_HAS_DATA_DICTIONARY |
                             HTON_HAS_FOREIGN_KEYS |
                             HTON_HAS_DOES_TRANSACTIONS)
   {
@@ -418,12 +421,12 @@ public:
 	return(ha_innobase_exts);
   }
 
-  UNIV_INTERN int doCreateTable(Session *session,
-                                Table& form,
+  UNIV_INTERN int doCreateTable(Session &session,
+                                Table &form,
                                 drizzled::TableIdentifier &identifier,
                                 message::Table&);
   UNIV_INTERN int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
-  UNIV_INTERN int doDropTable(Session& session, TableIdentifier &identifier);
+  UNIV_INTERN int doDropTable(Session &session, TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -440,7 +443,78 @@ public:
             HA_READ_RANGE |
             HA_KEYREAD_ONLY);
   }
+
+  int doGetTableDefinition(drizzled::Session& session,
+                           drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
+
+  void doGetTableNames(drizzled::CachedDirectory &directory,
+                       std::string &db_name,
+                       std::set<std::string> &set_of_names);
+
+  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
 };
+
+bool InnobaseEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(DEFAULT_FILE_EXTENSION);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+int InnobaseEngine::doGetTableDefinition(Session &,
+                                         drizzled::TableIdentifier &identifier,
+                                         message::Table &table_proto)
+{
+  string proto_path(identifier.getPath());
+  proto_path.append(DEFAULT_FILE_EXTENSION);
+
+  if (access(proto_path.c_str(), F_OK))
+  {
+    return errno;
+  }
+
+  if (StorageEngine::readTableFile(proto_path, table_proto))
+    return EEXIST;
+
+  return -1;
+}
+
+void InnobaseEngine::doGetTableNames(CachedDirectory &directory, string&, set<string>& set_of_names)
+{
+  CachedDirectory::Entries entries= directory.getEntries();
+
+  for (CachedDirectory::Entries::iterator entry_iter= entries.begin(); 
+       entry_iter != entries.end(); ++entry_iter)
+  {
+    CachedDirectory::Entry *entry= *entry_iter;
+    const string *filename= &entry->filename;
+
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, DEFAULT_FILE_EXTENSION) ||
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
+    { }
+    else
+    {
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
+      set_of_names.insert(uname);
+    }
+  }
+}
 
 /** @brief Initialize the default value of innodb_commit_concurrency.
 
@@ -5441,7 +5515,7 @@ UNIV_INTERN
 int
 InnobaseEngine::doCreateTable(
 /*================*/
-	Session*	session,	/*!< in: Session */
+	Session         &session,	/*!< in: Session */
 	Table&		form,		/*!< in: information on table columns and indexes */
         drizzled::TableIdentifier &identifier,
         message::Table& create_proto)
@@ -5462,8 +5536,6 @@ InnobaseEngine::doCreateTable(
         bool lex_identified_temp_table= (create_proto.type() == message::Table::TEMPORARY);
 
 	const char *table_name= identifier.getPath().c_str();
-
-	assert(session != NULL);
 
 #ifdef __WIN__
 	/* Names passed in from server are in two formats:
@@ -5497,14 +5569,14 @@ InnobaseEngine::doCreateTable(
 	/* Get the transaction associated with the current session, or create one
 	if not yet created */
 
-	parent_trx = check_trx_exists(session);
+	parent_trx = check_trx_exists(&session);
 
 	/* In case MySQL calls this in the middle of a SELECT query, release
 	possible adaptive hash latch to avoid deadlocks of threads */
 
 	trx_search_latch_release_if_reserved(parent_trx);
 
-	trx = innobase_trx_allocate(session);
+	trx = innobase_trx_allocate(&session);
 
 	srv_lower_case_table_names = TRUE;
 
@@ -5523,7 +5595,7 @@ InnobaseEngine::doCreateTable(
 	iflags = 0;
 
 	/* Validate create options if innodb_strict_mode is set. */
-	if (! create_options_are_valid(session, form, create_proto)) {
+	if (! create_options_are_valid(&session, form, create_proto)) {
 		error = ER_ILLEGAL_HA_CREATE_OPTION;
 		goto cleanup;
 	}
@@ -5547,7 +5619,7 @@ InnobaseEngine::doCreateTable(
 		}
 
 		if (!srv_file_per_table) {
-			push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+			push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 				     ER_ILLEGAL_HA_CREATE_OPTION,
 				     "InnoDB: KEY_BLOCK_SIZE"
 				     " requires innodb_file_per_table.");
@@ -5555,7 +5627,7 @@ InnobaseEngine::doCreateTable(
 		}
 
 		if (file_format < DICT_TF_FORMAT_ZIP) {
-			push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+			push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 				     ER_ILLEGAL_HA_CREATE_OPTION,
 				     "InnoDB: KEY_BLOCK_SIZE"
 				     " requires innodb_file_format >"
@@ -5564,7 +5636,7 @@ InnobaseEngine::doCreateTable(
 		}
 
 		if (!iflags) {
-			push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+			push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					    ER_ILLEGAL_HA_CREATE_OPTION,
 					    "InnoDB: ignoring"
 					    " KEY_BLOCK_SIZE=%lu.",
@@ -5583,7 +5655,7 @@ InnobaseEngine::doCreateTable(
 				such combinations can be obtained
 				with ALTER TABLE anyway. */
 				push_warning_printf(
-					session,
+					&session,
 					DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
@@ -5621,7 +5693,7 @@ InnobaseEngine::doCreateTable(
 
 			if (!srv_file_per_table) {
 				push_warning_printf(
-					session,
+					&session,
 					DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ROW_FORMAT=%s"
@@ -5629,7 +5701,7 @@ InnobaseEngine::doCreateTable(
 					row_format_name);
 			} else if (file_format < DICT_TF_FORMAT_ZIP) {
 				push_warning_printf(
-					session,
+					&session,
 					DRIZZLE_ERROR::WARN_LEVEL_WARN,
 					ER_ILLEGAL_HA_CREATE_OPTION,
 					"InnoDB: ROW_FORMAT=%s"
@@ -5755,7 +5827,7 @@ InnobaseEngine::doCreateTable(
 	this is an ALTER TABLE. */
 
 	if ((create_proto.options().has_auto_increment_value()
-	    || session_sql_command(session) == SQLCOM_ALTER_TABLE)
+	    || session_sql_command(&session) == SQLCOM_ALTER_TABLE)
 	    && create_proto.options().auto_increment_value() != 0) {
 
 		/* Query was ALTER TABLE...AUTO_INCREMENT = x; or
@@ -5778,6 +5850,8 @@ InnobaseEngine::doCreateTable(
 	srv_active_wake_master_thread();
 
 	trx_free_for_mysql(trx);
+
+        StorageEngine::writeDefinitionFromPath(identifier, create_proto);
 
 	return(0);
 
@@ -5922,6 +5996,15 @@ InnobaseEngine::doDropTable(
 	if(error!=ENOENT)
 	  error = convert_error_code_to_mysql(error, 0, NULL);
 
+        if (error == 0 || error == ENOENT)
+        {
+          string path(identifier.getPath());
+
+          path.append(DEFAULT_FILE_EXTENSION);
+
+          (void)internal::my_delete(path.c_str(), MYF(0));
+        }
+
 	return(error);
 }
 
@@ -6043,6 +6126,13 @@ Renames an InnoDB table.
 @return	0 or error code */
 UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
+        // A temp table alter table/rename is a shallow rename and only the
+        // definition needs to be updated.
+        if (to.getType() == message::Table::TEMPORARY && from.getType() == message::Table::TEMPORARY)
+        {
+          return plugin::StorageEngine::renameDefinitionFromPath(to, from);
+        }
+
 	trx_t*	trx;
 	int	error;
 	trx_t*	parent_trx;
@@ -6070,6 +6160,9 @@ UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier 
 	trx_free_for_mysql(trx);
 
 	error = convert_error_code_to_mysql(error, 0, NULL);
+
+        if (not error)
+          plugin::StorageEngine::renameDefinitionFromPath(to, from);
 
 	return(error);
 }

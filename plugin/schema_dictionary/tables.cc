@@ -81,7 +81,8 @@ bool TablesTool::Generator::nextTableCore()
      return false;
 
     table_names.clear();
-    plugin::StorageEngine::getTableNames(schema_name(), table_names);
+    Session *session= current_session;
+    plugin::StorageEngine::getTableNames(*session, schema_name(), table_names);
     table_iterator= table_names.begin();
     is_tables_primed= true;
   }
@@ -92,8 +93,6 @@ bool TablesTool::Generator::nextTableCore()
   table_proto.Clear();
   {
     Session *session= current_session;
-    string path;
-    build_table_filename(path, schema_name().c_str(), table_name().c_str(), false);
     TableIdentifier identifier(schema_name().c_str(), table_name().c_str());
     plugin::StorageEngine::getTableDefinition(*session,
                                              identifier,
@@ -205,10 +204,10 @@ void TablesTool::Generator::fill()
   */
 
   /* TABLE_SCHEMA */
-  push(schema_name());
+  push(table_proto.schema());
 
   /* TABLE_NAME */
-  push(table_name());
+  push(table_proto.name());
 
   /* TABLE_TYPE */
   {

@@ -44,7 +44,8 @@ public:
                                     drizzled::HTON_NULL_IN_KEY |
                                     drizzled::HTON_PRIMARY_KEY_IN_READ_INDEX |
                                     drizzled::HTON_STATS_RECORDS_IS_EXACT |
-                                    drizzled::HTON_SKIP_STORE_LOCK) {
+                                    drizzled::HTON_SKIP_STORE_LOCK |
+                                    drizzled::HTON_HAS_DATA_DICTIONARY) {
     table_definition_ext = BLITZ_SYSTEM_EXT;
   }
 
@@ -62,7 +63,7 @@ public:
     return ha_blitz_exts;
   }
 
-  int doCreateTable(drizzled::Session *session,
+  int doCreateTable(drizzled::Session &session,
                     drizzled::Table &table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table &table_proto);
@@ -112,7 +113,7 @@ public:
 static char *skip_btree_key(const char *key, const size_t skip_len,
                             int *return_klen);
 
-int BlitzEngine::doCreateTable(drizzled::Session *,
+int BlitzEngine::doCreateTable(drizzled::Session &,
                                drizzled::Table &table,
                                drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &proto) {

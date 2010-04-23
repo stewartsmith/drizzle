@@ -59,7 +59,8 @@ bool SchemasTool::Generator::nextSchemaCore()
   }
   else
   {
-    plugin::StorageEngine::getSchemaNames(schema_names);
+    Session *session= current_session;
+    plugin::StorageEngine::getSchemaNames(*session, schema_names);
     schema_iterator= schema_names.begin();
     is_schema_primed= true;
   }

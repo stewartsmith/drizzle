@@ -237,7 +237,7 @@ bool mysql_rm_db(Session *session, const std::string &schema_name, const bool if
 
   for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
-    TableIdentifier identifier(schema_name, *iter, TEMP_TABLE);
+    TableIdentifier identifier(schema_name, *iter, message::Table::TEMPORARY);
     Table *table= session->find_temporary_table(identifier);
     session->close_temporary_table(table);
   }
@@ -495,7 +495,7 @@ static long mysql_rm_known_files(Session *session,
 
   tot_list_next= &tot_list;
 
-  plugin::StorageEngine::getTableNames(db, dropped_tables);
+  plugin::StorageEngine::getTableNames(*session, db, dropped_tables);
 
   for (plugin::TableNameList::iterator it= dropped_tables.begin();
        it != dropped_tables.end();

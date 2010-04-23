@@ -37,7 +37,6 @@ static const char *schema_exts[] = {
 class Schema : public drizzled::plugin::StorageEngine
 {
   bool writeSchemaFile(const char *path, const drizzled::message::Schema &db);
-  bool readTableFile(const std::string &path, drizzled::message::Table &table_message);
   bool readSchemaFile(const std::string &path, drizzled::message::Schema &schema);
 
   void prime();
@@ -53,15 +52,6 @@ public:
 
   ~Schema();
 
-  int doCreateTable(drizzled::Session *,
-                    drizzled::Table&,
-                    drizzled::TableIdentifier &,
-                    drizzled::message::Table&)
-  {
-    return EPERM;
-  }
-
-  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier);
 
   bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 
@@ -80,19 +70,43 @@ public:
 
   bool doDropSchema(const std::string &schema_name);
 
-  int doGetTableDefinition(drizzled::Session& session,
-                           drizzled::TableIdentifier &identifier,
-                           drizzled::message::Table &table_proto);
+  // Below are table methods that we don't implement (and don't need)
 
-  void doGetTableNames(drizzled::CachedDirectory &directory,
-                       std::string &db_name,
-                       std::set<std::string> &set_of_names);
+  int doGetTableDefinition(drizzled::Session&,
+                           drizzled::TableIdentifier&,
+                           drizzled::message::Table&)
+  {
+    return ENOENT;
+  }
 
-  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
 
-  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &, drizzled::TableIdentifier &)
+  void doGetTableNames(drizzled::CachedDirectory&,
+                       std::string&,
+                       std::set<std::string>&)
+  {
+  }
+
+  bool doDoesTableExist(drizzled::Session&, drizzled::TableIdentifier&)
+  {
+    return false;
+  }
+
+  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
   {
     return EPERM;
+  }
+
+  int doCreateTable(drizzled::Session&,
+                    drizzled::Table&,
+                    drizzled::TableIdentifier&,
+                    drizzled::message::Table&)
+  {
+    return EPERM;
+  }
+
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier&)
+  {
+    return 0;
   }
 
   const char **bas_ext() const 
