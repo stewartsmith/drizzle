@@ -1257,16 +1257,15 @@ unsigned char *ha_blitz::get_pack_buffer(const size_t size) {
 
 static BlitzEngine *blitz_engine = NULL;
 
-BlitzShare *ha_blitz::get_share(const char *path) {
-  int len;
+BlitzShare *ha_blitz::get_share(const char *name) {
   BlitzShare *share_ptr;
   BlitzEngine *bz_engine = (BlitzEngine *)engine;
+  std::string table_path(name);
 
   pthread_mutex_lock(&blitz_utility_mutex);
-  len = (int)strlen(path);
 
   /* Look up the table cache to see if the table resource is available */
-  share_ptr = bz_engine->getTableShare(path);
+  share_ptr = bz_engine->getTableShare(table_path);
 
   if (share_ptr) {
     share_ptr->use_count++;
@@ -1278,7 +1277,7 @@ BlitzShare *ha_blitz::get_share(const char *path) {
   share_ptr = new BlitzShare();
 
   /* Prepare the Data Dictionary */
-  if (share_ptr->dict.startup(path) != 0) {
+  if (share_ptr->dict.startup(table_path.c_str()) != 0) {
     delete share_ptr;
     pthread_mutex_unlock(&blitz_utility_mutex);
     return NULL;
@@ -1289,7 +1288,7 @@ BlitzShare *ha_blitz::get_share(const char *path) {
   share_ptr->btrees = new BlitzTree[table->s->keys];
 
   for (uint32_t i = 0; i < table->s->keys; i++, curr++) {
-    share_ptr->btrees[i].open(path, i, BDBOWRITER);
+    share_ptr->btrees[i].open(table_path.c_str(), i, BDBOWRITER);
     share_ptr->btrees[i].parts = new BlitzKeyPart[curr->key_parts];
 
     if (table->key_info[i].flags & HA_NOSAME)
@@ -1322,7 +1321,7 @@ BlitzShare *ha_blitz::get_share(const char *path) {
 
   /* Set Meta Data */
   share_ptr->auto_increment_value = share_ptr->dict.read_meta_autoinc();
-  share_ptr->table_name.append(path);
+  share_ptr->table_name = table_path;
   share_ptr->nkeys = table->s->keys;
   share_ptr->use_count = 1;
 
@@ -1336,7 +1335,7 @@ BlitzShare *ha_blitz::get_share(const char *path) {
 
   /* Done creating the share object. Cache it for later
      use by another cursor object.*/
-  bz_engine->cacheTableShare(path, share_ptr);
+  bz_engine->cacheTableShare(table_path, share_ptr);
 
   pthread_mutex_unlock(&blitz_utility_mutex);
   return share_ptr;
