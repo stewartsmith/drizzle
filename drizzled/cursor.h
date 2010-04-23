@@ -156,8 +156,8 @@ protected:
   Table *table;               /* The current open table */
 
   ha_rows estimation_rows_to_insert;
-public:
   plugin::StorageEngine *engine;      /* storage engine of this Cursor */
+public:
   inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
     return engine;
