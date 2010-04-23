@@ -2306,7 +2306,8 @@ xtPublic xtBool xt_lock_file_ptr(XTOpenFilePtr of, xtWord1 **data, off_t offset,
 	return OK;
 }
 
-xtPublic void xt_unlock_file_ptr(XTOpenFilePtr of, xtWord1 *data, XTThreadPtr thread)
+// Depending on platform 'thread->t_id' may not be used by FILE_MAP_UNLOCK().
+xtPublic void xt_unlock_file_ptr(XTOpenFilePtr of, xtWord1 *data, XTThreadPtr thread __attribute__((unused)))
 {
 	switch (of->of_type) {
 		case XT_FT_NONE:

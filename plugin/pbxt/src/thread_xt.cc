@@ -2242,7 +2242,8 @@ xtPublic xtBool xt_add_to_wakeup_list(xtThreadID waiting_id, xtThreadID wait_for
 /*
  * Wakeup a single thread.
  */
-xtPublic void xt_wakeup_thread(xtThreadID thd_id, XTThreadPtr thread)
+// Depending on platform 'thread->t_id' may not be used by THR_ARRAY_READ_LOCK().
+xtPublic void xt_wakeup_thread(xtThreadID thd_id, XTThreadPtr thread __attribute__((unused)))
 {
 	XTWaitThreadPtr	target_wt;
 
