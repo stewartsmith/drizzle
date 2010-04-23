@@ -443,18 +443,6 @@ static int fill_table_proto(message::Table &table_proto,
   return 0;
 }
 
-int rename_table_proto_file(const char *from, const char* to)
-{
-  string from_path(from);
-  string to_path(to);
-  string file_ext = ".dfe";
-
-  from_path.append(file_ext);
-  to_path.append(file_ext);
-
-  return internal::my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
-}
-
 int delete_table_proto_file(const char *file_name)
 {
   string new_path(file_name);

@@ -34,6 +34,7 @@
 
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
+#include "drizzled/message/table.pb.h"
 #include <string.h>
 
 #include <assert.h>
@@ -131,6 +132,8 @@ public:
   {
     return table_name;
   }
+
+  void copyToTableMessage(message::Table &message);
 
   friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
   {

@@ -1645,7 +1645,7 @@ mysql_rename_table(plugin::StorageEngine *base,
   {
     if (not base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY))
     {
-      if ((error= rename_table_proto_file(from.getPath().c_str(), to.getPath().c_str())))
+      if ((error= plugin::StorageEngine::renameDefinitionFromPath(to, from)))
       {
         error= errno;
         base->renameTable(*session, to, from);

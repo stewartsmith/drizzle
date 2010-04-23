@@ -99,7 +99,7 @@ select * from mysqltest.t1;
 name
 mysqltest
 alter table t1 rename mysqltest.t1;
-ERROR 42S01: Table 't1' already exists
+ERROR 42S01: Table 'mysqltest.t1' already exists
 select * from t1;
 name
 current
@@ -789,13 +789,13 @@ CREATE TABLE `t+1` (c1 INT);
 ALTER TABLE  `t+1` RENAME `t+2`;
 CREATE TABLE `t+1` (c1 INT);
 ALTER TABLE  `t+1` RENAME `t+2`;
-ERROR 42S01: Table 't+2' already exists
+ERROR 42S01: Table 'test.t+2' already exists
 DROP TABLE   `t+1`, `t+2`;
 CREATE TEMPORARY TABLE `tt+1` (c1 INT);
 ALTER TABLE  `tt+1` RENAME `tt+2`;
 CREATE TEMPORARY TABLE `tt+1` (c1 INT);
 ALTER TABLE  `tt+1` RENAME `tt+2`;
-ERROR 42S01: Table 'tt+2' already exists
+ERROR 42S01: Table 'temporary.tt+2' already exists
 SHOW CREATE TABLE `tt+1`;
 Table	Create Table
 tt+1	CREATE TEMPORARY TABLE `tt+1` (

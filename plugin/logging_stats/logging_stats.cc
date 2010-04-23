@@ -230,10 +230,9 @@ bool LoggingStats::postEnd(Session *session)
     return false;
   }
 
-  /* do not pull a lock when we write this is the only thread that
-     can write to a particular sessions slot. */
-
   ScoreBoardSlot *score_board_slot;
+
+  pthread_rwlock_wrlock(&LOCK_scoreboard);
 
   for (uint32_t j=0; j < scoreboard_size; j++)
   {
@@ -245,6 +244,9 @@ bool LoggingStats::postEnd(Session *session)
       break;
     }
   }
+
+  pthread_rwlock_unlock(&LOCK_scoreboard);
+
   return false;
 }
 
