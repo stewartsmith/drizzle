@@ -96,7 +96,6 @@ bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_
 void key_unpack(String *to,Table *form,uint32_t index);
 bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields);
 int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length);
-extern "C" int key_rec_cmp(void *key_info, unsigned char *a, unsigned char *b);
 
 } /* namespace drizzled */
 

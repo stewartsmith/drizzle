@@ -2724,7 +2724,7 @@ bool Item_sum_count_distinct::add()
     */
     return tree->unique_add(table->record[0] + table->s->null_bytes);
   }
-  if ((error= table->cursor->ha_write_row(table->record[0])) &&
+  if ((error= table->cursor->insertRecord(table->record[0])) &&
       table->cursor->is_fatal_error(error, HA_CHECK_DUP))
     return true;
   return false;

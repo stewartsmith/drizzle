@@ -1449,7 +1449,7 @@ copy_data_between_tables(Table *from, Table *to,
       copy_ptr->do_copy(copy_ptr);
     }
     prev_insert_id= to->cursor->next_insert_id;
-    error= to->cursor->ha_write_row(to->record[0]);
+    error= to->cursor->insertRecord(to->record[0]);
     to->auto_increment_field_not_null= false;
     if (error)
     { 
