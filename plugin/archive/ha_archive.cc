@@ -692,7 +692,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   for implementing start_bulk_insert() is that we could skip
   setting dirty to true each time.
 */
-int ha_archive::write_row(unsigned char *buf)
+int ha_archive::doInsertRecord(unsigned char *buf)
 {
   int rc;
   unsigned char *read_buf= NULL;
@@ -1210,7 +1210,7 @@ int ha_archive::info(uint32_t flag)
 
 /*
   This method tells us that a bulk insert operation is about to occur. We set
-  a flag which will keep write_row from saying that its data is dirty. This in
+  a flag which will keep doInsertRecord from saying that its data is dirty. This in
   turn will keep selects from causing a sync to occur.
   Basically, yet another optimizations to keep compression working well.
 */

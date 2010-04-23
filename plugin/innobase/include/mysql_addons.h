@@ -40,5 +40,8 @@ Created November 07, 2007 Vasil Dimov
   @param session  user thread connection handle
   @return  thread id
 */
+#if defined(__cplusplus)
+extern "C"
+#endif
 unsigned long session_get_thread_id(const void *session);
 #endif

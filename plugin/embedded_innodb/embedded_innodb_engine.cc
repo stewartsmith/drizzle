@@ -1364,7 +1364,7 @@ static uint64_t innobase_get_int_col_max_value(const Field* field)
   return(max_value);
 }
 
-int EmbeddedInnoDBCursor::write_row(unsigned char *)
+int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *)
 {
   ib_err_t err;
   int ret= 0;
@@ -1446,8 +1446,8 @@ int EmbeddedInnoDBCursor::write_row(unsigned char *)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::update_row(const unsigned char * ,
-                                     unsigned char * )
+int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char * ,
+                                         unsigned char * )
 {
   ib_tpl_t update_tuple;
   ib_err_t err;
@@ -1476,7 +1476,7 @@ int EmbeddedInnoDBCursor::update_row(const unsigned char * ,
     return -1;
 }
 
-int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
+int EmbeddedInnoDBCursor::doDeleteRecord(const unsigned char *)
 {
   ib_err_t err;
 

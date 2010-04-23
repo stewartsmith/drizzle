@@ -47,18 +47,9 @@ namespace drizzled
 
 #define HA_MAX_ALTER_FLAGS 40
 
-
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 extern uint64_t refresh_version;  /* Increments on each reload */
-
-
-typedef bool (*qc_engine_callback)(Session *session, char *table_key,
-                                      uint32_t key_length,
-                                      uint64_t *engine_data);
-
-
-/* The Cursor for a table type.  Will be included in the Table structure */
 
 class Table;
 class TableList;
@@ -68,7 +59,6 @@ class ForeignKeyInfo;
 struct order_st;
 
 class Item;
-struct st_table_log_memory_entry;
 
 class LEX;
 class Select_Lex;
@@ -159,7 +149,6 @@ inline key_part_map make_prev_keypart_map(T a)
   If a blob column has NULL value, then its length and blob data pointer
   must be set to 0.
 */
-
 class Cursor :public memory::SqlAlloc
 {
 protected:
@@ -254,13 +243,13 @@ public:
   /**
     These functions represent the public interface to *users* of the
     Cursor class, hence they are *not* virtual. For the inheritance
-    interface, see the (private) functions write_row(), update_row(),
-    and delete_row() below.
+    interface, see the (private) functions doInsertRecord(), doUpdateRecord(),
+    and doDeleteRecord() below.
   */
   int ha_external_lock(Session *session, int lock_type);
-  int ha_write_row(unsigned char * buf);
-  int ha_update_row(const unsigned char * old_data, unsigned char * new_data);
-  int ha_delete_row(const unsigned char * buf);
+  int insertRecord(unsigned char * buf);
+  int updateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int deleteRecord(const unsigned char * buf);
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
@@ -579,17 +568,17 @@ private:
   */
   virtual int rnd_init(bool scan)= 0;
   virtual int rnd_end() { return 0; }
-  virtual int write_row(unsigned char *)
+  virtual int doInsertRecord(unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int update_row(const unsigned char *, unsigned char *)
+  virtual int doUpdateRecord(const unsigned char *, unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int delete_row(const unsigned char *)
+  virtual int doDeleteRecord(const unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
