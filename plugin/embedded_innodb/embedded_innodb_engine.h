@@ -70,6 +70,7 @@ public:
   int doDeleteRecord(const unsigned char *);
   int delete_all_rows(void);
   int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int extra(drizzled::ha_extra_function operation);
 
   EmbeddedInnoDBTableShare *get_share(const char *table_name, int *rc);
   int free_share();
@@ -92,6 +93,7 @@ private:
   ib_tpl_t tuple;
 
   ib_err_t next_innodb_error;
+  bool write_can_replace;
 };
 
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */
