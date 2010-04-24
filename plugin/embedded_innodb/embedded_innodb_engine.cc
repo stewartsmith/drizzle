@@ -108,6 +108,7 @@ static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
                                                 const drizzled::KEY *key_info,
                                                 const unsigned char *key_ptr,
                                                 uint32_t key_len);
+static void store_key_value_from_innodb(KEY *key_info, unsigned char* ref, int ref_len, const unsigned char *record);
 
 #define EMBEDDED_INNODB_EXT ".EID"
 
@@ -543,7 +544,8 @@ static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::str
 
 EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
                            TableShare &table_arg)
-  :Cursor(engine_arg, table_arg)
+  :Cursor(engine_arg, table_arg),
+   write_can_replace(false)
 { }
 
 int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
@@ -1396,7 +1398,7 @@ static uint64_t innobase_get_int_col_max_value(const Field* field)
   return(max_value);
 }
 
-int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *)
+int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
 {
   ib_err_t err;
   int ret= 0;
@@ -1469,7 +1471,37 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *)
   err= ib_cursor_insert_row(cursor, tuple);
 
   if (err == DB_DUPLICATE_KEY)
-    ret= HA_ERR_FOUND_DUPP_KEY;
+  {
+    if (write_can_replace)
+    {
+      store_key_value_from_innodb(table->key_info + table->s->primary_key,
+                                  ref, ref_length, record);
+
+      ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
+
+      fill_ib_search_tpl_from_drizzle_key(search_tuple,
+                                          table->key_info + 0,
+                                          ref, ref_length);
+
+      int res;
+      err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+      assert(err == DB_SUCCESS);
+      ib_tuple_delete(search_tuple);
+
+      tuple= ib_tuple_clear(tuple);
+      err= ib_cursor_delete_row(cursor);
+
+      err= ib_cursor_first(cursor);
+      assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
+
+      write_row_to_innodb_tuple(table->field, tuple);
+
+      err= ib_cursor_insert_row(cursor, tuple);
+      assert(err==DB_SUCCESS); // probably be nice and process errors
+    }
+    else
+      ret= HA_ERR_FOUND_DUPP_KEY;
+  }
 
   tuple= ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
@@ -2020,6 +2052,23 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
   }
 
   return ret;
+}
+
+int EmbeddedInnoDBCursor::extra(enum ha_extra_function operation)
+{
+  switch (operation)
+  {
+  case HA_EXTRA_WRITE_CAN_REPLACE:
+    write_can_replace= true;
+    break;
+  case HA_EXTRA_WRITE_CANNOT_REPLACE:
+    write_can_replace= false;
+    break;
+  default:
+    break;
+  }
+
+  return 0;
 }
 
 static int create_table_message_table()
