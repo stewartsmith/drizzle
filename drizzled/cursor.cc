@@ -56,7 +56,7 @@ Cursor::Cursor(plugin::StorageEngine &engine_arg,
                TableShare &share_arg)
   : table_share(&share_arg), table(0),
     estimation_rows_to_insert(0), engine(&engine_arg),
-    ref(0), in_range_check_pushed_down(false),
+    ref(0),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(internal::my_off_t)),
     inited(NONE),
@@ -1112,7 +1112,7 @@ int Cursor::multi_range_read_next(char **range_info)
   int result= 0;
   int range_res= 0;
 
-  if (!mrr_have_range)
+  if (not mrr_have_range)
   {
     mrr_have_range= true;
     goto start;
@@ -1266,25 +1266,8 @@ int Cursor::read_range_next()
 int Cursor::compare_key(key_range *range)
 {
   int cmp;
-  if (!range || in_range_check_pushed_down)
+  if (not range)
     return 0;					// No max range
-  cmp= key_cmp(range_key_part, range->key, range->length);
-  if (!cmp)
-    cmp= key_compare_result_on_equal;
-  return cmp;
-}
-
-
-/*
-  Same as compare_key() but doesn't check have in_range_check_pushed_down.
-  This is used by index condition pushdown implementation.
-*/
-
-int Cursor::compare_key2(key_range *range)
-{
-  int cmp;
-  if (!range)
-    return 0;					// no max range
   cmp= key_cmp(range_key_part, range->key, range->length);
   if (!cmp)
     cmp= key_compare_result_on_equal;
@@ -1344,10 +1327,10 @@ static bool log_row_for_replication(Table* table,
     /*
      * This is a total hack because of the code that is
      * in write_record() in sql_insert.cc. During
-     * a REPLACE statement, a call to ha_write_row() is
-     * called.  If it fails, then a call to ha_delete_row()
+     * a REPLACE statement, a call to insertRecord() is
+     * called.  If it fails, then a call to deleteRecord()
      * is called, followed by a repeat of the original
-     * call to ha_write_row().  So, log_row_for_replication
+     * call to insertRecord().  So, log_row_for_replication
      * could be called either once or twice for a REPLACE
      * statement.  The below looks at the values of before_record
      * and after_record to determine which call to this
@@ -1485,7 +1468,7 @@ int Cursor::ha_reset()
 }
 
 
-int Cursor::ha_write_row(unsigned char *buf)
+int Cursor::insertRecord(unsigned char *buf)
 {
   int error;
 
@@ -1500,7 +1483,7 @@ int Cursor::ha_write_row(unsigned char *buf)
 
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= write_row(buf);
+  error= doInsertRecord(buf);
   DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1515,7 +1498,7 @@ int Cursor::ha_write_row(unsigned char *buf)
 }
 
 
-int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data)
+int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
   int error;
 
@@ -1527,7 +1510,7 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= update_row(old_data, new_data);
+  error= doUpdateRecord(old_data, new_data);
   DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1541,13 +1524,13 @@ int Cursor::ha_update_row(const unsigned char *old_data, unsigned char *new_data
   return 0;
 }
 
-int Cursor::ha_delete_row(const unsigned char *buf)
+int Cursor::deleteRecord(const unsigned char *buf)
 {
   int error;
 
   DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= delete_row(buf);
+  error= doDeleteRecord(buf);
   DRIZZLE_DELETE_ROW_DONE(error);
 
   if (unlikely(error))

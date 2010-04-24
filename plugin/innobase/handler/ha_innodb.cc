@@ -886,7 +886,7 @@ thd_has_edited_nontrans_tables(
 /*===========================*/
   void*   session)  /*!< in: thread handle (Session*) */
 {
-  return((ibool) session_non_transactional_update((Session*) session));
+  return((ibool)((Session *)session)->transaction.all.hasModifiedNonTransData());
 }
 
 /******************************************************************//**
@@ -1024,7 +1024,7 @@ convert_error_code_to_mysql(
     tell it also to MySQL so that MySQL knows to empty the
     cached binlog for this transaction */
 
-                session_mark_transaction_to_rollback(session, TRUE);
+    mark_transaction_to_rollback(session, TRUE);
 
     return(HA_ERR_LOCK_DEADLOCK);
 
@@ -1033,8 +1033,7 @@ convert_error_code_to_mysql(
     latest SQL statement in a lock wait timeout. Previously, we
     rolled back the whole transaction. */
 
-                session_mark_transaction_to_rollback(session,
-                                             (bool)row_rollback_on_timeout);
+    mark_transaction_to_rollback(session, (bool)row_rollback_on_timeout);
 
     return(HA_ERR_LOCK_WAIT_TIMEOUT);
 
@@ -1080,7 +1079,7 @@ convert_error_code_to_mysql(
     tell it also to MySQL so that MySQL knows to empty the
     cached binlog for this transaction */
 
-    session_mark_transaction_to_rollback(session, TRUE);
+    mark_transaction_to_rollback(session, TRUE);
 
     return(HA_ERR_LOCK_TABLE_FULL);
 
@@ -1157,7 +1156,7 @@ innobase_mysql_print_thd(
   Session *session= reinterpret_cast<Session *>(in_session);
   fprintf(f,
           "Drizzle thread %"PRIu64", query id %"PRIu64", %s, %s, %s ",
-          static_cast<uint64_t>(session_get_thread_id( session)),
+          static_cast<uint64_t>(session->getSessionId()),
           static_cast<uint64_t>(session->getQueryId()),
           glob_hostname,
           session->getSecurityContext().getIp().c_str(),
@@ -1587,7 +1586,7 @@ ha_innobase::ha_innobase(plugin::StorageEngine &engine_arg,
                      value here because it doesn't matter if we return the
                      HA_DO_INDEX_COND_PUSHDOWN bit from those "early" calls */
   start_of_scan(0),
-  num_write_row(0)
+  num_doInsertRecord(0)
 {}
 
 /*********************************************************************//**
@@ -2742,14 +2741,23 @@ ha_innobase::open(
         table->s->stored_rec_length
         + table->s->max_key_length
         + MAX_REF_PARTS * 3;
-  if (!(unsigned char*) memory::multi_malloc(false,
-      &upd_buff, upd_and_key_val_buff_len,
-      &key_val_buff, upd_and_key_val_buff_len,
-      NULL)) {
-    free_share(share);
 
+  upd_buff= (unsigned char*)malloc(upd_and_key_val_buff_len);
+
+  if (upd_buff == NULL)
+  {
+    free_share(share);
+  }
+
+  key_val_buff= (unsigned char*)malloc(upd_and_key_val_buff_len);
+  if (key_val_buff == NULL)
+  {
+    free_share(share);
+    free(upd_buff);
     return(1);
   }
+
+
 
   /* We look for pattern #P# to see if the table is partitioned
   MySQL table. The retry logic for partitioned tables is a
@@ -2791,6 +2799,7 @@ retry:
         norm_name);
     free_share(share);
     free(upd_buff);
+    free(key_val_buff);
     errno = ENOENT;
 
     return(HA_ERR_NO_SUCH_TABLE);
@@ -2807,6 +2816,7 @@ retry:
         norm_name);
     free_share(share);
     free(upd_buff);
+    free(key_val_buff);
     errno = ENOENT;
 
     dict_table_decrement_handle_count(ib_table, FALSE);
@@ -2942,6 +2952,7 @@ ha_innobase::close(void)
   row_prebuilt_free(prebuilt, FALSE);
 
   free(upd_buff);
+  free(key_val_buff);
   free_share(share);
 
   /* Tell InnoDB server that there might be work for
@@ -3817,7 +3828,7 @@ handle.
 @return error code */
 UNIV_INTERN
 int
-ha_innobase::write_row(
+ha_innobase::doInsertRecord(
 /*===================*/
   unsigned char*  record) /*!< in: a row in MySQL format */
 {
@@ -3849,7 +3860,7 @@ ha_innobase::write_row(
   if ((sql_command == SQLCOM_ALTER_TABLE
        || sql_command == SQLCOM_CREATE_INDEX
        || sql_command == SQLCOM_DROP_INDEX)
-      && num_write_row >= 10000) {
+      && num_doInsertRecord >= 10000) {
     /* ALTER TABLE is COMMITted at every 10000 copied rows.
     The IX table lock for the original table has to be re-issued.
     As this method will be called on a temporary table where the
@@ -3862,7 +3873,7 @@ ha_innobase::write_row(
     dict_table_t* src_table;
     enum lock_mode  mode;
 
-    num_write_row = 0;
+    num_doInsertRecord = 0;
 
     /* Commit the transaction.  This will release the table
     locks, so they have to be acquired again. */
@@ -3909,7 +3920,7 @@ no_commit:
     }
   }
 
-  num_write_row++;
+  num_doInsertRecord++;
 
   /* This is the case where the table has an auto-increment column */
   if (table->next_number_field && record == table->record[0]) {
@@ -4200,7 +4211,7 @@ if its index columns are updated!
 @return error number or 0 */
 UNIV_INTERN
 int
-ha_innobase::update_row(
+ha_innobase::doUpdateRecord(
 /*====================*/
   const unsigned char*  old_row,/*!< in: old row in MySQL format */
   unsigned char*    new_row)/*!< in: new row in MySQL format */
@@ -4307,7 +4318,7 @@ Deletes a row given as the parameter.
 @return error number or 0 */
 UNIV_INTERN
 int
-ha_innobase::delete_row(
+ha_innobase::doDeleteRecord(
 /*====================*/
   const unsigned char*  record) /*!< in: a row in MySQL format */
 {
@@ -5944,7 +5955,7 @@ ha_innobase::delete_all_rows(void)
   if (session_sql_command(user_session) != SQLCOM_TRUNCATE) {
   fallback:
     /* We only handle TRUNCATE TABLE t as a special case.
-    DELETE FROM t will have to use ha_innobase::delete_row(),
+    DELETE FROM t will have to use ha_innobase::doDeleteRecord(),
     because DELETE is transactional while TRUNCATE is not. */
     return(errno=HA_ERR_WRONG_COMMAND);
   }
@@ -5953,7 +5964,7 @@ ha_innobase::delete_all_rows(void)
 
   error = row_truncate_table_for_mysql(prebuilt->table, prebuilt->trx);
   if (error == DB_ERROR) {
-    /* Cannot truncate; resort to ha_innobase::delete_row() */
+    /* Cannot truncate; resort to ha_innobase::doDeleteRecord() */
     goto fallback;
   }
 
@@ -6516,7 +6527,7 @@ ha_innobase::info(
       /* We need to reset the prebuilt value too, otherwise
       checks for values greater than the last value written
       to the table will fail and the autoinc counter will
-      not be updated. This will force write_row() into
+      not be updated. This will force doInsertRecord() into
       attempting an update of the table's AUTOINC counter. */
 
       prebuilt->autoinc_last_value = 0;
@@ -7764,7 +7775,7 @@ ha_innobase::get_auto_increment(
   meaningless for other statements e.g, LOAD etc. Subsequent calls to
   this method for the same statement results in different values which
   don't make sense. Therefore we store the value the first time we are
-  called and count down from that as rows are written (see write_row()).
+  called and count down from that as rows are written (see doInsertRecord()).
   */
 
   trx = prebuilt->trx;
@@ -7822,13 +7833,13 @@ ha_innobase::get_auto_increment(
         prebuilt->table, prebuilt->autoinc_last_value);
     }
   } else {
-    /* This will force write_row() into attempting an update
+    /* This will force doInsertRecord() into attempting an update
     of the table's AUTOINC counter. */
     prebuilt->autoinc_last_value = 0;
   }
 
   /* The increment to be used to increase the AUTOINC value, we use
-  this in write_row() and update_row() to increase the autoinc counter
+  this in doInsertRecord() and doUpdateRecord() to increase the autoinc counter
   for columns that are filled by the user. We need the offset and
   the increment. */
   prebuilt->autoinc_offset = offset;

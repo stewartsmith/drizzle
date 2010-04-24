@@ -24,7 +24,6 @@
 #include "drizzled/sql_bitmap.h"
 #include "drizzled/internal/m_string.h"
 #include <fcntl.h>
-#include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
 
@@ -255,8 +254,6 @@ bool optimizer::QuickRangeSelect::unique_key_range() const
 
 int optimizer::QuickRangeSelect::reset()
 {
-  uint32_t buf_size= 0;
-  unsigned char *mrange_buff= NULL;
   int error= 0;
   last_range= NULL;
   cur_range= (optimizer::QuickRange**) ranges.buffer;
@@ -266,30 +263,12 @@ int optimizer::QuickRangeSelect::reset()
     return error;
   }
 
-  /* Allocate buffer if we need one but haven't allocated it yet */
-  if (mrr_buf_size && ! mrr_buf_desc)
-  {
-    buf_size= mrr_buf_size;
-    while (buf_size && ! memory::multi_malloc(false,
-                                              &mrr_buf_desc,
-                                              sizeof(*mrr_buf_desc),
-                                              &mrange_buff,
-                                              buf_size,
-                                              NULL))
-    {
-      /* Try to shrink the buffers until both are 0. */
-      buf_size/= 2;
-    }
-    if (! mrr_buf_desc)
-    {
-      return HA_ERR_OUT_OF_MEM;
-    }
-
-    /* Initialize the Cursor buffer. */
-    mrr_buf_desc->buffer= mrange_buff;
-    mrr_buf_desc->buffer_end= mrange_buff + buf_size;
-    mrr_buf_desc->end_of_used_area= mrange_buff;
-  }
+  /*
+    (in the past) Allocate buffer if we need one but haven't allocated it yet 
+    There is a later assert in th code that hoped to catch random free() that might
+    have done this.
+  */
+  assert(not (mrr_buf_size && ! mrr_buf_desc));
 
   if (sorted)
   {

@@ -938,7 +938,7 @@ int ha_tina::close(void)
   of the file and appends the data. In an error case it really should
   just truncate to the original position (this is not done yet).
 */
-int ha_tina::write_row(unsigned char * buf)
+int ha_tina::doInsertRecord(unsigned char * buf)
 {
   int size;
 
@@ -998,7 +998,7 @@ int ha_tina::open_update_temp_file_if_needed()
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
-int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
+int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
 {
   int size;
   int rc= -1;
@@ -1043,7 +1043,7 @@ err:
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
 */
-int ha_tina::delete_row(const unsigned char *)
+int ha_tina::doDeleteRecord(const unsigned char *)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
 
