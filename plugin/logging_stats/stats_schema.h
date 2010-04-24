@@ -38,10 +38,10 @@
 
 #include <vector>
 
-class GlobalStatsTool : public drizzled::plugin::TableFunction
+class GlobalStatementsTool : public drizzled::plugin::TableFunction
 {
 public:
-  GlobalStatsTool(LoggingStats *logging_stats);
+  GlobalStatementsTool(LoggingStats *logging_stats);
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
@@ -51,17 +51,43 @@ public:
     bool populate();
 
   private:
-    LoggingStats *inner_logging_stats;
+    GlobalStats *global_stats; 
     uint32_t count;
   };
 
   Generator *generator(drizzled::Field **arg)
   {
-    return new Generator(arg, outer_logging_stats);
+    return new Generator(arg, logging_stats);
   }
 
 private:
-  LoggingStats *outer_logging_stats;
+  LoggingStats *logging_stats;
+};
+
+class SessionStatementsTool : public drizzled::plugin::TableFunction
+{
+public:
+  SessionStatementsTool(LoggingStats *logging_stats);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats);
+
+    bool populate();
+
+  private:
+    UserCommands *user_commands;
+    uint32_t count;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, logging_stats);
+  }
+
+private:
+  LoggingStats *logging_stats;
 };
 
 class CurrentCommandsTool : public drizzled::plugin::TableFunction

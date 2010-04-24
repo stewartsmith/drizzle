@@ -54,7 +54,9 @@ public:
     COUNT_CREATE,
     COUNT_ALTER,
     COUNT_DROP,
-    COUNT_ADMIN
+    COUNT_ADMIN,
+    /* add new COUNT_* values above this entry */
+    NUMBER_COMMANDS
   }; 
 
   void incrementCount(uint32_t index, uint32_t i= 1);
@@ -69,7 +71,15 @@ public:
 
   void init();
 
+  uint32_t getCommandCount()
+  {
+    return NUMBER_COMMANDS;
+  }
+
+  static const char *IDENTIFIERS[];
+
 private:
+
   std::vector<uint64_t*> vector_of_command_counts;
   
   uint32_t size;

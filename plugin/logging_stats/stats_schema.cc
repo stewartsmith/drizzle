@@ -29,6 +29,7 @@
 
 #include <config.h>          
 #include "stats_schema.h"
+#include "scoreboard.h"
 #include "identifiers.h"
 
 using namespace drizzled;
@@ -37,39 +38,97 @@ using namespace std;
 
 static Identifiers identifiers; 
 
-GlobalStatsTool::GlobalStatsTool(LoggingStats *logging_stats) :
-  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATEMENTS_NEW")
-{   
-  outer_logging_stats= logging_stats;
+SessionStatementsTool::SessionStatementsTool(LoggingStats *in_logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATEMENTS_NEW")
+{
+  logging_stats= in_logging_stats;
   add_field("VARIABLE_NAME");
   add_field("VARIABLE_VALUE", TableFunction::NUMBER);
 }
 
-GlobalStatsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
   count= 0;
-  inner_logging_stats= logging_stats;
+
+  /* Set user_commands */
+  Scoreboard *current_scoreboard= logging_stats->getCurrentScoreboard();
+
+  Session *this_session= current_session;
+
+  uint32_t bucket_number= current_scoreboard->getBucketNumber(this_session);
+
+  vector<ScoreboardSlot* > *scoreboard_vector=
+     current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
+
+  vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
+  vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
+
+  ScoreboardSlot *scoreboard_slot= NULL;
+  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+       it != scoreboard_vector->end(); ++it)
+  {
+    scoreboard_slot= *it;
+    if (scoreboard_slot->getSessionId() == this_session->getSessionId())
+    {
+      break;
+    }
+  }
+
+  user_commands= NULL;
+
+  if (scoreboard_slot != NULL)
+  {
+    user_commands= scoreboard_slot->getUserCommands();
+  }
 }
 
-bool GlobalStatsTool::Generator::populate()
+bool SessionStatementsTool::Generator::populate()
 {
-  if (count == 1)
+  if (user_commands == NULL)
+  {
+    return false;
+  } 
+
+  uint32_t number_identifiers= user_commands->getCommandCount();
+
+  if (count == number_identifiers)
   {
     return false;
   }
 
-  GlobalStats *global_stats= inner_logging_stats->getCumulativeStats()->getGlobalStats();
+  push(UserCommands::IDENTIFIERS[count]);
+  push(user_commands->getCount(count));
 
-  vector<const char*> command_identifiers_vector= identifiers.getCommandIdentifiers(); 
+  ++count;
+  return true;
+}
 
-  int number_commands= command_identifiers_vector.size(); 
+GlobalStatementsTool::GlobalStatementsTool(LoggingStats *in_logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATEMENTS_NEW")
+{   
+  logging_stats= in_logging_stats;
+  add_field("VARIABLE_NAME");
+  add_field("VARIABLE_VALUE", TableFunction::NUMBER);
+}
 
-  for (int j= 0; j < number_commands; ++j)
+GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  count= 0;
+  global_stats= logging_stats->getCumulativeStats()->getGlobalStats();
+}
+
+bool GlobalStatementsTool::Generator::populate()
+{
+  uint32_t number_identifiers= global_stats->getUserCommands()->getCommandCount(); 
+  if (count == number_identifiers)
   {
-    push(command_identifiers_vector.at(j));
-    push(global_stats->getUserCommands()->getCount(j));
-  } 
+    return false;
+  }
+
+  push(UserCommands::IDENTIFIERS[count]);
+  push(global_stats->getUserCommands()->getCount(count));
 
   ++count;
   return true;
@@ -146,7 +205,7 @@ bool CurrentCommandsTool::Generator::populate()
         push(scoreboard_slot->getUser());
         push(scoreboard_slot->getIp());
 
-        int number_commands= identifiers.getCommandIdentifiersSize();
+        int number_commands= user_commands->getCommandCount(); 
 
         for (int j= 0; j < number_commands; ++j)
         {
@@ -224,7 +283,7 @@ bool CumulativeCommandsTool::Generator::populate()
       UserCommands *user_commands= cumulative_scoreboard_slot->getUserCommands(); 
       push(cumulative_scoreboard_slot->getUser());
 
-      int number_commands= identifiers.getCommandIdentifiersSize();
+      int number_commands= user_commands->getCommandCount();
 
       for (int j= 0; j < number_commands; ++j)
       {

@@ -67,6 +67,8 @@ public:
    */
   ScoreboardSlot* findAndResetScoreboardSlot(drizzled::Session *session);
 
+  uint32_t getBucketNumber(drizzled::Session *session);
+
   uint32_t getNumberBuckets()
   {
     return number_buckets;

@@ -31,6 +31,21 @@
 
 using namespace drizzled;
 
+
+const char* UserCommands::IDENTIFIERS[] = 
+{ 
+  "COUNT_SELECT",
+  "COUNT_DELETE",
+  "COUNT_UPDATE",
+  "COUNT_INSERT",
+  "COUNT_ROLLBACK",
+  "COUNT_COMMIT",
+  "COUNT_CREATE",
+  "COUNT_ALTER",
+  "COUNT_DROP",
+  "COUNT_ADMIN"
+};
+
 UserCommands::UserCommands()
 {
   init();
