@@ -71,7 +71,7 @@ public:
 
   void init();
 
-  uint32_t getCommandCount()
+  static uint32_t getCommandCount()
   {
     return NUMBER_COMMANDS;
   }

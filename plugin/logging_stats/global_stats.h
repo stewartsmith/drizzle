@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef PLUGIN_LOGGING_GLOBAL_STATS_H
-#define PLUGIN_LOGGING_GLOBAL_STATS_H
+#ifndef PLUGIN_LOGGING_STATS_GLOBAL_STATS_H
+#define PLUGIN_LOGGING_STATS_GLOBAL_STATS_H
 
 #include "user_commands.h"
 #include "scoreboard_slot.h"

@@ -30,13 +30,10 @@
 #include <config.h>          
 #include "stats_schema.h"
 #include "scoreboard.h"
-#include "identifiers.h"
 
 using namespace drizzled;
 using namespace plugin;
 using namespace std;
-
-static Identifiers identifiers; 
 
 SessionStatementsTool::SessionStatementsTool(LoggingStats *in_logging_stats) :
   plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATEMENTS_NEW")
@@ -90,7 +87,7 @@ bool SessionStatementsTool::Generator::populate()
     return false;
   } 
 
-  uint32_t number_identifiers= user_commands->getCommandCount();
+  uint32_t number_identifiers= UserCommands::getCommandCount();
 
   if (count == number_identifiers)
   {
@@ -121,7 +118,7 @@ GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_st
 
 bool GlobalStatementsTool::Generator::populate()
 {
-  uint32_t number_identifiers= global_stats->getUserCommands()->getCommandCount(); 
+  uint32_t number_identifiers= UserCommands::getCommandCount(); 
   if (count == number_identifiers)
   {
     return false;
@@ -142,16 +139,12 @@ CurrentCommandsTool::CurrentCommandsTool(LoggingStats *logging_stats) :
   add_field("USER");
   add_field("IP");
 
-  vector<const char* >::iterator command_identifiers_it= 
-    identifiers.getCommandIdentifiers().begin();
+  uint32_t number_commands= UserCommands::getCommandCount();
 
-  vector<const char* >::iterator command_identifiers_end=              
-    identifiers.getCommandIdentifiers().end();
-
-  for (; command_identifiers_it != command_identifiers_end; ++command_identifiers_it) 
+  for (uint32_t j= 0; j < number_commands; ++j)
   {
-    add_field(*command_identifiers_it, TableFunction::NUMBER);
-  }
+    add_field(UserCommands::IDENTIFIERS[j], TableFunction::NUMBER);
+  } 
 }
 
 CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
@@ -205,9 +198,9 @@ bool CurrentCommandsTool::Generator::populate()
         push(scoreboard_slot->getUser());
         push(scoreboard_slot->getIp());
 
-        int number_commands= user_commands->getCommandCount(); 
+        uint32_t number_commands= UserCommands::getCommandCount(); 
 
-        for (int j= 0; j < number_commands; ++j)
+        for (uint32_t j= 0; j < number_commands; ++j)
         {
           push(user_commands->getCount(j));
         }
@@ -237,16 +230,11 @@ CumulativeCommandsTool::CumulativeCommandsTool(LoggingStats *logging_stats) :
 
   add_field("USER");
 
-  vector<const char* >::iterator command_identifiers_it=
-    identifiers.getCommandIdentifiers().begin();
+  uint32_t number_commands= UserCommands::getCommandCount();
 
-  vector<const char* >::iterator command_identifiers_end=
-    identifiers.getCommandIdentifiers().end();
-
-
-  for (; command_identifiers_it != command_identifiers_end; ++command_identifiers_it)
+  for (uint32_t j= 0; j < number_commands; ++j)
   {
-    add_field(*command_identifiers_it, TableFunction::NUMBER);
+    add_field(UserCommands::IDENTIFIERS[j], TableFunction::NUMBER);
   }
 }
 
@@ -283,9 +271,9 @@ bool CumulativeCommandsTool::Generator::populate()
       UserCommands *user_commands= cumulative_scoreboard_slot->getUserCommands(); 
       push(cumulative_scoreboard_slot->getUser());
 
-      int number_commands= user_commands->getCommandCount();
+      uint32_t number_commands= UserCommands::getCommandCount();
 
-      for (int j= 0; j < number_commands; ++j)
+      for (uint32_t j= 0; j < number_commands; ++j)
       {
         push(user_commands->getCount(j));
       }
