@@ -49,17 +49,16 @@
  * Each vector in the Scoreboard has its own lock. This allows session 2 
  * to not have to wait for session 1 to locate a slot to use, as they
  * will be in different buckets.  A lock is taken to locate a open slot
- * in the scoreboard for a session or to locate the slot that the current
- * session has claimed. 
+ * in the scoreboard.
  *
  * A read lock is taken on the scoreboard vector when the table is queried 
  * in the data_dictionary.
  *
  * Atomics
- * 
- * The cumulative statistics use atomics, for the index into the vector 
- * containing statistics by user. The statistics themselves though are 
- * not atomics.  
+ *
+ * The cumulative statistics use atomics, for the index into the vector
+ * marking the last index that is used by a user. New users will increment
+ * the atomic and claim the slot for use.  
  * 
  * System Variables
  * 
