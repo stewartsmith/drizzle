@@ -27,6 +27,63 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @details
+ *
+ * This class defines the following DATA_DICTIONARY tables:
+ *
+ * drizzle> describe GLOBAL_STATEMENTS_NEW;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | VARIABLE_NAME  | VARCHAR | FALSE |         | FALSE           |           |
+ * | VARIABLE_VALUE | BIGINT  | FALSE |         | FALSE           |           |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe SESSION_STATEMENTS_NEW;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | VARIABLE_NAME  | VARCHAR | FALSE |         | FALSE           |           |
+ * | VARIABLE_VALUE | BIGINT  | FALSE |         | FALSE           |           |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe CURRENT_SQL_COMMANDS;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | USER           | VARCHAR | FALSE |         | FALSE           |           |
+ * | IP             | VARCHAR | FALSE |         | FALSE           |           |
+ * | COUNT_SELECT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_DELETE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_UPDATE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_INSERT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ROLLBACK | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_COMMIT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_CREATE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ALTER    | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_DROP     | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ADMIN    | BIGINT  | FALSE |         | FALSE           |           |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe CUMULATIVE_SQL_COMMANDS;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | USER           | VARCHAR | FALSE |         | FALSE           |           |
+ * | COUNT_SELECT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_DELETE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_UPDATE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_INSERT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ROLLBACK | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_COMMIT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_CREATE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ALTER    | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_DROP     | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ADMIN    | BIGINT  | FALSE |         | FALSE           |           |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ */
+
 #include <config.h>          
 #include "stats_schema.h"
 #include "scoreboard.h"
