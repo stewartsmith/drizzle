@@ -589,6 +589,7 @@ xtBool				xt_async_flush_record_row(XTTableHPtr tab, xtBool notify_complete, XTT
 xtBool				xt_flush_record_row(XTOpenTablePtr ot, off_t *bytes_flushed, xtBool have_table_loc);
 void				xt_flush_table(struct XTThread *self, XTOpenTablePtr ot);
 XTTableHPtr			xt_use_table_no_lock(XTThreadPtr self, struct XTDatabase *db, XTPathStrPtr name, xtBool no_load, xtBool missing_ok, XTDictionaryPtr dic);
+XTTableHPtr			xt_use_table_no_lock_ns(struct XTDatabase *db, XTPathStrPtr name, xtBool no_load, xtBool missing_ok, XTDictionaryPtr dic);
 XTTableHPtr			xt_use_table_by_id(XTThreadPtr self, struct XTDatabase *db, xtTableID tab_id, int *result);
 XTTableHPtr			xt_use_table_by_id_ns(struct XTDatabase *db, xtTableID tab_id);
 XTOpenTablePtr		xt_open_table(XTTableHPtr tab);
