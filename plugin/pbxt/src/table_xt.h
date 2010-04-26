@@ -125,9 +125,9 @@ struct XTTablePath;
 #define XT_TAB_ROW_LOCK_TYPE			xt_rwlock_type
 #define XT_TAB_ROW_INIT_LOCK(s, i)		xt_init_rwlock_with_autoname(s, i)
 #define XT_TAB_ROW_FREE_LOCK(s, i)		xt_free_rwlock(i)	
-#define XT_TAB_ROW_READ_LOCK(i, s)		xt_slock_rwlock_ns(i)
-#define XT_TAB_ROW_WRITE_LOCK(i, s)		xt_xlock_rwlock_ns(i)
-#define XT_TAB_ROW_UNLOCK(i, s)			xt_unlock_rwlock_ns(i)
+#define XT_TAB_ROW_READ_LOCK(i, s)		do { xt_slock_rwlock_ns(i); (void) (s); } while(0)
+#define XT_TAB_ROW_WRITE_LOCK(i, s)		do { xt_xlock_rwlock_ns(i); (void) (s); } while(0)
+#define XT_TAB_ROW_UNLOCK(i, s)			do { xt_unlock_rwlock_ns(i); (void) (s); } while(0)
 #elif defined(XT_TAB_ROW_USE_XSMUTEX)
 #define XT_TAB_ROW_LOCK_TYPE			XTMutexXSLockRec
 #define XT_TAB_ROW_INIT_LOCK(s, i)		xt_xsmutex_init_with_autoname(s, i)
