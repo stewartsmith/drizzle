@@ -64,8 +64,7 @@ class Table;
 class TableList;
 class TableShare;
 class Select_Lex_Unit;
-struct st_foreign_key_info;
-typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
+class ForeignKeyInfo;
 struct order_st;
 
 class Item;
@@ -454,7 +453,8 @@ public:
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
-                                  uint64_t *nb_reserved_values);
+                                  uint64_t *nb_reserved_values)= 0;
+
   void set_next_insert_id(uint64_t id)
   {
     next_insert_id= id;
@@ -499,7 +499,7 @@ public:
    */
   virtual bool can_switch_engines(void) { return true; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */
-  virtual int get_foreign_key_list(Session *, List<FOREIGN_KEY_INFO> *)
+  virtual int get_foreign_key_list(Session *, List<ForeignKeyInfo> *)
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
   virtual void free_foreign_key_create_info(char *) {}

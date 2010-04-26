@@ -33,7 +33,6 @@
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/sql_base.h"
-#include "drizzled/hash.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
 
@@ -59,7 +58,7 @@ void TableShare::cacheStart(void)
   /* 
    * This is going to overalloc a bit - as rehash sets the number of
    * buckets, not the number of elements. BUT, it'll allow us to not need
-   * to rehash later on as the hash_map grows.
+   * to rehash later on as the unordered_map grows.
    */
   table_def_cache.rehash(table_def_size);
 }

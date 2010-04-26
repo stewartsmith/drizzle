@@ -902,7 +902,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         insert_values update delete truncate rename
         show describe load alter flush
         begin commit rollback savepoint release
-        analyze check start checksum
+        analyze check start
         field_list field_list_item field_spec kill column_def key_def
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
@@ -989,7 +989,6 @@ statement:
           alter
         | analyze
         | check
-        | checksum
         | commit
         | create
         | delete
@@ -2412,21 +2411,6 @@ start_transaction_opts:
             $$= START_TRANS_OPT_WITH_CONS_SNAPSHOT;
           }
         ;
-
-
-checksum:
-          CHECKSUM_SYM table_or_tables
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_CHECKSUM;
-            lex->statement= new(std::nothrow) statement::Checksum(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
-          table_list
-          {}
-        ;
-
 
 analyze:
           ANALYZE_SYM table_or_tables
@@ -4336,7 +4320,7 @@ select_var_ident:
           {
             LEX *lex=Lex;
             if (lex->result)
-              ((select_dumpvar *)lex->result)->var_list.push_back( new my_var($2,0,0,(enum_field_types)0));
+              ((select_dumpvar *)lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
             else
               /*
                 The parser won't create select_result instance only
@@ -4832,6 +4816,32 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+           }
+         | TEMPORARY_SYM TABLES show_wild
+           {
+             LEX *lex= Lex;
+             Session *session= YYSession;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             statement::Select *select=
+               new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+
+             if (prepare_new_schema_table(YYSession, lex, "SHOW_TEMPORARY_TABLES"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
            }
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {

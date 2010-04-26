@@ -52,7 +52,7 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 
 public:
   BlackholeEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
+   : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
@@ -140,8 +140,44 @@ public:
 
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
   int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
+
+void BlackholeEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                                            drizzled::SchemaIdentifier &schema_identifier,
+                                            drizzled::TableIdentifiers &set_of_identifiers)
+{
+  drizzled::CachedDirectory::Entries entries= directory.getEntries();
+
+  for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
+       entry_iter != entries.end(); ++entry_iter)
+  {
+    drizzled::CachedDirectory::Entry *entry= *entry_iter;
+    const string *filename= &entry->filename;
+
+    assert(filename->size());
+
+    const char *ext= strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLACKHOLE_EXT) ||
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
+    {  }
+    else
+    {
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      // TODO: Remove need for memory copy here
+      uname[file_name_len - sizeof(BLACKHOLE_EXT) + 1]= '\0'; // Subtract ending, place NULL
+
+      set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
+    }
+  }
+}
 
 int BlackholeEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
 {

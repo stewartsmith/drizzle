@@ -49,6 +49,7 @@
 #include "drizzled/plugin/scheduler.h"
 #include "drizzled/plugin/xa_resource_manager.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
+#include "drizzled/replication_services.h" /* For ReplicationServices::evaluateRegisteredPlugins() */
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/charset.h"
@@ -77,7 +78,7 @@
 
 #include <errno.h>
 #include <sys/stat.h>
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 #ifdef HAVE_SYSENT_H
 #include <sysent.h>
 #endif
@@ -373,7 +374,7 @@ bool drizzle_rm_tmp_tables();
 extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
-int drizzled_get_one_option(int, const struct my_option *, char *);
+int drizzled_get_one_option(int, const struct option *, char *);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string &progname);
@@ -1249,7 +1250,7 @@ static int init_server_components(plugin::Registry &plugins)
   {
     int ho_error;
     char **tmp_argv= defaults_argv;
-    struct my_option no_opts[]=
+    struct option no_opts[]=
     {
       {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
     };
@@ -1401,7 +1402,7 @@ enum options_drizzled
 };
 
 
-struct my_option my_long_options[] =
+struct option my_long_options[] =
 {
   {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
@@ -1861,7 +1862,7 @@ static void drizzle_init_variables(void)
 }
 
 
-int drizzled_get_one_option(int optid, const struct my_option *opt,
+int drizzled_get_one_option(int optid, const struct option *opt,
                              char *argument)
 {
   switch(optid) {
@@ -2298,6 +2299,20 @@ int main(int argc, char **argv)
 
   if (init_server_components(plugins))
     unireg_abort(1);
+
+  /**
+   * This check must be done after init_server_components for now
+   * because we don't yet have plugin dependency tracking...
+   *
+   * ReplicationServices::evaluateRegisteredPlugins() will print error messages to stderr
+   * via errmsg_printf().
+   *
+   * @todo
+   *
+   * not checking return since unireg_abort() hangs
+   */
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  (void) replication_services.evaluateRegisteredPlugins();
 
   if (plugin::Listen::setup())
     unireg_abort(1);

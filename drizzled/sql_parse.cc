@@ -254,7 +254,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.ha_autocommit_or_rollback(session, session->is_error());
+  transaction_services.autocommitOrRollback(session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -902,7 +902,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     my_casedn_str(files_charset_info, table->db.str);
 
-    SchemaIdentifier schema_identifier(string(table->db.str, table->db.length));
+    SchemaIdentifier schema_identifier(string(table->db.str));
     if (not check_db_name(schema_identifier))
     {
 

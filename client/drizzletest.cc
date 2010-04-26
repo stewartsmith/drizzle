@@ -58,13 +58,13 @@
 #include PCRE_HEADER
 
 #include <stdarg.h>
+#include <drizzled/unordered_map.h>
 
 #include "errname.h"
 
 /* Added this for string translation. */
 #include "drizzled/gettext.h"
-#include "drizzled/hash.h"
-#include "drizzled/my_time.h"
+#include "drizzled/drizzle_time.h"
 #include "drizzled/charset.h"
 
 #ifndef DRIZZLE_RETURN_SERVER_GONE
@@ -77,7 +77,7 @@ using namespace drizzled;
 extern "C"
 unsigned char *get_var_key(const unsigned char* var, size_t *len, bool);
 
-int get_one_option(int optid, const struct my_option *, char *argument);
+int get_one_option(int optid, const struct option *, char *argument);
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -208,7 +208,7 @@ typedef struct st_var
 VAR var_reg[10];
 
 
-drizzled::hash_map<string, VAR *> var_hash;
+unordered_map<string, VAR *> var_hash;
 
 struct st_connection
 {
@@ -1703,7 +1703,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    drizzled::hash_map<string, VAR*>::iterator iter=
+    unordered_map<string, VAR*>::iterator iter=
       var_hash.find(save_var_name_str);
     if (iter == var_hash.end())
     {
@@ -1741,7 +1741,7 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  drizzled::hash_map<string, VAR*>::iterator iter=
+  unordered_map<string, VAR*>::iterator iter=
     var_hash.find(var_name);
   if (iter != var_hash.end())
     return (*iter).second;
@@ -4578,7 +4578,7 @@ static int read_command(struct st_command** command_ptr)
 }
 
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"help", '?', "Display this help and exit.", 0, 0, 0, GET_NO_ARG, NO_ARG,
    0, 0, 0, 0, 0, 0},
@@ -4666,7 +4666,7 @@ static void usage(void)
   my_print_variables(my_long_options);
 }
 
-int get_one_option(int optid, const struct my_option *, char *argument)
+int get_one_option(int optid, const struct option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;

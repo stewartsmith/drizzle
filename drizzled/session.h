@@ -1421,7 +1421,7 @@ public:
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
 
-  typedef drizzled::hash_map<std::string, message::Table> TableMessageCache;
+  typedef unordered_map<std::string, message::Table> TableMessageCache;
   TableMessageCache table_message_cache;
 
   bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);
@@ -1440,6 +1440,12 @@ public:
                        std::set<std::string>& set_of_names);
   void doGetTableNames(SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
+
+  void doGetTableIdentifiers(CachedDirectory &directory,
+                             SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
+  void doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
 
   int doGetTableDefinition(drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
@@ -1542,7 +1548,7 @@ typedef struct st_sort_buffer
 #include <drizzled/table_ident.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/unique.h>
-#include <drizzled/my_var.h>
+#include <drizzled/var.h>
 #include <drizzled/select_dumpvar.h>
 
 namespace drizzled

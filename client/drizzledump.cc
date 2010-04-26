@@ -35,8 +35,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
-#include "drizzled/hash.h"
 #include <stdarg.h>
+#include <drizzled/unordered_set.h>
 #include <algorithm>
 
 #include <drizzled/gettext.h>
@@ -153,9 +153,9 @@ static const char *compatible_mode_names[]=
 static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
   "", compatible_mode_names, NULL};
 
-drizzled::hash_set<string> ignore_table;
+unordered_set<string> ignore_table;
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"all", 'a', "Deprecated. Use --create-options instead.",
     (char**) &create_options, (char**) &create_options, 0, GET_BOOL, NO_ARG, 1,
@@ -509,7 +509,7 @@ static void write_footer(FILE *sql_file)
 } /* write_footer */
 
 
-static int get_one_option(int optid, const struct my_option *, char *argument)
+static int get_one_option(int optid, const struct option *, char *argument)
 {
   char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
@@ -2341,7 +2341,7 @@ static int init_dumping(char *database, int init_func(char*))
 static bool include_table(const char *hash_key, size_t key_size)
 {
   string match(hash_key, key_size);
-  drizzled::hash_set<string>::iterator iter= ignore_table.find(match);
+  unordered_set<string>::iterator iter= ignore_table.find(match);
   return (iter == ignore_table.end());
 }
 

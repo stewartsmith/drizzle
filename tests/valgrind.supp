@@ -277,7 +277,7 @@
    fun:deflate
    fun:azwrite_row
    ...
-   fun:_ZN7Session3runEv
+   fun:_ZN8drizzled7Session3runEv
 }
 
 {
@@ -289,7 +289,30 @@
    fun:deflate
    fun:azwrite_row
    ...
-   fun:_ZN7Session3runEv
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   32-bit versoin of the suppression
+   Memcheck:Value4
+   fun:memcpy
+   obj:/lib/libz.so.1.2.3.3
+   obj:/lib/libz.so.1.2.3.3
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   32-bit versoin of the suppression
+   Memcheck:Value4
+   fun:memcpy
+   ...
+   fun:deflate
+   fun:azwrite_row
+   ...
+   fun:_ZN8drizzled7Session3runEv
 }
 
 {
@@ -762,6 +785,165 @@
 #
 
 {
+   Innodb Garbage
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:mem_heap_create_func
+   fun:mem_alloc_func
+   ...
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
+   Innodb Garbage
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
+   Innodb Garbage
+   Memcheck:Leak
+   fun:malloc
+   fun:ut_malloc_low
+   fun:ut_malloc
+   fun:os_aio_array_create
+   fun:os_aio_init
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
+   Innodb Garbage
+   Memcheck:Leak
+   fun:malloc
+   fun:ut_malloc_low
+   fun:ut_malloc
+   fun:os_aio_array_create
+   fun:os_aio_init
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
+   Innodb Garbage
+   Memcheck:Leak
+   fun:malloc
+   fun:ut_malloc_low
+   fun:mem_pool_create
+   fun:mem_init
+   fun:srv_general_init
+   fun:srv_boot
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
+   Innodb Garbage
+   Memcheck:Leak
+   fun:malloc
+   fun:ut_malloc_low
+   fun:ut_malloc
+   fun:yyalloc
+   fun:yyensure_buffer_stack
+   fun:yylex
+   fun:yyparse
+   fun:pars_sql
+   fun:que_eval_sql
+   fun:dict_create_or_check_foreign_constraint_tables
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
+   Innodb Garbage
+   Memcheck:Cond
+   fun:rw_lock_set_writer_id_and_recursion_flag
+   fun:rw_lock_x_lock_low
+   fun:rw_lock_x_lock_func
+   fun:btr_search_check_free_space_in_heap
+   fun:btr_search_update_hash_on_insert
+   fun:btr_cur_optimistic_insert
+   fun:row_ins_index_entry_low
+   fun:row_ins_index_entry
+   fun:row_ins_index_entry_step
+   fun:row_ins
+   fun:row_ins_step
+   fun:que_thr_step
+   fun:que_run_threads_low
+   fun:que_run_threads
+   fun:que_eval_sql
+   fun:dict_create_or_check_foreign_constraint_tables
+}
+{
+   Innodb Garbage
+   Memcheck:Cond
+   fun:rw_lock_set_writer_id_and_recursion_flag
+   fun:rw_lock_x_lock_low
+   fun:rw_lock_x_lock_func
+   fun:trx_purge
+   fun:srv_master_thread
+   fun:start_thread
+   fun:clone
+}
+{
+   Innodb Garbage
+   Memcheck:Cond
+   fun:rw_lock_set_writer_id_and_recursion_flag
+   fun:rw_lock_x_lock_low
+   fun:rw_lock_x_lock_func
+   fun:log_group_checkpoint
+   fun:log_groups_write_checkpoint_info
+   fun:log_checkpoint
+   fun:log_fsp_current_free_limit_set_and_checkpoint
+   fun:fsp_fill_free_list
+   fun:fsp_header_init
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
+   Innodb garbage
+   Memcheck:Cond
+   fun:rw_lock_set_writer_id_and_recursion_flag
+   fun:rw_lock_x_lock_low
+   fun:rw_lock_x_lock_func
+   fun:mtr_x_lock_func
+   fun:fsp_header_init
+   fun:innobase_start_or_create_for_mysql
+   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
+{
    thr_local_hash static initialization
    Memcheck:Leak
    fun:malloc
@@ -801,6 +983,26 @@
 }
 
 {
+   32bit InnoDB garbage
+   Memcheck:Value4
+   ...
+   fun:ut_print_buf
+   fun:dtuple_print
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+}
+
+
+{
    InnoDB makes babies cry
    Memcheck:Cond
    ...
@@ -815,6 +1017,35 @@
    fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
    fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
    fun:_ZN8drizzled9statement6Insert7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+}
+
+{
+   InnoDB Issue
+   Memcheck:Param
+   ...
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+}
+
+{
+   Static leak fun in innodb
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_pessimistic_insert
+   fun:row_ins_index_entry_low
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   ...
    fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
 }
 
@@ -1039,10 +1270,24 @@
    fun:dlopen
    ...
    fun:plugin_init
-   fun:_ZL22init_server_componentsRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
    fun:main
 }
 
+{
+   Catching more dlopen leaks
+   Memcheck:Leak
+   fun:malloc
+   fun:add_to_global
+   fun:dl_open_worker
+   ...
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:_ZN8drizzledL16plugin_load_listERNS_6plugin8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEE
+   fun:plugin_init
+   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:main
+}
 {
    Leak in dlopen from glibc (it's not a growing leak) see ./elf/dl-open.c
    Memcheck:Leak
@@ -1114,28 +1359,338 @@
    fun:main
 }
 
+{
+   Suppress dlclose() because we can't use it
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_close_worker
+   fun:_dl_close
+   ...
+   fun:exit
+   ...
+}
 
 {
-   Valgrind has issues tracking the deallocation of plugin objects.
+   Suppress dlclose() because we can't use it
+   Memcheck:Leak
+   fun:malloc
+   fun:expand_dynamic_string_token
+   fun:_dl_map_object
+   fun:dl_open_worker
+   ...
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:plugin_init
+   fun:main
+}
+
+{
+   Suppress dlclose() because we can't use it
+   Memcheck:Leak
+   fun:malloc
+   fun:local_strdup
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_error
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   ...
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:plugin_init
+}
+
+{
+   Suppress dlclose() because we can't use it
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_scope_free
+   fun:_dl_close_worker
+   fun:_dl_close
+   fun:_dl_catch_error
+   fun:__libc_dlclose
+   obj:/lib/libc-2.10.1.so
+   obj:/lib/libc-2.10.1.so
+   fun:_vgnU_freeres
+   fun:exit
+   fun:(below main)
+}
+
+{
+   Suppress dlclose() because we can't use it
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_lookup_symbol_x
+   fun:_dl_relocate_object
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:plugin_init
+   fun:main
+}
+
+{
+   InnoDB static issue   
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:new_do_write
+   ...
+   fun:rewind
+   fun:row_ins_foreign_report_add_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+}
+
+{
+   InnoDB Heap Stuff
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:new_do_write
+   ...
+   fun:rewind
+   fun:row_ins_foreign_report_err
+   fun:row_ins_check_foreign_constraint
+   fun:row_upd_check_references_constraints
+   fun:row_upd_clust_step
+   fun:row_upd_step
+   fun:row_update_for_mysql
+   fun:_ZN11ha_innobase10update_rowEPKhPh
+   fun:_ZN8drizzled6Cursor13ha_update_rowEPKhPh
+}
+
+{
+   More pwrite64 goo
+   Memcheck:Param
+   pwrite64(buf)
+   fun:pwrite64
+   fun:_ZL8do_flushP11azio_streami
+   fun:azflush
+   ...
+   fun:_ZN8drizzled7Session3runEv
+   fun:session_thread
+}
+
+{
+   InnoDB Static
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_optimistic_insert
+   fun:row_ins_index_entry_low
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:que_run_threads
+   fun:row_create_table_for_mysql
+   fun:_ZN14InnobaseEngine13doCreateTableERN8drizzled7SessionERNS0_5TableERNS0_15TableIdentifierERNS0_7message5TableE
+   fun:_ZN8drizzled6plugin13StorageEngine11createTableERNS_7SessionERNS_15TableIdentifierEbRNS_7message5TableE
+   fun:_ZN8drizzled16rea_create_tableEPNS_7SessionERNS_15TableIdentifierERNS_7message5TableEPNS_24st_ha_create_informationERNS_4ListINS_11CreateFieldEEEjPNS_6st_keyE
+   fun:_ZN8drizzled26mysql_create_table_no_lockEPNS_7SessionERNS_15TableIdentifierEPNS_24st_ha_create_informationERNS_7message5TableEPNS_9AlterInfoEbjb
+}
+
+{
+   InnoDB
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_upd_lock_and_undo
+   fun:btr_cur_pessimistic_update
+   fun:row_ins_index_entry_low
+   fun:row_ins_step
+   fun:que_run_threads
+   fun:que_eval_sql
+   fun:dict_foreign_eval_sql
+   fun:dict_create_add_foreigns_to_dictionary
+   fun:dict_create_foreign_constraints_low
+   fun:dict_create_foreign_constraints
+}
+
+
+
+{
+   Trapping dlclose() issues
+   Memcheck:Leak
+   fun:malloc
+   fun:local_strdup
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_error
+   fun:_dl_map_object_deps
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_error
+   fun:dlerror_run
+   fun:__libc_dlopen_mode
+   fun:__nss_lookup_function
+   fun:__nss_lookup
+   fun:__nss_passwd_lookup2
+}
+
+{
+   InnoDB Static Issue
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:thr_local_create
+   fun:srv_master_thread
+   fun:start_thread
+   fun:clone
+}
+
+{
+   Trapping dlclose()
    Memcheck:Leak
    fun:malloc
    ...
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:_dl_open
+   fun:dlopen_doit
+   ...
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
    fun:plugin_init
-   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
    fun:main
 }
 
 {
-   Valgrind has issues tracking the deallocation of plugin objects.
+   <insert_a_suppression_name_here>
    Memcheck:Leak
-   fun:new
+   fun:malloc
+   fun:_dl_scope_free
+   fun:_dl_close_worker
+   fun:_dl_close
+   fun:do_dlclose
+   fun:_dl_catch_error
+   fun:dlerror_run
+   obj:/lib/tls/i686/cmov/libc-2.10.1.so
+   obj:/lib/tls/i686/cmov/libc-2.10.1.so
+   fun:_vgnU_freeres
+   fun:_Exit
+   fun:exit
+   fun:(below main)
+}
+
+{
+   InnoDB heap mem issues
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_update_in_place
+   fun:btr_cur_optimistic_update
+   fun:row_ins_index_entry_low
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:que_run_threads
+   fun:row_create_table_for_mysql
+   fun:_ZN14InnobaseEngine13doCreateTableERN8drizzled7SessionERNS0_5TableERNS0_15TableIdentifierERNS0_7message5TableE
+   fun:_ZN8drizzled6plugin13StorageEngine11createTableERNS_7SessionERNS_15TableIdentifierEbRNS_7message5TableE
+   fun:_ZN8drizzled16rea_create_tableEPNS_7SessionERNS_15TableIdentifierERNS_7message5TableEPNS_24st_ha_create_informationERNS_4ListINS_11CreateFieldEEEjPNS_6st_keyE
+}
+
+{
+   InnoDB heap mem
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_optimistic_insert
+   fun:btr_cur_pessimistic_insert
+   fun:row_ins_index_entry_low
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+}
+
+{
+   Trapping dlclose()
+   Memcheck:Leak
+   fun:malloc
    ...
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:_dl_open
+   fun:dlopen_doit
+   ...
+   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
+   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
    fun:plugin_init
-   fun:_ZL22init_server_componentsRN8drizzled6plugin8RegistryE
    fun:main
 }
+
+{
+   InnoDB Heap Issue
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_optimistic_insert
+   fun:row_ins_index_entry_low
+   fun:row_ins_index_entry
+   fun:row_ins_step
+   fun:row_insert_for_mysql
+   fun:_ZN11ha_innobase9write_rowEPh
+   fun:_ZN8drizzled6Cursor12ha_write_rowEPh
+   fun:_ZN8drizzled12write_recordEPNS_7SessionEPNS_5TableEPNS_12st_copy_infoE
+   fun:_ZN8drizzled12mysql_insertEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEERNS4_IS6_EES7_S7_NS_15enum_duplicatesEb
+   fun:_ZN8drizzled9statement6Insert7executeEv
+}
+
+
+{
+   InnoDB Heap Issue.
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_area_alloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_del_mark_set_clust_rec
+   fun:row_upd_clust_step
+   fun:row_upd_step
+   fun:que_run_threads
+   fun:que_eval_sql
+   fun:row_rename_table_for_mysql
+   fun:_ZN14InnobaseEngine13doRenameTableERN8drizzled7SessionERNS0_15TableIdentifierES4_
+   fun:_ZN8drizzled18mysql_rename_tableEPNS_6plugin13StorageEngineERNS_15TableIdentifierES4_j
+   fun:_ZN8drizzledL20internal_alter_tableEPNS_7SessionEPNS_5TableERNS_15TableIdentifierES5_PNS_24st_ha_create_informationERNS_7message5TableEPNS_9TableListEPNS_9AlterInfoEjPNS_8order_stEb
+   fun:_ZN8drizzled11alter_tableEPNS_7SessionERNS_15TableIdentifierES3_PNS_24st_ha_create_informationERNS_7message5TableEPNS_9TableListEPNS_9AlterInfoEjPNS_8order_stEb
+}
+
 
 {
    Weird std::String leak errors.
@@ -1246,6 +1801,50 @@
    fun:session_thread
    fun:start_thread
 }
+
+{
+   More azio stuff.
+   Memcheck:Param
+   pwrite64(buf)
+   fun:pwrite64
+   fun:_ZL8do_flushP11azio_streami
+   fun:azclose
+   fun:_ZN12ArchiveShareD1Ev
+   fun:_ZN10ha_archive10free_shareEv
+   fun:_ZN10ha_archive5closeEv
+   fun:_ZN8drizzled5Table8closefrmEb
+   fun:_ZN8drizzled5Table18intern_close_tableEv
+   fun:_ZN8drizzledL20internal_alter_tableEPNS_7SessionEPNS_5TableERNS_15TableIdentifierES5_PNS_24st_ha_create_informationERNS_7message5TableEPNS_9TableListEPNS_9AlterInfoEjPNS_8order_stEb
+   fun:_ZN8drizzled11alter_tableEPNS_7SessionERNS_15TableIdentifierES3_PNS_24st_ha_create_informationERNS_7message5TableEPNS_9TableListEPNS_9AlterInfoEjPNS_8order_stEb
+   fun:_ZN8drizzled9statement10AlterTable7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcj
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+}
+
+{
+   More azio stuff
+   Memcheck:Cond
+   fun:deflate
+   fun:_ZL8do_flushP11azio_streami
+   fun:azflush
+   fun:_ZN10ha_archive4infoEj
+   fun:_ZN8drizzledL20make_join_statisticsEPNS_4JOINEPNS_9TableListEPNS_4ItemEPNS_16st_dynamic_arrayE
+   fun:_ZN8drizzled4JOIN8optimizeEv
+   fun:_ZN8drizzled12mysql_selectEPNS_7SessionEPPPNS_4ItemEPNS_9TableListEjRNS_4ListIS2_EES3_jPNS_8order_stESC_S3_yPNS_13select_resultEPNS_15Select_Lex_UnitEPNS_10Select_LexE
+   fun:_ZN8drizzled13handle_selectEPNS_7SessionEPNS_3LEXEPNS_13select_resultEy
+   fun:_ZN8drizzled21execute_sqlcom_selectEPNS_7SessionEPNS_9TableListE
+   fun:_ZN8drizzled9statement6Select7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+   fun:_ZN8drizzled11mysql_parseEPNS_7SessionEPKcj
+   fun:_ZN8drizzled16dispatch_commandENS_19enum_server_commandEPNS_7SessionEPcj
+   fun:_ZN8drizzled7Session16executeStatementEv
+   fun:_ZN8drizzled7Session3runEv
+   fun:session_thread
+}
+
 
 {
    pwrite64 issue
@@ -1406,3 +2005,43 @@
    fun:_ZN8drizzled7Session3runEv
    obj:*
 }
+
+{
+   Innodb Heap Alloc block
+   Memcheck:Leak
+   fun:malloc
+   fun:mem_heap_create_block
+   fun:trx_undo_mem_create
+   fun:trx_undo_assign_undo
+   fun:trx_undo_report_row_operation
+   fun:btr_cur_update_in_place
+   fun:btr_cur_optimistic_update
+   fun:row_upd_clust_rec
+   fun:row_upd_clust_step
+   fun:row_upd_step
+   fun:row_update_for_mysql
+   fun:_ZN11ha_innobase10update_rowEPKhPh
+   fun:_ZN8drizzled6Cursor13ha_update_rowEPKhPh
+   fun:_ZN8drizzled12mysql_updateEPNS_7SessionEPNS_9TableListERNS_4ListINS_4ItemEEES7_PS5_jPNS_8order_stEmNS_15enum_duplicatesEb
+   fun:_ZN8drizzled9statement6Update7executeEv
+   fun:_ZN8drizzledL21mysql_execute_commandEPNS_7SessionE
+}
+
+
+{
+   This is bunk and is going away anyway.
+   Memcheck:Cond
+   fun:_ZN8drizzledL17construct_optionsEPNS_6memory4RootEPNS_6plugin6ModuleEPNS_6optionE
+   fun:_ZN8drizzledL19test_plugin_optionsEPNS_6memory4RootEPNS_6plugin6ModuleEPiPPc
+   fun:plugin_init
+   fun:main
+}
+
+{
+   InnoDB allocing out of its internal heap is always confusing to valgrind
+   Memcheck:Leak
+   ...
+   fun:mem_heap_create_block
+   ...
+}
+

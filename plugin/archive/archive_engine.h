@@ -64,7 +64,6 @@ class ArchiveEngine : public drizzled::plugin::StorageEngine
 public:
   ArchiveEngine() :
     drizzled::plugin::StorageEngine("ARCHIVE",
-                                    drizzled::HTON_FILE_BASED |
                                     drizzled::HTON_STATS_RECORDS_IS_EXACT |
                                     drizzled::HTON_HAS_RECORDS),
     archive_open_tables()
@@ -110,6 +109,10 @@ public:
 
   bool doDoesTableExist(drizzled::Session&, drizzled::TableIdentifier &identifier);
   int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &from, drizzled::TableIdentifier &to);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 #endif /* PLUGIN_ARCHIVE_ARCHIVE_ENGINE_H */

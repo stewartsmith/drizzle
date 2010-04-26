@@ -61,6 +61,10 @@ static char* sysvar_transaction_log_file= NULL;
  * in truncating the log file. 
  */
 static bool sysvar_transaction_log_truncate_debug= false;
+/**
+ * The name of the main transaction log file on disk.  With no prefix,
+ * this goes into Drizzle's $datadir.
+ */
 static const char DEFAULT_LOG_FILE_PATH[]= "transaction.log"; /* In datadir... */
 /** 
  * Transaction Log plugin system variable - Should we write a CRC32 checksum for 
@@ -76,6 +80,17 @@ static bool sysvar_transaction_log_checksum_enabled= false;
  * TransactionLog::SYNC_METHOD_EVERY_SECOND == 2  ... sync at most once a second
  */
 static uint32_t sysvar_transaction_log_sync_method= 0;
+/**
+ * Transaction Log plugin system variable - Number of slots to create
+ * for managing write buffers
+ */
+static uint32_t sysvar_transaction_log_num_write_buffers= 8;
+/**
+ * Transaction Log plugin system variable - The name of the replicator plugin
+ * to pair the transaction log's applier with.  Defaults to "default"
+ */
+static char *sysvar_transaction_log_use_replicator= NULL;
+static const char DEFAULT_USE_REPLICATOR[]= "default";
 
 /** DATA_DICTIONARY views */
 static TransactionLogTool *transaction_log_tool;
@@ -99,7 +114,8 @@ static int init(drizzled::plugin::Context &context)
   if (sysvar_transaction_log_enabled)
   {
     transaction_log= new (nothrow) TransactionLog(string(sysvar_transaction_log_file),
-                                                  sysvar_transaction_log_sync_method);
+                                                  sysvar_transaction_log_sync_method,
+                                                  sysvar_transaction_log_checksum_enabled);
 
     if (transaction_log == NULL)
     {
@@ -117,35 +133,6 @@ static int init(drizzled::plugin::Context &context)
         return 1;
       }
     }
-    /* Create the applier plugin and register it */
-    transaction_log_applier= new (nothrow) TransactionLogApplier("transaction_log_applier",
-                                                                 *transaction_log, 
-                                                                 sysvar_transaction_log_checksum_enabled);
-    if (transaction_log_applier == NULL)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"), 
-                    strerror(errno));
-      return 1;
-    }
-    context.add(transaction_log_applier);
-
-    /* Setup DATA_DICTIONARY views */
-
-    transaction_log_tool= new (nothrow) TransactionLogTool;
-    context.add(transaction_log_tool);
-    transaction_log_entries_tool= new (nothrow) TransactionLogEntriesTool;
-    context.add(transaction_log_entries_tool);
-    transaction_log_transactions_tool= new (nothrow) TransactionLogTransactionsTool;
-    context.add(transaction_log_transactions_tool);
-
-    /* Setup the module's UDFs */
-    print_transaction_message_func_factory=
-      new plugin::Create_function<PrintTransactionMessageFunction>("print_transaction_message");
-    context.add(print_transaction_message_func_factory);
-
-    hexdump_transaction_message_func_factory=
-      new plugin::Create_function<HexdumpTransactionMessageFunction>("hexdump_transaction_message");
-    context.add(hexdump_transaction_message_func_factory);
 
     /* Create and initialize the transaction log index */
     transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
@@ -165,6 +152,40 @@ static int init(drizzled::plugin::Context &context)
         return 1;
       }
     }
+
+    /* Create the applier plugin and register it */
+    transaction_log_applier= new (nothrow) TransactionLogApplier("transaction_log_applier",
+                                                                 transaction_log, 
+                                                                 transaction_log_index, 
+                                                                 sysvar_transaction_log_num_write_buffers);
+    if (transaction_log_applier == NULL)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"), 
+                    strerror(errno));
+      return 1;
+    }
+    context.add(transaction_log_applier);
+    ReplicationServices &replication_services= ReplicationServices::singleton();
+    string replicator_name(sysvar_transaction_log_use_replicator);
+    replication_services.attachApplier(transaction_log_applier, replicator_name);
+
+    /* Setup DATA_DICTIONARY views */
+
+    transaction_log_tool= new (nothrow) TransactionLogTool;
+    context.add(transaction_log_tool);
+    transaction_log_entries_tool= new (nothrow) TransactionLogEntriesTool;
+    context.add(transaction_log_entries_tool);
+    transaction_log_transactions_tool= new (nothrow) TransactionLogTransactionsTool;
+    context.add(transaction_log_transactions_tool);
+
+    /* Setup the module's UDFs */
+    print_transaction_message_func_factory=
+      new plugin::Create_function<PrintTransactionMessageFunction>("print_transaction_message");
+    context.add(print_transaction_message_func_factory);
+
+    hexdump_transaction_message_func_factory=
+      new plugin::Create_function<HexdumpTransactionMessageFunction>("hexdump_transaction_message");
+    context.add(hexdump_transaction_message_func_factory);
 
     /* 
      * Setup the background worker thread which maintains
@@ -212,13 +233,21 @@ static DRIZZLE_SYSVAR_BOOL(truncate_debug,
                            set_truncate_debug, /* update func */
                            false /* default */);
 
-static DRIZZLE_SYSVAR_STR(log_file,
+static DRIZZLE_SYSVAR_STR(file,
                           sysvar_transaction_log_file,
                           PLUGIN_VAR_READONLY,
                           N_("Path to the file to use for transaction log"),
                           NULL, /* check func */
                           NULL, /* update func*/
                           DEFAULT_LOG_FILE_PATH /* default */);
+
+static DRIZZLE_SYSVAR_STR(use_replicator,
+                          sysvar_transaction_log_use_replicator,
+                          PLUGIN_VAR_READONLY,
+                          N_("Name of the replicator plugin to use (default='default_replicator')"),
+                          NULL, /* check func */
+                          NULL, /* update func*/
+                          DEFAULT_USE_REPLICATOR /* default */);
 
 static DRIZZLE_SYSVAR_BOOL(enable_checksum,
                            sysvar_transaction_log_checksum_enabled,
@@ -241,12 +270,25 @@ static DRIZZLE_SYSVAR_UINT(sync_method,
                            2,
                            0);
 
+static DRIZZLE_SYSVAR_UINT(num_write_buffers,
+                           sysvar_transaction_log_num_write_buffers,
+                           PLUGIN_VAR_OPCMDARG,
+                           N_("Number of slots for in-memory write buffers (default=8)."),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           8, /* default */
+                           4,
+                           8192,
+                           0);
+
 static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(truncate_debug),
-  DRIZZLE_SYSVAR(log_file),
+  DRIZZLE_SYSVAR(file),
   DRIZZLE_SYSVAR(enable_checksum),
   DRIZZLE_SYSVAR(sync_method),
+  DRIZZLE_SYSVAR(num_write_buffers),
+  DRIZZLE_SYSVAR(use_replicator),
   NULL
 };
 

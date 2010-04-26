@@ -13,7 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* Routines to handle mallocing of results which will be freed the same time */
+/**
+ * @file
+ * Routines to handle mallocing of results which will be freed the same time 
+ */
 
 #include "config.h"
 
@@ -30,25 +33,24 @@ namespace drizzled
 static const unsigned int MAX_BLOCK_TO_DROP= 4096;
 static const unsigned int MAX_BLOCK_USAGE_BEFORE_DROP= 10;
 
-/*
-  Initialize memory root
-
-  SYNOPSIS
-    memory::init_alloc_root()
-      mem_root       - memory root to initialize
-      block_size     - size of chunks (blocks) used for memory allocation
-                       (It is external size of chunk i.e. it should include
-                        memory required for internal structures, thus it
-                        should be no less than memory::ROOT_MIN_BLOCK_SIZE)
-
-  DESCRIPTION
-    This function prepares memory root for further use, sets initial size of
-    chunk for memory allocation and pre-allocates first block if specified.
-    Altough error can happen during execution of this function if
-    pre_alloc_size is non-0 it won't be reported. Instead it will be
-    reported as error in first alloc_root() on this memory root.
-*/
-
+/**
+ * @brief
+ * Initialize memory root
+ *
+ * @details
+ * This function prepares memory root for further use, sets initial size of
+ * chunk for memory allocation and pre-allocates first block if specified.
+ * Altough error can happen during execution of this function if
+ * pre_alloc_size is non-0 it won't be reported. Instead it will be
+ * reported as error in first alloc_root() on this memory root.
+ *
+ * @param  mem_root       memory root to initialize
+ * @param  block_size     size of chunks (blocks) used for memory allocation
+ *                       (It is external size of chunk i.e. it should include
+ *                      memory required for internal structures, thus it
+ *                      should be no less than memory::ROOT_MIN_BLOCK_SIZE)
+ *
+ */
 void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
 {
   mem_root->free= mem_root->used= mem_root->pre_alloc= 0;
@@ -62,23 +64,21 @@ void memory::init_alloc_root(memory::Root *mem_root, size_t block_size)
 }
 
 
-/*
-  SYNOPSIS
-    reset_root_defaults()
-    mem_root        memory root to change defaults of
-    block_size      new value of block size. Must be greater or equal
-                    than ALLOC_ROOT_MIN_BLOCK_SIZE (this value is about
-                    68 bytes and depends on platform and compilation flags)
-    pre_alloc_size  new size of preallocated block. If not zero,
-                    must be equal to or greater than block size,
-                    otherwise means 'no prealloc'.
-  DESCRIPTION
-    Function aligns and assigns new value to block size; then it tries to
-    reuse one of existing blocks as prealloc block, or malloc new one of
-    requested size. If no blocks can be reused, all unused blocks are freed
-    before allocation.
-*/
-
+/**
+ * @details
+ * Function aligns and assigns new value to block size; then it tries to
+ * reuse one of existing blocks as prealloc block, or malloc new one of
+ * requested size. If no blocks can be reused, all unused blocks are freed
+ * before allocation.
+ *
+ * @param  mem_root        memory root to change defaults of
+ * @param  block_size      new value of block size. Must be greater or equal
+ *                         than ALLOC_ROOT_MIN_BLOCK_SIZE (this value is about
+ *                         68 bytes and depends on platform and compilation flags)
+ * @param pre_alloc_size  new size of preallocated block. If not zero,
+ *                        must be equal to or greater than block size,
+ *                        otherwise means 'no prealloc'.
+ */
 void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
                                  size_t pre_alloc_size)
 {
@@ -133,7 +133,20 @@ void memory::reset_root_defaults(memory::Root *mem_root, size_t block_size,
   }
 }
 
-
+/**
+ * @brief 
+ * Allocate a chunk of memory from the Root structure provided, 
+ * obtaining more memory from the heap if necessary
+ *
+ * @pre
+ * mem_root must have been initialised via init_alloc_root()
+ *
+ * @param  mem_root  The memory Root to allocate from
+ * @param  length    The size of the block to allocate
+ *
+ * @todo Would this be more suitable as a member function on the
+ * Root class?
+ */
 void *memory::alloc_root(memory::Root *mem_root, size_t length)
 {
   size_t get_size, block_size;
@@ -178,7 +191,7 @@ void *memory::alloc_root(memory::Root *mem_root, size_t length)
   }
 
   point= (unsigned char*) ((char*) next+ (next->size-next->left));
-  /*TODO: next part may be unneded due to mem_root->first_block_usage counter*/
+  /** @todo next part may be unneeded due to mem_root->first_block_usage counter*/
   if ((next->left-= length) < mem_root->min_malloc)
   {						/* Full block */
     *prev= next->next;				/* Remove block from list */
@@ -186,29 +199,33 @@ void *memory::alloc_root(memory::Root *mem_root, size_t length)
     mem_root->used= next;
     mem_root->first_block_usage= 0;
   }
-  return((void*) point);
+
+  return point;
 }
 
 
-/*
-  Allocate many pointers at the same time.
-
-  DESCRIPTION
-    ptr1, ptr2, etc all point into big allocated memory area.
-
-  SYNOPSIS
-    multi_alloc_root()
-      root               Memory root
-      ptr1, length1      Multiple arguments terminated by a NULL pointer
-      ptr2, length2      ...
-      ...
-      NULL
-
-  RETURN VALUE
-    A pointer to the beginning of the allocated memory block
-    in case of success or NULL if out of memory.
-*/
-
+/**
+ * @brief
+ * Allocate many pointers at the same time.
+ *
+ * @details
+ * The variable arguments are a list of alternating pointers and lengths,
+ * terminated by a null pointer:
+ * @li <tt>char ** pointer1</tt>
+ * @li <tt>uint length1</tt>
+ * @li <tt>char ** pointer2</tt>
+ * @li <tt>uint length2</tt>
+ * @li <tt>...</tt>
+ * @li <tt>NULL</tt>
+ *
+ * @c pointer1, @c pointer2 etc. all point into big allocated memory area
+ *
+ * @param root  Memory root
+ *
+ * @return
+ * A pointer to the beginning of the allocated memory block in case of 
+ * success or NULL if out of memory
+ */
 void *memory::multi_alloc_root(memory::Root *root, ...)
 {
   va_list args;
@@ -241,8 +258,10 @@ void *memory::multi_alloc_root(memory::Root *root, ...)
 
 #define TRASH_MEM(X) TRASH(((char*)(X) + ((X)->size-(X)->left)), (X)->left)
 
-/* Mark all data in blocks free for reusage */
-
+/**
+ * @brief
+ * Mark all data in blocks free for reusage 
+ */
 static inline void mark_blocks_free(memory::Root* root)
 {
   memory::internal::UsedMemory *next;
@@ -271,26 +290,22 @@ static inline void mark_blocks_free(memory::Root* root)
   root->first_block_usage= 0;
 }
 
-
-/*
-  Deallocate everything used by memory::alloc_root or just move
-  used blocks to free list if called with MY_USED_TO_FREE
-
-  SYNOPSIS
-    free_root()
-      root		Memory root
-      MyFlags		Flags for what should be freed:
-
-        MARK_BLOCKS_FREED	Don't free blocks, just mark them free
-        KEEP_PREALLOC		If this is not set, then free also the
-        		        preallocated block
-
-  NOTES
-    One can call this function either with root block initialised with
-    init_alloc_root() or with a zero:ed block.
-    It's also safe to call this multiple times with the same mem_root.
-*/
-
+/**
+ * @brief
+ * Deallocate everything used by memory::alloc_root or just move
+ * used blocks to free list if called with MY_USED_TO_FREE
+ *
+ * @note
+ * One can call this function either with root block initialised with
+ * init_alloc_root() or with a zero:ed block.
+ * It's also safe to call this multiple times with the same mem_root.
+ *
+ * @param   root     Memory root
+ * @param   MyFlags  Flags for what should be freed:
+ *   @li   MARK_BLOCKS_FREED	Don't free blocks, just mark them free
+ *   @li   KEEP_PREALLOC        If this is not set, then free also the
+ *        		        preallocated block
+ */
 void memory::free_root(memory::Root *root, myf MyFlags)
 {
   memory::internal::UsedMemory *next,*old;
@@ -328,10 +343,10 @@ void memory::free_root(memory::Root *root, myf MyFlags)
   return;
 }
 
-/*
-  Find block that contains an object and set the pre_alloc to it
-*/
-
+/**
+ * @brief
+ * Find block that contains an object and set the pre_alloc to it
+ */
 void memory::set_prealloc_root(memory::Root *root, char *ptr)
 {
   memory::internal::UsedMemory *next;
@@ -353,13 +368,27 @@ void memory::set_prealloc_root(memory::Root *root, char *ptr)
   }
 }
 
-
+/**
+ * @brief
+ * Duplicate a null-terminated string into memory allocated from within the
+ * specified Root
+ */
 char *memory::strdup_root(memory::Root *root, const char *str)
 {
   return strmake_root(root, str, strlen(str));
 }
 
-
+/**
+ * @brief
+ * Copy the (not necessarily null-terminated) string into memory allocated
+ * from within the specified Root
+ *
+ * @details
+ * Note that the string is copied according to the length specified, so
+ * null-termination is ignored. The duplicated string will be null-terminated,
+ * even if the original string wasn't (one additional byte is allocated for
+ * this purpose).
+ */
 char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
 {
   char *pos;
@@ -371,7 +400,15 @@ char *memory::strmake_root(memory::Root *root, const char *str, size_t len)
   return pos;
 }
 
-
+/**
+ * @brief
+ * Duplicate the provided block into memory allocated from within the specified
+ * Root
+ *
+ * @return
+ * non-NULL pointer to a copy of the data if memory could be allocated, otherwise
+ * NULL
+ */
 void *memory::memdup_root(memory::Root *root, const void *str, size_t len)
 {
   void *pos;

@@ -20,7 +20,7 @@
 #include "myisampack.h"
 #include "ha_myisam.h"
 #include "myisam_priv.h"
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 #include "drizzled/internal/my_bit.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/util/test.h"
@@ -82,8 +82,7 @@ public:
                           HTON_HAS_RECORDS |
                           HTON_DUPLICATE_POS |
                           HTON_AUTO_PART_KEY |
-                          HTON_SKIP_STORE_LOCK |
-                          HTON_FILE_BASED )
+                          HTON_SKIP_STORE_LOCK)
   {
     pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
   }
@@ -135,7 +134,17 @@ public:
             HA_KEYREAD_ONLY);
   }
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
+
+void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                         drizzled::SchemaIdentifier&,
+                                         drizzled::TableIdentifiers&)
+{
+}
 
 bool MyisamEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
 {
@@ -1515,7 +1524,7 @@ static void sys_var_key_cache_size_update(Session *session, drizzle_sys_var *var
   uint32_t tmp= *static_cast<const uint32_t *>(save);
   bool error= 0;
 
-	struct my_option option_limits;
+	struct option option_limits;
   plugin_opt_set_limits(&option_limits, var);
 	option_limits.name= "myisam_key_cache_size";
 
@@ -1540,7 +1549,7 @@ static void sys_var_key_cache_block_size_update(Session *session, drizzle_sys_va
   uint32_t tmp= *static_cast<const uint32_t *>(save);
   bool error= 0;
 
-	struct my_option option_limits;
+	struct option option_limits;
   plugin_opt_set_limits(&option_limits, var);
 	option_limits.name= "myisam_key_cache_block_size";
 
@@ -1565,7 +1574,7 @@ static void sys_var_key_cache_division_limit_update(Session *session, drizzle_sy
   uint32_t tmp= *static_cast<const uint32_t *>(save);
   bool error= 0;
 
-	struct my_option option_limits;
+	struct option option_limits;
   plugin_opt_set_limits(&option_limits, var);
 	option_limits.name= "myisam_key_cache_division_limit";
 
@@ -1590,7 +1599,7 @@ static void sys_var_key_cache_age_threshold_update(Session *session, drizzle_sys
   uint32_t tmp= *static_cast<const uint32_t *>(save);
   bool error= 0;
 
-	struct my_option option_limits;
+	struct option option_limits;
   plugin_opt_set_limits(&option_limits, var);
 	option_limits.name= "myisam_key_cache_age_threshold";
 

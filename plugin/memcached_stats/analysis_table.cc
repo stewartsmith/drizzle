@@ -35,6 +35,7 @@
 #include "drizzled/error.h"
 
 #include <libmemcached/memcached.h>
+#include <libmemcached/server.h>
 
 using namespace std;
 using namespace drizzled;

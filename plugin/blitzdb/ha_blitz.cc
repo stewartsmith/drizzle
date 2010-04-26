@@ -40,7 +40,6 @@ private:
 public:
   BlitzEngine(const std::string &name_arg) :
     drizzled::plugin::StorageEngine(name_arg,
-                                    drizzled::HTON_FILE_BASED |
                                     drizzled::HTON_NULL_IN_KEY |
                                     drizzled::HTON_PRIMARY_KEY_IN_READ_INDEX |
                                     drizzled::HTON_STATS_RECORDS_IS_EXACT |
@@ -79,8 +78,12 @@ public:
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       drizzled::SchemaIdentifier &schema_ident,
+                       drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 
   bool doDoesTableExist(drizzled::Session &session,
                         drizzled::TableIdentifier &identifier);
@@ -283,7 +286,7 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory,
        entry_iter != entries.end(); ++entry_iter) {
 
     drizzled::CachedDirectory::Entry *entry = *entry_iter;
-    string *filename = &entry->filename;
+    std::string *filename = &entry->filename;
 
     assert(filename->size());
 
@@ -297,6 +300,36 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory,
                                             sizeof(uname));
       uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';
       set_of_names.insert(uname);
+    }
+  }
+}
+
+void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                                        drizzled::SchemaIdentifier &schema_id,
+                                        drizzled::TableIdentifiers &ids) {
+  drizzled::CachedDirectory::Entries entries = directory.getEntries();
+
+  for (drizzled::CachedDirectory::Entries::iterator entry_iter = entries.begin();
+       entry_iter != entries.end(); ++entry_iter) {
+
+    drizzled::CachedDirectory::Entry *entry = *entry_iter;
+    const std::string *filename = &entry->filename;
+
+    assert(filename->size());
+
+    const char *ext = strchr(filename->c_str(), '.');
+
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLITZ_DATA_EXT) ||
+        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0)) {
+    } else {
+      char uname[NAME_LEN + 1];
+      uint32_t file_name_len;
+
+      file_name_len = filename_to_tablename(filename->c_str(), uname,
+                                            sizeof(uname));
+
+      uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';
+      ids.push_back(TableIdentifier(schema_id, uname));
     }
   }
 }

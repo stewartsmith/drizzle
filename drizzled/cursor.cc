@@ -36,7 +36,6 @@
 #include "drizzled/session.h"
 #include "drizzled/sql_base.h"
 #include "drizzled/transaction_services.h"
-#include "drizzled/replication_services.h"
 #include "drizzled/lock.h"
 #include "drizzled/item/int.h"
 #include "drizzled/item/empty_string.h"
@@ -44,7 +43,6 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/transaction_services.h"
 
 using namespace std;
 
@@ -599,56 +597,6 @@ int Cursor::update_auto_increment()
   @param first_value         (OUT) the first value reserved by the Cursor
   @param nb_reserved_values  (OUT) how many values the Cursor reserved
 */
-void Cursor::get_auto_increment(uint64_t ,
-                                 uint64_t ,
-                                 uint64_t ,
-                                 uint64_t *first_value,
-                                 uint64_t *nb_reserved_values)
-{
-  uint64_t nr;
-  int error;
-
-  (void) extra(HA_EXTRA_KEYREAD);
-  table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
-  index_init(table->s->next_number_index, 1);
-  if (table->s->next_number_keypart == 0)
-  {						// Autoincrement at key-start
-    error=index_last(table->record[1]);
-    /*
-      MySQL implicitely assumes such method does locking (as MySQL decides to
-      use nr+increment without checking again with the Cursor, in
-      Cursor::update_auto_increment()), so reserves to infinite.
-    */
-    *nb_reserved_values= UINT64_MAX;
-  }
-  else
-  {
-    unsigned char key[MAX_KEY_LENGTH];
-    key_copy(key, table->record[0],
-             table->key_info + table->s->next_number_index,
-             table->s->next_number_key_offset);
-    error= index_read_map(table->record[1], key,
-                          make_prev_keypart_map(table->s->next_number_keypart),
-                          HA_READ_PREFIX_LAST);
-    /*
-      MySQL needs to call us for next row: assume we are inserting ("a",null)
-      here, we return 3, and next this statement will want to insert
-      ("b",null): there is no reason why ("b",3+1) would be the good row to
-      insert: maybe it already exists, maybe 3+1 is too large...
-    */
-    *nb_reserved_values= 1;
-  }
-
-  if (error)
-    nr=1;
-  else
-    nr= ((uint64_t) table->next_number_field->
-         val_int_offset(table->s->rec_buff_length)+1);
-  index_end();
-  (void) extra(HA_EXTRA_NO_KEYREAD);
-  *first_value= nr;
-}
-
 
 void Cursor::ha_release_auto_increment()
 {
@@ -1347,10 +1295,9 @@ static bool log_row_for_replication(Table* table,
                                     const unsigned char *after_record)
 {
   TransactionServices &transaction_services= TransactionServices::singleton();
-  ReplicationServices &replication_services= ReplicationServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->s->tmp_table || not replication_services.isActive())
+  if (table->s->tmp_table || not transaction_services.shouldConstructMessages())
     return false;
 
   bool result= false;

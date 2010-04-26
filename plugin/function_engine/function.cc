@@ -126,18 +126,22 @@ bool Function::doDoesTableExist(Session&, TableIdentifier &identifier)
 }
 
 
-static drizzled::plugin::StorageEngine *function_plugin= NULL;
+void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                     drizzled::SchemaIdentifier &schema_identifier,
+                                     drizzled::TableIdentifiers &set_of_identifiers)
+{
+  set<string> set_of_names;
+  drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
+
+  for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
+  {
+    set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter));
+  }
+}
 
 static int init(drizzled::plugin::Context &context)
 {
-  function_plugin= new(std::nothrow) Function("FunctionEngine");
-
-  if (not function_plugin)
-  {
-    return 1;
-  }
-
-  context.add(function_plugin);
+  context.add(new Function("FunctionEngine"));
 
   return 0;
 }

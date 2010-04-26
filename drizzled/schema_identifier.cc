@@ -140,7 +140,7 @@ const std::string &SchemaIdentifier::getSQLPath()
 
 const std::string &SchemaIdentifier::getPath()
 {
-  if (db_path.empty())
+  if (db_path.empty() && not lower_db.empty())
   {
     drizzled::build_schema_filename(db_path, lower_db.c_str());
     assert(db_path.length()); // TODO throw exception, this is a possibility

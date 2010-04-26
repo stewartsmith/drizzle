@@ -193,7 +193,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/ha_statistics.h \
 			      drizzled/cursor.h \
 			      drizzled/handler_structs.h \
-			      drizzled/hash.h \
 			      drizzled/hybrid_type.h \
 			      drizzled/hybrid_type_traits.h \
 			      drizzled/hybrid_type_traits_decimal.h \
@@ -255,11 +254,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/memory/sql_alloc.h \
 			      drizzled/memory/multi_malloc.h \
 			      drizzled/memory/root.h \
-			      drizzled/my_getopt.h \
+			      drizzled/option.h \
 			      drizzled/my_hash.h \
-			      drizzled/my_time.h \
-			      drizzled/my_tree.h \
-			      drizzled/my_var.h \
+			      drizzled/drizzle_time.h \
+			      drizzled/tree.h \
+			      drizzled/var.h \
 			      drizzled/name_resolution_context.h \
 			      drizzled/name_resolution_context_state.h \
 			      drizzled/named_savepoint.h \
@@ -307,6 +306,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/query_cache.h \
 		              drizzled/plugin/query_rewrite.h \
 			      drizzled/plugin/registry.h \
+			      drizzled/plugin/replication.h \
 			      drizzled/plugin/scheduler.h \
 			      drizzled/plugin/storage_engine.h \
 			      drizzled/plugin/table_function.h \
@@ -365,7 +365,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/analyze.h \
 			      drizzled/statement/change_schema.h \
 			      drizzled/statement/check.h \
-			      drizzled/statement/checksum.h \
 			      drizzled/statement/commit.h \
 			      drizzled/statement/create_index.h \
 			      drizzled/statement/create_schema.h \
@@ -421,6 +420,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
+			      drizzled/unordered_map.h \
+			      drizzled/unordered_set.h \
 			      drizzled/user_var_entry.h \
 			      drizzled/utf8.h \
 			      drizzled/utf8/checked.h \
@@ -634,8 +635,8 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/lookup_symbol.cc \
 			   drizzled/my_getsystime.cc \
 			   drizzled/my_hash.cc \
-			   drizzled/my_time.cc \
-			   drizzled/my_tree.cc \
+			   drizzled/drizzle_time.cc \
+			   drizzled/tree.cc \
 			   drizzled/name_resolution_context_state.cc \
 			   drizzled/natural_join_column.cc \
 			   drizzled/optimizer/explain_plan.cc \
@@ -708,7 +709,6 @@ drizzled_drizzled_SOURCES= \
 			   drizzled/statement/analyze.cc \
 			   drizzled/statement/change_schema.cc \
 			   drizzled/statement/check.cc \
-			   drizzled/statement/checksum.cc \
 			   drizzled/statement/commit.cc \
 			   drizzled/statement/create_index.cc \
 			   drizzled/statement/create_schema.cc \
@@ -781,7 +781,7 @@ drizzled_libcharset_la_SOURCES= \
 
 drizzled_libdynamic_array_la_SOURCES = drizzled/dynamic_array.cc
 drizzled_liberror_la_SOURCES = drizzled/error.cc
-drizzled_libgetopt_la_SOURCES = drizzled/my_getopt.cc
+drizzled_libgetopt_la_SOURCES = drizzled/option.cc
 drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
 drizzled_libserialutil_la_SOURCES = drizzled/db.cc drizzled/table_proto_write.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}

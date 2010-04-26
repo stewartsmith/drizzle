@@ -1,0 +1,9 @@
+CREATE TABLE t1 (a int primary key);
+SHOW CREATE TABLE t1;
+--error 1050
+CREATE TABLE t1 (a int primary key);
+CREATE TABLE t2 (a int primary key, b varchar(20), c bigint);
+--error 1178
+CREATE TABLE t3 (d datetime primary key);
+
+DROP TABLE t1, t2;

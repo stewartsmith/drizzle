@@ -123,7 +123,7 @@ def should_lint(path):
     if not (path.startswith('plugin/') or path.startswith('drizzled/') or
         path.startswith('client/')):
         return False
-    for exclude in ['innobase', 'gnulib', '.pb.', 'bak-header', 'm4',
+    for exclude in ['innobase', 'pbxt', 'gnulib', '.pb.', 'bak-header', 'm4',
         'sql_yacc', 'gperf', 'drizzled/probes.h',
         'drizzled/function_hash.h', 'drizzled/symbol_hash.h',
         'util/dummy.cc', 'drizzled/sql_yacc.h', 'drizzled/configmake.h',

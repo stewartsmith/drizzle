@@ -29,7 +29,7 @@
 #include "session_scheduler.h"
 #include <string>
 #include <queue>
-#include <set>
+#include <drizzled/unordered_set.h>
 #include <event.h>
 
 
@@ -58,9 +58,9 @@ private:
    *
    * This should really be a collection of unordered Sessions. No one is more
    * promising to encounter an io event earlier than another; so no order
-   * indeed! We will change this to unordered_set/hash_set when c++0x comes.
+   * indeed!
    */
-  std::set<drizzled::Session *> sessions_waiting_for_io;
+  drizzled::unordered_set<drizzled::Session *> sessions_waiting_for_io;
 
 public:
   PoolOfThreadsScheduler(const char *name_arg);

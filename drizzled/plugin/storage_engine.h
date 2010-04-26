@@ -33,7 +33,7 @@
 #include "drizzled/cached_directory.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 
-#include "drizzled/hash.h"
+#include <drizzled/unordered_map.h>
 
 #include <bitset>
 #include <string>
@@ -61,12 +61,10 @@ enum engine_flag_bits {
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
   HTON_BIT_TEMPORARY_ONLY,
-  HTON_BIT_FILE_BASED, // use for check_lowercase_names
   HTON_BIT_DOES_TRANSACTIONS,
   HTON_BIT_STATS_RECORDS_IS_EXACT,
   HTON_BIT_NULL_IN_KEY,
   HTON_BIT_CAN_INDEX_BLOBS,
-  HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_POSITION,
   HTON_BIT_PRIMARY_KEY_IN_READ_INDEX,
   HTON_BIT_PARTIAL_COLUMN_READ,
   HTON_BIT_TABLE_SCAN_ON_INDEX,
@@ -93,12 +91,10 @@ static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
-static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DOES_TRANSACTIONS(1 << HTON_BIT_DOES_TRANSACTIONS);
 static const std::bitset<HTON_BIT_SIZE> HTON_STATS_RECORDS_IS_EXACT(1 << HTON_BIT_STATS_RECORDS_IS_EXACT);
 static const std::bitset<HTON_BIT_SIZE> HTON_NULL_IN_KEY(1 << HTON_BIT_NULL_IN_KEY);
 static const std::bitset<HTON_BIT_SIZE> HTON_CAN_INDEX_BLOBS(1 << HTON_BIT_CAN_INDEX_BLOBS);
-static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION(1 << HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_POSITION);
 static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_IN_READ_INDEX(1 << HTON_BIT_PRIMARY_KEY_IN_READ_INDEX);
 static const std::bitset<HTON_BIT_SIZE> HTON_PARTIAL_COLUMN_READ(1 << HTON_BIT_PARTIAL_COLUMN_READ);
 static const std::bitset<HTON_BIT_SIZE> HTON_TABLE_SCAN_ON_INDEX(1 << HTON_BIT_TABLE_SCAN_ON_INDEX);
@@ -124,7 +120,7 @@ class NamedSavepoint;
 namespace plugin
 {
 
-typedef hash_map<std::string, StorageEngine *> EngineMap;
+typedef unordered_map<std::string, StorageEngine *> EngineMap;
 typedef std::vector<StorageEngine *> EngineVector;
 
 typedef std::set<std::string> TableNameList;
@@ -297,7 +293,11 @@ public:
   // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
                                drizzled::SchemaIdentifier &schema_identifier,
-                               TableNameList &set_of_names);
+                               TableNameList &set_of_names)= 0;
+
+  virtual void doGetTableIdentifiers(CachedDirectory &directory,
+                                     drizzled::SchemaIdentifier &schema_identifier,
+                                     TableIdentifiers &set_of_identifiers)= 0;
 
   virtual int doDropTable(Session &session,
                           TableIdentifier &identifier)= 0;
@@ -328,6 +328,7 @@ public:
                        StorageEngine &engine,
                        TableIdentifier &identifier);
   static void getTableNames(Session &session, drizzled::SchemaIdentifier& schema_identifier, TableNameList &set_of_names);
+  static void getTableIdentifiers(Session &session, SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(drizzled::TableIdentifier &identifier);
