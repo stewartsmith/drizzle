@@ -54,11 +54,6 @@ extern uint64_t refresh_version;
 typedef enum enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
 
-bool create_myisam_from_heap(Session *session, Table *table,
-                             MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo,
-                             int error, bool ignore_last_dupp_key_error);
-
 /**
  * Class representing a set of records, either in a temporary, 
  * normal, or derived table.

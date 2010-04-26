@@ -2082,7 +2082,7 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 			message::Table::STANDARD);
 	} else {
 		std::string n;
-		n.append(drizzle_data_home);
+		n.append(data_home);
 		n.append("/");
 		n.append(db_name);
 		n.append("/");

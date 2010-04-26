@@ -704,7 +704,7 @@ int ha_tina::find_current_row(unsigned char *buf)
   int eoln_len;
   int error;
 
-  free_root(&blobroot, MYF(drizzled::memory::MARK_BLOCKS_FREE));
+  blobroot.free_root(MYF(drizzled::memory::MARK_BLOCKS_FREE));
 
   /*
     We do not read further then local_saved_data_file_length in order
@@ -803,7 +803,7 @@ int ha_tina::find_current_row(unsigned char *buf)
         memcpy(&src, blob->ptr + packlength, sizeof(char*));
         if (src)
         {
-          tgt= (unsigned char*) alloc_root(&blobroot, length);
+          tgt= (unsigned char*) blobroot.alloc_root(length);
           memmove(tgt, src, length);
           memcpy(blob->ptr + packlength, &tgt, sizeof(char*));
         }
@@ -938,7 +938,7 @@ int ha_tina::close(void)
   of the file and appends the data. In an error case it really should
   just truncate to the original position (this is not done yet).
 */
-int ha_tina::write_row(unsigned char * buf)
+int ha_tina::doInsertRecord(unsigned char * buf)
 {
   int size;
 
@@ -998,7 +998,7 @@ int ha_tina::open_update_temp_file_if_needed()
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
-int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
+int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
 {
   int size;
   int rc= -1;
@@ -1043,7 +1043,7 @@ err:
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
 */
-int ha_tina::delete_row(const unsigned char *)
+int ha_tina::doDeleteRecord(const unsigned char *)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
 
@@ -1127,7 +1127,7 @@ int ha_tina::rnd_init(bool)
   records_is_known= 0;
   chain_ptr= chain;
 
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE);
+  blobroot.init_alloc_root(BLOB_MEMROOT_ALLOC_SIZE);
 
   return(0);
 }
@@ -1236,7 +1236,7 @@ int ha_tina::rnd_end()
   char updated_fname[FN_REFLEN];
   off_t file_buffer_start= 0;
 
-  free_root(&blobroot, MYF(0));
+  blobroot.free_root(MYF(0));
   records_is_known= 1;
 
   if ((chain_ptr - chain)  > 0)

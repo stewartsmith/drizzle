@@ -640,7 +640,7 @@ int ha_myisam::close(void)
   return mi_close(tmp);
 }
 
-int ha_myisam::write_row(unsigned char *buf)
+int ha_myisam::doInsertRecord(unsigned char *buf)
 {
   ha_statistic_increment(&system_status_var::ha_write_count);
 
@@ -1031,7 +1031,7 @@ int ha_myisam::end_bulk_insert()
 
 
 
-int ha_myisam::update_row(const unsigned char *old_data, unsigned char *new_data)
+int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
   ha_statistic_increment(&system_status_var::ha_update_count);
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
@@ -1039,7 +1039,7 @@ int ha_myisam::update_row(const unsigned char *old_data, unsigned char *new_data
   return mi_update(file,old_data,new_data);
 }
 
-int ha_myisam::delete_row(const unsigned char *buf)
+int ha_myisam::doDeleteRecord(const unsigned char *buf)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
   return mi_delete(file,buf);

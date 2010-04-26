@@ -768,7 +768,7 @@ ha_rows ha_blitz::records_in_range(uint32_t /*key_num*/,
   return BLITZ_WORST_CASE_RANGE;
 }
 
-int ha_blitz::write_row(unsigned char *drizzle_row) {
+int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
   int rv;
 
   ha_statistic_increment(&system_status_var::ha_write_count);
@@ -872,8 +872,8 @@ int ha_blitz::write_row(unsigned char *drizzle_row) {
   return rv;
 }
 
-int ha_blitz::update_row(const unsigned char *old_row,
-                         unsigned char *new_row) {
+int ha_blitz::doUpdateRecord(const unsigned char *old_row,
+                             unsigned char *new_row) {
   int rv;
   uint32_t lock_id = 0;
 
@@ -961,7 +961,7 @@ int ha_blitz::update_row(const unsigned char *old_row,
   return rv;
 }
 
-int ha_blitz::delete_row(const unsigned char *row_to_delete) {
+int ha_blitz::doDeleteRecord(const unsigned char *row_to_delete) {
   int rv;
   uint32_t lock_id = 0;
 

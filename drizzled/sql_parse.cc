@@ -315,7 +315,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->query.clear();
 
   session->set_proc_info(NULL);
-  free_root(session->mem_root,MYF(memory::KEEP_PREALLOC));
+  session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
 
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
   {

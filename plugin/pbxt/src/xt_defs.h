@@ -886,9 +886,8 @@ extern xtBool				pbxt_crash_debug;
 
 #define thd_charset							session_charset
 #define thd_slave_thread					session_slave_thread
-#define thd_non_transactional_update		session_non_transactional_update
 #define thd_binlog_format					session_binlog_format
-#define thd_mark_transaction_to_rollback	session_mark_transaction_to_rollback
+#define thd_mark_transaction_to_rollback	::drizzled::session_mark_transaction_to_rollback
 #define thd_ha_data							session_ha_data
 #define current_thd							current_session
 #define thd_sql_command						session_sql_command
@@ -903,7 +902,7 @@ extern xtBool				pbxt_crash_debug;
 
 #define my_pthread_setspecific_ptr(T, V)	pthread_setspecific(T, (void*) (V))
 
-#define mysql_real_data_home				drizzle_real_data_home
+#define mysql_real_data_home				::drizzled::data_home
 
 #define mi_int4store(T,A)   { uint32_t def_temp= (uint32_t) (A);\
                               ((unsigned char*) (T))[3]= (unsigned char) (def_temp);\
@@ -922,7 +921,6 @@ namespace drizzled {
 class Session;
 }
 
-extern "C" void session_mark_transaction_to_rollback(drizzled::Session *session, bool all);
 
 #else // DRIZZLED
 /* The MySQL case: */

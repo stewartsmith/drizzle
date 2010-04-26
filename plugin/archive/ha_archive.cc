@@ -692,7 +692,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   for implementing start_bulk_insert() is that we could skip
   setting dirty to true each time.
 */
-int ha_archive::write_row(unsigned char *buf)
+int ha_archive::doInsertRecord(unsigned char *buf)
 {
   int rc;
   unsigned char *read_buf= NULL;
@@ -769,20 +769,11 @@ int ha_archive::index_init(uint32_t keynr, bool)
   the optimizer that we have unique indexes, we scan
 */
 int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
-                             uint32_t key_len, enum ha_rkey_function find_flag)
-{
-  int rc;
-  rc= index_read_idx(buf, active_index, key, key_len, find_flag);
-  return(rc);
-}
-
-
-int ha_archive::index_read_idx(unsigned char *buf, uint32_t index, const unsigned char *key,
-                               uint32_t key_len, enum ha_rkey_function)
+                             uint32_t key_len, enum ha_rkey_function)
 {
   int rc;
   bool found= 0;
-  KEY *mkey= &table->s->key_info[index];
+  KEY *mkey= &table->s->key_info[0];
   current_k_offset= mkey->key_part->offset;
   current_key= key;
   current_key_len= key_len;
@@ -1219,7 +1210,7 @@ int ha_archive::info(uint32_t flag)
 
 /*
   This method tells us that a bulk insert operation is about to occur. We set
-  a flag which will keep write_row from saying that its data is dirty. This in
+  a flag which will keep doInsertRecord from saying that its data is dirty. This in
   turn will keep selects from causing a sync to occur.
   Basically, yet another optimizations to keep compression working well.
 */

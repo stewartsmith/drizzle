@@ -244,9 +244,9 @@ class ha_pbxt: public handler
                                  MX_ULONGLONG_T *nb_reserved_values);
 	void	set_auto_increment(Field *nr);
 
-	int		write_row(byte * buf);
-	int		update_row(const byte * old_data, byte * new_data);
-	int		delete_row(const byte * buf);
+	int		doInsertRecord(byte * buf);
+	int		doUpdateRecord(const byte * old_data, byte * new_data);
+	int		doDeleteRecord(const byte * buf);
 
 	/* Index access functions: */
 	int		xt_index_in_range(register XTOpenTablePtr ot, register XTIndexPtr ind, register XTIdxSearchKeyPtr search_key, byte *buf);
@@ -256,11 +256,11 @@ class ha_pbxt: public handler
 	int		index_end();
 	int		index_read(byte * buf, const byte * key,
 								 uint key_len, enum ha_rkey_function find_flag);
-	int		index_read_idx(byte * buf, uint idx, const byte * key,
-										 uint key_len, enum ha_rkey_function find_flag);
-	int		index_read_xt(byte * buf, uint idx, const byte * key,
-										 uint key_len, enum ha_rkey_function find_flag);
-	int		index_next(byte * buf);
+        int		index_read_idx(byte * buf, uint idx, const byte * key,
+                                       uint key_len, enum ha_rkey_function find_flag);
+        int		index_read_xt(byte * buf, uint idx, const byte * key,
+                                      uint key_len, enum ha_rkey_function find_flag);
+        int		index_next(byte * buf);
 	int		index_next_same(byte * buf, const byte *key, uint length);
 	int		index_prev(byte * buf);
 	int		index_first(byte * buf);
@@ -346,14 +346,12 @@ void			ha_set_auto_increment(XTOpenTablePtr ot, Field *nr);
 extern "C" struct charset_info_st *thd_charset(MYSQL_THD thd);
 extern "C" char **thd_query(MYSQL_THD thd);
 extern "C" int thd_slave_thread(const MYSQL_THD thd);
-extern "C" int thd_non_transactional_update(const MYSQL_THD thd);
 extern "C" int thd_binlog_format(const MYSQL_THD thd);
 extern "C" void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all);
 #else
 #define thd_charset(t)						(t)->charset()
 #define thd_query(t)						&(t)->query
 #define thd_slave_thread(t)					(t)->slave_thread
-#define thd_non_transactional_update(t)		(t)->transaction.all.modified_non_trans_table
 #define thd_binlog_format(t)				(t)->variables.binlog_format
 #define thd_mark_transaction_to_rollback(t)	mark_transaction_to_rollback(t, all)
 #endif // INNODB_COMPATIBILITY_HOOKS */
