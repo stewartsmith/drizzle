@@ -97,6 +97,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "embedded_innodb_engine.h"
 
 #include <drizzled/field.h>
+#include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
 #include <drizzled/session.h>
 
 using namespace std;
@@ -1523,6 +1524,9 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char * ,
 
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
+
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+    table->timestamp_field->set_time();
 
   write_row_to_innodb_tuple(table->field, update_tuple);
 
