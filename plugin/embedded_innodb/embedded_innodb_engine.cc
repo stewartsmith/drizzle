@@ -1584,6 +1584,8 @@ int EmbeddedInnoDBCursor::delete_all_rows(void)
     return HA_ERR_GENERIC;
   }
 
+  share->auto_increment_value.fetch_and_store(1);
+
   err= ib_cursor_truncate(&cursor, &id);
   if (err != DB_SUCCESS)
     goto err;
