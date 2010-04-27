@@ -44,8 +44,6 @@ public:
 
   UserCommands(const UserCommands &user_commands);
 
-  void incrementCount(uint32_t index, uint32_t i= 1);
-
   uint64_t getCount(uint32_t index);
 
   void merge(UserCommands *user_commands);
@@ -87,6 +85,8 @@ public:
 
 private:
   void init();
+
+  void incrementCount(uint32_t index, uint32_t i= 1);
 
   std::vector<uint64_t> vector_of_command_counts;
 };
