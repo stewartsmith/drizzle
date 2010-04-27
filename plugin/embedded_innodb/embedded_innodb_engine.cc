@@ -130,6 +130,7 @@ public:
                                                   HTON_CAN_INDEX_BLOBS |
                                                   HTON_AUTO_PART_KEY |
                                                   HTON_REQUIRE_PRIMARY_KEY |
+                                                  HTON_PARTIAL_COLUMN_READ |
                                                   HTON_HAS_DOES_TRANSACTIONS)
   {
     table_definition_ext= EMBEDDED_INNODB_EXT;
@@ -1313,7 +1314,6 @@ const char *EmbeddedInnoDBCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-
 static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
 {
   int colnr= 0;
@@ -1321,6 +1321,9 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
 
   for (Field **field= fields; *field; field++, colnr++)
   {
+    if (! (**field).isWriteSet() && (**field).is_null())
+      continue;
+
     if ((**field).is_null())
     {
       err= ib_col_set_value(tuple, colnr, NULL, IB_SQL_NULL);
@@ -1511,8 +1514,8 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char * ,
-                                         unsigned char * )
+int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
+                                         unsigned char *)
 {
   ib_tpl_t update_tuple;
   ib_err_t err;
@@ -1591,6 +1594,8 @@ int EmbeddedInnoDBCursor::delete_all_rows(void)
 
     return HA_ERR_GENERIC;
   }
+
+  share->auto_increment_value.fetch_and_store(1);
 
   err= ib_cursor_truncate(&cursor, &id);
   if (err != DB_SUCCESS)
