@@ -116,27 +116,6 @@ LoggingStats::~LoggingStats()
   delete cumulative_stats;
 }
 
-bool LoggingStats::isBeingLogged(Session *session)
-{
-  enum_sql_command sql_command= session->lex->sql_command;
-
-  switch(sql_command)
-  {
-    case SQLCOM_UPDATE:
-    case SQLCOM_DELETE:
-    case SQLCOM_INSERT:
-    case SQLCOM_ROLLBACK:
-    case SQLCOM_COMMIT:
-    case SQLCOM_CREATE_TABLE:
-    case SQLCOM_ALTER_TABLE:
-    case SQLCOM_DROP_TABLE:
-    case SQLCOM_SELECT:
-      return true;
-    default:
-      return false;
-  }
-} 
-
 void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
                                            Session *session)
 {
@@ -150,12 +129,6 @@ void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
 bool LoggingStats::post(Session *session)
 {
   if (! isEnabled() || (session->getSessionId() == 0))
-  {
-    return false;
-  }
-
-  /* exit early if we are not logging this type of command */
-  if (isBeingLogged(session) == false)
   {
     return false;
   }

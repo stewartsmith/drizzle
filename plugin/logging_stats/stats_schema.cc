@@ -144,14 +144,14 @@ bool SessionStatementsTool::Generator::populate()
     return false;
   } 
 
-  uint32_t number_identifiers= UserCommands::getCommandCount();
+  uint32_t number_identifiers= UserCommands::getStatusVarsCount();
 
   if (count == number_identifiers)
   {
     return false;
   }
 
-  push(UserCommands::IDENTIFIERS[count]);
+  push(UserCommands::STATUS_VARS[count]);
   push(user_commands->getCount(count));
 
   ++count;
@@ -175,13 +175,13 @@ GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_st
 
 bool GlobalStatementsTool::Generator::populate()
 {
-  uint32_t number_identifiers= UserCommands::getCommandCount(); 
+  uint32_t number_identifiers= UserCommands::getStatusVarsCount(); 
   if (count == number_identifiers)
   {
     return false;
   }
 
-  push(UserCommands::IDENTIFIERS[count]);
+  push(UserCommands::STATUS_VARS[count]);
   push(global_stats->getUserCommands()->getCount(count));
 
   ++count;
@@ -196,11 +196,11 @@ CurrentCommandsTool::CurrentCommandsTool(LoggingStats *logging_stats) :
   add_field("USER");
   add_field("IP");
 
-  uint32_t number_commands= UserCommands::getCommandCount();
+  uint32_t number_commands= UserCommands::getUserCounts();
 
   for (uint32_t j= 0; j < number_commands; ++j)
   {
-    add_field(UserCommands::IDENTIFIERS[j], TableFunction::NUMBER);
+    add_field(UserCommands::USER_COUNTS[j], TableFunction::NUMBER);
   } 
 }
 
@@ -255,11 +255,11 @@ bool CurrentCommandsTool::Generator::populate()
         push(scoreboard_slot->getUser());
         push(scoreboard_slot->getIp());
 
-        uint32_t number_commands= UserCommands::getCommandCount(); 
+        uint32_t number_commands= UserCommands::getUserCounts(); 
 
         for (uint32_t j= 0; j < number_commands; ++j)
         {
-          push(user_commands->getCount(j));
+          push(user_commands->getUserCount(j));
         }
 
         ++scoreboard_vector_it;
@@ -287,11 +287,11 @@ CumulativeCommandsTool::CumulativeCommandsTool(LoggingStats *logging_stats) :
 
   add_field("USER");
 
-  uint32_t number_commands= UserCommands::getCommandCount();
+  uint32_t number_commands= UserCommands::getUserCounts();
 
   for (uint32_t j= 0; j < number_commands; ++j)
   {
-    add_field(UserCommands::IDENTIFIERS[j], TableFunction::NUMBER);
+    add_field(UserCommands::USER_COUNTS[j], TableFunction::NUMBER);
   }
 }
 
@@ -328,11 +328,11 @@ bool CumulativeCommandsTool::Generator::populate()
       UserCommands *user_commands= cumulative_scoreboard_slot->getUserCommands(); 
       push(cumulative_scoreboard_slot->getUser());
 
-      uint32_t number_commands= UserCommands::getCommandCount();
+      uint32_t number_commands= UserCommands::getUserCounts();
 
       for (uint32_t j= 0; j < number_commands; ++j)
       {
-        push(user_commands->getCount(j));
+        push(user_commands->getUserCount(j));
       }
       ++record_number;
       return true;

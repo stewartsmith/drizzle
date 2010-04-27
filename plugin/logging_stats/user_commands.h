@@ -44,6 +44,30 @@ public:
 
   UserCommands(const UserCommands &user_commands);
 
+  void incrementCount(uint32_t index, uint32_t i= 1);
+
+  uint64_t getCount(uint32_t index);
+
+  void merge(UserCommands *user_commands);
+
+  void reset();
+
+  void logCommand(drizzled::enum_sql_command sql_command);
+
+  static uint32_t getStatusVarsCount()
+  {
+    return drizzled::SQLCOM_END;
+  }
+
+  static uint32_t getUserCounts()
+  {
+    return COUNT_END; 
+  }
+
+  static const char *STATUS_VARS[];
+
+  static const char *USER_COUNTS[];
+
   enum command_count_index {
     COUNT_SELECT,
     COUNT_DELETE,
@@ -56,43 +80,15 @@ public:
     COUNT_DROP,
     COUNT_ADMIN,
     /* add new COUNT_* values above this entry */
-    NUMBER_COMMANDS
-  }; 
+    COUNT_END 
+  };
 
-  void incrementCount(uint32_t index, uint32_t i= 1);
-
-  uint64_t getCount(uint32_t index);
-
-  void merge(UserCommands *user_commands);
-
-  void reset();
-
-  void logCommand(drizzled::enum_sql_command sql_command);
-
-  void init();
-
-  static uint32_t getCommandCount()
-  {
-    return NUMBER_COMMANDS;
-  }
-
-  static const char *IDENTIFIERS[];
+  uint64_t getUserCount(uint32_t index);
 
 private:
+  void init();
 
-  std::vector<uint64_t*> vector_of_command_counts;
-  
-  uint32_t size;
-  uint64_t select_count;
-  uint64_t delete_count;
-  uint64_t update_count;
-  uint64_t insert_count;
-  uint64_t rollback_count;
-  uint64_t commit_count;
-  uint64_t create_count;
-  uint64_t alter_count;
-  uint64_t drop_count;
-  uint64_t admin_count;
+  std::vector<uint64_t> vector_of_command_counts;
 };
 
 #endif /* PLUGIN_LOGGING_STATS_USER_COMMANDS_H */

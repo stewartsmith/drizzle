@@ -89,8 +89,6 @@ private:
 
   drizzled::atomic<bool> is_enabled;
 
-  bool isBeingLogged(drizzled::Session *session);
-
   void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
 };
 #endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */

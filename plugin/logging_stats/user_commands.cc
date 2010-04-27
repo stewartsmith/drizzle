@@ -30,10 +30,10 @@
 #include "user_commands.h"
 
 using namespace drizzled;
+using namespace std;
 
-
-const char* UserCommands::IDENTIFIERS[] = 
-{ 
+const char* UserCommands::USER_COUNTS[] =
+{
   "COUNT_SELECT",
   "COUNT_DELETE",
   "COUNT_UPDATE",
@@ -46,6 +46,47 @@ const char* UserCommands::IDENTIFIERS[] =
   "COUNT_ADMIN"
 };
 
+const char* UserCommands::STATUS_VARS[] =
+{
+  "select",
+  "create_table",
+  "create_index",
+  "alter_table",
+  "update",
+  "insert",
+  "insert_select",
+  "delete",
+  "truncate",
+  "drop_table",
+  "drop_index",
+  "show_create",
+  "show_create_db",
+  "load",
+  "set_option",
+  "unlock_tables",
+  "change_db",
+  "create_db",
+  "drop_db",
+  "alter_db",
+  "replace",
+  "replace_select",
+  "check",
+  "flush",
+  "kill",
+  "analyze",
+  "rollback",
+  "rollback_to_savepoint",
+  "commit",
+  "savepoint",
+  "release_savepoint",
+  "begin",
+  "rename_table",
+  "show_warns",
+  "empty_query",
+  "show_errors",
+  "checksum"
+};
+
 UserCommands::UserCommands()
 {
   init();
@@ -53,104 +94,88 @@ UserCommands::UserCommands()
 
 void UserCommands::init()
 {
-  select_count= 0;
-  delete_count= 0;
-  update_count= 0;
-  insert_count= 0;
-  rollback_count= 0;
-  commit_count= 0;
-  create_count= 0;
-  alter_count= 0;
-  drop_count= 0;
-  admin_count= 0;
-  vector_of_command_counts.push_back(&select_count);
-  vector_of_command_counts.push_back(&delete_count);
-  vector_of_command_counts.push_back(&update_count);
-  vector_of_command_counts.push_back(&insert_count);
-  vector_of_command_counts.push_back(&rollback_count);
-  vector_of_command_counts.push_back(&commit_count);
-  vector_of_command_counts.push_back(&create_count);
-  vector_of_command_counts.push_back(&alter_count);
-  vector_of_command_counts.push_back(&drop_count);
-  vector_of_command_counts.push_back(&admin_count);
-  size= vector_of_command_counts.size();
+  vector<uint64_t>::iterator it= vector_of_command_counts.begin();
+  for (int j=0; j < SQLCOM_END; ++j)
+  {
+    it=  vector_of_command_counts.insert(it, 0);
+  }
+  vector_of_command_counts.resize(SQLCOM_END);
 }
 
 void UserCommands::incrementCount(uint32_t index, uint32_t i)
 {
-  uint64_t *count= vector_of_command_counts.at(index);
+  uint64_t *count= &(vector_of_command_counts.at(index));
   *count= *count + i;
 }
 
 uint64_t UserCommands::getCount(uint32_t index)
 {
-  uint64_t *count= vector_of_command_counts.at(index);
+  uint64_t *count= &(vector_of_command_counts.at(index));
   return *count;
+}
+
+uint64_t UserCommands::getUserCount(uint32_t index)
+{
+  switch (index)
+  {
+    case COUNT_SELECT:
+      return getCount(SQLCOM_SELECT);
+    case COUNT_DELETE:
+      return getCount(SQLCOM_DELETE);
+    case COUNT_UPDATE:
+      return getCount(SQLCOM_UPDATE);
+    case COUNT_INSERT:
+      return getCount(SQLCOM_INSERT);
+    case COUNT_ROLLBACK:
+      return getCount(SQLCOM_ROLLBACK);
+    case COUNT_COMMIT:
+      return getCount(SQLCOM_COMMIT);
+    case COUNT_CREATE:
+      return getCount(SQLCOM_CREATE_TABLE);
+    case COUNT_ALTER:
+      return getCount(SQLCOM_ALTER_TABLE);
+    case COUNT_DROP:
+      return getCount(SQLCOM_DROP_TABLE);
+    default:
+      return 0;
+  }
 }
 
 void UserCommands::reset()
 {
-  for (uint32_t j= 0; j < size; ++j)
+  for (uint32_t j= 0; j < SQLCOM_END; ++j)
   {
-    uint64_t *count= vector_of_command_counts.at(j);
+    uint64_t *count= &(vector_of_command_counts.at(j));
     *count= 0;
   }
 }
 
 UserCommands::UserCommands(const UserCommands &user_commands)
 {
-  init();  
+  init();
 
-  for (uint32_t j= 0; j < size; ++j)
+  for (uint32_t j= 0; j < SQLCOM_END; ++j)
   {
-    uint64_t *my_count= vector_of_command_counts.at(j);
-    uint64_t *other_count= user_commands.vector_of_command_counts.at(j);
-    *my_count= *other_count;
+    uint64_t *my_count= &(vector_of_command_counts.at(j));
+    uint64_t other_count= user_commands.vector_of_command_counts.at(j);
+    *my_count= other_count;
   }
 }
 
 void UserCommands::merge(UserCommands *user_commands)
 {
-  for (uint32_t j= 0; j < size; ++j)
+  for (uint32_t j= 0; j < SQLCOM_END; ++j)
   {
-    uint64_t *my_count= vector_of_command_counts.at(j);
-    uint64_t *other_count= user_commands->vector_of_command_counts.at(j);
-    *my_count= *my_count + *other_count;
+    uint64_t *my_count= &(vector_of_command_counts.at(j));
+    uint64_t other_count= user_commands->vector_of_command_counts.at(j);
+    *my_count= *my_count + other_count;
   }
 }
 
 void UserCommands::logCommand(enum_sql_command sql_command)
 {
-  switch(sql_command)
+  if (sql_command < SQLCOM_END)
   {
-    case SQLCOM_UPDATE:
-      incrementCount(COUNT_UPDATE);
-      break;
-    case SQLCOM_DELETE:
-      incrementCount(COUNT_DELETE);
-      break;
-    case SQLCOM_INSERT:
-      incrementCount(COUNT_INSERT);
-      break;
-    case SQLCOM_ROLLBACK:
-      incrementCount(COUNT_ROLLBACK);
-      break;
-    case SQLCOM_COMMIT:
-      incrementCount(COUNT_COMMIT);
-      break;
-    case SQLCOM_CREATE_TABLE:
-      incrementCount(COUNT_CREATE);
-      break;
-    case SQLCOM_ALTER_TABLE:
-      incrementCount(COUNT_ALTER);
-      break;
-    case SQLCOM_DROP_TABLE:
-      incrementCount(COUNT_DROP);
-      break;
-    case SQLCOM_SELECT:
-      incrementCount(COUNT_SELECT);
-      break;
-    default:
-      return;
+    incrementCount(sql_command);
   }
 }
