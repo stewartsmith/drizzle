@@ -10,7 +10,7 @@ drop table if exists t1,t2;
 #set time_zone="+03:00";
 
 CREATE TABLE t1 (a int primary key, t timestamp);
-CREATE TABLE t2 (a int primary key, t datetime);
+CREATE TABLE t2 (a int primary key, t timestamp);
 SET TIMESTAMP=1234;
 insert into t1 values(1,NULL);
 insert into t1 values(2,"2002-03-03");
@@ -27,7 +27,7 @@ select * from t1;
 drop table t1,t2;
 
 SET TIMESTAMP=1234;
-CREATE TABLE t1 (value TEXT NOT NULL, id VARCHAR(32) NOT NULL, stamp timestamp, PRIMARY KEY (id));
+CREATE TABLE t1 (value VARCHAR(1000) NOT NULL, id VARCHAR(32) NOT NULL, stamp timestamp, PRIMARY KEY (id));
 INSERT INTO t1 VALUES ("my value", "myKey","1999-04-02 00:00:00");
 SELECT stamp FROM t1 WHERE id="myKey";
 UPDATE t1 SET value="my value" WHERE id="myKey";
@@ -49,7 +49,7 @@ insert into t1 (ix) values ("19991101000000"),("19990102030405"),("1999063023292
 select ix+0 from t1;
 drop table t1;
 
-CREATE TABLE t1 (date date primary key, date_time datetime, time_stamp timestamp);
+CREATE TABLE t1 (date timestamp primary key, date_time timestamp, time_stamp timestamp);
 INSERT INTO t1 VALUES ("1998-12-31","1998-12-31 23:59:59",19981231235959);
 INSERT INTO t1 VALUES ("1999-01-01","1999-01-01 00:00:00",19990101000000);
 INSERT INTO t1 VALUES ("1999-09-09","1999-09-09 23:59:59",19990909235959);
@@ -108,7 +108,7 @@ create table t1 (t1 timestamp on update now(), t2 timestamp default now() on upd
 # Let us test TIMESTAMP auto-update behaviour
 # Also we will test behaviour of TIMESTAMP field in SHOW CREATE TABLE and
 # behaviour of DEFAULT literal for such fields
-create table t1 (t1 timestamp default '2003-01-01 00:00:00', t2 datetime, t3 timestamp, pk int auto_increment primary key);
+create table t1 (t1 timestamp default '2003-01-01 00:00:00', t2 timestamp, t3 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000000;
 insert into t1 values ();
 SET TIMESTAMP=1000000001;
@@ -121,7 +121,7 @@ show create table t1;
 show columns from t1;
 drop table t1;
 
-create table t1 (t1 timestamp default now(), t2 datetime, t3 timestamp, pk int auto_increment primary key);
+create table t1 (t1 timestamp default now(), t2 timestamp, t3 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000002;
 insert into t1 values ();
 SET TIMESTAMP=1000000003;
@@ -134,7 +134,7 @@ show create table t1;
 show columns from t1;
 drop table t1;
 
-create table t1 (t1 timestamp default '2003-01-01 00:00:00' on update now(), t2 datetime, pk int auto_increment primary key);
+create table t1 (t1 timestamp default '2003-01-01 00:00:00' on update now(), t2 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000004;
 insert into t1 values ();
 select * from t1;
@@ -148,7 +148,7 @@ show create table t1;
 show columns from t1;
 drop table t1;
 
-create table t1 (t1 timestamp default now() on update now(), t2 datetime, pk int auto_increment primary key);
+create table t1 (t1 timestamp default now() on update now(), t2 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000006;
 insert into t1 values ();
 select * from t1;
@@ -162,7 +162,7 @@ show create table t1;
 show columns from t1;
 drop table t1;
 
-create table t1 (t1 timestamp, t2 datetime, t3 timestamp, pk int auto_increment primary key);
+create table t1 (t1 timestamp, t2 timestamp, t3 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000007;
 insert into t1 values ();
 select * from t1;
@@ -179,7 +179,7 @@ drop table t1;
 # Let us test if CURRENT_TIMESTAMP also works well as default value
 # (Of course NOW and CURRENT_TIMESTAMP are same for parser but still just
 # for demonstartion.)
-create table t1 (t1 timestamp default current_timestamp on update current_timestamp, t2 datetime, pk int auto_increment primary key);
+create table t1 (t1 timestamp default current_timestamp on update current_timestamp, t2 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000009;
 insert into t1 values ();
 select * from t1;
@@ -313,9 +313,13 @@ select * from t1;
 update t1 set c = '2004-04-04 04:04:04' where a = 4;
 --sorted_result
 select * from t1;
+# Embedded InnoDB needs to have HailDB instead of libinnodb before this will work
+--error 1022
 insert into t1 (a) values (3), (5) on duplicate key update b = 3, c = c;
 --sorted_result
 select * from t1;
+# Embedded InnoDB needs to have HailDB instead of libinnodb before this will work
+--error 1022
 insert into t1 (a, c) values (4, '2004-04-04 00:00:00'),
   (6, '2006-06-06 06:06:06') on duplicate key update b = 4;
 --sorted_result

@@ -1,6 +1,6 @@
 drop table if exists t1,t2;
 CREATE TABLE t1 (a int primary key, t timestamp);
-CREATE TABLE t2 (a int primary key, t datetime);
+CREATE TABLE t2 (a int primary key, t timestamp);
 SET TIMESTAMP=1234;
 insert into t1 values(1,NULL);
 insert into t1 values(2,"2002-03-03");
@@ -26,7 +26,7 @@ a	t
 9	NULL
 drop table t1,t2;
 SET TIMESTAMP=1234;
-CREATE TABLE t1 (value TEXT NOT NULL, id VARCHAR(32) NOT NULL, stamp timestamp, PRIMARY KEY (id));
+CREATE TABLE t1 (value VARCHAR(1000) NOT NULL, id VARCHAR(32) NOT NULL, stamp timestamp, PRIMARY KEY (id));
 INSERT INTO t1 VALUES ("my value", "myKey","1999-04-02 00:00:00");
 SELECT stamp FROM t1 WHERE id="myKey";
 stamp
@@ -68,7 +68,7 @@ ix+0
 19990630232922
 19990601000000
 drop table t1;
-CREATE TABLE t1 (date date primary key, date_time datetime, time_stamp timestamp);
+CREATE TABLE t1 (date timestamp primary key, date_time timestamp, time_stamp timestamp);
 INSERT INTO t1 VALUES ("1998-12-31","1998-12-31 23:59:59",19981231235959);
 INSERT INTO t1 VALUES ("1999-01-01","1999-01-01 00:00:00",19990101000000);
 INSERT INTO t1 VALUES ("1999-09-09","1999-09-09 23:59:59",19990909235959);
@@ -83,18 +83,18 @@ INSERT INTO t1 VALUES ("2005-01-01","2005-01-01 00:00:00",20050101000000);
 INSERT INTO t1 VALUES ("2030-01-01","2030-01-01 00:00:00",20300101000000);
 SELECT * FROM t1;
 date	date_time	time_stamp
-1998-12-31	1998-12-31 23:59:59	1998-12-31 23:59:59
-1999-01-01	1999-01-01 00:00:00	1999-01-01 00:00:00
-1999-09-09	1999-09-09 23:59:59	1999-09-09 23:59:59
-2000-01-01	2000-01-01 00:00:00	2000-01-01 00:00:00
-2000-02-28	2000-02-28 00:00:00	2000-02-28 00:00:00
-2000-02-29	2000-02-29 00:00:00	2000-02-29 00:00:00
-2000-03-01	2000-03-01 00:00:00	2000-03-01 00:00:00
-2000-12-31	2000-12-31 23:59:59	2000-12-31 23:59:59
-2001-01-01	2001-01-01 00:00:00	2001-01-01 00:00:00
-2004-12-31	2004-12-31 23:59:59	2004-12-31 23:59:59
-2005-01-01	2005-01-01 00:00:00	2005-01-01 00:00:00
-2030-01-01	2030-01-01 00:00:00	2030-01-01 00:00:00
+1998-12-31 00:00:00	1998-12-31 23:59:59	1998-12-31 23:59:59
+1999-01-01 00:00:00	1999-01-01 00:00:00	1999-01-01 00:00:00
+1999-09-09 00:00:00	1999-09-09 23:59:59	1999-09-09 23:59:59
+2000-01-01 00:00:00	2000-01-01 00:00:00	2000-01-01 00:00:00
+2000-02-28 00:00:00	2000-02-28 00:00:00	2000-02-28 00:00:00
+2000-02-29 00:00:00	2000-02-29 00:00:00	2000-02-29 00:00:00
+2000-03-01 00:00:00	2000-03-01 00:00:00	2000-03-01 00:00:00
+2000-12-31 00:00:00	2000-12-31 23:59:59	2000-12-31 23:59:59
+2001-01-01 00:00:00	2001-01-01 00:00:00	2001-01-01 00:00:00
+2004-12-31 00:00:00	2004-12-31 23:59:59	2004-12-31 23:59:59
+2005-01-01 00:00:00	2005-01-01 00:00:00	2005-01-01 00:00:00
+2030-01-01 00:00:00	2030-01-01 00:00:00	2030-01-01 00:00:00
 drop table t1;
 create table t1 (t2 timestamp primary key, t4 timestamp, t6 timestamp,
 t8 timestamp, t10 timestamp, t12 timestamp,
@@ -130,7 +130,7 @@ create table t1 (t1 timestamp default now(), t2 timestamp on update now());
 ERROR HY000: Incorrect table definition; there can be only one TIMESTAMP column with CURRENT_TIMESTAMP in DEFAULT or ON UPDATE clause
 create table t1 (t1 timestamp on update now(), t2 timestamp default now() on update now());
 ERROR HY000: Incorrect table definition; there can be only one TIMESTAMP column with CURRENT_TIMESTAMP in DEFAULT or ON UPDATE clause
-create table t1 (t1 timestamp default '2003-01-01 00:00:00', t2 datetime, t3 timestamp, pk int auto_increment primary key);
+create table t1 (t1 timestamp default '2003-01-01 00:00:00', t2 timestamp, t3 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000000;
 insert into t1 values ();
 SET TIMESTAMP=1000000001;
@@ -145,19 +145,19 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT '2003-01-01 00:00:00',
-  `t2` datetime DEFAULT NULL,
+  `t2` timestamp NULL DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	2003-01-01 00:00:00	FALSE	
-t2	DATETIME	TRUE		TRUE	
+t2	TIMESTAMP	TRUE		TRUE	
 t3	TIMESTAMP	TRUE		TRUE	
 pk	INTEGER	FALSE		FALSE	
 drop table t1;
-create table t1 (t1 timestamp default now(), t2 datetime, t3 timestamp, pk int auto_increment primary key);
+create table t1 (t1 timestamp default now(), t2 timestamp, t3 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000002;
 insert into t1 values ();
 SET TIMESTAMP=1000000003;
@@ -172,19 +172,19 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `t2` datetime DEFAULT NULL,
+  `t2` timestamp NULL DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	
-t2	DATETIME	TRUE		TRUE	
+t2	TIMESTAMP	TRUE		TRUE	
 t3	TIMESTAMP	TRUE		TRUE	
 pk	INTEGER	FALSE		FALSE	
 drop table t1;
-create table t1 (t1 timestamp default '2003-01-01 00:00:00' on update now(), t2 datetime, pk int auto_increment primary key);
+create table t1 (t1 timestamp default '2003-01-01 00:00:00' on update now(), t2 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000004;
 insert into t1 values ();
 select * from t1;
@@ -202,17 +202,17 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT '2003-01-01 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-  `t2` datetime DEFAULT NULL,
+  `t2` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	2003-01-01 00:00:00	FALSE	NOW()
-t2	DATETIME	TRUE		TRUE	
+t2	TIMESTAMP	TRUE		TRUE	
 pk	INTEGER	FALSE		FALSE	
 drop table t1;
-create table t1 (t1 timestamp default now() on update now(), t2 datetime, pk int auto_increment primary key);
+create table t1 (t1 timestamp default now() on update now(), t2 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000006;
 insert into t1 values ();
 select * from t1;
@@ -230,17 +230,17 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `t2` datetime DEFAULT NULL,
+  `t2` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	NOW()
-t2	DATETIME	TRUE		TRUE	
+t2	TIMESTAMP	TRUE		TRUE	
 pk	INTEGER	FALSE		FALSE	
 drop table t1;
-create table t1 (t1 timestamp, t2 datetime, t3 timestamp, pk int auto_increment primary key);
+create table t1 (t1 timestamp, t2 timestamp, t3 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000007;
 insert into t1 values ();
 select * from t1;
@@ -258,19 +258,19 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT NULL,
-  `t2` datetime DEFAULT NULL,
+  `t2` timestamp NULL DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE		TRUE	
-t2	DATETIME	TRUE		TRUE	
+t2	TIMESTAMP	TRUE		TRUE	
 t3	TIMESTAMP	TRUE		TRUE	
 pk	INTEGER	FALSE		FALSE	
 drop table t1;
-create table t1 (t1 timestamp default current_timestamp on update current_timestamp, t2 datetime, pk int auto_increment primary key);
+create table t1 (t1 timestamp default current_timestamp on update current_timestamp, t2 timestamp, pk int auto_increment primary key);
 SET TIMESTAMP=1000000009;
 insert into t1 values ();
 select * from t1;
@@ -288,14 +288,14 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `t2` datetime DEFAULT NULL,
+  `t2` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	TRUE	NOW()	TRUE	NOW()
-t2	DATETIME	TRUE		TRUE	
+t2	TIMESTAMP	TRUE		TRUE	
 pk	INTEGER	FALSE		FALSE	
 truncate table t1;
 insert into t1 (t1,t2) values ('2004-04-01 00:00:00', '2004-04-01 00:00:00');
@@ -348,7 +348,7 @@ t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT NULL,
   `b` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 insert into t1 (a,b) values (NULL, NULL);
 SET TIMESTAMP=1000000017;
@@ -365,7 +365,7 @@ t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `b` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 insert into t1 (a,b) values (NULL, NULL);
 SET TIMESTAMP=1000000018;
@@ -382,7 +382,7 @@ t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT NULL,
   `b` timestamp NULL DEFAULT '2003-01-01 00:00:00',
   `pk` int NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`pk`)
+  PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT
 insert into t1 (a,b) values (NULL, NULL);
 insert into t1 (a,b) values (DEFAULT, DEFAULT);
@@ -437,23 +437,22 @@ a	b	c
 3	0	2003-03-03 03:03:03
 4	NULL	2004-04-04 04:04:04
 insert into t1 (a) values (3), (5) on duplicate key update b = 3, c = c;
+ERROR 23000: Can't write; duplicate key in table 't1'
 select * from t1;
 a	b	c
 1	0	2001-01-01 01:01:01
 2	2	2002-02-02 02:02:02
-3	3	2003-03-03 03:03:03
+3	0	2003-03-03 03:03:03
 4	NULL	2004-04-04 04:04:04
-5	NULL	NULL
 insert into t1 (a, c) values (4, '2004-04-04 00:00:00'),
 (6, '2006-06-06 06:06:06') on duplicate key update b = 4;
+ERROR 23000: Can't write; duplicate key in table 't1'
 select * from t1;
 a	b	c
 1	0	2001-01-01 01:01:01
 2	2	2002-02-02 02:02:02
-3	3	2003-03-03 03:03:03
-4	4	2004-04-04 04:04:04
-5	NULL	NULL
-6	NULL	2006-06-06 06:06:06
+3	0	2003-03-03 03:03:03
+4	NULL	2004-04-04 04:04:04
 drop table t1;
 CREATE TABLE t1 (
 `id` int NOT NULL auto_increment,
