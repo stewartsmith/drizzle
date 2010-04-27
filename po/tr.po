@@ -8,24 +8,24 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-03-31 06:13+0000\n"
-"PO-Revision-Date: 2010-04-06 14:26+0000\n"
-"Last-Translator: Göksel GÜREN <Unknown>\n"
+"PO-Revision-Date: 2010-04-26 16:35+0000\n"
+"Last-Translator: Angel Spy <melissadilara@yahoo.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-04-07 03:45+0000\n"
+"X-Launchpad-Export-Date: 2010-04-27 03:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
-msgstr "yardım"
+msgstr "`help' için eşanlamlı."
 
 msgid "Clear command."
-msgstr "komutu temizle"
+msgstr "Komutu temizle."
 
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "servere yeniden bağlan.isteğe bağlı parametreler db ve host"
+msgstr "Sunucuya yeniden bağlan. Seçimsel argümanlar db ve makine."
 
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
@@ -44,22 +44,22 @@ msgid "Display this help."
 msgstr "Bu yardımı göster."
 
 msgid "Disable pager, print to stdout."
-msgstr "Pager ı iptal et, standart çıktıya yazdır"
+msgstr ""
 
 msgid "Don't write into outfile."
-msgstr "outfile 'e  yazmayınız."
+msgstr ""
 
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr "PAGER[to_pager] kullan. Sorgu sonuçlarını PAGER kullanarak yazdır."
+msgstr ""
 
 msgid "Print current command."
-msgstr "geçerli komutu yazdır"
+msgstr "Geçerli komutu yazdır."
 
 msgid "Change your drizzle prompt."
-msgstr "drizzle isteğini değiştir"
+msgstr "Drizzle uyarısını değiştir."
 
 msgid "Quit drizzle."
-msgstr "drizzle' dan çık"
+msgstr "Drizzle'dan çık."
 
 msgid "Rebuild completion hash."
 msgstr "Tamamlama hashini tekrar oluştur."
@@ -118,7 +118,7 @@ msgid "Writing history-file %s\n"
 msgstr "%s geçmiş dosyası yazılıyor\n"
 
 msgid "Aborted"
-msgstr "İptal edildi"
+msgstr "Vazgeçildi"
 
 msgid "Bye"
 msgstr "Hoşçakal"
@@ -127,7 +127,7 @@ msgid "Query aborted by Ctrl+C\n"
 msgstr "Sorgu Ctrl+C ile iptal edildi\n"
 
 msgid "Display this help and exit."
-msgstr "Bu yardımı göster ve çık"
+msgstr "Bu yardımı göster ve çık."
 
 msgid "Synonym for -?"
 msgstr "- için takma ad?"
@@ -211,10 +211,10 @@ msgid "Enable/disable LOAD DATA LOCAL INFILE."
 msgstr ""
 
 msgid "Turn off beep on error."
-msgstr "Hatada sesli uyarıyı kapat"
+msgstr "Hatada sesli uyarıyı kapat."
 
 msgid "Connect to host."
-msgstr "Sunucuya bağlan"
+msgstr "Makineye bağlan."
 
 msgid "Write line numbers for errors."
 msgstr "Hatalar için satır numaralarını yazdır"
@@ -247,7 +247,7 @@ msgstr ""
 "değişkenleri direk --variable-name=değer kullanarak atayabilirsiniz."
 
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr "SIGINT i yoksay (CTRL+C)"
+msgstr "Yoksay SIGINT (CTRL-C)"
 
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
@@ -316,7 +316,7 @@ msgstr ""
 "olarak tab kullanarak yazdır,"
 
 msgid "Output in table format."
-msgstr "Çıktı tablo formatında"
+msgstr "Tablo biçiminde çıkart."
 
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
@@ -342,7 +342,7 @@ msgid "Write more. (-v -v -v gives the table output format)."
 msgstr ""
 
 msgid "Output version information and exit."
-msgstr "Versiyon bilgisini ver ve çık"
+msgstr "Sürüm bilgisini ver ve çık."
 
 msgid "Wait and retry if connection is down."
 msgstr "Bağlantı koparsa bekle ve tekrar dene."
@@ -373,7 +373,7 @@ msgid "Ping the server to check if it's alive."
 msgstr "Sunucunun açık olduğunu anlamak için ping at."
 
 msgid "Use MySQL Protocol."
-msgstr "MySQL protokolünü kullan"
+msgstr "MySQL protokolünü kullan."
 
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
@@ -388,7 +388,7 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr "Kullanım: %s [TERCİHLER] [veritabanı]\n"
+msgstr "Kullanımı: %s [OPTIONS] [database]\n"
 
 msgid "DELIMITER cannot contain a backslash character"
 msgstr "AYRAÇ ters slash karakteri içeremez"
@@ -438,7 +438,7 @@ msgid "Can't connect to the server\n"
 msgstr "Sunucuya bağlanılamıyor\n"
 
 msgid "List of all Drizzle commands:"
-msgstr "Bütün drizzle komutlarının listesi:"
+msgstr "Tüm drizzle komutlarının listesi:"
 
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr "Bütün yazılı komutlar satırbaşından başlamalı be ';' ile bitmelidir."
@@ -479,15 +479,15 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr "Kullanım: %s [SEÇENEKLER] veritabanı [tablolar]\n"
+msgstr "Kullanımı: %s [OPTIONS] database [tables]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr "OR %s [SEÇENEKLER] --databases [SEÇENEKLER] DB1 [DB2 DB3 ...]\n"
+msgstr "OR %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr "OR %s [SEÇENEKLER] -all--databases [SEÇENEKLER]\n"
+msgstr "OR %s [OPTIONS] --all-databases [OPTIONS]\n"
 
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -499,7 +499,7 @@ msgstr "Drizzle veritabanı sunucusundan tanımları ve veriyi indiriyor."
 
 #, c-format
 msgid "For more options, use %s --help\n"
-msgstr "Daha fazla seçenek için, %s --yardımı kullanın\n"
+msgstr "Daha fazla seçenek için, %s --help kullanın\n"
 
 #, c-format
 msgid ""
@@ -588,7 +588,7 @@ msgstr "-- %s tablosunun tablo yapısı alınıyor...\n"
 
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
-msgstr "%s: Uyarı: SQL_QUOTE_SHOW_CREATE seçeneği uygulanamıyor (%s)\n"
+msgstr ""
 
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
@@ -655,11 +655,11 @@ msgid "when doing refresh"
 msgstr "yenileme yapılırken"
 
 msgid "alloc_root failure."
-msgstr "alloc_root hatası"
+msgstr "alloc_root başarısız."
 
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr "\"%s\" tablosu bulunamıyor"
+msgstr "Tablo bulunamıyor: \"%s\""
 
 #, c-format
 msgid ""
@@ -676,14 +676,14 @@ msgstr ""
 
 #, c-format
 msgid "Out of memory"
-msgstr ""
+msgstr "Yetersiz bellek"
 
 #, c-format
 msgid "Got signal %d from thread %<PRIu64>"
 msgstr ""
 
 msgid "Aborting\n"
-msgstr "İptal ediliyor\n"
+msgstr "Vazgeçiliyor\n"
 
 msgid "One can only use the --user switch if running as root\n"
 msgstr ""
@@ -766,7 +766,7 @@ msgstr ""
 
 #, c-format
 msgid "Unknown locale: '%s'"
-msgstr "Bilinmeyen locale: '%s'"
+msgstr ""
 
 msgid "Can't create thread-keys"
 msgstr ""
@@ -834,7 +834,7 @@ msgid "Set up signals usable for debugging"
 msgstr ""
 
 msgid "(IGNORED)"
-msgstr ""
+msgstr "(YOKSAYILDI)"
 
 msgid "Set the language used for the month names and the days of the week."
 msgstr ""
@@ -1033,7 +1033,7 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
-msgstr ""
+msgstr "Kullanımı: %s [OPTIONS]\n"
 
 #, c-format
 msgid ""
@@ -1068,7 +1068,7 @@ msgstr "EVET"
 
 #, c-format
 msgid "Can't create file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Dosya yaratılamıyor '%-.200s' (errno: %d)"
 
 #, c-format
 msgid "Can't create table '%-.200s' (errno: %d)"
