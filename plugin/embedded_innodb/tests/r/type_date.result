@@ -115,7 +115,7 @@ select @d:=1311;
 1311
 select year(@d), month(@d), day(@d), cast(@d as date);
 ERROR HY000: Received an invalid datetime value '1311'.
-create table t1 (d  date , dt datetime , ts timestamp);
+create table t1 (d  date , dt datetime , ts timestamp, primary key (d));
 insert into t1 values (9912101,9912101,9912101);
 ERROR HY000: Received an invalid datetime value '9912101'.
 insert into t1 values (11111,11111,11111);
@@ -145,7 +145,7 @@ EXPLAIN SELECT COUNT(*) FROM t1 WHERE a = NOW() AND b = 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
 DROP TABLE t1;
-CREATE TABLE t1 SELECT curdate() AS f1;
+CREATE TABLE t1 (f1 date primary key) SELECT curdate() AS f1;
 SELECT hour(f1), minute(f1), second(f1) FROM t1;
 hour(f1)	minute(f1)	second(f1)
 0	0	0
