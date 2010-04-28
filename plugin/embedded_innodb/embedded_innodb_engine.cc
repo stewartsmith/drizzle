@@ -603,6 +603,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
                                   column_attr, 0, 8);
     break;
   case message::Table::Field::DOUBLE:
+  case message::Table::Field::DATETIME:
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_DOUBLE,
                                   column_attr, 0, sizeof(double));
     break;
@@ -623,10 +624,12 @@ static int create_table_add_field(ib_tbl_sch_t schema,
     }
     break;
   }
+  case message::Table::Field::DATE:
   case message::Table::Field::TIMESTAMP:
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 4);
     break;
+
   default:
     my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "Column Type");
     return(HA_ERR_UNSUPPORTED);
@@ -1353,6 +1356,11 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
         assert((*field)->data_length() <= 2);
       }
     }
+    else if ((**field).type() == DRIZZLE_TYPE_DATE)
+    {
+      (**field).setReadSet();
+      err= ib_tuple_write_u32(tuple, colnr, (*field)->val_int());
+    }
     else
     {
       err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
@@ -1676,6 +1684,12 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
                       length,
                       &my_charset_bin);
     }
+    else if ((**field).type() == DRIZZLE_TYPE_DATE)
+    {
+      uint32_t date_read;
+      err= ib_tuple_read_u32(tuple, colnr, &date_read);
+      (*field)->store(date_read);
+    }
     else
     {
       ib_col_copy_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
@@ -1921,6 +1935,16 @@ static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
       err= ib_col_set_value(search_tuple, fieldnr, buff, length);
       assert(err == DB_SUCCESS);
 
+      buff+= key_part->length;
+    }
+    else if (field->type() == DRIZZLE_TYPE_DATE)
+    {
+      uint32_t date_int= 0;
+      char *date_ptr= (char*)&date_int;
+      date_ptr[0]= buff[0];
+      date_ptr[1]= buff[1];
+      date_ptr[2]= buff[2];
+      err= ib_col_set_value(search_tuple, fieldnr, &date_int, 4);
       buff+= key_part->length;
     }
     // FIXME: BLOBs
