@@ -727,6 +727,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
       return field_err;
   }
 
+  bool has_primary= false;
   for (int indexnr= 0; indexnr < table_message.indexes_size() ; indexnr++)
   {
     message::Table::Index *index = table_message.mutable_indexes(indexnr);
@@ -740,6 +741,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
     if (index->is_primary())
     {
+      has_primary= true;
       innodb_err= ib_index_schema_set_clustered(innodb_index);
       if (innodb_err != DB_SUCCESS)
         goto schema_error;
@@ -763,6 +765,14 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
       if (innodb_err != DB_SUCCESS)
         goto schema_error;
     }
+
+    if (! has_primary && index->is_unique())
+    {
+      innodb_err= ib_index_schema_set_clustered(innodb_index);
+      if (innodb_err != DB_SUCCESS)
+        goto schema_error;
+    }
+
   }
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
