@@ -17,6 +17,7 @@ create table t1 (a int) engine = blitzdb;
 --error 1050
 create table t2 (a int) engine = blitzdb;
 
+show tables;
 drop table t1, t2;
 
 # INSERT SYNTAX

@@ -9,6 +9,10 @@ create table t1 (a int) engine = blitzdb;
 ERROR 42S01: Table 'test.t1' already exists
 create table t2 (a int) engine = blitzdb;
 ERROR 42S01: Table 'test.t2' already exists
+show tables;
+Tables_in_test
+t1
+t2
 drop table t1, t2;
 create table t1 (a int, b int, c varchar(255)) engine = blitzdb;
 insert into t1 values (1, 8, "one");

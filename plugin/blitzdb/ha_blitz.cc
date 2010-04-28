@@ -319,14 +319,13 @@ void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 
     const char *ext = strchr(filename->c_str(), '.');
 
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLITZ_DATA_EXT) ||
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, BLITZ_SYSTEM_EXT) ||
         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0)) {
     } else {
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len = filename_to_tablename(filename->c_str(), uname,
-                                            sizeof(uname));
+      file_name_len = filename_to_tablename(filename->c_str(), uname, sizeof(uname));
 
       uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';
       ids.push_back(TableIdentifier(schema_id, uname));
