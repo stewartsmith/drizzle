@@ -1816,9 +1816,7 @@ xtPublic xtBool xt_flush_file(XTOpenFilePtr of, XTIOStatsPtr stat, XTThreadPtr t
 			break;
 		case XT_FT_MEM_MAP: {
 			XTFileMemMapPtr mm = of->x.mf_memmap;
-#ifndef XT_NO_ATOMICS
 			xtThreadID		thd_id = thread->t_id;
-#endif
 
 			if (!of->mf_slock_count)
 				FILE_MAP_READ_LOCK(&mm->mm_lock, thd_id);
@@ -2235,9 +2233,7 @@ xtPublic xtBool xt_lock_file_ptr(XTOpenFilePtr of, xtWord1 **data, off_t offset,
 			break;
 		case XT_FT_MEM_MAP: {
 			XTFileMemMapPtr	mm = of->x.mf_memmap;
-#ifndef XT_NO_ATOMICS
 			xtThreadID		thd_id = thread->t_id;
-#endif
 
 			if (!of->mf_slock_count)
 				FILE_MAP_READ_LOCK(&mm->mm_lock, thd_id);
@@ -2269,9 +2265,7 @@ xtPublic xtBool xt_lock_file_ptr(XTOpenFilePtr of, xtWord1 **data, off_t offset,
 		}
 		case XT_FT_HEAP: {
 			XTFileHeapPtr	fh = of->x.of_heap;
-#ifndef XT_NO_ATOMICS
 			xtThreadID		thd_id = thread->t_id;
-#endif
 
 			if (!of->mf_slock_count)
 				FILE_MAP_READ_LOCK(&fh->fh_lock, thd_id);
