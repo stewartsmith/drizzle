@@ -1750,8 +1750,8 @@ static xtBool dl_collect_garbage(XTThreadPtr self, XTDatabaseHPtr db, XTDataLogF
 	xtLogOffset			src_log_offset;
 	xtLogID				curr_log_id;
 	xtLogOffset			curr_log_offset;
-	xtLogID				dest_log_id;
-	xtLogOffset			dest_log_offset;
+	xtLogID				dest_log_id = 0;
+	xtLogOffset			dest_log_offset = 0;
 	off_t				garbage_count = 0;
 
 	memset(&cs, 0, sizeof(XTCompactorStateRec));

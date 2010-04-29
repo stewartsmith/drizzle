@@ -2012,7 +2012,6 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 	char		path_buffer[PATH_MAX];
 	char		*table_name;
 	char		database_name[XT_IDENTIFIER_NAME_SIZE];
-	char		*ptr;
 	size_t		size;
 	char		*buffer, *path, *db_name, *name;
 	TABLE_SHARE	*share;
@@ -2036,6 +2035,8 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 	xt_strcpy(PATH_MAX, path_buffer, tab_path->ps_path);
 	table_name = xt_last_name_of_path(path_buffer);
 #ifndef DRIZZLED
+	char *ptr;
+
 	if ((ptr = strstr(table_name, "#P#")))
 		*ptr = 0;
 #endif
@@ -2070,13 +2071,15 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 	lex_start(thd);
 
 #ifdef DRIZZLED
+	char		tab_name[XT_IDENTIFIER_NAME_SIZE];
+
 	uint32_t tab_name_len = filename_to_tablename(name, tab_name, XT_IDENTIFIER_NAME_SIZE);	
 	
 	TableIdentifier *ident = NULL;
 	if (table_type == XT_TABLE_TYPE_TEMPORARY) {
 		std::string tmp_path(drizzle_tmpdir);
 		tmp_path.append("/");
-		tmp_path.append(table_file_name);
+		tmp_path.append(table_name);
 		ident = new TableIdentifier(db_name, tab_name, tmp_path);
 	} else if (table_type == XT_TABLE_TYPE_STANDARD) {
         	ident = new TableIdentifier(
@@ -2089,7 +2092,7 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 		n.append("/");
 		n.append(db_name);
 		n.append("/");
-		n.append(table_file_name);
+		n.append(table_name);
 		//ident = new TableIdentifier(
 		//	std::string(db_name), 
 		//	std::string(tab_name, tab_name_len), 

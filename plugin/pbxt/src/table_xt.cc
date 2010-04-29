@@ -4437,7 +4437,7 @@ u_int		next_on_page = 0;
 u_int		next_off_page = 0;
 #endif
 
-static xtBool tab_write_ext_record(XTOpenTablePtr ot, XTTableHPtr tab, XTTabRecInfoPtr rec_info, xtRecordID rec_id, xtLogID log_id, xtLogOffset log_offset, XTThreadPtr thread)
+static xtBool tab_write_ext_record(XTOpenTablePtr XT_UNUSED(ot), XTTableHPtr tab, XTTabRecInfoPtr rec_info, xtRecordID rec_id, xtLogID log_id, xtLogOffset log_offset, XTThreadPtr thread)
 {
 	xtWord1 tmp_buffer[offsetof(XTactExtRecEntryDRec, er_data)];
 	xtBool	ok;
@@ -4582,7 +4582,7 @@ static xtBool tab_add_record(XTOpenTablePtr ot, XTTabRecInfoPtr rec_info, u_int 
 	return OK;
 }
 
-static void tab_delete_record_on_fail(XTOpenTablePtr ot, xtRowID row_id, xtRecordID rec_id, XTTabRecHeadDPtr row_ptr, xtWord1 *rec_data, u_int key_count)
+static void tab_delete_record_on_fail(XTOpenTablePtr ot, xtRowID row_id, xtRecordID rec_id, XTTabRecHeadDPtr XT_UNUSED(row_ptr), xtWord1 *rec_data, u_int key_count)
 {
 	XTExceptionRec	e;
 	xtBool			log_err = TRUE;
