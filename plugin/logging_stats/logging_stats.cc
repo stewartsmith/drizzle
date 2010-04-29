@@ -76,9 +76,6 @@
  * 
  * TODO 
  *
- * Logic should be reworked to not acquire a lock if a session has already reserved
- * a slot for itself.
- *
  * A pointer to the scoreboard slot could be added to the Session object.
  * This will avoid the session having to do multiple lookups in the scoreboard,
  * this will also avoid having to take a lock to locate the scoreboard slot 

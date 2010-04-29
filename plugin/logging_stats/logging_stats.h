@@ -81,8 +81,6 @@ public:
   }
 
 private:
-  static const int32_t UNINITIALIZED= -1;
-
   Scoreboard *current_scoreboard;
 
   CumulativeStats *cumulative_stats;
