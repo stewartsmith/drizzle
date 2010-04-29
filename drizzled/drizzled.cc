@@ -1811,12 +1811,14 @@ static void fix_paths(string &progname)
     {
       progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
     }
-    string testfile(progdir);
-    testfile.append("drizzled.lo");
+    string testlofile(progdir);
+    testlofile.append("drizzled.lo");
+    string testofile(progdir);
+    testofile.append("drizzled.o");
     struct stat testfile_stat;
-    if (stat(testfile.c_str(), &testfile_stat))
+    if (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat))
     {
-      /* drizzled.lo doesn't exist - we are not in a source dir.
+      /* neither drizzled.lo or drizzled.o exist - we are not in a source dir.
        * Go on as usual
        */
       (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
