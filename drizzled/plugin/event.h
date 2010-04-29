@@ -102,8 +102,20 @@ public:
   /*==========================================================*/
   /* Register an event of interest for this plugin. 
    * This is called from with in the plugin when registering itself.
+   *
+   * The position field is used to indicate the order the event observer is to be 
+   * called. If the event observer must be called before any other observer then 
+   * the position must be set to 1. If it must be called last then the position must be 
+   * set to -1. A position of 0 indicated the position doesn't matter.
+   *
+   * If 2 plugins require the same position then which is called first in not guarenteed.
+   * In this case a warrning will be logged but execution will continue.
+   * 
+   * It is good practice that if the event position matters not to hard code the position
+   * but supply a systen variable so that it can be set at runtime so that the user can
+   * decide which event should be called first.
    */
-  void registerEvent(EventObservers *observers, EventType event); 
+  void registerEvent(EventObservers *observers, EventType event, int position = 0); 
 
   /*==========================================================*/
   /* Called from drizzle to register all events for all event plugins 

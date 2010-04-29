@@ -49,10 +49,15 @@ using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
+#define PLUGIN_NAME "hello_events1"
+
 static bool sysvar_hello_events_enabled= true;
 static HelloEvents *hello_events= NULL;
 static char *sysvar_table_list= NULL;
 static char *sysvar_db_list= NULL;
+static int sysvar_pre_write_position= 1;
+static int sysvar_pre_update_position= 1;
+static int sysvar_post_drop_db_position= -1;  // I want my event observer to be called last. No reason, I just do!
 
 
 //==================================
@@ -60,65 +65,65 @@ static char *sysvar_db_list= NULL;
 static bool preWriteRow(PreWriteRowEventData *data)
 {
 
-  fprintf(stderr, "EVENT preWriteRow(%s)\n", data->table->getTableName());
+  fprintf(stderr, PLUGIN_NAME" EVENT preWriteRow(%s)\n", data->table->getTableName());
   return false;
 }
 
 //---
 static void postWriteRow(PostWriteRowEventData *data)
 {
-  fprintf(stderr, "EVENT postWriteRow(%s) err = %d\n", data->table->getTableName(), data->err);
+  fprintf(stderr, PLUGIN_NAME" EVENT postWriteRow(%s) err = %d\n", data->table->getTableName(), data->err);
 }
 
 //---
 static bool preDeleteRow(PreDeleteRowEventData *data)
 {
-  fprintf(stderr, "EVENT preDeleteRow(%s)\n", data->table->getTableName());
+  fprintf(stderr, PLUGIN_NAME" EVENT preDeleteRow(%s)\n", data->table->getTableName());
   return false;
 }
 
 //---
 static void postDeleteRow(PostDeleteRowEventData *data)
 {
-  fprintf(stderr, "EVENT postDeleteRow(%s) err = %d\n", data->table->getTableName(), data->err);
+  fprintf(stderr, PLUGIN_NAME" EVENT postDeleteRow(%s) err = %d\n", data->table->getTableName(), data->err);
 }
 
 //---
 static bool preUpdateRow(PreUpdateRowEventData *data)
 {
-  fprintf(stderr, "EVENT preUpdateRow(%s)\n", data->table->getTableName());
+  fprintf(stderr, PLUGIN_NAME" EVENT preUpdateRow(%s)\n", data->table->getTableName());
   return false;
 }
 
 //---
 static void postUpdateRow(PostUpdateRowEventData *data)
 {
-  fprintf(stderr, "EVENT postUpdateRow(%s) err = %d\n", data->table->getTableName(), data->err);
+  fprintf(stderr, PLUGIN_NAME" EVENT postUpdateRow(%s) err = %d\n", data->table->getTableName(), data->err);
 }
 
 //==================================
 // My schema event observers: 
 static void postDropTable(PostDropTableEventData *data)
 {
-  fprintf(stderr, "EVENT postDropTable(%s) err = %d\n", data->table->getTableName().c_str(), data->err);
+  fprintf(stderr, PLUGIN_NAME" EVENT postDropTable(%s) err = %d\n", data->table->getTableName().c_str(), data->err);
 }
 
 //---
 static void postRenameTable(PostRenameTableEventData *data)
 {
-  fprintf(stderr, "EVENT postRenameTable(%s, %s) err = %d\n", data->from->getTableName().c_str(), data->to->getTableName().c_str(), data->err);
+  fprintf(stderr, PLUGIN_NAME" EVENT postRenameTable(%s, %s) err = %d\n", data->from->getTableName().c_str(), data->to->getTableName().c_str(), data->err);
 }
 
 //---
 static void postCreateDatabase(PostCreateDatabaseEventData *data)
 {
-  fprintf(stderr, "EVENT postCreateDatabase(%s) err = %d\n", data->db, data->err);
+  fprintf(stderr, PLUGIN_NAME" EVENT postCreateDatabase(%s) err = %d\n", data->db, data->err);
 }
 
 //---
 static void postDropDatabase(PostDropDatabaseEventData *data)
 {
-  fprintf(stderr, "EVENT postDropDatabase(%s) err = %d\n", data->db, data->err);
+  fprintf(stderr, PLUGIN_NAME" EVENT postDropDatabase(%s) err = %d\n", data->db, data->err);
 }
 
 //==================================
@@ -130,9 +135,9 @@ void HelloEvents::registerTableEvents(TableShare *table_share, EventObservers *o
     || !isDatabaseInteresting(table_share->getSchemaName()))
     return;
     
-  registerEvent(observers, PRE_WRITE_ROW);
+  registerEvent(observers, PRE_WRITE_ROW, sysvar_pre_write_position); // I want to be called first if passible
   registerEvent(observers, POST_WRITE_ROW);
-  registerEvent(observers, PRE_UPDATE_ROW);
+  registerEvent(observers, PRE_UPDATE_ROW, sysvar_pre_update_position);
   registerEvent(observers, POST_UPDATE_ROW);
   registerEvent(observers, PRE_DELETE_ROW);
   registerEvent(observers, POST_DELETE_ROW);
@@ -159,7 +164,7 @@ void HelloEvents::registerSessionEvents(Session *session, EventObservers *observ
     return;
     
   registerEvent(observers, POST_CREATE_DATABASE);
-  registerEvent(observers, POST_DROP_DATABASE);
+  registerEvent(observers, POST_DROP_DATABASE, sysvar_post_drop_db_position);
 }
 
 
@@ -224,6 +229,7 @@ bool HelloEvents::observeEvent(EventData *data)
 
 
 /* Plugin initialization and system variables */
+
 static void enable(Session *,
                    drizzle_sys_var *,
                    void *var_ptr,
@@ -272,7 +278,7 @@ static void set_table_list(Session *,
 
 static int init(Context &context)
 {
-  hello_events= new HelloEvents("hello_events");
+  hello_events= new HelloEvents(PLUGIN_NAME);
 
   context.add(hello_events);
 
@@ -308,17 +314,53 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            enable, /* update func */
                            false /* default */);
 
+static DRIZZLE_SYSVAR_INT(pre_write_position,
+                           sysvar_pre_write_position,
+                           PLUGIN_VAR_NOCMDARG,
+                           N_("Pre write row event observer call position"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           1, /* default */
+                           1, /* min */
+                           INT32_MAX -1, /* max */
+                           0 /* blk */);
+
+static DRIZZLE_SYSVAR_INT(pre_update_position,
+                           sysvar_pre_update_position,
+                           PLUGIN_VAR_NOCMDARG,
+                           N_("Pre update row event observer call position"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           1, /* default */
+                           1, /* min */
+                           INT32_MAX -1, /* max */
+                           0 /* blk */);
+
+static DRIZZLE_SYSVAR_INT(post_drop_db_position,
+                           sysvar_post_drop_db_position,
+                           PLUGIN_VAR_NOCMDARG,
+                           N_("Post drop database event observer call position"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           -1, /* default */
+                           INT32_MAX +1, /* min */
+                           -1, /* max */
+                           0 /* blk */);
+
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(watch_databases),
   DRIZZLE_SYSVAR(watch_tables),
   DRIZZLE_SYSVAR(enable),
+  DRIZZLE_SYSVAR(pre_write_position),
+  DRIZZLE_SYSVAR(pre_update_position),
+  DRIZZLE_SYSVAR(post_drop_db_position),
   NULL
 };
 
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "hello_events",
+  PLUGIN_NAME,
   "0.1",
   "Barry Leslie",
   N_("An example events Plugin"),

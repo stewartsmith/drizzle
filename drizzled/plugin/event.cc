@@ -43,20 +43,48 @@ namespace plugin
  */
 class EventObservers
 {
+
   public:
   
+  void add_event(multimap<unsigned int, Event *> &observers, enum Event::EventType event, Event *eventObserver, int position)
+  {
+    unsigned int event_pos;
+    
+    if (position == 0)
+      event_pos = INT32_MAX; // Set the event position to be in the middle.
+    else
+      event_pos = (unsigned int) position;
+    
+    /* If positioned then check if the position is already taken. */
+    if (position) 
+    {
+      multimap<unsigned int, Event *>::iterator it;
+      
+      if ( observers.find(event_pos) != observers.end() )
+      {
+        errmsg_printf(ERRMSG_LVL_WARN,
+                    _("EventObservers::add_event() Duplicate event position %d for event '%s' from Event plugin '%s'"),
+                    position,
+                    Event::eventName(event), 
+                    eventObserver->getName().c_str());
+      }
+    }
+    
+    observers.insert(pair<unsigned int, Event *>(event_pos, eventObserver) );
+  }
+
   virtual ~EventObservers(){}
   
 /* Each event plugin registers itself with a shared table's event observer
  * for all events it is interested in regarding that table.
  */ 
-  virtual bool add_observer(Event *observer, enum Event::EventType event) = 0;
+  virtual bool add_observer(Event *observer, enum Event::EventType event, int position) = 0;
    
   /* Remove all observer from all lists. */
   virtual void clear_all_observers() = 0;  
   
    /* Get the observer list for an event type. */
-  virtual vector<Event *> *getObservers(enum Event::EventType event) = 0;
+  virtual multimap<unsigned int, Event *> *getObservers(enum Event::EventType event) = 0;
 };
 
 
@@ -67,6 +95,7 @@ static vector<Event *> all_event_plugins;
 //---------
 bool Event::addPlugin(Event *handler)
 {
+
   if (handler != NULL)
     all_event_plugins.push_back(handler);
   return false;
@@ -80,9 +109,9 @@ void Event::removePlugin(Event *handler)
 }
 
 //---------
-void Event::registerEvent(EventObservers *observers, EventType event)
+void Event::registerEvent(EventObservers *observers, EventType event, int position)
 {
-  observers->add_observer(this, event);
+  observers->add_observer(this, event, position);
 }
 
 /*========================================================*/
@@ -94,12 +123,12 @@ class TableEventObservers: public EventObservers
 {
   private:
   
-  vector<Event *> pre_write_row_observers;
-  vector<Event *> post_write_row_observers;
-  vector<Event *> pre_update_row_observers;
-  vector<Event *> post_update_row_observers;
-  vector<Event *> pre_delete_row_observers;
-  vector<Event *> post_delete_row_observers;
+  multimap<unsigned int, Event *> pre_write_row_observers;
+  multimap<unsigned int, Event *> post_write_row_observers;
+  multimap<unsigned int, Event *> pre_update_row_observers;
+  multimap<unsigned int, Event *> post_update_row_observers;
+  multimap<unsigned int, Event *> pre_delete_row_observers;
+  multimap<unsigned int, Event *> post_delete_row_observers;
   
   public:
   
@@ -109,32 +138,32 @@ class TableEventObservers: public EventObservers
 /* Each event plugin registers itself with a shared table's event observer
  * for all events it is interested in regarding that table.
  */ 
-  bool add_observer(Event *observer, enum Event::EventType event)
+  bool add_observer(Event *observer, enum Event::EventType event, int position)
   {
     switch(event) 
     {
       case Event::PRE_WRITE_ROW:
-        pre_write_row_observers.push_back(observer);
+        add_event(pre_write_row_observers, event, observer, position);
         break;
         
       case Event::POST_WRITE_ROW:
-        post_write_row_observers.push_back(observer);
-        break;
+        add_event(post_write_row_observers, event, observer, position);
+         break;
         
       case Event::PRE_UPDATE_ROW:
-        pre_update_row_observers.push_back(observer);
+        add_event(pre_update_row_observers, event, observer, position);
         break;
         
       case Event::POST_UPDATE_ROW:
-        post_update_row_observers.push_back(observer);
+        add_event(post_update_row_observers, event, observer, position);
         break;
         
       case Event::PRE_DELETE_ROW:
-        pre_delete_row_observers.push_back(observer);
+        add_event(pre_delete_row_observers, event, observer, position);
         break;
         
       case Event::POST_DELETE_ROW:
-        post_delete_row_observers.push_back(observer);
+        add_event(post_delete_row_observers, event, observer, position);
         break;
         
       default:
@@ -160,7 +189,7 @@ class TableEventObservers: public EventObservers
   }
   
    /* Get the observer list for an event type. */
-  vector<Event *> *getObservers(enum Event::EventType event)
+  multimap<unsigned int, Event *> *getObservers(enum Event::EventType event)
   {
     switch(event) {
       case Event::PRE_WRITE_ROW:
@@ -257,10 +286,10 @@ class SchemaEventObservers: public EventObservers
 {
   private:
   
-  vector<Event *> pre_drop_table_observers;
-  vector<Event *> post_drop_table_observers;
-  vector<Event *> pre_rename_table_observers;
-  vector<Event *> post_rename_table_observers;
+  multimap<unsigned int, Event *> pre_drop_table_observers;
+  multimap<unsigned int, Event *> post_drop_table_observers;
+  multimap<unsigned int, Event *> pre_rename_table_observers;
+  multimap<unsigned int, Event *> post_rename_table_observers;
   
   public:
   
@@ -270,23 +299,23 @@ class SchemaEventObservers: public EventObservers
 /* Each event plugin registers itself with a schema's event observer
  * for all events it is interested in regarding that schema.
  */ 
-  bool add_observer(Event *observer, enum Event::EventType event)
+  bool add_observer(Event *observer, enum Event::EventType event, int position)
   {
     switch(event) {
       case Event::PRE_DROP_TABLE:
-        pre_drop_table_observers.push_back(observer);
+        add_event(pre_drop_table_observers, event, observer, position);
         break;
       
       case Event::POST_DROP_TABLE:
-        post_drop_table_observers.push_back(observer);
+        add_event(post_drop_table_observers, event, observer, position);
         break;
       
       case Event::PRE_RENAME_TABLE:
-        pre_rename_table_observers.push_back(observer);
+        add_event(pre_rename_table_observers, event, observer, position);
         break;
         
       case Event::POST_RENAME_TABLE:
-        post_rename_table_observers.push_back(observer);
+        add_event(post_rename_table_observers, event, observer, position);
         break;
         
       default:
@@ -310,7 +339,7 @@ class SchemaEventObservers: public EventObservers
   }
   
    /* Get the observer list for an event type. */
-  vector<Event *> *getObservers(enum Event::EventType event)
+  multimap<unsigned int, Event *> *getObservers(enum Event::EventType event)
   {
     switch(event) {
       case Event::PRE_DROP_TABLE:
@@ -366,7 +395,8 @@ void Event::registerSchemaEventsDo(Session *session, const std::string *db)
   
   observers= session->getSchemaObservers(db);
   
-  if (observers == NULL) {
+  if (observers == NULL) 
+  {
     observers= new SchemaEventObservers();
     session->setSchemaObservers(db, observers);
   }
@@ -384,7 +414,8 @@ void Event::deregisterSchemaEventsDo(Session *session, const std::string *db)
   
   observers= session->getSchemaObservers(db);
 
-  if (observers) {
+  if (observers) 
+  {
     session->setSchemaObservers(db, NULL);
     observers->clear_all_observers();
     delete observers;
@@ -399,10 +430,10 @@ class SessionEventObservers: public EventObservers
 {
   private:
   
-  vector<Event *> pre_create_db_observers;
-  vector<Event *> post_create_db_observers;
-  vector<Event *> pre_drop_db_observers;
-  vector<Event *> post_drop_db_observers;
+  multimap<unsigned int, Event *> pre_create_db_observers;
+  multimap<unsigned int, Event *> post_create_db_observers;
+  multimap<unsigned int, Event *> pre_drop_db_observers;
+  multimap<unsigned int, Event *> post_drop_db_observers;
   
   public:
   
@@ -412,23 +443,23 @@ class SessionEventObservers: public EventObservers
 /* Each event plugin registers itself with a shared table's event observer
  * for all events it is interested in regarding that table.
  */ 
-  bool add_observer(Event *observer, enum Event::EventType event)
+  bool add_observer(Event *observer, enum Event::EventType event, int position)
   {
     switch(event) {
       case Event::PRE_CREATE_DATABASE:
-        pre_create_db_observers.push_back(observer);
+        add_event(pre_create_db_observers, event, observer, position);
         break;
       
       case Event::POST_CREATE_DATABASE:
-        post_create_db_observers.push_back(observer);
+        add_event(post_create_db_observers, event, observer, position);
         break;
 
       case Event::PRE_DROP_DATABASE:
-        pre_drop_db_observers.push_back(observer);
+        add_event(pre_drop_db_observers, event, observer, position);
         break;
       
       case Event::POST_DROP_DATABASE:
-        post_drop_db_observers.push_back(observer);
+        add_event(post_drop_db_observers, event, observer, position);
         break;
 
       default:
@@ -452,7 +483,7 @@ class SessionEventObservers: public EventObservers
   }
   
    /* Get the observer list for an event type. */
-  vector<Event *> *getObservers(enum Event::EventType event)
+  multimap<unsigned int, Event *> *getObservers(enum Event::EventType event)
   {
     switch(event) {
       case Event::PRE_CREATE_DATABASE:
@@ -536,27 +567,26 @@ void Event::deregisterSessionEventsDo(Session *session)
   
 /* Event observer list iterator: */
 //----------
-class EventIterate : public unary_function<Event *, bool>
+class EventIterate : public unary_function<pair<unsigned int, Event *>, bool>
 {
   EventData *data;
   
 public:
   EventIterate(EventData *data_arg) :
-    unary_function<Event *, bool>(),
+    unary_function<pair<unsigned int, Event *>, bool>(),
     data(data_arg)
     {}
 
   inline result_type operator()(argument_type handler)
   {
-    bool result = handler->observeEvent(data);
-
+    bool result = handler.second->observeEvent(data);
     if (result)
     {
       /* TRANSLATORS: The leading word "Event" is the name
          of the plugin api, and so should not be translated. */
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("EventIterate event handler '%s' failed for event '%s'"),
-                    handler->getName().c_str(), handler->eventName(data->event));
+                    handler.second->getName().c_str(), handler.second->eventName(data->event));
       
       if (data->cannot_fail)
         result = false;
@@ -568,7 +598,7 @@ public:
 
 bool Event::callEventObservers(EventData *data)
 {
-  vector<Event *> *observers;
+  multimap<unsigned int, Event *> *observers;
  
   switch (data->event_classs) 
   {
@@ -610,7 +640,7 @@ bool Event::callEventObservers(EventData *data)
     return false; // Nobody was interested in the event. :(
 
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<Event *>::iterator iter=
+  multimap<unsigned int, Event *>::iterator iter=
     find_if(observers->begin(), observers->end(),
             EventIterate(data)); 
   /* If iter is == end() here, that means that all of the plugins returned
