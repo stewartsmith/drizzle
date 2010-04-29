@@ -1149,6 +1149,11 @@ void XTDataLogBuffer::dlb_exit(XTThreadPtr self)
 xtBool XTDataLogBuffer::dlb_close_log(XTThreadPtr thread)
 {
 	if (dlb_data_log) {
+		if (dlb_data_log->dlf_log_file) {
+			if (!dl_write_log_header(dlb_data_log, dlb_data_log->dlf_log_file, 0, thread))
+				return FAILED;
+		}
+
 		/* Flush and commit the data in the old log: */
 		if (!dlb_flush_log(TRUE, thread))
 			return FAILED;
@@ -1204,7 +1209,7 @@ xtBool XTDataLogBuffer::dlb_flush_log(xtBool commit, XTThreadPtr thread)
 		if (!xt_pwrite_file(dlb_data_log->dlf_log_file, dlb_buffer_offset, dlb_buffer_len, dlb_log_buffer, &thread->st_statistics.st_data, thread))
 			return FAILED;
 #ifdef DEBUG
-		if (dlb_buffer_offset + dlb_buffer_len > dlb_max_write_offset)
+		if (dlb_buffer_offset + (xtLogOffset) dlb_buffer_len > dlb_max_write_offset)
 			dlb_max_write_offset = dlb_buffer_offset + (xtLogOffset) dlb_buffer_len;
 #endif
 		dlb_buffer_len = 0;

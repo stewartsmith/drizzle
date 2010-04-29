@@ -106,6 +106,8 @@ struct XTOpenTable;
 struct XTIndex;
 struct XTIndBlock;
 struct XTTable;
+struct XTThread;
+class Field;
 
 /*
  * INDEX ROLLBACK

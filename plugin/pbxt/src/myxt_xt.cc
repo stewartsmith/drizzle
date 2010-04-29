@@ -312,6 +312,11 @@ xtPublic u_int myxt_create_key_from_row(XTIndexPtr ind, xtWord1 *key, xtWord1 *r
                memset((byte*) key, 0,(size_t) (ind->mi_key_size) );
 #endif
 
+#ifdef HAVE_valgrind
+       if (ind->mi_fix_key)
+               memset((byte*) key, 0,(size_t) (ind->mi_key_size) );
+#endif
+
 	start = key;
  	for (u_int i=0; i<ind->mi_seg_count; i++, keyseg++)
 	{
@@ -2005,10 +2010,7 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 {
 	THD			*thd = current_thd;
 	char		path_buffer[PATH_MAX];
-	char		*table_file_name;
-#ifdef DRIZZLED
-	char		tab_name[XT_IDENTIFIER_NAME_SIZE];
-#endif
+	char		*table_name;
 	char		database_name[XT_IDENTIFIER_NAME_SIZE];
 	char		*ptr;
 	size_t		size;
@@ -2032,16 +2034,17 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 	 * have .frm files!!
 	 */
 	xt_strcpy(PATH_MAX, path_buffer, tab_path->ps_path);
-	table_file_name = xt_last_name_of_path(path_buffer);
-
-	if ((ptr = strstr(tab_name, "#P#")))
+	table_name = xt_last_name_of_path(path_buffer);
+#ifndef DRIZZLED
+	if ((ptr = strstr(table_name, "#P#")))
 		*ptr = 0;
+#endif
 
 	xt_2nd_last_name_of_path(XT_IDENTIFIER_NAME_SIZE, database_name, path_buffer);
 
 	size = sizeof(TABLE) + sizeof(TABLE_SHARE) + 
 		strlen(path_buffer) + 1 +
-		strlen(database_name) + 1 + strlen(table_file_name) + 1;
+		strlen(database_name) + 1 + strlen(table_name) + 1;
 	if (!(buffer = (char *) xt_malloc(self, size)))
 		return NULL;
 	table = (TABLE *) buffer;
@@ -2056,7 +2059,7 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 	strcpy(db_name, database_name);
 	buffer += strlen(database_name) + 1;
 	name = buffer;
-	strcpy(name, table_file_name);
+	strcpy(name, table_name);
 
 	/* Required to call 'open_table_from_share'! */
 	LEX *old_lex, new_lex;
@@ -2720,6 +2723,20 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 		}
 	}
 
+	/* Ensure that handle data record size is big enough to
+	 * include the extended record reference, in the case of
+	 * variable length rows
+	 */
+	if (!dic_rec_fixed) {
+		if (dic_rec_size < offsetof(XTTabRecExtDRec, re_data))
+			dic_rec_size = offsetof(XTTabRecExtDRec, re_data);
+	}
+#ifdef DEBUG
+	else {
+		ASSERT_NS(dic_rec_size > offsetof(XTTabRecFix, rf_data));
+	}
+#endif
+
 	if (!dic->dic_rec_size) {
 		dic->dic_rec_size = dic_rec_size;
 		dic->dic_rec_fixed = dic_rec_fixed;
@@ -3309,7 +3326,7 @@ xtPublic XTThreadPtr myxt_get_self()
  *
  */
 
-#ifdef DRI_IS
+#ifndef DRIZZLED
 static int mx_put_record(THD *thd, TABLE *table)
 {
 	return schema_table_store_record(thd, table);
@@ -3369,7 +3386,7 @@ xtPublic int myxt_statistics_fill_table(XTThreadPtr self, void *th, void *ta, vo
 
 	return err;
 }
-#endif // DRI_IS
+#endif // !DRIZZLED
 
 xtPublic void myxt_get_status(XTThreadPtr self, XTStringBufferPtr strbuf)
 {

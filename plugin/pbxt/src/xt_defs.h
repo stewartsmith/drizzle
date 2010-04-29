@@ -942,7 +942,7 @@ class Session;
 #define MX_ULONG_T							ulong
 #define MX_ULONGLONG_T						ulonglong
 #define MX_LONGLONG_T						longlong
-#define MX_CHARSET_INFO						CHARSET_INFO
+#define MX_CHARSET_INFO						struct charset_info_st
 #define MX_CONST_CHARSET_INFO				struct charset_info_st			
 #define MX_CONST							
 #define MX_BITMAP							MY_BITMAP
