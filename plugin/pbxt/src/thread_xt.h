@@ -264,7 +264,7 @@ class XTTask {
 		tk_notify_threads.pl_exit();
 	}
 
-	virtual void	tk_init(struct XTThread *) { }
+	virtual void	tk_init(struct XTThread *XT_UNUSED(self)) { }
 	virtual void	tk_exit() { delete this; }
 	virtual void	tk_lock() { }
 	virtual void	tk_unlock() { }

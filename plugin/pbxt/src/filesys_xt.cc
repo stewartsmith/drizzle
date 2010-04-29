@@ -1281,7 +1281,7 @@ xtPublic xtBool xt_set_eof_file(XTThreadPtr self, XTOpenFilePtr of, off_t offset
 	return OK;
 }
 
-static xtBool fs_rewrite_file(XTOpenFilePtr of, off_t offset, size_t size, void *data, XTIOStatsPtr stat, XTThreadPtr)
+static xtBool fs_rewrite_file(XTOpenFilePtr of, off_t offset, size_t size, void *data, XTIOStatsPtr stat, XTThreadPtr XT_UNUSED(thread))
 {
 #ifdef XT_TIME_DISK_WRITES
 	xtWord8		s;
@@ -1979,6 +1979,7 @@ xtPublic xtBool xt_pread_file_4(XTOpenFilePtr of, off_t offset, xtWord4 *value, 
 		}
 		case XT_FT_HEAP: {
 			XTFileHeapPtr	fh = of->x.of_heap;
+
 			thd_id = thread->t_id;
 
 #ifdef XT_TIME_DISK_READS

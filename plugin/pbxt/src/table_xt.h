@@ -191,7 +191,7 @@ typedef struct XTTableFormat {
 	XTDiskValue2			tf_tab_unused_2;						/* Unused, set to zero */
 	XTDiskValue4			tf_rec_size_4;							/* The maximum size of records in the table. */
 	XTDiskValue1			tf_rec_fixed_1;							/* Set to 1 if this table contains fixed length records. */
-	XTDiskValue1			tf_reserved_1;
+	XTDiskValue1			tf_reserved_1;							/* - */
 	XTDiskValue8			tf_min_auto_inc_8;						/* This is the minimum auto-increment value. */
 	xtWord1					tf_reserved[64];						/* Reserved, set to 0. */
 	char					tf_definition[XT_VAR_LENGTH];			/* A cstring, currently it only contains the foreign key information. */

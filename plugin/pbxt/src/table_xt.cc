@@ -537,8 +537,8 @@ xtPublic xtBool xt_describe_tables_next(XTThreadPtr self, XTTableDescPtr td)
 				else if (strcmp(name, "type") == 0) {
 					u_long lvalue = 0;
 
-                                        sscanf(value, "%lu", &lvalue);
-                                        td->td_tab_type = (xtWord1) lvalue;
+					sscanf(value, "%lu", &lvalue);
+					td->td_tab_type = (xtWord1) lvalue;
 				} 
 				else if (strcmp(name, "[table]") == 0)
 					break;
@@ -1300,7 +1300,7 @@ static int tab_new_handle(XTThreadPtr self, XTTableHPtr *r_tab, XTDatabaseHPtr d
 	XTOpenFilePtr	of_rec, of_ind;
 	XTTableEntryPtr	te_ptr;
 	size_t			tab_format_offset;
-	size_t			tab_head_size= 0;
+	size_t			tab_head_size = 0;
 
 	enter_();
 
@@ -1573,7 +1573,7 @@ static void tab_delete_table_files(XTThreadPtr self, XTPathStrPtr tab_name, xtTa
 	}
 }
 
-static void tab_init_row_file(XTThreadPtr self, XTOpenFilePtr of_row, XTTableHPtr tab, XTDictionaryPtr)
+static void tab_init_row_file(XTThreadPtr self, XTOpenFilePtr of_row, XTTableHPtr tab, XTDictionaryPtr XT_UNUSED(dic))
 {
 	XTTabRowHeadDRec	row_head;
 
@@ -5880,7 +5880,7 @@ xtPublic void xt_tab_set_table_repair_pending(XTTableHPtr tab)
  * EXTENDED DATA FOR RAM TABLES
  */
 
-xtPublic xtBool xt_tab_get_ext_slot(XTTableHPtr tab, xtLogID *log_id, xtLogOffset *log_offset, size_t /*req_size*/)
+xtPublic xtBool xt_tab_get_ext_slot(XTTableHPtr tab, xtLogID *log_id, xtLogOffset *log_offset, size_t XT_UNUSED(req_size))
 {
 	size_t new_slot;
 
