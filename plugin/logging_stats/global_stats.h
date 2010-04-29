@@ -25,70 +25,30 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
+ *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
-#define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
+#ifndef PLUGIN_LOGGING_STATS_GLOBAL_STATS_H
+#define PLUGIN_LOGGING_STATS_GLOBAL_STATS_H
 
-#include "scoreboard_slot.h"
-#include "cumulative_stats.h"
 #include "user_commands.h"
-#include "scoreboard.h"
-
-#include <drizzled/atomics.h>
-#include <drizzled/enum.h>
-#include <drizzled/session.h>
-#include <drizzled/plugin/logging.h>
+#include "scoreboard_slot.h"
 
 #include <string>
-#include <vector>
 
-class LoggingStats: public drizzled::plugin::Logging
+class GlobalStats 
 {
 public:
+  GlobalStats(); 
 
-  LoggingStats(std::string name_arg);
+  ~GlobalStats(); 
 
-  ~LoggingStats();
+  UserCommands* getUserCommands();
 
-  virtual bool post(drizzled::Session *session);
-
-  virtual bool postEnd(drizzled::Session *session);
-
-  bool isEnabled() const
-  {
-    return is_enabled;
-  }
-
-  void enable()
-  {
-    is_enabled= true;
-  }
-
-  void disable()
-  {
-    is_enabled= false;
-  }
-
-  Scoreboard *getCurrentScoreboard()
-  {          
-    return current_scoreboard;
-  }
-
-  CumulativeStats *getCumulativeStats()
-  {
-    return cumulative_stats;
-  }
+  void updateUserCommands(ScoreboardSlot *scoreboard_slot);
 
 private:
-  static const int32_t UNINITIALIZED= -1;
-
-  Scoreboard *current_scoreboard;
-
-  CumulativeStats *cumulative_stats;
-
-  drizzled::atomic<bool> is_enabled;
-
-  void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
+  UserCommands *user_commands;
 };
-#endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */
+ 
+#endif /* PLUGIN_LOGGING_STATS_GLOBAL_STATS_H */
