@@ -16,6 +16,61 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+/* innobase_get_int_col_max_value() comes from ha_innodb.cc which is under
+   the following license and Copyright */
+
+/*****************************************************************************
+
+Copyright (c) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
+Copyright (c) 2008, 2009 Google Inc.
+
+Portions of this file contain modifications contributed and copyrighted by
+Google, Inc. Those modifications are gratefully acknowledged and are described
+briefly in the InnoDB documentation. The contributions by Google are
+incorporated with their permission, and subject to the conditions contained in
+the file COPYING.Google.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+Place, Suite 330, Boston, MA 02111-1307 USA
+
+*****************************************************************************/
+/***********************************************************************
+
+Copyright (c) 1995, 2009, Innobase Oy. All Rights Reserved.
+Copyright (c) 2009, Percona Inc.
+
+Portions of this file contain modifications contributed and copyrighted
+by Percona Inc.. Those modifications are
+gratefully acknowledged and are described briefly in the InnoDB
+documentation. The contributions by Percona Inc. are incorporated with
+their permission, and subject to the conditions contained in the file
+COPYING.Percona.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+***********************************************************************/
+
+
 #include "config.h"
 #include <drizzled/table.h>
 #include <drizzled/error.h>
@@ -42,17 +97,19 @@
 #include "embedded_innodb_engine.h"
 
 #include <drizzled/field.h>
+#include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
 #include <drizzled/session.h>
 
 using namespace std;
 using namespace google;
 using namespace drizzled;
 
-int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
+int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
                                                 const drizzled::KEY *key_info,
                                                 const unsigned char *key_ptr,
                                                 uint32_t key_len);
+static void store_key_value_from_innodb(KEY *key_info, unsigned char* ref, int ref_len, const unsigned char *record);
 
 #define EMBEDDED_INNODB_EXT ".EID"
 
@@ -73,6 +130,7 @@ public:
                                                   HTON_CAN_INDEX_BLOBS |
                                                   HTON_AUTO_PART_KEY |
                                                   HTON_REQUIRE_PRIMARY_KEY |
+                                                  HTON_PARTIAL_COLUMN_READ |
                                                   HTON_HAS_DOES_TRANSACTIONS)
   {
     table_definition_ext= EMBEDDED_INNODB_EXT;
@@ -134,13 +192,11 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
-private:
   virtual int doStartTransaction(Session *session,
                                  start_transaction_option_t options);
   virtual void doStartStatement(Session *session);
   virtual void doEndStatement(Session *session);
 
-public:
   virtual int doSetSavepoint(Session* session,
                                  drizzled::NamedSavepoint &savepoint);
   virtual int doRollbackToSavepoint(Session* session,
@@ -156,6 +212,7 @@ public:
   void addOpenTable(const std::string &table_name, EmbeddedInnoDBTableShare *);
   void deleteOpenTable(const std::string &table_name);
 
+  uint64_t getInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor);
 };
 
 static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
@@ -296,6 +353,59 @@ void EmbeddedInnoDBEngine::deleteOpenTable(const string &table_name)
 
 static pthread_mutex_t embedded_innodb_mutex= PTHREAD_MUTEX_INITIALIZER;
 
+uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
+{
+  uint64_t nr;
+  int error;
+
+  (void) extra(HA_EXTRA_KEYREAD);
+  table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
+  index_init(table->s->next_number_index, 1);
+  if (table->s->next_number_keypart == 0)
+  {						// Autoincrement at key-start
+    error=index_last(table->record[1]);
+  }
+  else
+  {
+    unsigned char key[MAX_KEY_LENGTH];
+    key_copy(key, table->record[0],
+             table->key_info + table->s->next_number_index,
+             table->s->next_number_key_offset);
+    error= index_read_map(table->record[1], key,
+                          make_prev_keypart_map(table->s->next_number_keypart),
+                          HA_READ_PREFIX_LAST);
+  }
+
+  if (error)
+    nr=1;
+  else
+    nr= ((uint64_t) table->found_next_number_field->
+         val_int_offset(table->s->rec_buff_length)+1);
+  index_end();
+  (void) extra(HA_EXTRA_NO_KEYREAD);
+
+  if (table->s->getTableProto()->options().auto_increment_value() > nr)
+    nr= table->s->getTableProto()->options().auto_increment_value();
+
+  return nr;
+}
+
+EmbeddedInnoDBTableShare::EmbeddedInnoDBTableShare(const char* name, uint64_t initial_auto_increment_value)
+ : use_count(0)
+{
+  table_name.assign(name);
+  auto_increment_value.fetch_and_store(initial_auto_increment_value);
+}
+
+uint64_t EmbeddedInnoDBEngine::getInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor)
+{
+  doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
+  uint64_t initial_auto_increment_value= cursor->getInitialAutoIncrementValue();
+  doCommit(current_session, true);
+
+  return initial_auto_increment_value;
+}
+
 EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name, int *rc)
 {
   pthread_mutex_lock(&embedded_innodb_mutex);
@@ -305,7 +415,11 @@ EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name
 
   if (!share)
   {
-    share= new EmbeddedInnoDBTableShare(table_name);
+    uint64_t initial_auto_increment_value= 0;
+    if (table->found_next_number_field)
+      initial_auto_increment_value= a_engine->getInitialAutoIncrementValue(this);
+
+    share= new EmbeddedInnoDBTableShare(table_name, initial_auto_increment_value);
 
     if (share == NULL)
     {
@@ -400,20 +514,40 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
   return to;
 }
 
+void EmbeddedInnoDBCursor::get_auto_increment(uint64_t, //offset,
+                                              uint64_t, //increment,
+                                              uint64_t, //nb_dis,
+                                              uint64_t *first_value,
+                                              uint64_t *nb_reserved_values)
+{
+fetch:
+  *first_value= share->auto_increment_value.fetch_and_increment();
+  if (*first_value == 0)
+  {
+    /* if it's zero, then we skip it... why? because of ass.
+       set auto-inc to -1 and the sequence is:
+       -1, 1.
+       Zero is still "magic".
+    */
+    share->auto_increment_value.compare_and_swap(1, 0);
+    goto fetch;
+  }
+  *nb_reserved_values= 1;
+}
+
 static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
 {
   str->reserve(identifier.getSchemaName().length() + identifier.getTableName().length() + 1);
-  str->append(identifier.getPath().c_str()+2);
-/*
+//  str->append(identifier.getPath().c_str()+2);
   str->assign(identifier.getSchemaName());
   str->append("/");
   str->append(identifier.getTableName());
-*/
 }
 
 EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
                            TableShare &table_arg)
-  :Cursor(engine_arg, table_arg)
+  :Cursor(engine_arg, table_arg),
+   write_can_replace(false)
 { }
 
 int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
@@ -468,6 +602,34 @@ static int create_table_add_field(ib_tbl_sch_t schema,
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 8);
     break;
+  case message::Table::Field::DOUBLE:
+  case message::Table::Field::DATETIME:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_DOUBLE,
+                                  column_attr, 0, sizeof(double));
+    break;
+  case message::Table::Field::ENUM:
+  {
+    message::Table::Field::EnumerationValues field_options=
+      field.enumeration_values();
+
+    if (field_options.field_value_size() <= 256)
+      *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                    column_attr, 0, 1);
+    else if (field_options.field_value_size() > 256)
+      *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                    column_attr, 0, 2);
+    else
+    {
+      assert(field_options.field_value_size() < (int)0x10000);
+    }
+    break;
+  }
+  case message::Table::Field::DATE:
+  case message::Table::Field::TIMESTAMP:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
+                                  column_attr, 0, 4);
+    break;
+
   default:
     my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "Column Type");
     return(HA_ERR_UNSUPPORTED);
@@ -565,6 +727,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
       return field_err;
   }
 
+  bool has_primary= false;
   for (int indexnr= 0; indexnr < table_message.indexes_size() ; indexnr++)
   {
     message::Table::Index *index = table_message.mutable_indexes(indexnr);
@@ -578,6 +741,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
     if (index->is_primary())
     {
+      has_primary= true;
       innodb_err= ib_index_schema_set_clustered(innodb_index);
       if (innodb_err != DB_SUCCESS)
         goto schema_error;
@@ -601,6 +765,14 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
       if (innodb_err != DB_SUCCESS)
         goto schema_error;
     }
+
+    if (! has_primary && index->is_unique())
+    {
+      innodb_err= ib_index_schema_set_clustered(innodb_index);
+      if (innodb_err != DB_SUCCESS)
+        goto schema_error;
+    }
+
   }
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
@@ -1155,7 +1327,6 @@ const char *EmbeddedInnoDBCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-
 static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
 {
   int colnr= 0;
@@ -1163,6 +1334,9 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
 
   for (Field **field= fields; *field; field++, colnr++)
   {
+    if (! (**field).isWriteSet() && (**field).is_null())
+      continue;
+
     if ((**field).is_null())
     {
       err= ib_col_set_value(tuple, colnr, NULL, IB_SQL_NULL);
@@ -1181,6 +1355,22 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
       (**field).val_str(&str);
       err= ib_col_set_value(tuple, colnr, str.ptr(), str.length());
     }
+    else if ((**field).type() == DRIZZLE_TYPE_ENUM)
+    {
+      if ((*field)->data_length() == 1)
+        err= ib_tuple_write_u8(tuple, colnr, *((ib_u8_t*)(*field)->ptr));
+      else if ((*field)->data_length() == 2)
+        err= ib_tuple_write_u16(tuple, colnr, *((ib_u16_t*)(*field)->ptr));
+      else
+      {
+        assert((*field)->data_length() <= 2);
+      }
+    }
+    else if ((**field).type() == DRIZZLE_TYPE_DATE)
+    {
+      (**field).setReadSet();
+      err= ib_tuple_write_u32(tuple, colnr, (*field)->val_int());
+    }
     else
     {
       err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
@@ -1192,11 +1382,46 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
   return err;
 }
 
-int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *)
+static uint64_t innobase_get_int_col_max_value(const Field* field)
 {
-  if (table->next_number_field)
-    update_auto_increment();
+  uint64_t	max_value = 0;
 
+  switch(field->key_type()) {
+    /* TINY */
+  case HA_KEYTYPE_BINARY:
+    max_value = 0xFFULL;
+    break;
+    /* MEDIUM */
+  case HA_KEYTYPE_UINT24:
+    max_value = 0xFFFFFFULL;
+    break;
+    /* LONG */
+  case HA_KEYTYPE_ULONG_INT:
+    max_value = 0xFFFFFFFFULL;
+    break;
+  case HA_KEYTYPE_LONG_INT:
+    max_value = 0x7FFFFFFFULL;
+    break;
+    /* BIG */
+  case HA_KEYTYPE_ULONGLONG:
+    max_value = 0xFFFFFFFFFFFFFFFFULL;
+    break;
+  case HA_KEYTYPE_LONGLONG:
+    max_value = 0x7FFFFFFFFFFFFFFFULL;
+    break;
+  case HA_KEYTYPE_DOUBLE:
+    /* We use the maximum as per IEEE754-2008 standard, 2^53 */
+    max_value = 0x20000000000000ULL;
+    break;
+  default:
+    assert(false);
+  }
+
+  return(max_value);
+}
+
+int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
+{
   ib_err_t err;
   int ret= 0;
 
@@ -1207,14 +1432,98 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *)
   ib_cursor_attach_trx(cursor, transaction);
 
   err= ib_cursor_first(cursor);
+  if (current_session->lex->sql_command == SQLCOM_CREATE_TABLE
+      && err == DB_MISSING_HISTORY)
+  {
+    /* See https://bugs.launchpad.net/drizzle/+bug/556978
+     *
+     * In CREATE SELECT, transaction is started in ::store_lock
+     * at the start of the statement, before the table is created.
+     * This means the table doesn't exist in our snapshot,
+     * and we get a DB_MISSING_HISTORY error on ib_cursor_first().
+     * The way to get around this is to here, restart the transaction
+     * and continue.
+     *
+     * yuck.
+     */
+
+    EmbeddedInnoDBEngine *innodb_engine= static_cast<EmbeddedInnoDBEngine*>(engine);
+    err= ib_cursor_reset(cursor);
+    innodb_engine->doCommit(current_session, true);
+    innodb_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
+    transaction= *get_trx(ha_session());
+    assert(err == DB_SUCCESS);
+    ib_cursor_attach_trx(cursor, transaction);
+    err= ib_cursor_first(cursor);
+  }
+
   assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
+
+
+  if (table->next_number_field)
+  {
+    update_auto_increment();
+
+    uint64_t temp_auto= table->next_number_field->val_int();
+
+    if (temp_auto <= innobase_get_int_col_max_value(table->next_number_field))
+    {
+      while (true)
+      {
+        uint64_t fetched_auto= share->auto_increment_value;
+
+        if (temp_auto >= fetched_auto)
+        {
+          uint64_t store_value= temp_auto+1;
+          if (store_value == 0)
+            store_value++;
+
+          if (share->auto_increment_value.compare_and_swap(store_value, fetched_auto) == fetched_auto)
+            break;
+        }
+        else
+          break;
+      }
+    }
+
+  }
 
   write_row_to_innodb_tuple(table->field, tuple);
 
   err= ib_cursor_insert_row(cursor, tuple);
 
   if (err == DB_DUPLICATE_KEY)
-    ret= HA_ERR_FOUND_DUPP_KEY;
+  {
+    if (write_can_replace)
+    {
+      store_key_value_from_innodb(table->key_info + table->s->primary_key,
+                                  ref, ref_length, record);
+
+      ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
+
+      fill_ib_search_tpl_from_drizzle_key(search_tuple,
+                                          table->key_info + 0,
+                                          ref, ref_length);
+
+      int res;
+      err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
+      assert(err == DB_SUCCESS);
+      ib_tuple_delete(search_tuple);
+
+      tuple= ib_tuple_clear(tuple);
+      err= ib_cursor_delete_row(cursor);
+
+      err= ib_cursor_first(cursor);
+      assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
+
+      write_row_to_innodb_tuple(table->field, tuple);
+
+      err= ib_cursor_insert_row(cursor, tuple);
+      assert(err==DB_SUCCESS); // probably be nice and process errors
+    }
+    else
+      ret= HA_ERR_FOUND_DUPP_KEY;
+  }
 
   tuple= ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
@@ -1223,8 +1532,8 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *)
   return ret;
 }
 
-int EmbeddedInnoDBCursor::update_row(const unsigned char * ,
-                                     unsigned char * )
+int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
+                                         unsigned char *)
 {
   ib_tpl_t update_tuple;
   ib_err_t err;
@@ -1237,19 +1546,26 @@ int EmbeddedInnoDBCursor::update_row(const unsigned char * ,
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
+  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+    table->timestamp_field->set_time();
+
   write_row_to_innodb_tuple(table->field, update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
   ib_tuple_delete(update_tuple);
+  ib_err_t err2= ib_cursor_next(cursor);
+  (void)err2;
 
   if (err == DB_SUCCESS)
     return 0;
+  else if (err == DB_DUPLICATE_KEY)
+    return HA_ERR_FOUND_DUPP_KEY;
   else
     return -1;
 }
 
-int EmbeddedInnoDBCursor::delete_row(const unsigned char *)
+int EmbeddedInnoDBCursor::doDeleteRecord(const unsigned char *)
 {
   ib_err_t err;
 
@@ -1297,6 +1613,8 @@ int EmbeddedInnoDBCursor::delete_all_rows(void)
     return HA_ERR_GENERIC;
   }
 
+  share->auto_increment_value.fetch_and_store(1);
+
   err= ib_cursor_truncate(&cursor, &id);
   if (err != DB_SUCCESS)
     goto err;
@@ -1319,7 +1637,15 @@ err:
 
 int EmbeddedInnoDBCursor::rnd_init(bool)
 {
-  ib_trx_t transaction= *get_trx(ha_session());
+  ib_trx_t transaction;
+
+  if(*get_trx(current_session) == NULL)
+  {
+    EmbeddedInnoDBEngine *innodb_engine= static_cast<EmbeddedInnoDBEngine*>(engine);
+    innodb_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
+  }
+
+  transaction= *get_trx(ha_session());
 
   ib_cursor_attach_trx(cursor, transaction);
 
@@ -1332,9 +1658,10 @@ int EmbeddedInnoDBCursor::rnd_init(bool)
   return(0);
 }
 
-int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
+int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
 {
   ib_err_t err;
+  ptrdiff_t row_offset= buf - table->record[0];
 
   err= ib_cursor_read_row(cursor, tuple);
 
@@ -1347,6 +1674,8 @@ int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
   {
     if (! (**field).isReadSet())
       continue;
+
+    (**field).move_field_offset(row_offset);
 
     (**field).setWriteSet();
 
@@ -1365,22 +1694,31 @@ int read_row_from_innodb(ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
                       length,
                       &my_charset_bin);
     }
+    else if ((**field).type() == DRIZZLE_TYPE_DATE)
+    {
+      uint32_t date_read;
+      err= ib_tuple_read_u32(tuple, colnr, &date_read);
+      (*field)->store(date_read);
+    }
     else
     {
       ib_col_copy_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
     }
+
+    (**field).move_field_offset(-row_offset);
+
   }
 
   return 0;
 }
 
-int EmbeddedInnoDBCursor::rnd_next(unsigned char *)
+int EmbeddedInnoDBCursor::rnd_next(unsigned char *buf)
 {
   ib_err_t err;
   int ret;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
 
   err= ib_cursor_next(cursor);
 
@@ -1398,7 +1736,7 @@ int EmbeddedInnoDBCursor::rnd_end()
   return 0;
 }
 
-int EmbeddedInnoDBCursor::rnd_pos(unsigned char *, unsigned char *pos)
+int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ib_err_t err;
   int res;
@@ -1414,7 +1752,7 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *, unsigned char *pos)
   ib_tuple_delete(search_tuple);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
 
   err= ib_cursor_next(cursor);
 
@@ -1609,6 +1947,16 @@ static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
 
       buff+= key_part->length;
     }
+    else if (field->type() == DRIZZLE_TYPE_DATE)
+    {
+      uint32_t date_int= 0;
+      char *date_ptr= (char*)&date_int;
+      date_ptr[0]= buff[0];
+      date_ptr[1]= buff[1];
+      date_ptr[2]= buff[2];
+      err= ib_col_set_value(search_tuple, fieldnr, &date_int, 4);
+      buff+= key_part->length;
+    }
     // FIXME: BLOBs
     else
     {
@@ -1641,7 +1989,6 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
   ib_err_t err;
   int ret;
   ib_srch_mode_t search_mode;
-  (void)buf;
 
   search_mode= ha_rkey_function_to_ib_srch_mode(find_flag);
 
@@ -1661,13 +2008,13 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
     return HA_ERR_END_OF_FILE;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
   err= ib_cursor_next(cursor);
 
   return 0;
 }
 
-int EmbeddedInnoDBCursor::index_next(unsigned char *)
+int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
 
@@ -1675,7 +2022,7 @@ int EmbeddedInnoDBCursor::index_next(unsigned char *)
     return HA_ERR_END_OF_FILE;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
   next_innodb_error= ib_cursor_next(cursor);
 
   return ret;
@@ -1688,7 +2035,7 @@ int EmbeddedInnoDBCursor::index_end()
   return rnd_end();
 }
 
-int EmbeddedInnoDBCursor::index_prev(unsigned char *)
+int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -1696,7 +2043,7 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *)
   if (active_index == 0)
   {
     tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(cursor, tuple, table);
+    ret= read_row_from_innodb(buf, cursor, tuple, table);
     err= ib_cursor_prev(cursor);
   }
 
@@ -1704,7 +2051,7 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *)
 }
 
 
-int EmbeddedInnoDBCursor::index_first(unsigned char *)
+int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -1719,14 +2066,14 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *)
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table);
   next_innodb_error= ib_cursor_next(cursor);
 
   return ret;
 }
 
 
-int EmbeddedInnoDBCursor::index_last(unsigned char *)
+int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
@@ -1743,11 +2090,28 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *)
   if (active_index == 0)
   {
     tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(cursor, tuple, table);
+    ret= read_row_from_innodb(buf, cursor, tuple, table);
     err= ib_cursor_prev(cursor);
   }
 
   return ret;
+}
+
+int EmbeddedInnoDBCursor::extra(enum ha_extra_function operation)
+{
+  switch (operation)
+  {
+  case HA_EXTRA_WRITE_CAN_REPLACE:
+    write_can_replace= true;
+    break;
+  case HA_EXTRA_WRITE_CANNOT_REPLACE:
+    write_can_replace= false;
+    break;
+  default:
+    break;
+  }
+
+  return 0;
 }
 
 static int create_table_message_table()
