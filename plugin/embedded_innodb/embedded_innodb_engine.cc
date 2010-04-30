@@ -1639,13 +1639,9 @@ int EmbeddedInnoDBCursor::rnd_init(bool)
 {
   ib_trx_t transaction;
 
-  if(*get_trx(current_session) == NULL)
-  {
-    EmbeddedInnoDBEngine *innodb_engine= static_cast<EmbeddedInnoDBEngine*>(engine);
-    innodb_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
-  }
-
   transaction= *get_trx(ha_session());
+
+  assert(transaction != NULL);
 
   ib_cursor_attach_trx(cursor, transaction);
 
