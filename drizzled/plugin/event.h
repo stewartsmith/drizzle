@@ -92,7 +92,7 @@ public:
   virtual void registerSchemaEvents(const std::string */*db*/, EventObservers *) {}
   virtual void registerSessionEvents(Session *, EventObservers *) {}
 
-  virtual bool observeEvent(EventData *) = 0;
+  virtual bool observeEvent(EventData *)= 0;
 
   /*==========================================================*/
   /* Static access methods called by drizzle: */
@@ -115,7 +115,7 @@ public:
    * but supply a systen variable so that it can be set at runtime so that the user can
    * decide which event should be called first.
    */
-  void registerEvent(EventObservers *observers, EventType event, int position = 0); 
+  void registerEvent(EventObservers *observers, EventType event, int position= 0); 
 
   /*==========================================================*/
   /* Called from drizzle to register all events for all event plugins 
@@ -182,48 +182,47 @@ public:
   {
     switch(event) 
     {
-      case PRE_DROP_TABLE:
-        return "PRE_DROP_TABLE";
+    case PRE_DROP_TABLE:
+      return "PRE_DROP_TABLE";
+    
+    case POST_DROP_TABLE:
+      return "POST_DROP_TABLE";
+    
+    case PRE_RENAME_TABLE:
+      return "PRE_RENAME_TABLE";
       
-      case POST_DROP_TABLE:
-        return "POST_DROP_TABLE";
+    case POST_RENAME_TABLE:
+      return "POST_RENAME_TABLE";
       
-      case PRE_RENAME_TABLE:
-        return "PRE_RENAME_TABLE";
-        
-      case POST_RENAME_TABLE:
-        return "POST_RENAME_TABLE";
-        
-      case PRE_WRITE_ROW:
-         return "PRE_WRITE_ROW";
-        
-      case POST_WRITE_ROW:
-         return "POST_WRITE_ROW";
-        
-      case PRE_UPDATE_ROW:
-        return "PRE_UPDATE_ROW";
-                 
-      case POST_UPDATE_ROW:
-        return "POST_UPDATE_ROW";
-        
-      case PRE_DELETE_ROW:
-        return "PRE_DELETE_ROW";
+    case PRE_WRITE_ROW:
+       return "PRE_WRITE_ROW";
+      
+    case POST_WRITE_ROW:
+       return "POST_WRITE_ROW";
+      
+    case PRE_UPDATE_ROW:
+      return "PRE_UPDATE_ROW";
+               
+    case POST_UPDATE_ROW:
+      return "POST_UPDATE_ROW";
+      
+    case PRE_DELETE_ROW:
+      return "PRE_DELETE_ROW";
 
-      case POST_DELETE_ROW:
-        return "POST_DELETE_ROW";
- 
-      case PRE_CREATE_DATABASE:
-        return "PRE_CREATE_DATABASE";
+    case POST_DELETE_ROW:
+      return "POST_DELETE_ROW";
 
-      case POST_CREATE_DATABASE:
-        return "POST_CREATE_DATABASE";
+    case PRE_CREATE_DATABASE:
+      return "PRE_CREATE_DATABASE";
 
-      case PRE_DROP_DATABASE:
-        return "PRE_DROP_DATABASE";
+    case POST_CREATE_DATABASE:
+      return "POST_CREATE_DATABASE";
 
-      case POST_DROP_DATABASE:
-        return "POST_DROP_DATABASE";
+    case PRE_DROP_DATABASE:
+      return "PRE_DROP_DATABASE";
 
+    case POST_DROP_DATABASE:
+      return "POST_DROP_DATABASE";
    }
     
     return "Unknown";
@@ -235,7 +234,7 @@ public:
 //======================================
 class EventData
 {
-  public:
+public:
   Event::EventType event;
   Event::EventClass event_classs;
   bool cannot_fail;
@@ -252,7 +251,7 @@ class EventData
 //-----
 class SessionEventData: public EventData
 {
-  public:
+public:
   Session *session;
   
   SessionEventData(Event::EventType event_arg, bool cannot_fail_arg, Session *session_arg): 
@@ -266,7 +265,7 @@ class SessionEventData: public EventData
 //-----
 class SchemaEventData: public EventData
 {
-  public:
+public:
   Session *session;
   const char *db;
   
@@ -282,7 +281,7 @@ class SchemaEventData: public EventData
 //-----
 class TableEventData: public EventData
 {
-  public:
+public:
   Session *session;
   TableShare *table;  
   
@@ -298,7 +297,7 @@ class TableEventData: public EventData
 //-----
 class PreCreateDatabaseEventData: public SessionEventData
 {
-  public:
+public:
   const char *db;
 
   PreCreateDatabaseEventData(Session *session_arg, const char *db_arg): 
@@ -310,7 +309,7 @@ class PreCreateDatabaseEventData: public SessionEventData
 //-----
 class PostCreateDatabaseEventData: public SessionEventData
 {
-  public:
+public:
   const char *db;
   int err;
 
@@ -324,7 +323,7 @@ class PostCreateDatabaseEventData: public SessionEventData
 //-----
 class PreDropDatabaseEventData: public SessionEventData
 {
-  public:
+public:
   const char *db;
 
   PreDropDatabaseEventData(Session *session_arg, const char *db_arg): 
@@ -336,7 +335,7 @@ class PreDropDatabaseEventData: public SessionEventData
 //-----
 class PostDropDatabaseEventData: public SessionEventData
 {
-  public:
+public:
   const char *db;
   int err;
 
@@ -350,7 +349,7 @@ class PostDropDatabaseEventData: public SessionEventData
 //-----
 class PreDropTableEventData: public SchemaEventData
 {
-  public:
+public:
   TableIdentifier *table;
 
   PreDropTableEventData(Session *session_arg, TableIdentifier *table_arg): 
@@ -362,7 +361,7 @@ class PreDropTableEventData: public SchemaEventData
 //-----
 class PostDropTableEventData: public SchemaEventData
 {
-  public:
+public:
   TableIdentifier *table;
   int err;
 
@@ -376,7 +375,7 @@ class PostDropTableEventData: public SchemaEventData
 //-----
 class PreRenameTableEventData: public SchemaEventData
 {
-  public:
+public:
   TableIdentifier *from;
   TableIdentifier *to;
 
@@ -390,7 +389,7 @@ class PreRenameTableEventData: public SchemaEventData
 //-----
 class PostRenameTableEventData: public SchemaEventData
 {
-  public:
+public:
   TableIdentifier *from;
   TableIdentifier *to;
   int err;
@@ -406,7 +405,7 @@ class PostRenameTableEventData: public SchemaEventData
 //-----
 class PreWriteRowEventData: public TableEventData
 {
-  public:
+public:
   unsigned char *row;
 
   PreWriteRowEventData(Session *session_arg, TableShare *table_arg, unsigned char *row_arg): 
@@ -418,7 +417,7 @@ class PreWriteRowEventData: public TableEventData
 //-----
 class PostWriteRowEventData: public TableEventData
 {
-  public:
+public:
   const unsigned char *row;
   int err;
 
@@ -432,7 +431,7 @@ class PostWriteRowEventData: public TableEventData
 //-----
 class PreDeleteRowEventData: public TableEventData
 {
-  public:
+public:
   const unsigned char *row;
 
   PreDeleteRowEventData(Session *session_arg, TableShare *table_arg, const unsigned char *row_arg): 
@@ -444,7 +443,7 @@ class PreDeleteRowEventData: public TableEventData
 //-----
 class PostDeleteRowEventData: public TableEventData
 {
-  public:
+public:
   const unsigned char *row;
   int err;
 
@@ -458,7 +457,7 @@ class PostDeleteRowEventData: public TableEventData
 //-----
 class PreUpdateRowEventData: public TableEventData
 {
-  public:
+public:
   const unsigned char *old_row;
   unsigned char *new_row;
 
@@ -474,7 +473,7 @@ class PreUpdateRowEventData: public TableEventData
 //-----
 class PostUpdateRowEventData: public TableEventData
 {
-  public:
+public:
   const unsigned char *old_row;
   const unsigned char *new_row;
   int err;

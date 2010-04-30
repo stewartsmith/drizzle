@@ -39,9 +39,9 @@ set global hello_events_watch_tables = "x,y";
 
  */
 
+#include "config.h"
 #include <string>
 
-#include "config.h"
 #include "drizzled/session.h"
 #include "hello_events.h"
 
@@ -172,52 +172,51 @@ void HelloEvents::registerSessionEvents(Session *session, EventObservers *observ
 /* The event observer.*/
 bool HelloEvents::observeEvent(EventData *data)
 {
-  bool result = false;
+  bool result= false;
   
-  switch (data->event)
-  {
-      case POST_DROP_TABLE:
-        postDropTable((PostDropTableEventData *)data);
-        break;
-        
-      case POST_RENAME_TABLE:
-        postRenameTable((PostRenameTableEventData *)data);
-        break;
-        
-      case PRE_WRITE_ROW:
-         result = preWriteRow((PreWriteRowEventData *)data);
-        break;
-        
-      case POST_WRITE_ROW:
-        postWriteRow((PostWriteRowEventData *)data);
-        break;     
-           
-      case PRE_UPDATE_ROW:
-        result = preUpdateRow((PreUpdateRowEventData *)data);
-        break;
-                 
-      case POST_UPDATE_ROW:
-         postUpdateRow((PostUpdateRowEventData *)data);
-        break;     
-        
-      case PRE_DELETE_ROW:
-        result = preDeleteRow((PreDeleteRowEventData *)data);
-        break;
+  switch (data->event) {
+  case POST_DROP_TABLE:
+    postDropTable((PostDropTableEventData *)data);
+    break;
+    
+  case POST_RENAME_TABLE:
+    postRenameTable((PostRenameTableEventData *)data);
+    break;
+    
+  case PRE_WRITE_ROW:
+     result = preWriteRow((PreWriteRowEventData *)data);
+    break;
+    
+  case POST_WRITE_ROW:
+    postWriteRow((PostWriteRowEventData *)data);
+    break;     
+       
+  case PRE_UPDATE_ROW:
+    result = preUpdateRow((PreUpdateRowEventData *)data);
+    break;
+             
+  case POST_UPDATE_ROW:
+     postUpdateRow((PostUpdateRowEventData *)data);
+    break;     
+    
+  case PRE_DELETE_ROW:
+    result = preDeleteRow((PreDeleteRowEventData *)data);
+    break;
 
-      case POST_DELETE_ROW:
-        postDeleteRow((PostDeleteRowEventData *)data);
-        break;
+  case POST_DELETE_ROW:
+    postDeleteRow((PostDeleteRowEventData *)data);
+    break;
 
-      case POST_CREATE_DATABASE:
-        postCreateDatabase((PostCreateDatabaseEventData *)data);
-        break;
+  case POST_CREATE_DATABASE:
+    postCreateDatabase((PostCreateDatabaseEventData *)data);
+    break;
 
-      case POST_DROP_DATABASE:
-        postDropDatabase((PostDropDatabaseEventData *)data);
-        break;
+  case POST_DROP_DATABASE:
+    postDropDatabase((PostDropDatabaseEventData *)data);
+    break;
 
-      default:
-        fprintf(stderr, "HelloEvents: Unexpected event '%s'\n", Event::eventName(data->event));
+  default:
+    fprintf(stderr, "HelloEvents: Unexpected event '%s'\n", Event::eventName(data->event));
  
   }
   

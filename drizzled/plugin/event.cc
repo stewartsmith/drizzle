@@ -17,10 +17,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
+
 #include <string>
 #include <vector>
-
-#include "config.h"
 
 #include "drizzled/session.h"
 #include "drizzled/table_list.h"
@@ -44,16 +44,16 @@ namespace plugin
 class EventObservers
 {
 
-  public:
+public:
   
   void add_event(multimap<unsigned int, Event *> &observers, enum Event::EventType event, Event *eventObserver, int position)
   {
     unsigned int event_pos;
     
     if (position == 0)
-      event_pos = INT32_MAX; // Set the event position to be in the middle.
+      event_pos= INT32_MAX; // Set the event position to be in the middle.
     else
-      event_pos = (unsigned int) position;
+      event_pos= (unsigned int) position;
     
     /* If positioned then check if the position is already taken. */
     if (position) 
@@ -78,13 +78,13 @@ class EventObservers
 /* Each event plugin registers itself with a shared table's event observer
  * for all events it is interested in regarding that table.
  */ 
-  virtual bool add_observer(Event *observer, enum Event::EventType event, int position) = 0;
+  virtual bool add_observer(Event *observer, enum Event::EventType event, int position)= 0;
    
   /* Remove all observer from all lists. */
-  virtual void clear_all_observers() = 0;  
+  virtual void clear_all_observers()= 0;  
   
    /* Get the observer list for an event type. */
-  virtual multimap<unsigned int, Event *> *getObservers(enum Event::EventType event) = 0;
+  virtual multimap<unsigned int, Event *> *getObservers(enum Event::EventType event)= 0;
 };
 
 
@@ -121,7 +121,7 @@ void Event::registerEvent(EventObservers *observers, EventType event, int positi
 /* Table event Observers: */
 class TableEventObservers: public EventObservers
 {
-  private:
+private:
   
   multimap<unsigned int, Event *> pre_write_row_observers;
   multimap<unsigned int, Event *> post_write_row_observers;
@@ -130,7 +130,7 @@ class TableEventObservers: public EventObservers
   multimap<unsigned int, Event *> pre_delete_row_observers;
   multimap<unsigned int, Event *> post_delete_row_observers;
   
-  public:
+public:
   
   TableEventObservers(){}
   ~TableEventObservers(){}
@@ -140,37 +140,36 @@ class TableEventObservers: public EventObservers
  */ 
   bool add_observer(Event *observer, enum Event::EventType event, int position)
   {
-    switch(event) 
-    {
-      case Event::PRE_WRITE_ROW:
-        add_event(pre_write_row_observers, event, observer, position);
-        break;
-        
-      case Event::POST_WRITE_ROW:
-        add_event(post_write_row_observers, event, observer, position);
-         break;
-        
-      case Event::PRE_UPDATE_ROW:
-        add_event(pre_update_row_observers, event, observer, position);
-        break;
-        
-      case Event::POST_UPDATE_ROW:
-        add_event(post_update_row_observers, event, observer, position);
-        break;
-        
-      case Event::PRE_DELETE_ROW:
-        add_event(pre_delete_row_observers, event, observer, position);
-        break;
-        
-      case Event::POST_DELETE_ROW:
-        add_event(post_delete_row_observers, event, observer, position);
-        break;
-        
-      default:
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("TableEventObservers::add_observer() Unsupported Event type '%s'"),
-                    Event::eventName(event));
-        return true;       
+    switch(event) {
+    case Event::PRE_WRITE_ROW:
+      add_event(pre_write_row_observers, event, observer, position);
+      break;
+    
+    case Event::POST_WRITE_ROW:
+      add_event(post_write_row_observers, event, observer, position);
+      break;
+    
+    case Event::PRE_UPDATE_ROW:
+      add_event(pre_update_row_observers, event, observer, position);
+      break;
+    
+    case Event::POST_UPDATE_ROW:
+      add_event(post_update_row_observers, event, observer, position);
+      break;
+    
+    case Event::PRE_DELETE_ROW:
+      add_event(pre_delete_row_observers, event, observer, position);
+      break;
+    
+    case Event::POST_DELETE_ROW:
+      add_event(post_delete_row_observers, event, observer, position);
+      break;
+    
+    default:
+      errmsg_printf(ERRMSG_LVL_ERROR,
+            _("TableEventObservers::add_observer() Unsupported Event type '%s'"),
+            Event::eventName(event));
+      return true;       
     }
     
     return false;       
@@ -192,28 +191,28 @@ class TableEventObservers: public EventObservers
   multimap<unsigned int, Event *> *getObservers(enum Event::EventType event)
   {
     switch(event) {
-      case Event::PRE_WRITE_ROW:
-        return (pre_write_row_observers.empty()) ? NULL: &pre_write_row_observers;
-        
-      case Event::POST_WRITE_ROW:
-        return (post_write_row_observers.empty()) ? NULL: &post_write_row_observers;
-        
-      case Event::PRE_UPDATE_ROW:
-        return (pre_update_row_observers.empty()) ? NULL: &pre_update_row_observers;
-        
-      case Event::POST_UPDATE_ROW:
-        return (post_update_row_observers.empty()) ? NULL: &post_update_row_observers;
-        
-      case Event::PRE_DELETE_ROW:
-        return (pre_delete_row_observers.empty()) ? NULL: &pre_delete_row_observers;
-        
-      case Event::POST_DELETE_ROW:
-        return (post_delete_row_observers.empty()) ? NULL: &post_delete_row_observers;
-        
-      default:
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("TableEventObservers::getWatchers() Unsupported Event type '%s'"),
-                    Event::eventName(event));
+    case Event::PRE_WRITE_ROW:
+      return (pre_write_row_observers.empty()) ? NULL: &pre_write_row_observers;
+      
+    case Event::POST_WRITE_ROW:
+      return (post_write_row_observers.empty()) ? NULL: &post_write_row_observers;
+      
+    case Event::PRE_UPDATE_ROW:
+      return (pre_update_row_observers.empty()) ? NULL: &pre_update_row_observers;
+      
+    case Event::POST_UPDATE_ROW:
+      return (post_update_row_observers.empty()) ? NULL: &post_update_row_observers;
+      
+    case Event::PRE_DELETE_ROW:
+      return (pre_delete_row_observers.empty()) ? NULL: &pre_delete_row_observers;
+      
+    case Event::POST_DELETE_ROW:
+      return (post_delete_row_observers.empty()) ? NULL: &post_delete_row_observers;
+      
+    default:
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("TableEventObservers::getWatchers() Unsupported Event type '%s'"),
+                  Event::eventName(event));
     }
     
     return NULL;
@@ -230,7 +229,7 @@ class registerTableEventsIterate : public unary_function<Event *, void>
   TableShare *table_share;
   TableEventObservers *observers;
   
-  public:
+public:
   registerTableEventsIterate(TableShare *table_share_arg, TableEventObservers *observers_arg): 
     table_share(table_share_arg), observers(observers_arg) {}
   inline result_type operator() (argument_type eventObserver)
@@ -284,14 +283,14 @@ void Event::deregisterTableEventsDo(TableShare *table_share)
 /* Schema event Observers: */
 class SchemaEventObservers: public EventObservers
 {
-  private:
+private:
   
   multimap<unsigned int, Event *> pre_drop_table_observers;
   multimap<unsigned int, Event *> post_drop_table_observers;
   multimap<unsigned int, Event *> pre_rename_table_observers;
   multimap<unsigned int, Event *> post_rename_table_observers;
   
-  public:
+public:
   
   SchemaEventObservers(){}
   ~SchemaEventObservers(){}
@@ -302,27 +301,27 @@ class SchemaEventObservers: public EventObservers
   bool add_observer(Event *observer, enum Event::EventType event, int position)
   {
     switch(event) {
-      case Event::PRE_DROP_TABLE:
-        add_event(pre_drop_table_observers, event, observer, position);
-        break;
+    case Event::PRE_DROP_TABLE:
+      add_event(pre_drop_table_observers, event, observer, position);
+      break;
+    
+    case Event::POST_DROP_TABLE:
+      add_event(post_drop_table_observers, event, observer, position);
+      break;
+    
+    case Event::PRE_RENAME_TABLE:
+      add_event(pre_rename_table_observers, event, observer, position);
+      break;
       
-      case Event::POST_DROP_TABLE:
-        add_event(post_drop_table_observers, event, observer, position);
-        break;
+    case Event::POST_RENAME_TABLE:
+      add_event(post_rename_table_observers, event, observer, position);
+      break;
       
-      case Event::PRE_RENAME_TABLE:
-        add_event(pre_rename_table_observers, event, observer, position);
-        break;
-        
-      case Event::POST_RENAME_TABLE:
-        add_event(post_rename_table_observers, event, observer, position);
-        break;
-        
-      default:
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("SchemaEventObservers::add_observer() Unsupported Event type '%s'"),
-                    Event::eventName(event));
-        return true;       
+    default:
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("SchemaEventObservers::add_observer() Unsupported Event type '%s'"),
+                  Event::eventName(event));
+      return true;       
     }
     
     return false;       
@@ -342,22 +341,22 @@ class SchemaEventObservers: public EventObservers
   multimap<unsigned int, Event *> *getObservers(enum Event::EventType event)
   {
     switch(event) {
-      case Event::PRE_DROP_TABLE:
-        return (pre_drop_table_observers.empty()) ? NULL: &pre_drop_table_observers;
+    case Event::PRE_DROP_TABLE:
+      return (pre_drop_table_observers.empty()) ? NULL: &pre_drop_table_observers;
+    
+    case Event::POST_DROP_TABLE:
+      return (post_drop_table_observers.empty()) ? NULL: &post_drop_table_observers;
+    
+    case Event::PRE_RENAME_TABLE:
+      return (pre_rename_table_observers.empty()) ? NULL: &pre_rename_table_observers;
       
-      case Event::POST_DROP_TABLE:
-        return (post_drop_table_observers.empty()) ? NULL: &post_drop_table_observers;
+    case Event::POST_RENAME_TABLE:
+      return (post_rename_table_observers.empty()) ? NULL: &post_rename_table_observers;
       
-      case Event::PRE_RENAME_TABLE:
-        return (pre_rename_table_observers.empty()) ? NULL: &pre_rename_table_observers;
-        
-      case Event::POST_RENAME_TABLE:
-        return (post_rename_table_observers.empty()) ? NULL: &post_rename_table_observers;
-        
-      default:
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("SchemaEventObservers::getObservers() Unknown Event type '%d'"),
-                    event);
+    default:
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("SchemaEventObservers::getObservers() Unknown Event type '%d'"),
+                  event);
     }
     
     return NULL;
@@ -428,14 +427,14 @@ void Event::deregisterSchemaEventsDo(Session *session, const std::string *db)
 /* Session event Observers: */
 class SessionEventObservers: public EventObservers
 {
-  private:
+private:
   
   multimap<unsigned int, Event *> pre_create_db_observers;
   multimap<unsigned int, Event *> post_create_db_observers;
   multimap<unsigned int, Event *> pre_drop_db_observers;
   multimap<unsigned int, Event *> post_drop_db_observers;
   
-  public:
+public:
   
   SessionEventObservers(){}
   ~SessionEventObservers(){}
@@ -446,27 +445,27 @@ class SessionEventObservers: public EventObservers
   bool add_observer(Event *observer, enum Event::EventType event, int position)
   {
     switch(event) {
-      case Event::PRE_CREATE_DATABASE:
-        add_event(pre_create_db_observers, event, observer, position);
-        break;
-      
-      case Event::POST_CREATE_DATABASE:
-        add_event(post_create_db_observers, event, observer, position);
-        break;
+    case Event::PRE_CREATE_DATABASE:
+      add_event(pre_create_db_observers, event, observer, position);
+      break;
+    
+    case Event::POST_CREATE_DATABASE:
+      add_event(post_create_db_observers, event, observer, position);
+      break;
 
-      case Event::PRE_DROP_DATABASE:
-        add_event(pre_drop_db_observers, event, observer, position);
-        break;
-      
-      case Event::POST_DROP_DATABASE:
-        add_event(post_drop_db_observers, event, observer, position);
-        break;
+    case Event::PRE_DROP_DATABASE:
+      add_event(pre_drop_db_observers, event, observer, position);
+      break;
+    
+    case Event::POST_DROP_DATABASE:
+      add_event(post_drop_db_observers, event, observer, position);
+      break;
 
-      default:
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("SessionEventObservers::add_observer() Unsupported Event type '%s'"),
-                    Event::eventName(event));
-        return true;       
+    default:
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("SessionEventObservers::add_observer() Unsupported Event type '%s'"),
+                  Event::eventName(event));
+      return true;       
     }
     
     return false;       
@@ -486,22 +485,22 @@ class SessionEventObservers: public EventObservers
   multimap<unsigned int, Event *> *getObservers(enum Event::EventType event)
   {
     switch(event) {
-      case Event::PRE_CREATE_DATABASE:
-        return (pre_create_db_observers.empty()) ? NULL: &pre_create_db_observers;
-      
-      case Event::POST_CREATE_DATABASE:
-        return (post_create_db_observers.empty()) ? NULL: &post_create_db_observers;
-      
-      case Event::PRE_DROP_DATABASE:
-        return (pre_drop_db_observers.empty()) ? NULL: &pre_drop_db_observers;
-      
-      case Event::POST_DROP_DATABASE:
-        return (post_drop_db_observers.empty()) ? NULL: &post_drop_db_observers;
-      
-     default:
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("SchemaEventObservers::getObservers() Unknown Event type '%d'"),
-                    event);
+    case Event::PRE_CREATE_DATABASE:
+      return (pre_create_db_observers.empty()) ? NULL: &pre_create_db_observers;
+    
+    case Event::POST_CREATE_DATABASE:
+      return (post_create_db_observers.empty()) ? NULL: &post_create_db_observers;
+    
+    case Event::PRE_DROP_DATABASE:
+      return (pre_drop_db_observers.empty()) ? NULL: &pre_drop_db_observers;
+    
+    case Event::POST_DROP_DATABASE:
+      return (post_drop_db_observers.empty()) ? NULL: &post_drop_db_observers;
+    
+   default:
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("SchemaEventObservers::getObservers() Unknown Event type '%d'"),
+                  event);
     }
     
     return NULL;
@@ -579,7 +578,7 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-    bool result = handler.second->observeEvent(data);
+    bool result= handler.second->observeEvent(data);
     if (result)
     {
       /* TRANSLATORS: The leading word "Event" is the name
@@ -589,7 +588,7 @@ public:
                     handler.second->getName().c_str(), handler.second->eventName(data->event));
       
       if (data->cannot_fail)
-        result = false;
+        result= false;
     }
     return result;
   }
@@ -598,42 +597,44 @@ public:
 
 bool Event::callEventObservers(EventData *data)
 {
-  multimap<unsigned int, Event *> *observers;
+  multimap<unsigned int, Event *> *observers= NULL;
  
-  switch (data->event_classs) 
-  {
-    case SessionEvent: {
-        SessionEventData *session_data = (SessionEventData *)data;
-        observers = session_data->session->getSessionObservers()->getObservers(data->event);
-      }
-      break;
-      
-    case SchemaEvent: {
-        SchemaEventData *schema_data = (SchemaEventData *)data;
-        SchemaEventObservers *schema_observers;
-       
-        /* Get the Schema event observers for the session.
-         * If this is the first time a Schema event has occurred
-         * for this database in this session then no observers
-         * will be resistered yet in which case they must be resistered now.
-         */
-        std::string db(schema_data->db);
+  switch (data->event_classs) {
+  case SessionEvent:
+    {
+      SessionEventData *session_data= (SessionEventData *)data;
+      observers= session_data->session->getSessionObservers()->getObservers(data->event);
+    }
+    break;
+    
+  case SchemaEvent: 
+    {
+      SchemaEventData *schema_data= (SchemaEventData *)data;
+      SchemaEventObservers *schema_observers;
+     
+      /* Get the Schema event observers for the session.
+       * If this is the first time a Schema event has occurred
+       * for this database in this session then no observers
+       * will be resistered yet in which case they must be resistered now.
+       */
+      std::string db(schema_data->db);
+      schema_observers= schema_data->session->getSchemaObservers(&db);
+      if (!schema_observers) 
+      {
+        registerSchemaEventsDo(schema_data->session, &db);
         schema_observers= schema_data->session->getSchemaObservers(&db);
-        if (!schema_observers) 
-        {
-          registerSchemaEventsDo(schema_data->session, &db);
-          schema_observers= schema_data->session->getSchemaObservers(&db);
-        }
+      }
 
-        observers = schema_observers->getObservers(data->event);
-      }
-      break;
-      
-    case TableEvent:{
-        TableEventData *table_data = (TableEventData *)data;
-        observers = table_data->table->getTableObservers()->getObservers(data->event);
-      }
-      break;
+      observers= schema_observers->getObservers(data->event);
+    }
+    break;
+    
+  case TableEvent:
+    {
+      TableEventData *table_data= (TableEventData *)data;
+      observers= table_data->table->getTableObservers()->getObservers(data->event);
+    }
+    break;
   }
   
   if (observers == NULL)

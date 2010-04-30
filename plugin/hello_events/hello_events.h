@@ -57,13 +57,13 @@ public:
     return is_enabled;
   }
 
-  private:
+private:
   
   bool is_enabled;
   //----------------------
   std::string db_list;
   
-  public:
+public:
   void setDatabasesOfInterest(const char *list) 
   {
     db_list.assign(list);
@@ -74,7 +74,7 @@ public:
     return db_list.c_str();
   }
   
-  private:
+private:
   bool isDatabaseInteresting(const char *db_name)
   {
     std::string list(db_list);
@@ -89,7 +89,7 @@ public:
   //----------------------
   std::string table_list;
   
-  public:
+public:
   void setTablesOfInterest(const char *list) 
   {
     table_list.assign(list);
@@ -100,7 +100,7 @@ public:
     return table_list.c_str();
   }
   
-  private:
+private:
   bool isTableInteresting(const char *table_name)
   {
     std::string list(table_list);
