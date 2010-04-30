@@ -353,7 +353,6 @@ extern "C" void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all);
 #define thd_query(t)						&(t)->query
 #define thd_slave_thread(t)					(t)->slave_thread
 #define thd_binlog_format(t)				(t)->variables.binlog_format
-#define thd_mark_transaction_to_rollback(t)	mark_transaction_to_rollback(t, all)
 #endif // INNODB_COMPATIBILITY_HOOKS */
 #endif /* !DRIZZLED */
 
