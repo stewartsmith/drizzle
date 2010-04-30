@@ -2177,6 +2177,7 @@ free_err:
   return err;
 }
 
+static bool  innobase_use_checksums= true;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2203,6 +2204,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("log_files_in_group", innodb_log_files_in_group);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("checksums", innobase_use_checksums);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2240,6 +2245,12 @@ EmbeddedInnoDBEngine::~EmbeddedInnoDBEngine()
   }
 }
 
+static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
+  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
+  "Enable InnoDB checksums validation (enabled by default). "
+  "Disable with --skip-innodb-checksums.",
+  NULL, NULL, true);
+
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2261,6 +2272,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
 static drizzle_sys_var* innobase_system_variables[]= {
+  DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
