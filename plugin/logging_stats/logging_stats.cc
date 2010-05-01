@@ -76,11 +76,6 @@
  * 
  * TODO 
  *
- * A pointer to the scoreboard slot could be added to the Session object.
- * This will avoid the session having to do multiple lookups in the scoreboard,
- * this will also avoid having to take a lock to locate the scoreboard slot 
- * being used by a particular session. 
- *
  * Allow expansion of Scoreboard and cumulative vector 
  *  
  */
@@ -100,7 +95,7 @@ static uint32_t sysvar_logging_stats_scoreboard_size= 5000;
 
 static uint32_t sysvar_logging_stats_max_user_count= 10000;
 
-static uint32_t sysvar_logging_stats_bucket_count= 500;
+static uint32_t sysvar_logging_stats_bucket_count= 100;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
@@ -268,9 +263,9 @@ static DRIZZLE_SYSVAR_UINT(bucket_count,
                            N_("Max number of vector buckets to construct for logging"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           500, /* default */
+                           100, /* default */
                            5, /* minimum */
-                           100,
+                           500,
                            0);
 
 static DRIZZLE_SYSVAR_UINT(scoreboard_size,
