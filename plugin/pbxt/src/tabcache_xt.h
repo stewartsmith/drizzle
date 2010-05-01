@@ -167,9 +167,9 @@ typedef struct XTTableSeq {
 #define TAB_CAC_LOCK_TYPE				xt_rwlock_type
 #define TAB_CAC_INIT_LOCK(s, i)			xt_init_rwlock_with_autoname(s, i)
 #define TAB_CAC_FREE_LOCK(s, i)			xt_free_rwlock(i)	
-#define TAB_CAC_READ_LOCK(i, o)			xt_slock_rwlock_ns(i)
-#define TAB_CAC_WRITE_LOCK(i, o)		xt_xlock_rwlock_ns(i)
-#define TAB_CAC_UNLOCK(i, o)			xt_unlock_rwlock_ns(i)
+#define TAB_CAC_READ_LOCK(i, o)			do { xt_slock_rwlock_ns(i); (void) (o); } while(0)
+#define TAB_CAC_WRITE_LOCK(i, o)		do { xt_xlock_rwlock_ns(i); (void) (o); } while(0)
+#define TAB_CAC_UNLOCK(i, o)			do { xt_unlock_rwlock_ns(i); (void) (o); } while(0)
 #elif defined(TAB_CAC_USE_XSMUTEX)
 #define TAB_CAC_LOCK_TYPE				XTMutexXSLockRec
 #define TAB_CAC_INIT_LOCK(s, i)			xt_xsmutex_init_with_autoname(s, i)

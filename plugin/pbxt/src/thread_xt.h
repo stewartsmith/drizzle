@@ -652,9 +652,9 @@ int prof_setjmp(void);
 #define THR_ARRAY_LOCK_TYPE				xt_rwlock_type
 #define THR_ARRAY_INIT_LOCK(s, i)		xt_init_rwlock_with_autoname(s, i)
 #define THR_ARRAY_FREE_LOCK(s, i)		xt_free_rwlock(i)	
-#define THR_ARRAY_READ_LOCK(i, o)		xt_slock_rwlock_ns(i)
-#define THR_ARRAY_WRITE_LOCK(i, o)		xt_xlock_rwlock_ns(i)
-#define THR_ARRAY_UNLOCK(i, o)			xt_unlock_rwlock_ns(i)
+#define THR_ARRAY_READ_LOCK(i, o)		do { xt_slock_rwlock_ns(i); (void) (o); } while(0)
+#define THR_ARRAY_WRITE_LOCK(i, o)		do { xt_xlock_rwlock_ns(i); (void) (o); } while(0)
+#define THR_ARRAY_UNLOCK(i, o)			do { xt_unlock_rwlock_ns(i); (void) (o); } while(0)
 #elif defined(THR_ARRAY_USE_XSMUTEX)
 #define THR_ARRAY_LOCK_TYPE				XTMutexXSLockRec
 #define THR_ARRAY_INIT_LOCK(s, i)		xt_xsmutex_init_with_autoname(s, i)
