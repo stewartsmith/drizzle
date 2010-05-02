@@ -91,11 +91,11 @@ using namespace std;
 
 static bool sysvar_logging_stats_enabled= false;
 
-static uint32_t sysvar_logging_stats_scoreboard_size= 5000;
+static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
-static uint32_t sysvar_logging_stats_max_user_count= 10000;
+static uint32_t sysvar_logging_stats_max_user_count= 1000;
 
-static uint32_t sysvar_logging_stats_bucket_count= 100;
+static uint32_t sysvar_logging_stats_bucket_count= 10;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
@@ -252,7 +252,7 @@ static DRIZZLE_SYSVAR_UINT(max_user_count,
                            N_("Max number of users that will be logged"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           10000, /* default */
+                           1000, /* default */
                            500, /* minimum */
                            50000,
                            0);
@@ -263,7 +263,7 @@ static DRIZZLE_SYSVAR_UINT(bucket_count,
                            N_("Max number of vector buckets to construct for logging"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           100, /* default */
+                           10, /* default */
                            5, /* minimum */
                            500,
                            0);
@@ -274,7 +274,7 @@ static DRIZZLE_SYSVAR_UINT(scoreboard_size,
                            N_("Max number of concurrent sessions that will be logged"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           5000, /* default */
+                           2000, /* default */
                            10, /* minimum */
                            50000, 
                            0);
