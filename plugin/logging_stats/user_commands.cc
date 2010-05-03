@@ -29,158 +29,153 @@
 
 #include "user_commands.h"
 
+using namespace drizzled;
+using namespace std;
+
+const char* UserCommands::USER_COUNTS[] =
+{
+  "COUNT_SELECT",
+  "COUNT_DELETE",
+  "COUNT_UPDATE",
+  "COUNT_INSERT",
+  "COUNT_ROLLBACK",
+  "COUNT_COMMIT",
+  "COUNT_CREATE",
+  "COUNT_ALTER",
+  "COUNT_DROP",
+  "COUNT_ADMIN"
+};
+
+const char* UserCommands::STATUS_VARS[] =
+{
+  "select",
+  "create_table",
+  "create_index",
+  "alter_table",
+  "update",
+  "insert",
+  "insert_select",
+  "delete",
+  "truncate",
+  "drop_table",
+  "drop_index",
+  "show_create",
+  "show_create_db",
+  "load",
+  "set_option",
+  "unlock_tables",
+  "change_db",
+  "create_db",
+  "drop_db",
+  "alter_db",
+  "replace",
+  "replace_select",
+  "check",
+  "flush",
+  "kill",
+  "analyze",
+  "rollback",
+  "rollback_to_savepoint",
+  "commit",
+  "savepoint",
+  "release_savepoint",
+  "begin",
+  "rename_table",
+  "show_warns",
+  "empty_query",
+  "show_errors",
+  "checksum"
+};
+
 UserCommands::UserCommands()
-    :
-      update_count(0),
-      delete_count(0),
-      insert_count(0),
-      select_count(0),
-      rollback_count(0),
-      commit_count(0),
-      create_count(0),
-      alter_count(0),
-      drop_count(0),
-      admin_count(0)
-{}
+{
+  init();
+}
+
+void UserCommands::init()
+{
+  vector<uint64_t>::iterator it= vector_of_command_counts.begin();
+  for (int j=0; j < SQLCOM_END; ++j)
+  {
+    it=  vector_of_command_counts.insert(it, 0);
+  }
+  vector_of_command_counts.resize(SQLCOM_END);
+}
+
+void UserCommands::incrementCount(uint32_t index, uint32_t i)
+{
+  uint64_t *count= &(vector_of_command_counts.at(index));
+  *count= *count + i;
+}
+
+uint64_t UserCommands::getCount(uint32_t index)
+{
+  uint64_t *count= &(vector_of_command_counts.at(index));
+  return *count;
+}
+
+uint64_t UserCommands::getUserCount(uint32_t index)
+{
+  switch (index)
+  {
+    case COUNT_SELECT:
+      return getCount(SQLCOM_SELECT);
+    case COUNT_DELETE:
+      return getCount(SQLCOM_DELETE);
+    case COUNT_UPDATE:
+      return getCount(SQLCOM_UPDATE);
+    case COUNT_INSERT:
+      return getCount(SQLCOM_INSERT);
+    case COUNT_ROLLBACK:
+      return getCount(SQLCOM_ROLLBACK);
+    case COUNT_COMMIT:
+      return getCount(SQLCOM_COMMIT);
+    case COUNT_CREATE:
+      return getCount(SQLCOM_CREATE_TABLE);
+    case COUNT_ALTER:
+      return getCount(SQLCOM_ALTER_TABLE);
+    case COUNT_DROP:
+      return getCount(SQLCOM_DROP_TABLE);
+    default:
+      return 0;
+  }
+}
 
 void UserCommands::reset()
 {
-  update_count= 0;
-  delete_count= 0;
-  insert_count= 0;
-  select_count= 0;
-  rollback_count= 0;
-  commit_count= 0;
-  create_count= 0;
-  alter_count= 0;
-  drop_count= 0;
-  admin_count= 0;
+  for (uint32_t j= 0; j < SQLCOM_END; ++j)
+  {
+    uint64_t *count= &(vector_of_command_counts.at(j));
+    *count= 0;
+  }
 }
 
 UserCommands::UserCommands(const UserCommands &user_commands)
 {
-  update_count= user_commands.update_count;
-  delete_count= user_commands.delete_count;
-  insert_count= user_commands.insert_count;
-  select_count= user_commands.select_count;
-  rollback_count= user_commands.rollback_count;
-  commit_count= user_commands.commit_count;
-  create_count= user_commands.create_count;
-  alter_count= user_commands.alter_count;
-  drop_count= user_commands.drop_count;
-  admin_count= user_commands.admin_count;
+  init();
+
+  for (uint32_t j= 0; j < SQLCOM_END; ++j)
+  {
+    uint64_t *my_count= &(vector_of_command_counts.at(j));
+    uint64_t other_count= user_commands.vector_of_command_counts.at(j);
+    *my_count= other_count;
+  }
 }
 
 void UserCommands::merge(UserCommands *user_commands)
 {
-  incrementUpdateCount(user_commands->getUpdateCount());
-  incrementDeleteCount(user_commands->getDeleteCount());
-  incrementInsertCount(user_commands->getInsertCount());
-  incrementSelectCount(user_commands->getSelectCount());
-  incrementRollbackCount(user_commands->getRollbackCount());
-  incrementCommitCount(user_commands->getCommitCount());
-  incrementCreateCount(user_commands->getCreateCount());
-  incrementAlterCount(user_commands->getAlterCount());
-  incrementDropCount(user_commands->getDropCount());
-  incrementAdminCount(user_commands->getAdminCount());
+  for (uint32_t j= 0; j < SQLCOM_END; ++j)
+  {
+    uint64_t *my_count= &(vector_of_command_counts.at(j));
+    uint64_t other_count= user_commands->vector_of_command_counts.at(j);
+    *my_count= *my_count + other_count;
+  }
 }
 
-uint64_t UserCommands::getSelectCount()
+void UserCommands::logCommand(enum_sql_command sql_command)
 {
-  return select_count;
-}
-
-void UserCommands::incrementSelectCount(int i)
-{
-  select_count= select_count + i;
-}
-
-uint64_t UserCommands::getUpdateCount()
-{
-  return update_count;
-}
-
-void UserCommands::incrementUpdateCount(int i)
-{
-  update_count= update_count + i;
-}
-
-uint64_t UserCommands::getDeleteCount()
-{
-  return delete_count;
-}
-
-void UserCommands::incrementDeleteCount(int i)
-{
-  delete_count= delete_count + i;
-}
-
-uint64_t UserCommands::getInsertCount()
-{
-  return insert_count;
-}
-
-void UserCommands::incrementInsertCount(int i)
-{
-  insert_count= insert_count + i;
-}
-
-uint64_t UserCommands::getRollbackCount()
-{
-  return rollback_count;
-}
-
-void UserCommands::incrementRollbackCount(int i)
-{
-  rollback_count= rollback_count + i;
-}
-
-uint64_t UserCommands::getCommitCount()
-{
-  return commit_count;
-}
-
-void UserCommands::incrementCommitCount(int i)
-{
-  commit_count= commit_count + i;
-}
-
-uint64_t UserCommands::getCreateCount()
-{
-  return create_count;
-}
-
-void UserCommands::incrementCreateCount(int i)
-{
-  create_count= create_count + i;
-}
-
-uint64_t UserCommands::getAlterCount()
-{
-  return alter_count;
-}
-
-void UserCommands::incrementAlterCount(int i)
-{
-  alter_count= alter_count + i;
-}
-
-uint64_t UserCommands::getDropCount()
-{
-  return drop_count;
-}
-
-void UserCommands::incrementDropCount(int i)
-{
-  drop_count= drop_count + i;
-}
-
-uint64_t UserCommands::getAdminCount()
-{
-  return admin_count;
-}
-
-void UserCommands::incrementAdminCount(int i)
-{
-  admin_count= admin_count + i;
+  if (sql_command < SQLCOM_END)
+  {
+    incrementCount(sql_command);
+  }
 }

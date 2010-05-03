@@ -23,6 +23,7 @@
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <algorithm>
 
 using namespace std;

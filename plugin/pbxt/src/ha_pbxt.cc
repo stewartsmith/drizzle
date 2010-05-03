@@ -494,6 +494,7 @@ static inline void thd_init_xact(THD *thd, XTThreadPtr self, bool set_table_tran
 	self->st_abort_trans = FALSE;
 	self->st_stat_ended = FALSE;
 	self->st_stat_trans = FALSE;
+	self->st_non_temp_updated = FALSE;
 	XT_PRINT0(self, "xt_xn_begin\n");
 	xt_xres_wait_for_recovery(self, XT_RECOVER_SWEPT);
 }
@@ -4628,12 +4629,6 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 				self->st_statistics.st_stat_read++;
 			self->st_stat_modify = FALSE;
 			self->st_import_stat = XT_IMP_NO_IMPORT;
-
-			/* Only reset this if there is no transactions running, and
-			 * no tables are open!
-			 */
-			if (!self->st_xact_data)
-				self->st_non_temp_opened = FALSE;
 		}
 
 		if (pb_table_locked) {
@@ -4845,10 +4840,6 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 			}
 #endif
 		}
-
-		/* Any open table can cause this to be FALSE: */
-		if (!XT_IS_TEMP_TABLE(pb_open_tab->ot_table->tab_dic.dic_tab_flags))
-			self->st_non_temp_opened = TRUE;
 
 		/* Start a statment transaction: */
 		/* {START-STAT-HACK} The problem that ha_commit_trans() is not

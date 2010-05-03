@@ -118,7 +118,7 @@ xtPublic void xt_xlog_init(XTThreadPtr self, size_t cache_size)
 	cont_(a);
 }
 
-xtPublic void xt_xlog_exit(XTThreadPtr)
+xtPublic void xt_xlog_exit(XTThreadPtr XT_UNUSED(self))
 {
 	for (u_int i=0; i<XLC_SEGMENT_COUNT; i++) {
 		if (xt_xlog_cache.xlc_segment[i].lcs_hash_table) {
@@ -2185,7 +2185,11 @@ xtBool XTDatabaseLog::xlog_seq_next(XTXactSeqReadPtr seq, XTXactLogBufferDPtr *r
 	record = (XTXactLogBufferDPtr) (seq->xseq_buffer + rec_offset);
 	switch (record->xh.xh_status_1) {
 		case XT_LOG_ENT_HEADER:
-			len = sizeof(XTXactLogHeaderDRec);
+			len = offsetof(XTXactLogHeaderDRec, xh_version_2) + 2;
+			if (len > max_rec_len)
+				/* The size is not in the buffer: */
+				goto read_more;
+			len = (size_t) XT_GET_DISK_4(record->xh.xh_size_4);
 			break;
 		case XT_LOG_ENT_NEW_LOG:
 		case XT_LOG_ENT_DEL_LOG:
