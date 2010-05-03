@@ -95,7 +95,7 @@ using namespace plugin;
 using namespace std;
 
 SessionStatementsTool::SessionStatementsTool(LoggingStats *in_logging_stats) :
-  plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATEMENTS_NEW")
+  plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATEMENTS")
 {
   logging_stats= in_logging_stats;
   add_field("VARIABLE_NAME");
@@ -163,7 +163,7 @@ bool SessionStatementsTool::Generator::populate()
 }
 
 GlobalStatementsTool::GlobalStatementsTool(LoggingStats *in_logging_stats) :
-  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATEMENTS_NEW")
+  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATEMENTS")
 {   
   logging_stats= in_logging_stats;
   add_field("VARIABLE_NAME");
