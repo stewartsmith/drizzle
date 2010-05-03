@@ -2182,6 +2182,7 @@ static char*  innobase_data_home_dir      = NULL;
 static bool innobase_use_doublewrite= true;
 static unsigned long srv_io_capacity= 200;
 static unsigned long innobase_fast_shutdown= 1;
+static bool srv_file_per_table= false;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2215,6 +2216,14 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("io_capacity", srv_io_capacity);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  if (srv_file_per_table)
+    err= ib_cfg_set_bool_on("file_per_table");
+  else
+    err= ib_cfg_set_bool_off("file_per_table");
+
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2304,6 +2313,11 @@ static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
   ".",
   NULL, NULL, 1, 0, 2, 0);
 
+static DRIZZLE_SYSVAR_BOOL(file_per_table, srv_file_per_table,
+  PLUGIN_VAR_NOCMDARG,
+  "Stores each InnoDB table to an .ibd file in the database dir.",
+  NULL, NULL, false);
+
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2330,6 +2344,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(io_capacity),
   DRIZZLE_SYSVAR(fast_shutdown),
+  DRIZZLE_SYSVAR(file_per_table),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
