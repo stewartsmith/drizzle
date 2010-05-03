@@ -14,7 +14,8 @@ AC_DEFUN([_PANDORA_SEARCH_LIBLDAP],[
   AC_LIB_HAVE_LINKFLAGS(ldap,,
   [#include <ldap.h>],
   [
-    LDAP *l= ldap_init("localhost", 389);
+    LDAP *ldap;
+    ldap_initialize(&ldap, "ldap://localhost/");
   ])
   AS_IF([test "x$ac_cv_libldap" = "xno"],
   [
@@ -26,7 +27,8 @@ AC_DEFUN([_PANDORA_SEARCH_LIBLDAP],[
     AC_LIB_HAVE_LINKFLAGS(ldap,,
     [#include <ldap/ldap.h>],
     [
-      LDAP *l= ldap_init("localhost", 389);
+      LDAP *ldap;
+      ldap_initialize(&ldap, "ldap://localhost/");
     ])
     AS_IF([test "x$ac_cv_libldap" = "xyes"], [
       ac_cv_ldap_location="<ldap/ldap.h>"
