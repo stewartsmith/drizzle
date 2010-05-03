@@ -2178,6 +2178,7 @@ free_err:
 }
 
 static bool  innobase_use_checksums= true;
+static char*  innobase_data_home_dir      = NULL;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2191,6 +2192,13 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
   err= ib_init();
   if (err != DB_SUCCESS)
     goto innodb_error;
+
+  if (innobase_data_home_dir)
+  {
+    err= ib_cfg_set_text("data_home_dir", innobase_data_home_dir);
+    if (err != DB_SUCCESS)
+      goto innodb_error;
+  }
 
   if (innodb_data_file_path == NULL)
     innodb_data_file_path= default_innodb_data_file_path;
@@ -2251,6 +2259,11 @@ static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   "Disable with --skip-innodb-checksums.",
   NULL, NULL, true);
 
+static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
+  PLUGIN_VAR_READONLY,
+  "The common part for InnoDB table spaces.",
+  NULL, NULL, NULL);
+
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2273,6 +2286,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(checksums),
+  DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
