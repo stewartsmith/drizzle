@@ -328,11 +328,9 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
       free(param.tmp_buffer);
   if (!subselect || !subselect->is_uncacheable())
   {
-    if ((unsigned char*) sort_keys)
-      free((unsigned char*) sort_keys);
+    free(sort_keys);
     table_sort.sort_keys= 0;
-    if ((unsigned char*) buffpek)
-      free((unsigned char*) buffpek);
+    free(buffpek);
     table_sort.buffpek= 0;
     table_sort.buffpek_len= 0;
   }
