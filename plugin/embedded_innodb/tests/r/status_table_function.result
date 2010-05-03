@@ -59,19 +59,19 @@ fsyncs
 create table t1 (a int primary key);
 SELECT (value - @fsync_count) AS fsyncs FROM DATA_DICTIONARY.INNODB_STATUS WHERE NAME="fsync_req_done";
 fsyncs
-4
+1
 insert into t1 values (1);
 SELECT (value - @fsync_count) AS fsyncs FROM DATA_DICTIONARY.INNODB_STATUS WHERE NAME="fsync_req_done";
 fsyncs
-5
+2
 insert into t1 values (5),(2),(3),(4);
 SELECT (value - @fsync_count) AS fsyncs FROM DATA_DICTIONARY.INNODB_STATUS WHERE NAME="fsync_req_done";
 fsyncs
-6
+3
 delete from t1;
 SELECT (value - @fsync_count) AS fsyncs FROM DATA_DICTIONARY.INNODB_STATUS WHERE NAME="fsync_req_done";
 fsyncs
-7
+4
 begin;
 insert into t1 values (1);
 insert into t1 values (2);
@@ -80,8 +80,8 @@ insert into t1 values (4);
 commit;
 SELECT (value - @fsync_count) AS fsyncs FROM DATA_DICTIONARY.INNODB_STATUS WHERE NAME="fsync_req_done";
 fsyncs
-8
+5
 DROP TABLE t1;
 SELECT (value - @fsync_count) AS fsyncs FROM DATA_DICTIONARY.INNODB_STATUS WHERE NAME="fsync_req_done";
 fsyncs
-9
+6
