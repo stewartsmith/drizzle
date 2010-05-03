@@ -836,29 +836,30 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
   /* Loop over the keys and write them to it's exclusive tree. */
   while (curr_key < share->nkeys) {
     char *key = NULL;
-    size_t prefix_len, klen;
+    size_t prefix_len = 0;
+    size_t klen = 0;
 
-    klen = 0;
     prefix_len = make_index_key(key_buffer, curr_key, drizzle_row);
     key = merge_key(key_buffer, prefix_len, temp_pkbuf, pk_len, &klen);
 
     if (share->btrees[curr_key].unique) {
-      rv = share->btrees[curr_key].write_unique(key, klen);
-
-      if (rv == HA_ERR_FOUND_DUPP_KEY) {
-        errkey_id = curr_key;
-        share->blitz_lock.slotted_unlock(lock_id);
-        return rv;
+      /* NULL is a special case where we allow duplicate
+         entries in the UNIQUE INDEX tree. */
+      if (*key == 0) {
+        rv = share->btrees[curr_key].write(key, klen);
+      } else {
+        rv = share->btrees[curr_key].write_unique(key, klen);
       }
     } else {
       rv = share->btrees[curr_key].write(key, klen);
-
-      if (rv != 0) {
-        errkey_id = curr_key;
-        share->blitz_lock.slotted_unlock(lock_id);
-        return rv;
-      }
     }
+
+    if (rv != 0) {
+      errkey_id = curr_key;
+      share->blitz_lock.slotted_unlock(lock_id);
+      return rv;
+    }
+
     curr_key++;
   }
 
@@ -962,12 +963,12 @@ int ha_blitz::doUpdateRecord(const unsigned char *old_row,
 
 int ha_blitz::doDeleteRecord(const unsigned char *row_to_delete) {
   int rv;
-  uint32_t lock_id = 0;
 
   ha_statistic_increment(&system_status_var::ha_delete_count);
 
   char *dict_key = held_key;
   int dict_klen = held_key_len;
+  uint32_t lock_id = 0;
 
   if (share->nkeys > 0) {
     lock_id = share->blitz_lock.slot_id(held_key, held_key_len);

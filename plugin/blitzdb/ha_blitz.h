@@ -39,7 +39,7 @@
 #define BLITZ_INDEX_EXT        ".bzx"
 #define BLITZ_SYSTEM_EXT       ".bzs"
 #define BLITZ_LOCK_SLOTS       16
-#define BLITZ_MAX_INDEX        1
+#define BLITZ_MAX_INDEX        8
 #define BLITZ_MAX_META_LEN     128
 #define BLITZ_MAX_ROW_STACK    2048
 #define BLITZ_MAX_KEY_LEN      1024 

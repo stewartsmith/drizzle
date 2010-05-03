@@ -817,3 +817,15 @@ select count(*) from t1;
 count(*)
 0
 drop table t1;
+create table t1 (a int, b int, unique index(a)) engine = blitzdb;
+insert into t1 values (NULL, 1), (NULL, 2), (NULL, 3), (NULL, 4);
+select * from t1;
+a	b
+NULL	1
+NULL	2
+NULL	3
+NULL	4
+insert into t1 values (1, 5), (2, 6);
+insert into t1 values (1, 7), (1, 8);
+ERROR 23000: Duplicate entry '1' for key 'a'
+drop table t1;

@@ -130,7 +130,7 @@ char *BlitzTree::final_key(int *key_len) {
   return (char *)tcbdbcurkey(bt_cursor, key_len);
 }
 
-/* It's possible that the cursor had been unxplicitly moved
+/* It's possible that the cursor had been implicitly moved
    forward. If so, we obtain the key at the current position
    and return that. This can happen in delete_key(). */
 char *BlitzTree::next_key(int *key_len) {

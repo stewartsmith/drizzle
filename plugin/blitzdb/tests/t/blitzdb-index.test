@@ -444,3 +444,14 @@ delete from t1 where a = 4;
 select * from t1 where a = 4;
 select count(*) from t1;
 drop table t1;
+
+# +------------------------------+
+# | UNIQUE INDEX: DUPLICATE NULL |
+# +------------------------------+
+create table t1 (a int, b int, unique index(a)) engine = blitzdb;
+insert into t1 values (NULL, 1), (NULL, 2), (NULL, 3), (NULL, 4);
+select * from t1;
+insert into t1 values (1, 5), (2, 6);
+--error 1062
+insert into t1 values (1, 7), (1, 8);
+drop table t1;
