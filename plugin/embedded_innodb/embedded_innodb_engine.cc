@@ -2181,6 +2181,7 @@ static bool  innobase_use_checksums= true;
 static char*  innobase_data_home_dir      = NULL;
 static bool innobase_use_doublewrite= true;
 static unsigned long srv_io_capacity= 200;
+static unsigned long innobase_fast_shutdown= 1;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2258,8 +2259,14 @@ innodb_error:
 EmbeddedInnoDBEngine::~EmbeddedInnoDBEngine()
 {
   ib_err_t err;
+  ib_shutdown_t shutdown_flag= IB_SHUTDOWN_NORMAL;
 
-  err= ib_shutdown(IB_SHUTDOWN_NORMAL);
+  if (innobase_fast_shutdown == 1)
+    shutdown_flag= IB_SHUTDOWN_NO_IBUFMERGE_PURGE;
+  else if (innobase_fast_shutdown == 2)
+    shutdown_flag= IB_SHUTDOWN_NO_BUFPOOL_FLUSH;
+
+  err= ib_shutdown(shutdown_flag);
 
   if (err != DB_SUCCESS)
   {
@@ -2289,6 +2296,14 @@ static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
   "Number of IOPs the server can do. Tunes the background IO rate",
   NULL, NULL, 200, 100, ~0L, 0);
 
+static DRIZZLE_SYSVAR_ULONG(fast_shutdown, innobase_fast_shutdown,
+  PLUGIN_VAR_OPCMDARG,
+  "Speeds up the shutdown process of the InnoDB storage engine. Possible "
+  "values are 0, 1 (faster)"
+  " or 2 (fastest - crash-like)"
+  ".",
+  NULL, NULL, 1, 0, 2, 0);
+
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2314,6 +2329,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(io_capacity),
+  DRIZZLE_SYSVAR(fast_shutdown),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
