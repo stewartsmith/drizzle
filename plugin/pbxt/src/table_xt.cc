@@ -537,8 +537,8 @@ xtPublic xtBool xt_describe_tables_next(XTThreadPtr self, XTTableDescPtr td)
 				else if (strcmp(name, "type") == 0) {
 					u_long lvalue = 0;
 
-                                        sscanf(value, "%lu", &lvalue);
-                                        td->td_tab_type = (xtWord1) lvalue;
+					sscanf(value, "%lu", &lvalue);
+					td->td_tab_type = (xtWord1) lvalue;
 				} 
 				else if (strcmp(name, "[table]") == 0)
 					break;
@@ -1292,7 +1292,7 @@ static int tab_new_handle(XTThreadPtr self, XTTableHPtr *r_tab, XTDatabaseHPtr d
 	XTOpenFilePtr	of_rec, of_ind;
 	XTTableEntryPtr	te_ptr;
 	size_t			tab_format_offset;
-	size_t			tab_head_size= 0;
+	size_t			tab_head_size = 0;
 
 	enter_();
 
@@ -1579,7 +1579,7 @@ static void tab_delete_table_files(XTThreadPtr self, XTPathStrPtr tab_name, xtTa
 	}
 }
 
-static void tab_init_row_file(XTThreadPtr self, XTOpenFilePtr of_row, XTTableHPtr tab, XTDictionaryPtr)
+static void tab_init_row_file(XTThreadPtr self, XTOpenFilePtr of_row, XTTableHPtr tab, XTDictionaryPtr XT_UNUSED(dic))
 {
 	XTTabRowHeadDRec	row_head;
 
@@ -4442,6 +4442,24 @@ u_int		next_on_page = 0;
 u_int		next_off_page = 0;
 #endif
 
+static xtBool tab_write_ext_record(XTOpenTablePtr XT_UNUSED(ot), XTTableHPtr tab, XTTabRecInfoPtr rec_info, xtRecordID rec_id, xtLogID log_id, xtLogOffset log_offset, XTThreadPtr thread)
+{
+	xtWord1 tmp_buffer[offsetof(XTactExtRecEntryDRec, er_data)];
+	xtBool	ok;
+
+	memcpy(tmp_buffer, rec_info->ri_log_buf, sizeof(tmp_buffer));
+	rec_info->ri_log_buf->er_status_1 = XT_LOG_ENT_EXT_REC_OK;
+	XT_SET_DISK_4(rec_info->ri_log_buf->er_data_size_4, rec_info->ri_log_data_size);
+	XT_SET_DISK_4(rec_info->ri_log_buf->er_tab_id_4, tab->tab_id);
+	XT_SET_DISK_4(rec_info->ri_log_buf->er_rec_id_4, rec_id);
+	if (tab->tab_dic.dic_tab_flags & XT_TF_MEMORY_TABLE)
+		ok = xt_tab_save_ext_record(tab, log_id, log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info->ri_log_data_size, (xtWord1 *) rec_info->ri_log_buf);
+	else
+		ok = thread->st_dlog_buf.dlb_append_log(log_id, log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info->ri_log_data_size, (xtWord1 *) rec_info->ri_log_buf, thread);
+	memcpy(rec_info->ri_log_buf, tmp_buffer, sizeof(tmp_buffer));
+	return ok;
+}
+
 static xtBool tab_add_record(XTOpenTablePtr ot, XTTabRecInfoPtr rec_info, u_int status)
 {
 	register XTTableHPtr	tab = ot->ot_table;
@@ -4548,32 +4566,20 @@ static xtBool tab_add_record(XTOpenTablePtr ot, XTTabRecInfoPtr rec_info, u_int 
 		 */
 		read = ((rec_id - 1) % tab->tab_recs.tci_rows_per_page) != 0;
 
-		if (!tab->tab_recs.xt_tc_write(ot->ot_rec_file, rec_id, 0, rec_info->ri_rec_buf_size, (xtWord1 *) rec_info->ri_fix_rec_buf, &op_seq, read, ot->ot_thread)) {
+		if (!tab->tab_recs.xt_tc_write(ot->ot_rec_file, rec_id, 0, rec_info->ri_rec_buf_size, (xtWord1 *) rec_info->ri_fix_rec_buf, &op_seq, read, thread)) {
 			xt_unlock_mutex_ns(&tab->tab_rec_lock);
 			return FAILED;
 		}
 	}
 	xt_unlock_mutex_ns(&tab->tab_rec_lock);
 
-	if (!xt_xlog_modify_table(tab->tab_id, status, op_seq, 0, next_rec_id, rec_id,  rec_info->ri_rec_buf_size, (xtWord1 *) rec_info->ri_fix_rec_buf, ot->ot_thread))
+	if (!xt_xlog_modify_table(tab->tab_id, status, op_seq, 0, next_rec_id, rec_id,  rec_info->ri_rec_buf_size, (xtWord1 *) rec_info->ri_fix_rec_buf, thread))
 		return FAILED;
 
 	if (rec_info->ri_ext_rec) {
 		/* Write the log buffer overflow: */		
-		rec_info->ri_log_buf->er_status_1 = XT_LOG_ENT_EXT_REC_OK;
-		XT_SET_DISK_4(rec_info->ri_log_buf->er_data_size_4, rec_info->ri_log_data_size);
-		XT_SET_DISK_4(rec_info->ri_log_buf->er_tab_id_4, tab->tab_id);
-		XT_SET_DISK_4(rec_info->ri_log_buf->er_rec_id_4, rec_id);
-		if (tab->tab_dic.dic_tab_flags & XT_TF_MEMORY_TABLE) {
-			if (!xt_tab_save_ext_record(tab, log_id, log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info->ri_log_data_size, (xtWord1 *) rec_info->ri_log_buf))
-				return FAILED;
-		}
-		else {
-			if (!thread->st_dlog_buf.dlb_append_log(log_id, log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info->ri_log_data_size, (xtWord1 *) rec_info->ri_log_buf, ot->ot_thread)) {
-				/* Failed to write the overflow, free the record allocated above: */
-				return FAILED;
-			}
-		}
+		if (!tab_write_ext_record(ot, tab, rec_info, rec_id, log_id, log_offset, thread))
+			return FAILED;
 	}
 
 	XT_DISABLED_TRACE(("new rec tx=%d val=%d\n", (int) thread->st_xact_data->xd_start_xn_id, (int) rec_id));
@@ -4581,7 +4587,7 @@ static xtBool tab_add_record(XTOpenTablePtr ot, XTTabRecInfoPtr rec_info, u_int 
 	return OK;
 }
 
-static void tab_delete_record_on_fail(XTOpenTablePtr ot, xtRowID row_id, xtRecordID rec_id, XTTabRecHeadDPtr row_ptr, xtWord1 *rec_data, u_int key_count)
+static void tab_delete_record_on_fail(XTOpenTablePtr ot, xtRowID row_id, xtRecordID rec_id, XTTabRecHeadDPtr XT_UNUSED(row_ptr), xtWord1 *rec_data, u_int key_count)
 {
 	XTExceptionRec	e;
 	xtBool			log_err = TRUE;
@@ -4609,8 +4615,11 @@ static void tab_delete_record_on_fail(XTOpenTablePtr ot, xtRowID row_id, xtRecor
 		}
 	}
 
+	/* This is not required because the extended record will be free
+	 * later when the record is freed!
 	if (row_ptr->tr_rec_type_1 == XT_TAB_STATUS_EXT_DLOG || row_ptr->tr_rec_type_1 == XT_TAB_STATUS_EXT_CLEAN)
 		tab_free_ext_record_on_fail(ot, rec_id, (XTTabRecExtDPtr) row_ptr, log_err);
+	 */
 
 	rec_info.ri_fix_rec_buf = (XTTabRecFixDPtr) ot->ot_row_wbuffer;
 	rec_info.ri_rec_buf_size = offsetof(XTTabRecFixDRec, rf_data);
@@ -4909,6 +4918,10 @@ xtPublic xtBool xt_tab_new_record(XTOpenTablePtr ot, xtWord1 *rec_buf)
 	u_int					idx_cnt = 0;
 	XTIndexPtr				*ind;
 
+	/* A non-temporary table has been updated: */
+	if (!XT_IS_TEMP_TABLE(tab->tab_dic.dic_tab_flags))
+		self->st_non_temp_updated = TRUE;
+
 	if (!myxt_store_row(ot, &rec_info, (char *) rec_buf))
 		goto failed_0;
 
@@ -5005,7 +5018,7 @@ static xtBool tab_overwrite_record_on_fail(XTOpenTablePtr ot, XTTabRecInfoPtr re
 		 * order to do this we'd need to read the before-image of the 
 		 * record before modifying it.
 		 */
-		if (!ot->ot_thread->t_exception.e_xt_err)
+		if (!thread->t_exception.e_xt_err)
 			xt_register_xterr(XT_REG_CONTEXT, XT_ERR_NO_BEFORE_IMAGE);
 		return FAILED;
 	}
@@ -5023,7 +5036,7 @@ static xtBool tab_overwrite_record_on_fail(XTOpenTablePtr ot, XTTabRecInfoPtr re
 				return FAILED;
 		}
 		else {
-			if (!thread->st_dlog_buf.dlb_get_log_offset(&log_id, &log_offset, rec_info->ri_log_data_size + offsetof(XTactExtRecEntryDRec, er_data), ot->ot_thread))
+			if (!thread->st_dlog_buf.dlb_get_log_offset(&log_id, &log_offset, rec_info->ri_log_data_size + offsetof(XTactExtRecEntryDRec, er_data), thread))
 				return FAILED;
 		}
 		XT_SET_LOG_REF(rec_info->ri_ext_rec, log_id, log_offset);
@@ -5034,19 +5047,8 @@ static xtBool tab_overwrite_record_on_fail(XTOpenTablePtr ot, XTTabRecInfoPtr re
 
 	if (rec_info->ri_ext_rec) {
 		/* Write the log buffer overflow: */		
-		rec_info->ri_log_buf->er_status_1 = XT_LOG_ENT_EXT_REC_OK;
-		XT_SET_DISK_4(rec_info->ri_log_buf->er_data_size_4, rec_info->ri_log_data_size);
-		XT_SET_DISK_4(rec_info->ri_log_buf->er_tab_id_4, tab->tab_id);
-		XT_SET_DISK_4(rec_info->ri_log_buf->er_rec_id_4, rec_id);
-
-		if (tab->tab_dic.dic_tab_flags & XT_TF_MEMORY_TABLE) {
-			if (!xt_tab_save_ext_record(tab, log_id, log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info->ri_log_data_size, (xtWord1 *) rec_info->ri_log_buf))
-				return FAILED;
-		}
-		else {
-			if (!thread->st_dlog_buf.dlb_append_log(log_id, log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info->ri_log_data_size, (xtWord1 *) rec_info->ri_log_buf, ot->ot_thread))
-				return FAILED;
-		}
+		if (!tab_write_ext_record(ot, tab, rec_info, rec_id, log_id, log_offset, thread))
+			return FAILED;
 	}
 
 	/* Put the index entries back: */
@@ -5078,6 +5080,10 @@ static xtBool tab_overwrite_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtWor
 	xtLogOffset				log_offset;
 	xtBool					prev_ext_rec;
 
+	/* A non-temporary table has been updated: */
+	if (!XT_IS_TEMP_TABLE(tab->tab_dic.dic_tab_flags))
+		self->st_non_temp_updated = TRUE;
+
 	if (!myxt_store_row(ot, &rec_info, (char *) after_buf))
 		goto failed_0;
 
@@ -5094,7 +5100,7 @@ static xtBool tab_overwrite_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtWor
 				goto failed_0;
 		}
 		else {
-			if (!self->st_dlog_buf.dlb_get_log_offset(&log_id, &log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info.ri_log_data_size, ot->ot_thread))
+			if (!self->st_dlog_buf.dlb_get_log_offset(&log_id, &log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info.ri_log_data_size, self))
 				goto failed_0;
 		}
 		XT_SET_LOG_REF(rec_info.ri_ext_rec, log_id, log_offset);
@@ -5121,18 +5127,8 @@ static xtBool tab_overwrite_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtWor
 
 	if (rec_info.ri_ext_rec) {
 		/* Write the log buffer overflow: */		
-		rec_info.ri_log_buf->er_status_1 = XT_LOG_ENT_EXT_REC_OK;
-		XT_SET_DISK_4(rec_info.ri_log_buf->er_data_size_4, rec_info.ri_log_data_size);
-		XT_SET_DISK_4(rec_info.ri_log_buf->er_tab_id_4, tab->tab_id);
-		XT_SET_DISK_4(rec_info.ri_log_buf->er_rec_id_4, rec_id);
-		if (tab->tab_dic.dic_tab_flags & XT_TF_MEMORY_TABLE) {
-			if (!xt_tab_save_ext_record(tab, log_id, log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info.ri_log_data_size, (xtWord1 *) rec_info.ri_log_buf))
-				goto failed_1;
-		}
-		else {
-			if (!self->st_dlog_buf.dlb_append_log(log_id, log_offset, offsetof(XTactExtRecEntryDRec, er_data) + rec_info.ri_log_data_size, (xtWord1 *) rec_info.ri_log_buf, ot->ot_thread))
-				goto failed_1;
-		}
+		if (!tab_write_ext_record(ot, tab, &rec_info, rec_id, log_id, log_offset, self))
+			goto failed_1;
 	}
 
 	/* Add the index references that have changed: */
@@ -5247,6 +5243,10 @@ xtPublic xtBool xt_tab_update_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtW
 	row_id = ot->ot_curr_row_id;
 	self = ot->ot_thread;
 
+	/* A non-temporary table has been updated: */
+	if (!XT_IS_TEMP_TABLE(tab->tab_dic.dic_tab_flags))
+		self->st_non_temp_updated = TRUE;
+
 	if (!myxt_store_row(ot, &rec_info, (char *) after_buf))
 		goto failed_0;
 
@@ -5260,7 +5260,7 @@ xtPublic xtBool xt_tab_update_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtW
 		goto failed_0;
 
 	/* Link the new variation into the list: */
-	XT_TAB_ROW_WRITE_LOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], ot->ot_thread);
+	XT_TAB_ROW_WRITE_LOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], self);
 
 	if (!xt_tab_get_row(ot, row_id, &curr_var_rec_id))
 		goto failed_1;
@@ -5286,7 +5286,7 @@ xtPublic xtBool xt_tab_update_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtW
 		goto failed_1;
 	XT_DISABLED_TRACE(("set upd tx=%d row=%d rec=%d\n", (int) self->st_xact_data->xd_start_xn_id, (int) row_id, (int) rec_info.ri_rec_id));
 
-	XT_TAB_ROW_UNLOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], ot->ot_thread);
+	XT_TAB_ROW_UNLOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], self);
 
 	/* Add the index references: */
 	for (idx_cnt=0, ind=tab->tab_dic.dic_keys; idx_cnt<tab->tab_dic.dic_key_count; idx_cnt++, ind++) {
@@ -5301,7 +5301,7 @@ xtPublic xtBool xt_tab_update_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtW
 			goto failed_2;
 	}
 
-	ot->ot_thread->st_statistics.st_row_update++;
+	self->st_statistics.st_row_update++;
 	return OK;
 
 	failed_2:
@@ -5309,7 +5309,7 @@ xtPublic xtBool xt_tab_update_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtW
 	goto failed_0;
 
 	failed_1:
-	XT_TAB_ROW_UNLOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], ot->ot_thread);
+	XT_TAB_ROW_UNLOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], self);
 
 	failed_0:
 	return FAILED;
@@ -5318,9 +5318,14 @@ xtPublic xtBool xt_tab_update_record(XTOpenTablePtr ot, xtWord1 *before_buf, xtW
 xtPublic xtBool xt_tab_delete_record(XTOpenTablePtr ot, xtWord1 *rec_buf)
 {
 	register XTTableHPtr	tab = ot->ot_table;
+	register XTThreadPtr	thread = ot->ot_thread;
 	xtRowID					row_id = ot->ot_curr_row_id;
 	xtRecordID				curr_var_rec_id;
 	XTTabRecInfoRec			rec_info;
+
+	/* A non-temporary table has been updated: */
+	if (!XT_IS_TEMP_TABLE(tab->tab_dic.dic_tab_flags))
+		thread->st_non_temp_updated = TRUE;
 
 	/* Setup a delete record: */
 	rec_info.ri_fix_rec_buf = (XTTabRecFixDPtr) ot->ot_row_wbuffer;
@@ -5330,12 +5335,12 @@ xtPublic xtBool xt_tab_delete_record(XTOpenTablePtr ot, xtWord1 *rec_buf)
 	rec_info.ri_fix_rec_buf->tr_stat_id_1 = 0;
 	XT_SET_DISK_4(rec_info.ri_fix_rec_buf->tr_row_id_4, row_id);
 	XT_SET_DISK_4(rec_info.ri_fix_rec_buf->tr_prev_rec_id_4, ot->ot_curr_rec_id);
-	XT_SET_DISK_4(rec_info.ri_fix_rec_buf->tr_xact_id_4, ot->ot_thread->st_xact_data->xd_start_xn_id);
+	XT_SET_DISK_4(rec_info.ri_fix_rec_buf->tr_xact_id_4, thread->st_xact_data->xd_start_xn_id);
 
 	if (!tab_add_record(ot, &rec_info, XT_LOG_ENT_DELETE))
 		return FAILED;
 
-	XT_TAB_ROW_WRITE_LOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], ot->ot_thread);
+	XT_TAB_ROW_WRITE_LOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], thread);
 
 	if (!xt_tab_get_row(ot, row_id, &curr_var_rec_id))
 		goto failed_1;
@@ -5346,20 +5351,20 @@ xtPublic xtBool xt_tab_delete_record(XTOpenTablePtr ot, xtWord1 *rec_buf)
 	}
 
 #ifdef TRACE_VARIATIONS
-	xt_ttracef(ot->ot_thread, "update: row=%d rec=%d T%d\n", (int) row_id, (int) rec_info.ri_rec_id, (int) ot->ot_thread->st_xact_data->xd_start_xn_id);
+	xt_ttracef(thread, "update: row=%d rec=%d T%d\n", (int) row_id, (int) rec_info.ri_rec_id, (int) thread->st_xact_data->xd_start_xn_id);
 #endif
 	if (!xt_tab_set_row(ot, XT_LOG_ENT_ROW_ADD_REC, row_id, rec_info.ri_rec_id))
 		goto failed_1;
-	XT_DISABLED_TRACE(("del row tx=%d row=%d rec=%d\n", (int) ot->ot_thread->st_xact_data->xd_start_xn_id, (int) row_id, (int) rec_info.ri_rec_id));
+	XT_DISABLED_TRACE(("del row tx=%d row=%d rec=%d\n", (int) thread->st_xact_data->xd_start_xn_id, (int) row_id, (int) rec_info.ri_rec_id));
 
-	XT_TAB_ROW_UNLOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], ot->ot_thread);
+	XT_TAB_ROW_UNLOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], thread);
 
 	if (ot->ot_table->tab_dic.dic_table->dt_trefs) {
 		if (!ot->ot_table->tab_dic.dic_table->deleteRow(ot, rec_buf))
 			goto failed_2;
 	}
 
-	ot->ot_thread->st_statistics.st_row_delete++;
+	thread->st_statistics.st_row_delete++;
 	return OK;
 
 	failed_2:
@@ -5367,7 +5372,7 @@ xtPublic xtBool xt_tab_delete_record(XTOpenTablePtr ot, xtWord1 *rec_buf)
 	return FAILED;
 
 	failed_1:
-	XT_TAB_ROW_UNLOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], ot->ot_thread);
+	XT_TAB_ROW_UNLOCK(&tab->tab_row_rwlock[row_id % XT_ROW_RWLOCKS], thread);
 	return FAILED;
 }
 
@@ -5880,7 +5885,7 @@ xtPublic void xt_tab_set_table_repair_pending(XTTableHPtr tab)
  * EXTENDED DATA FOR RAM TABLES
  */
 
-xtPublic xtBool xt_tab_get_ext_slot(XTTableHPtr tab, xtLogID *log_id, xtLogOffset *log_offset, size_t /*req_size*/)
+xtPublic xtBool xt_tab_get_ext_slot(XTTableHPtr tab, xtLogID *log_id, xtLogOffset *log_offset, size_t XT_UNUSED(req_size))
 {
 	size_t new_slot;
 

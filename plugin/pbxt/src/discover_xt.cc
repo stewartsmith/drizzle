@@ -23,313 +23,26 @@
 
 #include "xt_config.h"
 
-#ifdef PBXT_SYS_TAB
-
 #ifndef DRIZZLED
+
 #include "mysql_priv.h"
 #include "item_create.h"
 #include <m_ctype.h>
-#else
-#include <drizzled/session.h>
-#include <drizzled/sql_base.h>
-#include <drizzled/statement/alter_table.h>
-#include <drizzled/sql_table.h>
-#include <algorithm>
-#include <sstream>
-namespace drizzled { 
-extern pid_t current_pid;
-namespace internal {
-size_t unpack_filename(char * to, const char *from);
-}
-}
-using namespace drizzled;
-using namespace drizzled::internal;
-#endif
 
 #include "strutil_xt.h"
 #include "ha_pbxt.h"
 #include "discover_xt.h"
 #include "ha_xtsys.h"
 
-#ifndef DRIZZLED
 #if MYSQL_VERSION_ID >= 50404
 #define DOT_STR(x)			x.str
 #else
 #define DOT_STR(x)			x
 #endif
-#endif
 
-//#ifndef DRIZZLED
 #define LOCK_OPEN_HACK_REQUIRED
-//#endif // DRIZZLED
 
 #ifdef LOCK_OPEN_HACK_REQUIRED
-#ifdef DRIZZLED
-
-using namespace drizzled;
-using namespace std;
-
-#define mysql_create_table_no_lock hacked_mysql_create_table_no_lock
-
-namespace drizzled {
-
-int rea_create_table(Session *session,
-                     TableIdentifier &identifier,
-                     message::Table &table_proto,
-                     HA_CREATE_INFO *create_info,
-                     List<CreateField> &create_field,
-                     uint32_t key_count,KEY *key_info);
-
-int mysql_prepare_create_table(Session *session,
-                                      HA_CREATE_INFO *create_info,
-                                      message::Table &create_proto,
-                                      AlterInfo *alter_info,
-                                      bool tmp_table,
-                                      uint32_t *db_options,
-                                      KEY **key_info_buffer,
-                                      uint32_t *key_count,
-                                      int select_field_count);
-
-}
-
-static uint32_t build_tmptable_filename(Session* session,
-                                        char *buff, size_t bufflen)
-{
-  uint32_t length;
-  ostringstream path_str, post_tmpdir_str;
-  string tmp;
-
-  path_str << drizzle_tmpdir;
-  post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
-  post_tmpdir_str << session->thread_id << session->tmp_table++;
-  tmp= post_tmpdir_str.str();
-
-  transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-
-  path_str << tmp;
-
-  if (bufflen < path_str.str().length())
-    length= 0;
-  else
-    length= unpack_filename(buff, path_str.str().c_str());
-
-  return length;
-}
-
-static bool mysql_create_table_no_lock(Session *session,
-                                const char *db, const char *table_name,
-                                HA_CREATE_INFO *create_info,
-                                message::Table *table_proto,
-                                AlterInfo *alter_info,
-                                bool internal_tmp_table,
-                                uint32_t select_field_count,
-				bool skip_existing)
-{
-  char          path[FN_REFLEN];
-  uint32_t          path_length;
-  uint          db_options, key_count;
-  KEY           *key_info_buffer;
-  Cursor        *file;
-  bool          error= true;
-  /* Check for duplicate fields and check type of table to create */
-  if (!alter_info->create_list.elements)
-  {
-    my_message(ER_TABLE_MUST_HAVE_COLUMNS, ER(ER_TABLE_MUST_HAVE_COLUMNS),
-               MYF(0));
-    return true;
-  }
-  assert(strcmp(table_name,table_proto->name().c_str())==0);
-  //if (check_engine(session, table_name, table_proto, create_info))
-  //  return true;
-  db_options= create_info->table_options;
-  if (create_info->row_type == ROW_TYPE_DYNAMIC)
-    db_options|=HA_OPTION_PACK_RECORD;
-  
-  /*if (!(file= create_info->db_type->getCursor((TableShare*) 0, session->mem_root)))
-  {
-    my_error(ER_OUTOFMEMORY, MYF(0), sizeof(Cursor));
-    return true;
-  }*/
-
-  TableIdentifier ident(db, table_name, table_proto->type());
-
-  /* PMC - Done to avoid getting the partition handler by mistake! */
-  if (!(file= new (session->mem_root) ha_xtsys(pbxt_hton, *TableShare::getShare(ident))))
-  {
-    my_error(ER_OUTOFMEMORY, MYF(0), sizeof(Cursor));
-    return true;
-  }
-
-  set_table_default_charset(create_info, (char*) db);
-
-  if (mysql_prepare_create_table(session, 
-                                 create_info,
-                                 *table_proto,
-                                 alter_info,
-                                 internal_tmp_table,
-                                 &db_options,
-				 &key_info_buffer, &key_count,
-                                 select_field_count))
-    goto err;
-
-      /* Check if table exists */
-  if (table_proto->type() == message::Table::TEMPORARY)
-  {
-    path_length= build_tmptable_filename(session, path, sizeof(path));
-  }
-  else
-  {
- #ifdef FN_DEVCHAR
-    /* check if the table name contains FN_DEVCHAR when defined */
-    if (strchr(table_name, FN_DEVCHAR))
-    {
-      my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name);
-      return true;
-    }
-#endif
-    std::string path_str;
-    path_length= build_table_filename(path_str, db, table_name, internal_tmp_table);
-  }
-
-  /* Check if table already exists */
-  if ((table_proto->type() == message::Table::TEMPORARY) &&
-      session->find_temporary_table(db, table_name))
-  {
-    if (skip_existing)
-    {
-      create_info->table_existed= 1;            // Mark that table existed
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                          ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                          table_name);
-      error= 0;
-      goto err;
-    }
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
-    goto err;
-  }
-
-  //pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
-  if (!internal_tmp_table && table_proto->type() != message::Table::TEMPORARY)
-  {
-    if (plugin::StorageEngine::getTableDefinition(*session,
-                                                  ident, 
-                                                  *table_proto,
-                                                  false) == EEXIST)
-    {
-      if (skip_existing)
-      {
-        error= false;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            table_name);
-        create_info->table_existed= 1;          // Mark that table existed
-      }
-      else
-        my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
-
-      goto unlock_and_end;
-    }
-    /*
- *       We don't assert here, but check the result, because the table could be
- *             in the table definition cache and in the same time the .frm could be
- *                   missing from the disk, in case of manual intervention which deletes
- *                         the .frm file. The user has to use FLUSH TABLES; to clear the cache.
- *                               Then she could create the table. This case is pretty obscure and
- *                                     therefore we don't introduce a new error message only for it.
- *                                         */
-    if (TableShare::getShare(ident))
-    {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
-      goto unlock_and_end;
-    }
-  }
-  /*
- *     Check that table with given name does not already
- *         exist in any storage engine. In such a case it should
- *             be discovered and the error ER_TABLE_EXISTS_ERROR be returned
- *                 unless user specified CREATE TABLE IF EXISTS
- *                     The LOCK_open mutex has been locked to make sure no
- *                         one else is attempting to discover the table. Since
- *                             it's not on disk as a frm file, no one could be using it!
- *                               */
-  if (table_proto->type() != message::Table::TEMPORARY)
-  {
-    bool create_if_not_exists = skip_existing;
-
-    std::string path_str;
-    uint32_t          table_path_length;
-
-    table_path_length= build_table_filename(path_str, db, table_name, false);
-
-    int retcode= plugin::StorageEngine::getTableDefinition(*session,
-                                                           ident, 
-                                                           *table_proto,
-                                                           false);
-    switch (retcode)
-    {
-      case ENOENT:
-        /* Normal case, no table exists. we can go and create it */
-        break;
-      case EEXIST:
-        if (create_if_not_exists)
-        {
-          error= false;
-          push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                              ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                              table_name);
-          create_info->table_existed= 1;                // Mark that table existed
-          goto unlock_and_end;
-        }
-        my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
-        goto unlock_and_end;
-      default:
-        my_error(retcode, MYF(0),table_name);
-        goto unlock_and_end;
-    }
-  }
-
-  session->set_proc_info("creating table");
-  create_info->table_existed= 0;                // Mark that table is created
-
-  create_info->table_options=db_options;
-
-  if (rea_create_table(session, ident,
-                       *table_proto,
-                       create_info, alter_info->create_list,
-                       key_count, key_info_buffer))
-    goto unlock_and_end;
-
-  if (table_proto->type() == message::Table::TEMPORARY)
-  {
-    /* Open table and put in temporary table list */
-    if (!(session->open_temporary_table(ident)))
-    {
-      (void) session->rm_temporary_table(ident);
-      goto unlock_and_end;
-    }
-  }
-
-  /*
- *     Don't write statement if:
- *         - It is an internal temporary table,
- *             - Row-based logging is used and it we are creating a temporary table, or
- *                 - The binary log is not open.
- *                     Otherwise, the statement shall be binlogged.
- *                        */
-  if (!internal_tmp_table &&
-      ((table_proto->type() != message::Table::TEMPORARY)))
-    write_bin_log(session, session->getQueryString().c_str());
-  error= false;
-unlock_and_end:
-  //pthread_mutex_unlock(&LOCK_open);
-
-err:
-  session->set_proc_info("After create");
-  delete file;
-  return(error);
-}
-
-#else // MySQL case
 ///////////////////////////////
 /*
  * Unfortunately I cannot use the standard mysql_create_table_no_lock() because it will lock "LOCK_open"
@@ -1568,51 +1281,27 @@ warn:
 ////// END OF CUT AND PASTES FROM  sql_table.cc ////////
 ////////////////////////////////////////////////////////
 
-#endif // DRIZZLED
 #endif // LOCK_OPEN_HACK_REQUIRED
 
 //------------------------------
 int xt_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *name, DT_FIELD_INFO *info, DT_KEY_INFO *XT_UNUSED(keys), xtBool skip_existing)
 {
-#ifdef DRIZZLED
-#define MYLEX_CREATE_INFO create_info
-#else
-#define MYLEX_CREATE_INFO mylex.create_info 
-#endif
-
-#ifdef DRIZZLED
-	drizzled::statement::AlterTable *stmt = new drizzled::statement::AlterTable(thd);
-	HA_CREATE_INFO create_info;
-	//AlterInfo alter_info;
-	drizzled::message::Table table_proto;
-
-	static const char *ext = ".dfe";
-	static const int ext_len = 4;
-
-	table_proto.mutable_engine()->mutable_name()->assign("PBXT");
-#else
 	static const char *ext = ".frm";
 	static const int ext_len = 4;
-#endif
 	int err = 1;
 	char field_length_buffer[12], *field_length_ptr;
 	LEX  *save_lex= thd->lex, mylex;
 
-	memset(&MYLEX_CREATE_INFO, 0, sizeof(HA_CREATE_INFO));
+	memset(&mylex.create_info, 0, sizeof(HA_CREATE_INFO));
 
 	thd->lex = &mylex;
 	lex_start(thd);
-#ifdef DRIZZLED
-        mylex.statement = stmt;
-#endif
 	
 	/* setup the create info */
-	MYLEX_CREATE_INFO.db_type = hton;
+	mylex.create_info.db_type = hton;
 
-#ifndef DRIZZLED 
 	mylex.create_info.frm_only = 1;
-#endif
- 	MYLEX_CREATE_INFO.default_table_charset = system_charset_info;
+ 	mylex.create_info.default_table_charset = system_charset_info;
 	
 	/* setup the column info. */
 	while (info->field_name) {		
@@ -1629,13 +1318,6 @@ int xt_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *
 		 } else 
 			field_length_ptr = NULL;
 
-#ifdef DRIZZLED
-		if (add_field_to_list(thd, &field_name, info->field_type, field_length_ptr, info->field_decimal_length,
-			info->field_flags,
-            COLUMN_FORMAT_TYPE_FIXED,
-		    NULL /*default_value*/, NULL /*on_update_value*/, &comment, NULL /*change*/,
-            NULL /*interval_list*/, info->field_charset))
-#else
 		if (add_field_to_list(thd, &field_name, info->field_type, field_length_ptr, info->field_decimal_length,
 			info->field_flags,
 #if MYSQL_VERSION_ID >= 50404
@@ -1644,7 +1326,6 @@ int xt_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *
 #endif
 		       NULL /*default_value*/, NULL /*on_update_value*/, &comment, NULL /*change*/, 
 		       NULL /*interval_list*/, info->field_charset, 0 /*uint_geom_type*/)) 
-#endif
 			goto error;
 
 
@@ -1668,18 +1349,8 @@ int xt_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *
 	}
 	
 	/* Create an internal temp table */
-#ifdef DRIZZLED
-    table_proto.set_name(name);
-    table_proto.set_type(drizzled::message::Table::STANDARD);
-    table_proto.set_schema(db);
-    table_proto.set_creation_timestamp(time(NULL));
-    table_proto.set_update_timestamp(time(NULL));
-	if (mysql_create_table_no_lock(thd, db, name, &create_info, &table_proto, &stmt->alter_info, 1, 0, skip_existing)) 
-		goto error;
-#else
 	if (mysql_create_table_no_lock(thd, db, name, &mylex.create_info, &mylex.alter_info, 1, 0)) 
 		goto error;
-#endif
 
 	noerror:
 	err = 0;
