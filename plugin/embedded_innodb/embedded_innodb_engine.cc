@@ -2180,6 +2180,7 @@ free_err:
 static bool  innobase_use_checksums= true;
 static char*  innobase_data_home_dir      = NULL;
 static bool innobase_use_doublewrite= true;
+static unsigned long srv_io_capacity= 200;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2209,6 +2210,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
   else
     err= ib_cfg_set_bool_off("doublewrite");
 
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("io_capacity", srv_io_capacity);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2279,6 +2284,11 @@ static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
   "Disable with --skip-innodb-doublewrite.",
   NULL, NULL, true);
 
+static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
+  PLUGIN_VAR_RQCMDARG,
+  "Number of IOPs the server can do. Tunes the background IO rate",
+  NULL, NULL, 200, 100, ~0L, 0);
+
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2303,6 +2313,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(doublewrite),
+  DRIZZLE_SYSVAR(io_capacity),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
