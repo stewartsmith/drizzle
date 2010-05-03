@@ -49,6 +49,7 @@
 #include "drizzled/field/varstring.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <math.h>
 #include <algorithm>
 #include <float.h>

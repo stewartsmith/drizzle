@@ -128,10 +128,15 @@ Scoreboard::~Scoreboard()
   }
 }
 
+uint32_t Scoreboard::getBucketNumber(Session *session)
+{
+  return (session->getSessionId() % number_buckets);
+}
+
 ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
 {
   /* our bucket */
-  uint32_t bucket_number= session->getSessionId() % number_buckets; 
+  uint32_t bucket_number= getBucketNumber(session); 
 
   /* our vector corresponding to bucket_number */
   vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number); 

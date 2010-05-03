@@ -683,25 +683,17 @@ xtPublic void xt_tab_init_db(XTThreadPtr self, XTDatabaseHPtr db)
 	 * Previously we only caclulated statistics when a handler was opened
 	 * and the underlying table was also opened.
 	 */
-	/* This (hack) fixes: warning: variable 'edx' might be clobbered by 'longjmp' or 'vfork' */
-	u_int save_edx;
+	XTTableHPtr tab;
 
 	xt_enum_tables_init(&edx);
 	while ((te_ptr = xt_enum_tables_next(self, db, &edx))) {
-		save_edx = edx;
-
 		xt_strcpy(PATH_MAX, pbuf, te_ptr->te_tab_path->tp_path);
 		xt_add_dir_char(PATH_MAX, pbuf);
 		xt_strcat(PATH_MAX, pbuf, te_ptr->te_tab_name);
-		try_(a) {
-			edx = 0;
-			xt_heap_release(self, xt_use_table_no_lock(self, db, (XTPathStrPtr)pbuf, FALSE, FALSE, NULL));
-		} catch_(a) {
-			edx = 0;
-			/* ignore errors */
+		if ((tab = xt_use_table_no_lock_ns(db, (XTPathStrPtr) pbuf, FALSE, FALSE, NULL)))
+			xt_heap_release_ns(tab);
+		else
 			xt_log_and_clear_warning(self);
-		} cont_(a);
-		edx = save_edx;
 	}
 
 	popr_(); // Discard xt_tab_exit_db(db)
@@ -1472,7 +1464,6 @@ static int tab_new_handle(XTThreadPtr self, XTTableHPtr *r_tab, XTDatabaseHPtr d
 	return_(XT_TAB_OK);
 }
 
-
 /*
  * Get a reference to a table in the current database. The table reference is valid,
  * as long as the thread is using the database!!!
@@ -1511,6 +1502,21 @@ xtPublic XTTableHPtr xt_use_table_no_lock(XTThreadPtr self, XTDatabaseHPtr db, X
 	if (tab)
 		xt_heap_reference(self, tab);
 
+	return tab;
+}
+
+xtPublic XTTableHPtr xt_use_table_no_lock_ns(struct XTDatabase *db, XTPathStrPtr name, xtBool no_load, xtBool missing_ok, XTDictionaryPtr dic)
+{
+	XTTableHPtr	tab;
+	XTThreadPtr	self = xt_get_self();
+
+	try_(a) {
+		tab = xt_use_table_no_lock(self, db, name, no_load, missing_ok, dic);
+	}
+	catch_(a) {
+		tab = NULL;
+	}
+	cont_(a);
 	return tab;
 }
 
@@ -2954,7 +2960,6 @@ xtPublic XTTableHPtr xt_use_table_by_id_ns(XTDatabaseHPtr db, xtTableID tab_id)
 	}
 	cont_(a);
 	return tab;
-
 }
 
 /* The fixed part of the record is already in the row buffer.

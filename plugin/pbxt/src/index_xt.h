@@ -374,9 +374,9 @@ typedef struct XTIndDirtyList {
 #define XT_INDEX_LOCK_TYPE				xt_rwlock_type
 #define XT_INDEX_INIT_LOCK(s, i)		xt_init_rwlock_with_autoname(s, &(i)->mi_rwlock)
 #define XT_INDEX_FREE_LOCK(s, i)		xt_free_rwlock(&(i)->mi_rwlock)	
-#define XT_INDEX_READ_LOCK(i, o)		xt_slock_rwlock_ns(&(i)->mi_rwlock)
-#define XT_INDEX_WRITE_LOCK(i, o)		xt_xlock_rwlock_ns(&(i)->mi_rwlock)
-#define XT_INDEX_UNLOCK(i, o)			xt_unlock_rwlock_ns(&(i)->mi_rwlock)
+#define XT_INDEX_READ_LOCK(i, o)		do { xt_slock_rwlock_ns(&(i)->mi_rwlock); (void) (o); } while(0)
+#define XT_INDEX_WRITE_LOCK(i, o)		do { xt_xlock_rwlock_ns(&(i)->mi_rwlock); (void) (o); } while(0)
+#define XT_INDEX_UNLOCK(i, o)			do { xt_unlock_rwlock_ns(&(i)->mi_rwlock); (void) (o); } while(0)
 #define XT_INDEX_HAVE_XLOCK(i, o)		TRUE
 #elif defined(XT_TAB_ROW_USE_XSMUTEX)
 #define XT_INDEX_LOCK_TYPE				XTMutexXSLockRec
