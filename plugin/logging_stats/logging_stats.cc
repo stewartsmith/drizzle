@@ -77,7 +77,11 @@
  * TODO 
  *
  * Allow expansion of Scoreboard and cumulative vector 
- *  
+ * 
+ * Possibly add a scoreboard_slot_index variable onto the Session class
+ * this would avoid having to relocate the Scoreboard slot for each Session
+ * doing multiple statements. 
+ * 
  */
 
 #include "config.h"
