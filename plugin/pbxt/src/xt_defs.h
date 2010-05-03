@@ -887,7 +887,7 @@ extern xtBool				pbxt_crash_debug;
 #define thd_charset							session_charset
 #define thd_slave_thread					session_slave_thread
 #define thd_binlog_format					session_binlog_format
-#define thd_mark_transaction_to_rollback	::drizzled::session_mark_transaction_to_rollback
+#define thd_mark_transaction_to_rollback	::drizzled::mark_transaction_to_rollback
 #define thd_ha_data							session_ha_data
 #define current_thd							current_session
 #define thd_sql_command						session_sql_command
@@ -942,7 +942,7 @@ class Session;
 #define MX_ULONG_T							ulong
 #define MX_ULONGLONG_T						ulonglong
 #define MX_LONGLONG_T						longlong
-#define MX_CHARSET_INFO						CHARSET_INFO
+#define MX_CHARSET_INFO						struct charset_info_st
 #define MX_CONST_CHARSET_INFO				struct charset_info_st			
 #define MX_CONST							
 #define MX_BITMAP							MY_BITMAP
