@@ -59,7 +59,7 @@ data_home_dir	TEXT	./
 doublewrite	BOOL	true
 file_format	TEXT	Barracuda
 file_io_threads	ULINT	10
-file_per_table	BOOL	true
+file_per_table	BOOL	false
 flush_log_at_trx_commit	ULONG	1
 flush_method	TEXT	fsync
 force_recovery	ULINT	0
@@ -90,4 +90,4 @@ data_file_path	NULL
 data_home_dir	./
 SELECT NAME,VALUE FROM DATA_DICTIONARY.INNODB_CONFIGURATION WHERE NAME = "file_per_table";
 NAME	VALUE
-file_per_table	true
+file_per_table	false
