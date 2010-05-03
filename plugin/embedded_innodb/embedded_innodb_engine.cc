@@ -2179,6 +2179,7 @@ free_err:
 
 static bool  innobase_use_checksums= true;
 static char*  innobase_data_home_dir      = NULL;
+static bool innobase_use_doublewrite= true;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2202,6 +2203,14 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
 
   if (innodb_data_file_path == NULL)
     innodb_data_file_path= default_innodb_data_file_path;
+
+  if (innobase_use_doublewrite)
+    err= ib_cfg_set_bool_on("doublewrite");
+  else
+    err= ib_cfg_set_bool_off("doublewrite");
+
+  if (err != DB_SUCCESS)
+    goto innodb_error;
 
   err= ib_cfg_set_text("data_file_path", innodb_data_file_path);
   if (err != DB_SUCCESS)
@@ -2264,6 +2273,12 @@ static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
   "The common part for InnoDB table spaces.",
   NULL, NULL, NULL);
 
+static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
+  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
+  "Enable InnoDB doublewrite buffer (enabled by default). "
+  "Disable with --skip-innodb-doublewrite.",
+  NULL, NULL, true);
+
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2287,6 +2302,7 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_home_dir),
+  DRIZZLE_SYSVAR(doublewrite),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
