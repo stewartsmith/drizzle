@@ -784,7 +784,7 @@ xtPublic int xt_ha_pbxt_to_mysql_error(int xt_err)
 	return(-1);			// Unknown error
 }
 
-xtPublic int xt_ha_pbxt_thread_error_for_mysql(THD *XT_UNUSED(thd), const XTThreadPtr self, int ignore_dup_key)
+xtPublic int xt_ha_pbxt_thread_error_for_mysql(THD *thd, const XTThreadPtr self, int ignore_dup_key)
 {
 	int		xt_err = self->t_exception.e_xt_err;
 	xtBool	dup_key = FALSE;
@@ -899,9 +899,13 @@ xtPublic int xt_ha_pbxt_thread_error_for_mysql(THD *XT_UNUSED(thd), const XTThre
 					 */
 					self->st_abort_trans = TRUE;
 				}
-				/* Drizzle is clever enough to know when it should rollback!
-				 * What a concept. :)
+				/* Only tell MySQL to rollback if we automatically rollback.
+				 * Note: calling this with (thd, FALSE), cause sp.test to fail.
 				 */
+				if (!dup_key) {
+					if (thd)
+						thd_mark_transaction_to_rollback(thd, TRUE);
+				}
 			}
 			break;
 	}
