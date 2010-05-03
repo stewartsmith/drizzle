@@ -812,11 +812,6 @@ public:
     return thread_id;
   }
 
-  inline int64_t getScoreboardSlotIndex() const
-  {
-    return scoreboard_slot_index;
-  }
-
   /** Accessor method returning the server's ID. */
   inline uint32_t getServerId()  const
   {
@@ -1252,22 +1247,10 @@ public:
   {
     statement_message= in_message;
   }
-
-  /**
-   * Sets the scoreboard slot index 
-   *
-   * @param[in] the scoreboard slot index 
-   */
-  void setScoreboardSlotIndex(uint32_t in_scoreboard_slot_index)
-  {
-    scoreboard_slot_index= in_scoreboard_slot_index; 
-  }
-
 private:
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
   message::Statement *statement_message;
-  int64_t scoreboard_slot_index;
   /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;

@@ -189,8 +189,7 @@ Session::Session(plugin::Client *client_arg)
   m_lip(NULL),
   cached_table(0),
   transaction_message(NULL),
-  statement_message(NULL),
-  scoreboard_slot_index(-1)
+  statement_message(NULL)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
