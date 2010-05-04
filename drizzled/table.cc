@@ -117,8 +117,7 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 
     share->setPath(path_buff, path.length());
     strcpy(path_buff, path.c_str());
-    share->normalized_path.str= path_buff;
-    share->normalized_path.length= path.length();
+    share->setNormalizedPath(path_buff, path.length());
 
     share->version=       refresh_version;
 
@@ -1461,7 +1460,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   {
     int ha_err;
     if ((ha_err= (outparam.cursor->
-                  ha_open(&outparam, share->normalized_path.str,
+                  ha_open(&outparam, share->getNormalizedPath(),
                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
                           (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE :
                            (db_stat & HA_WAIT_IF_LOCKED) ?  HA_OPEN_WAIT_IF_LOCKED :

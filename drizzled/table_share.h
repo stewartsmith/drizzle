@@ -209,8 +209,13 @@ public:
   LEX_STRING table_name;                /* Table name (for open) */
 private:
   LEX_STRING path;	/* Path to table (from datadir) */
-public:
   LEX_STRING normalized_path;		/* unpack_filename(path) */
+public:
+
+  const char *getNormalizedPath()
+  {
+    return normalized_path.str;
+  }
 
   const char *getPath()
   {
@@ -231,6 +236,12 @@ public:
   {
     path.str= str_arg;
     path.length= size_arg;
+  }
+
+  void setNormalizedPath(char *str_arg, uint32_t size_arg)
+  {
+    normalized_path.str= str_arg;
+    normalized_path.length= size_arg;
   }
 
   const char *getTableName() const

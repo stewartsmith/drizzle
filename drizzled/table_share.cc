@@ -106,8 +106,8 @@ void TableShare::release(TableShare *share)
 
   if (to_be_deleted)
   {
-    const string key_string(share->table_cache_key.str,
-                            share->table_cache_key.length);
+    const string key_string(share->getCacheKey(),
+                            share->getCacheKeySize());
     TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
     if (iter != table_def_cache.end())
     {
