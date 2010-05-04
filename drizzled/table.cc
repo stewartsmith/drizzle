@@ -115,10 +115,9 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 
     share->set_table_cache_key(key_buff, key, key_length);
 
-    share->path.str= path_buff,
-    share->path.length= path.length();
-    strcpy(share->path.str, path.c_str());
-    share->normalized_path.str=    share->path.str;
+    share->setPath(path_buff, path.length());
+    strcpy(path_buff, path.c_str());
+    share->normalized_path.str= path_buff;
     share->normalized_path.length= path.length();
 
     share->version=       refresh_version;
@@ -299,7 +298,7 @@ static int inner_parse_table_proto(Session& session,
 		    _("'%s' had no or invalid character set, "
 		      "and default character set is multi-byte, "
 		      "so character column sizes may have changed"),
-		    share->path.str);
+                    share->getPath());
     }
     share->table_charset= default_charset_info;
   }
@@ -3508,7 +3507,7 @@ int Table::report_error(int error)
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got error %d when reading table '%s'"),
-		    error, s->path.str);
+                  error, s->getPath());
   print_error(error, MYF(0));
 
   return 1;

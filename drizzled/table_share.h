@@ -202,17 +202,34 @@ public:
     should correspond to each other.
     To ensure this one can use set_table_cache() methods.
   */
-  LEX_STRING table_cache_key;
+  LEX_STRING table_cache_key;                        /* Pointer to db */
 private:
   LEX_STRING db;                        /* Pointer to db */
 public:
   LEX_STRING table_name;                /* Table name (for open) */
+private:
   LEX_STRING path;	/* Path to table (from datadir) */
+public:
   LEX_STRING normalized_path;		/* unpack_filename(path) */
+
+  const char *getPath()
+  {
+    return path.str;
+  }
+  void setPath(char *str_arg, uint32_t size_arg)
+  {
+    path.str= str_arg;
+    path.length= size_arg;
+  }
 
   const char *getTableName() const
   {
     return table_name.str;
+  }
+
+  const char *getTableCacheKey() const
+  {
+    return table_cache_key.str;
   }
 
   const char *getPath() const

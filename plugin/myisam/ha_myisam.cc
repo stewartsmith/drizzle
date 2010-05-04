@@ -680,7 +680,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   {
     errmsg_printf(ERRMSG_LVL_INFO, "Retrying repair of: '%s' failed. "
                           "Please try REPAIR EXTENDED or myisamchk",
-                          table->s->path.str);
+                          table->s->getPath());
     return(HA_ADMIN_FAILED);
   }
 

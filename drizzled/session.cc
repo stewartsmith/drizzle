@@ -1742,7 +1742,7 @@ void Session::nukeTable(Table *table)
   table->free_io_cache();
   table->delete_table(false);
 
-  TableIdentifier identifier(table->s->getSchemaName(), table->s->table_name.str, table->s->path.str);
+  TableIdentifier identifier(table->s->getSchemaName(), table->s->table_name.str, table->s->getPath());
   rm_temporary_table(table_type, identifier);
 
   table->s->free_table_share();

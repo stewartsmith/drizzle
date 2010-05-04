@@ -146,10 +146,10 @@ bool statement::AlterTable::execute()
     Table *table= session->find_temporary_table(first_table);
     assert(table);
     {
-      TableIdentifier identifier(first_table->db, first_table->table_name, table->s->path.str);
+      TableIdentifier identifier(first_table->db, first_table->table_name, table->s->getPath());
       TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->db,
                                      session->lex->name.str ? session->lex->name.str : first_table->table_name,
-                                     table->s->path.str);
+                                     table->s->getPath());
 
       res= alter_table(session, 
                        identifier,
