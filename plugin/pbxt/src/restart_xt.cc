@@ -2645,7 +2645,7 @@ off_t XTXactRestart::xres_bytes_to_read(XTThreadPtr self, XTDatabaseHPtr db, u_i
 	return to_read;
 
 	header_corrupt:
-	if (log_id == xres_cp_log_id && xres_cp_log_offset > sizeof(XTXactLogHeaderDRec))
+	if (log_id == xres_cp_log_id && xres_cp_log_offset > (xtLogOffset) sizeof(XTXactLogHeaderDRec))
 		xt_throw_ulxterr(XT_CONTEXT, XT_ERR_LOG_HEADER_CORRUPT, (u_long) log_id);
 
 	freer_(); // xt_close_file(of)

@@ -1852,7 +1852,7 @@ inline u_int idx_dirty_blocks(XTTableHPtr tab)
 
 	dirty_blocks = 0;
 	indp = tab->tab_dic.dic_keys;
-	for (int i=0; i<tab->tab_dic.dic_key_count; i++, indp++) {
+	for (u_int i=0; i<tab->tab_dic.dic_key_count; i++, indp++) {
 		ind = *indp;
 		dirty_blocks += ind->mi_dirty_blocks;
 	}
