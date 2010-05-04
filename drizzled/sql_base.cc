@@ -595,7 +595,7 @@ void Session::doGetTableNames(SchemaIdentifier &schema_identifier,
   {
     if (schema_identifier.compare(table->s->getSchemaName()))
     {
-      set_of_names.insert(table->s->table_name.str);
+      set_of_names.insert(table->s->getTableName());
     }
   }
 }
@@ -634,7 +634,7 @@ bool Session::doDoesTableExist(TableIdentifier &identifier)
   {
     if (table->s->tmp_table == message::Table::TEMPORARY)
     {
-      if (identifier.compare(table->s->getSchemaName(), table->s->table_name.str))
+      if (identifier.compare(table->s->getSchemaName(), table->s->getTableName()))
       {
         return true;
       }
@@ -651,7 +651,7 @@ int Session::doGetTableDefinition(TableIdentifier &identifier,
   {
     if (table->s->tmp_table == message::Table::TEMPORARY)
     {
-      if (identifier.compare(table->s->getSchemaName(), table->s->table_name.str))
+      if (identifier.compare(table->s->getSchemaName(), table->s->getTableName()))
       {
         table_proto.CopyFrom(*(table->s->getTableProto()));
 
@@ -1277,7 +1277,7 @@ c2: open t1; -- blocks
       if (table->open_placeholder && table->in_use == this)
       {
         pthread_mutex_unlock(&LOCK_open);
-        my_error(ER_UPDATE_TABLE_USED, MYF(0), table->s->table_name.str);
+        my_error(ER_UPDATE_TABLE_USED, MYF(0), table->s->getTableName());
         return NULL;
       }
 
@@ -1406,7 +1406,7 @@ reset:
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
-                                          table->s->table_name.str, alias);
+                                          table->s->getTableName(), alias);
   /* Fix alias if table name changes */
   if (strcmp(table->alias, alias))
   {
@@ -1472,7 +1472,7 @@ bool reopen_table(Table *table)
                   table->alias);
 #endif
   table_list.db=         const_cast<char *>(table->s->getSchemaName());
-  table_list.table_name= table->s->table_name.str;
+  table_list.table_name= table->s->getTableName();
   table_list.table=      table;
 
   if (wait_for_locked_table_names(session, &table_list))
@@ -1568,7 +1568,7 @@ void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
   */
   for (table= open_tables; table ; table=table->next)
   {
-    if (!strcmp(table->s->table_name.str, identifier.getTableName().c_str()) &&
+    if (!strcmp(table->s->getTableName(), identifier.getTableName().c_str()) &&
         !strcasecmp(table->s->getSchemaName(), identifier.getSchemaName().c_str()))
     {
       table->open_placeholder= true;
@@ -1872,7 +1872,7 @@ Table *drop_locked_tables(Session *session,const char *db, const char *table_nam
   for (table= session->open_tables; table ; table=next)
   {
     next=table->next;
-    if (!strcmp(table->s->table_name.str, table_name) &&
+    if (!strcmp(table->s->getTableName(), table_name) &&
         !strcasecmp(table->s->getSchemaName(), db))
     {
       mysql_lock_remove(session, table);
@@ -1918,7 +1918,7 @@ void abort_locked_tables(Session *session,const char *db, const char *table_name
   Table *table;
   for (table= session->open_tables; table ; table= table->next)
   {
-    if (!strcmp(table->s->table_name.str, table_name) &&
+    if (!strcmp(table->s->getTableName(), table_name) &&
         !strcmp(table->s->getSchemaName(), db))
     {
       /* If MERGE child, forward lock handling to parent. */

@@ -1742,7 +1742,7 @@ void Session::nukeTable(Table *table)
   table->free_io_cache();
   table->delete_table(false);
 
-  TableIdentifier identifier(table->s->getSchemaName(), table->s->table_name.str, table->s->getPath());
+  TableIdentifier identifier(table->s->getSchemaName(), table->s->getTableName(), table->s->getPath());
   rm_temporary_table(table_type, identifier);
 
   table->s->free_table_share();
@@ -2015,11 +2015,11 @@ void Session::dumpTemporaryTableNames(const char *foo)
 
     if (have_proto)
     {
-      cerr << "\tTable Name " << table->s->getSchemaName() << "." << table->s->table_name.str << " : " << answer << "\n";
+      cerr << "\tTable Name " << table->s->getSchemaName() << "." << table->s->getTableName() << " : " << answer << "\n";
       cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
     }
     else
-      cerr << "\tTabl;e Name " << table->s->getSchemaName() << "." << table->s->table_name.str << " : " << answer << "\n";
+      cerr << "\tTabl;e Name " << table->s->getSchemaName() << "." << table->s->getTableName() << " : " << answer << "\n";
   }
 }
 

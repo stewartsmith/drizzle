@@ -720,7 +720,7 @@ void Field::make_field(SendField *field)
   if (orig_table && orig_table->s->getSchemaName() && *orig_table->s->getSchemaName())
   {
     field->db_name= orig_table->s->getSchemaName();
-    field->org_table_name= orig_table->s->table_name.str;
+    field->org_table_name= orig_table->s->getTableName();
   }
   else
     field->org_table_name= field->db_name= "";

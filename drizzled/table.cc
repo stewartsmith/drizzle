@@ -3113,7 +3113,7 @@ error:
 bool Table::open_tmp_table()
 {
   int error;
-  if ((error=cursor->ha_open(this, s->table_name.str,O_RDWR,
+  if ((error=cursor->ha_open(this, s->getTableName(),O_RDWR,
                                   HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
     print_error(error, MYF(0));
@@ -3241,7 +3241,7 @@ bool Table::create_myisam_tmp_table(KEY *keyinfo,
       OPTION_BIG_TABLES)
     create_info.data_file_length= ~(uint64_t) 0;
 
-  if ((error=mi_create(share->table_name.str, share->keys, &keydef,
+  if ((error=mi_create(share->getTableName(), share->keys, &keydef,
 		       (uint32_t) (*recinfo-start_recinfo),
 		       start_recinfo,
 		       share->uniques, &uniquedef,
@@ -3274,9 +3274,9 @@ void Table::free_tmp_table(Session *session)
   if (cursor)
   {
     if (db_stat)
-      cursor->closeMarkForDelete(s->table_name.str);
+      cursor->closeMarkForDelete(s->getTableName());
 
-    TableIdentifier identifier(s->getSchemaName(), s->table_name.str, s->table_name.str);
+    TableIdentifier identifier(s->getSchemaName(), s->getTableName(), s->getTableName());
     s->db_type()->doDropTable(*session, identifier);
 
     delete cursor;

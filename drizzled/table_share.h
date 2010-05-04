@@ -205,9 +205,7 @@ public:
 private:
   LEX_STRING table_cache_key;                        /* Pointer to db */
   LEX_STRING db;                        /* Pointer to db */
-public:
   LEX_STRING table_name;                /* Table name (for open) */
-private:
   LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
 public:
@@ -247,6 +245,11 @@ public:
   const char *getTableName() const
   {
     return table_name.str;
+  }
+
+  uint32_t getTableNameSize() const
+  {
+    return table_name.length;
   }
 
   const char *getTableCacheKey() const
