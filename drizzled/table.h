@@ -508,8 +508,6 @@ public:
 
 };
 
-Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);
-
 /**
  * @class
  *  ForeignKeyInfo

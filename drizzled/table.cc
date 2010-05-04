@@ -104,8 +104,9 @@ TableShare *alloc_table_share(TableList *table_list, char *key,
 
   build_table_filename(path, table_list->db, table_list->table_name, false);
 
+  share= (TableShare *)mem_root.alloc_root(sizeof(TableShare));
+
   if (multi_alloc_root(&mem_root,
-                       &share, sizeof(*share),
                        &key_buff, key_length,
                        &path_buff, path.length() + 1,
                        NULL))
@@ -2997,8 +2998,9 @@ err:
     0 if out of memory, Table object in case of success
 */
 
-Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list)
+Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 {
+  Session *session= this;
   uint32_t field_count= field_list.elements;
   uint32_t blob_count= 0;
   Field **field;

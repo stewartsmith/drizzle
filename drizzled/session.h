@@ -1475,6 +1475,9 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
+  Table *create_virtual_tmp_table(List<CreateField> &field_list);
+
+
 
   /**
     Return the default storage engine
