@@ -377,7 +377,7 @@ xtPublic void xt_ind_release_handle(XTIndHandlePtr handle, xtBool have_lock, XTT
 	DcSegmentPtr	seg = NULL;
 	XTIndBlockPtr	xblock;
 
-        (void)thread;
+	(void) thread; /*DRIZZLED*/
 
 	/* The lock order is:
 	 * 1. Cache segment (cs_lock) - This is only by ind_free_block()!
@@ -835,7 +835,8 @@ static xtBool ind_free_block(XTOpenTablePtr ot, XTIndBlockPtr block)
 	u_int			file_id;
 	xtIndexNodeID	address;
 	DcSegmentPtr	seg;
-        (void)ot;
+
+	(void) ot; /*DRIZZLED*/
 
 #ifdef DEBUG_CHECK_IND_CACHE
 	xt_ind_check_cache(NULL);

@@ -637,6 +637,24 @@ void StorageEngine::getTableIdentifiers(Session &session, SchemaIdentifier &sche
   session.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 }
 
+class DropTable: public unary_function<TableIdentifier&, bool>
+{
+  Session &session;
+  StorageEngine *engine;
+
+public:
+
+  DropTable(Session &session_arg, StorageEngine *engine_arg) :
+    session(session_arg),
+    engine(engine_arg)
+  { }
+
+  result_type operator() (argument_type identifier)
+  {
+    return engine->doDropTable(session, identifier) == 0;
+  } 
+};
+
 /* This will later be converted to TableIdentifiers */
 class DropTables: public unary_function<StorageEngine *, void>
 {
@@ -652,17 +670,12 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    for (TableIdentifierList::iterator iter= table_identifiers.begin();
-         iter != table_identifiers.end();
-         iter++)
-    {
-      int error= engine->doDropTable(session, const_cast<TableIdentifier&>(*iter));
-
-      // On a return of zero we know we found and deleted the table. So we
-      // remove it from our search.
-      if (not error)
-        table_identifiers.erase(iter);
-    }
+    // True returning from DropTable means the table has been successfully
+    // deleted, so it should be removed from the list of tables to drop
+    table_identifiers.erase(remove_if(table_identifiers.begin(),
+                                      table_identifiers.end(),
+                                      DropTable(session, engine)),
+                            table_identifiers.end());
   }
 };
 

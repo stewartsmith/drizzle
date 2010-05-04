@@ -552,7 +552,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
       dangling arguments for engines.
     */
     packet->append(STRING_WITH_LEN(" ENGINE="));
-    packet->append(cursor->engine->getName().c_str());
+    packet->append(cursor->getEngine()->getName().c_str());
 
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
