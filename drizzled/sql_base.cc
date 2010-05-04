@@ -84,8 +84,8 @@ unsigned char *table_cache_key(const unsigned char *record,
                                bool )
 {
   Table *entry=(Table*) record;
-  *length= entry->s->table_cache_key.length;
-  return (unsigned char*) entry->s->table_cache_key.str;
+  *length= entry->s->getCacheKeySize();
+  return (unsigned char*) entry->s->getCacheKey();
 }
 
 HASH *get_open_cache()
@@ -152,12 +152,12 @@ void close_handle_and_leave_table_as_lock(Table *table)
   */
   if (multi_alloc_root(mem_root,
                        &share, sizeof(*share),
-                       &key_buff, old_share->table_cache_key.length,
+                       &key_buff, old_share->getCacheKeySize(),
                        NULL))
   {
     memset(share, 0, sizeof(*share));
-    share->set_table_cache_key(key_buff, old_share->table_cache_key.str,
-                               old_share->table_cache_key.length);
+    share->set_table_cache_key(key_buff, old_share->getCacheKey(),
+                               old_share->getCacheKeySize());
     share->tmp_table= message::Table::INTERNAL;       // for intern_close_table()
   }
 
@@ -672,8 +672,8 @@ Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->table_cache_key.length == key_length &&
-        not memcmp(table->s->table_cache_key.str, key, key_length))
+    if (table->s->getCacheKeySize() == key_length &&
+        not memcmp(table->s->getCacheKey(), key, key_length))
     {
       return table;
     }
@@ -695,8 +695,8 @@ Table *Session::find_temporary_table(TableIdentifier &identifier)
 
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->table_cache_key.length == key_length &&
-        not memcmp(table->s->table_cache_key.str, key, key_length))
+    if (table->s->getCacheKeySize() == key_length &&
+        not memcmp(table->s->getCacheKey(), key, key_length))
 
       return table;
   }
@@ -779,12 +779,12 @@ static void relink_unused(Table *table)
 void Session::unlink_open_table(Table *find)
 {
   char key[MAX_DBKEY_LENGTH];
-  uint32_t key_length= find->s->table_cache_key.length;
+  uint32_t key_length= find->s->getCacheKeySize();
   Table *list, **prev;
 
   safe_mutex_assert_owner(&LOCK_open);
 
-  memcpy(key, find->s->table_cache_key.str, key_length);
+  memcpy(key, find->s->getCacheKey(), key_length);
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
@@ -796,8 +796,8 @@ void Session::unlink_open_table(Table *find)
   {
     list= *prev;
 
-    if (list->s->table_cache_key.length == key_length &&
-        not memcmp(list->s->table_cache_key.str, key, key_length))
+    if (list->s->getCacheKeySize() == key_length &&
+        not memcmp(list->s->getCacheKey(), key, key_length))
     {
       /* Remove table from open_tables list. */
       *prev= list->next;
@@ -935,8 +935,8 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
   orig_table= *table;
 
   if (open_unireg_entry(this, table, table_list, table_name,
-                        table->s->table_cache_key.str,
-                        table->s->table_cache_key.length))
+                        const_cast<char *>(table->s->getCacheKey()),
+                        table->s->getCacheKeySize()))
   {
     table->intern_close_table();
     /*
@@ -1160,7 +1160,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   */
   for (table= temporary_tables; table ; table=table->next)
   {
-    if (table->s->table_cache_key.length == key_length && !memcmp(table->s->table_cache_key.str, key, key_length))
+    if (table->s->getCacheKeySize() == key_length && !memcmp(table->s->getCacheKey(), key, key_length))
     {
       /*
         We're trying to use the same temporary table twice in a query.
@@ -1480,8 +1480,8 @@ bool reopen_table(Table *table)
 
   if (open_unireg_entry(session, &tmp, &table_list,
                         table->alias,
-                        table->s->table_cache_key.str,
-                        table->s->table_cache_key.length))
+                        table->s->getCacheKey(),
+                        table->s->getCacheKeySize()))
     goto end;
 
   /* This list copies variables set by open_table */
@@ -1773,8 +1773,8 @@ bool table_is_used(Table *table, bool wait_for_name_lock)
 {
   do
   {
-    char *key= table->s->table_cache_key.str;
-    uint32_t key_length= table->s->table_cache_key.length;
+    char *key= const_cast<char *>(table->s->getCacheKey());
+    uint32_t key_length= table->s->getCacheKeySize();
 
     HASH_SEARCH_STATE state;
     for (Table *search= (Table*) hash_first(&open_cache, (unsigned char*) key,

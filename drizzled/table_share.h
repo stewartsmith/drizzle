@@ -202,8 +202,8 @@ public:
     should correspond to each other.
     To ensure this one can use set_table_cache() methods.
   */
-  LEX_STRING table_cache_key;                        /* Pointer to db */
 private:
+  LEX_STRING table_cache_key;                        /* Pointer to db */
   LEX_STRING db;                        /* Pointer to db */
 public:
   LEX_STRING table_name;                /* Table name (for open) */
@@ -216,6 +216,17 @@ public:
   {
     return path.str;
   }
+
+  const char *getCacheKey()
+  {
+    return table_cache_key.str;
+  }
+
+  size_t getCacheKeySize()
+  {
+    return table_cache_key.length;
+  }
+
   void setPath(char *str_arg, uint32_t size_arg)
   {
     path.str= str_arg;
