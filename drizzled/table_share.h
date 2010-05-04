@@ -167,6 +167,10 @@ public:
     init(key, key_length, new_table_name, new_path);
   }
 
+  TableShare(TableList *table_list, char *key, uint32_t key_length);
+
+  ~TableShare() { };
+
   /** Category of this table. */
   enum_table_category table_category;
 

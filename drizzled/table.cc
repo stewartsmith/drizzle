@@ -80,54 +80,6 @@ static unsigned char *get_field_name(Field **buff, size_t *length, bool)
   return (unsigned char*) (*buff)->field_name;
 }
 
-/*
-  Allocate a setup TableShare structure
-
-  SYNOPSIS
-    alloc_table_share()
-    TableList		Take database and table name from there
-    key			Table cache key (db \0 table_name \0...)
-    key_length		Length of key
-
-  RETURN
-    0  Error (out of memory)
-    #  Share
-*/
-
-TableShare *alloc_table_share(TableList *table_list, char *key,
-                               uint32_t key_length)
-{
-  memory::Root mem_root(TABLE_ALLOC_BLOCK_SIZE);
-  TableShare *share;
-  char *key_buff, *path_buff;
-  std::string path;
-
-  build_table_filename(path, table_list->db, table_list->table_name, false);
-
-  share= (TableShare *)mem_root.alloc_root(sizeof(TableShare));
-
-  if (multi_alloc_root(&mem_root,
-                       &key_buff, key_length,
-                       &path_buff, path.length() + 1,
-                       NULL))
-  {
-    memset(share, 0, sizeof(*share));
-
-    share->set_table_cache_key(key_buff, key, key_length);
-
-    share->setPath(path_buff, path.length());
-    strcpy(path_buff, path.c_str());
-    share->setNormalizedPath(path_buff, path.length());
-
-    share->version=       refresh_version;
-
-    memcpy(&share->mem_root, &mem_root, sizeof(mem_root));
-    pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
-    pthread_cond_init(&share->cond, NULL);
-  }
-  return(share);
-}
-
 
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 {

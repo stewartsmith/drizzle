@@ -704,8 +704,6 @@ struct open_table_list_st
 
 };
 
-TableShare *alloc_table_share(TableList *table_list, char *key,
-                               uint32_t key_length);
 int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share);
 void open_table_error(TableShare *share, int error, int db_errno, int errarg);
 int open_table_from_share(Session *session, TableShare *share, const char *alias,

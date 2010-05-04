@@ -102,7 +102,9 @@ void TableShare::release(TableShare *share)
 
   pthread_mutex_lock(&share->mutex);
   if (!--share->ref_count)
+  {
     to_be_deleted= true;
+  }
 
   if (to_be_deleted)
   {
@@ -113,6 +115,7 @@ void TableShare::release(TableShare *share)
     {
       (*iter).second->free_table_share();
       table_def_cache.erase(iter);
+      delete share;
     }
     return;
   }
@@ -133,6 +136,7 @@ void TableShare::release(const char *key, uint32_t key_length)
       pthread_mutex_lock(&share->mutex);
       share->free_table_share();
       table_def_cache.erase(key_string);
+      delete share;
     }
   }
 }
@@ -202,7 +206,7 @@ TableShare *TableShare::getShare(Session *session,
     return foundTableShare(share);
   }
 
-  if (not (share= alloc_table_share(table_list, key, key_length)))
+  if (not (share= new TableShare(table_list, key, key_length)))
   {
     return NULL;
   }
@@ -221,6 +225,8 @@ TableShare *TableShare::getShare(Session *session,
   if (ret.second == false)
   {
     share->free_table_share();
+    delete share;
+
     return NULL;
   }
   
@@ -230,6 +236,8 @@ TableShare *TableShare::getShare(Session *session,
     *error= share->error;
     table_def_cache.erase(key_string);
     share->free_table_share();
+    delete share;
+
     return NULL;
   }
   share->ref_count++;				// Mark in use
@@ -302,6 +310,39 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
 TableDefinitionCache &TableShare::getCache()
 {
   return table_def_cache;
+}
+
+TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length)
+{
+  memory::Root _mem_root(TABLE_ALLOC_BLOCK_SIZE);
+  char *key_buff, *path_buff;
+  std::string _path;
+
+  build_table_filename(_path, table_list->db, table_list->table_name, false);
+
+  if (multi_alloc_root(&_mem_root,
+                       &key_buff, key_length,
+                       &path_buff, _path.length() + 1,
+                       NULL))
+  {
+    memset(this, 0, sizeof(TableShare));
+
+    set_table_cache_key(key_buff, key, key_length);
+
+    setPath(path_buff, _path.length());
+    strcpy(path_buff, _path.c_str());
+    setNormalizedPath(path_buff, _path.length());
+
+    version=       refresh_version;
+
+    memcpy(&mem_root, &_mem_root, sizeof(mem_root));
+    pthread_mutex_init(&mutex, MY_MUTEX_INIT_FAST);
+    pthread_cond_init(&cond, NULL);
+  }
+  else
+  {
+    assert(0); // We should throw here.
+  }
 }
 
 } /* namespace drizzled */
