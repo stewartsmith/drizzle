@@ -2183,7 +2183,6 @@ static bool innobase_use_doublewrite= true;
 static unsigned long srv_io_capacity= 200;
 static unsigned long innobase_fast_shutdown= 1;
 static bool srv_file_per_table= false;
-static char*  innobase_file_format_name   = NULL;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2193,8 +2192,6 @@ static int64_t innodb_log_files_in_group;
 static int embedded_innodb_init(drizzled::plugin::Context &context)
 {
   ib_err_t err;
-
-  innobase_file_format_name= strdup("Barracuda");
 
   err= ib_init();
   if (err != DB_SUCCESS)
@@ -2286,55 +2283,6 @@ EmbeddedInnoDBEngine::~EmbeddedInnoDBEngine()
   }
 }
 
-static char innodb_file_format_name_storage[100];
-
-static int innodb_file_format_name_validate(Session*, drizzle_sys_var*,
-                                            void *save,
-                                            drizzle_value *value)
-{
-  ib_err_t err;
-  char buff[100];
-  int len= sizeof(buff);
-  const char *format= value->val_str(value, buff, &len);
-
-  *static_cast<const char**>(save)= NULL;
-
-  if (format == NULL)
-    return 1;
-
-  err= ib_cfg_set_text("file_format", format);
-
-  if (err == DB_SUCCESS)
-  {
-    strncpy(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)]= 0;
-
-    *static_cast<const char**>(save)= innodb_file_format_name_storage;
-    return 0;
-  }
-  else
-    return 1;
-}
-
-static void innodb_file_format_name_update(Session*, drizzle_sys_var*,
-                                           void *var_ptr,
-                                           const void *save)
-
-{
-  const char* format;
-
-  assert(var_ptr != NULL);
-  assert(save != NULL);
-
-  format= *static_cast<const char*const*>(save);
-
-  /* Format is already set in validate */
-    strncpy(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)]= 0;
-
-  *static_cast<const char**>(var_ptr)= innodb_file_format_name_storage;
-}
-
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
   "Enable InnoDB checksums validation (enabled by default). "
@@ -2370,12 +2318,6 @@ static DRIZZLE_SYSVAR_BOOL(file_per_table, srv_file_per_table,
   "Stores each InnoDB table to an .ibd file in the database dir.",
   NULL, NULL, false);
 
-static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
-  PLUGIN_VAR_RQCMDARG,
-  "File format to use for new tables in .ibd files.",
-  innodb_file_format_name_validate,
-  innodb_file_format_name_update, NULL);
-
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2403,7 +2345,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(io_capacity),
   DRIZZLE_SYSVAR(fast_shutdown),
   DRIZZLE_SYSVAR(file_per_table),
-  DRIZZLE_SYSVAR(file_format),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
