@@ -1746,7 +1746,7 @@ void Session::nukeTable(Table *table)
   rm_temporary_table(table_type, identifier);
 
   table->s->free_table_share();
-  free(table->s);
+  delete table->s;
 
   /* This makes me sad, but we're allocating it via malloc */
   free(table);

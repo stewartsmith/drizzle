@@ -2297,26 +2297,22 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
 {
   Table *new_tmp_table;
   TableShare *share;
-  char cache_key[MAX_DBKEY_LENGTH], *saved_cache_key, *tmp_path;
-  uint32_t key_length, path_length;
+  char cache_key[MAX_DBKEY_LENGTH];
+  uint32_t key_length;
   TableList table_list;
 
   table_list.db=         const_cast<char*>(identifier.getSchemaName().c_str());
   table_list.table_name= const_cast<char*>(identifier.getTableName().c_str());
   /* Create the cache_key for temporary tables */
   key_length= table_list.create_table_def_key(cache_key);
-  path_length= identifier.getPath().length();
 
-  share= (TableShare *)malloc(sizeof(TableShare));
-  if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table) +
-                                       path_length + 1 + key_length)))
+  share= new TableShare(&table_list, 
+                        cache_key, key_length,
+                        const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
+
+  if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table))))
     return NULL;
 
-  tmp_path= (char*) (new_tmp_table+1);
-  saved_cache_key= strcpy(tmp_path, identifier.getPath().c_str())+path_length+1;
-  memcpy(saved_cache_key, cache_key, key_length);
-
-  share->init(saved_cache_key, key_length, strchr(saved_cache_key, '\0')+1, tmp_path);
 
   /*
     First open the share, and then open the table from the share we just opened.

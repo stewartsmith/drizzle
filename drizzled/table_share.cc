@@ -312,13 +312,20 @@ TableDefinitionCache &TableShare::getCache()
   return table_def_cache;
 }
 
-TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length)
+TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg)
 {
   memory::Root _mem_root(TABLE_ALLOC_BLOCK_SIZE);
   char *key_buff, *path_buff;
   std::string _path;
 
-  build_table_filename(_path, table_list->db, table_list->table_name, false);
+  if (path_arg)
+  {
+    _path.append(path_arg, path_length_arg);
+  }
+  else
+  {
+    build_table_filename(_path, table_list->db, table_list->table_name, false);
+  }
 
   if (multi_alloc_root(&_mem_root,
                        &key_buff, key_length,
@@ -343,6 +350,8 @@ TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length)
   {
     assert(0); // We should throw here.
   }
+
+  newed= true;
 }
 
 } /* namespace drizzled */

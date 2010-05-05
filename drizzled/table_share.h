@@ -101,7 +101,8 @@ public:
     replace_with_name_lock(false),
     waiting_on_cond(false),
     keys_in_use(0),
-    keys_for_keyread(0)
+    keys_for_keyread(0),
+    newed(true)
   {
     init();
   }
@@ -162,12 +163,13 @@ public:
     replace_with_name_lock(false),
     waiting_on_cond(false),
     keys_in_use(0),
-    keys_for_keyread(0)
+    keys_for_keyread(0),
+    newed(true)
   {
     init(key, key_length, new_table_name, new_path);
   }
 
-  TableShare(TableList *table_list, char *key, uint32_t key_length);
+  TableShare(TableList *table_list, char *key, uint32_t key_length, char *path_arg= NULL, uint32_t path_length_arg= 0);
 
   ~TableShare() { };
 
@@ -687,6 +689,8 @@ public:
 
     return output;  // for multiple << operators.
   }
+
+  bool newed;
 };
 
 } /* namespace drizzled */
