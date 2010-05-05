@@ -80,7 +80,7 @@ class ha_innobase: public Cursor
 	uint		last_match_mode;/* match mode of the latest search:
 					ROW_SEL_EXACT, ROW_SEL_EXACT_PREFIX,
 					or undefined */
-	uint		num_write_row;	/*!< number of write_row() calls */
+	uint		num_doInsertRecord;	/*!< number of doInsertRecord() calls */
 
 	UNIV_INTERN uint store_key_val_for_row(uint keynr, char* buff, 
                                    uint buff_len, const unsigned char* record);
@@ -130,9 +130,9 @@ class ha_innobase: public Cursor
 	UNIV_INTERN double scan_time();
 	UNIV_INTERN double read_time(uint index, uint ranges, ha_rows rows);
 
-	UNIV_INTERN int write_row(unsigned char * buf);
-	UNIV_INTERN int update_row(const unsigned char * old_data, unsigned char * new_data);
-	UNIV_INTERN int delete_row(const unsigned char * buf);
+	UNIV_INTERN int doInsertRecord(unsigned char * buf);
+	UNIV_INTERN int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+	UNIV_INTERN int doDeleteRecord(const unsigned char * buf);
 	UNIV_INTERN bool was_semi_consistent_read();
 	UNIV_INTERN void try_semi_consistent_read(bool yes);
 	UNIV_INTERN void unlock_row();
@@ -171,7 +171,7 @@ class ha_innobase: public Cursor
 	UNIV_INTERN int check(Session* session);
 	UNIV_INTERN char* update_table_comment(const char* comment);
 	UNIV_INTERN char* get_foreign_key_create_info();
-	UNIV_INTERN int get_foreign_key_list(Session *session, List<FOREIGN_KEY_INFO> *f_key_list);
+	UNIV_INTERN int get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_list);
 	UNIV_INTERN bool can_switch_engines();
 	UNIV_INTERN uint referenced_by_foreign_key();
 	UNIV_INTERN void free_foreign_key_create_info(char* str);
@@ -187,6 +187,8 @@ class ha_innobase: public Cursor
 	UNIV_INTERN bool primary_key_is_clustered();
 	UNIV_INTERN int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
+        // Don't use these, I have just left them in here as reference for
+        // the future. -Brian
 	UNIV_INTERN int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys);
 	UNIV_INTERN int prepare_drop_index(TABLE *table_arg, uint *key_num,
                                            uint num_of_keys);
@@ -218,14 +220,6 @@ uint64_t drizzle_bin_log_file_pos(void);
   @retval 1 the user thread is a replication slave thread
 */
 int session_slave_thread(const Session *session);
-
-/**
-  Check if a user thread is running a non-transactional update
-  @param session  user thread
-  @retval 0 the user thread is not running a non-transactional update
-  @retval 1 the user thread is running a non-transactional update
-*/
-int session_non_transactional_update(const Session *session);
 
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.

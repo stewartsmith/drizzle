@@ -35,8 +35,8 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
-#include "drizzled/hash.h"
 #include <stdarg.h>
+#include <drizzled/unordered_set.h>
 #include <algorithm>
 
 #include <drizzled/gettext.h>
@@ -153,7 +153,7 @@ static const char *compatible_mode_names[]=
 static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
   "", compatible_mode_names, NULL};
 
-drizzled::hash_set<string> ignore_table;
+unordered_set<string> ignore_table;
 
 static struct option my_long_options[] =
 {
@@ -2341,7 +2341,7 @@ static int init_dumping(char *database, int init_func(char*))
 static bool include_table(const char *hash_key, size_t key_size)
 {
   string match(hash_key, key_size);
-  drizzled::hash_set<string>::iterator iter= ignore_table.find(match);
+  unordered_set<string>::iterator iter= ignore_table.find(match);
   return (iter == ignore_table.end());
 }
 
@@ -2433,7 +2433,7 @@ static char *get_actual_table_name(const char *old_table_name,
     */
     row= drizzle_row_next(&result);
     lengths= drizzle_row_field_sizes(&result);
-    name= strmake_root(root, row[0], lengths[0]);
+    name= root->strmake_root(row[0], lengths[0]);
   }
   drizzle_result_free(&result);
 
@@ -2452,8 +2452,8 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   if (init_dumping(db, init_dumping_tables))
     return(1);
 
-  init_alloc_root(&root, 8192);
-  if (!(dump_tables= pos= (char**) alloc_root(&root, tables * sizeof(char *))))
+  root.init_alloc_root(8192);
+  if (!(dump_tables= pos= (char**) root.alloc_root(tables * sizeof(char *))))
     die(EX_EOM, _("alloc_root failure."));
 
   for (; tables > 0 ; tables-- , table_names++)
@@ -2467,7 +2467,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     {
       if (!ignore_errors)
       {
-        free_root(&root, MYF(0));
+        root.free_root(MYF(0));
       }
       maybe_die(EX_ILLEGAL_TABLE, _("Couldn't find table: \"%s\""), *table_names);
       /* We shall countinue here, if --force was given */
@@ -2481,7 +2481,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
         ret != DRIZZLE_RETURN_OK)
     {
       if (!ignore_errors)
-        free_root(&root, MYF(0));
+        root.free_root(MYF(0));
       DB_error(&result, ret, _("when doing refresh"));
       /* We shall countinue here, if --force was given */
     }
@@ -2495,7 +2495,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   for (pos= dump_tables; pos < end; pos++)
     dump_table(*pos, db);
 
-  free_root(&root, MYF(0));
+  root.free_root(MYF(0));
   free(order_by);
   order_by= 0;
   if (opt_xml)

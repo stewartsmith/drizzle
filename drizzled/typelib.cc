@@ -209,17 +209,17 @@ TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
   if (!from)
     return NULL;
 
-  if (!(to= (TYPELIB*) alloc_root(root, sizeof(TYPELIB))))
+  if (!(to= (TYPELIB*) root->alloc_root(sizeof(TYPELIB))))
     return NULL;
 
   if (!(to->type_names= (const char **)
-        alloc_root(root, (sizeof(char *) + sizeof(int)) * (from->count + 1))))
+        root->alloc_root((sizeof(char *) + sizeof(int)) * (from->count + 1))))
     return NULL;
   to->type_lengths= (unsigned int *)(to->type_names + from->count + 1);
   to->count= from->count;
   if (from->name)
   {
-    if (!(to->name= strdup_root(root, from->name)))
+    if (!(to->name= root->strdup_root(from->name)))
       return NULL;
   }
   else
@@ -227,8 +227,7 @@ TYPELIB *copy_typelib(memory::Root *root, TYPELIB *from)
 
   for (i= 0; i < from->count; i++)
   {
-    if (!(to->type_names[i]= strmake_root(root, from->type_names[i],
-                                          from->type_lengths[i])))
+    if (!(to->type_names[i]= root->strmake_root(from->type_names[i], from->type_lengths[i])))
       return NULL;
     to->type_lengths[i]= from->type_lengths[i];
   }

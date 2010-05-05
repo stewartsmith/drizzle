@@ -52,7 +52,7 @@ class BlackholeEngine : public drizzled::plugin::StorageEngine
 
 public:
   BlackholeEngine(const string &name_arg)
-   : drizzled::plugin::StorageEngine(name_arg, HTON_FILE_BASED |
+   : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
@@ -348,7 +348,7 @@ const char *ha_blackhole::index_type(uint32_t)
   return("BTREE");
 }
 
-int ha_blackhole::write_row(unsigned char *)
+int ha_blackhole::doInsertRecord(unsigned char *)
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }

@@ -51,6 +51,7 @@
 #include "drizzled/global_charset_info.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/drizzled.h"
 #include "drizzled/plugin/authorization.h"
 
 using namespace std;
@@ -59,8 +60,6 @@ namespace drizzled
 {
 
 extern bool volatile shutdown_in_progress;
-
-bool drizzle_rm_tmp_tables();
 
 /**
   @defgroup Data_Dictionary Data Dictionary
@@ -76,6 +75,9 @@ unsigned char *table_cache_key(const unsigned char *record,
                                size_t *length,
                                bool );
 
+#if 0
+static bool reopen_table(Table *table);
+#endif
 
 unsigned char *table_cache_key(const unsigned char *record,
                                size_t *length,
@@ -1435,6 +1437,7 @@ reset:
 }
 
 
+#if 0
 /*
   Reopen an table because the definition has changed.
 
@@ -1522,6 +1525,7 @@ bool reopen_table(Table *table)
 end:
   return(error);
 }
+#endif
 
 
 /**
@@ -1542,11 +1546,6 @@ end:
 */
 
 void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
-{
-  close_data_files_and_morph_locks(identifier.getSchemaName().c_str(), identifier.getTableName().c_str());
-}
-
-void Session::close_data_files_and_morph_locks(const char *new_db, const char *new_table_name)
 {
   Table *table;
 
@@ -1569,8 +1568,8 @@ void Session::close_data_files_and_morph_locks(const char *new_db, const char *n
   */
   for (table= open_tables; table ; table=table->next)
   {
-    if (!strcmp(table->s->table_name.str, new_table_name) &&
-        !strcasecmp(table->s->getSchemaName(), new_db))
+    if (!strcmp(table->s->table_name.str, identifier.getTableName().c_str()) &&
+        !strcasecmp(table->s->getSchemaName(), identifier.getSchemaName().c_str()))
     {
       table->open_placeholder= true;
       close_handle_and_leave_table_as_lock(table);
@@ -1599,7 +1598,7 @@ void Session::close_data_files_and_morph_locks(const char *new_db, const char *n
   @return false in case of success, true - otherwise.
 */
 
-bool Session::reopen_tables(bool get_locks, bool mark_share_as_old)
+bool Session::reopen_tables(bool get_locks, bool)
 {
   Table *table,*next,**prev;
   Table **tables,**tables_ptr;			// For locks
@@ -1621,37 +1620,25 @@ bool Session::reopen_tables(bool get_locks, bool mark_share_as_old)
     uint32_t opens= 0;
 
     for (table= open_tables; table ; table=table->next)
+    {
       opens++;
+    }
     tables= new Table *[opens];
   }
   else
+  {
     tables= &open_tables;
+  }
   tables_ptr =tables;
 
   prev= &open_tables;
   for (table= open_tables; table ; table=next)
   {
-    uint32_t db_stat= table->db_stat;
     next= table->next;
-    if (!tables || (!db_stat && reopen_table(table)))
-    {
-      my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
-      hash_delete(&open_cache,(unsigned char*) table);
-      error= 1;
-    }
-    else
-    {
-      *prev= table;
-      prev= &table->next;
-      /* Do not handle locks of MERGE children. */
-      if (get_locks && !db_stat)
-        *tables_ptr++= table;			// need new lock on this
-      if (mark_share_as_old)
-      {
-        table->s->version= 0;
-        table->open_placeholder= false;
-      }
-    }
+
+    my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
+    hash_delete(&open_cache,(unsigned char*) table);
+    error= 1;
   }
   *prev=0;
   if (tables != tables_ptr)			// Should we get back old locks
@@ -2102,9 +2089,9 @@ restart:
      * to see if it exists so that an unauthorized user cannot phish for
      * table/schema information via error messages
      */
+    TableIdentifier the_table(tables->db, tables->table_name);
     if (not plugin::Authorization::isAuthorized(getSecurityContext(),
-                                                string(tables->db),
-                                                string(tables->table_name)))
+                                                the_table))
     {
       result= -1;                               // Fatal error
       break;

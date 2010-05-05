@@ -1046,6 +1046,10 @@ sub command_line_setup () {
 sub gimme_a_good_port($)
 {
   my $port_to_test= shift;
+  if ($port_to_test == 8000)
+  {
+    $port_to_test = 8001;
+  }
   my $is_port_bad= 1;
   while ($is_port_bad) {
     my $sock = new IO::Socket::INET( PeerAddr => 'localhost',
@@ -3337,17 +3341,19 @@ sub gdb_arguments {
     # write init file for mysqld
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
+               "set breakpoint pending on\n" .
 	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end\n" .
+               "set breakpoint pending off\n" .
 	       "run");
   }
 
   if ( $opt_manual_gdb )
   {
      print "\nTo start gdb for $type, type in another window:\n";
-     print "gdb -cd $glob_mysql_test_dir -x $gdb_init_file $$exe\n";
+     print "$glob_mysql_test_dir/../libtool --mode=execute gdb -cd $glob_mysql_test_dir -x $gdb_init_file $$exe\n";
 
      # Indicate the exe should not be started
      $$exe= undef;

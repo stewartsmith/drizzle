@@ -902,7 +902,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         insert_values update delete truncate rename
         show describe load alter flush
         begin commit rollback savepoint release
-        analyze check start checksum
+        analyze check start
         field_list field_list_item field_spec kill column_def key_def
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
@@ -989,7 +989,6 @@ statement:
           alter
         | analyze
         | check
-        | checksum
         | commit
         | create
         | delete
@@ -2412,21 +2411,6 @@ start_transaction_opts:
             $$= START_TRANS_OPT_WITH_CONS_SNAPSHOT;
           }
         ;
-
-
-checksum:
-          CHECKSUM_SYM table_or_tables
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_CHECKSUM;
-            lex->statement= new(std::nothrow) statement::Checksum(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
-          table_list
-          {}
-        ;
-
 
 analyze:
           ANALYZE_SYM table_or_tables

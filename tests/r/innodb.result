@@ -1127,30 +1127,6 @@ create table t3 (a int, b varchar(200), c text not null) engine=innodb;
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
 insert t3 select * from t1;
-checksum table t1, t2, t3, t4;
-Table	Checksum
-test.t1	2948697075
-test.t2	3505595080
-test.t3	3505595080
-test.t4	NULL
-Warnings:
-Error	1146	Table 'test.t4' doesn't exist
-checksum table t1, t2, t3, t4;
-Table	Checksum
-test.t1	2948697075
-test.t2	3505595080
-test.t3	3505595080
-test.t4	NULL
-Warnings:
-Error	1146	Table 'test.t4' doesn't exist
-checksum table t1, t2, t3, t4;
-Table	Checksum
-test.t1	2948697075
-test.t2	3505595080
-test.t3	3505595080
-test.t4	NULL
-Warnings:
-Error	1146	Table 'test.t4' doesn't exist
 drop table t1,t2,t3;
 create table t1 (id int,  name char(10) not null,  name2 char(10) not null) engine=innodb;
 insert into t1 values(1,'first','fff'),(2,'second','sss'),(3,'third','ttt');
@@ -2289,34 +2265,6 @@ SET FOREIGN_KEY_CHECKS=1;
 INSERT INTO t2 VALUES(3);
 ERROR 23000: Cannot add or update a child row: a foreign key constraint fails (`test`.`t2`, CONSTRAINT `c1` FOREIGN KEY (`v`) REFERENCES `t1` (`id`))
 DROP TABLE t2;
-create table t1(a int not null) engine=innodb;
-insert into t1 values (1),(2);
-set autocommit=0;
-checksum table t1;
-Table	Checksum
-test.t1	1531596814
-insert into t1 values(3);
-checksum table t1;
-Table	Checksum
-test.t1	1531596814
-commit;
-checksum table t1;
-Table	Checksum
-test.t1	2050879373
-commit;
-drop table t1;
-create table t1(a int not null) engine=innodb;
-insert into t1 values (1),(2);
-set autocommit=1;
-checksum table t1;
-Table	Checksum
-test.t1	1531596814
-set autocommit=1;
-insert into t1 values(3);
-checksum table t1;
-Table	Checksum
-test.t1	2050879373
-drop table t1;
 set foreign_key_checks=0;
 create table t2 (a int primary key, b int, foreign key (b) references t1(a)) engine = innodb;
 create table t1(a char(10) primary key, b varchar(20)) engine = innodb;

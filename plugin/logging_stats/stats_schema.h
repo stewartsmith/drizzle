@@ -34,33 +34,120 @@
 #include <drizzled/field.h>
 
 #include "logging_stats.h"
+#include "global_stats.h"
 
-class CommandsTool : public drizzled::plugin::TableFunction
+#include <vector>
+
+class GlobalStatementsTool : public drizzled::plugin::TableFunction
 {
-private:
-  LoggingStats *outer_logging_stats;
-
 public:
-
-  CommandsTool(LoggingStats *logging_stats);
+  GlobalStatementsTool(LoggingStats *logging_stats);
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
   public:
     Generator(drizzled::Field **arg, LoggingStats *logging_stats);
 
-    ~Generator();
+    bool populate();
+
+  private:
+    GlobalStats *global_stats; 
+    uint32_t count;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, logging_stats);
+  }
+
+private:
+  LoggingStats *logging_stats;
+};
+
+class SessionStatementsTool : public drizzled::plugin::TableFunction
+{
+public:
+  SessionStatementsTool(LoggingStats *logging_stats);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats);
+
+    bool populate();
+
+  private:
+    UserCommands *user_commands;
+    uint32_t count;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, logging_stats);
+  }
+
+private:
+  LoggingStats *logging_stats;
+};
+
+class CurrentCommandsTool : public drizzled::plugin::TableFunction
+{
+public:
+
+  CurrentCommandsTool(LoggingStats *logging_stats);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats);
 
     bool populate();
   private:
-    LoggingStats *logging_stats;
-    uint32_t record_number;
+    LoggingStats *inner_logging_stats; 
+    Scoreboard *current_scoreboard; 
+    uint32_t current_bucket;
+    bool isEnabled;
+    std::vector<ScoreboardSlot *>::iterator scoreboard_vector_it;
+    std::vector<ScoreboardSlot *>::iterator scoreboard_vector_end;
+    std::vector<std::vector<ScoreboardSlot* >* >::iterator vector_of_scoreboard_vectors_it;
+    std::vector<std::vector<ScoreboardSlot* >* >::iterator vector_of_scoreboard_vectors_end; 
+    pthread_rwlock_t* current_lock;
+
+    void setVectorIteratorsAndLock(uint32_t bucket_number);
   };
 
   Generator *generator(drizzled::Field **arg)
   {
     return new Generator(arg, outer_logging_stats);
   }
+private:
+  LoggingStats *outer_logging_stats;
+};
+
+class CumulativeCommandsTool : public drizzled::plugin::TableFunction
+{
+public:
+
+  CumulativeCommandsTool(LoggingStats *logging_stats);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats);
+
+    bool populate();
+  private:
+    LoggingStats *inner_logging_stats;
+    int32_t record_number;
+    int32_t last_valid_index;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, outer_logging_stats);
+  }
+private:
+  LoggingStats *outer_logging_stats;
 };
 
 #endif /* PLUGIN_LOGGING_STATS_STATS_SCHEMA_H */

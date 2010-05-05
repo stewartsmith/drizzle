@@ -28,6 +28,8 @@
 
 #include <string>
 
+#include <drizzled/unordered_map.h>
+
 #include "drizzled/typelib.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/memory/root.h"
@@ -36,7 +38,7 @@
 namespace drizzled
 {
 
-typedef drizzled::hash_map<std::string, TableShare *> TableDefinitionCache;
+typedef unordered_map<std::string, TableShare *> TableDefinitionCache;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
@@ -561,7 +563,7 @@ public:
 
     /* We must copy mem_root from share because share is allocated through it */
     memcpy(&new_mem_root, &mem_root, sizeof(new_mem_root));
-    free_root(&new_mem_root, MYF(0));                 // Free's share
+    new_mem_root.free_root(MYF(0));                 // Free's share
   }
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);

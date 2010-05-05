@@ -93,7 +93,7 @@ optimizer::QuickIndexMergeSelect::~QuickIndexMergeSelect()
            DeletePtr());
   quick_selects.clear();
   delete pk_quick_select;
-  free_root(&alloc,MYF(0));
+  alloc.free_root(MYF(0));
   return;
 }
 

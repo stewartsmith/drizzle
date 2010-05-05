@@ -23,6 +23,7 @@
  */
 
 #include "config.h"
+#include <cstdio>
 #include <errno.h>
 #include <float.h>
 #include "drizzled/sql_select.h"
@@ -373,7 +374,7 @@ void *Field::operator new(size_t size)
 
 void *Field::operator new(size_t size, memory::Root *mem_root)
 {
-  return alloc_root(mem_root, static_cast<uint32_t>(size));
+  return mem_root->alloc_root(static_cast<uint32_t>(size));
 }
 
 enum_field_types Field::field_type_merge(enum_field_types a,
@@ -811,7 +812,7 @@ bool Field::optimize_range(uint32_t idx, uint32_t)
 Field *Field::new_field(memory::Root *root, Table *new_table, bool)
 {
   Field *tmp;
-  if (!(tmp= (Field*) memdup_root(root,(char*) this,size_of())))
+  if (!(tmp= (Field*) root->memdup_root((char*) this,size_of())))
     return 0;
 
   if (tmp->table->maybe_null)
@@ -844,7 +845,7 @@ Field *Field::new_key_field(memory::Root *root, Table *new_table,
 Field *Field::clone(memory::Root *root, Table *new_table)
 {
   Field *tmp;
-  if ((tmp= (Field*) memdup_root(root,(char*) this,size_of())))
+  if ((tmp= (Field*) root->memdup_root((char*) this,size_of())))
   {
     tmp->init(new_table);
     tmp->move_field_offset((ptrdiff_t) (new_table->record[0] -
@@ -931,8 +932,7 @@ Field *make_field(TableShare *share,
                   TYPELIB *interval,
                   const char *field_name)
 {
-  if(! root)
-    root= current_mem_root();
+  assert(root);
 
   if (! is_nullable)
   {

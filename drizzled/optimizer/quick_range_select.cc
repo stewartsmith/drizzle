@@ -24,7 +24,6 @@
 #include "drizzled/sql_bitmap.h"
 #include "drizzled/internal/m_string.h"
 #include <fcntl.h>
-#include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
 
@@ -39,8 +38,6 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
                                               memory::Root *parent_alloc,
                                               bool *create_error)
   :
-    mrr_flags(0),
-    alloc(),
     cursor(NULL),
     ranges(),
     in_ror_merged_scan(false),
@@ -54,7 +51,9 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
     mrr_buf_size(0),
     mrr_buf_desc(NULL),
     key_parts(NULL),
-    dont_free(false)
+    dont_free(false),
+    mrr_flags(0),
+    alloc()
 {
   my_bitmap_map *bitmap= NULL;
 
@@ -138,7 +137,7 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
       }
     }
     delete_dynamic(&ranges); /* ranges are allocated in alloc */
-    free_root(&alloc,MYF(0));
+    alloc.free_root(MYF(0));
   }
   head->column_bitmaps_set(save_read_set, save_write_set);
   assert(mrr_buf_desc == NULL);
@@ -255,10 +254,7 @@ bool optimizer::QuickRangeSelect::unique_key_range() const
 
 int optimizer::QuickRangeSelect::reset()
 {
-  uint32_t buf_size= 0;
-  unsigned char *mrange_buff= NULL;
   int error= 0;
-  HANDLER_BUFFER empty_buf;
   last_range= NULL;
   cur_range= (optimizer::QuickRange**) ranges.buffer;
 
@@ -267,37 +263,12 @@ int optimizer::QuickRangeSelect::reset()
     return error;
   }
 
-  /* Allocate buffer if we need one but haven't allocated it yet */
-  if (mrr_buf_size && ! mrr_buf_desc)
-  {
-    buf_size= mrr_buf_size;
-    while (buf_size && ! memory::multi_malloc(false,
-                                              &mrr_buf_desc,
-                                              sizeof(*mrr_buf_desc),
-                                              &mrange_buff,
-                                              buf_size,
-                                              NULL))
-    {
-      /* Try to shrink the buffers until both are 0. */
-      buf_size/= 2;
-    }
-    if (! mrr_buf_desc)
-    {
-      return HA_ERR_OUT_OF_MEM;
-    }
-
-    /* Initialize the Cursor buffer. */
-    mrr_buf_desc->buffer= mrange_buff;
-    mrr_buf_desc->buffer_end= mrange_buff + buf_size;
-    mrr_buf_desc->end_of_used_area= mrange_buff;
-  }
-
-  if (! mrr_buf_desc)
-  {
-    empty_buf.buffer= NULL;
-    empty_buf.buffer_end= NULL;
-    empty_buf.end_of_used_area= NULL;
-  }
+  /*
+    (in the past) Allocate buffer if we need one but haven't allocated it yet 
+    There is a later assert in th code that hoped to catch random free() that might
+    have done this.
+  */
+  assert(not (mrr_buf_size && ! mrr_buf_desc));
 
   if (sorted)
   {
@@ -310,8 +281,7 @@ int optimizer::QuickRangeSelect::reset()
   error= cursor->multi_range_read_init(&seq_funcs,
                                        (void*) this,
                                        ranges.elements,
-                                       mrr_flags,
-                                       mrr_buf_desc ? mrr_buf_desc : &empty_buf);
+                                       mrr_flags);
   return error;
 }
 

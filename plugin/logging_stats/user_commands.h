@@ -31,8 +31,10 @@
 #define PLUGIN_LOGGING_STATS_USER_COMMANDS_H
 
 #include <drizzled/common.h>
-
+#include <drizzled/enum.h>
 #include <string>
+#include <vector>
+
 
 class UserCommands
 {
@@ -40,68 +42,53 @@ public:
 
   UserCommands();
 
-  uint64_t getSelectCount();
+  UserCommands(const UserCommands &user_commands);
 
-  void incrementSelectCount(int i= 1);
+  uint64_t getCount(uint32_t index);
 
-
-  uint64_t getUpdateCount();
-
-  void incrementUpdateCount(int i= 1);
-
-
-  uint64_t getDeleteCount();
-
-  void incrementDeleteCount(int i= 1);
-
-
-  uint64_t getInsertCount();
-
-  void incrementInsertCount(int i= 1);
-
-
-  uint64_t getRollbackCount();
-
-  void incrementRollbackCount(int i= 1);
-
-
-  uint64_t getCommitCount();
-
-  void incrementCommitCount(int i= 1);
-
-
-  uint64_t getCreateCount();
-
-  void incrementCreateCount(int i= 1);
-
-
-  uint64_t getAlterCount();
-
-  void incrementAlterCount(int i= 1);
-
-
-  uint64_t getDropCount();
-
-  void incrementDropCount(int i= 1);
-
-
-  uint64_t getAdminCount();
-
-  void incrementAdminCount(int i= 1);
+  void merge(UserCommands *user_commands);
 
   void reset();
 
+  void logCommand(drizzled::enum_sql_command sql_command);
+
+  static uint32_t getStatusVarsCount()
+  {
+    return drizzled::SQLCOM_END;
+  }
+
+  static uint32_t getUserCounts()
+  {
+    return COUNT_END; 
+  }
+
+  static const char *COM_STATUS_VARS[];
+
+  static const char *USER_COUNTS[];
+
+  enum command_count_index {
+    COUNT_SELECT,
+    COUNT_DELETE,
+    COUNT_UPDATE,
+    COUNT_INSERT,
+    COUNT_ROLLBACK,
+    COUNT_COMMIT,
+    COUNT_CREATE,
+    COUNT_ALTER,
+    COUNT_DROP,
+    COUNT_ADMIN,
+    /* add new COUNT_* values above this entry */
+    COUNT_END 
+  };
+
+  uint64_t getUserCount(uint32_t index);
+
 private:
-  uint64_t update_count;
-  uint64_t delete_count;
-  uint64_t insert_count;
-  uint64_t select_count;
-  uint64_t rollback_count;
-  uint64_t commit_count;
-  uint64_t create_count;
-  uint64_t alter_count;
-  uint64_t drop_count;
-  uint64_t admin_count;
+  void init();
+
+  void incrementCount(uint32_t index, uint32_t i= 1);
+
+  std::vector<uint64_t> vector_of_command_counts;
 };
 
 #endif /* PLUGIN_LOGGING_STATS_USER_COMMANDS_H */

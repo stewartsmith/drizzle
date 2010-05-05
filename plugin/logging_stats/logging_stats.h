@@ -30,7 +30,10 @@
 #ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
 #define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
 
-#include "score_board_slot.h"
+#include "scoreboard_slot.h"
+#include "cumulative_stats.h"
+#include "user_commands.h"
+#include "scoreboard.h"
 
 #include <drizzled/atomics.h>
 #include <drizzled/enum.h>
@@ -38,8 +41,7 @@
 #include <drizzled/plugin/logging.h>
 
 #include <string>
-
-extern pthread_rwlock_t LOCK_scoreboard;
+#include <vector>
 
 class LoggingStats: public drizzled::plugin::Logging
 {
@@ -68,27 +70,23 @@ public:
     is_enabled= false;
   }
 
-  uint32_t getScoreBoardSize()
-  {
-    return scoreboard_size;
+  Scoreboard *getCurrentScoreboard()
+  {          
+    return current_scoreboard;
   }
 
-  ScoreBoardSlot *getScoreBoardSlots()
+  CumulativeStats *getCumulativeStats()
   {
-    return score_board_slots;
+    return cumulative_stats;
   }
 
 private:
-  static const int32_t UNINITIALIZED= -1;
+  Scoreboard *current_scoreboard;
 
-  bool isBeingLogged(drizzled::Session *session);
-
-  void updateScoreBoard(ScoreBoardSlot *score_board_slot, drizzled::Session *session);
+  CumulativeStats *cumulative_stats;
 
   drizzled::atomic<bool> is_enabled;
 
-  ScoreBoardSlot *score_board_slots;
-
-  uint32_t scoreboard_size;
+  void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
 };
 #endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */

@@ -25,6 +25,7 @@
 */
 #include "config.h"
 
+#include <cstdio>
 #include <limits.h>
 
 #include <drizzled/sql_select.h>

@@ -96,14 +96,10 @@ public:
   virtual int index_read(unsigned char * buf, const unsigned char * key,
 			 uint32_t key_len,
                          drizzled::ha_rkey_function find_flag);
-  virtual int index_read_idx(unsigned char * buf, uint32_t index,
-                             const unsigned char * key,
-			     uint32_t key_len,
-                             drizzled::ha_rkey_function find_flag);
   int index_next(unsigned char * buf);
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
-  int write_row(unsigned char * buf);
+  int doInsertRecord(unsigned char * buf);
   int real_write_row(unsigned char *buf, azio_stream *writer);
   int delete_all_rows();
   int rnd_init(bool scan=1);

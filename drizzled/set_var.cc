@@ -64,6 +64,7 @@
 #include "drizzled/charset.h"
 #include "drizzled/transaction_services.h"
 
+#include <cstdio>
 #include <map>
 #include <algorithm>
 
@@ -143,7 +144,7 @@ static sys_var_session_uint32_t	sys_completion_type(&vars, "completion_type",
                                                     fix_completion_type);
 static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &system_variables::collation_server, &default_charset_info);
-static sys_var_const_str       sys_datadir(&vars, "datadir", drizzle_real_data_home);
+static sys_var_const_str       sys_datadir(&vars, "datadir", data_home_real);
 
 static sys_var_session_uint64_t	sys_join_buffer_size(&vars, "join_buffer_size",
                                                      &system_variables::join_buff_size);
@@ -399,9 +400,8 @@ static int check_completion_type(Session *, set_var *var)
 static void fix_session_mem_root(Session *session, sql_var_t type)
 {
   if (type != OPT_GLOBAL)
-    reset_root_defaults(session->mem_root,
-                        session->variables.query_alloc_block_size,
-                        session->variables.query_prealloc_size);
+    session->mem_root->reset_root_defaults(session->variables.query_alloc_block_size,
+                                           session->variables.query_prealloc_size);
 }
 
 
@@ -1381,7 +1381,7 @@ static bool set_option_autocommit(Session *session, set_var *var)
       session->options&= ~(uint64_t) (OPTION_BEGIN);
       session->server_status|= SERVER_STATUS_AUTOCOMMIT;
       TransactionServices &transaction_services= TransactionServices::singleton();
-      if (transaction_services.ha_commit_trans(session, true))
+      if (transaction_services.commitTransaction(session, true))
         return 1;
     }
     else

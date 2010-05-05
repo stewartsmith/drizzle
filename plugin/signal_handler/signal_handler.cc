@@ -23,6 +23,7 @@
 #include "drizzled/internal/my_pthread.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/plugin/daemon.h"
+#include "drizzled/signal_handler.h"
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -67,7 +68,7 @@ static void kill_server(void *sig_ptr)
   kill_in_progress=true;
   abort_loop=1;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
-    my_sigset(sig, SIG_IGN);                    /* purify inspected */
+    ignore_signal(sig);                    /* purify inspected */
   if (sig == SIGTERM || sig == 0)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
   else

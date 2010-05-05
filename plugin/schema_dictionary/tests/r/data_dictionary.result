@@ -462,8 +462,6 @@ COLUMN_NAME
 #
 #
 #
-#
-#
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 count(*)
 #

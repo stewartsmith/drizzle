@@ -195,7 +195,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
     if (packet_length == 0)
     {
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
@@ -254,7 +253,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.ha_autocommit_or_rollback(session, session->is_error());
+  transaction_services.autocommitOrRollback(session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -315,7 +314,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->query.clear();
 
   session->set_proc_info(NULL);
-  free_root(session->mem_root,MYF(memory::KEEP_PREALLOC));
+  session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
 
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
   {
@@ -472,8 +471,6 @@ mysql_execute_command(Session *session)
   {
     drizzle_reset_errors(session, 0);
   }
-
-  status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
   assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 
@@ -902,7 +899,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   {
     my_casedn_str(files_charset_info, table->db.str);
 
-    SchemaIdentifier schema_identifier(string(table->db.str, table->db.length));
+    SchemaIdentifier schema_identifier(string(table->db.str));
     if (not check_db_name(schema_identifier))
     {
 

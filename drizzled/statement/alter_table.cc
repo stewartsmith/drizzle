@@ -619,7 +619,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
     goto err;
 
   /* The ALTER Table is always in its own transaction */
-  error= transaction_services.ha_autocommit_or_rollback(session, false);
+  error= transaction_services.autocommitOrRollback(session, false);
   if (! session->endActiveTransaction())
     error=1;
   if (error)
@@ -627,7 +627,7 @@ static int mysql_discard_or_import_tablespace(Session *session,
   write_bin_log(session, session->query.c_str());
 
 err:
-  (void) transaction_services.ha_autocommit_or_rollback(session, error);
+  (void) transaction_services.autocommitOrRollback(session, error);
   session->tablespace_op=false;
 
   if (error == 0)
@@ -931,7 +931,7 @@ static bool internal_alter_table(Session *session,
         }
         else
         {
-          if (mysql_rename_table(original_engine, original_table_identifier, new_table_identifier, 0))
+          if (mysql_rename_table(original_engine, original_table_identifier, new_table_identifier))
           {
             error= -1;
           }
@@ -1125,7 +1125,7 @@ static bool internal_alter_table(Session *session,
 
     new_table_identifier.setPath(new_table_as_temporary.getPath());
 
-    if (mysql_rename_table(new_engine, new_table_as_temporary, new_table_identifier, FN_FROM_IS_TMP) != 0)
+    if (mysql_rename_table(new_engine, new_table_as_temporary, new_table_identifier) != 0)
     {
       return true;
     }
@@ -1184,14 +1184,14 @@ static bool internal_alter_table(Session *session,
     TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
                                            old_name, message::Table::TEMPORARY);
 
-    if (mysql_rename_table(original_engine, original_table_identifier, original_table_to_drop, FN_TO_IS_TMP))
+    if (mysql_rename_table(original_engine, original_table_identifier, original_table_to_drop))
     {
       error= 1;
       quick_rm_table(*session, new_table_as_temporary);
     }
     else
     {
-      if (mysql_rename_table(new_engine, new_table_as_temporary, new_table_identifier, FN_FROM_IS_TMP) != 0)
+      if (mysql_rename_table(new_engine, new_table_as_temporary, new_table_identifier) != 0)
       {
         /* Try to get everything back. */
         error= 1;
@@ -1200,7 +1200,7 @@ static bool internal_alter_table(Session *session,
 
         quick_rm_table(*session, new_table_as_temporary);
 
-        mysql_rename_table(original_engine, original_table_to_drop, original_table_identifier, FN_FROM_IS_TMP);
+        mysql_rename_table(original_engine, original_table_to_drop, original_table_identifier);
       }
       else
       {
@@ -1449,7 +1449,7 @@ copy_data_between_tables(Table *from, Table *to,
       copy_ptr->do_copy(copy_ptr);
     }
     prev_insert_id= to->cursor->next_insert_id;
-    error= to->cursor->ha_write_row(to->record[0]);
+    error= to->cursor->insertRecord(to->record[0]);
     to->auto_increment_field_not_null= false;
     if (error)
     { 
@@ -1480,7 +1480,7 @@ copy_data_between_tables(Table *from, Table *to,
     Ensure that the new table is saved properly to disk so that we
     can do a rename
   */
-  if (transaction_services.ha_autocommit_or_rollback(session, false))
+  if (transaction_services.autocommitOrRollback(session, false))
     error=1;
   if (! session->endActiveTransaction())
     error=1;

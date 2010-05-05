@@ -40,10 +40,6 @@ typedef struct st_ha_create_information HA_CREATE_INFO;
 class AlterInfo;
 class Cursor;
 
-/* Flags for conversion functions. */
-static const uint32_t FN_FROM_IS_TMP(1 << 0);
-static const uint32_t FN_TO_IS_TMP(1 << 0);
-
 namespace message { class Table; }
 class TableIdentifier;
 
@@ -59,8 +55,6 @@ void close_cached_table(Session *session, Table *table);
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_checksum_table(Session* session, TableList* table_list,
-                          HA_CHECK_OPT* check_opt);
 bool mysql_check_table(Session* session, TableList* table_list,
                        HA_CHECK_OPT* check_opt);
 bool mysql_analyze_table(Session* session, TableList* table_list,

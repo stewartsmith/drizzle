@@ -244,7 +244,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     // session->is_error() is tested to disallow delete row on error
     if (!(select && select->skip_record())&& ! session->is_error() )
     {
-      if (!(error= table->cursor->ha_delete_row(table->record[0])))
+      if (!(error= table->cursor->deleteRecord(table->record[0])))
       {
 	deleted++;
 	if (!--limit && using_limit)
@@ -396,7 +396,7 @@ bool mysql_truncate(Session& session, TableList *table_list)
     Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears session->transaction.*.
   */
-  error= transaction_services.ha_autocommit_or_rollback(&session, error);
+  error= transaction_services.autocommitOrRollback(&session, error);
   session.options= save_options;
 
   return error;

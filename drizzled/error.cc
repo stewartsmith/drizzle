@@ -27,8 +27,8 @@
 #include "drizzled/definitions.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
-#include "drizzled/hash.h"
 
+#include <drizzled/unordered_map.h>
 #include <exception>
 
 namespace drizzled
@@ -70,7 +70,7 @@ private:
   ErrorMap(const ErrorMap &e);
   ErrorMap& operator=(const ErrorMap &e);
 
-  typedef drizzled::hash_map<uint32_t, std::string> ErrorMessageMap;
+  typedef unordered_map<uint32_t, std::string> ErrorMessageMap;
   ErrorMessageMap mapping_;
 };
 
@@ -909,6 +909,7 @@ ErrorMap::ErrorMap()
   add(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   add(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
   add(ER_DROP_SCHEMA, +N_("Error droppping Schema : %s"));
+  add(ER_USE_SQL_BIG_RESULT, N_("Temporary table too large, rerun with SQL_BIG_RESULT."));
 
 
   add(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));

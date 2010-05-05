@@ -30,29 +30,57 @@
 /**
  * @details
  *
- * This tracks current user commands. The commands are logged using
- * the post() and postEnd() logging APIs. It uses a scoreboard
- * approach that initializes the scoreboard size to the value set
- * by logging_stats_scoreboard_size. Each ScoreBoardSlot wraps 
- * a UserCommand object containing the statistics for a particular
- * session. As other statistics are added they can then be added
- * to the ScoreBoardSlot object. 
+ * This plugin tracks the current user commands for a session, and copies
+ * them into a cumulative vector of all commands run by a user over time. 
+ * The commands are logged using the post() and postEnd() logging APIs.
+ * User commands are stored in a Scoreboard where each active session
+ * owns a ScoreboardSlot.  
+ *
+ * Scoreboard
+ *
+ * The scoreboard is a pre-allocated vector of vectors of ScoreboardSlots. It
+ * can be thought of as a vector of buckets where each bucket contains
+ * pre-allocated ScoreboardSlots. To determine which bucket gets used for
+ * recording statistics the modulus operator is used on the session_id. This
+ * will result in a bucket to search for a unused ScoreboardSlot.
  *
  * Locking  
- *
- * A RW lock is taken to locate a open slot for a session or to locate the
- * slot that the current session has claimed. 
  * 
- * A read lock is taken when the table is queried in the data_dictionary.
+ * Each vector in the Scoreboard has its own lock. This allows session 2 
+ * to not have to wait for session 1 to locate a slot to use, as they
+ * will be in different buckets.  A lock is taken to locate a open slot
+ * in the scoreboard.
+ *
+ * A read lock is taken on the scoreboard vector when the table is queried 
+ * in the data_dictionary.
+ *
+ * Atomics
+ *
+ * The cumulative statistics use atomics, for the index into the vector
+ * marking the last index that is used by a user. New users will increment
+ * the atomic and claim the slot for use.  
+ * 
+ * System Variables
+ * 
+ * logging_stats_scoreboard_size - the size of the scoreboard this corresponds
+ *   to the maximum number of concurrent connections that can be tracked
+ *
+ * logging_stats_max_user_count - this is used for cumulative statistics it 
+ *   represents the maximum users that can be tracked 
+ * 
+ * logging_stats_bucket_count - the number of buckets to have in the scoreboard
+ *   this splits up locking across several buckets so the entire scoreboard is 
+ *   not locked at a single point in time.
+ * 
+ * logging_stats_enabled - enable/disable plugin 
  * 
  * TODO 
  *
- * To improve as more statistics are added, a pointer to the scoreboard
- * slot should be added to the Session object. This will avoid the session
- * having to do multiple lookups in the scoreboard.  
- *  
- * Save the statistics off into a vector so you can query by user/ip and get
- * commands run based on those keys over time. 
+ * Allow expansion of Scoreboard and cumulative vector 
+ * 
+ * Possibly add a scoreboard_slot_index variable onto the Session class
+ * this would avoid having to relocate the Scoreboard slot for each Session
+ * doing multiple statements. 
  * 
  */
 
@@ -69,87 +97,32 @@ static bool sysvar_logging_stats_enabled= false;
 
 static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
-pthread_rwlock_t LOCK_scoreboard;
+static uint32_t sysvar_logging_stats_max_user_count= 1000;
+
+static uint32_t sysvar_logging_stats_bucket_count= 10;
 
 LoggingStats::LoggingStats(string name_arg) : Logging(name_arg)
 {
-  (void) pthread_rwlock_init(&LOCK_scoreboard, NULL);
-  scoreboard_size= sysvar_logging_stats_scoreboard_size;
-  score_board_slots= new ScoreBoardSlot[scoreboard_size];
-  for (uint32_t j=0; j < scoreboard_size; j++)
-  { 
-    UserCommands *user_commands= new UserCommands();
-    ScoreBoardSlot *score_board_slot= &score_board_slots[j];
-    score_board_slot->setUserCommands(user_commands); 
-  } 
+  current_scoreboard= new Scoreboard(sysvar_logging_stats_scoreboard_size, 
+                                     sysvar_logging_stats_bucket_count);
+
+  cumulative_stats= new CumulativeStats(sysvar_logging_stats_max_user_count); 
 }
 
 LoggingStats::~LoggingStats()
 {
-  (void) pthread_rwlock_destroy(&LOCK_scoreboard);
-  delete[] score_board_slots;
+  delete current_scoreboard;
+  delete cumulative_stats;
 }
 
-bool LoggingStats::isBeingLogged(Session *session)
+void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
+                                           Session *session)
 {
   enum_sql_command sql_command= session->lex->sql_command;
 
-  switch(sql_command)
-  {
-    case SQLCOM_UPDATE:
-    case SQLCOM_DELETE:
-    case SQLCOM_INSERT:
-    case SQLCOM_ROLLBACK:
-    case SQLCOM_COMMIT:
-    case SQLCOM_CREATE_TABLE:
-    case SQLCOM_ALTER_TABLE:
-    case SQLCOM_DROP_TABLE:
-    case SQLCOM_SELECT:
-      return true;
-    default:
-      return false;
-  }
-} 
+  UserCommands *user_commands= scoreboard_slot->getUserCommands();
 
-void LoggingStats::updateScoreBoard(ScoreBoardSlot *score_board_slot,
-                                    Session *session)
-{
-  enum_sql_command sql_command= session->lex->sql_command;
-
-  UserCommands *user_commands= score_board_slot->getUserCommands();
-
-  switch(sql_command)
-  {
-    case SQLCOM_UPDATE:
-      user_commands->incrementUpdateCount();
-      break;
-    case SQLCOM_DELETE:
-      user_commands->incrementDeleteCount();
-      break;
-    case SQLCOM_INSERT:
-      user_commands->incrementInsertCount();
-      break;
-    case SQLCOM_ROLLBACK:
-      user_commands->incrementRollbackCount();
-      break;
-    case SQLCOM_COMMIT:
-      user_commands->incrementCommitCount();
-      break;
-    case SQLCOM_CREATE_TABLE:
-      user_commands->incrementCreateCount();
-      break;
-    case SQLCOM_ALTER_TABLE:
-      user_commands->incrementAlterCount();
-      break;
-    case SQLCOM_DROP_TABLE:
-      user_commands->incrementDropCount();
-      break;
-    case SQLCOM_SELECT:
-      user_commands->incrementSelectCount();
-      break;
-    default:
-      return;
-  }
+  user_commands->logCommand(sql_command);
 }
 
 bool LoggingStats::post(Session *session)
@@ -159,95 +132,32 @@ bool LoggingStats::post(Session *session)
     return false;
   }
 
-  /* exit early if we are not logging this type of command */
-  if (isBeingLogged(session) == false)
+  ScoreboardSlot *scoreboard_slot= current_scoreboard->findScoreboardSlotToLog(session);
+
+  /* Its possible that the scoreboard is full with active sessions in which case 
+     this could be null */
+  if (scoreboard_slot)
   {
-    return false;
+    updateCurrentScoreboard(scoreboard_slot, session);
   }
-
-  /* Find a slot that is unused */
-
-  pthread_rwlock_wrlock(&LOCK_scoreboard);
-  ScoreBoardSlot *score_board_slot;
-  int our_slot= UNINITIALIZED; 
-  int open_slot= UNINITIALIZED;
-
-  for (uint32_t j=0; j < scoreboard_size; j++)
-  {
-    score_board_slot= &score_board_slots[j];
-
-    if (score_board_slot->isInUse() == true)
-    {
-      /* Check if this session is the one using this slot */
-      if (score_board_slot->getSessionId() == session->getSessionId())
-      {
-        our_slot= j;
-        break; 
-      } 
-      else 
-      {
-        continue; 
-      }
-    }
-    else 
-    {
-      /* save off the open slot */ 
-      if (open_slot == -1)
-      {
-        open_slot= j;
-      } 
-      continue;
-    }
-  }
-
-  if (our_slot != UNINITIALIZED)
-  {
-    pthread_rwlock_unlock(&LOCK_scoreboard); 
-  }
-  else if (open_slot != UNINITIALIZED)
-  {
-    score_board_slot= &score_board_slots[open_slot];
-    score_board_slot->setInUse(true);
-    score_board_slot->setSessionId(session->getSessionId());
-    score_board_slot->setUser(session->getSecurityContext().getUser());
-    score_board_slot->setIp(session->getSecurityContext().getIp());
-    pthread_rwlock_unlock(&LOCK_scoreboard);
-  }
-  else 
-  {
-    pthread_rwlock_unlock(&LOCK_scoreboard);
-    /* there was no available slot for this session */
-    return false;
-  }
-
-  updateScoreBoard(score_board_slot, session);
-
   return false;
 }
 
 bool LoggingStats::postEnd(Session *session)
 {
-  if (! isEnabled() || (session->getSessionId() == 0)) 
+  if (! isEnabled() || (session->getSessionId() == 0))
   {
     return false;
   }
 
-  ScoreBoardSlot *score_board_slot;
+  ScoreboardSlot *scoreboard_slot= current_scoreboard->findAndResetScoreboardSlot(session);
 
-  pthread_rwlock_wrlock(&LOCK_scoreboard);
-
-  for (uint32_t j=0; j < scoreboard_size; j++)
+  if (scoreboard_slot)
   {
-    score_board_slot= &score_board_slots[j];
-
-    if (score_board_slot->getSessionId() == session->getSessionId())
-    {
-      score_board_slot->reset();
-      break;
-    }
+    cumulative_stats->logUserStats(scoreboard_slot);
+    cumulative_stats->logGlobalStats(scoreboard_slot);
+    delete scoreboard_slot;
   }
-
-  pthread_rwlock_unlock(&LOCK_scoreboard);
 
   return false;
 }
@@ -256,7 +166,13 @@ bool LoggingStats::postEnd(Session *session)
 
 static LoggingStats *logging_stats= NULL;
 
-static CommandsTool *commands_tool= NULL;
+static CurrentCommandsTool *current_commands_tool= NULL;
+
+static CumulativeCommandsTool *cumulative_commands_tool= NULL;
+
+static GlobalStatementsTool *global_statements_tool= NULL;
+
+static SessionStatementsTool *session_statements_tool= NULL;
 
 static void enable(Session *,
                    drizzle_sys_var *,
@@ -280,9 +196,30 @@ static void enable(Session *,
 
 static bool initTable()
 {
-  commands_tool= new(nothrow)CommandsTool(logging_stats);
+  current_commands_tool= new(nothrow)CurrentCommandsTool(logging_stats);
 
-  if (! commands_tool)
+  if (! current_commands_tool)
+  {
+    return true;
+  }
+
+  cumulative_commands_tool= new(nothrow)CumulativeCommandsTool(logging_stats);
+
+  if (! cumulative_commands_tool)
+  {
+    return true;
+  }
+
+  global_statements_tool= new(nothrow)GlobalStatementsTool(logging_stats);
+
+  if (! global_statements_tool)
+  {
+    return true;
+  }
+
+  session_statements_tool= new(nothrow)SessionStatementsTool(logging_stats);
+
+  if (! session_statements_tool)
   {
     return true;
   }
@@ -290,7 +227,7 @@ static bool initTable()
   return false;
 }
 
-static int init(drizzled::plugin::Context &context)
+static int init(Context &context)
 {
   logging_stats= new LoggingStats("logging_stats");
 
@@ -300,7 +237,10 @@ static int init(drizzled::plugin::Context &context)
   }
 
   context.add(logging_stats);
-  context.add(commands_tool);
+  context.add(current_commands_tool);
+  context.add(cumulative_commands_tool);
+  context.add(global_statements_tool);
+  context.add(session_statements_tool);
 
   if (sysvar_logging_stats_enabled)
   {
@@ -310,6 +250,28 @@ static int init(drizzled::plugin::Context &context)
   return 0;
 }
 
+static DRIZZLE_SYSVAR_UINT(max_user_count,
+                           sysvar_logging_stats_max_user_count,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Max number of users that will be logged"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           1000, /* default */
+                           500, /* minimum */
+                           50000,
+                           0);
+
+static DRIZZLE_SYSVAR_UINT(bucket_count,
+                           sysvar_logging_stats_bucket_count,
+                           PLUGIN_VAR_RQCMDARG,
+                           N_("Max number of vector buckets to construct for logging"),
+                           NULL, /* check func */
+                           NULL, /* update func */
+                           10, /* default */
+                           5, /* minimum */
+                           500,
+                           0);
+
 static DRIZZLE_SYSVAR_UINT(scoreboard_size,
                            sysvar_logging_stats_scoreboard_size,
                            PLUGIN_VAR_RQCMDARG,
@@ -317,7 +279,7 @@ static DRIZZLE_SYSVAR_UINT(scoreboard_size,
                            NULL, /* check func */
                            NULL, /* update func */
                            2000, /* default */
-                           1000, /* minimum */
+                           10, /* minimum */
                            50000, 
                            0);
 
@@ -330,6 +292,8 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            false /* default */);
 
 static drizzle_sys_var* system_var[]= {
+  DRIZZLE_SYSVAR(max_user_count),
+  DRIZZLE_SYSVAR(bucket_count),
   DRIZZLE_SYSVAR(scoreboard_size),
   DRIZZLE_SYSVAR(enable),
   NULL

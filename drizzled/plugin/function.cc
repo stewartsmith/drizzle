@@ -20,8 +20,10 @@
 
 /* This implements 'user defined functions' */
 #include "config.h"
+
+#include <drizzled/unordered_map.h>
+
 #include <drizzled/gettext.h>
-#include "drizzled/hash.h"
 #include "drizzled/plugin/function.h"
 
 using namespace std;
@@ -29,7 +31,7 @@ using namespace std;
 namespace drizzled
 {
 
-typedef hash_map<string, const plugin::Function *> UdfMap;
+typedef unordered_map<string, const plugin::Function *> UdfMap;
 static UdfMap udf_registry;
 
 bool plugin::Function::addPlugin(const plugin::Function *udf)
