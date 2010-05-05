@@ -10,16 +10,15 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST_PROGRAM_OPTIONS],[
   dnl  Check for boost::program_options
   dnl --------------------------------------------------------------------
 
-  dnl link against libc because we're just looking for headers here
   AC_LANG_PUSH(C++)
-  AC_LIB_HAVE_LINKFLAGS(boost_program_options,,[
+  AC_LIB_HAVE_LINKFLAGS(boost_program_options-mt,,[
     #include <boost/program_options.hpp>
   ],[
     boost::program_options::options_description d;
     d.add_options()("a","some option");
   ])
-  AS_IF([test "x${ac_cv_libboost_program_options}" = "xno"],[
-    AC_LIB_HAVE_LINKFLAGS(boost_program_options-mt,,[
+  AS_IF([test "x${ac_cv_libboost_program_options_mt}" = "xno"],[
+    AC_LIB_HAVE_LINKFLAGS(boost_program_options,,[
       #include <boost/program_options.hpp>
     ],[
       boost::program_options::options_description d;
