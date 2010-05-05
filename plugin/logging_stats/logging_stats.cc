@@ -76,16 +76,12 @@
  * 
  * TODO 
  *
- * Logic should be reworked to not acquire a lock if a session has already reserved
- * a slot for itself.
- *
- * A pointer to the scoreboard slot could be added to the Session object.
- * This will avoid the session having to do multiple lookups in the scoreboard,
- * this will also avoid having to take a lock to locate the scoreboard slot 
- * being used by a particular session. 
- *
  * Allow expansion of Scoreboard and cumulative vector 
- *  
+ * 
+ * Possibly add a scoreboard_slot_index variable onto the Session class
+ * this would avoid having to relocate the Scoreboard slot for each Session
+ * doing multiple statements. 
+ * 
  */
 
 #include "config.h"
@@ -101,7 +97,7 @@ static bool sysvar_logging_stats_enabled= false;
 
 static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
-static uint32_t sysvar_logging_stats_max_user_count= 10000;
+static uint32_t sysvar_logging_stats_max_user_count= 1000;
 
 static uint32_t sysvar_logging_stats_bucket_count= 10;
 
@@ -260,7 +256,7 @@ static DRIZZLE_SYSVAR_UINT(max_user_count,
                            N_("Max number of users that will be logged"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           10000, /* default */
+                           1000, /* default */
                            500, /* minimum */
                            50000,
                            0);
@@ -273,7 +269,7 @@ static DRIZZLE_SYSVAR_UINT(bucket_count,
                            NULL, /* update func */
                            10, /* default */
                            5, /* minimum */
-                           100,
+                           500,
                            0);
 
 static DRIZZLE_SYSVAR_UINT(scoreboard_size,

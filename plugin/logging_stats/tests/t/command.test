@@ -28,7 +28,10 @@ set global logging_stats_enable=true;
 
 
 #check the stats for the current session
-SELECT * FROM DATA_DICTIONARY.SESSION_STATEMENTS_NEW;
+SHOW CREATE TABLE data_dictionary.SESSION_STATEMENTS;
+--replace_column 1 #
+SELECT count(*) FROM data_dictionary.SESSION_STATEMENTS;
+SELECT * FROM data_dictionary.SESSION_STATEMENTS;
 
 #check stats for all active sessions
 connect (con1, localhost, root,,);

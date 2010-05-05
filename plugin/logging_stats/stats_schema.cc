@@ -88,16 +88,18 @@
 #include "stats_schema.h"
 #include "scoreboard.h"
 
+#include <sstream>
+
 using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
 SessionStatementsTool::SessionStatementsTool(LoggingStats *in_logging_stats) :
-  plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATEMENTS_NEW")
+  plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATEMENTS")
 {
   logging_stats= in_logging_stats;
   add_field("VARIABLE_NAME");
-  add_field("VARIABLE_VALUE", TableFunction::NUMBER);
+  add_field("VARIABLE_VALUE", 1024);
 }
 
 SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
@@ -151,19 +153,21 @@ bool SessionStatementsTool::Generator::populate()
     return false;
   }
 
-  push(UserCommands::STATUS_VARS[count]);
-  push(user_commands->getCount(count));
+  push(UserCommands::COM_STATUS_VARS[count]);
+  ostringstream oss;
+  oss << user_commands->getCount(count);
+  push(oss.str()); 
 
   ++count;
   return true;
 }
 
 GlobalStatementsTool::GlobalStatementsTool(LoggingStats *in_logging_stats) :
-  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATEMENTS_NEW")
+  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATEMENTS")
 {   
   logging_stats= in_logging_stats;
   add_field("VARIABLE_NAME");
-  add_field("VARIABLE_VALUE", TableFunction::NUMBER);
+  add_field("VARIABLE_VALUE", 1024);
 }
 
 GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
@@ -181,8 +185,10 @@ bool GlobalStatementsTool::Generator::populate()
     return false;
   }
 
-  push(UserCommands::STATUS_VARS[count]);
-  push(global_stats->getUserCommands()->getCount(count));
+  push(UserCommands::COM_STATUS_VARS[count]);
+  ostringstream oss;
+  oss << global_stats->getUserCommands()->getCount(count);
+  push(oss.str());
 
   ++count;
   return true;

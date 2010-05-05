@@ -46,7 +46,7 @@ const char* UserCommands::USER_COUNTS[] =
   "COUNT_ADMIN"
 };
 
-const char* UserCommands::STATUS_VARS[] =
+const char* UserCommands::COM_STATUS_VARS[] =
 {
   "select",
   "create_table",
