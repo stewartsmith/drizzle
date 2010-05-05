@@ -98,6 +98,9 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
  *   DOUBLE    (interpreted as DOUBLE)
  *   VARCHAR   (VARTEXT1 or VARTEXT2)
  *
+ * BlitzDB Key Format:
+ *   [DRIZZLE_KEY][UINT16_T][BLITZDB_UNIQUE_KEY]
+ *
  * Returns:
  *   -1 = a < b
  *    0 = a == b
@@ -113,13 +116,16 @@ int blitz_keycmp_cb(const char *a, int,
   if (rv != 0)
     return rv;
 
-  /* Getting here means that the keys are identical. However,
-     unless this is a unique index, don't return 0 just yet.     
-     Our final job here is to check whether the PK part of the
-     keys are identical or not. If so, it's safe to conclude
-     that the keys are identical. */
-  if (tree->unique)
-    return 0;
+  /* Getting here means that the Drizzle part of the keys are
+     identical. We now compare the BlitzDB part of the key. */
+  if (tree->unique) {
+    /* This is a special exception that allows Drizzle's NULL
+       key to be inserted duplicately into a UNIQUE tree. If
+       the keys aren't NULL then it is safe to conclude that
+       the keys are identical which this condition does. */
+    if (*a != 0 && *b != 0)
+      return 0;
+  }
 
   char *a_pos = (char *)a + a_compared_len;
   char *b_pos = (char *)b + b_compared_len;

@@ -843,13 +843,7 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
     key = merge_key(key_buffer, prefix_len, temp_pkbuf, pk_len, &klen);
 
     if (share->btrees[curr_key].unique) {
-      /* NULL is a special case where we allow duplicate
-         entries in the UNIQUE INDEX tree. */
-      if (*key == 0) {
-        rv = share->btrees[curr_key].write(key, klen);
-      } else {
-        rv = share->btrees[curr_key].write_unique(key, klen);
-      }
+      rv = share->btrees[curr_key].write_unique(key, klen);
     } else {
       rv = share->btrees[curr_key].write(key, klen);
     }
