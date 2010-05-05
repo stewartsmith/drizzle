@@ -1493,7 +1493,9 @@ int Table::delete_table(bool free_share)
   if (field)
   {
     for (Field **ptr=field ; *ptr ; ptr++)
+    {
       delete *ptr;
+    }
     field= 0;
   }
   delete cursor;
@@ -1501,9 +1503,19 @@ int Table::delete_table(bool free_share)
   if (free_share)
   {
     if (s->tmp_table == message::Table::STANDARD)
+    {
       TableShare::release(s);
+    }
     else
+    {
       s->free_table_share();
+      if (s->newed)
+      {
+        delete s;
+      }
+    }
+
+    s= NULL;
   }
   mem_root.free_root(MYF(0));
 

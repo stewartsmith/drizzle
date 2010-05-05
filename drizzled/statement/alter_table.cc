@@ -1091,14 +1091,20 @@ static bool internal_alter_table(Session *session,
           Note that MERGE tables do not have their children attached here.
         */
         new_table->intern_close_table();
-        if (new_table->s->newed)
+        if (new_table->s)
         {
-          delete new_table->s;
+          if (new_table->s->newed)
+          {
+            delete new_table->s;
+          }
+          else
+          {
+            free(new_table->s);
+          }
+
+          new_table->s= NULL;
         }
-        else
-        {
-          free(new_table->s);
-        }
+
         free(new_table);
       }
 
@@ -1149,13 +1155,18 @@ static bool internal_alter_table(Session *session,
       */
       new_table->intern_close_table();
 
-      if (new_table->s->newed)
+      if (new_table->s)
       {
-        delete new_table->s;
-      }
-      else
-      {
-        free(new_table->s);
+        if (new_table->s->newed)
+        {
+          delete new_table->s;
+        }
+        else
+        {
+          free(new_table->s);
+        }
+
+        new_table->s= NULL;
       }
 
       free(new_table);

@@ -139,9 +139,8 @@ uint32_t cached_open_tables(void)
 
 void close_handle_and_leave_table_as_lock(Table *table)
 {
+  TableList ls;
   TableShare *share, *old_share= table->s;
-  char *key_buff;
-  memory::Root *mem_root= &table->mem_root;
 
   assert(table->db_stat);
 
@@ -150,16 +149,10 @@ void close_handle_and_leave_table_as_lock(Table *table)
     This has to be done to ensure that the table share is removed from
     the table defintion cache as soon as the last instance is removed
   */
-  if (multi_alloc_root(mem_root,
-                       &share, sizeof(*share),
-                       &key_buff, old_share->getCacheKeySize(),
-                       NULL))
-  {
-    memset(share, 0, sizeof(*share));
-    share->set_table_cache_key(key_buff, old_share->getCacheKey(),
-                               old_share->getCacheKeySize());
-    share->tmp_table= message::Table::INTERNAL;       // for intern_close_table()
-  }
+  ls.db= const_cast<char *>(table->getShare()->getTableName());
+  ls.table_name= const_cast<char *>(table->getShare()->getSchemaName());
+  share= new TableShare(&ls, const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
+  share->tmp_table= message::Table::INTERNAL;       // for intern_close_table()
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -178,7 +171,9 @@ void Table::intern_close_table()
 {						// Free all structures
   free_io_cache();
   if (cursor)                              // Not true if name lock
+  {
     delete_table(true);			// close cursor
+  }
 }
 
 /*
@@ -1397,7 +1392,7 @@ c2: open t1; -- blocks
   if (refresh)
   {
     table->next= open_tables; /* Link into simple list */
-    open_tables=table;
+    open_tables= table;
   }
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
