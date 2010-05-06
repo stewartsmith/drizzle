@@ -62,7 +62,7 @@ public:
     return COUNT_END; 
   }
 
-  static const char *STATUS_VARS[];
+  static const char *COM_STATUS_VARS[];
 
   static const char *USER_COUNTS[];
 

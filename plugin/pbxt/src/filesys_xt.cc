@@ -1498,7 +1498,7 @@ xtPublic xtBool xt_pwrite_file(XTOpenFilePtr of, off_t offset, size_t size, void
 				/* Consolidate 2 blocks that are closest to each other in other to
 				 * make space for another block:
 				 */
-				int		i;
+				size_t	i;
 				off_t	gap;
 				off_t	min_gap = (off_t) -1;
 
@@ -1527,7 +1527,7 @@ xtPublic xtBool xt_pwrite_file(XTOpenFilePtr of, off_t offset, size_t size, void
 			/* Wait for flush to pass this point: */
 			for (;;) {
 				flush_offset = ((xtWord8) rf->rf_flush_offset_hi << 32) | rf->rf_flush_offset_lo;
-				if (offset < flush_offset)
+				if ((xtWord8) offset < flush_offset)
 					break;
 				xt_critical_wait();
 			}
@@ -1730,7 +1730,7 @@ xtPublic xtBool xt_flush_file(XTOpenFilePtr of, XTIOStatsPtr stat, XTThreadPtr t
 		case XT_FT_REWRITE_FLUSH:
 			XTRewriteFlushPtr	rf;
 			RewriteBlockPtr		rec;
-			int					i;
+			size_t				i;
 			off_t				offset;
 			off_t				size;
 			off_t				tfer;
