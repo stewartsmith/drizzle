@@ -2184,6 +2184,7 @@ static unsigned long srv_io_capacity= 200;
 static unsigned long innobase_fast_shutdown= 1;
 static bool srv_file_per_table= false;
 static char*  innobase_file_format_name   = NULL;
+static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
@@ -2232,6 +2233,13 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
   err= ib_cfg_set_int("flush_log_at_trx_commit", srv_flush_log_at_trx_commit);
   if (err != DB_SUCCESS)
     goto innodb_error;
+
+  if (innobase_unix_file_flush_method)
+  {
+    err= ib_cfg_set_text("flush_method", innobase_unix_file_flush_method);
+    if (err != DB_SUCCESS)
+      goto innodb_error;
+  }
 
   err= ib_cfg_set_text("data_file_path", innodb_data_file_path);
   if (err != DB_SUCCESS)
@@ -2386,6 +2394,10 @@ static DRIZZLE_SYSVAR_ULONG(flush_log_at_trx_commit, srv_flush_log_at_trx_commit
   " or 2 (write at commit, flush once per second).",
   NULL, NULL, 1, 0, 2, 0);
 
+static DRIZZLE_SYSVAR_STR(flush_method, innobase_unix_file_flush_method,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "With which method to flush data.", NULL, NULL, NULL);
+
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2415,6 +2427,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(file_per_table),
   DRIZZLE_SYSVAR(file_format),
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
+  DRIZZLE_SYSVAR(flush_method),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
