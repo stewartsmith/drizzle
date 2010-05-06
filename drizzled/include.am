@@ -24,6 +24,7 @@ DTRACEFILES= \
 	     drizzled/filesort.o \
 	     drizzled/join.o \
 	     drizzled/session.o \
+	     drizzled/signal_handler.o \
 	     drizzled/sql_delete.o \
 	     drizzled/sql_insert.o \
 	     drizzled/sql_parse.o \
