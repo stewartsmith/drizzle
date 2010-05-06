@@ -1545,7 +1545,7 @@ static void *db_thread_pool_run_thread(XTThreadPtr self)
 {
 	DBThreadDataPtr	td = (DBThreadDataPtr) self->t_data;
 	XTDatabaseHPtr	db = td->td_db;
-	volatile int				i = 0;
+	volatile int	i = 0;
 
 	/* Note, the MySQL thread will be free when the this
 	 * thread quits.
@@ -1916,7 +1916,7 @@ class XTTestTask : public XTTask {
 	virtual void	tk_release();
 };
 
-xtBool XTTestTask::tk_task(XTThreadPtr)
+xtBool XTTestTask::tk_task(XTThreadPtr XT_UNUSED(thread))
 {
 	sleep(tt_sleep_time);
 	return OK;

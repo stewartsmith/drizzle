@@ -230,7 +230,6 @@ typedef struct system_status_var
   uint64_t bytes_received;
   uint64_t bytes_sent;
   ulong com_other;
-  ulong com_stat[(uint32_t) SQLCOM_END];
   ulong created_tmp_disk_tables;
   ulong created_tmp_tables;
   ulong ha_commit_count;

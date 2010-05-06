@@ -51,7 +51,6 @@ typedef class Item COND;
 extern struct system_status_var global_status_var;
 
 drizzle_show_var *getFrontOfStatusVars();
-drizzle_show_var *getCommandStatusVars();
 
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 
@@ -65,7 +64,6 @@ bool mysqld_show_column_types(Session *session);
 void calc_sum_of_all_status(struct system_status_var *to);
 
 int add_status_vars(drizzle_show_var *list);
-int add_com_status_vars(drizzle_show_var *list);
 void remove_status_vars(drizzle_show_var *list);
 void init_status_vars();
 void free_status_vars();
