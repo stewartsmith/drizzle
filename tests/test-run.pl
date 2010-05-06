@@ -1046,6 +1046,10 @@ sub command_line_setup () {
 sub gimme_a_good_port($)
 {
   my $port_to_test= shift;
+  if ($port_to_test == 8000)
+  {
+    $port_to_test = 8001;
+  }
   my $is_port_bad= 1;
   while ($is_port_bad) {
     my $sock = new IO::Socket::INET( PeerAddr => 'localhost',
