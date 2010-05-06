@@ -38,12 +38,6 @@ namespace drizzled
 
 */
 
-struct my_cs_file_section_st
-{
-  int        state;
-  const char *str;
-};
-
 
 #define MY_CS_CSDESCR_SIZE	64
 #define MY_CS_TAILORING_SIZE	1024

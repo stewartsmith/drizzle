@@ -38,8 +38,6 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
                                               memory::Root *parent_alloc,
                                               bool *create_error)
   :
-    mrr_flags(0),
-    alloc(),
     cursor(NULL),
     ranges(),
     in_ror_merged_scan(false),
@@ -53,7 +51,9 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
     mrr_buf_size(0),
     mrr_buf_desc(NULL),
     key_parts(NULL),
-    dont_free(false)
+    dont_free(false),
+    mrr_flags(0),
+    alloc()
 {
   my_bitmap_map *bitmap= NULL;
 
