@@ -43,6 +43,7 @@ This file contains the implementation of error and warnings related
 
 #include "config.h"
 
+#include <cstdio>
 #include <stdarg.h>
 
 #include <drizzled/session.h>
