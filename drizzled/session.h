@@ -59,8 +59,8 @@ namespace plugin
 {
 class Client;
 class Scheduler;
-class SessionEventObservers;
-class SchemaEventObservers;
+class SessionEventObserverList;
+class SchemaEventObserverList;
 }
 
 namespace message
@@ -1255,45 +1255,45 @@ private:
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
   message::Statement *statement_message;
-  plugin::SessionEventObservers *session_event_observers;
+  plugin::SessionEventObserverList *session_event_observers;
   
   /* Schema observers are mapped to databases. */
-  std::map<std::string, plugin::SchemaEventObservers *> schema_event_observers;
+  std::map<std::string, plugin::SchemaEventObserverList *> schema_event_observers;
 
  
 public:
-  plugin::SessionEventObservers *getSessionObservers() 
+  plugin::SessionEventObserverList *getSessionObservers() 
   { 
     return session_event_observers;
   }
   
-  void setSessionObservers(plugin::SessionEventObservers *observers) 
+  void setSessionObservers(plugin::SessionEventObserverList *observers) 
   { 
     session_event_observers= observers;
   }
   
   /* For schema event observers there is one set of observers per database. */
-  plugin::SchemaEventObservers *getSchemaObservers(const std::string *db_name) 
+  plugin::SchemaEventObserverList *getSchemaObservers(const std::string &db_name) 
   { 
-    std::map<std::string, plugin::SchemaEventObservers *>::iterator it;
+    std::map<std::string, plugin::SchemaEventObserverList *>::iterator it;
     
-    it= schema_event_observers.find(*db_name);
+    it= schema_event_observers.find(db_name);
     if (it == schema_event_observers.end())
       return NULL;
       
     return it->second;
   }
   
-  void setSchemaObservers(const std::string *db_name, plugin::SchemaEventObservers *observers) 
+  void setSchemaObservers(const std::string &db_name, plugin::SchemaEventObserverList *observers) 
   { 
-    std::map<std::string, plugin::SchemaEventObservers *>::iterator it;
+    std::map<std::string, plugin::SchemaEventObserverList *>::iterator it;
 
-    it= schema_event_observers.find(*db_name);
+    it= schema_event_observers.find(db_name);
     if (it != schema_event_observers.end())
       schema_event_observers.erase(it);;
 
     if (observers)
-      schema_event_observers[*db_name] = observers;
+      schema_event_observers[db_name] = observers;
   }
   
   

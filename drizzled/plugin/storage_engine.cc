@@ -53,7 +53,7 @@
 #include "drizzled/db.h"
 
 #include <drizzled/table_proto.h>
-#include <drizzled/plugin/event.h>
+#include <drizzled/plugin/event_observer.h>
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
@@ -102,12 +102,17 @@ int StorageEngine::renameTable(Session &session, TableIdentifier &from, TableIde
   int error;
   setTransactionReadWrite(session);
 
-  if (unlikely(plugin::Event::preRenameTableDo(&session, &from, &to)))
-    error= ER_EVENT_PLUGIN;
+  if (unlikely(plugin::EventObserver::preRenameTableDo(session, from, to)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
   else
   {
     error =  doRenameTable(session, from, to);
-    plugin::Event::postRenameTableDo(&session, &from, &to, error);
+    if (unlikely(plugin::EventObserver::postRenameTableDo(session, from, to, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
   }
   
   return error;
@@ -475,9 +480,19 @@ int StorageEngine::dropTable(Session& session,
 
   engine.setTransactionReadWrite(session);
   
-  plugin::Event::preDropTableDo(&session, &identifier);
-  error= engine.doDropTable(session, identifier);
-  plugin::Event::postDropTableDo(&session, &identifier, error);
+  if (unlikely(plugin::EventObserver::preDropTableDo(session, identifier)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= engine.doDropTable(session, identifier);
+    if (unlikely(plugin::EventObserver::postDropTableDo(session, identifier, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+
 
   return error;
 }

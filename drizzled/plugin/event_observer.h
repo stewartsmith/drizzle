@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Definitions required for Event plugin
+ *  Definitions required for EventObserver plugin
  *
  *  Copyright (C) 2010 PrimeBase Technologies GmbH, Germany
  *
@@ -22,15 +22,15 @@
 /*
  * How to add a new event:
  *
- * In event.h
+ * In event_observer.h
  * 1: Add your event to EventType.
- * 2: Add it to Event::eventName().
+ * 2: Add it to EventObserver::eventName().
  * 3: Cerate a EventData class for it based on SessionEventData, SchemaEventData, 
  *  or TableEventData depending on the event type class.
- * 4: Add a static method to the Event class, similar to preWriteRowDo() for example,
+ * 4: Add a static method to the EventObserver class, similar to preWriteRowDo() for example,
  *  that will be called by drizzle.
  *
- * In event.cc
+ * In event_observer.cc
  * 5: Impliment your static event method, similar to preWriteRowDo() for example.
  * 6: Depending on the event type class add an event vector for it to the SessionEventObservers,
  *  SchemaEventObservers, or TableEventObservers class.
@@ -50,20 +50,20 @@ class TableShare;
 
 namespace plugin
 {
-  class EventObservers;
+  class EventObserverList;
   class EventData;
 
 
-class Event : public Plugin
+class EventObserver : public Plugin
 {
-  Event();
-  Event(const Event &);
-  Event& operator=(const Event &);
+  EventObserver();
+  EventObserver(const EventObserver &);
+  EventObserver& operator=(const EventObserver &);
 public:
-  explicit Event(std::string name_arg)
-    : Plugin(name_arg, "Event")
+  explicit EventObserver(std::string name_arg)
+    : Plugin(name_arg, "EventObserver")
   {}
-  virtual ~Event() {}
+  virtual ~EventObserver() {}
 
    enum EventType{
       /* Session events: */
@@ -81,23 +81,23 @@ public:
       
     };
 
-  /* Event data classes: */
+  /* EventObserver data classes: */
   enum EventClass{SessionEvent, SchemaEvent, TableEvent};
 
   /*==========================================================*/
   /* registerEvents() must be implemented to allow the plugin to
    * register which events it is interested in.
    */
-  virtual void registerTableEvents(TableShare *, EventObservers *){}
-  virtual void registerSchemaEvents(const std::string */*db*/, EventObservers *) {}
-  virtual void registerSessionEvents(Session *, EventObservers *) {}
+  virtual void registerTableEvents(TableShare &, EventObserverList &){}
+  virtual void registerSchemaEvents(const std::string &/*db*/, EventObserverList &) {}
+  virtual void registerSessionEvents(Session &, EventObserverList &) {}
 
-  virtual bool observeEvent(EventData *)= 0;
+  virtual bool observeEvent(EventData &)= 0;
 
   /*==========================================================*/
   /* Static access methods called by drizzle: */
-  static bool addPlugin(Event *handler);
-  static void removePlugin(Event *handler);
+  static bool addPlugin(EventObserver *handler);
+  static void removePlugin(EventObserver *handler);
   
   /*==========================================================*/
   /* Register an event of interest for this plugin. 
@@ -115,65 +115,65 @@ public:
    * but supply a systen variable so that it can be set at runtime so that the user can
    * decide which event should be called first.
    */
-  void registerEvent(EventObservers *observers, EventType event, int position= 0); 
+  void registerEvent(EventObserverList &observers, EventType event, int position= 0); 
 
   /*==========================================================*/
   /* Called from drizzle to register all events for all event plugins 
    * interested in this table. 
    */
-  static void registerTableEventsDo(TableShare *table_share); 
-  static void deregisterTableEventsDo(TableShare *table_share); 
+  static void registerTableEventsDo(TableShare &table_share); 
+  static void deregisterTableEventsDo(TableShare &table_share); 
 
   /*==========================================================*/
   /* Called from drizzle to register all events for all event plugins 
   * interested in this database. 
   */
-  static void registerSchemaEventsDo(Session *session, const std::string *db); 
-  static void deregisterSchemaEventsDo(Session *session, const std::string *db); 
+  static void registerSchemaEventsDo(Session &session, const std::string &db); 
+  static void deregisterSchemaEventsDo(Session &session, const std::string &db); 
 
   /*==========================================================*/
   /* Called from drizzle to register all events for all event plugins 
   * interested in this session. 
   */
-  static void registerSessionEventsDo(Session *session); 
-  static void deregisterSessionEventsDo(Session *session); 
+  static void registerSessionEventsDo(Session &session); 
+  static void deregisterSessionEventsDo(Session &session); 
 
  
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
    * of a schema an event,
    */
-  static bool preDropTableDo(Session *session, TableIdentifier *table);
-  static void postDropTableDo(Session *session, TableIdentifier *table, int err);
-  static bool preRenameTableDo(Session *session, TableIdentifier *from, TableIdentifier *to);
-  static void postRenameTableDo(Session *session, TableIdentifier *from, TableIdentifier *to, int err);
+  static bool preDropTableDo(Session &session, TableIdentifier &table);
+  static bool postDropTableDo(Session &session, TableIdentifier &table, int err);
+  static bool preRenameTableDo(Session &session, TableIdentifier &from, TableIdentifier &to);
+  static bool postRenameTableDo(Session &session, TableIdentifier &from, TableIdentifier &to, int err);
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
    * of a table an event,
    */
-  static bool preWriteRowDo(Session *session, TableShare *table_share, unsigned char *buf);
-  static void postWriteRowDo(Session *session, TableShare *table_share, const unsigned char *buf, int err);
-  static bool preDeleteRowDo(Session *session, TableShare *table_share, const unsigned char *buf);
-  static void postDeleteRowDo(Session *session, TableShare *table_share, const unsigned char *buf, int err);
-  static bool preUpdateRowDo(Session *session, TableShare *table_share, const unsigned char *old_data, unsigned char *new_data);
-  static void postUpdateRowDo(Session *session, TableShare *table_share, const unsigned char *old_data, unsigned char *new_data, int err);
+  static bool preWriteRowDo(Session &session, TableShare &table_share, unsigned char *buf);
+  static bool postWriteRowDo(Session &session, TableShare &table_share, const unsigned char *buf, int err);
+  static bool preDeleteRowDo(Session &session, TableShare &table_share, const unsigned char *buf);
+  static bool postDeleteRowDo(Session &session, TableShare &table_share, const unsigned char *buf, int err);
+  static bool preUpdateRowDo(Session &session, TableShare &table_share, const unsigned char *old_data, unsigned char *new_data);
+  static bool postUpdateRowDo(Session &session, TableShare &table_share, const unsigned char *old_data, unsigned char *new_data, int err);
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
    * of a table an event,
    */
-  static bool preCreateDatabaseDo(Session *session, const char *db);
-  static void postCreateDatabaseDo(Session *session, const char *db, int err);
-  static bool preDropDatabaseDo(Session *session, const char *db);
-  static void postDropDatabaseDo(Session *session, const char *db, int err);
+  static bool preCreateDatabaseDo(Session &session, const std::string &db);
+  static bool postCreateDatabaseDo(Session &session, const std::string &db, int err);
+  static bool preDropDatabaseDo(Session &session, const std::string &db);
+  static bool postDropDatabaseDo(Session &session, const std::string &db, int err);
 
 
   /*==========================================================*/
   /* Internal method to call the generic event observers.
    */
   private:
-  static bool callEventObservers(EventData *data);
+  static bool callEventObservers(EventData &data);
 
   public:
   /*==========================================================*/
@@ -230,19 +230,17 @@ public:
   
 };
 
-/* Event data classes: */
+/* EventObserver data classes: */
 //======================================
 class EventData
 {
 public:
-  Event::EventType event;
-  Event::EventClass event_classs;
-  bool cannot_fail;
-  
-  EventData(Event::EventType event_arg, Event::EventClass event_class_arg, bool cannot_fail_arg): 
+  EventObserver::EventType event;
+  EventObserver::EventClass event_classs;
+   
+  EventData(EventObserver::EventType event_arg, EventObserver::EventClass event_class_arg): 
     event(event_arg), 
-    event_classs(event_class_arg), 
-    cannot_fail(cannot_fail_arg)
+    event_classs(event_class_arg)
     {}
   virtual ~EventData(){}
   
@@ -252,10 +250,10 @@ public:
 class SessionEventData: public EventData
 {
 public:
-  Session *session;
+  Session &session;
   
-  SessionEventData(Event::EventType event_arg, bool cannot_fail_arg, Session *session_arg): 
-    EventData(event_arg, Event::SessionEvent, cannot_fail_arg),
+  SessionEventData(EventObserver::EventType event_arg, Session &session_arg): 
+    EventData(event_arg, EventObserver::SessionEvent),
     session(session_arg)
     {}
   virtual ~SessionEventData(){}
@@ -266,11 +264,11 @@ public:
 class SchemaEventData: public EventData
 {
 public:
-  Session *session;
-  const char *db;
+  Session &session;
+  const std::string &db;
   
-  SchemaEventData(Event::EventType event_arg, bool cannot_fail_arg, Session *session_arg, const char *db_arg): 
-    EventData(event_arg, Event::SchemaEvent, cannot_fail_arg),
+  SchemaEventData(EventObserver::EventType event_arg, Session &session_arg, const std::string &db_arg): 
+    EventData(event_arg, EventObserver::SchemaEvent),
     session(session_arg),
     db(db_arg)
     {}
@@ -282,11 +280,11 @@ public:
 class TableEventData: public EventData
 {
 public:
-  Session *session;
-  TableShare *table;  
+  Session &session;
+  TableShare &table;  
   
-  TableEventData(Event::EventType event_arg, bool cannot_fail_arg, Session *session_arg, TableShare *table_arg): 
-    EventData(event_arg, Event::TableEvent, cannot_fail_arg),
+  TableEventData(EventObserver::EventType event_arg, Session &session_arg, TableShare &table_arg): 
+    EventData(event_arg, EventObserver::TableEvent),
     session(session_arg),
     table(table_arg)
     {}
@@ -298,10 +296,10 @@ public:
 class PreCreateDatabaseEventData: public SessionEventData
 {
 public:
-  const char *db;
+  const std::string &db;
 
-  PreCreateDatabaseEventData(Session *session_arg, const char *db_arg): 
-  SessionEventData(Event::PRE_CREATE_DATABASE, false, session_arg), 
+  PreCreateDatabaseEventData(Session &session_arg, const std::string &db_arg): 
+  SessionEventData(EventObserver::PRE_CREATE_DATABASE, session_arg), 
   db(db_arg)
   {}  
 };
@@ -310,11 +308,11 @@ public:
 class PostCreateDatabaseEventData: public SessionEventData
 {
 public:
-  const char *db;
+  const std::string &db;
   int err;
 
-  PostCreateDatabaseEventData(Session *session_arg, const char *db_arg, int err_arg): 
-  SessionEventData(Event::POST_CREATE_DATABASE, true, session_arg), 
+  PostCreateDatabaseEventData(Session &session_arg, const std::string &db_arg, int err_arg): 
+  SessionEventData(EventObserver::POST_CREATE_DATABASE, session_arg), 
   db(db_arg), 
   err(err_arg)
   {}  
@@ -324,10 +322,10 @@ public:
 class PreDropDatabaseEventData: public SessionEventData
 {
 public:
-  const char *db;
+  const std::string &db;
 
-  PreDropDatabaseEventData(Session *session_arg, const char *db_arg): 
-  SessionEventData(Event::PRE_DROP_DATABASE, false, session_arg), 
+  PreDropDatabaseEventData(Session &session_arg, const std::string &db_arg): 
+  SessionEventData(EventObserver::PRE_DROP_DATABASE, session_arg), 
   db(db_arg)
   {}  
 };
@@ -336,11 +334,11 @@ public:
 class PostDropDatabaseEventData: public SessionEventData
 {
 public:
-  const char *db;
+  const std::string &db;
   int err;
 
-  PostDropDatabaseEventData(Session *session_arg, const char *db_arg, int err_arg): 
-  SessionEventData(Event::POST_DROP_DATABASE, true, session_arg), 
+  PostDropDatabaseEventData(Session &session_arg, const std::string &db_arg, int err_arg): 
+  SessionEventData(EventObserver::POST_DROP_DATABASE, session_arg), 
   db(db_arg), 
   err(err_arg) 
   {}  
@@ -350,10 +348,10 @@ public:
 class PreDropTableEventData: public SchemaEventData
 {
 public:
-  TableIdentifier *table;
+  TableIdentifier &table;
 
-  PreDropTableEventData(Session *session_arg, TableIdentifier *table_arg): 
-  SchemaEventData(Event::PRE_DROP_TABLE, false, session_arg, table_arg->getSchemaName().c_str()), 
+  PreDropTableEventData(Session &session_arg, TableIdentifier &table_arg): 
+  SchemaEventData(EventObserver::PRE_DROP_TABLE, session_arg, table_arg.getSchemaName()), 
   table(table_arg)
   {}  
 };
@@ -362,11 +360,11 @@ public:
 class PostDropTableEventData: public SchemaEventData
 {
 public:
-  TableIdentifier *table;
+  TableIdentifier &table;
   int err;
 
-  PostDropTableEventData(Session *session_arg, TableIdentifier *table_arg, int err_arg): 
-  SchemaEventData(Event::POST_DROP_TABLE, true, session_arg, table_arg->getSchemaName().c_str()), 
+  PostDropTableEventData(Session &session_arg, TableIdentifier &table_arg, int err_arg): 
+  SchemaEventData(EventObserver::POST_DROP_TABLE, session_arg, table_arg.getSchemaName()), 
   table(table_arg), 
   err(err_arg)
   {}  
@@ -376,11 +374,11 @@ public:
 class PreRenameTableEventData: public SchemaEventData
 {
 public:
-  TableIdentifier *from;
-  TableIdentifier *to;
+  TableIdentifier &from;
+  TableIdentifier &to;
 
-  PreRenameTableEventData(Session *session_arg, TableIdentifier *from_arg, TableIdentifier *to_arg): 
-  SchemaEventData(Event::PRE_RENAME_TABLE, false, session_arg, from_arg->getSchemaName().c_str()), 
+  PreRenameTableEventData(Session &session_arg, TableIdentifier &from_arg, TableIdentifier &to_arg): 
+  SchemaEventData(EventObserver::PRE_RENAME_TABLE, session_arg, from_arg.getSchemaName()), 
   from(from_arg), 
   to(to_arg)
   {}  
@@ -390,12 +388,12 @@ public:
 class PostRenameTableEventData: public SchemaEventData
 {
 public:
-  TableIdentifier *from;
-  TableIdentifier *to;
+  TableIdentifier &from;
+  TableIdentifier &to;
   int err;
 
-  PostRenameTableEventData(Session *session_arg, TableIdentifier *from_arg, TableIdentifier *to_arg, int err_arg): 
-  SchemaEventData(Event::POST_RENAME_TABLE, true, session_arg, from_arg->getSchemaName().c_str()), 
+  PostRenameTableEventData(Session &session_arg, TableIdentifier &from_arg, TableIdentifier &to_arg, int err_arg): 
+  SchemaEventData(EventObserver::POST_RENAME_TABLE, session_arg, from_arg.getSchemaName()), 
   from(from_arg), 
   to(to_arg), 
   err(err_arg)
@@ -408,8 +406,8 @@ class PreWriteRowEventData: public TableEventData
 public:
   unsigned char *row;
 
-  PreWriteRowEventData(Session *session_arg, TableShare *table_arg, unsigned char *row_arg): 
-  TableEventData(Event::PRE_WRITE_ROW, false, session_arg, table_arg), 
+  PreWriteRowEventData(Session &session_arg, TableShare &table_arg, unsigned char *row_arg): 
+  TableEventData(EventObserver::PRE_WRITE_ROW, session_arg, table_arg), 
   row(row_arg)
   {}  
 };
@@ -421,8 +419,8 @@ public:
   const unsigned char *row;
   int err;
 
-  PostWriteRowEventData(Session *session_arg, TableShare *table_arg, const unsigned char *row_arg, int err_arg): 
-  TableEventData(Event::POST_WRITE_ROW, true, session_arg, table_arg), 
+  PostWriteRowEventData(Session &session_arg, TableShare &table_arg, const unsigned char *row_arg, int err_arg): 
+  TableEventData(EventObserver::POST_WRITE_ROW, session_arg, table_arg), 
   row(row_arg),
   err(err_arg)
   {}  
@@ -434,8 +432,8 @@ class PreDeleteRowEventData: public TableEventData
 public:
   const unsigned char *row;
 
-  PreDeleteRowEventData(Session *session_arg, TableShare *table_arg, const unsigned char *row_arg): 
-  TableEventData(Event::PRE_DELETE_ROW, false, session_arg, table_arg), 
+  PreDeleteRowEventData(Session &session_arg, TableShare &table_arg, const unsigned char *row_arg): 
+  TableEventData(EventObserver::PRE_DELETE_ROW, session_arg, table_arg), 
   row(row_arg)
   {}  
 };
@@ -447,8 +445,8 @@ public:
   const unsigned char *row;
   int err;
 
-  PostDeleteRowEventData(Session *session_arg, TableShare *table_arg, const unsigned char *row_arg, int err_arg): 
-  TableEventData(Event::POST_DELETE_ROW, true, session_arg, table_arg), 
+  PostDeleteRowEventData(Session &session_arg, TableShare &table_arg, const unsigned char *row_arg, int err_arg): 
+  TableEventData(EventObserver::POST_DELETE_ROW, session_arg, table_arg), 
   row(row_arg),
   err(err_arg)
   {}  
@@ -461,10 +459,10 @@ public:
   const unsigned char *old_row;
   unsigned char *new_row;
 
-  PreUpdateRowEventData(Session *session_arg, TableShare *table_arg,  
+  PreUpdateRowEventData(Session &session_arg, TableShare &table_arg,  
     const unsigned char *old_row_arg, 
     unsigned char *new_row_arg): 
-      TableEventData(Event::PRE_UPDATE_ROW, false, session_arg, table_arg), 
+      TableEventData(EventObserver::PRE_UPDATE_ROW, session_arg, table_arg), 
       old_row(old_row_arg),
       new_row(new_row_arg)      
       {}  
@@ -478,11 +476,11 @@ public:
   const unsigned char *new_row;
   int err;
 
-  PostUpdateRowEventData(Session *session_arg, TableShare *table_arg, 
+  PostUpdateRowEventData(Session &session_arg, TableShare &table_arg, 
     const unsigned char *old_row_arg, 
     const unsigned char *new_row_arg, 
     int err_arg): 
-      TableEventData(Event::POST_UPDATE_ROW, true, session_arg, table_arg), 
+      TableEventData(EventObserver::POST_UPDATE_ROW, session_arg, table_arg), 
       old_row(old_row_arg),
       new_row(new_row_arg),
       err(err_arg)

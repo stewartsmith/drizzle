@@ -30,24 +30,24 @@
 #ifndef PLUGIN_HELLO_EVENTS_H
 #define PLUGIN_HELLO_EVENTS_H
 
-#include <drizzled/plugin/event.h>
+#include <drizzled/plugin/event_observer.h>
 
 namespace drizzled
 {
 
 namespace plugin
 {
-class HelloEvents: public Event
+class HelloEvents: public EventObserver
 {
 public:
 
-  HelloEvents(std::string name_arg): Event(name_arg), is_enabled(false), db_list(""), table_list(""){}
+  HelloEvents(std::string name_arg): EventObserver(name_arg), is_enabled(false), db_list(""), table_list(""){}
 
-  void registerTableEvents(TableShare *table_share, EventObservers *observers);
-  void registerSchemaEvents(const std::string *db, EventObservers *observers);
-  void registerSessionEvents(Session *session, EventObservers *observers);
+  void registerTableEvents(TableShare &table_share, EventObserverList &observers);
+  void registerSchemaEvents(const std::string &db, EventObserverList &observers);
+  void registerSessionEvents(Session &session, EventObserverList &observers);
 
-  bool observeEvent(EventData *);
+  bool observeEvent(EventData &);
 
   // Some custom things for my plugin:
   void enable() { is_enabled= true;}
@@ -75,7 +75,7 @@ public:
   }
   
 private:
-  bool isDatabaseInteresting(const char *db_name)
+  bool isDatabaseInteresting(const std::string &db_name)
   {
     std::string list(db_list);
     list.append(",");
@@ -101,7 +101,7 @@ public:
   }
   
 private:
-  bool isTableInteresting(const char *table_name)
+  bool isTableInteresting(const std::string &table_name)
   {
     std::string list(table_list);
     list.append(",");
@@ -114,7 +114,7 @@ private:
 
 
   //----------------------
-  bool isSessionInteresting(Session *)
+  bool isSessionInteresting(Session &)
   {
     /* You could filter sessions of interest based on login
      * information.
