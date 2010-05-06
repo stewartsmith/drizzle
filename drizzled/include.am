@@ -438,8 +438,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/visibility.h \
 			      drizzled/xid.h
 
-lib_LTLIBRARIES+= drizzled/libdrizzled.la
-drizzled_libdrizzled_la_LIBADD= \
+drizzled_drizzled_LDFLAGS= -export-dynamic
+drizzled_drizzled_LDADD= \
 				drizzled/algorithm/libhash.la \
 				drizzled/util/libutil.la \
 				drizzled/internal/libinternal.la \
@@ -457,12 +457,13 @@ drizzled_libdrizzled_la_LIBADD= \
 				$(LIBTBB) \
 				$(GCOV_LIBS) 
 
-drizzled_libdrizzled_la_DEPENDENCIES= \
+drizzled_drizzled_DEPENDENCIES= \
                                       drizzled/message/libdrizzledmessage.la \
                                       ${noinst_LTLIBRARIES} \
                                       $(pandora_plugin_libs)
 
-drizzled_libdrizzled_la_SOURCES= \
+drizzled_drizzled_SOURCES= \
+                           drizzled/main.cc \
 				 drizzled/alter_info.cc \
 				 drizzled/cached_item.cc \
 				 drizzled/calendar.cc \
@@ -774,14 +775,6 @@ drizzled_libdrizzled_la_SOURCES= \
 
 sbin_PROGRAMS+= drizzled/drizzled
 
-drizzled_drizzled_SOURCES= \
-                           drizzled/main.cc
-drizzled_drizzled_LDADD= \
-			 $(LIBPCRE) \
-			 $(LIBINTL) \
-			 drizzled/libdrizzled.la
-
-drizzled_drizzled_LDFLAGS= -export-dynamic
 
 noinst_LTLIBRARIES+= \
 		     drizzled/libcached_directory.la \
