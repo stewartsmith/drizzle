@@ -64,6 +64,7 @@
 #include "drizzled/charset.h"
 #include "drizzled/transaction_services.h"
 
+#include <cstdio>
 #include <map>
 #include <algorithm>
 

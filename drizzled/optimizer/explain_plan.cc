@@ -29,6 +29,7 @@
 #include "drizzled/join.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <string>
 #include <sstream>
 
