@@ -314,7 +314,9 @@ TableDefinitionCache &TableShare::getCache()
 
 TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg)
 {
-  memory::Root _mem_root(TABLE_ALLOC_BLOCK_SIZE);
+  memset(this, 0, sizeof(TableShare)); // @todo remove need for
+
+  mem_root.init_alloc_root(TABLE_ALLOC_BLOCK_SIZE);
   char *key_buff, *path_buff;
   std::string _path;
 
@@ -327,13 +329,11 @@ TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length, ch
     build_table_filename(_path, table_list->db, table_list->table_name, false);
   }
 
-  if (multi_alloc_root(&_mem_root,
+  if (multi_alloc_root(&mem_root,
                        &key_buff, key_length,
                        &path_buff, _path.length() + 1,
                        NULL))
   {
-    memset(this, 0, sizeof(TableShare));
-
     set_table_cache_key(key_buff, key, key_length);
 
     setPath(path_buff, _path.length());
@@ -342,7 +342,6 @@ TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length, ch
 
     version=       refresh_version;
 
-    memcpy(&mem_root, &_mem_root, sizeof(mem_root));
     pthread_mutex_init(&mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&cond, NULL);
   }
