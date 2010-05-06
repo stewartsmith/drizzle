@@ -2131,3 +2131,16 @@
    fun:mem_heap_create_block
    ...
 }
+
+{
+  Static buffer created on gcrypt library initialization. Not a leak.
+  Memcheck:Leak
+  fun:malloc
+  ...
+  obj:*libgcrypt.so.*
+  fun:_ZL10initializeRN8drizzled6plugin7ContextE
+  fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
+  fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+  fun:main
+}
+

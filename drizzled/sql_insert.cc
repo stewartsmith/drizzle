@@ -17,6 +17,7 @@
 /* Insert of records */
 
 #include "config.h"
+#include <cstdio>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>

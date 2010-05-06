@@ -23,6 +23,7 @@
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/errmsg_print.h>
 
+#include <cstdio>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <fcntl.h>

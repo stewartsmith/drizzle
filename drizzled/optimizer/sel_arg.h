@@ -201,9 +201,7 @@ class RangeParameter;
 class SEL_ARG :public memory::SqlAlloc
 {
 public:
-  uint8_t min_flag;
-  uint8_t max_flag;
-  uint8_t maybe_flag;
+  uint8_t min_flag,max_flag,maybe_flag;
   uint8_t part;					// Which key part
   uint8_t maybe_null;
   /*
@@ -228,20 +226,8 @@ public:
   SEL_ARG *next,*prev;    /* Links for bi-directional interval list */
   SEL_ARG *parent;        /* R-B tree parent */
   SEL_ARG *next_key_part;
-
-  enum leaf_color 
-  { 
-    BLACK,
-    RED 
-  } color;
-
-  enum Type 
-  { 
-    IMPOSSIBLE, 
-    MAYBE, 
-    MAYBE_KEY, 
-    KEY_RANGE 
-  } type;
+  enum leaf_color { BLACK,RED } color;
+  enum Type { IMPOSSIBLE, MAYBE, MAYBE_KEY, KEY_RANGE } type;
 
   enum 
   { 
