@@ -19,6 +19,8 @@
 
 #include "config.h"
 
+#include <cstdio>
+
 #include "drizzled/function/time/date_add_interval.h"
 #include "drizzled/temporal_interval.h"
 #include "drizzled/time_functions.h"

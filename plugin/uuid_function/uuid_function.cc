@@ -55,7 +55,7 @@ String *UuidFunction::val_str(String *str)
   str->length(UUID_LENGTH);
   str->set_charset(system_charset_info);
   uuid_string= (char *) str->ptr();
-  uuid_generate_time(uu);
+  uuid_generate_random(uu);
   uuid_unparse(uu, uuid_string);
 
   return str;

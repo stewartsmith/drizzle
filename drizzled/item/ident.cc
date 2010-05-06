@@ -23,6 +23,8 @@
 #include <drizzled/current_session.h>
 #include <drizzled/item/ident.h>
 
+#include <cstdio>
+
 using namespace std;
 
 namespace drizzled
