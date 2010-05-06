@@ -195,7 +195,7 @@ one. Call function 'get_one_option()' once for each option.
             }
           }
           opt_str= check_struct_option(cur_arg, key_name);
-          optend= strrchr(opt_str, '=');
+          optend= strchr(opt_str, '=');
           if (optend != NULL)
           {
             length= (uint32_t) (optend - opt_str);
