@@ -2194,8 +2194,6 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
 {
   ib_err_t err;
 
-  innobase_file_format_name= strdup("Barracuda");
-
   err= ib_init();
   if (err != DB_SUCCESS)
     goto innodb_error;
@@ -2246,7 +2244,7 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
   if (err != DB_SUCCESS)
     goto innodb_error;
 
-  err= ib_startup("barracuda");
+  err= ib_startup(innobase_file_format_name);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2374,7 +2372,7 @@ static DRIZZLE_SYSVAR_STR(file_format, innobase_file_format_name,
   PLUGIN_VAR_RQCMDARG,
   "File format to use for new tables in .ibd files.",
   innodb_file_format_name_validate,
-  innodb_file_format_name_update, NULL);
+  innodb_file_format_name_update, "Barracuda");
 
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
