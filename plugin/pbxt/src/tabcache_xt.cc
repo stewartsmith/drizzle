@@ -923,7 +923,7 @@ xtBool XTTableSeq::xt_op_is_before(register xtOpSeqNo now, register xtOpSeqNo th
 /*
  * Used by the writer to wake the freeer.
  */
-xtPublic void xt_wr_wake_freeer(XTThreadPtr, XTDatabaseHPtr db)
+xtPublic void xt_wr_wake_freeer(XTThreadPtr XT_UNUSED(self), XTDatabaseHPtr db)
 {
 	/* BUG FIX: Was using tcm_freeer_cond.
 	 * This is incorrect. When the freeer waits for the

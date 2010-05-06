@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cstdio>
 
 using namespace std;
 
