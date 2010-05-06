@@ -124,9 +124,8 @@ int pbms_write_row_blobs(TABLE *table, uchar *row_buffer, PBMSResultPtr result)
 			}
 			
 			if (length > org_length) {
-                                Session *tmp_session= current_session;
 				// This can only happen if the BLOB URL is actually larger than the BLOB itself.
-				blob = (char *) session->session_alloc(length);
+				blob = (char *) session_alloc(current_session, length);
 				memcpy(blob_rec+packlength, &blob, sizeof(char*));
 			}			
 			memcpy(blob, blob_url_buffer, length);
