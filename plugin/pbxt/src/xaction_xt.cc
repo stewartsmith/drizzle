@@ -1221,7 +1221,7 @@ static xtBool xn_end_xact(XTThreadPtr thread, u_int status)
 			/* Write and flush the transaction log:
 			 * We only flush if this was not a temp table.
 			 */
-			if (!xt_xlog_log_data(thread, sizeof(XTXactEndEntryDRec), (XTXactLogBufferDPtr) &entry, thread->st_non_temp_opened ? XT_XLOG_NO_WRITE_NO_FLUSH : xt_db_flush_log_at_trx_commit)) {
+			if (!xt_xlog_log_data(thread, sizeof(XTXactEndEntryDRec), (XTXactLogBufferDPtr) &entry, thread->st_non_temp_updated ? xt_db_flush_log_at_trx_commit : XT_XLOG_NO_WRITE_NO_FLUSH)) {
 				ok = FALSE;
 				status = XT_LOG_ENT_ABORT;
 				/* Make sure this is done, if we failed to log
@@ -1337,20 +1337,27 @@ static xtBool xn_end_xact(XTThreadPtr thread, u_int status)
 		/* Don't get too far ahead of the sweeper! */
 		if (writer) {
 #ifdef XT_WAIT_FOR_CLEANUP
-			xtXactID	wait_xn_id;
-			
-			/* This is the transaction that was committed 3 transactions ago: */
-			wait_xn_id = thread->st_prev_xact[thread->st_last_xact];
-			thread->st_prev_xact[thread->st_last_xact] = xn_id;
-			/* This works because XT_MAX_XACT_BEHIND == 2! */
-			ASSERT_NS((thread->st_last_xact + 1) % XT_MAX_XACT_BEHIND == (thread->st_last_xact ^ 1));
-			thread->st_last_xact ^= 1;
-			while (xt_xn_is_before(db->db_xn_to_clean_id, wait_xn_id) && (db->db_sw_faster & XT_SW_TOO_FAR_BEHIND)) {
+			if (db->db_sw_faster & XT_SW_TOO_FAR_BEHIND) {
+				/* Set a maximum wait time (1/100s) */
+				xtWord8		then = xt_trace_clock() + (xtWord8) 100000;
+				xtXactID	wait_xn_id;
+				
+				/* This is the transaction that was committed 3 transactions ago: */
+				wait_xn_id = thread->st_prev_xact[thread->st_last_xact];
+				thread->st_prev_xact[thread->st_last_xact] = xn_id;
+				/* This works because XT_MAX_XACT_BEHIND == 2! */
+				ASSERT_NS((thread->st_last_xact + 1) % XT_MAX_XACT_BEHIND == (thread->st_last_xact ^ 1));
+				thread->st_last_xact ^= 1;
+
+				while (xt_xn_is_before(db->db_xn_to_clean_id, wait_xn_id) && (db->db_sw_faster & XT_SW_TOO_FAR_BEHIND)) {
+					if (xt_trace_clock() >= then)
+						break;
 #ifdef XT_SWEEPER_SORT_XACTS
-				if (!xn_get_xact_start(db, wait_xn_id, thread, NULL, NULL))
-					break;
+					if (!xn_get_xact_start(db, wait_xn_id, thread, NULL, NULL))
+						break;
 #endif
-				xt_critical_wait();
+					xt_critical_wait();
+				}
 			}
 #else
 			if ((db->db_sw_faster & XT_SW_TOO_FAR_BEHIND) != 0) {

@@ -21,6 +21,7 @@
   Sum functions (COUNT, MIN...)
 */
 #include "config.h"
+#include <cstdio>
 #include <math.h>
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>

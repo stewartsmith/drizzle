@@ -23,6 +23,7 @@
 
 #include "drizzled/gettext.h"
 
+#include <cstdio>
 #include <vector>
 
 using namespace std;

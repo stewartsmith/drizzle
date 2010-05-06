@@ -264,7 +264,7 @@ class XTTask {
 		tk_notify_threads.pl_exit();
 	}
 
-	virtual void	tk_init(struct XTThread *) { }
+	virtual void	tk_init(struct XTThread *XT_UNUSED(self)) { }
 	virtual void	tk_exit() { delete this; }
 	virtual void	tk_lock() { }
 	virtual void	tk_unlock() { }
@@ -395,7 +395,7 @@ typedef struct XTThread {
 	xtBool1					st_stat_ended;					/* TRUE if the statement was ended. */
 	xtBool1					st_stat_trans;					/* TRUE if a statement transaction is running (started on UPDATE). */
 	xtBool1					st_stat_modify;					/* TRUE if the statement is an INSERT/UPDATE/DELETE */
-	xtBool1					st_non_temp_opened;				/* TRUE if a non-temp tables was opened! */
+	xtBool1					st_non_temp_updated;			/* TRUE if a non-temp tables was updated! */
 	xtWord1					st_import_stat;					/* Non-zero if this is an import statement (ALTER, LOAD, REPAIR, etc). */
 #ifdef XT_IMPLEMENT_NO_ACTION
 	XTBasicListRec			st_restrict_list;				/* These records have been deleted and should have no reference. */
@@ -652,9 +652,9 @@ int prof_setjmp(void);
 #define THR_ARRAY_LOCK_TYPE				xt_rwlock_type
 #define THR_ARRAY_INIT_LOCK(s, i)		xt_init_rwlock_with_autoname(s, i)
 #define THR_ARRAY_FREE_LOCK(s, i)		xt_free_rwlock(i)	
-#define THR_ARRAY_READ_LOCK(i, o)		xt_slock_rwlock_ns(i)
-#define THR_ARRAY_WRITE_LOCK(i, o)		xt_xlock_rwlock_ns(i)
-#define THR_ARRAY_UNLOCK(i, o)			xt_unlock_rwlock_ns(i)
+#define THR_ARRAY_READ_LOCK(i, o)		do { xt_slock_rwlock_ns(i); (void) (o); } while(0)
+#define THR_ARRAY_WRITE_LOCK(i, o)		do { xt_xlock_rwlock_ns(i); (void) (o); } while(0)
+#define THR_ARRAY_UNLOCK(i, o)			do { xt_unlock_rwlock_ns(i); (void) (o); } while(0)
 #elif defined(THR_ARRAY_USE_XSMUTEX)
 #define THR_ARRAY_LOCK_TYPE				XTMutexXSLockRec
 #define THR_ARRAY_INIT_LOCK(s, i)		xt_xsmutex_init_with_autoname(s, i)

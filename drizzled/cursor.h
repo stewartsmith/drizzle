@@ -138,10 +138,6 @@ inline key_part_map make_prev_keypart_map(T a)
   present, its length is one byte <not-sure> which must be set to 0xFF
   at all times. </not-sure>
 
-  If the table has columns of type BIT, then certain bits from those columns
-  may be stored in null_bytes as well. Grep around for Field_bit for
-  details.
-
   For blob columns (see Field_blob), the record buffer stores length of the
   data, following by memory pointer to the blob data. The pointer is owned
   by the storage engine and is valid until the next operation.
@@ -156,8 +152,8 @@ protected:
   Table *table;               /* The current open table */
 
   ha_rows estimation_rows_to_insert;
-public:
   plugin::StorageEngine *engine;      /* storage engine of this Cursor */
+public:
   inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
     return engine;
@@ -489,16 +485,6 @@ public:
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
   virtual void free_foreign_key_create_info(char *) {}
-  /** The following can be called without an open Cursor */
-
-  virtual int add_index(Table *, KEY *, uint32_t)
-  { return (HA_ERR_WRONG_COMMAND); }
-  virtual int prepare_drop_index(Table *, uint32_t *, uint32_t)
-  { return (HA_ERR_WRONG_COMMAND); }
-  virtual int final_drop_index(Table *)
-  { return (HA_ERR_WRONG_COMMAND); }
-
-  virtual uint32_t checksum(void) const { return 0; }
 
   /**
     Is not invoked for non-transactional temporary tables.
@@ -748,7 +734,6 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);
-bool reopen_table(Table *table);
 bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);

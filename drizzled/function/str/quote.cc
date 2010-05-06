@@ -24,27 +24,29 @@
 namespace drizzled
 {
 
-#define get_esc_bit(mask, num) (1 & (*((mask) + ((num) >> 3))) >> ((num) & 7))
+inline
+static uint32_t get_esc_bit(unsigned char *mask, unsigned char num)
+{
+  return (1 & (*((mask) + ((num) >> 3))) >> ((num) & 7));
+}
 
 /**
-  QUOTE() function returns argument string in single quotes suitable for
-  using in a SQL statement.
-
-  Adds a \\ before all characters that needs to be escaped in a SQL string.
-  We also escape '^Z' (END-OF-FILE in windows) to avoid probelms when
-  running commands from a file in windows.
-
-  This function is very useful when you want to generate SQL statements.
-
-  @note
-    QUOTE(NULL) returns the string 'NULL' (4 letters, without quotes).
-
-  @retval
-    str	   Quoted string
-  @retval
-    NULL	   Out of memory.
-*/
-
+ * @brief
+ *   Returns the argument string in single quotes suitable for using in a SQL statement.
+ * 
+ * @detail
+ *   Adds a \\ before all characters that needs to be escaped in a SQL string.
+ *   We also escape '^Z' (END-OF-FILE in windows) to avoid problems when
+ *   running commands from a file in windows.
+ * 
+ *   This function is very useful when you want to generate SQL statements.
+ *
+ * @note
+ *   val_str(NULL) returns the string 'NULL' (4 letters, without quotes).
+ *
+ * @retval str Quoted string
+ * @retval NULL Out of memory.
+ */
 String *Item_func_quote::val_str(String *str)
 {
   assert(fixed == 1);

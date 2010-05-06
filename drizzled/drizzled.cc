@@ -731,51 +731,6 @@ static st_show_var_func_container show_starttime_cont= { &show_starttime };
 
 static st_show_var_func_container show_flushstatustime_cont= { &show_flushstatustime };
 
-/*
-  Variables shown by SHOW STATUS in alphabetical order
-*/
-static drizzle_show_var com_status_vars[]= {
-  {"admin_commands",       (char*) offsetof(system_status_var, com_other), SHOW_LONG_STATUS},
-  {"alter_db",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
-  {"alter_table",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
-  {"analyze",              (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
-  {"begin",                (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_BEGIN]), SHOW_LONG_STATUS},
-  {"change_db",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CHANGE_DB]), SHOW_LONG_STATUS},
-  {"check",                (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CHECK]), SHOW_LONG_STATUS},
-  {"checksum",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CHECKSUM]), SHOW_LONG_STATUS},
-  {"commit",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_COMMIT]), SHOW_LONG_STATUS},
-  {"create_db",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CREATE_DB]), SHOW_LONG_STATUS},
-  {"create_index",         (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CREATE_INDEX]), SHOW_LONG_STATUS},
-  {"create_table",         (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CREATE_TABLE]), SHOW_LONG_STATUS},
-  {"delete",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_DELETE]), SHOW_LONG_STATUS},
-  {"drop_db",              (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_DROP_DB]), SHOW_LONG_STATUS},
-  {"drop_index",           (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_DROP_INDEX]), SHOW_LONG_STATUS},
-  {"drop_table",           (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_DROP_TABLE]), SHOW_LONG_STATUS},
-  {"empty_query",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_EMPTY_QUERY]), SHOW_LONG_STATUS},
-  {"flush",                (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_FLUSH]), SHOW_LONG_STATUS},
-  {"insert",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_INSERT]), SHOW_LONG_STATUS},
-  {"insert_select",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
-  {"kill",                 (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_KILL]), SHOW_LONG_STATUS},
-  {"load",                 (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_LOAD]), SHOW_LONG_STATUS},
-  {"release_savepoint",    (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"rename_table",         (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
-  {"replace",              (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
-  {"replace_select",       (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_REPLACE_SELECT]), SHOW_LONG_STATUS},
-  {"rollback",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ROLLBACK]), SHOW_LONG_STATUS},
-  {"rollback_to_savepoint",(char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ROLLBACK_TO_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"savepoint",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"select",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SELECT]), SHOW_LONG_STATUS},
-  {"set_option",           (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SET_OPTION]), SHOW_LONG_STATUS},
-  {"show_create_db",       (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
-  {"show_create_table",    (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
-  {"show_errors",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
-  {"show_warnings",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
-  {"truncate",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
-  {"unlock_tables",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
-  {"update",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
-  {NULL, NULL, SHOW_LONGLONG}
-};
-
 static drizzle_show_var status_vars[]= {
   {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
   {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
@@ -871,14 +826,6 @@ int init_common_variables(const char *conf_file_name, int argc,
   else
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
   strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
-
-  /*
-    Add server status variables to the dynamic list of
-    status variables that is shown by SHOW STATUS.
-    Later, in plugin_init, new entries could be added to that list.
-  */
-  if (add_com_status_vars(com_status_vars))
-    return 1; // an error was already reported
 
   if (add_status_vars(status_vars))
     return 1; // an error was already reported
@@ -1864,12 +1811,14 @@ static void fix_paths(string &progname)
     {
       progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
     }
-    string testfile(progdir);
-    testfile.append("drizzled.lo");
+    string testlofile(progdir);
+    testlofile.append("drizzled.lo");
+    string testofile(progdir);
+    testofile.append("drizzled.o");
     struct stat testfile_stat;
-    if (stat(testfile.c_str(), &testfile_stat))
+    if (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat))
     {
-      /* drizzled.lo doesn't exist - we are not in a source dir.
+      /* neither drizzled.lo or drizzled.o exist - we are not in a source dir.
        * Go on as usual
        */
       (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
