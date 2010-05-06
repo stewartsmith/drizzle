@@ -187,6 +187,8 @@ class ha_innobase: public Cursor
 	UNIV_INTERN bool primary_key_is_clustered();
 	UNIV_INTERN int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
+        // Don't use these, I have just left them in here as reference for
+        // the future. -Brian
 	UNIV_INTERN int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys);
 	UNIV_INTERN int prepare_drop_index(TABLE *table_arg, uint *key_num,
                                            uint num_of_keys);
