@@ -5,21 +5,9 @@ GLOBAL_STATUS	CREATE TABLE `global_status` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(1024) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
-show create table GLOBAL_STATEMENTS ;
-Table	Create Table
-GLOBAL_STATEMENTS	CREATE TABLE `global_statements` (
-  `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
-  `VARIABLE_VALUE` varchar(1024) NOT NULL DEFAULT ''
-) ENGINE=FunctionEngine
 show create table GLOBAL_VARIABLES ;
 Table	Create Table
 GLOBAL_VARIABLES	CREATE TABLE `global_variables` (
-  `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
-  `VARIABLE_VALUE` varchar(1024) NOT NULL DEFAULT ''
-) ENGINE=FunctionEngine
-show create table SESSION_STATEMENTS;
-Table	Create Table
-SESSION_STATEMENTS	CREATE TABLE `session_statements` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(1024) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
@@ -35,16 +23,10 @@ SESSION_VARIABLES	CREATE TABLE `session_variables` (
   `VARIABLE_NAME` varchar(64) NOT NULL DEFAULT '',
   `VARIABLE_VALUE` varchar(1024) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
-SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
-count(*)
-#
 SELECT count(*) FROM data_dictionary.GLOBAL_STATUS;
 count(*)
 #
 SELECT count(*) FROM data_dictionary.GLOBAL_VARIABLES;
-count(*)
-#
-SELECT count(*) FROM data_dictionary.SESSION_STATEMENTS;
 count(*)
 #
 SELECT count(*) FROM data_dictionary.SESSION_STATUS;

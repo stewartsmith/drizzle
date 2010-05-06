@@ -49,6 +49,7 @@
 
 #include <time.h>
 
+#include <cstdio>
 #include <ostream>
 #include <iomanip>
 #include <vector>
