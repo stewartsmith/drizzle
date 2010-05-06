@@ -17,6 +17,7 @@
 
 #include <dlfcn.h>
 
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <map>

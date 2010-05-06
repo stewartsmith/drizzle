@@ -765,6 +765,13 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
     TransactionContext::ResourceContexts sorted_sv_resource_contexts(sv_resource_contexts);
     TransactionContext::ResourceContexts set_difference_contexts;
 
+    /* 
+     * Bug #542299: segfault during set_difference() below.  copy<>() requires pre-allocation
+     * of all elements, including the target, which is why we pre-allocate the set_difference_contexts
+     * here
+     */
+    set_difference_contexts.reserve(max(tran_resource_contexts.size(), sv_resource_contexts.size()));
+
     sort(sorted_tran_resource_contexts.begin(),
          sorted_tran_resource_contexts.end(),
          ResourceContextCompare());

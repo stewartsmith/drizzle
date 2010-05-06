@@ -27,36 +27,195 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @details
+ *
+ * This class defines the following DATA_DICTIONARY tables:
+ *
+ * drizzle> describe GLOBAL_STATEMENTS_NEW;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | VARIABLE_NAME  | VARCHAR | FALSE |         | FALSE           |           |
+ * | VARIABLE_VALUE | BIGINT  | FALSE |         | FALSE           |           |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe SESSION_STATEMENTS_NEW;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | VARIABLE_NAME  | VARCHAR | FALSE |         | FALSE           |           |
+ * | VARIABLE_VALUE | BIGINT  | FALSE |         | FALSE           |           |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe CURRENT_SQL_COMMANDS;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | USER           | VARCHAR | FALSE |         | FALSE           |           |
+ * | IP             | VARCHAR | FALSE |         | FALSE           |           |
+ * | COUNT_SELECT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_DELETE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_UPDATE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_INSERT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ROLLBACK | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_COMMIT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_CREATE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ALTER    | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_DROP     | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ADMIN    | BIGINT  | FALSE |         | FALSE           |           |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe CUMULATIVE_SQL_COMMANDS;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | USER           | VARCHAR | FALSE |         | FALSE           |           |
+ * | COUNT_SELECT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_DELETE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_UPDATE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_INSERT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ROLLBACK | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_COMMIT   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_CREATE   | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ALTER    | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_DROP     | BIGINT  | FALSE |         | FALSE           |           |
+ * | COUNT_ADMIN    | BIGINT  | FALSE |         | FALSE           |           |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ */
+
 #include <config.h>          
 #include "stats_schema.h"
+#include "scoreboard.h"
+
+#include <sstream>
 
 using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
-CurrentCommandsTool::CurrentCommandsTool(LoggingStats *in_logging_stats) :
-  plugin::TableFunction("DATA_DICTIONARY", "CURRENT_SQL_COMMANDS")
+SessionStatementsTool::SessionStatementsTool(LoggingStats *in_logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATEMENTS")
 {
   logging_stats= in_logging_stats;
+  add_field("VARIABLE_NAME");
+  add_field("VARIABLE_VALUE", 1024);
+}
+
+SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  count= 0;
+
+  /* Set user_commands */
+  Scoreboard *current_scoreboard= logging_stats->getCurrentScoreboard();
+
+  Session *this_session= current_session;
+
+  uint32_t bucket_number= current_scoreboard->getBucketNumber(this_session);
+
+  vector<ScoreboardSlot* > *scoreboard_vector=
+     current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
+
+  vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
+  vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
+
+  ScoreboardSlot *scoreboard_slot= NULL;
+  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+       it != scoreboard_vector->end(); ++it)
+  {
+    scoreboard_slot= *it;
+    if (scoreboard_slot->getSessionId() == this_session->getSessionId())
+    {
+      break;
+    }
+  }
+
+  user_commands= NULL;
+
+  if (scoreboard_slot != NULL)
+  {
+    user_commands= scoreboard_slot->getUserCommands();
+  }
+}
+
+bool SessionStatementsTool::Generator::populate()
+{
+  if (user_commands == NULL)
+  {
+    return false;
+  } 
+
+  uint32_t number_identifiers= UserCommands::getStatusVarsCount();
+
+  if (count == number_identifiers)
+  {
+    return false;
+  }
+
+  push(UserCommands::COM_STATUS_VARS[count]);
+  ostringstream oss;
+  oss << user_commands->getCount(count);
+  push(oss.str()); 
+
+  ++count;
+  return true;
+}
+
+GlobalStatementsTool::GlobalStatementsTool(LoggingStats *in_logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATEMENTS")
+{   
+  logging_stats= in_logging_stats;
+  add_field("VARIABLE_NAME");
+  add_field("VARIABLE_VALUE", 1024);
+}
+
+GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  count= 0;
+  global_stats= logging_stats->getCumulativeStats()->getGlobalStats();
+}
+
+bool GlobalStatementsTool::Generator::populate()
+{
+  uint32_t number_identifiers= UserCommands::getStatusVarsCount(); 
+  if (count == number_identifiers)
+  {
+    return false;
+  }
+
+  push(UserCommands::COM_STATUS_VARS[count]);
+  ostringstream oss;
+  oss << global_stats->getUserCommands()->getCount(count);
+  push(oss.str());
+
+  ++count;
+  return true;
+}
+
+CurrentCommandsTool::CurrentCommandsTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "CURRENT_SQL_COMMANDS")
+{
+  outer_logging_stats= logging_stats;
 
   add_field("USER");
   add_field("IP");
-  add_field("COUNT_SELECT", TableFunction::NUMBER);
-  add_field("COUNT_DELETE", TableFunction::NUMBER);
-  add_field("COUNT_UPDATE", TableFunction::NUMBER);
-  add_field("COUNT_INSERT", TableFunction::NUMBER);
-  add_field("COUNT_ROLLBACK", TableFunction::NUMBER);
-  add_field("COUNT_COMMIT", TableFunction::NUMBER);
-  add_field("COUNT_CREATE", TableFunction::NUMBER);
-  add_field("COUNT_ALTER", TableFunction::NUMBER);
-  add_field("COUNT_DROP", TableFunction::NUMBER);
-  add_field("COUNT_ADMIN", TableFunction::NUMBER);
+
+  uint32_t number_commands= UserCommands::getUserCounts();
+
+  for (uint32_t j= 0; j < number_commands; ++j)
+  {
+    add_field(UserCommands::USER_COUNTS[j], TableFunction::NUMBER);
+  } 
 }
 
 CurrentCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
-  isEnabled= logging_stats->isEnabled();
+  inner_logging_stats= logging_stats;
+
+  isEnabled= inner_logging_stats->isEnabled();
 
   if (isEnabled == false)
   {
@@ -101,16 +260,14 @@ bool CurrentCommandsTool::Generator::populate()
         UserCommands *user_commands= scoreboard_slot->getUserCommands();
         push(scoreboard_slot->getUser());
         push(scoreboard_slot->getIp());
-        push(user_commands->getSelectCount());
-        push(user_commands->getDeleteCount());
-        push(user_commands->getUpdateCount());
-        push(user_commands->getInsertCount());
-        push(user_commands->getRollbackCount());
-        push(user_commands->getCommitCount());
-        push(user_commands->getCreateCount());
-        push(user_commands->getAlterCount());
-        push(user_commands->getDropCount());
-        push(user_commands->getAdminCount());
+
+        uint32_t number_commands= UserCommands::getUserCounts(); 
+
+        for (uint32_t j= 0; j < number_commands; ++j)
+        {
+          push(user_commands->getUserCount(j));
+        }
+
         ++scoreboard_vector_it;
         return true;
       }
@@ -135,56 +292,62 @@ CumulativeCommandsTool::CumulativeCommandsTool(LoggingStats *logging_stats) :
   outer_logging_stats= logging_stats;
 
   add_field("USER");
-  add_field("COUNT_SELECT", TableFunction::NUMBER);
-  add_field("COUNT_DELETE", TableFunction::NUMBER);
-  add_field("COUNT_UPDATE", TableFunction::NUMBER);
-  add_field("COUNT_INSERT", TableFunction::NUMBER);
-  add_field("COUNT_ROLLBACK", TableFunction::NUMBER);
-  add_field("COUNT_COMMIT", TableFunction::NUMBER);
-  add_field("COUNT_CREATE", TableFunction::NUMBER);
-  add_field("COUNT_ALTER", TableFunction::NUMBER);
-  add_field("COUNT_DROP", TableFunction::NUMBER);
-  add_field("COUNT_ADMIN", TableFunction::NUMBER);
+
+  uint32_t number_commands= UserCommands::getUserCounts();
+
+  for (uint32_t j= 0; j < number_commands; ++j)
+  {
+    add_field(UserCommands::USER_COUNTS[j], TableFunction::NUMBER);
+  }
 }
 
-CumulativeCommandsTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats) :
+CumulativeCommandsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
   plugin::TableFunction::Generator(arg)
 {
-  logging_stats= in_logging_stats;
+  inner_logging_stats= logging_stats;
   record_number= 0;
 
-  if (logging_stats->isEnabled())
+  if (inner_logging_stats->isEnabled())
   {
-    total_records= logging_stats->getCumulativeStatsByUserIndex();
+    last_valid_index= inner_logging_stats->getCumulativeStats()->getCumulativeStatsLastValidIndex();
   }
   else
   {
-    total_records= 0; 
+    last_valid_index= INVALID_INDEX; 
   }
 }
 
 bool CumulativeCommandsTool::Generator::populate()
 {
-  if (record_number == total_records)
+  if ((record_number > last_valid_index) || (last_valid_index == INVALID_INDEX))
   {
     return false;
   }
 
-  ScoreboardSlot *cumulative_scoreboard_slot= 
-    logging_stats->getCumulativeStatsByUserVector()->at(record_number);
+  while (record_number <= last_valid_index)
+  {
+    ScoreboardSlot *cumulative_scoreboard_slot= 
+      inner_logging_stats->getCumulativeStats()->getCumulativeStatsByUserVector()->at(record_number);
 
-  push(cumulative_scoreboard_slot->getUser());
-  push(cumulative_scoreboard_slot->getUserCommands()->getSelectCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getDeleteCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getUpdateCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getInsertCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getRollbackCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getCommitCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getCreateCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getAlterCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getDropCount());
-  push(cumulative_scoreboard_slot->getUserCommands()->getAdminCount());
+    if (cumulative_scoreboard_slot->isInUse())
+    {
+      UserCommands *user_commands= cumulative_scoreboard_slot->getUserCommands(); 
+      push(cumulative_scoreboard_slot->getUser());
 
-  ++record_number;
-  return true;
+      uint32_t number_commands= UserCommands::getUserCounts();
+
+      for (uint32_t j= 0; j < number_commands; ++j)
+      {
+        push(user_commands->getUserCount(j));
+      }
+      ++record_number;
+      return true;
+    } 
+    else 
+    {
+      ++record_number;
+    }
+  }
+
+  return false;
 }

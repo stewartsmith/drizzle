@@ -50,7 +50,7 @@
 #include "database_xt.h"
 
 #ifdef DEBUG
-#define DEBUG_NO_ACTIVITY
+//#define DEBUG_NO_ACTIVITY
 #endif
 
 void xt_db_exit_thread(XTThreadPtr self);

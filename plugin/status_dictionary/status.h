@@ -34,18 +34,4 @@ public:
   }
 };
 
-
-class StatementsTool : public StateTool
-{
-public:
-  StatementsTool(bool global) :
-    StateTool(global ? "GLOBAL_STATEMENTS" : "SESSION_STATEMENTS", global)
-    { }
-
-  drizzled::drizzle_show_var *getVariables()
-  {
-    return drizzled::getCommandStatusVars();
-  }
-};
-
 #endif /* PLUGIN_STATUS_DICTIONARY_STATUS_H */

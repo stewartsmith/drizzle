@@ -23,6 +23,7 @@
  */
 
 #include "config.h"
+#include <cstdio>
 #include <errno.h>
 #include <float.h>
 #include "drizzled/sql_select.h"
