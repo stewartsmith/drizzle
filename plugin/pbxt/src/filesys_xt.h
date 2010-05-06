@@ -109,9 +109,9 @@ xtBool			xt_fs_rename(struct XTThread *self, char *from_path, char *to_path);
 #define FILE_MAP_LOCK_TYPE				xt_rwlock_type
 #define FILE_MAP_INIT_LOCK(s, i)		xt_init_rwlock_with_autoname(s, i)
 #define FILE_MAP_FREE_LOCK(s, i)		xt_free_rwlock(i)	
-#define FILE_MAP_READ_LOCK(i, o)		xt_slock_rwlock_ns(i)
-#define FILE_MAP_WRITE_LOCK(i, o)		xt_xlock_rwlock_ns(i)
-#define FILE_MAP_UNLOCK(i, o)			xt_unlock_rwlock_ns(i)
+#define FILE_MAP_READ_LOCK(i, o)		do { xt_slock_rwlock_ns(i); (void) (o); } while(0)
+#define FILE_MAP_WRITE_LOCK(i, o)		do { xt_xlock_rwlock_ns(i); (void) (o); } while(0)
+#define FILE_MAP_UNLOCK(i, o)			do { xt_unlock_rwlock_ns(i); (void) (o); } while(0)
 #elif defined(FILE_MAP_USE_XSMUTEX)
 #define FILE_MAP_LOCK_TYPE				XTMutexXSLockRec
 #define FILE_MAP_INIT_LOCK(s, i)		xt_xsmutex_init_with_autoname(s, i)
@@ -140,10 +140,10 @@ xtBool			xt_fs_rename(struct XTThread *self, char *from_path, char *to_path);
 #if defined(RR_FLUSH_USE_PTHREAD_RW)
 #define RR_FLUSH_LOCK_TYPE				xt_rwlock_type
 #define RR_FLUSH_INIT_LOCK(s, i)		xt_init_rwlock_with_autoname(s, i)
-#define RR_FLUSH_FREE_LOCK(s, i)		xt_free_rwlock(i)	
-#define RR_FLUSH_READ_LOCK(i, o)		xt_slock_rwlock_ns(i)
-#define RR_FLUSH_WRITE_LOCK(i, o)		xt_xlock_rwlock_ns(i)
-#define RR_FLUSH_UNLOCK(i, o)			xt_unlock_rwlock_ns(i)
+#define RR_FLUSH_FREE_LOCK(s, i)		xt_free_rwlock(i)
+#define RR_FLUSH_READ_LOCK(i, o)		do { xt_slock_rwlock_ns(i); (void) (o); } while(0)
+#define RR_FLUSH_WRITE_LOCK(i, o)		do { xt_xlock_rwlock_ns(i); (void) (o); } while(0)
+#define RR_FLUSH_UNLOCK(i, o)			do { xt_unlock_rwlock_ns(i); (void) (o); } while(0)
 #elif defined(RR_FLUSH_USE_XSMUTEX)
 #define RR_FLUSH_LOCK_TYPE				XTMutexXSLockRec
 #define RR_FLUSH_INIT_LOCK(s, i)		xt_xsmutex_init_with_autoname(s, i)
