@@ -195,7 +195,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
     if (packet_length == 0)
     {
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
@@ -472,8 +471,6 @@ mysql_execute_command(Session *session)
   {
     drizzle_reset_errors(session, 0);
   }
-
-  status_var_increment(session->status_var.com_stat[lex->sql_command]);
 
   assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 

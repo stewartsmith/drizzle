@@ -18,6 +18,7 @@
  */
 
 #include "config.h"
+#include <cstdio>
 #include "drizzled/plugin/client.h"
 
 using namespace std;

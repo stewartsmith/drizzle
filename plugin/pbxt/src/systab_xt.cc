@@ -590,15 +590,10 @@ bool XTSystemTableShare::doesSystemTableExist()
 
 void XTSystemTableShare::createSystemTables(XTThreadPtr XT_UNUSED(self), XTDatabaseHPtr XT_UNUSED(db))
 {
-#ifdef PBXT_SYS_TAB
+#ifndef DRIZZLED
 	int		i = 0;
 
 	while (xt_internal_tables[i].sts_path) {
-#ifdef DRIZZLED
-                // must ignore errors here
-                drizzled::Session *session = current_thd;
-		//session->main_da.disable_status();
-#endif
 		if (!xt_create_table_frm(pbxt_hton,
 			current_thd, "pbxt",
 			strchr(xt_internal_tables[i].sts_path, '.') + 1,
@@ -607,9 +602,6 @@ void XTSystemTableShare::createSystemTables(XTThreadPtr XT_UNUSED(self), XTDatab
 			TRUE /*do not recreate*/))
 			xt_internal_tables[i].sts_exists = TRUE;
 		i++;
-#ifdef DRIZZLED
-		session->main_da.reset_diagnostics_area();	
-#endif
 	}
 #endif
 }

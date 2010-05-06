@@ -1793,7 +1793,7 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
     if (my_hash_insert(&user_vars, (unsigned char*) entry))
     {
       assert(1);
-      free((char*) entry);
+      delete entry;
       return 0;
     }
 

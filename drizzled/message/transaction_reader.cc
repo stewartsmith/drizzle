@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <cstdio>
 #include <cerrno>
 #include <iostream>
 #include <string>
