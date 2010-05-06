@@ -2307,7 +2307,7 @@ static int innodb_file_format_name_validate(Session*, drizzle_sys_var*,
   if (err == DB_SUCCESS)
   {
     strncpy(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)]= 0;
+    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
 
     *static_cast<const char**>(save)= innodb_file_format_name_storage;
     return 0;
@@ -2330,7 +2330,7 @@ static void innodb_file_format_name_update(Session*, drizzle_sys_var*,
 
   /* Format is already set in validate */
     strncpy(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)]= 0;
+    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
 
   *static_cast<const char**>(var_ptr)= innodb_file_format_name_storage;
 }
