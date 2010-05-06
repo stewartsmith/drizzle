@@ -552,7 +552,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
       dangling arguments for engines.
     */
     packet->append(STRING_WITH_LEN(" ENGINE="));
-    packet->append(cursor->engine->getName().c_str());
+    packet->append(cursor->getEngine()->getName().c_str());
 
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
@@ -654,7 +654,6 @@ public:
 *****************************************************************************/
 
 static vector<drizzle_show_var *> all_status_vars;
-static vector<drizzle_show_var *> com_status_vars;
 static bool status_vars_inited= 0;
 static int show_var_cmp(const void *var1, const void *var2)
 {
@@ -685,11 +684,6 @@ class show_var_remove_if
 drizzle_show_var *getFrontOfStatusVars()
 {
   return all_status_vars.front();
-}
-
-drizzle_show_var *getCommandStatusVars()
-{
-  return com_status_vars.front();
 }
 
 /*
@@ -724,19 +718,6 @@ int add_status_vars(drizzle_show_var *list)
   return res;
 }
 
-int add_com_status_vars(drizzle_show_var *list)
-{
-  int res= 0;
-
-  while (list->name)
-    com_status_vars.insert(com_status_vars.begin(), list++);
-  if (status_vars_inited)
-    sort(com_status_vars.begin(), com_status_vars.end(),
-         show_var_cmp_functor());
-
-  return res;
-}
-
 /*
   Make all_status_vars[] usable for SHOW STATUS
 
@@ -750,8 +731,6 @@ void init_status_vars()
   status_vars_inited= 1;
   sort(all_status_vars.begin(), all_status_vars.end(),
        show_var_cmp_functor());
-  sort(com_status_vars.begin(), com_status_vars.end(),
-       show_var_cmp_functor());
 }
 
 void reset_status_vars()
@@ -760,15 +739,6 @@ void reset_status_vars()
 
   p= all_status_vars.begin();
   while (p != all_status_vars.end())
-  {
-    /* Note that SHOW_LONG_NOFLUSH variables are not reset */
-    if ((*p)->type == SHOW_LONG)
-      (*p)->value= 0;
-    ++p;
-  }
-
-  p= com_status_vars.begin();
-  while (p != com_status_vars.end())
   {
     /* Note that SHOW_LONG_NOFLUSH variables are not reset */
     if ((*p)->type == SHOW_LONG)
@@ -789,7 +759,6 @@ void reset_status_vars()
 void free_status_vars()
 {
   all_status_vars.clear();
-  com_status_vars.clear();
 }
 
 /*

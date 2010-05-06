@@ -1364,10 +1364,13 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
     memcpy(outparam->record[0], share->default_values, share->rec_buff_length);
     memcpy(outparam->record[1], share->default_values, share->null_bytes);
     if (records > 2)
-      memcpy(outparam->record[1], share->default_values,
-             share->rec_buff_length);
+      memcpy(outparam->record[1], share->default_values, share->rec_buff_length);
   }
 #endif
+  if (records > 1)
+  {
+    memcpy(outparam->record[1], share->default_values, share->null_bytes);
+  }
 
   if (!(field_ptr = (Field **) outparam->mem_root.alloc_root( (uint32_t) ((share->fields+1)* sizeof(Field*)))))
   {
