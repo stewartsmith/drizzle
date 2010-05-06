@@ -3,24 +3,16 @@
 use data_dictionary;
 
 show create table GLOBAL_STATUS ;
-show create table GLOBAL_STATEMENTS ;
 show create table GLOBAL_VARIABLES ;
 
-show create table SESSION_STATEMENTS;
 show create table SESSION_STATUS;
 show create table SESSION_VARIABLES;
-
---replace_column 1 #
-SELECT count(*) FROM data_dictionary.GLOBAL_STATEMENTS;
 
 --replace_column 1 #
 SELECT count(*) FROM data_dictionary.GLOBAL_STATUS;
 
 --replace_column 1 #
 SELECT count(*) FROM data_dictionary.GLOBAL_VARIABLES;
-
---replace_column 1 #
-SELECT count(*) FROM data_dictionary.SESSION_STATEMENTS;
 
 --replace_column 1 #
 SELECT count(*) FROM data_dictionary.SESSION_STATUS;

@@ -26,6 +26,7 @@
 #include "drizzled/lookup_symbol.h"
 #include "drizzled/index_hint.h"
 
+#include <cstdio>
 #include <ctype.h>
 
 using namespace std;
