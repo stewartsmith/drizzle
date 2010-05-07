@@ -2187,6 +2187,7 @@ static bool srv_file_per_table= false;
 static char*  innobase_file_format_name   = NULL;
 static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
+static unsigned long srv_max_buf_pool_modified_pct;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2262,6 +2263,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("checksums", innobase_use_checksums);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("max_dirty_pages_pct", srv_max_buf_pool_modified_pct);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2425,10 +2430,14 @@ static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, innodb_log_files_in_group,
   "Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here.",
   NULL, NULL, 2, 2, 100, 0);
 
-
 static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   "Placeholder: to be compatible with InnoDB plugin.",
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
+
+static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
+  PLUGIN_VAR_RQCMDARG,
+  "Percentage of dirty pages allowed in bufferpool.",
+  NULL, NULL, 75, 0, 99, 0);
 
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(checksums),
@@ -2445,6 +2454,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
   DRIZZLE_SYSVAR(log_files_in_group),
+  DRIZZLE_SYSVAR(max_dirty_pages_pct),
   NULL
 };
 
