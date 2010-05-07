@@ -67,7 +67,8 @@ extern bool volatile shutdown_in_progress;
 */
 Table *unused_tables;				/* Used by mysql_test */
 HASH open_cache;				/* Used by mysql_test */
-static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
+static int open_unireg_entry(Session *session,
+                             Table *entry,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length);
 void free_cache_entry(void *entry);
@@ -926,7 +927,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
 
   orig_table= *table;
 
-  if (open_unireg_entry(this, table, table_list, table_name,
+  if (open_unireg_entry(this, table, table_name,
                         const_cast<char *>(table->s->getCacheKey()),
                         table->s->getCacheKeySize()))
   {
@@ -1375,7 +1376,7 @@ c2: open t1; -- blocks
       return NULL;
     }
 
-    error= open_unireg_entry(this, table, table_list, alias, key, key_length);
+    error= open_unireg_entry(this, table, alias, key, key_length);
     if (error != 0)
     {
       free(table);
@@ -1941,7 +1942,8 @@ void abort_locked_tables(Session *session,const char *db, const char *table_name
 #	Error
 */
 
-static int open_unireg_entry(Session *session, Table *entry, TableList *table_list,
+static int open_unireg_entry(Session *session,
+                             Table *entry,
                              const char *alias,
                              char *cache_key, uint32_t cache_key_length)
 {
@@ -1951,9 +1953,8 @@ static int open_unireg_entry(Session *session, Table *entry, TableList *table_li
 
   safe_mutex_assert_owner(&LOCK_open);
 retry:
-  if (not (share= TableShare::getShare(session, table_list, cache_key,
+  if (not (share= TableShare::getShare(session, cache_key,
                                        cache_key_length,
-                                       table_list->i_s_requested_object,
                                        &error)))
     return 1;
 

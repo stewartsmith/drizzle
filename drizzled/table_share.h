@@ -672,8 +672,7 @@ public:
   static TableDefinitionCache &getCache();
   static TableShare *getShare(TableIdentifier &identifier);
   static TableShare *getShare(Session *session, 
-                              TableList *table_list, char *key,
-                              uint32_t key_length, uint32_t, int *error);
+                              char *key, uint32_t key_length, int *error);
 
   friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
   {

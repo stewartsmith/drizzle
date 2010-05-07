@@ -190,13 +190,11 @@ static TableShare *foundTableShare(TableShare *share)
 */
 
 TableShare *TableShare::getShare(Session *session, 
-                                 TableList *table_list, char *key,
-                                 uint32_t key_length, uint32_t, int *error)
+                                 char *key,
+                                 uint32_t key_length, int *error)
 {
   const string key_string(key, key_length);
   TableShare *share= NULL;
-
-  (void)table_list;
 
   *error= 0;
 
