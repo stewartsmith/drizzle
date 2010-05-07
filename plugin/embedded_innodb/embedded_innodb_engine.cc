@@ -2188,6 +2188,7 @@ static char*  innobase_file_format_name   = NULL;
 static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
 static unsigned long srv_max_buf_pool_modified_pct;
+static unsigned long srv_max_purge_lag;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2267,6 +2268,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("max_dirty_pages_pct", srv_max_buf_pool_modified_pct);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("max_purge_lag", srv_max_purge_lag);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2439,6 +2444,11 @@ static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
   "Percentage of dirty pages allowed in bufferpool.",
   NULL, NULL, 75, 0, 99, 0);
 
+static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
+  PLUGIN_VAR_RQCMDARG,
+  "Desired maximum length of the purge queue (0 = no limit)",
+  NULL, NULL, 0, 0, ~0L, 0);
+
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_home_dir),
@@ -2455,6 +2465,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(log_file_size),
   DRIZZLE_SYSVAR(log_files_in_group),
   DRIZZLE_SYSVAR(max_dirty_pages_pct),
+  DRIZZLE_SYSVAR(max_purge_lag),
   NULL
 };
 
