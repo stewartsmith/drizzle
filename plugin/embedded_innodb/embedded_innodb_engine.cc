@@ -2179,6 +2179,7 @@ free_err:
 
 static bool  innobase_use_checksums= true;
 static char*  innobase_data_home_dir      = NULL;
+static char*  innobase_log_group_home_dir   = NULL;
 static bool innobase_use_doublewrite= true;
 static unsigned long srv_io_capacity= 200;
 static unsigned long innobase_fast_shutdown= 1;
@@ -2203,6 +2204,13 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
   if (innobase_data_home_dir)
   {
     err= ib_cfg_set_text("data_home_dir", innobase_data_home_dir);
+    if (err != DB_SUCCESS)
+      goto innodb_error;
+  }
+
+  if (innobase_log_group_home_dir)
+  {
+    err= ib_cfg_set_text("log_group_home_dir", innobase_log_group_home_dir);
     if (err != DB_SUCCESS)
       goto innodb_error;
   }
@@ -2403,6 +2411,10 @@ static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   "Path to individual files and their sizes.",
   NULL, NULL, NULL);
 
+static DRIZZLE_SYSVAR_STR(log_group_home_dir, innobase_log_group_home_dir,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Path to InnoDB log files.", NULL, NULL, NULL);
+
 static DRIZZLE_SYSVAR_LONGLONG(log_file_size, innodb_log_file_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Size of each log file in a log group.",
@@ -2428,6 +2440,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(file_format),
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(flush_method),
+  DRIZZLE_SYSVAR(log_group_home_dir),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
