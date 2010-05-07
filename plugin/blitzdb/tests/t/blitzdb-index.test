@@ -36,7 +36,7 @@ select * from t1 where id = 6;
 # update value by key
 update t1 set a = 70 where id = 7;
 update t1 set a = 80 where id = 8;
-select * from t1;
+select * from t1 order by id;
 
 # update the key
 --error 1062
@@ -176,7 +176,7 @@ update t1 set id = 2.2 where id = 3.3;
 
 delete from t1 where id = 3.3;
 delete from t1 where id = 3.33;
-select * from t1;
+select * from t1 order by id;
 drop table t1;
 
 # +----------------------+
@@ -268,7 +268,7 @@ update t1 set a = '19840922' where a = '1984-09-25';
 
 update t1 set a = '2010-03-10' where a = '1984-09-22';
 update t1 set a = '2010-03-11', b = 777, c = 'triple seven' where a = '1984-09-23';
-select * from t1;
+select * from t1 order by a;
 drop table t1;
 
 # Test basic index scan on INT primary keys.

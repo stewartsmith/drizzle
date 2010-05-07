@@ -34,6 +34,7 @@
 #include <tcbdb.h>
 
 #include <string>
+#include <sys/stat.h>
 
 #define BLITZ_DATA_EXT         ".bzd"
 #define BLITZ_INDEX_EXT        ".bzx"

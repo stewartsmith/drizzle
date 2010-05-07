@@ -27,7 +27,7 @@ id	a	b
 6	6	6
 update t1 set a = 70 where id = 7;
 update t1 set a = 80 where id = 8;
-select * from t1;
+select * from t1 order by id;
 id	a	b
 1	1	1
 2	2	2
@@ -257,14 +257,14 @@ update t1 set id = 2.2 where id = 3.3;
 ERROR 23000: Duplicate entry '2.2' for key 'PRIMARY'
 delete from t1 where id = 3.3;
 delete from t1 where id = 3.33;
-select * from t1;
+select * from t1 order by id;
 id	a
-3.333	3
-3.3333	4
 2.2	5
 2.22	6
 2.222	7
 2.2222	8
+3.333	3
+3.3333	4
 drop table t1;
 create table t1 (id varchar(64) primary key, country varchar(64)) engine = blitzdb;
 insert into t1 values ('amsterdam', 'netherlands');
@@ -429,12 +429,12 @@ update t1 set a = '19840922' where a = '1984-09-25';
 ERROR 23000: Duplicate entry '1984-09-22' for key 'PRIMARY'
 update t1 set a = '2010-03-10' where a = '1984-09-22';
 update t1 set a = '2010-03-11', b = 777, c = 'triple seven' where a = '1984-09-23';
-select * from t1;
+select * from t1 order by a;
 a	b	c
-2010-03-10	22	twenty two
-2010-03-11	777	triple seven
 1984-09-24	24	twenty four
 1984-09-25	23	twenty five
+2010-03-10	22	twenty two
+2010-03-11	777	triple seven
 drop table t1;
 create table t1 (a int primary key) engine = blitzdb;
 insert into t1 values (1), (2), (3), (4), (5), (6);
