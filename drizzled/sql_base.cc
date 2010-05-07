@@ -139,7 +139,6 @@ uint32_t cached_open_tables(void)
 
 void close_handle_and_leave_table_as_lock(Table *table)
 {
-  TableList ls;
   TableShare *share, *old_share= table->s;
 
   assert(table->db_stat);
@@ -149,9 +148,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     This has to be done to ensure that the table share is removed from
     the table defintion cache as soon as the last instance is removed
   */
-  ls.db= const_cast<char *>(table->getShare()->getTableName());
-  ls.table_name= const_cast<char *>(table->getShare()->getSchemaName());
-  share= new TableShare(&ls, const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
+  share= new TableShare(const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
   share->tmp_table= message::Table::INTERNAL;       // for intern_close_table()
 
   table->cursor->close();
@@ -2294,15 +2291,12 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   TableShare *share;
   char cache_key[MAX_DBKEY_LENGTH];
   uint32_t key_length;
-  TableList table_list;
 
-  table_list.db=         const_cast<char*>(identifier.getSchemaName().c_str());
-  table_list.table_name= const_cast<char*>(identifier.getTableName().c_str());
   /* Create the cache_key for temporary tables */
-  key_length= table_list.create_table_def_key(cache_key);
+  key_length= TableShare::createKey(cache_key, const_cast<char*>(identifier.getSchemaName().c_str()),
+                                    const_cast<char*>(identifier.getTableName().c_str()));
 
-  share= new TableShare(&table_list, 
-                        cache_key, key_length,
+  share= new TableShare(cache_key, key_length,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table))))

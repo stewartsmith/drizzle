@@ -196,6 +196,8 @@ TableShare *TableShare::getShare(Session *session,
   const string key_string(key, key_length);
   TableShare *share= NULL;
 
+  (void)table_list;
+
   *error= 0;
 
   /* Read table definition from cache */
@@ -206,7 +208,7 @@ TableShare *TableShare::getShare(Session *session,
     return foundTableShare(share);
   }
 
-  if (not (share= new TableShare(table_list, key, key_length)))
+  if (not (share= new TableShare(key, key_length)))
   {
     return NULL;
   }
@@ -312,7 +314,7 @@ TableDefinitionCache &TableShare::getCache()
   return table_def_cache;
 }
 
-TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg)
+TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg)
 {
   memset(this, 0, sizeof(TableShare)); // @todo remove need for
 
@@ -320,13 +322,18 @@ TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length, ch
   char *key_buff, *path_buff;
   std::string _path;
 
+  db.str= key;
+  db.length= strlen(db.str);
+  table_name.str= db.str + db.length + 1;
+  table_name.length= strlen(table_name.str);
+
   if (path_arg)
   {
     _path.append(path_arg, path_length_arg);
   }
   else
   {
-    build_table_filename(_path, table_list->db, table_list->table_name, false);
+    build_table_filename(_path, db.str, table_name.str, false);
   }
 
   if (multi_alloc_root(&mem_root,
@@ -334,7 +341,7 @@ TableShare::TableShare(TableList *table_list, char *key, uint32_t key_length, ch
                        &path_buff, _path.length() + 1,
                        NULL))
   {
-    set_table_cache_key(key_buff, key, key_length);
+    set_table_cache_key(key_buff, key, key_length, db.length, table_name.length);
 
     setPath(path_buff, _path.length());
     strcpy(path_buff, _path.c_str());

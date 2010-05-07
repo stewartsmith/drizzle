@@ -169,7 +169,7 @@ public:
     init(key, key_length, new_table_name, new_path);
   }
 
-  TableShare(TableList *table_list, char *key, uint32_t key_length, char *path_arg= NULL, uint32_t path_length_arg= 0);
+  TableShare(char *key, uint32_t key_length, char *path_arg= NULL, uint32_t path_length_arg= 0);
 
   ~TableShare() { };
 
@@ -473,7 +473,7 @@ public:
     appropriate values by using table cache key as their source.
   */
 
-  void set_table_cache_key(char *key_buff, uint32_t key_length)
+  void set_table_cache_key(char *key_buff, uint32_t key_length, uint32_t db_length= 0, uint32_t table_name_length= 0)
   {
     table_cache_key.str= key_buff;
     table_cache_key.length= key_length;
@@ -482,9 +482,9 @@ public:
       part for temporary tables.
     */
     db.str=            table_cache_key.str;
-    db.length=         strlen(db.str);
+    db.length=         db_length ? db_length : strlen(db.str);
     table_name.str=    db.str + db.length + 1;
-    table_name.length= strlen(table_name.str);
+    table_name.length= table_name_length ? table_name_length :strlen(table_name.str);
   }
 
 
@@ -503,10 +503,10 @@ public:
     it should has same life-time as share itself.
   */
 
-  void set_table_cache_key(char *key_buff, const char *key, uint32_t key_length)
+  void set_table_cache_key(char *key_buff, const char *key, uint32_t key_length, uint32_t db_length= 0, uint32_t table_name_length= 0)
   {
     memcpy(key_buff, key, key_length);
-    set_table_cache_key(key_buff, key_length);
+    set_table_cache_key(key_buff, key_length, db_length, table_name_length);
   }
 
   inline bool honor_global_locks()
