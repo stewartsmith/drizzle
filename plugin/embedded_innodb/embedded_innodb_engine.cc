@@ -2189,6 +2189,8 @@ static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
 static unsigned long srv_max_buf_pool_modified_pct;
 static unsigned long srv_max_purge_lag;
+static unsigned long innobase_lru_old_blocks_pct;
+static unsigned long innobase_lru_block_access_recency;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2364,6 +2366,36 @@ static void innodb_file_format_name_update(Session*, drizzle_sys_var*,
   *static_cast<const char**>(var_ptr)= innodb_file_format_name_storage;
 }
 
+static void innodb_lru_old_blocks_pct_update(Session*, drizzle_sys_var*,
+                                             void *,
+                                             const void *save)
+
+{
+  unsigned long pct;
+
+  pct= *static_cast<const unsigned long*>(save);
+
+  ib_err_t err= ib_cfg_set_int("lru_old_blocks_pct", pct);
+  if (err == DB_SUCCESS)
+    innobase_lru_old_blocks_pct= pct;
+}
+
+static void innodb_lru_block_access_recency_update(Session*, drizzle_sys_var*,
+                                                   void *,
+                                                   const void *save)
+
+{
+  unsigned long ms;
+
+  ms= *static_cast<const unsigned long*>(save);
+
+  ib_err_t err= ib_cfg_set_int("lru_block_access_recency", ms);
+
+  if (err == DB_SUCCESS)
+    innobase_lru_block_access_recency= ms;
+}
+
+
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
   "Enable InnoDB checksums validation (enabled by default). "
@@ -2439,6 +2471,21 @@ static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
   "Placeholder: to be compatible with InnoDB plugin.",
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
+static DRIZZLE_SYSVAR_ULONG(lru_old_blocks_pct, innobase_lru_old_blocks_pct,
+  PLUGIN_VAR_RQCMDARG,
+  "Sets the point in the LRU list from where all pages are classified as "
+  "old (Advanced users)",
+  NULL,
+  innodb_lru_old_blocks_pct_update, 37, 5, 95, 0);
+
+static DRIZZLE_SYSVAR_ULONG(lru_block_access_recency, innobase_lru_block_access_recency,
+  PLUGIN_VAR_RQCMDARG,
+  "Milliseconds between accesses to a block at which it is made young. "
+  "0=disabled (Advanced users)",
+  NULL,
+  innodb_lru_block_access_recency_update, 0, 0, ULONG_MAX, 0);
+
+
 static DRIZZLE_SYSVAR_ULONG(max_dirty_pages_pct, srv_max_buf_pool_modified_pct,
   PLUGIN_VAR_RQCMDARG,
   "Percentage of dirty pages allowed in bufferpool.",
@@ -2464,6 +2511,8 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
   DRIZZLE_SYSVAR(log_files_in_group),
+  DRIZZLE_SYSVAR(lru_old_blocks_pct),
+  DRIZZLE_SYSVAR(lru_block_access_recency),
   DRIZZLE_SYSVAR(max_dirty_pages_pct),
   DRIZZLE_SYSVAR(max_purge_lag),
   NULL
