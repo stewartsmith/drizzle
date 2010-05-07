@@ -102,13 +102,8 @@ count (a)
 select count (b) from t1;
 count (b)
 12
-select * from t1;
+select * from t1 order by id;
 id	a	b
-17	1	1
-20	4	4
-21	5	5
-22	6	6
-23	70	7
 10	10	10
 11	11	11
 12	12	12
@@ -116,6 +111,11 @@ id	a	b
 14	14	14
 15	15	15
 16	16	16
+17	1	1
+20	4	4
+21	5	5
+22	6	6
+23	70	7
 delete from t1;
 select count (*) from t1;
 count (*)
@@ -274,7 +274,7 @@ insert into t1 values ('dublin', 'ireland');
 insert into t1 values ('edinburgh', 'scotland');
 insert into t1 values ('fukuoka', 'japan');
 insert into t1 values ('geneva', 'switzerland');
-select * from t1;
+select * from t1 order by id;
 id	country
 amsterdam	netherlands
 budapest	hungary
