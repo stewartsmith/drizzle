@@ -918,20 +918,20 @@ uint32_t pack_length_to_packflag(uint32_t type)
   return 0;					// This shouldn't happen
 }
 
-Field *make_field(TableShare *share,
-                  memory::Root *root,
-                  unsigned char *ptr,
-                  uint32_t field_length,
-                  bool is_nullable,
-                  unsigned char *null_pos,
-                  unsigned char null_bit,
-                  uint8_t decimals,
-                  enum_field_types field_type,
-                  const CHARSET_INFO * field_charset,
-                  Field::utype unireg_check,
-                  TYPELIB *interval,
-                  const char *field_name)
+Field *TableShare::make_field(memory::Root *root,
+                              unsigned char *ptr,
+                              uint32_t field_length,
+                              bool is_nullable,
+                              unsigned char *null_pos,
+                              unsigned char null_bit,
+                              uint8_t decimals,
+                              enum_field_types field_type,
+                              const CHARSET_INFO * field_charset,
+                              Field::utype unireg_check,
+                              TYPELIB *interval,
+                              const char *field_name)
 {
+  TableShare *share= this;
   assert(root);
 
   if (! is_nullable)

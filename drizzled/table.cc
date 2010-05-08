@@ -264,7 +264,7 @@ static int inner_parse_table_proto(Session& session,
   for (int indx= 0; indx < table.indexes_size(); indx++)
     share->key_parts+= table.indexes(indx).index_part_size();
 
-  share->key_info= (KEY*) share->mem_root.alloc_root( table.indexes_size() * sizeof(KEY) +share->key_parts*sizeof(KEY_PART_INFO));
+  share->key_info= (KEY*) share->alloc_root( table.indexes_size() * sizeof(KEY) +share->key_parts*sizeof(KEY_PART_INFO));
 
   KEY_PART_INFO *key_part;
 
@@ -272,15 +272,15 @@ static int inner_parse_table_proto(Session& session,
     (share->key_info+table.indexes_size());
 
 
-  ulong *rec_per_key= (ulong*) share->mem_root.alloc_root(sizeof(ulong*)*share->key_parts);
+  ulong *rec_per_key= (ulong*) share->alloc_root(sizeof(ulong*)*share->key_parts);
 
   share->keynames.count= table.indexes_size();
   share->keynames.name= NULL;
   share->keynames.type_names= (const char**)
-    share->mem_root.alloc_root(sizeof(char*) * (table.indexes_size()+1));
+    share->alloc_root(sizeof(char*) * (table.indexes_size()+1));
 
   share->keynames.type_lengths= (unsigned int*)
-    share->mem_root.alloc_root(sizeof(unsigned int) * (table.indexes_size()+1));
+    share->alloc_root(sizeof(unsigned int) * (table.indexes_size()+1));
 
   share->keynames.type_names[share->keynames.count]= NULL;
   share->keynames.type_lengths[share->keynames.count]= 0;
@@ -389,10 +389,10 @@ static int inner_parse_table_proto(Session& session,
     {
       keyinfo->flags|= HA_USES_COMMENT;
       keyinfo->comment.length= indx.comment().length();
-      keyinfo->comment.str= share->mem_root.strmake_root(indx.comment().c_str(), keyinfo->comment.length);
+      keyinfo->comment.str= share->strmake_root(indx.comment().c_str(), keyinfo->comment.length);
     }
 
-    keyinfo->name= share->mem_root.strmake_root(indx.name().c_str(), indx.name().length());
+    keyinfo->name= share->strmake_root(indx.name().c_str(), indx.name().length());
 
     share->keynames.type_names[keynr]= keyinfo->name;
     share->keynames.type_lengths[keynr]= indx.name().length();
@@ -403,7 +403,7 @@ static int inner_parse_table_proto(Session& session,
 
   share->fields= table.field_size();
 
-  share->field= (Field**) share->mem_root.alloc_root(((share->fields+1) * sizeof(Field*)));
+  share->field= (Field**) share->alloc_root(((share->fields+1) * sizeof(Field*)));
   share->field[share->fields]= NULL;
 
   uint32_t null_fields= 0;
@@ -500,7 +500,7 @@ static int inner_parse_table_proto(Session& session,
 
   unsigned char* record= NULL;
 
-  if (! (record= (unsigned char *) share->mem_root.alloc_root(rec_buff_length)))
+  if (! (record= (unsigned char *) share->alloc_root(rec_buff_length)))
     abort();
 
   memset(record, 0, rec_buff_length);
@@ -517,16 +517,16 @@ static int inner_parse_table_proto(Session& session,
 
   if (interval_count)
   {
-    share->intervals= (TYPELIB *) share->mem_root.alloc_root(interval_count*sizeof(TYPELIB));
+    share->intervals= (TYPELIB *) share->alloc_root(interval_count*sizeof(TYPELIB));
   }
   else
   {
     share->intervals= NULL;
   }
 
-  share->fieldnames.type_names= (const char **) share->mem_root.alloc_root((share->fields + 1) * sizeof(char*));
+  share->fieldnames.type_names= (const char **) share->alloc_root((share->fields + 1) * sizeof(char*));
 
-  share->fieldnames.type_lengths= (unsigned int *) share->mem_root.alloc_root((share->fields + 1) * sizeof(unsigned int));
+  share->fieldnames.type_lengths= (unsigned int *) share->alloc_root((share->fields + 1) * sizeof(unsigned int));
 
   share->fieldnames.type_names[share->fields]= NULL;
   share->fieldnames.type_lengths[share->fields]= 0;
@@ -544,7 +544,7 @@ static int inner_parse_table_proto(Session& session,
     message::Table::Field pfield= table.field(fieldnr);
 
     /* field names */
-    share->fieldnames.type_names[fieldnr]= share->mem_root.strmake_root(pfield.name().c_str(), pfield.name().length());
+    share->fieldnames.type_names[fieldnr]= share->strmake_root(pfield.name().c_str(), pfield.name().length());
 
     share->fieldnames.type_lengths[fieldnr]= pfield.name().length();
 
@@ -562,9 +562,9 @@ static int inner_parse_table_proto(Session& session,
 
     TYPELIB *t= &(share->intervals[interval_nr]);
 
-    t->type_names= (const char**)share->mem_root.alloc_root((field_options.field_value_size() + 1) * sizeof(char*));
+    t->type_names= (const char**)share->alloc_root((field_options.field_value_size() + 1) * sizeof(char*));
 
-    t->type_lengths= (unsigned int*) share->mem_root.alloc_root((field_options.field_value_size() + 1) * sizeof(unsigned int));
+    t->type_lengths= (unsigned int*) share->alloc_root((field_options.field_value_size() + 1) * sizeof(unsigned int));
 
     t->type_names[field_options.field_value_size()]= NULL;
     t->type_lengths[field_options.field_value_size()]= 0;
@@ -574,7 +574,7 @@ static int inner_parse_table_proto(Session& session,
 
     for (int n= 0; n < field_options.field_value_size(); n++)
     {
-      t->type_names[n]= share->mem_root.strmake_root(field_options.field_value(n).c_str(), field_options.field_value(n).length());
+      t->type_names[n]= share->strmake_root(field_options.field_value(n).c_str(), field_options.field_value(n).length());
 
       /* 
        * Go ask the charset what the length is as for "" length=1
@@ -671,7 +671,7 @@ static int inner_parse_table_proto(Session& session,
       size_t len= pfield.comment().length();
       const char* str= pfield.comment().c_str();
 
-      comment.str= share->mem_root.strmake_root(str, len);
+      comment.str= share->strmake_root(str, len);
       comment.length= len;
     }
 
@@ -837,21 +837,19 @@ static int inner_parse_table_proto(Session& session,
       abort(); // Programming error
     }
 
-    Field* f= make_field(share,
-                         &share->mem_root,
-                         record + field_offsets[fieldnr] + data_offset,
-                         field_length,
-                         pfield.constraints().is_nullable(),
-                         null_pos,
-                         null_bit_pos,
-                         decimals,
-                         field_type,
-                         charset,
-                         (Field::utype) MTYP_TYPENR(unireg_type),
-                         ((field_type == DRIZZLE_TYPE_ENUM) ?
-                          share->intervals + (interval_nr++)
-                          : (TYPELIB*) 0),
-                         share->fieldnames.type_names[fieldnr]);
+    Field* f= share->make_field(record + field_offsets[fieldnr] + data_offset,
+                                field_length,
+                                pfield.constraints().is_nullable(),
+                                null_pos,
+                                null_bit_pos,
+                                decimals,
+                                field_type,
+                                charset,
+                                (Field::utype) MTYP_TYPENR(unireg_type),
+                                ((field_type == DRIZZLE_TYPE_ENUM) ?
+                                 share->intervals + (interval_nr++)
+                                 : (TYPELIB*) 0),
+                                share->fieldnames.type_names[fieldnr]);
 
     share->field[fieldnr]= f;
 
@@ -1117,7 +1115,7 @@ static int inner_parse_table_proto(Session& session,
 
     /* Store offsets to blob fields to find them fast */
     if (!(share->blob_field= save=
-	  (uint*) share->mem_root.alloc_root((uint32_t) (share->blob_fields* sizeof(uint32_t)))))
+	  (uint*) share->alloc_root((uint32_t) (share->blob_fields* sizeof(uint32_t)))))
     {
       return error;
     }
@@ -1133,7 +1131,7 @@ static int inner_parse_table_proto(Session& session,
 
   my_bitmap_map *bitmaps;
 
-  if (!(bitmaps= (my_bitmap_map*) share->mem_root.alloc_root(share->column_bitmap_size)))
+  if (!(bitmaps= (my_bitmap_map*) share->alloc_root(share->column_bitmap_size)))
   { }
   else
   {
@@ -2997,19 +2995,18 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
-    *field= make_field(share,
-                       session->mem_root,
-                       0,
-                       cdef->length,
-                       (cdef->flags & NOT_NULL_FLAG) ? false : true,
-                       (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
-                       (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
-                       cdef->decimals,
-                       cdef->sql_type,
-                       cdef->charset,
-                       cdef->unireg_check,
-                       cdef->interval,
-                       cdef->field_name);
+    *field= share->make_field(session->mem_root,
+                              NULL,
+                              cdef->length,
+                              (cdef->flags & NOT_NULL_FLAG) ? false : true,
+                              (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
+                              (cdef->flags & NOT_NULL_FLAG) ? 0 : 1,
+                              cdef->decimals,
+                              cdef->sql_type,
+                              cdef->charset,
+                              cdef->unireg_check,
+                              cdef->interval,
+                              cdef->field_name);
     if (!*field)
       goto error;
     (*field)->init(table);
@@ -3512,7 +3509,7 @@ bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
   uint32_t key_length;
   TableShare *share= s;
 
-  if (not (key=(char*) share->mem_root.alloc_root(MAX_DBKEY_LENGTH)))
+  if (not (key=(char*) share->alloc_root(MAX_DBKEY_LENGTH)))
     return true;
 
   key_length= TableShare::createKey(key, identifier);

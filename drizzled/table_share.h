@@ -187,7 +187,19 @@ public:
 
   /* hash of field names (contains pointers to elements of field array) */
   HASH	name_hash;			/* hash of field names */
+private:
   memory::Root mem_root;
+public:
+  void *alloc_root(size_t arg)
+  {
+    return mem_root.alloc_root(arg);
+  }
+
+  char *strmake_root(const char *str_arg, size_t len_arg)
+  {
+    return mem_root.strmake_root(str_arg, len_arg);
+  }
+
   TYPELIB keynames;			/* Pointers to keynames */
   TYPELIB fieldnames;			/* Pointer to fieldnames */
   TYPELIB *intervals;			/* pointer to interval info */
@@ -688,6 +700,34 @@ public:
   }
 
   bool newed;
+
+  Field *make_field(unsigned char *ptr,
+                    uint32_t field_length,
+                    bool is_nullable,
+                    unsigned char *null_pos,
+                    unsigned char null_bit,
+                    uint8_t decimals,
+                    enum_field_types field_type,
+                    const CHARSET_INFO * field_charset,
+                    Field::utype unireg_check,
+                    TYPELIB *interval,
+                    const char *field_name)
+  {
+    return make_field(&mem_root, ptr, field_length, is_nullable, null_pos, null_bit, decimals, field_type, field_charset, unireg_check, interval, field_name);
+  }
+
+  Field *make_field(memory::Root *root,
+                    unsigned char *ptr,
+                    uint32_t field_length,
+                    bool is_nullable,
+                    unsigned char *null_pos,
+                    unsigned char null_bit,
+                    uint8_t decimals,
+                    enum_field_types field_type,
+                    const CHARSET_INFO * field_charset,
+                    Field::utype unireg_check,
+                    TYPELIB *interval,
+                    const char *field_name);
 };
 
 } /* namespace drizzled */
