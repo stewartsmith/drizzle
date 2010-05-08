@@ -240,6 +240,7 @@ public:
   filesort_info_st sort;
 
   Table();
+  virtual ~Table() { };
 
   int report_error(int error);
   /**
@@ -506,6 +507,10 @@ public:
     return output;  // for multiple << operators.
   }
 
+  virtual bool ownsShare()
+  {
+    return false;
+  }
 };
 
 /**

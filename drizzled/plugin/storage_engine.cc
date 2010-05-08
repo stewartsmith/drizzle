@@ -527,6 +527,7 @@ int StorageEngine::createTable(Session &session,
   }
 
   share.free_table_share();
+
   return(error != 0);
 }
 

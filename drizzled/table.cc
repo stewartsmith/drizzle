@@ -54,6 +54,8 @@
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
 
+#include <drizzled/table_instance.h>
+
 #include "drizzled/table_proto.h"
 
 using namespace std;
@@ -2298,7 +2300,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 const char *table_alias)
 {
   memory::Root *mem_root_save, own_root(TABLE_ALLOC_BLOCK_SIZE);
-  Table *table;
+  TableInstance *table;
   TableShare *share;
   uint	i,field_count,null_count,null_pack_length;
   uint32_t  copy_func_count= param->func_count;
@@ -2367,7 +2369,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   if (!multi_alloc_root(&own_root,
                         &table, sizeof(*table),
-                        &share, sizeof(*share),
                         &reg_field, sizeof(Field*) * (field_count+1),
                         &default_field, sizeof(Field*) * (field_count),
                         &blob_field, sizeof(uint32_t)*(field_count+1),
@@ -2400,6 +2401,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   memset(reg_field, 0, sizeof(Field*)*(field_count+1));
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
+
+  share=  &table->_table_share;
 
   table->mem_root= own_root;
   mem_root_save= session->mem_root;
@@ -2970,12 +2973,11 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   uint32_t null_pack_length;              /* NULL representation array length */
   uint32_t *blob_field;
   unsigned char *bitmaps;
-  Table *table;
+  TableInstance *table;
   TableShare *share;
 
   if (!multi_alloc_root(session->mem_root,
                         &table, sizeof(*table),
-                        &share, sizeof(*share),
                         &field, (field_count + 1) * sizeof(Field*),
                         &blob_field, (field_count+1) *sizeof(uint32_t),
                         &bitmaps, bitmap_buffer_size(field_count)*2,
@@ -2983,7 +2985,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
     return NULL;
 
   memset(table, 0, sizeof(*table));
-  memset(share, 0, sizeof(*share));
+  share= &table->_table_share;
   table->field= field;
   table->s= share;
   share->blob_field= blob_field;

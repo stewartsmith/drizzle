@@ -2315,9 +2315,9 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                             *new_tmp_table))
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
-    share->free_table_share();
-    free(share);
+    delete share;
     free((char*) new_tmp_table);
+
     return 0;
   }
 
