@@ -113,7 +113,6 @@ void TableShare::release(TableShare *share)
     TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
     if (iter != table_def_cache.end())
     {
-      (*iter).second->free_table_share();
       table_def_cache.erase(iter);
       delete share;
     }
@@ -134,7 +133,6 @@ void TableShare::release(const char *key, uint32_t key_length)
     if (share->ref_count == 0)
     {
       pthread_mutex_lock(&share->mutex);
-      share->free_table_share();
       table_def_cache.erase(key_string);
       delete share;
     }
@@ -224,7 +222,6 @@ TableShare *TableShare::getShare(Session *session,
     table_def_cache.insert(make_pair(key_string, share));
   if (ret.second == false)
   {
-    share->free_table_share();
     delete share;
 
     return NULL;
@@ -235,7 +232,6 @@ TableShare *TableShare::getShare(Session *session,
   {
     *error= share->error;
     table_def_cache.erase(key_string);
-    share->free_table_share();
     delete share;
 
     return NULL;

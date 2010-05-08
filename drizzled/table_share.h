@@ -171,7 +171,37 @@ public:
 
   TableShare(char *key, uint32_t key_length, char *path_arg= NULL, uint32_t path_length_arg= 0);
 
-  ~TableShare() { };
+  ~TableShare() 
+  {
+    assert(ref_count == 0);
+
+    /*
+      If someone is waiting for this to be deleted, inform it about this.
+      Don't do a delete until we know that no one is refering to this anymore.
+    */
+    if (tmp_table == message::Table::STANDARD)
+    {
+      /* share->mutex is locked in release_table_share() */
+      while (waiting_on_cond)
+      {
+        pthread_cond_broadcast(&cond);
+        pthread_cond_wait(&cond, &mutex);
+      }
+      /* No thread refers to this anymore */
+      pthread_mutex_unlock(&mutex);
+      pthread_mutex_destroy(&mutex);
+      pthread_cond_destroy(&cond);
+    }
+    hash_free(&name_hash);
+
+    storage_engine= NULL;
+
+    delete table_proto;
+    table_proto= NULL;
+
+    /* We must copy mem_root from share because share is allocated through it */
+    mem_root.free_root(MYF(0));                 // Free's share
+  };
 
   /** Category of this table. */
   enum_table_category table_category;
@@ -581,52 +611,7 @@ public:
     return;
   }
 
-  /*
-    Free table share and memory used by it
-
-    SYNOPSIS
-    free_table_share()
-    share		Table share
-
-    NOTES
-    share->mutex must be locked when we come here if it's not a temp table
-  */
-
-  void free_table_share()
-  {
-    assert(ref_count == 0);
-
-    /*
-      If someone is waiting for this to be deleted, inform it about this.
-      Don't do a delete until we know that no one is refering to this anymore.
-    */
-    if (tmp_table == message::Table::STANDARD)
-    {
-      /* share->mutex is locked in release_table_share() */
-      while (waiting_on_cond)
-      {
-        pthread_cond_broadcast(&cond);
-        pthread_cond_wait(&cond, &mutex);
-      }
-      /* No thread refers to this anymore */
-      pthread_mutex_unlock(&mutex);
-      pthread_mutex_destroy(&mutex);
-      pthread_cond_destroy(&cond);
-    }
-    hash_free(&name_hash);
-
-    storage_engine= NULL;
-
-    delete table_proto;
-    table_proto= NULL;
-
-    /* We must copy mem_root from share because share is allocated through it */
-    mem_root.free_root(MYF(0));                 // Free's share
-  }
-
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
-
-
 
   /*
     Create a table cache key

@@ -1508,11 +1508,8 @@ int Table::delete_table(bool free_share)
     }
     else
     {
-      s->free_table_share();
-      if (s->newed)
-      {
-        delete s;
-      }
+      assert(s->newed);
+      delete s;
     }
 
     s= NULL;

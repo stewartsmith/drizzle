@@ -1992,10 +1992,12 @@ xtPublic void myxt_print_key(XTIndexPtr ind, xtWord1 *key_value)
 static void my_close_table(TABLE *table)
 {
 #ifdef DRIZZLED
+#if 0 // Removed by Brian
 	TABLE_SHARE	*share;
 
 	share = (TABLE_SHARE *) ((char *) table + sizeof(TABLE));
 	share->free_table_share();
+#endif
 #else
 	delete_table(table, true);  // TODO: Q, why did Stewart remove this?
 #endif
