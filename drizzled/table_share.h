@@ -104,6 +104,23 @@ public:
     keys_for_keyread(0),
     newed(true)
   {
+    memset(&name_hash, 0, sizeof(HASH));
+    memset(&keynames, 0, sizeof(TYPELIB));
+    memset(&fieldnames, 0, sizeof(TYPELIB));
+
+#if 0
+    pthread_mutex_t mutex;                /* For locking the share  */
+    pthread_cond_t cond;			/* To signal that share is ready */
+#endif
+
+    table_charset= 0;
+    memset(&all_set, 0, sizeof (MyBitmap));
+    memset(&table_cache_key, 0, sizeof(LEX_STRING));
+    memset(&db, 0, sizeof(LEX_STRING));
+    memset(&table_name, 0, sizeof(LEX_STRING));
+    memset(&path, 0, sizeof(LEX_STRING));
+    memset(&normalized_path, 0, sizeof(LEX_STRING));
+
     init();
   }
 
@@ -166,6 +183,22 @@ public:
     keys_for_keyread(0),
     newed(true)
   {
+    memset(&name_hash, 0, sizeof(HASH));
+    memset(&keynames, 0, sizeof(TYPELIB));
+    memset(&fieldnames, 0, sizeof(TYPELIB));
+
+#if 0
+    pthread_mutex_t mutex;                /* For locking the share  */
+    pthread_cond_t cond;			/* To signal that share is ready */
+#endif
+
+    table_charset= 0;
+    memset(&all_set, 0, sizeof (MyBitmap));
+    memset(&table_cache_key, 0, sizeof(LEX_STRING));
+    memset(&db, 0, sizeof(LEX_STRING));
+    memset(&table_name, 0, sizeof(LEX_STRING));
+    memset(&path, 0, sizeof(LEX_STRING));
+    memset(&normalized_path, 0, sizeof(LEX_STRING));
     init(key, key_length, new_table_name, new_path);
   }
 
@@ -594,7 +627,6 @@ public:
             uint32_t key_length, const char *new_table_name,
             const char *new_path)
   {
-    memset(this, 0, sizeof(TableShare));
     memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     table_category=         TABLE_CATEGORY_TEMPORARY;
     tmp_table=              message::Table::INTERNAL;
