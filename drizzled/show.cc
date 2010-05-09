@@ -383,7 +383,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
     packet->append(STRING_WITH_LEN("CREATE TABLE "));
   if (is_if_not_exists)
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
-  alias= share->table_name.str;
+  alias= share->getTableName();
 
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));

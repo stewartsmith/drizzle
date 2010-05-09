@@ -2705,7 +2705,7 @@ void subselect_union_engine::print(String *str, enum_query_type query_type)
 void subselect_uniquesubquery_engine::print(String *str,
                                             enum_query_type query_type)
 {
-  char *table_name= tab->table->s->table_name.str;
+  char *table_name= const_cast<char *>(tab->table->s->getTableName());
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
@@ -2718,7 +2718,7 @@ void subselect_uniquesubquery_engine::print(String *str,
     str->append(STRING_WITH_LEN("<temporary table>"));
   }
   else
-    str->append(table_name, tab->table->s->table_name.length);
+    str->append(table_name, tab->table->s->getTableNameSize());
   KEY *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
@@ -2742,7 +2742,7 @@ void subselect_uniquesubquery_engine::print(String *str)
   for (uint32_t i= 0; i < key_info->key_parts; i++)
     tab->ref.items[i]->print(str);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->s->table_name.str, tab->table->s->table_name.length);
+  str->append(tab->table->s->getTableName(), tab->table->s->getTableNameSize());
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (cond)
@@ -2760,7 +2760,7 @@ void subselect_indexsubquery_engine::print(String *str,
   str->append(STRING_WITH_LEN("<index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->s->table_name.str, tab->table->s->table_name.length);
+  str->append(tab->table->s->getTableName(), tab->table->s->getTableNameSize());
   KEY *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);

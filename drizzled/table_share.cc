@@ -102,17 +102,19 @@ void TableShare::release(TableShare *share)
 
   pthread_mutex_lock(&share->mutex);
   if (!--share->ref_count)
+  {
     to_be_deleted= true;
+  }
 
   if (to_be_deleted)
   {
-    const string key_string(share->table_cache_key.str,
-                            share->table_cache_key.length);
+    const string key_string(share->getCacheKey(),
+                            share->getCacheKeySize());
     TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
     if (iter != table_def_cache.end())
     {
-      (*iter).second->free_table_share();
       table_def_cache.erase(iter);
+      delete share;
     }
     return;
   }
@@ -131,8 +133,8 @@ void TableShare::release(const char *key, uint32_t key_length)
     if (share->ref_count == 0)
     {
       pthread_mutex_lock(&share->mutex);
-      share->free_table_share();
       table_def_cache.erase(key_string);
+      delete share;
     }
   }
 }
@@ -186,8 +188,8 @@ static TableShare *foundTableShare(TableShare *share)
 */
 
 TableShare *TableShare::getShare(Session *session, 
-                                 TableList *table_list, char *key,
-                                 uint32_t key_length, uint32_t, int *error)
+                                 char *key,
+                                 uint32_t key_length, int *error)
 {
   const string key_string(key, key_length);
   TableShare *share= NULL;
@@ -202,7 +204,7 @@ TableShare *TableShare::getShare(Session *session,
     return foundTableShare(share);
   }
 
-  if (not (share= alloc_table_share(table_list, key, key_length)))
+  if (not (share= new TableShare(key, key_length)))
   {
     return NULL;
   }
@@ -220,7 +222,8 @@ TableShare *TableShare::getShare(Session *session,
     table_def_cache.insert(make_pair(key_string, share));
   if (ret.second == false)
   {
-    share->free_table_share();
+    delete share;
+
     return NULL;
   }
   
@@ -229,7 +232,8 @@ TableShare *TableShare::getShare(Session *session,
   {
     *error= share->error;
     table_def_cache.erase(key_string);
-    share->free_table_share();
+    delete share;
+
     return NULL;
   }
   share->ref_count++;				// Mark in use
@@ -302,6 +306,116 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
 TableDefinitionCache &TableShare::getCache()
 {
   return table_def_cache;
+}
+
+TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg) :
+  table_category(TABLE_UNKNOWN_CATEGORY),
+  open_count(0),
+  field(NULL),
+  found_next_number_field(NULL),
+  timestamp_field(NULL),
+  key_info(NULL),
+  blob_field(NULL),
+  intervals(NULL),
+  default_values(NULL),
+  block_size(0),
+  version(0),
+  timestamp_offset(0),
+  reclength(0),
+  stored_rec_length(0),
+  row_type(ROW_TYPE_DEFAULT),
+  max_rows(0),
+  table_proto(NULL),
+  storage_engine(NULL),
+  tmp_table(message::Table::STANDARD),
+  ref_count(0),
+  null_bytes(0),
+  last_null_bit_pos(0),
+  fields(0),
+  rec_buff_length(0),
+  keys(0),
+  key_parts(0),
+  max_key_length(0),
+  max_unique_length(0),
+  total_key_length(0),
+  uniques(0),
+  null_fields(0),
+  blob_fields(0),
+  timestamp_field_offset(0),
+  varchar_fields(0),
+  db_create_options(0),
+  db_options_in_use(0),
+  db_record_offset(0),
+  rowid_field_offset(0),
+  primary_key(0),
+  next_number_index(0),
+  next_number_key_offset(0),
+  next_number_keypart(0),
+  error(0),
+  open_errno(0),
+  errarg(0),
+  column_bitmap_size(0),
+  blob_ptr_size(0),
+  db_low_byte_first(false),
+  name_lock(false),
+  replace_with_name_lock(false),
+  waiting_on_cond(false),
+  keys_in_use(0),
+  keys_for_keyread(0),
+  newed(true)
+{
+  memset(&name_hash, 0, sizeof(HASH));
+  memset(&keynames, 0, sizeof(TYPELIB));
+  memset(&fieldnames, 0, sizeof(TYPELIB));
+
+  table_charset= 0;
+  memset(&all_set, 0, sizeof (MyBitmap));
+  memset(&table_cache_key, 0, sizeof(LEX_STRING));
+  memset(&db, 0, sizeof(LEX_STRING));
+  memset(&table_name, 0, sizeof(LEX_STRING));
+  memset(&path, 0, sizeof(LEX_STRING));
+  memset(&normalized_path, 0, sizeof(LEX_STRING));
+
+  mem_root.init_alloc_root(TABLE_ALLOC_BLOCK_SIZE);
+  char *key_buff, *path_buff;
+  std::string _path;
+
+  db.str= key;
+  db.length= strlen(db.str);
+  table_name.str= db.str + db.length + 1;
+  table_name.length= strlen(table_name.str);
+
+  if (path_arg)
+  {
+    _path.append(path_arg, path_length_arg);
+  }
+  else
+  {
+    build_table_filename(_path, db.str, table_name.str, false);
+  }
+
+  if (multi_alloc_root(&mem_root,
+                       &key_buff, key_length,
+                       &path_buff, _path.length() + 1,
+                       NULL))
+  {
+    set_table_cache_key(key_buff, key, key_length, db.length, table_name.length);
+
+    setPath(path_buff, _path.length());
+    strcpy(path_buff, _path.c_str());
+    setNormalizedPath(path_buff, _path.length());
+
+    version=       refresh_version;
+
+    pthread_mutex_init(&mutex, MY_MUTEX_INIT_FAST);
+    pthread_cond_init(&cond, NULL);
+  }
+  else
+  {
+    assert(0); // We should throw here.
+  }
+
+  newed= true;
 }
 
 } /* namespace drizzled */

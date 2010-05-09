@@ -146,10 +146,10 @@ bool statement::AlterTable::execute()
     Table *table= session->find_temporary_table(first_table);
     assert(table);
     {
-      TableIdentifier identifier(first_table->db, first_table->table_name, table->s->path.str);
+      TableIdentifier identifier(first_table->db, first_table->table_name, table->s->getPath());
       TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->db,
                                      session->lex->name.str ? session->lex->name.str : first_table->table_name,
-                                     table->s->path.str);
+                                     table->s->getPath());
 
       res= alter_table(session, 
                        identifier,
@@ -348,7 +348,7 @@ static bool mysql_prepare_alter_table(Session *session,
   {
     if (def->change && ! def->field)
     {
-      my_error(ER_BAD_FIELD_ERROR, MYF(0), def->change, table->s->table_name.str);
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), def->change, table->s->getTableName());
       goto err;
     }
     /*
@@ -382,7 +382,7 @@ static bool mysql_prepare_alter_table(Session *session,
       }
       if (! find)
       {
-        my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->s->table_name.str);
+        my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->s->getTableName());
         goto err;
       }
       find_it.after(def); /* Put element after this */
@@ -409,7 +409,7 @@ static bool mysql_prepare_alter_table(Session *session,
     my_error(ER_BAD_FIELD_ERROR,
              MYF(0),
              alter_info->alter_list.head()->name,
-             table->s->table_name.str);
+             table->s->getTableName());
     goto err;
   }
   if (! new_create_list.elements)
@@ -675,7 +675,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   {
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                         ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                        table->s->table_name.str);
+                        table->s->getTableName());
     error= 0;
   } else if (error)
     table->print_error(error, MYF(0));
@@ -1091,6 +1091,20 @@ static bool internal_alter_table(Session *session,
           Note that MERGE tables do not have their children attached here.
         */
         new_table->intern_close_table();
+        if (new_table->s)
+        {
+          if (new_table->s->newed)
+          {
+            delete new_table->s;
+          }
+          else
+          {
+            free(new_table->s);
+          }
+
+          new_table->s= NULL;
+        }
+
         free(new_table);
       }
 
@@ -1140,6 +1154,21 @@ static bool internal_alter_table(Session *session,
         Note that MERGE tables do not have their children attached here.
       */
       new_table->intern_close_table();
+
+      if (new_table->s)
+      {
+        if (new_table->s->newed)
+        {
+          delete new_table->s;
+        }
+        else
+        {
+          free(new_table->s);
+        }
+
+        new_table->s= NULL;
+      }
+
       free(new_table);
     }
 
@@ -1385,7 +1414,7 @@ copy_data_between_tables(Table *from, Table *to,
       snprintf(warn_buff, sizeof(warn_buff),
                _("order_st BY ignored because there is a user-defined clustered "
                  "index in the table '%-.192s'"),
-               from->s->table_name.str);
+               from->s->getTableName());
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                    warn_buff);
     }
@@ -1396,7 +1425,7 @@ copy_data_between_tables(Table *from, Table *to,
 
       memset(&tables, 0, sizeof(tables));
       tables.table= from;
-      tables.alias= tables.table_name= from->s->table_name.str;
+      tables.alias= tables.table_name= const_cast<char *>(from->s->getTableName());
       tables.db= const_cast<char *>(from->s->getSchemaName());
       error= 1;
 
