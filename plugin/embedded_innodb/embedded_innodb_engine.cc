@@ -2185,6 +2185,7 @@ static unsigned long srv_io_capacity= 200;
 static unsigned long innobase_fast_shutdown= 1;
 static bool srv_file_per_table= false;
 static bool innobase_adaptive_hash_index;
+static bool srv_adaptive_flushing;
 static char*  innobase_file_format_name   = NULL;
 static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
@@ -2238,6 +2239,14 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     err= ib_cfg_set_bool_on("adaptive_hash_index");
   else
     err= ib_cfg_set_bool_off("adaptive_hash_index");
+
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  if (srv_adaptive_flushing)
+    err= ib_cfg_set_bool_on("adaptive_flushing");
+  else
+    err= ib_cfg_set_bool_off("adaptive_flushing");
 
   if (err != DB_SUCCESS)
     goto innodb_error;
@@ -2424,6 +2433,11 @@ static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, innobase_adaptive_hash_index,
   "Enable InnoDB adaptive hash index (enabled by default).  ",
   NULL, NULL, true);
 
+static DRIZZLE_SYSVAR_BOOL(adaptive_flushing, srv_adaptive_flushing,
+  PLUGIN_VAR_NOCMDARG,
+  "Attempt flushing dirty pages to avoid IO bursts at checkpoints.",
+  NULL, NULL, true);
+
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
   "Enable InnoDB checksums validation (enabled by default). "
@@ -2541,6 +2555,7 @@ static DRIZZLE_SYSVAR_ULONG(write_io_threads, innobase_write_io_threads,
 
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(adaptive_hash_index),
+  DRIZZLE_SYSVAR(adaptive_flushing),
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(doublewrite),
