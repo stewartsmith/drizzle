@@ -16,11 +16,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 MESSAGE_DIR=drizzled/message
-MESSAGE_LDADD= ${MESSAGE_DIR}/libdrizzledmessage.la \
-	${LIBPROTOBUF} \
-	${LIBUUID} \
-	${LTLIBINTL} \
-	${top_builddir}/gnulib/libgnu.la
+MESSAGE_LDADD= \
+	       ${MESSAGE_DIR}/libdrizzledmessage.la \
+	       ${LIBPROTOBUF} \
+	       ${LIBUUID} \
+	       ${LTLIBINTL} \
+	       $(GCOV_LIBS) \
+	       ${top_builddir}/gnulib/libgnu.la
 
 MESSAGE_AM_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
