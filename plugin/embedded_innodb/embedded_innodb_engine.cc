@@ -2196,6 +2196,7 @@ static unsigned long innobase_lru_block_access_recency;
 static unsigned long innobase_read_io_threads;
 static unsigned long innobase_write_io_threads;
 static long innobase_open_files;
+static long innobase_additional_mem_pool_size;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2248,6 +2249,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
   else
     err= ib_cfg_set_bool_off("adaptive_flushing");
 
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("additional_mem_pool_size", innobase_additional_mem_pool_size);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2438,6 +2443,11 @@ static DRIZZLE_SYSVAR_BOOL(adaptive_flushing, srv_adaptive_flushing,
   "Attempt flushing dirty pages to avoid IO bursts at checkpoints.",
   NULL, NULL, true);
 
+static DRIZZLE_SYSVAR_LONG(additional_mem_pool_size, innobase_additional_mem_pool_size,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.",
+  NULL, NULL, 8*1024*1024L, 512*1024L, LONG_MAX, 1024);
+
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
   "Enable InnoDB checksums validation (enabled by default). "
@@ -2556,6 +2566,7 @@ static DRIZZLE_SYSVAR_ULONG(write_io_threads, innobase_write_io_threads,
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(adaptive_flushing),
+  DRIZZLE_SYSVAR(additional_mem_pool_size),
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_home_dir),
   DRIZZLE_SYSVAR(doublewrite),
