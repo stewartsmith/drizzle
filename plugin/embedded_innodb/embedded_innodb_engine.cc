@@ -2191,6 +2191,7 @@ static unsigned long srv_max_buf_pool_modified_pct;
 static unsigned long srv_max_purge_lag;
 static unsigned long innobase_lru_old_blocks_pct;
 static unsigned long innobase_lru_block_access_recency;
+static unsigned long innobase_read_io_threads;
 static long innobase_open_files;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
@@ -2279,6 +2280,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("open_files", innobase_open_files);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("read_io_threads", innobase_read_io_threads);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2506,6 +2511,11 @@ static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
   "How many files at the maximum InnoDB keeps open at the same time.",
   NULL, NULL, 300L, 10L, LONG_MAX, 0);
 
+static DRIZZLE_SYSVAR_ULONG(read_io_threads, innobase_read_io_threads,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Number of background read I/O threads in InnoDB.",
+  NULL, NULL, 4, 1, 64, 0);
+
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(checksums),
   DRIZZLE_SYSVAR(data_home_dir),
@@ -2526,6 +2536,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(max_dirty_pages_pct),
   DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(open_files),
+  DRIZZLE_SYSVAR(read_io_threads),
   NULL
 };
 
