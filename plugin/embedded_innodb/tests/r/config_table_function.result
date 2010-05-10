@@ -48,9 +48,9 @@ use_sys_malloc	BOOL
 version	TEXT
 SELECT * FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
 NAME	TYPE	VALUE
-adaptive_hash_index	BOOL	false
+adaptive_hash_index	BOOL	true
 adaptive_flushing	BOOL	true
-additional_mem_pool_size	ULINT	4194304
+additional_mem_pool_size	ULINT	8388608
 autoextend_increment	ULONG	8
 buffer_pool_size	ULINT	8388608
 checksums	BOOL	true
