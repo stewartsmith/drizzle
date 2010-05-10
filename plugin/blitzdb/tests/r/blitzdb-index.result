@@ -334,13 +334,13 @@ count (id)
 select count (*) from t1;
 count (*)
 5
-select * from t1;
+select * from t1 order by id;
 id	country
 amsterdam	netherlands
 berlin	germany
+edinburgh	scotland
 london	england
 paris	france
-edinburgh	scotland
 drop table t1;
 create table t1 (a varchar(10) primary key, b int) engine = blitzdb;
 insert into t1 values ('aaa', 1), ('bbb', 2), ('ccc', 3), ('ddd', 4);

@@ -217,7 +217,7 @@ delete from t1 where id = 'geneva';
 delete from t1 where id = 'fukuoka';
 select count (id) from t1;
 select count (*) from t1;
-select * from t1;
+select * from t1 order by id;
 drop table t1;
 
 # Test HA_KEYTYPE_VARTEXT1 as a PRIMARY KEY
