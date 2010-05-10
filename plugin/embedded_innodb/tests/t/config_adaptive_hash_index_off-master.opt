@@ -1,1 +1,1 @@
---plugin_add=embedded_innodb --plugin_remove=innobase --innodb-adaptive-hash-index=off
+--plugin_add=embedded_innodb --plugin_remove=innobase --innodb-adaptive-hash-index=false
