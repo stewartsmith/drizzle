@@ -2102,8 +2102,8 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 		ident = new TableIdentifier(db_name, tab_name, n);
 	}
 	share->init(db_name, 0, name, path);
-	if ((error = open_table_def(*thd, *ident, share)) ||
-		(error = open_table_from_share(thd, share, "", 0, 0, *table)))
+	if ((error = share->open_table_def(*thd, *ident)) ||
+		(error = share->open_table_from_share(thd, "", 0, 0, *table)))
         {
           xt_free(self, table);
           lex_end(&new_lex);

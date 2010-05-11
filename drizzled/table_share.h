@@ -226,13 +226,31 @@ public:
     mem_root.free_root(MYF(0));                 // Free's share
   };
 
+private:
   /** Category of this table. */
   enum_table_category table_category;
 
   uint32_t open_count;			/* Number of tables in open list */
+public:
+
+  bool isTemporaryCategory() const
+  {
+    return (table_category == TABLE_CATEGORY_TEMPORARY);
+  }
+
+  void setTableCategory(enum_table_category arg)
+  {
+    table_category= arg;
+  }
 
   /* The following is copied to each Table on OPEN */
   Field **field;
+  Field ** getFields()
+  {
+    return field;
+  }
+
+  
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
   KEY  *key_info;			/* data of keys in database */
@@ -420,16 +438,6 @@ public:
   inline uint32_t getCommentLength()
   {
     return (table_proto) ? table_proto->options().comment().length() : 0; 
-  }
-
-  inline bool hasKeyBlockSize()
-  {
-    return (table_proto) ? table_proto->options().has_key_block_size() : false;
-  }
-
-  inline uint32_t getKeyBlockSize()
-  {
-    return (table_proto) ? table_proto->options().key_block_size() : 0;
   }
 
   inline uint64_t getMaxRows()
@@ -735,6 +743,15 @@ public:
                     Field::utype unireg_check,
                     TYPELIB *interval,
                     const char *field_name);
+
+  int open_table_def(Session& session, TableIdentifier &identifier);
+
+  int open_table_from_share(Session *session, const char *alias,
+                            uint32_t db_stat, uint32_t ha_open_flags,
+                            Table &outparam);
+  int parse_table_proto(Session& session, message::Table &table);
+private:
+  int inner_parse_table_proto(Session& session, message::Table &table);
 };
 
 } /* namespace drizzled */

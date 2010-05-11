@@ -191,11 +191,10 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-static int inner_parse_table_proto(Session& session,
-				   message::Table &table,
-				   TableShare *share)
+int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 {
-  int error= 0;
+  TableShare *share= this;
+  int local_error= 0;
 
   if (! table.IsInitialized())
   {
@@ -213,23 +212,15 @@ static int inner_parse_table_proto(Session& session,
   if (table.has_options())
     table_options= table.options();
 
-  uint32_t db_create_options= 0;
-
-  if (table_options.has_pack_keys())
-  {
-    if (table_options.pack_keys())
-      db_create_options|= HA_OPTION_PACK_KEYS;
-    else
-      db_create_options|= HA_OPTION_NO_PACK_KEYS;
-  }
+  uint32_t local_db_create_options= 0;
 
   if (table_options.pack_record())
-    db_create_options|= HA_OPTION_PACK_RECORD;
+    local_db_create_options|= HA_OPTION_PACK_RECORD;
 
-  /* db_create_options was stored as 2 bytes in FRM
+  /* local_db_create_options was stored as 2 bytes in FRM
      Any HA_OPTION_ that doesn't fit into 2 bytes was silently truncated away.
    */
-  share->db_create_options= (db_create_options & 0x0000FFFF);
+  share->db_create_options= (local_db_create_options & 0x0000FFFF);
   share->db_options_in_use= share->db_create_options;
 
   share->row_type= table_options.has_row_type() ?
@@ -408,7 +399,7 @@ static int inner_parse_table_proto(Session& session,
   share->field= (Field**) share->alloc_root(((share->fields+1) * sizeof(Field*)));
   share->field[share->fields]= NULL;
 
-  uint32_t null_fields= 0;
+  uint32_t local_null_fields= 0;
   share->reclength= 0;
 
   vector<uint32_t> field_offsets;
@@ -426,7 +417,7 @@ static int inner_parse_table_proto(Session& session,
   {
     message::Table::Field pfield= table.field(fieldnr);
     if (pfield.constraints().is_nullable())
-      null_fields++;
+      local_null_fields++;
 
     enum_field_types drizzle_field_type=
       proto_field_type_to_drizzle_type(pfield.type());
@@ -484,9 +475,9 @@ static int inner_parse_table_proto(Session& session,
   /* data_offset added to stored_rec_length later */
   share->stored_rec_length= stored_columns_reclength;
 
-  share->null_fields= null_fields;
+  share->null_fields= local_null_fields;
 
-  ulong null_bits= null_fields;
+  ulong null_bits= local_null_fields;
   if (! table_options.pack_record())
     null_bits++;
   ulong data_offset= (null_bits + 7)/8;
@@ -495,17 +486,17 @@ static int inner_parse_table_proto(Session& session,
   share->reclength+= data_offset;
   share->stored_rec_length+= data_offset;
 
-  ulong rec_buff_length;
+  ulong local_rec_buff_length;
 
-  rec_buff_length= ALIGN_SIZE(share->reclength + 1);
-  share->rec_buff_length= rec_buff_length;
+  local_rec_buff_length= ALIGN_SIZE(share->reclength + 1);
+  share->rec_buff_length= local_rec_buff_length;
 
   unsigned char* record= NULL;
 
-  if (! (record= (unsigned char *) share->alloc_root(rec_buff_length)))
+  if (! (record= (unsigned char *) share->alloc_root(local_rec_buff_length)))
     abort();
 
-  memset(record, 0, rec_buff_length);
+  memset(record, 0, local_rec_buff_length);
 
   int null_count= 0;
 
@@ -724,9 +715,9 @@ static int inner_parse_table_proto(Session& session,
       {
         if (fo.scale() > DECIMAL_MAX_SCALE)
         {
-          error= 4;
+          local_error= 4;
 
-	  return error;
+	  return local_error;
         }
         decimals= static_cast<uint8_t>(fo.scale());
       }
@@ -786,9 +777,9 @@ static int inner_parse_table_proto(Session& session,
           decimals != NOT_FIXED_DEC)
       {
         my_error(ER_M_BIGGER_THAN_D, MYF(0), pfield.name().c_str());
-        error= 1;
+        local_error= 1;
 
-	return error;
+	return local_error;
       }
       break;
     }
@@ -874,9 +865,9 @@ static int inner_parse_table_proto(Session& session,
       if (res != 0 && res != 3) /* @TODO Huh? */
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
-        error= 1;
+        local_error= 1;
 
-	return error;
+	return local_error;
       }
     }
     else if (f->real_type() == DRIZZLE_TYPE_ENUM &&
@@ -949,7 +940,7 @@ static int inner_parse_table_proto(Session& session,
   /* Fix key stuff */
   if (share->key_parts)
   {
-    uint32_t primary_key= (uint32_t) (find_type((char*) "PRIMARY",
+    uint32_t local_primary_key= (uint32_t) (find_type((char*) "PRIMARY",
                                                 &share->keynames, 3) - 1); /* @TODO Huh? */
 
     keyinfo= share->key_info;
@@ -959,13 +950,13 @@ static int inner_parse_table_proto(Session& session,
     {
       uint32_t usable_parts= 0;
 
-      if (primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
+      if (local_primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
       {
 	/*
 	  If the UNIQUE key doesn't have NULL columns and is not a part key
 	  declare this as a primary key.
 	*/
-	primary_key=key;
+	local_primary_key=key;
 	for (uint32_t i= 0; i < keyinfo->key_parts; i++)
 	{
 	  uint32_t fieldnr= key_part[i].fieldnr;
@@ -973,7 +964,7 @@ static int inner_parse_table_proto(Session& session,
 	      share->field[fieldnr-1]->null_ptr ||
 	      share->field[fieldnr-1]->key_length() != key_part[i].length)
 	  {
-	    primary_key= MAX_KEY; // Can't be used
+	    local_primary_key= MAX_KEY; // Can't be used
 	    break;
 	  }
 	}
@@ -981,26 +972,26 @@ static int inner_parse_table_proto(Session& session,
 
       for (uint32_t i= 0 ; i < keyinfo->key_parts ; key_part++,i++)
       {
-	Field *field;
+	Field *local_field;
 	if (! key_part->fieldnr)
 	{
 	  return ENOMEM;
 	}
-	field= key_part->field= share->field[key_part->fieldnr-1];
-	key_part->type= field->key_type();
-	if (field->null_ptr)
+	local_field= key_part->field= share->field[key_part->fieldnr-1];
+	key_part->type= local_field->key_type();
+	if (local_field->null_ptr)
 	{
-	  key_part->null_offset=(uint32_t) ((unsigned char*) field->null_ptr - share->default_values);
-	  key_part->null_bit= field->null_bit;
+	  key_part->null_offset=(uint32_t) ((unsigned char*) local_field->null_ptr - share->default_values);
+	  key_part->null_bit= local_field->null_bit;
 	  key_part->store_length+=HA_KEY_NULL_LENGTH;
 	  keyinfo->flags|=HA_NULL_PART_KEY;
 	  keyinfo->extra_length+= HA_KEY_NULL_LENGTH;
 	  keyinfo->key_length+= HA_KEY_NULL_LENGTH;
 	}
-	if (field->type() == DRIZZLE_TYPE_BLOB ||
-	    field->real_type() == DRIZZLE_TYPE_VARCHAR)
+	if (local_field->type() == DRIZZLE_TYPE_BLOB ||
+	    local_field->real_type() == DRIZZLE_TYPE_VARCHAR)
 	{
-	  if (field->type() == DRIZZLE_TYPE_BLOB)
+	  if (local_field->type() == DRIZZLE_TYPE_BLOB)
 	    key_part->key_part_flag|= HA_BLOB_PART;
 	  else
 	    key_part->key_part_flag|= HA_VAR_LENGTH_PART;
@@ -1008,44 +999,44 @@ static int inner_parse_table_proto(Session& session,
 	  key_part->store_length+=HA_KEY_BLOB_LENGTH;
 	  keyinfo->key_length+= HA_KEY_BLOB_LENGTH;
 	}
-	if (i == 0 && key != primary_key)
-	  field->flags |= (((keyinfo->flags & HA_NOSAME) &&
+	if (i == 0 && key != local_primary_key)
+	  local_field->flags |= (((keyinfo->flags & HA_NOSAME) &&
 			    (keyinfo->key_parts == 1)) ?
 			   UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
 	if (i == 0)
-	  field->key_start.set(key);
-	if (field->key_length() == key_part->length &&
-	    !(field->flags & BLOB_FLAG))
+	  local_field->key_start.set(key);
+	if (local_field->key_length() == key_part->length &&
+	    !(local_field->flags & BLOB_FLAG))
 	{
 	  enum ha_key_alg algo= share->key_info[key].algorithm;
 	  if (share->db_type()->index_flags(algo) & HA_KEYREAD_ONLY)
 	  {
 	    share->keys_for_keyread.set(key);
-	    field->part_of_key.set(key);
-	    field->part_of_key_not_clustered.set(key);
+	    local_field->part_of_key.set(key);
+	    local_field->part_of_key_not_clustered.set(key);
 	  }
 	  if (share->db_type()->index_flags(algo) & HA_READ_ORDER)
-	    field->part_of_sortkey.set(key);
+	    local_field->part_of_sortkey.set(key);
 	}
 	if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
 	    usable_parts == i)
 	  usable_parts++;			// For FILESORT
-	field->flags|= PART_KEY_FLAG;
-	if (key == primary_key)
+	local_field->flags|= PART_KEY_FLAG;
+	if (key == local_primary_key)
 	{
-	  field->flags|= PRI_KEY_FLAG;
+	  local_field->flags|= PRI_KEY_FLAG;
 	  /*
 	    If this field is part of the primary key and all keys contains
 	    the primary key, then we can use any key to find this column
 	  */
 	  if (share->storage_engine->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX))
 	  {
-	    field->part_of_key= share->keys_in_use;
-	    if (field->part_of_sortkey.test(key))
-	      field->part_of_sortkey= share->keys_in_use;
+	    local_field->part_of_key= share->keys_in_use;
+	    if (local_field->part_of_sortkey.test(key))
+	      local_field->part_of_sortkey= share->keys_in_use;
 	  }
 	}
-	if (field->key_length() != key_part->length)
+	if (local_field->key_length() != key_part->length)
 	{
 	  key_part->key_part_flag|= HA_PART_KEY_SEG;
 	}
@@ -1061,21 +1052,21 @@ static int inner_parse_table_proto(Session& session,
 	set_if_bigger(share->max_unique_length,keyinfo->key_length);
       }
     }
-    if (primary_key < MAX_KEY &&
-        (share->keys_in_use.test(primary_key)))
+    if (local_primary_key < MAX_KEY &&
+        (share->keys_in_use.test(local_primary_key)))
     {
-      share->primary_key= primary_key;
+      share->primary_key= local_primary_key;
       /*
         If we are using an integer as the primary key then allow the user to
         refer to it as '_rowid'
       */
-      if (share->key_info[primary_key].key_parts == 1)
+      if (share->key_info[local_primary_key].key_parts == 1)
       {
-        Field *field= share->key_info[primary_key].key_part[0].field;
-        if (field && field->result_type() == INT_RESULT)
+        Field *local_field= share->key_info[local_primary_key].key_part[0].field;
+        if (local_field && local_field->result_type() == INT_RESULT)
         {
           /* note that fieldnr here (and rowid_field_offset) starts from 1 */
-          share->rowid_field_offset= (share->key_info[primary_key].key_part[0].
+          share->rowid_field_offset= (share->key_info[local_primary_key].key_part[0].
                                       fieldnr);
         }
       }
@@ -1100,9 +1091,9 @@ static int inner_parse_table_proto(Session& session,
                             &share->next_number_keypart)) < 0)
     {
       /* Wrong field definition */
-      error= 4;
+      local_error= 4;
 
-      return error;
+      return local_error;
     }
     else
     {
@@ -1119,7 +1110,7 @@ static int inner_parse_table_proto(Session& session,
     if (!(share->blob_field= save=
 	  (uint*) share->alloc_root((uint32_t) (share->blob_fields* sizeof(uint32_t)))))
     {
-      return error;
+      return local_error;
     }
     for (k= 0, ptr= share->field ; *ptr ; ptr++, k++)
     {
@@ -1143,25 +1134,23 @@ static int inner_parse_table_proto(Session& session,
     return (0);
   }
 
-  return error;
+  return local_error;
 }
 
-int parse_table_proto(Session& session,
-                      message::Table &table,
-                      TableShare *share)
+int TableShare::parse_table_proto(Session& session, message::Table &table)
 {
-  int error= inner_parse_table_proto(session, table, share);
+  int local_error= inner_parse_table_proto(session, table);
 
-  if (not error)
+  if (not local_error)
     return 0;
 
-  share->error= error;
-  share->open_errno= errno;
-  share->errarg= 0;
-  hash_free(&share->name_hash);
-  share->open_table_error(error, share->open_errno, 0);
+  error= local_error;
+  open_errno= errno;
+  errarg= 0;
+  hash_free(&name_hash);
+  open_table_error(local_error, open_errno, 0);
 
-  return error;
+  return local_error;
 }
 
 
@@ -1189,44 +1178,44 @@ int parse_table_proto(Session& session,
    6    Unknown .frm version
 */
 
-int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share)
+int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
 {
-  int error;
+  int local_error;
   bool error_given;
 
-  error= 1;
+  local_error= 1;
   error_given= 0;
 
   message::Table table;
 
-  error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
+  local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 
-  if (error != EEXIST)
+  if (local_error != EEXIST)
   {
-    if (error > 0)
+    if (local_error > 0)
     {
-      errno= error;
-      error= 1;
+      errno= local_error;
+      local_error= 1;
     }
     else
     {
       if (not table.IsInitialized())
       {
-	error= 4;
+	local_error= 4;
       }
     }
     goto err_not_open;
   }
 
-  error= parse_table_proto(session, table, share);
+  local_error= parse_table_proto(session, table);
 
-  share->table_category= TABLE_CATEGORY_USER;
+  setTableCategory(TABLE_CATEGORY_USER);
 
 err_not_open:
-  if (error && !error_given)
+  if (local_error && !error_given)
   {
-    share->error= error;
-    share->open_table_error(error, (share->open_errno= errno), 0);
+    error= local_error;
+    open_table_error(error, (open_errno= errno), 0);
   }
 
   return(error);
@@ -1257,12 +1246,12 @@ err_not_open:
    7    Table definition has changed in engine
 */
 
-int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t ha_open_flags,
-                          Table &outparam)
+int TableShare::open_table_from_share(Session *session, const char *alias,
+                                      uint32_t db_stat, uint32_t ha_open_flags,
+                                      Table &outparam)
 {
-  int error;
-  uint32_t records, i, bitmap_size;
+  int local_error;
+  uint32_t records, bitmap_size;
   bool error_reported= false;
   unsigned char *record, *bitmaps;
   Field **field_ptr;
@@ -1270,37 +1259,37 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   /* Parsing of partitioning information from .frm needs session->lex set up. */
   assert(session->lex->is_lex_started);
 
-  error= 1;
-  outparam.resetTable(session, share, db_stat);
+  local_error= 1;
+  outparam.resetTable(session, this, db_stat);
 
 
   if (not (outparam.alias= strdup(alias)))
     goto err;
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= share->db_type()->getCursor(*share, &outparam.mem_root)))
+  if (not (outparam.cursor= db_type()->getCursor(*this, &outparam.mem_root)))
     goto err;
 
-  error= 4;
+  local_error= 4;
   records= 0;
   if ((db_stat & HA_OPEN_KEYFILE))
     records=1;
 
   records++;
 
-  if (!(record= (unsigned char*) outparam.mem_root.alloc_root(share->rec_buff_length * records)))
+  if (!(record= (unsigned char*) outparam.mem_root.alloc_root(rec_buff_length * records)))
     goto err;
 
   if (records == 0)
   {
     /* We are probably in hard repair, and the buffers should not be used */
-    outparam.record[0]= outparam.record[1]= share->default_values;
+    outparam.record[0]= outparam.record[1]= default_values;
   }
   else
   {
     outparam.record[0]= record;
     if (records > 1)
-      outparam.record[1]= record+ share->rec_buff_length;
+      outparam.record[1]= record+ rec_buff_length;
     else
       outparam.record[1]= outparam.record[0];   // Safety
   }
@@ -1312,18 +1301,18 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   */
   if (records > 1)
   {
-    memcpy(outparam.record[0], share->default_values, share->rec_buff_length);
-    memcpy(outparam.record[1], share->default_values, share->null_bytes);
+    memcpy(outparam.record[0], default_values, rec_buff_length);
+    memcpy(outparam.record[1], default_values, null_bytes);
     if (records > 2)
-      memcpy(outparam.record[1], share->default_values, share->rec_buff_length);
+      memcpy(outparam.record[1], default_values, rec_buff_length);
   }
 #endif
   if (records > 1)
   {
-    memcpy(outparam.record[1], share->default_values, share->null_bytes);
+    memcpy(outparam.record[1], default_values, null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.mem_root.alloc_root( (uint32_t) ((share->fields+1)* sizeof(Field*)))))
+  if (!(field_ptr = (Field **) outparam.mem_root.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
   {
     goto err;
   }
@@ -1335,60 +1324,60 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   outparam.null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
-  for (i= 0 ; i < share->fields; i++, field_ptr++)
+  for (uint32_t i= 0 ; i < fields; i++, field_ptr++)
   {
-    if (!((*field_ptr)= share->field[i]->clone(&outparam.mem_root, &outparam)))
+    if (!((*field_ptr)= field[i]->clone(&outparam.mem_root, &outparam)))
       goto err;
   }
   (*field_ptr)= 0;                              // End marker
 
-  if (share->found_next_number_field)
+  if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[(uint32_t) (share->found_next_number_field - share->field)];
-  if (share->timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.field[share->timestamp_field_offset];
+      outparam.field[(uint32_t) (found_next_number_field - field)];
+  if (timestamp_field)
+    outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
 
 
   /* Fix key->name and key_part->field */
-  if (share->key_parts)
+  if (key_parts)
   {
-    KEY	*key_info, *key_info_end;
+    KEY	*local_key_info, *key_info_end;
     KEY_PART_INFO *key_part;
     uint32_t n_length;
-    n_length= share->keys*sizeof(KEY) + share->key_parts*sizeof(KEY_PART_INFO);
-    if (!(key_info= (KEY*) outparam.mem_root.alloc_root(n_length)))
+    n_length= keys*sizeof(KEY) + key_parts*sizeof(KEY_PART_INFO);
+    if (!(local_key_info= (KEY*) outparam.mem_root.alloc_root(n_length)))
       goto err;
-    outparam.key_info= key_info;
-    key_part= (reinterpret_cast<KEY_PART_INFO*> (key_info+share->keys));
+    outparam.key_info= local_key_info;
+    key_part= (reinterpret_cast<KEY_PART_INFO*> (local_key_info+keys));
 
-    memcpy(key_info, share->key_info, sizeof(*key_info)*share->keys);
-    memcpy(key_part, share->key_info[0].key_part, (sizeof(*key_part) *
-                                                   share->key_parts));
+    memcpy(local_key_info, key_info, sizeof(*local_key_info)*keys);
+    memcpy(key_part, key_info[0].key_part, (sizeof(*key_part) *
+                                                   key_parts));
 
-    for (key_info_end= key_info + share->keys ;
-         key_info < key_info_end ;
-         key_info++)
+    for (key_info_end= local_key_info + keys ;
+         local_key_info < key_info_end ;
+         local_key_info++)
     {
       KEY_PART_INFO *key_part_end;
 
-      key_info->table= &outparam;
-      key_info->key_part= key_part;
+      local_key_info->table= &outparam;
+      local_key_info->key_part= key_part;
 
-      for (key_part_end= key_part+ key_info->key_parts ;
+      for (key_part_end= key_part+ local_key_info->key_parts ;
            key_part < key_part_end ;
            key_part++)
       {
-        Field *field= key_part->field= outparam.field[key_part->fieldnr-1];
+        Field *local_field= key_part->field= outparam.field[key_part->fieldnr-1];
 
-        if (field->key_length() != key_part->length &&
-            !(field->flags & BLOB_FLAG))
+        if (local_field->key_length() != key_part->length &&
+            !(local_field->flags & BLOB_FLAG))
         {
           /*
             We are using only a prefix of the column as a key:
             Create a new field for the key part that matches the index
           */
-          field= key_part->field=field->new_field(&outparam.mem_root, &outparam, 0);
-          field->field_length= key_part->length;
+          local_field= key_part->field= local_field->new_field(&outparam.mem_root, &outparam, 0);
+          local_field->field_length= key_part->length;
         }
       }
     }
@@ -1396,23 +1385,23 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   /* Allocate bitmaps */
 
-  bitmap_size= share->column_bitmap_size;
+  bitmap_size= column_bitmap_size;
   if (!(bitmaps= (unsigned char*) outparam.mem_root.alloc_root(bitmap_size*3)))
   {
     goto err;
   }
-  outparam.def_read_set.init((my_bitmap_map*) bitmaps, share->fields);
-  outparam.def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
-  outparam.tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
+  outparam.def_read_set.init((my_bitmap_map*) bitmaps, fields);
+  outparam.def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), fields);
+  outparam.tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), fields);
   outparam.default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
-  error= 2;
+  local_error= 2;
   if (db_stat)
   {
     int ha_err;
     if ((ha_err= (outparam.cursor->
-                  ha_open(&outparam, share->getNormalizedPath(),
+                  ha_open(&outparam, getNormalizedPath(),
                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
                           (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE :
                            (db_stat & HA_WAIT_IF_LOCKED) ?  HA_OPEN_WAIT_IF_LOCKED :
@@ -1427,7 +1416,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             The table did not exists in storage engine, use same error message
             as if the .frm cursor didn't exist
           */
-	  error= 1;
+	  local_error= 1;
 	  errno= ENOENT;
           break;
         case EMFILE:
@@ -1435,14 +1424,14 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             Too many files opened, use same error message as if the .frm
             cursor can't open
            */
-	  error= 1;
+	  local_error= 1;
 	  errno= EMFILE;
           break;
         default:
           outparam.print_error(ha_err, MYF(0));
           error_reported= true;
           if (ha_err == HA_ERR_TABLE_DEF_CHANGED)
-            error= 7;
+            local_error= 7;
           break;
       }
       goto err;
@@ -1457,13 +1446,14 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
  err:
   if (!error_reported)
-    share->open_table_error(error, errno, 0);
+    open_table_error(local_error, errno, 0);
+
   delete outparam.cursor;
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
   outparam.mem_root.free_root(MYF(0));       // Safe to call on zeroed root
   free((char*) outparam.alias);
-  return (error);
+  return (local_error);
 }
 
 bool Table::fill_item_list(List<Item> *item_list) const

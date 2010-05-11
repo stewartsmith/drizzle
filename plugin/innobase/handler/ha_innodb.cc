@@ -5414,49 +5414,6 @@ create_options_are_valid(
     return(TRUE);
   }
 
-  /* First check if KEY_BLOCK_SIZE was specified. */
-  if (create_proto.options().has_key_block_size()) {
-
-    kbs_specified = TRUE;
-    switch (create_proto.options().key_block_size()) {
-    case 1:
-    case 2:
-    case 4:
-    case 8:
-    case 16:
-      /* Valid value. */
-      break;
-    default:
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-              ER_ILLEGAL_HA_CREATE_OPTION,
-              "InnoDB: invalid"
-              " KEY_BLOCK_SIZE = %lu."
-              " Valid values are"
-              " [1, 2, 4, 8, 16]",
-              create_proto.options().key_block_size());
-      ret = FALSE;
-    }
-  }
-  
-  /* If KEY_BLOCK_SIZE was specified, check for its
-  dependencies. */
-  if (kbs_specified && !srv_file_per_table) {
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-           ER_ILLEGAL_HA_CREATE_OPTION,
-           "InnoDB: KEY_BLOCK_SIZE"
-           " requires innodb_file_per_table.");
-    ret = FALSE;
-  }
-
-  if (kbs_specified && srv_file_format < DICT_TF_FORMAT_ZIP) {
-    push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-           ER_ILLEGAL_HA_CREATE_OPTION,
-           "InnoDB: KEY_BLOCK_SIZE"
-           " requires innodb_file_format >"
-           " Antelope.");
-    ret = FALSE;
-  }
-
   /* Now check for ROW_FORMAT specifier. */
   if (create_proto.options().has_row_type()) {
     switch (form.s->row_type) {
@@ -5641,75 +5598,13 @@ InnobaseEngine::doCreateTable(
     goto cleanup;
   }
 
-  if (create_proto.options().has_key_block_size()) {
-    /* Determine the page_zip.ssize corresponding to the
-    requested page size (key_block_size) in kilobytes. */
-
-    ulint ssize, ksize;
-    ulint key_block_size = create_proto.options().key_block_size();
-
-    for (ssize = ksize = 1; ssize <= DICT_TF_ZSSIZE_MAX;
-         ssize++, ksize <<= 1) {
-      if (key_block_size == ksize) {
-        iflags = ssize << DICT_TF_ZSSIZE_SHIFT
-          | DICT_TF_COMPACT
-          | DICT_TF_FORMAT_ZIP
-            << DICT_TF_FORMAT_SHIFT;
-        break;
-      }
-    }
-
-    if (!srv_file_per_table) {
-      push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-             ER_ILLEGAL_HA_CREATE_OPTION,
-             "InnoDB: KEY_BLOCK_SIZE"
-             " requires innodb_file_per_table.");
-      iflags = 0;
-    }
-
-    if (file_format < DICT_TF_FORMAT_ZIP) {
-      push_warning(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-             ER_ILLEGAL_HA_CREATE_OPTION,
-             "InnoDB: KEY_BLOCK_SIZE"
-             " requires innodb_file_format >"
-             " Antelope.");
-      iflags = 0;
-    }
-
-    if (!iflags) {
-      push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-              ER_ILLEGAL_HA_CREATE_OPTION,
-              "InnoDB: ignoring"
-              " KEY_BLOCK_SIZE=%lu.",
-              create_proto.options().key_block_size());
-    }
-  }
-
   if (create_proto.options().has_row_type()) {
-    if (iflags) {
-      /* KEY_BLOCK_SIZE was specified. */
-      if (form.s->row_type != ROW_TYPE_COMPRESSED) {
-        /* ROW_FORMAT other than COMPRESSED
-        ignores KEY_BLOCK_SIZE.  It does not
-        make sense to reject conflicting
-        KEY_BLOCK_SIZE and ROW_FORMAT, because
-        such combinations can be obtained
-        with ALTER TABLE anyway. */
-        push_warning_printf(
-          &session,
-          DRIZZLE_ERROR::WARN_LEVEL_WARN,
-          ER_ILLEGAL_HA_CREATE_OPTION,
-          "InnoDB: ignoring KEY_BLOCK_SIZE=%lu"
-          " unless ROW_FORMAT=COMPRESSED.",
-          create_proto.options().key_block_size());
-        iflags = 0;
-      }
-    } else {
+    {
       /* No KEY_BLOCK_SIZE */
       if (form.s->row_type == ROW_TYPE_COMPRESSED) {
         /* ROW_FORMAT=COMPRESSED without
-        KEY_BLOCK_SIZE implies half the
-        maximum KEY_BLOCK_SIZE. */
+          KEY_BLOCK_SIZE implies half the
+          maximum KEY_BLOCK_SIZE. */
         iflags = (DICT_TF_ZSSIZE_MAX - 1)
           << DICT_TF_ZSSIZE_SHIFT
           | DICT_TF_COMPACT

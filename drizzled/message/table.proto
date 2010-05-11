@@ -38,10 +38,8 @@ message Table {
     optional uint64 min_rows = 8;
     optional uint64 auto_increment_value = 9;
     optional uint32 avg_row_length = 11;
-    optional uint32 key_block_size = 12;
     optional uint32 block_size = 13;
     optional string comment = 14;
-    optional bool pack_keys = 15;
     optional bool pack_record = 16;
     optional bool checksum = 17;
     optional bool page_checksum = 18;
