@@ -2192,6 +2192,7 @@ static unsigned long innobase_lru_block_access_recency;
 static unsigned long innobase_read_io_threads;
 static unsigned long innobase_write_io_threads;
 static unsigned int srv_auto_extend_increment;
+static unsigned long innobase_lock_wait_timeout;
 static int64_t innobase_buffer_pool_size;
 static long innobase_open_files;
 static long innobase_additional_mem_pool_size;
@@ -2303,6 +2304,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("checksums", innobase_use_checksums);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("lock_wait_timeout", innobase_lock_wait_timeout);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2545,8 +2550,9 @@ static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, innodb_log_files_in_group,
   "Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here.",
   NULL, NULL, 2, 2, 100, 0);
 
-static DRIZZLE_SessionVAR_ULONG(lock_wait_timeout, PLUGIN_VAR_RQCMDARG,
-  "Placeholder: to be compatible with InnoDB plugin.",
+static DRIZZLE_SYSVAR_ULONG(lock_wait_timeout, innobase_lock_wait_timeout,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
 static DRIZZLE_SYSVAR_ULONG(lru_old_blocks_pct, innobase_lru_old_blocks_pct,
