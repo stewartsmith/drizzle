@@ -31,10 +31,6 @@ namespace drizzled {
 #define COLUMN_COMMENT_MAXLEN 1024
 #define INDEX_COMMENT_MAXLEN 1024
 
-int parse_table_proto(Session& session,
-                      message::Table &table,
-                      TableShare *share);
-
 bool rea_create_table(Session *session,
                       TableIdentifier &identifier,
                       message::Table &table_proto,

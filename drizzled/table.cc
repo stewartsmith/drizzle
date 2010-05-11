@@ -1258,7 +1258,6 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
                                       uint32_t db_stat, uint32_t ha_open_flags,
                                       Table &outparam)
 {
-  TableShare *share= this;
   int local_error;
   uint32_t records, bitmap_size;
   bool error_reported= false;
@@ -1269,14 +1268,14 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   assert(session->lex->is_lex_started);
 
   local_error= 1;
-  outparam.resetTable(session, share, db_stat);
+  outparam.resetTable(session, this, db_stat);
 
 
   if (not (outparam.alias= strdup(alias)))
     goto err;
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= db_type()->getCursor(*share, &outparam.mem_root)))
+  if (not (outparam.cursor= db_type()->getCursor(*this, &outparam.mem_root)))
     goto err;
 
   local_error= 4;
