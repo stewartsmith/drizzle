@@ -2195,6 +2195,7 @@ static unsigned int srv_auto_extend_increment;
 static int64_t innobase_buffer_pool_size;
 static long innobase_open_files;
 static long innobase_additional_mem_pool_size;
+static long innobase_force_recovery;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2284,6 +2285,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     if (err != DB_SUCCESS)
       goto innodb_error;
   }
+
+  err= ib_cfg_set_int("force_recovery", innobase_force_recovery);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
 
   err= ib_cfg_set_text("data_file_path", innodb_data_file_path);
   if (err != DB_SUCCESS)
@@ -2516,6 +2521,11 @@ static DRIZZLE_SYSVAR_STR(flush_method, innobase_unix_file_flush_method,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "With which method to flush data.", NULL, NULL, NULL);
 
+static DRIZZLE_SYSVAR_LONG(force_recovery, innobase_force_recovery,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Helps to save your data in case the disk image of the database becomes corrupt.",
+  NULL, NULL, 0, 0, 6, 0);
+
 static DRIZZLE_SYSVAR_STR(data_file_path, innodb_data_file_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Path to individual files and their sizes.",
@@ -2594,6 +2604,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(file_format),
   DRIZZLE_SYSVAR(flush_log_at_trx_commit),
   DRIZZLE_SYSVAR(flush_method),
+  DRIZZLE_SYSVAR(force_recovery),
   DRIZZLE_SYSVAR(log_group_home_dir),
   DRIZZLE_SYSVAR(data_file_path),
   DRIZZLE_SYSVAR(lock_wait_timeout),
