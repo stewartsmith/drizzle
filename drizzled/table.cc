@@ -1220,7 +1220,7 @@ int open_table_def(Session& session, TableIdentifier &identifier, TableShare *sh
 
   error= parse_table_proto(session, table, share);
 
-  share->table_category= TABLE_CATEGORY_USER;
+  share->setTableCategory(TABLE_CATEGORY_USER);
 
 err_not_open:
   if (error && !error_given)

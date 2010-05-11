@@ -236,13 +236,31 @@ public:
     mem_root.free_root(MYF(0));                 // Free's share
   };
 
+private:
   /** Category of this table. */
   enum_table_category table_category;
 
   uint32_t open_count;			/* Number of tables in open list */
+public:
+
+  bool isTemporaryCategory() const
+  {
+    return (table_category == TABLE_CATEGORY_TEMPORARY);
+  }
+
+  void setTableCategory(enum_table_category arg)
+  {
+    table_category= arg;
+  }
 
   /* The following is copied to each Table on OPEN */
   Field **field;
+  Field ** getFields()
+  {
+    return field;
+  }
+
+  
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
   KEY  *key_info;			/* data of keys in database */
