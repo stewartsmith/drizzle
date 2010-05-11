@@ -449,13 +449,13 @@ int ha_blitz::info(uint32_t flag) {
   return 0;
 }
 
-int ha_blitz::rnd_init(bool scan) {
+int ha_blitz::doStartTableScan(bool scan) {
   /* Obtain the most suitable lock for the given statement type */
   sql_command_type = session_sql_command(current_session);
   table_scan = scan;
   table_based = true;
 
-  /* This is unlocked at rnd_end() */
+  /* This is unlocked at doEndTableScan() */
   critical_section_enter();
 
   /* Get the first record from TCHDB. Let the scanner take
@@ -496,7 +496,7 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
   /* Memory region for "current_row" will be freed as "held key" on
      the next iteration. This is because "current_key" points to the
      region of memory that contains "current_row" and "held_key" points
-     to it. If there isn't another iteration then it is freed in rnd_end(). */
+     to it. If there isn't another iteration then it is freed in doEndTableScan(). */
   current_row = next_row;
   current_row_len = next_row_len;
 
@@ -514,7 +514,7 @@ int ha_blitz::rnd_next(unsigned char *drizzle_buf) {
   return 0;
 }
 
-int ha_blitz::rnd_end() {
+int ha_blitz::doEndTableScan() {
   if (table_scan && current_key)
     free(current_key);
   if (table_scan && held_key)
@@ -574,7 +574,7 @@ const char *ha_blitz::index_type(uint32_t /*key_num*/) {
   return "BTREE";
 }
 
-int ha_blitz::index_init(uint32_t key_num, bool) {
+int ha_blitz::doStartIndexScan(uint32_t key_num, bool) {
   active_index = key_num;
   sql_command_type = session_sql_command(current_session);
 
@@ -747,7 +747,7 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
   return 0;
 }
 
-int ha_blitz::index_end(void) {
+int ha_blitz::doEndIndexScan(void) {
   held_key = NULL;
   held_key_len = 0;
 

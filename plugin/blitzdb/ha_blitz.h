@@ -283,15 +283,15 @@ public:
   int info(uint32_t flag);
 
   /* TABLE SCANNER RELATED FUNCTIONS */
-  int rnd_init(bool scan);
+  int doStartTableScan(bool scan);
   int rnd_next(unsigned char *buf);
-  int rnd_end(void);
+  int doEndTableScan(void);
   int rnd_pos(unsigned char *buf, unsigned char *pos);
 
   void position(const unsigned char *record);
 
   /* INDEX RELATED FUNCTIONS */
-  int index_init(uint32_t key_num, bool sorted);
+  int doStartIndexScan(uint32_t key_num, bool sorted);
   int index_first(unsigned char *buf);
   int index_next(unsigned char *buf);
   int index_prev(unsigned char *buf);
@@ -301,7 +301,7 @@ public:
   int index_read_idx(unsigned char *buf, uint32_t key_num,
                      const unsigned char *key, uint32_t key_len,
                      enum drizzled::ha_rkey_function find_flag);
-  int index_end(void);
+  int doEndIndexScan(void);
 
   drizzled::ha_rows records_in_range(uint32_t key_num,
                                      drizzled::key_range *min_key,

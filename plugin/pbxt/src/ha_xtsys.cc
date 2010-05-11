@@ -58,18 +58,20 @@
  * HANDLER INTERFACE
  */
 
-ha_xtsys::ha_xtsys(handlerton *hton, TableShare& table_arg):
 #ifdef DRIZZLED
+ha_xtsys::ha_xtsys(handlerton *hton, TableShare& table_arg):
 handler(*hton, table_arg),
-#else
-handler(hton, table_arg),
-#endif
 ha_open_tab(NULL)
 {
-#ifndef DRIZZLED
-	init();
-#endif
 }
+#else
+ha_xtsys::ha_xtsys(handlerton *hton, TABLE_SHARE *table_arg):
+handler(hton, table_arg),
+ha_open_tab(NULL)
+{
+	init();
+}
+#endif
 
 static const char *ha_pbms_exts[] = {
 	"",
@@ -147,7 +149,7 @@ int ha_xtsys::close(void)
 	return err;
 }
 
-int ha_xtsys::rnd_init(bool XT_UNUSED(scan))
+int ha_xtsys::doStartTableScan(bool XT_UNUSED(scan))
 {
 	int err = 0;
 

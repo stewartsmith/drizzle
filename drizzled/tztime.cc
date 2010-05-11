@@ -19,6 +19,7 @@
 
 
 #include "config.h"
+#include <cstdio>
 #include "drizzled/tzfile.h"
 #include "drizzled/tztime.h"
 #include "drizzled/gettext.h"

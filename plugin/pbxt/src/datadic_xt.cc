@@ -396,7 +396,7 @@ void XTToken::expectNumber(XTThreadPtr self)
 struct charset_info_st;
 
 class XTTokenizer {
-	MX_CHARSET_INFO				*tkn_charset;
+	MX_CHARSET_INFO			*tkn_charset;
 	char					*tkn_cstring;
 	char					*tkn_curr_pos;
 	XTToken					*tkn_current;
@@ -1324,7 +1324,7 @@ void XTParseTable::parseDropIndex(XTThreadPtr self)
 class XTCreateTable : public XTParseTable {
 	public:
 	bool					ct_convert;
-	MX_CHARSET_INFO	*ct_charset;
+	MX_CHARSET_INFO			*ct_charset;
 	XTPathStrPtr			ct_tab_path;
 	u_int					ct_contraint_no;
 	XTDDTable				*ct_curr_table;

@@ -494,6 +494,7 @@ static inline void thd_init_xact(THD *thd, XTThreadPtr self, bool set_table_tran
 	self->st_abort_trans = FALSE;
 	self->st_stat_ended = FALSE;
 	self->st_stat_trans = FALSE;
+	self->st_non_temp_updated = FALSE;
 	XT_PRINT0(self, "xt_xn_begin\n");
 	xt_xres_wait_for_recovery(self, XT_RECOVER_SWEPT);
 }
@@ -2466,7 +2467,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		extra(HA_EXTRA_KEYREAD);
 		table->mark_columns_used_by_index_no_reset(TS(table)->next_number_index, table->read_set);
 		column_bitmaps_signal();
- 		index_init(TS(table)->next_number_index, 0);
+ 		doStartIndexScan(TS(table)->next_number_index, 0);
 		if (!TS(table)->next_number_key_offset) {
 			// Autoincrement at key-start
 			err = index_last(table->record[1]);
@@ -2492,7 +2493,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			}
 		}
 
-		index_end();
+		doEndIndexScan();
 		extra(HA_EXTRA_NO_KEYREAD);
 
 		/* {PRE-INC}
@@ -3173,7 +3174,7 @@ int ha_pbxt::xt_index_prev_read(XTOpenTablePtr ot, XTIndexPtr ind, xtBool key_on
 	return ha_log_pbxt_thread_error_for_mysql(FALSE);
 }
 
-int ha_pbxt::index_init(uint idx, bool XT_UNUSED(sorted))
+int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 {
 	XTIndexPtr	ind;
 	XTThreadPtr	thread = pb_open_tab->ot_thread;
@@ -3262,7 +3263,7 @@ int ha_pbxt::index_init(uint idx, bool XT_UNUSED(sorted))
 	return 0;
 }
 
-int ha_pbxt::index_end()
+int ha_pbxt::doEndIndexScan()
 {
 	int err = 0;
 
@@ -3571,7 +3572,7 @@ int ha_pbxt::index_first(byte * buf)
 	 * init init_index sometimes, for example:
 	 *
      * if (!table->file->inited)
-     *    table->file->ha_index_init(tab->index, tab->sorted);
+     *    table->file->startIndexScan(tab->index, tab->sorted);
      *  if ((error=tab->table->file->index_first(tab->table->record[0])))
 	 */
 	if (active_index == MAX_KEY) {
@@ -3659,15 +3660,15 @@ int ha_pbxt::index_last(byte * buf)
  */
  
 /*
- * rnd_init() is called when the system wants the storage engine to do a table
+ * doStartTableScan() is called when the system wants the storage engine to do a table
  * scan.
  * See the example in the introduction at the top of this file to see when
- * rnd_init() is called.
+ * doStartTableScan() is called.
  *
  * Called from filesort.cc, records.cc, sql_handler.cc, sql_select.cc, sql_table.cc,
  * and sql_update.cc.
  */
-int ha_pbxt::rnd_init(bool scan)
+int ha_pbxt::doStartTableScan(bool scan)
 {
 	int			err = 0;
 	XTThreadPtr	thread = pb_open_tab->ot_thread;
@@ -3677,15 +3678,15 @@ int ha_pbxt::rnd_init(bool scan)
 
 	/* Call xt_tab_seq_exit() to make sure the resources used by the previous
 	 * scan are freed. In particular make sure cache page ref count is decremented.
-	 * This is needed as rnd_init() can be called mulitple times w/o matching calls 
-	 * to rnd_end(). Our experience is that currently this is done in queries like:
+	 * This is needed as doStartTableScan() can be called mulitple times w/o matching calls 
+	 * to doEndTableScan(). Our experience is that currently this is done in queries like:
 	 *
 	 * SELECT t1.c1,t2.c1 FROM t1 LEFT JOIN t2 USING (c1);
 	 * UPDATE t1 LEFT JOIN t2 USING (c1) SET t1.c1 = t2.c1 WHERE t1.c1 = t2.c1;
 	 *
 	 * when scanning inner tables. It is important to understand that in such case
-	 * multiple calls to rnd_init() are not semantically equal to a new query. For
-	 * example we cannot make row locks permanent as we do in rnd_end(), as 
+	 * multiple calls to doStartTableScan() are not semantically equal to a new query. For
+	 * example we cannot make row locks permanent as we do in doEndTableScan(), as 
 	 * ha_pbxt::unlock_row still can be called.
 	 */
 	xt_tab_seq_exit(pb_open_tab);
@@ -3730,7 +3731,7 @@ int ha_pbxt::rnd_init(bool scan)
 	return err;
 }
 
-int ha_pbxt::rnd_end()
+int ha_pbxt::doEndTableScan()
 {
 	XT_TRACE_METHOD();
 
@@ -4628,12 +4629,6 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 				self->st_statistics.st_stat_read++;
 			self->st_stat_modify = FALSE;
 			self->st_import_stat = XT_IMP_NO_IMPORT;
-
-			/* Only reset this if there is no transactions running, and
-			 * no tables are open!
-			 */
-			if (!self->st_xact_data)
-				self->st_non_temp_opened = FALSE;
 		}
 
 		if (pb_table_locked) {
@@ -4845,10 +4840,6 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 			}
 #endif
 		}
-
-		/* Any open table can cause this to be FALSE: */
-		if (!XT_IS_TEMP_TABLE(pb_open_tab->ot_table->tab_dic.dic_tab_flags))
-			self->st_non_temp_opened = TRUE;
 
 		/* Start a statment transaction: */
 		/* {START-STAT-HACK} The problem that ha_commit_trans() is not
