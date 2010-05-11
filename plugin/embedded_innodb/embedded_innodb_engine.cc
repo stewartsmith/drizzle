@@ -2184,6 +2184,7 @@ static bool innobase_adaptive_hash_index;
 static bool srv_adaptive_flushing;
 static bool innobase_print_verbose_log;
 static bool innobase_rollback_on_timeout;
+static bool innobase_create_status_file;
 static char*  innobase_file_format_name   = NULL;
 static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
@@ -2472,6 +2473,26 @@ static void innodb_lru_block_access_recency_update(Session*, drizzle_sys_var*,
     innobase_lru_block_access_recency= ms;
 }
 
+static void innodb_status_file_update(Session*, drizzle_sys_var*,
+                                      void *,
+                                      const void *save)
+
+{
+  bool status_file_enabled;
+  ib_err_t err;
+
+  status_file_enabled= *static_cast<const bool*>(save);
+
+
+  if (status_file_enabled)
+    err= ib_cfg_set_bool_on("status_file");
+  else
+    err= ib_cfg_set_bool_off("status_file");
+
+  if (err == DB_SUCCESS)
+    innobase_create_status_file= status_file_enabled;
+}
+
 static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, innobase_adaptive_hash_index,
   PLUGIN_VAR_NOCMDARG,
   "Enable InnoDB adaptive hash index (enabled by default).  ",
@@ -2633,6 +2654,11 @@ static DRIZZLE_SYSVAR_BOOL(print_verbose_log, innobase_print_verbose_log,
   "Disable if you want to reduce the number of messages written to the log (default: enabled).",
   NULL, NULL, true);
 
+static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
+  PLUGIN_VAR_OPCMDARG,
+  "Enable SHOW INNODB STATUS output in the log",
+  NULL, innodb_status_file_update, false);
+
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(adaptive_flushing),
@@ -2664,6 +2690,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(rollback_on_timeout),
   DRIZZLE_SYSVAR(write_io_threads),
   DRIZZLE_SYSVAR(print_verbose_log),
+  DRIZZLE_SYSVAR(status_file),
   NULL
 };
 
