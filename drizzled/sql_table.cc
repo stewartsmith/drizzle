@@ -1140,15 +1140,19 @@ static int mysql_prepare_create_table(Session *session,
       key_part_info->length=(uint16_t) length;
       /* Use packed keys for long strings on the first column */
       if (!((*db_options) & HA_OPTION_NO_PACK_KEYS) &&
-	  (length >= KEY_DEFAULT_PACK_LENGTH &&
-	   (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR ||
-      sql_field->sql_type == DRIZZLE_TYPE_BLOB)))
+          (length >= KEY_DEFAULT_PACK_LENGTH &&
+           (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR ||
+            sql_field->sql_type == DRIZZLE_TYPE_BLOB)))
       {
         if ((column_nr == 0 && sql_field->sql_type == DRIZZLE_TYPE_BLOB) ||
             sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)
+        {
           key_info->flags|= HA_BINARY_PACK_KEY | HA_VAR_LENGTH_KEY;
+        }
         else
+        {
           key_info->flags|= HA_PACK_KEY;
+        }
       }
       /* Check if the key segment is partial, set the key flag accordingly */
       if (length != sql_field->key_length)

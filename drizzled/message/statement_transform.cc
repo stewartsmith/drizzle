@@ -1004,12 +1004,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     ss.clear();
   }
 
-  if (options.has_pack_keys() &&
-      options.pack_keys())
-    destination.append("\nPACK_KEYS = TRUE", 17);
-  if (options.has_pack_record() &&
-      options.pack_record())
-    destination.append("\nPACK_RECORD = TRUE", 19);
   if (options.has_checksum() &&
       options.checksum())
     destination.append("\nCHECKSUM = TRUE", 16);

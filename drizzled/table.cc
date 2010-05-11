@@ -214,14 +214,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   uint32_t local_db_create_options= 0;
 
-  if (table_options.has_pack_keys())
-  {
-    if (table_options.pack_keys())
-      local_db_create_options|= HA_OPTION_PACK_KEYS;
-    else
-      local_db_create_options|= HA_OPTION_NO_PACK_KEYS;
-  }
-
   if (table_options.pack_record())
     local_db_create_options|= HA_OPTION_PACK_RECORD;
 

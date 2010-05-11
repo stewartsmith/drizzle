@@ -554,10 +554,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
     packet->append(STRING_WITH_LEN(" ENGINE="));
     packet->append(cursor->getEngine()->getName().c_str());
 
-    if (share->db_create_options & HA_OPTION_PACK_KEYS)
-      packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
-    if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
-      packet->append(STRING_WITH_LEN(" PACK_KEYS=0"));
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
