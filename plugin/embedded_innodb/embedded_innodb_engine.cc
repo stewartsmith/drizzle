@@ -2185,6 +2185,7 @@ static bool srv_adaptive_flushing;
 static bool innobase_print_verbose_log;
 static bool innobase_rollback_on_timeout;
 static bool innobase_create_status_file;
+static bool srv_use_sys_malloc;
 static char*  innobase_file_format_name   = NULL;
 static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
@@ -2357,6 +2358,14 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("sync_spin_loops", srv_n_spin_wait_rounds);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  if (srv_use_sys_malloc)
+    err= ib_cfg_set_bool_on("use_sys_malloc");
+  else
+    err= ib_cfg_set_bool_off("use_sys_malloc");
+
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2669,6 +2678,11 @@ static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
   "Count of spin-loop rounds in InnoDB mutexes (30 by default)",
   NULL, NULL, 30L, 0L, ~0L, 0);
 
+static DRIZZLE_SYSVAR_BOOL(use_sys_malloc, srv_use_sys_malloc,
+  PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
+  "Use OS memory allocator instead of InnoDB's internal memory allocator",
+  NULL, NULL, true);
+
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(adaptive_flushing),
@@ -2702,6 +2716,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(print_verbose_log),
   DRIZZLE_SYSVAR(status_file),
   DRIZZLE_SYSVAR(sync_spin_loops),
+  DRIZZLE_SYSVAR(use_sys_malloc),
   NULL
 };
 
