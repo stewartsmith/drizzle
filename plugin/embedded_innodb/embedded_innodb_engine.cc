@@ -2196,6 +2196,7 @@ static unsigned long innobase_read_io_threads;
 static unsigned long innobase_write_io_threads;
 static unsigned int srv_auto_extend_increment;
 static unsigned long innobase_lock_wait_timeout;
+static unsigned long srv_n_spin_wait_rounds;
 static int64_t innobase_buffer_pool_size;
 static long innobase_open_files;
 static long innobase_additional_mem_pool_size;
@@ -2352,6 +2353,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("write_io_threads", innobase_write_io_threads);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("sync_spin_loops", srv_n_spin_wait_rounds);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2659,6 +2664,11 @@ static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
   "Enable SHOW INNODB STATUS output in the log",
   NULL, innodb_status_file_update, false);
 
+static DRIZZLE_SYSVAR_ULONG(sync_spin_loops, srv_n_spin_wait_rounds,
+  PLUGIN_VAR_RQCMDARG,
+  "Count of spin-loop rounds in InnoDB mutexes (30 by default)",
+  NULL, NULL, 30L, 0L, ~0L, 0);
+
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(adaptive_flushing),
@@ -2691,6 +2701,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(write_io_threads),
   DRIZZLE_SYSVAR(print_verbose_log),
   DRIZZLE_SYSVAR(status_file),
+  DRIZZLE_SYSVAR(sync_spin_loops),
   NULL
 };
 
