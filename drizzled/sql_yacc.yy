@@ -1229,15 +1229,6 @@ create_table_option:
 
             protoengine->set_name($3.str);
           }
-        | BLOCK_SIZE_SYM opt_equal ulong_num
-          {
-	    message::Table::TableOptions *tableopts;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
-
-            tableopts->set_block_size($3);
-            statement->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
-          }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
 	    message::Table::TableOptions *tableopts;
