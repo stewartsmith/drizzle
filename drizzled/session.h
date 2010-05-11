@@ -59,8 +59,7 @@ namespace plugin
 {
 class Client;
 class Scheduler;
-class SessionEventObserverList;
-class SchemaEventObserverList;
+class EventObserverList;
 }
 
 namespace message
@@ -1255,27 +1254,27 @@ private:
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
   message::Statement *statement_message;
-  plugin::SessionEventObserverList *session_event_observers;
+  plugin::EventObserverList *session_event_observers;
   
   /* Schema observers are mapped to databases. */
-  std::map<std::string, plugin::SchemaEventObserverList *> schema_event_observers;
+  std::map<std::string, plugin::EventObserverList *> schema_event_observers;
 
  
 public:
-  plugin::SessionEventObserverList *getSessionObservers() 
+  plugin::EventObserverList *getSessionObservers() 
   { 
     return session_event_observers;
   }
   
-  void setSessionObservers(plugin::SessionEventObserverList *observers) 
+  void setSessionObservers(plugin::EventObserverList *observers) 
   { 
     session_event_observers= observers;
   }
   
   /* For schema event observers there is one set of observers per database. */
-  plugin::SchemaEventObserverList *getSchemaObservers(const std::string &db_name) 
+  plugin::EventObserverList *getSchemaObservers(const std::string &db_name) 
   { 
-    std::map<std::string, plugin::SchemaEventObserverList *>::iterator it;
+    std::map<std::string, plugin::EventObserverList *>::iterator it;
     
     it= schema_event_observers.find(db_name);
     if (it == schema_event_observers.end())
@@ -1284,9 +1283,9 @@ public:
     return it->second;
   }
   
-  void setSchemaObservers(const std::string &db_name, plugin::SchemaEventObserverList *observers) 
+  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers) 
   { 
-    std::map<std::string, plugin::SchemaEventObserverList *>::iterator it;
+    std::map<std::string, plugin::EventObserverList *>::iterator it;
 
     it= schema_event_observers.find(db_name);
     if (it != schema_event_observers.end())

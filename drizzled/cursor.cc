@@ -1485,14 +1485,14 @@ int Cursor::insertRecord(unsigned char *buf)
   DRIZZLE_INSERT_ROW_START(table->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   
-  if (unlikely(plugin::EventObserver::preWriteRowDo(*(table->in_use), *table_share, buf)))
+  if (unlikely(plugin::EventObserver::beforeInsertRecord(*(table->in_use), *table_share, buf)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doInsertRecord(buf);
-    if (unlikely(plugin::EventObserver::postWriteRowDo(*(table->in_use), *table_share, buf, error))) 
+    if (unlikely(plugin::EventObserver::afterInsertRecord(*(table->in_use), *table_share, buf, error))) 
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1524,14 +1524,14 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  if (unlikely(plugin::EventObserver::preUpdateRowDo(*(table->in_use), *table_share, old_data, new_data)))
+  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*(table->in_use), *table_share, old_data, new_data)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doUpdateRecord(old_data, new_data);
-    if (unlikely(plugin::EventObserver::postUpdateRowDo(*(table->in_use), *table_share, old_data, new_data, error)))
+    if (unlikely(plugin::EventObserver::afterUpdateRecord(*(table->in_use), *table_share, old_data, new_data, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1556,14 +1556,14 @@ int Cursor::deleteRecord(const unsigned char *buf)
 
   DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  if (unlikely(plugin::EventObserver::preDeleteRowDo(*(table->in_use), *table_share, buf)))
+  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*(table->in_use), *table_share, buf)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doDeleteRecord(buf);
-    if (unlikely(plugin::EventObserver::postDeleteRowDo(*(table->in_use), *table_share, buf, error)))
+    if (unlikely(plugin::EventObserver::afterDeleteRecord(*(table->in_use), *table_share, buf, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }

@@ -102,14 +102,14 @@ int StorageEngine::renameTable(Session &session, TableIdentifier &from, TableIde
   int error;
   setTransactionReadWrite(session);
 
-  if (unlikely(plugin::EventObserver::preRenameTableDo(session, from, to)))
+  if (unlikely(plugin::EventObserver::beforeRenameTable(session, from, to)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error =  doRenameTable(session, from, to);
-    if (unlikely(plugin::EventObserver::postRenameTableDo(session, from, to, error)))
+    if (unlikely(plugin::EventObserver::afterRenameTable(session, from, to, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -480,14 +480,14 @@ int StorageEngine::dropTable(Session& session,
 
   engine.setTransactionReadWrite(session);
   
-  if (unlikely(plugin::EventObserver::preDropTableDo(session, identifier)))
+  if (unlikely(plugin::EventObserver::beforeDropTable(session, identifier)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= engine.doDropTable(session, identifier);
-    if (unlikely(plugin::EventObserver::postDropTableDo(session, identifier, error)))
+    if (unlikely(plugin::EventObserver::afterDropTable(session, identifier, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }

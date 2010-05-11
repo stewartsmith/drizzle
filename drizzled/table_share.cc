@@ -110,7 +110,7 @@ void TableShare::release(TableShare *share)
     const string key_string(share->table_cache_key.str,
                             share->table_cache_key.length);
                             
-    plugin::EventObserver::deregisterTableEventsDo(*share);
+    plugin::EventObserver::deregisterTableEvents(*share);
    
     TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
     if (iter != table_def_cache.end())
@@ -135,7 +135,7 @@ void TableShare::release(const char *key, uint32_t key_length)
     if (share->ref_count == 0)
     {
       pthread_mutex_lock(&share->mutex);
-      plugin::EventObserver::deregisterTableEventsDo(*share);
+      plugin::EventObserver::deregisterTableEvents(*share);
       share->free_table_share();
       table_def_cache.erase(key_string);
     }
@@ -239,7 +239,7 @@ TableShare *TableShare::getShare(Session *session,
   }
   share->ref_count++;				// Mark in use
   
-  plugin::EventObserver::registerTableEventsDo(*share);
+  plugin::EventObserver::registerTableEvents(*share);
   
   (void) pthread_mutex_unlock(&share->mutex);
 

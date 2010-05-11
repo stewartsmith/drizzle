@@ -47,7 +47,7 @@ const static std::string FUNCTION_STRING("FUNCTION");
 
 namespace plugin
 {
-class TableEventObserverList;
+class EventObserverList;
 }
 
 class TableShare
@@ -421,14 +421,14 @@ public:
     registered an interest in this table.
   */
   private:
-  plugin::TableEventObserverList *event_observers;
+  plugin::EventObserverList *event_observers;
   public:
-  plugin::TableEventObserverList *getTableObservers() 
+  plugin::EventObserverList *getTableObservers() 
   { 
     return event_observers;
   }
   
-  void setTableObservers(plugin::TableEventObserverList *observers) 
+  void setTableObservers(plugin::EventObserverList *observers) 
   { 
     event_observers= observers;
   }

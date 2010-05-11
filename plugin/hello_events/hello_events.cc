@@ -58,164 +58,164 @@ static char *sysvar_db_list= NULL;
  * or the last position (-1) in the calling order, for example it makes no sence 
  * to initially ask to be called in position 13.
  */
-static int sysvar_pre_write_position= 1;      // Call this event observer first.
-static int sysvar_pre_update_position= 1;
-static int sysvar_post_drop_db_position= -1;  // I want my event observer to be called last. No reason, I just do!
+static int32_t sysvar_before_write_position= 1;      // Call this event observer first.
+static int32_t sysvar_before_update_position= 1;
+static int32_t sysvar_post_drop_db_position= -1;  // I want my event observer to be called last. No reason, I just do!
 
 
 //==================================
 // My table event observers: 
-static bool preWriteRow(PreWriteRowEventData &data)
+static bool observeBeforeInsertRecord(BeforeInsertRecordEventData &data)
 {
 
-  fprintf(stderr, PLUGIN_NAME" EVENT preWriteRow(%s)\n", data.table.getTableName());
+  fprintf(stderr, PLUGIN_NAME" EVENT observeBeforeInsertRecord(%s)\n", data.table.getTableName());
   return false;
 }
 
 //---
-static void postWriteRow(PostWriteRowEventData &data)
+static void observeAfterInsertRecord(AfterInsertRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT postWriteRow(%s) err = %d\n", data.table.getTableName(), data.err);
+  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterInsertRecord(%s) err = %d\n", data.table.getTableName(), data.err);
 }
 
 //---
-static bool preDeleteRow(PreDeleteRowEventData &data)
+static bool observeBeforeDeleteRecord(BeforeDeleteRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT preDeleteRow(%s)\n", data.table.getTableName());
+  fprintf(stderr, PLUGIN_NAME" EVENT observeBeforeDeleteRecord(%s)\n", data.table.getTableName());
   return false;
 }
 
 //---
-static void postDeleteRow(PostDeleteRowEventData &data)
+static void observeAfterDeleteRecord(AfterDeleteRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT postDeleteRow(%s) err = %d\n", data.table.getTableName(), data.err);
+  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterDeleteRecord(%s) err = %d\n", data.table.getTableName(), data.err);
 }
 
 //---
-static bool preUpdateRow(PreUpdateRowEventData &data)
+static bool observeBeforeUpdateRecord(BeforeUpdateRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT preUpdateRow(%s)\n", data.table.getTableName());
+  fprintf(stderr, PLUGIN_NAME" EVENT observeBeforeUpdateRecord(%s)\n", data.table.getTableName());
   return false;
 }
 
 //---
-static void postUpdateRow(PostUpdateRowEventData &data)
+static void observeAfterUpdateRecord(AfterUpdateRecordEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT postUpdateRow(%s) err = %d\n", data.table.getTableName(), data.err);
+  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterUpdateRecord(%s) err = %d\n", data.table.getTableName(), data.err);
 }
 
 //==================================
 // My schema event observers: 
-static void postDropTable(PostDropTableEventData &data)
+static void observeAfterDropTable(AfterDropTableEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT postDropTable(%s) err = %d\n", data.table.getTableName().c_str(), data.err);
+  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterDropTable(%s) err = %d\n", data.table.getTableName().c_str(), data.err);
 }
 
 //---
-static void postRenameTable(PostRenameTableEventData &data)
+static void observeAfterRenameTable(AfterRenameTableEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT postRenameTable(%s, %s) err = %d\n", data.from.getTableName().c_str(), data.to.getTableName().c_str(), data.err);
+  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterRenameTable(%s, %s) err = %d\n", data.from.getTableName().c_str(), data.to.getTableName().c_str(), data.err);
 }
 
 //---
-static void postCreateDatabase(PostCreateDatabaseEventData &data)
+static void observeAfterCreateDatabase(AfterCreateDatabaseEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT postCreateDatabase(%s) err = %d\n", data.db.c_str(), data.err);
+  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterCreateDatabase(%s) err = %d\n", data.db.c_str(), data.err);
 }
 
 //---
-static void postDropDatabase(PostDropDatabaseEventData &data)
+static void observeAfterDropDatabase(AfterDropDatabaseEventData &data)
 {
-  fprintf(stderr, PLUGIN_NAME" EVENT postDropDatabase(%s) err = %d\n", data.db.c_str(), data.err);
+  fprintf(stderr, PLUGIN_NAME" EVENT observeAfterDropDatabase(%s) err = %d\n", data.db.c_str(), data.err);
 }
 
 //==================================
 /* This is where I register which table events my pluggin is interested in.*/
-void HelloEvents::registerTableEvents(TableShare &table_share, EventObserverList &observers)
+void HelloEvents::registerTableEventsDo(TableShare &table_share, EventObserverList &observers)
 {
   if ((is_enabled == false) 
     || !isTableInteresting(table_share.getTableName())
     || !isDatabaseInteresting(table_share.getSchemaName()))
     return;
     
-  registerEvent(observers, PRE_WRITE_ROW, sysvar_pre_write_position); // I want to be called first if passible
-  registerEvent(observers, POST_WRITE_ROW);
-  registerEvent(observers, PRE_UPDATE_ROW, sysvar_pre_update_position);
-  registerEvent(observers, POST_UPDATE_ROW);
-  registerEvent(observers, PRE_DELETE_ROW);
-  registerEvent(observers, POST_DELETE_ROW);
+  registerEvent(observers, BEFORE_INSERT_RECORD, sysvar_before_write_position); // I want to be called first if passible
+  registerEvent(observers, AFTER_INSERT_RECORD);
+  registerEvent(observers, BEFORE_UPDATE_RECORD, sysvar_before_update_position);
+  registerEvent(observers, AFTER_UPDATE_RECORD);
+  registerEvent(observers, BEFORE_DELETE_RECORD);
+  registerEvent(observers, AFTER_DELETE_RECORD);
 }
 
 //==================================
 /* This is where I register which schema events my pluggin is interested in.*/
-void HelloEvents::registerSchemaEvents(const std::string &db, EventObserverList &observers)
+void HelloEvents::registerSchemaEventsDo(const std::string &db, EventObserverList &observers)
 {
   if ((is_enabled == false) 
     || !isDatabaseInteresting(db))
     return;
     
-  registerEvent(observers, POST_DROP_TABLE);
-  registerEvent(observers, POST_RENAME_TABLE);
+  registerEvent(observers, AFTER_DROP_TABLE);
+  registerEvent(observers, AFTER_RENAME_TABLE);
 }
 
 //==================================
 /* This is where I register which session events my pluggin is interested in.*/
-void HelloEvents::registerSessionEvents(Session &session, EventObserverList &observers)
+void HelloEvents::registerSessionEventsDo(Session &session, EventObserverList &observers)
 {
   if ((is_enabled == false) 
     || !isSessionInteresting(session))
     return;
     
-  registerEvent(observers, POST_CREATE_DATABASE);
-  registerEvent(observers, POST_DROP_DATABASE, sysvar_post_drop_db_position);
+  registerEvent(observers, AFTER_CREATE_DATABASE);
+  registerEvent(observers, AFTER_DROP_DATABASE, sysvar_post_drop_db_position);
 }
 
 
 //==================================
 /* The event observer.*/
-bool HelloEvents::observeEvent(EventData &data)
+bool HelloEvents::observeEventDo(EventData &data)
 {
   bool result= false;
   
   switch (data.event) {
-  case POST_DROP_TABLE:
-    postDropTable((PostDropTableEventData &)data);
+  case AFTER_DROP_TABLE:
+    observeAfterDropTable((AfterDropTableEventData &)data);
     break;
     
-  case POST_RENAME_TABLE:
-    postRenameTable((PostRenameTableEventData &)data);
+  case AFTER_RENAME_TABLE:
+    observeAfterRenameTable((AfterRenameTableEventData &)data);
     break;
     
-  case PRE_WRITE_ROW:
-     result = preWriteRow((PreWriteRowEventData &)data);
+  case BEFORE_INSERT_RECORD:
+     result = observeBeforeInsertRecord((BeforeInsertRecordEventData &)data);
     break;
     
-  case POST_WRITE_ROW:
-    postWriteRow((PostWriteRowEventData &)data);
+  case AFTER_INSERT_RECORD:
+    observeAfterInsertRecord((AfterInsertRecordEventData &)data);
     break;     
        
-  case PRE_UPDATE_ROW:
-    result = preUpdateRow((PreUpdateRowEventData &)data);
+  case BEFORE_UPDATE_RECORD:
+    result = observeBeforeUpdateRecord((BeforeUpdateRecordEventData &)data);
     break;
              
-  case POST_UPDATE_ROW:
-     postUpdateRow((PostUpdateRowEventData &)data);
+  case AFTER_UPDATE_RECORD:
+     observeAfterUpdateRecord((AfterUpdateRecordEventData &)data);
     break;     
     
-  case PRE_DELETE_ROW:
-    result = preDeleteRow((PreDeleteRowEventData &)data);
+  case BEFORE_DELETE_RECORD:
+    result = observeBeforeDeleteRecord((BeforeDeleteRecordEventData &)data);
     break;
 
-  case POST_DELETE_ROW:
-    postDeleteRow((PostDeleteRowEventData &)data);
+  case AFTER_DELETE_RECORD:
+    observeAfterDeleteRecord((AfterDeleteRecordEventData &)data);
     break;
 
-  case POST_CREATE_DATABASE:
-    postCreateDatabase((PostCreateDatabaseEventData &)data);
+  case AFTER_CREATE_DATABASE:
+    observeAfterCreateDatabase((AfterCreateDatabaseEventData &)data);
     break;
 
-  case POST_DROP_DATABASE:
-    postDropDatabase((PostDropDatabaseEventData &)data);
+  case AFTER_DROP_DATABASE:
+    observeAfterDropDatabase((AfterDropDatabaseEventData &)data);
     break;
 
   default:
@@ -316,10 +316,10 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            enable, /* update func */
                            false /* default */);
 
-static DRIZZLE_SYSVAR_INT(pre_write_position,
-                           sysvar_pre_write_position,
+static DRIZZLE_SYSVAR_INT(before_write_position,
+                           sysvar_before_write_position,
                            PLUGIN_VAR_NOCMDARG,
-                           N_("Pre write row event observer call position"),
+                           N_("Before write row event observer call position"),
                            NULL, /* check func */
                            NULL, /* update func */
                            1, /* default */
@@ -327,10 +327,10 @@ static DRIZZLE_SYSVAR_INT(pre_write_position,
                            INT32_MAX -1, /* max */
                            0 /* blk */);
 
-static DRIZZLE_SYSVAR_INT(pre_update_position,
-                           sysvar_pre_update_position,
+static DRIZZLE_SYSVAR_INT(before_update_position,
+                           sysvar_before_update_position,
                            PLUGIN_VAR_NOCMDARG,
-                           N_("Pre update row event observer call position"),
+                           N_("Before update row event observer call position"),
                            NULL, /* check func */
                            NULL, /* update func */
                            1, /* default */
@@ -341,7 +341,7 @@ static DRIZZLE_SYSVAR_INT(pre_update_position,
 static DRIZZLE_SYSVAR_INT(post_drop_db_position,
                            sysvar_post_drop_db_position,
                            PLUGIN_VAR_NOCMDARG,
-                           N_("Post drop database event observer call position"),
+                           N_("After drop database event observer call position"),
                            NULL, /* check func */
                            NULL, /* update func */
                            -1, /* default */
@@ -353,8 +353,8 @@ static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(watch_databases),
   DRIZZLE_SYSVAR(watch_tables),
   DRIZZLE_SYSVAR(enable),
-  DRIZZLE_SYSVAR(pre_write_position),
-  DRIZZLE_SYSVAR(pre_update_position),
+  DRIZZLE_SYSVAR(before_write_position),
+  DRIZZLE_SYSVAR(before_update_position),
   DRIZZLE_SYSVAR(post_drop_db_position),
   NULL
 };

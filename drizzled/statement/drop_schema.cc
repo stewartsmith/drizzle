@@ -53,14 +53,14 @@ bool statement::DropSchema::execute()
   }
   
   bool res = true;
-  if (unlikely(plugin::EventObserver::preDropDatabaseDo(*session, schema_identifier.getSQLPath()))) 
+  if (unlikely(plugin::EventObserver::beforeDropDatabase(*session, schema_identifier.getSQLPath()))) 
   {
     my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
   }
   else
   {
     res= mysql_rm_db(session, schema_identifier, drop_if_exists);
-    if (unlikely(plugin::EventObserver::postDropDatabaseDo(*session, schema_identifier.getSQLPath(), res)))
+    if (unlikely(plugin::EventObserver::afterDropDatabase(*session, schema_identifier.getSQLPath(), res)))
     {
       my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
       res = false;

@@ -43,11 +43,11 @@ public:
 
   HelloEvents(std::string name_arg): EventObserver(name_arg), is_enabled(false), db_list(""), table_list(""){}
 
-  void registerTableEvents(TableShare &table_share, EventObserverList &observers);
-  void registerSchemaEvents(const std::string &db, EventObserverList &observers);
-  void registerSessionEvents(Session &session, EventObserverList &observers);
+  void registerTableEventsDo(TableShare &table_share, EventObserverList &observers);
+  void registerSchemaEventsDo(const std::string &db, EventObserverList &observers);
+  void registerSessionEventsDo(Session &session, EventObserverList &observers);
 
-  bool observeEvent(EventData &);
+  bool observeEventDo(EventData &);
 
   // Some custom things for my plugin:
   void enable() { is_enabled= true;}

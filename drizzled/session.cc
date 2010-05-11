@@ -266,7 +266,7 @@ Session::Session(plugin::Client *client_arg)
 
   m_internal_handler= NULL;
   
-  plugin::EventObserver::registerSessionEventsDo(*this); 
+  plugin::EventObserver::registerSessionEvents(*this); 
 }
 
 void Session::free_items()
@@ -372,7 +372,7 @@ Session::~Session()
   pthread_setspecific(THR_Session,  0);
 
   plugin::Logging::postEndDo(this);
-  plugin::EventObserver::deregisterSessionEventsDo(*this); 
+  plugin::EventObserver::deregisterSessionEvents(*this); 
 
   /* Ensure that no one is using Session */
   pthread_mutex_unlock(&LOCK_delete);
