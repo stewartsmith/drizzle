@@ -559,12 +559,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
       packet->append(ha_row_type[(uint32_t) create_info.row_type]);
     }
-    if (table->s->hasKeyBlockSize())
-    {
-      packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-      buff= to_string(table->s->getKeyBlockSize());
-      packet->append(buff.c_str(), buff.length());
-    }
     if (share->block_size)
     {
       packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
@@ -583,23 +577,13 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   return(0);
 }
 
-static void store_key_options(String *packet, Table *table, KEY *key_info)
+static void store_key_options(String *packet, Table *, KEY *key_info)
 {
-  char *end, buff[32];
-
   if (key_info->algorithm == HA_KEY_ALG_BTREE)
     packet->append(STRING_WITH_LEN(" USING BTREE"));
 
   if (key_info->algorithm == HA_KEY_ALG_HASH)
     packet->append(STRING_WITH_LEN(" USING HASH"));
-
-  if ((key_info->flags & HA_USES_BLOCK_SIZE) &&
-      table->s->getKeyBlockSize() != key_info->block_size)
-  {
-    packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-    end= internal::int64_t10_to_str(key_info->block_size, buff, 10);
-    packet->append(buff, (uint32_t) (end - buff));
-  }
 
   assert(test(key_info->flags & HA_USES_COMMENT) ==
               (key_info->comment.length > 0));

@@ -1293,16 +1293,6 @@ create_table_option:
             }
           }
         | default_collation
-        | KEY_BLOCK_SIZE opt_equal ulong_num
-          {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            statement->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
-
-            message::Table::TableOptions *tableopts;
-            tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
-            tableopts->set_key_block_size($3);
-          }
         ;
 
 default_collation:

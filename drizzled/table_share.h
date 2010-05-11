@@ -450,16 +450,6 @@ public:
     return (table_proto) ? table_proto->options().comment().length() : 0; 
   }
 
-  inline bool hasKeyBlockSize()
-  {
-    return (table_proto) ? table_proto->options().has_key_block_size() : false;
-  }
-
-  inline uint32_t getKeyBlockSize()
-  {
-    return (table_proto) ? table_proto->options().key_block_size() : 0;
-  }
-
   inline uint64_t getMaxRows()
   {
     return max_rows;

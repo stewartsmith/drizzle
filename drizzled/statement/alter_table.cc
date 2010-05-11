@@ -249,14 +249,6 @@ static bool mysql_prepare_alter_table(Session *session,
     table->cursor->info(HA_STATUS_AUTO);
     create_info->auto_increment_value= table->cursor->stats.auto_increment_value;
   }
-  if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
-      && table->s->hasKeyBlockSize())
-    table_options->set_key_block_size(table->s->getKeyBlockSize());
-
-  if ((used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
-      && table_options->key_block_size() == 0)
-    table_options->clear_key_block_size();
-
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
   CreateField *def;
 

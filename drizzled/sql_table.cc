@@ -951,18 +951,6 @@ static int mysql_prepare_create_table(Session *session,
     key_info->usable_key_parts= key_number;
     key_info->algorithm= key->key_create_info.algorithm;
 
-    /* Take block size from key part or table part */
-    /*
-      TODO: Add warning if block size changes. We can't do it here, as
-      this may depend on the size of the key
-    */
-    key_info->block_size= (key->key_create_info.block_size ?
-                           key->key_create_info.block_size :
-                           create_proto.options().key_block_size());
-
-    if (key_info->block_size)
-      key_info->flags|= HA_USES_BLOCK_SIZE;
-
     uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
                                            key->key_create_info.comment.str,
                                            key->key_create_info.comment.str +

@@ -988,22 +988,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     ss.clear();
   }
 
-  if (options.has_key_block_size())
-  {
-    ss << options.key_block_size();
-    destination.append("\nKEY_BLOCK_SIZE = ", 18);
-    destination.append(ss.str());
-    ss.clear();
-  }
-
-  if (options.has_block_size())
-  {
-    ss << options.block_size();
-    destination.append("\nBLOCK_SIZE = ", 14);
-    destination.append(ss.str());
-    ss.clear();
-  }
-
   if (options.has_checksum() &&
       options.checksum())
     destination.append("\nCHECKSUM = TRUE", 16);

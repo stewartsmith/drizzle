@@ -2,30 +2,6 @@ DROP TABLE IF EXISTS t1, `"t"1`, t1aa, t2, t2aa, t3;
 drop database if exists mysqldump_test_db;
 drop database if exists db1;
 drop database if exists db2;
-CREATE TABLE t1(a int, key (a)) key_block_size=1024;
-Warnings:
-Warning	1478	InnoDB: KEY_BLOCK_SIZE requires innodb_file_per_table.
-Warning	1478	InnoDB: KEY_BLOCK_SIZE requires innodb_file_format > Antelope.
-Warning	1478	InnoDB: ignoring KEY_BLOCK_SIZE=1024.
-INSERT INTO t1 VALUES (1), (2);
-<?xml version="1.0"?>
-<drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<database name="test">
-	<table_structure name="t1">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
-		<key Table="t1" Unique="FALSE" Key_name="a" Seq_in_index="1" Column_name="a" />
-	</table_structure>
-	<table_data name="t1">
-	<row>
-		<field name="a">1</field>
-	</row>
-	<row>
-		<field name="a">2</field>
-	</row>
-	</table_data>
-</database>
-</drizzledump>
-DROP TABLE t1;
 #
 # Bug #2005
 #
