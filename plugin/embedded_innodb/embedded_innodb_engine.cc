@@ -1939,11 +1939,7 @@ static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
     }
     else if (field->type() == DRIZZLE_TYPE_DATE)
     {
-      uint32_t date_int= 0;
-      char *date_ptr= (char*)&date_int;
-      date_ptr[0]= buff[0];
-      date_ptr[1]= buff[1];
-      date_ptr[2]= buff[2];
+      uint32_t date_int= static_cast<uint32_t>(field->val_int());
       err= ib_col_set_value(search_tuple, fieldnr, &date_int, 4);
       buff+= key_part->length;
     }
