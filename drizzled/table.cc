@@ -191,11 +191,10 @@ static Item *default_value_item(enum_field_types field_type,
   return default_item;
 }
 
-static int inner_parse_table_proto(Session& session,
-				   message::Table &table,
-				   TableShare *share)
+int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 {
-  int error= 0;
+  TableShare *share= this;
+  int local_error= 0;
 
   if (! table.IsInitialized())
   {
@@ -213,23 +212,23 @@ static int inner_parse_table_proto(Session& session,
   if (table.has_options())
     table_options= table.options();
 
-  uint32_t db_create_options= 0;
+  uint32_t local_db_create_options= 0;
 
   if (table_options.has_pack_keys())
   {
     if (table_options.pack_keys())
-      db_create_options|= HA_OPTION_PACK_KEYS;
+      local_db_create_options|= HA_OPTION_PACK_KEYS;
     else
-      db_create_options|= HA_OPTION_NO_PACK_KEYS;
+      local_db_create_options|= HA_OPTION_NO_PACK_KEYS;
   }
 
   if (table_options.pack_record())
-    db_create_options|= HA_OPTION_PACK_RECORD;
+    local_db_create_options|= HA_OPTION_PACK_RECORD;
 
-  /* db_create_options was stored as 2 bytes in FRM
+  /* local_db_create_options was stored as 2 bytes in FRM
      Any HA_OPTION_ that doesn't fit into 2 bytes was silently truncated away.
    */
-  share->db_create_options= (db_create_options & 0x0000FFFF);
+  share->db_create_options= (local_db_create_options & 0x0000FFFF);
   share->db_options_in_use= share->db_create_options;
 
   share->row_type= table_options.has_row_type() ?
@@ -408,7 +407,7 @@ static int inner_parse_table_proto(Session& session,
   share->field= (Field**) share->alloc_root(((share->fields+1) * sizeof(Field*)));
   share->field[share->fields]= NULL;
 
-  uint32_t null_fields= 0;
+  uint32_t local_null_fields= 0;
   share->reclength= 0;
 
   vector<uint32_t> field_offsets;
@@ -426,7 +425,7 @@ static int inner_parse_table_proto(Session& session,
   {
     message::Table::Field pfield= table.field(fieldnr);
     if (pfield.constraints().is_nullable())
-      null_fields++;
+      local_null_fields++;
 
     enum_field_types drizzle_field_type=
       proto_field_type_to_drizzle_type(pfield.type());
@@ -484,9 +483,9 @@ static int inner_parse_table_proto(Session& session,
   /* data_offset added to stored_rec_length later */
   share->stored_rec_length= stored_columns_reclength;
 
-  share->null_fields= null_fields;
+  share->null_fields= local_null_fields;
 
-  ulong null_bits= null_fields;
+  ulong null_bits= local_null_fields;
   if (! table_options.pack_record())
     null_bits++;
   ulong data_offset= (null_bits + 7)/8;
@@ -495,17 +494,17 @@ static int inner_parse_table_proto(Session& session,
   share->reclength+= data_offset;
   share->stored_rec_length+= data_offset;
 
-  ulong rec_buff_length;
+  ulong local_rec_buff_length;
 
-  rec_buff_length= ALIGN_SIZE(share->reclength + 1);
-  share->rec_buff_length= rec_buff_length;
+  local_rec_buff_length= ALIGN_SIZE(share->reclength + 1);
+  share->rec_buff_length= local_rec_buff_length;
 
   unsigned char* record= NULL;
 
-  if (! (record= (unsigned char *) share->alloc_root(rec_buff_length)))
+  if (! (record= (unsigned char *) share->alloc_root(local_rec_buff_length)))
     abort();
 
-  memset(record, 0, rec_buff_length);
+  memset(record, 0, local_rec_buff_length);
 
   int null_count= 0;
 
@@ -724,9 +723,9 @@ static int inner_parse_table_proto(Session& session,
       {
         if (fo.scale() > DECIMAL_MAX_SCALE)
         {
-          error= 4;
+          local_error= 4;
 
-	  return error;
+	  return local_error;
         }
         decimals= static_cast<uint8_t>(fo.scale());
       }
@@ -786,9 +785,9 @@ static int inner_parse_table_proto(Session& session,
           decimals != NOT_FIXED_DEC)
       {
         my_error(ER_M_BIGGER_THAN_D, MYF(0), pfield.name().c_str());
-        error= 1;
+        local_error= 1;
 
-	return error;
+	return local_error;
       }
       break;
     }
@@ -874,9 +873,9 @@ static int inner_parse_table_proto(Session& session,
       if (res != 0 && res != 3) /* @TODO Huh? */
       {
         my_error(ER_INVALID_DEFAULT, MYF(0), f->field_name);
-        error= 1;
+        local_error= 1;
 
-	return error;
+	return local_error;
       }
     }
     else if (f->real_type() == DRIZZLE_TYPE_ENUM &&
@@ -949,7 +948,7 @@ static int inner_parse_table_proto(Session& session,
   /* Fix key stuff */
   if (share->key_parts)
   {
-    uint32_t primary_key= (uint32_t) (find_type((char*) "PRIMARY",
+    uint32_t local_primary_key= (uint32_t) (find_type((char*) "PRIMARY",
                                                 &share->keynames, 3) - 1); /* @TODO Huh? */
 
     keyinfo= share->key_info;
@@ -959,13 +958,13 @@ static int inner_parse_table_proto(Session& session,
     {
       uint32_t usable_parts= 0;
 
-      if (primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
+      if (local_primary_key >= MAX_KEY && (keyinfo->flags & HA_NOSAME))
       {
 	/*
 	  If the UNIQUE key doesn't have NULL columns and is not a part key
 	  declare this as a primary key.
 	*/
-	primary_key=key;
+	local_primary_key=key;
 	for (uint32_t i= 0; i < keyinfo->key_parts; i++)
 	{
 	  uint32_t fieldnr= key_part[i].fieldnr;
@@ -973,7 +972,7 @@ static int inner_parse_table_proto(Session& session,
 	      share->field[fieldnr-1]->null_ptr ||
 	      share->field[fieldnr-1]->key_length() != key_part[i].length)
 	  {
-	    primary_key= MAX_KEY; // Can't be used
+	    local_primary_key= MAX_KEY; // Can't be used
 	    break;
 	  }
 	}
@@ -981,26 +980,26 @@ static int inner_parse_table_proto(Session& session,
 
       for (uint32_t i= 0 ; i < keyinfo->key_parts ; key_part++,i++)
       {
-	Field *field;
+	Field *local_field;
 	if (! key_part->fieldnr)
 	{
 	  return ENOMEM;
 	}
-	field= key_part->field= share->field[key_part->fieldnr-1];
-	key_part->type= field->key_type();
-	if (field->null_ptr)
+	local_field= key_part->field= share->field[key_part->fieldnr-1];
+	key_part->type= local_field->key_type();
+	if (local_field->null_ptr)
 	{
-	  key_part->null_offset=(uint32_t) ((unsigned char*) field->null_ptr - share->default_values);
-	  key_part->null_bit= field->null_bit;
+	  key_part->null_offset=(uint32_t) ((unsigned char*) local_field->null_ptr - share->default_values);
+	  key_part->null_bit= local_field->null_bit;
 	  key_part->store_length+=HA_KEY_NULL_LENGTH;
 	  keyinfo->flags|=HA_NULL_PART_KEY;
 	  keyinfo->extra_length+= HA_KEY_NULL_LENGTH;
 	  keyinfo->key_length+= HA_KEY_NULL_LENGTH;
 	}
-	if (field->type() == DRIZZLE_TYPE_BLOB ||
-	    field->real_type() == DRIZZLE_TYPE_VARCHAR)
+	if (local_field->type() == DRIZZLE_TYPE_BLOB ||
+	    local_field->real_type() == DRIZZLE_TYPE_VARCHAR)
 	{
-	  if (field->type() == DRIZZLE_TYPE_BLOB)
+	  if (local_field->type() == DRIZZLE_TYPE_BLOB)
 	    key_part->key_part_flag|= HA_BLOB_PART;
 	  else
 	    key_part->key_part_flag|= HA_VAR_LENGTH_PART;
@@ -1008,44 +1007,44 @@ static int inner_parse_table_proto(Session& session,
 	  key_part->store_length+=HA_KEY_BLOB_LENGTH;
 	  keyinfo->key_length+= HA_KEY_BLOB_LENGTH;
 	}
-	if (i == 0 && key != primary_key)
-	  field->flags |= (((keyinfo->flags & HA_NOSAME) &&
+	if (i == 0 && key != local_primary_key)
+	  local_field->flags |= (((keyinfo->flags & HA_NOSAME) &&
 			    (keyinfo->key_parts == 1)) ?
 			   UNIQUE_KEY_FLAG : MULTIPLE_KEY_FLAG);
 	if (i == 0)
-	  field->key_start.set(key);
-	if (field->key_length() == key_part->length &&
-	    !(field->flags & BLOB_FLAG))
+	  local_field->key_start.set(key);
+	if (local_field->key_length() == key_part->length &&
+	    !(local_field->flags & BLOB_FLAG))
 	{
 	  enum ha_key_alg algo= share->key_info[key].algorithm;
 	  if (share->db_type()->index_flags(algo) & HA_KEYREAD_ONLY)
 	  {
 	    share->keys_for_keyread.set(key);
-	    field->part_of_key.set(key);
-	    field->part_of_key_not_clustered.set(key);
+	    local_field->part_of_key.set(key);
+	    local_field->part_of_key_not_clustered.set(key);
 	  }
 	  if (share->db_type()->index_flags(algo) & HA_READ_ORDER)
-	    field->part_of_sortkey.set(key);
+	    local_field->part_of_sortkey.set(key);
 	}
 	if (!(key_part->key_part_flag & HA_REVERSE_SORT) &&
 	    usable_parts == i)
 	  usable_parts++;			// For FILESORT
-	field->flags|= PART_KEY_FLAG;
-	if (key == primary_key)
+	local_field->flags|= PART_KEY_FLAG;
+	if (key == local_primary_key)
 	{
-	  field->flags|= PRI_KEY_FLAG;
+	  local_field->flags|= PRI_KEY_FLAG;
 	  /*
 	    If this field is part of the primary key and all keys contains
 	    the primary key, then we can use any key to find this column
 	  */
 	  if (share->storage_engine->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX))
 	  {
-	    field->part_of_key= share->keys_in_use;
-	    if (field->part_of_sortkey.test(key))
-	      field->part_of_sortkey= share->keys_in_use;
+	    local_field->part_of_key= share->keys_in_use;
+	    if (local_field->part_of_sortkey.test(key))
+	      local_field->part_of_sortkey= share->keys_in_use;
 	  }
 	}
-	if (field->key_length() != key_part->length)
+	if (local_field->key_length() != key_part->length)
 	{
 	  key_part->key_part_flag|= HA_PART_KEY_SEG;
 	}
@@ -1061,21 +1060,21 @@ static int inner_parse_table_proto(Session& session,
 	set_if_bigger(share->max_unique_length,keyinfo->key_length);
       }
     }
-    if (primary_key < MAX_KEY &&
-        (share->keys_in_use.test(primary_key)))
+    if (local_primary_key < MAX_KEY &&
+        (share->keys_in_use.test(local_primary_key)))
     {
-      share->primary_key= primary_key;
+      share->primary_key= local_primary_key;
       /*
         If we are using an integer as the primary key then allow the user to
         refer to it as '_rowid'
       */
-      if (share->key_info[primary_key].key_parts == 1)
+      if (share->key_info[local_primary_key].key_parts == 1)
       {
-        Field *field= share->key_info[primary_key].key_part[0].field;
-        if (field && field->result_type() == INT_RESULT)
+        Field *local_field= share->key_info[local_primary_key].key_part[0].field;
+        if (local_field && local_field->result_type() == INT_RESULT)
         {
           /* note that fieldnr here (and rowid_field_offset) starts from 1 */
-          share->rowid_field_offset= (share->key_info[primary_key].key_part[0].
+          share->rowid_field_offset= (share->key_info[local_primary_key].key_part[0].
                                       fieldnr);
         }
       }
@@ -1100,9 +1099,9 @@ static int inner_parse_table_proto(Session& session,
                             &share->next_number_keypart)) < 0)
     {
       /* Wrong field definition */
-      error= 4;
+      local_error= 4;
 
-      return error;
+      return local_error;
     }
     else
     {
@@ -1119,7 +1118,7 @@ static int inner_parse_table_proto(Session& session,
     if (!(share->blob_field= save=
 	  (uint*) share->alloc_root((uint32_t) (share->blob_fields* sizeof(uint32_t)))))
     {
-      return error;
+      return local_error;
     }
     for (k= 0, ptr= share->field ; *ptr ; ptr++, k++)
     {
@@ -1143,25 +1142,23 @@ static int inner_parse_table_proto(Session& session,
     return (0);
   }
 
-  return error;
+  return local_error;
 }
 
-int parse_table_proto(Session& session,
-                      message::Table &table,
-                      TableShare *share)
+int TableShare::parse_table_proto(Session& session, message::Table &table)
 {
-  int error= inner_parse_table_proto(session, table, share);
+  int local_error= inner_parse_table_proto(session, table);
 
-  if (not error)
+  if (not local_error)
     return 0;
 
-  share->error= error;
-  share->open_errno= errno;
-  share->errarg= 0;
-  hash_free(&share->name_hash);
-  share->open_table_error(error, share->open_errno, 0);
+  error= local_error;
+  open_errno= errno;
+  errarg= 0;
+  hash_free(&name_hash);
+  open_table_error(local_error, open_errno, 0);
 
-  return error;
+  return local_error;
 }
 
 
@@ -1218,7 +1215,7 @@ int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
     goto err_not_open;
   }
 
-  local_error= parse_table_proto(session, table, this);
+  local_error= parse_table_proto(session, table);
 
   setTableCategory(TABLE_CATEGORY_USER);
 
