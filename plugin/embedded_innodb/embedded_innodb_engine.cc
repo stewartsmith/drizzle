@@ -2183,6 +2183,7 @@ static bool srv_file_per_table= false;
 static bool innobase_adaptive_hash_index;
 static bool srv_adaptive_flushing;
 static bool innobase_print_verbose_log;
+static bool innobase_rollback_on_timeout;
 static char*  innobase_file_format_name   = NULL;
 static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
@@ -2234,6 +2235,14 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     err= ib_cfg_set_bool_on("print_verbose_log");
   else
     err= ib_cfg_set_bool_off("print_verbose_log");
+
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  if (innobase_rollback_on_timeout)
+    err= ib_cfg_set_bool_on("rollback_on_timeout");
+  else
+    err= ib_cfg_set_bool_off("rollback_on_timeout");
 
   if (err != DB_SUCCESS)
     goto innodb_error;
@@ -2599,6 +2608,11 @@ static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
   "Desired maximum length of the purge queue (0 = no limit)",
   NULL, NULL, 0, 0, ~0L, 0);
 
+static DRIZZLE_SYSVAR_BOOL(rollback_on_timeout, innobase_rollback_on_timeout,
+  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
+  "Roll back the complete transaction on lock wait timeout, for 4.x compatibility (disabled by default)",
+  NULL, NULL, false);
+
 static DRIZZLE_SYSVAR_LONG(open_files, innobase_open_files,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "How many files at the maximum InnoDB keeps open at the same time.",
@@ -2647,6 +2661,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(max_purge_lag),
   DRIZZLE_SYSVAR(open_files),
   DRIZZLE_SYSVAR(read_io_threads),
+  DRIZZLE_SYSVAR(rollback_on_timeout),
   DRIZZLE_SYSVAR(write_io_threads),
   DRIZZLE_SYSVAR(print_verbose_log),
   NULL
