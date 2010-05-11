@@ -2182,6 +2182,7 @@ static unsigned long innobase_fast_shutdown= 1;
 static bool srv_file_per_table= false;
 static bool innobase_adaptive_hash_index;
 static bool srv_adaptive_flushing;
+static bool innobase_print_verbose_log;
 static char*  innobase_file_format_name   = NULL;
 static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
@@ -2228,6 +2229,14 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
 
   if (innodb_data_file_path == NULL)
     innodb_data_file_path= default_innodb_data_file_path;
+
+  if (innobase_print_verbose_log)
+    err= ib_cfg_set_bool_on("print_verbose_log");
+  else
+    err= ib_cfg_set_bool_off("print_verbose_log");
+
+  if (err != DB_SUCCESS)
+    goto innodb_error;
 
   if (innobase_use_doublewrite)
     err= ib_cfg_set_bool_on("doublewrite");
@@ -2605,6 +2614,11 @@ static DRIZZLE_SYSVAR_ULONG(write_io_threads, innobase_write_io_threads,
   "Number of background write I/O threads in InnoDB.",
   NULL, NULL, 4, 1, 64, 0);
 
+static DRIZZLE_SYSVAR_BOOL(print_verbose_log, innobase_print_verbose_log,
+  PLUGIN_VAR_NOCMDARG,
+  "Disable if you want to reduce the number of messages written to the log (default: enabled).",
+  NULL, NULL, true);
+
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(adaptive_hash_index),
   DRIZZLE_SYSVAR(adaptive_flushing),
@@ -2634,6 +2648,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(open_files),
   DRIZZLE_SYSVAR(read_io_threads),
   DRIZZLE_SYSVAR(write_io_threads),
+  DRIZZLE_SYSVAR(print_verbose_log),
   NULL
 };
 
