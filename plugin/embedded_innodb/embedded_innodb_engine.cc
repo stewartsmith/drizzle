@@ -2197,6 +2197,7 @@ static int64_t innobase_buffer_pool_size;
 static long innobase_open_files;
 static long innobase_additional_mem_pool_size;
 static long innobase_force_recovery;
+static long innobase_log_buffer_size;
 static char  default_innodb_data_file_path[]= "ibdata1:10M:autoextend";
 static char* innodb_data_file_path= NULL;
 
@@ -2296,6 +2297,10 @@ static int embedded_innodb_init(drizzled::plugin::Context &context)
     goto innodb_error;
 
   err= ib_cfg_set_int("log_file_size", innodb_log_file_size);
+  if (err != DB_SUCCESS)
+    goto innodb_error;
+
+  err= ib_cfg_set_int("log_buffer_size", innobase_log_buffer_size);
   if (err != DB_SUCCESS)
     goto innodb_error;
 
@@ -2555,6 +2560,11 @@ static DRIZZLE_SYSVAR_ULONG(lock_wait_timeout, innobase_lock_wait_timeout,
   "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
   NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
 
+static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "The size of the buffer which InnoDB uses to write log to the log files on disk.",
+  NULL, NULL, 8*1024*1024L, 256*1024L, LONG_MAX, 1024);
+
 static DRIZZLE_SYSVAR_ULONG(lru_old_blocks_pct, innobase_lru_old_blocks_pct,
   PLUGIN_VAR_RQCMDARG,
   "Sets the point in the LRU list from where all pages are classified as "
@@ -2616,6 +2626,7 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(lock_wait_timeout),
   DRIZZLE_SYSVAR(log_file_size),
   DRIZZLE_SYSVAR(log_files_in_group),
+  DRIZZLE_SYSVAR(log_buffer_size),
   DRIZZLE_SYSVAR(lru_old_blocks_pct),
   DRIZZLE_SYSVAR(lru_block_access_recency),
   DRIZZLE_SYSVAR(max_dirty_pages_pct),
