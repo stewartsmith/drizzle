@@ -244,7 +244,9 @@ public:
   }
 
   /* The following is copied to each Table on OPEN */
+private:
   Field **field;
+public:
   Field ** getFields()
   {
     return field;
