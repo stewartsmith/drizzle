@@ -1189,44 +1189,44 @@ int parse_table_proto(Session& session,
    6    Unknown .frm version
 */
 
-int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share)
+int TableShare::open_table_def(Session& session, TableIdentifier &identifier)
 {
-  int error;
+  int local_error;
   bool error_given;
 
-  error= 1;
+  local_error= 1;
   error_given= 0;
 
   message::Table table;
 
-  error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
+  local_error= plugin::StorageEngine::getTableDefinition(session, identifier, table);
 
-  if (error != EEXIST)
+  if (local_error != EEXIST)
   {
-    if (error > 0)
+    if (local_error > 0)
     {
-      errno= error;
-      error= 1;
+      errno= local_error;
+      local_error= 1;
     }
     else
     {
       if (not table.IsInitialized())
       {
-	error= 4;
+	local_error= 4;
       }
     }
     goto err_not_open;
   }
 
-  error= parse_table_proto(session, table, share);
+  local_error= parse_table_proto(session, table, this);
 
-  share->setTableCategory(TABLE_CATEGORY_USER);
+  setTableCategory(TABLE_CATEGORY_USER);
 
 err_not_open:
-  if (error && !error_given)
+  if (local_error && !error_given)
   {
-    share->error= error;
-    share->open_table_error(error, (share->open_errno= errno), 0);
+    error= local_error;
+    open_table_error(error, (open_errno= errno), 0);
   }
 
   return(error);
@@ -1257,12 +1257,13 @@ err_not_open:
    7    Table definition has changed in engine
 */
 
-int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t ha_open_flags,
-                          Table &outparam)
+int TableShare::open_table_from_share(Session *session, const char *alias,
+                                      uint32_t db_stat, uint32_t ha_open_flags,
+                                      Table &outparam)
 {
-  int error;
-  uint32_t records, i, bitmap_size;
+  TableShare *share= this;
+  int local_error;
+  uint32_t records, bitmap_size;
   bool error_reported= false;
   unsigned char *record, *bitmaps;
   Field **field_ptr;
@@ -1270,7 +1271,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   /* Parsing of partitioning information from .frm needs session->lex set up. */
   assert(session->lex->is_lex_started);
 
-  error= 1;
+  local_error= 1;
   outparam.resetTable(session, share, db_stat);
 
 
@@ -1278,29 +1279,29 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
     goto err;
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= share->db_type()->getCursor(*share, &outparam.mem_root)))
+  if (not (outparam.cursor= db_type()->getCursor(*share, &outparam.mem_root)))
     goto err;
 
-  error= 4;
+  local_error= 4;
   records= 0;
   if ((db_stat & HA_OPEN_KEYFILE))
     records=1;
 
   records++;
 
-  if (!(record= (unsigned char*) outparam.mem_root.alloc_root(share->rec_buff_length * records)))
+  if (!(record= (unsigned char*) outparam.mem_root.alloc_root(rec_buff_length * records)))
     goto err;
 
   if (records == 0)
   {
     /* We are probably in hard repair, and the buffers should not be used */
-    outparam.record[0]= outparam.record[1]= share->default_values;
+    outparam.record[0]= outparam.record[1]= default_values;
   }
   else
   {
     outparam.record[0]= record;
     if (records > 1)
-      outparam.record[1]= record+ share->rec_buff_length;
+      outparam.record[1]= record+ rec_buff_length;
     else
       outparam.record[1]= outparam.record[0];   // Safety
   }
@@ -1312,18 +1313,18 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   */
   if (records > 1)
   {
-    memcpy(outparam.record[0], share->default_values, share->rec_buff_length);
-    memcpy(outparam.record[1], share->default_values, share->null_bytes);
+    memcpy(outparam.record[0], default_values, rec_buff_length);
+    memcpy(outparam.record[1], default_values, null_bytes);
     if (records > 2)
-      memcpy(outparam.record[1], share->default_values, share->rec_buff_length);
+      memcpy(outparam.record[1], default_values, rec_buff_length);
   }
 #endif
   if (records > 1)
   {
-    memcpy(outparam.record[1], share->default_values, share->null_bytes);
+    memcpy(outparam.record[1], default_values, null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.mem_root.alloc_root( (uint32_t) ((share->fields+1)* sizeof(Field*)))))
+  if (!(field_ptr = (Field **) outparam.mem_root.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
   {
     goto err;
   }
@@ -1335,60 +1336,60 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
   outparam.null_flags= (unsigned char*) record+1;
 
   /* Setup copy of fields from share, but use the right alias and record */
-  for (i= 0 ; i < share->fields; i++, field_ptr++)
+  for (uint32_t i= 0 ; i < fields; i++, field_ptr++)
   {
-    if (!((*field_ptr)= share->field[i]->clone(&outparam.mem_root, &outparam)))
+    if (!((*field_ptr)= field[i]->clone(&outparam.mem_root, &outparam)))
       goto err;
   }
   (*field_ptr)= 0;                              // End marker
 
-  if (share->found_next_number_field)
+  if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[(uint32_t) (share->found_next_number_field - share->field)];
-  if (share->timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.field[share->timestamp_field_offset];
+      outparam.field[(uint32_t) (found_next_number_field - field)];
+  if (timestamp_field)
+    outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
 
 
   /* Fix key->name and key_part->field */
-  if (share->key_parts)
+  if (key_parts)
   {
-    KEY	*key_info, *key_info_end;
+    KEY	*local_key_info, *key_info_end;
     KEY_PART_INFO *key_part;
     uint32_t n_length;
-    n_length= share->keys*sizeof(KEY) + share->key_parts*sizeof(KEY_PART_INFO);
-    if (!(key_info= (KEY*) outparam.mem_root.alloc_root(n_length)))
+    n_length= keys*sizeof(KEY) + key_parts*sizeof(KEY_PART_INFO);
+    if (!(local_key_info= (KEY*) outparam.mem_root.alloc_root(n_length)))
       goto err;
-    outparam.key_info= key_info;
-    key_part= (reinterpret_cast<KEY_PART_INFO*> (key_info+share->keys));
+    outparam.key_info= local_key_info;
+    key_part= (reinterpret_cast<KEY_PART_INFO*> (local_key_info+keys));
 
-    memcpy(key_info, share->key_info, sizeof(*key_info)*share->keys);
-    memcpy(key_part, share->key_info[0].key_part, (sizeof(*key_part) *
-                                                   share->key_parts));
+    memcpy(local_key_info, key_info, sizeof(*local_key_info)*keys);
+    memcpy(key_part, key_info[0].key_part, (sizeof(*key_part) *
+                                                   key_parts));
 
-    for (key_info_end= key_info + share->keys ;
-         key_info < key_info_end ;
-         key_info++)
+    for (key_info_end= local_key_info + keys ;
+         local_key_info < key_info_end ;
+         local_key_info++)
     {
       KEY_PART_INFO *key_part_end;
 
-      key_info->table= &outparam;
-      key_info->key_part= key_part;
+      local_key_info->table= &outparam;
+      local_key_info->key_part= key_part;
 
-      for (key_part_end= key_part+ key_info->key_parts ;
+      for (key_part_end= key_part+ local_key_info->key_parts ;
            key_part < key_part_end ;
            key_part++)
       {
-        Field *field= key_part->field= outparam.field[key_part->fieldnr-1];
+        Field *local_field= key_part->field= outparam.field[key_part->fieldnr-1];
 
-        if (field->key_length() != key_part->length &&
-            !(field->flags & BLOB_FLAG))
+        if (local_field->key_length() != key_part->length &&
+            !(local_field->flags & BLOB_FLAG))
         {
           /*
             We are using only a prefix of the column as a key:
             Create a new field for the key part that matches the index
           */
-          field= key_part->field=field->new_field(&outparam.mem_root, &outparam, 0);
-          field->field_length= key_part->length;
+          local_field= key_part->field= local_field->new_field(&outparam.mem_root, &outparam, 0);
+          local_field->field_length= key_part->length;
         }
       }
     }
@@ -1396,23 +1397,23 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
   /* Allocate bitmaps */
 
-  bitmap_size= share->column_bitmap_size;
+  bitmap_size= column_bitmap_size;
   if (!(bitmaps= (unsigned char*) outparam.mem_root.alloc_root(bitmap_size*3)))
   {
     goto err;
   }
-  outparam.def_read_set.init((my_bitmap_map*) bitmaps, share->fields);
-  outparam.def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), share->fields);
-  outparam.tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields);
+  outparam.def_read_set.init((my_bitmap_map*) bitmaps, fields);
+  outparam.def_write_set.init((my_bitmap_map*) (bitmaps+bitmap_size), fields);
+  outparam.tmp_set.init((my_bitmap_map*) (bitmaps+bitmap_size*2), fields);
   outparam.default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
-  error= 2;
+  local_error= 2;
   if (db_stat)
   {
     int ha_err;
     if ((ha_err= (outparam.cursor->
-                  ha_open(&outparam, share->getNormalizedPath(),
+                  ha_open(&outparam, getNormalizedPath(),
                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
                           (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE :
                            (db_stat & HA_WAIT_IF_LOCKED) ?  HA_OPEN_WAIT_IF_LOCKED :
@@ -1427,7 +1428,7 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             The table did not exists in storage engine, use same error message
             as if the .frm cursor didn't exist
           */
-	  error= 1;
+	  local_error= 1;
 	  errno= ENOENT;
           break;
         case EMFILE:
@@ -1435,14 +1436,14 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
             Too many files opened, use same error message as if the .frm
             cursor can't open
            */
-	  error= 1;
+	  local_error= 1;
 	  errno= EMFILE;
           break;
         default:
           outparam.print_error(ha_err, MYF(0));
           error_reported= true;
           if (ha_err == HA_ERR_TABLE_DEF_CHANGED)
-            error= 7;
+            local_error= 7;
           break;
       }
       goto err;
@@ -1457,13 +1458,14 @@ int open_table_from_share(Session *session, TableShare *share, const char *alias
 
  err:
   if (!error_reported)
-    share->open_table_error(error, errno, 0);
+    open_table_error(local_error, errno, 0);
+
   delete outparam.cursor;
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
   outparam.mem_root.free_root(MYF(0));       // Safe to call on zeroed root
   free((char*) outparam.alias);
-  return (error);
+  return (local_error);
 }
 
 bool Table::fill_item_list(List<Item> *item_list) const

@@ -1958,12 +1958,12 @@ retry:
                                        &error)))
     return 1;
 
-  while ((error= open_table_from_share(session, share, alias,
-                                       (uint32_t) (HA_OPEN_KEYFILE |
-                                                   HA_OPEN_RNDFILE |
-                                                   HA_GET_INDEX |
-                                                   HA_TRY_READ_ONLY),
-                                       session->open_options, *entry)))
+  while ((error= share->open_table_from_share(session, alias,
+                                              (uint32_t) (HA_OPEN_KEYFILE |
+                                                          HA_OPEN_RNDFILE |
+                                                          HA_GET_INDEX |
+                                                          HA_TRY_READ_ONLY),
+                                              session->open_options, *entry)))
   {
     if (error == 7)                             // Table def changed
     {
@@ -2307,8 +2307,8 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   /*
     First open the share, and then open the table from the share we just opened.
   */
-  if (open_table_def(*this, identifier, share) ||
-      open_table_from_share(this, share, identifier.getTableName().c_str(),
+  if (share->open_table_def(*this, identifier) ||
+      share->open_table_from_share(this, identifier.getTableName().c_str(),
                             (uint32_t) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                         HA_GET_INDEX),
                             ha_open_options,
