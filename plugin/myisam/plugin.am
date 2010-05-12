@@ -14,7 +14,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-if BUILT_MYISAM_PLUGIN
+if BUILD_MYISAM_PLUGIN
 noinst_LTLIBRARIES+=	plugin/myisam/libmyisam.la 
 endif
 noinst_HEADERS+=	\
