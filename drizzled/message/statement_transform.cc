@@ -885,14 +885,14 @@ transformTableDefinitionToSql(const Table &table,
     destination.append("\nENGINE = ", 10);
     destination.append(engine.name());
 
-    size_t num_engine_options= engine.option_size();
+    size_t num_engine_options= engine.options_size();
     for (size_t x= 0; x < num_engine_options; ++x)
     {
-      const Table::StorageEngine::EngineOption &option= engine.option(x);
+      const Table::StorageEngine::EngineOption &option= engine.options(x);
       destination.push_back('\n');
-      destination.append(option.option_name());
+      destination.append(option.name());
       destination.append(" = ", 3);
-      destination.append(option.option_value());
+      destination.append(option.state());
       destination.push_back('\n');
     }
   }

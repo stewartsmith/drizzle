@@ -13,19 +13,12 @@ message Table {
   message StorageEngine {
 
     message EngineOption {
-      enum EngineOptionType {
-        BOOL = 0;
-        INTEGER = 1;
-        STRING = 2;
-      }
-
-      required string option_name = 1;
-      required string option_value = 2;
-      required EngineOptionType option_type = 3;
+      required string name = 1;
+      optional string state = 2;
     }
 
     required string name = 1;
-    repeated EngineOption option = 2;
+    repeated EngineOption options = 2;
   }
 
   message TableOptions {

@@ -64,6 +64,7 @@ static int copy_data_between_tables(Table *from,Table *to,
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
+                                      const message::Table &original_proto,
                                       message::Table &table_message,
                                       AlterInfo *alter_info);
 
@@ -97,7 +98,6 @@ bool statement::AlterTable::execute()
     }
   }
 
-
   /* Must be set in the parser */
   assert(select_lex->db);
 
@@ -110,6 +110,23 @@ bool statement::AlterTable::execute()
       my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
       return true;
     }
+
+    if (not  create_info.db_type)
+    {
+      create_info.db_type= 
+        plugin::StorageEngine::findByName(*session, original_table_message.engine().name());
+
+      if (not create_info.db_type)
+      {
+        my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
+        return true;
+      }
+    }
+  }
+
+  if (not validateCreateTableOption())
+  {
+    return true;
   }
 
   /* ALTER TABLE ends previous transaction */
@@ -134,6 +151,7 @@ bool statement::AlterTable::execute()
                      identifier,
                      new_identifier,
                      &create_info,
+                     original_table_message,
                      create_table_message,
                      first_table,
                      &alter_info,
@@ -155,6 +173,7 @@ bool statement::AlterTable::execute()
                        identifier,
                        new_identifier,
                        &create_info,
+                       original_table_message,
                        create_table_message,
                        first_table,
                        &alter_info,
@@ -216,6 +235,7 @@ bool statement::AlterTable::execute()
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
+                                      const message::Table &original_proto,
                                       message::Table &table_message,
                                       AlterInfo *alter_info)
 {
@@ -560,14 +580,36 @@ static bool mysql_prepare_alter_table(Session *session,
 
   table_message.set_update_timestamp(time(NULL));
 
-  if (not table_message.options().has_comment()
-      && table->s->hasComment())
-    table_options->set_comment(table->s->getComment());
-
   rc= false;
   alter_info->create_list.swap(new_create_list);
   alter_info->key_list.swap(new_key_list);
 err:
+
+  size_t num_engine_options= table_message.engine().options_size();
+  size_t original_num_engine_options= original_proto.engine().options_size();
+  for (size_t x= 0; x < original_num_engine_options; ++x)
+  {
+    bool found= false;
+
+    for (size_t y= 0; y < num_engine_options; ++y)
+    {
+      found= not table_message.engine().options(y).name().compare(original_proto.engine().options(x).name());
+      
+      if (found)
+        break;
+    }
+
+    if (not found)
+    {
+      message::Table::StorageEngine *engine_options;
+      engine_options= table_message.mutable_engine();
+      message::Table::StorageEngine::EngineOption *opt= engine_options->add_options();
+
+      opt->set_name(original_proto.engine().options(x).name());
+      opt->set_state(original_proto.engine().options(x).state());
+    }
+  }
+
   return rc;
 }
 
@@ -646,7 +688,7 @@ err:
     true   Error
 */
 static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
-                             enum enum_enable_or_disable keys_onoff)
+                                    enum enum_enable_or_disable keys_onoff)
 {
   int error= 0;
   switch (keys_onoff) {
@@ -654,7 +696,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
     break;
   case LEAVE_AS_IS:
-    if (!indexes_were_disabled)
+    if (not indexes_were_disabled)
       break;
     /* fall-through: disabled indexes */
   case DISABLE:
@@ -767,6 +809,7 @@ static bool internal_alter_table(Session *session,
                                  TableIdentifier &original_table_identifier,
                                  TableIdentifier &new_table_identifier,
                                  HA_CREATE_INFO *create_info,
+                                 const message::Table &original_proto,
                                  message::Table &create_proto,
                                  TableList *table_list,
                                  AlterInfo *alter_info,
@@ -957,7 +1000,7 @@ static bool internal_alter_table(Session *session,
   /* We have to do full alter table. */
   new_engine= create_info->db_type;
 
-  if (mysql_prepare_alter_table(session, table, create_info, create_proto, alter_info))
+  if (mysql_prepare_alter_table(session, table, create_info, original_proto, create_proto, alter_info))
   {
     return true;
   }
@@ -1272,6 +1315,7 @@ bool alter_table(Session *session,
                  TableIdentifier &original_table_identifier,
                  TableIdentifier &new_table_identifier,
                  HA_CREATE_INFO *create_info,
+                 const message::Table &original_proto,
                  message::Table &create_proto,
                  TableList *table_list,
                  AlterInfo *alter_info,
@@ -1312,6 +1356,7 @@ bool alter_table(Session *session,
                                 original_table_identifier,
                                 new_table_identifier,
                                 create_info,
+                                original_proto,
                                 create_proto,
                                 table_list,
                                 alter_info,

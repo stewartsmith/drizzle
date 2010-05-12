@@ -34,8 +34,6 @@ using namespace drizzled;
 
 static void fill_engine(message::Table::StorageEngine *engine)
 {
-  int16_t x;
-
   engine->set_name("InnoDB");
   message::Table::StorageEngine::EngineOption *option;
 
@@ -50,12 +48,11 @@ static void fill_engine(message::Table::StorageEngine *engine)
   };
 
   /* Add some engine options */
-  for (x= 0; x < 2; x++)
+  for (int16_t x= 0; x < 2; x++)
   {
-    option= engine->add_option();
-    option->set_option_name(option_names[x]);
-    option->set_option_value(option_values[x]);
-    option->set_option_type(message::Table::StorageEngine::EngineOption::STRING);
+    option= engine->add_options();
+    option->set_name(option_names[x]);
+    option->set_state(option_values[x]);
   }
 }
 

@@ -484,7 +484,7 @@ id	c	counter
 4	a	2
 drop table t1;
 create table t1(a int) engine=innodb;
-alter table t1 comment '123';
+alter table t1 comment='123';
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -1135,7 +1135,7 @@ SELECT table_schema, table_name, row_format
 FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	COMPACT
+test	t1	DEFAULT
 
 # - change ROW_FORMAT and check;
 
@@ -1145,7 +1145,7 @@ SELECT table_schema, table_name, row_format
 FROM data_dictionary.TABLES
 WHERE table_schema = DATABASE() AND table_name = 't1';
 table_schema	table_name	row_format
-test	t1	REDUNDANT
+test	t1	DEFAULT
 
 # - that's it, cleanup.
 
