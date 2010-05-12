@@ -169,7 +169,7 @@ optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
 {
   if (cursor->inited != Cursor::NONE)
   {
-    cursor->ha_index_end();
+    cursor->endIndexScan();
   }
   if (min_max_arg_part)
   {
@@ -286,7 +286,7 @@ int optimizer::QuickGroupMinMaxSelect::reset(void)
   int result;
 
   cursor->extra(HA_EXTRA_KEYREAD); /* We need only the key attributes */
-  if ((result= cursor->ha_index_init(index,1)))
+  if ((result= cursor->startIndexScan(index,1)))
     return result;
   if (quick_prefix_select && quick_prefix_select->reset())
     return 0;

@@ -60,7 +60,7 @@ int FunctionCursor::close(void)
   return 0;
 }
 
-int FunctionCursor::rnd_init(bool)
+int FunctionCursor::doStartTableScan(bool)
 {
   record_id= 0;
   rows_returned= 0;
@@ -109,7 +109,7 @@ void FunctionCursor::position(const unsigned char *record)
   record_id++;
 }
 
-int FunctionCursor::rnd_end()
+int FunctionCursor::doEndTableScan()
 { 
   size_t length_of_vector= row_cache.size();
 
