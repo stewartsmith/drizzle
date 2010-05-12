@@ -199,30 +199,291 @@ typedef enum {
   DELETE_TYPE_REQUIRES_PREFIX= 6
 } slap_query_type;
 
-typedef struct statement statement;
+class Statement;
 
-struct statement {
+class Statement 
+{
+public:
+  Statement(char *in_string,
+            size_t in_length,
+            slap_query_type in_type,
+            char *in_option,
+            size_t in_option_length,
+            Statement *in_next)
+    :
+    string(in_string),
+    length(in_length),
+    type(in_type),
+    option(in_option),
+    option_length(in_option_length),
+    next(in_next)
+    {}
+
+  Statement()
+    :
+    string(NULL),
+    length(0),
+    type(),
+    option(NULL),
+    option_length(0),
+    next(NULL)
+    {}
+   
+  char *getString() const
+  {
+    return string;
+  }
+
+  size_t getLength() const
+  {
+    return length;
+  }
+
+  slap_query_type getType() const
+  {
+    return type;
+  }
+
+  char *getOption() const
+  {
+    return option;
+  }
+
+  size_t getOptionLength() const
+  {
+    return option_length;
+  }
+
+  Statement *getNext() const
+  {
+    return next;
+  }
+
+  void setString(char *in_string)
+  {
+    string= in_string;
+  }
+
+  void setString(size_t in_length, char in_char)
+  {
+    string[in_length]= in_char;
+  }
+
+  void setLength(size_t in_length)
+  {
+    length= in_length;
+  }
+
+  void setType(slap_query_type in_type)
+  {
+    type= in_type;
+  }
+
+  void setOption(char *in_option)
+  {
+    option= in_option;
+  }
+
+   void setOptionLength(size_t in_option_length)
+  {
+    option_length= in_option_length;
+  }
+
+  void setNext(Statement *in_next)
+  {
+    next= in_next;
+  }
+
+private:
   char *string;
   size_t length;
   slap_query_type type;
   char *option;
   size_t option_length;
-  statement *next;
+  Statement *next;
 };
 
-typedef struct option_string option_string;
+class OptionString;
 
-struct option_string {
+class OptionString 
+{
+public:
+  OptionString(char *in_string,
+               size_t in_length,
+               char *in_option,
+               size_t in_option_length,
+               OptionString *in_next)
+    :
+    string(in_string),
+    length(in_length),
+    option(in_option),
+    option_length(in_option_length),
+    next(in_next)
+    {}  
+
+  OptionString()
+    :
+    string(NULL),
+    length(0),
+    option(NULL),
+    option_length(0),
+    next(NULL)
+    {}
+
+  char *getString() const
+  {
+    return string;
+  }
+
+  size_t getLength() const
+  {
+    return length;
+  }
+
+  char *getOption() const
+  {
+  return option;
+  }
+
+  size_t getOptionLength() const
+  {
+    return option_length;
+  }
+
+  OptionString *getNext() const
+  {
+    return next;
+  }
+
+  void setString(char *in_string)
+  {
+    string= in_string;
+  }
+
+  void setOptionLength(size_t in_option_length)
+  {
+    option_length= in_option_length;
+  }
+
+  void setLength(size_t in_length)
+  {
+    length= in_length;
+  }
+
+  void setOption(char *in_option)
+  {
+    option= in_option;
+  }
+
+  void setOption(size_t in_option_length, char in_char)
+  {
+    option[in_option_length]= in_char;
+  }
+
+  void setNext(OptionString *in_next)
+  {
+    next= in_next;
+  }
+  
+private:
   char *string;
   size_t length;
   char *option;
   size_t option_length;
-  option_string *next;
+  OptionString *next;
 };
 
-typedef struct stats stats;
+class Stats;
 
-struct stats {
+class Stats 
+{
+public:
+  Stats(long int in_timing,
+        uint32_t in_users,
+        uint32_t in_real_users,
+        uint32_t in_rows,
+        long int in_create_timing,
+        uint64_t in_create_count)
+    :
+    timing(in_timing),
+    users(in_users),
+    real_users(in_real_users),
+    rows(in_rows),
+    create_timing(in_create_timing),
+    create_count(in_create_count)
+    {}
+
+  Stats()
+    :
+    timing(0),
+    users(0),
+    real_users(0),
+    rows(0),
+    create_timing(0),
+    create_count(0)
+    {}
+
+  long int getTiming() const
+  {
+    return timing;
+  }
+
+  uint32_t getUsers() const
+  {
+    return users;
+  }   
+
+  uint32_t getRealUsers() const
+  {
+    return real_users;
+  }
+
+  uint64_t getRows() const
+  {
+    return rows;
+  }
+
+  long int getCreateTiming() const
+  {
+    return create_timing;
+  }
+
+  uint64_t getCreateCount() const
+  {
+    return create_count;
+  }
+
+  void setTiming(long int in_timing)
+  {
+  timing= in_timing;
+  }
+
+  void setUsers(uint32_t in_users)
+  {
+    users= in_users;
+  }
+
+  void setRealUsers(uint32_t in_real_users)
+  {
+    real_users= in_real_users;
+  }
+
+  void setRows(uint64_t in_rows)
+  {
+    rows= in_rows;
+  }
+   
+  void setCreateTiming(long int in_create_timing)
+  {
+    create_timing= in_create_timing;
+  }
+
+  void setCreateCount(uint64_t in_create_count)
+  {
+  create_count= in_create_count;
+  }
+  
+private:
   long int timing;
   uint32_t users;
   uint32_t real_users;
@@ -231,16 +492,258 @@ struct stats {
   uint64_t create_count;
 };
 
-typedef struct thread_context thread_context;
+class ThreadContext;
 
-struct thread_context {
-  statement *stmt;
+class ThreadContext 
+{
+public:
+  ThreadContext(Statement *in_stmt,
+                uint64_t in_limit)
+    :
+    stmt(in_stmt),
+    limit(in_limit)
+    {}
+
+  ThreadContext()
+    :
+    stmt(),
+    limit(0)
+    {}
+
+  Statement *getStmt() const
+  {
+    return stmt;
+  }
+
+  uint64_t getLimit() const
+  {
+    return limit;
+  }
+
+  void setStmt(Statement *in_stmt)
+  {
+    stmt= in_stmt;
+  }
+
+  void setLimit(uint64_t in_limit)
+  {
+    limit= in_limit;
+  }  
+
+private:
+  Statement *stmt;
   uint64_t limit;
 };
 
-typedef struct conclusions conclusions;
+class Conclusions;
 
-struct conclusions {
+class Conclusions 
+{
+
+public:
+  Conclusions(char *in_engine,
+              long int in_avg_timing,
+              long int in_max_timing,
+              long int in_min_timing,
+              uint32_t in_users,
+              uint32_t in_real_users,
+              uint64_t in_avg_rows,
+              long int in_sum_of_time,
+              long int in_std_dev,
+              long int in_create_avg_timing,
+              long int in_create_max_timing,
+              long int in_create_min_timing,
+              uint64_t in_create_count,
+              uint64_t in_max_rows,
+              uint64_t in_min_rows)
+    :
+    engine(in_engine),
+    avg_timing(in_avg_timing),
+    max_timing(in_max_timing),
+    min_timing(in_min_timing),
+    users(in_users),
+    real_users(in_real_users),
+    avg_rows(in_avg_rows),
+    sum_of_time(in_sum_of_time),
+    std_dev(in_std_dev),
+    create_avg_timing(in_create_avg_timing),
+    create_max_timing(in_create_max_timing),
+    create_min_timing(in_create_min_timing),
+    create_count(in_create_count),
+    max_rows(in_max_rows),
+    min_rows(in_min_rows)
+    {}
+
+  Conclusions()
+    :
+    engine(NULL),
+    avg_timing(0),
+    max_timing(0),
+    min_timing(0),
+    users(0),
+    real_users(0),
+    avg_rows(0),
+    sum_of_time(0),
+    std_dev(0),
+    create_avg_timing(0),
+    create_max_timing(0),
+    create_min_timing(0),
+    create_count(0),
+    max_rows(0),
+    min_rows(0)
+    {}
+
+  char *getEngine() const
+  {
+    return engine;
+  }
+  
+  long int getAvgTiming() const
+  {
+    return avg_timing;
+  }
+
+  long int getMaxTiming() const
+  {
+    return max_timing;
+  }
+
+  long int getMinTiming() const
+  {
+    return min_timing;
+  }
+
+  uint32_t getUsers() const
+  {
+    return users;
+  }
+
+  uint32_t getRealUsers() const
+  {
+    return real_users;
+  }
+
+  uint64_t getAvgRows() const
+  {
+    return avg_rows;
+  }   
+
+  long int getSumOfTime() const
+  {
+    return sum_of_time;
+  }
+
+  long int getStdDev() const
+  {
+    return std_dev;
+  }
+
+  long int getCreateAvgTiming() const
+  {
+    return create_avg_timing;
+  }
+
+  long int getCreateMaxTiming() const
+  {
+    return create_max_timing;
+  }
+
+  long int getCreateMinTiming() const
+  {
+    return create_min_timing;
+  }
+   
+  uint64_t getCreateCount() const
+  {
+    return create_count;
+  }
+
+  uint64_t getMinRows() const
+  {
+    return min_rows;
+  }
+
+  uint64_t getMaxRows() const
+  {
+    return max_rows;
+  }
+
+  void setEngine(char *in_engine) 
+  {
+    engine= in_engine;
+  }
+  
+  void setAvgTiming(long int in_avg_timing) 
+  {
+    avg_timing= in_avg_timing;
+  }
+
+  void setMaxTiming(long int in_max_timing) 
+  {
+    max_timing= in_max_timing;
+  }
+
+  void setMinTiming(long int in_min_timing) 
+  {
+    min_timing= in_min_timing;
+  }
+
+  void setUsers(uint32_t in_users) 
+  {
+    users= in_users;
+  }
+
+  void setRealUsers(uint32_t in_real_users) 
+  {
+    real_users= in_real_users;
+  }
+
+  void setAvgRows(uint64_t in_avg_rows) 
+  {
+    avg_rows= in_avg_rows;
+  }   
+
+  void setSumOfTime(long int in_sum_of_time) 
+  {
+    sum_of_time= in_sum_of_time;
+  }
+
+  void setStdDev(long int in_std_dev) 
+  {
+    std_dev= in_std_dev;
+  }
+
+  void setCreateAvgTiming(long int in_create_avg_timing) 
+  {
+    create_avg_timing= in_create_avg_timing;
+  }
+
+  void setCreateMaxTiming(long int in_create_max_timing) 
+  {
+    create_max_timing= in_create_max_timing;
+  }
+
+  void setCreateMinTiming(long int in_create_min_timing) 
+  {
+    create_min_timing= in_create_min_timing;
+  }
+   
+  void setCreateCount(uint64_t in_create_count) 
+  {
+    create_count= in_create_count;
+  }
+
+  void setMinRows(uint64_t in_min_rows) 
+  {
+    min_rows= in_min_rows;
+  }
+
+  void setMaxRows(uint64_t in_max_rows) 
+  {
+    max_rows= in_max_rows;
+  }
+
+private:
   char *engine;
   long int avg_timing;
   long int max_timing;
@@ -260,45 +763,46 @@ struct conclusions {
   uint64_t min_rows;
 };
 
-static option_string *engine_options= NULL;
-static option_string *query_options= NULL;
-static statement *pre_statements= NULL;
-static statement *post_statements= NULL;
-static statement *create_statements= NULL;
 
-static statement **query_statements= NULL;
+static OptionString *engine_options= NULL;
+static OptionString *query_options= NULL;
+static Statement *pre_statements= NULL;
+static Statement *post_statements= NULL;
+static Statement *create_statements= NULL;
+
+static Statement **query_statements= NULL;
 static unsigned int query_statements_count;
 
 
 /* Prototypes */
-void print_conclusions(conclusions *con);
-void print_conclusions_csv(conclusions *con);
-void generate_stats(conclusions *con, option_string *eng, stats *sptr);
+void print_conclusions(Conclusions *con);
+void print_conclusions_csv(Conclusions *con);
+void generate_stats(Conclusions *con, OptionString *eng, Stats *sptr);
 uint32_t parse_comma(const char *string, uint32_t **range);
-uint32_t parse_delimiter(const char *script, statement **stmt, char delm);
-uint32_t parse_option(const char *origin, option_string **stmt, char delm);
+uint32_t parse_delimiter(const char *script, Statement **stmt, char delm);
+uint32_t parse_option(const char *origin, OptionString **stmt, char delm);
 static int drop_schema(drizzle_con_st *con, const char *db);
 uint32_t get_random_string(char *buf, size_t size);
-static statement *build_table_string(void);
-static statement *build_insert_string(void);
-static statement *build_update_string(void);
-static statement * build_select_string(bool key);
-static int generate_primary_key_list(drizzle_con_st *con, option_string *engine_stmt);
+static Statement *build_table_string(void);
+static Statement *build_insert_string(void);
+static Statement *build_update_string(void);
+static Statement * build_select_string(bool key);
+static int generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt);
 static int drop_primary_key_list(void);
-static int create_schema(drizzle_con_st *con, const char *db, statement *stmt,
-                         option_string *engine_stmt, stats *sptr);
-static int run_scheduler(stats *sptr, statement **stmts, uint32_t concur,
+static int create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
+                         OptionString *engine_stmt, Stats *sptr);
+static int run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur,
                          uint64_t limit);
 extern "C" pthread_handler_t run_task(void *p);
 extern "C" pthread_handler_t timer_thread(void *p);
-void statement_cleanup(statement *stmt);
-void option_cleanup(option_string *stmt);
-void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr);
-static int run_statements(drizzle_con_st *con, statement *stmt);
+void statement_cleanup(Statement *stmt);
+void option_cleanup(OptionString *stmt);
+void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr);
+static int run_statements(drizzle_con_st *con, Statement *stmt);
 void slap_connect(drizzle_con_st *con, bool connect_to_schema);
 void slap_close(drizzle_con_st *con);
 static int run_query(drizzle_con_st *con, drizzle_result_st *result, const char *query, int len);
-void standard_deviation (conclusions *con, stats *sptr);
+void standard_deviation (Conclusions *con, Stats *sptr);
 
 static const char ALPHANUMERICS[]=
 "0123456789ABCDEFGHIJKLMNOPQRSTWXYZabcdefghijklmnopqrstuvwxyz";
@@ -320,7 +824,7 @@ static long int timedif(struct timeval a, struct timeval b)
 int main(int argc, char **argv)
 {
   drizzle_con_st con;
-  option_string *eptr;
+  OptionString *eptr;
   unsigned int x;
 
   internal::my_init();
@@ -393,7 +897,7 @@ burnin:
     if (!opt_preserve)
       drop_schema(&con, create_schema_string);
 
-  } while (eptr ? (eptr= eptr->next) : 0);
+  } while (eptr ? (eptr= eptr->getNext()) : 0);
 
   if (opt_burnin)
     goto burnin;
@@ -432,23 +936,23 @@ burnin:
   return 0;
 }
 
-void concurrency_loop(drizzle_con_st *con, uint32_t current, option_string *eptr)
+void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
 {
   unsigned int x;
-  stats *head_sptr;
-  stats *sptr;
-  conclusions conclusion;
+  Stats *head_sptr;
+  Stats *sptr;
+  Conclusions conclusion;
   uint64_t client_limit;
 
-  head_sptr= (stats *)malloc(sizeof(stats) * iterations);
+  head_sptr= (Stats *)malloc(sizeof(Stats) * iterations);
   if (head_sptr == NULL)
   {
     fprintf(stderr,"Error allocating memory in concurrency_loop\n");
     exit(1);
   }
-  memset(head_sptr, 0, sizeof(stats) * iterations);
+  memset(head_sptr, 0, sizeof(Stats) * iterations);
 
-  memset(&conclusion, 0, sizeof(conclusions));
+  memset(&conclusion, 0, sizeof(Conclusions));
 
   if (auto_actual_queries)
     client_limit= auto_actual_queries;
@@ -742,7 +1246,7 @@ static int get_one_option(int optid, const struct option *, char *argument)
     if (strlen(endchar) != 0)
     {
       fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
-      return EXIT_ARGUMENT_INVALID;
+      exit(1);
     }
     /* If the port number is > 65535 it is not a valid port
        This also helps with potential data loss casting unsigned long to a
@@ -750,7 +1254,7 @@ static int get_one_option(int optid, const struct option *, char *argument)
     if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       fprintf(stderr, _("Value supplied for port is not valid.\n"));
-      return EXIT_ARGUMENT_INVALID;
+      exit(1);
     }
     else
     {
@@ -768,7 +1272,7 @@ static int get_one_option(int optid, const struct option *, char *argument)
       {
         fprintf(stderr, "Memory allocation error while copying password. "
                         "Aborting.\n");
-        return EXIT_OUT_OF_MEMORY;
+        exit(ENOMEM);
       }
       while (*argument)
       {
@@ -815,12 +1319,12 @@ get_random_string(char *buf, size_t size)
   This function builds a create table query if the user opts to not supply
   a file or string containing a create table statement
 */
-static statement *
+static Statement *
 build_table_string(void)
 {
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
-  statement *ptr;
+  Statement *ptr;
   string table_string;
 
   table_string.reserve(HUGE_STRING_LENGTH);
@@ -936,23 +1440,23 @@ build_table_string(void)
     }
 
   table_string.append(")");
-  ptr= (statement *)malloc(sizeof(statement));
+  ptr= (Statement *)malloc(sizeof(Statement));
   if (ptr == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating table\n");
     exit(1);
   }
-  memset(ptr, 0, sizeof(statement));
-  ptr->string = (char *)malloc(table_string.length()+1);
-  if (ptr->string == NULL)
+  memset(ptr, 0, sizeof(Statement));
+  ptr->setString((char *)malloc(table_string.length()+1));
+  if (ptr->getString()==NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating table\n");
     exit(1);
   }
-  memset(ptr->string, 0, table_string.length()+1);
-  ptr->length= table_string.length()+1;
-  ptr->type= CREATE_TABLE_TYPE;
-  strcpy(ptr->string, table_string.c_str());
+  memset(ptr->getString(), 0, table_string.length()+1);
+  ptr->setLength(table_string.length()+1);
+  ptr->setType(CREATE_TABLE_TYPE);
+  strcpy(ptr->getString(), table_string.c_str());
   return(ptr);
 }
 
@@ -962,12 +1466,12 @@ build_table_string(void)
   This function builds insert statements when the user opts to not supply
   an insert file or string containing insert data
 */
-static statement *
+static Statement *
 build_update_string(void)
 {
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
-  statement *ptr;
+  Statement *ptr;
   string update_string;
 
   update_string.reserve(HUGE_STRING_LENGTH);
@@ -1012,27 +1516,27 @@ build_update_string(void)
     update_string.append(" WHERE id = ");
 
 
-  ptr= (statement *)malloc(sizeof(statement));
+  ptr= (Statement *)malloc(sizeof(Statement));
   if (ptr == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating update\n");
     exit(1);
   }
-  memset(ptr, 0, sizeof(statement));
+  memset(ptr, 0, sizeof(Statement));
 
-  ptr->length= update_string.length()+1;
-  ptr->string= (char *)malloc(ptr->length);
-  if (ptr->string == NULL)
+  ptr->setLength(update_string.length()+1);
+  ptr->setString((char *)malloc(ptr->getLength()));
+  if (ptr->getString() == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating update\n");
     exit(1);
   }
-  memset(ptr->string, 0, ptr->length);
+  memset(ptr->getString(), 0, ptr->getLength());
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
-    ptr->type= UPDATE_TYPE_REQUIRES_PREFIX ;
+    ptr->setType(UPDATE_TYPE_REQUIRES_PREFIX);
   else
-    ptr->type= UPDATE_TYPE;
-  strncpy(ptr->string, update_string.c_str(), ptr->length);
+    ptr->setType(UPDATE_TYPE);
+  strncpy(ptr->getString(), update_string.c_str(), ptr->getLength());
   return(ptr);
 }
 
@@ -1043,12 +1547,12 @@ build_update_string(void)
   This function builds insert statements when the user opts to not supply
   an insert file or string containing insert data
 */
-static statement *
+static Statement *
 build_insert_string(void)
 {
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
-  statement *ptr;
+  Statement *ptr;
   string insert_string;
 
   insert_string.reserve(HUGE_STRING_LENGTH);
@@ -1157,21 +1661,22 @@ build_insert_string(void)
 
   insert_string.append(")", 1);
 
-  if (!(ptr= (statement *)malloc(sizeof(statement))))
+  if (!(ptr= (Statement *)malloc(sizeof(Statement))))
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr, 0, sizeof(statement));
-  ptr->length= insert_string.length()+1;
-  if (!(ptr->string= (char *)malloc(ptr->length)))
+  memset(ptr, 0, sizeof(Statement));
+  ptr->setLength(insert_string.length()+1);
+  ptr->setString((char *)malloc(ptr->getLength()));
+  if (ptr->getString()==NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr->string, 0, ptr->length);
-  ptr->type= INSERT_TYPE;
-  strcpy(ptr->string, insert_string.c_str());
+  memset(ptr->getString(), 0, ptr->getLength());
+  ptr->setType(INSERT_TYPE);
+  strcpy(ptr->getString(), insert_string.c_str());
   return(ptr);
 }
 
@@ -1182,12 +1687,12 @@ build_insert_string(void)
   This function builds a query if the user opts to not supply a query
   statement or file containing a query statement
 */
-static statement *
+static Statement *
 build_select_string(bool key)
 {
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
-  statement *ptr;
+  Statement *ptr;
   string query_string;
 
   query_string.reserve(HUGE_STRING_LENGTH);
@@ -1247,27 +1752,27 @@ build_select_string(bool key)
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     query_string.append(" WHERE id = ");
 
-  ptr= (statement *)malloc(sizeof(statement));
+  ptr= (Statement *)malloc(sizeof(Statement));
   if (ptr == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr, 0, sizeof(statement));
-  ptr->length= query_string.length()+1;
-  ptr->string= (char *)malloc(ptr->length);
-  if (ptr->string == NULL)
+  memset(ptr, 0, sizeof(Statement));
+  ptr->setLength(query_string.length()+1);
+  ptr->setString((char *)malloc(ptr->getLength()));
+  if (ptr->getString() == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr->string, 0, ptr->length);
+  memset(ptr->getString(), 0, ptr->getLength());
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
-    ptr->type= SELECT_TYPE_REQUIRES_PREFIX;
+    ptr->setType(SELECT_TYPE_REQUIRES_PREFIX);
   else
-    ptr->type= SELECT_TYPE;
-  strcpy(ptr->string, query_string.c_str());
+    ptr->setType(SELECT_TYPE);
+  strcpy(ptr->getString(), query_string.c_str());
   return(ptr);
 }
 
@@ -1277,7 +1782,7 @@ get_options(int *argc,char ***argv)
   int ho_error;
   char *tmp_string;
   struct stat sbuf;
-  option_string *sql_type;
+  OptionString *sql_type;
   unsigned int sql_type_count= 0;
   ssize_t bytes_read= 0;
 
@@ -1344,21 +1849,21 @@ get_options(int *argc,char ***argv)
 
   if (num_int_cols_opt)
   {
-    option_string *str;
+    OptionString *str;
     parse_option(num_int_cols_opt, &str, ',');
-    num_int_cols= atoi(str->string);
-    if (str->option)
-      num_int_cols_index= atoi(str->option);
+    num_int_cols= atoi(str->getString());
+    if (str->getOption())
+      num_int_cols_index= atoi(str->getOption());
     option_cleanup(str);
   }
 
   if (num_char_cols_opt)
   {
-    option_string *str;
+    OptionString *str;
     parse_option(num_char_cols_opt, &str, ',');
-    num_char_cols= atoi(str->string);
-    if (str->option)
-      num_char_cols_index= atoi(str->option);
+    num_char_cols= atoi(str->getString());
+    if (str->getOption())
+      num_char_cols_index= atoi(str->getOption());
     else
       num_char_cols_index= 0;
     option_cleanup(str);
@@ -1366,21 +1871,21 @@ get_options(int *argc,char ***argv)
 
   if (num_blob_cols_opt)
   {
-    option_string *str;
+    OptionString *str;
     parse_option(num_blob_cols_opt, &str, ',');
-    num_blob_cols= atoi(str->string);
-    if (str->option)
+    num_blob_cols= atoi(str->getString());
+    if (str->getOption())
     {
       char *sep_ptr;
 
-      if ((sep_ptr= strchr(str->option, '/')))
+      if ((sep_ptr= strchr(str->getOption(), '/')))
       {
-        num_blob_cols_size_min= atoi(str->option);
+        num_blob_cols_size_min= atoi(str->getOption());
         num_blob_cols_size= atoi(sep_ptr+1);
       }
       else
       {
-        num_blob_cols_size_min= num_blob_cols_size= atoi(str->option);
+        num_blob_cols_size_min= num_blob_cols_size= atoi(str->getOption());
       }
     }
     else
@@ -1395,7 +1900,7 @@ get_options(int *argc,char ***argv)
   if (auto_generate_sql)
   {
     uint64_t x= 0;
-    statement *ptr_statement;
+    Statement *ptr_statement;
 
     if (verbose >= 2)
       printf("Building Create Statements for Auto\n");
@@ -1406,9 +1911,9 @@ get_options(int *argc,char ***argv)
     */
     for (ptr_statement= create_statements, x= 0;
          x < auto_generate_sql_unique_write_number;
-         x++, ptr_statement= ptr_statement->next)
+         x++, ptr_statement= ptr_statement->getNext())
     {
-      ptr_statement->next= build_insert_string();
+      ptr_statement->setNext(build_insert_string());
     }
 
     if (verbose >= 2)
@@ -1420,18 +1925,18 @@ get_options(int *argc,char ***argv)
     query_statements_count=
       parse_option(opt_auto_generate_sql_type, &query_options, ',');
 
-    query_statements= (statement **)malloc(sizeof(statement *) * query_statements_count);
+    query_statements= (Statement **)malloc(sizeof(Statement *) * query_statements_count);
     if (query_statements == NULL)
     {
       fprintf(stderr, "Memory Allocation error in Building Query Statements\n");
       exit(1);
     }
-    memset(query_statements, 0, sizeof(statement *) * query_statements_count);
+    memset(query_statements, 0, sizeof(Statement *) * query_statements_count);
 
     sql_type= query_options;
     do
     {
-      if (sql_type->string[0] == 'r')
+      if (sql_type->getString()[0] == 'r')
       {
         if (verbose >= 2)
           printf("Generating SELECT Statements for Auto\n");
@@ -1439,12 +1944,12 @@ get_options(int *argc,char ***argv)
         query_statements[sql_type_count]= build_select_string(false);
         for (ptr_statement= query_statements[sql_type_count], x= 0;
              x < auto_generate_sql_unique_query_number;
-             x++, ptr_statement= ptr_statement->next)
+             x++, ptr_statement= ptr_statement->getNext())
         {
-          ptr_statement->next= build_select_string(false);
+          ptr_statement->setNext(build_select_string(false));
         }
       }
-      else if (sql_type->string[0] == 'k')
+      else if (sql_type->getString()[0] == 'k')
       {
         if (verbose >= 2)
           printf("Generating SELECT for keys Statements for Auto\n");
@@ -1461,12 +1966,12 @@ get_options(int *argc,char ***argv)
         query_statements[sql_type_count]= build_select_string(true);
         for (ptr_statement= query_statements[sql_type_count], x= 0;
              x < auto_generate_sql_unique_query_number;
-             x++, ptr_statement= ptr_statement->next)
+             x++, ptr_statement= ptr_statement->getNext())
         {
-          ptr_statement->next= build_select_string(true);
+          ptr_statement->setNext(build_select_string(true));
         }
       }
-      else if (sql_type->string[0] == 'w')
+      else if (sql_type->getString()[0] == 'w')
       {
         /*
           We generate a number of strings in case the engine is
@@ -1478,12 +1983,12 @@ get_options(int *argc,char ***argv)
         query_statements[sql_type_count]= build_insert_string();
         for (ptr_statement= query_statements[sql_type_count], x= 0;
              x < auto_generate_sql_unique_query_number;
-             x++, ptr_statement= ptr_statement->next)
+             x++, ptr_statement= ptr_statement->getNext())
         {
-          ptr_statement->next= build_insert_string();
+          ptr_statement->setNext(build_insert_string());
         }
       }
-      else if (sql_type->string[0] == 'u')
+      else if (sql_type->getString()[0] == 'u')
       {
         if ( auto_generate_sql_autoincrement == false &&
              auto_generate_sql_guid_primary == false)
@@ -1497,9 +2002,9 @@ get_options(int *argc,char ***argv)
         query_statements[sql_type_count]= build_update_string();
         for (ptr_statement= query_statements[sql_type_count], x= 0;
              x < auto_generate_sql_unique_query_number;
-             x++, ptr_statement= ptr_statement->next)
+             x++, ptr_statement= ptr_statement->getNext())
         {
-          ptr_statement->next= build_update_string();
+          ptr_statement->setNext(build_update_string());
         }
       }
       else /* Mixed mode is default */
@@ -1513,22 +2018,22 @@ get_options(int *argc,char ***argv)
         */
         for (ptr_statement= query_statements[sql_type_count], x= 0;
              x < auto_generate_sql_unique_query_number;
-             x++, ptr_statement= ptr_statement->next)
+             x++, ptr_statement= ptr_statement->getNext())
         {
           if (coin)
           {
-            ptr_statement->next= build_insert_string();
+            ptr_statement->setNext(build_insert_string());
             coin= 0;
           }
           else
           {
-            ptr_statement->next= build_select_string(true);
+            ptr_statement->setNext(build_select_string(true));
             coin= 1;
           }
         }
       }
       sql_type_count++;
-    } while (sql_type ? (sql_type= sql_type->next) : 0);
+    } while (sql_type ? (sql_type= sql_type->getNext()) : 0);
   }
   else
   {
@@ -1580,13 +2085,13 @@ get_options(int *argc,char ***argv)
       query_statements_count=
         parse_option("default", &query_options, ',');
 
-      query_statements= (statement **)malloc(sizeof(statement *) * query_statements_count);
+      query_statements= (Statement **)malloc(sizeof(Statement *) * query_statements_count);
       if (query_statements == NULL)
       {
         fprintf(stderr, "Memory Allocation error in option processing\n");
         exit(1);
       }
-      memset(query_statements, 0, sizeof(statement *) * query_statements_count); 
+      memset(query_statements, 0, sizeof(Statement *) * query_statements_count); 
     }
 
     if (user_supplied_query && !stat(user_supplied_query, &sbuf))
@@ -1773,7 +2278,7 @@ static int run_query(drizzle_con_st *con, drizzle_result_st *result,
 
 
 static int
-generate_primary_key_list(drizzle_con_st *con, option_string *engine_stmt)
+generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
 {
   drizzle_result_st result;
   drizzle_row_t row;
@@ -1785,7 +2290,7 @@ generate_primary_key_list(drizzle_con_st *con, option_string *engine_stmt)
     of the server during load runs.
   */
   if (opt_only_print || (engine_stmt &&
-                         strstr(engine_stmt->string, "blackhole")))
+                         strstr(engine_stmt->getString(), "blackhole")))
   {
     primary_keys_number_of= 1;
     primary_keys= (char **)malloc((sizeof(char *) *
@@ -1872,12 +2377,12 @@ drop_primary_key_list(void)
 }
 
 static int
-create_schema(drizzle_con_st *con, const char *db, statement *stmt,
-              option_string *engine_stmt, stats *sptr)
+create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
+              OptionString *engine_stmt, Stats *sptr)
 {
   char query[HUGE_STRING_LENGTH];
-  statement *ptr;
-  statement *after_create;
+  Statement *ptr;
+  Statement *after_create;
   int len;
   uint64_t count;
   struct timeval start_time, end_time;
@@ -1898,7 +2403,7 @@ create_schema(drizzle_con_st *con, const char *db, statement *stmt,
   }
   else
   {
-    sptr->create_count++;
+    sptr->setCreateCount(sptr->getCreateCount()+1);
   }
 
   if (opt_only_print)
@@ -1922,69 +2427,69 @@ create_schema(drizzle_con_st *con, const char *db, statement *stmt,
       exit(1);
     }
     drizzle_result_free(&result);
-    sptr->create_count++;
+    sptr->setCreateCount(sptr->getCreateCount()+1);
   }
 
   if (engine_stmt)
   {
     len= snprintf(query, HUGE_STRING_LENGTH, "set storage_engine=`%s`",
-                  engine_stmt->string);
+                  engine_stmt->getString());
     if (run_query(con, NULL, query, len))
     {
       fprintf(stderr,"%s: Cannot set default engine: %s\n", internal::my_progname,
               drizzle_con_error(con));
       exit(1);
     }
-    sptr->create_count++;
+    sptr->setCreateCount(sptr->getCreateCount()+1);
   }
 
   count= 0;
   after_create= stmt;
 
 limit_not_met:
-  for (ptr= after_create; ptr && ptr->length; ptr= ptr->next, count++)
+  for (ptr= after_create; ptr && ptr->getLength(); ptr= ptr->getNext(), count++)
   {
     if (auto_generate_sql && ( auto_generate_sql_number == count))
       break;
 
-    if (engine_stmt && engine_stmt->option && ptr->type == CREATE_TABLE_TYPE)
+    if (engine_stmt && engine_stmt->getOption() && ptr->getType() == CREATE_TABLE_TYPE)
     {
       char buffer[HUGE_STRING_LENGTH];
 
-      snprintf(buffer, HUGE_STRING_LENGTH, "%s %s", ptr->string,
-               engine_stmt->option);
+      snprintf(buffer, HUGE_STRING_LENGTH, "%s %s", ptr->getString(),
+               engine_stmt->getOption());
       if (run_query(con, NULL, buffer, strlen(buffer)))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
+                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(con));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
-      sptr->create_count++;
+      sptr->setCreateCount(sptr->getCreateCount()+1);
     }
     else
     {
-      if (run_query(con, NULL, ptr->string, ptr->length))
+      if (run_query(con, NULL, ptr->getString(), ptr->getLength()))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
+                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(con));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
-      sptr->create_count++;
+      sptr->setCreateCount(sptr->getCreateCount()+1);
     }
   }
 
   if (auto_generate_sql && (auto_generate_sql_number > count ))
   {
     /* Special case for auto create, we don't want to create tables twice */
-    after_create= stmt->next;
+    after_create= stmt->getNext();
     goto limit_not_met;
   }
 
   gettimeofday(&end_time, NULL);
 
-  sptr->create_timing= timedif(end_time, start_time);
+  sptr->setCreateTiming(timedif(end_time, start_time));
 
   return(0);
 }
@@ -2010,16 +2515,16 @@ drop_schema(drizzle_con_st *con, const char *db)
 }
 
 static int
-run_statements(drizzle_con_st *con, statement *stmt)
+run_statements(drizzle_con_st *con, Statement *stmt)
 {
-  statement *ptr;
+  Statement *ptr;
 
-  for (ptr= stmt; ptr && ptr->length; ptr= ptr->next)
+  for (ptr= stmt; ptr && ptr->getLength(); ptr= ptr->getNext())
   {
-    if (run_query(con, NULL, ptr->string, ptr->length))
+    if (run_query(con, NULL, ptr->getString(), ptr->getLength()))
     {
       fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-              internal::my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(con));
+              internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(con));
       exit(1);
     }
   }
@@ -2028,14 +2533,14 @@ run_statements(drizzle_con_st *con, statement *stmt)
 }
 
 static int
-run_scheduler(stats *sptr, statement **stmts, uint32_t concur, uint64_t limit)
+run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
 {
   uint32_t x;
   uint32_t y;
   unsigned int real_concurrency;
   struct timeval start_time, end_time;
-  option_string *sql_type;
-  thread_context *con;
+  OptionString *sql_type;
+  ThreadContext *con;
   pthread_t mainthread;            /* Thread descriptor */
   pthread_attr_t attr;          /* Thread attributes */
 
@@ -2055,13 +2560,13 @@ run_scheduler(stats *sptr, statement **stmts, uint32_t concur, uint64_t limit)
 
   for (y= 0, sql_type= query_options;
        y < query_statements_count;
-       y++, sql_type= sql_type->next)
+       y++, sql_type= sql_type->getNext())
   {
     unsigned int options_loop= 1;
 
-    if (sql_type->option)
+    if (sql_type->getOption())
     {
-      options_loop= strtol(sql_type->option,
+      options_loop= strtol(sql_type->getOption(),
                            (char **)NULL, 10);
       options_loop= options_loop ? options_loop : 1;
     }
@@ -2069,14 +2574,14 @@ run_scheduler(stats *sptr, statement **stmts, uint32_t concur, uint64_t limit)
     while (options_loop--)
       for (x= 0; x < concur; x++)
       {
-        con= (thread_context *)malloc(sizeof(thread_context));
+        con= (ThreadContext *)malloc(sizeof(ThreadContext));
         if (con == NULL)
         {
           fprintf(stderr, "Memory Allocation error in scheduler\n");
           exit(1);
         }
-        con->stmt= stmts[y];
-        con->limit= limit;
+        con->setStmt(stmts[y]);
+        con->setLimit(limit);
 
         real_concurrency++;
         /* now you create the thread */
@@ -2134,10 +2639,10 @@ run_scheduler(stats *sptr, statement **stmts, uint32_t concur, uint64_t limit)
   gettimeofday(&end_time, NULL);
 
 
-  sptr->timing= timedif(end_time, start_time);
-  sptr->users= concur;
-  sptr->real_users= real_concurrency;
-  sptr->rows= limit;
+  sptr->setTiming(timedif(end_time, start_time));
+  sptr->setUsers(concur);
+  sptr->setRealUsers(real_concurrency);
+  sptr->setRows(limit);
 
   return(0);
 }
@@ -2181,8 +2686,8 @@ pthread_handler_t run_task(void *p)
   drizzle_con_st con;
   drizzle_result_st result;
   drizzle_row_t row;
-  statement *ptr;
-  thread_context *ctx= (thread_context *)p;
+  Statement *ptr;
+  ThreadContext *ctx= (ThreadContext *)p;
 
   pthread_mutex_lock(&sleeper_mutex);
   while (master_wakeup)
@@ -2202,9 +2707,9 @@ pthread_handler_t run_task(void *p)
     run_query(&con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
 limit_not_met:
-  for (ptr= ctx->stmt, detach_counter= 0;
-       ptr && ptr->length;
-       ptr= ptr->next, detach_counter++)
+  for (ptr= ctx->getStmt(), detach_counter= 0;
+       ptr && ptr->getLength();
+       ptr= ptr->getNext(), detach_counter++)
   {
     if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
     {
@@ -2215,8 +2720,8 @@ limit_not_met:
     /*
       We have to execute differently based on query type. This should become a function.
     */
-    if ((ptr->type == UPDATE_TYPE_REQUIRES_PREFIX) ||
-        (ptr->type == SELECT_TYPE_REQUIRES_PREFIX))
+    if ((ptr->getType() == UPDATE_TYPE_REQUIRES_PREFIX) ||
+        (ptr->getType() == SELECT_TYPE_REQUIRES_PREFIX))
     {
       int length;
       unsigned int key_val;
@@ -2239,7 +2744,7 @@ limit_not_met:
         assert(key);
 
         length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
-                         (int)ptr->length, ptr->string, key);
+                         (int)ptr->getLength(), ptr->getString(), key);
 
         if (run_query(&con, &result, buffer, length))
         {
@@ -2251,10 +2756,10 @@ limit_not_met:
     }
     else
     {
-      if (run_query(&con, &result, ptr->string, ptr->length))
+      if (run_query(&con, &result, ptr->getString(), ptr->getLength()))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                internal::my_progname, (uint32_t)ptr->length, ptr->string, drizzle_con_error(&con));
+                internal::my_progname, (uint32_t)ptr->getLength(), ptr->getString(), drizzle_con_error(&con));
         exit(1);
       }
     }
@@ -2278,14 +2783,14 @@ limit_not_met:
       goto end;
 
     /* If limit has been reached, and we are not in a timer_alarm just end */
-    if (ctx->limit && queries == ctx->limit && timer_alarm == false)
+    if (ctx->getLimit() && queries == ctx->getLimit() && timer_alarm == false)
       goto end;
   }
 
   if (opt_timer_length && timer_alarm == true)
     goto limit_not_met;
 
-  if (ctx->limit && queries < ctx->limit)
+  if (ctx->getLimit() && queries < ctx->getLimit())
     goto limit_not_met;
 
 
@@ -2310,29 +2815,29 @@ end:
   on variables.
 */
 uint
-parse_option(const char *origin, option_string **stmt, char delm)
+parse_option(const char *origin, OptionString **stmt, char delm)
 {
   char *string;
   char *begin_ptr;
   char *end_ptr;
-  option_string **sptr= stmt;
-  option_string *tmp;
+  OptionString **sptr= stmt;
+  OptionString *tmp;
   uint32_t length= strlen(origin);
   uint32_t count= 0; /* We know that there is always one */
 
   end_ptr= (char *)origin + length;
 
-  tmp= *sptr= (option_string *)malloc(sizeof(option_string));
+  tmp= *sptr= (OptionString *)malloc(sizeof(OptionString));
   if (tmp == NULL)
   {
     fprintf(stderr,"Error allocating memory while parsing options\n");
     exit(1);
   }
-  memset(tmp, 0, sizeof(option_string));
+  memset(tmp, 0, sizeof(OptionString));
 
   for (begin_ptr= (char *)origin;
        begin_ptr != end_ptr;
-       tmp= tmp->next)
+       tmp= tmp->getNext())
   {
     char buffer[HUGE_STRING_LENGTH];
     char *buffer_ptr;
@@ -2360,20 +2865,20 @@ parse_option(const char *origin, option_string **stmt, char delm)
       buffer_ptr++;
 
       /* Move past the : and the first string */
-      tmp->option_length= strlen(buffer_ptr);
-      tmp->option= (char *)malloc(tmp->option_length + 1);
-      if (tmp->option == NULL)
+      tmp->setOptionLength(strlen(buffer_ptr));
+      tmp->setOption((char *)malloc(tmp->getOptionLength() + 1));
+      if (tmp->getOption() == NULL)
       {
         fprintf(stderr,"Error allocating memory while parsing options\n");
         exit(1);
       }
-      memcpy(tmp->option, buffer_ptr, tmp->option_length);
-      tmp->option[tmp->option_length]= 0; 
+      memcpy(tmp->getOption(), buffer_ptr, tmp->getOptionLength());
+      tmp->setOption(tmp->getOptionLength(),0); 
     }
 
-    tmp->length= strlen(buffer);
-    tmp->string= strdup(buffer);
-    if (tmp->string == NULL)
+    tmp->setLength(strlen(buffer));
+    tmp->setString(strdup(buffer));
+    if (tmp->getString() == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing options\n");
       exit(1);
@@ -2386,13 +2891,13 @@ parse_option(const char *origin, option_string **stmt, char delm)
 
     if (begin_ptr != end_ptr)
     {
-      tmp->next= (option_string *)malloc(sizeof(option_string));
-      if (tmp->next == NULL)
+      tmp->setNext((OptionString *)malloc(sizeof(OptionString)));
+      if (tmp->getNext() == NULL)
       {
         fprintf(stderr,"Error allocating memory while parsing options\n");
         exit(1);
       }
-      memset(tmp->next, 0, sizeof(option_string));
+      memset(tmp->getNext(), 0, sizeof(OptionString));
     }
     
   }
@@ -2406,19 +2911,19 @@ parse_option(const char *origin, option_string **stmt, char delm)
   parse_option.
 */
 uint
-parse_delimiter(const char *script, statement **stmt, char delm)
+parse_delimiter(const char *script, Statement **stmt, char delm)
 {
   char *retstr;
   char *ptr= (char *)script;
-  statement **sptr= stmt;
-  statement *tmp;
+  Statement **sptr= stmt;
+  Statement *tmp;
   uint32_t length= strlen(script);
   uint32_t count= 0; /* We know that there is always one */
 
-  for (tmp= *sptr= (statement *)calloc(1, sizeof(statement));
+  for (tmp= *sptr= (Statement *)calloc(1, sizeof(Statement));
        (retstr= strchr(ptr, delm));
-       tmp->next=  (statement *)calloc(1, sizeof(statement)),
-       tmp= tmp->next)
+       tmp->setNext((Statement *)calloc(1, sizeof(Statement))),
+       tmp= tmp->getNext())
   {
     if (tmp == NULL)
     {
@@ -2427,17 +2932,17 @@ parse_delimiter(const char *script, statement **stmt, char delm)
     }
 
     count++;
-    tmp->length= (size_t)(retstr - ptr);
-    tmp->string= (char *)malloc(tmp->length + 1);
+    tmp->setLength((size_t)(retstr - ptr));
+    tmp->setString((char *)malloc(tmp->getLength() + 1));
 
-    if (tmp->string == NULL)
+    if (tmp->getString() == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
       exit(1);
     }
 
-    memcpy(tmp->string, ptr, tmp->length);
-    tmp->string[tmp->length]= 0;
+    memcpy(tmp->getString(), ptr, tmp->getLength());
+    tmp->setString(tmp->getLength(), 0);
     ptr+= retstr - ptr + 1;
     if (isspace(*ptr))
       ptr++;
@@ -2445,15 +2950,15 @@ parse_delimiter(const char *script, statement **stmt, char delm)
 
   if (ptr != script+length)
   {
-    tmp->length= (size_t)((script + length) - ptr);
-    tmp->string= (char *)malloc(tmp->length + 1);
-    if (tmp->string == NULL)
+    tmp->setLength((size_t)((script + length) - ptr));
+    tmp->setString((char *)malloc(tmp->getLength() + 1));
+    if (tmp->getString() == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
       exit(1);
     }
-    memcpy(tmp->string, ptr, tmp->length);
-    tmp->string[tmp->length]= 0;
+    memcpy(tmp->getString(), ptr, tmp->getLength());
+    tmp->setString(tmp->getLength(),0);
     count++;
   }
 
@@ -2494,37 +2999,37 @@ parse_comma(const char *string, uint32_t **range)
 }
 
 void
-print_conclusions(conclusions *con)
+print_conclusions(Conclusions *con)
 {
   printf("Benchmark\n");
-  if (con->engine)
-    printf("\tRunning for engine %s\n", con->engine);
+  if (con->getEngine())
+    printf("\tRunning for engine %s\n", con->getEngine());
   if (opt_label || opt_auto_generate_sql_type)
   {
     const char *ptr= opt_auto_generate_sql_type ? opt_auto_generate_sql_type : "query";
     printf("\tLoad: %s\n", opt_label ? opt_label : ptr);
   }
   printf("\tAverage Time took to generate schema and initial data: %ld.%03ld seconds\n",
-         con->create_avg_timing / 1000, con->create_avg_timing % 1000);
+         con->getCreateAvgTiming() / 1000, con->getCreateAvgTiming() % 1000);
   printf("\tAverage number of seconds to run all queries: %ld.%03ld seconds\n",
-         con->avg_timing / 1000, con->avg_timing % 1000);
+         con->getAvgTiming() / 1000, con->getAvgTiming() % 1000);
   printf("\tMinimum number of seconds to run all queries: %ld.%03ld seconds\n",
-         con->min_timing / 1000, con->min_timing % 1000);
+         con->getMinTiming() / 1000, con->getMinTiming() % 1000);
   printf("\tMaximum number of seconds to run all queries: %ld.%03ld seconds\n",
-         con->max_timing / 1000, con->max_timing % 1000);
+         con->getMaxTiming() / 1000, con->getMaxTiming() % 1000);
   printf("\tTotal time for tests: %ld.%03ld seconds\n",
-         con->sum_of_time / 1000, con->sum_of_time % 1000);
-  printf("\tStandard Deviation: %ld.%03ld\n", con->std_dev / 1000, con->std_dev % 1000);
-  printf("\tNumber of queries in create queries: %"PRIu64"\n", con->create_count);
+         con->getSumOfTime() / 1000, con->getSumOfTime() % 1000);
+  printf("\tStandard Deviation: %ld.%03ld\n", con->getStdDev() / 1000, con->getStdDev() % 1000);
+  printf("\tNumber of queries in create queries: %"PRIu64"\n", con->getCreateCount());
   printf("\tNumber of clients running queries: %u/%u\n",
-         con->users, con->real_users);
+         con->getUsers(), con->getRealUsers());
   printf("\tNumber of times test was run: %u\n", iterations);
-  printf("\tAverage number of queries per client: %"PRIu64"\n", con->avg_rows);
+  printf("\tAverage number of queries per client: %"PRIu64"\n", con->getAvgRows());
   printf("\n");
 }
 
 void
-print_conclusions_csv(conclusions *con)
+print_conclusions_csv(Conclusions *con)
 {
   unsigned int x;
   char buffer[HUGE_STRING_LENGTH];
@@ -2563,107 +3068,107 @@ print_conclusions_csv(conclusions *con)
   snprintf(buffer, HUGE_STRING_LENGTH,
            "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,"
            "%u,%u,%u,%"PRIu64"\n",
-           con->engine ? con->engine : "", /* Storage engine we ran against */
+           con->getEngine() ? con->getEngine() : "", /* Storage engine we ran against */
            label_buffer, /* Load type */
-           con->avg_timing / 1000, con->avg_timing % 1000, /* Time to load */
-           con->min_timing / 1000, con->min_timing % 1000, /* Min time */
-           con->max_timing / 1000, con->max_timing % 1000, /* Max time */
-           con->sum_of_time / 1000, con->sum_of_time % 1000, /* Total time */
-           con->std_dev / 1000, con->std_dev % 1000, /* Standard Deviation */
+           con->getAvgTiming() / 1000, con->getAvgTiming() % 1000, /* Time to load */
+           con->getMinTiming() / 1000, con->getMinTiming() % 1000, /* Min time */
+           con->getMaxTiming() / 1000, con->getMaxTiming() % 1000, /* Max time */
+           con->getSumOfTime() / 1000, con->getSumOfTime() % 1000, /* Total time */
+           con->getStdDev() / 1000, con->getStdDev() % 1000, /* Standard Deviation */
            iterations, /* Iterations */
-           con->users, /* Children used max_timing */
-           con->real_users, /* Children used max_timing */
-           con->avg_rows  /* Queries run */
+           con->getUsers(), /* Children used max_timing */
+           con->getRealUsers(), /* Children used max_timing */
+           con->getAvgRows()  /* Queries run */
            );
   internal::my_write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer), MYF(0));
 }
 
 void
-generate_stats(conclusions *con, option_string *eng, stats *sptr)
+generate_stats(Conclusions *con, OptionString *eng, Stats *sptr)
 {
-  stats *ptr;
+  Stats *ptr;
   unsigned int x;
 
-  con->min_timing= sptr->timing;
-  con->max_timing= sptr->timing;
-  con->min_rows= sptr->rows;
-  con->max_rows= sptr->rows;
+  con->setMinTiming(sptr->getTiming());
+  con->setMaxTiming(sptr->getTiming());
+  con->setMinRows(sptr->getRows());
+  con->setMaxRows(sptr->getRows());
 
   /* At the moment we assume uniform */
-  con->users= sptr->users;
-  con->real_users= sptr->real_users;
-  con->avg_rows= sptr->rows;
+  con->setUsers(sptr->getUsers());
+  con->setRealUsers(sptr->getRealUsers());
+  con->setAvgRows(sptr->getRows());
 
   /* With no next, we know it is the last element that was malloced */
   for (ptr= sptr, x= 0; x < iterations; ptr++, x++)
   {
-    con->avg_timing+= ptr->timing;
+    con->setAvgTiming(ptr->getTiming()+con->getAvgTiming());
 
-    if (ptr->timing > con->max_timing)
-      con->max_timing= ptr->timing;
-    if (ptr->timing < con->min_timing)
-      con->min_timing= ptr->timing;
+    if (ptr->getTiming() > con->getMaxTiming())
+      con->setMaxTiming(ptr->getTiming());
+    if (ptr->getTiming() < con->getMinTiming())
+      con->setMinTiming(ptr->getTiming());
   }
-  con->sum_of_time= con->avg_timing;
-  con->avg_timing= con->avg_timing/iterations;
+  con->setSumOfTime(con->getAvgTiming());
+  con->setAvgTiming(con->getAvgTiming()/iterations);
 
-  if (eng && eng->string)
-    con->engine= eng->string;
+  if (eng && eng->getString())
+    con->setEngine(eng->getString());
   else
-    con->engine= NULL;
+    con->setEngine(NULL);
 
   standard_deviation(con, sptr);
 
   /* Now we do the create time operations */
-  con->create_min_timing= sptr->create_timing;
-  con->create_max_timing= sptr->create_timing;
+  con->setCreateMinTiming(sptr->getCreateTiming());
+  con->setCreateMaxTiming(sptr->getCreateTiming());
 
   /* At the moment we assume uniform */
-  con->create_count= sptr->create_count;
+  con->setCreateCount(sptr->getCreateCount());
 
   /* With no next, we know it is the last element that was malloced */
   for (ptr= sptr, x= 0; x < iterations; ptr++, x++)
   {
-    con->create_avg_timing+= ptr->create_timing;
+    con->setCreateAvgTiming(ptr->getCreateTiming()+con->getCreateAvgTiming());
 
-    if (ptr->create_timing > con->create_max_timing)
-      con->create_max_timing= ptr->create_timing;
-    if (ptr->create_timing < con->create_min_timing)
-      con->create_min_timing= ptr->create_timing;
+    if (ptr->getCreateTiming() > con->getCreateMaxTiming())
+      con->setCreateMaxTiming(ptr->getCreateTiming());
+    if (ptr->getCreateTiming() < con->getCreateMinTiming())
+      con->setCreateMinTiming(ptr->getCreateTiming());
   }
-  con->create_avg_timing= con->create_avg_timing/iterations;
+  con->setCreateAvgTiming(con->getCreateAvgTiming()/iterations);
 }
 
 void
-option_cleanup(option_string *stmt)
+option_cleanup(OptionString *stmt)
 {
-  option_string *ptr, *nptr;
+  OptionString *ptr, *nptr;
   if (!stmt)
     return;
 
   for (ptr= stmt; ptr; ptr= nptr)
   {
-    nptr= ptr->next;
-    if (ptr->string)
-      free(ptr->string);
-    if (ptr->option)
-      free(ptr->option);
+    nptr= ptr->getNext();
+    if (ptr->getString())
+      free(ptr->getString());
+    if (ptr->getOption())
+      free(ptr->getOption());
     free(ptr);
   }
 }
 
 void
-statement_cleanup(statement *stmt)
+statement_cleanup(Statement *stmt)
 {
-  statement *ptr, *nptr;
+  Statement *ptr, *nptr;
   if (!stmt)
     return;
 
   for (ptr= stmt; ptr; ptr= nptr)
   {
-    nptr= ptr->next;
-    if (ptr->string)
-      free(ptr->string);
+    nptr= ptr->getNext();
+    if (ptr->getString())
+      free(ptr->getString());
     free(ptr);
   }
 }
@@ -2723,16 +3228,16 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
 }
 
 void
-standard_deviation (conclusions *con, stats *sptr)
+standard_deviation (Conclusions *con, Stats *sptr)
 {
   unsigned int x;
   long int sum_of_squares;
   double the_catch;
-  stats *ptr;
+  Stats *ptr;
 
   if (iterations == 1 || iterations == 0)
   {
-    con->std_dev= 0;
+    con->setStdDev(0);
     return;
   }
 
@@ -2740,10 +3245,10 @@ standard_deviation (conclusions *con, stats *sptr)
   {
     long int deviation;
 
-    deviation= ptr->timing - con->avg_timing;
+    deviation= ptr->getTiming() - con->getAvgTiming();
     sum_of_squares+= deviation*deviation;
   }
 
   the_catch= sqrt((double)(sum_of_squares/(iterations -1)));
-  con->std_dev= (long int)the_catch;
+  con->setStdDev((long int)the_catch);
 }

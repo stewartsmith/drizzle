@@ -50,17 +50,17 @@ public:
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   int doInsertRecord(unsigned char * buf);
-  int rnd_init(bool scan);
+  int doStartTableScan(bool scan);
   int rnd_next(unsigned char *buf);
-  int rnd_end();
+  int doEndTableScan();
   int rnd_pos(unsigned char * buf, unsigned char *pos);
 
-  int index_init(uint32_t, bool);
+  int doStartIndexScan(uint32_t, bool);
   int index_read(unsigned char *buf, const unsigned char *key_ptr,
                  uint32_t key_len, drizzled::ha_rkey_function find_flag);
 
   int index_next(unsigned char * buf);
-  int index_end();
+  int doEndIndexScan();
   int index_prev(unsigned char * buf);
   int index_first(unsigned char * buf);
   int index_last(unsigned char * buf);

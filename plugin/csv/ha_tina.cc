@@ -1013,7 +1013,7 @@ int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
   /*
     During update we mark each updating record as deleted
     (see the chain_append()) then write new one to the temporary data file.
-    At the end of the sequence in the rnd_end() we append all non-marked
+    At the end of the sequence in the doEndTableScan() we append all non-marked
     records from the data file to the temporary data file then rename it.
     The temp_file_length is used to calculate new data file length.
   */
@@ -1116,7 +1116,7 @@ int ha_tina::init_data_file()
 
 */
 
-int ha_tina::rnd_init(bool)
+int ha_tina::doStartTableScan(bool)
 {
   /* set buffer to the beginning of the file */
   if (share->crashed || init_data_file())
@@ -1231,7 +1231,7 @@ bool ha_tina::get_write_pos(off_t *end_pos, tina_set *closest_hole)
   slots to clean up all of the dead space we have collected while
   performing deletes/updates.
 */
-int ha_tina::rnd_end()
+int ha_tina::doEndTableScan()
 {
   char updated_fname[FN_REFLEN];
   off_t file_buffer_start= 0;
