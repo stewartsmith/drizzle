@@ -72,7 +72,7 @@ public:
   int index_prev(unsigned char * buf);
   int index_first(unsigned char * buf);
   int index_last(unsigned char * buf);
-  int rnd_init(bool scan);
+  int doStartTableScan(bool scan);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   void position(const unsigned char *record);
