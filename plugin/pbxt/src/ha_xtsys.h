@@ -85,7 +85,7 @@ public:
 
 	int		open(const char *name, int mode, uint test_if_locked);
 	int		close(void);
-	int		rnd_init(bool scan);
+	int		doStartTableScan(bool scan);
 	int		rnd_next(byte *buf);
 	int		rnd_pos(byte * buf, byte *pos);
 	void	position(const byte *record);

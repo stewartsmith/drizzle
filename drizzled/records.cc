@@ -58,7 +58,7 @@ void init_read_record_idx(READ_RECORD *info,
 
   table->status=0;			/* And it's always found */
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(idx, 1);
+    table->cursor->startIndexScan(idx, 1);
   /* read_record will be changed to rr_index in rr_index_first */
   info->read_record= rr_index_first;
 }
@@ -107,7 +107,7 @@ void init_read_record(READ_RECORD *info,
     reinit_io_cache(info->io_cache,internal::READ_CACHE,0L,0,0);
     info->ref_pos=table->cursor->ref;
     if (!table->cursor->inited)
-      table->cursor->ha_rnd_init(0);
+      table->cursor->startTableScan(0);
 
     /*
       table->sort.addon_field is checked because if we use addon fields,
@@ -139,7 +139,7 @@ void init_read_record(READ_RECORD *info,
   }
   else if (table->sort.record_pointers)
   {
-    table->cursor->ha_rnd_init(0);
+    table->cursor->startTableScan(0);
     info->cache_pos=table->sort.record_pointers;
     info->cache_end=info->cache_pos+
                     table->sort.found_records*info->ref_length;
@@ -149,7 +149,7 @@ void init_read_record(READ_RECORD *info,
   else
   {
     info->read_record= rr_sequential;
-    table->cursor->ha_rnd_init(1);
+    table->cursor->startTableScan(1);
     /* We can use record cache if we don't update dynamic length tables */
     if (!table->no_cache &&
         (use_record_cache > 0 ||

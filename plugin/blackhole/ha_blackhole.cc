@@ -353,7 +353,7 @@ int ha_blackhole::doInsertRecord(unsigned char *)
   return(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int ha_blackhole::rnd_init(bool)
+int ha_blackhole::doStartTableScan(bool)
 {
   return(0);
 }
