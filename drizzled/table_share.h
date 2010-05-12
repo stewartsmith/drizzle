@@ -273,7 +273,33 @@ public:
     return mem_root.strmake_root(str_arg, len_arg);
   }
 
+private:
   TYPELIB keynames;			/* Pointers to keynames */
+  std::vector<std::string> _keynames;
+
+  void addKeyName(std::string arg)
+  {
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+    _keynames.push_back(arg);
+  }
+public:
+  bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position)
+  {
+    std::string arg(name_arg, name_length);
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+
+    std::vector<std::string>::iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+
+    if (iter == _keynames.end())
+      return false;
+
+    position= iter -  _keynames.begin();
+
+    return true;
+  }
+
   TYPELIB fieldnames;			/* Pointer to fieldnames */
   TYPELIB *intervals;			/* pointer to interval info */
   pthread_mutex_t mutex;                /* For locking the share  */

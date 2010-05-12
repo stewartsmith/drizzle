@@ -754,6 +754,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     share->keynames.type_names[keynr]= keyinfo->name;
     share->keynames.type_lengths[keynr]= indx.name().length();
+
+    addKeyName(string(keyinfo->name, indx.name().length()));
   }
 
   share->keys_for_keyread.reset();
