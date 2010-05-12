@@ -190,7 +190,6 @@ public:
   uint32_t ref_length;
   enum {NONE=0, INDEX, RND} inited;
   bool locked;
-  bool implicit_emptied;                /* Can be !=0 only if HEAP */
 
   /**
     next_insert_id is the next value which should be inserted into the
@@ -227,10 +226,10 @@ public:
   /* ha_ methods: pubilc wrappers for private virtual API */
 
   int ha_open(Table *table, const char *name, int mode, int test_if_locked);
-  int ha_index_init(uint32_t idx, bool sorted);
-  int ha_index_end();
-  int ha_rnd_init(bool scan);
-  int ha_rnd_end();
+  int startIndexScan(uint32_t idx, bool sorted);
+  int endIndexScan();
+  int startTableScan(bool scan);
+  int endTableScan();
   int ha_reset();
 
   /* this is necessary in many places, e.g. in HANDLER command */
@@ -392,12 +391,6 @@ public:
   */
   virtual int rnd_pos_by_record(unsigned char *record);
   virtual int read_first_row(unsigned char *buf, uint32_t primary_key);
-  /**
-    The following function is only needed for tables that may be temporary
-    tables during joins.
-  */
-  virtual int restart_rnd_next(unsigned char *, unsigned char *)
-    { return HA_ERR_WRONG_COMMAND; }
   virtual int rnd_same(unsigned char *, uint32_t)
     { return HA_ERR_WRONG_COMMAND; }
   virtual ha_rows records_in_range(uint32_t, key_range *, key_range *)
@@ -542,18 +535,18 @@ private:
   */
 
   virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
-  virtual int index_init(uint32_t idx, bool)
+  virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
-  virtual int index_end() { active_index= MAX_KEY; return 0; }
+  virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }
   /**
-    rnd_init() can be called two times without rnd_end() in between
+    doStartTableScan() can be called two times without doEndTableScan() in between
     (it only makes sense if scan=1).
     then the second call should prepare for the new table scan (e.g
     if rnd_init allocates the cursor, second call should position it
     to the start of the table, no need to deallocate and allocate it again
   */
-  virtual int rnd_init(bool scan)= 0;
-  virtual int rnd_end() { return 0; }
+  virtual int doStartTableScan(bool scan)= 0;
+  virtual int doEndTableScan() { return 0; }
   virtual int doInsertRecord(unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
