@@ -43,7 +43,7 @@ public:
 
   int close(void);
 
-  int rnd_init(bool scan);
+  int doStartTableScan(bool scan);
 
   /* get the next row and copy it into buf */
   int rnd_next(unsigned char *buf);
@@ -51,7 +51,7 @@ public:
   /* locate row pointed to by pos, copy it into buf */
   int rnd_pos(unsigned char *buf, unsigned char *pos);
 
-  int rnd_end();
+  int doEndTableScan();
 
   /* record position of a record for reordering */
   void position(const unsigned char *record);

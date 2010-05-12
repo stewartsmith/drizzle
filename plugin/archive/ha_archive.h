@@ -92,7 +92,7 @@ public:
   void get_auto_increment(uint64_t, uint64_t, uint64_t,
                           uint64_t *first_value, uint64_t *nb_reserved_values);
   drizzled::ha_rows records() { return share->rows_recorded; }
-  int index_init(uint32_t keynr, bool sorted);
+  int doStartIndexScan(uint32_t keynr, bool sorted);
   virtual int index_read(unsigned char * buf, const unsigned char * key,
 			 uint32_t key_len,
                          drizzled::ha_rkey_function find_flag);
@@ -102,7 +102,7 @@ public:
   int doInsertRecord(unsigned char * buf);
   int real_write_row(unsigned char *buf, azio_stream *writer);
   int delete_all_rows();
-  int rnd_init(bool scan=1);
+  int doStartTableScan(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   ArchiveShare *get_share(const char *table_name, int *rc);
