@@ -76,7 +76,7 @@ optimizer::QuickRorIntersectSelect::~QuickRorIntersectSelect()
   alloc.free_root(MYF(0));
   if (need_to_fetch_row && head->cursor->inited != Cursor::NONE)
   {
-    head->cursor->ha_rnd_end();
+    head->cursor->endTableScan();
   }
   return;
 }
@@ -119,7 +119,7 @@ int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
     ++it;
   }
 
-  if (need_to_fetch_row && head->cursor->ha_rnd_init(1))
+  if (need_to_fetch_row && head->cursor->startTableScan(1))
   {
     return 0;
   }
