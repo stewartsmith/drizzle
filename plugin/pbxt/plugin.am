@@ -1,6 +1,8 @@
 # Used to build Makefile.in
 
+if BUILD_PBXT_PLUGIN
 noinst_LTLIBRARIES+= 		plugin/pbxt/libpbxt.la
+endif
 
 noinst_HEADERS+= \
                  plugin/pbxt/src/backup_xt.h \
