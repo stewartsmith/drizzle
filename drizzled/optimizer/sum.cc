@@ -261,7 +261,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 const_result= 0;
                 break;
               }
-              error= table->cursor->ha_index_init(static_cast<uint32_t>(ref.key), 1);
+              error= table->cursor->startIndexScan(static_cast<uint32_t>(ref.key), 1);
 
               if (! ref.key_length)
               {
@@ -351,7 +351,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 table->key_read= 0;
                 table->cursor->extra(HA_EXTRA_NO_KEYREAD);
               }
-              table->cursor->ha_index_end();
+              table->cursor->endIndexScan();
               if (error)
               {
                 if (error == HA_ERR_KEY_NOT_FOUND || error == HA_ERR_END_OF_FILE)
@@ -429,7 +429,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 const_result= 0;
                 break;
               }
-              error= table->cursor->ha_index_init(static_cast<uint32_t>(ref.key), 1);
+              error= table->cursor->startIndexScan(static_cast<uint32_t>(ref.key), 1);
 
               if (! ref.key_length)
               {
@@ -459,7 +459,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 table->key_read= 0;
                 table->cursor->extra(HA_EXTRA_NO_KEYREAD);
               }
-              table->cursor->ha_index_end();
+              table->cursor->endIndexScan();
               if (error)
               {
                 if (error == HA_ERR_KEY_NOT_FOUND || error == HA_ERR_END_OF_FILE)
