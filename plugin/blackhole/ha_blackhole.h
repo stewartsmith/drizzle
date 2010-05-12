@@ -64,7 +64,7 @@ public:
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   int doInsertRecord(unsigned char * buf);
-  int rnd_init(bool scan);
+  int doStartTableScan(bool scan);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   BlackholeShare *get_share(const char *table_name);
