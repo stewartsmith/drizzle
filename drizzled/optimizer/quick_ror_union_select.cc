@@ -127,7 +127,7 @@ int optimizer::QuickRorUnionSelect::reset()
     queue->push(*it);
   }
 
-  if (head->cursor->ha_rnd_init(1))
+  if (head->cursor->startTableScan(1))
   {
     return 0;
   }
@@ -157,7 +157,7 @@ optimizer::QuickRorUnionSelect::~QuickRorUnionSelect()
   quick_selects.clear();
   if (head->cursor->inited != Cursor::NONE)
   {
-    head->cursor->ha_rnd_end();
+    head->cursor->endTableScan();
   }
   alloc.free_root(MYF(0));
 }
