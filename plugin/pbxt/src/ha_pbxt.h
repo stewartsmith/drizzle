@@ -252,8 +252,8 @@ class ha_pbxt: public handler
 	int		xt_index_in_range(register XTOpenTablePtr ot, register XTIndexPtr ind, register XTIdxSearchKeyPtr search_key, byte *buf);
 	int		xt_index_next_read(register XTOpenTablePtr ot, register XTIndexPtr ind, xtBool key_only, register XTIdxSearchKeyPtr search_key, byte *buf);
 	int		xt_index_prev_read(XTOpenTablePtr ot, XTIndexPtr ind, xtBool key_only, register XTIdxSearchKeyPtr search_key, byte *buf);
-	int		index_init(uint idx, bool sorted);
-	int		index_end();
+	int		doStartIndexScan(uint idx, bool sorted);
+	int		doEndIndexScan();
 	int		index_read(byte * buf, const byte * key,
 								 uint key_len, enum ha_rkey_function find_flag);
         int		index_read_idx(byte * buf, uint idx, const byte * key,
@@ -268,8 +268,8 @@ class ha_pbxt: public handler
 	int		index_read_last(byte * buf, const byte * key, uint key_len);
 
 	/* Sequential scan functions: */
-	int		rnd_init(bool scan);								//required
-	int		rnd_end();
+	int		doStartTableScan(bool scan);								//required
+	int		doEndTableScan();
 	int		rnd_next(byte *buf);								//required
 	int		rnd_pos(byte * buf, byte *pos);													 //required
 	void	position(const byte *record);			//required
