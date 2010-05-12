@@ -192,12 +192,12 @@ const char *TableProtoTesterCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-int TableProtoTesterCursor::write_row(unsigned char *)
+int TableProtoTesterCursor::doInsertRecord(unsigned char *)
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int TableProtoTesterCursor::rnd_init(bool)
+int TableProtoTesterCursor::doStartTableScan(bool)
 {
   return(0);
 }

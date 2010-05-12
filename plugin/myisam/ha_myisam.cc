@@ -1046,7 +1046,7 @@ int ha_myisam::doDeleteRecord(const unsigned char *buf)
 }
 
 
-int ha_myisam::index_init(uint32_t idx, bool )
+int ha_myisam::doStartIndexScan(uint32_t idx, bool )
 {
   active_index=idx;
   //in_range_read= false;
@@ -1054,7 +1054,7 @@ int ha_myisam::index_init(uint32_t idx, bool )
 }
 
 
-int ha_myisam::index_end()
+int ha_myisam::doEndIndexScan()
 {
   active_index=MAX_KEY;
   return 0;
@@ -1170,7 +1170,7 @@ int ha_myisam::read_range_next()
 }
 
 
-int ha_myisam::rnd_init(bool scan)
+int ha_myisam::doStartTableScan(bool scan)
 {
   if (scan)
     return mi_scan_init(file);
@@ -1183,11 +1183,6 @@ int ha_myisam::rnd_next(unsigned char *buf)
   int error=mi_scan(file, buf);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
-}
-
-int ha_myisam::restart_rnd_next(unsigned char *buf, unsigned char *pos)
-{
-  return rnd_pos(buf,pos);
 }
 
 int ha_myisam::rnd_pos(unsigned char *buf, unsigned char *pos)

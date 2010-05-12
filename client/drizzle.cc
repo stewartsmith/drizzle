@@ -89,7 +89,7 @@ extern char *readline ();
 #  endif /* !defined(HAVE_READLINE_H) */
 char *cmdline = NULL;
 #else /* !defined(HAVE_READLINE_READLINE_H) */
-/* no readline */
+  /* no readline */
 #  error Readline Required
 #endif /* HAVE_LIBREADLINE */
 
@@ -103,11 +103,11 @@ extern void add_history ();
 extern int write_history ();
 extern int read_history ();
 #  endif /* defined(HAVE_READLINE_HISTORY_H) */
-/* no history */
+    /* no history */
 #endif /* HAVE_READLINE_HISTORY */
 
 /**
-  Make the old readline interface look like the new one.
+ Make the old readline interface look like the new one.
 */
 #ifndef HAVE_RL_COMPLETION
 typedef char **rl_completion_func_t(const char *, int, int);
@@ -153,15 +153,107 @@ const int MAX_SERVER_VERSION_LENGTH= 128;
 #define PROMPT_CHAR '\\'
 #define DEFAULT_DELIMITER ";"
 
-typedef struct st_status
+class Status
 {
+public:
+
+  Status(int in_exit_status, 
+         uint32_t in_query_start_line,
+  	 char *in_file_name,
+         LineBuffer *in_line_buff,
+	 bool in_batch,
+	 bool in_add_to_history)
+    :
+    exit_status(in_exit_status),
+    query_start_line(in_query_start_line),
+    file_name(in_file_name),
+    line_buff(in_line_buff),
+    batch(in_batch),
+    add_to_history(in_add_to_history)
+    {}
+
+  Status()
+    :
+    exit_status(),
+    query_start_line(),
+    file_name(),
+    line_buff(),
+    batch(),        
+    add_to_history()
+    {}
+  
+  int getExitStatus() const
+  {
+    return exit_status;
+  }
+
+  uint32_t getQueryStartLine() const
+  {
+    return query_start_line;
+  }
+
+  const char *getFileName() const
+  {
+    return file_name;
+  }
+
+  LineBuffer *getLineBuff() const
+  {
+    return line_buff;
+  }
+
+  bool getBatch() const
+  {
+    return batch;
+  }
+
+  bool getAddToHistory() const
+  {
+    return add_to_history;
+  }
+
+  void setExitStatus(int in_exit_status)
+  {
+    exit_status= in_exit_status;
+  }
+
+  void setQueryStartLine(uint32_t in_query_start_line)
+  {
+    query_start_line= in_query_start_line;
+  }
+
+  void setFileName(char *in_file_name)
+  {
+    file_name= in_file_name;
+  }
+
+  void setLineBuff(int max_size, FILE *file=NULL)
+  {
+    line_buff= new(std::nothrow) LineBuffer(max_size, file);
+  }
+
+  void setLineBuff(LineBuffer *in_line_buff)
+  {
+    line_buff= in_line_buff;
+  }
+
+  void setBatch(bool in_batch)
+  {
+    batch= in_batch;
+  }
+
+  void setAddToHistory(bool in_add_to_history)
+  {
+    add_to_history= in_add_to_history;
+  }
+
+private:
   int exit_status;
   uint32_t query_start_line;
   char *file_name;
   LineBuffer *line_buff;
   bool batch,add_to_history;
-} STATUS;
-
+}; 
 
 static map<string, string>::iterator completion_iter;
 static map<string, string>::iterator completion_end;
@@ -176,18 +268,18 @@ typedef enum enum_info_type INFO_TYPE;
 static drizzle_st drizzle;      /* The library handle */
 static drizzle_con_st con;      /* The connection */
 static bool ignore_errors= false, quick= false,
-            connected= false, opt_raw_data= false, unbuffered= false,
-            output_tables= false, opt_rehash= true, skip_updates= false,
-            safe_updates= false, one_database= false,
-            opt_compress= false, opt_shutdown= false, opt_ping= false,
-            vertical= false, line_numbers= true, column_names= true,
-            opt_nopager= true, opt_outfile= false, named_cmds= false,
-            tty_password= false, opt_nobeep= false, opt_reconnect= true,
-            default_charset_used= false, opt_secure_auth= false,
-            default_pager_set= false, opt_sigint_ignore= false,
-            auto_vertical_output= false,
-            show_warnings= false, executing_query= false, interrupted_query= false,
-            opt_mysql= false;
+  connected= false, opt_raw_data= false, unbuffered= false,
+  output_tables= false, opt_rehash= true, skip_updates= false,
+  safe_updates= false, one_database= false,
+  opt_compress= false, opt_shutdown= false, opt_ping= false,
+  vertical= false, line_numbers= true, column_names= true,
+  opt_nopager= true, opt_outfile= false, named_cmds= false,
+  tty_password= false, opt_nobeep= false, opt_reconnect= true,
+  default_charset_used= false, opt_secure_auth= false,
+  default_pager_set= false, opt_sigint_ignore= false,
+  auto_vertical_output= false,
+  show_warnings= false, executing_query= false, interrupted_query= false,
+  opt_mysql= false;
 static uint32_t  show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
@@ -195,21 +287,21 @@ static uint32_t opt_max_input_line, opt_drizzle_port= 0;
 static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
 static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *current_host, *current_db, *current_user= NULL,
-            *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
+  *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
 static string *processed_prompt= NULL;
 static char *default_prompt= NULL;
 static char *full_username= NULL,*part_username= NULL;
-static STATUS status;
+static Status status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static uint32_t opt_connect_timeout= 0;
 // TODO: Need to i18n these
 static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
-  "Aug","Sep","Oct","Nov","Dec"};
+                                  "Aug","Sep","Oct","Nov","Dec"};
 static char default_pager[FN_REFLEN];
 static char pager[FN_REFLEN], outfile[FN_REFLEN];
 static FILE *PAGER, *OUTFILE;
@@ -234,16 +326,16 @@ static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool)
 /* The names of functions that actually do the manipulation. */
 static int get_options(int argc,char **argv);
 static int com_quit(string *str,const char*),
-           com_go(string *str,const char*), com_ego(string *str,const char*),
-           com_print(string *str,const char*),
-           com_help(string *str,const char*), com_clear(string *str,const char*),
-           com_connect(string *str,const char*), com_status(string *str,const char*),
-           com_use(string *str,const char*), com_source(string *str, const char*),
-           com_rehash(string *str, const char*), com_tee(string *str, const char*),
-           com_notee(string *str, const char*),
-           com_prompt(string *str, const char*), com_delimiter(string *str, const char*),
-           com_warnings(string *str, const char*), com_nowarnings(string *str, const char*),
-           com_nopager(string *str, const char*), com_pager(string *str, const char*);
+  com_go(string *str,const char*), com_ego(string *str,const char*),
+  com_print(string *str,const char*),
+  com_help(string *str,const char*), com_clear(string *str,const char*),
+  com_connect(string *str,const char*), com_status(string *str,const char*),
+  com_use(string *str,const char*), com_source(string *str, const char*),
+  com_rehash(string *str, const char*), com_tee(string *str, const char*),
+  com_notee(string *str, const char*),
+  com_prompt(string *str, const char*), com_delimiter(string *str, const char*),
+  com_warnings(string *str, const char*), com_nowarnings(string *str, const char*),
+  com_nopager(string *str, const char*), com_pager(string *str, const char*);
 
 static int read_and_execute(bool interactive);
 static int sql_connect(char *host,char *database,char *user,char *password,
@@ -265,737 +357,804 @@ static int get_result_width(drizzle_result_st *res);
 static int get_field_disp_length(drizzle_column_st * field);
 static const char * strcont(register const char *str, register const char *set);
 
-/* A structure which contains information on the commands this program
-  can understand. */
-typedef struct {
+/* A class which contains information on the commands this program
+   can understand. */
+class Commands
+{
+private:
   const char *name;        /* User printable name of the function. */
   char cmd_char;        /* msql command character */
-  int (*func)(string *str,const char *); /* Function to call to do the job. */
+public:
+Commands(const char *in_name,
+         char in_cmd_char,
+         int (*in_func)(string *str,const char *name),
+         bool in_takes_params,
+         const char *in_doc)
+  :
+  name(in_name),
+  cmd_char(in_cmd_char),
+  func(in_func),
+  takes_params(in_takes_params),
+  doc(in_doc)
+  {}
+
+  Commands()
+  :
+  name(),
+  cmd_char(),
+  func(NULL),
+  takes_params(false),
+  doc()
+  {}
+
+  int (*func)(string *str,const char *);/* Function to call to do the job. */
+
+  const char *getName() const
+  {
+    return name;
+  }
+
+  char getCmdChar() const
+  {
+    return cmd_char;
+  }
+
+  bool getTakesParams() const
+  {
+    return takes_params;
+  }
+
+  const char *getDoc() const
+  {
+    return doc;
+  }
+
+  void setName(const char *in_name)
+  {
+     name= in_name;
+  }
+
+  void setCmdChar(char in_cmd_char)
+  {
+    cmd_char= in_cmd_char;
+  }
+
+  void setTakesParams(bool in_takes_params)
+  {
+    takes_params= in_takes_params;
+  }
+
+  void setDoc(const char *in_doc)
+  {
+    doc= in_doc;
+  }
+
+private:
   bool takes_params;        /* Max parameters for command */
   const char *doc;        /* Documentation for this function.  */
-} COMMANDS;
+}; 
 
 
-static COMMANDS commands[] = {
-  { "?",      '?', com_help,   0, N_("Synonym for `help'.") },
-  { "clear",  'c', com_clear,  0, N_("Clear command.")},
-  { "connect",'r', com_connect,1,
-    N_("Reconnect to the server. Optional arguments are db and host.")},
-  { "delimiter", 'd', com_delimiter,    1,
-    N_("Set statement delimiter. NOTE: Takes the rest of the line as new delimiter.") },
-  { "ego",    'G', com_ego,    0,
-    N_("Send command to drizzle server, display result vertically.")},
-  { "exit",   'q', com_quit,   0, N_("Exit drizzle. Same as quit.")},
-  { "go",     'g', com_go,     0, N_("Send command to drizzle server.") },
-  { "help",   'h', com_help,   0, N_("Display this help.") },
-  { "nopager",'n', com_nopager,0, N_("Disable pager, print to stdout.") },
-  { "notee",  't', com_notee,  0, N_("Don't write into outfile.") },
-  { "pager",  'P', com_pager,  1,
-    N_("Set PAGER [to_pager]. Print the query results via PAGER.") },
-  { "print",  'p', com_print,  0, N_("Print current command.") },
-  { "prompt", 'R', com_prompt, 1, N_("Change your drizzle prompt.")},
-  { "quit",   'q', com_quit,   0, N_("Quit drizzle.") },
-  { "rehash", '#', com_rehash, 0, N_("Rebuild completion hash.") },
-  { "source", '.', com_source, 1,
-    N_("Execute an SQL script file. Takes a file name as an argument.")},
-  { "status", 's', com_status, 0, N_("Get status information from the server.")},
-  { "tee",    'T', com_tee,    1,
-    N_("Set outfile [to_outfile]. Append everything into given outfile.") },
-  { "use",    'u', com_use,    1,
-    N_("Use another database. Takes database name as argument.") },
-  { "warnings", 'W', com_warnings,  0,
-    N_("Show warnings after every statement.") },
-  { "nowarning", 'w', com_nowarnings, 0,
-    N_("Don't show warnings after every statement.") },
+static Commands commands[] = {
+  Commands( "?",      '?', com_help,   0, N_("Synonym for `help'.") ),
+  Commands( "clear",  'c', com_clear,  0, N_("Clear command.")),
+  Commands( "connect",'r', com_connect,1,
+    N_("Reconnect to the server. Optional arguments are db and host.")),
+  Commands( "delimiter", 'd', com_delimiter,    1,
+    N_("Set statement delimiter. NOTE: Takes the rest of the line as new delimiter.") ),
+  Commands( "ego",    'G', com_ego,    0,
+    N_("Send command to drizzle server, display result vertically.")),
+  Commands( "exit",   'q', com_quit,   0, N_("Exit drizzle. Same as quit.")),
+  Commands( "go",     'g', com_go,     0, N_("Send command to drizzle server.") ),
+  Commands( "help",   'h', com_help,   0, N_("Display this help.") ),
+  Commands( "nopager",'n', com_nopager,0, N_("Disable pager, print to stdout.") ),
+  Commands( "notee",  't', com_notee,  0, N_("Don't write into outfile.") ),
+  Commands( "pager",  'P', com_pager,  1,
+    N_("Set PAGER [to_pager]. Print the query results via PAGER.") ),
+  Commands( "print",  'p', com_print,  0, N_("Print current command.") ),
+  Commands( "prompt", 'R', com_prompt, 1, N_("Change your drizzle prompt.")),
+  Commands( "quit",   'q', com_quit,   0, N_("Quit drizzle.") ),
+  Commands( "rehash", '#', com_rehash, 0, N_("Rebuild completion hash.") ),
+  Commands( "source", '.', com_source, 1,
+    N_("Execute an SQL script file. Takes a file name as an argument.")),
+  Commands( "status", 's', com_status, 0, N_("Get status information from the server.")),
+  Commands( "tee",    'T', com_tee,    1,
+    N_("Set outfile [to_outfile]. Append everything into given outfile.") ),
+  Commands( "use",    'u', com_use,    1,
+    N_("Use another database. Takes database name as argument.") ),
+  Commands( "warnings", 'W', com_warnings,  0,
+    N_("Show warnings after every statement.") ),
+  Commands( "nowarning", 'w', com_nowarnings, 0,
+    N_("Don't show warnings after every statement.") ),
   /* Get bash-like expansion for some commands */
-  { "create table",     0, 0, 0, ""},
-  { "create database",  0, 0, 0, ""},
-  { "show databases",   0, 0, 0, ""},
-  { "show fields from", 0, 0, 0, ""},
-  { "show keys from",   0, 0, 0, ""},
-  { "show tables",      0, 0, 0, ""},
-  { "load data from",   0, 0, 0, ""},
-  { "alter table",      0, 0, 0, ""},
-  { "set option",       0, 0, 0, ""},
-  { "lock tables",      0, 0, 0, ""},
-  { "unlock tables",    0, 0, 0, ""},
+  Commands( "create table",     0, 0, 0, ""),
+  Commands( "create database",  0, 0, 0, ""),
+  Commands( "show databases",   0, 0, 0, ""),
+  Commands( "show fields from", 0, 0, 0, ""),
+  Commands( "show keys from",   0, 0, 0, ""),
+  Commands( "show tables",      0, 0, 0, ""),
+  Commands( "load data from",   0, 0, 0, ""),
+  Commands( "alter table",      0, 0, 0, ""),
+  Commands( "set option",       0, 0, 0, ""),
+  Commands( "lock tables",      0, 0, 0, ""),
+  Commands( "unlock tables",    0, 0, 0, ""),
   /* generated 2006-12-28.  Refresh occasionally from lexer. */
-  { "ACTION", 0, 0, 0, ""},
-  { "ADD", 0, 0, 0, ""},
-  { "AFTER", 0, 0, 0, ""},
-  { "AGAINST", 0, 0, 0, ""},
-  { "AGGREGATE", 0, 0, 0, ""},
-  { "ALL", 0, 0, 0, ""},
-  { "ALGORITHM", 0, 0, 0, ""},
-  { "ALTER", 0, 0, 0, ""},
-  { "ANALYZE", 0, 0, 0, ""},
-  { "AND", 0, 0, 0, ""},
-  { "ANY", 0, 0, 0, ""},
-  { "AS", 0, 0, 0, ""},
-  { "ASC", 0, 0, 0, ""},
-  { "ASCII", 0, 0, 0, ""},
-  { "ASENSITIVE", 0, 0, 0, ""},
-  { "AUTO_INCREMENT", 0, 0, 0, ""},
-  { "AVG", 0, 0, 0, ""},
-  { "AVG_ROW_LENGTH", 0, 0, 0, ""},
-  { "BACKUP", 0, 0, 0, ""},
-  { "BDB", 0, 0, 0, ""},
-  { "BEFORE", 0, 0, 0, ""},
-  { "BEGIN", 0, 0, 0, ""},
-  { "BERKELEYDB", 0, 0, 0, ""},
-  { "BETWEEN", 0, 0, 0, ""},
-  { "BIGINT", 0, 0, 0, ""},
-  { "BINARY", 0, 0, 0, ""},
-  { "BINLOG", 0, 0, 0, ""},
-  { "BIT", 0, 0, 0, ""},
-  { "BLOB", 0, 0, 0, ""},
-  { "BOOL", 0, 0, 0, ""},
-  { "BOOLEAN", 0, 0, 0, ""},
-  { "BOTH", 0, 0, 0, ""},
-  { "BTREE", 0, 0, 0, ""},
-  { "BY", 0, 0, 0, ""},
-  { "BYTE", 0, 0, 0, ""},
-  { "CACHE", 0, 0, 0, ""},
-  { "CALL", 0, 0, 0, ""},
-  { "CASCADE", 0, 0, 0, ""},
-  { "CASCADED", 0, 0, 0, ""},
-  { "CASE", 0, 0, 0, ""},
-  { "CHAIN", 0, 0, 0, ""},
-  { "CHANGE", 0, 0, 0, ""},
-  { "CHANGED", 0, 0, 0, ""},
-  { "CHAR", 0, 0, 0, ""},
-  { "CHARACTER", 0, 0, 0, ""},
-  { "CHARSET", 0, 0, 0, ""},
-  { "CHECK", 0, 0, 0, ""},
-  { "CHECKSUM", 0, 0, 0, ""},
-  { "CIPHER", 0, 0, 0, ""},
-  { "CLIENT", 0, 0, 0, ""},
-  { "CLOSE", 0, 0, 0, ""},
-  { "CODE", 0, 0, 0, ""},
-  { "COLLATE", 0, 0, 0, ""},
-  { "COLLATION", 0, 0, 0, ""},
-  { "COLUMN", 0, 0, 0, ""},
-  { "COLUMNS", 0, 0, 0, ""},
-  { "COMMENT", 0, 0, 0, ""},
-  { "COMMIT", 0, 0, 0, ""},
-  { "COMMITTED", 0, 0, 0, ""},
-  { "COMPACT", 0, 0, 0, ""},
-  { "COMPRESSED", 0, 0, 0, ""},
-  { "CONCURRENT", 0, 0, 0, ""},
-  { "CONDITION", 0, 0, 0, ""},
-  { "CONNECTION", 0, 0, 0, ""},
-  { "CONSISTENT", 0, 0, 0, ""},
-  { "CONSTRAINT", 0, 0, 0, ""},
-  { "CONTAINS", 0, 0, 0, ""},
-  { "CONTINUE", 0, 0, 0, ""},
-  { "CONVERT", 0, 0, 0, ""},
-  { "CREATE", 0, 0, 0, ""},
-  { "CROSS", 0, 0, 0, ""},
-  { "CUBE", 0, 0, 0, ""},
-  { "CURRENT_DATE", 0, 0, 0, ""},
-  { "CURRENT_TIMESTAMP", 0, 0, 0, ""},
-  { "CURRENT_USER", 0, 0, 0, ""},
-  { "CURSOR", 0, 0, 0, ""},
-  { "DATA", 0, 0, 0, ""},
-  { "DATABASE", 0, 0, 0, ""},
-  { "DATABASES", 0, 0, 0, ""},
-  { "DATE", 0, 0, 0, ""},
-  { "DATETIME", 0, 0, 0, ""},
-  { "DAY", 0, 0, 0, ""},
-  { "DAY_HOUR", 0, 0, 0, ""},
-  { "DAY_MICROSECOND", 0, 0, 0, ""},
-  { "DAY_MINUTE", 0, 0, 0, ""},
-  { "DAY_SECOND", 0, 0, 0, ""},
-  { "DEALLOCATE", 0, 0, 0, ""},
-  { "DEC", 0, 0, 0, ""},
-  { "DECIMAL", 0, 0, 0, ""},
-  { "DECLARE", 0, 0, 0, ""},
-  { "DEFAULT", 0, 0, 0, ""},
-  { "DEFINER", 0, 0, 0, ""},
-  { "DELAYED", 0, 0, 0, ""},
-  { "DELAY_KEY_WRITE", 0, 0, 0, ""},
-  { "DELETE", 0, 0, 0, ""},
-  { "DESC", 0, 0, 0, ""},
-  { "DESCRIBE", 0, 0, 0, ""},
-  { "DES_KEY_FILE", 0, 0, 0, ""},
-  { "DETERMINISTIC", 0, 0, 0, ""},
-  { "DIRECTORY", 0, 0, 0, ""},
-  { "DISABLE", 0, 0, 0, ""},
-  { "DISCARD", 0, 0, 0, ""},
-  { "DISTINCT", 0, 0, 0, ""},
-  { "DISTINCTROW", 0, 0, 0, ""},
-  { "DIV", 0, 0, 0, ""},
-  { "DO", 0, 0, 0, ""},
-  { "DOUBLE", 0, 0, 0, ""},
-  { "DROP", 0, 0, 0, ""},
-  { "DUAL", 0, 0, 0, ""},
-  { "DUMPFILE", 0, 0, 0, ""},
-  { "DUPLICATE", 0, 0, 0, ""},
-  { "DYNAMIC", 0, 0, 0, ""},
-  { "EACH", 0, 0, 0, ""},
-  { "ELSE", 0, 0, 0, ""},
-  { "ELSEIF", 0, 0, 0, ""},
-  { "ENABLE", 0, 0, 0, ""},
-  { "ENCLOSED", 0, 0, 0, ""},
-  { "END", 0, 0, 0, ""},
-  { "ENGINE", 0, 0, 0, ""},
-  { "ENGINES", 0, 0, 0, ""},
-  { "ENUM", 0, 0, 0, ""},
-  { "ERRORS", 0, 0, 0, ""},
-  { "ESCAPE", 0, 0, 0, ""},
-  { "ESCAPED", 0, 0, 0, ""},
-  { "EVENTS", 0, 0, 0, ""},
-  { "EXECUTE", 0, 0, 0, ""},
-  { "EXISTS", 0, 0, 0, ""},
-  { "EXIT", 0, 0, 0, ""},
-  { "EXPANSION", 0, 0, 0, ""},
-  { "EXPLAIN", 0, 0, 0, ""},
-  { "EXTENDED", 0, 0, 0, ""},
-  { "FALSE", 0, 0, 0, ""},
-  { "FAST", 0, 0, 0, ""},
-  { "FETCH", 0, 0, 0, ""},
-  { "FIELDS", 0, 0, 0, ""},
-  { "FILE", 0, 0, 0, ""},
-  { "FIRST", 0, 0, 0, ""},
-  { "FIXED", 0, 0, 0, ""},
-  { "FLOAT", 0, 0, 0, ""},
-  { "FLOAT4", 0, 0, 0, ""},
-  { "FLOAT8", 0, 0, 0, ""},
-  { "FLUSH", 0, 0, 0, ""},
-  { "FOR", 0, 0, 0, ""},
-  { "FORCE", 0, 0, 0, ""},
-  { "FOREIGN", 0, 0, 0, ""},
-  { "FOUND", 0, 0, 0, ""},
-  { "FRAC_SECOND", 0, 0, 0, ""},
-  { "FROM", 0, 0, 0, ""},
-  { "FULL", 0, 0, 0, ""},
-  { "FULLTEXT", 0, 0, 0, ""},
-  { "FUNCTION", 0, 0, 0, ""},
-  { "GLOBAL", 0, 0, 0, ""},
-  { "GRANT", 0, 0, 0, ""},
-  { "GRANTS", 0, 0, 0, ""},
-  { "GROUP", 0, 0, 0, ""},
-  { "HANDLER", 0, 0, 0, ""},
-  { "HASH", 0, 0, 0, ""},
-  { "HAVING", 0, 0, 0, ""},
-  { "HELP", 0, 0, 0, ""},
-  { "HIGH_PRIORITY", 0, 0, 0, ""},
-  { "HOSTS", 0, 0, 0, ""},
-  { "HOUR", 0, 0, 0, ""},
-  { "HOUR_MICROSECOND", 0, 0, 0, ""},
-  { "HOUR_MINUTE", 0, 0, 0, ""},
-  { "HOUR_SECOND", 0, 0, 0, ""},
-  { "IDENTIFIED", 0, 0, 0, ""},
-  { "IF", 0, 0, 0, ""},
-  { "IGNORE", 0, 0, 0, ""},
-  { "IMPORT", 0, 0, 0, ""},
-  { "IN", 0, 0, 0, ""},
-  { "INDEX", 0, 0, 0, ""},
-  { "INDEXES", 0, 0, 0, ""},
-  { "INFILE", 0, 0, 0, ""},
-  { "INNER", 0, 0, 0, ""},
-  { "INNOBASE", 0, 0, 0, ""},
-  { "INNODB", 0, 0, 0, ""},
-  { "INOUT", 0, 0, 0, ""},
-  { "INSENSITIVE", 0, 0, 0, ""},
-  { "INSERT", 0, 0, 0, ""},
-  { "INSERT_METHOD", 0, 0, 0, ""},
-  { "INT", 0, 0, 0, ""},
-  { "INT1", 0, 0, 0, ""},
-  { "INT2", 0, 0, 0, ""},
-  { "INT3", 0, 0, 0, ""},
-  { "INT4", 0, 0, 0, ""},
-  { "INT8", 0, 0, 0, ""},
-  { "INTEGER", 0, 0, 0, ""},
-  { "INTERVAL", 0, 0, 0, ""},
-  { "INTO", 0, 0, 0, ""},
-  { "IO_THREAD", 0, 0, 0, ""},
-  { "IS", 0, 0, 0, ""},
-  { "ISOLATION", 0, 0, 0, ""},
-  { "ISSUER", 0, 0, 0, ""},
-  { "ITERATE", 0, 0, 0, ""},
-  { "INVOKER", 0, 0, 0, ""},
-  { "JOIN", 0, 0, 0, ""},
-  { "KEY", 0, 0, 0, ""},
-  { "KEYS", 0, 0, 0, ""},
-  { "KILL", 0, 0, 0, ""},
-  { "LANGUAGE", 0, 0, 0, ""},
-  { "LAST", 0, 0, 0, ""},
-  { "LEADING", 0, 0, 0, ""},
-  { "LEAVE", 0, 0, 0, ""},
-  { "LEAVES", 0, 0, 0, ""},
-  { "LEFT", 0, 0, 0, ""},
-  { "LEVEL", 0, 0, 0, ""},
-  { "LIKE", 0, 0, 0, ""},
-  { "LIMIT", 0, 0, 0, ""},
-  { "LINES", 0, 0, 0, ""},
-  { "LINESTRING", 0, 0, 0, ""},
-  { "LOAD", 0, 0, 0, ""},
-  { "LOCAL", 0, 0, 0, ""},
-  { "LOCALTIMESTAMP", 0, 0, 0, ""},
-  { "LOCK", 0, 0, 0, ""},
-  { "LOCKS", 0, 0, 0, ""},
-  { "LOGS", 0, 0, 0, ""},
-  { "LONG", 0, 0, 0, ""},
-  { "LONGTEXT", 0, 0, 0, ""},
-  { "LOOP", 0, 0, 0, ""},
-  { "LOW_PRIORITY", 0, 0, 0, ""},
-  { "MASTER", 0, 0, 0, ""},
-  { "MASTER_CONNECT_RETRY", 0, 0, 0, ""},
-  { "MASTER_HOST", 0, 0, 0, ""},
-  { "MASTER_LOG_FILE", 0, 0, 0, ""},
-  { "MASTER_LOG_POS", 0, 0, 0, ""},
-  { "MASTER_PASSWORD", 0, 0, 0, ""},
-  { "MASTER_PORT", 0, 0, 0, ""},
-  { "MASTER_SERVER_ID", 0, 0, 0, ""},
-  { "MASTER_SSL", 0, 0, 0, ""},
-  { "MASTER_SSL_CA", 0, 0, 0, ""},
-  { "MASTER_SSL_CAPATH", 0, 0, 0, ""},
-  { "MASTER_SSL_CERT", 0, 0, 0, ""},
-  { "MASTER_SSL_CIPHER", 0, 0, 0, ""},
-  { "MASTER_SSL_KEY", 0, 0, 0, ""},
-  { "MASTER_USER", 0, 0, 0, ""},
-  { "MATCH", 0, 0, 0, ""},
-  { "MAX_CONNECTIONS_PER_HOUR", 0, 0, 0, ""},
-  { "MAX_QUERIES_PER_HOUR", 0, 0, 0, ""},
-  { "MAX_ROWS", 0, 0, 0, ""},
-  { "MAX_UPDATES_PER_HOUR", 0, 0, 0, ""},
-  { "MAX_USER_CONNECTIONS", 0, 0, 0, ""},
-  { "MEDIUM", 0, 0, 0, ""},
-  { "MEDIUMTEXT", 0, 0, 0, ""},
-  { "MERGE", 0, 0, 0, ""},
-  { "MICROSECOND", 0, 0, 0, ""},
-  { "MIDDLEINT", 0, 0, 0, ""},
-  { "MIGRATE", 0, 0, 0, ""},
-  { "MINUTE", 0, 0, 0, ""},
-  { "MINUTE_MICROSECOND", 0, 0, 0, ""},
-  { "MINUTE_SECOND", 0, 0, 0, ""},
-  { "MIN_ROWS", 0, 0, 0, ""},
-  { "MOD", 0, 0, 0, ""},
-  { "MODE", 0, 0, 0, ""},
-  { "MODIFIES", 0, 0, 0, ""},
-  { "MODIFY", 0, 0, 0, ""},
-  { "MONTH", 0, 0, 0, ""},
-  { "MULTILINESTRING", 0, 0, 0, ""},
-  { "MULTIPOINT", 0, 0, 0, ""},
-  { "MULTIPOLYGON", 0, 0, 0, ""},
-  { "MUTEX", 0, 0, 0, ""},
-  { "NAME", 0, 0, 0, ""},
-  { "NAMES", 0, 0, 0, ""},
-  { "NATIONAL", 0, 0, 0, ""},
-  { "NATURAL", 0, 0, 0, ""},
-  { "NDB", 0, 0, 0, ""},
-  { "NDBCLUSTER", 0, 0, 0, ""},
-  { "NCHAR", 0, 0, 0, ""},
-  { "NEW", 0, 0, 0, ""},
-  { "NEXT", 0, 0, 0, ""},
-  { "NO", 0, 0, 0, ""},
-  { "NONE", 0, 0, 0, ""},
-  { "NOT", 0, 0, 0, ""},
-  { "NO_WRITE_TO_BINLOG", 0, 0, 0, ""},
-  { "NULL", 0, 0, 0, ""},
-  { "NUMERIC", 0, 0, 0, ""},
-  { "NVARCHAR", 0, 0, 0, ""},
-  { "OFFSET", 0, 0, 0, ""},
-  { "OLD_PASSWORD", 0, 0, 0, ""},
-  { "ON", 0, 0, 0, ""},
-  { "ONE", 0, 0, 0, ""},
-  { "ONE_SHOT", 0, 0, 0, ""},
-  { "OPEN", 0, 0, 0, ""},
-  { "OPTIMIZE", 0, 0, 0, ""},
-  { "OPTION", 0, 0, 0, ""},
-  { "OPTIONALLY", 0, 0, 0, ""},
-  { "OR", 0, 0, 0, ""},
-  { "ORDER", 0, 0, 0, ""},
-  { "OUT", 0, 0, 0, ""},
-  { "OUTER", 0, 0, 0, ""},
-  { "OUTFILE", 0, 0, 0, ""},
-  { "PACK_KEYS", 0, 0, 0, ""},
-  { "PARTIAL", 0, 0, 0, ""},
-  { "PASSWORD", 0, 0, 0, ""},
-  { "PHASE", 0, 0, 0, ""},
-  { "POINT", 0, 0, 0, ""},
-  { "POLYGON", 0, 0, 0, ""},
-  { "PRECISION", 0, 0, 0, ""},
-  { "PREPARE", 0, 0, 0, ""},
-  { "PREV", 0, 0, 0, ""},
-  { "PRIMARY", 0, 0, 0, ""},
-  { "PRIVILEGES", 0, 0, 0, ""},
-  { "PROCEDURE", 0, 0, 0, ""},
-  { "PROCESS", 0, 0, 0, ""},
-  { "PROCESSLIST", 0, 0, 0, ""},
-  { "PURGE", 0, 0, 0, ""},
-  { "QUARTER", 0, 0, 0, ""},
-  { "QUERY", 0, 0, 0, ""},
-  { "QUICK", 0, 0, 0, ""},
-  { "READ", 0, 0, 0, ""},
-  { "READS", 0, 0, 0, ""},
-  { "REAL", 0, 0, 0, ""},
-  { "RECOVER", 0, 0, 0, ""},
-  { "REDUNDANT", 0, 0, 0, ""},
-  { "REFERENCES", 0, 0, 0, ""},
-  { "REGEXP", 0, 0, 0, ""},
-  { "RELAY_LOG_FILE", 0, 0, 0, ""},
-  { "RELAY_LOG_POS", 0, 0, 0, ""},
-  { "RELAY_THREAD", 0, 0, 0, ""},
-  { "RELEASE", 0, 0, 0, ""},
-  { "RELOAD", 0, 0, 0, ""},
-  { "RENAME", 0, 0, 0, ""},
-  { "REPAIR", 0, 0, 0, ""},
-  { "REPEATABLE", 0, 0, 0, ""},
-  { "REPLACE", 0, 0, 0, ""},
-  { "REPLICATION", 0, 0, 0, ""},
-  { "REPEAT", 0, 0, 0, ""},
-  { "REQUIRE", 0, 0, 0, ""},
-  { "RESET", 0, 0, 0, ""},
-  { "RESTORE", 0, 0, 0, ""},
-  { "RESTRICT", 0, 0, 0, ""},
-  { "RESUME", 0, 0, 0, ""},
-  { "RETURN", 0, 0, 0, ""},
-  { "RETURNS", 0, 0, 0, ""},
-  { "REVOKE", 0, 0, 0, ""},
-  { "RIGHT", 0, 0, 0, ""},
-  { "RLIKE", 0, 0, 0, ""},
-  { "ROLLBACK", 0, 0, 0, ""},
-  { "ROLLUP", 0, 0, 0, ""},
-  { "ROUTINE", 0, 0, 0, ""},
-  { "ROW", 0, 0, 0, ""},
-  { "ROWS", 0, 0, 0, ""},
-  { "ROW_FORMAT", 0, 0, 0, ""},
-  { "RTREE", 0, 0, 0, ""},
-  { "SAVEPOINT", 0, 0, 0, ""},
-  { "SCHEMA", 0, 0, 0, ""},
-  { "SCHEMAS", 0, 0, 0, ""},
-  { "SECOND", 0, 0, 0, ""},
-  { "SECOND_MICROSECOND", 0, 0, 0, ""},
-  { "SECURITY", 0, 0, 0, ""},
-  { "SELECT", 0, 0, 0, ""},
-  { "SENSITIVE", 0, 0, 0, ""},
-  { "SEPARATOR", 0, 0, 0, ""},
-  { "SERIAL", 0, 0, 0, ""},
-  { "SERIALIZABLE", 0, 0, 0, ""},
-  { "SESSION", 0, 0, 0, ""},
-  { "SET", 0, 0, 0, ""},
-  { "SHARE", 0, 0, 0, ""},
-  { "SHOW", 0, 0, 0, ""},
-  { "SHUTDOWN", 0, 0, 0, ""},
-  { "SIGNED", 0, 0, 0, ""},
-  { "SIMPLE", 0, 0, 0, ""},
-  { "SLAVE", 0, 0, 0, ""},
-  { "SNAPSHOT", 0, 0, 0, ""},
-  { "SMALLINT", 0, 0, 0, ""},
-  { "SOME", 0, 0, 0, ""},
-  { "SONAME", 0, 0, 0, ""},
-  { "SOUNDS", 0, 0, 0, ""},
-  { "SPATIAL", 0, 0, 0, ""},
-  { "SPECIFIC", 0, 0, 0, ""},
-  { "SQL", 0, 0, 0, ""},
-  { "SQLEXCEPTION", 0, 0, 0, ""},
-  { "SQLSTATE", 0, 0, 0, ""},
-  { "SQLWARNING", 0, 0, 0, ""},
-  { "SQL_BIG_RESULT", 0, 0, 0, ""},
-  { "SQL_BUFFER_RESULT", 0, 0, 0, ""},
-  { "SQL_CACHE", 0, 0, 0, ""},
-  { "SQL_CALC_FOUND_ROWS", 0, 0, 0, ""},
-  { "SQL_NO_CACHE", 0, 0, 0, ""},
-  { "SQL_SMALL_RESULT", 0, 0, 0, ""},
-  { "SQL_THREAD", 0, 0, 0, ""},
-  { "SQL_TSI_FRAC_SECOND", 0, 0, 0, ""},
-  { "SQL_TSI_SECOND", 0, 0, 0, ""},
-  { "SQL_TSI_MINUTE", 0, 0, 0, ""},
-  { "SQL_TSI_HOUR", 0, 0, 0, ""},
-  { "SQL_TSI_DAY", 0, 0, 0, ""},
-  { "SQL_TSI_WEEK", 0, 0, 0, ""},
-  { "SQL_TSI_MONTH", 0, 0, 0, ""},
-  { "SQL_TSI_QUARTER", 0, 0, 0, ""},
-  { "SQL_TSI_YEAR", 0, 0, 0, ""},
-  { "SSL", 0, 0, 0, ""},
-  { "START", 0, 0, 0, ""},
-  { "STARTING", 0, 0, 0, ""},
-  { "STATUS", 0, 0, 0, ""},
-  { "STOP", 0, 0, 0, ""},
-  { "STORAGE", 0, 0, 0, ""},
-  { "STRAIGHT_JOIN", 0, 0, 0, ""},
-  { "STRING", 0, 0, 0, ""},
-  { "STRIPED", 0, 0, 0, ""},
-  { "SUBJECT", 0, 0, 0, ""},
-  { "SUPER", 0, 0, 0, ""},
-  { "SUSPEND", 0, 0, 0, ""},
-  { "TABLE", 0, 0, 0, ""},
-  { "TABLES", 0, 0, 0, ""},
-  { "TABLESPACE", 0, 0, 0, ""},
-  { "TEMPORARY", 0, 0, 0, ""},
-  { "TEMPTABLE", 0, 0, 0, ""},
-  { "TERMINATED", 0, 0, 0, ""},
-  { "TEXT", 0, 0, 0, ""},
-  { "THEN", 0, 0, 0, ""},
-  { "TIMESTAMP", 0, 0, 0, ""},
-  { "TIMESTAMPADD", 0, 0, 0, ""},
-  { "TIMESTAMPDIFF", 0, 0, 0, ""},
-  { "TINYTEXT", 0, 0, 0, ""},
-  { "TO", 0, 0, 0, ""},
-  { "TRAILING", 0, 0, 0, ""},
-  { "TRANSACTION", 0, 0, 0, ""},
-  { "TRIGGER", 0, 0, 0, ""},
-  { "TRIGGERS", 0, 0, 0, ""},
-  { "TRUE", 0, 0, 0, ""},
-  { "TRUNCATE", 0, 0, 0, ""},
-  { "TYPE", 0, 0, 0, ""},
-  { "TYPES", 0, 0, 0, ""},
-  { "UNCOMMITTED", 0, 0, 0, ""},
-  { "UNDEFINED", 0, 0, 0, ""},
-  { "UNDO", 0, 0, 0, ""},
-  { "UNICODE", 0, 0, 0, ""},
-  { "UNION", 0, 0, 0, ""},
-  { "UNIQUE", 0, 0, 0, ""},
-  { "UNKNOWN", 0, 0, 0, ""},
-  { "UNLOCK", 0, 0, 0, ""},
-  { "UNSIGNED", 0, 0, 0, ""},
-  { "UNTIL", 0, 0, 0, ""},
-  { "UPDATE", 0, 0, 0, ""},
-  { "UPGRADE", 0, 0, 0, ""},
-  { "USAGE", 0, 0, 0, ""},
-  { "USE", 0, 0, 0, ""},
-  { "USER", 0, 0, 0, ""},
-  { "USER_RESOURCES", 0, 0, 0, ""},
-  { "USE_FRM", 0, 0, 0, ""},
-  { "USING", 0, 0, 0, ""},
-  { "UTC_DATE", 0, 0, 0, ""},
-  { "UTC_TIMESTAMP", 0, 0, 0, ""},
-  { "VALUE", 0, 0, 0, ""},
-  { "VALUES", 0, 0, 0, ""},
-  { "VARBINARY", 0, 0, 0, ""},
-  { "VARCHAR", 0, 0, 0, ""},
-  { "VARCHARACTER", 0, 0, 0, ""},
-  { "VARIABLES", 0, 0, 0, ""},
-  { "VARYING", 0, 0, 0, ""},
-  { "WARNINGS", 0, 0, 0, ""},
-  { "WEEK", 0, 0, 0, ""},
-  { "WHEN", 0, 0, 0, ""},
-  { "WHERE", 0, 0, 0, ""},
-  { "WHILE", 0, 0, 0, ""},
-  { "VIEW", 0, 0, 0, ""},
-  { "WITH", 0, 0, 0, ""},
-  { "WORK", 0, 0, 0, ""},
-  { "WRITE", 0, 0, 0, ""},
-  { "X509", 0, 0, 0, ""},
-  { "XOR", 0, 0, 0, ""},
-  { "XA", 0, 0, 0, ""},
-  { "YEAR", 0, 0, 0, ""},
-  { "YEAR_MONTH", 0, 0, 0, ""},
-  { "ZEROFILL", 0, 0, 0, ""},
-  { "ABS", 0, 0, 0, ""},
-  { "ACOS", 0, 0, 0, ""},
-  { "ADDDATE", 0, 0, 0, ""},
-  { "AES_ENCRYPT", 0, 0, 0, ""},
-  { "AES_DECRYPT", 0, 0, 0, ""},
-  { "AREA", 0, 0, 0, ""},
-  { "ASIN", 0, 0, 0, ""},
-  { "ASBINARY", 0, 0, 0, ""},
-  { "ASTEXT", 0, 0, 0, ""},
-  { "ASWKB", 0, 0, 0, ""},
-  { "ASWKT", 0, 0, 0, ""},
-  { "ATAN", 0, 0, 0, ""},
-  { "ATAN2", 0, 0, 0, ""},
-  { "BENCHMARK", 0, 0, 0, ""},
-  { "BIN", 0, 0, 0, ""},
-  { "BIT_OR", 0, 0, 0, ""},
-  { "BIT_AND", 0, 0, 0, ""},
-  { "BIT_XOR", 0, 0, 0, ""},
-  { "CAST", 0, 0, 0, ""},
-  { "CEIL", 0, 0, 0, ""},
-  { "CEILING", 0, 0, 0, ""},
-  { "CENTROID", 0, 0, 0, ""},
-  { "CHAR_LENGTH", 0, 0, 0, ""},
-  { "CHARACTER_LENGTH", 0, 0, 0, ""},
-  { "COALESCE", 0, 0, 0, ""},
-  { "COERCIBILITY", 0, 0, 0, ""},
-  { "COMPRESS", 0, 0, 0, ""},
-  { "CONCAT", 0, 0, 0, ""},
-  { "CONCAT_WS", 0, 0, 0, ""},
-  { "CONNECTION_ID", 0, 0, 0, ""},
-  { "CONV", 0, 0, 0, ""},
-  { "CONVERT_TZ", 0, 0, 0, ""},
-  { "COUNT", 0, 0, 0, ""},
-  { "COS", 0, 0, 0, ""},
-  { "COT", 0, 0, 0, ""},
-  { "CRC32", 0, 0, 0, ""},
-  { "CROSSES", 0, 0, 0, ""},
-  { "CURDATE", 0, 0, 0, ""},
-  { "DATE_ADD", 0, 0, 0, ""},
-  { "DATEDIFF", 0, 0, 0, ""},
-  { "DATE_FORMAT", 0, 0, 0, ""},
-  { "DATE_SUB", 0, 0, 0, ""},
-  { "DAYNAME", 0, 0, 0, ""},
-  { "DAYOFMONTH", 0, 0, 0, ""},
-  { "DAYOFWEEK", 0, 0, 0, ""},
-  { "DAYOFYEAR", 0, 0, 0, ""},
-  { "DECODE", 0, 0, 0, ""},
-  { "DEGREES", 0, 0, 0, ""},
-  { "DES_ENCRYPT", 0, 0, 0, ""},
-  { "DES_DECRYPT", 0, 0, 0, ""},
-  { "DIMENSION", 0, 0, 0, ""},
-  { "DISJOINT", 0, 0, 0, ""},
-  { "ELT", 0, 0, 0, ""},
-  { "ENCODE", 0, 0, 0, ""},
-  { "ENCRYPT", 0, 0, 0, ""},
-  { "ENDPOINT", 0, 0, 0, ""},
-  { "ENVELOPE", 0, 0, 0, ""},
-  { "EQUALS", 0, 0, 0, ""},
-  { "EXTERIORRING", 0, 0, 0, ""},
-  { "EXTRACT", 0, 0, 0, ""},
-  { "EXP", 0, 0, 0, ""},
-  { "EXPORT_SET", 0, 0, 0, ""},
-  { "FIELD", 0, 0, 0, ""},
-  { "FIND_IN_SET", 0, 0, 0, ""},
-  { "FLOOR", 0, 0, 0, ""},
-  { "FORMAT", 0, 0, 0, ""},
-  { "FOUND_ROWS", 0, 0, 0, ""},
-  { "FROM_DAYS", 0, 0, 0, ""},
-  { "FROM_UNIXTIME", 0, 0, 0, ""},
-  { "GET_LOCK", 0, 0, 0, ""},
-  { "GLENGTH", 0, 0, 0, ""},
-  { "GREATEST", 0, 0, 0, ""},
-  { "GROUP_CONCAT", 0, 0, 0, ""},
-  { "GROUP_UNIQUE_USERS", 0, 0, 0, ""},
-  { "HEX", 0, 0, 0, ""},
-  { "IFNULL", 0, 0, 0, ""},
-  { "INET_ATON", 0, 0, 0, ""},
-  { "INET_NTOA", 0, 0, 0, ""},
-  { "INSTR", 0, 0, 0, ""},
-  { "INTERIORRINGN", 0, 0, 0, ""},
-  { "INTERSECTS", 0, 0, 0, ""},
-  { "ISCLOSED", 0, 0, 0, ""},
-  { "ISEMPTY", 0, 0, 0, ""},
-  { "ISNULL", 0, 0, 0, ""},
-  { "IS_FREE_LOCK", 0, 0, 0, ""},
-  { "IS_USED_LOCK", 0, 0, 0, ""},
-  { "LAST_INSERT_ID", 0, 0, 0, ""},
-  { "ISSIMPLE", 0, 0, 0, ""},
-  { "LAST_DAY", 0, 0, 0, ""},
-  { "LCASE", 0, 0, 0, ""},
-  { "LEAST", 0, 0, 0, ""},
-  { "LENGTH", 0, 0, 0, ""},
-  { "LN", 0, 0, 0, ""},
-  { "LINEFROMTEXT", 0, 0, 0, ""},
-  { "LINEFROMWKB", 0, 0, 0, ""},
-  { "LINESTRINGFROMTEXT", 0, 0, 0, ""},
-  { "LINESTRINGFROMWKB", 0, 0, 0, ""},
-  { "LOAD_FILE", 0, 0, 0, ""},
-  { "LOCATE", 0, 0, 0, ""},
-  { "LOG", 0, 0, 0, ""},
-  { "LOG2", 0, 0, 0, ""},
-  { "LOG10", 0, 0, 0, ""},
-  { "LOWER", 0, 0, 0, ""},
-  { "LPAD", 0, 0, 0, ""},
-  { "LTRIM", 0, 0, 0, ""},
-  { "MAKE_SET", 0, 0, 0, ""},
-  { "MAKEDATE", 0, 0, 0, ""},
-  { "MASTER_POS_WAIT", 0, 0, 0, ""},
-  { "MAX", 0, 0, 0, ""},
-  { "MBRCONTAINS", 0, 0, 0, ""},
-  { "MBRDISJOINT", 0, 0, 0, ""},
-  { "MBREQUAL", 0, 0, 0, ""},
-  { "MBRINTERSECTS", 0, 0, 0, ""},
-  { "MBROVERLAPS", 0, 0, 0, ""},
-  { "MBRTOUCHES", 0, 0, 0, ""},
-  { "MBRWITHIN", 0, 0, 0, ""},
-  { "MD5", 0, 0, 0, ""},
-  { "MID", 0, 0, 0, ""},
-  { "MIN", 0, 0, 0, ""},
-  { "MLINEFROMTEXT", 0, 0, 0, ""},
-  { "MLINEFROMWKB", 0, 0, 0, ""},
-  { "MPOINTFROMTEXT", 0, 0, 0, ""},
-  { "MPOINTFROMWKB", 0, 0, 0, ""},
-  { "MPOLYFROMTEXT", 0, 0, 0, ""},
-  { "MPOLYFROMWKB", 0, 0, 0, ""},
-  { "MONTHNAME", 0, 0, 0, ""},
-  { "MULTILINESTRINGFROMTEXT", 0, 0, 0, ""},
-  { "MULTILINESTRINGFROMWKB", 0, 0, 0, ""},
-  { "MULTIPOINTFROMTEXT", 0, 0, 0, ""},
-  { "MULTIPOINTFROMWKB", 0, 0, 0, ""},
-  { "MULTIPOLYGONFROMTEXT", 0, 0, 0, ""},
-  { "MULTIPOLYGONFROMWKB", 0, 0, 0, ""},
-  { "NAME_CONST", 0, 0, 0, ""},
-  { "NOW", 0, 0, 0, ""},
-  { "NULLIF", 0, 0, 0, ""},
-  { "NUMINTERIORRINGS", 0, 0, 0, ""},
-  { "NUMPOINTS", 0, 0, 0, ""},
-  { "OCTET_LENGTH", 0, 0, 0, ""},
-  { "OCT", 0, 0, 0, ""},
-  { "ORD", 0, 0, 0, ""},
-  { "OVERLAPS", 0, 0, 0, ""},
-  { "PERIOD_ADD", 0, 0, 0, ""},
-  { "PERIOD_DIFF", 0, 0, 0, ""},
-  { "PI", 0, 0, 0, ""},
-  { "POINTFROMTEXT", 0, 0, 0, ""},
-  { "POINTFROMWKB", 0, 0, 0, ""},
-  { "POINTN", 0, 0, 0, ""},
-  { "POLYFROMTEXT", 0, 0, 0, ""},
-  { "POLYFROMWKB", 0, 0, 0, ""},
-  { "POLYGONFROMTEXT", 0, 0, 0, ""},
-  { "POLYGONFROMWKB", 0, 0, 0, ""},
-  { "POSITION", 0, 0, 0, ""},
-  { "POW", 0, 0, 0, ""},
-  { "POWER", 0, 0, 0, ""},
-  { "QUOTE", 0, 0, 0, ""},
-  { "RADIANS", 0, 0, 0, ""},
-  { "RAND", 0, 0, 0, ""},
-  { "RELEASE_LOCK", 0, 0, 0, ""},
-  { "REVERSE", 0, 0, 0, ""},
-  { "ROUND", 0, 0, 0, ""},
-  { "ROW_COUNT", 0, 0, 0, ""},
-  { "RPAD", 0, 0, 0, ""},
-  { "RTRIM", 0, 0, 0, ""},
-  { "SESSION_USER", 0, 0, 0, ""},
-  { "SUBDATE", 0, 0, 0, ""},
-  { "SIGN", 0, 0, 0, ""},
-  { "SIN", 0, 0, 0, ""},
-  { "SHA", 0, 0, 0, ""},
-  { "SHA1", 0, 0, 0, ""},
-  { "SLEEP", 0, 0, 0, ""},
-  { "SOUNDEX", 0, 0, 0, ""},
-  { "SPACE", 0, 0, 0, ""},
-  { "SQRT", 0, 0, 0, ""},
-  { "SRID", 0, 0, 0, ""},
-  { "STARTPOINT", 0, 0, 0, ""},
-  { "STD", 0, 0, 0, ""},
-  { "STDDEV", 0, 0, 0, ""},
-  { "STDDEV_POP", 0, 0, 0, ""},
-  { "STDDEV_SAMP", 0, 0, 0, ""},
-  { "STR_TO_DATE", 0, 0, 0, ""},
-  { "STRCMP", 0, 0, 0, ""},
-  { "SUBSTR", 0, 0, 0, ""},
-  { "SUBSTRING", 0, 0, 0, ""},
-  { "SUBSTRING_INDEX", 0, 0, 0, ""},
-  { "SUM", 0, 0, 0, ""},
-  { "SYSDATE", 0, 0, 0, ""},
-  { "SYSTEM_USER", 0, 0, 0, ""},
-  { "TAN", 0, 0, 0, ""},
-  { "TIME_FORMAT", 0, 0, 0, ""},
-  { "TO_DAYS", 0, 0, 0, ""},
-  { "TOUCHES", 0, 0, 0, ""},
-  { "TRIM", 0, 0, 0, ""},
-  { "UCASE", 0, 0, 0, ""},
-  { "UNCOMPRESS", 0, 0, 0, ""},
-  { "UNCOMPRESSED_LENGTH", 0, 0, 0, ""},
-  { "UNHEX", 0, 0, 0, ""},
-  { "UNIQUE_USERS", 0, 0, 0, ""},
-  { "UNIX_TIMESTAMP", 0, 0, 0, ""},
-  { "UPPER", 0, 0, 0, ""},
-  { "UUID", 0, 0, 0, ""},
-  { "VARIANCE", 0, 0, 0, ""},
-  { "VAR_POP", 0, 0, 0, ""},
-  { "VAR_SAMP", 0, 0, 0, ""},
-  { "VERSION", 0, 0, 0, ""},
-  { "WEEKDAY", 0, 0, 0, ""},
-  { "WEEKOFYEAR", 0, 0, 0, ""},
-  { "WITHIN", 0, 0, 0, ""},
-  { "X", 0, 0, 0, ""},
-  { "Y", 0, 0, 0, ""},
-  { "YEARWEEK", 0, 0, 0, ""},
+  Commands( "ACTION", 0, 0, 0, ""),
+  Commands( "ADD", 0, 0, 0, ""),
+  Commands( "AFTER", 0, 0, 0, ""),
+  Commands( "AGAINST", 0, 0, 0, ""),
+  Commands( "AGGREGATE", 0, 0, 0, ""),
+  Commands( "ALL", 0, 0, 0, ""),
+  Commands( "ALGORITHM", 0, 0, 0, ""),
+  Commands( "ALTER", 0, 0, 0, ""),
+  Commands( "ANALYZE", 0, 0, 0, ""),
+  Commands( "AND", 0, 0, 0, ""),
+  Commands( "ANY", 0, 0, 0, ""),
+  Commands( "AS", 0, 0, 0, ""),
+  Commands( "ASC", 0, 0, 0, ""),
+  Commands( "ASCII", 0, 0, 0, ""),
+  Commands( "ASENSITIVE", 0, 0, 0, ""),
+  Commands( "AUTO_INCREMENT", 0, 0, 0, ""),
+  Commands( "AVG", 0, 0, 0, ""),
+  Commands( "AVG_ROW_LENGTH", 0, 0, 0, ""),
+  Commands( "BACKUP", 0, 0, 0, ""),
+  Commands( "BDB", 0, 0, 0, ""),
+  Commands( "BEFORE", 0, 0, 0, ""),
+  Commands( "BEGIN", 0, 0, 0, ""),
+  Commands( "BERKELEYDB", 0, 0, 0, ""),
+  Commands( "BETWEEN", 0, 0, 0, ""),
+  Commands( "BIGINT", 0, 0, 0, ""),
+  Commands( "BINARY", 0, 0, 0, ""),
+  Commands( "BINLOG", 0, 0, 0, ""),
+  Commands( "BIT", 0, 0, 0, ""),
+  Commands( "BLOB", 0, 0, 0, ""),
+  Commands( "BOOL", 0, 0, 0, ""),
+  Commands( "BOOLEAN", 0, 0, 0, ""),
+  Commands( "BOTH", 0, 0, 0, ""),
+  Commands( "BTREE", 0, 0, 0, ""),
+  Commands( "BY", 0, 0, 0, ""),
+  Commands( "BYTE", 0, 0, 0, ""),
+  Commands( "CACHE", 0, 0, 0, ""),
+  Commands( "CALL", 0, 0, 0, ""),
+  Commands( "CASCADE", 0, 0, 0, ""),
+  Commands( "CASCADED", 0, 0, 0, ""),
+  Commands( "CASE", 0, 0, 0, ""),
+  Commands( "CHAIN", 0, 0, 0, ""),
+  Commands( "CHANGE", 0, 0, 0, ""),
+  Commands( "CHANGED", 0, 0, 0, ""),
+  Commands( "CHAR", 0, 0, 0, ""),
+  Commands( "CHARACTER", 0, 0, 0, ""),
+  Commands( "CHARSET", 0, 0, 0, ""),
+  Commands( "CHECK", 0, 0, 0, ""),
+  Commands( "CHECKSUM", 0, 0, 0, ""),
+  Commands( "CIPHER", 0, 0, 0, ""),
+  Commands( "CLIENT", 0, 0, 0, ""),
+  Commands( "CLOSE", 0, 0, 0, ""),
+  Commands( "CODE", 0, 0, 0, ""),
+  Commands( "COLLATE", 0, 0, 0, ""),
+  Commands( "COLLATION", 0, 0, 0, ""),
+  Commands( "COLUMN", 0, 0, 0, ""),
+  Commands( "COLUMNS", 0, 0, 0, ""),
+  Commands( "COMMENT", 0, 0, 0, ""),
+  Commands( "COMMIT", 0, 0, 0, ""),
+  Commands( "COMMITTED", 0, 0, 0, ""),
+  Commands( "COMPACT", 0, 0, 0, ""),
+  Commands( "COMPRESSED", 0, 0, 0, ""),
+  Commands( "CONCURRENT", 0, 0, 0, ""),
+  Commands( "CONDITION", 0, 0, 0, ""),
+  Commands( "CONNECTION", 0, 0, 0, ""),
+  Commands( "CONSISTENT", 0, 0, 0, ""),
+  Commands( "CONSTRAINT", 0, 0, 0, ""),
+  Commands( "CONTAINS", 0, 0, 0, ""),
+  Commands( "CONTINUE", 0, 0, 0, ""),
+  Commands( "CONVERT", 0, 0, 0, ""),
+  Commands( "CREATE", 0, 0, 0, ""),
+  Commands( "CROSS", 0, 0, 0, ""),
+  Commands( "CUBE", 0, 0, 0, ""),
+  Commands( "CURRENT_DATE", 0, 0, 0, ""),
+  Commands( "CURRENT_TIMESTAMP", 0, 0, 0, ""),
+  Commands( "CURRENT_USER", 0, 0, 0, ""),
+  Commands( "CURSOR", 0, 0, 0, ""),
+  Commands( "DATA", 0, 0, 0, ""),
+  Commands( "DATABASE", 0, 0, 0, ""),
+  Commands( "DATABASES", 0, 0, 0, ""),
+  Commands( "DATE", 0, 0, 0, ""),
+  Commands( "DATETIME", 0, 0, 0, ""),
+  Commands( "DAY", 0, 0, 0, ""),
+  Commands( "DAY_HOUR", 0, 0, 0, ""),
+  Commands( "DAY_MICROSECOND", 0, 0, 0, ""),
+  Commands( "DAY_MINUTE", 0, 0, 0, ""),
+  Commands( "DAY_SECOND", 0, 0, 0, ""),
+  Commands( "DEALLOCATE", 0, 0, 0, ""),
+  Commands( "DEC", 0, 0, 0, ""),
+  Commands( "DECIMAL", 0, 0, 0, ""),
+  Commands( "DECLARE", 0, 0, 0, ""),
+  Commands( "DEFAULT", 0, 0, 0, ""),
+  Commands( "DEFINER", 0, 0, 0, ""),
+  Commands( "DELAYED", 0, 0, 0, ""),
+  Commands( "DELAY_KEY_WRITE", 0, 0, 0, ""),
+  Commands( "DELETE", 0, 0, 0, ""),
+  Commands( "DESC", 0, 0, 0, ""),
+  Commands( "DESCRIBE", 0, 0, 0, ""),
+  Commands( "DES_KEY_FILE", 0, 0, 0, ""),
+  Commands( "DETERMINISTIC", 0, 0, 0, ""),
+  Commands( "DIRECTORY", 0, 0, 0, ""),
+  Commands( "DISABLE", 0, 0, 0, ""),
+  Commands( "DISCARD", 0, 0, 0, ""),
+  Commands( "DISTINCT", 0, 0, 0, ""),
+  Commands( "DISTINCTROW", 0, 0, 0, ""),
+  Commands( "DIV", 0, 0, 0, ""),
+  Commands( "DO", 0, 0, 0, ""),
+  Commands( "DOUBLE", 0, 0, 0, ""),
+  Commands( "DROP", 0, 0, 0, ""),
+  Commands( "DUAL", 0, 0, 0, ""),
+  Commands( "DUMPFILE", 0, 0, 0, ""),
+  Commands( "DUPLICATE", 0, 0, 0, ""),
+  Commands( "DYNAMIC", 0, 0, 0, ""),
+  Commands( "EACH", 0, 0, 0, ""),
+  Commands( "ELSE", 0, 0, 0, ""),
+  Commands( "ELSEIF", 0, 0, 0, ""),
+  Commands( "ENABLE", 0, 0, 0, ""),
+  Commands( "ENCLOSED", 0, 0, 0, ""),
+  Commands( "END", 0, 0, 0, ""),
+  Commands( "ENGINE", 0, 0, 0, ""),
+  Commands( "ENGINES", 0, 0, 0, ""),
+  Commands( "ENUM", 0, 0, 0, ""),
+  Commands( "ERRORS", 0, 0, 0, ""),
+  Commands( "ESCAPE", 0, 0, 0, ""),
+  Commands( "ESCAPED", 0, 0, 0, ""),
+  Commands( "EVENTS", 0, 0, 0, ""),
+  Commands( "EXECUTE", 0, 0, 0, ""),
+  Commands( "EXISTS", 0, 0, 0, ""),
+  Commands( "EXIT", 0, 0, 0, ""),
+  Commands( "EXPANSION", 0, 0, 0, ""),
+  Commands( "EXPLAIN", 0, 0, 0, ""),
+  Commands( "EXTENDED", 0, 0, 0, ""),
+  Commands( "FALSE", 0, 0, 0, ""),
+  Commands( "FAST", 0, 0, 0, ""),
+  Commands( "FETCH", 0, 0, 0, ""),
+  Commands( "FIELDS", 0, 0, 0, ""),
+  Commands( "FILE", 0, 0, 0, ""),
+  Commands( "FIRST", 0, 0, 0, ""),
+  Commands( "FIXED", 0, 0, 0, ""),
+  Commands( "FLOAT", 0, 0, 0, ""),
+  Commands( "FLOAT4", 0, 0, 0, ""),
+  Commands( "FLOAT8", 0, 0, 0, ""),
+  Commands( "FLUSH", 0, 0, 0, ""),
+  Commands( "FOR", 0, 0, 0, ""),
+  Commands( "FORCE", 0, 0, 0, ""),
+  Commands( "FOREIGN", 0, 0, 0, ""),
+  Commands( "FOUND", 0, 0, 0, ""),
+  Commands( "FRAC_SECOND", 0, 0, 0, ""),
+  Commands( "FROM", 0, 0, 0, ""),
+  Commands( "FULL", 0, 0, 0, ""),
+  Commands( "FULLTEXT", 0, 0, 0, ""),
+  Commands( "FUNCTION", 0, 0, 0, ""),
+  Commands( "GLOBAL", 0, 0, 0, ""),
+  Commands( "GRANT", 0, 0, 0, ""),
+  Commands( "GRANTS", 0, 0, 0, ""),
+  Commands( "GROUP", 0, 0, 0, ""),
+  Commands( "HANDLER", 0, 0, 0, ""),
+  Commands( "HASH", 0, 0, 0, ""),
+  Commands( "HAVING", 0, 0, 0, ""),
+  Commands( "HELP", 0, 0, 0, ""),
+  Commands( "HIGH_PRIORITY", 0, 0, 0, ""),
+  Commands( "HOSTS", 0, 0, 0, ""),
+  Commands( "HOUR", 0, 0, 0, ""),
+  Commands( "HOUR_MICROSECOND", 0, 0, 0, ""),
+  Commands( "HOUR_MINUTE", 0, 0, 0, ""),
+  Commands( "HOUR_SECOND", 0, 0, 0, ""),
+  Commands( "IDENTIFIED", 0, 0, 0, ""),
+  Commands( "IF", 0, 0, 0, ""),
+  Commands( "IGNORE", 0, 0, 0, ""),
+  Commands( "IMPORT", 0, 0, 0, ""),
+  Commands( "IN", 0, 0, 0, ""),
+  Commands( "INDEX", 0, 0, 0, ""),
+  Commands( "INDEXES", 0, 0, 0, ""),
+  Commands( "INFILE", 0, 0, 0, ""),
+  Commands( "INNER", 0, 0, 0, ""),
+  Commands( "INNOBASE", 0, 0, 0, ""),
+  Commands( "INNODB", 0, 0, 0, ""),
+  Commands( "INOUT", 0, 0, 0, ""),
+  Commands( "INSENSITIVE", 0, 0, 0, ""),
+  Commands( "INSERT", 0, 0, 0, ""),
+  Commands( "INSERT_METHOD", 0, 0, 0, ""),
+  Commands( "INT", 0, 0, 0, ""),
+  Commands( "INT1", 0, 0, 0, ""),
+  Commands( "INT2", 0, 0, 0, ""),
+  Commands( "INT3", 0, 0, 0, ""),
+  Commands( "INT4", 0, 0, 0, ""),
+  Commands( "INT8", 0, 0, 0, ""),
+  Commands( "INTEGER", 0, 0, 0, ""),
+  Commands( "INTERVAL", 0, 0, 0, ""),
+  Commands( "INTO", 0, 0, 0, ""),
+  Commands( "IO_THREAD", 0, 0, 0, ""),
+  Commands( "IS", 0, 0, 0, ""),
+  Commands( "ISOLATION", 0, 0, 0, ""),
+  Commands( "ISSUER", 0, 0, 0, ""),
+  Commands( "ITERATE", 0, 0, 0, ""),
+  Commands( "INVOKER", 0, 0, 0, ""),
+  Commands( "JOIN", 0, 0, 0, ""),
+  Commands( "KEY", 0, 0, 0, ""),
+  Commands( "KEYS", 0, 0, 0, ""),
+  Commands( "KILL", 0, 0, 0, ""),
+  Commands( "LANGUAGE", 0, 0, 0, ""),
+  Commands( "LAST", 0, 0, 0, ""),
+  Commands( "LEADING", 0, 0, 0, ""),
+  Commands( "LEAVE", 0, 0, 0, ""),
+  Commands( "LEAVES", 0, 0, 0, ""),
+  Commands( "LEFT", 0, 0, 0, ""),
+  Commands( "LEVEL", 0, 0, 0, ""),
+  Commands( "LIKE", 0, 0, 0, ""),
+  Commands( "LIMIT", 0, 0, 0, ""),
+  Commands( "LINES", 0, 0, 0, ""),
+  Commands( "LINESTRING", 0, 0, 0, ""),
+  Commands( "LOAD", 0, 0, 0, ""),
+  Commands( "LOCAL", 0, 0, 0, ""),
+  Commands( "LOCALTIMESTAMP", 0, 0, 0, ""),
+  Commands( "LOCK", 0, 0, 0, ""),
+  Commands( "LOCKS", 0, 0, 0, ""),
+  Commands( "LOGS", 0, 0, 0, ""),
+  Commands( "LONG", 0, 0, 0, ""),
+  Commands( "LONGTEXT", 0, 0, 0, ""),
+  Commands( "LOOP", 0, 0, 0, ""),
+  Commands( "LOW_PRIORITY", 0, 0, 0, ""),
+  Commands( "MASTER", 0, 0, 0, ""),
+  Commands( "MASTER_CONNECT_RETRY", 0, 0, 0, ""),
+  Commands( "MASTER_HOST", 0, 0, 0, ""),
+  Commands( "MASTER_LOG_FILE", 0, 0, 0, ""),
+  Commands( "MASTER_LOG_POS", 0, 0, 0, ""),
+  Commands( "MASTER_PASSWORD", 0, 0, 0, ""),
+  Commands( "MASTER_PORT", 0, 0, 0, ""),
+  Commands( "MASTER_SERVER_ID", 0, 0, 0, ""),
+  Commands( "MASTER_SSL", 0, 0, 0, ""),
+  Commands( "MASTER_SSL_CA", 0, 0, 0, ""),
+  Commands( "MASTER_SSL_CAPATH", 0, 0, 0, ""),
+  Commands( "MASTER_SSL_CERT", 0, 0, 0, ""),
+  Commands( "MASTER_SSL_CIPHER", 0, 0, 0, ""),
+  Commands( "MASTER_SSL_KEY", 0, 0, 0, ""),
+  Commands( "MASTER_USER", 0, 0, 0, ""),
+  Commands( "MATCH", 0, 0, 0, ""),
+  Commands( "MAX_CONNECTIONS_PER_HOUR", 0, 0, 0, ""),
+  Commands( "MAX_QUERIES_PER_HOUR", 0, 0, 0, ""),
+  Commands( "MAX_ROWS", 0, 0, 0, ""),
+  Commands( "MAX_UPDATES_PER_HOUR", 0, 0, 0, ""),
+  Commands( "MAX_USER_CONNECTIONS", 0, 0, 0, ""),
+  Commands( "MEDIUM", 0, 0, 0, ""),
+  Commands( "MEDIUMTEXT", 0, 0, 0, ""),
+  Commands( "MERGE", 0, 0, 0, ""),
+  Commands( "MICROSECOND", 0, 0, 0, ""),
+  Commands( "MIDDLEINT", 0, 0, 0, ""),
+  Commands( "MIGRATE", 0, 0, 0, ""),
+  Commands( "MINUTE", 0, 0, 0, ""),
+  Commands( "MINUTE_MICROSECOND", 0, 0, 0, ""),
+  Commands( "MINUTE_SECOND", 0, 0, 0, ""),
+  Commands( "MIN_ROWS", 0, 0, 0, ""),
+  Commands( "MOD", 0, 0, 0, ""),
+  Commands( "MODE", 0, 0, 0, ""),
+  Commands( "MODIFIES", 0, 0, 0, ""),
+  Commands( "MODIFY", 0, 0, 0, ""),
+  Commands( "MONTH", 0, 0, 0, ""),
+  Commands( "MULTILINESTRING", 0, 0, 0, ""),
+  Commands( "MULTIPOINT", 0, 0, 0, ""),
+  Commands( "MULTIPOLYGON", 0, 0, 0, ""),
+  Commands( "MUTEX", 0, 0, 0, ""),
+  Commands( "NAME", 0, 0, 0, ""),
+  Commands( "NAMES", 0, 0, 0, ""),
+  Commands( "NATIONAL", 0, 0, 0, ""),
+  Commands( "NATURAL", 0, 0, 0, ""),
+  Commands( "NDB", 0, 0, 0, ""),
+  Commands( "NDBCLUSTER", 0, 0, 0, ""),
+  Commands( "NCHAR", 0, 0, 0, ""),
+  Commands( "NEW", 0, 0, 0, ""),
+  Commands( "NEXT", 0, 0, 0, ""),
+  Commands( "NO", 0, 0, 0, ""),
+  Commands( "NONE", 0, 0, 0, ""),
+  Commands( "NOT", 0, 0, 0, ""),
+  Commands( "NO_WRITE_TO_BINLOG", 0, 0, 0, ""),
+  Commands( "NULL", 0, 0, 0, ""),
+  Commands( "NUMERIC", 0, 0, 0, ""),
+  Commands( "NVARCHAR", 0, 0, 0, ""),
+  Commands( "OFFSET", 0, 0, 0, ""),
+  Commands( "OLD_PASSWORD", 0, 0, 0, ""),
+  Commands( "ON", 0, 0, 0, ""),
+  Commands( "ONE", 0, 0, 0, ""),
+  Commands( "ONE_SHOT", 0, 0, 0, ""),
+  Commands( "OPEN", 0, 0, 0, ""),
+  Commands( "OPTIMIZE", 0, 0, 0, ""),
+  Commands( "OPTION", 0, 0, 0, ""),
+  Commands( "OPTIONALLY", 0, 0, 0, ""),
+  Commands( "OR", 0, 0, 0, ""),
+  Commands( "ORDER", 0, 0, 0, ""),
+  Commands( "OUT", 0, 0, 0, ""),
+  Commands( "OUTER", 0, 0, 0, ""),
+  Commands( "OUTFILE", 0, 0, 0, ""),
+  Commands( "PACK_KEYS", 0, 0, 0, ""),
+  Commands( "PARTIAL", 0, 0, 0, ""),
+  Commands( "PASSWORD", 0, 0, 0, ""),
+  Commands( "PHASE", 0, 0, 0, ""),
+  Commands( "POINT", 0, 0, 0, ""),
+  Commands( "POLYGON", 0, 0, 0, ""),
+  Commands( "PRECISION", 0, 0, 0, ""),
+  Commands( "PREPARE", 0, 0, 0, ""),
+  Commands( "PREV", 0, 0, 0, ""),
+  Commands( "PRIMARY", 0, 0, 0, ""),
+  Commands( "PRIVILEGES", 0, 0, 0, ""),
+  Commands( "PROCEDURE", 0, 0, 0, ""),
+  Commands( "PROCESS", 0, 0, 0, ""),
+  Commands( "PROCESSLIST", 0, 0, 0, ""),
+  Commands( "PURGE", 0, 0, 0, ""),
+  Commands( "QUARTER", 0, 0, 0, ""),
+  Commands( "QUERY", 0, 0, 0, ""),
+  Commands( "QUICK", 0, 0, 0, ""),
+  Commands( "READ", 0, 0, 0, ""),
+  Commands( "READS", 0, 0, 0, ""),
+  Commands( "REAL", 0, 0, 0, ""),
+  Commands( "RECOVER", 0, 0, 0, ""),
+  Commands( "REDUNDANT", 0, 0, 0, ""),
+  Commands( "REFERENCES", 0, 0, 0, ""),
+  Commands( "REGEXP", 0, 0, 0, ""),
+  Commands( "RELAY_LOG_FILE", 0, 0, 0, ""),
+  Commands( "RELAY_LOG_POS", 0, 0, 0, ""),
+  Commands( "RELAY_THREAD", 0, 0, 0, ""),
+  Commands( "RELEASE", 0, 0, 0, ""),
+  Commands( "RELOAD", 0, 0, 0, ""),
+  Commands( "RENAME", 0, 0, 0, ""),
+  Commands( "REPAIR", 0, 0, 0, ""),
+  Commands( "REPEATABLE", 0, 0, 0, ""),
+  Commands( "REPLACE", 0, 0, 0, ""),
+  Commands( "REPLICATION", 0, 0, 0, ""),
+  Commands( "REPEAT", 0, 0, 0, ""),
+  Commands( "REQUIRE", 0, 0, 0, ""),
+  Commands( "RESET", 0, 0, 0, ""),
+  Commands( "RESTORE", 0, 0, 0, ""),
+  Commands( "RESTRICT", 0, 0, 0, ""),
+  Commands( "RESUME", 0, 0, 0, ""),
+  Commands( "RETURN", 0, 0, 0, ""),
+  Commands( "RETURNS", 0, 0, 0, ""),
+  Commands( "REVOKE", 0, 0, 0, ""),
+  Commands( "RIGHT", 0, 0, 0, ""),
+  Commands( "RLIKE", 0, 0, 0, ""),
+  Commands( "ROLLBACK", 0, 0, 0, ""),
+  Commands( "ROLLUP", 0, 0, 0, ""),
+  Commands( "ROUTINE", 0, 0, 0, ""),
+  Commands( "ROW", 0, 0, 0, ""),
+  Commands( "ROWS", 0, 0, 0, ""),
+  Commands( "ROW_FORMAT", 0, 0, 0, ""),
+  Commands( "RTREE", 0, 0, 0, ""),
+  Commands( "SAVEPOINT", 0, 0, 0, ""),
+  Commands( "SCHEMA", 0, 0, 0, ""),
+  Commands( "SCHEMAS", 0, 0, 0, ""),
+  Commands( "SECOND", 0, 0, 0, ""),
+  Commands( "SECOND_MICROSECOND", 0, 0, 0, ""),
+  Commands( "SECURITY", 0, 0, 0, ""),
+  Commands( "SELECT", 0, 0, 0, ""),
+  Commands( "SENSITIVE", 0, 0, 0, ""),
+  Commands( "SEPARATOR", 0, 0, 0, ""),
+  Commands( "SERIAL", 0, 0, 0, ""),
+  Commands( "SERIALIZABLE", 0, 0, 0, ""),
+  Commands( "SESSION", 0, 0, 0, ""),
+  Commands( "SET", 0, 0, 0, ""),
+  Commands( "SHARE", 0, 0, 0, ""),
+  Commands( "SHOW", 0, 0, 0, ""),
+  Commands( "SHUTDOWN", 0, 0, 0, ""),
+  Commands( "SIGNED", 0, 0, 0, ""),
+  Commands( "SIMPLE", 0, 0, 0, ""),
+  Commands( "SLAVE", 0, 0, 0, ""),
+  Commands( "SNAPSHOT", 0, 0, 0, ""),
+  Commands( "SMALLINT", 0, 0, 0, ""),
+  Commands( "SOME", 0, 0, 0, ""),
+  Commands( "SONAME", 0, 0, 0, ""),
+  Commands( "SOUNDS", 0, 0, 0, ""),
+  Commands( "SPATIAL", 0, 0, 0, ""),
+  Commands( "SPECIFIC", 0, 0, 0, ""),
+  Commands( "SQL", 0, 0, 0, ""),
+  Commands( "SQLEXCEPTION", 0, 0, 0, ""),
+  Commands( "SQLSTATE", 0, 0, 0, ""),
+  Commands( "SQLWARNING", 0, 0, 0, ""),
+  Commands( "SQL_BIG_RESULT", 0, 0, 0, ""),
+  Commands( "SQL_BUFFER_RESULT", 0, 0, 0, ""),
+  Commands( "SQL_CACHE", 0, 0, 0, ""),
+  Commands( "SQL_CALC_FOUND_ROWS", 0, 0, 0, ""),
+  Commands( "SQL_NO_CACHE", 0, 0, 0, ""),
+  Commands( "SQL_SMALL_RESULT", 0, 0, 0, ""),
+  Commands( "SQL_THREAD", 0, 0, 0, ""),
+  Commands( "SQL_TSI_FRAC_SECOND", 0, 0, 0, ""),
+  Commands( "SQL_TSI_SECOND", 0, 0, 0, ""),
+  Commands( "SQL_TSI_MINUTE", 0, 0, 0, ""),
+  Commands( "SQL_TSI_HOUR", 0, 0, 0, ""),
+  Commands( "SQL_TSI_DAY", 0, 0, 0, ""),
+  Commands( "SQL_TSI_WEEK", 0, 0, 0, ""),
+  Commands( "SQL_TSI_MONTH", 0, 0, 0, ""),
+  Commands( "SQL_TSI_QUARTER", 0, 0, 0, ""),
+  Commands( "SQL_TSI_YEAR", 0, 0, 0, ""),
+  Commands( "SSL", 0, 0, 0, ""),
+  Commands( "START", 0, 0, 0, ""),
+  Commands( "STARTING", 0, 0, 0, ""),
+  Commands( "STATUS", 0, 0, 0, ""),
+  Commands( "STOP", 0, 0, 0, ""),
+  Commands( "STORAGE", 0, 0, 0, ""),
+  Commands( "STRAIGHT_JOIN", 0, 0, 0, ""),
+  Commands( "STRING", 0, 0, 0, ""),
+  Commands( "STRIPED", 0, 0, 0, ""),
+  Commands( "SUBJECT", 0, 0, 0, ""),
+  Commands( "SUPER", 0, 0, 0, ""),
+  Commands( "SUSPEND", 0, 0, 0, ""),
+  Commands( "TABLE", 0, 0, 0, ""),
+  Commands( "TABLES", 0, 0, 0, ""),
+  Commands( "TABLESPACE", 0, 0, 0, ""),
+  Commands( "TEMPORARY", 0, 0, 0, ""),
+  Commands( "TEMPTABLE", 0, 0, 0, ""),
+  Commands( "TERMINATED", 0, 0, 0, ""),
+  Commands( "TEXT", 0, 0, 0, ""),
+  Commands( "THEN", 0, 0, 0, ""),
+  Commands( "TIMESTAMP", 0, 0, 0, ""),
+  Commands( "TIMESTAMPADD", 0, 0, 0, ""),
+  Commands( "TIMESTAMPDIFF", 0, 0, 0, ""),
+  Commands( "TINYTEXT", 0, 0, 0, ""),
+  Commands( "TO", 0, 0, 0, ""),
+  Commands( "TRAILING", 0, 0, 0, ""),
+  Commands( "TRANSACTION", 0, 0, 0, ""),
+  Commands( "TRIGGER", 0, 0, 0, ""),
+  Commands( "TRIGGERS", 0, 0, 0, ""),
+  Commands( "TRUE", 0, 0, 0, ""),
+  Commands( "TRUNCATE", 0, 0, 0, ""),
+  Commands( "TYPE", 0, 0, 0, ""),
+  Commands( "TYPES", 0, 0, 0, ""),
+  Commands( "UNCOMMITTED", 0, 0, 0, ""),
+  Commands( "UNDEFINED", 0, 0, 0, ""),
+  Commands( "UNDO", 0, 0, 0, ""),
+  Commands( "UNICODE", 0, 0, 0, ""),
+  Commands( "UNION", 0, 0, 0, ""),
+  Commands( "UNIQUE", 0, 0, 0, ""),
+  Commands( "UNKNOWN", 0, 0, 0, ""),
+  Commands( "UNLOCK", 0, 0, 0, ""),
+  Commands( "UNSIGNED", 0, 0, 0, ""),
+  Commands( "UNTIL", 0, 0, 0, ""),
+  Commands( "UPDATE", 0, 0, 0, ""),
+  Commands( "UPGRADE", 0, 0, 0, ""),
+  Commands( "USAGE", 0, 0, 0, ""),
+  Commands( "USE", 0, 0, 0, ""),
+  Commands( "USER", 0, 0, 0, ""),
+  Commands( "USER_RESOURCES", 0, 0, 0, ""),
+  Commands( "USE_FRM", 0, 0, 0, ""),
+  Commands( "USING", 0, 0, 0, ""),
+  Commands( "UTC_DATE", 0, 0, 0, ""),
+  Commands( "UTC_TIMESTAMP", 0, 0, 0, ""),
+  Commands( "VALUE", 0, 0, 0, ""),
+  Commands( "VALUES", 0, 0, 0, ""),
+  Commands( "VARBINARY", 0, 0, 0, ""),
+  Commands( "VARCHAR", 0, 0, 0, ""),
+  Commands( "VARCHARACTER", 0, 0, 0, ""),
+  Commands( "VARIABLES", 0, 0, 0, ""),
+  Commands( "VARYING", 0, 0, 0, ""),
+  Commands( "WARNINGS", 0, 0, 0, ""),
+  Commands( "WEEK", 0, 0, 0, ""),
+  Commands( "WHEN", 0, 0, 0, ""),
+  Commands( "WHERE", 0, 0, 0, ""),
+  Commands( "WHILE", 0, 0, 0, ""),
+  Commands( "VIEW", 0, 0, 0, ""),
+  Commands( "WITH", 0, 0, 0, ""),
+  Commands( "WORK", 0, 0, 0, ""),
+  Commands( "WRITE", 0, 0, 0, ""),
+  Commands( "X509", 0, 0, 0, ""),
+  Commands( "XOR", 0, 0, 0, ""),
+  Commands( "XA", 0, 0, 0, ""),
+  Commands( "YEAR", 0, 0, 0, ""),
+  Commands( "YEAR_MONTH", 0, 0, 0, ""),
+  Commands( "ZEROFILL", 0, 0, 0, ""),
+  Commands( "ABS", 0, 0, 0, ""),
+  Commands( "ACOS", 0, 0, 0, ""),
+  Commands( "ADDDATE", 0, 0, 0, ""),
+  Commands( "AES_ENCRYPT", 0, 0, 0, ""),
+  Commands( "AES_DECRYPT", 0, 0, 0, ""),
+  Commands( "AREA", 0, 0, 0, ""),
+  Commands( "ASIN", 0, 0, 0, ""),
+  Commands( "ASBINARY", 0, 0, 0, ""),
+  Commands( "ASTEXT", 0, 0, 0, ""),
+  Commands( "ASWKB", 0, 0, 0, ""),
+  Commands( "ASWKT", 0, 0, 0, ""),
+  Commands( "ATAN", 0, 0, 0, ""),
+  Commands( "ATAN2", 0, 0, 0, ""),
+  Commands( "BENCHMARK", 0, 0, 0, ""),
+  Commands( "BIN", 0, 0, 0, ""),
+  Commands( "BIT_OR", 0, 0, 0, ""),
+  Commands( "BIT_AND", 0, 0, 0, ""),
+  Commands( "BIT_XOR", 0, 0, 0, ""),
+  Commands( "CAST", 0, 0, 0, ""),
+  Commands( "CEIL", 0, 0, 0, ""),
+  Commands( "CEILING", 0, 0, 0, ""),
+  Commands( "CENTROID", 0, 0, 0, ""),
+  Commands( "CHAR_LENGTH", 0, 0, 0, ""),
+  Commands( "CHARACTER_LENGTH", 0, 0, 0, ""),
+  Commands( "COALESCE", 0, 0, 0, ""),
+  Commands( "COERCIBILITY", 0, 0, 0, ""),
+  Commands( "COMPRESS", 0, 0, 0, ""),
+  Commands( "CONCAT", 0, 0, 0, ""),
+  Commands( "CONCAT_WS", 0, 0, 0, ""),
+  Commands( "CONNECTION_ID", 0, 0, 0, ""),
+  Commands( "CONV", 0, 0, 0, ""),
+  Commands( "CONVERT_TZ", 0, 0, 0, ""),
+  Commands( "COUNT", 0, 0, 0, ""),
+  Commands( "COS", 0, 0, 0, ""),
+  Commands( "COT", 0, 0, 0, ""),
+  Commands( "CRC32", 0, 0, 0, ""),
+  Commands( "CROSSES", 0, 0, 0, ""),
+  Commands( "CURDATE", 0, 0, 0, ""),
+  Commands( "DATE_ADD", 0, 0, 0, ""),
+  Commands( "DATEDIFF", 0, 0, 0, ""),
+  Commands( "DATE_FORMAT", 0, 0, 0, ""),
+  Commands( "DATE_SUB", 0, 0, 0, ""),
+  Commands( "DAYNAME", 0, 0, 0, ""),
+  Commands( "DAYOFMONTH", 0, 0, 0, ""),
+  Commands( "DAYOFWEEK", 0, 0, 0, ""),
+  Commands( "DAYOFYEAR", 0, 0, 0, ""),
+  Commands( "DECODE", 0, 0, 0, ""),
+  Commands( "DEGREES", 0, 0, 0, ""),
+  Commands( "DES_ENCRYPT", 0, 0, 0, ""),
+  Commands( "DES_DECRYPT", 0, 0, 0, ""),
+  Commands( "DIMENSION", 0, 0, 0, ""),
+  Commands( "DISJOINT", 0, 0, 0, ""),
+  Commands( "ELT", 0, 0, 0, ""),
+  Commands( "ENCODE", 0, 0, 0, ""),
+  Commands( "ENCRYPT", 0, 0, 0, ""),
+  Commands( "ENDPOINT", 0, 0, 0, ""),
+  Commands( "ENVELOPE", 0, 0, 0, ""),
+  Commands( "EQUALS", 0, 0, 0, ""),
+  Commands( "EXTERIORRING", 0, 0, 0, ""),
+  Commands( "EXTRACT", 0, 0, 0, ""),
+  Commands( "EXP", 0, 0, 0, ""),
+  Commands( "EXPORT_SET", 0, 0, 0, ""),
+  Commands( "FIELD", 0, 0, 0, ""),
+  Commands( "FIND_IN_SET", 0, 0, 0, ""),
+  Commands( "FLOOR", 0, 0, 0, ""),
+  Commands( "FORMAT", 0, 0, 0, ""),
+  Commands( "FOUND_ROWS", 0, 0, 0, ""),
+  Commands( "FROM_DAYS", 0, 0, 0, ""),
+  Commands( "FROM_UNIXTIME", 0, 0, 0, ""),
+  Commands( "GET_LOCK", 0, 0, 0, ""),
+  Commands( "GLENGTH", 0, 0, 0, ""),
+  Commands( "GREATEST", 0, 0, 0, ""),
+  Commands( "GROUP_CONCAT", 0, 0, 0, ""),
+  Commands( "GROUP_UNIQUE_USERS", 0, 0, 0, ""),
+  Commands( "HEX", 0, 0, 0, ""),
+  Commands( "IFNULL", 0, 0, 0, ""),
+  Commands( "INET_ATON", 0, 0, 0, ""),
+  Commands( "INET_NTOA", 0, 0, 0, ""),
+  Commands( "INSTR", 0, 0, 0, ""),
+  Commands( "INTERIORRINGN", 0, 0, 0, ""),
+  Commands( "INTERSECTS", 0, 0, 0, ""),
+  Commands( "ISCLOSED", 0, 0, 0, ""),
+  Commands( "ISEMPTY", 0, 0, 0, ""),
+  Commands( "ISNULL", 0, 0, 0, ""),
+  Commands( "IS_FREE_LOCK", 0, 0, 0, ""),
+  Commands( "IS_USED_LOCK", 0, 0, 0, ""),
+  Commands( "LAST_INSERT_ID", 0, 0, 0, ""),
+  Commands( "ISSIMPLE", 0, 0, 0, ""),
+  Commands( "LAST_DAY", 0, 0, 0, ""),
+  Commands( "LCASE", 0, 0, 0, ""),
+  Commands( "LEAST", 0, 0, 0, ""),
+  Commands( "LENGTH", 0, 0, 0, ""),
+  Commands( "LN", 0, 0, 0, ""),
+  Commands( "LINEFROMTEXT", 0, 0, 0, ""),
+  Commands( "LINEFROMWKB", 0, 0, 0, ""),
+  Commands( "LINESTRINGFROMTEXT", 0, 0, 0, ""),
+  Commands( "LINESTRINGFROMWKB", 0, 0, 0, ""),
+  Commands( "LOAD_FILE", 0, 0, 0, ""),
+  Commands( "LOCATE", 0, 0, 0, ""),
+  Commands( "LOG", 0, 0, 0, ""),
+  Commands( "LOG2", 0, 0, 0, ""),
+  Commands( "LOG10", 0, 0, 0, ""),
+  Commands( "LOWER", 0, 0, 0, ""),
+  Commands( "LPAD", 0, 0, 0, ""),
+  Commands( "LTRIM", 0, 0, 0, ""),
+  Commands( "MAKE_SET", 0, 0, 0, ""),
+  Commands( "MAKEDATE", 0, 0, 0, ""),
+  Commands( "MASTER_POS_WAIT", 0, 0, 0, ""),
+  Commands( "MAX", 0, 0, 0, ""),
+  Commands( "MBRCONTAINS", 0, 0, 0, ""),
+  Commands( "MBRDISJOINT", 0, 0, 0, ""),
+  Commands( "MBREQUAL", 0, 0, 0, ""),
+  Commands( "MBRINTERSECTS", 0, 0, 0, ""),
+  Commands( "MBROVERLAPS", 0, 0, 0, ""),
+  Commands( "MBRTOUCHES", 0, 0, 0, ""),
+  Commands( "MBRWITHIN", 0, 0, 0, ""),
+  Commands( "MD5", 0, 0, 0, ""),
+  Commands( "MID", 0, 0, 0, ""),
+  Commands( "MIN", 0, 0, 0, ""),
+  Commands( "MLINEFROMTEXT", 0, 0, 0, ""),
+  Commands( "MLINEFROMWKB", 0, 0, 0, ""),
+  Commands( "MPOINTFROMTEXT", 0, 0, 0, ""),
+  Commands( "MPOINTFROMWKB", 0, 0, 0, ""),
+  Commands( "MPOLYFROMTEXT", 0, 0, 0, ""),
+  Commands( "MPOLYFROMWKB", 0, 0, 0, ""),
+  Commands( "MONTHNAME", 0, 0, 0, ""),
+  Commands( "MULTILINESTRINGFROMTEXT", 0, 0, 0, ""),
+  Commands( "MULTILINESTRINGFROMWKB", 0, 0, 0, ""),
+  Commands( "MULTIPOINTFROMTEXT", 0, 0, 0, ""),
+  Commands( "MULTIPOINTFROMWKB", 0, 0, 0, ""),
+  Commands( "MULTIPOLYGONFROMTEXT", 0, 0, 0, ""),
+  Commands( "MULTIPOLYGONFROMWKB", 0, 0, 0, ""),
+  Commands( "NAME_CONST", 0, 0, 0, ""),
+  Commands( "NOW", 0, 0, 0, ""),
+  Commands( "NULLIF", 0, 0, 0, ""),
+  Commands( "NUMINTERIORRINGS", 0, 0, 0, ""),
+  Commands( "NUMPOINTS", 0, 0, 0, ""),
+  Commands( "OCTET_LENGTH", 0, 0, 0, ""),
+  Commands( "OCT", 0, 0, 0, ""),
+  Commands( "ORD", 0, 0, 0, ""),
+  Commands( "OVERLAPS", 0, 0, 0, ""),
+  Commands( "PERIOD_ADD", 0, 0, 0, ""),
+  Commands( "PERIOD_DIFF", 0, 0, 0, ""),
+  Commands( "PI", 0, 0, 0, ""),
+  Commands( "POINTFROMTEXT", 0, 0, 0, ""),
+  Commands( "POINTFROMWKB", 0, 0, 0, ""),
+  Commands( "POINTN", 0, 0, 0, ""),
+  Commands( "POLYFROMTEXT", 0, 0, 0, ""),
+  Commands( "POLYFROMWKB", 0, 0, 0, ""),
+  Commands( "POLYGONFROMTEXT", 0, 0, 0, ""),
+  Commands( "POLYGONFROMWKB", 0, 0, 0, ""),
+  Commands( "POSITION", 0, 0, 0, ""),
+  Commands( "POW", 0, 0, 0, ""),
+  Commands( "POWER", 0, 0, 0, ""),
+  Commands( "QUOTE", 0, 0, 0, ""),
+  Commands( "RADIANS", 0, 0, 0, ""),
+  Commands( "RAND", 0, 0, 0, ""),
+  Commands( "RELEASE_LOCK", 0, 0, 0, ""),
+  Commands( "REVERSE", 0, 0, 0, ""),
+  Commands( "ROUND", 0, 0, 0, ""),
+  Commands( "ROW_COUNT", 0, 0, 0, ""),
+  Commands( "RPAD", 0, 0, 0, ""),
+  Commands( "RTRIM", 0, 0, 0, ""),
+  Commands( "SESSION_USER", 0, 0, 0, ""),
+  Commands( "SUBDATE", 0, 0, 0, ""),
+  Commands( "SIGN", 0, 0, 0, ""),
+  Commands( "SIN", 0, 0, 0, ""),
+  Commands( "SHA", 0, 0, 0, ""),
+  Commands( "SHA1", 0, 0, 0, ""),
+  Commands( "SLEEP", 0, 0, 0, ""),
+  Commands( "SOUNDEX", 0, 0, 0, ""),
+  Commands( "SPACE", 0, 0, 0, ""),
+  Commands( "SQRT", 0, 0, 0, ""),
+  Commands( "SRID", 0, 0, 0, ""),
+  Commands( "STARTPOINT", 0, 0, 0, ""),
+  Commands( "STD", 0, 0, 0, ""),
+  Commands( "STDDEV", 0, 0, 0, ""),
+  Commands( "STDDEV_POP", 0, 0, 0, ""),
+  Commands( "STDDEV_SAMP", 0, 0, 0, ""),
+  Commands( "STR_TO_DATE", 0, 0, 0, ""),
+  Commands( "STRCMP", 0, 0, 0, ""),
+  Commands( "SUBSTR", 0, 0, 0, ""),
+  Commands( "SUBSTRING", 0, 0, 0, ""),
+  Commands( "SUBSTRING_INDEX", 0, 0, 0, ""),
+  Commands( "SUM", 0, 0, 0, ""),
+  Commands( "SYSDATE", 0, 0, 0, ""),
+  Commands( "SYSTEM_USER", 0, 0, 0, ""),
+  Commands( "TAN", 0, 0, 0, ""),
+  Commands( "TIME_FORMAT", 0, 0, 0, ""),
+  Commands( "TO_DAYS", 0, 0, 0, ""),
+  Commands( "TOUCHES", 0, 0, 0, ""),
+  Commands( "TRIM", 0, 0, 0, ""),
+  Commands( "UCASE", 0, 0, 0, ""),
+  Commands( "UNCOMPRESS", 0, 0, 0, ""),
+  Commands( "UNCOMPRESSED_LENGTH", 0, 0, 0, ""),
+  Commands( "UNHEX", 0, 0, 0, ""),
+  Commands( "UNIQUE_USERS", 0, 0, 0, ""),
+  Commands( "UNIX_TIMESTAMP", 0, 0, 0, ""),
+  Commands( "UPPER", 0, 0, 0, ""),
+  Commands( "UUID", 0, 0, 0, ""),
+  Commands( "VARIANCE", 0, 0, 0, ""),
+  Commands( "VAR_POP", 0, 0, 0, ""),
+  Commands( "VAR_SAMP", 0, 0, 0, ""),
+  Commands( "VERSION", 0, 0, 0, ""),
+  Commands( "WEEKDAY", 0, 0, 0, ""),
+  Commands( "WEEKOFYEAR", 0, 0, 0, ""),
+  Commands( "WITHIN", 0, 0, 0, ""),
+  Commands( "X", 0, 0, 0, ""),
+  Commands( "Y", 0, 0, 0, ""),
+  Commands( "YEARWEEK", 0, 0, 0, ""),
   /* end sentinel */
-  { (char *)NULL,       0, 0, 0, ""}
+  Commands((char *)NULL,       0, 0, 0, "")
 };
 
 static const char *load_default_groups[]= { "drizzle","client",0 };
@@ -1005,7 +1164,7 @@ static int not_in_history(const char *line);
 static void initialize_readline (char *name);
 static void fix_history(string *final_command);
 
-static COMMANDS *find_command(const char *name,char cmd_name);
+static Commands *find_command(const char *name,char cmd_name);
 static bool add_line(string *buffer,char *line,char *in_string,
                      bool *ml_comment);
 static void remove_cntrl(string *buffer);
@@ -1027,9 +1186,9 @@ static void window_resize(int sig);
   Shutdown the server that we are currently connected to.
 
   @retval
-  true success
+    true success
   @retval
-  false failure
+    false failure
 */
 static bool server_shutdown(void)
 {
@@ -1073,9 +1232,9 @@ static bool server_shutdown(void)
   Ping the server that we are currently connected to.
 
   @retval
-  true success
+    true success
   @retval
-  false failure
+    false failure
 */
 static bool server_ping(void)
 {
@@ -1110,15 +1269,15 @@ static bool server_ping(void)
   Execute command(s) specified by the user.
 
   @param error  error status of command execution.
-  If an error had occurred, this variable will be set
-  to 1 whereas on success, it shall be set to 0. This
-  value will be supplied to the exit() function used
-  by the caller.
+                If an error had occurred, this variable will be set
+                to 1 whereas on success, it shall be set to 0. This
+                value will be supplied to the exit() function used
+                by the caller.
 
   @retval
-  false no commands were executed
+    false no commands were executed
   @retval
-  true  at least one command was executed
+    true  at least one command was executed
 */
 static bool execute_commands(int *error)
 {
@@ -1156,7 +1315,7 @@ int main(int argc,char *argv[])
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
-
+  
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -1187,12 +1346,12 @@ int main(int argc,char *argv[])
   }
   if (!isatty(0) || !isatty(1))
   {
-    status.batch=1; opt_silent=1;
+    status.setBatch(1); opt_silent=1;
     ignore_errors=0;
   }
   else
-    status.add_to_history=1;
-  status.exit_status=1;
+    status.setAddToHistory(1);
+  status.setExitStatus(1);
 
   {
     /*
@@ -1222,7 +1381,7 @@ int main(int argc,char *argv[])
                   opt_silent))
   {
     quick= 1;          // Avoid history
-    status.exit_status= 1;
+    status.setExitStatus(1);
     drizzle_end(-1);
   }
 
@@ -1235,10 +1394,10 @@ int main(int argc,char *argv[])
     exit(command_error);
   }
 
-  if (status.batch && !status.line_buff)
+  if (status.getBatch() && !status.getLineBuff())
   {
-    status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line, stdin);
-    if (status.line_buff == NULL)
+    status.setLineBuff(opt_max_input_line, stdin);
+    if (status.getLineBuff() == NULL)
     {
       internal::free_defaults(defaults_argv);
       internal::my_end();
@@ -1246,7 +1405,7 @@ int main(int argc,char *argv[])
     }
   }
 
-  if (!status.batch)
+  if (!status.getBatch())
     ignore_errors=1;        // Don't abort monitor
 
   if (opt_sigint_ignore)
@@ -1268,27 +1427,26 @@ int main(int argc,char *argv[])
   glob_buffer= new string();
   glob_buffer->reserve(512);
 
-  ostringstream output_buff;
-  output_buff << _("Your Drizzle connection id is ");
-  output_buff << drizzle_con_thread_id(&con);
-  output_buff << "\n";
-  output_buff << _("Server version: ");
-  output_buff << server_version_string(&con) << "\n";
-  put_info(output_buff.str().c_str(), INFO_INFO, 0, 0);
+  char * output_buff= (char *)malloc(512);
+  memset(output_buff, '\0', 512);
+
+  sprintf(output_buff,
+          _("Your Drizzle connection id is %u\nServer version: %s\n"),
+          drizzle_con_thread_id(&con),
+          server_version_string(&con));
+  put_info(output_buff, INFO_INFO, 0, 0);
 
   initialize_readline(current_prompt);
-  if (!status.batch && !quick)
+  if (!status.getBatch() && !quick)
   {
     /* read-history from file, default ~/.drizzle_history*/
     if (getenv("DRIZZLE_HISTFILE"))
       histfile= strdup(getenv("DRIZZLE_HISTFILE"));
     else if (getenv("HOME"))
     {
-      size_t histfile_size = strlen(getenv("HOME")) +
-        strlen("/.drizzle_history") + 2;
-      histfile=(char*) malloc(histfile_size);
+      histfile=(char*) malloc(strlen(getenv("HOME")) + strlen("/.drizzle_history") + 2);
       if (histfile)
-        snprintf(histfile, histfile_size, "%s/.drizzle_history",getenv("HOME"));
+        sprintf(histfile,"%s/.drizzle_history",getenv("HOME"));
       char link_name[FN_REFLEN];
       ssize_t sym_link_size= readlink(histfile,link_name,FN_REFLEN-1);
       if (sym_link_size >= 0)
@@ -1307,19 +1465,18 @@ int main(int argc,char *argv[])
       if (verbose)
         tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
-      size_t histfile_tmp_size = strlen(histfile) + 5;
-      if (!(histfile_tmp= (char*) malloc(histfile_tmp_size)))
+      if (!(histfile_tmp= (char*) malloc((uint32_t) strlen(histfile) + 5)))
       {
         fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
         exit(1);
       }
-      snprintf(histfile_tmp, histfile_tmp_size, "%s.TMP", histfile);
+      sprintf(histfile_tmp, "%s.TMP", histfile);
     }
   }
 
   put_info(_("Type 'help;' or '\\h' for help. "
              "Type '\\c' to clear the buffer.\n"),INFO_INFO,0,0);
-  status.exit_status= read_and_execute(!status.batch);
+  status.setExitStatus(read_and_execute(!status.getBatch()));
   if (opt_outfile)
     end_tee();
   drizzle_end(0);
@@ -1331,7 +1488,7 @@ void drizzle_end(int sig)
 {
   drizzle_con_free(&con);
   drizzle_free(&drizzle);
-  if (!status.batch && !quick && histfile)
+  if (!status.getBatch() && !quick && histfile)
   {
     /* write-history */
     if (verbose)
@@ -1339,8 +1496,8 @@ void drizzle_end(int sig)
     if (!write_history(histfile_tmp))
       internal::my_rename(histfile_tmp, histfile, MYF(MY_WME));
   }
-  delete status.line_buff;
-  status.line_buff= 0;
+  delete status.getLineBuff();
+  status.setLineBuff(0);
 
   if (sig >= 0)
     put_info(sig ? _("Aborted") : _("Bye"), INFO_RESULT,0,0);
@@ -1360,7 +1517,7 @@ void drizzle_end(int sig)
   free(current_prompt);
   internal::free_defaults(defaults_argv);
   internal::my_end();
-  exit(status.exit_status);
+  exit(status.getExitStatus());
 }
 
 
@@ -1390,8 +1547,8 @@ void handle_sigint(int sig)
   }
 
   /* kill_buffer is always big enough because max length of %lu is 15 */
-  snprintf(kill_buffer, sizeof(kill_buffer), "KILL /*!50000 QUERY */ %u",
-           drizzle_con_thread_id(&con));
+  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u",
+          drizzle_con_thread_id(&con));
 
   if (drizzle_query_str(&kill_drizzle, &res, kill_buffer, &ret) != NULL)
     drizzle_result_free(&res);
@@ -1421,164 +1578,164 @@ void window_resize(int)
 static struct option my_long_options[] =
 {
   {"help", '?', N_("Display this help and exit."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
-    0, 0, 0, 0, 0},
+   0, 0, 0, 0, 0},
   {"help", 'I', N_("Synonym for -?"), 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
-    0, 0, 0, 0, 0},
+   0, 0, 0, 0, 0},
   {"auto-rehash", OPT_AUTO_REHASH,
-    N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."),
-    (char**) &opt_rehash, (char**) &opt_rehash, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0,
-    0, 0},
+   N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."),
+   (char**) &opt_rehash, (char**) &opt_rehash, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0,
+   0, 0},
   {"no-auto-rehash", 'A',
-    N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."),
-    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-vertical-output", OPT_AUTO_VERTICAL_OUTPUT,
-    N_("Automatically switch to vertical output mode if the result is wider than the terminal width."),
-    (char**) &auto_vertical_output, (char**) &auto_vertical_output, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Automatically switch to vertical output mode if the result is wider than the terminal width."),
+   (char**) &auto_vertical_output, (char**) &auto_vertical_output, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"batch", 'B',
-    N_("Don't use history file. Disable interactive behavior. (Enables --silent)"), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Don't use history file. Disable interactive behavior. (Enables --silent)"), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"column-type-info", OPT_COLUMN_TYPES, N_("Display column type information."),
-    (char**) &column_types_flag, (char**) &column_types_flag,
-    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &column_types_flag, (char**) &column_types_flag,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"comments", 'c', N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"),
-    (char**) &preserve_comments, (char**) &preserve_comments,
-    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &preserve_comments, (char**) &preserve_comments,
+   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"compress", 'C', N_("Use compression in server/client protocol."),
-    (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-    0, 0, 0},
+   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"database", 'D', N_("Database to use."), (char**) &current_db,
-    (char**) &current_db, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &current_db, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-character-set", OPT_DEFAULT_CHARSET,
-    N_("(not used)"), 0,
-    0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("(not used)"), 0,
+   0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"delimiter", OPT_DELIMITER, N_("Delimiter to be used."), (char**) &delimiter_str,
-    (char**) &delimiter_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &delimiter_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"execute", 'e', N_("Execute command and quit. (Disables --force and history file)"), 0,
-    0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"vertical", 'E', N_("Print the output of a query (rows) vertically."),
-    (char**) &vertical, (char**) &vertical, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
-    0},
+   (char**) &vertical, (char**) &vertical, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
+   0},
   {"force", 'f', N_("Continue even if we get an sql error."),
-    (char**) &ignore_errors, (char**) &ignore_errors, 0, GET_BOOL, NO_ARG, 0, 0,
-    0, 0, 0, 0},
+   (char**) &ignore_errors, (char**) &ignore_errors, 0, GET_BOOL, NO_ARG, 0, 0,
+   0, 0, 0, 0},
   {"named-commands", 'G',
-    N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default."),
-    (char**) &named_cmds, (char**) &named_cmds, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-    0, 0},
+   N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default."),
+   (char**) &named_cmds, (char**) &named_cmds, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
+   0, 0},
   {"no-named-commands", 'g',
-    N_("Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead."),
-    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"ignore-spaces", 'i', N_("Ignore space after function names."), 0, 0, 0,
-    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"local-infile", OPT_LOCAL_INFILE, N_("Enable/disable LOAD DATA LOCAL INFILE."),
-    (char**) &opt_local_infile,
-    (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_local_infile,
+   (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"no-beep", 'b', N_("Turn off beep on error."), (char**) &opt_nobeep,
-    (char**) &opt_nobeep, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_nobeep, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', N_("Connect to host."), (char**) &current_host,
-    (char**) &current_host, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &current_host, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"line-numbers", OPT_LINE_NUMBERS, N_("Write line numbers for errors."),
-    (char**) &line_numbers, (char**) &line_numbers, 0, GET_BOOL,
-    NO_ARG, 1, 0, 0, 0, 0, 0},
+   (char**) &line_numbers, (char**) &line_numbers, 0, GET_BOOL,
+   NO_ARG, 1, 0, 0, 0, 0, 0},
   {"skip-line-numbers", 'L', N_("Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead."), 0, 0, 0, GET_NO_ARG,
-    NO_ARG, 0, 0, 0, 0, 0, 0},
+   NO_ARG, 0, 0, 0, 0, 0, 0},
   {"unbuffered", 'n', N_("Flush buffer after each query."), (char**) &unbuffered,
-    (char**) &unbuffered, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &unbuffered, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"column-names", OPT_COLUMN_NAMES, N_("Write column names in results."),
-    (char**) &column_names, (char**) &column_names, 0, GET_BOOL,
-    NO_ARG, 1, 0, 0, 0, 0, 0},
+   (char**) &column_names, (char**) &column_names, 0, GET_BOOL,
+   NO_ARG, 1, 0, 0, 0, 0, 0},
   {"skip-column-names", 'N',
-    N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."),
-    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"set-variable", 'O',
-    N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."),
-    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."),
+   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"sigint-ignore", OPT_SIGINT_IGNORE, N_("Ignore SIGINT (CTRL-C)"),
-    (char**) &opt_sigint_ignore,  (char**) &opt_sigint_ignore, 0, GET_BOOL,
-    NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_sigint_ignore,  (char**) &opt_sigint_ignore, 0, GET_BOOL,
+   NO_ARG, 0, 0, 0, 0, 0, 0},
   {"one-database", 'o',
-    N_("Only update the default database. This is useful for skipping updates to other database in the update log."),
-    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Only update the default database. This is useful for skipping updates to other database in the update log."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"pager", OPT_PAGER,
-    N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."),
-    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."),
+   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"no-pager", OPT_NOPAGER,
-    N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."),
-    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"password", 'P',
-    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
-    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
+   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'p', N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, ")
-    N_("built-in default") " (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-    0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("built-in default") " (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
+   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"prompt", OPT_PROMPT, N_("Set the drizzle prompt to this value."),
-    (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
-    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
+   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
-    N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."),
-    (char**) &quick, (char**) &quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."),
+   (char**) &quick, (char**) &quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"raw", 'r', N_("Write fields without conversion. Used with --batch."),
-    (char**) &opt_raw_data, (char**) &opt_raw_data, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-    0, 0, 0},
+   (char**) &opt_raw_data, (char**) &opt_raw_data, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   0, 0, 0},
   {"reconnect", OPT_RECONNECT, N_("Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default."),
-    (char**) &opt_reconnect, (char**) &opt_reconnect, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
+   (char**) &opt_reconnect, (char**) &opt_reconnect, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"shutdown", OPT_SHUTDOWN, N_("Shutdown the server."),
-    (char**) &opt_shutdown, (char**) &opt_shutdown, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_shutdown, (char**) &opt_shutdown, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', N_("Be more silent. Print results with a tab as separator, each row on new line."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
-    0, 0},
+   0, 0},
   {"table", 't', N_("Output in table format."), (char**) &output_tables,
-    (char**) &output_tables, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &output_tables, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"tee", OPT_TEE,
-    N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."),
-    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."),
+   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"no-tee", OPT_NOTEE, N_("Disable outfile. See interactive help (\\h) also. WARNING: option deprecated; use --disable-tee instead"), 0, 0, 0, GET_NO_ARG,
-    NO_ARG, 0, 0, 0, 0, 0, 0},
+   NO_ARG, 0, 0, 0, 0, 0, 0},
   {"user", 'u', N_("User for login if not current user."), (char**) &current_user,
-    (char**) &current_user, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &current_user, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"safe-updates", 'U', N_("Only allow UPDATE and DELETE that uses keys."),
-    (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
-    0, 0, 0, 0},
+   (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
+   0, 0, 0, 0},
   {"i-am-a-dummy", 'U', N_("Synonym for option --safe-updates, -U."),
-    (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
-    0, 0, 0, 0},
+   (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
+   0, 0, 0, 0},
   {"verbose", 'v', N_("Write more. (-v -v -v gives the table output format)."), 0,
-    0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', N_("Output version information and exit."), 0, 0, 0,
-    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"wait", 'w', N_("Wait and retry if connection is down."), 0, 0, 0, GET_NO_ARG,
-    NO_ARG, 0, 0, 0, 0, 0, 0},
+   NO_ARG, 0, 0, 0, 0, 0, 0},
   {"connect_timeout", OPT_CONNECT_TIMEOUT,
-    N_("Number of seconds before connection timeout."),
-    (char**) &opt_connect_timeout,
-    (char**) &opt_connect_timeout, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 3600*12, 0,
-    0, 0},
+   N_("Number of seconds before connection timeout."),
+   (char**) &opt_connect_timeout,
+   (char**) &opt_connect_timeout, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 3600*12, 0,
+   0, 0},
   {"max_input_line", OPT_MAX_INPUT_LINE,
-    N_("Max length of input line"),
-    (char**) &opt_max_input_line, (char**) &opt_max_input_line, 0,
-    GET_UINT32, REQUIRED_ARG, 16 *1024L*1024L, 4096,
-    (int64_t) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
+   N_("Max length of input line"),
+   (char**) &opt_max_input_line, (char**) &opt_max_input_line, 0,
+   GET_UINT32, REQUIRED_ARG, 16 *1024L*1024L, 4096,
+   (int64_t) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"select_limit", OPT_SELECT_LIMIT,
-    N_("Automatic limit for SELECT when using --safe-updates"),
-    (char**) &select_limit,
-    (char**) &select_limit, 0, GET_UINT32, REQUIRED_ARG, 1000L, 1, ULONG_MAX,
-    0, 1, 0},
+   N_("Automatic limit for SELECT when using --safe-updates"),
+   (char**) &select_limit,
+   (char**) &select_limit, 0, GET_UINT32, REQUIRED_ARG, 1000L, 1, ULONG_MAX,
+   0, 1, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
-    N_("Automatic limit for rows in a join when using --safe-updates"),
-    (char**) &max_join_size,
-    (char**) &max_join_size, 0, GET_UINT32, REQUIRED_ARG, 1000000L, 1, ULONG_MAX,
-    0, 1, 0},
+   N_("Automatic limit for rows in a join when using --safe-updates"),
+   (char**) &max_join_size,
+   (char**) &max_join_size, 0, GET_UINT32, REQUIRED_ARG, 1000000L, 1, ULONG_MAX,
+   0, 1, 0},
   {"secure-auth", OPT_SECURE_AUTH, N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"), (char**) &opt_secure_auth,
-    (char**) &opt_secure_auth, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_secure_auth, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"show-warnings", OPT_SHOW_WARNINGS, N_("Show warnings after every statement."),
-    (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
-    0, 0, 0, 0, 0, 0},
+   (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
+   0, 0, 0, 0, 0, 0},
   {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of lines before each import progress report."),
-    (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_UINT32, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
+   (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_UINT32, REQUIRED_ARG,
+   0, 0, 0, 0, 0, 0},
   {"ping", OPT_PING, N_("Ping the server to check if it's alive."),
-    (char**) &opt_ping, (char**) &opt_ping, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_ping, (char**) &opt_ping, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"mysql", 'm', N_("Use MySQL Protocol."),
-    (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 1, 0, 0,
-    0, 0, 0},
+   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 1, 0, 0,
+   0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -1631,7 +1788,7 @@ static int get_one_option(int optid, const struct option *, char *argument)
       {
         put_info(_("DELIMITER cannot contain a backslash character"),
                  INFO_ERROR,0,0);
-        return EXIT_ARGUMENT_INVALID;
+        return false;
       }
     }
     delimiter_length= (uint32_t)strlen(delimiter);
@@ -1683,16 +1840,16 @@ static int get_one_option(int optid, const struct option *, char *argument)
     column_names= 0;
     break;
   case 'e':
-    status.batch= 1;
-    status.add_to_history= 0;
-    if (status.line_buff == NULL)
-      status.line_buff= new(std::nothrow) LineBuffer(opt_max_input_line,NULL);
-    if (status.line_buff == NULL)
+    status.setBatch(1);
+    status.setAddToHistory(1);
+    if (status.getLineBuff() == NULL)
+      status.setLineBuff(opt_max_input_line,NULL);
+    if (status.getLineBuff() == NULL)
     {
       internal::my_end();
       exit(1);
     }
-    status.line_buff->addString(argument);
+    status.getLineBuff()->addString(argument);
     break;
   case 'o':
     if (argument == disabled_my_option)
@@ -1706,15 +1863,15 @@ static int get_one_option(int optid, const struct option *, char *argument)
     if (strlen(endchar) != 0)
     {
       put_info(_("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead."), INFO_ERROR, 0, 0);
-      return EXIT_ARGUMENT_INVALID;
+      return false;
     }
     /* If the port number is > 65535 it is not a valid port
-      This also helps with potential data loss casting unsigned long to a
-      uint32_t. */
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
     if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
-      return EXIT_ARGUMENT_INVALID;
+      return false;
     }
     else
     {
@@ -1761,8 +1918,8 @@ static int get_one_option(int optid, const struct option *, char *argument)
       verbose++;
     break;
   case 'B':
-    status.batch= 1;
-    status.add_to_history= 0;
+    status.setBatch(1);
+    status.setAddToHistory(0);
     set_if_bigger(opt_silent,1);                         // more silent
     break;
   case 'V':
@@ -1799,7 +1956,7 @@ static int get_options(int argc, char **argv)
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
     exit(ho_error);
 
-  if (status.batch) /* disable pager and outfile in this case */
+  if (status.getBatch()) /* disable pager and outfile in this case */
   {
     strcpy(default_pager, "stdout");
     strcpy(pager, "stdout");
@@ -1833,15 +1990,15 @@ static int read_and_execute(bool interactive)
   char in_string=0;
   uint32_t line_number=0;
   bool ml_comment= 0;
-  COMMANDS *com;
-  status.exit_status=1;
+  Commands *com;
+  status.setExitStatus(1);
 
   for (;;)
   {
     if (!interactive)
     {
-      if (status.line_buff)
-        line= status.line_buff->readline();
+      if (status.getLineBuff())
+        line= status.getLineBuff()->readline();
       else
         line= 0;
 
@@ -1852,7 +2009,7 @@ static int read_and_execute(bool interactive)
           fprintf(stderr, _("Processing line: %"PRIu32"\n"), line_number);
       }
       if (!glob_buffer->empty())
-        status.query_start_line= line_number;
+        status.setQueryStartLine(line_number);
     }
     else
     {
@@ -1880,7 +2037,7 @@ static int read_and_execute(bool interactive)
     // End of file
     if (!line)
     {
-      status.exit_status=0;
+      status.setExitStatus(0);
       break;
     }
 
@@ -1896,7 +2053,7 @@ static int read_and_execute(bool interactive)
       // If buffer was emptied
       if (glob_buffer->empty())
         in_string=0;
-      if (interactive && status.add_to_history && not_in_history(line))
+      if (interactive && status.getAddToHistory() && not_in_history(line))
         add_history(line);
       continue;
     }
@@ -1905,22 +2062,22 @@ static int read_and_execute(bool interactive)
   }
   /* if in batch mode, send last query even if it doesn't end with \g or go */
 
-  if (!interactive && !status.exit_status)
+  if (!interactive && !status.getExitStatus())
   {
     remove_cntrl(glob_buffer);
     if (!glob_buffer->empty())
     {
-      status.exit_status=1;
+      status.setExitStatus(1);
       if (com_go(glob_buffer,line) <= 0)
-        status.exit_status=0;
+        status.setExitStatus(0);
     }
   }
 
-  return status.exit_status;
+  return status.getExitStatus();
 }
 
 
-static COMMANDS *find_command(const char *name,char cmd_char)
+static Commands *find_command(const char *name,char cmd_char)
 {
   uint32_t len;
   const char *end;
@@ -1945,7 +2102,7 @@ static COMMANDS *find_command(const char *name,char cmd_char)
                                                 (unsigned char*) name, 9,
                                                 (const unsigned char*) "delimiter",
                                                 9))))
-      return((COMMANDS *) 0);
+      return(NULL);
     if ((end=strcont(name," \t")))
     {
       len=(uint32_t) (end - name);
@@ -1958,31 +2115,31 @@ static COMMANDS *find_command(const char *name,char cmd_char)
       len=(uint32_t) strlen(name);
   }
 
-  for (uint32_t i= 0; commands[i].name; i++)
+  for (uint32_t i= 0; commands[i].getName(); i++)
   {
     if (commands[i].func &&
-        ((name && !my_strnncoll(charset_info,(const unsigned char*)name,len, (const unsigned char*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
+        ((name && !my_strnncoll(charset_info,(const unsigned char*)name,len, (const unsigned char*)commands[i].getName(),len) && !commands[i].getName()[len] && (!end || (end && commands[i].getTakesParams()))) || (!name && commands[i].getCmdChar() == cmd_char)))
     {
       return(&commands[i]);
     }
   }
-  return((COMMANDS *) 0);
+  return(NULL);
 }
 
 
 static bool add_line(string *buffer, char *line, char *in_string,
-                     bool *ml_comment)
+                        bool *ml_comment)
 {
   unsigned char inchar;
   char *pos, *out;
-  COMMANDS *com;
+  Commands *com;
   bool need_space= 0;
   bool ss_comment= 0;
 
 
   if (!line[0] && (buffer->empty()))
     return(0);
-  if (status.add_to_history && line[0] && not_in_history(line))
+  if (status.getAddToHistory() && line[0] && not_in_history(line))
     add_history(line);
   char *end_of_line=line+(uint32_t) strlen(line);
 
@@ -2035,7 +2192,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
 
         if ((*com->func)(buffer,pos-1) > 0)
           return(1);                       // Quit
-        if (com->takes_params)
+        if (com->getTakesParams())
         {
           if (ss_comment)
           {
@@ -2240,8 +2397,8 @@ static bool add_line(string *buffer, char *line, char *in_string,
 }
 
 /*****************************************************************
-  Interface to Readline Completion
- ******************************************************************/
+            Interface to Readline Completion
+******************************************************************/
 
 
 static char **mysql_completion (const char *text, int start, int end);
@@ -2349,7 +2506,7 @@ static void initialize_readline (char *name)
 */
 char **mysql_completion (const char *text, int, int)
 {
-  if (!status.batch && !quick)
+  if (!status.getBatch() && !quick)
     return rl_completion_matches(text, new_command_generator);
   else
     return (char**) 0;
@@ -2418,14 +2575,14 @@ char *new_command_generator(const char *text, int state)
 
 static void build_completion_hash(bool rehash, bool write_info)
 {
-  COMMANDS *cmd=commands;
+  Commands *cmd=commands;
   drizzle_return_t ret;
   drizzle_result_st databases,tables,fields;
   drizzle_row_t database_row,table_row;
   drizzle_column_st *sql_field;
   string tmp_str, tmp_str_lower;
 
-  if (status.batch || quick || !current_db)
+  if (status.getBatch() || quick || !current_db)
     return;      // We don't need completion in batches
   if (!rehash)
     return;
@@ -2433,8 +2590,8 @@ static void build_completion_hash(bool rehash, bool write_info)
   completion_map.clear();
 
   /* hash this file's known subset of SQL commands */
-  while (cmd->name) {
-    tmp_str= cmd->name;
+  while (cmd->getName()) {
+    tmp_str= cmd->getName();
     tmp_str_lower= lower_string(tmp_str);
     completion_map[tmp_str_lower]= tmp_str;
     cmd++;
@@ -2511,7 +2668,7 @@ static void build_completion_hash(bool rehash, bool write_info)
     query.append("show fields in '");
     query.append(table_row[0]);
     query.append("'");
-
+    
     if (drizzle_query(&con, &fields, query.c_str(), query.length(),
                       &ret) != NULL)
     {
@@ -2577,8 +2734,8 @@ static void get_current_db(void)
 }
 
 /***************************************************************************
-  The different commands
- ***************************************************************************/
+ The different commands
+***************************************************************************/
 
 int drizzleclient_real_query_for_lazy(const char *buf, int length,
                                       drizzle_result_st *result,
@@ -2619,11 +2776,7 @@ int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
     return 0;
 
   if (drizzle_con_error(&con)[0])
-  {
-    int ret = put_error(&con, result);
-    drizzle_result_free(result);
-    return ret;
-  }
+    return put_error(&con, result);
   return 0;
 }
 
@@ -2636,15 +2789,15 @@ com_help(string *buffer, const char *)
   put_info(_("List of all Drizzle commands:"), INFO_INFO,0,0);
   if (!named_cmds)
     put_info(_("Note that all text commands must be first on line and end with ';'"),INFO_INFO,0,0);
-  for (i = 0; commands[i].name; i++)
+  for (i = 0; commands[i].getName(); i++)
   {
-    end= strcpy(buff, commands[i].name);
-    end+= strlen(commands[i].name);
-    for (j= (int)strlen(commands[i].name); j < 10; j++)
+    end= strcpy(buff, commands[i].getName());
+    end+= strlen(commands[i].getName());
+    for (j= (int)strlen(commands[i].getName()); j < 10; j++)
       end= strcpy(end, " ")+1;
     if (commands[i].func)
       tee_fprintf(stdout, "%s(\\%c) %s\n", buff,
-                  commands[i].cmd_char, _(commands[i].doc));
+                  commands[i].getCmdChar(), _(commands[i].getDoc()));
   }
   tee_fprintf(stdout, "\n");
   buffer->clear();
@@ -2655,7 +2808,7 @@ com_help(string *buffer, const char *)
 static int
 com_clear(string *buffer, const char *)
 {
-  if (status.add_to_history)
+  if (status.getAddToHistory())
     fix_history(buffer);
   buffer->clear();
   return 0;
@@ -2664,9 +2817,9 @@ com_clear(string *buffer, const char *)
 
 /*
   Execute command
-Returns: 0  if ok
--1 if not fatal error
-1  if fatal error
+  Returns: 0  if ok
+  -1 if not fatal error
+  1  if fatal error
 */
 static int
 com_go(string *buffer, const char *)
@@ -2688,7 +2841,7 @@ com_go(string *buffer, const char *)
   if (buffer->empty())
   {
     // Ignore empty quries
-    if (status.batch)
+    if (status.getBatch())
       return 0;
     return put_info(_("No query specified\n"),INFO_ERROR,0,0);
 
@@ -2713,7 +2866,7 @@ com_go(string *buffer, const char *)
   executing_query= 1;
   error= drizzleclient_real_query_for_lazy(buffer->c_str(),buffer->length(),&result, &error_code);
 
-  if (status.add_to_history)
+  if (status.getAddToHistory())
   {
     buffer->append(vertical ? "\\G" : delimiter);
     /* Append final command onto history */
@@ -2767,10 +2920,10 @@ com_go(string *buffer, const char *)
           print_tab_data(&result);
         else
           print_table_data(&result);
-        snprintf(buff, sizeof(buff), 
-                 ngettext("%ld row in set","%ld rows in set",
-                          (long) drizzle_result_row_count(&result)),
-                 (long) drizzle_result_row_count(&result));
+        sprintf(buff,
+                ngettext("%ld row in set","%ld rows in set",
+                         (long) drizzle_result_row_count(&result)),
+                (long) drizzle_result_row_count(&result));
         end_pager();
         if (drizzle_result_error_code(&result))
           error= put_error(&con, &result);
@@ -2779,10 +2932,10 @@ com_go(string *buffer, const char *)
     else if (drizzle_result_affected_rows(&result) == ~(uint64_t) 0)
       strcpy(buff,_("Query OK"));
     else
-      snprintf(buff, sizeof(buff), ngettext("Query OK, %ld row affected",
-                                            "Query OK, %ld rows affected",
-                                            (long) drizzle_result_affected_rows(&result)),
-               (long) drizzle_result_affected_rows(&result));
+      sprintf(buff, ngettext("Query OK, %ld row affected",
+                             "Query OK, %ld rows affected",
+                             (long) drizzle_result_affected_rows(&result)),
+              (long) drizzle_result_affected_rows(&result));
 
     pos= strchr(buff, '\0');
     if ((warnings= drizzle_result_warning_count(&result)))
@@ -2791,7 +2944,7 @@ com_go(string *buffer, const char *)
       *pos++= ' ';
       char warnings_buff[20];
       memset(warnings_buff,0,20);
-      snprintf(warnings_buff, sizeof(warnings_buff), "%d", warnings);
+      sprintf(warnings_buff, "%d", warnings);
       strcpy(pos, warnings_buff);
       pos+= strlen(warnings_buff);
       pos= strcpy(pos, " warning")+8;
@@ -2834,7 +2987,7 @@ end:
   if (show_warnings == 1 && (warnings >= 1 || error))
     print_warnings(error_code);
 
-  if (!error && !status.batch &&
+  if (!error && !status.getBatch() &&
       drizzle_con_status(&con) & DRIZZLE_CON_STATUS_DB_DROPPED)
   {
     get_current_db();
@@ -2909,17 +3062,17 @@ com_ego(string *buffer,const char *line)
 static const char *fieldtype2str(drizzle_column_type_t type)
 {
   switch (type) {
-  case DRIZZLE_COLUMN_TYPE_BLOB:        return "BLOB";
-  case DRIZZLE_COLUMN_TYPE_DATE:        return "DATE";
-  case DRIZZLE_COLUMN_TYPE_DATETIME:    return "DATETIME";
-  case DRIZZLE_COLUMN_TYPE_NEWDECIMAL:  return "DECIMAL";
-  case DRIZZLE_COLUMN_TYPE_DOUBLE:      return "DOUBLE";
-  case DRIZZLE_COLUMN_TYPE_ENUM:        return "ENUM";
-  case DRIZZLE_COLUMN_TYPE_LONG:        return "LONG";
-  case DRIZZLE_COLUMN_TYPE_LONGLONG:    return "LONGLONG";
-  case DRIZZLE_COLUMN_TYPE_NULL:        return "NULL";
-  case DRIZZLE_COLUMN_TYPE_TIMESTAMP:   return "TIMESTAMP";
-  default:                     return "?-unknown-?";
+    case DRIZZLE_COLUMN_TYPE_BLOB:        return "BLOB";
+    case DRIZZLE_COLUMN_TYPE_DATE:        return "DATE";
+    case DRIZZLE_COLUMN_TYPE_DATETIME:    return "DATETIME";
+    case DRIZZLE_COLUMN_TYPE_NEWDECIMAL:  return "DECIMAL";
+    case DRIZZLE_COLUMN_TYPE_DOUBLE:      return "DOUBLE";
+    case DRIZZLE_COLUMN_TYPE_ENUM:        return "ENUM";
+    case DRIZZLE_COLUMN_TYPE_LONG:        return "LONG";
+    case DRIZZLE_COLUMN_TYPE_LONGLONG:    return "LONGLONG";
+    case DRIZZLE_COLUMN_TYPE_NULL:        return "NULL";
+    case DRIZZLE_COLUMN_TYPE_TIMESTAMP:   return "TIMESTAMP";
+    default:                     return "?-unknown-?";
   }
 }
 
@@ -2929,7 +3082,7 @@ static char *fieldflags2str(uint32_t f) {
   *s=0;
 #define ff2s_check_flag(X)                                              \
   if (f & DRIZZLE_COLUMN_FLAGS_ ## X) { s=strcpy(s, # X " ")+strlen(# X " "); \
-    f &= ~ DRIZZLE_COLUMN_FLAGS_ ## X; }
+                        f &= ~ DRIZZLE_COLUMN_FLAGS_ ## X; }
   ff2s_check_flag(NOT_NULL);
   ff2s_check_flag(PRI_KEY);
   ff2s_check_flag(UNIQUE_KEY);
@@ -2950,7 +3103,7 @@ static char *fieldflags2str(uint32_t f) {
   ff2s_check_flag(ON_UPDATE_NOW);
 #undef ff2s_check_flag
   if (f)
-    snprintf(s, sizeof(buf), " unknows=0x%04x", f);
+    sprintf(s, " unknows=0x%04x", f);
   return buf;
 }
 
@@ -3016,8 +3169,8 @@ print_table_data(drizzle_result_st *result)
       uint32_t name_length= strlen(drizzle_column_name(field));
 
       /* Check if the max_byte value is really the maximum in terms
-        of visual length since multibyte characters can affect the
-        length of the separator. */
+         of visual length since multibyte characters can affect the
+         length of the separator. */
       length= charset_info->cset->numcells(charset_info,
                                            drizzle_column_name(field),
                                            drizzle_column_name(field) +
@@ -3033,7 +3186,7 @@ print_table_data(drizzle_result_st *result)
         length= name_length;
       }
     }
-
+  
     if (quick)
       length=max(length,drizzle_column_size(field));
     else
@@ -3060,11 +3213,11 @@ print_table_data(drizzle_result_st *result)
     {
       uint32_t name_length= (uint32_t) strlen(drizzle_column_name(field));
       uint32_t numcells= charset_info->cset->numcells(charset_info,
-                                                      drizzle_column_name(field),
-                                                      drizzle_column_name(field) +
-                                                      name_length);
+                                                  drizzle_column_name(field),
+                                                  drizzle_column_name(field) +
+                                                  name_length);
       uint32_t display_length= drizzle_column_max_size(field) + name_length -
-        numcells;
+                               numcells;
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
                                              MAX_COLUMN_LENGTH),
                   drizzle_column_name(field));
@@ -3149,20 +3302,20 @@ print_table_data(drizzle_result_st *result)
 }
 
 /**
-  Return the length of a field after it would be rendered into text.
+   Return the length of a field after it would be rendered into text.
 
-  This doesn't know or care about multibyte characters.  Assume we're
-  using such a charset.  We can't know that all of the upcoming rows
-  for this column will have bytes that each render into some fraction
-  of a character.  It's at least possible that a row has bytes that
-  all render into one character each, and so the maximum length is
-  still the number of bytes.  (Assumption 1:  This can't be better
-  because we can never know the number of characters that the DB is
-  going to send -- only the number of bytes.  2: Chars <= Bytes.)
+   This doesn't know or care about multibyte characters.  Assume we're
+   using such a charset.  We can't know that all of the upcoming rows
+   for this column will have bytes that each render into some fraction
+   of a character.  It's at least possible that a row has bytes that
+   all render into one character each, and so the maximum length is
+   still the number of bytes.  (Assumption 1:  This can't be better
+   because we can never know the number of characters that the DB is
+   going to send -- only the number of bytes.  2: Chars <= Bytes.)
 
-  @param  field  Pointer to a field to be inspected
+   @param  field  Pointer to a field to be inspected
 
-  @returns  number of character positions to be used, at most
+   @returns  number of character positions to be used, at most
 */
 static int get_field_disp_length(drizzle_column_st *field)
 {
@@ -3174,7 +3327,7 @@ static int get_field_disp_length(drizzle_column_st *field)
     length= max(length, (uint32_t)drizzle_column_max_size(field));
 
   if (length < 4 &&
-      !(drizzle_column_flags(field) & DRIZZLE_COLUMN_FLAGS_NOT_NULL))
+    !(drizzle_column_flags(field) & DRIZZLE_COLUMN_FLAGS_NOT_NULL))
   {
     length= 4;        /* Room for "NULL" */
   }
@@ -3183,12 +3336,12 @@ static int get_field_disp_length(drizzle_column_st *field)
 }
 
 /**
-  For a new result, return the max number of characters that any
-  upcoming row may return.
+   For a new result, return the max number of characters that any
+   upcoming row may return.
 
-  @param  result  Pointer to the result to judge
+   @param  result  Pointer to the result to judge
 
-  @returns  The max number of characters in any row of this result
+   @returns  The max number of characters in any row of this result
 */
 static int get_result_width(drizzle_result_st *result)
 {
@@ -3312,7 +3465,7 @@ static void print_warnings(uint32_t error_code)
     warning.
   */
   if (!cur || (num_rows == 1 &&
-               error_code == (uint32_t) strtoul(cur[1], NULL, 10)))
+      error_code == (uint32_t) strtoul(cur[1], NULL, 10)))
   {
     goto end;
   }
@@ -3420,7 +3573,7 @@ com_tee(string *, const char *line )
   char file_name[FN_REFLEN], *end;
   const char *param;
 
-  if (status.batch)
+  if (status.getBatch())
     return 0;
   while (my_isspace(charset_info,*line))
     line++;
@@ -3479,7 +3632,7 @@ com_pager(string *, const char *line)
   char pager_name[FN_REFLEN], *end;
   const char *param;
 
-  if (status.batch)
+  if (status.getBatch())
     return 0;
   /* Skip spaces in front of the pager command */
   while (my_isspace(charset_info, *line))
@@ -3534,7 +3687,7 @@ static int
 com_quit(string *, const char *)
 {
   /* let the screen auto close on a normal shutdown */
-  status.exit_status=0;
+  status.setExitStatus(0);
   return 1;
 }
 
@@ -3607,10 +3760,10 @@ com_connect(string *buffer, const char *line)
 
   if (connected)
   {
-    snprintf(buff, sizeof(buff), "Connection id:    %u",drizzle_con_thread_id(&con));
+    sprintf(buff,"Connection id:    %u",drizzle_con_thread_id(&con));
     put_info(buff,INFO_INFO,0,0);
-    snprintf(buff, sizeof(buff), "Current database: %.128s\n",
-             current_db ? current_db : "*** NONE ***");
+    sprintf(buff,"Current database: %.128s\n",
+            current_db ? current_db : "*** NONE ***");
     put_info(buff,INFO_INFO,0,0);
   }
   return error;
@@ -3623,7 +3776,7 @@ static int com_source(string *, const char *line)
   const char *param;
   LineBuffer *line_buff;
   int error;
-  STATUS old_status;
+  Status old_status;
   FILE *sql_file;
 
   /* Skip space from file name */
@@ -3645,7 +3798,7 @@ static int com_source(string *, const char *line)
   if (!(sql_file = fopen(source_name, "r")))
   {
     char buff[FN_REFLEN+60];
-    snprintf(buff, sizeof(buff), "Failed to open file '%s', error: %d", source_name,errno);
+    sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
@@ -3661,9 +3814,9 @@ static int com_source(string *, const char *line)
   memset(&status, 0, sizeof(status));
 
   // Run in batch mode
-  status.batch=old_status.batch;
-  status.line_buff=line_buff;
-  status.file_name=source_name;
+  status.setBatch(old_status.getBatch());
+  status.setLineBuff(line_buff);
+  status.setFileName(source_name);
   // Empty command buffer
   assert(glob_buffer!=NULL);
   glob_buffer->clear();
@@ -3671,8 +3824,9 @@ static int com_source(string *, const char *line)
   // Continue as before
   status=old_status;
   fclose(sql_file);
-  delete status.line_buff;
-  line_buff= status.line_buff= 0;
+  delete status.getLineBuff();
+  line_buff=0;
+  status.setLineBuff(0);
   return error;
 }
 
@@ -3873,7 +4027,7 @@ char *get_arg(char *line, bool get_next_arg)
 
 static int
 sql_connect(char *host,char *database,char *user,char *password,
-            uint32_t silent)
+                 uint32_t silent)
 {
   drizzle_return_t ret;
 
@@ -3892,26 +4046,26 @@ sql_connect(char *host,char *database,char *user,char *password,
     return 1;
   }
 
-  /* XXX add this back in
-    if (opt_connect_timeout)
-    {
+/* XXX add this back in
+  if (opt_connect_timeout)
+  {
     uint32_t timeout=opt_connect_timeout;
     drizzleclient_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT,
-    (char*) &timeout);
-    }
-  */
+                  (char*) &timeout);
+  }
+*/
 
-  /* XXX Do we need this?
-    if (safe_updates)
-    {
+/* XXX Do we need this?
+  if (safe_updates)
+  {
     char init_command[100];
     sprintf(init_command,
-    "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
-    ",MAX_JOIN_SIZE=%"PRIu32,
-    select_limit, max_join_size);
+            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
+            ",MAX_JOIN_SIZE=%"PRIu32,
+            select_limit, max_join_size);
     drizzleclient_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
-    }
-  */
+  }
+*/
   if ((ret= drizzle_con_connect(&con)) != DRIZZLE_RETURN_OK)
   {
     if (!silent || (ret != DRIZZLE_RETURN_GETADDRINFO &&
@@ -3933,10 +4087,10 @@ sql_connect(char *host,char *database,char *user,char *password,
 static int
 com_status(string *, const char *)
 {
-  /*
-    char buff[40];
-    uint64_t id;
-  */
+/*
+  char buff[40];
+  uint64_t id;
+*/
   drizzle_result_st result;
   drizzle_return_t ret;
 
@@ -3984,10 +4138,10 @@ com_status(string *, const char *)
   tee_fprintf(stdout, "Server version:\t\t%s\n", server_version_string(&con));
   tee_fprintf(stdout, "Protocol version:\t%d\n", drizzle_con_protocol_version(&con));
   tee_fprintf(stdout, "Connection:\t\t%s\n", drizzle_con_host(&con));
-  /* XXX need to save this from result
-    if ((id= drizzleclient_insert_id(&drizzle)))
+/* XXX need to save this from result
+  if ((id= drizzleclient_insert_id(&drizzle)))
     tee_fprintf(stdout, "Insert id:\t\t%s\n", internal::llstr(id, buff));
-  */
+*/
 
   if (drizzle_con_uds(&con))
     tee_fprintf(stdout, "UNIX socket:\t\t%s\n", drizzle_con_uds(&con));
@@ -4000,10 +4154,10 @@ com_status(string *, const char *)
     tee_fprintf(stdout, "\nNote that you are running in safe_update_mode:\n");
     vidattr(A_NORMAL);
     tee_fprintf(stdout, "\
-                UPDATEs and DELETEs that don't use a key in the WHERE clause are not allowed.\n\
-                (One can force an UPDATE/DELETE by adding LIMIT # at the end of the command.)\n \
-                SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n             \
-                Max number of examined row combination in a join is set to: %lu\n\n",
+UPDATEs and DELETEs that don't use a key in the WHERE clause are not allowed.\n\
+(One can force an UPDATE/DELETE by adding LIMIT # at the end of the command.)\n \
+SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n             \
+Max number of examined row combination in a join is set to: %lu\n\n",
                 select_limit, max_join_size);
   }
   tee_puts("--------------\n", stdout);
@@ -4056,7 +4210,7 @@ put_info(const char *str,INFO_TYPE info_type, uint32_t error, const char *sqlsta
   FILE *file= (info_type == INFO_ERROR ? stderr : stdout);
   static int inited=0;
 
-  if (status.batch)
+  if (status.getBatch())
   {
     if (info_type == INFO_ERROR)
     {
@@ -4069,11 +4223,11 @@ put_info(const char *str,INFO_TYPE info_type, uint32_t error, const char *sqlsta
         else
           (void) fprintf(file," %d",error);
       }
-      if (status.query_start_line && line_numbers)
+      if (status.getQueryStartLine() && line_numbers)
       {
-        (void) fprintf(file," at line %"PRIu32,status.query_start_line);
-        if (status.file_name)
-          (void) fprintf(file," in file: '%s'", status.file_name);
+        (void) fprintf(file," at line %"PRIu32,status.getQueryStartLine());
+        if (status.getFileName())
+          (void) fprintf(file," in file: '%s'", status.getFileName());
       }
       (void) fprintf(file,": %s\n",str);
       (void) fflush(file);
@@ -4138,9 +4292,9 @@ put_error(drizzle_con_st *local_con, drizzle_result_st *res)
 
   return put_info(error, INFO_ERROR,
                   res == NULL ? drizzle_con_error_code(local_con) :
-                  drizzle_result_error_code(res),
+                                drizzle_result_error_code(res),
                   res == NULL ? drizzle_con_sqlstate(local_con) :
-                  drizzle_result_sqlstate(res));
+                                drizzle_result_sqlstate(res));
 }
 
 
@@ -4213,10 +4367,10 @@ static uint32_t start_timer(void)
 
 
 /**
-  Write as many as 52+1 bytes to buff, in the form of a legible
-  duration of time.
+   Write as many as 52+1 bytes to buff, in the form of a legible
+   duration of time.
 
-  len("4294967296 days, 23 hours, 59 minutes, 60.00 seconds")  ->  52
+   len("4294967296 days, 23 hours, 59 minutes, 60.00 seconds")  ->  52
 */
 static void nice_time(double sec,char *buff,bool part_second)
 {
@@ -4317,36 +4471,36 @@ static const char * construct_prompt()
         processed_prompt->append(current_db ? current_db : "(none)");
         break;
       case 'h':
+      {
+        const char *prompt;
+        prompt= connected ? drizzle_con_host(&con) : "not_connected";
+        if (strstr(prompt, "Localhost"))
+          processed_prompt->append("localhost");
+        else
         {
-          const char *prompt;
-          prompt= connected ? drizzle_con_host(&con) : "not_connected";
-          if (strstr(prompt, "Localhost"))
-            processed_prompt->append("localhost");
-          else
-          {
-            const char *end=strrchr(prompt,' ');
-            if (end != NULL)
-              processed_prompt->append(prompt, (end-prompt));
-          }
-          break;
-        }
-      case 'p':
-        {
-          if (!connected)
-          {
-            processed_prompt->append("not_connected");
-            break;
-          }
-
-          if (drizzle_con_uds(&con))
-          {
-            const char *pos=strrchr(drizzle_con_uds(&con),'/');
-            processed_prompt->append(pos ? pos+1 : drizzle_con_uds(&con));
-          }
-          else
-            add_int_to_prompt(drizzle_con_port(&con));
+          const char *end=strrchr(prompt,' ');
+          if (end != NULL)
+            processed_prompt->append(prompt, (end-prompt));
         }
         break;
+      }
+      case 'p':
+      {
+        if (!connected)
+        {
+          processed_prompt->append("not_connected");
+          break;
+        }
+
+        if (drizzle_con_uds(&con))
+        {
+          const char *pos=strrchr(drizzle_con_uds(&con),'/');
+          processed_prompt->append(pos ? pos+1 : drizzle_con_uds(&con));
+        }
+        else
+          add_int_to_prompt(drizzle_con_port(&con));
+      }
+      break;
       case 'U':
         if (!full_username)
           init_username();
@@ -4456,20 +4610,20 @@ static void add_int_to_prompt(int toadd)
 
 static void init_username()
 {
-  /* XXX need this?
-    free(full_username);
-    free(part_username);
+/* XXX need this?
+  free(full_username);
+  free(part_username);
 
-    drizzle_result_st *result;
-    if (!drizzleclient_query(&drizzle,"select USER()") &&
-    (result=drizzleclient_use_result(&drizzle)))
-    {
+  drizzle_result_st *result;
+  if (!drizzleclient_query(&drizzle,"select USER()") &&
+      (result=drizzleclient_use_result(&drizzle)))
+  {
     drizzle_row_t cur=drizzleclient_fetch_row(result);
     full_username= strdup(cur[0]);
     part_username= strdup(strtok(cur[0],"@"));
     (void) drizzleclient_fetch_row(result);        // Read eof
-    }
-  */
+  }
+*/
 }
 
 static int com_prompt(string *, const char *line)
@@ -4492,9 +4646,9 @@ static int com_prompt(string *, const char *line)
 }
 
 /*
-  strcont(str, set) if str contanies any character in the string set.
-  The result is the position of the first found character in str, or NULL
-  if there isn't anything found.
+    strcont(str, set) if str contanies any character in the string set.
+    The result is the position of the first found character in str, or NULL
+    if there isn't anything found.
 */
 
 static const char * strcont(register const char *str, register const char *set)
