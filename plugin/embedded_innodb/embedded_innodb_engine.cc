@@ -357,7 +357,7 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
 
   (void) extra(HA_EXTRA_KEYREAD);
   table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
-  index_init(table->s->next_number_index, 1);
+  doStartIndexScan(table->s->next_number_index, 1);
   if (table->s->next_number_keypart == 0)
   {						// Autoincrement at key-start
     error=index_last(table->record[1]);
@@ -378,7 +378,7 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
   else
     nr= ((uint64_t) table->found_next_number_field->
          val_int_offset(table->s->rec_buff_length)+1);
-  index_end();
+  doEndIndexScan();
   (void) extra(HA_EXTRA_NO_KEYREAD);
 
   if (table->s->getTableProto()->options().auto_increment_value() > nr)
