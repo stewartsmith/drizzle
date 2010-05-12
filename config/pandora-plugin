@@ -211,22 +211,7 @@ dnl Config for %(title)s
     plugin_ac.write('m4_sinclude([%s])\n' % m4_file)
   plugin['plugin_dep_libs']=" ".join(["\${top_builddir}/%s" % f for f in plugin['libs'].split()])
 
-  if plugin['static']:
-    plugin_ac.write("""
-dnl This plugin is staticly built, which means we cannot live without and it is not
-dnl possible to disable it. Once it is disableable, we will make it non-static.
-with_%(name)s_plugin=yes
-pandora_builtin_list="_drizzled_%(name)s_plugin_,${pandora_builtin_list}"
-pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(libname)s.la"
-PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
-
-""" % plugin)
-    if plugin['testsuite']:
-      plugin_ac.write("""
-pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
-""" % plugin)
-  else:
-    plugin_ac.write("""
+  plugin_ac.write("""
 AC_ARG_WITH([%(name_with_dashes)s-plugin],[
 dnl indented wierd to make the help output correct
 AS_HELP_STRING([--with-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@default=%(enabled)s@:>@])
@@ -247,7 +232,7 @@ dnl indented wierd to make the help output correct
 AS_HELP_STRING([--enable-%(name_with_dashes)s-plugin],[Build %(title)s. @<:@default=%(default_yesno)s@:>@])
 AS_HELP_STRING([--disable-%(name_with_dashes)s-plugin],[Disable building %(title)s])
   ],
-  [enable_%(name)s_plugin="$withval"],
+  [enable_%(name)s_plugin="$enableval"],
   [enable_%(name)s_plugin=%(default_yesno)s])
 
 """ % plugin)
@@ -274,22 +259,31 @@ AS_IF([test %(build_conditional)s],
 AM_CONDITIONAL([%(build_conditional_tag)s],
                [test %(build_conditional)s])
     """ % plugin)
-  if not plugin['static']:
-    plugin_ac.write("""
-AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
-      [
-""" % plugin)
-    if plugin['testsuite']:
-      plugin_ac.write("""
-        pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
-      """ % plugin)
 
+  plugin_ac.write("""
+AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
+    [
+""" % plugin)
+  if plugin['testsuite']:
+    plugin_ac.write("""
+      pandora_plugin_test_list="%(name)s,${pandora_plugin_test_list}"
+    """ % plugin)
+  if plugin['static']:
+    plugin_ac.write("""
+        AS_IF([test "x$enable_%(name)s_plugin" = "xyes"],[
+          pandora_builtin_list="_drizzled_%(name)s_plugin_,${pandora_builtin_list}"
+          pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(libname)s.la"
+          PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
+        ])
+    """ % plugin)
+
+  else:
     plugin_ac.write("""
         AS_IF([test "x$enable_%(name)s_plugin" = "xyes"],[
           pandora_default_plugin_list="%(name)s,${pandora_default_plugin_list}"
         ])
     """ % plugin)
-    plugin_ac.write("      ])\n")
+  plugin_ac.write("      ])\n")
 
 def fix_file_paths(plugin, files):
   # TODO: determine path to plugin dir relative to top_srcdir... append it to
@@ -325,7 +319,7 @@ def expand_plugin_ini(plugin):
     plugin['tests']= fix_file_paths(plugin, plugin['tests'])
 
     # Make a yes/no version for autoconf help messages
-    if plugin['load_by_default']:
+    if plugin['load_by_default'] or plugin['static']:
       plugin['default_yesno']="yes"
     else:
       plugin['default_yesno']="no"
