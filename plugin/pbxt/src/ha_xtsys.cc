@@ -149,7 +149,7 @@ int ha_xtsys::close(void)
 	return err;
 }
 
-int ha_xtsys::rnd_init(bool XT_UNUSED(scan))
+int ha_xtsys::doStartTableScan(bool XT_UNUSED(scan))
 {
 	int err = 0;
 
