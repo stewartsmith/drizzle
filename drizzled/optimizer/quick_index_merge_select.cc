@@ -141,7 +141,7 @@ int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
         break;
 
       if (cur_quick->cursor->inited != Cursor::NONE)
-        cur_quick->cursor->ha_index_end();
+        cur_quick->cursor->endIndexScan();
       if (cur_quick->init() || cur_quick->reset())
         return 0;
     }
