@@ -271,7 +271,7 @@ AS_IF([test "x$with_%(name)s_plugin" = "xyes"],
   if plugin['static']:
     plugin_ac.write("""
         AS_IF([test "x$enable_%(name)s_plugin" = "xyes"],[
-          pandora_builtin_list="_drizzled_%(name)s_plugin_,${pandora_builtin_list}"
+          pandora_builtin_list="_drizzled_%(module_name)s_plugin_,${pandora_builtin_list}"
           pandora_plugin_libs="${pandora_plugin_libs} \${top_builddir}/%(root_plugin_dir)s/%(libname)s.la"
           PANDORA_PLUGIN_DEP_LIBS="${PANDORA_PLUGIN_DEP_LIBS} %(plugin_dep_libs)s"
         ])
