@@ -3289,7 +3289,7 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
         table->s->keys && !table->cursor->inited)
-      table->cursor->ha_index_init(0, 0);
+      table->cursor->startIndexScan(0, 0);
   }
   /* Set up select_end */
   Next_select_func end_select= setup_end_select_func(join);
@@ -3767,7 +3767,7 @@ int join_read_key(JoinTable *tab)
 
   if (!table->cursor->inited)
   {
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
   }
 
   /* TODO: Why don't we do "Late NULLs Filtering" here? */
@@ -3815,7 +3815,7 @@ int join_read_always_key(JoinTable *tab)
 
   /* Initialize the index first */
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
 
   /* Perform "Late NULLs Filtering" (see internals manual for explanations) */
   for (uint32_t i= 0 ; i < tab->ref.key_parts ; i++)
@@ -3849,7 +3849,7 @@ int join_read_last_key(JoinTable *tab)
   Table *table= tab->table;
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
   if ((error=table->cursor->index_read_last_map(table->record[0],
@@ -3946,7 +3946,7 @@ int rr_sequential(READ_RECORD *info);
 int init_read_record_seq(JoinTable *tab)
 {
   tab->read_record.read_record= rr_sequential;
-  if (tab->read_record.cursor->ha_rnd_init(1))
+  if (tab->read_record.cursor->startTableScan(1))
     return 1;
   return (*tab->read_record.read_record)(&tab->read_record);
 }
@@ -3996,7 +3996,7 @@ int join_read_first(JoinTable *tab)
   }
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->index, tab->sorted);
+    table->cursor->startIndexScan(tab->index, tab->sorted);
   if ((error=tab->table->cursor->index_first(tab->table->record[0])))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
@@ -4055,7 +4055,7 @@ int join_read_last(JoinTable *tab)
   tab->read_record.index=tab->index;
   tab->read_record.record=table->record[0];
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->index, 1);
+    table->cursor->startIndexScan(tab->index, 1);
   if ((error= tab->table->cursor->index_last(tab->table->record[0])))
     return table->report_error(error);
 
@@ -5327,7 +5327,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   org_record=(char*) (record=table->record[0])+offset;
   new_record=(char*) table->record[1]+offset;
 
-  cursor->ha_rnd_init(1);
+  cursor->startTableScan(1);
   error=cursor->rnd_next(record);
   for (;;)
   {
@@ -5385,8 +5385,8 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     if (!found)
       break;					// End of cursor
-    /* Restart search on next row */
-    error=cursor->restart_rnd_next(record,cursor->ref);
+    /* Move current position to the next row */
+    error= cursor->rnd_pos(record, cursor->ref);
   }
 
   cursor->extra(HA_EXTRA_NO_CACHE);
@@ -5448,7 +5448,7 @@ int remove_dup_with_hash_index(Session *session,
     return(1);
   }
 
-  cursor->ha_rnd_init(1);
+  cursor->startTableScan(1);
   key_pos= &key_buffer[0];
   for (;;)
   {
@@ -5496,14 +5496,14 @@ int remove_dup_with_hash_index(Session *session,
   free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->ha_rnd_end();
+  (void) cursor->endTableScan();
   return(0);
 
 err:
   free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->ha_rnd_end();
+  (void) cursor->endTableScan();
   if (error)
     table->print_error(error,MYF(0));
   return(1);
