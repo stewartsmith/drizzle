@@ -15,6 +15,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Barry Leslie
+ *
+ * 2010-05-12
  */
 
 #include "config.h"
@@ -27,6 +31,9 @@
 #include "drizzled/table_share.h"
 #include "drizzled/plugin/registry.h"
 #include "drizzled/plugin/event_observer.h"
+#include <drizzled/util/functors.h>
+#include <algorithm>
+
 
 
 using namespace std;
@@ -40,13 +47,11 @@ namespace plugin
 /*============================*/
 // Basic plugin registration stuff.
 static vector<EventObserver *> all_event_plugins;
-static bool noObservers = true;
 
 //---------
 bool EventObserver::addPlugin(EventObserver *handler)
 {
-  noObservers = false;
-  if (handler != NULL)
+   if (handler != NULL)
     all_event_plugins.push_back(handler);
   return false;
 }
@@ -57,7 +62,6 @@ void EventObserver::removePlugin(EventObserver *handler)
   if (handler != NULL)
     all_event_plugins.erase(find(all_event_plugins.begin(), all_event_plugins.end(), handler));
 }
-
 
 
 /* 
@@ -72,22 +76,30 @@ class EventObserverList
 {
 
 public:
-typedef multimap<uint32_t, EventObserver *> ObserverMap;
-  
+  typedef multimap<uint32_t, EventObserver *> ObserverMap;
+
+private:
   /* A list of lists indexed by event type. */
-  vector<ObserverMap *> eventObserverLists;
+  vector<ObserverMap *> event_observer_lists;
   
+public:
+
   EventObserverList()
   {
     uint32_t i;
      
-    eventObserverLists.reserve(EventObserver::MAX_EVENT_COUNT);
+    event_observer_lists.reserve(EventObserver::MAX_EVENT_COUNT);
     for (i=0; i < EventObserver::MAX_EVENT_COUNT; i++)
     {
-        eventObserverLists[i]= NULL;
+        event_observer_lists[i]= NULL;
      }
   }
 
+  ~EventObserverList()
+  {
+    clearAllObservers();
+  }
+  
    /* Add the observer to the observer list for the even, positioning it if required.
     *
     * Note: Event observers are storted in a multimap object so that the order in which
@@ -99,11 +111,11 @@ typedef multimap<uint32_t, EventObserver *> ObserverMap;
     uint32_t event_pos;
     ObserverMap *observers;
     
-    observers= eventObserverLists[event];
+    observers= event_observer_lists[event];
     if (observers == NULL) 
     {
       observers= new ObserverMap();
-      eventObserverLists[event]= observers;
+      event_observer_lists[event]= observers;
     }
     
     if (position == 0)
@@ -130,25 +142,17 @@ typedef multimap<uint32_t, EventObserver *> ObserverMap;
   /* Remove all observer from all lists. */
   void clearAllObservers()
   {
-    uint32_t i;
-    ObserverMap *observers;
-    
-    for (i=0; i < EventObserver::MAX_EVENT_COUNT; i++)
-    {
-      observers= eventObserverLists[i];
-      if (observers != NULL)
-      {
-        delete observers;
-        eventObserverLists[i]= NULL;
-      }
-    }
+    for_each(event_observer_lists.begin(),
+             event_observer_lists.end(),
+             DeletePtr());
+    event_observer_lists.clear();
   }
     
   
    /* Get the observer list for an event type. Will return NULL if no observer exists.*/
   ObserverMap *getObservers(enum EventObserver::EventType event)
   {
-    return eventObserverLists[event];
+    return event_observer_lists[event];
   }
 };
 
@@ -170,13 +174,13 @@ void EventObserver::registerEvent(EventObserverList &observers, EventType event,
 /* For each EventObserver plugin call its registerTableEventsDo() meathod so that it can
  * register what events, if any, it is interested in on this table.
  */ 
-class registerTableEventsIterate : public unary_function<EventObserver *, void>
+class RegisterTableEventsIterate : public unary_function<EventObserver *, void>
 {
   TableShare &table_share;
   EventObserverList &observers;
   
 public:
-  registerTableEventsIterate(TableShare &table_share_arg, EventObserverList &observers_arg): 
+  RegisterTableEventsIterate(TableShare &table_share_arg, EventObserverList &observers_arg): 
     table_share(table_share_arg), observers(observers_arg) {}
   inline result_type operator() (argument_type eventObserver)
   {
@@ -191,17 +195,20 @@ public:
  */ 
 void EventObserver::registerTableEvents(TableShare &table_share)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return;
     
   EventObserverList *observers;
   
   observers= table_share.getTableObservers();
   
-  if (observers == NULL) {
+  if (observers == NULL) 
+  {
     observers= new EventObserverList();
     table_share.setTableObservers(observers);
-  } else {
+  } 
+  else 
+  {
     /* Calling registerTableEvents() for a table that already has
      * events registered on it is probably a programming error.
      */
@@ -210,7 +217,7 @@ void EventObserver::registerTableEvents(TableShare &table_share)
   
   
   for_each(all_event_plugins.begin(), all_event_plugins.end(),
-           registerTableEventsIterate(table_share, *observers));
+           RegisterTableEventsIterate(table_share, *observers));
   
 }
 
@@ -218,14 +225,15 @@ void EventObserver::registerTableEvents(TableShare &table_share)
 /* Cleanup before freeing the TableShare object. */
 void EventObserver::deregisterTableEvents(TableShare &table_share)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return;
     
   EventObserverList *observers;
   
   observers= table_share.getTableObservers();
 
-  if (observers) {
+  if (observers) 
+  {
     table_share.setTableObservers(NULL);
     observers->clearAllObservers();
     delete observers;
@@ -241,12 +249,12 @@ void EventObserver::deregisterTableEvents(TableShare &table_share)
 /* For each EventObserver plugin call its registerSchemaEventsDo() meathod so that it can
  * register what events, if any, it is interested in on the schema.
  */ 
-class registerSchemaEventsIterate : public unary_function<EventObserver *, void>
+class RegisterSchemaEventsIterate : public unary_function<EventObserver *, void>
 {
   const std::string &db;
   EventObserverList &observers;
 public:
-  registerSchemaEventsIterate(const std::string &db_arg, EventObserverList &observers_arg) :     
+  RegisterSchemaEventsIterate(const std::string &db_arg, EventObserverList &observers_arg) :     
     db(db_arg),
     observers(observers_arg){}
     
@@ -263,7 +271,7 @@ public:
  */ 
 void EventObserver::registerSchemaEvents(Session &session, const std::string &db)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return;
     
   EventObserverList *observers;
@@ -277,7 +285,7 @@ void EventObserver::registerSchemaEvents(Session &session, const std::string &db
   }
   
   for_each(all_event_plugins.begin(), all_event_plugins.end(),
-           registerSchemaEventsIterate(db, *observers));
+           RegisterSchemaEventsIterate(db, *observers));
   
 }
 
@@ -285,7 +293,7 @@ void EventObserver::registerSchemaEvents(Session &session, const std::string &db
 /* Cleanup before freeing the Session object. */
 void EventObserver::deregisterSchemaEvents(Session &session, const std::string &db)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return;
     
   EventObserverList *observers;
@@ -308,12 +316,12 @@ void EventObserver::deregisterSchemaEvents(Session &session, const std::string &
 /* For each EventObserver plugin call its registerSessionEventsDo() meathod so that it can
  * register what events, if any, it is interested in on this session.
  */ 
-class registerSessionEventsIterate : public unary_function<EventObserver *, void>
+class RegisterSessionEventsIterate : public unary_function<EventObserver *, void>
 {
   Session &session;
   EventObserverList &observers;
 public:
-  registerSessionEventsIterate(Session &session_arg, EventObserverList &observers_arg) : 
+  RegisterSessionEventsIterate(Session &session_arg, EventObserverList &observers_arg) : 
   session(session_arg), observers(observers_arg) {}
   inline result_type operator() (argument_type eventObserver)
   {
@@ -328,14 +336,15 @@ public:
  */ 
 void EventObserver::registerSessionEvents(Session &session)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return;
     
   EventObserverList *observers;
   
   observers= session.getSessionObservers();
   
-  if (observers == NULL) {
+  if (observers == NULL) 
+  {
     observers= new EventObserverList();
     session.setSessionObservers(observers);
   }
@@ -343,7 +352,7 @@ void EventObserver::registerSessionEvents(Session &session)
   observers->clearAllObservers();
   
   for_each(all_event_plugins.begin(), all_event_plugins.end(),
-           registerSessionEventsIterate(session, *observers));
+           RegisterSessionEventsIterate(session, *observers));
   
 }
 
@@ -351,14 +360,15 @@ void EventObserver::registerSessionEvents(Session &session)
 /* Cleanup before freeing the session object. */
 void EventObserver::deregisterSessionEvents(Session &session)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return;
     
   EventObserverList *observers;
   
   observers= session.getSessionObservers();
 
-  if (observers) {
+  if (observers) 
+  {
     session.setSessionObservers(NULL);
     observers->clearAllObservers();
     delete observers;
@@ -456,7 +466,7 @@ bool TableEventData::callEventObservers()
  */
 bool EventObserver::beforeDropTable(Session &session, TableIdentifier &table)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   BeforeDropTableEventData eventData(session, table);
@@ -465,7 +475,7 @@ bool EventObserver::beforeDropTable(Session &session, TableIdentifier &table)
 
 bool EventObserver::afterDropTable(Session &session, TableIdentifier &table, int err)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   AfterDropTableEventData eventData(session, table, err);
@@ -474,7 +484,7 @@ bool EventObserver::afterDropTable(Session &session, TableIdentifier &table, int
 
 bool EventObserver::beforeRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   BeforeRenameTableEventData eventData(session, from, to);
@@ -483,7 +493,7 @@ bool EventObserver::beforeRenameTable(Session &session, TableIdentifier &from, T
 
 bool EventObserver::afterRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to, int err)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   AfterRenameTableEventData eventData(session, from, to, err);
@@ -496,7 +506,7 @@ bool EventObserver::afterRenameTable(Session &session, TableIdentifier &from, Ta
  */
 bool EventObserver::beforeInsertRecord(Session &session, TableShare &table_share, unsigned char *buf)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   BeforeInsertRecordEventData eventData(session, table_share, buf);
@@ -505,7 +515,7 @@ bool EventObserver::beforeInsertRecord(Session &session, TableShare &table_share
 
 bool EventObserver::afterInsertRecord(Session &session, TableShare &table_share, const unsigned char *buf, int err)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   AfterInsertRecordEventData eventData(session, table_share, buf, err);
@@ -514,7 +524,7 @@ bool EventObserver::afterInsertRecord(Session &session, TableShare &table_share,
 
 bool EventObserver::beforeDeleteRecord(Session &session, TableShare &table_share, const unsigned char *buf)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   BeforeDeleteRecordEventData eventData(session, table_share, buf);
@@ -523,7 +533,7 @@ bool EventObserver::beforeDeleteRecord(Session &session, TableShare &table_share
 
 bool EventObserver::afterDeleteRecord(Session &session, TableShare &table_share, const unsigned char *buf, int err)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   AfterDeleteRecordEventData eventData(session, table_share, buf, err);
@@ -532,7 +542,7 @@ bool EventObserver::afterDeleteRecord(Session &session, TableShare &table_share,
 
 bool EventObserver::beforeUpdateRecord(Session &session, TableShare &table_share, const unsigned char *old_data, unsigned char *new_data)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   BeforeUpdateRecordEventData eventData(session, table_share, old_data, new_data);
@@ -541,7 +551,7 @@ bool EventObserver::beforeUpdateRecord(Session &session, TableShare &table_share
 
 bool EventObserver::afterUpdateRecord(Session &session, TableShare &table_share, const unsigned char *old_data, unsigned char *new_data, int err)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
  AfterUpdateRecordEventData eventData(session, table_share, old_data, new_data, err);
@@ -554,7 +564,7 @@ bool EventObserver::afterUpdateRecord(Session &session, TableShare &table_share,
  */
 bool EventObserver::beforeCreateDatabase(Session &session, const std::string &db)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   BeforeCreateDatabaseEventData eventData(session, db);
@@ -563,7 +573,7 @@ bool EventObserver::beforeCreateDatabase(Session &session, const std::string &db
 
 bool EventObserver::afterCreateDatabase(Session &session, const std::string &db, int err)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   AfterCreateDatabaseEventData eventData(session, db, err);
@@ -572,7 +582,7 @@ bool EventObserver::afterCreateDatabase(Session &session, const std::string &db,
 
 bool EventObserver::beforeDropDatabase(Session &session, const std::string &db)
 {
-   if (noObservers)
+   if (all_event_plugins.empty())
     return false;
     
  BeforeDropDatabaseEventData eventData(session, db);
@@ -581,7 +591,7 @@ bool EventObserver::beforeDropDatabase(Session &session, const std::string &db)
 
 bool EventObserver::afterDropDatabase(Session &session, const std::string &db, int err)
 {
-  if (noObservers)
+  if (all_event_plugins.empty())
     return false;
     
   AfterDropDatabaseEventData eventData(session, db, err);
