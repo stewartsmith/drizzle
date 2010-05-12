@@ -124,7 +124,7 @@ def should_lint(path):
         path.startswith('client/')):
         return False
     # Let's not lint emacs autosave files
-    if (os.path.split(path)[-1].startswith('.#'):
+    if (os.path.split(path)[-1].startswith('.#')):
         return False
     for exclude in ['innobase', 'pbxt', 'gnulib', '.pb.', 'bak-header', 'm4',
         'sql_yacc', 'gperf', 'drizzled/probes.h',
