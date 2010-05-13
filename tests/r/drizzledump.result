@@ -1046,8 +1046,6 @@ t1_id int not null auto_increment,
 key (t1_name),
 primary key (t1_id)
 ) auto_increment = 1000;
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
 insert into t1 (t1_name) values('bla');
 insert into t1 (t1_name) values('bla');
 insert into t1 (t1_name) values('bla');
@@ -1062,7 +1060,7 @@ t1	CREATE TABLE `t1` (
   `t1_name` varchar(255) DEFAULT NULL,
   `t1_id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`t1_id`),
-  KEY `t1_name` (`t1_name`(191))
+  KEY `t1_name` (`t1_name`)
 ) ENGINE=InnoDB
 DROP TABLE `t1`;
 select * from t1;
@@ -1076,7 +1074,7 @@ t1	CREATE TABLE `t1` (
   `t1_name` varchar(255) DEFAULT NULL,
   `t1_id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`t1_id`),
-  KEY `t1_name` (`t1_name`(191))
+  KEY `t1_name` (`t1_name`)
 ) ENGINE=InnoDB
 drop table `t1`;
 #
