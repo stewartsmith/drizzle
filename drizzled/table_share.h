@@ -105,7 +105,6 @@ public:
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
-    memset(&keynames, 0, sizeof(TYPELIB));
     memset(&fieldnames, 0, sizeof(TYPELIB));
 
     table_charset= 0;
@@ -179,7 +178,6 @@ public:
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
-    memset(&keynames, 0, sizeof(TYPELIB));
     memset(&fieldnames, 0, sizeof(TYPELIB));
 
     table_charset= 0;
@@ -274,7 +272,6 @@ public:
   }
 
 private:
-  TYPELIB keynames;			/* Pointers to keynames */
   std::vector<std::string> _keynames;
 
   void addKeyName(std::string arg)
@@ -294,6 +291,24 @@ public:
 
     if (iter == _keynames.end())
       return false;
+
+    position= iter -  _keynames.begin();
+
+    return true;
+  }
+
+  bool doesKeyNameExist(std::string arg, uint32_t &position)
+  {
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+
+    std::vector<std::string>::iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+
+    if (iter == _keynames.end())
+    {
+      position= -1; //historical, required for finding primary key from unique
+      return false;
+    }
 
     position= iter -  _keynames.begin();
 

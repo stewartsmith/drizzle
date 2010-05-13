@@ -503,7 +503,6 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   newed(true)
 {
   memset(&name_hash, 0, sizeof(HASH));
-  memset(&keynames, 0, sizeof(TYPELIB));
   memset(&fieldnames, 0, sizeof(TYPELIB));
 
   table_charset= 0;
@@ -632,17 +631,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   ulong *rec_per_key= (ulong*) share->alloc_root(sizeof(ulong*)*share->key_parts);
 
-  share->keynames.count= table.indexes_size();
-  share->keynames.name= NULL;
-  share->keynames.type_names= (const char**)
-    share->alloc_root(sizeof(char*) * (table.indexes_size()+1));
-
-  share->keynames.type_lengths= (unsigned int*)
-    share->alloc_root(sizeof(unsigned int) * (table.indexes_size()+1));
-
-  share->keynames.type_names[share->keynames.count]= NULL;
-  share->keynames.type_lengths[share->keynames.count]= 0;
-
   KEY* keyinfo= share->key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
   {
@@ -751,9 +739,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
     keyinfo->name= share->strmake_root(indx.name().c_str(), indx.name().length());
-
-    share->keynames.type_names[keynr]= keyinfo->name;
-    share->keynames.type_lengths[keynr]= indx.name().length();
 
     addKeyName(string(keyinfo->name, indx.name().length()));
   }
@@ -1307,8 +1292,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   /* Fix key stuff */
   if (share->key_parts)
   {
-    uint32_t local_primary_key= (uint32_t) (find_type((char*) "PRIMARY",
-                                                &share->keynames, 3) - 1); /* @TODO Huh? */
+    uint32_t local_primary_key= 0;
+    doesKeyNameExist("PRIMARY", local_primary_key);
 
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
