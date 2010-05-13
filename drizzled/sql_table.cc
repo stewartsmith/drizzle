@@ -2053,10 +2053,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 
   if (is_engine_set)
   {
-    message::Table::StorageEngine *protoengine;
-
-    protoengine= new_proto.mutable_engine();
-    protoengine->set_name(create_table_proto.engine().name());
+    new_proto.mutable_engine()->set_name(create_table_proto.engine().name());
   }
 
   { // We now do a selective copy of elements on to the new table.

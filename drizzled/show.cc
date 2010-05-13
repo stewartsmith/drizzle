@@ -555,7 +555,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
     size_t num_engine_options= share->getTableProto()->engine().options_size();
     for (size_t x= 0; x < num_engine_options; ++x)
     {
-      const message::Table::StorageEngine::EngineOption &option= share->getTableProto()->engine().options(x);
+      const message::Engine::Option &option= share->getTableProto()->engine().options(x);
       packet->append(" ");
       packet->append(option.name().c_str());
       packet->append("=");

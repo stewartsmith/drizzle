@@ -71,10 +71,7 @@ bool statement::CreateTable::execute()
     create_info.db_type.
   */
   {
-    message::Table::StorageEngine *protoengine;
-
-    protoengine= create_table_message.mutable_engine();
-    protoengine->set_name(create_info.db_type->getName());
+    create_table_message.mutable_engine()->set_name(create_info.db_type->getName());
   }
 
 

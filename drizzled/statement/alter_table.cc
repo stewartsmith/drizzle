@@ -601,9 +601,7 @@ err:
 
     if (not found)
     {
-      message::Table::StorageEngine *engine_options;
-      engine_options= table_message.mutable_engine();
-      message::Table::StorageEngine::EngineOption *opt= engine_options->add_options();
+      message::Engine::Option *opt= table_message.mutable_engine()->add_options();
 
       opt->set_name(original_proto.engine().options(x).name());
       opt->set_state(original_proto.engine().options(x).state());
@@ -1575,9 +1573,7 @@ create_temporary_table(Session *session,
   */
   create_proto.set_name(identifier.getTableName());
 
-  message::Table::StorageEngine *protoengine;
-  protoengine= create_proto.mutable_engine();
-  protoengine->set_name(create_info->db_type->getName());
+  create_proto.mutable_engine()->set_name(create_info->db_type->getName());
 
   error= mysql_create_table(session,
                             identifier,

@@ -1198,14 +1198,14 @@ custom_database_option:
           ident_or_text
         {
           statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          drizzled::message::Schema::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
 
           opt->set_name($1.str);
         }
         | ident_or_text equal ident_or_text
         {
           statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
-          drizzled::message::Schema::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
 
           opt->set_name($1.str);
           opt->set_state($3.str);
@@ -1217,7 +1217,7 @@ custom_database_option:
 
           snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
 
-          drizzled::message::Schema::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
 
           opt->set_name($1.str);
           opt->set_state(number_as_string);
@@ -1256,12 +1256,10 @@ custom_engine_option:
         ENGINE_SYM equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            message::Table::StorageEngine *protoengine;
-            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine();
 
             statement->is_engine_set= true;
 
-            protoengine->set_name($3.str);
+            ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->set_name($3.str);
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
@@ -1283,10 +1281,7 @@ custom_engine_option:
           }
         |  ident_or_text equal ident_or_text
           {
-            message::Table::StorageEngine *protoengine;
-            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine();
-
-	    drizzled::message::Table::StorageEngine::EngineOption *opt= protoengine->add_options();
+	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
 
             opt->set_name($1.str);
             opt->set_state($3.str);
@@ -1296,10 +1291,7 @@ custom_engine_option:
             char number_as_string[22];
             snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
 
-            message::Table::StorageEngine *protoengine;
-            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine();
-
-	    drizzled::message::Table::StorageEngine::EngineOption *opt= protoengine->add_options();
+	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
             opt->set_name($1.str);
             opt->set_state(number_as_string);
           }
