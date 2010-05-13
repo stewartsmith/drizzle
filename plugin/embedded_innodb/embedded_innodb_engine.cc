@@ -104,7 +104,7 @@ using namespace std;
 using namespace google;
 using namespace drizzled;
 
-int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
+int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey);
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
                                                 const drizzled::KEY *key_info,
                                                 const unsigned char *key_ptr,
@@ -129,7 +129,6 @@ public:
                                                   HTON_NULL_IN_KEY |
                                                   HTON_CAN_INDEX_BLOBS |
                                                   HTON_AUTO_PART_KEY |
-                                                  HTON_REQUIRE_PRIMARY_KEY |
                                                   HTON_PARTIAL_COLUMN_READ |
                                                   HTON_HAS_DOES_TRANSACTIONS)
   {
@@ -213,6 +212,8 @@ public:
   void deleteOpenTable(const std::string &table_name);
 
   uint64_t getInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor);
+  uint64_t getHiddenPrimaryKeyInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor);
+
 };
 
 static drizzled::plugin::StorageEngine *embedded_innodb_engine= NULL;
@@ -353,6 +354,30 @@ void EmbeddedInnoDBEngine::deleteOpenTable(const string &table_name)
 
 static pthread_mutex_t embedded_innodb_mutex= PTHREAD_MUTEX_INITIALIZER;
 
+uint64_t EmbeddedInnoDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
+{
+  uint64_t nr;
+  ib_err_t err;
+  ib_trx_t transaction= *get_trx(ha_session());
+  ib_cursor_attach_trx(cursor, transaction);
+  tuple= ib_clust_read_tuple_create(cursor);
+  err= ib_cursor_last(cursor);
+  assert(err == DB_SUCCESS || err == DB_END_OF_INDEX); // Probably a FIXME
+  err= ib_cursor_read_row(cursor, tuple);
+  if (err == DB_RECORD_NOT_FOUND)
+    nr= 1;
+  else
+  {
+    assert (err == DB_SUCCESS);
+    err= ib_tuple_read_u64(tuple, table->s->fields, &nr);
+    nr++;
+  }
+  ib_tuple_delete(tuple);
+  err= ib_cursor_reset(cursor);
+  assert(err == DB_SUCCESS);
+  return nr;
+}
+
 uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
 {
   uint64_t nr;
@@ -390,11 +415,10 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
   return nr;
 }
 
-EmbeddedInnoDBTableShare::EmbeddedInnoDBTableShare(const char* name, uint64_t initial_auto_increment_value)
- : use_count(0)
+EmbeddedInnoDBTableShare::EmbeddedInnoDBTableShare(const char* name, bool hidden_primary_key)
+  : use_count(0), has_hidden_primary_key(hidden_primary_key)
 {
   table_name.assign(name);
-  auto_increment_value.fetch_and_store(initial_auto_increment_value);
 }
 
 uint64_t EmbeddedInnoDBEngine::getInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor)
@@ -406,7 +430,16 @@ uint64_t EmbeddedInnoDBEngine::getInitialAutoIncrementValue(EmbeddedInnoDBCursor
   return initial_auto_increment_value;
 }
 
-EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name, int *rc)
+uint64_t EmbeddedInnoDBEngine::getHiddenPrimaryKeyInitialAutoIncrementValue(EmbeddedInnoDBCursor *cursor)
+{
+  doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
+  uint64_t initial_auto_increment_value= cursor->getHiddenPrimaryKeyInitialAutoIncrementValue();
+  doCommit(current_session, true);
+
+  return initial_auto_increment_value;
+}
+
+EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name, bool has_hidden_primary_key, int *rc)
 {
   pthread_mutex_lock(&embedded_innodb_mutex);
 
@@ -415,17 +448,27 @@ EmbeddedInnoDBTableShare *EmbeddedInnoDBCursor::get_share(const char *table_name
 
   if (!share)
   {
-    uint64_t initial_auto_increment_value= 0;
-    if (table->found_next_number_field)
-      initial_auto_increment_value= a_engine->getInitialAutoIncrementValue(this);
-
-    share= new EmbeddedInnoDBTableShare(table_name, initial_auto_increment_value);
+    share= new EmbeddedInnoDBTableShare(table_name, has_hidden_primary_key);
 
     if (share == NULL)
     {
       pthread_mutex_unlock(&embedded_innodb_mutex);
       *rc= HA_ERR_OUT_OF_MEM;
       return(NULL);
+    }
+
+    if (table->found_next_number_field)
+    {
+      share->auto_increment_value.fetch_and_store(
+                                  a_engine->getInitialAutoIncrementValue(this));
+
+    }
+
+    if (has_hidden_primary_key)
+    {
+      uint64_t hidden_pkey= 0;
+      hidden_pkey= a_engine->getHiddenPrimaryKeyInitialAutoIncrementValue(this);
+      share->hidden_pkey_auto_increment_value.fetch_and_store(hidden_pkey);
     }
 
     a_engine->addOpenTable(share->table_name, share);
@@ -553,16 +596,27 @@ EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engi
 int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 {
   ib_err_t err= ib_cursor_open_table(name+2, NULL, &cursor);
+  bool has_hidden_primary_key= false;
   assert (err == DB_SUCCESS);
+  ib_id_t idx_id;
+
+  err= ib_index_get_id(name+2, "HIDDEN_PRIMARY", &idx_id);
+  if (err == DB_SUCCESS)
+    has_hidden_primary_key= true;
 
   int rc;
-  share= get_share(name, &rc);
+  share= get_share(name, has_hidden_primary_key, &rc);
   thr_lock_data_init(&share->lock, &lock, NULL);
+
 
   if (table->s->primary_key != MAX_KEY)
     ref_length= table->key_info[table->s->primary_key].key_length;
+  else if (share->has_hidden_primary_key)
+    ref_length= sizeof(uint64_t);
   else
-    ref_length= 0;
+  {
+    ref_length= 0; // FIXME: this is a bug. we need to work out what index it is.
+  }
 
   return(0);
 }
@@ -686,6 +740,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
   ib_id_t innodb_table_id;
   ib_err_t innodb_err= DB_SUCCESS;
   string innodb_table_name;
+  bool has_explicit_pkey= false;
 
   (void)table_obj;
 
@@ -743,6 +798,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
     {
       has_primary= true;
       innodb_err= ib_index_schema_set_clustered(innodb_index);
+      has_explicit_pkey= true;
       if (innodb_err != DB_SUCCESS)
         goto schema_error;
     }
@@ -769,10 +825,32 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
     if (! has_primary && index->is_unique())
     {
       innodb_err= ib_index_schema_set_clustered(innodb_index);
+      has_explicit_pkey= true;
       if (innodb_err != DB_SUCCESS)
         goto schema_error;
     }
 
+  }
+
+  if (! has_explicit_pkey)
+  {
+    ib_idx_sch_t innodb_index;
+
+    innodb_err= ib_table_schema_add_col(innodb_table_schema, "hidden_primary_key_col",
+                                        IB_INT, IB_COL_NOT_NULL, 0, 8);
+
+    innodb_err= ib_table_schema_add_index(innodb_table_schema, "HIDDEN_PRIMARY",
+                                          &innodb_index);
+    if (innodb_err != DB_SUCCESS)
+      goto schema_error;
+
+    innodb_err= ib_index_schema_set_clustered(innodb_index);
+    if (innodb_err != DB_SUCCESS)
+      goto schema_error;
+
+    innodb_err= ib_index_schema_add_col(innodb_index, "hidden_primary_key_col", 0);
+    if (innodb_err != DB_SUCCESS)
+      goto schema_error;
   }
 
   innodb_schema_transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
@@ -1490,6 +1568,11 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
 
   write_row_to_innodb_tuple(table->field, tuple);
 
+  if (share->has_hidden_primary_key)
+  {
+    err= ib_tuple_write_u64(tuple, table->s->fields, share->hidden_pkey_auto_increment_value.fetch_and_increment());
+  }
+
   err= ib_cursor_insert_row(cursor, tuple);
 
   if (err == DB_DUPLICATE_KEY)
@@ -1524,6 +1607,8 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
     else
       ret= HA_ERR_FOUND_DUPP_KEY;
   }
+  else if (err != DB_SUCCESS)
+    ret= -1;
 
   tuple= ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
@@ -1658,7 +1743,7 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
   return(0);
 }
 
-int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table)
+int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey)
 {
   ib_err_t err;
   ptrdiff_t row_offset= buf - table->record[0];
@@ -1709,6 +1794,11 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
 
   }
 
+  if (has_hidden_primary_key)
+  {
+    err= ib_tuple_read_u64(tuple, colnr, hidden_pkey);
+  }
+
   return 0;
 }
 
@@ -1718,7 +1808,9 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *buf)
   int ret;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
 
   err= ib_cursor_next(cursor);
 
@@ -1743,16 +1835,25 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   int ret;
   ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
 
-  fill_ib_search_tpl_from_drizzle_key(search_tuple,
-                                      table->key_info + 0,
-                                      pos, ref_length);
+  if (share->has_hidden_primary_key)
+  {
+    err= ib_col_set_value(search_tuple, 0, ((uint64_t*)(ref)), sizeof(uint64_t));
+  }
+  else
+  {
+    fill_ib_search_tpl_from_drizzle_key(search_tuple,
+                                        table->key_info + 0,
+                                        pos, ref_length);
+  }
 
   err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
   assert(err == DB_SUCCESS);
   ib_tuple_delete(search_tuple);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
 
   err= ib_cursor_next(cursor);
 
@@ -1816,10 +1917,11 @@ static void store_key_value_from_innodb(KEY *key_info, unsigned char* ref, int r
 
 void EmbeddedInnoDBCursor::position(const unsigned char *record)
 {
-  assert(table->s->primary_key != MAX_KEY); /* must have pkey */
-
-  store_key_value_from_innodb(table->key_info + table->s->primary_key,
-                              ref, ref_length, record);
+  if (table->s->primary_key != MAX_KEY)
+    store_key_value_from_innodb(table->key_info + table->s->primary_key,
+                                ref, ref_length, record);
+  else
+    *((uint64_t*) ref)= hidden_autoinc_pkey_position;
   return;
 }
 
@@ -2004,7 +2106,9 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
     return HA_ERR_END_OF_FILE;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
   err= ib_cursor_next(cursor);
 
   return 0;
@@ -2018,7 +2122,9 @@ int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
     return HA_ERR_END_OF_FILE;
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
   next_innodb_error= ib_cursor_next(cursor);
 
   return ret;
@@ -2039,7 +2145,9 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
   if (active_index == 0)
   {
     tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(buf, cursor, tuple, table);
+    ret= read_row_from_innodb(buf, cursor, tuple, table,
+                              share->has_hidden_primary_key,
+                              &hidden_autoinc_pkey_position);
     err= ib_cursor_prev(cursor);
   }
 
@@ -2062,7 +2170,9 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
   }
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
   next_innodb_error= ib_cursor_next(cursor);
 
   return ret;
@@ -2086,7 +2196,9 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
   if (active_index == 0)
   {
     tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(buf, cursor, tuple, table);
+    ret= read_row_from_innodb(buf, cursor, tuple, table,
+                              share->has_hidden_primary_key,
+                              &hidden_autoinc_pkey_position);
     err= ib_cursor_prev(cursor);
   }
 

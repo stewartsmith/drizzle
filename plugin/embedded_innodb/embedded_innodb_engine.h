@@ -25,13 +25,15 @@
 class EmbeddedInnoDBTableShare
 {
 public:
-  EmbeddedInnoDBTableShare(const char* name, uint64_t intial_auto_increment_value);
+  EmbeddedInnoDBTableShare(const char* name, bool hidden_primary_key);
 
   drizzled::THR_LOCK lock;
   int use_count;
   std::string table_name;
 
   drizzled::atomic<uint64_t> auto_increment_value;
+  drizzled::atomic<uint64_t> hidden_pkey_auto_increment_value;
+  bool has_hidden_primary_key;
 };
 
 class EmbeddedInnoDBCursor: public drizzled::Cursor
@@ -72,7 +74,9 @@ public:
   int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
   int extra(drizzled::ha_extra_function operation);
 
-  EmbeddedInnoDBTableShare *get_share(const char *table_name, int *rc);
+  EmbeddedInnoDBTableShare *get_share(const char *table_name,
+                                      bool has_hidden_primary_key,
+                                      int *rc);
   int free_share();
 
   EmbeddedInnoDBTableShare *share;
@@ -82,6 +86,8 @@ public:
                                        drizzled::thr_lock_type);
 
   uint64_t getInitialAutoIncrementValue();
+  uint64_t getHiddenPrimaryKeyInitialAutoIncrementValue();
+
   void get_auto_increment(uint64_t ,
                           uint64_t ,
                           uint64_t ,
@@ -94,6 +100,7 @@ private:
 
   ib_err_t next_innodb_error;
   bool write_can_replace;
+  uint64_t hidden_autoinc_pkey_position;
 };
 
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */
