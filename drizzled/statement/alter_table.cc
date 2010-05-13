@@ -238,8 +238,6 @@ static bool mysql_prepare_alter_table(Session *session,
   message::Table::TableOptions *table_options;
   table_options= table_message.mutable_options();
 
-  if (! (used_fields & HA_CREATE_USED_BLOCK_SIZE))
-    table_options->set_block_size(table->s->block_size);
   if (! (used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
     create_info->default_table_charset= table->s->table_charset;
   if (! (used_fields & HA_CREATE_USED_AUTO) &&
@@ -249,14 +247,6 @@ static bool mysql_prepare_alter_table(Session *session,
     table->cursor->info(HA_STATUS_AUTO);
     create_info->auto_increment_value= table->cursor->stats.auto_increment_value;
   }
-  if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
-      && table->s->hasKeyBlockSize())
-    table_options->set_key_block_size(table->s->getKeyBlockSize());
-
-  if ((used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
-      && table_options->key_block_size() == 0)
-    table_options->clear_key_block_size();
-
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
   CreateField *def;
 

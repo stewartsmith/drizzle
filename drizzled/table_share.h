@@ -105,7 +105,6 @@ public:
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
-    memset(&keynames, 0, sizeof(TYPELIB));
     memset(&fieldnames, 0, sizeof(TYPELIB));
 
     table_charset= 0;
@@ -179,7 +178,6 @@ public:
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
-    memset(&keynames, 0, sizeof(TYPELIB));
     memset(&fieldnames, 0, sizeof(TYPELIB));
 
     table_charset= 0;
@@ -226,13 +224,33 @@ public:
     mem_root.free_root(MYF(0));                 // Free's share
   };
 
+private:
   /** Category of this table. */
   enum_table_category table_category;
 
   uint32_t open_count;			/* Number of tables in open list */
+public:
+
+  bool isTemporaryCategory() const
+  {
+    return (table_category == TABLE_CATEGORY_TEMPORARY);
+  }
+
+  void setTableCategory(enum_table_category arg)
+  {
+    table_category= arg;
+  }
 
   /* The following is copied to each Table on OPEN */
+private:
   Field **field;
+public:
+  Field ** getFields()
+  {
+    return field;
+  }
+
+  
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
   KEY  *key_info;			/* data of keys in database */
@@ -253,7 +271,50 @@ public:
     return mem_root.strmake_root(str_arg, len_arg);
   }
 
-  TYPELIB keynames;			/* Pointers to keynames */
+private:
+  std::vector<std::string> _keynames;
+
+  void addKeyName(std::string arg)
+  {
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+    _keynames.push_back(arg);
+  }
+public:
+  bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position)
+  {
+    std::string arg(name_arg, name_length);
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+
+    std::vector<std::string>::iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+
+    if (iter == _keynames.end())
+      return false;
+
+    position= iter -  _keynames.begin();
+
+    return true;
+  }
+
+  bool doesKeyNameExist(std::string arg, uint32_t &position)
+  {
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+
+    std::vector<std::string>::iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+
+    if (iter == _keynames.end())
+    {
+      position= -1; //historical, required for finding primary key from unique
+      return false;
+    }
+
+    position= iter -  _keynames.begin();
+
+    return true;
+  }
+
   TYPELIB fieldnames;			/* Pointer to fieldnames */
   TYPELIB *intervals;			/* pointer to interval info */
   pthread_mutex_t mutex;                /* For locking the share  */
@@ -420,16 +481,6 @@ public:
   inline uint32_t getCommentLength()
   {
     return (table_proto) ? table_proto->options().comment().length() : 0; 
-  }
-
-  inline bool hasKeyBlockSize()
-  {
-    return (table_proto) ? table_proto->options().has_key_block_size() : false;
-  }
-
-  inline uint32_t getKeyBlockSize()
-  {
-    return (table_proto) ? table_proto->options().key_block_size() : 0;
   }
 
   inline uint64_t getMaxRows()
@@ -735,6 +786,15 @@ public:
                     Field::utype unireg_check,
                     TYPELIB *interval,
                     const char *field_name);
+
+  int open_table_def(Session& session, TableIdentifier &identifier);
+
+  int open_table_from_share(Session *session, const char *alias,
+                            uint32_t db_stat, uint32_t ha_open_flags,
+                            Table &outparam);
+  int parse_table_proto(Session& session, message::Table &table);
+private:
+  int inner_parse_table_proto(Session& session, message::Table &table);
 };
 
 } /* namespace drizzled */
