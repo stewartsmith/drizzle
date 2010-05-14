@@ -36,6 +36,8 @@
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/plugin/daemon.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include <string>
 #include <sstream>
 #include <map>
@@ -138,6 +140,16 @@ public:
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
+  bool validateCreateTableOption(const std::string &key, const std::string &state)
+  {
+    (void)state;
+    if (boost::iequals(key, "ROW_FORMAT"))
+    {
+      return true;
+    }
+
+    return false;
+  }
 };
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,

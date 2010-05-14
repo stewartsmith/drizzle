@@ -1,5 +1,10 @@
+/*
+  Message format for tables.
+*/
 package drizzled.message;
 option optimize_for = SPEED;
+
+import "engine.proto";
 
 message Table {
 
@@ -8,24 +13,6 @@ message Table {
     TEMPORARY = 1;
     INTERNAL = 2;
     FUNCTION = 3;
-  }
-
-  message StorageEngine {
-
-    message EngineOption {
-      enum EngineOptionType {
-        BOOL = 0;
-        INTEGER = 1;
-        STRING = 2;
-      }
-
-      required string option_name = 1;
-      required string option_value = 2;
-      required EngineOptionType option_type = 3;
-    }
-
-    required string name = 1;
-    repeated EngineOption option = 2;
   }
 
   message TableOptions {
@@ -183,7 +170,7 @@ message Table {
   required string name = 1;
   required string schema = 6;
   required TableType type = 5;
-  required StorageEngine engine = 2;
+  required Engine engine = 2;
   repeated Field field = 3;
   repeated Index indexes = 4;
 
