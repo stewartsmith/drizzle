@@ -56,6 +56,23 @@
 #include "drizzled/item/null.h"
 #include "drizzled/temporal.h"
 
+#include "drizzled/field.h"
+#include "drizzled/field/str.h"
+#include "drizzled/field/num.h"
+#include "drizzled/field/blob.h"
+#include "drizzled/field/enum.h"
+#include "drizzled/field/null.h"
+#include "drizzled/field/date.h"
+#include "drizzled/field/decimal.h"
+#include "drizzled/field/real.h"
+#include "drizzled/field/double.h"
+#include "drizzled/field/long.h"
+#include "drizzled/field/int64_t.h"
+#include "drizzled/field/num.h"
+#include "drizzled/field/timestamp.h"
+#include "drizzled/field/datetime.h"
+#include "drizzled/field/varstring.h"
+
 using namespace std;
 
 namespace drizzled
@@ -1868,6 +1885,137 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   }
   return;
 } /* open_table_error */
+
+Field *TableShare::make_field(memory::Root *root,
+                              unsigned char *ptr,
+                              uint32_t field_length,
+                              bool is_nullable,
+                              unsigned char *null_pos,
+                              unsigned char null_bit,
+                              uint8_t decimals,
+                              enum_field_types field_type,
+                              const CHARSET_INFO * field_charset,
+                              Field::utype unireg_check,
+                              TYPELIB *interval,
+                              const char *field_name)
+{
+  TableShare *share= this;
+  assert(root);
+
+  if (! is_nullable)
+  {
+    null_pos=0;
+    null_bit=0;
+  }
+  else
+  {
+    null_bit= ((unsigned char) 1) << null_bit;
+  }
+
+  switch (field_type) 
+  {
+  case DRIZZLE_TYPE_DATE:
+  case DRIZZLE_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIMESTAMP:
+    field_charset= &my_charset_bin;
+  default: break;
+  }
+
+  switch (field_type)
+  {
+  case DRIZZLE_TYPE_ENUM:
+    return new (root) Field_enum(ptr,
+                                 field_length,
+                                 null_pos,
+                                 null_bit,
+                                 field_name,
+                                 get_enum_pack_length(interval->count),
+                                 interval,
+                                 field_charset);
+  case DRIZZLE_TYPE_VARCHAR:
+    return new (root) Field_varstring(ptr,field_length,
+                                      HA_VARCHAR_PACKLENGTH(field_length),
+                                      null_pos,null_bit,
+                                      field_name,
+                                      share,
+                                      field_charset);
+  case DRIZZLE_TYPE_BLOB:
+    return new (root) Field_blob(ptr,
+                                 null_pos,
+                                 null_bit,
+                                 field_name,
+                                 share,
+                                 calc_pack_length(DRIZZLE_TYPE_LONG, 0),
+                                 field_charset);
+  case DRIZZLE_TYPE_DECIMAL:
+    return new (root) Field_decimal(ptr,
+                                    field_length,
+                                    null_pos,
+                                    null_bit,
+                                    unireg_check,
+                                    field_name,
+                                    decimals,
+                                    false,
+                                    false /* is_unsigned */);
+  case DRIZZLE_TYPE_DOUBLE:
+    return new (root) Field_double(ptr,
+                                   field_length,
+                                   null_pos,
+                                   null_bit,
+                                   unireg_check,
+                                   field_name,
+                                   decimals,
+                                   false,
+                                   false /* is_unsigned */);
+  case DRIZZLE_TYPE_LONG:
+    return new (root) Field_long(ptr,
+                                 field_length,
+                                 null_pos,
+                                 null_bit,
+                                 unireg_check,
+                                 field_name,
+                                 false,
+                                 false /* is_unsigned */);
+  case DRIZZLE_TYPE_LONGLONG:
+    return new (root) Field_int64_t(ptr,
+                                    field_length,
+                                    null_pos,
+                                    null_bit,
+                                    unireg_check,
+                                    field_name,
+                                    false,
+                                    false /* is_unsigned */);
+  case DRIZZLE_TYPE_TIMESTAMP:
+    return new (root) Field_timestamp(ptr,
+                                      field_length,
+                                      null_pos,
+                                      null_bit,
+                                      unireg_check,
+                                      field_name,
+                                      share,
+                                      field_charset);
+  case DRIZZLE_TYPE_DATE:
+    return new (root) Field_date(ptr,
+                                 null_pos,
+                                 null_bit,
+                                 field_name,
+                                 field_charset);
+  case DRIZZLE_TYPE_DATETIME:
+    return new (root) Field_datetime(ptr,
+                                     null_pos,
+                                     null_bit,
+                                     field_name,
+                                     field_charset);
+  case DRIZZLE_TYPE_NULL:
+    return new (root) Field_null(ptr,
+                                 field_length,
+                                 field_name,
+                                 field_charset);
+  default: // Impossible (Wrong version)
+    break;
+  }
+  return 0;
+}
 
 
 } /* namespace drizzled */
