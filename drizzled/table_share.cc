@@ -503,7 +503,6 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   newed(true)
 {
   memset(&name_hash, 0, sizeof(HASH));
-  memset(&fieldnames, 0, sizeof(TYPELIB));
 
   table_charset= 0;
   memset(&all_set, 0, sizeof (MyBitmap));
@@ -869,15 +868,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     share->intervals= NULL;
   }
 
-  share->fieldnames.type_names= (const char **) share->alloc_root((share->fields + 1) * sizeof(char*));
-
-  share->fieldnames.type_lengths= (unsigned int *) share->alloc_root((share->fields + 1) * sizeof(unsigned int));
-
-  share->fieldnames.type_names[share->fields]= NULL;
-  share->fieldnames.type_lengths[share->fields]= 0;
-  share->fieldnames.count= share->fields;
-
-
   /* Now fix the TYPELIBs for the intervals (enum values)
      and field names.
    */
@@ -889,9 +879,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     message::Table::Field pfield= table.field(fieldnr);
 
     /* field names */
-    share->fieldnames.type_names[fieldnr]= share->strmake_root(pfield.name().c_str(), pfield.name().length());
-
-    share->fieldnames.type_lengths[fieldnr]= pfield.name().length();
+    addFieldName(std::string(pfield.name().c_str(), pfield.name().length()));
 
     /* enum typelibs */
     if (pfield.type() != message::Table::Field::ENUM)
@@ -1194,7 +1182,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                 ((field_type == DRIZZLE_TYPE_ENUM) ?
                                  share->intervals + (interval_nr++)
                                  : (TYPELIB*) 0),
-                                share->fieldnames.type_names[fieldnr]);
+                                fieldnames[fieldnr].c_str());
 
     share->field[fieldnr]= f;
 

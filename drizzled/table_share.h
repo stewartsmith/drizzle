@@ -47,6 +47,7 @@ const static std::string FUNCTION_STRING("FUNCTION");
 
 class TableShare
 {
+  typedef std::vector<std::string> StringVector;
 public:
   TableShare() :
     table_category(TABLE_UNKNOWN_CATEGORY),
@@ -105,7 +106,6 @@ public:
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
-    memset(&fieldnames, 0, sizeof(TYPELIB));
 
     table_charset= 0;
     memset(&all_set, 0, sizeof (MyBitmap));
@@ -178,7 +178,6 @@ public:
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
-    memset(&fieldnames, 0, sizeof(TYPELIB));
 
     table_charset= 0;
     memset(&all_set, 0, sizeof (MyBitmap));
@@ -315,8 +314,16 @@ public:
     return true;
   }
 
-  TYPELIB fieldnames;			/* Pointer to fieldnames */
+private:
+  std::vector<std::string> fieldnames;
+
+  void addFieldName(std::string arg)
+  {
+    fieldnames.push_back(arg);
+  }
   TYPELIB *intervals;			/* pointer to interval info */
+
+public:
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
 
