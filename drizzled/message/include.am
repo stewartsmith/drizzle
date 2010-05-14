@@ -94,6 +94,7 @@ EXTRA_DIST += \
 		${MESSAGE_DIR}/transaction.proto
 
 BUILT_SOURCES += \
+		${MESSAGE_DIR}/engine.pb.h \
 		${MESSAGE_DIR}/schema.pb.h \
 		${MESSAGE_DIR}/table.pb.h \
 		${MESSAGE_DIR}/transaction.pb.h
