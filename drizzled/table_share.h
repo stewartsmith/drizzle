@@ -249,7 +249,7 @@ public:
     return field;
   }
 
-  
+
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
   KEY  *key_info;			/* data of keys in database */
@@ -503,7 +503,7 @@ public:
   /**
    * Returns true if the supplied Field object
    * is part of the table's primary key.
-   */
+ */
   bool fieldInPrimaryKey(Field *field) const;
 
   plugin::StorageEngine *storage_engine;			/* storage engine plugin */
@@ -547,7 +547,7 @@ public:
    * primary key.  However, as it exists, because this member is scalar, it
    * only supports a single-column primary key. Is there a better way
    * to ask for the fields which are in a primary key?
-   */
+ */
   uint32_t primary_key;
   /* Index of auto-updated TIMESTAMP field in field array */
   uint32_t next_number_index;               /* autoincrement key number */
