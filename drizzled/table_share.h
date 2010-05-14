@@ -47,6 +47,7 @@ const static std::string FUNCTION_STRING("FUNCTION");
 
 class TableShare
 {
+  typedef std::vector<std::string> StringVector;
 public:
   TableShare() :
     table_category(TABLE_UNKNOWN_CATEGORY),
@@ -105,7 +106,6 @@ public:
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
-    memset(&fieldnames, 0, sizeof(TYPELIB));
 
     table_charset= 0;
     memset(&all_set, 0, sizeof (MyBitmap));
@@ -178,7 +178,6 @@ public:
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
-    memset(&fieldnames, 0, sizeof(TYPELIB));
 
     table_charset= 0;
     memset(&all_set, 0, sizeof (MyBitmap));
@@ -250,7 +249,7 @@ public:
     return field;
   }
 
-  
+
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
   KEY  *key_info;			/* data of keys in database */
@@ -315,8 +314,16 @@ public:
     return true;
   }
 
-  TYPELIB fieldnames;			/* Pointer to fieldnames */
+private:
+  std::vector<std::string> fieldnames;
+
+  void addFieldName(std::string arg)
+  {
+    fieldnames.push_back(arg);
+  }
   TYPELIB *intervals;			/* pointer to interval info */
+
+public:
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
 
@@ -496,7 +503,7 @@ public:
   /**
    * Returns true if the supplied Field object
    * is part of the table's primary key.
-   */
+ */
   bool fieldInPrimaryKey(Field *field) const;
 
   plugin::StorageEngine *storage_engine;			/* storage engine plugin */
@@ -540,7 +547,7 @@ public:
    * primary key.  However, as it exists, because this member is scalar, it
    * only supports a single-column primary key. Is there a better way
    * to ask for the fields which are in a primary key?
-   */
+ */
   uint32_t primary_key;
   /* Index of auto-updated TIMESTAMP field in field array */
   uint32_t next_number_index;               /* autoincrement key number */
