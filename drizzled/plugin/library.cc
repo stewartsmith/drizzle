@@ -50,20 +50,8 @@ plugin::Library::~Library()
   */
 }
 
-plugin::Library *plugin::Library::loadLibrary(const string &plugin_name)
+const string plugin::Library::getLibraryPath(const string &plugin_name)
 {
-  /*
-    Ensure that the dll doesn't have a path.
-    This is done to ensure that only approved libraries from the
-    plugin directory are used (to make this even remotely secure).
-  */
-  size_t found= plugin_name.find(FN_LIBCHAR);
-  if (found != string::npos)
-  {
-    errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_PLUGIN_NO_PATHS));
-    return NULL;
-  }
-
   /* Compile dll path */
   string dlpath;
   dlpath.reserve(FN_REFLEN);
@@ -77,29 +65,65 @@ plugin::Library *plugin::Library::loadLibrary(const string &plugin_name)
 #else
   dlpath.append(".so");
 #endif
+  return dlpath;
+}
 
-  /* Open new dll handle */
-  void *handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);
-  if (handle == NULL)
+plugin::Library *plugin::Library::loadLibrary(const string &plugin_name, bool builtin)
+{
+  /*
+    Ensure that the dll doesn't have a path.
+    This is done to ensure that only approved libraries from the
+    plugin directory are used (to make this even remotely secure).
+  */
+  size_t found= plugin_name.find(FN_LIBCHAR);
+  if (found != string::npos)
   {
-    const char *errmsg= dlerror();
-    uint32_t dlpathlen= dlpath.length();
-    if (!dlpath.compare(0, dlpathlen, errmsg))
-    { // if errmsg starts from dlpath, trim this prefix.
-      errmsg+=dlpathlen;
-      if (*errmsg == ':') errmsg++;
-      if (*errmsg == ' ') errmsg++;
-    }
-    errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY),
-                  dlpath.c_str(), errno, errmsg);
-
-    // This is, in theory, should cause dlerror() to deallocate the error
-    // message. Found this via Google'ing :)
-    (void)dlerror();
-
+    errmsg_printf(ERRMSG_LVL_ERROR, "%s",ER(ER_PLUGIN_NO_PATHS));
     return NULL;
   }
 
+  void *handle= NULL;
+  string dlpath("");
+
+  if (builtin)
+  {
+    dlpath.assign("<builtin>");
+    handle= dlopen(NULL, RTLD_NOW|RTLD_GLOBAL);
+    if (handle == NULL)
+    {
+      const char *errmsg= dlerror();
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY),
+                    dlpath.c_str(), errno, errmsg);
+      (void)dlerror();
+
+      return NULL;
+    }
+  }
+  else
+  {
+  /* Open new dll handle */
+    dlpath.assign(Library::getLibraryPath(plugin_name));
+    handle= dlopen(dlpath.c_str(), RTLD_NOW|RTLD_GLOBAL);
+    if (handle == NULL)
+    {
+      const char *errmsg= dlerror();
+      uint32_t dlpathlen= dlpath.length();
+      if (!dlpath.compare(0, dlpathlen, errmsg))
+      { // if errmsg starts from dlpath, trim this prefix.
+        errmsg+=dlpathlen;
+        if (*errmsg == ':') errmsg++;
+        if (*errmsg == ' ') errmsg++;
+      }
+      errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY),
+                    dlpath.c_str(), errno, errmsg);
+
+      // This is, in theory, should cause dlerror() to deallocate the error
+      // message. Found this via Google'ing :)
+      (void)dlerror();
+
+      return NULL;
+    }
+  }
 
   string plugin_decl_sym("_drizzled_");
   plugin_decl_sym.append(plugin_name);

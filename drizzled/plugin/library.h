@@ -53,6 +53,7 @@ class Library
   Library(const std::string &name_arg,
           void *handle_arg,
           const Manifest *manifest_arg);
+
 public:
   ~Library();
 
@@ -66,7 +67,8 @@ public:
     return manifest;
   }
 
-  static Library *loadLibrary(const std::string &plugin_name);
+  static const std::string getLibraryPath(const std::string &plugin_name);
+  static Library *loadLibrary(const std::string &plugin_name, bool builtin);
 };
 
 } /* namespace plugin */

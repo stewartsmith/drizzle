@@ -113,7 +113,9 @@ vector<plugin::Module *> plugin::Registry::getList(bool active)
   return plugins;
 }
 
-plugin::Library *plugin::Registry::addLibrary(const string &plugin_name)
+
+plugin::Library *plugin::Registry::addLibrary(const string &plugin_name,
+                                              bool builtin)
 {
 
   /* If this dll is already loaded just return it */
@@ -123,7 +125,7 @@ plugin::Library *plugin::Registry::addLibrary(const string &plugin_name)
     return library;
   }
 
-  library= plugin::Library::loadLibrary(plugin_name);
+  library= plugin::Library::loadLibrary(plugin_name, builtin);
   if (library != NULL)
   {
     /* Add this dll to the map */

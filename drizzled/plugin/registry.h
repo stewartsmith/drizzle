@@ -79,7 +79,7 @@ public:
     return module_map;
   }
 
-  Library *addLibrary(const std::string &plugin_name);
+  Library *addLibrary(const std::string &plugin_name, bool builtin= false);
   void removeLibrary(const std::string &plugin_name);
   Library *findLibrary(const std::string &plugin_name) const;
 

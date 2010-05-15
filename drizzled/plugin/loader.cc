@@ -51,13 +51,6 @@
 
 using namespace std;
 
-typedef drizzled::plugin::Manifest drizzled_builtin_plugin[];
-extern drizzled_builtin_plugin PANDORA_BUILTIN_LIST;
-static drizzled::plugin::Manifest *drizzled_builtins[]=
-{
-  PANDORA_BUILTIN_LIST, NULL
-};
-
 namespace drizzled
 {
  
@@ -71,6 +64,7 @@ char *opt_plugin_load= NULL;
 char *opt_plugin_dir_ptr;
 char opt_plugin_dir[FN_REFLEN];
 const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
+const char *builtin_plugins= PANDORA_BUILTIN_LIST;
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
@@ -155,7 +149,8 @@ static void plugin_prune_list(vector<string> &plugin_list,
                               const vector<string> &plugins_to_remove);
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             const set<string> &plugin_list);
+                             const set<string> &plugin_list,
+                             bool builtin= false);
 static int test_plugin_options(memory::Root *, plugin::Module *,
                                int *, char **);
 static void unlock_variables(Session *session, struct system_variables *vars);
@@ -373,8 +368,6 @@ bool plugin_init(plugin::Registry &registry,
                  int *argc, char **argv,
                  bool skip_init)
 {
-  plugin::Manifest **builtins;
-  plugin::Manifest *manifest;
   plugin::Module *module;
   memory::Root tmp_root(4096);
 
@@ -391,37 +384,8 @@ bool plugin_init(plugin::Registry &registry,
 
   initialized= 1;
 
-  /*
-    First we register builtin plugins
-  */
-  for (builtins= drizzled_builtins; *builtins; builtins++)
-  {
-    manifest= *builtins;
-    if (manifest->name != NULL)
-    {
-      module= new (std::nothrow) plugin::Module(manifest);
-      if (module == NULL)
-        return true;
-
-      tmp_root.free_root(MYF(memory::MARK_BLOCKS_FREE));
-      if (test_plugin_options(&tmp_root, module, argc, argv))
-        continue;
-
-      registry.add(module);
-
-      plugin_initialize_vars(module);
-
-      if (! skip_init)
-      {
-        if (plugin_initialize(registry, module))
-        {
-          tmp_root.free_root(MYF(0));
-          return true;
-        }
-      }
-    }
-  }
-
+  vector<string> builtin_list;
+  tokenize(builtin_plugins, builtin_list, ",", true);
 
   bool load_failed= false;
   vector<string> plugin_list;
@@ -443,6 +407,20 @@ bool plugin_init(plugin::Registry &registry,
     vector<string> plugins_to_remove;
     tokenize(opt_plugin_remove, plugins_to_remove, ",", true);
     plugin_prune_list(plugin_list, plugins_to_remove);
+    plugin_prune_list(builtin_list, plugins_to_remove);
+  }
+
+
+  /*
+    First we register builtin plugins
+  */
+  const set<string> builtin_list_set(builtin_list.begin(), builtin_list.end());
+  load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+                                builtin_list_set, true);
+  if (load_failed)
+  {
+    tmp_root.free_root(MYF(0));
+    return true;
   }
 
   /* Uniquify the list */
@@ -524,7 +502,8 @@ static void plugin_prune_list(vector<string> &plugin_list,
 */
 static bool plugin_load_list(plugin::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
-                             const set<string> &plugin_list)
+                             const set<string> &plugin_list,
+                             bool builtin)
 {
   plugin::Library *library= NULL;
 
@@ -533,7 +512,14 @@ static bool plugin_load_list(plugin::Registry &registry,
        ++iter)
   {
     const string plugin_name(*iter);
-    library= registry.addLibrary(plugin_name);
+    if (builtin)
+    {
+      library= registry.addLibrary(plugin_name, true);
+    }
+    else
+    {
+      library= registry.addLibrary(plugin_name);
+    }
     if (library == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -1840,3 +1826,12 @@ void my_print_help_inc_plugins(option *main_options)
 }
 
 } /* namespace drizzled */
+
+/** These exist just to prevent symbols from being optimized out */
+typedef drizzled::plugin::Manifest drizzled_builtin_list[];
+extern drizzled_builtin_list PANDORA_BUILTIN_SYMBOLS_LIST;
+drizzled::plugin::Manifest *drizzled_builtins[]=
+{
+  PANDORA_BUILTIN_SYMBOLS_LIST, NULL
+};
+
