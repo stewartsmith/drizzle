@@ -251,7 +251,7 @@ static bool mysql_prepare_alter_table(Session *session,
   List_iterator<CreateField> field_it(new_create_list);
   List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
-  KEY *key_info= table->key_info;
+  KeyInfo *key_info= table->key_info;
   bool rc= true;
 
   /* Let new create options override the old ones */
@@ -451,7 +451,7 @@ static bool mysql_prepare_alter_table(Session *session,
       continue;
     }
 
-    KEY_PART_INFO *key_part= key_info->key_part;
+    KeyPartInfo *key_part= key_info->key_part;
     key_parts.empty();
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {

@@ -264,14 +264,14 @@ void optimizer::QuickIndexMergeSelect::add_keys_and_lengths(String *key_names,
       used_lengths->append(',');
     }
 
-    KEY *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + (*it)->index;
     key_names->append(key_info->name);
     length= internal::int64_t2str((*it)->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
   if (pk_quick_select)
   {
-    KEY *key_info= head->key_info + pk_quick_select->index;
+    KeyInfo *key_info= head->key_info + pk_quick_select->index;
     key_names->append(',');
     key_names->append(key_info->name);
     length= internal::int64_t2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
