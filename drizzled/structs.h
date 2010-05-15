@@ -62,7 +62,7 @@ struct KeyPartInfo {	/* Info about a key part */
 };
 
 
-typedef struct st_key {
+struct KeyInfo {
   unsigned int	key_length;		/* Tot length of key */
   enum  ha_key_alg algorithm;
   unsigned long flags;			/* dupp key and pack flags */
@@ -80,7 +80,7 @@ typedef struct st_key {
   ulong *rec_per_key;
   Table *table;
   LEX_STRING comment;
-} KEY;
+};
 
 
 class JoinTable;

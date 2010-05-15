@@ -2719,7 +2719,7 @@ void subselect_uniquesubquery_engine::print(String *str,
   }
   else
     str->append(table_name, tab->table->s->getTableNameSize());
-  KEY *key_info= tab->table->key_info+ tab->ref.key;
+  KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (cond)
@@ -2761,7 +2761,7 @@ void subselect_indexsubquery_engine::print(String *str,
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
   str->append(tab->table->s->getTableName(), tab->table->s->getTableNameSize());
-  KEY *key_info= tab->table->key_info+ tab->ref.key;
+  KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (check_null)
@@ -2938,7 +2938,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   select_union  *tmp_result_sink;
   /* The table into which the subquery is materialized. */
   Table         *tmp_table;
-  KEY           *tmp_key; /* The only index on the temporary table. */
+  KeyInfo           *tmp_key; /* The only index on the temporary table. */
   uint32_t          tmp_key_parts; /* Number of keyparts in tmp_key. */
   Item_in_subselect *item_in= (Item_in_subselect *) item;
 

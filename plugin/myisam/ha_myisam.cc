@@ -212,7 +212,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   uint32_t i, j, recpos, minpos, fieldpos, temp_length, length;
   enum ha_base_keytype type= HA_KEYTYPE_BINARY;
   unsigned char *record;
-  KEY *pos;
+  KeyInfo *pos;
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo, *recinfo_pos;
   HA_KEYSEG *keyseg;

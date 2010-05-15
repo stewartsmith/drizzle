@@ -195,7 +195,7 @@ private:
   uint32_t group_prefix_len;
   uint32_t used_key_parts;
   uint32_t group_key_parts;
-  KEY *index_info;
+  KeyInfo *index_info;
   uint32_t index;
   uint32_t key_infix_len;
   unsigned char key_infix[MAX_KEY_LENGTH];
@@ -213,7 +213,7 @@ public:
                       uint32_t group_prefix_len_arg, 
                       uint32_t used_key_parts_arg,
                       uint32_t group_key_parts_arg, 
-                      KEY *index_info_arg,
+                      KeyInfo *index_info_arg,
                       uint32_t index_arg, 
                       uint32_t key_infix_len_arg,
                       unsigned char *key_infix_arg,

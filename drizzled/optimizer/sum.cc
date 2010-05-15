@@ -647,7 +647,7 @@ bool optimizer::simple_pred(Item_func *func_item, Item **args, bool &inv_order)
 */
 static bool matching_cond(bool max_fl,
                           table_reference_st *ref,
-                          KEY *keyinfo,
+                          KeyInfo *keyinfo,
                           KeyPartInfo *field_part,
                           COND *cond,
                           key_part_map *key_part_used,
@@ -910,7 +910,7 @@ static bool find_key_for_maxmin(bool max_fl,
   Table *table= field->table;
   uint32_t idx= 0;
 
-  KEY *keyinfo,*keyinfo_end= NULL;
+  KeyInfo *keyinfo,*keyinfo_end= NULL;
   for (keyinfo= table->key_info, keyinfo_end= keyinfo+table->s->keys;
        keyinfo != keyinfo_end;
        keyinfo++,idx++)

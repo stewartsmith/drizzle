@@ -38,7 +38,7 @@ private:
   void operator=(Tmp_Table_Param &);
 
 public:
-  KEY *keyinfo;
+  KeyInfo *keyinfo;
   List<Item> copy_funcs;
   List<Item> save_copy_funcs;
   CopyField *copy_field, *copy_field_end;

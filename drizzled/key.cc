@@ -57,11 +57,11 @@ namespace drizzled
        key_length is set to length of key before (not including) field
 */
 
-int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *field,
+int find_ref_key(KeyInfo *key, uint32_t key_count, unsigned char *record, Field *field,
                  uint32_t *key_length, uint32_t *keypart)
 {
   register int i;
-  register KEY *key_info;
+  register KeyInfo *key_info;
   uint32_t fieldpos;
 
   fieldpos= field->offset(record);
@@ -102,7 +102,7 @@ int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *fie
 }
 
 
-void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
+void key_copy(unsigned char *to_key, unsigned char *from_record, KeyInfo *key_info,
               unsigned int key_length)
 {
   uint32_t length;
@@ -145,7 +145,7 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
   Zero the null components of key tuple.
 */
 
-void key_zero_nulls(unsigned char *tuple, KEY *key_info)
+void key_zero_nulls(unsigned char *tuple, KeyInfo *key_info)
 {
   KeyPartInfo *key_part= key_info->key_part;
   KeyPartInfo *key_part_end= key_part + key_info->key_parts;
@@ -170,7 +170,7 @@ void key_zero_nulls(unsigned char *tuple, KEY *key_info)
   @param key_length  specifies length of all keyparts that will be restored
 */
 
-void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
+void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key_info,
                  uint16_t key_length)
 {
   uint32_t length;

@@ -100,7 +100,7 @@ uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_m
   /* works only with key prefixes */
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
-  KEY *key_info_found= table->s->key_info + key_position;
+  KeyInfo *key_info_found= table->s->key_info + key_position;
   KeyPartInfo *key_part_found= key_info_found->key_part;
   KeyPartInfo *end_key_part_found= key_part_found + key_info_found->key_parts;
   uint32_t length= 0;
@@ -816,7 +816,7 @@ int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32
   {
     ptrdiff_t ptrdiff= buf - table->record[0];
     unsigned char *save_record_0= NULL;
-    KEY *key_info= NULL;
+    KeyInfo *key_info= NULL;
     KeyPartInfo *key_part;
     KeyPartInfo *key_part_end= NULL;
 

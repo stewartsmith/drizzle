@@ -833,7 +833,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   Field **reg_field, **from_field, **default_field;
   uint32_t *blob_field;
   CopyField *copy= 0;
-  KEY *keyinfo;
+  KeyInfo *keyinfo;
   KeyPartInfo *key_part_info;
   Item **copy_func;
   MI_COLUMNDEF *recinfo;
@@ -1632,7 +1632,7 @@ bool Table::open_tmp_table()
      true  - Error
 */
 
-bool Table::create_myisam_tmp_table(KEY *keyinfo,
+bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
                                     MI_COLUMNDEF *start_recinfo,
                                     MI_COLUMNDEF **recinfo,
 				    uint64_t options)

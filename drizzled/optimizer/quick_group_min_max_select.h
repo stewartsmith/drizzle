@@ -69,7 +69,7 @@ private:
 
   Cursor *cursor; /**< The Cursor used to get data. */
   JOIN *join; /**< Descriptor of the current query */
-  KEY *index_info; /**< The index chosen for data access */
+  KeyInfo *index_info; /**< The index chosen for data access */
   unsigned char *record; /**< Buffer where the next record is returned. */
   unsigned char *tmp_record; /**< Temporary storage for next_min(), next_max(). */
   unsigned char *group_prefix; /**< Key prefix consisting of the GROUP fields. */
@@ -288,7 +288,7 @@ public:
                          uint32_t group_prefix_len, 
                          uint32_t group_key_parts,
                          uint32_t used_key_parts, 
-                         KEY *index_info,
+                         KeyInfo *index_info,
                          uint use_index, 
                          double read_cost, 
                          ha_rows records,

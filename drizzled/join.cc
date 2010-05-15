@@ -3368,7 +3368,7 @@ static void best_access_path(JOIN *join,
       key_part_map found_part= 0;
       table_map found_ref= 0;
       uint32_t key= keyuse->getKey();
-      KEY *keyinfo= table->key_info + key;
+      KeyInfo *keyinfo= table->key_info + key;
       /* Bitmap of keyparts where the ref access is over 'keypart=const': */
       key_part_map const_part= 0;
       /* The or-null keypart in ref-or-null access: */

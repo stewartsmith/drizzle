@@ -228,7 +228,7 @@ static
 int
 innobase_check_index_keys(
 /*======================*/
-	const KEY*	key_info,	/*!< in: Indexes to be created */
+	const KeyInfo*	key_info,	/*!< in: Indexes to be created */
 	ulint		num_of_keys)	/*!< in: Number of indexes to
 					be created */
 {
@@ -238,13 +238,13 @@ innobase_check_index_keys(
 	ut_ad(num_of_keys);
 
 	for (key_num = 0; key_num < num_of_keys; key_num++) {
-		const KEY&	key = key_info[key_num];
+		const KeyInfo&	key = key_info[key_num];
 
 		/* Check that the same index name does not appear
 		twice in indexes to be created. */
 
 		for (ulint i = 0; i < key_num; i++) {
-			const KEY&	key2 = key_info[i];
+			const KeyInfo&	key2 = key_info[i];
 
 			if (0 == strcmp(key.name, key2.name)) {
 				errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: key name `%s` appears"
@@ -367,7 +367,7 @@ static
 void
 innobase_create_index_def(
 /*======================*/
-	KEY*			key,		/*!< in: key definition */
+	KeyInfo*			key,		/*!< in: key definition */
 	bool			new_primary,	/*!< in: TRUE=generating
 						a new primary key
 						on the table */
@@ -492,7 +492,7 @@ innobase_create_key_def(
 	const dict_table_t*table,		/*!< in: table definition */
 	mem_heap_t*	heap,		/*!< in: heap where space for key
 					definitions are allocated */
-	KEY*		key_info,	/*!< in: Indexes to be created */
+	KeyInfo*		key_info,	/*!< in: Indexes to be created */
 	ulint&		n_keys)		/*!< in/out: Number of indexes to
 					be created */
 {
@@ -604,7 +604,7 @@ int
 ha_innobase::add_index(
 /*===================*/
 	Table*	i_table,	/*!< in: Table where indexes are created */
-	KEY*	key_info,	/*!< in: Indexes to be created */
+	KeyInfo*	key_info,	/*!< in: Indexes to be created */
 	uint	num_of_keys)	/*!< in: Number of indexes to be created */
 {
 	dict_index_t**	index;		/*!< Index to be created */
@@ -943,7 +943,7 @@ ha_innobase::prepare_drop_index(
 	}
 
 	for (n_key = 0; n_key < num_of_keys; n_key++) {
-		const KEY*	key;
+		const KeyInfo*	key;
 		dict_index_t*	index;
 
 		key = i_table->key_info + key_num[n_key];

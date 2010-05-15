@@ -971,7 +971,7 @@ bool create_ref_for_key(JOIN *join,
   uint32_t length;
   uint32_t key;
   Table *table= NULL;
-  KEY *keyinfo= NULL;
+  KeyInfo *keyinfo= NULL;
 
   /*  Use best key from find_best */
   table= j->table;
@@ -3874,7 +3874,7 @@ int join_read_next_same_diff(READ_RECORD *info)
   JoinTable *tab=table->reginfo.join_tab;
   if (tab->insideout_match_tab->found_match)
   {
-    KEY *key= tab->table->key_info + tab->index;
+    KeyInfo *key= tab->table->key_info + tab->index;
     do
     {
       int error;
@@ -4012,7 +4012,7 @@ int join_read_next_different(READ_RECORD *info)
   JoinTable *tab= info->do_insideout_scan;
   if (tab->insideout_match_tab->found_match)
   {
-    KEY *key= tab->table->key_info + tab->index;
+    KeyInfo *key= tab->table->key_info + tab->index;
     do
     {
       int error;
@@ -4667,7 +4667,7 @@ bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *
     if (keynr == table->s->primary_key ||
          (table->key_info[keynr].flags & HA_NOSAME))
     {
-      KEY *keyinfo= table->key_info + keynr;
+      KeyInfo *keyinfo= table->key_info + keynr;
       KeyPartInfo *key_part= NULL;
       KeyPartInfo *key_part_end= NULL;
 
@@ -4986,7 +4986,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
         {
           double rec_per_key;
           double index_scan_time;
-          KEY *keyinfo= tab->table->key_info+nr;
+          KeyInfo *keyinfo= tab->table->key_info+nr;
           if (select_limit == HA_POS_ERROR)
             select_limit= table_records;
           if (group)

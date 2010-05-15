@@ -662,7 +662,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     memory::Root alloc;
     optimizer::SEL_TREE *tree= NULL;
     KEY_PART *key_parts;
-    KEY *key_info;
+    KeyInfo *key_info;
     optimizer::Parameter param;
 
     if (check_stack_overrun(session, 2*STACK_MIN_SIZE, NULL))
@@ -3950,7 +3950,7 @@ ha_rows check_quick_select(optimizer::Parameter *param,
 
 static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t nparts)
 {
-  KEY *table_key= param->table->key_info + keynr;
+  KeyInfo *table_key= param->table->key_info + keynr;
   KeyPartInfo *key_part= table_key->key_part + nparts;
   KeyPartInfo *key_part_end= (table_key->key_part +
                                 table_key->key_parts);
@@ -4146,7 +4146,7 @@ optimizer::get_quick_keys(optimizer::Parameter *param,
     if (length == (uint32_t) (tmp_max_key - param->max_key) &&
 	      ! memcmp(param->min_key,param->max_key,length))
     {
-      KEY *table_key= quick->head->key_info+quick->index;
+      KeyInfo *table_key= quick->head->key_info+quick->index;
       flag= EQ_RANGE;
       if ((table_key->flags & (HA_NOSAME)) == HA_NOSAME &&
 	        key->part == table_key->key_parts-1)
@@ -4260,7 +4260,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
 {
   memory::Root *old_root, *alloc;
   optimizer::QuickRangeSelect *quick= NULL;
-  KEY *key_info = &table->key_info[ref->key];
+  KeyInfo *key_info = &table->key_info[ref->key];
   KEY_PART *key_part;
   optimizer::QuickRange *range= NULL;
   uint32_t part;
@@ -4421,14 +4421,14 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
 }
 
 
-static inline uint32_t get_field_keypart(KEY *index, Field *field);
+static inline uint32_t get_field_keypart(KeyInfo *index, Field *field);
 
 static inline optimizer::SEL_ARG * get_index_range_tree(uint32_t index,
                                                         optimizer::SEL_TREE *range_tree,
                                                         optimizer::Parameter *param,
                                                         uint32_t *param_idx);
 
-static bool get_constant_key_infix(KEY *index_info,
+static bool get_constant_key_infix(KeyInfo *index_info,
                                    optimizer::SEL_ARG *index_range_tree,
                                    KeyPartInfo *first_non_group_part,
                                    KeyPartInfo *min_max_arg_part,
@@ -4442,7 +4442,7 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
 
 static void
 cost_group_min_max(Table* table,
-                   KEY *index_info,
+                   KeyInfo *index_info,
                    uint32_t used_key_parts,
                    uint32_t group_key_parts,
                    optimizer::SEL_TREE *range_tree,
@@ -4592,7 +4592,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
   Item_field *min_max_arg_item= NULL; // The argument of all MIN/MAX functions
   KeyPartInfo *min_max_arg_part= NULL; /* The corresponding keypart. */
   uint32_t group_prefix_len= 0; /* Length (in bytes) of the key prefix. */
-  KEY *index_info= NULL;    /* The index chosen for data access. */
+  KeyInfo *index_info= NULL;    /* The index chosen for data access. */
   uint32_t index= 0;            /* The id of the chosen index. */
   uint32_t group_key_parts= 0;  // Number of index key parts in the group prefix.
   uint32_t used_key_parts= 0;   /* Number of index key parts used for access. */
@@ -4672,8 +4672,8 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     (GA1,GA2) are all true. If there is more than one such index, select the
     first one. Here we set the variables: group_prefix_len and index_info.
   */
-  KEY *cur_index_info= table->key_info;
-  KEY *cur_index_info_end= cur_index_info + table->s->keys;
+  KeyInfo *cur_index_info= table->key_info;
+  KeyInfo *cur_index_info_end= cur_index_info + table->s->keys;
   KeyPartInfo *cur_part= NULL;
   KeyPartInfo *end_part= NULL; /* Last part for loops. */
   /* Last index part. */
@@ -5183,7 +5183,7 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
     false o/w
 */
 static bool
-get_constant_key_infix(KEY *,
+get_constant_key_infix(KeyInfo *,
                        optimizer::SEL_ARG *index_range_tree,
                        KeyPartInfo *first_non_group_part,
                        KeyPartInfo *min_max_arg_part,
@@ -5270,7 +5270,7 @@ get_constant_key_infix(KEY *,
     0 if field does not reference any index field.
 */
 static inline uint
-get_field_keypart(KEY *index, Field *field)
+get_field_keypart(KeyInfo *index, Field *field)
 {
   KeyPartInfo *part= NULL;
   KeyPartInfo *end= NULL;
@@ -5383,7 +5383,7 @@ optimizer::SEL_ARG *get_index_range_tree(uint32_t index,
     None
 */
 void cost_group_min_max(Table* table,
-                        KEY *index_info,
+                        KeyInfo *index_info,
                         uint32_t used_key_parts,
                         uint32_t group_key_parts,
                         optimizer::SEL_TREE *range_tree,

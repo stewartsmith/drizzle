@@ -69,7 +69,7 @@ str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-static void store_key_options(String *packet, Table *table, KEY *key_info);
+static void store_key_options(String *packet, Table *table, KeyInfo *key_info);
 
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
@@ -367,7 +367,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
   Field **ptr,*field;
   uint32_t primary_key;
-  KEY *key_info;
+  KeyInfo *key_info;
   Table *table= table_list->table;
   Cursor *cursor= table->cursor;
   TableShare *share= table->s;
@@ -587,7 +587,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   return(0);
 }
 
-static void store_key_options(String *packet, Table *, KEY *key_info)
+static void store_key_options(String *packet, Table *, KeyInfo *key_info)
 {
   if (key_info->algorithm == HA_KEY_ALG_BTREE)
     packet->append(STRING_WITH_LEN(" USING BTREE"));

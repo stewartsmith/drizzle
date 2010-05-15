@@ -40,8 +40,6 @@
 namespace drizzled
 {
 
-struct st_key;
-typedef struct st_key KEY;
 typedef struct st_key_cache KEY_CACHE;
 
 
@@ -64,7 +62,7 @@ typedef struct st_ha_create_information
 
 typedef struct st_ha_alter_information
 {
-  KEY  *key_info_buffer;
+  KeyInfo  *key_info_buffer;
   uint32_t key_count;
   uint32_t index_drop_count;
   uint32_t *index_drop_buffer;
