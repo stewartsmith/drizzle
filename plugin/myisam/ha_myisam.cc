@@ -620,8 +620,8 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   {
     table->key_info[i].block_size= file->s->keyinfo[i].block_length;
 
-    KEY_PART_INFO *kp= table->key_info[i].key_part;
-    KEY_PART_INFO *kp_end= kp + table->key_info[i].key_parts;
+    KeyPartInfo *kp= table->key_info[i].key_part;
+    KeyPartInfo *kp_end= kp + table->key_info[i].key_parts;
     for (; kp != kp_end; kp++)
     {
       if (!kp->field->part_of_key.test(i))

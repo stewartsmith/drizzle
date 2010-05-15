@@ -777,8 +777,8 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   for (key= 0; key < keys; key++)
   {
     KEY *pos= table_arg->key_info+key;
-    KEY_PART_INFO *key_part=     pos->key_part;
-    KEY_PART_INFO *key_part_end= key_part + pos->key_parts;
+    KeyPartInfo *key_part=     pos->key_part;
+    KeyPartInfo *key_part_end= key_part + pos->key_parts;
 
     keydef[key].keysegs=   (uint) pos->key_parts;
     keydef[key].flag=      (pos->flags & (HA_NOSAME | HA_NULL_ARE_EQUAL));

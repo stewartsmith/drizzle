@@ -101,8 +101,8 @@ uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_m
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
   KEY *key_info_found= table->s->key_info + key_position;
-  KEY_PART_INFO *key_part_found= key_info_found->key_part;
-  KEY_PART_INFO *end_key_part_found= key_part_found + key_info_found->key_parts;
+  KeyPartInfo *key_part_found= key_info_found->key_part;
+  KeyPartInfo *end_key_part_found= key_part_found + key_info_found->key_parts;
   uint32_t length= 0;
 
   while (key_part_found < end_key_part_found && keypart_map_arg)
@@ -817,8 +817,8 @@ int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32
     ptrdiff_t ptrdiff= buf - table->record[0];
     unsigned char *save_record_0= NULL;
     KEY *key_info= NULL;
-    KEY_PART_INFO *key_part;
-    KEY_PART_INFO *key_part_end= NULL;
+    KeyPartInfo *key_part;
+    KeyPartInfo *key_part_end= NULL;
 
     /*
       key_cmp_if_same() compares table->record[0] against 'key'.

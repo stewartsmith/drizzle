@@ -84,7 +84,7 @@
   keypart-value-bytes holds the value. Its format depends on the field type.
   The length of keypart-value-bytes may or may not depend on the value being
   stored. The default is that length is static and equal to
-  KEY_PART_INFO::length.
+  KeyPartInfo::length.
 
   Key parts with (key_part_flag & HA_BLOB_PART) have length depending of the
   value:
@@ -471,7 +471,7 @@ uint32_t optimizer::get_index_for_order(Table *table, order_st *order, ha_rows l
   {
     if (!(table->keys_in_use_for_query.test(idx)))
       continue;
-    KEY_PART_INFO *keyinfo= table->key_info[idx].key_part;
+    KeyPartInfo *keyinfo= table->key_info[idx].key_part;
     uint32_t n_parts=  table->key_info[idx].key_parts;
     uint32_t partno= 0;
 
@@ -553,8 +553,8 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
   if (pk != MAX_KEY && param->table->cursor->primary_key_is_clustered())
   {
     /* The table uses clustered PK and it is not internally generated */
-    KEY_PART_INFO *key_part= param->table->key_info[pk].key_part;
-    KEY_PART_INFO *key_part_end= key_part +
+    KeyPartInfo *key_part= param->table->key_info[pk].key_part;
+    KeyPartInfo *key_part_end= key_part +
                                  param->table->key_info[pk].key_parts;
     for (;key_part != key_part_end; ++key_part)
       param->needed_fields.clearBit(key_part->fieldnr-1);
@@ -703,7 +703,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     key_info= head->key_info;
     for (idx=0 ; idx < head->s->keys ; idx++, key_info++)
     {
-      KEY_PART_INFO *key_part_info;
+      KeyPartInfo *key_part_info;
       if (! keys_to_use.test(idx))
 	continue;
 
@@ -1242,8 +1242,8 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
   }
   ror_scan->covered_fields.clearAll();
 
-  KEY_PART_INFO *key_part= param->table->key_info[keynr].key_part;
-  KEY_PART_INFO *key_part_end= key_part +
+  KeyPartInfo *key_part= param->table->key_info[keynr].key_part;
+  KeyPartInfo *key_part_end= key_part +
                                param->table->key_info[keynr].key_parts;
   for (;key_part != key_part_end; ++key_part)
   {
@@ -1471,7 +1471,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
                                    const ROR_SCAN_INFO *scan)
 {
   double selectivity_mult= 1.0;
-  KEY_PART_INFO *key_part= info->param->table->key_info[scan->keynr].key_part;
+  KeyPartInfo *key_part= info->param->table->key_info[scan->keynr].key_part;
   unsigned char key_val[MAX_KEY_LENGTH+MAX_FIELD_WIDTH]; /* key values tuple */
   unsigned char *key_ptr= key_val;
   optimizer::SEL_ARG *sel_arg= NULL;
@@ -3951,12 +3951,12 @@ ha_rows check_quick_select(optimizer::Parameter *param,
 static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t nparts)
 {
   KEY *table_key= param->table->key_info + keynr;
-  KEY_PART_INFO *key_part= table_key->key_part + nparts;
-  KEY_PART_INFO *key_part_end= (table_key->key_part +
+  KeyPartInfo *key_part= table_key->key_part + nparts;
+  KeyPartInfo *key_part_end= (table_key->key_part +
                                 table_key->key_parts);
   uint32_t pk_number;
 
-  for (KEY_PART_INFO *kp= table_key->key_part; kp < key_part; kp++)
+  for (KeyPartInfo *kp= table_key->key_part; kp < key_part; kp++)
   {
     uint16_t fieldnr= param->table->key_info[keynr].
                     key_part[kp - table_key->key_part].fieldnr - 1;
@@ -3972,8 +3972,8 @@ static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t
   if (!param->table->cursor->primary_key_is_clustered() || pk_number == MAX_KEY)
     return false;
 
-  KEY_PART_INFO *pk_part= param->table->key_info[pk_number].key_part;
-  KEY_PART_INFO *pk_part_end= pk_part +
+  KeyPartInfo *pk_part= param->table->key_info[pk_number].key_part;
+  KeyPartInfo *pk_part_end= pk_part +
                               param->table->key_info[pk_number].key_parts;
   for (;(key_part!=key_part_end) && (pk_part != pk_part_end);
        ++key_part, ++pk_part)
@@ -4430,13 +4430,13 @@ static inline optimizer::SEL_ARG * get_index_range_tree(uint32_t index,
 
 static bool get_constant_key_infix(KEY *index_info,
                                    optimizer::SEL_ARG *index_range_tree,
-                                   KEY_PART_INFO *first_non_group_part,
-                                   KEY_PART_INFO *min_max_arg_part,
-                                   KEY_PART_INFO *last_part,
+                                   KeyPartInfo *first_non_group_part,
+                                   KeyPartInfo *min_max_arg_part,
+                                   KeyPartInfo *last_part,
                                    Session *session,
                                    unsigned char *key_infix,
                                    uint32_t *key_infix_len,
-                                   KEY_PART_INFO **first_non_infix_part);
+                                   KeyPartInfo **first_non_infix_part);
 
 static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item);
 
@@ -4590,7 +4590,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
   bool have_min= false;              /* true if there is a MIN function. */
   bool have_max= false;              /* true if there is a MAX function. */
   Item_field *min_max_arg_item= NULL; // The argument of all MIN/MAX functions
-  KEY_PART_INFO *min_max_arg_part= NULL; /* The corresponding keypart. */
+  KeyPartInfo *min_max_arg_part= NULL; /* The corresponding keypart. */
   uint32_t group_prefix_len= 0; /* Length (in bytes) of the key prefix. */
   KEY *index_info= NULL;    /* The index chosen for data access. */
   uint32_t index= 0;            /* The id of the chosen index. */
@@ -4674,12 +4674,12 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
   */
   KEY *cur_index_info= table->key_info;
   KEY *cur_index_info_end= cur_index_info + table->s->keys;
-  KEY_PART_INFO *cur_part= NULL;
-  KEY_PART_INFO *end_part= NULL; /* Last part for loops. */
+  KeyPartInfo *cur_part= NULL;
+  KeyPartInfo *end_part= NULL; /* Last part for loops. */
   /* Last index part. */
-  KEY_PART_INFO *last_part= NULL;
-  KEY_PART_INFO *first_non_group_part= NULL;
-  KEY_PART_INFO *first_non_infix_part= NULL;
+  KeyPartInfo *last_part= NULL;
+  KeyPartInfo *first_non_group_part= NULL;
+  KeyPartInfo *first_non_infix_part= NULL;
   uint32_t key_infix_parts= 0;
   uint32_t cur_group_key_parts= 0;
   uint32_t cur_group_prefix_len= 0;
@@ -4891,7 +4891,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
           Store the first and last keyparts that need to be analyzed
           into one array that can be passed as parameter.
         */
-        KEY_PART_INFO *key_part_range[2];
+        KeyPartInfo *key_part_range[2];
         key_part_range[0]= first_non_group_part;
         key_part_range[1]= last_part;
 
@@ -5185,18 +5185,18 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
 static bool
 get_constant_key_infix(KEY *,
                        optimizer::SEL_ARG *index_range_tree,
-                       KEY_PART_INFO *first_non_group_part,
-                       KEY_PART_INFO *min_max_arg_part,
-                       KEY_PART_INFO *last_part,
+                       KeyPartInfo *first_non_group_part,
+                       KeyPartInfo *min_max_arg_part,
+                       KeyPartInfo *last_part,
                        Session *,
                        unsigned char *key_infix,
                        uint32_t *key_infix_len,
-                       KEY_PART_INFO **first_non_infix_part)
+                       KeyPartInfo **first_non_infix_part)
 {
   optimizer::SEL_ARG *cur_range= NULL;
-  KEY_PART_INFO *cur_part= NULL;
+  KeyPartInfo *cur_part= NULL;
   /* End part for the first loop below. */
-  KEY_PART_INFO *end_part= min_max_arg_part ? min_max_arg_part : last_part;
+  KeyPartInfo *end_part= min_max_arg_part ? min_max_arg_part : last_part;
 
   *key_infix_len= 0;
   unsigned char *key_ptr= key_infix;
@@ -5262,7 +5262,7 @@ get_constant_key_infix(KEY *,
     field  field that possibly references some key part in index
 
   NOTES
-    The return value can be used to get a KEY_PART_INFO pointer by
+    The return value can be used to get a KeyPartInfo pointer by
     part= index->key_part + get_field_keypart(...) - 1;
 
   RETURN
@@ -5272,8 +5272,8 @@ get_constant_key_infix(KEY *,
 static inline uint
 get_field_keypart(KEY *index, Field *field)
 {
-  KEY_PART_INFO *part= NULL;
-  KEY_PART_INFO *end= NULL;
+  KeyPartInfo *part= NULL;
+  KeyPartInfo *end= NULL;
 
   for (part= index->key_part, end= part + index->key_parts; part < end; part++)
   {

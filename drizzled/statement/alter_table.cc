@@ -451,7 +451,7 @@ static bool mysql_prepare_alter_table(Session *session,
       continue;
     }
 
-    KEY_PART_INFO *key_part= key_info->key_part;
+    KeyPartInfo *key_part= key_info->key_part;
     key_parts.empty();
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {

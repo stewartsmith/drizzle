@@ -3012,7 +3012,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
         (Item**) session->alloc(sizeof(Item*) * tmp_key_parts)))
     return(true);
 
-  KEY_PART_INFO *cur_key_part= tmp_key->key_part;
+  KeyPartInfo *cur_key_part= tmp_key->key_part;
   StoredKey **ref_key= tab->ref.key_copy;
   unsigned char *cur_ref_buff= tab->ref.key_buff;
 

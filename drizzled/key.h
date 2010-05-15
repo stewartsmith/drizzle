@@ -95,7 +95,7 @@ void key_zero_nulls(unsigned char *tuple, KEY *key_info);
 bool key_cmp_if_same(Table *form,const unsigned char *key,uint32_t index,uint32_t key_length);
 void key_unpack(String *to,Table *form,uint32_t index);
 bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields);
-int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length);
+int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length);
 
 } /* namespace drizzled */
 

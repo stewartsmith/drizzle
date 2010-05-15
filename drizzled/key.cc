@@ -84,7 +84,7 @@ int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *fie
        i++, key_info++)
   {
     uint32_t j;
-    KEY_PART_INFO *key_part;
+    KeyPartInfo *key_part;
     *key_length=0;
     for (j=0, key_part=key_info->key_part ;
 	 j < key_info->key_parts ;
@@ -106,7 +106,7 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
               unsigned int key_length)
 {
   uint32_t length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
 
   if (key_length == 0)
     key_length= key_info->key_length;
@@ -147,8 +147,8 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
 
 void key_zero_nulls(unsigned char *tuple, KEY *key_info)
 {
-  KEY_PART_INFO *key_part= key_info->key_part;
-  KEY_PART_INFO *key_part_end= key_part + key_info->key_parts;
+  KeyPartInfo *key_part= key_info->key_part;
+  KeyPartInfo *key_part_end= key_part + key_info->key_parts;
   for (; key_part != key_part_end; key_part++)
   {
     if (key_part->null_bit && *tuple)
@@ -174,7 +174,7 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
                  uint16_t key_length)
 {
   uint32_t length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
 
   if (key_length == 0)
   {
@@ -262,7 +262,7 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
 bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t key_length)
 {
   uint32_t store_length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
   const unsigned char *key_end= key + key_length;;
 
   for (key_part=table->key_info[idx].key_part;
@@ -328,7 +328,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 
 void key_unpack(String *to, Table *table, uint32_t idx)
 {
-  KEY_PART_INFO *key_part,*key_part_end;
+  KeyPartInfo *key_part,*key_part_end;
   Field *field;
   String tmp;
 
@@ -431,7 +431,7 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     -   1		Key is larger than range
 */
 
-int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length)
+int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length)
 {
   uint32_t store_length;
 

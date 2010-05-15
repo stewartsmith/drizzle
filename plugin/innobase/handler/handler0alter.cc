@@ -260,7 +260,7 @@ innobase_check_index_keys(
 		that the same colum does not appear twice in the index. */
 
 		for (ulint i = 0; i < key.key_parts; i++) {
-			const KEY_PART_INFO&	key_part1
+			const KeyPartInfo&	key_part1
 				= key.key_part[i];
 			const Field*		field
 				= key_part1.field;
@@ -300,7 +300,7 @@ innobase_check_index_keys(
 			}
 
 			for (ulint j = 0; j < i; j++) {
-				const KEY_PART_INFO&	key_part2
+				const KeyPartInfo&	key_part2
 					= key.key_part[j];
 
 				if (strcmp(key_part1.field->field_name,
@@ -327,7 +327,7 @@ static
 void
 innobase_create_index_field_def(
 /*============================*/
-	KEY_PART_INFO*		key_part,	/*!< in: MySQL key definition */
+	KeyPartInfo*		key_part,	/*!< in: MySQL key definition */
 	mem_heap_t*		heap,		/*!< in: memory heap */
 	merge_index_field_t*	index_field)	/*!< out: index field
 						definition for key_part */

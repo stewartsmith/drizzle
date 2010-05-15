@@ -2180,8 +2180,8 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 /*
 static bool my_match_index(XTDDIndex *ind, KEY *index)
 {
-	KEY_PART_INFO	*key_part;
-	KEY_PART_INFO	*key_part_end;
+	KeyPartInfo	*key_part;
+	KeyPartInfo	*key_part_end;
 	u_int			j;
 	XTDDColumnRef	*cref;
 
@@ -2261,8 +2261,8 @@ static xtBool my_is_not_null_int4(XTIndexSegPtr seg)
 static XTIndexPtr my_create_index(XTThreadPtr self, TABLE *table_arg, u_int idx, KEY *index)
 {
 	XTIndexPtr				ind;
-	KEY_PART_INFO			*key_part;
-	KEY_PART_INFO			*key_part_end;
+	KeyPartInfo			*key_part;
+	KeyPartInfo			*key_part_end;
 	XTIndexSegRec			*seg;
 	Field					*field;
 	enum ha_base_keytype	type;
@@ -2537,8 +2537,8 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 
 	/* How many columns are required for all indexes. */
 	KEY				*index;
-	KEY_PART_INFO	*key_part;
-	KEY_PART_INFO	*key_part_end;
+	KeyPartInfo	*key_part;
+	KeyPartInfo	*key_part_end;
 
 #ifndef XT_USE_LAZY_DELETE
 	dic->dic_no_lazy_delete = TRUE;
@@ -2959,8 +2959,8 @@ static void my_free_dd_table(XTThreadPtr self, XTDDTable *dd_tab)
 
 static void ha_create_dd_index(XTThreadPtr self, XTDDIndex *ind, KEY *key)
 {
-	KEY_PART_INFO	*key_part;
-	KEY_PART_INFO	*key_part_end;
+	KeyPartInfo	*key_part;
+	KeyPartInfo	*key_part_end;
 	XTDDColumnRef	*cref;
 
 	if (strcmp(key->name, "PRIMARY") == 0)

@@ -3253,8 +3253,8 @@ ha_innobase::store_key_val_for_row(
   const unsigned char*  record)/*!< in: row in MySQL format */
 {
   KEY*    key_info  = table->key_info + keynr;
-  KEY_PART_INFO*  key_part  = key_info->key_part;
-  KEY_PART_INFO*  end   = key_part + key_info->key_parts;
+  KeyPartInfo*  key_part  = key_info->key_part;
+  KeyPartInfo*  end   = key_part + key_info->key_parts;
   char*   buff_start  = buff;
   enum_field_types mysql_type;
   Field*    field;
@@ -5281,7 +5281,7 @@ create_index(
   int   error;
   ulint   n_fields;
   KEY*    key;
-  KEY_PART_INFO*  key_part;
+  KeyPartInfo*  key_part;
   ulint   ind_type;
   ulint   col_type;
   ulint   prefix_len;
@@ -7743,8 +7743,8 @@ ha_innobase::cmp_ref(
 {
   enum_field_types mysql_type;
   Field*    field;
-  KEY_PART_INFO*  key_part;
-  KEY_PART_INFO*  key_part_end;
+  KeyPartInfo*  key_part;
+  KeyPartInfo*  key_part_end;
   uint    len1;
   uint    len2;
   int   result;

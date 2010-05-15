@@ -637,11 +637,11 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   for (int indx= 0; indx < table.indexes_size(); indx++)
     share->key_parts+= table.indexes(indx).index_part_size();
 
-  share->key_info= (KEY*) share->alloc_root( table.indexes_size() * sizeof(KEY) +share->key_parts*sizeof(KEY_PART_INFO));
+  share->key_info= (KEY*) share->alloc_root( table.indexes_size() * sizeof(KEY) +share->key_parts*sizeof(KeyPartInfo));
 
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
 
-  key_part= reinterpret_cast<KEY_PART_INFO*>
+  key_part= reinterpret_cast<KeyPartInfo*>
     (share->key_info+table.indexes_size());
 
 
@@ -1696,13 +1696,13 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   if (key_parts)
   {
     KEY	*local_key_info, *key_info_end;
-    KEY_PART_INFO *key_part;
+    KeyPartInfo *key_part;
     uint32_t n_length;
-    n_length= keys*sizeof(KEY) + key_parts*sizeof(KEY_PART_INFO);
+    n_length= keys*sizeof(KEY) + key_parts*sizeof(KeyPartInfo);
     if (!(local_key_info= (KEY*) outparam.mem_root.alloc_root(n_length)))
       goto err;
     outparam.key_info= local_key_info;
-    key_part= (reinterpret_cast<KEY_PART_INFO*> (local_key_info+keys));
+    key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
 
     memcpy(local_key_info, key_info, sizeof(*local_key_info)*keys);
     memcpy(key_part, key_info[0].key_part, (sizeof(*key_part) *
@@ -1712,7 +1712,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
          local_key_info < key_info_end ;
          local_key_info++)
     {
-      KEY_PART_INFO *key_part_end;
+      KeyPartInfo *key_part_end;
 
       local_key_info->table= &outparam;
       local_key_info->key_part= key_part;

@@ -2880,7 +2880,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
     We can't copy all data as the key may have different format
     as the row data (for example as with VARCHAR keys)
   */
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
   for (group=table->group,key_part=table->key_info[0].key_part;
        group ;
        group=group->next,key_part++)

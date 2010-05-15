@@ -39,29 +39,7 @@ typedef struct st_io_cache IO_CACHE;
 class Table;
 class Field;
 
-typedef struct st_keyfile_info {	/* used with ha_info() */
-  unsigned char ref[MAX_REFLENGTH];		/* Pointer to current row */
-  unsigned char dupp_ref[MAX_REFLENGTH];	/* Pointer to dupp row */
-  uint32_t ref_length;			/* Length of ref (1-8) */
-  uint32_t block_size;			/* index block size */
-  int filenr;				/* (uniq) filenr for table */
-  ha_rows records;			/* Records i datafilen */
-  ha_rows deleted;			/* Deleted records */
-  uint64_t data_file_length;		/* Length off data file */
-  uint64_t max_data_file_length;	/* Length off data file */
-  uint64_t index_file_length;
-  uint64_t max_index_file_length;
-  uint64_t delete_length;		/* Free bytes */
-  uint64_t auto_increment_value;
-  int errkey,sortkey;			/* Last errorkey and sorted by */
-  time_t create_time;			/* When table was created */
-  time_t check_time;
-  time_t update_time;
-  uint64_t mean_rec_length;		/* physical reclength */
-} KEYFILE_INFO;
-
-
-typedef struct st_key_part_info {	/* Info about a key part */
+struct KeyPartInfo {	/* Info about a key part */
   Field *field;
   unsigned int	offset;				/* offset in record (from 0) */
   unsigned int	null_offset;			/* Offset to null_bit in record */
@@ -81,7 +59,7 @@ typedef struct st_key_part_info {	/* Info about a key part */
   uint16_t key_part_flag;			/* 0 or HA_REVERSE_SORT */
   uint8_t type;
   uint8_t null_bit;			/* Position to null_bit */
-} KEY_PART_INFO ;
+};
 
 
 typedef struct st_key {
@@ -92,7 +70,7 @@ typedef struct st_key {
   uint32_t  extra_length;
   unsigned int usable_key_parts;	/* Should normally be = key_parts */
   uint32_t  block_size;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
   char	*name;				/* Name of key */
   /*
     Array of AVG(#records with the same field value) for 1st ... Nth key part.

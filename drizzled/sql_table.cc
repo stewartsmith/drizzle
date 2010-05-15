@@ -552,7 +552,7 @@ static int mysql_prepare_create_table(Session *session,
   uint		field,null_fields,blob_columns,max_key_length;
   ulong		record_offset= 0;
   KEY		*key_info;
-  KEY_PART_INFO *key_part_info;
+  KeyPartInfo *key_part_info;
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		field_no,dup_no;
   int		select_field_pos,auto_increment=0;
@@ -911,7 +911,7 @@ static int mysql_prepare_create_table(Session *session,
   }
 
   (*key_info_buffer)= key_info= (KEY*) memory::sql_calloc(sizeof(KEY) * (*key_count));
-  key_part_info=(KEY_PART_INFO*) memory::sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
+  key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 

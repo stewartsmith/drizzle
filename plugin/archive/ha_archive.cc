@@ -543,8 +543,8 @@ int ArchiveEngine::doCreateTable(Session &,
   for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
     KEY *pos= table_arg.key_info+key;
-    KEY_PART_INFO *key_part=     pos->key_part;
-    KEY_PART_INFO *key_part_end= key_part + pos->key_parts;
+    KeyPartInfo *key_part=     pos->key_part;
+    KeyPartInfo *key_part_end= key_part + pos->key_parts;
 
     for (; key_part != key_part_end; key_part++)
     {

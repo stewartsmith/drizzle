@@ -480,7 +480,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
   for (uint32_t i=0 ; i < share->keys ; i++,key_info++)
   {
-    KEY_PART_INFO *key_part= key_info->key_part;
+    KeyPartInfo *key_part= key_info->key_part;
     bool found_primary=0;
     packet->append(STRING_WITH_LEN(",\n  "));
 

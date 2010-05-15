@@ -541,8 +541,8 @@ void Table::mark_columns_used_by_index_no_reset(uint32_t index)
 void Table::mark_columns_used_by_index_no_reset(uint32_t index,
                                                 MyBitmap *bitmap)
 {
-  KEY_PART_INFO *key_part= key_info[index].key_part;
-  KEY_PART_INFO *key_part_end= (key_part +
+  KeyPartInfo *key_part= key_info[index].key_part;
+  KeyPartInfo *key_part_end= (key_part +
                                 key_info[index].key_parts);
   for (;key_part != key_part_end; key_part++)
     bitmap->setBit(key_part->fieldnr-1);
@@ -834,7 +834,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint32_t *blob_field;
   CopyField *copy= 0;
   KEY *keyinfo;
-  KEY_PART_INFO *key_part_info;
+  KeyPartInfo *key_part_info;
   Item **copy_func;
   MI_COLUMNDEF *recinfo;
   uint32_t total_uneven_bit_length= 0;
@@ -1362,10 +1362,10 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 			 (share->uniques ? test(null_pack_length) : 0));
     table->distinct= 1;
     share->keys= 1;
-    if (!(key_part_info= (KEY_PART_INFO*)
-         table->mem_root.alloc_root(keyinfo->key_parts * sizeof(KEY_PART_INFO))))
+    if (!(key_part_info= (KeyPartInfo*)
+         table->mem_root.alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo))))
       goto err;
-    memset(key_part_info, 0, keyinfo->key_parts * sizeof(KEY_PART_INFO));
+    memset(key_part_info, 0, keyinfo->key_parts * sizeof(KeyPartInfo));
     table->key_info=keyinfo;
     keyinfo->key_part=key_part_info;
     keyinfo->flags=HA_NOSAME | HA_NULL_ARE_EQUAL;

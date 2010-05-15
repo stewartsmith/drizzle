@@ -79,7 +79,7 @@ private:
   bool have_min; /**< Specify whether we are computing */
   bool have_max; /**< a MIN, a MAX, or both. */
   bool seen_first_key; /**< Denotes whether the first key was retrieved.*/
-  KEY_PART_INFO *min_max_arg_part; /** The keypart of the only argument field of all MIN/MAX functions. */
+  KeyPartInfo *min_max_arg_part; /** The keypart of the only argument field of all MIN/MAX functions. */
   uint32_t min_max_arg_len; /**< The length of the MIN/MAX argument field */
   unsigned char *key_infix; /**< Infix of constants from equality predicates. */
   uint32_t key_infix_len;
@@ -284,7 +284,7 @@ public:
                          JOIN *join, 
                          bool have_min,
                          bool have_max, 
-                         KEY_PART_INFO *min_max_arg_part,
+                         KeyPartInfo *min_max_arg_part,
                          uint32_t group_prefix_len, 
                          uint32_t group_key_parts,
                          uint32_t used_key_parts, 
