@@ -28,18 +28,18 @@
 #include "drizzled/internal/m_string.h"
 
 #include "drizzled/plugin.h"
-#include "drizzled/plugin/load_list.h"
+#include "drizzled/module/load_list.h"
+#include "drizzled/module/library.h"
+#include "drizzled/module/registry.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/show.h"
 #include "drizzled/cursor.h"
 #include "drizzled/set_var.h"
 #include "drizzled/session.h"
 #include "drizzled/item/null.h"
-#include "drizzled/plugin/registry.h"
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/errmsg_print.h"
-#include "drizzled/plugin/library.h"
 #include "drizzled/strfunc.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/util/tokenize.h"
@@ -50,6 +50,14 @@
 #endif
 
 using namespace std;
+
+/** These exist just to prevent symbols from being optimized out */
+typedef drizzled::module::Manifest drizzled_builtin_list[];
+extern drizzled_builtin_list PANDORA_BUILTIN_SYMBOLS_LIST;
+drizzled::module::Manifest *drizzled_builtins[]=
+{
+  PANDORA_BUILTIN_SYMBOLS_LIST, NULL
+};
 
 namespace drizzled
 {
@@ -120,7 +128,7 @@ struct st_bookmark
 class sys_var_pluginvar: public sys_var
 {
 public:
-  plugin::Module *plugin;
+  module::Module *plugin;
   drizzle_sys_var *plugin_var;
 
   sys_var_pluginvar(const std::string name_arg,
@@ -147,11 +155,11 @@ public:
 /* prototypes */
 static void plugin_prune_list(vector<string> &plugin_list,
                               const vector<string> &plugins_to_remove);
-static bool plugin_load_list(plugin::Registry &registry,
+static bool plugin_load_list(module::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
                              const set<string> &plugin_list,
                              bool builtin= false);
-static int test_plugin_options(memory::Root *, plugin::Module *,
+static int test_plugin_options(memory::Root *, module::Module *,
                                int *, char **);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
@@ -234,8 +242,8 @@ static int item_val_real(drizzle_value *value, double *buf)
   NOTE
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static bool plugin_add(plugin::Registry &registry, memory::Root *tmp_root,
-                       plugin::Library *library,
+static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
+                       module::Library *library,
                        int *argc, char **argv)
 {
   if (! initialized)
@@ -248,9 +256,9 @@ static bool plugin_add(plugin::Registry &registry, memory::Root *tmp_root,
     return false;
   }
 
-  plugin::Module *tmp= NULL;
+  module::Module *tmp= NULL;
   /* Find plugin by name */
-  const plugin::Manifest *manifest= library->getManifest();
+  const module::Manifest *manifest= library->getManifest();
 
   if (registry.find(manifest->name))
   {
@@ -262,7 +270,7 @@ static bool plugin_add(plugin::Registry &registry, memory::Root *tmp_root,
     return true;
   }
 
-  tmp= new (std::nothrow) plugin::Module(manifest, library);
+  tmp= new (std::nothrow) module::Module(manifest, library);
   if (tmp == NULL)
     return true;
 
@@ -277,7 +285,7 @@ static bool plugin_add(plugin::Registry &registry, memory::Root *tmp_root,
 }
 
 
-static void delete_module(plugin::Module *module)
+static void delete_module(module::Module *module)
 {
   /* Free allocated strings before deleting the plugin. */
   plugin_vars_free_values(module->system_vars);
@@ -289,14 +297,14 @@ static void delete_module(plugin::Module *module)
 }
 
 
-static void reap_plugins(plugin::Registry &registry)
+static void reap_plugins(module::Registry &registry)
 {
-  std::map<std::string, plugin::Module *>::const_iterator modules=
+  std::map<std::string, module::Module *>::const_iterator modules=
     registry.getModulesMap().begin();
 
   while (modules != registry.getModulesMap().end())
   {
-    plugin::Module *module= (*modules).second;
+    module::Module *module= (*modules).second;
     delete_module(module);
     ++modules;
   }
@@ -305,7 +313,7 @@ static void reap_plugins(plugin::Registry &registry)
 }
 
 
-static void plugin_initialize_vars(plugin::Module *module)
+static void plugin_initialize_vars(module::Module *module)
 {
   /*
     set the plugin attribute of plugin's sys vars so they are pointing
@@ -325,8 +333,8 @@ static void plugin_initialize_vars(plugin::Module *module)
 }
 
 
-static bool plugin_initialize(plugin::Registry &registry,
-                              plugin::Module *module)
+static bool plugin_initialize(module::Registry &registry,
+                              module::Module *module)
 {
   assert(module->isInited == false);
 
@@ -364,11 +372,11 @@ static unsigned char *get_bookmark_hash_key(const unsigned char *buff,
 
   Finally we initialize everything, aka the dynamic that have yet to initialize.
 */
-bool plugin_init(plugin::Registry &registry,
+bool plugin_init(module::Registry &registry,
                  int *argc, char **argv,
                  bool skip_init)
 {
-  plugin::Module *module;
+  module::Module *module;
   memory::Root tmp_root(4096);
 
   if (initialized)
@@ -444,7 +452,7 @@ bool plugin_init(plugin::Registry &registry,
   /*
     Now we initialize all remaining plugins
   */
-  std::map<std::string, plugin::Module *>::const_iterator modules=
+  std::map<std::string, module::Module *>::const_iterator modules=
     registry.getModulesMap().begin();
     
   while (modules != registry.getModulesMap().end())
@@ -500,12 +508,12 @@ static void plugin_prune_list(vector<string> &plugin_list,
 /*
   called only by plugin_init()
 */
-static bool plugin_load_list(plugin::Registry &registry,
+static bool plugin_load_list(module::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
                              const set<string> &plugin_list,
                              bool builtin)
 {
-  plugin::Library *library= NULL;
+  module::Library *library= NULL;
 
   for (set<string>::const_iterator iter= plugin_list.begin();
        iter != plugin_list.end();
@@ -537,7 +545,7 @@ static bool plugin_load_list(plugin::Registry &registry,
 }
 
 
-void plugin_shutdown(plugin::Registry &registry)
+void module_shutdown(module::Registry &registry)
 {
 
   if (initialized)
@@ -771,7 +779,7 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
 {
   sys_var *var;
   sys_var_pluginvar *pi= NULL;
-  plugin::Module *module;
+  module::Module *module;
 
   pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   if ((var= intern_find_sys_var(str, length, false)) &&
@@ -1426,7 +1434,7 @@ static int get_one_plugin_option(int, const struct option *, char *)
 }
 
 
-static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
+static int construct_options(memory::Root *mem_root, module::Module *tmp,
                              option *options)
 {
   
@@ -1596,7 +1604,7 @@ static int construct_options(memory::Root *mem_root, plugin::Module *tmp,
 }
 
 
-static option *construct_help_options(memory::Root *mem_root, plugin::Module *p)
+static option *construct_help_options(memory::Root *mem_root, module::Module *p)
 {
   drizzle_sys_var **opt;
   option *opts;
@@ -1645,7 +1653,7 @@ void drizzle_del_plugin_sysvar()
   NOTE:
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static int test_plugin_options(memory::Root *tmp_root, plugin::Module *tmp,
+static int test_plugin_options(memory::Root *tmp_root, module::Module *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
@@ -1761,20 +1769,20 @@ public:
 
 void my_print_help_inc_plugins(option *main_options)
 {
-  plugin::Registry &registry= plugin::Registry::singleton();
+  module::Registry &registry= module::Registry::singleton();
   vector<option> all_options;
-  plugin::Module *p;
   memory::Root mem_root(4096);
   option *opt= NULL;
 
+
   if (initialized)
   {
-    std::map<std::string, plugin::Module *>::const_iterator modules=
+    std::map<std::string, module::Module *>::const_iterator modules=
       registry.getModulesMap().begin();
     
     while (modules != registry.getModulesMap().end())
     {
-      p= (*modules).second;
+      module::Module *p= (*modules).second;
       ++modules;
 
       if (p->getManifest().system_vars == NULL)
@@ -1821,11 +1829,4 @@ void my_print_help_inc_plugins(option *main_options)
 
 } /* namespace drizzled */
 
-/** These exist just to prevent symbols from being optimized out */
-typedef drizzled::plugin::Manifest drizzled_builtin_list[];
-extern drizzled_builtin_list PANDORA_BUILTIN_SYMBOLS_LIST;
-drizzled::plugin::Manifest *drizzled_builtins[]=
-{
-  PANDORA_BUILTIN_SYMBOLS_LIST, NULL
-};
 

@@ -120,6 +120,7 @@ extern "C" {
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
+#include "mysql_addons.h"
 }
 
 #include "ha_innodb.h"
@@ -1103,6 +1104,8 @@ convert_error_code_to_mysql(
     return(HA_ERR_UNSUPPORTED);
   }
 }
+
+
 
 /*************************************************************//**
 If you want to print a session that is not associated with the current thread,

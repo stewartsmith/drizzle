@@ -39,7 +39,6 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
-#include "drizzled/plugin/registry.h"
 #include "drizzled/session_list.h"
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>

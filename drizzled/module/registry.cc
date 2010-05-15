@@ -23,10 +23,10 @@
 #include <vector>
 #include <map>
 
-#include "drizzled/plugin/registry.h"
+#include "drizzled/module/registry.h"
+#include "drizzled/module/library.h"
 
 #include "drizzled/plugin.h"
-#include "drizzled/plugin/library.h"
 #include "drizzled/show.h"
 #include "drizzled/cursor.h"
 
@@ -35,7 +35,8 @@ using namespace std;
 namespace drizzled
 {
 
-plugin::Registry::~Registry()
+
+module::Registry::~Registry()
 {
   map<string, plugin::Plugin *>::iterator plugin_iter= plugin_registry.begin();
   while (plugin_iter != plugin_registry.end())
@@ -47,7 +48,7 @@ plugin::Registry::~Registry()
 
   /*
     @TODO When we delete modules here, we segfault on a bad string. Why?
-    map<string, plugin::Module *>::iterator module_iter= module_map.begin();
+    map<string, module::Module *>::iterator module_iter= module_map.begin();
   while (module_iter != module_map.end())
   {
     delete (*module_iter).second;
@@ -55,7 +56,7 @@ plugin::Registry::~Registry()
   }
   module_map.clear();
   */
-  map<string, plugin::Library *>::iterator library_iter= library_map.begin();
+  map<string, module::Library *>::iterator library_iter= library_map.begin();
   while (library_iter != library_map.end())
   {
     delete (*library_iter).second;
@@ -64,24 +65,24 @@ plugin::Registry::~Registry()
   library_map.clear();
 }
 
-void plugin::Registry::shutdown()
+void module::Registry::shutdown()
 {
-  plugin::Registry& registry= singleton();
+  module::Registry& registry= singleton();
   delete &registry;
 }
 
-plugin::Module *plugin::Registry::find(string name)
+module::Module *module::Registry::find(string name)
 {
   transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-  map<string, plugin::Module *>::iterator map_iter;
+  map<string, module::Module *>::iterator map_iter;
   map_iter= module_map.find(name);
   if (map_iter != module_map.end())
     return (*map_iter).second;
   return(0);
 }
 
-void plugin::Registry::add(plugin::Module *handle)
+void module::Registry::add(module::Module *handle)
 {
   string add_str(handle->getName());
   transform(add_str.begin(), add_str.end(),
@@ -91,14 +92,14 @@ void plugin::Registry::add(plugin::Module *handle)
 }
 
 
-vector<plugin::Module *> plugin::Registry::getList(bool active)
+vector<module::Module *> module::Registry::getList(bool active)
 {
-  plugin::Module *plugin= NULL;
+  module::Module *plugin= NULL;
 
-  vector<plugin::Module *> plugins;
+  vector<module::Module *> plugins;
   plugins.reserve(module_map.size());
 
-  map<string, plugin::Module *>::iterator map_iter;
+  map<string, module::Module *>::iterator map_iter;
   for (map_iter= module_map.begin();
        map_iter != module_map.end();
        map_iter++)
@@ -113,19 +114,18 @@ vector<plugin::Module *> plugin::Registry::getList(bool active)
   return plugins;
 }
 
-
-plugin::Library *plugin::Registry::addLibrary(const string &plugin_name,
+module::Library *module::Registry::addLibrary(const string &plugin_name,
                                               bool builtin)
 {
 
   /* If this dll is already loaded just return it */
-  plugin::Library *library= findLibrary(plugin_name);
+  module::Library *library= findLibrary(plugin_name);
   if (library != NULL)
   {
     return library;
   }
 
-  library= plugin::Library::loadLibrary(plugin_name, builtin);
+  library= module::Library::loadLibrary(plugin_name, builtin);
   if (library != NULL)
   {
     /* Add this dll to the map */
@@ -135,9 +135,9 @@ plugin::Library *plugin::Registry::addLibrary(const string &plugin_name,
   return library;
 }
 
-void plugin::Registry::removeLibrary(const string &plugin_name)
+void module::Registry::removeLibrary(const string &plugin_name)
 {
-  map<string, plugin::Library *>::iterator iter=
+  map<string, module::Library *>::iterator iter=
     library_map.find(plugin_name);
   if (iter != library_map.end())
   {
@@ -146,13 +146,18 @@ void plugin::Registry::removeLibrary(const string &plugin_name)
   }
 }
 
-plugin::Library *plugin::Registry::findLibrary(const string &plugin_name) const
+module::Library *module::Registry::findLibrary(const string &plugin_name) const
 {
-  map<string, plugin::Library *>::const_iterator iter=
+  map<string, module::Library *>::const_iterator iter=
     library_map.find(plugin_name);
   if (iter != library_map.end())
     return (*iter).second;
   return NULL;
+}
+
+void module::Registry::shutdownModules()
+{
+  module_shutdown(*this);
 }
 
 } /* namespace drizzled */

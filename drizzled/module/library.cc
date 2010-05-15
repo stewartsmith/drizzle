@@ -28,20 +28,20 @@
 #include "drizzled/definitions.h"
 #include "drizzled/error.h"
 #include "drizzled/errmsg_print.h"
-#include "drizzled/plugin/library.h"
+#include "drizzled/module/library.h"
 
 using namespace std;
 
 namespace drizzled
 {
 
-plugin::Library::Library(const std::string &name_arg,
+module::Library::Library(const std::string &name_arg,
                          void *handle_arg,
                          const Manifest *manifest_arg)
  : name(name_arg), handle(handle_arg), manifest(manifest_arg)
 {}
 
-plugin::Library::~Library()
+module::Library::~Library()
 {
   /**
    * @TODO: This breaks valgrind at the moment. 
@@ -50,7 +50,7 @@ plugin::Library::~Library()
   */
 }
 
-const string plugin::Library::getLibraryPath(const string &plugin_name)
+const string module::Library::getLibraryPath(const string &plugin_name)
 {
   /* Compile dll path */
   string dlpath;
@@ -68,7 +68,7 @@ const string plugin::Library::getLibraryPath(const string &plugin_name)
   return dlpath;
 }
 
-plugin::Library *plugin::Library::loadLibrary(const string &plugin_name, bool builtin)
+module::Library *module::Library::loadLibrary(const string &plugin_name, bool builtin)
 {
   /*
     Ensure that the dll doesn't have a path.
@@ -142,7 +142,7 @@ plugin::Library *plugin::Library::loadLibrary(const string &plugin_name, bool bu
     return NULL;
   }
 
-  const Manifest *manifest= static_cast<plugin::Manifest *>(sym); 
+  const Manifest *manifest= static_cast<module::Manifest *>(sym); 
   if (manifest->drizzle_version != DRIZZLE_VERSION_ID)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -154,7 +154,7 @@ plugin::Library *plugin::Library::loadLibrary(const string &plugin_name, bool bu
     return NULL;
   }
 
-  return new (nothrow) plugin::Library(plugin_name, handle, manifest);
+  return new (nothrow) module::Library(plugin_name, handle, manifest);
 }
 
 } /* namespace drizzled */

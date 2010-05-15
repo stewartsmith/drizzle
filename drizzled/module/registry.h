@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_REGISTRY_H
-#define DRIZZLED_PLUGIN_REGISTRY_H
+#ifndef DRIZZLED_MODULE_REGISTRY_H
+#define DRIZZLED_MODULE_REGISTRY_H
 
 #include <string>
 #include <vector>
@@ -33,8 +33,12 @@ namespace drizzled
 {
 namespace plugin
 {
-class Module;
 class Plugin;
+}
+
+namespace module
+{
+class Module;
 class Library;
 
 class Registry
@@ -42,7 +46,7 @@ class Registry
 private:
   std::map<std::string, Library *> library_map;
   std::map<std::string, Module *> module_map;
-  std::map<std::string, Plugin *> plugin_registry;
+  std::map<std::string, plugin::Plugin *> plugin_registry;
 
   Registry()
    : module_map(),
@@ -54,9 +58,9 @@ private:
   ~Registry();
 public:
 
-  static plugin::Registry& singleton()
+  static Registry& singleton()
   {
-    static plugin::Registry *registry= new plugin::Registry();
+    static Registry *registry= new Registry();
     return *registry;
   }
 
@@ -69,7 +73,7 @@ public:
 
   std::vector<Module *> getList(bool active);
 
-  const std::map<std::string, Plugin *> &getPluginsMap() const
+  const std::map<std::string, plugin::Plugin *> &getPluginsMap() const
   {
     return plugin_registry;
   }
@@ -82,6 +86,8 @@ public:
   Library *addLibrary(const std::string &plugin_name, bool builtin= false);
   void removeLibrary(const std::string &plugin_name);
   Library *findLibrary(const std::string &plugin_name) const;
+
+  void shutdownModules();
 
   template<class T>
   void add(T *plugin)
@@ -106,7 +112,7 @@ public:
                     plugin->getName().c_str());
       unireg_abort(1);
     }
-    plugin_registry.insert(std::pair<std::string, Plugin *>(plugin_name, plugin));
+    plugin_registry.insert(std::pair<std::string, plugin::Plugin *>(plugin_name, plugin));
   }
 
   template<class T>
@@ -122,6 +128,6 @@ public:
 
 };
 
-} /* end namespace plugin */
-} /* end namespace drizzled */
-#endif /* DRIZZLED_PLUGIN_REGISTRY_H */
+} /* namespace module */
+} /* namespace drizzled */
+#endif /* DRIZZLED_MODULE_REGISTRY_H */

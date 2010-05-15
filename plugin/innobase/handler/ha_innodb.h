@@ -221,12 +221,6 @@ uint64_t drizzle_bin_log_file_pos(void);
 */
 int session_slave_thread(const Session *session);
 
-/**
-  Mark transaction to rollback and mark error as fatal to a sub-statement.
-  @param  session   Thread handle
-  @param  all   TRUE <=> rollback main transaction.
-*/
-void session_mark_transaction_to_rollback(Session *session, bool all);
 }
 
 typedef struct trx_struct trx_t;
