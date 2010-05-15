@@ -315,12 +315,6 @@ public:
   }
 
 private:
-  std::vector<std::string> fieldnames;
-
-  void addFieldName(std::string arg)
-  {
-    fieldnames.push_back(arg);
-  }
   TYPELIB *intervals;			/* pointer to interval info */
 
 public:

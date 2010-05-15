@@ -372,7 +372,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   Cursor *cursor= table->cursor;
   TableShare *share= table->s;
   HA_CREATE_INFO create_info;
-  bool show_table_options= false;
   my_bitmap_map *old_map;
 
   table->restoreRecordAsDefault(); // Get empty record
@@ -540,7 +539,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
   packet->append(STRING_WITH_LEN("\n)"));
   {
-    show_table_options= true;
     /*
       Get possible table space definitions and append them
       to the CREATE TABLE statement
@@ -554,11 +552,23 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
     packet->append(STRING_WITH_LEN(" ENGINE="));
     packet->append(cursor->getEngine()->getName().c_str());
 
+    size_t num_engine_options= share->getTableProto()->engine().options_size();
+    for (size_t x= 0; x < num_engine_options; ++x)
+    {
+      const message::Engine::Option &option= share->getTableProto()->engine().options(x);
+      packet->append(" ");
+      packet->append(option.name().c_str());
+      packet->append("=");
+      append_unescaped(packet, option.state().c_str(), option.state().length());
+    }
+
+#if 0
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
       packet->append(ha_row_type[(uint32_t) create_info.row_type]);
     }
+#endif
     if (share->block_size)
     {
       packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));

@@ -895,9 +895,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   {
     message::Table::Field pfield= table.field(fieldnr);
 
-    /* field names */
-    addFieldName(std::string(pfield.name().c_str(), pfield.name().length()));
-
     /* enum typelibs */
     if (pfield.type() != message::Table::Field::ENUM)
       continue;
@@ -1199,7 +1196,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                 ((field_type == DRIZZLE_TYPE_ENUM) ?
                                  share->intervals + (interval_nr++)
                                  : (TYPELIB*) 0),
-                                fieldnames[fieldnr].c_str());
+                                getTableProto()->field(fieldnr).name().c_str());
 
     share->field[fieldnr]= f;
 
