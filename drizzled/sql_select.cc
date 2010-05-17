@@ -884,7 +884,7 @@ void calc_used_field_length(Session *, JoinTable *join_tab)
 StoredKey *get_store_key(Session *session,
                          optimizer::KeyUse *keyuse,
                          table_map used_tables,
-	                 KEY_PART_INFO *key_part,
+	                 KeyPartInfo *key_part,
                          unsigned char *key_buff,
                          uint32_t maybe_null)
 {
@@ -971,7 +971,7 @@ bool create_ref_for_key(JOIN *join,
   uint32_t length;
   uint32_t key;
   Table *table= NULL;
-  KEY *keyinfo= NULL;
+  KeyInfo *keyinfo= NULL;
 
   /*  Use best key from find_best */
   table= j->table;
@@ -3874,7 +3874,7 @@ int join_read_next_same_diff(READ_RECORD *info)
   JoinTable *tab=table->reginfo.join_tab;
   if (tab->insideout_match_tab->found_match)
   {
-    KEY *key= tab->table->key_info + tab->index;
+    KeyInfo *key= tab->table->key_info + tab->index;
     do
     {
       int error;
@@ -4012,7 +4012,7 @@ int join_read_next_different(READ_RECORD *info)
   JoinTable *tab= info->do_insideout_scan;
   if (tab->insideout_match_tab->found_match)
   {
-    KEY *key= tab->table->key_info + tab->index;
+    KeyInfo *key= tab->table->key_info + tab->index;
     do
     {
       int error;
@@ -4456,7 +4456,7 @@ static Item *part_of_refkey(Table *table,Field *field)
   uint32_t ref_parts=table->reginfo.join_tab->ref.key_parts;
   if (ref_parts)
   {
-    KEY_PART_INFO *key_part=
+    KeyPartInfo *key_part=
       table->key_info[table->reginfo.join_tab->ref.key].key_part;
     uint32_t part;
 
@@ -4496,8 +4496,8 @@ static Item *part_of_refkey(Table *table,Field *field)
 */
 static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uint32_t *used_key_parts)
 {
-  KEY_PART_INFO *key_part= NULL;
-  KEY_PART_INFO *key_part_end= NULL;
+  KeyPartInfo *key_part= NULL;
+  KeyPartInfo *key_part_end= NULL;
   key_part= table->key_info[idx].key_part;
   key_part_end= key_part + table->key_info[idx].key_parts;
   key_part_map const_key_parts=table->const_key_parts[idx];
@@ -4579,9 +4579,9 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
   @retval
     0	no sub key
 */
-inline bool is_subkey(KEY_PART_INFO *key_part,
-                      KEY_PART_INFO *ref_key_part,
-	              KEY_PART_INFO *ref_key_part_end)
+inline bool is_subkey(KeyPartInfo *key_part,
+                      KeyPartInfo *ref_key_part,
+	              KeyPartInfo *ref_key_part_end)
 {
   for (; ref_key_part < ref_key_part_end; key_part++, ref_key_part++)
     if (! key_part->field->eq(ref_key_part->field))
@@ -4610,8 +4610,8 @@ static uint32_t test_if_subkey(order_st *order,
   uint32_t min_length= UINT32_MAX;
   uint32_t best= MAX_KEY;
   uint32_t not_used;
-  KEY_PART_INFO *ref_key_part= table->key_info[ref].key_part;
-  KEY_PART_INFO *ref_key_part_end= ref_key_part + ref_key_parts;
+  KeyPartInfo *ref_key_part= table->key_info[ref].key_part;
+  KeyPartInfo *ref_key_part_end= ref_key_part + ref_key_parts;
 
   for (nr= 0 ; nr < table->s->keys ; nr++)
   {
@@ -4667,9 +4667,9 @@ bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *
     if (keynr == table->s->primary_key ||
          (table->key_info[keynr].flags & HA_NOSAME))
     {
-      KEY *keyinfo= table->key_info + keynr;
-      KEY_PART_INFO *key_part= NULL;
-      KEY_PART_INFO *key_part_end= NULL;
+      KeyInfo *keyinfo= table->key_info + keynr;
+      KeyPartInfo *key_part= NULL;
+      KeyPartInfo *key_part_end= NULL;
 
       for (key_part=keyinfo->key_part,
            key_part_end=key_part+ keyinfo->key_parts;
@@ -4986,7 +4986,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
         {
           double rec_per_key;
           double index_scan_time;
-          KEY *keyinfo= tab->table->key_info+nr;
+          KeyInfo *keyinfo= tab->table->key_info+nr;
           if (select_limit == HA_POS_ERROR)
             select_limit= table_records;
           if (group)

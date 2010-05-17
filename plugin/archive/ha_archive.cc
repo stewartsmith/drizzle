@@ -542,9 +542,9 @@ int ArchiveEngine::doCreateTable(Session &,
 
   for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
-    KEY *pos= table_arg.key_info+key;
-    KEY_PART_INFO *key_part=     pos->key_part;
-    KEY_PART_INFO *key_part_end= key_part + pos->key_parts;
+    KeyInfo *pos= table_arg.key_info+key;
+    KeyPartInfo *key_part=     pos->key_part;
+    KeyPartInfo *key_part_end= key_part + pos->key_parts;
 
     for (; key_part != key_part_end; key_part++)
     {
@@ -712,7 +712,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
 
   if (table->next_number_field && record == table->record[0])
   {
-    KEY *mkey= &table->s->key_info[0]; // We only support one key right now
+    KeyInfo *mkey= &table->s->key_info[0]; // We only support one key right now
     update_auto_increment();
     temp_auto= table->next_number_field->val_int();
 
@@ -773,7 +773,7 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 {
   int rc;
   bool found= 0;
-  KEY *mkey= &table->s->key_info[0];
+  KeyInfo *mkey= &table->s->key_info[0];
   current_k_offset= mkey->key_part->offset;
   current_key= key;
   current_key_len= key_len;
