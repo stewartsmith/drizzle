@@ -69,7 +69,7 @@ str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-static void store_key_options(String *packet, Table *table, KEY *key_info);
+static void store_key_options(String *packet, Table *table, KeyInfo *key_info);
 
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
@@ -367,12 +367,11 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
   Field **ptr,*field;
   uint32_t primary_key;
-  KEY *key_info;
+  KeyInfo *key_info;
   Table *table= table_list->table;
   Cursor *cursor= table->cursor;
   TableShare *share= table->s;
   HA_CREATE_INFO create_info;
-  bool show_table_options= false;
   my_bitmap_map *old_map;
 
   table->restoreRecordAsDefault(); // Get empty record
@@ -383,7 +382,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
     packet->append(STRING_WITH_LEN("CREATE TABLE "));
   if (is_if_not_exists)
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
-  alias= share->table_name.str;
+  alias= share->getTableName();
 
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
@@ -481,7 +480,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
   for (uint32_t i=0 ; i < share->keys ; i++,key_info++)
   {
-    KEY_PART_INFO *key_part= key_info->key_part;
+    KeyPartInfo *key_part= key_info->key_part;
     bool found_primary=0;
     packet->append(STRING_WITH_LEN(",\n  "));
 
@@ -540,7 +539,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
   packet->append(STRING_WITH_LEN("\n)"));
   {
-    show_table_options= true;
     /*
       Get possible table space definitions and append them
       to the CREATE TABLE statement
@@ -554,21 +552,23 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
     packet->append(STRING_WITH_LEN(" ENGINE="));
     packet->append(cursor->getEngine()->getName().c_str());
 
-    if (share->db_create_options & HA_OPTION_PACK_KEYS)
-      packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
-    if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
-      packet->append(STRING_WITH_LEN(" PACK_KEYS=0"));
+    size_t num_engine_options= share->getTableProto()->engine().options_size();
+    for (size_t x= 0; x < num_engine_options; ++x)
+    {
+      const message::Engine::Option &option= share->getTableProto()->engine().options(x);
+      packet->append(" ");
+      packet->append(option.name().c_str());
+      packet->append("=");
+      append_unescaped(packet, option.state().c_str(), option.state().length());
+    }
+
+#if 0
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
       packet->append(ha_row_type[(uint32_t) create_info.row_type]);
     }
-    if (table->s->hasKeyBlockSize())
-    {
-      packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-      buff= to_string(table->s->getKeyBlockSize());
-      packet->append(buff.c_str(), buff.length());
-    }
+#endif
     if (share->block_size)
     {
       packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
@@ -587,23 +587,13 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   return(0);
 }
 
-static void store_key_options(String *packet, Table *table, KEY *key_info)
+static void store_key_options(String *packet, Table *, KeyInfo *key_info)
 {
-  char *end, buff[32];
-
   if (key_info->algorithm == HA_KEY_ALG_BTREE)
     packet->append(STRING_WITH_LEN(" USING BTREE"));
 
   if (key_info->algorithm == HA_KEY_ALG_HASH)
     packet->append(STRING_WITH_LEN(" USING HASH"));
-
-  if ((key_info->flags & HA_USES_BLOCK_SIZE) &&
-      table->s->getKeyBlockSize() != key_info->block_size)
-  {
-    packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-    end= internal::int64_t10_to_str(key_info->block_size, buff, 10);
-    packet->append(buff, (uint32_t) (end - buff));
-  }
 
   assert(test(key_info->flags & HA_USES_COMMENT) ==
               (key_info->comment.length > 0));
