@@ -349,7 +349,7 @@ static DRIZZLE_SYSVAR_INT(post_drop_db_position,
                            NULL, /* check func */
                            NULL, /* update func */
                            -1, /* default */
-                           INT32_MAX +1, /* min */
+                           INT32_MIN +1, /* min */
                            -1, /* max */
                            0 /* blk */);
 
