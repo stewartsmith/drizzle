@@ -109,7 +109,7 @@ static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
                                                 const drizzled::KeyInfo *key_info,
                                                 const unsigned char *key_ptr,
                                                 uint32_t key_len);
-static void store_key_value_from_innodb(KEY *key_info, unsigned char* ref, int ref_len, const unsigned char *record);
+static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, int ref_len, const unsigned char *record);
 
 #define EMBEDDED_INNODB_EXT ".EID"
 
