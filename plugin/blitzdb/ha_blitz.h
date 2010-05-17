@@ -154,6 +154,17 @@ public:
   uint8_t null_bitmask; /* Bitmask to test for NULL */
 };
 
+class BlitzCursor {
+public:
+  BlitzCursor() : btree_cursor(NULL), cursor_moved(false),
+                  active(false) {}
+  ~BlitzCursor() {}
+
+  BDBCUR *btree_cursor;
+  bool cursor_moved;
+  bool active;
+};
+
 /* Class that reprensents a BTREE index. Takes care of all I/O
    to the B+Tree index structure */
 class BlitzTree {
@@ -182,6 +193,8 @@ public:
   int close(void);
 
   /* KEY HANDLING */
+  BlitzCursor *create_cursor(void);
+  void destroy_cursor(BlitzCursor *cursor);
   char *prepare_key(const char *key, const size_t klen,
                     const char *val, const size_t vlen,
                     size_t *total_klen);
@@ -240,6 +253,7 @@ public:
 class ha_blitz: public drizzled::Cursor {
 private:
   BlitzShare *share;            /* Shared object among all threads */
+  BlitzCursor *btree_cursor;    /* Cursor for B+Tree Index */
   drizzled::THR_LOCK_DATA lock; /* Drizzle Lock */
 
   /* THREAD STATE */

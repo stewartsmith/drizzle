@@ -102,6 +102,24 @@ int BlitzTree::close(void) {
   return 0;
 }
 
+BlitzCursor *BlitzTree::create_cursor(void) {
+  BlitzCursor *cursor = new BlitzCursor();
+
+  if ((cursor->btree_cursor = tcbdbcurnew(btree)) == NULL)
+    return NULL;
+
+  cursor->active = true;
+  return cursor;
+}
+
+void BlitzTree::destroy_cursor(BlitzCursor *cursor) {
+  if (cursor == NULL)
+    return;
+
+  tcbdbcurdel(cursor->btree_cursor);
+  delete cursor; 
+}
+
 int BlitzTree::write(const char *key, const size_t klen) {
   return (tcbdbputdup(btree, key, klen, "", 0)) ? 0 : -1;
 }

@@ -372,6 +372,7 @@ void BlitzEngine::deleteTableShare(const std::string &table_name) {
 
 ha_blitz::ha_blitz(drizzled::plugin::StorageEngine &engine_arg,
                    TableShare &table_arg) : Cursor(engine_arg, table_arg),
+                                            btree_cursor(NULL),
                                             table_scan(false),
                                             table_based(false),
                                             thread_locked(false),
@@ -586,6 +587,17 @@ int ha_blitz::doStartIndexScan(uint32_t key_num, bool) {
     critical_section_exit();
 
   critical_section_enter();
+
+  /* Create a cursor object for this index scan. In the future
+     we will avoid creating this on each index scan and instead
+     create an array of it at Cursor::open(). */
+  btree_cursor = share->btrees[active_index].create_cursor();
+
+  if (btree_cursor == NULL) {
+    critical_section_exit();
+    return HA_ERR_OUT_OF_MEM;
+  }
+
   return 0;
 }
 
@@ -750,6 +762,8 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
 int ha_blitz::doEndIndexScan(void) {
   held_key = NULL;
   held_key_len = 0;
+
+  share->btrees[active_index].destroy_cursor(btree_cursor);
 
   if (thread_locked)
     critical_section_exit();
