@@ -87,7 +87,7 @@ public:
 
   unsigned char *record[2]; /**< Pointer to "records" */
   unsigned char *insert_values; /* used by INSERT ... UPDATE */
-  KEY  *key_info; /**< data of keys in database */
+  KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
   Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
@@ -240,14 +240,16 @@ public:
   filesort_info_st sort;
 
   Table();
+  virtual ~Table() { };
 
   int report_error(int error);
   /**
    * Free information allocated by openfrm
    *
    * @param If true if we also want to free table_share
+   * @note this should all be the destructor
    */
-  int closefrm(bool free_share);
+  int delete_table(bool free_share);
 
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
@@ -287,7 +289,7 @@ public:
   /* For TMP tables, should be pulled out as a class */
   void updateCreateInfo(message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
-  bool create_myisam_tmp_table(KEY *keyinfo,
+  bool create_myisam_tmp_table(KeyInfo *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo,
                                uint64_t options);
@@ -505,9 +507,11 @@ public:
     return output;  // for multiple << operators.
   }
 
+  virtual bool ownsShare()
+  {
+    return false;
+  }
 };
-
-Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);
 
 /**
  * @class
@@ -705,13 +709,6 @@ struct open_table_list_st
 
 };
 
-TableShare *alloc_table_share(TableList *table_list, char *key,
-                               uint32_t key_length);
-int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share);
-void open_table_error(TableShare *share, int error, int db_errno, int errarg);
-int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t ha_open_flags,
-                          Table *outparam);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);

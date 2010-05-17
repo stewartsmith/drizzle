@@ -64,6 +64,7 @@ static int copy_data_between_tables(Table *from,Table *to,
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
+                                      const message::Table &original_proto,
                                       message::Table &table_message,
                                       AlterInfo *alter_info);
 
@@ -97,7 +98,6 @@ bool statement::AlterTable::execute()
     }
   }
 
-
   /* Must be set in the parser */
   assert(select_lex->db);
 
@@ -110,6 +110,23 @@ bool statement::AlterTable::execute()
       my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
       return true;
     }
+
+    if (not  create_info.db_type)
+    {
+      create_info.db_type= 
+        plugin::StorageEngine::findByName(*session, original_table_message.engine().name());
+
+      if (not create_info.db_type)
+      {
+        my_error(ER_BAD_TABLE_ERROR, MYF(0), identifier.getSQLPath().c_str());
+        return true;
+      }
+    }
+  }
+
+  if (not validateCreateTableOption())
+  {
+    return true;
   }
 
   /* ALTER TABLE ends previous transaction */
@@ -134,6 +151,7 @@ bool statement::AlterTable::execute()
                      identifier,
                      new_identifier,
                      &create_info,
+                     original_table_message,
                      create_table_message,
                      first_table,
                      &alter_info,
@@ -146,15 +164,16 @@ bool statement::AlterTable::execute()
     Table *table= session->find_temporary_table(first_table);
     assert(table);
     {
-      TableIdentifier identifier(first_table->db, first_table->table_name, table->s->path.str);
+      TableIdentifier identifier(first_table->db, first_table->table_name, table->s->getPath());
       TableIdentifier new_identifier(select_lex->db ? select_lex->db : first_table->db,
                                      session->lex->name.str ? session->lex->name.str : first_table->table_name,
-                                     table->s->path.str);
+                                     table->s->getPath());
 
       res= alter_table(session, 
                        identifier,
                        new_identifier,
                        &create_info,
+                       original_table_message,
                        create_table_message,
                        first_table,
                        &alter_info,
@@ -216,6 +235,7 @@ bool statement::AlterTable::execute()
 static bool mysql_prepare_alter_table(Session *session,
                                       Table *table,
                                       HA_CREATE_INFO *create_info,
+                                      const message::Table &original_proto,
                                       message::Table &table_message,
                                       AlterInfo *alter_info)
 {
@@ -231,15 +251,13 @@ static bool mysql_prepare_alter_table(Session *session,
   List_iterator<CreateField> field_it(new_create_list);
   List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
-  KEY *key_info= table->key_info;
+  KeyInfo *key_info= table->key_info;
   bool rc= true;
 
   /* Let new create options override the old ones */
   message::Table::TableOptions *table_options;
   table_options= table_message.mutable_options();
 
-  if (! (used_fields & HA_CREATE_USED_BLOCK_SIZE))
-    table_options->set_block_size(table->s->block_size);
   if (! (used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
     create_info->default_table_charset= table->s->table_charset;
   if (! (used_fields & HA_CREATE_USED_AUTO) &&
@@ -249,14 +267,6 @@ static bool mysql_prepare_alter_table(Session *session,
     table->cursor->info(HA_STATUS_AUTO);
     create_info->auto_increment_value= table->cursor->stats.auto_increment_value;
   }
-  if (! (used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
-      && table->s->hasKeyBlockSize())
-    table_options->set_key_block_size(table->s->getKeyBlockSize());
-
-  if ((used_fields & HA_CREATE_USED_KEY_BLOCK_SIZE)
-      && table_options->key_block_size() == 0)
-    table_options->clear_key_block_size();
-
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
   CreateField *def;
 
@@ -348,7 +358,7 @@ static bool mysql_prepare_alter_table(Session *session,
   {
     if (def->change && ! def->field)
     {
-      my_error(ER_BAD_FIELD_ERROR, MYF(0), def->change, table->s->table_name.str);
+      my_error(ER_BAD_FIELD_ERROR, MYF(0), def->change, table->s->getTableName());
       goto err;
     }
     /*
@@ -382,7 +392,7 @@ static bool mysql_prepare_alter_table(Session *session,
       }
       if (! find)
       {
-        my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->s->table_name.str);
+        my_error(ER_BAD_FIELD_ERROR, MYF(0), def->after, table->s->getTableName());
         goto err;
       }
       find_it.after(def); /* Put element after this */
@@ -409,7 +419,7 @@ static bool mysql_prepare_alter_table(Session *session,
     my_error(ER_BAD_FIELD_ERROR,
              MYF(0),
              alter_info->alter_list.head()->name,
-             table->s->table_name.str);
+             table->s->getTableName());
     goto err;
   }
   if (! new_create_list.elements)
@@ -441,7 +451,7 @@ static bool mysql_prepare_alter_table(Session *session,
       continue;
     }
 
-    KEY_PART_INFO *key_part= key_info->key_part;
+    KeyPartInfo *key_part= key_info->key_part;
     key_parts.empty();
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
@@ -570,14 +580,34 @@ static bool mysql_prepare_alter_table(Session *session,
 
   table_message.set_update_timestamp(time(NULL));
 
-  if (not table_message.options().has_comment()
-      && table->s->hasComment())
-    table_options->set_comment(table->s->getComment());
-
   rc= false;
   alter_info->create_list.swap(new_create_list);
   alter_info->key_list.swap(new_key_list);
 err:
+
+  size_t num_engine_options= table_message.engine().options_size();
+  size_t original_num_engine_options= original_proto.engine().options_size();
+  for (size_t x= 0; x < original_num_engine_options; ++x)
+  {
+    bool found= false;
+
+    for (size_t y= 0; y < num_engine_options; ++y)
+    {
+      found= not table_message.engine().options(y).name().compare(original_proto.engine().options(x).name());
+      
+      if (found)
+        break;
+    }
+
+    if (not found)
+    {
+      message::Engine::Option *opt= table_message.mutable_engine()->add_options();
+
+      opt->set_name(original_proto.engine().options(x).name());
+      opt->set_state(original_proto.engine().options(x).state());
+    }
+  }
+
   return rc;
 }
 
@@ -656,7 +686,7 @@ err:
     true   Error
 */
 static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
-                             enum enum_enable_or_disable keys_onoff)
+                                    enum enum_enable_or_disable keys_onoff)
 {
   int error= 0;
   switch (keys_onoff) {
@@ -664,7 +694,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
     error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
     break;
   case LEAVE_AS_IS:
-    if (!indexes_were_disabled)
+    if (not indexes_were_disabled)
       break;
     /* fall-through: disabled indexes */
   case DISABLE:
@@ -675,7 +705,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
   {
     push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                         ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                        table->s->table_name.str);
+                        table->s->getTableName());
     error= 0;
   } else if (error)
     table->print_error(error, MYF(0));
@@ -777,6 +807,7 @@ static bool internal_alter_table(Session *session,
                                  TableIdentifier &original_table_identifier,
                                  TableIdentifier &new_table_identifier,
                                  HA_CREATE_INFO *create_info,
+                                 const message::Table &original_proto,
                                  message::Table &create_proto,
                                  TableList *table_list,
                                  AlterInfo *alter_info,
@@ -967,7 +998,7 @@ static bool internal_alter_table(Session *session,
   /* We have to do full alter table. */
   new_engine= create_info->db_type;
 
-  if (mysql_prepare_alter_table(session, table, create_info, create_proto, alter_info))
+  if (mysql_prepare_alter_table(session, table, create_info, original_proto, create_proto, alter_info))
   {
     return true;
   }
@@ -1091,6 +1122,20 @@ static bool internal_alter_table(Session *session,
           Note that MERGE tables do not have their children attached here.
         */
         new_table->intern_close_table();
+        if (new_table->s)
+        {
+          if (new_table->s->newed)
+          {
+            delete new_table->s;
+          }
+          else
+          {
+            free(new_table->s);
+          }
+
+          new_table->s= NULL;
+        }
+
         free(new_table);
       }
 
@@ -1140,6 +1185,21 @@ static bool internal_alter_table(Session *session,
         Note that MERGE tables do not have their children attached here.
       */
       new_table->intern_close_table();
+
+      if (new_table->s)
+      {
+        if (new_table->s->newed)
+        {
+          delete new_table->s;
+        }
+        else
+        {
+          free(new_table->s);
+        }
+
+        new_table->s= NULL;
+      }
+
       free(new_table);
     }
 
@@ -1253,6 +1313,7 @@ bool alter_table(Session *session,
                  TableIdentifier &original_table_identifier,
                  TableIdentifier &new_table_identifier,
                  HA_CREATE_INFO *create_info,
+                 const message::Table &original_proto,
                  message::Table &create_proto,
                  TableList *table_list,
                  AlterInfo *alter_info,
@@ -1293,6 +1354,7 @@ bool alter_table(Session *session,
                                 original_table_identifier,
                                 new_table_identifier,
                                 create_info,
+                                original_proto,
                                 create_proto,
                                 table_list,
                                 alter_info,
@@ -1385,7 +1447,7 @@ copy_data_between_tables(Table *from, Table *to,
       snprintf(warn_buff, sizeof(warn_buff),
                _("order_st BY ignored because there is a user-defined clustered "
                  "index in the table '%-.192s'"),
-               from->s->table_name.str);
+               from->s->getTableName());
       push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                    warn_buff);
     }
@@ -1396,7 +1458,7 @@ copy_data_between_tables(Table *from, Table *to,
 
       memset(&tables, 0, sizeof(tables));
       tables.table= from;
-      tables.alias= tables.table_name= from->s->table_name.str;
+      tables.alias= tables.table_name= const_cast<char *>(from->s->getTableName());
       tables.db= const_cast<char *>(from->s->getSchemaName());
       error= 1;
 
@@ -1511,9 +1573,7 @@ create_temporary_table(Session *session,
   */
   create_proto.set_name(identifier.getTableName());
 
-  message::Table::StorageEngine *protoengine;
-  protoengine= create_proto.mutable_engine();
-  protoengine->set_name(create_info->db_type->getName());
+  create_proto.mutable_engine()->set_name(create_info->db_type->getName());
 
   error= mysql_create_table(session,
                             identifier,
