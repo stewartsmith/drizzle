@@ -771,20 +771,6 @@ public:
   void (*do_copy2)(CopyField *);		// Used to handle null values
 };
 
-Field *make_field(TableShare *share,
-                  memory::Root *root,
-                  unsigned char *ptr,
-                  uint32_t field_length,
-                  bool is_nullable,
-                  unsigned char *null_pos,
-                  unsigned char null_bit,
-                  uint8_t decimals,
-                  enum_field_types field_type,
-                  const CHARSET_INFO * cs,
-                  Field::utype unireg_check,
-                  TYPELIB *interval,
-                  const char *field_name);
-
 uint32_t pack_length_to_packflag(uint32_t type);
 uint32_t calc_pack_length(enum_field_types type,uint32_t length);
 int set_field_to_null(Field *field);

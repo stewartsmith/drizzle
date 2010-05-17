@@ -652,10 +652,10 @@ bool ClientMySQLProtocol::checkConnection(void)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= buff + strlen(VERSION);
+    end= buff + strlen(PANDORA_RELEASE_VERSION);
     if ((end - buff) >= SERVER_VERSION_LENGTH)
       end= buff + (SERVER_VERSION_LENGTH - 1);
-    memcpy(buff, VERSION, end - buff);
+    memcpy(buff, PANDORA_RELEASE_VERSION, end - buff);
     *end= 0;
     end++;
 

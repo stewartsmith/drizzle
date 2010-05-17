@@ -1740,12 +1740,12 @@ void Session::nukeTable(Table *table)
   plugin::StorageEngine *table_type= table->s->db_type();
 
   table->free_io_cache();
-  table->closefrm(false);
+  table->delete_table(false);
 
-  TableIdentifier identifier(table->s->getSchemaName(), table->s->table_name.str, table->s->path.str);
+  TableIdentifier identifier(table->s->getSchemaName(), table->s->getTableName(), table->s->getPath());
   rm_temporary_table(table_type, identifier);
 
-  table->s->free_table_share();
+  delete table->s;
 
   /* This makes me sad, but we're allocating it via malloc */
   free(table);
@@ -2014,11 +2014,11 @@ void Session::dumpTemporaryTableNames(const char *foo)
 
     if (have_proto)
     {
-      cerr << "\tTable Name " << table->s->getSchemaName() << "." << table->s->table_name.str << " : " << answer << "\n";
+      cerr << "\tTable Name " << table->s->getSchemaName() << "." << table->s->getTableName() << " : " << answer << "\n";
       cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
     }
     else
-      cerr << "\tTabl;e Name " << table->s->getSchemaName() << "." << table->s->table_name.str << " : " << answer << "\n";
+      cerr << "\tTabl;e Name " << table->s->getSchemaName() << "." << table->s->getTableName() << " : " << answer << "\n";
   }
 }
 
