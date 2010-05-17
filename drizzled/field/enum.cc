@@ -215,11 +215,14 @@ String *Field_enum::val_str(String *, String *val_ptr)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
   if (!tmp || tmp > typelib->count)
+  {
     val_ptr->set("", 0, field_charset);
+  }
   else
-    val_ptr->set((const char*) typelib->type_names[tmp-1],
-		 typelib->type_lengths[tmp-1],
-		 field_charset);
+  {
+    val_ptr->set((const char*) typelib->type_names[tmp-1], typelib->type_lengths[tmp-1], field_charset);
+  }
+
   return val_ptr;
 }
 
@@ -273,7 +276,9 @@ Field *Field_enum::new_field(memory::Root *root, Table *new_table,
 {
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
   if (res)
+  {
     res->typelib= copy_typelib(root, typelib);
+  }
   return res;
 }
 

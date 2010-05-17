@@ -307,7 +307,6 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/memory/multi_malloc.h
 %{_includedir}/drizzled/memory/root.h
 %{_includedir}/drizzled/memory/sql_alloc.h
-%{_includedir}/drizzled/message/master_list.pb.h
 %{_includedir}/drizzled/message/schema.pb.h
 %{_includedir}/drizzled/message/statement_transform.h
 %{_includedir}/drizzled/message/table.pb.h

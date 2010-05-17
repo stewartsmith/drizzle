@@ -20,7 +20,9 @@ test_archive_LDADD = \
 			$(LIBINTL) \
 			$(LTLIBZ)
 
+if BUILD_ARCHIVE_PLUGIN
 noinst_LTLIBRARIES+=  plugin/archive/libazio.la
+endif
 noinst_HEADERS+= \
                  plugin/archive/azio.h
 plugin_archive_libazio_la_SOURCES= \

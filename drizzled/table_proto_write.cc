@@ -44,7 +44,7 @@ static int fill_table_proto(message::Table &table_proto,
                             List<CreateField> &create_fields,
                             HA_CREATE_INFO *create_info,
                             uint32_t keys,
-                            KEY *key_info)
+                            KeyInfo *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
@@ -467,7 +467,7 @@ bool rea_create_table(Session *session,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_fields,
-                      uint32_t keys, KEY *key_info)
+                      uint32_t keys, KeyInfo *key_info)
 {
   if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
                        keys, key_info))
