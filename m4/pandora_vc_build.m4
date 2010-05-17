@@ -60,17 +60,19 @@ AC_DEFUN([PANDORA_BUILDING_FROM_VC],[
       mkdir -p config
     fi
 
-    cat > config/pandora_vc_revinfo.tmp <<EOF
+    if test "${pandora_building_from_bzr}" = "yes" -o ! -f config/pandora_vc_revinfo ; then 
+      cat > config/pandora_vc_revinfo.tmp <<EOF
 PANDORA_VC_REVNO=${PANDORA_VC_REVNO}
 PANDORA_VC_REVID=${PANDORA_VC_REVID}
 PANDORA_VC_BRANCH=${PANDORA_VC_BRANCH}
 PANDORA_RELEASE_DATE=${PANDORA_RELEASE_DATE}
 PANDORA_RELEASE_NODOTS_DATE=${PANDORA_RELEASE_NODOTS_DATE}
 EOF
-    if ! diff config/pandora_vc_revinfo.tmp config/pandora_vc_revinfo >/dev/null 2>&1 ; then
-      mv config/pandora_vc_revinfo.tmp config/pandora_vc_revinfo
+      if ! diff config/pandora_vc_revinfo.tmp config/pandora_vc_revinfo >/dev/null 2>&1 ; then
+        mv config/pandora_vc_revinfo.tmp config/pandora_vc_revinfo
+      fi
+      rm -f config/pandora_vc_revinfo.tmp
     fi
-    rm -f config/pandora_vc_revinfo.tmp
   ])
 ])
   

@@ -541,7 +541,7 @@ drop table t1;
 # Bug #28652: assert when alter innodb table operation
 #
 create table t1(a int) engine=innodb;
-alter table t1 comment '123';
+alter table t1 comment='123';
 show create table t1;
 drop table t1;
 
