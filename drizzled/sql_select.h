@@ -173,7 +173,7 @@ void calc_used_field_length(Session *, JoinTable *join_tab);
 StoredKey *get_store_key(Session *session, 
                          optimizer::KeyUse *keyuse,
                          table_map used_tables,
-                         KEY_PART_INFO *key_part,
+                         KeyPartInfo *key_part,
                          unsigned char *key_buff,
                          uint32_t maybe_null);
 int join_tab_cmp(const void* ptr1, const void* ptr2);

@@ -136,7 +136,7 @@ select hex(s1) from t1;
 hex(s1)
 drop table t1;
 create table t1 (a text, primary key(a(360))) engine=innodb;
-ERROR 42000: Specified key was too long; max key length is 767 bytes
+ERROR 42000: Specified key was too long; max key length is 1023 bytes
 CREATE TABLE t1 ( a varchar(10) );
 INSERT INTO t1 VALUES ( 'test' );
 SELECT a.a, b.a FROM t1 a, t1 b WHERE a.a = b.a;
@@ -724,7 +724,7 @@ drop table t1;
 CREATE TEMPORARY TABLE t1 (
 a varchar(255) NOT NULL default '',
 KEY a (a)
-) ENGINE=MyISAM COLLATE utf8_general_ci;
+) ENGINE=MyISAM COLLATE=utf8_general_ci;
 insert into t1 values (0xe880bd);
 insert into t1 values (0x5b);
 select hex(a) from t1;

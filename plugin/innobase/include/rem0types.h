@@ -41,6 +41,6 @@ TEXT or VARCHAR column also in the UTF-8 charset. In that charset,
 a character may take at most 3 bytes.
 This constant MUST NOT BE CHANGED, or the compatibility of InnoDB data
 files would be at risk! */
-#define REC_MAX_INDEX_COL_LEN	768
+#define REC_MAX_INDEX_COL_LEN	1024
 
 #endif

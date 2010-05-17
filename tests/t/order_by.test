@@ -742,11 +742,16 @@ INSERT INTO t1 SELECT a +16, b +16 FROM t1;
 INSERT INTO t1 SELECT a +32, b +32 FROM t1;
 INSERT INTO t1 SELECT a +64, b +64 FROM t1;
 
+--error 1176
 SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (a, ab) GROUP BY a;
+
+SELECT a FROM t1 IGNORE INDEX FOR GROUP BY (primary, ab) GROUP BY a;
 
 SELECT @tmp_tables_after = @tmp_tables_before ;
 
+--error 1176
 SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (a, ab) ORDER BY a;
+SELECT a FROM t1 IGNORE INDEX FOR ORDER BY (primary, ab) ORDER BY a;
 
 SELECT @tmp_tables_after = @tmp_tables_before;
 
