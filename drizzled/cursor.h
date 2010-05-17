@@ -180,7 +180,7 @@ public:
 
   /** The following are for read_range() */
   key_range save_end_range, *end_range;
-  KEY_PART_INFO *range_key_part;
+  KeyPartInfo *range_key_part;
   int key_compare_result_on_equal;
 
   uint32_t errkey;				/* Last dup key */

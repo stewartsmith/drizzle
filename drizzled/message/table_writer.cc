@@ -32,12 +32,10 @@ using namespace drizzled;
   Written from Google proto example
 */
 
-static void fill_engine(message::Table::StorageEngine *engine)
+static void fill_engine(message::Engine *engine)
 {
-  int16_t x;
-
   engine->set_name("InnoDB");
-  message::Table::StorageEngine::EngineOption *option;
+  message::Engine::Option *option;
 
   string option_names[2]= {
     "INDEX_DIRECTORY"
@@ -50,12 +48,11 @@ static void fill_engine(message::Table::StorageEngine *engine)
   };
 
   /* Add some engine options */
-  for (x= 0; x < 2; x++)
+  for (int16_t x= 0; x < 2; x++)
   {
-    option= engine->add_option();
-    option->set_option_name(option_names[x]);
-    option->set_option_value(option_values[x]);
-    option->set_option_type(message::Table::StorageEngine::EngineOption::STRING);
+    option= engine->add_options();
+    option->set_name(option_names[x]);
+    option->set_state(option_values[x]);
   }
 }
 
@@ -192,7 +189,7 @@ static void fill_table(message::Table *table, const char *name)
   }
 
   /* Do engine-specific stuff */
-  message::Table::StorageEngine *engine= table->mutable_engine();
+  message::Engine *engine= table->mutable_engine();
   fill_engine(engine);
 
 }
