@@ -2880,7 +2880,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
     We can't copy all data as the key may have different format
     as the row data (for example as with VARCHAR keys)
   */
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
   for (group=table->group,key_part=table->key_info[0].key_part;
        group ;
        group=group->next,key_part++)
@@ -3368,7 +3368,7 @@ static void best_access_path(JOIN *join,
       key_part_map found_part= 0;
       table_map found_ref= 0;
       uint32_t key= keyuse->getKey();
-      KEY *keyinfo= table->key_info + key;
+      KeyInfo *keyinfo= table->key_info + key;
       /* Bitmap of keyparts where the ref access is over 'keypart=const': */
       key_part_map const_part= 0;
       /* The or-null keypart in ref-or-null access: */

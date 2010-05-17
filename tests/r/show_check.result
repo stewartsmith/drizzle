@@ -172,7 +172,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL,
   `b` varchar(10) DEFAULT NULL,
   KEY `b` (`b`)
-) ENGINE=MyISAM ROW_FORMAT=FIXED COMMENT='test'
+) ENGINE=MyISAM ROW_FORMAT='fixed' COMMENT='test'
 alter table t1 ROW_FORMAT=dynamic;
 show create table t1;
 Table	Create Table
@@ -180,15 +180,15 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL,
   `b` varchar(10) DEFAULT NULL,
   KEY `b` (`b`)
-) ENGINE=MyISAM ROW_FORMAT=DYNAMIC COMMENT='test'
-ALTER TABLE t1 COMMENT="" ROW_FORMAT=default;
+) ENGINE=MyISAM ROW_FORMAT='dynamic' COMMENT='test'
+ALTER TABLE t1 COMMENT="", ROW_FORMAT='default';
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL,
   `b` varchar(10) DEFAULT NULL,
   KEY `b` (`b`)
-) ENGINE=MyISAM
+) ENGINE=MyISAM ROW_FORMAT='default'
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
@@ -241,7 +241,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `type_set` enum('red','green','blue') DEFAULT NULL,
   `type_blob` blob,
   KEY `type_int` (`type_int`)
-) ENGINE=MyISAM ROW_FORMAT=FIXED COMMENT='test'
+) ENGINE=MyISAM ROW_FORMAT='fixed' COMMENT='test'
 insert into t1 (type_timestamp) values ("2003-02-07 10:00:01");
 select * from t1;
 type_int	type_bigint	type_decimal	type_numeric	empty_char	type_char	type_varchar	type_timestamp	type_date	type_datetime	type_enum	type_set	type_blob

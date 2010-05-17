@@ -61,15 +61,17 @@ bool statement::CreateTable::execute()
     create_info.db_type= session->getDefaultStorageEngine();
   }
 
+  if (not validateCreateTableOption())
+  {
+    return true;
+  }
+
   /* 
     Now we set the name in our Table proto so that it will match 
     create_info.db_type.
   */
   {
-    message::Table::StorageEngine *protoengine;
-
-    protoengine= create_table_message.mutable_engine();
-    protoengine->set_name(create_info.db_type->getName());
+    create_table_message.mutable_engine()->set_name(create_info.db_type->getName());
   }
 
 
@@ -238,6 +240,31 @@ bool statement::CreateTable::execute()
   start_waiting_global_read_lock(session);
 
   return res;
+}
+
+bool statement::CreateTable::validateCreateTableOption()
+{
+  bool rc= true;
+  size_t num_engine_options= create_table_message.engine().options_size();
+
+  assert(create_info.db_type);
+
+  for (size_t y= 0; y < num_engine_options; ++y)
+  {
+    bool valid= create_info.db_type->validateCreateTableOption(create_table_message.engine().options(y).name(),
+                                                               create_table_message.engine().options(y).state());
+
+    if (not valid)
+    {
+      my_error(ER_UNKNOWN_ENGINE_OPTION, MYF(0),
+               create_table_message.engine().options(y).name().c_str(),
+               create_table_message.engine().options(y).state().c_str());
+
+      rc= false;
+    }
+  }
+
+  return rc;
 }
 
 } /* namespace drizzled */

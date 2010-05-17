@@ -45,6 +45,7 @@ int main(int argc, char* argv[])
     file_name= argv[1];
 
   schema.set_name(argv[1]);
+  schema.mutable_engine()->set_name("filesystem");
   schema.set_creation_timestamp(time(NULL));
   schema.set_update_timestamp(time(NULL));
 
