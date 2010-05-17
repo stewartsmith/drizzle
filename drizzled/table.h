@@ -287,7 +287,6 @@ public:
   }
 
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KeyInfo *keyinfo,
                                MI_COLUMNDEF *start_recinfo,

@@ -660,7 +660,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     if (indx.has_options())
     {
-      message::Table::Index::IndexOptions indx_options= indx.options();
+      message::Table::Index::Options indx_options= indx.options();
       if (indx_options.pack_key())
         keyinfo->flags|= HA_PACK_KEY;
 
@@ -958,23 +958,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
-
-    enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-
-    switch (pfield.format())
-    {
-    case message::Table::Field::DefaultFormat:
-      column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-      break;
-    case message::Table::Field::FixedFormat:
-      column_format= COLUMN_FORMAT_TYPE_FIXED;
-      break;
-    case message::Table::Field::DynamicFormat:
-      column_format= COLUMN_FORMAT_TYPE_DYNAMIC;
-      break;
-    default:
-      assert(1);
-    }
 
     Field::utype unireg_type= Field::NONE;
 

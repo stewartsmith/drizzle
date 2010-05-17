@@ -348,14 +348,6 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 }
 
 
-
-void Table::updateCreateInfo(message::Table *table_proto)
-{
-  message::Table::TableOptions *table_options= table_proto->mutable_options();
-  table_options->set_block_size(s->block_size);
-  table_options->set_comment(s->getComment());
-}
-
 int rename_file_ext(const char * from,const char * to,const char * ext)
 {
   string from_s, to_s;
