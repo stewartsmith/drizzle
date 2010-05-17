@@ -1404,7 +1404,7 @@ int Tina::doCreateTable(Session &session,
   /*
     check columns
   */
-  for (Field **field= table_arg.s->field; *field; field++)
+  for (Field **field= table_arg.s->getFields(); *field; field++)
   {
     if ((*field)->real_maybe_null())
     {
