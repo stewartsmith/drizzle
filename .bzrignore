@@ -6,6 +6,7 @@
 *.lo
 *.orig
 *.rej
+*.reject
 *.rpm
 *replication.pb.*
 *stamp-h
@@ -45,6 +46,7 @@ config.status
 config.sub
 config/bzr_revinfo
 config/pandora-plugin.list
+config/pandora_vc_revinfo
 config/plugin-list.ac
 config/plugin-list.am
 config/plugin.ac
@@ -59,6 +61,7 @@ dbug/Makefile.in
 depcomp
 docs
 doxerr.log
+drizzle-2010.01.1315.tar.gz
 drizzled.gcno
 drizzled/configmake.h
 drizzled/drizzled
@@ -71,11 +74,9 @@ drizzled/message/binary_log.pb.h
 drizzled/message/binlog_reader
 drizzled/message/binlog_writer
 drizzled/message/command_reader
+drizzled/message/engine.pb.cc
+drizzled/message/engine.pb.h
 drizzled/message/length
-drizzled/message/master_list.pb.cc
-drizzled/message/master_list.pb.h
-drizzled/message/master_list_reader
-drizzled/message/master_list_writer
 drizzled/message/replication.pb.cc
 drizzled/message/replication.pb.h
 drizzled/message/replication_event.pb.cc
@@ -85,6 +86,7 @@ drizzled/message/replication_event_writer
 drizzled/message/schema.pb.cc
 drizzled/message/schema.pb.h
 drizzled/message/schema_reader
+drizzled/message/schema_writer
 drizzled/message/table.pb.cc
 drizzled/message/table.pb.h
 drizzled/message/table.pb.h
@@ -304,3 +306,4 @@ drizzle-2010.01.1315.tar.gz
 *.reject
 config/pandora_vc_revinfo
 drizzled/message/schema_writer
+drizzled/generated_probes.h
