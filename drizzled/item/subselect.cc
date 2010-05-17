@@ -2705,11 +2705,11 @@ void subselect_union_engine::print(String *str, enum_query_type query_type)
 void subselect_uniquesubquery_engine::print(String *str,
                                             enum_query_type query_type)
 {
-  char *table_name= tab->table->s->table_name.str;
+  char *table_name= const_cast<char *>(tab->table->s->getTableName());
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
-  if (tab->table->s->table_category == TABLE_CATEGORY_TEMPORARY)
+  if (tab->table->getShare()->isTemporaryCategory())
   {
     /*
       Temporary tables' names change across runs, so they can't be used for
@@ -2718,8 +2718,8 @@ void subselect_uniquesubquery_engine::print(String *str,
     str->append(STRING_WITH_LEN("<temporary table>"));
   }
   else
-    str->append(table_name, tab->table->s->table_name.length);
-  KEY *key_info= tab->table->key_info+ tab->ref.key;
+    str->append(table_name, tab->table->s->getTableNameSize());
+  KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (cond)
@@ -2742,7 +2742,7 @@ void subselect_uniquesubquery_engine::print(String *str)
   for (uint32_t i= 0; i < key_info->key_parts; i++)
     tab->ref.items[i]->print(str);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->s->table_name.str, tab->table->s->table_name.length);
+  str->append(tab->table->s->getTableName(), tab->table->s->getTableNameSize());
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (cond)
@@ -2760,8 +2760,8 @@ void subselect_indexsubquery_engine::print(String *str,
   str->append(STRING_WITH_LEN("<index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->s->table_name.str, tab->table->s->table_name.length);
-  KEY *key_info= tab->table->key_info+ tab->ref.key;
+  str->append(tab->table->s->getTableName(), tab->table->s->getTableNameSize());
+  KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (check_null)
@@ -2938,7 +2938,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   select_union  *tmp_result_sink;
   /* The table into which the subquery is materialized. */
   Table         *tmp_table;
-  KEY           *tmp_key; /* The only index on the temporary table. */
+  KeyInfo           *tmp_key; /* The only index on the temporary table. */
   uint32_t          tmp_key_parts; /* Number of keyparts in tmp_key. */
   Item_in_subselect *item_in= (Item_in_subselect *) item;
 
@@ -3012,7 +3012,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
         (Item**) session->alloc(sizeof(Item*) * tmp_key_parts)))
     return(true);
 
-  KEY_PART_INFO *cur_key_part= tmp_key->key_part;
+  KeyPartInfo *cur_key_part= tmp_key->key_part;
   StoredKey **ref_key= tab->ref.key_copy;
   unsigned char *cur_ref_buff= tab->ref.key_buff;
 

@@ -232,8 +232,6 @@ cap varchar(255) NOT NULL default '',
 PRIMARY KEY  (cid),
 KEY cap (cap)
 ) ;
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
 CREATE TABLE t3 (
 gid int NOT NULL auto_increment,
 gn varchar(255) NOT NULL default '',
@@ -241,8 +239,6 @@ must int default NULL,
 PRIMARY KEY  (gid),
 KEY gn (gn)
 ) ;
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
 INSERT INTO t3 VALUES (1,'V1',NULL);
 CREATE TABLE t4 (
 uid bigint NOT NULL default '0',
@@ -262,8 +258,6 @@ rl varchar(255) NOT NULL default '',
 PRIMARY KEY  (rid),
 KEY rl (rl)
 ) ;
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
 CREATE TABLE t6 (
 uid bigint NOT NULL auto_increment,
 un varchar(190) NOT NULL default '',
@@ -1161,7 +1155,7 @@ some text
 select concat('a', 'b' collate utf8_bin);
 concat('a', 'b' collate utf8_bin)
 ab
-create table t1 (foo varchar(100)) collate utf8_bin;
+create table t1 (foo varchar(100)) collate=utf8_bin;
 insert into t1 (foo) values ("foo");
 select foo from t1 union select 'bar' as foo from dual;
 ERROR 42S02: Table 'test.dual' doesn't exist

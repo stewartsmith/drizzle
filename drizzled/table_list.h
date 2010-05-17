@@ -106,7 +106,6 @@ public:
     next_leaf(NULL),
     outer_join(0),
     shared(0),
-    i_s_requested_object(0),
     db_length(0),
     table_name_length(0),
     dep_tables(0),
@@ -213,7 +212,6 @@ public:
   thr_lock_type lock_type;
   uint32_t outer_join; ///< Which join type
   uint32_t shared; ///<Used in multi-upd
-  uint32_t i_s_requested_object;
   size_t db_length;
   size_t table_name_length;
   table_map dep_tables; ///< tables the table depends on
