@@ -418,6 +418,22 @@ public:
   {
     return false;
   }
+
+  virtual bool validateCreateTableOption(const std::string &key, const std::string &state)
+  {
+    (void)key;
+    (void)state;
+
+    return false;
+  }
+
+  virtual bool validateCreateSchemaOption(const std::string &key, const std::string &state)
+  {
+    (void)key;
+    (void)state;
+
+    return false;
+  }
 };
 
 } /* namespace plugin */

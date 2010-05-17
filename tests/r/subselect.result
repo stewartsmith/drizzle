@@ -3964,8 +3964,6 @@ CREATE TABLE t1 (
 a varchar(255) default NULL,
 b timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
 INDEX idx(a,b));
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
 CREATE TABLE t2 (
 a varchar(255) default NULL);
 INSERT INTO t1 VALUES ('abcdefghijk','2007-05-07 06:00:24');
