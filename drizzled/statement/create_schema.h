@@ -46,6 +46,8 @@ public:
   bool execute();
   bool is_if_not_exists;
   message::Schema schema_message;
+
+  bool validateSchemaOptions();
 };
 
 } /* end namespace statement */

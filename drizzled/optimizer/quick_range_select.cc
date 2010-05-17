@@ -243,7 +243,7 @@ bool optimizer::QuickRangeSelect::unique_key_range() const
     optimizer::QuickRange *tmp= *((optimizer::QuickRange**)ranges.buffer);
     if ((tmp->flag & (EQ_RANGE | NULL_RANGE)) == EQ_RANGE)
     {
-      KEY *key=head->key_info+index;
+      KeyInfo *key=head->key_info+index;
       return ((key->flags & (HA_NOSAME)) == HA_NOSAME &&
 	      key->key_length == tmp->min_length);
     }
@@ -443,7 +443,7 @@ int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 
 void optimizer::QuickRangeSelect::add_info_string(String *str)
 {
-  KEY *key_info= head->key_info + index;
+  KeyInfo *key_info= head->key_info + index;
   str->append(key_info->name);
 }
 
@@ -453,7 +453,7 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
 {
   char buf[64];
   uint32_t length;
-  KEY *key_info= head->key_info + index;
+  KeyInfo *key_info= head->key_info + index;
   key_names->append(key_info->name);
   length= internal::int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
