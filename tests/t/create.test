@@ -1243,7 +1243,7 @@ CREATE TABLE t1(
   c4 VARCHAR(255) NOT NULL DEFAULT 'a',
   c5 VARCHAR(255) COLLATE utf8_unicode_ci NULL DEFAULT 'b',
   c6 VARCHAR(255))
-  COLLATE utf8_bin;
+  COLLATE=utf8_bin;
 
 --echo
 

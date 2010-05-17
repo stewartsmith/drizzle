@@ -280,7 +280,7 @@ TableIdentifier::TableIdentifier(const drizzled::Table &table) :
   table_name(table.s->getTableProto()->name())
 {
   if (type == message::Table::TEMPORARY)
-    path= table.s->path.str;
+    path= table.s->getPath();
 
   init();
 }
