@@ -149,8 +149,8 @@ exit:
       }
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
-      orig_table_list->table_name=        table->s->table_name.str;
-      orig_table_list->table_name_length= table->s->table_name.length;
+      orig_table_list->table_name=        const_cast<char *>(table->s->getTableName());
+      orig_table_list->table_name_length= table->s->getTableNameSize();
       table->derived_select_number= first_select->select_number;
       table->s->tmp_table= message::Table::TEMPORARY;
       orig_table_list->db= (char *)"";

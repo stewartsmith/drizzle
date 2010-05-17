@@ -1,0 +1,8 @@
+CREATE TABLE t1 (a int) FOO=BAR, INVALIDFOOBAR=0;
+ERROR HY000: Unknown table engine option key/pair FOO = BAR.
+CREATE TABLE t1 (a int) INVALIDFOOBAR=0;
+ERROR HY000: Unknown table engine option key/pair INVALIDFOOBAR = 0.
+CREATE TABLE t1 (a int) INVALIDFOOBAR=foo;
+ERROR HY000: Unknown table engine option key/pair INVALIDFOOBAR = foo.
+CREATE TABLE t1 (a int) INVALIDFOOBAR="foa";
+ERROR HY000: Unknown table engine option key/pair INVALIDFOOBAR = foa.
