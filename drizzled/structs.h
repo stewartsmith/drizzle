@@ -102,29 +102,10 @@ struct RegInfo {		/* Extra info about reg */
   }
 };
 
-struct st_read_record;				/* For referense later */
+struct ReadRecord;				/* For referense later */
 class Session;
 class Cursor;
 namespace optimizer { class SqlSelect; }
-
-typedef struct st_read_record {			/* Parameter to read_record */
-  Table *table;			/* Head-form */
-  Cursor *cursor;
-  Table **forms;			/* head and ref forms */
-  int (*read_record)(struct st_read_record *);
-  Session *session;
-  optimizer::SqlSelect *select;
-  uint32_t cache_records;
-  uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
-  uint32_t index;
-  unsigned char *ref_pos;				/* pointer to form->refpos */
-  unsigned char *record;
-  unsigned char *rec_buf;                /* to read field values  after filesort */
-  unsigned char	*cache,*cache_pos,*cache_end,*read_positions;
-  internal::IO_CACHE *io_cache;
-  bool print_error, ignore_not_found_rows;
-  JoinTable *do_insideout_scan;
-} READ_RECORD;
 
 typedef int *(*update_var)(Session *, struct drizzle_show_var *);
 

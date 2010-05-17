@@ -1485,7 +1485,7 @@ void JOIN::exec()
         error= tmp_error;
         return;
       }
-      end_read_record(&curr_join->join_tab->read_record);
+      curr_join->join_tab->read_record.end_read_record();
       curr_join->const_tables= curr_join->tables; // Mark free for cleanup()
       curr_join->join_tab[0].table= 0;           // Table is freed
 
@@ -2635,7 +2635,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
 {
   enum_nested_loop_state rc= NESTED_LOOP_OK;
   int error;
-  READ_RECORD *info;
+  ReadRecord *info;
 
   join_tab->table->null_row= 0;
   if (!join_tab->cache.records)

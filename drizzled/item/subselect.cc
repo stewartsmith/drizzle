@@ -2133,7 +2133,7 @@ void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **)
 
 int  init_read_record_seq(JoinTable *tab);
 int join_read_always_key_or_null(JoinTable *tab);
-int join_read_next_same_or_null(READ_RECORD *info);
+int join_read_next_same_or_null(ReadRecord *info);
 
 int subselect_single_select_engine::exec()
 {

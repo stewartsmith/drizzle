@@ -1475,7 +1475,7 @@ void JoinTable::cleanup()
     */
     table->reginfo.join_tab= 0;
   }
-  end_read_record(&read_record);
+  read_record.end_read_record();
 }
 
 bool only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
@@ -3530,7 +3530,7 @@ enum_nested_loop_state sub_select(JOIN *join, JoinTable *join_tab, bool end_of_r
 
   int error;
   enum_nested_loop_state rc;
-  READ_RECORD *info= &join_tab->read_record;
+  ReadRecord *info= &join_tab->read_record;
 
   if (join->resume_nested_loop)
   {
@@ -3863,12 +3863,12 @@ int join_read_last_key(JoinTable *tab)
   return 0;
 }
 
-int join_no_more_records(READ_RECORD *)
+int join_no_more_records(ReadRecord *)
 {
   return -1;
 }
 
-int join_read_next_same_diff(READ_RECORD *info)
+int join_read_next_same_diff(ReadRecord *info)
 {
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
@@ -3899,7 +3899,7 @@ int join_read_next_same_diff(READ_RECORD *info)
     return join_read_next_same(info);
 }
 
-int join_read_next_same(READ_RECORD *info)
+int join_read_next_same(ReadRecord *info)
 {
   int error;
   Table *table= info->table;
@@ -3918,7 +3918,7 @@ int join_read_next_same(READ_RECORD *info)
   return 0;
 }
 
-int join_read_prev_same(READ_RECORD *info)
+int join_read_prev_same(ReadRecord *info)
 {
   int error;
   Table *table= info->table;
@@ -3942,7 +3942,7 @@ int join_init_quick_read_record(JoinTable *tab)
   return join_init_read_record(tab);
 }
 
-int rr_sequential(READ_RECORD *info);
+int rr_sequential(ReadRecord *info);
 int init_read_record_seq(JoinTable *tab)
 {
   tab->read_record.read_record= rr_sequential;
@@ -3963,8 +3963,9 @@ int join_init_read_record(JoinTable *tab)
 {
   if (tab->select && tab->select->quick && tab->select->quick->reset())
     return 1;
-  init_read_record(&tab->read_record, tab->join->session, tab->table,
-		   tab->select,1,1);
+
+  tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true);
+
   return (*tab->read_record.read_record)(&tab->read_record);
 }
 
@@ -3975,10 +3976,10 @@ int join_read_first(JoinTable *tab)
   if (!table->key_read && table->covering_keys.test(tab->index) &&
       !table->no_keyread)
   {
-    table->key_read=1;
+    table->key_read= 1;
     table->cursor->extra(HA_EXTRA_KEYREAD);
   }
-  tab->table->status=0;
+  tab->table->status= 0;
   tab->read_record.table=table;
   tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
@@ -4007,7 +4008,7 @@ int join_read_first(JoinTable *tab)
   return 0;
 }
 
-int join_read_next_different(READ_RECORD *info)
+int join_read_next_different(ReadRecord *info)
 {
   JoinTable *tab= info->do_insideout_scan;
   if (tab->insideout_match_tab->found_match)
@@ -4030,7 +4031,7 @@ int join_read_next_different(READ_RECORD *info)
     return join_read_next(info);
 }
 
-int join_read_next(READ_RECORD *info)
+int join_read_next(ReadRecord *info)
 {
   int error;
   if ((error=info->cursor->index_next(info->record)))
@@ -4062,7 +4063,7 @@ int join_read_last(JoinTable *tab)
   return 0;
 }
 
-int join_read_prev(READ_RECORD *info)
+int join_read_prev(ReadRecord *info)
 {
   int error;
   if ((error= info->cursor->index_prev(info->record)))
@@ -4088,7 +4089,7 @@ int join_read_always_key_or_null(JoinTable *tab)
   return safe_index_read(tab);
 }
 
-int join_read_next_same_or_null(READ_RECORD *info)
+int join_read_next_same_or_null(ReadRecord *info)
 {
   int error;
   if ((error= join_read_next_same(info)) >= 0)

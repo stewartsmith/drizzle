@@ -34,6 +34,8 @@
 #include "drizzled/join_cache.h"
 #include "drizzled/optimizer/key_use.h"
 
+#include "drizzled/records.h"
+
 #include <bitset>
 
 namespace drizzled
@@ -149,14 +151,14 @@ public:
 
   Read_record_func read_first_record;
   Next_select_func next_select;
-  READ_RECORD	read_record;
+  ReadRecord	read_record;
   /*
     Currently the following two fields are used only for a [NOT] IN subquery
     if it is executed by an alternative full table scan when the left operand of
     the subquery predicate is evaluated to NULL.
   */
   Read_record_func save_read_first_record; /**< to save read_first_record */
-  int (*save_read_record) (READ_RECORD *); /**< to save read_record.read_record */
+  int (*save_read_record) (ReadRecord *); /**< to save read_record.read_record */
   double worst_seeks;
   key_map	const_keys; /**< Keys with constant part */
   key_map	checked_keys; /**< Keys checked in find_best */
