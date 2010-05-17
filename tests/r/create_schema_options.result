@@ -1,0 +1,12 @@
+CREATE DATABASE foo unknown_key=value;
+ERROR HY000: Unknown schema engine option key/pair unknown_key = value.
+CREATE DATABASE foo unknown_key=value, anotheR_unknown_key;
+ERROR HY000: Unknown schema engine option key/pair unknown_key = value.
+SHOW WARNINGS;
+Level	Code	Message
+Error	1699	Unknown schema engine option key/pair unknown_key = value.
+Error	1699	Unknown schema engine option key/pair anotheR_unknown_key = .
+CREATE DATABASE foo unknown_key=42;
+ERROR HY000: Unknown schema engine option key/pair unknown_key = 42.
+CREATE DATABASE foo unknown_key;
+ERROR HY000: Unknown schema engine option key/pair unknown_key = .
