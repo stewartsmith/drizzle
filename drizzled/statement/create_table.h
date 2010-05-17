@@ -78,6 +78,8 @@ public:
   bool is_create_table_like;
   bool is_if_not_exists;
   bool is_engine_set;
+
+  bool validateCreateTableOption();
 };
 
 } /* namespace statement */

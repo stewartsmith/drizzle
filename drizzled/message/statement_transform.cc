@@ -881,18 +881,17 @@ transformTableDefinitionToSql(const Table &table,
   /* Add ENGINE = " clause */
   if (table.has_engine())
   {
-    const Table::StorageEngine &engine= table.engine();
     destination.append("\nENGINE = ", 10);
-    destination.append(engine.name());
+    destination.append(table.engine().name());
 
-    size_t num_engine_options= engine.option_size();
+    size_t num_engine_options= table.engine().options_size();
     for (size_t x= 0; x < num_engine_options; ++x)
     {
-      const Table::StorageEngine::EngineOption &option= engine.option(x);
+      const Engine::Option &option= table.engine().options(x);
       destination.push_back('\n');
-      destination.append(option.option_name());
+      destination.append(option.name());
       destination.append(" = ", 3);
-      destination.append(option.option_value());
+      destination.append(option.state());
       destination.push_back('\n');
     }
   }
@@ -988,28 +987,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     ss.clear();
   }
 
-  if (options.has_key_block_size())
-  {
-    ss << options.key_block_size();
-    destination.append("\nKEY_BLOCK_SIZE = ", 18);
-    destination.append(ss.str());
-    ss.clear();
-  }
-
-  if (options.has_block_size())
-  {
-    ss << options.block_size();
-    destination.append("\nBLOCK_SIZE = ", 14);
-    destination.append(ss.str());
-    ss.clear();
-  }
-
-  if (options.has_pack_keys() &&
-      options.pack_keys())
-    destination.append("\nPACK_KEYS = TRUE", 17);
-  if (options.has_pack_record() &&
-      options.pack_record())
-    destination.append("\nPACK_RECORD = TRUE", 19);
   if (options.has_checksum() &&
       options.checksum())
     destination.append("\nCHECKSUM = TRUE", 16);

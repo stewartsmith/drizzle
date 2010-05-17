@@ -84,9 +84,9 @@ bool Item_field::collect_item_field_processor(unsigned char *arg)
 
 bool Item_field::find_item_in_field_list_processor(unsigned char *arg)
 {
-  KEY_PART_INFO *first_non_group_part= *((KEY_PART_INFO **) arg);
-  KEY_PART_INFO *last_part= *(((KEY_PART_INFO **) arg) + 1);
-  KEY_PART_INFO *cur_part;
+  KeyPartInfo *first_non_group_part= *((KeyPartInfo **) arg);
+  KeyPartInfo *last_part= *(((KeyPartInfo **) arg) + 1);
+  KeyPartInfo *cur_part;
 
   for (cur_part= first_non_group_part; cur_part != last_part; cur_part++)
   {
