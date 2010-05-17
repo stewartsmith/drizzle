@@ -1992,12 +1992,14 @@ xtPublic void myxt_print_key(XTIndexPtr ind, xtWord1 *key_value)
 static void my_close_table(TABLE *table)
 {
 #ifdef DRIZZLED
+#if 0 // Removed by Brian
 	TABLE_SHARE	*share;
 
 	share = (TABLE_SHARE *) ((char *) table + sizeof(TABLE));
 	share->free_table_share();
+#endif
 #else
-	closefrm(table, 1);  // TODO: Q, why did Stewart remove this?
+	delete_table(table, true);  // TODO: Q, why did Stewart remove this?
 #endif
 	xt_free_ns(table);
 }
@@ -2100,16 +2102,16 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 		ident = new TableIdentifier(db_name, tab_name, n);
 	}
 	share->init(db_name, 0, name, path);
-	if ((error = open_table_def(*thd, *ident, share)) ||
-		(error = open_table_from_share(thd, share, "", 0, 0, table)))
-	{
-		xt_free(self, table);
-		lex_end(&new_lex);
-		thd->lex = old_lex;
-		xt_throw_sulxterr(XT_CONTEXT, XT_ERR_LOADING_MYSQL_DIC, tab_path->ps_path, (u_long) error);
-		delete ident;
-		return NULL;
-	}
+	if ((error = share->open_table_def(*thd, *ident)) ||
+		(error = share->open_table_from_share(thd, "", 0, 0, *table)))
+        {
+          xt_free(self, table);
+          lex_end(&new_lex);
+          thd->lex = old_lex;
+          xt_throw_sulxterr(XT_CONTEXT, XT_ERR_LOADING_MYSQL_DIC, tab_path->ps_path, (u_long) error);
+          delete ident;
+          return NULL;
+        }
 	delete ident;
 #else
 #if MYSQL_VERSION_ID < 60000
@@ -2178,8 +2180,8 @@ static TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db), XTPa
 /*
 static bool my_match_index(XTDDIndex *ind, KEY *index)
 {
-	KEY_PART_INFO	*key_part;
-	KEY_PART_INFO	*key_part_end;
+	KeyPartInfo	*key_part;
+	KeyPartInfo	*key_part_end;
 	u_int			j;
 	XTDDColumnRef	*cref;
 
@@ -2256,11 +2258,11 @@ static xtBool my_is_not_null_int4(XTIndexSegPtr seg)
 #define MX_OFFSETOF(x, y)		((size_t)(&((x *) 8)->y) - 8)
 
 /* Derived from ha_myisam::create and mi_create */
-static XTIndexPtr my_create_index(XTThreadPtr self, TABLE *table_arg, u_int idx, KEY *index)
+static XTIndexPtr my_create_index(XTThreadPtr self, TABLE *table_arg, u_int idx, KeyInfo *index)
 {
 	XTIndexPtr				ind;
-	KEY_PART_INFO			*key_part;
-	KEY_PART_INFO			*key_part_end;
+	KeyPartInfo			*key_part;
+	KeyPartInfo			*key_part_end;
 	XTIndexSegRec			*seg;
 	Field					*field;
 	enum ha_base_keytype	type;
@@ -2534,9 +2536,9 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 	Field	**field;
 
 	/* How many columns are required for all indexes. */
-	KEY				*index;
-	KEY_PART_INFO	*key_part;
-	KEY_PART_INFO	*key_part_end;
+	KeyInfo				*index;
+	KeyPartInfo	*key_part;
+	KeyPartInfo	*key_part_end;
 
 #ifndef XT_USE_LAZY_DELETE
 	dic->dic_no_lazy_delete = TRUE;
@@ -2955,10 +2957,10 @@ static void my_free_dd_table(XTThreadPtr self, XTDDTable *dd_tab)
 		dd_tab->release(self);
 }
 
-static void ha_create_dd_index(XTThreadPtr self, XTDDIndex *ind, KEY *key)
+static void ha_create_dd_index(XTThreadPtr self, XTDDIndex *ind, KeyInfo *key)
 {
-	KEY_PART_INFO	*key_part;
-	KEY_PART_INFO	*key_part_end;
+	KeyPartInfo	*key_part;
+	KeyPartInfo	*key_part_end;
 	XTDDColumnRef	*cref;
 
 	if (strcmp(key->name, "PRIMARY") == 0)

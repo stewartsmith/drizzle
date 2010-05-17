@@ -62,7 +62,7 @@ protected:
 
   /** Info about index we're scanning */
   KEY_PART *key_parts;
-  KEY_PART_INFO *key_part_info;
+  KeyPartInfo *key_part_info;
 
   bool dont_free; /**< Used by QuickSelectDescending */
 

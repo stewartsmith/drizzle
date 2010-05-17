@@ -215,8 +215,12 @@ noinst_HEADERS+= \
                  plugin/innobase/handler/status_function.h \
                  plugin/innobase/handler/data_dictionary.h
 
+if BUILD_INNOBASE_PLUGIN
 noinst_LTLIBRARIES+= \
-                     plugin/innobase/libinnobase.la plugin/innobase/libpars.la
+                     plugin/innobase/libinnobase.la \
+		     plugin/innobase/libpars.la
+endif
+
 plugin_innobase_libinnobase_la_CFLAGS=	${AM_CFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_CXXFLAGS=${AM_CXXFLAGS} ${INNOBASE_SKIP_WARNINGS} -I$(top_srcdir)/plugin/innobase/include -DBUILD_DRIZZLE
 plugin_innobase_libinnobase_la_SOURCES= \

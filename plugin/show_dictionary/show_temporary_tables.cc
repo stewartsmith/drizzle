@@ -69,7 +69,7 @@ void ShowTemporaryTables::Generator::fill()
   push(table->s->getSchemaName());
 
   /* TABLE_NAME */
-  push(table->s->table_name.str);
+  push(table->s->getTableName());
 
   /* RECORDS */
   push(static_cast<uint64_t>(table->getCursor().records()));
