@@ -105,7 +105,7 @@ using namespace drizzled;
 
 int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table);
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
-                                                const drizzled::KEY *key_info,
+                                                const drizzled::KeyInfo *key_info,
                                                 const unsigned char *key_ptr,
                                                 uint32_t key_len);
 
@@ -1203,7 +1203,7 @@ rollback_close_err:
 
   if (strcmp(table_name, INNODB_TABLE_DEFINITIONS_TABLE) == 0)
   {
-    message::Table::StorageEngine *engine= table_message->mutable_engine();
+    message::Engine *engine= table_message->mutable_engine();
     engine->set_name("InnoDB");
     table_message->set_name("innodb_table_definitions");
     table_message->set_schema("data_dictionary");
@@ -1662,10 +1662,10 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   return(0);
 }
 
-static void store_key_value_from_innodb(KEY *key_info, unsigned char* ref, int ref_len, const unsigned char *record)
+static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, int ref_len, const unsigned char *record)
 {
-  KEY_PART_INFO* key_part= key_info->key_part;
-  KEY_PART_INFO* end= key_info->key_part + key_info->key_parts;
+  KeyPartInfo* key_part= key_info->key_part;
+  KeyPartInfo* end= key_info->key_part + key_info->key_parts;
   unsigned char* ref_start= ref;
 
   memset(ref, 0, ref_len);
@@ -1757,7 +1757,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
   {
     ib_err_t err;
     ib_id_t index_id;
-    err= ib_index_get_id(table_share->path.str+2,
+    err= ib_index_get_id(table_share->getPath()+2,
                          table_share->key_info[keynr].name,
                          &index_id);
     if (err != DB_SUCCESS)
@@ -1808,12 +1808,12 @@ static ib_srch_mode_t ha_rkey_function_to_ib_srch_mode(drizzled::ha_rkey_functio
 }
 
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
-                                                const drizzled::KEY *key_info,
+                                                const drizzled::KeyInfo *key_info,
                                                 const unsigned char *key_ptr,
                                                 uint32_t key_len)
 {
-  KEY_PART_INFO *key_part= key_info->key_part;
-  KEY_PART_INFO *end= key_part + key_info->key_parts;
+  KeyPartInfo *key_part= key_info->key_part;
+  KeyPartInfo *end= key_part + key_info->key_parts;
   const unsigned char *buff= key_ptr;
   ib_err_t err;
 

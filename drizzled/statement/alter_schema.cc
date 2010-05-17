@@ -37,6 +37,9 @@ bool statement::AlterSchema::execute()
   LEX_STRING *db= &session->lex->name;
   message::Schema old_definition;
 
+  if (not validateSchemaOptions())
+    return true;
+
   SchemaIdentifier schema_identifier(string(db->str, db->length));
 
   if (not check_db_name(schema_identifier))
@@ -46,6 +49,7 @@ bool statement::AlterSchema::execute()
   }
 
   schema_message.set_name(db->str);
+  schema_message.mutable_engine()->set_name("filesystem"); // For the moment we have only one.
   SchemaIdentifier identifier(schema_message.name());
 
   if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))

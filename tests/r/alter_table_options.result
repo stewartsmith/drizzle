@@ -1,0 +1,8 @@
+CREATE TABLE t1 (a int);
+ALTER TABLE t1 FOO=BAR, INVALIDFOOBAR=0;
+ERROR HY000: Unknown table engine option key/pair FOO = BAR.
+SHOW WARNINGS;
+Level	Code	Message
+Error	1698	Unknown table engine option key/pair FOO = BAR.
+Error	1698	Unknown table engine option key/pair INVALIDFOOBAR = 0.
+DROP TABLE t1;
