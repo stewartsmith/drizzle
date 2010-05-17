@@ -125,13 +125,13 @@ char **primary_keys;
 /* This gets passed to malloc, so lets set it to an arch-dependant size */
 size_t primary_keys_number_of;
 
-string host= NULL, opt_password= NULL, user= NULL,
-  user_supplied_query= NULL,
-  user_supplied_pre_statements= NULL,
-  user_supplied_post_statements= NULL,
-  default_engine= NULL,
-  pre_system= NULL,
-  post_system= NULL;
+string host= "", opt_password= "", user= "",
+  user_supplied_query= "",
+  user_supplied_pre_statements= "",
+  user_supplied_post_statements= "",
+  default_engine= "",
+  pre_system= "",
+  post_system= "";
 
 string delimiter= "\n";
 
@@ -176,8 +176,8 @@ static uint64_t auto_generate_sql_unique_query_number;
 static unsigned int auto_generate_sql_secondary_indexes;
 static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
-char *concurrency_str= NULL;
-static char *create_string;
+string concurrency_str= "";
+string create_string;
 uint32_t *concurrency;
 
 const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
@@ -831,7 +831,7 @@ int main(int argc, char **argv)
   ("help,?","Display this help and exit")
   ("info,i","Gives information and exit")
   ("auto-generate-sql-select-columns",
-  po::value<string>(&auto_generate_selected_columns_opt)->default_value(NULL),
+  po::value<string>(&auto_generate_selected_columns_opt)->default_value(""),
   "Provide a string to use for the select fields used in auto tests")
   ("auto-generate-sql,a",po::value<bool>(&auto_generate_sql)->default_value(false)->zero_tokens(),
   "Generate SQL where not supplied by file or command line")  
@@ -866,13 +866,13 @@ int main(int argc, char **argv)
   "Ignore SQL errors in query run")
   ("commit",po::value<uint32_t>(&commit_rate)->default_value(0),
   "Commit records every X number of statements")
-  ("conncurrency,c",po::value<char *>(&concurrency_str)->default_value(NULL),
+  ("conncurrency,c",po::value<string>(&concurrency_str)->default_value(""),
   "Number of clients to simulate for query to run")
-  ("create",po::value<char *>(&create_string)->default_value(NULL),
+  ("create",po::value<string>(&create_string)->default_value(""),
   "File or string to use to create tables")
   ("create-schema",po::value<string>(&create_schema_string)->default_value("drizzleslap"),
   "Schema to run tests in")
-  ("csv",po::value<std::string>(&opt_csv_str)->default_value(NULL),
+  ("csv",po::value<std::string>(&opt_csv_str)->default_value(""),
   "Generate CSV output to named file or to stdout if no file is name.")
   ("delayed-start",po::value<uint32_t>(&opt_delayed_start)->default_value(0),
   "Delay the startup of threads by a random number of microsends (the maximum of the delay")
@@ -880,12 +880,12 @@ int main(int argc, char **argv)
   "Delimiter to use in SQL statements supplied in file or command line")
   ("detach",po::value<uint32_t>(&detach_rate)->default_value(0),
   "Detach (close and re open) connections after X number of requests")
-  ("engine ,e",po::value<string>(&default_engine)->default_value(NULL),
+  ("engine ,e",po::value<string>(&default_engine)->default_value(""),
   "Storage engien to use for creating the table")
-  ("host,h",po::value<string>(&host)->default_value(NULL),"Connect to the host")
+  ("host,h",po::value<string>(&host)->default_value(""),"Connect to the host")
   ("iterations,i",po::value<uint32_t>(&iterations)->default_value(0),
   "Number of times to run the tests")
-  ("label",po::value<string>(&opt_label)->default_value(NULL),
+  ("label",po::value<string>(&opt_label)->default_value(""),
   "Label to use for print and csv")
   ("mysql,m",po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),"Use MySQL protocol")
   ("number-blob-cols",po::value<string>(&num_blob_cols_opt)->default_value(0),
@@ -904,27 +904,27 @@ int main(int argc, char **argv)
   ("port,p",po::value<uint32_t>()->default_value(0),
   "Port number to use for connection")
   ("post-query",
-  po::value<string>(&user_supplied_post_statements)->default_value(NULL),
+  po::value<string>(&user_supplied_post_statements)->default_value(""),
   "Query to run or file containing query to execute after tests have completed.")
-  ("post-system",po::value<string>(&post_system)->default_value(NULL),
+  ("post-system",po::value<string>(&post_system)->default_value(""),
   "system() string to execute after tests have completed")
   ("pre-query",
-  po::value<string>(&user_supplied_pre_statements)->default_value(NULL),
+  po::value<string>(&user_supplied_pre_statements)->default_value(""),
   "Query to run or file containing query to execute before running tests.")
-  ("pre-system",po::value<string>(&pre_system)->default_value(NULL),
+  ("pre-system",po::value<string>(&pre_system)->default_value(""),
   "system() string to execute before running tests.")
   ("protocol",po::value<string>(),
   "The protocol of connection (tcp,socket,pipe,memory).")
-  ("query,q",po::value<string>(&user_supplied_query)->default_value(NULL),
+  ("query,q",po::value<string>(&user_supplied_query)->default_value(""),
   "Query to run or file containing query")
   ("set-random-seed",
-  po::value<uint32_t>(&opt_set_random_seed)->default_value(NULL), 
+  po::value<uint32_t>(&opt_set_random_seed)->default_value(0), 
   "Seed for random number generator (srandom(3)) ") 
   ("silent,s",po::value<bool>(&opt_silent)->default_value(false)->zero_tokens(),
   "Run program in silent mode - no output. ") 
   ("timer-length",po::value<uint32_t>(&opt_timer_length)->default_value(0),
   "Require drizzleslap to run each specific test a certain amount of time in seconds")  
-  ("user,u",po::value<string>(&user)->default_value(NULL),
+  ("user,u",po::value<string>(&user)->default_value(""),
   "User for login if not current user")  
   ("verbose,v",po::value<int32_t>(&verbose)->zero_tokens(),
   "More verbose output,you can use this multiple times to get more verbose output")  
@@ -1715,10 +1715,10 @@ get_options(void)
     user= "root";
 
   /* If something is created we clean it up, otherwise we leave schemas alone */
-  if (create_string || auto_generate_sql)
+  if (create_string.c_str() || auto_generate_sql)
     opt_preserve= false;
 
-  if (auto_generate_sql && (create_string || user_supplied_query.c_str()))
+  if (auto_generate_sql && (create_string.c_str() || user_supplied_query.c_str()))
   {
     fprintf(stderr,
             "%s: Can't use --auto-generate-sql when create and query strings are specified!\n",
@@ -1743,7 +1743,7 @@ get_options(void)
     exit(1);
   }
 
-  parse_comma(concurrency_str ? concurrency_str : "1", &concurrency);
+  parse_comma(concurrency_str.c_str() ? concurrency_str.c_str() : "1", &concurrency);
 
   if (opt_csv_str.c_str())
   {
@@ -1938,7 +1938,7 @@ get_options(void)
   }
   else
   {
-    if (create_string && !stat(create_string, &sbuf))
+    if (create_string.c_str() && !stat(create_string.c_str(), &sbuf))
     {
       int data_file;
       if (!S_ISREG(sbuf.st_mode))
@@ -1947,7 +1947,7 @@ get_options(void)
                 internal::my_progname);
         exit(1);
       }
-      if ((data_file= open(create_string, O_RDWR)) == -1)
+      if ((data_file= open(create_string.c_str(), O_RDWR)) == -1)
       {
         fprintf(stderr,"%s: Could not open create file\n", internal::my_progname);
         exit(1);
@@ -1975,9 +1975,9 @@ get_options(void)
       parse_delimiter(tmp_string, &create_statements, delimiter[0]);
       free(tmp_string);
     }
-    else if (create_string)
+    else if (create_string.c_str())
     {
-      parse_delimiter(create_string, &create_statements, delimiter[0]);
+      parse_delimiter(create_string.c_str(), &create_statements, delimiter[0]);
     }
 
     /* Set this up till we fully support options on user generated queries */
