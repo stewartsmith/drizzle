@@ -42,9 +42,6 @@ key (`col_bigint_not_null_key` ),
 key (`col_char_not_null_key` ),
 key (`col_text_key`  (255)),
 key (`col_enum_key` )) ENGINE=innodb;
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
-Warning	1071	Specified key was too long; max key length is 767 bytes
 set AUTOCOMMIT=OFF;
 select table_schema, 
 table_name, 

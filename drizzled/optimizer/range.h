@@ -45,7 +45,7 @@ typedef struct st_key_part
 {
   uint16_t key;
   uint16_t part;
-  /* See KEY_PART_INFO for meaning of the next two: */
+  /* See KeyPartInfo for meaning of the next two: */
   uint16_t store_length;
   uint16_t length;
   uint8_t null_bit;
