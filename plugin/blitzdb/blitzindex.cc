@@ -30,20 +30,13 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
   if ((btree = tcbdbnew()) == NULL)
     return HA_ERR_OUT_OF_MEM;
 
-  if ((bt_cursor = tcbdbcurnew(btree)) == NULL) {
-    tcbdbdel(btree);
-    return HA_ERR_OUT_OF_MEM;
-  }
-
   if (!tcbdbsetmutex(btree)) {
     tcbdbdel(btree);
-    tcbdbcurdel(bt_cursor);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
   if (!tcbdbsetcmpfunc(btree, blitz_keycmp_cb, this)) {
     tcbdbdel(btree);
-    tcbdbcurdel(bt_cursor);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
@@ -51,7 +44,6 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
 
   if (!tcbdbopen(btree, buf, mode)) {
     tcbdbdel(btree);
-    tcbdbcurdel(bt_cursor);
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
@@ -94,9 +86,6 @@ int BlitzTree::close(void) {
     tcbdbdel(btree);
     return HA_ERR_CRASHED_ON_USAGE;
   }
-
-  tcbdbcurdel(bt_cursor);
-  bt_cursor = NULL;
 
   tcbdbdel(btree);
   return 0;
@@ -302,4 +291,3 @@ int BlitzCursor::delete_position(void) {
   moved = true;
   return 0;
 }
-

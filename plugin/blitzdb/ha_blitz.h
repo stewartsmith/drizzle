@@ -193,11 +193,9 @@ public:
 class BlitzTree {
 private:
   TCBDB *btree;
-  BDBCUR *bt_cursor;
 
 public:
-  BlitzTree() : bt_cursor(NULL), length(0), nparts(0), type(0),
-                unique(false) {}
+  BlitzTree() : length(0), nparts(0), type(0), unique(false) {}
   ~BlitzTree() {}
 
   /* METADATA */
