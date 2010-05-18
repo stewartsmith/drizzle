@@ -2639,9 +2639,16 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
 
   join_tab->table->null_row= 0;
   if (!join_tab->cache.records)
+  {
     return NESTED_LOOP_OK;                      /* Nothing to do */
+  }
+
   if (skip_last)
-    (void) store_record_in_cache(&join_tab->cache); // Must save this for later
+  {
+    (void) join_tab->cache.store_record_in_cache(); // Must save this for later
+  }
+
+
   if (join_tab->use_quick == 2)
   {
     if (join_tab->select->quick)
@@ -2653,7 +2660,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
   /* read through all records */
   if ((error=join_init_read_record(join_tab)))
   {
-    reset_cache_write(&join_tab->cache);
+    join_tab->cache.reset_cache_write();
     return error < 0 ? NESTED_LOOP_NO_MORE_ROWS: NESTED_LOOP_ERROR;
   }
 
@@ -2676,7 +2683,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
         (!join_tab->cache.select || !join_tab->cache.select->skip_record()))
     {
       uint32_t i;
-      reset_cache_read(&join_tab->cache);
+      join_tab->cache.reset_cache_read();
       for (i=(join_tab->cache.records- (skip_last ? 1 : 0)) ; i-- > 0 ;)
       {
 	      join_tab->readCachedRecord();
@@ -2687,7 +2694,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
           rc= (join_tab->next_select)(join,join_tab+1,0);
           if (rc != NESTED_LOOP_OK && rc != NESTED_LOOP_NO_MORE_ROWS)
           {
-            reset_cache_write(&join_tab->cache);
+            join_tab->cache.reset_cache_write();
             return rc;
           }
 
@@ -2700,7 +2707,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
 
   if (skip_last)
     join_tab->readCachedRecord();		// Restore current record
-  reset_cache_write(&join_tab->cache);
+  join_tab->cache.reset_cache_write();
   if (error > 0)				// Fatal error
     return NESTED_LOOP_ERROR;
   for (JoinTable *tmp2=join->join_tab; tmp2 != join_tab ; tmp2++)

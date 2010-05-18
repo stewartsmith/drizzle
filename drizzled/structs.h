@@ -102,7 +102,6 @@ struct RegInfo {		/* Extra info about reg */
   }
 };
 
-struct ReadRecord;				/* For referense later */
 class Session;
 class Cursor;
 namespace optimizer { class SqlSelect; }
