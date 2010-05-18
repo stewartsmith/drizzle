@@ -547,10 +547,9 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
     build_table_filename(_path, db.str, table_name.str, false);
   }
 
-  if (multi_alloc_root(&mem_root,
-                       &key_buff, key_length,
-                       &path_buff, _path.length() + 1,
-                       NULL))
+  if (mem_root.multi_alloc_root(&key_buff, key_length,
+                                &path_buff, _path.length() + 1,
+                                NULL))
   {
     set_table_cache_key(key_buff, key, key_length, db.length, table_name.length);
 
