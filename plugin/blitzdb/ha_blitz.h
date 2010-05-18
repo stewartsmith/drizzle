@@ -156,13 +156,12 @@ public:
 
 class BlitzCursor {
 public:
-  BlitzCursor() : btree_cursor(NULL), cursor_moved(false),
-                  active(false) {}
+  BlitzCursor() : cursor(NULL), moved(false), active(false) {}
   ~BlitzCursor() {}
 
-  BDBCUR *btree_cursor;
-  bool cursor_moved;
-  bool active;
+  BDBCUR *cursor; /* Raw cursor to TC. */
+  bool moved;     /* Whether the key was implicitly moved. */
+  bool active;    /* Whether this cursor is active */
 };
 
 /* Class that reprensents a BTREE index. Takes care of all I/O
@@ -216,9 +215,6 @@ public:
   char *find_key(const int search_mode, const char *key,
                  const int klen, int *rv_len);
 
-  bool move_cursor(const char *key, const int klen, const int search_mode);
-  int count_duplicates_from_cursor(void);
-  
   /* BTREE METADATA RELATED */
   uint64_t records(void); 
 };

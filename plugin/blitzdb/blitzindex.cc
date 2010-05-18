@@ -103,21 +103,22 @@ int BlitzTree::close(void) {
 }
 
 BlitzCursor *BlitzTree::create_cursor(void) {
-  BlitzCursor *cursor = new BlitzCursor();
+  BlitzCursor *bc = new BlitzCursor();
 
-  if ((cursor->btree_cursor = tcbdbcurnew(btree)) == NULL)
+  if ((bc->cursor = tcbdbcurnew(btree)) == NULL)
     return NULL;
 
-  cursor->active = true;
-  return cursor;
+  bc->active = true;
+  bc->moved = false;
+  return bc;
 }
 
-void BlitzTree::destroy_cursor(BlitzCursor *cursor) {
-  if (cursor == NULL)
+void BlitzTree::destroy_cursor(BlitzCursor *bc) {
+  if (bc == NULL)
     return;
 
-  tcbdbcurdel(cursor->btree_cursor);
-  delete cursor; 
+  tcbdbcurdel(bc->cursor);
+  delete bc; 
 }
 
 int BlitzTree::write(const char *key, const size_t klen) {
@@ -272,82 +273,6 @@ char *BlitzTree::find_key(const int search_mode, const char *key,
      break;
   }
 
-  return rv;
-}
-
-/* Search and position the cursor at the specified key.
-   Returns true on success and otherwise false. */
-bool BlitzTree::move_cursor(const char *key, const int klen,
-                            const int search_mode) {
-  char *fetched_key;
-  int fetched_klen, cmp;
-
-  fetched_key = this->find_key(search_mode, key, klen, &fetched_klen);
-
-  if (fetched_key == NULL)
-    return false;
-
-  free(fetched_key);
-
-  /* If this index is unique, then there is no point in scanning
-     for duplicates. Thus we return. */
-  if (this->unique)
-    return true;
-
-  /* This mode means find the first possible key in the tree. */
-  if (search_mode == drizzled::HA_READ_KEY_EXACT)
-    return true;
-
-  /* Keep traversing forward until we hit a different key or EOF. */
-  do {
-    fetched_key = this->next_key(&fetched_klen);
-
-    /* No more nodes to visit. */
-    if (fetched_key == NULL)
-      break;
-
-    cmp = blitz_keycmp_cb(fetched_key, fetched_klen, key, klen, this);
-
-    if (cmp != 0) {
-      free(fetched_key);
-      /* Step back one key since that's the last position of
-         the key that we're interested in. */
-      tcbdbcurprev(bt_cursor);
-      break;
-    }
-
-    free(fetched_key);
-  } while(1);
-
-  return true;
-}
-
-/* This function will count the number of duplicate keys from the
-   current cursor position. */
-int BlitzTree::count_duplicates_from_cursor(void) {
-  int found_len, a_compared_len, b_compared_len;
-  int target_len, cmp, rv = 0;
-
-  char *target = (char *)tcbdbcurkey(bt_cursor, &target_len);
-  char *found;
-
-  do {
-    if ((found = this->next_key(&found_len)) == NULL)
-      break;
-
-    cmp = packed_key_cmp(this, target, found, &a_compared_len, &b_compared_len);
-
-    /* Found a different key. We can now stop counting. */
-    if (cmp != 0) {
-      free(found);
-      break;
-    }
-
-    rv++;
-    free(found);
-  } while (1);
-
-  free(target);
   return rv;
 }
 
