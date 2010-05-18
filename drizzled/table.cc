@@ -909,7 +909,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table= share->getTable();
 
-  memset(table, 0, sizeof(*table));
   memset(reg_field, 0, sizeof(Field*)*(field_count+1));
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);

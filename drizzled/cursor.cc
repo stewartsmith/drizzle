@@ -226,7 +226,6 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
 
   table= table_arg;
   assert(table->s == table_share);
-  assert(table->mem_root.alloc_root_inited());
 
   if ((error=open(name, mode, test_if_locked)))
   {
@@ -248,7 +247,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from Cursor::clone() */
-    if (!ref && !(ref= (unsigned char*) table->mem_root.alloc_root(ALIGN_SIZE(ref_length)*2)))
+    if (!ref && !(ref= (unsigned char*) table->alloc_root(ALIGN_SIZE(ref_length)*2)))
     {
       close();
       error=HA_ERR_OUT_OF_MEM;
