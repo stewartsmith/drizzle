@@ -38,7 +38,6 @@ static int rr_unpack_from_tempfile(ReadRecord *info);
 static int rr_unpack_from_buffer(ReadRecord *info);
 static int rr_from_pointers(ReadRecord *info);
 static int rr_from_cache(ReadRecord *info);
-static int init_rr_cache(Session *session, ReadRecord *info);
 static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(ReadRecord *info);
 static int rr_index(ReadRecord *info);
@@ -130,7 +129,7 @@ void ReadRecord::init_read_record(Session *session_arg,
         !table->s->blob_fields &&
         ref_length <= MAX_REFLENGTH)
     {
-      if (! init_rr_cache(session, this))
+      if (init_rr_cache())
       {
         read_record=rr_from_cache;
       }
@@ -381,34 +380,35 @@ static int rr_unpack_from_buffer(ReadRecord *info)
 }
 
 /* cacheing of records from a database */
-static int init_rr_cache(Session *session, ReadRecord *info)
+bool ReadRecord::init_rr_cache()
 {
-  uint32_t rec_cache_size;
+  uint32_t local_rec_cache_size;
 
-  info->struct_length= 3+MAX_REFLENGTH;
-  info->reclength= ALIGN_SIZE(info->table->s->reclength+1);
-  if (info->reclength < info->struct_length)
-    info->reclength= ALIGN_SIZE(info->struct_length);
+  struct_length= 3 + MAX_REFLENGTH;
+  reclength= ALIGN_SIZE(table->s->reclength+1);
+  if (reclength < struct_length)
+    reclength= ALIGN_SIZE(struct_length);
 
-  info->error_offset= info->table->s->reclength;
-  info->cache_records= (session->variables.read_rnd_buff_size /
-                        (info->reclength+info->struct_length));
-  rec_cache_size= info->cache_records*info->reclength;
-  info->rec_cache_size= info->cache_records*info->ref_length;
+  error_offset= table->s->reclength;
+  cache_records= (session->variables.read_rnd_buff_size /
+                        (reclength+struct_length));
+  local_rec_cache_size= cache_records * reclength;
+  rec_cache_size= cache_records * ref_length;
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
-  if (info->cache_records <= 2 ||
-      !(info->cache=(unsigned char*) malloc(rec_cache_size+info->cache_records*
-					    info->struct_length+1)))
-    return(1);
+  if (cache_records <= 2 ||
+      !(cache=(unsigned char*) malloc(local_rec_cache_size + cache_records * struct_length + 1)))
+  {
+    return false;
+  }
 #ifdef HAVE_purify
   // Avoid warnings in qsort
-  memset(info->cache, 0,
-         rec_cache_size+info->cache_records* info->struct_length+1);
+  memset(cache, 0, local_rec_cache_size + cache_records * struct_length + 1);
 #endif
-  info->read_positions=info->cache+rec_cache_size;
-  info->cache_pos=info->cache_end=info->cache;
-  return(0);
+  read_positions= cache + local_rec_cache_size;
+  cache_pos= cache_end= cache;
+
+  return true;
 } /* init_rr_cache */
 
 static int rr_from_cache(ReadRecord *info)

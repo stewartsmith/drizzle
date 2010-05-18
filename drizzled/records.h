@@ -175,6 +175,7 @@ struct ReadRecord {			/* Parameter to read_record */
                             Table *table,
                             bool print_error, 
                             uint32_t idx);
+  bool init_rr_cache();
 };
 
 } /* namespace drizzled */
