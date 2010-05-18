@@ -156,7 +156,9 @@ static uint32_t commit_rate;
 static uint32_t detach_rate;
 static uint32_t opt_timer_length;
 static uint32_t opt_delayed_start;
-string num_blob_cols_opt;
+string num_blob_cols_opt,
+  num_char_cols_opt,
+  num_int_cols_opt;
 string opt_label;
 static unsigned int opt_set_random_seed;
 
@@ -893,9 +895,9 @@ int main(int argc, char **argv)
   ("mysql,m",po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),"Use MySQL protocol")
   ("number-blob-cols",po::value<string>(&num_blob_cols_opt)->default_value(""),
   "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ")
-  ("number-char-cols,x",po::value<uint32_t>(&num_char_cols)->default_value(0),
+  ("number-char-cols,x",po::value<string>(&num_char_cols_opt)->default_value(""),
   "Number of VARCHAR columns to create in table if specifying --auto-generate-sql.")
-  ("number-int-cols,y",po::value<uint32_t>(&num_int_cols)->default_value(0),
+  ("number-int-cols,y",po::value<string>(&num_int_cols_opt)->default_value(""),
   "Number of INT columns to create in table if specifying --auto-generate-sql.")
   ("number-of-queries",
   po::value<uint64_t>(&num_of_query)->default_value(0),
@@ -1767,7 +1769,27 @@ get_options(void)
   if (opt_only_print)
     opt_silent= true;
 
+  if (!num_int_cols_opt.empty())
+  {
+    OptionString *str;
+    parse_option(num_int_cols_opt.c_str(), &str, ',');
+    num_int_cols= atoi(str->getString());
+    if (str->getOption())
+      num_int_cols_index= atoi(str->getOption());
+    option_cleanup(str);
+  }
 
+  if (!num_char_cols_opt.empty())
+  {
+    OptionString *str;
+    parse_option(num_char_cols_opt.c_str(), &str, ',');
+    num_char_cols= atoi(str->getString());
+    if (str->getOption())
+      num_char_cols_index= atoi(str->getOption());
+    else
+      num_char_cols_index= 0;
+    option_cleanup(str);
+  }
 
   if (!num_blob_cols_opt.empty())
   {
