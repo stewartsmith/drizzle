@@ -33,14 +33,12 @@ class TableShareInstance : public TableShare
 public:
   TableShareInstance()
   {
-    memset((void *)&private_table, 0, sizeof(Table));
     private_table.s= this;
   }
 
   TableShareInstance(const char *tmpname_arg) :
     TableShare("", 0, tmpname_arg, tmpname_arg)
   {
-    memset((void *)&private_table, 0, sizeof(Table));
     private_table.s= this;
   }
 
