@@ -161,7 +161,7 @@ public:
   int read_keys_and_merge();
 
   /* used to get rows collected in Unique */
-  READ_RECORD read_record;
+  ReadRecord read_record;
 };
 
 } /* namespace optimizer */

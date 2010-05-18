@@ -1490,7 +1490,7 @@ void JOIN::exec()
         error= tmp_error;
         return;
       }
-      end_read_record(&curr_join->join_tab->read_record);
+      curr_join->join_tab->read_record.end_read_record();
       curr_join->const_tables= curr_join->tables; // Mark free for cleanup()
       curr_join->join_tab[0].table= 0;           // Table is freed
 
@@ -2639,7 +2639,7 @@ enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, boo
 {
   enum_nested_loop_state rc= NESTED_LOOP_OK;
   int error;
-  READ_RECORD *info;
+  ReadRecord *info;
 
   join_tab->table->null_row= 0;
   if (!join_tab->cache.records)
@@ -2884,7 +2884,7 @@ enum_nested_loop_state end_update(JOIN *join, JoinTable *, bool end_of_records)
     We can't copy all data as the key may have different format
     as the row data (for example as with VARCHAR keys)
   */
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
   for (group=table->group,key_part=table->key_info[0].key_part;
        group ;
        group=group->next,key_part++)
@@ -3372,7 +3372,7 @@ static void best_access_path(JOIN *join,
       key_part_map found_part= 0;
       table_map found_ref= 0;
       uint32_t key= keyuse->getKey();
-      KEY *keyinfo= table->key_info + key;
+      KeyInfo *keyinfo= table->key_info + key;
       /* Bitmap of keyparts where the ref access is over 'keypart=const': */
       key_part_map const_part= 0;
       /* The or-null keypart in ref-or-null access: */

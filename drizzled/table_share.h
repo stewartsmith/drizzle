@@ -252,7 +252,7 @@ public:
 
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
-  KEY  *key_info;			/* data of keys in database */
+  KeyInfo  *key_info;			/* data of keys in database */
   uint	*blob_field;			/* Index to blobs in Field arrray*/
 
   /* hash of field names (contains pointers to elements of field array) */

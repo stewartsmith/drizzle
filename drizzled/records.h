@@ -24,21 +24,21 @@ namespace drizzled
 {
 
 /**
-  Initialize READ_RECORD structure to perform full index scan (in forward
+  Initialize ReadRecord structure to perform full index scan (in forward
   direction) using read_record.read_record() interface.
 
     This function has been added at late stage and is used only by
     UPDATE/DELETE. Other statements perform index scans using
     join_read_first/next functions.
 
-  @param info         READ_RECORD structure to initialize.
+  @param info         ReadRecord structure to initialize.
   @param session          Thread handle
   @param table        Table to be accessed
   @param print_error  If true, call table->print_error() if an error
                       occurs (except for end-of-records error)
   @param idx          index to scan
 */
-void init_read_record_idx(READ_RECORD *info, 
+void init_read_record_idx(ReadRecord *info, 
                           Session *session, 
                           Table *table,
                           bool print_error, 
@@ -112,14 +112,33 @@ void init_read_record_idx(READ_RECORD *info,
     This is the most basic access method of a table using rnd_init,
     rnd_next and rnd_end. No indexes are used.
 */
-void init_read_record(READ_RECORD *info, 
-                      Session *session, 
-                      Table *reg_form,
-                      optimizer::SqlSelect *select,
-                      int use_record_cache, 
-                      bool print_errors);
 
-void end_read_record(READ_RECORD *info);
+struct ReadRecord {			/* Parameter to read_record */
+  Table *table;			/* Head-form */
+  Cursor *cursor;
+  Table **forms;			/* head and ref forms */
+  int (*read_record)(ReadRecord *);
+  Session *session;
+  optimizer::SqlSelect *select;
+  uint32_t cache_records;
+  uint32_t ref_length,struct_length,reclength,rec_cache_size,error_offset;
+  uint32_t index;
+  unsigned char *ref_pos;				/* pointer to form->refpos */
+  unsigned char *record;
+  unsigned char *rec_buf;                /* to read field values  after filesort */
+  unsigned char	*cache,*cache_pos,*cache_end,*read_positions;
+  internal::IO_CACHE *io_cache;
+  bool print_error, ignore_not_found_rows;
+  JoinTable *do_insideout_scan;
+
+  void init_read_record(Session *session, 
+                        Table *reg_form,
+                        optimizer::SqlSelect *select,
+                        int use_record_cache, 
+                        bool print_errors);
+
+  void end_read_record();
+};
 
 } /* namespace drizzled */
 

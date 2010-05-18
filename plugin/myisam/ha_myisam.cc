@@ -36,6 +36,8 @@
 #include "drizzled/memory/multi_malloc.h"
 #include "drizzled/plugin/daemon.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include <string>
 #include <sstream>
 #include <map>
@@ -138,6 +140,16 @@ public:
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
+  bool validateCreateTableOption(const std::string &key, const std::string &state)
+  {
+    (void)state;
+    if (boost::iequals(key, "ROW_FORMAT"))
+    {
+      return true;
+    }
+
+    return false;
+  }
 };
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
@@ -200,7 +212,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   uint32_t i, j, recpos, minpos, fieldpos, temp_length, length;
   enum ha_base_keytype type= HA_KEYTYPE_BINARY;
   unsigned char *record;
-  KEY *pos;
+  KeyInfo *pos;
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo, *recinfo_pos;
   HA_KEYSEG *keyseg;
@@ -608,8 +620,8 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   {
     table->key_info[i].block_size= file->s->keyinfo[i].block_length;
 
-    KEY_PART_INFO *kp= table->key_info[i].key_part;
-    KEY_PART_INFO *kp_end= kp + table->key_info[i].key_parts;
+    KeyPartInfo *kp= table->key_info[i].key_part;
+    KeyPartInfo *kp_end= kp + table->key_info[i].key_parts;
     for (; kp != kp_end; kp++)
     {
       if (!kp->field->part_of_key.test(i))

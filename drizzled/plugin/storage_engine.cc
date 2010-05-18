@@ -480,7 +480,6 @@ int StorageEngine::dropTable(Session& session,
 */
 int StorageEngine::createTable(Session &session,
                                TableIdentifier &identifier,
-                               bool update_create_info,
                                message::Table& table_message)
 {
   int error= 1;
@@ -494,9 +493,6 @@ int StorageEngine::createTable(Session &session,
   }
   else
   {
-    if (update_create_info)
-      table.updateCreateInfo(&table_message);
-
     /* Check for legal operations against the Engine using the proto (if used) */
     if (table_message.type() == message::Table::TEMPORARY &&
         share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)

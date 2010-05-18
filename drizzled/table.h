@@ -87,7 +87,7 @@ public:
 
   unsigned char *record[2]; /**< Pointer to "records" */
   unsigned char *insert_values; /* used by INSERT ... UPDATE */
-  KEY  *key_info; /**< data of keys in database */
+  KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
   Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
@@ -287,9 +287,8 @@ public:
   }
 
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
-  bool create_myisam_tmp_table(KEY *keyinfo,
+  bool create_myisam_tmp_table(KeyInfo *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo,
                                uint64_t options);

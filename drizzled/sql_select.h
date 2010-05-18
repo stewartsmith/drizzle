@@ -152,27 +152,27 @@ int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);
 int join_read_always_key(JoinTable *tab);
 int join_read_last_key(JoinTable *tab);
-int join_no_more_records(READ_RECORD *info);
-int join_read_next(READ_RECORD *info);
-int join_read_next_different(READ_RECORD *info);
+int join_no_more_records(ReadRecord *info);
+int join_read_next(ReadRecord *info);
+int join_read_next_different(ReadRecord *info);
 int join_init_quick_read_record(JoinTable *tab);
 int init_read_record_seq(JoinTable *tab);
 int test_if_quick_select(JoinTable *tab);
 int join_init_read_record(JoinTable *tab);
 int join_read_first(JoinTable *tab);
-int join_read_next_same(READ_RECORD *info);
-int join_read_next_same_diff(READ_RECORD *info);
+int join_read_next_same(ReadRecord *info);
+int join_read_next_same_diff(ReadRecord *info);
 int join_read_last(JoinTable *tab);
-int join_read_prev_same(READ_RECORD *info);
-int join_read_prev(READ_RECORD *info);
+int join_read_prev_same(ReadRecord *info);
+int join_read_prev(ReadRecord *info);
 int join_read_always_key_or_null(JoinTable *tab);
-int join_read_next_same_or_null(READ_RECORD *info);
+int join_read_next_same_or_null(ReadRecord *info);
 
 void calc_used_field_length(Session *, JoinTable *join_tab);
 StoredKey *get_store_key(Session *session, 
                          optimizer::KeyUse *keyuse,
                          table_map used_tables,
-                         KEY_PART_INFO *key_part,
+                         KeyPartInfo *key_part,
                          unsigned char *key_buff,
                          uint32_t maybe_null);
 int join_tab_cmp(const void* ptr1, const void* ptr2);

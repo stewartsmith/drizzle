@@ -35,6 +35,13 @@ static void printSchema(const message::Schema *schema)
   cout << "CREATE SCHEMA `" << schema->name() << "` ";
   if (schema->has_collation())
     cout << "COLLATE `" << schema->collation() << "` ";
+
+  for (int option_nr=0; option_nr < schema->engine().options_size(); option_nr++)
+  {
+    cout << " " << schema->engine().options(option_nr).name() << " = "
+         << "'" << schema->engine().options(option_nr).state() << "'";
+  }
+
   cout << ";" << endl;
 }
 
