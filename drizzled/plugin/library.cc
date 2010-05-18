@@ -108,16 +108,16 @@ plugin::Library *plugin::Library::loadLibrary(const string &plugin_name, bool bu
     {
       const char *errmsg= dlerror();
       uint32_t dlpathlen= dlpath.length();
-      if (!dlpath.compare(0, dlpathlen, errmsg))
+      if (not dlpath.compare(0, dlpathlen, errmsg))
       { // if errmsg starts from dlpath, trim this prefix.
-        errmsg+=dlpathlen;
+        errmsg+= dlpathlen;
         if (*errmsg == ':') errmsg++;
         if (*errmsg == ' ') errmsg++;
       }
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_CANT_OPEN_LIBRARY),
                     dlpath.c_str(), errno, errmsg);
 
-      // This is, in theory, should cause dlerror() to deallocate the error
+      // This, in theory, should cause dlerror() to deallocate the error
       // message. Found this via Google'ing :)
       (void)dlerror();
 

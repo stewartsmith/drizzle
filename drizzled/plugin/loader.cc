@@ -512,14 +512,8 @@ static bool plugin_load_list(plugin::Registry &registry,
        ++iter)
   {
     const string plugin_name(*iter);
-    if (builtin)
-    {
-      library= registry.addLibrary(plugin_name, true);
-    }
-    else
-    {
-      library= registry.addLibrary(plugin_name);
-    }
+
+    library= registry.addLibrary(plugin_name, builtin);
     if (library == NULL)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
