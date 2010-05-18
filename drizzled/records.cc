@@ -43,24 +43,23 @@ static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(ReadRecord *info);
 static int rr_index(ReadRecord *info);
 
-void init_read_record_idx(ReadRecord *info, 
-                          Session *, 
-                          Table *table,
-                          bool print_error, 
-                          uint32_t idx)
+void ReadRecord::init_read_record_idx(Session *, 
+                                      Table *table_arg,
+                                      bool print_error_arg, 
+                                      uint32_t idx)
 {
-  table->emptyRecord();
-  memset(info, 0, sizeof(*info));
-  info->table= table;
-  info->cursor=  table->cursor;
-  info->record= table->record[0];
-  info->print_error= print_error;
+  table_arg->emptyRecord();
+  memset(this, 0, sizeof(*this));
+  table= table_arg;
+  cursor=  table->cursor;
+  record= table->record[0];
+  print_error= print_error_arg;
 
   table->status=0;			/* And it's always found */
-  if (!table->cursor->inited)
+  if (not table->cursor->inited)
     table->cursor->startIndexScan(idx, 1);
   /* read_record will be changed to rr_index in rr_index_first */
-  info->read_record= rr_index_first;
+  read_record= rr_index_first;
 }
 
 

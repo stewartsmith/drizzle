@@ -345,7 +345,7 @@ int mysql_update(Session *session, TableList *table_list,
       }
       else
       {
-        init_read_record_idx(&info, session, table, 1, used_index);
+        info.init_read_record_idx(session, table, 1, used_index);
       }
 
       session->set_proc_info("Searching rows for update");
