@@ -172,6 +172,20 @@ public:
   BDBCUR *cursor;  /* Raw cursor to TC */
   bool moved;      /* Whether the key was implicitly moved */
   bool active;     /* Whether this cursor is active */
+
+  /* B+TREE READ RELATED */
+  char *first_key(int *key_len);
+  char *final_key(int *key_len);
+  char *next_key(int *key_len);
+  char *prev_key(int *key_ken);
+  char *next_logical_key(int *key_len);
+  char *prev_logical_key(int *key_len);
+
+  char *find_key(const int search_mode, const char *key,
+                 const int klen, int *rv_len);
+
+  /* B+TREE UPDATE RELATED */
+  int delete_position(void);
 };
 
 /* Class that reprensents a BTREE index. Takes care of all I/O
@@ -183,7 +197,7 @@ private:
 
 public:
   BlitzTree() : bt_cursor(NULL), length(0), nparts(0), type(0),
-                cursor_moved(false), unique(false) {}
+                unique(false) {}
   ~BlitzTree() {}
 
   /* METADATA */
@@ -191,7 +205,6 @@ public:
   int length;          /* Length of the entire key */
   int nparts;          /* Number of parts in this key */
   int type;            /* Type of the key */
-  bool cursor_moved;   /* Cursor was unexplicitly moved forward */
   bool unique;         /* Whether this key is unique */
 
   /* BTREE INDEX CREATION RELATED */
@@ -209,18 +222,7 @@ public:
   int write(const char *key, const size_t klen);
   int write_unique(const char *key, const size_t klen);
   int delete_key(const char *key, const int klen);
-  int delete_cursor_pos(void);
   int delete_all(void);
-
-  /* BTREE INDEX READ RELATED */
-  char *first_key(int *key_len);
-  char *final_key(int *key_len);
-  char *next_key(int *key_len);
-  char *prev_key(int *key_ken);
-  char *next_logical_key(int *key_len);
-  char *prev_logical_key(int *key_len);
-  char *find_key(const int search_mode, const char *key,
-                 const int klen, int *rv_len);
 
   /* BTREE METADATA RELATED */
   uint64_t records(void); 

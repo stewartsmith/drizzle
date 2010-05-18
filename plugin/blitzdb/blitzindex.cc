@@ -139,46 +139,60 @@ int BlitzTree::write_unique(const char *key, const size_t klen) {
   return 0;
 }
 
-char *BlitzTree::first_key(int *key_len) {
-  if (!tcbdbcurfirst(bt_cursor))
-    return NULL;
-
-  return (char *)tcbdbcurkey(bt_cursor, key_len);
+int BlitzTree::delete_key(const char *key, const int klen) {
+  return (tcbdbout(btree, key, klen)) ? 0 : -1;
 }
 
-char *BlitzTree::final_key(int *key_len) {
-  if (!tcbdbcurlast(bt_cursor))
+int BlitzTree::delete_all(void) {
+  return (tcbdbvanish(btree)) ? 0 : -1;
+}
+
+uint64_t BlitzTree::records(void) {
+  return tcbdbrnum(btree);
+}
+
+/* == BlitzCursor Code From Here == */
+
+char *BlitzCursor::first_key(int *key_len) {
+  if (!tcbdbcurfirst(cursor))
     return NULL;
 
-  return (char *)tcbdbcurkey(bt_cursor, key_len);
+  return (char *)tcbdbcurkey(cursor, key_len);
+}
+
+char *BlitzCursor::final_key(int *key_len) {
+  if (!tcbdbcurlast(cursor))
+    return NULL;
+
+  return (char *)tcbdbcurkey(cursor, key_len);
 }
 
 /* It's possible that the cursor had been implicitly moved
    forward. If so, we obtain the key at the current position
    and return that. This can happen in delete_key(). */
-char *BlitzTree::next_key(int *key_len) {
-  if (!cursor_moved) {
-    if (!tcbdbcurnext(bt_cursor))
+char *BlitzCursor::next_key(int *key_len) {
+  if (!moved) {
+    if (!tcbdbcurnext(cursor))
       return NULL;
   } else
-    cursor_moved = false;
+    moved = false;
 
-  return (char *)tcbdbcurkey(bt_cursor, key_len);
+  return (char *)tcbdbcurkey(cursor, key_len);
 }
 
-char *BlitzTree::prev_key(int *key_len) {
-  if (!tcbdbcurprev(bt_cursor))
+char *BlitzCursor::prev_key(int *key_len) {
+  if (!tcbdbcurprev(cursor))
     return NULL;
 
-  return (char *)tcbdbcurkey(bt_cursor, key_len);
+  return (char *)tcbdbcurkey(cursor, key_len);
 }
 
-char *BlitzTree::next_logical_key(int *key_len) {
+char *BlitzCursor::next_logical_key(int *key_len) {
   int origin_len, a_cmp_len, b_cmp_len;
   char *rv, *origin;
 
   /* Get the key to scan away from. */
-  if ((origin = (char *)tcbdbcurkey(bt_cursor, &origin_len)) == NULL)
+  if ((origin = (char *)tcbdbcurkey(cursor, &origin_len)) == NULL)
     return NULL;
 
   rv = NULL;
@@ -187,13 +201,13 @@ char *BlitzTree::next_logical_key(int *key_len) {
      a key greater than the origin or EOF. */
   while (1) {
     /* Move the cursor and get the next key. */
-    if (!tcbdbcurnext(bt_cursor))
+    if (!tcbdbcurnext(cursor))
       break;
   
-    rv = (char *)tcbdbcurkey(bt_cursor, key_len);
+    rv = (char *)tcbdbcurkey(cursor, key_len);
 
     /* Compare the fetched key with origin. */
-    if (packed_key_cmp(this, rv, origin, &a_cmp_len, &b_cmp_len) > 0)
+    if (packed_key_cmp(this->tree, rv, origin, &a_cmp_len, &b_cmp_len) > 0)
       break;
 
     free(rv);
@@ -203,24 +217,24 @@ char *BlitzTree::next_logical_key(int *key_len) {
   return rv;
 }
 
-char *BlitzTree::prev_logical_key(int *key_len) {
+char *BlitzCursor::prev_logical_key(int *key_len) {
   int origin_len, a_cmp_len, b_cmp_len;
   char *rv, *origin;
 
   /* Get the key to scan away from. */
-  if ((origin = (char *)tcbdbcurkey(bt_cursor, &origin_len)) == NULL)
+  if ((origin = (char *)tcbdbcurkey(cursor, &origin_len)) == NULL)
     return NULL;
 
   rv = NULL;
 
   while (1) {
-    if (!tcbdbcurprev(bt_cursor))
+    if (!tcbdbcurprev(cursor))
       break;
   
-    rv = (char *)tcbdbcurkey(bt_cursor, key_len);
+    rv = (char *)tcbdbcurkey(cursor, key_len);
 
     /* Compare the fetched key with origin. */
-    if (packed_key_cmp(this, rv, origin, &a_cmp_len, &b_cmp_len) < 0)
+    if (packed_key_cmp(this->tree, rv, origin, &a_cmp_len, &b_cmp_len) < 0)
       break;
 
     free(rv);
@@ -233,18 +247,19 @@ char *BlitzTree::prev_logical_key(int *key_len) {
 /* A cursor based lookup on a B+Tree doesn't guarantee that the
    returned key is identical. This is because it would return the
    next logical key if one exists. */
-char *BlitzTree::find_key(const int search_mode, const char *key,
-                          const int klen, int *rv_len) {
-  if (!tcbdbcurjump(bt_cursor, (void *)key, klen))
+char *BlitzCursor::find_key(const int search_mode, const char *key,
+                            const int klen, int *rv_len) {
+
+  if (!tcbdbcurjump(cursor, (void *)key, klen))
     return NULL;
 
-  char *rv = (char *)tcbdbcurkey(bt_cursor, rv_len);
+  char *rv = (char *)tcbdbcurkey(cursor, rv_len);
 
   if (rv == NULL)
     return NULL;
 
   int cmp, a_cmp_len, b_cmp_len;
-  cmp = packed_key_cmp(this, rv, key, &a_cmp_len, &b_cmp_len);
+  cmp = packed_key_cmp(this->tree, rv, key, &a_cmp_len, &b_cmp_len);
 
   switch (search_mode) {
   case drizzled::HA_READ_KEY_EXACT:
@@ -280,22 +295,11 @@ char *BlitzTree::find_key(const int search_mode, const char *key,
   return rv;
 }
 
-int BlitzTree::delete_key(const char *key, const int klen) {
-  return (tcbdbout(btree, key, klen)) ? 0 : -1;
-}
-
-int BlitzTree::delete_cursor_pos(void) {
-  if (!tcbdbcurout(bt_cursor))
+int BlitzCursor::delete_position(void) {
+  if (!tcbdbcurout(cursor))
     return -1;
 
-  cursor_moved = true;
+  moved = true;
   return 0;
 }
 
-int BlitzTree::delete_all(void) {
-  return (tcbdbvanish(btree)) ? 0 : -1;
-}
-
-uint64_t BlitzTree::records(void) {
-  return tcbdbrnum(btree);
-}

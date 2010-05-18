@@ -605,7 +605,7 @@ int ha_blitz::index_first(unsigned char *buf) {
   char *dict_key, *bt_key, *row;
   int dict_klen, bt_klen, prefix_len, rlen;
 
-  bt_key = share->btrees[active_index].first_key(&bt_klen);
+  bt_key = btree_cursor->first_key(&bt_klen);
 
   if (bt_key == NULL)
     return HA_ERR_END_OF_FILE;
@@ -630,7 +630,7 @@ int ha_blitz::index_next(unsigned char *buf) {
   char *dict_key, *bt_key, *row;
   int dict_klen, bt_klen, prefix_len, rlen;
 
-  bt_key = share->btrees[active_index].next_key(&bt_klen);
+  bt_key = btree_cursor->next_key(&bt_klen);
 
   if (bt_key == NULL) {
     table->status = STATUS_NOT_FOUND;
@@ -658,7 +658,7 @@ int ha_blitz::index_prev(unsigned char *buf) {
   char *dict_key, *bt_key, *row;
   int dict_klen, bt_klen, prefix_len, rlen;
 
-  bt_key = share->btrees[active_index].prev_key(&bt_klen);
+  bt_key = btree_cursor->prev_key(&bt_klen);
 
   if (bt_key == NULL)
     return HA_ERR_END_OF_FILE;
@@ -683,7 +683,7 @@ int ha_blitz::index_last(unsigned char *buf) {
   char *dict_key, *bt_key, *row;
   int dict_klen, bt_klen, prefix_len, rlen;
 
-  bt_key = share->btrees[active_index].final_key(&bt_klen);
+  bt_key = btree_cursor->final_key(&bt_klen);
 
   if (bt_key == NULL)
     return HA_ERR_KEY_NOT_FOUND;
@@ -727,8 +727,11 @@ int ha_blitz::index_read_idx(unsigned char *buf, uint32_t key_num,
 
   /* Lookup the tree and get the master key. */
   int unique_klen;
-  char *unique_key = share->btrees[key_num].find_key(search_mode, packed_key,
-                                                     packed_klen, &unique_klen);
+  char *unique_key;
+
+  unique_key = btree_cursor->find_key(search_mode, packed_key,
+                                      packed_klen, &unique_klen);
+
   if (unique_key == NULL) {
     errkey_id = key_num;
     return HA_ERR_KEY_NOT_FOUND;
@@ -995,7 +998,7 @@ int ha_blitz::doDeleteRecord(const unsigned char *row_to_delete) {
          TC's cursor is already pointing at the key that we want
          to delete. We wouldn't be here otherwise. */
       if (i == active_index) {
-        share->btrees[i].delete_cursor_pos();
+        btree_cursor->delete_position();
         continue;
       }
 

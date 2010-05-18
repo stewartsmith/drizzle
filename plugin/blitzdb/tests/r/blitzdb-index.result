@@ -710,7 +710,6 @@ delete from t1 where a = 'b';
 select * from t1;
 a
 c
-c
 d
 e
 f
