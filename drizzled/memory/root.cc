@@ -228,6 +228,7 @@ void *memory::Root::multi_alloc_root(int unused, ...)
   char **ptr, *start, *res;
   size_t tot_length, length;
 
+  (void)unused; // For some reason Sun Studio registers unused as not used.
   va_start(args, unused);
   tot_length= 0;
   while ((ptr= va_arg(args, char **)))
