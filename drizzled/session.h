@@ -75,6 +75,8 @@ class user_var_entry;
 class CopyField;
 class Table_ident;
 
+class TableShareInstance;
+
 extern char internal_table_name[2];
 extern char empty_c_string[1];
 extern const char **errmesg;
@@ -1494,6 +1496,13 @@ public:
   static void unlink(Session *session);
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
+
+private:
+  std::vector<TableShareInstance *> temporary_shares;
+
+public:
+  TableShareInstance *getTemporaryShare(const char *tmpname_arg);
+  TableShareInstance *getTemporaryShare();
 };
 
 class JOIN;

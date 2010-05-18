@@ -1414,7 +1414,9 @@ void JOIN::exec()
                                                    - curr_join->tmp_fields_list1.elements;
 
       if (exec_tmp_table2)
+      {
         curr_tmp_table= exec_tmp_table2;
+      }
       else
       {
         /* group data to new table */
@@ -1437,7 +1439,10 @@ void JOIN::exec()
                                                 1, curr_join->select_options,
                                                 HA_POS_ERROR,
                                                 (char *) "")))
+        {
           return;
+        }
+
         curr_join->exec_tmp_table2= exec_tmp_table2;
       }
       if (curr_join->group_list)
@@ -1717,12 +1722,11 @@ int JOIN::destroy()
   cond_equal= 0;
 
   cleanup(1);
-  if (exec_tmp_table1)
-    exec_tmp_table1->free_tmp_table(session);
-  if (exec_tmp_table2)
-    exec_tmp_table2->free_tmp_table(session);
+  exec_tmp_table1= NULL;
+  exec_tmp_table2= NULL;
   delete select;
   delete_dynamic(&keyuse);
+
   return(error);
 }
 

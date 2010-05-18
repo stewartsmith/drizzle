@@ -96,7 +96,6 @@ Table *create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fiel
 			order_st *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
 			const char* alias);
-void free_tmp_table(Session *session, Table *entry);
 void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param,
                        List<Item> &fields, bool reset_with_sum_func);
 bool setup_copy_fields(Session *session, Tmp_Table_Param *param,
