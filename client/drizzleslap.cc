@@ -125,29 +125,31 @@ char **primary_keys;
 /* This gets passed to malloc, so lets set it to an arch-dependant size */
 size_t primary_keys_number_of;
 
-string host= "", opt_password= "", user= "",
-  user_supplied_query= "",
-  user_supplied_pre_statements= "",
-  user_supplied_post_statements= "",
-  default_engine= "",
-  pre_system= "",
-  post_system= "";
+static string host, 
+  opt_password, 
+  user,
+  user_supplied_query,
+  user_supplied_pre_statements,
+  user_supplied_post_statements,
+  default_engine,
+  pre_system,
+  post_system;
 
-string delimiter= "\n";
+string delimiter;
 
-string create_schema_string= "drizzleslap";
+string create_schema_string;
 
-static bool opt_mysql= false;
+static bool opt_mysql;
 static bool opt_preserve= true;
-static bool opt_only_print= false;
-static bool opt_burnin= false;
+static bool opt_only_print;
+static bool opt_burnin;
 static bool opt_ignore_sql_errors= false;
 static bool tty_password= false,
-  opt_silent= false,
-  auto_generate_sql_autoincrement= false,
-  auto_generate_sql_guid_primary= false,
-  auto_generate_sql= false;
-std::string opt_auto_generate_sql_type= "mixed";
+  opt_silent,
+  auto_generate_sql_autoincrement,
+  auto_generate_sql_guid_primary,
+  auto_generate_sql;
+std::string opt_auto_generate_sql_type;
 
 static int verbose, delimiter_length;
 static uint32_t commit_rate;
@@ -161,9 +163,9 @@ static unsigned int opt_set_random_seed;
 string auto_generate_selected_columns_opt;
 
 /* Yes, we do set defaults here */
-static unsigned int num_int_cols= 1;
-static unsigned int num_char_cols= 1;
-static unsigned int num_blob_cols= 0;
+static unsigned int num_int_cols;
+static unsigned int num_char_cols;
+static unsigned int num_blob_cols;
 static unsigned int num_blob_cols_size;
 static unsigned int num_blob_cols_size_min;
 static unsigned int num_int_cols_index= 0;
@@ -176,8 +178,8 @@ static uint64_t auto_generate_sql_unique_query_number;
 static unsigned int auto_generate_sql_secondary_indexes;
 static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
-string concurrency_str= "";
-string create_string="";
+string concurrency_str;
+string create_string;
 uint32_t *concurrency;
 
 const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
@@ -185,7 +187,7 @@ std::string opt_csv_str;
 int csv_file;
 
 static int get_options(void);
-static uint32_t opt_drizzle_port= 0;
+static uint32_t opt_drizzle_port;
 
 static const char *load_default_groups[]= { "drizzleslap","client",0 };
 
@@ -883,16 +885,16 @@ int main(int argc, char **argv)
   ("engine ,e",po::value<string>(&default_engine)->default_value(""),
   "Storage engien to use for creating the table")
   ("host,h",po::value<string>(&host)->default_value(""),"Connect to the host")
-  ("iterations,i",po::value<uint32_t>(&iterations)->default_value(0),
+  ("iterations,i",po::value<uint32_t>(&iterations),
   "Number of times to run the tests")
   ("label",po::value<string>(&opt_label)->default_value(""),
   "Label to use for print and csv")
   ("mysql,m",po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),"Use MySQL protocol")
   ("number-blob-cols",po::value<string>(&num_blob_cols_opt)->default_value(""),
   "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ")
-  ("number-char-cols,x",po::value<uint32_t>(&num_char_cols)->default_value(1),
+  ("number-char-cols,x",po::value<uint32_t>(&num_char_cols)->default_value(0),
   "Number of VARCHAR columns to create in table if specifying --auto-generate-sql.")
-  ("number-int-cols,y",po::value<uint32_t>(&num_int_cols)->default_value(1),
+  ("number-int-cols,y",po::value<uint32_t>(&num_int_cols)->default_value(0),
   "Number of INT columns to create in table if specifying --auto-generate-sql.")
   ("number-of-queries",
   po::value<uint64_t>(&num_of_query)->default_value(0),
