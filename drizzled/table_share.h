@@ -270,6 +270,11 @@ public:
     return mem_root.strmake_root(str_arg, len_arg);
   }
 
+  memory::Root *getMemRoot()
+  {
+    return &mem_root;
+  }
+
 private:
   std::vector<std::string> _keynames;
 

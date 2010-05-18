@@ -137,7 +137,9 @@ exit:
     if (res)
     {
       if (table)
-        table->free_tmp_table(session);
+      {
+        table= 0;
+      }
       delete derived_result;
     }
     else

@@ -48,6 +48,8 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
 
+#include "drizzled/table_share_instance.h"
+
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
 
@@ -827,6 +829,14 @@ void Session::cleanup_after_query()
   free_items();
   /* Reset where. */
   where= Session::DEFAULT_WHERE;
+
+  /* Reset the temporary shares we built */
+  for (std::vector<TableShareInstance *>::iterator iter= temporary_shares.begin();
+       iter != temporary_shares.end(); iter++)
+  {
+    delete *iter;
+  }
+  temporary_shares.clear();
 }
 
 /**
@@ -1837,33 +1847,8 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 */
 void Session::close_thread_tables()
 {
-  Table *table;
-
-  /*
-    We are assuming here that session->derived_tables contains ONLY derived
-    tables for this substatement. i.e. instead of approach which uses
-    query_id matching for determining which of the derived tables belong
-    to this substatement we rely on the ability of substatements to
-    save/restore session->derived_tables during their execution.
-
-    TODO: Probably even better approach is to simply associate list of
-          derived tables with (sub-)statement instead of thread and destroy
-          them at the end of its execution.
-  */
   if (derived_tables)
-  {
-    Table *next;
-    /*
-      Close all derived tables generated in queries like
-      SELECT * FROM (SELECT * FROM t1)
-    */
-    for (table= derived_tables ; table ; table= next)
-    {
-      next= table->next;
-      table->free_tmp_table(this);
-    }
-    derived_tables= 0;
-  }
+    derived_tables= NULL; // They should all be invalid by this point
 
   /*
     Mark all temporary tables used by this statement as free for reuse.
@@ -2088,6 +2073,30 @@ bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
   (*iter).second.set_name(to.getTableName());
 
   return true;
+}
+
+TableShareInstance *Session::getTemporaryShare()
+{
+  temporary_shares.push_back(new TableShareInstance()); // This will not go into the tableshare cache, so no key is used.
+
+  TableShareInstance *tmp_share= temporary_shares.back();
+
+  assert(tmp_share);
+
+  return tmp_share;
+}
+
+TableShareInstance *Session::getTemporaryShare(const char *tmpname_arg)
+{
+  assert(tmpname_arg);
+
+  temporary_shares.push_back(new TableShareInstance(tmpname_arg)); // This will not go into the tableshare cache, so no key is used.
+
+  TableShareInstance *tmp_share= temporary_shares.back();
+
+  assert(tmp_share);
+
+  return tmp_share;
 }
 
 } /* namespace drizzled */

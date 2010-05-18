@@ -127,9 +127,13 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
                                  (order_st*) NULL, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
+  {
     return true;
+  }
+
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
   table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   return false;
 }
 
@@ -604,8 +608,6 @@ bool Select_Lex_Unit::cleanup()
   {
     delete union_result;
     union_result=0; // Safety
-    if (table)
-      table->free_tmp_table(session);
     table= 0; // Safety
   }
 

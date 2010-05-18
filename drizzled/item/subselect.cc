@@ -2951,6 +2951,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   */
   if (!(tmp_result_sink= new select_union))
     return(true);
+
   if (tmp_result_sink->create_result_table(
                          session, tmp_columns, true,
                          session->options | TMP_TABLE_ALL_COLUMNS,
@@ -2975,7 +2976,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
       tmp_table->s->uniques ||
       tmp_table->key_info->key_length >= tmp_table->cursor->getEngine()->max_key_length() ||
       tmp_table->key_info->key_parts > tmp_table->cursor->getEngine()->max_key_parts());
-    tmp_table->free_tmp_table(session);
+    tmp_table= NULL;
     delete result;
     result= NULL;
     return(true);
@@ -3066,7 +3067,9 @@ subselect_hash_sj_engine::~subselect_hash_sj_engine()
 {
   delete result;
   if (tab)
-    tab->table->free_tmp_table(session);
+  {
+    tab->table= NULL;
+  }
 }
 
 
