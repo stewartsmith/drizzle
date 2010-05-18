@@ -884,7 +884,7 @@ int main(int argc, char **argv)
   "Detach (close and re open) connections after X number of requests")
   ("engine ,e",po::value<string>(&default_engine)->default_value(""),
   "Storage engien to use for creating the table")
-  ("host,h",po::value<string>(&host)->default_value(""),"Connect to the host")
+  ("host,h",po::value<string>(&host)->default_value("localhost"),"Connect to the host")
   ("iterations,i",po::value<uint32_t>(&iterations),
   "Number of times to run the tests")
   ("label",po::value<string>(&opt_label)->default_value(""),
