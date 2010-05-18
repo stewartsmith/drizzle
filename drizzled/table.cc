@@ -1483,11 +1483,13 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 
   TableShareInstance *share= session->getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
 
-  if (! session->mem_root->multi_alloc_root(&field, (field_count + 1) * sizeof(Field*),
-                                            &blob_field, (field_count+1) *sizeof(uint32_t),
-                                            &bitmaps, bitmap_buffer_size(field_count)*2,
-                                            NULL))
+  if (! share->getMemRoot()->multi_alloc_root(&field, (field_count + 1) * sizeof(Field*),
+                                              &blob_field, (field_count+1) *sizeof(uint32_t),
+                                              &bitmaps, bitmap_buffer_size(field_count)*2,
+                                              NULL))
+  {
     return NULL;
+  }
 
   table= share->getTable();
   table->field= field;
@@ -1500,8 +1502,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
-    *field= share->make_field(session->mem_root,
-                              NULL,
+    *field= share->make_field(NULL,
                               cdef->length,
                               (cdef->flags & NOT_NULL_FLAG) ? false : true,
                               (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),

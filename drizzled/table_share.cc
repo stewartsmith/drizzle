@@ -1865,8 +1865,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   return;
 } /* open_table_error */
 
-Field *TableShare::make_field(memory::Root *root,
-                              unsigned char *ptr,
+Field *TableShare::make_field(unsigned char *ptr,
                               uint32_t field_length,
                               bool is_nullable,
                               unsigned char *null_pos,
@@ -1878,9 +1877,6 @@ Field *TableShare::make_field(memory::Root *root,
                               TYPELIB *interval,
                               const char *field_name)
 {
-  TableShare *share= this;
-  assert(root);
-
   if (! is_nullable)
   {
     null_pos=0;
@@ -1903,7 +1899,7 @@ Field *TableShare::make_field(memory::Root *root,
   switch (field_type)
   {
   case DRIZZLE_TYPE_ENUM:
-    return new (root) Field_enum(ptr,
+    return new (&mem_root) Field_enum(ptr,
                                  field_length,
                                  null_pos,
                                  null_bit,
@@ -1912,22 +1908,22 @@ Field *TableShare::make_field(memory::Root *root,
                                  interval,
                                  field_charset);
   case DRIZZLE_TYPE_VARCHAR:
-    return new (root) Field_varstring(ptr,field_length,
+    return new (&mem_root) Field_varstring(ptr,field_length,
                                       HA_VARCHAR_PACKLENGTH(field_length),
                                       null_pos,null_bit,
                                       field_name,
-                                      share,
+                                      this,
                                       field_charset);
   case DRIZZLE_TYPE_BLOB:
-    return new (root) Field_blob(ptr,
+    return new (&mem_root) Field_blob(ptr,
                                  null_pos,
                                  null_bit,
                                  field_name,
-                                 share,
+                                 this,
                                  calc_pack_length(DRIZZLE_TYPE_LONG, 0),
                                  field_charset);
   case DRIZZLE_TYPE_DECIMAL:
-    return new (root) Field_decimal(ptr,
+    return new (&mem_root) Field_decimal(ptr,
                                     field_length,
                                     null_pos,
                                     null_bit,
@@ -1937,7 +1933,7 @@ Field *TableShare::make_field(memory::Root *root,
                                     false,
                                     false /* is_unsigned */);
   case DRIZZLE_TYPE_DOUBLE:
-    return new (root) Field_double(ptr,
+    return new (&mem_root) Field_double(ptr,
                                    field_length,
                                    null_pos,
                                    null_bit,
@@ -1947,7 +1943,7 @@ Field *TableShare::make_field(memory::Root *root,
                                    false,
                                    false /* is_unsigned */);
   case DRIZZLE_TYPE_LONG:
-    return new (root) Field_long(ptr,
+    return new (&mem_root) Field_long(ptr,
                                  field_length,
                                  null_pos,
                                  null_bit,
@@ -1956,7 +1952,7 @@ Field *TableShare::make_field(memory::Root *root,
                                  false,
                                  false /* is_unsigned */);
   case DRIZZLE_TYPE_LONGLONG:
-    return new (root) Field_int64_t(ptr,
+    return new (&mem_root) Field_int64_t(ptr,
                                     field_length,
                                     null_pos,
                                     null_bit,
@@ -1965,28 +1961,28 @@ Field *TableShare::make_field(memory::Root *root,
                                     false,
                                     false /* is_unsigned */);
   case DRIZZLE_TYPE_TIMESTAMP:
-    return new (root) Field_timestamp(ptr,
+    return new (&mem_root) Field_timestamp(ptr,
                                       field_length,
                                       null_pos,
                                       null_bit,
                                       unireg_check,
                                       field_name,
-                                      share,
+                                      this,
                                       field_charset);
   case DRIZZLE_TYPE_DATE:
-    return new (root) Field_date(ptr,
+    return new (&mem_root) Field_date(ptr,
                                  null_pos,
                                  null_bit,
                                  field_name,
                                  field_charset);
   case DRIZZLE_TYPE_DATETIME:
-    return new (root) Field_datetime(ptr,
+    return new (&mem_root) Field_datetime(ptr,
                                      null_pos,
                                      null_bit,
                                      field_name,
                                      field_charset);
   case DRIZZLE_TYPE_NULL:
-    return new (root) Field_null(ptr,
+    return new (&mem_root) Field_null(ptr,
                                  field_length,
                                  field_name,
                                  field_charset);
