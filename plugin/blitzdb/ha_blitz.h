@@ -48,6 +48,14 @@
 const std::string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const std::string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
 
+/* Class Prototype */
+class BlitzLock;
+class BlitzData;
+class BlitzKeyPart;
+class BlitzCursor;
+class BlitzTree;
+class BlitzShare;
+
 /* Multi Reader-Writer lock responsible for controlling concurrency
    at the handler level. This class is implemented in blitzlock.cc */
 class BlitzLock {
@@ -156,12 +164,14 @@ public:
 
 class BlitzCursor {
 public:
-  BlitzCursor() : cursor(NULL), moved(false), active(false) {}
+  BlitzCursor() : tree(NULL), cursor(NULL), moved(false),
+                  active(false) {}
   ~BlitzCursor() {}
 
-  BDBCUR *cursor; /* Raw cursor to TC. */
-  bool moved;     /* Whether the key was implicitly moved. */
-  bool active;    /* Whether this cursor is active */
+  BlitzTree *tree; /* Tree that this instance works on */
+  BDBCUR *cursor;  /* Raw cursor to TC */
+  bool moved;      /* Whether the key was implicitly moved */
+  bool active;     /* Whether this cursor is active */
 };
 
 /* Class that reprensents a BTREE index. Takes care of all I/O
@@ -194,9 +204,6 @@ public:
   /* KEY HANDLING */
   BlitzCursor *create_cursor(void);
   void destroy_cursor(BlitzCursor *cursor);
-  char *prepare_key(const char *key, const size_t klen,
-                    const char *val, const size_t vlen,
-                    size_t *total_klen);
 
   /* BTREE INDEX WRITE RELATED */
   int write(const char *key, const size_t klen);

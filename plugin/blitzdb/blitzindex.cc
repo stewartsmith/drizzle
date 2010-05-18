@@ -103,11 +103,15 @@ int BlitzTree::close(void) {
 }
 
 BlitzCursor *BlitzTree::create_cursor(void) {
+  /* Resort instantiating a new object everytime for now.
+     In the future this will be a singleton for each Cursor
+     object. We must first confirm it's safety. */
   BlitzCursor *bc = new BlitzCursor();
 
   if ((bc->cursor = tcbdbcurnew(btree)) == NULL)
     return NULL;
 
+  bc->tree = this;
   bc->active = true;
   bc->moved = false;
   return bc;
