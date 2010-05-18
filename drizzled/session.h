@@ -1103,8 +1103,6 @@ public:
     return (abort_on_warning);
   }
   void set_status_var_init();
-  void reset_n_backup_open_tables_state(Open_tables_state *backup);
-  void restore_backup_open_tables_state(Open_tables_state *backup);
 
   /**
     Set the current database; use deep copy of C-string.

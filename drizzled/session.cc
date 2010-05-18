@@ -92,10 +92,11 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          !strcmp(field_name.str, other.field_name.str);
 }
 
-Open_tables_state::Open_tables_state(uint64_t version_arg)
-  :version(version_arg), backups_available(false)
+Open_tables_state::Open_tables_state(uint64_t version_arg) :
+  version(version_arg)
 {
-  reset_open_tables_state();
+  open_tables= temporary_tables= derived_tables= NULL;
+  extra_lock= lock= NULL;
 }
 
 /*
@@ -161,8 +162,7 @@ int session_tx_isolation(const Session *session)
   return (int) session->variables.tx_isolation;
 }
 
-Session::Session(plugin::Client *client_arg)
-  :
+Session::Session(plugin::Client *client_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
@@ -1543,34 +1543,6 @@ void Session::set_status_var_init()
 }
 
 
-/****************************************************************************
-  Handling of open and locked tables states.
-
-  This is used when we want to open/lock (and then close) some tables when
-  we already have a set of tables open and locked. We use these methods for
-  access to mysql.proc table to find definitions of stored routines.
-****************************************************************************/
-
-void Session::reset_n_backup_open_tables_state(Open_tables_state *backup)
-{
-  backup->set_open_tables_state(this);
-  reset_open_tables_state();
-  backups_available= false;
-}
-
-
-void Session::restore_backup_open_tables_state(Open_tables_state *backup)
-{
-  /*
-    Before we will throw away current open tables state we want
-    to be sure that it was properly cleaned up.
-  */
-  assert(open_tables == 0 && temporary_tables == 0 &&
-              derived_tables == 0 &&
-              lock == 0);
-  set_open_tables_state(backup);
-}
-
 bool Session::set_db(const std::string &new_db)
 {
   /* Do not reallocate memory if current chunk is big enough. */
@@ -1877,7 +1849,6 @@ void Session::close_thread_tables()
     does not belong to statement for which we do close_thread_tables()).
     TODO: This should be fixed in later releases.
    */
-  if (backups_available == false)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     main_da.can_overwrite_status= true;
