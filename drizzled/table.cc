@@ -1089,7 +1089,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     share->storage_engine= myisam_engine;
-    table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
+    table->cursor= share->db_type()->getCursor(*share, table->getMemRoot());
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
@@ -1100,7 +1100,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     share->storage_engine= heap_engine;
-    table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
+    table->cursor= share->db_type()->getCursor(*share, table->getMemRoot());
   }
   if (! table->cursor)
     goto err;
@@ -1133,7 +1133,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
     if (!(table->record[0]= (unsigned char*)
-                            table->mem_root.alloc_root(alloc_length*3)))
+                            table->alloc_root(alloc_length*3)))
     {
       goto err;
     }
@@ -1353,7 +1353,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     table->distinct= 1;
     share->keys= 1;
     if (!(key_part_info= (KeyPartInfo*)
-         table->mem_root.alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo))))
+         table->alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo))))
       goto err;
     memset(key_part_info, 0, keyinfo->key_parts * sizeof(KeyPartInfo));
     table->key_info=keyinfo;
@@ -1469,7 +1469,6 @@ err:
 
 Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 {
-  Session *session= this;
   uint32_t field_count= field_list.elements;
   uint32_t blob_count= 0;
   Field **field;
@@ -1481,7 +1480,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   unsigned char *bitmaps;
   Table *table;
 
-  TableShareInstance *share= session->getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
+  TableShareInstance *share= getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
 
   if (! share->getMemRoot()->multi_alloc_root(0, &field, (field_count + 1) * sizeof(Field*),
                                               &blob_field, (field_count+1) *sizeof(uint32_t),
@@ -1532,7 +1531,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   null_pack_length= (null_count + 7)/8;
   share->reclength= record_length + null_pack_length;
   share->rec_buff_length= ALIGN_SIZE(share->reclength + 1);
-  table->record[0]= (unsigned char*) session->alloc(share->rec_buff_length);
+  table->record[0]= (unsigned char*)alloc(share->rec_buff_length);
   if (!table->record[0])
     goto error;
 
@@ -1543,7 +1542,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
     share->null_bytes= null_pack_length;
   }
 
-  table->in_use= session;           /* field->reset() may access table->in_use */
+  table->in_use= this;           /* field->reset() may access table->in_use */
   {
     /* Set up field pointers */
     unsigned char *null_pos= table->record[0];

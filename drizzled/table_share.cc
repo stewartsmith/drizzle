@@ -1603,7 +1603,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
     goto err;
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= db_type()->getCursor(*this, &outparam.mem_root)))
+  if (not (outparam.cursor= db_type()->getCursor(*this, outparam.getMemRoot())))
     goto err;
 
   local_error= 4;
@@ -1613,7 +1613,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   records++;
 
-  if (!(record= (unsigned char*) outparam.mem_root.alloc_root(rec_buff_length * records)))
+  if (!(record= (unsigned char*) outparam.alloc_root(rec_buff_length * records)))
     goto err;
 
   if (records == 0)
@@ -1648,7 +1648,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
     memcpy(outparam.record[1], default_values, null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.mem_root.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
+  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
   {
     goto err;
   }
@@ -1662,7 +1662,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   /* Setup copy of fields from share, but use the right alias and record */
   for (uint32_t i= 0 ; i < fields; i++, field_ptr++)
   {
-    if (!((*field_ptr)= field[i]->clone(&outparam.mem_root, &outparam)))
+    if (!((*field_ptr)= field[i]->clone(outparam.getMemRoot(), &outparam)))
       goto err;
   }
   (*field_ptr)= 0;                              // End marker
@@ -1681,7 +1681,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
     KeyPartInfo *key_part;
     uint32_t n_length;
     n_length= keys*sizeof(KeyInfo) + key_parts*sizeof(KeyPartInfo);
-    if (!(local_key_info= (KeyInfo*) outparam.mem_root.alloc_root(n_length)))
+    if (!(local_key_info= (KeyInfo*) outparam.alloc_root(n_length)))
       goto err;
     outparam.key_info= local_key_info;
     key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
@@ -1712,7 +1712,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
             We are using only a prefix of the column as a key:
             Create a new field for the key part that matches the index
           */
-          local_field= key_part->field= local_field->new_field(&outparam.mem_root, &outparam, 0);
+          local_field= key_part->field= local_field->new_field(outparam.getMemRoot(), &outparam, 0);
           local_field->field_length= key_part->length;
         }
       }
@@ -1722,7 +1722,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   /* Allocate bitmaps */
 
   bitmap_size= column_bitmap_size;
-  if (!(bitmaps= (unsigned char*) outparam.mem_root.alloc_root(bitmap_size*3)))
+  if (!(bitmaps= (unsigned char*) outparam.alloc_root(bitmap_size*3)))
   {
     goto err;
   }
@@ -1787,7 +1787,7 @@ err:
   delete outparam.cursor;
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
-  outparam.mem_root.free_root(MYF(0));       // Safe to call on zeroed root
+  outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
   free((char*) outparam.alias);
   return (local_error);
 }
