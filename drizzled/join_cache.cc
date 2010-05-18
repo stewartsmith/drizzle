@@ -38,9 +38,9 @@ using namespace std;
 namespace drizzled
 {
 
-static uint32_t used_blob_length(CACHE_FIELD **ptr);
+static uint32_t used_blob_length(CacheField **ptr);
 
-static uint32_t used_blob_length(CACHE_FIELD **ptr)
+static uint32_t used_blob_length(CacheField **ptr)
 {
   uint32_t length,blob_length;
   for (length=0 ; *ptr ; ptr++)
@@ -60,18 +60,17 @@ static uint32_t used_blob_length(CACHE_FIELD **ptr)
 ******************************************************************************/
 int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
 {
-  register unsigned int i;
   unsigned int length, blobs;
   size_t size;
-  CACHE_FIELD *copy,**blob_ptr;
-  JOIN_CACHE  *cache;
+  CacheField *copy,**blob_ptr;
+  JoinCache  *cache;
   JoinTable *join_tab;
 
   cache= &tables[table_count].cache;
   cache->fields=blobs=0;
 
   join_tab= tables;
-  for (i=0 ; i < table_count ; i++,join_tab++)
+  for (unsigned int i= 0; i < table_count ; i++, join_tab++)
   {
     if (!join_tab->used_fieldlength)		/* Not calced yet */
       calc_used_field_length(session, join_tab);
@@ -85,19 +84,19 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
       join_tab->used_fieldlength += join_tab->table->cursor->ref_length;
     }
   }
-  if (!(cache->field=(CACHE_FIELD*)
-        memory::sql_alloc(sizeof(CACHE_FIELD)*(cache->fields+table_count*2)+(blobs+1)* sizeof(CACHE_FIELD*))))
+  if (!(cache->field=(CacheField*)
+        memory::sql_alloc(sizeof(CacheField)*(cache->fields+table_count*2)+(blobs+1)* sizeof(CacheField*))))
   {
     free((unsigned char*) cache->buff);
     cache->buff=0;
     return(1);
   }
   copy=cache->field;
-  blob_ptr=cache->blob_ptr=(CACHE_FIELD**)
+  blob_ptr=cache->blob_ptr=(CacheField**)
     (cache->field+cache->fields+table_count*2);
 
   length=0;
-  for (i=0 ; i < table_count ; i++)
+  for (unsigned int i= 0 ; i < table_count ; i++)
   {
     uint32_t null_fields=0, used_fields;
     Field **f_ptr,*field;
@@ -170,11 +169,11 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   return 0;
 }
 
-bool store_record_in_cache(JOIN_CACHE *cache)
+bool store_record_in_cache(JoinCache *cache)
 {
   uint32_t length;
   unsigned char *pos;
-  CACHE_FIELD *copy,*end_field;
+  CacheField *copy,*end_field;
   bool last_record;
 
   pos= cache->pos;
@@ -233,13 +232,13 @@ bool store_record_in_cache(JOIN_CACHE *cache)
   return last_record || (size_t) (cache->end - pos) < cache->length;
 }
 
-void reset_cache_read(JOIN_CACHE *cache)
+void reset_cache_read(JoinCache *cache)
 {
   cache->record_nr= 0;
   cache->pos= cache->buff;
 }
 
-void reset_cache_write(JOIN_CACHE *cache)
+void reset_cache_write(JoinCache *cache)
 {
   reset_cache_read(cache);
   cache->records= 0;

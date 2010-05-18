@@ -59,7 +59,7 @@ class SendField;
 class CreateField;
 class TableShare;
 class Field;
-struct st_cache_field;
+struct CacheField;
 
 int field_conv(Field *to,Field *from);
 
@@ -541,7 +541,7 @@ public:
     return (uint32_t) (ptr - record);
   }
   void copy_from_tmp(int offset);
-  uint32_t fill_cache_field(struct st_cache_field *copy);
+  uint32_t fill_cache_field(CacheField *copy);
   virtual bool get_date(DRIZZLE_TIME *ltime,uint32_t fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);
   virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }

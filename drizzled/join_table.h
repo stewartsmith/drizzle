@@ -200,7 +200,7 @@ public:
   */
   ha_rows limit;
   table_reference_st	ref;
-  JOIN_CACHE cache;
+  JoinCache cache;
   JOIN *join;
 
   /**
