@@ -144,7 +144,7 @@ public:
 };
 
 /* This class is only used by the BlitzTree object which has a long life
-   span. In general we use the Cursor's local KEY_PART_INFO array for
+   span. In general we use the Cursor's local KeyPartInfo array for
    obtaining key information. We create our own array of key information
    because there is no guarantee that the pointer to the internal key_info
    array will always be alive. */

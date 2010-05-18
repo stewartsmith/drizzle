@@ -35,9 +35,9 @@ int ha_blitz::compare_rows_for_unique_violation(const unsigned char *old_row,
   /* For now, we are only interested in supporting a PRIMARY KEY. In the
      next phase of BlitzDB, this should loop through the key array. */
   if (share->primary_key_exists) {
-    KEY *pk = &table->key_info[table->s->primary_key];
-    KEY_PART_INFO *key_part = pk->key_part;
-    KEY_PART_INFO *key_part_end = key_part + pk->key_parts;
+    KeyInfo *pk = &table->key_info[table->s->primary_key];
+    KeyPartInfo *key_part = pk->key_part;
+    KeyPartInfo *key_part_end = key_part + pk->key_parts;
     int key_changed = 0;
 
     while (key_part != key_part_end) {  

@@ -794,7 +794,7 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
     if ((rv = update_auto_increment()) != 0)
       return rv;
 
-    KEY *key = &table->s->key_info[0];
+    KeyInfo *key = &table->s->key_info[0];
     uint64_t next_val = table->next_number_field->val_int();
 
     if (next_val <= share->auto_increment_value && key->flags & HA_NOSAME)
@@ -1080,9 +1080,9 @@ size_t ha_blitz::make_primary_key(char *pack_to, const unsigned char *row) {
 
 size_t ha_blitz::make_index_key(char *pack_to, int key_num,
                                 const unsigned char *row) {
-  KEY *key = &table->key_info[key_num];
-  KEY_PART_INFO *key_part = key->key_part;
-  KEY_PART_INFO *key_part_end = key_part + key->key_parts;
+  KeyInfo *key = &table->key_info[key_num];
+  KeyPartInfo *key_part = key->key_part;
+  KeyPartInfo *key_part_end = key_part + key->key_parts;
 
   unsigned char *pos = (unsigned char *)pack_to;
   unsigned char *end;
@@ -1141,9 +1141,9 @@ char *ha_blitz::merge_key(const char *a, const size_t a_len, const char *b,
 }
 
 size_t ha_blitz::btree_key_length(const char *key, const int key_num) {
-  KEY *key_info = &table->key_info[key_num];
-  KEY_PART_INFO *key_part = key_info->key_part;
-  KEY_PART_INFO *key_part_end = key_part + key_info->key_parts;
+  KeyInfo *key_info = &table->key_info[key_num];
+  KeyPartInfo *key_part = key_info->key_part;
+  KeyPartInfo *key_part_end = key_part + key_info->key_parts;
   char *pos = (char *)key;
   uint64_t len = 0;
   size_t rv = 0;
@@ -1181,9 +1181,9 @@ void ha_blitz::keep_track_of_key(const char *key, const int klen) {
 /* Converts a native Drizzle index key to BlitzDB's format. */
 char *ha_blitz::native_to_blitz_key(const unsigned char *native_key,
                                     const int key_num, int *return_key_len) {
-  KEY *key = &table->key_info[key_num];
-  KEY_PART_INFO *key_part = key->key_part;
-  KEY_PART_INFO *key_part_end = key_part + key->key_parts;
+  KeyInfo *key = &table->key_info[key_num];
+  KeyPartInfo *key_part = key->key_part;
+  KeyPartInfo *key_part_end = key_part + key->key_parts;
 
   unsigned char *key_pos = (unsigned char *)native_key;
   unsigned char *keybuf_pos = (unsigned char *)key_buffer;
@@ -1329,7 +1329,7 @@ BlitzShare *ha_blitz::get_share(const char *name) {
   }
 
   /* Prepare Index Structure(s) */
-  KEY *curr = table->s->key_info;
+  KeyInfo *curr = table->s->key_info;
   share_ptr->btrees = new BlitzTree[table->s->keys];
 
   for (uint32_t i = 0; i < table->s->keys; i++, curr++) {

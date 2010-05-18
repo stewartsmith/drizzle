@@ -1,0 +1,45 @@
+# Can't run test of external client with embedded server
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=20 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --create-schema=test_env --auto-generate-sql-add-autoincrement  --commit=100
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement  --commit=100
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=update
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=read --commit=100
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write --commit=100
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=mixed --commit=100
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-guid-primary --auto-generate-sql-load-type=update 
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-guid-primary --auto-generate-sql-load-type=update --auto-generate-sql-execute-number=5
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-guid-primary --auto-generate-sql-load-type=key --auto-generate-sql-execute-number=5 --commit=100
+
+#--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-guid-primary --auto-generate-sql-load-type=key --auto-generate-sql-execute-number=5 --auto-generate-sql-secondary-indexes=3
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write --detach=2 --commit=100
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write --timer-length=10 --commit=100
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write --timer-length=1 --commit=100
+
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write --delayed_start=1234 --commit=100
+
+# no blob yet
+#--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write  --number-blob-cols=2:1024/2048 --commit=100
+
+#--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write  --number-blob-cols=1:8197 --commit=100
+
+#--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write  --number-blob-cols=1:1024 --auto-generate-sql-select-columns="charcol1, blobcol1" --commit=100
+
+#--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write  --number-blob-cols=1:1024 --auto-generate-sql-select-columns="charcol1, blobcol1" --set-random-seed=2 --commit=100
+
+#--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write,read  --number-blob-cols=1:1024 --auto-generate-sql-select-columns="charcol1, blobcol1" --commit=100
+
+# Concurrency
+--exec $DRIZZLE_SLAP --silent --concurrency=32 --iterations=20 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --commit=100 --auto-generate-sql-add-autoincrement
+
+--echo Congratulations: we didn't crash.

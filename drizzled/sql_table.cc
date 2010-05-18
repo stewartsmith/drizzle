@@ -56,7 +56,7 @@ namespace drizzled
 
 extern pid_t current_pid;
 
-bool is_primary_key(KEY *key_info)
+bool is_primary_key(KeyInfo *key_info)
 {
   static const char * primary_key_name="PRIMARY";
   return (strcmp(key_info->name, primary_key_name)==0);
@@ -71,8 +71,8 @@ const char* is_primary_key_name(const char* key_name)
     return NULL;
 }
 
-static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
-static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
+static bool check_if_keyname_exists(const char *name,KeyInfo *start, KeyInfo *end);
+static char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
 
 static bool prepare_blob_field(Session *session, CreateField *sql_field);
 
@@ -343,7 +343,7 @@ bool quick_rm_table(Session& session,
   PRIMARY keys are prioritized.
 */
 
-static int sort_keys(KEY *a, KEY *b)
+static int sort_keys(KeyInfo *a, KeyInfo *b)
 {
   ulong a_flags= a->flags, b_flags= b->flags;
 
@@ -543,7 +543,7 @@ static int mysql_prepare_create_table(Session *session,
                                       AlterInfo *alter_info,
                                       bool tmp_table,
                                       uint32_t *db_options,
-                                      KEY **key_info_buffer,
+                                      KeyInfo **key_info_buffer,
                                       uint32_t *key_count,
                                       int select_field_count)
 {
@@ -551,8 +551,8 @@ static int mysql_prepare_create_table(Session *session,
   CreateField	*sql_field,*dup_field;
   uint		field,null_fields,blob_columns,max_key_length;
   ulong		record_offset= 0;
-  KEY		*key_info;
-  KEY_PART_INFO *key_part_info;
+  KeyInfo		*key_info;
+  KeyPartInfo *key_part_info;
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		field_no,dup_no;
   int		select_field_pos,auto_increment=0;
@@ -910,8 +910,8 @@ static int mysql_prepare_create_table(Session *session,
     return(true);
   }
 
-  (*key_info_buffer)= key_info= (KEY*) memory::sql_calloc(sizeof(KEY) * (*key_count));
-  key_part_info=(KEY_PART_INFO*) memory::sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
+  (*key_info_buffer)= key_info= (KeyInfo*) memory::sql_calloc(sizeof(KeyInfo) * (*key_count));
+  key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 
@@ -950,18 +950,6 @@ static int mysql_prepare_create_table(Session *session,
     key_info->key_part=key_part_info;
     key_info->usable_key_parts= key_number;
     key_info->algorithm= key->key_create_info.algorithm;
-
-    /* Take block size from key part or table part */
-    /*
-      TODO: Add warning if block size changes. We can't do it here, as
-      this may depend on the size of the key
-    */
-    key_info->block_size= (key->key_create_info.block_size ?
-                           key->key_create_info.block_size :
-                           create_proto.options().key_block_size());
-
-    if (key_info->block_size)
-      key_info->flags|= HA_USES_BLOCK_SIZE;
 
     uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
                                            key->key_create_info.comment.str,
@@ -1140,15 +1128,19 @@ static int mysql_prepare_create_table(Session *session,
       key_part_info->length=(uint16_t) length;
       /* Use packed keys for long strings on the first column */
       if (!((*db_options) & HA_OPTION_NO_PACK_KEYS) &&
-	  (length >= KEY_DEFAULT_PACK_LENGTH &&
-	   (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR ||
-      sql_field->sql_type == DRIZZLE_TYPE_BLOB)))
+          (length >= KEY_DEFAULT_PACK_LENGTH &&
+           (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR ||
+            sql_field->sql_type == DRIZZLE_TYPE_BLOB)))
       {
         if ((column_nr == 0 && sql_field->sql_type == DRIZZLE_TYPE_BLOB) ||
             sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)
+        {
           key_info->flags|= HA_BINARY_PACK_KEY | HA_VAR_LENGTH_KEY;
+        }
         else
+        {
           key_info->flags|= HA_PACK_KEY;
+        }
       }
       /* Check if the key segment is partial, set the key flag accordingly */
       if (length != sql_field->key_length)
@@ -1210,7 +1202,7 @@ static int mysql_prepare_create_table(Session *session,
     return(true);
   }
   /* Sort keys in optimized order */
-  internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KEY),
+  internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KeyInfo),
 	             (qsort_cmp) sort_keys);
 
   /* Check fields. */
@@ -1293,7 +1285,7 @@ static bool locked_create_event(Session *session,
                                 bool internal_tmp_table,
                                 uint db_options,
                                 uint key_count,
-                                KEY *key_info_buffer)
+                                KeyInfo *key_info_buffer)
 {
   bool error= true;
 
@@ -1424,7 +1416,7 @@ bool mysql_create_table_no_lock(Session *session,
                                 bool is_if_not_exists)
 {
   uint		db_options, key_count;
-  KEY		*key_info_buffer;
+  KeyInfo		*key_info_buffer;
   bool		error= true;
   TableShare share;
 
@@ -1566,9 +1558,9 @@ bool mysql_create_table(Session *session,
 **/
 
 static bool
-check_if_keyname_exists(const char *name, KEY *start, KEY *end)
+check_if_keyname_exists(const char *name, KeyInfo *start, KeyInfo *end)
 {
-  for (KEY *key=start ; key != end ; key++)
+  for (KeyInfo *key=start ; key != end ; key++)
     if (!my_strcasecmp(system_charset_info,name,key->name))
       return 1;
   return 0;
@@ -1576,7 +1568,7 @@ check_if_keyname_exists(const char *name, KEY *start, KEY *end)
 
 
 static char *
-make_unique_key_name(const char *field_name,KEY *start,KEY *end)
+make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 {
   char buff[MAX_FIELD_NAME],*buff_end;
 
@@ -1687,7 +1679,7 @@ void wait_while_table_is_used(Session *session, Table *table,
 
   /* Wait until all there are no other threads that has this table open */
   remove_table_from_cache(session, table->s->getSchemaName(),
-                          table->s->table_name.str,
+                          table->s->getTableName(),
                           RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
@@ -1841,7 +1833,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
       remove_table_from_cache(session, table->table->s->getSchemaName(),
-                              table->table->s->table_name.str,
+                              table->table->s->getTableName(),
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
@@ -1941,7 +1933,7 @@ send_result:
         {
           pthread_mutex_lock(&LOCK_open);
           remove_table_from_cache(session, table->table->s->getSchemaName(),
-                                  table->table->s->table_name.str, RTFC_NO_FLAG);
+                                  table->table->s->getTableName(), RTFC_NO_FLAG);
           pthread_mutex_unlock(&LOCK_open);
         }
       }
@@ -2061,10 +2053,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 
   if (is_engine_set)
   {
-    message::Table::StorageEngine *protoengine;
-
-    protoengine= new_proto.mutable_engine();
-    protoengine->set_name(create_table_proto.engine().name());
+    new_proto.mutable_engine()->set_name(create_table_proto.engine().name());
   }
 
   { // We now do a selective copy of elements on to the new table.
@@ -2090,7 +2079,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
   */
   int err= plugin::StorageEngine::createTable(session,
                                               destination_identifier,
-                                              true, new_proto);
+                                              new_proto);
 
   return err ? false : true;
 }
@@ -2137,7 +2126,7 @@ bool mysql_create_like_table(Session* session,
     return true;
 
   TableIdentifier src_identifier(src_table->table->s->getSchemaName(),
-                                 src_table->table->s->table_name.str, src_table->table->s->tmp_table);
+                                 src_table->table->s->getTableName(), src_table->table->s->tmp_table);
 
 
 

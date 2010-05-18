@@ -129,7 +129,7 @@ const char *Field_iterator_table_ref::table_name()
     return natural_join_it.column_ref()->table_name();
 
   assert(!strcmp(table_ref->table_name,
-                      table_ref->table->s->table_name.str));
+                      table_ref->table->s->getTableName()));
   return table_ref->table_name;
 }
 

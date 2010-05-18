@@ -480,7 +480,6 @@ int StorageEngine::dropTable(Session& session,
 */
 int StorageEngine::createTable(Session &session,
                                TableIdentifier &identifier,
-                               bool update_create_info,
                                message::Table& table_message)
 {
   int error= 1;
@@ -488,15 +487,12 @@ int StorageEngine::createTable(Session &session,
   TableShare share(identifier.getSchemaName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
   message::Table tmp_proto;
 
-  if (parse_table_proto(session, table_message, &share) || open_table_from_share(&session, &share, "", 0, 0, &table))
+  if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, "", 0, 0, table))
   { 
     // @note Error occured, we should probably do a little more here.
   }
   else
   {
-    if (update_create_info)
-      table.updateCreateInfo(&table_message);
-
     /* Check for legal operations against the Engine using the proto (if used) */
     if (table_message.type() == message::Table::TEMPORARY &&
         share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
@@ -523,10 +519,9 @@ int StorageEngine::createTable(Session &session,
       my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
     }
 
-    table.closefrm(false);
+    table.delete_table(false);
   }
 
-  share.free_table_share();
   return(error != 0);
 }
 
@@ -835,7 +830,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
         str.length(max_length-4);
         str.append(STRING_WITH_LEN("..."));
       }
-      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->s->table_name.str,
+      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->s->getTableName(),
         str.c_ptr(), key_nr+1);
       return;
     }
@@ -914,7 +909,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
   case HA_ERR_NO_SUCH_TABLE:
     assert(table);
     my_error(ER_NO_SUCH_TABLE, MYF(0), table->s->getSchemaName(),
-             table->s->table_name.str);
+             table->s->getTableName());
     return;
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
@@ -970,7 +965,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
       return;
     }
   }
-  my_error(textno, errflag, table->s->table_name.str, error);
+  my_error(textno, errflag, table->s->getTableName(), error);
 }
 
 
