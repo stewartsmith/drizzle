@@ -118,7 +118,7 @@ public:
     return min_malloc != 0;
   }
   void free_root(myf MyFLAGS);
-  void *multi_alloc_root(...);
+  void *multi_alloc_root(int unused, ...);
 
 };
 

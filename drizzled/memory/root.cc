@@ -222,13 +222,13 @@ void *memory::Root::alloc_root(size_t length)
  * A pointer to the beginning of the allocated memory block in case of 
  * success or NULL if out of memory
  */
-void *memory::Root::multi_alloc_root(...)
+void *memory::Root::multi_alloc_root(int unused, ...)
 {
   va_list args;
   char **ptr, *start, *res;
   size_t tot_length, length;
 
-  va_start(args, NULL);
+  va_start(args, unused);
   tot_length= 0;
   while ((ptr= va_arg(args, char **)))
   {
@@ -240,7 +240,7 @@ void *memory::Root::multi_alloc_root(...)
   if (!(start= (char*) this->alloc_root(tot_length)))
     return(0);
 
-  va_start(args, NULL);
+  va_start(args, unused);
   res= start;
   while ((ptr= va_arg(args, char **)))
   {

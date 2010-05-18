@@ -866,11 +866,13 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     these items are stored in the temporary table.
   */
   if (param->precomputed_group_by)
+  {
     copy_func_count+= param->sum_func_count;
+  }
 
   memory::Root own_root(TABLE_ALLOC_BLOCK_SIZE);
 
-  if (not own_root.multi_alloc_root(&tmpname, (uint32_t) strlen(path)+1, NULL))
+  if (not own_root.multi_alloc_root(0, &tmpname, (uint32_t) strlen(path)+1, NULL))
   {
     return NULL;
   }
@@ -879,20 +881,18 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   TableShareInstance *share= session->getTemporaryShare(tmpname); // This will not go into the tableshare cache, so no key is used.
 
-  if (not share->getMemRoot()->multi_alloc_root( &reg_field, sizeof(Field*) * (field_count+1),
-                                                 &default_field, sizeof(Field*) * (field_count),
-                                                 &blob_field, sizeof(uint32_t)*(field_count+1),
-                                                 &from_field, sizeof(Field*)*field_count,
-                                                 &copy_func, sizeof(*copy_func)*(copy_func_count+1),
-                                                 &param->keyinfo, sizeof(*param->keyinfo),
-                                                 &key_part_info,
-                                                 sizeof(*key_part_info)*(param->group_parts+1),
-                                                 &param->start_recinfo,
-                                                 sizeof(*param->recinfo)*(field_count*2+4),
-                                                 &group_buff, (group && ! using_unique_constraint ?
-                                                               param->group_length : 0),
-                                                 &bitmaps, bitmap_buffer_size(field_count)*2,
-                                                 NULL))
+  if (not share->getMemRoot()->multi_alloc_root(0, &reg_field, sizeof(Field*) * (field_count+1),
+                                                &default_field, sizeof(Field*) * (field_count),
+                                                &blob_field, sizeof(uint32_t)*(field_count+1),
+                                                &from_field, sizeof(Field*)*field_count,
+                                                &copy_func, sizeof(*copy_func)*(copy_func_count+1),
+                                                &param->keyinfo, sizeof(*param->keyinfo),
+                                                &key_part_info, sizeof(*key_part_info)*(param->group_parts+1),
+                                                &param->start_recinfo, sizeof(*param->recinfo)*(field_count*2+4),
+                                                &group_buff, (group && ! using_unique_constraint ?
+                                                              param->group_length : 0),
+                                                &bitmaps, bitmap_buffer_size(field_count)*2,
+                                                NULL))
   {
     return NULL;
   }
@@ -1483,7 +1483,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 
   TableShareInstance *share= session->getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
 
-  if (! share->getMemRoot()->multi_alloc_root(&field, (field_count + 1) * sizeof(Field*),
+  if (! share->getMemRoot()->multi_alloc_root(0, &field, (field_count + 1) * sizeof(Field*),
                                               &blob_field, (field_count+1) *sizeof(uint32_t),
                                               &bitmaps, bitmap_buffer_size(field_count)*2,
                                               NULL))
