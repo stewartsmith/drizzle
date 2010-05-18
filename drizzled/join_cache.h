@@ -65,12 +65,13 @@ struct JoinCache
   CacheField *field;
   CacheField **blob_ptr;
   optimizer::SqlSelect *select;
+
+  void reset_cache_read();
+  void reset_cache_write();
+  bool store_record_in_cache();
 };
 
 int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count);
-void reset_cache_read(JoinCache *cache);
-void reset_cache_write(JoinCache *cache);
-bool store_record_in_cache(JoinCache *cache);
 
 } /* namespace drizzled */
 
