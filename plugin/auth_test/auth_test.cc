@@ -97,7 +97,7 @@ public:
 
 AuthTest *auth_test= NULL;
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   auth_test= new AuthTest("auth_test");
   context.add(auth_test);

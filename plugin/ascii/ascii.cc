@@ -68,7 +68,7 @@ int64_t AsciiFunction::val_int()
 
 plugin::Create_function<AsciiFunction> *asciiudf= NULL;
 
-static int initialize(plugin::Context &context)
+static int initialize(module::Context &context)
 {
   asciiudf= new plugin::Create_function<AsciiFunction>("ascii");
   context.add(asciiudf);

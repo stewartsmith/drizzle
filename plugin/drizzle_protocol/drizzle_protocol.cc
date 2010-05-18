@@ -814,7 +814,7 @@ void ClientDrizzleProtocol::writeEOFPacket(uint32_t server_status,
 
 static ListenDrizzleProtocol *listen_obj= NULL;
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   listen_obj= new ListenDrizzleProtocol("drizzle_protocol", false);
   context.add(listen_obj); 

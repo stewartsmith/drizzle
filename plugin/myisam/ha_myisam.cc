@@ -1495,7 +1495,7 @@ uint32_t ha_myisam::checksum() const
 
 static MyisamEngine *engine= NULL;
 
-static int myisam_init(plugin::Context &context)
+static int myisam_init(module::Context &context)
 {
   engine= new MyisamEngine(engine_name);
   context.add(engine);

@@ -794,10 +794,10 @@
    fun:mem_alloc_func
    ...
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -807,9 +807,9 @@
    fun:malloc
    ...
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -819,10 +819,10 @@
    fun:malloc
    ...
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -831,9 +831,9 @@
    fun:malloc
    ...
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -845,10 +845,10 @@
    fun:os_aio_array_create
    fun:os_aio_init
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -860,10 +860,10 @@
    fun:os_aio_array_create
    fun:os_aio_init
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -876,10 +876,10 @@
    fun:srv_general_init
    fun:srv_boot
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -896,10 +896,10 @@
    fun:que_eval_sql
    fun:dict_create_or_check_foreign_constraint_tables
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -946,10 +946,10 @@
    fun:fsp_fill_free_list
    fun:fsp_header_init
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -961,10 +961,10 @@
    fun:mtr_x_lock_func
    fun:fsp_header_init
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -980,8 +980,8 @@
    fun:srv_general_init
    fun:srv_boot
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
    fun:_Z11plugin_initPiPPci
    fun:_ZL22init_server_componentsv
    fun:main
@@ -1165,8 +1165,8 @@
    Memcheck:Leak
    ...
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
    fun:main
 }
 
@@ -1197,8 +1197,8 @@
    fun:srv_general_init
    fun:srv_boot
    fun:innobase_start_or_create_for_mysql
-   fun:_ZL13innobase_initRN8drizzled6plugin7ContextE
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
+   fun:_ZL13innobase_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
    fun:_Z11plugin_initPiPPci
    fun:_ZL22init_server_componentsv
    fun:main
@@ -1317,8 +1317,8 @@
    Memcheck:Leak
    fun:dlopen
    ...
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -1329,10 +1329,10 @@
    fun:add_to_global
    fun:dl_open_worker
    ...
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
    ...
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 {
@@ -1340,7 +1340,7 @@
    Memcheck:Leak
    fun:dlopen
    ...
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
 }
 
 {
@@ -1348,7 +1348,7 @@
    Memcheck:Leak
    fun:dlopen
    ...
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
    fun:main
 }
 
@@ -1359,7 +1359,7 @@
    ...
    fun:dlopen
    ...
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
 }
 
 {
@@ -1369,7 +1369,7 @@
    ...
    fun:dlopen
    ...
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
    fun:main
 }
 
@@ -1378,8 +1378,8 @@
    Memcheck:Leak
    fun:dlopen
    ...
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZL22init_server_componentsRN8drizzled6plugin7ContextE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZL22init_server_componentsRN8drizzled6module7ContextE
    fun:main
 }
 
@@ -1389,8 +1389,8 @@
    fun:calloc
    ...
    fun:dlopen
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
 }
 
 
@@ -1400,8 +1400,8 @@
    fun:malloc
    fun:add_to_global
    ...
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
    ...
    fun:main
 }
@@ -1425,8 +1425,8 @@
    fun:_dl_map_object
    fun:dl_open_worker
    ...
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
    ...
    fun:main
 }
@@ -1442,9 +1442,9 @@
    fun:_dl_map_object_deps
    fun:dl_open_worker
    ...
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
 }
 
 {
@@ -1477,10 +1477,11 @@
    fun:_dl_catch_error
    fun:_dlerror_run
    fun:dlopen@@GLIBC_2.2.5
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
+   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEEb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -1492,11 +1493,24 @@
    ...
    fun:dlopen_doit
    ...
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
+   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEEb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
    fun:main
+}
+
+{
+   Suppress dlclose() because we can't use it
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dlopen_doit
+   ...
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
+   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEEb
 }
 
 {
@@ -1651,10 +1665,11 @@
    fun:_dl_open
    fun:dlopen_doit
    ...
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
+   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEEb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -1726,10 +1741,11 @@
    fun:_dl_open
    fun:dlopen_doit
    ...
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
+   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEEb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -1785,9 +1801,9 @@
    obj:/usr/lib/libstdc++.so.6.0.10
    fun:_ZNSsC1EPKcRKSaIcE
    obj:*
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -1796,9 +1812,9 @@
    Memcheck:Leak
    fun:malloc
    ...
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -1807,9 +1823,9 @@
    Memcheck:Leak
    fun:_ZnwmRKSt9nothrow_t
    ...
-   fun:_ZN8drizzledL17plugin_initializeERNS_6plugin8RegistryEPNS0_6ModuleE
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzledL22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzledL17plugin_initializeERNS_6module8RegistryEPNS0_6ModuleE
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
@@ -1819,9 +1835,9 @@
    fun:malloc
    ...
    fun:dlclose
-   fun:_ZN8drizzled6plugin7LibraryD1Ev
-   fun:_ZN8drizzled6plugin8RegistryD1Ev
-   fun:_ZN8drizzled6plugin8Registry8shutdownEv
+   fun:_ZN8drizzled6module7LibraryD1Ev
+   fun:_ZN8drizzled6module8RegistryD1Ev
+   fun:_ZN8drizzled6module8Registry8shutdownEv
    fun:main
 }
 
@@ -1831,8 +1847,8 @@
    fun:malloc
    ...
    fun:dlopen
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
 }
 
 {
@@ -1841,9 +1857,13 @@
    fun:malloc
    ...
    fun:dlopen
-   fun:_ZN8drizzled6plugin7Library11loadLibraryERKSs
-   fun:_ZN8drizzled6plugin8Registry10addLibraryERKSs
-   fun:_ZL16plugin_load_listRN8drizzled6plugin8RegistryEP11st_mem_rootPiPPcSs
+   fun:_ZN8drizzled6module7Library11loadLibraryERKSsb
+   fun:_ZN8drizzled6module8Registry10addLibraryERKSsb
+   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEEb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
+   fun:main
+
 }
 
 {
@@ -2002,8 +2022,8 @@
    Memcheck:Addr8
    fun:_Z8hp_panicN8drizzled17ha_panic_functionE
    fun:_ZN10HeapEngineD0Ev
-   fun:_ZN8drizzled6plugin8RegistryD1Ev
-   fun:_ZN8drizzled6plugin8Registry8shutdownEv
+   fun:_ZN8drizzled6module8RegistryD1Ev
+   fun:_ZN8drizzled6module8Registry8shutdownEv
    fun:main
 }
 
@@ -2117,13 +2137,23 @@
 {
    This is bunk and is going away anyway.
    Memcheck:Cond
-   fun:_ZN8drizzledL17construct_optionsEPNS_6memory4RootEPNS_6plugin6ModuleEPNS_6optionE
-   fun:_ZN8drizzledL19test_plugin_optionsEPNS_6memory4RootEPNS_6plugin6ModuleEPiPPc
-   fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-   fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+   fun:_ZN8drizzledL17construct_optionsEPNS_6memory4RootEPNS_6module6ModuleEPNS_6optionE
+   fun:_ZN8drizzledL19test_plugin_optionsEPNS_6memory4RootEPNS_6module6ModuleEPiPPc
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
 
+{
+   This is bunk and is going away anyway.
+   Memcheck:Cond
+   fun:_ZN8drizzledL17construct_optionsEPNS_6memory4RootEPNS_6module6ModuleEPNS_6optionE
+   fun:_ZN8drizzledL19test_plugin_optionsEPNS_6memory4RootEPNS_6module6ModuleEPiPPc
+   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEEb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
+   fun:main
+}
 {
    InnoDB allocing out of its internal heap is always confusing to valgrind
    Memcheck:Leak
@@ -2138,9 +2168,9 @@
   fun:malloc
   ...
   obj:*libgcrypt.so.*
-  fun:_ZL10initializeRN8drizzled6plugin7ContextE
-  fun:_ZN8drizzled11plugin_initERNS_6plugin8RegistryEPiPPcb
-  fun:_ZN8drizzled22init_server_componentsERNS_6plugin8RegistryE
+  fun:_ZL10initializeRN8drizzled6module7ContextE
+  fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+  fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
   fun:main
 }
 

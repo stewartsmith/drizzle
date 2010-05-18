@@ -338,7 +338,7 @@ static bool plugin_initialize(module::Registry &registry,
 {
   assert(module->isInited == false);
 
-  plugin::Context loading_context(registry, module);
+  module::Context loading_context(registry, module);
   if (module->getManifest().init)
   {
     if (module->getManifest().init(loading_context))

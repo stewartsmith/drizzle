@@ -26,7 +26,7 @@
  * A module::Manifest is the struct contained in every Plugin Library.
  */
 
-#include "drizzled/plugin/context.h"
+#include "drizzled/module/context.h"
 
 namespace drizzled
 {
@@ -47,7 +47,7 @@ enum plugin_license_type {
 namespace module
 {
 
-typedef int (*initialize_func_t)(::drizzled::plugin::Context &);
+typedef int (*initialize_func_t)(::drizzled::module::Context &);
 
 /**
  * Plugin Manfiest

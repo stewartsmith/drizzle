@@ -17,19 +17,19 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_CONTEXT_H
-#define DRIZZLED_PLUGIN_CONTEXT_H
+#ifndef DRIZZLED_MODULE_CONTEXT_H
+#define DRIZZLED_MODULE_CONTEXT_H
 
 /**
  * @file Defines a Plugin Context
  *
- * A plugin::Context object is a proxy object containing state information
+ * A module::Context object is a proxy object containing state information
  * about the plugin being registered that knows how to perform registration
  * actions.
  *
- * The plugin registration system creates a new plugin::Context for each
+ * The plugin registration system creates a new module::Context for each
  * module::Module during the initializtion phase and passes a reference to
- * the plugin::Context to the module's init method. This allows the plugin
+ * the module::Context to the module's init method. This allows the plugin
  * to call registration methods without having access to larger module::Registry
  * calls. It also provides a filter layer through which calls are made in order
  * to force things like proper name prefixing and the like.
@@ -45,10 +45,6 @@ class sys_var;
 namespace module
 {
 class Module;
-}
-
-namespace plugin
-{
 
 class Context
 {
@@ -93,4 +89,4 @@ inline void Context::registerVariable(sys_var *)
 } /* namespace module */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_CONTEXT_H */
+#endif /* DRIZZLED_MODULE_CONTEXT_H */

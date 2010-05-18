@@ -23,7 +23,7 @@
 #include "drizzled/module/manifest.h"
 #include "drizzled/module/module.h"
 #include "drizzled/plugin/version.h"
-#include "drizzled/plugin/context.h"
+#include "drizzled/module/context.h"
 #include "drizzled/definitions.h"
 
 #include "drizzled/lex_string.h"

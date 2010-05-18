@@ -59,7 +59,7 @@ DefaultReplicator::replicate(plugin::TransactionApplier *in_applier,
 
 static DefaultReplicator *default_replicator= NULL; /* The singleton replicator */
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   default_replicator= new DefaultReplicator("default_replicator");
   context.add(default_replicator);

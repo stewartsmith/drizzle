@@ -1809,7 +1809,7 @@ static
 int
 innobase_init(
 /*==========*/
-  plugin::Context &context) /*!< in: Drizzle Plugin Context */
+  module::Context &context) /*!< in: Drizzle Plugin Context */
 {
   static char current_dir[3];   /*!< Set if using current lib */
   int   err;

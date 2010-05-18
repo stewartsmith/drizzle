@@ -55,7 +55,7 @@ public:
 };
 
 static Error_message_stderr *handler= NULL;
-static int errmsg_stderr_plugin_init(plugin::Context &context)
+static int errmsg_stderr_plugin_init(module::Context &context)
 {
   handler= new Error_message_stderr();
   context.add(handler);
