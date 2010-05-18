@@ -177,7 +177,7 @@ static unsigned int auto_generate_sql_secondary_indexes;
 static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
 string concurrency_str= "";
-string create_string;
+string create_string="";
 uint32_t *concurrency;
 
 const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
@@ -866,7 +866,7 @@ int main(int argc, char **argv)
   "Ignore SQL errors in query run")
   ("commit",po::value<uint32_t>(&commit_rate)->default_value(0),
   "Commit records every X number of statements")
-  ("conncurrency,c",po::value<string>(&concurrency_str)->default_value(""),
+  ("concurrency,c",po::value<string>(&concurrency_str)->default_value(""),
   "Number of clients to simulate for query to run")
   ("create",po::value<string>(&create_string)->default_value(""),
   "File or string to use to create tables")
@@ -888,7 +888,7 @@ int main(int argc, char **argv)
   ("label",po::value<string>(&opt_label)->default_value(""),
   "Label to use for print and csv")
   ("mysql,m",po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),"Use MySQL protocol")
-  ("number-blob-cols",po::value<string>(&num_blob_cols_opt)->default_value(0),
+  ("number-blob-cols",po::value<string>(&num_blob_cols_opt)->default_value(""),
   "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ")
   ("number-char-cols,x",po::value<uint32_t>(&num_char_cols)->default_value(1),
   "Number of VARCHAR columns to create in table if specifying --auto-generate-sql.")
@@ -901,7 +901,7 @@ int main(int argc, char **argv)
   "This causes drizzleslap to not connect to the database instead print out what it would have done instead")
   ("password,P",po::value<char *>(&password),
   "Password to use when connecting to server. If password is not given it's asked from the tty")
-  ("port,p",po::value<uint32_t>()->default_value(0),
+  ("port,p",po::value<uint32_t>(),
   "Port number to use for connection")
   ("post-query",
   po::value<string>(&user_supplied_post_statements)->default_value(""),
@@ -926,12 +926,12 @@ int main(int argc, char **argv)
   "Require drizzleslap to run each specific test a certain amount of time in seconds")  
   ("user,u",po::value<string>(&user)->default_value(""),
   "User for login if not current user")  
-  ("verbose,v",po::value<int32_t>(&verbose)->zero_tokens(),
+  ("verbose,v",po::value<int32_t>(&verbose)->implicit_value(0),
   "More verbose output,you can use this multiple times to get more verbose output")  
   ("version,V","Output version information and exit") 
   ;
 
-  char *endchar= NULL;
+ // char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
   drizzle_con_st con;
   OptionString *eptr;
@@ -939,15 +939,36 @@ int main(int argc, char **argv)
   internal::my_init();
 
   MY_INIT(argv[0]);
-
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
+  defaults_argv=argv;
+  
   po::variables_map vm;
   po::store(po::parse_command_line(argc,argv,long_options),vm);
   po::notify(vm);
 
-  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
-  defaults_argv=argv;
-  
-  if( vm.count("verbose") )
+  if (get_options())
+  {
+    internal::free_defaults(defaults_argv);
+    internal::my_end();
+    exit(1);
+  }
+
+  if( vm.count("help") || vm.count("info"))
+  {
+     printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
+       drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
+     puts("Copyright (C) 2008 Sun Microsystems");
+     puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
+      \nand you are welcome to modify and redistribute it under the GPL \
+      license\n");
+    puts("Run a query multiple times against the server\n");
+    printf("Usage: %s [OPTIONS]\n",internal::my_progname);
+    internal::print_defaults("drizzle",load_default_groups);
+    cout<<long_options<<endl;
+    exit(0);
+  }   
+
+ if( vm.count("verbose") )
   {
     verbose++;
   }
@@ -955,15 +976,7 @@ int main(int argc, char **argv)
   if(vm.count("port")) 
   {
     temp_drizzle_port= vm["port"].as<uint32_t>();
-    /* if there is an alpha character this is not a valid port */
-    if (strlen(endchar) != 0)
-    {
-      fprintf(stderr, _("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead.\n"));
-      exit(1);
-    }
-    /* If the port number is > 65535 it is not a valid port
-       This also helps with potential data loss casting unsigned long to a
-       u  int32_t. */
+    
     if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
     {
       fprintf(stderr, _("Value supplied for port is not valid.\n"));
@@ -978,7 +991,7 @@ int main(int argc, char **argv)
   if( vm.count("password") )
   {
     char *start= vm["password"].as<char *>();
-    if (opt_password.c_str())
+    if (!opt_password.empty())
       opt_password.erase();
     opt_password = strdup(vm["password"].as<char *>());
   if (opt_password.c_str() == NULL)
@@ -1012,28 +1025,6 @@ int main(int argc, char **argv)
     exit(0);
   }
 
-  if( vm.count("help") || vm.count("info") )
-  {
-     printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
-       drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
-     puts("Copyright (C) 2008 Sun Microsystems");
-     puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
-      \nand you are welcome to modify and redistribute it under the GPL \
-      license\n");
-    puts("Run a query multiple times against the server\n");
-    printf("Usage: %s [OPTIONS]\n",internal::my_progname);
-    internal::print_defaults("drizzle",load_default_groups);
-    cout<<long_options<<endl;
-    exit(0);
-  }  
-
-  if (get_options())
-  {
-    internal::free_defaults(defaults_argv);
-    internal::my_end();
-    exit(1);
-  }
-
   /* Seed the random number generator if we will be using it. */
   if (auto_generate_sql)
   {
@@ -1045,13 +1036,13 @@ int main(int argc, char **argv)
   /* globals? Yes, so we only have to run strlen once */
   delimiter_length= delimiter.length();
 
-  if (argc > 2)
+  /*if (argc > 2)
   {
     fprintf(stderr,"%s: Too many arguments\n",internal::my_progname);
     internal::free_defaults(defaults_argv);
     internal::my_end();
     exit(1);
-  }
+  }*/
 
   slap_connect(&con, false);
 
@@ -1106,7 +1097,7 @@ burnin:
   slap_close(&con);
 
   /* now free all the strings we created */
-  if (opt_password.c_str())
+  if (!opt_password.empty())
     opt_password.erase();
 
   free(concurrency);
@@ -1181,7 +1172,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
     if (commit_rate)
       run_query(con, NULL, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
-    if (pre_system.c_str())
+    if (!pre_system.empty())
     {
       int ret= system(pre_system.c_str());
       assert(ret != -1);
@@ -1200,7 +1191,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
     if (post_statements)
       run_statements(con, post_statements);
 
-    if (post_system.c_str())
+    if (!post_system.empty())
     {
       int ret=  system(post_system.c_str());
       assert(ret !=-1);
@@ -1218,7 +1209,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
 
   if (!opt_silent)
     print_conclusions(&conclusion);
-  if (opt_csv_str.c_str())
+  if (!opt_csv_str.empty())
     print_conclusions_csv(&conclusion);
 
   free(head_sptr);
@@ -1624,7 +1615,7 @@ build_select_string(bool key)
   query_string.reserve(HUGE_STRING_LENGTH);
 
   query_string.append("SELECT ", 7);
-  if (auto_generate_selected_columns_opt.c_str())
+  if (!auto_generate_selected_columns_opt.empty())
   {
     query_string.append(auto_generate_selected_columns_opt.c_str());
   }
@@ -1711,14 +1702,14 @@ get_options(void)
   unsigned int sql_type_count= 0;
   ssize_t bytes_read= 0;
   
-  if (!user.c_str())
+  if (user.empty())
     user= "root";
 
   /* If something is created we clean it up, otherwise we leave schemas alone */
-  if (create_string.c_str() || auto_generate_sql)
+  if ( (!create_string.empty()) || auto_generate_sql)
     opt_preserve= false;
 
-  if (auto_generate_sql && (create_string.c_str() || user_supplied_query.c_str()))
+  if (auto_generate_sql && (!create_string.empty() || !user_supplied_query.empty()))
   {
     fprintf(stderr,
             "%s: Can't use --auto-generate-sql when create and query strings are specified!\n",
@@ -1743,9 +1734,9 @@ get_options(void)
     exit(1);
   }
 
-  parse_comma(concurrency_str.c_str() ? concurrency_str.c_str() : "1", &concurrency);
+  parse_comma(!concurrency_str.empty() ? concurrency_str.c_str() : "1", &concurrency);
 
-  if (opt_csv_str.c_str())
+  if (!opt_csv_str.empty())
   {
     opt_silent= true;
 
@@ -1770,7 +1761,7 @@ get_options(void)
 
 
 
-  if (num_blob_cols_opt.c_str())
+  if (!num_blob_cols_opt.empty())
   {
     OptionString *str;
     parse_option(num_blob_cols_opt.c_str(), &str, ',');
@@ -1820,7 +1811,7 @@ get_options(void)
     if (verbose >= 2)
       printf("Building Query Statements for Auto\n");
 
-    if (opt_auto_generate_sql_type.c_str())
+    if (opt_auto_generate_sql_type.empty())
       opt_auto_generate_sql_type= "mixed";
 
     query_statements_count=
@@ -1938,7 +1929,7 @@ get_options(void)
   }
   else
   {
-    if (create_string.c_str() && !stat(create_string.c_str(), &sbuf))
+    if (!create_string.empty() && !stat(create_string.c_str(), &sbuf))
     {
       int data_file;
       if (!S_ISREG(sbuf.st_mode))
@@ -1975,13 +1966,13 @@ get_options(void)
       parse_delimiter(tmp_string, &create_statements, delimiter[0]);
       free(tmp_string);
     }
-    else if (create_string.c_str())
+    else if (!create_string.empty())
     {
       parse_delimiter(create_string.c_str(), &create_statements, delimiter[0]);
     }
 
     /* Set this up till we fully support options on user generated queries */
-    if (user_supplied_query.c_str())
+    if (!user_supplied_query.empty())
     {
       query_statements_count=
         parse_option("default", &query_options, ',');
@@ -1995,7 +1986,7 @@ get_options(void)
       memset(query_statements, 0, sizeof(Statement *) * query_statements_count); 
     }
 
-    if (user_supplied_query.c_str() && !stat(user_supplied_query.c_str(), &sbuf))
+    if (!user_supplied_query.empty() && !stat(user_supplied_query.c_str(), &sbuf))
     {
       int data_file;
       if (!S_ISREG(sbuf.st_mode))
@@ -2029,19 +2020,19 @@ get_options(void)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
       }
-      if (user_supplied_query.c_str())
+      if (!user_supplied_query.empty())
         actual_queries= parse_delimiter(tmp_string, &query_statements[0],
                                         delimiter[0]);
       free(tmp_string);
     }
-    else if (user_supplied_query.c_str())
+    else if (!user_supplied_query.empty())
     {
       actual_queries= parse_delimiter(user_supplied_query.c_str(), &query_statements[0],
                                       delimiter[0]);
     }
   }
 
-  if (user_supplied_pre_statements.c_str()
+  if (!user_supplied_pre_statements.empty()
       && !stat(user_supplied_pre_statements.c_str(), &sbuf))
   {
     int data_file;
@@ -2076,19 +2067,19 @@ get_options(void)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
     }
-    if (user_supplied_pre_statements.c_str())
+    if (!user_supplied_pre_statements.empty())
       (void)parse_delimiter(tmp_string, &pre_statements,
                             delimiter[0]);
     free(tmp_string);
   }
-  else if (user_supplied_pre_statements.c_str())
+  else if (!user_supplied_pre_statements.empty())
   {
     (void)parse_delimiter(user_supplied_pre_statements.c_str(),
                           &pre_statements,
                           delimiter[0]);
   }
 
-  if (user_supplied_post_statements.c_str()
+  if (!user_supplied_post_statements.empty()
       && !stat(user_supplied_post_statements.c_str(), &sbuf))
   {
     int data_file;
@@ -2125,12 +2116,12 @@ get_options(void)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
     }
-    if (user_supplied_post_statements.c_str())
+    if (!user_supplied_post_statements.empty())
       (void)parse_delimiter(tmp_string, &post_statements,
                             delimiter[0]);
     free(tmp_string);
   }
-  else if (user_supplied_post_statements.c_str())
+  else if (!user_supplied_post_statements.empty())
   {
     (void)parse_delimiter(user_supplied_post_statements.c_str(), &post_statements,
                           delimiter[0]);
@@ -2139,7 +2130,7 @@ get_options(void)
   if (verbose >= 2)
     printf("Parsing engines to use.\n");
 
-  if (default_engine.c_str())
+  if (!default_engine.empty())
     parse_option(default_engine.c_str(), &engine_options, ',');
 
   if (tty_password)
@@ -2905,10 +2896,10 @@ print_conclusions(Conclusions *con)
   printf("Benchmark\n");
   if (con->getEngine())
     printf("\tRunning for engine %s\n", con->getEngine());
-  if (opt_label.c_str() || opt_auto_generate_sql_type.c_str())
+  if (!opt_label.empty() || !opt_auto_generate_sql_type.empty())
   {
     const char *ptr= opt_auto_generate_sql_type.c_str() ? opt_auto_generate_sql_type.c_str() : "query";
-    printf("\tLoad: %s\n", opt_label.c_str() ? opt_label.c_str() : ptr);
+    printf("\tLoad: %s\n", !opt_label.empty() ? opt_label.c_str() : ptr);
   }
   printf("\tAverage Time took to generate schema and initial data: %ld.%03ld seconds\n",
          con->getCreateAvgTiming() / 1000, con->getCreateAvgTiming() % 1000);
@@ -2939,7 +2930,7 @@ print_conclusions_csv(Conclusions *con)
 
   memset(label_buffer, 0, HUGE_STRING_LENGTH);
 
-  if (opt_label.c_str())
+  if (!opt_label.empty())
   {
     string_len= opt_label.length();
 
@@ -2951,7 +2942,7 @@ print_conclusions_csv(Conclusions *con)
         label_buffer[x]= opt_label[x] ;
     }
   }
-  else if (opt_auto_generate_sql_type.c_str())
+  else if (!opt_auto_generate_sql_type.empty())
   {
     string_len= opt_auto_generate_sql_type.length();
 
