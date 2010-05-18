@@ -827,7 +827,8 @@ static long int timedif(struct timeval a, struct timeval b)
 int main(int argc, char **argv)
 {
   char *password= NULL;
-
+  try
+  {
   po::options_description long_options("Allowed Options");
   long_options.add_options()
   ("help,?","Display this help and exit")
@@ -885,7 +886,7 @@ int main(int argc, char **argv)
   ("engine ,e",po::value<string>(&default_engine)->default_value(""),
   "Storage engien to use for creating the table")
   ("host,h",po::value<string>(&host)->default_value("localhost"),"Connect to the host")
-  ("iterations,i",po::value<uint32_t>(&iterations),
+  ("iterations,i",po::value<uint32_t>(&iterations)->default_value(1),
   "Number of times to run the tests")
   ("label",po::value<string>(&opt_label)->default_value(""),
   "Label to use for print and csv")
@@ -1119,7 +1120,12 @@ burnin:
 #endif
   internal::free_defaults(defaults_argv);
   internal::my_end();
+  }
 
+  catch(exception &err)
+  {
+  cerr<<"Error:"<<err.what()<<endl;
+  }
   return 0;
 }
 
@@ -2929,6 +2935,7 @@ print_conclusions_csv(Conclusions *con)
   char buffer[HUGE_STRING_LENGTH];
   char label_buffer[HUGE_STRING_LENGTH];
   size_t string_len;
+  const char *temp_label= opt_label.c_str();
 
   memset(label_buffer, 0, HUGE_STRING_LENGTH);
 
@@ -2938,10 +2945,10 @@ print_conclusions_csv(Conclusions *con)
 
     for (x= 0; x < string_len; x++)
     {
-      if (opt_label[x] == ',')
+      if (temp_label[x] == ',')
         label_buffer[x]= '-';
       else
-        label_buffer[x]= opt_label[x] ;
+        label_buffer[x]= temp_label[x] ;
     }
   }
   else if (!opt_auto_generate_sql_type.empty())
