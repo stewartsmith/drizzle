@@ -101,6 +101,14 @@
    fun:row_insert_for_mysql
    ...
 }
+{
+   InnoDB Insert Row
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:row_insert_for_mysql
+   ...
+}
 
 {
    InnoDB Create Table
