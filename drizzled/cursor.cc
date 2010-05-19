@@ -1481,7 +1481,7 @@ int Cursor::insertRecord(unsigned char *buf)
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
 
-  DRIZZLE_INSERT_ROW_START(table->getSchemaName(), table_share->getTableName());
+  DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   
   if (unlikely(plugin::EventObserver::beforeInsertRecord(*(table->in_use), *table_share, buf)))
