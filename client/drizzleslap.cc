@@ -165,14 +165,14 @@ static unsigned int opt_set_random_seed;
 string auto_generate_selected_columns_opt;
 
 /* Yes, we do set defaults here */
-static unsigned int num_int_cols;
-static unsigned int num_char_cols;
-static unsigned int num_blob_cols;
+static unsigned int num_int_cols= 1;
+static unsigned int num_char_cols= 1;
+static unsigned int num_blob_cols= 0;
 static unsigned int num_blob_cols_size;
 static unsigned int num_blob_cols_size_min;
 static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
-static unsigned int iterations;
+uint32_t iterations;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;
@@ -189,7 +189,7 @@ std::string opt_csv_str;
 int csv_file;
 
 static int get_options(void);
-static uint32_t opt_drizzle_port;
+static uint32_t opt_drizzle_port= 0;
 
 static const char *load_default_groups[]= { "drizzleslap","client",0 };
 
@@ -423,7 +423,7 @@ public:
     timing(0),
     users(0),
     real_users(0),
-    rows(0),
+    rows(),
     create_timing(0),
     create_count(0)
     {}
@@ -887,7 +887,7 @@ int main(int argc, char **argv)
   "Detach (close and re open) connections after X number of requests")
   ("engine ,e",po::value<string>(&default_engine)->default_value(""),
   "Storage engien to use for creating the table")
-  ("host,h",po::value<string>(&host)->default_value("localhost"),"Connect to the host")
+  ("host,h",po::value<string>(&host)->default_value(""),"Connect to the host")
   ("iterations,i",po::value<uint32_t>(&iterations)->default_value(1),
   "Number of times to run the tests")
   ("label",po::value<string>(&opt_label)->default_value(""),
