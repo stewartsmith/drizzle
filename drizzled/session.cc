@@ -48,6 +48,8 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
 
+#include "drizzled/table_share_instance.h"
+
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
 
@@ -92,10 +94,11 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          !strcmp(field_name.str, other.field_name.str);
 }
 
-Open_tables_state::Open_tables_state(uint64_t version_arg)
-  :version(version_arg), backups_available(false)
+Open_tables_state::Open_tables_state(uint64_t version_arg) :
+  version(version_arg)
 {
-  reset_open_tables_state();
+  open_tables= temporary_tables= derived_tables= NULL;
+  extra_lock= lock= NULL;
 }
 
 /*
@@ -161,8 +164,7 @@ int session_tx_isolation(const Session *session)
   return (int) session->variables.tx_isolation;
 }
 
-Session::Session(plugin::Client *client_arg)
-  :
+Session::Session(plugin::Client *client_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
@@ -827,6 +829,14 @@ void Session::cleanup_after_query()
   free_items();
   /* Reset where. */
   where= Session::DEFAULT_WHERE;
+
+  /* Reset the temporary shares we built */
+  for (std::vector<TableShareInstance *>::iterator iter= temporary_shares.begin();
+       iter != temporary_shares.end(); iter++)
+  {
+    delete *iter;
+  }
+  temporary_shares.clear();
 }
 
 /**
@@ -1543,34 +1553,6 @@ void Session::set_status_var_init()
 }
 
 
-/****************************************************************************
-  Handling of open and locked tables states.
-
-  This is used when we want to open/lock (and then close) some tables when
-  we already have a set of tables open and locked. We use these methods for
-  access to mysql.proc table to find definitions of stored routines.
-****************************************************************************/
-
-void Session::reset_n_backup_open_tables_state(Open_tables_state *backup)
-{
-  backup->set_open_tables_state(this);
-  reset_open_tables_state();
-  backups_available= false;
-}
-
-
-void Session::restore_backup_open_tables_state(Open_tables_state *backup)
-{
-  /*
-    Before we will throw away current open tables state we want
-    to be sure that it was properly cleaned up.
-  */
-  assert(open_tables == 0 && temporary_tables == 0 &&
-              derived_tables == 0 &&
-              lock == 0);
-  set_open_tables_state(backup);
-}
-
 bool Session::set_db(const std::string &new_db)
 {
   /* Do not reallocate memory if current chunk is big enough. */
@@ -1837,33 +1819,8 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 */
 void Session::close_thread_tables()
 {
-  Table *table;
-
-  /*
-    We are assuming here that session->derived_tables contains ONLY derived
-    tables for this substatement. i.e. instead of approach which uses
-    query_id matching for determining which of the derived tables belong
-    to this substatement we rely on the ability of substatements to
-    save/restore session->derived_tables during their execution.
-
-    TODO: Probably even better approach is to simply associate list of
-          derived tables with (sub-)statement instead of thread and destroy
-          them at the end of its execution.
-  */
   if (derived_tables)
-  {
-    Table *next;
-    /*
-      Close all derived tables generated in queries like
-      SELECT * FROM (SELECT * FROM t1)
-    */
-    for (table= derived_tables ; table ; table= next)
-    {
-      next= table->next;
-      table->free_tmp_table(this);
-    }
-    derived_tables= 0;
-  }
+    derived_tables= NULL; // They should all be invalid by this point
 
   /*
     Mark all temporary tables used by this statement as free for reuse.
@@ -1877,7 +1834,6 @@ void Session::close_thread_tables()
     does not belong to statement for which we do close_thread_tables()).
     TODO: This should be fixed in later releases.
    */
-  if (backups_available == false)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     main_da.can_overwrite_status= true;
@@ -2088,6 +2044,30 @@ bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
   (*iter).second.set_name(to.getTableName());
 
   return true;
+}
+
+TableShareInstance *Session::getTemporaryShare()
+{
+  temporary_shares.push_back(new TableShareInstance()); // This will not go into the tableshare cache, so no key is used.
+
+  TableShareInstance *tmp_share= temporary_shares.back();
+
+  assert(tmp_share);
+
+  return tmp_share;
+}
+
+TableShareInstance *Session::getTemporaryShare(const char *tmpname_arg)
+{
+  assert(tmpname_arg);
+
+  temporary_shares.push_back(new TableShareInstance(tmpname_arg)); // This will not go into the tableshare cache, so no key is used.
+
+  TableShareInstance *tmp_share= temporary_shares.back();
+
+  assert(tmp_share);
+
+  return tmp_share;
 }
 
 } /* namespace drizzled */

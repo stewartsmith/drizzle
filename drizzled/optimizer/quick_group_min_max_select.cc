@@ -38,7 +38,7 @@ namespace drizzled
 
 optimizer::QuickGroupMinMaxSelect::
 QuickGroupMinMaxSelect(Table *table,
-                       JOIN *join_arg,
+                       Join *join_arg,
                        bool have_min_arg,
                        bool have_max_arg,
                        KeyPartInfo *min_max_arg_part_arg,

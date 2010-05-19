@@ -2079,7 +2079,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
   */
   int err= plugin::StorageEngine::createTable(session,
                                               destination_identifier,
-                                              true, new_proto);
+                                              new_proto);
 
   return err ? false : true;
 }

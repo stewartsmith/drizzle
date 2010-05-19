@@ -2534,7 +2534,6 @@ void Item_sum_count_distinct::cleanup()
     is_evaluated= false;
     if (table)
     {
-      table->free_tmp_table(table->in_use);
       table= 0;
     }
     delete tmp_table_param;
@@ -2603,7 +2602,9 @@ bool Item_sum_count_distinct::setup(Session *session)
 				0,
 				(select_lex->options | session->options),
 				HA_POS_ERROR, (char*)"")))
+  {
     return true;
+  }
   table->cursor->extra(HA_EXTRA_NO_ROWS);		// Don't update rows
   table->no_rows=1;
 
@@ -3048,7 +3049,6 @@ void Item_func_group_concat::cleanup()
     if (table)
     {
       Session *session= table->in_use;
-      table->free_tmp_table(session);
       table= 0;
       if (tree)
       {
@@ -3257,7 +3257,10 @@ bool Item_func_group_concat::setup(Session *session)
                                 (order_st*) 0, 0, true,
                                 (select_lex->options | session->options),
                                 HA_POS_ERROR, (char*) "")))
+  {
     return(true);
+  }
+
   table->cursor->extra(HA_EXTRA_NO_ROWS);
   table->no_rows= 1;
 

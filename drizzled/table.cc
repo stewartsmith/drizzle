@@ -54,7 +54,7 @@
 #include <drizzled/item/null.h>
 #include <drizzled/temporal.h>
 
-#include <drizzled/table_instance.h>
+#include "drizzled/table_share_instance.h"
 
 #include "drizzled/table_proto.h"
 
@@ -347,14 +347,6 @@ void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
   default_column_bitmaps();
 }
 
-
-
-void Table::updateCreateInfo(message::Table *table_proto)
-{
-  message::Table::TableOptions *table_options= table_proto->mutable_options();
-  table_options->set_block_size(s->block_size);
-  table_options->set_comment(s->getComment());
-}
 
 int rename_file_ext(const char * from,const char * to,const char * ext)
 {
@@ -704,11 +696,6 @@ size_t Table::max_row_length(const unsigned char *data)
 /****************************************************************************
  Functions for creating temporary tables.
 ****************************************************************************/
-
-
-/* Prototypes */
-void free_tmp_table(Session *session, Table *entry);
-
 /**
   Create field for temporary table from given field.
 
@@ -814,9 +801,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 const char *table_alias)
 {
-  memory::Root *mem_root_save, own_root(TABLE_ALLOC_BLOCK_SIZE);
-  TableInstance *table;
-  TableShare *share;
+  memory::Root *mem_root_save;
+  Table *table;
   uint	i,field_count,null_count,null_pack_length;
   uint32_t  copy_func_count= param->func_count;
   uint32_t  hidden_null_count, hidden_null_pack_length, hidden_field_count;
@@ -880,44 +866,49 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     these items are stored in the temporary table.
   */
   if (param->precomputed_group_by)
+  {
     copy_func_count+= param->sum_func_count;
+  }
 
-  if (!multi_alloc_root(&own_root,
-                        &table, sizeof(*table),
-                        &reg_field, sizeof(Field*) * (field_count+1),
-                        &default_field, sizeof(Field*) * (field_count),
-                        &blob_field, sizeof(uint32_t)*(field_count+1),
-                        &from_field, sizeof(Field*)*field_count,
-                        &copy_func, sizeof(*copy_func)*(copy_func_count+1),
-                        &param->keyinfo, sizeof(*param->keyinfo),
-                        &key_part_info,
-                        sizeof(*key_part_info)*(param->group_parts+1),
-                        &param->start_recinfo,
-                        sizeof(*param->recinfo)*(field_count*2+4),
-                        &tmpname, (uint32_t) strlen(path)+1,
-                        &group_buff, (group && ! using_unique_constraint ?
-                                      param->group_length : 0),
-                        &bitmaps, bitmap_buffer_size(field_count)*2,
-                        NULL))
+  memory::Root own_root(TABLE_ALLOC_BLOCK_SIZE);
+
+  if (not own_root.multi_alloc_root(0, &tmpname, (uint32_t) strlen(path)+1, NULL))
+  {
+    return NULL;
+  }
+
+  strcpy(tmpname, path);
+
+  TableShareInstance *share= session->getTemporaryShare(tmpname); // This will not go into the tableshare cache, so no key is used.
+
+  if (not share->getMemRoot()->multi_alloc_root(0, &reg_field, sizeof(Field*) * (field_count+1),
+                                                &default_field, sizeof(Field*) * (field_count),
+                                                &blob_field, sizeof(uint32_t)*(field_count+1),
+                                                &from_field, sizeof(Field*)*field_count,
+                                                &copy_func, sizeof(*copy_func)*(copy_func_count+1),
+                                                &param->keyinfo, sizeof(*param->keyinfo),
+                                                &key_part_info, sizeof(*key_part_info)*(param->group_parts+1),
+                                                &param->start_recinfo, sizeof(*param->recinfo)*(field_count*2+4),
+                                                &group_buff, (group && ! using_unique_constraint ?
+                                                              param->group_length : 0),
+                                                &bitmaps, bitmap_buffer_size(field_count)*2,
+                                                NULL))
   {
     return NULL;
   }
   /* CopyField belongs to Tmp_Table_Param, allocate it in Session mem_root */
   if (!(param->copy_field= copy= new (session->mem_root) CopyField[field_count]))
   {
-    own_root.free_root(MYF(0));
     return NULL;
   }
   param->items_to_copy= copy_func;
-  strcpy(tmpname,path);
   /* make table according to fields */
 
-  memset(table, 0, sizeof(*table));
+  table= share->getTable();
+
   memset(reg_field, 0, sizeof(Field*)*(field_count+1));
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
-
-  share=  &table->_table_share;
 
   table->mem_root= own_root;
   mem_root_save= session->mem_root;
@@ -935,7 +926,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->keys_in_use_for_query.reset();
 
   table->setShare(share);
-  share->init(tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
@@ -1099,7 +1089,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     share->storage_engine= myisam_engine;
-    table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
+    table->cursor= share->db_type()->getCursor(*share, table->getMemRoot());
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
@@ -1110,7 +1100,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     share->storage_engine= heap_engine;
-    table->cursor= share->db_type()->getCursor(*share, &table->mem_root);
+    table->cursor= share->db_type()->getCursor(*share, table->getMemRoot());
   }
   if (! table->cursor)
     goto err;
@@ -1143,7 +1133,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
     if (!(table->record[0]= (unsigned char*)
-                            table->mem_root.alloc_root(alloc_length*3)))
+                            table->alloc_root(alloc_length*3)))
     {
       goto err;
     }
@@ -1363,7 +1353,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     table->distinct= 1;
     share->keys= 1;
     if (!(key_part_info= (KeyPartInfo*)
-         table->mem_root.alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo))))
+         table->alloc_root(keyinfo->key_parts * sizeof(KeyPartInfo))))
       goto err;
     memset(key_part_info, 0, keyinfo->key_parts * sizeof(KeyPartInfo));
     table->key_info=keyinfo;
@@ -1451,7 +1441,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
 err:
   session->mem_root= mem_root_save;
-  table->free_tmp_table(session);
+  table= NULL;
+
   return NULL;
 }
 
@@ -1478,7 +1469,6 @@ err:
 
 Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 {
-  Session *session= this;
   uint32_t field_count= field_list.elements;
   uint32_t blob_count= 0;
   Field **field;
@@ -1488,21 +1478,20 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   uint32_t null_pack_length;              /* NULL representation array length */
   uint32_t *blob_field;
   unsigned char *bitmaps;
-  TableInstance *table;
-  TableShare *share;
+  Table *table;
 
-  if (!multi_alloc_root(session->mem_root,
-                        &table, sizeof(*table),
-                        &field, (field_count + 1) * sizeof(Field*),
-                        &blob_field, (field_count+1) *sizeof(uint32_t),
-                        &bitmaps, bitmap_buffer_size(field_count)*2,
-                        NULL))
+  TableShareInstance *share= getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
+
+  if (! share->getMemRoot()->multi_alloc_root(0, &field, (field_count + 1) * sizeof(Field*),
+                                              &blob_field, (field_count+1) *sizeof(uint32_t),
+                                              &bitmaps, bitmap_buffer_size(field_count)*2,
+                                              NULL))
+  {
     return NULL;
+  }
 
-  memset(table, 0, sizeof(*table));
-  share= &table->_table_share;
+  table= share->getTable();
   table->field= field;
-  table->s= share;
   share->blob_field= blob_field;
   share->fields= field_count;
   share->blob_ptr_size= portable_sizeof_char_ptr;
@@ -1512,8 +1501,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   List_iterator_fast<CreateField> it(field_list);
   while ((cdef= it++))
   {
-    *field= share->make_field(session->mem_root,
-                              NULL,
+    *field= share->make_field(NULL,
                               cdef->length,
                               (cdef->flags & NOT_NULL_FLAG) ? false : true,
                               (unsigned char *) ((cdef->flags & NOT_NULL_FLAG) ? 0 : ""),
@@ -1543,7 +1531,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   null_pack_length= (null_count + 7)/8;
   share->reclength= record_length + null_pack_length;
   share->rec_buff_length= ALIGN_SIZE(share->reclength + 1);
-  table->record[0]= (unsigned char*) session->alloc(share->rec_buff_length);
+  table->record[0]= (unsigned char*)alloc(share->rec_buff_length);
   if (!table->record[0])
     goto error;
 
@@ -1554,7 +1542,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
     share->null_bytes= null_pack_length;
   }
 
-  table->in_use= session;           /* field->reset() may access table->in_use */
+  table->in_use= this;           /* field->reset() may access table->in_use */
   {
     /* Set up field pointers */
     unsigned char *null_pos= table->record[0];
@@ -1743,7 +1731,7 @@ void Table::free_tmp_table(Session *session)
   memory::Root own_root= mem_root;
   const char *save_proc_info;
 
-  save_proc_info=session->get_proc_info();
+  save_proc_info= session->get_proc_info();
   session->set_proc_info("removing tmp table");
 
   // Release latches since this can take a long time
@@ -1752,7 +1740,9 @@ void Table::free_tmp_table(Session *session)
   if (cursor)
   {
     if (db_stat)
+    {
       cursor->closeMarkForDelete(s->getTableName());
+    }
 
     TableIdentifier identifier(s->getSchemaName(), s->getTableName(), s->getTableName());
     s->db_type()->doDropTable(*session, identifier);
@@ -1896,57 +1886,61 @@ void Table::emptyRecord()
   memset(null_flags, 255, s->null_bytes);
 }
 
-Table::Table()
-  : s(NULL),
-    field(NULL),
-    cursor(NULL),
-    next(NULL),
-    prev(NULL),
-    read_set(NULL),
-    write_set(NULL),
-    tablenr(0),
-    db_stat(0),
-    in_use(NULL),
-    insert_values(NULL),
-    key_info(NULL),
-    next_number_field(NULL),
-    found_next_number_field(NULL),
-    timestamp_field(NULL),
-    pos_in_table_list(NULL),
-    group(NULL),
-    alias(NULL),
-    null_flags(NULL),
-    lock_position(0),
-    lock_data_start(0),
-    lock_count(0),
-    used_fields(0),
-    status(0),
-    derived_select_number(0),
-    current_lock(F_UNLCK),
-    copy_blobs(false),
-    maybe_null(false),
-    null_row(false),
-    force_index(false),
-    distinct(false),
-    const_table(false),
-    no_rows(false),
-    key_read(false),
-    no_keyread(false),
-    open_placeholder(false),
-    locked_by_name(false),
-    no_cache(false),
-    auto_increment_field_not_null(false),
-    alias_name_used(false),
-    query_id(0),
-    quick_condition_rows(0),
-    timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-    map(0)
+Table::Table() : 
+  s(NULL),
+  field(NULL),
+  cursor(NULL),
+  next(NULL),
+  prev(NULL),
+  read_set(NULL),
+  write_set(NULL),
+  tablenr(0),
+  db_stat(0),
+  in_use(NULL),
+  insert_values(NULL),
+  key_info(NULL),
+  next_number_field(NULL),
+  found_next_number_field(NULL),
+  timestamp_field(NULL),
+  pos_in_table_list(NULL),
+  group(NULL),
+  alias(NULL),
+  null_flags(NULL),
+  lock_position(0),
+  lock_data_start(0),
+  lock_count(0),
+  used_fields(0),
+  status(0),
+  derived_select_number(0),
+  current_lock(F_UNLCK),
+  copy_blobs(false),
+  maybe_null(false),
+  null_row(false),
+  force_index(false),
+  distinct(false),
+  const_table(false),
+  no_rows(false),
+  key_read(false),
+  no_keyread(false),
+  open_placeholder(false),
+  locked_by_name(false),
+  no_cache(false),
+  auto_increment_field_not_null(false),
+  alias_name_used(false),
+  query_id(0),
+  quick_condition_rows(0),
+  timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
+  map(0)
 {
+  memset(&def_read_set, 0, sizeof(MyBitmap)); /**< Default read set of columns */
+  memset(&def_write_set, 0, sizeof(MyBitmap)); /**< Default write set of columns */
+  memset(&tmp_set, 0, sizeof(MyBitmap)); /* Not sure about this... */
+
   record[0]= (unsigned char *) 0;
   record[1]= (unsigned char *) 0;
 
+  reginfo.reset();
   covering_keys.reset();
-
   quick_keys.reset();
   merge_keys.reset();
 
@@ -1960,7 +1954,7 @@ Table::Table()
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
-  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  memset(&mem_root, 0, sizeof(memory::Root));
   memset(&sort, 0, sizeof(filesort_info_st));
 }
 

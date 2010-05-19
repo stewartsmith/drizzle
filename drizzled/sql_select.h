@@ -49,12 +49,12 @@ class select_result;
 #define KEY_OPTIMIZE_EXISTS		1
 #define KEY_OPTIMIZE_REF_OR_NULL	2
 
-class JOIN;
+class Join;
 
-enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state sub_select(JOIN *join,JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state end_send_group(JOIN *join, JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state end_write_group(JOIN *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state sub_select_cache(Join *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state sub_select(Join *join,JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_send_group(Join *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_write_group(Join *join, JoinTable *join_tab, bool end_of_records);
 
 typedef struct st_rollup
 {
@@ -88,7 +88,7 @@ struct COND_CMP {
   COND_CMP(Item *a,Item_func *b) :and_level(a),cmp_func(b) {}
 };
 
-void TEST_join(JOIN *join);
+void TEST_join(Join *join);
 
 /* Extern functions in sql_select.cc */
 bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
@@ -96,7 +96,6 @@ Table *create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fiel
 			order_st *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
 			const char* alias);
-void free_tmp_table(Session *session, Table *entry);
 void count_field_types(Select_Lex *select_lex, Tmp_Table_Param *param,
                        List<Item> &fields, bool reset_with_sum_func);
 bool setup_copy_fields(Session *session, Tmp_Table_Param *param,
@@ -109,7 +108,7 @@ Field* create_tmp_field_from_field(Session *session, Field* org_field,
                                    const char *name, Table *table,
                                    Item_field *item, uint32_t convert_blob_length);
 bool test_if_ref(Item_field *left_item,Item *right_item);
-COND *optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list, Item::cond_result *cond_value);
+COND *optimize_cond(Join *join, COND *conds, List<TableList> *join_list, Item::cond_result *cond_value);
 COND *make_cond_for_table(COND *cond,table_map table, table_map used_table, bool exclude_expensive_cond);
 COND* substitute_for_best_equal_field(COND *cond, COND_EQUAL *cond_equal, void *table_join_idx);
 bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *), void *data);
@@ -129,9 +128,9 @@ bool change_to_use_tmp_fields(Session *session,
 			                        List<Item> &res_all_fields,
 			                        uint32_t elements,
                               List<Item> &all_fields);
-int do_select(JOIN *join, List<Item> *fields, Table *tmp_table);
+int do_select(Join *join, List<Item> *fields, Table *tmp_table);
 bool const_expression_in_where(COND *conds,Item *item, Item **comp_item);
-int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by);
+int create_sort_index(Session *session, Join *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by);
 void save_index_subquery_explain_info(JoinTable *join_tab, Item* where);
 Item *remove_additional_cond(Item* conds);
 bool setup_sum_funcs(Session *session, Item_sum **func_ptr);
@@ -153,21 +152,21 @@ int join_read_const(JoinTable *tab);
 int join_read_key(JoinTable *tab);
 int join_read_always_key(JoinTable *tab);
 int join_read_last_key(JoinTable *tab);
-int join_no_more_records(READ_RECORD *info);
-int join_read_next(READ_RECORD *info);
-int join_read_next_different(READ_RECORD *info);
+int join_no_more_records(ReadRecord *info);
+int join_read_next(ReadRecord *info);
+int join_read_next_different(ReadRecord *info);
 int join_init_quick_read_record(JoinTable *tab);
 int init_read_record_seq(JoinTable *tab);
 int test_if_quick_select(JoinTable *tab);
 int join_init_read_record(JoinTable *tab);
 int join_read_first(JoinTable *tab);
-int join_read_next_same(READ_RECORD *info);
-int join_read_next_same_diff(READ_RECORD *info);
+int join_read_next_same(ReadRecord *info);
+int join_read_next_same_diff(ReadRecord *info);
 int join_read_last(JoinTable *tab);
-int join_read_prev_same(READ_RECORD *info);
-int join_read_prev(READ_RECORD *info);
+int join_read_prev_same(ReadRecord *info);
+int join_read_prev(ReadRecord *info);
 int join_read_always_key_or_null(JoinTable *tab);
-int join_read_next_same_or_null(READ_RECORD *info);
+int join_read_next_same_or_null(ReadRecord *info);
 
 void calc_used_field_length(Session *, JoinTable *join_tab);
 StoredKey *get_store_key(Session *session, 
@@ -179,7 +178,7 @@ StoredKey *get_store_key(Session *session,
 int join_tab_cmp(const void* ptr1, const void* ptr2);
 int join_tab_cmp_straight(const void* ptr1, const void* ptr2);
 void push_index_cond(JoinTable *tab, uint32_t keyno, bool other_tbls_ok);
-void add_not_null_conds(JOIN *join);
+void add_not_null_conds(Join *join);
 uint32_t max_part_bit(key_part_map bits);
 COND *add_found_match_trig_cond(JoinTable *tab, COND *cond, JoinTable *root_tab);
 order_st *create_distinct_group(Session *session,
@@ -188,7 +187,7 @@ order_st *create_distinct_group(Session *session,
                                 List<Item> &fields,
                                 List<Item> &all_fields,
                                 bool *all_order_by_fields_used);
-bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab);
+bool eq_ref_table(Join *join, order_st *start_order, JoinTable *tab);
 int remove_dup_with_compare(Session *session, Table *table, Field **first_field, uint32_t offset, Item *having);
 int remove_dup_with_hash_index(Session *session, 
                                Table *table,
@@ -206,8 +205,8 @@ bool update_ref_and_keys(Session *session,
                          Select_Lex *select_lex,
                          std::vector<optimizer::SargableParam> &sargables);
 ha_rows get_quick_record_count(Session *session, optimizer::SqlSelect *select, Table *table, const key_map *keys,ha_rows limit);
-void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
-void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab);
+void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array);
+void add_group_and_distinct_keys(Join *join, JoinTable *join_tab);
 void read_cached_record(JoinTable *tab);
 bool mysql_select(Session *session, Item ***rref_pointer_array,
                   TableList *tables, uint32_t wild_num,  List<Item> &list,
@@ -218,8 +217,8 @@ bool mysql_select(Session *session, Item ***rref_pointer_array,
 // Create list for using with tempory table
 void init_tmptable_sum_functions(Item_sum **func);
 void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
-bool only_eq_ref_tables(JOIN *join, order_st *order, table_map tables);
-bool create_ref_for_key(JOIN *join, JoinTable *j, 
+bool only_eq_ref_tables(Join *join, order_st *order, table_map tables);
+bool create_ref_for_key(Join *join, JoinTable *j, 
                         optimizer::KeyUse *org_keyuse, 
                         table_map used_tables);
 

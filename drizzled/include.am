@@ -410,10 +410,10 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table_ident.h \
 			      drizzled/table_identifier.h \
 			      drizzled/table_list.h \
-			      drizzled/table_instance.h \
 			      drizzled/table_proto.h \
 			      drizzled/table_reference.h \
 			      drizzled/table_share.h \
+			      drizzled/table_share_instance.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
 			      drizzled/temporal_interval.h \

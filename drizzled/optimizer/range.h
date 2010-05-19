@@ -30,7 +30,7 @@
 namespace drizzled
 {
 
-class JOIN;
+class Join;
 class RorIntersectReadPlan; 
 typedef class Item COND;
 

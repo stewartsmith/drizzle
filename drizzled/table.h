@@ -237,6 +237,44 @@ public:
   uint32_t quick_n_ranges[MAX_KEY];
 
   memory::Root mem_root;
+private:
+
+  void init_mem_root()
+  {
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  }
+
+public:
+  memory::Root *getMemRoot()
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return &mem_root;
+  }
+
+  void *alloc_root(size_t arg)
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return mem_root.alloc_root(arg);
+  }
+
+  char *strmake_root(const char *str_arg, size_t len_arg)
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return mem_root.strmake_root(str_arg, len_arg);
+  }
+
   filesort_info_st sort;
 
   Table();
@@ -287,7 +325,6 @@ public:
   }
 
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
   bool create_myisam_tmp_table(KeyInfo *keyinfo,
                                MI_COLUMNDEF *start_recinfo,

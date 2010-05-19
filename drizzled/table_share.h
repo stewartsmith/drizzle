@@ -270,6 +270,11 @@ public:
     return mem_root.strmake_root(str_arg, len_arg);
   }
 
+  memory::Root *getMemRoot()
+  {
+    return &mem_root;
+  }
+
 private:
   std::vector<std::string> _keynames;
 
@@ -761,22 +766,6 @@ public:
   bool newed;
 
   Field *make_field(unsigned char *ptr,
-                    uint32_t field_length,
-                    bool is_nullable,
-                    unsigned char *null_pos,
-                    unsigned char null_bit,
-                    uint8_t decimals,
-                    enum_field_types field_type,
-                    const CHARSET_INFO * field_charset,
-                    Field::utype unireg_check,
-                    TYPELIB *interval,
-                    const char *field_name)
-  {
-    return make_field(&mem_root, ptr, field_length, is_nullable, null_pos, null_bit, decimals, field_type, field_charset, unireg_check, interval, field_name);
-  }
-
-  Field *make_field(memory::Root *root,
-                    unsigned char *ptr,
                     uint32_t field_length,
                     bool is_nullable,
                     unsigned char *null_pos,

@@ -364,7 +364,7 @@ bool mysql_select(Session *session,
   bool free_join= 1;
 
   select_lex->context.resolve_in_select_list= true;
-  JOIN *join;
+  Join *join;
   if (select_lex->join != 0)
   {
     join= select_lex->join;
@@ -397,7 +397,7 @@ bool mysql_select(Session *session,
   }
   else
   {
-    if (!(join= new JOIN(session, fields, select_options, result)))
+    if (!(join= new Join(session, fields, select_options, result)))
       return(true);
     session->set_proc_info("init");
     session->used_tables=0;                         // Updated by setup_fields
@@ -693,7 +693,7 @@ bool update_ref_and_keys(Session *session,
 /**
   Update some values in keyuse for faster choose_plan() loop.
 */
-void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
+void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
 {
   optimizer::KeyUse *end,*keyuse= dynamic_element(keyuse_array, 
                                                   0, 
@@ -748,7 +748,7 @@ void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
   @return
     None
 */
-void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab)
+void add_group_and_distinct_keys(Join *join, JoinTable *join_tab)
 {
   List<Item_field> indexed_fields;
   List_iterator<Item_field> indexed_fields_it(indexed_fields);
@@ -960,7 +960,7 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
     *e1= e2;
 }
 
-bool create_ref_for_key(JOIN *join, 
+bool create_ref_for_key(Join *join, 
                         JoinTable *j, 
                         optimizer::KeyUse *org_keyuse,
                         table_map used_tables)
@@ -1138,7 +1138,7 @@ bool create_ref_for_key(JOIN *join,
       3. add_not_null_conds adds "x IS NOT NULL" to join_tab->select_cond of
          appropiate JoinTable members.
 */
-void add_not_null_conds(JOIN *join)
+void add_not_null_conds(Join *join)
 {
   for (uint32_t i= join->const_tables; i < join->tables; i++)
   {
@@ -1475,10 +1475,10 @@ void JoinTable::cleanup()
     */
     table->reginfo.join_tab= 0;
   }
-  end_read_record(&read_record);
+  read_record.end_read_record();
 }
 
-bool only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
+bool only_eq_ref_tables(Join *join,order_st *order,table_map tables)
 {
   for (JoinTable **tab=join->map2table ; tables ; tab++, tables>>=1)
   {
@@ -1507,7 +1507,7 @@ bool only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
   SELECT * FROM t1,t2 WHERE t1.a=t2.a ORDER BY t2.b,t1.a
   @endcode
 */
-bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab)
+bool eq_ref_table(Join *join, order_st *start_order, JoinTable *tab)
 {
   if (tab->cached_eq_ref_table)			// If cached
     return tab->eq_ref_table;
@@ -2859,7 +2859,7 @@ static void propagate_cond_constants(Session *session,
 bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
 {
   TableList *next_emb= next_tab->table->pos_in_table_list->embedding;
-  JOIN *join= last_tab->join;
+  Join *join= last_tab->join;
 
   if ((join->cur_embedding_map & ~next_tab->embedding_map).any())
   {
@@ -2900,7 +2900,7 @@ bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
   return false;
 }
 
-COND *optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list, Item::cond_result *cond_value)
+COND *optimize_cond(Join *join, COND *conds, List<TableList> *join_list, Item::cond_result *cond_value)
 {
   Session *session= join->session;
 
@@ -3209,7 +3209,7 @@ bool const_expression_in_where(COND *cond, Item *comp_item, Item **const_item)
   @return
     end_select function to use. This function can't fail.
 */
-Next_select_func setup_end_select_func(JOIN *join)
+Next_select_func setup_end_select_func(Join *join)
 {
   Table *table= join->tmp_table;
   Tmp_Table_Param *tmp_tbl= &join->tmp_table_param;
@@ -3274,7 +3274,7 @@ Next_select_func setup_end_select_func(JOIN *join)
   @retval
     -1  if error should be sent
 */
-int do_select(JOIN *join, List<Item> *fields, Table *table)
+int do_select(Join *join, List<Item> *fields, Table *table)
 {
   int rc= 0;
   enum_nested_loop_state error= NESTED_LOOP_OK;
@@ -3375,7 +3375,7 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
   return(join->session->is_error() ? -1 : rc);
 }
 
-enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool end_of_records)
+enum_nested_loop_state sub_select_cache(Join *join, JoinTable *join_tab, bool end_of_records)
 {
   enum_nested_loop_state rc;
 
@@ -3393,7 +3393,7 @@ enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool en
   }
   if (join_tab->use_quick != 2 || test_if_quick_select(join_tab) <= 0)
   {
-    if (! store_record_in_cache(&join_tab->cache))
+    if (! join_tab->cache.store_record_in_cache())
       return NESTED_LOOP_OK;                     // There is more room in cache
     return flush_cached_records(join,join_tab,false);
   }
@@ -3522,7 +3522,7 @@ enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool en
   @return
     return one of enum_nested_loop_state, except NESTED_LOOP_NO_MORE_ROWS.
 */
-enum_nested_loop_state sub_select(JOIN *join, JoinTable *join_tab, bool end_of_records)
+enum_nested_loop_state sub_select(Join *join, JoinTable *join_tab, bool end_of_records)
 {
   join_tab->table->null_row=0;
   if (end_of_records)
@@ -3530,7 +3530,7 @@ enum_nested_loop_state sub_select(JOIN *join, JoinTable *join_tab, bool end_of_r
 
   int error;
   enum_nested_loop_state rc;
-  READ_RECORD *info= &join_tab->read_record;
+  ReadRecord *info= &join_tab->read_record;
 
   if (join->resume_nested_loop)
   {
@@ -3651,7 +3651,7 @@ int join_read_const_table(JoinTable *tab, optimizer::Position *pos)
     table->maybe_null=0;
 
   /* Check appearance of new constant items in Item_equal objects */
-  JOIN *join= tab->join;
+  Join *join= tab->join;
   if (join->conds)
     update_const_equal_items(join->conds, tab);
   TableList *tbl;
@@ -3863,12 +3863,12 @@ int join_read_last_key(JoinTable *tab)
   return 0;
 }
 
-int join_no_more_records(READ_RECORD *)
+int join_no_more_records(ReadRecord *)
 {
   return -1;
 }
 
-int join_read_next_same_diff(READ_RECORD *info)
+int join_read_next_same_diff(ReadRecord *info)
 {
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
@@ -3899,7 +3899,7 @@ int join_read_next_same_diff(READ_RECORD *info)
     return join_read_next_same(info);
 }
 
-int join_read_next_same(READ_RECORD *info)
+int join_read_next_same(ReadRecord *info)
 {
   int error;
   Table *table= info->table;
@@ -3918,7 +3918,7 @@ int join_read_next_same(READ_RECORD *info)
   return 0;
 }
 
-int join_read_prev_same(READ_RECORD *info)
+int join_read_prev_same(ReadRecord *info)
 {
   int error;
   Table *table= info->table;
@@ -3942,7 +3942,7 @@ int join_init_quick_read_record(JoinTable *tab)
   return join_init_read_record(tab);
 }
 
-int rr_sequential(READ_RECORD *info);
+int rr_sequential(ReadRecord *info);
 int init_read_record_seq(JoinTable *tab)
 {
   tab->read_record.read_record= rr_sequential;
@@ -3963,8 +3963,9 @@ int join_init_read_record(JoinTable *tab)
 {
   if (tab->select && tab->select->quick && tab->select->quick->reset())
     return 1;
-  init_read_record(&tab->read_record, tab->join->session, tab->table,
-		   tab->select,1,1);
+
+  tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true);
+
   return (*tab->read_record.read_record)(&tab->read_record);
 }
 
@@ -3975,10 +3976,10 @@ int join_read_first(JoinTable *tab)
   if (!table->key_read && table->covering_keys.test(tab->index) &&
       !table->no_keyread)
   {
-    table->key_read=1;
+    table->key_read= 1;
     table->cursor->extra(HA_EXTRA_KEYREAD);
   }
-  tab->table->status=0;
+  tab->table->status= 0;
   tab->read_record.table=table;
   tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
@@ -4007,7 +4008,7 @@ int join_read_first(JoinTable *tab)
   return 0;
 }
 
-int join_read_next_different(READ_RECORD *info)
+int join_read_next_different(ReadRecord *info)
 {
   JoinTable *tab= info->do_insideout_scan;
   if (tab->insideout_match_tab->found_match)
@@ -4030,7 +4031,7 @@ int join_read_next_different(READ_RECORD *info)
     return join_read_next(info);
 }
 
-int join_read_next(READ_RECORD *info)
+int join_read_next(ReadRecord *info)
 {
   int error;
   if ((error=info->cursor->index_next(info->record)))
@@ -4062,7 +4063,7 @@ int join_read_last(JoinTable *tab)
   return 0;
 }
 
-int join_read_prev(READ_RECORD *info)
+int join_read_prev(ReadRecord *info)
 {
   int error;
   if ((error= info->cursor->index_prev(info->record)))
@@ -4088,7 +4089,7 @@ int join_read_always_key_or_null(JoinTable *tab)
   return safe_index_read(tab);
 }
 
-int join_read_next_same_or_null(READ_RECORD *info)
+int join_read_next_same_or_null(ReadRecord *info)
 {
   int error;
   if ((error= join_read_next_same(info)) >= 0)
@@ -4102,7 +4103,7 @@ int join_read_next_same_or_null(READ_RECORD *info)
   return safe_index_read(tab);			// then read null keys
 }
 
-enum_nested_loop_state end_send_group(JOIN *join, JoinTable *, bool end_of_records)
+enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_records)
 {
   int idx= -1;
   enum_nested_loop_state ok_code= NESTED_LOOP_OK;
@@ -4191,7 +4192,7 @@ enum_nested_loop_state end_send_group(JOIN *join, JoinTable *, bool end_of_recor
   return(NESTED_LOOP_OK);
 }
 
-enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_records)
+enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_records)
 {
   Table *table=join->tmp_table;
   int	  idx= -1;
@@ -4920,7 +4921,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     int best_key= -1;
     bool is_best_covering= false;
     double fanout= 1;
-    JOIN *join= tab->join;
+    Join *join= tab->join;
     uint32_t tablenr= tab - join->join_tab;
     ha_rows table_records= table->cursor->stats.records;
     bool group= join->group && order == join->group_list;
@@ -5217,7 +5218,7 @@ check_reverse_order:
     -1		Some fatal error
     1		No records
 */
-int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by)
+int create_sort_index(Session *session, Join *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by)
 {
   uint32_t length= 0;
   ha_rows examined_rows;
