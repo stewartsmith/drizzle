@@ -43,6 +43,7 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/plugin/event_observer.h"
 
 using namespace std;
 
@@ -1480,9 +1481,22 @@ int Cursor::insertRecord(unsigned char *buf)
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
     table->timestamp_field->set_time();
 
-  DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
+  DRIZZLE_INSERT_ROW_START(table->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doInsertRecord(buf);
+  
+  if (unlikely(plugin::EventObserver::beforeInsertRecord(*(table->in_use), *table_share, buf)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doInsertRecord(buf);
+    if (unlikely(plugin::EventObserver::afterInsertRecord(*(table->in_use), *table_share, buf, error))) 
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+ 
   DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1509,7 +1523,19 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doUpdateRecord(old_data, new_data);
+  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*(table->in_use), *table_share, old_data, new_data)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doUpdateRecord(old_data, new_data);
+    if (unlikely(plugin::EventObserver::afterUpdateRecord(*(table->in_use), *table_share, old_data, new_data, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+
   DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1529,7 +1555,19 @@ int Cursor::deleteRecord(const unsigned char *buf)
 
   DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doDeleteRecord(buf);
+  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*(table->in_use), *table_share, buf)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doDeleteRecord(buf);
+    if (unlikely(plugin::EventObserver::afterDeleteRecord(*(table->in_use), *table_share, buf, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+
   DRIZZLE_DELETE_ROW_DONE(error);
 
   if (unlikely(error))

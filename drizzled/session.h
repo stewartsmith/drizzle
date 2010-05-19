@@ -59,7 +59,9 @@ namespace plugin
 {
 class Client;
 class Scheduler;
+class EventObserverList;
 }
+
 namespace message
 {
 class Transaction;
@@ -1251,7 +1253,50 @@ private:
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
   message::Statement *statement_message;
-  /** Microsecond timestamp of when Session connected */
+  plugin::EventObserverList *session_event_observers;
+  
+  /* Schema observers are mapped to databases. */
+  std::map<std::string, plugin::EventObserverList *> schema_event_observers;
+
+ 
+public:
+  plugin::EventObserverList *getSessionObservers() 
+  { 
+    return session_event_observers;
+  }
+  
+  void setSessionObservers(plugin::EventObserverList *observers) 
+  { 
+    session_event_observers= observers;
+  }
+  
+  /* For schema event observers there is one set of observers per database. */
+  plugin::EventObserverList *getSchemaObservers(const std::string &db_name) 
+  { 
+    std::map<std::string, plugin::EventObserverList *>::iterator it;
+    
+    it= schema_event_observers.find(db_name);
+    if (it == schema_event_observers.end())
+      return NULL;
+      
+    return it->second;
+  }
+  
+  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers) 
+  { 
+    std::map<std::string, plugin::EventObserverList *>::iterator it;
+
+    it= schema_event_observers.find(db_name);
+    if (it != schema_event_observers.end())
+      schema_event_observers.erase(it);;
+
+    if (observers)
+      schema_event_observers[db_name] = observers;
+  }
+  
+  
+ private:
+ /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;
 

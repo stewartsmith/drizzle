@@ -23,6 +23,7 @@
 #include <drizzled/session.h>
 #include <drizzled/statement/create_schema.h>
 #include <drizzled/db.h>
+#include <drizzled/plugin/event_observer.h>
 
 #include <string>
 
@@ -55,7 +56,22 @@ bool statement::CreateSchema::execute()
     schema_message.set_collation(default_charset_info->name);
   }
 
-  bool res= mysql_create_db(session, schema_message, is_if_not_exists);
+  bool res = false;
+  if (unlikely(plugin::EventObserver::beforeCreateDatabase(*session, schema_identifier.getSQLPath())))
+  {
+    my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
+  }
+  else
+  {
+    res= mysql_create_db(session, schema_message, is_if_not_exists);
+    if (unlikely(plugin::EventObserver::afterCreateDatabase(*session, schema_identifier.getSQLPath(), res)))
+    {
+      my_error(ER_EVENT_OBSERVER_PLUGIN, MYF(0), schema_identifier.getSQLPath().c_str());
+      res = false;
+    }
+
+  }
+
   return not res;
 }
 
