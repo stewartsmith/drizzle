@@ -28,12 +28,12 @@
 
 using namespace drizzled;
 
-static uint32_t make_join_orderinfo(JOIN *join);
+static uint32_t make_join_orderinfo(Join *join);
 
 bool optimizer::Scan::getStats(Table *table,
                                JoinTable *join_tab)
 {
-  JOIN *join= join_tab->join;
+  Join *join= join_tab->join;
   bool statistics= test(! (join->select_options & SELECT_DESCRIBE));
   uint64_t options= (join->select_options &
                      (SELECT_DESCRIBE | SELECT_NO_JOIN_CACHE)) |
@@ -158,7 +158,7 @@ bool optimizer::Scan::getStats(Table *table,
   ordered. If there is a temp table the ordering is done as a last
   operation and doesn't prevent join cache usage.
 */
-static uint32_t make_join_orderinfo(JOIN *join)
+static uint32_t make_join_orderinfo(Join *join)
 {
   uint32_t i= 0;
   if (join->need_tmp)

@@ -1505,7 +1505,7 @@ public:
   TableShareInstance *getTemporaryShare();
 };
 
-class JOIN;
+class Join;
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
 

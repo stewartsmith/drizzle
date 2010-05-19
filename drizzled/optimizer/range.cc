@@ -1030,7 +1030,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
   /* Calculate cost(rowid_to_row_scan) */
   {
     optimizer::CostVector sweep_cost;
-    JOIN *join= param->session->lex->select_lex.join;
+    Join *join= param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, non_cpk_scan_records, is_interrupted,
                         &sweep_cost);
@@ -1148,7 +1148,7 @@ skip_to_ror_scan:
   double roru_total_cost;
   {
     optimizer::CostVector sweep_cost;
-    JOIN *join= param->session->lex->select_lex.join;
+    Join *join= param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, roru_total_records, is_interrupted,
                         &sweep_cost);
@@ -1615,7 +1615,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   if (!info->is_covering)
   {
     optimizer::CostVector sweep_cost;
-    JOIN *join= info->param->session->lex->select_lex.join;
+    Join *join= info->param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(info->param->table, double2rows(info->out_rows),
                         is_interrupted, &sweep_cost);
@@ -4585,7 +4585,7 @@ static optimizer::GroupMinMaxReadPlan *
 get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
 {
   Session *session= param->session;
-  JOIN *join= session->lex->current_select->join;
+  Join *join= session->lex->current_select->join;
   Table *table= param->table;
   bool have_min= false;              /* true if there is a MIN function. */
   bool have_max= false;              /* true if there is a MAX function. */
