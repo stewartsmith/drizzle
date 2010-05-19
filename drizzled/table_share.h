@@ -633,28 +633,6 @@ public:
     table_name.length= table_name_length ? table_name_length :strlen(table_name.str);
   }
 
-
-  /*
-    Set share's table cache key and update its db and table name appropriately.
-
-    SYNOPSIS
-    set_table_cache_key()
-    key_buff    Buffer to be used as storage for table cache key
-    (should be at least key_length bytes).
-    key         Value for table cache key.
-    key_length  Key length.
-
-    NOTE
-    Since 'key_buff' buffer will be used as storage for table cache key
-    it should has same life-time as share itself.
-  */
-
-  void set_table_cache_key(char *key_buff, const char *key, uint32_t key_length, uint32_t db_length= 0, uint32_t table_name_length= 0)
-  {
-    memcpy(key_buff, key, key_length);
-    set_table_cache_key(key_buff, key_length, db_length, table_name_length);
-  }
-
   inline bool honor_global_locks()
   {
     return (table_category == TABLE_CATEGORY_USER);

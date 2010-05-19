@@ -1014,7 +1014,8 @@ Table *Session::table_cache_insert_placeholder(const char *key, uint32_t key_len
     return NULL;
 
   table->s= share;
-  share->set_table_cache_key(key_buff, key, key_length);
+  memcpy(key_buff, key, key_length);
+  share->set_table_cache_key(key_buff, key_length);
   share->tmp_table= message::Table::INTERNAL;  // for intern_close_table
   table->in_use= this;
   table->locked_by_name=1;
