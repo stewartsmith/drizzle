@@ -135,6 +135,8 @@ static string host,
   pre_system,
   post_system;
 
+static vector<string> user_supplied_queries;
+
 string delimiter;
 
 string create_schema_string;
@@ -826,6 +828,18 @@ static long int timedif(struct timeval a, struct timeval b)
   return s + us;
 }
 
+static void combine_queries(vector<string> queries)
+{
+  user_supplied_query.erase();
+  for (vector<string>::iterator it= queries.begin();
+       it != queries.end();
+       ++it)
+  {
+    user_supplied_query.append(*it);
+    user_supplied_query.append(delimiter);
+  }
+}
+
 int main(int argc, char **argv)
 {
   char *password= NULL;
@@ -887,7 +901,7 @@ int main(int argc, char **argv)
   "Detach (close and re open) connections after X number of requests")
   ("engine ,e",po::value<string>(&default_engine)->default_value(""),
   "Storage engien to use for creating the table")
-  ("host,h",po::value<string>(&host)->default_value(""),"Connect to the host")
+  ("host,h",po::value<string>(&host)->default_value("localhost"),"Connect to the host")
   ("iterations,i",po::value<uint32_t>(&iterations)->default_value(1),
   "Number of times to run the tests")
   ("label",po::value<string>(&opt_label)->default_value(""),
@@ -920,7 +934,7 @@ int main(int argc, char **argv)
   "system() string to execute before running tests.")
   ("protocol",po::value<string>(),
   "The protocol of connection (tcp,socket,pipe,memory).")
-  ("query,q",po::value<string>(&user_supplied_query)->default_value(""),
+  ("query,q",po::value<vector<string> >(&user_supplied_queries)->composing()->notifier(&combine_queries),
   "Query to run or file containing query")
   ("set-random-seed",
   po::value<uint32_t>(&opt_set_random_seed)->default_value(0), 
@@ -1040,14 +1054,6 @@ int main(int argc, char **argv)
 
   /* globals? Yes, so we only have to run strlen once */
   delimiter_length= delimiter.length();
-
-  /*if (argc > 2)
-  {
-    fprintf(stderr,"%s: Too many arguments\n",internal::my_progname);
-    internal::free_defaults(defaults_argv);
-    internal::my_end();
-    exit(1);
-  }*/
 
   slap_connect(&con, false);
 
