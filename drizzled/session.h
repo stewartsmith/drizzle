@@ -404,6 +404,12 @@ public:
    */
   Item *free_list;
   memory::Root *mem_root; /**< Pointer to current memroot */
+
+
+  memory::Root *getMemRoot()
+  {
+    return mem_root;
+  }
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.

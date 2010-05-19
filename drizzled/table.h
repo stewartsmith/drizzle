@@ -243,7 +243,6 @@ private:
   {
     init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   }
-
 public:
   memory::Root *getMemRoot()
   {

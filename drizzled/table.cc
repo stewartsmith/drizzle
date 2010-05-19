@@ -870,9 +870,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  memory::Root own_root(TABLE_ALLOC_BLOCK_SIZE);
-
-  if (not own_root.multi_alloc_root(0, &tmpname, (uint32_t) strlen(path)+1, NULL))
+  if (not session->getMemRoot()->multi_alloc_root(0, &tmpname, (uint32_t) strlen(path)+1, NULL))
   {
     return NULL;
   }
@@ -910,9 +908,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
 
-  table->mem_root= own_root;
   mem_root_save= session->mem_root;
-  session->mem_root= &table->mem_root;
+  session->mem_root= table->getMemRoot();
 
   table->field=reg_field;
   table->alias= table_alias;
