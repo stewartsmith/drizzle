@@ -575,6 +575,7 @@ drizzleclient_net_real_write(NET *net, const unsigned char *packet, size_t len)
       break;
     }
     pos+=length;
+    current_session->status_var.bytes_sent+= length;
   }
 end:
   if ((net->compress) && (packet != NULL))
@@ -641,6 +642,7 @@ my_real_read(NET *net, size_t *complen)
       }
       remain -= (uint32_t) length;
       pos+= length;
+      current_session->status_var.bytes_received+= length;
     }
     if (i == 0)
     {                    /* First parts is packet length */
