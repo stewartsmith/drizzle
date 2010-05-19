@@ -305,7 +305,7 @@ private:
 */
 class Session;
 class select_result;
-class JOIN;
+class Join;
 class select_union;
 class Select_Lex_Unit: public Select_Lex_Node {
 protected:
@@ -422,7 +422,7 @@ public:
   List<Item> item_list;  /* list of fields & expressions */
   List<String> interval_list;
   bool is_item_list_lookup;
-  JOIN *join; /* after JOIN::prepare it is pointer to corresponding JOIN */
+  Join *join; /* after Join::prepare it is pointer to corresponding JOIN */
   List<TableList> top_join_list; /* join list of the top level          */
   List<TableList> *join_list;    /* list for the currently parsed join  */
   TableList *embedding;          /* table embedding to the above list   */

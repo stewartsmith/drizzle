@@ -90,7 +90,7 @@ void Item_subselect::init(Select_Lex *select_lex,
   if (unit->item)
   {
     /*
-      Item can be changed in JOIN::prepare while engine in JOIN::optimize
+      Item can be changed in JOIN::prepare while engine in Join::optimize
       => we do not copy old_engine here
     */
     engine= unit->item->engine;
@@ -172,7 +172,7 @@ Item_subselect::~Item_subselect()
 }
 
 Item_subselect::trans_res
-Item_subselect::select_transformer(JOIN *)
+Item_subselect::select_transformer(Join *)
 {
   return(RES_OK);
 }
@@ -497,7 +497,7 @@ void Item_singlerow_subselect::reset()
   Make rollback for it, or special name resolving mode in 5.0.
 */
 Item_subselect::trans_res
-Item_singlerow_subselect::select_transformer(JOIN *join)
+Item_singlerow_subselect::select_transformer(Join *join)
 {
   if (changed)
     return(RES_OK);
@@ -977,7 +977,7 @@ my_decimal *Item_in_subselect::val_decimal(my_decimal *decimal_value)
 */
 
 Item_subselect::trans_res
-Item_in_subselect::single_value_transformer(JOIN *join,
+Item_in_subselect::single_value_transformer(Join *join,
 					    const Comp_creator *func)
 {
   Select_Lex *select_lex= join->select_lex;
@@ -1159,7 +1159,7 @@ Item_in_subselect::single_value_transformer(JOIN *join,
 */
 
 Item_subselect::trans_res
-Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp_creator *func)
+Item_in_subselect::single_value_in_to_exists_transformer(Join * join, const Comp_creator *func)
 {
   Select_Lex *select_lex= join->select_lex;
 
@@ -1335,7 +1335,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, const Comp
 
 
 Item_subselect::trans_res
-Item_in_subselect::row_value_transformer(JOIN *join)
+Item_in_subselect::row_value_transformer(Join *join)
 {
   Select_Lex *select_lex= join->select_lex;
   uint32_t cols_num= left_expr->cols();
@@ -1412,7 +1412,7 @@ Item_in_subselect::row_value_transformer(JOIN *join)
 */
 
 Item_subselect::trans_res
-Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
+Item_in_subselect::row_value_in_to_exists_transformer(Join * join)
 {
   Select_Lex *select_lex= join->select_lex;
   Item *having_item= 0;
@@ -1610,7 +1610,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
 
 
 Item_subselect::trans_res
-Item_in_subselect::select_transformer(JOIN *join)
+Item_in_subselect::select_transformer(Join *join)
 {
   return select_in_like_transformer(join, Eq_creator::instance());
 }
@@ -1638,7 +1638,7 @@ Item_in_subselect::select_transformer(JOIN *join)
 */
 
 Item_subselect::trans_res
-Item_in_subselect::select_in_like_transformer(JOIN *join, const Comp_creator *func)
+Item_in_subselect::select_in_like_transformer(Join *join, const Comp_creator *func)
 {
   Select_Lex *current= session->lex->current_select, *up;
   const char *save_where= session->where;
@@ -1841,7 +1841,7 @@ bool Item_in_subselect::setup_engine()
 
 bool Item_in_subselect::init_left_expr_cache()
 {
-  JOIN *outer_join= NULL;
+  Join *outer_join= NULL;
 
   outer_join= unit->outer_select()->join;
   if (! outer_join || ! outer_join->tables || ! outer_join->join_tab)
@@ -1880,7 +1880,7 @@ bool Item_in_subselect::is_expensive_processor(unsigned char *)
 
 
 Item_subselect::trans_res
-Item_allany_subselect::select_transformer(JOIN *join)
+Item_allany_subselect::select_transformer(Join *join)
 {
   exec_method= IN_TO_EXISTS;
   if (upper_item)
@@ -2017,7 +2017,7 @@ int subselect_single_select_engine::prepare()
 {
   if (prepared)
     return 0;
-  join= new JOIN(session, select_lex->item_list,
+  join= new Join(session, select_lex->item_list,
 		 select_lex->options | SELECT_NO_UNLOCK, result);
   if (!join || !result)
     return 1; /* Fatal error is set already. */
@@ -3077,7 +3077,7 @@ subselect_hash_sj_engine::~subselect_hash_sj_engine()
   Cleanup performed after each PS execution.
 
   @detail
-  Called in the end of JOIN::prepare for PS from Item_subselect::cleanup.
+  Called in the end of Join::prepare for PS from Item_subselect::cleanup.
 */
 
 void subselect_hash_sj_engine::cleanup()
@@ -3122,7 +3122,7 @@ int subselect_hash_sj_engine::exec()
     /*
       TODO:
       - Unlock all subquery tables as we don't need them. To implement this
-        we need to add new functionality to JOIN::join_free that can unlock
+        we need to add new functionality to Join::join_free that can unlock
         all tables in a subquery (and all its subqueries).
       - The temp table used for grouping in the subquery can be freed
         immediately after materialization (yet it's done together with

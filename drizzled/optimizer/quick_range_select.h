@@ -264,7 +264,7 @@ private:
                                           uint32_t n_ranges, 
                                           uint32_t flags);
 
-  friend void select_describe(JOIN *join, 
+  friend void select_describe(Join *join, 
                               bool need_tmp_table, 
                               bool need_order,
                               bool distinct,
