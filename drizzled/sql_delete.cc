@@ -235,7 +235,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   }
   else
   {
-    init_read_record_idx(&info, session, table, 1, usable_index);
+    info.init_read_record_idx(session, table, 1, usable_index);
   }
 
   session->set_proc_info("updating");

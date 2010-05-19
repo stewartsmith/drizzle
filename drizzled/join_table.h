@@ -200,8 +200,8 @@ public:
   */
   ha_rows limit;
   table_reference_st	ref;
-  JOIN_CACHE cache;
-  JOIN *join;
+  JoinCache cache;
+  Join *join;
 
   /**
      ptr  - this join tab should do an InsideOut scan. Points
