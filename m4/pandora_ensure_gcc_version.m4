@@ -4,12 +4,15 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([_PANDORA_TRY_GCC],[
-  AS_IF([test -f /usr/bin/gcc$1 -a -f /usr/bin/g++$1],
-  [
-    CPP="/usr/bin/gcc$1 -E"
-    CC=/usr/bin/gcc$1
-    CXX=/usr/bin/g++$1
-  ])
+  pushdef([Name],[translit([$1],[./-], [___])])
+  pushdef([NAME],[translit([$1],[abcdefghijklmnopqrstuvwxyz./-],
+                                [ABCDEFGHIJKLMNOPQRSTUVWXYZ___])])
+  AC_CHECK_PROGS([CC]NAME,[gcc$1],[no])
+  AC_CHECK_PROGS([CXX]NAME,[g++$1],[no])
+  AC_CHECK_PROGS([CPP]NAME,[gcc$1 -E],[no])
+  AS_IF([test "x${ac_cv_prog_CC]NAME[}" != "no"],[CC="${ac_cv_prog_CC]NAME[}"])
+  AS_IF([test "x${ac_cv_prog_CXX]NAME[}" != "no"],[CXX="${ac_cv_prog_CXX]NAME[}"])
+  AS_IF([test "x${ac_cv_prog_CPP]NAME[}" != "no"],[CPP="${ac_cv_prog_CPP]NAME[}"])
 ])
 
 dnl If the user is on a Mac and didn't ask for a specific compiler
