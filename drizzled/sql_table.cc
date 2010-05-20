@@ -1418,7 +1418,6 @@ bool mysql_create_table_no_lock(Session *session,
   uint		db_options, key_count;
   KeyInfo		*key_info_buffer;
   bool		error= true;
-  TableShare share;
 
   /* Check for duplicate fields and check type of table to create */
   if (not alter_info->create_list.elements)

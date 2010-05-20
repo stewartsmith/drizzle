@@ -81,7 +81,7 @@ int FunctionCursor::rnd_next(unsigned char *)
     (*field)->setWriteSet();
   }
 
-  more_rows= generator->sub_populate(table->s->fields);
+  more_rows= generator->sub_populate(table->getShare()->fields);
 
   if (more_rows)
   {
@@ -101,9 +101,9 @@ void FunctionCursor::position(const unsigned char *record)
 {
   unsigned char *copy;
 
-  copy= (unsigned char *)calloc(table->s->reclength, sizeof(unsigned char));
+  copy= (unsigned char *)calloc(table->getShare()->reclength, sizeof(unsigned char));
   assert(copy);
-  memcpy(copy, record, table->s->reclength);
+  memcpy(copy, record, table->getShare()->reclength);
   row_cache.push_back(copy);
   internal::my_store_ptr(ref, ref_length, record_id);
   record_id++;
@@ -154,7 +154,7 @@ int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   size_t position_id= (size_t)internal::my_get_ptr(pos, ref_length);
 
   assert(position_id < row_cache.size());
-  memcpy(buf, row_cache[position_id], table->s->reclength);
+  memcpy(buf, row_cache[position_id], table->getShare()->reclength);
 
   return 0;
 }

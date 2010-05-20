@@ -665,7 +665,7 @@ unsigned char *Field::pack(unsigned char *to, const unsigned char *from, uint32_
 
 unsigned char *Field::pack(unsigned char *to, const unsigned char *from)
 {
-  unsigned char *result= this->pack(to, from, UINT32_MAX, table->s->db_low_byte_first);
+  unsigned char *result= this->pack(to, from, UINT32_MAX, table->getShare()->db_low_byte_first);
   return(result);
 }
 
@@ -703,7 +703,7 @@ const unsigned char *Field::unpack(unsigned char* to,
 
 const unsigned char *Field::unpack(unsigned char* to, const unsigned char *from)
 {
-  const unsigned char *result= unpack(to, from, 0U, table->s->db_low_byte_first);
+  const unsigned char *result= unpack(to, from, 0U, table->getShare()->db_low_byte_first);
   return(result);
 }
 
@@ -717,10 +717,10 @@ my_decimal *Field::val_decimal(my_decimal *)
 
 void Field::make_field(SendField *field)
 {
-  if (orig_table && orig_table->s->getSchemaName() && *orig_table->s->getSchemaName())
+  if (orig_table && orig_table->getShare()->getSchemaName() && *orig_table->getShare()->getSchemaName())
   {
-    field->db_name= orig_table->s->getSchemaName();
-    field->org_table_name= orig_table->s->getTableName();
+    field->db_name= orig_table->getMutableShare()->getSchemaName();
+    field->org_table_name= orig_table->getMutableShare()->getTableName();
   }
   else
     field->org_table_name= field->db_name= "";
@@ -765,7 +765,7 @@ uint32_t Field::fill_cache_field(CacheField *copy)
   {
     copy->blob_field=(Field_blob*) this;
     copy->strip=0;
-    copy->length-= table->s->blob_ptr_size;
+    copy->length-= table->getShare()->blob_ptr_size;
     return copy->length;
   }
   else
@@ -849,7 +849,7 @@ Field *Field::clone(memory::Root *root, Table *new_table)
   {
     tmp->init(new_table);
     tmp->move_field_offset((ptrdiff_t) (new_table->record[0] -
-                                           new_table->s->default_values));
+                                           new_table->getShare()->default_values));
   }
   return tmp;
 }

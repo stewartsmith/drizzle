@@ -74,7 +74,7 @@ Cursor::~Cursor(void)
 
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
-  Cursor *new_handler= table->s->db_type()->getCursor(*table->s, mem_root);
+  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare(), mem_root);
 
   /*
     Allocate Cursor->ref here because otherwise ha_open will allocate it
@@ -84,7 +84,7 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
   if (new_handler && !new_handler->ha_open(table,
-                                           table->s->getNormalizedPath(),
+                                           table->getMutableShare()->getNormalizedPath(),
                                            table->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
@@ -101,7 +101,7 @@ uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_m
   /* works only with key prefixes */
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
-  KeyInfo *key_info_found= table->s->key_info + key_position;
+  KeyInfo *key_info_found= table->getShare()->key_info + key_position;
   KeyPartInfo *key_part_found= key_info_found->key_part;
   KeyPartInfo *end_key_part_found= key_part_found + key_info_found->key_parts;
   uint32_t length= 0;
@@ -179,7 +179,7 @@ const key_map *Cursor::keys_to_use_for_scanning()
 
 bool Cursor::has_transactions()
 {
-  return (table->s->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
+  return (table->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
 void Cursor::ha_statistic_increment(ulong system_status_var::*offset) const
@@ -226,7 +226,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   int error;
 
   table= table_arg;
-  assert(table->s == table_share);
+  assert(table->getShare() == table_share);
 
   if ((error=open(name, mode, test_if_locked)))
   {
@@ -243,7 +243,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   }
   else
   {
-    if (table->s->db_options_in_use & HA_OPTION_READ_ONLY_DATA)
+    if (table->getShare()->db_options_in_use & HA_OPTION_READ_ONLY_DATA)
       table->db_stat|=HA_READ_ONLY;
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
@@ -554,7 +554,7 @@ int Cursor::update_auto_increment()
       nr= compute_next_insert_id(nr-1, variables);
     }
 
-    if (table->s->next_number_keypart == 0)
+    if (table->getShare()->next_number_keypart == 0)
     {
       /* We must defer the appending until "nr" has been possibly truncated */
       append= true;
@@ -1303,7 +1303,7 @@ static bool log_row_for_replication(Table* table,
   TransactionServices &transaction_services= TransactionServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->s->tmp_table || not transaction_services.shouldConstructMessages())
+  if (table->getShare()->tmp_table || not transaction_services.shouldConstructMessages())
     return false;
 
   bool result= false;
@@ -1454,9 +1454,9 @@ int Cursor::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
   assert((unsigned char*) table->def_read_set.getBitmap() +
-              table->s->column_bitmap_size ==
+              table->getShare()->column_bitmap_size ==
               (unsigned char*) table->def_write_set.getBitmap());
-  assert(table->s->all_set.isSetAll());
+  assert(table->getShare()->all_set.isSetAll());
   assert(table->key_read == 0);
   /* ensure that ha_index_end / endTableScan has been called */
   assert(inited == NONE);

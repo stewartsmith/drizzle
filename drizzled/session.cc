@@ -1724,15 +1724,15 @@ void Session::close_temporary_table(Table *table)
 
 void Session::nukeTable(Table *table)
 {
-  plugin::StorageEngine *table_type= table->s->db_type();
+  plugin::StorageEngine *table_type= table->getShare()->db_type();
 
   table->free_io_cache();
   table->delete_table(false);
 
-  TableIdentifier identifier(table->s->getSchemaName(), table->s->getTableName(), table->s->getPath());
+  TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
   rm_temporary_table(table_type, identifier);
 
-  delete table->s;
+  delete table->getMutableShare();
 
   /* This makes me sad, but we're allocating it via malloc */
   free(table);
@@ -1967,19 +1967,19 @@ void Session::dumpTemporaryTableNames(const char *foo)
   {
     bool have_proto= false;
 
-    message::Table *proto= table->s->getTableProto();
-    if (table->s->getTableProto())
+    message::Table *proto= table->getShare()->getTableProto();
+    if (table->getShare()->getTableProto())
       have_proto= true;
 
     const char *answer= have_proto ? "true" : "false";
 
     if (have_proto)
     {
-      cerr << "\tTable Name " << table->s->getSchemaName() << "." << table->s->getTableName() << " : " << answer << "\n";
+      cerr << "\tTable Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
       cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
     }
     else
-      cerr << "\tTabl;e Name " << table->s->getSchemaName() << "." << table->s->getTableName() << " : " << answer << "\n";
+      cerr << "\tTabl;e Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
   }
 }
 
