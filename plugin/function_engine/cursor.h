@@ -24,6 +24,7 @@
 #include <drizzled/cursor.h>
 
 #include <plugin/function_engine/function.h>
+#include <drizzled/base.h>
 
 class FunctionCursor: public drizzled::Cursor
 {
@@ -52,6 +53,8 @@ public:
   int rnd_pos(unsigned char *buf, unsigned char *pos);
 
   int doEndTableScan();
+
+  int extra(enum drizzled::ha_extra_function);
 
   /* record position of a record for reordering */
   void position(const unsigned char *record);

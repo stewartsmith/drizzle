@@ -109,20 +109,40 @@ void FunctionCursor::position(const unsigned char *record)
   record_id++;
 }
 
-int FunctionCursor::doEndTableScan()
-{ 
-  size_t length_of_vector= row_cache.size();
-
-  for (size_t x= 0; x < length_of_vector; x++)
+int FunctionCursor::extra(enum ha_extra_function operation)
+{
+  switch (operation)
   {
-    free(row_cache[x]);
+  case drizzled::HA_EXTRA_CACHE:
+  case drizzled::HA_EXTRA_NO_CACHE:
+    break;
+  case drizzled::HA_EXTRA_RESET_STATE:
+    { 
+      size_t length_of_vector= row_cache.size();
+
+      for (size_t x= 0; x < length_of_vector; x++)
+      {
+        free(row_cache[x]);
+      }
+
+      if (rows_returned > estimate_of_rows)
+        estimate_of_rows= rows_returned;
+
+      row_cache.clear();
+      record_id= 0;
+      delete generator; // Do this in case of an early exit from rnd_next()
+
+      break;
+    }
+  default:
+    break;
   }
 
-  if (rows_returned > estimate_of_rows)
-    estimate_of_rows= rows_returned;
+  return 0;
+}
 
-  row_cache.clear();
-  record_id= 0;
+int FunctionCursor::doEndTableScan()
+{ 
   delete generator; // Do this in case of an early exit from rnd_next()
 
   return 0;
@@ -133,6 +153,7 @@ int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   size_t position_id= (size_t)internal::my_get_ptr(pos, ref_length);
 
+  assert(position_id < row_cache.size());
   memcpy(buf, row_cache[position_id], table->s->reclength);
 
   return 0;
