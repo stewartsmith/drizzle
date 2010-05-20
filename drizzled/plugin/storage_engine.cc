@@ -786,7 +786,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
   @note
     In case of delete table it's only safe to use the following parts of
     the 'table' structure:
-    - table->s->path
+    - table->getShare()->path
     - table->alias
 */
 void StorageEngine::print_error(int error, myf errflag, Table &table)
@@ -858,7 +858,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
         str.length(max_length-4);
         str.append(STRING_WITH_LEN("..."));
       }
-      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->s->getTableName(),
+      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->getShare()->getTableName(),
         str.c_ptr(), key_nr+1);
       return;
     }
@@ -936,8 +936,8 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     break;
   case HA_ERR_NO_SUCH_TABLE:
     assert(table);
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table->s->getSchemaName(),
-             table->s->getTableName());
+    my_error(ER_NO_SUCH_TABLE, MYF(0), table->getShare()->getSchemaName(),
+             table->getShare()->getTableName());
     return;
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
@@ -993,7 +993,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
       return;
     }
   }
-  my_error(textno, errflag, table->s->getTableName(), error);
+  my_error(textno, errflag, table->getShare()->getTableName(), error);
 }
 
 
