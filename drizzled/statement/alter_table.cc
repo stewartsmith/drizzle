@@ -1513,6 +1513,7 @@ copy_data_between_tables(Table *from, Table *to,
     prev_insert_id= to->cursor->next_insert_id;
     error= to->cursor->insertRecord(to->record[0]);
     to->auto_increment_field_not_null= false;
+
     if (error)
     { 
       if (!ignore ||
@@ -1525,8 +1526,11 @@ copy_data_between_tables(Table *from, Table *to,
       delete_count++;
     }
     else
+    {
       found_count++;
+    }
   }
+
   info.end_read_record();
   from->free_io_cache();
   delete [] copy;				// This is never 0
@@ -1555,6 +1559,7 @@ copy_data_between_tables(Table *from, Table *to,
   to->cursor->ha_release_auto_increment();
   if (to->cursor->ha_external_lock(session,F_UNLCK))
     error=1;
+
   return(error > 0 ? -1 : 0);
 }
 
