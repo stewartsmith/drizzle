@@ -97,8 +97,8 @@ public:
 private:
   ib_crsr_t cursor;
   ib_tpl_t tuple;
+  bool advance_cursor;
 
-  ib_err_t next_innodb_error;
   bool write_can_replace;
   uint64_t hidden_autoinc_pkey_position;
 };

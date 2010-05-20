@@ -1623,9 +1623,6 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
   ib_tpl_t update_tuple;
   ib_err_t err;
 
-  err= ib_cursor_prev(cursor);
-  assert (err == DB_SUCCESS);
-
   update_tuple= ib_clust_read_tuple_create(cursor);
 
   err= ib_tuple_copy(update_tuple, tuple);
@@ -1639,8 +1636,8 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
   ib_tuple_delete(update_tuple);
-  ib_err_t err2= ib_cursor_next(cursor);
-  (void)err2;
+
+  advance_cursor= true;
 
   if (err == DB_SUCCESS)
     return 0;
@@ -1654,16 +1651,11 @@ int EmbeddedInnoDBCursor::doDeleteRecord(const unsigned char *)
 {
   ib_err_t err;
 
-  err= ib_cursor_prev(cursor);
-  assert (err == DB_SUCCESS);
-
   err= ib_cursor_delete_row(cursor);
   if (err != DB_SUCCESS)
     return -1; // FIXME
 
-  err= ib_cursor_next(cursor);
-  if (err != DB_SUCCESS && err != DB_END_OF_INDEX)
-    return -1; // FIXME
+  advance_cursor= true;
   return 0;
 }
 
@@ -1740,6 +1732,8 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
   if (err != DB_SUCCESS && err != DB_END_OF_INDEX)
     return -1; // FIXME
 
+  advance_cursor= false;
+
   return(0);
 }
 
@@ -1807,13 +1801,15 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *buf)
   ib_err_t err;
   int ret;
 
+  if (advance_cursor)
+    err= ib_cursor_next(cursor);
+
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
-  err= ib_cursor_next(cursor);
-
+  advance_cursor= true;
   return ret;
 }
 
@@ -1855,7 +1851,7 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
 
-  err= ib_cursor_next(cursor);
+  advance_cursor= true;
 
   return(0);
 }
@@ -1944,7 +1940,6 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
   ib_trx_t transaction= *get_trx(ha_session());
 
   active_index= keynr;
-  next_innodb_error= DB_SUCCESS;
 
   ib_cursor_attach_trx(cursor, transaction);
 
@@ -1972,6 +1967,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
     ib_cursor_set_cluster_access(cursor);
   }
 
+  advance_cursor= false;
   return 0;
 }
 
@@ -2109,7 +2105,7 @@ int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
   ret= read_row_from_innodb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
-  err= ib_cursor_next(cursor);
+  advance_cursor= true;
 
   return 0;
 }
@@ -2118,15 +2114,19 @@ int EmbeddedInnoDBCursor::index_next(unsigned char *buf)
 {
   int ret= HA_ERR_END_OF_FILE;
 
-  if (next_innodb_error == DB_END_OF_INDEX)
-    return HA_ERR_END_OF_FILE;
+  if (advance_cursor)
+  {
+    ib_err_t err= ib_cursor_next(cursor);
+    if (err == DB_END_OF_INDEX)
+      return HA_ERR_END_OF_FILE;
+  }
 
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
-  next_innodb_error= ib_cursor_next(cursor);
 
+  advance_cursor= true;
   return ret;
 }
 
@@ -2142,14 +2142,18 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
   int ret= HA_ERR_END_OF_FILE;
   ib_err_t err;
 
+  if (advance_cursor)
+    err= ib_cursor_prev(cursor);
+
   if (active_index == 0)
   {
     tuple= ib_tuple_clear(tuple);
     ret= read_row_from_innodb(buf, cursor, tuple, table,
                               share->has_hidden_primary_key,
                               &hidden_autoinc_pkey_position);
-    err= ib_cursor_prev(cursor);
   }
+
+  advance_cursor= true;
 
   return ret;
 }
@@ -2173,7 +2177,8 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
   ret= read_row_from_innodb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position);
-  next_innodb_error= ib_cursor_next(cursor);
+
+  advance_cursor= true;
 
   return ret;
 }
@@ -2199,7 +2204,7 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
     ret= read_row_from_innodb(buf, cursor, tuple, table,
                               share->has_hidden_primary_key,
                               &hidden_autoinc_pkey_position);
-    err= ib_cursor_prev(cursor);
+    advance_cursor= true;
   }
 
   return ret;
