@@ -154,7 +154,7 @@ static bool tty_password= false,
   auto_generate_sql;
 std::string opt_auto_generate_sql_type;
 
-static int32_t verbose= 1;
+static int32_t verbose= 0;
 static uint32_t delimiter_length;
 static uint32_t commit_rate;
 static uint32_t detach_rate;
@@ -1717,7 +1717,7 @@ process_options(void)
   if (user.empty())
     user= "root";
 
-  verbose+= opt_verbose.length();
+  verbose= opt_verbose.length();
 
   /* If something is created we clean it up, otherwise we leave schemas alone */
   if ( (!create_string.empty()) || auto_generate_sql)
