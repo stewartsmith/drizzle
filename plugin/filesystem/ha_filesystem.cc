@@ -37,6 +37,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace drizzled;
@@ -78,6 +79,8 @@ public:
   const char **bas_ext() const {
     return ha_filesystem_exts;
   }
+
+  bool validateCreateTableOption(const std::string &key, const std::string &state);
 
   int doCreateTable(Session &,
                     Table &table_arg,
@@ -464,6 +467,22 @@ int ha_filesystem::doEndTableScan()
   return 0;
 }
 
+bool FilesystemEngine::validateCreateTableOption(const std::string &key,
+                                                 const std::string &state)
+{
+  (void)state;
+  // FILE and SEP
+  if (boost::iequals(key, "FILE"))
+  {
+    return true;
+  }
+  else if (boost::iequals(key, "SEP"))
+  {
+    return true;
+  }
+  return false;
+}
+
 /*
   Create a table. You do not want to leave the table open after a call to
   this (the database will call ::open() if it needs to).
@@ -475,6 +494,8 @@ int FilesystemEngine::doCreateTable(Session &,
 {
   string serialized_proto;
   string new_path;
+
+  // check for option proto.engine().options(i).name() / state()
 
   new_path= identifier.getPath();
   new_path+= ".FST";
