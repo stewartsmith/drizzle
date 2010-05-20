@@ -138,7 +138,7 @@ static string host,
   post_system;
 
 static vector<string> user_supplied_queries;
-
+static vector<int32_t> opt_verbose;
 string delimiter;
 
 string create_schema_string;
@@ -155,7 +155,7 @@ static bool tty_password= false,
   auto_generate_sql;
 std::string opt_auto_generate_sql_type;
 
-static int32_t verbose;
+static int32_t verbose= 0;
 static uint32_t delimiter_length;
 static uint32_t commit_rate;
 static uint32_t detach_rate;
@@ -843,6 +843,18 @@ static void combine_queries(vector<string> queries)
   }
 }
 
+static void process_verbose(vector<int32_t> in_verbose)
+{
+  verbose= 0;
+  for (vector<int32_t>::iterator it= in_verbose.begin();
+       it != in_verbose.end();
+       ++it)
+  {
+    verbose+=*it;
+  }
+cout<<verbose<<endl;
+}
+
 int main(int argc, char **argv)
 {
   char *password= NULL;
@@ -948,7 +960,7 @@ int main(int argc, char **argv)
   "Require drizzleslap to run each specific test a certain amount of time in seconds")  
   ("user,u",po::value<string>(&user)->default_value(""),
   "User for login if not current user")  
-  ("verbose,v",po::value<int32_t>(&verbose)->implicit_value(0),
+  ("verbose,v",po::value<vector<int32_t>>(&opt_verbose)->composing()->notifier(&process_verbose),
   "More verbose output,you can use this multiple times to get more verbose output")  
   ("version,V","Output version information and exit") 
   ;
@@ -988,11 +1000,6 @@ int main(int argc, char **argv)
     cout<<long_options<<endl;
     exit(0);
   }   
-
- if( vm.count("verbose") )
-  {
-    verbose++;
-  }
 
   if(vm.count("port")) 
   {
