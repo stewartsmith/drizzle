@@ -137,7 +137,7 @@ static string host,
   post_system;
 
 static vector<string> user_supplied_queries;
-static vector<int32_t> opt_verbose;
+static string opt_verbose;
 string delimiter;
 
 string create_schema_string;
@@ -154,7 +154,7 @@ static bool tty_password= false,
   auto_generate_sql;
 std::string opt_auto_generate_sql_type;
 
-static int32_t verbose= 0;
+static int32_t verbose= 1;
 static uint32_t delimiter_length;
 static uint32_t commit_rate;
 static uint32_t detach_rate;
@@ -842,16 +842,6 @@ static void combine_queries(vector<string> queries)
   }
 }
 
-static void process_verbose(vector<int32_t> in_verbose)
-{
-  verbose= 0;
-  for (vector<int32_t>::iterator it= in_verbose.begin();
-       it != in_verbose.end();
-       ++it)
-  {
-    verbose+= *it;
-  }
-}
 
 int main(int argc, char **argv)
 {
@@ -958,8 +948,7 @@ int main(int argc, char **argv)
   "Require drizzleslap to run each specific test a certain amount of time in seconds")  
   ("user,u",po::value<string>(&user)->default_value(""),
   "User for login if not current user")  
-  ("verbose,v",po::value<vector<int32_t> >(&opt_verbose)->composing()->notifier(&process_verbose),
-  "More verbose output,you can use this multiple times to get more verbose output")  
+  ("verbose,v", po::value<string>(&opt_verbose)->default_value("v"), "Increase verbosity level by one.")
   ("version,V","Output version information and exit") 
   ;
 
@@ -1727,6 +1716,8 @@ process_options(void)
   
   if (user.empty())
     user= "root";
+
+  verbose+= opt_verbose.length();
 
   /* If something is created we clean it up, otherwise we leave schemas alone */
   if ( (!create_string.empty()) || auto_generate_sql)
