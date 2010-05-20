@@ -96,7 +96,7 @@ bool BlitzTree::create_cursor(BlitzCursor *bc) {
     return false;
 
   if ((bc->cursor = tcbdbcurnew(btree)) == NULL)
-    return NULL;
+    return false;
 
   bc->tree = this;
   bc->active = true;
