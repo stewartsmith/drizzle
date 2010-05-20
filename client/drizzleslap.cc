@@ -153,7 +153,8 @@ static bool tty_password= false,
   auto_generate_sql;
 std::string opt_auto_generate_sql_type;
 
-static int verbose, delimiter_length;
+static int32_t verbose;
+static uint32_t delimiter_length;
 static uint32_t commit_rate;
 static uint32_t detach_rate;
 static uint32_t opt_timer_length;
@@ -174,12 +175,12 @@ static unsigned int num_blob_cols_size;
 static unsigned int num_blob_cols_size_min;
 static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
-uint32_t iterations;
+static uint32_t iterations;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;
 static uint64_t auto_generate_sql_unique_query_number;
-static unsigned int auto_generate_sql_secondary_indexes;
+static uint32_t auto_generate_sql_secondary_indexes;
 static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
 string concurrency_str;
@@ -190,7 +191,7 @@ const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 std::string opt_csv_str;
 int csv_file;
 
-static int get_options(void);
+static int process_options(void);
 static uint32_t opt_drizzle_port= 0;
 
 static const char *load_default_groups[]= { "drizzleslap","client",0 };
@@ -425,7 +426,7 @@ public:
     timing(0),
     users(0),
     real_users(0),
-    rows(),
+    rows(0),
     create_timing(0),
     create_count(0)
     {}
@@ -950,7 +951,6 @@ int main(int argc, char **argv)
   ("version,V","Output version information and exit") 
   ;
 
- // char *endchar= NULL;
   uint64_t temp_drizzle_port= 0;
   drizzle_con_st con;
   OptionString *eptr;
@@ -965,7 +965,7 @@ int main(int argc, char **argv)
   po::store(po::parse_command_line(argc,argv,long_options),vm);
   po::notify(vm);
 
-  if (get_options())
+  if (process_options())
   {
     internal::free_defaults(defaults_argv);
     internal::my_end();
@@ -1710,7 +1710,7 @@ build_select_string(bool key)
 }
 
 static int
-get_options(void)
+process_options(void)
 {
   char *tmp_string;
   struct stat sbuf;
