@@ -3446,6 +3446,7 @@ static void print_warnings(uint32_t error_code)
   drizzle_row_t cur;
   uint64_t num_rows;
   uint32_t new_code= 0;
+  FILE *out;
 
   /* Get the warnings */
   query= "show warnings";
@@ -3471,12 +3472,21 @@ static void print_warnings(uint32_t error_code)
   }
 
   /* Print the warnings */
-  init_pager();
+  if (status.getBatch()) 
+  {
+    out = stderr;
+  } 
+  else 
+  {
+    init_pager();
+    out = PAGER;
+  }
   do
   {
-    tee_fprintf(PAGER, "%s (Code %s): %s\n", cur[0], cur[1], cur[2]);
+    tee_fprintf(out, "%s (Code %s): %s\n", cur[0], cur[1], cur[2]);
   } while ((cur= drizzle_row_next(&result)));
-  end_pager();
+  if (!status.getBatch())
+    end_pager();
 
 end:
   drizzle_result_free(&result);
