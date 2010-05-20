@@ -75,6 +75,8 @@
 #define HUGE_STRING_LENGTH 8196
 #define RAND_STRING_SIZE 126
 #define DEFAULT_BLOB_SIZE 1024
+#include<config.h>
+#include CSTDINT_H
 #include <boost/program_options.hpp>
 namespace po= boost::program_options;
 #include "client_priv.h"
@@ -86,7 +88,7 @@ namespace po= boost::program_options;
 # include <sys/stat.h>
 #endif
 #include <fcntl.h>
-#include <stdint.h>
+#include <cstdint>
 #include <math.h>
 #include <ctype.h>
 #include <cassert>
