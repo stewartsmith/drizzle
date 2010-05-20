@@ -91,11 +91,9 @@ int BlitzTree::close(void) {
   return 0;
 }
 
-BlitzCursor *BlitzTree::create_cursor(void) {
-  /* Resort instantiating a new object everytime for now.
-     In the future this will be a singleton for each Cursor
-     object. We must first confirm it's safety. */
-  BlitzCursor *bc = new BlitzCursor();
+bool BlitzTree::create_cursor(BlitzCursor *bc) {
+  if (bc == NULL)
+    return false;
 
   if ((bc->cursor = tcbdbcurnew(btree)) == NULL)
     return NULL;
@@ -103,7 +101,7 @@ BlitzCursor *BlitzTree::create_cursor(void) {
   bc->tree = this;
   bc->active = true;
   bc->moved = false;
-  return bc;
+  return true;
 }
 
 void BlitzTree::destroy_cursor(BlitzCursor *bc) {
@@ -111,7 +109,7 @@ void BlitzTree::destroy_cursor(BlitzCursor *bc) {
     return;
 
   tcbdbcurdel(bc->cursor);
-  delete bc; 
+  return;
 }
 
 int BlitzTree::write(const char *key, const size_t klen) {

@@ -386,6 +386,7 @@ insert into t1 values ('c');
 insert into t1 values ('f'), ('e'), ('d');
 --sorted_result
 select * from t1;
+select count(*) from t1;
 explain select * from t1 where a = 'a';
 select * from t1 where a = 'a';
 select * from t1 where a = 'b';
@@ -397,11 +398,13 @@ select * from t1 where a = 'f';
 # deletion test
 delete from t1 where a = 'a';
 delete from t1 where a = 'b';
+select count(*) from t1;
 select * from t1;
 delete from t1 where a = 'c';
 delete from t1 where a = 'd';
 delete from t1 where a = 'e';
 delete from t1 where a = 'f';
+select count(*) from t1;
 select * from t1;
 drop table t1;
 

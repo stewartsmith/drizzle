@@ -684,6 +684,9 @@ c
 d
 e
 f
+select count(*) from t1;
+count(*)
+6
 explain select * from t1 where a = 'a';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	const	a	a	131	const	1	Using index
@@ -707,6 +710,9 @@ a
 f
 delete from t1 where a = 'a';
 delete from t1 where a = 'b';
+select count(*) from t1;
+count(*)
+4
 select * from t1;
 a
 c
@@ -717,6 +723,9 @@ delete from t1 where a = 'c';
 delete from t1 where a = 'd';
 delete from t1 where a = 'e';
 delete from t1 where a = 'f';
+select count(*) from t1;
+count(*)
+0
 select * from t1;
 a
 drop table t1;

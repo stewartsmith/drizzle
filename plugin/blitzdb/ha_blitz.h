@@ -213,7 +213,7 @@ public:
   int close(void);
 
   /* KEY HANDLING */
-  BlitzCursor *create_cursor(void);
+  bool create_cursor(BlitzCursor *cursor);
   void destroy_cursor(BlitzCursor *cursor);
 
   /* BTREE INDEX WRITE RELATED */
@@ -256,7 +256,7 @@ public:
 class ha_blitz: public drizzled::Cursor {
 private:
   BlitzShare *share;            /* Shared object among all threads */
-  BlitzCursor *btree_cursor;    /* Cursor for B+Tree Index */
+  BlitzCursor *btree_cursor;    /* Array of B+Tree Cursor */
   drizzled::THR_LOCK_DATA lock; /* Drizzle Lock */
 
   /* THREAD STATE */
