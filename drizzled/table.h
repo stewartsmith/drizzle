@@ -543,9 +543,13 @@ public:
     return output;  // for multiple << operators.
   }
 
-  virtual bool ownsShare()
+protected:
+  bool is_placeholder_created;
+
+public:
+  bool isPlaceHolder()
   {
-    return false;
+    return is_placeholder_created;
   }
 };
 

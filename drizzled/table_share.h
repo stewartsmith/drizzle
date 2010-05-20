@@ -226,7 +226,6 @@ public:
     delete table_proto;
     table_proto= NULL;
 
-    /* We must copy mem_root from share because share is allocated through it */
     mem_root.free_root(MYF(0));                 // Free's share
   };
 

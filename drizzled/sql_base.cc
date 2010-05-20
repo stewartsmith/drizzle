@@ -53,6 +53,7 @@
 #include "drizzled/internal/iocache.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/plugin/authorization.h"
+#include "drizzled/table_placeholder.h"
 
 using namespace std;
 
@@ -188,6 +189,7 @@ void Table::intern_close_table()
 void free_cache_entry(void *entry)
 {
   Table *table= static_cast<Table *>(entry);
+
   table->intern_close_table();
   if (not table->in_use)
   {
@@ -195,12 +197,20 @@ void free_cache_entry(void *entry)
     table->prev->next=table->next;
     if (table == unused_tables)
     {
-      unused_tables=unused_tables->next;
+      unused_tables= unused_tables->next;
       if (table == unused_tables)
         unused_tables= NULL;
     }
   }
-  free(table);
+
+  if (table->isPlaceHolder())
+  {
+    delete table;
+  }
+  else
+  {
+    free(table);
+  }
 }
 
 /* Free resources allocated by filesort() and read_record() */
@@ -242,7 +252,9 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   {
     refresh_version++;				// Force close of open tables
     while (unused_tables)
+    {
       hash_delete(&open_cache,(unsigned char*) unused_tables);
+    }
 
     if (wait_for_refresh)
     {
@@ -425,7 +437,9 @@ bool Session::free_cached_table()
       table->prev->next= table;
     }
     else
-      unused_tables= table->next=table->prev=table;
+    {
+      unused_tables= table->next= table->prev=table;
+    }
   }
 
   return found_old_table;
@@ -449,7 +463,9 @@ void Session::close_open_tables()
   pthread_mutex_lock(&LOCK_open); /* Close all open tables on Session */
 
   while (open_tables)
+  {
     found_old_table|= free_cached_table();
+  }
   some_tables_deleted= false;
 
   if (found_old_table)
@@ -794,6 +810,7 @@ void Session::unlink_open_table(Table *find)
     {
       /* Remove table from open_tables list. */
       *prev= list->next;
+
       /* Close table. */
       hash_delete(&open_cache,(unsigned char*) list); // Close table
     }
@@ -995,10 +1012,6 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
 
 Table *Session::table_cache_insert_placeholder(const char *key, uint32_t key_length)
 {
-  Table *table;
-  TableShare *share;
-  char *key_buff;
-
   safe_mutex_assert_owner(&LOCK_open);
 
   /*
@@ -1006,23 +1019,13 @@ Table *Session::table_cache_insert_placeholder(const char *key, uint32_t key_len
     Note that we must use multi_malloc() here as this is freed by the
     table cache
   */
-  if (! memory::multi_malloc(true,
-                             &table, sizeof(*table),
-                             &share, sizeof(*share),
-                             &key_buff, key_length,
-                             NULL))
-    return NULL;
-
-  table->s= share;
-  memcpy(key_buff, key, key_length);
-  share->set_table_cache_key(key_buff, key_length);
-  share->tmp_table= message::Table::INTERNAL;  // for intern_close_table
+  TablePlaceholder *table= new TablePlaceholder(key, key_length);
   table->in_use= this;
-  table->locked_by_name=1;
 
   if (my_hash_insert(&open_cache, (unsigned char*)table))
   {
-    free((unsigned char*) table);
+    delete table;
+
     return NULL;
   }
 
@@ -1075,6 +1078,7 @@ bool Session::lock_table_name_if_not_cached(const char *new_db,
     *table= 0;
     return false;
   }
+
   if (not (*table= table_cache_insert_placeholder(key, key_length)))
   {
     pthread_mutex_unlock(&LOCK_open);
@@ -1371,6 +1375,7 @@ c2: open t1; -- blocks
 
     /* make a new table */
     table= (Table *)malloc(sizeof(Table));
+    memset(table, 0, sizeof(Table));
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
@@ -2303,6 +2308,8 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table))))
     return NULL;
+
+  memset(new_tmp_table, 0, sizeof(*new_tmp_table));
 
 
   /*

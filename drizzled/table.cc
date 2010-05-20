@@ -93,6 +93,7 @@ int Table::delete_table(bool free_share)
   }
   delete cursor;
   cursor= 0;				/* For easier errorchecking */
+
   if (free_share)
   {
     if (s->tmp_table == message::Table::STANDARD)
@@ -1927,7 +1928,8 @@ Table::Table() :
   query_id(0),
   quick_condition_rows(0),
   timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-  map(0)
+  map(0),
+  is_placeholder_created(0)
 {
   memset(&def_read_set, 0, sizeof(MyBitmap)); /**< Default read set of columns */
   memset(&def_write_set, 0, sizeof(MyBitmap)); /**< Default write set of columns */
