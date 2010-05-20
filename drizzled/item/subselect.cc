@@ -2283,7 +2283,7 @@ int subselect_uniquesubquery_engine::scan_table()
 
   table->cursor->startTableScan(1);
   table->cursor->extra_opt(HA_EXTRA_CACHE,
-                         current_session->variables.read_buff_size);
+                           current_session->variables.read_buff_size);
   table->null_row= 0;
   for (;;)
   {

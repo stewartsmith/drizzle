@@ -260,26 +260,6 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
 }
 
 /**
-  one has to use this method when to find
-  random position by record as the plain
-  position() call doesn't work for some
-  handlers for random position
-*/
-
-int Cursor::rnd_pos_by_record(unsigned char *record)
-{
-  register int error;
-
-  position(record);
-  if (inited && (error= endIndexScan()))
-    return error;
-  if ((error= startTableScan(false)))
-    return error;
-
-  return rnd_pos(record, ref);
-}
-
-/**
   Read first row (only) from a table.
 
   This is never called for InnoDB tables, as these table types

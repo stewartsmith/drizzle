@@ -388,13 +388,6 @@ public:
   int compare_key(key_range *range);
   virtual int rnd_next(unsigned char *)=0;
   virtual int rnd_pos(unsigned char *, unsigned char *)=0;
-  /**
-    One has to use this method when to find
-    random position by record as the plain
-    position() call doesn't work for some
-    handlers for random position.
-  */
-  virtual int rnd_pos_by_record(unsigned char *record);
   virtual int read_first_row(unsigned char *buf, uint32_t primary_key);
   virtual int rnd_same(unsigned char *, uint32_t)
     { return HA_ERR_WRONG_COMMAND; }
