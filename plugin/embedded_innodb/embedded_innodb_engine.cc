@@ -25,7 +25,7 @@ Copyright (c) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
 Copyright (c) 2008, 2009 Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
-Google, Inc. Those modifications are gratefully acknowledged and are described
+staticGoogle, Inc. Those modifications are gratefully acknowledged and are described
 briefly in the InnoDB documentation. The contributions by Google are
 incorporated with their permission, and subject to the conditions contained in
 the file COPYING.Google.
@@ -98,6 +98,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include <drizzled/field.h>
 #include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
+#include "drizzled/field/blob.h"
 #include <drizzled/session.h>
 
 using namespace std;
@@ -683,7 +684,10 @@ static int create_table_add_field(ib_tbl_sch_t schema,
     *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_INT,
                                   column_attr, 0, 4);
     break;
-
+  case message::Table::Field::BLOB:
+    *err= ib_table_schema_add_col(schema, field.name().c_str(), IB_BLOB,
+                                  column_attr, 0, 0);
+    break;
   default:
     my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "Column Type");
     return(HA_ERR_UNSUPPORTED);
@@ -1449,6 +1453,14 @@ static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
       (**field).setReadSet();
       err= ib_tuple_write_u32(tuple, colnr, (*field)->val_int());
     }
+    else if ((**field).type() == DRIZZLE_TYPE_BLOB)
+    {
+      Field_blob *blob= reinterpret_cast<Field_blob*>(*field);
+      unsigned char* blob_ptr;
+      uint32_t blob_length= blob->get_length();
+      blob->get_ptr(&blob_ptr);
+      err= ib_col_set_value(tuple, colnr, blob_ptr, blob_length);
+    }
     else
     {
       err= ib_col_set_value(tuple, colnr, (*field)->ptr, (*field)->data_length());
@@ -1778,6 +1790,12 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
       uint32_t date_read;
       err= ib_tuple_read_u32(tuple, colnr, &date_read);
       (*field)->store(date_read);
+    }
+    else if ((**field).type() == DRIZZLE_TYPE_BLOB)
+    {
+      (reinterpret_cast<Field_blob*>(*field))->set_ptr(length,
+                                     (unsigned char*)ib_col_get_value(tuple,
+                                                                      colnr));
     }
     else
     {
