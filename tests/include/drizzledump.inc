@@ -21,11 +21,6 @@
 #
 # LIMITATIONS:  Does *NOT* work with xml output!
 #
-# AUTHOR: pcrews 2009-05-21
-#                Bug#40465 drizzledump.test does no checking of dump or restore
-#
-# LAST CHANGE: 2009-05-21 
-#
 ################################################################################
 
 --echo # Begin testing drizzledump output + restore
