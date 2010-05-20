@@ -45,7 +45,7 @@ let $table_name = test.t1;
 --source include/drizzledump.inc
 
 --echo #
---echo # Bug#3361 drizzledump quotes DECIMAL values inconsistently
+--echo # Bug#3361 mysqldump quotes DECIMAL values inconsistently
 --echo #
 CREATE TABLE t1 (a DECIMAL(10,5), b FLOAT);
 # Check at first how mysql work with quoted decimal
@@ -75,7 +75,7 @@ let $table_name = test.t2;
 DROP TABLE t1;
 
 --echo #
---echo # Bug#8830 drizzledump --skip-extended-insert causes --hex-blob to dump wrong values
+--echo # Bug#8830 mysqldump --skip-extended-insert causes --hex-blob to dump wrong values
 --echo #
 CREATE TABLE t1 (`b` blob);
 INSERT INTO `t1` VALUES (0x602010000280100005E71A);
