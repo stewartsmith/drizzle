@@ -60,9 +60,10 @@ typedef struct st_columndef MI_COLUMNDEF;
  */
 class Table 
 {
-public:
 
+public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
+
   Field **field; /**< Pointer to fields collection */
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
@@ -236,8 +237,8 @@ public:
   uint32_t quick_key_parts[MAX_KEY];
   uint32_t quick_n_ranges[MAX_KEY];
 
-  memory::Root mem_root;
 private:
+  memory::Root mem_root;
 
   void init_mem_root()
   {
@@ -292,6 +293,7 @@ public:
 
   /* SHARE methods */
   inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
+  inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }

@@ -369,7 +369,7 @@ public:
     return table_cache_key.str;
   }
 
-  size_t getCacheKeySize()
+  size_t getCacheKeySize() const
   {
     return table_cache_key.length;
   }
@@ -495,7 +495,7 @@ public:
     return (table_proto) ? table_proto->options().comment().length() : 0; 
   }
 
-  inline uint64_t getMaxRows()
+  inline uint64_t getMaxRows() const
   {
     return max_rows;
   }

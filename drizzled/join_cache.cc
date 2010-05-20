@@ -119,7 +119,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     if (null_fields && tables[i].table->getNullFields())
     {						/* must copy null bits */
       copy->str= tables[i].table->null_flags;
-      copy->length= tables[i].table->s->null_bytes;
+      copy->length= tables[i].table->getShare()->null_bytes;
       copy->strip=0;
       copy->blob_field=0;
       copy->get_rowid= NULL;

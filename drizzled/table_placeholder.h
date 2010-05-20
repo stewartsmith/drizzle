@@ -36,13 +36,13 @@ public:
     Table()
   {
     is_placeholder_created= true;
-    s= &private_share;
+    setShare(&private_share);
 
     key_buff.resize(key_length);
 
     memcpy(&key_buff[0], key, key_length);
-    s->set_table_cache_key(&key_buff[0], key_length);
-    s->tmp_table= message::Table::INTERNAL;  // for intern_close_table
+    getMutableShare()->set_table_cache_key(&key_buff[0], key_length);
+    getMutableShare()->tmp_table= message::Table::INTERNAL;  // for intern_close_table
     locked_by_name= true;
   }
 };

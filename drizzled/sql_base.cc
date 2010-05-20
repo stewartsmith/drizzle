@@ -86,8 +86,8 @@ unsigned char *table_cache_key(const unsigned char *record,
                                bool )
 {
   Table *entry=(Table*) record;
-  *length= entry->s->getCacheKeySize();
-  return (unsigned char*) entry->s->getCacheKey();
+  *length= entry->getShare()->getCacheKeySize();
+  return (unsigned char*) entry->getMutableShare()->getCacheKey();
 }
 
 HASH *get_open_cache()
@@ -502,7 +502,7 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->s->tmp_table == message::Table::STANDARD) &&
+    if ((table->table == 0 || table->table->getShare()->tmp_table == message::Table::STANDARD) &&
         strcasecmp(table->db, db_name) == 0 &&
         strcasecmp(table->table_name, table_name) == 0)
       break;
@@ -566,7 +566,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   if (table->table)
   {
     /* temporary table is always unique */
-    if (table->table && table->table->s->tmp_table != message::Table::STANDARD)
+    if (table->table && table->table->getShare()->tmp_table != message::Table::STANDARD)
       return 0;
     table= table->find_underlying_table(table->table);
     /*
@@ -602,9 +602,9 @@ void Session::doGetTableNames(SchemaIdentifier &schema_identifier,
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (schema_identifier.compare(table->s->getSchemaName()))
+    if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
-      set_of_names.insert(table->s->getTableName());
+      set_of_names.insert(table->getShare()->getTableName());
     }
   }
 }
@@ -621,7 +621,7 @@ void Session::doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (schema_identifier.compare(table->s->getSchemaName()))
+    if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
       set_of_identifiers.push_back(TableIdentifier(table->getShare()->getSchemaName(),
                                                    table->getShare()->getTableName(),
@@ -641,9 +641,9 @@ bool Session::doDoesTableExist(TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->tmp_table == message::Table::TEMPORARY)
+    if (table->getShare()->tmp_table == message::Table::TEMPORARY)
     {
-      if (identifier.compare(table->s->getSchemaName(), table->s->getTableName()))
+      if (identifier.compare(table->getShare()->getSchemaName(), table->getShare()->getTableName()))
       {
         return true;
       }
@@ -658,9 +658,9 @@ int Session::doGetTableDefinition(TableIdentifier &identifier,
 {
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->tmp_table == message::Table::TEMPORARY)
+    if (table->getShare()->tmp_table == message::Table::TEMPORARY)
     {
-      if (identifier.compare(table->s->getSchemaName(), table->s->getTableName()))
+      if (identifier.compare(table->getShare()->getSchemaName(), table->getShare()->getTableName()))
       {
         table_proto.CopyFrom(*(table->s->getTableProto()));
 
@@ -681,8 +681,8 @@ Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->getCacheKeySize() == key_length &&
-        not memcmp(table->s->getCacheKey(), key, key_length))
+    if (table->getShare()->getCacheKeySize() == key_length &&
+        not memcmp(table->getMutableShare()->getCacheKey(), key, key_length))
     {
       return table;
     }
@@ -704,8 +704,8 @@ Table *Session::find_temporary_table(TableIdentifier &identifier)
 
   for (Table *table= temporary_tables ; table ; table= table->next)
   {
-    if (table->s->getCacheKeySize() == key_length &&
-        not memcmp(table->s->getCacheKey(), key, key_length))
+    if (table->getShare()->getCacheKeySize() == key_length &&
+        not memcmp(table->getMutableShare()->getCacheKey(), key, key_length))
 
       return table;
   }
@@ -788,12 +788,12 @@ static void relink_unused(Table *table)
 void Session::unlink_open_table(Table *find)
 {
   char key[MAX_DBKEY_LENGTH];
-  uint32_t key_length= find->s->getCacheKeySize();
+  uint32_t key_length= find->getShare()->getCacheKeySize();
   Table *list, **prev;
 
   safe_mutex_assert_owner(&LOCK_open);
 
-  memcpy(key, find->s->getCacheKey(), key_length);
+  memcpy(key, find->getMutableShare()->getCacheKey(), key_length);
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
@@ -805,8 +805,8 @@ void Session::unlink_open_table(Table *find)
   {
     list= *prev;
 
-    if (list->s->getCacheKeySize() == key_length &&
-        not memcmp(list->s->getCacheKey(), key, key_length))
+    if (list->getShare()->getCacheKeySize() == key_length &&
+        not memcmp(list->getMutableShare()->getCacheKey(), key, key_length))
     {
       /* Remove table from open_tables list. */
       *prev= list->next;

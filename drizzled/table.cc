@@ -997,7 +997,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
           }
           session->mem_root= mem_root_save;
           session->change_item_tree(argp, new Item_field(new_field));
-          session->mem_root= &table->mem_root;
+          session->mem_root= table->getMemRoot();
 	  if (!(new_field->flags & NOT_NULL_FLAG))
           {
 	    null_count++;

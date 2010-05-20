@@ -161,6 +161,11 @@ public:
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
+  TableShare *getShare() const
+  {
+    return table_share;
+  }
+
   ha_statistics stats;
   /** MultiRangeRead-related members: */
   range_seq_t mrr_iter;    /* Interator to traverse the range sequence */
