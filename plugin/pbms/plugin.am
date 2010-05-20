@@ -1,0 +1,126 @@
+# Used to build Makefile.in
+
+noinst_LTLIBRARIES+= 		plugin/pbms/libpbms.la
+
+noinst_HEADERS+= \
+		plugin/pbms/src/alias_ms.h \
+		plugin/pbms/src/backup_ms.h \
+		plugin/pbms/src/cloud.h \
+		plugin/pbms/src/Compactor_ms.h \
+		plugin/pbms/src/ConnectionHandler_ms.h \
+		plugin/pbms/src/cslib/CSConfig.h \
+		plugin/pbms/src/cslib/CSDefs.h \
+		plugin/pbms/src/cslib/CSDirectory.h \
+		plugin/pbms/src/cslib/CSEncode.h \
+		plugin/pbms/src/cslib/CSException.h \
+		plugin/pbms/src/cslib/CSFile.h \
+		plugin/pbms/src/cslib/CSGlobal.h \
+		plugin/pbms/src/cslib/CSHTTPStream.h \
+		plugin/pbms/src/cslib/CSLog.h \
+		plugin/pbms/src/cslib/CSMd5.h \
+		plugin/pbms/src/cslib/CSMemory.h \
+		plugin/pbms/src/cslib/CSMutex.h \
+		plugin/pbms/src/cslib/CSObject.h \
+		plugin/pbms/src/cslib/CSPath.h \
+		plugin/pbms/src/cslib/CSProperties.h \
+		plugin/pbms/src/cslib/CSS3Protocol.h \
+		plugin/pbms/src/cslib/CSSha1.h \
+		plugin/pbms/src/cslib/CSSocket.h \
+		plugin/pbms/src/cslib/CSStorage.h \
+		plugin/pbms/src/cslib/CSStream.h \
+		plugin/pbms/src/cslib/CSString.h \
+		plugin/pbms/src/cslib/CSStrUtil.h \
+		plugin/pbms/src/cslib/CSTest.h \
+		plugin/pbms/src/cslib/CSThread.h \
+		plugin/pbms/src/cslib/CSTime.h \
+		plugin/pbms/src/cslib/CSTokenStream.h \
+		plugin/pbms/src/cslib/CSUTF8.h \
+		plugin/pbms/src/Database_ms.h \
+		plugin/pbms/src/Defs_ms.h \
+		plugin/pbms/src/Discover_ms.h \
+		plugin/pbms/src/Engine_ms.h \
+		plugin/pbms/src/ha_pbms.h \
+		plugin/pbms/src/metadata_ms.h \
+		plugin/pbms/src/ms_mysql.h \
+		plugin/pbms/src/Network_ms.h \
+		plugin/pbms/src/OpenTable_ms.h \
+		plugin/pbms/src/pbms.h \
+		plugin/pbms/src/pbms_enabled.h \
+		plugin/pbms/src/pbmslib.h \
+		plugin/pbms/src/Repository_ms.h \
+		plugin/pbms/src/SysTab_backup.h \
+		plugin/pbms/src/SysTab_cloud.h \
+		plugin/pbms/src/SysTab_dump.h \
+		plugin/pbms/src/SysTab_enabled.h \
+		plugin/pbms/src/SysTab_httpheader.h \
+		plugin/pbms/src/SysTab_util.h \
+		plugin/pbms/src/SysTab_variable.h \
+		plugin/pbms/src/SystemTable_ms.h \
+		plugin/pbms/src/Table_ms.h \
+		plugin/pbms/src/TempLog_ms.h \
+		plugin/pbms/src/Transaction_ms.h \
+		plugin/pbms/src/TransCache_ms.h \
+		plugin/pbms/src/TransLog_ms.h \
+		plugin/pbms/src/Util_ms.h
+
+
+
+plugin_pbms_libpbms_la_CXXFLAGS=	${AM_CXXFLAGS} -DDRIZZLED -Wno-long-long -Wno-overloaded-virtual -Wno-sign-compare -Wno-unused-function
+plugin_pbms_libpbms_la_CFLAGS=		${AM_CFLAGS} -DDRIZZLED -std=c99
+
+plugin_pbms_libpbms_la_SOURCES= \
+	plugin/pbms/src/backup_ms.cc \
+	plugin/pbms/src/cloud.cc \
+	plugin/pbms/src/Compactor_ms.cc \
+	plugin/pbms/src/ConnectionHandler_ms.cc	 \
+	plugin/pbms/src/Database_ms.cc \
+	plugin/pbms/src/Discover_ms.cc \
+	plugin/pbms/src/Engine_ms.cc \
+	plugin/pbms/src/ha_pbms.cc \
+	plugin/pbms/src/metadata_ms.cc \
+	plugin/pbms/src/ms_api.cc \
+	plugin/pbms/src/ms_mysql.cc \
+	plugin/pbms/src/Network_ms.cc \
+	plugin/pbms/src/OpenTable_ms.cc \
+	plugin/pbms/src/pbms_enabled.cc \
+	plugin/pbms/src/Repository_ms.cc \
+	plugin/pbms/src/SysTab_backup.cc \
+	plugin/pbms/src/SysTab_cloud.cc \
+	plugin/pbms/src/SysTab_dump.cc \
+	plugin/pbms/src/SysTab_enabled.cc \
+	plugin/pbms/src/SysTab_httpheader.cc \
+	plugin/pbms/src/SysTab_util.cc \
+	plugin/pbms/src/SysTab_variable.cc \
+	plugin/pbms/src/SystemTable_ms.cc \
+	plugin/pbms/src/Table_ms.cc \
+	plugin/pbms/src/TempLog_ms.cc \
+	plugin/pbms/src/Transaction_ms.cc \
+	plugin/pbms/src/TransCache_ms.cc \
+	plugin/pbms/src/TransLog_ms.cc \
+	plugin/pbms/src/Util_ms.cc	 \
+	plugin/pbms/src/cslib/CSDirectory.cc \
+	plugin/pbms/src/cslib/CSEncode.cc \
+	plugin/pbms/src/cslib/CSException.cc \
+	plugin/pbms/src/cslib/CSFile.cc \
+	plugin/pbms/src/cslib/CSHTTPStream.cc \
+	plugin/pbms/src/cslib/CSLog.cc \
+	plugin/pbms/src/cslib/CSMd5.cc \
+	plugin/pbms/src/cslib/CSMemory.cc \
+	plugin/pbms/src/cslib/CSMutex.cc \
+	plugin/pbms/src/cslib/CSObject.cc \
+	plugin/pbms/src/cslib/CSPath.cc \
+	plugin/pbms/src/cslib/CSProperties.cc \
+	plugin/pbms/src/cslib/CSS3Protocol.cc \
+	plugin/pbms/src/cslib/CSSha1.cc \
+	plugin/pbms/src/cslib/CSSocket.cc \
+	plugin/pbms/src/cslib/CSStorage.cc \
+	plugin/pbms/src/cslib/CSStream.cc \
+	plugin/pbms/src/cslib/CSString.cc \
+	plugin/pbms/src/cslib/CSStrUtil.cc \
+	plugin/pbms/src/cslib/CSThread.cc \
+	plugin/pbms/src/cslib/CSTime.cc \
+	plugin/pbms/src/cslib/CSTokenStream.cc \
+	plugin/pbms/src/cslib/CSUTF8.cc
+
+
+EXTRA_DIST+=			CMakeLists.txt
