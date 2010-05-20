@@ -850,9 +850,8 @@ static void process_verbose(vector<int32_t> in_verbose)
        it != in_verbose.end();
        ++it)
   {
-    verbose+=*it;
+    verbose+= *it;
   }
-cout<<verbose<<endl;
 }
 
 int main(int argc, char **argv)
@@ -960,7 +959,7 @@ int main(int argc, char **argv)
   "Require drizzleslap to run each specific test a certain amount of time in seconds")  
   ("user,u",po::value<string>(&user)->default_value(""),
   "User for login if not current user")  
-  ("verbose,v",po::value<vector<int32_t>>(&opt_verbose)->composing()->notifier(&process_verbose),
+  ("verbose,v",po::value<vector<int32_t> >(&opt_verbose)->composing()->notifier(&process_verbose),
   "More verbose output,you can use this multiple times to get more verbose output")  
   ("version,V","Output version information and exit") 
   ;
