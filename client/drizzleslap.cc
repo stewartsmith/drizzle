@@ -88,7 +88,6 @@ namespace po= boost::program_options;
 # include <sys/stat.h>
 #endif
 #include <fcntl.h>
-#include <cstdint>
 #include <math.h>
 #include <cassert>
 #include <cstdlib>
