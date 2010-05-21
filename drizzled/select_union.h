@@ -30,7 +30,9 @@ class select_union :public select_result_interceptor
 public:
   Table *table;
 
-  select_union() :table(0) {}
+  select_union() :table(0) { }
+  ~select_union() { }
+
   int prepare(List<Item> &list, Select_Lex_Unit *u);
   bool send_data(List<Item> &items);
   bool send_eof();

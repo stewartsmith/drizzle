@@ -49,7 +49,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   int		error;
   Table		*table;
   optimizer::SqlSelect *select= NULL;
-  READ_RECORD	info;
+  ReadRecord	info;
   bool          using_limit=limit != HA_POS_ERROR;
   bool		transactional_table, const_cond;
   bool          const_cond_result;
@@ -230,9 +230,13 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   }
 
   if (usable_index==MAX_KEY)
-    init_read_record(&info,session,table,select,1,1);
+  {
+    info.init_read_record(session,table,select,1,1);
+  }
   else
-    init_read_record_idx(&info, session, table, 1, usable_index);
+  {
+    info.init_read_record_idx(session, table, 1, usable_index);
+  }
 
   session->set_proc_info("updating");
 
@@ -276,7 +280,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     error= 1;					// Aborted
 
   session->set_proc_info("end");
-  end_read_record(&info);
+  info.end_read_record();
 
 cleanup:
 

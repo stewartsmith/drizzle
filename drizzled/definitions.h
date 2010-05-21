@@ -182,8 +182,6 @@ namespace drizzled
 
 /** Characters shown for the command in 'show processlist'. */
 #define PROCESS_LIST_WIDTH 100
-/* Characters shown for the command in 'information_schema.processlist' */
-#define PROCESS_LIST_INFO_WIDTH 65535
 
 #define PRECISION_FOR_DOUBLE 53
 #define PRECISION_FOR_FLOAT  24

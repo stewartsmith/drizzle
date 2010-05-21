@@ -370,7 +370,6 @@ public:
 
   static int createTable(Session& session,
                          TableIdentifier &identifier,
-                         bool update_create_info,
                          message::Table& table_proto);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
@@ -416,6 +415,22 @@ public:
   }
   virtual bool alwaysRegisterForXaTransaction() const
   {
+    return false;
+  }
+
+  virtual bool validateCreateTableOption(const std::string &key, const std::string &state)
+  {
+    (void)key;
+    (void)state;
+
+    return false;
+  }
+
+  virtual bool validateCreateSchemaOption(const std::string &key, const std::string &state)
+  {
+    (void)key;
+    (void)state;
+
     return false;
   }
 };

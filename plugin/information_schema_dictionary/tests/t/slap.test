@@ -19,7 +19,7 @@ CREATE SCHEMA drizzleslap;
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.SCHEMATA" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.TABLES" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.TABLE_CONSTRAINTS" --delimiter=";"
---exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.TABLE_PRIVILEDGES" --delimiter=";"
+--exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.TABLE_PRIVILEGES" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.VIEWS" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.VIEW_COLUMN_USAGE" --delimiter=";"
 --exec $DRIZZLE_SLAP --silent  --concurrency=5 --iterations=20  --query="select * from information_schema.VIEW_TABLE_USAGE" --delimiter=";"

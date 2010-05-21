@@ -24,6 +24,7 @@
 #include <drizzled/cursor.h>
 
 #include <plugin/function_engine/function.h>
+#include <drizzled/base.h>
 
 class FunctionCursor: public drizzled::Cursor
 {
@@ -34,6 +35,8 @@ class FunctionCursor: public drizzled::Cursor
   drizzled::ha_rows estimate_of_rows;
   drizzled::ha_rows rows_returned;
 
+  void wipeCache();
+
 public:
   FunctionCursor(drizzled::plugin::StorageEngine &engine,
                  drizzled::TableShare &table_arg);
@@ -42,6 +45,11 @@ public:
   int open(const char *name, int mode, uint32_t test_if_locked);
 
   int close(void);
+
+  int reset()
+  {
+    return extra(drizzled::HA_EXTRA_RESET_STATE);
+  }
 
   int doStartTableScan(bool scan);
 
@@ -52,6 +60,8 @@ public:
   int rnd_pos(unsigned char *buf, unsigned char *pos);
 
   int doEndTableScan();
+
+  int extra(enum drizzled::ha_extra_function);
 
   /* record position of a record for reordering */
   void position(const unsigned char *record);

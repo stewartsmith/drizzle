@@ -717,7 +717,7 @@ int ha_tina::find_current_row(unsigned char *buf)
 
   error= HA_ERR_CRASHED_ON_USAGE;
 
-  memset(buf, 0, table->s->null_bytes);
+  memset(buf, 0, table->getShare()->null_bytes);
 
   for (Field **field=table->field ; *field ; field++)
   {
@@ -1404,7 +1404,7 @@ int Tina::doCreateTable(Session &session,
   /*
     check columns
   */
-  for (Field **field= table_arg.s->getFields(); *field; field++)
+  for (Field **field= table_arg.getMutableShare()->getFields(); *field; field++)
   {
     if ((*field)->real_maybe_null())
     {

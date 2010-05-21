@@ -632,8 +632,8 @@ void CopyField::set(Field *to,Field *from,bool save)
 CopyField::Copy_func *
 CopyField::get_copy_func(Field *to,Field *from)
 {
-  bool compatible_db_low_byte_first= (to->table->s->db_low_byte_first ==
-                                     from->table->s->db_low_byte_first);
+  bool compatible_db_low_byte_first= (to->table->getShare()->db_low_byte_first ==
+                                     from->table->getShare()->db_low_byte_first);
   if (to->flags & BLOB_FLAG)
   {
     if (!(from->flags & BLOB_FLAG) || from->charset() != to->charset())
@@ -641,8 +641,8 @@ CopyField::get_copy_func(Field *to,Field *from)
     if (from_length != to_length || !compatible_db_low_byte_first)
     {
       // Correct pointer to point at char pointer
-      to_ptr+= to_length - to->table->s->blob_ptr_size;
-      from_ptr+= from_length- from->table->s->blob_ptr_size;
+      to_ptr+= to_length - to->table->getShare()->blob_ptr_size;
+      from_ptr+= from_length- from->table->getShare()->blob_ptr_size;
       return do_copy_blob;
     }
   }
@@ -767,7 +767,7 @@ int field_conv(Field *to,Field *from)
         to->real_type() != DRIZZLE_TYPE_ENUM &&
         (to->real_type() != DRIZZLE_TYPE_DECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
-	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
+	to->table->getShare()->db_low_byte_first == from->table->getShare()->db_low_byte_first &&
         (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != DRIZZLE_TYPE_DATE && to->type() != DRIZZLE_TYPE_DATETIME)) &&
         (from->real_type() != DRIZZLE_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
     {						// Identical fields

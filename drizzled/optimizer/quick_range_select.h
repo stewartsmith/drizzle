@@ -62,7 +62,7 @@ protected:
 
   /** Info about index we're scanning */
   KEY_PART *key_parts;
-  KEY_PART_INFO *key_part_info;
+  KeyPartInfo *key_part_info;
 
   bool dont_free; /**< Used by QuickSelectDescending */
 
@@ -264,7 +264,7 @@ private:
                                           uint32_t n_ranges, 
                                           uint32_t flags);
 
-  friend void select_describe(JOIN *join, 
+  friend void select_describe(Join *join, 
                               bool need_tmp_table, 
                               bool need_order,
                               bool distinct,

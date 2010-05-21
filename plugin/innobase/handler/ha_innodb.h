@@ -189,7 +189,7 @@ class ha_innobase: public Cursor
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
         // Don't use these, I have just left them in here as reference for
         // the future. -Brian
-	UNIV_INTERN int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys);
+	UNIV_INTERN int add_index(TABLE *table_arg, KeyInfo *key_info, uint num_of_keys);
 	UNIV_INTERN int prepare_drop_index(TABLE *table_arg, uint *key_num,
                                            uint num_of_keys);
         UNIV_INTERN int final_drop_index(TABLE *table_arg);

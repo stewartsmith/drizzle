@@ -39,7 +39,7 @@ namespace drizzled
 
 /* Forward declarations */
 class String;
-class JOIN;
+class Join;
 class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
