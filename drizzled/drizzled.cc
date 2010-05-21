@@ -217,7 +217,6 @@ char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-uint32_t max_used_connections;
 const string opt_scheduler_default("multi_thread");
 char *opt_scheduler= NULL;
 
@@ -242,8 +241,6 @@ uint32_t back_log;
 uint32_t server_id;
 uint64_t table_cache_size;
 size_t table_def_size;
-uint64_t aborted_threads;
-uint64_t aborted_connects;
 uint64_t max_connect_errors;
 uint32_t global_thread_id= 1UL;
 pid_t current_pid;
@@ -316,6 +313,7 @@ FILE *stderror_file=0;
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
+struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;
@@ -742,8 +740,8 @@ static st_show_var_func_container show_flushstatustime_cont= { &show_flushstatus
 static st_show_var_func_container show_connection_count_cont= { &show_connection_count };
 
 static drizzle_show_var status_vars[]= {
-  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
-  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
+  {"Aborted_clients",          (char*) &current_global_counters.aborted_threads, SHOW_LONGLONG},
+  {"Aborted_connects",         (char*) &current_global_counters.aborted_connects, SHOW_LONGLONG},
   {"Bytes_received",           (char*) offsetof(system_status_var, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(system_status_var, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
@@ -772,7 +770,7 @@ static drizzle_show_var status_vars[]= {
   {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(system_status_var, last_query_cost), SHOW_DOUBLE_STATUS},
-  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
+  {"Max_used_connections",     (char*) &current_global_counters.max_used_connections,  SHOW_INT},
   {"Questions",                (char*) offsetof(system_status_var, questions), SHOW_LONG_STATUS},
   {"Select_full_join",         (char*) offsetof(system_status_var, select_full_join_count), SHOW_LONG_STATUS},
   {"Select_full_range_join",   (char*) offsetof(system_status_var, select_full_range_join_count), SHOW_LONG_STATUS},
@@ -784,8 +782,8 @@ static drizzle_show_var status_vars[]= {
   {"Sort_range",	       (char*) offsetof(system_status_var, filesort_range_count), SHOW_LONG_STATUS},
   {"Sort_rows",		       (char*) offsetof(system_status_var, filesort_rows), SHOW_LONG_STATUS},
   {"Sort_scan",		       (char*) offsetof(system_status_var, filesort_scan_count), SHOW_LONG_STATUS},
-  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
-  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
+  {"Table_locks_immediate",    (char*) &current_global_counters.locks_immediate,        SHOW_INT},
+  {"Table_locks_waited",       (char*) &current_global_counters.locks_waited,           SHOW_INT},
   {"Threads_connected",        (char*) &show_connection_count_cont,  SHOW_FUNC},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
@@ -1524,10 +1522,9 @@ static void drizzle_init_variables(void)
   wake_thread=0;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
-  aborted_threads= aborted_connects= 0;
-  max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
   memset(&global_status_var, 0, sizeof(global_status_var));
+  memset(&current_global_counters, 0, sizeof(current_global_counters));
   key_map_full.set();
 
   /* Character sets */

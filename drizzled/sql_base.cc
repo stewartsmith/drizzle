@@ -1192,7 +1192,9 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     Note-> refresh_version is currently changed only during FLUSH TABLES.
   */
   if (!open_tables)
+  {
     version= refresh_version;
+  }
   else if ((version != refresh_version) &&
            ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
   {
