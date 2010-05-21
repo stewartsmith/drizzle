@@ -38,6 +38,7 @@
 #define Lex (YYSession->lex)
 
 #include "config.h"
+#include <cstdio>
 #include "drizzled/parser.h"
 
 int yylex(void *yylval, void *yysession);
