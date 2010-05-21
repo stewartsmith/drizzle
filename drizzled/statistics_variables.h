@@ -26,6 +26,10 @@ namespace drizzled
 
 extern struct global_counters current_global_counters;
 
+/* 
+ * These statistics are global and are not per session
+ * they are not reset once initialized. 
+ */
 typedef struct global_counters
 {
   uint64_t aborted_threads;
@@ -35,6 +39,11 @@ typedef struct global_counters
   uint32_t locks_waited;
 } global_counters;
 
+/* 
+ * These statistics are per session and are reset at the end
+ * of each session, after being copied into a global 
+ * system_status_var
+ */
 typedef struct system_status_var
 {
   uint64_t bytes_received;
