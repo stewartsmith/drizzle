@@ -140,7 +140,7 @@ innobase_rec_to_mysql(
 	const ulint*		offsets)	/*!< in: rec_get_offsets(
 						rec, index, ...) */
 {
-	uint	n_fields	= table->s->fields;
+	uint	n_fields	= table->getShare()->fields;
 	uint	i;
 
 	ut_ad(n_fields == dict_table_get_n_user_cols(index->table));
@@ -186,7 +186,7 @@ innobase_rec_reset(
 /*===============*/
 	Table*			table)		/*!< in/out: MySQL table */
 {
-	uint	n_fields	= table->s->fields;
+	uint	n_fields	= table->getShare()->fields;
 	uint	i;
 
 	for (i = 0; i < n_fields; i++) {
@@ -228,7 +228,7 @@ static
 int
 innobase_check_index_keys(
 /*======================*/
-	const KEY*	key_info,	/*!< in: Indexes to be created */
+	const KeyInfo*	key_info,	/*!< in: Indexes to be created */
 	ulint		num_of_keys)	/*!< in: Number of indexes to
 					be created */
 {
@@ -238,13 +238,13 @@ innobase_check_index_keys(
 	ut_ad(num_of_keys);
 
 	for (key_num = 0; key_num < num_of_keys; key_num++) {
-		const KEY&	key = key_info[key_num];
+		const KeyInfo&	key = key_info[key_num];
 
 		/* Check that the same index name does not appear
 		twice in indexes to be created. */
 
 		for (ulint i = 0; i < key_num; i++) {
-			const KEY&	key2 = key_info[i];
+			const KeyInfo&	key2 = key_info[i];
 
 			if (0 == strcmp(key.name, key2.name)) {
 				errmsg_printf(ERRMSG_LVL_ERROR, "InnoDB: key name `%s` appears"
@@ -260,7 +260,7 @@ innobase_check_index_keys(
 		that the same colum does not appear twice in the index. */
 
 		for (ulint i = 0; i < key.key_parts; i++) {
-			const KEY_PART_INFO&	key_part1
+			const KeyPartInfo&	key_part1
 				= key.key_part[i];
 			const Field*		field
 				= key_part1.field;
@@ -300,7 +300,7 @@ innobase_check_index_keys(
 			}
 
 			for (ulint j = 0; j < i; j++) {
-				const KEY_PART_INFO&	key_part2
+				const KeyPartInfo&	key_part2
 					= key.key_part[j];
 
 				if (strcmp(key_part1.field->field_name,
@@ -327,7 +327,7 @@ static
 void
 innobase_create_index_field_def(
 /*============================*/
-	KEY_PART_INFO*		key_part,	/*!< in: MySQL key definition */
+	KeyPartInfo*		key_part,	/*!< in: MySQL key definition */
 	mem_heap_t*		heap,		/*!< in: memory heap */
 	merge_index_field_t*	index_field)	/*!< out: index field
 						definition for key_part */
@@ -367,7 +367,7 @@ static
 void
 innobase_create_index_def(
 /*======================*/
-	KEY*			key,		/*!< in: key definition */
+	KeyInfo*			key,		/*!< in: key definition */
 	bool			new_primary,	/*!< in: TRUE=generating
 						a new primary key
 						on the table */
@@ -492,7 +492,7 @@ innobase_create_key_def(
 	const dict_table_t*table,		/*!< in: table definition */
 	mem_heap_t*	heap,		/*!< in: heap where space for key
 					definitions are allocated */
-	KEY*		key_info,	/*!< in: Indexes to be created */
+	KeyInfo*		key_info,	/*!< in: Indexes to be created */
 	ulint&		n_keys)		/*!< in/out: Number of indexes to
 					be created */
 {
@@ -604,7 +604,7 @@ int
 ha_innobase::add_index(
 /*===================*/
 	Table*	i_table,	/*!< in: Table where indexes are created */
-	KEY*	key_info,	/*!< in: Indexes to be created */
+	KeyInfo*	key_info,	/*!< in: Indexes to be created */
 	uint	num_of_keys)	/*!< in: Number of indexes to be created */
 {
 	dict_index_t**	index;		/*!< Index to be created */
@@ -943,7 +943,7 @@ ha_innobase::prepare_drop_index(
 	}
 
 	for (n_key = 0; n_key < num_of_keys; n_key++) {
-		const KEY*	key;
+		const KeyInfo*	key;
 		dict_index_t*	index;
 
 		key = i_table->key_info + key_num[n_key];

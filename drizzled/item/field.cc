@@ -84,9 +84,9 @@ bool Item_field::collect_item_field_processor(unsigned char *arg)
 
 bool Item_field::find_item_in_field_list_processor(unsigned char *arg)
 {
-  KEY_PART_INFO *first_non_group_part= *((KEY_PART_INFO **) arg);
-  KEY_PART_INFO *last_part= *(((KEY_PART_INFO **) arg) + 1);
-  KEY_PART_INFO *cur_part;
+  KeyPartInfo *first_non_group_part= *((KeyPartInfo **) arg);
+  KeyPartInfo *last_part= *(((KeyPartInfo **) arg) + 1);
+  KeyPartInfo *cur_part;
 
   for (cur_part= first_non_group_part; cur_part != last_part; cur_part++)
   {
@@ -140,7 +140,7 @@ Item_field::Item_field(Session *,
                        Name_resolution_context *context_arg,
                        Field *f) :
   Item_ident(context_arg,
-             f->table->s->getSchemaName(),
+             f->table->getShare()->getSchemaName(),
              *f->table_name,
              f->field_name),
    item_equal(0),
@@ -194,7 +194,7 @@ void Item_field::set_field(Field *field_par)
   max_length= field_par->max_display_length();
   table_name= *field_par->table_name;
   field_name= field_par->field_name;
-  db_name= field_par->table->s->getSchemaName();
+  db_name= field_par->table->getShare()->getSchemaName();
   alias_name_used= field_par->table->alias_name_used;
   unsigned_flag=test(field_par->flags & UNSIGNED_FLAG);
   collation.set(field_par->charset(), field_par->derivation());

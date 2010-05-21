@@ -58,7 +58,7 @@ public:
       message(NULL)
   {}
 
-  ExplainPlan(JOIN *in_join,
+  ExplainPlan(Join *in_join,
               bool in_need_tmp_table,
               bool in_need_order,
               bool in_distinct,
@@ -79,7 +79,7 @@ public:
 
 private:
 
-  JOIN *join;
+  Join *join;
 
   bool need_tmp_table;
 

@@ -56,7 +56,7 @@ namespace drizzled
 
 extern pid_t current_pid;
 
-bool is_primary_key(KEY *key_info)
+bool is_primary_key(KeyInfo *key_info)
 {
   static const char * primary_key_name="PRIMARY";
   return (strcmp(key_info->name, primary_key_name)==0);
@@ -71,8 +71,8 @@ const char* is_primary_key_name(const char* key_name)
     return NULL;
 }
 
-static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
-static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
+static bool check_if_keyname_exists(const char *name,KeyInfo *start, KeyInfo *end);
+static char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
 
 static bool prepare_blob_field(Session *session, CreateField *sql_field);
 
@@ -343,7 +343,7 @@ bool quick_rm_table(Session& session,
   PRIMARY keys are prioritized.
 */
 
-static int sort_keys(KEY *a, KEY *b)
+static int sort_keys(KeyInfo *a, KeyInfo *b)
 {
   ulong a_flags= a->flags, b_flags= b->flags;
 
@@ -543,7 +543,7 @@ static int mysql_prepare_create_table(Session *session,
                                       AlterInfo *alter_info,
                                       bool tmp_table,
                                       uint32_t *db_options,
-                                      KEY **key_info_buffer,
+                                      KeyInfo **key_info_buffer,
                                       uint32_t *key_count,
                                       int select_field_count)
 {
@@ -551,8 +551,8 @@ static int mysql_prepare_create_table(Session *session,
   CreateField	*sql_field,*dup_field;
   uint		field,null_fields,blob_columns,max_key_length;
   ulong		record_offset= 0;
-  KEY		*key_info;
-  KEY_PART_INFO *key_part_info;
+  KeyInfo		*key_info;
+  KeyPartInfo *key_part_info;
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		field_no,dup_no;
   int		select_field_pos,auto_increment=0;
@@ -910,8 +910,8 @@ static int mysql_prepare_create_table(Session *session,
     return(true);
   }
 
-  (*key_info_buffer)= key_info= (KEY*) memory::sql_calloc(sizeof(KEY) * (*key_count));
-  key_part_info=(KEY_PART_INFO*) memory::sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
+  (*key_info_buffer)= key_info= (KeyInfo*) memory::sql_calloc(sizeof(KeyInfo) * (*key_count));
+  key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 
@@ -1202,7 +1202,7 @@ static int mysql_prepare_create_table(Session *session,
     return(true);
   }
   /* Sort keys in optimized order */
-  internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KEY),
+  internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KeyInfo),
 	             (qsort_cmp) sort_keys);
 
   /* Check fields. */
@@ -1285,7 +1285,7 @@ static bool locked_create_event(Session *session,
                                 bool internal_tmp_table,
                                 uint db_options,
                                 uint key_count,
-                                KEY *key_info_buffer)
+                                KeyInfo *key_info_buffer)
 {
   bool error= true;
 
@@ -1416,9 +1416,8 @@ bool mysql_create_table_no_lock(Session *session,
                                 bool is_if_not_exists)
 {
   uint		db_options, key_count;
-  KEY		*key_info_buffer;
+  KeyInfo		*key_info_buffer;
   bool		error= true;
-  TableShare share;
 
   /* Check for duplicate fields and check type of table to create */
   if (not alter_info->create_list.elements)
@@ -1558,9 +1557,9 @@ bool mysql_create_table(Session *session,
 **/
 
 static bool
-check_if_keyname_exists(const char *name, KEY *start, KEY *end)
+check_if_keyname_exists(const char *name, KeyInfo *start, KeyInfo *end)
 {
-  for (KEY *key=start ; key != end ; key++)
+  for (KeyInfo *key=start ; key != end ; key++)
     if (!my_strcasecmp(system_charset_info,name,key->name))
       return 1;
   return 0;
@@ -1568,7 +1567,7 @@ check_if_keyname_exists(const char *name, KEY *start, KEY *end)
 
 
 static char *
-make_unique_key_name(const char *field_name,KEY *start,KEY *end)
+make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 {
   char buff[MAX_FIELD_NAME],*buff_end;
 
@@ -2053,10 +2052,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
 
   if (is_engine_set)
   {
-    message::Table::StorageEngine *protoengine;
-
-    protoengine= new_proto.mutable_engine();
-    protoengine->set_name(create_table_proto.engine().name());
+    new_proto.mutable_engine()->set_name(create_table_proto.engine().name());
   }
 
   { // We now do a selective copy of elements on to the new table.
@@ -2082,7 +2078,7 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
   */
   int err= plugin::StorageEngine::createTable(session,
                                               destination_identifier,
-                                              true, new_proto);
+                                              new_proto);
 
   return err ? false : true;
 }
@@ -2109,12 +2105,10 @@ bool mysql_create_like_table(Session* session,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
-  Table *name_lock= 0;
   char *db= table->db;
   char *table_name= table->table_name;
   bool res= true;
   uint32_t not_used;
-  bool was_created;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2136,6 +2130,8 @@ bool mysql_create_like_table(Session* session,
   /*
     Check that destination tables does not exist. Note that its name
     was already checked when it was added to the table list.
+
+    For temporary tables we don't aim to grab locks.
   */
   bool table_exists= false;
   if (destination_identifier.isTmp())
@@ -2144,9 +2140,29 @@ bool mysql_create_like_table(Session* session,
     {
       table_exists= true;
     }
+    else
+    {
+      bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                        src_identifier, is_engine_set);
+      if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
+      {
+        (void) session->rm_temporary_table(destination_identifier);
+      }
+      else if (not session->open_temporary_table(destination_identifier))
+      {
+        // We created, but we can't open... also, a hack.
+        (void) session->rm_temporary_table(destination_identifier);
+      }
+      else
+      {
+        res= false;
+      }
+    }
   }
-  else
+  else // Standard table which will require locks.
   {
+    Table *name_lock= 0;
+
     if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
     {
       if (name_lock)
@@ -2167,6 +2183,34 @@ bool mysql_create_like_table(Session* session,
     {
       table_exists= true;
     }
+    else // Otherwise we create the table
+    {
+      pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+      bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                        src_identifier, is_engine_set);
+      pthread_mutex_unlock(&LOCK_open);
+
+      // So we blew the creation of the table, and we scramble to clean up
+      // anything that might have been created (read... it is a hack)
+      if (not was_created)
+      {
+        quick_rm_table(*session, destination_identifier);
+      } 
+      else
+      {
+        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->s->tmp_table), is_if_not_exists);
+        (void)rc;
+
+        res= false;
+      }
+    }
+
+    if (name_lock)
+    {
+      pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
+      session->unlink_open_table(name_lock);
+      pthread_mutex_unlock(&LOCK_open);
+    }
   }
 
   if (table_exists)
@@ -2184,49 +2228,6 @@ bool mysql_create_like_table(Session* session,
     {
       my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
     }
-  }
-  else // Otherwise we create the table
-  {
-    pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-    was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                      src_identifier, is_engine_set);
-    pthread_mutex_unlock(&LOCK_open);
-
-    // So we blew the creation of the table, and we scramble to clean up
-    // anything that might have been created (read... it is a hack)
-    if (not was_created)
-    {
-      if (destination_identifier.isTmp())
-      {
-        (void) session->rm_temporary_table(destination_identifier);
-      }
-      else
-      {
-        quick_rm_table(*session, destination_identifier);
-      }
-    } 
-    else if (destination_identifier.isTmp() && not session->open_temporary_table(destination_identifier))
-    {
-      // We created, but we can't open... also, a hack.
-      (void) session->rm_temporary_table(destination_identifier);
-    }
-    else
-    {
-      if (not destination_identifier.isTmp())
-      {
-        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->s->tmp_table), is_if_not_exists);
-        (void)rc;
-      }
-
-      res= false;
-    }
-  }
-
-  if (name_lock)
-  {
-    pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
-    session->unlink_open_table(name_lock);
-    pthread_mutex_unlock(&LOCK_open);
   }
 
   return(res);
