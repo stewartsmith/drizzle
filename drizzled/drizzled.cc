@@ -731,7 +731,7 @@ static int show_connection_count(drizzle_show_var *var, char *buff)
 {
   var->type= SHOW_INT;
   var->value= buff;
-  *((long *)buff)= (long) (connection_count);
+  *((uint32_t *)buff)= connection_count;
   return 0;
 }
 
