@@ -66,17 +66,6 @@ const int max_connections = 500;
 #define __STDC_FORMAT_MACROS
 #endif
 
-/* Missing on some Solaris machines: */
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN 4321
-#endif
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN 1234
-#endif
-#ifndef PDP_ENDIAN
-#define PDP_ENDIAN 3412
-#endif
-
 /*
  * This define is not required by Linux because the _GNU_SOURCE
  * definition includes POSIX complience. But I need it for

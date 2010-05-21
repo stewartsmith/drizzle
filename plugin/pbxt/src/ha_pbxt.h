@@ -173,11 +173,7 @@ class ha_pbxt: public handler
 	THD					*pb_mysql_thd;			/* A pointer to the MySQL thread. */
 	xtBool				pb_in_stat;				/* TRUE of start_stmt() was issued */
 
-#ifdef DRIZZLED
-	ha_pbxt(handlerton *hton, TableShare& table_arg);
-#else
-	ha_pbxt(handlerton *hton, TABLE_SHARE *table_arg);
-#endif
+	ha_pbxt(plugin::StorageEngine &engine_arg, TableShare &table_arg);
 	virtual ~ha_pbxt() { }
 
 	/* The name that will be used for display purposes */
