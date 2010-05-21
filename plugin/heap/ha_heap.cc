@@ -157,7 +157,7 @@ int HeapEngine::doDropTable(Session &session, TableIdentifier &identifier)
 
 static HeapEngine *heap_storage_engine= NULL;
 
-static int heap_init(plugin::Context &context)
+static int heap_init(module::Context &context)
 {
   heap_storage_engine= new HeapEngine(engine_name);
   context.add(heap_storage_engine);

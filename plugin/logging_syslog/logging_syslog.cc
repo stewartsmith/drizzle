@@ -178,7 +178,7 @@ public:
 
 static Logging_syslog *handler= NULL;
 
-static int logging_syslog_plugin_init(drizzled::plugin::Context &context)
+static int logging_syslog_plugin_init(drizzled::module::Context &context)
 {
   handler= new Logging_syslog();
   context.add(handler);

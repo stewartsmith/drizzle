@@ -108,7 +108,7 @@ extern TransactionLogApplier *transaction_log_applier;
 extern plugin::Create_function<PrintTransactionMessageFunction> *print_transaction_message_func_factory;
 extern plugin::Create_function<HexdumpTransactionMessageFunction> *hexdump_transaction_message_func_factory;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   /* Create and initialize the transaction log itself */
   if (sysvar_transaction_log_enabled)

@@ -258,7 +258,7 @@ int Tina::doGetTableDefinition(Session &session,
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(drizzled::plugin::Context &context)
+static int tina_init_func(drizzled::module::Context &context)
 {
 
   tina_engine= new Tina("CSV");

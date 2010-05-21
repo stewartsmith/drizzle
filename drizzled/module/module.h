@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_MODULE_H
-#define DRIZZLED_PLUGIN_MODULE_H
+#ifndef DRIZZLED_MODULE_MODULE_H
+#define DRIZZLED_MODULE_MODULE_H
 
 /**
  * @file Defines a Plugin Module
@@ -30,13 +30,15 @@
 
 #include <cassert>
 
-#include "drizzled/plugin/manifest.h"
+#include "drizzled/module/manifest.h"
 
 namespace drizzled
 {
 class sys_var;
 
-namespace plugin
+void module_shutdown(module::Registry &registry);
+
+namespace module
 {
 
 class Library;
@@ -77,7 +79,7 @@ public:
   }
 };
 
-} /* namespace plugin */
+} /* namespace module */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_MODULE_H */
+#endif /* DRIZZLED_MODULE_MODULE_H */

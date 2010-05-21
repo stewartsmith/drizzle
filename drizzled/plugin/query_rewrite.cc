@@ -24,8 +24,8 @@
 #include "config.h"
 #include "drizzled/plugin/query_rewrite.h"
 #include "drizzled/gettext.h"
-#include "drizzled/plugin/registry.h"
 
+#include <algorithm>
 #include <vector>
 
 using namespace std;

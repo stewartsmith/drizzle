@@ -282,7 +282,7 @@ static void set_table_list(Session *,
 }
 
 
-static int init(Context &context)
+static int init(module::Context &context)
 {
   hello_events= new HelloEvents(PLUGIN_NAME);
 

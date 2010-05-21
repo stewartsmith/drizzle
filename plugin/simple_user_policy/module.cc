@@ -28,7 +28,7 @@ using namespace drizzled;
 namespace simple_user_policy
 {
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   context.add(new Policy);
   return 0;

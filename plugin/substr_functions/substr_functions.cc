@@ -258,7 +258,7 @@ String *SubstrIndexFunction::val_str(String *str)
 plugin::Create_function<SubstrFunction> *substr_function= NULL;
 plugin::Create_function<SubstrIndexFunction> *substr_index_function= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   substr_function= new plugin::Create_function<SubstrFunction>("substr");
   substr_index_function= new plugin::Create_function<SubstrIndexFunction>("substring_index");

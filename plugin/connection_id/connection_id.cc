@@ -68,7 +68,7 @@ public:
 
 plugin::Create_function<ConnectionIdFunction> *connection_idudf= NULL;
 
-static int initialize(plugin::Context &context)
+static int initialize(module::Context &context)
 {
   connection_idudf=
     new plugin::Create_function<ConnectionIdFunction>("connection_id");

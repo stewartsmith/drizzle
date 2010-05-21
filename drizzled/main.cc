@@ -200,7 +200,7 @@ int main(int argc, char **argv)
   textdomain("drizzle");
 #endif
 
-  plugin::Registry &plugins= plugin::Registry::singleton();
+  module::Registry &modules= module::Registry::singleton();
   plugin::Client *client;
   Session *session;
 
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
     server_id= 1;
   }
 
-  if (init_server_components(plugins))
+  if (init_server_components(modules))
     unireg_abort(1);
 
   /**
@@ -320,7 +320,7 @@ int main(int argc, char **argv)
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);
-  plugin::Registry::shutdown();
+  module::Registry::shutdown();
   clean_up_mutexes();
   internal::my_end();
   return 0;
