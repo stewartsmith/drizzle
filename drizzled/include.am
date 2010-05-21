@@ -297,6 +297,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/context.h \
 			      drizzled/plugin/daemon.h \
 			      drizzled/plugin/error_message.h \
+			      drizzled/plugin/event_observer.h \
 			      drizzled/plugin/function.h \
 			      drizzled/plugin/library.h \
 			      drizzled/plugin/listen.h \
@@ -410,10 +411,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/table_ident.h \
 			      drizzled/table_identifier.h \
 			      drizzled/table_list.h \
-			      drizzled/table_instance.h \
 			      drizzled/table_proto.h \
 			      drizzled/table_reference.h \
+			      drizzled/table_placeholder.h \
 			      drizzled/table_share.h \
+			      drizzled/table_share_instance.h \
 			      drizzled/temporal.h \
 			      drizzled/temporal_format.h \
 			      drizzled/temporal_interval.h \
@@ -671,6 +673,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/plugin/authorization.cc \
 				 drizzled/plugin/client.cc \
 				 drizzled/plugin/error_message.cc \
+				 drizzled/plugin/event_observer.cc  \
 				 drizzled/plugin/function.cc \
 				 drizzled/plugin/library.cc \
 				 drizzled/plugin/listen.cc \

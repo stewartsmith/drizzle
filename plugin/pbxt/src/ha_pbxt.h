@@ -303,7 +303,6 @@ class ha_pbxt: public handler
 	int		rename_table(const char * from, const char * to);
 	int		create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);				//required
 #endif
-	void	update_create_info(HA_CREATE_INFO *create_info);
 
 	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);		 //required
 

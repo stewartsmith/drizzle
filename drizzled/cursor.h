@@ -161,6 +161,11 @@ public:
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
+  TableShare *getShare() const
+  {
+    return table_share;
+  }
+
   ha_statistics stats;
   /** MultiRangeRead-related members: */
   range_seq_t mrr_iter;    /* Interator to traverse the range sequence */
@@ -180,7 +185,7 @@ public:
 
   /** The following are for read_range() */
   key_range save_end_range, *end_range;
-  KEY_PART_INFO *range_key_part;
+  KeyPartInfo *range_key_part;
   int key_compare_result_on_equal;
 
   uint32_t errkey;				/* Last dup key */
@@ -383,13 +388,6 @@ public:
   int compare_key(key_range *range);
   virtual int rnd_next(unsigned char *)=0;
   virtual int rnd_pos(unsigned char *, unsigned char *)=0;
-  /**
-    One has to use this method when to find
-    random position by record as the plain
-    position() call doesn't work for some
-    handlers for random position.
-  */
-  virtual int rnd_pos_by_record(unsigned char *record);
   virtual int read_first_row(unsigned char *buf, uint32_t primary_key);
   virtual int rnd_same(unsigned char *, uint32_t)
     { return HA_ERR_WRONG_COMMAND; }

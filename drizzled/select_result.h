@@ -24,7 +24,7 @@
 namespace drizzled
 {
 
-class JOIN;
+class Join;
 
 class select_result :public memory::SqlAlloc {
 protected:
@@ -51,7 +51,7 @@ public:
   { return fields.elements; }
   virtual bool send_fields(List<Item> &list)=0;
   virtual bool send_data(List<Item> &items)=0;
-  virtual bool initialize_tables (JOIN *)
+  virtual bool initialize_tables (Join *)
   { return 0; }
   virtual bool send_eof()=0;
   virtual void abort() {}

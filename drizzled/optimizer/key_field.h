@@ -150,7 +150,7 @@ private:
 
 };
 
-void add_key_fields(JOIN *join, 
+void add_key_fields(Join *join, 
                     KeyField **key_fields,
                     uint32_t *and_level,
                     COND *cond,
@@ -193,7 +193,7 @@ void add_key_part(DYNAMIC_ARRAY *keyuse_array, KeyField *key_field);
  *   @endcode
  *   Here we can add 'ref' access candidates for t1 and t2, but not for t3.
  */
-void add_key_fields_for_nj(JOIN *join,
+void add_key_fields_for_nj(Join *join,
                            TableList *nested_join_table,
                            KeyField **end,
                            uint32_t *and_level,

@@ -5766,18 +5766,6 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
 	XT_RETURN(err);
 }
 
-void ha_pbxt::update_create_info(HA_CREATE_INFO *create_info)
-{
-	XTOpenTablePtr	ot;
-
-	if ((ot = pb_open_tab)) {
-		if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-			/* Fill in the minimum auto-increment value! */
-			create_info->auto_increment_value = ot->ot_table->tab_dic.dic_min_auto_inc;
-		}
-	}
-}
-
 #ifdef DRIZZLED
 int PBXTStorageEngine::doStartTransaction(Session *thd, start_transaction_option_t XT_UNUSED(options))
 {
