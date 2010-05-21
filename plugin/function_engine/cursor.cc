@@ -109,9 +109,6 @@ void FunctionCursor::position(const unsigned char *record)
   {
     row_cache.resize(row_cache.size() + table->getShare()->reclength * 100); // Hardwired at adding an additional 100 rows of storage
   }
-#if 0
-  std::cerr << " position() " << table->getShare()->reclength << " " << row_cache.size() << " " << record_id << " total " << record_id * table->getShare()->reclength << "\n";
-#endif
   memcpy(&row_cache[record_id * table->getShare()->reclength], record, table->getShare()->reclength);
   internal::my_store_ptr(ref, ref_length, record_id);
   record_id++;
@@ -157,9 +154,6 @@ int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   size_t position_id= (size_t)internal::my_get_ptr(pos, ref_length);
 
-#if 0
-  std::cerr << " rnd_pos() " << table->getShare()->reclength << " " << row_cache.size() << " " << position_id << " total " << position_id * table->getShare()->reclength << "\n";
-#endif
   assert(position_id * table->getShare()->reclength < row_cache.size());
   memcpy(buf, &row_cache[position_id * table->getShare()->reclength], table->getShare()->reclength);
 

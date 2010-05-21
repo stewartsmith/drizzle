@@ -462,6 +462,9 @@ int mysql_update(Session *session, TableList *table_list,
         /* Non-batched update */
         error= table->cursor->updateRecord(table->record[1],
                                             table->record[0]);
+
+        table->auto_increment_field_not_null= false;
+
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
 	{
           if (error != HA_ERR_RECORD_IS_THE_SAME)
