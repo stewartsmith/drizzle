@@ -27,7 +27,7 @@
 #include <drizzled/message/transaction.pb.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <stdio.h>
-#include <drizzled/plugin/registry.h>
+#include <drizzled/module/registry.h>
 #include <drizzled/plugin.h>
 #include <stdint.h>
 #include "rabbitmq_handler.h"
