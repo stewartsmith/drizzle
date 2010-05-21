@@ -29,7 +29,7 @@
 #include "drizzled/session.h"
 #include "drizzled/table_list.h"
 #include "drizzled/table_share.h"
-#include "drizzled/plugin/registry.h"
+#include "drizzled/module/registry.h"
 #include "drizzled/plugin/event_observer.h"
 #include <drizzled/util/functors.h>
 #include <algorithm>
