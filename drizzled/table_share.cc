@@ -558,13 +558,14 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
                                 &path_buff, _path.length() + 1,
                                 NULL))
   {
-    set_table_cache_key(key_buff, key, key_length, db.length, table_name.length);
+    memcpy(key_buff, key, key_length);
+    set_table_cache_key(key_buff, key_length, db.length, table_name.length);
 
     setPath(path_buff, _path.length());
     strcpy(path_buff, _path.c_str());
     setNormalizedPath(path_buff, _path.length());
 
-    version=       refresh_version;
+    version= refresh_version;
 
     pthread_mutex_init(&mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&cond, NULL);

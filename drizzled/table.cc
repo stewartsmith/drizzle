@@ -93,6 +93,7 @@ int Table::delete_table(bool free_share)
   }
   delete cursor;
   cursor= 0;				/* For easier errorchecking */
+
   if (free_share)
   {
     if (s->tmp_table == message::Table::STANDARD)
@@ -870,9 +871,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  memory::Root own_root(TABLE_ALLOC_BLOCK_SIZE);
-
-  if (not own_root.multi_alloc_root(0, &tmpname, (uint32_t) strlen(path)+1, NULL))
+  if (not session->getMemRoot()->multi_alloc_root(0, &tmpname, (uint32_t) strlen(path)+1, NULL))
   {
     return NULL;
   }
@@ -910,9 +909,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
 
-  table->mem_root= own_root;
   mem_root_save= session->mem_root;
-  session->mem_root= &table->mem_root;
+  session->mem_root= table->getMemRoot();
 
   table->field=reg_field;
   table->alias= table_alias;
@@ -999,7 +997,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
           }
           session->mem_root= mem_root_save;
           session->change_item_tree(argp, new Item_field(new_field));
-          session->mem_root= &table->mem_root;
+          session->mem_root= table->getMemRoot();
 	  if (!(new_field->flags & NOT_NULL_FLAG))
           {
 	    null_count++;
@@ -1930,7 +1928,8 @@ Table::Table() :
   query_id(0),
   quick_condition_rows(0),
   timestamp_field_type(TIMESTAMP_NO_AUTO_SET),
-  map(0)
+  map(0),
+  is_placeholder_created(0)
 {
   memset(&def_read_set, 0, sizeof(MyBitmap)); /**< Default read set of columns */
   memset(&def_write_set, 0, sizeof(MyBitmap)); /**< Default write set of columns */

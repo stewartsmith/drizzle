@@ -2676,7 +2676,7 @@ ha_innobase::innobase_initialize_autoinc()
   ulint   error;
 
   col_name = table->found_next_number_field->field_name;
-  index = innobase_get_index(table->s->next_number_index);
+  index = innobase_get_index(table->getShare()->next_number_index);
 
   /* Execute SELECT MAX(col_name) FROM TABLE; */
   error = row_search_max_autoinc(index, col_name, &auto_inc);
@@ -2762,8 +2762,8 @@ ha_innobase::open(
   stored the string length as the first byte. */
 
   upd_and_key_val_buff_len =
-        table->s->stored_rec_length
-        + table->s->max_key_length
+        table->getShare()->stored_rec_length
+        + table->getShare()->max_key_length
         + MAX_REF_PARTS * 3;
 
   upd_buff= (unsigned char*)malloc(upd_and_key_val_buff_len);
@@ -2849,13 +2849,13 @@ retry:
 
   prebuilt = row_create_prebuilt(ib_table);
 
-  prebuilt->mysql_row_len = table->s->stored_rec_length;
-  prebuilt->default_rec = table->s->default_values;
+  prebuilt->mysql_row_len = table->getShare()->stored_rec_length;
+  prebuilt->default_rec = table->getShare()->default_values;
   ut_ad(prebuilt->default_rec);
 
   /* Looks like MySQL-3.23 sometimes has primary key number != 0 */
 
-  primary_key = table->s->primary_key;
+  primary_key = table->getShare()->primary_key;
   key_used_on_scan = primary_key;
 
   /* Allocate a buffer for a 'row reference'. A row reference is
@@ -3566,7 +3566,7 @@ build_template(
     the clustered index */
   }
 
-  n_fields = (ulint)table->s->fields; /* number of columns */
+  n_fields = (ulint)table->getShare()->fields; /* number of columns */
 
   if (!prebuilt->mysql_template) {
     prebuilt->mysql_template = (mysql_row_templ_t*)
@@ -3574,7 +3574,7 @@ build_template(
   }
 
   prebuilt->template_type = templ_type;
-  prebuilt->null_bitmap_len = table->s->null_bytes;
+  prebuilt->null_bitmap_len = table->getShare()->null_bytes;
 
   prebuilt->templ_contains_blob = FALSE;
 
@@ -4113,7 +4113,7 @@ calc_row_difference(
   dict_index_t* clust_index;
   uint    i= 0;
 
-  n_fields = table->s->fields;
+  n_fields = table->getShare()->fields;
   clust_index = dict_table_get_first_index(prebuilt->table);
 
   /* We use upd_buff to convert changed fields */
@@ -4734,7 +4734,7 @@ ha_innobase::innobase_get_index(
   ut_ad(user_session == ha_session());
   ut_a(prebuilt->trx == session_to_trx(user_session));
 
-  if (keynr != MAX_KEY && table->s->keys > 0) {
+  if (keynr != MAX_KEY && table->getShare()->keys > 0) {
     key = table->key_info + keynr;
 
     index = dict_table_get_index_on_name(prebuilt->table,
@@ -5176,7 +5176,7 @@ create_table_def(
   ulint   charset_no;
   ulint   i;
 
-  n_cols = form->s->fields;
+  n_cols = form->getShare()->fields;
 
   /* We pass 0 as the space id, and determine at a lower level the space
   id where to store the table */
@@ -5296,7 +5296,7 @@ create_index(
 
   ind_type = 0;
 
-  if (key_num == form->s->primary_key) {
+  if (key_num == form->getShare()->primary_key) {
     ind_type = ind_type | DICT_CLUSTERED;
   }
 
@@ -5322,7 +5322,7 @@ create_index(
     the length of the key part versus the column. */
 
     field = NULL;
-    for (j = 0; j < form->s->fields; j++) {
+    for (j = 0; j < form->getShare()->fields; j++) {
 
       field = form->field[j];
 
@@ -5335,7 +5335,7 @@ create_index(
       }
     }
 
-    ut_a(j < form->s->fields);
+    ut_a(j < form->getShare()->fields);
 
     col_type = get_innobase_type_from_mysql_type(
           &is_unsigned, key_part->field);
@@ -5494,7 +5494,7 @@ InnobaseEngine::doCreateTable(
   }
 #endif
 
-  if (form.s->fields > 1000) {
+  if (form.getShare()->fields > 1000) {
     /* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
     but we play safe here */
 
@@ -5614,8 +5614,8 @@ InnobaseEngine::doCreateTable(
 
   /* Look for a primary key */
 
-  primary_key_no= (form.s->primary_key != MAX_KEY ?
-                   (int) form.s->primary_key :
+  primary_key_no= (form.getShare()->primary_key != MAX_KEY ?
+                   (int) form.getShare()->primary_key :
                    -1);
 
   /* Our function row_get_mysql_key_number_for_index assumes
@@ -5625,7 +5625,7 @@ InnobaseEngine::doCreateTable(
 
   /* Create the keys */
 
-  if (form.s->keys == 0 || primary_key_no == -1) {
+  if (form.getShare()->keys == 0 || primary_key_no == -1) {
     /* Create an index which is used as the clustered index;
       order the rows by their row id which is internally generated
       by InnoDB */
@@ -5646,7 +5646,7 @@ InnobaseEngine::doCreateTable(
     }
   }
 
-  for (i = 0; i < form.s->keys; i++) {
+  for (i = 0; i < form.getShare()->keys; i++) {
     if (i != (uint) primary_key_no) {
 
       if ((error = create_index(trx, &form, iflags, norm_name,
@@ -6057,10 +6057,10 @@ ha_innobase::records_in_range(
   KeyInfo*    key;
   dict_index_t* index;
   unsigned char*    key_val_buff2 = (unsigned char*) malloc(
-              table->s->stored_rec_length
-          + table->s->max_key_length + 100);
-  ulint   buff2_len = table->s->stored_rec_length
-          + table->s->max_key_length + 100;
+              table->getShare()->stored_rec_length
+          + table->getShare()->max_key_length + 100);
+  ulint   buff2_len = table->getShare()->stored_rec_length
+          + table->getShare()->max_key_length + 100;
   dtuple_t* range_start;
   dtuple_t* range_end;
   ib_int64_t  n_rows;
@@ -6227,7 +6227,7 @@ ha_innobase::read_time(
   ha_rows total_rows;
   double  time_for_scan;
 
-  if (index != table->s->primary_key) {
+  if (index != table->getShare()->primary_key) {
     /* Not clustered */
     return(Cursor::read_time(index, ranges, rows));
   }
@@ -6432,7 +6432,7 @@ ha_innobase::info(
       index = dict_table_get_next_index(index);
     }
 
-    for (i = 0; i < table->s->keys; i++) {
+    for (i = 0; i < table->getShare()->keys; i++) {
       if (index == NULL) {
         errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains fewer "
             "indexes inside InnoDB than "
@@ -7758,10 +7758,10 @@ ha_innobase::cmp_ref(
   /* Do a type-aware comparison of primary key fields. PK fields
   are always NOT NULL, so no checks for NULL are performed. */
 
-  key_part = table->key_info[table->s->primary_key].key_part;
+  key_part = table->key_info[table->getShare()->primary_key].key_part;
 
   key_part_end = key_part
-      + table->key_info[table->s->primary_key].key_parts;
+      + table->key_info[table->getShare()->primary_key].key_parts;
 
   for (; key_part != key_part_end; ++key_part) {
     field = key_part->field;

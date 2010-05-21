@@ -69,7 +69,7 @@ optimizer::QuickIndexMergeSelect::push_quick_back(optimizer::QuickRangeSelect *q
     processed separately.
   */
   if (head->cursor->primary_key_is_clustered() &&
-      quick_sel_range->index == head->s->primary_key)
+      quick_sel_range->index == head->getShare()->primary_key)
   {
     pk_quick_select= quick_sel_range;
   }

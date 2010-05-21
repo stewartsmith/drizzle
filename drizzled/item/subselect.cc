@@ -2283,7 +2283,7 @@ int subselect_uniquesubquery_engine::scan_table()
 
   table->cursor->startTableScan(1);
   table->cursor->extra_opt(HA_EXTRA_CACHE,
-                         current_session->variables.read_buff_size);
+                           current_session->variables.read_buff_size);
   table->null_row= 0;
   for (;;)
   {
@@ -2705,7 +2705,7 @@ void subselect_union_engine::print(String *str, enum_query_type query_type)
 void subselect_uniquesubquery_engine::print(String *str,
                                             enum_query_type query_type)
 {
-  char *table_name= const_cast<char *>(tab->table->s->getTableName());
+  char *table_name= const_cast<char *>(tab->table->getShare()->getTableName());
   str->append(STRING_WITH_LEN("<primary_index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
@@ -2718,7 +2718,7 @@ void subselect_uniquesubquery_engine::print(String *str,
     str->append(STRING_WITH_LEN("<temporary table>"));
   }
   else
-    str->append(table_name, tab->table->s->getTableNameSize());
+    str->append(table_name, tab->table->getShare()->getTableNameSize());
   KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
@@ -2742,7 +2742,7 @@ void subselect_uniquesubquery_engine::print(String *str)
   for (uint32_t i= 0; i < key_info->key_parts; i++)
     tab->ref.items[i]->print(str);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->s->getTableName(), tab->table->s->getTableNameSize());
+  str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
   if (cond)
@@ -2760,7 +2760,7 @@ void subselect_indexsubquery_engine::print(String *str,
   str->append(STRING_WITH_LEN("<index_lookup>("));
   tab->ref.items[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" in "));
-  str->append(tab->table->s->getTableName(), tab->table->s->getTableNameSize());
+  str->append(tab->table->getShare()->getTableName(), tab->table->getShare()->getTableNameSize());
   KeyInfo *key_info= tab->table->key_info+ tab->ref.key;
   str->append(STRING_WITH_LEN(" on "));
   str->append(key_info->name);
@@ -2969,11 +2969,11 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
      table since it will not be used, and tell the caller we failed to
      initialize the engine.
   */
-  if (tmp_table->s->keys == 0)
+  if (tmp_table->getShare()->keys == 0)
   {
-    assert(tmp_table->s->db_type() == myisam_engine);
+    assert(tmp_table->getShare()->db_type() == myisam_engine);
     assert(
-      tmp_table->s->uniques ||
+      tmp_table->getShare()->uniques ||
       tmp_table->key_info->key_length >= tmp_table->cursor->getEngine()->max_key_length() ||
       tmp_table->key_info->key_parts > tmp_table->cursor->getEngine()->max_key_parts());
     tmp_table= NULL;
@@ -2987,7 +2987,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     Make sure there is only one index on the temp table, and it doesn't have
     the extra key part created when s->uniques > 0.
   */
-  assert(tmp_table->s->keys == 1 && tmp_columns->elements == tmp_key_parts);
+  assert(tmp_table->getShare()->keys == 1 && tmp_columns->elements == tmp_key_parts);
 
 
   /* 2. Create/initialize execution related objects. */

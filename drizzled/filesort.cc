@@ -148,7 +148,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
-  DRIZZLE_FILESORT_START(table->s->getSchemaName(), table->s->getTableName());
+  DRIZZLE_FILESORT_START(table->getShare()->getSchemaName(), table->getShare()->getTableName());
 
   /*
    Release InnoDB's adaptive hash index latch (if holding) before
@@ -561,7 +561,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
 	if (!flag)
 	{
 	  internal::my_store_ptr(ref_pos,ref_length,record); // Position to row
-	  record+= sort_form->s->db_record_offset;
+	  record+= sort_form->getShare()->db_record_offset;
 	}
 	else if (!error)
 	  file->position(sort_form->record[0]);

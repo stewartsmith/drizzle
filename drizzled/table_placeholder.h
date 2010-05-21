@@ -20,39 +20,33 @@
 
 /* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_SHARE_INSTANCE_H
-#define DRIZZLED_TABLE_SHARE_INSTANCE_H
+#ifndef DRIZZLED_TABLE_PLACEHOLDER_H
+#define DRIZZLED_TABLE_PLACEHOLDER_H
 
 namespace drizzled
 {
 
-class TableShareInstance : public TableShare 
+class TablePlaceholder : public Table
 {
-  Table private_table;
+  TableShare private_share;
+  std::vector<char> key_buff;
 
 public:
-  TableShareInstance()
+  TablePlaceholder(const char *key, uint32_t key_length) :
+    Table()
   {
-    private_table.setShare(this);
-  }
+    is_placeholder_created= true;
+    setShare(&private_share);
 
-  TableShareInstance(const char *tmpname_arg) :
-    TableShare("", 0, tmpname_arg, tmpname_arg)
-  {
-    private_table.setShare(this);
-  }
+    key_buff.resize(key_length);
 
-  Table *getTable()
-  {
-    return &private_table;
-  }
-
-  ~TableShareInstance()
-  {
-    private_table.free_tmp_table(private_table.in_use);
+    memcpy(&key_buff[0], key, key_length);
+    getMutableShare()->set_table_cache_key(&key_buff[0], key_length);
+    getMutableShare()->tmp_table= message::Table::INTERNAL;  // for intern_close_table
+    locked_by_name= true;
   }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_SHARE_INSTANCE_H */
+#endif /* DRIZZLED_TABLE_PLACEHOLDER_H */

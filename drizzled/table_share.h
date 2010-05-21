@@ -226,7 +226,6 @@ public:
     delete table_proto;
     table_proto= NULL;
 
-    /* We must copy mem_root from share because share is allocated through it */
     mem_root.free_root(MYF(0));                 // Free's share
   };
 
@@ -370,7 +369,7 @@ public:
     return table_cache_key.str;
   }
 
-  size_t getCacheKeySize()
+  size_t getCacheKeySize() const
   {
     return table_cache_key.length;
   }
@@ -496,7 +495,7 @@ public:
     return (table_proto) ? table_proto->options().comment().length() : 0; 
   }
 
-  inline uint64_t getMaxRows()
+  inline uint64_t getMaxRows() const
   {
     return max_rows;
   }
@@ -631,28 +630,6 @@ public:
     db.length=         db_length ? db_length : strlen(db.str);
     table_name.str=    db.str + db.length + 1;
     table_name.length= table_name_length ? table_name_length :strlen(table_name.str);
-  }
-
-
-  /*
-    Set share's table cache key and update its db and table name appropriately.
-
-    SYNOPSIS
-    set_table_cache_key()
-    key_buff    Buffer to be used as storage for table cache key
-    (should be at least key_length bytes).
-    key         Value for table cache key.
-    key_length  Key length.
-
-    NOTE
-    Since 'key_buff' buffer will be used as storage for table cache key
-    it should has same life-time as share itself.
-  */
-
-  void set_table_cache_key(char *key_buff, const char *key, uint32_t key_length, uint32_t db_length= 0, uint32_t table_name_length= 0)
-  {
-    memcpy(key_buff, key, key_length);
-    set_table_cache_key(key_buff, key_length, db_length, table_name_length);
   }
 
   inline bool honor_global_locks()
