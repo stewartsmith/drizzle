@@ -177,7 +177,7 @@ int optimizer::QuickIndexMergeSelect::read_keys_and_merge()
   /* index_merge currently doesn't support "using index" at all */
   cursor->extra(HA_EXTRA_NO_KEYREAD);
   /* start table scan */
-  init_read_record(&read_record, session, head, (optimizer::SqlSelect*) 0, 1, 1);
+  read_record.init_read_record(session, head, (optimizer::SqlSelect*) 0, 1, 1);
   return result;
 }
 
@@ -192,7 +192,7 @@ int optimizer::QuickIndexMergeSelect::get_next()
   if ((result= read_record.read_record(&read_record)) == -1)
   {
     result= HA_ERR_END_OF_FILE;
-    end_read_record(&read_record);
+    read_record.end_read_record();
     /* All rows from Unique have been retrieved, do a clustered PK scan */
     if (pk_quick_select)
     {

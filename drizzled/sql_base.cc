@@ -2599,8 +2599,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
     inside the view, but we want to search directly in the view columns
     which are represented as a 'field_translation'.
 
-TODO: Ensure that table_name, db_name and tables->db always points to
-something !
+    TODO-> Ensure that table_name, db_name and tables->db always points to something !
   */
   if (/* Exclude nested joins. */
       (!table_list->nested_join) &&

@@ -44,6 +44,16 @@ a/a	CREATE TABLE `a/a` (
   `a` int DEFAULT NULL
 ) ENGINE=DEFAULT
 create table t1 like `a/a`;
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int DEFAULT NULL
+) ENGINE=DEFAULT
+show create table `t1`;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int DEFAULT NULL
+) ENGINE=DEFAULT
 drop table `a/a`;
 drop table `t1`;
 create table `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa int);

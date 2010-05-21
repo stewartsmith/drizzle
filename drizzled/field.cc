@@ -755,7 +755,7 @@ int64_t Field::convert_decimal2int64_t(const my_decimal *val, bool, int *err)
   return i;
 }
 
-uint32_t Field::fill_cache_field(CACHE_FIELD *copy)
+uint32_t Field::fill_cache_field(CacheField *copy)
 {
   uint32_t store_length;
   copy->str=ptr;

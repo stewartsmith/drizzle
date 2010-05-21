@@ -43,6 +43,7 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/plugin/event_observer.h"
 
 using namespace std;
 
@@ -226,7 +227,6 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
 
   table= table_arg;
   assert(table->s == table_share);
-  assert(table->mem_root.alloc_root_inited());
 
   if ((error=open(name, mode, test_if_locked)))
   {
@@ -248,7 +248,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from Cursor::clone() */
-    if (!ref && !(ref= (unsigned char*) table->mem_root.alloc_root(ALIGN_SIZE(ref_length)*2)))
+    if (!ref && !(ref= (unsigned char*) table->alloc_root(ALIGN_SIZE(ref_length)*2)))
     {
       close();
       error=HA_ERR_OUT_OF_MEM;
@@ -1483,7 +1483,20 @@ int Cursor::insertRecord(unsigned char *buf)
 
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doInsertRecord(buf);
+  
+  if (unlikely(plugin::EventObserver::beforeInsertRecord(*(table->in_use), *table_share, buf)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doInsertRecord(buf);
+    if (unlikely(plugin::EventObserver::afterInsertRecord(*(table->in_use), *table_share, buf, error))) 
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+ 
   DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1510,7 +1523,19 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doUpdateRecord(old_data, new_data);
+  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*(table->in_use), *table_share, old_data, new_data)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doUpdateRecord(old_data, new_data);
+    if (unlikely(plugin::EventObserver::afterUpdateRecord(*(table->in_use), *table_share, old_data, new_data, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+
   DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1530,7 +1555,19 @@ int Cursor::deleteRecord(const unsigned char *buf)
 
   DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doDeleteRecord(buf);
+  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*(table->in_use), *table_share, buf)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doDeleteRecord(buf);
+    if (unlikely(plugin::EventObserver::afterDeleteRecord(*(table->in_use), *table_share, buf, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+
   DRIZZLE_DELETE_ROW_DONE(error);
 
   if (unlikely(error))

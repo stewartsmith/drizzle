@@ -46,6 +46,10 @@ create table `a/a` (a int);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table `a/a`;
 create table t1 like `a/a`;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table `t1`;
 drop table `a/a`;
 drop table `t1`;
 --error 1103

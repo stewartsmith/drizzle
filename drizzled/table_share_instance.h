@@ -20,23 +20,39 @@
 
 /* Structs that defines the Table */
 
-#ifndef DRIZZLED_TABLE_INSTANCE_H
-#define DRIZZLED_TABLE_INSTANCE_H
+#ifndef DRIZZLED_TABLE_SHARE_INSTANCE_H
+#define DRIZZLED_TABLE_SHARE_INSTANCE_H
 
 namespace drizzled
 {
 
-class TableInstance : public Table 
+class TableShareInstance : public TableShare 
 {
-public:
-  TableShare _table_share;
+  Table private_table;
 
-  bool ownsShare()
+public:
+  TableShareInstance()
   {
-    return (bool)(&_table_share == s);
+    private_table.s= this;
+  }
+
+  TableShareInstance(const char *tmpname_arg) :
+    TableShare("", 0, tmpname_arg, tmpname_arg)
+  {
+    private_table.s= this;
+  }
+
+  Table *getTable()
+  {
+    return &private_table;
+  }
+
+  ~TableShareInstance()
+  {
+    private_table.free_tmp_table(private_table.in_use);
   }
 };
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_INSTANCE_H */
+#endif /* DRIZZLED_TABLE_SHARE_INSTANCE_H */

@@ -1408,7 +1408,7 @@ const char *EmbeddedInnoDBCursor::index_type(uint32_t)
 static ib_err_t write_row_to_innodb_tuple(Field **fields, ib_tpl_t tuple)
 {
   int colnr= 0;
-  ib_err_t err;
+  ib_err_t err= DB_ERROR;
 
   for (Field **field= fields; *field; field++, colnr++)
   {
