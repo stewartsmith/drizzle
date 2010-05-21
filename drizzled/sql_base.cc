@@ -4408,14 +4408,14 @@ bool drizzle_rm_tmp_tables()
 {
   Session *session;
 
-  assert(drizzle_tmpdir);
+  assert(drizzle_tmpdir.size());
 
   if (!(session= new Session(plugin::Listen::getNullClient())))
     return true;
   session->thread_stack= (char*) &session;
   session->storeGlobals();
 
-  plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir);
+  plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir.c_str());
 
   delete session;
 
