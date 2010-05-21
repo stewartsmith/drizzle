@@ -84,7 +84,7 @@
   keypart-value-bytes holds the value. Its format depends on the field type.
   The length of keypart-value-bytes may or may not depend on the value being
   stored. The default is that length is static and equal to
-  KEY_PART_INFO::length.
+  KeyPartInfo::length.
 
   Key parts with (key_part_flag & HA_BLOB_PART) have length depending of the
   value:
@@ -204,7 +204,7 @@ static void get_sweep_read_cost(Table *table,
   cost->zero();
   if (table->cursor->primary_key_is_clustered())
   {
-    cost->setIOCount(table->cursor->read_time(table->s->primary_key,
+    cost->setIOCount(table->cursor->read_time(table->getShare()->primary_key,
                                              static_cast<uint32_t>(nrows),
                                              nrows));
   }
@@ -467,11 +467,11 @@ uint32_t optimizer::get_index_for_order(Table *table, order_st *order, ha_rows l
     if (!ord->asc)
       return MAX_KEY;
 
-  for (idx= 0; idx < table->s->keys; idx++)
+  for (idx= 0; idx < table->getShare()->keys; idx++)
   {
     if (!(table->keys_in_use_for_query.test(idx)))
       continue;
-    KEY_PART_INFO *keyinfo= table->key_info[idx].key_part;
+    KeyPartInfo *keyinfo= table->key_info[idx].key_part;
     uint32_t n_parts=  table->key_info[idx].key_parts;
     uint32_t partno= 0;
 
@@ -539,9 +539,9 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
   my_bitmap_map *tmp;
   uint32_t pk;
   param->tmp_covered_fields.setBitmap(0);
-  param->fields_bitmap_size= table->s->column_bitmap_size;
+  param->fields_bitmap_size= table->getShare()->column_bitmap_size;
   if (!(tmp= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)) ||
-      param->needed_fields.init(tmp, table->s->fields))
+      param->needed_fields.init(tmp, table->getShare()->fields))
   {
     return 1;
   }
@@ -549,12 +549,12 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
   param->needed_fields= *table->read_set;
   bitmap_union(&param->needed_fields, table->write_set);
 
-  pk= param->table->s->primary_key;
+  pk= param->table->getShare()->primary_key;
   if (pk != MAX_KEY && param->table->cursor->primary_key_is_clustered())
   {
     /* The table uses clustered PK and it is not internally generated */
-    KEY_PART_INFO *key_part= param->table->key_info[pk].key_part;
-    KEY_PART_INFO *key_part_end= key_part +
+    KeyPartInfo *key_part= param->table->key_info[pk].key_part;
+    KeyPartInfo *key_part_end= key_part +
                                  param->table->key_info[pk].key_parts;
     for (;key_part != key_part_end; ++key_part)
       param->needed_fields.clearBit(key_part->fieldnr-1);
@@ -662,7 +662,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
     memory::Root alloc;
     optimizer::SEL_TREE *tree= NULL;
     KEY_PART *key_parts;
-    KEY *key_info;
+    KeyInfo *key_info;
     optimizer::Parameter param;
 
     if (check_stack_overrun(session, 2*STACK_MIN_SIZE, NULL))
@@ -685,7 +685,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 
     session->no_errors=1;				// Don't warn about NULL
     memory::init_sql_alloc(&alloc, session->variables.range_alloc_block_size, 0);
-    if (!(param.key_parts= (KEY_PART*) alloc.alloc_root( sizeof(KEY_PART) * head->s->key_parts)) ||
+    if (!(param.key_parts= (KEY_PART*) alloc.alloc_root( sizeof(KEY_PART) * head->getShare()->key_parts)) ||
         fill_used_fields_bitmap(&param))
     {
       session->no_errors=0;
@@ -701,9 +701,9 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       This is used in get_mm_parts function.
     */
     key_info= head->key_info;
-    for (idx=0 ; idx < head->s->keys ; idx++, key_info++)
+    for (idx=0 ; idx < head->getShare()->keys ; idx++, key_info++)
     {
-      KEY_PART_INFO *key_part_info;
+      KeyPartInfo *key_part_info;
       if (! keys_to_use.test(idx))
 	continue;
 
@@ -995,7 +995,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
     all_scans_rors &= (*cur_child)->is_ror;
     if (pk_is_clustered &&
         param->real_keynr[(*cur_child)->key_idx] ==
-        param->table->s->primary_key)
+        param->table->getShare()->primary_key)
     {
       cpk_scan= cur_child;
       cpk_scan_records= (*cur_child)->records;
@@ -1030,7 +1030,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
   /* Calculate cost(rowid_to_row_scan) */
   {
     optimizer::CostVector sweep_cost;
-    JOIN *join= param->session->lex->select_lex.join;
+    Join *join= param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, non_cpk_scan_records, is_interrupted,
                         &sweep_cost);
@@ -1148,7 +1148,7 @@ skip_to_ror_scan:
   double roru_total_cost;
   {
     optimizer::CostVector sweep_cost;
-    JOIN *join= param->session->lex->select_lex.join;
+    Join *join= param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(param->table, roru_total_records, is_interrupted,
                         &sweep_cost);
@@ -1236,14 +1236,14 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
     return NULL;
   }
 
-  if (ror_scan->covered_fields.init(bitmap_buf, param->table->s->fields))
+  if (ror_scan->covered_fields.init(bitmap_buf, param->table->getShare()->fields))
   {
     return NULL;
   }
   ror_scan->covered_fields.clearAll();
 
-  KEY_PART_INFO *key_part= param->table->key_info[keynr].key_part;
-  KEY_PART_INFO *key_part_end= key_part +
+  KeyPartInfo *key_part= param->table->key_info[keynr].key_part;
+  KeyPartInfo *key_part_end= key_part +
                                param->table->key_info[keynr].key_parts;
   for (;key_part != key_part_end; ++key_part)
   {
@@ -1354,7 +1354,7 @@ ROR_INTERSECT_INFO* ror_intersect_init(const optimizer::Parameter *param)
   info->param= param;
   if (!(buf= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)))
     return NULL;
-  if (info->covered_fields.init(buf, param->table->s->fields))
+  if (info->covered_fields.init(buf, param->table->getShare()->fields))
     return NULL;
   info->is_covering= false;
   info->index_scan_costs= 0.0;
@@ -1471,7 +1471,7 @@ static double ror_scan_selectivity(const ROR_INTERSECT_INFO *info,
                                    const ROR_SCAN_INFO *scan)
 {
   double selectivity_mult= 1.0;
-  KEY_PART_INFO *key_part= info->param->table->key_info[scan->keynr].key_part;
+  KeyPartInfo *key_part= info->param->table->key_info[scan->keynr].key_part;
   unsigned char key_val[MAX_KEY_LENGTH+MAX_FIELD_WIDTH]; /* key values tuple */
   unsigned char *key_ptr= key_val;
   optimizer::SEL_ARG *sel_arg= NULL;
@@ -1615,7 +1615,7 @@ static bool ror_intersect_add(ROR_INTERSECT_INFO *info,
   if (!info->is_covering)
   {
     optimizer::CostVector sweep_cost;
-    JOIN *join= info->param->session->lex->select_lex.join;
+    Join *join= info->param->session->lex->select_lex.join;
     bool is_interrupted= test(join && join->tables == 1);
     get_sweep_read_cost(info->param->table, double2rows(info->out_rows),
                         is_interrupted, &sweep_cost);
@@ -1686,7 +1686,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   }
   if (! covered_fields->getBitmap() ||
       covered_fields->init(covered_fields->getBitmap(),
-                           param->table->s->fields))
+                           param->table->getShare()->fields))
     return 0;
   covered_fields->clearAll();
 
@@ -1851,7 +1851,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     return NULL;
   }
   cpk_no= ((param->table->cursor->primary_key_is_clustered()) ?
-           param->table->s->primary_key : MAX_KEY);
+           param->table->getShare()->primary_key : MAX_KEY);
 
   for (idx= 0, cur_ror_scan= tree->ror_scans; idx < param->keys; idx++)
   {
@@ -3868,7 +3868,7 @@ ha_rows check_quick_select(optimizer::Parameter *param,
   bool pk_is_clustered= cursor->primary_key_is_clustered();
   if (index_only &&
       (param->table->index_flags(keynr) & HA_KEYREAD_ONLY) &&
-      !(pk_is_clustered && keynr == param->table->s->primary_key))
+      !(pk_is_clustered && keynr == param->table->getShare()->primary_key))
      *mrr_flags |= HA_MRR_INDEX_ONLY;
 
   if (current_session->lex->sql_command != SQLCOM_SELECT)
@@ -3903,7 +3903,7 @@ ha_rows check_quick_select(optimizer::Parameter *param,
   else
   {
     /* Clustered PK scan is always a ROR scan (TODO: same as above) */
-    if (param->table->s->primary_key == keynr && pk_is_clustered)
+    if (param->table->getShare()->primary_key == keynr && pk_is_clustered)
       param->is_ror_scan= true;
   }
 
@@ -3950,13 +3950,13 @@ ha_rows check_quick_select(optimizer::Parameter *param,
 
 static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t nparts)
 {
-  KEY *table_key= param->table->key_info + keynr;
-  KEY_PART_INFO *key_part= table_key->key_part + nparts;
-  KEY_PART_INFO *key_part_end= (table_key->key_part +
+  KeyInfo *table_key= param->table->key_info + keynr;
+  KeyPartInfo *key_part= table_key->key_part + nparts;
+  KeyPartInfo *key_part_end= (table_key->key_part +
                                 table_key->key_parts);
   uint32_t pk_number;
 
-  for (KEY_PART_INFO *kp= table_key->key_part; kp < key_part; kp++)
+  for (KeyPartInfo *kp= table_key->key_part; kp < key_part; kp++)
   {
     uint16_t fieldnr= param->table->key_info[keynr].
                     key_part[kp - table_key->key_part].fieldnr - 1;
@@ -3968,12 +3968,12 @@ static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t
     return true;
 
   key_part= table_key->key_part + nparts;
-  pk_number= param->table->s->primary_key;
+  pk_number= param->table->getShare()->primary_key;
   if (!param->table->cursor->primary_key_is_clustered() || pk_number == MAX_KEY)
     return false;
 
-  KEY_PART_INFO *pk_part= param->table->key_info[pk_number].key_part;
-  KEY_PART_INFO *pk_part_end= pk_part +
+  KeyPartInfo *pk_part= param->table->key_info[pk_number].key_part;
+  KeyPartInfo *pk_part_end= pk_part +
                               param->table->key_info[pk_number].key_parts;
   for (;(key_part!=key_part_end) && (pk_part != pk_part_end);
        ++key_part, ++pk_part)
@@ -4146,7 +4146,7 @@ optimizer::get_quick_keys(optimizer::Parameter *param,
     if (length == (uint32_t) (tmp_max_key - param->max_key) &&
 	      ! memcmp(param->min_key,param->max_key,length))
     {
-      KEY *table_key= quick->head->key_info+quick->index;
+      KeyInfo *table_key= quick->head->key_info+quick->index;
       flag= EQ_RANGE;
       if ((table_key->flags & (HA_NOSAME)) == HA_NOSAME &&
 	        key->part == table_key->key_parts-1)
@@ -4260,7 +4260,7 @@ optimizer::QuickRangeSelect *optimizer::get_quick_select_for_ref(Session *sessio
 {
   memory::Root *old_root, *alloc;
   optimizer::QuickRangeSelect *quick= NULL;
-  KEY *key_info = &table->key_info[ref->key];
+  KeyInfo *key_info = &table->key_info[ref->key];
   KEY_PART *key_part;
   optimizer::QuickRange *range= NULL;
   uint32_t part;
@@ -4421,28 +4421,28 @@ uint32_t optimizer::quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *rang
 }
 
 
-static inline uint32_t get_field_keypart(KEY *index, Field *field);
+static inline uint32_t get_field_keypart(KeyInfo *index, Field *field);
 
 static inline optimizer::SEL_ARG * get_index_range_tree(uint32_t index,
                                                         optimizer::SEL_TREE *range_tree,
                                                         optimizer::Parameter *param,
                                                         uint32_t *param_idx);
 
-static bool get_constant_key_infix(KEY *index_info,
+static bool get_constant_key_infix(KeyInfo *index_info,
                                    optimizer::SEL_ARG *index_range_tree,
-                                   KEY_PART_INFO *first_non_group_part,
-                                   KEY_PART_INFO *min_max_arg_part,
-                                   KEY_PART_INFO *last_part,
+                                   KeyPartInfo *first_non_group_part,
+                                   KeyPartInfo *min_max_arg_part,
+                                   KeyPartInfo *last_part,
                                    Session *session,
                                    unsigned char *key_infix,
                                    uint32_t *key_infix_len,
-                                   KEY_PART_INFO **first_non_infix_part);
+                                   KeyPartInfo **first_non_infix_part);
 
 static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item);
 
 static void
 cost_group_min_max(Table* table,
-                   KEY *index_info,
+                   KeyInfo *index_info,
                    uint32_t used_key_parts,
                    uint32_t group_key_parts,
                    optimizer::SEL_TREE *range_tree,
@@ -4585,14 +4585,14 @@ static optimizer::GroupMinMaxReadPlan *
 get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
 {
   Session *session= param->session;
-  JOIN *join= session->lex->current_select->join;
+  Join *join= session->lex->current_select->join;
   Table *table= param->table;
   bool have_min= false;              /* true if there is a MIN function. */
   bool have_max= false;              /* true if there is a MAX function. */
   Item_field *min_max_arg_item= NULL; // The argument of all MIN/MAX functions
-  KEY_PART_INFO *min_max_arg_part= NULL; /* The corresponding keypart. */
+  KeyPartInfo *min_max_arg_part= NULL; /* The corresponding keypart. */
   uint32_t group_prefix_len= 0; /* Length (in bytes) of the key prefix. */
-  KEY *index_info= NULL;    /* The index chosen for data access. */
+  KeyInfo *index_info= NULL;    /* The index chosen for data access. */
   uint32_t index= 0;            /* The id of the chosen index. */
   uint32_t group_key_parts= 0;  // Number of index key parts in the group prefix.
   uint32_t used_key_parts= 0;   /* Number of index key parts used for access. */
@@ -4613,7 +4613,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
        (! join->select_distinct)) ||
       (join->select_lex->olap == ROLLUP_TYPE)) /* Check (B3) for ROLLUP */
     return NULL;
-  if (table->s->keys == 0)        /* There are no indexes to use. */
+  if (table->getShare()->keys == 0)        /* There are no indexes to use. */
     return NULL;
 
   /* Analyze the query in more detail. */
@@ -4672,14 +4672,14 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     (GA1,GA2) are all true. If there is more than one such index, select the
     first one. Here we set the variables: group_prefix_len and index_info.
   */
-  KEY *cur_index_info= table->key_info;
-  KEY *cur_index_info_end= cur_index_info + table->s->keys;
-  KEY_PART_INFO *cur_part= NULL;
-  KEY_PART_INFO *end_part= NULL; /* Last part for loops. */
+  KeyInfo *cur_index_info= table->key_info;
+  KeyInfo *cur_index_info_end= cur_index_info + table->getShare()->keys;
+  KeyPartInfo *cur_part= NULL;
+  KeyPartInfo *end_part= NULL; /* Last part for loops. */
   /* Last index part. */
-  KEY_PART_INFO *last_part= NULL;
-  KEY_PART_INFO *first_non_group_part= NULL;
-  KEY_PART_INFO *first_non_infix_part= NULL;
+  KeyPartInfo *last_part= NULL;
+  KeyPartInfo *first_non_group_part= NULL;
+  KeyPartInfo *first_non_infix_part= NULL;
   uint32_t key_infix_parts= 0;
   uint32_t cur_group_key_parts= 0;
   uint32_t cur_group_prefix_len= 0;
@@ -4698,7 +4698,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
   uint32_t cur_key_infix_len= 0;
   unsigned char cur_key_infix[MAX_KEY_LENGTH];
   uint32_t cur_used_key_parts= 0;
-  uint32_t pk= param->table->s->primary_key;
+  uint32_t pk= param->table->getShare()->primary_key;
 
   for (uint32_t cur_index= 0;
        cur_index_info != cur_index_info_end;
@@ -4721,7 +4721,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
         (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
     {
       /* For each table field */
-      for (uint32_t i= 0; i < table->s->fields; i++)
+      for (uint32_t i= 0; i < table->getShare()->fields; i++)
       {
         Field *cur_field= table->field[i];
         /*
@@ -4891,7 +4891,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
           Store the first and last keyparts that need to be analyzed
           into one array that can be passed as parameter.
         */
-        KEY_PART_INFO *key_part_range[2];
+        KeyPartInfo *key_part_range[2];
         key_part_range[0]= first_non_group_part;
         key_part_range[1]= last_part;
 
@@ -5183,20 +5183,20 @@ static bool check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_i
     false o/w
 */
 static bool
-get_constant_key_infix(KEY *,
+get_constant_key_infix(KeyInfo *,
                        optimizer::SEL_ARG *index_range_tree,
-                       KEY_PART_INFO *first_non_group_part,
-                       KEY_PART_INFO *min_max_arg_part,
-                       KEY_PART_INFO *last_part,
+                       KeyPartInfo *first_non_group_part,
+                       KeyPartInfo *min_max_arg_part,
+                       KeyPartInfo *last_part,
                        Session *,
                        unsigned char *key_infix,
                        uint32_t *key_infix_len,
-                       KEY_PART_INFO **first_non_infix_part)
+                       KeyPartInfo **first_non_infix_part)
 {
   optimizer::SEL_ARG *cur_range= NULL;
-  KEY_PART_INFO *cur_part= NULL;
+  KeyPartInfo *cur_part= NULL;
   /* End part for the first loop below. */
-  KEY_PART_INFO *end_part= min_max_arg_part ? min_max_arg_part : last_part;
+  KeyPartInfo *end_part= min_max_arg_part ? min_max_arg_part : last_part;
 
   *key_infix_len= 0;
   unsigned char *key_ptr= key_infix;
@@ -5262,7 +5262,7 @@ get_constant_key_infix(KEY *,
     field  field that possibly references some key part in index
 
   NOTES
-    The return value can be used to get a KEY_PART_INFO pointer by
+    The return value can be used to get a KeyPartInfo pointer by
     part= index->key_part + get_field_keypart(...) - 1;
 
   RETURN
@@ -5270,10 +5270,10 @@ get_constant_key_infix(KEY *,
     0 if field does not reference any index field.
 */
 static inline uint
-get_field_keypart(KEY *index, Field *field)
+get_field_keypart(KeyInfo *index, Field *field)
 {
-  KEY_PART_INFO *part= NULL;
-  KEY_PART_INFO *end= NULL;
+  KeyPartInfo *part= NULL;
+  KeyPartInfo *end= NULL;
 
   for (part= index->key_part, end= part + index->key_parts; part < end; part++)
   {
@@ -5383,7 +5383,7 @@ optimizer::SEL_ARG *get_index_range_tree(uint32_t index,
     None
 */
 void cost_group_min_max(Table* table,
-                        KEY *index_info,
+                        KeyInfo *index_info,
                         uint32_t used_key_parts,
                         uint32_t group_key_parts,
                         optimizer::SEL_TREE *range_tree,

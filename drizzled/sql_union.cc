@@ -127,9 +127,13 @@ select_union::create_result_table(Session *session_arg, List<Item> *column_types
   if (! (table= create_tmp_table(session_arg, &tmp_table_param, *column_types,
                                  (order_st*) NULL, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
+  {
     return true;
+  }
+
   table->cursor->extra(HA_EXTRA_WRITE_CACHE);
   table->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
+
   return false;
 }
 
@@ -249,7 +253,7 @@ bool Select_Lex_Unit::prepare(Session *session_arg, select_result *sel_result,
   {
     bool can_skip_order_by;
     sl->options|=  SELECT_NO_UNLOCK;
-    JOIN *join= new JOIN(session_arg, sl->item_list,
+    Join *join= new Join(session_arg, sl->item_list,
 			 sl->options | session_arg->options | additional_options,
 			 tmp_result);
     /*
@@ -509,7 +513,7 @@ bool Select_Lex_Unit::exec()
     {
       set_limit(global_parameters);
       init_prepare_fake_select_lex(session);
-      JOIN *join= fake_select_lex->join;
+      Join *join= fake_select_lex->join;
       if (!join)
       {
 	/*
@@ -520,7 +524,7 @@ bool Select_Lex_Unit::exec()
           don't let it allocate the join. Perhaps this is because we need
           some special parameter values passed to join constructor?
 	*/
-	if (!(fake_select_lex->join= new JOIN(session, item_list,
+	if (!(fake_select_lex->join= new Join(session, item_list,
 					      fake_select_lex->options, result)))
 	{
 	  fake_select_lex->table_list.empty();
@@ -604,8 +608,6 @@ bool Select_Lex_Unit::cleanup()
   {
     delete union_result;
     union_result=0; // Safety
-    if (table)
-      table->free_tmp_table(session);
     table= 0; // Safety
   }
 
@@ -614,7 +616,7 @@ bool Select_Lex_Unit::cleanup()
 
   if (fake_select_lex)
   {
-    JOIN *join;
+    Join *join;
     if ((join= fake_select_lex->join))
     {
       join->tables_list= 0;

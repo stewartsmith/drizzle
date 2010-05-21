@@ -27,10 +27,10 @@ class Field_blob;
 typedef JoinTable JoinTable;
 
 /**
-  CACHE_FIELD and JOIN_CACHE is used on full join to cache records in outer
+  CacheField and JoinCache is used on full join to cache records in outer
   table
 */
-typedef struct st_cache_field {
+struct CacheField {
   /*
     Where source data is located (i.e. this points to somewhere in
     tableX->record[0])
@@ -42,9 +42,9 @@ typedef struct st_cache_field {
   bool strip; /* true <=> Strip endspaces ?? */
 
   Table *get_rowid; /* _ != NULL <=> */
-} CACHE_FIELD;
+};
 
-typedef struct st_join_cache
+struct JoinCache
 {
   unsigned char *buff;
   unsigned char *pos;    /* Start of free space in the buffer */
@@ -62,15 +62,16 @@ typedef struct st_join_cache
   uint32_t fields;
   uint32_t length;
   uint32_t blobs;
-  CACHE_FIELD *field;
-  CACHE_FIELD **blob_ptr;
+  CacheField *field;
+  CacheField **blob_ptr;
   optimizer::SqlSelect *select;
-} JOIN_CACHE;
+
+  void reset_cache_read();
+  void reset_cache_write();
+  bool store_record_in_cache();
+};
 
 int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count);
-void reset_cache_read(JOIN_CACHE *cache);
-void reset_cache_write(JOIN_CACHE *cache);
-bool store_record_in_cache(JOIN_CACHE *cache);
 
 } /* namespace drizzled */
 

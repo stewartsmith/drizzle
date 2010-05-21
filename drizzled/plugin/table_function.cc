@@ -37,7 +37,7 @@ static TableFunctionContainer table_functions;
 
 void plugin::TableFunction::init()
 {
-  drizzled::message::Table::StorageEngine *engine;
+  drizzled::message::Engine *engine;
   drizzled::message::Table::TableOptions *table_options;
 
   proto.set_name(getTableLabel());
