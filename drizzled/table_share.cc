@@ -42,6 +42,7 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
+#include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/session.h"
 
@@ -147,6 +148,8 @@ void TableShare::release(TableShare *share)
   {
     const string key_string(share->getCacheKey(),
                             share->getCacheKeySize());
+    plugin::EventObserver::deregisterTableEvents(*share);
+   
     TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
     if (iter != table_def_cache.end())
     {
@@ -170,6 +173,7 @@ void TableShare::release(const char *key, uint32_t key_length)
     if (share->ref_count == 0)
     {
       pthread_mutex_lock(&share->mutex);
+      plugin::EventObserver::deregisterTableEvents(*share);
       table_def_cache.erase(key_string);
       delete share;
     }
@@ -274,6 +278,9 @@ TableShare *TableShare::getShare(Session *session,
     return NULL;
   }
   share->ref_count++;				// Mark in use
+  
+  plugin::EventObserver::registerTableEvents(*share);
+  
   (void) pthread_mutex_unlock(&share->mutex);
 
   return share;
@@ -547,18 +554,18 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
     build_table_filename(_path, db.str, table_name.str, false);
   }
 
-  if (multi_alloc_root(&mem_root,
-                       &key_buff, key_length,
-                       &path_buff, _path.length() + 1,
-                       NULL))
+  if (mem_root.multi_alloc_root(0, &key_buff, key_length,
+                                &path_buff, _path.length() + 1,
+                                NULL))
   {
-    set_table_cache_key(key_buff, key, key_length, db.length, table_name.length);
+    memcpy(key_buff, key, key_length);
+    set_table_cache_key(key_buff, key_length, db.length, table_name.length);
 
     setPath(path_buff, _path.length());
     strcpy(path_buff, _path.c_str());
     setNormalizedPath(path_buff, _path.length());
 
-    version=       refresh_version;
+    version= refresh_version;
 
     pthread_mutex_init(&mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&cond, NULL);
@@ -637,17 +644,17 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   for (int indx= 0; indx < table.indexes_size(); indx++)
     share->key_parts+= table.indexes(indx).index_part_size();
 
-  share->key_info= (KEY*) share->alloc_root( table.indexes_size() * sizeof(KEY) +share->key_parts*sizeof(KEY_PART_INFO));
+  share->key_info= (KeyInfo*) share->alloc_root( table.indexes_size() * sizeof(KeyInfo) +share->key_parts*sizeof(KeyPartInfo));
 
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
 
-  key_part= reinterpret_cast<KEY_PART_INFO*>
+  key_part= reinterpret_cast<KeyPartInfo*>
     (share->key_info+table.indexes_size());
 
 
   ulong *rec_per_key= (ulong*) share->alloc_root(sizeof(ulong*)*share->key_parts);
 
-  KEY* keyinfo= share->key_info;
+  KeyInfo* keyinfo= share->key_info;
   for (int keynr= 0; keynr < table.indexes_size(); keynr++, keyinfo++)
   {
     message::Table::Index indx= table.indexes(keynr);
@@ -660,7 +667,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     if (indx.has_options())
     {
-      message::Table::Index::IndexOptions indx_options= indx.options();
+      message::Table::Index::Options indx_options= indx.options();
       if (indx_options.pack_key())
         keyinfo->flags|= HA_PACK_KEY;
 
@@ -958,23 +965,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
   {
     message::Table::Field pfield= table.field(fieldnr);
-
-    enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-
-    switch (pfield.format())
-    {
-    case message::Table::Field::DefaultFormat:
-      column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-      break;
-    case message::Table::Field::FixedFormat:
-      column_format= COLUMN_FORMAT_TYPE_FIXED;
-      break;
-    case message::Table::Field::DynamicFormat:
-      column_format= COLUMN_FORMAT_TYPE_DYNAMIC;
-      break;
-    default:
-      assert(1);
-    }
 
     Field::utype unireg_type= Field::NONE;
 
@@ -1621,7 +1611,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
     goto err;
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= db_type()->getCursor(*this, &outparam.mem_root)))
+  if (not (outparam.cursor= db_type()->getCursor(*this, outparam.getMemRoot())))
     goto err;
 
   local_error= 4;
@@ -1631,7 +1621,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   records++;
 
-  if (!(record= (unsigned char*) outparam.mem_root.alloc_root(rec_buff_length * records)))
+  if (!(record= (unsigned char*) outparam.alloc_root(rec_buff_length * records)))
     goto err;
 
   if (records == 0)
@@ -1666,7 +1656,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
     memcpy(outparam.record[1], default_values, null_bytes);
   }
 
-  if (!(field_ptr = (Field **) outparam.mem_root.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
+  if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
   {
     goto err;
   }
@@ -1680,7 +1670,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   /* Setup copy of fields from share, but use the right alias and record */
   for (uint32_t i= 0 ; i < fields; i++, field_ptr++)
   {
-    if (!((*field_ptr)= field[i]->clone(&outparam.mem_root, &outparam)))
+    if (!((*field_ptr)= field[i]->clone(outparam.getMemRoot(), &outparam)))
       goto err;
   }
   (*field_ptr)= 0;                              // End marker
@@ -1695,14 +1685,14 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   /* Fix key->name and key_part->field */
   if (key_parts)
   {
-    KEY	*local_key_info, *key_info_end;
-    KEY_PART_INFO *key_part;
+    KeyInfo	*local_key_info, *key_info_end;
+    KeyPartInfo *key_part;
     uint32_t n_length;
-    n_length= keys*sizeof(KEY) + key_parts*sizeof(KEY_PART_INFO);
-    if (!(local_key_info= (KEY*) outparam.mem_root.alloc_root(n_length)))
+    n_length= keys*sizeof(KeyInfo) + key_parts*sizeof(KeyPartInfo);
+    if (!(local_key_info= (KeyInfo*) outparam.alloc_root(n_length)))
       goto err;
     outparam.key_info= local_key_info;
-    key_part= (reinterpret_cast<KEY_PART_INFO*> (local_key_info+keys));
+    key_part= (reinterpret_cast<KeyPartInfo*> (local_key_info+keys));
 
     memcpy(local_key_info, key_info, sizeof(*local_key_info)*keys);
     memcpy(key_part, key_info[0].key_part, (sizeof(*key_part) *
@@ -1712,7 +1702,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
          local_key_info < key_info_end ;
          local_key_info++)
     {
-      KEY_PART_INFO *key_part_end;
+      KeyPartInfo *key_part_end;
 
       local_key_info->table= &outparam;
       local_key_info->key_part= key_part;
@@ -1730,7 +1720,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
             We are using only a prefix of the column as a key:
             Create a new field for the key part that matches the index
           */
-          local_field= key_part->field= local_field->new_field(&outparam.mem_root, &outparam, 0);
+          local_field= key_part->field= local_field->new_field(outparam.getMemRoot(), &outparam, 0);
           local_field->field_length= key_part->length;
         }
       }
@@ -1740,7 +1730,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   /* Allocate bitmaps */
 
   bitmap_size= column_bitmap_size;
-  if (!(bitmaps= (unsigned char*) outparam.mem_root.alloc_root(bitmap_size*3)))
+  if (!(bitmaps= (unsigned char*) outparam.alloc_root(bitmap_size*3)))
   {
     goto err;
   }
@@ -1805,7 +1795,7 @@ err:
   delete outparam.cursor;
   outparam.cursor= 0;				// For easier error checking
   outparam.db_stat= 0;
-  outparam.mem_root.free_root(MYF(0));       // Safe to call on zeroed root
+  outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
   free((char*) outparam.alias);
   return (local_error);
 }
@@ -1883,8 +1873,7 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
   return;
 } /* open_table_error */
 
-Field *TableShare::make_field(memory::Root *root,
-                              unsigned char *ptr,
+Field *TableShare::make_field(unsigned char *ptr,
                               uint32_t field_length,
                               bool is_nullable,
                               unsigned char *null_pos,
@@ -1896,9 +1885,6 @@ Field *TableShare::make_field(memory::Root *root,
                               TYPELIB *interval,
                               const char *field_name)
 {
-  TableShare *share= this;
-  assert(root);
-
   if (! is_nullable)
   {
     null_pos=0;
@@ -1921,7 +1907,7 @@ Field *TableShare::make_field(memory::Root *root,
   switch (field_type)
   {
   case DRIZZLE_TYPE_ENUM:
-    return new (root) Field_enum(ptr,
+    return new (&mem_root) Field_enum(ptr,
                                  field_length,
                                  null_pos,
                                  null_bit,
@@ -1930,22 +1916,22 @@ Field *TableShare::make_field(memory::Root *root,
                                  interval,
                                  field_charset);
   case DRIZZLE_TYPE_VARCHAR:
-    return new (root) Field_varstring(ptr,field_length,
+    return new (&mem_root) Field_varstring(ptr,field_length,
                                       HA_VARCHAR_PACKLENGTH(field_length),
                                       null_pos,null_bit,
                                       field_name,
-                                      share,
+                                      this,
                                       field_charset);
   case DRIZZLE_TYPE_BLOB:
-    return new (root) Field_blob(ptr,
+    return new (&mem_root) Field_blob(ptr,
                                  null_pos,
                                  null_bit,
                                  field_name,
-                                 share,
+                                 this,
                                  calc_pack_length(DRIZZLE_TYPE_LONG, 0),
                                  field_charset);
   case DRIZZLE_TYPE_DECIMAL:
-    return new (root) Field_decimal(ptr,
+    return new (&mem_root) Field_decimal(ptr,
                                     field_length,
                                     null_pos,
                                     null_bit,
@@ -1955,7 +1941,7 @@ Field *TableShare::make_field(memory::Root *root,
                                     false,
                                     false /* is_unsigned */);
   case DRIZZLE_TYPE_DOUBLE:
-    return new (root) Field_double(ptr,
+    return new (&mem_root) Field_double(ptr,
                                    field_length,
                                    null_pos,
                                    null_bit,
@@ -1965,7 +1951,7 @@ Field *TableShare::make_field(memory::Root *root,
                                    false,
                                    false /* is_unsigned */);
   case DRIZZLE_TYPE_LONG:
-    return new (root) Field_long(ptr,
+    return new (&mem_root) Field_long(ptr,
                                  field_length,
                                  null_pos,
                                  null_bit,
@@ -1974,7 +1960,7 @@ Field *TableShare::make_field(memory::Root *root,
                                  false,
                                  false /* is_unsigned */);
   case DRIZZLE_TYPE_LONGLONG:
-    return new (root) Field_int64_t(ptr,
+    return new (&mem_root) Field_int64_t(ptr,
                                     field_length,
                                     null_pos,
                                     null_bit,
@@ -1983,28 +1969,28 @@ Field *TableShare::make_field(memory::Root *root,
                                     false,
                                     false /* is_unsigned */);
   case DRIZZLE_TYPE_TIMESTAMP:
-    return new (root) Field_timestamp(ptr,
+    return new (&mem_root) Field_timestamp(ptr,
                                       field_length,
                                       null_pos,
                                       null_bit,
                                       unireg_check,
                                       field_name,
-                                      share,
+                                      this,
                                       field_charset);
   case DRIZZLE_TYPE_DATE:
-    return new (root) Field_date(ptr,
+    return new (&mem_root) Field_date(ptr,
                                  null_pos,
                                  null_bit,
                                  field_name,
                                  field_charset);
   case DRIZZLE_TYPE_DATETIME:
-    return new (root) Field_datetime(ptr,
+    return new (&mem_root) Field_datetime(ptr,
                                      null_pos,
                                      null_bit,
                                      field_name,
                                      field_charset);
   case DRIZZLE_TYPE_NULL:
-    return new (root) Field_null(ptr,
+    return new (&mem_root) Field_null(ptr,
                                  field_length,
                                  field_name,
                                  field_charset);

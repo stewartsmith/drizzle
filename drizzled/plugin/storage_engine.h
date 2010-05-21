@@ -370,7 +370,6 @@ public:
 
   static int createTable(Session& session,
                          TableIdentifier &identifier,
-                         bool update_create_info,
                          message::Table& table_proto);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);

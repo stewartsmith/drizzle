@@ -69,7 +69,7 @@ str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-static void store_key_options(String *packet, Table *table, KEY *key_info);
+static void store_key_options(String *packet, Table *table, KeyInfo *key_info);
 
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
@@ -367,22 +367,21 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
   Field **ptr,*field;
   uint32_t primary_key;
-  KEY *key_info;
+  KeyInfo *key_info;
   Table *table= table_list->table;
   Cursor *cursor= table->cursor;
-  TableShare *share= table->s;
   HA_CREATE_INFO create_info;
   my_bitmap_map *old_map;
 
   table->restoreRecordAsDefault(); // Get empty record
 
-  if (share->tmp_table)
+  if (table->getShare()->tmp_table)
     packet->append(STRING_WITH_LEN("CREATE TEMPORARY TABLE "));
   else
     packet->append(STRING_WITH_LEN("CREATE TABLE "));
   if (is_if_not_exists)
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
-  alias= share->getTableName();
+  alias= table->getShare()->getTableName();
 
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
@@ -474,13 +473,13 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   key_info= table->key_info;
   memset(&create_info, 0, sizeof(create_info));
   /* Allow update_create_info to update row type */
-  create_info.row_type= share->row_type;
+  create_info.row_type= table->getShare()->row_type;
   cursor->update_create_info(&create_info);
-  primary_key= share->primary_key;
+  primary_key= table->getShare()->primary_key;
 
-  for (uint32_t i=0 ; i < share->keys ; i++,key_info++)
+  for (uint32_t i=0 ; i < table->getShare()->keys ; i++,key_info++)
   {
-    KEY_PART_INFO *key_part= key_info->key_part;
+    KeyPartInfo *key_part= key_info->key_part;
     bool found_primary=0;
     packet->append(STRING_WITH_LEN(",\n  "));
 
@@ -552,10 +551,10 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
     packet->append(STRING_WITH_LEN(" ENGINE="));
     packet->append(cursor->getEngine()->getName().c_str());
 
-    size_t num_engine_options= share->getTableProto()->engine().options_size();
+    size_t num_engine_options= table->getShare()->getTableProto()->engine().options_size();
     for (size_t x= 0; x < num_engine_options; ++x)
     {
-      const message::Engine::Option &option= share->getTableProto()->engine().options(x);
+      const message::Engine::Option &option= table->getShare()->getTableProto()->engine().options(x);
       packet->append(" ");
       packet->append(option.name().c_str());
       packet->append("=");
@@ -569,25 +568,25 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
       packet->append(ha_row_type[(uint32_t) create_info.row_type]);
     }
 #endif
-    if (share->block_size)
+    if (table->getShare()->block_size)
     {
       packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
-      buff= to_string(share->block_size);
+      buff= to_string(table->getShare()->block_size);
       packet->append(buff.c_str(), buff.length());
     }
     table->cursor->append_create_info(packet);
-    if (share->hasComment() && share->getCommentLength())
+    if (table->getMutableShare()->hasComment() && table->getMutableShare()->getCommentLength())
     {
       packet->append(STRING_WITH_LEN(" COMMENT="));
-      append_unescaped(packet, share->getComment(),
-                       share->getCommentLength());
+      append_unescaped(packet, table->getMutableShare()->getComment(),
+                       table->getMutableShare()->getCommentLength());
     }
   }
   table->restore_column_map(old_map);
   return(0);
 }
 
-static void store_key_options(String *packet, Table *, KEY *key_info)
+static void store_key_options(String *packet, Table *, KeyInfo *key_info)
 {
   if (key_info->algorithm == HA_KEY_ALG_BTREE)
     packet->append(STRING_WITH_LEN(" USING BTREE"));

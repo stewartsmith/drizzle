@@ -45,6 +45,11 @@ const static std::string TEMPORARY_STRING("TEMPORARY");
 const static std::string INTERNAL_STRING("INTERNAL");
 const static std::string FUNCTION_STRING("FUNCTION");
 
+namespace plugin
+{
+class EventObserverList;
+}
+
 class TableShare
 {
   typedef std::vector<std::string> StringVector;
@@ -103,6 +108,7 @@ public:
     waiting_on_cond(false),
     keys_in_use(0),
     keys_for_keyread(0),
+    event_observers(NULL),
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
@@ -175,6 +181,7 @@ public:
     waiting_on_cond(false),
     keys_in_use(0),
     keys_for_keyread(0),
+    event_observers(NULL),
     newed(true)
   {
     memset(&name_hash, 0, sizeof(HASH));
@@ -219,7 +226,6 @@ public:
     delete table_proto;
     table_proto= NULL;
 
-    /* We must copy mem_root from share because share is allocated through it */
     mem_root.free_root(MYF(0));                 // Free's share
   };
 
@@ -252,7 +258,7 @@ public:
 
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
-  KEY  *key_info;			/* data of keys in database */
+  KeyInfo  *key_info;			/* data of keys in database */
   uint	*blob_field;			/* Index to blobs in Field arrray*/
 
   /* hash of field names (contains pointers to elements of field array) */
@@ -268,6 +274,11 @@ public:
   char *strmake_root(const char *str_arg, size_t len_arg)
   {
     return mem_root.strmake_root(str_arg, len_arg);
+  }
+
+  memory::Root *getMemRoot()
+  {
+    return &mem_root;
   }
 
 private:
@@ -358,7 +369,7 @@ public:
     return table_cache_key.str;
   }
 
-  size_t getCacheKeySize()
+  size_t getCacheKeySize() const
   {
     return table_cache_key.length;
   }
@@ -484,7 +495,7 @@ public:
     return (table_proto) ? table_proto->options().comment().length() : 0; 
   }
 
-  inline uint64_t getMaxRows()
+  inline uint64_t getMaxRows() const
   {
     return max_rows;
   }
@@ -574,6 +585,23 @@ public:
   key_map keys_in_use;
   key_map keys_for_keyread;
 
+  /* 
+    event_observers is a class containing all the event plugins that have 
+    registered an interest in this table.
+  */
+  private:
+  plugin::EventObserverList *event_observers;
+  public:
+  plugin::EventObserverList *getTableObservers() 
+  { 
+    return event_observers;
+  }
+  
+  void setTableObservers(plugin::EventObserverList *observers) 
+  { 
+    event_observers= observers;
+  }
+  
   /*
     Set share's table cache key and update its db and table name appropriately.
 
@@ -602,28 +630,6 @@ public:
     db.length=         db_length ? db_length : strlen(db.str);
     table_name.str=    db.str + db.length + 1;
     table_name.length= table_name_length ? table_name_length :strlen(table_name.str);
-  }
-
-
-  /*
-    Set share's table cache key and update its db and table name appropriately.
-
-    SYNOPSIS
-    set_table_cache_key()
-    key_buff    Buffer to be used as storage for table cache key
-    (should be at least key_length bytes).
-    key         Value for table cache key.
-    key_length  Key length.
-
-    NOTE
-    Since 'key_buff' buffer will be used as storage for table cache key
-    it should has same life-time as share itself.
-  */
-
-  void set_table_cache_key(char *key_buff, const char *key, uint32_t key_length, uint32_t db_length= 0, uint32_t table_name_length= 0)
-  {
-    memcpy(key_buff, key, key_length);
-    set_table_cache_key(key_buff, key_length, db_length, table_name_length);
   }
 
   inline bool honor_global_locks()
@@ -761,22 +767,6 @@ public:
   bool newed;
 
   Field *make_field(unsigned char *ptr,
-                    uint32_t field_length,
-                    bool is_nullable,
-                    unsigned char *null_pos,
-                    unsigned char null_bit,
-                    uint8_t decimals,
-                    enum_field_types field_type,
-                    const CHARSET_INFO * field_charset,
-                    Field::utype unireg_check,
-                    TYPELIB *interval,
-                    const char *field_name)
-  {
-    return make_field(&mem_root, ptr, field_length, is_nullable, null_pos, null_bit, decimals, field_type, field_charset, unireg_check, interval, field_name);
-  }
-
-  Field *make_field(memory::Root *root,
-                    unsigned char *ptr,
                     uint32_t field_length,
                     bool is_nullable,
                     unsigned char *null_pos,

@@ -251,7 +251,7 @@ static bool mysql_prepare_alter_table(Session *session,
   List_iterator<CreateField> field_it(new_create_list);
   List<Key_part_spec> key_parts;
   uint32_t used_fields= create_info->used_fields;
-  KEY *key_info= table->key_info;
+  KeyInfo *key_info= table->key_info;
   bool rc= true;
 
   /* Let new create options override the old ones */
@@ -451,7 +451,7 @@ static bool mysql_prepare_alter_table(Session *session,
       continue;
     }
 
-    KEY_PART_INFO *key_part= key_info->key_part;
+    KeyPartInfo *key_part= key_info->key_part;
     key_parts.empty();
     for (uint32_t j= 0; j < key_info->key_parts; j++, key_part++)
     {
@@ -1390,7 +1390,7 @@ copy_data_between_tables(Table *from, Table *to,
   Session *session= current_session;
   uint32_t length= 0;
   SORT_FIELD *sortorder;
-  READ_RECORD info;
+  ReadRecord info;
   TableList   tables;
   List<Item>   fields;
   List<Item>   all_fields;
@@ -1478,7 +1478,7 @@ copy_data_between_tables(Table *from, Table *to,
 
   /* Tell handler that we have values for all columns in the to table */
   to->use_all_columns();
-  init_read_record(&info, session, from, (optimizer::SqlSelect *) 0, 1,1);
+  info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
   if (ignore)
     to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   session->row_count= 0;
@@ -1527,7 +1527,7 @@ copy_data_between_tables(Table *from, Table *to,
     else
       found_count++;
   }
-  end_read_record(&info);
+  info.end_read_record();
   from->free_io_cache();
   delete [] copy;				// This is never 0
 

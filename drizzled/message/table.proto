@@ -45,12 +45,6 @@ message Table {
     optional RowType row_type = 20;
   }
 
-  message TableStats {
-    optional uint32 avg_row_length = 1;
-    optional uint64 max_rows = 2;
-    optional uint32 min_rows = 3;
-  }
-
   message ForeignKeyConstraint {
     required string name = 1;
     required Field dependent = 2;
@@ -71,12 +65,6 @@ message Table {
       DATE = 7;
       TIMESTAMP = 9;
       DATETIME = 10;
-    }
-
-    enum FieldFormatType {
-      DefaultFormat= 0;
-      FixedFormat= 1;
-      DynamicFormat= 2;
     }
 
     message FieldOptions {
@@ -117,7 +105,6 @@ message Table {
 
     required string name = 1;
     required FieldType type = 2;
-    optional FieldFormatType format = 3;
     optional FieldOptions options = 4;
     optional FieldConstraints constraints = 5;
     optional NumericFieldOptions numeric_options = 6;
@@ -147,7 +134,7 @@ message Table {
       optional uint32 key_type = 101; /* THIS MUST DIE. Along with pack_flag*/
     }
 
-    message IndexOptions {
+    message Options {
       optional bool pack_key = 1;
       optional bool binary_pack_key = 2;
       optional bool var_length_key = 3;
@@ -163,7 +150,7 @@ message Table {
     required IndexType type = 4 [default = UNKNOWN_INDEX];
     required uint32 key_length = 5;
     repeated IndexPart index_part = 6;
-    optional IndexOptions options= 7;
+    optional Options options= 7;
     optional string comment = 8;
   }
 
@@ -176,7 +163,6 @@ message Table {
 
   repeated ForeignKeyConstraint fk_constraint = 8;
   optional TableOptions options = 9;
-  optional TableStats stats = 10;
   required uint64 creation_timestamp= 11 [default = 0];
   required uint64 update_timestamp= 12 [default = 0];
   optional string catalog = 13;
