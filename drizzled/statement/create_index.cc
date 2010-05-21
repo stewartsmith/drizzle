@@ -71,6 +71,7 @@ bool statement::CreateIndex::execute()
                      identifier,
                      identifier,
                      &create_info, 
+                     original_table_message,
                      create_table_message, 
                      first_table,
                      &alter_info,
@@ -88,12 +89,14 @@ bool statement::CreateIndex::execute()
                        identifier,
                        identifier,
                        &create_info, 
+                       original_table_message,
                        create_table_message, 
                        first_table,
                        &alter_info,
                        0, (order_st*) 0, 0);
     }
   }
+
   return res;
 }
 

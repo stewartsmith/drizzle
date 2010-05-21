@@ -60,9 +60,10 @@ typedef struct st_columndef MI_COLUMNDEF;
  */
 class Table 
 {
-public:
 
+public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
+
   Field **field; /**< Pointer to fields collection */
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
@@ -87,7 +88,7 @@ public:
 
   unsigned char *record[2]; /**< Pointer to "records" */
   unsigned char *insert_values; /* used by INSERT ... UPDATE */
-  KEY  *key_info; /**< data of keys in database */
+  KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
   Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
@@ -236,7 +237,44 @@ public:
   uint32_t quick_key_parts[MAX_KEY];
   uint32_t quick_n_ranges[MAX_KEY];
 
+private:
   memory::Root mem_root;
+
+  void init_mem_root()
+  {
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  }
+public:
+  memory::Root *getMemRoot()
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return &mem_root;
+  }
+
+  void *alloc_root(size_t arg)
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return mem_root.alloc_root(arg);
+  }
+
+  char *strmake_root(const char *str_arg, size_t len_arg)
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return mem_root.strmake_root(str_arg, len_arg);
+  }
+
   filesort_info_st sort;
 
   Table();
@@ -255,6 +293,7 @@ public:
 
   /* SHARE methods */
   inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
+  inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }
@@ -287,9 +326,8 @@ public:
   }
 
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
-  bool create_myisam_tmp_table(KEY *keyinfo,
+  bool create_myisam_tmp_table(KeyInfo *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo,
                                uint64_t options);
@@ -507,9 +545,13 @@ public:
     return output;  // for multiple << operators.
   }
 
-  virtual bool ownsShare()
+protected:
+  bool is_placeholder_created;
+
+public:
+  bool isPlaceHolder()
   {
-    return false;
+    return is_placeholder_created;
   }
 };
 

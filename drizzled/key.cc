@@ -57,11 +57,11 @@ namespace drizzled
        key_length is set to length of key before (not including) field
 */
 
-int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *field,
+int find_ref_key(KeyInfo *key, uint32_t key_count, unsigned char *record, Field *field,
                  uint32_t *key_length, uint32_t *keypart)
 {
   register int i;
-  register KEY *key_info;
+  register KeyInfo *key_info;
   uint32_t fieldpos;
 
   fieldpos= field->offset(record);
@@ -84,7 +84,7 @@ int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *fie
        i++, key_info++)
   {
     uint32_t j;
-    KEY_PART_INFO *key_part;
+    KeyPartInfo *key_part;
     *key_length=0;
     for (j=0, key_part=key_info->key_part ;
 	 j < key_info->key_parts ;
@@ -102,11 +102,11 @@ int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *fie
 }
 
 
-void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
+void key_copy(unsigned char *to_key, unsigned char *from_record, KeyInfo *key_info,
               unsigned int key_length)
 {
   uint32_t length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
 
   if (key_length == 0)
     key_length= key_info->key_length;
@@ -145,10 +145,10 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
   Zero the null components of key tuple.
 */
 
-void key_zero_nulls(unsigned char *tuple, KEY *key_info)
+void key_zero_nulls(unsigned char *tuple, KeyInfo *key_info)
 {
-  KEY_PART_INFO *key_part= key_info->key_part;
-  KEY_PART_INFO *key_part_end= key_part + key_info->key_parts;
+  KeyPartInfo *key_part= key_info->key_part;
+  KeyPartInfo *key_part_end= key_part + key_info->key_parts;
   for (; key_part != key_part_end; key_part++)
   {
     if (key_part->null_bit && *tuple)
@@ -170,11 +170,11 @@ void key_zero_nulls(unsigned char *tuple, KEY *key_info)
   @param key_length  specifies length of all keyparts that will be restored
 */
 
-void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
+void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key_info,
                  uint16_t key_length)
 {
   uint32_t length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
 
   if (key_length == 0)
   {
@@ -262,7 +262,7 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
 bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t key_length)
 {
   uint32_t store_length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
   const unsigned char *key_end= key + key_length;;
 
   for (key_part=table->key_info[idx].key_part;
@@ -328,7 +328,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 
 void key_unpack(String *to, Table *table, uint32_t idx)
 {
-  KEY_PART_INFO *key_part,*key_part_end;
+  KeyPartInfo *key_part,*key_part_end;
   Field *field;
   String tmp;
 
@@ -410,9 +410,9 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     If table handler has primary key as part of the index, check that primary
     key is not updated
   */
-  if (idx != table->s->primary_key && table->s->primary_key < MAX_KEY &&
+  if (idx != table->getShare()->primary_key && table->getShare()->primary_key < MAX_KEY &&
       (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
-    return is_key_used(table, table->s->primary_key, fields);
+    return is_key_used(table, table->getShare()->primary_key, fields);
   return 0;
 }
 
@@ -431,7 +431,7 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     -   1		Key is larger than range
 */
 
-int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length)
+int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length)
 {
   uint32_t store_length;
 

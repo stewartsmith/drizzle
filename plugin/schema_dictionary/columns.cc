@@ -115,6 +115,8 @@ bool ColumnsTool::Generator::populate()
 void ColumnsTool::Generator::fill()
 {
   /* TABLE_SCHEMA */
+  assert(getTableProto().schema().length());
+  assert(getTableProto().schema().c_str());
   push(getTableProto().schema());
 
   /* TABLE_NAME */

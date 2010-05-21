@@ -372,7 +372,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 88
+%expect 94
 
 /*
    Comments for TOKENS.
@@ -417,8 +417,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BIN_NUM
 %token  BIT_SYM                       /* MYSQL-FUNC */
 %token  BLOB_SYM                      /* SQL-2003-R */
-%token  BLOCK_SIZE_SYM
-%token  BLOCK_SYM
 %token  BOOLEAN_SYM                   /* SQL-2003-R */
 %token  BOOL_SYM
 %token  BOTH                          /* SQL-2003-R */
@@ -873,8 +871,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <interval_time_st> interval_time_stamp
 
-%type <row_type> row_types
-
 %type <column_format_type> column_format_types
 
 %type <tx_isolation> isolation_types
@@ -1190,6 +1186,42 @@ opt_as:
 opt_create_database_options:
           /* empty */ {}
         | default_collation_schema {}
+        | opt_database_custom_options {}
+        ;
+
+opt_database_custom_options:
+        custom_database_option
+        | custom_database_option ',' opt_database_custom_options
+        ;
+
+custom_database_option:
+          ident_or_text
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+        }
+        | ident_or_text equal ident_or_text
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+          opt->set_state($3.str);
+        }
+        | ident_or_text equal ulonglong_num
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          char number_as_string[22];
+
+          snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
+
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+          opt->set_state(number_as_string);
+        }
         ;
 
 opt_table_options:
@@ -1216,18 +1248,18 @@ create_table_options:
           create_table_option
         | create_table_option     create_table_options
         | create_table_option ',' create_table_options
-        ;
 
 create_table_option:
-          ENGINE_SYM opt_equal ident_or_text
+          custom_engine_option;
+
+custom_engine_option:
+        ENGINE_SYM equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            message::Table::StorageEngine *protoengine;
-            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine();
 
             statement->is_engine_set= true;
 
-            protoengine->set_name($3.str);
+            ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->set_name($3.str);
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
@@ -1247,41 +1279,21 @@ create_table_option:
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
 	    tableopts->set_auto_increment_value($3);
           }
-        | ROW_FORMAT_SYM opt_equal row_types
+        |  ident_or_text equal ident_or_text
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            message::Table::TableOptions *table_options= statement->createTableMessage().mutable_options();
+	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
 
-            statement->create_info.row_type= $3;
-            statement->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
-            statement->alter_info.flags.set(ALTER_ROW_FORMAT);
+            opt->set_name($1.str);
+            opt->set_state($3.str);
+          }
+        | ident_or_text equal ulonglong_num
+          {
+            char number_as_string[22];
+            snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
 
-            switch(statement->create_info.row_type)
-            {
-            case ROW_TYPE_DEFAULT:
-              /* No use setting a default row type... just adds redundant info to message */
-              break;
-            case ROW_TYPE_FIXED:
-              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_FIXED);
-              break;
-            case ROW_TYPE_DYNAMIC:
-              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_DYNAMIC);
-              break;
-            case ROW_TYPE_COMPRESSED:
-              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPRESSED);
-              break;
-            case ROW_TYPE_REDUNDANT:
-              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_REDUNDANT);
-              break;
-            case ROW_TYPE_COMPACT:
-              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_COMPACT);
-              break;
-            case ROW_TYPE_PAGE:
-              table_options->set_row_type(message::Table::TableOptions::ROW_TYPE_PAGE);
-              break;
-            default:
-              abort();
-            }
+	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
+            opt->set_name($1.str);
+            opt->set_state(number_as_string);
           }
         | default_collation
         ;
@@ -1320,15 +1332,6 @@ column_format_types:
         | FIXED_SYM   { $$= COLUMN_FORMAT_TYPE_FIXED; }
         | DYNAMIC_SYM { $$= COLUMN_FORMAT_TYPE_DYNAMIC; };
 
-row_types:
-          DEFAULT        { $$= ROW_TYPE_DEFAULT; }
-        | FIXED_SYM      { $$= ROW_TYPE_FIXED; }
-        | DYNAMIC_SYM    { $$= ROW_TYPE_DYNAMIC; }
-        | COMPRESSED_SYM { $$= ROW_TYPE_COMPRESSED; }
-        | REDUNDANT_SYM  { $$= ROW_TYPE_REDUNDANT; }
-        | COMPACT_SYM    { $$= ROW_TYPE_COMPACT; }
-        | PAGE_SYM       { $$= ROW_TYPE_PAGE; }
-        ;
 
 opt_select_from:
           opt_limit_clause {}
@@ -5798,8 +5801,6 @@ keyword_sp:
         | AVG_ROW_LENGTH           {}
         | AVG_SYM                  {}
         | BIT_SYM                  {}
-        | BLOCK_SIZE_SYM           {}
-        | BLOCK_SYM                {}
         | BOOL_SYM                 {}
         | BOOLEAN_SYM              {}
         | BTREE_SYM                {}

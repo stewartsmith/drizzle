@@ -68,7 +68,7 @@ void optimizer::add_key_part(DYNAMIC_ARRAY *keyuse_array,
   }
 }
 
-void optimizer::add_key_fields_for_nj(JOIN *join,
+void optimizer::add_key_fields_for_nj(Join *join,
                                       TableList *nested_join_table,
                                       optimizer::KeyField **end,
                                       uint32_t *and_level,
@@ -413,7 +413,7 @@ void optimizer::add_key_equal_fields(optimizer::KeyField **key_fields,
   }
 }
 
-void optimizer::add_key_fields(JOIN *join,
+void optimizer::add_key_fields(Join *join,
                                optimizer::KeyField **key_fields,
                                uint32_t *and_level,
                                COND *cond,
