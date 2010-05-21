@@ -401,6 +401,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/truncate.h \
 			      drizzled/statement/unlock_tables.h \
 			      drizzled/statement/update.h \
+ 			      drizzled/statistics_variables.h \
 			      drizzled/stored_key.h \
 			      drizzled/strfunc.h \
 			      drizzled/structs.h \

@@ -67,6 +67,7 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 #include "config.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/statistics_variables.h"
 
 #include "thr_lock.h"
 #include "drizzled/internal/m_string.h"
@@ -92,7 +93,6 @@ namespace drizzled
 {
 
 bool thr_lock_inited= false;
-uint32_t locks_immediate = 0L, locks_waited = 0L;
 uint64_t table_lock_wait_timeout;
 static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
@@ -201,7 +201,7 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
     wait->last= &data->next;
   }
 
-  statistic_increment(locks_waited, &internal::THR_LOCK_lock);
+  status_var_increment(current_global_counters.locks_waited);
 
   /* Set up control struct to allow others to abort locks */
   thread_var->current_mutex= &data->lock->mutex;
@@ -309,7 +309,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	  lock->read_no_write_count++;
 	if (lock->get_status)
 	  (*lock->get_status)(data->status_param, 0);
-	statistic_increment(locks_immediate,&internal::THR_LOCK_lock);
+        status_var_increment(current_global_counters.locks_immediate);
 	goto end;
       }
       if (lock->write.data->type == TL_WRITE_ONLY)
@@ -331,7 +331,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	(*lock->get_status)(data->status_param, 0);
       if (lock_type == TL_READ_NO_INSERT)
 	lock->read_no_write_count++;
-      statistic_increment(locks_immediate,&internal::THR_LOCK_lock);
+      status_var_increment(current_global_counters.locks_immediate);
       goto end;
     }
     /*
@@ -380,7 +380,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	lock->write.last= &data->next;
 	if (data->lock->get_status)
 	  (*data->lock->get_status)(data->status_param, 0);
-	statistic_increment(locks_immediate,&internal::THR_LOCK_lock);
+        status_var_increment(current_global_counters.locks_immediate);
 	goto end;
       }
     }
@@ -410,7 +410,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	  lock->write.last= &data->next;
 	  if (data->lock->get_status)
 	    (*data->lock->get_status)(data->status_param, concurrent_insert);
-	  statistic_increment(locks_immediate,&internal::THR_LOCK_lock);
+          status_var_increment(current_global_counters.locks_immediate);
 	  goto end;
 	}
       }
