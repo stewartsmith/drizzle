@@ -97,7 +97,7 @@ drizzled/message/transaction.pb.cc
 drizzled/message/transaction.pb.h
 drizzled/message/transaction_reader
 drizzled/message/transaction_writer
-drizzled/plugin/load_list.h
+drizzled/module/load_list.h
 drizzled/plugin/version.h
 drizzled/schema.pb.cc
 drizzled/schema.pb.h
