@@ -532,7 +532,7 @@ bool Session::initGlobals()
   if (storeGlobals())
   {
     disconnect(ER_OUT_OF_RESOURCES, true);
-    statistic_increment(aborted_connects, &LOCK_status);
+    status_var_increment(current_global_counters.aborted_connects);
     return true;
   }
   return false;
@@ -564,8 +564,10 @@ bool Session::schedule()
 
   connection_count.increment();
 
-  if (connection_count > max_used_connections)
-    max_used_connections= connection_count;
+  if (connection_count > current_global_counters.max_used_connections)
+  {
+    current_global_counters.max_used_connections= connection_count;
+  }
 
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
@@ -580,7 +582,7 @@ bool Session::schedule()
 
     killed= Session::KILL_CONNECTION;
 
-    statistic_increment(aborted_connects, &LOCK_status);
+    status_var_increment(current_global_counters.aborted_connects);
 
     /* Can't use my_error() since store_globals has not been called. */
     /* TODO replace will better error message */
@@ -628,7 +630,7 @@ bool Session::authenticate()
   if (client->authenticate())
     return false;
 
-  statistic_increment(aborted_connects, &LOCK_status);
+  status_var_increment(current_global_counters.aborted_connects);
   return true;
 }
 
@@ -1611,7 +1613,9 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
   /* If necessary, log any aborted or unauthorized connections */
   if (killed || client->wasAborted())
-    statistic_increment(aborted_threads, &LOCK_status);
+  {
+    status_var_increment(current_global_counters.aborted_threads);
+  }
 
   if (client->wasAborted())
   {
@@ -1740,7 +1744,6 @@ void Session::nukeTable(Table *table)
 
 /** Clear most status variables. */
 extern time_t flush_status_time;
-extern uint32_t max_used_connections;
 
 void Session::refresh_status()
 {
@@ -1758,7 +1761,7 @@ void Session::refresh_status()
   /* Reset the counters of all key caches (default and named). */
   reset_key_cache_counters();
   flush_status_time= time((time_t*) 0);
-  max_used_connections= 1; /* We set it to one, because we know we exist */
+  current_global_counters.max_used_connections= 1; /* We set it to one, because we know we exist */
   pthread_mutex_unlock(&LOCK_status);
 }
 
