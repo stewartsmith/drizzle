@@ -217,7 +217,7 @@ char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-const string opt_scheduler_default("multi_thread");
+char *opt_scheduler_default;
 char *opt_scheduler= NULL;
 
 size_t my_thread_stack_size= 65536;
@@ -995,6 +995,7 @@ int init_server_components(plugin::Registry &plugins)
   else
   {
     scheduler_name= opt_scheduler_default;
+    opt_scheduler= opt_scheduler_default; 
   }
 
   if (plugin::Scheduler::setPlugin(scheduler_name))
@@ -1554,6 +1555,7 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
+  opt_scheduler_default= (char*) "multi_thread";
 
   /* Variables that depends on compile options */
 #ifdef HAVE_BROKEN_REALPATH
