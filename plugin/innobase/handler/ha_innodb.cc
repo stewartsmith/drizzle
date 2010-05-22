@@ -127,6 +127,7 @@ extern "C" {
 
 #include "ha_innodb.h"
 #include "data_dictionary.h"
+#include "internal_dictionary.h"
 #include "handler0vars.h"
 
 #include <iostream>
@@ -2148,6 +2149,8 @@ innobase_change_buffering_inited_ok:
 
   innodb_lock_waits_tool= new(std::nothrow)InnodbTrxTool("INNODB_LOCK_WAITS");
   context.add(innodb_lock_waits_tool);
+
+  context.add(new(std::nothrow)InnodbInternalTables());
 
   /* Get the current high water mark format. */
   innobase_file_format_check = (char*) trx_sys_file_format_max_get();

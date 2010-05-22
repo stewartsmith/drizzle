@@ -240,6 +240,81 @@ loop:
 	goto loop;
 }
 
+/*
+  Send data to callback function .
+*/
+
+UNIV_INTERN void dict_print_with_callback(dict_print_callback func, void *func_arg)
+{
+	dict_table_t*	sys_tables;
+	dict_index_t*	sys_index;
+	btr_pcur_t	pcur;
+	const rec_t*	rec;
+	const byte*	field;
+	ulint		len;
+	mtr_t		mtr;
+
+	/* Enlarge the fatal semaphore wait timeout during the InnoDB table
+	monitor printout */
+
+	mutex_enter(&kernel_mutex);
+	srv_fatal_semaphore_wait_threshold += 7200; /* 2 hours */
+	mutex_exit(&kernel_mutex);
+
+	mutex_enter(&(dict_sys->mutex));
+
+	mtr_start(&mtr);
+
+	sys_tables = dict_table_get_low("SYS_TABLES");
+	sys_index = UT_LIST_GET_FIRST(sys_tables->indexes);
+
+	btr_pcur_open_at_index_side(TRUE, sys_index, BTR_SEARCH_LEAF, &pcur,
+				    TRUE, &mtr);
+loop:
+	btr_pcur_move_to_next_user_rec(&pcur, &mtr);
+
+	rec = btr_pcur_get_rec(&pcur);
+
+	if (!btr_pcur_is_on_user_rec(&pcur)) {
+		/* end of index */
+
+		btr_pcur_close(&pcur);
+		mtr_commit(&mtr);
+
+		mutex_exit(&(dict_sys->mutex));
+
+		/* Restore the fatal semaphore wait timeout */
+
+		mutex_enter(&kernel_mutex);
+		srv_fatal_semaphore_wait_threshold -= 7200; /* 2 hours */
+		mutex_exit(&kernel_mutex);
+
+		return;
+	}
+
+	field = rec_get_nth_field_old(rec, 0, &len);
+
+	if (!rec_get_deleted_flag(rec, 0)) {
+
+		/* We found one */
+
+		char*	table_name = mem_strdupl((char*) field, len);
+
+		btr_pcur_store_position(&pcur, &mtr);
+
+		mtr_commit(&mtr);
+
+                func(func_arg, table_name);
+		mem_free(table_name);
+
+		mtr_start(&mtr);
+
+		btr_pcur_restore_position(BTR_SEARCH_LEAF, &pcur, &mtr);
+	}
+
+	goto loop;
+}
+
 /********************************************************************//**
 Determine the flags of a table described in SYS_TABLES.
 @return compressed page size in kilobytes; or 0 if the tablespace is
