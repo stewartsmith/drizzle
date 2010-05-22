@@ -54,6 +54,7 @@
 #include "drizzled/charset.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/drizzled.h"
+#include "drizzled/module/registry.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -499,8 +500,8 @@ void clean_up(bool print_message)
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  plugin_shutdown(plugins);
+  module::Registry &modules= module::Registry::singleton();
+  modules.shutdownModules();
   xid_cache_free();
   free_status_vars();
   if (defaults_argv)
@@ -922,7 +923,7 @@ static int init_thread_environment()
 }
 
 
-int init_server_components(plugin::Registry &plugins)
+int init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that

@@ -103,7 +103,7 @@ AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
 
 dnl Has to be done late, as the plugin may need to check for existence of
 dnl functions tested above
-PANDORA_PLUGINS([drizzled/plugin/load_list.h])
+PANDORA_PLUGINS([drizzled/module/load_list.h])
 
 dnl GCC Precompiled Header Support
 dnl re-enable later

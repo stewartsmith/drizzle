@@ -33,7 +33,7 @@ bool archive_aio_state(void)
   return archive_use_aio;
 }
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
 
   archive_engine= new ArchiveEngine();

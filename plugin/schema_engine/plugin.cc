@@ -29,7 +29,7 @@ using namespace drizzled;
 
 static drizzled::plugin::StorageEngine *schema_plugin= NULL;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   schema_plugin= new(std::nothrow) Schema();
 

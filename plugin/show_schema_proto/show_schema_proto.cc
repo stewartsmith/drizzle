@@ -106,7 +106,7 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
 plugin::Create_function<ShowSchemaProtoFunction> *show_schema_proto_func= NULL;
 
-static int initialize(plugin::Context &context)
+static int initialize(module::Context &context)
 {
   show_schema_proto_func= new plugin::Create_function<ShowSchemaProtoFunction>("show_schema_proto");
   context.add(show_schema_proto_func);

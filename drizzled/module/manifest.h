@@ -17,16 +17,16 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_MANIFEST_H
-#define DRIZZLED_PLUGIN_MANIFEST_H
+#ifndef DRIZZLED_MODULE_MANIFEST_H
+#define DRIZZLED_MODULE_MANIFEST_H
 
 /**
  * @file Defines a Plugin Manifest
  *
- * A plugin::Manifest is the struct contained in every Plugin Library.
+ * A module::Manifest is the struct contained in every Plugin Library.
  */
 
-#include "drizzled/plugin/context.h"
+#include "drizzled/module/context.h"
 
 namespace drizzled
 {
@@ -44,10 +44,10 @@ enum plugin_license_type {
 };
 
 
-namespace plugin
+namespace module
 {
 
-typedef int (*initialize_func_t)(Context &);
+typedef int (*initialize_func_t)(::drizzled::module::Context &);
 
 /**
  * Plugin Manfiest
@@ -70,7 +70,7 @@ struct Manifest
   void *reserved1;           /* reserved for dependency checking             */
 };
 
-} /* namespace plugin */
+} /* namespace module */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_MANIFEST_H */
+#endif /* DRIZZLED_MODULE_MANIFEST_H */

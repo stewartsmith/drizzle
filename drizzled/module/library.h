@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_PLUGIN_LIBRARY_H
-#define DRIZZLED_PLUGIN_LIBRARY_H
+#ifndef DRIZZLED_MODULE_LIBRARY_H
+#define DRIZZLED_MODULE_LIBRARY_H
 
 /**
  * @file Defines a Plugin Library Wrapper
@@ -32,7 +32,7 @@
 
 namespace drizzled
 {
-namespace plugin
+namespace module
 {
 
 class Manifest;
@@ -53,6 +53,7 @@ class Library
   Library(const std::string &name_arg,
           void *handle_arg,
           const Manifest *manifest_arg);
+
 public:
   ~Library();
 
@@ -66,10 +67,11 @@ public:
     return manifest;
   }
 
-  static Library *loadLibrary(const std::string &plugin_name);
+  static const std::string getLibraryPath(const std::string &plugin_name);
+  static Library *loadLibrary(const std::string &plugin_name, bool builtin);
 };
 
-} /* namespace plugin */
+} /* namespace module */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_PLUGIN_LIBRARY_H */
+#endif /* DRIZZLED_MODULE_LIBRARY_H */

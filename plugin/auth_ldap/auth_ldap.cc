@@ -402,7 +402,7 @@ bool AuthLDAP::verifyMySQLHash(const PasswordEntry &password,
   return memcmp(local_scrambled_password, scrambled_password_check, SHA1_DIGEST_LENGTH) == 0;
 }
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   AuthLDAP *auth_ldap= new AuthLDAP("auth_ldap");
   if (! auth_ldap->initialize())

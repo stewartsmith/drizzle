@@ -93,7 +93,7 @@ void ReverseFunction::fix_length_and_dec()
 
 plugin::Create_function<ReverseFunction> *reverse_function= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   reverse_function= new plugin::Create_function<ReverseFunction>("reverse");
   context.add(reverse_function);

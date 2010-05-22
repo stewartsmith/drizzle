@@ -482,7 +482,7 @@ BlackholeShare::~BlackholeShare()
 
 static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 
-static int blackhole_init(drizzled::plugin::Context &context)
+static int blackhole_init(drizzled::module::Context &context)
 {
 
   blackhole_engine= new BlackholeEngine("BLACKHOLE");

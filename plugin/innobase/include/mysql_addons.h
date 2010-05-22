@@ -33,6 +33,12 @@ Created November 07, 2007 Vasil Dimov
 *******************************************************/
 
 #if defined(BUILD_DRIZZLE)
+#if defined(__cplusplus)
+extern "C"
+{
+#else
+#include <stdbool.h>
+#endif
 /**
  *
   Return the thread id of a user thread
@@ -44,4 +50,23 @@ Created November 07, 2007 Vasil Dimov
 extern "C"
 #endif
 unsigned long session_get_thread_id(const void *session);
+
+/**
+  Check if a user thread is running a non-transactional update
+  @param session  user thread
+  @retval 0 the user thread is not running a non-transactional update
+  @retval 1 the user thread is running a non-transactional update
+*/
+int session_non_transactional_update(const void *session);
+
+/**
+  Mark transaction to rollback and mark error as fatal to a sub-statement.
+  @param  session   Thread handle
+  @param  all   TRUE <=> rollback main transaction.
+*/
+void session_mark_transaction_to_rollback(void *session, bool all);
+
+#if defined(__cplusplus)
+}
+#endif
 #endif

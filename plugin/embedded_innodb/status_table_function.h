@@ -19,6 +19,6 @@
 #ifndef PLUGIN_EMBEDDED_INNODB_STATUS_TABLE_FUNCTION_H
 #define PLUGIN_EMBEDDED_INNODB_STATUS_TABLE_FUNCTION_H
 
-int status_table_function_initialize(drizzled::plugin::Context &context);
+int status_table_function_initialize(drizzled::module::Context &context);
 
 #endif /* PLUGIN_EMBEDDED_INNODB_STATUS_TABLE_FUNCTION_H */

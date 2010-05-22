@@ -139,7 +139,7 @@ void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
   }
 }
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   context.add(new Function("FunctionEngine"));
 
