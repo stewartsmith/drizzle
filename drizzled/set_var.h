@@ -69,8 +69,6 @@ extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
 extern uint32_t global_thread_id;
-extern uint64_t aborted_threads;
-extern uint64_t aborted_connects;
 extern uint64_t table_cache_size;
 extern uint64_t max_connect_errors;
 extern uint32_t back_log;

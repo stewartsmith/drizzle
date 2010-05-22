@@ -36,7 +36,6 @@ class Registry;
 }
 
 extern std::bitset<12> test_flags;
-extern uint32_t max_used_connections;
 extern atomic<uint32_t> connection_count;
 extern bool calling_initgroups;
 extern const char *load_default_groups[];
