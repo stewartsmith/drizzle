@@ -2321,7 +2321,7 @@ static char* innodb_data_file_path= NULL;
 static int64_t innodb_log_file_size;
 static int64_t innodb_log_files_in_group;
 
-static int embedded_innodb_init(drizzled::plugin::Context &context)
+static int embedded_innodb_init(drizzled::module::Context &context)
 {
   ib_err_t err;
 

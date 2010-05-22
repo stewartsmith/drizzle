@@ -122,6 +122,7 @@ extern "C" {
 #include "ha_prototypes.h"
 #include "ut0mem.h"
 #include "ibuf0ibuf.h"
+#include "mysql_addons.h"
 }
 
 #include "ha_innodb.h"
@@ -1128,6 +1129,8 @@ convert_error_code_to_mysql(
   }
 }
 
+
+
 /*************************************************************//**
 If you want to print a session that is not associated with the current thread,
 you must call this function before reserving the InnoDB kernel_mutex, to
@@ -1830,7 +1833,7 @@ static
 int
 innobase_init(
 /*==========*/
-  plugin::Context &context) /*!< in: Drizzle Plugin Context */
+  module::Context &context) /*!< in: Drizzle Plugin Context */
 {
   static char current_dir[3];   /*!< Set if using current lib */
   int   err;

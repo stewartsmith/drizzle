@@ -23,7 +23,7 @@
 
 using namespace drizzled;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   context.add(new ShowColumns());
   context.add(new ShowIndexes());

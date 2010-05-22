@@ -19,10 +19,11 @@
 
 #include "config.h"
 #include "drizzled/plugin/query_cache.h"
-#include "drizzled/plugin/registry.h"
+#include "drizzled/errmsg_print.h"
 
 #include "drizzled/gettext.h"
 
+#include <algorithm>
 #include <vector>
 
 class Session;

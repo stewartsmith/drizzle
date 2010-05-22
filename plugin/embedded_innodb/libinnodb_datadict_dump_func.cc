@@ -167,7 +167,7 @@ String *LibinnodbDatadictDumpFunction::val_str(String *str)
 
 plugin::Create_function<LibinnodbDatadictDumpFunction> *libinnodb_datadict_dump_func= NULL;
 
-int libinnodb_datadict_dump_func_initialize(plugin::Context &context)
+int libinnodb_datadict_dump_func_initialize(module::Context &context)
 {
   libinnodb_datadict_dump_func= new plugin::Create_function<LibinnodbDatadictDumpFunction>("libinnodb_datadict_dump");
   context.add(libinnodb_datadict_dump_func);

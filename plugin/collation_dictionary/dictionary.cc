@@ -26,7 +26,7 @@ using namespace drizzled;
 static CharacterSetsTool *character_sets;
 static CollationsTool *collations;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   character_sets= new(std::nothrow)CharacterSetsTool;
   collations= new(std::nothrow)CollationsTool;

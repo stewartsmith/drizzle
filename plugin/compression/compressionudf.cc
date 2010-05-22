@@ -28,7 +28,7 @@ plugin::Create_function<Item_func_uncompress> *uncompressudf= NULL;
 plugin::Create_function<Item_func_uncompressed_length>
   *uncompressed_lengthudf= NULL;
 
-static int compressionudf_plugin_init(plugin::Context &context)
+static int compressionudf_plugin_init(module::Context &context)
 {
   compressudf= new plugin::Create_function<Item_func_compress>("compress");
   uncompressudf=

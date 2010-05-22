@@ -254,6 +254,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/memory/multi_malloc.h \
 			      drizzled/memory/root.h \
 			      drizzled/memory/sql_alloc.h \
+			      drizzled/module/context.h \
+			      drizzled/module/library.h \
+			      drizzled/module/manifest.h \
+			      drizzled/module/module.h \
+			      drizzled/module/registry.h \
 			      drizzled/my_hash.h \
 			      drizzled/name_resolution_context.h \
 			      drizzled/name_resolution_context_state.h \
@@ -294,24 +299,19 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/plugin/authentication.h \
 			      drizzled/plugin/authorization.h \
 			      drizzled/plugin/client.h \
-			      drizzled/plugin/context.h \
 			      drizzled/plugin/daemon.h \
 			      drizzled/plugin/error_message.h \
 			      drizzled/plugin/event_observer.h \
 			      drizzled/plugin/function.h \
-			      drizzled/plugin/library.h \
 			      drizzled/plugin/listen.h \
 			      drizzled/plugin/listen_tcp.h \
 			      drizzled/plugin/logging.h \
-			      drizzled/plugin/manifest.h \
-			      drizzled/plugin/module.h \
 			      drizzled/plugin/monitored_in_transaction.h \
 			      drizzled/plugin/null_client.h \
 			      drizzled/plugin/plugin.h \
 			      drizzled/plugin/query_cache.h \
 			      drizzled/plugin/query_rewrite.h \
 			      drizzled/plugin/replication.h \
-			      drizzled/plugin/registry.h \
 			      drizzled/plugin/scheduler.h \
 			      drizzled/plugin/storage_engine.h \
 			      drizzled/plugin/table_function.h \
@@ -647,6 +647,9 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/key_map.cc \
 				 drizzled/lock.cc \
 				 drizzled/lookup_symbol.cc \
+				 drizzled/module/library.cc \
+				 drizzled/module/loader.cc \
+				 drizzled/module/registry.cc \
 				 drizzled/my_getsystime.cc \
 				 drizzled/my_hash.cc \
 				 drizzled/name_resolution_context_state.cc \
@@ -676,16 +679,13 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/plugin/error_message.cc \
 				 drizzled/plugin/event_observer.cc  \
 				 drizzled/plugin/function.cc \
-				 drizzled/plugin/library.cc \
 				 drizzled/plugin/listen.cc \
 				 drizzled/plugin/listen_tcp.cc \
-				 drizzled/plugin/loader.cc \
 				 drizzled/plugin/logging.cc \
 				 drizzled/plugin/monitored_in_transaction.cc \
 				 drizzled/plugin/plugin.cc \
 				 drizzled/plugin/query_cache.cc \
 				 drizzled/plugin/query_rewrite.cc \
-				 drizzled/plugin/registry.cc \
 				 drizzled/plugin/scheduler.cc \
 				 drizzled/plugin/schema_engine.cc \
 				 drizzled/plugin/storage_engine.cc \

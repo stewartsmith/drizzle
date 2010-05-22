@@ -91,7 +91,7 @@ String *Md5Function::val_str(String *str)
 
 plugin::Create_function<Md5Function> *md5udf= NULL;
 
-static int initialize(plugin::Context &context)
+static int initialize(module::Context &context)
 {
   /* Initialize libgcrypt */
   if (not gcry_check_version(GCRYPT_VERSION))
