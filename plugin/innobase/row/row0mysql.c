@@ -3473,6 +3473,10 @@ loop:
 	while ((table_name = dict_get_first_table_name_in_db(name))) {
 		ut_a(memcmp(table_name, name, namelen) == 0);
 
+                // For the time being I would like to see how often we see
+                // lost temporary tables. --Brian
+                fprintf(stderr, "Dropping lost temporary table %s\n", table_name);
+
 		table = dict_table_get_low(table_name);
 
 		ut_a(table);

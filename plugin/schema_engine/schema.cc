@@ -82,6 +82,9 @@ void Schema::prime()
     CachedDirectory::Entry *entry= *fileIter;
     message::Schema schema_message;
 
+    if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
+      continue;
+
     if (readSchemaFile(entry->filename, schema_message))
     {
       SchemaIdentifier schema_identifier(schema_message.name());
