@@ -19,13 +19,17 @@
  */
 
 #include "config.h"
-
+#include CSTDINT_H
+#include <boost/program_options.hpp>
+namespace po= boost::program_options;
 #include "azio.h"
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <fcntl.h>
+#include <iostream>
+#include <string>
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/option.h"
