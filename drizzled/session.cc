@@ -108,7 +108,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg) :
 int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  int fd = internal::create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
+  int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
   if (fd >= 0) {
     unlink(filename);
   }

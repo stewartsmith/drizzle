@@ -793,7 +793,7 @@ static void make_internal_temporary_table_path(Session *session, char *path)
   snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
            session->thread_id, session->tmp_table++);
 
-  internal::fn_format(path, path, drizzle_tmpdir, "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
+  internal::fn_format(path, path, drizzle_tmpdir.c_str(), "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 }
 
 Table *
