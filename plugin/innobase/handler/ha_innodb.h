@@ -66,10 +66,10 @@ class ha_innobase: public Cursor
 	INNOBASE_SHARE*	share;		/*!< information for MySQL
 					table locking */
 
-	unsigned char*	upd_buff;	/*!< buffer used in updates */
-	unsigned char*	key_val_buff;	/*!< buffer used in converting
-					search key values from MySQL format
-					to Innodb format */
+        std::vector<unsigned char> upd_buff; /*!< buffer used in updates */
+        std::vector<unsigned char> key_val_buff; /*!< buffer used in converting
+                                                     search key values from MySQL format
+                                                     to Innodb format */
 	ulong		upd_and_key_val_buff_len;
 					/* the length of each of the previous
 					two buffers */
