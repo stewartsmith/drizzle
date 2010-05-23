@@ -56,7 +56,7 @@ static const std::vector<std::string> empty_aliases;
 extern struct system_variables max_system_variables;
 extern size_t table_def_size;
 
-extern char *drizzle_tmpdir;
+extern std::string drizzle_tmpdir;
 extern const char *first_keyword;
 extern const char *in_left_expr_name;
 extern const char *in_additional_cond;

@@ -319,7 +319,7 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       internal::IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, drizzle_tmpdir,TEMP_PREFIX,
+      if (open_cached_file(&tempfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,
 			   DISK_BUFFER_SIZE, MYF(MY_WME)))
 	goto err;
 

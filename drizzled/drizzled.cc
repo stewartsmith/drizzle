@@ -297,7 +297,7 @@ key_map key_map_full(0);                        // Will be initialized later
 
 uint32_t data_home_len;
 char data_home_buff[2], *data_home=data_home_real;
-char *drizzle_tmpdir= NULL;
+std::string drizzle_tmpdir;
 char *opt_drizzle_tmpdir= NULL;
 
 /** name of reference on left espression in rewritten IN subquery */
@@ -506,7 +506,6 @@ void clean_up(bool print_message)
   free_status_vars();
   if (defaults_argv)
     internal::free_defaults(defaults_argv);
-  free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
 
@@ -1855,16 +1854,40 @@ static void fix_paths(string &progname)
     tmp_string= getenv("TMPDIR");
 
     if (opt_drizzle_tmpdir)
-      drizzle_tmpdir= strdup(opt_drizzle_tmpdir);
-    else if (tmp_string == NULL)
-      drizzle_tmpdir= strdup(P_tmpdir);
-    else
-      drizzle_tmpdir= strdup(tmp_string);
-
-    assert(drizzle_tmpdir);
-
-    if (stat(drizzle_tmpdir, &buf) || (S_ISDIR(buf.st_mode) == false))
     {
+      drizzle_tmpdir.append(opt_drizzle_tmpdir);
+    }
+    else if (tmp_string == NULL)
+    {
+      drizzle_tmpdir.append(data_home);
+    }
+    else
+    {
+      drizzle_tmpdir.append(tmp_string);
+    }
+
+    assert(drizzle_tmpdir.size());
+    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    {
+      perror(drizzle_tmpdir.c_str());
+      exit(1);
+    }
+
+    drizzle_tmpdir.append(FN_ROOTDIR);
+    drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
+
+    if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
+    {
+      if (errno != EEXIST)
+      {
+        perror(drizzle_tmpdir.c_str());
+        exit(1);
+      }
+    }
+
+    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    {
+      perror(drizzle_tmpdir.c_str());
       exit(1);
     }
   }

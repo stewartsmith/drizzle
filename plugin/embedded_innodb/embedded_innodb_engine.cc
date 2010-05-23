@@ -2004,6 +2004,8 @@ static ib_srch_mode_t ha_rkey_function_to_ib_srch_mode(drizzled::ha_rkey_functio
   }
 
   assert(false);
+  /* Must return or compiler complains about reaching end of function */
+  return (ib_srch_mode_t)0;
 }
 
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
