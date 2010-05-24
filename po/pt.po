@@ -97,14 +97,13 @@ msgstr ""
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Bem-vindo ao Drizzle client.. Comandos terminam com ; ou \\g."
 
-#, fuzzy
-msgid "Your Drizzle connection id is "
+#, fuzzy, c-format
+msgid ""
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
 msgstr ""
 "O id de sua conexão é %u\n"
 "Versão do servidor: %s\n"
-
-msgid "Server version: "
-msgstr ""
 
 #, c-format
 msgid "Reading history-file %s\n"
@@ -461,10 +460,8 @@ msgstr "Comando desconhecido: "
 
 #, fuzzy
 msgid ""
-"                              Reading table information for completion of "
-"table and column names\n"
-"                                  You can turn off this feature to get a "
-"quicker startup with -A\n"
+"Reading table information for completion of table and column names\n"
+"You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 "A ler informação das tabelas para completar automaticamente os nomes de "
@@ -3996,6 +3993,14 @@ msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
 msgstr ""
 
 #, c-format
+msgid "Unknown table engine option key/pair %s = %s."
+msgstr ""
+
+#, c-format
+msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "Não foi possível desbloquear o ficheiro (Código de erro: %d)"
 
@@ -4120,6 +4125,69 @@ msgstr ""
 #, fuzzy, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
 msgstr "Modo de utilização: %s [OPTIONS]\n"
+
+#, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' init function returned error.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin library named '%s'.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin named '%s'.\n"
+msgstr ""
+
+msgid "Out of memory."
+msgstr ""
+
+#, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr ""
+
+#, c-format
+msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Fatal error: Failed initializing %s plugin.\n"
+msgstr "A inicialização de plugins falhou."
 
 msgid "Warning: "
 msgstr "Aviso: "
@@ -4252,61 +4320,6 @@ msgid "Listening on %s:%s\n"
 msgstr ""
 
 #, c-format
-msgid ""
-"Plugin '%s' contains the name '%s' in its manifest, which has already been "
-"registered.\n"
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' init function returned error.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin library named '%s'.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
-
-msgid "Out of memory."
-msgstr ""
-
-#, c-format
-msgid "Unknown variable type code 0x%x in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid ""
-"Server variable %s of plugin %s was forced to be read-only: string variable "
-"without update_func and PLUGIN_VAR_MEMALLOC flag"
-msgstr ""
-
-#, c-format
-msgid "Missing variable name in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Thread local variable '%s' not allocated in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Out of memory for plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Bad options for plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Parsing options for plugin '%s' failed."
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' has conflicting system variables"
-msgstr ""
-
-#, c-format
 msgid "logging '%s' pre() failed"
 msgstr ""
 
@@ -4337,14 +4350,6 @@ msgstr "A função errmsg() do errmsg plugin '%s' falhou"
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
 msgstr ""
-
-#, c-format
-msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
-msgstr ""
-
-#, fuzzy, c-format
-msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr "A inicialização de plugins falhou."
 
 #, c-format
 msgid ""
@@ -4417,6 +4422,10 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr ""
+
+#, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
@@ -4430,10 +4439,6 @@ msgstr ""
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
 "read"
-msgstr ""
-
-#, c-format
-msgid "Got error %d when reading table '%s'"
 msgstr ""
 
 #, c-format
