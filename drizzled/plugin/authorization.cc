@@ -27,7 +27,6 @@
 #include "drizzled/table_identifier.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
-#include "drizzled/plugin/registry.h"
 #include "drizzled/gettext.h"
 
 using namespace std;

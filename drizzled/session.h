@@ -31,6 +31,7 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
+#include <drizzled/statistics_variables.h>
 #include <drizzled/xid.h>
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
@@ -59,7 +60,9 @@ namespace plugin
 {
 class Client;
 class Scheduler;
+class EventObserverList;
 }
+
 namespace message
 {
 class Transaction;
@@ -74,6 +77,8 @@ class Lex_input_stream;
 class user_var_entry;
 class CopyField;
 class Table_ident;
+
+class TableShareInstance;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -222,81 +227,10 @@ extern struct system_variables global_system_variables;
 namespace drizzled
 {
 
-/**
- * Per-session local status counters
- */
-typedef struct system_status_var
-{
-  uint64_t bytes_received;
-  uint64_t bytes_sent;
-  ulong com_other;
-  ulong com_stat[(uint32_t) SQLCOM_END];
-  ulong created_tmp_disk_tables;
-  ulong created_tmp_tables;
-  ulong ha_commit_count;
-  ulong ha_delete_count;
-  ulong ha_read_first_count;
-  ulong ha_read_last_count;
-  ulong ha_read_key_count;
-  ulong ha_read_next_count;
-  ulong ha_read_prev_count;
-  ulong ha_read_rnd_count;
-  ulong ha_read_rnd_next_count;
-  ulong ha_rollback_count;
-  ulong ha_update_count;
-  ulong ha_write_count;
-  ulong ha_prepare_count;
-  ulong ha_savepoint_count;
-  ulong ha_savepoint_rollback_count;
-
-  /* KEY_CACHE parts. These are copies of the original */
-  ulong key_blocks_changed;
-  ulong key_blocks_used;
-  ulong key_cache_r_requests;
-  ulong key_cache_read;
-  ulong key_cache_w_requests;
-  ulong key_cache_write;
-  /* END OF KEY_CACHE parts */
-
-  ulong net_big_packet_count;
-  ulong select_full_join_count;
-  ulong select_full_range_join_count;
-  ulong select_range_count;
-  ulong select_range_check_count;
-  ulong select_scan_count;
-  ulong long_query_count;
-  ulong filesort_merge_passes;
-  ulong filesort_range_count;
-  ulong filesort_rows;
-  ulong filesort_scan_count;
-  /*
-    Number of statements sent from the client
-  */
-  ulong questions;
-
-  /*
-    IMPORTANT!
-    SEE last_system_status_var DEFINITION BELOW.
-
-    Below 'last_system_status_var' are all variables which doesn't make any
-    sense to add to the /global/ status variable counter.
-  */
-  double last_query_cost;
-} system_status_var;
-
-/*
-  This is used for 'SHOW STATUS'. It must be updated to the last ulong
-  variable in system_status_var which is makes sens to add to the global
-  counter
-*/
-
-#define last_system_status_var questions
-
 void mark_transaction_to_rollback(Session *session, bool all);
 
 extern pthread_mutex_t LOCK_xid_cache;
 extern HASH xid_cache;
-
 
 /**
   Storage engine specific thread local data.
@@ -403,6 +337,12 @@ public:
    */
   Item *free_list;
   memory::Root *mem_root; /**< Pointer to current memroot */
+
+
+  memory::Root *getMemRoot()
+  {
+    return mem_root;
+  }
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
@@ -1104,8 +1044,6 @@ public:
     return (abort_on_warning);
   }
   void set_status_var_init();
-  void reset_n_backup_open_tables_state(Open_tables_state *backup);
-  void restore_backup_open_tables_state(Open_tables_state *backup);
 
   /**
     Set the current database; use deep copy of C-string.
@@ -1252,7 +1190,50 @@ private:
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
   message::Statement *statement_message;
-  /** Microsecond timestamp of when Session connected */
+  plugin::EventObserverList *session_event_observers;
+  
+  /* Schema observers are mapped to databases. */
+  std::map<std::string, plugin::EventObserverList *> schema_event_observers;
+
+ 
+public:
+  plugin::EventObserverList *getSessionObservers() 
+  { 
+    return session_event_observers;
+  }
+  
+  void setSessionObservers(plugin::EventObserverList *observers) 
+  { 
+    session_event_observers= observers;
+  }
+  
+  /* For schema event observers there is one set of observers per database. */
+  plugin::EventObserverList *getSchemaObservers(const std::string &db_name) 
+  { 
+    std::map<std::string, plugin::EventObserverList *>::iterator it;
+    
+    it= schema_event_observers.find(db_name);
+    if (it == schema_event_observers.end())
+      return NULL;
+      
+    return it->second;
+  }
+  
+  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers) 
+  { 
+    std::map<std::string, plugin::EventObserverList *>::iterator it;
+
+    it= schema_event_observers.find(db_name);
+    if (it != schema_event_observers.end())
+      schema_event_observers.erase(it);;
+
+    if (observers)
+      schema_event_observers[db_name] = observers;
+  }
+  
+  
+ private:
+ /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;
 
@@ -1475,6 +1456,9 @@ public:
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 
+  Table *create_virtual_tmp_table(List<CreateField> &field_list);
+
+
 
   /**
     Return the default storage engine
@@ -1494,9 +1478,16 @@ public:
   static void unlink(Session *session);
 
   void get_xid(DRIZZLE_XID *xid); // Innodb only
+
+private:
+  std::vector<TableShareInstance *> temporary_shares;
+
+public:
+  TableShareInstance *getTemporaryShare(const char *tmpname_arg);
+  TableShareInstance *getTemporaryShare();
 };
 
-class JOIN;
+class Join;
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
 

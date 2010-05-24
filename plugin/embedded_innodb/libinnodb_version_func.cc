@@ -79,7 +79,7 @@ String *LibinnodbVersionFunction::val_str(String *str)
 
 plugin::Create_function<LibinnodbVersionFunction> *libinnodb_version_func= NULL;
 
-int libinnodb_version_func_initialize(plugin::Context &context)
+int libinnodb_version_func_initialize(module::Context &context)
 {
   libinnodb_version_func= new plugin::Create_function<LibinnodbVersionFunction>("libinnodb_version");
   context.add(libinnodb_version_func);

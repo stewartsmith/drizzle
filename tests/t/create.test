@@ -46,6 +46,10 @@ create table `a/a` (a int);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table `a/a`;
 create table t1 like `a/a`;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table t1;
+--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
+show create table `t1`;
 drop table `a/a`;
 drop table `t1`;
 --error 1103
@@ -1243,7 +1247,7 @@ CREATE TABLE t1(
   c4 VARCHAR(255) NOT NULL DEFAULT 'a',
   c5 VARCHAR(255) COLLATE utf8_unicode_ci NULL DEFAULT 'b',
   c6 VARCHAR(255))
-  COLLATE utf8_bin;
+  COLLATE=utf8_bin;
 
 --echo
 

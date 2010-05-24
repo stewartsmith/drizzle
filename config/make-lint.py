@@ -123,12 +123,16 @@ def should_lint(path):
     if not (path.startswith('plugin/') or path.startswith('drizzled/') or
         path.startswith('client/')):
         return False
+    # Let's not lint emacs autosave files
+    if (os.path.split(path)[-1].startswith('.#')):
+        return False
     for exclude in ['innobase', 'pbxt', 'gnulib', '.pb.', 'bak-header', 'm4',
         'sql_yacc', 'gperf', 'drizzled/probes.h',
         'drizzled/function_hash.h', 'drizzled/symbol_hash.h',
         'util/dummy.cc', 'drizzled/sql_yacc.h', 'drizzled/configmake.h',
 	'drizzled/plugin/version.h',
-        'drizzled/plugin/load_list.h']:
+        'drizzled/generated_probes.h',
+        'drizzled/module/load_list.h']:
         if exclude in path:
             return False
     return True

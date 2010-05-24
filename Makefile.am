@@ -42,14 +42,18 @@ DIST_SUBDIRS = ${SUBDIRS} tests
 
 BUILT_SOURCES=		drizzled/configmake.h
 EXTRA_DIST= \
+	    DRIZZLE.FAQ \
 	    Doxyfile \
+	    EXCEPTIONS-CLIENT \
 	    config/config.rpath \
 	    config/make-lint.py \
 	    config/pandora_vc_revinfo \
+	    config/uncrustify.cfg \
 	    extra/clean_source.sh \
 	    extra/cpplint.py \
-	    extra/run_cpplint.sh  \
-	    m4/gnulib-cache.m4
+	    extra/run_cpplint.sh \
+	    m4/gnulib-cache.m4 \
+	    ${top_srcdir}/m4/pandora*m4
 
 
 CLEANFILES=		${BUILT_SOURCES}

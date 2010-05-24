@@ -55,7 +55,7 @@ String *UuidFunction::val_str(String *str)
   str->length(UUID_LENGTH);
   str->set_charset(system_charset_info);
   uuid_string= (char *) str->ptr();
-  uuid_generate_time(uu);
+  uuid_generate_random(uu);
   uuid_unparse(uu, uuid_string);
 
   return str;
@@ -63,7 +63,7 @@ String *UuidFunction::val_str(String *str)
 
 plugin::Create_function<UuidFunction> *uuid_function= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   uuid_function= new plugin::Create_function<UuidFunction>("uuid");
   context.add(uuid_function);

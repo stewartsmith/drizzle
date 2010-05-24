@@ -55,7 +55,7 @@ String *DatabaseFunction::val_str(String *str)
 
 plugin::Create_function<DatabaseFunction> *database_function= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   database_function= new plugin::Create_function<DatabaseFunction>("database");
   context.add(database_function);

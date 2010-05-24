@@ -80,7 +80,7 @@ public:
 };
 
 using plugin::Create_function;
-using plugin::Context;
+using module::Context;
 typedef Create_function<Function> PluginFunction;
 PluginFunction *rot13_func= NULL;
 

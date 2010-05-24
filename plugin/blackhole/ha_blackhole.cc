@@ -348,12 +348,12 @@ const char *ha_blackhole::index_type(uint32_t)
   return("BTREE");
 }
 
-int ha_blackhole::write_row(unsigned char *)
+int ha_blackhole::doInsertRecord(unsigned char *)
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int ha_blackhole::rnd_init(bool)
+int ha_blackhole::doStartTableScan(bool)
 {
   return(0);
 }
@@ -482,7 +482,7 @@ BlackholeShare::~BlackholeShare()
 
 static drizzled::plugin::StorageEngine *blackhole_engine= NULL;
 
-static int blackhole_init(drizzled::plugin::Context &context)
+static int blackhole_init(drizzled::module::Context &context)
 {
 
   blackhole_engine= new BlackholeEngine("BLACKHOLE");

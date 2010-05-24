@@ -411,7 +411,8 @@ xtBool XTTabCache::xt_tc_get_page(XT_ROW_REC_FILE_PTR file, xtRefID ref_id, xtBo
 	return OK;
 }
 
-void XTTabCache::xt_tc_release_page(XT_ROW_REC_FILE_PTR XT_UNUSED(file), XTTabCachePagePtr page, XTThreadPtr thread)
+// Depending on platform 'thread->t_id' may not be used by TAB_CAC_WRITE_LOCK().
+void XTTabCache::xt_tc_release_page(XT_ROW_REC_FILE_PTR XT_UNUSED(file), XTTabCachePagePtr page, XTThreadPtr thread __attribute__((unused)))
 {
 	XTTabCacheSegPtr	seg;
 
@@ -441,7 +442,8 @@ void XTTabCache::xt_tc_release_page(XT_ROW_REC_FILE_PTR XT_UNUSED(file), XTTabCa
 	TAB_CAC_UNLOCK(&seg->tcs_lock, thread->t_id);
 }
 
-xtBool XTTabCache::xt_tc_lock_page(XT_ROW_REC_FILE_PTR file, XTTabCachePagePtr *ret_page, xtRefID ref_id, size_t *offset, XTThreadPtr thread)
+// Depending on platform 'thread->t_id' may not be used by TAB_CAC_WRITE_LOCK().
+xtBool XTTabCache::xt_tc_lock_page(XT_ROW_REC_FILE_PTR file, XTTabCachePagePtr *ret_page, xtRefID ref_id, size_t *offset, XTThreadPtr thread __attribute__((unused)))
 {
 	XTTabCachePagePtr	page;
 	XTTabCacheSegPtr	seg;
@@ -455,7 +457,8 @@ xtBool XTTabCache::xt_tc_lock_page(XT_ROW_REC_FILE_PTR file, XTTabCachePagePtr *
 	return OK;
 }
 
-void XTTabCache::xt_tc_unlock_page(XT_ROW_REC_FILE_PTR XT_UNUSED(file), XTTabCachePagePtr page, xtOpSeqNo *op_seq, XTThreadPtr thread)
+// Depending on platform 'thread->t_id' may not be used by TAB_CAC_WRITE_LOCK().
+void XTTabCache::xt_tc_unlock_page(XT_ROW_REC_FILE_PTR XT_UNUSED(file), XTTabCachePagePtr page, xtOpSeqNo *op_seq, XTThreadPtr thread  __attribute__((unused)))
 {
 	XTTabCacheSegPtr	seg;
 
@@ -516,7 +519,8 @@ xtBool XTTabCache::tc_read_direct(XT_ROW_REC_FILE_PTR file, xtRefID ref_id, size
 	return OK;
 }
 
-xtBool XTTabCache::tc_fetch_direct(XT_ROW_REC_FILE_PTR file, xtRefID ref_id, XTTabCacheSegPtr *ret_seg, XTTabCachePagePtr *ret_page, size_t *offset, XTThreadPtr thread)
+// Depending on platform 'thread->t_id' may not be used by TAB_CAC_WRITE_LOCK().
+xtBool XTTabCache::tc_fetch_direct(XT_ROW_REC_FILE_PTR file, xtRefID ref_id, XTTabCacheSegPtr *ret_seg, XTTabCachePagePtr *ret_page, size_t *offset, XTThreadPtr thread  __attribute__((unused)))
 {
 	register u_int				page_idx;
 	register XTTabCachePagePtr	page;
@@ -923,7 +927,7 @@ xtBool XTTableSeq::xt_op_is_before(register xtOpSeqNo now, register xtOpSeqNo th
 /*
  * Used by the writer to wake the freeer.
  */
-xtPublic void xt_wr_wake_freeer(XTThreadPtr, XTDatabaseHPtr db)
+xtPublic void xt_wr_wake_freeer(XTThreadPtr XT_UNUSED(self), XTDatabaseHPtr db)
 {
 	/* BUG FIX: Was using tcm_freeer_cond.
 	 * This is incorrect. When the freeer waits for the

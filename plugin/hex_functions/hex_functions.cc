@@ -165,7 +165,7 @@ String *UnHexFunction::val_str(String *str)
 plugin::Create_function<HexFunction> *hex_function= NULL;
 plugin::Create_function<UnHexFunction> *unhex_function= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   hex_function= new plugin::Create_function<HexFunction>("hex");
   unhex_function= new plugin::Create_function<UnHexFunction>("unhex");

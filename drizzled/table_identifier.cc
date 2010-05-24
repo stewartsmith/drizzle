@@ -39,7 +39,7 @@ using namespace std;
 namespace drizzled
 {
 
-extern char *drizzle_tmpdir;
+extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
@@ -280,7 +280,7 @@ TableIdentifier::TableIdentifier(const drizzled::Table &table) :
   table_name(table.s->getTableProto()->name())
 {
   if (type == message::Table::TEMPORARY)
-    path= table.s->path.str;
+    path= table.s->getPath();
 
   init();
 }

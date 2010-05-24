@@ -26,7 +26,7 @@ using namespace drizzled;
 static ModulesTool *modules;
 static PluginsTool *plugins;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   modules= new(std::nothrow)ModulesTool;
   plugins= new(std::nothrow)PluginsTool;

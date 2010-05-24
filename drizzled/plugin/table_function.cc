@@ -22,7 +22,6 @@
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/table_function_container.h>
 #include <drizzled/gettext.h>
-#include "drizzled/plugin/registry.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
@@ -38,7 +37,7 @@ static TableFunctionContainer table_functions;
 
 void plugin::TableFunction::init()
 {
-  drizzled::message::Table::StorageEngine *engine;
+  drizzled::message::Engine *engine;
   drizzled::message::Table::TableOptions *table_options;
 
   proto.set_name(getTableLabel());

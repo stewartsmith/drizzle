@@ -65,7 +65,7 @@ int64_t LengthFunction::val_int()
 plugin::Create_function<LengthFunction> *lengthudf= NULL;
 plugin::Create_function<LengthFunction> *octet_lengthudf= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   lengthudf= new plugin::Create_function<LengthFunction>("length");
   octet_lengthudf= new plugin::Create_function<LengthFunction>("octet_length");

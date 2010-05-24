@@ -1046,6 +1046,10 @@ sub command_line_setup () {
 sub gimme_a_good_port($)
 {
   my $port_to_test= shift;
+  if ($port_to_test == 8000)
+  {
+    $port_to_test = 8001;
+  }
   my $is_port_bad= 1;
   while ($is_port_bad) {
     my $sock = new IO::Socket::INET( PeerAddr => 'localhost',
@@ -1318,6 +1322,13 @@ sub generate_cmdline_mysqldump ($) {
       "--port=$mysqld->{'port'} ";
 }
 
+sub generate_cmdline_drizzle ($) {
+  my($mysqld) = @_;
+  return
+    mtr_native_path($exe_drizzle) .
+    " -uroot --port=$mysqld->{'port'} ";
+}
+
 
 ##############################################################################
 #
@@ -1486,6 +1497,12 @@ sub environment_setup () {
   $ENV{'DRIZZLE_DUMP'}= $cmdline_mysqldump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
   $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_mysqldump_secondary;
+
+  # ----------------------------------------------------
+  # Setup env so we can execute drizzle client
+  # ----------------------------------------------------
+  my $cmdline_drizzle = generate_cmdline_drizzle($master->[0]);
+  $ENV{'DRIZZLE'}= $cmdline_drizzle;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlslap

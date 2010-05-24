@@ -46,7 +46,7 @@ bool ShowTemporaryTables::Generator::populate()
 {
   while (table)
   {
-    if (not isWild(table->s->getTableName()))
+    if (not isWild(table->getShare()->getTableName()))
     {
       break;
     }
@@ -66,10 +66,10 @@ bool ShowTemporaryTables::Generator::populate()
 void ShowTemporaryTables::Generator::fill()
 {
   /* TABLE_SCHEMA */
-  push(table->s->getSchemaName());
+  push(table->getShare()->getSchemaName());
 
   /* TABLE_NAME */
-  push(table->s->table_name.str);
+  push(table->getShare()->getTableName());
 
   /* RECORDS */
   push(static_cast<uint64_t>(table->getCursor().records()));

@@ -76,7 +76,7 @@ optimizer::QuickRorIntersectSelect::~QuickRorIntersectSelect()
   alloc.free_root(MYF(0));
   if (need_to_fetch_row && head->cursor->inited != Cursor::NONE)
   {
-    head->cursor->ha_rnd_end();
+    head->cursor->endTableScan();
   }
   return;
 }
@@ -119,7 +119,7 @@ int optimizer::QuickRorIntersectSelect::init_ror_merged_scan(bool reuse_handler)
     ++it;
   }
 
-  if (need_to_fetch_row && head->cursor->ha_rnd_init(1))
+  if (need_to_fetch_row && head->cursor->startTableScan(1))
   {
     return 0;
   }
@@ -254,7 +254,7 @@ void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
        it != quick_selects.end();
        ++it)
   {
-    KEY *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + (*it)->index;
     if (! first)
       str->append(',');
     else
@@ -263,7 +263,7 @@ void optimizer::QuickRorIntersectSelect::add_info_string(String *str)
   }
   if (cpk_quick)
   {
-    KEY *key_info= head->key_info + cpk_quick->index;
+    KeyInfo *key_info= head->key_info + cpk_quick->index;
     str->append(',');
     str->append(key_info->name);
   }
@@ -281,7 +281,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
        it != quick_selects.end();
        ++it)
   {
-    KEY *key_info= head->key_info + (*it)->index;
+    KeyInfo *key_info= head->key_info + (*it)->index;
     if (first)
     {
       first= false;
@@ -298,7 +298,7 @@ void optimizer::QuickRorIntersectSelect::add_keys_and_lengths(String *key_names,
 
   if (cpk_quick)
   {
-    KEY *key_info= head->key_info + cpk_quick->index;
+    KeyInfo *key_info= head->key_info + cpk_quick->index;
     key_names->append(',');
     key_names->append(key_info->name);
     length= internal::int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;

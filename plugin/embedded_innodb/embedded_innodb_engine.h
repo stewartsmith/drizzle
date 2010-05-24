@@ -20,18 +20,20 @@
 #define PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H
 
 #include <drizzled/cursor.h>
+#include <drizzled/atomics.h>
 
 class EmbeddedInnoDBTableShare
 {
 public:
-  EmbeddedInnoDBTableShare(const char* name) : use_count(0)
-  {
-    table_name.assign(name);
-  }
+  EmbeddedInnoDBTableShare(const char* name, bool hidden_primary_key);
 
   drizzled::THR_LOCK lock;
   int use_count;
   std::string table_name;
+
+  drizzled::atomic<uint64_t> auto_increment_value;
+  drizzled::atomic<uint64_t> hidden_pkey_auto_increment_value;
+  bool has_hidden_primary_key;
 };
 
 class EmbeddedInnoDBCursor: public drizzled::Cursor
@@ -49,35 +51,32 @@ public:
   uint32_t index_flags(uint32_t inx) const;
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
-  int write_row(unsigned char * buf);
-  int rnd_init(bool scan);
+  int doInsertRecord(unsigned char * buf);
+  int doStartTableScan(bool scan);
   int rnd_next(unsigned char *buf);
-  int rnd_end();
+  int doEndTableScan();
   int rnd_pos(unsigned char * buf, unsigned char *pos);
 
-  int index_init(uint32_t, bool);
+  int doStartIndexScan(uint32_t, bool);
   int index_read(unsigned char *buf, const unsigned char *key_ptr,
                  uint32_t key_len, drizzled::ha_rkey_function find_flag);
 
   int index_next(unsigned char * buf);
-  int index_end();
+  int doEndIndexScan();
   int index_prev(unsigned char * buf);
   int index_first(unsigned char * buf);
   int index_last(unsigned char * buf);
   void position(const unsigned char *record);
   int info(uint32_t flag);
   double scan_time();
-  int delete_row(const unsigned char *);
+  int doDeleteRecord(const unsigned char *);
   int delete_all_rows(void);
-  int update_row(const unsigned char * old_data, unsigned char * new_data);
+  int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int extra(drizzled::ha_extra_function operation);
 
-  void get_auto_increment(uint64_t, uint64_t,
-                          uint64_t,
-                          uint64_t *,
-                          uint64_t *)
-  {}
-
-  EmbeddedInnoDBTableShare *get_share(const char *table_name, int *rc);
+  EmbeddedInnoDBTableShare *get_share(const char *table_name,
+                                      bool has_hidden_primary_key,
+                                      int *rc);
   int free_share();
 
   EmbeddedInnoDBTableShare *share;
@@ -86,11 +85,22 @@ public:
                                        drizzled::THR_LOCK_DATA **to,
                                        drizzled::thr_lock_type);
 
+  uint64_t getInitialAutoIncrementValue();
+  uint64_t getHiddenPrimaryKeyInitialAutoIncrementValue();
+
+  void get_auto_increment(uint64_t ,
+                          uint64_t ,
+                          uint64_t ,
+                          uint64_t *first_value,
+                          uint64_t *nb_reserved_values);
+
 private:
   ib_crsr_t cursor;
   ib_tpl_t tuple;
 
   ib_err_t next_innodb_error;
+  bool write_can_replace;
+  uint64_t hidden_autoinc_pkey_position;
 };
 
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */

@@ -24,7 +24,6 @@
 #include "drizzled/sql_bitmap.h"
 #include "drizzled/internal/m_string.h"
 #include <fcntl.h>
-#include "drizzled/memory/multi_malloc.h"
 
 using namespace std;
 
@@ -39,8 +38,6 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
                                               memory::Root *parent_alloc,
                                               bool *create_error)
   :
-    mrr_flags(0),
-    alloc(),
     cursor(NULL),
     ranges(),
     in_ror_merged_scan(false),
@@ -54,7 +51,9 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
     mrr_buf_size(0),
     mrr_buf_desc(NULL),
     key_parts(NULL),
-    dont_free(false)
+    dont_free(false),
+    mrr_flags(0),
+    alloc()
 {
   my_bitmap_map *bitmap= NULL;
 
@@ -89,7 +88,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
      same time we destroy the mem_root.
    */
 
-  bitmap= reinterpret_cast<my_bitmap_map*>(memory::sql_alloc(head->s->column_bitmap_size));
+  bitmap= reinterpret_cast<my_bitmap_map*>(memory::sql_alloc(head->getShare()->column_bitmap_size));
   if (! bitmap)
   {
     column_bitmap.setBitmap(NULL);
@@ -97,7 +96,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   }
   else
   {
-    column_bitmap.init(bitmap, head->s->fields);
+    column_bitmap.init(bitmap, head->getShare()->fields);
   }
 }
 
@@ -106,7 +105,7 @@ int optimizer::QuickRangeSelect::init()
 {
   if (cursor->inited != Cursor::NONE)
     cursor->ha_index_or_rnd_end();
-  return (cursor->ha_index_init(index, 1));
+  return (cursor->startIndexScan(index, 1));
 }
 
 
@@ -244,7 +243,7 @@ bool optimizer::QuickRangeSelect::unique_key_range() const
     optimizer::QuickRange *tmp= *((optimizer::QuickRange**)ranges.buffer);
     if ((tmp->flag & (EQ_RANGE | NULL_RANGE)) == EQ_RANGE)
     {
-      KEY *key=head->key_info+index;
+      KeyInfo *key=head->key_info+index;
       return ((key->flags & (HA_NOSAME)) == HA_NOSAME &&
 	      key->key_length == tmp->min_length);
     }
@@ -255,41 +254,21 @@ bool optimizer::QuickRangeSelect::unique_key_range() const
 
 int optimizer::QuickRangeSelect::reset()
 {
-  uint32_t buf_size= 0;
-  unsigned char *mrange_buff= NULL;
   int error= 0;
   last_range= NULL;
   cur_range= (optimizer::QuickRange**) ranges.buffer;
 
-  if (cursor->inited == Cursor::NONE && (error= cursor->ha_index_init(index, 1)))
+  if (cursor->inited == Cursor::NONE && (error= cursor->startIndexScan(index, 1)))
   {
     return error;
   }
 
-  /* Allocate buffer if we need one but haven't allocated it yet */
-  if (mrr_buf_size && ! mrr_buf_desc)
-  {
-    buf_size= mrr_buf_size;
-    while (buf_size && ! memory::multi_malloc(false,
-                                              &mrr_buf_desc,
-                                              sizeof(*mrr_buf_desc),
-                                              &mrange_buff,
-                                              buf_size,
-                                              NULL))
-    {
-      /* Try to shrink the buffers until both are 0. */
-      buf_size/= 2;
-    }
-    if (! mrr_buf_desc)
-    {
-      return HA_ERR_OUT_OF_MEM;
-    }
-
-    /* Initialize the Cursor buffer. */
-    mrr_buf_desc->buffer= mrange_buff;
-    mrr_buf_desc->buffer_end= mrange_buff + buf_size;
-    mrr_buf_desc->end_of_used_area= mrange_buff;
-  }
+  /*
+    (in the past) Allocate buffer if we need one but haven't allocated it yet 
+    There is a later assert in th code that hoped to catch random free() that might
+    have done this.
+  */
+  assert(not (mrr_buf_size && ! mrr_buf_desc));
 
   if (sorted)
   {
@@ -464,7 +443,7 @@ int optimizer::QuickRangeSelect::cmp_prev(optimizer::QuickRange *range_arg)
 
 void optimizer::QuickRangeSelect::add_info_string(String *str)
 {
-  KEY *key_info= head->key_info + index;
+  KeyInfo *key_info= head->key_info + index;
   str->append(key_info->name);
 }
 
@@ -474,7 +453,7 @@ void optimizer::QuickRangeSelect::add_keys_and_lengths(String *key_names,
 {
   char buf[64];
   uint32_t length;
-  KEY *key_info= head->key_info + index;
+  KeyInfo *key_info= head->key_info + index;
   key_names->append(key_info->name);
   length= internal::int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);

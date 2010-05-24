@@ -82,7 +82,7 @@ using namespace drizzled::plugin;
 
 #ifdef DEBUG
 //#define XT_USE_SYS_PAR_DEBUG_SIZES
-#define PBXT_HANDLER_TRACE
+//#define PBXT_HANDLER_TRACE
 //#define PBXT_TRACE_RETURN
 //#define XT_PRINT_INDEX_OPT
 //#define XT_SHOW_DUMPS_TRACE
@@ -494,6 +494,7 @@ static inline void thd_init_xact(THD *thd, XTThreadPtr self, bool set_table_tran
 	self->st_abort_trans = FALSE;
 	self->st_stat_ended = FALSE;
 	self->st_stat_trans = FALSE;
+	self->st_non_temp_updated = FALSE;
 	XT_PRINT0(self, "xt_xn_begin\n");
 	xt_xres_wait_for_recovery(self, XT_RECOVER_SWEPT);
 }
@@ -1527,19 +1528,9 @@ static int pbxt_rollback(handlerton *hton, THD *thd, bool all)
 	return 0;
 }
 
-#ifdef DRIZZLED
 Cursor *PBXTStorageEngine::create(TableShare& table, memory::Root *mem_root)
 {
-	PBXTStorageEngine * const hton = this;
-	if (XTSystemTableShare::isSystemTable(table.path.str))
-#else
-static handler *pbxt_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root)
-{
-	if (table && XTSystemTableShare::isSystemTable(table->path.str))
-#endif
-		return new (mem_root) ha_xtsys(hton, table);
-	else
-		return new (mem_root) ha_pbxt(hton, table);
+	return new (mem_root) ha_pbxt(*this, table);
 }
 
 /*
@@ -2070,11 +2061,7 @@ static int pbxt_exit_statistics(void *XT_UNUSED(p))
  *
  */
 
-#ifdef DRIZZLED
-ha_pbxt::ha_pbxt(handlerton *hton, TableShare& table_arg) : handler(*hton, table_arg)
-#else
-ha_pbxt::ha_pbxt(handlerton *hton, TABLE_SHARE *table_arg) : handler(hton, table_arg)
-#endif
+ha_pbxt::ha_pbxt(plugin::StorageEngine &engine_arg, TableShare &table_arg) : Cursor(engine_arg, table_arg)
 {
 	pb_share = NULL;
 	pb_open_tab = NULL;
@@ -2466,7 +2453,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 		extra(HA_EXTRA_KEYREAD);
 		table->mark_columns_used_by_index_no_reset(TS(table)->next_number_index, table->read_set);
 		column_bitmaps_signal();
- 		index_init(TS(table)->next_number_index, 0);
+ 		doStartIndexScan(TS(table)->next_number_index, 0);
 		if (!TS(table)->next_number_key_offset) {
 			// Autoincrement at key-start
 			err = index_last(table->record[1]);
@@ -2492,7 +2479,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			}
 		}
 
-		index_end();
+		doEndIndexScan();
 		extra(HA_EXTRA_NO_KEYREAD);
 
 		/* {PRE-INC}
@@ -2628,7 +2615,7 @@ static void dump_buf(unsigned char *buf, int len)
 */
 
 /*
- * write_row() inserts a row. No extra() hint is given currently if a bulk load
+ * doInsertRecord() inserts a row. No extra() hint is given currently if a bulk load
  * is happeneding. buf() is a byte array of data. You can use the field
  * information to extract the data from the native byte array type.
  * Example of this would be:
@@ -2641,26 +2628,26 @@ static void dump_buf(unsigned char *buf, int len)
  * ha_berekly.cc has an example of how to store it intact by "packing" it
  * for ha_berkeley's own native storage type.
 
- * See the note for update_row() on auto_increments and timestamps. This
- * case also applied to write_row().
+ * See the note for doUpdateRecord() on auto_increments and timestamps. This
+ * case also applied to doInsertRecord().
 
  * Called from item_sum.cc, item_sum.cc, sql_acl.cc, sql_insert.cc,
  * sql_insert.cc, sql_select.cc, sql_table.cc, sql_udf.cc, and sql_update.cc.
  */
-int ha_pbxt::write_row(byte *buf)
+int ha_pbxt::doInsertRecord(byte *buf)
 {
 	int err = 0;
 
 	ASSERT_NS(pb_ex_in_use);
 
-	XT_PRINT1(pb_open_tab->ot_thread, "write_row (%s)\n", pb_share->sh_table_path->ps_path);
+	XT_PRINT1(pb_open_tab->ot_thread, "doInsertRecord (%s)\n", pb_share->sh_table_path->ps_path);
 	XT_DISABLED_TRACE(("INSERT tx=%d val=%d\n", (int) pb_open_tab->ot_thread->st_xact_data->xd_start_xn_id, (int) XT_GET_DISK_4(&buf[1])));
 	//statistic_increment(ha_write_count,&LOCK_status);
 #ifdef PBMS_ENABLED
 	PBMSResultRec result;
-	err = pbms_write_row_blobs(table, buf, &result);
+	err = pbms_doInsertRecord_blobs(table, buf, &result);
 	if (err) {
-		xt_logf(XT_NT_ERROR, "pbms_write_row_blobs() Error: %s", result.mr_message);
+		xt_logf(XT_NT_ERROR, "pbms_doInsertRecord_blobs() Error: %s", result.mr_message);
 		return err;
 	}
 #endif
@@ -2673,12 +2660,12 @@ int ha_pbxt::write_row(byte *buf)
 			/* Commit and restart the transaction. */
 			XTThreadPtr thread = pb_open_tab->ot_thread;
 
-			XT_PRINT0(thread, "xt_xn_commit in write_row\n");
+			XT_PRINT0(thread, "xt_xn_commit in doInsertRecord\n");
 			if (!xt_xn_commit(thread)) {
 				err = xt_ha_pbxt_thread_error_for_mysql(pb_mysql_thd, thread, pb_ignore_dup_key);
 				return err;
 			}
-			XT_PRINT0(thread, "xt_xn_begin in write_row\n");
+			XT_PRINT0(thread, "xt_xn_begin in doInsertRecord\n");
 			if (!xt_xn_begin(thread)) {
 				err = xt_ha_pbxt_thread_error_for_mysql(pb_mysql_thd, thread, pb_ignore_dup_key);
 				return err;
@@ -2764,14 +2751,14 @@ static void dump_bin(const byte *a_in, int offset, int len_in)
 #endif
 
 /*
- * Yes, update_row() does what you expect, it updates a row. old_data will have
+ * Yes, doUpdateRecord() does what you expect, it updates a row. old_data will have
  * the previous row record in it, while new_data will have the newest data in
  * it. Keep in mind that the server can do updates based on ordering if an ORDER BY
  * clause was used. Consecutive ordering is not guarenteed.
  *
  * Called from sql_select.cc, sql_acl.cc, sql_update.cc, and sql_insert.cc.
  */
-int ha_pbxt::update_row(const byte * old_data, byte * new_data)
+int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 {
 	int						err = 0;
 	register XTThreadPtr	self = pb_open_tab->ot_thread;
@@ -2803,9 +2790,9 @@ int ha_pbxt::update_row(const byte * old_data, byte * new_data)
 		xt_logf(XT_NT_ERROR, "update_row:pbms_delete_row_blobs() Error: %s", result.mr_message);
 		return err;
 	}
-	err = pbms_write_row_blobs(table, new_data, &result);
+	err = pbms_doInsertRecord_blobs(table, new_data, &result);
 	if (err) { 
-		xt_logf(XT_NT_ERROR, "update_row:pbms_write_row_blobs() Error: %s", result.mr_message);
+		xt_logf(XT_NT_ERROR, "update_row:pbms_doInsertRecord_blobs() Error: %s", result.mr_message);
 		goto pbms_done;
 	}
 #endif
@@ -2850,7 +2837,7 @@ int ha_pbxt::update_row(const byte * old_data, byte * new_data)
  * Called in sql_delete.cc, sql_insert.cc, and sql_select.cc. In sql_select it is
  * used for removing duplicates while in insert it is used for REPLACE calls.
 */
-int ha_pbxt::delete_row(const byte * buf)
+int ha_pbxt::doDeleteRecord(const byte * buf)
 {
 	int err = 0;
 
@@ -3173,7 +3160,7 @@ int ha_pbxt::xt_index_prev_read(XTOpenTablePtr ot, XTIndexPtr ind, xtBool key_on
 	return ha_log_pbxt_thread_error_for_mysql(FALSE);
 }
 
-int ha_pbxt::index_init(uint idx, bool XT_UNUSED(sorted))
+int ha_pbxt::doStartIndexScan(uint idx, bool XT_UNUSED(sorted))
 {
 	XTIndexPtr	ind;
 	XTThreadPtr	thread = pb_open_tab->ot_thread;
@@ -3262,7 +3249,7 @@ int ha_pbxt::index_init(uint idx, bool XT_UNUSED(sorted))
 	return 0;
 }
 
-int ha_pbxt::index_end()
+int ha_pbxt::doEndIndexScan()
 {
 	int err = 0;
 
@@ -3571,7 +3558,7 @@ int ha_pbxt::index_first(byte * buf)
 	 * init init_index sometimes, for example:
 	 *
      * if (!table->file->inited)
-     *    table->file->ha_index_init(tab->index, tab->sorted);
+     *    table->file->startIndexScan(tab->index, tab->sorted);
      *  if ((error=tab->table->file->index_first(tab->table->record[0])))
 	 */
 	if (active_index == MAX_KEY) {
@@ -3659,15 +3646,15 @@ int ha_pbxt::index_last(byte * buf)
  */
  
 /*
- * rnd_init() is called when the system wants the storage engine to do a table
+ * doStartTableScan() is called when the system wants the storage engine to do a table
  * scan.
  * See the example in the introduction at the top of this file to see when
- * rnd_init() is called.
+ * doStartTableScan() is called.
  *
  * Called from filesort.cc, records.cc, sql_handler.cc, sql_select.cc, sql_table.cc,
  * and sql_update.cc.
  */
-int ha_pbxt::rnd_init(bool scan)
+int ha_pbxt::doStartTableScan(bool scan)
 {
 	int			err = 0;
 	XTThreadPtr	thread = pb_open_tab->ot_thread;
@@ -3677,15 +3664,15 @@ int ha_pbxt::rnd_init(bool scan)
 
 	/* Call xt_tab_seq_exit() to make sure the resources used by the previous
 	 * scan are freed. In particular make sure cache page ref count is decremented.
-	 * This is needed as rnd_init() can be called mulitple times w/o matching calls 
-	 * to rnd_end(). Our experience is that currently this is done in queries like:
+	 * This is needed as doStartTableScan() can be called mulitple times w/o matching calls 
+	 * to doEndTableScan(). Our experience is that currently this is done in queries like:
 	 *
 	 * SELECT t1.c1,t2.c1 FROM t1 LEFT JOIN t2 USING (c1);
 	 * UPDATE t1 LEFT JOIN t2 USING (c1) SET t1.c1 = t2.c1 WHERE t1.c1 = t2.c1;
 	 *
 	 * when scanning inner tables. It is important to understand that in such case
-	 * multiple calls to rnd_init() are not semantically equal to a new query. For
-	 * example we cannot make row locks permanent as we do in rnd_end(), as 
+	 * multiple calls to doStartTableScan() are not semantically equal to a new query. For
+	 * example we cannot make row locks permanent as we do in doEndTableScan(), as 
 	 * ha_pbxt::unlock_row still can be called.
 	 */
 	xt_tab_seq_exit(pb_open_tab);
@@ -3730,7 +3717,7 @@ int ha_pbxt::rnd_init(bool scan)
 	return err;
 }
 
-int ha_pbxt::rnd_end()
+int ha_pbxt::doEndTableScan()
 {
 	XT_TRACE_METHOD();
 
@@ -4628,12 +4615,6 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 				self->st_statistics.st_stat_read++;
 			self->st_stat_modify = FALSE;
 			self->st_import_stat = XT_IMP_NO_IMPORT;
-
-			/* Only reset this if there is no transactions running, and
-			 * no tables are open!
-			 */
-			if (!self->st_xact_data)
-				self->st_non_temp_opened = FALSE;
 		}
 
 		if (pb_table_locked) {
@@ -4735,7 +4716,7 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 						 * this avoids taking locks on the rows that are read
 						 * Which leads to the assertion failure:
 						 * int XTRowLocks::xt_make_lock_permanent(XTOpenTable*, XTRowLockList*)(lock_xt.cc:646) item
-						 * after the transaction is committed in write_row.
+						 * after the transaction is committed in doInsertRecord.
 						 */
 						pb_open_tab->ot_for_update = FALSE;
 						break;
@@ -4846,10 +4827,6 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 #endif
 		}
 
-		/* Any open table can cause this to be FALSE: */
-		if (!XT_IS_TEMP_TABLE(pb_open_tab->ot_table->tab_dic.dic_tab_flags))
-			self->st_non_temp_opened = TRUE;
-
 		/* Start a statment transaction: */
 		/* {START-STAT-HACK} The problem that ha_commit_trans() is not
 		 * called by MySQL seems to be fixed (tests confirm this).
@@ -4874,9 +4851,9 @@ xtPublic int ha_pbxt::external_lock(THD *thd, int lock_type)
 		 *
 		 * So, this is the correct place to start a statement transaction.
 		 *
-		 * Note: if trans_register_ha() is not called before ha_write_row(), then 
+		 * Note: if trans_register_ha() is not called before insertRecord(), then 
 		 * PBXT is not registered correctly as a modification transaction.
-		 * (mark_trx_read_write call in ha_write_row).
+		 * (mark_trx_read_write call in insertRecord).
 		 * This leads to 2-phase commit not being called as it should when
 		 * binary logging is enabled.
 		 */
@@ -5623,7 +5600,6 @@ ha_rows ha_pbxt::records_in_range(uint inx, key_range *min_key, key_range *max_k
 
  * Called from handle.cc by ha_create_table().
 */
-#ifdef DRIZZLED
 int PBXTStorageEngine::doCreateTable(Session&, 
                                      Table& table_arg, 
                                      TableIdentifier& ident,
@@ -5631,10 +5607,6 @@ int PBXTStorageEngine::doCreateTable(Session&,
 {
 	const std::string& path = ident.getPath();
 	const char *table_path = path.c_str();
-#else
-int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *create_info)
-{
-#endif
 	THD				*thd = current_thd;
 	int				err = 0;
 	XTThreadPtr		self;
@@ -5654,7 +5626,6 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
 
 	if (!(self = ha_set_current_thread(thd, &err)))
 		return xt_ha_pbxt_to_mysql_error(err);
-#ifdef DRIZZLED
 	XT_PRINT2(self, "create (%s) %s\n", table_path, (proto.type() == message::Table::TEMPORARY) ? "temporary" : "");
         switch(ident.getType()) {
         	case message::Table::STANDARD:
@@ -5673,26 +5644,16 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
                 	dic.dic_table_type = XT_TABLE_TYPE_FUNCTION;
 			break;
 	}
-#else
-	XT_PRINT2(self, "create (%s) %s\n", table_path, (create_info->options & HA_LEX_CREATE_TMP_TABLE) ? "temporary" : "");
-#endif
 
 	STAT_TRACE(self, *thd_query(thd));
 
 	try_(a) {
 		xt_ha_open_database_of_table(self, (XTPathStrPtr) table_path);
 
-#ifdef DRIZZLED
-		for (uint i=0; i<TS(&table_arg)->keys; i++) {
+		for (uint i=0; i<table_arg.s->keys; i++) {
 			if (table_arg.key_info[i].key_length > XT_INDEX_MAX_KEY_SIZE)
 				xt_throw_sulxterr(XT_CONTEXT, XT_ERR_KEY_TOO_LARGE, table_arg.key_info[i].name, (u_long) XT_INDEX_MAX_KEY_SIZE);
 		}
-#else
-		for (uint i=0; i<TS(table_arg)->keys; i++) {
-			if (table_arg->key_info[i].key_length > XT_INDEX_MAX_KEY_SIZE)
-				xt_throw_sulxterr(XT_CONTEXT, XT_ERR_KEY_TOO_LARGE, table_arg->key_info[i].name, (u_long) XT_INDEX_MAX_KEY_SIZE);
-		}
-#endif
 
 		/* ($) auto_increment_value will be zero if 
 		 * AUTO_INCREMENT is not used. Otherwise
@@ -5704,21 +5665,13 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
 			source_dic.dic_tab_flags |= XT_TF_MEMORY_TABLE;
 #endif
 
-#ifdef DRIZZLED
 		StorageEngine::writeDefinitionFromPath(ident, proto);
 
-		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, &table_arg), &source_dic);
+		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, table_arg.s), &source_dic);
 		tab_def->checkForeignKeys(self, proto.type() == message::Table::TEMPORARY);
-#else
-		// tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, *thd_query(thd), myxt_create_table_from_table(self, table_arg));
-		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, *thd_query(thd), myxt_create_table_from_table(self, table_arg), &source_dic);
-		tab_def->checkForeignKeys(self, create_info->options & HA_LEX_CREATE_TMP_TABLE);
-		dic.dic_table_type = XT_TABLE_TYPE_STANDARD;
-#endif
 
 		dic.dic_table = tab_def;
-#ifdef DRIZZLED
-		dic.dic_my_table = &table_arg;
+		dic.dic_my_table = table_arg.s;
 		dic.dic_tab_flags = source_dic.dic_tab_flags;
 		//if (create_info.storage_media == HA_SM_MEMORY)
 		//	dic.dic_tab_flags |= XT_TF_MEMORY_TABLE;
@@ -5729,20 +5682,6 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
 
 		dic.dic_min_auto_inc = (xtWord8) proto.options().auto_increment_value(); /* ($) */
 		dic.dic_def_ave_row_size =  proto.options().avg_row_length();
-#else
-		dic.dic_my_table = table_arg;
-		dic.dic_tab_flags = source_dic.dic_tab_flags;
-
-		if (create_info->storage_media == HA_SM_MEMORY)
-			dic.dic_tab_flags |= XT_TF_MEMORY_TABLE;
-		if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
-			dic.dic_tab_flags |= XT_TF_REAL_TEMP_TABLE;
-		if (myxt_temp_table_name(table_path))
-			dic.dic_tab_flags |= XT_TF_DDL_TEMP_TABLE;
-
-		dic.dic_min_auto_inc = (xtWord8) create_info->auto_increment_value; /* ($) */
-		dic.dic_def_ave_row_size = (xtWord8) table_arg->s->avg_row_length;
-#endif
 		myxt_setup_dictionary(self, &dic);
 
 		/*
@@ -5773,18 +5712,6 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
 	myxt_free_dictionary(self, &dic);
 
 	XT_RETURN(err);
-}
-
-void ha_pbxt::update_create_info(HA_CREATE_INFO *create_info)
-{
-	XTOpenTablePtr	ot;
-
-	if ((ot = pb_open_tab)) {
-		if (!(create_info->used_fields & HA_CREATE_USED_AUTO)) {
-			/* Fill in the minimum auto-increment value! */
-			create_info->auto_increment_value = ot->ot_table->tab_dic.dic_min_auto_inc;
-		}
-	}
 }
 
 #ifdef DRIZZLED

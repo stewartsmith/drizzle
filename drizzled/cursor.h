@@ -47,18 +47,9 @@ namespace drizzled
 
 #define HA_MAX_ALTER_FLAGS 40
 
-
 typedef std::bitset<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 
 extern uint64_t refresh_version;  /* Increments on each reload */
-
-
-typedef bool (*qc_engine_callback)(Session *session, char *table_key,
-                                      uint32_t key_length,
-                                      uint64_t *engine_data);
-
-
-/* The Cursor for a table type.  Will be included in the Table structure */
 
 class Table;
 class TableList;
@@ -68,7 +59,6 @@ class ForeignKeyInfo;
 struct order_st;
 
 class Item;
-struct st_table_log_memory_entry;
 
 class LEX;
 class Select_Lex;
@@ -148,10 +138,6 @@ inline key_part_map make_prev_keypart_map(T a)
   present, its length is one byte <not-sure> which must be set to 0xFF
   at all times. </not-sure>
 
-  If the table has columns of type BIT, then certain bits from those columns
-  may be stored in null_bytes as well. Grep around for Field_bit for
-  details.
-
   For blob columns (see Field_blob), the record buffer stores length of the
   data, following by memory pointer to the blob data. The pointer is owned
   by the storage engine and is valid until the next operation.
@@ -159,7 +145,6 @@ inline key_part_map make_prev_keypart_map(T a)
   If a blob column has NULL value, then its length and blob data pointer
   must be set to 0.
 */
-
 class Cursor :public memory::SqlAlloc
 {
 protected:
@@ -167,14 +152,19 @@ protected:
   Table *table;               /* The current open table */
 
   ha_rows estimation_rows_to_insert;
-public:
   plugin::StorageEngine *engine;      /* storage engine of this Cursor */
+public:
   inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
   {
     return engine;
   }
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
+
+  TableShare *getShare() const
+  {
+    return table_share;
+  }
 
   ha_statistics stats;
   /** MultiRangeRead-related members: */
@@ -189,18 +179,13 @@ public:
   bool mrr_have_range;
 
   bool eq_range;
-  /*
-    true <=> the engine guarantees that returned records are within the range
-    being scanned.
-  */
-  bool in_range_check_pushed_down;
 
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
 
   /** The following are for read_range() */
   key_range save_end_range, *end_range;
-  KEY_PART_INFO *range_key_part;
+  KeyPartInfo *range_key_part;
   int key_compare_result_on_equal;
 
   uint32_t errkey;				/* Last dup key */
@@ -210,7 +195,6 @@ public:
   uint32_t ref_length;
   enum {NONE=0, INDEX, RND} inited;
   bool locked;
-  bool implicit_emptied;                /* Can be !=0 only if HEAP */
 
   /**
     next_insert_id is the next value which should be inserted into the
@@ -247,10 +231,10 @@ public:
   /* ha_ methods: pubilc wrappers for private virtual API */
 
   int ha_open(Table *table, const char *name, int mode, int test_if_locked);
-  int ha_index_init(uint32_t idx, bool sorted);
-  int ha_index_end();
-  int ha_rnd_init(bool scan);
-  int ha_rnd_end();
+  int startIndexScan(uint32_t idx, bool sorted);
+  int endIndexScan();
+  int startTableScan(bool scan);
+  int endTableScan();
   int ha_reset();
 
   /* this is necessary in many places, e.g. in HANDLER command */
@@ -259,13 +243,13 @@ public:
   /**
     These functions represent the public interface to *users* of the
     Cursor class, hence they are *not* virtual. For the inheritance
-    interface, see the (private) functions write_row(), update_row(),
-    and delete_row() below.
+    interface, see the (private) functions doInsertRecord(), doUpdateRecord(),
+    and doDeleteRecord() below.
   */
   int ha_external_lock(Session *session, int lock_type);
-  int ha_write_row(unsigned char * buf);
-  int ha_update_row(const unsigned char * old_data, unsigned char * new_data);
-  int ha_delete_row(const unsigned char * buf);
+  int insertRecord(unsigned char * buf);
+  int updateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int deleteRecord(const unsigned char * buf);
   void ha_release_auto_increment();
 
   /** to be actually called to get 'check()' functionality*/
@@ -402,23 +386,9 @@ public:
                                bool eq_range, bool sorted);
   virtual int read_range_next();
   int compare_key(key_range *range);
-  int compare_key2(key_range *range);
   virtual int rnd_next(unsigned char *)=0;
   virtual int rnd_pos(unsigned char *, unsigned char *)=0;
-  /**
-    One has to use this method when to find
-    random position by record as the plain
-    position() call doesn't work for some
-    handlers for random position.
-  */
-  virtual int rnd_pos_by_record(unsigned char *record);
   virtual int read_first_row(unsigned char *buf, uint32_t primary_key);
-  /**
-    The following function is only needed for tables that may be temporary
-    tables during joins.
-  */
-  virtual int restart_rnd_next(unsigned char *, unsigned char *)
-    { return HA_ERR_WRONG_COMMAND; }
   virtual int rnd_same(unsigned char *, uint32_t)
     { return HA_ERR_WRONG_COMMAND; }
   virtual ha_rows records_in_range(uint32_t, key_range *, key_range *)
@@ -506,16 +476,6 @@ public:
   { return 0; }
   virtual uint32_t referenced_by_foreign_key() { return 0;}
   virtual void free_foreign_key_create_info(char *) {}
-  /** The following can be called without an open Cursor */
-
-  virtual int add_index(Table *, KEY *, uint32_t)
-  { return (HA_ERR_WRONG_COMMAND); }
-  virtual int prepare_drop_index(Table *, uint32_t *, uint32_t)
-  { return (HA_ERR_WRONG_COMMAND); }
-  virtual int final_drop_index(Table *)
-  { return (HA_ERR_WRONG_COMMAND); }
-
-  virtual uint32_t checksum(void) const { return 0; }
 
   /**
     Is not invoked for non-transactional temporary tables.
@@ -573,29 +533,29 @@ private:
   */
 
   virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
-  virtual int index_init(uint32_t idx, bool)
+  virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
-  virtual int index_end() { active_index= MAX_KEY; return 0; }
+  virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }
   /**
-    rnd_init() can be called two times without rnd_end() in between
+    doStartTableScan() can be called two times without doEndTableScan() in between
     (it only makes sense if scan=1).
     then the second call should prepare for the new table scan (e.g
     if rnd_init allocates the cursor, second call should position it
     to the start of the table, no need to deallocate and allocate it again
   */
-  virtual int rnd_init(bool scan)= 0;
-  virtual int rnd_end() { return 0; }
-  virtual int write_row(unsigned char *)
+  virtual int doStartTableScan(bool scan)= 0;
+  virtual int doEndTableScan() { return 0; }
+  virtual int doInsertRecord(unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int update_row(const unsigned char *, unsigned char *)
+  virtual int doUpdateRecord(const unsigned char *, unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
 
-  virtual int delete_row(const unsigned char *)
+  virtual int doDeleteRecord(const unsigned char *)
   {
     return HA_ERR_WRONG_COMMAND;
   }
@@ -765,14 +725,7 @@ TableShare *get_table_share(Session *session, TableList *table_list, char *key,
                              uint32_t key_length, uint32_t db_flags, int *error);
 TableShare *get_cached_table_share(const char *db, const char *table_name);
 bool reopen_name_locked_table(Session* session, TableList* table_list, bool link_in);
-Table *table_cache_insert_placeholder(Session *session, const char *key,
-                                      uint32_t key_length);
-bool lock_table_name_if_not_cached(Session *session, const char *db,
-                                   const char *table_name, Table **table);
-bool reopen_table(Table *table);
 bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
-void close_data_files_and_morph_locks(Session *session, const char *db,
-                                      const char *table_name);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);

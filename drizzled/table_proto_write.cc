@@ -44,7 +44,7 @@ static int fill_table_proto(message::Table &table_proto,
                             List<CreateField> &create_fields,
                             HA_CREATE_INFO *create_info,
                             uint32_t keys,
-                            KEY *key_info)
+                            KeyInfo *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
@@ -182,23 +182,6 @@ static int fill_table_proto(message::Table &table_proto,
     field_constraints= attribute->mutable_constraints();
     constraints->set_is_nullable(field_arg->def->null_value);
 #endif
-
-    switch(field_arg->column_format())
-    {
-    case COLUMN_FORMAT_TYPE_NOT_USED:
-      break;
-    case COLUMN_FORMAT_TYPE_DEFAULT:
-      attribute->set_format(message::Table::Field::DefaultFormat);
-      break;
-    case COLUMN_FORMAT_TYPE_FIXED:
-      attribute->set_format(message::Table::Field::FixedFormat);
-      break;
-    case COLUMN_FORMAT_TYPE_DYNAMIC:
-      attribute->set_format(message::Table::Field::DynamicFormat);
-      break;
-    default:
-      assert(0); /* Tell us, since this shouldn't happend */
-    }
 
     if (field_arg->comment.length)
     {
@@ -377,7 +360,7 @@ static int fill_table_proto(message::Table &table_proto,
     else
       idx->set_is_unique(false);
 
-    message::Table::Index::IndexOptions *index_options= idx->mutable_options();
+    message::Table::Index::Options *index_options= idx->mutable_options();
 
     if (key_info[i].flags & HA_USES_BLOCK_SIZE)
       index_options->set_key_block_size(key_info[i].block_size);
@@ -467,7 +450,7 @@ bool rea_create_table(Session *session,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_fields,
-                      uint32_t keys, KEY *key_info)
+                      uint32_t keys, KeyInfo *key_info)
 {
   if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
                        keys, key_info))
@@ -475,7 +458,7 @@ bool rea_create_table(Session *session,
 
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,
-                                         false, table_proto))
+                                         table_proto))
   {
     return false;
   }

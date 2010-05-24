@@ -652,10 +652,10 @@ bool ClientMySQLProtocol::checkConnection(void)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= buff + strlen(VERSION);
+    end= buff + strlen(PANDORA_RELEASE_VERSION);
     if ((end - buff) >= SERVER_VERSION_LENGTH)
       end= buff + (SERVER_VERSION_LENGTH - 1);
-    memcpy(buff, VERSION, end - buff);
+    memcpy(buff, PANDORA_RELEASE_VERSION, end - buff);
     *end= 0;
     end++;
 
@@ -881,7 +881,7 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
 static ListenMySQLProtocol *listen_obj= NULL;
 plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   /* Initialize random seeds for the MySQL algorithm with minimal changes. */
   time_t seed_time= time(NULL);

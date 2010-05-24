@@ -87,7 +87,7 @@ MultiThreadScheduler::~MultiThreadScheduler()
 }
 
   
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   scheduler= new MultiThreadScheduler("multi_thread");
   context.add(scheduler);

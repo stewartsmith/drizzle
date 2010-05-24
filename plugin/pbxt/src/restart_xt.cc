@@ -2578,7 +2578,7 @@ xtBool XTXactRestart::xres_restart(XTThreadPtr self, xtLogID *log_id, xtLogOffse
 
 xtBool XTXactRestart::xres_is_checkpoint_pending(xtLogID curr_log_id, xtLogOffset curr_log_offset)
 {
-	return xt_bytes_since_last_checkpoint(xres_db, curr_log_id, curr_log_offset) >= xt_db_checkpoint_frequency / 2;
+	return xt_bytes_since_last_checkpoint(xres_db, curr_log_id, curr_log_offset) >= xt_db_checkpoint_frequency;
 }
 
 /*
@@ -2645,7 +2645,7 @@ off_t XTXactRestart::xres_bytes_to_read(XTThreadPtr self, XTDatabaseHPtr db, u_i
 	return to_read;
 
 	header_corrupt:
-	if (log_id == xres_cp_log_id && xres_cp_log_offset > sizeof(XTXactLogHeaderDRec))
+	if (log_id == xres_cp_log_id && xres_cp_log_offset > (xtLogOffset) sizeof(XTXactLogHeaderDRec))
 		xt_throw_ulxterr(XT_CONTEXT, XT_ERR_LOG_HEADER_CORRUPT, (u_long) log_id);
 
 	freer_(); // xt_close_file(of)
@@ -2888,6 +2888,7 @@ static void xres_cp_main(XTThreadPtr self)
 	u_int				curr_writer_total;
 	time_t				now, last_index_flush;
 	xtBool				async = TRUE;
+	xtXactID			sweep_count;
 
 	xt_set_low_priority(self);
 
@@ -2916,8 +2917,14 @@ static void xres_cp_main(XTThreadPtr self)
 		 * And if the sweeper is not idle, then there is also activity!
 		 * And if the writer is active, then we should wait for it as well!
 		 */
+#ifdef XT_SWEEPER_SORT_XACTS
+		sweep_count = db->db_xn_curr_id + 1 - db->db_sw_to_add + db->db_sw_list_size;
+#else
+		sweep_count = db->db_xn_curr_id + 1 - db->db_xn_to_clean_id;
+#endif
 		if (!db->db_xn_long_running_count && 
 			curr_writer_total == db->db_xn_total_writer_count && 
+			!sweep_count &&
 			db->db_sw_idle == XT_THREAD_IDLE && 
 			db->db_wr_idle == XT_THREAD_IDLE) {
 			/* No activity in 2 seconds: */

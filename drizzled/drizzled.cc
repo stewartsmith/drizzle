@@ -54,6 +54,7 @@
 #include "drizzled/charset.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/drizzled.h"
+#include "drizzled/module/registry.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -217,7 +218,6 @@ char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-uint32_t max_used_connections;
 const string opt_scheduler_default("multi_thread");
 char *opt_scheduler= NULL;
 
@@ -242,8 +242,6 @@ uint32_t back_log;
 uint32_t server_id;
 uint64_t table_cache_size;
 size_t table_def_size;
-uint64_t aborted_threads;
-uint64_t aborted_connects;
 uint64_t max_connect_errors;
 uint32_t global_thread_id= 1UL;
 pid_t current_pid;
@@ -299,7 +297,7 @@ key_map key_map_full(0);                        // Will be initialized later
 
 uint32_t data_home_len;
 char data_home_buff[2], *data_home=data_home_real;
-char *drizzle_tmpdir= NULL;
+std::string drizzle_tmpdir;
 char *opt_drizzle_tmpdir= NULL;
 
 /** name of reference on left espression in rewritten IN subquery */
@@ -316,6 +314,7 @@ FILE *stderror_file=0;
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
+struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;
@@ -364,14 +363,12 @@ uint64_t refresh_version;  /* Increments on each reload */
 /* Function declarations */
 bool drizzle_rm_tmp_tables();
 
-extern "C" pthread_handler_t signal_hand(void *arg);
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 int drizzled_get_one_option(int, const struct option *, char *);
 static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string &progname);
-extern "C" pthread_handler_t handle_slave(void *arg);
 
 static void usage(void);
 void close_connections(void);
@@ -503,13 +500,12 @@ void clean_up(bool print_message)
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  plugin_shutdown(plugins);
+  module::Registry &modules= module::Registry::singleton();
+  modules.shutdownModules();
   xid_cache_free();
   free_status_vars();
   if (defaults_argv)
     internal::free_defaults(defaults_argv);
-  free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
 
@@ -733,54 +729,9 @@ static st_show_var_func_container show_starttime_cont= { &show_starttime };
 
 static st_show_var_func_container show_flushstatustime_cont= { &show_flushstatustime };
 
-/*
-  Variables shown by SHOW STATUS in alphabetical order
-*/
-static drizzle_show_var com_status_vars[]= {
-  {"admin_commands",       (char*) offsetof(system_status_var, com_other), SHOW_LONG_STATUS},
-  {"alter_db",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
-  {"alter_table",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
-  {"analyze",              (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
-  {"begin",                (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_BEGIN]), SHOW_LONG_STATUS},
-  {"change_db",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CHANGE_DB]), SHOW_LONG_STATUS},
-  {"check",                (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CHECK]), SHOW_LONG_STATUS},
-  {"checksum",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CHECKSUM]), SHOW_LONG_STATUS},
-  {"commit",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_COMMIT]), SHOW_LONG_STATUS},
-  {"create_db",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CREATE_DB]), SHOW_LONG_STATUS},
-  {"create_index",         (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CREATE_INDEX]), SHOW_LONG_STATUS},
-  {"create_table",         (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_CREATE_TABLE]), SHOW_LONG_STATUS},
-  {"delete",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_DELETE]), SHOW_LONG_STATUS},
-  {"drop_db",              (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_DROP_DB]), SHOW_LONG_STATUS},
-  {"drop_index",           (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_DROP_INDEX]), SHOW_LONG_STATUS},
-  {"drop_table",           (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_DROP_TABLE]), SHOW_LONG_STATUS},
-  {"empty_query",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_EMPTY_QUERY]), SHOW_LONG_STATUS},
-  {"flush",                (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_FLUSH]), SHOW_LONG_STATUS},
-  {"insert",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_INSERT]), SHOW_LONG_STATUS},
-  {"insert_select",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
-  {"kill",                 (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_KILL]), SHOW_LONG_STATUS},
-  {"load",                 (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_LOAD]), SHOW_LONG_STATUS},
-  {"release_savepoint",    (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"rename_table",         (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_RENAME_TABLE]), SHOW_LONG_STATUS},
-  {"replace",              (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_REPLACE]), SHOW_LONG_STATUS},
-  {"replace_select",       (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_REPLACE_SELECT]), SHOW_LONG_STATUS},
-  {"rollback",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ROLLBACK]), SHOW_LONG_STATUS},
-  {"rollback_to_savepoint",(char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_ROLLBACK_TO_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"savepoint",            (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SAVEPOINT]), SHOW_LONG_STATUS},
-  {"select",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SELECT]), SHOW_LONG_STATUS},
-  {"set_option",           (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SET_OPTION]), SHOW_LONG_STATUS},
-  {"show_create_db",       (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
-  {"show_create_table",    (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
-  {"show_errors",          (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
-  {"show_warnings",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
-  {"truncate",             (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
-  {"unlock_tables",        (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
-  {"update",               (char*) offsetof(system_status_var, com_stat[(uint32_t) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
-  {NULL, NULL, SHOW_LONGLONG}
-};
-
 static drizzle_show_var status_vars[]= {
-  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
-  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
+  {"Aborted_clients",          (char*) &current_global_counters.aborted_threads, SHOW_LONGLONG},
+  {"Aborted_connects",         (char*) &current_global_counters.aborted_connects, SHOW_LONGLONG},
   {"Bytes_received",           (char*) offsetof(system_status_var, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(system_status_var, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
@@ -809,7 +760,7 @@ static drizzle_show_var status_vars[]= {
   {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(system_status_var, last_query_cost), SHOW_DOUBLE_STATUS},
-  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
+  {"Max_used_connections",     (char*) &current_global_counters.max_used_connections,  SHOW_INT},
   {"Questions",                (char*) offsetof(system_status_var, questions), SHOW_LONG_STATUS},
   {"Select_full_join",         (char*) offsetof(system_status_var, select_full_join_count), SHOW_LONG_STATUS},
   {"Select_full_range_join",   (char*) offsetof(system_status_var, select_full_range_join_count), SHOW_LONG_STATUS},
@@ -821,8 +772,8 @@ static drizzle_show_var status_vars[]= {
   {"Sort_range",	       (char*) offsetof(system_status_var, filesort_range_count), SHOW_LONG_STATUS},
   {"Sort_rows",		       (char*) offsetof(system_status_var, filesort_rows), SHOW_LONG_STATUS},
   {"Sort_scan",		       (char*) offsetof(system_status_var, filesort_scan_count), SHOW_LONG_STATUS},
-  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
-  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
+  {"Table_locks_immediate",    (char*) &current_global_counters.locks_immediate,        SHOW_INT},
+  {"Table_locks_waited",       (char*) &current_global_counters.locks_waited,           SHOW_INT},
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
@@ -873,14 +824,6 @@ int init_common_variables(const char *conf_file_name, int argc,
   else
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
   strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
-
-  /*
-    Add server status variables to the dynamic list of
-    status variables that is shown by SHOW STATUS.
-    Later, in plugin_init, new entries could be added to that list.
-  */
-  if (add_com_status_vars(com_status_vars))
-    return 1; // an error was already reported
 
   if (add_status_vars(status_vars))
     return 1; // an error was already reported
@@ -979,7 +922,7 @@ static int init_thread_environment()
 }
 
 
-int init_server_components(plugin::Registry &plugins)
+int init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -1569,10 +1512,9 @@ static void drizzle_init_variables(void)
   wake_thread=0;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
-  aborted_threads= aborted_connects= 0;
-  max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
   memset(&global_status_var, 0, sizeof(global_status_var));
+  memset(&current_global_counters, 0, sizeof(current_global_counters));
   key_map_full.set();
 
   /* Character sets */
@@ -1866,12 +1808,14 @@ static void fix_paths(string &progname)
     {
       progdir.assign(progdir.substr(0, progdir.rfind(".libs/")));
     }
-    string testfile(progdir);
-    testfile.append("drizzled.lo");
+    string testlofile(progdir);
+    testlofile.append("drizzled.lo");
+    string testofile(progdir);
+    testofile.append("drizzled.o");
     struct stat testfile_stat;
-    if (stat(testfile.c_str(), &testfile_stat))
+    if (stat(testlofile.c_str(), &testfile_stat) && stat(testofile.c_str(), &testfile_stat))
     {
-      /* drizzled.lo doesn't exist - we are not in a source dir.
+      /* neither drizzled.lo or drizzled.o exist - we are not in a source dir.
        * Go on as usual
        */
       (void) internal::my_load_path(opt_plugin_dir, get_relative_path(PKGPLUGINDIR),
@@ -1910,16 +1854,40 @@ static void fix_paths(string &progname)
     tmp_string= getenv("TMPDIR");
 
     if (opt_drizzle_tmpdir)
-      drizzle_tmpdir= strdup(opt_drizzle_tmpdir);
-    else if (tmp_string == NULL)
-      drizzle_tmpdir= strdup(P_tmpdir);
-    else
-      drizzle_tmpdir= strdup(tmp_string);
-
-    assert(drizzle_tmpdir);
-
-    if (stat(drizzle_tmpdir, &buf) || (S_ISDIR(buf.st_mode) == false))
     {
+      drizzle_tmpdir.append(opt_drizzle_tmpdir);
+    }
+    else if (tmp_string == NULL)
+    {
+      drizzle_tmpdir.append(data_home);
+    }
+    else
+    {
+      drizzle_tmpdir.append(tmp_string);
+    }
+
+    assert(drizzle_tmpdir.size());
+    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    {
+      perror(drizzle_tmpdir.c_str());
+      exit(1);
+    }
+
+    drizzle_tmpdir.append(FN_ROOTDIR);
+    drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
+
+    if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
+    {
+      if (errno != EEXIST)
+      {
+        perror(drizzle_tmpdir.c_str());
+        exit(1);
+      }
+    }
+
+    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    {
+      perror(drizzle_tmpdir.c_str());
       exit(1);
     }
   }

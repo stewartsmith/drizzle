@@ -173,11 +173,7 @@ class ha_pbxt: public handler
 	THD					*pb_mysql_thd;			/* A pointer to the MySQL thread. */
 	xtBool				pb_in_stat;				/* TRUE of start_stmt() was issued */
 
-#ifdef DRIZZLED
-	ha_pbxt(handlerton *hton, TableShare& table_arg);
-#else
-	ha_pbxt(handlerton *hton, TABLE_SHARE *table_arg);
-#endif
+	ha_pbxt(plugin::StorageEngine &engine_arg, TableShare &table_arg);
 	virtual ~ha_pbxt() { }
 
 	/* The name that will be used for display purposes */
@@ -244,16 +240,16 @@ class ha_pbxt: public handler
                                  MX_ULONGLONG_T *nb_reserved_values);
 	void	set_auto_increment(Field *nr);
 
-	int		write_row(byte * buf);
-	int		update_row(const byte * old_data, byte * new_data);
-	int		delete_row(const byte * buf);
+	int		doInsertRecord(byte * buf);
+	int		doUpdateRecord(const byte * old_data, byte * new_data);
+	int		doDeleteRecord(const byte * buf);
 
 	/* Index access functions: */
 	int		xt_index_in_range(register XTOpenTablePtr ot, register XTIndexPtr ind, register XTIdxSearchKeyPtr search_key, byte *buf);
 	int		xt_index_next_read(register XTOpenTablePtr ot, register XTIndexPtr ind, xtBool key_only, register XTIdxSearchKeyPtr search_key, byte *buf);
 	int		xt_index_prev_read(XTOpenTablePtr ot, XTIndexPtr ind, xtBool key_only, register XTIdxSearchKeyPtr search_key, byte *buf);
-	int		index_init(uint idx, bool sorted);
-	int		index_end();
+	int		doStartIndexScan(uint idx, bool sorted);
+	int		doEndIndexScan();
 	int		index_read(byte * buf, const byte * key,
 								 uint key_len, enum ha_rkey_function find_flag);
         int		index_read_idx(byte * buf, uint idx, const byte * key,
@@ -268,8 +264,8 @@ class ha_pbxt: public handler
 	int		index_read_last(byte * buf, const byte * key, uint key_len);
 
 	/* Sequential scan functions: */
-	int		rnd_init(bool scan);								//required
-	int		rnd_end();
+	int		doStartTableScan(bool scan);								//required
+	int		doEndTableScan();
 	int		rnd_next(byte *buf);								//required
 	int		rnd_pos(byte * buf, byte *pos);													 //required
 	void	position(const byte *record);			//required
@@ -303,7 +299,6 @@ class ha_pbxt: public handler
 	int		rename_table(const char * from, const char * to);
 	int		create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);				//required
 #endif
-	void	update_create_info(HA_CREATE_INFO *create_info);
 
 	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);		 //required
 
@@ -346,16 +341,13 @@ void			ha_set_auto_increment(XTOpenTablePtr ot, Field *nr);
 extern "C" struct charset_info_st *thd_charset(MYSQL_THD thd);
 extern "C" char **thd_query(MYSQL_THD thd);
 extern "C" int thd_slave_thread(const MYSQL_THD thd);
-extern "C" int thd_non_transactional_update(const MYSQL_THD thd);
 extern "C" int thd_binlog_format(const MYSQL_THD thd);
 extern "C" void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all);
 #else
 #define thd_charset(t)						(t)->charset()
 #define thd_query(t)						&(t)->query
 #define thd_slave_thread(t)					(t)->slave_thread
-#define thd_non_transactional_update(t)		(t)->transaction.all.modified_non_trans_table
 #define thd_binlog_format(t)				(t)->variables.binlog_format
-#define thd_mark_transaction_to_rollback(t)	mark_transaction_to_rollback(t, all)
 #endif // INNODB_COMPATIBILITY_HOOKS */
 #endif /* !DRIZZLED */
 

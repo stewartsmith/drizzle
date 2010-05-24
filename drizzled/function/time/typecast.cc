@@ -18,6 +18,9 @@
  */
 
 #include "config.h"
+
+#include <cstdio>
+
 #include "drizzled/current_session.h"
 #include "drizzled/error.h"
 #include "drizzled/function/time/typecast.h"

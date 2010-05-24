@@ -43,7 +43,7 @@ public:
 
 plugin::Create_function<Item_func_hello_world> *hello_world_udf= NULL;
 
-static int hello_world_plugin_init(drizzled::plugin::Context &context)
+static int hello_world_plugin_init(drizzled::module::Context &context)
 {
   hello_world_udf=
     new plugin::Create_function<Item_func_hello_world>("hello_world");

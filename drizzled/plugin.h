@@ -20,14 +20,14 @@
 #ifndef DRIZZLED_PLUGIN_H
 #define DRIZZLED_PLUGIN_H
 
-#include <drizzled/lex_string.h>
-#include <drizzled/xid.h>
-#include <drizzled/plugin/manifest.h>
-#include <drizzled/plugin/module.h>
+#include "drizzled/module/manifest.h"
+#include "drizzled/module/module.h"
 #include "drizzled/plugin/version.h"
+#include "drizzled/module/context.h"
 #include "drizzled/definitions.h"
-#include "drizzled/plugin/context.h"
 
+#include "drizzled/lex_string.h"
+#include "drizzled/xid.h"
 
 namespace drizzled
 {
@@ -56,14 +56,14 @@ namespace plugin { class StorageEngine; }
 /*
   Macros for beginning and ending plugin declarations. Between
   DRIZZLE_DECLARE_PLUGIN and DRIZZLE_DECLARE_PLUGIN_END there should
-  be a plugin::Manifest for each plugin to be declared.
+  be a module::Manifest for each plugin to be declared.
 */
 
 
 #define PANDORA_CPP_NAME(x) _drizzled_ ## x ## _plugin_
 #define PANDORA_PLUGIN_NAME(x) PANDORA_CPP_NAME(x)
 #define DRIZZLE_DECLARE_PLUGIN \
-  ::drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
+  ::drizzled::module::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
 
 
 #define DRIZZLE_DECLARE_PLUGIN_END
@@ -371,14 +371,9 @@ struct drizzle_value
   Miscellaneous functions for plugin implementors
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern bool plugin_init(plugin::Registry &registry,
+extern bool plugin_init(module::Registry &registry,
                         int *argc, char **argv,
                         bool skip_init);
-extern void plugin_shutdown(plugin::Registry &plugins);
 extern void my_print_help_inc_plugins(option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);
@@ -426,17 +421,7 @@ int mysql_tmpfile(const char *prefix);
 int session_killed(const Session *session);
 
 
-/**
-  Return the thread id of a user thread
-
-  @param session  user thread connection handle
-  @return  thread id
-*/
-unsigned long session_get_thread_id(const Session *session);
-
 const charset_info_st *session_charset(Session *session);
-int session_non_transactional_update(const Session *session);
-void session_mark_transaction_to_rollback(Session *session, bool all);
 
 /**
   Invalidate the query cache for a given table.
@@ -449,10 +434,6 @@ void session_mark_transaction_to_rollback(Session *session, bool all);
 void mysql_query_cache_invalidate4(Session *session,
                                    const char *key, unsigned int key_length,
                                    int using_trx);
-
-#ifdef __cplusplus
-}
-#endif
 
 } /* namespace drizzled */
 

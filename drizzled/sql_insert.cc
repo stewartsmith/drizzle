@@ -17,6 +17,7 @@
 /* Insert of records */
 
 #include "config.h"
+#include <cstdio>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
@@ -721,7 +722,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 
   if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE)
   {
-    while ((error=table->cursor->ha_write_row(table->record[0])))
+    while ((error=table->cursor->insertRecord(table->record[0])))
     {
       uint32_t key_nr;
       /*
@@ -820,7 +821,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
              !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
-          if ((error=table->cursor->ha_update_row(table->record[1],
+          if ((error=table->cursor->updateRecord(table->record[1],
                                                 table->record[0])) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
           {
@@ -875,7 +876,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             (table->timestamp_field_type == TIMESTAMP_NO_AUTO_SET ||
              table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
         {
-          if ((error=table->cursor->ha_update_row(table->record[1],
+          if ((error=table->cursor->updateRecord(table->record[1],
 					        table->record[0])) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
             goto err;
@@ -892,7 +893,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         }
         else
         {
-          if ((error=table->cursor->ha_delete_row(table->record[1])))
+          if ((error=table->cursor->deleteRecord(table->record[1])))
             goto err;
           info->deleted++;
           if (!table->cursor->has_transactions())
@@ -910,7 +911,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         table->write_set != save_write_set)
       table->column_bitmaps_set(save_read_set, save_write_set);
   }
-  else if ((error=table->cursor->ha_write_row(table->record[0])))
+  else if ((error=table->cursor->insertRecord(table->record[0])))
   {
     if (!info->ignore ||
         table->cursor->is_fatal_error(error, HA_CHECK_DUP))
@@ -1257,6 +1258,7 @@ bool select_insert::send_data(List<Item> &values)
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   error= write_record(session, table, &info);
+  table->auto_increment_field_not_null= false;
 
   if (!error)
   {

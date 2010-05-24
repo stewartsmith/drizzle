@@ -37,7 +37,7 @@ using namespace std;
 namespace drizzled
 {
 
-extern char *drizzle_tmpdir;
+extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";

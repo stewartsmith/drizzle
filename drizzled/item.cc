@@ -49,6 +49,7 @@
 #include "drizzled/field/varstring.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <math.h>
 #include <algorithm>
 #include <float.h>
@@ -1125,7 +1126,7 @@ Field *Item::make_string_field(Table *table)
     field= new Field_blob(max_length, maybe_null, name,
                           collation.collation);
   else
-    field= new Field_varstring(max_length, maybe_null, name, table->s,
+    field= new Field_varstring(max_length, maybe_null, name, table->getMutableShare(),
                                collation.collation);
 
   if (field)
@@ -1595,7 +1596,7 @@ static Field *create_tmp_field_from_item(Session *,
              convert_blob_length <= Field_varstring::MAX_SIZE &&
              convert_blob_length)
       new_field= new Field_varstring(convert_blob_length, maybe_null,
-                                     item->name, table->s,
+                                     item->name, table->getMutableShare(),
                                      item->collation.collation);
     else
       new_field= item->make_string_field(table);

@@ -467,7 +467,7 @@ int ha_archive::open(const char *name, int, uint32_t)
 
   assert(share);
 
-  record_buffer= create_record_buffer(table->s->reclength +
+  record_buffer= create_record_buffer(table->getShare()->reclength +
                                       ARCHIVE_ROW_HEADER_SIZE);
 
   if (!record_buffer)
@@ -542,9 +542,9 @@ int ArchiveEngine::doCreateTable(Session &,
 
   for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
-    KEY *pos= table_arg.key_info+key;
-    KEY_PART_INFO *key_part=     pos->key_part;
-    KEY_PART_INFO *key_part_end= key_part + pos->key_parts;
+    KeyInfo *pos= table_arg.key_info+key;
+    KeyPartInfo *key_part=     pos->key_part;
+    KeyPartInfo *key_part_end= key_part + pos->key_parts;
 
     for (; key_part != key_part_end; key_part++)
     {
@@ -670,8 +670,8 @@ unsigned int ha_archive::pack_row(unsigned char *record)
     return(HA_ERR_OUT_OF_MEM);
 
   /* Copy null bits */
-  memcpy(record_buffer->buffer, record, table->s->null_bytes);
-  ptr= record_buffer->buffer + table->s->null_bytes;
+  memcpy(record_buffer->buffer, record, table->getShare()->null_bytes);
+  ptr= record_buffer->buffer + table->getShare()->null_bytes;
 
   for (Field **field=table->field ; *field ; field++)
   {
@@ -692,7 +692,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   for implementing start_bulk_insert() is that we could skip
   setting dirty to true each time.
 */
-int ha_archive::write_row(unsigned char *buf)
+int ha_archive::doInsertRecord(unsigned char *buf)
 {
   int rc;
   unsigned char *read_buf= NULL;
@@ -712,7 +712,7 @@ int ha_archive::write_row(unsigned char *buf)
 
   if (table->next_number_field && record == table->record[0])
   {
-    KEY *mkey= &table->s->key_info[0]; // We only support one key right now
+    KeyInfo *mkey= &table->getShare()->key_info[0]; // We only support one key right now
     update_auto_increment();
     temp_auto= table->next_number_field->val_int();
 
@@ -756,8 +756,8 @@ void ha_archive::get_auto_increment(uint64_t, uint64_t, uint64_t,
   *first_value= share->archive_write.auto_increment + 1;
 }
 
-/* Initialized at each key walk (called multiple times unlike rnd_init()) */
-int ha_archive::index_init(uint32_t keynr, bool)
+/* Initialized at each key walk (called multiple times unlike doStartTableScan()) */
+int ha_archive::doStartIndexScan(uint32_t keynr, bool)
 {
   active_index= keynr;
   return(0);
@@ -773,12 +773,12 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 {
   int rc;
   bool found= 0;
-  KEY *mkey= &table->s->key_info[0];
+  KeyInfo *mkey= &table->getShare()->key_info[0];
   current_k_offset= mkey->key_part->offset;
   current_key= key;
   current_key_len= key_len;
 
-  rc= rnd_init(true);
+  rc= doStartTableScan(true);
 
   if (rc)
     goto error;
@@ -822,7 +822,7 @@ int ha_archive::index_next(unsigned char * buf)
   we assume the position will be set.
 */
 
-int ha_archive::rnd_init(bool scan)
+int ha_archive::doStartTableScan(bool scan)
 {
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);
@@ -1210,7 +1210,7 @@ int ha_archive::info(uint32_t flag)
 
 /*
   This method tells us that a bulk insert operation is about to occur. We set
-  a flag which will keep write_row from saying that its data is dirty. This in
+  a flag which will keep doInsertRecord from saying that its data is dirty. This in
   turn will keep selects from causing a sync to occur.
   Basically, yet another optimizations to keep compression working well.
 */

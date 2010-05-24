@@ -231,7 +231,8 @@ void XTRowLocks::rl_check(XTLockWaitPtr no_lw)
 }
 #endif
 
-xtBool XTRowLocks::rl_lock_row(XTLockGroupPtr group, XTLockWaitPtr lw, XTRowLockListPtr, int *result, XTThreadPtr thread)
+// Depending on platform 'thread->t_id' may not be used by THR_ARRAY_READ_LOCK().
+xtBool XTRowLocks::rl_lock_row(XTLockGroupPtr group, XTLockWaitPtr lw, XTRowLockListPtr, int *result, XTThreadPtr thread __attribute__((unused)))
 {
 	XTLockItemPtr	item;
 	size_t			index;

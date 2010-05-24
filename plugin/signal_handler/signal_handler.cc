@@ -261,7 +261,7 @@ public:
   }
 };
 
-static int init(drizzled::plugin::Context& context)
+static int init(drizzled::module::Context& context)
 {
   SignalHandler *handler= new SignalHandler;
   context.add(handler);

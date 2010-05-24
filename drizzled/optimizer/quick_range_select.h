@@ -40,6 +40,62 @@ namespace optimizer
  */
 class QuickRangeSelect : public QuickSelectInterface
 {
+protected:
+  Cursor *cursor;
+  DYNAMIC_ARRAY ranges; /**< ordered array of range ptrs */
+
+  /** Members to deal with case when this quick select is a ROR-merged scan */
+  bool in_ror_merged_scan;
+  MyBitmap column_bitmap;
+  MyBitmap *save_read_set;
+  MyBitmap *save_write_set;
+  bool free_file; /**< True when this->file is "owned" by this quick select */
+
+  /* Range pointers to be used when not using MRR interface */
+  QuickRange **cur_range; /**< current element in ranges  */
+  QuickRange *last_range;
+
+  /** Members needed to use the MRR interface */
+  QuickRangeSequenceContext qr_traversal_ctx;
+  uint32_t mrr_buf_size; /**< copy from session->variables.read_rnd_buff_size */
+  HANDLER_BUFFER *mrr_buf_desc; /**< the Cursor buffer */
+
+  /** Info about index we're scanning */
+  KEY_PART *key_parts;
+  KeyPartInfo *key_part_info;
+
+  bool dont_free; /**< Used by QuickSelectDescending */
+
+  /**
+   * Compare if found key is over max-value
+   * @return 0 if key <= range->max_key
+   * @todo: Figure out why can't this function be as simple as cmp_prev().
+   */
+  int cmp_next(QuickRange *range);
+
+  /**
+   * @return 0 if found key is inside range (found key >= range->min_key).
+   */
+  int cmp_prev(QuickRange *range);
+
+  /**
+   * Check if current row will be retrieved by this QuickRangeSelect
+   *
+   * NOTES
+   * It is assumed that currently a scan is being done on another index
+   * which reads all necessary parts of the index that is scanned by this
+   * quick select.
+   * The implementation does a binary search on sorted array of disjoint
+   * ranges, without taking size of range into account.
+   *
+   * This function is used to filter out clustered PK scan rows in
+   * index_merge quick select.
+   *
+   * RETURN
+   * @retval true  if current row will be retrieved by this quick select
+   * false if not
+   */
+  bool row_in_ranges();
 
 public:
 
@@ -157,64 +213,6 @@ public:
     cursor= NULL;
   }
 
-protected:
-
-  Cursor *cursor;
-  DYNAMIC_ARRAY ranges; /**< ordered array of range ptrs */
-
-  /** Members to deal with case when this quick select is a ROR-merged scan */
-  bool in_ror_merged_scan;
-  MyBitmap column_bitmap;
-  MyBitmap *save_read_set;
-  MyBitmap *save_write_set;
-  bool free_file; /**< True when this->file is "owned" by this quick select */
-
-  /* Range pointers to be used when not using MRR interface */
-  QuickRange **cur_range; /**< current element in ranges  */
-  QuickRange *last_range;
-
-  /** Members needed to use the MRR interface */
-  QuickRangeSequenceContext qr_traversal_ctx;
-  uint32_t mrr_buf_size; /**< copy from session->variables.read_rnd_buff_size */
-  HANDLER_BUFFER *mrr_buf_desc; /**< the Cursor buffer */
-
-  /** Info about index we're scanning */
-  KEY_PART *key_parts;
-  KEY_PART_INFO *key_part_info;
-
-  bool dont_free; /**< Used by QuickSelectDescending */
-
-  /**
-   * Compare if found key is over max-value
-   * @return 0 if key <= range->max_key
-   * @todo: Figure out why can't this function be as simple as cmp_prev().
-   */
-  int cmp_next(QuickRange *range);
-
-  /**
-   * @return 0 if found key is inside range (found key >= range->min_key).
-   */
-  int cmp_prev(QuickRange *range);
-
-  /**
-   * Check if current row will be retrieved by this QuickRangeSelect
-   *
-   * NOTES
-   * It is assumed that currently a scan is being done on another index
-   * which reads all necessary parts of the index that is scanned by this
-   * quick select.
-   * The implementation does a binary search on sorted array of disjoint
-   * ranges, without taking size of range into account.
-   *
-   * This function is used to filter out clustered PK scan rows in
-   * index_merge quick select.
-   *
-   * RETURN
-   * @retval true  if current row will be retrieved by this quick select
-   * false if not
-   */
-  bool row_in_ranges();
-
 private:
 
   /* Used only by QuickSelectDescending */
@@ -266,7 +264,7 @@ private:
                                           uint32_t n_ranges, 
                                           uint32_t flags);
 
-  friend void select_describe(JOIN *join, 
+  friend void select_describe(Join *join, 
                               bool need_tmp_table, 
                               bool need_order,
                               bool distinct,

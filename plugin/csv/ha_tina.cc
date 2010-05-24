@@ -258,7 +258,7 @@ int Tina::doGetTableDefinition(Session &session,
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(drizzled::plugin::Context &context)
+static int tina_init_func(drizzled::module::Context &context)
 {
 
   tina_engine= new Tina("CSV");
@@ -717,7 +717,7 @@ int ha_tina::find_current_row(unsigned char *buf)
 
   error= HA_ERR_CRASHED_ON_USAGE;
 
-  memset(buf, 0, table->s->null_bytes);
+  memset(buf, 0, table->getShare()->null_bytes);
 
   for (Field **field=table->field ; *field ; field++)
   {
@@ -938,7 +938,7 @@ int ha_tina::close(void)
   of the file and appends the data. In an error case it really should
   just truncate to the original position (this is not done yet).
 */
-int ha_tina::write_row(unsigned char * buf)
+int ha_tina::doInsertRecord(unsigned char * buf)
 {
   int size;
 
@@ -998,7 +998,7 @@ int ha_tina::open_update_temp_file_if_needed()
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
-int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
+int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
 {
   int size;
   int rc= -1;
@@ -1013,7 +1013,7 @@ int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
   /*
     During update we mark each updating record as deleted
     (see the chain_append()) then write new one to the temporary data file.
-    At the end of the sequence in the rnd_end() we append all non-marked
+    At the end of the sequence in the doEndTableScan() we append all non-marked
     records from the data file to the temporary data file then rename it.
     The temp_file_length is used to calculate new data file length.
   */
@@ -1043,7 +1043,7 @@ err:
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
 */
-int ha_tina::delete_row(const unsigned char *)
+int ha_tina::doDeleteRecord(const unsigned char *)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
 
@@ -1116,7 +1116,7 @@ int ha_tina::init_data_file()
 
 */
 
-int ha_tina::rnd_init(bool)
+int ha_tina::doStartTableScan(bool)
 {
   /* set buffer to the beginning of the file */
   if (share->crashed || init_data_file())
@@ -1231,7 +1231,7 @@ bool ha_tina::get_write_pos(off_t *end_pos, tina_set *closest_hole)
   slots to clean up all of the dead space we have collected while
   performing deletes/updates.
 */
-int ha_tina::rnd_end()
+int ha_tina::doEndTableScan()
 {
   char updated_fname[FN_REFLEN];
   off_t file_buffer_start= 0;
@@ -1404,7 +1404,7 @@ int Tina::doCreateTable(Session &session,
   /*
     check columns
   */
-  for (Field **field= table_arg.s->field; *field; field++)
+  for (Field **field= table_arg.getMutableShare()->getFields(); *field; field++)
   {
     if ((*field)->real_maybe_null())
     {

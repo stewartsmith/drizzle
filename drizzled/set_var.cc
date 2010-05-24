@@ -64,6 +64,7 @@
 #include "drizzled/charset.h"
 #include "drizzled/transaction_services.h"
 
+#include <cstdio>
 #include <map>
 #include <algorithm>
 
@@ -1430,8 +1431,8 @@ static unsigned char *get_error_count(Session *session)
 */
 static unsigned char *get_tmpdir(Session *)
 {
-  assert(drizzle_tmpdir);
-  return (unsigned char*)drizzle_tmpdir;
+  assert(drizzle_tmpdir.size());
+  return (unsigned char*)drizzle_tmpdir.c_str();
 }
 
 /****************************************************************************

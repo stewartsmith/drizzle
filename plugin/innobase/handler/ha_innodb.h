@@ -66,10 +66,10 @@ class ha_innobase: public Cursor
 	INNOBASE_SHARE*	share;		/*!< information for MySQL
 					table locking */
 
-	unsigned char*	upd_buff;	/*!< buffer used in updates */
-	unsigned char*	key_val_buff;	/*!< buffer used in converting
-					search key values from MySQL format
-					to Innodb format */
+        std::vector<unsigned char> upd_buff; /*!< buffer used in updates */
+        std::vector<unsigned char> key_val_buff; /*!< buffer used in converting
+                                                     search key values from MySQL format
+                                                     to Innodb format */
 	ulong		upd_and_key_val_buff_len;
 					/* the length of each of the previous
 					two buffers */
@@ -80,7 +80,7 @@ class ha_innobase: public Cursor
 	uint		last_match_mode;/* match mode of the latest search:
 					ROW_SEL_EXACT, ROW_SEL_EXACT_PREFIX,
 					or undefined */
-	uint		num_write_row;	/*!< number of write_row() calls */
+	uint		num_write_row;	/*!< number of doInsertRecord() calls */
 
 	UNIV_INTERN uint store_key_val_for_row(uint keynr, char* buff, 
                                    uint buff_len, const unsigned char* record);
@@ -130,15 +130,15 @@ class ha_innobase: public Cursor
 	UNIV_INTERN double scan_time();
 	UNIV_INTERN double read_time(uint index, uint ranges, ha_rows rows);
 
-	UNIV_INTERN int write_row(unsigned char * buf);
-	UNIV_INTERN int update_row(const unsigned char * old_data, unsigned char * new_data);
-	UNIV_INTERN int delete_row(const unsigned char * buf);
+	UNIV_INTERN int doInsertRecord(unsigned char * buf);
+	UNIV_INTERN int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+	UNIV_INTERN int doDeleteRecord(const unsigned char * buf);
 	UNIV_INTERN bool was_semi_consistent_read();
 	UNIV_INTERN void try_semi_consistent_read(bool yes);
 	UNIV_INTERN void unlock_row();
 
-	UNIV_INTERN int index_init(uint index, bool sorted);
-	UNIV_INTERN int index_end();
+	UNIV_INTERN int doStartIndexScan(uint index, bool sorted);
+	UNIV_INTERN int doEndIndexScan();
 	UNIV_INTERN int index_read(unsigned char * buf, const unsigned char * key,
 		uint key_len, enum ha_rkey_function find_flag);
 	UNIV_INTERN int index_read_idx(unsigned char * buf, uint index, const unsigned char * key,
@@ -150,8 +150,8 @@ class ha_innobase: public Cursor
 	UNIV_INTERN int index_first(unsigned char * buf);
 	UNIV_INTERN int index_last(unsigned char * buf);
 
-	UNIV_INTERN int rnd_init(bool scan);
-	UNIV_INTERN int rnd_end();
+	UNIV_INTERN int doStartTableScan(bool scan);
+	UNIV_INTERN int doEndTableScan();
 	UNIV_INTERN int rnd_next(unsigned char *buf);
 	UNIV_INTERN int rnd_pos(unsigned char * buf, unsigned char *pos);
 
@@ -187,7 +187,9 @@ class ha_innobase: public Cursor
 	UNIV_INTERN bool primary_key_is_clustered();
 	UNIV_INTERN int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
-	UNIV_INTERN int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys);
+        // Don't use these, I have just left them in here as reference for
+        // the future. -Brian
+	UNIV_INTERN int add_index(TABLE *table_arg, KeyInfo *key_info, uint num_of_keys);
 	UNIV_INTERN int prepare_drop_index(TABLE *table_arg, uint *key_num,
                                            uint num_of_keys);
         UNIV_INTERN int final_drop_index(TABLE *table_arg);
@@ -219,20 +221,6 @@ uint64_t drizzle_bin_log_file_pos(void);
 */
 int session_slave_thread(const Session *session);
 
-/**
-  Check if a user thread is running a non-transactional update
-  @param session  user thread
-  @retval 0 the user thread is not running a non-transactional update
-  @retval 1 the user thread is running a non-transactional update
-*/
-int session_non_transactional_update(const Session *session);
-
-/**
-  Mark transaction to rollback and mark error as fatal to a sub-statement.
-  @param  session   Thread handle
-  @param  all   TRUE <=> rollback main transaction.
-*/
-void session_mark_transaction_to_rollback(Session *session, bool all);
 }
 
 typedef struct trx_struct trx_t;

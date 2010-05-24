@@ -146,7 +146,7 @@ bool LibInnoDBStatusTool::Generator::populate()
 
 static LibInnoDBStatusTool *status_tool;
 
-int status_table_function_initialize(drizzled::plugin::Context &context)
+int status_table_function_initialize(drizzled::module::Context &context)
 {
   status_tool= new(std::nothrow)LibInnoDBStatusTool();
   context.add(status_tool);

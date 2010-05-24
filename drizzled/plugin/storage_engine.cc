@@ -53,6 +53,7 @@
 #include "drizzled/db.h"
 
 #include <drizzled/table_proto.h>
+#include <drizzled/plugin/event_observer.h>
 
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
@@ -98,9 +99,23 @@ void StorageEngine::setTransactionReadWrite(Session& session)
 
 int StorageEngine::renameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
 {
+  int error;
   setTransactionReadWrite(session);
 
-  return doRenameTable(session, from, to);
+  if (unlikely(plugin::EventObserver::beforeRenameTable(session, from, to)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error =  doRenameTable(session, from, to);
+    if (unlikely(plugin::EventObserver::afterRenameTable(session, from, to, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+  
+  return error;
 }
 
 /**
@@ -464,7 +479,20 @@ int StorageEngine::dropTable(Session& session,
   int error;
 
   engine.setTransactionReadWrite(session);
-  error= engine.doDropTable(session, identifier);
+  
+  if (unlikely(plugin::EventObserver::beforeDropTable(session, identifier)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= engine.doDropTable(session, identifier);
+    if (unlikely(plugin::EventObserver::afterDropTable(session, identifier, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+
 
   return error;
 }
@@ -480,7 +508,6 @@ int StorageEngine::dropTable(Session& session,
 */
 int StorageEngine::createTable(Session &session,
                                TableIdentifier &identifier,
-                               bool update_create_info,
                                message::Table& table_message)
 {
   int error= 1;
@@ -488,15 +515,12 @@ int StorageEngine::createTable(Session &session,
   TableShare share(identifier.getSchemaName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
   message::Table tmp_proto;
 
-  if (parse_table_proto(session, table_message, &share) || open_table_from_share(&session, &share, "", 0, 0, &table))
+  if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, "", 0, 0, table))
   { 
     // @note Error occured, we should probably do a little more here.
   }
   else
   {
-    if (update_create_info)
-      table.updateCreateInfo(&table_message);
-
     /* Check for legal operations against the Engine using the proto (if used) */
     if (table_message.type() == message::Table::TEMPORARY &&
         share.storage_engine->check_flag(HTON_BIT_TEMPORARY_NOT_SUPPORTED) == true)
@@ -523,10 +547,9 @@ int StorageEngine::createTable(Session &session,
       my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
     }
 
-    table.closefrm(false);
+    table.delete_table(false);
   }
 
-  share.free_table_share();
   return(error != 0);
 }
 
@@ -637,6 +660,24 @@ void StorageEngine::getTableIdentifiers(Session &session, SchemaIdentifier &sche
   session.doGetTableIdentifiers(directory, schema_identifier, set_of_identifiers);
 }
 
+class DropTable: public unary_function<TableIdentifier&, bool>
+{
+  Session &session;
+  StorageEngine *engine;
+
+public:
+
+  DropTable(Session &session_arg, StorageEngine *engine_arg) :
+    session(session_arg),
+    engine(engine_arg)
+  { }
+
+  result_type operator() (argument_type identifier)
+  {
+    return engine->doDropTable(session, identifier) == 0;
+  } 
+};
+
 /* This will later be converted to TableIdentifiers */
 class DropTables: public unary_function<StorageEngine *, void>
 {
@@ -652,17 +693,12 @@ public:
 
   result_type operator() (argument_type engine)
   {
-    for (TableIdentifierList::iterator iter= table_identifiers.begin();
-         iter != table_identifiers.end();
-         iter++)
-    {
-      int error= engine->doDropTable(session, const_cast<TableIdentifier&>(*iter));
-
-      // On a return of zero we know we found and deleted the table. So we
-      // remove it from our search.
-      if (not error)
-        table_identifiers.erase(iter);
-    }
+    // True returning from DropTable means the table has been successfully
+    // deleted, so it should be removed from the list of tables to drop
+    table_identifiers.erase(remove_if(table_identifiers.begin(),
+                                      table_identifiers.end(),
+                                      DropTable(session, engine)),
+                            table_identifiers.end());
   }
 };
 
@@ -750,7 +786,7 @@ void StorageEngine::removeLostTemporaryTables(Session &session, const char *dire
   @note
     In case of delete table it's only safe to use the following parts of
     the 'table' structure:
-    - table->s->path
+    - table->getShare()->path
     - table->alias
 */
 void StorageEngine::print_error(int error, myf errflag, Table &table)
@@ -822,7 +858,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
         str.length(max_length-4);
         str.append(STRING_WITH_LEN("..."));
       }
-      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->s->table_name.str,
+      my_error(ER_FOREIGN_DUPLICATE_KEY, MYF(0), table->getShare()->getTableName(),
         str.c_ptr(), key_nr+1);
       return;
     }
@@ -900,8 +936,8 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     break;
   case HA_ERR_NO_SUCH_TABLE:
     assert(table);
-    my_error(ER_NO_SUCH_TABLE, MYF(0), table->s->getSchemaName(),
-             table->s->table_name.str);
+    my_error(ER_NO_SUCH_TABLE, MYF(0), table->getShare()->getSchemaName(),
+             table->getShare()->getTableName());
     return;
   case HA_ERR_RBR_LOGGING_FAILED:
     textno= ER_BINLOG_ROW_LOGGING_FAILED;
@@ -957,7 +993,7 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
       return;
     }
   }
-  my_error(textno, errflag, table->s->table_name.str, error);
+  my_error(textno, errflag, table->getShare()->getTableName(), error);
 }
 
 

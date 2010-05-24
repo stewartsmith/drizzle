@@ -23,27 +23,21 @@
 
 using namespace drizzled;
 
-static StatementsTool *global_statements;
-static StatementsTool *session_statements;
 static StatusTool *global_status;
 static StatusTool *session_status;
 static VariablesTool *global_variables;
 static VariablesTool *session_variables;
 
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
-  global_statements= new(std::nothrow)StatementsTool(true);
   global_status= new(std::nothrow)StatusTool(true);
-  session_statements= new(std::nothrow)StatementsTool(false);
   session_status= new(std::nothrow)StatusTool(false);
   global_variables= new(std::nothrow)VariablesTool(true);
   session_variables= new(std::nothrow)VariablesTool(false);
 
-  context.add(global_statements);
   context.add(global_status);
   context.add(global_variables);
-  context.add(session_statements);
   context.add(session_status);
   context.add(session_variables);
   

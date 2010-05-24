@@ -128,7 +128,7 @@ int64_t Item_func_sleep::val_int()
 
 plugin::Create_function<Item_func_sleep> *sleep_udf= NULL;
 
-static int sleep_plugin_init(drizzled::plugin::Context &context)
+static int sleep_plugin_init(drizzled::module::Context &context)
 {
   sleep_udf= new plugin::Create_function<Item_func_sleep>("sleep");
   context.add(sleep_udf);
