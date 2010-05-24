@@ -70,15 +70,8 @@
 
 */
 
-#define SLAP_VERSION "1.5"
+#include "config.h"
 
-#define HUGE_STRING_LENGTH 8196
-#define RAND_STRING_SIZE 126
-#define DEFAULT_BLOB_SIZE 1024
-#include<config.h>
-#include CSTDINT_H
-#include <boost/program_options.hpp>
-namespace po= boost::program_options;
 #include "client_priv.h"
 #include <signal.h>
 #include <stdarg.h>
@@ -93,15 +86,22 @@ namespace po= boost::program_options;
 #include <cstdlib>
 #include <string>
 #include <iostream>
-using namespace std;
 
 #include <pthread.h>
 
 /* Added this for string translation. */
 #include <drizzled/gettext.h>
+#include <boost/program_options.hpp>
+
+#define SLAP_VERSION "1.5"
+
+#define HUGE_STRING_LENGTH 8196
+#define RAND_STRING_SIZE 126
+#define DEFAULT_BLOB_SIZE 1024
 
 using namespace std;
 using namespace drizzled;
+namespace po= boost::program_options;
 
 #ifdef HAVE_SMEM
 static char *shared_memory_base_name=0;
@@ -890,10 +890,10 @@ int main(int argc, char **argv)
   "Commit records every X number of statements")
   ("concurrency,c",po::value<string>(&concurrency_str)->default_value(""),
   "Number of clients to simulate for query to run")
-  ("create",po::value<string>(&create_string)->default_value(""),
-  "File or string to use to create tables")
   ("create-schema",po::value<string>(&create_schema_string)->default_value("drizzleslap"),
   "Schema to run tests in")
+  ("create",po::value<string>(&create_string)->default_value(""),
+  "File or string to use to create tables")
   ("csv",po::value<std::string>(&opt_csv_str)->default_value(""),
   "Generate CSV output to named file or to stdout if no file is name.")
   ("delayed-start",po::value<uint32_t>(&opt_delayed_start)->default_value(0),
