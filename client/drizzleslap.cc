@@ -838,8 +838,24 @@ static void combine_queries(vector<string> queries)
     user_supplied_query.append(delimiter);
   }
 }
+/**
+ * commandline_options is the set of all options that can only be called via the command line.
 
+ * client_options is the set of all options that can be defined via both command line and via
+ * the configuration file client.cnf
 
+ * slap_options is the set of all drizzleslap specific options which behave in a manner 
+ * similar to that of client_options. It's configuration file is drizzleslap.cnf
+
+ * long_options is the union of commandline_options, slap_options and client_options.
+
+ * There are two configuration files per set of options, one which is defined by the user and
+ * which is found at ~/.drizzle directory and the other which is the system configuration
+ * file which is found in the SYSCONFDIR/drizzle directory.
+
+ * The system configuration file is over ridden by the user's configuration file which
+ * in turn is over ridden by the command line.
+ */
 int main(int argc, char **argv)
 {
   char *password= NULL;
