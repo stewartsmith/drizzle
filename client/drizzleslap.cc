@@ -183,7 +183,7 @@ static uint64_t auto_generate_sql_unique_write_number;
 static uint64_t auto_generate_sql_unique_query_number;
 static uint32_t auto_generate_sql_secondary_indexes;
 static uint64_t num_of_query;
-static uint64_t auto_generate_sql_number= 100;
+static uint64_t auto_generate_sql_number;
 string concurrency_str;
 string create_string;
 uint32_t *concurrency;
@@ -879,7 +879,7 @@ int main(int argc, char **argv)
   po::value<uint64_t>(&auto_generate_sql_unique_write_number)->default_value(10),
   "Number of unique queries to generate for auto-generate-sql-write-number")
   ("auto-generate-sql-write-number",
-  po::value<uint64_t>(&auto_generate_sql_number),
+  po::value<uint64_t>(&auto_generate_sql_number)->default_value(100),
   "Number of row inserts to perform for each thread (default is 100).")
   ("burnin",po::value<bool>(&opt_burnin)->default_value(false)->zero_tokens(),
   "Run full test case in infinite loop")
