@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-03-15 21:00+0000\n"
-"PO-Revision-Date: 2010-03-23 11:30+0000\n"
-"Last-Translator: fsilvarib <fabio.slack@gmail.com>\n"
+"PO-Revision-Date: 2010-03-30 14:39+0000\n"
+"Last-Translator: Patrick Kaminski <Unknown>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-03-24 04:51+0000\n"
+"X-Launchpad-Export-Date: 2010-03-31 03:53+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -586,11 +586,11 @@ msgstr "%s: --databases ou --all-databases não pode ser usado com --tab\n"
 
 #, c-format
 msgid "Got error: %s (%d) %s"
-msgstr ""
+msgstr "Retornou erro: %s (%d) %s"
 
 #, c-format
 msgid "Got error: %d %s"
-msgstr ""
+msgstr "Retornou erro: %d %s"
 
 #, c-format
 msgid "Couldn't execute '%s': %s (%d)"
@@ -763,7 +763,7 @@ msgstr "Nenhuma tarefa encontrada, não pode continuar!\n"
 
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr ""
+msgstr "Mecanismo de armazenamento desconhecido ou não suportado: %s"
 
 msgid "Display this help and exit after initializing plugins."
 msgstr "Exibe essa ajuda e sai depois de inicializar os plugins."
@@ -1144,7 +1144,7 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 msgid "Sort aborted"
-msgstr ""
+msgstr "Ordenação abortada"
 
 #, c-format
 msgid "View '%-.192s' doesn't exist for '%-.192s'"
@@ -1152,7 +1152,7 @@ msgstr "A exibição '%-.192s' não existe para '%-.192s'"
 
 #, c-format
 msgid "Got error %d from storage engine"
-msgstr ""
+msgstr "Retornou erro %d do mecanismo de armazenamento"
 
 #, c-format
 msgid "Table storage engine for '%-.192s' doesn't have this option"
@@ -1164,7 +1164,7 @@ msgstr "Não foi possível encontrar o registro em '%-.192s'"
 
 #, c-format
 msgid "Incorrect information in file: '%-.200s'"
-msgstr ""
+msgstr "Informação incorreta no arquivo: '%-.200s'"
 
 #, c-format
 msgid "Incorrect key file for table '%-.200s'; try to repair it"
@@ -1190,7 +1190,7 @@ msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
 msgstr ""
 
 msgid "Too many connections"
-msgstr ""
+msgstr "Muitas conexões"
 
 msgid ""
 "Out of memory; check if drizzled or some other process uses all available "
@@ -1211,36 +1211,36 @@ msgstr ""
 
 #, c-format
 msgid "Access denied for user '%-.48s'@'%-.64s' (using password: %s)"
-msgstr ""
+msgstr "Acesso negado para o usuário '%-.48s'@'%-.64s' (usando senha: %s)"
 
 msgid "No database selected"
-msgstr ""
+msgstr "Nenhuma base de dados selecionada"
 
 msgid "Unknown command"
-msgstr ""
+msgstr "Comando desconhecido"
 
 #, c-format
 msgid "Column '%-.192s' cannot be null"
-msgstr ""
+msgstr "Coluna '%-.192s' não pode ser nula"
 
 #, c-format
 msgid "Unknown database '%-.192s'"
-msgstr ""
+msgstr "Base de dados desconhecida '%-.192s'"
 
 #, c-format
 msgid "Table '%-.192s' already exists"
-msgstr ""
+msgstr "Tabela '%-.192s' já existe"
 
 #, c-format
 msgid "Unknown table '%-.100s'"
-msgstr ""
+msgstr "Tabela desconhecida '%-.100s'"
 
 #, c-format
 msgid "Column '%-.192s' in %-.192s is ambiguous"
 msgstr ""
 
 msgid "Server shutdown in progress"
-msgstr ""
+msgstr "Desligamento do servidor em progresso"
 
 #, c-format
 msgid "Unknown column '%-.192s' in '%-.192s'"
@@ -1266,11 +1266,11 @@ msgstr ""
 
 #, c-format
 msgid "Duplicate column name '%-.192s'"
-msgstr ""
+msgstr "Nome de coluna duplicado '%-.192s'"
 
 #, c-format
 msgid "Duplicate key name '%-.192s'"
-msgstr ""
+msgstr "Nome de chave duplicado '%-.192s'"
 
 #, c-format
 msgid "Duplicate entry '%-.192s' for key %d"
@@ -1296,7 +1296,7 @@ msgid "Invalid default value for '%-.192s'"
 msgstr ""
 
 msgid "Multiple primary key defined"
-msgstr ""
+msgstr "Chaves primárias múltiplas definidas"
 
 #, c-format
 msgid "Too many keys specified; max %d keys allowed"
@@ -1336,10 +1336,12 @@ msgid ""
 "%s: ready for connections.\n"
 "Version: '%s'  socket: '%s'  port: %u\n"
 msgstr ""
+"%s: pronto para conexões.\n"
+"Versão: '%s' socket: '%s' porta: %u\n"
 
 #, c-format
 msgid "%s: Normal shutdown\n"
-msgstr ""
+msgstr "%s: Desligamento normal\n"
 
 #, c-format
 msgid "%s: Got signal %d. Aborting!\n"
@@ -1347,7 +1349,7 @@ msgstr ""
 
 #, c-format
 msgid "%s: Shutdown complete\n"
-msgstr ""
+msgstr "%s: Desligamento completo\n"
 
 #, c-format
 msgid "%s: Forcing close of thread %<PRIu64> user: '%-.48s'\n"
@@ -1419,7 +1421,7 @@ msgid "You are not owner of thread %lu"
 msgstr ""
 
 msgid "No tables used"
-msgstr ""
+msgstr "Nenhuma tabela usada"
 
 #, c-format
 msgid "Too many strings for column %-.192s and SET"
@@ -1443,11 +1445,11 @@ msgstr ""
 
 #, c-format
 msgid "Incorrect database name '%-.100s'"
-msgstr ""
+msgstr "Nome da base de dados incorreto '%-.100s'"
 
 #, c-format
 msgid "Incorrect table name '%-.100s'"
-msgstr ""
+msgstr "Nome da tabela incorreto '%-.100s'"
 
 msgid ""
 "The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and "
@@ -1455,7 +1457,7 @@ msgid ""
 msgstr ""
 
 msgid "Unknown error"
-msgstr ""
+msgstr "Erro desconhecido"
 
 #, c-format
 msgid "Unknown procedure '%-.192s'"
@@ -1699,7 +1701,7 @@ msgstr ""
 
 #, c-format
 msgid "Incorrect column name '%-.100s'"
-msgstr ""
+msgstr "Nome da coluna incorreto '%-.100s'"
 
 #, c-format
 msgid "The used storage engine can't index column '%-.192s'"
@@ -1867,7 +1869,7 @@ msgstr ""
 
 #, c-format
 msgid "Incorrect arguments to %s"
-msgstr ""
+msgstr "Argumentos incorretos para %s"
 
 #, c-format
 msgid "'%-.48s'@'%-.64s' is not allowed to create new users"

@@ -7,25 +7,25 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-12-23 08:49+0000\n"
-"Last-Translator: Serdar KAHYA <Unknown>\n"
+"POT-Creation-Date: 2010-04-28 02:45+0000\n"
+"PO-Revision-Date: 2010-05-01 18:19+0000\n"
+"Last-Translator: Angel Spy <melissadilara@yahoo.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-05-02 03:56+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
-msgstr "yardım"
+msgstr "`help' için eşanlamlı."
 
 msgid "Clear command."
-msgstr "komutu temizle"
+msgstr "Komutu temizle."
 
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "servere yeniden bağlan.isteğe bağlı parametreler db ve host"
+msgstr "Sunucuya yeniden bağlan. Seçimsel argümanlar db ve makine."
 
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
@@ -44,22 +44,22 @@ msgid "Display this help."
 msgstr "Bu yardımı göster."
 
 msgid "Disable pager, print to stdout."
-msgstr "Pager ı iptal et, standart çıktıya yazdır"
+msgstr ""
 
 msgid "Don't write into outfile."
-msgstr "outfile 'e  yazmayınız."
+msgstr ""
 
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr "PAGER[to_pager] kullan. Sorgu sonuçlarını PAGER kullanarak yazdır."
+msgstr ""
 
 msgid "Print current command."
-msgstr "geçerli komutu yazdır"
+msgstr "Geçerli komutu yazdır."
 
 msgid "Change your drizzle prompt."
-msgstr "drizzle isteğini değiştir"
+msgstr "Drizzle uyarısını değiştir."
 
 msgid "Quit drizzle."
-msgstr "drizzle' dan çık"
+msgstr "Drizzle'dan çık."
 
 msgid "Rebuild completion hash."
 msgstr "Tamamlama hashini tekrar oluştur."
@@ -85,20 +85,18 @@ msgid "Don't show warnings after every statement."
 msgstr "Her ifadeden sonra uyarı gösterme"
 
 #, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr "Başlartılırken hafıza ayırma problemi. İptal ediliyor\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Drizzle istemcisine hoşgeldin. Komutlar ; veya \\g ile biter."
 
-#, fuzzy
 msgid "Your Drizzle connection id is "
 msgstr ""
-"Drizzle bağlantı id niz : %u\n"
-"Sunucu versiyonu : %s\n"
 
 msgid "Server version: "
-msgstr ""
+msgstr "Sunucu sürümü: "
 
 #, c-format
 msgid "Reading history-file %s\n"
@@ -118,7 +116,7 @@ msgid "Writing history-file %s\n"
 msgstr "%s geçmiş dosyası yazılıyor\n"
 
 msgid "Aborted"
-msgstr "İptal edildi"
+msgstr "Vazgeçildi"
 
 msgid "Bye"
 msgstr "Hoşçakal"
@@ -127,7 +125,7 @@ msgid "Query aborted by Ctrl+C\n"
 msgstr "Sorgu Ctrl+C ile iptal edildi\n"
 
 msgid "Display this help and exit."
-msgstr "Bu yardımı göster ve çık"
+msgstr "Bu yardımı göster ve çık."
 
 msgid "Synonym for -?"
 msgstr "- için takma ad?"
@@ -211,10 +209,10 @@ msgid "Enable/disable LOAD DATA LOCAL INFILE."
 msgstr ""
 
 msgid "Turn off beep on error."
-msgstr "Hatada sesli uyarıyı kapat"
+msgstr "Hatada sesli uyarıyı kapat."
 
 msgid "Connect to host."
-msgstr "Sunucuya bağlan"
+msgstr "Makineye bağlan."
 
 msgid "Write line numbers for errors."
 msgstr "Hatalar için satır numaralarını yazdır"
@@ -247,7 +245,7 @@ msgstr ""
 "değişkenleri direk --variable-name=değer kullanarak atayabilirsiniz."
 
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr "SIGINT i yoksay (CTRL+C)"
+msgstr "Yoksay SIGINT (CTRL-C)"
 
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
@@ -316,7 +314,7 @@ msgstr ""
 "olarak tab kullanarak yazdır,"
 
 msgid "Output in table format."
-msgstr "Çıktı tablo formatında"
+msgstr "Tablo biçiminde çıkart."
 
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
@@ -342,7 +340,7 @@ msgid "Write more. (-v -v -v gives the table output format)."
 msgstr ""
 
 msgid "Output version information and exit."
-msgstr "Versiyon bilgisini ver ve çık"
+msgstr "Sürüm bilgisini ver ve çık."
 
 msgid "Wait and retry if connection is down."
 msgstr "Bağlantı koparsa bekle ve tekrar dene."
@@ -357,9 +355,11 @@ msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr "--safe-updates kullanırken SELECT için otomatik limit."
 
 msgid "Automatic limit for rows in a join when using --safe-updates"
-msgstr "--safe-updates kullanırken satırları birleştirmek için otomatik limit."
+msgstr ""
+"--safe-updates kullanırken satırları birleştirmek için otomatik limit."
 
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Sunucuya bağlanmak için eski tip protokol (pre-4.1.1) kullanan istemcileri "
 "reddet"
@@ -371,7 +371,7 @@ msgid "Ping the server to check if it's alive."
 msgstr "Sunucunun açık olduğunu anlamak için ping at."
 
 msgid "Use MySQL Protocol."
-msgstr ""
+msgstr "MySQL protokolünü kullan."
 
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
@@ -386,7 +386,7 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr "Kullanım: %s [TERCİHLER] [veritabanı]\n"
+msgstr "Kullanımı: %s [OPTIONS] [database]\n"
 
 msgid "DELIMITER cannot contain a backslash character"
 msgstr "AYRAÇ ters slash karakteri içeremez"
@@ -401,7 +401,8 @@ msgstr "UYARI: seçenek eski; onun yerine --disable-pager kullan.\n"
 
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr "UYARI: --server-arg seçeneği bu konfigurasyonda desteklenmemektedir.\n"
+msgstr ""
+"UYARI: --server-arg seçeneği bu konfigurasyonda desteklenmemektedir.\n"
 
 msgid ""
 "Non-integer value supplied for port.  If you are trying to enter a password "
@@ -420,7 +421,6 @@ msgstr "İşlediği satır: %<PRIu32>\n"
 msgid "Unknown command: "
 msgstr "Bilinmeyen komut: "
 
-#, fuzzy
 msgid ""
 "                              Reading table information for completion of "
 "table and column names\n"
@@ -428,9 +428,6 @@ msgid ""
 "quicker startup with -A\n"
 "\n"
 msgstr ""
-"Tablo ve kolon adlarının tamamlamak için tablo bilgilerini okuyor\n"
-"    Bu seçeneği -A ile iptal edebilirsiniz.\n"
-"\n"
 
 msgid "No connection. Trying to reconnect..."
 msgstr "Bağlantı yok. Tekrar bağlanılıyor..."
@@ -439,7 +436,7 @@ msgid "Can't connect to the server\n"
 msgstr "Sunucuya bağlanılamıyor\n"
 
 msgid "List of all Drizzle commands:"
-msgstr "Bütün drizzle komutlarının listesi:"
+msgstr "Tüm drizzle komutlarının listesi:"
 
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr "Bütün yazılı komutlar satırbaşından başlamalı be ';' ile bitmelidir."
@@ -466,7 +463,8 @@ msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Sorgu bitti %ld satır etkilendi"
 
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr "Çıktı ilerleme raporundan önceki satır sayısı (--verbose gerektirir)"
 
 #, c-format
@@ -479,15 +477,15 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr "Kullanım: %s [SEÇENEKLER] veritabanı [tablolar]\n"
+msgstr "Kullanımı: %s [OPTIONS] database [tables]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr "OR %s [SEÇENEKLER] --databases [SEÇENEKLER] DB1 [DB2 DB3 ...]\n"
+msgstr "OR %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr "OR %s [SEÇENEKLER] -all--databases [SEÇENEKLER]\n"
+msgstr "OR %s [OPTIONS] --all-databases [OPTIONS]\n"
 
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -499,7 +497,7 @@ msgstr "Drizzle veritabanı sunucusundan tanımları ve veriyi indiriyor."
 
 #, c-format
 msgid "For more options, use %s --help\n"
-msgstr "Daha fazla seçenek için, %s --yardımı kullanın\n"
+msgstr "Daha fazla seçenek için, %s --help kullanın\n"
 
 #, c-format
 msgid ""
@@ -588,7 +586,7 @@ msgstr "-- %s tablosunun tablo yapısı alınıyor...\n"
 
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
-msgstr "%s: Uyarı: SQL_QUOTE_SHOW_CREATE seçeneği uygulanamıyor (%s)\n"
+msgstr "%s: Uyarı: SQL_QUOTE_SHOW_CREATE seçeneği (%s) ayarlanamıyor\n"
 
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
@@ -596,7 +594,7 @@ msgstr "%s: %s tablosu için indeksleri alamıyor\n"
 
 #, c-format
 msgid "Error: Couldn't read status information for table %s\n"
-msgstr ""
+msgstr "Hata: %s tablosu için durum bilgisi okunamadı\n"
 
 #, c-format
 msgid "Error retrieving table structure for table: \"%s\""
@@ -655,11 +653,11 @@ msgid "when doing refresh"
 msgstr "yenileme yapılırken"
 
 msgid "alloc_root failure."
-msgstr "alloc_root hatası"
+msgstr "alloc_root başarısız."
 
 #, c-format
 msgid "Couldn't find table: \"%s\""
-msgstr "\"%s\" tablosu bulunamıyor"
+msgstr "Tablo bulunamıyor: \"%s\""
 
 #, c-format
 msgid ""
@@ -676,10 +674,10 @@ msgstr ""
 
 #, c-format
 msgid "Out of memory"
-msgstr ""
+msgstr "Yetersiz bellek"
 
 msgid "Aborting\n"
-msgstr "İptal ediliyor\n"
+msgstr "Vazgeçiliyor\n"
 
 msgid "One can only use the --user switch if running as root\n"
 msgstr ""
@@ -701,7 +699,7 @@ msgstr ""
 
 #, c-format
 msgid "Unknown locale: '%s'"
-msgstr "Bilinmeyen locale: '%s'"
+msgstr ""
 
 msgid "Can't create thread-keys"
 msgstr ""
@@ -718,9 +716,9 @@ msgstr ""
 msgid "No scheduler found, cannot continue!\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr "Bilinmeyen/desteklenmeyen tablo tipi: %s"
+msgstr ""
 
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
@@ -729,8 +727,8 @@ msgid "Auto-increment columns are incremented by this"
 msgstr ""
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
 
 msgid ""
@@ -766,7 +764,7 @@ msgid "Set up signals usable for debugging"
 msgstr ""
 
 msgid "(IGNORED)"
-msgstr ""
+msgstr "(YOKSAYILDI)"
 
 msgid "Set the language used for the month names and the days of the week."
 msgstr ""
@@ -965,7 +963,7 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
-msgstr ""
+msgstr "Kullanımı: %s [OPTIONS]\n"
 
 #, c-format
 msgid ""
@@ -991,7 +989,7 @@ msgstr "EVET"
 
 #, c-format
 msgid "Can't create file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "Dosya yaratılamıyor '%-.200s' (errno: %d)"
 
 #, c-format
 msgid "Can't create table '%-.200s' (errno: %d)"
@@ -999,11 +997,11 @@ msgstr ""
 
 #, c-format
 msgid "Can't create database '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "'%-.192s' veritabanı oluşturulamıyor (errno: %d)"
 
 #, c-format
 msgid "Can't create database '%-.192s'; database exists"
-msgstr ""
+msgstr "'%-.192s' veritabanı oluşturulamıyor; veritabanı mevcut"
 
 #, c-format
 msgid "Can't drop database '%-.192s'; database doesn't exist"
@@ -1019,10 +1017,10 @@ msgstr ""
 
 #, c-format
 msgid "Error on delete of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "'%-.192s' silinirken hata oluştu (errno: %d)"
 
 msgid "Can't read record in system table"
-msgstr ""
+msgstr "Sistem tablosundaki kayıt okunamıyor"
 
 #, c-format
 msgid "Can't get status of '%-.200s' (errno: %d)"
@@ -1066,11 +1064,11 @@ msgstr ""
 
 #, c-format
 msgid "Error on close of '%-.192s' (errno: %d)"
-msgstr ""
+msgstr "'%-.192s' kapatılırken hata oluştu (errno: %d)"
 
 #, c-format
 msgid "Error reading file '%-.200s' (errno: %d)"
-msgstr ""
+msgstr "'%-.200s' dosyası okuma hatası (errno: %d)"
 
 #, c-format
 msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
@@ -1117,7 +1115,7 @@ msgstr ""
 
 #, c-format
 msgid "Table '%-.192s' is read only"
-msgstr ""
+msgstr "'%-.192s' tablosu salt okunur"
 
 #, c-format
 msgid "Out of memory; restart server and try again (needed %lu bytes)"
@@ -1169,11 +1167,11 @@ msgstr "Bilinmeyen veritabanı '%-.192s'"
 
 #, c-format
 msgid "Table '%-.192s' already exists"
-msgstr ""
+msgstr "'%-.192s' tablosu zaten mevcut"
 
 #, c-format
 msgid "Unknown table '%-.100s'"
-msgstr ""
+msgstr "Bilinmeyen tablo '%-.100s'"
 
 #, c-format
 msgid "Column '%-.192s' in %-.192s is ambiguous"
@@ -1184,7 +1182,7 @@ msgstr ""
 
 #, c-format
 msgid "Unknown column '%-.192s' in '%-.192s'"
-msgstr ""
+msgstr "'%-.192s' içinde bilinmeyen sütun '%-.192s'"
 
 #, c-format
 msgid "'%-.192s' isn't in GROUP BY"
@@ -1202,7 +1200,7 @@ msgstr ""
 
 #, c-format
 msgid "Identifier name '%-.100s' is too long"
-msgstr ""
+msgstr "'%-.100s' tanımlayıcı adı çok uzun"
 
 #, c-format
 msgid "Duplicate column name '%-.192s'"
@@ -1233,7 +1231,7 @@ msgstr ""
 
 #, c-format
 msgid "Invalid default value for '%-.192s'"
-msgstr ""
+msgstr "'%-.192s' için geçersiz varsayılan değeri"
 
 msgid "Multiple primary key defined"
 msgstr ""
@@ -1319,7 +1317,7 @@ msgstr ""
 
 #, c-format
 msgid "File '%-.200s' already exists"
-msgstr ""
+msgstr "'%-.200s' dosyası zaten mevcut"
 
 #, c-format
 msgid "Records: %ld  Deleted: %ld  Skipped: %ld  Warnings: %ld"
@@ -1359,7 +1357,7 @@ msgid "You are not owner of thread %lu"
 msgstr ""
 
 msgid "No tables used"
-msgstr ""
+msgstr "Tablo kullanılmadı"
 
 #, c-format
 msgid "Too many strings for column %-.192s and SET"
@@ -1399,7 +1397,7 @@ msgstr "Bilinmeyen hata"
 
 #, c-format
 msgid "Unknown procedure '%-.192s'"
-msgstr ""
+msgstr "Bilinmeyen işlem '%-.192s'"
 
 #, c-format
 msgid "Incorrect parameter count to procedure '%-.192s'"
@@ -1415,10 +1413,10 @@ msgstr ""
 
 #, c-format
 msgid "Column '%-.192s' specified twice"
-msgstr ""
+msgstr "'%-.192s' sütunu iki kere belirtildi"
 
 msgid "Invalid use of group function"
-msgstr ""
+msgstr "Geçersiz grup fonksiyon kullanımı"
 
 #, c-format
 msgid ""
@@ -1426,7 +1424,7 @@ msgid ""
 msgstr ""
 
 msgid "A table must have at least 1 column"
-msgstr ""
+msgstr "Tabloda en az 1 sütun olmalı"
 
 #, c-format
 msgid "The table '%-.192s' is full"
@@ -1434,14 +1432,14 @@ msgstr ""
 
 #, c-format
 msgid "Unknown character set: '%-.64s'"
-msgstr ""
+msgstr "Bilinmeyen karakter dizisi: '%-.64s'"
 
 #, c-format
 msgid "Too many tables; Drizzle can only use %d tables in a join"
 msgstr ""
 
 msgid "Too many columns"
-msgstr ""
+msgstr "Çok fazla sütun"
 
 #, c-format
 msgid ""
@@ -1460,13 +1458,13 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #, c-format
 msgid "Can't load function '%-.192s'"
-msgstr ""
+msgstr "'%-.192s' fonksiyonu yüklenemiyor"
 
 #, c-format
 msgid "Can't initialize function '%-.192s'; %-.80s"
@@ -1568,7 +1566,7 @@ msgstr ""
 
 #, c-format
 msgid "Table '%-.192s.%-.192s' doesn't exist"
-msgstr ""
+msgstr "'%-.192s.%-.192s' tablosu mevcut değil"
 
 #, c-format
 msgid ""
@@ -1639,7 +1637,7 @@ msgstr ""
 
 #, c-format
 msgid "Incorrect column name '%-.100s'"
-msgstr ""
+msgstr "Hatalı sütun adı '%-.100s'"
 
 #, c-format
 msgid "The used storage engine can't index column '%-.192s'"
@@ -1683,7 +1681,7 @@ msgid "Key '%-.192s' doesn't exist in table '%-.192s'"
 msgstr ""
 
 msgid "Can't open table"
-msgstr ""
+msgstr "Tablo açılamıyor"
 
 #, c-format
 msgid "The storage engine for the table doesn't support %s"
@@ -1710,8 +1708,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
@@ -1934,7 +1932,7 @@ msgid "Unknown prepared statement handler (%.*s) given to %s"
 msgstr ""
 
 msgid "Help database is corrupt or does not exist"
-msgstr ""
+msgstr "Yardım veritabanı hasarlı veya yok"
 
 msgid "Cyclic reference on subqueries"
 msgstr ""
@@ -1983,7 +1981,7 @@ msgid ""
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
-msgstr ""
+msgstr "ZLIB: Yetersiz bellek"
 
 msgid ""
 "ZLIB: Not enough room in the output buffer (probably, length of uncompressed "
@@ -1991,7 +1989,7 @@ msgid ""
 msgstr ""
 
 msgid "ZLIB: Input data corrupted"
-msgstr ""
+msgstr "ZLIB: Girdi verisi hasarlı"
 
 #, c-format
 msgid "%d line(s) were cut by GROUP_CONCAT()"
@@ -2034,7 +2032,8 @@ msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
 
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #, c-format
@@ -2043,8 +2042,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 
 #, c-format
@@ -2069,7 +2068,8 @@ msgid ""
 "SELECT #%d"
 msgstr ""
 
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 msgid ""
@@ -2160,7 +2160,7 @@ msgstr ""
 
 #, c-format
 msgid "Unknown or incorrect time zone: '%-.64s'"
-msgstr ""
+msgstr "Bilinmeyen veya hatalı zaman bölgesi: '%-.64s'"
 
 #, c-format
 msgid "Invalid TIMESTAMP value in column '%s' at row %ld"
@@ -2184,11 +2184,11 @@ msgstr ""
 
 #, c-format
 msgid "%s %s already exists"
-msgstr ""
+msgstr "%s %s zaten mevcut"
 
 #, c-format
 msgid "%s %s does not exist"
-msgstr ""
+msgstr "%s %s mevcut değil"
 
 #, c-format
 msgid "Failed to DROP %s %s"
@@ -2244,7 +2244,7 @@ msgstr ""
 
 #, c-format
 msgid "Undefined CONDITION: %s"
-msgstr ""
+msgstr "Belirtilmemiş KOŞUL: %s"
 
 #, c-format
 msgid "No RETURN found in FUNCTION %s"
@@ -2318,7 +2318,7 @@ msgstr ""
 
 #, c-format
 msgid "Configuration file '%-.192s' is too big"
-msgstr ""
+msgstr "'%-.192s' yapılandırma dosyası çok büyük"
 
 #, c-format
 msgid "Malformed file type header in file '%-.192s'"
@@ -2336,12 +2336,13 @@ msgstr ""
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #, c-format
 msgid "'%-.192s.%-.192s' is not %s"
-msgstr ""
+msgstr "'%-.192s.%-.192s', %s değil"
 
 #, c-format
 msgid "Column '%-.192s' is not updatable"
@@ -2368,13 +2369,14 @@ msgid ""
 "View merge algorithm can't be used here for now (assumed undefined algorithm)"
 msgstr ""
 
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #, c-format
@@ -2647,8 +2649,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
 
 msgid ""
@@ -2679,7 +2681,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #, c-format
@@ -2721,8 +2724,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
 
 msgid ""
@@ -2799,7 +2802,8 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr ""
 
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 msgid "AGGREGATE is not supported for stored functions"
@@ -2807,8 +2811,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 
 #, c-format
@@ -2885,7 +2889,8 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 msgid "MAXVALUE can only be used in last partition definition"
@@ -2903,7 +2908,8 @@ msgstr ""
 msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -2964,7 +2970,8 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr ""
 
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #, c-format
@@ -3021,7 +3028,8 @@ msgstr ""
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 msgid ""
@@ -3151,8 +3159,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 
 msgid "You can't write-lock a log table. Only read access is possible"
@@ -3163,8 +3171,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
 
 #, c-format
@@ -3302,7 +3310,7 @@ msgstr ""
 
 #, c-format
 msgid "Fatal error: %s"
-msgstr ""
+msgstr "Ölümcül hata: %s"
 
 #, c-format
 msgid "Relay log read failure: %s"
@@ -3429,7 +3437,7 @@ msgid ""
 msgstr ""
 
 msgid "Error when preparing for backup operation"
-msgstr ""
+msgstr "Yedekleme işlemine hazırlanılırken hata oluştu"
 
 msgid "Error when preparing for restore operation"
 msgstr ""
@@ -3466,7 +3474,7 @@ msgstr ""
 
 #, c-format
 msgid "Can't open table %-.64s"
-msgstr ""
+msgstr "%-.64s tablosu açılamıyor"
 
 msgid "Can't read backup archive preamble"
 msgstr ""
@@ -3561,7 +3569,8 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr ""
 
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #, c-format
@@ -3689,11 +3698,11 @@ msgstr ""
 
 #, c-format
 msgid "Corrupt or invalid table definition: %s"
-msgstr ""
+msgstr "Hasarlı veya geçersiz tablo tanımı: %s"
 
 #, c-format
 msgid "Schema does not exist: %s"
-msgstr ""
+msgstr "Şema mevcut değil: %s"
 
 #, c-format
 msgid "Error altering schema: %s"
@@ -3777,7 +3786,7 @@ msgstr ""
 
 #, c-format
 msgid "Data directory %s does not exist\n"
-msgstr ""
+msgstr "%s veri dizini mevcut değil\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
@@ -3785,7 +3794,7 @@ msgstr ""
 
 #, c-format
 msgid "Cannot open file: %s\n"
-msgstr ""
+msgstr "Dosya açılamıyor: %s\n"
 
 #, c-format
 msgid "Found a non-transaction message in log.  Currently, not supported.\n"
@@ -3824,13 +3833,13 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
-msgstr ""
+msgstr "Kullanımı: %s TRANSACTION_LOG\n"
 
 msgid "Warning: "
 msgstr "Uyarı: "
 
 msgid "Info: "
-msgstr ""
+msgstr "Bilgi: "
 
 #, c-format
 msgid "%s: %s: Option '%s' used, but is disabled\n"
@@ -3870,10 +3879,10 @@ msgid "(No default value)"
 msgstr ""
 
 msgid "true"
-msgstr ""
+msgstr "true"
 
 msgid "false"
-msgstr ""
+msgstr "false"
 
 #, c-format
 msgid "(Disabled)\n"
@@ -3888,7 +3897,7 @@ msgid "A function named %s already exists!\n"
 msgstr ""
 
 msgid "Could not add Function!\n"
-msgstr ""
+msgstr "Fonksiyon eklenemedi!\n"
 
 msgid "No sockets could be bound for listening"
 msgstr ""
@@ -3971,7 +3980,7 @@ msgid "Couldn't load plugin named '%s'.\n"
 msgstr ""
 
 msgid "Out of memory."
-msgstr ""
+msgstr "Yetersiz bellek."
 
 #, c-format
 msgid "Unknown variable type code 0x%x in plugin '%s'."
@@ -4043,9 +4052,9 @@ msgstr ""
 msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr "Eklentileri başlatılamadı"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -4099,9 +4108,9 @@ msgstr ""
 msgid "Variable named %s already exists!\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not add Variable: %s\n"
-msgstr "\"%s\" tablosu bulunamıyor"
+msgstr ""
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
@@ -4147,27 +4156,27 @@ msgstr ""
 
 #, c-format
 msgid "%s: option `--%s' doesn't allow an argument\n"
-msgstr ""
+msgstr "%s: seçenek `--%s' bir argümana izin vermiyor\n"
 
 #, c-format
 msgid "%s: option `%c%s' doesn't allow an argument\n"
-msgstr ""
+msgstr "%s: seçenek `%c%s' bir argümana izin vermiyor\n"
 
 #, c-format
 msgid "%s: option `%s' requires an argument\n"
-msgstr ""
+msgstr "%s: seçenek `%s' bir argüman gerektiriyor\n"
 
 #, c-format
 msgid "%s: unrecognized option `--%s'\n"
-msgstr ""
+msgstr "%s: tanınmayan seçenek `--%s'\n"
 
 #, c-format
 msgid "%s: unrecognized option `%c%s'\n"
-msgstr ""
+msgstr "%s: tanınmayan seçenek `%c%s'\n"
 
 #, c-format
 msgid "%s: illegal option -- %c\n"
-msgstr ""
+msgstr "%s: illegal seçenek -- %c\n"
 
 #, c-format
 msgid "%s: invalid option -- %c\n"
@@ -4175,7 +4184,7 @@ msgstr "%s: geçersiz seçenek -- %c\n"
 
 #, c-format
 msgid "%s: option requires an argument -- %c\n"
-msgstr ""
+msgstr "%s: seçenek argüman gerektiriyor -- %c\n"
 
 #, c-format
 msgid "%s: option `-W %s' is ambiguous\n"
@@ -4203,17 +4212,13 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "Kullanılacak veritabanı."
+msgstr "Kullanılacak varsayılan veritabanı."
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
 msgstr ""
-"Bağlantı için kullanılacak port numarası ya da öntanımlı değerin kullanıması "
-"için 0,  erişilme önceliğine göre, drizzle.cnf, $DRIZZLE_TCP_PORT "
 
 msgid "Connect Timeout."
 msgstr ""
@@ -4228,14 +4233,13 @@ msgid "Retry Count."
 msgstr ""
 
 msgid "Buffer length."
-msgstr ""
+msgstr "Arabellek uzunluğu."
 
-#, fuzzy
 msgid "Address to bind to."
-msgstr "Bağlanılacak IP adresi."
+msgstr ""
 
 msgid "Unknown Drizzle error"
-msgstr ""
+msgstr "Bilinmeyen Drizzle hatası"
 
 #, c-format
 msgid "Can't create UNIX socket (%d)"
@@ -4746,12 +4750,9 @@ msgstr ""
 msgid "Tablespace not empty"
 msgstr ""
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
-"Bağlantı için kullanılacak port numarası ya da öntanımlı değerin kullanıması "
-"için 0,  erişilme önceliğine göre, drizzle.cnf, $DRIZZLE_TCP_PORT "
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
@@ -4778,7 +4779,8 @@ msgid "Failed to initialize the Transaction Log Index.  Got error: %s\n"
 msgstr ""
 
 #, c-format
-msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgid ""
+"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 msgid "Enable transaction log"
@@ -4787,9 +4789,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "Bağlantı için kullanılacak socket dosyası"
+msgstr ""
 
 msgid "Name of the replicator plugin to use (default='default_replicator')"
 msgstr ""
@@ -4833,30 +4834,3 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr ""
-
-#~ msgid "Error while loading database options: '%s':"
-#~ msgstr "Veritabanı seçenekleri yüklenirken hata oluştu: '%s':"
-
-#~ msgid "Error reading file '%s' (Errcode: %d)"
-#~ msgstr "'%s' dosyası okunurken hata oluştu (Errcode: %d)"
-
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "'%s' dosyasına yazarken hata oluştu(Errcode: %d)"
-
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "'%s' dosyası bulunamadı (Errcode: %d)"
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "Çıkışta hafıza ve açık dosya kullanımını kontrol et."
-
-#~ msgid "Print some debug info at exit."
-#~ msgstr "Çıkışta debug bilgisi yazdır."
-
-#~ msgid "Can't init databases"
-#~ msgstr "Veritabanları başlatılamıyor"
-
-#~ msgid "Buffer length for TCP/IP and socket communication."
-#~ msgstr "TCP/IP ve soket iltişimi için tampon uzunluğu."
-
-#~ msgid "Size of Pool."
-#~ msgstr "Havuzun boyutu"

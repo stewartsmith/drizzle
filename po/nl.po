@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2010-03-15 21:00+0000\n"
-"PO-Revision-Date: 2010-03-16 21:15+0000\n"
+"POT-Creation-Date: 2010-04-28 02:45+0000\n"
+"PO-Revision-Date: 2010-04-30 23:48+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-17 04:38+0000\n"
+"X-Launchpad-Export-Date: 2010-05-02 03:56+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -25,7 +25,8 @@ msgid "Clear command."
 msgstr "Opdracht wissen."
 
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "Opnieuw verbinden met de server. Optionele argumenten zijn db en host."
+msgstr ""
+"Opnieuw verbinden met de server. Optionele argumenten zijn db en host."
 
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
@@ -34,7 +35,8 @@ msgstr ""
 "als nieuwe delimiter."
 
 msgid "Send command to drizzle server, display result vertically."
-msgstr "Verstuur opdracht naar de drizzle server, toon het resultaat verticaal"
+msgstr ""
+"Verstuur opdracht naar de drizzle server, toon het resultaat verticaal"
 
 msgid "Exit drizzle. Same as quit."
 msgstr "Verlaat drizzle. Hetzelfde als quit"
@@ -67,7 +69,8 @@ msgid "Rebuild completion hash."
 msgstr "Herbouw volledigheids hash"
 
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr "Voer een SQL script bestand uit. Neemt een bestandsnaam als argument."
+msgstr ""
+"Voer een SQL script bestand uit. Neemt een bestandsnaam als argument."
 
 msgid "Get status information from the server."
 msgstr "Vraag status informatie aan de server."
@@ -87,7 +90,8 @@ msgid "Don't show warnings after every statement."
 msgstr "Toon geen waarschuwingen na elk statement."
 
 #, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid ""
+"Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 "Geheugentoewijzingsfout tijdens het aanmaken van de initiële prompt. Breekt "
 "af.\n"
@@ -95,14 +99,11 @@ msgstr ""
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Welkom bij de drizzle client. Opdrachten eindigen met ; of \\g"
 
-#, fuzzy
 msgid "Your Drizzle connection id is "
-msgstr ""
-"Je Drizzle connection id is %u\n"
-"Server versie: %s\n"
+msgstr "Je Drizzle verbindings-id is "
 
 msgid "Server version: "
-msgstr ""
+msgstr "Server versie: "
 
 #, c-format
 msgid "Reading history-file %s\n"
@@ -398,7 +399,8 @@ msgstr ""
 "Automatische limiet voor rijen in een join indien --safe-updates gebruikt "
 "wordt"
 
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgid ""
+"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Weiger verbinding met een server indien die het oude (pre-4.1.1) protocol "
 "gebruikt."
@@ -465,7 +467,6 @@ msgstr "Verwerkt lijn: %<PRIu32>\n"
 msgid "Unknown command: "
 msgstr "Onbekende opdracht: "
 
-#, fuzzy
 msgid ""
 "                              Reading table information for completion of "
 "table and column names\n"
@@ -473,8 +474,10 @@ msgid ""
 "quicker startup with -A\n"
 "\n"
 msgstr ""
-"Leest tabel informatie voor het vervolledigen van tabel- en kolomnamen\n"
-"    Je kan deze functie uitschakelen om sneller op te starten met -A\n"
+"                              Leest tabel informatie voor het aanvullen van "
+"tabel- en kolomnamen\n"
+"                                  Om sneller op te starten kan je deze "
+"feature uitschakelen met -A\n"
 "\n"
 
 msgid "No connection. Trying to reconnect..."
@@ -515,7 +518,8 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Query OK, %ld rij beïnvloed"
 msgstr[1] "Query OK, %ld rijen beïnvloed"
 
-msgid "Number of rows before each output progress report (requires --verbose)."
+msgid ""
+"Number of rows before each output progress report (requires --verbose)."
 msgstr "Aantal rijen voor elk uitvoer voortgangsrapport (vereist --verbose)"
 
 #, c-format
@@ -699,7 +703,8 @@ msgstr "%s: Fout in het aantal velden voor tabel: %s !  Breekt af.\n"
 
 #, c-format
 msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
-msgstr "%s: Fout bij het lezen van rijen voor tabel: %s (%d:%s) ! Breekt af.\n"
+msgstr ""
+"%s: Fout bij het lezen van rijen voor tabel: %s (%d:%s) ! Breekt af.\n"
 
 #, c-format
 msgid "-- %<PRIu32> of ~%<PRIu64> rows dumped for table %s\n"
@@ -730,9 +735,9 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Fout: Niet genoeg geheugen om de ORDER BY clausule op te slaan\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not open '%s' for reading: errno = %d"
-msgstr "Kon tabel %s.%s niet openen na hernoemen\n"
+msgstr "Kon '%s' niet openen om te lezen: errno = %d"
 
 #, c-format
 msgid "Out of memory"
@@ -797,8 +802,8 @@ msgid "Auto-increment columns are incremented by this"
 msgstr "Auto-increment kolommen worden hiermee verhoogd"
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment !"
-"= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment "
+"!= 1"
 msgstr ""
 "Offset toegevoegd aan Auto-increment kolommen. Gebruikt wanneer auto-"
 "increment-increment != 1"
@@ -997,8 +1002,8 @@ msgstr ""
 "relatie resulteren in snellere optimalisering, maar kunnen heel slechte "
 "zoekplannen opleveren. Indien ingesteld op 0 zal het systeem automatisch een "
 "redelijke waarde kiezen. Indien ingesteld op MAX_TABLES+2 zal de op "
-"optimizer overschakelennaar de originele waarde (gebruikt voor testen/"
-"vergelijken)."
+"optimizer overschakelennaar de originele waarde (gebruikt voor "
+"testen/vergelijken)."
 
 msgid "Directory for plugins."
 msgstr "Directory voor plugins"
@@ -1008,8 +1013,8 @@ msgid ""
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
 msgstr ""
 "Optionele door komma's gescheiden lijst van plugins om te laden bij het "
-"opstarten, als toevoeging aan de standaardlijst met plugins. [bijvoorbeeld: "
-"--plugin_add=crc32,logger_gearman]"
+"opstarten, als toevoeging aan de standaardlijst met plugins. [bijvoorbeeld: -"
+"-plugin_add=crc32,logger_gearman]"
 
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
@@ -1279,8 +1284,8 @@ msgstr "Sorteergeheugen is op; verhoog server sort buffer size"
 #, c-format
 msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
 msgstr ""
-"Onverwacht bestandseinde gevonden tijdens het lezen van bestand "
-"'%-.192s' (Foutcode: %d)"
+"Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%-.192s' "
+"(Foutcode: %d)"
 
 msgid "Too many connections"
 msgstr "Te veel verbindingen"
@@ -1496,7 +1501,8 @@ msgstr "Bestand '%-.200s' bestaat reeds"
 
 #, c-format
 msgid "Records: %ld  Deleted: %ld  Skipped: %ld  Warnings: %ld"
-msgstr "Records: %ld  Verwijderd: %ld  Overgeslagen: %ld  Waarschuwingen: %ld"
+msgstr ""
+"Records: %ld  Verwijderd: %ld  Overgeslagen: %ld  Waarschuwingen: %ld"
 
 #, c-format
 msgid "Records: %ld  Duplicates: %ld"
@@ -1652,11 +1658,11 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column "
-"'%-.192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column '%-"
+".192s' to be NOT NULL or use another handler"
 msgstr ""
-"Tabel handler ondersteunt NULL niet voor de opgegeven index. Wijzig kolom "
-"'%-.192s' naar NOT NULL of gebruik een andere handler"
+"Tabel handler ondersteunt NULL niet voor de opgegeven index. Wijzig kolom '%-"
+".192s' naar NOT NULL of gebruik een andere handler"
 
 #, c-format
 msgid "Can't load function '%-.192s'"
@@ -1675,7 +1681,8 @@ msgstr "Plugin '%-.192s' bestaat reeds"
 
 #, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
-msgstr "Kan gedeelde bibliotheek '%-.192s' niet openen (Foutcode: %d %-.128s)"
+msgstr ""
+"Kan gedeelde bibliotheek '%-.192s' niet openen (Foutcode: %d %-.128s)"
 
 #, c-format
 msgid "Can't find symbol '%-.128s' in library '%-.128s'"
@@ -1757,16 +1764,16 @@ msgstr "Zulke grant bestaat niet voor gebruiker '%-.48s' op host '%-.64s'"
 #, c-format
 msgid "%-.16s command denied to user '%-.48s'@'%-.64s' for table '%-.192s'"
 msgstr ""
-"%-.16s opdracht geweigerd aan gebruiker '%-.48s'@'%-.64s' voor tabel "
-"'%-.192s'"
+"%-.16s opdracht geweigerd aan gebruiker '%-.48s'@'%-.64s' voor tabel '%-"
+".192s'"
 
 #, c-format
 msgid ""
 "%-.16s command denied to user '%-.48s'@'%-.64s' for column '%-.192s' in "
 "table '%-.192s'"
 msgstr ""
-"%-.16s opdracht geweigerd aan gebruiker '%-.48s'@'%-.64s' voor kolom "
-"'%-.192s' in tabel '%-.192s'"
+"%-.16s opdracht geweigerd aan gebruiker '%-.48s'@'%-.64s' voor kolom '%-"
+".192s' in tabel '%-.192s'"
 
 msgid ""
 "Illegal GRANT/REVOKE command; please consult the manual to see which "
@@ -1803,8 +1810,8 @@ msgstr ""
 #, c-format
 msgid "Delayed insert thread couldn't get requested lock for table %-.192s"
 msgstr ""
-"De uitgestelde insert thread kon de gevraagde vergrendeling voor tabel "
-"%-.192s niet krijgen"
+"De uitgestelde insert thread kon de gevraagde vergrendeling voor tabel %-"
+".192s niet krijgen"
 
 msgid "Too many delayed threads in use"
 msgstr "Te veel uitgestelde threads in gebruik"
@@ -1899,7 +1906,8 @@ msgid "This table type requires a primary key"
 msgstr "Dit tabeltype vereist een primaire sleutel"
 
 msgid "This version of Drizzle is not compiled with RAID support"
-msgstr "Deze versie van Drizzle werd niet gecompileerd met RAID ondersteuning"
+msgstr ""
+"Deze versie van Drizzle werd niet gecompileerd met RAID ondersteuning"
 
 msgid ""
 "You are using safe update mode and you tried to update a table without a "
@@ -1941,8 +1949,8 @@ msgstr "Kreeg fout %d tijdens CHECKPOINT"
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
-"'%-.64s' (%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
+"(%-.64s)"
 msgstr ""
 "Verbinding verbroken %<PRIi64> met db: '%-.192s' gebruiker: '%-.48s' host: "
 "'%-.64s' (%-.64s)"
@@ -2115,7 +2123,8 @@ msgid "Incorrect usage of %s and %s"
 msgstr "Foutief gebruik van %s en %s"
 
 msgid "The used SELECT statements have a different number of columns"
-msgstr "De gebruikte SELECT opdrachten hebben een verschillend aantal kolommen"
+msgstr ""
+"De gebruikte SELECT opdrachten hebben een verschillend aantal kolommen"
 
 msgid "Can't execute the query because you have a conflicting read lock"
 msgstr ""
@@ -2313,8 +2322,8 @@ msgstr "Gebruikt storage engine %s voor tabel '%s'"
 #, c-format
 msgid "Illegal mix of collations (%s,%s) and (%s,%s) for operation '%s'"
 msgstr ""
-"Niet toegelaten mengeling van collations (%s,%s) en (%s,%s) voor bewerking '%"
-"s'"
+"Niet toegelaten mengeling van collations (%s,%s) en (%s,%s) voor bewerking "
+"'%s'"
 
 msgid "Cannot drop one or more of the requested users"
 msgstr "Kan één of meer van de gevraagde gebruikers niet verwijderen"
@@ -2324,7 +2333,8 @@ msgstr ""
 "Kan niet alle rechten herroepen voor één of meer van de gevraagde gebruikers"
 
 #, c-format
-msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid ""
+"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 "Niet toegelaten mengeling van collations (%s,%s), (%s,%s), (%s,%s) voor "
 "bewerking '%s'"
@@ -2335,8 +2345,8 @@ msgstr "Niet toegelaten mengeling van collations voor bewerking '%s'"
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as XXXX."
-"variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as "
+"XXXX.variable_name)"
 msgstr ""
 "Variabele '%-.64s' is geen variabel component (kan niet gebruikt worden als "
 "XXXX.variabel_naam)"
@@ -2370,8 +2380,10 @@ msgstr ""
 "Referentieveld '%-.192s%s%-.192s%s%-.192s' van SELECT #%d werd opgelost in "
 "SELECT #%d"
 
-msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
-msgstr "Foutieve parameter of combinatie van parameters voor START SLAVE UNTIL"
+msgid ""
+"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgstr ""
+"Foutieve parameter of combinatie van parameters voor START SLAVE UNTIL"
 
 msgid ""
 "It is recommended to use --skip-slave-start when doing step-by-step "
@@ -2383,7 +2395,8 @@ msgstr ""
 "onverwachte drizzled herstart op de slave"
 
 msgid "SQL thread is not to be started so UNTIL options are ignored"
-msgstr "SQL thread mag niet gestart worden, dus worden UNTIL opties genegeerd"
+msgstr ""
+"SQL thread mag niet gestart worden, dus worden UNTIL opties genegeerd"
 
 #, c-format
 msgid "Incorrect index name '%-.100s'"
@@ -2431,8 +2444,8 @@ msgid ""
 "The '%s' feature is disabled; you need Drizzle built with '%s' to have it "
 "working"
 msgstr ""
-"De '%s' mogelijkheid werd uitgeschakeld; je hebt een Drizzle gebouwd met '%"
-"s' nodig om dit te laten werken"
+"De '%s' mogelijkheid werd uitgeschakeld; je hebt een Drizzle gebouwd met "
+"'%s' nodig om dit te laten werken"
 
 #, c-format
 msgid ""
@@ -2646,7 +2659,8 @@ msgstr "Misvormde bestandstype hoofding in bestand '%-.192s'"
 
 #, c-format
 msgid "Unexpected end of file while parsing comment '%-.200s'"
-msgstr "Onverwacht bestandseinde tijdens het ontleden van commentaar '%-.200s'"
+msgstr ""
+"Onverwacht bestandseinde tijdens het ontleden van commentaar '%-.200s'"
 
 #, c-format
 msgid "Error while parsing parameter '%-.192s' (line: '%-.192s')"
@@ -2656,7 +2670,8 @@ msgstr "Fout tijdens ontleden van parameter '%-.192s' (lijn: '%-.192s')"
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr "Onverwacht bestandseinde bij het overslaan van parameter '%-.192s'"
 
-msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid ""
+"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 "EXPLAIN/SHOW kan niet uitgevoerd worden; rechten op de onderliggende tabel "
 "ontbreken"
@@ -2693,15 +2708,16 @@ msgstr ""
 "View merge algoritme kan hier momenteel niet gebruikt worden (ongedefinieerd "
 "algoritme wordt verondersteld)"
 
-msgid "View being updated does not have complete key of underlying table in it"
+msgid ""
+"View being updated does not have complete key of underlying table in it"
 msgstr ""
 "De view die aangepast wordt bevat de volledige sleutel van de onderliggende "
 "tabel niet"
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
-"(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
+"function(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 "View '%-.192s.%-.192s' refereert naar ongeldige tabel(len), kolom(men)of  "
 "functie(s); of de aanmaker/aanroeper van de view ontbreekt het aan de "
@@ -2709,7 +2725,8 @@ msgstr ""
 
 #, c-format
 msgid "Can't drop or alter a %s from within another stored routine"
-msgstr "Kan geen %s verwijderen of aanpassen vanuit een andere stored routine"
+msgstr ""
+"Kan geen %s verwijderen of aanpassen vanuit een andere stored routine"
 
 msgid "GOTO is not allowed in a stored procedure handler"
 msgstr "GOTO is niet toegestaan in een stored procedure handler"
@@ -2758,8 +2775,8 @@ msgstr "CHECK OPTION mislukt '%-.192s.%-.192s'"
 #, c-format
 msgid "%-.16s command denied to user '%-.48s'@'%-.64s' for routine '%-.192s'"
 msgstr ""
-"%-.16s opdracht geweigerd aan gebruiker '%-.48s'@'%-.64s' voor routine "
-"'%-.192s'"
+"%-.16s opdracht geweigerd aan gebruiker '%-.48s'@'%-.64s' voor routine '%-"
+".192s'"
 
 #, c-format
 msgid "Failed purging old relay logs: %s"
@@ -3005,7 +3022,8 @@ msgstr "Recursieve stored functions en triggers zijn niet toegestaan."
 
 #, c-format
 msgid "Too big scale %d specified for column '%-.192s'. Maximum is %d."
-msgstr "Te grote schaal %d gespecifieerd voor kolom '%-.192s'. Maximum is %d."
+msgstr ""
+"Te grote schaal %d gespecifieerd voor kolom '%-.192s'. Maximum is %d."
 
 #, c-format
 msgid "Too big precision %d specified for column '%-.192s'. Maximum is %d."
@@ -3014,11 +3032,11 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
-"'%-.192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
+".192s')."
 msgstr ""
-"Voor float(M,D), double(M,D) of decimal(M,D), moet M >= D zijn (kolom "
-"'%-.192s')."
+"Voor float(M,D), double(M,D) of decimal(M,D), moet M >= D zijn (kolom '%-"
+".192s')."
 
 msgid ""
 "You can't combine write-locking of system tables with other tables or lock "
@@ -3056,7 +3074,8 @@ msgstr ""
 "gegevensbron '%-.64s' heeft niet het juiste formaat"
 
 #, c-format
-msgid "The data source connection string '%-.64s' is not in the correct format"
+msgid ""
+"The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 "De verbindingsparameter voor de gegevensbron '%-.64s' heeft niet het juiste "
 "formaat"
@@ -3106,11 +3125,11 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table "
-"'%-.192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table '%-"
+".192s'."
 msgstr ""
-"De definitie van tabel '%-.192s' voorkomt de bewerking %.192s op tabel "
-"'%-.192s'."
+"De definitie van tabel '%-.192s' voorkomt de bewerking %.192s op tabel '%-"
+".192s'."
 
 msgid ""
 "The prepared statement contains a stored routine call that refers to that "
@@ -3171,7 +3190,8 @@ msgstr ""
 
 #, c-format
 msgid "Variable '%-.64s' must be quoted with `...`, or renamed"
-msgstr "Variabele '%-.64s' moet tussen `...` gezet worden, of hernoemd worden"
+msgstr ""
+"Variabele '%-.64s' moet tussen `...` gezet worden, of hernoemd worden"
 
 #, c-format
 msgid ""
@@ -3210,7 +3230,8 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr "Foute routine naam '%-.192s'"
 
 #, c-format
-msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid ""
+"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 "Tabel upgrade nodig. Doe \"REPAIR TABLE `%-.32s`\" om dit op te lossen!"
 
@@ -3219,8 +3240,8 @@ msgstr "AGGREGATE is niet ondersteund voor stored functions"
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: %"
-"lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: "
+"%lu)"
 msgstr ""
 "Kan niet meer dan max_prepared_stmt_count statements aanmaken (huidige "
 "waarde: %lu)"
@@ -3254,7 +3275,8 @@ msgstr "hostnaam"
 
 #, c-format
 msgid "String '%-.70s' is too long for %s (should be no longer than %d)"
-msgstr "String '%-.70s' is te lang voor %s (zou niet langer mogen zijn dan %d)"
+msgstr ""
+"String '%-.70s' is te lang voor %s (zou niet langer mogen zijn dan %d)"
 
 #, c-format
 msgid "The target table %-.100s of the %s is not insertable-into"
@@ -3296,7 +3318,8 @@ msgstr ""
 #, c-format
 msgid ""
 "Table storage engine '%-.64s' does not support the create option '%.64s'"
-msgstr "Tabel storage engine '%-.64s' ondersteunt de create optie '%.64s' niet"
+msgstr ""
+"Tabel storage engine '%-.64s' ondersteunt de create optie '%.64s' niet"
 
 #, c-format
 msgid ""
@@ -3307,7 +3330,8 @@ msgstr ""
 "elke partitie"
 
 #, c-format
-msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid ""
+"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 "Enkel %-.64s PARTITIONING kan VALUES %-.64s gebruiken in de definitie van "
 "een partitie"
@@ -3331,10 +3355,11 @@ msgstr ""
 "Fout aantal subpartities gedefinieerd, komt niet overeen met vorige "
 "instelling"
 
-msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgid ""
+"Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
-"Constante of willekeurige expressie is niet toegestaan in in een (sub)"
-"partitioneringsfunctie"
+"Constante of willekeurige expressie is niet toegestaan in in een "
+"(sub)partitioneringsfunctie"
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
 msgstr "Expressie in RANGE/LIST VALUES moet constant zijn"
@@ -3366,7 +3391,8 @@ msgid "VALUES LESS THAN value must be strictly increasing for each partition"
 msgstr "VALUES LESS THAN waarde moet strikt oplopend zijn voor elke partitie"
 
 msgid "VALUES value must be of same type as partition function"
-msgstr "VALUES waarde moet van hetzelfde type zijn als partitioneringsfunctie"
+msgstr ""
+"VALUES waarde moet van hetzelfde type zijn als partitioneringsfunctie"
 
 msgid "Multiple definition of same constant in list partitioning"
 msgstr "Een constante werd meermaals gedefineerd bij lijst partitionering"
@@ -3402,7 +3428,8 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr "Een BLOB veld is niet toegestaan in een partitioneringsfunctie"
 
 #, c-format
-msgid "A %-.192s must include all columns in the table's partitioning function"
+msgid ""
+"A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 "Een %-.192s moet alle kolommen in de partitioneringsfunctie van de tabel "
 "bevatten"
@@ -3467,7 +3494,8 @@ msgstr "Dubbele partitienaam %-.192s"
 msgid "It is not allowed to shut off binlog on this command"
 msgstr "Het is niet toegestaand de binlog af te sluiten voor deze opdracht"
 
-msgid "When reorganizing a set of partitions they must be in consecutive order"
+msgid ""
+"When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 "Bij het reorganiseren van een set partities moeten ze in opeenvolgende "
 "volgorde staan"
@@ -3517,7 +3545,8 @@ msgid "Failed to drop %s"
 msgstr "Verwijderen van %s mislukt"
 
 msgid "The handler doesn't support autoextend of tablespaces"
-msgstr "De handler ondersteunt het automatisch uitbreiden van tablespaces niet"
+msgstr ""
+"De handler ondersteunt het automatisch uitbreiden van tablespaces niet"
 
 msgid ""
 "A size parameter was incorrectly specified, either number or on the form 10M"
@@ -3613,8 +3642,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
-"s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
+"%s instead"
 msgstr ""
 "De syntax '%s' wordt afgeraden en zal verwijderd worden in Drizzle %s. "
 "Gebruik %s"
@@ -3629,11 +3658,11 @@ msgstr "Je kan geen vergrendelingen gebruiken met logtabellen."
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
-"d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
+"%d would lead to a duplicate entry"
 msgstr ""
-"Het behoud van foreign key constraints voor tabel '%.192s', waarde "
-"'%-.192s', sleutel %d zou leiden tot een dubbele vermelding"
+"Het behoud van foreign key constraints voor tabel '%.192s', waarde '%-"
+".192s', sleutel %d zou leiden tot een dubbele vermelding"
 
 #, c-format
 msgid ""
@@ -3744,13 +3773,14 @@ msgid ""
 "rename two tables: the log table to an archive table and another table back "
 "to '%s'"
 msgstr ""
-"Kan '%s' niet hernoemen. Indien logging ingeschakeld is, moet hernoemen naar/"
-"van log tabel twee tabellen hernoemen: de log tabel naar een archief tabel "
-"en een andere tabel terug naar '%s'"
+"Kan '%s' niet hernoemen. Indien logging ingeschakeld is, moet hernoemen "
+"naar/van log tabel twee tabellen hernoemen: de log tabel naar een archief "
+"tabel en een andere tabel terug naar '%s'"
 
 #, c-format
 msgid "Incorrect parameter count in the call to native function '%-.192s'"
-msgstr "Foutief aantal parameters in de aanroep van 'native' functie '%-.192s'"
+msgstr ""
+"Foutief aantal parameters in de aanroep van 'native' functie '%-.192s'"
 
 #, c-format
 msgid "Incorrect parameters in the call to native function '%-.192s'"
@@ -4067,7 +4097,8 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr "Fout bij het vragen naar imagegegevens van de %-.64s backup driver"
 
 #, c-format
-msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid ""
+"Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 "Fout bij verzenden van image gegevens (voor tabel #%d) naar %-.64s herstel "
 "driver"
@@ -4092,8 +4123,8 @@ msgid ""
 "Can't open the online backup progress tables. Check 'drizzle.online_backup' "
 "and 'drizzle.online_backup_progress'."
 msgstr ""
-"Kan de online backup voortgangstabellen niet openen. Controleer 'drizzle."
-"online_backup' en 'drizzle.online_backup_progress'."
+"Kan de online backup voortgangstabellen niet openen. Controleer "
+"'drizzle.online_backup' en 'drizzle.online_backup_progress'."
 
 #, c-format
 msgid "Tablespace '%-.192s' already exists"
@@ -4113,7 +4144,8 @@ msgstr "De gevraagde waarde voor de heartbeat frequentie %s %s"
 
 #, c-format
 msgid "Can't write to the online backup progress log %-.64s."
-msgstr "Kan niet schrijven naar de voortgangslog %-.64s voor de online backup."
+msgstr ""
+"Kan niet schrijven naar de voortgangslog %-.64s voor de online backup."
 
 #, c-format
 msgid "Tablespace '%-.192s' not empty"
@@ -4228,7 +4260,7 @@ msgid "Error droppping Schema : %s"
 msgstr "Fout bij verwijderen van schema : %s"
 
 msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
-msgstr ""
+msgstr "Tijdelijke tabel te groot, voer opnieuw uit met SQL_BIG_RESULT."
 
 #, c-format
 msgid "Can't unlock file (Errcode: %d)"
@@ -4635,6 +4667,8 @@ msgid ""
 "You registered a TransactionApplier plugin but no TransactionReplicator "
 "plugins were registered.\n"
 msgstr ""
+"Je hebt een TransactionApplier plugin geregistreerd, maar er werden geen "
+"TransactionReplicator plugins geregistreerd\n"
 
 #, c-format
 msgid ""
@@ -4642,6 +4676,10 @@ msgid ""
 "plugins were registered that match the requested replicator name of '%s'.\n"
 "We have deactivated the TransactionApplier '%s'.\n"
 msgstr ""
+"Je hebt een TransactionApplier plugin geregistreerd, maar er werden geen "
+"TransactionReplicator plugins geregistreerd die overeenkomen met de "
+"gevraagde replicator naam '%s'.\n"
+"De TransactionApplier '%s' werd gedesactiveerd.\n"
 
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
@@ -4799,7 +4837,8 @@ msgstr "Kan UNIX socket niet creëren (%d)"
 
 #, c-format
 msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
-msgstr "Kan niet verbinden met locale Drizzle server via socket '%-.100s' (%d)"
+msgstr ""
+"Kan niet verbinden met locale Drizzle server via socket '%-.100s' (%d)"
 
 #, c-format
 msgid "Can't connect to Drizzle server on '%-.100s:%lu' (%d)"
@@ -5289,7 +5328,8 @@ msgid "Index needed in foreign key constraint"
 msgstr "Index is noodzakelijk in foreign key constraint"
 
 msgid "Upholding foreign key constraints would lead to a duplicate key error"
-msgstr "Foreign key beperkingen invoeren zou leiden tot een duplcate key fout"
+msgstr ""
+"Foreign key beperkingen invoeren zou leiden tot een duplcate key fout"
 
 msgid "Table needs to be upgraded before it can be used"
 msgstr "Tabel moet opgewaardeerd worden voordat ze gebruikt kan worden"
@@ -5316,7 +5356,8 @@ msgid "Tablespace exists"
 msgstr "Tablespace bestaat"
 
 msgid "The event was corrupt, leading to illegal data being read"
-msgstr "Het event was corrupt, hetgeen leidde tot het lezen van ongeldige data"
+msgstr ""
+"Het event was corrupt, hetgeen leidde tot het lezen van ongeldige data"
 
 msgid "The table is of a new format not supported by this version"
 msgstr ""
@@ -5368,15 +5409,18 @@ msgstr "Initialiseren van de Transaction Log mislukt.  Kreeg fout: %s\n"
 
 #, c-format
 msgid "Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"
-msgstr "Toewijzen van TransactionLogAIndex instance mislukt. Kreeg fout: %s\n"
+msgstr ""
+"Toewijzen van TransactionLogAIndex instance mislukt. Kreeg fout: %s\n"
 
 #, c-format
 msgid "Failed to initialize the Transaction Log Index.  Got error: %s\n"
 msgstr "Initialiseren van de Transaction Log Index mislukt. Kreeg fout: %s\n"
 
 #, c-format
-msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
-msgstr "Toewijzen van TransactionLogApplier instance mislukt. Kreeg fout: %s\n"
+msgid ""
+"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgstr ""
+"Toewijzen van TransactionLogApplier instance mislukt. Kreeg fout: %s\n"
 
 msgid "Enable transaction log"
 msgstr "Schakel transaction log in"
@@ -5389,6 +5433,7 @@ msgstr "Pad naar het bestand voor de transaction log"
 
 msgid "Name of the replicator plugin to use (default='default_replicator')"
 msgstr ""
+"Naam van de te gebruiken replicator plugin (standaard='default_replicator')"
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
@@ -5403,7 +5448,7 @@ msgstr ""
 "file bij elke transaction write, 2 == sync log file eenmaal per seconde"
 
 msgid "Number of slots for in-memory write buffers (default=8)."
-msgstr ""
+msgstr "Aantal slots voor in-memory schrijfbuffers (standaard=8)."
 
 msgid "Failed to open transaction log file "
 msgstr "Openen van transaction log bestand mislukt "
@@ -5414,8 +5459,8 @@ msgid ""
 "offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
 msgstr ""
 "Kon niet de volledige log entry schrijven. Probeerde %<PRId64> bytes tes "
-"schrijven op offset %<PRId64>, maar schreef slechts %<PRId32> bytes.  Fout: %"
-"s\n"
+"schrijven op offset %<PRId64>, maar schreef slechts %<PRId32> bytes.  Fout: "
+"%s\n"
 
 #, c-format
 msgid "Failed to sync log file. Got error: %s\n"
@@ -5437,191 +5482,13 @@ msgstr "Kon de transactie niet interpreteren. Kreeg fout: %s.\n"
 msgid "BUFFER: %s\n"
 msgstr "BUFFER: %s\n"
 
-#~ msgid "Got signal %d from thread %<PRIu64>"
-#~ msgstr "Kreeg signaal %d van thread %<PRIu64>"
-
-#~ msgid "Fatal signal %d while backtracing\n"
-#~ msgstr "Fataal signaal %d tijdens het maken van een backtrace\n"
-
+#, c-format
 #~ msgid ""
-#~ "We will try our best to scrape up some info that will hopefully help "
-#~ "diagnose\n"
-#~ "the problem, but since we have already crashed, something is definitely "
-#~ "wrong\n"
-#~ "and this may fail.\n"
-#~ "\n"
+#~ "Your Drizzle connection id is %u\n"
+#~ "Server version: %s\n"
 #~ msgstr ""
-#~ "We zullen ons best doen om wat info bij elkaar te rapen die je misschien "
-#~ "kan \n"
-#~ "helpen bij de diagnose van het probleem, maar aangezien we al gecrasht "
-#~ "zijn is\n"
-#~ "er zeker iets mis en dit kan dus mislukken.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "It is possible that drizzled could use up to \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
-#~ "bytes of memory\n"
-#~ "Hope that's ok; if not, decrease some variables in the equation.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Het is mogelijk dat drizzled tot \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
-#~ "bytes geheugen gebruikt\n"
-#~ "Ik hoop dat dit in orde is; indien niet, verminder dan enkele variabelen "
-#~ "in de vergelijking.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "Attempting backtrace. You can use the following information to find out\n"
-#~ "where drizzled died. If you see no messages after this, something went\n"
-#~ "terribly wrong...\n"
-#~ msgstr ""
-#~ "Probeert een backtrace. Je kan de volgende inmormatie gebruiken om uit te "
-#~ "zoeken\n"
-#~ "waar drizzled afbrak. Indien je hierna geen boodschappen ziet, ging er "
-#~ "iets\n"
-#~ "verschrikkelijk fout...\n"
-
-#~ msgid ""
-#~ "Trying to get some variables.\n"
-#~ "Some pointers may be invalid and cause the dump to abort...\n"
-#~ msgstr ""
-#~ "Probeert enkele variablen te vinden.\n"
-#~ "Enkele pointers kunnen ongeldig zijn en de dump afbreken...\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "This crash occurred while the server was calling initgroups(). This is\n"
-#~ "often due to the use of a drizzled that is statically linked against "
-#~ "glibc\n"
-#~ "and configured to use LDAP in /etc/nsswitch.conf. You will need to "
-#~ "either\n"
-#~ "upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
-#~ "later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
-#~ "drizzled that is not statically linked.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Deze crash gebeurde terwijl de server initgroups() aanriep. Dit is "
-#~ "dikwijls\n"
-#~ "te wijten aan een drizzled die statisch gelinked werd met glibc en "
-#~ "ingesteld\n"
-#~ "werd om LDAP te gebruiken in /etc/nsswitch.conf. Je zal ofwel moeten\n"
-#~ "upgraden naar een glibc versie die dit probleem niet heeft (2.3.4 of "
-#~ "later\n"
-#~ "indien gebruikt met nscd) ofwel LDAP moeten uitschakelen in nsswitch."
-#~ "conf,\n"
-#~ "ofwel een drizzled moeten gebruiken die niet statisch gelinked werd.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "You are running a statically-linked LinuxThreads binary on an NPTL "
-#~ "system.\n"
-#~ "This can result in crashes on some distributions due to LT/NPTL "
-#~ "conflicts.\n"
-#~ "You should either build a dynamically-linked binary, or force "
-#~ "LinuxThreads\n"
-#~ "to be used with the LD_ASSUME_KERNEL environment variable. Please "
-#~ "consult\n"
-#~ "the documentation for your distribution on how to do that.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Je draait een statisch gelinkte LinuxThreads binary op een NPTL systeem.\n"
-#~ "Dit kan crashes veroorzaken in enkele distributies vanwege LT/NPTL "
-#~ "conflicten.\n"
-#~ "Je zou een dynamisch gelinkte  binary moeten bouwen, of LinuxThreads "
-#~ "forceren\n"
-#~ "om gebruikt te worden met de LD_ASSUME_KERNEL omgevingsvariabele.\n"
-#~ "Consulteer de documentatie van je distributieom te leren hoe je dat "
-#~ "doet.\n"
-
-#~ msgid "Writing a core file\n"
-#~ msgstr "Schrijft core bestand\n"
-
-#~ msgid "Print a symbolic stack trace on failure."
-#~ msgstr "Druk een symbolic stack trace bij falen."
-
-#~ msgid "Error while loading database options: '%s':"
-#~ msgstr "Fout tijdens laden van de databank opties: '%s':"
-
-#~ msgid "Enable default replicator"
-#~ msgstr "Schakel standaard Replicator in"
-
-#~ msgid "Default Replicator"
-#~ msgstr "Standaard Replicator"
-
-#~ msgid "Enable filtered replicator"
-#~ msgstr "Schakel de gefilterde replicator in"
-
-#~ msgid "Filtered Replicator"
-#~ msgstr "Gefilterde Replicator"
-
-#~ msgid ""
-#~ "Failed to allocate enough memory to buffer header, transaction message, "
-#~ "and trailing checksum bytes. Tried to allocate %<PRId64> bytes.  Error: %"
-#~ "s\n"
-#~ msgstr ""
-#~ "Het toewijzen van voldoende geheugen voor header, transaction message, en "
-#~ "trailing checksum bytes is mislukt. Probeerde %<PRId64> bytes toe te "
-#~ "wijzen. Fout: %s\n"
-
-#~ msgid "UNUSED"
-#~ msgstr "ONGEBRUIKT"
-
-#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
-#~ msgstr "Kan bestand '%s' niet aanmaken/wijzigen (Foutcode: %d)"
-
-#~ msgid "Error reading file '%s' (Errcode: %d)"
-#~ msgstr "Fout bij lezen van bestand '%s' (Foutcode: %d)"
-
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "Fout bij schrijven van bestand '%s' (Foutcode: %d)"
-
-#~ msgid "Error on close of '%s' (Errcode: %d)"
-#~ msgstr "Fout bij sluiten van '%s' (Foutcode: %d)"
-
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "Geheugen is op (Had %u bytes nodig)"
-
-#~ msgid "Error on delete of '%s' (Errcode: %d)"
-#~ msgstr "Fout bij wissen van '%s' (Foutcode: %d)"
-
-#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-#~ msgstr "Fout bij hernoemen van '%s' naar '%s' (Foutcode: %d)"
-
-#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-#~ msgstr ""
-#~ "Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%"
-#~ "s' (Foutcode: %d)"
-
-#~ msgid "Can't lock file (Errcode: %d)"
-#~ msgstr "Kan bestand niet vergrendelen (Foutcode: %d)"
-
-#~ msgid "Can't read dir of '%s' (Errcode: %d)"
-#~ msgstr "Kan dir van '%s' niet lezen (Foutcode: %d)"
-
-#~ msgid "Can't get stat of '%s' (Errcode: %d)"
-#~ msgstr "Kan stat van '%s' niet lezen (Foutcode: %d)"
-
-#~ msgid "Can't get working dirctory (Errcode: %d)"
-#~ msgstr "Kan de werkdirectory niet vinden (Foutcode: %d)"
-
-#~ msgid "Can't change dir to '%s' (Errcode: %d)"
-#~ msgstr "Kan directory niet veranderen in '%s' (Foutcode: %d)"
-
-#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-#~ msgstr ""
-#~ "Disk is vol bij het schrijven van '%s'. Aan het wachten tot iemand ruimte "
-#~ "vrijmaakt..."
-
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Bestand '%s' niet gevonden (Foutcode: %d)"
-
-#~ msgid "Undefined handler error 125"
-#~ msgstr "Ongedefinieerde handler fout 125"
-
-#~ msgid "Undefined handler error 129"
-#~ msgstr "Ongedefinieerde handler fout 129"
+#~ "Je Drizzle connection id is %u\n"
+#~ "Server versie: %s\n"
 
 #~ msgid "Set the default character set."
 #~ msgstr "Stel de standaard karakterset in."
@@ -5635,79 +5502,189 @@ msgstr "BUFFER: %s\n"
 #~ msgid "Socket file to use for connection."
 #~ msgstr "Socket bestand om te gebruiken voor de verbinding."
 
+#, c-format
 #~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 #~ msgstr "%s Ver %s Distrib %s, voor %s (%s) gebruik makend van %s %s\n"
 
+#~ msgid ""
+#~ "Reading table information for completion of table and column names\n"
+#~ "    You can turn off this feature to get a quicker startup with -A\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Leest tabel informatie voor het vervolledigen van tabel- en kolomnamen\n"
+#~ "    Je kan deze functie uitschakelen om sneller op te starten met -A\n"
+#~ "\n"
+
+#, c-format
 #~ msgid "Unknown command '\\%c'."
 #~ msgstr "Onbekende opdracht '\\%c'."
+
+#, c-format
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Fout bij wissen van '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Fout bij hernoemen van '%s' naar '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Kan bestand '%s' niet aanmaken/wijzigen (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Fout bij lezen van bestand '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Fout bij schrijven van bestand '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Geheugen is op (Had %u bytes nodig)"
+
+#, c-format
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Kan directory niet veranderen in '%s' (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Kan bestand niet vergrendelen (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%s' "
+#~ "(Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Kan dir van '%s' niet lezen (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Kan stat van '%s' niet lezen (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Kan de werkdirectory niet vinden (Foutcode: %d)"
+
+#, c-format
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Disk is vol bij het schrijven van '%s'. Aan het wachten tot iemand ruimte "
+#~ "vrijmaakt..."
+
+#, c-format
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Bestand '%s' niet gevonden (Foutcode: %d)"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Ongedefinieerde handler fout 125"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Ongedefinieerde handler fout 129"
+
+#, c-format
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Fout bij sluiten van '%s' (Foutcode: %d)"
 
 #~ msgid "Buffer length for TCP/IP and socket communication."
 #~ msgstr "Buffer lengte voor TCP/IP en socket communicatie"
 
+#, c-format
 #~ msgid "Can't create completion port thread (error %d)"
 #~ msgstr "Kan completion port thread niet aanmaken (fout %d)"
 
+#, c-format
+#~ msgid "Writing a core file\n"
+#~ msgstr "Schrijft core bestand\n"
+
+#, c-format
 #~ msgid "Plugin '%s' init function returned error."
 #~ msgstr "Initialisatie-functie van plugin '%s' gaf een fout terug."
 
+#, c-format
 #~ msgid "Retrying bind on TCP/IP port %u"
 #~ msgstr "Probeert opnieuw te verbinden met TCP/IP port %u"
 
 #~ msgid "Can't start server: Bind on TCP/IP port"
 #~ msgstr "Kan de server niet starten: Verbinden met TCP/IP port"
 
+#, c-format
 #~ msgid "Fatal "
 #~ msgstr "Fatale "
 
+#, c-format
 #~ msgid "listen() on TCP/IP failed with error %d"
 #~ msgstr "listen() op TCP/IP mislukt met fout %d"
 
 #~ msgid "Can't start server: listen() on TCP/IP port"
 #~ msgstr "Kan server niet starten: listen() op TCP/IP port"
 
+#, c-format
+#~ msgid ""
+#~ "We will try our best to scrape up some info that will hopefully help "
+#~ "diagnose\n"
+#~ "the problem, but since we have already crashed, something is definitely "
+#~ "wrong\n"
+#~ "and this may fail.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "We zullen ons best doen om wat info bij elkaar te rapen die je misschien kan "
+#~ "\n"
+#~ "helpen bij de diagnose van het probleem, maar aangezien we al gecrasht zijn "
+#~ "is\n"
+#~ "er zeker iets mis en dit kan dus mislukken.\n"
+#~ "\n"
+
+#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "The '--memlock' argument, which was enabled, uses system calls that are\n"
 #~ "unreliable and unstable on some operating systems and operating-system\n"
-#~ "versions (notably, some versions of Linux).  This crash could be due to "
-#~ "use\n"
-#~ "of those buggy OS calls.  You should consider whether you really need "
-#~ "the\n"
+#~ "versions (notably, some versions of Linux).  This crash could be due to use\n"
+#~ "of those buggy OS calls.  You should consider whether you really need the\n"
 #~ "'--memlock' parameter and/or consult the OS distributor about 'mlockall'\n"
 #~ " bugs.\n"
 #~ msgstr ""
 #~ "\n"
 #~ "Het --memlock argument dat ingeschakeld is gebruikt system calls die\n"
-#~ "onbetrouwbaar en stabiel zijn op enkele besturingssystemen (vooral "
-#~ "enkele\n"
+#~ "onbetrouwbaar en stabiel zijn op enkele besturingssystemen (vooral enkele\n"
 #~ "Linux versies). Deze crash zou het gevolg kunnen zijn van deze system "
 #~ "calls.\n"
-#~ "Je zou in overweging moeten nemen of je de --memlock parameter echt "
-#~ "nodig\n"
-#~ "hebt en/of de verdeler van het besturingssysteem consulteren over bugs "
-#~ "met\n"
+#~ "Je zou in overweging moeten nemen of je de --memlock parameter echt nodig\n"
+#~ "hebt en/of de verdeler van het besturingssysteem consulteren over bugs met\n"
 #~ "'mlockall'.\n"
 
 #~ msgid "Can't init databases"
 #~ msgstr "Kan databanken niet initialiseren"
 
+#, c-format
 #~ msgid "drizzled: Got error %d from select"
 #~ msgstr "drizzled: Kreeg fout %d van select"
 
+#, c-format
 #~ msgid "Unknown/unsupported table type: %s"
 #~ msgstr "Onbekend/niet-ondersteund tabel type: %s"
 
+#, c-format
 #~ msgid "Default storage engine (%s) is not available"
 #~ msgstr "Standaard starage engine (%s) niet beschikbaar"
 
+#, c-format
 #~ msgid "Failed to lock memory. Errno: %d\n"
 #~ msgstr "In geheugen vergrendelen mislukte. Foutcode: %d\n"
 
+#, c-format
 #~ msgid "Do you already have another drizzled server running on port: %d ?"
 #~ msgstr "Heb je al een andere drizzled server draaien op poort %d?"
 
 #~ msgid "Push supported query conditions to the storage engine."
 #~ msgstr "Geef ondersteunde query voorwaarden door aan de storage engine."
+
+#~ msgid "Print a symbolic stack trace on failure."
+#~ msgstr "Druk een symbolic stack trace bij falen."
 
 #~ msgid "Type of DELAY_KEY_WRITE."
 #~ msgstr "Type van DELAY_KEY_WRITE."
@@ -5717,6 +5694,32 @@ msgstr "BUFFER: %s\n"
 
 #~ msgid "Log connections and queries to file."
 #~ msgstr "Log verbindingen en queries naar bestand."
+
+#, c-format
+#~ msgid ""
+#~ "\n"
+#~ "You are running a statically-linked LinuxThreads binary on an NPTL system.\n"
+#~ "This can result in crashes on some distributions due to LT/NPTL conflicts.\n"
+#~ "You should either build a dynamically-linked binary, or force LinuxThreads\n"
+#~ "to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n"
+#~ "the documentation for your distribution on how to do that.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Je draait een statisch gelinkte LinuxThreads binary op een NPTL systeem.\n"
+#~ "Dit kan crashes veroorzaken in enkele distributies vanwege LT/NPTL "
+#~ "conflicten.\n"
+#~ "Je zou een dynamisch gelinkte  binary moeten bouwen, of LinuxThreads "
+#~ "forceren\n"
+#~ "om gebruikt te worden met de LD_ASSUME_KERNEL omgevingsvariabele.\n"
+#~ "Consulteer de documentatie van je distributieom te leren hoe je dat doet.\n"
+
+#, c-format
+#~ msgid ""
+#~ "Trying to get some variables.\n"
+#~ "Some pointers may be invalid and cause the dump to abort...\n"
+#~ msgstr ""
+#~ "Probeert enkele variablen te vinden.\n"
+#~ "Enkele pointers kunnen ongeldig zijn en de dump afbreken...\n"
 
 #~ msgid "IP address to bind to."
 #~ msgstr "IP adres om mee te verbinden."
@@ -5735,12 +5738,12 @@ msgstr "BUFFER: %s\n"
 #~ "FORCE of QUICK kan zijn."
 
 #~ msgid ""
-#~ "Using this option will cause most temporary files created to use a small "
-#~ "set of names, rather than a unique name for each new file."
+#~ "Using this option will cause most temporary files created to use a small set "
+#~ "of names, rather than a unique name for each new file."
 #~ msgstr ""
-#~ "Het gebruik van deze opties zorgt ervoor dat de meeste tijdelijke "
-#~ "bestanden een kleine groep van namen hergebruiken in plaats van een "
-#~ "unieke naam voor elk nieuw bestand."
+#~ "Het gebruik van deze opties zorgt ervoor dat de meeste tijdelijke bestanden "
+#~ "een kleine groep van namen hergebruiken in plaats van een unieke naam voor "
+#~ "elk nieuw bestand."
 
 #~ msgid ""
 #~ "Don't overwrite stale .MYD and .MYI even if no directory is specified."
@@ -5757,8 +5760,8 @@ msgstr "BUFFER: %s\n"
 #~ "openhouden."
 
 #~ msgid ""
-#~ "Number of seconds to wait for a block to be written to a connection "
-#~ "before aborting the write."
+#~ "Number of seconds to wait for a block to be written to a connection before "
+#~ "aborting the write."
 #~ msgstr ""
 #~ "Aantal seconden dat gewacht wordt tot een blok geschreven is voordat de "
 #~ "schrijfoperatie afgebroken wordt."
@@ -5779,8 +5782,8 @@ msgstr "BUFFER: %s\n"
 
 #~ msgid "Allocation block size for transactions to be stored in binary log"
 #~ msgstr ""
-#~ "Toewijzingsblokgrootte voor de transacties die opgeslagen moeten worden "
-#~ "in de binaire log."
+#~ "Toewijzingsblokgrootte voor de transacties die opgeslagen moeten worden in "
+#~ "de binaire log."
 
 #~ msgid "Persistent buffer for transactions to be stored in binary log"
 #~ msgstr ""
@@ -5788,8 +5791,8 @@ msgstr "BUFFER: %s\n"
 #~ "binaire log."
 
 #~ msgid ""
-#~ "The number of seconds the server waits for activity on a connection "
-#~ "before closing it."
+#~ "The number of seconds the server waits for activity on a connection before "
+#~ "closing it."
 #~ msgstr ""
 #~ "Het aantal seconden dat de server op activiteit van een verbinding wacht "
 #~ "voordat ze afgesloten wordt."
@@ -5803,9 +5806,11 @@ msgstr "BUFFER: %s\n"
 #~ "Om te zien welke waarden een draaiende Drizzle server gebruikt, type\n"
 #~ "'drizzleadmin variables' in plaats van 'drizzled --help'."
 
+#, c-format
 #~ msgid "Wrong option to %s. Option(s) given: %s\n"
 #~ msgstr "Foute optie bij %s. Opgegeven optie(s): %s\n"
 
+#, c-format
 #~ msgid "Alternatives are: '%s'"
 #~ msgstr "Alternatieven zijn: '%s'"
 
@@ -5815,9 +5820,11 @@ msgstr "BUFFER: %s\n"
 #~ msgid "isamchk"
 #~ msgstr "isamchk"
 
+#, c-format
 #~ msgid "No option given to %s\n"
 #~ msgstr "Geen optie gegeven bij %s\n"
 
+#, c-format
 #~ msgid ""
 #~ "%s: ready for connections.\n"
 #~ "Version: '%s'  socket: '%s'  port: %d"
@@ -5825,21 +5832,26 @@ msgstr "BUFFER: %s\n"
 #~ "%s: klaar voor verbindingen.\n"
 #~ "Versie: '%s'  socket: '%s'  poort: %d"
 
+#, c-format
 #~ msgid "%s: Forcing close of thread %ld  user: '%-.48s'\n"
 #~ msgstr "%s: Forceert afsluiten van thread %ld  gebruiker: '%-.48s'\n"
 
+#, c-format
 #~ msgid "Function '%-.192s' already exists"
 #~ msgstr "Functie '%-.192s' bestaat reeds"
 
+#, c-format
 #~ msgid "Can't find symbol '%-.128s' in library"
 #~ msgstr "Kan symbol '%-.128s' niet vinden in library"
 
 #~ msgid "No paths allowed for shared library"
 #~ msgstr "Geen paden toegestaan voor een gedeelde library"
 
+#, c-format
 #~ msgid "File '%-.192s' has unknown type '%-.64s' in its header"
 #~ msgstr "Bestand '%-.192s' heeft onbekend type '%-.64s' in zijn hoofding"
 
+#, c-format
 #~ msgid ""
 #~ "%s: ready for connections.\n"
 #~ "Version: '%s'  socket: '%s'  port: %d  %s"
@@ -5847,56 +5859,74 @@ msgstr "BUFFER: %s\n"
 #~ "%s: klaar voor verbindingen\n"
 #~ "Versie: '%s' socket: '%s' poort: %d %s"
 
+#, c-format
 #~ msgid "Found %d prepared transaction(s) in %s"
 #~ msgstr "%d prepared transaction(s) gevonden in %s"
 
 #~ msgid "libevent_thread_proc: my_thread_init() failed\n"
 #~ msgstr "libevent_thread_proc: my_thread_init() mislukt\n"
 
+#, c-format
 #~ msgid "Table %s had a open data handler in reopen_table"
 #~ msgstr "Tabel %s had een open data handler in reopen_table"
 
+#, c-format
 #~ msgid "Couldn't repair table: %s.%s"
 #~ msgstr "Kon tabel niet herstellen: %s.%s"
 
+#, c-format
+#~ msgid "Error while loading database options: '%s':"
+#~ msgstr "Fout tijdens laden van de databank opties: '%s':"
+
+#, c-format
 #~ msgid "Invalid (old?) table or database name '%s'"
 #~ msgstr "Ongeldige (oude?) tabel of databank naam '%s'"
 
+#, c-format
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 #~ "position %d to have character set '%s' but found character set '%s'."
 #~ msgstr ""
-#~ "Foute definitie van tabel %s.%s:  verwachtte dat het type van kolom '%s' "
-#~ "op positie %d karakterset '%s' had maar vond karakterset '%s'."
+#~ "Foute definitie van tabel %s.%s:  verwachtte dat het type van kolom '%s' op "
+#~ "positie %d karakterset '%s' had maar vond karakterset '%s'."
 
+#, c-format
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
 #~ "found '%s'."
 #~ msgstr ""
-#~ "Foute definitie van tabel %s.%s: verwachtte kolom '%s' op positie %d, '%"
-#~ "s' gevonden."
+#~ "Foute definitie van tabel %s.%s: verwachtte kolom '%s' op positie %d, '%s' "
+#~ "gevonden."
 
+#, c-format
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 #~ "position %d to have character set '%s' but the type has no character set."
 #~ msgstr ""
-#~ "Foute definitie van tabel %s.%s:  verwachtte dat het type van kolom '%s' "
-#~ "op positie %d karakterset '%s' had maar het type heeft geen karakterset."
+#~ "Foute definitie van tabel %s.%s:  verwachtte dat het type van kolom '%s' op "
+#~ "positie %d karakterset '%s' had maar het type heeft geen karakterset."
 
+#, c-format
 #~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
-#~ "to have type %s, found type %s."
+#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
+#~ "have type %s, found type %s."
 #~ msgstr ""
 #~ "Foute definitie van tabel %s.%s:  verwachtte dat kolom '%s' op positie %d "
 #~ "van het type %s was, type %s gevonden."
 
+#, c-format
+#~ msgid "Could not open table %s.%s after rename\n"
+#~ msgstr "Kon tabel %s.%s niet openen na hernoemen\n"
+
+#, c-format
 #~ msgid ""
-#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
-#~ "to have type %s  but the column is not found."
+#~ "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
+#~ "have type %s  but the column is not found."
 #~ msgstr ""
 #~ "Foute definitie van tabel %s.%s:  verwachtte dat kolom '%s' op positie %d "
 #~ "type '%s' had maar de kolom werd niet gevonden."
 
+#, c-format
 #~ msgid "Couldn't load plugin named '%s' with soname '%s'."
 #~ msgstr "Kon plugin met de naam '%s' niet laden met soname '%s'."
 
@@ -5904,22 +5934,25 @@ msgstr "BUFFER: %s\n"
 #~ msgstr "parameter voor het laden van de plugin te lang"
 
 #~ msgid ""
-#~ "Specifies how MyISAM index statistics collection code should threat "
-#~ "NULLs. Possible values of name are 'nulls_unequal' (default behavior), "
+#~ "Specifies how MyISAM index statistics collection code should threat NULLs. "
+#~ "Possible values of name are 'nulls_unequal' (default behavior), "
 #~ "'nulls_equal' (emulate MySQL 4.0 behavior), and 'nulls_ignored'."
 #~ msgstr ""
 #~ "Specifieert hoe de indexstatistieken verzamelende code voor MYISAM NULL-"
-#~ "waarden behandelt. Mogelijke waarden zijn "
-#~ "'nulls_unequal' (standaardgerag), 'nulls_equal' (emuleer MySQL 4.0 "
-#~ "gedrag), en 'nulls_ignored'."
+#~ "waarden behandelt. Mogelijke waarden zijn 'nulls_unequal' (standaardgerag), "
+#~ "'nulls_equal' (emuleer MySQL 4.0 gedrag), en 'nulls_ignored'."
+
+#, c-format
+#~ msgid "Got signal %d from thread %<PRIu64>"
+#~ msgstr "Kreeg signaal %d van thread %<PRIu64>"
 
 #~ msgid "Lock drizzled in memory."
 #~ msgstr "Vergrendel drizzled in het geheugen."
 
 #~ msgid ""
-#~ "Optional colon (or semicolon) separated list of plugins to load,where "
-#~ "each plugin is identified by the name of the shared library. [for "
-#~ "example: --plugin_load=libmd5udf.so:libauth_pam.so]"
+#~ "Optional colon (or semicolon) separated list of plugins to load,where each "
+#~ "plugin is identified by the name of the shared library. [for example: --"
+#~ "plugin_load=libmd5udf.so:libauth_pam.so]"
 #~ msgstr ""
 #~ "Optionele door dubbelpunt (of kommapunt) gescheiden lijst van plugins die "
 #~ "geladen moeten worden, waarbij elke plugin geïdentificeerd wordt dooe de "
@@ -5952,22 +5985,33 @@ msgstr "BUFFER: %s\n"
 #~ "Port number to use for connection or 0 for default to, in order of "
 #~ "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 #~ msgstr ""
-#~ "Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen "
-#~ "op, in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT,built-in "
-#~ "default ("
+#~ "Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen op, "
+#~ "in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT,built-in default ("
 
+#, c-format
+#~ msgid ""
+#~ "Attempting backtrace. You can use the following information to find out\n"
+#~ "where drizzled died. If you see no messages after this, something went\n"
+#~ "terribly wrong...\n"
+#~ msgstr ""
+#~ "Probeert een backtrace. Je kan de volgende inmormatie gebruiken om uit te "
+#~ "zoeken\n"
+#~ "waar drizzled afbrak. Indien je hierna geen boodschappen ziet, ging er iets\n"
+#~ "verschrikkelijk fout...\n"
+
+#, c-format
 #~ msgid ""
 #~ "It is possible that drizzled could use up to \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
-#~ "<PRIu64> K\n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
+#~ "%<PRIu64> K\n"
 #~ "bytes of memory\n"
 #~ "Hope that's ok; if not, decrease some variables in the equation.\n"
 #~ "\n"
 #~ msgstr ""
 #~ "Het is mogelijk dat drizzled tot \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %"
-#~ "<PRIu64> K\n"
+#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = "
+#~ "%<PRIu64> K\n"
 #~ "bytes geheugen gebruikt\n"
-#~ "Ik hoop dat dit in orde is; indien niet, verminder dan enkele variabelen "
-#~ "in deze vergelijking.\n"
+#~ "Ik hoop dat dit in orde is; indien niet, verminder dan enkele variabelen in "
+#~ "deze vergelijking.\n"
 #~ "\n"
