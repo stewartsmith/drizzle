@@ -60,3 +60,11 @@ test/t1 Format: COMPACT Page size: 0 Columns: 5 Indexes: 1
     IDXCOL: pk
 
 drop table t1;
+create table t1 (a blob);
+insert into t1 values ('aaa'),('aa'),('a');
+select length(a) from t1 order by length(a);
+length(a)
+1
+2
+3
+drop table t1;

@@ -1856,7 +1856,7 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   if (share->has_hidden_primary_key)
   {
     err= ib_col_set_value(search_tuple, 0,
-                          ((uint64_t*)(ref)), sizeof(uint64_t));
+                          ((uint64_t*)(pos)), sizeof(uint64_t));
   }
   else
   {
