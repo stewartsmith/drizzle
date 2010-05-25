@@ -43,30 +43,51 @@ class DateTest : public ::testing::Test {
 };
 
 
-TEST_F(DateTest, operatorEqual_ComparingIdencticalDates_ShouldReturn_True)
+TEST_F(DateTest, operatorEqual_ComparingWithIdencticalDate_ShouldReturn_True)
 {
   bool result= (sample_date == identical_with_sample_date);
   
   ASSERT_EQ(true, result);
 }
 
-TEST_F(DateTest, operatorEqual_ComparingDifferentDates_ShouldReturn_False)
+TEST_F(DateTest, operatorEqual_ComparingWithDifferentDate_ShouldReturn_False)
 {
   bool result= (sample_date == before_sample_date);
   
   ASSERT_EQ(false, result);
 }
 
-TEST_F(DateTest, operatorNotEqual_ComparingIdencticalDates_ShouldReturn_False)
+TEST_F(DateTest, operatorNotEqual_ComparingWithIdencticalDate_ShouldReturn_False)
 { 
   bool result= (sample_date != identical_with_sample_date);
   
   ASSERT_EQ(false, result);
 }
 
-TEST_F(DateTest, operatorNotEqual_ComparingDifferentDates_ShouldReturn_True)
+TEST_F(DateTest, operatorNotEqual_ComparingWithDifferentDate_ShouldReturn_True)
 {
   bool result= (sample_date != before_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorGreaterThan_ComparingWithIdenticalDate_ShouldReturn_False)
+{
+  bool result= (sample_date > identical_with_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorGreaterThan_ComparingWithLaterDate_ShouldReturn_False)
+{
+  bool result= (sample_date > after_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorGreaterThan_ComparingWithEarlierDate_ShouldReturn_True)
+{
+  bool result= (sample_date > before_sample_date);
   
   ASSERT_EQ(true, result);
 }
