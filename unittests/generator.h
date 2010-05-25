@@ -37,6 +37,14 @@ public:
   public:
     static void make_date(drizzled::Date *date, uint32_t years, uint32_t months, uint32_t days);
   };
+  
+  class DateTimeGen
+  {
+    public:
+      static void make_datetime(drizzled::DateTime *datetime,
+                                uint32_t years, uint32_t months, uint32_t days, uint32_t _hours,
+                                uint32_t _minutes, uint32_t _seconds, uint32_t _useconds);
+  };
 };
 
 #endif /*UNITTESTS_GENERATOR_H*/

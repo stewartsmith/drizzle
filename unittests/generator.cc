@@ -33,3 +33,16 @@ void Generator::DateGen::make_date(Date *date,
   date->set_months(months);
   date->set_days(days);
 }
+
+void make_datetime(drizzled::DateTime *datetime,
+                   uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
+                   uint32_t minutes, uint32_t seconds, uint32_t useconds)
+{
+  datetime->set_years(years);
+  datetime->set_months(months);
+  datetime->set_days(days);
+  datetime->set_hours(hours);
+  datetime->set_minutes(minutes);
+  datetime->set_seconds(seconds);
+  datetime->set_useconds(useconds);
+}                     
