@@ -5843,6 +5843,20 @@ InnobaseEngine::doDropTable(
     if (identifier.getType() == message::Table::TEMPORARY)
     {
       session.removeTableMessage(identifier);
+      ulint sql_command = session_sql_command(&session);
+
+      // If this was the final removal to an alter table then we will need
+      // to remove the .dfe that was left behind.
+      if ((sql_command == SQLCOM_ALTER_TABLE
+       || sql_command == SQLCOM_CREATE_INDEX
+       || sql_command == SQLCOM_DROP_INDEX))
+      {
+        string path(identifier.getPath());
+
+        path.append(DEFAULT_FILE_EXTENSION);
+
+        (void)internal::my_delete(path.c_str(), MYF(0));
+      }
     }
     else
     {
