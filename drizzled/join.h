@@ -21,7 +21,7 @@
 /**
  * @file
  *
- * Defines the JOIN class
+ * Defines the Join class
  */
 
 #ifndef DRIZZLED_JOIN_H
@@ -34,10 +34,10 @@
 namespace drizzled
 {
 
-class JOIN :public memory::SqlAlloc
+class Join :public memory::SqlAlloc
 {
-  JOIN(const JOIN &rhs);                        /**< not implemented */
-  JOIN& operator=(const JOIN &rhs);             /**< not implemented */
+  Join(const Join &rhs);                        /**< not implemented */
+  Join& operator=(const Join &rhs);             /**< not implemented */
 
   /**
    * Contains a partial query execution plan which is extended during
@@ -102,7 +102,7 @@ public:
 
   /*
     simple_xxxxx is set if order_st/GROUP BY doesn't include any references
-    to other tables than the first non-constant table in the JOIN.
+    to other tables than the first non-constant table in the Join.
     It's also set if order_st/GROUP BY is empty.
   */
   bool simple_order;
@@ -179,7 +179,7 @@ public:
   Tmp_Table_Param tmp_table_param;
   DRIZZLE_LOCK *lock;
 
-  JOIN *tmp_join; /**< copy of this JOIN to be used with temporary tables */
+  Join *tmp_join; /**< copy of this Join to be used with temporary tables */
   ROLLUP rollup;				/**< Used with rollup */
   DYNAMIC_ARRAY keyuse;
   Item::cond_result cond_value;
@@ -225,7 +225,7 @@ public:
   /* end of allocation caching storage */
 
   /** Constructors */
-  JOIN(Session *session_arg, 
+  Join(Session *session_arg, 
        List<Item> &fields_arg, 
        uint64_t select_options_arg,
        select_result *result_arg)
@@ -446,7 +446,7 @@ public:
     memory consumption.
   */
   void join_free();
-  /** Cleanup this JOIN, possibly for reuse */
+  /** Cleanup this Join, possibly for reuse */
   void cleanup(bool full);
   void clear();
   bool save_join_tab();
@@ -525,13 +525,13 @@ public:
 
 };
 
-enum_nested_loop_state evaluate_join_record(JOIN *join, JoinTable *join_tab, int error);
-enum_nested_loop_state evaluate_null_complemented_join_record(JOIN *join, JoinTable *join_tab);
-enum_nested_loop_state flush_cached_records(JOIN *join, JoinTable *join_tab, bool skip_last);
-enum_nested_loop_state end_send(JOIN *join, JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state end_write(JOIN *join, JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state end_update(JOIN *join, JoinTable *join_tab, bool end_of_records);
-enum_nested_loop_state end_unique_update(JOIN *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state evaluate_join_record(Join *join, JoinTable *join_tab, int error);
+enum_nested_loop_state evaluate_null_complemented_join_record(Join *join, JoinTable *join_tab);
+enum_nested_loop_state flush_cached_records(Join *join, JoinTable *join_tab, bool skip_last);
+enum_nested_loop_state end_send(Join *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_write(Join *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_update(Join *join, JoinTable *join_tab, bool end_of_records);
+enum_nested_loop_state end_unique_update(Join *join, JoinTable *join_tab, bool end_of_records);
 
 } /* namespace drizzled */
 

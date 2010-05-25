@@ -38,7 +38,7 @@ namespace drizzled
 
 optimizer::QuickGroupMinMaxSelect::
 QuickGroupMinMaxSelect(Table *table,
-                       JOIN *join_arg,
+                       Join *join_arg,
                        bool have_min_arg,
                        bool have_max_arg,
                        KeyPartInfo *min_max_arg_part_arg,
@@ -579,7 +579,7 @@ int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
         Remember this key, and continue looking for a non-NULL key that
         satisfies some other condition.
       */
-      memcpy(tmp_record, record, head->s->rec_buff_length);
+      memcpy(tmp_record, record, head->getShare()->rec_buff_length);
       found_null= true;
       continue;
     }
@@ -620,7 +620,7 @@ int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
   */
   if (found_null && result)
   {
-    memcpy(record, tmp_record, head->s->rec_buff_length);
+    memcpy(record, tmp_record, head->getShare()->rec_buff_length);
     result= 0;
   }
   return result;

@@ -43,6 +43,7 @@
 #include "drizzled/message/table.pb.h"
 #include "drizzled/plugin/client.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/plugin/event_observer.h"
 
 using namespace std;
 
@@ -73,7 +74,7 @@ Cursor::~Cursor(void)
 
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
-  Cursor *new_handler= table->s->db_type()->getCursor(*table->s, mem_root);
+  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare(), mem_root);
 
   /*
     Allocate Cursor->ref here because otherwise ha_open will allocate it
@@ -83,7 +84,7 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
   if (new_handler && !new_handler->ha_open(table,
-                                           table->s->getNormalizedPath(),
+                                           table->getMutableShare()->getNormalizedPath(),
                                            table->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
@@ -100,7 +101,7 @@ uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_m
   /* works only with key prefixes */
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
-  KeyInfo *key_info_found= table->s->key_info + key_position;
+  KeyInfo *key_info_found= table->getShare()->key_info + key_position;
   KeyPartInfo *key_part_found= key_info_found->key_part;
   KeyPartInfo *end_key_part_found= key_part_found + key_info_found->key_parts;
   uint32_t length= 0;
@@ -178,7 +179,7 @@ const key_map *Cursor::keys_to_use_for_scanning()
 
 bool Cursor::has_transactions()
 {
-  return (table->s->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
+  return (table->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
 void Cursor::ha_statistic_increment(ulong system_status_var::*offset) const
@@ -225,8 +226,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   int error;
 
   table= table_arg;
-  assert(table->s == table_share);
-  assert(table->mem_root.alloc_root_inited());
+  assert(table->getShare() == table_share);
 
   if ((error=open(name, mode, test_if_locked)))
   {
@@ -243,12 +243,12 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   }
   else
   {
-    if (table->s->db_options_in_use & HA_OPTION_READ_ONLY_DATA)
+    if (table->getShare()->db_options_in_use & HA_OPTION_READ_ONLY_DATA)
       table->db_stat|=HA_READ_ONLY;
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
     /* ref is already allocated for us if we're called from Cursor::clone() */
-    if (!ref && !(ref= (unsigned char*) table->mem_root.alloc_root(ALIGN_SIZE(ref_length)*2)))
+    if (!ref && !(ref= (unsigned char*) table->alloc_root(ALIGN_SIZE(ref_length)*2)))
     {
       close();
       error=HA_ERR_OUT_OF_MEM;
@@ -257,26 +257,6 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
       dup_ref=ref+ALIGN_SIZE(ref_length);
   }
   return error;
-}
-
-/**
-  one has to use this method when to find
-  random position by record as the plain
-  position() call doesn't work for some
-  handlers for random position
-*/
-
-int Cursor::rnd_pos_by_record(unsigned char *record)
-{
-  register int error;
-
-  position(record);
-  if (inited && (error= endIndexScan()))
-    return error;
-  if ((error= startTableScan(false)))
-    return error;
-
-  return rnd_pos(record, ref);
 }
 
 /**
@@ -554,7 +534,7 @@ int Cursor::update_auto_increment()
       nr= compute_next_insert_id(nr-1, variables);
     }
 
-    if (table->s->next_number_keypart == 0)
+    if (table->getShare()->next_number_keypart == 0)
     {
       /* We must defer the appending until "nr" has been possibly truncated */
       append= true;
@@ -1303,7 +1283,7 @@ static bool log_row_for_replication(Table* table,
   TransactionServices &transaction_services= TransactionServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->s->tmp_table || not transaction_services.shouldConstructMessages())
+  if (table->getShare()->tmp_table || not transaction_services.shouldConstructMessages())
     return false;
 
   bool result= false;
@@ -1454,9 +1434,9 @@ int Cursor::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
   assert((unsigned char*) table->def_read_set.getBitmap() +
-              table->s->column_bitmap_size ==
+              table->getShare()->column_bitmap_size ==
               (unsigned char*) table->def_write_set.getBitmap());
-  assert(table->s->all_set.isSetAll());
+  assert(table->getShare()->all_set.isSetAll());
   assert(table->key_read == 0);
   /* ensure that ha_index_end / endTableScan has been called */
   assert(inited == NONE);
@@ -1483,7 +1463,20 @@ int Cursor::insertRecord(unsigned char *buf)
 
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doInsertRecord(buf);
+  
+  if (unlikely(plugin::EventObserver::beforeInsertRecord(*(table->in_use), *table_share, buf)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doInsertRecord(buf);
+    if (unlikely(plugin::EventObserver::afterInsertRecord(*(table->in_use), *table_share, buf, error))) 
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+ 
   DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1510,7 +1503,19 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doUpdateRecord(old_data, new_data);
+  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*(table->in_use), *table_share, old_data, new_data)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doUpdateRecord(old_data, new_data);
+    if (unlikely(plugin::EventObserver::afterUpdateRecord(*(table->in_use), *table_share, old_data, new_data, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+
   DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1530,7 +1535,19 @@ int Cursor::deleteRecord(const unsigned char *buf)
 
   DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  error= doDeleteRecord(buf);
+  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*(table->in_use), *table_share, buf)))
+  {
+    error= ER_EVENT_OBSERVER_PLUGIN;
+  }
+  else
+  {
+    error= doDeleteRecord(buf);
+    if (unlikely(plugin::EventObserver::afterDeleteRecord(*(table->in_use), *table_share, buf, error)))
+    {
+      error= ER_EVENT_OBSERVER_PLUGIN;
+    }
+  }
+
   DRIZZLE_DELETE_ROW_DONE(error);
 
   if (unlikely(error))

@@ -148,7 +148,7 @@ bool LibInnoDBConfigTool::Generator::populate()
 
 static LibInnoDBConfigTool *config_tool;
 
-int config_table_function_initialize(drizzled::plugin::Context &context)
+int config_table_function_initialize(drizzled::module::Context &context)
 {
   config_tool= new(std::nothrow)LibInnoDBConfigTool();
   context.add(config_tool);

@@ -327,7 +327,7 @@ public:
 
 static Logging_query *handler= NULL;
 
-static int logging_query_plugin_init(drizzled::plugin::Context &context)
+static int logging_query_plugin_init(drizzled::module::Context &context)
 {
   handler= new Logging_query();
   context.add(handler);

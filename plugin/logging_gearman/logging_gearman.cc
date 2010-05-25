@@ -290,7 +290,7 @@ public:
 
 static LoggingGearman *handler= NULL;
 
-static int logging_gearman_plugin_init(plugin::Context &context)
+static int logging_gearman_plugin_init(module::Context &context)
 {
   handler= new LoggingGearman();
   context.add(handler);

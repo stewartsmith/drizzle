@@ -1390,7 +1390,7 @@ copy_data_between_tables(Table *from, Table *to,
   Session *session= current_session;
   uint32_t length= 0;
   SORT_FIELD *sortorder;
-  READ_RECORD info;
+  ReadRecord info;
   TableList   tables;
   List<Item>   fields;
   List<Item>   all_fields;
@@ -1478,7 +1478,7 @@ copy_data_between_tables(Table *from, Table *to,
 
   /* Tell handler that we have values for all columns in the to table */
   to->use_all_columns();
-  init_read_record(&info, session, from, (optimizer::SqlSelect *) 0, 1,1);
+  info.init_read_record(session, from, (optimizer::SqlSelect *) 0, 1, true);
   if (ignore)
     to->cursor->extra(HA_EXTRA_IGNORE_DUP_KEY);
   session->row_count= 0;
@@ -1513,6 +1513,7 @@ copy_data_between_tables(Table *from, Table *to,
     prev_insert_id= to->cursor->next_insert_id;
     error= to->cursor->insertRecord(to->record[0]);
     to->auto_increment_field_not_null= false;
+
     if (error)
     { 
       if (!ignore ||
@@ -1525,9 +1526,12 @@ copy_data_between_tables(Table *from, Table *to,
       delete_count++;
     }
     else
+    {
       found_count++;
+    }
   }
-  end_read_record(&info);
+
+  info.end_read_record();
   from->free_io_cache();
   delete [] copy;				// This is never 0
 
@@ -1555,6 +1559,7 @@ copy_data_between_tables(Table *from, Table *to,
   to->cursor->ha_release_auto_increment();
   if (to->cursor->ha_external_lock(session,F_UNLCK))
     error=1;
+
   return(error > 0 ? -1 : 0);
 }
 

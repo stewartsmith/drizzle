@@ -66,7 +66,7 @@ int64_t CharLengthFunction::val_int()
 plugin::Create_function<CharLengthFunction> *charlengthudf= NULL;
 plugin::Create_function<CharLengthFunction> *characterlengthudf= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   charlengthudf= new plugin::Create_function<CharLengthFunction>("char_length");
   characterlengthudf= new plugin::Create_function<CharLengthFunction>("character_length");

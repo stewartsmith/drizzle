@@ -76,30 +76,13 @@ public:
   uint32_t current_tablenr;
 
   /*
-    Flags with information about the open tables state.
-  */
-  bool backups_available;
-
-  /*
     This constructor serves for creation of Open_tables_state instances
     which are used as backup storage.
   */
-  Open_tables_state() : backups_available(false) { }
+  Open_tables_state() { }
   virtual ~Open_tables_state() {}
 
   Open_tables_state(uint64_t version_arg);
-
-  void set_open_tables_state(Open_tables_state *state)
-  {
-    *this= *state;
-  }
-
-  void reset_open_tables_state()
-  {
-    open_tables= temporary_tables= derived_tables= NULL;
-    extra_lock= lock= NULL;
-    backups_available= false;
-  }
 };
 
 } /* namespace drizzled */

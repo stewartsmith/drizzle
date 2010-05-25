@@ -97,7 +97,7 @@ drizzled/message/transaction.pb.cc
 drizzled/message/transaction.pb.h
 drizzled/message/transaction_reader
 drizzled/message/transaction_writer
-drizzled/plugin/load_list.h
+drizzled/module/load_list.h
 drizzled/plugin/version.h
 drizzled/schema.pb.cc
 drizzled/schema.pb.h
@@ -307,3 +307,4 @@ drizzle-2010.01.1315.tar.gz
 config/pandora_vc_revinfo
 drizzled/message/schema_writer
 drizzled/generated_probes.h
+.DS_Store

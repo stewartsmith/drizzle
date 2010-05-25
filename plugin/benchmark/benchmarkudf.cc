@@ -118,7 +118,7 @@ void BenchmarkFunction::print(String *str, enum_query_type query_type)
 
 plugin::Create_function<BenchmarkFunction> *benchmarkudf= NULL;
 
-static int initialize(plugin::Context &context)
+static int initialize(module::Context &context)
 {
   benchmarkudf= new plugin::Create_function<BenchmarkFunction>("benchmark");
   context.add(benchmarkudf);

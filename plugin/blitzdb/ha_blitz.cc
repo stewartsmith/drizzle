@@ -466,12 +466,12 @@ int ha_blitz::info(uint32_t flag) {
 }
 
 int ha_blitz::doStartTableScan(bool scan) {
-  /* Obtain the most suitable lock for the given statement type */
+  /* Obtain the query type for this scan */
   sql_command_type = session_sql_command(current_session);
   table_scan = scan;
   table_based = true;
 
-  /* This is unlocked at doEndTableScan() */
+  /* Obtain the most suitable lock for the given statement type. */
   critical_section_enter();
 
   /* Get the first record from TCHDB. Let the scanner take
@@ -1419,7 +1419,7 @@ int ha_blitz::free_share(void) {
   return 0;
 }
 
-static int blitz_init(drizzled::plugin::Context &context) {
+static int blitz_init(drizzled::module::Context &context) {
   blitz_engine = new BlitzEngine("BLITZDB");
 
   if (!blitz_engine->doCreateTableCache()) {

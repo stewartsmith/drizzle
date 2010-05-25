@@ -25,7 +25,7 @@ using namespace drizzled;
 
 static ProcesslistTool *processlist;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   processlist= new(std::nothrow)ProcesslistTool;
   context.add(processlist);

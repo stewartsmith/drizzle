@@ -48,8 +48,11 @@
 #include "drizzled/transaction_services.h"
 #include "drizzled/drizzled.h"
 
+#include "drizzled/table_share_instance.h"
+
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/plugin/event_observer.h"
 
 #include <fcntl.h>
 #include <algorithm>
@@ -92,10 +95,11 @@ bool Key_part_spec::operator==(const Key_part_spec& other) const
          !strcmp(field_name.str, other.field_name.str);
 }
 
-Open_tables_state::Open_tables_state(uint64_t version_arg)
-  :version(version_arg), backups_available(false)
+Open_tables_state::Open_tables_state(uint64_t version_arg) :
+  version(version_arg)
 {
-  reset_open_tables_state();
+  open_tables= temporary_tables= derived_tables= NULL;
+  extra_lock= lock= NULL;
 }
 
 /*
@@ -104,7 +108,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg)
 int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  int fd = internal::create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
+  int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
   if (fd >= 0) {
     unlink(filename);
   }
@@ -161,8 +165,7 @@ int session_tx_isolation(const Session *session)
   return (int) session->variables.tx_isolation;
 }
 
-Session::Session(plugin::Client *client_arg)
-  :
+Session::Session(plugin::Client *client_arg) :
   Open_tables_state(refresh_version),
   mem_root(&main_mem_root),
   lex(&main_lex),
@@ -189,7 +192,8 @@ Session::Session(plugin::Client *client_arg)
   m_lip(NULL),
   cached_table(0),
   transaction_message(NULL),
-  statement_message(NULL)
+  statement_message(NULL),
+  session_event_observers(NULL)
 {
   memset(process_list_info, 0, PROCESS_LIST_WIDTH);
   client->setSession(this);
@@ -263,6 +267,8 @@ Session::Session(plugin::Client *client_arg)
   thr_lock_owner_init(&main_lock_id, &lock_info);
 
   m_internal_handler= NULL;
+  
+  plugin::EventObserver::registerSessionEvents(*this); 
 }
 
 void Session::free_items()
@@ -368,6 +374,7 @@ Session::~Session()
   pthread_setspecific(THR_Session,  0);
 
   plugin::Logging::postEndDo(this);
+  plugin::EventObserver::deregisterSessionEvents(*this); 
 
   /* Ensure that no one is using Session */
   pthread_mutex_unlock(&LOCK_delete);
@@ -525,7 +532,7 @@ bool Session::initGlobals()
   if (storeGlobals())
   {
     disconnect(ER_OUT_OF_RESOURCES, true);
-    statistic_increment(aborted_connects, &LOCK_status);
+    status_var_increment(current_global_counters.aborted_connects);
     return true;
   }
   return false;
@@ -557,8 +564,10 @@ bool Session::schedule()
 
   connection_count.increment();
 
-  if (connection_count > max_used_connections)
-    max_used_connections= connection_count;
+  if (connection_count > current_global_counters.max_used_connections)
+  {
+    current_global_counters.max_used_connections= connection_count;
+  }
 
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
@@ -573,7 +582,7 @@ bool Session::schedule()
 
     killed= Session::KILL_CONNECTION;
 
-    statistic_increment(aborted_connects, &LOCK_status);
+    status_var_increment(current_global_counters.aborted_connects);
 
     /* Can't use my_error() since store_globals has not been called. */
     /* TODO replace will better error message */
@@ -621,7 +630,7 @@ bool Session::authenticate()
   if (client->authenticate())
     return false;
 
-  statistic_increment(aborted_connects, &LOCK_status);
+  status_var_increment(current_global_counters.aborted_connects);
   return true;
 }
 
@@ -827,6 +836,14 @@ void Session::cleanup_after_query()
   free_items();
   /* Reset where. */
   where= Session::DEFAULT_WHERE;
+
+  /* Reset the temporary shares we built */
+  for (std::vector<TableShareInstance *>::iterator iter= temporary_shares.begin();
+       iter != temporary_shares.end(); iter++)
+  {
+    delete *iter;
+  }
+  temporary_shares.clear();
 }
 
 /**
@@ -1543,34 +1560,6 @@ void Session::set_status_var_init()
 }
 
 
-/****************************************************************************
-  Handling of open and locked tables states.
-
-  This is used when we want to open/lock (and then close) some tables when
-  we already have a set of tables open and locked. We use these methods for
-  access to mysql.proc table to find definitions of stored routines.
-****************************************************************************/
-
-void Session::reset_n_backup_open_tables_state(Open_tables_state *backup)
-{
-  backup->set_open_tables_state(this);
-  reset_open_tables_state();
-  backups_available= false;
-}
-
-
-void Session::restore_backup_open_tables_state(Open_tables_state *backup)
-{
-  /*
-    Before we will throw away current open tables state we want
-    to be sure that it was properly cleaned up.
-  */
-  assert(open_tables == 0 && temporary_tables == 0 &&
-              derived_tables == 0 &&
-              lock == 0);
-  set_open_tables_state(backup);
-}
-
 bool Session::set_db(const std::string &new_db)
 {
   /* Do not reallocate memory if current chunk is big enough. */
@@ -1624,7 +1613,9 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
   /* If necessary, log any aborted or unauthorized connections */
   if (killed || client->wasAborted())
-    statistic_increment(aborted_threads, &LOCK_status);
+  {
+    status_var_increment(current_global_counters.aborted_threads);
+  }
 
   if (client->wasAborted())
   {
@@ -1737,15 +1728,15 @@ void Session::close_temporary_table(Table *table)
 
 void Session::nukeTable(Table *table)
 {
-  plugin::StorageEngine *table_type= table->s->db_type();
+  plugin::StorageEngine *table_type= table->getShare()->db_type();
 
   table->free_io_cache();
   table->delete_table(false);
 
-  TableIdentifier identifier(table->s->getSchemaName(), table->s->getTableName(), table->s->getPath());
+  TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
   rm_temporary_table(table_type, identifier);
 
-  delete table->s;
+  delete table->getMutableShare();
 
   /* This makes me sad, but we're allocating it via malloc */
   free(table);
@@ -1753,7 +1744,6 @@ void Session::nukeTable(Table *table)
 
 /** Clear most status variables. */
 extern time_t flush_status_time;
-extern uint32_t max_used_connections;
 
 void Session::refresh_status()
 {
@@ -1771,7 +1761,7 @@ void Session::refresh_status()
   /* Reset the counters of all key caches (default and named). */
   reset_key_cache_counters();
   flush_status_time= time((time_t*) 0);
-  max_used_connections= 1; /* We set it to one, because we know we exist */
+  current_global_counters.max_used_connections= 1; /* We set it to one, because we know we exist */
   pthread_mutex_unlock(&LOCK_status);
 }
 
@@ -1837,33 +1827,8 @@ void Session::mark_used_tables_as_free_for_reuse(Table *table)
 */
 void Session::close_thread_tables()
 {
-  Table *table;
-
-  /*
-    We are assuming here that session->derived_tables contains ONLY derived
-    tables for this substatement. i.e. instead of approach which uses
-    query_id matching for determining which of the derived tables belong
-    to this substatement we rely on the ability of substatements to
-    save/restore session->derived_tables during their execution.
-
-    TODO: Probably even better approach is to simply associate list of
-          derived tables with (sub-)statement instead of thread and destroy
-          them at the end of its execution.
-  */
   if (derived_tables)
-  {
-    Table *next;
-    /*
-      Close all derived tables generated in queries like
-      SELECT * FROM (SELECT * FROM t1)
-    */
-    for (table= derived_tables ; table ; table= next)
-    {
-      next= table->next;
-      table->free_tmp_table(this);
-    }
-    derived_tables= 0;
-  }
+    derived_tables= NULL; // They should all be invalid by this point
 
   /*
     Mark all temporary tables used by this statement as free for reuse.
@@ -1877,7 +1842,6 @@ void Session::close_thread_tables()
     does not belong to statement for which we do close_thread_tables()).
     TODO: This should be fixed in later releases.
    */
-  if (backups_available == false)
   {
     TransactionServices &transaction_services= TransactionServices::singleton();
     main_da.can_overwrite_status= true;
@@ -2006,19 +1970,19 @@ void Session::dumpTemporaryTableNames(const char *foo)
   {
     bool have_proto= false;
 
-    message::Table *proto= table->s->getTableProto();
-    if (table->s->getTableProto())
+    message::Table *proto= table->getShare()->getTableProto();
+    if (table->getShare()->getTableProto())
       have_proto= true;
 
     const char *answer= have_proto ? "true" : "false";
 
     if (have_proto)
     {
-      cerr << "\tTable Name " << table->s->getSchemaName() << "." << table->s->getTableName() << " : " << answer << "\n";
+      cerr << "\tTable Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
       cerr << "\t\t Proto " << proto->schema() << " " << proto->name() << "\n";
     }
     else
-      cerr << "\tTabl;e Name " << table->s->getSchemaName() << "." << table->s->getTableName() << " : " << answer << "\n";
+      cerr << "\tTabl;e Name " << table->getShare()->getSchemaName() << "." << table->getShare()->getTableName() << " : " << answer << "\n";
   }
 }
 
@@ -2088,6 +2052,30 @@ bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
   (*iter).second.set_name(to.getTableName());
 
   return true;
+}
+
+TableShareInstance *Session::getTemporaryShare()
+{
+  temporary_shares.push_back(new TableShareInstance()); // This will not go into the tableshare cache, so no key is used.
+
+  TableShareInstance *tmp_share= temporary_shares.back();
+
+  assert(tmp_share);
+
+  return tmp_share;
+}
+
+TableShareInstance *Session::getTemporaryShare(const char *tmpname_arg)
+{
+  assert(tmpname_arg);
+
+  temporary_shares.push_back(new TableShareInstance(tmpname_arg)); // This will not go into the tableshare cache, so no key is used.
+
+  TableShareInstance *tmp_share= temporary_shares.back();
+
+  assert(tmp_share);
+
+  return tmp_share;
 }
 
 } /* namespace drizzled */

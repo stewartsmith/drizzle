@@ -277,7 +277,7 @@ int TableProtoTesterCursor::index_last(unsigned char *)
 
 static drizzled::plugin::StorageEngine *tableprototester_engine= NULL;
 
-static int tableprototester_init(drizzled::plugin::Context &context)
+static int tableprototester_init(drizzled::module::Context &context)
 {
 
   tableprototester_engine= new TableProtoTesterEngine("TABLEPROTOTESTER");

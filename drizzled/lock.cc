@@ -709,15 +709,17 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
 
       if (table->in_use == session)
       {
-        table->s->version= 0;                  // Ensure no one can use this
-        table->locked_by_name= 1;
+        table->getMutableShare()->version= 0;                  // Ensure no one can use this
+        table->locked_by_name= true;
         return 0;
       }
     }
   }
 
   if (!(table= session->table_cache_insert_placeholder(key, key_length)))
+  {
     return -1;
+  }
 
   table_list->table=table;
 

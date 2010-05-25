@@ -310,7 +310,7 @@ public:
 
 static ListenConsole *listen_obj= NULL;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   listen_obj= new ListenConsole("console");
   context.add(listen_obj);

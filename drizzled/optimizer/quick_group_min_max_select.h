@@ -68,7 +68,7 @@ class QuickGroupMinMaxSelect : public QuickSelectInterface
 private:
 
   Cursor *cursor; /**< The Cursor used to get data. */
-  JOIN *join; /**< Descriptor of the current query */
+  Join *join; /**< Descriptor of the current query */
   KeyInfo *index_info; /**< The index chosen for data access */
   unsigned char *record; /**< Buffer where the next record is returned. */
   unsigned char *tmp_record; /**< Temporary storage for next_min(), next_max(). */
@@ -281,7 +281,7 @@ public:
      None
    */
   QuickGroupMinMaxSelect(Table *table, 
-                         JOIN *join, 
+                         Join *join, 
                          bool have_min,
                          bool have_max, 
                          KeyPartInfo *min_max_arg_part,

@@ -32,7 +32,7 @@ plugin::Create_function<Item_func_gman_do_high_background>
 plugin::Create_function<Item_func_gman_do_low_background>
   *gman_do_low_background= NULL;
 
-static int gearman_udf_plugin_init(drizzled::plugin::Context &context)
+static int gearman_udf_plugin_init(drizzled::module::Context &context)
 {
   gman_servers_set= new plugin::Create_function<Item_func_gman_servers_set>("gman_servers_set");
   gman_do= new plugin::Create_function<Item_func_gman_do>("gman_do");

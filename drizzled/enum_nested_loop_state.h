@@ -34,12 +34,12 @@ enum enum_nested_loop_state
   NESTED_LOOP_CURSOR_LIMIT= 4
 };
 
-class JOIN;
+class Join;
 class JoinTable;
 
-typedef enum_nested_loop_state (*Next_select_func)(JOIN *, JoinTable *, bool);
+typedef enum_nested_loop_state (*Next_select_func)(Join *, JoinTable *, bool);
 typedef int (*Read_record_func)(JoinTable *tab);
-Next_select_func setup_end_select_func(JOIN *join);
+Next_select_func setup_end_select_func(Join *join);
 
 } /* namespace drizzled */
 

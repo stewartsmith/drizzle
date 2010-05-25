@@ -1258,6 +1258,7 @@ bool select_insert::send_data(List<Item> &values)
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   error= write_record(session, table, &info);
+  table->auto_increment_field_not_null= false;
 
   if (!error)
   {

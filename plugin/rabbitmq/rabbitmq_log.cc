@@ -27,7 +27,7 @@
 #include <drizzled/message/transaction.pb.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <stdio.h>
-#include <drizzled/plugin/registry.h>
+#include <drizzled/module/registry.h>
 #include <drizzled/plugin.h>
 #include <stdint.h>
 #include "rabbitmq_handler.h"
@@ -134,7 +134,7 @@ static RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
  * and creates the log handler with the dependency - makes it easier to swap out
  * handler implementation
  */
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   if(sysvar_rabbitmq_log_enabled)
   {

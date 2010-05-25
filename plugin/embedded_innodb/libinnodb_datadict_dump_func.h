@@ -19,6 +19,6 @@
 #ifndef PLUGIN_EMBEDDED_INNODB_LIBINNODB_DATADICT_DUMP_FUNC_H
 #define PLUGIN_EMBEDDED_INNODB_LIBINNODB_DATADICT_DUMP_FUNC_H
 
-int libinnodb_datadict_dump_func_initialize(drizzled::plugin::Context &context);
+int libinnodb_datadict_dump_func_initialize(drizzled::module::Context &context);
 
 #endif /* PLUGIN_EMBEDDED_INNODB_LIBINNODB_DATADICT_DUMP_FUNC_H */

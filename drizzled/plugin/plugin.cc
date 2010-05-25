@@ -18,8 +18,8 @@
  */
 
 #include "config.h"
+#include "drizzled/module/module.h"
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/plugin/module.h"
 
 namespace drizzled
 {
