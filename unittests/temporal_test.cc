@@ -35,6 +35,9 @@ class DateTest : public ::testing::Test {
   DateTime datetime_identical_with_sample_date;
   DateTime datetime_before_sample_date, datetime_after_sample_date;
   
+  Timestamp timestamp_identical_with_sample_date;
+  Timestamp timestamp_before_sample_date, timestamp_after_sample_date;
+  
   virtual void SetUp()
   {
     Generator::DateGen::make_date(&sample_date, 2010, 9, 8);
@@ -46,6 +49,10 @@ class DateTest : public ::testing::Test {
     Generator::DateGen::make_datetime(&datetime_before_sample_date, 1990, 12, 31, 12, 12, 30, 1000);
     Generator::DateGen::make_datetime(&datetime_identical_with_sample_date, 2010, 9, 8, 0, 0, 0, 0);
     Generator::DateGen::make_datetime(&datetime_after_sample_date, 2020, 4, 4, 4, 4, 4, 4000);
+    
+    Generator::DateGen::make_timestamp(&timestamp_before_sample_date, 1980, 1, 1);
+    Generator::DateGen::make_timestamp(&timestamp_identical_with_sample_date, 2010, 9, 8);
+    Generator::DateGen::make_timestamp(&timestamp_after_sample_date, 2019, 5, 30);
 
   }
 };
@@ -272,6 +279,120 @@ TEST_F(DateTest, operatorLessThanOrEqual_ComparingWithLaterDateTime_ShouldReturn
 TEST_F(DateTest, operatorLessThanOrEqual_ComparingWithEarlierDateTime_ShouldReturn_False)
 {
   bool result= (sample_date < datetime_before_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+
+/* Date operators for comparing with Timestamp */
+TEST_F(DateTest, operatorEqual_ComparingWithIdencticalTimestamp_ShouldReturn_True)
+{
+  bool result= (sample_date == timestamp_identical_with_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorEqual_ComparingWithDifferentTimestamp_ShouldReturn_False)
+{
+  bool result= (sample_date == timestamp_before_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorNotEqual_ComparingWithIdencticalTimestamp_ShouldReturn_False)
+{ 
+  bool result= (sample_date != timestamp_identical_with_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorNotEqual_ComparingWithDifferentTimestamp_ShouldReturn_True)
+{
+  bool result= (sample_date != timestamp_before_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorGreaterThan_ComparingWithIdenticalTimestamp_ShouldReturn_False)
+{
+  bool result= (sample_date > timestamp_identical_with_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorGreaterThan_ComparingWithLaterTimestamp_ShouldReturn_False)
+{
+  bool result= (sample_date > timestamp_after_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorGreaterThan_ComparingWithEarlierTimestamp_ShouldReturn_True)
+{
+  bool result= (sample_date > timestamp_before_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorGreaterThanOrEqual_ComparingWithIdenticalTimestamp_ShouldReturn_True)
+{
+  bool result= (sample_date >= timestamp_identical_with_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorGreaterThanOrEqual_ComparingWithLaterTimestamp_ShouldReturn_False)
+{
+  bool result= (sample_date >= timestamp_after_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorGreaterThanOrEqual_ComparingWithEarlierTimestamp_ShouldReturn_True)
+{
+  bool result= (sample_date >= timestamp_before_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorLessThan_ComparingWithIdenticalTimestamp_ShouldReturn_False)
+{
+  bool result= (sample_date < timestamp_identical_with_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorLessThan_ComparingWithLaterTimestamp_ShouldReturn_True)
+{
+  bool result= (sample_date < timestamp_after_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorLessThan_ComparingWithEarlierTimestamp_ShouldReturn_False)
+{
+  bool result= (sample_date < timestamp_before_sample_date);
+  
+  ASSERT_EQ(false, result);
+}
+
+TEST_F(DateTest, operatorLessThanOrEqual_ComparingWithIdenticalTimestamp_ShouldReturn_True)
+{
+  bool result= (sample_date < timestamp_identical_with_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorLessThanOrEqual_ComparingWithLaterTimestamp_ShouldReturn_True)
+{
+  bool result= (sample_date < timestamp_after_sample_date);
+  
+  ASSERT_EQ(true, result);
+}
+
+TEST_F(DateTest, operatorLessThanOrEqual_ComparingWithEarlierTimestamp_ShouldReturn_False)
+{
+  bool result= (sample_date < timestamp_before_sample_date);
   
   ASSERT_EQ(false, result);
 }

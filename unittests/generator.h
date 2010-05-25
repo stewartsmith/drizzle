@@ -45,6 +45,13 @@ public:
                                 uint32_t years, uint32_t months, uint32_t days, uint32_t _hours,
                                 uint32_t _minutes, uint32_t _seconds, uint32_t _useconds);
   };
+  
+  class TimestampGen
+  {
+    public:
+      static void make_timestamp(drizzled::Timestamp *timestamp,
+                                 uint32_t years, uint32_t months, uint32_t days);
+  };
 };
 
 #endif /*UNITTESTS_GENERATOR_H*/

@@ -46,3 +46,11 @@ void make_datetime(drizzled::DateTime *datetime,
   datetime->set_seconds(seconds);
   datetime->set_useconds(useconds);
 }                     
+
+void make_timestamp(drizzled::Timestamp *timestamp,
+                           uint32_t years, uint32_t months, uint32_t days)
+{
+  timestamp->set_years(years);
+  timestamp->set_months(months);
+  timestamp->set_days(days);
+}
