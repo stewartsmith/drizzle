@@ -44,7 +44,7 @@ static int fill_table_proto(message::Table &table_proto,
                             List<CreateField> &create_fields,
                             HA_CREATE_INFO *create_info,
                             uint32_t keys,
-                            KEY *key_info)
+                            KeyInfo *key_info)
 {
   CreateField *field_arg;
   List_iterator<CreateField> it(create_fields);
@@ -148,20 +148,20 @@ static int fill_table_proto(message::Table &table_proto,
       }
     case message::Table::Field::ENUM:
       {
-        message::Table::Field::SetFieldOptions *set_field_options;
+        message::Table::Field::EnumerationValues *enumeration_options;
 
         assert(field_arg->interval);
 
-        set_field_options= attribute->mutable_set_options();
+        enumeration_options= attribute->mutable_enumeration_values();
 
         for (uint32_t pos= 0; pos < field_arg->interval->count; pos++)
         {
           const char *src= field_arg->interval->type_names[pos];
 
-          set_field_options->add_field_value(src);
+          enumeration_options->add_field_value(src);
         }
-	set_field_options->set_collation_id(field_arg->charset->number);
-        set_field_options->set_collation(field_arg->charset->name);
+	enumeration_options->set_collation_id(field_arg->charset->number);
+        enumeration_options->set_collation(field_arg->charset->name);
         break;
       }
     case message::Table::Field::BLOB:
@@ -182,23 +182,6 @@ static int fill_table_proto(message::Table &table_proto,
     field_constraints= attribute->mutable_constraints();
     constraints->set_is_nullable(field_arg->def->null_value);
 #endif
-
-    switch(field_arg->column_format())
-    {
-    case COLUMN_FORMAT_TYPE_NOT_USED:
-      break;
-    case COLUMN_FORMAT_TYPE_DEFAULT:
-      attribute->set_format(message::Table::Field::DefaultFormat);
-      break;
-    case COLUMN_FORMAT_TYPE_FIXED:
-      attribute->set_format(message::Table::Field::FixedFormat);
-      break;
-    case COLUMN_FORMAT_TYPE_DYNAMIC:
-      attribute->set_format(message::Table::Field::DynamicFormat);
-      break;
-    default:
-      assert(0); /* Tell us, since this shouldn't happend */
-    }
 
     if (field_arg->comment.length)
     {
@@ -377,7 +360,7 @@ static int fill_table_proto(message::Table &table_proto,
     else
       idx->set_is_unique(false);
 
-    message::Table::Index::IndexOptions *index_options= idx->mutable_options();
+    message::Table::Index::Options *index_options= idx->mutable_options();
 
     if (key_info[i].flags & HA_USES_BLOCK_SIZE)
       index_options->set_key_block_size(key_info[i].block_size);
@@ -443,27 +426,6 @@ static int fill_table_proto(message::Table &table_proto,
   return 0;
 }
 
-int rename_table_proto_file(const char *from, const char* to)
-{
-  string from_path(from);
-  string to_path(to);
-  string file_ext = ".dfe";
-
-  from_path.append(file_ext);
-  to_path.append(file_ext);
-
-  return internal::my_rename(from_path.c_str(),to_path.c_str(),MYF(MY_WME));
-}
-
-int delete_table_proto_file(const char *file_name)
-{
-  string new_path(file_name);
-  string file_ext = ".dfe";
-
-  new_path.append(file_ext);
-  return internal::my_delete(new_path.c_str(), MYF(0));
-}
-
 /*
   Create a table definition proto file and the tables
 
@@ -488,15 +450,15 @@ bool rea_create_table(Session *session,
                       message::Table &table_proto,
                       HA_CREATE_INFO *create_info,
                       List<CreateField> &create_fields,
-                      uint32_t keys, KEY *key_info)
+                      uint32_t keys, KeyInfo *key_info)
 {
   if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
-		      keys, key_info))
+                       keys, key_info))
     return false;
 
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,
-                                         false, table_proto))
+                                         table_proto))
   {
     return false;
   }

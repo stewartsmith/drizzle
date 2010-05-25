@@ -43,22 +43,14 @@ public:
 
 plugin::Create_function<Item_func_hello_world> *hello_world_udf= NULL;
 
-static int hello_world_plugin_init(drizzled::plugin::Registry &registry)
+static int hello_world_plugin_init(drizzled::module::Context &context)
 {
   hello_world_udf=
     new plugin::Create_function<Item_func_hello_world>("hello_world");
-  registry.add(hello_world_udf);
+  context.add(hello_world_udf);
 
   return 0;
 }
-
-static int hello_world_plugin_deinit(drizzled::plugin::Registry &registry)
-{
-  registry.remove(hello_world_udf);
-  delete hello_world_udf;
-  return 0;
-}
-
 
 DRIZZLE_DECLARE_PLUGIN
 {
@@ -69,7 +61,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Hello, world!",
   PLUGIN_LICENSE_GPL,
   hello_world_plugin_init, /* Plugin Init */
-  hello_world_plugin_deinit, /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

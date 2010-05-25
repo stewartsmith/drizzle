@@ -23,83 +23,16 @@
 
 using namespace drizzled;
 
-static ColumnsTool *columns;
-static IndexPartsTool *index_parts;
-static IndexesTool *indexes;
-static ReferentialConstraintsTool *referential_constraints;
-static SchemasTool *schemas;
-static SchemaNames *schema_names;
-static ShowColumns *show_columns;
-static ShowIndexes *show_indexes;
-static TableConstraintsTool *table_constraints;
-static TablesTool *tables;
-static ShowTables *local_tables;
-static ShowTableStatus *table_status;
-static ShowTemporaryTables *show_temporary_tables;
-
-
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::module::Context &context)
 {
-  columns= new(std::nothrow)ColumnsTool;
-  index_parts= new(std::nothrow)IndexPartsTool;
-  indexes= new(std::nothrow)IndexesTool;
-  local_tables= new(std::nothrow)ShowTables;
-  referential_constraints= new(std::nothrow)ReferentialConstraintsTool;
-  schema_names= new(std::nothrow)SchemaNames;
-  schemas= new(std::nothrow)SchemasTool;
-  show_columns= new(std::nothrow)ShowColumns;
-  show_indexes= new(std::nothrow)ShowIndexes;
-  show_temporary_tables= new(std::nothrow)ShowTemporaryTables;
-  table_constraints= new(std::nothrow)TableConstraintsTool;
-  table_status= new(std::nothrow)ShowTableStatus;
-  tables= new(std::nothrow)TablesTool;
-
-  registry.add(columns);
-  registry.add(index_parts);
-  registry.add(indexes);
-  registry.add(local_tables);
-  registry.add(referential_constraints);
-  registry.add(schema_names);
-  registry.add(schemas);
-  registry.add(show_columns);
-  registry.add(show_indexes);
-  registry.add(show_temporary_tables);
-  registry.add(table_constraints);
-  registry.add(table_status);
-  registry.add(tables);
+  context.add(new ColumnsTool());
+  context.add(new IndexPartsTool());
+  context.add(new IndexesTool());
+  context.add(new ReferentialConstraintsTool());
+  context.add(new SchemasTool());
+  context.add(new TableConstraintsTool());
+  context.add(new TablesTool());
   
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(columns);
-  registry.remove(index_parts);
-  registry.remove(indexes);
-  registry.remove(local_tables);
-  registry.remove(referential_constraints);
-  registry.remove(schema_names);
-  registry.remove(schemas);
-  registry.remove(show_columns);
-  registry.remove(show_indexes);
-  registry.remove(show_temporary_tables);
-  registry.remove(table_constraints);
-  registry.remove(table_status);
-  registry.remove(tables);
-  delete columns;
-  delete index_parts;
-  delete indexes;
-  delete local_tables;
-  delete referential_constraints;
-  delete schema_names;
-  delete schemas;
-  delete show_columns;
-  delete show_indexes;
-  delete show_temporary_tables;
-  delete table_constraints;
-  delete table_status;
-  delete tables;
-
   return 0;
 }
 
@@ -112,7 +45,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Data Dictionary for schema, table, column, indexes, etc",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }

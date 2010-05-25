@@ -41,6 +41,8 @@ TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
+	${srcdir}/tests/README.stress \
+	${srcdir}/tests/resolve-stack \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
 	${srcdir}/tests/include/*.inc \
@@ -48,11 +50,12 @@ EXTRA_DIST += \
 	${srcdir}/tests/include/*.test \
 	${srcdir}/tests/r/*.result \
 	${srcdir}/tests/r/*.require \
+	${srcdir}/tests/r/pbxt/*result \
 	${srcdir}/tests/std_data \
 	${srcdir}/tests/lib/*.pl \
 	${srcdir}/tests/lib/My/*.pm
 
-check: test-drizzle
+check-local: test-drizzle
 
 # dtr - a shortcut for executing test-run.pl
 tests/dtr:
@@ -86,7 +89,7 @@ tests/test-run: tests/var
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
-test: test-drizzle
+test: check
 
 # Please keep the list of tests in alphabetical order for ease of
 # maintenance and verification

@@ -20,13 +20,14 @@
 #ifndef DRIZZLED_PLUGIN_H
 #define DRIZZLED_PLUGIN_H
 
-#include <drizzled/lex_string.h>
-#include <drizzled/xid.h>
-#include <drizzled/plugin/manifest.h>
-#include <drizzled/plugin/module.h>
+#include "drizzled/module/manifest.h"
+#include "drizzled/module/module.h"
 #include "drizzled/plugin/version.h"
+#include "drizzled/module/context.h"
 #include "drizzled/definitions.h"
 
+#include "drizzled/lex_string.h"
+#include "drizzled/xid.h"
 
 namespace drizzled
 {
@@ -42,7 +43,7 @@ struct charset_info_st;
 
 class sys_var;
 typedef drizzle_lex_string LEX_STRING;
-struct my_option;
+struct option;
 
 extern char *opt_plugin_add;
 extern char *opt_plugin_remove;
@@ -55,18 +56,18 @@ namespace plugin { class StorageEngine; }
 /*
   Macros for beginning and ending plugin declarations. Between
   DRIZZLE_DECLARE_PLUGIN and DRIZZLE_DECLARE_PLUGIN_END there should
-  be a plugin::Manifest for each plugin to be declared.
+  be a module::Manifest for each plugin to be declared.
 */
 
 
 #define PANDORA_CPP_NAME(x) _drizzled_ ## x ## _plugin_
 #define PANDORA_PLUGIN_NAME(x) PANDORA_CPP_NAME(x)
 #define DRIZZLE_DECLARE_PLUGIN \
-  ::drizzled::plugin::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
+  ::drizzled::module::Manifest PANDORA_PLUGIN_NAME(PANDORA_MODULE_NAME)= 
 
 
 #define DRIZZLE_DECLARE_PLUGIN_END
-#define DRIZZLE_PLUGIN(init,deinit,system) \
+#define DRIZZLE_PLUGIN(init,system) \
   DRIZZLE_DECLARE_PLUGIN \
   { \
     DRIZZLE_VERSION_ID, \
@@ -75,7 +76,7 @@ namespace plugin { class StorageEngine; }
     STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
     STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
     PANDORA_MODULE_LICENSE, \
-    init, deinit, system, NULL \
+    init, system, NULL \
   } 
 
 
@@ -355,7 +356,7 @@ struct drizzle_sys_var
   DRIZZLE_PLUGIN_VAR_HEADER;
 };
 
-void plugin_opt_set_limits(my_option *options, const drizzle_sys_var *opt);
+void plugin_opt_set_limits(option *options, const drizzle_sys_var *opt);
 
 struct drizzle_value
 {
@@ -370,15 +371,10 @@ struct drizzle_value
   Miscellaneous functions for plugin implementors
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern bool plugin_init(plugin::Registry &registry,
+extern bool plugin_init(module::Registry &registry,
                         int *argc, char **argv,
                         bool skip_init);
-extern void plugin_shutdown(plugin::Registry &plugins);
-extern void my_print_help_inc_plugins(my_option *options);
+extern void my_print_help_inc_plugins(option *options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);
@@ -425,56 +421,7 @@ int mysql_tmpfile(const char *prefix);
 int session_killed(const Session *session);
 
 
-/**
-  Return the thread id of a user thread
-
-  @param session  user thread connection handle
-  @return  thread id
-*/
-unsigned long session_get_thread_id(const Session *session);
-
 const charset_info_st *session_charset(Session *session);
-int session_non_transactional_update(const Session *session);
-void session_mark_transaction_to_rollback(Session *session, bool all);
-
-
-/**
-  Allocate memory in the connection's local memory pool
-
-  @details
-  When properly used in place of @c malloc(), this can significantly
-  improve concurrency. Don't use this or related functions to allocate
-  large chunks of memory. Use for temporary storage only. The memory
-  will be freed automatically at the end of the statement; no explicit
-  code is required to prevent memory leaks.
-
-  @see alloc_root()
-*/
-void *session_alloc(Session *session, unsigned int size);
-/**
-  @see session_alloc()
-*/
-void *session_calloc(Session *session, unsigned int size);
-/**
-  @see session_alloc()
-*/
-char *session_strdup(Session *session, const char *str);
-/**
-  @see session_alloc()
-*/
-char *session_strmake(Session *session, const char *str, unsigned int size);
-/**
-  @see session_alloc()
-*/
-void *session_memdup(Session *session, const void* str, unsigned int size);
-
-/**
-  Get the XID for this connection's transaction
-
-  @param session  user thread connection handle
-  @param xid  location where identifier is stored
-*/
-void session_get_xid(const Session *session, DRIZZLE_XID *xid);
 
 /**
   Invalidate the query cache for a given table.
@@ -487,10 +434,6 @@ void session_get_xid(const Session *session, DRIZZLE_XID *xid);
 void mysql_query_cache_invalidate4(Session *session,
                                    const char *key, unsigned int key_length,
                                    int using_trx);
-
-#ifdef __cplusplus
-}
-#endif
 
 } /* namespace drizzled */
 

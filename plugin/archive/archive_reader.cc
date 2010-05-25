@@ -28,13 +28,13 @@
 #include <fcntl.h>
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/m_string.h"
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 
 #define SHOW_VERSION "0.1"
 
 using namespace drizzled;
 
-bool get_one_option(int optid, const struct my_option *opt, char *argument);
+int get_one_option(int optid, const struct option *opt, char *argument);
 
 static void get_options(int *argc,char * * *argv);
 static void print_version(void);
@@ -258,7 +258,7 @@ end:
   return 0;
 }
 
-bool get_one_option(int optid, const struct my_option *opt, char *argument)
+int get_one_option(int optid, const struct option *opt, char *argument)
 {
   (void)opt;
   switch (optid) {
@@ -299,7 +299,7 @@ bool get_one_option(int optid, const struct my_option *opt, char *argument)
   return 0;
 }
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"backup", 'b',
    "Make a backup of an archive table.",

@@ -25,7 +25,7 @@ using namespace std;
 using namespace drizzled;
 
 TablePriviledges::TablePriviledges() :
-  InformationSchema("TABLE_PRIVILEDGES")
+  InformationSchema("TABLE_PRIVILEGES")
 {
   add_field("GRANTOR");
   add_field("GRANTEE");

@@ -56,7 +56,7 @@ public:
    * @returns true if the user cannot access the schema
    */
   virtual bool restrictSchema(const SecurityContext &user_ctx,
-                              const std::string &schema)= 0;
+                              SchemaIdentifier &schema)= 0;
 
   /**
    * Should we restrict the current user's access to this table?
@@ -68,8 +68,7 @@ public:
    * @returns true if the user cannot access the table
    */
   virtual bool restrictTable(const SecurityContext &user_ctx,
-                             const std::string &schema,
-                             const std::string &table);
+                             TableIdentifier &table);
 
   /**
    * Should we restrict the current user's access to see this process?
@@ -85,13 +84,12 @@ public:
 
   /** Server API method for checking schema authorization */
   static bool isAuthorized(const SecurityContext &user_ctx,
-                           const std::string &schema,
+                           SchemaIdentifier &schema_identifier,
                            bool send_error= true);
 
   /** Server API method for checking table authorization */
   static bool isAuthorized(const SecurityContext &user_ctx,
-                           const std::string &schema,
-                           const std::string &table,
+                           TableIdentifier &table_identifier,
                            bool send_error= true);
 
   /** Server API method for checking process authorization */
@@ -104,7 +102,7 @@ public:
    * to a set of schema names (for use in the context of getSchemaNames
    */
   static void pruneSchemaNames(const SecurityContext &user_ctx,
-                               std::set<std::string> &set_of_names);
+                               SchemaIdentifierList &set_of_schemas);
   
   /**
    * Standard plugin system registration hooks
@@ -115,10 +113,9 @@ public:
 };
 
 inline bool Authorization::restrictTable(const SecurityContext &user_ctx,
-                                         const std::string &schema,
-                                         const std::string &)
+                                         TableIdentifier &table)
 {
-  return restrictSchema(user_ctx, schema);
+  return restrictSchema(user_ctx, table);
 }
 
 inline bool Authorization::restrictProcess(const SecurityContext &,

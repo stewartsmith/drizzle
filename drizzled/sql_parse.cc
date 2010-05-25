@@ -195,7 +195,6 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   switch (command) {
   case COM_INIT_DB:
   {
-    status_var_increment(session->status_var.com_stat[SQLCOM_CHANGE_DB]);
     if (packet_length == 0)
     {
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
@@ -204,7 +203,9 @@ bool dispatch_command(enum enum_server_command command, Session *session,
 
     string tmp(packet, packet_length);
 
-    if (not mysql_change_db(session, tmp))
+    SchemaIdentifier identifier(tmp);
+
+    if (not mysql_change_db(session, identifier))
     {
       session->my_ok();
     }
@@ -252,7 +253,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   /* If commit fails, we should be able to reset the OK status. */
   session->main_da.can_overwrite_status= true;
   TransactionServices &transaction_services= TransactionServices::singleton();
-  transaction_services.ha_autocommit_or_rollback(session, session->is_error());
+  transaction_services.autocommitOrRollback(session, session->is_error());
   session->main_da.can_overwrite_status= false;
 
   session->transaction.stmt.reset();
@@ -313,7 +314,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   session->query.clear();
 
   session->set_proc_info(NULL);
-  free_root(session->mem_root,MYF(memory::KEEP_PREALLOC));
+  session->mem_root->free_root(MYF(memory::KEEP_PREALLOC));
 
   if (DRIZZLE_QUERY_DONE_ENABLED() || DRIZZLE_COMMAND_DONE_ENABLED())
   {
@@ -471,8 +472,6 @@ mysql_execute_command(Session *session)
     drizzle_reset_errors(session, 0);
   }
 
-  status_var_increment(session->status_var.com_stat[lex->sql_command]);
-
   assert(session->transaction.stmt.hasModifiedNonTransData() == false);
 
   /* now we are ready to execute the statement */
@@ -506,7 +505,7 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
       param->select_limit=
         new Item_int((uint64_t) session->variables.select_limit);
   }
-  if (!(res= session->openTablesLock(all_tables)))
+  if (not (res= session->openTablesLock(all_tables)))
   {
     if (lex->describe)
     {
@@ -695,7 +694,7 @@ void create_select_for_variable(const char *var_name)
   */
   if ((var= get_system_var(session, OPT_SESSION, tmp, null_lex_string)))
   {
-    end+= sprintf(buff, "@@session.%s", var_name);
+    end+= snprintf(buff, sizeof(buff), "@@session.%s", var_name);
     var->set_name(buff, end-buff, system_charset_info);
     session->add_item_to_list(var);
   }
@@ -896,11 +895,17 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     return NULL;
   }
 
-  if (table->is_derived_table() == false && table->db.str &&
-      check_db_name(&table->db))
+  if (table->is_derived_table() == false && table->db.str)
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
-    return NULL;
+    my_casedn_str(files_charset_info, table->db.str);
+
+    SchemaIdentifier schema_identifier(string(table->db.str));
+    if (not check_db_name(schema_identifier))
+    {
+
+      my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
+      return NULL;
+    }
   }
 
   if (!alias)					/* Alias is case sensitive */
@@ -949,7 +954,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
 	 tables=tables->next_local)
     {
       if (!my_strcasecmp(table_alias_charset, alias_str, tables->alias) &&
-	  !strcmp(ptr->db, tables->db))
+	  !strcasecmp(ptr->db, tables->db))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str);
 	return NULL;
@@ -1596,6 +1601,12 @@ bool create_table_precheck(TableIdentifier &identifier)
   if (not plugin::StorageEngine::canCreateTable(identifier))
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", identifier.getSchemaName().c_str());
+    return true;
+  }
+
+  if (not plugin::StorageEngine::doesSchemaExist(identifier))
+  {
+    my_error(ER_BAD_DB_ERROR, MYF(0), identifier.getSchemaName().c_str());
     return true;
   }
 

@@ -30,7 +30,6 @@
 #include <drizzled/plugin/error_message.h>
 #include <drizzled/gettext.h>
 #include <drizzled/plugin.h>
-#include <drizzled/plugin/registry.h>
 
 
 /* todo, make this dynamic as needed */
@@ -95,24 +94,13 @@ public:
 };
 
 static Error_message_notify *handler= NULL;
-static int plugin_init(plugin::Registry &registry)
+static int plugin_init(module::Context &context)
 {
   Notify::init("Drizzled");
   handler= new Error_message_notify();
-  registry.add(handler);
+  context.add(handler);
 
   return 0;
 }
 
-static int plugin_deinit(plugin::Registry &registry)
-{
-
-  if (handler)
-  {
-    registry.remove(handler);
-    delete handler;
-  }
-  return 0;
-}
-
-DRIZZLE_PLUGIN(plugin_init, plugin_deinit, NULL);
+DRIZZLE_PLUGIN(plugin_init, NULL);

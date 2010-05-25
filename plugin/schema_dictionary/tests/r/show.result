@@ -1,4 +1,5 @@
 create schema everything;
+use everything;
 DROP TABLE IF EXISTS `branch`;
 Warnings:
 Note	1051	Unknown table 'branch'
@@ -134,8 +135,6 @@ KEY `title` (`title`,`type_nodetype`),
 KEY `author` (`author_user`),
 KEY `type` (`type_nodetype`)
 )  AUTO_INCREMENT=641;
-Warnings:
-Warning	1071	Specified key was too long; max key length is 767 bytes
 DROP TABLE IF EXISTS `nodegroup`;
 Warnings:
 Note	1051	Unknown table 'nodegroup'
@@ -336,7 +335,7 @@ CREATE TABLE `workspace` (
 PRIMARY KEY  (`workspace_id`)
 ) ;
 show tables;
-Tables_in_test
+Tables_in_everything
 branch
 container
 document
@@ -486,7 +485,7 @@ node	CREATE TABLE `node` (
   `dynamicguest_permission` int NOT NULL DEFAULT '-1',
   `group_usergroup` int NOT NULL DEFAULT '-1',
   PRIMARY KEY (`node_id`),
-  KEY `title` (`title`(191),`type_nodetype`),
+  KEY `title` (`title`,`type_nodetype`),
   KEY `author` (`author_user`),
   KEY `type` (`type_nodetype`)
 ) ENGINE=InnoDB

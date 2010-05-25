@@ -41,15 +41,11 @@ AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 ])
 
-AC_CHECK_LIB([gtest_main], [main])
-
 PANDORA_RUN_CPPLINT
 
 PANDORA_REQUIRE_LIBPROTOBUF
 PANDORA_PROTOBUF_REQUIRE_VERSION([2.1.0])
 PANDORA_REQUIRE_PROTOC
-
-AX_BOOST_BASE([1.32])
 
 AC_LANG_PUSH(C++)
 PANDORA_REQUIRE_PTHREAD
@@ -67,6 +63,7 @@ PANDORA_DRIZZLE_BUILD
 AC_DEFINE([BUILDING_DRIZZLE],[1],
           [Define indicating we are building and not consuming drizzle.])
 
+PANDORA_REQUIRE_LIBGTEST
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -106,7 +103,7 @@ AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
 
 dnl Has to be done late, as the plugin may need to check for existence of
 dnl functions tested above
-PANDORA_PLUGINS([drizzled/plugin/load_list.h])
+PANDORA_PLUGINS([drizzled/module/load_list.h])
 
 dnl GCC Precompiled Header Support
 dnl re-enable later
@@ -156,8 +153,6 @@ echo "   * Profiling enabled:         $ac_profiling"
 echo "   * Coverage enabled:          $ac_coverage"
 echo "   * Warnings as failure:       $ac_cv_warnings_as_errors"
 echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
-echo "   * C++ hash_map location:     $ac_cv_cxx_hash_map"
-echo "   * C++ hash namespace:        $ac_cv_cxx_hash_namespace"
 echo "   * C++ shared_ptr namespace:  $ac_cv_shared_ptr_namespace"
 echo ""
 echo "---"

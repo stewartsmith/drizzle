@@ -119,11 +119,14 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_TEMPORARY_ONLY |
                                      HTON_NO_AUTO_INCREMENT |
-                                     HTON_HAS_DATA_DICTIONARY |
-                                     HTON_SKIP_STORE_LOCK |
-                                     HTON_FILE_BASED),
+                                     HTON_SKIP_STORE_LOCK),
     tina_open_tables()
   {}
+  virtual ~Tina()
+  {
+    pthread_mutex_destroy(&tina_mutex);
+  }
+
   virtual Cursor *create(TableShare &table,
                          drizzled::memory::Root *mem_root)
   {
@@ -134,8 +137,8 @@ public:
     return ha_tina_exts;
   }
 
-  int doCreateTable(Session *,
-                    Table& table_arg,
+  int doCreateTable(Session &,
+                    Table &table_arg,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
@@ -144,7 +147,7 @@ public:
                            drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, string& , set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, SchemaIdentifier&, set<string>&) { };
 
   int doDropTable(Session&, TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
@@ -156,33 +159,50 @@ public:
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
   bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
-
-bool Tina::doDoesTableExist(Session&, TableIdentifier &identifier)
+void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                 drizzled::SchemaIdentifier&,
+                                 drizzled::TableIdentifiers&)
 {
-  ProtoCache::iterator iter;
+}
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter != proto_cache.end())
+int Tina::doRenameTable(Session &session,
+                        TableIdentifier &from, TableIdentifier &to)
+{
+  int error= 0;
+  for (const char **ext= bas_ext(); *ext ; ext++)
   {
-    return true;
+    if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), *ext))
+    {
+      if ((error=errno) != ENOENT)
+        break;
+      error= 0;
+    }
   }
-  pthread_mutex_unlock(&proto_cache_mutex);
 
-  return false;
+  session.renameTableMessage(from, to);
+
+  return error;
+}
+
+bool Tina::doDoesTableExist(Session &session, TableIdentifier &identifier)
+{
+  return session.doesTableMessageExist(identifier);
 }
 
 
-int Tina::doDropTable(Session&,
+int Tina::doDropTable(Session &session,
                       TableIdentifier &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
   char buff[FN_REFLEN];
-  ProtoCache::iterator iter;
 
   for (const char **ext= bas_ext(); *ext ; ext++)
   {
@@ -198,12 +218,7 @@ int Tina::doDropTable(Session&,
     error= enoent_or_zero;
   }
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-    proto_cache.erase(iter);
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.removeTableMessage(identifier);
 
   return error;
 }
@@ -230,48 +245,29 @@ void Tina::deleteOpenTable(const string &table_name)
 }
 
 
-int Tina::doGetTableDefinition(Session&,
+int Tina::doGetTableDefinition(Session &session,
                                drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
-  int error= ENOENT;
-  ProtoCache::iterator iter;
+  if (session.getTableMessage(identifier, table_message))
+    return EEXIST;
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  iter= proto_cache.find(identifier.getPath());
-
-  if (iter!= proto_cache.end())
-  {
-    table_message.CopyFrom(((*iter).second));
-    error= EEXIST;
-  }
-  pthread_mutex_unlock(&proto_cache_mutex);
-
-  return error;
+  return ENOENT;
 }
 
 
 static Tina *tina_engine= NULL;
 
-static int tina_init_func(drizzled::plugin::Registry &registry)
+static int tina_init_func(drizzled::module::Context &context)
 {
 
   tina_engine= new Tina("CSV");
-  registry.add(tina_engine);
+  context.add(tina_engine);
 
   pthread_mutex_init(&tina_mutex,MY_MUTEX_INIT_FAST);
   return 0;
 }
 
-static int tina_done_func(drizzled::plugin::Registry &registry)
-{
-  registry.remove(tina_engine);
-  delete tina_engine;
-
-  pthread_mutex_destroy(&tina_mutex);
-
-  return 0;
-}
 
 
 TinaShare::TinaShare(const char *table_name_arg)
@@ -708,7 +704,7 @@ int ha_tina::find_current_row(unsigned char *buf)
   int eoln_len;
   int error;
 
-  free_root(&blobroot, MYF(drizzled::memory::MARK_BLOCKS_FREE));
+  blobroot.free_root(MYF(drizzled::memory::MARK_BLOCKS_FREE));
 
   /*
     We do not read further then local_saved_data_file_length in order
@@ -721,7 +717,7 @@ int ha_tina::find_current_row(unsigned char *buf)
 
   error= HA_ERR_CRASHED_ON_USAGE;
 
-  memset(buf, 0, table->s->null_bytes);
+  memset(buf, 0, table->getShare()->null_bytes);
 
   for (Field **field=table->field ; *field ; field++)
   {
@@ -807,7 +803,7 @@ int ha_tina::find_current_row(unsigned char *buf)
         memcpy(&src, blob->ptr + packlength, sizeof(char*));
         if (src)
         {
-          tgt= (unsigned char*) alloc_root(&blobroot, length);
+          tgt= (unsigned char*) blobroot.alloc_root(length);
           memmove(tgt, src, length);
           memcpy(blob->ptr + packlength, &tgt, sizeof(char*));
         }
@@ -942,7 +938,7 @@ int ha_tina::close(void)
   of the file and appends the data. In an error case it really should
   just truncate to the original position (this is not done yet).
 */
-int ha_tina::write_row(unsigned char * buf)
+int ha_tina::doInsertRecord(unsigned char * buf)
 {
   int size;
 
@@ -1002,7 +998,7 @@ int ha_tina::open_update_temp_file_if_needed()
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
-int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
+int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
 {
   int size;
   int rc= -1;
@@ -1017,7 +1013,7 @@ int ha_tina::update_row(const unsigned char *, unsigned char * new_data)
   /*
     During update we mark each updating record as deleted
     (see the chain_append()) then write new one to the temporary data file.
-    At the end of the sequence in the rnd_end() we append all non-marked
+    At the end of the sequence in the doEndTableScan() we append all non-marked
     records from the data file to the temporary data file then rename it.
     The temp_file_length is used to calculate new data file length.
   */
@@ -1047,7 +1043,7 @@ err:
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
 */
-int ha_tina::delete_row(const unsigned char *)
+int ha_tina::doDeleteRecord(const unsigned char *)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
 
@@ -1120,7 +1116,7 @@ int ha_tina::init_data_file()
 
 */
 
-int ha_tina::rnd_init(bool)
+int ha_tina::doStartTableScan(bool)
 {
   /* set buffer to the beginning of the file */
   if (share->crashed || init_data_file())
@@ -1131,7 +1127,7 @@ int ha_tina::rnd_init(bool)
   records_is_known= 0;
   chain_ptr= chain;
 
-  init_alloc_root(&blobroot, BLOB_MEMROOT_ALLOC_SIZE);
+  blobroot.init_alloc_root(BLOB_MEMROOT_ALLOC_SIZE);
 
   return(0);
 }
@@ -1235,12 +1231,12 @@ bool ha_tina::get_write_pos(off_t *end_pos, tina_set *closest_hole)
   slots to clean up all of the dead space we have collected while
   performing deletes/updates.
 */
-int ha_tina::rnd_end()
+int ha_tina::doEndTableScan()
 {
   char updated_fname[FN_REFLEN];
   off_t file_buffer_start= 0;
 
-  free_root(&blobroot, MYF(0));
+  blobroot.free_root(MYF(0));
   records_is_known= 1;
 
   if ((chain_ptr - chain)  > 0)
@@ -1397,10 +1393,10 @@ int ha_tina::delete_all_rows()
   this (the database will call ::open() if it needs to).
 */
 
-int Tina::doCreateTable(Session *,
+int Tina::doCreateTable(Session &session,
                         Table& table_arg,
                         drizzled::TableIdentifier &identifier,
-                        drizzled::message::Table& create_proto)
+                        drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];
   int create_file;
@@ -1408,7 +1404,7 @@ int Tina::doCreateTable(Session *,
   /*
     check columns
   */
-  for (Field **field= table_arg.s->field; *field; field++)
+  for (Field **field= table_arg.getMutableShare()->getFields(); *field; field++)
   {
     if ((*field)->real_maybe_null())
     {
@@ -1433,9 +1429,7 @@ int Tina::doCreateTable(Session *,
 
   internal::my_close(create_file, MYF(0));
 
-  pthread_mutex_lock(&proto_cache_mutex);
-  proto_cache.insert(make_pair(identifier.getPath(), create_proto));
-  pthread_mutex_unlock(&proto_cache_mutex);
+  session.storeTableMessage(identifier, create_proto);
 
   return 0;
 }
@@ -1450,7 +1444,6 @@ DRIZZLE_DECLARE_PLUGIN
   "CSV storage engine",
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
-  tina_done_func, /* Plugin Deinit */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }

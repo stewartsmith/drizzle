@@ -80,7 +80,7 @@ class ha_tina: public drizzled::Cursor
   drizzled::String buffer;
   /*
     The chain contains "holes" in the file, occured because of
-    deletes/updates. It is used in rnd_end() to get rid of them
+    deletes/updates. It is used in doEndTableScan() to get rid of them
     in the end of the query.
   */
   tina_set chain_buffer[DEFAULT_CHAIN_LENGTH];
@@ -126,13 +126,13 @@ public:
 
   int open(const char *name, int mode, uint32_t open_options);
   int close(void);
-  int write_row(unsigned char * buf);
-  int update_row(const unsigned char * old_data, unsigned char * new_data);
-  int delete_row(const unsigned char * buf);
-  int rnd_init(bool scan=1);
+  int doInsertRecord(unsigned char * buf);
+  int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int doDeleteRecord(const unsigned char * buf);
+  int doStartTableScan(bool scan=1);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
-  int rnd_end();
+  int doEndTableScan();
   TinaShare *get_share(const char *table_name);
   int free_share();
   int repair(drizzled::Session* session, drizzled::HA_CHECK_OPT* check_opt);
@@ -140,6 +140,11 @@ public:
   void position(const unsigned char *record);
   int info(uint);
   int delete_all_rows(void);
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
 
   /*
     These functions used to get/update status of the Cursor.

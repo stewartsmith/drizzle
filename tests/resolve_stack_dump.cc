@@ -25,7 +25,7 @@
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 
 using namespace drizzled;
 
@@ -46,7 +46,7 @@ static char* dump_fname = 0, *sym_fname = 0;
 static DYNAMIC_ARRAY sym_table; /* how do you like this , static DYNAMIC ? */
 static FILE* fp_dump, *fp_sym = 0, *fp_out;
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   {"help", 'h', "Display this help and exit.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -98,7 +98,7 @@ static void die(const char* fmt, ...)
 }
 
 
-static bool get_one_option(int optid, const struct my_option *, char *)
+static int get_one_option(int optid, const struct option *, char *)
 {
   switch(optid) {
   case 'V':

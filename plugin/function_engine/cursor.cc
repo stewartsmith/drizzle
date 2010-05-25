@@ -24,6 +24,9 @@
 #include <drizzled/session.h>
 #include "drizzled/internal/my_sys.h"
 
+#include <unistd.h>
+#include <fcntl.h>
+
 #include <string>
 
 using namespace std;
@@ -42,9 +45,16 @@ FunctionCursor::FunctionCursor(plugin::StorageEngine &engine_arg,
 
 int FunctionCursor::open(const char *name, int, uint32_t)
 {
-  (void)name;
-  string temp_name= name;
-  tool= static_cast<Function *>(engine)->getFunction(temp_name); 
+  string tab_name(name);
+  transform(tab_name.begin(), tab_name.end(),
+            tab_name.begin(), ::tolower);
+  tool= static_cast<Function *>(engine)->getFunction(tab_name); 
+//  assert(tool);
+
+  record_id= 0;
+
+  if (not tool)
+    return HA_ERR_NO_SUCH_TABLE;
 
   return 0;
 }
@@ -52,12 +62,13 @@ int FunctionCursor::open(const char *name, int, uint32_t)
 int FunctionCursor::close(void)
 {
   tool= NULL;
+  wipeCache();
+
   return 0;
 }
 
-int FunctionCursor::rnd_init(bool)
+int FunctionCursor::doStartTableScan(bool)
 {
-  record_id= 0;
   rows_returned= 0;
   generator= tool->generator(table->field);
 
@@ -76,7 +87,7 @@ int FunctionCursor::rnd_next(unsigned char *)
     (*field)->setWriteSet();
   }
 
-  more_rows= generator->sub_populate(table->s->fields);
+  more_rows= generator->sub_populate(table->getShare()->fields);
 
   if (more_rows)
   {
@@ -94,30 +105,45 @@ int FunctionCursor::rnd_next(unsigned char *)
 
 void FunctionCursor::position(const unsigned char *record)
 {
-  unsigned char *copy;
-
-  copy= (unsigned char *)calloc(table->s->reclength, sizeof(unsigned char));
-  assert(copy);
-  memcpy(copy, record, table->s->reclength);
-  row_cache.push_back(copy);
+  if (row_cache.size() <= record_id * table->getShare()->reclength)
+  {
+    row_cache.resize(row_cache.size() + table->getShare()->reclength * 100); // Hardwired at adding an additional 100 rows of storage
+  }
+  memcpy(&row_cache[record_id * table->getShare()->reclength], record, table->getShare()->reclength);
   internal::my_store_ptr(ref, ref_length, record_id);
   record_id++;
 }
 
-int FunctionCursor::rnd_end()
-{ 
-  size_t length_of_vector= row_cache.size();
 
-  for (size_t x= 0; x < length_of_vector; x++)
-  {
-    free(row_cache[x]);
-  }
-
+void FunctionCursor::wipeCache()
+{
   if (rows_returned > estimate_of_rows)
     estimate_of_rows= rows_returned;
 
   row_cache.clear();
   record_id= 0;
+}
+
+int FunctionCursor::extra(enum ha_extra_function operation)
+{
+  switch (operation)
+  {
+  case drizzled::HA_EXTRA_CACHE:
+    break;
+  case drizzled::HA_EXTRA_NO_CACHE:
+    break;
+  case drizzled::HA_EXTRA_RESET_STATE:
+    wipeCache();
+    break;
+  default:
+    break;
+  }
+
+  return 0;
+}
+
+int FunctionCursor::doEndTableScan()
+{ 
   delete generator; // Do this in case of an early exit from rnd_next()
 
   return 0;
@@ -128,7 +154,8 @@ int FunctionCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   size_t position_id= (size_t)internal::my_get_ptr(pos, ref_length);
 
-  memcpy(buf, row_cache[position_id], table->s->reclength);
+  assert(position_id * table->getShare()->reclength < row_cache.size());
+  memcpy(buf, &row_cache[position_id * table->getShare()->reclength], table->getShare()->reclength);
 
   return 0;
 }

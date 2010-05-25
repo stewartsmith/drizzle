@@ -17,6 +17,7 @@
 /* Insert of records */
 
 #include "config.h"
+#include <cstdio>
 #include <drizzled/sql_select.h>
 #include <drizzled/show.h>
 #include <drizzled/error.h>
@@ -458,10 +459,10 @@ bool mysql_insert(Session *session,TableList *table_list,
   {
     char buff[160];
     if (ignore)
-      sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+      snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
               (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
     else
-      sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+      snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	      (ulong) (info.deleted + info.updated), (ulong) session->cuted_fields);
     session->row_count_func= info.copied + info.deleted + info.updated;
     session->my_ok((ulong) session->row_count_func,
@@ -721,7 +722,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 
   if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE)
   {
-    while ((error=table->cursor->ha_write_row(table->record[0])))
+    while ((error=table->cursor->insertRecord(table->record[0])))
     {
       uint32_t key_nr;
       /*
@@ -820,7 +821,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
              !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
-          if ((error=table->cursor->ha_update_row(table->record[1],
+          if ((error=table->cursor->updateRecord(table->record[1],
                                                 table->record[0])) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
           {
@@ -875,7 +876,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             (table->timestamp_field_type == TIMESTAMP_NO_AUTO_SET ||
              table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
         {
-          if ((error=table->cursor->ha_update_row(table->record[1],
+          if ((error=table->cursor->updateRecord(table->record[1],
 					        table->record[0])) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
             goto err;
@@ -892,7 +893,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         }
         else
         {
-          if ((error=table->cursor->ha_delete_row(table->record[1])))
+          if ((error=table->cursor->deleteRecord(table->record[1])))
             goto err;
           info->deleted++;
           if (!table->cursor->has_transactions())
@@ -910,7 +911,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         table->write_set != save_write_set)
       table->column_bitmaps_set(save_read_set, save_write_set);
   }
-  else if ((error=table->cursor->ha_write_row(table->record[0])))
+  else if ((error=table->cursor->insertRecord(table->record[0])))
   {
     if (!info->ignore ||
         table->cursor->is_fatal_error(error, HA_CHECK_DUP))
@@ -1257,6 +1258,7 @@ bool select_insert::send_data(List<Item> &values)
   plugin::TransactionalStorageEngine::releaseTemporaryLatches(session);
 
   error= write_record(session, table, &info);
+  table->auto_increment_field_not_null= false;
 
   if (!error)
   {
@@ -1325,7 +1327,7 @@ bool select_insert::send_eof()
   {
     /*
       We must invalidate the table in the query cache before binlog writing
-      and ha_autocommit_or_rollback.
+      and autocommitOrRollback.
     */
     if (session->transaction.stmt.hasModifiedNonTransData())
       session->transaction.all.markModifiedNonTransData();
@@ -1343,10 +1345,10 @@ bool select_insert::send_eof()
   }
   char buff[160];
   if (info.ignore)
-    sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+    snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	    (ulong) (info.records - info.copied), (ulong) session->cuted_fields);
   else
-    sprintf(buff, ER(ER_INSERT_INFO), (ulong) info.records,
+    snprintf(buff, sizeof(buff), ER(ER_INSERT_INFO), (ulong) info.records,
 	    (ulong) (info.deleted+info.updated), (ulong) session->cuted_fields);
   session->row_count_func= info.copied + info.deleted + info.updated;
 
@@ -1471,10 +1473,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
   Field *tmp_field;
   bool not_used;
 
-  bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
-
-  if (not (lex_identified_temp_table) &&
-      create_table->table->db_stat)
+  if (not (identifier.isTmp()) && create_table->table->db_stat)
   {
     /* Table already exists and was open at openTablesLock() stage. */
     if (is_if_not_exists)
@@ -1545,8 +1544,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				       select_field_count,
 				       is_if_not_exists))
     {
-      if (create_info->table_existed &&
-          !(lex_identified_temp_table))
+      if (create_info->table_existed && not identifier.isTmp())
       {
         /*
           This means that someone created table underneath server
@@ -1557,7 +1555,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
         return NULL;
       }
 
-      if (not lex_identified_temp_table)
+      if (not identifier.isTmp())
       {
         pthread_mutex_lock(&LOCK_open); /* CREATE TABLE... has found that the table already exists for insert and is adapting to use it */
         if (session->reopen_name_locked_table(create_table, false))
@@ -1609,8 +1607,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 int
 select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
-  bool lex_identified_temp_table= (table_proto.type() == message::Table::TEMPORARY);
-
   DRIZZLE_LOCK *extra_lock= NULL;
   /*
     For replication, the CREATE-SELECT statement is written
@@ -1635,7 +1631,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   {
     assert(m_plock == NULL);
 
-    if (lex_identified_temp_table)
+    if (identifier.isTmp())
       m_plock= &m_lock;
     else
       m_plock= &session->extra_lock;
@@ -1717,7 +1713,7 @@ bool select_create::send_eof()
     if (!table->s->tmp_table)
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
-      transaction_services.ha_autocommit_or_rollback(session, 0);
+      transaction_services.autocommitOrRollback(session, 0);
       (void) session->endActiveTransaction();
     }
 

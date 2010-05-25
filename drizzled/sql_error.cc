@@ -43,6 +43,7 @@ This file contains the implementation of error and warnings related
 
 #include "config.h"
 
+#include <cstdio>
 #include <stdarg.h>
 
 #include <drizzled/session.h>
@@ -64,7 +65,7 @@ namespace drizzled
 */
 void DRIZZLE_ERROR::set_msg(Session *session, const char *msg_arg)
 {
-  msg= strdup_root(&session->warn_root, msg_arg);
+  msg= session->warn_root.strdup_root(msg_arg);
 }
 
 /*
@@ -86,7 +87,7 @@ void drizzle_reset_errors(Session *session, bool force)
   if (session->getQueryId() != session->getWarningQueryId() || force)
   {
     session->setWarningQueryId(session->getQueryId());
-    free_root(&session->warn_root,MYF(0));
+    session->warn_root.free_root(MYF(0));
     memset(session->warn_count, 0, sizeof(session->warn_count));
     if (force)
       session->total_warn_count= 0;

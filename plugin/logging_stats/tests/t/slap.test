@@ -1,0 +1,5 @@
+
+--exec $DRIZZLE_SLAP --silent --concurrency=10 --iterations=20 --query="SELECT * FROM t1" --create="CREATE TABLE t1 (id int, name varchar(64)); INSERT INTO t1 VALUES (1, 'This is a test')" --delimiter=";" --commit=10
+
+--replace_column 1 #
+SELECT count(*) FROM DATA_DICTIONARY.CURRENT_SQL_COMMANDS; 

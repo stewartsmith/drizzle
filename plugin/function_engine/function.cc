@@ -28,11 +28,13 @@
 using namespace std;
 using namespace drizzled;
 
+static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("INFORMATION_SCHEMA");
+static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("DATA_DICTIONARY");
+
 Function::Function(const std::string &name_arg) :
   drizzled::plugin::StorageEngine(name_arg,
                                   HTON_ALTER_NOT_SUPPORTED |
                                   HTON_HAS_SCHEMA_DICTIONARY |
-                                  HTON_HAS_DATA_DICTIONARY |
                                   HTON_SKIP_STORE_LOCK |
                                   HTON_TEMPORARY_NOT_SUPPORTED)
 {
@@ -66,26 +68,26 @@ int Function::doGetTableDefinition(Session &,
 
 
 void Function::doGetTableNames(drizzled::CachedDirectory&, 
-                               string &db, 
+                               drizzled::SchemaIdentifier &schema_identifier,
                                set<string> &set_of_names)
 {
-  drizzled::plugin::TableFunction::getNames(db, set_of_names);
+  drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
 }
 
-void Function::doGetSchemaNames(std::set<std::string>& set_of_names)
+void Function::doGetSchemaIdentifiers(SchemaIdentifierList& schemas)
 {
-  set_of_names.insert("information_schema"); // special cases suck
-  set_of_names.insert("data_dictionary"); // special cases suck
+  schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);
+  schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
 }
 
-bool Function::doGetSchemaDefinition(const std::string &schema_name, message::Schema &schema_message)
+bool Function::doGetSchemaDefinition(SchemaIdentifier &schema_identifier, message::Schema &schema_message)
 {
-  if (not schema_name.compare("information_schema"))
+  if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
   {
     schema_message.set_name("information_schema");
     schema_message.set_collation("utf8_general_ci");
   }
-  else if (not schema_name.compare("data_dictionary"))
+  else if (schema_identifier == DATA_DICTIONARY_IDENTIFIER)
   {
     schema_message.set_name("data_dictionary");
     schema_message.set_collation("utf8_general_ci");
@@ -98,14 +100,14 @@ bool Function::doGetSchemaDefinition(const std::string &schema_name, message::Sc
   return true;
 }
 
-bool Function::doCanCreateTable(const drizzled::TableIdentifier &identifier)
+bool Function::doCanCreateTable(drizzled::TableIdentifier &table_identifier)
 {
-  if (not strcasecmp(identifier.getSchemaName().c_str(), "information_schema"))
+  if (static_cast<SchemaIdentifier&>(table_identifier) == INFORMATION_SCHEMA_IDENTIFIER)
   {
     return false;
   }
 
-  if (not strcasecmp(identifier.getSchemaName().c_str(), "data_dictionary"))
+  else if (static_cast<SchemaIdentifier&>(table_identifier) == DATA_DICTIONARY_IDENTIFIER)
   {
     return false;
   }
@@ -124,26 +126,22 @@ bool Function::doDoesTableExist(Session&, TableIdentifier &identifier)
 }
 
 
-static drizzled::plugin::StorageEngine *function_plugin= NULL;
-
-static int init(drizzled::plugin::Registry &registry)
+void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                     drizzled::SchemaIdentifier &schema_identifier,
+                                     drizzled::TableIdentifiers &set_of_identifiers)
 {
-  function_plugin= new(std::nothrow) Function("FunctionEngine");
+  set<string> set_of_names;
+  drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
 
-  if (not function_plugin)
+  for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
-    return 1;
+    set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter));
   }
-
-  registry.add(function_plugin);
-
-  return 0;
 }
 
-static int finalize(drizzled::plugin::Registry &registry)
+static int init(drizzled::module::Context &context)
 {
-  registry.remove(function_plugin);
-  delete function_plugin;
+  context.add(new Function("FunctionEngine"));
 
   return 0;
 }
@@ -157,7 +155,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Function Engine provides the infrastructure for Table Functions,etc.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  finalize,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

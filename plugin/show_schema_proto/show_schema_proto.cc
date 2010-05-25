@@ -82,7 +82,8 @@ String *ShowSchemaProtoFunction::val_str(String *str)
   message::Schema proto;
 
 
-  if (not plugin::StorageEngine::getSchemaDefinition(db, proto))
+  SchemaIdentifier schema_identifier(db);
+  if (not plugin::StorageEngine::getSchemaDefinition(schema_identifier, proto))
   {
     my_error(ER_BAD_DB_ERROR, MYF(0), db);
     return NULL;
@@ -105,17 +106,10 @@ String *ShowSchemaProtoFunction::val_str(String *str)
 
 plugin::Create_function<ShowSchemaProtoFunction> *show_schema_proto_func= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(module::Context &context)
 {
   show_schema_proto_func= new plugin::Create_function<ShowSchemaProtoFunction>("show_schema_proto");
-  registry.add(show_schema_proto_func);
-  return 0;
-}
-
-static int finalize(plugin::Registry &registry)
-{
-  registry.remove(show_schema_proto_func);
-  delete show_schema_proto_func;
+  context.add(show_schema_proto_func);
   return 0;
 }
 
@@ -128,7 +122,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Shows text representation of schema definition proto",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize,   /* Plugin Deinit */
   NULL,   /* system variables */
   NULL    /* config options */
 }

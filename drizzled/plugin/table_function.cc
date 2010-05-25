@@ -22,7 +22,6 @@
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/table_function_container.h>
 #include <drizzled/gettext.h>
-#include "drizzled/plugin/registry.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/session.h"
 #include "drizzled/current_session.h"
@@ -38,7 +37,7 @@ static TableFunctionContainer table_functions;
 
 void plugin::TableFunction::init()
 {
-  drizzled::message::Table::StorageEngine *engine;
+  drizzled::message::Engine *engine;
   drizzled::message::Table::TableOptions *table_options;
 
   proto.set_name(getTableLabel());
@@ -144,7 +143,8 @@ void plugin::TableFunction::add_field(const char *label,
 }
 
 plugin::TableFunction::Generator::Generator(Field **arg) :
-  columns(arg)
+  columns(arg),
+  session(current_session)
 {
   scs= system_charset_info;
 }
@@ -220,14 +220,12 @@ void plugin::TableFunction::Generator::push(bool arg)
 
 bool plugin::TableFunction::Generator::isWild(const std::string &predicate)
 {
-  Session *session= current_session;
-
-  if (not session->lex->wild)
+  if (not getSession().lex->wild)
     return false;
 
   bool match= wild_case_compare(system_charset_info,
                                 predicate.c_str(),
-                                session->lex->wild->ptr());
+                                getSession().lex->wild->ptr());
 
   return match;
 }

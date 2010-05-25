@@ -54,20 +54,16 @@ extern uint64_t refresh_version;
 typedef enum enum_table_category TABLE_CATEGORY;
 typedef struct st_columndef MI_COLUMNDEF;
 
-bool create_myisam_from_heap(Session *session, Table *table,
-                             MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo,
-                             int error, bool ignore_last_dupp_key_error);
-
 /**
  * Class representing a set of records, either in a temporary, 
  * normal, or derived table.
  */
 class Table 
 {
-public:
 
+public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
+
   Field **field; /**< Pointer to fields collection */
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
@@ -92,7 +88,7 @@ public:
 
   unsigned char *record[2]; /**< Pointer to "records" */
   unsigned char *insert_values; /* used by INSERT ... UPDATE */
-  KEY  *key_info; /**< data of keys in database */
+  KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
   Field_timestamp *timestamp_field; /**< Points to the auto-setting timestamp field, if any */
@@ -241,23 +237,63 @@ public:
   uint32_t quick_key_parts[MAX_KEY];
   uint32_t quick_n_ranges[MAX_KEY];
 
+private:
   memory::Root mem_root;
+
+  void init_mem_root()
+  {
+    init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  }
+public:
+  memory::Root *getMemRoot()
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return &mem_root;
+  }
+
+  void *alloc_root(size_t arg)
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return mem_root.alloc_root(arg);
+  }
+
+  char *strmake_root(const char *str_arg, size_t len_arg)
+  {
+    if (not mem_root.alloc_root_inited())
+    {
+      init_mem_root();
+    }
+
+    return mem_root.strmake_root(str_arg, len_arg);
+  }
+
   filesort_info_st sort;
 
   Table();
+  virtual ~Table() { };
 
   int report_error(int error);
   /**
    * Free information allocated by openfrm
    *
    * @param If true if we also want to free table_share
+   * @note this should all be the destructor
    */
-  int closefrm(bool free_share);
+  int delete_table(bool free_share);
 
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
   /* SHARE methods */
   inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
+  inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }
@@ -278,21 +314,20 @@ public:
     return s->storage_engine->index_flags(s->key_info[idx].algorithm);
   }
 
-  inline plugin::StorageEngine *getEngine() const	/* table_type for handler */
+  inline plugin::StorageEngine *getEngine() const   /* table_type for handler */
   {
     return s->storage_engine;
   }
 
-  Cursor &getCursor() const	/* table_type for handler */
+  Cursor &getCursor() const /* table_type for handler */
   {
     assert(cursor);
     return *cursor;
   }
 
   /* For TMP tables, should be pulled out as a class */
-  void updateCreateInfo(message::Table *table_proto);
   void setup_tmp_table_column_bitmaps(unsigned char *bitmaps);
-  bool create_myisam_tmp_table(KEY *keyinfo,
+  bool create_myisam_tmp_table(KeyInfo *keyinfo,
                                MI_COLUMNDEF *start_recinfo,
                                MI_COLUMNDEF **recinfo,
                                uint64_t options);
@@ -470,7 +505,7 @@ public:
   */
   bool operator<(const Table &right) const
   {
-    int result= strcmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
+    int result= strcasecmp(this->getShare()->getSchemaName(), right.getShare()->getSchemaName());
 
     if (result <  0)
       return true;
@@ -478,7 +513,7 @@ public:
     if (result >  0)
       return false;
 
-    result= strcmp(this->getShare()->getTableName(), right.getShare()->getTableName());
+    result= strcasecmp(this->getShare()->getTableName(), right.getShare()->getTableName());
 
     if (result <  0)
       return true;
@@ -486,8 +521,7 @@ public:
     if (result >  0)
       return false;
 
-    if (this->getShare()->getTableProto()->type()  < 
-        right.getShare()->getTableProto()->type())
+    if (this->getShare()->getTableProto()->type()  < right.getShare()->getTableProto()->type())
       return true;
 
     return false;
@@ -511,28 +545,193 @@ public:
     return output;  // for multiple << operators.
   }
 
+protected:
+  bool is_placeholder_created;
+
+public:
+  bool isPlaceHolder()
+  {
+    return is_placeholder_created;
+  }
 };
 
-Table *create_virtual_tmp_table(Session *session, List<CreateField> &field_list);
-
-typedef struct st_foreign_key_info
+/**
+ * @class
+ *  ForeignKeyInfo
+ *
+ * @brief
+ *  This class defines the information for foreign keys.
+ */
+class ForeignKeyInfo
 {
-  LEX_STRING *forein_id;
-  LEX_STRING *referenced_db;
-  LEX_STRING *referenced_table;
-  LEX_STRING *update_method;
-  LEX_STRING *delete_method;
-  LEX_STRING *referenced_key_name;
-  List<LEX_STRING> foreign_fields;
-  List<LEX_STRING> referenced_fields;
-} FOREIGN_KEY_INFO;
+public:
+    /**
+     * @brief
+     *  This is the constructor with all properties set.
+     *
+     * @param[in] in_foreign_id The id of the foreign key
+     * @param[in] in_referenced_db The referenced database name of the foreign key
+     * @param[in] in_referenced_table The referenced table name of the foreign key
+     * @param[in] in_update_method The update method of the foreign key.
+     * @param[in] in_delete_method The delete method of the foreign key.
+     * @param[in] in_referenced_key_name The name of referenced key
+     * @param[in] in_foreign_fields The foreign fields
+     * @param[in] in_referenced_fields The referenced fields
+     */
+    ForeignKeyInfo(LEX_STRING *in_foreign_id,
+                   LEX_STRING *in_referenced_db,
+                   LEX_STRING *in_referenced_table,
+                   LEX_STRING *in_update_method,
+                   LEX_STRING *in_delete_method,
+                   LEX_STRING *in_referenced_key_name,
+                   List<LEX_STRING> in_foreign_fields,
+                   List<LEX_STRING> in_referenced_fields)
+    :
+      foreign_id(in_foreign_id),
+      referenced_db(in_referenced_db),
+      referenced_table(in_referenced_table),
+      update_method(in_update_method),
+      delete_method(in_delete_method),
+      referenced_key_name(in_referenced_key_name),
+      foreign_fields(in_foreign_fields),
+      referenced_fields(in_referenced_fields)
+    {}
 
+    /**
+     * @brief
+     *  This is the default constructor. All properties are set to default values for their types.
+     */
+    ForeignKeyInfo()
+    : foreign_id(NULL), referenced_db(NULL), referenced_table(NULL),
+      update_method(NULL), delete_method(NULL), referenced_key_name(NULL)
+    {}
 
+    /**
+     * @brief
+     *  Gets the foreign id.
+     *
+     * @ retval  the foreign id
+     */
+    const LEX_STRING *getForeignId() const
+    {
+        return foreign_id;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced database.
+     *
+     * @ retval  the name of the referenced database
+     */
+    const LEX_STRING *getReferencedDb() const
+    {
+        return referenced_db;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced table.
+     *
+     * @ retval  the name of the referenced table
+     */
+    const LEX_STRING *getReferencedTable() const
+    {
+        return referenced_table;
+    }
+
+    /**
+     * @brief
+     *  Gets the update method.
+     *
+     * @ retval  the update method
+     */
+    const LEX_STRING *getUpdateMethod() const
+    {
+        return update_method;
+    }
+
+    /**
+     * @brief
+     *  Gets the delete method.
+     *
+     * @ retval  the delete method
+     */
+    const LEX_STRING *getDeleteMethod() const
+    {
+        return delete_method;
+    }
+
+    /**
+     * @brief
+     *  Gets the name of the referenced key.
+     *
+     * @ retval  the name of the referenced key
+     */
+    const LEX_STRING *getReferencedKeyName() const
+    {
+        return referenced_key_name;
+    }
+
+    /**
+     * @brief
+     *  Gets the foreign fields.
+     *
+     * @ retval  the foreign fields
+     */
+    const List<LEX_STRING> &getForeignFields() const
+    {
+        return foreign_fields;
+    }
+
+    /**
+     * @brief
+     *  Gets the referenced fields.
+     *
+     * @ retval  the referenced fields
+     */
+    const List<LEX_STRING> &getReferencedFields() const
+    {
+        return referenced_fields;
+    }
+private:
+    /**
+     * The foreign id.
+     */
+    LEX_STRING *foreign_id;
+    /**
+     * The name of the reference database.
+     */
+    LEX_STRING *referenced_db;
+    /**
+     * The name of the reference table.
+     */
+    LEX_STRING *referenced_table;
+    /**
+     * The update method.
+     */
+    LEX_STRING *update_method;
+    /**
+     * The delete method.
+     */
+    LEX_STRING *delete_method;
+    /**
+     * The name of the referenced key.
+     */
+    LEX_STRING *referenced_key_name;
+    /**
+     * The foreign fields.
+     */
+    List<LEX_STRING> foreign_fields;
+    /**
+     * The referenced fields.
+     */
+    List<LEX_STRING> referenced_fields;
+};
 
 class TableList;
 
-#define JOIN_TYPE_LEFT	1
-#define JOIN_TYPE_RIGHT	2
+#define JOIN_TYPE_LEFT  1
+#define JOIN_TYPE_RIGHT 2
 
 struct st_lex;
 class select_union;
@@ -540,8 +739,8 @@ class Tmp_Table_Param;
 
 struct open_table_list_st
 {
-  std::string	db;
-  std::string	table;
+  std::string   db;
+  std::string   table;
   uint32_t in_use;
   uint32_t locked;
 
@@ -552,13 +751,6 @@ struct open_table_list_st
 
 };
 
-TableShare *alloc_table_share(TableList *table_list, char *key,
-                               uint32_t key_length);
-int open_table_def(Session& session, TableIdentifier &identifier, TableShare *share);
-void open_table_error(TableShare *share, int error, int db_errno, int errarg);
-int open_table_from_share(Session *session, TableShare *share, const char *alias,
-                          uint32_t db_stat, uint32_t ha_open_flags,
-                          Table *outparam);
 void free_blobs(Table *table);
 int set_zone(int nr,int min_zone,int max_zone);
 uint32_t convert_period_to_month(uint32_t period);
@@ -593,7 +785,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
-bool check_db_name(LEX_STRING *org_name);
+bool check_db_name(SchemaIdentifier &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */

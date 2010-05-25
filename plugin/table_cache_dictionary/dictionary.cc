@@ -27,25 +27,14 @@ static table_cache_dictionary::TableCache *tables_in_cache;
 static table_cache_dictionary::TableDefinitionCache *table_definitions;
 
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::module::Context &context)
 {
   table_definitions= new(std::nothrow)table_cache_dictionary::TableDefinitionCache;
   tables_in_cache= new(std::nothrow)table_cache_dictionary::TableCache;
 
-  registry.add(table_definitions);
-  registry.add(tables_in_cache);
+  context.add(table_definitions);
+  context.add(tables_in_cache);
   
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(table_definitions);
-  registry.remove(tables_in_cache);
-
-  delete table_definitions;
-  delete tables_in_cache;
-
   return 0;
 }
 
@@ -58,7 +47,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Data Dictionary for table and table definition cache.",
   PLUGIN_LICENSE_GPL,
   init,
-  finalize,
   NULL,
   NULL
 }

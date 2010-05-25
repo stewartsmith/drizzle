@@ -26,24 +26,14 @@ using namespace drizzled;
 static ModulesTool *modules;
 static PluginsTool *plugins;
 
-static int init(drizzled::plugin::Registry &registry)
+static int init(drizzled::module::Context &context)
 {
   modules= new(std::nothrow)ModulesTool;
   plugins= new(std::nothrow)PluginsTool;
 
-  registry.add(modules);
-  registry.add(plugins);
+  context.add(modules);
+  context.add(plugins);
   
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  registry.remove(modules);
-  registry.remove(plugins);
-  delete modules;
-  delete plugins;
-
   return 0;
 }
 
@@ -56,7 +46,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Provides dictionary for plugin registry system.",
   PLUGIN_LICENSE_GPL,
   init,     /* Plugin Init */
-  finalize,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

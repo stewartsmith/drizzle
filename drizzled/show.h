@@ -39,7 +39,7 @@ namespace drizzled
 
 /* Forward declarations */
 class String;
-class JOIN;
+class Join;
 class Session;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
@@ -51,7 +51,6 @@ typedef class Item COND;
 extern struct system_status_var global_status_var;
 
 drizzle_show_var *getFrontOfStatusVars();
-drizzle_show_var *getCommandStatusVars();
 
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 
@@ -59,13 +58,12 @@ int wild_case_compare(const CHARSET_INFO * const cs,
                       const char *str,const char *wildstr);
 
 bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_not_exists);
-bool mysqld_show_create_db(Session *session, const char *dbname, bool if_not_exists);
+bool mysqld_show_create_db(Session &session, SchemaIdentifier &, bool if_not_exists);
 
 bool mysqld_show_column_types(Session *session);
 void calc_sum_of_all_status(struct system_status_var *to);
 
 int add_status_vars(drizzle_show_var *list);
-int add_com_status_vars(drizzle_show_var *list);
 void remove_status_vars(drizzle_show_var *list);
 void init_status_vars();
 void free_status_vars();

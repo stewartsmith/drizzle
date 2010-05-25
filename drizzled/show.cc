@@ -39,7 +39,6 @@
 #include <drizzled/lock.h>
 #include <drizzled/item/return_date_time.h>
 #include <drizzled/item/empty_string.h>
-#include "drizzled/plugin/registry.h"
 #include "drizzled/session_list.h"
 #include <drizzled/message/schema.pb.h>
 #include <drizzled/plugin/client.h>
@@ -69,7 +68,7 @@ str_or_nil(const char *str)
   return str ? str : "<nil>";
 }
 
-static void store_key_options(String *packet, Table *table, KEY *key_info);
+static void store_key_options(String *packet, Table *table, KeyInfo *key_info);
 
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
@@ -191,11 +190,11 @@ bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_no
   @returns true if errors are detected, false otherwise.
 */
 
-static bool store_db_create_info(const char *dbname, string &buffer, bool if_not_exists)
+static bool store_db_create_info(SchemaIdentifier &schema_identifier, string &buffer, bool if_not_exists)
 {
   message::Schema schema;
 
-  bool found= plugin::StorageEngine::getSchemaDefinition(dbname, schema);
+  bool found= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
   if (not found)
     return false;
 
@@ -217,17 +216,28 @@ static bool store_db_create_info(const char *dbname, string &buffer, bool if_not
   return true;
 }
 
-bool mysqld_show_create_db(Session *session, const char *dbname, bool if_not_exists)
+bool mysqld_show_create_db(Session &session, SchemaIdentifier &schema_identifier, bool if_not_exists)
 {
+  message::Schema schema_message;
   string buffer;
 
-  if (not store_db_create_info(dbname, buffer, if_not_exists))
+  if (not plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema_message))
   {
     /*
       This assumes that the only reason for which store_db_create_info()
       can fail is incorrect database name (which is the case now).
     */
-    my_error(ER_BAD_DB_ERROR, MYF(0), dbname);
+    my_error(ER_BAD_DB_ERROR, MYF(0), schema_identifier.getSQLPath().c_str());
+    return true;
+  }
+
+  if (not store_db_create_info(schema_identifier, buffer, if_not_exists))
+  {
+    /*
+      This assumes that the only reason for which store_db_create_info()
+      can fail is incorrect database name (which is the case now).
+    */
+    my_error(ER_BAD_DB_ERROR, MYF(0), schema_identifier.getSQLPath().c_str());
     return true;
   }
 
@@ -235,16 +245,16 @@ bool mysqld_show_create_db(Session *session, const char *dbname, bool if_not_exi
   field_list.push_back(new Item_empty_string("Database",NAME_CHAR_LEN));
   field_list.push_back(new Item_empty_string("Create Database",1024));
 
-  if (session->client->sendFields(&field_list))
+  if (session.client->sendFields(&field_list))
     return true;
 
-  session->client->store(dbname, strlen(dbname));
-  session->client->store(buffer);
+  session.client->store(schema_message.name());
+  session.client->store(buffer);
 
-  if (session->client->flush())
+  if (session.client->flush())
     return true;
 
-  session->my_eof();
+  session.my_eof();
 
   return false;
 }
@@ -356,23 +366,21 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
   Field **ptr,*field;
   uint32_t primary_key;
-  KEY *key_info;
+  KeyInfo *key_info;
   Table *table= table_list->table;
   Cursor *cursor= table->cursor;
-  TableShare *share= table->s;
   HA_CREATE_INFO create_info;
-  bool show_table_options= false;
   my_bitmap_map *old_map;
 
   table->restoreRecordAsDefault(); // Get empty record
 
-  if (share->tmp_table)
+  if (table->getShare()->tmp_table)
     packet->append(STRING_WITH_LEN("CREATE TEMPORARY TABLE "));
   else
     packet->append(STRING_WITH_LEN("CREATE TABLE "));
   if (is_if_not_exists)
     packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
-  alias= share->table_name.str;
+  alias= table->getShare()->getTableName();
 
   packet->append_identifier(alias, strlen(alias));
   packet->append(STRING_WITH_LEN(" (\n"));
@@ -404,12 +412,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
     if (field->has_charset())
     {
-      if (field->charset() != share->table_charset)
-      {
-        packet->append(STRING_WITH_LEN(" CHARACTER SET "));
-        packet->append(field->charset()->csname);
-      }
-
       /*
         For string types dump collation name only if
         collation is not primary for the given charset
@@ -470,13 +472,13 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   key_info= table->key_info;
   memset(&create_info, 0, sizeof(create_info));
   /* Allow update_create_info to update row type */
-  create_info.row_type= share->row_type;
+  create_info.row_type= table->getShare()->row_type;
   cursor->update_create_info(&create_info);
-  primary_key= share->primary_key;
+  primary_key= table->getShare()->primary_key;
 
-  for (uint32_t i=0 ; i < share->keys ; i++,key_info++)
+  for (uint32_t i=0 ; i < table->getShare()->keys ; i++,key_info++)
   {
-    KEY_PART_INFO *key_part= key_info->key_part;
+    KeyPartInfo *key_part= key_info->key_part;
     bool found_primary=0;
     packet->append(STRING_WITH_LEN(",\n  "));
 
@@ -535,7 +537,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
   packet->append(STRING_WITH_LEN("\n)"));
   {
-    show_table_options= true;
     /*
       Get possible table space definitions and append them
       to the CREATE TABLE statement
@@ -547,58 +548,50 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
       dangling arguments for engines.
     */
     packet->append(STRING_WITH_LEN(" ENGINE="));
-    packet->append(cursor->engine->getName().c_str());
+    packet->append(cursor->getEngine()->getName().c_str());
 
-    if (share->db_create_options & HA_OPTION_PACK_KEYS)
-      packet->append(STRING_WITH_LEN(" PACK_KEYS=1"));
-    if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
-      packet->append(STRING_WITH_LEN(" PACK_KEYS=0"));
+    size_t num_engine_options= table->getShare()->getTableProto()->engine().options_size();
+    for (size_t x= 0; x < num_engine_options; ++x)
+    {
+      const message::Engine::Option &option= table->getShare()->getTableProto()->engine().options(x);
+      packet->append(" ");
+      packet->append(option.name().c_str());
+      packet->append("=");
+      append_unescaped(packet, option.state().c_str(), option.state().length());
+    }
+
+#if 0
     if (create_info.row_type != ROW_TYPE_DEFAULT)
     {
       packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
       packet->append(ha_row_type[(uint32_t) create_info.row_type]);
     }
-    if (table->s->hasKeyBlockSize())
-    {
-      packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-      buff= to_string(table->s->getKeyBlockSize());
-      packet->append(buff.c_str(), buff.length());
-    }
-    if (share->block_size)
+#endif
+    if (table->getShare()->block_size)
     {
       packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
-      buff= to_string(share->block_size);
+      buff= to_string(table->getShare()->block_size);
       packet->append(buff.c_str(), buff.length());
     }
     table->cursor->append_create_info(packet);
-    if (share->hasComment() && share->getCommentLength())
+    if (table->getMutableShare()->hasComment() && table->getMutableShare()->getCommentLength())
     {
       packet->append(STRING_WITH_LEN(" COMMENT="));
-      append_unescaped(packet, share->getComment(),
-                       share->getCommentLength());
+      append_unescaped(packet, table->getMutableShare()->getComment(),
+                       table->getMutableShare()->getCommentLength());
     }
   }
   table->restore_column_map(old_map);
   return(0);
 }
 
-static void store_key_options(String *packet, Table *table, KEY *key_info)
+static void store_key_options(String *packet, Table *, KeyInfo *key_info)
 {
-  char *end, buff[32];
-
   if (key_info->algorithm == HA_KEY_ALG_BTREE)
     packet->append(STRING_WITH_LEN(" USING BTREE"));
 
   if (key_info->algorithm == HA_KEY_ALG_HASH)
     packet->append(STRING_WITH_LEN(" USING HASH"));
-
-  if ((key_info->flags & HA_USES_BLOCK_SIZE) &&
-      table->s->getKeyBlockSize() != key_info->block_size)
-  {
-    packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-    end= internal::int64_t10_to_str(key_info->block_size, buff, 10);
-    packet->append(buff, (uint32_t) (end - buff));
-  }
 
   assert(test(key_info->flags & HA_USES_COMMENT) ==
               (key_info->comment.length > 0));
@@ -649,7 +642,6 @@ public:
 *****************************************************************************/
 
 static vector<drizzle_show_var *> all_status_vars;
-static vector<drizzle_show_var *> com_status_vars;
 static bool status_vars_inited= 0;
 static int show_var_cmp(const void *var1, const void *var2)
 {
@@ -680,11 +672,6 @@ class show_var_remove_if
 drizzle_show_var *getFrontOfStatusVars()
 {
   return all_status_vars.front();
-}
-
-drizzle_show_var *getCommandStatusVars()
-{
-  return com_status_vars.front();
 }
 
 /*
@@ -719,19 +706,6 @@ int add_status_vars(drizzle_show_var *list)
   return res;
 }
 
-int add_com_status_vars(drizzle_show_var *list)
-{
-  int res= 0;
-
-  while (list->name)
-    com_status_vars.insert(com_status_vars.begin(), list++);
-  if (status_vars_inited)
-    sort(com_status_vars.begin(), com_status_vars.end(),
-         show_var_cmp_functor());
-
-  return res;
-}
-
 /*
   Make all_status_vars[] usable for SHOW STATUS
 
@@ -745,8 +719,6 @@ void init_status_vars()
   status_vars_inited= 1;
   sort(all_status_vars.begin(), all_status_vars.end(),
        show_var_cmp_functor());
-  sort(com_status_vars.begin(), com_status_vars.end(),
-       show_var_cmp_functor());
 }
 
 void reset_status_vars()
@@ -755,15 +727,6 @@ void reset_status_vars()
 
   p= all_status_vars.begin();
   while (p != all_status_vars.end())
-  {
-    /* Note that SHOW_LONG_NOFLUSH variables are not reset */
-    if ((*p)->type == SHOW_LONG)
-      (*p)->value= 0;
-    ++p;
-  }
-
-  p= com_status_vars.begin();
-  while (p != com_status_vars.end())
   {
     /* Note that SHOW_LONG_NOFLUSH variables are not reset */
     if ((*p)->type == SHOW_LONG)
@@ -784,7 +747,6 @@ void reset_status_vars()
 void free_status_vars()
 {
   all_status_vars.clear();
-  com_status_vars.clear();
 }
 
 /*

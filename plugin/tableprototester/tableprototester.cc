@@ -52,8 +52,7 @@ public:
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY)
+                                     HTON_AUTO_PART_KEY)
   {
     table_definition_ext= TABLEPROTOTESTER_EXT;
   }
@@ -68,19 +67,20 @@ public:
     return TableProtoTesterCursor_exts;
   }
 
-  int doCreateTable(Session*,
+  int doCreateTable(Session&,
                     Table&,
                     drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
-  int doGetTableDefinition(Session& session,
+  int doGetTableDefinition(Session &session,
                            drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       string&, set<string>& set_of_names)
+		       SchemaIdentifier &,
+		       set<string>& set_of_names)
   {
     (void)directory;
     set_of_names.insert("t1");
@@ -101,9 +101,24 @@ public:
             HA_KEYREAD_ONLY);
   }
 
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  bool doDoesTableExist(Session &session, TableIdentifier &identifier);
+
+  int doRenameTable(Session&, TableIdentifier&, TableIdentifier&)
+  {
+    return EPERM;
+  }
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
+void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                                   drizzled::SchemaIdentifier &schema_identifier,
+                                                   drizzled::TableIdentifiers &set_of_identifiers)
+{
+  set_of_identifiers.push_back(TableIdentifier(schema_identifier, "t1"));
+}
 
 bool TableProtoTesterEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
 {
@@ -128,9 +143,9 @@ int TableProtoTesterCursor::close(void)
   return 0;
 }
 
-int TableProtoTesterEngine::doCreateTable(Session*,
+int TableProtoTesterEngine::doCreateTable(Session&,
                                           Table&,
-                                          drizzled::TableIdentifier &,
+                                          drizzled::TableIdentifier&,
                                           drizzled::message::Table&)
 {
   return EEXIST;
@@ -177,12 +192,12 @@ const char *TableProtoTesterCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-int TableProtoTesterCursor::write_row(unsigned char *)
+int TableProtoTesterCursor::doInsertRecord(unsigned char *)
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int TableProtoTesterCursor::rnd_init(bool)
+int TableProtoTesterCursor::doStartTableScan(bool)
 {
   return(0);
 }
@@ -262,19 +277,11 @@ int TableProtoTesterCursor::index_last(unsigned char *)
 
 static drizzled::plugin::StorageEngine *tableprototester_engine= NULL;
 
-static int tableprototester_init(drizzled::plugin::Registry &registry)
+static int tableprototester_init(drizzled::module::Context &context)
 {
 
   tableprototester_engine= new TableProtoTesterEngine("TABLEPROTOTESTER");
-  registry.add(tableprototester_engine);
-
-  return 0;
-}
-
-static int tableprototester_fini(drizzled::plugin::Registry &registry)
-{
-  registry.remove(tableprototester_engine);
-  delete tableprototester_engine;
+  context.add(tableprototester_engine);
 
   return 0;
 }
@@ -288,7 +295,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Used to test rest of server with various table proto messages",
   PLUGIN_LICENSE_GPL,
   tableprototester_init,     /* Plugin Init */
-  tableprototester_fini,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

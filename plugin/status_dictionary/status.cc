@@ -62,8 +62,7 @@ StateTool::Generator::Generator(Field **arg, sql_var_t option_arg,
   }
   else
   {
-    Session *session= current_session;
-    status_ptr= &session->status_var;
+    status_ptr= &getSession().status_var;
   }
 }
 
@@ -118,7 +117,6 @@ bool StateTool::Generator::populate()
 extern drizzled::KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
 void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE show_type)
 {
-  Session *session= current_session;
   struct system_status_var *status_var;
   std::ostringstream oss;
 
@@ -133,7 +131,7 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
   if (show_type == SHOW_SYS)
   {
     show_type= ((sys_var*) value)->show_type();
-    value= (char*) ((sys_var*) value)->value_ptr(session, option_type,
+    value= (char*) ((sys_var*) value)->value_ptr(&(getSession()), option_type,
                                                  &null_lex_str);
   }
 
@@ -154,7 +152,7 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
     value= ((char *) status_var + (ulong) value);
     /* fall through */
   case SHOW_LONG:
-    oss << *(int64_t*) value;
+    oss << *(long*) value;
     return_value= oss.str();
     break;
   case SHOW_LONGLONG_STATUS:

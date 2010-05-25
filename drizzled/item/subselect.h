@@ -33,7 +33,7 @@ namespace drizzled
 
 class Select_Lex;
 class Select_Lex_Unit;
-class JOIN;
+class Join;
 class select_result_interceptor;
 class subselect_engine;
 class subselect_hash_sj_engine;
@@ -103,7 +103,7 @@ public:
   {
     null_value= 1;
   }
-  virtual trans_res select_transformer(JOIN *join);
+  virtual trans_res select_transformer(Join *join);
   bool assigned() { return value_assigned; }
   void assigned(bool a) { value_assigned= a; }
   enum Type type() const;
@@ -177,7 +177,7 @@ public:
   subs_type substype() { return SINGLEROW_SUBS; }
 
   void reset();
-  trans_res select_transformer(JOIN *join);
+  trans_res select_transformer(Join *join);
   void store(uint32_t i, Item* item);
   double val_real();
   int64_t val_int ();
@@ -356,13 +356,13 @@ public:
     null_value= 0;
     was_null= 0;
   }
-  trans_res select_transformer(JOIN *join);
-  trans_res select_in_like_transformer(JOIN *join, const Comp_creator *func);
-  trans_res single_value_transformer(JOIN *join, const Comp_creator *func);
-  trans_res row_value_transformer(JOIN * join);
-  trans_res single_value_in_to_exists_transformer(JOIN * join,
+  trans_res select_transformer(Join *join);
+  trans_res select_in_like_transformer(Join *join, const Comp_creator *func);
+  trans_res single_value_transformer(Join *join, const Comp_creator *func);
+  trans_res row_value_transformer(Join * join);
+  trans_res single_value_in_to_exists_transformer(Join * join,
                                                   const Comp_creator *func);
-  trans_res row_value_in_to_exists_transformer(JOIN * join);
+  trans_res row_value_in_to_exists_transformer(Join * join);
   virtual bool exec();
   int64_t val_int();
   double val_real();
@@ -400,7 +400,7 @@ public:
 
   // only ALL subquery has upper not
   subs_type substype() { return all?ALL_SUBS:ANY_SUBS; }
-  trans_res select_transformer(JOIN *join);
+  trans_res select_transformer(Join *join);
   virtual void print(String *str, enum_query_type query_type);
 };
 
@@ -489,7 +489,7 @@ class subselect_single_select_engine: public subselect_engine
   bool optimized; /* simple subselect is optimized */
   bool executed; /* simple subselect is executed */
   Select_Lex *select_lex; /* corresponding select_lex */
-  JOIN * join; /* corresponding JOIN structure */
+  Join * join; /* corresponding JOIN structure */
 public:
   subselect_single_select_engine(Select_Lex *select,
 				 select_result_interceptor *result,
@@ -572,7 +572,7 @@ protected:
   bool null_keypart; /* TRUE <=> constructed search tuple has a NULL */
 public:
 
-  // constructor can assign Session because it will be called after JOIN::prepare
+  // constructor can assign Session because it will be called after Join::prepare
   subselect_uniquesubquery_engine(Session *session_arg, JoinTable *tab_arg,
 				  Item_subselect *subs, Item *where)
     :subselect_engine(subs, 0), tab(tab_arg), cond(where)
@@ -633,7 +633,7 @@ class subselect_indexsubquery_engine: public subselect_uniquesubquery_engine
   Item *having;
 public:
 
-  // constructor can assign Session because it will be called after JOIN::prepare
+  // constructor can assign Session because it will be called after Join::prepare
   subselect_indexsubquery_engine(Session *session_arg, JoinTable *tab_arg,
 				 Item_subselect *subs, Item *where,
                                  Item *having_arg, bool chk_null)
@@ -681,7 +681,7 @@ protected:
     QEP to execute the subquery and materialize its result into a
     temporary table. Created during the first call to exec().
   */
-  JOIN *materialize_join;
+  Join *materialize_join;
   /* Temp table context of the outer select's JOIN. */
   Tmp_Table_Param *tmp_param;
 

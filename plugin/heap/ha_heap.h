@@ -52,9 +52,9 @@ public:
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   void set_keys_for_scanning(void);
-  int write_row(unsigned char * buf);
-  int update_row(const unsigned char * old_data, unsigned char * new_data);
-  int delete_row(const unsigned char * buf);
+  int doInsertRecord(unsigned char * buf);
+  int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int doDeleteRecord(const unsigned char * buf);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
@@ -72,7 +72,7 @@ public:
   int index_prev(unsigned char * buf);
   int index_first(unsigned char * buf);
   int index_last(unsigned char * buf);
-  int rnd_init(bool scan);
+  int doStartTableScan(bool scan);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
   void position(const unsigned char *record);

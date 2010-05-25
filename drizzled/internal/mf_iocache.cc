@@ -74,27 +74,77 @@ static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t 
 static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
 static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count);
 
-#define lock_append_buffer(info) \
- pthread_mutex_lock(&(info)->append_buffer_lock)
-#define unlock_append_buffer(info) \
- pthread_mutex_unlock(&(info)->append_buffer_lock)
+/**
+ * @brief
+ *   Lock appends for the IO_CACHE   
+ */
+inline
+static void lock_append_buffer(register IO_CACHE *info)
+{
+  pthread_mutex_lock(&(info)->append_buffer_lock);
+}
 
-#define IO_ROUND_UP(X) (((X)+IO_SIZE-1) & ~(IO_SIZE-1))
-#define IO_ROUND_DN(X) ( (X)            & ~(IO_SIZE-1))
+/**
+ * @brief
+ *   Lock appends for the IO_CACHE   
+ */
+inline
+static void unlock_append_buffer(register IO_CACHE *info)
+{
+  pthread_mutex_unlock(&(info)->append_buffer_lock);
+}
 
-/*
-  Setup internal pointers inside IO_CACHE
+/**
+ * @brief
+ *   Lock appends for the IO_CACHE if required (need_append_buffer_lock)   
+ */
+inline
+static void lock_append_buffer(register IO_CACHE *info, int need_append_buffer_lock)
+{
+  if (need_append_buffer_lock) lock_append_buffer(info);
+}
 
-  SYNOPSIS
-    setup_io_cache()
-    info		IO_CACHE handler
+/**
+ * @brief
+ *   Unlock appends for the IO_CACHE if required (need_append_buffer_lock)   
+ */
+inline
+static void unlock_append_buffer(register IO_CACHE *info, int need_append_buffer_lock)
+{
+  if (need_append_buffer_lock) unlock_append_buffer(info);
+}
 
-  NOTES
-    This is called on automaticly on init or reinit of IO_CACHE
-    It must be called externally if one moves or copies an IO_CACHE
-    object.
-*/
+/**
+ * @brief
+ *   Round up to the nearest IO_SIZE boundary 
+ */
+inline
+static size_t io_round_up(size_t x)
+{
+  return ((x+IO_SIZE-1) & ~(IO_SIZE-1));
+}
 
+/**
+ * @brief
+ *   Round down to the nearest IO_SIZE boundary   
+ */
+inline
+static size_t io_round_dn(size_t x)
+{
+  return (x & ~(IO_SIZE-1));
+}
+
+
+/**
+ * @brief 
+ *   Setup internal pointers inside IO_CACHE
+ * 
+ * @details
+ *   This is called on automatically on init or reinit of IO_CACHE
+ *   It must be called externally if one moves or copies an IO_CACHE object.
+ * 
+ * @param info Cache handler to setup
+ */
 void setup_io_cache(IO_CACHE* info)
 {
   /* Ensure that my_b_tell() and my_b_bytes_in_cache works */
@@ -139,30 +189,24 @@ init_functions(IO_CACHE* info)
   setup_io_cache(info);
 }
 
-
-/*
-  Initialize an IO_CACHE object
-
-  SYNOPSOS
-    init_io_cache()
-    info		cache handler to initialize
-    file		File that should be associated to to the handler
-			If == -1 then real_open_cached_file()
-			will be called when it's time to open file.
-    cachesize		Size of buffer to allocate for read/write
-			If == 0 then use my_default_record_cache_size
-    type		Type of cache
-    seek_offset		Where cache should start reading/writing
-    use_async_io	Set to 1 of we should use async_io (if avaiable)
-    cache_myflags	Bitmap of differnt flags
-			MY_WME | MY_FAE | MY_NABP | MY_FNABP |
-			MY_DONT_CHECK_FILESIZE
-
-  RETURN
-    0  ok
-    #  error
-*/
-
+/**
+ * @brief
+ *   Initialize an IO_CACHE object
+ *
+ * @param info Cache handler to initialize
+ * @param file File that should be associated with the handler
+ *                 If == -1 then real_open_cached_file() will be called when it's time to open file.
+ * @param cachesize Size of buffer to allocate for read/write
+ *                      If == 0 then use my_default_record_cache_size
+ * @param type Type of cache
+ * @param seek_offset Where cache should start reading/writing
+ * @param use_async_io Set to 1 if we should use async_io (if avaiable)
+ * @param cache_myflags Bitmap of different flags
+                            MY_WME | MY_FAE | MY_NABP | MY_FNABP | MY_DONT_CHECK_FILESIZE
+ * 
+ * @retval 0 success
+ * @retval # error
+ */
 int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
 		  enum cache_type type, my_off_t seek_offset,
 		  bool use_async_io, myf cache_myflags)
@@ -311,14 +355,16 @@ static void my_aiowait(my_aio_result *result)
 }
 #endif
 
-
-/*
-  Use this to reset cache to re-start reading or to change the type
-  between READ_CACHE <-> WRITE_CACHE
-  If we are doing a reinit of a cache where we have the start of the file
-  in the cache, we are reusing this memory without flushing it to disk.
-*/
-
+/**
+ * @brief 
+ *   Reset the cache
+ * 
+ * @detail
+ *   Use this to reset cache to re-start reading or to change the type 
+ *   between READ_CACHE <-> WRITE_CACHE
+ *   If we are doing a reinit of a cache where we have the start of the file
+ *   in the cache, we are reusing this memory without flushing it to disk.
+ */
 bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 			my_off_t seek_offset,
 			bool use_async_io,
@@ -409,36 +455,30 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
   return(0);
 } /* reinit_io_cache */
 
-
-
-/*
-  Read buffered.
-
-  SYNOPSIS
-    _my_b_read()
-      info                      IO_CACHE pointer
-      Buffer                    Buffer to retrieve count bytes from file
-      Count                     Number of bytes to read into Buffer
-
-  NOTE
-    This function is only called from the my_b_read() macro when there
-    isn't enough characters in the buffer to satisfy the request.
-
-  WARNING
-
-    When changing this function, be careful with handling file offsets
-    (end-of_file, pos_in_file). Do not cast them to possibly smaller
-    types than my_off_t unless you can be sure that their value fits.
-    Same applies to differences of file offsets.
-
-    When changing this function, check _my_b_read_r(). It might need the
-    same change.
-
-  RETURN
-    0      we succeeded in reading all data
-    1      Error: can't read requested characters
-*/
-
+/**
+ * @brief 
+ *   Read buffered.
+ * 
+ * @detail
+ *   This function is only called from the my_b_read() macro when there
+ *   aren't enough characters in the buffer to satisfy the request.
+ *
+ * WARNING
+ *   When changing this function, be careful with handling file offsets
+ *   (end-of_file, pos_in_file). Do not cast them to possibly smaller
+ *   types than my_off_t unless you can be sure that their value fits.
+ *   Same applies to differences of file offsets.
+ *
+ * When changing this function, check _my_b_read_r(). It might need the
+ * same change.
+ * 
+ * @param info IO_CACHE pointer
+ * @param Buffer Buffer to retrieve count bytes from file
+ * @param Count Number of bytes to read into Buffer
+ * 
+ * @retval 0 We succeeded in reading all data
+ * @retval 1 Error: can't read requested characters
+ */
 static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length,diff_length,left_length, max_length;
@@ -536,75 +576,65 @@ static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Cou
   return(0);
 }
 
-
-/*
-  Prepare IO_CACHE for shared use.
-
-  SYNOPSIS
-    init_io_cache_share()
-      read_cache                A read cache. This will be copied for
-                                every thread after setup.
-      cshare                    The share.
-      write_cache               If non-NULL a write cache that is to be
-                                synchronized with the read caches.
-      num_threads               Number of threads sharing the cache
-                                including the write thread if any.
-
-  DESCRIPTION
-
-    The shared cache is used so: One IO_CACHE is initialized with
-    init_io_cache(). This includes the allocation of a buffer. Then a
-    share is allocated and init_io_cache_share() is called with the io
-    cache and the share. Then the io cache is copied for each thread. So
-    every thread has its own copy of IO_CACHE. But the allocated buffer
-    is shared because cache->buffer is the same for all caches.
-
-    One thread reads data from the file into the buffer. All threads
-    read from the buffer, but every thread maintains its own set of
-    pointers into the buffer. When all threads have used up the buffer
-    contents, one of the threads reads the next block of data into the
-    buffer. To accomplish this, each thread enters the cache lock before
-    accessing the buffer. They wait in lock_io_cache() until all threads
-    joined the lock. The last thread entering the lock is in charge of
-    reading from file to buffer. It wakes all threads when done.
-
-    Synchronizing a write cache to the read caches works so: Whenever
-    the write buffer needs a flush, the write thread enters the lock and
-    waits for all other threads to enter the lock too. They do this when
-    they have used up the read buffer. When all threads are in the lock,
-    the write thread copies the write buffer to the read buffer and
-    wakes all threads.
-
-    share->running_threads is the number of threads not being in the
-    cache lock. When entering lock_io_cache() the number is decreased.
-    When the thread that fills the buffer enters unlock_io_cache() the
-    number is reset to the number of threads. The condition
-    running_threads == 0 means that all threads are in the lock. Bumping
-    up the number to the full count is non-intuitive. But increasing the
-    number by one for each thread that leaves the lock could lead to a
-    solo run of one thread. The last thread to join a lock reads from
-    file to buffer, wakes the other threads, processes the data in the
-    cache and enters the lock again. If no other thread left the lock
-    meanwhile, it would think it's the last one again and read the next
-    block...
-
-    The share has copies of 'error', 'buffer', 'read_end', and
-    'pos_in_file' from the thread that filled the buffer. We may not be
-    able to access this information directly from its cache because the
-    thread may be removed from the share before the variables could be
-    copied by all other threads. Or, if a write buffer is synchronized,
-    it would change its 'pos_in_file' after waking the other threads,
-    possibly before they could copy its value.
-
-    However, the 'buffer' variable in the share is for a synchronized
-    write cache. It needs to know where to put the data. Otherwise it
-    would need access to the read cache of one of the threads that is
-    not yet removed from the share.
-
-  RETURN
-    void
-*/
-
+/**
+ * @brief
+ *   Prepare IO_CACHE for shared use.
+ *
+ * @detail
+ *   The shared cache is used so: One IO_CACHE is initialized with
+ *   init_io_cache(). This includes the allocation of a buffer. Then a
+ *   share is allocated and init_io_cache_share() is called with the io
+ *   cache and the share. Then the io cache is copied for each thread. So
+ *   every thread has its own copy of IO_CACHE. But the allocated buffer
+ *   is shared because cache->buffer is the same for all caches.
+ *
+ *   One thread reads data from the file into the buffer. All threads
+ *   read from the buffer, but every thread maintains its own set of
+ *   pointers into the buffer. When all threads have used up the buffer
+ *   contents, one of the threads reads the next block of data into the
+ *   buffer. To accomplish this, each thread enters the cache lock before
+ *   accessing the buffer. They wait in lock_io_cache() until all threads
+ *   joined the lock. The last thread entering the lock is in charge of
+ *   reading from file to buffer. It wakes all threads when done.
+ *
+ *   Synchronizing a write cache to the read caches works so: Whenever
+ *   the write buffer needs a flush, the write thread enters the lock and
+ *   waits for all other threads to enter the lock too. They do this when
+ *   they have used up the read buffer. When all threads are in the lock,
+ *   the write thread copies the write buffer to the read buffer and
+ *   wakes all threads.
+ *
+ *   share->running_threads is the number of threads not being in the
+ *   cache lock. When entering lock_io_cache() the number is decreased.
+ *   When the thread that fills the buffer enters unlock_io_cache() the
+ *   number is reset to the number of threads. The condition
+ *   running_threads == 0 means that all threads are in the lock. Bumping
+ *   up the number to the full count is non-intuitive. But increasing the
+ *   number by one for each thread that leaves the lock could lead to a
+ *   solo run of one thread. The last thread to join a lock reads from
+ *   file to buffer, wakes the other threads, processes the data in the
+ *   cache and enters the lock again. If no other thread left the lock
+ *   meanwhile, it would think it's the last one again and read the next
+ *   block...
+ *
+ *   The share has copies of 'error', 'buffer', 'read_end', and
+ *   'pos_in_file' from the thread that filled the buffer. We may not be
+ *   able to access this information directly from its cache because the
+ *   thread may be removed from the share before the variables could be
+ *   copied by all other threads. Or, if a write buffer is synchronized,
+ *   it would change its 'pos_in_file' after waking the other threads,
+ *   possibly before they could copy its value.
+ *
+ *   However, the 'buffer' variable in the share is for a synchronized
+ *   write cache. It needs to know where to put the data. Otherwise it
+ *   would need access to the read cache of one of the threads that is
+ *   not yet removed from the share.
+ *
+ * @param read_cache A read cache. This will be copied for every thread after setup.
+ * @param cshare The share.
+ * @param write_cache If non-NULL a write cache that is to be synchronized with the read caches.
+ * @param num_threads Number of threads sharing the cache including the write thread if any.
+ */
 void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
                          IO_CACHE *write_cache, uint32_t num_threads)
 {
@@ -635,26 +665,16 @@ void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
   return;
 }
 
-
-/*
-  Remove a thread from shared access to IO_CACHE.
-
-  SYNOPSIS
-    remove_io_thread()
-      cache                     The IO_CACHE to be removed from the share.
-
-  NOTE
-
-    Every thread must do that on exit for not to deadlock other threads.
-
-    The last thread destroys the pthread resources.
-
-    A writer flushes its cache first.
-
-  RETURN
-    void
-*/
-
+/**
+ * @brief
+ *   Remove a thread from shared access to IO_CACHE.
+ * @detail
+ *   Every thread must do that on exit for not to deadlock other threads.
+ *   The last thread destroys the pthread resources.
+ *   A writer flushes its cache first.
+ *
+ * @param cache The IO_CACHE to be removed from the share.
+ */
 void remove_io_thread(IO_CACHE *cache)
 {
   IO_CACHE_SHARE *cshare= cache->share;
@@ -697,35 +717,29 @@ void remove_io_thread(IO_CACHE *cache)
   return;
 }
 
-
-/*
-  Lock IO cache and wait for all other threads to join.
-
-  SYNOPSIS
-    lock_io_cache()
-      cache                     The cache of the thread entering the lock.
-      pos                       File position of the block to read.
-                                Unused for the write thread.
-
-  DESCRIPTION
-
-    Wait for all threads to finish with the current buffer. We want
-    all threads to proceed in concert. The last thread to join
-    lock_io_cache() will read the block from file and all threads start
-    to use it. Then they will join again for reading the next block.
-
-    The waiting threads detect a fresh buffer by comparing
-    cshare->pos_in_file with the position they want to process next.
-    Since the first block may start at position 0, we take
-    cshare->read_end as an additional condition. This variable is
-    initialized to NULL and will be set after a block of data is written
-    to the buffer.
-
-  RETURN
-    1           OK, lock in place, go ahead and read.
-    0           OK, unlocked, another thread did the read.
-*/
-
+/**
+ * @brief
+ *   Lock IO cache and wait for all other threads to join.
+ *
+ * @detail
+ *   Wait for all threads to finish with the current buffer. We want
+ *   all threads to proceed in concert. The last thread to join
+ *   lock_io_cache() will read the block from file and all threads start
+ *   to use it. Then they will join again for reading the next block.
+ *
+ *   The waiting threads detect a fresh buffer by comparing
+ *   cshare->pos_in_file with the position they want to process next.
+ *   Since the first block may start at position 0, we take
+ *   cshare->read_end as an additional condition. This variable is
+ *   initialized to NULL and will be set after a block of data is written
+ *   to the buffer.
+ *
+ * @param cache The cache of the thread entering the lock.
+ * @param pos File position of the block to read. Unused for the write thread.
+ *
+ * @retval 1 OK, lock in place, go ahead and read.
+ * @retval 0 OK, unlocked, another thread did the read.
+ */
 static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
 {
   IO_CACHE_SHARE *cshare= cache->share;
@@ -823,34 +837,28 @@ static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
   return(0);
 }
 
-
-/*
-  Unlock IO cache.
-
-  SYNOPSIS
-    unlock_io_cache()
-      cache                     The cache of the thread leaving the lock.
-
-  NOTE
-    This is called by the thread that filled the buffer. It marks all
-    threads as running and awakes them. This must not be done by any
-    other thread.
-
-    Do not signal cond_writer. Either there is no writer or the writer
-    is the only one who can call this function.
-
-    The reason for resetting running_threads to total_threads before
-    waking all other threads is that it could be possible that this
-    thread is so fast with processing the buffer that it enters the lock
-    before even one other thread has left it. If every awoken thread
-    would increase running_threads by one, this thread could think that
-    he is again the last to join and would not wait for the other
-    threads to process the data.
-
-  RETURN
-    void
-*/
-
+/**
+ * @brief
+ *   Unlock IO cache.
+ * 
+ * @detail
+ *   This is called by the thread that filled the buffer. It marks all
+ *   threads as running and awakes them. This must not be done by any
+ *   other thread.
+ *
+ *   Do not signal cond_writer. Either there is no writer or the writer
+ *   is the only one who can call this function.
+ *
+ *   The reason for resetting running_threads to total_threads before
+ *   waking all other threads is that it could be possible that this
+ *   thread is so fast with processing the buffer that it enters the lock
+ *   before even one other thread has left it. If every awoken thread
+ *   would increase running_threads by one, this thread could think that
+ *   he is again the last to join and would not wait for the other
+ *   threads to process the data.
+ *
+ * @param cache The cache of the thread leaving the lock.
+ */
 static void unlock_io_cache(IO_CACHE *cache)
 {
   IO_CACHE_SHARE *cshare= cache->share;
@@ -861,44 +869,36 @@ static void unlock_io_cache(IO_CACHE *cache)
   return;
 }
 
-
-/*
-  Read from IO_CACHE when it is shared between several threads.
-
-  SYNOPSIS
-    _my_b_read_r()
-      cache                     IO_CACHE pointer
-      Buffer                    Buffer to retrieve count bytes from file
-      Count                     Number of bytes to read into Buffer
-
-  NOTE
-    This function is only called from the my_b_read() macro when there
-    isn't enough characters in the buffer to satisfy the request.
-
-  IMPLEMENTATION
-
-    It works as follows: when a thread tries to read from a file (that
-    is, after using all the data from the (shared) buffer), it just
-    hangs on lock_io_cache(), waiting for other threads. When the very
-    last thread attempts a read, lock_io_cache() returns 1, the thread
-    does actual IO and unlock_io_cache(), which signals all the waiting
-    threads that data is in the buffer.
-
-  WARNING
-
-    When changing this function, be careful with handling file offsets
-    (end-of_file, pos_in_file). Do not cast them to possibly smaller
-    types than my_off_t unless you can be sure that their value fits.
-    Same applies to differences of file offsets. (Bug #11527)
-
-    When changing this function, check _my_b_read(). It might need the
-    same change.
-
-  RETURN
-    0      we succeeded in reading all data
-    1      Error: can't read requested characters
-*/
-
+/**
+ * @brief
+ *   Read from IO_CACHE when it is shared between several threads.
+ * @detail
+ *   This function is only called from the my_b_read() macro when there
+ *   aren't enough characters in the buffer to satisfy the request.
+ *
+ * IMPLEMENTATION
+ *   It works as follows: when a thread tries to read from a file (that
+ *   is, after using all the data from the (shared) buffer), it just
+ *   hangs on lock_io_cache(), waiting for other threads. When the very
+ *   last thread attempts a read, lock_io_cache() returns 1, the thread
+ *   does actual IO and unlock_io_cache(), which signals all the waiting
+ *   threads that data is in the buffer.
+ *
+ * WARNING
+ *   When changing this function, be careful with handling file offsets
+ *   (end-of_file, pos_in_file). Do not cast them to possibly smaller
+ *   types than my_off_t unless you can be sure that their value fits.
+ *   Same applies to differences of file offsets. (Bug #11527)
+ *
+ *   When changing this function, check _my_b_read(). It might need thesame change.
+ * 
+ * @param cache IO_CACHE pointer
+ * @param Buffer Buffer to retrieve count bytes from file
+ * @param Count Number of bytes to read into Buffer
+ *
+ * @retval 0 We succeeded in reading all data
+ * @retval 1 Error: can't read requested characters
+ */
 int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
 {
   my_off_t pos_in_file;
@@ -918,10 +918,10 @@ int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
 
     pos_in_file= cache->pos_in_file + (cache->read_end - cache->buffer);
     diff_length= (size_t) (pos_in_file & (IO_SIZE-1));
-    length=IO_ROUND_UP(Count+diff_length)-diff_length;
+    length=io_round_up(Count+diff_length)-diff_length;
     length= ((length <= cache->read_length) ?
-             length + IO_ROUND_DN(cache->read_length - length) :
-             length - IO_ROUND_UP(length - cache->read_length));
+             length + io_round_dn(cache->read_length - length) :
+             length - io_round_up(length - cache->read_length));
     if (cache->type != READ_FIFO &&
 	(length > (cache->end_of_file - pos_in_file)))
       length= (size_t) (cache->end_of_file - pos_in_file);
@@ -1002,24 +1002,17 @@ int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
   return(0);
 }
 
-
-/*
-  Copy data from write cache to read cache.
-
-  SYNOPSIS
-    copy_to_read_buffer()
-      write_cache               The write cache.
-      write_buffer              The source of data, mostly the cache buffer.
-      write_length              The number of bytes to copy.
-
-  NOTE
-    The write thread will wait for all read threads to join the cache
-    lock. Then it copies the data over and wakes the read threads.
-
-  RETURN
-    void
-*/
-
+/**
+ * @brief
+ *   Copy data from write cache to read cache.
+ * @detail
+ *   The write thread will wait for all read threads to join the cache lock.
+ *   Then it copies the data over and wakes the read threads.
+ *
+ * @param write_cache The write cache.
+ * @param write_buffer The source of data, mostly the cache buffer.
+ * @param write_length The number of bytes to copy.
+ */
 static void copy_to_read_buffer(IO_CACHE *write_cache,
                                 const unsigned char *write_buffer, size_t write_length)
 {
@@ -1053,20 +1046,19 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
   }
 }
 
-
-/*
-  Do sequential read from the SEQ_READ_APPEND cache.
-
-  We do this in three stages:
-   - first read from info->buffer
-   - then if there are still data to read, try the file descriptor
-   - afterwards, if there are still data to read, try append buffer
-
-  RETURNS
-    0  Success
-    1  Failed to read
-*/
-
+/**
+ * @brief
+ *   Do sequential read from the SEQ_READ_APPEND cache.
+ *
+ * @detail
+ *   We do this in three stages:
+ *      - first read from info->buffer
+ *      - then if there are still data to read, try the file descriptor
+ *      - afterwards, if there are still data to read, try append buffer
+ *
+ * @retval 0 Success
+ * @retval 1 Failed to read
+ */
 int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length, diff_length, left_length, save_count, max_length;
@@ -1213,22 +1205,18 @@ read_append_buffer:
 
 #ifdef HAVE_AIOWAIT
 
-/*
-  Read from the IO_CACHE into a buffer and feed asynchronously
-  from disk when needed.
-
-  SYNOPSIS
-    _my_b_async_read()
-      info                      IO_CACHE pointer
-      Buffer                    Buffer to retrieve count bytes from file
-      Count                     Number of bytes to read into Buffer
-
-  RETURN VALUE
-    -1          An error has occurred; errno is set.
-     0          Success
-     1          An error has occurred; IO_CACHE to error state.
-*/
-
+/**
+ * @brief
+ *   Read from the IO_CACHE into a buffer and feed asynchronously from disk when needed.
+ *
+ * @param info IO_CACHE pointer
+ * @param Buffer Buffer to retrieve count bytes from file
+ * @param Count Number of bytes to read into Buffer
+ * 
+ * @retval -1 An error has occurred; errno is set.
+ * @retval 0 Success
+ * @retval 1 An error has occurred; IO_CACHE to error state.
+ */
 int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
 {
   size_t length,read_length,diff_length,left_length,use_length,org_Count;
@@ -1392,8 +1380,10 @@ int _my_b_async_read(register IO_CACHE *info, unsigned char *Buffer, size_t Coun
 #endif
 
 
-/* Read one byte when buffer is empty */
-
+/**
+ * @brief
+ *   Read one byte when buffer is empty
+ */
 int _my_b_get(IO_CACHE *info)
 {
   unsigned char buff;
@@ -1407,16 +1397,14 @@ int _my_b_get(IO_CACHE *info)
   return (int) (unsigned char) buff;
 }
 
-/*
-   Write a byte buffer to IO_CACHE and flush to disk
-   if IO_CACHE is full.
-
-   RETURN VALUE
-    1 On error on write
-    0 On success
-   -1 On error; errno contains error code.
-*/
-
+/**
+ * @brief
+ *   Write a byte buffer to IO_CACHE and flush to disk if IO_CACHE is full.
+ *
+ * @retval -1 On error; errno contains error code.
+ * @retval 0 On success
+ * @retval 1 On error on write
+ */
 int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count)
 {
   size_t rest_length,length;
@@ -1479,12 +1467,12 @@ int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Cou
   return 0;
 }
 
-/*
-  Write a block to disk where part of the data may be inside the record
-  buffer.  As all write calls to the data goes through the cache,
-  we will never get a seek over the end of the buffer
-*/
-
+/**
+ * @brief
+ *   Write a block to disk where part of the data may be inside the record buffer.
+ *   As all write calls to the data goes through the cache,
+ *   we will never get a seek over the end of the buffer.
+ */
 int my_block_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count,
 		   my_off_t pos)
 {
@@ -1534,14 +1522,10 @@ int my_block_write(register IO_CACHE *info, const unsigned char *Buffer, size_t 
   return error;
 }
 
-
-	/* Flush write cache */
-
-#define LOCK_APPEND_BUFFER if (need_append_buffer_lock) \
-  lock_append_buffer(info);
-#define UNLOCK_APPEND_BUFFER if (need_append_buffer_lock) \
-  unlock_append_buffer(info);
-
+/**
+ * @brief
+ *   Flush write cache 
+ */
 int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
 {
   size_t length;
@@ -1558,7 +1542,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       if (real_open_cached_file(info))
 	return((info->error= -1));
     }
-    LOCK_APPEND_BUFFER;
+    lock_append_buffer(info, need_append_buffer_lock);
 
     if ((length=(size_t) (info->write_pos - info->write_buffer)))
     {
@@ -1580,7 +1564,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       {					/* File touched, do seek */
 	if (lseek(info->file,pos_in_file,SEEK_SET) == MY_FILEPOS_ERROR)
 	{
-	  UNLOCK_APPEND_BUFFER;
+	  unlock_append_buffer(info, need_append_buffer_lock);
 	  return((info->error= -1));
 	}
 	if (!append_cache)
@@ -1608,7 +1592,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       }
 
       info->append_read_pos=info->write_pos=info->write_buffer;
-      UNLOCK_APPEND_BUFFER;
+      unlock_append_buffer(info, need_append_buffer_lock);
       return(info->error);
     }
   }
@@ -1619,27 +1603,24 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
     info->inited=0;
   }
 #endif
-  UNLOCK_APPEND_BUFFER;
+  unlock_append_buffer(info, need_append_buffer_lock);
   return(0);
 }
 
-/*
-  Free an IO_CACHE object
-
-  SYNOPSOS
-    end_io_cache()
-    info		IO_CACHE Handle to free
-
-  NOTES
-    It's currently safe to call this if one has called init_io_cache()
-    on the 'info' object, even if init_io_cache() failed.
-    This function is also safe to call twice with the same handle.
-
-  RETURN
-   0  ok
-   #  Error
-*/
-
+/**
+ * @brief
+ *   Free an IO_CACHE object
+ * 
+ * @detail
+ *   It's currently safe to call this if one has called init_io_cache()
+ *   on the 'info' object, even if init_io_cache() failed.
+ *   This function is also safe to call twice with the same handle.
+ * 
+ * @param info IO_CACHE Handle to free
+ * 
+ * @retval 0 ok
+ * @retval # Error
+ */
 int end_io_cache(IO_CACHE *info)
 {
   int error=0;

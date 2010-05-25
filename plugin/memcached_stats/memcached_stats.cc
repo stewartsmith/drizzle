@@ -59,7 +59,7 @@ static char *sysvar_memcached_servers= NULL;
  * @param[in] registry the drizzled::plugin::Registry singleton
  * @return false on success; true on failure.
  */
-static int init(plugin::Registry &registry)
+static int init(module::Context &context)
 {
 
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
@@ -67,26 +67,11 @@ static int init(plugin::Registry &registry)
 
   /* we are good to go */
   stats_table_tool= new(std::nothrow)StatsTableTool; 
-  registry.add(stats_table_tool);
+  context.add(stats_table_tool);
 
   analysis_table_tool= new(std::nothrow)AnalysisTableTool;
-  registry.add(analysis_table_tool);
+  context.add(analysis_table_tool);
 
-  return 0;
-}
-
-/**
- * Clean up the memcached stats plugin.
- *
- * @param[in] registry the drizzled::plugin::Registry singleton
- * @return false on success; true on failure
- */
-static int deinit(plugin::Registry &registry)
-{
-  registry.remove(stats_table_tool);
-  delete stats_table_tool;
-  registry.remove(analysis_table_tool);
-  delete analysis_table_tool;
   return 0;
 }
 
@@ -146,7 +131,6 @@ DRIZZLE_DECLARE_PLUGIN
   N_("Memcached Stats as I_S tables"),
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  deinit, /* Plugin Deinit    */
   system_variables, /* system variables */
   NULL    /* config options   */
 }

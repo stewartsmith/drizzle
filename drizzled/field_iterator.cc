@@ -129,7 +129,7 @@ const char *Field_iterator_table_ref::table_name()
     return natural_join_it.column_ref()->table_name();
 
   assert(!strcmp(table_ref->table_name,
-                      table_ref->table->s->table_name.str));
+                      table_ref->table->getShare()->getTableName()));
   return table_ref->table_name;
 }
 
@@ -143,7 +143,7 @@ const char *Field_iterator_table_ref::db_name()
     Test that TableList::db is the same as TableShare::db to
     ensure consistency. 
   */
-  assert(!strcmp(table_ref->db, table_ref->table->s->getSchemaName()));
+  assert(!strcmp(table_ref->db, table_ref->table->getShare()->getSchemaName()));
   return table_ref->db;
 }
 
@@ -200,7 +200,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     /* The field belongs to a stored table. */
     Field *tmp_field= table_field_it.field();
     nj_col= new Natural_join_column(tmp_field, table_ref);
-    field_count= table_ref->table->s->fields;
+    field_count= table_ref->table->getShare()->fields;
   }
   else
   {

@@ -7,6 +7,7 @@ set @my_mysql_protocol_buffer_length =@@global.mysql_protocol_buffer_length;
 set @my_server_id                 =@@global.server_id;
 set @my_storage_engine            =@@global.storage_engine;
 set @my_myisam_sort_buffer_size	  =@@global.myisam_sort_buffer_size;
+set @my_tx_isolation	  =@@global.tx_isolation;
 set @`test`=1;
 select @test, @`test`, @TEST, @`TEST`, @"teSt";
 @test	@`test`	@TEST	@`TEST`	@"teSt"
@@ -585,6 +586,46 @@ set global storage_engine            =@my_storage_engine;
 set global thread_cache_size         =@my_thread_cache_size;
 ERROR HY000: Unknown system variable 'thread_cache_size'
 set global myisam_sort_buffer_size   =@my_myisam_sort_buffer_size;
+SHOW GLOBAL VARIABLES LIKE 'max_join_size';
+Variable_name	Value
+max_join_size	2147483647
+SHOW LOCAL VARIABLES LIKE 'max_join_size';
+Variable_name	Value
+max_join_size	100
+set GLOBAL bulk_insert_buffer_size=DEFAULT;
+set GLOBAL join_buffer_size=DEFAULT;
+set GLOBAL max_allowed_packet=DEFAULT;
+set GLOBAL max_connect_errors=DEFAULT;
+set GLOBAL max_heap_table_size=DEFAULT;
+set GLOBAL max_join_size=DEFAULT;
+set GLOBAL max_sort_length=DEFAULT;
+set GLOBAL max_write_lock_count=DEFAULT;
+set GLOBAL myisam_sort_buffer_size=DEFAULT;
+set GLOBAL mysql_protocol_buffer_length=DEFAULT;
+set GLOBAL read_buffer_size=DEFAULT;
+set GLOBAL read_rnd_buffer_size=DEFAULT;
+set GLOBAL server_id=DEFAULT;
+set GLOBAL sort_buffer_size=DEFAULT;
+set GLOBAL table_open_cache=DEFAULT;
+set GLOBAL storage_engine= @my_storage_engine;
+set GLOBAL tmp_table_size=DEFAULT;
+set GLOBAL tx_isolation= @my_tx_isolation;
+set SESSION bulk_insert_buffer_size=DEFAULT;
+set SESSION join_buffer_size=DEFAULT;
+set SESSION max_allowed_packet=DEFAULT;
+set SESSION max_heap_table_size=DEFAULT;
+set SESSION max_join_size=DEFAULT;
+set SESSION max_sort_length=DEFAULT;
+set SESSION read_buffer_size=DEFAULT;
+set SESSION read_rnd_buffer_size=DEFAULT;
+set SESSION sort_buffer_size=DEFAULT;
+set SESSION sql_big_selects=DEFAULT;
+set SESSION sql_buffer_result=DEFAULT;
+set SESSION sql_select_limit=DEFAULT;
+set SESSION sql_warnings=DEFAULT;
+set SESSION storage_engine= @my_storage_engine;
+set SESSION tmp_table_size=DEFAULT;
+set SESSION tx_isolation= @my_tx_isolation;
 show global variables where variable_name='table_definition_cache' or Variable_name='table_lock_wait_timeout';
 Variable_name	Value
 table_definition_cache	#
