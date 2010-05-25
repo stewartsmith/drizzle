@@ -2,6 +2,9 @@
 # included from Top Level Makefile.am
 # All paths should be given relative to the root
 
-noinst_PROGRAMS+= unittests/unittests
+check_PROGRAMS += unittests/calendar_test
 
-unittests_unittests_SOURCES=	unittests/calendar_test.cc drizzled/calendar.cc
+unittests_calendar_test_LDADD = drizzled/libtemporal.la ${LTLIBGTEST}
+unittests_calendar_test_SOURCES = unittests/calendar_test.cc \
+	unittests/temporal_test.cc unittests/temporal_format_test.cc \
+	unittests/temporal_interval_test.cc unittests/generator.cc
