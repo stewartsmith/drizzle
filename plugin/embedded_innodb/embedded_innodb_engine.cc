@@ -1846,12 +1846,13 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 {
   ib_err_t err;
   int res;
-  int ret;
+  int ret= 0;
   ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
 
   if (share->has_hidden_primary_key)
   {
-    err= ib_col_set_value(search_tuple, 0, ((uint64_t*)(ref)), sizeof(uint64_t));
+    err= ib_col_set_value(search_tuple, 0,
+                          ((uint64_t*)(ref)), sizeof(uint64_t));
   }
   else
   {
@@ -1862,16 +1863,23 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
 
   err= ib_cursor_moveto(cursor, search_tuple, IB_CUR_GE, &res);
   assert(err == DB_SUCCESS);
+
+  assert(res==0);
+  if (res != 0)
+    ret= -1;
+
   ib_tuple_delete(search_tuple);
 
   tuple= ib_tuple_clear(tuple);
-  ret= read_row_from_innodb(buf, cursor, tuple, table,
-                            share->has_hidden_primary_key,
-                            &hidden_autoinc_pkey_position);
+
+  if (ret == 0)
+    ret= read_row_from_innodb(buf, cursor, tuple, table,
+                              share->has_hidden_primary_key,
+                              &hidden_autoinc_pkey_position);
 
   advance_cursor= true;
 
-  return(0);
+  return(ret);
 }
 
 static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, int ref_len, const unsigned char *record)
