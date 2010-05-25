@@ -494,6 +494,39 @@ int ha_filesystem::doEndTableScan()
   return 0;
 }
 
+int ha_filesystem::doInsertRecord(unsigned char * buf)
+{
+  ha_statistic_increment(&system_status_var::ha_write_count);
+  char attribute_buffer[1024];
+  drizzled::String attribute(attribute_buffer, sizeof(attribute_buffer),
+                   &my_charset_bin);
+  drizzled::String output_line;
+  for (Field **field= table->field; *field; ++field)
+  {
+    if (not (*field)->is_null())
+    {
+      (*field)->setReadSet();
+      (*field)->val_str(&attribute, &attribute);
+
+      output_line.append(attribute);
+    }
+    else
+    {
+      output_line.append(" 0 "); // SEP. TODO
+    }
+  }
+  // write output_line to real file
+  ofstream fout(real_file_name.c_str(), ios::app);
+  if (not fout.is_open())
+  {
+    return -5;
+  }
+  fout.write(output_line.ptr(), output_line.length());
+  fout.close();
+
+  return 0;
+}
+
 bool FilesystemEngine::validateCreateTableOption(const std::string &key,
                                                  const std::string &state)
 {
