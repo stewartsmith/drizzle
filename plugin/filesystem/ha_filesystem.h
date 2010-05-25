@@ -48,6 +48,8 @@ class ha_filesystem : public drizzled::Cursor
   drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
   FilesystemShare *share;       /* Shared lock info */
   std::ifstream fd;
+  std::string real_file_name;
+  std::string sep;
 
 public:
   ha_filesystem(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);

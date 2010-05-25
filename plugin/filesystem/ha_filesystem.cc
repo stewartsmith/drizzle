@@ -326,6 +326,30 @@ int ha_filesystem::open(const char *name, int, uint32_t)
   if (!(share= get_share(name)))
     return HA_ERR_OUT_OF_MEM; // TODO: code style???
 
+  string db_path = share->table_name + FST;
+  fd.open(db_path.c_str());
+  if (not fd.is_open())
+  {
+    return -2; // TODO more correct return value;
+  }
+  message::Table table_proto;
+  if (not table_proto.ParseFromIstream(&fd))
+  {
+    fd.close();
+    return -3; // TODO more correct return value;
+  }
+  fd.close();
+  for (int i = 0; i < table_proto.engine().options_size(); i++)
+  {
+    if (boost::iequals(table_proto.engine().options(i).name(), "FILE"))
+    {
+      real_file_name = table_proto.engine().options(i).state();
+    }
+    else if (boost::iequals(table_proto.engine().options(i).name(), "SEP"))
+    {
+      sep = table_proto.engine().options(i).state();
+    }
+  }
   thr_lock_data_init(&share->lock, &lock, NULL);
   return 0;
 }
@@ -369,10 +393,10 @@ int ha_filesystem::close(void)
 
 int ha_filesystem::doStartTableScan(bool)
 {
-  // open a specific file
-  fd.open("demo.txt");
-  if (!fd.is_open())
-    cerr << "can't open demo.txt file." << endl;
+  // open the real file
+  fd.open(real_file_name.c_str());
+  if (not fd.is_open())
+    cerr << "can't open " << real_file_name << " file." << endl;
   return 0;
 }
 
@@ -465,6 +489,7 @@ int ha_filesystem::info(uint32_t)
 
 int ha_filesystem::doEndTableScan()
 {
+  // close the real file
   fd.close();
   return 0;
 }
