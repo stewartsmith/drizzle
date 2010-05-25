@@ -20,7 +20,7 @@ Comparing tables test.t1 and test.t1_orig
 # Cleanup
 DROP TABLE test.t1, test.t1_orig;
 #
-# Bug#3361 drizzledump quotes DECIMAL values inconsistently
+# Bug#3361 mysqldump quotes DECIMAL values inconsistently
 #
 CREATE TABLE t1 (a DECIMAL(10,5), b FLOAT);
 INSERT INTO t1 VALUES (1.2345, 2.3456);
@@ -62,7 +62,7 @@ Comparing tables test.t2 and test.t2_orig
 DROP TABLE test.t2, test.t2_orig;
 DROP TABLE t1;
 #
-# Bug#8830 drizzledump --skip-extended-insert causes --hex-blob to dump wrong values
+# Bug#8830 mysqldump --skip-extended-insert causes --hex-blob to dump wrong values
 #
 CREATE TABLE t1 (`b` blob);
 INSERT INTO `t1` VALUES (0x602010000280100005E71A);
