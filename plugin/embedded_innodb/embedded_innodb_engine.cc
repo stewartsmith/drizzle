@@ -1761,6 +1761,10 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
 
   int colnr= 0;
 
+  /* We need the primary key for ::position() to work */
+  if (table->s->primary_key != MAX_KEY)
+    table->mark_columns_used_by_index_no_reset(table->s->primary_key);
+
   for (Field **field=table->field ; *field ; field++, colnr++)
   {
     if (! (**field).isReadSet())
