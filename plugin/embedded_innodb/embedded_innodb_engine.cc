@@ -2055,6 +2055,29 @@ static ib_srch_mode_t ha_rkey_function_to_ib_srch_mode(drizzled::ha_rkey_functio
   assert(false);
 }
 
+static bool moveto_result_valid_for_ib_srch_mode(const ib_srch_mode_t srch_mode,
+                                                 const int res)
+{
+  bool ret;
+  switch (srch_mode)
+  {
+  case IB_CUR_G:
+    ret= (res == 1);
+    break;
+  case IB_CUR_GE:
+    ret= (res >= 0);
+    break;
+  case IB_CUR_L:
+    ret= (res == -1);
+    break;
+  case IB_CUR_LE:
+    ret= (res <= 0);
+    break;
+  }
+
+  return ret;
+}
+
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
                                                 const drizzled::KeyInfo *key_info,
                                                 const unsigned char *key_ptr,
@@ -2152,17 +2175,28 @@ int EmbeddedInnoDBCursor::innodb_index_read(unsigned char *buf,
   err= ib_cursor_moveto(cursor, search_tuple, search_mode, &res);
   ib_tuple_delete(search_tuple);
 
-  if (err == DB_RECORD_NOT_FOUND)
-    return HA_ERR_END_OF_FILE;
+  if ((err == DB_RECORD_NOT_FOUND || err == DB_END_OF_INDEX)
+      || (err == DB_SUCCESS
+          && ! moveto_result_valid_for_ib_srch_mode(search_mode, res)))
+  {
+    return HA_ERR_KEY_NOT_FOUND;
+  }
+
+  assert(err==DB_SUCCESS);
 
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(buf, cursor, tuple, table,
                             share->has_hidden_primary_key,
                             &hidden_autoinc_pkey_position,
                             (allocate_blobs)? &blobroot : NULL);
+  if (ret == 0)
+    table->status= 0;
+  else
+    table->status= STATUS_NOT_FOUND;
+
   advance_cursor= true;
 
-  return 0;
+  return ret;
 }
 
 int EmbeddedInnoDBCursor::index_read(unsigned char *buf,
