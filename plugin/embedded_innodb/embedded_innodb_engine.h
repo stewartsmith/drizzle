@@ -123,6 +123,8 @@ private:
   bool write_can_replace;
   uint64_t hidden_autoinc_pkey_position;
   drizzled::memory::Root *blobroot;
+
+  bool in_table_scan;
 };
 
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */

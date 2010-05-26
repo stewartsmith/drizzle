@@ -620,6 +620,8 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
     ref_length= 0; // FIXME: this is a bug. we need to work out what index it is.
   }
 
+  in_table_scan= false;
+
   return(0);
 }
 
@@ -1732,6 +1734,10 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
 {
   ib_trx_t transaction;
 
+  if (in_table_scan)
+    doEndTableScan();
+  in_table_scan= true;
+
   if(*get_trx(current_session) == NULL)
   {
     EmbeddedInnoDBEngine *innodb_engine= static_cast<EmbeddedInnoDBEngine*>(engine);
@@ -1859,7 +1865,7 @@ int EmbeddedInnoDBCursor::doEndTableScan()
   ib_tuple_delete(tuple);
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
-
+  in_table_scan= false;
   return 0;
 }
 
