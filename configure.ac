@@ -63,7 +63,7 @@ PANDORA_DRIZZLE_BUILD
 AC_DEFINE([BUILDING_DRIZZLE],[1],
           [Define indicating we are building and not consuming drizzle.])
 
-PANDORA_REQUIRE_LIBGTEST
+PANDORA_HAVE_LIBGTEST
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
