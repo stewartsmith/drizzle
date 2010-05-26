@@ -8620,7 +8620,7 @@ static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
 static DRIZZLE_SYSVAR_LONGLONG(log_file_size, innobase_log_file_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Size of each log file in a log group.",
-  NULL, NULL, 5*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
+  NULL, NULL, 20*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
 
 static DRIZZLE_SYSVAR_LONG(log_files_in_group, innobase_log_files_in_group,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,

@@ -906,6 +906,7 @@ ErrorMap::ErrorMap()
   add(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   add(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));
   add(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition: %s"));
+  add(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for %s : %s"));
   add(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   add(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
   add(ER_DROP_SCHEMA, +N_("Error droppping Schema : %s"));

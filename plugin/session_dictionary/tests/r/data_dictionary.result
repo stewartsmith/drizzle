@@ -5,10 +5,10 @@ PROCESSLIST	CREATE TABLE `processlist` (
   `ID` bigint NOT NULL DEFAULT '0',
   `USER` varchar(16) NOT NULL DEFAULT '',
   `HOST` varchar(1025) NOT NULL DEFAULT '',
-  `DB` varchar(64) NOT NULL DEFAULT '',
+  `DB` varchar(256) NOT NULL DEFAULT '',
   `COMMAND` varchar(16) NOT NULL DEFAULT '',
   `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(64) NOT NULL DEFAULT '',
+  `STATE` varchar(256) NOT NULL DEFAULT '',
   `INFO` varchar(100) NOT NULL DEFAULT ''
 ) ENGINE=FunctionEngine
 SELECT ID FROM processlist;
