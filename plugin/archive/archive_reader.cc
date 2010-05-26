@@ -124,13 +124,13 @@ try
   if (argc < 1)
   {
     printf("No file specified. \n");
-    return 0;
+    return -1;
   }
 
   if (!(ret= azopen(&reader_handle, argv[0], O_RDONLY, AZ_METHOD_BLOCK)))
   {
     printf("Could not open Archive file\n");
-    return 0;
+    return -1;
   }
 
   if (opt_autoincrement)
