@@ -46,13 +46,13 @@ class DateTest : public ::testing::Test {
     Generator::DateGen::make_date(&date_identical_with_sample_date, 2010, 9, 8);
     Generator::DateGen::make_date(&date_after_sample_date, 2019, 5, 30);
 
-    Generator::DateGen::make_datetime(&datetime_before_sample_date, 1990, 12, 31, 12, 12, 30, 1000);
-    Generator::DateGen::make_datetime(&datetime_identical_with_sample_date, 2010, 9, 8, 0, 0, 0, 0);
-    Generator::DateGen::make_datetime(&datetime_after_sample_date, 2020, 4, 4, 4, 4, 4, 4000);
+    Generator::DateTimeGen::make_datetime(&datetime_before_sample_date, 1990, 12, 31, 12, 12, 30, 1000);
+    Generator::DateTimeGen::make_datetime(&datetime_identical_with_sample_date, 2010, 9, 8, 0, 0, 0, 0);
+    Generator::DateTimeGen::make_datetime(&datetime_after_sample_date, 2020, 4, 4, 4, 4, 4, 4000);
     
-    Generator::DateGen::make_timestamp(&timestamp_before_sample_date, 1980, 1, 1);
-    Generator::DateGen::make_timestamp(&timestamp_identical_with_sample_date, 2010, 9, 8);
-    Generator::DateGen::make_timestamp(&timestamp_after_sample_date, 2019, 5, 30);
+    Generator::TimestampGen::make_timestamp(&timestamp_before_sample_date, 1980, 1, 1);
+    Generator::TimestampGen::make_timestamp(&timestamp_identical_with_sample_date, 2010, 9, 8);
+    Generator::TimestampGen::make_timestamp(&timestamp_after_sample_date, 2019, 5, 30);
 
   }
 };

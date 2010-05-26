@@ -34,7 +34,7 @@ void Generator::DateGen::make_date(Date *date,
   date->set_days(days);
 }
 
-void make_datetime(drizzled::DateTime *datetime,
+void Generator::DateTimeGen::make_datetime(drizzled::DateTime *datetime,
                    uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
                    uint32_t minutes, uint32_t seconds, uint32_t useconds)
 {
@@ -47,7 +47,7 @@ void make_datetime(drizzled::DateTime *datetime,
   datetime->set_useconds(useconds);
 }                     
 
-void make_timestamp(drizzled::Timestamp *timestamp,
+void Generator::TimestampGen::make_timestamp(drizzled::Timestamp *timestamp,
                            uint32_t years, uint32_t months, uint32_t days)
 {
   timestamp->set_years(years);
