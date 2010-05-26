@@ -61,6 +61,25 @@ public:
   int index_read(unsigned char *buf, const unsigned char *key_ptr,
                  uint32_t key_len, drizzled::ha_rkey_function find_flag);
 
+  int innodb_index_read(unsigned char *buf,
+                        const unsigned char *key_ptr,
+                        uint32_t key_len,
+                        drizzled::ha_rkey_function find_flag,
+                        bool allocate_blobs);
+
+  uint32_t calculate_key_len(uint32_t key_position,
+                             drizzled::key_part_map keypart_map_arg);
+  int innodb_index_read_map(unsigned char * buf,
+                            const unsigned char *key,
+                            drizzled::key_part_map keypart_map,
+                            drizzled::ha_rkey_function find_flag,
+                            bool allocate_blobs);
+  int index_read_idx_map(unsigned char * buf,
+                         uint32_t index,
+                         const unsigned char * key,
+                         drizzled::key_part_map keypart_map,
+                         drizzled::ha_rkey_function find_flag);
+
   int index_next(unsigned char * buf);
   int doEndIndexScan();
   int index_prev(unsigned char * buf);
@@ -94,6 +113,8 @@ public:
                           uint64_t *first_value,
                           uint64_t *nb_reserved_values);
 
+  int reset();
+
 private:
   ib_crsr_t cursor;
   ib_tpl_t tuple;
@@ -101,6 +122,7 @@ private:
 
   bool write_can_replace;
   uint64_t hidden_autoinc_pkey_position;
+  drizzled::memory::Root *blobroot;
 };
 
 #endif /* PLUGIN_EMBEDDED_INNODB_EMBEDDED_INNODB_ENGINE_H */
