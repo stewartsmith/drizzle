@@ -165,6 +165,8 @@ case "$host_os" in
     echo "*"
     echo "*   use 'gmake' To build Drizzle"
     echo "*"
+    echo "*  And ensure that /usr/local/lib/gcc44 is in your LD_LIBRARY_PATH"
+    echo "*" 
     echo "*****"
   ;;
 esac
