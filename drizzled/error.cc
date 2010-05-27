@@ -469,7 +469,7 @@ ErrorMap::ErrorMap()
   add(ER_COLLATION_CHARSET_MISMATCH, N_("COLLATION '%s' is not valid for CHARACTER SET '%s'"));
   add(ER_SLAVE_WAS_RUNNING, N_("Slave is already running"));
   add(ER_SLAVE_WAS_NOT_RUNNING, N_("Slave already has been stopped"));
-  add(ER_TOO_BIG_FOR_UNCOMPRESS, N_("Uncompressed data size too large; the maximum size is %d (probably, length of uncompressed data was corrupted)"));
+  add(ER_TOO_BIG_FOR_UNCOMPRESS, N_("Uncompressed data size too large; the maximum size is %d (based on max_allowed_packet). The length of uncompressed data may also be corrupted."));
   add(ER_ZLIB_Z_MEM_ERROR, N_("ZLIB: Not enough memory"));
   add(ER_ZLIB_Z_BUF_ERROR, N_("ZLIB: Not enough room in the output buffer (probably, length of uncompressed data was corrupted)"));
   add(ER_ZLIB_Z_DATA_ERROR, N_("ZLIB: Input data corrupted"));
