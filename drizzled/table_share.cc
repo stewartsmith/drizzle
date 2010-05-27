@@ -42,6 +42,7 @@
 #include "drizzled/sql_base.h"
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
+#include "drizzled/plugin/event_observer.h"
 
 #include "drizzled/session.h"
 
@@ -147,6 +148,8 @@ void TableShare::release(TableShare *share)
   {
     const string key_string(share->getCacheKey(),
                             share->getCacheKeySize());
+    plugin::EventObserver::deregisterTableEvents(*share);
+   
     TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
     if (iter != table_def_cache.end())
     {
@@ -170,6 +173,7 @@ void TableShare::release(const char *key, uint32_t key_length)
     if (share->ref_count == 0)
     {
       pthread_mutex_lock(&share->mutex);
+      plugin::EventObserver::deregisterTableEvents(*share);
       table_def_cache.erase(key_string);
       delete share;
     }
@@ -274,6 +278,9 @@ TableShare *TableShare::getShare(Session *session,
     return NULL;
   }
   share->ref_count++;				// Mark in use
+  
+  plugin::EventObserver::registerTableEvents(*share);
+  
   (void) pthread_mutex_unlock(&share->mutex);
 
   return share;
@@ -551,13 +558,14 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
                                 &path_buff, _path.length() + 1,
                                 NULL))
   {
-    set_table_cache_key(key_buff, key, key_length, db.length, table_name.length);
+    memcpy(key_buff, key, key_length);
+    set_table_cache_key(key_buff, key_length, db.length, table_name.length);
 
     setPath(path_buff, _path.length());
     strcpy(path_buff, _path.c_str());
     setNormalizedPath(path_buff, _path.length());
 
-    version=       refresh_version;
+    version= refresh_version;
 
     pthread_mutex_init(&mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&cond, NULL);

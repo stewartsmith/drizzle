@@ -94,7 +94,7 @@ public:
 };
 
 static Error_message_notify *handler= NULL;
-static int plugin_init(plugin::Context &context)
+static int plugin_init(module::Context &context)
 {
   Notify::init("Drizzled");
   handler= new Error_message_notify();

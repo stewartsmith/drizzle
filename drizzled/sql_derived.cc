@@ -151,10 +151,10 @@ exit:
       }
       orig_table_list->derived_result= derived_result;
       orig_table_list->table= table;
-      orig_table_list->table_name=        const_cast<char *>(table->s->getTableName());
-      orig_table_list->table_name_length= table->s->getTableNameSize();
+      orig_table_list->table_name=        const_cast<char *>(table->getShare()->getTableName());
+      orig_table_list->table_name_length= table->getShare()->getTableNameSize();
       table->derived_select_number= first_select->select_number;
-      table->s->tmp_table= message::Table::TEMPORARY;
+      table->getMutableShare()->tmp_table= message::Table::TEMPORARY;
       orig_table_list->db= (char *)"";
       orig_table_list->db_length= 0;
       /* Force read of table stats in the optimizer */

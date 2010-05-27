@@ -35,7 +35,7 @@ die() { echo "$@"; exit 1; }
 LIBTOOLIZE_FLAGS=" --automake --copy --force"
 # --add-missing instructs automake to install missing auxiliary files
 # and --force to overwrite them if they already exist
-AUTOMAKE_FLAGS="--add-missing --copy --force"
+AUTOMAKE_FLAGS="--add-missing --copy --force --foreign"
 ACLOCAL_FLAGS="-I m4"
 
 ARGV0=$0

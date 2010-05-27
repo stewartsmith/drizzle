@@ -21,7 +21,6 @@
 #include "config.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/error.h"
-#include "drizzled/plugin/registry.h"
 #include "drizzled/gettext.h"
 #include "drizzled/security_context.h"
 

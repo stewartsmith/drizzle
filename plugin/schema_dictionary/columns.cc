@@ -53,7 +53,7 @@ ColumnsTool::ColumnsTool() :
 
   add_field("COLLATION_NAME");
 
-  add_field("COLUMN_COMMENT", 1024);
+  add_field("COLUMN_COMMENT", plugin::TableFunction::STRING, 1024, true);
 }
 
 
@@ -115,6 +115,8 @@ bool ColumnsTool::Generator::populate()
 void ColumnsTool::Generator::fill()
 {
   /* TABLE_SCHEMA */
+  assert(getTableProto().schema().length());
+  assert(getTableProto().schema().c_str());
   push(getTableProto().schema());
 
   /* TABLE_NAME */
@@ -211,5 +213,12 @@ void ColumnsTool::Generator::fill()
   push(column.string_options().collation());
 
  /* "COLUMN_COMMENT" */
-  push(column.comment());
+  if (column.has_comment())
+  {
+    push(column.comment());
+  }
+  else
+  {
+    push();
+  }
 }

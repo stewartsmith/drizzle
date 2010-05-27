@@ -88,7 +88,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
      same time we destroy the mem_root.
    */
 
-  bitmap= reinterpret_cast<my_bitmap_map*>(memory::sql_alloc(head->s->column_bitmap_size));
+  bitmap= reinterpret_cast<my_bitmap_map*>(memory::sql_alloc(head->getShare()->column_bitmap_size));
   if (! bitmap)
   {
     column_bitmap.setBitmap(NULL);
@@ -96,7 +96,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   }
   else
   {
-    column_bitmap.init(bitmap, head->s->fields);
+    column_bitmap.init(bitmap, head->getShare()->fields);
   }
 }
 

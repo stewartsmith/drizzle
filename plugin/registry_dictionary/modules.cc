@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include "plugin/registry_dictionary/dictionary.h"
-#include "drizzled/plugin/library.h"
+#include "drizzled/module/library.h"
 
 using namespace std;
 using namespace drizzled;
@@ -50,7 +50,7 @@ ModulesTool::ModulesTool() :
 ModulesTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg)
 {
-  plugin::Registry &registry= plugin::Registry::singleton();
+  module::Registry &registry= module::Registry::singleton();
   modules= registry.getList(true);
   it= modules.begin();
 }
@@ -61,8 +61,8 @@ bool ModulesTool::Generator::populate()
     return false;
 
   {
-    plugin::Module *module= *it;
-    const plugin::Manifest &manifest= module->getManifest();
+    module::Module *module= *it;
+    const module::Manifest &manifest= module->getManifest();
 
     /* MODULE_NAME */
     push(module->getName());

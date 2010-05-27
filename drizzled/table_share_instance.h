@@ -33,13 +33,13 @@ class TableShareInstance : public TableShare
 public:
   TableShareInstance()
   {
-    private_table.s= this;
+    private_table.setShare(this);
   }
 
   TableShareInstance(const char *tmpname_arg) :
     TableShare("", 0, tmpname_arg, tmpname_arg)
   {
-    private_table.s= this;
+    private_table.setShare(this);
   }
 
   Table *getTable()
