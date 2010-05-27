@@ -120,9 +120,9 @@ void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
 {
   enum_sql_command sql_command= session->lex->sql_command;
 
-  UserCommands *user_commands= scoreboard_slot->getUserCommands();
+  scoreboard_slot->getUserCommands()->logCommand(sql_command);
 
-  user_commands->logCommand(sql_command);
+  scoreboard_slot->getStatusVars()->logStatusVar(session);
 }
 
 bool LoggingStats::post(Session *session)
@@ -174,6 +174,8 @@ static GlobalStatementsTool *global_statements_tool= NULL;
 
 static SessionStatementsTool *session_statements_tool= NULL;
 
+static StatusVarTool *status_var_tool= NULL;
+
 static void enable(Session *,
                    drizzle_sys_var *,
                    void *var_ptr,
@@ -224,6 +226,13 @@ static bool initTable()
     return true;
   }
 
+  status_var_tool= new(nothrow)StatusVarTool(logging_stats);
+
+  if (! status_var_tool)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -241,6 +250,7 @@ static int init(module::Context &context)
   context.add(cumulative_commands_tool);
   context.add(global_statements_tool);
   context.add(session_statements_tool);
+  context.add(status_var_tool);
 
   if (sysvar_logging_stats_enabled)
   {

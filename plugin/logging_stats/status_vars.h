@@ -25,57 +25,42 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
-#define PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
+#ifndef PLUGIN_LOGGING_STATS_STATUS_VARS_H
+#define PLUGIN_LOGGING_STATS_STATUS_VARS_H
 
-#include "status_vars.h"
-#include "user_commands.h"
+#include <drizzled/session.h>
 
-#include <string>
-
-class ScoreboardSlot
+class StatusVars
 {
 public:
-  ScoreboardSlot(); 
+  StatusVars();
 
-  ~ScoreboardSlot(); 
+  StatusVars(const StatusVars &status_vars);
 
-  ScoreboardSlot(const ScoreboardSlot &scoreboad_slot);
-
-  UserCommands* getUserCommands();
-
-  StatusVars* getStatusVars();
-
-  void setSessionId(uint64_t in_session_id);
-
-  uint64_t getSessionId();
-
-  void setInUse(bool in_in_use);
-
-  bool isInUse();
-
-  void setUser(std::string in_user);
-
-  const std::string& getUser();
-
-  void setIp(std::string in_ip);
-
-  const std::string& getIp();
+  ~StatusVars();
 
   void reset();
 
-  void merge(ScoreboardSlot *score_board_slot);
+  void logStatusVar(drizzled::Session *session);
+
+  void merge(StatusVars *status_vars);
+
+ //TMP
+  void test();
+
+
+  void copySystemStatusVar(drizzled::system_status_var *to_var, 
+                           drizzled::system_status_var *from_var);
+
+  drizzled::system_status_var* getStatusVarCounters()
+  {
+    return status_var_counters;
+  }
 
 private:
-  UserCommands *user_commands;
-  StatusVars *status_vars;
-  std::string user;
-  std::string ip;
-  bool in_use;
-  uint64_t session_id;
+  drizzled::system_status_var *status_var_counters;
 };
- 
-#endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H */
+
+#endif /* PLUGIN_LOGGING_STATS_STATUS_VARS_H */

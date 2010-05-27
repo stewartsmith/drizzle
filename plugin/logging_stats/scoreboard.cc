@@ -45,6 +45,7 @@
  */
 
 #include "config.h"
+#include <drizzled/plugin.h>
 #include "scoreboard.h"
 
 #include <math.h>

@@ -119,7 +119,7 @@ void drizzled_handle_segfault(int sig)
   fprintf(stderr, "key_buffer_size=%u\n",
           (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
-  fprintf(stderr, "max_used_connections=%u\n", current_global_counters.max_used_connections);
+  fprintf(stderr, "max_used_connections=%lu\n", current_global_counters.max_used_connections);
   fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
                     "key_buffer_size + (read_buffer_size + "
