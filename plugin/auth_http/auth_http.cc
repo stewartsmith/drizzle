@@ -120,7 +120,7 @@ public:
 
 Auth_http* auth= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   /* 
    * Per libcurl manual, in multi-threaded applications, curl_global_init() should

@@ -1418,7 +1418,6 @@ bool mysql_create_table_no_lock(Session *session,
   uint		db_options, key_count;
   KeyInfo		*key_info_buffer;
   bool		error= true;
-  TableShare share;
 
   /* Check for duplicate fields and check type of table to create */
   if (not alter_info->create_list.elements)
@@ -2106,12 +2105,10 @@ bool mysql_create_like_table(Session* session,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
-  Table *name_lock= 0;
   char *db= table->db;
   char *table_name= table->table_name;
   bool res= true;
   uint32_t not_used;
-  bool was_created;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2133,6 +2130,8 @@ bool mysql_create_like_table(Session* session,
   /*
     Check that destination tables does not exist. Note that its name
     was already checked when it was added to the table list.
+
+    For temporary tables we don't aim to grab locks.
   */
   bool table_exists= false;
   if (destination_identifier.isTmp())
@@ -2141,9 +2140,29 @@ bool mysql_create_like_table(Session* session,
     {
       table_exists= true;
     }
+    else
+    {
+      bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                        src_identifier, is_engine_set);
+      if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
+      {
+        (void) session->rm_temporary_table(destination_identifier);
+      }
+      else if (not session->open_temporary_table(destination_identifier))
+      {
+        // We created, but we can't open... also, a hack.
+        (void) session->rm_temporary_table(destination_identifier);
+      }
+      else
+      {
+        res= false;
+      }
+    }
   }
-  else
+  else // Standard table which will require locks.
   {
+    Table *name_lock= 0;
+
     if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
     {
       if (name_lock)
@@ -2164,6 +2183,34 @@ bool mysql_create_like_table(Session* session,
     {
       table_exists= true;
     }
+    else // Otherwise we create the table
+    {
+      pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+      bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                        src_identifier, is_engine_set);
+      pthread_mutex_unlock(&LOCK_open);
+
+      // So we blew the creation of the table, and we scramble to clean up
+      // anything that might have been created (read... it is a hack)
+      if (not was_created)
+      {
+        quick_rm_table(*session, destination_identifier);
+      } 
+      else
+      {
+        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->s->tmp_table), is_if_not_exists);
+        (void)rc;
+
+        res= false;
+      }
+    }
+
+    if (name_lock)
+    {
+      pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
+      session->unlink_open_table(name_lock);
+      pthread_mutex_unlock(&LOCK_open);
+    }
   }
 
   if (table_exists)
@@ -2181,49 +2228,6 @@ bool mysql_create_like_table(Session* session,
     {
       my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
     }
-  }
-  else // Otherwise we create the table
-  {
-    pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-    was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                      src_identifier, is_engine_set);
-    pthread_mutex_unlock(&LOCK_open);
-
-    // So we blew the creation of the table, and we scramble to clean up
-    // anything that might have been created (read... it is a hack)
-    if (not was_created)
-    {
-      if (destination_identifier.isTmp())
-      {
-        (void) session->rm_temporary_table(destination_identifier);
-      }
-      else
-      {
-        quick_rm_table(*session, destination_identifier);
-      }
-    } 
-    else if (destination_identifier.isTmp() && not session->open_temporary_table(destination_identifier))
-    {
-      // We created, but we can't open... also, a hack.
-      (void) session->rm_temporary_table(destination_identifier);
-    }
-    else
-    {
-      if (not destination_identifier.isTmp())
-      {
-        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->s->tmp_table), is_if_not_exists);
-        (void)rc;
-      }
-
-      res= false;
-    }
-  }
-
-  if (name_lock)
-  {
-    pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
-    session->unlink_open_table(name_lock);
-    pthread_mutex_unlock(&LOCK_open);
   }
 
   return(res);

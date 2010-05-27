@@ -206,7 +206,7 @@ bool AuthFile::authenticate(const SecurityContext &sctx, const string &password)
   return false;
 }
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   AuthFile *auth_file = new AuthFile("auth_file");
   if (!auth_file->loadFile())

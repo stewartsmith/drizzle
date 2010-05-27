@@ -227,7 +227,7 @@ static bool initTable()
   return false;
 }
 
-static int init(Context &context)
+static int init(module::Context &context)
 {
   logging_stats= new LoggingStats("logging_stats");
 

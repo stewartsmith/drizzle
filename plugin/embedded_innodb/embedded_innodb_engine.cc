@@ -370,7 +370,7 @@ uint64_t EmbeddedInnoDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
   else
   {
     assert (err == DB_SUCCESS);
-    err= ib_tuple_read_u64(tuple, table->s->fields, &nr);
+    err= ib_tuple_read_u64(tuple, table->getShare()->fields, &nr);
     nr++;
   }
   ib_tuple_delete(tuple);
@@ -385,9 +385,9 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
   int error;
 
   (void) extra(HA_EXTRA_KEYREAD);
-  table->mark_columns_used_by_index_no_reset(table->s->next_number_index);
-  doStartIndexScan(table->s->next_number_index, 1);
-  if (table->s->next_number_keypart == 0)
+  table->mark_columns_used_by_index_no_reset(table->getShare()->next_number_index);
+  doStartIndexScan(table->getShare()->next_number_index, 1);
+  if (table->getShare()->next_number_keypart == 0)
   {						// Autoincrement at key-start
     error=index_last(table->record[1]);
   }
@@ -395,10 +395,10 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
   {
     unsigned char key[MAX_KEY_LENGTH];
     key_copy(key, table->record[0],
-             table->key_info + table->s->next_number_index,
-             table->s->next_number_key_offset);
+             table->key_info + table->getShare()->next_number_index,
+             table->getShare()->next_number_key_offset);
     error= index_read_map(table->record[1], key,
-                          make_prev_keypart_map(table->s->next_number_keypart),
+                          make_prev_keypart_map(table->getShare()->next_number_keypart),
                           HA_READ_PREFIX_LAST);
   }
 
@@ -406,12 +406,12 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
     nr=1;
   else
     nr= ((uint64_t) table->found_next_number_field->
-         val_int_offset(table->s->rec_buff_length)+1);
+         val_int_offset(table->getShare()->rec_buff_length)+1);
   doEndIndexScan();
   (void) extra(HA_EXTRA_NO_KEYREAD);
 
-  if (table->s->getTableProto()->options().auto_increment_value() > nr)
-    nr= table->s->getTableProto()->options().auto_increment_value();
+  if (table->getShare()->getTableProto()->options().auto_increment_value() > nr)
+    nr= table->getShare()->getTableProto()->options().auto_increment_value();
 
   return nr;
 }
@@ -611,8 +611,8 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
   thr_lock_data_init(&share->lock, &lock, NULL);
 
 
-  if (table->s->primary_key != MAX_KEY)
-    ref_length= table->key_info[table->s->primary_key].key_length;
+  if (table->getShare()->primary_key != MAX_KEY)
+    ref_length= table->key_info[table->getShare()->primary_key].key_length;
   else if (share->has_hidden_primary_key)
     ref_length= sizeof(uint64_t);
   else
@@ -1592,7 +1592,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
 
   if (share->has_hidden_primary_key)
   {
-    err= ib_tuple_write_u64(tuple, table->s->fields, share->hidden_pkey_auto_increment_value.fetch_and_increment());
+    err= ib_tuple_write_u64(tuple, table->getShare()->fields, share->hidden_pkey_auto_increment_value.fetch_and_increment());
   }
 
   err= ib_cursor_insert_row(cursor, tuple);
@@ -1601,7 +1601,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   {
     if (write_can_replace)
     {
-      store_key_value_from_innodb(table->key_info + table->s->primary_key,
+      store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
                                   ref, ref_length, record);
 
       ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
@@ -1970,8 +1970,8 @@ static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, i
 
 void EmbeddedInnoDBCursor::position(const unsigned char *record)
 {
-  if (table->s->primary_key != MAX_KEY)
-    store_key_value_from_innodb(table->key_info + table->s->primary_key,
+  if (table->getShare()->primary_key != MAX_KEY)
+    store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
                                 ref, ref_length, record);
   else
     *((uint64_t*) ref)= hidden_autoinc_pkey_position;
@@ -2057,6 +2057,8 @@ static ib_srch_mode_t ha_rkey_function_to_ib_srch_mode(drizzled::ha_rkey_functio
   }
 
   assert(false);
+  /* Must return or compiler complains about reaching end of function */
+  return (ib_srch_mode_t)0;
 }
 
 static void fill_ib_search_tpl_from_drizzle_key(ib_tpl_t search_tuple,
@@ -2463,7 +2465,7 @@ static char* innodb_data_file_path= NULL;
 static int64_t innodb_log_file_size;
 static int64_t innodb_log_files_in_group;
 
-static int embedded_innodb_init(drizzled::plugin::Context &context)
+static int embedded_innodb_init(drizzled::module::Context &context)
 {
   ib_err_t err;
 

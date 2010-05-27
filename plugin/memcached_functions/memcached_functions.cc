@@ -275,7 +275,7 @@ void cleanupMemcUDF()
   delete memc_decrement;
 }
 
-static int memcachedInit(drizzled::plugin::Context &context)
+static int memcachedInit(drizzled::module::Context &context)
 {
   if (initMemcUDF())
   {
@@ -312,7 +312,7 @@ static int memcachedInit(drizzled::plugin::Context &context)
   return 0;
 }
 
-static int memcachedDone(drizzled::plugin::Context &context)
+static int memcachedDone(drizzled::module::Context &context)
 {
 
   memcached_free(memc);

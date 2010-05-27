@@ -24,7 +24,7 @@ using namespace drizzled;
 static SingleThreadScheduler *scheduler= NULL;
 
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   scheduler= new SingleThreadScheduler("single_thread");
   context.add(scheduler);

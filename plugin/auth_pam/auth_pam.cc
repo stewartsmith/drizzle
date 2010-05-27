@@ -134,7 +134,7 @@ public:
 
 static Auth_pam *auth= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   auth= new Auth_pam("auth_pam");
   context.add(auth);

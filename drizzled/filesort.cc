@@ -148,7 +148,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
-  DRIZZLE_FILESORT_START(table->s->getSchemaName(), table->s->getTableName());
+  DRIZZLE_FILESORT_START(table->getShare()->getSchemaName(), table->getShare()->getTableName());
 
   /*
    Release InnoDB's adaptive hash index latch (if holding) before
@@ -260,7 +260,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     my_error(ER_OUT_OF_SORTMEMORY,MYF(ME_ERROR+ME_WAITTANG));
     goto err;
   }
-  if (open_cached_file(&buffpek_pointers,drizzle_tmpdir,TEMP_PREFIX,
+  if (open_cached_file(&buffpek_pointers,drizzle_tmpdir.c_str(),TEMP_PREFIX,
 		       DISK_BUFFER_SIZE, MYF(MY_WME)))
     goto err;
 
@@ -295,7 +295,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     close_cached_file(&buffpek_pointers);
 	/* Open cached file if it isn't open */
     if (! my_b_inited(outfile) &&
-	open_cached_file(outfile,drizzle_tmpdir,TEMP_PREFIX,READ_RECORD_BUFFER,
+	open_cached_file(outfile,drizzle_tmpdir.c_str(),TEMP_PREFIX,READ_RECORD_BUFFER,
 			  MYF(MY_WME)))
       goto err;
     if (reinit_io_cache(outfile,internal::WRITE_CACHE,0L,0,0))
@@ -561,7 +561,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
 	if (!flag)
 	{
 	  internal::my_store_ptr(ref_pos,ref_length,record); // Position to row
-	  record+= sort_form->s->db_record_offset;
+	  record+= sort_form->getShare()->db_record_offset;
 	}
 	else if (!error)
 	  file->position(sort_form->record[0]);
@@ -667,7 +667,7 @@ write_keys(SORTPARAM *param, register unsigned char **sort_keys, uint32_t count,
   rec_length= param->rec_length;
   internal::my_string_ptr_sort((unsigned char*) sort_keys, (uint32_t) count, sort_length);
   if (!my_b_inited(tempfile) &&
-      open_cached_file(tempfile, drizzle_tmpdir, TEMP_PREFIX, DISK_BUFFER_SIZE,
+      open_cached_file(tempfile, drizzle_tmpdir.c_str(), TEMP_PREFIX, DISK_BUFFER_SIZE,
                        MYF(MY_WME)))
     goto err;
   /* check we won't have more buffpeks than we can possibly keep in memory */
@@ -1020,7 +1020,7 @@ int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
   if (*maxbuffer < MERGEBUFF2)
     return(0);
   if (flush_io_cache(t_file) ||
-      open_cached_file(&t_file2,drizzle_tmpdir,TEMP_PREFIX,DISK_BUFFER_SIZE,
+      open_cached_file(&t_file2,drizzle_tmpdir.c_str(),TEMP_PREFIX,DISK_BUFFER_SIZE,
 			MYF(MY_WME)))
     return(1);
 

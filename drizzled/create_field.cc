@@ -69,7 +69,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
 
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)
-    pack_length= (pack_length - old_field->table->s->blob_ptr_size + portable_sizeof_char_ptr);
+    pack_length= (pack_length - old_field->table->getShare()->blob_ptr_size + portable_sizeof_char_ptr);
 
   switch (sql_type) 
   {
@@ -103,7 +103,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
     ptrdiff_t diff;
 
     /* Get the value from default_values */
-    diff= (ptrdiff_t) (orig_field->table->s->default_values - orig_field->table->record[0]);
+    diff= (ptrdiff_t) (orig_field->table->getShare()->default_values - orig_field->table->record[0]);
     orig_field->move_field_offset(diff);	// Points now at default_values
     if (! orig_field->is_real_null())
     {

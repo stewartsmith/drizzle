@@ -636,7 +636,7 @@ bool PoolOfThreadsScheduler::libevent_init(void)
  * 
  * @param[in] registry holding the record of the plugins
  */
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   assert(pool_size != 0);
 

@@ -97,7 +97,7 @@ bool UserFunction::fix_fields(Session *session, Item **ref)
 
 plugin::Create_function<UserFunction> *user_function= NULL;
 
-static int initialize(drizzled::plugin::Context &context)
+static int initialize(drizzled::module::Context &context)
 {
   user_function= new plugin::Create_function<UserFunction>("user");
   context.add(user_function);

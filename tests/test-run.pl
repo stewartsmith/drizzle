@@ -1322,6 +1322,13 @@ sub generate_cmdline_mysqldump ($) {
       "--port=$mysqld->{'port'} ";
 }
 
+sub generate_cmdline_drizzle ($) {
+  my($mysqld) = @_;
+  return
+    mtr_native_path($exe_drizzle) .
+    " -uroot --port=$mysqld->{'port'} ";
+}
+
 
 ##############################################################################
 #
@@ -1490,6 +1497,12 @@ sub environment_setup () {
   $ENV{'DRIZZLE_DUMP'}= $cmdline_mysqldump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
   $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_mysqldump_secondary;
+
+  # ----------------------------------------------------
+  # Setup env so we can execute drizzle client
+  # ----------------------------------------------------
+  my $cmdline_drizzle = generate_cmdline_drizzle($master->[0]);
+  $ENV{'DRIZZLE'}= $cmdline_drizzle;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlslap
@@ -2545,8 +2558,8 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--server-id=%d", $prefix,
 	       $idx > 0 ? $idx + 101 : 1);
 
-    mtr_add_arg($args, "%s--loose-innodb_data_file_path=ibdata1:10M:autoextend",
-		$prefix);
+    mtr_add_arg($args,
+      "%s--loose-innodb_data_file_path=ibdata1:20M:autoextend", $prefix);
 
     mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
 

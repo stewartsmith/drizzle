@@ -66,10 +66,10 @@ class ha_innobase: public Cursor
 	INNOBASE_SHARE*	share;		/*!< information for MySQL
 					table locking */
 
-	unsigned char*	upd_buff;	/*!< buffer used in updates */
-	unsigned char*	key_val_buff;	/*!< buffer used in converting
-					search key values from MySQL format
-					to Innodb format */
+        std::vector<unsigned char> upd_buff; /*!< buffer used in updates */
+        std::vector<unsigned char> key_val_buff; /*!< buffer used in converting
+                                                     search key values from MySQL format
+                                                     to Innodb format */
 	ulong		upd_and_key_val_buff_len;
 					/* the length of each of the previous
 					two buffers */
@@ -221,12 +221,6 @@ uint64_t drizzle_bin_log_file_pos(void);
 */
 int session_slave_thread(const Session *session);
 
-/**
-  Mark transaction to rollback and mark error as fatal to a sub-statement.
-  @param  session   Thread handle
-  @param  all   TRUE <=> rollback main transaction.
-*/
-void session_mark_transaction_to_rollback(Session *session, bool all);
 }
 
 typedef struct trx_struct trx_t;
