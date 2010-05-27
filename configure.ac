@@ -157,5 +157,18 @@ echo "   * C++ shared_ptr namespace:  $ac_cv_shared_ptr_namespace"
 echo ""
 echo "---"
 
+case "$host_os" in
+  *freebsd*)
+    echo "*****"
+    echo "*"
+    echo "*  NOTE: You are on FreeBSD. BSD make will not work."
+    echo "*"
+    echo "*   use 'gmake' To build Drizzle"
+    echo "*"
+    echo "*****"
+  ;;
+esac
+
+
 dnl libtoolize scans configure.ac  and needs to see some text
 m4_define([LIBTOOLIZE_AC_INIT], [])
