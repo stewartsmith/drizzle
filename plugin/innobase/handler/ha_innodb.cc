@@ -178,15 +178,10 @@ static plugin::TableFunction* innodb_trx_tool= NULL;
 static plugin::TableFunction* innodb_locks_tool= NULL;
 static plugin::TableFunction* innodb_lock_waits_tool= NULL;
 
-static const long AUTOINC_OLD_STYLE_LOCKING = 0;
-static const long AUTOINC_NEW_STYLE_LOCKING = 1;
-static const long AUTOINC_NO_LOCKING = 2;
-
 static long innobase_mirrored_log_groups, innobase_log_files_in_group,
   innobase_log_buffer_size,
   innobase_additional_mem_pool_size, innobase_file_io_threads,
-  innobase_force_recovery, innobase_open_files,
-  innobase_autoinc_lock_mode;
+  innobase_force_recovery, innobase_open_files;
 static ulong innobase_commit_concurrency = 0;
 static ulong innobase_read_io_threads;
 static ulong innobase_write_io_threads;
@@ -1471,7 +1466,6 @@ values we want to reserve for multi-value inserts e.g.,
   INSERT INTO T VALUES(), (), ();
 
 innobase_next_autoinc() will be called with increment set to
-n * 3 where autoinc_lock_mode != TRADITIONAL because we want
 to reserve 3 values for the multi-value INSERT above.
 @return the next value */
 static
@@ -3742,48 +3736,7 @@ ha_innobase::innobase_lock_autoinc(void)
 {
   ulint   error = DB_SUCCESS;
 
-  switch (innobase_autoinc_lock_mode) {
-  case AUTOINC_NO_LOCKING:
-    /* Acquire only the AUTOINC mutex. */
-    dict_table_autoinc_lock(prebuilt->table);
-    break;
-
-  case AUTOINC_NEW_STYLE_LOCKING:
-    /* For simple (single/multi) row INSERTs, we fallback to the
-    old style only if another transaction has already acquired
-    the AUTOINC lock on behalf of a LOAD FILE or INSERT ... SELECT
-    etc. type of statement. */
-    if (session_sql_command(user_session) == SQLCOM_INSERT
-        || session_sql_command(user_session) == SQLCOM_REPLACE) {
-      dict_table_t* d_table = prebuilt->table;
-
-      /* Acquire the AUTOINC mutex. */
-      dict_table_autoinc_lock(d_table);
-
-      /* We need to check that another transaction isn't
-      already holding the AUTOINC lock on the table. */
-      if (d_table->n_waiting_or_granted_auto_inc_locks) {
-        /* Release the mutex to avoid deadlocks. */
-        dict_table_autoinc_unlock(d_table);
-      } else {
-        break;
-      }
-    }
-    /* Fall through to old style locking. */
-
-  case AUTOINC_OLD_STYLE_LOCKING:
-    error = row_lock_table_autoinc_for_mysql(prebuilt);
-
-    if (error == DB_SUCCESS) {
-
-      /* Acquire the AUTOINC mutex. */
-      dict_table_autoinc_lock(prebuilt->table);
-    }
-    break;
-
-  default:
-    ut_error;
-  }
+  dict_table_autoinc_lock(prebuilt->table);
 
   return(ulong(error));
 }
@@ -3797,18 +3750,11 @@ ha_innobase::innobase_reset_autoinc(
 /*================================*/
   uint64_t  autoinc)  /*!< in: value to store */
 {
-  ulint   error;
+  dict_table_autoinc_lock(prebuilt->table);
+  dict_table_autoinc_initialize(prebuilt->table, autoinc);
+  dict_table_autoinc_unlock(prebuilt->table);
 
-  error = innobase_lock_autoinc();
-
-  if (error == DB_SUCCESS) {
-
-    dict_table_autoinc_initialize(prebuilt->table, autoinc);
-
-    dict_table_autoinc_unlock(prebuilt->table);
-  }
-
-  return(ulong(error));
+  return(ulong(DB_SUCCESS));
 }
 
 /********************************************************************//**
@@ -3821,18 +3767,11 @@ ha_innobase::innobase_set_max_autoinc(
 /*==================================*/
   uint64_t  auto_inc) /*!< in: value to store */
 {
-  ulint   error;
+  dict_table_autoinc_lock(prebuilt->table);
+  dict_table_autoinc_update_if_greater(prebuilt->table, auto_inc);
+  dict_table_autoinc_unlock(prebuilt->table);
 
-  error = innobase_lock_autoinc();
-
-  if (error == DB_SUCCESS) {
-
-    dict_table_autoinc_update_if_greater(prebuilt->table, auto_inc);
-
-    dict_table_autoinc_unlock(prebuilt->table);
-  }
-
-  return(ulong(error));
+  return(ulong(DB_SUCCESS));
 }
 
 /********************************************************************//**
@@ -7545,19 +7484,16 @@ ha_innobase::innobase_get_autoinc(
   uint64_t* value)    /*!< out: autoinc value */
 {
   *value = 0;
- 
-  prebuilt->autoinc_error = innobase_lock_autoinc();
 
-  if (prebuilt->autoinc_error == DB_SUCCESS) {
+  dict_table_autoinc_lock(prebuilt->table);
+  prebuilt->autoinc_error= DB_SUCCESS;
+  /* Determine the first value of the interval */
+  *value = dict_table_autoinc_read(prebuilt->table);
 
-    /* Determine the first value of the interval */
-    *value = dict_table_autoinc_read(prebuilt->table);
+  /* It should have been initialized during open. */
+  ut_a(*value != 0);
 
-    /* It should have been initialized during open. */
-    ut_a(*value != 0);
-  }
-
-  return(prebuilt->autoinc_error);
+  return(DB_SUCCESS);
 }
 
 /*******************************************************************//**
@@ -7654,9 +7590,8 @@ ha_innobase::get_auto_increment(
 
   *nb_reserved_values = trx->n_autoinc_rows;
 
-  /* With old style AUTOINC locking we only update the table's
-  AUTOINC counter after attempting to insert the row. */
-  if (innobase_autoinc_lock_mode != AUTOINC_OLD_STYLE_LOCKING) {
+  /* This all current style autoinc. */
+  {
     uint64_t  need;
     uint64_t  next_value;
     uint64_t  col_max_value;
@@ -7681,10 +7616,6 @@ ha_innobase::get_auto_increment(
       dict_table_autoinc_update_if_greater(
         prebuilt->table, prebuilt->autoinc_last_value);
     }
-  } else {
-    /* This will force doInsertRecord() into attempting an update
-    of the table's AUTOINC counter. */
-    prebuilt->autoinc_last_value = 0;
   }
 
   /* The increment to be used to increase the AUTOINC value, we use
@@ -8535,11 +8466,6 @@ static DRIZZLE_SYSVAR_ULONG(max_purge_lag, srv_max_purge_lag,
   "Desired maximum length of the purge queue (0 = no limit)",
   NULL, NULL, 0, 0, ~0L, 0);
 
-static DRIZZLE_SYSVAR_BOOL(rollback_on_timeout, innobase_rollback_on_timeout,
-  PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-  "Roll back the complete transaction on lock wait timeout, for 4.x compatibility (disabled by default)",
-  NULL, NULL, FALSE);
-
 static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
   PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_NOSYSVAR,
   "Enable SHOW INNODB STATUS output in the innodb_status.<pid> file",
@@ -8662,18 +8588,6 @@ static DRIZZLE_SYSVAR_STR(data_file_path, innobase_data_file_path,
   "Path to individual files and their sizes.",
   NULL, NULL, NULL);
 
-static DRIZZLE_SYSVAR_LONG(autoinc_lock_mode, innobase_autoinc_lock_mode,
-  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
-  "The AUTOINC lock modes supported by InnoDB:               "
-  "0 => Old style AUTOINC locking (for backward"
-  " compatibility)                                           "
-  "1 => New style AUTOINC locking                            "
-  "2 => No AUTOINC locking (unsafe for SBR)",
-  NULL, NULL,
-  AUTOINC_NO_LOCKING, /* Default setting */
-  AUTOINC_OLD_STYLE_LOCKING,  /* Minimum value */
-  AUTOINC_NO_LOCKING, 0); /* Maximum value */
-
 static DRIZZLE_SYSVAR_STR(version, innodb_version_str,
   PLUGIN_VAR_NOCMDOPT | PLUGIN_VAR_READONLY,
   "InnoDB version", NULL, NULL, INNODB_VERSION_STR);
@@ -8730,7 +8644,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(adaptive_flushing),
   DRIZZLE_SYSVAR(mirrored_log_groups),
   DRIZZLE_SYSVAR(open_files),
-  DRIZZLE_SYSVAR(rollback_on_timeout),
   DRIZZLE_SYSVAR(stats_on_metadata),
   DRIZZLE_SYSVAR(stats_sample_pages),
   DRIZZLE_SYSVAR(adaptive_hash_index),
@@ -8743,7 +8656,6 @@ static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(table_locks),
   DRIZZLE_SYSVAR(thread_concurrency),
   DRIZZLE_SYSVAR(thread_sleep_delay),
-  DRIZZLE_SYSVAR(autoinc_lock_mode),
   DRIZZLE_SYSVAR(version),
   DRIZZLE_SYSVAR(use_sys_malloc),
   DRIZZLE_SYSVAR(change_buffering),
