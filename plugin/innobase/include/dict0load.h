@@ -107,6 +107,10 @@ void
 dict_print(void);
 /*============*/
 
+typedef void (*dict_print_callback)(void *ptr, const char *);
+UNIV_INTERN void dict_print_with_callback(dict_print_callback, void *);
+
+
 
 #ifndef UNIV_NONINL
 #include "dict0load.ic"

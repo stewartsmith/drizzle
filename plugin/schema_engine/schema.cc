@@ -46,7 +46,7 @@ using namespace drizzled;
 
 // This should always be the same value as GLOBAL_TEMPORARY_EXT but be
 // CASE_UP. --Brian
-static SchemaIdentifier TEMPORARY_IDENTIFIER("TEMPORARY");
+static SchemaIdentifier TEMPORARY_IDENTIFIER(".TEMPORARY");
 
 #define MY_DB_OPT_FILE "db.opt"
 #define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
@@ -81,6 +81,9 @@ void Schema::prime()
   {
     CachedDirectory::Entry *entry= *fileIter;
     message::Schema schema_message;
+
+    if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
+      continue;
 
     if (readSchemaFile(entry->filename, schema_message))
     {

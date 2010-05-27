@@ -990,13 +990,13 @@ int main(int argc, char **argv)
   ifstream user_slap_ifs("~/.drizzle/drizzleslap.cnf");
   po::store(parse_config_file(user_slap_ifs, slap_options), vm);
  
-  ifstream system_slap_ifs(system_config_dir_slap);
+  ifstream system_slap_ifs(system_config_dir_slap.c_str());
   store(parse_config_file(system_slap_ifs, slap_options), vm);
 
   ifstream user_client_ifs("~/.drizzle/client.cnf");
   po::store(parse_config_file(user_client_ifs, client_options), vm);
  
-  ifstream system_client_ifs(system_config_dir_client);
+  ifstream system_client_ifs(system_config_dir_client.c_str());
   store(parse_config_file(system_client_ifs, client_options), vm);
 
   po::notify(vm);
