@@ -282,8 +282,8 @@ bool Schema::writeSchemaFile(SchemaIdentifier &schema_identifier, const message:
 
   if (not db.SerializeToFileDescriptor(fd))
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             db.InitializationErrorString().c_str());
+    my_error(ER_CORRUPT_SCHEMA_DEFINITION, MYF(0), schema_file.c_str(),
+             db.InitializationErrorString().empty() ? "unknown" :  db.InitializationErrorString().c_str());
 
     if (close(fd) == -1)
       perror(schema_file_tmp);
@@ -341,8 +341,8 @@ bool Schema::readSchemaFile(const std::string &schema_file_name, drizzled::messa
       return true;
     }
 
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             schema_message.InitializationErrorString().c_str());
+    my_error(ER_CORRUPT_SCHEMA_DEFINITION, MYF(0), db_opt_path.c_str(),
+             schema_message.InitializationErrorString().empty() ? "unknown" :  schema_message.InitializationErrorString().c_str());
   }
   else
   {
