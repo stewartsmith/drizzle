@@ -256,7 +256,13 @@ public:
 
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
+private:
   KeyInfo  *key_info;			/* data of keys in database */
+public:
+  KeyInfo &getKeyInfo(uint32_t arg)
+  {
+    return key_info[arg];
+  }
   uint	*blob_field;			/* Index to blobs in Field arrray*/
 
   /* hash of field names (contains pointers to elements of field array) */

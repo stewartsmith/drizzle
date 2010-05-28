@@ -712,7 +712,6 @@ int ha_archive::doInsertRecord(unsigned char *buf)
 
   if (table->next_number_field && record == table->record[0])
   {
-    KeyInfo *mkey= &table->getShare()->key_info[0]; // We only support one key right now
     update_auto_increment();
     temp_auto= table->next_number_field->val_int();
 
@@ -721,7 +720,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
       just cry.
     */
     if (temp_auto <= share->archive_write.auto_increment &&
-        mkey->flags & HA_NOSAME)
+        table->getMutableShare()->getKeyInfo(0).flags & HA_NOSAME)
     {
       rc= HA_ERR_FOUND_DUPP_KEY;
       goto error;
@@ -773,8 +772,7 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 {
   int rc;
   bool found= 0;
-  KeyInfo *mkey= &table->getShare()->key_info[0];
-  current_k_offset= mkey->key_part->offset;
+  current_k_offset= table->getMutableShare()->getKeyInfo(0).key_part->offset;
   current_key= key;
   current_key_len= key_len;
 

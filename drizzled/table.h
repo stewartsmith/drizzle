@@ -311,7 +311,7 @@ public:
 
   uint32_t index_flags(uint32_t idx) const
   {
-    return s->storage_engine->index_flags(s->key_info[idx].algorithm);
+    return s->storage_engine->index_flags(s->getKeyInfo(idx).algorithm);
   }
 
   inline plugin::StorageEngine *getEngine() const   /* table_type for handler */

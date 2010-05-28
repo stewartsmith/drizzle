@@ -263,7 +263,7 @@ Cursor *ha_heap::clone(memory::Root *mem_root)
 
 const char *ha_heap::index_type(uint32_t inx)
 {
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
+  return ((table_share->getKeyInfo(inx).algorithm == HA_KEY_ALG_BTREE) ?
           "BTREE" : "HASH");
 }
 
