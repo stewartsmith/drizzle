@@ -1422,7 +1422,7 @@ try
   N_("Only update the default database. This is useful for skipping updates to other database in the update log."))
   ("pager", po::value<string>(),
   N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
-  ("no-pager", 
+  ("no-pager", po::value<bool>(&opt_nopager)->default_value(false)->zero_tokens(),
   N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."))
   ("password,P", po::value<string>(&opt_password)->default_value(""),
   N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
