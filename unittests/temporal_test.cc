@@ -449,3 +449,18 @@ TEST_F(DateTest, to_time_t)
   
   ASSERT_EQ(652838400, time);
 }
+
+TEST_F(DateTest, from_time_t)
+{
+  int years, months, days;
+  
+  date.from_time_t(652838400);
+  
+  years = date.years();
+  months = date.months();
+  days = date.days();
+  
+  EXPECT_EQ(1990, years);  
+  EXPECT_EQ(9, months);
+  EXPECT_EQ(9, days);
+}
