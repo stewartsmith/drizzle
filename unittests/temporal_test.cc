@@ -32,6 +32,7 @@ class DateTestCompareOperators : public ::testing::Test
 {
  protected:
   Date sample_date;
+  bool result;
   
   TemporalType identical_with_sample_date, before_sample_date, after_sample_date;
   
@@ -70,130 +71,131 @@ TYPED_TEST_CASE(DateTestCompareOperators, typesForDateTestCompareOperators);
 
 TYPED_TEST(DateTestCompareOperators, operatorEqual_ComparingWithIdencticalTemporal_ShouldReturn_True)
 {
-  bool result= (this->sample_date == this->identical_with_sample_date);
+  this->result= (this->sample_date == this->identical_with_sample_date);
   
-  ASSERT_EQ(true, result);
+  ASSERT_EQ(true, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorEqual_ComparingWithDifferentTemporal_ShouldReturn_False)
 {
-  bool result= (this->sample_date == this->before_sample_date);
+  this->result= (this->sample_date == this->before_sample_date);
   
-  ASSERT_EQ(false, result);
+  ASSERT_EQ(false, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorNotEqual_ComparingWithIdencticalTemporal_ShouldReturn_False)
 { 
-  bool result= (this->sample_date != this->identical_with_sample_date);
+  this->result= (this->sample_date != this->identical_with_sample_date);
   
-  ASSERT_EQ(false, result);
+  ASSERT_EQ(false, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorNotEqual_ComparingWithDifferentTemporal_ShouldReturn_True)
 {
-  bool result= (this->sample_date != this->before_sample_date);
+  this->result= (this->sample_date != this->before_sample_date);
   
-  ASSERT_EQ(true, result);
+  ASSERT_EQ(true, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorGreaterThan_ComparingWithIdenticalTemporal_ShouldReturn_False)
 {
-  bool result= (this->sample_date > this->identical_with_sample_date);
+  this->result= (this->sample_date > this->identical_with_sample_date);
   
-  ASSERT_EQ(false, result);
+  ASSERT_EQ(false, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorGreaterThan_ComparingWithLaterTemporal_ShouldReturn_False)
 {
-  bool result= (this->sample_date > this->after_sample_date);
+  this->result= (this->sample_date > this->after_sample_date);
   
-  ASSERT_EQ(false, result);
+  ASSERT_EQ(false, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorGreaterThan_ComparingWithEarlierTemporal_ShouldReturn_True)
 {
-  bool result= (this->sample_date > this->before_sample_date);
+  this->result= (this->sample_date > this->before_sample_date);
   
-  ASSERT_EQ(true, result);
+  ASSERT_EQ(true, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorGreaterThanOrEqual_ComparingWithIdenticalTemporal_ShouldReturn_True)
 {
-  bool result= (this->sample_date >= this->identical_with_sample_date);
+  this->result= (this->sample_date >= this->identical_with_sample_date);
   
-  ASSERT_EQ(true, result);
+  ASSERT_EQ(true, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorGreaterThanOrEqual_ComparingWithLaterTemporal_ShouldReturn_False)
 {
-  bool result= (this->sample_date >= this->after_sample_date);
+  this->result= (this->sample_date >= this->after_sample_date);
   
-  ASSERT_EQ(false, result);
+  ASSERT_EQ(false, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorGreaterThanOrEqual_ComparingWithEarlierTemporal_ShouldReturn_True)
 {
-  bool result= (this->sample_date >= this->before_sample_date);
+  this->result= (this->sample_date >= this->before_sample_date);
   
-  ASSERT_EQ(true, result);
+  ASSERT_EQ(true, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorLessThan_ComparingWithIdenticalTemporal_ShouldReturn_False)
 {
-  bool result= (this->sample_date < this->identical_with_sample_date);
+  this->result= (this->sample_date < this->identical_with_sample_date);
   
-  ASSERT_EQ(false, result);
+  ASSERT_EQ(false, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorLessThan_ComparingWithLaterTemporal_ShouldReturn_True)
 {
-  bool result= (this->sample_date < this->after_sample_date);
+  this->result= (this->sample_date < this->after_sample_date);
   
-  ASSERT_EQ(true, result);
+  ASSERT_EQ(true, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorLessThan_ComparingWithEarlierTemporal_ShouldReturn_False)
 {
-  bool result= (this->sample_date < this->before_sample_date);
+  this->result= (this->sample_date < this->before_sample_date);
   
-  ASSERT_EQ(false, result);
+  ASSERT_EQ(false, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorLessThanOrEqual_ComparingWithIdenticalTemporal_ShouldReturn_True)
 {
-  bool result= (this->sample_date < this->identical_with_sample_date);
+  this->result= (this->sample_date < this->identical_with_sample_date);
   
-  ASSERT_EQ(true, result);
+  ASSERT_EQ(true, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorLessThanOrEqual_ComparingWithLaterTemporal_ShouldReturn_True)
 {
-  bool result= (this->sample_date < this->after_sample_date);
+  this->result= (this->sample_date < this->after_sample_date);
   
-  ASSERT_EQ(true, result);
+  ASSERT_EQ(true, this->result);
 }
 
 TYPED_TEST(DateTestCompareOperators, operatorLessThanOrEqual_ComparingWithEarlierTemporal_ShouldReturn_False)
 {
-  bool result= (this->sample_date < this->before_sample_date);
+  this->result= (this->sample_date < this->before_sample_date);
   
-  ASSERT_EQ(false, result);
+  ASSERT_EQ(false, this->result);
 }
 
 class DateTest : public ::testing::Test
 {
   protected:
     Date date;
+    bool result;
     
     virtual void SetUp()
     {
       Generator::DateGen::make_valid_date(&date);
     }
-}
+};
 
 TEST_F(DateTest, is_valid_onValidDate_shouldReturn_True)
 {
-  bool result = date.is_valid();
+  result= date.is_valid();
   ASSERT_EQ(true, result);
 }
 
@@ -201,7 +203,7 @@ TEST_F(DateTest, is_valid_onInvalidDateWithYearBelowMinimum_shouldReturn_False)
 {
   date.set_years(DRIZZLE_MIN_YEARS_SQL - 1);
   
-  bool result = date.is_valid();
+  result= date.is_valid();
   
   ASSERT_EQ(false, result);
 }
@@ -210,7 +212,7 @@ TEST_F(DateTest, is_valid_onInvalidDateWithYearAboveMaximum_shouldReturn_False)
 {
   date.set_years(DRIZZLE_MAX_YEARS_SQL + 1);
     
-  bool result = date.is_valid();
+  result= date.is_valid();
   
   ASSERT_EQ(false, result);
 }
@@ -219,7 +221,7 @@ TEST_F(DateTest, is_valid_onInvalidDateWithMonthSetToZero_shouldReturn_False)
 {
   date.set_months(0);
   
-  bool result = date.is_valid();
+  result= date.is_valid();
   
   ASSERT_EQ(false, result);
 }
@@ -229,7 +231,7 @@ TEST_F(DateTest, is_valid_onInvalidDateWithMonthAboveMaximum_shouldReturn_False)
 {
   date.set_months(13);
   
-  bool result = date.is_valid();
+  result= date.is_valid();
   
   ASSERT_EQ(false, result);
 }
@@ -238,7 +240,7 @@ TEST_F(DateTest, is_valid_onInvalidDateWithDaySetToZero_shouldReturn_False)
 {
   date.set_days(0);
   
-  bool result = date.is_valid();
+  result= date.is_valid();
   
   ASSERT_EQ(false, result);
 }
@@ -247,25 +249,66 @@ TEST_F(DateTest, is_valid_onInvalidDateWithDayAboveDaysInMonth_shouldReturn_Fals
 {
   date.set_days(32);
   
-  bool result = date.is_valid();
+  result= date.is_valid();
   
   ASSERT_EQ(false, result);
 }
 
 TEST_F(DateTest, is_valid_onInvalidDateWithLeapDayInNonLeapYear_shouldReturn_False)
 {
-  leap_day_in_non_leap_year(&date);
+  Generator::DateGen::leap_day_in_non_leap_year(&date);
   
-  bool result = date.is_valid();
+  result= date.is_valid();
   
   ASSERT_EQ(false, result);
 }
 
 TEST_F(DateTest, is_valid_onValidDateWithLeapDayInLeapYear_shouldReturn_True)
 {
-  leap_day_in_leap_year(&date);
+  Generator::DateGen::leap_day_in_leap_year(&date);
   
-  bool result = date.is_valid();
+  result= date.is_valid();
   
   ASSERT_EQ(true, result);
+}
+
+
+TEST_F(DateTest, in_unix_epoch_onFirstDateInUnixEpoch_shouldReturn_True)
+{
+  Generator::DateGen::make_date(&date, 1970, 1, 1);
+  
+  result= date.is_valid();
+  
+  ASSERT_EQ(true, result);
+  
+}
+
+TEST_F(DateTest, in_unix_epoch_onLastDateInUnixEpoch_shouldReturn_True)
+{
+  Generator::DateGen::make_date(&date, 2038, 1, 19);
+  
+  result= date.is_valid();
+  
+  ASSERT_EQ(true, result);
+  
+}
+
+TEST_F(DateTest, in_unix_epoch_onLastDateBeforeUnixEpoch_shouldReturn_False)
+{
+  Generator::DateGen::make_date(&date, 1969, 12, 31);
+  
+  result= date.is_valid();
+  
+  ASSERT_EQ(false, result);
+  
+}
+
+TEST_F(DateTest, in_unix_epoch_onFirstDateAfterUnixEpoch_shouldReturn_False)
+{
+  Generator::DateGen::make_date(&date, 2038, 1, 20);
+  
+  result= date.is_valid();
+  
+  ASSERT_EQ(false, result);
+  
 }
