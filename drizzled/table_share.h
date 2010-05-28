@@ -63,7 +63,6 @@ public:
     key_info(NULL),
     blob_field(NULL),
     intervals(NULL),
-    default_values(NULL),
     block_size(0),
     version(0),
     timestamp_offset(0),
@@ -136,7 +135,6 @@ public:
     key_info(NULL),
     blob_field(NULL),
     intervals(NULL),
-    default_values(NULL),
     block_size(0),
     version(0),
     timestamp_offset(0),
@@ -291,13 +289,13 @@ private:
     _keynames.push_back(arg);
   }
 public:
-  bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position)
+  bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position) const
   {
     std::string arg(name_arg, name_length);
     std::transform(arg.begin(), arg.end(),
                    arg.begin(), ::toupper);
 
-    std::vector<std::string>::iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
 
     if (iter == _keynames.end())
       return false;
@@ -307,12 +305,12 @@ public:
     return true;
   }
 
-  bool doesKeyNameExist(std::string arg, uint32_t &position)
+  bool doesKeyNameExist(std::string arg, uint32_t &position) const
   {
     std::transform(arg.begin(), arg.end(),
                    arg.begin(), ::toupper);
 
-    std::vector<std::string>::iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
 
     if (iter == _keynames.end())
     {
@@ -332,7 +330,18 @@ public:
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
 
-  unsigned char	*default_values;		/* row with default values */
+private:
+  std::vector<unsigned char> default_values;		/* row with default values */
+public:
+  unsigned char * getDefaultValues()
+  {
+    return &default_values[0];
+  }
+  void resizeDefaultValues(size_t arg)
+  {
+    default_values.resize(arg);
+  }
+
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
   MyBitmap all_set;
@@ -480,7 +489,7 @@ public:
     table_proto= arg;
   }
 
-  inline bool hasComment()
+  inline bool hasComment() const
   {
     return (table_proto) ?  table_proto->options().has_comment() : false; 
   }
@@ -490,7 +499,7 @@ public:
     return (table_proto && table_proto->has_options()) ?  table_proto->options().comment().c_str() : NULL; 
   }
 
-  inline uint32_t getCommentLength()
+  inline uint32_t getCommentLength() const
   {
     return (table_proto) ? table_proto->options().comment().length() : 0; 
   }

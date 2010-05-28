@@ -60,7 +60,6 @@ typedef struct st_columndef MI_COLUMNDEF;
  */
 class Table 
 {
-
 public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
 
@@ -293,6 +292,7 @@ public:
 
   /* SHARE methods */
   inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
+  inline bool hasShare() const { return s ? true : false ; } /* Get rid of this long term */
   inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
@@ -302,7 +302,7 @@ public:
   inline uint32_t *getBlobField() { return s->blob_field; }
   inline uint32_t getNullBytes() { return s->null_bytes; }
   inline uint32_t getNullFields() { return s->null_fields; }
-  inline unsigned char *getDefaultValues() { return s->default_values; }
+  inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
   inline bool isNameLock() { return s->name_lock; }

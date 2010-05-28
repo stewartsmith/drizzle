@@ -2836,7 +2836,7 @@ ha_innobase::open(
   prebuilt = row_create_prebuilt(ib_table);
 
   prebuilt->mysql_row_len = table->getShare()->stored_rec_length;
-  prebuilt->default_rec = table->getShare()->default_values;
+  prebuilt->default_rec = table->getDefaultValues();
   ut_ad(prebuilt->default_rec);
 
   /* Looks like MySQL-3.23 sometimes has primary key number != 0 */

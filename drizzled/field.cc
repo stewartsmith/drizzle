@@ -849,7 +849,7 @@ Field *Field::clone(memory::Root *root, Table *new_table)
   {
     tmp->init(new_table);
     tmp->move_field_offset((ptrdiff_t) (new_table->record[0] -
-                                           new_table->getShare()->default_values));
+                                           new_table->getDefaultValues()));
   }
   return tmp;
 }

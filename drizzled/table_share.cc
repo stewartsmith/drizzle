@@ -479,7 +479,6 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   key_info(NULL),
   blob_field(NULL),
   intervals(NULL),
-  default_values(NULL),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -866,13 +865,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   local_rec_buff_length= ALIGN_SIZE(share->reclength + 1);
   share->rec_buff_length= local_rec_buff_length;
 
-  unsigned char* record= NULL;
-
-  if (! (record= (unsigned char *) share->alloc_root(local_rec_buff_length)))
-    abort();
-
-  memset(record, 0, local_rec_buff_length);
-
+  share->resizeDefaultValues(local_rec_buff_length);
+  unsigned char* record= share->getDefaultValues();
   int null_count= 0;
 
   if (! table_options.pack_record())
@@ -881,7 +875,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     *record|= 1;
   }
 
-  share->default_values= record;
 
   if (interval_count)
   {
@@ -959,7 +952,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                           0,
                           0);
 
-  unsigned char* null_pos= record;;
+  unsigned char* null_pos= share->getDefaultValues();
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
   for (unsigned int fieldnr= 0; fieldnr < share->fields; fieldnr++)
@@ -1083,10 +1076,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     Table temp_table; /* Use this so that BLOB DEFAULT '' works */
     memset(&temp_table, 0, sizeof(temp_table));
-    temp_table.s= share;
+    temp_table.setShare(share);
     temp_table.in_use= &session;
-    temp_table.s->db_low_byte_first= true; //Cursor->low_byte_first();
-    temp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
+    temp_table.getMutableShare()->db_low_byte_first= true; //Cursor->low_byte_first();
+    temp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
 
     uint32_t field_length= 0; //Assignment is for compiler complaint.
 
@@ -1325,7 +1318,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         key_part->type= local_field->key_type();
         if (local_field->null_ptr)
         {
-          key_part->null_offset=(uint32_t) ((unsigned char*) local_field->null_ptr - share->default_values);
+          key_part->null_offset=(uint32_t) ((unsigned char*) local_field->null_ptr - share->getDefaultValues());
           key_part->null_bit= local_field->null_bit;
           key_part->store_length+=HA_KEY_NULL_LENGTH;
           keyinfo->flags|=HA_NULL_PART_KEY;
@@ -1430,7 +1423,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     Field *reg_field= *share->found_next_number_field;
     if ((int) (share->next_number_index= (uint32_t)
                find_ref_key(share->key_info, share->keys,
-                            share->default_values, reg_field,
+                            share->getDefaultValues(), reg_field,
                             &share->next_number_key_offset,
                             &share->next_number_keypart)) < 0)
     {
@@ -1627,7 +1620,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   if (records == 0)
   {
     /* We are probably in hard repair, and the buffers should not be used */
-    outparam.record[0]= outparam.record[1]= default_values;
+    outparam.record[0]= outparam.record[1]= getDefaultValues();
   }
   else
   {
@@ -1645,15 +1638,15 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   */
   if (records > 1)
   {
-    memcpy(outparam.record[0], default_values, rec_buff_length);
-    memcpy(outparam.record[1], default_values, null_bytes);
+    memcpy(outparam.record[0], getDefaultValues(), rec_buff_length);
+    memcpy(outparam.record[1], getDefaultValues(), null_bytes);
     if (records > 2)
-      memcpy(outparam.record[1], default_values, rec_buff_length);
+      memcpy(outparam.record[1], getDefaultValues(), rec_buff_length);
   }
 #endif
   if (records > 1)
   {
-    memcpy(outparam.record[1], default_values, null_bytes);
+    memcpy(outparam.record[1], getDefaultValues(), null_bytes);
   }
 
   if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
