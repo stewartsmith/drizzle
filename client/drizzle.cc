@@ -49,6 +49,11 @@
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
 #include "drizzled/charset.h"
+#include <drizzled/gettext.h>
+#include <boost/program_options.hpp>
+
+using namespace std;
+namespace po=boost::program_options;
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -151,7 +156,6 @@ const uint32_t MAX_COLUMN_LENGTH= 1024;
 const int MAX_SERVER_VERSION_LENGTH= 128;
 
 #define PROMPT_CHAR '\\'
-#define DEFAULT_DELIMITER ";"
 
 class Status
 {
@@ -279,15 +283,13 @@ static bool ignore_errors= false, quick= false,
   default_pager_set= false, opt_sigint_ignore= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
-  opt_mysql= false;
-static uint32_t  show_progress_size= 0;
+  opt_mysql= false, opt_local_infile;
+static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
-static uint32_t opt_max_input_line, opt_drizzle_port= 0;
-static int verbose= 0, opt_silent= 0, opt_local_infile= 0;
+static uint32_t opt_max_input_line, opt_drizzle_port;
+static int  opt_silent, verbose= 0;
 static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
-static char *current_host, *current_db, *current_user= NULL,
-  *opt_password= NULL, *delimiter_str= NULL, *current_prompt= NULL;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
@@ -298,6 +300,13 @@ static Status status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static uint32_t opt_connect_timeout= 0;
+std::string current_db,
+  delimiter_str,  
+  current_host,
+  current_prompt,
+  current_user,
+  opt_verbose,
+  opt_password;
 // TODO: Need to i18n these
 static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
@@ -306,7 +315,7 @@ static char default_pager[FN_REFLEN];
 static char pager[FN_REFLEN], outfile[FN_REFLEN];
 static FILE *PAGER, *OUTFILE;
 static uint32_t prompt_counter;
-static char delimiter[16]= DEFAULT_DELIMITER;
+static char *delimiter= NULL;
 static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
 
@@ -324,7 +333,7 @@ void tee_puts(const char *s, FILE *file);
 void tee_putc(int c, FILE *file);
 static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool);
 /* The names of functions that actually do the manipulation. */
-static int get_options(int argc,char **argv);
+static int get_options(void);
 static int com_quit(string *str,const char*),
   com_go(string *str,const char*), com_ego(string *str,const char*),
   com_print(string *str,const char*),
@@ -338,7 +347,7 @@ static int com_quit(string *str,const char*),
   com_nopager(string *str, const char*), com_pager(string *str, const char*);
 
 static int read_and_execute(bool interactive);
-static int sql_connect(char *host,char *database,char *user,char *password,
+static int sql_connect(const char *host,const char *database,const char *user,const char *password,
                        uint32_t silent);
 static const char *server_version_string(drizzle_con_st *con);
 static int put_info(const char *str,INFO_TYPE info,uint32_t error,
@@ -1161,7 +1170,7 @@ static const char *load_default_groups[]= { "drizzle","client",0 };
 
 int history_length;
 static int not_in_history(const char *line);
-static void initialize_readline (char *name);
+static void initialize_readline (const char *name);
 static void fix_history(string *final_command);
 
 static Commands *find_command(const char *name,char cmd_name);
@@ -1300,6 +1309,52 @@ static bool execute_commands(int *error)
   return executed;
 }
 
+static void check_timeout_value(uint32_t in_connect_timeout)
+{
+  opt_connect_timeout= 0;
+  if(in_connect_timeout<3600*12)
+  {
+    cout<<N_("Error: Invalid Value for connect_timeout"); 
+    exit(-1);
+  }
+  opt_connect_timeout= in_connect_timeout;
+}
+
+static void check_max_input_line(uint32_t in_max_input_line)
+{
+  opt_max_input_line= 0;
+  if( in_max_input_line>=4096 || in_max_input_line<(int64_t)2*1024L*1024L*1024L)
+  {
+    cout<<N_("Error: Invalid Value for max_input_line");
+    exit(-1);
+  }
+  opt_max_input_line= in_max_input_line/1024;
+  opt_max_input_line*=1024;
+}
+
+static void check_select_limit(uint32_t in_check_limit)
+{
+  select_limit= 0;
+  if( in_check_limit>=1 || in_check_limit<ULONG_MAX)
+  {
+    cout<<N_("Error: Invalid Value for check_limit");
+    exit(-1);
+  }
+  select_limit= in_check_limit;
+}
+
+static void check_join_size(uint32_t in_max_join_size)
+{
+  max_join_size= 0;
+  if( in_max_join_size>=1 || in_max_join_size<ULONG_MAX)
+  {
+    cout<<N_("Error: Invalid Value for max_join_size");
+    exit(-1);
+  }
+  max_join_size= in_max_join_size;
+}
+
+
 int main(int argc,char *argv[])
 {
 #if defined(ENABLE_NLS)
@@ -1309,12 +1364,127 @@ int main(int argc,char *argv[])
   bindtextdomain("drizzle", LOCALEDIR);
   textdomain("drizzle");
 #endif
+try
+{
+  po::options_description long_options("Allowed Options");
+  long_options.add_options()
+  ("help,?",N_("Displays this help and exit."))
+  ("auto-rehash", po::value<bool>(&opt_rehash)->default_value(true)->zero_tokens(),
+  N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."))
+  ("no-auto-rehash,A",N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."))
+  ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
+  N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
+  ("batch,B",N_("Don't use history file. Disable interactive behavior. (Enables --silent)"))
+  ("column-type-info", po::value<bool>(&column_types_flag)->default_value(false)->zero_tokens(),
+  N_("Display column type information."))
+  ("comments,c", po::value<bool>(&preserve_comments)->default_value(false)->zero_tokens(),
+  N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
+  ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
+  N_("Use compression in server/client protocol."))
+  ("database,D", po::value<string>(&current_db)->default_value(""),
+  N_("Database to use."))
+  ("default-character-set",po::value<string>(),
+  N_("(not used)"))
+  ("delimiter", po::value<string>(&delimiter_str)->default_value(";"),
+  N_("Delimiter to be used."))
+  ("execute,e", po::value<string>(),
+  N_("Execute command and quit. (Disables --force and history file)"))
+  ("vertical,E", po::value<bool>(&vertical)->default_value(false)->zero_tokens(),
+  N_("Print the output of a query (rows) vertically."))
+  ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
+  N_("Continue even if we get an sql error."))
+  ("named-commands,G", po::value<bool>(&named_cmds)->default_value(false)->zero_tokens(),
+  N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default."))
+  ("no-named-commands,g",
+  N_("Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead."))
+  ("ignore-spaces,i", N_("Ignore space after function names."))
+  ("local-infile", po::value<bool>(&opt_local_infile)->default_value(false)->zero_tokens(),
+  N_("Enable/disable LOAD DATA LOCAL INFILE."))
+  ("no-beep,b", po::value<bool>(&opt_nobeep)->default_value(false)->zero_tokens(),
+  N_("Turn off beep on error."))
+  ("host,h", po::value<string>(&current_host)->default_value("localhost"),
+  N_("Connect to host"))
+  ("line-numbers", po::value<bool>(&line_numbers)->default_value(true)->zero_tokens(),
+  N_("Write line numbers for errors."))
+  ("skip-line-numbers,L", 
+  N_("Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead."))
+  ("unbuffered,n", po::value<bool>(&unbuffered)->default_value(false)->zero_tokens(),
+  N_("Flush buffer after each query."))
+  ("column-name", po::value<bool>(&column_names)->default_value(true)->zero_tokens(),
+  N_("Write column names in results."))
+  ("skip-column-names,N", 
+  N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
+  ("set-variable,O", po::value<string>(),
+  N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."))
+  ("sigint-ignore", po::value<bool>(&opt_sigint_ignore)->default_value(false)->zero_tokens(),
+  N_("Ignore SIGINT (CTRL-C)"))
+  ("one-database,o", po::value<bool>(&one_database)->default_value(false)->zero_tokens(),
+  N_("Only update the default database. This is useful for skipping updates to other database in the update log."))
+  ("pager", po::value<string>(),
+  N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
+  ("no-pager", 
+  N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."))
+  ("password,P", po::value<string>(&opt_password)->default_value(""),
+  N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
+  ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
+  N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
+  ("prompt", po::value<string>(&current_prompt)->default_value(""),  
+  N_("Set the drizzle prompt to this value."))
+  ("quick,q", po::value<bool>(&quick)->default_value(false)->zero_tokens(),
+  N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."))
+  ("raw,r", po::value<bool>(&opt_raw_data)->default_value(false)->zero_tokens(),
+  N_("Write fields without conversion. Used with --batch.")) 
+  ("reconnect", po::value<bool>(&opt_reconnect)->default_value(true)->zero_tokens(),
+  N_("Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default."))
+  ("shutdown", po::value<bool>(&opt_shutdown)->default_value(false)->zero_tokens(),
+  N_("Shutdown the server"))
+  ("silent,s", N_("Be more silent. Print results with a tab as separator, each row on new line."))
+  ("table,t", po::value<bool>(&output_tables)->default_value(false)->zero_tokens(),
+  N_("Output in table format.")) 
+  ("tee", po::value<string>(),
+  N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
+  ("no-tee", 
+  N_("Disable outfile. See interactive help (\\h) also. WARNING: option deprecated; use --disable-tee instead"))
+  ("user,u", po::value<string>(&current_user)->default_value(""),
+  N_("User for login if not current user."))
+  ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
+  N_("Only allow UPDATE and DELETE that uses keys."))
+  ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
+  N_("Synonym for option --safe-updates, -U."))
+  ("verbose,v", po::value<string>(&opt_verbose)->default_value(""),
+  N_("-v vvv implies that verbose= 3, Used to specify verbose"))
+  ("version,V", N_("Output version information and exit."))
+  ("wait,w", N_("Wait and retry if connection is down."))
+  ("connect_timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
+  N_("Number of seconds before connection timeout."))
+  ("max_input_line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
+  N_("Max length of input line"))
+  ("select_limit", po::value<uint32_t>(&select_limit)->default_value(1000L)->notifier(&check_select_limit),
+  N_("Automatic limit for SELECT when using --safe-updates"))
+  ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L)->notifier(&check_join_size),
+  N_("Automatic limit for rows in a join when using --safe-updates"))
+  ("secure-auth", po::value<bool>(&opt_secure_auth)->default_value(false)->zero_tokens(),
+  N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
+  ("show-warnings", po::value<bool>(&show_warnings)->default_value(false)->zero_tokens(),
+  N_("Show warnings after every statement."))
+  ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(0),
+  N_("Number of lines before each import progress report."))
+  ("ping", po::value<bool>(&opt_ping)->default_value(false)->zero_tokens(),
+  N_("Ping the server to check if it's alive."))
+  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
+  N_("Use MySQL Protocol."))
+  ;
+
 
   MY_INIT(argv[0]);
-  delimiter_str= delimiter;
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
+  defaults_argv=argv;
+ 
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc,argv,long_options),vm);
   
   if (default_prompt == NULL)
   {
@@ -1323,7 +1493,7 @@ int main(int argc,char *argv[])
     exit(ENOMEM);
   }
   current_prompt= strdup(default_prompt);
-  if (current_prompt == NULL)
+  if (current_prompt.empty())
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
                       "prompt. Aborting.\n"));
@@ -1367,18 +1537,181 @@ int main(int argc,char *argv[])
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
 
-  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
-  defaults_argv=argv;
-  if (get_options(argc, (char **) argv))
+
+  if(vm.count("default-character-set"))
+    default_charset_used= 1;
+    
+  if(vm.count("delimiter"))
+  {
+    /* Check that delimiter does not contain a backslash */
+    if (!strstr(delimiter_str.c_str(), "\\"))
+    {
+      delimiter= (char *)delimiter_str.c_str();  
+    }
+    else
+    {
+      put_info(_("DELIMITER cannot contain a backslash character"),
+      INFO_ERROR,0,0);
+      return false;
+    }
+   
+    delimiter_length= (uint32_t)strlen(delimiter);
+  }
+  if(vm.count("tee"))
+  { 
+    if (vm["tee"].as<string>().empty())
+    {
+      if (opt_outfile)
+        end_tee();
+    }
+    else
+      init_tee(vm["tee"].as<string>().c_str());
+  }
+  if(vm.count("no-tee"))
+  {
+    printf(_("WARNING: option deprecated; use --disable-tee instead.\n"));
+    if (opt_outfile)
+      end_tee();
+  }
+  if(vm.count("pager"))
+  {
+    if (vm["pager"].as<string>().empty())
+      opt_nopager= 1;
+    else
+    {
+      opt_nopager= 0;
+      if (vm[pager].as<string>().length())
+      {
+        default_pager_set= 1;
+        strncpy(pager, vm["pager"].as<string>().c_str(), sizeof(pager) - 1);
+        strcpy(default_pager, pager);
+      }
+      else if (default_pager_set)
+        strcpy(pager, default_pager);
+      else
+        opt_nopager= 1;
+    }
+  }
+  if(vm.count("no-pager"))
+  {
+    printf(_("WARNING: option deprecated; use --disable-pager instead.\n"));
+    opt_nopager= 1;
+  }
+
+  if(vm.count("no-auto-rehash"))
+    opt_rehash= 0;
+
+  if(vm.count("skip-column-names"))
+    column_names= 0;
+    
+  if(vm.count("execute"))
+  {  
+    status.setBatch(1);
+    status.setAddToHistory(1);
+    if (status.getLineBuff() == NULL)
+      status.setLineBuff(opt_max_input_line,NULL);
+    if (status.getLineBuff() == NULL)
+    {
+      internal::my_end();
+      exit(1);
+    }
+    status.getLineBuff()->addString(vm["execute"].as<string>().c_str());
+  }
+
+  if (one_database)
+    skip_updates= true;
+  
+  if(vm.count("port"))
+  {
+    /* If the port number is > 65535 it is not a valid port
+       This also helps with potential data loss casting unsigned long to a
+       uint32_t. */
+    if ((opt_drizzle_port == 0) || (opt_drizzle_port > 65535))
+    {
+      put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
+      exit(-1);
+    }
+   }
+
+    if (!opt_password.empty())
+    {
+      char *start= (char *)opt_password.c_str();
+      char *temp_pass= (char *)vm["password"].as<string>().c_str();
+      while (*temp_pass)
+      {
+        /* Overwriting password with 'x' */
+        *temp_pass++= 'x';
+      }
+      if (*start)
+      {
+        start[1]= 0;
+      }
+      tty_password= 0;
+    }
+    else
+    {
+      tty_password= 1;
+    }
+
+  
+  if (!opt_verbose.empty())
+  {
+    verbose= opt_verbose.length();
+  }
+
+  if(vm.count("batch"))
+  {
+    status.setBatch(1);
+    status.setAddToHistory(0);
+    set_if_bigger(opt_silent,1);                         // more silent
+  }
+  if(vm.count("silent"))
+  {
+    opt_silent++;
+  }
+  if(vm.count("version"))
+  {
+    printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
+    internal::my_progname, VER.c_str(), drizzle_version(),
+    HOST_VENDOR, HOST_OS, HOST_CPU,
+    rl_library_version);
+
+    exit(0);
+  }
+  
+  if(vm.count("help"))
+  {
+    printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
+    internal::my_progname, VER.c_str(), drizzle_version(),
+    HOST_VENDOR, HOST_OS, HOST_CPU,
+    rl_library_version);
+    printf(_("Copyright (C) 2008 Sun Microsystems\n"
+           "This software comes with ABSOLUTELY NO WARRANTY. "
+           "This is free software,\n"
+           "and you are welcome to modify and redistribute it "
+           "under the GPL license\n"));
+    printf(_("Usage: %s [OPTIONS] [database]\n"), internal::my_progname);
+    cout<<long_options;
+    exit(0);
+  }
+ 
+
+  if (get_options())
   {
     internal::free_defaults(defaults_argv);
     internal::my_end();
     exit(1);
   }
 
+  if (argc == 1)
+  {
+    skip_updates= 0;
+    current_db.erase();
+    current_db= strdup(*argv);
+  }
+
   memset(&drizzle, 0, sizeof(drizzle));
-  if (sql_connect(current_host,current_db,current_user,opt_password,
-                  opt_silent))
+  if (sql_connect(current_host.c_str(),current_db.c_str(),current_user.c_str(),opt_password.c_str(),opt_silent))
   {
     quick= 1;          // Avoid history
     status.setExitStatus(1);
@@ -1436,7 +1769,7 @@ int main(int argc,char *argv[])
           server_version_string(&con));
   put_info(output_buff, INFO_INFO, 0, 0);
 
-  initialize_readline(current_prompt);
+  initialize_readline(current_prompt.c_str());
   if (!status.getBatch() && !quick)
   {
     /* read-history from file, default ~/.drizzle_history*/
@@ -1480,7 +1813,12 @@ int main(int argc,char *argv[])
   if (opt_outfile)
     end_tee();
   drizzle_end(0);
+}
 
+  catch(exception &err)
+  {
+  cerr<<"Error:"<<err.what()<<endl;
+  }
   return(0);        // Keep compiler happy
 }
 
@@ -1505,16 +1843,16 @@ void drizzle_end(int sig)
     delete glob_buffer;
   if (processed_prompt)
     delete processed_prompt;
-  free(opt_password);
+  opt_password.erase();
   free(histfile);
   free(histfile_tmp);
-  free(current_db);
-  free(current_host);
-  free(current_user);
+  current_db.erase();
+  current_host.erase();
+  current_user.erase();
   free(full_username);
   free(part_username);
   free(default_prompt);
-  free(current_prompt);
+  current_prompt.erase();
   internal::free_defaults(defaults_argv);
   internal::my_end();
   exit(status.getExitStatus());
@@ -1539,8 +1877,8 @@ void handle_sigint(int sig)
     goto err;
   }
 
-  if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host,
-                          opt_drizzle_port, current_user, opt_password, NULL,
+  if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host.c_str(),
+                          opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
                           opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
   {
     goto err;
@@ -1575,369 +1913,12 @@ void window_resize(int)
 }
 #endif
 
-static struct option my_long_options[] =
-{
-  {"help", '?', N_("Display this help and exit."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
-   0, 0, 0, 0, 0},
-  {"help", 'I', N_("Synonym for -?"), 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
-   0, 0, 0, 0, 0},
-  {"auto-rehash", OPT_AUTO_REHASH,
-   N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."),
-   (char**) &opt_rehash, (char**) &opt_rehash, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0,
-   0, 0},
-  {"no-auto-rehash", 'A',
-   N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"auto-vertical-output", OPT_AUTO_VERTICAL_OUTPUT,
-   N_("Automatically switch to vertical output mode if the result is wider than the terminal width."),
-   (char**) &auto_vertical_output, (char**) &auto_vertical_output, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"batch", 'B',
-   N_("Don't use history file. Disable interactive behavior. (Enables --silent)"), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"column-type-info", OPT_COLUMN_TYPES, N_("Display column type information."),
-   (char**) &column_types_flag, (char**) &column_types_flag,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"comments", 'c', N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"),
-   (char**) &preserve_comments, (char**) &preserve_comments,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"compress", 'C', N_("Use compression in server/client protocol."),
-   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
-  {"database", 'D', N_("Database to use."), (char**) &current_db,
-   (char**) &current_db, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-character-set", OPT_DEFAULT_CHARSET,
-   N_("(not used)"), 0,
-   0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"delimiter", OPT_DELIMITER, N_("Delimiter to be used."), (char**) &delimiter_str,
-   (char**) &delimiter_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"execute", 'e', N_("Execute command and quit. (Disables --force and history file)"), 0,
-   0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"vertical", 'E', N_("Print the output of a query (rows) vertically."),
-   (char**) &vertical, (char**) &vertical, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
-   0},
-  {"force", 'f', N_("Continue even if we get an sql error."),
-   (char**) &ignore_errors, (char**) &ignore_errors, 0, GET_BOOL, NO_ARG, 0, 0,
-   0, 0, 0, 0},
-  {"named-commands", 'G',
-   N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default."),
-   (char**) &named_cmds, (char**) &named_cmds, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
-  {"no-named-commands", 'g',
-   N_("Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"ignore-spaces", 'i', N_("Ignore space after function names."), 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"local-infile", OPT_LOCAL_INFILE, N_("Enable/disable LOAD DATA LOCAL INFILE."),
-   (char**) &opt_local_infile,
-   (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"no-beep", 'b', N_("Turn off beep on error."), (char**) &opt_nobeep,
-   (char**) &opt_nobeep, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"host", 'h', N_("Connect to host."), (char**) &current_host,
-   (char**) &current_host, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"line-numbers", OPT_LINE_NUMBERS, N_("Write line numbers for errors."),
-   (char**) &line_numbers, (char**) &line_numbers, 0, GET_BOOL,
-   NO_ARG, 1, 0, 0, 0, 0, 0},
-  {"skip-line-numbers", 'L', N_("Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead."), 0, 0, 0, GET_NO_ARG,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"unbuffered", 'n', N_("Flush buffer after each query."), (char**) &unbuffered,
-   (char**) &unbuffered, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"column-names", OPT_COLUMN_NAMES, N_("Write column names in results."),
-   (char**) &column_names, (char**) &column_names, 0, GET_BOOL,
-   NO_ARG, 1, 0, 0, 0, 0, 0},
-  {"skip-column-names", 'N',
-   N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"set-variable", 'O',
-   N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"sigint-ignore", OPT_SIGINT_IGNORE, N_("Ignore SIGINT (CTRL-C)"),
-   (char**) &opt_sigint_ignore,  (char**) &opt_sigint_ignore, 0, GET_BOOL,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"one-database", 'o',
-   N_("Only update the default database. This is useful for skipping updates to other database in the update log."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"pager", OPT_PAGER,
-   N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."),
-   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"no-pager", OPT_NOPAGER,
-   N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."),
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"password", 'P',
-   N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
-   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'p', N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, ")
-   N_("built-in default") " (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
-   0, 0, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"prompt", OPT_PROMPT, N_("Set the drizzle prompt to this value."),
-   (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"quick", 'q',
-   N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."),
-   (char**) &quick, (char**) &quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"raw", 'r', N_("Write fields without conversion. Used with --batch."),
-   (char**) &opt_raw_data, (char**) &opt_raw_data, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
-  {"reconnect", OPT_RECONNECT, N_("Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default."),
-   (char**) &opt_reconnect, (char**) &opt_reconnect, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
-  {"shutdown", OPT_SHUTDOWN, N_("Shutdown the server."),
-   (char**) &opt_shutdown, (char**) &opt_shutdown, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"silent", 's', N_("Be more silent. Print results with a tab as separator, each row on new line."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
-   0, 0},
-  {"table", 't', N_("Output in table format."), (char**) &output_tables,
-   (char**) &output_tables, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"tee", OPT_TEE,
-   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"no-tee", OPT_NOTEE, N_("Disable outfile. See interactive help (\\h) also. WARNING: option deprecated; use --disable-tee instead"), 0, 0, 0, GET_NO_ARG,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"user", 'u', N_("User for login if not current user."), (char**) &current_user,
-   (char**) &current_user, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"safe-updates", 'U', N_("Only allow UPDATE and DELETE that uses keys."),
-   (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
-   0, 0, 0, 0},
-  {"i-am-a-dummy", 'U', N_("Synonym for option --safe-updates, -U."),
-   (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
-   0, 0, 0, 0},
-  {"verbose", 'v', N_("Write more. (-v -v -v gives the table output format)."), 0,
-   0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"version", 'V', N_("Output version information and exit."), 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"wait", 'w', N_("Wait and retry if connection is down."), 0, 0, 0, GET_NO_ARG,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"connect_timeout", OPT_CONNECT_TIMEOUT,
-   N_("Number of seconds before connection timeout."),
-   (char**) &opt_connect_timeout,
-   (char**) &opt_connect_timeout, 0, GET_UINT32, REQUIRED_ARG, 0, 0, 3600*12, 0,
-   0, 0},
-  {"max_input_line", OPT_MAX_INPUT_LINE,
-   N_("Max length of input line"),
-   (char**) &opt_max_input_line, (char**) &opt_max_input_line, 0,
-   GET_UINT32, REQUIRED_ARG, 16 *1024L*1024L, 4096,
-   (int64_t) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
-  {"select_limit", OPT_SELECT_LIMIT,
-   N_("Automatic limit for SELECT when using --safe-updates"),
-   (char**) &select_limit,
-   (char**) &select_limit, 0, GET_UINT32, REQUIRED_ARG, 1000L, 1, ULONG_MAX,
-   0, 1, 0},
-  {"max_join_size", OPT_MAX_JOIN_SIZE,
-   N_("Automatic limit for rows in a join when using --safe-updates"),
-   (char**) &max_join_size,
-   (char**) &max_join_size, 0, GET_UINT32, REQUIRED_ARG, 1000000L, 1, ULONG_MAX,
-   0, 1, 0},
-  {"secure-auth", OPT_SECURE_AUTH, N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"), (char**) &opt_secure_auth,
-   (char**) &opt_secure_auth, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"show-warnings", OPT_SHOW_WARNINGS, N_("Show warnings after every statement."),
-   (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
-   0, 0, 0, 0, 0, 0},
-  {"show-progress-size", OPT_SHOW_PROGRESS_SIZE, N_("Number of lines before each import progress report."),
-   (char**) &show_progress_size, (char**) &show_progress_size, 0, GET_UINT32, REQUIRED_ARG,
-   0, 0, 0, 0, 0, 0},
-  {"ping", OPT_PING, N_("Ping the server to check if it's alive."),
-   (char**) &opt_ping, (char**) &opt_ping, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"mysql", 'm', N_("Use MySQL Protocol."),
-   (char**) &opt_mysql, (char**) &opt_mysql, 0, GET_BOOL, NO_ARG, 1, 0, 0,
-   0, 0, 0},
-  { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
-};
 
 
-static void usage(int version)
-{
-  const char* readline= "readline";
-
-  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"),
-         internal::my_progname, VER.c_str(), drizzle_version(),
-         HOST_VENDOR, HOST_OS, HOST_CPU,
-         readline, rl_library_version);
-
-  if (version)
-    return;
-  printf(_("Copyright (C) 2008 Sun Microsystems\n"
-           "This software comes with ABSOLUTELY NO WARRANTY. "
-           "This is free software,\n"
-           "and you are welcome to modify and redistribute it "
-           "under the GPL license\n"));
-  printf(_("Usage: %s [OPTIONS] [database]\n"), internal::my_progname);
-  my_print_help(my_long_options);
-  internal::print_defaults("drizzle", load_default_groups);
-  my_print_variables(my_long_options);
-}
-
-
-static int get_one_option(int optid, const struct option *, char *argument)
-{
-  char *endchar= NULL;
-  uint64_t temp_drizzle_port= 0;
-
-  switch(optid) {
-  case  OPT_DEFAULT_CHARSET:
-    default_charset_used= 1;
-    break;
-  case OPT_DELIMITER:
-    if (argument == disabled_my_option)
-    {
-      strcpy(delimiter, DEFAULT_DELIMITER);
-    }
-    else
-    {
-      /* Check that delimiter does not contain a backslash */
-      if (!strstr(argument, "\\"))
-      {
-        strncpy(delimiter, argument, sizeof(delimiter) - 1);
-      }
-      else
-      {
-        put_info(_("DELIMITER cannot contain a backslash character"),
-                 INFO_ERROR,0,0);
-        return false;
-      }
-    }
-    delimiter_length= (uint32_t)strlen(delimiter);
-    delimiter_str= delimiter;
-    break;
-  case OPT_TEE:
-    if (argument == disabled_my_option)
-    {
-      if (opt_outfile)
-        end_tee();
-    }
-    else
-      init_tee(argument);
-    break;
-  case OPT_NOTEE:
-    printf(_("WARNING: option deprecated; use --disable-tee instead.\n"));
-    if (opt_outfile)
-      end_tee();
-    break;
-  case OPT_PAGER:
-    if (argument == disabled_my_option)
-      opt_nopager= 1;
-    else
-    {
-      opt_nopager= 0;
-      if (argument && strlen(argument))
-      {
-        default_pager_set= 1;
-        strncpy(pager, argument, sizeof(pager) - 1);
-        strcpy(default_pager, pager);
-      }
-      else if (default_pager_set)
-        strcpy(pager, default_pager);
-      else
-        opt_nopager= 1;
-    }
-    break;
-  case OPT_NOPAGER:
-    printf(_("WARNING: option deprecated; use --disable-pager instead.\n"));
-    opt_nopager= 1;
-    break;
-  case OPT_SERVER_ARG:
-    printf(_("WARNING: --server-arg option not supported in this configuration.\n"));
-    break;
-  case 'A':
-    opt_rehash= 0;
-    break;
-  case 'N':
-    column_names= 0;
-    break;
-  case 'e':
-    status.setBatch(1);
-    status.setAddToHistory(1);
-    if (status.getLineBuff() == NULL)
-      status.setLineBuff(opt_max_input_line,NULL);
-    if (status.getLineBuff() == NULL)
-    {
-      internal::my_end();
-      exit(1);
-    }
-    status.getLineBuff()->addString(argument);
-    break;
-  case 'o':
-    if (argument == disabled_my_option)
-      one_database= 0;
-    else
-      one_database= skip_updates= 1;
-    break;
-  case 'p':
-    temp_drizzle_port= (uint64_t) strtoul(argument, &endchar, 10);
-    /* if there is an alpha character this is not a valid port */
-    if (strlen(endchar) != 0)
-    {
-      put_info(_("Non-integer value supplied for port.  If you are trying to enter a password please use --password instead."), INFO_ERROR, 0, 0);
-      return false;
-    }
-    /* If the port number is > 65535 it is not a valid port
-       This also helps with potential data loss casting unsigned long to a
-       uint32_t. */
-    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
-    {
-      put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
-      return false;
-    }
-    else
-    {
-      opt_drizzle_port= (uint32_t) temp_drizzle_port;
-    }
-    break;
-  case 'P':
-    /* Don't require password */
-    if (argument == disabled_my_option)
-    {
-      argument= (char*) "";
-    }
-    if (argument)
-    {
-      char *start= argument;
-      free(opt_password);
-      opt_password= strdup(argument);
-      while (*argument)
-      {
-        /* Overwriting password with 'x' */
-        *argument++= 'x';
-      }
-      if (*start)
-      {
-        start[1]= 0;
-      }
-      tty_password= 0;
-    }
-    else
-    {
-      tty_password= 1;
-    }
-    break;
-  case 's':
-    if (argument == disabled_my_option)
-      opt_silent= 0;
-    else
-      opt_silent++;
-    break;
-  case 'v':
-    if (argument == disabled_my_option)
-      verbose= 0;
-    else
-      verbose++;
-    break;
-  case 'B':
-    status.setBatch(1);
-    status.setAddToHistory(0);
-    set_if_bigger(opt_silent,1);                         // more silent
-    break;
-  case 'V':
-    usage(1);
-    exit(0);
-  case 'I':
-  case '?':
-    usage(0);
-    exit(0);
-  }
-  return 0;
-}
-
-
-static int get_options(int argc, char **argv)
+static int get_options(void)
 {
   char *tmp, *pagpoint;
-  int ho_error;
+  
 
   tmp= (char *) getenv("DRIZZLE_HOST");
   if (tmp)
@@ -1953,8 +1934,7 @@ static int get_options(int argc, char **argv)
     strcpy(pager, pagpoint);
   strcpy(default_pager, pager);
 
-  if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
-    exit(ho_error);
+  //
 
   if (status.getBatch()) /* disable pager and outfile in this case */
   {
@@ -1967,20 +1947,8 @@ static int get_options(int argc, char **argv)
     connect_flag= DRIZZLE_CAPABILITIES_NONE; /* Not in interactive mode */
   }
 
-  if (argc > 1)
-  {
-    usage(0);
-    exit(1);
-  }
-  if (argc == 1)
-  {
-    skip_updates= 0;
-    free(current_db);
-    current_db= strdup(*argv);
-  }
   if (tty_password)
     opt_password= client_get_tty_password(NULL);
-
   return(0);
 }
 
@@ -2487,7 +2455,7 @@ static int not_in_history(const char *line)
   return 1;
 }
 
-static void initialize_readline (char *name)
+static void initialize_readline (const char *name)
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
   rl_readline_name= name;
@@ -2582,7 +2550,7 @@ static void build_completion_hash(bool rehash, bool write_info)
   drizzle_column_st *sql_field;
   string tmp_str, tmp_str_lower;
 
-  if (status.getBatch() || quick || !current_db)
+  if (status.getBatch() || quick || current_db.empty())
     return;      // We don't need completion in batches
   if (!rehash)
     return;
@@ -2717,8 +2685,8 @@ static void get_current_db(void)
   drizzle_return_t ret;
   drizzle_result_st res;
 
-  free(current_db);
-  current_db= NULL;
+  current_db.erase();
+  current_db= "";
   /* In case of error below current_db will be NULL */
   if (drizzle_query_str(&con, &res, "SELECT DATABASE()", &ret) != NULL)
   {
@@ -3746,12 +3714,12 @@ com_connect(string *buffer, const char *line)
     tmp= get_arg(buff, 0);
     if (tmp && *tmp)
     {
-      free(current_db);
+      current_db.erase();
       current_db= strdup(tmp);
       tmp= get_arg(buff, 1);
       if (tmp)
       {
-        free(current_host);
+        current_host.erase();
         current_host=strdup(tmp);
       }
     }
@@ -3766,7 +3734,7 @@ com_connect(string *buffer, const char *line)
   }
   else
     opt_rehash= 0;
-  error=sql_connect(current_host,current_db,current_user,opt_password,0);
+  error=sql_connect(current_host.c_str(),current_db.c_str(),current_user.c_str(),opt_password.c_str(),0);
   opt_rehash= save_rehash;
 
   if (connected)
@@ -3774,7 +3742,7 @@ com_connect(string *buffer, const char *line)
     sprintf(buff,"Connection id:    %u",drizzle_con_thread_id(&con));
     put_info(buff,INFO_INFO,0,0);
     sprintf(buff,"Current database: %.128s\n",
-            current_db ? current_db : "*** NONE ***");
+            !current_db.empty() ? current_db.c_str() : "*** NONE ***");
     put_info(buff,INFO_INFO,0,0);
   }
   return error;
@@ -3896,7 +3864,7 @@ com_use(string *, const char *line)
   */
   get_current_db();
 
-  if (!current_db || strcmp(current_db,tmp))
+  if (current_db.empty() || strcmp(current_db.c_str(),tmp))
   {
     if (one_database)
     {
@@ -3948,7 +3916,7 @@ com_use(string *, const char *line)
       else
         drizzle_result_free(&result);
     }
-    free(current_db);
+    current_db.erase();
     current_db= strdup(tmp);
     if (select_db > 1)
       build_completion_hash(opt_rehash, 1);
@@ -4037,7 +4005,7 @@ char *get_arg(char *line, bool get_next_arg)
 
 
 static int
-sql_connect(char *host,char *database,char *user,char *password,
+sql_connect(const char *host,const char *database,const char *user,const char *password,
                  uint32_t silent)
 {
   drizzle_return_t ret;
@@ -4106,7 +4074,12 @@ com_status(string *, const char *)
   drizzle_return_t ret;
 
   tee_puts("--------------", stdout);
-  usage(1);          /* Print version */
+  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
+  internal::my_progname, VER.c_str(), drizzle_version(),
+  HOST_VENDOR, HOST_OS, HOST_CPU,
+  rl_library_version);          /* Print version */
+
+
   if (connected)
   {
     tee_fprintf(stdout, "\nConnection id:\t\t%lu\n",drizzle_con_thread_id(&con));
@@ -4452,7 +4425,7 @@ static const char * construct_prompt()
   struct tm *t = localtime(&lclock);
 
   /* parse thru the settings for the prompt */
-  for (char *c= current_prompt; *c; (void)*c++)
+  for (char *c= (char *)current_prompt.c_str(); *c; (void)*c++)
   {
     if (*c != PROMPT_CHAR)
     {
@@ -4479,7 +4452,7 @@ static const char * construct_prompt()
           processed_prompt->append("not_connected");
         break;
       case 'd':
-        processed_prompt->append(current_db ? current_db : "(none)");
+        processed_prompt->append(!current_db.empty() ? current_db.c_str() : "(none)");
         break;
       case 'h':
       {
@@ -4516,13 +4489,13 @@ static const char * construct_prompt()
         if (!full_username)
           init_username();
         processed_prompt->append(full_username ? full_username :
-                                 (current_user ?  current_user : "(unknown)"));
+                                 (!current_user.empty() ?  current_user.c_str() : "(unknown)"));
         break;
       case 'u':
         if (!full_username)
           init_username();
         processed_prompt->append(part_username ? part_username :
-                                 (current_user ?  current_user : "(unknown)"));
+                                 (!current_user.empty() ?  current_user.c_str() : "(unknown)"));
         break;
       case PROMPT_CHAR:
         {
@@ -4601,7 +4574,7 @@ static const char * construct_prompt()
         processed_prompt->append("\t");
         break;
       case 'l':
-        processed_prompt->append(delimiter_str);
+        processed_prompt->append(delimiter_str.c_str());
         break;
       default:
         processed_prompt->append(c, 1);
@@ -4649,9 +4622,9 @@ static int com_prompt(string *, const char *line)
     tee_fprintf(stdout, "Memory allocation error. Not changing prompt\n");
   else
   {
-    free(current_prompt);
+    current_prompt.erase();
     current_prompt= tmpptr;
-    tee_fprintf(stdout, "PROMPT set to '%s'\n", current_prompt);
+    tee_fprintf(stdout, "PROMPT set to '%s'\n", current_prompt.c_str());
   }
   return 0;
 }
