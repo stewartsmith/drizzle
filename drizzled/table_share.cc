@@ -528,7 +528,6 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   memset(&name_hash, 0, sizeof(HASH));
 
   table_charset= 0;
-  memset(&all_set, 0, sizeof (MyBitmap));
   memset(&table_cache_key, 0, sizeof(LEX_STRING));
   memset(&db, 0, sizeof(LEX_STRING));
   memset(&table_name, 0, sizeof(LEX_STRING));
@@ -1458,17 +1457,9 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   db_low_byte_first= true; // @todo Question this.
   column_bitmap_size= bitmap_buffer_size(fields);
 
-  my_bitmap_map *bitmaps;
-
-  if (!(bitmaps= (my_bitmap_map*) alloc_root(column_bitmap_size)))
-  { }
-  else
-  {
-    all_set.init(bitmaps, fields);
-    all_set.setAll();
-
-    return (0);
-  }
+  all_bitmap.resize(column_bitmap_size);
+  all_set.init(&all_bitmap[0], fields);
+  all_set.setAll();
 
   return local_error;
 }

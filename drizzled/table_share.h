@@ -113,7 +113,6 @@ public:
     memset(&name_hash, 0, sizeof(HASH));
 
     table_charset= 0;
-    memset(&all_set, 0, sizeof (MyBitmap));
     memset(&table_cache_key, 0, sizeof(LEX_STRING));
     memset(&db, 0, sizeof(LEX_STRING));
     memset(&table_name, 0, sizeof(LEX_STRING));
@@ -185,7 +184,6 @@ public:
     memset(&name_hash, 0, sizeof(HASH));
 
     table_charset= 0;
-    memset(&all_set, 0, sizeof (MyBitmap));
     memset(&table_cache_key, 0, sizeof(LEX_STRING));
     memset(&db, 0, sizeof(LEX_STRING));
     memset(&table_name, 0, sizeof(LEX_STRING));
@@ -351,6 +349,10 @@ public:
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
   MyBitmap all_set;
+private:
+  std::vector<my_bitmap_map> all_bitmap;
+
+public:
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
