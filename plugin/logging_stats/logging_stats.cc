@@ -176,6 +176,8 @@ static SessionStatementsTool *session_statements_tool= NULL;
 
 static StatusVarTool *status_var_tool= NULL;
 
+static SessionStatusTool *session_status_tool= NULL;
+
 static void enable(Session *,
                    drizzle_sys_var *,
                    void *var_ptr,
@@ -233,6 +235,13 @@ static bool initTable()
     return true;
   }
 
+  session_status_tool= new(nothrow)SessionStatusTool(logging_stats);
+
+  if (! status_var_tool)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -251,6 +260,7 @@ static int init(module::Context &context)
   context.add(global_statements_tool);
   context.add(session_statements_tool);
   context.add(status_var_tool);
+  context.add(session_status_tool);
 
   if (sysvar_logging_stats_enabled)
   {

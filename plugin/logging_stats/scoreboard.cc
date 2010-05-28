@@ -134,9 +134,14 @@ uint32_t Scoreboard::getBucketNumber(Session *session)
   return (session->getSessionId() % number_buckets);
 }
 
-ScoreboardSlot* Scoreboard::findOurScoreboardSlot(Session *session, 
-                                                  vector<ScoreboardSlot* > *scoreboard_vector)
+ScoreboardSlot* Scoreboard::findOurScoreboardSlot(Session *session)
 {
+  /* our bucket */
+  uint32_t bucket_number= getBucketNumber(session);
+
+  /* our vector corresponding to bucket_number */
+  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
+
   ScoreboardSlot *scoreboard_slot= NULL;
 
   for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
@@ -146,16 +151,20 @@ ScoreboardSlot* Scoreboard::findOurScoreboardSlot(Session *session,
 
     if (scoreboard_slot->getSessionId() == session->getSessionId())
     {
-      return scoreboard_slot; 
+      return scoreboard_slot;
     }
   }
   return NULL;
 }
 
-ScoreboardSlot* Scoreboard::claimOpenScoreboardSlot(Session *session, 
-                                                    uint32_t bucket_number, 
-                                                    vector<ScoreboardSlot* > *scoreboard_vector)
+ScoreboardSlot* Scoreboard::claimOpenScoreboardSlot(Session *session) 
 {
+  /* our bucket */
+  uint32_t bucket_number= getBucketNumber(session);
+
+  /* our vector corresponding to bucket_number */
+  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
+
   pthread_rwlock_t *LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
   pthread_rwlock_wrlock(LOCK_scoreboard_vector);
 
@@ -184,19 +193,13 @@ ScoreboardSlot* Scoreboard::claimOpenScoreboardSlot(Session *session,
 
 ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
 {
-  /* our bucket */
-  uint32_t bucket_number= getBucketNumber(session); 
-
-  /* our vector corresponding to bucket_number */
-  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number); 
-  
   ScoreboardSlot* scoreboard_slot= NULL;
 
-  scoreboard_slot= findOurScoreboardSlot(session, scoreboard_vector);
+  scoreboard_slot= findOurScoreboardSlot(session);
 
   if (scoreboard_slot == NULL)
   {
-    scoreboard_slot= claimOpenScoreboardSlot(session, bucket_number, scoreboard_vector);
+    scoreboard_slot= claimOpenScoreboardSlot(session);
   }
 
   return scoreboard_slot;

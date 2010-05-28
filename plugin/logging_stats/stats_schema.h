@@ -176,4 +176,30 @@ private:
   LoggingStats *outer_logging_stats;
 };
 
+class SessionStatusTool : public drizzled::plugin::TableFunction
+{
+public:
+
+  SessionStatusTool(LoggingStats *logging_stats);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats);
+
+    bool populate();
+  private:
+    StatusVars *status_vars;
+    uint32_t count;
+    uint64_t *current_variable;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, outer_logging_stats);
+  }
+private:
+  LoggingStats *outer_logging_stats;
+};
+
 #endif /* PLUGIN_LOGGING_STATS_STATS_SCHEMA_H */

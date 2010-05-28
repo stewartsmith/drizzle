@@ -36,7 +36,7 @@
 
 using namespace drizzled;
 
-static drizzle_show_var status_vars_defs[]= 
+drizzle_show_var StatusVars::status_vars_defs[]= 
 {
   {"Bytes_received",           (char*) offsetof(system_status_var, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(system_status_var, bytes_sent), SHOW_LONGLONG_STATUS},

@@ -112,24 +112,7 @@ SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_s
 
   Session *this_session= current_session;
 
-  uint32_t bucket_number= current_scoreboard->getBucketNumber(this_session);
-
-  vector<ScoreboardSlot* > *scoreboard_vector=
-     current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
-
-  vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
-  vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
-
-  ScoreboardSlot *scoreboard_slot= NULL;
-  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
-       it != scoreboard_vector->end(); ++it)
-  {
-    scoreboard_slot= *it;
-    if (scoreboard_slot->getSessionId() == this_session->getSessionId())
-    {
-      break;
-    }
-  }
+  ScoreboardSlot *scoreboard_slot= current_scoreboard->findOurScoreboardSlot(this_session);
 
   user_commands= NULL;
 
@@ -407,4 +390,63 @@ bool StatusVarTool::Generator::populate()
   }
 
   return false;
+}
+
+SessionStatusTool::SessionStatusTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATUS_NEW")
+{
+  outer_logging_stats= logging_stats;
+
+  add_field("VARIABLE_NAME");
+  add_field("VARIABLE_VALUE", 1024);
+}
+
+SessionStatusTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  count= 0;
+
+  Session *this_session= current_session;
+
+  ScoreboardSlot *scoreboard_slot= logging_stats->getCurrentScoreboard()->findOurScoreboardSlot(this_session);
+
+  status_vars= NULL;
+
+  if (scoreboard_slot != NULL)
+  {
+    status_vars= scoreboard_slot->getStatusVars();
+    system_status_var *status_var= status_vars->getStatusVarCounters();
+    current_variable= (uint64_t*) status_var; 
+  }
+}
+
+bool SessionStatusTool::Generator::populate()
+{
+  if (status_vars == NULL)
+  {
+    return false;
+  }
+
+  if (count == 2)
+  {
+    return false;
+  }
+
+  system_status_var *status_var= status_vars->getStatusVarCounters();
+
+  drizzle_show_var my_show_var= StatusVars::status_vars_defs[count];
+
+  push(my_show_var.name);
+
+  char* value= my_show_var.value;
+
+  value= (char*)status_var + (uint64_t)value; 
+
+  ostringstream oss;
+  oss << *(uint64_t*)value;
+  push(oss.str());
+
+  *(current_variable++);
+  ++count;
+  return true;
 }
