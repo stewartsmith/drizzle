@@ -259,7 +259,7 @@ public:
 private:
   KeyInfo  *key_info;			/* data of keys in database */
 public:
-  KeyInfo &getKeyInfo(uint32_t arg)
+  KeyInfo &getKeyInfo(uint32_t arg) const
   {
     return key_info[arg];
   }

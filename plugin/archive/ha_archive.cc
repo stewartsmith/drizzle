@@ -720,7 +720,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
       just cry.
     */
     if (temp_auto <= share->archive_write.auto_increment &&
-        table->getMutableShare()->getKeyInfo(0).flags & HA_NOSAME)
+        table->getShare()->getKeyInfo(0).flags & HA_NOSAME)
     {
       rc= HA_ERR_FOUND_DUPP_KEY;
       goto error;
@@ -772,7 +772,7 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 {
   int rc;
   bool found= 0;
-  current_k_offset= table->getMutableShare()->getKeyInfo(0).key_part->offset;
+  current_k_offset= table->getShare()->getKeyInfo(0).key_part->offset;
   current_key= key;
   current_key_len= key_len;
 
