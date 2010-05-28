@@ -542,7 +542,7 @@ int ArchiveEngine::doCreateTable(Session &,
 
   for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
-    KeyInfo *pos= table_arg.key_info+key;
+    KeyInfo *pos= &table_arg.key_info[key];
     KeyPartInfo *key_part=     pos->key_part;
     KeyPartInfo *key_part_end= key_part + pos->key_parts;
 
