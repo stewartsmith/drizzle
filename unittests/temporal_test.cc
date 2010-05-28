@@ -312,3 +312,140 @@ TEST_F(DateTest, in_unix_epoch_onFirstDateAfterUnixEpoch_shouldReturn_False)
   ASSERT_FALSE(result);
   
 }
+
+TEST_F(DateTest, to_string_shouldProduce_hyphenSeperatedDateElements)
+{
+  char expected[Date::MAX_STRING_LENGTH]= "2010-05-01";
+  char returned[Date::MAX_STRING_LENGTH];
+  Generator::DateGen::make_date(&date, 2010, 5, 1);
+  
+  date.to_string(returned, Date::MAX_STRING_LENGTH);
+  
+  ASSERT_STREQ(expected, returned);  
+}
+
+TEST_F(DateTest, to_string_nullBuffer_shouldReturnProperLengthAnyway)
+{
+  int length= date.to_string(NULL, 0);
+  
+  ASSERT_EQ(Date::MAX_STRING_LENGTH - 1, length);  
+}
+
+TEST_F(DateTest, from_string_validString_shouldPopulateCorrectly)
+{
+  char valid_string[Date::MAX_STRING_LENGTH]= "2010-05-01";
+  int years, months, days;
+  
+  result = date.from_string(valid_string, Date::MAX_STRING_LENGTH);
+  ASSERT_TRUE(result);
+  
+  years = date.years();
+  months = date.months();
+  days = date.days();
+  
+  EXPECT_EQ(2010, years);
+  EXPECT_EQ(5, months);
+  EXPECT_EQ(1, days);
+}
+
+TEST_F(DateTest, from_string_invalidString_shouldReturn_False)
+{
+  char valid_string[Date::MAX_STRING_LENGTH]= "2x10-05-01";
+   
+  result = date.from_string(valid_string, Date::MAX_STRING_LENGTH);
+  ASSERT_FALSE(result);
+}
+
+TEST_F(DateTest, from_int32_t_onValueCreatedBy_to_int32_t_shouldProduceOriginalDate)
+{
+  int years = 2030, months = 8, days = 17;
+  Generator::DateGen::make_date(&date, years, months, days);
+  int decoded_years, decoded_months, decoded_days;
+  int32_t representation;
+  Date decoded_date;
+  
+  date.to_int32_t(&representation);
+  decoded_date.from_int32_t(representation);
+  
+  decoded_years = decoded_date.years();
+  decoded_months = decoded_date.months();
+  decoded_days = decoded_date.days();
+  
+  EXPECT_EQ(years, decoded_years);
+  EXPECT_EQ(months, decoded_months);
+  EXPECT_EQ(days, decoded_days);
+}
+
+TEST_F(DateTest, to_julian_day_number)
+{
+  int64_t julian_day;
+  Generator::DateGen::make_date(&date, 1999, 12, 31);
+  
+  date.to_julian_day_number(&julian_day);
+  
+  ASSERT_EQ(2451544, julian_day);
+}
+
+TEST_F(DateTest, from_julian_day_number)
+{
+  int64_t julian_day = 2451544;
+  int years, months, days;
+   
+  date.from_julian_day_number(julian_day);
+  
+  years = date.years();
+  months = date.months();
+  days = date.days();  
+    
+  EXPECT_EQ(1999, years);
+  EXPECT_EQ(12, months);
+  EXPECT_EQ(31, days);
+}
+
+TEST_F(DateTest, to_tm)
+{
+  int years = 2030, months = 8, days = 17;
+  Generator::DateGen::make_date(&date, years, months, days);
+  struct tm filled;
+  
+  date.to_tm(&filled);
+  
+  EXPECT_EQ(130, filled.tm_year);
+  EXPECT_EQ(7, filled.tm_mon);
+  EXPECT_EQ(17, filled.tm_mday);
+  EXPECT_EQ(0, filled.tm_hour);
+  EXPECT_EQ(0, filled.tm_min);
+  EXPECT_EQ(0, filled.tm_sec);
+  EXPECT_EQ(228, filled.tm_yday);
+  EXPECT_EQ(6, filled.tm_wday);
+  EXPECT_GT(0, filled.tm_isdst);
+}
+
+TEST_F(DateTest, from_tm)
+{
+  int years, months, days;
+  struct tm from;
+  from.tm_year = 1956;
+  from.tm_mon = 3;
+  from.tm_mday = 30;
+  
+  date.from_tm(&from);
+  
+  years = date.years();
+  months = date.months();
+  days = date.days();
+  
+  EXPECT_EQ(1956, years);  
+  EXPECT_EQ(3, months);
+  EXPECT_EQ(30, days);
+}
+
+TEST_F(DateTest, to_time_t)
+{
+  time_t time;
+  Generator::DateGen::make_date(&date, 1990, 9, 9);
+  
+  date.to_time_t(&time);
+  
+  ASSERT_EQ(652838400, time);
+}
