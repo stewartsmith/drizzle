@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2010-04-28 02:45+0000\n"
-"PO-Revision-Date: 2010-04-30 23:48+0000\n"
+"POT-Creation-Date: 2010-05-26 01:18+0000\n"
+"PO-Revision-Date: 2010-05-27 21:20+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-05-02 03:56+0000\n"
+"X-Launchpad-Export-Date: 2010-05-28 03:38+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -99,11 +99,13 @@ msgstr ""
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Welkom bij de drizzle client. Opdrachten eindigen met ; of \\g"
 
-msgid "Your Drizzle connection id is "
-msgstr "Je Drizzle verbindings-id is "
-
-msgid "Server version: "
-msgstr "Server versie: "
+#, c-format
+msgid ""
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
+msgstr ""
+"Je Drizzle connection id is %u\n"
+"Server versie: %s\n"
 
 #, c-format
 msgid "Reading history-file %s\n"
@@ -468,16 +470,12 @@ msgid "Unknown command: "
 msgstr "Onbekende opdracht: "
 
 msgid ""
-"                              Reading table information for completion of "
-"table and column names\n"
-"                                  You can turn off this feature to get a "
-"quicker startup with -A\n"
+"Reading table information for completion of table and column names\n"
+"You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
-"                              Leest tabel informatie voor het aanvullen van "
-"tabel- en kolomnamen\n"
-"                                  Om sneller op te starten kan je deze "
-"feature uitschakelen met -A\n"
+"Leest tabelinformatie voor het aanvullen van tabel- en kolomnamen\n"
+"Je kan deze functionaliteit uitschakelen met -A om sneller op te starten\n"
 "\n"
 
 msgid "No connection. Trying to reconnect..."
@@ -4263,6 +4261,14 @@ msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
 msgstr "Tijdelijke tabel te groot, voer opnieuw uit met SQL_BIG_RESULT."
 
 #, c-format
+msgid "Unknown table engine option key/pair %s = %s."
+msgstr "Onbekende table engine optie sleutel/paar %s = %s."
+
+#, c-format
+msgid "Unknown schema engine option key/pair %s = %s."
+msgstr "Onbekende schema engine optie sleutel/paar %s = %s."
+
+#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "Kan bestand niet ontgrendelen (Foutcode: %d)"
 
@@ -4395,6 +4401,73 @@ msgstr "Controlecijfer mislukt. Wilde %<PRIu32> kreeg %<PRIu32>\n"
 msgid "Usage: %s TRANSACTION_LOG\n"
 msgstr "Gebruik: %s TRANSACTION_LOG\n"
 
+#, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+"Plugin '%s' bevat de naam '%s' in in zijn manifest, deze werd reeds "
+"geregistreerd.\n"
+
+#, c-format
+msgid "Plugin '%s' init function returned error.\n"
+msgstr "Plugin '%s' init functie gaf een fout terug.\n"
+
+#, c-format
+msgid "Couldn't load plugin library named '%s'.\n"
+msgstr "Kon plugin bibliotheek met de naam '%s' niet vinden.\n"
+
+#, c-format
+msgid "Couldn't load plugin named '%s'.\n"
+msgstr "Kon plugin bibliotheek met de naam '%s' niet laden.\n"
+
+msgid "Out of memory."
+msgstr "Geheugen opgebruikt."
+
+#, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr "Onbekende variabele type code 0x%x in plugin '%s'."
+
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+"Server variabele %s van plugin %s werd geforceerd read-only: string "
+"variabele zonder update_func en PLUGIN_VAR_MEMALLOC vlag"
+
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr "Ontbrekende variabele naam in plugin '%s'."
+
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr "Locale thread variabele '%s' niet toegewezen in plugin '%s'."
+
+#, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr "Geheugen tekort in plugin '%s'."
+
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr "Slechte opties voor plugin '%s'."
+
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr "Interpreteren van opties voor plugin '%s' mislukt."
+
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr "Plugin '%s' heeft conflicterende systeem variabelen"
+
+#, c-format
+msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
+msgstr "Loading plugin %s mislukt: en plugin met die naam bestaat reeds.\n"
+
+#, c-format
+msgid "Fatal error: Failed initializing %s plugin.\n"
+msgstr "Fatale fout: Initialiseren van plugin %s mislukt.\n"
+
 msgid "Warning: "
 msgstr "Waarschuwing: "
 
@@ -4526,65 +4599,6 @@ msgid "Listening on %s:%s\n"
 msgstr "Luistert op %s:%s\n"
 
 #, c-format
-msgid ""
-"Plugin '%s' contains the name '%s' in its manifest, which has already been "
-"registered.\n"
-msgstr ""
-"Plugin '%s' bevat de naam '%s' in in zijn manifest, deze werd reeds "
-"geregistreerd.\n"
-
-#, c-format
-msgid "Plugin '%s' init function returned error.\n"
-msgstr "Plugin '%s' init functie gaf een fout terug.\n"
-
-#, c-format
-msgid "Couldn't load plugin library named '%s'.\n"
-msgstr "Kon plugin bibliotheek met de naam '%s' niet vinden.\n"
-
-#, c-format
-msgid "Couldn't load plugin named '%s'.\n"
-msgstr "Kon plugin bibliotheek met de naam '%s' niet laden.\n"
-
-msgid "Out of memory."
-msgstr "Geheugen opgebruikt."
-
-#, c-format
-msgid "Unknown variable type code 0x%x in plugin '%s'."
-msgstr "Onbekende variabele type code 0x%x in plugin '%s'."
-
-#, c-format
-msgid ""
-"Server variable %s of plugin %s was forced to be read-only: string variable "
-"without update_func and PLUGIN_VAR_MEMALLOC flag"
-msgstr ""
-"Server variabele %s van plugin %s werd geforceerd read-only: string "
-"variabele zonder update_func en PLUGIN_VAR_MEMALLOC vlag"
-
-#, c-format
-msgid "Missing variable name in plugin '%s'."
-msgstr "Ontbrekende variabele naam in plugin '%s'."
-
-#, c-format
-msgid "Thread local variable '%s' not allocated in plugin '%s'."
-msgstr "Locale thread variabele '%s' niet toegewezen in plugin '%s'."
-
-#, c-format
-msgid "Out of memory for plugin '%s'."
-msgstr "Geheugen tekort in plugin '%s'."
-
-#, c-format
-msgid "Bad options for plugin '%s'."
-msgstr "Slechte opties voor plugin '%s'."
-
-#, c-format
-msgid "Parsing options for plugin '%s' failed."
-msgstr "Interpreteren van opties voor plugin '%s' mislukt."
-
-#, c-format
-msgid "Plugin '%s' has conflicting system variables"
-msgstr "Plugin '%s' heeft conflicterende systeem variabelen"
-
-#, c-format
 msgid "logging '%s' pre() failed"
 msgstr "loggen van '%s' pre() mislukte"
 
@@ -4615,14 +4629,6 @@ msgstr "qcache plugin '%s' invalidateDb() mislukt"
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
 msgstr "qcache plugin '%s' flush() mislukt"
-
-#, c-format
-msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
-msgstr "Loading plugin %s mislukt: en plugin met die naam bestaat reeds.\n"
-
-#, c-format
-msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr "Fatale fout: Initialiseren van plugin %s mislukt.\n"
 
 #, c-format
 msgid ""
@@ -4710,6 +4716,10 @@ msgstr ""
 "is in tabel '%-.192s'"
 
 #, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr "Kreeg fout %d bij het lezen van tabel '%s'"
+
+#, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
@@ -4728,10 +4738,6 @@ msgid ""
 msgstr ""
 "Tabel '%-.64s' werd aangemaakt met een verschillende versie van Drizzle en "
 "kan niet gelezen worden"
-
-#, c-format
-msgid "Got error %d when reading table '%s'"
-msgstr "Kreeg fout %d bij het lezen van tabel '%s'"
 
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
@@ -5481,14 +5487,6 @@ msgstr "Kon de transactie niet interpreteren. Kreeg fout: %s.\n"
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "BUFFER: %s\n"
-
-#, c-format
-#~ msgid ""
-#~ "Your Drizzle connection id is %u\n"
-#~ "Server version: %s\n"
-#~ msgstr ""
-#~ "Je Drizzle connection id is %u\n"
-#~ "Server versie: %s\n"
 
 #~ msgid "Set the default character set."
 #~ msgstr "Stel de standaard karakterset in."
