@@ -36,6 +36,9 @@ public:
   {
   public:
     static void make_date(drizzled::Date *date, uint32_t years, uint32_t months, uint32_t days);
+    static void make_valid_date(drizzled::Date *date);
+    static void leap_day_in_leap_year(drizzled::Date *date);
+    static void leap_day_in_non_leap_year(drizzled::Date *date);
   };
   
   class DateTimeGen

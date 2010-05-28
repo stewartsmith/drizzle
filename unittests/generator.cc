@@ -34,6 +34,27 @@ void Generator::DateGen::make_date(Date *date,
   date->set_days(days);
 }
 
+void Generator::DateGen::make_valid_date(drizzled::Date *date)
+{
+  date->set_years(2005);
+  date->set_months(5);
+  date->set_days(26);
+}
+
+void Generator::DateGen::leap_day_in_leap_year(drizzled::Date *date)
+{
+  date->set_years(2008);
+  date->set_months(2);
+  date->set_days(29);
+}
+
+void Generator::DateGen::leap_day_in_non_leap_year(drizzled::Date *date)
+{
+  date->set_years(2010);
+  date->set_months(2);
+  date->set_days(29);
+}
+
 void Generator::DateTimeGen::make_datetime(drizzled::DateTime *datetime,
                    uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
                    uint32_t minutes, uint32_t seconds, uint32_t useconds)
