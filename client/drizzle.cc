@@ -1332,28 +1332,6 @@ static void check_max_input_line(uint32_t in_max_input_line)
   opt_max_input_line*=1024;
 }
 
-static void check_select_limit(uint32_t in_check_limit)
-{
-  select_limit= 0;
-  if( in_check_limit>=1 || in_check_limit<ULONG_MAX)
-  {
-    cout<<N_("Error: Invalid Value for check_limit");
-    exit(-1);
-  }
-  select_limit= in_check_limit;
-}
-
-static void check_join_size(uint32_t in_max_join_size)
-{
-  max_join_size= 0;
-  if( in_max_join_size>=1 || in_max_join_size<ULONG_MAX)
-  {
-    cout<<N_("Error: Invalid Value for max_join_size");
-    exit(-1);
-  }
-  max_join_size= in_max_join_size;
-}
-
 
 int main(int argc,char *argv[])
 {
@@ -1459,9 +1437,9 @@ try
   N_("Number of seconds before connection timeout."))
   ("max_input_line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
   N_("Max length of input line"))
-  ("select_limit", po::value<uint32_t>(&select_limit)->default_value(1000L)->notifier(&check_select_limit),
+  ("select_limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
   N_("Automatic limit for SELECT when using --safe-updates"))
-  ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L)->notifier(&check_join_size),
+  ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   N_("Automatic limit for rows in a join when using --safe-updates"))
   ("secure-auth", po::value<bool>(&opt_secure_auth)->default_value(false)->zero_tokens(),
   N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
