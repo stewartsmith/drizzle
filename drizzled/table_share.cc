@@ -478,7 +478,6 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   timestamp_field(NULL),
   key_info(NULL),
   blob_field(NULL),
-  intervals(NULL),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -874,14 +873,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   }
 
 
-  if (interval_count)
-  {
-    intervals= (TYPELIB *) alloc_root(interval_count*sizeof(TYPELIB));
-  }
-  else
-  {
-    intervals= NULL;
-  }
+  intervals.resize(interval_count);
 
   /* Now fix the TYPELIBs for the intervals (enum values)
     and field names.
@@ -905,7 +897,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     if (! charset)
       charset= default_charset_info;
 
-    TYPELIB *t= &(intervals[interval_nr]);
+    TYPELIB *t= (&intervals[interval_nr]);
 
     t->type_names= (const char**)alloc_root((field_options.field_value_size() + 1) * sizeof(char*));
 
@@ -1175,7 +1167,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
                                 charset,
                                 (Field::utype) MTYP_TYPENR(unireg_type),
                                 ((field_type == DRIZZLE_TYPE_ENUM) ?
-                                 intervals + (interval_nr++)
+                                 &intervals[interval_nr++]
                                  : (TYPELIB*) 0),
                                 getTableProto()->field(fieldnr).name().c_str());
 

@@ -62,7 +62,6 @@ public:
     timestamp_field(NULL),
     key_info(NULL),
     blob_field(NULL),
-    intervals(NULL),
     block_size(0),
     version(0),
     timestamp_offset(0),
@@ -133,7 +132,6 @@ public:
     timestamp_field(NULL),
     key_info(NULL),
     blob_field(NULL),
-    intervals(NULL),
     block_size(0),
     version(0),
     timestamp_offset(0),
@@ -328,7 +326,7 @@ public:
   }
 
 private:
-  TYPELIB *intervals;			/* pointer to interval info */
+  std::vector<TYPELIB> intervals;			/* pointer to interval info */
 
 public:
   pthread_mutex_t mutex;                /* For locking the share  */
