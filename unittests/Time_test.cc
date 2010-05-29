@@ -167,7 +167,7 @@ TEST_F(TimeTest, is_valid_onValidTime_shouldReturn_True)
 
 TEST_F(TimeTest, is_valid_onValidMinimalTime_shouldReturn_True)
 {
-  Generator::TimeGen::make_min_time(&sample_time);
+  Generator::TemporalGen::make_min_time(&sample_time);
   
   result= sample_time.is_valid();
   
@@ -176,7 +176,7 @@ TEST_F(TimeTest, is_valid_onValidMinimalTime_shouldReturn_True)
 
 TEST_F(TimeTest, is_valid_onValidMaximalTime_shouldReturn_True)
 {
-  Generator::TimeGen::make_max_time(&sample_time);
+  Generator::TemporalGen::make_max_time(&sample_time);
   
   result= sample_time.is_valid();
   

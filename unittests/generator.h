@@ -32,36 +32,42 @@ class Generator
 {
 public:
 
+  class TemporalGen
+  {
+  public:
+    static void leap_day_in_leap_year(drizzled::Temporal *temporal);
+    static void leap_day_in_non_leap_year(drizzled::Temporal *temporal);
+    static void make_min_time(drizzled::Temporal *temporal);
+    static void make_max_time(drizzled::Temporal *temporal);
+  };
+  
   class DateGen
   {
   public:
     static void make_date(drizzled::Date *date, uint32_t years, uint32_t months, uint32_t days);
-    static void make_valid_date(drizzled::Date *date);
-    static void leap_day_in_leap_year(drizzled::Date *date);
-    static void leap_day_in_non_leap_year(drizzled::Date *date);
+    static void make_valid_date(drizzled::Date *date);  
   };
   
   class TimeGen
   {
   public:
     static void make_time(drizzled::Time *time, uint32_t hours, uint32_t minutes, uint32_t seconds);
-    static void make_min_time(drizzled::Time *time);
-    static void make_max_time(drizzled::Time *time);
   };
   
   class DateTimeGen
   {
-    public:
-      static void make_datetime(drizzled::DateTime *datetime,
-                                uint32_t years, uint32_t months, uint32_t days, uint32_t _hours,
-                                uint32_t _minutes, uint32_t _seconds, uint32_t _useconds);
+  public:
+    static void make_datetime(drizzled::DateTime *datetime,
+                              uint32_t years, uint32_t months, uint32_t days, uint32_t _hours,
+                              uint32_t _minutes, uint32_t _seconds);
+    static void make_valid_datetime(drizzled::DateTime *datetime);
   };
   
   class TimestampGen
   {
-    public:
-      static void make_timestamp(drizzled::Timestamp *timestamp,
-                                 uint32_t years, uint32_t months, uint32_t days);
+  public:
+    static void make_timestamp(drizzled::Timestamp *timestamp,
+                                uint32_t years, uint32_t months, uint32_t days);
   };
 };
 

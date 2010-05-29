@@ -54,9 +54,9 @@ template<> void DateTestCompareOperators<Date>::initBeforeIdenticalAfter()
 
 template<> void DateTestCompareOperators<DateTime>::initBeforeIdenticalAfter()
 {
-  Generator::DateTimeGen::make_datetime(&before_sample_date, 1990, 12, 31, 12, 12, 30, 1000);
-  Generator::DateTimeGen::make_datetime(&identical_with_sample_date, 2010, 9, 8, 0, 0, 0, 0);
-  Generator::DateTimeGen::make_datetime(&after_sample_date, 2020, 4, 4, 4, 4, 4, 4000);
+  Generator::DateTimeGen::make_datetime(&before_sample_date, 1990, 12, 31, 12, 12, 30);
+  Generator::DateTimeGen::make_datetime(&identical_with_sample_date, 2010, 9, 8, 0, 0, 0);
+  Generator::DateTimeGen::make_datetime(&after_sample_date, 2020, 4, 4, 4, 4, 4);
 }
 
 template<> void DateTestCompareOperators<Timestamp>::initBeforeIdenticalAfter()
@@ -256,7 +256,7 @@ TEST_F(DateTest, is_valid_onInvalidDateWithDayAboveDaysInMonth_shouldReturn_Fals
 
 TEST_F(DateTest, is_valid_onInvalidDateWithLeapDayInNonLeapYear_shouldReturn_False)
 {
-  Generator::DateGen::leap_day_in_non_leap_year(&date);
+  Generator::TemporalGen::leap_day_in_non_leap_year(&date);
   
   result= date.is_valid();
   
@@ -265,13 +265,12 @@ TEST_F(DateTest, is_valid_onInvalidDateWithLeapDayInNonLeapYear_shouldReturn_Fal
 
 TEST_F(DateTest, is_valid_onValidDateWithLeapDayInLeapYear_shouldReturn_True)
 {
-  Generator::DateGen::leap_day_in_leap_year(&date);
+  Generator::TemporalGen::leap_day_in_leap_year(&date);
   
   result= date.is_valid();
   
   ASSERT_TRUE(result);
 }
-
 
 TEST_F(DateTest, in_unix_epoch_onFirstDateInUnixEpoch_shouldReturn_True)
 {
@@ -280,7 +279,6 @@ TEST_F(DateTest, in_unix_epoch_onFirstDateInUnixEpoch_shouldReturn_True)
   result= date.is_valid();
   
   ASSERT_TRUE(result);
-  
 }
 
 TEST_F(DateTest, in_unix_epoch_onLastDateInUnixEpoch_shouldReturn_True)
@@ -290,7 +288,6 @@ TEST_F(DateTest, in_unix_epoch_onLastDateInUnixEpoch_shouldReturn_True)
   result= date.is_valid();
   
   ASSERT_TRUE(result);
-  
 }
 
 TEST_F(DateTest, in_unix_epoch_onLastDateBeforeUnixEpoch_shouldReturn_False)
@@ -300,7 +297,6 @@ TEST_F(DateTest, in_unix_epoch_onLastDateBeforeUnixEpoch_shouldReturn_False)
   result= date.is_valid();
   
   ASSERT_FALSE(result);
-  
 }
 
 TEST_F(DateTest, in_unix_epoch_onFirstDateAfterUnixEpoch_shouldReturn_False)
@@ -309,8 +305,7 @@ TEST_F(DateTest, in_unix_epoch_onFirstDateAfterUnixEpoch_shouldReturn_False)
   
   result= date.is_valid();
   
-  ASSERT_FALSE(result);
-  
+  ASSERT_FALSE(result);  
 }
 
 TEST_F(DateTest, to_string_shouldProduce_hyphenSeperatedDateElements)
