@@ -818,7 +818,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   unsigned char	*pos, *group_buff, *bitmaps;
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
-  uint32_t *blob_field;
   CopyField *copy= 0;
   KeyInfo *keyinfo;
   KeyPartInfo *key_part_info;
@@ -882,7 +881,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   if (not share->getMemRoot()->multi_alloc_root(0, &reg_field, sizeof(Field*) * (field_count+1),
                                                 &default_field, sizeof(Field*) * (field_count),
-                                                &blob_field, sizeof(uint32_t)*(field_count+1),
                                                 &from_field, sizeof(Field*)*field_count,
                                                 &copy_func, sizeof(*copy_func)*(copy_func_count+1),
                                                 &param->keyinfo, sizeof(*param->keyinfo),
@@ -924,7 +922,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->keys_in_use_for_query.reset();
 
   table->setShare(share);
-  share->blob_field= blob_field;
+  share->blob_field.resize(field_count+1);
+  uint32_t *blob_field= &share->blob_field[0];
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
   share->table_charset= param->table_charset;
@@ -1473,14 +1472,12 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   uint32_t record_length= 0;
   uint32_t null_count= 0;                 /* number of columns which may be null */
   uint32_t null_pack_length;              /* NULL representation array length */
-  uint32_t *blob_field;
   unsigned char *bitmaps;
   Table *table;
 
   TableShareInstance *share= getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
 
   if (! share->getMemRoot()->multi_alloc_root(0, &field, (field_count + 1) * sizeof(Field*),
-                                              &blob_field, (field_count+1) *sizeof(uint32_t),
                                               &bitmaps, bitmap_buffer_size(field_count)*2,
                                               NULL))
   {
@@ -1489,7 +1486,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 
   table= share->getTable();
   table->field= field;
-  share->blob_field= blob_field;
+  share->blob_field.resize(field_count+1);
   share->fields= field_count;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   table->setup_tmp_table_column_bitmaps(bitmaps);

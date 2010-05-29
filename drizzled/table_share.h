@@ -259,7 +259,7 @@ public:
   {
     return key_info[arg];
   }
-  uint	*blob_field;			/* Index to blobs in Field arrray*/
+  std::vector<uint>	blob_field;			/* Index to blobs in Field arrray*/
 
   /* hash of field names (contains pointers to elements of field array) */
   HASH	name_hash;			/* hash of field names */

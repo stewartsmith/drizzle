@@ -1434,11 +1434,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     uint32_t k, *save;
 
     /* Store offsets to blob fields to find them fast */
-    if (!(blob_field= save=
-          (uint*) alloc_root((uint32_t) (blob_fields* sizeof(uint32_t)))))
-    {
-      return local_error;
-    }
+    blob_field.resize(blob_fields);
+    save= &blob_field[0];
     for (k= 0, ptr= field ; *ptr ; ptr++, k++)
     {
       if ((*ptr)->flags & BLOB_FLAG)
