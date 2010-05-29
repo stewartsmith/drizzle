@@ -488,15 +488,12 @@ int prepare_create_field(CreateField *sql_field,
 
   switch (sql_field->sql_type) {
   case DRIZZLE_TYPE_BLOB:
-    sql_field->pack_flag= pack_length_to_packflag(sql_field->pack_length - portable_sizeof_char_ptr);
     sql_field->length= 8; // Unireg field length
     (*blob_columns)++;
     break;
   case DRIZZLE_TYPE_VARCHAR:
-    sql_field->pack_flag=0;
     break;
   case DRIZZLE_TYPE_ENUM:
-    sql_field->pack_flag=pack_length_to_packflag(sql_field->pack_length);
     if (check_duplicates_in_interval("ENUM",
                                      sql_field->field_name,
                                      sql_field->interval,
@@ -507,10 +504,8 @@ int prepare_create_field(CreateField *sql_field,
   case DRIZZLE_TYPE_DATE:  // Rest of string types
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_NULL:
-    sql_field->pack_flag=f_settype((uint32_t) sql_field->sql_type);
     break;
   case DRIZZLE_TYPE_DECIMAL:
-    sql_field->pack_flag= 0;
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
     /* We should replace old TIMESTAMP fields with their newer analogs */
@@ -522,7 +517,9 @@ int prepare_create_field(CreateField *sql_field,
         (*timestamps_with_niladic)++;
       }
       else
+      {
         sql_field->unireg_check= Field::NONE;
+      }
     }
     else if (sql_field->unireg_check != Field::NONE)
       (*timestamps_with_niladic)++;
@@ -530,10 +527,11 @@ int prepare_create_field(CreateField *sql_field,
     (*timestamps)++;
     /* fall-through */
   default:
-    sql_field->pack_flag=(0 |
-                          f_settype((uint32_t) sql_field->sql_type));
     break;
   }
+
+  sql_field->pack_flag= 0;
+
   return 0;
 }
 
@@ -1060,7 +1058,7 @@ static int mysql_prepare_create_table(Session *session,
 
       key_part_info->fieldnr= field;
       key_part_info->offset=  (uint16_t) sql_field->offset;
-      key_part_info->key_type=sql_field->pack_flag;
+      key_part_info->key_type= 0;
       length= sql_field->key_length;
 
       if (column->length)
