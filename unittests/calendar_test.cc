@@ -29,7 +29,7 @@ using namespace drizzled;
 TEST(calendar_julian_day_number_from_gregorian_date_test, CalculationTest)
 {
   uint32_t year, month, day;
-  
+
   year= 2010; month= 4; day= 2;
   EXPECT_EQ(2455289, julian_day_number_from_gregorian_date(year, month, day));
   

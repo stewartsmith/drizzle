@@ -6,5 +6,9 @@ if HAVE_LIBGTEST
 check_PROGRAMS += unittests/calendar_test
 
 unittests_calendar_test_LDADD = drizzled/libtemporal.la ${LTLIBGTEST}
-unittests_calendar_test_SOURCES = unittests/calendar_test.cc
+
+unittests_calendar_test_SOURCES = unittests/calendar_test.cc \
+	unittests/temporal_test.cc unittests/temporal_format_test.cc \
+	unittests/temporal_interval_test.cc unittests/generator.cc
 endif
+
