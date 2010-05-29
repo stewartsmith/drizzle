@@ -55,6 +55,28 @@ void Generator::DateGen::leap_day_in_non_leap_year(drizzled::Date *date)
   date->set_days(29);
 }
 
+void Generator::TimeGen::make_time(drizzled::Time *time,
+                                   uint32_t hours, uint32_t minutes, uint32_t seconds)
+{
+  time->set_hours(hours);
+  time->set_minutes(minutes);
+  time->set_seconds(seconds);
+}
+
+void Generator::TimeGen::make_min_time(drizzled::Time *time)
+{
+  time->set_hours(0);
+  time->set_minutes(0);
+  time->set_seconds(0);
+}
+
+void Generator::TimeGen::make_max_time(drizzled::Time *time)
+{
+  time->set_hours(23);
+  time->set_minutes(59);
+  time->set_seconds(59);
+}
+
 void Generator::DateTimeGen::make_datetime(drizzled::DateTime *datetime,
                    uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
                    uint32_t minutes, uint32_t seconds, uint32_t useconds)

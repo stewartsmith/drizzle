@@ -41,6 +41,14 @@ public:
     static void leap_day_in_non_leap_year(drizzled::Date *date);
   };
   
+  class TimeGen
+  {
+  public:
+    static void make_time(drizzled::Time *time, uint32_t hours, uint32_t minutes, uint32_t seconds);
+    static void make_min_time(drizzled::Time *time);
+    static void make_max_time(drizzled::Time *time);
+  };
+  
   class DateTimeGen
   {
     public:
