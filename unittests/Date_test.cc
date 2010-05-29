@@ -334,7 +334,7 @@ TEST_F(DateTest, to_string_nullBuffer_shouldReturnProperLengthAnyway)
 TEST_F(DateTest, from_string_validString_shouldPopulateCorrectly)
 {
   char valid_string[Date::MAX_STRING_LENGTH]= "2010-05-01";
-  int years, months, days;
+  uint32_t years, months, days;
   
   result = date.from_string(valid_string, Date::MAX_STRING_LENGTH);
   ASSERT_TRUE(result);
@@ -358,9 +358,9 @@ TEST_F(DateTest, from_string_invalidString_shouldReturn_False)
 
 TEST_F(DateTest, from_int32_t_onValueCreatedBy_to_int32_t_shouldProduceOriginalDate)
 {
-  int years = 2030, months = 8, days = 17;
+  uint32_t years = 2030, months = 8, days = 17;
   Generator::DateGen::make_date(&date, years, months, days);
-  int decoded_years, decoded_months, decoded_days;
+  uint32_t decoded_years, decoded_months, decoded_days;
   int32_t representation;
   Date decoded_date;
   
@@ -389,7 +389,7 @@ TEST_F(DateTest, to_julian_day_number)
 TEST_F(DateTest, from_julian_day_number)
 {
   int64_t julian_day = 2451544;
-  int years, months, days;
+  uint32_t years, months, days;
    
   date.from_julian_day_number(julian_day);
   
@@ -404,7 +404,7 @@ TEST_F(DateTest, from_julian_day_number)
 
 TEST_F(DateTest, to_tm)
 {
-  int years = 2030, months = 8, days = 17;
+  uint32_t years = 2030, months = 8, days = 17;
   Generator::DateGen::make_date(&date, years, months, days);
   struct tm filled;
   
@@ -423,7 +423,7 @@ TEST_F(DateTest, to_tm)
 
 TEST_F(DateTest, from_tm)
 {
-  int years, months, days;
+  uint32_t years, months, days;
   struct tm from;
   from.tm_year = 1956;
   from.tm_mon = 3;
@@ -452,7 +452,7 @@ TEST_F(DateTest, to_time_t)
 
 TEST_F(DateTest, from_time_t)
 {
-  int years, months, days;
+  uint32_t years, months, days;
   
   date.from_time_t(652838400);
   
