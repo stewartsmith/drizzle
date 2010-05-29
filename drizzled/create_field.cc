@@ -164,7 +164,6 @@ void CreateField::init_for_tmp_table(enum_field_types sql_type_arg,
   interval= 0;
   charset= &my_charset_bin;
   decimals= decimals_arg & FIELDFLAG_MAX_DEC;
-  pack_flag= 0;
 
   if (! maybe_null)
     flags= NOT_NULL_FLAG;

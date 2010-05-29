@@ -530,8 +530,6 @@ int prepare_create_field(CreateField *sql_field,
     break;
   }
 
-  sql_field->pack_flag= 0;
-
   return 0;
 }
 
