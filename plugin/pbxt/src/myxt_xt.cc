@@ -3640,7 +3640,7 @@ xtPublic void myxt_wait_pbxt_plugin_slot_assigned(XTThread *self)
 #ifdef DRIZZLED
 	static std::string plugin_name("PBXT");
 
-	while (!self->t_quit && !Registry::singleton().find(plugin_name))
+	while (!self->t_quit && !module::Registry::singleton().find(plugin_name))
 		xt_sleep_milli_second(1);
 #else
 	while(!self->t_quit && (pbxt_hton->slot >= total_ha))

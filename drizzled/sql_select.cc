@@ -3221,7 +3221,7 @@ Next_select_func setup_end_select_func(Join *join)
     if (table->group && tmp_tbl->sum_func_count &&
         !tmp_tbl->precomputed_group_by)
     {
-      if (table->s->keys)
+      if (table->getShare()->keys)
       {
         end_select= end_update;
       }
@@ -3288,7 +3288,7 @@ int do_select(Join *join, List<Item> *fields, Table *table)
     table->cursor->extra(HA_EXTRA_WRITE_CACHE);
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
-        table->s->keys && !table->cursor->inited)
+        table->getShare()->keys && !table->cursor->inited)
       table->cursor->startIndexScan(0, 0);
   }
   /* Set up select_end */
@@ -3680,7 +3680,7 @@ int join_read_system(JoinTable *tab)
   if (table->status & STATUS_GARBAGE)		// If first read
   {
     if ((error=table->cursor->read_first_row(table->record[0],
-					   table->s->primary_key)))
+					   table->getShare()->primary_key)))
     {
       if (error != HA_ERR_END_OF_FILE)
         return table->report_error(error);
@@ -4526,12 +4526,12 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
       */
       if (!on_primary_key &&
           (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
-          table->s->primary_key != MAX_KEY)
+          table->getShare()->primary_key != MAX_KEY)
       {
         on_primary_key= true;
-        key_part= table->key_info[table->s->primary_key].key_part;
-        key_part_end=key_part+table->key_info[table->s->primary_key].key_parts;
-        const_key_parts=table->const_key_parts[table->s->primary_key];
+        key_part= table->key_info[table->getShare()->primary_key].key_part;
+        key_part_end=key_part+table->key_info[table->getShare()->primary_key].key_parts;
+        const_key_parts=table->const_key_parts[table->getShare()->primary_key];
 
         for (; const_key_parts & 1 ; const_key_parts>>= 1)
           key_part++;
@@ -4614,7 +4614,7 @@ static uint32_t test_if_subkey(order_st *order,
   KeyPartInfo *ref_key_part= table->key_info[ref].key_part;
   KeyPartInfo *ref_key_part_end= ref_key_part + ref_key_parts;
 
-  for (nr= 0 ; nr < table->s->keys ; nr++)
+  for (nr= 0 ; nr < table->getShare()->keys ; nr++)
   {
     if (usable_keys->test(nr) &&
 	table->key_info[nr].key_length < min_length &&
@@ -4663,9 +4663,9 @@ static uint32_t test_if_subkey(order_st *order,
 */
 bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *), void *data)
 {
-  for (uint32_t keynr= 0; keynr < table->s->keys; keynr++)
+  for (uint32_t keynr= 0; keynr < table->getShare()->keys; keynr++)
   {
-    if (keynr == table->s->primary_key ||
+    if (keynr == table->getShare()->primary_key ||
          (table->key_info[keynr].flags & HA_NOSAME))
     {
       KeyInfo *keyinfo= table->key_info + keynr;
@@ -4964,13 +4964,13 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       fanout*= cur_pos.getFanout(); // fanout is always >= 1
     }
 
-    for (nr=0; nr < table->s->keys ; nr++)
+    for (nr=0; nr < table->getShare()->keys ; nr++)
     {
       int direction;
       if (keys.test(nr) &&
           (direction= test_if_order_by_key(order, table, nr, &used_key_parts)))
       {
-        bool is_covering= table->covering_keys.test(nr) || (nr == table->s->primary_key && table->cursor->primary_key_is_clustered());
+        bool is_covering= table->covering_keys.test(nr) || (nr == table->getShare()->primary_key && table->cursor->primary_key_is_clustered());
 
         /*
           Don't use an index scan with ORDER BY without limit.
@@ -5290,7 +5290,7 @@ int create_sort_index(Session *session, Join *join, order_st *order, ha_rows fil
     }
   }
 
-  if (table->s->tmp_table)
+  if (table->getShare()->tmp_table)
     table->cursor->info(HA_STATUS_VARIABLE);	// Get record count
   table->sort.found_records=filesort(session, table,join->sortorder, length,
                                      select, filesort_limit, 0,
@@ -5323,7 +5323,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   char *org_record,*new_record;
   unsigned char *record;
   int error;
-  uint32_t reclength= table->s->reclength-offset;
+  uint32_t reclength= table->getShare()->reclength - offset;
 
   org_record=(char*) (record=table->record[0])+offset;
   new_record=(char*) table->record[1]+offset;

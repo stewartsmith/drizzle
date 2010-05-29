@@ -73,7 +73,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  unique_map.init(unique_map_buf, table->s->fields);
+  unique_map.init(unique_map_buf, table->getMutableShare()->fields);
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
@@ -97,7 +97,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Copy the newly read columns into the new record. */
   for (field_p= table->field; (field= *field_p); field_p++)
     if (unique_map.isBitSet(field->field_index))
-      field->copy_from_tmp(table->s->rec_buff_length);
+      field->copy_from_tmp(table->getShare()->rec_buff_length);
 
   return;
 }
@@ -156,7 +156,7 @@ int mysql_update(Session *session, TableList *table_list,
   table= table_list->table;
 
   /* Calculate "table->covering_keys" based on the WHERE */
-  table->covering_keys= table->s->keys_in_use;
+  table->covering_keys= table->getShare()->keys_in_use;
   table->quick_keys.reset();
 
   if (mysql_prepare_update(session, table_list, &conds, order_num, order))

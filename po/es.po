@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2010-03-15 21:00+0000\n"
-"PO-Revision-Date: 2010-03-15 22:56+0000\n"
-"Last-Translator: DiegoJ <diegojromerolopez@gmail.com>\n"
+"POT-Creation-Date: 2010-04-28 02:45+0000\n"
+"PO-Revision-Date: 2010-04-28 20:13+0000\n"
+"Last-Translator: Antonio Maldonado <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-17 04:39+0000\n"
+"X-Launchpad-Export-Date: 2010-04-29 03:51+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -97,14 +97,13 @@ msgstr ""
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Bienvenido al cliente Drizzle.. Los comandos terminan con ; o \\g."
 
-#, fuzzy
-msgid "Your Drizzle connection id is "
+#, c-format
+msgid ""
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
 msgstr ""
 "El id de tu conexión con Drizzle es %u\n"
 "Versión del servidor: %s\n"
-
-msgid "Server version: "
-msgstr ""
 
 #, c-format
 msgid "Reading history-file %s\n"
@@ -462,10 +461,8 @@ msgstr "Unbekannter Befehl: "
 
 #, fuzzy
 msgid ""
-"                              Reading table information for completion of "
-"table and column names\n"
-"                                  You can turn off this feature to get a "
-"quicker startup with -A\n"
+"Reading table information for completion of table and column names\n"
+"You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 "Leer información de la tabla para completar nombres de tablas y columnas\n"
@@ -727,7 +724,7 @@ msgstr "Error: Memoria insuficiente para almacenar la clausula ORDER BY\n"
 
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
-msgstr ""
+msgstr "No se pudó abrir '%s' para lectura: errno = %d"
 
 #, c-format
 msgid "Out of memory"
@@ -1657,7 +1654,7 @@ msgid "Can't initialize function '%-.192s'; %-.80s"
 msgstr "No se puede inicializar la función '%-.192s'; %-.80s"
 
 msgid "No paths allowed for plugin library"
-msgstr ""
+msgstr "No se permiten rutas para la biblioteca de complementos"
 
 #, c-format
 msgid "Plugin '%-.192s' already exists"
@@ -4232,17 +4229,25 @@ msgstr ""
 
 #, c-format
 msgid "Schema does not exist: %s"
-msgstr ""
+msgstr "El esquema no existe: %s"
 
 #, c-format
 msgid "Error altering schema: %s"
-msgstr ""
+msgstr "Error al alterar el esquema esquema: %s"
 
 #, c-format
 msgid "Error droppping Schema : %s"
-msgstr ""
+msgstr "Error descartando el esquema: %s"
 
 msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Unknown table engine option key/pair %s = %s."
+msgstr "Motor de la tabla Desconocido '%s'"
+
+#, c-format
+msgid "Unknown schema engine option key/pair %s = %s."
 msgstr ""
 
 #, c-format
@@ -4324,7 +4329,7 @@ msgstr ""
 
 #, c-format
 msgid "Data directory %s does not exist\n"
-msgstr ""
+msgstr "El directorio de datos %s no existe\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
@@ -4352,7 +4357,7 @@ msgstr ""
 
 #, c-format
 msgid "GPB ERROR: %s.\n"
-msgstr ""
+msgstr "Erorr GPB: %s.\n"
 
 #, c-format
 msgid ""
@@ -4360,6 +4365,9 @@ msgid ""
 "\n"
 "%s\n"
 msgstr ""
+"Vuelco hexadecimal:\n"
+"\n"
+"%s\n"
 
 #, c-format
 msgid "Unable to parse command. Got error: %s.\n"
@@ -4371,6 +4379,71 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' init function returned error.\n"
+msgstr "Plugin '%s' función init ha devuelto un error.\n"
+
+#, c-format
+msgid "Couldn't load plugin library named '%s'.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin named '%s'.\n"
+msgstr ""
+
+msgid "Out of memory."
+msgstr "No hay suficiente memoria."
+
+#, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr "desconocido código de tipo variable 0x%x en el plugin '%s'."
+
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+"variable servidor %s s del plugin %s se vio obligado a ser de sólo lectura: "
+"variable de cadena sin update_func y la bandera PLUGIN_VAR_MEMALLOC"
+
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr "Falta el nombre de variable en el plugin '%s'."
+
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr "Variable local de subprocesos '%s' no asignado en el plugin '%s'."
+
+#, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr "No hay suficiente memoria para plugin '%s'"
+
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr "mal opción para plugin '%s'"
+
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr "Analisis de las opciones para el plugin '%s' fallaron."
+
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr "plugin '%s' tiene conflicto con variables del sistema"
+
+#, c-format
+msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
+msgstr ""
+
+#, c-format
+msgid "Fatal error: Failed initializing %s plugin.\n"
 msgstr ""
 
 msgid "Warning: "
@@ -4435,10 +4508,10 @@ msgstr "errmsg complemento %s' errmsg() falló"
 
 #, c-format
 msgid "A function named %s already exists!\n"
-msgstr ""
+msgstr "¡Una función nombrada %s ya existe!\n"
 
 msgid "Could not add Function!\n"
-msgstr ""
+msgstr "¡No se pudo agregar la función!\n"
 
 msgid "No sockets could be bound for listening"
 msgstr "no sockets fueron encontrados para escucha"
@@ -4503,63 +4576,6 @@ msgid "Listening on %s:%s\n"
 msgstr "escuchando en %s%s\n"
 
 #, c-format
-msgid ""
-"Plugin '%s' contains the name '%s' in its manifest, which has already been "
-"registered.\n"
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' init function returned error.\n"
-msgstr "Plugin '%s' función init ha devuelto un error.\n"
-
-#, c-format
-msgid "Couldn't load plugin library named '%s'.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
-
-msgid "Out of memory."
-msgstr "No hay suficiente memoria."
-
-#, c-format
-msgid "Unknown variable type code 0x%x in plugin '%s'."
-msgstr "desconocido código de tipo variable 0x%x en el plugin '%s'."
-
-#, c-format
-msgid ""
-"Server variable %s of plugin %s was forced to be read-only: string variable "
-"without update_func and PLUGIN_VAR_MEMALLOC flag"
-msgstr ""
-"variable servidor %s s del plugin %s se vio obligado a ser de sólo lectura: "
-"variable de cadena sin update_func y la bandera PLUGIN_VAR_MEMALLOC"
-
-#, c-format
-msgid "Missing variable name in plugin '%s'."
-msgstr "Falta el nombre de variable en el plugin '%s'."
-
-#, c-format
-msgid "Thread local variable '%s' not allocated in plugin '%s'."
-msgstr "Variable local de subprocesos '%s' no asignado en el plugin '%s'."
-
-#, c-format
-msgid "Out of memory for plugin '%s'."
-msgstr "No hay suficiente memoria para plugin '%s'"
-
-#, c-format
-msgid "Bad options for plugin '%s'."
-msgstr "mal opción para plugin '%s'"
-
-#, c-format
-msgid "Parsing options for plugin '%s' failed."
-msgstr "Analisis de las opciones para el plugin '%s' fallaron."
-
-#, c-format
-msgid "Plugin '%s' has conflicting system variables"
-msgstr "plugin '%s' tiene conflicto con variables del sistema"
-
-#, c-format
 msgid "logging '%s' pre() failed"
 msgstr "el registro '%s' pre() falló"
 
@@ -4569,7 +4585,7 @@ msgstr "el registro '%s' post() falló"
 
 #, c-format
 msgid "logging '%s' postEnd() failed"
-msgstr ""
+msgstr "Registrando '%s' postEnd() ha fallado"
 
 #, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
@@ -4590,14 +4606,6 @@ msgstr ""
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
 msgstr "qcache plugin '%s' flush() fallo"
-
-#, c-format
-msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
-msgstr ""
-
-#, c-format
-msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr ""
 
 #, c-format
 msgid ""
@@ -4656,11 +4664,11 @@ msgstr "no se pudo remover tabla temporal: '%s'. error %d"
 
 #, c-format
 msgid "Variable named %s already exists!\n"
-msgstr ""
+msgstr "¡La variable con nombre %s ya existe!\n"
 
 #, c-format
 msgid "Could not add Variable: %s\n"
-msgstr ""
+msgstr "No se pudo agregar la variable: %s\n"
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
@@ -4677,6 +4685,10 @@ msgid ""
 msgstr ""
 "order_St By ignorado porque hay indices de cluster definidos por el usuario "
 "en la tabla '%-.192s'"
+
+#, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr "error obtenido %d cuando se leia la tabla '%s'"
 
 #, c-format
 msgid ""
@@ -4698,10 +4710,6 @@ msgid ""
 msgstr ""
 "tabla '%-.64s' fue creada con una versión diferente de Drizzle y no puede "
 "ser leida"
-
-#, c-format
-msgid "Got error %d when reading table '%s'"
-msgstr "error obtenido %d cuando se leia la tabla '%s'"
 
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
@@ -4770,7 +4778,7 @@ msgid "Password to use for auth."
 msgstr ""
 
 msgid "Default database to use."
-msgstr ""
+msgstr "Base de datos predeterminada a usar"
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -4790,10 +4798,10 @@ msgid "Retry Count."
 msgstr "Número de reintentos."
 
 msgid "Buffer length."
-msgstr ""
+msgstr "Longitud de la memoria de intercambio."
 
 msgid "Address to bind to."
-msgstr ""
+msgstr "Dirección para unir a."
 
 msgid "Unknown Drizzle error"
 msgstr "Error de Drizzle desconocido"
@@ -5438,176 +5446,24 @@ msgstr ""
 msgid "BUFFER: %s\n"
 msgstr "MEM:% s\n"
 
-#~ msgid "Got signal %d from thread %<PRIu64>"
-#~ msgstr "Capturada la señal %d del hilo de ejecución %<PRIu64>"
+#~ msgid "Your Drizzle connection id is "
+#~ msgstr "Tu identificador de conección Drizzle es "
 
-#~ msgid "Fatal signal %d while backtracing\n"
-#~ msgstr "Señal fatal %d al hacer el retroceso\n"
-
-#~ msgid ""
-#~ "We will try our best to scrape up some info that will hopefully help "
-#~ "diagnose\n"
-#~ "the problem, but since we have already crashed, something is definitely "
-#~ "wrong\n"
-#~ "and this may fail.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Haremos nuestro mejor esfuerzo para sacar algo de información que se "
-#~ "espera ayudar a diagnosticar\n"
-#~ "el problema, pero como ya hemos colgado, esta todo muy malo\n"
-#~ "y incluso esto puede fallar.\n"
-#~ "\n"
+#~ msgid "Server version: "
+#~ msgstr "Versión del servidor: "
 
 #~ msgid ""
-#~ "It is possible that drizzled could use up to \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
-#~ "bytes of memory\n"
-#~ "Hope that's ok; if not, decrease some variables in the equation.\n"
+#~ "                              Reading table information for completion of "
+#~ "table and column names\n"
+#~ "                                  You can turn off this feature to get a "
+#~ "quicker startup with -A\n"
 #~ "\n"
 #~ msgstr ""
-#~ "Es posible que drizzled pudiera usar hasta \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
-#~ "bytes de memoria\n"
-#~ "Espero que eso este bien; si no, decrementa algunas variables en la "
-#~ "equación.\n"
+#~ "                              Leer la informacion de la tabla para "
+#~ "completar los nombres de tabla y columna\n"
+#~ "                                  Puedes desactivar esta característica "
+#~ "para iniciar más rapido con -A\n"
 #~ "\n"
-
-#~ msgid ""
-#~ "Attempting backtrace. You can use the following information to find out\n"
-#~ "where drizzled died. If you see no messages after this, something went\n"
-#~ "terribly wrong...\n"
-#~ msgstr ""
-#~ "Intentando hacer un backtrace. Ud. puede usar la siguiente información "
-#~ "para descubrir donde murió el programa Drizzled. Si no ve ningún mensaje "
-#~ "después de este, algo resultó terrible mal...\n"
-
-#~ msgid ""
-#~ "Trying to get some variables.\n"
-#~ "Some pointers may be invalid and cause the dump to abort...\n"
-#~ msgstr ""
-#~ "Intentado de obtener algunas variables.\n"
-#~ "Algunos punteros podrian ser invalidos y causar el abortar...\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "This crash occurred while the server was calling initgroups(). This is\n"
-#~ "often due to the use of a drizzled that is statically linked against "
-#~ "glibc\n"
-#~ "and configured to use LDAP in /etc/nsswitch.conf. You will need to "
-#~ "either\n"
-#~ "upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
-#~ "later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
-#~ "drizzled that is not statically linked.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Este fallo ocurrió mientras el servidor llamaba a initgroups(). Esto\n"
-#~ "a menudo se debe al uso de un drizzled enlazado estáticamente a la "
-#~ "librería glibc\n"
-#~ "y configurado para usar LDAP en /etc/nsswitch.conf. Será necesario bien\n"
-#~ "actualizar a una versión de glibc que no tenga ese problema (2.3.4 o \n"
-#~ "posterior si se usa con nscd), desactivar LDAP en el fichero nsswitch."
-#~ "conf, o bien usar un\n"
-#~ "drizzled que no está enlazado estáticamente\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "You are running a statically-linked LinuxThreads binary on an NPTL "
-#~ "system.\n"
-#~ "This can result in crashes on some distributions due to LT/NPTL "
-#~ "conflicts.\n"
-#~ "You should either build a dynamically-linked binary, or force "
-#~ "LinuxThreads\n"
-#~ "to be used with the LD_ASSUME_KERNEL environment variable. Please "
-#~ "consult\n"
-#~ "the documentation for your distribution on how to do that.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Está ejecutando un estáticamente enlazado al binario de LinuxThreads en "
-#~ "un sistema de NPTL.\n"
-#~ "Esto puede dar lugar a problemas en algunas distribuciones debido a "
-#~ "conflictos de LT/NPTL.\n"
-#~ "Debería crear un binario enlazado estaticamente, o forzar la utilización "
-#~ "de LinuxThreads\n"
-#~ "con la variable de entorno LD_ASSUME_KERNEL. Por favor, consulte\n"
-#~ "la documentación de su distribución sobre la forma de hacerlo.\n"
-
-#~ msgid "Writing a core file\n"
-#~ msgstr "Escribiendo archivo nucelo\n"
-
-#~ msgid "Print a symbolic stack trace on failure."
-#~ msgstr "Imprime stack trace simbolico en fallo."
-
-#~ msgid "Error while loading database options: '%s':"
-#~ msgstr "Error al cargar las opciones de la base de datos: '%s'"
-
-#~ msgid "Enable default replicator"
-#~ msgstr "habilitar replicador por defecto"
-
-#~ msgid "Default Replicator"
-#~ msgstr "Default Replicador"
-
-#~ msgid "Enable filtered replicator"
-#~ msgstr "habilitar filtro replicador"
-
-#~ msgid "Filtered Replicator"
-#~ msgstr "filtro replicador"
-
-#~ msgid "UNUSED"
-#~ msgstr "NO USADO"
-
-#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
-#~ msgstr "No puede crear/escribir el archivo '%s' (Codigo de Error: %d)"
-
-#~ msgid "Error reading file '%s' (Errcode: %d)"
-#~ msgstr "Error leyendo el archivo '%s' (Codigo de error: %d)"
-
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "Error escribiendo el archivo '%s' (Codigo de error: %d)"
-
-#~ msgid "Error on close of '%s' (Errcode: %d)"
-#~ msgstr "Error tratndo de cerrar '%s' (Errcode: %d)"
-
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "No hay mas memoria (Se necesitan %u bytes)"
-
-#~ msgid "Error on delete of '%s' (Errcode: %d)"
-#~ msgstr "Error tratando de eliminar '%s' (Codigo de error: %d)"
-
-#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-#~ msgstr "Error tratando de renombrar '%s' a '%s' (Codigo de error: %d)"
-
-#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-#~ msgstr ""
-#~ "EOF inesperado encontrado al leer el archivo '%s' (Codigo de error: %d)"
-
-#~ msgid "Can't lock file (Errcode: %d)"
-#~ msgstr "No puede bloquear el archivo (Codigo de error: %d)"
-
-#~ msgid "Can't read dir of '%s' (Errcode: %d)"
-#~ msgstr "No puede leer el directorio de '%s' (Codigo de error: %d)"
-
-#~ msgid "Can't get stat of '%s' (Errcode: %d)"
-#~ msgstr "No puede obtener estadistica de '%s' (Codigo de error: %d)"
-
-#~ msgid "Can't get working dirctory (Errcode: %d)"
-#~ msgstr "No puede obtener directory de trabajo (Codigo de error: %d)"
-
-#~ msgid "Can't change dir to '%s' (Errcode: %d)"
-#~ msgstr "No puede cambiar directorio a '%'s (Codigo de error: %d)"
-
-#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-#~ msgstr ""
-#~ "Disco esta lleno escribiendo '%s'. Esperando a que alguien libere "
-#~ "espacio..."
-
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Archivo '%s' no encontrado (Codigo de error: %d)"
-
-#~ msgid "Undefined handler error 125"
-#~ msgstr "Manejador indefinido error 125"
-
-#~ msgid "Undefined handler error 129"
-#~ msgstr "Manejador indefinido error 129"
 
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "Comprobar memoria y uso del ficheros abiertos en la salida."
@@ -5664,6 +5520,57 @@ msgstr "MEM:% s\n"
 #~ msgid "Unknown command '\\%c'."
 #~ msgstr "Comando desconocido '\\%c'."
 
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "No puede crear/escribir el archivo '%s' (Codigo de Error: %d)"
+
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Error leyendo el archivo '%s' (Codigo de error: %d)"
+
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Error escribiendo el archivo '%s' (Codigo de error: %d)"
+
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "No hay mas memoria (Se necesitan %u bytes)"
+
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Error tratando de eliminar '%s' (Codigo de error: %d)"
+
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Error tratando de renombrar '%s' a '%s' (Codigo de error: %d)"
+
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "EOF inesperado encontrado al leer el archivo '%s' (Codigo de error: %d)"
+
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "No puede bloquear el archivo (Codigo de error: %d)"
+
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "No puede leer el directorio de '%s' (Codigo de error: %d)"
+
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "No puede obtener estadistica de '%s' (Codigo de error: %d)"
+
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "No puede obtener directory de trabajo (Codigo de error: %d)"
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "No puede cambiar directorio a '%'s (Codigo de error: %d)"
+
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Disco esta lleno escribiendo '%s'. Esperando a que alguien libere "
+#~ "espacio..."
+
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Archivo '%s' no encontrado (Codigo de error: %d)"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Manejador indefinido error 125"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Manejador indefinido error 129"
+
 #~ msgid "Do you already have another drizzled server running on port: %d ?"
 #~ msgstr "Ya tiene otro servidor drizzled ejecutando en el puerto: %d ?"
 
@@ -5688,6 +5595,9 @@ msgstr "MEM:% s\n"
 #~ msgid "Set the filesystem character set."
 #~ msgstr "Establece el conujnto de caracteres del sistema de archivos."
 
+#~ msgid "Print a symbolic stack trace on failure."
+#~ msgstr "Imprime stack trace simbolico en fallo."
+
 #~ msgid "Type of DELAY_KEY_WRITE."
 #~ msgstr "Tipo de DELAY_KEY_WRITE."
 
@@ -5697,11 +5607,54 @@ msgstr "MEM:% s\n"
 #~ msgid "Fatal "
 #~ msgstr "Fatal "
 
+#~ msgid ""
+#~ "Trying to get some variables.\n"
+#~ "Some pointers may be invalid and cause the dump to abort...\n"
+#~ msgstr ""
+#~ "Intentado de obtener algunas variables.\n"
+#~ "Algunos punteros podrian ser invalidos y causar el abortar...\n"
+
 #~ msgid "Retrying bind on TCP/IP port %u"
 #~ msgstr "Volviendo a enlazar a puerto TCP/IP %u"
 
 #~ msgid "Can't start server: Bind on TCP/IP port"
 #~ msgstr "No se puede iniciar el servidor: Enlazar puerto TCP/IP"
+
+#~ msgid ""
+#~ "We will try our best to scrape up some info that will hopefully help "
+#~ "diagnose\n"
+#~ "the problem, but since we have already crashed, something is definitely "
+#~ "wrong\n"
+#~ "and this may fail.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Haremos nuestro mejor esfuerzo para sacar algo de información que se "
+#~ "espera ayudar a diagnosticar\n"
+#~ "el problema, pero como ya hemos colgado, esta todo muy malo\n"
+#~ "y incluso esto puede fallar.\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "You are running a statically-linked LinuxThreads binary on an NPTL "
+#~ "system.\n"
+#~ "This can result in crashes on some distributions due to LT/NPTL "
+#~ "conflicts.\n"
+#~ "You should either build a dynamically-linked binary, or force "
+#~ "LinuxThreads\n"
+#~ "to be used with the LD_ASSUME_KERNEL environment variable. Please "
+#~ "consult\n"
+#~ "the documentation for your distribution on how to do that.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Está ejecutando un estáticamente enlazado al binario de LinuxThreads en "
+#~ "un sistema de NPTL.\n"
+#~ "Esto puede dar lugar a problemas en algunas distribuciones debido a "
+#~ "conflictos de LT/NPTL.\n"
+#~ "Debería crear un binario enlazado estaticamente, o forzar la utilización "
+#~ "de LinuxThreads\n"
+#~ "con la variable de entorno LD_ASSUME_KERNEL. Por favor, consulte\n"
+#~ "la documentación de su distribución sobre la forma de hacerlo.\n"
 
 #~ msgid "IP address to bind to."
 #~ msgstr "Dirección IP a enlazar."
@@ -5733,11 +5686,23 @@ msgstr "MEM:% s\n"
 #~ msgid "Use old, non-optimized alter table."
 #~ msgstr "Utililza el alter table viejo, no optimizado."
 
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Error tratndo de cerrar '%s' (Errcode: %d)"
+
 #~ msgid "Plugin '%s' init function returned error."
 #~ msgstr "La funcion init del plugin '%s' a retornado un error."
 
+#~ msgid "Writing a core file\n"
+#~ msgstr "Escribiendo archivo nucelo\n"
+
 #~ msgid "Can't start server: listen() on TCP/IP port"
 #~ msgstr "No se puede iniciar el servidor: listen() en puerto TCP/IP"
+
+#~ msgid "Got signal %d from thread %<PRIu64>"
+#~ msgstr "Capturada la señal %d del hilo de ejecución %<PRIu64>"
+
+#~ msgid "Error while loading database options: '%s':"
+#~ msgstr "Error al cargar las opciones de la base de datos: '%s'"
 
 #~ msgid ""
 #~ "It is possible that drizzled could use up to \n"
@@ -5766,6 +5731,15 @@ msgstr "MEM:% s\n"
 #~ "Numero del puerto a usar para la conexion o 0 para predeterminado a, en "
 #~ "orden de preferencia, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in "
 #~ "predeterminado ("
+
+#~ msgid ""
+#~ "Attempting backtrace. You can use the following information to find out\n"
+#~ "where drizzled died. If you see no messages after this, something went\n"
+#~ "terribly wrong...\n"
+#~ msgstr ""
+#~ "Intentando hacer un backtrace. Ud. puede usar la siguiente información "
+#~ "para descubrir donde murió el programa Drizzled. Si no ve ningún mensaje "
+#~ "después de este, algo resultó terrible mal...\n"
 
 #~ msgid "Log all MyISAM changes to file."
 #~ msgstr "Registrar todos los cambios a tablas MyISAM en un archivo."
