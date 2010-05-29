@@ -745,7 +745,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       key_part->store_length= key_part->length;
 
       /* key_part->offset is set later */
-      key_part->key_type= part.key_type();
+      key_part->key_type= 0;
     }
 
     if (! indx.has_comment())
