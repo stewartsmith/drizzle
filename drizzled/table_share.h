@@ -62,7 +62,6 @@ public:
     timestamp_field(NULL),
     key_info(NULL),
     blob_field(NULL),
-    intervals(NULL),
     block_size(0),
     version(0),
     timestamp_offset(0),
@@ -113,7 +112,6 @@ public:
     memset(&name_hash, 0, sizeof(HASH));
 
     table_charset= 0;
-    memset(&all_set, 0, sizeof (MyBitmap));
     memset(&table_cache_key, 0, sizeof(LEX_STRING));
     memset(&db, 0, sizeof(LEX_STRING));
     memset(&table_name, 0, sizeof(LEX_STRING));
@@ -134,7 +132,6 @@ public:
     timestamp_field(NULL),
     key_info(NULL),
     blob_field(NULL),
-    intervals(NULL),
     block_size(0),
     version(0),
     timestamp_offset(0),
@@ -185,7 +182,6 @@ public:
     memset(&name_hash, 0, sizeof(HASH));
 
     table_charset= 0;
-    memset(&all_set, 0, sizeof (MyBitmap));
     memset(&table_cache_key, 0, sizeof(LEX_STRING));
     memset(&db, 0, sizeof(LEX_STRING));
     memset(&table_name, 0, sizeof(LEX_STRING));
@@ -256,8 +252,14 @@ public:
 
   Field **found_next_number_field;
   Field *timestamp_field;               /* Used only during open */
+private:
   KeyInfo  *key_info;			/* data of keys in database */
-  uint	*blob_field;			/* Index to blobs in Field arrray*/
+public:
+  KeyInfo &getKeyInfo(uint32_t arg) const
+  {
+    return key_info[arg];
+  }
+  std::vector<uint>	blob_field;			/* Index to blobs in Field arrray*/
 
   /* hash of field names (contains pointers to elements of field array) */
   HASH	name_hash;			/* hash of field names */
@@ -324,7 +326,7 @@ public:
   }
 
 private:
-  TYPELIB *intervals;			/* pointer to interval info */
+  std::vector<TYPELIB> intervals;			/* pointer to interval info */
 
 public:
   pthread_mutex_t mutex;                /* For locking the share  */
@@ -345,6 +347,10 @@ public:
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
   MyBitmap all_set;
+private:
+  std::vector<my_bitmap_map> all_bitmap;
+
+public:
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:

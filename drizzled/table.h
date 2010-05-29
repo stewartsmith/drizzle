@@ -299,7 +299,7 @@ public:
   inline uint32_t sizeFields() { return s->fields; }
   inline uint32_t getRecordLength() { return s->reclength; }
   inline uint32_t sizeBlobFields() { return s->blob_fields; }
-  inline uint32_t *getBlobField() { return s->blob_field; }
+  inline uint32_t *getBlobField() { return &s->blob_field[0]; }
   inline uint32_t getNullBytes() { return s->null_bytes; }
   inline uint32_t getNullFields() { return s->null_fields; }
   inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
@@ -311,7 +311,7 @@ public:
 
   uint32_t index_flags(uint32_t idx) const
   {
-    return s->storage_engine->index_flags(s->key_info[idx].algorithm);
+    return s->storage_engine->index_flags(s->getKeyInfo(idx).algorithm);
   }
 
   inline plugin::StorageEngine *getEngine() const   /* table_type for handler */

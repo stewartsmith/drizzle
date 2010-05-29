@@ -1392,6 +1392,16 @@ copy_data_between_tables(Table *from, Table *to,
   */
   TransactionServices &transaction_services= TransactionServices::singleton();
 
+  /* 
+   * LP Bug #552420 
+   *
+   * Since open_temporary_table() doesn't invoke mysql_lock_tables(), we
+   * don't get the usual automatic call to StorageEngine::startStatement(), so
+   * we manually call it here...
+   */
+  to->s->getEngine()->startStatement(session);
+
+  if (!(copy= new CopyField[to->s->fields]))
   if (!(copy= new CopyField[to->getShare()->fields]))
     return -1;
 
