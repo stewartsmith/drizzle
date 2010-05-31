@@ -56,7 +56,6 @@ extern "C" {
 static void td_catch_signal(int sig)
 {
 	CSThread *self;
-	struct sigaction *old_action = NULL;
 
 	if ((self = CSThread::getSelf())) {
 		if (self->isMain()) {
@@ -139,7 +138,6 @@ void CSThreadList::signalAllThreads(int sig)
 	finally_(a) {
 		unlock();
 	}
-	cont_(a);
 	exit_();
 }
 
@@ -160,7 +158,6 @@ void CSThreadList::quitAllThreads()
 	finally_(a) {
 		unlock();
 	}
-	cont_(a);
 	exit_();
 }
 
@@ -186,7 +183,6 @@ void CSThreadList::stopAllThreads()
 		finally_(a) {
 			unlock();
 		}
-		cont_(a);
 		if (!thread)
 			break;
 
@@ -196,7 +192,6 @@ void CSThreadList::stopAllThreads()
 		finally_(b) {
 			thread->release();
 		}
-		cont_(b);
 	}
 	exit_();
 }
@@ -459,21 +454,25 @@ void CSThread::caught()
  */
 
 pthread_key_t	CSThread::sThreadKey;
+bool			CSThread::isUp = false;
 
 bool CSThread::startUp()
 {
 	int err;
 
+	isUp = false;
 	if ((err = pthread_key_create(&sThreadKey, NULL))) {
 		CSException::logOSError(CS_CONTEXT, errno);
 		return false;
-	}
-
-	return true;
+	} else
+		isUp = true;
+		
+	return isUp;
 }
 
 void CSThread::shutDown()
 {
+	isUp = false;
 }
 
 bool CSThread::attach(CSThread *thread)
@@ -507,11 +506,19 @@ void CSThread::detach(CSThread *thread)
 
 CSThread* CSThread::getSelf()
 {
-	void* t;
+	CSThread* self;
 	
-	if (!(t = pthread_getspecific(sThreadKey)))
+	if ((!isUp) || !(self = (CSThread*) pthread_getspecific(sThreadKey)))
 		return (CSThread*) NULL;
-	return reinterpret_cast<CSThread*>(t);
+		
+#ifdef DEBUG
+	if (self->iRefCount == 0) {
+		pthread_setspecific(sThreadKey, NULL);
+		CSException::throwAssertion(CS_CONTEXT, "Bad self pointer.");
+	}	
+#endif
+
+	return self;
 }
 
 bool CSThread::setSelf(CSThread *self)

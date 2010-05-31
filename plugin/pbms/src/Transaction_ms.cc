@@ -27,12 +27,12 @@
  *
  */
 
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
 
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSLog.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSLog.h"
 
 #include "Defs_ms.h"
 #include "Util_ms.h"
@@ -78,8 +78,8 @@ private:
 	void dereference(MSTransPtr rec, MS_TxnState state);
 	void commitReference(MSTransPtr rec, MS_TxnState state);
 	
-	CSFile	*lostLog;
 	MSTrans *log;
+	CSFile	*lostLog;
 
 };
 
@@ -233,7 +233,7 @@ void MSTransactionThread::flush()
 
 bool MSTransactionThread::doWork()
 {
-	MSTransRec rec = {0};
+	MSTransRec rec = {0,0,0,0,0,0,0};
 	MS_TxnState state;
 	enter_();
 	
@@ -289,7 +289,7 @@ void *MSTransactionThread::finalize()
 {
 	close();
 	return NULL;
-};
+}
 
 /*
  * ---------------------------------------------------------------
@@ -400,7 +400,73 @@ void MSTransactionManager::rollback()
 	exit_();
 }
 
-void MSTransactionManager::rollbackTo(uint32_t position)
+class MSTransactionCheckPoint: public CSCString
+{
+	public:
+	MSTransactionCheckPoint(const char *name, uint32_t stmtCount ):CSCString()
+	{
+		myCString = cs_strdup(name);
+		myStrLen = strlen(name);
+
+		position = stmtCount;
+	}
+	
+	uint32_t position;
+};
+
+void MSTransactionManager::setSavepoint(const char *savePoint)
+{
+	MSTransactionCheckPoint *checkPoint;
+	enter_();
+	
+	new_(checkPoint, MSTransactionCheckPoint(savePoint, self->myStmtCount));
+	
+	self->mySavePoints.add(checkPoint);
+	
+	exit_();
+}
+
+void MSTransactionManager::releaseSavepoint(const char *savePoint)
+{
+	MSTransactionCheckPoint *checkPoint;
+	CSCString *name;
+	enter_();
+	
+	name = CSCString::newString(savePoint);
+	push_(name);
+
+	checkPoint = (MSTransactionCheckPoint*) self->mySavePoints.find(name);
+	release_(name);
+	
+	if (checkPoint) 		
+		self->mySavePoints.remove(checkPoint);
+		
+	exit_();
+}
+
+void MSTransactionManager::rollbackTo(const char *savePoint)
+{
+	MSTransactionCheckPoint *checkPoint;
+	CSCString *name;
+	enter_();
+	
+	name = CSCString::newString(savePoint);
+	push_(name);
+
+	checkPoint = (MSTransactionCheckPoint*) self->mySavePoints.find(name);
+	release_(name);
+	
+	if (checkPoint) {
+		uint32_t position = checkPoint->position;
+		
+		self->mySavePoints.remove(checkPoint);
+		rollbackToPosition(position);
+	}
+		
+	exit_();
+}
+
+void MSTransactionManager::rollbackToPosition(uint32_t position)
 {
 	enter_();
 
@@ -427,13 +493,14 @@ void MSTransactionManager::dropDatabase(uint32_t db_id)
 
 void MSTransactionManager::logTransaction(bool ref, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id)
 {
-	bool autocommit = false;
 	enter_();
 	
 	if (!tm_Log)
 		startUpReader();
 
+#ifndef DRIZZLED
 	if (!self->myTID) {
+		bool autocommit = false;
 		autocommit = ms_is_autocommit();
 		if (!autocommit)
 			pbms_take_part_in_transaction(ms_my_get_thread());
@@ -441,6 +508,7 @@ void MSTransactionManager::logTransaction(bool ref, uint32_t db_id, uint32_t tab
 		self->myIsAutoCommit = autocommit;
 	}
 	
+#endif
 	// PBMS always explicitly commits
 	tm_Log->txn_LogTransaction((ref)?MS_ReferenceTxn:MS_DereferenceTxn, false /*autocommit*/, db_id, tab_id, blob_id, blob_ref_id);
 

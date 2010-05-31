@@ -1532,11 +1532,11 @@ static int pbxt_rollback(handlerton *hton, THD *thd, bool all)
 Cursor *PBXTStorageEngine::create(TableShare& table, memory::Root *mem_root)
 {
 	PBXTStorageEngine * const hton = this;
-	if (XTSystemTableShare::isSystemTable(table.path.str))
+	if (XTSystemTableShare::isSystemTable(table.getPath()))
 #else
 static handler *pbxt_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root)
 {
-	if (table && XTSystemTableShare::isSystemTable(table->path.str))
+	if (table && XTSystemTableShare::isSystemTable(table->getPath()))
 #endif
 		return new (mem_root) ha_xtsys(hton, table);
 	else

@@ -30,9 +30,9 @@
 #ifndef __DATABASE_MS_H__
 #define __DATABASE_MS_H__
 
-#include "CSDefs.h"
-#include "CSStorage.h"
-#include "CSStrUtil.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSStorage.h"
+#include "cslib/CSStrUtil.h"
 
 #include "Table_ms.h"
 #include "Repository_ms.h"
@@ -69,18 +69,18 @@ public:
 	MSTable *getTable(uint32_t tab_id, bool missing_ok);
 	MSTable *getNextTable(uint32_t *pos);
 
-	void addTable(uint32_t tab_id, const char *tab_name, off_t file_size, bool to_delete);
+	void addTable(uint32_t tab_id, const char *tab_name, off64_t file_size, bool to_delete);
 	void addTableFromFile(CSDirectory *dir, const char *file_name, bool to_delete);
 	void removeTable(MSTable *tab);
 	void dropTable(MSTable *tab);
 	void renameTable(MSTable *tab, const char *to_name);
 	CSString *getATableName();
-	u_int getTableCount();
+	uint32_t getTableCount();
 
 	void openWriteRepo(MSOpenTable *otab);
 
 	MSRepository *getRepoFullOfTrash(time_t *wait_time);
-	MSRepository *lockRepo(off_t size);
+	MSRepository *lockRepo(off64_t size);
 	void removeRepo(uint32_t repo_id, bool *mustQuit);
 
 	MSRepoFile *getRepoFileFromPool(uint32_t repo_id, bool missing_ok);
@@ -109,7 +109,7 @@ public:
 	}
 #endif
 	MSTempLogFile *openTempLogFile(uint32_t log_id, size_t *log_rec_size, size_t *log_head_size);
-	u_int getTempLogCount();
+	uint32_t getTempLogCount();
 	void removeTempLog(uint32_t log_id);
 
 	/* Make this object sortable: */

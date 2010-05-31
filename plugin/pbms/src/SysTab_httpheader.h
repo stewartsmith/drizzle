@@ -25,7 +25,7 @@
 #ifndef __SYSTAB_HTTPHEADER_H__
 #define __SYSTAB_HTTPHEADER_H__
 
-#include "CSMutex.h"
+#include "cslib/CSMutex.h"
 
 #include "Defs_ms.h"
 #include "SystemTable_ms.h"
@@ -66,7 +66,7 @@ public:
 
 private:
 	static			SysTabRec	*gDefaultMetaDataHeaders;
-	uint32_t			iHeaderIndex;
+	uint32_t		iHeaderIndex;
 	bool			iDirty;
 };
 

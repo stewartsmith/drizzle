@@ -98,22 +98,22 @@ void cs_free(void *ptr)
 
 typedef struct MissingMemory {
 	void			*ptr;
-	u_int			id;
+	uint32_t			id;
 	const char		*func_name;
 	const char		*file_name;
-	u_int			line_nr;
+	uint32_t			line_nr;
 } MissingMemoryRec, *MissingMemoryPtr;
 
 static MissingMemoryRec	*mm_addresses = NULL;
-static u_int			mm_nr_in_use = 0L;
-static u_int			mm_total_allocated = 0L;
-static u_int			mm_alloc_count = 0;
+static uint32_t			mm_nr_in_use = 0L;
+static uint32_t			mm_total_allocated = 0L;
+static uint32_t			mm_alloc_count = 0;
 static pthread_mutex_t	mm_mutex;
 
 /* Set this variable to the ID of the memory you want
  * to track.
  */
-static u_int			mm_tracking_id = 0;
+static uint32_t			mm_tracking_id = 0;
 
 static void mm_println(const char *str)
 {
@@ -209,7 +209,7 @@ static void mm_throw_assertion(MissingMemoryPtr mm_ptr, void *p, const char *mes
 	char str[200];
 
 	if (mm_ptr) {
-		snprintf(str, 200, "MM ERROR: %08p (#%"PRId32") %s:%"PRId32" %s",
+		snprintf(str, 200, "MM ERROR: %8p (#%"PRId32") %s:%"PRId32" %s",
 					   mm_ptr->ptr,
 					   mm_ptr->id,
 					   cs_last_name_of_path(mm_ptr->file_name),
@@ -217,14 +217,14 @@ static void mm_throw_assertion(MissingMemoryPtr mm_ptr, void *p, const char *mes
 					   message);
 	}
 	else
-		snprintf(str, 200, "MM ERROR: %08p %s", p, message);
+		snprintf(str, 200, "MM ERROR: %8p %s", p, message);
 	mm_println(str);
 }
 
-static u_int mm_add_core_ptr(void *ptr, const char *func, const char *file, int line)
+static uint32_t mm_add_core_ptr(void *ptr, const char *func, const char *file, int line)
 {
 	long	mm;
-	u_int	id;
+	uint32_t	id;
 
 	mm = mm_add_pointer(ptr);
 	if (mm < 0) {
@@ -300,9 +300,9 @@ static void mm_replace_core_ptr(long i, void *ptr)
 #define MEM_FREED_BYTE			0x03
 
 typedef struct MemoryDebug {
-	u_int		check;
-	u_int		md_id;				/* The memory ID! */
-	u_int		size;
+	uint32_t		check;
+	uint32_t		md_id;				/* The memory ID! */
+	uint32_t		size;
 	char		data[200];
 } MemoryDebugRec, *MemoryDebugPtr;
 
@@ -348,7 +348,7 @@ static size_t mm_check_and_free(MissingMemoryPtr mm_ptr, void *p, bool freeme)
 
 bool cs_mm_scan_core(void)
 {
-	u_int mm;
+	uint32_t mm;
 	bool rtc = true;
 
 	if (!mm_addresses)
@@ -443,7 +443,7 @@ void *cs_mm_malloc(const char *func, const char *file, int line, size_t size)
 
 	((MemoryDebugPtr) p)->check = MEM_HEADER;
 	((MemoryDebugPtr) p)->md_id = 0;
-	((MemoryDebugPtr) p)->size = (u_int) size;
+	((MemoryDebugPtr) p)->size = (uint32_t) size;
 	*(p + size + MEM_DEBUG_HDR_SIZE) = MEM_TRAILER_BYTE;
 	*(p + size + MEM_DEBUG_HDR_SIZE + 1L) = MEM_TRAILER_BYTE;
 
@@ -465,7 +465,7 @@ void *cs_mm_calloc(const char *func, const char *file, int line, size_t size)
 
 	((MemoryDebugPtr) p)->check = MEM_HEADER;
 	((MemoryDebugPtr) p)->md_id = 0;
-	((MemoryDebugPtr) p)->size  = (u_int) size;
+	((MemoryDebugPtr) p)->size  = (uint32_t) size;
 	*(p + size + MEM_DEBUG_HDR_SIZE) = MEM_TRAILER_BYTE;
 	*(p + size + MEM_DEBUG_HDR_SIZE + 1L) = MEM_TRAILER_BYTE;
 
@@ -540,7 +540,7 @@ void cs_mm_realloc(const char *func, const char *file, int line, void **ptr, siz
 	cs_free(oldptr);
 
 	((MemoryDebugPtr) pnew)->check = MEM_HEADER;
-	((MemoryDebugPtr) pnew)->size = (u_int) newsize;
+	((MemoryDebugPtr) pnew)->size = (uint32_t) newsize;
 	*(pnew + newsize + MEM_DEBUG_HDR_SIZE) = MEM_TRAILER_BYTE;
 	*(pnew + newsize + MEM_DEBUG_HDR_SIZE + 1L)	= MEM_TRAILER_BYTE;
 
@@ -588,7 +588,7 @@ size_t cs_mm_malloc_size(void *ptr)
 	return size;
 }
 
-void cs_mm_print_track(const char *func, const char *file, u_int line, void *p, bool inc, u_int ref_cnt, int track_me)
+void cs_mm_print_track(const char *func, const char *file, uint32_t line, void *p, bool inc, uint32_t ref_cnt, int track_me)
 {
 	unsigned char	*ptr = (unsigned char *) p - MEM_DEBUG_HDR_SIZE;
 	MemoryDebugPtr	debug_ptr = (MemoryDebugPtr) ptr;
@@ -614,7 +614,7 @@ void cs_mm_print_track(const char *func, const char *file, u_int line, void *p, 
 	printf("\n");
 }
 
-void cs_mm_track_memory(const char *func, const char *file, u_int line, void *p, bool inc, u_int ref_cnt, int track_me)
+void cs_mm_track_memory(const char *func, const char *file, uint32_t line, void *p, bool inc, uint32_t ref_cnt, int track_me)
 {
 	unsigned char	*ptr = (unsigned char *) p - MEM_DEBUG_HDR_SIZE;
 	MemoryDebugPtr	debug_ptr = (MemoryDebugPtr) ptr;
@@ -652,7 +652,7 @@ bool cs_init_memory(void)
 void cs_exit_memory(void)
 {
 #ifdef DEBUG
-	u_int mm;
+	uint32_t mm;
 
 	if (!mm_addresses)
 		return;

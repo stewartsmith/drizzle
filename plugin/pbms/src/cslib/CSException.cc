@@ -99,7 +99,7 @@ void CSException::initAssertion(const char *func, const char *file, int line, co
 	cs_strcpy(CS_EXC_MESSAGE_SIZE, iMessage, message);
 }
 
-void CSException::getCoreError(u_int size, char *buffer, int err)
+void CSException::getCoreError(uint32_t size, char *buffer, int err)
 {
 	const char *message = NULL;
 

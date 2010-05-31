@@ -83,7 +83,6 @@ CSFile *CSPath::createFile(int mode)
 			finally_(b) {
 				dir->release();
 			}
-			cont_(b);
 
 			retry = true;
 		}
@@ -162,7 +161,6 @@ void CSPath::makePath()
 	finally_(a) {
 		path->release();
 	}
-	cont_(a);
 	exit_();
 }
 
@@ -254,7 +252,6 @@ bool CSPath::isEmpty()
 	finally_(a) {
 		dir->release();	
 	}
-	cont_(a);
 	return_(result);
 }
 
@@ -288,7 +285,6 @@ void CSPath::emptyDir()
 			path->release();
 		dir->release();	
 	}
-	cont_(a);
 	exit_();
 }
 
@@ -338,7 +334,6 @@ void CSPath::moveTo(CSPath *in_to_path)
 		if (to_path != in_to_path)
 			to_path->release();
 	}
-	cont_(a);
 
 	exit_();
 }
@@ -388,9 +383,9 @@ const char *CSPath::getNameCString()
 	return cs_last_name_of_path(str);
 }
 
-off_t CSPath::getSize()
+off64_t CSPath::getSize()
 {
-	off_t size;
+	off64_t size;
 
 	info((bool *) NULL, &size, (CSTime *) NULL);
 	return size;
@@ -400,7 +395,7 @@ bool CSPath::isDir()
 {
 	bool	is_dir;
 
-	info(&is_dir, (off_t *) NULL, (CSTime *) NULL);
+	info(&is_dir, (off64_t *) NULL, (CSTime *) NULL);
 	return is_dir;
 }
 
@@ -421,7 +416,7 @@ bool CSPath::exists(bool *is_dir)
 	return true;
 }
 
-void CSPath::info(bool *is_dir, off_t *size, CSTime *mod_time)
+void CSPath::info(bool *is_dir, off64_t *size, CSTime *mod_time)
 {
 	struct stat sb;
 

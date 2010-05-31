@@ -47,7 +47,7 @@
  */
 #define s_char			unsigned char
 
-/* PBMS assumes that off_t is 8 bytes so to ensure this always use  off64_t*/
+/* PBMS assumes that off64_t is 8 bytes so to ensure this always use  off64_t*/
 #define off64_t			uint64_t
 
 

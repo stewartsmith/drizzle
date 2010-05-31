@@ -27,18 +27,18 @@
  */
 
 #ifdef HAVE_ALIAS_SUPPORT
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 
 #include "string.h"
 
 #ifdef DRIZZLED
-#include <drizzled/server_includes.h>
+#include <drizzled/common.h>
 #endif
 
-#include "CSGlobal.h"
-#include "CSLog.h"
-#include "CSStrUtil.h"
-#include "CSFile.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSFile.h"
 #include "SystemTable_ms.h"
 #include "Database_ms.h"
 
@@ -117,7 +117,7 @@ void MSAlias::MSAliasLoad()
 {	
 	CSFile			*fa = NULL;
 	CSSortedList	freeList;
-	off_t			fileSize;
+	off64_t			fileSize;
 
 	enter_();
 	
@@ -166,7 +166,7 @@ void MSAlias::MSAliasLoad()
 		} while (offset != start_offset);
 		
 	}
-	for (u_int i = 0; i < BUCKET_LIST_SIZE; i++) {
+	for (uint32_t i = 0; i < BUCKET_LIST_SIZE; i++) {
 		uint64_t used, total_space;
 		MSABucketLinkedList *bucketChain = &(iFileShare->msa_buckets[i]);
 		
@@ -330,7 +330,7 @@ void MSAlias::MSAliasBuild()
 	
 	// Initialize the file bucket chains.
 	MSADiskBucketHeadRec bucketHead = {0};
-	for (u_int i = 0; i < BUCKET_LIST_SIZE; i++) {
+	for (uint32_t i = 0; i < BUCKET_LIST_SIZE; i++) {
 		CS_SET_DISK_8(bucketHead.ab_prev_bucket_8, offset);
 		CS_SET_DISK_8(bucketHead.ab_next_bucket_8, offset);
 		fa->write(&bucketHead, offset, sizeof(MSADiskBucketHeadRec));
@@ -388,10 +388,10 @@ retry:
 //------------------------
 uint32_t MSAlias::hashAlias(const char *ptr)
 {
-	register u_int h = 0, g;
+	register uint32_t h = 0, g;
 	
 	while (*ptr) {
-		h = (h << 4) + (u_int) toupper(*ptr++);
+		h = (h << 4) + (uint32_t) toupper(*ptr++);
 		if ((g = (h & 0xF0000000)))
 			h = (h ^ (g >> 24)) ^ g;
 	}

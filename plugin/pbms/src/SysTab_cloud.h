@@ -27,7 +27,7 @@
 #ifndef __SYSTAB_CLOUD_H__
 #define __SYSTAB_CLOUD_H__
 
-#include "CSMutex.h"
+#include "cslib/CSMutex.h"
 
 #include "Defs_ms.h"
 #include "SystemTable_ms.h"

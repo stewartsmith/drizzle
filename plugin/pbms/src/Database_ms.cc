@@ -26,18 +26,29 @@
  * Network interface.
  *
  */
+ 
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/message/table.pb.h>
+#include "drizzled/charset_info.h"
+#include <drizzled/table_proto.h>
+#include <drizzled/field.h>
+#endif
 
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 
 #include <string.h>
 #include <ctype.h>
 
 #include "string.h"
 
-#include "CSGlobal.h"
-#include "CSLog.h"
-#include "CSDirectory.h"
-#include "CSStrUtil.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSDirectory.h"
+#include "cslib/CSStrUtil.h"
 
 #include "Database_ms.h"
 #include "OpenTable_ms.h"
@@ -65,27 +76,30 @@ uint64_t				MSDatabase::gBackupDatabaseID;
  */
 
 MSDatabase::MSDatabase():
-myDatabasePath(NULL),
+myIsPBMS(false),
+myDatabaseID(0),
 myDatabaseName(NULL),
+myDatabasePath(NULL),
 myTempLogArray(NULL),
 myCompactorThread(NULL),
 myTempLogThread(NULL),
 myRepostoryList(NULL),
 myBlobCloud(NULL),
 myBlobType(MS_STANDARD_STORAGE),
-iTableList(NULL),
-iTableArray(NULL),
-iMaxTableID(0),
+isBackup(false),
+iBackupThread(NULL),
+iBackupTime(0),
+iRecovering(false),
 #ifdef HAVE_ALIAS_SUPPORT
 iBlobAliases(NULL),
 #endif
-iDropping(false),
-iRecovering(false),
-isBackup(false),
+iClosing(false),
+iTableList(NULL),
+iTableArray(NULL),
+iMaxTableID(0),
 iWriteTempLog(NULL),
-iBackupThread(NULL),
-iNextBlobRefId(0),
-iClosing(false)
+iDropping(false),
+iNextBlobRefId(0)
 {
 }
 
@@ -160,7 +174,7 @@ MSTable *MSDatabase::getTable(CSString *tab_name, bool create)
 
 		if (create) {
 			/* Create a new table: */
-			tab = MSTable::newTable(iMaxTableID+1, RETAIN(tab_name), this, (off_t) 0, false);
+			tab = MSTable::newTable(iMaxTableID+1, RETAIN(tab_name), this, (off64_t) 0, false);
 			iTableList->add(tab);
 			iTableArray->set(iMaxTableID+1, RETAIN(tab));
 			iMaxTableID++;
@@ -185,7 +199,7 @@ MSTable *MSDatabase::getTable(uint32_t tab_id, bool missing_ok)
 	
 	enter_();
 	lock_(iTableList);
-	if (!(tab = (MSTable *) iTableArray->get((u_int) tab_id))) {
+	if (!(tab = (MSTable *) iTableArray->get((uint32_t) tab_id))) {
 		if (missing_ok) {
 			unlock_(iTableList);
 			return_(NULL);
@@ -193,7 +207,7 @@ MSTable *MSDatabase::getTable(uint32_t tab_id, bool missing_ok)
 		char buffer[CS_EXC_MESSAGE_SIZE];
 
 		cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Unknown table #");
-		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, (u_int) tab_id);
+		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, (uint32_t) tab_id);
 		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, " in database ");
 		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, getDatabaseNameCString());
 		CSException::throwException(CS_CONTEXT, MS_ERR_UNKNOWN_TABLE, buffer);
@@ -205,7 +219,7 @@ MSTable *MSDatabase::getTable(uint32_t tab_id, bool missing_ok)
 
 MSTable *MSDatabase::getNextTable(uint32_t *pos)
 {
-	u_int i = *pos;
+	uint32_t i = *pos;
 	MSTable *tab = NULL;
 	
 	enter_();
@@ -223,7 +237,7 @@ MSTable *MSDatabase::getNextTable(uint32_t *pos)
 	return_(tab);
 }
 
-void MSDatabase::addTable(uint32_t tab_id, const char *tab_name, off_t file_size, bool to_delete)
+void MSDatabase::addTable(uint32_t tab_id, const char *tab_name, off64_t file_size, bool to_delete)
 {
 	MSTable	*tab;
 
@@ -236,8 +250,8 @@ void MSDatabase::addTable(uint32_t tab_id, const char *tab_name, off_t file_size
 
 void MSDatabase::addTableFromFile(CSDirectory *dir, const char *file_name, bool to_delete)
 {
-	off_t	file_size;
-	u_int	file_id;
+	off64_t	file_size;
+	uint32_t	file_id;
 	char	tab_name[MS_TABLE_NAME_SIZE];
 
 	dir->info(NULL, &file_size, NULL);
@@ -278,7 +292,7 @@ void MSDatabase::dropTable(MSTable *tab)
 // dropping the database itself. 
 CSString *MSDatabase::getATableName()
 {
-	u_int i = 0;
+	uint32_t i = 0;
 	MSTable *tab;
 	CSString *name = NULL;
 	
@@ -294,9 +308,9 @@ CSString *MSDatabase::getATableName()
 	return_(name);
 }
 
-u_int MSDatabase::getTableCount()
+uint32_t MSDatabase::getTableCount()
 {
-	u_int cnt = 0, i = 0;
+	uint32_t cnt = 0, i = 0;
 	MSTable *tab;
 	
 	enter_();
@@ -348,7 +362,7 @@ MSRepository *MSDatabase::getRepoFullOfTrash(time_t *ret_wait_time)
 		wait_time = *ret_wait_time;
 	enter_();
 	lock_(myRepostoryList);
-	for (u_int i=0; i<myRepostoryList->size(); i++) {
+	for (uint32_t i=0; i<myRepostoryList->size(); i++) {
 		retry:
 		if ((repo = (MSRepository *) myRepostoryList->get(i))) {
 			if (!repo->isRemovingFP && !repo->mustBeDeleted && !repo->isRepoLocked()) {
@@ -375,7 +389,7 @@ MSRepository *MSDatabase::getRepoFullOfTrash(time_t *ret_wait_time)
 					time_t then = repo->myLastTempTime;
 
 					/* Check if there are any temp BLOBs to be removed: */
-					if (now > then + MSTempLog::gTempBlobTimeout) {
+					if (now > (time_t)(then + MSTempLog::gTempBlobTimeout)) {
 						repo->lockRepo(REPO_COMPACTING); 
 						repo->retain();
 						break;
@@ -396,16 +410,16 @@ MSRepository *MSDatabase::getRepoFullOfTrash(time_t *ret_wait_time)
 	return_(repo);
 }
 
-MSRepository *MSDatabase::lockRepo(off_t size)
+MSRepository *MSDatabase::lockRepo(off64_t size)
 {
 	MSRepository	*repo;
-	u_int			free_slot;
+	uint32_t			free_slot;
 
 	enter_();
 	lock_(myRepostoryList);
 	free_slot = myRepostoryList->size();
 	/* Find an unlocked repository file that is below the write threshold: */
-	for (u_int i=0; i<myRepostoryList->size(); i++) {
+	for (uint32_t i=0; i<myRepostoryList->size(); i++) {
 		if ((repo = (MSRepository *) myRepostoryList->get(i))) {
 			if (!repo->isRepoLocked() && !repo->isRemovingFP && !repo->mustBeDeleted &&
 				repo->myRepoFileSize + size < gRepoThreshold 
@@ -441,7 +455,7 @@ MSRepoFile *MSDatabase::getRepoFileFromPool(uint32_t repo_id, bool missing_ok)
 			char buffer[CS_EXC_MESSAGE_SIZE];
 
 			cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Unknown repository file: ");
-			cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, (u_int) repo_id);
+			cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, (uint32_t) repo_id);
 			CSException::throwException(CS_CONTEXT, MS_ERR_NOT_FOUND, buffer);
 		}
 		unlock_(myRepostoryList);
@@ -451,7 +465,7 @@ MSRepoFile *MSDatabase::getRepoFileFromPool(uint32_t repo_id, bool missing_ok)
 		char buffer[CS_EXC_MESSAGE_SIZE];
 
 		cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Repository will be removed: ");
-		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, (u_int) repo_id);
+		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, (uint32_t) repo_id);
 		CSException::throwException(CS_CONTEXT, MS_ERR_REMOVING_REPO, buffer);
 	}
 	repo->retain(); /* Release is here: [++] */
@@ -541,10 +555,10 @@ void MSDatabase::queueTempLogEvent(MSOpenTable *otab, int type, uint32_t tab_id,
 	}
 
 	if (iWriteTempLog->myTempLogSize >= gTempLogThreshold) {
-		u_int log_id = iWriteTempLog->myLogID + 1;
+		uint32_t tmp_log_id = iWriteTempLog->myLogID + 1;
 
-		new_(iWriteTempLog, MSTempLog(log_id, this, 0));
-		myTempLogArray->set(log_id, iWriteTempLog);
+		new_(iWriteTempLog, MSTempLog(tmp_log_id, this, 0));
+		myTempLogArray->set(tmp_log_id, iWriteTempLog);
 
 		otab->myTempLogFile->release();
 		otab->myTempLogFile = NULL;
@@ -615,9 +629,9 @@ MSTempLogFile *MSDatabase::openTempLogFile(uint32_t log_id, size_t *log_rec_size
 	return_(log_file);
 }
 
-u_int MSDatabase::getTempLogCount()
+uint32_t MSDatabase::getTempLogCount()
 {
-	u_int count;
+	uint32_t count;
 
 	enter_();
 	lock_(myTempLogArray);
@@ -759,7 +773,7 @@ void MSDatabase::startUp(const char *default_http_headers)
 	new_(gDatabaseList, CSSyncSortedList);
 	new_(gDatabaseArray, CSSparseArray(5));
 	MSHTTPHeaderTable::setDefaultMetaDataHeaders(default_http_headers);
-	pbmsSystemTablesStartUp();
+	PBMSSystemTables::systemTablesStartUp();
 	gBackupDatabaseID = 1;
 	exit_();
 }
@@ -817,7 +831,7 @@ void MSDatabase::shutDown()
 	}
 	
 	MSHTTPHeaderTable::releaseDefaultMetaDataHeaders();
-	pbmsSystemTableShutDown();
+	PBMSSystemTables::systemTableShutDown();
 }
 
 void MSDatabase::setBackupDatabase()
@@ -984,7 +998,7 @@ MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
 	
 	enter_();
 	lock_(gDatabaseList);
-	if ((db = (MSDatabase *) gDatabaseArray->get((u_int) db_id))) 
+	if ((db = (MSDatabase *) gDatabaseArray->get((uint32_t) db_id))) 
 		db->retain();
 	else {
 		// Look for the database folder with the correct ID:
@@ -1006,7 +1020,7 @@ MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
 					if (*ptr ==  '-') {
 						int len = ptr - dir_name;
 						ptr++;
-						if (atol(ptr) == db_id && len) {
+						if ((strtoul(ptr, NULL, 10) == db_id) && len) {
 							db = getDatabase(CSCString::newString(dir_name, len), true);
 							ASSERT(db->myDatabaseID == db_id);
 						}
@@ -1023,7 +1037,7 @@ MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
 		char buffer[CS_EXC_MESSAGE_SIZE];
 
 		cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Unknown database #");
-		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, (u_int) db_id);
+		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, (uint32_t) db_id);
 		CSException::throwException(CS_CONTEXT, MS_ERR_UNKNOWN_DB, buffer);
 	}
 	return_(db);
@@ -1085,7 +1099,7 @@ uint32_t MSDatabase::getDBID(CSPath *path, CSString *db_name)
 				if (!dir->isFile()) {
 					ptr = dir->name() + strlen(dir->name()) -1;
 					while (ptr > dir->name() && isdigit(*ptr)) ptr--;
-					if ((*ptr == '-') && (db_id == atol(ptr+1))) {
+					if ((*ptr == '-') && (db_id == strtoul(ptr+1, NULL, 10))) {
 						db_id = 0;				
 					}
 				}
@@ -1140,7 +1154,7 @@ CSPath *MSDatabase::createDatabasePath(const char *location, CSString *db_name, 
 	// Create the PBMS database name with ID
 	cs_strcpy(MS_DATABASE_NAME_SIZE + 40, name_buffer, db_name->getCString());
 	cs_strcat(MS_DATABASE_NAME_SIZE + 40, name_buffer, "-");
-	cs_strcat(MS_DATABASE_NAME_SIZE + 40, name_buffer, (u_int) db_id);
+	cs_strcat(MS_DATABASE_NAME_SIZE + 40, name_buffer, (uint32_t) db_id);
 			
 	pop_(path);
 	path = CSPath::newPath(path, name_buffer);
@@ -1172,10 +1186,10 @@ MSDatabase *MSDatabase::newDatabase(const char *db_location, CSString *db_name, 
 	MSRepository	*repo;
 	CSPath			*path;
 	const char		*file_name;
-	u_int			file_id;
-	off_t			file_size;
+	uint32_t			file_id;
+	off64_t			file_size;
 	MSTempLog		*log;
-	u_int			to_delete = 0;
+	uint32_t			to_delete = 0;
 	CSString		*db_path;
 	bool			is_pbms = false;
 
@@ -1304,7 +1318,7 @@ MSDatabase *MSDatabase::newDatabase(const char *db_location, CSString *db_name, 
 			/* Go through and prepare all the tables that are to
 			 * be deleted:
 			 */
-			u_int	i = 0;
+			uint32_t	i = 0;
 			MSTable	*tab;
 			
 			while ((tab = (MSTable *) db->iTableList->itemAt(i))) {
@@ -1451,7 +1465,7 @@ void MSDatabase::removeDatabasePath(CSString *doomedDatabasePath )
 	release_(path);
 #endif
 
-	pbms_remove_ststem_tables(RETAIN(doomedDatabasePath));
+	PBMSSystemTables::removeSystemTables(RETAIN(doomedDatabasePath));
 	
 	path = CSPath::newPath(RETAIN(doomedDatabasePath));
 	push_(path);
@@ -1546,7 +1560,6 @@ void MSDatabase::dropDatabase(MSDatabase *doomedDatabase, const char *db_name )
 	if (doomedDatabasePath)
 		removeDatabasePath(doomedDatabasePath);
 	
-done:
 	exit_();
 }
 
@@ -1672,7 +1685,7 @@ MSDatabase *MSDatabase::loadDatabase(CSString *db_name, bool create)
 		
 		gDatabaseArray->set(db->myDatabaseID, RETAIN(db));
 		db->startThreads();
-		pbms_load_system_tables(RETAIN(db));
+		PBMSSystemTables::loadSystemTables(RETAIN(db));
 			
 		pop_(db);
 	}

@@ -52,7 +52,7 @@ CSHashTable::~CSHashTable()
 
 }
 
-void CSHashTable::setSize(u_int size)
+void CSHashTable::setSize(uint32_t size)
 {
 	enter_();
 	cs_realloc((void **) &iTable, sizeof(CSObject *) * size);
@@ -62,7 +62,7 @@ void CSHashTable::setSize(u_int size)
 
 void CSHashTable::add(CSObject *item)
 {
-	u_int h = item->hashKey();
+	uint32_t h = item->hashKey();
 
 	remove(item->getKey());
 	item->setHashLink(iTable[h % iSize]);
@@ -71,7 +71,7 @@ void CSHashTable::add(CSObject *item)
 
 CSObject *CSHashTable::find(CSObject *key)
 {
-	u_int h = key->hashKey();
+	uint32_t h = key->hashKey();
 	CSObject *item;
 	
 	item = iTable[h % iSize];
@@ -85,7 +85,7 @@ CSObject *CSHashTable::find(CSObject *key)
 
 void CSHashTable::remove(CSObject *key)
 {
-	u_int h = key->hashKey();
+	uint32_t h = key->hashKey();
 	CSObject *item, *prev_item;
 
 	prev_item = NULL;
@@ -109,7 +109,7 @@ void CSHashTable::clear()
 {
 	CSObject *item, *tmp_item;
 
-	for (u_int i=0; i<iSize; i++) {
+	for (uint32_t i=0; i<iSize; i++) {
 		item = iTable[i];
 		while ((tmp_item = item)) {
 			item = tmp_item->getHashLink();
@@ -126,7 +126,7 @@ void CSHashTable::clear()
 void CSSortedList::clear()
 {
 	if (iList) {
-		for (u_int i=0; i<iInUse; i++)
+		for (uint32_t i=0; i<iInUse; i++)
 			iList[i]->release();
 		cs_free(iList);
 		iList = NULL;
@@ -138,7 +138,7 @@ void CSSortedList::clear()
 void CSSortedList::add(CSObject *item)
 {
 	CSObject	*old_item;
-	u_int		idx;
+	uint32_t		idx;
 
 	enter_();
 	if ((old_item = search(item->getKey(), idx))) {
@@ -161,19 +161,19 @@ void CSSortedList::add(CSObject *item)
 
 CSObject *CSSortedList::find(CSObject *key)
 {
-	u_int idx;
+	uint32_t idx;
 
 	return search(key, idx);
 }
 
-CSObject *CSSortedList::itemAt(u_int idx)
+CSObject *CSSortedList::itemAt(uint32_t idx)
 {
 	if (idx >= iInUse)
 		return NULL;
 	return iList[idx];
 }
 
-CSObject *CSSortedList::takeItemAt(u_int idx)
+CSObject *CSSortedList::takeItemAt(uint32_t idx)
 {
 	CSObject	*item;
 
@@ -190,7 +190,7 @@ CSObject *CSSortedList::takeItemAt(u_int idx)
 void CSSortedList::remove(CSObject *key)
 {
 	CSObject	*item;
-	u_int		idx;
+	uint32_t		idx;
 
 	if ((item = search(key, idx))) {
 		memmove(&iList[idx], &iList[idx+1], (iInUse - idx) * sizeof(CSObject *));
@@ -199,11 +199,11 @@ void CSSortedList::remove(CSObject *key)
 	}
 }
 
-CSObject *CSSortedList::search(CSObject *key, u_int& idx)
+CSObject *CSSortedList::search(CSObject *key, uint32_t& idx)
 {
-	register u_int		count = iInUse;
-	register u_int		i;
-	register u_int		guess;
+	register uint32_t		count = iInUse;
+	register uint32_t		i;
+	register uint32_t		guess;
 	register int		r;
 
 	i = 0;
@@ -342,7 +342,7 @@ void CSVector::free()
 
 void CSVector::clear()
 {
-	u_int i = iUsage;
+	uint32_t i = iUsage;
 
 	for (;;) {
 		if (i == 0)
@@ -359,7 +359,7 @@ void CSVector::clear()
 	iUsage = 0;
 }
 
-CSObject *CSVector::take(u_int idx)
+CSObject *CSVector::take(uint32_t idx)
 {
 	CSObject *obj;
 
@@ -372,7 +372,7 @@ CSObject *CSVector::take(u_int idx)
 	return obj;
 }
 
-void CSVector::remove(u_int idx)
+void CSVector::remove(uint32_t idx)
 {
 	CSObject *obj;
 
@@ -385,14 +385,14 @@ void CSVector::remove(u_int idx)
 	obj->release();
 }
 
-CSObject *CSVector::get(u_int idx)
+CSObject *CSVector::get(uint32_t idx)
 {
 	if (idx >= iUsage)
 		return NULL;
 	return iArray[idx];
 }
 
-void CSVector::set(u_int idx, CSObject *val)
+void CSVector::set(uint32_t idx, CSObject *val)
 {
 	enter_();
 	if (idx >= iMaxSize) {
@@ -451,7 +451,7 @@ void CSSparseArray::free()
 
 void CSSparseArray::clear()
 {
-	u_int i = iUsage;
+	uint32_t i = iUsage;
 
 	for (;;) {
 		if (i == 0)
@@ -468,9 +468,9 @@ void CSSparseArray::clear()
 	iUsage = 0;
 }
 
-CSObject *CSSparseArray::take(u_int idx)
+CSObject *CSSparseArray::take(uint32_t idx)
 {
-	u_int		pos;
+	uint32_t		pos;
 	CSObject	*obj;
 
 	if (!(obj = search(idx, pos)))
@@ -480,9 +480,9 @@ CSObject *CSSparseArray::take(u_int idx)
 	return obj;
 }
 
-void CSSparseArray::remove(u_int idx)
+void CSSparseArray::remove(uint32_t idx)
 {
-	u_int		pos;
+	uint32_t		pos;
 	CSObject	*obj;
 
 	if (!(obj = search(idx, pos)))
@@ -492,31 +492,31 @@ void CSSparseArray::remove(u_int idx)
 	obj->release();
 }
 
-CSObject *CSSparseArray::itemAt(u_int idx)
+CSObject *CSSparseArray::itemAt(uint32_t idx)
 {
 	if (idx >= iUsage)
 		return NULL;
 	return iArray[idx].sa_object;
 }
 
-CSObject *CSSparseArray::get(u_int idx)
+CSObject *CSSparseArray::get(uint32_t idx)
 {
-	u_int pos;
+	uint32_t pos;
 
 	return search(idx, pos);
 }
 
-u_int CSSparseArray::getIndex(u_int idx)
+uint32_t CSSparseArray::getIndex(uint32_t idx)
 {
-	u_int pos;
+	uint32_t pos;
 
 	search(idx, pos);
 	return pos;
 }
 
-void CSSparseArray::set(u_int idx, CSObject *val)
+void CSSparseArray::set(uint32_t idx, CSObject *val)
 {
-	u_int		pos;
+	uint32_t		pos;
 	CSObject	*obj;
 
 	enter_();
@@ -558,11 +558,11 @@ CSObject *CSSparseArray::last()
 	return iArray[iUsage-1].sa_object;
 }
 
-CSObject *CSSparseArray::search(u_int idx, u_int& pos)
+CSObject *CSSparseArray::search(uint32_t idx, uint32_t& pos)
 {
-	register u_int	count = iUsage;
-	register u_int	i;
-	register u_int	guess;
+	register uint32_t	count = iUsage;
+	register uint32_t	i;
+	register uint32_t	guess;
 
 	i = 0;
 	while (i < count) {
@@ -589,7 +589,7 @@ CSObject *CSSparseArray::search(u_int idx, u_int& pos)
 void CSOrderedList::clear()
 {
 	if (iList) {
-		for (u_int i=0; i<iInUse; i++) {
+		for (uint32_t i=0; i<iInUse; i++) {
 			if (iList[i].li_key)
 				iList[i].li_key->release();
 			if (iList[i].li_item)
@@ -602,7 +602,7 @@ void CSOrderedList::clear()
 	iListSize = 0;
 }
 
-CSObject *CSOrderedList::itemAt(u_int idx)
+CSObject *CSOrderedList::itemAt(uint32_t idx)
 {
 	if (idx >= iInUse)
 		return NULL;
@@ -613,7 +613,7 @@ CSObject *CSOrderedList::itemAt(u_int idx)
 void CSOrderedList::add(CSOrderKey *key, CSObject *item)
 {
 	CSOrderedListItemPtr	old_item;
-	u_int					idx;
+	uint32_t					idx;
 
 	enter_();
 	if ((old_item = search(key, &idx))) {
@@ -643,7 +643,7 @@ void CSOrderedList::add(CSOrderKey *key, CSObject *item)
 
 CSObject *CSOrderedList::find(CSOrderKey *key)
 {
-	u_int					idx;
+	uint32_t					idx;
 	CSOrderedListItemPtr	ptr;
 
 	if ((ptr = search(key, &idx)))
@@ -654,7 +654,7 @@ CSObject *CSOrderedList::find(CSOrderKey *key)
 void CSOrderedList::remove(CSOrderKey *key)
 {
 	CSOrderedListItemPtr	item;
-	u_int					idx;
+	uint32_t					idx;
 
 	if ((item = search(key, &idx))) {
 		CSOrderedListItemRec ir;
@@ -669,11 +669,11 @@ void CSOrderedList::remove(CSOrderKey *key)
 	}
 }
 
-CSOrderedListItemPtr CSOrderedList::search(CSOrderKey *key, u_int *idx)
+CSOrderedListItemPtr CSOrderedList::search(CSOrderKey *key, uint32_t *idx)
 {
-	register u_int		count = iInUse;
-	register u_int		i;
-	register u_int		guess;
+	register uint32_t		count = iInUse;
+	register uint32_t		i;
+	register uint32_t		guess;
 	register int		r;
 
 	i = 0;

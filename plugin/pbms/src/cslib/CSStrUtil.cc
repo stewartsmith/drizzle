@@ -423,10 +423,10 @@ void cs_replace_string(size_t size, char *into, const char ch, const char *str)
 	char *ptr;
 
 	if ((ptr = strchr(into, ch))) {
-		int len = strlen(into);
-		int len2 = strlen(str);
+		size_t len = strlen(into);
+		size_t len2 = strlen(str);
 		
-		if (len + len2 > size)
+		if ((len + len2) > size)
 			len2 = size - len;
 		
 		memmove(ptr+1, ptr+len2, len - (ptr - into + 1));

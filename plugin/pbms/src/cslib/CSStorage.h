@@ -41,7 +41,7 @@ public:
 	CSHashTable(): iSize(0), iTable(NULL) { }
 	virtual ~CSHashTable();
 
-	void setSize(u_int size);
+	void setSize(uint32_t size);
 
 	void clear();
 
@@ -54,7 +54,7 @@ public:
 	void remove(CSObject *key);
 
 private:
-	u_int iSize;
+	uint32_t iSize;
 
 	CSObject **iTable;
 };
@@ -74,23 +74,23 @@ public:
 	/* Value is returned NOT referenced. */
 	CSObject *find(CSObject *key);
 
-	CSObject *itemAt(u_int idx);
+	CSObject *itemAt(uint32_t idx);
 	
-	CSObject *takeItemAt(u_int idx); // Takes item off of list.
+	CSObject *takeItemAt(uint32_t idx); // Takes item off of list.
 	
 	void remove(CSObject *key);
 	
-	u_int getSize() { return iInUse; }
+	uint32_t getSize() { return iInUse; }
 
 
 private:
-	u_int iListSize;
+	uint32_t iListSize;
 
-	u_int iInUse;
+	uint32_t iInUse;
 
 	CSObject **iList;
 
-	CSObject *search(CSObject *key, u_int& idx);
+	CSObject *search(CSObject *key, uint32_t& idx);
 };
 
 class CSSyncSortedList : public CSSortedList, public CSSync {
@@ -125,7 +125,7 @@ public:
 
 	void clear();
 	
-	u_int getSize() { return iSize; }
+	uint32_t getSize() { return iSize; }
 
 	/* Value must be given referenced. */
 	void addFront(CSObject *item);
@@ -144,14 +144,14 @@ public:
 	/* Value is returned referenced. */
 	CSObject *removeFront();
 private:
-	u_int iSize;
+	uint32_t iSize;
 	CSObject *iListFront;
 	CSObject *iListBack;
 };
 
 class CSVector : public CSObject {
 public:
-	CSVector(u_int growSize): iGrowSize(growSize), iMaxSize(0), iUsage(0), iArray(NULL) { }
+	CSVector(uint32_t growSize): iGrowSize(growSize), iMaxSize(0), iUsage(0), iArray(NULL) { }
 	virtual ~CSVector() { free(); }
 
 	void free();
@@ -163,22 +163,22 @@ public:
 	 * The object is rfemoved from the list.
 	 * return a reference.
 	 */
-	CSObject *take(u_int idx);
+	CSObject *take(uint32_t idx);
 
 	/*
 	 * Remove an object from the vector.
 	 */
-	void remove(u_int idx);
+	void remove(uint32_t idx);
 
 	/*
 	 * Get a reference to an object in the vector.
 	 * A reference to the object remains on the list.
 	 * Value returned is NOT referenced!
 	 */
-	CSObject *get(u_int idx);
+	CSObject *get(uint32_t idx);
 
 	/* Set a specific index: */
-	void set(u_int idx, CSObject *);
+	void set(uint32_t idx, CSObject *);
 
 	/*
 	 * Add an object to the end of the vector.
@@ -186,29 +186,29 @@ public:
 	 */
 	void add(CSObject *);
 
-	u_int size() { return iUsage; }
+	uint32_t size() { return iUsage; }
 
 private:
-	u_int iGrowSize;
-	u_int iMaxSize;
-	u_int iUsage;
+	uint32_t iGrowSize;
+	uint32_t iMaxSize;
+	uint32_t iUsage;
 
 	CSObject **iArray;
 };
 
 class CSSyncVector : public CSVector, public CSSync {
 public:
-	CSSyncVector(u_int growSize): CSVector(growSize), CSSync() { }
+	CSSyncVector(uint32_t growSize): CSVector(growSize), CSSync() { }
 };
 
 typedef struct CSSpareArrayItem {
-	u_int		sa_index;
+	uint32_t		sa_index;
 	CSObject	*sa_object;
 } CSSpareArrayItemRec, *CSSpareArrayItemPtr;
 
 class CSSparseArray : public CSObject {
 public:
-	CSSparseArray(u_int growSize): iGrowSize(growSize), iMaxSize(0), iUsage(0), iArray(NULL) { }
+	CSSparseArray(uint32_t growSize): iGrowSize(growSize), iMaxSize(0), iUsage(0), iArray(NULL) { }
 	CSSparseArray(): iGrowSize(10), iMaxSize(0), iUsage(0), iArray(NULL) { }
 	virtual ~CSSparseArray() { free(); }
 
@@ -216,29 +216,29 @@ public:
 
 	void clear();
 
-	CSObject *take(u_int idx);
+	CSObject *take(uint32_t idx);
 
-	void remove(u_int idx);
+	void remove(uint32_t idx);
 
 	void removeFirst();
 
-	CSObject *itemAt(u_int idx);
+	CSObject *itemAt(uint32_t idx);
 
-	CSObject *get(u_int idx);
+	CSObject *get(uint32_t idx);
 	
-	u_int getIndex(u_int idx);
+	uint32_t getIndex(uint32_t idx);
 	
-	void set(u_int idx, CSObject *);
+	void set(uint32_t idx, CSObject *);
 
-	u_int size() { return iUsage; }
+	uint32_t size() { return iUsage; }
 
-	u_int minIndex() {
+	uint32_t minIndex() {
 		if (iUsage == 0)
 			return 0;
 		return iArray[0].sa_index;
 	}
 
-	u_int maxIndex() {
+	uint32_t maxIndex() {
 		if (iUsage == 0)
 			return 0;
 		return iArray[iUsage-1].sa_index;
@@ -249,22 +249,23 @@ public:
 	CSObject *last();
 
 private:
-	u_int				iGrowSize;
-	u_int				iMaxSize;
-	u_int				iUsage;
+	uint32_t				iGrowSize;
+	uint32_t				iMaxSize;
+	uint32_t				iUsage;
 	CSSpareArrayItemPtr	iArray;
 
-	CSObject *search(u_int idx, u_int& pos);
+	CSObject *search(uint32_t idx, uint32_t& pos);
 };
 
 class CSSyncSparseArray : public CSSparseArray, public CSSync {
 public:
-	CSSyncSparseArray(u_int growSize): CSSparseArray(growSize), CSSync() { }
+	CSSyncSparseArray(uint32_t growSize): CSSparseArray(growSize), CSSync() { }
 };
 
 class CSOrderKey : public CSObject {
 public:
 	virtual int compareKey(CSOrderKey *key) = 0;
+	int compareKey(CSObject *key) {return CSObject::compareKey(key);}
 };
 
 typedef struct CSOrderedListItem {
@@ -286,18 +287,18 @@ public:
 	CSObject *find(CSOrderKey *key);
 	
 	/* Value is returned NOT referenced. */
-	CSObject *itemAt(u_int idx);
+	CSObject *itemAt(uint32_t idx);
 	
 	void remove(CSOrderKey *key);
 
 private:
-	u_int iListSize;
+	uint32_t iListSize;
 
-	u_int iInUse;
+	uint32_t iInUse;
 
 	CSOrderedListItemPtr iList;
 
-	CSOrderedListItemPtr search(CSOrderKey *key, u_int *idx);
+	CSOrderedListItemPtr search(CSOrderKey *key, uint32_t *idx);
 };
 
 class CSSyncOrderedList : public CSOrderedList, public CSSync {
@@ -326,8 +327,8 @@ public:
 	CSObject *remove();
 
 private:
-	u_int iQueueSize;
-	u_int iHighWater;
+	uint32_t iQueueSize;
+	uint32_t iHighWater;
 
 	CSQueueItemPtr	iFront;
 	CSQueueItemPtr	iBack;

@@ -35,8 +35,8 @@
 #define __TRANSLOG_MS_H__
 #include <stddef.h>
 
-#include "CSDefs.h"
-#include "CSFile.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSFile.h"
 #define CHECK_TIDS
 #define CRASH_TEST
 
@@ -329,7 +329,8 @@ public:
 class ReadTXNLog {
 	public:
 	ReadTXNLog(MSTrans *txn_log): rl_log(txn_log){}
-	
+	virtual ~ReadTXNLog(){}
+		
 	MSTrans *rl_log;
 	void rl_ReadLog(uint64_t read_start, bool log_locked);
 	virtual bool rl_CanContinue();

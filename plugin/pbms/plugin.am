@@ -44,6 +44,7 @@ noinst_HEADERS+= \
 		plugin/pbms/src/ms_mysql.h \
 		plugin/pbms/src/Network_ms.h \
 		plugin/pbms/src/OpenTable_ms.h \
+		plugin/pbms/src/parameters_ms.h \
 		plugin/pbms/src/pbms.h \
 		plugin/pbms/src/pbms_enabled.h \
 		plugin/pbms/src/pbmslib.h \
@@ -65,8 +66,9 @@ noinst_HEADERS+= \
 
 
 
-plugin_pbms_libpbms_la_CXXFLAGS=	${AM_CXXFLAGS} -DDRIZZLED -Wno-long-long -Wno-overloaded-virtual -Wno-sign-compare -Wno-unused-function
+plugin_pbms_libpbms_la_CXXFLAGS=	${AM_CXXFLAGS}  -DDRIZZLED 
 plugin_pbms_libpbms_la_CFLAGS=		${AM_CFLAGS} -DDRIZZLED -std=c99
+plugin_pbms_libpbms_la_LDFLAGS =	-lcurl -lxml2
 
 plugin_pbms_libpbms_la_SOURCES= \
 	plugin/pbms/src/backup_ms.cc \
@@ -76,13 +78,10 @@ plugin_pbms_libpbms_la_SOURCES= \
 	plugin/pbms/src/Database_ms.cc \
 	plugin/pbms/src/Discover_ms.cc \
 	plugin/pbms/src/Engine_ms.cc \
-	plugin/pbms/src/ha_pbms.cc \
-	plugin/pbms/src/metadata_ms.cc \
-	plugin/pbms/src/ms_api.cc \
 	plugin/pbms/src/ms_mysql.cc \
 	plugin/pbms/src/Network_ms.cc \
 	plugin/pbms/src/OpenTable_ms.cc \
-	plugin/pbms/src/pbms_enabled.cc \
+	plugin/pbms/src/parameters_ms.cc \
 	plugin/pbms/src/Repository_ms.cc \
 	plugin/pbms/src/SysTab_backup.cc \
 	plugin/pbms/src/SysTab_cloud.cc \
@@ -123,4 +122,4 @@ plugin_pbms_libpbms_la_SOURCES= \
 	plugin/pbms/src/cslib/CSUTF8.cc
 
 
-EXTRA_DIST+=			CMakeLists.txt
+EXTRA_DIST+=

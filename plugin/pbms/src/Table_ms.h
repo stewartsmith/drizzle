@@ -104,27 +104,27 @@ public:
 	/* Make this object hashable: */
 	virtual CSObject *getKey();
 	virtual int compareKey(CSObject *);
-	virtual u_int hashKey();
+	virtual uint32_t hashKey();
 
-	off_t getTableFileSize() { return iTableFileSize; }
+	off64_t getTableFileSize() { return iTableFileSize; }
 	CSString *getTableName();
 	bool isToDelete() { return iToDelete; }
 	void getDeleteInfo(uint32_t *log, uint32_t *offs, time_t *tim);
 	bool isNoTable() { return myTableName->length() == 0; }
 
 private:
-	off_t		iTableFileSize;
+	off64_t		iTableFileSize;
 	size_t		iTableHeadSize;
-	off_t		iFreeList;
+	off64_t		iFreeList;
 	bool		iToDelete;
 	uint32_t		iTabDeleteTime;
 	uint32_t		iTabTempLogID;
 	uint32_t		iTabTempLogOffset;
 
 public:
-	static MSTable *newTable(uint32_t tab_id, CSString *name, MSDatabase *db, off_t file_size, bool to_delete);
+	static MSTable *newTable(uint32_t tab_id, CSString *name, MSDatabase *db, off64_t file_size, bool to_delete);
 
-	static MSTable *newTable(uint32_t tab_id, const char *name, MSDatabase *db, off_t file_size, bool to_delete);	
+	static MSTable *newTable(uint32_t tab_id, const char *name, MSDatabase *db, off64_t file_size, bool to_delete);	
 };
 
 #endif

@@ -26,9 +26,10 @@
  *
  */
 
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
-#include "CSGlobal.h"
+
+#include "cslib/CSGlobal.h"
 
 #include "TransCache_ms.h"
 
@@ -61,23 +62,23 @@ typedef struct TransList {
 MSTransCache::MSTransCache(): CSSharedRefObject(),
 	tc_List(NULL),
 	tc_OverFlow(NULL),
-	tc_ReLoadingThread(NULL),
-	tc_Recovering(false),
-	tc_OverFlowTID(0),
 	tc_Size(0),
 	tc_EOL(0),
 	tc_First(0),
 	tc_Used(0),
 	tc_TotalTransCount(0),
 	tc_TotalCacheCount(0),
+	tc_ReLoadingThread(NULL),
+	tc_OverFlowTID(0),
 	tc_Full(false),
-	tc_CacheVersion(0)
+	tc_CacheVersion(0),
+	tc_Recovering(false)
 	{}
 
 MSTransCache::~MSTransCache() 
 {
 	if (tc_List) {
-		for (int i = 0; i < tc_Size; i++) {
+		for (uint32_t i = 0; i < tc_Size; i++) {
 			if (tc_List[i].list)
 				cs_free(tc_List[i].list);
 		}
@@ -113,7 +114,7 @@ void MSTransCache::tc_Initialize(uint32_t size)
 	tc_List = (TransListPtr) cs_malloc(size * sizeof(TransListRec));
 	
 	// Give each new transaction list record a short list of transaction records
-	for (int i = 0; i < tc_Size; i++) {
+	for (uint32_t i = 0; i < tc_Size; i++) {
 		tc_List[i].list = (myTransPtr) cs_malloc(MIN_CACHE_RECORDS * sizeof(myTransRec));
 		tc_List[i].size = MIN_CACHE_RECORDS;
 		tc_List[i].len = 0;
@@ -145,7 +146,7 @@ void MSTransCache::tc_SetSize(uint32_t cache_size)
 	
 	// If the cache is being reduced then free the record 
 	// lists if the transactions about to be removed.
-	for (int i = cache_size +1; i < tc_Size; i++) {
+	for (uint32_t i = cache_size +1; i < tc_Size; i++) {
 		if (tc_List[i].list)
 			cs_free(tc_List[i].list);
 	}
@@ -157,7 +158,7 @@ void MSTransCache::tc_SetSize(uint32_t cache_size)
 		// Move the overflow record.
 		memcpy(tc_List + cache_size, tc_List + tc_Size, sizeof(TransListRec));
 		
-		for (int i = tc_Size; i < cache_size; i++) {
+		for (uint32_t i = tc_Size; i < cache_size; i++) {
 			tc_List[i].list = (myTransPtr) cs_malloc(MIN_CACHE_RECORDS * sizeof(myTransRec));
 			tc_List[i].size = MIN_CACHE_RECORDS;
 			tc_List[i].len = 0;
@@ -436,7 +437,7 @@ void MSTransCache::tc_AddRec(uint64_t log_position, MSTransPtr rec, TRef tref)
 	} else if (( (TRANS_TYPE(rec->tr_type) == MS_ReferenceTxn) || (TRANS_TYPE(rec->tr_type) == MS_DereferenceTxn)) && !tc_Recovering) { 
 		// Make sure the record isn't already in the list.
 		// This can happen during cache reload.
-		for (int i = 0; i < lrec->len; i++) {
+		for (uint32_t i = 0; i < lrec->len; i++) {
 			if (lrec->list[i].tc_position == log_position)
 				goto done;
 		}
@@ -645,10 +646,10 @@ void MSTransCache::tc_dropDatabase(uint32_t db_id)
 	enter_();
 	lock_(this);
 	if (tc_List) {
-		for (int i = 0; i < tc_Size; i++) {
+		for (uint32_t i = 0; i < tc_Size; i++) {
 			myTransPtr rec = tc_List[i].list;
 			if (rec) {
-				int list_len = tc_List[i].len;			
+				uint32_t list_len = tc_List[i].len;			
 				while (list_len) {
 					if (rec->tc_db_id == db_id)
 						rec->tc_db_id = 0;

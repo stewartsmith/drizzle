@@ -56,7 +56,7 @@ public:
 	 */
 	virtual CSObject *getKey();
 	virtual int compareKey(CSObject *);
-	virtual u_int hashKey();
+	virtual uint32_t hashKey();
 	virtual CSObject *getHashLink();
 	virtual void setHashLink(CSObject *);
 	virtual CSObject *getNextLink();
@@ -65,16 +65,16 @@ public:
 	virtual void setPrevLink(CSObject *);
 
 #ifdef DEBUG
-	static void *operator new(size_t size, const char *func, const char *file, u_int line) {
+	static void *operator new(size_t size, const char *func, const char *file, uint32_t line) {
 		return cs_mm_malloc(func, file, line, size);
 	}
 
-	static void operator delete(void *ptr, size_t size) {
+	static void operator delete(void *ptr, size_t size  __attribute__((unused))) {
 		cs_mm_free(ptr);
 	}
 
-	//virtual void retain(const char *func, const char *file, u_int line);
-	//virtual void release(const char *func, const char *file, u_int line);
+	//virtual void retain(const char *func, const char *file, uint32_t line);
+	//virtual void release(const char *func, const char *file, uint32_t line);
 #endif
 };
 
@@ -86,15 +86,15 @@ public:
 	virtual void retain();
 	virtual void release();
 #ifdef DEBUG
-	//virtual void retain(const char *func, const char *file, u_int line);
-	//virtual void release(const char *func, const char *file, u_int line);
+	//virtual void retain(const char *func, const char *file, uint32_t line);
+	//virtual void release(const char *func, const char *file, uint32_t line);
 	int		iTrackMe;
 #endif
 
 #ifndef DEBUG
 private:
 #endif
-	u_int	iRefCount;
+	uint32_t	iRefCount;
 };
 
 class CSSharedRefObject : public CSObject, public CSSync {
@@ -106,15 +106,15 @@ public:
 	virtual void release();
 #ifdef DEBUG
 	virtual void startTracking();
-	//virtual void retain(const char *func, const char *file, u_int line);
-	//virtual void release(const char *func, const char *file, u_int line);
+	//virtual void retain(const char *func, const char *file, uint32_t line);
+	//virtual void release(const char *func, const char *file, uint32_t line);
 	int		iTrackMe;
 #endif
 
 #ifndef DEBUG
 private:
 #endif
-	u_int	iRefCount;
+	uint32_t	iRefCount;
 };
 
 #ifdef DEBUG
@@ -123,6 +123,7 @@ private:
 
 class CSPooled {
 public:
+	virtual ~CSPooled() {}
 	virtual void returnToPool() = 0;
 };
 

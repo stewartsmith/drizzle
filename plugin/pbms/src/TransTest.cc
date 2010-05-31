@@ -42,11 +42,11 @@
 #include <ctype.h>
 #include <inttypes.h>
 
-#include "CSConfig.h"
-#include "CSGlobal.h"
-#include "CSThread.h"
-#include "CSStrUtil.h"
-#include "CSStorage.h"
+#include "cslib/CSConfig.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSThread.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSStorage.h"
 
 #include "TransCache_ms.h"
 #include "TransLog_ms.h"

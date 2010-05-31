@@ -29,7 +29,8 @@
 #define __METADATA_MS_H__
 
 #ifdef DRIZZLED
-#include "mystrings/m_ctype.h"
+#include <drizzled/internal/m_string.h>
+#include <drizzled/charset_info.h>
 #else
 #include "m_ctype.h"
 #endif
@@ -44,8 +45,8 @@ private:
 	char *position;
 	
 public:
-	MetaData(): data(NULL), position(NULL), eod(NULL){}
-	MetaData(char *meta_data, size_t meta_data_size): data(meta_data), position(meta_data), eod(meta_data + meta_data_size){}
+	MetaData(): data(NULL), eod(NULL), position(NULL){}
+	MetaData(char *meta_data, size_t meta_data_size): data(meta_data), eod(meta_data + meta_data_size), position(meta_data){}
 	
 	char *getBuffer() { return data;}
 		
@@ -111,9 +112,9 @@ public:
 	char *findAlias() {return findName(MS_ALIAS_TAG);}
 #endif
 	
-	static u_int recSize(const char *rec) 
+	static uint32_t recSize(const char *rec) 
 	{ 
-		u_int len = strlen(rec) + 1;
+		uint32_t len = strlen(rec) + 1;
 		
 		rec += len;
 		return (len + strlen(rec) + 1);

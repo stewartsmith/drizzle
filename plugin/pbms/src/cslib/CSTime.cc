@@ -55,8 +55,10 @@ void CSTime::setNull()
 
 void CSTime::setLocal(s_int year, s_int mon, s_int day, s_int hour, s_int min, s_int sec, s_int nsec)
 {
-	struct tm	ltime = { 0 };
+	struct tm	ltime;
 	time_t		secs;
+	
+	memset(&ltime, 0, sizeof(ltime));
 
 	ltime.tm_sec = sec;
 	ltime.tm_min = min;
@@ -70,9 +72,11 @@ void CSTime::setLocal(s_int year, s_int mon, s_int day, s_int hour, s_int min, s
 
 void CSTime::getLocal(s_int& year, s_int& mon, s_int& day, s_int& hour, s_int& min, s_int& sec, s_int& nsec)
 {
-	struct tm	ltime = { 0 };
+	struct tm	ltime;
 	time_t		secs;
 
+	memset(&ltime, 0, sizeof(ltime));
+	
 	getUTC1970(secs, nsec);
 	localtime_r(&secs, &ltime);
 	sec = ltime.tm_sec;
@@ -111,10 +115,12 @@ char *CSTime::getCString(const char *format)
 	if (iIsNull)
 		strcpy(iCString, "NULL");
 	else {
-		struct tm	ltime = { 0 };
+		struct tm	ltime;
 		time_t		secs;
 		s_int		nsec;
 
+		memset(&ltime, 0, sizeof(ltime));
+	
 		getUTC1970(secs, nsec);
 		localtime_r(&secs, &ltime);
 		strftime(iCString, 100, format, &ltime);
@@ -129,7 +135,9 @@ char *CSTime::getCString()
 
 void CSTime::setUTC1970(time_t sec, s_int nsec)
 {
-	struct tm	ltime = { 0 };
+	struct tm	ltime;
+
+	memset(&ltime, 0, sizeof(ltime));
 
 	gmtime_r(&sec, &ltime);
 	setUTC(ltime.tm_year + 1900, ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min, ltime.tm_sec, nsec);
@@ -145,7 +153,9 @@ void CSTime::getUTC1970(time_t& sec, s_int& nsec)
 	nsec100 = nsec100 - get1970as1601();
 	sec = (time_t) (nsec100 / 10000000);
 #else
-	struct tm	ltime = { 0 };
+	struct tm	ltime;
+
+	memset(&ltime, 0, sizeof(ltime));
 
 	ltime.tm_sec = iSeconds;
 	ltime.tm_min = iMinutes;

@@ -28,7 +28,7 @@
 #ifndef __DEFS_MS_H__
 #define __DEFS_MS_H__
 
-#include "CSDefs.h"
+#include "cslib/CSDefs.h"
 
 #define MS_IDENTIFIER_CHAR_COUNT	64
 
@@ -119,9 +119,15 @@
 #define MYSQL_VERSION_ID					60005
 
 #define TABLE_LIST							TableList
-#define TABLE								Table
+#define TABLE								drizzled::Table
+#define Field								drizzled::Field
+//#define enum_field_types					drizzled::enum_field_types
+
+#define my_charset_bin						drizzled::my_charset_bin
+#define THR_LOCK							drizzled::THR_LOCK
+
 #define TABLE_SHARE							TableShare
-#define THD									Session
+#define THD									drizzled::Session
 #define MYSQL_THD							Session *
 #define THR_THD								THR_Session
 #define STRUCT_TABLE						class Table
@@ -188,7 +194,6 @@
 #define thd_non_transactional_update		session_non_transactional_update
 #define thd_binlog_format					session_binlog_format
 #define thd_mark_transaction_to_rollback	session_mark_transaction_to_rollback
-#define thd_ha_data							session_ha_data
 #define current_thd							current_session
 #define thd_sql_command						session_sql_command
 #define thd_test_options					session_test_options
@@ -203,6 +208,36 @@
 
 #define mysql_real_data_home				drizzle_real_data_home
 
+#define mi_int4store(T,A)   { uint32_t def_temp= (uint32_t) (A);\
+                              ((unsigned char*) (T))[3]= (unsigned char) (def_temp);\
+                              ((unsigned char*) (T))[2]= (unsigned char) (def_temp >> 8);\
+                              ((unsigned char*) (T))[1]= (unsigned char) (def_temp >> 16);\
+                              ((unsigned char*) (T))[0]= (unsigned char) (def_temp >> 24); }
+
+#define mi_uint4korr(A) ((uint32_t) (((uint32_t) (((const unsigned char*) (A))[3])) +\
+                                   (((uint32_t) (((const unsigned char*) (A))[2])) << 8) +\
+                                   (((uint32_t) (((const unsigned char*) (A))[1])) << 16) +\
+                                   (((uint32_t) (((const unsigned char*) (A))[0])) << 24)))
+								   
+#define mi_int8store(T,A)   { uint64_t def_temp= (uint64_t) (A);\
+                              ((unsigned char*) (T))[7]= (unsigned char) (def_temp);\
+                              ((unsigned char*) (T))[6]= (unsigned char) (def_temp >> 8);\
+                              ((unsigned char*) (T))[5]= (unsigned char) (def_temp >> 16);\
+                              ((unsigned char*) (T))[4]= (unsigned char) (def_temp >> 24);\
+                              ((unsigned char*) (T))[3]= (unsigned char) (def_temp >> 32);\
+                              ((unsigned char*) (T))[2]= (unsigned char) (def_temp >> 40);\
+                              ((unsigned char*) (T))[1]= (unsigned char) (def_temp >> 48);\
+                              ((unsigned char*) (T))[0]= (unsigned char) (def_temp >> 56); }
+
+#define mi_uint8korr(A) ((uint64_t) (((uint64_t) (((const unsigned char*) (A))[7])) +\
+                                   (((uint64_t) (((const unsigned char*) (A))[6])) << 8) +\
+                                   (((uint64_t) (((const unsigned char*) (A))[5])) << 16) +\
+                                   (((uint64_t) (((const unsigned char*) (A))[4])) << 24) +\
+                                   (((uint64_t) (((const unsigned char*) (A))[3])) << 32) +\
+                                   (((uint64_t) (((const unsigned char*) (A))[2])) << 40) +\
+                                   (((uint64_t) (((const unsigned char*) (A))[1])) << 48) +\
+                                   (((uint64_t) (((const unsigned char*) (A))[0])) << 56)))
+								   
 #else // DRIZZLED
 /* The MySQL case: */
 #define STRUCT_TABLE						struct st_table

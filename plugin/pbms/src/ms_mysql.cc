@@ -33,17 +33,18 @@
 //#define DRIZZLE_SERVER 1
 //#include <config.h>
 //#include <drizzled/global.h>
-#include <drizzled/server_includes.h>
+#include <drizzled/common.h>
 //#include <drizzled/plugin.h>
 //#include <drizzled/show.h>
 #include <drizzled/data_home.h>
 #include <drizzled/current_session.h>
 #else
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 #endif
 
-#include "CSGlobal.h"
-#include "CSException.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSException.h"
+#include "Defs_ms.h"
 #include "Defs_ms.h"
 #include "ms_mysql.h"
 
@@ -59,24 +60,23 @@ void *ms_my_get_thread()
 	return (void *) thd;
 }
 
+#ifdef DRIZZLED
+const char *ms_my_get_mysql_home_path()
+{
+	return drizzled::data_home;
+}
+
+#else
+const char *ms_my_get_mysql_home_path()
+{
+	return mysql_real_data_home;
+}
+
 bool ms_is_autocommit()
 {
 	return (thd_test_options(current_thd, (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) == 0;
 }
-
-const char *ms_my_version()
-{
-	return VERSION;
-}
-
-#ifndef DRIZZLED
-extern ulong server_id;
 #endif
-
-u_long ms_my_get_server_id()
-{
-	return server_id;
-}
 
 /* YYYYMMDDHHMMSS */
 uint64_t	ms_my_1970_to_mysql_time(time_t t)
@@ -98,11 +98,6 @@ uint64_t	ms_my_1970_to_mysql_time(time_t t)
 	year = (uint64_t) (details.tm_year+1900) * 10000000000LL;
 	
 	return year + mon + day + hour + min + sec;
-}
-
-const char *ms_my_get_mysql_home_path()
-{
-	return mysql_real_data_home;
 }
 
 

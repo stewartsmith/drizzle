@@ -73,7 +73,6 @@ void CSStream::pipe(CSOutputStream *out, CSInputStream *in)
 		in->close();
 		out->close();
 	}
-	cont_(a);
 	release_(in);
 	release_(out);
 	exit_();
@@ -221,7 +220,7 @@ CSFileInputStream *CSFileInputStream::newStream(CSFile *f)
 	return s;
 }
 
-CSFileInputStream *CSFileInputStream::newStream(CSFile *f, off_t offset)
+CSFileInputStream *CSFileInputStream::newStream(CSFile *f, off64_t offset)
 {
 	CSFileInputStream *s;
 
@@ -295,7 +294,7 @@ CSFileOutputStream *CSFileOutputStream::newStream(CSFile *f)
 	return  s;
 }
 
-CSFileOutputStream *CSFileOutputStream::newStream(CSFile *f, off_t offset)
+CSFileOutputStream *CSFileOutputStream::newStream(CSFile *f, off64_t offset)
 {
 	CSFileOutputStream *s;
 
@@ -596,7 +595,7 @@ CSBufferedOutputStream *CSBufferedOutputStream::newStream(CSOutputStream* i)
  * ---------------------------------------------------------------
  * MEMORY INPUT STREAMS
  */
-CSMemoryInputStream *CSMemoryInputStream::newStream(const u_char* buffer, u_int length)
+CSMemoryInputStream *CSMemoryInputStream::newStream(const u_char* buffer, uint32_t length)
 {
 	CSMemoryInputStream *s;
 

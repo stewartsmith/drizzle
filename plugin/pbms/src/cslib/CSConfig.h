@@ -30,12 +30,13 @@
 #ifndef __CSCONFIG_H__
 #define __CSCONFIG_H__
 
-#ifdef MYSQL_SERVER
+#if defined(MYSQL_SERVER) ||  defined(DRIZZLED)
 // Because mysql_priv.h can redefine system data types it is not safe to include it
 // in some souce code files and not others because of what it may do to structures defined
 // in other headers. So the only safe thing I can think of is to include it in all source code
 // files.
 #ifdef DRIZZLED
+#include "config.h"
 #include <drizzled/common.h>
 #else
 #include "my_global.h"
@@ -58,11 +59,6 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-
-/*
- * Make sure we use the thread safe version of the library.
- */
-#define _THREAD_SAFE
 
 #ifndef NODEBUG
 #ifdef DEBUG

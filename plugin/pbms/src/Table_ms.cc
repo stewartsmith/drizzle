@@ -27,14 +27,14 @@
  *
  */
 
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 
 #include <stdlib.h>
 
-#include "CSGlobal.h"
-#include "CSLog.h"
-#include "CSPath.h"
-#include "CSStrUtil.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSPath.h"
+#include "cslib/CSStrUtil.h"
 
 #include "Database_ms.h"
 #include "OpenTable_ms.h"
@@ -201,7 +201,7 @@ void MSTable::prepareToDelete()
 uint64_t MSTable::findBlobHandle(MSOpenTable *otab, uint32_t repo_id, uint64_t file_offset, uint64_t size, uint16_t head_size, uint32_t auth_code)
 {
 	uint64_t			blob_id = 0;
-	off_t			offset = iTableHeadSize;
+	off64_t			offset = iTableHeadSize;
 	MSTableBlobRec	blob;
 	enter_();
 	lock_(this);
@@ -354,7 +354,7 @@ int MSTable::compareKey(CSObject *key)
 	return myTableName->compare((CSString *) key);
 }
 
-u_int MSTable::hashKey()
+uint32_t MSTable::hashKey()
 {
 	return myTableName->hashKey();
 }
@@ -378,7 +378,7 @@ void MSTable::getDeleteInfo(uint32_t *log, uint32_t *offs, time_t *tim)
 	*tim = iTabDeleteTime; 
 }
 
-MSTable *MSTable::newTable(uint32_t tab_id, CSString *tab_name, MSDatabase *db, off_t file_size, bool to_delete)
+MSTable *MSTable::newTable(uint32_t tab_id, CSString *tab_name, MSDatabase *db, off64_t file_size, bool to_delete)
 {
 	MSTable *tab;
 
@@ -405,7 +405,7 @@ MSTable *MSTable::newTable(uint32_t tab_id, CSString *tab_name, MSDatabase *db, 
 	return tab;
 }
 
-MSTable *MSTable::newTable(uint32_t tab_id, const char *name, MSDatabase *db, off_t file_size, bool to_delete)
+MSTable *MSTable::newTable(uint32_t tab_id, const char *name, MSDatabase *db, off64_t file_size, bool to_delete)
 {
 	return newTable(tab_id, CSString::newString(name), db, file_size, to_delete);
 }

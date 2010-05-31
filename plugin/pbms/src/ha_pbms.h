@@ -41,11 +41,15 @@
 #endif
 
 #ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#include <drizzled/handler.h>
+#include <drizzled/cursor.h>
+#include <drizzled/thr_lock.h>
 
 class PBMSStorageEngine;
 #define handlerton PBMSStorageEngine
+#define handler	Cursor
+
+using namespace drizzled;
+
 #else
 extern handlerton		*pbms_hton;
 #endif
@@ -61,26 +65,30 @@ class ha_pbms: public handler
 	//MS_SHARE			*ha_share;		///< Shared lock info
 
 public:
+#ifdef DRIZZLED
+	ha_pbms(handlerton *hton, TableShare& table_arg);
+#else
 	ha_pbms(handlerton *hton, TABLE_SHARE *table_arg);
+#endif
 	~ha_pbms() { }
 
 	const char *table_type() const { return "PBMS"; }
 
-	const char *index_type(uint inx) { return "NONE"; }
+	const char *index_type(uint inx __attribute__((unused))) { return "NONE"; }
 
 #ifndef DRIZZLED
 	const char **bas_ext() const;
-#endif
 
 	MX_TABLE_TYPES_T table_flags() const;
+#endif
 
-	MX_ULONG_T index_flags(uint inx, uint part, bool all_parts) const { return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY); }
+	MX_ULONG_T index_flags(uint inx __attribute__((unused)), uint part __attribute__((unused)), bool all_parts __attribute__((unused))) const { return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY); }
 	uint	max_supported_keys()			const { return 512; }
 	uint	max_supported_key_length()    const { return 1024; }
 	uint	max_supported_key_part_length() const { return 1024; }
 
 	int open(const char *name, int mode, uint test_if_locked);
-	void drop_table(const char *name) {}
+	void drop_table(const char *name __attribute__((unused))) {}
 
 	int close(void);
 	int write_row(unsigned char * buf);
@@ -88,6 +96,7 @@ public:
 	int delete_row(const unsigned char * buf);
 
 	/* Sequential scan functions: */
+	int	doStartTableScan(bool ) { return 0;}
 	int rnd_init(bool scan);
 	int rnd_next(byte *buf);
 	int rnd_pos(byte * buf, byte *pos);
@@ -113,6 +122,12 @@ public:
 #ifndef DRIZZLED
 	int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);
 #endif
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
+
 	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type);
 
 	bool get_error_message(int error, String *buf);

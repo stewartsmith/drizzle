@@ -56,10 +56,10 @@ public:
 	virtual ~CSFile(); 
 
 	CSOutputStream *getOutputStream();
-	CSOutputStream *getOutputStream(off_t offset);
+	CSOutputStream *getOutputStream(off64_t offset);
 
 	CSInputStream *getInputStream();
-	CSInputStream *getInputStream(off_t offset);
+	CSInputStream *getInputStream(off64_t offset);
 
 	/*
 	 * Open the file in the specified
@@ -76,22 +76,22 @@ public:
 	 * Move the current position to
 	 * the end of the file.
 	 */
-	virtual off_t getEOF();
+	virtual off64_t getEOF();
 
-	virtual void setEOF(off_t offset);
+	virtual void setEOF(off64_t offset);
 
 	/*
 	 * Read a given number of bytes. This function
 	 * throws an error if the number of bytes read
 	 * ius less than 'min_size'.
 	 */
-	virtual size_t read(void *data, off_t offset, size_t size, size_t min_size);
+	virtual size_t read(void *data, off64_t offset, size_t size, size_t min_size);
 
 	/*
 	 * Write the given number of bytes.
 	 * Throws IOException if an error occurs.
 	 */
-	virtual void write(const void *data, off_t offset, size_t size);
+	virtual void write(const void *data, off64_t offset, size_t size);
 
 	/*
 	 * Flush the data written.
@@ -121,7 +121,7 @@ public:
 	static bool isDirNotFound(CSException *e) { return e->getErrorCode() == ENOENT; }
 	static bool isDirExists(CSException *e) { return e->getErrorCode() == EEXIST; }
 
-	static bool transfer(CSFile *dst_file, off_t dst_offset, CSFile *src_file, off_t src_offset, off_t size, char *buffer, size_t buffer_size);
+	static bool transfer(CSFile *dst_file, off64_t dst_offset, CSFile *src_file, off64_t src_offset, off64_t size, char *buffer, size_t buffer_size);
 
 	static CSFile *newFile(CSPath *path);
 
@@ -144,13 +144,13 @@ public:
 
 	virtual void close();
 
-	virtual off_t getEOF();
+	virtual off64_t getEOF();
 
-	virtual void setEOF(off_t offset);
+	virtual void setEOF(off64_t offset);
 
-	virtual size_t read(void *data, off_t offset, size_t size, size_t min_size);
+	virtual size_t read(void *data, off64_t offset, size_t size, size_t min_size);
 
-	virtual void write(const void *data, off_t offset, size_t size);
+	virtual void write(const void *data, off64_t offset, size_t size);
 
 	virtual void flush();
 
@@ -162,7 +162,7 @@ public:
 
 private:
 	char	iFileBuffer[SC_DEFAULT_FILE_BUFFER_SIZE];
-	off_t	iFileBufferOffset;
+	off64_t	iFileBufferOffset;
 	size_t	iBufferDataLen;
 
 	virtual void openFile(int mode);
@@ -176,7 +176,7 @@ public:
 
 	virtual ~CSBufferedFile() { };
 
-	virtual void write(const void *data, off_t offset, size_t size);
+	virtual void write(const void *data, off64_t offset, size_t size);
 
 	virtual void flush();
 

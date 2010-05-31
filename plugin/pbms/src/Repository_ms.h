@@ -30,9 +30,9 @@
 #ifndef __REPOSITORY_MS_H__
 #define __REPOSITORY_MS_H__
 
-#include "CSDefs.h"
-#include "CSFile.h"
-#include "CSMd5.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSFile.h"
+#include "cslib/CSMd5.h"
 #include "Engine_ms.h"
 #include "cloud.h"
 #include "pbmslib.h"
@@ -184,9 +184,9 @@ typedef struct MSBlobHead {
 #define MS_METADAT_OFFSET(header_size, current_metadata_size, metadata_size)		(header_size - current_metadata_size - metadata_size)
 #define MS_MIN_BLOB_HEAD_SIZE		((uint16_t)(offsetof(MSBlobHeadRec, rb_auth_code_4) + 4))
 
-#define MS_VAR_SPACE(bh)			((CS_GET_DISK_2(bh->rb_head_size_2) - MS_MIN_BLOB_HEAD_SIZE) -(CS_GET_DISK_2(bh->rb_ref_count_2) * CS_GET_DISK_1(bh->rb_ref_size_1)) - CS_GET_DISK_2(bh->rb_mdata_size_2))
-#define MS_CAN_ADD_REFS(bh, n)		(MS_VAR_SPACE(bh) >= (n * CS_GET_DISK_1(bh->rb_ref_size_1)))
-#define MS_CAN_ADD_MDATA(bh, l)		(MS_VAR_SPACE(bh) >= l)
+#define MS_VAR_SPACE(bh)			((int32_t)((CS_GET_DISK_2(bh->rb_head_size_2) - MS_MIN_BLOB_HEAD_SIZE) -(CS_GET_DISK_2(bh->rb_ref_count_2) * CS_GET_DISK_1(bh->rb_ref_size_1)) - CS_GET_DISK_2(bh->rb_mdata_size_2)))
+#define MS_CAN_ADD_REFS(bh, n)		(MS_VAR_SPACE(bh) >= (int32_t)(n * CS_GET_DISK_1(bh->rb_ref_size_1)))
+#define MS_CAN_ADD_MDATA(bh, l)		(MS_VAR_SPACE(bh) >= (int32_t)l)
 
 
 #define MS_BLOB_STAT_OFFS			offsetof(MSBlobHeadRec, rb_storage_type_1)
@@ -297,7 +297,7 @@ private:
 	void realFreeBlob(MSOpenTable *otab, char *buffer, uint32_t auth_code, uint64_t offset, uint16_t head_size, uint64_t blob_size, size_t ref_size);
 public:
 	void freeTableReference(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code);
-	void checkBlob(MSOpenTable *otab, CSStringBuffer *buffer, uint64_t offset, uint32_t auth_code, uint32_t temp_log_id, uint32_t temp_log_offset);
+	void checkBlob(CSStringBuffer *buffer, uint64_t offset, uint32_t auth_code, uint32_t temp_log_id, uint32_t temp_log_offset);
 
 	void updateAccess(MSBlobHeadPtr blob, uint64_t rep_offset);	
 	virtual void returnToPool();
@@ -350,18 +350,18 @@ typedef enum RepoLockStates { // These states are actually bit masks
 // backup is a read only operation.  
 class MSRepository : public CSSharedRefObject, public CSPooled {
 public:
-	u_int			myRepoID;
-	off_t			myRepoFileSize;
-	u_int			myRepoLockState;	// Bit mask of RepoLockStates						
+	uint32_t			myRepoID;
+	off64_t			myRepoFileSize;
+	uint32_t			myRepoLockState;	// Bit mask of RepoLockStates						
 	bool			isRemovingFP;								/* Set to true if the file pool is being removed. */
 	CSMutex			myRepoLock[CS_REPO_REC_LOCK_COUNT];
 	MSDatabase		*myRepoDatabase;
-	off_t			myGarbageCount;
+	off64_t			myGarbageCount;
 	size_t			myRepoHeadSize;
 	int				myRepoDefRefSize;
 	size_t			myRepoBlobHeadSize;
 	
-	off_t			myRecoveryOffset;							/* The starting point for the next recovery. */
+	off64_t			myRecoveryOffset;							/* The starting point for the next recovery. */
 	time_t			myLastTempTime;
 	time_t			myLastAccessTime;
 	time_t			myLastCreateTime;
@@ -369,7 +369,7 @@ public:
 	
 	bool			mustBeDeleted;								/* Set to true if the repository should be deleted when freed. */
 
-	MSRepository(u_int id, MSDatabase *db, off_t file_size);
+	MSRepository(uint32_t id, MSDatabase *db, off64_t file_size);
 	~MSRepository();
 
 	/* TODO: Check recovery after crash after each phase below. */
@@ -377,9 +377,8 @@ public:
 	uint64_t receiveBlob(MSOpenTable *otab, uint16_t head_size, uint64_t blob_size, Md5Digest *checksum = NULL, CSInputStream *stream = NULL);
 	uint64_t copyBlob(MSOpenTable *otab, uint64_t size, CSInputStream *stream); // Makes a copy of the complete BLOB with header.
 	void writeBlobHead(MSOpenTable *otab, uint64_t offset, uint8_t ref_size, uint16_t head_size, uint64_t size, Md5Digest *checksum, char *metadata, uint16_t metadata_size, uint64_t blob_id, uint32_t auth_code, uint32_t log_id, uint32_t log_offset, uint8_t blob_type, CloudKeyPtr cloud_key);
-	void resetBlobHead(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint64_t blob_id, uint64_t blob_ref_id, uint32_t auth_code, uint16_t col_index, uint8_t blob_type); // Resets the BLOB header after it has been copied.
 	//void writeBlobHead(MSOpenTable *otab, uint64_t offset, uint32_t access_time, uint32_t create_time, uint8_t ref_size, uint16_t head_size, uint64_t blob_size, Md5Digest *checksum, uint16_t metadata_size, uint64_t blob_id, uint32_t auth_code, uint16_t col_index, PBMSEngineRefPtr eng_ref);
-	void setRepoFileSize(MSOpenTable *otab, off_t offset);
+	void setRepoFileSize(MSOpenTable *otab, off64_t offset);
 	void syncHead(MSRepoFile *fh);
 	MSRepoFile *openRepoFile();
 
@@ -393,14 +392,14 @@ public:
 	bool removeRepoFilesNotInUse();								/* Return true if all files have been removed. */
 	
 	uint16_t getDefaultHeaderSize(uint16_t metadata_size) { return myRepoBlobHeadSize + ((metadata_size)?metadata_size:MS_REPO_MIN_MATADATA)  + myRepoDefRefSize * MS_REPO_MIN_REF_COUNT;}
-	off_t getRepoFileSize();
+	off64_t getRepoFileSize();
 	size_t getRepoHeadSize();
 	size_t getRepoBlobHeadSize();
-	CSMutex *getRepoLock(off_t offset);
-	u_int getRepoID();
-	u_int getGarbageLevel();
+	CSMutex *getRepoLock(off64_t offset);
+	uint32_t getRepoID();
+	uint32_t getGarbageLevel();
 
-	u_int initBackup();
+	uint32_t initBackup();
 	bool lockedForBackup();
 	void backupCompleted();
 	bool isRepoLocked() { return myRepoXLock;}
@@ -419,7 +418,7 @@ private:
 	void signalCompactor();
 
 public:
-	static int		gGarbageThreshold;
+	static u_long		gGarbageThreshold;
 };
 
 #endif

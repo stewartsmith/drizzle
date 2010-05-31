@@ -34,14 +34,14 @@
 #undef MYSQL_SERVER
 #endif
 
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
 
 #include <string.h>
 #include <ctype.h>
 
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
 
 #include "Engine_ms.h"
 #include "Util_ms.h"
@@ -50,7 +50,7 @@
  * A file name has the form:
  * <text>-<number>[.<ext>]
  * This function return the number part as a
- * u_int.
+ * uint32_t.
  */
 uint32_t ms_file_to_table_id(const char *file_name, const char *name_part)
 {
@@ -99,7 +99,6 @@ const char *ms_file_to_table_name(size_t size, char *tab_name, const char *file_
 		}
 	}
 
-	ret_name:
 	len = cptr - file_name;
 	if (len > size-1)
 		len = size-1;

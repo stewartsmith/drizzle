@@ -30,8 +30,8 @@
 #ifndef __OPENTABLE_MS_H__
 #define __OPENTABLE_MS_H__
 
-#include "CSDefs.h"
-#include "CSFile.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSFile.h"
 
 #include "Engine_ms.h"
 
@@ -135,8 +135,8 @@ private:
 	CSObject			*iNextLink;
 	CSObject			*iPrevLink;
 
-//	u_int				iUseSize;
-//	u_int				iUseCount;
+//	uint32_t				iUseSize;
+//	uint32_t				iUseCount;
 //	MSUsedBlobPtr		iUsedBlobs;
 	
 
@@ -170,7 +170,7 @@ public:
 	void check();
 #endif
 	
-	u_int getSize() { return iPoolTables.getSize(); }
+	uint32_t getSize() { return iPoolTables.getSize(); }
 
 private:
 	MSOpenTable		*iTablePool;						/* A list of tables currently not in use. */

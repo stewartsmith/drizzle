@@ -56,12 +56,12 @@ void CSObject::release()
 
 #ifdef DEBUG
 /*
-void CSObject::retain(const char *func, const char *file, u_int line)
+void CSObject::retain(const char *func, const char *file, uint32_t line)
 {
 	CSException::throwAssertion(CS_CONTEXT, "Non-referenced object cannot be referenced");
 }
 
-void CSObject::release(const char *func, const char *file, u_int line)
+void CSObject::release(const char *func, const char *file, uint32_t line)
 {
 	delete this;
 }
@@ -70,21 +70,21 @@ void CSObject::release(const char *func, const char *file, u_int line)
 
 CSObject *CSObject::getKey() { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return NULL; }
 
-int CSObject::compareKey(CSObject *x)  { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return 0; }
+int CSObject::compareKey(CSObject *)  { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return 0; }
 
-u_int CSObject::hashKey()  { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return 0; }
+uint32_t CSObject::hashKey()  { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return 0; }
 
 CSObject *CSObject::getHashLink() { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return NULL; }
 
-void CSObject::setHashLink(CSObject *x) { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); }
+void CSObject::setHashLink(CSObject *) { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); }
 
 CSObject *CSObject::getNextLink() { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return NULL; }
 
 CSObject *CSObject::getPrevLink() { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); return NULL; }
 
-void CSObject::setNextLink(CSObject *x) { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); }
+void CSObject::setNextLink(CSObject *) { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); }
 
-void CSObject::setPrevLink(CSObject *x) { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); }
+void CSObject::setPrevLink(CSObject *) { CSException::throwCoreError(CS_CONTEXT, CS_ERR_IMPL_MISSING, __FUNC__); }
 /*
  * ---------------------------------------------------------------
  * REFERENCE OBJECTS
@@ -134,13 +134,13 @@ void CSRefObject::release()
 
 #ifdef DEBUG
 /*
-void CSRefObject::retain(const char *func, const char *file, u_int line)
+void CSRefObject::retain(const char *func, const char *file, uint32_t line)
 {
 	iRefCount++;
 	cs_mm_print_track(func, file, line, this, true, iRefCount);
 }
 
-void CSRefObject::release(const char *func, const char *file, u_int line)
+void CSRefObject::release(const char *func, const char *file, uint32_t line)
 {
 	bool terminate;
 
@@ -217,7 +217,7 @@ void CSSharedRefObject::startTracking()
 
 #ifdef DEBUG
 /*
-void CSSharedRefObject::retain(const char *func, const char *file, u_int line)
+void CSSharedRefObject::retain(const char *func, const char *file, uint32_t line)
 {
 	lock();
 	iRefCount++;
@@ -225,7 +225,7 @@ void CSSharedRefObject::retain(const char *func, const char *file, u_int line)
 	unlock();
 }
 
-void CSSharedRefObject::release(const char *func, const char *file, u_int line)
+void CSSharedRefObject::release(const char *func, const char *file, uint32_t line)
 {
 	bool terminate;
 

@@ -32,7 +32,7 @@
 #include <stddef.h>
 
 #include "Defs_ms.h"
-#include "CSStorage.h"
+#include "cslib/CSStorage.h"
 
 #define MS_ALIAS_FILE_MAGIC			0x5954228A
 #define MS_ALIAS_FILE_VERSION		1
@@ -242,7 +242,7 @@ public:
 		if (msa_filePath)
 			msa_filePath->release();
 			
-		for (u_int i =0; i < BUCKET_LIST_SIZE; i++)
+		for (uint32_t i =0; i < BUCKET_LIST_SIZE; i++)
 			msa_buckets[i].clear();
 			
 		msa_empty_buckets.clear();

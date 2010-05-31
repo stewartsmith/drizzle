@@ -162,7 +162,7 @@ public:
 
 	CSToken *takeFront() { return (CSToken *) take(0); }
 
-	CSToken *getAt(u_int idx) { return (CSToken *) get(idx); }
+	CSToken *getAt(uint32_t idx) { return (CSToken *) get(idx); }
 
 	CSToken *getFront() { return (CSToken *) get(0); }
 };
@@ -182,7 +182,7 @@ public:
 	 * If set to zero, the line number will also not be incremented
 	 * when a new line is encountered.
 	 */
-	virtual void open(CSInputStream *stream, u_int line);
+	virtual void open(CSInputStream *stream, uint32_t line);
 
 	virtual void close();
 	
@@ -192,12 +192,12 @@ public:
 
 	friend class UXTokenStream;
 
-	static CSTokenStream *newTokenStream(CSInputStream *stream, u_int line);
+	static CSTokenStream *newTokenStream(CSInputStream *stream, uint32_t line);
 
 private:
 	CSInputStream *iStream;
 	
-	u_int iLine;
+	uint32_t iLine;
 
 	int iChar;
 };
@@ -214,7 +214,7 @@ public:
 
 	virtual CSToken *newToken(int type, char ch);
 
-	static CSTokenStream *newTokenStream(CSInputStream *stream, u_int line);
+	static CSTokenStream *newTokenStream(CSInputStream *stream, uint32_t line);
 private:
 };
 

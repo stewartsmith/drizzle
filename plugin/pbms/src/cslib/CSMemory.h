@@ -64,8 +64,8 @@ void cs_mm_realloc(const char *func, const char *file, int line, void **ptr, siz
 void cs_mm_free(void *ptr);
 void cs_mm_pfree(void **ptr);
 size_t cs_mm_malloc_size(void *ptr);
-void cs_mm_print_track(const char *func, const char *file, u_int line, void *p, bool inc, u_int ref_cnt, int track_me);
-void cs_mm_track_memory(const char *func, const char *file, u_int line, void *p, bool inc, u_int ref_cnt, int track_me);
+void cs_mm_print_track(const char *func, const char *file, uint32_t line, void *p, bool inc, uint32_t ref_cnt, int track_me);
+void cs_mm_track_memory(const char *func, const char *file, uint32_t line, void *p, bool inc, uint32_t ref_cnt, int track_me);
 #endif
 
 #endif

@@ -22,7 +22,7 @@
  *
  */
 #include <inttypes.h>
-#include "CSMd5.h"
+#include "cslib/CSMd5.h"
 
 
 /* NOTES:
@@ -102,7 +102,7 @@ public:
 	
 	CSString *getDataURL(const char *key, int keep_alive);
 
-	void send(CSInputStream *input, const char *key, off_t size);
+	void send(CSInputStream *input, const char *key, off64_t size);
 	
 	void receive(CSOutputStream *output, const char *key);
 	
@@ -256,8 +256,8 @@ public:
 	void cl_backupBLOB(CloudKeyPtr key);
 	void cl_restoreBLOB(CloudKeyPtr key, uint32_t backup_db_id);
 
-	void cl_putData( CloudKeyPtr key, CSInputStream *stream, off_t size);
-	off_t cl_getData(CloudKeyPtr key, char *data, off_t size);
+	void cl_putData( CloudKeyPtr key, CSInputStream *stream, off64_t size);
+	off64_t cl_getData(CloudKeyPtr key, char *data, off64_t size);
 	CSString *cl_getDataURL(CloudKeyPtr key);
 	void cl_deleteData(CloudKeyPtr key);
 	CSString *cl_getSignature(CloudKeyPtr key, CSString *content_type, uint32_t *s3AuthorizationTime);

@@ -22,7 +22,13 @@
  *
  * System backup info table for repository backups.
  */
-#include "CSConfig.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#endif
+
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
 
 #include <sys/types.h>
@@ -30,16 +36,12 @@
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#endif
-
 //#include "mysql_priv.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSLog.h"
-#include "CSPath.h"
-#include "CSDirectory.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSPath.h"
+#include "cslib/CSDirectory.h"
 
 #include "ha_pbms.h"
 //#include <plugin.h>
@@ -281,17 +283,17 @@ bool MSBackupTable::seqScanNext(char *buf)
 				if (curr_field->field_name[1] == 'd') {
 					ASSERT(strcmp(curr_field->field_name, "Id") == 0);
 					curr_field->store(info->getBackupRefId(), true);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				} else if (curr_field->field_name[2] == 'D') {
 					ASSERT(strcmp(curr_field->field_name, "IsDump") == 0);
 					val = (info->isDump())? "Yes": "No";
 					curr_field->store(val, strlen(val), &UTF8_CHARSET);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				} else {
 					ASSERT(strcmp(curr_field->field_name, "IsRunning") == 0);
 					val = (info->isBackupRunning())? "Yes": "No";
 					curr_field->store(val, strlen(val), &UTF8_CHARSET);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				} 
 				break;
 
@@ -299,12 +301,12 @@ bool MSBackupTable::seqScanNext(char *buf)
 				if (curr_field->field_name[9] == 'I') {
 					ASSERT(strcmp(curr_field->field_name, "Database_Id") == 0);
 					curr_field->store(info->getDatabaseId(), true);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				} else {
 					ASSERT(strcmp(curr_field->field_name, "Database_Name") == 0);
 					val = info->getName();
 					curr_field->store(val, strlen(val), &UTF8_CHARSET);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				}
 				
 				break;
@@ -315,7 +317,7 @@ bool MSBackupTable::seqScanNext(char *buf)
 					timeVal->setUTC1970(info->getStart(), 0);
 					val = timeVal->getCString();
 					curr_field->store(val, strlen(val), &UTF8_CHARSET);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				}
 				break;
 
@@ -324,7 +326,7 @@ bool MSBackupTable::seqScanNext(char *buf)
 				val = info->getLocation();
 				if (val) {
 					curr_field->store(val, strlen(val), &UTF8_CHARSET);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				}
 				break;
 
@@ -335,16 +337,16 @@ bool MSBackupTable::seqScanNext(char *buf)
 						timeVal->setUTC1970(info->getEnd(), 0);
 						val = timeVal->getCString();
 						curr_field->store(val, strlen(val), &UTF8_CHARSET);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 					}
 				} else if (curr_field->field_name[6] == 'R') {
 					ASSERT(strcmp(curr_field->field_name, "Cloud_Ref") == 0);
 					curr_field->store(info->getcloudRef(), true);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				} else if (curr_field->field_name[6] == 'B') {
 					ASSERT(strcmp(curr_field->field_name, "Cloud_Backup_No") == 0);
 					curr_field->store(info->getcloudBackupNo(), true);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				} else {
 					ASSERT(false);
 					break;

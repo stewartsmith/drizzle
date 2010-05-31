@@ -84,7 +84,7 @@ public:
 
 	void initException(const char *func, const char *file, int line, int err, const char *message);
 	void initAssertion(const char *func, const char *file, int line, const char *message);
-	void getCoreError(u_int size, char *buffer, int err);
+	void getCoreError(uint32_t size, char *buffer, int err);
 	void initCoreError(const char *func, const char *file, int line, int err);
 	void initCoreError(const char *func, const char *file, int line, int err, const char *item);
 	void initOSError(const char *func, const char *file, int line, int err);

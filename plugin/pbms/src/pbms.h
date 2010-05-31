@@ -54,7 +54,7 @@
 
 #define MS_SHARED_MEMORY_MAGIC			0x7E9A120C
 #define MS_ENGINE_VERSION				2
-#define MS_CALLBACK_VERSION				4
+#define MS_CALLBACK_VERSION				5
 #define MS_SHARED_MEMORY_VERSION		2
 #define MS_ENGINE_LIST_SIZE				10
 #define MS_TEMP_FILE_PREFIX				"pbms_temp_"
@@ -141,7 +141,7 @@ typedef void (*ECDeregisterdFunc)(PBMSEnginePtr engine);
  *
  * The BLOB URL must still be retained or it will automaticly be deleted after a timeout expires.
  */
-typedef int (*ECCreateBlobsFunc)(bool built_in, const char *db_name, const char *tab_name, char *blob, size_t blob_len, char *blob_url, unsigned short col_index, PBMSResultPtr result);
+typedef int (*ECCreateBlobsFunc)(bool built_in, const char *db_name, const char *tab_name, char *blob, size_t blob_len, char *blob_url, PBMSResultPtr result);
 
 /*
  * Call this function for each BLOB to be retained. When a BLOB is used, the 
@@ -424,7 +424,7 @@ public:
 				*ret_blob_url = 0;
 				return MS_OK;
 			}
-			err = sharedMemory->sm_callbacks->cb_create_blob(built_in, db_name, tab_name, blob_url, blob_size, ret_blob_url, col_index, result);
+			err = sharedMemory->sm_callbacks->cb_create_blob(built_in, db_name, tab_name, blob_url, blob_size, ret_blob_url, result);
 			if (err)
 				return err;
 				

@@ -21,16 +21,16 @@
 /* need to define DRIZZLE_SERVER to get inside the Session */
 #define DRIZZLE_SERVER 1
 
-#include <drizzled/server_includes.h>
+#include <drizzled/common.h>
 #include <drizzled/plugin_blobcontainer.h>
 #include <drizzled/table.h>
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg.h>
 #include <drizzled/error.h>
 
-#include "CSConfig.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
+#include "cslib/CSConfig.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
 #include "Engine_ms.h"
 
 /*

@@ -1,6 +1,6 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (c) 2010 PrimeBase Technologies GmbH, Germany
  *
- * PrimeBase Media Stream for MySQL
+ * PrimeBase Media Stream Daemon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,24 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * Original author: Paul McCullagh
- * Continued development: Barry Leslie
- *
- * 2007-05-25
- *
- * H&G2JCtL
- *
- * MySQL interface.
+ * Author: Barry Leslie
  *
  */
+#ifndef __PBMS_VERSION_H__
+#define __PBMS_VERSION_H__
 
-#ifndef __MS_MYSQL_H__
-#define __MS_MYSQL_H__
+#define PBMS_VERSION "0.5.14-beta"
 
-void		*ms_my_get_thread();
-uint64_t		ms_my_1970_to_mysql_time(time_t t);
-const char	*ms_my_get_mysql_home_path();
-void		ms_my_set_column_name(const char *table, uint16_t col_index, char *col_name);
-bool		ms_is_autocommit();
-
-#endif
+#endif // __PBMS_VERSION_H__

@@ -27,33 +27,33 @@
  *
  */
 
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
-#include "CSConfig.h"
 
-#include "CSGlobal.h"
-#include "CSSocket.h"
-#include "CSStrUtil.h"
-#include "CSHTTPStream.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSSocket.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSHTTPStream.h"
 
 #include "ConnectionHandler_ms.h"
 #include "Network_ms.h"
 #include "OpenTable_ms.h"
 #include "Util_ms.h"
 #include "Engine_ms.h"
-#include "metadata_ms.h"
 
-#include "ms_mysql.h"
+#include "pbms_version.h"
+//#include "ms_mysql.h"
 
-int MSConnectionHandler::gMaxKeepAlive;
+u_long MSConnectionHandler::gMaxKeepAlive;
 
 MSConnectionHandler::MSConnectionHandler(CSThreadList *list):
 	CSDaemon(list),
 	amWaitingToListen(false),
+	shuttingDown(false),
 	lastUse(0),
+	replyPending(false),
 	iInputStream(NULL),
 	iOutputStream(NULL),
-	replyPending(false),
-	shuttingDown(false),
 	iTableURI(NULL)
 {
 }
@@ -108,7 +108,7 @@ int MSConnectionHandler::getHTTPStatus(int err)
 		case MS_ERR_UNKNOWN_DB:			code = 404; break;
 		case MS_ERR_DATABASE_DELETED:	code = 404; break;
 		case MS_ERR_NOT_FOUND:			code = 404; break;
-		case MS_ERR_REMOVING_REPO:		code - 404; break;
+		case MS_ERR_REMOVING_REPO:		code = 404; break;
 		case MS_ERR_TABLE_LOCKED:		code = 412; break; // Precondition Failed
 		case MS_ERR_INCORRECT_URL:		code = 404; break;
 		case MS_ERR_AUTH_FAILED:		code = 403; break; // Forbidden
@@ -144,7 +144,7 @@ void MSConnectionHandler::writeException(const char *qualifier)
 	iOutputStream->appendBody(myException.getStackTrace());
 	iOutputStream->appendBody(EXCEPTION_REPLY_STACK_TRACE_SUFFIX_TAG);
 	iOutputStream->appendBody("MySQL ");
-	iOutputStream->appendBody(ms_my_version());
+	iOutputStream->appendBody(PBMS_VERSION);
 	iOutputStream->appendBody(", PBMS ");
 	iOutputStream->appendBody(ms_version());
 	iOutputStream->appendBody("<br>Copyright &#169; 2009, PrimeBase Technologies GmbH</font></P></BODY></HTML>");
@@ -186,7 +186,7 @@ void MSConnectionHandler::closeStream()
 void MSConnectionHandler::parseRequestURI()
 {
 	CSString	*uri = iInputStream->getRequestURI();
-	u_int		pos = 0, end;
+	uint32_t		pos = 0, end;
 	enter_();
 	
 	freeRequestURI();
@@ -351,7 +351,6 @@ void MSConnectionHandler::handleGet()
 			backtopool_(repo_file);
 			backtopool_(otab);
 		}
-		
 	} 
 	else { 
 #ifdef HAVE_ALIAS_SUPPORT
@@ -459,7 +458,7 @@ void MSConnectionHandler::handlePut()
 		blob_len = iInputStream->getContentLength();
 		
 		// Collect the meta data.
-		for (u_int i = 0; i < iInputStream->numHeaders(); i++) {
+		for (uint32_t i = 0; i < iInputStream->numHeaders(); i++) {
 			CSHeader *header = iInputStream->getHeader(i);
 			const char *name = header->getNameCString();
 			
@@ -557,9 +556,7 @@ void MSConnectionHandler::handlePut()
 	finally_(a) {
 		otab->returnToPool();
 	}
-	cont_(a);
 
-	exit:
 	exit_();
 }
 

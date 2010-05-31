@@ -29,7 +29,7 @@
  
 #ifndef __TRANSACTION_MS_H__
 #define __TRANSACTION_MS_H__
-#include "CSDefs.h"
+#include "cslib/CSDefs.h"
 
 class MSTrans;
 class MSTransactionThread;
@@ -45,7 +45,14 @@ public:
 	static void resume();
 	static void commit();
 	static void rollback();
-	static void rollbackTo(uint32_t position);
+	static void rollbackToPosition(uint32_t position);
+	
+#ifdef DRIZZLED
+	static void setSavepoint(const char *savePoint);
+	static void releaseSavepoint(const char *savePoint);
+	static void rollbackTo(const char *savePoint);
+#endif
+
 	static void referenceBLOB(uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id)
 	 {
 		logTransaction(true, db_id, tab_id, blob_id, blob_ref_id);

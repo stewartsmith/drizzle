@@ -26,12 +26,12 @@
  * Media Stream Tables.
  *
  */
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 
-#include "CSGlobal.h"
-#include "CSLog.h"
-#include "CSStrUtil.h"
-#include "CSPath.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSPath.h"
 
 #include "OpenTable_ms.h"
 #include "Table_ms.h"
@@ -39,8 +39,7 @@
 #include "Engine_ms.h"
 #include "Util_ms.h"
 #include "Transaction_ms.h"
-
-#include "ms_mysql.h"
+#include "parameters_ms.h"
 
 /*
  * ---------------------------------------------------------------
@@ -238,206 +237,6 @@ void MSOpenTable::sendRepoBlob(uint64_t blob_id, uint64_t req_offset, uint64_t r
 	backtopool_(repo_file);
 	exit_();
 }
-
-/* OLD WAY
-void MSOpenTable::useBlob(int type, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code, uint16_t col_index, uint64_t blob_size, char **ret_blob_url)
-{
-	MSUsedBlobPtr	ub;
-	MSRepoFile		*repo_file;
-	MSBlobHeadRec	blob;
-	CSInputStream	*stream;
-	MSDatabase		*blob_db;
-
-	enter_();
-	if (iUseCount == iUseSize) {
-		cs_realloc((void **) &iUsedBlobs, sizeof(MSUsedBlobRec) * (iUseSize+1));
-		iUseSize++;
-	}
-	ub = &iUsedBlobs[iUseCount];
-	
-	blob_db = getDB();
-		
-	if (blob_db->isRecovering()) {
-		// During recovery the only thing that needs to be done is to 
-		// reset the database ID which is done when the URL is created.
-		// Create the URL using the table ID passed in not the one from 
-		// the table associated with this object.
-		ub->ub_blob_id = blob_id;
-		ub->ub_blob_size = blob_size;
-		formatBlobURL(ub->ub_blob_url, ub->ub_blob_id, auth_code, ub->ub_blob_size, tab_id, ub->ub_blob_ref_id);
-	} else {
-		openForReading();
-		if (type == MS_URL_TYPE_REPO) { // There is no table reference associated with this BLOB yet.
-			uint32_t		ac;
-			uint8_t		status;
-			bool		same_db = true;
-
-			if (blob_db->myDatabaseID == db_id)
-				repo_file = blob_db->getRepoFileFromPool(tab_id, false);
-			else {
-				same_db = false;
-				blob_db = MSDatabase::getDatabase(db_id);
-				push_(blob_db);
-				repo_file = blob_db->getRepoFileFromPool(tab_id, false);
-				release_(blob_db);
-				blob_db = repo_file->myRepo->myRepoDatabase;
-			}
-		
-			frompool_(repo_file);
-			repo_file->read(&blob, blob_id, MS_MIN_BLOB_HEAD_SIZE, MS_MIN_BLOB_HEAD_SIZE);
-
-			ub->ub_repo_offset = blob_id;
-			ub->ub_blob_size  = CS_GET_DISK_6(blob.rb_blob_repo_size_6);
-			ub->ub_head_size = CS_GET_DISK_2(blob.rb_head_size_2);
-			 
-			ac = CS_GET_DISK_4(blob.rb_auth_code_4);
-			if (auth_code != ac)
-				CSException::throwException(CS_CONTEXT, MS_ERR_AUTH_FAILED, "Invalid BLOB identifier");
-			status = CS_GET_DISK_1(blob.rb_status_1);
-			if ( ! IN_USE_BLOB_STATUS(status))
-				CSException::throwException(CS_CONTEXT, MS_ERR_NOT_FOUND, "BLOB has already been deleted");
-
-			if (same_db) {
-				// Create a table reference to the BLOB:
-				ub->ub_repo_id = tab_id;
-				ub->ub_blob_id = getDBTable()->createBlobHandle(this, tab_id, blob_id, ub->ub_blob_size, ub->ub_head_size, auth_code);
-				ub->ub_state = MS_UB_NEW_HANDLE;
-			}
-			else {
-				
-				getDB()->openWriteRepo(this);
-
-				// If either databases are using cloud storage then this is
-				// not supported yet.			
-				if (getDB()->myBlobCloud || myWriteRepo->myRepoDatabase->myBlobCloud)
-					CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Copying cloud BLOB between databases is not supported.");
-			
-				stream = repo_file->getInputStream(ub->ub_repo_offset);
-				push_(stream);
-				ub->ub_repo_offset = myWriteRepo->copyBlob(this, ub->ub_head_size + ub->ub_blob_size, stream);			
-				release_(stream);
-
-				// Create a table reference to the BLOB:
-				ub->ub_repo_id = myWriteRepo->myRepoID;
-				ub->ub_blob_id = getDBTable()->createBlobHandle(this, myWriteRepo->myRepoID, ub->ub_repo_offset, ub->ub_blob_size, ub->ub_head_size, auth_code);
-				ub->ub_state = MS_UB_NEW_BLOB;
-			}
-			backtopool_(repo_file);
-		}
-		else {
-
-			if (blob_db->myDatabaseID == db_id && getDBTable()->myTableID == tab_id) {
-				getDBTable()->readBlobHandle(this, blob_id, &auth_code, &ub->ub_repo_id, &ub->ub_repo_offset, &ub->ub_blob_size, &ub->ub_head_size, true);
-				
-				ub->ub_blob_id = blob_id;
-				ub->ub_state = MS_UB_SAME_TAB;
-			}
-			else {
-				MSOpenTable *blob_otab;
-
-				blob_otab = MSTableList::getOpenTableByID(db_id, tab_id);
-				frompool_(blob_otab);
-				blob_otab->getDBTable()->readBlobHandle(blob_otab, blob_id, &auth_code, &ub->ub_repo_id, &ub->ub_repo_offset, &ub->ub_blob_size, &ub->ub_head_size, true);
-				if (blob_db->myDatabaseID == db_id) {
-					ub->ub_blob_id = getDBTable()->createBlobHandle(this, ub->ub_repo_id, ub->ub_repo_offset, ub->ub_blob_size, ub->ub_head_size, auth_code);
-					ub->ub_state = MS_UB_NEW_HANDLE;
-				}
-				else {
-
-					blob_db->openWriteRepo(this);
-									
-					stream = repo_file->getInputStream(ub->ub_repo_offset);
-					push_(stream);
-					
-					ub->ub_repo_offset = myWriteRepo->copyBlob(this, ub->ub_head_size + ub->ub_blob_size, stream);
-					
-					release_(stream);
-
-					ub->ub_repo_id = myWriteRepo->myRepoID;
-					ub->ub_blob_id = getDBTable()->createBlobHandle(this, myWriteRepo->myRepoID, ub->ub_repo_offset, ub->ub_blob_size, ub->ub_head_size, auth_code);
-					ub->ub_state = MS_UB_NEW_BLOB;
-				}
-				backtopool_(blob_otab);
-			}
-		}
-		
-		ub->ub_blob_ref_id = blob_db->newBlobRefId();
-		formatBlobURL(ub->ub_blob_url, ub->ub_blob_id, auth_code, ub->ub_blob_size, ub->ub_blob_ref_id);
-	} 
-		
-	ub->ub_auth_code = auth_code;
-	ub->ub_col_index = col_index;
-	*ret_blob_url = ub->ub_blob_url;
-	iUseCount++;
-	exit_();
-}
-
-void MSOpenTable::unUseBlobs()
-{
-	MSUsedBlobPtr	ub = iUsedBlobs;
-
-	if (!getDB()->isRecovering()) {
-		for (u_int i=0; i<iUseCount; i++) {
-			switch (ub->ub_state) {
-				case MS_UB_SAME_TAB:
-					break;
-				case MS_UB_NEW_HANDLE:
-				case MS_UB_NEW_BLOB:
-					getDBTable()->freeBlobHandle(this, ub->ub_blob_id, ub->ub_repo_id, ub->ub_repo_offset, ub->ub_auth_code);
-					break;
-				case MS_UB_RETAINED:
-				case MS_UB_NEW_RETAINED:
-					freeReference(ub->ub_blob_id, ub->ub_blob_ref_id);
-					break;
-			}
-			ub++;
-		}
-	}
-	iUseCount = 0;
-}
-
-void MSOpenTable::retainReferences()
-{
-	MSUsedBlobPtr	ub = iUsedBlobs;
-	off_t			repo_offset = 0;
-	uint32_t			tab_id;
-
-	enter_();
-	if (!getDB()->isRecovering()) {
-	
-		tab_id = getDBTable()->myTableID;
-		
-		for (u_int i=0; i<iUseCount; i++) {
-			if (ub->ub_state == MS_UB_NEW_BLOB) {
-				// In this case a blob has been copied because it was referenced from a database
-				// other than the one in which it resides. The BLOB and header has been written to the repository 
-				// of the destination database but the header has not been updated yet.
-				myWriteRepo->resetBlobHead(this, ub->ub_repo_offset, ub->ub_head_size, ub->ub_blob_id, ub->ub_blob_ref_id, ub->ub_auth_code, ub->ub_col_index, getDB()->myBlobType);
-				if (repo_offset < ub->ub_repo_offset + ub->ub_head_size +  ub->ub_blob_size)
-					repo_offset = ub->ub_repo_offset + ub->ub_head_size +  ub->ub_blob_size;
-				ub->ub_state = MS_UB_NEW_RETAINED;
-			}
-			else {
-				MSRepoFile *repo_file;
-
-				repo_file = getDB()->getRepoFileFromPool(ub->ub_repo_id, false);
-				frompool_(repo_file);
-				repo_file->retainBlob(this, ub->ub_repo_offset, ub->ub_head_size, tab_id, ub->ub_blob_id, ub->ub_blob_ref_id, ub->ub_auth_code, ub->ub_col_index);
-				backtopool_(repo_file);
-				ub->ub_state = MS_UB_RETAINED;
-			}
-			
-			MSTransactionManager::referenceBLOB(getDB()->myDatabaseID, tab_id, ub->ub_blob_id, ub->ub_blob_ref_id);
-			ub++;
-		}
-	}
-
-	iUseCount = 0;
-	if (repo_offset)
-		myWriteRepo->setRepoFileSize(this, repo_offset);
-	exit_();
-}
-*/
 
 void MSOpenTable::freeReference(uint64_t blob_id, uint64_t blob_ref_id)
 {
@@ -653,7 +452,7 @@ void MSOpenTable::checkBlob(CSStringBuffer *buffer, uint64_t blob_id, uint32_t a
 	if (getDBTable()->readBlobHandle(this, blob_id, &auth_code, &repo_id, &offset, &size, &head_size, false)) {
 		if ((repo_file = getDB()->getRepoFileFromPool(repo_id, true))) {
 			frompool_(repo_file);
-			repo_file->checkBlob(this, buffer, offset, auth_code, temp_log_id, temp_log_offset);
+			repo_file->checkBlob(buffer, offset, auth_code, temp_log_id, temp_log_offset);
 			backtopool_(repo_file);
 		}
 		else
@@ -665,7 +464,7 @@ void MSOpenTable::checkBlob(CSStringBuffer *buffer, uint64_t blob_id, uint32_t a
 bool MSOpenTable::deleteReferences(uint32_t temp_log_id, uint32_t temp_log_offset, bool *must_quit)
 {
 	MSTableHeadRec		tab_head;
-	off_t				blob_id;
+	off64_t				blob_id;
 	MSTableBlobRec		tab_blob;
 	uint32_t				repo_id;
 	uint64_t				repo_offset;
@@ -715,7 +514,6 @@ bool MSOpenTable::deleteReferences(uint32_t temp_log_id, uint32_t temp_log_offse
 		if (repo_file)
 			repo_file->returnToPool();
 	}
-	cont_(a);
 
 	exit:
 	return_(result);
@@ -782,7 +580,7 @@ void MSOpenTable::formatBlobURL(char *blob_url, uint64_t blob_id, uint32_t auth_
 	blob.bu_tab_id = tab_id;
 	blob.bu_blob_id = blob_id;
 	blob.bu_auth_code = auth_code;
-	blob.bu_server_id = ms_my_get_server_id();
+	blob.bu_server_id = PBMSParameters::getServerID();
 	blob.bu_blob_size = blob_size;
 	blob.bu_blob_ref_id = blob_ref_id;
 	
@@ -802,7 +600,7 @@ void MSOpenTable::formatRepoURL(char *blob_url, uint32_t log_id, uint64_t log_of
 	blob.bu_tab_id = log_id;
 	blob.bu_blob_id = log_offset;
 	blob.bu_auth_code = auth_code;
-	blob.bu_server_id = ms_my_get_server_id();
+	blob.bu_server_id = PBMSParameters::getServerID();
 	blob.bu_blob_size = blob_size;
 	blob.bu_blob_ref_id = 0;
 	
@@ -996,6 +794,7 @@ public:
 	virtual ~MSTableKey() {
 	}
 
+	int compareKey(CSObject *key) {return CSObject::compareKey(key);}
 	virtual int compareKey(CSOrderKey *x) {
 		MSTableKey	*key = (MSTableKey *) x;
 		int			r = 0;
@@ -1152,7 +951,7 @@ void MSTableList::removeTablePool(MSOpenTable *otab)
 void MSTableList::removeDatabaseTables(MSDatabase *database)
 {
 	MSOpenTablePool *pool;
-	u_int			idx;
+	uint32_t			idx;
 	
 
 	enter_();

@@ -30,9 +30,9 @@
 #ifndef __CONNECTIONHANDLER_MS_H__
 #define __CONNECTIONHANDLER_MS_H__
 
-#include "CSDefs.h"
-#include "CSThread.h"
-#include "CSHTTPStream.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSThread.h"
+#include "cslib/CSHTTPStream.h"
 
 #include "Engine_ms.h"
 
@@ -82,7 +82,7 @@ private:
 	CSString			*iTableURI;
 	
 public:
-	static int	gMaxKeepAlive;
+	static u_long	gMaxKeepAlive;
 };
 
 #endif

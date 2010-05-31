@@ -121,7 +121,7 @@ char *base64Encode(const void *data, size_t len)
 
 void *base64Decode(const char *data, size_t len)
 {
-	u_int tail;
+	uint32_t tail;
 	u_char *wptr, *rptr, *decoding;
 	enter_();
 

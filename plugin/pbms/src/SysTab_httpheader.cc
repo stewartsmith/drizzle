@@ -21,22 +21,25 @@
  * System variables table.
  *
  */
-#include "CSConfig.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/field/blob.h>
+#endif
+
+#include "cslib/CSConfig.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#endif
-
 //#include "mysql_priv.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSLog.h"
-#include "CSPath.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSPath.h"
 
 #include "ha_pbms.h"
 //#include <plugin.h>
@@ -171,7 +174,7 @@ void MSHTTPHeaderTable::saveTable(MSDatabase *db)
 	lock_(&db->iHTTPMetaDataHeaders);
 	
 	// Note: the object returned by itemAt() is not returnd referenced.
-	for (u_int i =0; (str = (CSString*) db->iHTTPMetaDataHeaders.itemAt(i)); i++) {
+	for (uint32_t i =0; (str = (CSString*) db->iHTTPMetaDataHeaders.itemAt(i)); i++) {
 		headerData->beginRecord();
 		headerData->setStringField(str->getCString());
 		headerData->endRecord();
@@ -288,8 +291,8 @@ void MSHTTPHeaderTable::removeTable(CSString *db_path)
 
 MSHTTPHeaderTable::MSHTTPHeaderTable(MSSystemTableShare *share, TABLE *table):
 MSOpenSystemTable(share, table),
-iDirty(false),
-iHeaderIndex(0)
+iHeaderIndex(0),
+iDirty(false)
 {
 }
 
@@ -354,7 +357,7 @@ bool MSHTTPHeaderTable::seqScanNext(char *buf)
 			case 'N':
 				ASSERT(strcmp(curr_field->field_name, "Name") == 0);
 					curr_field->store(name, strlen(name), &UTF8_CHARSET);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				break;
 
 		}

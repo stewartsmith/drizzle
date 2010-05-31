@@ -41,7 +41,7 @@ using namespace std;
 
 class CSDirectory : public CSObject {
 public:
-	CSDirectory(): iPath(NULL), iDir(NULL) { }
+	CSDirectory(): iDir(NULL), iPath(NULL) { }
 
 	virtual ~CSDirectory();
 
@@ -57,7 +57,7 @@ public:
 	
 	virtual void deleteEntry() ;
 
-	virtual void info(bool *is_dir, off_t *size, CSTime *mod_time);
+	virtual void info(bool *is_dir, off64_t *size, CSTime *mod_time);
 
 	virtual void print(CSOutputStream *out);
 

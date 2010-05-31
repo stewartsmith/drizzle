@@ -43,11 +43,11 @@ public:
 	virtual ~CSHeader();
 
 	void setName(const char *name);
-	void setName(const char *name, u_int len);
+	void setName(const char *name, uint32_t len);
 	void setName(CSString *name);
 
 	void setValue(const char *value);
-	void setValue(const char *value, u_int len);
+	void setValue(const char *value, uint32_t len);
 	void setValue(CSString *value);
 
 	const char *getNameCString() { return iName ? iName->getCString() : ""; }
@@ -75,7 +75,7 @@ public:
 	void addHeaders(CSHTTPHeaders *h);
 	void addHeader(CSHeader *h);
 	void addHeader(const char *name, const char *value);
-	void addHeader(const char *name, u_int nlen, const char *value, u_int vlen);
+	void addHeader(const char *name, uint32_t nlen, const char *value, uint32_t vlen);
 	void addHeader(CSString *name, CSString *value);
 	void addHeader(const char *name, CSString *value);
 	void removeHeader(const char *name);
@@ -86,8 +86,8 @@ public:
 	bool expect100Continue();
 	bool unknownEpectHeader();
 
-	u_int numHeaders() { return (iHeaders)?iHeaders->size(): 0; }
-	CSHeader *getHeader(u_int idx) 
+	uint32_t numHeaders() { return (iHeaders)?iHeaders->size(): 0; }
+	CSHeader *getHeader(uint32_t idx) 
 	{ 
 		CSHeader *header = NULL;
 		

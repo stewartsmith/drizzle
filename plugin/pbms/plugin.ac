@@ -1,0 +1,11 @@
+PANDORA_HAVE_LIBXML2
+AS_IF([test "x$ac_cv_libxml2" = "xno"],
+      AC_MSG_WARN([libxml2 not found: not building pbms plugin.]))
+
+PANDORA_ADD_PLUGIN_DEP_LIB([${LTLIBXML2}])
+
+PANDORA_HAVE_LIBCURL
+AS_IF([test "x$ac_cv_libcurl" = "xno"],
+      AC_MSG_WARN([libcurl not found: not building pbms plugin.]))
+
+PANDORA_ADD_PLUGIN_DEP_LIB([${LIBCURL}])

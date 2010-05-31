@@ -23,7 +23,13 @@
  * System cloud starage info table.
  *
  */
-#include "CSConfig.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#endif
+
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
 
 #include <sys/types.h>
@@ -31,16 +37,12 @@
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#endif
-
 //#include "mysql_priv.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSLog.h"
-#include "CSPath.h"
-#include "CSDirectory.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSPath.h"
+#include "cslib/CSDirectory.h"
 
 #include "ha_pbms.h"
 //#include <plugin.h>
@@ -229,7 +231,7 @@ void MSCloudTable::seqScanInit()
 	iCloudIndex = 0;
 }
 
-#define MAX_PASSWORD 64
+#define MAX_PASSWORD ((int32_t)64)
 bool MSCloudTable::seqScanNext(char *buf)
 {
 	char		passwd[MAX_PASSWORD +1];
@@ -268,14 +270,14 @@ bool MSCloudTable::seqScanNext(char *buf)
 				ASSERT(strcmp(curr_field->field_name, "Server") == 0);
 				val = info->getServer();
 				curr_field->store(val, strlen(val), &UTF8_CHARSET);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 
 			case 'B': 
 				ASSERT(strcmp(curr_field->field_name, "Bucket") == 0);
 				val = info->getBucket();
 				curr_field->store(val, strlen(val), &UTF8_CHARSET);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 
 			case 'P': 
@@ -286,8 +288,8 @@ bool MSCloudTable::seqScanNext(char *buf)
 					ASSERT(strcmp(curr_field->field_name, "PrivateKey") == 0);
 					val = info->getPrivateKey();
 					
-					int i;
-					for (i = 0; i < MAX_PASSWORD && i < strlen(val); i++) passwd[i] = '*';
+					int32_t i;
+					for (i = 0; (i < MAX_PASSWORD) && (i < (int32_t)strlen(val)); i++) passwd[i] = '*';
 					passwd[i] = 0;
 					val = passwd;
 				} else {
@@ -295,7 +297,7 @@ bool MSCloudTable::seqScanNext(char *buf)
 					break;
 				}
 				curr_field->store(val, strlen(val), &UTF8_CHARSET);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 				
 			default:

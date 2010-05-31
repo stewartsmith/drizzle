@@ -27,10 +27,10 @@
  *
  */
 
-#include "CSConfig.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSThread.h"
+#include "cslib/CSConfig.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSThread.h"
 
 #define PBMS_API	pbms_api_PBMS
 
@@ -82,11 +82,11 @@ static void ms_register_engine(PBMSEnginePtr engine)
 		have_handler_support = true;
 }
 
-static void ms_deregister_engine(PBMSEnginePtr engine)
+static void ms_deregister_engine(PBMSEnginePtr engine __attribute__((unused)))
 {
 }
 
-static int ms_create_blob(bool internal, const char *db_name, const char *tab_name, char *blob, size_t blob_len, char *blob_url, unsigned short col_index, PBMSResultPtr result)
+static int ms_create_blob(bool internal, const char *db_name, const char *tab_name, char *blob, size_t blob_len, char *blob_url, PBMSResultPtr result)
 {
 	CSThread		*self;
 	int				err = MS_OK;
@@ -469,7 +469,7 @@ static void ms_completed(bool internal, bool ok)
 			else if (self->myIsAutoCommit)
 				MSTransactionManager::rollback();
 			else
-				MSTransactionManager::rollbackTo(self->myStartStmt); // Rollback the last logical statement.
+				MSTransactionManager::rollbackToPosition(self->myStartStmt); // Rollback the last logical statement.
 		}
 		catch_(a) {
 			self->logException();

@@ -47,7 +47,7 @@ CSTokenStream::~CSTokenStream()
 	exit_();
 }
 
-void CSTokenStream::open(CSInputStream *stream, u_int line)
+void CSTokenStream::open(CSInputStream *stream, uint32_t line)
 {
 	enter_();
 	if (iStream)
@@ -72,7 +72,7 @@ void CSTokenStream::nextChar()
 	exit_();
 }
 
-CSTokenStream *CSTokenStream::newTokenStream(CSInputStream *stream, u_int line)
+CSTokenStream *CSTokenStream::newTokenStream(CSInputStream *stream, uint32_t line)
 {
 	return UXTokenStream::newTokenStream(stream, line);
 }
@@ -80,7 +80,7 @@ CSTokenStream *CSTokenStream::newTokenStream(CSInputStream *stream, u_int line)
 CSToken *UXTokenStream::nextToken()
 {
 	char	quote;
-	const char	*ptr;
+	char	*ptr;
 
 	enter_();
 	/* Initialize the current character: */
@@ -195,7 +195,7 @@ CSToken *UXTokenStream::newToken(int type, char ch)
 	return tk;
 }
 
-CSTokenStream *UXTokenStream::newTokenStream(CSInputStream *stream, u_int line)
+CSTokenStream *UXTokenStream::newTokenStream(CSInputStream *stream, uint32_t line)
 {
 	CSTokenStream *s;
 	enter_();

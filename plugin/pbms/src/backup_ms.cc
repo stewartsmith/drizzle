@@ -33,15 +33,22 @@
  */
 
 #ifdef DRIZZLED
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/message/table.pb.h>
+#include "drizzled/charset_info.h"
+#include <drizzled/table_proto.h>
+#include <drizzled/field.h>
 #endif
 
 #include <inttypes.h>
 
-#include "CSConfig.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSStorage.h"
+#include "cslib/CSConfig.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSStorage.h"
 
 #include "Defs_ms.h"
 #include "SystemTable_ms.h"
@@ -49,7 +56,6 @@
 #include "Table_ms.h"
 #include "Database_ms.h"
 #include "Repository_ms.h"
-#include "backup_ms.h"
 #include "backup_ms.h"
 #include "Transaction_ms.h"
 #include "SysTab_variable.h"
@@ -64,7 +70,7 @@ MSBackupInfo::MSBackupInfo(	uint32_t id,
 							uint32_t db_id_arg, 
 							time_t start, 
 							time_t end, 
-							bool isDump, 
+							bool _isDump, 
 							const char *location, 
 							uint32_t cloudRef_arg, 
 							uint32_t cloudBackupNo_arg ):
@@ -73,8 +79,8 @@ MSBackupInfo::MSBackupInfo(	uint32_t id,
 	db_id(db_id_arg),
 	startTime(start),
 	completionTime(end),
+	dump(_isDump),
 	isRunning(false),
-	dump(isDump),
 	backupLocation(NULL),
 	cloudRef(cloudRef_arg),
 	cloudBackupNo(cloudBackupNo_arg)
@@ -176,14 +182,20 @@ void MSBackupInfo::backupTerminated(MSDatabase *db)
 //==========================================
 MSBackup::MSBackup():
 CSDaemon(NULL),
-bu_SourceDatabase(NULL),
-bu_Database(NULL),
 bu_info(NULL),
 bu_BackupList(NULL),
 bu_Compactor(NULL),
-bu_completed(0),
 bu_BackupRunning(false),
-bu_size(0)
+bu_State(BU_COMPLETED),
+bu_SourceDatabase(NULL),
+bu_Database(NULL),
+bu_dst_dump(NULL),
+bu_src_dump(NULL),
+bu_size(0),
+bu_completed(0),
+bu_ID(0),
+bu_start_time(0),
+bu_TransactionManagerSuspended(false)
 {
 }
 
@@ -247,7 +259,7 @@ void MSBackup::startBackup(MSDatabase *src_db)
 		lock_(repo_list);
 
 		new_(bu_BackupList, CSVector(repo_list->size()));
-		for (u_int i = 0; i<repo_list->size(); i++) {
+		for (uint32_t i = 0; i<repo_list->size(); i++) {
 			if ((repo = (MSRepository *) repo_list->get(i))) {
 				if (!repo->isRemovingFP && !repo->mustBeDeleted) {
 					bu_BackupList->add(RETAIN(repo));
@@ -287,11 +299,11 @@ void MSBackup::startBackup(MSDatabase *src_db)
 		unlock_(repo_list);
 		
 		// Copy over any physical PBMS system tables.
-		pbms_transfer_ststem_tables(RETAIN(bu_Database), RETAIN(bu_SourceDatabase));
+		PBMSSystemTables::transferSystemTables(RETAIN(bu_Database), RETAIN(bu_SourceDatabase));
 
 		// Load the system tables into the backup database. This will
 		// initialize the database for cloud storage if required.
-		pbms_load_system_tables(RETAIN(bu_Database));
+		PBMSSystemTables::loadSystemTables(RETAIN(bu_Database));
 		
 		// Set the cloud backup info.
 		bu_Database->myBlobCloud->cl_setBackupInfo(RETAIN(bu_info));
@@ -385,16 +397,16 @@ void MSBackup::completeBackup()
 
 bool MSBackup::doWork()
 {
-	CSMutex				*lock;
+	CSMutex				*my_lock;
 	MSRepository		*src_repo, *dst_repo;
 	MSRepoFile			*src_file, *dst_file;
-	off_t				src_offset, prev_offset;
+	off64_t				src_offset, prev_offset;
 	uint16_t				head_size;
 	uint64_t				blob_size, blob_data_size;
 	CSStringBuffer		*head;
 	MSRepoPointersRec	ptr;
-	u_int				table_ref_count;
-	u_int				blob_ref_count;
+	uint32_t				table_ref_count;
+	uint32_t				blob_ref_count;
 	int					ref_count;
 	size_t				ref_size;
 	uint32_t				auth_code;
@@ -455,11 +467,11 @@ bool MSBackup::doWork()
 				// A lock is required here because references and dereferences to the
 				// BLOBs can result in the repository record being updated while 
 				// it is being copied.
-				lock = &src_repo->myRepoLock[src_offset % CS_REPO_REC_LOCK_COUNT];
-				lock_(lock);
+				my_lock = &src_repo->myRepoLock[src_offset % CS_REPO_REC_LOCK_COUNT];
+				lock_(my_lock);
 				head->setLength(src_repo->myRepoBlobHeadSize);
 				if (src_file->read(head->getBuffer(0), src_offset, src_repo->myRepoBlobHeadSize, 0) < src_repo->myRepoBlobHeadSize) { 
-					unlock_(lock);
+					unlock_(my_lock);
 					break;
 				}
 					
@@ -497,7 +509,7 @@ bool MSBackup::doWork()
 					!VALID_BLOB_STATUS(status)) {
 					/* Can't be true. Assume this is garbage! */
 					src_offset++;
-					unlock_(lock);
+					unlock_(my_lock);
 					continue;
 				}
 				
@@ -505,7 +517,7 @@ bool MSBackup::doWork()
 				if ((status == MS_BLOB_REFERENCED) || (status == MS_BLOB_MOVED)) {
 					head->setLength(head_size);
 					if (src_file->read(head->getBuffer(0) + src_repo->myRepoBlobHeadSize, src_offset + src_repo->myRepoBlobHeadSize, head_size  - src_repo->myRepoBlobHeadSize, 0) != (head_size- src_repo->myRepoBlobHeadSize)) {
-						unlock_(lock);
+						unlock_(my_lock);
 						break;
 					}
 
@@ -548,7 +560,7 @@ bool MSBackup::doWork()
 								} else {
 									/* Can't be true. Assume this is garbage! */
 									src_offset++;
-									unlock_(lock);
+									unlock_(my_lock);
 									goto retry_read;
 								}
 								break;
@@ -560,7 +572,7 @@ bool MSBackup::doWork()
 					// If there are still blob references then the record needs to be backed up.
 					if (table_ref_count && blob_ref_count) {
 
-						off_t dst_offset;
+						off64_t dst_offset;
 
 						dst_offset = dst_repo->myRepoFileSize;
 						
@@ -601,7 +613,7 @@ bool MSBackup::doWork()
 						dst_repo->myRepoFileSize += head_size + blob_size;
 					}
 				}
-				unlock_(lock);
+				unlock_(my_lock);
 				src_offset += head_size + blob_size;
 			}
 			bu_completed += src_offset - prev_offset;
@@ -639,4 +651,4 @@ bool MSBackup::doWork()
 void *MSBackup::finalize()
 {
 	return NULL;
-};
+}

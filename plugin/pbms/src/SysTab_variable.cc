@@ -21,7 +21,14 @@
  * System variables table.
  *
  */
-#include "CSConfig.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/field/blob.h>
+#endif
+
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
 
 #include <sys/types.h>
@@ -29,14 +36,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#endif
-
 //#include "mysql_priv.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSLog.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSLog.h"
 
 #include "ha_pbms.h"
 //#include <plugin.h>
@@ -110,14 +113,7 @@ static char *cleanupVariable(char *value, int *len)
 }
 
 //---------------------------
-static const char *get_dflt(MSDatabase *db, const char *dflt_value)
-{
-	db->release();
-	return dflt_value;
-}
-
-//---------------------------
-static const char *get_DumpRestore(MSDatabase *db, const char *dflt_value)
+static const char *get_DumpRestore(MSDatabase *db, const char *)
 {
 	const char *value;
 	enter_();
@@ -131,7 +127,7 @@ static const char *get_DumpRestore(MSDatabase *db, const char *dflt_value)
 }
 
 //---------------------------
-static const char *readOnlyCheck(char *value, bool *ok)
+static const char *readOnlyCheck(char *, bool *ok)
 {
 	*ok = false;
 	return "Value is Read Only.";
@@ -226,7 +222,7 @@ static void set_StorageType(MSDatabase *db, const char *value)
 }
 
 //---------------------------
-const char *get_StorageType(MSDatabase *db, const char *dflt_value)
+const char *get_StorageType(MSDatabase *db, const char *)
 {
 	const char *value = "Unknown";
 	enter_();
@@ -242,7 +238,7 @@ const char *get_StorageType(MSDatabase *db, const char *dflt_value)
 }
 
 //---------------------------
-static const char *get_S3CloudRefNo(MSDatabase *db, const char *dflt_value)
+static const char *get_S3CloudRefNo(MSDatabase *db, const char *)
 {
 	static char value[20];
 	uint32_t	num;
@@ -281,7 +277,7 @@ static void set_BackupNo(MSDatabase *db, const char *value)
 }
 
 //---------------------------
-static const char *get_BackupNo(MSDatabase *db, const char *dflt_value)
+static const char *get_BackupNo(MSDatabase *db, const char *)
 {
 	const char *value;
 	enter_();
@@ -294,7 +290,7 @@ static const char *get_BackupNo(MSDatabase *db, const char *dflt_value)
 }
 
 static PBMSVariableRec variables[] = {
-	{false, "Storage-type", MS_REPOSITORY_STORAGE_TYPE, "How the BLOB data is to be stored.", true, get_StorageType, storageTypeCheck, set_StorageType},
+	{false, "Storage-Type", MS_REPOSITORY_STORAGE_TYPE, "How the BLOB data is to be stored.", true, get_StorageType, storageTypeCheck, set_StorageType},
 	{false, "S3-Cloud-Ref", NULL, "The S3 cloud reference id from the pbms.pbms_cloud table used for new BLOB storage.", true, get_S3CloudRefNo, NULL, set_S3CloudRefNo},
 	{false, RESTORE_DUMP_VAR, "FALSE", "Indicate if the database is being restored from a dump file.", false, get_DumpRestore, boolCheck, set_DumpRestore},
 	// Hidden variables should be placed at the end.
@@ -369,7 +365,7 @@ void MSVariableTable::loadTable(MSDatabase *db)
 			if (pos > size)
 				break;
 			
-			for (int i =0; i < num_variables; i++) {
+			for (uint32_t i =0; i < num_variables; i++) {
 				if (variables[i].save && variables[i].action && !strcmp(name, variables[i].name)) {
 					variables[i].action(RETAIN(db), value);
 				}
@@ -380,7 +376,7 @@ void MSVariableTable::loadTable(MSDatabase *db)
 		release_(string);
 
 	} else { // Set the default values
-		for (int i =0; i < num_variables; i++) {
+		for (uint32_t i =0; i < num_variables; i++) {
 			if (variables[i].value && variables[i].action) {
 				variables[i].action(RETAIN(db), variables[i].value);
 			}
@@ -424,7 +420,7 @@ void MSVariableTable::saveTable(MSDatabase *db)
 	CSPath			*old_path;
 	CSFile			*file;
 	const char		*value;
-	size_t			offset = 0, len, cnt;
+	size_t			offset = 0, len;
 	char			null_char = 0;
 	enter_();
 	
@@ -434,7 +430,7 @@ void MSVariableTable::saveTable(MSDatabase *db)
 	file = path->openFile(CSFile::CREATE | CSFile::TRUNCATE);
 	push_(file);
 	
-	for (int i = 0; i < num_variables; i++) {
+	for (uint32_t i = 0; i < num_variables; i++) {
 		if (! variables[i].save) continue;
 		
 		len = strlen(variables[i].name)+1;
@@ -532,7 +528,7 @@ bool MSVariableTable::seqScanNext(char *buf)
 			case 'N':
 				ASSERT(strcmp(curr_field->field_name, "Name") == 0);
 					curr_field->store(var->name, strlen(var->name), &UTF8_CHARSET);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				break;
 
 			case 'V': {
@@ -541,7 +537,7 @@ bool MSVariableTable::seqScanNext(char *buf)
 					value = var->get(RETAIN(myShare->mySysDatabase), var->value);
 					if (value) {
 						curr_field->store(value, strlen(value), &UTF8_CHARSET);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 					}
 				}
 				break;
@@ -549,7 +545,7 @@ bool MSVariableTable::seqScanNext(char *buf)
 			case 'D':
 				ASSERT(strcmp(curr_field->field_name, "Description") == 0);
 					curr_field->store(var->info, strlen(var->info), &UTF8_CHARSET);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				break;
 
 		}
@@ -657,7 +653,7 @@ void MSVariableTable::setVariable(MSDatabase *db, const char *name, const char *
 	
 	push_(db);
 	
-	for (int i =0; db && i < num_variables; i++) {
+	for (uint32_t i =0; db && i < num_variables; i++) {
 		if (variables[i].action && !strcmp(name, variables[i].name)) {
 			variables[i].action(RETAIN(db), value);
 			if (variables[i].save) {

@@ -29,7 +29,7 @@
 #ifndef __TRANSCACHE_MS_H__
 #define __TRANSCACHE_MS_H__
 
-#include "CSDefs.h"
+#include "cslib/CSDefs.h"
 #include "TransLog_ms.h"
 
 #define TRANS_CACHE_NEW_REF	((TRef)-1)

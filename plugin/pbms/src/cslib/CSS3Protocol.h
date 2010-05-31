@@ -32,7 +32,6 @@ class S3ProtocolCon;
 
 class CSS3Protocol: public CSRefObject {
 	private:
-	S3ProtocolCon *con_data;
 	
 	CSStringBuffer *s3_server;
 	
@@ -103,7 +102,7 @@ class CSS3Protocol: public CSRefObject {
 	// s3_getAuthorization() returns the S3 Authorization sting and the time on which it was based.
 	CSString *s3_getAuthorization(const char *bucket, const char *key, const char *content_type, uint32_t *s3AuthorizationTime);
 	
-	CSVector *s3_send(CSInputStream *input, const char *bucket, const char *key, off_t size, const char *content_type = NULL, Md5Digest *digest = NULL, const char *s3Authorization = NULL, time_t s3AuthorizationTime = 0);
+	CSVector *s3_send(CSInputStream *input, const char *bucket, const char *key, off64_t size, const char *content_type = NULL, Md5Digest *digest = NULL, const char *s3Authorization = NULL, time_t s3AuthorizationTime = 0);
 
 	// s3_receive() returns false if the object was not found.
 	CSVector *s3_receive(CSOutputStream *output, const char *bucket, const char *key, bool *found);

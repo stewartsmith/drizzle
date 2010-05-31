@@ -35,17 +35,17 @@
 #include "CSMemory.h"
 #include "CSGlobal.h"
 
-size_t cs_utf_to_uni_char(const char *in_string, u_int *ret_value)
+size_t cs_utf_to_uni_char(const char *in_string, uint32_t *ret_value)
 {
 	u_char	*i_string = (u_char *) in_string;
 	size_t	s_len = strlen(in_string);
 	u_char	ch;
-	u_int	val;
+	uint32_t	val;
 	size_t	clen;
 
 	ch = *i_string;
 	if ((ch & 0x80) == 0x00) {
-		val = (u_int) ch & 0x0000007F;
+		val = (uint32_t) ch & 0x0000007F;
 		clen = 1;
 	}
 	else if ((ch & 0xE0) == 0xC0) {
@@ -134,7 +134,7 @@ size_t cs_utf_to_uni_char(const char *in_string, u_int *ret_value)
 
 void cs_utf8_to_uni(size_t out_len, unichar *out_string, const char *in_string)
 {
-	u_int	utf_value;
+	uint32_t	utf_value;
 
 	out_len--;  // Space for zero terminator
 	while (*in_string) {
@@ -153,7 +153,7 @@ void cs_utf8_to_uni(size_t out_len, unichar *out_string, const char *in_string)
 
 void cs_utf8_to_uni_no_term(size_t out_len, unichar *out_string, const char *in_string)
 {
-	u_int	utf_value;
+	uint32_t	utf_value;
 
 	while (*in_string) {
 		in_string += cs_utf_to_uni_char(in_string, &utf_value);

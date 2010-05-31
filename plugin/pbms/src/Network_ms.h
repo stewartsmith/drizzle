@@ -30,9 +30,9 @@
 #ifndef __NETWORK_MS_H__
 #define __NETWORK_MS_H__
 
-#include "CSDefs.h"
-#include "CSSocket.h"
-#include "CSThread.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSSocket.h"
+#include "cslib/CSThread.h"
 #include "ConnectionHandler_ms.h"
 
 class MSSystemThread : public CSDaemon {
@@ -62,7 +62,7 @@ public:
 	static CSSync				gListenerLock;
 	static CSSocket				*gListenerSocket;
 	static MSConnectionHandler	*gListenerThread;
-	static u_int				gWaitingToListen;
+	static uint32_t				gWaitingToListen;
 
 private:
 	static int					handlerCount;

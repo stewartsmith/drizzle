@@ -27,18 +27,18 @@
  *
  */
 
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSStorage.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSStorage.h"
 
 #include "TempLog_ms.h"
 #include "OpenTable_ms.h"
 #include "TransLog_ms.h"
 #include "Transaction_ms.h"
 
-u_long				MSTempLog::gTempBlobTimeout;
+u_long MSTempLog::gTempBlobTimeout;
 
 // Search the transaction log for a MS_ReferenceTxn record for the given BLOB.
 // Just search the log file and not the cache. Seaching the cache may be faster but
@@ -62,6 +62,8 @@ class SearchTXNLog : ReadTXNLog {
 	virtual bool rl_CanContinue() { return ((!st_found) || !st_terminated);}
 	virtual void rl_Load(uint64_t log_position, MSTransPtr rec) 
 	{
+		(void) log_position;
+		
 		if ( !st_found && (TRANS_TYPE(rec->tr_type) != MS_ReferenceTxn))
 			return;
 		
@@ -104,7 +106,7 @@ MSTempLogFile::~MSTempLogFile()
 		myTempLog->release();
 }
 
-MSTempLogFile *MSTempLogFile::newTempLogFile(u_int id, MSTempLog *temp_log, CSFile *file)
+MSTempLogFile *MSTempLogFile::newTempLogFile(uint32_t id, MSTempLog *temp_log, CSFile *file)
 {
 	MSTempLogFile *f;
 	
@@ -121,7 +123,7 @@ MSTempLogFile *MSTempLogFile::newTempLogFile(u_int id, MSTempLog *temp_log, CSFi
 	return f;
 }
 
-MSTempLog::MSTempLog(u_int id, MSDatabase *db, off_t file_size):
+MSTempLog::MSTempLog(uint32_t id, MSDatabase *db, off64_t file_size):
 CSRefObject(),
 myLogID(id),
 myTempLogSize(file_size),
@@ -221,7 +223,7 @@ time_t MSTempLog::adjustWaitTime(time_t then, time_t now)
 {
 	time_t wait;
 
-	if (now < then + gTempBlobTimeout) {
+	if (now < (time_t)(then + gTempBlobTimeout)) {
 		wait = ((then + gTempBlobTimeout - now) * 1000);
 		if (wait < 2000)
 			wait = 2000;
@@ -324,7 +326,7 @@ bool MSTempLogThread::doWork()
 			then = CS_GET_DISK_4(log_item.ti_time_4);
 
 			now = time(NULL);
-			if (now < then + MSTempLog::gTempBlobTimeout) {
+			if (now < (time_t)(then + MSTempLog::gTempBlobTimeout)) {
 				/* Time has not yet exired, adjust wait time: */
 				myWaitTime = MSTempLog::adjustWaitTime(then, now);
 				break;
@@ -339,7 +341,7 @@ bool MSTempLogThread::doWork()
 
 					if ((repo_file = iTempLogDatabase->getRepoFileFromPool(tab_id, true))) {
 						frompool_(repo_file);
-						repo_file->checkBlob(NULL, buffer, blob_id, auth_code, iTempLogFile->myTempLogID, iLogOffset);
+						repo_file->checkBlob(buffer, blob_id, auth_code, iTempLogFile->myTempLogID, iLogOffset);
 						backtopool_(repo_file);
 					}
 				}
@@ -418,5 +420,5 @@ void *MSTempLogThread::finalize()
 {
 	close();
 	return NULL;
-};
+}
 

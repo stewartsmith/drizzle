@@ -69,7 +69,7 @@ CSOutputStream *CSFile::getOutputStream()
 	return CSFileOutputStream::newStream(RETAIN(this));
 }
 
-CSOutputStream *CSFile::getOutputStream(off_t offset)
+CSOutputStream *CSFile::getOutputStream(off64_t offset)
 {
 	return CSFileOutputStream::newStream(RETAIN(this), offset);
 }
@@ -79,7 +79,7 @@ CSInputStream *CSFile::getInputStream()
 	return CSFileInputStream::newStream(RETAIN(this));
 }
 
-CSInputStream *CSFile::getInputStream(off_t offset)
+CSInputStream *CSFile::getInputStream(off64_t offset)
 {
 	return CSFileInputStream::newStream(RETAIN(this), offset);
 }
@@ -125,12 +125,12 @@ void CSFile::open(int mode)
 	exit_();
 }
 
-bool CSFile::transfer(CSFile *dst_file, off_t dst_offset, CSFile *src_file, off_t src_offset, off_t size, char *buffer, size_t buffer_size)
+bool CSFile::transfer(CSFile *dst_file, off64_t dst_offset, CSFile *src_file, off64_t src_offset, off64_t size, char *buffer, size_t buffer_size)
 {
 	size_t tfer;
 
 	while (size > 0) {
-		if (size > (off_t) buffer_size)
+		if (size > (off64_t) buffer_size)
 			tfer = buffer_size;
 		else
 			tfer = (size_t) size;
@@ -155,7 +155,7 @@ void CSFile::close()
 	}
 }
 
-off_t CSFile::getEOF()
+off64_t CSFile::getEOF()
 {
 	off_t eof;
 
@@ -165,13 +165,13 @@ off_t CSFile::getEOF()
      return eof;
 }
 
-void CSFile::setEOF(off_t offset)
+void CSFile::setEOF(off64_t offset)
 {
 	if (ftruncate(iFH, offset) == -1)
 		CSException::throwFileError(CS_CONTEXT, myFilePath->getCString(), errno);
 }
 
-size_t CSFile::read(void *data, off_t offset, size_t size, size_t min_size)
+size_t CSFile::read(void *data, off64_t offset, size_t size, size_t min_size)
 {
 	ssize_t read_size;
 	
@@ -185,7 +185,7 @@ size_t CSFile::read(void *data, off_t offset, size_t size, size_t min_size)
 	return_(read_size);
 }
 
-void CSFile::write(const void *data, off_t offset, size_t size)
+void CSFile::write(const void *data, off64_t offset, size_t size)
 {
 	size_t write_size;
 
@@ -243,7 +243,7 @@ void CSFile::openFile(int mode)
 
 	/* Does not make sense to truncate, and have READONLY! */
 	if ((mode & TRUNCATE) && !(mode & READONLY))
-		setEOF((off_t) 0);
+		setEOF((off64_t) 0);
 }
 
 /*
@@ -275,16 +275,16 @@ void CSReadBufferedFile::close()
 	iBufferDataLen = 0;
 }
 
-off_t CSReadBufferedFile::getEOF()
+off64_t CSReadBufferedFile::getEOF()
 {
-	off_t eof = myFile->getEOF();
+	off64_t eof = myFile->getEOF();
 
 	if (eof < iFileBufferOffset + iBufferDataLen)
 		return iFileBufferOffset + iBufferDataLen;
 	return eof;
 }
 
-void CSReadBufferedFile::setEOF(off_t offset)
+void CSReadBufferedFile::setEOF(off64_t offset)
 {
 	myFile->setEOF(offset);
 	if (offset < iFileBufferOffset) {
@@ -295,7 +295,7 @@ void CSReadBufferedFile::setEOF(off_t offset)
 		iBufferDataLen = offset - iFileBufferOffset;
 }
 
-size_t CSReadBufferedFile::read(void *data, off_t offset, size_t size, size_t min_size)
+size_t CSReadBufferedFile::read(void *data, off64_t offset, size_t size, size_t min_size)
 {
 	size_t result;
 	size_t tfer = 0;
@@ -368,7 +368,7 @@ size_t CSReadBufferedFile::read(void *data, off_t offset, size_t size, size_t mi
 	return result + tfer;
 }
 
-void CSReadBufferedFile::write(const void *data, off_t offset, size_t size)
+void CSReadBufferedFile::write(const void *data, off64_t offset, size_t size)
 {
 	if (iBufferDataLen > 0) {
 		size_t tfer;
@@ -397,7 +397,6 @@ void CSReadBufferedFile::write(const void *data, off_t offset, size_t size)
 		// else 5
 	}
 
-	writeit:
 	myFile->write(data, offset, size);
 }
 
@@ -441,7 +440,7 @@ CSFile *CSReadBufferedFile::newFile(CSFile *file)
  * A BUFFERED FILE
  */
 
-void CSBufferedFile::write(const void *data, off_t offset, size_t size)
+void CSBufferedFile::write(const void *data, off64_t offset, size_t size)
 {
 	if (iBufferDataLen > 0) {
 		if (offset < iFileBufferOffset && offset <= iFileBufferOffset + iBufferDataLen) {
@@ -450,7 +449,6 @@ void CSBufferedFile::write(const void *data, off_t offset, size_t size)
 			tfer = iFileBufferOffset + SC_DEFAULT_FILE_BUFFER_SIZE - offset;
 			if (tfer >= size) {
 				memcpy(iFileBuffer + (offset - iFileBufferOffset), data, size);
-				size;
 			}
 			size -= tfer;
 			data = (char *) data + tfer;
@@ -458,7 +456,6 @@ void CSBufferedFile::write(const void *data, off_t offset, size_t size)
 		flush();
 	}
 
-	writeit:
 	if (size < SC_DEFAULT_FILE_BUFFER_SIZE) {
 		iFileBufferOffset = offset;
 		iBufferDataLen = size;

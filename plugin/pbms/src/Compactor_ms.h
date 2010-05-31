@@ -37,8 +37,8 @@
 #ifndef __COMPACTOR_MS_H__
 #define __COMPACTOR_MS_H__
 
-#include "CSDefs.h"
-#include "CSFile.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSFile.h"
 
 class MSDatabase;
 

@@ -160,11 +160,11 @@ public:
 	virtual void reset(); 
 
 	static CSFileInputStream *newStream(CSFile* f);
-	static CSFileInputStream *newStream(CSFile* f, off_t offset);
+	static CSFileInputStream *newStream(CSFile* f, off64_t offset);
 
 private:
 	CSFile	*iFile;
-	off_t	iReadOffset;
+	off64_t	iReadOffset;
 };
 
 class CSFileOutputStream : public CSOutputStream {
@@ -185,11 +185,11 @@ public:
 	virtual void reset(); 
 
 	static CSFileOutputStream *newStream(CSFile* f);
-	static CSFileOutputStream *newStream(CSFile* f, off_t offset);
+	static CSFileOutputStream *newStream(CSFile* f, off64_t offset);
 
 private:
 	CSFile	*iFile;
-	off_t	iWriteOffset;
+	off64_t	iWriteOffset;
 };
 
 /* Socket Stream */
@@ -266,8 +266,8 @@ public:
 private:
 	CSInputStream* iStream;
 	u_char iBuffer[CS_STREAM_BUFFER_SIZE];
-	u_int iBuffTotal;
-	u_int iBuffPos;
+	uint32_t iBuffTotal;
+	uint32_t iBuffPos;
 };
 
 class CSBufferedOutputStream : public CSOutputStream {
@@ -292,7 +292,7 @@ public:
 private:
 	CSOutputStream* iStream;
 	u_char iBuffer[CS_STREAM_BUFFER_SIZE];
-	u_int iBuffTotal;
+	uint32_t iBuffTotal;
 };
 
 /* memory Stream */
@@ -331,12 +331,12 @@ public:
 
 	virtual void reset() {iMemPos = 0;}
 	
-	static CSMemoryInputStream *newStream(const u_char* buffer, u_int length);
+	static CSMemoryInputStream *newStream(const u_char* buffer, uint32_t length);
 
 private:
 	const u_char *iMemory;
-	u_int iMemTotal;
-	u_int iMemPos;
+	uint32_t iMemTotal;
+	uint32_t iMemPos;
 };
 
 
@@ -366,15 +366,15 @@ public:
 
 private:
 	u_char *iMemory;
-	u_int iMemTotal;
-	u_int iMemSpace;
-	u_int iMemMin;
+	uint32_t iMemTotal;
+	uint32_t iMemSpace;
+	uint32_t iMemMin;
 	u_char *iMemPos;
 };
 
 class CSStaticMemoryOutputStream : public CSOutputStream {
 public:
-	CSStaticMemoryOutputStream(u_char *mem, off_t size): iMemory(mem), iMemSpace(size), iMemSize(size), iMemPos(mem){ }
+	CSStaticMemoryOutputStream(u_char *mem, off64_t size): iMemory(mem), iMemSpace(size), iMemSize(size), iMemPos(mem){ }
 	virtual ~CSStaticMemoryOutputStream() {}
 
 	virtual void close() {}
@@ -392,12 +392,12 @@ public:
 		iMemSpace = iMemSize;
 	}
 	
-	off_t getSize() { return iMemPos - iMemory; }
+	off64_t getSize() { return iMemPos - iMemory; }
 
 private:
 	u_char *iMemory;
-	off_t iMemSpace;
-	off_t iMemSize;
+	off64_t iMemSpace;
+	off64_t iMemSize;
 	u_char *iMemPos;
 };
 

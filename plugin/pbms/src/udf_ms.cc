@@ -29,7 +29,7 @@
  *
  */
 
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -40,9 +40,9 @@
 #include <mysql.h>
 #include <ctype.h>
 
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSThread.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSThread.h"
 
 #include "Engine_ms.h"
 

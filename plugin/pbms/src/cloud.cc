@@ -20,22 +20,34 @@
  *
  */
  
-#include "CSConfig.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/message/table.pb.h>
+#include "drizzled/charset_info.h"
+#include <drizzled/table_proto.h>
+#include <drizzled/session.h>
+#include <drizzled/field.h>
+#endif
+
+#include "cslib/CSConfig.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 
-#include "CSGlobal.h"
-#include "CSThread.h"
-#include "CSLog.h"
-#include "CSPath.h"
-#include "CSFile.h"
-#include "CSString.h"
-#include "CSStrUtil.h"
-#include "CSStorage.h"
-#include "CSEncode.h"
-#include "CSS3Protocol.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSThread.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSPath.h"
+#include "cslib/CSFile.h"
+#include "cslib/CSString.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSStorage.h"
+#include "cslib/CSEncode.h"
+#include "cslib/CSS3Protocol.h"
 
 #include "backup_ms.h"
 #include "cloud.h"
@@ -112,7 +124,7 @@ CSString *MSCloudInfo::getDataURL(const char *key, int keep_alive)
 }
 
 //-------------------------------
-void MSCloudInfo::send(CSInputStream *input, const char *key, off_t size)
+void MSCloudInfo::send(CSInputStream *input, const char *key, off64_t size)
 {
 	CSVector *headers;
 	headers = s3Prot->s3_send(input, bucket->getCString(), key, size);
@@ -172,17 +184,17 @@ void MSCloudInfo::copy(MSCloudInfo *dst_cloud, const char *dst_key, const char *
 
 //==============================
 CloudDB::CloudDB(uint32_t db_id):
-	isBackup(false),
+	dfltCloudRefId(0),
+	keep_alive(5 * 60),// default URL keep alive in seconds.
 	blob_recovery_no(0),
 	blob_db_id(db_id),
-	dfltCloudRefId(0),
-	backupCloud(NULL),
+	isBackup(false),
 	backupInfo(NULL),
+	backupCloud(NULL),
 	clObjectKey(NULL)
 {
 	enter_();
 
-	keep_alive = (5 * 60); // default URL keep alive in seconds.
 	new_(clObjectKey, CSStringBuffer());
 	clObjectKey->setLength(base_key_size);
 		
@@ -293,7 +305,6 @@ void CloudDB::cl_restoreDB()
 		if (dst_cloud)
 			dst_cloud->release();
 	}
-	cont_(a);
 	
 	blob_recovery_no = 0;
 	release_(list);
@@ -475,14 +486,13 @@ void CloudDB::cl_dropDB()
 			s3Cloud = (MSCloudInfo*)MSCloudInfo::gCloudInfo->itemAt(i++);// <-- unreferenced object
 	}
 	
-done:
 	unlock_(MSCloudInfo::gCloudInfo);
 	release_(objectKey);
 	exit_();
 }
 
 //-------------------------------
-void CloudDB::cl_putData(CloudKeyPtr key, CSInputStream *stream, off_t size)
+void CloudDB::cl_putData(CloudKeyPtr key, CSInputStream *stream, off64_t size)
 {
 	CloudObjectKey *objectKey;
 	MSCloudInfo *s3Cloud;
@@ -508,7 +518,7 @@ void CloudDB::cl_putData(CloudKeyPtr key, CSInputStream *stream, off_t size)
 }
 
 //-------------------------------
-off_t CloudDB::cl_getData(CloudKeyPtr key,  char *buffer, off_t size)
+off64_t CloudDB::cl_getData(CloudKeyPtr key,  char *buffer, off64_t size)
 {	
 	CloudObjectKey *objectKey;
 	CSStaticMemoryOutputStream *output;

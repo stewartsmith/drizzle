@@ -22,7 +22,7 @@
  *
  */
 
-#include "CSLog.h"
+#include "cslib/CSLog.h"
 
 class SysTabRec: public CSRefStringBuffer {	
 	void logError(const char *text = NULL);
@@ -39,14 +39,15 @@ class SysTabRec: public CSRefStringBuffer {
 
 	SysTabRec(const char *db_name_arg, const char *file_name_arg, const char *table_name_arg): 
 		CSRefStringBuffer(64),
+		badRecord(false),
+		recordLength(0),
+		start_of_record(0),
 		db_name(db_name_arg),
 		file_name(file_name_arg),
 		table_name(table_name_arg),
 		ptr(NULL),
-		start_of_record(0),
 		end_of_record(NULL),
-		end_of_data(NULL),
-		recordLength(0)
+		end_of_data(NULL)
 	{
 	}
 	

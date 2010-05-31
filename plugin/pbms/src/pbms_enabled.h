@@ -36,7 +36,7 @@
 #include "pbms.h"
 
 #ifdef DRIZZLED
-#include <drizzled/server_includes.h>
+#include <drizzled/common.h>
 #define TABLE Table
 #define uchar unsigned char
 #else

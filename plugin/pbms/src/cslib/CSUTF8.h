@@ -36,7 +36,7 @@
  * Convert a UTF-8 string to a unicode value.
  * This function returns the length of the unicode character.
  */
-size_t cs_utf_to_uni_char(const u_char *in_string, u_int *uni_value);
+size_t cs_utf_to_uni_char(const u_char *in_string, uint32_t *uni_value);
 
 void cs_utf8_to_uni(size_t out_len, unichar *out_string, const char *in_string);
 

@@ -28,13 +28,20 @@
  */
 
 #ifdef DRIZZLED
-#include <drizzled/server_includes.h>
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
 #include <drizzled/table.h>
+#include <drizzled/field.h>
 #include <drizzled/field/blob.h>
-#include <drizzled/current_session.h>
+
+#include <drizzled/message/table.pb.h>
+#include "drizzled/charset_info.h"
+#include <drizzled/table_proto.h>
 #endif
 
-#include "CSConfig.h"
+
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
 
 #include <sys/types.h>
@@ -45,8 +52,8 @@
 //#include "mysql_priv.h"
 //#include <plugin.h>
 
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
 #include "ha_pbms.h"
 
 #include "ms_mysql.h"
@@ -57,7 +64,6 @@
 #include "Compactor_ms.h"
 #include "OpenTable_ms.h"
 #include "Util_ms.h"
-#include "Discover_ms.h"
 #include "metadata_ms.h"
 #include "alias_ms.h"
 #include "cloud.h"
@@ -69,6 +75,9 @@
 #include "SysTab_cloud.h"
 #include "SysTab_backup.h"
 #include "SysTab_enabled.h"
+#ifndef DRIZZLED
+#include "Discover_ms.h"
+#endif
 
 ///* Note: mysql_priv.h messes with new, which caused a crash. */
 //#ifdef new
@@ -95,11 +104,13 @@ static DT_FIELD_INFO pbms_repository_info[]=
 	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
+#ifdef PBMS_HAS_KEYS
 static DT_KEY_INFO pbms_repository_keys[]=
 {
 	{"pbms_repository_pk", PRI_KEY_FLAG, {"Repository_id", "Repo_blob_offset", NULL}},
 	{NULL, 0, {NULL}}
 };
+#endif
 
 static DT_FIELD_INFO pbms_metadata_info[]=
 {
@@ -110,11 +121,13 @@ static DT_FIELD_INFO pbms_metadata_info[]=
 	{NULL,					NULL,					NULL, MYSQL_TYPE_STRING,	NULL, 0, NULL}
 };
 
+#ifdef PBMS_HAS_KEYS
 static DT_KEY_INFO pbms_metadata_keys[]=
 {
 	{"pbms_metadata_pk", PRI_KEY_FLAG, {"Repository_id", "Repo_blob_offset", NULL}},
 	{NULL, 0, {NULL}}
 };
+#endif
 
 
 #ifdef HAVE_ALIAS_SUPPORT
@@ -141,11 +154,13 @@ static DT_FIELD_INFO pbms_blobs_info[]=
 	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
+#ifdef PBMS_HAS_KEYS
 static DT_KEY_INFO pbms_blobs_keys[]=
 {
 	{"pbms_blobs_pk", PRI_KEY_FLAG, {"Repository_id", "Repo_blob_offset", NULL}},
 	{NULL, 0, {NULL}}
 };
+#endif
 
 static DT_FIELD_INFO pbms_reference_info[]=
 {
@@ -163,12 +178,14 @@ static DT_FIELD_INFO pbms_reference_info[]=
 	{NULL,NULL, NULL, MYSQL_TYPE_STRING,NULL, 0, NULL}
 };
 
+#ifdef PBMS_HAS_KEYS
 static DT_KEY_INFO pbms_reference_keys[]=
 {
 	{"pbms_reference_pk", PRI_KEY_FLAG, {"Table_name", "Blob_id", NULL}},
 	{"pbms_reference_k", MULTIPLE_KEY_FLAG, {"Repository_id", "Repo_blob_offset", NULL}},
 	{NULL, 0, {NULL}}
 };
+#endif
 
 
 typedef enum {	SYS_REP = 0, 
@@ -235,19 +252,146 @@ static INTERRNAL_TABLE_INFO pbms_internal_tables[]=
 	{ true, sysTableNames[SYS_ENABLED], pbms_enabled_info, NULL},
 #endif
 
-	{ NULL, NULL, NULL}
+	{ false, NULL, NULL, NULL}
 	
 };
 
 //--------------------------
-const char *pbms_getSysTableName(int i)
+static SysTableType pbms_systable_type(const char *table)
 {
-	if ((i < 0) || (i >= SYS_UNKNOWN))
-		return NULL;
-		
-	return sysTableNames[i];
+	int i = 0;
+	
+	while ((i < SYS_UNKNOWN) && strcasecmp(table, sysTableNames[i])) i++;
+	
+	return((SysTableType) i );
 }
 
+//--------------------------
+bool PBMSSystemTables::isSystable(const char *table)
+{
+	return( pbms_systable_type(table) !=  SYS_UNKNOWN);
+}
+
+//--------------------------
+#ifdef DRIZZLED
+using namespace std;
+using namespace drizzled;
+#undef TABLE
+#undef Field
+static int pbms_create_proto_table(const char *engine_name, const char *name, DT_FIELD_INFO *info, DT_KEY_INFO *keys, drizzled::message::Table *table)
+{
+  message::Table::Field *field;
+  message::Table::Field::FieldConstraints *field_constraints;
+  message::Table::Field::StringFieldOptions *string_field_options;
+
+	table->set_name(name);
+	table->set_type(message::Table::STANDARD);
+	table->mutable_engine()->set_name(engine_name);
+	
+	while (info->field_name) {	
+		field= table->add_field();
+		
+		field->set_name(info->field_name);
+		if (info->comment)
+			field->set_comment(info->comment);
+			
+		field_constraints= field->mutable_constraints();
+		if (info->field_flags & NOT_NULL_FLAG)
+			field_constraints->set_is_nullable(true);
+		else
+			field_constraints->set_is_nullable(false);
+		
+		if (info->field_flags & UNSIGNED_FLAG)
+			field_constraints->set_is_unsigned(true);
+		else
+			field_constraints->set_is_unsigned(false);
+
+		switch (info->field_type) {
+			case DRIZZLE_TYPE_VARCHAR:
+				string_field_options = field->mutable_string_options();
+				
+				field->set_type(message::Table::Field::VARCHAR);
+				string_field_options->set_length(info->field_length);
+				if (info->field_charset) {
+					string_field_options->set_collation(info->field_charset->name);
+					string_field_options->set_collation_id(info->field_charset->number);
+				}
+				break;
+				
+			case DRIZZLE_TYPE_LONG:
+				field->set_type(message::Table::Field::INTEGER);
+				break;
+				
+			case DRIZZLE_TYPE_DOUBLE:
+				field->set_type(message::Table::Field::DOUBLE);
+				break;
+				
+			case DRIZZLE_TYPE_LONGLONG:
+				field->set_type(message::Table::Field::BIGINT);
+				break;
+				
+			case DRIZZLE_TYPE_TIMESTAMP:
+				field->set_type(message::Table::Field::TIMESTAMP);
+				break;
+				
+			case DRIZZLE_TYPE_BLOB:
+				field->set_type(message::Table::Field::BLOB);
+				if (info->field_charset) {
+					string_field_options = field->mutable_string_options();
+					string_field_options->set_collation(info->field_charset->name);
+					string_field_options->set_collation_id(info->field_charset->number);
+				}
+				break;
+				
+			default:
+				assert(0); 
+			
+				
+		}
+	}
+	
+			
+	if (keys) {
+		while (keys->key_name) {
+			// To be done later. (maybe)
+			keys++;
+		}
+	}
+
+	return 0;
+}
+#define TABLE								drizzled::Table
+#define Field								drizzled::Field
+
+int PBMSSystemTables::getSystemTableInfo(const char *name, drizzled::message::Table *table)
+{
+	int err = 1, i = 0;
+			
+	while (pbms_internal_tables[i].name) {
+		if (strcasecmp(name, pbms_internal_tables[i].name) == 0){
+			err = pbms_create_proto_table("PBMS", name, pbms_internal_tables[i].info, pbms_internal_tables[i].keys, table);
+			break;
+		}
+		i++;
+	}
+	
+	return err;
+}
+
+void PBMSSystemTables::getSystemTableNames(bool isPBMS, std::set<std::string> &set_of_names)
+{
+	int i = 0;
+			
+	while (pbms_internal_tables[i].name) {
+		if ( isPBMS == pbms_internal_tables[i].is_pbms){
+			set_of_names.insert(pbms_internal_tables[i].name);
+		}
+		i++;
+	}
+	
+}
+
+#else // DRIZZLED
 //--------------------------
 static bool pbms_database_follder_exists( const char *db)
 {
@@ -266,47 +410,21 @@ static bool pbms_database_follder_exists( const char *db)
 	return false;
 }
 
-//--------------------------
-static SysTableType pbms_systable_type(const char *table)
-{
-	int i = 0;
-	
-	while ((i < SYS_UNKNOWN) && strcasecmp(table, sysTableNames[i])) i++;
-	
-	return((SysTableType) i );
-}
-
-//--------------------------
-bool pbms_is_Systable(const char *table)
-{
-	return( pbms_systable_type(table) !=  SYS_UNKNOWN);
-}
-
-//--------------------------
-#ifdef DRIZZLED
-int pbms_discover_system_tables(const char *name, drizzled::message::Table *table)
-#else
 int pbms_discover_system_tables(handlerton *hton, THD* thd, const char *db, const char *name, uchar **frmblob, size_t *frmlen)
-#endif
 {
 	int err = 1, i = 0;
 	bool is_pbms = false;
 
-#ifndef DRIZZLED
 	// Check that the database exists!
 	if (!pbms_database_follder_exists(db))
 		return err;
-#endif
 		
 	is_pbms = (strcmp(db, "pbms") == 0);
+		
 	
 	while (pbms_internal_tables[i].name) {
 		if ((!strcasecmp(name, pbms_internal_tables[i].name)) && ( is_pbms == pbms_internal_tables[i].is_pbms)){
-#ifdef DRIZZLED
-			err = ms_create_proto_table("PBMS", name, pbms_internal_tables[i].info, pbms_internal_tables[i].keys, table);
-#else
 			err = ms_create_table_frm(hton, thd, db, name, pbms_internal_tables[i].info, pbms_internal_tables[i].keys, frmblob, frmlen);
-#endif
 			break;
 		}
 		i++;
@@ -314,9 +432,10 @@ int pbms_discover_system_tables(handlerton *hton, THD* thd, const char *db, cons
 	
 	return err;
 }
+#endif // DRIZZLED
 
 // Transfer any physical PBMS ststem tables to another database.
-void pbms_transfer_ststem_tables(MSDatabase *dst_db, MSDatabase *src_db)
+void PBMSSystemTables::transferSystemTables(MSDatabase *dst_db, MSDatabase *src_db)
 {
 	enter_();
 	push_(dst_db);
@@ -333,7 +452,7 @@ void pbms_transfer_ststem_tables(MSDatabase *dst_db, MSDatabase *src_db)
 }
 
 //----------------
-void pbms_remove_ststem_tables(CSString *db_path)
+void PBMSSystemTables::removeSystemTables(CSString *db_path)
 {
 	enter_();
 	push_(db_path);
@@ -348,7 +467,7 @@ void pbms_remove_ststem_tables(CSString *db_path)
 }
 
 //----------------
-void pbms_load_system_tables(MSDatabase *db)
+void PBMSSystemTables::loadSystemTables(MSDatabase *db)
 {
 	enter_();
 	push_(db);
@@ -399,10 +518,10 @@ typedef union {
 		DumpHeaderPtr dumpHeader;
 } DumpDiskData;
 
-CSStringBuffer *pbms_dump_system_tables(MSDatabase *db)
+CSStringBuffer *PBMSSystemTables::dumpSystemTables(MSDatabase *db)
 {
 	CSStringBuffer *sysDump, *tabDump;
-	uint32_t size, tab = 0, pos, tab_version;
+	uint32_t size, pos, tab_version;
 	uint8_t tab_id;
 	DumpDiskData	d;
 
@@ -463,7 +582,7 @@ CSStringBuffer *pbms_dump_system_tables(MSDatabase *db)
 }
 
 //----------------
-void pbms_restore_system_tables(MSDatabase *db, const char *data, size_t size)
+void PBMSSystemTables::restoreSystemTables(MSDatabase *db, const char *data, size_t size)
 {
 	uint32_t tab_size, tab_version;
 	uint8_t tab_id;
@@ -529,7 +648,7 @@ void pbms_restore_system_tables(MSDatabase *db, const char *data, size_t size)
  * MYSQL UTILITIES
  */
 
-void ms_my_set_notnull_in_record(Field *field, char *record)
+void MSOpenSystemTable::setNotNullInRecord(Field *field, char *record)
 {
 	if (field->null_ptr)
 		record[(uint) (field->null_ptr - (uchar *) field->table->record[0])] &= (uchar) ~field->null_bit;
@@ -774,7 +893,7 @@ bool MSRepositoryTable::returnRecord(char *buf)
 }
 
 //-----------------------
-bool MSRepositoryTable::returnSubRecord(char *buf)
+bool MSRepositoryTable::returnSubRecord(char *)
 {
 	return false;
 }
@@ -831,12 +950,12 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 					case 'd':
 						ASSERT(strcmp(curr_field->field_name, "Access_code") == 0);
 						curr_field->store(access_code, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'u':
 						ASSERT(strcmp(curr_field->field_name, "Access_count") == 0);
 						curr_field->store(access_count, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 				}
 				break;
@@ -846,13 +965,13 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 						// Repository_id     INT
 						ASSERT(strcmp(curr_field->field_name, "Repository_id") == 0);
 						curr_field->store(iRepoFile->myRepo->getRepoID(), true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'l':
 						// Repo_blob_offset  BIGINT
 						ASSERT(strcmp(curr_field->field_name, "Repo_blob_offset") == 0);
 						curr_field->store(iRepoOffset, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 				}
 				break;
@@ -862,7 +981,7 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 						// Blob_size         BIGINT
 						ASSERT(strcmp(curr_field->field_name, "Blob_size") == 0);
 						curr_field->store(blob_size, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'a':
 						// Blob_alias         
@@ -879,7 +998,7 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 							unlock_(lock);
 							blob_alias[rsize] = 0;
 							curr_field->store(blob_alias, strlen(blob_alias), &my_charset_utf8_general_ci);
-							ms_my_set_notnull_in_record(curr_field, buf);
+							setNotNullInRecord(curr_field, buf);
 						} else {
 							curr_field->store((uint64_t) 0, true);
 						}
@@ -898,7 +1017,7 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 					ASSERT(strcmp(curr_field->field_name, "MD5_Checksum") == 0);
 					cs_bin_to_hex(sizeof(Md5Digest) *2, checksum, sizeof(Md5Digest), &(blob->rb_blob_checksum_md5d));
 					curr_field->store(checksum, sizeof(Md5Digest) *2, system_charset_info);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 					
 				} else
 					curr_field->store((uint64_t) 0, true);
@@ -908,13 +1027,13 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 				// Head_size         SMALLINT UNSIGNED
 				ASSERT(strcmp(curr_field->field_name, "Head_size") == 0);
 				curr_field->store(head_size, true);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 			case 'C':
 				// Creation_time     TIMESTAMP
 				ASSERT(strcmp(curr_field->field_name, "Creation_time") == 0);
 				curr_field->store(ms_my_1970_to_mysql_time(creation_time), true);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 			case 'L':
 				switch (curr_field->field_name[5]) {
@@ -922,13 +1041,13 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 						// Last_ref_time     TIMESTAMP
 						ASSERT(strcmp(curr_field->field_name, "Last_ref_time") == 0);
 						curr_field->store(ms_my_1970_to_mysql_time(last_ref), true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'a':
 						// Last_access_time  TIMESTAMP
 						ASSERT(strcmp(curr_field->field_name, "Last_access_time") == 0);
 						curr_field->store(ms_my_1970_to_mysql_time(last_access), true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 				}
 				break;
@@ -994,13 +1113,13 @@ bool MSBlobDataTable::returnRow(MSBlobHeadPtr blob, char *buf)
 						// Repository_id     INT
 						ASSERT(strcmp(curr_field->field_name, "Repository_id") == 0);
 						curr_field->store(iRepoFile->myRepo->getRepoID(), true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'l':
 						// Repo_blob_offset  BIGINT
 						ASSERT(strcmp(curr_field->field_name, "Repo_blob_offset") == 0);
 						curr_field->store(iRepoOffset, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 				}
 				break;
@@ -1008,7 +1127,7 @@ bool MSBlobDataTable::returnRow(MSBlobHeadPtr blob, char *buf)
 				// Blob_data         LONGBLOB
 				ASSERT(strcmp(curr_field->field_name, "Blob_data") == 0);
 				if (blob_size <= 0xFFFFFFF) {
-					iBlobBuffer->setLength((u_int) blob_size);
+					iBlobBuffer->setLength((uint32_t) blob_size);
 					if (BLOB_IN_REPOSITORY(blob_type)) {
 						len = iRepoFile->read(iBlobBuffer->getBuffer(0), iRepoOffset + head_size, (size_t) blob_size, 0);
 					} else {
@@ -1021,7 +1140,7 @@ bool MSBlobDataTable::returnRow(MSBlobHeadPtr blob, char *buf)
 						len = blobCloud->cl_getData(&key, iBlobBuffer->getBuffer(0), blob_size);
 					}
 					((Field_blob *) curr_field)->set_ptr(len, (byte *) iBlobBuffer->getBuffer(0));
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				}
 				break;
 		}
@@ -1084,13 +1203,13 @@ bool MSBlobAliasTable::returnRow(MSBlobHeadPtr blob, char *buf)
 						// Repository_id     INT
 						ASSERT(strcmp(curr_field->field_name, "Repository_id") == 0);
 						curr_field->store(iRepoFile->myRepo->getRepoID(), true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'l':
 						// Repo_blob_offset  BIGINT
 						ASSERT(strcmp(curr_field->field_name, "Repo_blob_offset") == 0);
 						curr_field->store(iRepoOffset, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 				}
 				break;
@@ -1098,7 +1217,7 @@ bool MSBlobAliasTable::returnRow(MSBlobHeadPtr blob, char *buf)
 				// Blob_alias         
 				ASSERT(strcmp(curr_field->field_name, "Blob_alias") == 0);
 				curr_field->store(blob_alias, strlen(blob_alias), &UTF8_CHARSET);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				
 				break;
 		}
@@ -1200,12 +1319,12 @@ bool MSReferenceTable::resetScan(bool positioned, uint32_t repo_index)
 {
 	CSMutex				*lock;
 	MSBlobHeadRec		blob;
-	uint16_t				head_size;
-	uint64_t				blob_size;
+	uint16_t			head_size;
+	uint64_t			blob_size;
 	MSRepoPointersRec	ptr;
 	size_t				ref_size;
-	u_int				tab_index;
-	int					ref_count;
+	uint32_t			tab_index;
+	uint32_t			ref_count;
 	uint8_t				status;
 
 	enter_();
@@ -1236,7 +1355,7 @@ bool MSReferenceTable::resetScan(bool positioned, uint32_t repo_index)
 	}
 
 	if (IN_USE_BLOB_STATUS(status)) {
-		iBlobBuffer->setLength((u_int) head_size);
+		iBlobBuffer->setLength((uint32_t) head_size);
 		if (iRepoFile->read(iBlobBuffer->getBuffer(0), iRepoOffset, head_size, 0) < head_size) {
 			unlock_(lock);
 			iRepoOffset = iRepoFileSize;
@@ -1265,9 +1384,9 @@ bool MSReferenceTable::resetScan(bool positioned, uint32_t repo_index)
 		iRefCurrentDataUsed = iRefDataUsed = ref_count;
 		memset(iRefDataList, 0, sizeof(MSRefDataRec) * ref_count);
 
-		u_int h = iRepoFile->myRepo->getRepoBlobHeadSize();
+		uint32_t h = iRepoFile->myRepo->getRepoBlobHeadSize();
 		ptr.rp_chars = iBlobBuffer->getBuffer(0) + h;
-		for (u_int i=0; i<ref_count; i++) {
+		for (uint32_t i=0; i<ref_count; i++) {
 			switch (CS_GET_DISK_2(ptr.rp_ref->rr_type_2)) {
 				case MS_BLOB_FREE_REF:
 					break;
@@ -1337,7 +1456,7 @@ bool MSReferenceTable::returnRecord(char *buf)
 
 bool MSReferenceTable::returnSubRecord(char *buf)
 {
-	u_int i;
+	uint32_t i;
 	
 	while (iRefDataPos < iRefDataUsed) {
 		i = iRefDataPos++;
@@ -1440,7 +1559,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 							curr_field->store(0, true);
 						else {
 							curr_field->store(ref_data->rd_blob_id, true);
-							ms_my_set_notnull_in_record(curr_field, buf);
+							setNotNullInRecord(curr_field, buf);
 						}
 						break;
 					case 'u':
@@ -1451,14 +1570,14 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 						if (ref_data->rd_tab_id != 0xFFFFFFFF) {
 							iRefOpenTable->formatBlobURL(blob_url, ref_data->rd_blob_id, iRefAuthCode, iRefBlobSize, ref_data->rd_blob_ref_id);
 							curr_field->store(blob_url, strlen(blob_url), &UTF8_CHARSET);
-							ms_my_set_notnull_in_record(curr_field, buf);
+							setNotNullInRecord(curr_field, buf);
 						}
 						break;
 					case 's':
 						// Blob_size         BIGINT,
 						ASSERT(strcmp(curr_field->field_name, "Blob_size") == 0);
 						curr_field->store(iRefBlobSize, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 				}
 				break;
@@ -1467,7 +1586,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 				ASSERT(strcmp(curr_field->field_name, "Column_ordinal") == 0);
 				if (ref_data->rd_col_index != INVALID_INDEX) {
 					curr_field->store(ref_data->rd_col_index +1, true);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				}
 				break;
 			case 'D':
@@ -1475,7 +1594,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 				ASSERT(strcmp(curr_field->field_name, "Deletion_time") == 0);
 				if (have_times) {
 					curr_field->store(ms_my_1970_to_mysql_time(delete_time), true);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				}
 				else
 					curr_field->store((uint64_t) 0, true);
@@ -1486,20 +1605,20 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 						// Repository_id     INT,
 						ASSERT(strcmp(curr_field->field_name, "Repository_id") == 0);
 						curr_field->store(iRefBlobRepo, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'b':
 						// Repo_blob_offset  BIGINT,
 						ASSERT(strcmp(curr_field->field_name, "Repo_blob_offset") == 0);
 						curr_field->store(iRefBlobOffset, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'e':
 						// Remove_in INT
 						ASSERT(strcmp(curr_field->field_name, "Remove_in") == 0);
 						if (have_times) {
 							curr_field->store(countdown, false);
-							ms_my_set_notnull_in_record(curr_field, buf);
+							setNotNullInRecord(curr_field, buf);
 						}
 						break;
 				}
@@ -1520,7 +1639,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 								snprintf(buffer, MS_TABLE_NAME_SIZE, "Table #%"PRIu32"", ref_data->rd_tab_id);
 								curr_field->store(buffer, strlen(buffer), &UTF8_CHARSET);
 							}
-							ms_my_set_notnull_in_record(curr_field, buf);
+							setNotNullInRecord(curr_field, buf);
 						}
 						break;
 					case 'i':
@@ -1528,7 +1647,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 						ASSERT(strcmp(curr_field->field_name, "Temp_log_id") == 0);
 						if (ref_data->rd_temp_log_id) {
 							curr_field->store(ref_data->rd_temp_log_id, true);
-							ms_my_set_notnull_in_record(curr_field, buf);
+							setNotNullInRecord(curr_field, buf);
 						}
 						break;
 					case 'o':
@@ -1536,7 +1655,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 						ASSERT(strcmp(curr_field->field_name, "Temp_log_offset") == 0);
 						if (ref_data->rd_temp_log_id) {
 							curr_field->store(ref_data->rd_temp_log_offset, true);
-							ms_my_set_notnull_in_record(curr_field, buf);
+							setNotNullInRecord(curr_field, buf);
 						}
 						break;
 				}
@@ -1556,10 +1675,15 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 MSMetaDataTable::MSMetaDataTable(MSSystemTableShare *share, TABLE *table):
 MSRepositoryTable(share, table),
 iMetData(NULL), 
-iMetDataSize(0), 
+iMetCurrentBlobRepo(0),
+iMetCurrentBlobOffset(0),
+iMetCurrentDataPos(0),
+iMetCurrentDataSize(0),
 iMetDataPos(0),
+iMetDataSize(0), 
 iMetBlobRepo(0),
-iMetBlobOffset(0)
+iMetBlobOffset(0),
+iMetStateSaved(false)
 {
 }
 
@@ -1693,7 +1817,7 @@ bool MSMetaDataTable::resetScan(bool positioned, bool *have_data, uint32_t repo_
 	}
 
 	if (mdata_size && IN_USE_BLOB_STATUS(status)) {
-		iMetData->setLength((u_int) mdata_size);
+		iMetData->setLength((uint32_t) mdata_size);
 		if (iRepoFile->read(iMetData->getBuffer(0), iRepoOffset + mdata_offset, mdata_size, 0) < mdata_size) {
 			unlock_(lock);
 			iRepoOffset = iRepoFileSize;
@@ -1791,13 +1915,13 @@ void MSMetaDataTable::returnRow(char *name, char *value, char *buf)
 						// Repository_id     INT
 						ASSERT(strcmp(curr_field->field_name, "Repository_id") == 0);
 						curr_field->store(iRepoFile->myRepo->getRepoID(), true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 					case 'l':
 						// Repo_blob_offset  BIGINT
 						ASSERT(strcmp(curr_field->field_name, "Repo_blob_offset") == 0);
 						curr_field->store(iMetCurrentBlobOffset, true);
-						ms_my_set_notnull_in_record(curr_field, buf);
+						setNotNullInRecord(curr_field, buf);
 						break;
 				}
 				break;
@@ -1805,13 +1929,13 @@ void MSMetaDataTable::returnRow(char *name, char *value, char *buf)
 				// Name        
 				ASSERT(strcmp(curr_field->field_name, "Name") == 0);
 				curr_field->store(name, strlen(name), &UTF8_CHARSET);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 			case 'V':
 				// Value        
 				ASSERT(strcmp(curr_field->field_name, "Value") == 0);
 				curr_field->store(value, strlen(value), &my_charset_utf8_bin);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 		}
 		curr_field->ptr = save;
@@ -2250,6 +2374,8 @@ MSOpenSystemTable *MSSystemTableShare::openSystemTable(const char *table_path, T
 		case SYS_ENABLED:
 			new_(otab, MSEnabledTable(share, table));
 			break;
+		case SYS_UNKNOWN:
+			break;
 	}
 	
 	share->iOpenCount++;
@@ -2287,13 +2413,13 @@ MSSystemTableShare *MSSystemTableShare::newTableShare(CSString *table_path)
 	return_(tab);
 }
 
-void pbmsSystemTablesStartUp()
+void PBMSSystemTables::systemTablesStartUp()
 {
 	MSCloudTable::startUp();
 	MSBackupTable::startUp();
 }
 
-void pbmsSystemTableShutDown()
+void PBMSSystemTables::systemTableShutDown()
 {
 	MSBackupTable::shutDown();
 	MSCloudTable::shutDown();

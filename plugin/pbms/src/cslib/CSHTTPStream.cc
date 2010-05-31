@@ -60,7 +60,7 @@ void CSHeader::setName(const char *name)
 	iName = CSString::newString(name);
 }
 
-void CSHeader::setName(const char *name, u_int len)
+void CSHeader::setName(const char *name, uint32_t len)
 {
 	iName = CSString::newString(name, len);
 }
@@ -75,7 +75,7 @@ void CSHeader::setValue(const char *value)
 	iValue = CSString::newString(value);
 }
 
-void CSHeader::setValue(const char *value, u_int len)
+void CSHeader::setValue(const char *value, uint32_t len)
 {
 	iValue = CSString::newString(value, len);
 }
@@ -138,7 +138,7 @@ void CSHTTPHeaders::addHeader(CSHeader *h)
 void CSHTTPHeaders::addHeaders(CSHTTPHeaders *headers)
 {
 	CSHeader *h;
-	u_int i =0;
+	uint32_t i =0;
 	while ((h = headers->getHeader(i++))) {
 		addHeader(h);
 	}
@@ -166,7 +166,7 @@ void CSHTTPHeaders::addHeader(const char *name, const char *value)
 	exit_();
 }
 
-void CSHTTPHeaders::addHeader(const char *name, u_int nlen, const char *value, u_int vlen)
+void CSHTTPHeaders::addHeader(const char *name, uint32_t nlen, const char *value, uint32_t vlen)
 {
 	CSHeader *h;
 
@@ -234,7 +234,7 @@ void CSHTTPHeaders::removeHeader(CSString *name)
 	if (iHeaders) {
 		CSHeader *h;
 
-		for (u_int i=0; i<iHeaders->size(); ) {
+		for (uint32_t i=0; i<iHeaders->size(); ) {
 			h = (CSHeader *) iHeaders->get(i);
 			if (h->getName()->compare(name) == 0) {
 				iHeaders->remove(i);
@@ -264,7 +264,7 @@ CSString *CSHTTPHeaders::getHeaderValue(const char *name)
 	if (iHeaders) {
 		CSHeader *h;
 
-		for (u_int i=0; i<iHeaders->size(); i++) {
+		for (uint32_t i=0; i<iHeaders->size(); i++) {
 			h = (CSHeader *) iHeaders->get(i);
 			if (h->getName()->compare(n) == 0) {
 				v = h->getValue();
@@ -282,7 +282,7 @@ void CSHTTPHeaders::writeHeader(CSOutputStream *out)
 	if (iHeaders) {
 		CSHeader *h;
 
-		for (int i=0; i<iHeaders->size(); i++) {
+		for (uint32_t i=0; i<iHeaders->size(); i++) {
 			h = (CSHeader *) iHeaders->get(i);
 			h->write(out);
 		}
@@ -331,7 +331,7 @@ void CSHTTPInputStream::readHead()
 {
 	CSStringBuffer	*sb = NULL;
 	bool			first_line = true;
-	u_int			start, end;
+	uint32_t			start, end;
 
 	enter_();
 	freeHead();
@@ -387,8 +387,8 @@ void CSHTTPInputStream::readHead()
 				first_line = false;
 			}
 			else {
-				u_int nstart, nend;
-				u_int vstart, vend;
+				uint32_t nstart, nend;
+				uint32_t vstart, vend;
 
 				nstart = sb->ignore(0, ' ');
 				nend = sb->find(nstart, ':');
@@ -407,7 +407,6 @@ void CSHTTPInputStream::readHead()
 		finally_(a) {
 			sb->release();
 		}
-		cont_(a);
 	}
 	exit_();
 }

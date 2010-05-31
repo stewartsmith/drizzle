@@ -20,7 +20,7 @@
  *
  * H&G2JCtL
  */
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
 
 #include <curl/curl.h>
@@ -46,14 +46,14 @@
 
 #include "pbmslib.h"
 #include "pbms.h"
-#include "CSGlobal.h"
-#include "CSThread.h"
-#include "CSString.h"
-#include "CSStrUtil.h"
-//#include "CSSocket.h"
-#include "CSHTTPStream.h"
-#include "CSMd5.h"
-#include "CSS3Protocol.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSThread.h"
+#include "cslib/CSString.h"
+#include "cslib/CSStrUtil.h"
+//#include "cslib/CSSocket.h"
+#include "cslib/CSHTTPStream.h"
+#include "cslib/CSMd5.h"
+#include "cslib/CSS3Protocol.h"
 #include "Util_ms.h"
 #include "metadata_ms.h"
 
@@ -157,8 +157,8 @@ class  PBMS_ConHandle:public CSThread {
 	unsigned int		ms_replyStatus;
 	CSHTTPHeaders		ms_headers; 
 	CSHTTPHeaders		ms_metadata_out;
-	u_int				ms_next_header;
-	u_int				ms_max_header;	
+	uint32_t				ms_next_header;
+	uint32_t				ms_max_header;	
 	unsigned int		ms_port;
 	unsigned int		ms_transmition_timeout; // In the future this may have some effect but for now it is always be 0 (no timeout).
 	unsigned int		ms_url_base_len;
@@ -276,7 +276,7 @@ class  PBMS_ConHandle:public CSThread {
 
 	pbms_bool ms_upLoadData(const char *table, const char *alias, const char *checksum, char *ref, size_t size, const u_char *data, PBMS_READ_CALLBACK_FUNC cb = NULL, void *caller_data = NULL);
 	
-	u_int ms_init_fetch() {ms_next_header =0; return ms_max_header = ms_headers.numHeaders();}
+	uint32_t ms_init_fetch() {ms_next_header =0; return ms_max_header = ms_headers.numHeaders();}
 	
 	bool ms_next(const char **name, const char **value) 
 	{
@@ -292,7 +292,7 @@ class  PBMS_ConHandle:public CSThread {
 	
 	void dump_headers() 
 	{
-		u_int i = 0;
+		uint32_t i = 0;
 		CSHeader *header;
 		printf("Headers:\n");
 		printf("---------------------------------------\n");
@@ -428,7 +428,7 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 	size_t size = objs * obj_size;
 	char *end, *ptr = (char*) header, *value;
 	const char *name;
-	u_int name_len, value_len;
+	uint32_t name_len, value_len;
 	
 	end = ptr + size;
 	if (*(end -2) == '\r' && *(end -1) == '\n')
@@ -557,7 +557,7 @@ void PBMS_ConHandle::ms_init_put_blob(curl_off_t size, const char *table, const 
 	}
 	
 	// Add metadata headers.
-	u_int i = 0;
+	uint32_t i = 0;
 	CSHeader *header;
 	while  ( (header = ms_metadata_out.getHeader(i++)) ) {
 		cs_strcpy(buffer_size, buffer, header->getNameCString());
@@ -739,7 +739,7 @@ void PBMS_ConHandle::throw_http_reply_exception()
 		if (!size) {
 			error_text = CSString::newString("Missing HTTP reply: possible Media Stream engine connection failure.");
 		} else {
-			u_int start, end;
+			uint32_t start, end;
 		
 			reply = CSString::newString(ms_errorReply);
 			ms_errorReply = NULL;
@@ -868,13 +868,13 @@ void PBMS_ConHandle::ms_addS3HeadersHeaders(CSVector *s3Headers)
 	try_(a) {
 		headers.setHeaders(s3Headers);
 		
-		for (u_int i = 0; i < headers.numHeaders(); i++) {
+		for (uint32_t i = 0; i < headers.numHeaders(); i++) {
 			CSHeader *h = headers.getHeader(i);
 			const char *name = h->getNameCString();
 			
 			if (strcasecmp(name, "ETag") == 0){
 				const char *value = h->getValueCString();
-				u_int value_len = strlen(value);
+				uint32_t value_len = strlen(value);
 				
 				// Strip any quotes
 				if (*value == '"') {

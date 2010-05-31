@@ -27,10 +27,10 @@
  *
  */
 
-#include "CSConfig.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSStorage.h"
+#include "cslib/CSConfig.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSStorage.h"
 
 #include "Defs_ms.h"
 #include "Compactor_ms.h"
@@ -62,26 +62,26 @@ bool MSCompactorThread::doWork()
 	bool				complete;
 	MSRepository		*src_repo, *dst_repo;
 	MSRepoFile			*src_file, *dst_file;
-	uint32_t				src_repo_id;
+	uint32_t			src_repo_id;
 	MSBlobHeadRec		blob;
 	off64_t				src_offset;
-	uint16_t				head_size;
-	uint64_t				blob_size, blob_data_size;
+	uint16_t			head_size;
+	uint64_t			blob_size, blob_data_size;
 	CSStringBuffer		*head;
 	MSRepoPointersRec	ptr;
-	u_int				table_ref_count;
-	u_int				blob_ref_count;
+	uint32_t				table_ref_count;
+	uint32_t				blob_ref_count;
 	int					ref_count;
 	size_t				ref_size;
-	CSMutex				*lock;
-	uint32_t				tab_id;
-	uint64_t				blob_id;
+	CSMutex				*mylock;
+	uint32_t			tab_id;
+	uint64_t			blob_id;
 	MSOpenTable			*otab;
-	uint32_t				repo_id;
-	uint64_t				repo_offset;
-	uint64_t				repo_blob_size;
-	uint16_t				repo_head_size;
-	uint16_t				tab_index;
+	uint32_t			repo_id;
+	uint64_t			repo_offset;
+	uint64_t			repo_blob_size;
+	uint16_t			repo_head_size;
+	uint16_t			tab_index;
 	uint8_t				status;
 
 	enter_();
@@ -136,10 +136,10 @@ bool MSCompactorThread::doWork()
 		// A lock is required here because references and dereferences to the
 		// BLOBs can result in the repository record being updated while 
 		// it is being copied.
-		lock = &src_repo->myRepoLock[src_offset % CS_REPO_REC_LOCK_COUNT];
-		lock_(lock);
+		mylock = &src_repo->myRepoLock[src_offset % CS_REPO_REC_LOCK_COUNT];
+		lock_(mylock);
 		if (src_file->read(&blob, src_offset, src_repo->myRepoBlobHeadSize, 0) < src_repo->myRepoBlobHeadSize) {
-			unlock_(lock);
+			unlock_(mylock);
 			break;
 		}
 		ref_size = CS_GET_DISK_1(blob.rb_ref_size_1);
@@ -152,14 +152,14 @@ bool MSCompactorThread::doWork()
 			head_size < src_repo->myRepoBlobHeadSize + ref_count * ref_size ||
 			!VALID_BLOB_STATUS(status)) {
 			/* Can't be true. Assume this is garbage! */
-			unlock_(lock);
+			unlock_(mylock);
 			src_offset++;
 			goto retry_read;
 		}
 		if (IN_USE_BLOB_STATUS(status)) {
 			head->setLength(head_size);
 			if (src_file->read(head->getBuffer(0), src_offset, head_size, 0) != head_size) {
-				unlock_(lock);
+				unlock_(mylock);
 				break;
 			}
 
@@ -213,10 +213,10 @@ bool MSCompactorThread::doWork()
 							if (temp_log->read(&log_item, temp_log_offset, sizeof(MSTempLogItemRec), 0) == sizeof(MSTempLogItemRec)) {
 								then = CS_GET_DISK_4(log_item.ti_time_4);
 								now = time(NULL);
-								if (now < then + MSTempLog::gTempBlobTimeout) {
+								if (now < (time_t)(then + MSTempLog::gTempBlobTimeout)) {
 									/* Wait for the BLOB to expire before we continue: */									
 									release_(temp_log);
-									unlock_(lock);
+									unlock_(mylock);
 
 									/* Go to sleep until the problem has gone away! */
 									lock_(this);
@@ -235,7 +235,7 @@ bool MSCompactorThread::doWork()
 						tab_index = CS_GET_DISK_2(ptr.rp_blob_ref->er_table_2);
 						if (tab_index > ref_count || !tab_index) {
 							/* Can't be true. Assume this is garbage! */
-							unlock_(lock);
+							unlock_(mylock);
 							src_offset++;
 							goto retry_read;
 						}
@@ -315,7 +315,7 @@ bool MSCompactorThread::doWork()
 			}
 		}
 		
-		unlock_(lock);
+		unlock_(mylock);
 		src_offset += head_size + blob_size;
 	}
 
@@ -341,5 +341,5 @@ void *MSCompactorThread::finalize()
 {
 	close();
 	return NULL;
-};
+}
 

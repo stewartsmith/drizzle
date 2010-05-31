@@ -21,7 +21,7 @@
  * System table utility functions.
  *
  */
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,9 +29,9 @@
 #include <time.h>
 #include <inttypes.h>
 
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSPath.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSPath.h"
 
 #include "SysTab_util.h"
 
@@ -41,7 +41,7 @@ void SysTabRec::logError(const char *text)
 	char msg[80];
 	enter_();
 	
-	snprintf(msg, 80, ", damaged at or near position %"PRIdPTR" \n", ptr - getBuffer(0));
+	snprintf(msg, 80, ", damaged at or near position %"PRIu32" \n", (uint32_t) (ptr - getBuffer(0)));
 	CSL.log(self, CSLog::Warning, db_name);
 	CSL.log(self, CSLog::Warning, ".");
 	CSL.log(self, CSLog::Warning, table_name);
@@ -203,7 +203,7 @@ void SysTabRec::clear()
 void SysTabRec::beginRecord()
 {
 	CSDiskData d;
-	u_int len = length();
+	uint32_t len = length();
 	
 	setLength(len + 8); // Room for header marker and record length.
 
@@ -217,7 +217,7 @@ void SysTabRec::beginRecord()
 void SysTabRec::endRecord()
 {
 	CSDiskData d;
-	u_int len = length();
+	uint32_t len = length();
 	
 	// Write the record length to the head of the record
 	d.rec_chars = getBuffer(start_of_record);
@@ -234,7 +234,7 @@ void SysTabRec::setInt1Field(uint8_t val)
 {
 	CSDiskData d;
 
-	u_int len = length();
+	uint32_t len = length();
 	
 	setLength(len +1); // Important: set the length before getting the buffer pointer
 	d.rec_chars = getBuffer(len);
@@ -246,7 +246,7 @@ void SysTabRec::setInt4Field(uint32_t val)
 {
 	CSDiskData d;
 
-	u_int len = length();
+	uint32_t len = length();
 	
 	setLength(len +4); // Important: set the length before getting the buffer pointer
 	d.rec_chars = getBuffer(len);

@@ -57,7 +57,7 @@ void CSDirectory::print(CSOutputStream *out)
 	char	buffer[500];
 	char	number[50];
 	bool	is_dir;
-	off_t	size;
+	off64_t	size;
 	CSTime	mod_time;
 	char	*str_time;
 
@@ -161,7 +161,7 @@ bool CSDirectory::isFile()
 	return true;
 }
 
-void CSDirectory::info(bool *is_dir, off_t *size, CSTime *mod_time)
+void CSDirectory::info(bool *is_dir, off64_t *size, CSTime *mod_time)
 {
 	char path[PATH_MAX];
 

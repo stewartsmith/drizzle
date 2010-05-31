@@ -83,6 +83,7 @@ typedef struct {
 static void saxError(void *user_data, const char *msg, ...)
 {
 	ParserInfoPtr info = (ParserInfoPtr) user_data;
+	(void)msg;
 /*	
 	va_list args;
 	va_start(args, msg);
@@ -153,11 +154,12 @@ class S3ProtocolCon : public CSObject {
 	//-------------------------------
 	void parse_s3_error()
 	{
-		ParserErrorInfoRec parser_info = {0};
-		struct _xmlSAXHandler sax_handler = {0};
+		ParserErrorInfoRec parser_info = {false, NULL, {}, NULL, NULL};
+		struct _xmlSAXHandler sax_handler;
 		
 		enter_();
 		
+		memset(&sax_handler, 0, sizeof(sax_handler));
 		parser_info.s3Con = this;
 		
 		if (!ms_errorReply)
@@ -215,12 +217,12 @@ class S3ProtocolCon : public CSObject {
 	CSStringBuffer	*ms_errorReply;
 	char			ms_curl_error[CURL_ERROR_SIZE];
 	
-	off_t			ms_data_size;
+	off64_t			ms_data_size;
 	
 	unsigned int	ms_replyStatus;
 	bool			ms_throw_error;	// Gets set if an exception occurs in a callback.
 
-	S3ProtocolCon(CSS3Protocol *prot):
+	S3ProtocolCon():
 		ms_curl(NULL),
 		ms_header_list(NULL),
 		ms_inputStream(NULL),
@@ -229,8 +231,8 @@ class S3ProtocolCon : public CSObject {
 		ms_retry(false),
 		ms_slowDown(false),
 		ms_errorReply(NULL),
-		ms_replyStatus(0),
 		ms_data_size(0),
+		ms_replyStatus(0),
 		ms_throw_error(false)
 	{
 	
@@ -426,7 +428,7 @@ class S3ProtocolCon : public CSObject {
 		exit_();		
 	}
 	
-	inline void ms_execute_put_request(CSInputStream *input, off_t size, Md5Digest *digest)
+	inline void ms_execute_put_request(CSInputStream *input, off64_t size, Md5Digest *digest)
 	{
 		enter_();
 		
@@ -480,7 +482,6 @@ class S3ProtocolCon : public CSObject {
 
 //======================================
 CSS3Protocol::CSS3Protocol():
-	con_data(NULL),
 	s3_server(NULL),
 	s3_public_key(NULL),
 	s3_private_key(NULL),
@@ -623,7 +624,7 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 	S3ProtocolCon *con = (S3ProtocolCon*) v_con;
 	size_t size = objs * obj_size;
 	char *end, *ptr = (char*) header, *name, *value;
-	u_int name_len, value_len;
+	uint32_t name_len, value_len;
 //printf(	"receive_header: %s\n", ptr);
 	end = ptr + size;
 	if (*(end -2) == '\r' && *(end -1) == '\n')
@@ -709,7 +710,7 @@ bool CSS3Protocol::s3_delete(const char *bucket, const char *key)
 	new_(s3_buffer, CSStringBuffer());
 	push_(s3_buffer);
 
-	new_(con_data, S3ProtocolCon(this));
+	new_(con_data, S3ProtocolCon());
 	push_(con_data);
 
 retry:
@@ -778,7 +779,7 @@ void CSS3Protocol::s3_copy(const char *dest_server, const char *dest_bucket, con
 	new_(s3_buffer, CSStringBuffer());
 	push_(s3_buffer);
 
-	new_(con_data, S3ProtocolCon(this));
+	new_(con_data, S3ProtocolCon());
 	push_(con_data);
 	
 	if (!dest_server)
@@ -880,7 +881,7 @@ CSVector *CSS3Protocol::s3_receive(CSOutputStream *output, const char *bucket, c
 	new_(s3_buffer, CSStringBuffer());
 	push_(s3_buffer);
 
-	new_(con_data, S3ProtocolCon(this));
+	new_(con_data, S3ProtocolCon());
 	push_(con_data);
 
 retry:
@@ -1010,12 +1011,14 @@ static void saxListData(void *user_data, const xmlChar *ch, int len)
 //-------------------------------
 static CSVector *parse_s3_list(CSMemoryOutputStream *output)
 {
-	ParserListInfoRec parser_info = {0};
-	struct _xmlSAXHandler sax_handler = {0};
+	ParserListInfoRec parser_info = {false, NULL, NULL, false};
+	struct _xmlSAXHandler sax_handler;
 	const char *data;
 	size_t len;
 	
 	enter_();
+	
+	memset(&sax_handler, 0, sizeof(sax_handler));
 	
 	push_(output);
 	data = (const char *) output->getMemory(&len);
@@ -1066,7 +1069,7 @@ CSVector *CSS3Protocol::s3_list(const char *bucket, const char *key_prefix, uint
 	output = CSMemoryOutputStream::newStream(1024, 1024);
 	push_(output);
 	
-	new_(con_data, S3ProtocolCon(this));
+	new_(con_data, S3ProtocolCon());
 	push_(con_data);
 
 retry:
@@ -1155,7 +1158,7 @@ CSString *CSS3Protocol::s3_getAuthorization(const char *bucket, const char *key,
 }
 
 //-------------------------------
-CSVector *CSS3Protocol::s3_send(CSInputStream *input, const char *bucket, const char *key, off_t size, const char *content_type, Md5Digest *digest, const char *s3Authorization, time_t s3AuthorizationTime)
+CSVector *CSS3Protocol::s3_send(CSInputStream *input, const char *bucket, const char *key, off64_t size, const char *content_type, Md5Digest *digest, const char *s3Authorization, time_t s3AuthorizationTime)
 {
  	CSStringBuffer *s3_buffer;
     char date[64];
@@ -1171,7 +1174,7 @@ CSVector *CSS3Protocol::s3_send(CSInputStream *input, const char *bucket, const 
 	new_(s3_buffer, CSStringBuffer());
 	push_(s3_buffer);
 
-	new_(con_data, S3ProtocolCon(this));
+	new_(con_data, S3ProtocolCon());
 	push_(con_data);
 
 	if (!digest)
@@ -1308,7 +1311,7 @@ void dump_headers(CSVector *header_array)
 	printf("Reply Headers:\n");
 	printf("--------------\n");
 	
-	for (u_int i = 0; i < headers.numHeaders(); i++) {
+	for (uint32_t i = 0; i < headers.numHeaders(); i++) {
 		CSHeader *h = headers.getHeader(i);
 		
 		printf("%s : %s\n", h->getNameCString(), h->getValueCString());

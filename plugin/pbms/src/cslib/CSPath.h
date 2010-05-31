@@ -92,9 +92,9 @@ public:
 
 	virtual bool exists() { return exists(NULL); }
 
-	virtual void info(bool *is_dir, off_t *size, CSTime *mod_time);
+	virtual void info(bool *is_dir, off64_t *size, CSTime *mod_time);
 
-	virtual off_t getSize();
+	virtual off64_t getSize();
 
 	virtual bool isDir();
 

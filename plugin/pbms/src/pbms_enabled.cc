@@ -63,7 +63,7 @@ void pbms_completed(TABLE *table __attribute__((unused)),
 #include "pbms_enabled.h"
 #ifdef DRIZZLED
 #include <sys/stat.h>
-#include <drizzled/server_includes.h>
+#include <drizzled/common.h>
 #include <drizzled/field/blob.h>
 #include <drizzled/session.h>
 #include <drizzled/plugin.h>
@@ -126,10 +126,10 @@ int pbms_write_row_blobs(TABLE *table, unsigned char *row_buffer, PBMSResultPtr 
 	char blob_url_buffer[PBMS_BLOB_URL_SIZE];
 	int err;
 
-	if (table->s->blob_fields == 0)
+	if (!pbms_api.isPBMSLoaded())
 		return 0;
 		
-	if (!pbms_api.isPBMSLoaded())
+	if (table->s->blob_fields == 0)
 		return 0;
 		
 	for (i= 0; i < table->s->blob_fields; i++) {
@@ -192,10 +192,10 @@ int pbms_delete_row_blobs(TABLE *table, const unsigned char *row_buffer, PBMSRes
 	size_t packlength, i, length;
 	int err;
 
-	if (table->s->blob_fields == 0)
+	if (!pbms_api.isPBMSLoaded())
 		return 0;
 		
-	if (!pbms_api.isPBMSLoaded())
+	if (table->s->blob_fields == 0)
 		return 0;
 		
 	for (i= 0; i < table->s->blob_fields; i++) {
@@ -291,8 +291,10 @@ int pbms_delete_table_with_blobs(const char *table_path, PBMSResultPtr result)
 //====================
 void pbms_completed(TABLE *table, bool ok)
 {
-
-	if (((!table) || (table->s->blob_fields != 0)) && pbms_api.isPBMSLoaded())
+	if (!pbms_api.isPBMSLoaded())
+		return;
+		
+	if ((!table) || (table->s->blob_fields != 0))
 		pbms_api.completed(ok) ;
 		
 	 return ;

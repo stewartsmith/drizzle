@@ -129,6 +129,9 @@ public:
 	CSException		myException;
 
 	/* Transaction references. */
+#ifdef DRIZZLED
+	CSHashTable		mySavePoints;
+#endif
 	uint32_t			myTID;			// Current transaction ID
 	uint32_t			myTransRef;		// Reference to the current transaction cache index
 	bool			myIsAutoCommit;	// Is the current transaction in auto commit mode.
@@ -158,21 +161,22 @@ public:
 		ignoreSignals(false),
 		isRunning(false),
 		myMustQuit(false),
-		callTop(0),
-		jumpDepth(0),
-		myInfo(NULL),
+		pbms_api_owner(false),
 		myTID(0),
 		myTransRef(0),
+		myIsAutoCommit(false),
+		myCacheVersion(0),
 		myStartTxn(true),
 		myStmtCount(0),
 		myStartStmt(0),
-		myCacheVersion(0),
+		myInfo(NULL),
+		callTop(0),
+		jumpDepth(0),
 		relTop(relStack),
 		iIsMain(false),
 		iRunFunc(NULL),
 		iNextLink(NULL),
-		iPrevLink(NULL),
-		pbms_api_owner(false)
+		iPrevLink(NULL)
 	{
 	}
 
@@ -281,6 +285,7 @@ public:
 	static void sleep(unsigned long timeout);
 
 	/* Do static initialization and de-initialization. */
+	static bool isUp;
 	static bool startUp();
 	static void shutDown();
 
@@ -340,7 +345,7 @@ public:
 
 private:
 	bool			iSuspended;
-	u_int			iSuspendCount;
+	uint32_t			iSuspendCount;
 };
 
 #endif

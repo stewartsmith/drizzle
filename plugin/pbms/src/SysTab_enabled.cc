@@ -21,22 +21,23 @@
  * System dump table.
  *
  */
-#include "CSConfig.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/field/blob.h>
+#endif
+
+#include "cslib/CSConfig.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#include <drizzled/field/blob.h>
-#endif
-
-
 //#include "mysql_priv.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
 
 #include "ha_pbms.h"
 //#include <plugin.h>
@@ -126,7 +127,7 @@ bool MSEnabledTable::seqScanNext(char *buf)
 			case 'N':
 				ASSERT(strcmp(curr_field->field_name, "Name") == 0);
 				curr_field->store(eng->ms_engine_name, strlen(eng->ms_engine_name), &UTF8_CHARSET);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 
 			case 'I':
@@ -137,7 +138,7 @@ bool MSEnabledTable::seqScanNext(char *buf)
 					yesno = "No";
 					
 				curr_field->store(yesno, strlen(yesno), &UTF8_CHARSET);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 
 			case 'T': 
@@ -150,7 +151,7 @@ bool MSEnabledTable::seqScanNext(char *buf)
 					yesno = "No";
 					
 				curr_field->store(yesno, strlen(yesno), &UTF8_CHARSET);
-				ms_my_set_notnull_in_record(curr_field, buf);
+				setNotNullInRecord(curr_field, buf);
 				break;
 
 			case 'A':

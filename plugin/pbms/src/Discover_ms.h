@@ -22,14 +22,7 @@
 
 #ifndef __DISCOVER_MS_H__
 #define __DISCOVER_MS_H__
-#include "CSConfig.h"
-
-#ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#include <drizzled/table.h>
-#include <drizzled/message/table.pb.h>
-#include <drizzled/table_proto.h>
-#endif
+#include "cslib/CSConfig.h"
 
 #define UTF8_CHARSET	my_charset_utf8_general_ci
 
@@ -60,13 +53,17 @@ typedef struct dt_field_info
 	be one entry in the enum for each SQL data type, although there seem to
 	be a number of additional entries in the enum.
 	*/
+#ifdef DRIZZLED
+	enum drizzled::enum_field_types field_type;
+#else
 	enum enum_field_types field_type;
+#endif
 
 	/**
 	This is the charater set for non numeric data types including blob data.
 	*/
 #ifdef DRIZZLED
-	const CHARSET_INFO *field_charset;
+	const drizzled::CHARSET_INFO *field_charset;
 #else
 	CHARSET_INFO *field_charset;
 #endif
@@ -80,12 +77,6 @@ typedef struct dt_key_info
 	uint		key_type; /* PRI_KEY_FLAG, UNIQUE_KEY_FLAG, MULTIPLE_KEY_FLAG */
 	const char*	key_columns[8]; // The size of this can be set to what ever you need.
 } DT_KEY_INFO;
-
-static DT_FIELD_INFO t_info[]=
-{
-	{"Blob_data",			NULL, NULL, MYSQL_TYPE_LONG_BLOB,	&my_charset_bin, NOT_NULL_FLAG,	"The data of this BLOB"},
-	{NULL,					NULL, NULL, MYSQL_TYPE_STRING,	NULL, 0,																NULL}
-};
 
 typedef struct internal_table_info {
 	bool			is_pbms;

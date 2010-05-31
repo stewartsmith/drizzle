@@ -21,22 +21,24 @@
  * System dump table.
  *
  */
-#include "CSConfig.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/field/blob.h>
+#endif
+
+#include "cslib/CSConfig.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <time.h>
 
-#ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#include <drizzled/field/blob.h>
-#endif
-
 
 //#include "mysql_priv.h"
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
 
 #include "ha_pbms.h"
 //#include <plugin.h>
@@ -174,7 +176,7 @@ bool MSDumpTable::returnDumpRow(char *record, uint64_t record_size, char *buf)
 				ASSERT(strcmp(curr_field->field_name, "Data") == 0);
 				if (record_size <= 0xFFFFFFF) {
 					((Field_blob *) curr_field)->set_ptr(record_size, (byte *) record);
-					ms_my_set_notnull_in_record(curr_field, buf);
+					setNotNullInRecord(curr_field, buf);
 				}
 				break;
 		}
@@ -300,7 +302,7 @@ bool MSDumpTable::returnInfoRow(char *buf)
 	
 	dt_cloudbackupDBID = myShare->mySysDatabase->myDatabaseID;
 	
-	sysTablesDump = pbms_dump_system_tables(RETAIN(myShare->mySysDatabase));
+	sysTablesDump = PBMSSystemTables::dumpSystemTables(RETAIN(myShare->mySysDatabase));
 	push_(sysTablesDump);
 	
 	iBlobBuffer->setLength(space + sysTablesDump->length() + 4 + 4);
@@ -400,7 +402,7 @@ void MSDumpTable::setUpRepository(const char *info_buffer, uint32_t length)
 	sys_size = CS_GET_DISK_4(d.int_val->val_4);
 	INC_INFO_REC(4);
 	
-	pbms_restore_system_tables(RETAIN(myDB), info_buffer, sys_size);
+	PBMSSystemTables::restoreSystemTables(RETAIN(myDB), info_buffer, sys_size);
 	INC_INFO_REC(sys_size);
 
 	while (length > 5) {
@@ -521,12 +523,6 @@ void MSDumpTable::insertRepoRow(MSBlobHeadPtr blob, uint32_t length)
 			MSOpenTable	*otab;
 			uint32_t		tab_id;
 			uint64_t		blob_id;
-			uint32_t		log_id; 
-			uint32_t		log_offset;
-			uint32_t		temp_time;
-			uint16_t		tab_index;
-			
-			
 			
 			switch (ref_type) {
 				case MS_BLOB_TABLE_REF:

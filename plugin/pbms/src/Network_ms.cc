@@ -27,9 +27,9 @@
  *
  */
 
-#include "CSConfig.h"
-#include "CSGlobal.h"
-#include "CSLog.h"
+#include "cslib/CSConfig.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSLog.h"
 
 #include "Network_ms.h"
 #include "ConnectionHandler_ms.h"
@@ -42,7 +42,7 @@ CSThreadList		*MSNetwork::gHandlerList;
 CSSync				MSNetwork::gListenerLock;
 CSSocket			*MSNetwork::gListenerSocket;
 MSConnectionHandler	*MSNetwork::gListenerThread;
-u_int				MSNetwork::gWaitingToListen;
+uint32_t				MSNetwork::gWaitingToListen;
 int					MSNetwork::handlerCount;
 
 /*

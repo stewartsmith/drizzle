@@ -45,12 +45,12 @@ public:
 
 	CSLog(FILE *s, int level):
 		iStream(s),
-		iLogLevel(level),
 		iHeaderPending(true),
-		iLockThread(0) {
+		iLogLevel(level),
+		iLockThread(0),
+		iLockCount(0)
+		 {
 		pthread_mutex_init(&iMutex, NULL);
-		iLockThread = 0;
-		iLockCount = 0;
 	}
 
 	virtual ~CSLog() {
@@ -101,9 +101,9 @@ private:
 
 	int iLogLevel;				/* The current log level. */
 
-	pthread_mutex_t	iMutex;
 	pthread_t iLockThread;
 	int iLockCount;
+	pthread_mutex_t	iMutex;
 };
 
 extern CSLog CSL;

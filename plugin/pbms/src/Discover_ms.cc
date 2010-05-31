@@ -21,8 +21,18 @@
  *
  */
 
-#include <inttypes.h>
-#include "Defs_ms.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/table.h>
+#include <drizzled/message/table.pb.h>
+#include "drizzled/charset_info.h"
+#include <drizzled/table_proto.h>
+#include <drizzled/field.h>
+
+#endif
+
 #include "Discover_ms.h"
 
 #ifdef DRIZZLED
@@ -68,10 +78,6 @@ int ms_create_proto_table(const char *engine_name, const char *name, DT_FIELD_IN
 					string_field_options->set_collation(info->field_charset->name);
 					string_field_options->set_collation_id(info->field_charset->number);
 				}
-				break;
-				
-			case DRIZZLE_TYPE_TINY:
-				field->set_type(message::Table::Field::TINYINT);
 				break;
 				
 			case DRIZZLE_TYPE_LONG:
@@ -122,9 +128,9 @@ int ms_create_proto_table(const char *engine_name, const char *name, DT_FIELD_IN
 #include "mysql_priv.h"
 #include "item_create.h"
 #include <m_ctype.h>
-#include "CSConfig.h"
-#include "CSGlobal.h"
-#include "CSThread.h"
+#include "cslib/CSConfig.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSThread.h"
 #include "ha_pbms.h"
 #undef new
 

@@ -37,9 +37,9 @@
 #ifndef __TEMPLOG_MS_H__
 #define __TEMPLOG_MS_H__
 
-#include "CSDefs.h"
-#include "CSFile.h"
-#include "CSStream.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSFile.h"
+#include "cslib/CSStream.h"
 
 #include "Defs_ms.h"
 
@@ -79,7 +79,7 @@ typedef struct MSTempLogItem {
 
 class MSTempLogFile : public CSReadBufferedFile {
 public:
-	u_int		myTempLogID;
+	uint32_t		myTempLogID;
 	MSTempLog	*myTempLog;
 
 	MSTempLogFile();
@@ -88,17 +88,17 @@ public:
 	friend class MSTempLog;
 
 private:
-	static MSTempLogFile *newTempLogFile(u_int id, MSTempLog *temp_log, CSFile *path);
+	static MSTempLogFile *newTempLogFile(uint32_t id, MSTempLog *temp_log, CSFile *path);
 };
 
 class MSTempLog : public CSRefObject {
 public:
-	u_int		myLogID;
-	off_t		myTempLogSize;
+	uint32_t		myLogID;
+	off64_t		myTempLogSize;
 	int			myTemplogRecSize;
 	size_t		myTempLogHeadSize;
 
-	MSTempLog(u_int id, MSDatabase *db, off_t file_size);
+	MSTempLog(uint32_t id, MSDatabase *db, off64_t file_size);
 	virtual ~MSTempLog();
 
 	void deleteLog();
@@ -144,7 +144,7 @@ private:
 	MSDatabase			*iTempLogDatabase;
 	MSTempLogFile		*iTempLogFile;
 	size_t				iLogRecSize;
-	off_t				iLogOffset;
+	off64_t				iLogOffset;
 	
 };
 

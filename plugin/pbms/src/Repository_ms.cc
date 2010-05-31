@@ -27,21 +27,29 @@
  *
  */
 
-#include "CSConfig.h"
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#endif
+
+#include "cslib/CSConfig.h"
 #include <inttypes.h>
 
-#include "CSGlobal.h"
-#include "CSLog.h"
-#include "CSStrUtil.h"
-#include "CSHTTPStream.h"
-#include "CSStream.h"
+#include "Defs_ms.h"
+
+#include "cslib/CSGlobal.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSHTTPStream.h"
+#include "cslib/CSStream.h"
 
 #include "Repository_ms.h"
 #include "OpenTable_ms.h"
 #include "ConnectionHandler_ms.h"
 #include "metadata_ms.h"
 
-int MSRepository::gGarbageThreshold;
+u_long MSRepository::gGarbageThreshold;
 
 /*
  * ---------------------------------------------------------------
@@ -144,7 +152,7 @@ done:
 void MSRepoFile::writeBlobChunk(PBMSBlobIDPtr blob_id, uint64_t rep_offset, uint64_t blob_offset, uint64_t data_size, char *data)
 {
 	size_t				tfer;
-	off_t				offset;
+	off64_t				offset;
 	MSBlobHeadRec		blob_head;
 	uint16_t				head_size;
 	uint64_t				blob_size;
@@ -186,7 +194,7 @@ void MSRepoFile::sendBlob(MSOpenTable *otab, uint64_t offset, uint64_t req_offse
 {
 	MSConnectionHandler	*me;
 	size_t				tfer;
-	off_t				start_offset = offset;
+	off64_t				start_offset = offset;
 	MSBlobHeadRec		blob_head;
 	uint8_t				storage_type;
 	uint16_t				head_size, meta_size;
@@ -307,9 +315,8 @@ void MSRepoFile::update_blob_header(MSOpenTable *otab, uint64_t offset, uint64_t
 		write(otab->myOTBuffer + w_offset, offset + w_offset, head_size - w_offset);
 	} else {
 		/* Copy to a new space, free the old: */
-		off_t			dst_offset;
+		off64_t			dst_offset;
 		CSStringBuffer	*buffer;
-		MSRepoPointersRec	ptr;
 		uint16_t ref_count, ref_size;
 		uint32_t tab_id;
 		uint64_t blob_id;
@@ -327,7 +334,6 @@ void MSRepoFile::update_blob_header(MSOpenTable *otab, uint64_t offset, uint64_t
 		CSFile::transfer(otab->myWriteRepoFile, dst_offset + new_head_size, this, offset + head_size, blob_size, buffer->getBuffer(0), MS_COMPACTOR_BUFFER_SIZE);
 		release_(buffer);
 
-		ptr.rp_chars = otab->myOTBuffer;
 #ifdef HAVE_ALIAS_SUPPORT
 		/* Update the BLOB alias if required. */
 		
@@ -404,9 +410,9 @@ void MSRepoFile::update_blob_header(MSOpenTable *otab, uint64_t offset, uint64_t
 
 void MSRepoFile::referenceBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id, uint32_t auth_code, uint16_t col_index)
 {
-	CSMutex				*lock;
+	CSMutex				*myLock;
 	MSRepoPointersRec	ptr;
-	u_int				size, ref_count;
+	uint32_t				size, ref_count;
 	size_t				ref_size, read_size;
 	MSRepoBlobRefPtr	free_ref = NULL;
 	MSRepoBlobRefPtr	free2_ref = NULL;
@@ -420,8 +426,8 @@ void MSRepoFile::referenceBlob(MSOpenTable *otab, uint64_t offset, uint16_t head
 	
 	enter_();
 	/* Lock the BLOB: */
-	lock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
-	lock_(lock);
+	myLock = &myRepo->myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
+	lock_(myLock);
 	/* Read the header: */
 	if (head_size > MS_OT_BUFFER_SIZE) {
 		CSException::throwAssertion(CS_CONTEXT, "BLOB header overflow");
@@ -491,7 +497,7 @@ void MSRepoFile::referenceBlob(MSOpenTable *otab, uint64_t offset, uint16_t head
 					tab_ref = ptr.rp_tab_ref;
 				break;
 			case MS_BLOB_DELETE_REF: {
-				u_int tab_index;
+				uint32_t tab_index;
 
 				tab_index = CS_GET_DISK_2(ptr.rp_temp_ref->tp_del_ref_2);
 				if (tab_index && tab_index < ref_count) {
@@ -516,7 +522,7 @@ void MSRepoFile::referenceBlob(MSOpenTable *otab, uint64_t offset, uint16_t head
 				break;
 			}
 			default: { // Must be a blob REF, check that the BLOB reference doesn't already exist.
-				u_int tab_index;
+				uint32_t tab_index;
 				tab_index = CS_GET_DISK_2(ptr.rp_blob_ref->er_table_2);
 				
 				if (tab_index && tab_index < ref_count) {
@@ -548,7 +554,7 @@ void MSRepoFile::referenceBlob(MSOpenTable *otab, uint64_t offset, uint16_t head
 	if (!free_ref || (!tab_ref && !free2_ref)) {
 		size_t new_refs = (tab_ref)?1:2;
 		ptr.rp_chars = otab->myOTBuffer;
-		int sp = MS_VAR_SPACE(ptr.rp_head);
+		size_t sp = MS_VAR_SPACE(ptr.rp_head);
 		
 		if (sp > (new_refs * CS_GET_DISK_1(ptr.rp_head->rb_ref_size_1))) {
 			sp = MS_MIN_BLOB_HEAD_SIZE;
@@ -641,7 +647,7 @@ void MSRepoFile::referenceBlob(MSOpenTable *otab, uint64_t offset, uint16_t head
 
 done:
 	
-	unlock_(lock);
+	unlock_(myLock);
 	exit_();
 }
 
@@ -758,8 +764,8 @@ void MSRepoFile::releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_s
 {
 	CSMutex				*lock;
 	MSRepoPointersRec	ptr;
-	u_int				table_ref_count = 0;
-	u_int				size;
+	uint32_t				table_ref_count = 0;
+	uint32_t				size;
 	size_t				ref_size, ref_count, read_size;
 	MSRepoTempRefPtr	temp_ref = NULL;
 	uint16_t				tab_index;
@@ -818,7 +824,7 @@ void MSRepoFile::releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_s
 			case MS_BLOB_TABLE_REF:
 				break;
 			case MS_BLOB_DELETE_REF: {
-				u_int tabi;
+				uint32_t tabi;
 
 				tabi = CS_GET_DISK_2(ptr.rp_temp_ref->tp_del_ref_2);
 				if (tabi && tabi < ref_count) {
@@ -908,7 +914,7 @@ void MSRepoFile::commitBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_si
 {
 	CSMutex				*lock;
 	MSRepoPointersRec	ptr;
-	u_int				size;
+	uint32_t				size;
 	size_t				ref_size, ref_count, read_size;
 	MSRepoTableRefPtr	tab_ref;
 
@@ -1044,10 +1050,10 @@ void MSRepoFile::freeTableReference(MSOpenTable *otab, uint64_t offset, uint16_t
 {
 	CSMutex				*lock;
 	MSRepoPointersRec	ptr;
-	u_int				blob_ref_count = 0;
-	u_int				table_ref_count = 0;
+	uint32_t				blob_ref_count = 0;
+	uint32_t				table_ref_count = 0;
 	bool				modified = false;
-	u_int				size;
+	uint32_t				size;
 	size_t				ref_size, ref_count, read_size;
 	MSRepoTableRefPtr	tab_ref = NULL;
 	uint64_t				blob_size;
@@ -1163,14 +1169,14 @@ void MSRepoFile::freeTableReference(MSOpenTable *otab, uint64_t offset, uint16_t
 	exit_();
 }
 
-void MSRepoFile::checkBlob(MSOpenTable *otab, CSStringBuffer *buffer, uint64_t offset, uint32_t auth_code, uint32_t temp_log_id, uint32_t temp_log_offset)
+void MSRepoFile::checkBlob(CSStringBuffer *buffer, uint64_t offset, uint32_t auth_code, uint32_t temp_log_id, uint32_t temp_log_offset)
 {
 	CSMutex				*lock;
 	MSBlobHeadRec		blob;
 	MSRepoPointersRec	ptr;
-	u_int				blob_ref_count = 0;
+	uint32_t				blob_ref_count = 0;
 	bool				modified = false;
-	u_int				size;
+	uint32_t				size;
 	size_t				ref_size, ref_count, read_size;
 	uint8_t				status;
 	uint16_t				head_size;
@@ -1248,7 +1254,7 @@ void MSRepoFile::checkBlob(MSOpenTable *otab, CSStringBuffer *buffer, uint64_t o
 				break;
 			default:
 				MSRepoTableRefPtr	tr;
-				u_int				tabi;
+				uint32_t				tabi;
 
 				tabi = CS_GET_DISK_2(ptr.rp_blob_ref->er_table_2);
 				if (tabi < ref_count) {
@@ -1311,11 +1317,10 @@ MSRepoFile *MSRepoFile::newRepoFile(MSRepository *repo, CSPath *path)
  * REPOSITORY
  */
 
-MSRepository::MSRepository(u_int id, MSDatabase *db, off_t file_size):
+MSRepository::MSRepository(uint32_t id, MSDatabase *db, off64_t file_size):
 CSSharedRefObject(),
 myRepoID(id),
 myRepoFileSize(file_size),
-myRepoXLock(false),
 myRepoLockState(REPO_UNLOCKED),
 isRemovingFP(false),
 myRepoDatabase(db),
@@ -1329,6 +1334,7 @@ myLastAccessTime(0),
 myLastCreateTime(0),
 myLastRefTime(0),
 mustBeDeleted(false),
+myRepoXLock(false),
 iFilePool(NULL)
 {
 }
@@ -1363,7 +1369,7 @@ void MSRepository::openRepoFileForWriting(MSOpenTable *otab)
 
 uint64_t MSRepository::receiveBlob(MSOpenTable *otab, uint16_t head_size, uint64_t blob_size, Md5Digest *checksum, CSInputStream *stream)
 {
-	off_t	offset;
+	off64_t	offset;
 	size_t	tfer;
 
 	enter_();
@@ -1403,7 +1409,7 @@ uint64_t MSRepository::receiveBlob(MSOpenTable *otab, uint16_t head_size, uint64
 // copyBlob() copies the BLOB and its header.
 uint64_t MSRepository::copyBlob(MSOpenTable *otab, uint64_t size, CSInputStream *stream)
 {
-	off_t	offset = myRepoFileSize;
+	off64_t	offset = myRepoFileSize;
 	size_t	tfer;
 
 	while (size > 0) {
@@ -1524,54 +1530,7 @@ void MSRepository::writeBlobHead(MSOpenTable *otab, uint64_t offset, uint8_t ref
 	setRepoFileSize(otab, offset + head_size + blob_size);
 }
 
-// This is called to update the header info for a new unreferenced  blob that was
-// created as the result of the BLOB being copied from one database to another.
-// When this happens the BLOB and meta data is copied but the header is not set.
-void MSRepository::resetBlobHead(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint64_t blob_id, uint64_t blob_ref_id, uint32_t auth_code, uint16_t col_index, uint8_t blob_type)
-{
-	MSBlobHeadPtr		blob ;
-	MSRepoTableRefPtr	tab_ref;
-	MSRepoBlobRefPtr	blob_ref;
-	uint16_t				metadata_size;
-	uint8_t				ref_size;
-	size_t				size;
-
-	otab->myWriteRepoFile->read(otab->myOTBuffer, offset, head_size, head_size);
-
-	blob = (MSBlobHeadPtr) otab->myOTBuffer;
-	
-	if (CS_GET_DISK_4(blob->rd_magic_4) != MS_BLOB_HEADER_MAGIC)
-		CSException::throwException(CS_CONTEXT, MS_ERR_NOT_FOUND, "Invalid BLOB identifier");
-	metadata_size = CS_GET_DISK_2(blob->rb_mdata_size_2);
-	ref_size = CS_GET_DISK_1(blob->rb_ref_size_1);
-	
-	CS_SET_DISK_4(blob->rb_last_ref_4, (uint32_t) time(NULL)); // Set the reference time
-	CS_SET_DISK_1(blob->rb_status_1, MS_BLOB_REFERENCED); 
-	CS_SET_DISK_4(otab->myOTBuffer + myRepoBlobHeadSize - 4, auth_code);
-
-	// Add the table reference:
-	tab_ref = (MSRepoTableRefPtr) (otab->myOTBuffer + myRepoBlobHeadSize);
-	CS_SET_DISK_2(tab_ref->rr_type_2, MS_BLOB_TABLE_REF);
-	CS_SET_DISK_4(tab_ref->tr_table_id_4, otab->getDBTable()->myTableID);
-	CS_SET_DISK_6(tab_ref->tr_blob_id_6, blob_id);
-
-	// Add the blob reference:
-	blob_ref = (MSRepoBlobRefPtr) (otab->myOTBuffer + myRepoBlobHeadSize + ref_size);
-	CS_SET_DISK_2(blob_ref->er_table_2, 1);
-	CS_SET_DISK_2(blob_ref->er_col_index_2, col_index);
-	CS_SET_DISK_8(blob_ref->er_blob_ref_id_8, blob_ref_id);
-	
-	size = myRepoBlobHeadSize + ref_size + ref_size;
-	
-	// Any downloading of data from the cloud or copying
-	// data from one cloud to another is assumed to have been
-	// done before this.
-	
-	memset(otab->myOTBuffer + size, 0, head_size - size - metadata_size); // Clear the unused reference slots.
-	otab->myWriteRepoFile->write(blob, offset, head_size);
-}
-
-void MSRepository::setRepoFileSize(MSOpenTable *otab, off_t offset)
+void MSRepository::setRepoFileSize(MSOpenTable *otab, off64_t offset)
 {
 	myRepoFileSize = offset;
 	if (myRepoFileSize >= MSDatabase::gRepoThreshold
@@ -1702,18 +1661,18 @@ MSRepoFile *MSRepository::openRepoFile()
 
 void MSRepository::lockRepo(RepoLockState state)
 {
-	CSMutex	*lock;
+	CSMutex	*myLock;
 	enter_();
 	
-	lock = &myRepoLock[0];
-	lock_(lock);
+	myLock = &myRepoLock[0];
+	lock_(myLock);
 	
 	ASSERT(!myRepoXLock);
 	
 	myRepoLockState = state;
 	myRepoXLock = true;
 		
-	unlock_(lock);
+	unlock_(myLock);
 	exit_();
 }
 
@@ -1731,10 +1690,10 @@ void MSRepository::signalCompactor()
 
 void MSRepository::unlockRepo(RepoLockState state)
 {
-	CSMutex	*lock;
+	CSMutex	*myLock;
 	enter_();
-	lock = &myRepoLock[0];
-	lock_(lock);
+	myLock = &myRepoLock[0];
+	lock_(myLock);
 	
 	ASSERT(myRepoLockState & state);
 	
@@ -1743,7 +1702,7 @@ void MSRepository::unlockRepo(RepoLockState state)
 		myRepoXLock = false;
 		signalCompactor();
 	}
-	unlock_(lock);
+	unlock_(myLock);
 	
 	exit_();
 }
@@ -1753,16 +1712,16 @@ void MSRepository::unlockRepo(RepoLockState state)
 // not handled here.
 void MSRepository::returnToPool()
 {
-	CSMutex	*lock;
+	CSMutex	*myLock;
 	enter_();
-	lock = &myRepoLock[0];
-	lock_(lock);
+	myLock = &myRepoLock[0];
+	lock_(myLock);
 	this->myRepoLockState &= ~(REPO_COMPACTING | REPO_WRITE);
 	if ( this->myRepoLockState == REPO_UNLOCKED) {
 		myRepoXLock = false;
 		signalCompactor();
 	}
-	unlock_(lock);
+	unlock_(myLock);
 	
 	this->release();
 	exit_();
@@ -1770,10 +1729,10 @@ void MSRepository::returnToPool()
 
 void MSRepository::backupCompleted()
 {
-	CSMutex	*lock;
+	CSMutex	*myLock;
 	enter_();
-	lock = &myRepoLock[0];
-	lock_(lock);
+	myLock = &myRepoLock[0];
+	lock_(myLock);
 	
 	
 	this->myRepoLockState &= ~REPO_BACKUP;
@@ -1782,26 +1741,26 @@ void MSRepository::backupCompleted()
 		signalCompactor();
 	}
 		
-	unlock_(lock);
+	unlock_(myLock);
 	exit_();
 }
 
 bool MSRepository::lockedForBackup() { return ((myRepoLockState & REPO_BACKUP) == REPO_BACKUP);}
 
-u_int MSRepository::initBackup()
+uint32_t MSRepository::initBackup()
 {
-	CSMutex	*lock;
-	u_int state;
+	CSMutex	*myLock;
+	uint32_t state;
 	enter_();
 	
-	lock = &myRepoLock[0];
-	lock_(lock);
+	myLock = &myRepoLock[0];
+	lock_(myLock);
 	state = this->myRepoLockState;
 	this->myRepoLockState |= REPO_BACKUP;
 	if (this->myRepoLockState == REPO_BACKUP) 
 		this->myRepoXLock = true;
 		
-	unlock_(lock);
+	unlock_(myLock);
 	return_(state);
 }
 
@@ -1852,7 +1811,7 @@ bool MSRepository::removeRepoFilesNotInUse()
 	return iPoolFiles.getSize() == 0;
 }
 
-off_t MSRepository::getRepoFileSize()
+off64_t MSRepository::getRepoFileSize()
 {
 	return myRepoFileSize;
 }
@@ -1867,17 +1826,17 @@ size_t MSRepository::getRepoBlobHeadSize()
 	return myRepoBlobHeadSize;
 }
 
-CSMutex *MSRepository::getRepoLock(off_t offset)
+CSMutex *MSRepository::getRepoLock(off64_t offset)
 {
 	return &myRepoLock[offset % CS_REPO_REC_LOCK_COUNT];
 }
 
-u_int MSRepository::getRepoID()
+uint32_t MSRepository::getRepoID()
 {
 	return myRepoID;
 }
 
-u_int MSRepository::getGarbageLevel()
+uint32_t MSRepository::getGarbageLevel()
 {
 	if (myRepoFileSize <= myRepoHeadSize)
 		return 0;

@@ -32,26 +32,26 @@
 #endif
 
 #ifdef DRIZZLED
-#include <drizzled/server_includes.h>
-#include <drizzled/handler.h>
-#include <drizzled/table.h>
-#include <drizzled/current_session.h>
-#include <drizzled/plugin/storage_engine.h>
+#include "config.h"
+#include <drizzled/common.h>
 #include <drizzled/plugin.h>
-
-#define my_strdup(a,b) strdup(a)
-
-/*
-#include <sys/stat.h>
-#include <drizzled/common_server.h>
+#include <drizzled/field.h>
+#include <drizzled/session.h>
 #include <drizzled/data_home.h>
 #include <drizzled/error.h>
-#include <drizzled/handler.h>
-#include <drizzled/plugin/storage_engine.h>
-*/
-#include "CSConfig.h"
+#include <drizzled/table.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/plugin/transactional_storage_engine.h>
+
+#define my_strdup(a,b) strdup(a)
+using namespace drizzled;
+using namespace drizzled::plugin;
+
+
+
+#include "cslib/CSConfig.h"
 #else
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 #include "mysql_priv.h"
 #include <mysql/plugin.h>
 #include <my_dir.h>
@@ -59,17 +59,18 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <inttypes.h>
 
 
 #include "Defs_ms.h"
 
-#include "CSDefs.h"
-#include "CSObject.h"
-#include "CSGlobal.h"
-#include "CSThread.h"
-#include "CSStrUtil.h"
-#include "CSTest.h"
-#include "CSLog.h"
+#include "cslib/CSDefs.h"
+#include "cslib/CSObject.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSThread.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSTest.h"
+#include "cslib/CSLog.h"
 
 #include "Engine_ms.h"	
 #include "ha_pbms.h"
@@ -85,6 +86,8 @@
 #include "metadata_ms.h"
 #include "Transaction_ms.h"
 #include "SysTab_httpheader.h"
+#include "SystemTable_ms.h"
+#include "parameters_ms.h"
 
 /* Note: 'new' used here is NOT CSObject::new which is a DEBUG define*/
 #ifdef new
@@ -101,81 +104,91 @@ static char		*pbms_temp_log_threshold;
 static char		*pbms_http_metadata_headers;
 
 #ifdef DRIZZLED
-class PBMSTableNameIterator: public TableNameIteratorImplementation
-{
-private:
-  uint32_t current_name;
+static int pbms_done_func(void *);
 
-public:
-  PBMSTableNameIterator(const std::string &database)
-    : TableNameIteratorImplementation(database), current_name(0)
-    {};
-
-   int next(std::string *name);
-
-};
-
-int PBMSTableNameIterator::next(string *name)
-{
-	const char *tab_name = pbms_getSysTableName(current_name++);
-	
-	if (!tab_name) 
-		return -1;
-		
-    if (name)
-      name->assign(tab_name);
-	  
-	return 0;
-	
-}
-
-int pbms_discover_system_tables(const char *name, drizzled::message::Table *table);
-
-class PBMSStorageEngine : public StorageEngine {
+class PBMSStorageEngine : public drizzled::plugin::TransactionalStorageEngine {
 public:
 	PBMSStorageEngine(std::string name_arg)
-	: StorageEngine(name_arg, HTON_NO_FLAGS | HTON_HIDDEN, 4 /*savepoint_offset*/, false /*support_2pc*/) {}
+	: TransactionalStorageEngine(name_arg, HTON_NO_FLAGS | HTON_HIDDEN) {}
 
-	int close_connection(Session *);
-	int commit(Session *, bool);
-	int rollback(Session *, bool);
-	handler *create(TABLE_SHARE *, MEM_ROOT *);
-	void drop_database(char *);
-	int savepoint_set(Session *thd, void *sv);
-	int savepoint_rollback(Session *thd, void *sv);
-	int savepoint_release(Session *thd, void *sv);
-	const char **bas_ext() const;
-
-	int createTableImplementation(Session*, const char *path, Table *,HA_CREATE_INFO *, drizzled::message::Table*)
+	~PBMSStorageEngine()
 	{
-		if (pbms_is_Systable(cs_last_name_of_path(path)))
-			return(0);
-			
-		/* Create only works for system tables. */
-		return( HA_ERR_WRONG_COMMAND );
+		pbms_done_func(NULL);
 	}
 	
-	int deleteTableImplementation(Session*, const string table_name) { return 0;}
+	int close_connection(Session *);
 	
-	int getTableProtoImplementation(const char* path, drizzled::message::Table *table_proto)
+	int doStartTransaction(Session *session, start_transaction_option_t options);
+	int doCommit(Session *, bool);
+	int doRollback(Session *, bool);
+	Cursor *create(TableShare& table, memory::Root *mem_root);
+	void drop_database(char *);
+	
+	/*
+	* Indicates to a storage engine the start of a
+	* new SQL statement.
+	*/
+	void doStartStatement(Session *session)
 	{
-		int err = pbms_discover_system_tables(path, table_proto);
+		(void) session;
+	}
+
+	/*
+	* Indicates to a storage engine the end of
+	* the current SQL statement in the supplied
+	* Session.
+	*/
+	void doEndStatement(Session *session)
+	{
+		(void) session;
+	}
+	
+	int doCreateTable(Session&, Table&, TableIdentifier& ident, drizzled::message::Table& );	
+	int doDropTable(Session &, TableIdentifier& );
+	
+	int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+	
+	void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
+                             drizzled::SchemaIdentifier &schema,
+                             drizzled::TableIdentifiers &set_of_identifiers) 
+	{
+		std::set<std::string> set_of_names;
+		
+		doGetTableNames(dir, schema, set_of_names);
+		for (std::set<std::string>::iterator set_iter = set_of_names.begin(); set_iter != set_of_names.end(); ++set_iter)
+		{
+			set_of_identifiers.push_back(TableIdentifier(schema, *set_iter));
+		}
+	}
+	
+	void doGetTableNames(CachedDirectory&, 
+					SchemaIdentifier &schema, 
+					std::set<std::string> &set_of_names) 
+	{
+		bool isPBMS = schema.compare("PBMS");
+		
+		if (isPBMS || PBMSParameters::isBLOBDatabase(schema.getSchemaName().c_str()))
+			PBMSSystemTables::getSystemTableNames(isPBMS, set_of_names);
+	}
+
+	int doSetSavepoint(Session *thd, NamedSavepoint &savepoint);
+	int doRollbackToSavepoint(Session *session, NamedSavepoint &savepoint);
+	int doReleaseSavepoint(Session *session, NamedSavepoint &savepoint);
+	const char **bas_ext() const;
+
+  int doGetTableDefinition(Session&, TableIdentifier &identifier,
+                                          drizzled::message::Table &table_proto)
+  {
+		int err;
+		const char *tab_name = identifier.getTableName().c_str();
+		
+		err = PBMSSystemTables::getSystemTableInfo(tab_name, &table_proto);
 		if (err)
 			return err;
 			
 		return EEXIST;
-	}
+  }
 
-	TableNameIteratorImplementation* tableNameIterator(const std::string &database)
-	{
-		return new PBMSTableNameIterator(database);
-	}
-
-	int renameTableImplementation(Session*,
-											  const char *from, const char *to)
-	{
-	  return -1;
-	}
 };
 
 PBMSStorageEngine	*pbms_hton;
@@ -192,6 +205,7 @@ static const char *ha_pbms_exts[] = {
  * UTILITIES
  */
 
+#ifndef DRIZZLED
 void pbms_take_part_in_transaction(void *thread)
 {
 	THD			*thd;
@@ -199,6 +213,7 @@ void pbms_take_part_in_transaction(void *thread)
 		trans_register_ha(thd, true, pbms_hton); 
 	}
 }
+#endif
 
 #ifdef DRIZZLED
 const char **PBMSStorageEngine::bas_ext() const
@@ -210,12 +225,20 @@ const char **ha_pbms::bas_ext() const
 }
 
 #ifdef DRIZZLED
+#define GET_MY_SELF(thd) ((CSThread *) *thd->getEngineData(pbms_hton))
+#define SET_MY_SELF(thd, self) *thd->getEngineData(pbms_hton) = (void *)self
+#else
+#define GET_MY_SELF(thd) ((CSThread *) *thd_ha_data(thd, pbms_hton))
+#define SET_MY_SELF(thd, self) *thd_ha_data(thd, pbms_hton) = (void *)self
+#endif
+
+#ifdef DRIZZLED
 int PBMSStorageEngine::close_connection(Session *thd)
 {
-	PBMSStorageEngine * const hton = this;
 #else
 static int pbms_close_connection(handlerton *hton, THD* thd)
 {
+	(void)hton;
 #endif
 	CSThread	*self;
 
@@ -224,8 +247,8 @@ static int pbms_close_connection(handlerton *hton, THD* thd)
 		return 0;
 
 	if (thd) {
-		if ((self = (CSThread *) *thd_ha_data(thd, pbms_hton))) {
-			*thd_ha_data(thd, pbms_hton) = NULL;
+		if ((self = GET_MY_SELF(thd))) {
+			SET_MY_SELF(thd, NULL);
 			CSThread::setSelf(self);
 			CSThread::detach(self);
 		}
@@ -237,40 +260,49 @@ static int pbms_close_connection(handlerton *hton, THD* thd)
 	return 0;
 }
 
-static int pbms_enter_conn(void *thread, CSThread **r_self, PBMSResultPtr result)
-{
-	THD			*thd;
-	CSThread	*self;
 
+static int pbms_enter_conn(THD *thd, CSThread **r_self, PBMSResultPtr result, bool doCreate)
+{
+	CSThread	*self = NULL;
+
+#ifndef DRIZZLED
+	// In drizzle there is no 1:1 relationship between pthreads and sessions
+	// so we must always get it from the session handle NOT the current pthread.
 	self = CSThread::getSelf();
+#endif
 	if (!self) {	
-		if ((thd = (THD *) thread)) {
-			if (!(self = (CSThread *) *thd_ha_data(((THD *) thd), pbms_hton))) {
+		if (thd) {
+			if (!(self = GET_MY_SELF(thd))) {
+				if (!doCreate)
+					return MS_ERR_NOT_FOUND;
+					
 				if (!(self = CSThread::newCSThread()))
 					return pbms_os_error_result(CS_CONTEXT, ENOMEM, result);
 				if (!CSThread::attach(self))
 					return pbms_exception_to_result(&self->myException, result);
-				*thd_ha_data(thd, pbms_hton) = self;
-			}
-			else {
+				SET_MY_SELF(thd, self);
+			} else {
 				if (!CSThread::setSelf(self))
 					return pbms_exception_to_result(&self->myException, result);
 			}
-		}
-		else {
+		} else {
+			if (!doCreate)
+				return MS_ERR_NOT_FOUND;
+				
 			if (!(self = CSThread::newCSThread()))
 				return pbms_os_error_result(CS_CONTEXT, ENOMEM, result);
 			if (!CSThread::attach(self))
 				return pbms_exception_to_result(&self->myException, result);
 		}
 	}
+
 	*r_self = self;
 	return MS_OK;
 }
 
 int pbms_enter_conn_no_thd(CSThread **r_self, PBMSResultPtr result)
 {
-	return pbms_enter_conn(current_thd, r_self, result);
+	return pbms_enter_conn(current_thd, r_self, result, true);
 }
 
 void pbms_exit_conn()
@@ -334,29 +366,38 @@ int pbms_error_result(const char *func, const char *file, int line, int err, con
 
 
 #ifdef DRIZZLED
-handler *PBMSStorageEngine::create(TABLE_SHARE *table, MEM_ROOT *mem_root)
+Cursor *PBMSStorageEngine::create(TableShare& table, memory::Root *mem_root)
 {
 	PBMSStorageEngine * const hton = this;
+	return new (mem_root) ha_pbms(hton, table);
+}
 #else
 static handler *pbms_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root)
 {
-#endif
 	return new (mem_root) ha_pbms(hton, table);
 }
+#endif
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::commit(Session *thd, bool all)
+int PBMSStorageEngine::doStartTransaction(Session *session, start_transaction_option_t options)
 {
-	PBMSStorageEngine * const hton = this;
+	(void)session;
+	(void)options;
+	
+	return 0;
+}
+
+int PBMSStorageEngine::doCommit(Session *thd, bool all __attribute__((unused)))
+{
 #else
-static int pbms_commit(handlerton *hton, THD *thd, bool all)
+static int pbms_commit(handlerton *, THD *thd, bool all __attribute__((unused)))
 {
 #endif
 	int			err = 0;
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn_no_thd(&self, &result))
+	if (pbms_enter_conn(thd, &self, &result, false))
 		return 0;
 	inner_();
 	try_(a) {
@@ -370,18 +411,17 @@ static int pbms_commit(handlerton *hton, THD *thd, bool all)
 }
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::rollback(Session *thd, bool all)
+int PBMSStorageEngine::doRollback(THD *thd, bool all __attribute__((unused)))
 {
-	PBMSStorageEngine * const hton = this;
 #else
-static int pbms_rollback(handlerton *hton, THD *thd, bool all)
+static int pbms_rollback(handlerton *, THD *thd, bool all __attribute__((unused)))
 {
 #endif
 	int			err = 0;
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn_no_thd(&self, &result))
+	if (pbms_enter_conn(thd, &self, &result, false))
 		return 0;
 	inner_();
 	try_(a) {
@@ -395,41 +435,38 @@ static int pbms_rollback(handlerton *hton, THD *thd, bool all)
 }
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::savepoint_set(Session *thd, void *sv)
+int PBMSStorageEngine::doSetSavepoint(Session *thd, NamedSavepoint &savepoint)
 {
-	PBMSStorageEngine * const hton = this;
-#else
-static int pbms_savepoint_set(handlerton *hton, THD *thd, void *sv)
-{
-#endif
 	int			err = 0;
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn_no_thd(&self, &result))
+	if (pbms_enter_conn(thd, &self, &result, false))
 		return 0;
-		
-	*((uint32_t*)sv) = self->myStmtCount;
-	return 0;	
+	
+	inner_();
+	try_(a) {
+		MSTransactionManager::setSavepoint(savepoint.getName().c_str());
+	}
+	catch_(a) {
+		err = pbms_exception_to_result(&self->myException, &result);
+	}
+	cont_(a);
+	return_(err);
+	
 }
 
-#ifdef DRIZZLED
-int PBMSStorageEngine::savepoint_rollback(Session *thd, void *sv)
+int PBMSStorageEngine::doRollbackToSavepoint(Session *session, NamedSavepoint &savepoint)
 {
-	PBMSStorageEngine * const hton = this;
-#else
-static int pbms_savepoint_rollback(handlerton *hton, THD *thd, void *sv)
-{
-#endif
 	int			err = 0;
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn_no_thd(&self, &result))
+	if (pbms_enter_conn(session, &self, &result, false))
 		return 0;
 	inner_();
 	try_(a) {
-		MSTransactionManager::rollbackTo(*((uint32_t*)sv));
+		MSTransactionManager::rollbackTo(savepoint.getName().c_str());
 	}
 	catch_(a) {
 		err = pbms_exception_to_result(&self->myException, &result);
@@ -438,24 +475,72 @@ static int pbms_savepoint_rollback(handlerton *hton, THD *thd, void *sv)
 	return_(err);
 }
 
-#ifdef DRIZZLED
-int PBMSStorageEngine::savepoint_release(Session *thd, void *sv)
+
+int PBMSStorageEngine::doReleaseSavepoint(Session *session, NamedSavepoint &savepoint)
 {
-	PBMSStorageEngine * const hton = this;
+	int			err = 0;
+	CSThread	*self;
+	PBMSResultRec result;
+
+	if (pbms_enter_conn(session, &self, &result, false))
+		return 0;
+		
+	inner_();
+	try_(a) {
+		MSTransactionManager::releaseSavepoint(savepoint.getName().c_str());
+	}
+	catch_(a) {
+		err = pbms_exception_to_result(&self->myException, &result);
+	}
+	cont_(a);
+	return_(err);
+}
+
 #else
+static int pbms_savepoint_set(handlerton *hton, THD *thd, void *sv)
+{
+	int			err = 0;
+	CSThread	*self;
+	PBMSResultRec result;
+
+	if (pbms_enter_conn(thd, &self, &result, false))
+		return 0;
+		
+	*((csWord4*)sv) = self->myStmtCount;
+	return 0;	
+}
+
+static int pbms_savepoint_rollback(handlerton *hton, THD *thd, void *sv)
+{
+	int			err = 0;
+	CSThread	*self;
+	PBMSResultRec result;
+
+	if (pbms_enter_conn(thd, &self, &result, false))
+		return 0;
+	inner_();
+	try_(a) {
+		MSTransactionManager::rollbackToPosition(*((csWord4*)sv));
+	}
+	catch_(a) {
+		err = pbms_exception_to_result(&self->myException, &result);
+	}
+	cont_(a);
+	return_(err);
+}
+
 static int pbms_savepoint_release(handlerton *hton, THD *thd, void *sv)
 {
-#endif
 	return 0;
 }
 
+#endif
 
 #ifdef DRIZZLED
 void PBMSStorageEngine::drop_database(char *path)
 {
-	PBMSStorageEngine * const hton = this;
 #else
-static void pbms_drop_database(handlerton *hton, char *path)
+static void pbms_drop_database(handlerton *, char *path)
 {
 #endif
 	CSThread *self;
@@ -481,7 +566,7 @@ static bool pbms_started = false;
 
 
 #ifdef DRIZZLED
-static int pbms_init_func(drizzled::plugin::Registry &registry)
+static int pbms_init_func(Context &registry)
 #else
 int pbms_discover_system_tables(handlerton *hton, THD* thd, const char *db, const char *name, uchar **frmblob, size_t *frmlen);
 static int pbms_init_func(void *p)
@@ -592,11 +677,7 @@ static int pbms_init_func(void *p)
 	return(my_res);
 }
 
-#ifdef DRIZZLED
-static int pbms_done_func(drizzled::plugin::Registry &registry)
-#else
 static int pbms_done_func(void *)
-#endif
 {
 	CSThread	*thread;
 
@@ -645,20 +726,21 @@ static int pbms_done_func(void *)
 
 	CSL.logLine(NULL, CSLog::Protocol, "PrimeBase Media Stream (PBMS) Daemon shutdown completed");
 	pbms_started = false;
-#ifdef DRIZZLED
-	registry.remove(pbms_hton);
-#endif
 	return(0);
 }
 
-ha_pbms::ha_pbms(handlerton *hton, TABLE_SHARE *table_arg):
-handler(hton, table_arg),
+#ifdef DRIZZLED
+ha_pbms::ha_pbms(handlerton *hton, TableShare& table_arg) : handler(*hton, table_arg),
+#else
+ha_pbms::ha_pbms(handlerton *hton, TABLE_SHARE *table_arg) : handler(hton, table_arg),
+#endif
 ha_open_tab(NULL),
 ha_error(0)
 {
 	memset(&ha_result, 0, sizeof(PBMSResultRec));
 }
 
+#ifndef DRIZZLED
 MX_TABLE_TYPES_T ha_pbms::table_flags() const
 {
 	return (
@@ -678,12 +760,13 @@ MX_TABLE_TYPES_T ha_pbms::table_flags() const
 		 */
 		0);
 }
+#endif
 
-int ha_pbms::open(const char *table_path, int mode, uint test_if_locked)
+int ha_pbms::open(const char *table_path, int , uint )
 {
 	CSThread *self;
 
-	if ((ha_error = pbms_enter_conn(current_thd, &self, &ha_result)))
+	if ((ha_error = pbms_enter_conn(current_thd, &self, &ha_result, true)))
 		return 1;
 
 	inner_();
@@ -703,7 +786,7 @@ int ha_pbms::close(void)
 {
 	CSThread *self;
 
-	if ((ha_error = pbms_enter_conn(current_thd, &self, &ha_result)))
+	if ((ha_error = pbms_enter_conn(current_thd, &self, &ha_result, true)))
 		return 1;
 
 	inner_();
@@ -876,7 +959,7 @@ int ha_pbms::index_read_last(byte * buf, const byte * key, uint key_len)
 #endif // PBMS_HAS_KEYS
 
 /* Sequential scan functions: */
-int ha_pbms::rnd_init(bool scan)
+int ha_pbms::rnd_init(bool )
 {
 	int err = 0;
 	enter_();
@@ -909,7 +992,7 @@ int ha_pbms::rnd_next(unsigned char *buf)
 }
 
 //-------
-void ha_pbms::position(const unsigned char *record)
+void ha_pbms::position(const unsigned char *)
 {
 	ha_open_tab->seqScanPos((uint8_t *) ref);
 }
@@ -976,7 +1059,7 @@ int ha_pbms::update_row(const unsigned char * old_data, unsigned char * new_data
 	return_(err);
 }
 
-int ha_pbms::info(uint flag)
+int ha_pbms::info(uint )
 {
 	return 0;
 }
@@ -986,7 +1069,7 @@ int ha_pbms::external_lock(THD *thd, int lock_type)
 	CSThread	*self;
 	int			err = 0;
 
-	if ((ha_error = pbms_enter_conn(thd, &self, &ha_result)))
+	if ((ha_error = pbms_enter_conn(thd, &self, &ha_result, true)))
 		return 1;
 
 	inner_();
@@ -1004,7 +1087,7 @@ int ha_pbms::external_lock(THD *thd, int lock_type)
 	return_(err);
 }
 
-THR_LOCK_DATA **ha_pbms::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_type lock_type)
+THR_LOCK_DATA **ha_pbms::store_lock(THD *, THR_LOCK_DATA **to, enum thr_lock_type lock_type)
 {
 	if (lock_type != TL_IGNORE && ha_lock.type == TL_UNLOCK)
 		ha_lock.type = lock_type;
@@ -1012,18 +1095,39 @@ THR_LOCK_DATA **ha_pbms::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_
 	return to;
 }
 
-#ifndef DRIZZLED
-int ha_pbms::create(const char *name, TABLE *table_arg, HA_CREATE_INFO *create_info)
+
+#ifdef DRIZZLED
+int PBMSStorageEngine::doCreateTable(Session&, Table&, TableIdentifier& , drizzled::message::Table& )
 {
-	if (pbms_is_Systable(cs_last_name_of_path(name)))
+	/* You cannot create PBMS tables. */
+	return( HA_ERR_WRONG_COMMAND );
+}
+
+int PBMSStorageEngine::doDropTable(Session &, TableIdentifier& )
+{
+	/* You cannot delete PBMS tables. */
+	return( HA_ERR_WRONG_COMMAND );
+}
+
+int PBMSStorageEngine::doRenameTable(Session&, TableIdentifier &, TableIdentifier &)
+{
+	/* You cannot rename PBMS tables. */
+	return( HA_ERR_WRONG_COMMAND );
+}
+
+#else // DRIZZLED
+
+int ha_pbms::create(const char *table_name, TABLE *, HA_CREATE_INFO *)
+{
+	if (PBMSSystemTables::isSystable(cs_last_name_of_path(table_name)))
 		return(0);
 		
 	/* Create only works for system tables. */
 	return( HA_ERR_WRONG_COMMAND );
 }
-#endif
+#endif // DRIZZLED
 
-bool ha_pbms::get_error_message(int error, String *buf)
+bool ha_pbms::get_error_message(int , String *buf)
 {
 	if (!ha_result.mr_code)
 		return false;
@@ -1033,16 +1137,20 @@ bool ha_pbms::get_error_message(int error, String *buf)
 }
 
 
-#ifndef DRIZZLED
+#ifdef DRIZZLED
+#define st_mysql_sys_var drizzled::drizzle_sys_var
+#else
+
 struct st_mysql_storage_engine pbms_engine_handler = {
 	MYSQL_HANDLERTON_INTERFACE_VERSION
 };
-#endif
 
 struct st_mysql_sys_var
 {
   MYSQL_PLUGIN_VAR_HEADER;
 };
+
+#endif
 
 #if MYSQL_VERSION_ID < 60000
 #if MYSQL_VERSION_ID >= 50124
@@ -1055,9 +1163,9 @@ struct st_mysql_sys_var
 #endif
 
 #ifdef USE_CONST_SAVE
-static void pbms_repository_threshold_func(THD *thd, struct st_mysql_sys_var *var, void *tgt, const void *save)
+static void pbms_repository_threshold_func(THD *, struct st_mysql_sys_var *var, void *tgt, const void *save)
 #else
-static void pbms_repository_threshold_func(THD *thd, struct st_mysql_sys_var *var, void *tgt, void *save)
+static void pbms_repository_threshold_func(THD *, struct st_mysql_sys_var *var, void *tgt, void *save)
 #endif
 {
 	char *old= *(char **) tgt;
@@ -1077,9 +1185,9 @@ static void pbms_repository_threshold_func(THD *thd, struct st_mysql_sys_var *va
 }
 
 #ifdef USE_CONST_SAVE
-static void pbms_temp_log_threshold_func(THD *thd, struct st_mysql_sys_var *var, void *tgt, const void *save)
+static void pbms_temp_log_threshold_func(THD *, struct st_mysql_sys_var *var, void *tgt, const void *save)
 #else
-static void pbms_temp_log_threshold_func(THD *thd, struct st_mysql_sys_var *var, void *tgt, void *save)
+static void pbms_temp_log_threshold_func(THD *, struct st_mysql_sys_var *var, void *tgt, void *save)
 #endif
 {
 	char *old= *(char **) tgt;
@@ -1099,9 +1207,9 @@ static void pbms_temp_log_threshold_func(THD *thd, struct st_mysql_sys_var *var,
 }
 
 #ifdef USE_CONST_SAVE
-static void pbms_http_metadata_headers_func(THD *thd, struct st_mysql_sys_var *var, void *tgt, const void *save)
+static void pbms_http_metadata_headers_func(THD *, struct st_mysql_sys_var *var, void *tgt, const void *save)
 #else
-static void pbms_http_metadata_headers_func(THD *thd, struct st_mysql_sys_var *var, void *tgt, void *save)
+static void pbms_http_metadata_headers_func(THD *, struct st_mysql_sys_var *var, void *tgt, void *save)
 #endif
 {
 	char *old= *(char **) tgt;
@@ -1117,15 +1225,15 @@ static void pbms_http_metadata_headers_func(THD *thd, struct st_mysql_sys_var *v
 #ifdef DEBUG
 	char buffer[200];
 
-	snprintf(buffer, 200, "pbms_http_metadata_headers=%"PRIu64"\n", pbms_http_metadata_headers);
+	snprintf(buffer, 200, "pbms_http_metadata_headers=%s\n", pbms_http_metadata_headers);
 	CSL.log(NULL, CSLog::Protocol, buffer);
 #endif
 }
 
 #ifdef USE_CONST_SAVE
-static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *var, void *tgt, const void *save)
+static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *, void *tgt, const void *save)
 #else
-static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *var, void *tgt, void *save)
+static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *, void *tgt, void *save)
 #endif
 {
 	CSThread		*self;
@@ -1133,7 +1241,7 @@ static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *var, 
 
 	*(long *)tgt= *(long *) save;
 
-	if (pbms_enter_conn(thd, &self, &result))
+	if (pbms_enter_conn(thd, &self, &result, true))
 		return;
 	MSDatabase::wakeTempLogThreads();
 }
@@ -1164,16 +1272,16 @@ static MYSQL_SYSVAR_ULONG(temp_blob_timeout, MSTempLog::gTempBlobTimeout,
 	"The timeout, in seconds, for temporary BLOBs. Uploaded blob data is removed after this time, unless committed to the database.",
 	NULL, pbms_temp_blob_timeout_func, MS_DEFAULT_TEMP_LOG_WAIT, 1, ~0L, 1);
 
-static MYSQL_SYSVAR_INT(garbage_threshold, MSRepository::gGarbageThreshold,
+static MYSQL_SYSVAR_ULONG(garbage_threshold, MSRepository::gGarbageThreshold,
 	PLUGIN_VAR_OPCMDARG,
 	"The percentage of garbage in a repository file before it is compacted.",
 	NULL, NULL, MS_DEFAULT_GARBAGE_LEVEL, 0, 100, 1);
 
 
-static MYSQL_SYSVAR_INT(max_keep_alive, MSConnectionHandler::gMaxKeepAlive,
+static MYSQL_SYSVAR_ULONG(max_keep_alive, MSConnectionHandler::gMaxKeepAlive,
 	PLUGIN_VAR_OPCMDARG,
 	"The timeout, in milli-seconds, before the HTTP server will close an inactive HTTP connection.",
-	NULL, NULL, MS_DEFAULT_KEEP_ALIVE, 1, INT32_MAX, 1);
+	NULL, NULL, MS_DEFAULT_KEEP_ALIVE, 1, UINT32_MAX, 1);
 
 static struct st_mysql_sys_var* pbms_system_variables[] = {
 	MYSQL_SYSVAR(port),
@@ -1188,27 +1296,31 @@ static struct st_mysql_sys_var* pbms_system_variables[] = {
 #endif
 
 #ifdef DRIZZLED
-drizzle_declare_plugin(pbms)
+DRIZZLE_DECLARE_PLUGIN
+{
+	DRIZZLE_VERSION_ID,
+	"PBMS",
+	"1.0",
+	"Barry Leslie, PrimeBase Technologies GmbH",
+	"The Media Stream daemon for Drizzle",
+	PLUGIN_LICENSE_GPL,
+	pbms_init_func, /* Plugin Init */
+	pbms_system_variables,          /* system variables                */
+	NULL                                            /* config options                  */
+}
+DRIZZLE_DECLARE_PLUGIN_END;
 #else
 mysql_declare_plugin(pbms)
-#endif
 {
-#ifndef DRIZZLED
 	MYSQL_STORAGE_ENGINE_PLUGIN,
 	&pbms_engine_handler,
-#endif
 	"PBMS",
-#ifdef DRIZZLED
-	"1.0",
-#endif
 	"Barry Leslie, PrimeBase Technologies GmbH",
 	"The Media Stream daemon for MySQL",
 	PLUGIN_LICENSE_GPL,
 	pbms_init_func, /* Plugin Init */
 	pbms_done_func, /* Plugin Deinit */
-#ifndef DRIZZLED
 	0x0001 /* 0.1 */,
-#endif
 	NULL, 											/* status variables								*/
 #if MYSQL_VERSION_ID >= 50118
 	pbms_system_variables, 							/* system variables								*/
@@ -1217,8 +1329,6 @@ mysql_declare_plugin(pbms)
 #endif
 	NULL											/* config options								*/
 }
-#ifdef DRIZZLED
-drizzle_declare_plugin_end;
-#else
 mysql_declare_plugin_end;
-#endif
+#endif //DRIZZLED
+

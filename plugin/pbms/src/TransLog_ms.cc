@@ -30,14 +30,14 @@
  * so that no transactions will be applied to the repository files as they are backed up.
  *
  */
-#include "CSConfig.h"
+#include "cslib/CSConfig.h"
 
 #include <stdlib.h>
 #include <inttypes.h>
 
-#include "CSGlobal.h"
-#include "CSStrUtil.h"
-#include "CSStorage.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSStorage.h"
 
 #include "TransLog_ms.h"
 #include "TransCache_ms.h"
@@ -112,19 +112,28 @@ static uint8_t checksum(uint8_t *data, size_t len)
 
 MSTrans::MSTrans() : 
 	CSSharedRefObject(),
-	txn_TransCache(NULL),
-	txn_IsTxnValid(false),
-	txn_HaveOverflow(false),
-	txn_OverflowCount(0),
-	txn_HighWaterMark(0),
-	txn_Overflow(0),
+	txn_MaxCheckPoint(0),
+	txn_Doingbackup(false),
 	txn_reader(NULL),
+	txn_IsTxnValid(false),
+	txn_CurrentTxn(0),
+	txn_TxnIndex(0),
 	txn_StartCheckPoint(0),
-	txn_EOLCheckPoint(0),
+	txn_TransCache(NULL),
+	txn_BlockingTransaction(0),
 	txn_File(NULL),
+	txn_EOLCheckPoint(0),
+	txn_MaxRecords(0),
+	txn_ReqestedMaxRecords(0),
+	txn_HighWaterMark(0),
+	txn_OverflowCount(0),
 	txn_MaxTID(0),
 	txn_Recovered(false),
-	txn_Doingbackup(false)
+	txn_HaveOverflow(false),
+	txn_Overflow(0),
+	txn_EOL(0),
+	txn_Start(0),
+	txn_Checksum(0)
 {
 }
 
@@ -200,8 +209,8 @@ try_again:
 		log_size = DFLT_TRANS_LOG_LIST_SIZE * sizeof(MSDiskTransRec) + sizeof(MSDiskTransHeadRec);
 
 		// Preallocate the log space and initialize it.
-		MSDiskTransRec recs[1024] = {0};
-		off_t offset = sizeof(MSDiskTransHeadRec);
+		MSDiskTransRec recs[1024] = {};
+		off64_t offset = sizeof(MSDiskTransHeadRec);
 		uint64_t num_records = DFLT_TRANS_LOG_LIST_SIZE;
 		size_t size;
 		
@@ -322,7 +331,7 @@ try_again:
 			printf("Recovering overflow log\n");
 		if (dump_log) {
 			char name[100];
-			snprintf(name, 100, "%dms-trans-log.dump", time(NULL));
+			snprintf(name, 100, "%dms-trans-log.dump", (int)time(NULL));
 			trans->txn_DumpLog(name);
 		}
 #endif
@@ -380,7 +389,7 @@ bool MSTrans::txn_ValidRecord(MSTransPtr rec)
 void MSTrans::txn_GetRecordAt(uint64_t index, MSTransPtr rec)
 {
 	MSDiskTransRec drec;
-	off_t offset;
+	off64_t offset;
 	
 	// Read 1 record from the log and convert it from disk format.
 	offset = sizeof(MSDiskTransHeadRec) + index * sizeof(MSDiskTransRec);		
@@ -393,7 +402,7 @@ void MSTrans::txn_GetRecordAt(uint64_t index, MSTransPtr rec)
 // in the header. 
 void MSTrans::txn_Recover()
 {
-	MSTransRec rec = {0};
+	MSTransRec rec = {0,0,0,0,0,0,0};
 	uint64_t original_eol = txn_EOL;
 	enter_();
 
@@ -531,7 +540,7 @@ void ReadTXNLog::rl_ReadLog(uint64_t read_start, bool log_locked)
 	while (size && rl_CanContinue()) {
 		MSDiskTransRec diskRecords[1000];
 		uint32_t read_size;
-		off_t offset;
+		off64_t offset;
 		
 		if (size > 1000) 
 			read_size = 1000 ;
@@ -701,7 +710,7 @@ void MSTrans::txn_LogTransaction(MS_Txn type, bool autocommit, uint32_t db_id, u
 
 void  MSTrans::txn_AddTransaction(uint8_t tran_type, bool autocommit, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id)
 {
-	MSTransRec rec = {0}; // This must be set to zero so that the checksum will be valid. 
+	MSTransRec rec = {0,0,0,0,0,0,0}; // This must be set to zero so that the checksum will be valid. 
 	MSDiskTransRec drec;
 	uint64_t new_offset = txn_EOL;
 	bool do_flush = true;
@@ -1150,7 +1159,7 @@ void MSTrans::txn_DumpLog(const char *file)
 	while (size) {
 		MSDiskTransRec diskRecords[1000];
 		uint32_t read_size;
-		off_t offset;
+		off64_t offset;
 		
 		if (size > 1000) 
 			read_size = 1000 ;

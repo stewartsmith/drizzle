@@ -1,4 +1,4 @@
-/* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
+/* Copyright (c) 2010 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
  *
@@ -16,24 +16,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * Original author: Paul McCullagh
- * Continued development: Barry Leslie
+ * Barry Leslie
  *
- * 2007-05-25
+ * 2010-05-25
  *
- * H&G2JCtL
- *
- * MySQL interface.
+ * PBMS daemon global parameters.
  *
  */
 
-#ifndef __MS_MYSQL_H__
-#define __MS_MYSQL_H__
+#ifndef __PARAMETERS_MS_H__
+#define __PARAMETERS_MS_H__
 
-void		*ms_my_get_thread();
-uint64_t		ms_my_1970_to_mysql_time(time_t t);
-const char	*ms_my_get_mysql_home_path();
-void		ms_my_set_column_name(const char *table, uint16_t col_index, char *col_name);
-bool		ms_is_autocommit();
+class PBMSParameters {
+	static uint32_t server_id;
+	
+	public:
+	
+	static uint32_t getServerID() { return server_id;}
+	static void setServerID(uint32_t id) { server_id = id;}
+	
+	static bool isBLOBDatabase(const char *) { return true;}
 
-#endif
+};
+
+#endif // __PARAMETERS_MS_H__

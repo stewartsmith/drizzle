@@ -1,3 +1,5 @@
+#ifdef NOT_USED_IN_ANY_THING
+
 /* Copyright (c) 2008 PrimeBase Technologies GmbH, Germany
  *
  * PrimeBase Media Stream for MySQL
@@ -24,12 +26,12 @@
  *
  */
 
-#include "CSConfig.h"
-#include "CSGlobal.h"
-#include "CSLog.h"
-#include "CSStrUtil.h"
-#include "CSHTTPStream.h"
-#include "CSStream.h"
+#include "cslib/CSConfig.h"
+#include "cslib/CSGlobal.h"
+#include "cslib/CSLog.h"
+#include "cslib/CSStrUtil.h"
+#include "cslib/CSHTTPStream.h"
+#include "cslib/CSStream.h"
 
 #include "Repository_ms.h"
 #include "OpenTable_ms.h"
@@ -266,4 +268,4 @@ bool PBMSURLToID(char *url, PBMSBlobIDPtr blob_id)
 }
 
 
-
+#endif // NOT_USED_IN_ANY_THING
