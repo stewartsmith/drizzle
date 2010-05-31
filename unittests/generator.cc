@@ -100,9 +100,31 @@ void Generator::DateTimeGen::make_valid_datetime(drizzled::DateTime *datetime)
 }
 
 void Generator::TimestampGen::make_timestamp(drizzled::Timestamp *timestamp,
-                           uint32_t years, uint32_t months, uint32_t days)
+                                             uint32_t years, uint32_t months, uint32_t days,
+                                             uint32_t hours, uint32_t minutes, uint32_t seconds)
 {
   timestamp->set_years(years);
   timestamp->set_months(months);
   timestamp->set_days(days);
+  timestamp->set_hours(hours);
+  timestamp->set_minutes(minutes);
+  timestamp->set_seconds(seconds);
+}
+
+void Generator::TimestampGen::make_micro_timestamp(drizzled::MicroTimestamp *timestamp,
+                                                   uint32_t years, uint32_t months, uint32_t days,
+                                                   uint32_t hours, uint32_t minutes,
+                                                   uint32_t seconds, uint32_t microseconds)
+{
+  make_timestamp(timestamp, years, months, days, hours, minutes, seconds);
+  timestamp->set_useconds(microseconds);
+}
+                                 
+void Generator::TimestampGen::make_nano_timestamp(drizzled::NanoTimestamp *timestamp,
+                                                  uint32_t years, uint32_t months, uint32_t days,
+                                                  uint32_t hours, uint32_t minutes,
+                                                  uint32_t seconds, uint32_t nanoseconds)
+{
+  make_timestamp(timestamp, years, months, days, hours, minutes, seconds);
+  timestamp->set_nseconds(nanoseconds);
 }

@@ -58,8 +58,8 @@ public:
   {
   public:
     static void make_datetime(drizzled::DateTime *datetime,
-                              uint32_t years, uint32_t months, uint32_t days, uint32_t _hours,
-                              uint32_t _minutes, uint32_t _seconds);
+                              uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
+                              uint32_t minutes, uint32_t seconds);
     static void make_valid_datetime(drizzled::DateTime *datetime);
   };
   
@@ -67,7 +67,14 @@ public:
   {
   public:
     static void make_timestamp(drizzled::Timestamp *timestamp,
-                                uint32_t years, uint32_t months, uint32_t days);
+                               uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
+                               uint32_t minutes, uint32_t seconds);
+    static void make_micro_timestamp(drizzled::MicroTimestamp *timestamp,
+                              uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
+                              uint32_t minutes, uint32_t seconds, uint32_t microseconds);
+    static void make_nano_timestamp(drizzled::NanoTimestamp *timestamp,
+                                uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
+                                uint32_t minutes, uint32_t seconds, uint32_t nanoseconds);
   };
 };
 

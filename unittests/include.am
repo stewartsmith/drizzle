@@ -8,7 +8,14 @@ check_PROGRAMS += unittests/calendar_test
 unittests_calendar_test_LDADD = drizzled/libtemporal.la ${LTLIBGTEST}
 
 unittests_calendar_test_SOURCES = unittests/calendar_test.cc \
-	unittests/date_test.cc unittests/time_test.cc unittests/date_time_test.cc \
-	unittests/temporal_format_test.cc unittests/temporal_interval_test.cc unittests/generator.cc
+	unittests/date_test.cc \
+	unittests/date_time_test.cc \
+	unittests/generator.cc \
+	unittests/micro_timestamp_test.cc \
+	unittests/nano_timestamp_test.cc \
+	unittests/temporal_format_test.cc \
+	unittests/temporal_interval_test.cc \
+	unittests/time_test.cc \
+	unittests/timestamp_test.cc
 endif
 

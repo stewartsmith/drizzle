@@ -61,9 +61,9 @@ template<> void DateTestCompareOperators<DateTime>::initBeforeIdenticalAfter()
 
 template<> void DateTestCompareOperators<Timestamp>::initBeforeIdenticalAfter()
 {
-  Generator::TimestampGen::make_timestamp(&before_sample_date, 1980, 1, 1);
-  Generator::TimestampGen::make_timestamp(&identical_with_sample_date, 2010, 9, 8);
-  Generator::TimestampGen::make_timestamp(&after_sample_date, 2019, 5, 30);
+  Generator::TimestampGen::make_timestamp(&before_sample_date, 1980, 1, 1, 13, 56, 41);
+  Generator::TimestampGen::make_timestamp(&identical_with_sample_date, 2010, 9, 8, 0, 0, 0);
+  Generator::TimestampGen::make_timestamp(&after_sample_date, 2019, 5, 30, 9, 10, 13);
 }
 
 typedef ::testing::Types<Date, DateTime, Timestamp> typesForDateTestCompareOperators;
@@ -192,6 +192,15 @@ class DateTest : public ::testing::Test
       Generator::DateGen::make_valid_date(&date);
     }
 };
+
+TEST_F(DateTest, operatorAssign_shouldCopyDateRelatadComponents)
+{
+  Date copy = date;
+
+  EXPECT_EQ(date.years(), copy.years());
+  EXPECT_EQ(date.months(), copy.months());
+  EXPECT_EQ(date.days(), copy.days());
+}
 
 TEST_F(DateTest, is_valid_onValidDate_shouldReturn_True)
 {
@@ -331,12 +340,12 @@ TEST_F(DateTest, from_string_validString_shouldPopulateCorrectly)
   char valid_string[Date::MAX_STRING_LENGTH]= "2010-05-01";
   uint32_t years, months, days;
   
-  result = date.from_string(valid_string, Date::MAX_STRING_LENGTH);
+  result= date.from_string(valid_string, Date::MAX_STRING_LENGTH);
   ASSERT_TRUE(result);
   
-  years = date.years();
-  months = date.months();
-  days = date.days();
+  years= date.years();
+  months= date.months();
+  days= date.days();
   
   EXPECT_EQ(2010, years);
   EXPECT_EQ(5, months);
@@ -347,13 +356,13 @@ TEST_F(DateTest, from_string_invalidString_shouldReturn_False)
 {
   char valid_string[Date::MAX_STRING_LENGTH]= "2x10-05-01";
    
-  result = date.from_string(valid_string, Date::MAX_STRING_LENGTH);
+  result= date.from_string(valid_string, Date::MAX_STRING_LENGTH);
   ASSERT_FALSE(result);
 }
 
 TEST_F(DateTest, from_int32_t_onValueCreatedBy_to_int32_t_shouldProduceOriginalDate)
 {
-  uint32_t years = 2030, months = 8, days = 17;
+  uint32_t years= 2030, months= 8, days= 17;
   Generator::DateGen::make_date(&date, years, months, days);
   uint32_t decoded_years, decoded_months, decoded_days;
   int32_t representation;
@@ -362,9 +371,9 @@ TEST_F(DateTest, from_int32_t_onValueCreatedBy_to_int32_t_shouldProduceOriginalD
   date.to_int32_t(&representation);
   decoded_date.from_int32_t(representation);
   
-  decoded_years = decoded_date.years();
-  decoded_months = decoded_date.months();
-  decoded_days = decoded_date.days();
+  decoded_years= decoded_date.years();
+  decoded_months= decoded_date.months();
+  decoded_days= decoded_date.days();
   
   EXPECT_EQ(years, decoded_years);
   EXPECT_EQ(months, decoded_months);
@@ -383,14 +392,14 @@ TEST_F(DateTest, to_julian_day_number)
 
 TEST_F(DateTest, from_julian_day_number)
 {
-  int64_t julian_day = 2451544;
+  int64_t julian_day= 2451544;
   uint32_t years, months, days;
    
   date.from_julian_day_number(julian_day);
   
-  years = date.years();
-  months = date.months();
-  days = date.days();  
+  years= date.years();
+  months= date.months();
+  days= date.days();
     
   EXPECT_EQ(1999, years);
   EXPECT_EQ(12, months);
@@ -399,7 +408,7 @@ TEST_F(DateTest, from_julian_day_number)
 
 TEST_F(DateTest, to_tm)
 {
-  uint32_t years = 2030, months = 8, days = 17;
+  uint32_t years= 2030, months= 8, days= 17;
   Generator::DateGen::make_date(&date, years, months, days);
   struct tm filled;
   
@@ -420,15 +429,15 @@ TEST_F(DateTest, from_tm)
 {
   uint32_t years, months, days;
   struct tm from;
-  from.tm_year = 1956;
-  from.tm_mon = 3;
-  from.tm_mday = 30;
+  from.tm_year= 1956;
+  from.tm_mon= 3;
+  from.tm_mday= 30;
   
   date.from_tm(&from);
   
-  years = date.years();
-  months = date.months();
-  days = date.days();
+  years= date.years();
+  months= date.months();
+  days= date.days();
   
   EXPECT_EQ(1956, years);  
   EXPECT_EQ(3, months);
@@ -451,9 +460,9 @@ TEST_F(DateTest, from_time_t)
   
   date.from_time_t(652838400);
   
-  years = date.years();
-  months = date.months();
-  days = date.days();
+  years= date.years();
+  months= date.months();
+  days= date.days();
   
   EXPECT_EQ(1990, years);  
   EXPECT_EQ(9, months);
