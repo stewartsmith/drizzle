@@ -41,7 +41,6 @@ AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 ])
 
-
 PANDORA_RUN_CPPLINT
 
 PANDORA_REQUIRE_LIBPROTOBUF
@@ -64,6 +63,7 @@ PANDORA_DRIZZLE_BUILD
 AC_DEFINE([BUILDING_DRIZZLE],[1],
           [Define indicating we are building and not consuming drizzle.])
 
+PANDORA_HAVE_LIBGTEST
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
