@@ -386,7 +386,7 @@ void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-int session_tx_isolation(const Session *session);
+enum_tx_isolation session_tx_isolation(const Session *session);
 
 
 
