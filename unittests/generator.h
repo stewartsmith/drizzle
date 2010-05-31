@@ -26,6 +26,7 @@
 namespace drizzled
 {
   class Date;
+  class TemporalFormat;
 }
 
 class Generator 
@@ -75,6 +76,20 @@ public:
     static void make_nano_timestamp(drizzled::NanoTimestamp *timestamp,
                                 uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
                                 uint32_t minutes, uint32_t seconds, uint32_t nanoseconds);
+  };
+
+  class TemporalFormatGen
+  {
+  public:
+    static drizzled::TemporalFormat *make_temporal_format(const char *regexp,
+                                     int32_t year_part_index,
+                                     int32_t month_part_index,
+                                     int32_t day_part_index,
+                                     int32_t hour_part_index,
+                                     int32_t minute_part_index,
+                                     int32_t second_part_index,
+                                     int32_t usecond_part_index,
+                                     int32_t nsecond_part_index);
   };
 };
 

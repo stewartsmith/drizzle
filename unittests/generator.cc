@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <drizzled/temporal.h>
+#include <drizzled/temporal_format.h>
 
 #include "generator.h"
 
@@ -127,4 +128,28 @@ void Generator::TimestampGen::make_nano_timestamp(drizzled::NanoTimestamp *times
 {
   make_timestamp(timestamp, years, months, days, hours, minutes, seconds);
   timestamp->set_nseconds(nanoseconds);
+}
+
+drizzled::TemporalFormat *Generator::TemporalFormatGen::make_temporal_format(const char *regexp,
+                                                                  int32_t year_part_index,
+                                                                  int32_t month_part_index,
+                                                                  int32_t day_part_index,
+                                                                  int32_t hour_part_index,
+                                                                  int32_t minute_part_index,
+                                                                  int32_t second_part_index,
+                                                                  int32_t usecond_part_index,
+                                                                  int32_t nsecond_part_index)
+{
+  drizzled::TemporalFormat *temporal_format= new drizzled::TemporalFormat(regexp);
+  
+  temporal_format->set_year_part_index(year_part_index);
+  temporal_format->set_month_part_index(month_part_index);
+  temporal_format->set_day_part_index(day_part_index);
+  temporal_format->set_hour_part_index(hour_part_index);
+  temporal_format->set_minute_part_index(minute_part_index);
+  temporal_format->set_second_part_index(second_part_index);
+  temporal_format->set_usecond_part_index(usecond_part_index);
+  temporal_format->set_nsecond_part_index(nsecond_part_index);
+
+  return temporal_format;
 }

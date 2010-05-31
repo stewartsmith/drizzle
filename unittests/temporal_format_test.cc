@@ -20,4 +20,111 @@
 
 #include "config.h"
 
+#include <drizzled/temporal.h>
+#include <drizzled/temporal_format.h>
 #include <gtest/gtest.h>
+
+#include "generator.h"
+
+using namespace drizzled;
+
+class TemporalFormatTest : public ::testing::Test
+{
+  protected:
+    TemporalFormat *tf;
+    Temporal *temporal;
+    bool result;
+
+  virtual void SetUp()
+  {
+    tf= NULL;
+    temporal= NULL;
+  }
+
+  virtual void TearDown()
+  {
+    if (tf != NULL)
+      delete tf;
+    if (temporal != NULL)
+      delete temporal;
+  }
+};
+
+
+TEST_F(TemporalFormatTest, constructor_WithValidRegExp_shouldCompile)
+{
+  tf= new TemporalFormat("^(\\d{4})[-/.]$");
+  
+  result= tf->is_valid();
+
+  ASSERT_TRUE(result);
+}
+
+TEST_F(TemporalFormatTest, constructor_WithInvalidRegExp_shouldNotCompile)
+{
+  tf= new TemporalFormat("^(\\d{4)[-/.]$");
+
+  result= tf->is_valid();
+  
+  ASSERT_FALSE(result);
+}
+
+TEST_F(TemporalFormatTest, matches_OnMatchingStringAndNULLTemporal_FormatWithNoIndexesSet_shouldReturn_True)
+{
+  tf= new TemporalFormat("^(\\d{4})[-/.](\\s+)ABC$");
+  char matched[] ="1234/   ABC";
+
+  result= tf->matches(matched, sizeof(matched) - sizeof(char), NULL);
+  
+  ASSERT_TRUE(result);
+}
+
+TEST_F(TemporalFormatTest, matches_OnNotMatchingString_shouldReturn_False)
+{
+  tf= new TemporalFormat("^(\\d{4})[-/.](\\s+)ABC$");
+  char matched[] ="1234/ABC";
+
+  result= tf->matches(matched, sizeof(matched) - sizeof(char), NULL);
+  
+  ASSERT_FALSE(result);
+}
+
+TEST_F(TemporalFormatTest, matches_OnMatchingString_FormatWithIndexesSet_shouldPopulateTemporal)
+{
+  char regexp[] = "^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})$";
+  char matched[]= "1999/9/14T23:29:05";
+  tf= Generator::TemporalFormatGen::make_temporal_format(regexp, 1, 2, 3, 4, 5, 6, 0, 0);
+  temporal= new DateTime();
+
+  
+  tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
+  
+  EXPECT_EQ(1999, temporal->years());
+  EXPECT_EQ(9, temporal->months());
+  EXPECT_EQ(14, temporal->days());
+  EXPECT_EQ(23, temporal->hours());
+  EXPECT_EQ(29, temporal->minutes());
+  EXPECT_EQ(5, temporal->seconds());
+}
+
+TEST_F(TemporalFormatTest, matches_FormatWithMicroSecondIndexSet_shouldAddTrailingZeros)
+{
+  tf= Generator::TemporalFormatGen::make_temporal_format("^(\\d{1,6})$", 0, 0, 0, 0, 0, 0, 1, 0);
+  char matched[]= "560";
+  temporal= new Time();
+  
+  tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
+  
+  ASSERT_EQ(560000, temporal->useconds());
+}
+
+TEST_F(TemporalFormatTest, matches_FormatWithNanoSecondIndexSet_shouldAddTrailingZeros)
+{
+  tf= Generator::TemporalFormatGen::make_temporal_format("^(\\d{1,9})$", 0, 0, 0, 0, 0, 0, 0, 1);
+  char matched[]= "4321";
+  temporal= new Time();
+  
+  tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
+  
+  ASSERT_EQ(432100000, temporal->nseconds());
+}
