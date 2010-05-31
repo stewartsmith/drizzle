@@ -287,7 +287,8 @@ static bool ignore_errors= false, quick= false,
 static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
-static uint32_t opt_max_input_line, opt_drizzle_port;
+static uint32_t opt_max_input_line;
+static uint32_t opt_drizzle_port= 0;
 static int  opt_silent, verbose= 0;
 static drizzle_capabilities_t connect_flag= DRIZZLE_CAPABILITIES_NONE;
 static char *histfile;
@@ -347,7 +348,7 @@ static int com_quit(string *str,const char*),
   com_nopager(string *str, const char*), com_pager(string *str, const char*);
 
 static int read_and_execute(bool interactive);
-static int sql_connect(const char *host,const char *database,const char *user,const char *password,
+static int sql_connect(char *host, char *database, char *user, char *password,
                        uint32_t silent);
 static const char *server_version_string(drizzle_con_st *con);
 static int put_info(const char *str,INFO_TYPE info,uint32_t error,
@@ -1332,28 +1333,43 @@ static void check_max_input_line(uint32_t in_max_input_line)
   opt_max_input_line*=1024;
 }
 
-static void check_select_limit(uint32_t in_check_limit)
+static pair<string, string> reg_password(std::string &s)
 {
-  select_limit= 0;
-  if( in_check_limit>=1 || in_check_limit<ULONG_MAX)
+  if (s.find("--password")==0)
   {
-    cout<<N_("Error: Invalid Value for check_limit");
-    exit(-1);
-  }
-  select_limit= in_check_limit;
-}
+    if (s=="--password")
+    {
+      //check if no argument is passed.
+      return make_pair("password", "☃PASSWORD☃");
+    }
 
-static void check_join_size(uint32_t in_max_join_size)
-{
-  max_join_size= 0;
-  if( in_max_join_size>=1 || in_max_join_size<ULONG_MAX)
+    if (s.substr(10,3)=="=\"\"")
+    {
+      // Check if --password=""
+      return make_pair("password","☃PASSWORD☃");
+    }
+    
+    if(s.substr(10)=="=")
+    {
+      // check if --password= and return a default value
+      return make_pair("password","☃PASSWORD☃");
+    }
+
+    if(s.length()>12 && s[10]=='\"')
+    {
+      // check if --password has quotes, remove quotes and return the value
+      return make_pair("password", s.substr(11,s.length()-1));
+    }
+
+    // if all above are false, it implies that --password=value, return value.
+    return make_pair("password", s.substr(11));
+  }
+
+  else
   {
-    cout<<N_("Error: Invalid Value for max_join_size");
-    exit(-1);
-  }
-  max_join_size= in_max_join_size;
+    return make_pair(string(), string());
+  } 
 }
-
 
 int main(int argc,char *argv[])
 {
@@ -1422,11 +1438,11 @@ try
   N_("Only update the default database. This is useful for skipping updates to other database in the update log."))
   ("pager", po::value<string>(),
   N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
-  ("no-pager", po::value<bool>(&opt_nopager)->default_value(false)->zero_tokens(),
-  N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."))
-  ("password,P", po::value<string>(&opt_password)->default_value(""),
+  ("disable-pager", po::value<bool>(&opt_nopager)->default_value(false)->zero_tokens(),
+  N_("Disable pager and print to stdout. See interactive help (\\h) also."))
+  ("password,P", po::value<string>(&opt_password)->implicit_value(""),
   N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
-  ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
+  ("port,p", po::value<uint32_t>()->default_value(0),
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
   ("prompt", po::value<string>(&current_prompt)->default_value(""),  
   N_("Set the drizzle prompt to this value."))
@@ -1443,8 +1459,8 @@ try
   N_("Output in table format.")) 
   ("tee", po::value<string>(),
   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
-  ("no-tee", 
-  N_("Disable outfile. See interactive help (\\h) also. WARNING: option deprecated; use --disable-tee instead"))
+  ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
+  N_("Disable outfile. See interactive help (\\h) also."))
   ("user,u", po::value<string>(&current_user)->default_value(""),
   N_("User for login if not current user."))
   ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
@@ -1459,9 +1475,9 @@ try
   N_("Number of seconds before connection timeout."))
   ("max_input_line", po::value<uint32_t>(&opt_max_input_line)->default_value(16*1024L*1024L)->notifier(&check_max_input_line),
   N_("Max length of input line"))
-  ("select_limit", po::value<uint32_t>(&select_limit)->default_value(1000L)->notifier(&check_select_limit),
+  ("select_limit", po::value<uint32_t>(&select_limit)->default_value(1000L),
   N_("Automatic limit for SELECT when using --safe-updates"))
-  ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L)->notifier(&check_join_size),
+  ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   N_("Automatic limit for rows in a join when using --safe-updates"))
   ("secure-auth", po::value<bool>(&opt_secure_auth)->default_value(false)->zero_tokens(),
   N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
@@ -1484,7 +1500,7 @@ try
   defaults_argv=argv;
  
   po::variables_map vm;
-  po::store(po::parse_command_line(argc,argv,long_options),vm);
+  po::store(po::command_line_parser(argc, argv).options(long_options).extra_parser(reg_password).run(), vm);
   
   if (default_prompt == NULL)
   {
@@ -1514,7 +1530,7 @@ try
       strcpy(default_pager, tmp);
     }
   }
-  if (!isatty(0) || !isatty(1))
+  if (! isatty(0) || ! isatty(1))
   {
     status.setBatch(1); opt_silent=1;
     ignore_errors=0;
@@ -1538,13 +1554,13 @@ try
   }
 
 
-  if(vm.count("default-character-set"))
+  if (vm.count("default-character-set"))
     default_charset_used= 1;
     
-  if(vm.count("delimiter"))
+  if (vm.count("delimiter"))
   {
     /* Check that delimiter does not contain a backslash */
-    if (!strstr(delimiter_str.c_str(), "\\"))
+    if (! strstr(delimiter_str.c_str(), "\\"))
     {
       delimiter= (char *)delimiter_str.c_str();  
     }
@@ -1557,7 +1573,7 @@ try
    
     delimiter_length= (uint32_t)strlen(delimiter);
   }
-  if(vm.count("tee"))
+  if (vm.count("tee"))
   { 
     if (vm["tee"].as<string>().empty())
     {
@@ -1567,13 +1583,12 @@ try
     else
       init_tee(vm["tee"].as<string>().c_str());
   }
-  if(vm.count("no-tee"))
+  if (vm["disable-tee"].as<bool>() == true)
   {
-    printf(_("WARNING: option deprecated; use --disable-tee instead.\n"));
     if (opt_outfile)
       end_tee();
   }
-  if(vm.count("pager"))
+  if (vm.count("pager"))
   {
     if (vm["pager"].as<string>().empty())
       opt_nopager= 1;
@@ -1592,19 +1607,18 @@ try
         opt_nopager= 1;
     }
   }
-  if(vm.count("no-pager"))
+  if (vm.count("disable-pager"))
   {
-    printf(_("WARNING: option deprecated; use --disable-pager instead.\n"));
     opt_nopager= 1;
   }
 
-  if(vm.count("no-auto-rehash"))
+  if (vm.count("no-auto-rehash"))
     opt_rehash= 0;
 
-  if(vm.count("skip-column-names"))
+  if (vm.count("skip-column-names"))
     column_names= 0;
     
-  if(vm.count("execute"))
+  if (vm.count("execute"))
   {  
     status.setBatch(1);
     status.setAddToHistory(1);
@@ -1621,39 +1635,46 @@ try
   if (one_database)
     skip_updates= true;
   
-  if(vm.count("port"))
+  if (vm.count("port"))
   {
+    opt_drizzle_port= vm["port"].as<uint32_t>();
+
     /* If the port number is > 65535 it is not a valid port
        This also helps with potential data loss casting unsigned long to a
        uint32_t. */
     if ((opt_drizzle_port == 0) || (opt_drizzle_port > 65535))
     {
-      put_info(_("Value supplied for port is not valid."), INFO_ERROR, 0, 0);
+      printf(_("Error: Value of %" PRIu32 " supplied for port is not valid.\n"), opt_drizzle_port);
       exit(-1);
     }
-   }
+  }
 
+  if (vm.count("password"))
+  {
+    
     if (!opt_password.empty())
+      opt_password.erase();
+
+    opt_password= vm["password"].as<string>();
+    char *start= (char *)opt_password.c_str();
+    char *temp_pass= (char *)vm["password"].as<string>().c_str();
+    while (*temp_pass)
     {
-      char *start= (char *)opt_password.c_str();
-      char *temp_pass= (char *)vm["password"].as<string>().c_str();
-      while (*temp_pass)
-      {
         /* Overwriting password with 'x' */
         *temp_pass++= 'x';
-      }
-      if (*start)
-      {
-        start[1]= 0;
-      }
-      tty_password= 0;
     }
-    else
+    if (*start)
     {
-      tty_password= 1;
+      start[1]= 0;
     }
-
+    tty_password= 0;
+  }
+  else
+  {
+      tty_password= 1;
+  }
   
+
   if (!opt_verbose.empty())
   {
     verbose= opt_verbose.length();
@@ -1711,7 +1732,7 @@ try
   }
 
   memset(&drizzle, 0, sizeof(drizzle));
-  if (sql_connect(current_host.c_str(),current_db.c_str(),current_user.c_str(),opt_password.c_str(),opt_silent))
+  if (sql_connect((char *)current_host.c_str(), (char *)current_db.c_str(), (char *)current_user.c_str(), (char *)opt_password.c_str(),opt_silent))
   {
     quick= 1;          // Avoid history
     status.setExitStatus(1);
@@ -3734,7 +3755,7 @@ com_connect(string *buffer, const char *line)
   }
   else
     opt_rehash= 0;
-  error=sql_connect(current_host.c_str(),current_db.c_str(),current_user.c_str(),opt_password.c_str(),0);
+  error=sql_connect((char *)current_host.c_str(), (char *)current_db.c_str(), (char *)current_user.c_str(), (char *)opt_password.c_str(),0);
   opt_rehash= save_rehash;
 
   if (connected)
@@ -4005,7 +4026,7 @@ char *get_arg(char *line, bool get_next_arg)
 
 
 static int
-sql_connect(const char *host,const char *database,const char *user,const char *password,
+sql_connect(char *host, char *database, char *user, char *password,
                  uint32_t silent)
 {
   drizzle_return_t ret;
