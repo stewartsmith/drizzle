@@ -23,3 +23,5 @@ disconnect a;
 disconnect b;
 
 connection default;
+
+DROP TABLE t1;

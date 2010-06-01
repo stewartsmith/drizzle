@@ -14,3 +14,4 @@ update t1 set a=2 where a=1;
 select * from t1;
 a
 2
+DROP TABLE t1;
