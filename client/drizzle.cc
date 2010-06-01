@@ -50,10 +50,6 @@
 #include <drizzled/configmake.h>
 #include "drizzled/charset.h"
 #include <drizzled/gettext.h>
-#include <boost/program_options.hpp>
-
-using namespace std;
-namespace po=boost::program_options;
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -144,9 +140,11 @@ typedef Function drizzle_compentry_func_t;
 #undef vidattr
 #define vidattr(A) {}      // Can't get this to work
 #endif
+#include <boost/program_options.hpp>
 
 using namespace drizzled;
 using namespace std;
+namespace po=boost::program_options;
 
 const string VER("14.14");
 /* Don't try to make a nice table if the data is too big */
@@ -307,6 +305,7 @@ std::string current_db,
   current_prompt,
   current_user,
   opt_verbose,
+  current_password,
   opt_password;
 // TODO: Need to i18n these
 static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
@@ -1313,7 +1312,7 @@ static bool execute_commands(int *error)
 static void check_timeout_value(uint32_t in_connect_timeout)
 {
   opt_connect_timeout= 0;
-  if(in_connect_timeout<3600*12)
+  if(in_connect_timeout>3600*12)
   {
     cout<<N_("Error: Invalid Value for connect_timeout"); 
     exit(-1);
@@ -1324,7 +1323,7 @@ static void check_timeout_value(uint32_t in_connect_timeout)
 static void check_max_input_line(uint32_t in_max_input_line)
 {
   opt_max_input_line= 0;
-  if( in_max_input_line>=4096 || in_max_input_line<(int64_t)2*1024L*1024L*1024L)
+  if( in_max_input_line<4096 || in_max_input_line>(int64_t)2*1024L*1024L*1024L)
   {
     cout<<N_("Error: Invalid Value for max_input_line");
     exit(-1);
@@ -1367,11 +1366,13 @@ static pair<string, string> reg_password(std::string s)
 
   else
   {
-    return make_pair(string(), string());
+    return make_pair(string(""), string(""));
   } 
 }
 
 int main(int argc,char *argv[])
+{
+try
 {
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
@@ -1380,8 +1381,6 @@ int main(int argc,char *argv[])
   bindtextdomain("drizzle", LOCALEDIR);
   textdomain("drizzle");
 #endif
-try
-{
   po::options_description long_options("Allowed Options");
   long_options.add_options()
   ("help,?",N_("Displays this help and exit."))
@@ -1440,7 +1439,7 @@ try
   N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
   ("disable-pager", po::value<bool>(&opt_nopager)->default_value(false)->zero_tokens(),
   N_("Disable pager and print to stdout. See interactive help (\\h) also."))
-  ("password,P", po::value<string>(&opt_password)->implicit_value(""),
+  ("password,P", po::value<string>(&current_password)->default_value(""),
   N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
   ("port,p", po::value<uint32_t>()->default_value(0),
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
@@ -1501,7 +1500,7 @@ try
  
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(long_options).extra_parser(reg_password).run(), vm);
-  
+  po::notify(vm);
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -1653,13 +1652,14 @@ try
 
   if (vm.count("password"))
   {
-    
     if (!opt_password.empty())
       opt_password.erase();
-
-    opt_password= vm["password"].as<string>();
-    char *start= (char *)opt_password.c_str();
-    char *temp_pass= (char *)vm["password"].as<string>().c_str();
+    if (current_password=="☃PASSWORD☃")
+      opt_password= "";
+    else
+      opt_password= current_password;
+    char *start= (char *)current_password.c_str();
+    char *temp_pass= (char *)current_password.c_str();
     while (*temp_pass)
     {
         /* Overwriting password with 'x' */
@@ -4032,7 +4032,6 @@ sql_connect(char *host, char *database, char *user, char *password,
                  uint32_t silent)
 {
   drizzle_return_t ret;
-  cout<<host<<endl<<database<<endl<<user<<endl<<password<<endl<<silent<<endl;
   if (connected)
   {
     connected= 0;
