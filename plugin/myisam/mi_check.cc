@@ -43,7 +43,6 @@
 #include "myisam_priv.h"
 #include "drizzled/internal/m_string.h"
 #include <stdarg.h>
-#include "drizzled/option.h"
 #ifdef HAVE_SYS_VADVISE_H
 #include <sys/vadvise.h>
 #endif
