@@ -377,7 +377,7 @@ exist yet.
         global read lock won't sneak in.
       */
       if (table->reginfo.lock_type < TL_WRITE_ALLOW_WRITE)
-        table->getMutableShare()->version= refresh_version;
+        table->getMutableShare()->refreshVersion();
     }
   }
 
@@ -968,7 +968,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
     This also allows us to assume that no other connection will sneak in
     before we will get table-level lock on this table.
   */
-  share->version=0;
+  share->resetVersion();
   table->in_use = this;
 
   if (link_in)
@@ -1269,7 +1269,7 @@ c2: open t1; -- blocks
       if (flags & DRIZZLE_LOCK_IGNORE_FLUSH)
       {
         /* Force close at once after usage */
-        version= table->getShare()->version;
+        version= table->getShare()->getVersion();
         continue;
       }
 
@@ -1975,7 +1975,7 @@ retry:
   {
     if (error == 7)                             // Table def changed
     {
-      share->version= 0;                        // Mark share as old
+      share->resetVersion();                        // Mark share as old
       if (discover_retry_count++)               // Retry once
         goto err;
 
@@ -4450,12 +4450,12 @@ void remove_db_from_cache(SchemaIdentifier &schema_identifier)
     Table *table=(Table*) hash_element(&open_cache,idx);
     if (not schema_identifier.getPath().compare(table->getMutableShare()->getSchemaName()))
     {
-      table->getMutableShare()->version= 0L;			/* Free when thread is ready */
+      table->getMutableShare()->resetVersion();			/* Free when thread is ready */
       if (not table->in_use)
         relink_unused(table);
     }
   }
-  while (unused_tables && !unused_tables->getShare()->version)
+  while (unused_tables && !unused_tables->getShare()->getVersion())
     hash_delete(&open_cache,(unsigned char*) unused_tables);
 }
 
@@ -4502,7 +4502,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
     {
       Session *in_use;
 
-      table->getMutableShare()->version=0L;		/* Free when thread is ready */
+      table->getMutableShare()->resetVersion();		/* Free when thread is ready */
       if (!(in_use=table->in_use))
       {
         relink_unused(table);
@@ -4540,7 +4540,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
       else
         result= result || (flags & RTFC_OWNED_BY_Session_FLAG);
     }
-    while (unused_tables && !unused_tables->getShare()->version)
+    while (unused_tables && !unused_tables->getShare()->getVersion())
       hash_delete(&open_cache,(unsigned char*) unused_tables);
 
     /* Remove table from table definition cache if it's not in use */

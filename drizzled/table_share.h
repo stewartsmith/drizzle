@@ -439,10 +439,22 @@ public:
 
   uint32_t   block_size;                   /* create information */
 
+private:
   uint64_t   version;
+public:
   uint64_t getVersion() const
   {
     return version;
+  }
+
+  void refreshVersion()
+  {
+   version= refresh_version;
+  }
+
+  void resetVersion()
+  {
+    version= 0;
   }
 
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */

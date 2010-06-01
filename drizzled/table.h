@@ -457,7 +457,7 @@ public:
   */
   inline bool needs_reopen_or_name_lock()
   { 
-    return s->version != refresh_version;
+    return s->getVersion() != refresh_version;
   }
 
   /**
