@@ -959,6 +959,8 @@ int main(int argc, char **argv)
 
   po::options_description client_options("Options specific to the client");
   client_options.add_options()
+  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
+  N_("Use MySQL Protocol."))
   ("host,h",po::value<string>(&host)->default_value("localhost"),"Connect to the host")
   ("password,P",po::value<char *>(&password),
   "Password to use when connecting to server. If password is not given it's asked from the tty")
