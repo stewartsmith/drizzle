@@ -369,17 +369,17 @@ private:
   LEX_STRING normalized_path;		/* unpack_filename(path) */
 public:
 
-  const char *getNormalizedPath()
+  const char *getNormalizedPath() const
   {
     return normalized_path.str;
   }
 
-  const char *getPath()
+  const char *getPath() const
   {
     return path.str;
   }
 
-  const char *getCacheKey()
+  const char *getCacheKey() const
   {
     return table_cache_key.str;
   }
@@ -416,11 +416,6 @@ public:
     return table_cache_key.str;
   }
 
-  const char *getPath() const
-  {
-    return path.str;
-  }
-
   const std::string &getTableName(std::string &name_arg) const
   {
     name_arg.clear();
@@ -445,7 +440,7 @@ public:
   uint32_t   block_size;                   /* create information */
 
   uint64_t   version;
-  uint64_t getVersion()
+  uint64_t getVersion() const
   {
     return version;
   }
