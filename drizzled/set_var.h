@@ -68,6 +68,8 @@ extern char pidfile_name[FN_REFLEN];
 extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
+extern time_t server_start_time;
+extern time_t flush_status_time;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
 extern uint64_t max_connect_errors;

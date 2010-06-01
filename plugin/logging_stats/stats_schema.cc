@@ -87,6 +87,7 @@
 #include <config.h>          
 #include "stats_schema.h"
 #include "scoreboard.h"
+#include "status_vars.h"
 
 #include <sstream>
 
@@ -392,6 +393,19 @@ bool StatusVarTool::Generator::populate()
   return false;
 }
 
+class show_var_cmp_functor
+{
+  public:
+  show_var_cmp_functor() { }
+  inline bool operator()(const drizzle_show_var *var1, const drizzle_show_var *var2) const
+  {
+    int val= strcmp(var1->name, var2->name);
+    return (val < 0);
+  }
+};
+
+
+
 SessionStatusTool::SessionStatusTool(LoggingStats *logging_stats) :
   plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATUS_NEW")
 {
@@ -399,12 +413,38 @@ SessionStatusTool::SessionStatusTool(LoggingStats *logging_stats) :
 
   add_field("VARIABLE_NAME");
   add_field("VARIABLE_VALUE", 1024);
+
+  init();
 }
 
-SessionStatusTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+void SessionStatusTool::init()
+{
+  vector<drizzle_show_var* >::iterator all_status_vars_iterator= all_status_vars.begin();
+
+  drizzle_show_var *var= &StatusVars::status_vars_defs[0];
+
+  uint32_t count= 1;
+  while (var != NULL)
+  {
+    if (var->name == NULL)
+    {   
+      break;
+    }   
+
+    all_status_vars_iterator= all_status_vars.insert(all_status_vars_iterator, 
+                                                     var);
+    var= &StatusVars::status_vars_defs[count];
+    ++count;
+  }
+  sort(all_status_vars.begin(), all_status_vars.end(), show_var_cmp_functor());
+}
+
+SessionStatusTool::Generator::Generator(Field **arg, LoggingStats *logging_stats, 
+                                        vector<drizzle_show_var *> *all_status_vars) :
   plugin::TableFunction::Generator(arg)
 {
-  count= 0;
+  all_status_vars_it= all_status_vars->begin();
+  all_status_vars_end= all_status_vars->end();
 
   Session *this_session= current_session;
 
@@ -415,8 +455,6 @@ SessionStatusTool::Generator::Generator(Field **arg, LoggingStats *logging_stats
   if (scoreboard_slot != NULL)
   {
     status_vars= scoreboard_slot->getStatusVars();
-    system_status_var *status_var= status_vars->getStatusVarCounters();
-    current_variable= (uint64_t*) status_var; 
   }
 }
 
@@ -427,26 +465,135 @@ bool SessionStatusTool::Generator::populate()
     return false;
   }
 
-  if (count == 2)
+  while (all_status_vars_it != all_status_vars_end)
   {
-    return false;
+    drizzle_show_var *variables= *all_status_vars_it;     
+
+    if ((variables == NULL) || (variables->name == NULL))
+    {
+      return false;
+    }
+
+    drizzle_show_var *var;
+    MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
+    char * const buff= (char *) &buff_data;
+
+    /*
+      if var->type is SHOW_FUNC, call the function.
+      Repeat as necessary, if new var is again SHOW_FUNC
+    */
+    {
+      drizzle_show_var tmp;
+
+      for (var= variables; var->type == SHOW_FUNC; var= &tmp)
+        ((mysql_show_var_func)((st_show_var_func_container *)var->value)->func)(&tmp, buff);
+    }
+
+    if (isWild(variables->name))
+    {
+      variables++;
+      continue;
+    }
+
+    fill(variables->name, var->value, var->type);
+
+    ++all_status_vars_it;
+
+    return true;
   }
 
-  system_status_var *status_var= status_vars->getStatusVarCounters();
+  return false;
+}
 
-  drizzle_show_var my_show_var= StatusVars::status_vars_defs[count];
+void SessionStatusTool::Generator::fill(const string &name, char *value, SHOW_TYPE show_type)
+{
+  struct system_status_var *status_var;
+  std::ostringstream oss;
 
-  push(my_show_var.name);
+  std::string return_value;
+  
+  status_var= status_vars->getStatusVarCounters();
 
-  char* value= my_show_var.value;
+  if (show_type == SHOW_SYS)
+  {
+    show_type= ((sys_var*) value)->show_type();
+    value= (char*) ((sys_var*) value)->value_ptr(&(getSession()), OPT_SESSION,
+                                                 &null_lex_str);
+  }
 
-  value= (char*)status_var + (uint64_t)value; 
+  /*
+    note that value may be == buff. All SHOW_xxx code below
+    should still work in this case
+  */
+  switch (show_type) 
+  {
+  case SHOW_DOUBLE_STATUS:
+    value= ((char *) status_var + (ulong) value);
+    /* fall through */
+  case SHOW_DOUBLE:
+    oss.precision(6);
+    oss << *(double *) value;
+    return_value= oss.str();
+    break;
+  case SHOW_LONG_STATUS:
+    value= ((char *) status_var + (ulong) value);
+    /* fall through */
+  case SHOW_LONG:
+    oss << *(long*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_LONGLONG_STATUS:
+    value= ((char *) status_var + (uint64_t) value);
+    /* fall through */
+  case SHOW_LONGLONG:
+    oss << *(int64_t*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_SIZE:
+    oss << *(size_t*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_HA_ROWS:
+    oss << (int64_t) *(ha_rows*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_BOOL:
+  case SHOW_MY_BOOL:
+    return_value= *(bool*) value ? "ON" : "OFF";
+    break;
+  case SHOW_INT:
+  case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
+    oss << (long) *(uint32_t*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_CHAR:
+    {
+      if (value)
+        return_value= value;
+      break;
+    }
+  case SHOW_CHAR_PTR:
+    {
+      if (*(char**) value)
+        return_value= *(char**) value;
 
-  ostringstream oss;
-  oss << *(uint64_t*)value;
-  push(oss.str());
+      break;
+    }
+  case SHOW_UNDEF:
+    break;                                        // Return empty string
+  case SHOW_SYS:                                  // Cannot happen
+  default:
+    assert(0);
+    break;
+  }
 
-  *(current_variable++);
-  ++count;
-  return true;
+  push(name);
+  if (return_value.length())
+  {
+    push(return_value);
+  }
+  else
+  {
+    push(" ");
+  }
 }
