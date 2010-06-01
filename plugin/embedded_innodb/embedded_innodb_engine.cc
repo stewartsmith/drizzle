@@ -529,7 +529,7 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
 
   if(*get_trx(session) == NULL)
   {
-    reinterpret_cast<EmbeddedInnoDBEngine*>(getEngine())->
+    static_cast<EmbeddedInnoDBEngine*>(getEngine())->
                     doStartTransaction(session, START_TRANS_NO_OPTIONS);
   }
 
