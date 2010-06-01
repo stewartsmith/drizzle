@@ -1333,7 +1333,7 @@ static void check_max_input_line(uint32_t in_max_input_line)
   opt_max_input_line*=1024;
 }
 
-static pair<string, string> reg_password(std::string &s)
+static pair<string, string> reg_password(std::string s)
 {
   if (s.find("--password")==0)
   {
@@ -1553,6 +1553,8 @@ try
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
 
+  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
+  defaults_argv=argv;
 
   if (vm.count("default-character-set"))
     default_charset_used= 1;
@@ -1568,7 +1570,7 @@ try
     {
       put_info(_("DELIMITER cannot contain a backslash character"),
       INFO_ERROR,0,0);
-      return false;
+      exit(-1);
     }
    
     delimiter_length= (uint32_t)strlen(delimiter);
@@ -1730,7 +1732,7 @@ try
     current_db.erase();
     current_db= strdup(*argv);
   }
-
+  cout<<delimiter_str<<endl;
   memset(&drizzle, 0, sizeof(drizzle));
   if (sql_connect((char *)current_host.c_str(), (char *)current_db.c_str(), (char *)current_user.c_str(), (char *)opt_password.c_str(),opt_silent))
   {
@@ -4030,7 +4032,7 @@ sql_connect(char *host, char *database, char *user, char *password,
                  uint32_t silent)
 {
   drizzle_return_t ret;
-
+  cout<<host<<endl<<database<<endl<<user<<endl<<password<<endl<<silent<<endl;
   if (connected)
   {
     connected= 0;
