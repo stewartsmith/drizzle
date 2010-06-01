@@ -2,17 +2,17 @@ use data_dictionary;
 show create table CHARACTER_SETS ;
 Table	Create Table
 CHARACTER_SETS	CREATE TABLE `character_sets` (
-  `CHARACTER_SET_NAME` varchar(64) NOT NULL DEFAULT '',
-  `DEFAULT_COLLATE_NAME` varchar(64) NOT NULL DEFAULT '',
-  `DESCRIPTION` varchar(64) NOT NULL DEFAULT '',
+  `CHARACTER_SET_NAME` varchar(256) NOT NULL DEFAULT '',
+  `DEFAULT_COLLATE_NAME` varchar(256) NOT NULL DEFAULT '',
+  `DESCRIPTION` varchar(256) NOT NULL DEFAULT '',
   `MAXLEN` bigint NOT NULL DEFAULT '0'
 ) ENGINE=FunctionEngine
 show create table COLLATIONS ;
 Table	Create Table
 COLLATIONS	CREATE TABLE `collations` (
-  `CHARACTER_SET_NAME` varchar(64) NOT NULL DEFAULT '',
-  `COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
-  `DESCRIPTION` varchar(64) NOT NULL DEFAULT '',
+  `CHARACTER_SET_NAME` varchar(256) NOT NULL DEFAULT '',
+  `COLLATION_NAME` varchar(256) NOT NULL DEFAULT '',
+  `DESCRIPTION` varchar(256) NOT NULL DEFAULT '',
   `ID` bigint NOT NULL DEFAULT '0',
   `IS_DEFAULT` varchar(5) NOT NULL DEFAULT '',
   `IS_COMPILED` varchar(5) NOT NULL DEFAULT '',

@@ -55,6 +55,12 @@ struct KeyPartInfo {	/* Info about a key part */
   */
   uint16_t store_length;
   uint16_t key_type;
+private:
+public:
+  uint16_t getKeyType() const
+  {
+    return key_type;
+  }
   uint16_t fieldnr;			/* Fieldnum in UNIREG (1,2,3,...) */
   uint16_t key_part_flag;			/* 0 or HA_REVERSE_SORT */
   uint8_t type;

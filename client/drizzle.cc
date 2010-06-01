@@ -1732,7 +1732,6 @@ try
     current_db.erase();
     current_db= strdup(*argv);
   }
-  cout<<delimiter_str<<endl;
   memset(&drizzle, 0, sizeof(drizzle));
   if (sql_connect((char *)current_host.c_str(), (char *)current_db.c_str(), (char *)current_user.c_str(), (char *)opt_password.c_str(),opt_silent))
   {

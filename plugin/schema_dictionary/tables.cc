@@ -60,7 +60,7 @@ TablesTool::TablesTool() :
   add_field("TABLE_COLLATION");
   add_field("TABLE_CREATION_TIME");
   add_field("TABLE_UPDATE_TIME");
-  add_field("TABLE_COMMENT", 2048);
+  add_field("TABLE_COMMENT", plugin::TableFunction::STRING, 2048, true);
 }
 
 TablesTool::Generator::Generator(Field **arg) :
@@ -253,5 +253,12 @@ void TablesTool::Generator::fill()
   push(buffer);
 
   /* TABLE_COMMENT */
-  push(table_proto.options().comment());
+  if (table_proto.options().has_comment())
+  {
+    push(table_proto.options().comment());
+  }
+  else
+  {
+    push();
+  }
 }

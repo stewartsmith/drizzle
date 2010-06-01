@@ -1,8 +1,8 @@
 show create table data_dictionary.TABLE_DEFINITION_CACHE;
 Table	Create Table
 TABLE_DEFINITION_CACHE	CREATE TABLE `table_definition_cache` (
-  `TABLE_SCHEMA` varchar(64) NOT NULL DEFAULT '',
-  `TABLE_NAME` varchar(64) NOT NULL DEFAULT '',
+  `TABLE_SCHEMA` varchar(256) NOT NULL DEFAULT '',
+  `TABLE_NAME` varchar(256) NOT NULL DEFAULT '',
   `VERSION` bigint NOT NULL DEFAULT '0',
   `TABLE_COUNT` bigint NOT NULL DEFAULT '0',
   `IS_NAME_LOCKED` varchar(5) NOT NULL DEFAULT ''
