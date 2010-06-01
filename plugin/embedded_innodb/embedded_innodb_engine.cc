@@ -2295,7 +2295,10 @@ int EmbeddedInnoDBCursor::innodb_index_read(unsigned char *buf,
     return HA_ERR_KEY_NOT_FOUND;
   }
 
-  assert(err==DB_SUCCESS);
+  if (err != DB_SUCCESS)
+  {
+    return ib_err_t_to_drizzle_error(err);
+  }
 
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(buf, cursor, tuple, table,
