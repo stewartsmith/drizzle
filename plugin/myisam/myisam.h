@@ -448,8 +448,6 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
 int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name);
 int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
 		      const char * name, int rep_quick);
-int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
-		      const char * name, int rep_quick);
 int change_to_newfile(const char * filename, const char * old_ext,
 		      const char * new_ext, uint32_t raid_chunks,
 		      drizzled::myf myflags);

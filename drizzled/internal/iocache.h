@@ -31,22 +31,6 @@ namespace internal
 struct st_io_cache;
 typedef int (*IO_CACHE_CALLBACK)(struct st_io_cache*);
 
-typedef struct st_io_cache_share
-{
-  pthread_mutex_t       mutex;           /* To sync on reads into buffer. */
-  pthread_cond_t        cond;            /* To wait for signals. */
-  pthread_cond_t        cond_writer;     /* For a synchronized writer. */
-  /* Offset in file corresponding to the first byte of buffer. */
-  my_off_t              pos_in_file;
-  /* If a synchronized write cache is the source of the data. */
-  struct st_io_cache    *source_cache;
-  unsigned char                 *buffer;         /* The read buffer. */
-  unsigned char                 *read_end;       /* Behind last valid byte of buffer. */
-  int                   running_threads; /* threads not in lock. */
-  int                   total_threads;   /* threads sharing the cache. */
-  int                   error;           /* Last error. */
-} IO_CACHE_SHARE;
-
 typedef struct st_io_cache    /* Used when cacheing files */
 {
   /* Offset in file corresponding to the first byte of unsigned char* buffer. */
@@ -91,14 +75,6 @@ typedef struct st_io_cache    /* Used when cacheing files */
     need mutex copying from append buffer to read buffer.
   */
   pthread_mutex_t append_buffer_lock;
-  /*
-    The following is used when several threads are reading the
-    same file in parallel. They are synchronized on disk
-    accesses reading the cached part of the file asynchronously.
-    It should be set to NULL to disable the feature.  Only
-    READ_CACHE mode is supported.
-  */
-  IO_CACHE_SHARE *share;
   /*
     A caller will use my_b_read() macro to read from the cache
     if the data is already in cache, it will be simply copied with
@@ -172,9 +148,6 @@ extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
                             my_off_t seek_offset,bool use_async_io,
                             bool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
-extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
-                                IO_CACHE *write_cache, uint32_t num_threads);
-extern void remove_io_thread(IO_CACHE *info);
 extern int _my_b_get(IO_CACHE *info);
 extern int _my_b_async_read(IO_CACHE *info,unsigned char *Buffer,size_t Count);
 

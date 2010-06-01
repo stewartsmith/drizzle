@@ -70,7 +70,6 @@ namespace internal
 {
 
 static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
-static int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count);
 static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
 static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count);
 
@@ -180,9 +179,7 @@ init_functions(IO_CACHE* info)
     info->write_function = 0;			/* Force a core if used */
     break;
   default:
-    info->read_function =
-                          info->share ? _my_b_read_r :
-                                        _my_b_read;
+    info->read_function = _my_b_read;
     info->write_function = _my_b_write;
   }
 
@@ -244,8 +241,6 @@ int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
     else
       info->seek_not_done= test(seek_offset != (my_off_t)pos);
   }
-
-  info->share=0;
 
   if (!cachesize && !(cachesize= my_default_record_cache_size))
     return(1);				/* No cache requested */
@@ -469,12 +464,8 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
  *   types than my_off_t unless you can be sure that their value fits.
  *   Same applies to differences of file offsets.
  *
- * When changing this function, check _my_b_read_r(). It might need the
- * same change.
- * 
- * @param info IO_CACHE pointer
- * @param Buffer Buffer to retrieve count bytes from file
- * @param Count Number of bytes to read into Buffer
+ * @param info IO_CACHE pointer @param Buffer Buffer to retrieve count bytes
+ * from file @param Count Number of bytes to read into Buffer
  * 
  * @retval 0 We succeeded in reading all data
  * @retval 1 Error: can't read requested characters
@@ -574,476 +565,6 @@ static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Cou
   info->pos_in_file=pos_in_file;
   memcpy(Buffer, info->buffer, Count);
   return(0);
-}
-
-/**
- * @brief
- *   Prepare IO_CACHE for shared use.
- *
- * @detail
- *   The shared cache is used so: One IO_CACHE is initialized with
- *   init_io_cache(). This includes the allocation of a buffer. Then a
- *   share is allocated and init_io_cache_share() is called with the io
- *   cache and the share. Then the io cache is copied for each thread. So
- *   every thread has its own copy of IO_CACHE. But the allocated buffer
- *   is shared because cache->buffer is the same for all caches.
- *
- *   One thread reads data from the file into the buffer. All threads
- *   read from the buffer, but every thread maintains its own set of
- *   pointers into the buffer. When all threads have used up the buffer
- *   contents, one of the threads reads the next block of data into the
- *   buffer. To accomplish this, each thread enters the cache lock before
- *   accessing the buffer. They wait in lock_io_cache() until all threads
- *   joined the lock. The last thread entering the lock is in charge of
- *   reading from file to buffer. It wakes all threads when done.
- *
- *   Synchronizing a write cache to the read caches works so: Whenever
- *   the write buffer needs a flush, the write thread enters the lock and
- *   waits for all other threads to enter the lock too. They do this when
- *   they have used up the read buffer. When all threads are in the lock,
- *   the write thread copies the write buffer to the read buffer and
- *   wakes all threads.
- *
- *   share->running_threads is the number of threads not being in the
- *   cache lock. When entering lock_io_cache() the number is decreased.
- *   When the thread that fills the buffer enters unlock_io_cache() the
- *   number is reset to the number of threads. The condition
- *   running_threads == 0 means that all threads are in the lock. Bumping
- *   up the number to the full count is non-intuitive. But increasing the
- *   number by one for each thread that leaves the lock could lead to a
- *   solo run of one thread. The last thread to join a lock reads from
- *   file to buffer, wakes the other threads, processes the data in the
- *   cache and enters the lock again. If no other thread left the lock
- *   meanwhile, it would think it's the last one again and read the next
- *   block...
- *
- *   The share has copies of 'error', 'buffer', 'read_end', and
- *   'pos_in_file' from the thread that filled the buffer. We may not be
- *   able to access this information directly from its cache because the
- *   thread may be removed from the share before the variables could be
- *   copied by all other threads. Or, if a write buffer is synchronized,
- *   it would change its 'pos_in_file' after waking the other threads,
- *   possibly before they could copy its value.
- *
- *   However, the 'buffer' variable in the share is for a synchronized
- *   write cache. It needs to know where to put the data. Otherwise it
- *   would need access to the read cache of one of the threads that is
- *   not yet removed from the share.
- *
- * @param read_cache A read cache. This will be copied for every thread after setup.
- * @param cshare The share.
- * @param write_cache If non-NULL a write cache that is to be synchronized with the read caches.
- * @param num_threads Number of threads sharing the cache including the write thread if any.
- */
-void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
-                         IO_CACHE *write_cache, uint32_t num_threads)
-{
-  assert(num_threads > 1);
-  assert(read_cache->type == READ_CACHE);
-  assert(!write_cache || (write_cache->type == WRITE_CACHE));
-
-  pthread_mutex_init(&cshare->mutex, MY_MUTEX_INIT_FAST);
-  pthread_cond_init(&cshare->cond, 0);
-  pthread_cond_init(&cshare->cond_writer, 0);
-
-  cshare->running_threads= num_threads;
-  cshare->total_threads=   num_threads;
-  cshare->error=           0;    /* Initialize. */
-  cshare->buffer=          read_cache->buffer;
-  cshare->read_end=        NULL; /* See function comment of lock_io_cache(). */
-  cshare->pos_in_file=     0;    /* See function comment of lock_io_cache(). */
-  cshare->source_cache=    write_cache; /* Can be NULL. */
-
-  read_cache->share=         cshare;
-  read_cache->read_function= _my_b_read_r;
-  read_cache->current_pos=   NULL;
-  read_cache->current_end=   NULL;
-
-  if (write_cache)
-    write_cache->share= cshare;
-
-  return;
-}
-
-/**
- * @brief
- *   Remove a thread from shared access to IO_CACHE.
- * @detail
- *   Every thread must do that on exit for not to deadlock other threads.
- *   The last thread destroys the pthread resources.
- *   A writer flushes its cache first.
- *
- * @param cache The IO_CACHE to be removed from the share.
- */
-void remove_io_thread(IO_CACHE *cache)
-{
-  IO_CACHE_SHARE *cshare= cache->share;
-  uint32_t total;
-
-  /* If the writer goes, it needs to flush the write cache. */
-  if (cache == cshare->source_cache)
-    flush_io_cache(cache);
-
-  pthread_mutex_lock(&cshare->mutex);
-
-  /* Remove from share. */
-  total= --cshare->total_threads;
-
-  /* Detach from share. */
-  cache->share= NULL;
-
-  /* If the writer goes, let the readers know. */
-  if (cache == cshare->source_cache)
-  {
-    cshare->source_cache= NULL;
-  }
-
-  /* If all threads are waiting for me to join the lock, wake them. */
-  if (!--cshare->running_threads)
-  {
-    pthread_cond_signal(&cshare->cond_writer);
-    pthread_cond_broadcast(&cshare->cond);
-  }
-
-  pthread_mutex_unlock(&cshare->mutex);
-
-  if (!total)
-  {
-    pthread_cond_destroy (&cshare->cond_writer);
-    pthread_cond_destroy (&cshare->cond);
-    pthread_mutex_destroy(&cshare->mutex);
-  }
-
-  return;
-}
-
-/**
- * @brief
- *   Lock IO cache and wait for all other threads to join.
- *
- * @detail
- *   Wait for all threads to finish with the current buffer. We want
- *   all threads to proceed in concert. The last thread to join
- *   lock_io_cache() will read the block from file and all threads start
- *   to use it. Then they will join again for reading the next block.
- *
- *   The waiting threads detect a fresh buffer by comparing
- *   cshare->pos_in_file with the position they want to process next.
- *   Since the first block may start at position 0, we take
- *   cshare->read_end as an additional condition. This variable is
- *   initialized to NULL and will be set after a block of data is written
- *   to the buffer.
- *
- * @param cache The cache of the thread entering the lock.
- * @param pos File position of the block to read. Unused for the write thread.
- *
- * @retval 1 OK, lock in place, go ahead and read.
- * @retval 0 OK, unlocked, another thread did the read.
- */
-static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
-{
-  IO_CACHE_SHARE *cshare= cache->share;
-
-  /* Enter the lock. */
-  pthread_mutex_lock(&cshare->mutex);
-  cshare->running_threads--;
-
-  if (cshare->source_cache)
-  {
-    /* A write cache is synchronized to the read caches. */
-
-    if (cache == cshare->source_cache)
-    {
-      /* The writer waits until all readers are here. */
-      while (cshare->running_threads)
-      {
-        pthread_cond_wait(&cshare->cond_writer, &cshare->mutex);
-      }
-      /* Stay locked. Leave the lock later by unlock_io_cache(). */
-      return(1);
-    }
-
-    /* The last thread wakes the writer. */
-    if (!cshare->running_threads)
-    {
-      pthread_cond_signal(&cshare->cond_writer);
-    }
-
-    /*
-      Readers wait until the data is copied from the writer. Another
-      reason to stop waiting is the removal of the write thread. If this
-      happens, we leave the lock with old data in the buffer.
-    */
-    while ((!cshare->read_end || (cshare->pos_in_file < pos)) &&
-           cshare->source_cache)
-    {
-      pthread_cond_wait(&cshare->cond, &cshare->mutex);
-    }
-
-    /*
-      If the writer was removed from the share while this thread was
-      asleep, we need to simulate an EOF condition. The writer cannot
-      reset the share variables as they might still be in use by readers
-      of the last block. When we awake here then because the last
-      joining thread signalled us. If the writer is not the last, it
-      will not signal. So it is safe to clear the buffer here.
-    */
-    if (!cshare->read_end || (cshare->pos_in_file < pos))
-    {
-      cshare->read_end= cshare->buffer; /* Empty buffer. */
-      cshare->error= 0; /* EOF is not an error. */
-    }
-  }
-  else
-  {
-    /*
-      There are read caches only. The last thread arriving in
-      lock_io_cache() continues with a locked cache and reads the block.
-    */
-    if (!cshare->running_threads)
-    {
-      /* Stay locked. Leave the lock later by unlock_io_cache(). */
-      return(1);
-    }
-
-    /*
-      All other threads wait until the requested block is read by the
-      last thread arriving. Another reason to stop waiting is the
-      removal of a thread. If this leads to all threads being in the
-      lock, we have to continue also. The first of the awaken threads
-      will then do the read.
-    */
-    while ((!cshare->read_end || (cshare->pos_in_file < pos)) &&
-           cshare->running_threads)
-    {
-      pthread_cond_wait(&cshare->cond, &cshare->mutex);
-    }
-
-    /* If the block is not yet read, continue with a locked cache and read. */
-    if (!cshare->read_end || (cshare->pos_in_file < pos))
-    {
-      /* Stay locked. Leave the lock later by unlock_io_cache(). */
-      return(1);
-    }
-
-    /* Another thread did read the block already. */
-  }
-
-  /*
-    Leave the lock. Do not call unlock_io_cache() later. The thread that
-    filled the buffer did this and marked all threads as running.
-  */
-  pthread_mutex_unlock(&cshare->mutex);
-  return(0);
-}
-
-/**
- * @brief
- *   Unlock IO cache.
- * 
- * @detail
- *   This is called by the thread that filled the buffer. It marks all
- *   threads as running and awakes them. This must not be done by any
- *   other thread.
- *
- *   Do not signal cond_writer. Either there is no writer or the writer
- *   is the only one who can call this function.
- *
- *   The reason for resetting running_threads to total_threads before
- *   waking all other threads is that it could be possible that this
- *   thread is so fast with processing the buffer that it enters the lock
- *   before even one other thread has left it. If every awoken thread
- *   would increase running_threads by one, this thread could think that
- *   he is again the last to join and would not wait for the other
- *   threads to process the data.
- *
- * @param cache The cache of the thread leaving the lock.
- */
-static void unlock_io_cache(IO_CACHE *cache)
-{
-  IO_CACHE_SHARE *cshare= cache->share;
-
-  cshare->running_threads= cshare->total_threads;
-  pthread_cond_broadcast(&cshare->cond);
-  pthread_mutex_unlock(&cshare->mutex);
-  return;
-}
-
-/**
- * @brief
- *   Read from IO_CACHE when it is shared between several threads.
- * @detail
- *   This function is only called from the my_b_read() macro when there
- *   aren't enough characters in the buffer to satisfy the request.
- *
- * IMPLEMENTATION
- *   It works as follows: when a thread tries to read from a file (that
- *   is, after using all the data from the (shared) buffer), it just
- *   hangs on lock_io_cache(), waiting for other threads. When the very
- *   last thread attempts a read, lock_io_cache() returns 1, the thread
- *   does actual IO and unlock_io_cache(), which signals all the waiting
- *   threads that data is in the buffer.
- *
- * WARNING
- *   When changing this function, be careful with handling file offsets
- *   (end-of_file, pos_in_file). Do not cast them to possibly smaller
- *   types than my_off_t unless you can be sure that their value fits.
- *   Same applies to differences of file offsets. (Bug #11527)
- *
- *   When changing this function, check _my_b_read(). It might need thesame change.
- * 
- * @param cache IO_CACHE pointer
- * @param Buffer Buffer to retrieve count bytes from file
- * @param Count Number of bytes to read into Buffer
- *
- * @retval 0 We succeeded in reading all data
- * @retval 1 Error: can't read requested characters
- */
-int _my_b_read_r(register IO_CACHE *cache, unsigned char *Buffer, size_t Count)
-{
-  my_off_t pos_in_file;
-  size_t length, diff_length, left_length;
-  IO_CACHE_SHARE *cshare= cache->share;
-
-  if ((left_length= (size_t) (cache->read_end - cache->read_pos)))
-  {
-    assert(Count >= left_length);	/* User is not using my_b_read() */
-    memcpy(Buffer, cache->read_pos, left_length);
-    Buffer+= left_length;
-    Count-= left_length;
-  }
-  while (Count)
-  {
-    size_t cnt, len;
-
-    pos_in_file= cache->pos_in_file + (cache->read_end - cache->buffer);
-    diff_length= (size_t) (pos_in_file & (IO_SIZE-1));
-    length=io_round_up(Count+diff_length)-diff_length;
-    length= ((length <= cache->read_length) ?
-             length + io_round_dn(cache->read_length - length) :
-             length - io_round_up(length - cache->read_length));
-    if (cache->type != READ_FIFO &&
-	(length > (cache->end_of_file - pos_in_file)))
-      length= (size_t) (cache->end_of_file - pos_in_file);
-    if (length == 0)
-    {
-      cache->error= (int) left_length;
-      return(1);
-    }
-    if (lock_io_cache(cache, pos_in_file))
-    {
-      /* With a synchronized write/read cache we won't come here... */
-      assert(!cshare->source_cache);
-      /*
-        ... unless the writer has gone before this thread entered the
-        lock. Simulate EOF in this case. It can be distinguished by
-        cache->file.
-      */
-      if (cache->file < 0)
-        len= 0;
-      else
-      {
-        /*
-          Whenever a function which operates on IO_CACHE flushes/writes
-          some part of the IO_CACHE to disk it will set the property
-          "seek_not_done" to indicate this to other functions operating
-          on the IO_CACHE.
-        */
-        if (cache->seek_not_done)
-        {
-          if (lseek(cache->file, pos_in_file, SEEK_SET) == MY_FILEPOS_ERROR)
-          {
-            cache->error= -1;
-            unlock_io_cache(cache);
-            return(1);
-          }
-        }
-        len= my_read(cache->file, cache->buffer, length, cache->myflags);
-      }
-      cache->read_end=    cache->buffer + (len == (size_t) -1 ? 0 : len);
-      cache->error=       (len == length ? 0 : (int) len);
-      cache->pos_in_file= pos_in_file;
-
-      /* Copy important values to the share. */
-      cshare->error=       cache->error;
-      cshare->read_end=    cache->read_end;
-      cshare->pos_in_file= pos_in_file;
-
-      /* Mark all threads as running and wake them. */
-      unlock_io_cache(cache);
-    }
-    else
-    {
-      /*
-        With a synchronized write/read cache readers always come here.
-        Copy important values from the share.
-      */
-      cache->error=       cshare->error;
-      cache->read_end=    cshare->read_end;
-      cache->pos_in_file= cshare->pos_in_file;
-
-      len= ((cache->error == -1) ? (size_t) -1 :
-            (size_t) (cache->read_end - cache->buffer));
-    }
-    cache->read_pos=      cache->buffer;
-    cache->seek_not_done= 0;
-    if (len == 0 || len == (size_t) -1)
-    {
-      cache->error= (int) left_length;
-      return(1);
-    }
-    cnt= (len > Count) ? Count : len;
-    memcpy(Buffer, cache->read_pos, cnt);
-    Count -= cnt;
-    Buffer+= cnt;
-    left_length+= cnt;
-    cache->read_pos+= cnt;
-  }
-  return(0);
-}
-
-/**
- * @brief
- *   Copy data from write cache to read cache.
- * @detail
- *   The write thread will wait for all read threads to join the cache lock.
- *   Then it copies the data over and wakes the read threads.
- *
- * @param write_cache The write cache.
- * @param write_buffer The source of data, mostly the cache buffer.
- * @param write_length The number of bytes to copy.
- */
-static void copy_to_read_buffer(IO_CACHE *write_cache,
-                                const unsigned char *write_buffer, size_t write_length)
-{
-  IO_CACHE_SHARE *cshare= write_cache->share;
-
-  assert(cshare->source_cache == write_cache);
-  /*
-    write_length is usually less or equal to buffer_length.
-    It can be bigger if _my_b_write() is called with a big length.
-  */
-  while (write_length)
-  {
-    size_t copy_length= min(write_length, write_cache->buffer_length);
-    int  rc;
-
-    rc= lock_io_cache(write_cache, write_cache->pos_in_file);
-    /* The writing thread does always have the lock when it awakes. */
-    assert(rc);
-
-    memcpy(cshare->buffer, write_buffer, copy_length);
-
-    cshare->error=       0;
-    cshare->read_end=    cshare->buffer + copy_length;
-    cshare->pos_in_file= write_cache->pos_in_file;
-
-    /* Mark all threads as running and wake them. */
-    unlock_io_cache(write_cache);
-
-    write_buffer+= copy_length;
-    write_length-= copy_length;
-  }
 }
 
 /**
@@ -1444,20 +965,6 @@ int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Cou
     if (my_write(info->file, Buffer, length, info->myflags | MY_NABP))
       return info->error= -1;
 
-    /*
-      In case of a shared I/O cache with a writer we normally do direct
-      write cache to read cache copy. Simulate this here by direct
-      caller buffer to read cache copy. Do it after the write so that
-      the cache readers actions on the flushed part can go in parallel
-      with the write of the extra stuff. copy_to_read_buffer()
-      synchronizes writer and readers so that after this call the
-      readers can act on the extra stuff while the writer can go ahead
-      and prepare the next output. copy_to_read_buffer() relies on
-      info->pos_in_file.
-    */
-    if (info->share)
-      copy_to_read_buffer(info, Buffer, length);
-
     Count-=length;
     Buffer+=length;
     info->pos_in_file+=length;
@@ -1478,12 +985,6 @@ int my_block_write(register IO_CACHE *info, const unsigned char *Buffer, size_t 
 {
   size_t length;
   int error=0;
-
-  /*
-    Assert that we cannot come here with a shared cache. If we do one
-    day, we might need to add a call to copy_to_read_buffer().
-  */
-  assert(!info->share);
 
   if (pos < info->pos_in_file)
   {
@@ -1546,15 +1047,6 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
 
     if ((length=(size_t) (info->write_pos - info->write_buffer)))
     {
-      /*
-        In case of a shared I/O cache with a writer we do direct write
-        cache to read cache copy. Do it before the write here so that
-        the readers can work in parallel with the write.
-        copy_to_read_buffer() relies on info->pos_in_file.
-      */
-      if (info->share)
-        copy_to_read_buffer(info, info->write_buffer, length);
-
       pos_in_file=info->pos_in_file;
       /*
 	If we have append cache, we always open the file with
@@ -1625,12 +1117,6 @@ int end_io_cache(IO_CACHE *info)
 {
   int error=0;
   IO_CACHE_CALLBACK pre_close;
-
-  /*
-    Every thread must call remove_io_thread(). The last one destroys
-    the share elements.
-  */
-  assert(!info->share || !info->share->total_threads);
 
   if ((pre_close=info->pre_close))
   {
