@@ -1396,7 +1396,7 @@ try
   N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
   ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
   N_("Use compression in server/client protocol."))
-  ("database,D", po::value<string>(&current_db)->default_value(""),
+  ("database,D", po::value<string>(&current_db)->default_value("test"),
   N_("Database to use."))
   ("default-character-set",po::value<string>(),
   N_("(not used)"))
