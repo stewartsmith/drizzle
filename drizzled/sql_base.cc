@@ -1403,7 +1403,7 @@ c2: open t1; -- blocks
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->getShare()->ref_count > 0 || table->getShare()->tmp_table != message::Table::STANDARD);
+  assert(table->getShare()->getTableCount() > 0 || table->getShare()->tmp_table != message::Table::STANDARD);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -1998,7 +1998,7 @@ retry:
         To avoid deadlock, only wait for release if no one else is
         using the share.
       */
-      if (share->ref_count != 1)
+      if (share->getTableCount() != 1)
         goto err;
       /* Free share and wait until it's released by all threads */
       TableShare::release(share);

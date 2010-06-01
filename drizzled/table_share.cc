@@ -199,7 +199,7 @@ static TableShare *foundTableShare(TableShare *share)
     return NULL;
   }
 
-  share->ref_count++;
+  share->incrementTableCount();
   (void) pthread_mutex_unlock(&share->mutex);
 
   return share;

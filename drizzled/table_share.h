@@ -545,10 +545,17 @@ public:
 
   TableIdentifier::Type tmp_table;
 
+private:
   uint32_t ref_count;       /* How many Table objects uses this */
-  uint32_t getTableCount()
+public:
+  uint32_t getTableCount() const
   {
     return ref_count;
+  }
+
+  void incrementTableCount()
+  {
+    ref_count++;
   }
 
   uint32_t null_bytes;
