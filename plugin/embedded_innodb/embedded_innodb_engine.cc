@@ -225,6 +225,90 @@ static ib_trx_t* get_trx(Session* session)
   return (ib_trx_t*) session->getEngineData(embedded_innodb_engine);
 }
 
+/* This is a superset of the map from innobase plugin.
+   Unlike innobase plugin we don't act on errors here, we just
+   map error codes. */
+static int ib_err_t_to_drizzle_error(ib_err_t err)
+{
+  switch (err)
+  {
+  case DB_SUCCESS:
+    return 0;
+
+  case DB_ERROR:
+  default:
+    return -1;
+
+  case DB_INTERRUPTED:
+    return ER_QUERY_INTERRUPTED; // FIXME: is this correct?
+
+  case DB_OUT_OF_MEMORY:
+    return HA_ERR_OUT_OF_MEM;
+
+  case DB_DUPLICATE_KEY:
+    return HA_ERR_FOUND_DUPP_KEY;
+
+  case DB_FOREIGN_DUPLICATE_KEY:
+    return HA_ERR_FOREIGN_DUPLICATE_KEY;
+
+  case DB_MISSING_HISTORY:
+    return HA_ERR_TABLE_DEF_CHANGED;
+
+  case DB_RECORD_NOT_FOUND:
+    return HA_ERR_NO_ACTIVE_RECORD;
+
+  case DB_DEADLOCK:
+    return HA_ERR_LOCK_DEADLOCK;
+
+  case DB_LOCK_WAIT_TIMEOUT:
+    return HA_ERR_LOCK_WAIT_TIMEOUT;
+
+  case DB_NO_REFERENCED_ROW:
+    return HA_ERR_NO_REFERENCED_ROW;
+
+  case DB_ROW_IS_REFERENCED:
+    return HA_ERR_ROW_IS_REFERENCED;
+
+  case DB_CANNOT_ADD_CONSTRAINT:
+    return HA_ERR_CANNOT_ADD_FOREIGN;
+
+  case DB_CANNOT_DROP_CONSTRAINT:
+    return HA_ERR_ROW_IS_REFERENCED; /* misleading. should have new err code */
+
+  case DB_COL_APPEARS_TWICE_IN_INDEX:
+  case DB_CORRUPTION:
+    return HA_ERR_CRASHED;
+
+  case DB_MUST_GET_MORE_FILE_SPACE:
+  case DB_OUT_OF_FILE_SPACE:
+    return HA_ERR_RECORD_FILE_FULL;
+
+  case DB_TABLE_IS_BEING_USED:
+    return HA_ERR_WRONG_COMMAND;
+
+  case DB_TABLE_NOT_FOUND:
+    return HA_ERR_NO_SUCH_TABLE;
+
+  case DB_TOO_BIG_RECORD:
+    return HA_ERR_TO_BIG_ROW;
+
+  case DB_NO_SAVEPOINT:
+    return HA_ERR_NO_SAVEPOINT;
+
+  case DB_LOCK_TABLE_FULL:
+    return HA_ERR_LOCK_TABLE_FULL;
+
+  case DB_PRIMARY_KEY_IS_NULL:
+    return ER_PRIMARY_CANT_HAVE_NULL;
+
+  case DB_TOO_MANY_CONCURRENT_TRXS:
+    return HA_ERR_RECORD_FILE_FULL; /* need better error code */
+
+  case DB_UNSUPPORTED:
+    return HA_ERR_UNSUPPORTED;
+  }
+}
+
 static ib_trx_level_t tx_isolation_to_ib_trx_level(enum_tx_isolation level)
 {
   switch(level)
@@ -608,6 +692,7 @@ static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::str
 EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
                            TableShare &table_arg)
   :Cursor(engine_arg, table_arg),
+   ib_lock_mode(IB_LOCK_NONE),
    write_can_replace(false),
    blobroot(NULL)
 { }
@@ -661,7 +746,14 @@ int EmbeddedInnoDBCursor::external_lock(Session* session, int lock_type)
   ib_cursor_stmt_begin(cursor);
 
   (void)session;
-  (void)lock_type;
+
+  if (lock_type == F_WRLCK)
+  {
+    /* SELECT ... FOR UPDATE or UPDATE TABLE */
+    ib_lock_mode= IB_LOCK_X;
+  }
+  else
+    ib_lock_mode= IB_LOCK_NONE;
 
   return 0;
 }
@@ -1763,6 +1855,7 @@ err:
 
 int EmbeddedInnoDBCursor::doStartTableScan(bool)
 {
+  ib_err_t err;
   ib_trx_t transaction;
 
   if (in_table_scan)
@@ -1775,14 +1868,21 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
 
   ib_cursor_attach_trx(cursor, transaction);
 
+  err= ib_cursor_set_lock_mode(cursor, ib_lock_mode);
+  assert(err == DB_SUCCESS); // FIXME
+
   tuple= ib_clust_read_tuple_create(cursor);
 
-  ib_err_t err= ib_cursor_first(cursor);
+  err= ib_cursor_first(cursor);
   if (err != DB_SUCCESS && err != DB_END_OF_INDEX)
-    return -1; // FIXME
+  {
+    previous_error= ib_err_t_to_drizzle_error(err);
+    return previous_error;
+  }
 
   advance_cursor= false;
 
+  previous_error= 0;
   return(0);
 }
 
@@ -1873,6 +1973,9 @@ int EmbeddedInnoDBCursor::rnd_next(unsigned char *buf)
   ib_err_t err;
   int ret;
 
+  if (previous_error)
+    return previous_error;
+
   if (advance_cursor)
     err= ib_cursor_next(cursor);
 
@@ -1893,6 +1996,7 @@ int EmbeddedInnoDBCursor::doEndTableScan()
   err= ib_cursor_reset(cursor);
   assert(err == DB_SUCCESS);
   in_table_scan= false;
+  previous_error= 0;
   return 0;
 }
 
@@ -2038,6 +2142,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
       return -1;
 
     err= ib_cursor_close(cursor);
+    assert(err == DB_SUCCESS);
     err= ib_cursor_open_index_using_id(index_id, transaction, &cursor);
 
     if (err != DB_SUCCESS)
@@ -2046,6 +2151,9 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
     tuple= ib_clust_read_tuple_create(cursor);
     ib_cursor_set_cluster_access(cursor);
   }
+
+  ib_err_t err= ib_cursor_set_lock_mode(cursor, ib_lock_mode);
+  assert(err == DB_SUCCESS);
 
   advance_cursor= false;
   return 0;
