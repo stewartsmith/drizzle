@@ -675,6 +675,7 @@ public:
     use key_length= 0 as neither table_cache_key or key_length will be used).
   */
 
+private:
   void init()
   {
     init("", 0, "", "");
@@ -705,6 +706,7 @@ public:
 
     return;
   }
+public:
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
