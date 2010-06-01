@@ -2209,7 +2209,9 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
     {
       param->read_cache.end_of_file=sort_param.filepos;
       if (write_data_suffix(&sort_info,1) || end_io_cache(&info->rec_cache))
+      {
 	goto err;
+      }
       if (param->testflag & T_SAFE_REPAIR)
       {
 	/* Don't repair if we loosed more than one row */

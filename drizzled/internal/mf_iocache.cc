@@ -70,37 +70,15 @@ namespace internal
 {
 
 static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
-static int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count);
 static int _my_b_write(register IO_CACHE *info, const unsigned char *Buffer, size_t Count);
-
-/**
- * @brief
- *   Lock appends for the IO_CACHE   
- */
-inline
-static void lock_append_buffer(register IO_CACHE *info)
-{
-  pthread_mutex_lock(&(info)->append_buffer_lock);
-}
-
-/**
- * @brief
- *   Lock appends for the IO_CACHE   
- */
-inline
-static void unlock_append_buffer(register IO_CACHE *info)
-{
-  pthread_mutex_unlock(&(info)->append_buffer_lock);
-}
 
 /**
  * @brief
  *   Lock appends for the IO_CACHE if required (need_append_buffer_lock)   
  */
 inline
-static void lock_append_buffer(register IO_CACHE *info, int need_append_buffer_lock)
+static void lock_append_buffer(register IO_CACHE *, int )
 {
-  if (need_append_buffer_lock) lock_append_buffer(info);
 }
 
 /**
@@ -108,9 +86,8 @@ static void lock_append_buffer(register IO_CACHE *info, int need_append_buffer_l
  *   Unlock appends for the IO_CACHE if required (need_append_buffer_lock)   
  */
 inline
-static void unlock_append_buffer(register IO_CACHE *info, int need_append_buffer_lock)
+static void unlock_append_buffer(register IO_CACHE *, int )
 {
-  if (need_append_buffer_lock) unlock_append_buffer(info);
 }
 
 /**
@@ -173,10 +150,6 @@ init_functions(IO_CACHE* info)
       programs that link against mysys but know nothing about THD, such
       as myisamchk
     */
-    break;
-  case SEQ_READ_APPEND:
-    info->read_function = _my_b_seq_read;
-    info->write_function = 0;			/* Force a core if used */
     break;
   default:
     info->read_function = _my_b_read;
@@ -245,7 +218,7 @@ int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
   if (!cachesize && !(cachesize= my_default_record_cache_size))
     return(1);				/* No cache requested */
   min_cache=use_async_io ? IO_SIZE*4 : IO_SIZE*2;
-  if (type == READ_CACHE || type == SEQ_READ_APPEND)
+  if (type == READ_CACHE)
   {						/* Assume file isn't growing */
     if (!(cache_myflags & MY_DONT_CHECK_FILESIZE))
     {
@@ -274,15 +247,11 @@ int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
       if (cachesize < min_cache)
 	cachesize = min_cache;
       buffer_block= cachesize;
-      if (type == SEQ_READ_APPEND)
-	buffer_block *= 2;
       if ((info->buffer=
 	   (unsigned char*) malloc(buffer_block)) != 0)
       {
 	info->write_buffer=info->buffer;
-	if (type == SEQ_READ_APPEND)
-	  info->write_buffer = info->buffer + cachesize;
-	info->alloced_buffer=1;
+	info->alloced_buffer= true;
 	break;					/* Enough memory found */
       }
       if (cachesize == min_cache)
@@ -295,12 +264,6 @@ int init_io_cache(IO_CACHE *info, int file, size_t cachesize,
   info->read_length=info->buffer_length=cachesize;
   info->myflags=cache_myflags & ~(MY_NABP | MY_FNABP);
   info->request_pos= info->read_pos= info->write_pos = info->buffer;
-  if (type == SEQ_READ_APPEND)
-  {
-    info->append_read_pos = info->write_pos = info->write_buffer;
-    info->write_end = info->write_buffer + info->buffer_length;
-    pthread_mutex_init(&info->append_buffer_lock,MY_MUTEX_INIT_FAST);
-  }
 
   if (type == WRITE_CACHE)
     info->write_end=
@@ -367,8 +330,7 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 {
   /* One can't do reinit with the following types */
   assert(type != READ_NET && info->type != READ_NET &&
-	      type != WRITE_NET && info->type != WRITE_NET &&
-	      type != SEQ_READ_APPEND && info->type != SEQ_READ_APPEND);
+	      type != WRITE_NET && info->type != WRITE_NET);
 
   /* If the whole file is in memory, avoid flushing to disk */
   if (! clear_cache &&
@@ -565,162 +527,6 @@ static int _my_b_read(register IO_CACHE *info, unsigned char *Buffer, size_t Cou
   info->pos_in_file=pos_in_file;
   memcpy(Buffer, info->buffer, Count);
   return(0);
-}
-
-/**
- * @brief
- *   Do sequential read from the SEQ_READ_APPEND cache.
- *
- * @detail
- *   We do this in three stages:
- *      - first read from info->buffer
- *      - then if there are still data to read, try the file descriptor
- *      - afterwards, if there are still data to read, try append buffer
- *
- * @retval 0 Success
- * @retval 1 Failed to read
- */
-int _my_b_seq_read(register IO_CACHE *info, unsigned char *Buffer, size_t Count)
-{
-  size_t length, diff_length, left_length, save_count, max_length;
-  my_off_t pos_in_file;
-  save_count=Count;
-
-  /* first, read the regular buffer */
-  if ((left_length=(size_t) (info->read_end-info->read_pos)))
-  {
-    assert(Count > left_length);	/* User is not using my_b_read() */
-    memcpy(Buffer,info->read_pos, left_length);
-    Buffer+=left_length;
-    Count-=left_length;
-  }
-  lock_append_buffer(info);
-
-  /* pos_in_file always point on where info->buffer was read */
-  if ((pos_in_file=info->pos_in_file +
-       (size_t) (info->read_end - info->buffer)) >= info->end_of_file)
-    goto read_append_buffer;
-
-  /*
-    With read-append cache we must always do a seek before we read,
-    because the write could have moved the file pointer astray
-  */
-  if (lseek(info->file,pos_in_file,SEEK_SET) == MY_FILEPOS_ERROR)
-  {
-   info->error= -1;
-   unlock_append_buffer(info);
-   return (1);
-  }
-  info->seek_not_done=0;
-
-  diff_length= (size_t) (pos_in_file & (IO_SIZE-1));
-
-  /* now the second stage begins - read from file descriptor */
-  if (Count >= (size_t) (IO_SIZE+(IO_SIZE-diff_length)))
-  {
-    /* Fill first intern buffer */
-    size_t read_length;
-
-    length=(Count & (size_t) ~(IO_SIZE-1))-diff_length;
-    if ((read_length= my_read(info->file,Buffer, length,
-                              info->myflags)) == (size_t) -1)
-    {
-      info->error= -1;
-      unlock_append_buffer(info);
-      return 1;
-    }
-    Count-=read_length;
-    Buffer+=read_length;
-    pos_in_file+=read_length;
-
-    if (read_length != length)
-    {
-      /*
-	We only got part of data;  Read the rest of the data from the
-	write buffer
-      */
-      goto read_append_buffer;
-    }
-    left_length+=length;
-    diff_length=0;
-  }
-
-  max_length= info->read_length-diff_length;
-  if (max_length > (info->end_of_file - pos_in_file))
-    max_length= (size_t) (info->end_of_file - pos_in_file);
-  if (!max_length)
-  {
-    if (Count)
-      goto read_append_buffer;
-    length=0;				/* Didn't read any more chars */
-  }
-  else
-  {
-    length= my_read(info->file,info->buffer, max_length, info->myflags);
-    if (length == (size_t) -1)
-    {
-      info->error= -1;
-      unlock_append_buffer(info);
-      return 1;
-    }
-    if (length < Count)
-    {
-      memcpy(Buffer, info->buffer, length);
-      Count -= length;
-      Buffer += length;
-
-      /*
-	 added the line below to make
-	 assert(pos_in_file==info->end_of_file) pass.
-	 otherwise this does not appear to be needed
-      */
-      pos_in_file += length;
-      goto read_append_buffer;
-    }
-  }
-  unlock_append_buffer(info);
-  info->read_pos=info->buffer+Count;
-  info->read_end=info->buffer+length;
-  info->pos_in_file=pos_in_file;
-  memcpy(Buffer,info->buffer,(size_t) Count);
-  return 0;
-
-read_append_buffer:
-
-  /*
-     Read data from the current write buffer.
-     Count should never be == 0 here (The code will work even if count is 0)
-  */
-
-  {
-    /* First copy the data to Count */
-    size_t len_in_buff = (size_t) (info->write_pos - info->append_read_pos);
-    size_t copy_len;
-    size_t transfer_len;
-
-    assert(info->append_read_pos <= info->write_pos);
-    /*
-      TODO: figure out if the assert below is needed or correct.
-    */
-    assert(pos_in_file == info->end_of_file);
-    copy_len=min(Count, len_in_buff);
-    memcpy(Buffer, info->append_read_pos, copy_len);
-    info->append_read_pos += copy_len;
-    Count -= copy_len;
-    if (Count)
-      info->error = static_cast<int>(save_count - Count);
-
-    /* Fill read buffer with data from write buffer */
-    memcpy(info->buffer, info->append_read_pos,
-	   (size_t) (transfer_len=len_in_buff - copy_len));
-    info->read_pos= info->buffer;
-    info->read_end= info->buffer+transfer_len;
-    info->append_read_pos=info->write_pos;
-    info->pos_in_file=pos_in_file+copy_len;
-    info->end_of_file+=len_in_buff;
-  }
-  unlock_append_buffer(info);
-  return Count ? 1 : 0;
 }
 
 
@@ -1030,11 +836,8 @@ int my_block_write(register IO_CACHE *info, const unsigned char *Buffer, size_t 
 int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
 {
   size_t length;
-  bool append_cache;
+  bool append_cache= false;
   my_off_t pos_in_file;
-
-  if (!(append_cache = (info->type == SEQ_READ_APPEND)))
-    need_append_buffer_lock=0;
 
   if (info->type == WRITE_CACHE || append_cache)
   {
@@ -1131,103 +934,9 @@ int end_io_cache(IO_CACHE *info)
     free((unsigned char*) info->buffer);
     info->buffer=info->read_pos=(unsigned char*) 0;
   }
-  if (info->type == SEQ_READ_APPEND)
-  {
-    /* Destroy allocated mutex */
-    info->type= TYPE_NOT_SET;
-    pthread_mutex_destroy(&info->append_buffer_lock);
-  }
+
   return(error);
 } /* end_io_cache */
 
 } /* namespace internal */
 } /* namespace drizzled */
-
-/**********************************************************************
- Testing of MF_IOCACHE
-**********************************************************************/
-
-#ifdef MAIN
-
-void die(const char* fmt, ...)
-{
-  va_list va_args;
-  va_start(va_args,fmt);
-  fprintf(stderr,"Error:");
-  vfprintf(stderr, fmt,va_args);
-  fprintf(stderr,", errno=%d\n", errno);
-  exit(1);
-}
-
-int open_file(const char* fname, IO_CACHE* info, int cache_size)
-{
-  int fd;
-  if ((fd=my_open(fname,O_CREAT | O_RDWR,MYF(MY_WME))) < 0)
-    die("Could not open %s", fname);
-  if (init_io_cache(info, fd, cache_size, SEQ_READ_APPEND, 0,0,MYF(MY_WME)))
-    die("failed in init_io_cache()");
-  return fd;
-}
-
-void close_file(IO_CACHE* info)
-{
-  end_io_cache(info);
-  my_close(info->file, MYF(MY_WME));
-}
-
-int main(int argc, char** argv)
-{
-  IO_CACHE sra_cache; /* SEQ_READ_APPEND */
-  MY_STAT status;
-  const char* fname="/tmp/iocache.test";
-  int cache_size=16384;
-  char llstr_buf[22];
-  int max_block,total_bytes=0;
-  int i,num_loops=100,error=0;
-  char *p;
-  char* block, *block_end;
-  MY_INIT(argv[0]);
-  max_block = cache_size*3;
-  if (!(block=(char*)malloc(max_block)))
-    die("Not enough memory to allocate test block");
-  block_end = block + max_block;
-  for (p = block,i=0; p < block_end;i++)
-  {
-    *p++ = (char)i;
-  }
-  if (my_stat(fname,&status, MYF(0)) &&
-      my_delete(fname,MYF(MY_WME)))
-    {
-      die("Delete of %s failed, aborting", fname);
-    }
-  open_file(fname,&sra_cache, cache_size);
-  for (i = 0; i < num_loops; i++)
-  {
-    char buf[4];
-    int block_size = abs(rand() % max_block);
-    int4store(buf, block_size);
-    if (my_b_append(&sra_cache,buf,4) ||
-	my_b_append(&sra_cache, block, block_size))
-      die("write failed");
-    total_bytes += 4+block_size;
-  }
-  close_file(&sra_cache);
-  free(block);
-  if (!my_stat(fname,&status,MYF(MY_WME)))
-    die("%s failed to stat, but I had just closed it,\
- wonder how that happened");
-  printf("Final size of %s is %s, wrote %d bytes\n",fname,
-	 llstr(status.st_size,llstr_buf),
-	 total_bytes);
-  my_delete(fname, MYF(MY_WME));
-  /* check correctness of tests */
-  if (total_bytes != status.st_size)
-  {
-    fprintf(stderr,"Not the same number of bytes acutally  in file as bytes \
-supposedly written\n");
-    error=1;
-  }
-  exit(error);
-  return 0;
-}
-#endif

@@ -71,11 +71,6 @@ typedef struct st_io_cache    /* Used when cacheing files */
   */
   unsigned char  **current_pos, **current_end;
   /*
-    The lock is for append buffer used in SEQ_READ_APPEND cache
-    need mutex copying from append buffer to read buffer.
-  */
-  pthread_mutex_t append_buffer_lock;
-  /*
     A caller will use my_b_read() macro to read from the cache
     if the data is already in cache, it will be simply copied with
     memcpy() and internal variables will be accordinging updated with
