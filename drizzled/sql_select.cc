@@ -3942,10 +3942,10 @@ int join_init_quick_read_record(JoinTable *tab)
   return join_init_read_record(tab);
 }
 
-int rr_sequential(ReadRecord *info);
 int init_read_record_seq(JoinTable *tab)
 {
-  tab->read_record.read_record= rr_sequential;
+  tab->read_record.init_reard_record_sequential();
+
   if (tab->read_record.cursor->startTableScan(1))
     return 1;
   return (*tab->read_record.read_record)(&tab->read_record);

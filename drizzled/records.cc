@@ -31,7 +31,7 @@
 namespace drizzled
 {
 
-int rr_sequential(ReadRecord *info);
+static int rr_sequential(ReadRecord *info);
 static int rr_quick(ReadRecord *info);
 static int rr_from_tempfile(ReadRecord *info);
 static int rr_unpack_from_tempfile(ReadRecord *info);
@@ -41,6 +41,11 @@ static int rr_from_cache(ReadRecord *info);
 static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(ReadRecord *info);
 static int rr_index(ReadRecord *info);
+
+void ReadRecord::init_reard_record_sequential()
+{
+  read_record= rr_sequential;
+}
 
 void ReadRecord::init_read_record_idx(Session *, 
                                       Table *table_arg,
