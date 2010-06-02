@@ -194,7 +194,7 @@ public:
                  uint32_t length= 0);
 
   void add_field(const char *label,
-                 uint32_t field_length= 64);
+                 uint32_t field_length= MAXIMUM_IDENTIFIER_LENGTH);
 
   void add_field(const char *label,
                  TableFunction::ColumnType type,

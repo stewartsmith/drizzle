@@ -60,7 +60,6 @@ typedef struct st_columndef MI_COLUMNDEF;
  */
 class Table 
 {
-
 public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
 
@@ -293,16 +292,17 @@ public:
 
   /* SHARE methods */
   inline const TableShare *getShare() const { assert(s); return s; } /* Get rid of this long term */
+  inline bool hasShare() const { return s ? true : false ; } /* Get rid of this long term */
   inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }
   inline uint32_t getRecordLength() { return s->reclength; }
   inline uint32_t sizeBlobFields() { return s->blob_fields; }
-  inline uint32_t *getBlobField() { return s->blob_field; }
+  inline uint32_t *getBlobField() { return &s->blob_field[0]; }
   inline uint32_t getNullBytes() { return s->null_bytes; }
   inline uint32_t getNullFields() { return s->null_fields; }
-  inline unsigned char *getDefaultValues() { return s->default_values; }
+  inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
   inline bool isNameLock() { return s->name_lock; }
@@ -311,7 +311,7 @@ public:
 
   uint32_t index_flags(uint32_t idx) const
   {
-    return s->storage_engine->index_flags(s->key_info[idx].algorithm);
+    return s->storage_engine->index_flags(s->getKeyInfo(idx).algorithm);
   }
 
   inline plugin::StorageEngine *getEngine() const   /* table_type for handler */

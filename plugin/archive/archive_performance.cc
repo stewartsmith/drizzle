@@ -23,7 +23,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-//#include "drizzled/option.h"
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
