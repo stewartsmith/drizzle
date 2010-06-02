@@ -593,7 +593,9 @@ public:
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
 
+private:
   bool name_lock;
+public:
   bool isNameLock() const
   {
     return name_lock;

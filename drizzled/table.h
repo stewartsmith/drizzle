@@ -305,7 +305,7 @@ public:
   inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isNameLock() { return s->name_lock; }
+  inline bool isNameLock() const { return s->isNameLock(); }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
 
