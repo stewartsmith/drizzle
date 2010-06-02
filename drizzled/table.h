@@ -297,7 +297,7 @@ public:
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
   inline uint32_t sizeKeys() { return s->keys; }
   inline uint32_t sizeFields() { return s->fields; }
-  inline uint32_t getRecordLength() { return s->reclength; }
+  inline uint32_t getRecordLength() const { return s->getRecordLength(); }
   inline uint32_t sizeBlobFields() { return s->blob_fields; }
   inline uint32_t *getBlobField() { return &s->blob_field[0]; }
   inline uint32_t getNullBytes() { return s->null_bytes; }

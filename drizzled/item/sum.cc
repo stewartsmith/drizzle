@@ -1028,7 +1028,7 @@ bool Item_sum_distinct::setup(Session *session)
     return(true);
 
   /* XXX: check that the case of CHAR(0) works OK */
-  tree_key_length= table->getShare()->reclength - table->getShare()->null_bytes;
+  tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
 
   /*
     Unique handles all unique elements in a tree until they can't fit
@@ -2873,7 +2873,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
-  String tmp((char *)table->record[1], table->getShare()->reclength,
+  String tmp((char *)table->record[1], table->getShare()->getRecordLength(),
              default_charset_info);
   String tmp2;
   String *result= &item->result;
@@ -2902,7 +2902,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
       Field *field= (*arg)->get_tmp_table_field();
       uint32_t offset= (field->offset(field->table->record[0]) -
                     table->getShare()->null_bytes);
-      assert(offset < table->getShare()->reclength);
+      assert(offset < table->getShare()->getRecordLength());
       res= field->val_str(&tmp, key + offset);
     }
     else
@@ -3269,7 +3269,7 @@ bool Item_func_group_concat::setup(Session *session)
      Don't reserve space for NULLs: if any of gconcat arguments is NULL,
      the row is not added to the result.
   */
-  uint32_t tree_key_length= table->getShare()->reclength - table->getShare()->null_bytes;
+  uint32_t tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
 
   if (arg_count_order)
   {

@@ -293,7 +293,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   while (recpos < (uint) share->stored_rec_length)
   {
     Field **field, *found= 0;
-    minpos= share->reclength;
+    minpos= share->getRecordLength();
     length= 0;
 
     for (field= table_arg->field; *field; field++)

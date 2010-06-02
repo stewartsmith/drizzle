@@ -1125,7 +1125,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (blob_count || ((string_total_length >= STRING_TOTAL_LENGTH_TO_PACK_ROWS) && (reclength / string_total_length <= RATIO_TO_PACK_ROWS || (string_total_length / string_count) >= AVG_STRING_LENGTH_TO_PACK_ROWS)))
     use_packed_rows= 1;
 
-  share->reclength= reclength;
+  share->setRecordLength(reclength);
   {
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
@@ -1244,13 +1244,17 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
+  {
     max_rows= ~(uint64_t) 0;
+  }
   else
+  {
     max_rows= (uint64_t) (((share->db_type() == heap_engine) ?
-                          min(session->variables.tmp_table_size,
-                              session->variables.max_heap_table_size) :
-                          session->variables.tmp_table_size) /
-                         share->reclength);
+                           min(session->variables.tmp_table_size,
+                               session->variables.max_heap_table_size) :
+                           session->variables.tmp_table_size) /
+                          share->getRecordLength());
+  }
 
   set_if_bigger(max_rows, (uint64_t)1);	// For dummy start options
   /*
@@ -1523,8 +1527,8 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   share->blob_fields= blob_count;
 
   null_pack_length= (null_count + 7)/8;
-  share->reclength= record_length + null_pack_length;
-  share->rec_buff_length= ALIGN_SIZE(share->reclength + 1);
+  share->setRecordLength(record_length + null_pack_length);
+  share->rec_buff_length= ALIGN_SIZE(share->getRecordLength() + 1);
   table->record[0]= (unsigned char*)alloc(share->rec_buff_length);
   if (!table->record[0])
     goto error;
@@ -1650,7 +1654,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
       (*recinfo)->type= FIELD_CHECK;
       (*recinfo)->length=MI_UNIQUE_HASH_LENGTH;
       (*recinfo)++;
-      share->reclength+=MI_UNIQUE_HASH_LENGTH;
+      share->setRecordLength(share->getRecordLength() + MI_UNIQUE_HASH_LENGTH);
     }
     else
     {
@@ -1809,7 +1813,7 @@ bool Table::compare_record(Field **ptr)
 bool Table::compare_record()
 {
   if (s->blob_fields + s->varchar_fields == 0)
-    return memcmp(this->record[0], this->record[1], (size_t) s->reclength);
+    return memcmp(this->record[0], this->record[1], (size_t) s->getRecordLength());
   
   /* Compare null bits */
   if (memcmp(null_flags, null_flags + s->rec_buff_length, s->null_bytes))
@@ -1831,7 +1835,7 @@ bool Table::compare_record()
  */
 void Table::storeRecord()
 {
-  memcpy(record[1], record[0], (size_t) s->reclength);
+  memcpy(record[1], record[0], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1840,7 +1844,7 @@ void Table::storeRecord()
  */
 void Table::storeRecordAsInsert()
 {
-  memcpy(insert_values, record[0], (size_t) s->reclength);
+  memcpy(insert_values, record[0], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1849,7 +1853,7 @@ void Table::storeRecordAsInsert()
  */
 void Table::storeRecordAsDefault()
 {
-  memcpy(s->getDefaultValues(), record[0], (size_t) s->reclength);
+  memcpy(s->getDefaultValues(), record[0], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1858,7 +1862,7 @@ void Table::storeRecordAsDefault()
  */
 void Table::restoreRecord()
 {
-  memcpy(record[0], record[1], (size_t) s->reclength);
+  memcpy(record[0], record[1], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1867,7 +1871,7 @@ void Table::restoreRecord()
  */
 void Table::restoreRecordAsDefault()
 {
-  memcpy(record[0], s->getDefaultValues(), (size_t) s->reclength);
+  memcpy(record[0], s->getDefaultValues(), (size_t) s->getRecordLength());
 }
 
 /*

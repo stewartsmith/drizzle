@@ -5323,7 +5323,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   char *org_record,*new_record;
   unsigned char *record;
   int error;
-  uint32_t reclength= table->getShare()->reclength - offset;
+  uint32_t reclength= table->getShare()->getRecordLength() - offset;
 
   org_record=(char*) (record=table->record[0])+offset;
   new_record=(char*) table->record[1]+offset;

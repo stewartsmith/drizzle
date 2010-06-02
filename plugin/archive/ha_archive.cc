@@ -467,7 +467,7 @@ int ha_archive::open(const char *name, int, uint32_t)
 
   assert(share);
 
-  record_buffer= create_record_buffer(table->getShare()->reclength +
+  record_buffer= create_record_buffer(table->getShare()->getRecordLength() +
                                       ARCHIVE_ROW_HEADER_SIZE);
 
   if (!record_buffer)

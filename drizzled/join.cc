@@ -5389,7 +5389,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
   offset= (field_count ?
            entry->field[entry->getShare()->fields - field_count]->
            offset(entry->record[0]) : 0);
-  reclength= entry->getShare()->reclength-offset;
+  reclength= entry->getShare()->getRecordLength() - offset;
 
   entry->free_io_cache();				// Safety
   entry->cursor->info(HA_STATUS_VARIABLE);

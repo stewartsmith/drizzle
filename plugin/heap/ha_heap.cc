@@ -888,7 +888,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
                     keys, keydef,
                     column_count, columndef,
                     max_key_fieldnr, key_part_size,
-                    table_arg->getShare()->reclength, mem_per_row_keys,
+                    table_arg->getShare()->getRecordLength(), mem_per_row_keys,
                     static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
                     0, // Factor out MIN
                     &hp_create_info, internal_share);

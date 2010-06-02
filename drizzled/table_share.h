@@ -472,13 +472,20 @@ public:
   }
 
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
+private:
   uint32_t   reclength;			/* Recordlength */
+public:
   uint32_t   stored_rec_length;         /* Stored record length*/
   enum row_type row_type;		/* How rows are stored */
 
-  uint32_t getRecordLength()
+  uint32_t getRecordLength() const
   {
     return reclength;
+  }
+
+  void setRecordLength(uint32_t arg)
+  {
+    reclength= arg;
   }
 
 private:
