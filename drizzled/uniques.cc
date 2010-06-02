@@ -579,24 +579,33 @@ end:
 bool Unique::walk(tree_walk_action action, void *walk_action_arg)
 {
   int res;
-  unsigned char *merge_buffer;
+  std::vector<unsigned char> merge_buffer;
 
   if (elements == 0)                       /* the whole tree is in memory */
     return tree_walk(&tree, action, walk_action_arg, left_root_right);
 
   /* flush current tree to the file to have some memory for merge buffer */
   if (flush())
-    return 1;
+    return true;
+
   if (flush_io_cache(file) || reinit_io_cache(file, internal::READ_CACHE, 0L, 0, 0))
-    return 1;
-  if (!(merge_buffer= (unsigned char *) malloc(max_in_memory_size)))
-    return 1;
-  res= merge_walk(merge_buffer, (ulong) max_in_memory_size, size,
+    return true;
+
+  try
+  {
+    merge_buffer.resize(max_in_memory_size);
+  }
+  catch (std::bad_alloc const&)
+  {
+    return true;
+  }
+
+  res= merge_walk(&merge_buffer[0], (ulong) max_in_memory_size, size,
                   (BUFFPEK *) file_ptrs.buffer,
                   (BUFFPEK *) file_ptrs.buffer + file_ptrs.elements,
                   action, walk_action_arg,
                   tree.compare, tree.custom_arg, file);
-  free((char*) merge_buffer);
+
   return res;
 }
 
