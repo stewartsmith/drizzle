@@ -37,6 +37,7 @@
 #include <string>
 #include <drizzled/gettext.h>
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <algorithm>
 #include <limits.h>
@@ -1381,29 +1382,17 @@ try
   bindtextdomain("drizzle", LOCALEDIR);
   textdomain("drizzle");
 #endif
-  po::options_description long_options("Allowed Options");
-  long_options.add_options()
+
+  po::options_description commandline_options("Options used only in command line");
+  commandline_options.add_options()
   ("help,?",N_("Displays this help and exit."))
-  ("auto-rehash", po::value<bool>(&opt_rehash)->default_value(true)->zero_tokens(),
-  N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."))
-  ("no-auto-rehash,A",N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."))
-  ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
-  N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
   ("batch,B",N_("Don't use history file. Disable interactive behavior. (Enables --silent)"))
   ("column-type-info", po::value<bool>(&column_types_flag)->default_value(false)->zero_tokens(),
   N_("Display column type information."))
   ("comments,c", po::value<bool>(&preserve_comments)->default_value(false)->zero_tokens(),
   N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"))
   ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
-  N_("Use compression in server/client protocol."))
-  ("database,D", po::value<string>(&current_db)->default_value("test"),
-  N_("Database to use."))
-  ("default-character-set",po::value<string>(),
-  N_("(not used)"))
-  ("delimiter", po::value<string>(&delimiter_str)->default_value(";"),
-  N_("Delimiter to be used."))
-  ("execute,e", po::value<string>(),
-  N_("Execute command and quit. (Disables --force and history file)"))
+  N_("Use compression in server/client protocol."))  
   ("vertical,E", po::value<bool>(&vertical)->default_value(false)->zero_tokens(),
   N_("Print the output of a query (rows) vertically."))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
@@ -1413,24 +1402,57 @@ try
   ("no-named-commands,g",
   N_("Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead."))
   ("ignore-spaces,i", N_("Ignore space after function names."))
-  ("local-infile", po::value<bool>(&opt_local_infile)->default_value(false)->zero_tokens(),
-  N_("Enable/disable LOAD DATA LOCAL INFILE."))
   ("no-beep,b", po::value<bool>(&opt_nobeep)->default_value(false)->zero_tokens(),
   N_("Turn off beep on error."))
-  ("host,h", po::value<string>(&current_host)->default_value("localhost"),
-  N_("Connect to host"))
   ("line-numbers", po::value<bool>(&line_numbers)->default_value(true)->zero_tokens(),
   N_("Write line numbers for errors."))
   ("skip-line-numbers,L", 
   N_("Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead."))
-  ("unbuffered,n", po::value<bool>(&unbuffered)->default_value(false)->zero_tokens(),
-  N_("Flush buffer after each query."))
   ("column-name", po::value<bool>(&column_names)->default_value(true)->zero_tokens(),
   N_("Write column names in results."))
   ("skip-column-names,N", 
   N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."))
   ("set-variable,O", po::value<string>(),
   N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."))
+  ("table,t", po::value<bool>(&output_tables)->default_value(false)->zero_tokens(),
+  N_("Output in table format.")) 
+  ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
+  N_("Only allow UPDATE and DELETE that uses keys."))
+  ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
+  N_("Synonym for option --safe-updates, -U."))
+  ("verbose,v", po::value<string>(&opt_verbose)->default_value(""),
+  N_("-v vvv implies that verbose= 3, Used to specify verbose"))
+  ("version,V", N_("Output version information and exit."))
+  ("secure-auth", po::value<bool>(&opt_secure_auth)->default_value(false)->zero_tokens(),
+  N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
+  ("show-warnings", po::value<bool>(&show_warnings)->default_value(false)->zero_tokens(),
+  N_("Show warnings after every statement."))
+  ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(0),
+  N_("Number of lines before each import progress report."))
+  ("ping", po::value<bool>(&opt_ping)->default_value(false)->zero_tokens(),
+  N_("Ping the server to check if it's alive."))
+  ;
+
+
+  po::options_description drizzle_options("Options specific to the drizzle client");
+  drizzle_options.add_options()
+  ("auto-rehash", po::value<bool>(&opt_rehash)->default_value(true)->zero_tokens(),
+  N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."))
+  ("no-auto-rehash,A",N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."))
+  ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
+  N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
+  ("database,D", po::value<string>(&current_db)->default_value("test"),
+  N_("Database to use."))
+  ("default-character-set",po::value<string>(),
+  N_("(not used)"))
+  ("delimiter", po::value<string>(&delimiter_str)->default_value(";"),
+  N_("Delimiter to be used."))
+  ("execute,e", po::value<string>(),
+  N_("Execute command and quit. (Disables --force and history file)"))
+  ("local-infile", po::value<bool>(&opt_local_infile)->default_value(false)->zero_tokens(),
+  N_("Enable/disable LOAD DATA LOCAL INFILE."))
+  ("unbuffered,n", po::value<bool>(&unbuffered)->default_value(false)->zero_tokens(),
+  N_("Flush buffer after each query."))
   ("sigint-ignore", po::value<bool>(&opt_sigint_ignore)->default_value(false)->zero_tokens(),
   N_("Ignore SIGINT (CTRL-C)"))
   ("one-database,o", po::value<bool>(&one_database)->default_value(false)->zero_tokens(),
@@ -1439,10 +1461,6 @@ try
   N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."))
   ("disable-pager", po::value<bool>(&opt_nopager)->default_value(false)->zero_tokens(),
   N_("Disable pager and print to stdout. See interactive help (\\h) also."))
-  ("password,P", po::value<string>(&current_password)->default_value(""),
-  N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
-  ("port,p", po::value<uint32_t>()->default_value(0),
-  N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
   ("prompt", po::value<string>(&current_prompt)->default_value(""),  
   N_("Set the drizzle prompt to this value."))
   ("quick,q", po::value<bool>(&quick)->default_value(false)->zero_tokens(),
@@ -1454,21 +1472,10 @@ try
   ("shutdown", po::value<bool>(&opt_shutdown)->default_value(false)->zero_tokens(),
   N_("Shutdown the server"))
   ("silent,s", N_("Be more silent. Print results with a tab as separator, each row on new line."))
-  ("table,t", po::value<bool>(&output_tables)->default_value(false)->zero_tokens(),
-  N_("Output in table format.")) 
   ("tee", po::value<string>(),
   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."))
   ("disable-tee", po::value<bool>()->default_value(false)->zero_tokens(), 
   N_("Disable outfile. See interactive help (\\h) also."))
-  ("user,u", po::value<string>(&current_user)->default_value(""),
-  N_("User for login if not current user."))
-  ("safe-updates,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
-  N_("Only allow UPDATE and DELETE that uses keys."))
-  ("i-am-a-dummy,U", po::value<bool>(&safe_updates)->default_value(0)->zero_tokens(),
-  N_("Synonym for option --safe-updates, -U."))
-  ("verbose,v", po::value<string>(&opt_verbose)->default_value(""),
-  N_("-v vvv implies that verbose= 3, Used to specify verbose"))
-  ("version,V", N_("Output version information and exit."))
   ("wait,w", N_("Wait and retry if connection is down."))
   ("connect_timeout", po::value<uint32_t>(&opt_connect_timeout)->default_value(0)->notifier(&check_timeout_value),
   N_("Number of seconds before connection timeout."))
@@ -1478,29 +1485,56 @@ try
   N_("Automatic limit for SELECT when using --safe-updates"))
   ("max_join_size", po::value<uint32_t>(&max_join_size)->default_value(1000000L),
   N_("Automatic limit for rows in a join when using --safe-updates"))
-  ("secure-auth", po::value<bool>(&opt_secure_auth)->default_value(false)->zero_tokens(),
-  N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"))
-  ("show-warnings", po::value<bool>(&show_warnings)->default_value(false)->zero_tokens(),
-  N_("Show warnings after every statement."))
-  ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(0),
-  N_("Number of lines before each import progress report."))
-  ("ping", po::value<bool>(&opt_ping)->default_value(false)->zero_tokens(),
-  N_("Ping the server to check if it's alive."))
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-  N_("Use MySQL Protocol."))
   ;
 
+  po::options_description client_options("Options specific to the client");
+  client_options.add_options()
+  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
+  N_("Use MySQL Protocol."))
+  ("host,h", po::value<string>(&current_host)->default_value("localhost"),
+  N_("Connect to host"))
+  ("password,P", po::value<string>(&current_password)->default_value(""),
+  N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
+  ("port,p", po::value<uint32_t>()->default_value(0),
+  N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
+  ("user,u", po::value<string>(&current_user)->default_value(""),
+  N_("User for login if not current user."))
+  ("protocol",po::value<string>(),
+  N_("The protocol of connection (tcp,socket,pipe,memory)."))
+  ;
+
+  po::options_description long_options("Allowed Options");
+  long_options.add(commandline_options).add(drizzle_options).add(client_options);
+
+  std::string system_config_dir_drizzle(SYSCONFDIR); 
+  system_config_dir_drizzle.append("/drizzle/drizzle.cnf");
+
+  std::string system_config_dir_client(SYSCONFDIR); 
+  system_config_dir_client.append("/drizzle/client.cnf");
 
   MY_INIT(argv[0]);
+
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
-  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
-  defaults_argv=argv;
- 
+
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(long_options).extra_parser(reg_password).run(), vm);
+
+  ifstream user_drizzle_ifs("~/.drizzle/drizzle.cnf");
+  po::store(parse_config_file(user_drizzle_ifs, drizzle_options), vm);
+ 
+  ifstream system_drizzle_ifs(system_config_dir_drizzle.c_str());
+  store(parse_config_file(system_drizzle_ifs, drizzle_options), vm);
+
+  ifstream user_client_ifs("~/.drizzle/client.cnf");
+  po::store(parse_config_file(user_client_ifs, client_options), vm);
+ 
+  ifstream system_client_ifs(system_config_dir_client.c_str());
+  store(parse_config_file(system_client_ifs, client_options), vm);
+
   po::notify(vm);
+
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
