@@ -767,7 +767,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   fields= table.field_size();
 
-  field= (Field**) alloc_root(((fields+1) * sizeof(Field*)));
+  field.resize(fields + 1);
   field[fields]= NULL;
 
   uint32_t local_null_fields= 0;
@@ -1436,7 +1436,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     /* Store offsets to blob fields to find them fast */
     blob_field.resize(blob_fields);
     save= &blob_field[0];
-    for (k= 0, ptr= field ; *ptr ; ptr++, k++)
+    for (k= 0, ptr= getFields() ; *ptr ; ptr++, k++)
     {
       if ((*ptr)->flags & BLOB_FLAG)
         (*save++)= k;
@@ -1649,7 +1649,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[(uint32_t) (found_next_number_field - field)];
+      outparam.field[(uint32_t) (found_next_number_field - getFields())];
   if (timestamp_field)
     outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
 
