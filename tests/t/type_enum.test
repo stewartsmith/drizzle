@@ -45,6 +45,13 @@ show columns from t1;
 show create table t1;
 drop table t1;
 
+# and now with what it's meant to be doing (from looking at mysql result)
+create table t1 (a enum(0xC3A4, '1', '2') not null default 0xC3A4);
+show columns from t1;
+show create table t1;
+drop table t1;
+
+
 # Test currently turned off because of this bug:
 # Bug 308841 queries with German umlauts in insert statem
 #

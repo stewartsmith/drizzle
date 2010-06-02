@@ -1657,6 +1657,16 @@ t1	CREATE TABLE `t1` (
   `a` enum('ä','1','2') NOT NULL DEFAULT 'ä'
 ) ENGINE=InnoDB
 drop table t1;
+create table t1 (a enum(0xC3A4, '1', '2') not null default 0xC3A4);
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	ENUM	FALSE	Ã¤	FALSE	
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` enum('Ã¤','1','2') NOT NULL DEFAULT 'Ã¤'
+) ENGINE=InnoDB
+drop table t1;
 create table t1 (a enum ('Y','N') COLLATE utf8_bin);
 insert into t1 values ('Y');
 alter table t1 add c enum ('Y','N') COLLATE utf8_bin;
