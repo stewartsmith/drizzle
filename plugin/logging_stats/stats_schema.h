@@ -211,4 +211,39 @@ private:
   void init(); 
 };
 
+class GlobalStatusTool : public drizzled::plugin::TableFunction
+{
+public:
+
+  GlobalStatusTool(LoggingStats *logging_stats);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats,
+              std::vector<drizzled::drizzle_show_var *> *all_status_vars);
+
+    void fill(const std::string &name, char *value, drizzled::SHOW_TYPE show_type);
+
+    bool populate();
+  private:
+    LoggingStats *logging_stats;     
+    StatusVars summed_status_vars;
+    std::vector<drizzled::drizzle_show_var *>::iterator all_status_vars_it;
+    std::vector<drizzled::drizzle_show_var *>::iterator all_status_vars_end;
+  };    
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, outer_logging_stats, &all_status_vars);
+  } 
+    
+private:
+  LoggingStats *outer_logging_stats;
+
+  std::vector<drizzled::drizzle_show_var *> all_status_vars;
+    
+  void init(); 
+};  
+
 #endif /* PLUGIN_LOGGING_STATS_STATS_SCHEMA_H */

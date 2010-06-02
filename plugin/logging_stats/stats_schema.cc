@@ -404,8 +404,6 @@ class show_var_cmp_functor
   }
 };
 
-
-
 SessionStatusTool::SessionStatusTool(LoggingStats *logging_stats) :
   plugin::TableFunction("DATA_DICTIONARY", "SESSION_STATUS_NEW")
 {
@@ -526,6 +524,194 @@ void SessionStatusTool::Generator::fill(const string &name, char *value, SHOW_TY
     should still work in this case
   */
   switch (show_type) 
+  {
+  case SHOW_DOUBLE_STATUS:
+    value= ((char *) status_var + (ulong) value);
+    /* fall through */
+  case SHOW_DOUBLE:
+    oss.precision(6);
+    oss << *(double *) value;
+    return_value= oss.str();
+    break;
+  case SHOW_LONG_STATUS:
+    value= ((char *) status_var + (ulong) value);
+    /* fall through */
+  case SHOW_LONG:
+    oss << *(long*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_LONGLONG_STATUS:
+    value= ((char *) status_var + (uint64_t) value);
+    /* fall through */
+  case SHOW_LONGLONG:
+    oss << *(int64_t*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_SIZE:
+    oss << *(size_t*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_HA_ROWS:
+    oss << (int64_t) *(ha_rows*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_BOOL:
+  case SHOW_MY_BOOL:
+    return_value= *(bool*) value ? "ON" : "OFF";
+    break;
+  case SHOW_INT:
+  case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
+    oss << (long) *(uint32_t*) value;
+    return_value= oss.str();
+    break;
+  case SHOW_CHAR:
+    {
+      if (value)
+        return_value= value;
+      break;
+    }
+  case SHOW_CHAR_PTR:
+    {
+      if (*(char**) value)
+        return_value= *(char**) value;
+
+      break;
+    }
+  case SHOW_UNDEF:
+    break;                                        // Return empty string
+  case SHOW_SYS:                                  // Cannot happen
+  default:
+    assert(0);
+    break;
+  }
+
+  push(name);
+  if (return_value.length())
+  {
+    push(return_value);
+  }
+  else
+  {
+    push(" ");
+  }
+}
+
+
+
+
+GlobalStatusTool::GlobalStatusTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "GLOBAL_STATUS_NEW")
+{
+  outer_logging_stats= logging_stats;
+
+  add_field("VARIABLE_NAME");
+  add_field("VARIABLE_VALUE", 1024);
+
+  init();
+}
+
+void GlobalStatusTool::init()
+{
+  vector<drizzle_show_var* >::iterator all_status_vars_iterator= all_status_vars.begin();
+
+  drizzle_show_var *var= &StatusVars::status_vars_defs[0];
+
+  uint32_t count= 1;
+  while (var != NULL)
+  {
+    if (var->name == NULL)
+    {
+      break;
+    }
+
+    all_status_vars_iterator= all_status_vars.insert(all_status_vars_iterator,
+                                                     var);
+    var= &StatusVars::status_vars_defs[count];
+    ++count;
+  }
+  sort(all_status_vars.begin(), all_status_vars.end(), show_var_cmp_functor());
+}
+
+GlobalStatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
+                                        vector<drizzle_show_var *> *all_status_vars) :
+  plugin::TableFunction::Generator(arg)
+{
+  all_status_vars_it= all_status_vars->begin();
+  all_status_vars_end= all_status_vars->end();
+  logging_stats= in_logging_stats;
+
+  CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
+
+  cumulativeStats->sumCurrentScoreboardStatusVars(logging_stats->getCurrentScoreboard(), summed_status_vars);
+
+  summed_status_vars.merge(logging_stats->getCumulativeStats()->getGlobalStatusVars());
+
+}
+
+bool GlobalStatusTool::Generator::populate()
+{
+
+  while (all_status_vars_it != all_status_vars_end)
+  {
+    drizzle_show_var *variables= *all_status_vars_it;
+
+    if ((variables == NULL) || (variables->name == NULL))
+    {
+      return false;
+    }
+
+    drizzle_show_var *var;
+    MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
+    char * const buff= (char *) &buff_data;
+
+    /*
+      if var->type is SHOW_FUNC, call the function.
+      Repeat as necessary, if new var is again SHOW_FUNC
+    */
+    {
+      drizzle_show_var tmp;
+
+      for (var= variables; var->type == SHOW_FUNC; var= &tmp)
+        ((mysql_show_var_func)((st_show_var_func_container *)var->value)->func)(&tmp, buff);
+    }
+
+    if (isWild(variables->name))
+    {
+      variables++;
+      continue;
+    }
+
+    fill(variables->name, var->value, var->type);
+
+    ++all_status_vars_it;
+
+    return true;
+  }
+
+  return false;
+}
+
+void GlobalStatusTool::Generator::fill(const string &name, char *value, SHOW_TYPE show_type)
+{
+  struct system_status_var *status_var;
+  std::ostringstream oss;
+
+  std::string return_value;
+
+  status_var= summed_status_vars.getStatusVarCounters();
+
+  if (show_type == SHOW_SYS)
+  {
+    show_type= ((sys_var*) value)->show_type();
+    value= (char*) ((sys_var*) value)->value_ptr(&(getSession()), OPT_GLOBAL,
+                                                 &null_lex_str);
+  }
+
+  /*
+    note that value may be == buff. All SHOW_xxx code below
+    should still work in this case
+  */
+  switch (show_type)
   {
   case SHOW_DOUBLE_STATUS:
     value= ((char *) status_var + (ulong) value);
