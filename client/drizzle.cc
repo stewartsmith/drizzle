@@ -2178,18 +2178,21 @@ static bool add_line(string *buffer, char *line, char *in_string,
     }
 
     // Accept multi-byte characters as-is
-    int length;
-    if ((length= U8_LENGTH(*pos)))
+    if (not U8_IS_SINGLE(*pos))
     {
-      if (!*ml_comment || preserve_comments)
+      int length;
+      if ((length= U8_LENGTH(*pos)))
       {
-        while (length--)
-          *out++ = *pos++;
-        pos--;
+        if (!*ml_comment || preserve_comments)
+        {
+          while (length--)
+            *out++ = *pos++;
+          pos--;
+        }
+        else
+          pos+= length - 1;
+        continue;
       }
-      else
-        pos+= length - 1;
-      continue;
     }
     if (!*ml_comment && inchar == '\\' &&
         !(*in_string && (drizzle_con_status(&con) & DRIZZLE_CON_STATUS_NO_BACKSLASH_ESCAPES)))
