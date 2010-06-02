@@ -1715,15 +1715,12 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   local_error= 2;
   if (db_stat)
   {
+    assert(!(db_stat & HA_WAIT_IF_LOCKED));
     int ha_err;
     if ((ha_err= (outparam.cursor->
                   ha_open(&outparam, getNormalizedPath(),
                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
-                          (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE :
-                           (db_stat & HA_WAIT_IF_LOCKED) ?  HA_OPEN_WAIT_IF_LOCKED :
-                           (db_stat & (HA_ABORT_IF_LOCKED | HA_GET_INFO)) ?
-                           HA_OPEN_ABORT_IF_LOCKED :
-                           HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
+                          (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE : HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {
       switch (ha_err)
       {

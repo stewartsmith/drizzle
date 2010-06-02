@@ -604,6 +604,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     }
   }
 
+  assert(test_if_locked);
   if (test_if_locked & (HA_OPEN_IGNORE_IF_LOCKED | HA_OPEN_TMP_TABLE))
     mi_extra(file, HA_EXTRA_NO_WAIT_LOCK, 0);
 
