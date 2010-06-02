@@ -1520,17 +1520,17 @@ try
 
   if (!vm["no-defaults"].as<bool>())
   {
-  ifstream user_drizzle_ifs("~/.drizzle/drizzleslap.cnf");
-  po::store(parse_config_file(user_drizzle_ifs, drizzle_options), vm);
+    ifstream user_drizzle_ifs("~/.drizzle/drizzleslap.cnf");
+    po::store(parse_config_file(user_drizzle_ifs, drizzle_options), vm);
  
-  ifstream system_drizzle_ifs(system_config_dir_drizzle.c_str());
-  store(parse_config_file(system_drizzle_ifs, drizzle_options), vm);
+    ifstream system_drizzle_ifs(system_config_dir_drizzle.c_str());
+    store(parse_config_file(system_drizzle_ifs, drizzle_options), vm);
 
-  ifstream user_client_ifs("~/.drizzle/client.cnf");
-  po::store(parse_config_file(user_client_ifs, client_options), vm);
+    ifstream user_client_ifs("~/.drizzle/client.cnf");
+    po::store(parse_config_file(user_client_ifs, client_options), vm);
  
-  ifstream system_client_ifs(system_config_dir_client.c_str());
-  po::store(parse_config_file(system_client_ifs, client_options), vm);
+    ifstream system_client_ifs(system_config_dir_client.c_str());
+    po::store(parse_config_file(system_client_ifs, client_options), vm);
   }
 
   po::notify(vm);
