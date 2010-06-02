@@ -1,0 +1,14 @@
+# vim:ft=automake
+# included from Top Level Makefile.am
+# All paths should be given relative to the root
+
+if HAVE_LIBGTEST
+check_PROGRAMS += 	unittests/calendar_test \
+			unittests/atomics_test
+
+unittests_calendar_test_LDADD = drizzled/libtemporal.la ${LTLIBGTEST}
+unittests_calendar_test_SOURCES = unittests/calendar_test.cc
+
+unittests_atomics_test_SOURCES = unittests/atomics_test.cc
+unittests_atomics_test_LDADD = ${LTLIBGTEST}
+endif

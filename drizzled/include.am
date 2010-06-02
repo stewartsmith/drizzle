@@ -449,6 +449,7 @@ drizzled_drizzled_LDADD= \
 				drizzled/util/libutil.la \
 				drizzled/internal/libinternal.la \
 				drizzled/message/libdrizzledmessage.la \
+				drizzled/libtemporal.la \
 				gnulib/libgnu.la \
 				$(LIBZ) \
 				$(LIBINTL) \
@@ -471,7 +472,6 @@ drizzled_drizzled_SOURCES= \
                            drizzled/main.cc \
 				 drizzled/alter_info.cc \
 				 drizzled/cached_item.cc \
-				 drizzled/calendar.cc \
 				 drizzled/check_stack_overrun.cc \
 				 drizzled/comp_creator.cc \
 				 drizzled/create_field.cc \
@@ -766,9 +766,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/table_identifier.cc \
 				 drizzled/table_list.cc \
 				 drizzled/table_share.cc \
-				 drizzled/temporal.cc \
-				 drizzled/temporal_format.cc \
-				 drizzled/temporal_interval.cc \
 				 drizzled/thr_lock.cc \
 				 drizzled/time_functions.cc \
 				 drizzled/transaction_services.cc \
@@ -790,6 +787,7 @@ noinst_LTLIBRARIES+= \
 		     drizzled/libgetopt.la \
 		     drizzled/libmemory.la \
 		     drizzled/libserialutil.la \
+		     drizzled/libtemporal.la \
 		     drizzled/libtypelib.la
 
 drizzled_libcharset_la_SOURCES= \
@@ -806,6 +804,12 @@ drizzled_libcharset_la_SOURCES= \
 drizzled_libdynamic_array_la_SOURCES = drizzled/dynamic_array.cc
 drizzled_liberror_la_SOURCES = drizzled/error.cc
 drizzled_libgetopt_la_SOURCES = drizzled/option.cc
+drizzled_libtemporal_la_SOURCES= \
+				 drizzled/calendar.cc \
+				 drizzled/temporal.cc \
+				 drizzled/temporal_format.cc \
+				 drizzled/temporal_interval.cc
+drizzled_libtemporal_la_LIBADD= gnulib/libgnu.la
 drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
 drizzled_libserialutil_la_SOURCES = drizzled/db.cc drizzled/table_proto_write.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
