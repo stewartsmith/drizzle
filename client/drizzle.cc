@@ -50,7 +50,6 @@
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
 #include "drizzled/charset.h"
-#include <drizzled/gettext.h>
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -263,7 +262,6 @@ static map<string, string>::iterator completion_end;
 static map<string, string> completion_map;
 static string completion_string;
 
-static char **defaults_argv;
 
 enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
 typedef enum enum_info_type INFO_TYPE;
@@ -1167,7 +1165,6 @@ static Commands commands[] = {
   Commands((char *)NULL,       0, 0, 0, "")
 };
 
-static const char *load_default_groups[]= { "drizzle","client",0 };
 
 int history_length;
 static int not_in_history(const char *line);
@@ -1433,7 +1430,6 @@ try
   N_("Ping the server to check if it's alive."))
   ;
 
-
   po::options_description drizzle_options("Options specific to the drizzle client");
   drizzle_options.add_options()
   ("auto-rehash", po::value<bool>(&opt_rehash)->default_value(true)->zero_tokens(),
@@ -1512,16 +1508,15 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
 
-  MY_INIT(argv[0]);
-
   default_prompt= strdup(getenv("DRIZZLE_PS1") ?
                          getenv("DRIZZLE_PS1") :
                          "drizzle> ");
-
+ 
   po::variables_map vm;
+
   po::store(po::command_line_parser(argc, argv).options(long_options).extra_parser(reg_password).run(), vm);
 
-  ifstream user_drizzle_ifs("~/.drizzle/drizzle.cnf");
+  ifstream user_drizzle_ifs("~/.drizzle/drizzleslap.cnf");
   po::store(parse_config_file(user_drizzle_ifs, drizzle_options), vm);
  
   ifstream system_drizzle_ifs(system_config_dir_drizzle.c_str());
@@ -1531,7 +1526,6 @@ try
   po::store(parse_config_file(user_client_ifs, client_options), vm);
  
   ifstream system_client_ifs(system_config_dir_client.c_str());
-  store(parse_config_file(system_client_ifs, client_options), vm);
 
   po::notify(vm);
 
@@ -1585,9 +1579,6 @@ try
     else
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
-
-  internal::load_defaults("drizzle",load_default_groups,&argc,&argv);
-  defaults_argv=argv;
 
   if (vm.count("default-character-set"))
     default_charset_used= 1;
@@ -1755,8 +1746,6 @@ try
 
   if (get_options())
   {
-    internal::free_defaults(defaults_argv);
-    internal::my_end();
     exit(1);
   }
 
@@ -1778,8 +1767,6 @@ try
   if (execute_commands(&command_error) != false)
   {
     /* we've executed a command so exit before we go into readline mode */
-    internal::free_defaults(defaults_argv);
-    internal::my_end();
     exit(command_error);
   }
 
@@ -1788,8 +1775,6 @@ try
     status.setLineBuff(opt_max_input_line, stdin);
     if (status.getLineBuff() == NULL)
     {
-      internal::free_defaults(defaults_argv);
-      internal::my_end();
       exit(1);
     }
   }
@@ -1909,8 +1894,6 @@ void drizzle_end(int sig)
   free(part_username);
   free(default_prompt);
   current_prompt.erase();
-  internal::free_defaults(defaults_argv);
-  internal::my_end();
   exit(status.getExitStatus());
 }
 
