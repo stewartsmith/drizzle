@@ -2493,7 +2493,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   uint32_t cached_field_index= *cached_field_index_ptr;
 
   /* We assume here that table->field < NO_CACHED_FIELD_INDEX = UINT_MAX */
-  if (cached_field_index < table->getShare()->fields &&
+  if (cached_field_index < table->getShare()->sizeFields() &&
       !my_strcasecmp(system_charset_info,
                      table->field[cached_field_index]->field_name, name))
     field_ptr= table->field + cached_field_index;
@@ -4162,7 +4162,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       For NATURAL joins, used_tables is updated in the IF above.
     */
     if (table)
-      table->used_fields= table->getShare()->fields;
+      table->used_fields= table->getShare()->sizeFields();
   }
   if (found)
     return false;

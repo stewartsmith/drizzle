@@ -3221,7 +3221,7 @@ Next_select_func setup_end_select_func(Join *join)
     if (table->group && tmp_tbl->sum_func_count &&
         !tmp_tbl->precomputed_group_by)
     {
-      if (table->getShare()->keys)
+      if (table->getShare()->sizeKeys())
       {
         end_select= end_update;
       }
@@ -3288,7 +3288,7 @@ int do_select(Join *join, List<Item> *fields, Table *table)
     table->cursor->extra(HA_EXTRA_WRITE_CACHE);
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
-        table->getShare()->keys && !table->cursor->inited)
+        table->getShare()->sizeKeys() && !table->cursor->inited)
       table->cursor->startIndexScan(0, 0);
   }
   /* Set up select_end */
@@ -4614,7 +4614,7 @@ static uint32_t test_if_subkey(order_st *order,
   KeyPartInfo *ref_key_part= table->key_info[ref].key_part;
   KeyPartInfo *ref_key_part_end= ref_key_part + ref_key_parts;
 
-  for (nr= 0 ; nr < table->getShare()->keys ; nr++)
+  for (nr= 0 ; nr < table->getShare()->sizeKeys() ; nr++)
   {
     if (usable_keys->test(nr) &&
 	table->key_info[nr].key_length < min_length &&
@@ -4663,7 +4663,7 @@ static uint32_t test_if_subkey(order_st *order,
 */
 bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *), void *data)
 {
-  for (uint32_t keynr= 0; keynr < table->getShare()->keys; keynr++)
+  for (uint32_t keynr= 0; keynr < table->getShare()->sizeKeys(); keynr++)
   {
     if (keynr == table->getShare()->primary_key ||
          (table->key_info[keynr].flags & HA_NOSAME))
@@ -4964,7 +4964,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       fanout*= cur_pos.getFanout(); // fanout is always >= 1
     }
 
-    for (nr=0; nr < table->getShare()->keys ; nr++)
+    for (nr=0; nr < table->getShare()->sizeKeys() ; nr++)
     {
       int direction;
       if (keys.test(nr) &&

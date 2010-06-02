@@ -336,7 +336,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
 void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 {
-  uint32_t field_count= s->fields;
+  uint32_t field_count= s->sizeFields();
 
   this->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
   this->tmp_set.init((my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
@@ -1578,7 +1578,7 @@ bool Table::open_tmp_table()
 {
   int error;
   if ((error=cursor->ha_open(this, s->getTableName(),O_RDWR,
-                                  HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
+                             HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
     print_error(error, MYF(0));
     db_stat= 0;
@@ -1628,7 +1628,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
   MI_UNIQUEDEF uniquedef;
   TableShare *share= s;
 
-  if (share->keys)
+  if (share->sizeKeys())
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
     HA_KEYSEG *seg= (HA_KEYSEG*) this->mem_root.alloc_root(sizeof(*seg) * keyinfo->key_parts);
@@ -1705,7 +1705,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
       OPTION_BIG_TABLES)
     create_info.data_file_length= ~(uint64_t) 0;
 
-  if ((error=mi_create(share->getTableName(), share->keys, &keydef,
+  if ((error=mi_create(share->getTableName(), share->sizeKeys(), &keydef,
 		       (uint32_t) (*recinfo-start_recinfo),
 		       start_recinfo,
 		       share->uniques, &uniquedef,
@@ -1775,7 +1775,7 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
   uint32_t best= MAX_KEY;
   if (usable_keys->any())
   {
-    for (uint32_t nr= 0; nr < s->keys ; nr++)
+    for (uint32_t nr= 0; nr < s->sizeKeys() ; nr++)
     {
       if (usable_keys->test(nr))
       {

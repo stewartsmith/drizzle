@@ -73,7 +73,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  unique_map.init(unique_map_buf, table->getMutableShare()->fields);
+  unique_map.init(unique_map_buf, table->getMutableShare()->sizeFields());
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */

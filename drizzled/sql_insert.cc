@@ -68,7 +68,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
 
   if (fields.elements == 0 && values.elements != 0)
   {
-    if (values.elements != table->getShare()->fields)
+    if (values.elements != table->getShare()->sizeFields())
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1L);
       return -1;
@@ -673,7 +673,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
 
 static int last_uniq_key(Table *table,uint32_t keynr)
 {
-  while (++keynr < table->getShare()->keys)
+  while (++keynr < table->getShare()->sizeKeys())
     if (table->key_info[keynr].flags & HA_NOSAME)
       return 0;
   return 1;
@@ -1639,14 +1639,14 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
     *m_plock= extra_lock;
   }
 
-  if (table->getShare()->fields < values.elements)
+  if (table->getShare()->sizeFields() < values.elements)
   {
     my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1);
     return(-1);
   }
 
  /* First field to copy */
-  field= table->field+table->getShare()->fields - values.elements;
+  field= table->field+table->getShare()->sizeFields() - values.elements;
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)

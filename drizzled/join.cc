@@ -5385,9 +5385,9 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
     join->unit->select_limit_cnt= 1;		// Only send first row
     return(0);
   }
-  Field **first_field=entry->field+entry->getShare()->fields - field_count;
+  Field **first_field=entry->field+entry->getShare()->sizeFields() - field_count;
   offset= (field_count ?
-           entry->field[entry->getShare()->fields - field_count]->
+           entry->field[entry->getShare()->sizeFields() - field_count]->
            offset(entry->record[0]) : 0);
   reclength= entry->getShare()->getRecordLength() - offset;
 
@@ -5507,7 +5507,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     table->reginfo.join_tab=s;
     table->reginfo.not_exists_optimize=0;
     memset(table->const_key_parts, 0,
-           sizeof(key_part_map)*table->getShare()->keys);
+           sizeof(key_part_map)*table->getShare()->sizeKeys());
     all_table_map|= table->map;
     s->join=join;
     s->info=0;					// For describe

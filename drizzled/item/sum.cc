@@ -2494,7 +2494,7 @@ int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Item_sum_count_distinct* item = (Item_sum_count_distinct*)arg;
   Field **field    = item->table->field;
-  Field **field_end= field + item->table->getShare()->fields;
+  Field **field_end= field + item->table->getShare()->sizeFields();
   uint32_t *lengths=item->field_lengths;
   for (; field < field_end; ++field)
   {
@@ -2617,7 +2617,7 @@ bool Item_sum_count_distinct::setup(Session *session)
     qsort_cmp2 compare_key;
     void* cmp_arg;
     Field **field= table->field;
-    Field **field_end= field + table->getShare()->fields;
+    Field **field_end= field + table->getShare()->sizeFields();
     bool all_binary= true;
 
     for (tree_key_length= 0; field < field_end; ++field)
@@ -2638,7 +2638,7 @@ bool Item_sum_count_distinct::setup(Session *session)
     }
     else
     {
-      if (table->getShare()->fields == 1)
+      if (table->getShare()->sizeFields() == 1)
       {
         /*
           If we have only one field, which is the most common use of
@@ -2655,7 +2655,7 @@ bool Item_sum_count_distinct::setup(Session *session)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->alloc(table->getShare()->fields * sizeof(uint32_t));
+        field_lengths= (uint32_t*) session->alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
         for (tree_key_length= 0, length= field_lengths, field= table->field;
              field < field_end; ++field, ++length)
         {

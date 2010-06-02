@@ -582,8 +582,20 @@ public:
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
+
+  uint32_t sizeFields() const
+  {
+    return fields;
+  }
+
   uint32_t rec_buff_length;                 /* Size of table->record[] buffer */
-  uint32_t keys, key_parts;
+  uint32_t keys;
+
+  uint32_t sizeKeys() const
+  {
+    return keys;
+  }
+  uint32_t key_parts;
   uint32_t max_key_length, max_unique_length, total_key_length;
   uint32_t uniques;                         /* Number of UNIQUE index */
   uint32_t null_fields;			/* number of null fields */

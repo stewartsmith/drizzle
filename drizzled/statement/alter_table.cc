@@ -434,7 +434,7 @@ static bool mysql_prepare_alter_table(Session *session,
     Collect all keys which isn't in drop list. Add only those
     for which some fields exists.
   */
-  for (uint32_t i= 0; i < table->getShare()->keys; i++, key_info++)
+  for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
     char *key_name= key_info->name;
     AlterDrop *drop;
@@ -1401,8 +1401,7 @@ copy_data_between_tables(Table *from, Table *to,
    */
   to->s->getEngine()->startStatement(session);
 
-  if (!(copy= new CopyField[to->s->fields]))
-  if (!(copy= new CopyField[to->getShare()->fields]))
+  if (!(copy= new CopyField[to->getShare()->sizeFields()]))
     return -1;
 
   if (to->cursor->ha_external_lock(session, F_WRLCK))

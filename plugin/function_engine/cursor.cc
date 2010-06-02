@@ -87,7 +87,7 @@ int FunctionCursor::rnd_next(unsigned char *)
     (*field)->setWriteSet();
   }
 
-  more_rows= generator->sub_populate(table->getShare()->fields);
+  more_rows= generator->sub_populate(table->getShare()->sizeFields());
 
   if (more_rows)
   {
