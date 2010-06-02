@@ -42,13 +42,13 @@
 #include <algorithm>
 #include <limits.h>
 #include <cassert>
-#include "drizzled/charset_info.h"
 #include <stdarg.h>
 #include <math.h>
 #include "client/linebuffer.h"
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
+#include "drizzled/internal/utf8.h"
 #include "drizzled/charset.h"
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
@@ -317,8 +317,6 @@ static uint32_t prompt_counter;
 static char *delimiter= NULL;
 static uint32_t delimiter_length= 1;
 unsigned short terminal_width= 80;
-
-static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
 
 int drizzleclient_real_query_for_lazy(const char *buf, int length,
                                       drizzle_result_st *result,
@@ -1658,7 +1656,6 @@ try
       status.setLineBuff(opt_max_input_line,NULL);
     if (status.getLineBuff() == NULL)
     {
-      internal::my_end();
       exit(1);
     }
     status.getLineBuff()->addString(vm["execute"].as<string>().c_str());
@@ -1725,26 +1722,26 @@ try
   }
   if(vm.count("version"))
   {
-    printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-    internal::my_progname, VER.c_str(), drizzle_version(),
-    HOST_VENDOR, HOST_OS, HOST_CPU,
-    rl_library_version);
+    printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
+           VER.c_str(), drizzle_version(),
+           HOST_VENDOR, HOST_OS, HOST_CPU,
+           rl_library_version);
 
     exit(0);
   }
   
   if(vm.count("help"))
   {
-    printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-    internal::my_progname, VER.c_str(), drizzle_version(),
-    HOST_VENDOR, HOST_OS, HOST_CPU,
-    rl_library_version);
+    printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
+           VER.c_str(), drizzle_version(),
+           HOST_VENDOR, HOST_OS, HOST_CPU,
+           rl_library_version);
     printf(_("Copyright (C) 2008 Sun Microsystems\n"
            "This software comes with ABSOLUTELY NO WARRANTY. "
            "This is free software,\n"
            "and you are welcome to modify and redistribute it "
            "under the GPL license\n"));
-    printf(_("Usage: %s [OPTIONS] [database]\n"), internal::my_progname);
+    printf(_("Usage: drizzle [OPTIONS] [database]\n"));
     cout<<long_options;
     exit(0);
   }
@@ -1879,7 +1876,7 @@ void drizzle_end(int sig)
     if (verbose)
       tee_fprintf(stdout, _("Writing history-file %s\n"),histfile);
     if (!write_history(histfile_tmp))
-      internal::my_rename(histfile_tmp, histfile, MYF(MY_WME));
+      rename(histfile_tmp, histfile);
   }
   delete status.getLineBuff();
   status.setLineBuff(0);
@@ -2102,7 +2099,7 @@ static Commands *find_command(const char *name,char cmd_char)
   }
   else
   {
-    while (my_isspace(charset_info,*name))
+    while (isspace(*name))
       name++;
     /*
       If there is an \\g in the row or if the row has a delimiter but
@@ -2111,15 +2108,12 @@ static Commands *find_command(const char *name,char cmd_char)
     */
     if (strstr(name, "\\g") || (strstr(name, delimiter) &&
                                 !(strlen(name) >= 9 &&
-                                  !my_strnncoll(charset_info,
-                                                (unsigned char*) name, 9,
-                                                (const unsigned char*) "delimiter",
-                                                9))))
+                                  !strcmp(name, "delimiter"))))
       return(NULL);
     if ((end=strcont(name," \t")))
     {
       len=(uint32_t) (end - name);
-      while (my_isspace(charset_info,*end))
+      while (isspace(*end))
         end++;
       if (!*end)
         end=0;          // no arguments to function
@@ -2131,7 +2125,8 @@ static Commands *find_command(const char *name,char cmd_char)
   for (uint32_t i= 0; commands[i].getName(); i++)
   {
     if (commands[i].func &&
-        ((name && !my_strnncoll(charset_info,(const unsigned char*)name,len, (const unsigned char*)commands[i].getName(),len) && !commands[i].getName()[len] && (!end || (end && commands[i].getTakesParams()))) || (!name && commands[i].getCmdChar() == cmd_char)))
+        ((name && !strncmp(name, commands[i].getName(), len)
+          && !commands[i].getName()[len] && (!end || (end && commands[i].getTakesParams()))) || (!name && commands[i].getCmdChar() == cmd_char)))
     {
       return(&commands[i]);
     }
@@ -2161,15 +2156,14 @@ static bool add_line(string *buffer, char *line, char *in_string,
     if (!preserve_comments)
     {
       // Skip spaces at the beggining of a statement
-      if (my_isspace(charset_info,inchar) && (out == line) &&
+      if (isspace(inchar) && (out == line) &&
           (buffer->empty()))
         continue;
     }
 
     // Accept multi-byte characters as-is
     int length;
-    if (use_mb(charset_info) &&
-        (length= my_ismbchar(charset_info, pos, end_of_line)))
+    if ((length= U8_LENGTH(*pos)))
     {
       if (!*ml_comment || preserve_comments)
       {
@@ -2248,8 +2242,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     }
     else if (!*ml_comment && !*in_string &&
              (end_of_line - pos) >= 10 &&
-             !my_strnncoll(charset_info, (unsigned char*) pos, 10,
-                           (const unsigned char*) "delimiter ", 10))
+             !strncmp(pos, "delimiter ", 10))
     {
       // Flush previously accepted characters
       if (out != line)
@@ -2286,7 +2279,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
 
       if (preserve_comments)
       {
-        while (my_isspace(charset_info, *pos))
+        while (isspace(*pos))
           *out++= *pos++;
       }
       // Flush previously accepted characters
@@ -2299,7 +2292,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
       if (preserve_comments && ((*pos == '#') ||
                                 ((*pos == '-') &&
                                  (pos[1] == '-') &&
-                                 my_isspace(charset_info, pos[2]))))
+                                 isspace(pos[2]))))
       {
         // Add trailing single line comments to this statement
         buffer->append(pos);
@@ -2326,7 +2319,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
                  && (inchar == '#'
                      || (inchar == '-'
                          && pos[1] == '-'
-                         && my_isspace(charset_info,pos[2])))))
+                         && isspace(pos[2])))))
     {
       // Flush previously accepted characters
       if (out != line)
@@ -2392,7 +2385,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
         *in_string= (char) inchar;
       if (!*ml_comment || preserve_comments)
       {
-        if (need_space && !my_isspace(charset_info, (char)inchar))
+        if (need_space && !isspace((char)inchar))
           *out++= ' ';
         need_space= 0;
         *out++= (char) inchar;
@@ -3133,7 +3126,7 @@ print_field_types(drizzle_result_st *result)
                 "Database:   `%s`\n"
                 "Table:      `%s`\n"
                 "Org_table:  `%s`\n"
-                "Type:       %s\n"
+                "Type:       UTF-8\n"
                 "Collation:  %s (%u)\n"
                 "Length:     %lu\n"
                 "Max_length: %lu\n"
@@ -3144,7 +3137,6 @@ print_field_types(drizzle_result_st *result)
                 drizzle_column_db(field), drizzle_column_table(field),
                 drizzle_column_orig_table(field),
                 fieldtype2str(drizzle_column_type(field)),
-                get_charset_name(drizzle_column_charset(field)),
                 drizzle_column_charset(field), drizzle_column_size(field),
                 drizzle_column_max_size(field), drizzle_column_decimals(field),
                 fieldflags2str(drizzle_column_flags(field)));
@@ -3184,10 +3176,7 @@ print_table_data(drizzle_result_st *result)
       /* Check if the max_byte value is really the maximum in terms
          of visual length since multibyte characters can affect the
          length of the separator. */
-      length= charset_info->cset->numcells(charset_info,
-                                           drizzle_column_name(field),
-                                           drizzle_column_name(field) +
-                                           name_length);
+      length= U8_LENGTH(*(drizzle_column_name(field)));
 
       if (name_length == drizzle_column_max_size(field))
       {
@@ -3225,10 +3214,7 @@ print_table_data(drizzle_result_st *result)
     for (uint32_t off=0; (field = drizzle_column_next(result)) ; off++)
     {
       uint32_t name_length= (uint32_t) strlen(drizzle_column_name(field));
-      uint32_t numcells= charset_info->cset->numcells(charset_info,
-                                                  drizzle_column_name(field),
-                                                  drizzle_column_name(field) +
-                                                  name_length);
+      uint32_t numcells= U8_LENGTH(*drizzle_column_name(field));
       uint32_t display_length= drizzle_column_max_size(field) + name_length -
                                numcells;
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
@@ -3291,7 +3277,7 @@ print_table_data(drizzle_result_st *result)
         We need to find how much screen real-estate we will occupy to know how
         many extra padding-characters we should send with the printing function.
       */
-      visible_length= charset_info->cset->numcells(charset_info, buffer, buffer + data_length);
+      visible_length= U8_LENGTH(*buffer);
       extra_padding= data_length - visible_length;
 
       if (field_max_length > MAX_COLUMN_LENGTH)
@@ -3519,8 +3505,7 @@ safe_put_field(const char *pos,uint32_t length)
     else for (const char *end=pos+length ; pos != end ; pos++)
     {
       int l;
-      if (use_mb(charset_info) &&
-          (l = my_ismbchar(charset_info, pos, end)))
+      if ((l = U8_LENGTH(*pos)))
       {
         while (l--)
           tee_putc(*pos++, PAGER);
@@ -3599,7 +3584,7 @@ com_tee(string *, const char *line )
 
   if (status.getBatch())
     return 0;
-  while (my_isspace(charset_info,*line))
+  while (isspace(*line))
     line++;
   if (!(param = strchr(line, ' '))) // if outfile wasn't given, use the default
   {
@@ -3618,13 +3603,13 @@ com_tee(string *, const char *line )
   }
 
   /* eliminate the spaces before the parameters */
-  while (my_isspace(charset_info,*param))
+  while (isspace(*param))
     param++;
   strncpy(file_name, param, sizeof(file_name) - 1);
   end= file_name + strlen(file_name);
   /* remove end space from command line */
-  while (end > file_name && (my_isspace(charset_info,end[-1]) ||
-                             my_iscntrl(charset_info,end[-1])))
+  while (end > file_name && (isspace(end[-1]) ||
+                             iscntrl(end[-1])))
     end--;
   end[0]= 0;
   if (end == file_name)
@@ -3659,12 +3644,12 @@ com_pager(string *, const char *line)
   if (status.getBatch())
     return 0;
   /* Skip spaces in front of the pager command */
-  while (my_isspace(charset_info, *line))
+  while (isspace(*line))
     line++;
   /* Skip the pager command */
   param= strchr(line, ' ');
   /* Skip the spaces between the command and the argument */
-  while (param && my_isspace(charset_info, *param))
+  while (param && isspace(*param))
     param++;
   if (!param || !strlen(param)) // if pager was not given, use the default
   {
@@ -3682,8 +3667,8 @@ com_pager(string *, const char *line)
   {
     end= strncpy(pager_name, param, sizeof(pager_name)-1);
     end+= strlen(pager_name);
-    while (end > pager_name && (my_isspace(charset_info,end[-1]) ||
-                                my_iscntrl(charset_info,end[-1])))
+    while (end > pager_name && (isspace(end[-1]) ||
+                                iscntrl(end[-1])))
       end--;
     end[0]=0;
     strcpy(pager, pager_name);
@@ -3804,20 +3789,20 @@ static int com_source(string *, const char *line)
   FILE *sql_file;
 
   /* Skip space from file name */
-  while (my_isspace(charset_info,*line))
+  while (isspace(*line))
     line++;
   if (!(param = strchr(line, ' ')))    // Skip command name
     return put_info("Usage: \\. <filename> | source <filename>",
                     INFO_ERROR, 0,0);
-  while (my_isspace(charset_info,*param))
+  while (isspace(*param))
     param++;
   end= strncpy(source_name,param,sizeof(source_name)-1);
   end+= strlen(source_name);
-  while (end > source_name && (my_isspace(charset_info,end[-1]) ||
-                               my_iscntrl(charset_info,end[-1])))
+  while (end > source_name && (isspace(end[-1]) ||
+                               iscntrl(end[-1])))
     end--;
   end[0]=0;
-  internal::unpack_filename(source_name,source_name);
+
   /* open file name */
   if (!(sql_file = fopen(source_name, "r")))
   {
@@ -4013,17 +3998,17 @@ char *get_arg(char *line, bool get_next_arg)
   else
   {
     /* skip leading white spaces */
-    while (my_isspace(charset_info, *ptr))
+    while (isspace(*ptr))
       ptr++;
     if (*ptr == '\\') // short command was used
       ptr+= 2;
     else
-      while (*ptr &&!my_isspace(charset_info, *ptr)) // skip command
+      while (*ptr &&!isspace(*ptr)) // skip command
         ptr++;
   }
   if (!*ptr)
     return NULL;
-  while (my_isspace(charset_info, *ptr))
+  while (isspace(*ptr))
     ptr++;
   if (*ptr == '\'' || *ptr == '\"' || *ptr == '`')
   {
@@ -4118,8 +4103,8 @@ com_status(string *, const char *)
   drizzle_return_t ret;
 
   tee_puts("--------------", stdout);
-  printf(_("%s  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-  internal::my_progname, VER.c_str(), drizzle_version(),
+  printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
+  VER.c_str(), drizzle_version(),
   HOST_VENDOR, HOST_OS, HOST_CPU,
   rl_library_version);          /* Print version */
 
@@ -4330,7 +4315,7 @@ static void remove_cntrl(string *buffer)
 {
   const char *start=  buffer->c_str();
   const char *end= start + (buffer->length());
-  while (start < end && !my_isgraph(charset_info,end[-1]))
+  while (start < end && !isgraph(end[-1]))
     end--;
   uint32_t pos_to_truncate= (end-start);
   if (buffer->length() > pos_to_truncate)
