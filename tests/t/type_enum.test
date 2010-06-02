@@ -37,13 +37,13 @@ update t1 set a = replace(a,'x','y');
 select * from t1;
 drop table t1;
 
-##
-## Bug #2077
-##
-#create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
-#show columns from t1;
-#show create table t1;
-#drop table t1;
+#
+# Bug #2077
+#
+create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
+show columns from t1;
+show create table t1;
+drop table t1;
 
 # Test currently turned off because of this bug:
 # Bug 308841 queries with German umlauts in insert statem

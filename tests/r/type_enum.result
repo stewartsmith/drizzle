@@ -1645,6 +1645,18 @@ update t1 set a = replace(a,'x','y');
 select * from t1;
 a
 drop table t1;
+create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	ENUM	FALSE		FALSE	
+Warnings:
+Warning	1366	Incorrect string value: '\xE4' for column 'Default' at row 0
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` enum('ä','1','2') NOT NULL DEFAULT 'ä'
+) ENGINE=InnoDB
+drop table t1;
 create table t1 (a enum ('Y','N') COLLATE utf8_bin);
 insert into t1 values ('Y');
 alter table t1 add c enum ('Y','N') COLLATE utf8_bin;
