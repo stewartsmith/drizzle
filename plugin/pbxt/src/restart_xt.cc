@@ -36,7 +36,7 @@
 
 #ifdef DRIZZLED
 #include <drizzled/data_home.h>
-using drizzled::plugin::Registry;
+using drizzled::module::Registry;
 #endif
 
 #include "xactlog_xt.h"

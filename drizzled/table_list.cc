@@ -44,7 +44,7 @@ bool TableList::set_insert_values(memory::Root *mem_root)
   if (table)
   {
     if (!table->insert_values &&
-        !(table->insert_values= (unsigned char *)mem_root->alloc_root(table->s->rec_buff_length)))
+        !(table->insert_values= (unsigned char *)mem_root->alloc_root(table->getShare()->rec_buff_length)))
       return true;
   }
 
@@ -155,7 +155,7 @@ bool TableList::process_index_hints(Table *tbl)
 {
   /* initialize the result variables */
   tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by=
-    tbl->keys_in_use_for_order_by= tbl->s->keys_in_use;
+    tbl->keys_in_use_for_order_by= tbl->getShare()->keys_in_use;
 
   /* index hint list processing */
   if (index_hints)
@@ -207,7 +207,7 @@ bool TableList::process_index_hints(Table *tbl)
         Check if an index with the given name exists and get his offset in
         the keys bitmask for the table
       */
-      if (not tbl->s->doesKeyNameExist(hint->key_name.str, hint->key_name.length, pos))
+      if (not tbl->getShare()->doesKeyNameExist(hint->key_name.str, hint->key_name.length, pos))
       {
         my_error(ER_KEY_DOES_NOT_EXITS, MYF(0), hint->key_name.str, alias);
         return 1;

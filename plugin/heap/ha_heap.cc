@@ -263,7 +263,7 @@ Cursor *ha_heap::clone(memory::Root *mem_root)
 
 const char *ha_heap::index_type(uint32_t inx)
 {
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
+  return ((table_share->getKeyInfo(inx).algorithm == HA_KEY_ALG_BTREE) ?
           "BTREE" : "HASH");
 }
 
@@ -299,7 +299,7 @@ void ha_heap::update_key_stats()
 {
   for (uint32_t i= 0; i < table->getShare()->keys; i++)
   {
-    KeyInfo *key=table->key_info+i;
+    KeyInfo *key= &table->key_info[i];
     if (!key->rec_per_key)
       continue;
     if (key->algorithm != HA_KEY_ALG_BTREE)
@@ -661,7 +661,7 @@ int HeapEngine::doRenameTable(Session &session, TableIdentifier &from, TableIden
 ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
                                   key_range *max_key)
 {
-  KeyInfo *key=table->key_info+inx;
+  KeyInfo *key= &table->key_info[inx];
   if (key->algorithm == HA_KEY_ALG_BTREE)
     return hp_rb_records_in_range(file, inx, min_key, max_key);
 
@@ -775,7 +775,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   seg= reinterpret_cast<HA_KEYSEG*> (keydef + keys);
   for (key= 0; key < keys; key++)
   {
-    KeyInfo *pos= table_arg->key_info+key;
+    KeyInfo *pos= &table_arg->key_info[key];
     KeyPartInfo *key_part=     pos->key_part;
     KeyPartInfo *key_part_end= key_part + pos->key_parts;
 
