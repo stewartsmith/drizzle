@@ -634,7 +634,6 @@ bool Unique::get(Table *table)
 
       /* Open cached file if it isn't open */
   outfile=table->sort.io_cache= new internal::IO_CACHE;
-  memset(outfile, 0, sizeof(internal::IO_CACHE));
 
   if (!outfile || (! my_b_inited(outfile) && open_cached_file(outfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,READ_RECORD_BUFFER, MYF(MY_WME))))
     return 1;

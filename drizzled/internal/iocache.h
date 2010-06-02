@@ -31,7 +31,7 @@ namespace internal
 struct st_io_cache;
 typedef int (*IO_CACHE_CALLBACK)(struct st_io_cache*);
 
-typedef struct st_io_cache    /* Used when cacheing files */
+struct st_io_cache    /* Used when cacheing files */
 {
   /* Offset in file corresponding to the first byte of unsigned char* buffer. */
   my_off_t pos_in_file;
@@ -134,7 +134,50 @@ typedef struct st_io_cache    /* Used when cacheing files */
   my_off_t aio_read_pos;
   my_aio_result aio_result;
 #endif
-} IO_CACHE;
+
+  st_io_cache() :
+    pos_in_file(0),
+    end_of_file(0),
+    read_pos(0),
+    read_end(0),
+    buffer(0),
+    request_pos(0),
+    write_buffer(0),
+    append_read_pos(0),
+    write_pos(0),
+    write_end(0),
+    current_pos(0),
+    current_end(0),
+    read_function(0),
+    write_function(0),
+    type(TYPE_NOT_SET),
+    error(0),
+    pre_read(0),
+    post_read(0),
+    pre_close(0),
+    arg(0),
+    file_name(0),
+    dir(0),
+    prefix(0),
+    file(0),
+    seek_not_done(0),
+    buffer_length(0),
+    read_length(0),
+    myflags(0),
+    alloced_buffer(0)
+#ifdef HAVE_AIOWAIT
+    ,
+    inited(0),
+    aio_read_pos(0),
+    aio_result(0)
+#endif
+  { }
+
+  ~st_io_cache()
+  { }
+};
+
+typedef struct st_io_cache IO_CACHE;    /* Used when cacheing files */
 
 extern int init_io_cache(IO_CACHE *info,int file,size_t cachesize,
                          enum cache_type type,my_off_t seek_offset,
