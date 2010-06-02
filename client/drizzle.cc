@@ -33,7 +33,22 @@
  *
  **/
 
-#include "client_priv.h"
+#include "config.h"
+#include <libdrizzle/drizzle_client.h>
+
+#include "client/get_password.h"
+
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
 #include <string>
 #include <drizzled/gettext.h>
 #include <iostream>
@@ -49,7 +64,6 @@
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
 #include "drizzled/internal/utf8.h"
-#include "drizzled/charset.h"
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -142,7 +156,6 @@ typedef Function drizzle_compentry_func_t;
 #endif
 #include <boost/program_options.hpp>
 
-using namespace drizzled;
 using namespace std;
 namespace po=boost::program_options;
 
@@ -276,7 +289,7 @@ static bool ignore_errors= false, quick= false,
   vertical= false, line_numbers= true, column_names= true,
   opt_nopager= true, opt_outfile= false, named_cmds= false,
   tty_password= false, opt_nobeep= false, opt_reconnect= true,
-  default_charset_used= false, opt_secure_auth= false,
+  opt_secure_auth= false,
   default_pager_set= false, opt_sigint_ignore= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
@@ -310,6 +323,9 @@ std::string current_db,
 static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
                                   "Aug","Sep","Oct","Nov","Dec"};
+/* @TODO: Remove this */
+#define FN_REFLEN 512
+
 static char default_pager[FN_REFLEN];
 static char pager[FN_REFLEN], outfile[FN_REFLEN];
 static FILE *PAGER, *OUTFILE;
@@ -1584,9 +1600,6 @@ try
       close(stdout_fileno_copy);             /* Clean up dup(). */
   }
 
-  if (vm.count("default-character-set"))
-    default_charset_used= 1;
-    
   if (vm.count("delimiter"))
   {
     /* Check that delimiter does not contain a backslash */
@@ -1714,7 +1727,10 @@ try
   {
     status.setBatch(1);
     status.setAddToHistory(0);
-    set_if_bigger(opt_silent,1);                         // more silent
+    if (opt_silent < 1)
+    {
+      opt_silent= 1;
+    }
   }
   if(vm.count("silent"))
   {
