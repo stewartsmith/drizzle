@@ -46,7 +46,6 @@ noinst_HEADERS+= \
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS} ${BOOST_LIBS}
-client_drizzle_LDADD=		${CLIENT_LDADD} ${READLINE_LIBS}
 client_drizzle_CXXFLAGS=	${CLIENT_CXXFLAGS}
 
 client_drizzledump_SOURCES=	client/drizzledump.cc
