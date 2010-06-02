@@ -336,7 +336,7 @@ inline const EnumDescriptor* GetEnumDescriptor<Table_TableOptions_RowType>() {
     CC_WARNINGS="-v -errtags=yes ${W_FAIL} ${CC_WARNINGS_FULL} ${CFLAG_VISIBILITY}"
     CXX_WARNINGS="+w +w2 -xwe -xport64 -errtags=yes ${CXX_WARNINGS_FULL} ${W_FAIL} ${CFLAG_VISIBILITY}"
     PROTOSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,wbadinitl,identexpected,inllargeuse,truncwarn1,signextwarn,partinit,notused,badargtype2w,wbadinit"
-    BOOSTSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint,hidef"
+    BOOSTSKIP_WARNINGS="-erroff=attrskipunsup,doubunder,reftotemp,inllargeuse,truncwarn1,signextwarn,inllargeint,hidef,wvarhidenmem"
     NO_UNREACHED="-erroff=E_STATEMENT_NOT_REACHED"
     NO_WERROR="-errwarn=%none"
 
