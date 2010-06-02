@@ -212,7 +212,6 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   uint32_t i, j, recpos, minpos, fieldpos, temp_length, length;
   enum ha_base_keytype type= HA_KEYTYPE_BINARY;
   unsigned char *record;
-  KeyInfo *pos;
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo, *recinfo_pos;
   HA_KEYSEG *keyseg;
@@ -226,9 +225,9 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
     return(HA_ERR_OUT_OF_MEM);
   keydef= *keydef_out;
   recinfo= *recinfo_out;
-  pos= table_arg->key_info;
-  for (i= 0; i < share->keys; i++, pos++)
+  for (i= 0; i < share->keys; i++)
   {
+    KeyInfo *pos= &table_arg->key_info[i];
     keydef[i].flag= ((uint16_t) pos->flags & (HA_NOSAME));
     keydef[i].key_alg= HA_KEY_ALG_BTREE;
     keydef[i].block_length= pos->block_size;
@@ -1443,7 +1442,7 @@ void ha_myisam::get_auto_increment(uint64_t ,
 
   (void) extra(HA_EXTRA_KEYREAD);
   key_copy(key, table->record[0],
-           table->key_info + table->getShare()->next_number_index,
+           &table->key_info[table->getShare()->next_number_index],
            table->getShare()->next_number_key_offset);
   error= mi_rkey(file, table->record[1], (int) table->getShare()->next_number_index,
                  key, make_prev_keypart_map(table->getShare()->next_number_keypart),

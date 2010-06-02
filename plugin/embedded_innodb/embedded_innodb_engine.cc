@@ -2032,7 +2032,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
     ib_err_t err;
     ib_id_t index_id;
     err= ib_index_get_id(table_share->getPath()+2,
-                         table_share->key_info[keynr].name,
+                         table_share->getKeyInfo(keynr).name,
                          &index_id);
     if (err != DB_SUCCESS)
       return -1;
@@ -2219,9 +2219,8 @@ uint32_t EmbeddedInnoDBCursor::calculate_key_len(uint32_t key_position,
   /* works only with key prefixes */
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
-  KeyInfo *key_info_found= table->s->key_info + key_position;
-  KeyPartInfo *key_part_found= key_info_found->key_part;
-  KeyPartInfo *end_key_part_found= key_part_found + key_info_found->key_parts;
+  KeyPartInfo *key_part_found= table->s->getKeyInfo(key_position).key_part;
+  KeyPartInfo *end_key_part_found= key_part_found + table->s->getKeyInfo(key_position).key_parts;
   uint32_t length= 0;
 
   while (key_part_found < end_key_part_found && keypart_map_arg)
