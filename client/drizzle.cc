@@ -1428,6 +1428,8 @@ try
   N_("Number of lines before each import progress report."))
   ("ping", po::value<bool>(&opt_ping)->default_value(false)->zero_tokens(),
   N_("Ping the server to check if it's alive."))
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
+  N_("Configuration file defaults are not used if no-defaults is set"))
   ;
 
   po::options_description drizzle_options("Options specific to the drizzle client");
@@ -1516,6 +1518,8 @@ try
 
   po::store(po::command_line_parser(argc, argv).options(long_options).extra_parser(reg_password).run(), vm);
 
+  if (!vm["no-defaults"].as<bool>())
+  {
   ifstream user_drizzle_ifs("~/.drizzle/drizzleslap.cnf");
   po::store(parse_config_file(user_drizzle_ifs, drizzle_options), vm);
  
@@ -1526,6 +1530,8 @@ try
   po::store(parse_config_file(user_client_ifs, client_options), vm);
  
   ifstream system_client_ifs(system_config_dir_client.c_str());
+  po::store(parse_config_file(system_client_ifs, client_options), vm);
+  }
 
   po::notify(vm);
 
