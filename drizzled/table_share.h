@@ -251,7 +251,21 @@ public:
 
 
   Field **found_next_number_field;
+private:
   Field *timestamp_field;               /* Used only during open */
+public:
+
+  Field *getTimestampField() const               /* Used only during open */
+  {
+    return timestamp_field;
+  }
+
+  void setTimestampField(Field *arg) /* Used only during open */
+  {
+    timestamp_field= arg;
+  }
+
+
 private:
   KeyInfo  *key_info;			/* data of keys in database */
 public:
@@ -603,7 +617,9 @@ public:
 
   bool replace_with_name_lock;
 
+private:
   bool waiting_on_cond;                 /* Protection against free */
+public:
   bool isWaitingOnCondition()
   {
     return waiting_on_cond;
