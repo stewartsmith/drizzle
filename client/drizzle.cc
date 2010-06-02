@@ -326,8 +326,9 @@ static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
 /* @TODO: Remove this */
 #define FN_REFLEN 512
 
-static char default_pager[FN_REFLEN];
-static char pager[FN_REFLEN], outfile[FN_REFLEN];
+static string default_pager("");
+static string pager("");
+static string outfile("");
 static FILE *PAGER, *OUTFILE;
 static uint32_t prompt_counter;
 static char *delimiter= NULL;
@@ -1567,14 +1568,14 @@ try
 
   prompt_counter=0;
 
-  outfile[0]=0;      // no (default) outfile
-  strcpy(pager, "stdout");  // the default, if --pager wasn't given
+  outfile.clear();      // no (default) outfile
+  pager.assign("stdout");  // the default, if --pager wasn't given
   {
-    char *tmp=getenv("PAGER");
+    const char *tmp= getenv("PAGER");
     if (tmp && strlen(tmp))
     {
       default_pager_set= 1;
-      strcpy(default_pager, tmp);
+      default_pager.assign(tmp);
     }
   }
   if (! isatty(0) || ! isatty(1))
@@ -1641,11 +1642,11 @@ try
       if (vm[pager].as<string>().length())
       {
         default_pager_set= 1;
-        strncpy(pager, vm["pager"].as<string>().c_str(), sizeof(pager) - 1);
-        strcpy(default_pager, pager);
+        pager.assign(vm["pager"].as<string>());
+        default_pager.assign(pager);
       }
       else if (default_pager_set)
-        strcpy(pager, default_pager);
+        pager.assign(default_pager);
       else
         opt_nopager= 1;
     }
@@ -1985,19 +1986,21 @@ static int get_options(void)
   pagpoint= getenv("PAGER");
   if (!((char*) (pagpoint)))
   {
-    strcpy(pager, "stdout");
+    pager.assign("stdout");
     opt_nopager= 1;
   }
   else
-    strcpy(pager, pagpoint);
-  strcpy(default_pager, pager);
+  {
+    pager.assign(pagpoint);
+  }
+  default_pager.assign(pager);
 
   //
 
   if (status.getBatch()) /* disable pager and outfile in this case */
   {
-    strcpy(default_pager, "stdout");
-    strcpy(pager, "stdout");
+    default_pager.assign("stdout");
+    pager.assign("stdout");
     opt_nopager= 1;
     default_pager_set= 0;
     opt_outfile= 0;
@@ -3027,7 +3030,7 @@ static void init_pager()
 {
   if (!opt_nopager)
   {
-    if (!(PAGER= popen(pager, "w")))
+    if (!(PAGER= popen(pager.c_str(), "w")))
     {
       tee_fprintf(stdout, "popen() failed! defaulting PAGER to stdout!\n");
       PAGER= stdout;
@@ -3055,7 +3058,7 @@ static void init_tee(const char *file_name)
     return;
   }
   OUTFILE = new_outfile;
-  strncpy(outfile, file_name, FN_REFLEN-1);
+  outfile.assign(file_name);
   tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
   opt_outfile= 1;
 
@@ -3605,22 +3608,23 @@ com_tee(string *, const char *line )
     return 0;
   while (isspace(*line))
     line++;
-  if (!(param = strchr(line, ' '))) // if outfile wasn't given, use the default
+  if (!(param =strchr(line, ' '))) // if outfile wasn't given, use the default
   {
-    if (!strlen(outfile))
+    if (outfile.empty())
     {
       printf("No previous outfile available, you must give a filename!\n");
       return 0;
     }
     else if (opt_outfile)
     {
-      tee_fprintf(stdout, "Currently logging to file '%s'\n", outfile);
+      tee_fprintf(stdout, "Currently logging to file '%s'\n", outfile.c_str());
       return 0;
     }
     else
-      param = outfile;      //resume using the old outfile
+      param= outfile.c_str();      //resume using the old outfile
   }
 
+  /* @TODO: Replace this with string methods */
   /* eliminate the spaces before the parameters */
   while (isspace(*param))
     param++;
@@ -3657,7 +3661,6 @@ com_notee(string *, const char *)
 static int
 com_pager(string *, const char *line)
 {
-  char pager_name[FN_REFLEN], *end;
   const char *param;
 
   if (status.getBatch())
@@ -3676,25 +3679,25 @@ com_pager(string *, const char *line)
     {
       tee_fprintf(stdout, "Default pager wasn't set, using stdout.\n");
       opt_nopager=1;
-      strcpy(pager, "stdout");
+      pager.assign("stdout");
       PAGER= stdout;
       return 0;
     }
-    strcpy(pager, default_pager);
+    pager.assign(default_pager);
   }
   else
   {
-    end= strncpy(pager_name, param, sizeof(pager_name)-1);
-    end+= strlen(pager_name);
-    while (end > pager_name && (isspace(end[-1]) ||
-                                iscntrl(end[-1])))
-      end--;
-    end[0]=0;
-    strcpy(pager, pager_name);
-    strcpy(default_pager, pager_name);
+    string pager_name(param);
+    string::iterator end= pager_name.end();
+    while (end > pager_name.begin() &&
+           (isspace(*(end-1)) || iscntrl(*(end-1))))
+      --end;
+    pager_name.erase(end, pager_name.end());
+    pager.assign(pager_name);
+    default_pager.assign(pager_name);
   }
   opt_nopager=0;
-  tee_fprintf(stdout, "PAGER set to '%s'\n", pager);
+  tee_fprintf(stdout, "PAGER set to '%s'\n", pager.c_str());
   return 0;
 }
 
@@ -3702,7 +3705,7 @@ com_pager(string *, const char *line)
 static int
 com_nopager(string *, const char *)
 {
-  strcpy(pager, "stdout");
+  pager.assign("stdout");
   opt_nopager=1;
   PAGER= stdout;
   tee_fprintf(stdout, "PAGER set to stdout\n");
@@ -4164,8 +4167,8 @@ com_status(string *, const char *)
     tee_fprintf(stdout, "\nAll updates ignored to this database\n");
     vidattr(A_NORMAL);
   }
-  tee_fprintf(stdout, "Current pager:\t\t%s\n", pager);
-  tee_fprintf(stdout, "Using outfile:\t\t'%s'\n", opt_outfile ? outfile : "");
+  tee_fprintf(stdout, "Current pager:\t\t%s\n", pager.c_str());
+  tee_fprintf(stdout, "Using outfile:\t\t'%s'\n", opt_outfile ? outfile.c_str() : "");
   tee_fprintf(stdout, "Using delimiter:\t%s\n", delimiter);
   tee_fprintf(stdout, "Server version:\t\t%s\n", server_version_string(&con));
   tee_fprintf(stdout, "Protocol version:\t%d\n", drizzle_con_protocol_version(&con));
