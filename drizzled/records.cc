@@ -107,7 +107,8 @@ void ReadRecord::init_read_record(Session *session_arg,
   if (tempfile && my_b_inited(tempfile)) // Test if ref-records was used
   {
     read_record= (table->sort.addon_field ?
-                        rr_unpack_from_tempfile : rr_from_tempfile);
+                  rr_unpack_from_tempfile : rr_from_tempfile);
+
     io_cache=tempfile;
     reinit_io_cache(io_cache,internal::READ_CACHE,0L,0,0);
     ref_pos=table->cursor->ref;
@@ -134,13 +135,13 @@ void ReadRecord::init_read_record(Session *session_arg,
     {
       if (init_rr_cache())
       {
-        read_record=rr_from_cache;
+        read_record= rr_from_cache;
       }
     }
   }
   else if (select && select->quick)
   {
-    read_record=rr_quick;
+    read_record= rr_quick;
   }
   else if (table->sort.record_pointers)
   {
@@ -158,7 +159,9 @@ void ReadRecord::init_read_record(Session *session_arg,
         (use_record_cache > 0 ||
         (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS ||
         !(table->getShare()->db_options_in_use & HA_OPTION_PACK_RECORD)))
+    {
       table->cursor->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
+    }
   }
 
   return;
@@ -332,6 +335,7 @@ static int rr_from_pointers(ReadRecord *info)
   int tmp;
   unsigned char *cache_pos;
 
+
   for (;;)
   {
     if (info->cache_pos == info->cache_end)
@@ -433,9 +437,12 @@ static int rr_from_cache(ReadRecord *info)
       return ((int) error);
     }
     length=info->rec_cache_size;
-    rest_of_file=info->io_cache->end_of_file - my_b_tell(info->io_cache);
+    rest_of_file= info->io_cache->end_of_file - my_b_tell(info->io_cache);
     if ((internal::my_off_t) length > rest_of_file)
+    {
       length= (uint32_t) rest_of_file;
+    }
+
     if (!length || my_b_read(info->io_cache, info->getCache(), length))
     {
       return -1;			/* End of cursor */
@@ -470,7 +477,7 @@ static int rr_from_cache(ReadRecord *info)
       else
         record_pos[info->error_offset]=0;
     }
-    info->cache_end=(info->cache_pos= info->getCache())+length*info->reclength;
+    info->cache_end= (info->cache_pos= info->getCache())+length*info->reclength;
   }
 } /* rr_from_cache */
 
