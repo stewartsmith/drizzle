@@ -275,12 +275,12 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
 }
 
 TableIdentifier::TableIdentifier(const drizzled::Table &table) :
-  SchemaIdentifier(table.s->getTableProto()->schema()),
-  type(table.s->getTableProto()->type()),
-  table_name(table.s->getTableProto()->name())
+  SchemaIdentifier(table.getShare()->getTableProto()->schema()),
+  type(table.getShare()->getTableProto()->type()),
+  table_name(table.getShare()->getTableProto()->name())
 {
   if (type == message::Table::TEMPORARY)
-    path= table.s->getPath();
+    path= table.getShare()->getPath();
 
   init();
 }

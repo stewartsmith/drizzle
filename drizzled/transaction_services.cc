@@ -1111,7 +1111,7 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
    *
    * Multi-column primary keys are handled how exactly?
    */
-  if (in_table->s->primary_key == MAX_KEY)
+  if (in_table->getShare()->primary_key == MAX_KEY)
   {
     my_error(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, MYF(0));
     return true;
@@ -1214,7 +1214,7 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
      * We add the "key field metadata" -- i.e. the fields which is
      * the primary key for the table.
      */
-    if (in_table->s->fieldInPrimaryKey(current_field))
+    if (in_table->getShare()->fieldInPrimaryKey(current_field))
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
@@ -1309,7 +1309,7 @@ void TransactionServices::updateRecord(Session *in_session,
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->s->fieldInPrimaryKey(current_field))
+    if (in_table->getShare()->fieldInPrimaryKey(current_field))
     {
       /**
        * To say the below is ugly is an understatement. But it works.
@@ -1391,7 +1391,7 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->s->fieldInPrimaryKey(current_field))
+    if (in_table->getShare()->fieldInPrimaryKey(current_field))
     {
       field_metadata= header->add_key_field_metadata();
       field_metadata->set_name(current_field->field_name);
@@ -1425,7 +1425,7 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
      * primary key field value.  Replication only supports tables
      * with a primary key.
      */
-    if (in_table->s->fieldInPrimaryKey(current_field))
+    if (in_table->getShare()->fieldInPrimaryKey(current_field))
     {
       string_value= current_field->val_str(string_value);
       record->add_key_value(string_value->c_ptr(), string_value->length());

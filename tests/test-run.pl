@@ -241,7 +241,7 @@ our $opt_user;
 my $opt_valgrind= 0;
 my $opt_valgrind_mysqld= 0;
 my $opt_valgrind_drizzletest= 0;
-my @default_valgrind_args= ("--show-reachable=yes");
+my @default_valgrind_args= ("--show-reachable=yes --malloc-fill=0xDEADBEEF --free-fill=0xDEADBEEF");
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;

@@ -20,8 +20,6 @@
 
 #include "config.h"
 
-#include <cstdint>
-
 #include <gtest/gtest.h>
 
 # if defined(__SUNPRO_CC)
