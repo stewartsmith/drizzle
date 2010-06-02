@@ -1020,11 +1020,11 @@ bool Date::operator<=(const Timestamp& rhs)
 }
 bool Date::operator>(const Timestamp& rhs)
 {
-  return ! (*this < rhs);
+  return ! (*this <= rhs);
 }
 bool Date::operator>=(const Timestamp& rhs)
 {
-  return ! (*this <= rhs);
+  return ! (*this < rhs);
 }
 /*
  * Comparison operators between a Timestamp and a Date
@@ -1057,11 +1057,11 @@ bool Timestamp::operator<=(const Date& rhs)
 }
 bool Timestamp::operator>(const Date& rhs)
 {
-  return ! (*this < rhs);
+  return ! (*this <= rhs);
 }
 bool Timestamp::operator>=(const Date& rhs)
 {
-  return ! (*this <= rhs);
+  return ! (*this < rhs);
 }
 /*
  * Comparison operators between a Timestamp and a DateTime
@@ -1110,11 +1110,11 @@ bool Timestamp::operator<=(const DateTime& rhs)
 }
 bool Timestamp::operator>(const DateTime& rhs)
 {
-  return ! (*this < rhs);
+  return ! (*this <= rhs);
 }
 bool Timestamp::operator>=(const DateTime& rhs)
 {
-  return ! (*this <= rhs);
+  return ! (*this < rhs);
 }
 /*
  * Comparison operators between two Timestamps
@@ -1137,11 +1137,11 @@ bool Timestamp::operator<=(const Timestamp& rhs)
 }
 bool Timestamp::operator>(const Timestamp& rhs)
 {
-  return ! (*this < rhs);
+  return ! (*this <= rhs);
 }
 bool Timestamp::operator>=(const Timestamp& rhs)
 {
-  return ! (*this <= rhs);
+  return ! (*this < rhs);
 }
 
 /**
@@ -1342,9 +1342,9 @@ bool Date::from_int32_t(const int32_t from)
 bool Time::from_int32_t(const int32_t from)
 {
   uint32_t copy_from= (uint32_t) from;
-  _hours= copy_from % INT32_C(10000);
-  _minutes= copy_from % INT32_C(100);
-  _seconds= copy_from & 3; /* Masks off all but last 2 digits */
+  _hours= copy_from / INT32_C(10000);
+  _minutes= (copy_from % INT32_C(10000)) / INT32_C(100);
+  _seconds= copy_from % INT32_C(100); /* Masks off all but last 2 digits */
   return is_valid();
 }
 

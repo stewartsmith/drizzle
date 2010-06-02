@@ -33,6 +33,7 @@ void Generator::DateGen::make_date(Date *date,
   date->set_years(years);
   date->set_months(months);
   date->set_days(days);
+  date->set_epoch_seconds();
 }
 
 void Generator::DateGen::make_valid_date(drizzled::Date *date)
@@ -40,6 +41,7 @@ void Generator::DateGen::make_valid_date(drizzled::Date *date)
   date->set_years(2005);
   date->set_months(5);
   date->set_days(26);
+  date->set_epoch_seconds();
 }
 
 void Generator::TemporalGen::leap_day_in_leap_year(drizzled::Temporal *temporal)
@@ -47,6 +49,7 @@ void Generator::TemporalGen::leap_day_in_leap_year(drizzled::Temporal *temporal)
   temporal->set_years(2008);
   temporal->set_months(2);
   temporal->set_days(29);
+  temporal->set_epoch_seconds();
 }
 
 void Generator::TemporalGen::leap_day_in_non_leap_year(drizzled::Temporal *temporal)
@@ -54,6 +57,7 @@ void Generator::TemporalGen::leap_day_in_non_leap_year(drizzled::Temporal *tempo
   temporal->set_years(2010);
   temporal->set_months(2);
   temporal->set_days(29);
+  temporal->set_epoch_seconds();
 }
 
 void Generator::TimeGen::make_time(drizzled::Time *time,
@@ -62,6 +66,7 @@ void Generator::TimeGen::make_time(drizzled::Time *time,
   time->set_hours(hours);
   time->set_minutes(minutes);
   time->set_seconds(seconds);
+  time->set_epoch_seconds();
 }
 
 void Generator::TemporalGen::make_min_time(drizzled::Temporal *temporal)
@@ -69,6 +74,7 @@ void Generator::TemporalGen::make_min_time(drizzled::Temporal *temporal)
   temporal->set_hours(0);
   temporal->set_minutes(0);
   temporal->set_seconds(0);
+  temporal->set_epoch_seconds();
 }
 
 void Generator::TemporalGen::make_max_time(drizzled::Temporal *temporal)
@@ -76,6 +82,7 @@ void Generator::TemporalGen::make_max_time(drizzled::Temporal *temporal)
   temporal->set_hours(23);
   temporal->set_minutes(59);
   temporal->set_seconds(59);
+  temporal->set_epoch_seconds();
 }
 
 void Generator::DateTimeGen::make_datetime(drizzled::DateTime *datetime,
@@ -88,6 +95,7 @@ void Generator::DateTimeGen::make_datetime(drizzled::DateTime *datetime,
   datetime->set_hours(hours);
   datetime->set_minutes(minutes);
   datetime->set_seconds(seconds);
+  datetime->set_epoch_seconds();
 }                     
 
 void Generator::DateTimeGen::make_valid_datetime(drizzled::DateTime *datetime)
@@ -98,6 +106,7 @@ void Generator::DateTimeGen::make_valid_datetime(drizzled::DateTime *datetime)
   datetime->set_hours(13);
   datetime->set_minutes(34);
   datetime->set_seconds(6);
+  datetime->set_epoch_seconds();
 }
 
 void Generator::TimestampGen::make_timestamp(drizzled::Timestamp *timestamp,
@@ -110,6 +119,7 @@ void Generator::TimestampGen::make_timestamp(drizzled::Timestamp *timestamp,
   timestamp->set_hours(hours);
   timestamp->set_minutes(minutes);
   timestamp->set_seconds(seconds);
+  timestamp->set_epoch_seconds();
 }
 
 void Generator::TimestampGen::make_micro_timestamp(drizzled::MicroTimestamp *timestamp,
@@ -119,6 +129,7 @@ void Generator::TimestampGen::make_micro_timestamp(drizzled::MicroTimestamp *tim
 {
   make_timestamp(timestamp, years, months, days, hours, minutes, seconds);
   timestamp->set_useconds(microseconds);
+  timestamp->set_epoch_seconds();
 }
                                  
 void Generator::TimestampGen::make_nano_timestamp(drizzled::NanoTimestamp *timestamp,
@@ -128,6 +139,7 @@ void Generator::TimestampGen::make_nano_timestamp(drizzled::NanoTimestamp *times
 {
   make_timestamp(timestamp, years, months, days, hours, minutes, seconds);
   timestamp->set_nseconds(nanoseconds);
+  timestamp->set_epoch_seconds();
 }
 
 drizzled::TemporalFormat *Generator::TemporalFormatGen::make_temporal_format(const char *regexp,

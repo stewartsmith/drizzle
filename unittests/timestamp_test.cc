@@ -162,21 +162,21 @@ TYPED_TEST(TimestampTestCompareOperators, operatorLessThan_ComparingWithEarlierT
 
 TYPED_TEST(TimestampTestCompareOperators, operatorLessThanOrEqual_ComparingWithIdenticalTemporal_ShouldReturn_True)
 {
-  this->result= (this->sample_timestamp < this->identical_with_sample_timestamp);
+  this->result= (this->sample_timestamp <= this->identical_with_sample_timestamp);
   
   ASSERT_TRUE(this->result);
 }
 
 TYPED_TEST(TimestampTestCompareOperators, operatorLessThanOrEqual_ComparingWithLaterTemporal_ShouldReturn_True)
 {
-  this->result= (this->sample_timestamp < this->after_sample_timestamp);
+  this->result= (this->sample_timestamp <= this->after_sample_timestamp);
   
   ASSERT_TRUE(this->result);
 }
 
 TYPED_TEST(TimestampTestCompareOperators, operatorLessThanOrEqual_ComparingWithEarlierTemporal_ShouldReturn_False)
 {
-  this->result= (this->sample_timestamp < this->before_sample_timestamp);
+  this->result= (this->sample_timestamp <= this->before_sample_timestamp);
   
   ASSERT_FALSE(this->result);
 }

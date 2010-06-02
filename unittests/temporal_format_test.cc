@@ -62,26 +62,16 @@ TEST_F(TemporalFormatTest, constructor_WithValidRegExp_shouldCompile)
 
 TEST_F(TemporalFormatTest, constructor_WithInvalidRegExp_shouldNotCompile)
 {
-  tf= new TemporalFormat("^(\\d{4)[-/.]$");
+  tf= new TemporalFormat("^\\d{4)[-/.]$");
 
   result= tf->is_valid();
   
   ASSERT_FALSE(result);
 }
 
-TEST_F(TemporalFormatTest, matches_OnMatchingStringAndNULLTemporal_FormatWithNoIndexesSet_shouldReturn_True)
-{
-  tf= new TemporalFormat("^(\\d{4})[-/.](\\s+)ABC$");
-  char matched[] ="1234/   ABC";
-
-  result= tf->matches(matched, sizeof(matched) - sizeof(char), NULL);
-  
-  ASSERT_TRUE(result);
-}
-
 TEST_F(TemporalFormatTest, matches_OnNotMatchingString_shouldReturn_False)
 {
-  tf= new TemporalFormat("^(\\d{4})[-/.](\\s+)ABC$");
+  tf= new TemporalFormat("^(\\d{4})[-/.]$");
   char matched[] ="1234/ABC";
 
   result= tf->matches(matched, sizeof(matched) - sizeof(char), NULL);
@@ -97,7 +87,8 @@ TEST_F(TemporalFormatTest, matches_OnMatchingString_FormatWithIndexesSet_shouldP
   temporal= new DateTime();
 
   
-  tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
+  result = tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
+  ASSERT_TRUE(result);
   
   EXPECT_EQ(1999, temporal->years());
   EXPECT_EQ(9, temporal->months());

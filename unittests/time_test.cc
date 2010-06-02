@@ -22,6 +22,7 @@
 
 #include <gtest/gtest.h>
 #include <drizzled/temporal.h>
+#include <drizzled/temporal_format.h>
 
 #include "generator.h"
 
@@ -139,21 +140,21 @@ TEST_F(TimeTest, operatorLessThan_ComparingWithEarlierTemporal_ShouldReturn_Fals
 
 TEST_F(TimeTest, operatorLessThanOrEqual_ComparingWithIdenticalTemporal_ShouldReturn_True)
 {
-  this->result= (this->sample_time < this->identical_with_sample_time);
+  this->result= (this->sample_time <= this->identical_with_sample_time);
   
   ASSERT_TRUE(this->result);
 }
 
 TEST_F(TimeTest, operatorLessThanOrEqual_ComparingWithLaterTemporal_ShouldReturn_True)
 {
-  this->result= (this->sample_time < this->after_sample_time);
+  this->result= (this->sample_time <= this->after_sample_time);
   
   ASSERT_TRUE(this->result);
 }
 
 TEST_F(TimeTest, operatorLessThanOrEqual_ComparingWithEarlierTemporal_ShouldReturn_False)
 {
-  this->result= (this->sample_time < this->before_sample_time);
+  this->result= (this->sample_time <= this->before_sample_time);
   
   ASSERT_FALSE(this->result);
 }
@@ -231,13 +232,17 @@ TEST_F(TimeTest, from_string_validString_shouldPopulateCorrectly)
 {
   char valid_string[Time::MAX_STRING_LENGTH]= "18:34:59";
   uint32_t hours, minutes, seconds;
+
+  init_temporal_formats();
   
-  result= sample_time.from_string(valid_string, Time::MAX_STRING_LENGTH);
+  result= sample_time.from_string(valid_string, Time::MAX_STRING_LENGTH - 1);
   ASSERT_TRUE(result);
   
   hours= sample_time.hours();
   minutes= sample_time.minutes();
   seconds= sample_time.seconds();
+
+  deinit_temporal_formats();
   
   EXPECT_EQ(18, hours);
   EXPECT_EQ(34, minutes);
@@ -247,19 +252,29 @@ TEST_F(TimeTest, from_string_validString_shouldPopulateCorrectly)
 TEST_F(TimeTest, from_string_invalidString_shouldReturn_False)
 {
   char invalid_string[Time::MAX_STRING_LENGTH]= "1o:34:59";
+
+  init_temporal_formats();
+  result= sample_time.from_string(invalid_string, Time::MAX_STRING_LENGTH - 1);
+  deinit_temporal_formats();
   
-  result= sample_time.from_string(invalid_string, Time::MAX_STRING_LENGTH);
   ASSERT_FALSE(result);
 }
 
-TEST_F(TimeTest, from_int32_t_onValueCreatedBy_to_int32_t_shouldProduceOriginalTime)
+TEST_F(TimeTest, to_int32_t)
+{
+  int32_t representation;
+
+  sample_time.to_int32_t(&representation);
+
+  ASSERT_EQ(representation, 183459);
+}
+
+TEST_F(TimeTest, from_int32_t_shouldPopulateTimeCorrectly)
 {
   uint32_t decoded_hours, decoded_minutes, decoded_seconds;
-  int32_t representation;
   Time decoded_time;
   
-  sample_time.to_int32_t(&representation);
-  decoded_time.from_int32_t(representation);
+  decoded_time.from_int32_t(183459);
   
   decoded_hours= decoded_time.hours();
   decoded_minutes= decoded_time.minutes();

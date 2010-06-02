@@ -329,7 +329,7 @@ public:
    *
    * @param C-String to fill.
    * @param Length of to C-String
-   * @returns length of string written (not including trailing '\0').
+   * @returns length of string written (including trailing '\0').
    *          If output was truncated, returns length that would have
    *          been outputted.
    */
@@ -349,7 +349,7 @@ public:
    * successful.
    *
    * @param String to convert from
-   * @param Length of supplied string
+   * @param Length of supplied string (not including trailing '\0').
    */
   virtual bool from_string(const char *from, size_t from_len);
 
