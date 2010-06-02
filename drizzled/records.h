@@ -40,7 +40,13 @@ struct ReadRecord {			/* Parameter to read_record */
   unsigned char *ref_pos;				/* pointer to form->refpos */
   unsigned char *record;
   unsigned char *rec_buf;                /* to read field values  after filesort */
-  unsigned char	*cache;
+private:
+  std::vector<unsigned char> cache;
+public:
+  unsigned char *getCache()
+  {
+    return &cache[0];
+  }
   unsigned char *cache_pos;
   unsigned char *cache_end;
   unsigned char *read_positions;

@@ -167,11 +167,7 @@ void ReadRecord::init_read_record(Session *session_arg,
 
 void ReadRecord::end_read_record()
 {                   /* free cache if used */
-  if (cache)
-  {
-    free((char*) cache);
-    cache= NULL;
-  }
+  cache.resize(0);
   if (table)
   {
     table->filesort_free_buffers();
@@ -399,17 +395,12 @@ bool ReadRecord::init_rr_cache()
   rec_cache_size= cache_records * ref_length;
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
-  if (cache_records <= 2 ||
-      !(cache=(unsigned char*) malloc(local_rec_cache_size + cache_records * struct_length + 1)))
-  {
+  if (cache_records <= 2)
     return false;
-  }
-#ifdef HAVE_purify
-  // Avoid warnings in qsort
-  memset(cache, 0, local_rec_cache_size + cache_records * struct_length + 1);
-#endif
-  read_positions= cache + local_rec_cache_size;
-  cache_pos= cache_end= cache;
+
+  cache.resize(local_rec_cache_size + cache_records * struct_length + 1);
+  read_positions= &cache[0] + local_rec_cache_size;
+  cache_pos= cache_end= &cache[0];
 
   return true;
 } /* init_rr_cache */
@@ -445,13 +436,13 @@ static int rr_from_cache(ReadRecord *info)
     rest_of_file=info->io_cache->end_of_file - my_b_tell(info->io_cache);
     if ((internal::my_off_t) length > rest_of_file)
       length= (uint32_t) rest_of_file;
-    if (!length || my_b_read(info->io_cache,info->cache,length))
+    if (!length || my_b_read(info->io_cache, info->getCache(), length))
     {
       return -1;			/* End of cursor */
     }
 
     length/=info->ref_length;
-    position=info->cache;
+    position=info->getCache();
     ref_position=info->read_positions;
     for (i=0 ; i < length ; i++,position+=info->ref_length)
     {
@@ -470,7 +461,7 @@ static int rr_from_cache(ReadRecord *info)
       position+=MAX_REFLENGTH;
       record=uint3korr(position);
       position+=3;
-      record_pos=info->cache+record*info->reclength;
+      record_pos=info->getCache() + record * info->reclength;
       if ((error=(int16_t) info->cursor->rnd_pos(record_pos,info->ref_pos)))
       {
         record_pos[info->error_offset]=1;
@@ -479,7 +470,7 @@ static int rr_from_cache(ReadRecord *info)
       else
         record_pos[info->error_offset]=0;
     }
-    info->cache_end=(info->cache_pos=info->cache)+length*info->reclength;
+    info->cache_end=(info->cache_pos= info->getCache())+length*info->reclength;
   }
 } /* rr_from_cache */
 
