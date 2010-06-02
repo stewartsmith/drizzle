@@ -792,17 +792,12 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
 
   ha_statistic_increment(&system_status_var::ha_write_count);
 
-  /* Prepare Auto Increment field if one exists. This logic is borrowed
-     from Archive until we hack on multiple index support. */
+  /* Prepare Auto Increment field if one exists. */
   if (table->next_number_field && drizzle_row == table->record[0]) {
     if ((rv = update_auto_increment()) != 0)
       return rv;
 
-    KeyInfo *key = &table->s->key_info[0];
     uint64_t next_val = table->next_number_field->val_int();
-
-    if (next_val <= share->auto_increment_value && key->flags & HA_NOSAME)
-      return HA_ERR_FOUND_DUPP_KEY;
 
     if (next_val > share->auto_increment_value) {
       share->auto_increment_value = next_val;
