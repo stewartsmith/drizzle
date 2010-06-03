@@ -1383,7 +1383,7 @@ bool DateTime::from_int64_t(const int64_t from, bool convert)
     else if (copy_from <  DRIZZLE_YY_PART_YEAR * 10000000000LL + 101000000LL)
       return false;
     else if (copy_from <= 991231235959LL)
-      copy_from= copy_from + 19000000000000LL;		/* YYMMDDHHMMSS, 1970-1999 */
+      copy_from= copy_from + 19000000000000LL;    /* YYMMDDHHMMSS, 1970-1999 */
   }
 
   part1= (int64_t) (copy_from / 1000000LL);

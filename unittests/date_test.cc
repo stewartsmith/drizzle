@@ -332,24 +332,39 @@ TEST_F(DateTest, from_string_invalidString_shouldReturn_False)
   ASSERT_FALSE(result);
 }
 
-TEST_F(DateTest, from_int32_t_onValueCreatedBy_to_int32_t_shouldProduceOriginalDate)
+TEST_F(DateTest, to_int64_t)
 {
-  uint32_t years= 2030, months= 8, days= 17;
-  Generator::DateGen::make_date(&date, years, months, days);
-  uint32_t decoded_years, decoded_months, decoded_days;
+  Generator::DateGen::make_date(&date, 2030, 8, 17);
+  int64_t representation;
+  
+  date.to_int64_t(&representation);
+  
+  ASSERT_EQ(20300817, representation);
+}
+
+TEST_F(DateTest, to_int32_t)
+{
+  Generator::DateGen::make_date(&date, 2030, 8, 17);
   int32_t representation;
-  Date decoded_date;
-  
+
   date.to_int32_t(&representation);
-  decoded_date.from_int32_t(representation);
+
+  ASSERT_EQ(20300817, representation);
+}
+
+TEST_F(DateTest, from_int32_t_shouldPopulateDateCorrectly)
+{
+  uint32_t decoded_years, decoded_months, decoded_days;
+
+  date.from_int32_t(20300817);
   
-  decoded_years= decoded_date.years();
-  decoded_months= decoded_date.months();
-  decoded_days= decoded_date.days();
+  decoded_years= date.years();
+  decoded_months= date.months();
+  decoded_days= date.days();
   
-  EXPECT_EQ(years, decoded_years);
-  EXPECT_EQ(months, decoded_months);
-  EXPECT_EQ(days, decoded_days);
+  EXPECT_EQ(2030, decoded_years);
+  EXPECT_EQ(8, decoded_months);
+  EXPECT_EQ(17, decoded_days);
 }
 
 TEST_F(DateTest, to_julian_day_number)

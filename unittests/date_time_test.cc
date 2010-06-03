@@ -33,10 +33,22 @@ class DateTimeTest: public ::testing::Test
   protected:
     DateTime datetime;
     bool result;
+    uint32_t years, months, days;
+    uint32_t hours, minutes, seconds;
     
     virtual void SetUp()
     {
       Generator::DateTimeGen::make_valid_datetime(&datetime);
+    }
+
+    void assignDateTimeValues()
+    {
+      years = datetime.years();
+      months = datetime.months();
+      days = datetime.days();
+      hours = datetime.hours();
+      minutes = datetime.minutes();
+      seconds = datetime.seconds();
     }
 };
 
@@ -185,21 +197,13 @@ TEST_F(DateTimeTest, to_string_nullBuffer_noMicroSeconds_shouldReturnProperLengt
 TEST_F(DateTimeTest, from_string_validString_shouldPopulateCorrectly)
 {
   char valid_string[DateTime::MAX_STRING_LENGTH]= "2010-05-01 08:07:06";
-  uint32_t years, months, days, hours, minutes, seconds;
 
   init_temporal_formats();
   
   result = datetime.from_string(valid_string, DateTime::MAX_STRING_LENGTH - 1);
   ASSERT_TRUE(result);
-  
-  years = datetime.years();
-  months = datetime.months();
-  days = datetime.days();
-  hours = datetime.hours();
-  minutes = datetime.minutes();
-  seconds = datetime.seconds();
 
-  deinit_temporal_formats();
+  assignDateTimeValues();
   
   EXPECT_EQ(2010, years);
   EXPECT_EQ(5, months);
@@ -207,38 +211,93 @@ TEST_F(DateTimeTest, from_string_validString_shouldPopulateCorrectly)
   EXPECT_EQ(8, hours);
   EXPECT_EQ(7, minutes);
   EXPECT_EQ(6, seconds);
+
+  deinit_temporal_formats();
 }
 
-TEST_F(DateTimeTest, from_int32_t_onValueCreatedBy_to_int32_t_shouldProduceOriginalDate)
+TEST_F(DateTimeTest, to_int64_t)
 {
-  uint32_t years = 2030, months = 8, days = 17, hours = 14, minutes = 45, seconds = 13;
-  Generator::DateTimeGen::make_datetime(&datetime, years, months, days, hours, minutes, seconds);
-  uint32_t decoded_years, decoded_months, decoded_days;
-  uint32_t decoded_hours, decoded_minutes, decoded_seconds;
+  Generator::DateTimeGen::make_datetime(&datetime, 2030, 8, 7, 14, 5, 13);
   int64_t representation;
-  DateTime decoded_datetime;
-  
+
   datetime.to_int64_t(&representation);
-  decoded_datetime.from_int64_t(representation);
+
+  ASSERT_EQ(20300807140513LL, representation);
+}
+
+TEST_F(DateTimeTest, from_int64_t_no_conversion_format_YYYYMMDDHHMMSSshouldPopulateDateTimeCorrectly)
+{
+  datetime.from_int64_t(20300807140513LL, false);
   
-  decoded_years = decoded_datetime.years();
-  decoded_months = decoded_datetime.months();
-  decoded_days = decoded_datetime.days();
-  decoded_hours = decoded_datetime.hours();
-  decoded_minutes = decoded_datetime.minutes();
-  decoded_seconds = decoded_datetime.seconds();
+  assignDateTimeValues();
   
-  EXPECT_EQ(years, decoded_years);
-  EXPECT_EQ(months, decoded_months);
-  EXPECT_EQ(days, decoded_days);
-  EXPECT_EQ(hours, decoded_hours);
-  EXPECT_EQ(minutes, decoded_minutes);
-  EXPECT_EQ(seconds, decoded_seconds);
+  EXPECT_EQ(2030, years);
+  EXPECT_EQ(8, months);
+  EXPECT_EQ(7, days);
+  EXPECT_EQ(14, hours);
+  EXPECT_EQ(5, minutes);
+  EXPECT_EQ(13, seconds);
+}
+
+TEST_F(DateTimeTest, from_int64_t_with_conversion_format_YYYYMMDDHHMMSS_yearOver2000)
+{
+  datetime.from_int64_t(20300807140513LL, true);
+  
+  assignDateTimeValues();
+  
+  EXPECT_EQ(2030, years);
+  EXPECT_EQ(8, months);
+  EXPECT_EQ(7, days);
+  EXPECT_EQ(14, hours);
+  EXPECT_EQ(5, minutes);
+  EXPECT_EQ(13, seconds);
+}
+
+TEST_F(DateTimeTest, from_int64_t_with_conversion_format_YYYYMMDDHHMMSS_yearBelow2000)
+{
+  datetime.from_int64_t(19900807140513LL, true);
+  
+  assignDateTimeValues();
+  
+  EXPECT_EQ(1990, years);
+  EXPECT_EQ(8, months);
+  EXPECT_EQ(7, days);
+  EXPECT_EQ(14, hours);
+  EXPECT_EQ(5, minutes);
+  EXPECT_EQ(13, seconds);
+}
+
+TEST_F(DateTimeTest, from_int64_t_with_conversion_format_YYMMDDHHMMSS_yearOver2000)
+{
+  datetime.from_int64_t(300807140513LL, true);
+  
+  assignDateTimeValues();
+  
+  EXPECT_EQ(2030, years);
+  EXPECT_EQ(8, months);
+  EXPECT_EQ(7, days);
+  EXPECT_EQ(14, hours);
+  EXPECT_EQ(5, minutes);
+  EXPECT_EQ(13, seconds);
+}
+
+TEST_F(DateTimeTest, from_int64_t_with_conversion_format_YYMMDDHHMMSS_yearBelow2000)
+{
+  datetime.from_int64_t(900807140513LL, true);
+  
+  assignDateTimeValues();
+  
+  EXPECT_EQ(1990, years);
+  EXPECT_EQ(8, months);
+  EXPECT_EQ(7, days);
+  EXPECT_EQ(14, hours);
+  EXPECT_EQ(5, minutes);
+  EXPECT_EQ(13, seconds);
 }
 
 TEST_F(DateTimeTest, DISABLED_to_tm)
 {
-  uint32_t years = 2030, months = 8, days = 17, hours = 14, minutes = 45, seconds = 13;
+  years = 2030, months = 8, days = 17, hours = 14, minutes = 45, seconds = 13;
   Generator::DateTimeGen::make_datetime(&datetime, years, months, days, hours, minutes, seconds);
   struct tm filled;
   

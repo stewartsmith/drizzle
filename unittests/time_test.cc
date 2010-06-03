@@ -272,13 +272,12 @@ TEST_F(TimeTest, to_int32_t)
 TEST_F(TimeTest, from_int32_t_shouldPopulateTimeCorrectly)
 {
   uint32_t decoded_hours, decoded_minutes, decoded_seconds;
-  Time decoded_time;
+
+  sample_time.from_int32_t(183459);
   
-  decoded_time.from_int32_t(183459);
-  
-  decoded_hours= decoded_time.hours();
-  decoded_minutes= decoded_time.minutes();
-  decoded_seconds= decoded_time.seconds();
+  decoded_hours= sample_time.hours();
+  decoded_minutes= sample_time.minutes();
+  decoded_seconds= sample_time.seconds();
   
   EXPECT_EQ(18, decoded_hours);
   EXPECT_EQ(34, decoded_minutes);
