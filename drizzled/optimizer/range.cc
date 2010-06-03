@@ -248,7 +248,8 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
 
 static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t nparts);
 
-static ha_rows check_quick_select(optimizer::Parameter *param,
+static ha_rows check_quick_select(Session *session,
+                                  optimizer::Parameter *param,
                                   uint32_t idx,
                                   bool index_only,
                                   optimizer::SEL_ARG *tree,
@@ -257,7 +258,8 @@ static ha_rows check_quick_select(optimizer::Parameter *param,
                                   uint32_t *bufsize,
                                   optimizer::CostVector *cost);
 
-static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
+static optimizer::RangeReadPlan *get_key_scans_params(Session *session,
+                                                      optimizer::Parameter *param,
                                                       optimizer::SEL_TREE *tree,
                                                       bool index_read_must_be_used,
                                                       bool update_tbl_stats,
@@ -275,7 +277,8 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
                                                                  double read_time);
 
 static
-optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
+optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
+                                                  optimizer::Parameter *param,
                                                   optimizer::SEL_IMERGE *imerge,
                                                   double read_time);
 
@@ -791,7 +794,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         bool can_build_covering= false;
 
         /* Get best 'range' plan and prepare data for making other plans */
-        if ((range_trp= get_key_scans_params(&param, tree, false, true,
+        if ((range_trp= get_key_scans_params(session, &param, tree, false, true,
                                              best_read_time)))
         {
           best_trp= range_trp;
@@ -834,7 +837,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
         List_iterator_fast<optimizer::SEL_IMERGE> it(tree->merges);
         while ((imerge= it++))
         {
-          new_conj_trp= get_best_disjunct_quick(&param, imerge, best_read_time);
+          new_conj_trp= get_best_disjunct_quick(session, &param, imerge, best_read_time);
           if (new_conj_trp)
             set_if_smaller(param.table->quick_condition_rows,
                            new_conj_trp->records);
@@ -877,6 +880,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
   Get best plan for a optimizer::SEL_IMERGE disjunctive expression.
   SYNOPSIS
     get_best_disjunct_quick()
+      session
       param     Parameter from check_quick_select function
       imerge    Expression to use
       read_time Don't create scans with cost > read_time
@@ -939,7 +943,8 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
 */
 
 static
-optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
+optimizer::TableReadPlan *get_best_disjunct_quick(Session *session,
+                                                  optimizer::Parameter *param,
                                                   optimizer::SEL_IMERGE *imerge,
                                                   double read_time)
 {
@@ -977,7 +982,7 @@ optimizer::TableReadPlan *get_best_disjunct_quick(optimizer::Parameter *param,
        ptree != imerge->trees_next;
        ptree++, cur_child++)
   {
-    if (!(*cur_child= get_key_scans_params(param, *ptree, true, false, read_time)))
+    if (!(*cur_child= get_key_scans_params(session, param, *ptree, true, false, read_time)))
     {
       /*
         One of index scans in this index_merge is more expensive than entire
@@ -1971,6 +1976,7 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
 
   SYNOPSIS
     get_key_scans_params()
+      session
       param                    Parameters from test_quick_select
       tree                     Make range select for this optimizer::SEL_TREE
       index_read_must_be_used  true <=> assume 'index only' option will be set
@@ -1992,7 +1998,8 @@ optimizer::RorIntersectReadPlan *get_best_ror_intersect(const optimizer::Paramet
     NULL if no plan found or error occurred
 */
 
-static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *param,
+static optimizer::RangeReadPlan *get_key_scans_params(Session *session,
+                                                      optimizer::Parameter *param,
                                                       optimizer::SEL_TREE *tree,
                                                       bool index_read_must_be_used,
                                                       bool update_tbl_stats,
@@ -2029,7 +2036,7 @@ static optimizer::RangeReadPlan *get_key_scans_params(optimizer::Parameter *para
       bool read_index_only= index_read_must_be_used ||
                             param->table->covering_keys.test(keynr);
 
-      found_records= check_quick_select(param, idx, read_index_only, *key,
+      found_records= check_quick_select(session, param, idx, read_index_only, *key,
                                         update_tbl_stats, &mrr_flags,
                                         &buf_size, &cost);
       found_read_time= cost.total_cost();
@@ -3827,7 +3834,8 @@ walk_up_n_right:
 */
 
 static
-ha_rows check_quick_select(optimizer::Parameter *param,
+ha_rows check_quick_select(Session *session,
+                           optimizer::Parameter *param,
                            uint32_t idx,
                            bool index_only,
                            optimizer::SEL_ARG *tree,
@@ -3871,7 +3879,7 @@ ha_rows check_quick_select(optimizer::Parameter *param,
       !(pk_is_clustered && keynr == param->table->getShare()->primary_key))
      *mrr_flags |= HA_MRR_INDEX_ONLY;
 
-  if (current_session->lex->sql_command != SQLCOM_SELECT)
+  if (session->lex->sql_command != SQLCOM_SELECT)
     *mrr_flags |= HA_MRR_USE_DEFAULT_IMPL;
 
   *bufsize= param->session->variables.read_rnd_buff_size;
@@ -4935,7 +4943,8 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
       optimizer::CostVector dummy_cost;
       uint32_t mrr_flags= HA_MRR_USE_DEFAULT_IMPL;
       uint32_t mrr_bufsize= 0;
-      cur_quick_prefix_records= check_quick_select(param,
+      cur_quick_prefix_records= check_quick_select(session,
+                                                   param,
                                                    cur_param_idx,
                                                    false /*don't care*/,
                                                    cur_index_tree,

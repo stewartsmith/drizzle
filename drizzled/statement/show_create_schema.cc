@@ -35,7 +35,7 @@ bool statement::ShowCreateSchema::execute()
 {
   SchemaIdentifier schema_identifier(string(session->lex->name.str, session->lex->name.length));
 
-  if (not check_db_name(schema_identifier))
+  if (not check_db_name(session, schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
     return false;

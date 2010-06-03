@@ -900,7 +900,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
     my_casedn_str(files_charset_info, table->db.str);
 
     SchemaIdentifier schema_identifier(string(table->db.str));
-    if (not check_db_name(schema_identifier))
+    if (not check_db_name(session, schema_identifier))
     {
 
       my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
