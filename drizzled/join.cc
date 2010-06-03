@@ -5397,14 +5397,18 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
       (!entry->getShare()->blob_fields &&
        ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->cursor->stats.records <
         session->variables.sortbuff_size)))
+  {
     error= remove_dup_with_hash_index(join->session, entry,
                                       field_count, first_field,
                                       reclength, having);
+  }
   else
-    error= remove_dup_with_compare(join->session, entry, first_field, offset,
-                                   having);
+  {
+    error= remove_dup_with_compare(join->session, entry, first_field, offset, having);
+  }
 
   free_blobs(first_field);
+
   return(error);
 }
 
