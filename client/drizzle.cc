@@ -3166,13 +3166,14 @@ print_field_types(drizzle_result_st *result)
   tee_puts("", PAGER);
 }
 
-static uint32_t num_cells(const char *in_string, const char *end_string)
+static uint32_t num_cells(const string in_string)
 {
   uint32_t length= 0;
-  while (in_string < end_string)
+  string::const_iterator iter= in_string.begin();
+  while (iter < in_string.end())
   {
     length++;
-    in_string += U8_SEQUENCE_LENGTH(*in_string);
+    iter += U8_SEQUENCE_LENGTH(*iter);
   }
   return length;
 }
@@ -3208,8 +3209,7 @@ print_table_data(drizzle_result_st *result)
       /* Check if the max_byte value is really the maximum in terms
          of visual length since multibyte characters can affect the
          length of the separator. */
-      length= num_cells(drizzle_column_name(field),
-                        drizzle_column_name(field) + name_length);
+      length= num_cells(drizzle_column_name(field));
 
       if (name_length == drizzle_column_max_size(field))
       {
@@ -3247,8 +3247,7 @@ print_table_data(drizzle_result_st *result)
     for (uint32_t off=0; (field = drizzle_column_next(result)) ; off++)
     {
       uint32_t name_length= (uint32_t) strlen(drizzle_column_name(field));
-      uint32_t numcells= num_cells(drizzle_column_name(field),
-                                   drizzle_column_name(field) + name_length);
+      uint32_t numcells= num_cells(drizzle_column_name(field));
       uint32_t display_length= drizzle_column_max_size(field) + name_length -
                                numcells;
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
@@ -3311,7 +3310,7 @@ print_table_data(drizzle_result_st *result)
         We need to find how much screen real-estate we will occupy to know how
         many extra padding-characters we should send with the printing function.
       */
-      visible_length= num_cells(buffer, buffer + data_length);
+      visible_length= num_cells(buffer);
       extra_padding= data_length - visible_length;
 
       if (field_max_length > MAX_COLUMN_LENGTH)
