@@ -4197,6 +4197,40 @@ ha_innobase::doUpdateRecord(
 
   ut_a(prebuilt->template_type == ROW_MYSQL_WHOLE_ROW);
 
+  if (table->found_next_number_field)
+  {
+    uint64_t  auto_inc;
+    uint64_t  col_max_value;
+
+    auto_inc = table->found_next_number_field->val_int();
+
+    /* We need the upper limit of the col type to check for
+    whether we update the table autoinc counter or not. */
+    col_max_value = innobase_get_int_col_max_value(
+      table->found_next_number_field);
+
+    uint64_t current_autoinc;
+    ulint error= innobase_get_autoinc(&current_autoinc);
+    if (error == DB_SUCCESS
+        && auto_inc <= col_max_value && auto_inc != 0
+        && auto_inc >= current_autoinc)
+    {
+
+      uint64_t  need;
+      uint64_t  offset;
+
+      offset = prebuilt->autoinc_offset;
+      need = prebuilt->autoinc_increment;
+
+      auto_inc = innobase_next_autoinc(
+        auto_inc, need, offset, col_max_value);
+
+      dict_table_autoinc_update_if_greater(prebuilt->table, auto_inc);
+    }
+
+    dict_table_autoinc_unlock(prebuilt->table);
+  }
+
   innodb_srv_conc_enter_innodb(trx);
 
   error = row_update_for_mysql((byte*) old_row, prebuilt);
