@@ -75,6 +75,16 @@ this Software without prior written authorization of the copyright holder.
         ) \
     )
 
+/* Return the length of the codepoint based solely on the leading char */
+#define U8_SEQUENCE_LENGTH(c) \
+   ((uint8_t)(c) < 0x80 ? 1 : \
+     (((uint8_t)(c) >> 5) == 0x6 ? 2 : \
+       (((uint8_t)(c) >> 4) == 0xe ? 3 : \
+         (((uint8_t)(c) >> 3) == 0x1e ? 4 : 0) \
+        ) \
+      ) \
+    )
+
 /**
  * The maximum number of UTF-8 code units (bytes) per Unicode code point (U+0000..U+10ffff).
  * @return 4
