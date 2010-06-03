@@ -142,7 +142,7 @@ int32_t CumulativeStats::getCumulativeStatsLastValidIndex()
 }
 
 void CumulativeStats::sumCurrentScoreboardStatusVars(Scoreboard *scoreboard,
-                                                     StatusVars &current_status_vars)
+                                                     StatusVars *current_status_vars)
 {
   /* the vector of vectors */
   vector<vector<ScoreboardSlot* >* > *vector_of_scoreboard_vectors= 
@@ -165,7 +165,7 @@ void CumulativeStats::sumCurrentScoreboardStatusVars(Scoreboard *scoreboard,
       ScoreboardSlot *scoreboard_slot= *scoreboard_vector_it;
       if (scoreboard_slot->isInUse())
       {
-        current_status_vars.merge(scoreboard_slot->getStatusVars());
+        current_status_vars->merge(scoreboard_slot->getStatusVars());
       }
     }
   }

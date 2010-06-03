@@ -27,69 +27,52 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H
-#define PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H
+#ifndef PLUGIN_LOGGING_STATS_STATUS_TOOL_H
+#define PLUGIN_LOGGING_STATS_STATUS_TOOL_H
 
-#include "scoreboard_slot.h"
-#include "global_stats.h"
-#include "status_vars.h"
-#include "scoreboard.h"
-#include <drizzled/atomics.h>
+#include "logging_stats.h"
 
-#include <vector>
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/field.h>
 
-static const int32_t INVALID_INDEX= -1;
-
-class CumulativeStats
-{
+class StatusTool : public drizzled::plugin::TableFunction
+{            
 public:
-  CumulativeStats(uint32_t in_cumulative_stats_by_user_max);
 
-  ~CumulativeStats();
+  StatusTool(LoggingStats *logging_stats, bool isLocal);
+    
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  { 
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats,
+              std::vector<drizzled::drizzle_show_var *> *all_status_vars, 
+              bool isLocal);
 
-  void logUserStats(ScoreboardSlot* scoreboard_slot);
+    ~Generator();
+    
+    void fill(const std::string &name, char *value, drizzled::SHOW_TYPE show_type);
+    
+    bool populate();
+  private:
+    LoggingStats *logging_stats;
+    bool isLocal;
+    StatusVars *status_var_to_display;
 
-  void logGlobalStats(ScoreboardSlot* scoreboard_slot);
+    std::vector<drizzled::drizzle_show_var *>::iterator all_status_vars_it;
+    std::vector<drizzled::drizzle_show_var *>::iterator all_status_vars_end;
+  };
 
-  void logGlobalStatusVars(ScoreboardSlot* scoreboard_slot);
-
-  std::vector<ScoreboardSlot* > *getCumulativeStatsByUserVector()
+  Generator *generator(drizzled::Field **arg)
   {
-    return cumulative_stats_by_user_vector;
+    return new Generator(arg, outer_logging_stats, &all_status_vars, isLocal);
   }
-
-  GlobalStats *getGlobalStats()
-  {
-    return global_stats;
-  }
-
-  StatusVars *getGlobalStatusVars()
-  {
-    return global_status_vars;
-  }
-
-  int32_t getCumulativeStatsByUserMax()
-  {
-    return cumulative_stats_by_user_max; 
-  }
-
-  int32_t getCumulativeStatsLastValidIndex();
-
-  bool hasOpenUserSlots()
-  {
-    return isOpenUserSlots;
-  }
-
-  void sumCurrentScoreboardStatusVars(Scoreboard *scoreboard, 
-                                      StatusVars *current_status_vars);
 
 private:
-  std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
-  GlobalStats *global_stats; 
-  StatusVars *global_status_vars;
-  int32_t cumulative_stats_by_user_max;
-  drizzled::atomic<int32_t> last_valid_index;
-  bool isOpenUserSlots;
+  LoggingStats *outer_logging_stats;
+
+  bool isLocal;
+
+  std::vector<drizzled::drizzle_show_var *> all_status_vars;
 };
 
-#endif /* PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H */
+#endif /* PLUGIN_LOGGING_STATS_STATUS_TOOL_H */

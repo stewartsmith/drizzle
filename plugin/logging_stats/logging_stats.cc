@@ -85,6 +85,7 @@
  */
 
 #include "config.h"
+#include "status_tool.h"
 #include "logging_stats.h"
 #include "stats_schema.h"
 #include <drizzled/session.h>
@@ -177,9 +178,9 @@ static SessionStatementsTool *session_statements_tool= NULL;
 
 static StatusVarTool *status_var_tool= NULL;
 
-static SessionStatusTool *session_status_tool= NULL;
+static StatusTool *global_status_tool= NULL;
 
-static GlobalStatusTool *global_status_tool= NULL;
+static StatusTool *session_status_tool= NULL;
 
 static void enable(Session *,
                    drizzle_sys_var *,
@@ -238,14 +239,14 @@ static bool initTable()
     return true;
   }
 
-  session_status_tool= new(nothrow)SessionStatusTool(logging_stats);
+  session_status_tool= new(nothrow)StatusTool(logging_stats, true);
 
   if (! session_status_tool)
   {
     return true;
   }
 
-  global_status_tool= new(nothrow)GlobalStatusTool(logging_stats);
+  global_status_tool= new(nothrow)StatusTool(logging_stats, false);
 
   if (! global_status_tool)
   {
@@ -272,6 +273,7 @@ static int init(module::Context &context)
   context.add(status_var_tool);
   context.add(session_status_tool);
   context.add(global_status_tool);
+
 
   if (sysvar_logging_stats_enabled)
   {
