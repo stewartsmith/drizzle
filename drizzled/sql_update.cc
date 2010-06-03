@@ -293,7 +293,6 @@ int mysql_update(Session *session, TableList *table_list,
       ha_rows examined_rows;
 
       table->sort.io_cache = new internal::IO_CACHE;
-      memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
           (table->sort.found_records= filesort(session, table, sortorder, length,

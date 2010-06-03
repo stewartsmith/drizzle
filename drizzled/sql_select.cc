@@ -3942,10 +3942,10 @@ int join_init_quick_read_record(JoinTable *tab)
   return join_init_read_record(tab);
 }
 
-int rr_sequential(ReadRecord *info);
 int init_read_record_seq(JoinTable *tab)
 {
-  tab->read_record.read_record= rr_sequential;
+  tab->read_record.init_reard_record_sequential();
+
   if (tab->read_record.cursor->startTableScan(1))
     return 1;
   return (*tab->read_record.read_record)(&tab->read_record);
@@ -5252,7 +5252,6 @@ int create_sort_index(Session *session, Join *join, order_st *order, ha_rows fil
     goto err;
 
   table->sort.io_cache= new internal::IO_CACHE;
-  memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select
@@ -5416,22 +5415,19 @@ int remove_dup_with_hash_index(Session *session,
   int error;
   Cursor *cursor= table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
-  uint32_t *field_lengths,*field_length;
+  uint32_t *field_length;
   HASH hash;
-  std::vector<unsigned char>key_buffer;
+  std::vector<unsigned char> key_buffer;
+  std::vector<uint32_t> field_lengths;
 
   key_buffer.resize((key_length + extra_length) * (long) cursor->stats.records);
-
-  field_lengths= (uint32_t *)std::malloc(field_count * sizeof(*field_lengths));
-
-  if (field_lengths == NULL)
-    return(1);
+  field_lengths.resize(field_count);
 
   {
     Field **ptr;
     uint32_t total_length= 0;
 
-    for (ptr= first_field, field_length=field_lengths ; *ptr ; ptr++)
+    for (ptr= first_field, field_length= &field_lengths[0] ; *ptr ; ptr++)
     {
       uint32_t length= (*ptr)->sort_length();
       (*field_length++)= length;
@@ -5445,7 +5441,6 @@ int remove_dup_with_hash_index(Session *session,
   if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor->stats.records, 0,
 		key_length, (hash_get_key) 0, 0, 0))
   {
-    free((char*) field_lengths);
     return(1);
   }
 
@@ -5477,7 +5472,7 @@ int remove_dup_with_hash_index(Session *session,
 
     /* copy fields to key buffer */
     org_key_pos= key_pos;
-    field_length=field_lengths;
+    field_length= &field_lengths[0];
     for (Field **ptr= first_field ; *ptr ; ptr++)
     {
       (*ptr)->sort_string(key_pos,*field_length);
@@ -5494,14 +5489,12 @@ int remove_dup_with_hash_index(Session *session,
       (void) my_hash_insert(&hash, org_key_pos);
     key_pos+=extra_length;
   }
-  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->endTableScan();
   return(0);
 
 err:
-  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->endTableScan();
@@ -5740,7 +5733,7 @@ static bool find_order_in_list(Session *session,
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR),
                           ((Item_ident*) order_item)->field_name,
-                          current_session->where);
+                          session->where);
     }
   }
 
@@ -6594,8 +6587,7 @@ void print_join(Session *session, String *str,
 void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
 {
   /* QQ: session may not be set for sub queries, but this should be fixed */
-  if (!session)
-    session= current_session;
+  assert(session);
 
   str->append(STRING_WITH_LEN("select "));
 

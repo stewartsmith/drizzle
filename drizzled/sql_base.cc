@@ -1858,7 +1858,7 @@ bool wait_for_tables(Session *session)
 */
 
 
-Table *drop_locked_tables(Session *session,const char *db, const char *table_name)
+Table *drop_locked_tables(Session *session, const char *db, const char *table_name)
 {
   Table *table,*next,**prev, *found= 0;
   prev= &session->open_tables;

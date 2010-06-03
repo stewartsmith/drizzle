@@ -919,7 +919,6 @@ Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   range_seq_t seq_it;
   ha_rows rows, total_rows= 0;
   uint32_t n_ranges=0;
-  Session *session= current_session;
 
   /* Default MRR implementation doesn't need buffer */
   *bufsz= 0;
@@ -927,9 +926,6 @@ Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   seq_it= seq->init(seq_init_param, n_ranges, *flags);
   while (!seq->next(seq_it, &range))
   {
-    if (unlikely(session->killed != 0))
-      return HA_POS_ERROR;
-
     n_ranges++;
     key_range *min_endp, *max_endp;
     {

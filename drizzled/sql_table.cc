@@ -1598,6 +1598,7 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 
   SYNOPSIS
     mysql_rename_table()
+      session
       base                      The plugin::StorageEngine handle.
       old_db                    The old database name.
       old_name                  The old table name.
@@ -1610,11 +1611,11 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 */
 
 bool
-mysql_rename_table(plugin::StorageEngine *base,
+mysql_rename_table(Session &session,
+                   plugin::StorageEngine *base,
                    TableIdentifier &from,
                    TableIdentifier &to)
 {
-  Session *session= current_session;
   int error= 0;
 
   assert(base);
@@ -1625,7 +1626,7 @@ mysql_rename_table(plugin::StorageEngine *base,
     return true;
   }
 
-  error= base->renameTable(*session, from, to);
+  error= base->renameTable(session, from, to);
 
   if (error == HA_ERR_WRONG_COMMAND)
   {
