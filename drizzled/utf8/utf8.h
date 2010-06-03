@@ -71,29 +71,6 @@ bool is_single(T c)
 }
 
 /**
- * Is this code unit (byte) a UTF-8 lead byte?
- * @param c 8-bit code unit (byte)
- * @return TRUE or FALSE
- */
-template <class T>
-bool is_lead(T c)
-{
-  return (static_cast<uint8_t>(c) - 0xc0) < 0x3e;
-}
-
-
-/**
- * Is this code unit (byte) a UTF-8 trail byte?
- * @param c 8-bit code unit (byte)
- * @return TRUE or FALSE
- */
-template <class T>
-bool is_trail(T c)
-{
-  return (static_cast<uint8_t>(c) & 0xc0) == 0x80;
-}
-
-/**
  * How many code units (bytes) are used for the UTF-8 encoding
  * of this Unicode code point?
  * @param c 32-bit code point
