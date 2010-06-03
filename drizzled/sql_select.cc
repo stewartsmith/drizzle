@@ -5733,7 +5733,7 @@ static bool find_order_in_list(Session *session,
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR),
                           ((Item_ident*) order_item)->field_name,
-                          current_session->where);
+                          session->where);
     }
   }
 
