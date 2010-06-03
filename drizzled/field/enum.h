@@ -26,7 +26,7 @@
 namespace drizzled
 {
 
-class Field_enum :public Field_str 
+class Field_enum :public Field_str
 {
 protected:
   uint32_t packlength;

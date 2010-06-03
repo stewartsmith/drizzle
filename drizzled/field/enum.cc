@@ -40,7 +40,7 @@ namespace drizzled
 
 enum ha_base_keytype Field_enum::key_type() const
 {
-  switch (packlength) 
+  switch (packlength)
   {
     default: return HA_KEYTYPE_BINARY;
     case 2: assert(1);
@@ -89,7 +89,7 @@ void Field_enum::store_type(uint64_t value)
 
 /**
  * Given a supplied string, looks up the string in the internal typelib
- * and stores the found key.  Upon not finding an entry in the typelib, 
+ * and stores the found key.  Upon not finding an entry in the typelib,
  * we always throw an error.
  */
 int Field_enum::store(const char *from, uint32_t length, const CHARSET_INFO * const)
@@ -136,7 +136,7 @@ int Field_enum::store(double from)
  * @note MySQL allows 0 values, saying that 0 is "the index of the
  * blank string error", whatever that means.  Uhm, Drizzle doesn't
  * allow this.  To store an ENUM column value using an integer, you
- * must specify the 1-based index of the enum column definition's 
+ * must specify the 1-based index of the enum column definition's
  * key.
  */
 int Field_enum::store(int64_t from, bool)
