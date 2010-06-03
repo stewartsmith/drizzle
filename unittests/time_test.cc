@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <gtest/gtest.h>
+#include <drizzled/decimal.h>
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
 
@@ -33,6 +34,7 @@ class TimeTest: public ::testing::Test
 protected:
   Time sample_time;
   bool result;
+  uint32_t hours, minutes, seconds;
   
   Time identical_with_sample_time, before_sample_time, after_sample_time;
   
@@ -44,6 +46,23 @@ protected:
     Generator::TimeGen::make_time(&identical_with_sample_time, 18, 34, 59);
     Generator::TimeGen::make_time(&after_sample_time, 18, 35, 0);
     
+  }
+
+  void assign_time_values()
+  {
+    hours= sample_time.hours();
+    minutes= sample_time.minutes();
+    seconds= sample_time.seconds();
+  }
+
+  void from_string(const char *string)
+  {
+    
+    init_temporal_formats();
+    result= sample_time.from_string(string, strlen(string));
+    deinit_temporal_formats();
+    
+    assign_time_values();
   }
 };
 
@@ -228,38 +247,6 @@ TEST_F(TimeTest, to_string_nullBuffer_shouldReturnProperLengthAnyway)
   ASSERT_EQ(Time::MAX_STRING_LENGTH - 1, length);  
 }
 
-TEST_F(TimeTest, from_string_validString_shouldPopulateCorrectly)
-{
-  char valid_string[Time::MAX_STRING_LENGTH]= "18:34:59";
-  uint32_t hours, minutes, seconds;
-
-  init_temporal_formats();
-  
-  result= sample_time.from_string(valid_string, Time::MAX_STRING_LENGTH - 1);
-  ASSERT_TRUE(result);
-  
-  hours= sample_time.hours();
-  minutes= sample_time.minutes();
-  seconds= sample_time.seconds();
-
-  deinit_temporal_formats();
-  
-  EXPECT_EQ(18, hours);
-  EXPECT_EQ(34, minutes);
-  EXPECT_EQ(59, seconds);
-}
-
-TEST_F(TimeTest, from_string_invalidString_shouldReturn_False)
-{
-  char invalid_string[Time::MAX_STRING_LENGTH]= "1o:34:59";
-
-  init_temporal_formats();
-  result= sample_time.from_string(invalid_string, Time::MAX_STRING_LENGTH - 1);
-  deinit_temporal_formats();
-  
-  ASSERT_FALSE(result);
-}
-
 TEST_F(TimeTest, to_int32_t)
 {
   int32_t representation;
@@ -271,30 +258,120 @@ TEST_F(TimeTest, to_int32_t)
 
 TEST_F(TimeTest, from_int32_t_shouldPopulateTimeCorrectly)
 {
-  uint32_t decoded_hours, decoded_minutes, decoded_seconds;
-
   sample_time.from_int32_t(183459);
   
-  decoded_hours= sample_time.hours();
-  decoded_minutes= sample_time.minutes();
-  decoded_seconds= sample_time.seconds();
+  assign_time_values();;
   
-  EXPECT_EQ(18, decoded_hours);
-  EXPECT_EQ(34, decoded_minutes);
-  EXPECT_EQ(59, decoded_seconds);
+  EXPECT_EQ(18, hours);
+  EXPECT_EQ(34, minutes);
+  EXPECT_EQ(59, seconds);
 }
 
 TEST_F(TimeTest, from_time_t)
 {
-  uint32_t hours, minutes, seconds;
-  
   sample_time.from_time_t(59588);
   
-  hours= sample_time.hours();
-  minutes= sample_time.minutes();
-  seconds= sample_time.seconds();
+  assign_time_values();
   
   EXPECT_EQ(16, hours);  
   EXPECT_EQ(33, minutes);
   EXPECT_EQ(8, seconds);
 }
+
+TEST_F(TimeTest, to_decimal)
+{
+  drizzled::my_decimal to;
+  Generator::TimeGen::make_time(&sample_time, 8, 4, 9);
+
+  sample_time.to_decimal(&to);
+  
+  ASSERT_EQ(80409, to.buf[0]);
+}
+
+TEST_F(TimeTest, from_string_invalidString_shouldReturn_False)
+{
+  char invalid_string[Time::MAX_STRING_LENGTH]= "1o:34:59";
+  
+  init_temporal_formats();
+  result= sample_time.from_string(invalid_string, strlen(invalid_string));
+  deinit_temporal_formats();
+  
+  ASSERT_FALSE(result);
+}
+
+TEST_F(TimeTest, from_string_validString_minuteAndSecond_shouldPopulateCorrectly)
+{
+  char valid_string[Time::MAX_STRING_LENGTH]= "4:52";
+
+  from_string(valid_string);
+
+  EXPECT_EQ(4, minutes);
+  EXPECT_EQ(52, seconds);
+}
+
+TEST_F(TimeTest, from_string_validString_minuteAndSecondNoColon_shouldPopulateCorrectly)
+{
+  char valid_string[Time::MAX_STRING_LENGTH]= "3456";
+  
+  from_string(valid_string);
+  
+  EXPECT_EQ(34, minutes);
+  EXPECT_EQ(56, seconds);
+}
+
+TEST_F(TimeTest, from_string_validString_secondsOnly_shouldPopulateCorrectly)
+{
+  char valid_string[Time::MAX_STRING_LENGTH]= "59";
+  
+  from_string(valid_string);
+  
+  EXPECT_EQ(59, seconds);
+}
+/*
+class TimeFromStringTest: public ::testing::TestWithParam<const char*>
+{
+  protected:
+    Time time;
+    bool result;
+    uint32_t hours, minutes, seconds;
+    
+    virtual void SetUp()
+    {
+      init_temporal_formats();
+    }
+    
+    virtual void TearDown()
+    {
+      deinit_temporal_formats();
+    }
+    
+    void assign_time_values()
+    {
+      hours= time.hours();
+      minutes= time.minutes();
+      seconds= time.seconds();
+    }
+};
+
+TEST_P(TimeFromStringTest, from_string_validString_formatsWithAllTimeComponentsPresent_shouldPopulateCorrectly)
+{
+  const char *valid_string = GetParam();
+
+  result= time.from_string(valid_string, strlen(valid_string));
+  ASSERT_TRUE(result);
+  
+  assign_time_values();
+
+  EXPECT_EQ(8, hours);
+  EXPECT_EQ(4, minutes);
+  EXPECT_EQ(9, seconds);
+}
+
+INSTANTIATE_TEST_CASE_P(FormatsWithAllTimeComponentsPresent, TimeFromStringTest,
+                        ::testing::Values("080409",
+                                          "80409",
+                                          "08:04:09",
+                                          "8:04:09",
+                                          "8:04:9",
+                                          "8:4:9"));
+*/                                          

@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <gtest/gtest.h>
+#include <drizzled/decimal.h>
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
 
@@ -456,4 +457,14 @@ TEST_F(DateTest, from_time_t)
   EXPECT_EQ(1990, years);  
   EXPECT_EQ(9, months);
   EXPECT_EQ(9, days);
+}
+
+TEST_F(DateTest, to_decimal)
+{
+  drizzled::my_decimal to;
+  Generator::DateGen::make_date(&date, 1987, 5, 6);
+
+  date.to_decimal(&to);
+
+  ASSERT_EQ(19870506, to.buf[0]);
 }

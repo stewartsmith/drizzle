@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <gtest/gtest.h>
+#include <drizzled/decimal.h>
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
 
@@ -194,27 +195,6 @@ TEST_F(DateTimeTest, to_string_nullBuffer_noMicroSeconds_shouldReturnProperLengt
   ASSERT_EQ(DateTime::MAX_STRING_LENGTH - 1 - 7, length);  
 }
 
-TEST_F(DateTimeTest, from_string_validString_shouldPopulateCorrectly)
-{
-  char valid_string[DateTime::MAX_STRING_LENGTH]= "2010-05-01 08:07:06";
-
-  init_temporal_formats();
-  
-  result = datetime.from_string(valid_string, DateTime::MAX_STRING_LENGTH - 1);
-  ASSERT_TRUE(result);
-
-  assignDateTimeValues();
-  
-  EXPECT_EQ(2010, years);
-  EXPECT_EQ(5, months);
-  EXPECT_EQ(1, days);
-  EXPECT_EQ(8, hours);
-  EXPECT_EQ(7, minutes);
-  EXPECT_EQ(6, seconds);
-
-  deinit_temporal_formats();
-}
-
 TEST_F(DateTimeTest, to_int64_t)
 {
   Generator::DateTimeGen::make_datetime(&datetime, 2030, 8, 7, 14, 5, 13);
@@ -315,3 +295,96 @@ TEST_F(DateTimeTest, DISABLED_to_tm)
   EXPECT_EQ(6, filled.tm_wday);
   EXPECT_EQ(-1, filled.tm_isdst);
 }
+
+TEST_F(DateTimeTest, to_decimal)
+{
+  drizzled::my_decimal to;
+  Generator::DateTimeGen::make_datetime(&datetime, 1987, 6, 13, 5, 10, 13);
+
+  datetime.to_decimal(&to);
+  
+  ASSERT_EQ(19870,to.buf[0]);
+  ASSERT_EQ(613051013,to.buf[1]);
+}
+
+
+/*
+class DateTimeFromStringTest: public ::testing::TestWithParam<const char*>
+{
+  protected:
+    DateTime datetime;
+    bool result;
+    uint32_t years, months, days;
+    uint32_t hours, minutes, seconds;
+
+    virtual void SetUp()
+    {
+      init_temporal_formats();
+    }
+
+    virtual void TearDown()
+    {
+      deinit_temporal_formats();
+    }
+
+    void assignDateTimeValues()
+    {
+      years = datetime.years();
+      months = datetime.months();
+      days = datetime.days();
+      hours = datetime.hours();
+      minutes = datetime.minutes();
+      seconds = datetime.seconds();
+    }
+};
+
+TEST_P(DateTimeFromStringTest, from_string_validString_formatsWithDateAndTimePresent_shouldPopulateCorrectly)
+{
+  const char *valid_string = GetParam();
+
+  result = datetime.from_string(valid_string, strlen(valid_string));
+  ASSERT_TRUE(result);
+
+  assignDateTimeValues();
+
+  EXPECT_EQ(2010, years);
+  EXPECT_EQ(5, months);
+  EXPECT_EQ(1, days);
+  EXPECT_EQ(8, hours);
+  EXPECT_EQ(7, minutes);
+  EXPECT_EQ(6, seconds);
+}
+
+INSTANTIATE_TEST_CASE_P(FormatsWithDateAndTimePresent, DateTimeFromStringTest,
+                        ::testing::Values("20100501080706",
+                                          "2010-05-01 08:07:06",
+                                          "2010/05/01T08:07:06",
+                                          "2010.5.1 08:07:06",
+                                          "10-05-01 08:07:06",
+                                          "10/5/1 08:07:06",
+                                          "10.5.1 08:07:06"));
+
+TEST_P(DateTimeFromStringTest, from_string_validString_formatsWithDateHourAndMinutePresent_shouldPopulateCorrectly)
+{
+  const char *valid_string = GetParam();
+
+  result = datetime.from_string(valid_string, strlen(valid_string));
+  ASSERT_TRUE(result);
+
+  assignDateTimeValues();
+
+  EXPECT_EQ(2010, years);
+  EXPECT_EQ(5, months);
+  EXPECT_EQ(1, days);
+  EXPECT_EQ(8, hours);
+  EXPECT_EQ(7, minutes);
+}
+
+INSTANTIATE_TEST_CASE_P(FormatsWithDateHourAndMinutePresent, DateTimeFromStringTest,
+                        ::testing::Values("2010-05-01 08:07",
+                                          "2010/05/01 08:07"
+                                          "2010.5.1 08:07",
+                                          "10-05-01 08:07",
+                                          "10/5/1 08:07",
+                                          "10.5.1 08:07"));
+*/
