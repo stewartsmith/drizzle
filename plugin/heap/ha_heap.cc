@@ -199,7 +199,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
     HP_SHARE *internal_share= NULL;
     message::Table create_proto;
 
-    if (!heap_storage_engine->heap_create_table(ha_session(), name, table,
+    if (!heap_storage_engine->heap_create_table(table->in_use, name, table,
                                                 internal_table,
                                                 create_proto,
                                                 &internal_share))

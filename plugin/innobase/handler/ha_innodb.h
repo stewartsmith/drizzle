@@ -85,7 +85,6 @@ class ha_innobase: public Cursor
 	UNIV_INTERN uint store_key_val_for_row(uint keynr, char* buff, 
                                    uint buff_len, const unsigned char* record);
 	UNIV_INTERN void update_session(Session* session);
-	UNIV_INTERN void update_session();
 	UNIV_INTERN int change_active_index(uint32_t keynr);
 	UNIV_INTERN int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
 	UNIV_INTERN ulint innobase_lock_autoinc();
@@ -189,10 +188,12 @@ class ha_innobase: public Cursor
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
         // Don't use these, I have just left them in here as reference for
         // the future. -Brian
-	UNIV_INTERN int add_index(TABLE *table_arg, KeyInfo *key_info, uint num_of_keys);
-	UNIV_INTERN int prepare_drop_index(TABLE *table_arg, uint *key_num,
+	UNIV_INTERN int add_index(Session *session, TABLE *table_arg, KeyInfo *key_info, uint num_of_keys);
+	UNIV_INTERN int prepare_drop_index(Session *session,
+                                           TABLE *table_arg,
+                                           uint *key_num,
                                            uint num_of_keys);
-        UNIV_INTERN int final_drop_index(TABLE *table_arg);
+        UNIV_INTERN int final_drop_index(Session *session, TABLE *table_arg);
 	/** @} */
 public:
   int read_range_first(const key_range *start_key, const key_range *end_key,

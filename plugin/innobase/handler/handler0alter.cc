@@ -603,6 +603,7 @@ UNIV_INTERN
 int
 ha_innobase::add_index(
 /*===================*/
+                       Session *session,
 	Table*	i_table,	/*!< in: Table where indexes are created */
 	KeyInfo*	key_info,	/*!< in: Indexes to be created */
 	uint	num_of_keys)	/*!< in: Number of indexes to be created */
@@ -627,7 +628,7 @@ ha_innobase::add_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	heap = mem_heap_create(1024);
 
@@ -907,6 +908,7 @@ UNIV_INTERN
 int
 ha_innobase::prepare_drop_index(
 /*============================*/
+                                Session *session,
 	Table*	i_table,	/*!< in: Table where indexes are dropped */
 	uint*	key_num,	/*!< in: Key nums to be dropped */
 	uint	num_of_keys)	/*!< in: Number of keys to be dropped */
@@ -922,7 +924,7 @@ ha_innobase::prepare_drop_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 	trx = prebuilt->trx;
@@ -1107,6 +1109,7 @@ UNIV_INTERN
 int
 ha_innobase::final_drop_index(
 /*==========================*/
+                              Session *session,
 	Table*	)		/*!< in: Table where indexes are dropped */
 {
 	dict_index_t*	index;		/*!< Index to be dropped */
@@ -1117,7 +1120,7 @@ ha_innobase::final_drop_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 	trx_start_if_not_started(prebuilt->trx);

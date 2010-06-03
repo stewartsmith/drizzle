@@ -191,13 +191,6 @@ void **Cursor::ha_data(Session *session) const
   return session->getEngineData(engine);
 }
 
-Session *Cursor::ha_session(void) const
-{
-  assert(!table || !table->in_use || table->in_use == current_session);
-  return (table && table->in_use) ? table->in_use : current_session;
-}
-
-
 bool Cursor::is_fatal_error(int error, uint32_t flags)
 {
   if (!error ||
