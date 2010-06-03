@@ -239,10 +239,16 @@ public:
   }
 
   /* The following is copied to each Table on OPEN */
+  typedef std::vector<Field *> Fields;
 private:
-  std::vector<Field *> field;
+  Fields field;
 public:
-  Field ** getFields()
+  Fields getFields() const
+  {
+    return field;
+  }
+
+  Field ** getFields(bool)
   {
     return &field[0];
   }

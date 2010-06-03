@@ -1435,7 +1435,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     blob_field.resize(blob_fields);
     save= &blob_field[0];
     k= 0;
-    for (std::vector<Field *>::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
+    for (Fields::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
     {
       if ((*iter)->flags & BLOB_FLAG)
         (*save++)= k;
@@ -1648,7 +1648,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[(uint32_t) (found_next_number_field - getFields())];
+      outparam.field[(uint32_t) (found_next_number_field - getFields(true))];
   if (timestamp_field)
     outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
 
