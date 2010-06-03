@@ -1429,15 +1429,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (blob_fields)
   {
-    Field **ptr;
     uint32_t k, *save;
 
     /* Store offsets to blob fields to find them fast */
     blob_field.resize(blob_fields);
     save= &blob_field[0];
-    for (k= 0, ptr= getFields() ; *ptr ; ptr++, k++)
+    k= 0;
+    for (std::vector<Field *>::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
     {
-      if ((*ptr)->flags & BLOB_FLAG)
+      if ((*iter)->flags & BLOB_FLAG)
         (*save++)= k;
     }
   }
