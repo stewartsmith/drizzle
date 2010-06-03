@@ -77,9 +77,9 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_CANONICAL_TARGET
   
   m4_if(PCT_DONT_SUPRESS_INCLUDE,yes,[
-    AM_INIT_AUTOMAKE(-Wall -Werror subdir-objects foreign)
+    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability subdir-objects foreign)
   ],[
-    AM_INIT_AUTOMAKE(-Wall -Werror nostdinc subdir-objects foreign)
+    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability nostdinc subdir-objects foreign)
   ])
 
   m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
