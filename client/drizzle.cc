@@ -49,6 +49,7 @@
 # endif
 #endif
 
+#include <cerrno>
 #include <string>
 #include <drizzled/gettext.h>
 #include <iostream>
