@@ -42,11 +42,13 @@ enum ha_base_keytype Field_enum::key_type() const
 {
   switch (packlength)
   {
-    default: return HA_KEYTYPE_BINARY;
-    case 2: assert(1);
-    case 3: assert(1);
-    case 4: return HA_KEYTYPE_ULONG_INT;
-    case 8: return HA_KEYTYPE_ULONGLONG;
+  case 1:
+    return HA_KEYTYPE_BINARY;
+  case 2:
+    return HA_KEYTYPE_ULONG_INT;
+  default:
+    assert(packlength <= 2);
+    return HA_KEYTYPE_ULONG_INT;
   }
 }
 
@@ -64,26 +66,8 @@ void Field_enum::store_type(uint64_t value)
 #endif
     shortstore(ptr,(unsigned short) value);
   break;
-  case 3: int3store(ptr,(long) value); break;
-  case 4:
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    int4store(ptr,value);
-  }
-  else
-#endif
-    longstore(ptr,(long) value);
-  break;
-  case 8:
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    int8store(ptr,value);
-  }
-  else
-#endif
-    int64_tstore(ptr,value); break;
+  default:
+    assert(packlength <= 2);
   }
 }
 
@@ -180,30 +164,8 @@ int64_t Field_enum::val_int(void)
       shortget(tmp,ptr);
     return (int64_t) tmp;
   }
-  case 3:
-    return (int64_t) uint3korr(ptr);
-  case 4:
-  {
-    uint32_t tmp;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      tmp=uint4korr(ptr);
-    else
-#endif
-      longget(tmp,ptr);
-    return (int64_t) tmp;
-  }
-  case 8:
-  {
-    int64_t tmp;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      tmp=sint8korr(ptr);
-    else
-#endif
-      int64_tget(tmp,ptr);
-    return tmp;
-  }
+  default:
+    assert(packlength <= 2);
   }
   return 0;					// impossible
 }
