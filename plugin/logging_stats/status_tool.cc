@@ -165,13 +165,6 @@ void StatusTool::Generator::fill(const string &name, char *value, SHOW_TYPE show
 
   status_var= status_var_to_display->getStatusVarCounters();
 
-  if (show_type == SHOW_SYS)
-  {
-    show_type= ((sys_var*) value)->show_type();
-    value= (char*) ((sys_var*) value)->value_ptr(&(getSession()), OPT_GLOBAL,
-                                                 &null_lex_str);
-  }
-
   /*
     note that value may be == buff. All SHOW_xxx code below
     should still work in this case

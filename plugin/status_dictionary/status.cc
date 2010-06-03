@@ -42,40 +42,18 @@ StateTool::StateTool(const char *arg, bool global) :
 }
 
 StateTool::Generator::Generator(Field **arg, sql_var_t option_arg,
-                                drizzle_show_var *variables_args,
-                                bool status_arg) :
+                                drizzle_show_var *variables_args)
+                                :
   plugin::TableFunction::Generator(arg),
   option_type(option_arg),
-  has_status(status_arg),
   variables(variables_args)
 {
-  if (not has_status)
-  {
-    status_ptr= NULL;
-    pthread_rwlock_rdlock(&LOCK_system_variables_hash);
-  }
-  else if (option_type == OPT_GLOBAL  && has_status)
-  {
-    status_ptr= &status;
-    pthread_mutex_lock(&LOCK_status);
-    calc_sum_of_all_status(&status);
-  }
-  else
-  {
-    status_ptr= &getSession().status_var;
-  }
+  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
 }
 
 StateTool::Generator::~Generator()
 {
-  if (not has_status)
-  {
-    pthread_rwlock_unlock(&LOCK_system_variables_hash);
-  }
-  else if (option_type == OPT_GLOBAL)
-  {
-    pthread_mutex_unlock(&LOCK_status);
-  }
+  pthread_rwlock_unlock(&LOCK_system_variables_hash);
 }
 
 bool StateTool::Generator::populate()
@@ -113,18 +91,10 @@ bool StateTool::Generator::populate()
   return false;
 }
 
-
-extern drizzled::KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
 void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE show_type)
 {
-  struct system_status_var *status_var;
   std::ostringstream oss;
-
-
   std::string return_value;
-
-  /* Scope represents if the status should be session or global */
-  status_var= getStatus();
 
   pthread_mutex_lock(&LOCK_global_system_variables);
 
@@ -140,24 +110,15 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
     should still work in this case
   */
   switch (show_type) {
-  case SHOW_DOUBLE_STATUS:
-    value= ((char *) status_var + (ulong) value);
-    /* fall through */
   case SHOW_DOUBLE:
     oss.precision(6);
     oss << *(double *) value;
     return_value= oss.str();
     break;
-  case SHOW_LONG_STATUS:
-    value= ((char *) status_var + (ulong) value);
-    /* fall through */
   case SHOW_LONG:
     oss << *(long*) value;
     return_value= oss.str();
     break;
-  case SHOW_LONGLONG_STATUS:
-    value= ((char *) status_var + (uint64_t) value);
-    /* fall through */
   case SHOW_LONGLONG:
     oss << *(int64_t*) value;
     return_value= oss.str();
@@ -192,16 +153,6 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
 
       break;
     }
-  case SHOW_KEY_CACHE_LONG:
-    value= (char*) dflt_key_cache + (unsigned long)value;
-    oss << *(long*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_KEY_CACHE_LONGLONG:
-    value= (char*) dflt_key_cache + (unsigned long)value;
-    oss << *(int64_t*) value;
-    return_value= oss.str();
-    break;
   case SHOW_UNDEF:
     break;                                        // Return empty string
   case SHOW_SYS:                                  // Cannot happen

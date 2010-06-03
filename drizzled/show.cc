@@ -643,10 +643,6 @@ public:
 
 static vector<drizzle_show_var *> all_status_vars;
 static bool status_vars_inited= 0;
-static int show_var_cmp(const void *var1, const void *var2)
-{
-  return strcmp(((drizzle_show_var*)var1)->name, ((drizzle_show_var*)var2)->name);
-}
 
 class show_var_cmp_functor
 {
@@ -658,53 +654,6 @@ class show_var_cmp_functor
     return (val < 0);
   }
 };
-
-class show_var_remove_if
-{
-  public:
-  show_var_remove_if() { }
-  inline bool operator()(const drizzle_show_var *curr) const
-  {
-    return (curr->type == SHOW_UNDEF);
-  }
-};
-
-drizzle_show_var *getFrontOfStatusVars()
-{
-  return all_status_vars.front();
-}
-
-/*
-  Adds an array of drizzle_show_var entries to the output of SHOW STATUS
-
-  SYNOPSIS
-    add_status_vars(drizzle_show_var *list)
-    list - an array of drizzle_show_var entries to add to all_status_vars
-           the last entry must be {0,0,SHOW_UNDEF}
-
-  NOTE
-    The handling of all_status_vars[] is completely internal, it's allocated
-    automatically when something is added to it, and deleted completely when
-    the last entry is removed.
-
-    As a special optimization, if add_status_vars() is called before
-    init_status_vars(), it assumes "startup mode" - neither concurrent access
-    to the array nor SHOW STATUS are possible (thus it skips locks and qsort)
-*/
-int add_status_vars(drizzle_show_var *list)
-{
-  int res= 0;
-  if (status_vars_inited)
-    pthread_mutex_lock(&LOCK_status);
-  while (list->name)
-    all_status_vars.insert(all_status_vars.begin(), list++);
-  if (status_vars_inited)
-    sort(all_status_vars.begin(), all_status_vars.end(),
-         show_var_cmp_functor());
-  if (status_vars_inited)
-    pthread_mutex_unlock(&LOCK_status);
-  return res;
-}
 
 /*
   Make all_status_vars[] usable for SHOW STATUS
@@ -747,91 +696,6 @@ void reset_status_vars()
 void free_status_vars()
 {
   all_status_vars.clear();
-}
-
-/*
-  Removes an array of drizzle_show_var entries from the output of SHOW STATUS
-
-  SYNOPSIS
-    remove_status_vars(drizzle_show_var *list)
-    list - an array of drizzle_show_var entries to remove to all_status_vars
-           the last entry must be {0,0,SHOW_UNDEF}
-
-  NOTE
-    there's lots of room for optimizing this, especially in non-sorted mode,
-    but nobody cares - it may be called only in case of failed plugin
-    initialization in the mysqld startup.
-*/
-
-void remove_status_vars(drizzle_show_var *list)
-{
-  if (status_vars_inited)
-  {
-    pthread_mutex_lock(&LOCK_status);
-    drizzle_show_var *all= all_status_vars.front();
-    int a= 0, b= all_status_vars.size(), c= (a+b)/2;
-
-    for (; list->name; list++)
-    {
-      int res= 0;
-      for (a= 0, b= all_status_vars.size(); b-a > 1; c= (a+b)/2)
-      {
-        res= show_var_cmp(list, all+c);
-        if (res < 0)
-          b= c;
-        else if (res > 0)
-          a= c;
-        else
-          break;
-      }
-      if (res == 0)
-        all[c].type= SHOW_UNDEF;
-    }
-    /* removes all the SHOW_UNDEF elements from the vector */
-    all_status_vars.erase(std::remove_if(all_status_vars.begin(),
-                            all_status_vars.end(),show_var_remove_if()),
-                            all_status_vars.end());
-    pthread_mutex_unlock(&LOCK_status);
-  }
-  else
-  {
-    drizzle_show_var *all= all_status_vars.front();
-    uint32_t i;
-    for (; list->name; list++)
-    {
-      for (i= 0; i < all_status_vars.size(); i++)
-      {
-        if (show_var_cmp(list, all+i))
-          continue;
-        all[i].type= SHOW_UNDEF;
-        break;
-      }
-    }
-    /* removes all the SHOW_UNDEF elements from the vector */
-    all_status_vars.erase(std::remove_if(all_status_vars.begin(),
-                            all_status_vars.end(),show_var_remove_if()),
-                            all_status_vars.end());
-  }
-}
-
-/* collect status for all running threads */
-
-void calc_sum_of_all_status(system_status_var *to)
-{
-  /* Ensure that thread id not killed during loop */
-  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
-
-  /* Get global values as base */
-  *to= global_status_var;
-
-  /* Add to this status from existing threads */
-  for(SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
-  {
-    add_to_status(to, &((*it)->status_var));
-  }
-
-  pthread_mutex_unlock(&LOCK_thread_count);
-  return;
 }
 
 } /* namespace drizzled */
