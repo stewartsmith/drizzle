@@ -121,10 +121,10 @@ void ReadRecord::init_read_record(Session *session_arg,
         !(table->cursor->getEngine()->check_flag(HTON_BIT_FAST_KEY_READ)) &&
         (table->db_stat & HA_READ_ONLY ||
         table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
-        (uint64_t) table->getShare()->reclength* (table->cursor->stats.records+
+        (uint64_t) table->getShare()->getRecordLength() * (table->cursor->stats.records+
                                                 table->cursor->stats.deleted) >
         (uint64_t) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
-        io_cache->end_of_file/ref_length * table->getShare()->reclength >
+        io_cache->end_of_file/ref_length * table->getShare()->getRecordLength() >
         (internal::my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
         !table->getShare()->blob_fields &&
         ref_length <= MAX_REFLENGTH)
@@ -385,13 +385,13 @@ bool ReadRecord::init_rr_cache()
   uint32_t local_rec_cache_size;
 
   struct_length= 3 + MAX_REFLENGTH;
-  reclength= ALIGN_SIZE(table->getShare()->reclength+1);
+  reclength= ALIGN_SIZE(table->getShare()->getRecordLength() + 1);
   if (reclength < struct_length)
     reclength= ALIGN_SIZE(struct_length);
 
-  error_offset= table->getShare()->reclength;
+  error_offset= table->getShare()->getRecordLength();
   cache_records= (session->variables.read_rnd_buff_size /
-                        (reclength+struct_length));
+                        (reclength + struct_length));
   local_rec_cache_size= cache_records * reclength;
   rec_cache_size= cache_records * ref_length;
 
@@ -433,9 +433,9 @@ static int rr_from_cache(ReadRecord *info)
       else
       {
         error=0;
-        memcpy(info->record,info->cache_pos, (size_t) info->table->getShare()->reclength);
+        memcpy(info->record,info->cache_pos, (size_t) info->table->getShare()->getRecordLength());
       }
-      info->cache_pos+=info->reclength;
+      info->cache_pos+= info->reclength;
       return ((int) error);
     }
     length=info->rec_cache_size;

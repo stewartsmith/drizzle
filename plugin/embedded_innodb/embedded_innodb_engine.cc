@@ -25,7 +25,7 @@ Copyright (c) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
 Copyright (c) 2008, 2009 Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
-staticGoogle, Inc. Those modifications are gratefully acknowledged and are described
+Google, Inc. Those modifications are gratefully acknowledged and are described
 briefly in the InnoDB documentation. The contributions by Google are
 incorporated with their permission, and subject to the conditions contained in
 the file COPYING.Google.
@@ -225,15 +225,35 @@ static ib_trx_t* get_trx(Session* session)
   return (ib_trx_t*) session->getEngineData(embedded_innodb_engine);
 }
 
+static ib_trx_level_t tx_isolation_to_ib_trx_level(enum_tx_isolation level)
+{
+  switch(level)
+  {
+  case ISO_REPEATABLE_READ:
+    return IB_TRX_REPEATABLE_READ;
+  case ISO_READ_COMMITTED:
+    return IB_TRX_READ_COMMITTED;
+  case ISO_SERIALIZABLE:
+    return IB_TRX_SERIALIZABLE;
+  case ISO_READ_UNCOMMITTED:
+    return IB_TRX_READ_UNCOMMITTED;
+  }
+
+  assert(0);
+  return IB_TRX_REPEATABLE_READ;
+}
+
 int EmbeddedInnoDBEngine::doStartTransaction(Session *session,
                                              start_transaction_option_t options)
 {
   ib_trx_t *transaction;
+  ib_trx_level_t isolation_level;
 
   (void)options;
 
   transaction= get_trx(session);
-  *transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  isolation_level= tx_isolation_to_ib_trx_level((enum_tx_isolation)session_tx_isolation(session));
+  *transaction= ib_trx_begin(isolation_level);
 
   return 0;
 }
@@ -512,8 +532,8 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
 
   if(*get_trx(session) == NULL)
   {
-    ib_trx_t *transaction= get_trx(session);
-    *transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+    static_cast<EmbeddedInnoDBEngine*>(getEngine())->
+                    doStartTransaction(session, START_TRANS_NO_OPTIONS);
   }
 
   if (lock_type != TL_UNLOCK)
@@ -635,6 +655,16 @@ int EmbeddedInnoDBCursor::close(void)
 
   delete blobroot;
   blobroot= NULL;
+
+  return 0;
+}
+
+int EmbeddedInnoDBCursor::external_lock(Session* session, int lock_type)
+{
+  ib_cursor_stmt_begin(cursor);
+
+  (void)session;
+  (void)lock_type;
 
   return 0;
 }

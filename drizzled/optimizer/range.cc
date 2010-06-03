@@ -467,7 +467,7 @@ uint32_t optimizer::get_index_for_order(Table *table, order_st *order, ha_rows l
     if (!ord->asc)
       return MAX_KEY;
 
-  for (idx= 0; idx < table->getShare()->keys; idx++)
+  for (idx= 0; idx < table->getShare()->sizeKeys(); idx++)
   {
     if (!(table->keys_in_use_for_query.test(idx)))
       continue;
@@ -541,7 +541,7 @@ static int fill_used_fields_bitmap(optimizer::Parameter *param)
   param->tmp_covered_fields.setBitmap(0);
   param->fields_bitmap_size= table->getShare()->column_bitmap_size;
   if (!(tmp= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)) ||
-      param->needed_fields.init(tmp, table->getShare()->fields))
+      param->needed_fields.init(tmp, table->getShare()->sizeFields()))
   {
     return 1;
   }
@@ -701,7 +701,7 @@ int optimizer::SqlSelect::test_quick_select(Session *session,
       This is used in get_mm_parts function.
     */
     key_info= head->key_info;
-    for (idx=0 ; idx < head->getShare()->keys ; idx++, key_info++)
+    for (idx=0 ; idx < head->getShare()->sizeKeys() ; idx++, key_info++)
     {
       KeyPartInfo *key_part_info;
       if (! keys_to_use.test(idx))
@@ -1236,7 +1236,7 @@ ROR_SCAN_INFO *make_ror_scan(const optimizer::Parameter *param, int idx, optimiz
     return NULL;
   }
 
-  if (ror_scan->covered_fields.init(bitmap_buf, param->table->getShare()->fields))
+  if (ror_scan->covered_fields.init(bitmap_buf, param->table->getShare()->sizeFields()))
   {
     return NULL;
   }
@@ -1354,7 +1354,7 @@ ROR_INTERSECT_INFO* ror_intersect_init(const optimizer::Parameter *param)
   info->param= param;
   if (!(buf= (my_bitmap_map*) param->mem_root->alloc_root(param->fields_bitmap_size)))
     return NULL;
-  if (info->covered_fields.init(buf, param->table->getShare()->fields))
+  if (info->covered_fields.init(buf, param->table->getShare()->sizeFields()))
     return NULL;
   info->is_covering= false;
   info->index_scan_costs= 0.0;
@@ -1686,7 +1686,7 @@ optimizer::RorIntersectReadPlan *get_best_covering_ror_intersect(optimizer::Para
   }
   if (! covered_fields->getBitmap() ||
       covered_fields->init(covered_fields->getBitmap(),
-                           param->table->getShare()->fields))
+                           param->table->getShare()->sizeFields()))
     return 0;
   covered_fields->clearAll();
 
@@ -4613,7 +4613,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
        (! join->select_distinct)) ||
       (join->select_lex->olap == ROLLUP_TYPE)) /* Check (B3) for ROLLUP */
     return NULL;
-  if (table->getShare()->keys == 0)        /* There are no indexes to use. */
+  if (table->getShare()->sizeKeys() == 0)        /* There are no indexes to use. */
     return NULL;
 
   /* Analyze the query in more detail. */
@@ -4673,7 +4673,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
     first one. Here we set the variables: group_prefix_len and index_info.
   */
   KeyInfo *cur_index_info= table->key_info;
-  KeyInfo *cur_index_info_end= cur_index_info + table->getShare()->keys;
+  KeyInfo *cur_index_info_end= cur_index_info + table->getShare()->sizeKeys();
   KeyPartInfo *cur_part= NULL;
   KeyPartInfo *end_part= NULL; /* Last part for loops. */
   /* Last index part. */
@@ -4721,7 +4721,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
         (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
     {
       /* For each table field */
-      for (uint32_t i= 0; i < table->getShare()->fields; i++)
+      for (uint32_t i= 0; i < table->getShare()->sizeFields(); i++)
       {
         Field *cur_field= table->field[i];
         /*

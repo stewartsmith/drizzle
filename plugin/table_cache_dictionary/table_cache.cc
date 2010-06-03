@@ -127,7 +127,7 @@ void table_cache_dictionary::TableCache::Generator::fill()
   push(table->getShare()->getTableName(arg));
 
   /* VERSION 4 */
-  push(static_cast<int64_t>(table->getShare()->version));
+  push(static_cast<int64_t>(table->getShare()->getVersion()));
 
   /* IS_NAME_LOCKED 5 */
   push(table->getShare()->isNameLock());

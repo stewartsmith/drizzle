@@ -99,14 +99,13 @@ bool is_trail(T c)
  * @param c 32-bit code point
  * @return 1..4, or 0 if c is a surrogate or not a Unicode code point
  */
-template <class T>
-int codepoint_length(T c)
+static inline int codepoint_length(uint32_t c)
 {
-  return (static_cast<uint32_t>(c) <= 0x7f ? 1 :
-          (static_cast<uint32_t>(c) <= 0x7ff ? 2 :
-           (static_cast<uint32_t>(c) <= 0xd7ff ? 3 :
-            (static_cast<uint32_t>(c) <= 0xdfff || c>0x10ffff ? 0 :
-             (static_cast<uint32_t>(c) <= 0xffff ? 3 : 4)))));
+  return (c <= 0x7f ? 1 :
+          (c <= 0x7ff ? 2 :
+           (c <= 0xd7ff ? 3 :
+            (c <= 0xdfff || c>0x10ffff ? 0 :
+             (c <= 0xffff ? 3 : 4)))));
 }
 
 /**

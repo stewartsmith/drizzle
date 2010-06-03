@@ -169,7 +169,7 @@ void ShowTableStatus::Generator::fill()
   push(table->getEngine()->getName());
 
   /* Version 6 */
-  push(static_cast<int64_t>(table->getShare()->version));
+  push(static_cast<int64_t>(table->getShare()->getVersion()));
 
   /* Rows 7 */
   push(static_cast<uint64_t>(table->getCursor().records()));
