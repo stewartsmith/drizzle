@@ -238,6 +238,9 @@ static ib_trx_level_t tx_isolation_to_ib_trx_level(enum_tx_isolation level)
   case ISO_READ_UNCOMMITTED:
     return IB_TRX_READ_UNCOMMITTED;
   }
+
+  assert(0);
+  return IB_TRX_REPEATABLE_READ;
 }
 
 int EmbeddedInnoDBEngine::doStartTransaction(Session *session,
