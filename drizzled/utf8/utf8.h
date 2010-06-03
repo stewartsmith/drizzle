@@ -30,32 +30,47 @@ used in advertising or otherwise to promote the sale, use or other dealings in
 this Software without prior written authorization of the copyright holder.
 */
 
-#ifndef DRIZZLED_INTERNAL_UTF8_H
-#define DRIZZLED_INTERNAL_UTF8_H
+#ifndef DRIZZLED_UTF8_UTF8_H
+#define DRIZZLED_UTF8_UTF8_H
+
+namespace drizzled
+{
+namespace utf8
+{
 
 /**
  * Does this code unit (byte) encode a code point by itself (US-ASCII 0..0x7f)?
  * @param c 8-bit code unit (byte)
  * @return TRUE or FALSE
- * @stable ICU 2.4
  */
-#define U8_IS_SINGLE(c) (((c)&0x80)==0)
+template <class T>
+bool is_single(T c)
+{
+  return (static_cast<uint8_t>(c) & 0x80) == 0;
+}
 
 /**
  * Is this code unit (byte) a UTF-8 lead byte?
  * @param c 8-bit code unit (byte)
  * @return TRUE or FALSE
- * @stable ICU 2.4
  */
-#define U8_IS_LEAD(c) ((uint8_t)((c)-0xc0)<0x3e)
+template <class T>
+bool is_lead(T c)
+{
+  return (static_cast<uint8_t>(c) - 0xc0) < 0x3e;
+}
+
 
 /**
  * Is this code unit (byte) a UTF-8 trail byte?
  * @param c 8-bit code unit (byte)
  * @return TRUE or FALSE
- * @stable ICU 2.4
  */
-#define U8_IS_TRAIL(c) (((c)&0xc0)==0x80)
+template <class T>
+bool is_trail(T c)
+{
+  return (static_cast<uint8_t>(c) & 0xc0) == 0x80;
+}
 
 /**
  * How many code units (bytes) are used for the UTF-8 encoding
@@ -64,32 +79,33 @@ this Software without prior written authorization of the copyright holder.
  * @return 1..4, or 0 if c is a surrogate or not a Unicode code point
  * @stable ICU 2.4
  */
-#define U8_LENGTH(c) \
-    ((uint32_t)(c)<=0x7f ? 1 : \
-        ((uint32_t)(c)<=0x7ff ? 2 : \
-            ((uint32_t)(c)<=0xd7ff ? 3 : \
-                ((uint32_t)(c)<=0xdfff || (uint32_t)(c)>0x10ffff ? 0 : \
-                    ((uint32_t)(c)<=0xffff ? 3 : 4)\
-                ) \
-            ) \
-        ) \
-    )
+template <class T>
+int codepoint_length(T c)
+{
+  return (static_cast<uint32_t>(c) <= 0x7f ? 1 :
+          (static_cast<uint32_t>(c) <= 0x7ff ? 2 :
+           (static_cast<uint32_t>(c) <= 0xd7ff ? 3 :
+            (static_cast<uint32_t>(c) <= 0xdfff || c>0x10ffff ? 0 :
+             (static_cast<uint32_t>(c) <= 0xffff ? 3 : 4)))));
+}
 
 /* Return the length of the codepoint based solely on the leading char */
-#define U8_SEQUENCE_LENGTH(c) \
-   ((uint8_t)(c) < 0x80 ? 1 : \
-     (((uint8_t)(c) >> 5) == 0x6 ? 2 : \
-       (((uint8_t)(c) >> 4) == 0xe ? 3 : \
-         (((uint8_t)(c) >> 3) == 0x1e ? 4 : 0) \
-        ) \
-      ) \
-    )
+template <class T>
+int sequence_length(T c)
+{
+  return (static_cast<uint8_t>(c) < 0x80 ? 1 :
+          ((static_cast<uint8_t>(c) >> 5) == 0x6 ? 2 :
+           ((static_cast<uint8_t>(c) >> 4) == 0xe ? 3 :
+            ((static_cast<uint8_t>(c) >> 3) == 0x1e ? 4 : 0))));
+}
 
 /**
  * The maximum number of UTF-8 code units (bytes) per Unicode code point (U+0000..U+10ffff).
  * @return 4
- * @stable ICU 2.4
  */
-#define U8_MAX_LENGTH 4
+static const int MAX_LENGTH= 4;
 
-#endif /* DRIZZLED_INTERNAL_UTF8_H */
+} /* namespace utf8 */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_UTF8_UTF8_H */

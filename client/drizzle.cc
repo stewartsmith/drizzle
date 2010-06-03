@@ -63,7 +63,7 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
-#include "drizzled/internal/utf8.h"
+#include "drizzled/utf8/utf8.h"
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
 #include <curses.h>
@@ -2181,10 +2181,10 @@ static bool add_line(string *buffer, char *line, char *in_string,
     }
 
     // Accept multi-byte characters as-is
-    if (not U8_IS_SINGLE(*pos))
+    if (not drizzled::utf8::is_single(*pos))
     {
       int length;
-      if ((length= U8_SEQUENCE_LENGTH(*pos)))
+      if ((length= drizzled::utf8::sequence_length(*pos)))
       {
         if (!*ml_comment || preserve_comments)
         {
@@ -3173,7 +3173,7 @@ static uint32_t num_cells(const string in_string)
   while (iter < in_string.end())
   {
     length++;
-    iter += U8_SEQUENCE_LENGTH(*iter);
+    iter += drizzled::utf8::sequence_length(*iter);
   }
   return length;
 }
@@ -3538,7 +3538,7 @@ safe_put_field(const char *pos,uint32_t length)
     else for (const char *end=pos+length ; pos != end ; pos++)
     {
       int l;
-      if ((l = U8_SEQUENCE_LENGTH(*pos)))
+      if ((l = drizzled::utf8::sequence_length(*pos)))
       {
         while (l--)
           tee_putc(*pos++, PAGER);
