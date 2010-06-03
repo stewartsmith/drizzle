@@ -99,7 +99,7 @@ public:
   {
     return false;
   }
-  bool optimize_range(uint32_t, uint32_t) 
+  bool optimize_range(uint32_t, uint32_t)
   {
     return false;
   }
