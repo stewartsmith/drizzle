@@ -218,7 +218,7 @@ char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-const string opt_scheduler_default("multi_thread");
+char *opt_scheduler_default;
 char *opt_scheduler= NULL;
 
 size_t my_thread_stack_size= 65536;
@@ -725,9 +725,19 @@ static int show_flushstatustime(drizzle_show_var *var, char *buff)
   return 0;
 }
 
+static int show_connection_count(drizzle_show_var *var, char *buff)
+{
+  var->type= SHOW_INT;
+  var->value= buff;
+  *((uint32_t *)buff)= connection_count;
+  return 0;
+}
+
 static st_show_var_func_container show_starttime_cont= { &show_starttime };
 
 static st_show_var_func_container show_flushstatustime_cont= { &show_flushstatustime };
+
+static st_show_var_func_container show_connection_count_cont= { &show_connection_count };
 
 static drizzle_show_var status_vars[]= {
   {"Aborted_clients",          (char*) &current_global_counters.aborted_threads, SHOW_LONGLONG},
@@ -760,21 +770,21 @@ static drizzle_show_var status_vars[]= {
   {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(system_status_var, last_query_cost), SHOW_DOUBLE_STATUS},
-  {"Max_used_connections",     (char*) &current_global_counters.max_used_connections,  SHOW_LONGLONG},
-  {"Questions",                (char*) offsetof(system_status_var, questions), SHOW_LONGLONG_STATUS},
-  {"Select_full_join",         (char*) offsetof(system_status_var, select_full_join_count), SHOW_LONGLONG_STATUS},
-  {"Select_full_range_join",   (char*) offsetof(system_status_var, select_full_range_join_count), SHOW_LONGLONG_STATUS},
-  {"Select_range",             (char*) offsetof(system_status_var, select_range_count), SHOW_LONGLONG_STATUS},
-  {"Select_range_check",       (char*) offsetof(system_status_var, select_range_check_count), SHOW_LONGLONG_STATUS},
-  {"Select_scan",	       (char*) offsetof(system_status_var, select_scan_count), SHOW_LONGLONG_STATUS},
-  {"Slow_queries",             (char*) offsetof(system_status_var, long_query_count), SHOW_LONGLONG_STATUS},
-  {"Sort_merge_passes",	       (char*) offsetof(system_status_var, filesort_merge_passes), SHOW_LONGLONG_STATUS},
-  {"Sort_range",	       (char*) offsetof(system_status_var, filesort_range_count), SHOW_LONGLONG_STATUS},
-  {"Sort_rows",		       (char*) offsetof(system_status_var, filesort_rows), SHOW_LONGLONG_STATUS},
-  {"Sort_scan",		       (char*) offsetof(system_status_var, filesort_scan_count), SHOW_LONGLONG_STATUS},
-  {"Table_locks_immediate",    (char*) &current_global_counters.locks_immediate,        SHOW_LONGLONG},
-  {"Table_locks_waited",       (char*) &current_global_counters.locks_waited,           SHOW_LONGLONG},
-  {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
+  {"Max_used_connections",     (char*) &current_global_counters.max_used_connections,  SHOW_INT},
+  {"Questions",                (char*) offsetof(system_status_var, questions), SHOW_LONG_STATUS},
+  {"Select_full_join",         (char*) offsetof(system_status_var, select_full_join_count), SHOW_LONG_STATUS},
+  {"Select_full_range_join",   (char*) offsetof(system_status_var, select_full_range_join_count), SHOW_LONG_STATUS},
+  {"Select_range",             (char*) offsetof(system_status_var, select_range_count), SHOW_LONG_STATUS},
+  {"Select_range_check",       (char*) offsetof(system_status_var, select_range_check_count), SHOW_LONG_STATUS},
+  {"Select_scan",	       (char*) offsetof(system_status_var, select_scan_count), SHOW_LONG_STATUS},
+  {"Slow_queries",             (char*) offsetof(system_status_var, long_query_count), SHOW_LONG_STATUS},
+  {"Sort_merge_passes",	       (char*) offsetof(system_status_var, filesort_merge_passes), SHOW_LONG_STATUS},
+  {"Sort_range",	       (char*) offsetof(system_status_var, filesort_range_count), SHOW_LONG_STATUS},
+  {"Sort_rows",		       (char*) offsetof(system_status_var, filesort_rows), SHOW_LONG_STATUS},
+  {"Sort_scan",		       (char*) offsetof(system_status_var, filesort_scan_count), SHOW_LONG_STATUS},
+  {"Table_locks_immediate",    (char*) &current_global_counters.locks_immediate,        SHOW_INT},
+  {"Table_locks_waited",       (char*) &current_global_counters.locks_waited,           SHOW_INT},
+  {"Threads_connected",        (char*) &show_connection_count_cont,  SHOW_FUNC},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
   {NULL, NULL, SHOW_LONGLONG}
@@ -995,6 +1005,7 @@ int init_server_components(module::Registry &plugins)
   else
   {
     scheduler_name= opt_scheduler_default;
+    opt_scheduler= opt_scheduler_default; 
   }
 
   if (plugin::Scheduler::setPlugin(scheduler_name))
@@ -1554,6 +1565,7 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
+  opt_scheduler_default= (char*) "multi_thread";
 
   /* Variables that depends on compile options */
 #ifdef HAVE_BROKEN_REALPATH

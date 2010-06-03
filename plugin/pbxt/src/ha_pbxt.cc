@@ -1143,7 +1143,7 @@ static bool pbxt_show_status(handlerton *XT_UNUSED(hton), THD* thd,
  * return 1 on error, else 0.
  */
 #ifdef DRIZZLED
-static int pbxt_init(Context &registry)
+static int pbxt_init(module::Context &registry)
 #else
 static int pbxt_init(void *p)
 #endif

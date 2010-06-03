@@ -83,6 +83,7 @@ extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern char *default_tz_name;
+extern char *opt_scheduler;
 
 uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 
