@@ -4210,8 +4210,8 @@ ha_innobase::doUpdateRecord(
       table->found_next_number_field);
 
     uint64_t current_autoinc;
-    ulint error= innobase_get_autoinc(&current_autoinc);
-    if (error == DB_SUCCESS
+    ulint autoinc_error= innobase_get_autoinc(&current_autoinc);
+    if (autoinc_error == DB_SUCCESS
         && auto_inc <= col_max_value && auto_inc != 0
         && auto_inc >= current_autoinc)
     {
