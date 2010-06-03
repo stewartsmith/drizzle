@@ -1168,7 +1168,7 @@ static Commands commands[] = {
 
 int history_length;
 static int not_in_history(const char *line);
-static void initialize_readline (const char *name);
+static void initialize_readline (char *name);
 static void fix_history(string *final_command);
 
 static Commands *find_command(const char *name,char cmd_name);
@@ -1815,7 +1815,7 @@ try
           server_version_string(&con));
   put_info(output_buff, INFO_INFO, 0, 0);
 
-  initialize_readline(current_prompt.c_str());
+  initialize_readline((char *)current_prompt.c_str());
   if (!status.getBatch() && !quick)
   {
     /* read-history from file, default ~/.drizzle_history*/
@@ -2499,7 +2499,7 @@ static int not_in_history(const char *line)
   return 1;
 }
 
-static void initialize_readline (const char *name)
+static void initialize_readline (char *name)
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
   rl_readline_name= name;
