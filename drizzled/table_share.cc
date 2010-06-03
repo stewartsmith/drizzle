@@ -473,7 +473,6 @@ TableDefinitionCache &TableShare::getCache()
 TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   open_count(0),
-  field(NULL),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),

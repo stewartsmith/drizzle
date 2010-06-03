@@ -57,7 +57,6 @@ public:
   TableShare() :
     table_category(TABLE_UNKNOWN_CATEGORY),
     open_count(0),
-    field(NULL),
     found_next_number_field(NULL),
     timestamp_field(NULL),
     key_info(NULL),
@@ -127,7 +126,6 @@ public:
              const char *new_path) :
     table_category(TABLE_UNKNOWN_CATEGORY),
     open_count(0),
-    field(NULL),
     found_next_number_field(NULL),
     timestamp_field(NULL),
     key_info(NULL),
