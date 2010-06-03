@@ -95,10 +95,6 @@ public:
   {
     return DRIZZLE_TYPE_ENUM;
   }
-  uint32_t pack_length_from_metadata(uint32_t field_metadata)
-  {
-    return (field_metadata & 0x00ff);
-  }
   virtual bool zero_pack() const
   {
     return false;
