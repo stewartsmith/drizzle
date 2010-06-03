@@ -249,6 +249,11 @@ public:
     return &field[0];
   }
 
+  void setFields(uint32_t arg)
+  {
+    field.resize(arg);
+  }
+
 
   Field **found_next_number_field;
 private:

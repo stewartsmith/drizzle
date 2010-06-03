@@ -879,7 +879,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   TableShareInstance *share= session->getTemporaryShare(tmpname); // This will not go into the tableshare cache, so no key is used.
 
-  if (not share->getMemRoot()->multi_alloc_root(0, &reg_field, sizeof(Field*) * (field_count+1),
+  if (not share->getMemRoot()->multi_alloc_root(0,
                                                 &default_field, sizeof(Field*) * (field_count),
                                                 &from_field, sizeof(Field*)*field_count,
                                                 &copy_func, sizeof(*copy_func)*(copy_func_count+1),
@@ -903,14 +903,14 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table= share->getTable();
 
-  memset(reg_field, 0, sizeof(Field*)*(field_count+1));
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
 
   mem_root_save= session->mem_root;
   session->mem_root= table->getMemRoot();
 
-  table->field=reg_field;
+  share->setFields(field_count+1);
+  reg_field= table->field= share->getFields();
   table->alias= table_alias;
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
@@ -1481,7 +1481,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 
   TableShareInstance *share= getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
 
-  if (! share->getMemRoot()->multi_alloc_root(0, &field, (field_count + 1) * sizeof(Field*),
+  if (! share->getMemRoot()->multi_alloc_root(0,
                                               &bitmaps, bitmap_buffer_size(field_count)*2,
                                               NULL))
   {
@@ -1489,7 +1489,8 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   }
 
   table= share->getTable();
-  table->field= field;
+  share->setFields(field_count + 1);
+  field= table->field= share->getFields();
   share->blob_field.resize(field_count+1);
   share->fields= field_count;
   share->blob_ptr_size= portable_sizeof_char_ptr;

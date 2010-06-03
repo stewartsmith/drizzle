@@ -767,7 +767,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   fields= table.field_size();
 
-  field.resize(fields + 1);
+  setFields(fields + 1);
   field[fields]= NULL;
 
   uint32_t local_null_fields= 0;
