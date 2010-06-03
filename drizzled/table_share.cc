@@ -199,7 +199,7 @@ static TableShare *foundTableShare(TableShare *share)
     return NULL;
   }
 
-  share->ref_count++;
+  share->incrementTableCount();
   (void) pthread_mutex_unlock(&share->mutex);
 
   return share;
@@ -473,7 +473,6 @@ TableDefinitionCache &TableShare::getCache()
 TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   open_count(0),
-  field(NULL),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -767,7 +766,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   fields= table.field_size();
 
-  field= (Field**) alloc_root(((fields+1) * sizeof(Field*)));
+  setFields(fields + 1);
   field[fields]= NULL;
 
   uint32_t local_null_fields= 0;
@@ -1436,7 +1435,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     /* Store offsets to blob fields to find them fast */
     blob_field.resize(blob_fields);
     save= &blob_field[0];
-    for (k= 0, ptr= field ; *ptr ; ptr++, k++)
+    for (k= 0, ptr= getFields() ; *ptr ; ptr++, k++)
     {
       if ((*ptr)->flags & BLOB_FLAG)
         (*save++)= k;
@@ -1649,7 +1648,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[(uint32_t) (found_next_number_field - field)];
+      outparam.field[(uint32_t) (found_next_number_field - getFields())];
   if (timestamp_field)
     outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
 
@@ -1715,15 +1714,12 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   local_error= 2;
   if (db_stat)
   {
+    assert(!(db_stat & HA_WAIT_IF_LOCKED));
     int ha_err;
     if ((ha_err= (outparam.cursor->
                   ha_open(&outparam, getNormalizedPath(),
                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
-                          (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE :
-                           (db_stat & HA_WAIT_IF_LOCKED) ?  HA_OPEN_WAIT_IF_LOCKED :
-                           (db_stat & (HA_ABORT_IF_LOCKED | HA_GET_INFO)) ?
-                           HA_OPEN_ABORT_IF_LOCKED :
-                           HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
+                          (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE : HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {
       switch (ha_err)
       {

@@ -709,7 +709,7 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
 
       if (table->in_use == session)
       {
-        table->getMutableShare()->version= 0;                  // Ensure no one can use this
+        table->getMutableShare()->resetVersion();                  // Ensure no one can use this
         table->locked_by_name= true;
         return 0;
       }

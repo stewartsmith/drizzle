@@ -287,7 +287,7 @@ const char *ha_heap::index_type(uint32_t inx)
 void ha_heap::set_keys_for_scanning(void)
 {
   btree_keys.reset();
-  for (uint32_t i= 0 ; i < table->getShare()->keys ; i++)
+  for (uint32_t i= 0 ; i < table->getShare()->sizeKeys() ; i++)
   {
     if (table->key_info[i].algorithm == HA_KEY_ALG_BTREE)
       btree_keys.set(i);
@@ -297,7 +297,7 @@ void ha_heap::set_keys_for_scanning(void)
 
 void ha_heap::update_key_stats()
 {
-  for (uint32_t i= 0; i < table->getShare()->keys; i++)
+  for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++)
   {
     KeyInfo *key= &table->key_info[i];
     if (!key->rec_per_key)
@@ -709,10 +709,10 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
-  uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->getShare()->keys;
+  uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->getShare()->sizeKeys();
   uint32_t auto_key= 0, auto_key_type= 0;
   uint32_t max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
-  uint32_t column_idx, column_count= table_arg->getShare()->fields;
+  uint32_t column_idx, column_count= table_arg->getShare()->sizeFields();
   HP_COLUMNDEF *columndef;
   HP_KEYDEF *keydef;
   HA_KEYSEG *seg;
@@ -888,7 +888,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
                     keys, keydef,
                     column_count, columndef,
                     max_key_fieldnr, key_part_size,
-                    table_arg->getShare()->reclength, mem_per_row_keys,
+                    table_arg->getShare()->getRecordLength(), mem_per_row_keys,
                     static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
                     0, // Factor out MIN
                     &hp_create_info, internal_share);

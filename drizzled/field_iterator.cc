@@ -200,7 +200,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     /* The field belongs to a stored table. */
     Field *tmp_field= table_field_it.field();
     nj_col= new Natural_join_column(tmp_field, table_ref);
-    field_count= table_ref->table->getShare()->fields;
+    field_count= table_ref->table->getShare()->sizeFields();
   }
   else
   {

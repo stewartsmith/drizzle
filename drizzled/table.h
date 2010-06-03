@@ -295,9 +295,9 @@ public:
   inline bool hasShare() const { return s ? true : false ; } /* Get rid of this long term */
   inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
-  inline uint32_t sizeKeys() { return s->keys; }
-  inline uint32_t sizeFields() { return s->fields; }
-  inline uint32_t getRecordLength() { return s->reclength; }
+  inline uint32_t sizeKeys() { return s->sizeKeys(); }
+  inline uint32_t sizeFields() { return s->sizeFields(); }
+  inline uint32_t getRecordLength() const { return s->getRecordLength(); }
   inline uint32_t sizeBlobFields() { return s->blob_fields; }
   inline uint32_t *getBlobField() { return &s->blob_field[0]; }
   inline uint32_t getNullBytes() { return s->null_bytes; }
@@ -305,9 +305,9 @@ public:
   inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isNameLock() { return s->name_lock; }
+  inline bool isNameLock() const { return s->isNameLock(); }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
-  inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
+  inline bool isWaitingOnCondition() const { return s->isWaitingOnCondition(); } /* Protection against free */
 
   uint32_t index_flags(uint32_t idx) const
   {
@@ -457,7 +457,7 @@ public:
   */
   inline bool needs_reopen_or_name_lock()
   { 
-    return s->version != refresh_version;
+    return s->getVersion() != refresh_version;
   }
 
   /**
