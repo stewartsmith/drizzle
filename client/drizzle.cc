@@ -1510,10 +1510,6 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
 
-  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
-                         getenv("DRIZZLE_PS1") :
-                         "drizzle> ");
- 
   po::variables_map vm;
 
   po::store(po::command_line_parser(argc, argv).options(long_options).extra_parser(reg_password).run(), vm);
@@ -1535,6 +1531,9 @@ try
 
   po::notify(vm);
 
+  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
+                         getenv("DRIZZLE_PS1") :
+                         "drizzle> ");
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
