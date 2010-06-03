@@ -651,7 +651,17 @@ inline
 void
 Cursor::setTransactionReadWrite()
 {
-  ResourceContext *resource_context= ha_session()->getResourceContext(engine);
+  ResourceContext *resource_context;
+
+  /*
+   * If the cursor has not context for execution then there should be no
+   * possible resource to gain (and if there is... then there is a bug such
+   * that in_use should have been set.
+ */
+  if (not table || not table->in_use)
+    return;
+
+  resource_context= table->in_use->getResourceContext(engine);
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
