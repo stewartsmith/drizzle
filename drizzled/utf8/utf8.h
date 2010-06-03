@@ -33,6 +33,8 @@ this Software without prior written authorization of the copyright holder.
 #ifndef DRIZZLED_UTF8_UTF8_H
 #define DRIZZLED_UTF8_UTF8_H
 
+#include <string>
+
 namespace drizzled
 {
 namespace utf8
@@ -98,6 +100,27 @@ int sequence_length(T c)
            ((static_cast<uint8_t>(c) >> 4) == 0xe ? 3 :
             ((static_cast<uint8_t>(c) >> 3) == 0x1e ? 4 : 0))));
 }
+
+
+/* Return the length in characters of the string, rather than length in bytes */
+static inline uint32_t char_length(const std::string &in_string)
+{
+  uint32_t length= 0;
+  std::string::const_iterator iter= in_string.begin();
+  while (iter < in_string.end())
+  {
+    length++;
+    iter += sequence_length(*iter);
+  }
+  return length;
+}
+
+static inline uint32_t char_length(const char *in_string)
+{
+  const std::string process_string(in_string);
+  return char_length(process_string);
+}
+
 
 /**
  * The maximum number of UTF-8 code units (bytes) per Unicode code point (U+0000..U+10ffff).

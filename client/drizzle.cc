@@ -3166,18 +3166,6 @@ print_field_types(drizzle_result_st *result)
   tee_puts("", PAGER);
 }
 
-static uint32_t num_cells(const string in_string)
-{
-  uint32_t length= 0;
-  string::const_iterator iter= in_string.begin();
-  while (iter < in_string.end())
-  {
-    length++;
-    iter += drizzled::utf8::sequence_length(*iter);
-  }
-  return length;
-}
-
 static void
 print_table_data(drizzle_result_st *result)
 {
@@ -3209,7 +3197,7 @@ print_table_data(drizzle_result_st *result)
       /* Check if the max_byte value is really the maximum in terms
          of visual length since multibyte characters can affect the
          length of the separator. */
-      length= num_cells(drizzle_column_name(field));
+      length= drizzled::utf8::char_length(drizzle_column_name(field));
 
       if (name_length == drizzle_column_max_size(field))
       {
@@ -3247,7 +3235,7 @@ print_table_data(drizzle_result_st *result)
     for (uint32_t off=0; (field = drizzle_column_next(result)) ; off++)
     {
       uint32_t name_length= (uint32_t) strlen(drizzle_column_name(field));
-      uint32_t numcells= num_cells(drizzle_column_name(field));
+      uint32_t numcells= drizzled::utf8::char_length(drizzle_column_name(field));
       uint32_t display_length= drizzle_column_max_size(field) + name_length -
                                numcells;
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
@@ -3310,7 +3298,7 @@ print_table_data(drizzle_result_st *result)
         We need to find how much screen real-estate we will occupy to know how
         many extra padding-characters we should send with the printing function.
       */
-      visible_length= num_cells(buffer);
+      visible_length= drizzled::utf8::char_length(buffer);
       extra_padding= data_length - visible_length;
 
       if (field_max_length > MAX_COLUMN_LENGTH)
