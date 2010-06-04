@@ -2496,7 +2496,9 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   if (cached_field_index < table->getShare()->sizeFields() &&
       !my_strcasecmp(system_charset_info,
                      table->field[cached_field_index]->field_name, name))
+  {
     field_ptr= table->field + cached_field_index;
+  }
   else if (table->getShare()->name_hash.records)
   {
     field_ptr= (Field**) hash_search(&table->getShare()->name_hash, (unsigned char*) name,
@@ -2507,7 +2509,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         field_ptr points to field in TableShare. Convert it to the matching
         field in table
       */
-      field_ptr= (table->field + (field_ptr - table->getMutableShare()->getFields()));
+      field_ptr= (table->field + table->getShare()->positionFields(field_ptr));
     }
   }
   else

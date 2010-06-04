@@ -910,7 +910,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   session->mem_root= table->getMemRoot();
 
   share->setFields(field_count+1);
-  reg_field= table->field= share->getFields();
+  reg_field= table->field= share->getFields(true);
   table->alias= table_alias;
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
@@ -1490,7 +1490,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 
   table= share->getTable();
   share->setFields(field_count + 1);
-  field= table->field= share->getFields();
+  field= table->field= share->getFields(true);
   share->blob_field.resize(field_count+1);
   share->fields= field_count;
   share->blob_ptr_size= portable_sizeof_char_ptr;

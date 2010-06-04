@@ -1404,9 +1404,15 @@ int Tina::doCreateTable(Session &session,
   /*
     check columns
   */
-  for (Field **field= table_arg.getMutableShare()->getFields(); *field; field++)
+  const drizzled::TableShare::Fields fields(table_arg.getShare()->getFields());
+  for (drizzled::TableShare::Fields::const_iterator iter= fields.begin();
+       iter != fields.end();
+       iter++)
   {
-    if ((*field)->real_maybe_null())
+    if (not *iter) // Historical legacy for NULL array end.
+      continue;
+
+    if ((*iter)->real_maybe_null())
     {
       my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "nullable columns");
       return(HA_ERR_UNSUPPORTED);
