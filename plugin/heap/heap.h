@@ -25,7 +25,7 @@
 #include <drizzled/thr_lock.h>
 
 #include <plugin/myisam/my_handler.h>
-#include "drizzled/my_tree.h"
+#include "drizzled/tree.h"
 
 	/* defines used by heap-funktions */
 
@@ -194,7 +194,6 @@ typedef struct st_heap_info
   drizzled::TREE_ELEMENT *parents[drizzled::MAX_TREE_HEIGHT+1];
   drizzled::TREE_ELEMENT **last_pos;
   uint32_t lastkey_len;
-  bool implicit_emptied;
   drizzled::THR_LOCK_DATA lock;
 } HP_INFO;
 

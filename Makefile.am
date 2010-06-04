@@ -22,6 +22,7 @@ check_PROGRAMS =
 noinst_HEADERS =
 nobase_nodist_include_HEADERS =
 nobase_dist_include_HEADERS =
+sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
@@ -40,13 +41,19 @@ SUBDIRS = ${po} \
 DIST_SUBDIRS = ${SUBDIRS} tests
 
 BUILT_SOURCES=		drizzled/configmake.h
-EXTRA_DIST=		config/config.rpath m4/gnulib-cache.m4 \
-			config/autorun.sh Doxyfile \
-			config/pandora_vc_revinfo \
-			extra/run_cpplint.sh  \
-			extra/cpplint.py \
-			extra/clean_source.sh \
-			config/make-lint.py
+EXTRA_DIST= \
+	    DRIZZLE.FAQ \
+	    Doxyfile \
+	    EXCEPTIONS-CLIENT \
+	    config/config.rpath \
+	    config/make-lint.py \
+	    config/pandora_vc_revinfo \
+	    config/uncrustify.cfg \
+	    extra/clean_source.sh \
+	    extra/cpplint.py \
+	    extra/run_cpplint.sh \
+	    m4/gnulib-cache.m4 \
+	    ${top_srcdir}/m4/pandora*m4
 
 
 CLEANFILES=		${BUILT_SOURCES}
@@ -64,19 +71,7 @@ include config/pandora-plugin.am
 EXTRA_DIST+=	${man_MANS}
 
 .PHONY: \
-	indent \
-	test
-
-
-# Target 'test' will run the regression test suite using the built server.
-#
-# If you are running in a shared environment, users can avoid clashing
-# port numbers by setting individual small numbers 1-100 to the
-# environment variable MTR_BUILD_THREAD. The script "test-run"
-# will then calculate the various port numbers it needs from this,
-# making sure each user use different ports.
-
-test: test-drizzle
+	indent
 
 doxygen:
 	doxygen Doxyfile
@@ -132,17 +127,23 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
 
+distclean-local:
+	rm -r -f unittests/.libs
+
 include config/lint-source.am
 
+include drizzled/message/include.am
 include drizzled/include.am
 include drizzled/internal/include.am
 include drizzled/algorithm/include.am
 include drizzled/util/include.am
-include drizzled/message/include.am
 include client/include.am
 include extra/include.am
 include support-files/include.am
 include tests/include.am
+include unittests/include.am
+
+TESTS += ${check_PROGRAMS}
 
 merge-clean:
 	find ./ | $(GREP) \.orig | xargs rm -f

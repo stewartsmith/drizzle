@@ -52,8 +52,7 @@ public:
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_SKIP_STORE_LOCK |
-                                     HTON_AUTO_PART_KEY |
-                                     HTON_HAS_DATA_DICTIONARY)
+                                     HTON_AUTO_PART_KEY)
   {
     table_definition_ext= TABLEPROTOTESTER_EXT;
   }
@@ -68,22 +67,20 @@ public:
     return TableProtoTesterCursor_exts;
   }
 
-  int doCreateTable(Session*,
-                    const char *,
+  int doCreateTable(Session&,
                     Table&,
+                    drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, const string &table_name);
+  int doDropTable(Session&, drizzled::TableIdentifier &identifier);
 
-  int doGetTableDefinition(Session& session,
-                           const char* path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+  int doGetTableDefinition(Session &session,
+                           drizzled::TableIdentifier &identifier,
+                           drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       string&, set<string>& set_of_names)
+		       SchemaIdentifier &,
+		       set<string>& set_of_names)
   {
     (void)directory;
     set_of_names.insert("t1");
@@ -104,16 +101,41 @@ public:
             HA_KEYREAD_ONLY);
   }
 
+  bool doDoesTableExist(Session &session, TableIdentifier &identifier);
+
+  int doRenameTable(Session&, TableIdentifier&, TableIdentifier&)
+  {
+    return EPERM;
+  }
+
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
+void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
+                                                   drizzled::SchemaIdentifier &schema_identifier,
+                                                   drizzled::TableIdentifiers &set_of_identifiers)
+{
+  set_of_identifiers.push_back(TableIdentifier(schema_identifier, "t1"));
+}
+
+bool TableProtoTesterEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+{
+  if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
+    return true;
+
+  return false;
+}
+
 TableProtoTesterCursor::TableProtoTesterCursor(drizzled::plugin::StorageEngine &engine_arg,
-                           TableShare &table_arg)
-  :Cursor(engine_arg, table_arg)
+                           TableShare &table_arg) :
+  Cursor(engine_arg, table_arg)
 { }
 
 int TableProtoTesterCursor::open(const char *, int, uint32_t)
 {
-  return(0);
+  return 0;
 }
 
 int TableProtoTesterCursor::close(void)
@@ -121,48 +143,45 @@ int TableProtoTesterCursor::close(void)
   return 0;
 }
 
-int TableProtoTesterEngine::doCreateTable(Session*, const char *,
-                                   Table&,
-                                   drizzled::message::Table&)
+int TableProtoTesterEngine::doCreateTable(Session&,
+                                          Table&,
+                                          drizzled::TableIdentifier&,
+                                          drizzled::message::Table&)
 {
   return EEXIST;
 }
 
 
-int TableProtoTesterEngine::doDropTable(Session&, const string&)
+int TableProtoTesterEngine::doDropTable(Session&, drizzled::TableIdentifier&)
 {
   return EPERM;
 }
 
-static void fill_table1(message::Table *table)
+static void fill_table1(message::Table &table)
 {
   message::Table::Field *field;
   message::Table::TableOptions *tableopts;
 
-  table->set_name("t1");
-  table->set_type(message::Table::INTERNAL);
+  table.set_name("t1");
+  table.set_type(message::Table::INTERNAL);
 
-  tableopts= table->mutable_options();
+  tableopts= table.mutable_options();
   tableopts->set_comment("Table without a StorageEngine message");
 
   {
-    field= table->add_field();
+    field= table.add_field();
     field->set_name("number");
     field->set_type(message::Table::Field::INTEGER);
   }
 
 }
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
-                                          const char* path,
-                                          const char *,
-                                          const char *,
-                                          const bool,
-                                          drizzled::message::Table *table_proto)
+                                                 drizzled::TableIdentifier &identifier,
+                                                 drizzled::message::Table &table_proto)
 {
-  if (strcmp(path, "./test/t1") == 0)
+  if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
   {
-    if (table_proto)
-      fill_table1(table_proto);
+    fill_table1(table_proto);
     return EEXIST;
   }
   return ENOENT;
@@ -173,12 +192,12 @@ const char *TableProtoTesterCursor::index_type(uint32_t)
   return("BTREE");
 }
 
-int TableProtoTesterCursor::write_row(unsigned char *)
+int TableProtoTesterCursor::doInsertRecord(unsigned char *)
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int TableProtoTesterCursor::rnd_init(bool)
+int TableProtoTesterCursor::doStartTableScan(bool)
 {
   return(0);
 }
@@ -258,19 +277,11 @@ int TableProtoTesterCursor::index_last(unsigned char *)
 
 static drizzled::plugin::StorageEngine *tableprototester_engine= NULL;
 
-static int tableprototester_init(drizzled::plugin::Registry &registry)
+static int tableprototester_init(drizzled::module::Context &context)
 {
 
   tableprototester_engine= new TableProtoTesterEngine("TABLEPROTOTESTER");
-  registry.add(tableprototester_engine);
-
-  return 0;
-}
-
-static int tableprototester_fini(drizzled::plugin::Registry &registry)
-{
-  registry.remove(tableprototester_engine);
-  delete tableprototester_engine;
+  context.add(tableprototester_engine);
 
   return 0;
 }
@@ -284,7 +295,6 @@ DRIZZLE_DECLARE_PLUGIN
   "Used to test rest of server with various table proto messages",
   PLUGIN_LICENSE_GPL,
   tableprototester_init,     /* Plugin Init */
-  tableprototester_fini,     /* Plugin Deinit */
   NULL,               /* system variables */
   NULL                /* config options   */
 }

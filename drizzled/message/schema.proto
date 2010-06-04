@@ -1,9 +1,15 @@
+/*
+  Message format for schemas.
+*/
 package drizzled.message;
 option optimize_for = SPEED;
+
+import "engine.proto";
 
 message Schema {
   required string name = 1;
   optional string collation = 2;
+  required Engine engine = 3;
   required uint64 creation_timestamp= 11 [default = 0];
   required uint64 update_timestamp= 12 [default = 0];
 }

@@ -261,7 +261,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 const_result= 0;
                 break;
               }
-              error= table->cursor->ha_index_init(static_cast<uint32_t>(ref.key), 1);
+              error= table->cursor->startIndexScan(static_cast<uint32_t>(ref.key), 1);
 
               if (! ref.key_length)
               {
@@ -351,7 +351,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 table->key_read= 0;
                 table->cursor->extra(HA_EXTRA_NO_KEYREAD);
               }
-              table->cursor->ha_index_end();
+              table->cursor->endIndexScan();
               if (error)
               {
                 if (error == HA_ERR_KEY_NOT_FOUND || error == HA_ERR_END_OF_FILE)
@@ -429,7 +429,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 const_result= 0;
                 break;
               }
-              error= table->cursor->ha_index_init(static_cast<uint32_t>(ref.key), 1);
+              error= table->cursor->startIndexScan(static_cast<uint32_t>(ref.key), 1);
 
               if (! ref.key_length)
               {
@@ -459,7 +459,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
                 table->key_read= 0;
                 table->cursor->extra(HA_EXTRA_NO_KEYREAD);
               }
-              table->cursor->ha_index_end();
+              table->cursor->endIndexScan();
               if (error)
               {
                 if (error == HA_ERR_KEY_NOT_FOUND || error == HA_ERR_END_OF_FILE)
@@ -647,8 +647,8 @@ bool optimizer::simple_pred(Item_func *func_item, Item **args, bool &inv_order)
 */
 static bool matching_cond(bool max_fl,
                           table_reference_st *ref,
-                          KEY *keyinfo,
-                          KEY_PART_INFO *field_part,
+                          KeyInfo *keyinfo,
+                          KeyPartInfo *field_part,
                           COND *cond,
                           key_part_map *key_part_used,
                           uint32_t *range_fl,
@@ -748,7 +748,7 @@ static bool matching_cond(bool max_fl,
 
   /* Check if field is part of the tested partial key */
   unsigned char *key_ptr= ref->key_buff;
-  KEY_PART_INFO *part= NULL;
+  KeyPartInfo *part= NULL;
   for (part= keyinfo->key_part; ; key_ptr+= part++->store_length)
 
   {
@@ -910,13 +910,13 @@ static bool find_key_for_maxmin(bool max_fl,
   Table *table= field->table;
   uint32_t idx= 0;
 
-  KEY *keyinfo,*keyinfo_end= NULL;
-  for (keyinfo= table->key_info, keyinfo_end= keyinfo+table->s->keys;
+  KeyInfo *keyinfo,*keyinfo_end= NULL;
+  for (keyinfo= table->key_info, keyinfo_end= keyinfo+table->getShare()->sizeKeys();
        keyinfo != keyinfo_end;
        keyinfo++,idx++)
   {
-    KEY_PART_INFO *part= NULL;
-    KEY_PART_INFO *part_end= NULL;
+    KeyPartInfo *part= NULL;
+    KeyPartInfo *part_end= NULL;
     key_part_map key_part_to_use= 0;
     /*
       Perform a check if index is not disabled by ALTER Table

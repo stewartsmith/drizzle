@@ -21,7 +21,6 @@
 #include "config.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/error.h"
-#include "drizzled/plugin/registry.h"
 #include "drizzled/gettext.h"
 #include "drizzled/security_context.h"
 
@@ -77,19 +76,19 @@ bool plugin::Authentication::isAuthenticated(const SecurityContext &sctx,
     find_if(all_authentication.begin(), all_authentication.end(),
             AuthenticateBy(sctx, password));
 
-  /* If iter is == end() here, that means that all of the plugins returned
-   * false, which in this case means they all succeeded. Since we want to 
-   * return false on success, we return the value of the two being != 
+  /* We only require one plugin to return success in order to authenticate.
+   * If iter is == end() here, that means that all of the plugins returned
+   * false, which means they all failed.
    */
-  if (iter != all_authentication.end())
+  if (iter == all_authentication.end())
   {
     my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
              sctx.getUser().c_str(),
              sctx.getIp().c_str(),
              password.empty() ? ER(ER_NO) : ER(ER_YES));
-    return true;
+    return false;
   }
-  return false;
+  return true;
 }
 
 } /* namespace drizzled */

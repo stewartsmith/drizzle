@@ -49,6 +49,7 @@
 #include "drizzled/field/varstring.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <math.h>
 #include <algorithm>
 #include <float.h>
@@ -787,7 +788,7 @@ void mark_as_dependent(Session *session, Select_Lex *last, Select_Lex *current,
   if (session->lex->describe & DESCRIBE_EXTENDED)
   {
     char warn_buff[DRIZZLE_ERRMSG_SIZE];
-    sprintf(warn_buff, ER(ER_WARN_FIELD_RESOLVED),
+    snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_FIELD_RESOLVED),
             db_name, (db_name[0] ? "." : ""),
             table_name, (table_name [0] ? "." : ""),
             resolved_item->field_name,
@@ -906,7 +907,7 @@ static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
         if (cur_field->db_name && db_name)
         {
           /* If field_name is also qualified by a database name. */
-          if (strcmp(cur_field->db_name, db_name))
+          if (strcasecmp(cur_field->db_name, db_name))
             /* Same field names, different databases. */
             return NULL;
           ++cur_match_degree;
@@ -1125,7 +1126,7 @@ Field *Item::make_string_field(Table *table)
     field= new Field_blob(max_length, maybe_null, name,
                           collation.collation);
   else
-    field= new Field_varstring(max_length, maybe_null, name, table->s,
+    field= new Field_varstring(max_length, maybe_null, name, table->getMutableShare(),
                                collation.collation);
 
   if (field)
@@ -1595,7 +1596,7 @@ static Field *create_tmp_field_from_item(Session *,
              convert_blob_length <= Field_varstring::MAX_SIZE &&
              convert_blob_length)
       new_field= new Field_varstring(convert_blob_length, maybe_null,
-                                     item->name, table->s,
+                                     item->name, table->getMutableShare(),
                                      item->collation.collation);
     else
       new_field= item->make_string_field(table);

@@ -2,17 +2,17 @@ use data_dictionary;
 show create table CHARACTER_SETS ;
 Table	Create Table
 CHARACTER_SETS	CREATE TABLE `character_sets` (
-  `CHARACTER_SET_NAME` varchar(64) NOT NULL DEFAULT '',
-  `DEFAULT_COLLATE_NAME` varchar(64) NOT NULL DEFAULT '',
-  `DESCRIPTION` varchar(64) NOT NULL DEFAULT '',
+  `CHARACTER_SET_NAME` varchar(256) NOT NULL DEFAULT '',
+  `DEFAULT_COLLATE_NAME` varchar(256) NOT NULL DEFAULT '',
+  `DESCRIPTION` varchar(256) NOT NULL DEFAULT '',
   `MAXLEN` bigint NOT NULL DEFAULT '0'
 ) ENGINE=FunctionEngine
 show create table COLLATIONS ;
 Table	Create Table
 COLLATIONS	CREATE TABLE `collations` (
-  `CHARACTER_SET_NAME` varchar(64) NOT NULL DEFAULT '',
-  `COLLATION_NAME` varchar(64) NOT NULL DEFAULT '',
-  `DESCRIPTION` varchar(64) NOT NULL DEFAULT '',
+  `CHARACTER_SET_NAME` varchar(256) NOT NULL DEFAULT '',
+  `COLLATION_NAME` varchar(256) NOT NULL DEFAULT '',
+  `DESCRIPTION` varchar(256) NOT NULL DEFAULT '',
   `ID` bigint NOT NULL DEFAULT '0',
   `IS_DEFAULT` varchar(5) NOT NULL DEFAULT '',
   `IS_COMPILED` varchar(5) NOT NULL DEFAULT '',
@@ -20,7 +20,7 @@ COLLATIONS	CREATE TABLE `collations` (
 ) ENGINE=FunctionEngine
 SELECT * FROM character_sets ORDER BY CHARACTER_SET_NAME;
 CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-binary	binary	UTF-8 Unicode	1
+binary	binary		1
 utf8	utf8_general_ci	UTF-8 Unicode	4
 SELECT * FROM collations ORDER BY COLLATION_NAME;
 CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
@@ -51,7 +51,7 @@ SELECT *
 FROM data_dictionary.character_sets
 ORDER BY character_set_name;
 CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
-binary	binary	UTF-8 Unicode	1
+binary	binary		1
 utf8	utf8_general_ci	UTF-8 Unicode	4
 SELECT *
 FROM data_dictionary.collations

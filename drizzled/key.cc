@@ -57,11 +57,11 @@ namespace drizzled
        key_length is set to length of key before (not including) field
 */
 
-int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *field,
+int find_ref_key(KeyInfo *key, uint32_t key_count, unsigned char *record, Field *field,
                  uint32_t *key_length, uint32_t *keypart)
 {
   register int i;
-  register KEY *key_info;
+  register KeyInfo *key_info;
   uint32_t fieldpos;
 
   fieldpos= field->offset(record);
@@ -84,7 +84,7 @@ int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *fie
        i++, key_info++)
   {
     uint32_t j;
-    KEY_PART_INFO *key_part;
+    KeyPartInfo *key_part;
     *key_length=0;
     for (j=0, key_part=key_info->key_part ;
 	 j < key_info->key_parts ;
@@ -102,11 +102,11 @@ int find_ref_key(KEY *key, uint32_t key_count, unsigned char *record, Field *fie
 }
 
 
-void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
+void key_copy(unsigned char *to_key, unsigned char *from_record, KeyInfo *key_info,
               unsigned int key_length)
 {
   uint32_t length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
 
   if (key_length == 0)
     key_length= key_info->key_length;
@@ -145,10 +145,10 @@ void key_copy(unsigned char *to_key, unsigned char *from_record, KEY *key_info,
   Zero the null components of key tuple.
 */
 
-void key_zero_nulls(unsigned char *tuple, KEY *key_info)
+void key_zero_nulls(unsigned char *tuple, KeyInfo *key_info)
 {
-  KEY_PART_INFO *key_part= key_info->key_part;
-  KEY_PART_INFO *key_part_end= key_part + key_info->key_parts;
+  KeyPartInfo *key_part= key_info->key_part;
+  KeyPartInfo *key_part_end= key_part + key_info->key_parts;
   for (; key_part != key_part_end; key_part++)
   {
     if (key_part->null_bit && *tuple)
@@ -170,11 +170,11 @@ void key_zero_nulls(unsigned char *tuple, KEY *key_info)
   @param key_length  specifies length of all keyparts that will be restored
 */
 
-void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_info,
+void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key_info,
                  uint16_t key_length)
 {
   uint32_t length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
 
   if (key_length == 0)
   {
@@ -262,7 +262,7 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KEY *key_inf
 bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t key_length)
 {
   uint32_t store_length;
-  KEY_PART_INFO *key_part;
+  KeyPartInfo *key_part;
   const unsigned char *key_end= key + key_length;;
 
   for (key_part=table->key_info[idx].key_part;
@@ -328,7 +328,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 
 void key_unpack(String *to, Table *table, uint32_t idx)
 {
-  KEY_PART_INFO *key_part,*key_part_end;
+  KeyPartInfo *key_part,*key_part_end;
   Field *field;
   String tmp;
 
@@ -410,9 +410,9 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     If table handler has primary key as part of the index, check that primary
     key is not updated
   */
-  if (idx != table->s->primary_key && table->s->primary_key < MAX_KEY &&
+  if (idx != table->getShare()->primary_key && table->getShare()->primary_key < MAX_KEY &&
       (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
-    return is_key_used(table, table->s->primary_key, fields);
+    return is_key_used(table, table->getShare()->primary_key, fields);
   return 0;
 }
 
@@ -431,7 +431,7 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     -   1		Key is larger than range
 */
 
-int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_length)
+int key_cmp(KeyPartInfo *key_part, const unsigned char *key, uint32_t key_length)
 {
   uint32_t store_length;
 
@@ -466,86 +466,5 @@ int key_cmp(KEY_PART_INFO *key_part, const unsigned char *key, uint32_t key_leng
   return 0;                                     // Keys are equal
 }
 
-
-/*
-  Compare two records in index order
-  SYNOPSIS
-    key_rec_cmp()
-    key                         Index information
-    rec0                        Pointer to table->record[0]
-    first_rec                   Pointer to record compare with
-    second_rec                  Pointer to record compare against first_rec
-
-  DESCRIPTION
-    This method is set-up such that it can be called directly from the
-    priority queue and it is attempted to be optimised as much as possible
-    since this will be called O(N * log N) times while performing a merge
-    sort in various places in the code.
-
-    We retrieve the pointer to table->record[0] using the fact that key_parts
-    have an offset making it possible to calculate the start of the record.
-    We need to get the diff to the compared record since none of the records
-    being compared are stored in table->record[0].
-
-    We first check for NULL values, if there are no NULL values we use
-    a compare method that gets two field pointers and a max length
-    and return the result of the comparison.
-*/
-
-int key_rec_cmp(void *key, unsigned char *first_rec, unsigned char *second_rec)
-{
-  KEY *key_info= (KEY*)key;
-  uint32_t key_parts= key_info->key_parts, i= 0;
-  KEY_PART_INFO *key_part= key_info->key_part;
-  unsigned char *rec0= key_part->field->ptr - key_part->offset;
-  ptrdiff_t first_diff= first_rec - rec0, sec_diff= second_rec - rec0;
-  int result= 0;
-
-  do
-  {
-    Field *field= key_part->field;
-
-    if (key_part->null_bit)
-    {
-      /* The key_part can contain NULL values */
-      bool first_is_null= field->is_null_in_record_with_offset(first_diff);
-      bool sec_is_null= field->is_null_in_record_with_offset(sec_diff);
-      /*
-        NULL is smaller then everything so if first is NULL and the other
-        not then we know that we should return -1 and for the opposite
-        we should return +1. If both are NULL then we call it equality
-        although it is a strange form of equality, we have equally little
-        information of the real value.
-      */
-      if (!first_is_null)
-      {
-        if (!sec_is_null)
-          ; /* Fall through, no NULL fields */
-        else
-        {
-          return(1);
-        }
-      }
-      else if (!sec_is_null)
-      {
-        return(-1);
-      }
-      else
-        goto next_loop; /* Both were NULL */
-    }
-    /*
-      No null values in the fields
-      We use the virtual method cmp_max with a max length parameter.
-      For most field types this translates into a cmp without
-      max length. The exceptions are the BLOB and VARCHAR field types
-      that take the max length into account.
-    */
-    result= field->cmp_max(field->ptr+first_diff, field->ptr+sec_diff,
-                           key_part->length);
-next_loop:
-    key_part++;
-  } while (!result && ++i < key_parts);
-  return(result);
-}
 
 } /* namespace drizzled */

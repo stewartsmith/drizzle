@@ -34,7 +34,7 @@ ColumnsTool::ColumnsTool() :
   add_field("COLUMN_NAME");
   add_field("COLUMN_TYPE");
   add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER);
-  add_field("COLUMN_DEFAULT");
+  add_field("COLUMN_DEFAULT", plugin::TableFunction::VARBINARY, 65535, true);
   add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN);
   add_field("COLUMN_DEFAULT_UPDATE");
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
@@ -53,7 +53,7 @@ ColumnsTool::ColumnsTool() :
 
   add_field("COLLATION_NAME");
 
-  add_field("COLUMN_COMMENT", 1024);
+  add_field("COLUMN_COMMENT", plugin::TableFunction::STRING, 1024, true);
 }
 
 
@@ -62,11 +62,6 @@ ColumnsTool::Generator::Generator(Field **arg) :
   column_iterator(0),
   is_columns_primed(false)
 {
-  Session *session= current_session;
-  drizzled::statement::Select *select= static_cast<statement::Select *>(session->lex->statement);
-
-  setSchemaPredicate(select->getShowSchema());
-  setTablePredicate(select->getShowTable());
 }
 
 
@@ -120,10 +115,12 @@ bool ColumnsTool::Generator::populate()
 void ColumnsTool::Generator::fill()
 {
   /* TABLE_SCHEMA */
-  push(schema_name());
+  assert(getTableProto().schema().length());
+  assert(getTableProto().schema().c_str());
+  push(getTableProto().schema());
 
   /* TABLE_NAME */
-  push(table_name());
+  push(getTableProto().name());
 
   /* COLUMN_NAME */
   push(column.name());
@@ -135,7 +132,12 @@ void ColumnsTool::Generator::fill()
   push(static_cast<int64_t>(column_iterator));
 
   /* COLUMN_DEFAULT */
-  push(column.options().default_value());
+  if (column.options().has_default_value())
+    push(column.options().default_value());
+  else if (column.options().has_default_bin_value())
+    push(column.options().default_bin_value().c_str(), column.options().default_bin_value().length());
+  else
+    push();
 
   /* COLUMN_DEFAULT_IS_NULL */
   push(column.options().default_null());
@@ -211,5 +213,12 @@ void ColumnsTool::Generator::fill()
   push(column.string_options().collation());
 
  /* "COLUMN_COMMENT" */
-  push(column.comment());
+  if (column.has_comment())
+  {
+    push(column.comment());
+  }
+  else
+  {
+    push();
+  }
 }

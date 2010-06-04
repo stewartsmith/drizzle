@@ -38,14 +38,14 @@ namespace drizzled
 
 optimizer::QuickGroupMinMaxSelect::
 QuickGroupMinMaxSelect(Table *table,
-                       JOIN *join_arg,
+                       Join *join_arg,
                        bool have_min_arg,
                        bool have_max_arg,
-                       KEY_PART_INFO *min_max_arg_part_arg,
+                       KeyPartInfo *min_max_arg_part_arg,
                        uint32_t group_prefix_len_arg,
                        uint32_t group_key_parts_arg,
                        uint32_t used_key_parts_arg,
-                       KEY *index_info_arg,
+                       KeyInfo *index_info_arg,
                        uint32_t use_index,
                        double read_cost_arg,
                        ha_rows records_arg,
@@ -99,14 +99,13 @@ int optimizer::QuickGroupMinMaxSelect::init()
   if (group_prefix) /* Already initialized. */
     return 0;
 
-  if (! (last_prefix= (unsigned char*) alloc_root(&alloc, group_prefix_len)))
+  if (! (last_prefix= (unsigned char*) alloc.alloc_root(group_prefix_len)))
       return 1;
   /*
     We may use group_prefix to store keys with all select fields, so allocate
     enough space for it.
   */
-  if (! (group_prefix= (unsigned char*) alloc_root(&alloc,
-                                                   real_prefix_len + min_max_arg_len)))
+  if (! (group_prefix= (unsigned char*) alloc.alloc_root(real_prefix_len + min_max_arg_len)))
     return 1;
 
   if (key_infix_len > 0)
@@ -115,7 +114,7 @@ int optimizer::QuickGroupMinMaxSelect::init()
       The memory location pointed to by key_infix will be deleted soon, so
       allocate a new buffer and copy the key_infix into it.
     */
-    unsigned char *tmp_key_infix= (unsigned char*) alloc_root(&alloc, key_infix_len);
+    unsigned char *tmp_key_infix= (unsigned char*) alloc.alloc_root(key_infix_len);
     if (! tmp_key_infix)
       return 1;
     memcpy(tmp_key_infix, this->key_infix, key_infix_len);
@@ -170,7 +169,7 @@ optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
 {
   if (cursor->inited != Cursor::NONE)
   {
-    cursor->ha_index_end();
+    cursor->endIndexScan();
   }
   if (min_max_arg_part)
   {
@@ -179,7 +178,7 @@ optimizer::QuickGroupMinMaxSelect::~QuickGroupMinMaxSelect()
              DeletePtr());
   }
   min_max_ranges.clear();
-  free_root(&alloc,MYF(0));
+  alloc.free_root(MYF(0));
   delete min_functions_it;
   delete max_functions_it;
   delete quick_prefix_select;
@@ -287,7 +286,7 @@ int optimizer::QuickGroupMinMaxSelect::reset(void)
   int result;
 
   cursor->extra(HA_EXTRA_KEYREAD); /* We need only the key attributes */
-  if ((result= cursor->ha_index_init(index,1)))
+  if ((result= cursor->startIndexScan(index,1)))
     return result;
   if (quick_prefix_select && quick_prefix_select->reset())
     return 0;
@@ -580,7 +579,7 @@ int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
         Remember this key, and continue looking for a non-NULL key that
         satisfies some other condition.
       */
-      memcpy(tmp_record, record, head->s->rec_buff_length);
+      memcpy(tmp_record, record, head->getShare()->rec_buff_length);
       found_null= true;
       continue;
     }
@@ -621,7 +620,7 @@ int optimizer::QuickGroupMinMaxSelect::next_min_in_range()
   */
   if (found_null && result)
   {
-    memcpy(record, tmp_record, head->s->rec_buff_length);
+    memcpy(record, tmp_record, head->getShare()->rec_buff_length);
     result= 0;
   }
   return result;

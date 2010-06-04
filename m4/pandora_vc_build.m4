@@ -3,7 +3,7 @@ dnl This file is free software; Sun Microsystems
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
-AC_DEFUN([_PANDORA_BUILDING_FROM_VC],[
+AC_DEFUN([PANDORA_TEST_VC_DIR],[
   pandora_building_from_vc=no
 
   if test -d ".bzr" ; then
@@ -36,7 +36,7 @@ AC_DEFUN([_PANDORA_BUILDING_FROM_VC],[
 ])
 
 AC_DEFUN([PANDORA_BUILDING_FROM_VC],[
-  m4_syscmd(_PANDORA_BUILDING_FROM_VC [
+  m4_syscmd(PANDORA_TEST_VC_DIR [
 
     PANDORA_RELEASE_DATE=`date +%Y.%m`
     PANDORA_RELEASE_NODOTS_DATE=`date +%Y%m`
@@ -60,17 +60,19 @@ AC_DEFUN([PANDORA_BUILDING_FROM_VC],[
       mkdir -p config
     fi
 
-    cat > config/pandora_vc_revinfo.tmp <<EOF
+    if test "${pandora_building_from_bzr}" = "yes" -o ! -f config/pandora_vc_revinfo ; then 
+      cat > config/pandora_vc_revinfo.tmp <<EOF
 PANDORA_VC_REVNO=${PANDORA_VC_REVNO}
 PANDORA_VC_REVID=${PANDORA_VC_REVID}
 PANDORA_VC_BRANCH=${PANDORA_VC_BRANCH}
 PANDORA_RELEASE_DATE=${PANDORA_RELEASE_DATE}
 PANDORA_RELEASE_NODOTS_DATE=${PANDORA_RELEASE_NODOTS_DATE}
 EOF
-    if ! diff config/pandora_vc_revinfo.tmp config/pandora_vc_revinfo >/dev/null 2>&1 ; then
-      mv config/pandora_vc_revinfo.tmp config/pandora_vc_revinfo
+      if ! diff config/pandora_vc_revinfo.tmp config/pandora_vc_revinfo >/dev/null 2>&1 ; then
+        mv config/pandora_vc_revinfo.tmp config/pandora_vc_revinfo
+      fi
+      rm -f config/pandora_vc_revinfo.tmp
     fi
-    rm -f config/pandora_vc_revinfo.tmp
   ])
 ])
   
@@ -81,7 +83,7 @@ AC_DEFUN([_PANDORA_READ_FROM_FILE],[
 AC_DEFUN([PANDORA_VC_VERSION],[
   AC_REQUIRE([PANDORA_BUILDING_FROM_VC])
 
-  _PANDORA_BUILDING_FROM_VC
+  PANDORA_TEST_VC_DIR
 
   AS_IF([test -f ${srcdir}/config/pandora_vc_revinfo],[
     _PANDORA_READ_FROM_FILE([PANDORA_VC_REVNO],${srcdir}/config/pandora_vc_revinfo)

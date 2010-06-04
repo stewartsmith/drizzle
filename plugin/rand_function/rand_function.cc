@@ -119,18 +119,11 @@ double RandFunction::val_real()
 
 plugin::Create_function<RandFunction> *rand_function= NULL;
 
-static int initialize(plugin::Registry &registry)
+static int initialize(module::Context &registry)
 {
   rand_function= new plugin::Create_function<RandFunction>("rand");
   registry.add(rand_function);
   return 0;
 }
 
-static int finalize(plugin::Registry &registry)
-{
-  registry.remove(rand_function);
-  delete rand_function;
-  return 0;
-}
-
-DRIZZLE_PLUGIN(initialize, finalize, NULL);
+DRIZZLE_PLUGIN(initialize, NULL);

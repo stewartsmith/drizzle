@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-10-10 07:47+0000\n"
+"POT-Creation-Date: 2010-04-28 02:45+0000\n"
+"PO-Revision-Date: 2010-04-30 23:48+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-05-02 03:56+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -410,7 +410,7 @@ msgstr ""
 "Stuur een ping-signaal naar de server om te controleren of hij reageert."
 
 msgid "Use MySQL Protocol."
-msgstr ""
+msgstr "Gebruik het MySQL Protocol."
 
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
@@ -464,9 +464,10 @@ msgstr "Verwerkt lijn: %<PRIu32>\n"
 msgid "Unknown command: "
 msgstr "Onbekende opdracht: "
 
+#, fuzzy
 msgid ""
 "Reading table information for completion of table and column names\n"
-"    You can turn off this feature to get a quicker startup with -A\n"
+"You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 "Leest tabel informatie voor het vervolledigen van tabel- en kolomnamen\n"
@@ -726,9 +727,13 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Fout: Niet genoeg geheugen om de ORDER BY clausule op te slaan\n"
 
-#, fuzzy, c-format
-msgid "Got signal %d from thread %<PRIu64>"
-msgstr "Kreeg signaal %d van thread %<PRIu64>"
+#, c-format
+msgid "Could not open '%s' for reading: errno = %d"
+msgstr "Kon '%s' niet openen om te lezen: errno = %d"
+
+#, c-format
+msgid "Out of memory"
+msgstr "Te weinig geheugen"
 
 msgid "Aborting\n"
 msgstr "Breekt af\n"
@@ -754,101 +759,6 @@ msgstr ""
 "gebruiker bestaat!\n"
 
 #, c-format
-msgid "Fatal signal %d while backtracing\n"
-msgstr "Fataal signaal %d tijdens het maken van een backtrace\n"
-
-#, c-format
-msgid ""
-"We will try our best to scrape up some info that will hopefully help "
-"diagnose\n"
-"the problem, but since we have already crashed, something is definitely "
-"wrong\n"
-"and this may fail.\n"
-"\n"
-msgstr ""
-"We zullen ons best doen om wat info bij elkaar te rapen die je misschien "
-"kan \n"
-"helpen bij de diagnose van het probleem, maar aangezien we al gecrasht zijn "
-"is\n"
-"er zeker iets mis en dit kan dus mislukken.\n"
-"\n"
-
-#, c-format
-msgid ""
-"It is possible that drizzled could use up to \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
-"bytes of memory\n"
-"Hope that's ok; if not, decrease some variables in the equation.\n"
-"\n"
-msgstr ""
-"Het is mogelijk dat drizzled tot \n"
-"key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
-"bytes geheugen gebruikt\n"
-"Ik hoop dat dit in orde is; indien niet, verminder dan enkele variabelen in "
-"de vergelijking.\n"
-"\n"
-
-#, c-format
-msgid ""
-"Attempting backtrace. You can use the following information to find out\n"
-"where drizzled died. If you see no messages after this, something went\n"
-"terribly wrong...\n"
-msgstr ""
-"Probeert een backtrace. Je kan de volgende inmormatie gebruiken om uit te "
-"zoeken\n"
-"waar drizzled afbrak. Indien je hierna geen boodschappen ziet, ging er iets\n"
-"verschrikkelijk fout...\n"
-
-#, c-format
-msgid ""
-"Trying to get some variables.\n"
-"Some pointers may be invalid and cause the dump to abort...\n"
-msgstr ""
-"Probeert enkele variablen te vinden.\n"
-"Enkele pointers kunnen ongeldig zijn en de dump afbreken...\n"
-
-#, c-format
-msgid ""
-"\n"
-"This crash occurred while the server was calling initgroups(). This is\n"
-"often due to the use of a drizzled that is statically linked against glibc\n"
-"and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n"
-"upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
-"later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
-"drizzled that is not statically linked.\n"
-msgstr ""
-"\n"
-"Deze crash gebeurde terwijl de server initgroups() aanriep. Dit is dikwijls\n"
-"te wijten aan een drizzled die statisch gelinked werd met glibc en "
-"ingesteld\n"
-"werd om LDAP te gebruiken in /etc/nsswitch.conf. Je zal ofwel moeten\n"
-"upgraden naar een glibc versie die dit probleem niet heeft (2.3.4 of later\n"
-"indien gebruikt met nscd) ofwel LDAP moeten uitschakelen in nsswitch.conf,\n"
-"ofwel een drizzled moeten gebruiken die niet statisch gelinked werd.\n"
-
-#, c-format
-msgid ""
-"\n"
-"You are running a statically-linked LinuxThreads binary on an NPTL system.\n"
-"This can result in crashes on some distributions due to LT/NPTL conflicts.\n"
-"You should either build a dynamically-linked binary, or force LinuxThreads\n"
-"to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n"
-"the documentation for your distribution on how to do that.\n"
-msgstr ""
-"\n"
-"Je draait een statisch gelinkte LinuxThreads binary op een NPTL systeem.\n"
-"Dit kan crashes veroorzaken in enkele distributies vanwege LT/NPTL "
-"conflicten.\n"
-"Je zou een dynamisch gelinkte  binary moeten bouwen, of LinuxThreads "
-"forceren\n"
-"om gebruikt te worden met de LD_ASSUME_KERNEL omgevingsvariabele.\n"
-"Consulteer de documentatie van je distributieom te leren hoe je dat doet.\n"
-
-#, c-format
-msgid "Writing a core file\n"
-msgstr "Schrijft core bestand\n"
-
-#, c-format
 msgid "gethostname failed, using '%s' as hostname"
 msgstr "gethostname mislukt, gebruikt '%s' ass hostnaam"
 
@@ -858,9 +768,6 @@ msgstr "Onbekende locale: '%s'"
 
 msgid "Can't create thread-keys"
 msgstr "Kan geen thread-keys aanmaken"
-
-msgid "Out of memory"
-msgstr "Te weinig geheugen"
 
 msgid "Failed to initialize plugins."
 msgstr "Initialiseren van plugins mislukte."
@@ -876,9 +783,9 @@ msgstr ""
 msgid "No scheduler found, cannot continue!\n"
 msgstr "Geen planner gevonden, kan niet verdergaan!\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr "Onbekend/niet-ondersteund tabel type: %s"
+msgstr "Onbekend/niet-ondersteund storage engine: %s"
 
 msgid "Display this help and exit after initializing plugins."
 msgstr "Toon deze help en sluit af na het initialiseren van de plugins."
@@ -920,9 +827,6 @@ msgstr "Stel het standaard storage engine (tabel type) voor tabellen in."
 
 msgid "Set the default time zone."
 msgstr "Stel de standaard tijdzone in."
-
-msgid "Print a symbolic stack trace on failure."
-msgstr "Druk een symbolic stack trace bij falen."
 
 msgid "Used for debugging;  Use at your own risk!"
 msgstr "Gebruikt voor debugging;  Gebruik op eigen risico!"
@@ -1096,30 +1000,30 @@ msgstr ""
 msgid "Directory for plugins."
 msgstr "Directory voor plugins"
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
 msgstr ""
-"Optionele door komma's gescheiden lijst van plugins te laden bij het "
-"opstarten.[bijvoorbeeld: --plugin_load=crc32,logger_gearman]"
+"Optionele door komma's gescheiden lijst van plugins om te laden bij het "
+"opstarten, als toevoeging aan de standaardlijst met plugins. [bijvoorbeeld: "
+"--plugin_add=crc32,logger_gearman]"
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
 "removes a plugin from the list of plugins to be loaded. [for example: --"
 "plugin_remove=crc32,logger_gearman]"
 msgstr ""
-"Optionele door komma's gescheiden lijst van plugins te laden bij het "
-"opstarten.[bijvoorbeeld: --plugin_load=crc32,logger_gearman]"
+"Optionele door komma's gescheiden lijst van plugins die niet geladen mogen "
+"worden bij het opstarten. Dit verwijdert een plugin effectief van de lijst "
+"met te laden plugins. [bijvoorbeeld: --plugin_remove=crc32,logger_gearman]"
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
-"Optionele door komma's gescheiden lijst van plugins te laden bij het "
-"opstarten.[bijvoorbeeld: --plugin_load=crc32,logger_gearman]"
+"Optionele door komma's gescheiden lijst van plugins om te laden bij het "
+"opstarten, in plaats van de standaardlijst met plugins. [bijvoorbeeld: --"
+"plugin_load=crc32,logger_gearman]"
 
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
@@ -1218,19 +1122,9 @@ msgstr ""
 "Kan de server niet starten: het verbindingsadres verwijst naar meerdere "
 "interfaces!"
 
-msgid ""
-"setrlimit could not change the size of core files to 'infinity';  We may not "
-"be able to generate a core file on signals"
-msgstr ""
-"setrlimit kon de grootte van de  core bestanden niet wijzigen in 'infinity'; "
-"Het zou kunnen dat we geen core bestand kunnen genereren bij signalen."
-
-#, fuzzy, c-format
-msgid "Data directory %s does not exist\n"
-msgstr "%s %s bestaat niet"
-
-msgid "UNUSED"
-msgstr "ONGEBRUIKT"
+#, c-format
+msgid "Unknown error %d"
+msgstr "Onbekende fout %d"
 
 msgid "NO"
 msgstr "NEE"
@@ -1557,9 +1451,9 @@ msgstr "%s: Kreeg signaal %d. Afgebroken!\n"
 msgid "%s: Shutdown complete\n"
 msgstr "%s: Afsluiten volledig\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Forcing close of thread %<PRIu64> user: '%-.48s'\n"
-msgstr "%s: Forceert afsluiten van thread %ld  gebruiker: '%-.48s'\n"
+msgstr "%s: Forceert afsluiten van thread %<PRIu64> gebruiker: '%-.48s'\n"
 
 msgid "Can't create IP socket"
 msgstr "Kan IP socket niet aanmaken"
@@ -1769,21 +1663,20 @@ msgstr "Kan functie '%-.192s' niet laden"
 msgid "Can't initialize function '%-.192s'; %-.80s"
 msgstr "Kan functie '%-.192s' niet initialiseren; %-.80s"
 
-#, fuzzy
 msgid "No paths allowed for plugin library"
-msgstr "Geen paden toegestaan voor een gedeelde library"
+msgstr "Geen paden toegestaan voor plugin bibliotheek"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Plugin '%-.192s' already exists"
-msgstr "Functie '%-.192s' bestaat reeds"
+msgstr "Plugin '%-.192s' bestaat reeds"
 
 #, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
 msgstr "Kan gedeelde bibliotheek '%-.192s' niet openen (Foutcode: %d %-.128s)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find symbol '%-.128s' in library '%-.128s'"
-msgstr "Kan symbol '%-.128s' niet vinden in library"
+msgstr "Kan symbool '%-.128s' niet vinden in bibliotheek '%-.128s'"
 
 #, c-format
 msgid "Function '%-.192s' is not defined"
@@ -4312,75 +4205,39 @@ msgstr "Kreeg een ongeldige tijdswaarde '%s'."
 msgid "Received an invalid enum value '%s'."
 msgstr "Ontving een ongelding enum waarde '%s'."
 
-#, fuzzy
 msgid "Tables which are replicated require a primary key."
-msgstr "Dit tabeltype vereist een primaire sleutel"
+msgstr "Tabellen die gerepliceerd worden hebben een primaire sleutel nodig."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Corrupt or invalid table definition: %s"
-msgstr "Het aantal tabeldefinities in de cache."
+msgstr "Corrupte of ongeldige tabel definitie: %s"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Schema does not exist: %s"
-msgstr "Trigger bestaat niet"
+msgstr "Schema bestaat niet: %s"
 
 #, c-format
 msgid "Error altering schema: %s"
-msgstr ""
+msgstr "Fout bij wijzigen schema: %s"
 
 #, c-format
 msgid "Error droppping Schema : %s"
+msgstr "Fout bij verwijderen van schema : %s"
+
+msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
+msgstr "Tijdelijke tabel te groot, voer opnieuw uit met SQL_BIG_RESULT."
+
+#, fuzzy, c-format
+msgid "Unknown table engine option key/pair %s = %s."
+msgstr "Onbekende table engine '%s'"
+
+#, c-format
+msgid "Unknown schema engine option key/pair %s = %s."
 msgstr ""
-
-#, c-format
-msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr "Kan bestand '%s' niet aanmaken/wijzigen (Foutcode: %d)"
-
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Fout bij lezen van bestand '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Error writing file '%s' (Errcode: %d)"
-msgstr "Fout bij schrijven van bestand '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Error on close of '%s' (Errcode: %d)"
-msgstr "Fout bij sluiten van '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Out of memory (Needed %u bytes)"
-msgstr "Geheugen is op (Had %u bytes nodig)"
-
-#, c-format
-msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr "Fout bij wissen van '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr "Fout bij hernoemen van '%s' naar '%s' (Foutcode: %d)"
-
-#, c-format
-msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
-"Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%"
-"s' (Foutcode: %d)"
-
-#, c-format
-msgid "Can't lock file (Errcode: %d)"
-msgstr "Kan bestand niet vergrendelen (Foutcode: %d)"
 
 #, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr "Kan bestand niet ontgrendelen (Foutcode: %d)"
-
-#, c-format
-msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr "Kan dir van '%s' niet lezen (Foutcode: %d)"
-
-#, c-format
-msgid "Can't get stat of '%s' (Errcode: %d)"
-msgstr "Kan stat van '%s' niet lezen (Foutcode: %d)"
 
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
@@ -4391,26 +4248,12 @@ msgid "Can't open stream from handle (Errcode: %d)"
 msgstr "Kan geen stream openen met deze handle (Foutcode: %d)"
 
 #, c-format
-msgid "Can't get working dirctory (Errcode: %d)"
-msgstr "Kan de werkdirectory niet vinden (Foutcode: %d)"
-
-#, c-format
-msgid "Can't change dir to '%s' (Errcode: %d)"
-msgstr "Kan directory niet veranderen in '%s' (Foutcode: %d)"
-
-#, c-format
 msgid "Warning: '%s' had %d links"
 msgstr "Waarschuwing: '%s' had %d links"
 
 #, c-format
 msgid "Warning: %d files and %d streams is left open\n"
 msgstr "Waarschuwing: %d bestanden and %d streams zijn nog geopend\n"
-
-#, c-format
-msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-msgstr ""
-"Disk is vol bij het schrijven van '%s'. Aan het wachten tot iemand ruimte "
-"vrijmaakt..."
 
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
@@ -4454,24 +4297,27 @@ msgstr ""
 "het bestand %s"
 
 #, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr "Bestand '%s' niet gevonden (Foutcode: %d)"
-
-#, c-format
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr "Bestand '%s' (fileno: %d) werd niet afgesloten"
-
-#, c-format
-msgid "Unknown error %d"
-msgstr "Onbekende fout %d"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
 msgstr "fout: kon directory niet openen: %s\n"
 
+msgid ""
+"setrlimit could not change the size of core files to 'infinity';  We may not "
+"be able to generate a core file on signals"
+msgstr ""
+"setrlimit kon de grootte van de  core bestanden niet wijzigen in 'infinity'; "
+"Het zou kunnen dat we geen core bestand kunnen genereren bij signalen."
+
+#, c-format
+msgid "Data directory %s does not exist\n"
+msgstr "Gegevens directory %s bestaat niet\n"
+
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
-msgstr ""
+msgstr "Gebruik: %s TRANSACTION_LOG [--checksum] \n"
 
 #, c-format
 msgid "Cannot open file: %s\n"
@@ -4480,23 +4326,25 @@ msgstr "Kan bestand niet openen: %s\n"
 #, c-format
 msgid "Found a non-transaction message in log.  Currently, not supported.\n"
 msgstr ""
+"Niet-transactioneel bericht gevonden in de log.  Dit wordt momenteel niet "
+"ondersteund.\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Attempted to read record bigger than INT_MAX\n"
-msgstr "Probeerde een record te lezen dat groter is dan SIZE_MAX\n"
+msgstr "Probeerde een record groter dan INT_MAX te lezen\n"
 
 #, c-format
 msgid "Memory allocation failure trying to allocate %<PRIu64> bytes.\n"
 msgstr ""
 "Geheugentoewijzingsfout bij een poging om %<PRIu64> bytes toe te wijzen.\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not read transaction message.\n"
-msgstr "%d prepared XA transacties gevonden"
+msgstr "Kon transactie-bericht net lezen.\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "GPB ERROR: %s.\n"
-msgstr "BUFFER: %s\n"
+msgstr "GPB ERROR: %s.\n"
 
 #, c-format
 msgid ""
@@ -4504,6 +4352,9 @@ msgid ""
 "\n"
 "%s\n"
 msgstr ""
+"HEXDUMP:\n"
+"\n"
+"%s\n"
 
 #, c-format
 msgid "Unable to parse command. Got error: %s.\n"
@@ -4511,11 +4362,78 @@ msgstr "Kon de opdracht niet interpreteren. Kreeg fout: %s.\n"
 
 #, c-format
 msgid "Checksum failed. Wanted %<PRIu32> got %<PRIu32>\n"
-msgstr ""
+msgstr "Controlecijfer mislukt. Wilde %<PRIu32> kreeg %<PRIu32>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
-msgstr "Gebruik: %s COMMAND_LOG\n"
+msgstr "Gebruik: %s TRANSACTION_LOG\n"
+
+#, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+"Plugin '%s' bevat de naam '%s' in in zijn manifest, deze werd reeds "
+"geregistreerd.\n"
+
+#, c-format
+msgid "Plugin '%s' init function returned error.\n"
+msgstr "Plugin '%s' init functie gaf een fout terug.\n"
+
+#, c-format
+msgid "Couldn't load plugin library named '%s'.\n"
+msgstr "Kon plugin bibliotheek met de naam '%s' niet vinden.\n"
+
+#, c-format
+msgid "Couldn't load plugin named '%s'.\n"
+msgstr "Kon plugin bibliotheek met de naam '%s' niet laden.\n"
+
+msgid "Out of memory."
+msgstr "Geheugen opgebruikt."
+
+#, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr "Onbekende variabele type code 0x%x in plugin '%s'."
+
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+"Server variabele %s van plugin %s werd geforceerd read-only: string "
+"variabele zonder update_func en PLUGIN_VAR_MEMALLOC vlag"
+
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr "Ontbrekende variabele naam in plugin '%s'."
+
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr "Locale thread variabele '%s' niet toegewezen in plugin '%s'."
+
+#, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr "Geheugen tekort in plugin '%s'."
+
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr "Slechte opties voor plugin '%s'."
+
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr "Interpreteren van opties voor plugin '%s' mislukt."
+
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr "Plugin '%s' heeft conflicterende systeem variabelen"
+
+#, c-format
+msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
+msgstr "Loading plugin %s mislukt: en plugin met die naam bestaat reeds.\n"
+
+#, c-format
+msgid "Fatal error: Failed initializing %s plugin.\n"
+msgstr "Fatale fout: Initialiseren van plugin %s mislukt.\n"
 
 msgid "Warning: "
 msgstr "Waarschuwing: "
@@ -4578,12 +4496,12 @@ msgstr "(Uitgeschakeld)\n"
 msgid "errmsg plugin '%s' errmsg() failed"
 msgstr "errmsg plugin '%s' errmsg() mislukt"
 
-#, fuzzy, c-format
+#, c-format
 msgid "A function named %s already exists!\n"
-msgstr "Functie '%-.192s' bestaat reeds"
+msgstr "Een functie met de naam %s bestaat reeds!\n"
 
 msgid "Could not add Function!\n"
-msgstr ""
+msgstr "Kon Functie niet toevoegen!\n"
 
 msgid "No sockets could be bound for listening"
 msgstr "Er kan geen socket gebonden worden om naar te luisteren"
@@ -4648,63 +4566,6 @@ msgid "Listening on %s:%s\n"
 msgstr "Luistert op %s:%s\n"
 
 #, c-format
-msgid ""
-"Plugin '%s' contains the name '%s' in its manifest, which has already been "
-"registered.\n"
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' init function returned error.\n"
-msgstr "Plugin '%s' init functie gaf een fout terug.\n"
-
-#, fuzzy, c-format
-msgid "Couldn't load plugin library named '%s'.\n"
-msgstr "Kon plugin met de naam '%s' niet laden met soname '%s'."
-
-#, fuzzy, c-format
-msgid "Couldn't load plugin named '%s'.\n"
-msgstr "Kon plugin met de naam '%s' niet laden met soname '%s'."
-
-msgid "Out of memory."
-msgstr "Geheugen opgebruikt."
-
-#, c-format
-msgid "Unknown variable type code 0x%x in plugin '%s'."
-msgstr "Onbekende variabele type code 0x%x in plugin '%s'."
-
-#, c-format
-msgid ""
-"Server variable %s of plugin %s was forced to be read-only: string variable "
-"without update_func and PLUGIN_VAR_MEMALLOC flag"
-msgstr ""
-"Server variabele %s van plugin %s werd geforceerd read-only: string "
-"variabele zonder update_func en PLUGIN_VAR_MEMALLOC vlag"
-
-#, c-format
-msgid "Missing variable name in plugin '%s'."
-msgstr "Ontbrekende variabele naam in plugin '%s'."
-
-#, c-format
-msgid "Thread local variable '%s' not allocated in plugin '%s'."
-msgstr "Locale thread variabele '%s' niet toegewezen in plugin '%s'."
-
-#, c-format
-msgid "Out of memory for plugin '%s'."
-msgstr "Geheugen tekort in plugin '%s'."
-
-#, c-format
-msgid "Bad options for plugin '%s'."
-msgstr "Slechte opties voor plugin '%s'."
-
-#, c-format
-msgid "Parsing options for plugin '%s' failed."
-msgstr "Interpreteren van opties voor plugin '%s' mislukt."
-
-#, c-format
-msgid "Plugin '%s' has conflicting system variables"
-msgstr "Plugin '%s' heeft conflicterende systeem variabelen"
-
-#, c-format
 msgid "logging '%s' pre() failed"
 msgstr "loggen van '%s' pre() mislukte"
 
@@ -4712,9 +4573,9 @@ msgstr "loggen van '%s' pre() mislukte"
 msgid "logging '%s' post() failed"
 msgstr "loggen van '%s' post() mislukte"
 
-#, fuzzy, c-format
+#, c-format
 msgid "logging '%s' postEnd() failed"
-msgstr "loggen van '%s' post() mislukte"
+msgstr "loggen van '%s' postEnd() mislukt"
 
 #, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
@@ -4724,25 +4585,17 @@ msgstr "qcache plugin '%s' try_fetch_and_send() mislukt"
 msgid "qcache plugin '%s' set() failed"
 msgstr "qcache plugin '%s' set() mislukt"
 
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' invalidateTable() failed"
-msgstr "qcache plugin '%s' invalidate_table() mislukt"
+msgstr "qcache plugin '%s' invalidateTable() mislukt"
 
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' invalidateDb() failed"
-msgstr "qcache plugin '%s' invalidate_db() mislukt"
+msgstr "qcache plugin '%s' invalidateDb() mislukt"
 
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
 msgstr "qcache plugin '%s' flush() mislukt"
-
-#, c-format
-msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
-msgstr ""
-
-#, fuzzy, c-format
-msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr "Initialiseren van plugins mislukte."
 
 #, c-format
 msgid ""
@@ -4757,12 +4610,8 @@ msgid "Attempted to configure %s as the scheduler, which did not exist.\n"
 msgstr "Probeerde %s in te stellen als planner, maar die bestaat niet.\n"
 
 #, c-format
-msgid "Error while loading database options: '%s':"
-msgstr "Fout tijdens laden van de databank opties: '%s':"
-
-#, fuzzy, c-format
 msgid "Found %d prepared transaction(s) in resource manager."
-msgstr "%d prepared transaction(s) gevonden in %s"
+msgstr "Vond %d prepared transactie(s) in de bronbeheerder."
 
 msgid "Starting crash recovery..."
 msgstr "Start crash herstel..."
@@ -4787,21 +4636,39 @@ msgstr ""
 msgid "Crash recovery finished."
 msgstr "Crash herstel afgelopen."
 
+msgid ""
+"You registered a TransactionApplier plugin but no TransactionReplicator "
+"plugins were registered.\n"
+msgstr ""
+"Je hebt een TransactionApplier plugin geregistreerd, maar er werden geen "
+"TransactionReplicator plugins geregistreerd\n"
+
+#, c-format
+msgid ""
+"You registered a TransactionApplier plugin but no TransactionReplicator "
+"plugins were registered that match the requested replicator name of '%s'.\n"
+"We have deactivated the TransactionApplier '%s'.\n"
+msgstr ""
+"Je hebt een TransactionApplier plugin geregistreerd, maar er werden geen "
+"TransactionReplicator plugins geregistreerd die overeenkomen met de "
+"gevraagde replicator naam '%s'.\n"
+"De TransactionApplier '%s' werd gedesactiveerd.\n"
+
 #, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "Kon tijdelijke table '%s' niet verwijderen, fout: %d"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Variable named %s already exists!\n"
-msgstr "Tablespace '%-.192s' bestaat reeds"
+msgstr "Een variabele met de naam %s bestaat reeds!\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not add Variable: %s\n"
-msgstr "Kon tabel niet vinden: \"%s\""
+msgstr "Kon variabele niet toevoegen: %s\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
-msgstr "Tabel %s had een open data handler in reopen_table"
+msgstr "Tabel %s had een open data Cursor in reopen_table"
 
 #, c-format
 msgid "Unknown - internal error %d during operation"
@@ -4814,6 +4681,10 @@ msgid ""
 msgstr ""
 "order_st BY genegeerd omdat er een gebruikers-gedefinieerde clustered index "
 "is in tabel '%-.192s'"
+
+#, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr "Kreeg fout %d bij het lezen van tabel '%s'"
 
 #, c-format
 msgid ""
@@ -4834,10 +4705,6 @@ msgid ""
 msgstr ""
 "Tabel '%-.64s' werd aangemaakt met een verschillende versie van Drizzle en "
 "kan niet gelezen worden"
-
-#, c-format
-msgid "Got error %d when reading table '%s'"
-msgstr "Kreeg fout %d bij het lezen van tabel '%s'"
 
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
@@ -4900,28 +4767,21 @@ msgid "Turn on extra debugging."
 msgstr "Schakel extra debugging in."
 
 msgid "User to use for auth."
-msgstr ""
+msgstr "User om te gebruiken voor authenticatie."
 
 msgid "Password to use for auth."
-msgstr ""
+msgstr "Paswoord om te gebruiken voor authenticatie."
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "Te gebruiken databank"
+msgstr "Standaard te gebruiken databank."
 
-msgid "Enable default replicator"
-msgstr "Schakel standaard Replicator in"
-
-msgid "Default Replicator"
-msgstr "Standaard Replicator"
-
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
 msgstr ""
-"Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen op, "
-"in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT,built-in default ("
+"Poortnummer om te gebruiken voor de verbinding of 0 om als standaard - in "
+"orde van voorkeur - drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427) "
+"te gebruiken."
 
 msgid "Connect Timeout."
 msgstr "Verbindingstimeout"
@@ -4936,11 +4796,10 @@ msgid "Retry Count."
 msgstr "Aantal Pogingen"
 
 msgid "Buffer length."
-msgstr ""
+msgstr "Bufferlengte."
 
-#, fuzzy
 msgid "Address to bind to."
-msgstr "IP adres om mee te verbinden."
+msgstr "Adres om mee te verbinden."
 
 msgid "Unknown Drizzle error"
 msgstr "Onbekende Drizzle fout %d"
@@ -5156,13 +5015,10 @@ msgstr ""
 
 #, c-format
 msgid "Failed to send error message to libnotify\n"
-msgstr ""
+msgstr "Versturen van foutbericht aan libnotify mislukt\n"
 
 msgid "Error Messages to stderr"
 msgstr "Foutboodschappen naar stderr"
-
-msgid "Enable filtered replicator"
-msgstr "Schakel de gefilterde replicator in"
 
 msgid "List of schemas to filter"
 msgstr "Lijst van te filteren schemas"
@@ -5175,9 +5031,6 @@ msgstr "Reguliere expressie toe te passen op de te filteren schema's"
 
 msgid "Regular expression to apply to tables to filter"
 msgstr "Reguliere expressie toe te passen op de te filteren tabellen"
-
-msgid "Filtered Replicator"
-msgstr "Gefilterde Replicator"
 
 #, c-format
 msgid "fail gearman_client_create(): %s"
@@ -5250,10 +5103,10 @@ msgid "Log to syslog"
 msgstr "Log naar syslog"
 
 msgid "List of memcached servers."
-msgstr ""
+msgstr "Lijst van memcached servers."
 
 msgid "Memcached Stats as I_S tables"
-msgstr ""
+msgstr "Memcached Stats als I_S tabellen"
 
 #, c-format
 msgid "Got an error from thread_id=%<PRIu64>, %s:%d"
@@ -5335,9 +5188,6 @@ msgstr ""
 msgid "Wrong index given to function"
 msgstr "Verkeerde index gegeven aan de functie"
 
-msgid "Undefined handler error 125"
-msgstr "Ongedefinieerde handler fout 125"
-
 msgid "Index file is crashed"
 msgstr "Index bestand is gecrashed"
 
@@ -5346,9 +5196,6 @@ msgstr "Record bestand is gecrashed"
 
 msgid "Out of memory in engine"
 msgstr "Geheugen tekort in engine"
-
-msgid "Undefined handler error 129"
-msgstr "Ongedefinieerde handler fout 129"
 
 msgid "Incorrect file format"
 msgstr "Bestand heeft onjuiste indeling"
@@ -5508,99 +5355,121 @@ msgstr "Onbestaande tablespace"
 msgid "Tablespace not empty"
 msgstr "Tablespace is niet leeg"
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
-"Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen op, "
-"in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+"Poortnummer om te gebruiken voor de verbinding of 0 om als standaard het "
+"MySQL protocol te gebruiken."
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr "Kan geen interrupt-thread aanmaken (fout %d, foutcode: %d)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to create background worker thread. Got error %s.\n"
-msgstr "Kon de opdracht niet interpreteren. Kreeg fout: %s.\n"
+msgstr "Kon geen worker thread aanmaken op de achtergrond. Kreeg fout %s.\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to allocate the TransactionLog instance.  Got error: %s\n"
-msgstr "Openen van command log bestand %s.  Kreeg fout: %s\n"
+msgstr "Toewijzen van een TransactionLog instance mislukt. Kreeg fout: %s\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to initialize the Transaction Log.  Got error: %s\n"
-msgstr "Openen van command log bestand %s.  Kreeg fout: %s\n"
+msgstr "Initialiseren van de Transaction Log mislukt.  Kreeg fout: %s\n"
 
-#, fuzzy, c-format
-msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
-msgstr "Openen van command log bestand %s.  Kreeg fout: %s\n"
-
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"
-msgstr "Openen van command log bestand %s.  Kreeg fout: %s\n"
+msgstr "Toewijzen van TransactionLogAIndex instance mislukt. Kreeg fout: %s\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to initialize the Transaction Log Index.  Got error: %s\n"
-msgstr "Openen van command log bestand %s.  Kreeg fout: %s\n"
+msgstr "Initialiseren van de Transaction Log Index mislukt. Kreeg fout: %s\n"
 
-#, fuzzy
+#, c-format
+msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgstr "Toewijzen van TransactionLogApplier instance mislukt. Kreeg fout: %s\n"
+
 msgid "Enable transaction log"
-msgstr "Command log inschakelen"
+msgstr "Schakel transaction log in"
 
-#, fuzzy
 msgid "DEBUGGING - Truncate transaction log"
-msgstr "AAN HET DEBUGGEN - Truncate command log"
+msgstr "DEBUGGING - Truncate transaction log"
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "Pad naar het bestand dat gebruikt moet worden voor de command log."
+msgstr "Pad naar het bestand voor de transaction log"
+
+msgid "Name of the replicator plugin to use (default='default_replicator')"
+msgstr ""
+"Naam van de te gebruiken replicator plugin (standaard='default_replicator')"
 
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
+"Schakel het gebruik van CRC32 controlegetallen in voor elk geschreven "
+"transaction log entry"
 
 msgid ""
 "0 == rely on operating system to sync log file (default), 1 == sync file at "
 "each transaction write, 2 == sync log file once per second"
 msgstr ""
+"0 == vertrouw op operating system voor sync log file (standaard), 1 == sync "
+"file bij elke transaction write, 2 == sync log file eenmaal per seconde"
+
+msgid "Number of slots for in-memory write buffers (default=8)."
+msgstr "Aantal slots voor in-memory schrijfbuffers (standaard=8)."
+
+msgid "Failed to open transaction log file "
+msgstr "Openen van transaction log bestand mislukt "
 
 #, c-format
-msgid ""
-"Failed to allocate enough memory to buffer header, transaction message, and "
-"trailing checksum bytes. Tried to allocate %<PRId64> bytes.  Error: %s\n"
-msgstr ""
-
-#, fuzzy
-msgid "Failed to open transaction log file "
-msgstr "Openen van command log bestand %s.  Kreeg fout: %s\n"
-
-#, fuzzy, c-format
 msgid ""
 "Failed to write full size of log entry.  Tried to write %<PRId64> bytes at "
 "offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
 msgstr ""
-"Volledige grootte van commando schrijven is mislukt. Probeerde %<PRId64> "
-"bytes te schrijven op offset %<PRId64>, maar schreef slechts %<PRId64> "
-"bytes. Fout: %s\n"
+"Kon niet de volledige log entry schrijven. Probeerde %<PRId64> bytes tes "
+"schrijven op offset %<PRId64>, maar schreef slechts %<PRId32> bytes.  Fout: %"
+"s\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to sync log file. Got error: %s\n"
-msgstr "Openen van command log bestand %s.  Kreeg fout: %s\n"
+msgstr "Sync log file mislukt. Kreeg fout: %s\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open transaction log file %s.  Got error: %s\n"
-msgstr "Openen van command log bestand %s.  Kreeg fout: %s\n"
+msgstr "Openen van transaction log file %s mislukt. Kreeg fout: %s\n"
 
 #, c-format
 msgid "Raw buffer read: %s.\n"
-msgstr ""
+msgstr "Raw buffer gelezen: %s.\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to parse transaction. Got error: %s.\n"
-msgstr "Kon de opdracht niet interpreteren. Kreeg fout: %s.\n"
+msgstr "Kon de transactie niet interpreteren. Kreeg fout: %s.\n"
 
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "BUFFER: %s\n"
+
+#~ msgid "Your Drizzle connection id is "
+#~ msgstr "Je Drizzle verbindings-id is "
+
+#~ msgid "Server version: "
+#~ msgstr "Server versie: "
+
+#~ msgid ""
+#~ "                              Reading table information for completion of "
+#~ "table and column names\n"
+#~ "                                  You can turn off this feature to get a "
+#~ "quicker startup with -A\n"
+#~ "\n"
+#~ msgstr ""
+#~ "                              Leest tabel informatie voor het aanvullen "
+#~ "van tabel- en kolomnamen\n"
+#~ "                                  Om sneller op te starten kan je deze "
+#~ "feature uitschakelen met -A\n"
+#~ "\n"
+
+#~ msgid "Set the default character set."
+#~ msgstr "Stel de standaard karakterset in."
 
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "Controleer het geheugen- en open bestandsgebruik bij afsluiten."
@@ -5610,6 +5479,109 @@ msgstr "BUFFER: %s\n"
 
 #~ msgid "Socket file to use for connection."
 #~ msgstr "Socket bestand om te gebruiken voor de verbinding."
+
+#~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
+#~ msgstr "%s Ver %s Distrib %s, voor %s (%s) gebruik makend van %s %s\n"
+
+#~ msgid "Unknown command '\\%c'."
+#~ msgstr "Onbekende opdracht '\\%c'."
+
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Fout bij wissen van '%s' (Foutcode: %d)"
+
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Fout bij hernoemen van '%s' naar '%s' (Foutcode: %d)"
+
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Kan bestand '%s' niet aanmaken/wijzigen (Foutcode: %d)"
+
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Fout bij lezen van bestand '%s' (Foutcode: %d)"
+
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Fout bij schrijven van bestand '%s' (Foutcode: %d)"
+
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Geheugen is op (Had %u bytes nodig)"
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Kan directory niet veranderen in '%s' (Foutcode: %d)"
+
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Kan bestand niet vergrendelen (Foutcode: %d)"
+
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr ""
+#~ "Onverwacht bestandseinde gevonden tijdens het lezen van bestand '%"
+#~ "s' (Foutcode: %d)"
+
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Kan dir van '%s' niet lezen (Foutcode: %d)"
+
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Kan stat van '%s' niet lezen (Foutcode: %d)"
+
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Kan de werkdirectory niet vinden (Foutcode: %d)"
+
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Disk is vol bij het schrijven van '%s'. Aan het wachten tot iemand ruimte "
+#~ "vrijmaakt..."
+
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Bestand '%s' niet gevonden (Foutcode: %d)"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Ongedefinieerde handler fout 125"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Ongedefinieerde handler fout 129"
+
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Fout bij sluiten van '%s' (Foutcode: %d)"
+
+#~ msgid "Buffer length for TCP/IP and socket communication."
+#~ msgstr "Buffer lengte voor TCP/IP en socket communicatie"
+
+#~ msgid "Can't create completion port thread (error %d)"
+#~ msgstr "Kan completion port thread niet aanmaken (fout %d)"
+
+#~ msgid "Writing a core file\n"
+#~ msgstr "Schrijft core bestand\n"
+
+#~ msgid "Plugin '%s' init function returned error."
+#~ msgstr "Initialisatie-functie van plugin '%s' gaf een fout terug."
+
+#~ msgid "Retrying bind on TCP/IP port %u"
+#~ msgstr "Probeert opnieuw te verbinden met TCP/IP port %u"
+
+#~ msgid "Can't start server: Bind on TCP/IP port"
+#~ msgstr "Kan de server niet starten: Verbinden met TCP/IP port"
+
+#~ msgid "Fatal "
+#~ msgstr "Fatale "
+
+#~ msgid "listen() on TCP/IP failed with error %d"
+#~ msgstr "listen() op TCP/IP mislukt met fout %d"
+
+#~ msgid "Can't start server: listen() on TCP/IP port"
+#~ msgstr "Kan server niet starten: listen() op TCP/IP port"
+
+#~ msgid ""
+#~ "We will try our best to scrape up some info that will hopefully help "
+#~ "diagnose\n"
+#~ "the problem, but since we have already crashed, something is definitely "
+#~ "wrong\n"
+#~ "and this may fail.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "We zullen ons best doen om wat info bij elkaar te rapen die je misschien "
+#~ "kan \n"
+#~ "helpen bij de diagnose van het probleem, maar aangezien we al gecrasht "
+#~ "zijn is\n"
+#~ "er zeker iets mis en dit kan dus mislukken.\n"
+#~ "\n"
 
 #~ msgid ""
 #~ "\n"
@@ -5637,185 +5609,26 @@ msgstr "BUFFER: %s\n"
 #~ msgid "Can't init databases"
 #~ msgstr "Kan databanken niet initialiseren"
 
+#~ msgid "drizzled: Got error %d from select"
+#~ msgstr "drizzled: Kreeg fout %d van select"
+
+#~ msgid "Unknown/unsupported table type: %s"
+#~ msgstr "Onbekend/niet-ondersteund tabel type: %s"
+
 #~ msgid "Default storage engine (%s) is not available"
 #~ msgstr "Standaard starage engine (%s) niet beschikbaar"
 
 #~ msgid "Failed to lock memory. Errno: %d\n"
 #~ msgstr "In geheugen vergrendelen mislukte. Foutcode: %d\n"
 
-#~ msgid "Lock drizzled in memory."
-#~ msgstr "Vergrendel drizzled in het geheugen."
-
-#~ msgid "The default size of key cache blocks"
-#~ msgstr "De standaard grootte van de key cache blokken"
-
-#~ msgid "Buffer length for TCP/IP and socket communication."
-#~ msgstr "Buffer lengte voor TCP/IP en socket communicatie"
-
-#~ msgid "Allocation block size for transactions to be stored in binary log"
-#~ msgstr ""
-#~ "Toewijzingsblokgrootte voor de transacties die opgeslagen moeten worden "
-#~ "in de binaire log."
-
-#~ msgid "Persistent buffer for transactions to be stored in binary log"
-#~ msgstr ""
-#~ "Persistente buffer voor de transacties die opgeslagen moeten worden in de "
-#~ "binaire log."
-
-#~ msgid "File '%-.192s' has unknown type '%-.64s' in its header"
-#~ msgstr "Bestand '%-.192s' heeft onbekend type '%-.64s' in zijn hoofding"
-
-#~ msgid "Failed to read initial length header\n"
-#~ msgstr "Het lezen van de initiële lengte hoofding mislukte\n"
-
-#~ msgid ""
-#~ "Could not read entire transaction. Read %<PRIu64> bytes instead of %"
-#~ "<PRIu64> bytes.\n"
-#~ msgstr ""
-#~ "Kon de hele transactie niet lezen. %<PRIu64> bytes gelezen in plaats van %"
-#~ "<PRIu64> bytes.\n"
-
-#~ msgid ""
-#~ "Could not read entire checksum. Read %<PRIu64> bytes instead of 4 bytes.\n"
-#~ msgstr ""
-#~ "Kon de checksum niet volledige lezen. %<PRIu64> bytes gelezen in plaats "
-#~ "van 4 bytes.\n"
-
-#~ msgid "Scheduler initialization failed.\n"
-#~ msgstr "Initialisering van de planner mislukte.\n"
-
-#~ msgid "realloc() failed with errno %d"
-#~ msgstr "realloc() mislukte met foutnummer %d"
-
-#~ msgid "Couldn't repair table: %s.%s"
-#~ msgstr "Kon tabel niet herstellen: %s.%s"
-
-#~ msgid ""
-#~ "When opening HEAP table, could not allocate memory to write 'DELETE FROM `"
-#~ "%s`.`%s`' to replication"
-#~ msgstr ""
-#~ "Kon geen geheugen toewijzen om 'DELETE FROM `%s`.`%s`' naar de replicatie "
-#~ "te schrijven tijdens het openen van een HEAP tabel"
-
-#~ msgid "plugin-load parameter too long"
-#~ msgstr "parameter voor het laden van de plugin te lang"
-
-#~ msgid ""
-#~ "Table name cannot be encoded and fit within filesystem name length "
-#~ "restrictions."
-#~ msgstr ""
-#~ "Tabelnaam kan niet gecodeerd worden en passen binnen de lengtebeperkingen "
-#~ "van het bestandssysteem."
-
-#~ msgid ""
-#~ "Schema name cannot be encoded and fit within filesystem name length "
-#~ "restrictions."
-#~ msgstr ""
-#~ "Schemanaam kan niet gecodeerd worden en passen binnen de "
-#~ "lengtebeperkingen van het bestandssysteem."
-
-#~ msgid "Could not open table %s.%s after rename\n"
-#~ msgstr "Kon tabel %s.%s niet openen na hernoemen\n"
-
-#~ msgid ""
-#~ "Failed to write full serialized command.  Tried to write %<PRId64> bytes "
-#~ "at offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
-#~ msgstr ""
-#~ "Volledige geserialiseerd commando schrijven mislukt.  Probeerde %<PRId64> "
-#~ "bytes te schrijven op offset %<PRId64>, maar schreef slechts %<PRId64> "
-#~ "bytes.  Fout: %s\n"
-
-#~ msgid ""
-#~ "Failed to write full checksum of command.  Tried to write %<PRId64> bytes "
-#~ "at offset %<PRId64>, but only wrote %<PRId64> bytes.  Error: %s\n"
-#~ msgstr ""
-#~ "Schrijven van de checksum van de opdracht mislukte.  Probeerde %<PRId64> "
-#~ "bytes te schrijven op offset %<PRId64>, maar schreef slechts %<PRId64> "
-#~ "bytes.  Fout: %s\n"
-
-#~ msgid "Enable CRC32 Checksumming"
-#~ msgstr "Schakel CRC32 Checksumming in"
-
-#~ msgid "Command Message Log"
-#~ msgstr "Command Message Log"
-
-#~ msgid "Failed to read length header at offset %<PRId64>.  Got error: %s\n"
-#~ msgstr ""
-#~ "Lezen van lengte hoofding mislukte op offset %<PRId64>.  Kreeg fout: %s\n"
-
-#~ msgid ""
-#~ "Failed to parse command message at offset %<PRId64>.  Got error: %s\n"
-#~ msgstr ""
-#~ "Interpreteren van opdracht boodschap mislukte op offset %<PRId64>. Kreeg "
-#~ "fout: %s\n"
-
-#~ msgid ""
-#~ "Failed to read checksum trailer at offset %<PRId64>.  Got error: %s\n"
-#~ msgstr ""
-#~ "Lezen van checksum trailer mislukte op offset %<PRId64>.  Kreeg fout: %s\n"
-
-#~ msgid "Checksum FAILED!\n"
-#~ msgstr "Checksum MISLUKT!\n"
-
-#~ msgid "Maximum number of user threads available."
-#~ msgstr "Maximum aantal beschikbare user threads."
-
-#~ msgid "event_add error in libevent_add_session_callback\n"
-#~ msgstr "event_add fout in libevent_add_session_callback\n"
-
-#~ msgid "init_pipe(session_add_pipe) error in libevent_init\n"
-#~ msgstr "init_pipe(session_add_pipe) fout in libevent_init\n"
-
-#~ msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
-#~ msgstr "init_pipe(session_kill_pipe) fout in libevent_init\n"
-
-#~ msgid "session_add_event event_add error in libevent_init\n"
-#~ msgstr "session_add_event event_add fout in libevent_init\n"
-
-#~ msgid "Can't create completion port thread (error %d)"
-#~ msgstr "Kan completion port thread niet aanmaken (fout %d)"
-
-#~ msgid "libevent_thread_proc: my_thread_init() failed\n"
-#~ msgstr "libevent_thread_proc: my_thread_init() mislukt\n"
-
-#~ msgid "Size of Pool."
-#~ msgstr "Grootte van Pool."
-
-#~ msgid "Set the default character set."
-#~ msgstr "Stel de standaard karakterset in."
-
-#~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
-#~ msgstr "%s Ver %s Distrib %s, voor %s (%s) gebruik makend van %s %s\n"
-
-#~ msgid "Unknown command '\\%c'."
-#~ msgstr "Onbekende opdracht '\\%c'."
-
-#~ msgid "Plugin '%s' init function returned error."
-#~ msgstr "Initialisatie-functie van plugin '%s' gaf een fout terug."
-
-#~ msgid "Retrying bind on TCP/IP port %u"
-#~ msgstr "Probeert opnieuw te verbinden met TCP/IP port %u"
-
-#~ msgid "Can't start server: Bind on TCP/IP port"
-#~ msgstr "Kan de server niet starten: Verbinden met TCP/IP port"
-
-#~ msgid "Fatal "
-#~ msgstr "Fatale "
-
-#~ msgid "listen() on TCP/IP failed with error %d"
-#~ msgstr "listen() op TCP/IP mislukt met fout %d"
-
-#~ msgid "Can't start server: listen() on TCP/IP port"
-#~ msgstr "Kan server niet starten: listen() op TCP/IP port"
-
-#~ msgid "drizzled: Got error %d from select"
-#~ msgstr "drizzled: Kreeg fout %d van select"
-
 #~ msgid "Do you already have another drizzled server running on port: %d ?"
 #~ msgstr "Heb je al een andere drizzled server draaien op poort %d?"
 
 #~ msgid "Push supported query conditions to the storage engine."
 #~ msgstr "Geef ondersteunde query voorwaarden door aan de storage engine."
+
+#~ msgid "Print a symbolic stack trace on failure."
+#~ msgstr "Druk een symbolic stack trace bij falen."
 
 #~ msgid "Type of DELAY_KEY_WRITE."
 #~ msgstr "Type van DELAY_KEY_WRITE."
@@ -5825,6 +5638,38 @@ msgstr "BUFFER: %s\n"
 
 #~ msgid "Log connections and queries to file."
 #~ msgstr "Log verbindingen en queries naar bestand."
+
+#~ msgid ""
+#~ "\n"
+#~ "You are running a statically-linked LinuxThreads binary on an NPTL "
+#~ "system.\n"
+#~ "This can result in crashes on some distributions due to LT/NPTL "
+#~ "conflicts.\n"
+#~ "You should either build a dynamically-linked binary, or force "
+#~ "LinuxThreads\n"
+#~ "to be used with the LD_ASSUME_KERNEL environment variable. Please "
+#~ "consult\n"
+#~ "the documentation for your distribution on how to do that.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Je draait een statisch gelinkte LinuxThreads binary op een NPTL systeem.\n"
+#~ "Dit kan crashes veroorzaken in enkele distributies vanwege LT/NPTL "
+#~ "conflicten.\n"
+#~ "Je zou een dynamisch gelinkte  binary moeten bouwen, of LinuxThreads "
+#~ "forceren\n"
+#~ "om gebruikt te worden met de LD_ASSUME_KERNEL omgevingsvariabele.\n"
+#~ "Consulteer de documentatie van je distributieom te leren hoe je dat "
+#~ "doet.\n"
+
+#~ msgid ""
+#~ "Trying to get some variables.\n"
+#~ "Some pointers may be invalid and cause the dump to abort...\n"
+#~ msgstr ""
+#~ "Probeert enkele variablen te vinden.\n"
+#~ "Enkele pointers kunnen ongeldig zijn en de dump afbreken...\n"
+
+#~ msgid "IP address to bind to."
+#~ msgstr "IP adres om mee te verbinden."
 
 #~ msgid "Set the filesystem character set."
 #~ msgstr "De karakterset van het bestandsysteem instellen"
@@ -5853,6 +5698,9 @@ msgstr "BUFFER: %s\n"
 #~ "Overschrijf geen oude .MYD en .MYI bestanden, zelfs niet indien er geen "
 #~ "directory opgegeven werd."
 
+#~ msgid "The default size of key cache blocks"
+#~ msgstr "De standaard grootte van de key cache blokken"
+
 #~ msgid "Maximum number of temporary tables a client can keep open at a time."
 #~ msgstr ""
 #~ "Maximaal aantal tijdelijke tabellen die een client gelijktijdig kan "
@@ -5878,6 +5726,16 @@ msgstr "BUFFER: %s\n"
 #~ msgstr ""
 #~ "Aantal seconden dat gewacht wordt op meer data voordat de leesoperatie "
 #~ "afgebroken wordt."
+
+#~ msgid "Allocation block size for transactions to be stored in binary log"
+#~ msgstr ""
+#~ "Toewijzingsblokgrootte voor de transacties die opgeslagen moeten worden "
+#~ "in de binaire log."
+
+#~ msgid "Persistent buffer for transactions to be stored in binary log"
+#~ msgstr ""
+#~ "Persistente buffer voor de transacties die opgeslagen moeten worden in de "
+#~ "binaire log."
 
 #~ msgid ""
 #~ "The number of seconds the server waits for activity on a connection "
@@ -5917,12 +5775,42 @@ msgstr "BUFFER: %s\n"
 #~ "%s: klaar voor verbindingen.\n"
 #~ "Versie: '%s'  socket: '%s'  poort: %d"
 
+#~ msgid "%s: Forcing close of thread %ld  user: '%-.48s'\n"
+#~ msgstr "%s: Forceert afsluiten van thread %ld  gebruiker: '%-.48s'\n"
+
+#~ msgid "Function '%-.192s' already exists"
+#~ msgstr "Functie '%-.192s' bestaat reeds"
+
+#~ msgid "Can't find symbol '%-.128s' in library"
+#~ msgstr "Kan symbol '%-.128s' niet vinden in library"
+
+#~ msgid "No paths allowed for shared library"
+#~ msgstr "Geen paden toegestaan voor een gedeelde library"
+
+#~ msgid "File '%-.192s' has unknown type '%-.64s' in its header"
+#~ msgstr "Bestand '%-.192s' heeft onbekend type '%-.64s' in zijn hoofding"
+
 #~ msgid ""
 #~ "%s: ready for connections.\n"
 #~ "Version: '%s'  socket: '%s'  port: %d  %s"
 #~ msgstr ""
 #~ "%s: klaar voor verbindingen\n"
 #~ "Versie: '%s' socket: '%s' poort: %d %s"
+
+#~ msgid "Found %d prepared transaction(s) in %s"
+#~ msgstr "%d prepared transaction(s) gevonden in %s"
+
+#~ msgid "libevent_thread_proc: my_thread_init() failed\n"
+#~ msgstr "libevent_thread_proc: my_thread_init() mislukt\n"
+
+#~ msgid "Table %s had a open data handler in reopen_table"
+#~ msgstr "Tabel %s had een open data handler in reopen_table"
+
+#~ msgid "Couldn't repair table: %s.%s"
+#~ msgstr "Kon tabel niet herstellen: %s.%s"
+
+#~ msgid "Error while loading database options: '%s':"
+#~ msgstr "Fout tijdens laden van de databank opties: '%s':"
 
 #~ msgid "Invalid (old?) table or database name '%s'"
 #~ msgstr "Ongeldige (oude?) tabel of databank naam '%s'"
@@ -5955,12 +5843,21 @@ msgstr "BUFFER: %s\n"
 #~ "Foute definitie van tabel %s.%s:  verwachtte dat kolom '%s' op positie %d "
 #~ "van het type %s was, type %s gevonden."
 
+#~ msgid "Could not open table %s.%s after rename\n"
+#~ msgstr "Kon tabel %s.%s niet openen na hernoemen\n"
+
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
 #~ "to have type %s  but the column is not found."
 #~ msgstr ""
 #~ "Foute definitie van tabel %s.%s:  verwachtte dat kolom '%s' op positie %d "
 #~ "type '%s' had maar de kolom werd niet gevonden."
+
+#~ msgid "Couldn't load plugin named '%s' with soname '%s'."
+#~ msgstr "Kon plugin met de naam '%s' niet laden met soname '%s'."
+
+#~ msgid "plugin-load parameter too long"
+#~ msgstr "parameter voor het laden van de plugin te lang"
 
 #~ msgid ""
 #~ "Specifies how MyISAM index statistics collection code should threat "
@@ -5971,6 +5868,12 @@ msgstr "BUFFER: %s\n"
 #~ "waarden behandelt. Mogelijke waarden zijn "
 #~ "'nulls_unequal' (standaardgerag), 'nulls_equal' (emuleer MySQL 4.0 "
 #~ "gedrag), en 'nulls_ignored'."
+
+#~ msgid "Got signal %d from thread %<PRIu64>"
+#~ msgstr "Kreeg signaal %d van thread %<PRIu64>"
+
+#~ msgid "Lock drizzled in memory."
+#~ msgstr "Vergrendel drizzled in het geheugen."
 
 #~ msgid ""
 #~ "Optional colon (or semicolon) separated list of plugins to load,where "
@@ -5989,8 +5892,39 @@ msgstr "BUFFER: %s\n"
 #~ "Het aantal seconden dat de drizzled server wacht op een verbindingspakket "
 #~ "vooraleer  te antwoorden met 'Bad handshake'."
 
+#~ msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
+#~ msgstr "init_pipe(session_kill_pipe) fout in libevent_init\n"
+
+#~ msgid "init_pipe(session_add_pipe) error in libevent_init\n"
+#~ msgstr "init_pipe(session_add_pipe) fout in libevent_init\n"
+
+#~ msgid "event_add error in libevent_add_session_callback\n"
+#~ msgstr "event_add fout in libevent_add_session_callback\n"
+
+#~ msgid "session_add_event event_add error in libevent_init\n"
+#~ msgstr "session_add_event event_add fout in libevent_init\n"
+
 #~ msgid "Enable logging"
 #~ msgstr "Loggen activeren"
+
+#~ msgid ""
+#~ "Port number to use for connection or 0 for default to, in order of "
+#~ "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
+#~ msgstr ""
+#~ "Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen "
+#~ "op, in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT,built-in "
+#~ "default ("
+
+#~ msgid ""
+#~ "Attempting backtrace. You can use the following information to find out\n"
+#~ "where drizzled died. If you see no messages after this, something went\n"
+#~ "terribly wrong...\n"
+#~ msgstr ""
+#~ "Probeert een backtrace. Je kan de volgende inmormatie gebruiken om uit te "
+#~ "zoeken\n"
+#~ "waar drizzled afbrak. Indien je hierna geen boodschappen ziet, ging er "
+#~ "iets\n"
+#~ "verschrikkelijk fout...\n"
 
 #~ msgid ""
 #~ "It is possible that drizzled could use up to \n"

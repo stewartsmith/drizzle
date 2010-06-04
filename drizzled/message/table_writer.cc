@@ -32,12 +32,10 @@ using namespace drizzled;
   Written from Google proto example
 */
 
-static void fill_engine(message::Table::StorageEngine *engine)
+static void fill_engine(message::Engine *engine)
 {
-  int16_t x;
-
   engine->set_name("InnoDB");
-  message::Table::StorageEngine::EngineOption *option;
+  message::Engine::Option *option;
 
   string option_names[2]= {
     "INDEX_DIRECTORY"
@@ -50,12 +48,11 @@ static void fill_engine(message::Table::StorageEngine *engine)
   };
 
   /* Add some engine options */
-  for (x= 0; x < 2; x++)
+  for (int16_t x= 0; x < 2; x++)
   {
-    option= engine->add_option();
-    option->set_option_name(option_names[x]);
-    option->set_option_value(option_values[x]);
-    option->set_option_type(message::Table::StorageEngine::EngineOption::STRING);
+    option= engine->add_options();
+    option->set_name(option_names[x]);
+    option->set_state(option_values[x]);
   }
 }
 
@@ -107,7 +104,7 @@ static void fill_table(message::Table *table, const char *name)
   message::Table::Field::FieldConstraints *field_constraints;
   message::Table::Field::StringFieldOptions *string_field_options;
   message::Table::Field::NumericFieldOptions *numeric_field_options;
-  message::Table::Field::SetFieldOptions *set_field_options;
+  message::Table::Field::EnumerationValues *enumeration_options;
 
   table->set_name(name);
   table->set_type(message::Table::STANDARD);
@@ -120,7 +117,7 @@ static void fill_table(message::Table *table, const char *name)
     field_constraints= field->mutable_constraints();
     string_field_options= field->mutable_string_options();
 
-    sprintf(buffer, "sample%u", x);
+    snprintf(buffer, sizeof(buffer), "sample%u", x);
 
     field->set_name(buffer);
     field->set_type(message::Table::Field::VARCHAR);
@@ -147,11 +144,10 @@ static void fill_table(message::Table *table, const char *name)
     field->set_type(message::Table::Field::ENUM);
     field->set_name("colors");
 
-    set_field_options= field->mutable_set_options();
-    set_field_options->add_field_value("red");
-    set_field_options->add_field_value("blue");
-    set_field_options->add_field_value("green");
-    set_field_options->set_count_elements(set_field_options->field_value_size());
+    enumeration_options= field->mutable_enumeration_values();
+    enumeration_options->add_field_value("red");
+    enumeration_options->add_field_value("blue");
+    enumeration_options->add_field_value("green");
   }
   /* Write out a BLOB */
   {
@@ -193,7 +189,7 @@ static void fill_table(message::Table *table, const char *name)
   }
 
   /* Do engine-specific stuff */
-  message::Table::StorageEngine *engine= table->mutable_engine();
+  message::Engine *engine= table->mutable_engine();
   fill_engine(engine);
 
 }

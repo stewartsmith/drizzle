@@ -59,7 +59,7 @@ sub mtr_report_test_name ($) {
   if ($::opt_subunit) {
     printf "test: $tname\n";
   } else {
-    printf "%-30s ", $tname;
+    printf "%-60s ", $tname;
   }
 }
 
@@ -121,14 +121,14 @@ sub mtr_report_test_passed ($) {
   {
     $timer= mtr_fromfile("$::opt_vardir/log/timer");
     $tot_real_time += ($timer/1000);
-    $timer= sprintf "%12s", $timer;
+    $timer= sprintf "%7s", $timer;
     ### XXX: How to format this as iso6801 datetime?
   }
   $tinfo->{'result'}= 'MTR_RES_PASSED';
   if ($::opt_subunit) {
     mtr_report("success: $tname");
   } else {
-    mtr_report("[ pass ]   $timer");
+    mtr_report("[ pass ] $timer");
   }
 }
 
@@ -164,7 +164,7 @@ sub mtr_report_test_failed ($) {
   if ($::opt_subunit) {
     mtr_report("failure: $tname [\n$comment\n]");
   } else {
-    mtr_report("[ fail ]   $comment");
+    mtr_report("[ fail ]\n$comment");
   }
 }
 
@@ -237,254 +237,6 @@ sub mtr_report_stats ($) {
 	       time - $BASETIME, "seconds executing testcases");
   }
 
-  # ----------------------------------------------------------------------
-  # If a debug run, there might be interesting information inside
-  # the "var/log/*.err" files. We save this info in "var/log/warnings"
-  # ----------------------------------------------------------------------
-
-  if ( ! $::glob_use_running_server )
-  {
-    # Save and report if there was any fatal warnings/errors in err logs
-
-    my $warnlog= "$::opt_vardir/log/warnings";
-
-    unless ( open(WARN, ">$warnlog") )
-    {
-      mtr_warning("can't write to the file \"$warnlog\": $!");
-    }
-    else
-    {
-      # We report different types of problems in order
-      foreach my $pattern ( "^Warning:",
-			    "\\[Warning\\]",
-			    "\\[ERROR\\]",
-			    "^Error:", "^==.* at 0x",
-			    "InnoDB: Warning",
-			    "InnoDB: Error",
-			    "^safe_mutex:",
-			    "missing DBUG_RETURN",
-			    "mysqld: Warning",
-			    "allocated at line",
-			    "Attempting backtrace", "Assertion .* failed" )
-      {
-        foreach my $errlog ( sort glob("$::opt_vardir/log/*.err") )
-        {
-	  my $testname= "";
-          unless ( open(ERR, $errlog) )
-          {
-            mtr_warning("can't read $errlog");
-            next;
-          }
-          my $leak_reports_expected= undef;
-          while ( <ERR> )
-          {
-            # There is a test case that purposely provokes a
-            # SAFEMALLOC leak report, even though there is no actual
-            # leak. We need to detect this, and ignore the warning in
-            # that case.
-            if (/Begin safemalloc memory dump:/) {
-              $leak_reports_expected= 1;
-            } elsif (/End safemalloc memory dump./) {
-              $leak_reports_expected= undef;
-            }
-
-            # Skip some non fatal warnings from the log files
-            if (
-		/\"SELECT UNIX_TIMESTAMP\(\)\" failed on master/ or
-		/Aborted connection/ or
-		/Client requested master to start replication from impossible position/ or
-		/Could not find first log file name in binary log/ or
-		/Enabling keys got errno/ or
-		/Error reading master configuration/ or
-		/Error reading packet/ or
-		/Event Scheduler/ or
-		/Failed to open log/ or
-		/Failed to open the existing master info file/ or
-		/Forcing shutdown of [0-9]* plugins/ or
-                /Can't open shared library .*\bha_example\b/ or
-                /Couldn't load plugin .*\bha_example\b/ or
-
-		# Due to timing issues, it might be that this warning
-		# is printed when the server shuts down and the
-		# computer is loaded.
-		/Forcing close of thread \d+  user: '.*?'/ or
-
-		/Got error [0-9]* when reading table/ or
-		/Incorrect definition of table/ or
-		/Incorrect information in file/ or
-		/InnoDB: Warning: we did not need to do crash recovery/ or
-		/Invalid \(old\?\) table or database name/ or
-		/Lock wait timeout exceeded/ or
-		/Log entry on master is longer than max_allowed_packet/ or
-                /unknown option '--loose-/ or
-                /unknown variable 'loose-/ or
-		/You have forced lower_case_table_names to 0 through a command-line option/ or
-		/Setting lower_case_table_names=2/ or
-		/NDB Binlog:/ or
-		/NDB: failed to setup table/ or
-		/NDB: only row based binary logging/ or
-		/Neither --relay-log nor --relay-log-index were used/ or
-		/Query partially completed/ or
-		/Slave I.O thread aborted while waiting for relay log/ or
-		/Slave SQL thread is stopped because UNTIL condition/ or
-		/Slave SQL thread retried transaction/ or
-		/Slave \(additional info\)/ or
-		/Slave: .*Duplicate column name/ or
-		/Slave: .*master may suffer from/ or
-		/Slave: According to the master's version/ or
-		/Slave: Column [0-9]* type mismatch/ or
-                /Slave: Can't DROP 'c7'; check that column.key exists Error_code: 1091/ or
-                /Slave: Unknown column 'c7' in 't15' Error_code: 1054/ or
-                /Slave: Key column 'c6' doesn't exist in table Error_code: 1072/ or
-		/Slave: Error .* doesn't exist/ or
-		/Slave: Error .*Deadlock found/ or
-		/Slave: Error .*Unknown table/ or
-		/Slave: Error in Write_rows event: / or
-		/Slave: Field .* of table .* has no default value/ or
-                /Slave: Field .* doesn't have a default value/ or
-		/Slave: Query caused different errors on master and slave/ or
-		/Slave: Table .* doesn't exist/ or
-		/Slave: Table width mismatch/ or
-		/Slave: The incident LOST_EVENTS occured on the master/ or
-		/Slave: Unknown error.* 1105/ or
-		/Slave: Can't drop database.* database doesn't exist/ or
-                /Slave SQL:.*(?:Error_code: \d+|Query:.*)/ or
-		
-		# backup_errors test is supposed to trigger lots of backup related errors
-		($testname eq 'main.backup_errors') and
-		(
-		  /Backup:/ or /Restore:/ or /Can't open the online backup progress tables/
-		) or
-		# The tablespace test triggers error below on purpose
-		($testname eq 'main.backup_tablespace') and
-		(
-		  /Restore: Tablespace .* needed by tables being restored has changed on the server/
-		) or
-		
-		/Sort aborted/ or
-		/Time-out in NDB/ or
-		/One can only use the --user.*root/ or
-		/Setting lower_case_table_names=2/ or
-		/Table:.* on (delete|rename)/ or
-		/You have an error in your SQL syntax/ or
-		/deprecated/ or
-		/description of time zone/ or
-		/equal MySQL server ids/ or
-		/error .*connecting to master/ or
-		/error reading log entry/ or
-		/lower_case_table_names is set/ or
-		/skip-name-resolve mode/ or
-		/slave SQL thread aborted/ or
-		/Slave: .*Duplicate entry/ or
-		# Special case for Bug #26402 in show_check.test
-		# Question marks are not valid file name parts
-		# on Windows platforms. Ignore this error message. 
-		/\QCan't find file: '.\test\????????.frm'\E/ or
-		# Special case, made as specific as possible, for:
-		# Bug #28436: Incorrect position in SHOW BINLOG EVENTS causes
-		#             server coredump
-		/\QError in Log_event::read_log_event(): 'Sanity check failed', data_len: 258, event_type: 49\E/ or
-                /Statement is not safe to log in statement format/ or
-
-                # test case for Bug#bug29807 copies a stray frm into database
-                /InnoDB: Error: table `test`.`bug29807` does not exist in the InnoDB internal/ or
-                /Cannot find or open table test\/bug29807 from/ or
-
-                # innodb foreign key tests that fail in ALTER or RENAME produce this
-                /InnoDB: Error: in ALTER TABLE `test`.`t[12]`/ or
-                /InnoDB: Error: in RENAME TABLE table `test`.`t1`/ or
-                /InnoDB: Error: table `test`.`t[12]` does not exist in the InnoDB internal/ or
-
-                # Test case for Bug#14233 produces the following warnings:
-                /Stored routine 'test'.'bug14233_1': invalid value in column mysql.proc/ or
-                /Stored routine 'test'.'bug14233_2': invalid value in column mysql.proc/ or
-                /Stored routine 'test'.'bug14233_3': invalid value in column mysql.proc/ or
-
-                # BUG#29839 - lowercase_table3.test: Cannot find table test/T1
-                #             from the internal data dictiona
-                /Cannot find table test\/BUG29839 from the internal data dictionary/ or
-                # BUG#32080 - Excessive warnings on Solaris: setrlimit could not
-                #             change the size of core files
-                /setrlimit could not change the size of core files to 'infinity'/ or
-
-                # rpl_ndb_basic expects this error
-                /Slave: Got error 146 during COMMIT Error_code: 1180/ or
-
-		# rpl_extrColmaster_*.test, the slave thread produces warnings
-		# when it get updates to a table that has more columns on the
-		# master
-		/Slave: Unknown column 'c7' in 't15' Error_code: 1054/ or
-		/Slave: Can't DROP 'c7'.* 1091/ or
-		/Slave: Key column 'c6'.* 1072/ or
-
-                # BUG#32080 - Excessive warnings on Solaris: setrlimit could not
-                #             change the size of core files
-                /setrlimit could not change the size of core files to 'infinity'/ or
-		# rpl_idempotency.test produces warnings for the slave.
-		($testname eq 'rpl.rpl_idempotency' and
-		 (/Slave: Can\'t find record in \'t1\' Error_code: 1032/ or
-                  /Slave: Cannot add or update a child row: a foreign key constraint fails .* Error_code: 1452/
-		 )) or
-
-		# These tests does "kill" on queries, causing sporadic errors when writing to logs
-		(($testname eq 'rpl.rpl_skip_error' or
-		  $testname eq 'rpl.rpl_err_ignoredtable' or
-		  $testname eq 'binlog.binlog_killed_simulate' or
-		  $testname eq 'binlog.binlog_killed') and
-		 (/Failed to write to mysql\.\w+_log/
-		 )) or
-
-		# rpl_bug33931 has deliberate failures
-		($testname eq 'rpl.rpl_bug33931' and
-		 (/Failed during slave.*thread initialization/
-		  )) or
-
-		# rpl_temporary has an error on slave that can be ignored
-		($testname eq 'rpl.rpl_temporary' and
-		 (/Slave: Can\'t find record in \'user\' Error_code: 1032/
-		 )) or
-
-                # Test case for Bug#31590 produces the following error:
-                /Out of sort memory; increase server sort buffer size/
-		)
-            {
-              next;                       # Skip these lines
-            }
-	    if ( /CURRENT_TEST: (.*)/ )
-	    {
-	      $testname= $1;
-	    }
-            if ( /$pattern/ )
-            {
-              if ($leak_reports_expected) {
-                next;
-              }
-              $found_problems= 1;
-              print WARN basename($errlog) . ": $testname: $_";
-            }
-          }
-        }
-      }
-
-      if ( $::opt_check_testcases )
-      {
-        # Look for warnings produced by mysqltest in testname.warnings
-        foreach my $test_warning_file
-	  ( glob("$::glob_mysql_test_dir/r/*.warnings") )
-        {
-          $found_problems= 1;
-	  print WARN "Check myqltest warnings in $test_warning_file\n";
-        }
-      }
-
-      if ( $found_problems )
-      {
-	mtr_warning("Got errors/warnings while running tests, please examine",
-		    "\"$warnlog\" for details.");
-      }
-    }
-  }
-
   print "\n";
 
   # Print a list of testcases that failed
@@ -538,18 +290,18 @@ sub mtr_report_stats ($) {
 ##############################################################################
 
 sub mtr_print_line () {
-  print '-' x 55, "\n";
+  print '-' x 80, "\n";
 }
 
 sub mtr_print_thick_line () {
-  print '=' x 55, "\n";
+  print '=' x 80, "\n";
 }
 
 sub mtr_print_header () {
   print "DEFAULT STORAGE ENGINE: $::opt_engine\n";
   if ( $::opt_timer )
   {
-    print "TEST                           RESULT         TIME (ms)\n";
+    printf "%-61s%-9s%10s\n","TEST","RESULT","TIME (ms)";
   }
   else
   {

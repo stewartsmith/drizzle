@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <cstdio>
 
 using namespace std;
 
@@ -819,7 +820,7 @@ transformCreateTableStatementToSql(const CreateTableStatement &statement,
 enum TransformSqlError
 transformTableDefinitionToSql(const Table &table,
                               string &destination,
-                              enum TransformSqlVariant sql_variant)
+                              enum TransformSqlVariant sql_variant, bool with_schema)
 {
   char quoted_identifier= '`';
   if (sql_variant == ANSI)
@@ -831,6 +832,13 @@ transformTableDefinitionToSql(const Table &table,
     destination.append("TEMPORARY ", 10);
   
   destination.append("TABLE ", 6);
+  if (with_schema)
+  {
+    destination.push_back(quoted_identifier);
+    destination.append(table.schema());
+    destination.push_back(quoted_identifier);
+    destination.push_back('.');
+  }
   destination.push_back(quoted_identifier);
   destination.append(table.name());
   destination.push_back(quoted_identifier);
@@ -873,18 +881,17 @@ transformTableDefinitionToSql(const Table &table,
   /* Add ENGINE = " clause */
   if (table.has_engine())
   {
-    const Table::StorageEngine &engine= table.engine();
     destination.append("\nENGINE = ", 10);
-    destination.append(engine.name());
+    destination.append(table.engine().name());
 
-    size_t num_engine_options= engine.option_size();
+    size_t num_engine_options= table.engine().options_size();
     for (size_t x= 0; x < num_engine_options; ++x)
     {
-      const Table::StorageEngine::EngineOption &option= engine.option(x);
+      const Engine::Option &option= table.engine().options(x);
       destination.push_back('\n');
-      destination.append(option.option_name());
+      destination.append(option.name());
       destination.append(" = ", 3);
-      destination.append(option.option_value());
+      destination.append(option.state());
       destination.push_back('\n');
     }
   }
@@ -980,28 +987,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     ss.clear();
   }
 
-  if (options.has_key_block_size())
-  {
-    ss << options.key_block_size();
-    destination.append("\nKEY_BLOCK_SIZE = ", 18);
-    destination.append(ss.str());
-    ss.clear();
-  }
-
-  if (options.has_block_size())
-  {
-    ss << options.block_size();
-    destination.append("\nBLOCK_SIZE = ", 14);
-    destination.append(ss.str());
-    ss.clear();
-  }
-
-  if (options.has_pack_keys() &&
-      options.pack_keys())
-    destination.append("\nPACK_KEYS = TRUE", 17);
-  if (options.has_pack_record() &&
-      options.pack_record())
-    destination.append("\nPACK_RECORD = TRUE", 19);
   if (options.has_checksum() &&
       options.checksum())
     destination.append("\nCHECKSUM = TRUE", 16);
@@ -1112,11 +1097,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
     break;
   case Table::Field::ENUM:
     {
-      size_t num_field_values= field.set_options().field_value_size();
+      size_t num_field_values= field.enumeration_values().field_value_size();
       destination.append(" ENUM(", 6);
       for (size_t x= 0; x < num_field_values; ++x)
       {
-        const string &type= field.set_options().field_value(x);
+        const string &type= field.enumeration_values().field_value(x);
 
         if (x != 0)
           destination.push_back(',');

@@ -498,9 +498,6 @@ create table t1 (a int, b varchar(200), c text not null);
 create table t2 (a int, b varchar(200), c text not null);
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
-checksum table t1, t2, t3;
-checksum table t1, t2, t3;
-checksum table t1, t2, t3;
 --replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 show table status;
 drop table t1,t2;
@@ -549,22 +546,6 @@ insert into t1 values (1,'A'), (2, 'B'), (3, 'A');
 update t1 set c2='A  B' where c1=2;
 check table t1;
 drop table t1;
-
-
-#
-# Bug#12296 - CHECKSUM TABLE reports 0 for the table
-# This happened if the first record was marked as deleted.
-#
-create table t1 (c1 int);
-insert into t1 values (1),(2),(3),(4);
-checksum table t1;
-delete from t1 where c1 = 1;
-create table t2 as select * from t1;
-# The following returns 0 with the bug in place.
-checksum table t1;
-# The above should give the same number as the following.
-checksum table t2;
-drop table t1, t2;
 
 # BUG#13814 - key value packed incorrectly for TINYBLOBs
 
@@ -924,69 +905,6 @@ DROP TABLE t1, t2;
 
 --echo End of 5.0 tests
 
-
-#
-# Test of key_block_size
-#
-
-create temporary table t1 (a int not null, key `a` (a) key_block_size=1024) ENGINE=MyISAM;
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a int not null, key `a` (a) key_block_size=2048) ENGINE=MyISAM;
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a varchar(2048), key `a` (a)) ENGINE=MyISAM;
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a varchar(2048), key `a` (a) key_block_size=1024) ENGINE=MyISAM;
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a int not null, b varchar(2048), key (a), key(b)) ENGINE=MyISAM key_block_size=1024;
-show create table t1;
-alter table t1 key_block_size=2048;
-show create table t1;
-alter table t1 add c int, add key (c);
-show create table t1;
-alter table t1 key_block_size=0;
-alter table t1 add d int, add key (d);
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a int not null, b varchar(2048), key (a), key(b)) ENGINE=MyISAM key_block_size=8192;
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a int not null, b varchar(2048), key (a) key_block_size=1024, key(b)) ENGINE=MyISAM key_block_size=8192;
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a int not null, b int, key (a) key_block_size=1024, key(b) key_block_size=8192) ENGINE=MyISAM key_block_size=16384;
-show create table t1;
-drop table t1;
-
-
-# Test limits and errors of key_block_size
-
-create temporary table t1 (a int not null, key `a` (a) key_block_size=512) ENGINE=MyISAM;
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a varchar(2048), key `a` (a) key_block_size=1000000000000000000) ENGINE=MyISAM;
-show create table t1;
-drop table t1;
-
-create temporary table t1 (a int not null, key `a` (a) key_block_size=1025) ENGINE=MyISAM;
-show create table t1;
-drop table t1;
-
---error 1064
-create temporary table t1 (a int not null, key key_block_size=1024 (a)) ENGINE=MyISAM;
---error 1064
-create temporary table t1 (a int not null, key `a` key_block_size=1024 (a)) ENGINE=MyISAM;
 
 #
 # Bug#22119 - Changing MI_KEY_BLOCK_LENGTH makes a wrong myisamchk

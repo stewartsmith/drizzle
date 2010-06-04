@@ -28,18 +28,24 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/data_home.h"
 
+#include "drizzled/table.h"
+
 #include <algorithm>
 #include <sstream>
+#include <cstdio>
 
 using namespace std;
 
 namespace drizzled
 {
 
-extern char *drizzle_tmpdir;
+extern std::string drizzle_tmpdir;
 extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
+
+static bool tablename_to_filename(const char *from, char *to, size_t to_length);
+static size_t build_tmptable_filename(std::string &path);
 
 /*
   Translate a cursor name to a table name (WL #1324).
@@ -108,29 +114,24 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
     path length on success, 0 on failure
 */
 
-size_t build_tmptable_filename(char *buff, size_t bufflen)
+static size_t build_tmptable_filename(std::string &buffer)
 {
-  size_t length;
-  ostringstream path_str, post_tmpdir_str;
-  string tmp;
+  size_t tmpdir_length;
+  ostringstream post_tmpdir_str;
 
   Session *session= current_session;
 
-  path_str << drizzle_tmpdir;
+  buffer.append(drizzle_tmpdir);
+  tmpdir_length= buffer.length();
+
   post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
   post_tmpdir_str << session->thread_id << session->tmp_table++;
-  tmp= post_tmpdir_str.str();
 
-  transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
+  buffer.append(post_tmpdir_str.str());
 
-  path_str << tmp;
+  transform(buffer.begin() + tmpdir_length, buffer.end(), buffer.begin() + tmpdir_length, ::tolower);
 
-  if (bufflen < path_str.str().length())
-    length= 0;
-  else
-    length= internal::unpack_filename(buff, path_str.str().c_str());
-
-  return length;
+  return buffer.length();
 }
 
 /*
@@ -144,8 +145,7 @@ size_t build_tmptable_filename(char *buff, size_t bufflen)
      db                         Database name
      table_name                 Table name
      ext                        File extension.
-     flags                      FN_FROM_IS_TMP or FN_TO_IS_TMP
-                                table_name is temporary, do not change.
+     flags                      table_name is temporary, do not change.
 
   NOTES
 
@@ -166,15 +166,17 @@ size_t build_tmptable_filename(char *buff, size_t bufflen)
     path length on success, 0 on failure
 */
 
-size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp)
+size_t build_table_filename(std::string &path, const char *db, const char *table_name, bool is_tmp)
 {
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];
   bool conversion_error= false;
 
   memset(tbbuff, 0, sizeof(tbbuff));
-  if (is_tmp) // FN_FROM_IS_TMP | FN_TO_IS_TMP
+  if (is_tmp) // It a conversion tmp
+  {
     strncpy(tbbuff, table_name, sizeof(tbbuff));
+  }
   else
   {
     conversion_error= tablename_to_filename(table_name, tbbuff, sizeof(tbbuff));
@@ -198,27 +200,23 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
    
 
   int rootdir_len= strlen(FN_ROOTDIR);
-  string table_path(drizzle_data_home);
-  int without_rootdir= table_path.length()-rootdir_len;
+  path.append(data_home);
+  ssize_t without_rootdir= path.length() - rootdir_len;
 
   /* Don't add FN_ROOTDIR if dirzzle_data_home already includes it */
   if (without_rootdir >= 0)
   {
-    const char *tmp= table_path.c_str()+without_rootdir;
+    const char *tmp= path.c_str() + without_rootdir;
+
     if (memcmp(tmp, FN_ROOTDIR, rootdir_len) != 0)
-      table_path.append(FN_ROOTDIR);
+      path.append(FN_ROOTDIR);
   }
 
-  table_path.append(dbbuff);
-  table_path.append(FN_ROOTDIR);
-  table_path.append(tbbuff);
+  path.append(dbbuff);
+  path.append(FN_ROOTDIR);
+  path.append(tbbuff);
 
-  if (bufflen < table_path.length())
-    return 0;
-
-  strcpy(buff, table_path.c_str());
-
-  return table_path.length();
+  return path.length();
 }
 
 
@@ -234,7 +232,7 @@ size_t build_table_filename(char *buff, size_t bufflen, const char *db, const ch
   RETURN
     true if errors happen. false on success.
 */
-bool tablename_to_filename(const char *from, char *to, size_t to_length)
+static bool tablename_to_filename(const char *from, char *to, size_t to_length)
 {
   
   size_t length= 0;
@@ -254,7 +252,7 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
         (*from == ' ') ||
         (*from == '-'))
     {
-      to[length]= *from;
+      to[length]= tolower(*from);
       continue;
     }
    
@@ -276,36 +274,100 @@ bool tablename_to_filename(const char *from, char *to, size_t to_length)
   return false;
 }
 
-
-
-const char *TableIdentifier::getPath()
+TableIdentifier::TableIdentifier(const drizzled::Table &table) :
+  SchemaIdentifier(table.getShare()->getTableProto()->schema()),
+  type(table.getShare()->getTableProto()->type()),
+  table_name(table.getShare()->getTableProto()->name())
 {
-  if (not path_inited)
-  {
-    size_t path_length= 0;
+  if (type == message::Table::TEMPORARY)
+    path= table.getShare()->getPath();
 
+  init();
+}
+
+void TableIdentifier::init()
+{
+  lower_table_name.append(table_name);
+  std::transform(lower_table_name.begin(), lower_table_name.end(),
+                 lower_table_name.begin(), ::tolower);
+}
+
+
+const std::string &TableIdentifier::getPath()
+{
+  assert(not lower_table_name.empty());
+
+  if (path.empty())
+  {
     switch (type) {
-    case STANDARD_TABLE:
-      path_length= build_table_filename(path, sizeof(path),
-                                        db.c_str(), table_name.c_str(),
-                                        false);
+    case message::Table::STANDARD:
+      build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), false);
       break;
-    case INTERNAL_TMP_TABLE:
-      path_length= build_table_filename(path, sizeof(path),
-                                        db.c_str(), table_name.c_str(),
-                                        true);
+    case message::Table::INTERNAL:
+      build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), true);
       break;
-    case TEMP_TABLE:
-      path_length= build_tmptable_filename(path, sizeof(path));
+    case message::Table::TEMPORARY:
+      build_tmptable_filename(path);
       break;
-    case SYSTEM_TMP_TABLE:
-      assert(0);
+    case message::Table::FUNCTION:
+      path.append(getSchemaName());
+      path.append(".");
+      path.append(table_name);
+      break;
     }
-    path_inited= true;
-    assert(path_length); // TODO throw exception, this is a possibility
+    assert(path.length()); // TODO throw exception, this is a possibility
   }
 
   return path;
+}
+
+bool TableIdentifier::compare(std::string schema_arg, std::string table_arg)
+{
+  std::transform(schema_arg.begin(), schema_arg.end(),
+                 schema_arg.begin(), ::tolower);
+
+  std::transform(table_arg.begin(), table_arg.end(),
+                 table_arg.begin(), ::tolower);
+
+  if (schema_arg == getLower() && table_arg == lower_table_name)
+  {
+    return true;
+  }
+
+  return false;
+}
+
+const std::string &TableIdentifier::getSQLPath()
+{
+  if (sql_path.empty())
+  {
+    switch (type) {
+    case message::Table::FUNCTION:
+    case message::Table::STANDARD:
+      sql_path.append(getLower());
+      sql_path.append(".");
+      sql_path.append(table_name);
+      break;
+    case message::Table::INTERNAL:
+      sql_path.append("temporary.");
+      sql_path.append(table_name);
+      break;
+    case message::Table::TEMPORARY:
+      sql_path.append(getLower());
+      sql_path.append(".#");
+      sql_path.append(table_name);
+      break;
+    }
+  }
+
+  return sql_path;
+}
+
+
+void TableIdentifier::copyToTableMessage(message::Table &message)
+{
+  message.set_name(table_name);
+  message.set_schema(getSchemaName());
 }
 
 } /* namespace drizzled */

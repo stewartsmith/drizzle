@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/data_home.h>
-#include <drizzled/hash.h>
+#include <drizzled/unordered_map.h>
 
 #include <pthread.h>
 
@@ -36,13 +36,12 @@ static const char *schema_exts[] = {
 
 class Schema : public drizzled::plugin::StorageEngine
 {
-  bool writeSchemaFile(const char *path, const drizzled::message::Schema &db);
-  bool readTableFile(const std::string &path, drizzled::message::Table &table_message);
-  bool readSchemaFile(const std::string &path, drizzled::message::Schema &schema);
+  bool writeSchemaFile(drizzled::SchemaIdentifier &schema_identifier, const drizzled::message::Schema &db);
+  bool readSchemaFile(const std::string &schema_file_name, drizzled::message::Schema &schema);
 
   void prime();
 
-  typedef drizzled::hash_map<std::string, drizzled::message::Schema> SchemaCache;
+  typedef drizzled::unordered_map<std::string, drizzled::message::Schema> SchemaCache;
   SchemaCache schema_cache;
   bool schema_cache_filled;
 
@@ -53,17 +52,8 @@ public:
 
   ~Schema();
 
-  int doCreateTable(drizzled::Session *,
-                    const char *,
-                    drizzled::Table&,
-                    drizzled::message::Table&)
-  {
-    return EPERM;
-  }
 
-  int doDropTable(drizzled::Session&, const std::string &table_path);
-
-  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
+  bool doCanCreateTable(drizzled::TableIdentifier &identifier);
 
   drizzled::Cursor *create(drizzled::TableShare &,
                            drizzled::memory::Root *)
@@ -71,30 +61,67 @@ public:
     return NULL;
   }
 
-  void doGetSchemaNames(std::set<std::string>& set_of_names);
-  bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto);
+  void doGetSchemaIdentifiers(drizzled::SchemaIdentifierList &set_of_names);
+  bool doGetSchemaDefinition(drizzled::SchemaIdentifier&, drizzled::message::Schema &proto);
 
   bool doCreateSchema(const drizzled::message::Schema &schema_message);
 
   bool doAlterSchema(const drizzled::message::Schema &schema_message);
 
-  bool doDropSchema(const std::string &schema_name);
+  bool doDropSchema(drizzled::SchemaIdentifier&);
 
-  int doGetTableDefinition(drizzled::Session& session,
-                           const char *path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           drizzled::message::Table *table_proto);
+  // Below are table methods that we don't implement (and don't need)
 
-  void doGetTableNames(drizzled::CachedDirectory &directory,
-                       std::string &db_name,
-                       std::set<std::string> &set_of_names);
+  int doGetTableDefinition(drizzled::Session&,
+                           drizzled::TableIdentifier&,
+                           drizzled::message::Table&)
+  {
+    return ENOENT;
+  }
+
+
+  void doGetTableNames(drizzled::CachedDirectory&,
+                       drizzled::SchemaIdentifier&,
+                       std::set<std::string>&)
+  {
+  }
+
+  bool doDoesTableExist(drizzled::Session&, drizzled::TableIdentifier&)
+  {
+    return false;
+  }
+
+  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
+  {
+    return EPERM;
+  }
+
+  int doCreateTable(drizzled::Session&,
+                    drizzled::Table&,
+                    drizzled::TableIdentifier&,
+                    drizzled::message::Table&)
+  {
+    return EPERM;
+  }
+
+  int doDropTable(drizzled::Session&, drizzled::TableIdentifier&)
+  {
+    return 0;
+  }
 
   const char **bas_ext() const 
   {
     return schema_exts;
   }
+
+  void get_auto_increment(uint64_t, uint64_t,
+                          uint64_t,
+                          uint64_t *,
+                          uint64_t *)
+  {}
+  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                             drizzled::SchemaIdentifier &schema_identifier,
+                             drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 #endif /* PLUGIN_SCHEMA_ENGINE_SCHEMA_H */

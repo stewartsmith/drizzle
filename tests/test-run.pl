@@ -241,7 +241,7 @@ our $opt_user;
 my $opt_valgrind= 0;
 my $opt_valgrind_mysqld= 0;
 my $opt_valgrind_drizzletest= 0;
-my @default_valgrind_args= ("--show-reachable=yes");
+my @default_valgrind_args= ("--show-reachable=yes --malloc-fill=0xDEADBEEF --free-fill=0xDEADBEEF");
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;
@@ -1043,6 +1043,32 @@ sub command_line_setup () {
   }
 }
 
+sub gimme_a_good_port($)
+{
+  my $port_to_test= shift;
+  if ($port_to_test == 8000)
+  {
+    $port_to_test = 8001;
+  }
+  my $is_port_bad= 1;
+  while ($is_port_bad) {
+    my $sock = new IO::Socket::INET( PeerAddr => 'localhost',
+                                     PeerPort => $port_to_test,
+                                     Proto => 'tcp' );
+    if ($sock) {
+      close($sock);
+      $port_to_test += 1;
+      if ($port_to_test >= 32767) {
+        $port_to_test = 5001;
+      }
+
+    } else {
+      $is_port_bad= 0;
+    }
+  }
+  return $port_to_test;
+
+}
 #
 # To make it easier for different devs to work on the same host,
 # an environment variable can be used to control all ports. A small
@@ -1072,9 +1098,11 @@ sub set_mtr_build_thread_ports($) {
 
   # Up to two masters, up to three slaves
   # A magic value in command_line_setup depends on these equations.
-  $opt_master_myport=         $mtr_build_thread + 9000; # and 1
-  $opt_slave_myport=          $opt_master_myport + 2;  # and 3 4
-  $opt_memc_myport= $opt_master_myport + 10;
+  $opt_master_myport=         gimme_a_good_port($mtr_build_thread + 9000); # and 1
+
+
+  $opt_slave_myport=          gimme_a_good_port($opt_master_myport + 2);  # and 3 4
+  $opt_memc_myport= gimme_a_good_port($opt_master_myport + 10);
 
   if ( $opt_master_myport < 5001 or $opt_master_myport + 10 >= 32767 )
   {
@@ -1294,6 +1322,13 @@ sub generate_cmdline_mysqldump ($) {
       "--port=$mysqld->{'port'} ";
 }
 
+sub generate_cmdline_drizzle ($) {
+  my($mysqld) = @_;
+  return
+    mtr_native_path($exe_drizzle) .
+    " -uroot --port=$mysqld->{'port'} ";
+}
+
 
 ##############################################################################
 #
@@ -1434,7 +1469,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
-  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
+  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'drizzle-protocol-port'};
 
   $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
 
@@ -1462,6 +1497,12 @@ sub environment_setup () {
   $ENV{'DRIZZLE_DUMP'}= $cmdline_mysqldump;
   $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
   $ENV{'DRIZZLE_DUMP_SECONDARY'}= $cmdline_mysqldump_secondary;
+
+  # ----------------------------------------------------
+  # Setup env so we can execute drizzle client
+  # ----------------------------------------------------
+  my $cmdline_drizzle = generate_cmdline_drizzle($master->[0]);
+  $ENV{'DRIZZLE'}= $cmdline_drizzle;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlslap
@@ -2517,8 +2558,8 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args, "%s--server-id=%d", $prefix,
 	       $idx > 0 ? $idx + 101 : 1);
 
-    mtr_add_arg($args, "%s--loose-innodb_data_file_path=ibdata1:10M:autoextend",
-		$prefix);
+    mtr_add_arg($args,
+      "%s--loose-innodb_data_file_path=ibdata1:20M:autoextend", $prefix);
 
     mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
 
@@ -3257,7 +3298,7 @@ sub dbx_arguments {
   {
     # write init file for drizzled
     mtr_tofile($dbx_init_file,
-               "stop in drizzled::mysql_parse\n" .
+               "stop in __1cIdrizzledLmysql_parse6Fpn0AHSession_pkcI_v_\n" .
                "runargs $str\n" .
                "run\n" .
                "\n");
@@ -3313,17 +3354,19 @@ sub gdb_arguments {
     # write init file for mysqld
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
+               "set breakpoint pending on\n" .
 	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .
 	       "disable 1\n" .
 	       "end\n" .
+               "set breakpoint pending off\n" .
 	       "run");
   }
 
   if ( $opt_manual_gdb )
   {
      print "\nTo start gdb for $type, type in another window:\n";
-     print "gdb -cd $glob_mysql_test_dir -x $gdb_init_file $$exe\n";
+     print "$glob_mysql_test_dir/../libtool --mode=execute gdb -cd $glob_mysql_test_dir -x $gdb_init_file $$exe\n";
 
      # Indicate the exe should not be started
      $$exe= undef;

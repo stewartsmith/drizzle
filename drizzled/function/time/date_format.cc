@@ -23,6 +23,7 @@
 #include "drizzled/time_functions.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <algorithm>
 
 using namespace std;
@@ -179,7 +180,7 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 	str->append(hours_i < 12 ? "AM" : "PM",2);
 	break;
       case 'r':
-	length= sprintf(intbuff,
+	length= snprintf(intbuff, sizeof(intbuff), 
 		    ((l_time->hour % 24) < 12) ?
                     "%02d:%02d:%02d AM" : "%02d:%02d:%02d PM",
 		    (l_time->hour+11)%12+1,
@@ -193,7 +194,7 @@ static bool make_date_time(String *format, DRIZZLE_TIME *l_time,
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'T':
-	length= sprintf(intbuff,
+	length= snprintf(intbuff, sizeof(intbuff), 
 		    "%02d:%02d:%02d",
 		    l_time->hour,
 		    l_time->minute,

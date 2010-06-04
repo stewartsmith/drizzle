@@ -223,7 +223,7 @@ DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count
       set<size_t> involved_slots;
       for (size_t x= 1; x <= num_tables; x++, tables++)
       {
-        engine= (*tables)->cursor->engine;
+        engine= (*tables)->cursor->getEngine();
         if (involved_slots.count(engine->getId()) > 0)
           continue; /* already added to involved engines */
         involved_engines.push_back(engine);
@@ -348,7 +348,7 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 
     if ((error=(*tables)->cursor->ha_external_lock(session,lock_type)))
     {
-      print_lock_error(error, (*tables)->cursor->engine->getName().c_str());
+      print_lock_error(error, (*tables)->cursor->getEngine()->getName().c_str());
       while (--i)
       {
         tables--;
@@ -543,7 +543,7 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
       if ((error=(*table)->cursor->ha_external_lock(session, F_UNLCK)))
       {
 	error_code=error;
-	print_lock_error(error_code, (*table)->cursor->engine->getName().c_str());
+	print_lock_error(error_code, (*table)->cursor->getEngine()->getName().c_str());
       }
     }
     table++;
@@ -709,15 +709,17 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
 
       if (table->in_use == session)
       {
-        table->s->version= 0;                  // Ensure no one can use this
-        table->locked_by_name= 1;
+        table->getMutableShare()->resetVersion();                  // Ensure no one can use this
+        table->locked_by_name= true;
         return 0;
       }
     }
   }
 
   if (!(table= session->table_cache_insert_placeholder(key, key_length)))
+  {
     return -1;
+  }
 
   table_list->table=table;
 
@@ -1048,9 +1050,12 @@ void unlock_global_read_lock(Session *session)
   session->global_read_lock= 0;
 }
 
-#define must_wait (global_read_lock &&                             \
-                   (is_not_commit ||                               \
-                    global_read_lock_blocks_commit))
+static inline bool must_wait(bool is_not_commit)
+{
+  return (global_read_lock &&
+          (is_not_commit ||
+          global_read_lock_blocks_commit));
+}
 
 bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
                               bool is_not_commit)
@@ -1066,7 +1071,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
   safe_mutex_assert_not_owner(&LOCK_open);
 
   (void) pthread_mutex_lock(&LOCK_global_read_lock);
-  if ((need_exit_cond= must_wait))
+  if ((need_exit_cond= must_wait(is_not_commit)))
   {
     if (session->global_read_lock)		// This thread had the read locks
     {
@@ -1083,7 +1088,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     }
     old_message=session->enter_cond(&COND_global_read_lock, &LOCK_global_read_lock,
 				"Waiting for release of readlock");
-    while (must_wait && ! session->killed &&
+    while (must_wait(is_not_commit) && ! session->killed &&
 	   (!abort_on_refresh || session->version == refresh_version))
     {
       (void) pthread_cond_wait(&COND_global_read_lock, &LOCK_global_read_lock);

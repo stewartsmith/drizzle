@@ -34,71 +34,139 @@
 
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
+#include "drizzled/message/table.pb.h"
+
+#include "drizzled/schema_identifier.h"
+
 #include <string.h>
 
 #include <assert.h>
 
 #include <ostream>
 #include <set>
+#include <algorithm>
+#include <functional>
 
 namespace drizzled {
 
+class Table;
+
 uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-bool tablename_to_filename(const char *from, char *to, size_t to_length);
-size_t build_tmptable_filename(char *buff, size_t bufflen);
-size_t build_table_filename(char *buff, size_t bufflen, const char *db, const char *table_name, bool is_tmp);
+size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
 
-
-class TableIdentifier
+class TableIdentifier : public SchemaIdentifier
 {
+public:
+  typedef message::Table::TableType Type;
 private:
-  bool path_inited;
 
-  tmp_table_type type;
-  char path[FN_REFLEN];
-  std::string db;
+  Type type;
+  std::string path;
   std::string table_name;
+  std::string lower_table_name;
   std::string sql_path;
 
+  void init();
+
 public:
-  TableIdentifier( const char *db_arg,
-                   const char *table_name_arg,
-                   tmp_table_type tmp_arg= STANDARD_TABLE) :
-    path_inited(false),
+  TableIdentifier(const Table &table);
+                   
+  TableIdentifier( const SchemaIdentifier &schema,
+                   const std::string &table_name_arg,
+                   Type tmp_arg= message::Table::STANDARD) :
+    SchemaIdentifier(schema),
     type(tmp_arg),
-    db(db_arg),
-    table_name(table_name_arg),
-    sql_path(db)
+    table_name(table_name_arg)
   { 
-    sql_path.append(".");
-    sql_path.append(table_name);
+    init();
   }
+
+  TableIdentifier( const std::string &db_arg,
+                   const std::string &table_name_arg,
+                   Type tmp_arg= message::Table::STANDARD) :
+    SchemaIdentifier(db_arg),
+    type(tmp_arg),
+    table_name(table_name_arg)
+  { 
+    init();
+  }
+
+  TableIdentifier( const std::string &schema_name_arg,
+                   const std::string &table_name_arg,
+                   const std::string &path_arg ) :
+    SchemaIdentifier(schema_name_arg),
+    type(message::Table::TEMPORARY),
+    path(path_arg),
+    table_name(table_name_arg)
+  { 
+    init();
+  }
+
+  using SchemaIdentifier::compare;
+  bool compare(std::string schema_arg, std::string table_arg);
 
   bool isTmp() const
   {
-    return type == STANDARD_TABLE ? false  : true;
+    if (type == message::Table::TEMPORARY || type == message::Table::INTERNAL)
+      return true;
+    return false;
   }
 
-  const std::string &getSQLPath()
+  Type getType() const
   {
-    return sql_path;
+    return type;
   }
 
-  const char *getPath();
+  const std::string &getSQLPath();
 
-  const char *getDBName() const
+  const std::string &getPath();
+
+  void setPath(const std::string &new_path)
   {
-    return db.c_str();
+    path= new_path;
   }
 
-  const char *getSchemaName() const
+  const std::string &getTableName() const
   {
-    return db.c_str();
+    return table_name;
   }
 
-  const char *getTableName() const
+  void copyToTableMessage(message::Table &message);
+
+  bool operator<(TableIdentifier &right)
   {
-    return table_name.c_str();
+    int first= getLower().compare(right.getLower());
+
+    if (first < 0)
+    {
+      return true;
+    }
+    else if (first > 0)
+    {
+      return false;
+    }
+    else
+    {
+      int val= lower_table_name.compare(right.lower_table_name);
+
+      if (val < 0)
+      {
+        return true;
+      }
+      else if (val > 0)
+      {
+        return false;
+      }
+      else
+      {
+        if (type < right.type)
+        {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   friend std::ostream& operator<<(std::ostream& output, const TableIdentifier &identifier)
@@ -106,38 +174,41 @@ public:
     const char *type_str;
 
     output << "TableIdentifier:(";
-    output <<  identifier.getDBName();
+    output <<  identifier.getSchemaName();
     output << ", ";
     output << identifier.getTableName();
     output << ", ";
 
     switch (identifier.type) {
-    case STANDARD_TABLE:
+    case message::Table::STANDARD:
       type_str= "standard";
       break;
-    case INTERNAL_TMP_TABLE:
+    case message::Table::INTERNAL:
       type_str= "internal";
       break;
-    case TEMP_TABLE:
+    case message::Table::TEMPORARY:
       type_str= "temporary";
       break;
-    case SYSTEM_TMP_TABLE:
-      type_str= "system";
+    case message::Table::FUNCTION:
+      type_str= "function";
+      break;
     }
 
     output << type_str;
+    output << ", ";
+    output << identifier.path;
     output << ")";
 
     return output;  // for multiple << operators.
   }
 
-  friend bool operator==(const TableIdentifier &left, const TableIdentifier &right)
+  friend bool operator==(TableIdentifier &left, TableIdentifier &right)
   {
     if (left.type == right.type)
     {
-      if (not strcmp(left.db.c_str(), right.db.c_str()))
+      if (static_cast<SchemaIdentifier &>(left) == static_cast<SchemaIdentifier &>(right))
       {
-        if (not strcmp(left.table_name.c_str(), right.table_name.c_str()))
+        if (left.lower_table_name == right.lower_table_name)
         {
           return true;
         }
@@ -149,7 +220,8 @@ public:
 
 };
 
-typedef std::set <TableIdentifier> TableIdentifierList;
+typedef std::vector <TableIdentifier> TableIdentifierList;
+typedef std::list <TableIdentifier> TableIdentifiers;
 
 } /* namespace drizzled */
 

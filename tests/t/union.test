@@ -457,7 +457,7 @@ insert into t2 select * from t1;
 insert into t1 select * from t2;
 insert into t2 select * from t1;
 set local tmp_table_size=1024;
-select count(*) from (select * from t1 union all select * from t2 order by 1) b;
+select SQL_BIG_RESULT count(*) from (select SQL_BIG_RESULT * from t1 union all select * from t2 order by 1) b;
 select count(*) from t1;
 select count(*) from t2;
 drop table t1,t2;
@@ -746,7 +746,7 @@ select concat('value is: ', @val) union select 'some text';
 # Bug#15949 union + illegal mix of collations (IMPLICIT + COERCIBLE)
 #
 select concat('a', 'b' collate utf8_bin);
-create table t1 (foo varchar(100)) collate utf8_bin;
+create table t1 (foo varchar(100)) collate=utf8_bin;
 insert into t1 (foo) values ("foo");
 --error 1146
 select foo from t1 union select 'bar' as foo from dual;

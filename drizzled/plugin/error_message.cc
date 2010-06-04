@@ -19,10 +19,11 @@
 
 #include "config.h"
 #include "drizzled/plugin/error_message.h"
-#include "drizzled/plugin/registry.h"
 
 #include "drizzled/gettext.h"
 
+#include <cstdio>
+#include <algorithm>
 #include <vector>
 
 using namespace std;

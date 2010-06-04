@@ -1,0 +1,5 @@
+PANDORA_HAVE_LIBMEMCACHED(0.39)
+PANDORA_HAVE_MEMCACHED
+AS_IF([test "x$ac_cv_libmemcached" = "xno" -a "x${MEMCACHED_BINARY}" = "xyes"],
+      AC_MSG_WARN([libmemcached not found: not building memcached functions.]))
+DRIZZLED_PLUGIN_DEP_LIBS="${DRIZZLED_PLUGIN_DEP_LIBS} ${LTLIBMEMCACHED}"

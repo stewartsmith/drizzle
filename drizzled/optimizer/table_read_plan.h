@@ -21,6 +21,7 @@
 #define DRIZZLED_OPTIMIZER_TABLE_READ_PLAN_H
 
 #include "drizzled/util/functors.h"
+#include <algorithm>
 
 namespace drizzled
 {
@@ -77,7 +78,7 @@ public:
   /* Table read plans are allocated on memory::Root and are never deleted */
   static void *operator new(size_t size, memory::Root *mem_root)
   { 
-    return (void*) alloc_root(mem_root, (uint32_t) size); 
+    return (void*) mem_root->alloc_root((uint32_t) size); 
   }
 
   static void operator delete(void *, size_t)
@@ -102,41 +103,20 @@ class RangeReadPlan : public TableReadPlan
 
 public:
 
+  SEL_ARG *key; /* set of intervals to be used in "range" method retrieval */
+  uint32_t     key_idx; /* key number in Parameter::key */
+  uint32_t     mrr_flags;
+  uint32_t     mrr_buf_size;
+
   RangeReadPlan(SEL_ARG *key_arg, uint32_t idx_arg, uint32_t mrr_flags_arg)
     :
       key(key_arg),
       key_idx(idx_arg),
-      mrr_flags(mrr_flags_arg),
-      mrr_buf_size(0)
+      mrr_flags(mrr_flags_arg)
   {}
-
   virtual ~RangeReadPlan() {}                     /* Remove gcc warning */
 
   QuickSelectInterface *make_quick(Parameter *param, bool, memory::Root *parent_alloc);
-
-  void setMRRBufferSize(uint32_t in_mrr_buf_size)
-  {
-    mrr_buf_size= in_mrr_buf_size;
-  }
-
-  uint32_t getKeyIndex() const
-  {
-    return key_idx;
-  }
-
-  uint32_t getMRRBufferSize() const
-  {
-    return mrr_buf_size;
-  }
-
-private:
-
-  /** set of intervals to be used in "range" method retrieval */
-  SEL_ARG *key;
-  /** key number in Parameter::key */
-  uint32_t     key_idx;
-  uint32_t     mrr_flags;
-  uint32_t     mrr_buf_size;
 
 };
 
@@ -146,62 +126,20 @@ class RorIntersectReadPlan : public TableReadPlan
 {
 public:
 
-  RorIntersectReadPlan() 
-    :
-      ror_range_scans(),
-      cpk_scan(NULL),
-      is_covering(false),
-      index_scan_costs(0.0)
-  {}
-
-  virtual ~RorIntersectReadPlan() 
-  {
-    for_each(ror_range_scans.begin(),
-             ror_range_scans.end(),
-             DeletePtr());
-    ror_range_scans.clear();
-  }
+  RorIntersectReadPlan() {}                      /* Remove gcc warning */
+  virtual ~RorIntersectReadPlan() {}             /* Remove gcc warning */
 
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
 
-  void setRowRetrievalNecessary(bool in_is_covering)
-  {
-    is_covering= in_is_covering;
-  }
-
-  void setCostOfIndexScans(double in_index_scan_costs)
-  {
-    index_scan_costs= in_index_scan_costs;
-  }
-
-  /**
-   * @return true if row retrival phase is necessary.
-   */
-  bool isRowRetrievalNecessary() const
-  {
-    return ! is_covering;
-  }
-
-  /**
-   * @return the sum of the cost of each index scan
-   */
-  double getCostOfIndexScans() const
-  {
-    return index_scan_costs;
-  }
-
-  /** Vector of pointers to ROR range scans used in this intersection */
-  std::vector<struct st_ror_scan_info *> ror_range_scans;
+  /* Array of pointers to ROR range scans used in this intersection */
+  struct st_ror_scan_info **first_scan;
+  struct st_ror_scan_info **last_scan; /* End of the above array */
   struct st_ror_scan_info *cpk_scan;  /* Clustered PK scan, if there is one */
 
-private:
-
-  /** true if no row retrieval phase is necessary */
-  bool is_covering; 
-  /* SUM(cost(index_scan)) */
-  double index_scan_costs; 
+  bool is_covering; /* true if no row retrieval phase is necessary */
+  double index_scan_costs; /* SUM(cost(index_scan)) */
 
 };
 
@@ -220,8 +158,8 @@ public:
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
-  /** vector of plans for merged scans */
-  std::vector<TableReadPlan *> merged_scans;
+  TableReadPlan **first_ror; /* array of ptrs to plans for merged scans */
+  TableReadPlan **last_ror;  /* end of the above array */
 };
 
 
@@ -250,16 +188,32 @@ public:
 
 class GroupMinMaxReadPlan : public TableReadPlan
 {
+private:
+  bool have_min;
+  bool have_max;
+  KeyPartInfo *min_max_arg_part;
+  uint32_t group_prefix_len;
+  uint32_t used_key_parts;
+  uint32_t group_key_parts;
+  KeyInfo *index_info;
+  uint32_t index;
+  uint32_t key_infix_len;
+  unsigned char key_infix[MAX_KEY_LENGTH];
+  SEL_TREE *range_tree; /* Represents all range predicates in the query. */
+  SEL_ARG *index_tree; /* The SEL_ARG sub-tree corresponding to index_info. */
+  uint32_t param_idx; /* Index of used key in param->key. */
+  /* Number of records selected by the ranges in index_tree. */
+public:
+  ha_rows quick_prefix_records;
 
 public:
-
   GroupMinMaxReadPlan(bool have_min_arg, 
                       bool have_max_arg,
-                      KEY_PART_INFO *min_max_arg_part_arg,
+                      KeyPartInfo *min_max_arg_part_arg,
                       uint32_t group_prefix_len_arg, 
                       uint32_t used_key_parts_arg,
                       uint32_t group_key_parts_arg, 
-                      KEY *index_info_arg,
+                      KeyInfo *index_info_arg,
                       uint32_t index_arg, 
                       uint32_t key_infix_len_arg,
                       unsigned char *key_infix_arg,
@@ -268,7 +222,6 @@ public:
                       uint32_t param_idx_arg, 
                       ha_rows quick_prefix_records_arg)
     :
-      quick_prefix_records(quick_prefix_records_arg),
       have_min(have_min_arg),
       have_max(have_max_arg),
       min_max_arg_part(min_max_arg_part_arg),
@@ -280,7 +233,8 @@ public:
       key_infix_len(key_infix_len_arg),
       range_tree(tree_arg),
       index_tree(index_tree_arg),
-      param_idx(param_idx_arg)
+      param_idx(param_idx_arg),
+      quick_prefix_records(quick_prefix_records_arg)
     {
       if (key_infix_len)
         memcpy(this->key_infix, key_infix_arg, key_infix_len);
@@ -290,25 +244,6 @@ public:
   QuickSelectInterface *make_quick(Parameter *param,
                                    bool retrieve_full_rows,
                                    memory::Root *parent_alloc);
-
-  /* Number of records selected by the ranges in index_tree. */
-  ha_rows quick_prefix_records;
-
-private:
-
-  bool have_min;
-  bool have_max;
-  KEY_PART_INFO *min_max_arg_part;
-  uint32_t group_prefix_len;
-  uint32_t used_key_parts;
-  uint32_t group_key_parts;
-  KEY *index_info;
-  uint32_t index;
-  uint32_t key_infix_len;
-  unsigned char key_infix[MAX_KEY_LENGTH];
-  SEL_TREE *range_tree; /* Represents all range predicates in the query. */
-  SEL_ARG *index_tree; /* The SEL_ARG sub-tree corresponding to index_info. */
-  uint32_t param_idx; /* Index of used key in param->key. */
 };
 
 

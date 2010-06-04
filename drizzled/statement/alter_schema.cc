@@ -37,15 +37,22 @@ bool statement::AlterSchema::execute()
   LEX_STRING *db= &session->lex->name;
   message::Schema old_definition;
 
-  if (check_db_name(db))
+  if (not validateSchemaOptions())
+    return true;
+
+  SchemaIdentifier schema_identifier(string(db->str, db->length));
+
+  if (not check_db_name(schema_identifier))
   {
-    my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
+    my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
     return false;
   }
 
   schema_message.set_name(db->str);
+  schema_message.mutable_engine()->set_name("filesystem"); // For the moment we have only one.
+  SchemaIdentifier identifier(schema_message.name());
 
-  if (not plugin::StorageEngine::getSchemaDefinition(schema_message.name(), old_definition))
+  if (not plugin::StorageEngine::getSchemaDefinition(identifier, old_definition))
   {
     my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), db->str);
     return true;

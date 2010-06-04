@@ -70,6 +70,7 @@ public:
   ~Auth_http()
   {
     curl_easy_cleanup(curl_handle);
+    curl_global_cleanup();
   }
 
   virtual bool authenticate(const SecurityContext &sctx, const string &password)
@@ -119,7 +120,7 @@ public:
 
 Auth_http* auth= NULL;
 
-static int initialize(drizzled::plugin::Registry &registry)
+static int initialize(drizzled::module::Context &context)
 {
   /* 
    * Per libcurl manual, in multi-threaded applications, curl_global_init() should
@@ -130,20 +131,7 @@ static int initialize(drizzled::plugin::Registry &registry)
     return 1;
 
   auth= new Auth_http("auth_http");
-  registry.add(auth);
-
-  return 0;
-}
-
-static int finalize(drizzled::plugin::Registry &registry)
-{
-  if (auth)
-  {
-    registry.remove(auth);
-    delete auth;
-
-    curl_global_cleanup();
-  }
+  context.add(auth);
 
   return 0;
 }
@@ -183,7 +171,6 @@ DRIZZLE_DECLARE_PLUGIN
   "HTTP based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
-  finalize, /* Plugin Deinit */
   auth_http_system_variables,
   NULL    /* config options */
 }

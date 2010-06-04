@@ -49,7 +49,6 @@
 #include "drizzled/lock.h"
 #include "drizzled/item/outer_ref.h"
 #include "drizzled/index_hint.h"
-#include "drizzled/memory/multi_malloc.h"
 #include "drizzled/records.h"
 #include "drizzled/internal/iocache.h"
 
@@ -119,8 +118,10 @@ bool handle_select(Session *session, LEX *lex, select_result *result,
 
   if (select_lex->master_unit()->is_union() ||
       select_lex->master_unit()->fake_select_lex)
+  {
     res= drizzle_union(session, lex, result, &lex->unit,
 		       setup_tables_done_option);
+  }
   else
   {
     Select_Lex_Unit *unit= &lex->unit;
@@ -363,7 +364,7 @@ bool mysql_select(Session *session,
   bool free_join= 1;
 
   select_lex->context.resolve_in_select_list= true;
-  JOIN *join;
+  Join *join;
   if (select_lex->join != 0)
   {
     join= select_lex->join;
@@ -396,7 +397,7 @@ bool mysql_select(Session *session,
   }
   else
   {
-    if (!(join= new JOIN(session, fields, select_options, result)))
+    if (!(join= new Join(session, fields, select_options, result)))
       return(true);
     session->set_proc_info("init");
     session->used_tables=0;                         // Updated by setup_fields
@@ -692,7 +693,7 @@ bool update_ref_and_keys(Session *session,
 /**
   Update some values in keyuse for faster choose_plan() loop.
 */
-void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
+void optimize_keyuse(Join *join, DYNAMIC_ARRAY *keyuse_array)
 {
   optimizer::KeyUse *end,*keyuse= dynamic_element(keyuse_array, 
                                                   0, 
@@ -747,7 +748,7 @@ void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
   @return
     None
 */
-void add_group_and_distinct_keys(JOIN *join, JoinTable *join_tab)
+void add_group_and_distinct_keys(Join *join, JoinTable *join_tab)
 {
   List<Item_field> indexed_fields;
   List_iterator<Item_field> indexed_fields_it(indexed_fields);
@@ -883,7 +884,7 @@ void calc_used_field_length(Session *, JoinTable *join_tab)
 StoredKey *get_store_key(Session *session,
                          optimizer::KeyUse *keyuse,
                          table_map used_tables,
-	                 KEY_PART_INFO *key_part,
+	                 KeyPartInfo *key_part,
                          unsigned char *key_buff,
                          uint32_t maybe_null)
 {
@@ -959,7 +960,7 @@ inline void add_cond_and_fix(Item **e1, Item *e2)
     *e1= e2;
 }
 
-bool create_ref_for_key(JOIN *join, 
+bool create_ref_for_key(Join *join, 
                         JoinTable *j, 
                         optimizer::KeyUse *org_keyuse,
                         table_map used_tables)
@@ -970,7 +971,7 @@ bool create_ref_for_key(JOIN *join,
   uint32_t length;
   uint32_t key;
   Table *table= NULL;
-  KEY *keyinfo= NULL;
+  KeyInfo *keyinfo= NULL;
 
   /*  Use best key from find_best */
   table= j->table;
@@ -1137,7 +1138,7 @@ bool create_ref_for_key(JOIN *join,
       3. add_not_null_conds adds "x IS NOT NULL" to join_tab->select_cond of
          appropiate JoinTable members.
 */
-void add_not_null_conds(JOIN *join)
+void add_not_null_conds(Join *join)
 {
   for (uint32_t i= join->const_tables; i < join->tables; i++)
   {
@@ -1474,10 +1475,10 @@ void JoinTable::cleanup()
     */
     table->reginfo.join_tab= 0;
   }
-  end_read_record(&read_record);
+  read_record.end_read_record();
 }
 
-bool only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
+bool only_eq_ref_tables(Join *join,order_st *order,table_map tables)
 {
   for (JoinTable **tab=join->map2table ; tables ; tab++, tables>>=1)
   {
@@ -1506,7 +1507,7 @@ bool only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
   SELECT * FROM t1,t2 WHERE t1.a=t2.a ORDER BY t2.b,t1.a
   @endcode
 */
-bool eq_ref_table(JOIN *join, order_st *start_order, JoinTable *tab)
+bool eq_ref_table(Join *join, order_st *start_order, JoinTable *tab)
 {
   if (tab->cached_eq_ref_table)			// If cached
     return tab->eq_ref_table;
@@ -2858,7 +2859,7 @@ static void propagate_cond_constants(Session *session,
 bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
 {
   TableList *next_emb= next_tab->table->pos_in_table_list->embedding;
-  JOIN *join= last_tab->join;
+  Join *join= last_tab->join;
 
   if ((join->cur_embedding_map & ~next_tab->embedding_map).any())
   {
@@ -2899,7 +2900,7 @@ bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
   return false;
 }
 
-COND *optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list, Item::cond_result *cond_value)
+COND *optimize_cond(Join *join, COND *conds, List<TableList> *join_list, Item::cond_result *cond_value)
 {
   Session *session= join->session;
 
@@ -3208,7 +3209,7 @@ bool const_expression_in_where(COND *cond, Item *comp_item, Item **const_item)
   @return
     end_select function to use. This function can't fail.
 */
-Next_select_func setup_end_select_func(JOIN *join)
+Next_select_func setup_end_select_func(Join *join)
 {
   Table *table= join->tmp_table;
   Tmp_Table_Param *tmp_tbl= &join->tmp_table_param;
@@ -3220,7 +3221,7 @@ Next_select_func setup_end_select_func(JOIN *join)
     if (table->group && tmp_tbl->sum_func_count &&
         !tmp_tbl->precomputed_group_by)
     {
-      if (table->s->keys)
+      if (table->getShare()->sizeKeys())
       {
         end_select= end_update;
       }
@@ -3231,11 +3232,11 @@ Next_select_func setup_end_select_func(JOIN *join)
     }
     else if (join->sort_and_group && !tmp_tbl->precomputed_group_by)
     {
-      end_select=end_write_group;
+      end_select= end_write_group;
     }
     else
     {
-      end_select=end_write;
+      end_select= end_write;
       if (tmp_tbl->precomputed_group_by)
       {
         /*
@@ -3273,7 +3274,7 @@ Next_select_func setup_end_select_func(JOIN *join)
   @retval
     -1  if error should be sent
 */
-int do_select(JOIN *join, List<Item> *fields, Table *table)
+int do_select(Join *join, List<Item> *fields, Table *table)
 {
   int rc= 0;
   enum_nested_loop_state error= NESTED_LOOP_OK;
@@ -3287,8 +3288,8 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
     table->cursor->extra(HA_EXTRA_WRITE_CACHE);
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
-        table->s->keys && !table->cursor->inited)
-      table->cursor->ha_index_init(0, 0);
+        table->getShare()->sizeKeys() && !table->cursor->inited)
+      table->cursor->startIndexScan(0, 0);
   }
   /* Set up select_end */
   Next_select_func end_select= setup_end_select_func(join);
@@ -3374,7 +3375,7 @@ int do_select(JOIN *join, List<Item> *fields, Table *table)
   return(join->session->is_error() ? -1 : rc);
 }
 
-enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool end_of_records)
+enum_nested_loop_state sub_select_cache(Join *join, JoinTable *join_tab, bool end_of_records)
 {
   enum_nested_loop_state rc;
 
@@ -3392,7 +3393,7 @@ enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool en
   }
   if (join_tab->use_quick != 2 || test_if_quick_select(join_tab) <= 0)
   {
-    if (! store_record_in_cache(&join_tab->cache))
+    if (! join_tab->cache.store_record_in_cache())
       return NESTED_LOOP_OK;                     // There is more room in cache
     return flush_cached_records(join,join_tab,false);
   }
@@ -3521,7 +3522,7 @@ enum_nested_loop_state sub_select_cache(JOIN *join, JoinTable *join_tab, bool en
   @return
     return one of enum_nested_loop_state, except NESTED_LOOP_NO_MORE_ROWS.
 */
-enum_nested_loop_state sub_select(JOIN *join, JoinTable *join_tab, bool end_of_records)
+enum_nested_loop_state sub_select(Join *join, JoinTable *join_tab, bool end_of_records)
 {
   join_tab->table->null_row=0;
   if (end_of_records)
@@ -3529,7 +3530,7 @@ enum_nested_loop_state sub_select(JOIN *join, JoinTable *join_tab, bool end_of_r
 
   int error;
   enum_nested_loop_state rc;
-  READ_RECORD *info= &join_tab->read_record;
+  ReadRecord *info= &join_tab->read_record;
 
   if (join->resume_nested_loop)
   {
@@ -3650,7 +3651,7 @@ int join_read_const_table(JoinTable *tab, optimizer::Position *pos)
     table->maybe_null=0;
 
   /* Check appearance of new constant items in Item_equal objects */
-  JOIN *join= tab->join;
+  Join *join= tab->join;
   if (join->conds)
     update_const_equal_items(join->conds, tab);
   TableList *tbl;
@@ -3679,7 +3680,7 @@ int join_read_system(JoinTable *tab)
   if (table->status & STATUS_GARBAGE)		// If first read
   {
     if ((error=table->cursor->read_first_row(table->record[0],
-					   table->s->primary_key)))
+					   table->getShare()->primary_key)))
     {
       if (error != HA_ERR_END_OF_FILE)
         return table->report_error(error);
@@ -3766,7 +3767,7 @@ int join_read_key(JoinTable *tab)
 
   if (!table->cursor->inited)
   {
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
   }
 
   /* TODO: Why don't we do "Late NULLs Filtering" here? */
@@ -3814,7 +3815,7 @@ int join_read_always_key(JoinTable *tab)
 
   /* Initialize the index first */
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
 
   /* Perform "Late NULLs Filtering" (see internals manual for explanations) */
   for (uint32_t i= 0 ; i < tab->ref.key_parts ; i++)
@@ -3848,7 +3849,7 @@ int join_read_last_key(JoinTable *tab)
   Table *table= tab->table;
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->ref.key, tab->sorted);
+    table->cursor->startIndexScan(tab->ref.key, tab->sorted);
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
   if ((error=table->cursor->index_read_last_map(table->record[0],
@@ -3862,18 +3863,18 @@ int join_read_last_key(JoinTable *tab)
   return 0;
 }
 
-int join_no_more_records(READ_RECORD *)
+int join_no_more_records(ReadRecord *)
 {
   return -1;
 }
 
-int join_read_next_same_diff(READ_RECORD *info)
+int join_read_next_same_diff(ReadRecord *info)
 {
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
   if (tab->insideout_match_tab->found_match)
   {
-    KEY *key= tab->table->key_info + tab->index;
+    KeyInfo *key= tab->table->key_info + tab->index;
     do
     {
       int error;
@@ -3898,7 +3899,7 @@ int join_read_next_same_diff(READ_RECORD *info)
     return join_read_next_same(info);
 }
 
-int join_read_next_same(READ_RECORD *info)
+int join_read_next_same(ReadRecord *info)
 {
   int error;
   Table *table= info->table;
@@ -3917,7 +3918,7 @@ int join_read_next_same(READ_RECORD *info)
   return 0;
 }
 
-int join_read_prev_same(READ_RECORD *info)
+int join_read_prev_same(ReadRecord *info)
 {
   int error;
   Table *table= info->table;
@@ -3941,11 +3942,11 @@ int join_init_quick_read_record(JoinTable *tab)
   return join_init_read_record(tab);
 }
 
-int rr_sequential(READ_RECORD *info);
+int rr_sequential(ReadRecord *info);
 int init_read_record_seq(JoinTable *tab)
 {
   tab->read_record.read_record= rr_sequential;
-  if (tab->read_record.cursor->ha_rnd_init(1))
+  if (tab->read_record.cursor->startTableScan(1))
     return 1;
   return (*tab->read_record.read_record)(&tab->read_record);
 }
@@ -3962,8 +3963,9 @@ int join_init_read_record(JoinTable *tab)
 {
   if (tab->select && tab->select->quick && tab->select->quick->reset())
     return 1;
-  init_read_record(&tab->read_record, tab->join->session, tab->table,
-		   tab->select,1,1);
+
+  tab->read_record.init_read_record(tab->join->session, tab->table, tab->select, 1, true);
+
   return (*tab->read_record.read_record)(&tab->read_record);
 }
 
@@ -3974,10 +3976,10 @@ int join_read_first(JoinTable *tab)
   if (!table->key_read && table->covering_keys.test(tab->index) &&
       !table->no_keyread)
   {
-    table->key_read=1;
+    table->key_read= 1;
     table->cursor->extra(HA_EXTRA_KEYREAD);
   }
-  tab->table->status=0;
+  tab->table->status= 0;
   tab->read_record.table=table;
   tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
@@ -3995,7 +3997,7 @@ int join_read_first(JoinTable *tab)
   }
 
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->index, tab->sorted);
+    table->cursor->startIndexScan(tab->index, tab->sorted);
   if ((error=tab->table->cursor->index_first(tab->table->record[0])))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
@@ -4006,12 +4008,12 @@ int join_read_first(JoinTable *tab)
   return 0;
 }
 
-int join_read_next_different(READ_RECORD *info)
+int join_read_next_different(ReadRecord *info)
 {
   JoinTable *tab= info->do_insideout_scan;
   if (tab->insideout_match_tab->found_match)
   {
-    KEY *key= tab->table->key_info + tab->index;
+    KeyInfo *key= tab->table->key_info + tab->index;
     do
     {
       int error;
@@ -4029,7 +4031,7 @@ int join_read_next_different(READ_RECORD *info)
     return join_read_next(info);
 }
 
-int join_read_next(READ_RECORD *info)
+int join_read_next(ReadRecord *info)
 {
   int error;
   if ((error=info->cursor->index_next(info->record)))
@@ -4054,14 +4056,14 @@ int join_read_last(JoinTable *tab)
   tab->read_record.index=tab->index;
   tab->read_record.record=table->record[0];
   if (!table->cursor->inited)
-    table->cursor->ha_index_init(tab->index, 1);
+    table->cursor->startIndexScan(tab->index, 1);
   if ((error= tab->table->cursor->index_last(tab->table->record[0])))
     return table->report_error(error);
 
   return 0;
 }
 
-int join_read_prev(READ_RECORD *info)
+int join_read_prev(ReadRecord *info)
 {
   int error;
   if ((error= info->cursor->index_prev(info->record)))
@@ -4087,7 +4089,7 @@ int join_read_always_key_or_null(JoinTable *tab)
   return safe_index_read(tab);
 }
 
-int join_read_next_same_or_null(READ_RECORD *info)
+int join_read_next_same_or_null(ReadRecord *info)
 {
   int error;
   if ((error= join_read_next_same(info)) >= 0)
@@ -4101,7 +4103,7 @@ int join_read_next_same_or_null(READ_RECORD *info)
   return safe_index_read(tab);			// then read null keys
 }
 
-enum_nested_loop_state end_send_group(JOIN *join, JoinTable *, bool end_of_records)
+enum_nested_loop_state end_send_group(Join *join, JoinTable *, bool end_of_records)
 {
   int idx= -1;
   enum_nested_loop_state ok_code= NESTED_LOOP_OK;
@@ -4190,7 +4192,7 @@ enum_nested_loop_state end_send_group(JOIN *join, JoinTable *, bool end_of_recor
   return(NESTED_LOOP_OK);
 }
 
-enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_records)
+enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_records)
 {
   Table *table=join->tmp_table;
   int	  idx= -1;
@@ -4216,12 +4218,13 @@ enum_nested_loop_state end_write_group(JOIN *join, JoinTable *, bool end_of_reco
         copy_sum_funcs(join->sum_funcs, join->sum_funcs_end[send_group_parts]);
         if (!join->having || join->having->val_int())
         {
-          int error= table->cursor->ha_write_row(table->record[0]);
-          if (error && create_myisam_from_heap(join->session, table,
-                                              join->tmp_table_param.start_recinfo,
-                                                &join->tmp_table_param.recinfo,
-                                              error, 0))
-          return NESTED_LOOP_ERROR;
+          int error= table->cursor->insertRecord(table->record[0]);
+
+          if (error)
+          {
+            my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
+            return NESTED_LOOP_ERROR;
+          }
         }
         if (join->rollup.state != ROLLUP::STATE_NONE)
         {
@@ -4454,7 +4457,7 @@ static Item *part_of_refkey(Table *table,Field *field)
   uint32_t ref_parts=table->reginfo.join_tab->ref.key_parts;
   if (ref_parts)
   {
-    KEY_PART_INFO *key_part=
+    KeyPartInfo *key_part=
       table->key_info[table->reginfo.join_tab->ref.key].key_part;
     uint32_t part;
 
@@ -4494,8 +4497,8 @@ static Item *part_of_refkey(Table *table,Field *field)
 */
 static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uint32_t *used_key_parts)
 {
-  KEY_PART_INFO *key_part= NULL;
-  KEY_PART_INFO *key_part_end= NULL;
+  KeyPartInfo *key_part= NULL;
+  KeyPartInfo *key_part_end= NULL;
   key_part= table->key_info[idx].key_part;
   key_part_end= key_part + table->key_info[idx].key_parts;
   key_part_map const_key_parts=table->const_key_parts[idx];
@@ -4523,12 +4526,12 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
       */
       if (!on_primary_key &&
           (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
-          table->s->primary_key != MAX_KEY)
+          table->getShare()->primary_key != MAX_KEY)
       {
         on_primary_key= true;
-        key_part= table->key_info[table->s->primary_key].key_part;
-        key_part_end=key_part+table->key_info[table->s->primary_key].key_parts;
-        const_key_parts=table->const_key_parts[table->s->primary_key];
+        key_part= table->key_info[table->getShare()->primary_key].key_part;
+        key_part_end=key_part+table->key_info[table->getShare()->primary_key].key_parts;
+        const_key_parts=table->const_key_parts[table->getShare()->primary_key];
 
         for (; const_key_parts & 1 ; const_key_parts>>= 1)
           key_part++;
@@ -4577,9 +4580,9 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
   @retval
     0	no sub key
 */
-inline bool is_subkey(KEY_PART_INFO *key_part,
-                      KEY_PART_INFO *ref_key_part,
-	              KEY_PART_INFO *ref_key_part_end)
+inline bool is_subkey(KeyPartInfo *key_part,
+                      KeyPartInfo *ref_key_part,
+	              KeyPartInfo *ref_key_part_end)
 {
   for (; ref_key_part < ref_key_part_end; key_part++, ref_key_part++)
     if (! key_part->field->eq(ref_key_part->field))
@@ -4608,10 +4611,10 @@ static uint32_t test_if_subkey(order_st *order,
   uint32_t min_length= UINT32_MAX;
   uint32_t best= MAX_KEY;
   uint32_t not_used;
-  KEY_PART_INFO *ref_key_part= table->key_info[ref].key_part;
-  KEY_PART_INFO *ref_key_part_end= ref_key_part + ref_key_parts;
+  KeyPartInfo *ref_key_part= table->key_info[ref].key_part;
+  KeyPartInfo *ref_key_part_end= ref_key_part + ref_key_parts;
 
-  for (nr= 0 ; nr < table->s->keys ; nr++)
+  for (nr= 0 ; nr < table->getShare()->sizeKeys() ; nr++)
   {
     if (usable_keys->test(nr) &&
 	table->key_info[nr].key_length < min_length &&
@@ -4660,14 +4663,14 @@ static uint32_t test_if_subkey(order_st *order,
 */
 bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *), void *data)
 {
-  for (uint32_t keynr= 0; keynr < table->s->keys; keynr++)
+  for (uint32_t keynr= 0; keynr < table->getShare()->sizeKeys(); keynr++)
   {
-    if (keynr == table->s->primary_key ||
+    if (keynr == table->getShare()->primary_key ||
          (table->key_info[keynr].flags & HA_NOSAME))
     {
-      KEY *keyinfo= table->key_info + keynr;
-      KEY_PART_INFO *key_part= NULL;
-      KEY_PART_INFO *key_part_end= NULL;
+      KeyInfo *keyinfo= table->key_info + keynr;
+      KeyPartInfo *key_part= NULL;
+      KeyPartInfo *key_part_end= NULL;
 
       for (key_part=keyinfo->key_part,
            key_part_end=key_part+ keyinfo->key_parts;
@@ -4918,7 +4921,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
     int best_key= -1;
     bool is_best_covering= false;
     double fanout= 1;
-    JOIN *join= tab->join;
+    Join *join= tab->join;
     uint32_t tablenr= tab - join->join_tab;
     ha_rows table_records= table->cursor->stats.records;
     bool group= join->group && order == join->group_list;
@@ -4961,13 +4964,13 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       fanout*= cur_pos.getFanout(); // fanout is always >= 1
     }
 
-    for (nr=0; nr < table->s->keys ; nr++)
+    for (nr=0; nr < table->getShare()->sizeKeys() ; nr++)
     {
       int direction;
       if (keys.test(nr) &&
           (direction= test_if_order_by_key(order, table, nr, &used_key_parts)))
       {
-        bool is_covering= table->covering_keys.test(nr) || (nr == table->s->primary_key && table->cursor->primary_key_is_clustered());
+        bool is_covering= table->covering_keys.test(nr) || (nr == table->getShare()->primary_key && table->cursor->primary_key_is_clustered());
 
         /*
           Don't use an index scan with ORDER BY without limit.
@@ -4984,7 +4987,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
         {
           double rec_per_key;
           double index_scan_time;
-          KEY *keyinfo= tab->table->key_info+nr;
+          KeyInfo *keyinfo= tab->table->key_info+nr;
           if (select_limit == HA_POS_ERROR)
             select_limit= table_records;
           if (group)
@@ -5215,7 +5218,7 @@ check_reverse_order:
     -1		Some fatal error
     1		No records
 */
-int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by)
+int create_sort_index(Session *session, Join *join, order_st *order, ha_rows filesort_limit, ha_rows select_limit, bool is_order_by)
 {
   uint32_t length= 0;
   ha_rows examined_rows;
@@ -5287,7 +5290,7 @@ int create_sort_index(Session *session, JOIN *join, order_st *order, ha_rows fil
     }
   }
 
-  if (table->s->tmp_table)
+  if (table->getShare()->tmp_table)
     table->cursor->info(HA_STATUS_VARIABLE);	// Get record count
   table->sort.found_records=filesort(session, table,join->sortorder, length,
                                      select, filesort_limit, 0,
@@ -5320,12 +5323,12 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   char *org_record,*new_record;
   unsigned char *record;
   int error;
-  uint32_t reclength= table->s->reclength-offset;
+  uint32_t reclength= table->getShare()->getRecordLength() - offset;
 
   org_record=(char*) (record=table->record[0])+offset;
   new_record=(char*) table->record[1]+offset;
 
-  cursor->ha_rnd_init(1);
+  cursor->startTableScan(1);
   error=cursor->rnd_next(record);
   for (;;)
   {
@@ -5345,7 +5348,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
       error=cursor->rnd_next(record);
       continue;
@@ -5372,7 +5375,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
       }
       if (table->compare_record(first_field) == 0)
       {
-        if ((error=cursor->ha_delete_row(record)))
+        if ((error=cursor->deleteRecord(record)))
           goto err;
       }
       else if (!found)
@@ -5383,8 +5386,8 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
     }
     if (!found)
       break;					// End of cursor
-    /* Restart search on next row */
-    error=cursor->restart_rnd_next(record,cursor->ref);
+    /* Move current position to the next row */
+    error= cursor->rnd_pos(record, cursor->ref);
   }
 
   cursor->extra(HA_EXTRA_NO_CACHE);
@@ -5409,25 +5412,25 @@ int remove_dup_with_hash_index(Session *session,
                                uint32_t key_length,
                                Item *having)
 {
-  unsigned char *key_buffer, *key_pos, *record=table->record[0];
+  unsigned char *key_pos, *record=table->record[0];
   int error;
   Cursor *cursor= table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
   uint32_t *field_lengths,*field_length;
   HASH hash;
+  std::vector<unsigned char>key_buffer;
 
-  if (! memory::multi_malloc(false,
-		       &key_buffer,
-		       (uint32_t) ((key_length + extra_length) *
-			       (long) cursor->stats.records),
-		       &field_lengths,
-		       (uint32_t) (field_count*sizeof(*field_lengths)),
-		       NULL))
+  key_buffer.resize((key_length + extra_length) * (long) cursor->stats.records);
+
+  field_lengths= (uint32_t *)std::malloc(field_count * sizeof(*field_lengths));
+
+  if (field_lengths == NULL)
     return(1);
 
   {
     Field **ptr;
     uint32_t total_length= 0;
+
     for (ptr= first_field, field_length=field_lengths ; *ptr ; ptr++)
     {
       uint32_t length= (*ptr)->sort_length();
@@ -5442,12 +5445,12 @@ int remove_dup_with_hash_index(Session *session,
   if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor->stats.records, 0,
 		key_length, (hash_get_key) 0, 0, 0))
   {
-    free((char*) key_buffer);
+    free((char*) field_lengths);
     return(1);
   }
 
-  cursor->ha_rnd_init(1);
-  key_pos=key_buffer;
+  cursor->startTableScan(1);
+  key_pos= &key_buffer[0];
   for (;;)
   {
     unsigned char *org_key_pos;
@@ -5467,7 +5470,7 @@ int remove_dup_with_hash_index(Session *session,
     }
     if (having && !having->val_int())
     {
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
       continue;
     }
@@ -5484,24 +5487,24 @@ int remove_dup_with_hash_index(Session *session,
     if (hash_search(&hash, org_key_pos, key_length))
     {
       /* Duplicated found ; Remove the row */
-      if ((error=cursor->ha_delete_row(record)))
+      if ((error=cursor->deleteRecord(record)))
         goto err;
     }
     else
       (void) my_hash_insert(&hash, org_key_pos);
     key_pos+=extra_length;
   }
-  free((char*) key_buffer);
+  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->ha_rnd_end();
+  (void) cursor->endTableScan();
   return(0);
 
 err:
-  free((char*) key_buffer);
+  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
-  (void) cursor->ha_rnd_end();
+  (void) cursor->endTableScan();
   if (error)
     table->print_error(error,MYF(0));
   return(1);

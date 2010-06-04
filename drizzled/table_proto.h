@@ -31,20 +31,12 @@ namespace drizzled {
 #define COLUMN_COMMENT_MAXLEN 1024
 #define INDEX_COMMENT_MAXLEN 1024
 
-int parse_table_proto(Session& session,
-                      message::Table &table,
-                      TableShare *share);
-
-int rename_table_proto_file(const char *from, const char* to);
-
-int delete_table_proto_file(const char *file_name);
-
-int rea_create_table(Session *session,
-                     TableIdentifier &identifier,
-                     message::Table &table_proto,
-                     HA_CREATE_INFO *create_info,
-                     List<CreateField> &create_field,
-                     uint32_t key_count,KEY *key_info);
+bool rea_create_table(Session *session,
+                      TableIdentifier &identifier,
+                      message::Table &table_proto,
+                      HA_CREATE_INFO *create_info,
+                      List<CreateField> &create_field,
+                      uint32_t key_count,KeyInfo *key_info);
 
 } /* namespace drizzled */
 

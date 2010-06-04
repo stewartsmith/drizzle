@@ -23,7 +23,7 @@
 #include "config.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
-#include "drizzled/my_getopt.h"
+#include "drizzled/option.h"
 
 #include <stdio.h>
 
@@ -32,7 +32,7 @@ using namespace drizzled;
 const char *config_file="drizzle";		/* Default config file */
 uint32_t verbose= 0, opt_defaults_file_used= 0;
 
-static struct my_option my_long_options[] =
+static struct option my_long_options[] =
 {
   /*
     NB: --config-file is troublesome, because get_defaults_options() doesn't
@@ -92,7 +92,7 @@ static void usage(bool version)
   printf("\nExample usage:\n%s --defaults-file=example.cnf client mysql\n", internal::my_progname);
 }
 
-static bool get_one_option(int optid, const struct my_option *, char *)
+static int get_one_option(int optid, const struct option *, char *)
 {
   switch (optid) {
     case 'c':

@@ -73,7 +73,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  unique_map.init(unique_map_buf, table->s->fields);
+  unique_map.init(unique_map_buf, table->getMutableShare()->sizeFields());
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
@@ -97,7 +97,7 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Copy the newly read columns into the new record. */
   for (field_p= table->field; (field= *field_p); field_p++)
     if (unique_map.isBitSet(field->field_index))
-      field->copy_from_tmp(table->s->rec_buff_length);
+      field->copy_from_tmp(table->getShare()->rec_buff_length);
 
   return;
 }
@@ -139,7 +139,7 @@ int mysql_update(Session *session, TableList *table_list,
   key_map	old_covering_keys;
   Table		*table;
   optimizer::SqlSelect *select= NULL;
-  READ_RECORD	info;
+  ReadRecord	info;
   Select_Lex    *select_lex= &session->lex->select_lex;
   uint64_t     id;
   List<Item> all_fields;
@@ -156,7 +156,7 @@ int mysql_update(Session *session, TableList *table_list,
   table= table_list->table;
 
   /* Calculate "table->covering_keys" based on the WHERE */
-  table->covering_keys= table->s->keys_in_use;
+  table->covering_keys= table->getShare()->keys_in_use;
   table->quick_keys.reset();
 
   if (mysql_prepare_update(session, table_list, &conds, order_num, order))
@@ -319,7 +319,7 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       internal::IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, drizzle_tmpdir,TEMP_PREFIX,
+      if (open_cached_file(&tempfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,
 			   DISK_BUFFER_SIZE, MYF(MY_WME)))
 	goto err;
 
@@ -340,9 +340,13 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       if (used_index == MAX_KEY || (select && select->quick))
-        init_read_record(&info,session,table,select,0,1);
+      {
+        info.init_read_record(session, table, select, 0, true);
+      }
       else
-        init_read_record_idx(&info, session, table, 1, used_index);
+      {
+        info.init_read_record_idx(session, table, 1, used_index);
+      }
 
       session->set_proc_info("Searching rows for update");
       ha_rows tmp_limit= limit;
@@ -374,7 +378,7 @@ int mysql_update(Session *session, TableList *table_list,
 	error= 1;				// Aborted
       limit= tmp_limit;
       table->cursor->try_semi_consistent_read(0);
-      end_read_record(&info);
+      info.end_read_record();
 
       /* Change select to use tempfile */
       if (select)
@@ -407,7 +411,7 @@ int mysql_update(Session *session, TableList *table_list,
   if (select && select->quick && select->quick->reset())
     goto err;
   table->cursor->try_semi_consistent_read(1);
-  init_read_record(&info,session,table,select,0,1);
+  info.init_read_record(session, table, select, 0, true);
 
   updated= found= 0;
   /*
@@ -456,8 +460,11 @@ int mysql_update(Session *session, TableList *table_list,
       if (!can_compare_record || table->compare_record())
       {
         /* Non-batched update */
-        error= table->cursor->ha_update_row(table->record[1],
+        error= table->cursor->updateRecord(table->record[1],
                                             table->record[0]);
+
+        table->auto_increment_field_not_null= false;
+
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
 	{
           if (error != HA_ERR_RECORD_IS_THE_SAME)
@@ -513,7 +520,7 @@ int mysql_update(Session *session, TableList *table_list,
   if (!transactional_table && updated > 0)
     session->transaction.stmt.markModifiedNonTransData();
 
-  end_read_record(&info);
+  info.end_read_record();
   delete select;
   session->set_proc_info("end");
   table->cursor->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
@@ -523,7 +530,7 @@ int mysql_update(Session *session, TableList *table_list,
     last one without error. error > 0 means an error (e.g. unique key
     violation and no IGNORE or REPLACE). error == 0 is also an error (if
     preparing the record or invoking before triggers fails). See
-    ha_autocommit_or_rollback(error>=0) and return(error>=0) below.
+    autocommitOrRollback(error>=0) and return(error>=0) below.
     Sometimes we want to binlog even if we updated no rows, in case user used
     it to be sure master and slave are in same state.
   */
@@ -542,7 +549,7 @@ int mysql_update(Session *session, TableList *table_list,
   if (error < 0)
   {
     char buff[STRING_BUFFER_USUAL_SIZE];
-    sprintf(buff, ER(ER_UPDATE_INFO), (ulong) found, (ulong) updated,
+    snprintf(buff, sizeof(buff), ER(ER_UPDATE_INFO), (ulong) found, (ulong) updated,
 	    (ulong) session->cuted_fields);
     session->row_count_func= updated;
     /**

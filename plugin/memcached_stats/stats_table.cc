@@ -33,6 +33,7 @@
 #include "sysvar_holder.h"
 
 #include "drizzled/error.h"
+#include <libmemcached/server.h>
 
 using namespace std;
 using namespace drizzled;
@@ -63,8 +64,8 @@ memcached_return  server_function(const memcached_st *memc,
 {
   server_function_context *ctx= static_cast<server_function_context *>(context);
 
-  char *server_name= memcached_server_name(memc, *server);
-  in_port_t server_port= memcached_server_port(memc, *server);
+  const char *server_name= memcached_server_name(*memc, *server);
+  in_port_t server_port= memcached_server_port(*memc, *server);
 
   memcached_stat_st stats;
   memcached_return ret= memcached_stat_servername(&stats, NULL,
@@ -80,7 +81,7 @@ memcached_return  server_function(const memcached_st *memc,
   char **ptr= NULL;
  
   ctx->generator->push(server_name);
-  ctx->generator->push(server_port);
+  ctx->generator->push(static_cast<uint64_t>(server_port));
 
   for (ptr= list; *ptr; ptr++)
   {
@@ -184,7 +185,7 @@ bool StatsTableTool::Generator::populate()
 
   server_function_context context(this);
 
-  memcached_server_fn callbacks[1];
+  memcached_server_function callbacks[1];
   callbacks[0]= server_function;
 
   unsigned int iferror; 

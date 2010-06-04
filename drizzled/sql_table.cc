@@ -54,10 +54,9 @@ using namespace std;
 namespace drizzled
 {
 
-extern plugin::StorageEngine *myisam_engine;
 extern pid_t current_pid;
 
-bool is_primary_key(KEY *key_info)
+bool is_primary_key(KeyInfo *key_info)
 {
   static const char * primary_key_name="PRIMARY";
   return (strcmp(key_info->name, primary_key_name)==0);
@@ -72,8 +71,8 @@ const char* is_primary_key_name(const char* key_name)
     return NULL;
 }
 
-static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
-static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
+static bool check_if_keyname_exists(const char *name,KeyInfo *start, KeyInfo *end);
+static char *make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end);
 
 static bool prepare_blob_field(Session *session, CreateField *sql_field);
 
@@ -84,8 +83,9 @@ void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db)
     let's fetch the database default character set and
     apply it to the table.
   */
+  SchemaIdentifier identifier(db);
   if (create_info->default_table_charset == NULL)
-    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(db);
+    create_info->default_table_charset= plugin::StorageEngine::getSchemaCollation(identifier);
 }
 
 /*
@@ -179,10 +179,14 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   for (table= tables; table; table= table->next_local)
   {
+    TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
     table->db_type= NULL;
-    if ((share= TableShare::getShare(table->db, table->table_name)))
+
+    if ((share= TableShare::getShare(identifier)))
+    {
       table->db_type= share->db_type();
+    }
   }
 
   if (not drop_temporary && lock_table_names_exclusively(session, tables))
@@ -232,7 +236,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
     }
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? INTERNAL_TMP_TABLE : STANDARD_TABLE);
+    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? message::Table::INTERNAL : message::Table::STANDARD);
 
     if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -280,11 +284,14 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   */
   pthread_mutex_unlock(&LOCK_open);
   error= 0;
+
   if (wrong_tables.length())
   {
-    if (!foreign_key_error)
+    if (not foreign_key_error)
+    {
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
                       wrong_tables.c_ptr());
+    }
     else
     {
       my_message(ER_ROW_IS_REFERENCED, ER(ER_ROW_IS_REFERENCED), MYF(0));
@@ -293,12 +300,13 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   }
 
   pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
+
 err_with_placeholders:
   unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
   session->no_warnings_for_error= 0;
 
-  return(error);
+  return error;
 }
 
 
@@ -335,7 +343,7 @@ bool quick_rm_table(Session& session,
   PRIMARY keys are prioritized.
 */
 
-static int sort_keys(KEY *a, KEY *b)
+static int sort_keys(KeyInfo *a, KeyInfo *b)
 {
   ulong a_flags= a->flags, b_flags= b->flags;
 
@@ -480,15 +488,12 @@ int prepare_create_field(CreateField *sql_field,
 
   switch (sql_field->sql_type) {
   case DRIZZLE_TYPE_BLOB:
-    sql_field->pack_flag= pack_length_to_packflag(sql_field->pack_length - portable_sizeof_char_ptr);
     sql_field->length= 8; // Unireg field length
     (*blob_columns)++;
     break;
   case DRIZZLE_TYPE_VARCHAR:
-    sql_field->pack_flag=0;
     break;
   case DRIZZLE_TYPE_ENUM:
-    sql_field->pack_flag=pack_length_to_packflag(sql_field->pack_length);
     if (check_duplicates_in_interval("ENUM",
                                      sql_field->field_name,
                                      sql_field->interval,
@@ -499,10 +504,8 @@ int prepare_create_field(CreateField *sql_field,
   case DRIZZLE_TYPE_DATE:  // Rest of string types
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_NULL:
-    sql_field->pack_flag=f_settype((uint32_t) sql_field->sql_type);
     break;
   case DRIZZLE_TYPE_DECIMAL:
-    sql_field->pack_flag= 0;
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
     /* We should replace old TIMESTAMP fields with their newer analogs */
@@ -514,7 +517,9 @@ int prepare_create_field(CreateField *sql_field,
         (*timestamps_with_niladic)++;
       }
       else
+      {
         sql_field->unireg_check= Field::NONE;
+      }
     }
     else if (sql_field->unireg_check != Field::NONE)
       (*timestamps_with_niladic)++;
@@ -522,10 +527,9 @@ int prepare_create_field(CreateField *sql_field,
     (*timestamps)++;
     /* fall-through */
   default:
-    sql_field->pack_flag=(0 |
-                          f_settype((uint32_t) sql_field->sql_type));
     break;
   }
+
   return 0;
 }
 
@@ -535,7 +539,7 @@ static int mysql_prepare_create_table(Session *session,
                                       AlterInfo *alter_info,
                                       bool tmp_table,
                                       uint32_t *db_options,
-                                      KEY **key_info_buffer,
+                                      KeyInfo **key_info_buffer,
                                       uint32_t *key_count,
                                       int select_field_count)
 {
@@ -543,8 +547,8 @@ static int mysql_prepare_create_table(Session *session,
   CreateField	*sql_field,*dup_field;
   uint		field,null_fields,blob_columns,max_key_length;
   ulong		record_offset= 0;
-  KEY		*key_info;
-  KEY_PART_INFO *key_part_info;
+  KeyInfo		*key_info;
+  KeyPartInfo *key_part_info;
   int		timestamps= 0, timestamps_with_niladic= 0;
   int		field_no,dup_no;
   int		select_field_pos,auto_increment=0;
@@ -657,8 +661,7 @@ static int mysql_prepare_create_table(Session *session,
           {
             uint32_t cnv_errs;
             conv.copy(tmp->ptr(), tmp->length(), tmp->charset(), cs, &cnv_errs);
-            interval->type_names[i]= strmake_root(session->mem_root, conv.ptr(),
-                                                  conv.length());
+            interval->type_names[i]= session->mem_root->strmake_root(conv.ptr(), conv.length());
             interval->type_lengths[i]= conv.length();
           }
 
@@ -903,8 +906,8 @@ static int mysql_prepare_create_table(Session *session,
     return(true);
   }
 
-  (*key_info_buffer)= key_info= (KEY*) memory::sql_calloc(sizeof(KEY) * (*key_count));
-  key_part_info=(KEY_PART_INFO*) memory::sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
+  (*key_info_buffer)= key_info= (KeyInfo*) memory::sql_calloc(sizeof(KeyInfo) * (*key_count));
+  key_part_info=(KeyPartInfo*) memory::sql_calloc(sizeof(KeyPartInfo)*key_parts);
   if (!*key_info_buffer || ! key_part_info)
     return(true);				// Out of memory
 
@@ -943,18 +946,6 @@ static int mysql_prepare_create_table(Session *session,
     key_info->key_part=key_part_info;
     key_info->usable_key_parts= key_number;
     key_info->algorithm= key->key_create_info.algorithm;
-
-    /* Take block size from key part or table part */
-    /*
-      TODO: Add warning if block size changes. We can't do it here, as
-      this may depend on the size of the key
-    */
-    key_info->block_size= (key->key_create_info.block_size ?
-                           key->key_create_info.block_size :
-                           create_proto.options().key_block_size());
-
-    if (key_info->block_size)
-      key_info->flags|= HA_USES_BLOCK_SIZE;
 
     uint32_t tmp_len= system_charset_info->cset->charpos(system_charset_info,
                                            key->key_create_info.comment.str,
@@ -1065,7 +1056,7 @@ static int mysql_prepare_create_table(Session *session,
 
       key_part_info->fieldnr= field;
       key_part_info->offset=  (uint16_t) sql_field->offset;
-      key_part_info->key_type=sql_field->pack_flag;
+      key_part_info->key_type= 0;
       length= sql_field->key_length;
 
       if (column->length)
@@ -1133,15 +1124,19 @@ static int mysql_prepare_create_table(Session *session,
       key_part_info->length=(uint16_t) length;
       /* Use packed keys for long strings on the first column */
       if (!((*db_options) & HA_OPTION_NO_PACK_KEYS) &&
-	  (length >= KEY_DEFAULT_PACK_LENGTH &&
-	   (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR ||
-      sql_field->sql_type == DRIZZLE_TYPE_BLOB)))
+          (length >= KEY_DEFAULT_PACK_LENGTH &&
+           (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR ||
+            sql_field->sql_type == DRIZZLE_TYPE_BLOB)))
       {
         if ((column_nr == 0 && sql_field->sql_type == DRIZZLE_TYPE_BLOB) ||
             sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)
+        {
           key_info->flags|= HA_BINARY_PACK_KEY | HA_VAR_LENGTH_KEY;
+        }
         else
+        {
           key_info->flags|= HA_PACK_KEY;
+        }
       }
       /* Check if the key segment is partial, set the key flag accordingly */
       if (length != sql_field->key_length)
@@ -1203,7 +1198,7 @@ static int mysql_prepare_create_table(Session *session,
     return(true);
   }
   /* Sort keys in optimized order */
-  internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KEY),
+  internal::my_qsort((unsigned char*) *key_info_buffer, *key_count, sizeof(KeyInfo),
 	             (qsort_cmp) sort_keys);
 
   /* Check fields. */
@@ -1277,6 +1272,105 @@ static bool prepare_blob_field(Session *,
   return 0;
 }
 
+static bool locked_create_event(Session *session,
+                                TableIdentifier &identifier,
+                                HA_CREATE_INFO *create_info,
+                                message::Table &table_proto,
+                                AlterInfo *alter_info,
+                                bool is_if_not_exists,
+                                bool internal_tmp_table,
+                                uint db_options,
+                                uint key_count,
+                                KeyInfo *key_info_buffer)
+{
+  bool error= true;
+
+  {
+
+    /*
+      @note if we are building a temp table we need to check to see if a temp table
+      already exists, otherwise we just need to find out if a normal table exists (aka it is fine
+      to create a table under a temporary table.
+    */
+    bool exists= 
+      plugin::StorageEngine::doesTableExist(*session, identifier, 
+                                            identifier.getType() != message::Table::STANDARD );
+
+    if (exists)
+    {
+      if (is_if_not_exists)
+      {
+        error= false;
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                            identifier.getTableName().c_str());
+        create_info->table_existed= 1;		// Mark that table existed
+        return error;
+      }
+
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      return error;
+    }
+
+    if (identifier.getType() == message::Table::STANDARD) // We have a real table
+    {
+      /*
+        We don't assert here, but check the result, because the table could be
+        in the table definition cache and in the same time the .frm could be
+        missing from the disk, in case of manual intervention which deletes
+        the .frm cursor. The user has to use FLUSH TABLES; to clear the cache.
+        Then she could create the table. This case is pretty obscure and
+        therefore we don't introduce a new error message only for it.
+      */
+      /*
+        @todo improve this error condition.
+      */
+      if (TableShare::getShare(identifier))
+      {
+        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+        return error;
+      }
+    }
+  }
+
+  session->set_proc_info("creating table");
+  create_info->table_existed= 0;		// Mark that table is created
+
+  create_info->table_options= db_options;
+
+  if (not rea_create_table(session, identifier,
+                           table_proto,
+                           create_info, alter_info->create_list,
+                           key_count, key_info_buffer))
+  {
+    return error;
+  }
+
+  if (identifier.getType() == message::Table::TEMPORARY)
+  {
+    /* Open table and put in temporary table list */
+    if (not (session->open_temporary_table(identifier)))
+    {
+      (void) session->rm_temporary_table(identifier);
+      return error;
+    }
+  }
+
+  /* 
+    We keep this behind the lock to make sure ordering is correct for a table.
+    This is a very unlikely problem where before we would write out to the
+    trans log, someone would do a delete/create operation.
+  */
+
+  if (table_proto.type() == message::Table::STANDARD && not internal_tmp_table)
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.createTable(session, table_proto);
+  }
+
+  return false;
+}
+
 
 /*
   Ignore the name of this function... it locks :(
@@ -1318,11 +1412,8 @@ bool mysql_create_table_no_lock(Session *session,
                                 bool is_if_not_exists)
 {
   uint		db_options, key_count;
-  KEY		*key_info_buffer;
+  KeyInfo		*key_info_buffer;
   bool		error= true;
-  TableShare share;
-  bool lex_identified_temp_table=
-    (table_proto.type() == message::Table::TEMPORARY);
 
   /* Check for duplicate fields and check type of table to create */
   if (not alter_info->create_list.elements)
@@ -1331,200 +1422,86 @@ bool mysql_create_table_no_lock(Session *session,
                MYF(0));
     return true;
   }
-  assert(strcmp(identifier.getTableName(), table_proto.name().c_str())==0);
+  assert(identifier.getTableName() == table_proto.name());
   db_options= create_info->table_options;
 
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
 
-  set_table_default_charset(create_info, identifier.getDBName());
+  set_table_default_charset(create_info, identifier.getSchemaName().c_str());
 
-  /* Check if table exists */
-  if (mysql_prepare_create_table(session, create_info, table_proto, alter_info,
+  /* Build a Table object to pass down to the engine, and the do the actual create. */
+  if (not mysql_prepare_create_table(session, create_info, table_proto, alter_info,
                                  internal_tmp_table,
                                  &db_options,
                                  &key_info_buffer, &key_count,
                                  select_field_count))
-    goto err;
-
-  /* Check if table already exists */
-  if (lex_identified_temp_table &&
-      session->find_temporary_table(identifier.getDBName(), identifier.getTableName()))
   {
-    if (is_if_not_exists)
-    {
-      create_info->table_existed= 1;		// Mark that table existed
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                          ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                          identifier.getTableName());
-      error= 0;
-      goto err;
-    }
-    my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-    goto err;
+    pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
+    error= locked_create_event(session,
+                               identifier,
+                               create_info,
+                               table_proto,
+                               alter_info,
+                               is_if_not_exists,
+                               internal_tmp_table,
+                               db_options, key_count,
+                               key_info_buffer);
+    pthread_mutex_unlock(&LOCK_open);
   }
 
-  pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
-  if (not internal_tmp_table && not lex_identified_temp_table)
-  {
-    if (plugin::StorageEngine::doesTableExist(*session,
-                                              identifier, false)==EEXIST)
-    {
-      if (is_if_not_exists)
-      {
-        error= false;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            identifier.getTableName());
-        create_info->table_existed= 1;		// Mark that table existed
-      }
-      else 
-      {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-      }
-
-      goto unlock_and_end;
-    }
-    /*
-      We don't assert here, but check the result, because the table could be
-      in the table definition cache and in the same time the .frm could be
-      missing from the disk, in case of manual intervention which deletes
-      the .frm cursor. The user has to use FLUSH TABLES; to clear the cache.
-      Then she could create the table. This case is pretty obscure and
-      therefore we don't introduce a new error message only for it.
-    */
-    if (TableShare::getShare(identifier.getDBName(), identifier.getTableName()))
-    {
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-      goto unlock_and_end;
-    }
-  }
-
-  /*
-    Check that table with given name does not already
-    exist in any storage engine. In such a case it should
-    be discovered and the error ER_TABLE_EXISTS_ERROR be returned
-    unless user specified CREATE TABLE IF EXISTS
-    The LOCK_open mutex has been locked to make sure no
-    one else is attempting to discover the table. Since
-    it's not on disk as a frm cursor, no one could be using it!
-  */
-  if (not lex_identified_temp_table)
-  {
-    bool exists= plugin::StorageEngine::doesTableExist(*session, identifier, false);
-
-    if (exists)
-    {
-      if (is_if_not_exists)
-      {
-        error= false;
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            identifier.getTableName());
-        create_info->table_existed= 1;		// Mark that table existed
-        goto unlock_and_end;
-      }
-
-      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-      goto unlock_and_end;
-    }
-  }
-
-  session->set_proc_info("creating table");
-  create_info->table_existed= 0;		// Mark that table is created
-
-  create_info->table_options= db_options;
-
-  if (rea_create_table(session, identifier,
-		       table_proto,
-                       create_info, alter_info->create_list,
-                       key_count, key_info_buffer))
-  {
-    goto unlock_and_end;
-  }
-
-  if (lex_identified_temp_table)
-  {
-    /* Open table and put in temporary table list */
-    if (not (session->open_temporary_table(identifier)))
-    {
-      (void) session->rm_temporary_table(identifier);
-      goto unlock_and_end;
-    }
-  }
-
-  if (not internal_tmp_table && not lex_identified_temp_table)
-  {
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.createTable(session, table_proto);
-  }
-  error= false;
-unlock_and_end:
-  pthread_mutex_unlock(&LOCK_open);
-
-err:
   session->set_proc_info("After create");
 
   return(error);
 }
 
-
-/*
-  Database locking aware wrapper for mysql_create_table_no_lock(),
+/**
+  @note the following two methods implement create [temporary] table.
 */
-
-bool mysql_create_table(Session *session,
-                        TableIdentifier &identifier,
-                        HA_CREATE_INFO *create_info,
-			message::Table &table_proto,
-                        AlterInfo *alter_info,
-                        bool internal_tmp_table,
-                        uint32_t select_field_count,
-                        bool is_if_not_exists)
+static bool drizzle_create_table(Session *session,
+                                 TableIdentifier &identifier,
+                                 HA_CREATE_INFO *create_info,
+                                 message::Table &table_proto,
+                                 AlterInfo *alter_info,
+                                 bool internal_tmp_table,
+                                 uint32_t select_field_count,
+                                 bool is_if_not_exists)
 {
   Table *name_lock= NULL;
   bool result;
-  bool lex_identified_temp_table=
-    (table_proto.type() == message::Table::TEMPORARY);
 
-  if (not lex_identified_temp_table)
+  if (session->lock_table_name_if_not_cached(identifier, &name_lock))
   {
-    if (session->lock_table_name_if_not_cached(identifier.getDBName(),
-                                               identifier.getTableName(),
-                                               &name_lock))
+    result= true;
+  }
+  else if (name_lock == NULL)
+  {
+    if (is_if_not_exists)
     {
-      result= true;
-      goto unlock;
+      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                          ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
+                          identifier.getTableName().c_str());
+      create_info->table_existed= 1;
+      result= false;
     }
-    if (name_lock == NULL)
+    else
     {
-      if (is_if_not_exists)
-      {
-        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                            ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
-                            identifier.getTableName());
-        create_info->table_existed= 1;
-        result= false;
-      }
-      else
-      {
-        my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getTableName());
-        result= true;
-      }
-      goto unlock;
+      my_error(ER_TABLE_EXISTS_ERROR, MYF(0), identifier.getSQLPath().c_str());
+      result= true;
     }
   }
+  else
+  {
+    result= mysql_create_table_no_lock(session,
+                                       identifier,
+                                       create_info,
+                                       table_proto,
+                                       alter_info,
+                                       internal_tmp_table,
+                                       select_field_count,
+                                       is_if_not_exists);
+  }
 
-  result= mysql_create_table_no_lock(session,
-                                     identifier,
-                                     create_info,
-                                     table_proto,
-                                     alter_info,
-                                     internal_tmp_table,
-                                     select_field_count,
-                                     is_if_not_exists);
-
-unlock:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open); /* Lock for removing name_lock during table create */
@@ -1537,13 +1514,48 @@ unlock:
 
 
 /*
+  Database locking aware wrapper for mysql_create_table_no_lock(),
+*/
+bool mysql_create_table(Session *session,
+                        TableIdentifier &identifier,
+                        HA_CREATE_INFO *create_info,
+			message::Table &table_proto,
+                        AlterInfo *alter_info,
+                        bool internal_tmp_table,
+                        uint32_t select_field_count,
+                        bool is_if_not_exists)
+{
+  if (identifier.isTmp())
+  {
+    return mysql_create_table_no_lock(session,
+                                      identifier,
+                                      create_info,
+                                      table_proto,
+                                      alter_info,
+                                      internal_tmp_table,
+                                      select_field_count,
+                                      is_if_not_exists);
+  }
+
+  return drizzle_create_table(session,
+                              identifier,
+                              create_info,
+                              table_proto,
+                              alter_info,
+                              internal_tmp_table,
+                              select_field_count,
+                              is_if_not_exists);
+}
+
+
+/*
 ** Give the key name after the first field with an optional '_#' after
 **/
 
 static bool
-check_if_keyname_exists(const char *name, KEY *start, KEY *end)
+check_if_keyname_exists(const char *name, KeyInfo *start, KeyInfo *end)
 {
-  for (KEY *key=start ; key != end ; key++)
+  for (KeyInfo *key=start ; key != end ; key++)
     if (!my_strcasecmp(system_charset_info,name,key->name))
       return 1;
   return 0;
@@ -1551,7 +1563,7 @@ check_if_keyname_exists(const char *name, KEY *start, KEY *end)
 
 
 static char *
-make_unique_key_name(const char *field_name,KEY *start,KEY *end)
+make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 {
   char buff[MAX_FIELD_NAME],*buff_end;
 
@@ -1591,9 +1603,6 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
       old_name                  The old table name.
       new_db                    The new database name.
       new_name                  The new table name.
-      flags                     flags for build_table_filename().
-                                FN_FROM_IS_TMP old_name is temporary.
-                                FN_TO_IS_TMP   new_name is temporary.
 
   RETURN
     false   OK
@@ -1601,37 +1610,36 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
 */
 
 bool
-mysql_rename_table(plugin::StorageEngine *base, const char *old_db,
-                   const char *old_name, const char *new_db,
-                   const char *new_name, uint32_t flags)
+mysql_rename_table(plugin::StorageEngine *base,
+                   TableIdentifier &from,
+                   TableIdentifier &to)
 {
   Session *session= current_session;
-  char from[FN_REFLEN], to[FN_REFLEN];
-  char *from_base= from, *to_base= to;
   int error= 0;
 
   assert(base);
 
-  build_table_filename(from, sizeof(from), old_db, old_name,
-                       flags & FN_FROM_IS_TMP);
-  build_table_filename(to, sizeof(to), new_db, new_name,
-                       flags & FN_TO_IS_TMP);
-
-  if (!(error= base->renameTable(session, from_base, to_base)))
+  if (not plugin::StorageEngine::doesSchemaExist(to))
   {
-    if (base->check_flag(HTON_BIT_HAS_DATA_DICTIONARY) == 0
-       && rename_table_proto_file(from_base, to_base))
-    {
-      error= errno;
-      base->renameTable(session, to_base, from_base);
-    }
+    my_error(ER_NO_DB_ERROR, MYF(0), to.getSchemaName().c_str());
+    return true;
   }
 
+  error= base->renameTable(*session, from, to);
+
   if (error == HA_ERR_WRONG_COMMAND)
+  {
     my_error(ER_NOT_SUPPORTED_YET, MYF(0), "ALTER Table");
+  }
   else if (error)
-    my_error(ER_ERROR_ON_RENAME, MYF(0), from, to, error);
-  return(error != 0);
+  {
+    const char *from_identifier= from.isTmp() ? "#sql-temporary" : from.getSQLPath().c_str();
+    const char *to_identifier= to.isTmp() ? "#sql-temporary" : to.getSQLPath().c_str();
+
+    my_error(ER_ERROR_ON_RENAME, MYF(0), from_identifier, to_identifier, error);
+  }
+
+  return error ? true : false; 
 }
 
 
@@ -1665,8 +1673,8 @@ void wait_while_table_is_used(Session *session, Table *table,
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  remove_table_from_cache(session, table->s->getSchemaName(),
-                          table->s->table_name.str,
+  remove_table_from_cache(session, table->getMutableShare()->getSchemaName(),
+                          table->getMutableShare()->getTableName(),
                           RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
@@ -1748,7 +1756,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     char* db = table->db;
     bool fatal_error=0;
 
-    sprintf(table_name,"%s.%s",db,table->table_name);
+    snprintf(table_name, sizeof(table_name), "%s.%s",db,table->table_name);
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {
@@ -1802,7 +1810,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
                        table_name);
       session->client->store(buff, length);
-      transaction_services.ha_autocommit_or_rollback(session, false);
+      transaction_services.autocommitOrRollback(session, false);
       session->endTransaction(COMMIT);
       session->close_thread_tables();
       lex->reset_query_tables_list(false);
@@ -1813,14 +1821,14 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     }
 
     /* Close all instances of the table to allow repair to rename files */
-    if (lock_type == TL_WRITE && table->table->s->version)
+    if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
       pthread_mutex_lock(&LOCK_open); /* Lock type is TL_WRITE and we lock to repair the table */
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
-      remove_table_from_cache(session, table->table->s->getSchemaName(),
-                              table->table->s->table_name.str,
+      remove_table_from_cache(session, table->table->getMutableShare()->getSchemaName(),
+                              table->table->getMutableShare()->getTableName(),
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
@@ -1911,21 +1919,25 @@ send_result:
     if (table->table)
     {
       if (fatal_error)
-        table->table->s->version=0;               // Force close of table
+      {
+        table->table->getMutableShare()->resetVersion();               // Force close of table
+      }
       else if (open_for_modify)
       {
-        if (table->table->s->tmp_table)
+        if (table->table->getShare()->tmp_table)
+        {
           table->table->cursor->info(HA_STATUS_CONST);
+        }
         else
         {
           pthread_mutex_lock(&LOCK_open);
-          remove_table_from_cache(session, table->table->s->getSchemaName(),
-                                  table->table->s->table_name.str, RTFC_NO_FLAG);
+          remove_table_from_cache(session, table->table->getMutableShare()->getSchemaName(),
+                                  table->table->getMutableShare()->getTableName(), RTFC_NO_FLAG);
           pthread_mutex_unlock(&LOCK_open);
         }
       }
     }
-    transaction_services.ha_autocommit_or_rollback(session, false);
+    transaction_services.autocommitOrRollback(session, false);
     session->endTransaction(COMMIT);
     session->close_thread_tables();
     table->table=0;				// For query cache
@@ -1937,7 +1949,7 @@ send_result:
   return(false);
 
 err:
-  transaction_services.ha_autocommit_or_rollback(session, true);
+  transaction_services.autocommitOrRollback(session, true);
   session->endTransaction(ROLLBACK);
   session->close_thread_tables();			// Shouldn't be needed
   if (table)
@@ -2015,10 +2027,10 @@ static bool replicateCreateTableLike(Session *session, TableList *table, Table *
     during the call to plugin::StorageEngine::createTable().
     See bug #28614 for more info.
   */
-static bool create_table_wrapper(Session &session, message::Table& create_table_proto,
+static bool create_table_wrapper(Session &session, const message::Table& create_table_proto,
                                  TableIdentifier &destination_identifier,
                                  TableIdentifier &src_table,
-                                 bool lex_identified_temp_table, bool is_engine_set)
+                                 bool is_engine_set)
 {
   int protoerr= EEXIST;
   message::Table new_proto;
@@ -2026,10 +2038,10 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
   protoerr= plugin::StorageEngine::getTableDefinition(session,
                                                       src_table,
-                                                      &src_proto);
+                                                      src_proto);
   new_proto.CopyFrom(src_proto);
 
-  if (lex_identified_temp_table)
+  if (destination_identifier.isTmp())
   {
     new_proto.set_type(message::Table::TEMPORARY);
   }
@@ -2040,18 +2052,21 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 
   if (is_engine_set)
   {
-    message::Table::StorageEngine *protoengine;
+    new_proto.mutable_engine()->set_name(create_table_proto.engine().name());
+  }
 
-    protoengine= new_proto.mutable_engine();
-    protoengine->set_name(create_table_proto.engine().name());
+  { // We now do a selective copy of elements on to the new table.
+    new_proto.set_name(create_table_proto.name());
+    new_proto.set_schema(create_table_proto.schema());
+    new_proto.set_catalog(create_table_proto.catalog());
   }
 
   if (protoerr && protoerr != EEXIST)
   {
     if (errno == ENOENT)
-      my_error(ER_BAD_DB_ERROR,MYF(0), destination_identifier.getSchemaName());
+      my_error(ER_BAD_DB_ERROR,MYF(0), destination_identifier.getSchemaName().c_str());
     else
-      my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath(), errno);
+      my_error(ER_CANT_CREATE_FILE, MYF(0), destination_identifier.getPath().c_str(), errno);
 
     return false;
   }
@@ -2063,7 +2078,7 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
   */
   int err= plugin::StorageEngine::createTable(session,
                                               destination_identifier,
-                                              true, new_proto);
+                                              new_proto);
 
   return err ? false : true;
 }
@@ -2086,18 +2101,14 @@ static bool create_table_wrapper(Session &session, message::Table& create_table_
 bool mysql_create_like_table(Session* session,
                              TableIdentifier &destination_identifier,
                              TableList* table, TableList* src_table,
-                             message::Table& create_table_proto,
+                             message::Table &create_table_proto,
                              bool is_if_not_exists,
                              bool is_engine_set)
 {
-  Table *name_lock= 0;
   char *db= table->db;
   char *table_name= table->table_name;
   bool res= true;
   uint32_t not_used;
-  bool lex_identified_temp_table=
-    (create_table_proto.type() == message::Table::TEMPORARY);
-  bool was_created;
 
   /*
     By opening source table we guarantee that it exists and no concurrent
@@ -2111,25 +2122,47 @@ bool mysql_create_like_table(Session* session,
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier src_identifier(src_table->table->s->getSchemaName(),
-                                 src_table->table->s->table_name.str, src_table->table->s->tmp_table);
+  TableIdentifier src_identifier(src_table->table->getMutableShare()->getSchemaName(),
+                                 src_table->table->getMutableShare()->getTableName(), src_table->table->getMutableShare()->tmp_table);
 
 
 
   /*
     Check that destination tables does not exist. Note that its name
     was already checked when it was added to the table list.
+
+    For temporary tables we don't aim to grab locks.
   */
   bool table_exists= false;
-  if (lex_identified_temp_table)
+  if (destination_identifier.isTmp())
   {
     if (session->find_temporary_table(db, table_name))
     {
       table_exists= true;
     }
+    else
+    {
+      bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                        src_identifier, is_engine_set);
+      if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
+      {
+        (void) session->rm_temporary_table(destination_identifier);
+      }
+      else if (not session->open_temporary_table(destination_identifier))
+      {
+        // We created, but we can't open... also, a hack.
+        (void) session->rm_temporary_table(destination_identifier);
+      }
+      else
+      {
+        res= false;
+      }
+    }
   }
-  else
+  else // Standard table which will require locks.
   {
+    Table *name_lock= 0;
+
     if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
     {
       if (name_lock)
@@ -2150,6 +2183,34 @@ bool mysql_create_like_table(Session* session,
     {
       table_exists= true;
     }
+    else // Otherwise we create the table
+    {
+      pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+      bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                        src_identifier, is_engine_set);
+      pthread_mutex_unlock(&LOCK_open);
+
+      // So we blew the creation of the table, and we scramble to clean up
+      // anything that might have been created (read... it is a hack)
+      if (not was_created)
+      {
+        quick_rm_table(*session, destination_identifier);
+      } 
+      else
+      {
+        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->getShare()->tmp_table), is_if_not_exists);
+        (void)rc;
+
+        res= false;
+      }
+    }
+
+    if (name_lock)
+    {
+      pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
+      session->unlink_open_table(name_lock);
+      pthread_mutex_unlock(&LOCK_open);
+    }
   }
 
   if (table_exists)
@@ -2167,49 +2228,6 @@ bool mysql_create_like_table(Session* session,
     {
       my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
     }
-  }
-  else // Otherwise we create the table
-  {
-    pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
-    was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                      src_identifier, lex_identified_temp_table, is_engine_set);
-    pthread_mutex_unlock(&LOCK_open);
-
-    // So we blew the creation of the table, and we scramble to clean up
-    // anything that might have been created (read... it is a hack)
-    if (not was_created)
-    {
-      if (lex_identified_temp_table)
-      {
-        (void) session->rm_temporary_table(destination_identifier);
-      }
-      else
-      {
-        quick_rm_table(*session, destination_identifier);
-      }
-    } 
-    else if (lex_identified_temp_table && not session->open_temporary_table(destination_identifier))
-    {
-      // We created, but we can't open... also, a hack.
-      (void) session->rm_temporary_table(destination_identifier);
-    }
-    else
-    {
-      if (not lex_identified_temp_table)
-      {
-        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->s->tmp_table), is_if_not_exists);
-        (void)rc;
-      }
-
-      res= false;
-    }
-  }
-
-  if (name_lock)
-  {
-    pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
-    session->unlink_open_table(name_lock);
-    pthread_mutex_unlock(&LOCK_open);
   }
 
   return(res);
@@ -2234,121 +2252,6 @@ bool mysql_check_table(Session* session, TableList* tables,HA_CHECK_OPT* check_o
 				"check", lock_type,
 				false,
 				&Cursor::ha_check));
-}
-
-
-bool mysql_checksum_table(Session *session, TableList *tables,
-                          HA_CHECK_OPT *)
-{
-  TableList *table;
-  List<Item> field_list;
-  Item *item;
-
-  field_list.push_back(item = new Item_empty_string("Table", NAME_LEN*2));
-  item->maybe_null= 1;
-  field_list.push_back(item= new Item_int("Checksum", (int64_t) 1,
-                                          MY_INT64_NUM_DECIMAL_DIGITS));
-  item->maybe_null= 1;
-  if (session->client->sendFields(&field_list))
-    return true;
-
-  /* Open one table after the other to keep lock time as short as possible. */
-  for (table= tables; table; table= table->next_local)
-  {
-    char table_name[NAME_LEN*2+2];
-    Table *t;
-
-    sprintf(table_name,"%s.%s",table->db,table->table_name);
-
-    t= table->table= session->openTableLock(table, TL_READ);
-    session->clear_error();			// these errors shouldn't get client
-
-    session->client->store(table_name);
-
-    if (!t)
-    {
-      /* Table didn't exist */
-      session->client->store();
-      session->clear_error();
-    }
-    else
-    {
-      /**
-        @note if the engine keeps a checksum then we return the checksum, otherwise we calculate
-      */
-      if (t->cursor->getEngine()->check_flag(HTON_BIT_HAS_CHECKSUM))
-      {
-        session->client->store((uint64_t)t->cursor->checksum());
-      }
-      else
-      {
-	/* calculating table's checksum */
-	internal::ha_checksum crc= 0;
-        unsigned char null_mask=256 -  (1 << t->s->last_null_bit_pos);
-
-        t->use_all_columns();
-
-	if (t->cursor->ha_rnd_init(1))
-	  session->client->store();
-	else
-	{
-	  for (;;)
-	  {
-	    internal::ha_checksum row_crc= 0;
-            int error= t->cursor->rnd_next(t->record[0]);
-            if (unlikely(error))
-            {
-              if (error == HA_ERR_RECORD_DELETED)
-                continue;
-              break;
-            }
-	    if (t->s->null_bytes)
-            {
-              /* fix undefined null bits */
-              t->record[0][t->s->null_bytes-1] |= null_mask;
-              if (!(t->s->db_create_options & HA_OPTION_PACK_RECORD))
-                t->record[0][0] |= 1;
-
-	      row_crc= internal::my_checksum(row_crc, t->record[0], t->s->null_bytes);
-            }
-
-	    for (uint32_t i= 0; i < t->s->fields; i++ )
-	    {
-	      Field *f= t->field[i];
-	      if ((f->type() == DRIZZLE_TYPE_BLOB) ||
-                  (f->type() == DRIZZLE_TYPE_VARCHAR))
-	      {
-		String tmp;
-		f->val_str(&tmp);
-		row_crc= internal::my_checksum(row_crc, (unsigned char*) tmp.ptr(), tmp.length());
-	      }
-	      else
-		row_crc= internal::my_checksum(row_crc, f->ptr,
-				     f->pack_length());
-	    }
-
-	    crc+= row_crc;
-	  }
-	  session->client->store((uint64_t)crc);
-          t->cursor->ha_rnd_end();
-	}
-      }
-      session->clear_error();
-      session->close_thread_tables();
-      table->table=0;				// For query cache
-    }
-    if (session->client->flush())
-      goto err;
-  }
-
-  session->my_eof();
-  return(false);
-
- err:
-  session->close_thread_tables();			// Shouldn't be needed
-  if (table)
-    table->table=0;
-  return(true);
 }
 
 } /* namespace drizzled */

@@ -43,14 +43,22 @@
 #include <vector>
 #include <string>
 
+namespace drizzled
+{
+  class Session;
+}
+
 class TransactionLog;
+class TransactionLogIndex;
+class WriteBuffer;
 
 class TransactionLogApplier: public drizzled::plugin::TransactionApplier 
 {
 public:
   TransactionLogApplier(const std::string name_arg,
-                        TransactionLog &in_transaction_log,
-                        bool in_do_checksum);
+                        TransactionLog *in_transaction_log,
+                        TransactionLogIndex *in_transaction_log_index,
+                        uint32_t in_num_write_buffers);
 
   /** Destructor */
   ~TransactionLogApplier();
@@ -68,16 +76,32 @@ public:
    * the supplied message to their own controlled memory storage
    * area.
    *
+   * @param Session descriptor
    * @param Transaction message to be replicated
    */
-  void apply(const drizzled::message::Transaction &to_apply);
+  drizzled::plugin::ReplicationReturnCode
+  apply(drizzled::Session &in_session,
+        const drizzled::message::Transaction &to_apply);
 private:
   /* Don't allows these */
   TransactionLogApplier();
   TransactionLogApplier(const TransactionLogApplier &other);
   TransactionLogApplier &operator=(const TransactionLogApplier &other);
-  TransactionLog &transaction_log;
-  bool do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
+  /** 
+   * This Applier owns the memory of the associated TransactionLog 
+   * and its index - so we have to track it. 
+   */
+  TransactionLog *transaction_log;
+  TransactionLogIndex *transaction_log_index;
+  uint32_t num_write_buffers; ///< Number of write buffers used
+  std::vector<WriteBuffer *> write_buffers; ///< array of write buffers
+
+  /**
+   * Returns the write buffer for the supplied session
+   *
+   * @param Session descriptor
+   */
+  WriteBuffer *getWriteBuffer(const drizzled::Session &session);
 };
 
 #endif /* PLUGIN_TRANSACTION_LOG_TRANSACTION_LOG_APPLIER_H */

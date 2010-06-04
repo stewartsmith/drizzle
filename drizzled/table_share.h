@@ -28,6 +28,8 @@
 
 #include <string>
 
+#include <drizzled/unordered_map.h>
+
 #include "drizzled/typelib.h"
 #include "drizzled/my_hash.h"
 #include "drizzled/memory/root.h"
@@ -36,26 +38,29 @@
 namespace drizzled
 {
 
-typedef drizzled::hash_map<std::string, TableShare *> TableDefinitionCache;
+typedef unordered_map<std::string, TableShare *> TableDefinitionCache;
 
 const static std::string STANDARD_STRING("STANDARD");
 const static std::string TEMPORARY_STRING("TEMPORARY");
 const static std::string INTERNAL_STRING("INTERNAL");
 const static std::string FUNCTION_STRING("FUNCTION");
 
+namespace plugin
+{
+class EventObserverList;
+}
+
 class TableShare
 {
+  typedef std::vector<std::string> StringVector;
 public:
   TableShare() :
     table_category(TABLE_UNKNOWN_CATEGORY),
     open_count(0),
-    field(NULL),
     found_next_number_field(NULL),
     timestamp_field(NULL),
     key_info(NULL),
     blob_field(NULL),
-    intervals(NULL),
-    default_values(NULL),
     block_size(0),
     version(0),
     timestamp_offset(0),
@@ -65,7 +70,7 @@ public:
     max_rows(0),
     table_proto(NULL),
     storage_engine(NULL),
-    tmp_table(STANDARD_TABLE),
+    tmp_table(message::Table::STANDARD),
     ref_count(0),
     null_bytes(0),
     last_null_bit_pos(0),
@@ -99,8 +104,19 @@ public:
     replace_with_name_lock(false),
     waiting_on_cond(false),
     keys_in_use(0),
-    keys_for_keyread(0)
+    keys_for_keyread(0),
+    event_observers(NULL),
+    newed(true)
   {
+    memset(&name_hash, 0, sizeof(HASH));
+
+    table_charset= 0;
+    memset(&table_cache_key, 0, sizeof(LEX_STRING));
+    memset(&db, 0, sizeof(LEX_STRING));
+    memset(&table_name, 0, sizeof(LEX_STRING));
+    memset(&path, 0, sizeof(LEX_STRING));
+    memset(&normalized_path, 0, sizeof(LEX_STRING));
+
     init();
   }
 
@@ -110,13 +126,10 @@ public:
              const char *new_path) :
     table_category(TABLE_UNKNOWN_CATEGORY),
     open_count(0),
-    field(NULL),
     found_next_number_field(NULL),
     timestamp_field(NULL),
     key_info(NULL),
     blob_field(NULL),
-    intervals(NULL),
-    default_values(NULL),
     block_size(0),
     version(0),
     timestamp_offset(0),
@@ -126,7 +139,7 @@ public:
     max_rows(0),
     table_proto(NULL),
     storage_engine(NULL),
-    tmp_table(STANDARD_TABLE),
+    tmp_table(message::Table::STANDARD),
     ref_count(0),
     null_bytes(0),
     last_null_bit_pos(0),
@@ -160,36 +173,201 @@ public:
     replace_with_name_lock(false),
     waiting_on_cond(false),
     keys_in_use(0),
-    keys_for_keyread(0)
+    keys_for_keyread(0),
+    event_observers(NULL),
+    newed(true)
   {
+    memset(&name_hash, 0, sizeof(HASH));
+
+    table_charset= 0;
+    memset(&table_cache_key, 0, sizeof(LEX_STRING));
+    memset(&db, 0, sizeof(LEX_STRING));
+    memset(&table_name, 0, sizeof(LEX_STRING));
+    memset(&path, 0, sizeof(LEX_STRING));
+    memset(&normalized_path, 0, sizeof(LEX_STRING));
     init(key, key_length, new_table_name, new_path);
   }
 
+  TableShare(char *key, uint32_t key_length, char *path_arg= NULL, uint32_t path_length_arg= 0);
+
+  ~TableShare() 
+  {
+    assert(ref_count == 0);
+
+    /*
+      If someone is waiting for this to be deleted, inform it about this.
+      Don't do a delete until we know that no one is refering to this anymore.
+    */
+    if (tmp_table == message::Table::STANDARD)
+    {
+      /* share->mutex is locked in release_table_share() */
+      while (waiting_on_cond)
+      {
+        pthread_cond_broadcast(&cond);
+        pthread_cond_wait(&cond, &mutex);
+      }
+      /* No thread refers to this anymore */
+      pthread_mutex_unlock(&mutex);
+      pthread_mutex_destroy(&mutex);
+      pthread_cond_destroy(&cond);
+    }
+    hash_free(&name_hash);
+
+    storage_engine= NULL;
+
+    delete table_proto;
+    table_proto= NULL;
+
+    mem_root.free_root(MYF(0));                 // Free's share
+  };
+
+private:
   /** Category of this table. */
   enum_table_category table_category;
 
   uint32_t open_count;			/* Number of tables in open list */
+public:
+
+  bool isTemporaryCategory() const
+  {
+    return (table_category == TABLE_CATEGORY_TEMPORARY);
+  }
+
+  void setTableCategory(enum_table_category arg)
+  {
+    table_category= arg;
+  }
 
   /* The following is copied to each Table on OPEN */
-  Field **field;
+private:
+  std::vector<Field *> field;
+public:
+  Field ** getFields()
+  {
+    return &field[0];
+  }
+
+  void setFields(uint32_t arg)
+  {
+    field.resize(arg);
+  }
+
+
   Field **found_next_number_field;
+private:
   Field *timestamp_field;               /* Used only during open */
-  KEY  *key_info;			/* data of keys in database */
-  uint	*blob_field;			/* Index to blobs in Field arrray*/
+public:
+
+  Field *getTimestampField() const               /* Used only during open */
+  {
+    return timestamp_field;
+  }
+
+  void setTimestampField(Field *arg) /* Used only during open */
+  {
+    timestamp_field= arg;
+  }
+
+
+private:
+  KeyInfo  *key_info;			/* data of keys in database */
+public:
+  KeyInfo &getKeyInfo(uint32_t arg) const
+  {
+    return key_info[arg];
+  }
+  std::vector<uint>	blob_field;			/* Index to blobs in Field arrray*/
 
   /* hash of field names (contains pointers to elements of field array) */
   HASH	name_hash;			/* hash of field names */
+private:
   memory::Root mem_root;
-  TYPELIB keynames;			/* Pointers to keynames */
-  TYPELIB fieldnames;			/* Pointer to fieldnames */
-  TYPELIB *intervals;			/* pointer to interval info */
+public:
+  void *alloc_root(size_t arg)
+  {
+    return mem_root.alloc_root(arg);
+  }
+
+  char *strmake_root(const char *str_arg, size_t len_arg)
+  {
+    return mem_root.strmake_root(str_arg, len_arg);
+  }
+
+  memory::Root *getMemRoot()
+  {
+    return &mem_root;
+  }
+
+private:
+  std::vector<std::string> _keynames;
+
+  void addKeyName(std::string arg)
+  {
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+    _keynames.push_back(arg);
+  }
+public:
+  bool doesKeyNameExist(const char *name_arg, uint32_t name_length, uint32_t &position) const
+  {
+    std::string arg(name_arg, name_length);
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+
+    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+
+    if (iter == _keynames.end())
+      return false;
+
+    position= iter -  _keynames.begin();
+
+    return true;
+  }
+
+  bool doesKeyNameExist(std::string arg, uint32_t &position) const
+  {
+    std::transform(arg.begin(), arg.end(),
+                   arg.begin(), ::toupper);
+
+    std::vector<std::string>::const_iterator iter= std::find(_keynames.begin(), _keynames.end(), arg);
+
+    if (iter == _keynames.end())
+    {
+      position= -1; //historical, required for finding primary key from unique
+      return false;
+    }
+
+    position= iter -  _keynames.begin();
+
+    return true;
+  }
+
+private:
+  std::vector<TYPELIB> intervals;			/* pointer to interval info */
+
+public:
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
 
-  unsigned char	*default_values;		/* row with default values */
+private:
+  std::vector<unsigned char> default_values;		/* row with default values */
+public:
+  unsigned char * getDefaultValues()
+  {
+    return &default_values[0];
+  }
+  void resizeDefaultValues(size_t arg)
+  {
+    default_values.resize(arg);
+  }
+
   const CHARSET_INFO *table_charset; /* Default charset of string fields */
 
   MyBitmap all_set;
+private:
+  std::vector<my_bitmap_map> all_bitmap;
+
+public:
   /*
     Key which is used for looking-up table in table cache and in the list
     of thread's temporary tables. Has the form of:
@@ -200,17 +378,59 @@ public:
     should correspond to each other.
     To ensure this one can use set_table_cache() methods.
   */
-  LEX_STRING table_cache_key;
 private:
+  LEX_STRING table_cache_key;                        /* Pointer to db */
   LEX_STRING db;                        /* Pointer to db */
-public:
   LEX_STRING table_name;                /* Table name (for open) */
   LEX_STRING path;	/* Path to table (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
+public:
+
+  const char *getNormalizedPath() const
+  {
+    return normalized_path.str;
+  }
+
+  const char *getPath() const
+  {
+    return path.str;
+  }
+
+  const char *getCacheKey() const
+  {
+    return table_cache_key.str;
+  }
+
+  size_t getCacheKeySize() const
+  {
+    return table_cache_key.length;
+  }
+
+  void setPath(char *str_arg, uint32_t size_arg)
+  {
+    path.str= str_arg;
+    path.length= size_arg;
+  }
+
+  void setNormalizedPath(char *str_arg, uint32_t size_arg)
+  {
+    normalized_path.str= str_arg;
+    normalized_path.length= size_arg;
+  }
 
   const char *getTableName() const
   {
     return table_name.str;
+  }
+
+  uint32_t getTableNameSize() const
+  {
+    return table_name.length;
+  }
+
+  const char *getTableCacheKey() const
+  {
+    return table_cache_key.str;
   }
 
   const std::string &getTableName(std::string &name_arg) const
@@ -236,20 +456,39 @@ public:
 
   uint32_t   block_size;                   /* create information */
 
+private:
   uint64_t   version;
-  uint64_t getVersion()
+public:
+  uint64_t getVersion() const
   {
     return version;
   }
 
+  void refreshVersion()
+  {
+   version= refresh_version;
+  }
+
+  void resetVersion()
+  {
+    version= 0;
+  }
+
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
+private:
   uint32_t   reclength;			/* Recordlength */
+public:
   uint32_t   stored_rec_length;         /* Stored record length*/
   enum row_type row_type;		/* How rows are stored */
 
-  uint32_t getRecordLength()
+  uint32_t getRecordLength() const
   {
     return reclength;
+  }
+
+  void setRecordLength(uint32_t arg)
+  {
+    reclength= arg;
   }
 
 private:
@@ -287,7 +526,7 @@ public:
     table_proto= arg;
   }
 
-  inline bool hasComment()
+  inline bool hasComment() const
   {
     return (table_proto) ?  table_proto->options().has_comment() : false; 
   }
@@ -297,22 +536,12 @@ public:
     return (table_proto && table_proto->has_options()) ?  table_proto->options().comment().c_str() : NULL; 
   }
 
-  inline uint32_t getCommentLength()
+  inline uint32_t getCommentLength() const
   {
     return (table_proto) ? table_proto->options().comment().length() : 0; 
   }
 
-  inline bool hasKeyBlockSize()
-  {
-    return (table_proto) ? table_proto->options().has_key_block_size() : false;
-  }
-
-  inline uint32_t getKeyBlockSize()
-  {
-    return (table_proto) ? table_proto->options().key_block_size() : 0;
-  }
-
-  inline uint64_t getMaxRows()
+  inline uint64_t getMaxRows() const
   {
     return max_rows;
   }
@@ -325,7 +554,7 @@ public:
   /**
    * Returns true if the supplied Field object
    * is part of the table's primary key.
-   */
+ */
   bool fieldInPrimaryKey(Field *field) const;
 
   plugin::StorageEngine *storage_engine;			/* storage engine plugin */
@@ -337,19 +566,39 @@ public:
   {
     return storage_engine;
   }
-  enum tmp_table_type tmp_table;
 
+  TableIdentifier::Type tmp_table;
+
+private:
   uint32_t ref_count;       /* How many Table objects uses this */
-  uint32_t getTableCount()
+public:
+  uint32_t getTableCount() const
   {
     return ref_count;
+  }
+
+  void incrementTableCount()
+  {
+    ref_count++;
   }
 
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
+
+  uint32_t sizeFields() const
+  {
+    return fields;
+  }
+
   uint32_t rec_buff_length;                 /* Size of table->record[] buffer */
-  uint32_t keys, key_parts;
+  uint32_t keys;
+
+  uint32_t sizeKeys() const
+  {
+    return keys;
+  }
+  uint32_t key_parts;
   uint32_t max_key_length, max_unique_length, total_key_length;
   uint32_t uniques;                         /* Number of UNIQUE index */
   uint32_t null_fields;			/* number of null fields */
@@ -368,7 +617,7 @@ public:
    * primary key.  However, as it exists, because this member is scalar, it
    * only supports a single-column primary key. Is there a better way
    * to ask for the fields which are in a primary key?
-   */
+ */
   uint32_t primary_key;
   /* Index of auto-updated TIMESTAMP field in field array */
   uint32_t next_number_index;               /* autoincrement key number */
@@ -380,7 +629,9 @@ public:
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
 
+private:
   bool name_lock;
+public:
   bool isNameLock() const
   {
     return name_lock;
@@ -388,7 +639,9 @@ public:
 
   bool replace_with_name_lock;
 
+private:
   bool waiting_on_cond;                 /* Protection against free */
+public:
   bool isWaitingOnCondition()
   {
     return waiting_on_cond;
@@ -401,6 +654,23 @@ public:
   key_map keys_in_use;
   key_map keys_for_keyread;
 
+  /* 
+    event_observers is a class containing all the event plugins that have 
+    registered an interest in this table.
+  */
+  private:
+  plugin::EventObserverList *event_observers;
+  public:
+  plugin::EventObserverList *getTableObservers() 
+  { 
+    return event_observers;
+  }
+  
+  void setTableObservers(plugin::EventObserverList *observers) 
+  { 
+    event_observers= observers;
+  }
+  
   /*
     Set share's table cache key and update its db and table name appropriately.
 
@@ -417,7 +687,7 @@ public:
     appropriate values by using table cache key as their source.
   */
 
-  void set_table_cache_key(char *key_buff, uint32_t key_length)
+  void set_table_cache_key(char *key_buff, uint32_t key_length, uint32_t db_length= 0, uint32_t table_name_length= 0)
   {
     table_cache_key.str= key_buff;
     table_cache_key.length= key_length;
@@ -426,31 +696,9 @@ public:
       part for temporary tables.
     */
     db.str=            table_cache_key.str;
-    db.length=         strlen(db.str);
+    db.length=         db_length ? db_length : strlen(db.str);
     table_name.str=    db.str + db.length + 1;
-    table_name.length= strlen(table_name.str);
-  }
-
-
-  /*
-    Set share's table cache key and update its db and table name appropriately.
-
-    SYNOPSIS
-    set_table_cache_key()
-    key_buff    Buffer to be used as storage for table cache key
-    (should be at least key_length bytes).
-    key         Value for table cache key.
-    key_length  Key length.
-
-    NOTE
-    Since 'key_buff' buffer will be used as storage for table cache key
-    it should has same life-time as share itself.
-  */
-
-  void set_table_cache_key(char *key_buff, const char *key, uint32_t key_length)
-  {
-    memcpy(key_buff, key, key_length);
-    set_table_cache_key(key_buff, key_length);
+    table_name.length= table_name_length ? table_name_length :strlen(table_name.str);
   }
 
   inline bool honor_global_locks()
@@ -481,6 +729,7 @@ public:
     use key_length= 0 as neither table_cache_key or key_length will be used).
   */
 
+private:
   void init()
   {
     init("", 0, "", "");
@@ -496,10 +745,9 @@ public:
             uint32_t key_length, const char *new_table_name,
             const char *new_path)
   {
-    memset(this, 0, sizeof(TableShare));
     memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     table_category=         TABLE_CATEGORY_TEMPORARY;
-    tmp_table=              INTERNAL_TMP_TABLE;
+    tmp_table=              message::Table::INTERNAL;
     db.str=                 (char*) key;
     db.length=		 strlen(key);
     table_cache_key.str=    (char*) key;
@@ -512,55 +760,9 @@ public:
 
     return;
   }
-
-  /*
-    Free table share and memory used by it
-
-    SYNOPSIS
-    free_table_share()
-    share		Table share
-
-    NOTES
-    share->mutex must be locked when we come here if it's not a temp table
-  */
-
-  void free_table_share()
-  {
-    memory::Root new_mem_root;
-    assert(ref_count == 0);
-
-    /*
-      If someone is waiting for this to be deleted, inform it about this.
-      Don't do a delete until we know that no one is refering to this anymore.
-    */
-    if (tmp_table == STANDARD_TABLE)
-    {
-      /* share->mutex is locked in release_table_share() */
-      while (waiting_on_cond)
-      {
-        pthread_cond_broadcast(&cond);
-        pthread_cond_wait(&cond, &mutex);
-      }
-      /* No thread refers to this anymore */
-      pthread_mutex_unlock(&mutex);
-      pthread_mutex_destroy(&mutex);
-      pthread_cond_destroy(&cond);
-    }
-    hash_free(&name_hash);
-
-    storage_engine= NULL;
-
-    delete table_proto;
-    table_proto= NULL;
-
-    /* We must copy mem_root from share because share is allocated through it */
-    memcpy(&new_mem_root, &mem_root, sizeof(new_mem_root));
-    free_root(&new_mem_root, MYF(0));                 // Free's share
-  }
+public:
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
-
-
 
   /*
     Create a table cache key
@@ -584,13 +786,6 @@ public:
     RETURN
     Length of key
   */
-
-  static inline uint32_t createKey(char *key, std::string& db_arg,
-                                   std::string& table_name_arg)
-  {
-    return createKey(key, db_arg.c_str(), table_name_arg.c_str());
-  }
-
   static inline uint32_t createKey(char *key, const char *db_arg, const char *table_name_arg)
   {
     uint32_t key_length;
@@ -604,15 +799,64 @@ public:
     return key_length;
   }
 
+  static inline uint32_t createKey(char *key, TableIdentifier &identifier)
+  {
+    uint32_t key_length;
+    char *key_pos= key;
+
+    key_pos= strcpy(key_pos, identifier.getSchemaName().c_str()) + identifier.getSchemaName().length();
+    key_pos= strcpy(key_pos + 1, identifier.getTableName().c_str()) + identifier.getTableName().length();
+    key_length= (uint32_t)(key_pos-key)+1;
+
+    return key_length;
+  }
+
   static void cacheStart(void);
   static void cacheStop(void);
   static void release(TableShare *share);
   static void release(const char *key, uint32_t key_length);
   static TableDefinitionCache &getCache();
-  static TableShare *getShare(const char *db, const char *table_name);
+  static TableShare *getShare(TableIdentifier &identifier);
   static TableShare *getShare(Session *session, 
-                              TableList *table_list, char *key,
-                              uint32_t key_length, uint32_t, int *error);
+                              char *key, uint32_t key_length, int *error);
+
+  friend std::ostream& operator<<(std::ostream& output, const TableShare &share)
+  {
+    output << "TableShare:(";
+    output <<  share.getSchemaName();
+    output << ", ";
+    output << share.getTableName();
+    output << ", ";
+    output << share.getTableTypeAsString();
+    output << ", ";
+    output << share.getPath();
+    output << ")";
+
+    return output;  // for multiple << operators.
+  }
+
+  bool newed;
+
+  Field *make_field(unsigned char *ptr,
+                    uint32_t field_length,
+                    bool is_nullable,
+                    unsigned char *null_pos,
+                    unsigned char null_bit,
+                    uint8_t decimals,
+                    enum_field_types field_type,
+                    const CHARSET_INFO * field_charset,
+                    Field::utype unireg_check,
+                    TYPELIB *interval,
+                    const char *field_name);
+
+  int open_table_def(Session& session, TableIdentifier &identifier);
+
+  int open_table_from_share(Session *session, const char *alias,
+                            uint32_t db_stat, uint32_t ha_open_flags,
+                            Table &outparam);
+  int parse_table_proto(Session& session, message::Table &table);
+private:
+  int inner_parse_table_proto(Session& session, message::Table &table);
 };
 
 } /* namespace drizzled */

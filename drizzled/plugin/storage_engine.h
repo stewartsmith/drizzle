@@ -28,11 +28,12 @@
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/sql_string.h"
+#include "drizzled/schema_identifier.h"
 #include "drizzled/table_identifier.h"
 #include "drizzled/cached_directory.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 
-#include "drizzled/hash.h"
+#include <drizzled/unordered_map.h>
 
 #include <bitset>
 #include <string>
@@ -60,13 +61,10 @@ enum engine_flag_bits {
   HTON_BIT_NOT_USER_SELECTABLE,
   HTON_BIT_TEMPORARY_NOT_SUPPORTED,   // Having temporary tables not supported
   HTON_BIT_TEMPORARY_ONLY,
-  HTON_BIT_FILE_BASED, // use for check_lowercase_names
-  HTON_BIT_HAS_DATA_DICTIONARY,
   HTON_BIT_DOES_TRANSACTIONS,
   HTON_BIT_STATS_RECORDS_IS_EXACT,
   HTON_BIT_NULL_IN_KEY,
   HTON_BIT_CAN_INDEX_BLOBS,
-  HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_POSITION,
   HTON_BIT_PRIMARY_KEY_IN_READ_INDEX,
   HTON_BIT_PARTIAL_COLUMN_READ,
   HTON_BIT_TABLE_SCAN_ON_INDEX,
@@ -83,6 +81,7 @@ enum engine_flag_bits {
   HTON_BIT_HAS_CHECKSUM,
   HTON_BIT_SKIP_STORE_LOCK,
   HTON_BIT_SCHEMA_DICTIONARY,
+  HTON_BIT_FOREIGN_KEYS,
   HTON_BIT_SIZE
 };
 
@@ -92,13 +91,10 @@ static const std::bitset<HTON_BIT_SIZE> HTON_HIDDEN(1 << HTON_BIT_HIDDEN);
 static const std::bitset<HTON_BIT_SIZE> HTON_NOT_USER_SELECTABLE(1 << HTON_BIT_NOT_USER_SELECTABLE);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_NOT_SUPPORTED(1 << HTON_BIT_TEMPORARY_NOT_SUPPORTED);
 static const std::bitset<HTON_BIT_SIZE> HTON_TEMPORARY_ONLY(1 << HTON_BIT_TEMPORARY_ONLY);
-static const std::bitset<HTON_BIT_SIZE> HTON_FILE_BASED(1 << HTON_BIT_FILE_BASED);
-static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DATA_DICTIONARY(1 << HTON_BIT_HAS_DATA_DICTIONARY);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_DOES_TRANSACTIONS(1 << HTON_BIT_DOES_TRANSACTIONS);
 static const std::bitset<HTON_BIT_SIZE> HTON_STATS_RECORDS_IS_EXACT(1 << HTON_BIT_STATS_RECORDS_IS_EXACT);
 static const std::bitset<HTON_BIT_SIZE> HTON_NULL_IN_KEY(1 << HTON_BIT_NULL_IN_KEY);
 static const std::bitset<HTON_BIT_SIZE> HTON_CAN_INDEX_BLOBS(1 << HTON_BIT_CAN_INDEX_BLOBS);
-static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_REQUIRED_FOR_POSITION(1 << HTON_BIT_PRIMARY_KEY_REQUIRED_FOR_POSITION);
 static const std::bitset<HTON_BIT_SIZE> HTON_PRIMARY_KEY_IN_READ_INDEX(1 << HTON_BIT_PRIMARY_KEY_IN_READ_INDEX);
 static const std::bitset<HTON_BIT_SIZE> HTON_PARTIAL_COLUMN_READ(1 << HTON_BIT_PARTIAL_COLUMN_READ);
 static const std::bitset<HTON_BIT_SIZE> HTON_TABLE_SCAN_ON_INDEX(1 << HTON_BIT_TABLE_SCAN_ON_INDEX);
@@ -115,6 +111,7 @@ static const std::bitset<HTON_BIT_SIZE> HTON_NO_PREFIX_CHAR_KEYS(1 << HTON_BIT_N
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_CHECKSUM(1 << HTON_BIT_HAS_CHECKSUM);
 static const std::bitset<HTON_BIT_SIZE> HTON_SKIP_STORE_LOCK(1 << HTON_BIT_SKIP_STORE_LOCK);
 static const std::bitset<HTON_BIT_SIZE> HTON_HAS_SCHEMA_DICTIONARY(1 << HTON_BIT_SCHEMA_DICTIONARY);
+static const std::bitset<HTON_BIT_SIZE> HTON_HAS_FOREIGN_KEYS(1 << HTON_BIT_FOREIGN_KEYS);
 
 
 class Table;
@@ -123,11 +120,10 @@ class NamedSavepoint;
 namespace plugin
 {
 
-typedef hash_map<std::string, StorageEngine *> EngineMap;
+typedef unordered_map<std::string, StorageEngine *> EngineMap;
 typedef std::vector<StorageEngine *> EngineVector;
 
 typedef std::set<std::string> TableNameList;
-typedef std::set<std::string> SchemaNameList;
 
 extern const std::string UNKNOWN_STRING;
 extern const std::string DEFAULT_DEFINITION_FILE_EXT;
@@ -149,6 +145,8 @@ public:
 
 private:
   const std::bitset<HTON_BIT_SIZE> flags; /* global Cursor flags */
+
+  static EngineVector &getSchemaEngines();
 
   virtual void setTransactionReadWrite(Session& session);
 
@@ -211,19 +209,13 @@ public:
 
   virtual ~StorageEngine();
 
-  virtual int doGetTableDefinition(Session& session,
-                                   const char *path,
-                                   const char *db,
-                                   const char *table_name,
-                                   const bool is_tmp,
-                                   message::Table *table_proto)
+  virtual int doGetTableDefinition(Session &session,
+                                   TableIdentifier &identifier,
+                                   message::Table &table_message)
   {
     (void)session;
-    (void)path;
-    (void)db;
-    (void)table_name;
-    (void)is_tmp;
-    (void)table_proto;
+    (void)identifier;
+    (void)table_message;
 
     return ENOENT;
   }
@@ -286,31 +278,29 @@ public:
   virtual const char **bas_ext() const =0;
 
 protected:
-  virtual int doCreateTable(Session *session,
-                            const char *table_name,
-                            Table& table_arg,
-                            message::Table& proto)= 0;
+  virtual int doCreateTable(Session &session,
+                            Table &table_arg,
+                            TableIdentifier &identifier,
+                            message::Table &message)= 0;
 
-  virtual int doRenameTable(Session* session,
-                            const char *from, const char *to);
+  virtual int doRenameTable(Session &session,
+                            TableIdentifier &from, TableIdentifier &to)= 0;
 
 public:
 
-  int renameTable(Session *session, const char *from, const char *to) 
-  {
-    setTransactionReadWrite(*session);
-
-    return doRenameTable(session, from, to);
-  }
+  int renameTable(Session &session, TableIdentifier &from, TableIdentifier &to);
 
   // @todo move these to protected
   virtual void doGetTableNames(CachedDirectory &directory,
-                               std::string& db_name,
-                               TableNameList &set_of_names);
-  virtual int doDropTable(Session& session,
-                          const std::string &table_path)= 0;
+                               drizzled::SchemaIdentifier &schema_identifier,
+                               TableNameList &set_of_names)= 0;
 
-  const char *checkLowercaseNames(const char *path, char *tmp_path);
+  virtual void doGetTableIdentifiers(CachedDirectory &directory,
+                                     drizzled::SchemaIdentifier &schema_identifier,
+                                     TableIdentifiers &set_of_identifiers)= 0;
+
+  virtual int doDropTable(Session &session,
+                          TableIdentifier &identifier)= 0;
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::StorageEngine *engine);
@@ -318,63 +308,60 @@ public:
 
   static int getTableDefinition(Session& session,
                                 TableIdentifier &identifier,
-                                message::Table *table_proto= NULL,
+                                message::Table &table_proto,
                                 bool include_temporary_tables= true);
-  static int getTableDefinition(Session& session,
-                                const char* path,
-                                const char *db,
-                                const char *table_name,
-                                const bool is_tmp,
-                                message::Table *table_proto= NULL,
-                                bool include_temporary_tables= true);
-  static bool doesTableExist(Session& session,
+  static bool doesTableExist(Session &session,
                              TableIdentifier &identifier,
                              bool include_temporary_tables= true);
 
-  static plugin::StorageEngine *findByName(std::string find_str);
-  static plugin::StorageEngine *findByName(Session& session,
-                                           std::string find_str);
+  virtual bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+
+  static plugin::StorageEngine *findByName(const std::string &find_str);
+  static plugin::StorageEngine *findByName(Session& session, const std::string &find_str);
+
   static void closeConnection(Session* session);
   static void dropDatabase(char* path);
   static bool flushLogs(plugin::StorageEngine *db_type);
   static int dropTable(Session& session,
                        TableIdentifier &identifier);
-  static void getTableNames(const std::string& db_name, TableNameList &set_of_names);
+  static int dropTable(Session& session,
+                       StorageEngine &engine,
+                       TableIdentifier &identifier);
+  static void getTableNames(Session &session, drizzled::SchemaIdentifier& schema_identifier, TableNameList &set_of_names);
+  static void getTableIdentifiers(Session &session, SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(drizzled::TableIdentifier &identifier);
-  virtual bool doCanCreateTable(const drizzled::TableIdentifier &identifier)
+  virtual bool doCanCreateTable(drizzled::TableIdentifier &identifier)
   { (void)identifier;  return true; }
 
   // @note All schema methods defined here
-  static void getSchemaNames(SchemaNameList &set_of_names);
-  static bool getSchemaDefinition(const std::string &schema_name, message::Schema &proto);
-  static bool doesSchemaExist(const std::string &schema_name);
-  static const CHARSET_INFO *getSchemaCollation(const std::string &schema_name);
+  static void getSchemaIdentifiers(Session &session, SchemaIdentifierList &schemas);
+  static bool getSchemaDefinition(TableIdentifier &identifier, message::Schema &proto);
+  static bool getSchemaDefinition(drizzled::SchemaIdentifier &identifier, message::Schema &proto);
+  static bool doesSchemaExist(drizzled::SchemaIdentifier &identifier);
+  static const CHARSET_INFO *getSchemaCollation(drizzled::SchemaIdentifier &identifier);
   static bool createSchema(const drizzled::message::Schema &schema_message);
-  static bool dropSchema(const std::string &schema_name);
+  static bool dropSchema(drizzled::SchemaIdentifier &identifier);
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected
-  virtual void doGetSchemaNames(SchemaNameList &set_of_names)
-  { (void)set_of_names; }
+  virtual void doGetSchemaIdentifiers(SchemaIdentifierList&)
+  { }
 
-  virtual bool doGetSchemaDefinition(const std::string &schema_name, drizzled::message::Schema &proto)
+  virtual bool doGetSchemaDefinition(drizzled::SchemaIdentifier&, drizzled::message::Schema&)
   { 
-    (void)schema_name;
-    (void)proto; 
-
     return false; 
   }
 
-  virtual bool doCreateSchema(const drizzled::message::Schema &schema_message)
-  { (void)schema_message; return false; }
+  virtual bool doCreateSchema(const drizzled::message::Schema&)
+  { return false; }
 
-  virtual bool doAlterSchema(const drizzled::message::Schema &schema_message)
-  { (void)schema_message; return false; }
+  virtual bool doAlterSchema(const drizzled::message::Schema&)
+  { return false; }
 
-  virtual bool doDropSchema(const std::string &schema_name)
-  { (void)schema_name; return false; }
+  virtual bool doDropSchema(drizzled::SchemaIdentifier&)
+  { return false; }
 
   static inline const std::string &resolveName(const StorageEngine *engine)
   {
@@ -383,7 +370,6 @@ public:
 
   static int createTable(Session& session,
                          TableIdentifier &identifier,
-                         bool update_create_info,
                          message::Table& table_proto);
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
@@ -409,10 +395,10 @@ public:
   virtual uint32_t max_supported_key_part_length(void) const { return 255; }
 
   /* TODO-> Make private */
-  static int readDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
   static int deleteDefinitionFromPath(TableIdentifier &identifier);
   static int renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src);
   static int writeDefinitionFromPath(TableIdentifier &identifier, message::Table &proto);
+  static bool readTableFile(const std::string &path, message::Table &table_message);
 
 public:
   /* 
@@ -429,6 +415,22 @@ public:
   }
   virtual bool alwaysRegisterForXaTransaction() const
   {
+    return false;
+  }
+
+  virtual bool validateCreateTableOption(const std::string &key, const std::string &state)
+  {
+    (void)key;
+    (void)state;
+
+    return false;
+  }
+
+  virtual bool validateCreateSchemaOption(const std::string &key, const std::string &state)
+  {
+    (void)key;
+    (void)state;
+
     return false;
   }
 };

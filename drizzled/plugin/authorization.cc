@@ -24,9 +24,9 @@
 
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/security_context.h"
+#include "drizzled/table_identifier.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
-#include "drizzled/plugin/registry.h"
 #include "drizzled/gettext.h"
 
 using namespace std;
@@ -61,10 +61,10 @@ class RestrictDbFunctor :
   public unary_function<plugin::Authorization *, bool>
 {
   const SecurityContext &user_ctx;
-  const string &schema;
+  SchemaIdentifier &schema;
 public:
   RestrictDbFunctor(const SecurityContext &user_ctx_arg,
-                    const string &schema_arg) :
+                    SchemaIdentifier &schema_arg) :
     unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
     schema(schema_arg)
@@ -80,21 +80,18 @@ class RestrictTableFunctor :
   public unary_function<plugin::Authorization *, bool>
 {
   const SecurityContext &user_ctx;
-  const string &schema;
-  const string &table;
+  TableIdentifier &table;
 public:
   RestrictTableFunctor(const SecurityContext &user_ctx_arg,
-                       const string &schema_arg,
-                       const string &table_arg) :
+                       TableIdentifier &table_arg) :
     unary_function<plugin::Authorization *, bool>(),
     user_ctx(user_ctx_arg),
-    schema(schema_arg),
     table(table_arg)
   { }
 
   inline result_type operator()(argument_type auth)
   {
-    return auth->restrictTable(user_ctx, schema, table);
+    return auth->restrictTable(user_ctx, table);
   }
 };
 
@@ -117,10 +114,26 @@ public:
   }
 };
 
+class PruneSchemaFunctor :
+  public unary_function<SchemaIdentifier&, bool>
+{
+  const SecurityContext &user_ctx;
+public:
+  PruneSchemaFunctor(const SecurityContext &user_ctx_arg) :
+    unary_function<SchemaIdentifier&, bool>(),
+    user_ctx(user_ctx_arg)
+  { }
+
+  inline result_type operator()(argument_type auth)
+  {
+    return not plugin::Authorization::isAuthorized(user_ctx, auth, false);
+  }
+};
+
 } /* namespace */
 
 bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
-                                         const string &schema,
+                                         SchemaIdentifier &schema_identifier,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
@@ -131,7 +144,8 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
   vector<plugin::Authorization *>::const_iterator iter=
     find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
-            RestrictDbFunctor(user_ctx, schema));
+            RestrictDbFunctor(user_ctx, schema_identifier));
+
 
   /*
    * If iter is == end() here, that means that all of the plugins returned
@@ -145,7 +159,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
       my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
                user_ctx.getUser().c_str(),
                user_ctx.getIp().c_str(),
-               schema.c_str());
+               schema_identifier.getSQLPath().c_str());
     }
     return false;
   }
@@ -153,8 +167,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 }
 
 bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
-                                         const string &schema,
-                                         const string &table,
+                                         TableIdentifier &table,
                                          bool send_error)
 {
   /* If we never loaded any authorization plugins, just return true */
@@ -165,7 +178,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
   vector<plugin::Authorization *>::const_iterator iter=
     find_if(authorization_plugins.begin(),
             authorization_plugins.end(),
-            RestrictTableFunctor(user_ctx, schema, table));
+            RestrictTableFunctor(user_ctx, table));
 
   /*
    * If iter is == end() here, that means that all of the plugins returned
@@ -179,7 +192,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
       my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
                user_ctx.getUser().c_str(),
                user_ctx.getIp().c_str(),
-               schema.c_str());
+               table.getSQLPath().c_str());
     }
     return false;
   }
@@ -220,29 +233,16 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 }
 
 void plugin::Authorization::pruneSchemaNames(const SecurityContext &user_ctx,
-                                             set<string> &set_of_names)
+                                             SchemaIdentifierList &set_of_schemas)
 {
-
-  set<string> pruned_set_of_names;
-
   /* If we never loaded any authorization plugins, just return true */
   if (authorization_plugins.empty())
     return;
 
-  /**
-   * @TODO: It would be stellar if we could find a way to do this with a
-   * functor and an STL algoritm
-   */
-  for(set<string>::const_iterator iter= set_of_names.begin();
-      iter != set_of_names.end();
-      ++iter)
-  {
-    if (plugin::Authorization::isAuthorized(user_ctx, *iter, false))
-    {
-      pruned_set_of_names.insert(*iter);
-    }
-  }
-  set_of_names.swap(pruned_set_of_names);
+  set_of_schemas.erase(remove_if(set_of_schemas.begin(),
+                                 set_of_schemas.end(),
+                                 PruneSchemaFunctor(user_ctx)),
+                       set_of_schemas.end());
 }
 
 } /* namespace drizzled */

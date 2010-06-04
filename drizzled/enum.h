@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_ENUM_H
 #define DRIZZLED_ENUM_H
 
+#include "drizzled/message/table.pb.h"
+
 namespace drizzled
 {
 
@@ -212,14 +214,6 @@ enum find_item_error_report_type
   IGNORE_ERRORS,
   REPORT_EXCEPT_NON_UNIQUE,
   IGNORE_EXCEPT_NON_UNIQUE
-};
-
-enum tmp_table_type
-{
-  STANDARD_TABLE,
-  TEMP_TABLE,
-  INTERNAL_TMP_TABLE,
-  SYSTEM_TMP_TABLE
 };
 
 /*
@@ -1061,7 +1055,12 @@ enum drizzled_error_code {
   ER_SCHEMA_DOES_NOT_EXIST,
   ER_ALTER_SCHEMA,
   ER_DROP_SCHEMA,
-  ER_ERROR_LAST= ER_CORRUPT_TABLE_DEFINITION
+  ER_USE_SQL_BIG_RESULT,
+  ER_UNKNOWN_ENGINE_OPTION,
+  ER_UNKNOWN_SCHEMA_OPTION,
+  ER_EVENT_OBSERVER_PLUGIN,
+  ER_CORRUPT_SCHEMA_DEFINITION,
+  ER_ERROR_LAST= ER_CORRUPT_SCHEMA_DEFINITION
 };
 
 enum drizzle_exit_codes {

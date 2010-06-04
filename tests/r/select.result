@@ -1939,28 +1939,28 @@ Field	Type	Null	Default	Default_is_NULL	On_Update
 auto	INTEGER	FALSE		FALSE	
 fld1	INTEGER	FALSE	0	FALSE	
 companynr	INTEGER	FALSE	0	FALSE	
-fld3	VARCHAR	FALSE	0	FALSE	
-fld4	VARCHAR	FALSE	0	FALSE	
-fld5	VARCHAR	FALSE	0	FALSE	
-fld6	VARCHAR	FALSE	0	FALSE	
+fld3	VARCHAR	FALSE		FALSE	
+fld4	VARCHAR	FALSE		FALSE	
+fld5	VARCHAR	FALSE		FALSE	
+fld6	VARCHAR	FALSE		FALSE	
 show columns from t2 from test like 'f%';
 Field	Type	Null	Default	Default_is_NULL	On_Update
 auto	INTEGER	FALSE		FALSE	
 fld1	INTEGER	FALSE	0	FALSE	
 companynr	INTEGER	FALSE	0	FALSE	
-fld3	VARCHAR	FALSE	0	FALSE	
-fld4	VARCHAR	FALSE	0	FALSE	
-fld5	VARCHAR	FALSE	0	FALSE	
-fld6	VARCHAR	FALSE	0	FALSE	
+fld3	VARCHAR	FALSE		FALSE	
+fld4	VARCHAR	FALSE		FALSE	
+fld5	VARCHAR	FALSE		FALSE	
+fld6	VARCHAR	FALSE		FALSE	
 show columns from t2 from test like 's%';
 Field	Type	Null	Default	Default_is_NULL	On_Update
 auto	INTEGER	FALSE		FALSE	
 fld1	INTEGER	FALSE	0	FALSE	
 companynr	INTEGER	FALSE	0	FALSE	
-fld3	VARCHAR	FALSE	0	FALSE	
-fld4	VARCHAR	FALSE	0	FALSE	
-fld5	VARCHAR	FALSE	0	FALSE	
-fld6	VARCHAR	FALSE	0	FALSE	
+fld3	VARCHAR	FALSE		FALSE	
+fld4	VARCHAR	FALSE		FALSE	
+fld5	VARCHAR	FALSE		FALSE	
+fld6	VARCHAR	FALSE		FALSE	
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
 id bigint NOT NULL auto_increment,
@@ -3713,3 +3713,4 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	10	100.00	Using where
 Warnings:
 Note	1003	select `test`.`t1`.`a` AS `a` from `test`.`t1` where (`test`.`t1`.`a` > <cache>(unix_timestamp('2009-03-10 00:00:00')))
+DROP TABLE t1, t2;

@@ -18,11 +18,12 @@
  */
 
 #include "config.h"
-#include <drizzled/plugin/logging.h>
-#include <drizzled/gettext.h>
-#include "drizzled/plugin/registry.h"
+#include "drizzled/plugin/logging.h"
+#include "drizzled/gettext.h"
+#include "drizzled/errmsg_print.h"
 
 #include <vector>
+#include <algorithm>
 
 class Session;
 

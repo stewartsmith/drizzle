@@ -38,15 +38,15 @@ class ha_myisam: public drizzled::Cursor
   ~ha_myisam() {}
   Cursor *clone(drizzled::memory::Root *mem_root);
   const char *index_type(uint32_t key_number);
-  int index_init(uint32_t idx, bool sorted);
-  int index_end();
+  int doStartIndexScan(uint32_t idx, bool sorted);
+  int doEndIndexScan();
   uint32_t checksum() const;
 
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
-  int write_row(unsigned char * buf);
-  int update_row(const unsigned char * old_data, unsigned char * new_data);
-  int delete_row(const unsigned char * buf);
+  int doInsertRecord(unsigned char * buf);
+  int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);
+  int doDeleteRecord(const unsigned char * buf);
   int index_read_map(unsigned char *buf, const unsigned char *key, drizzled::key_part_map keypart_map,
                      enum drizzled::ha_rkey_function find_flag);
   int index_read_idx_map(unsigned char *buf, uint32_t index, const unsigned char *key,
@@ -58,10 +58,9 @@ class ha_myisam: public drizzled::Cursor
   int index_first(unsigned char * buf);
   int index_last(unsigned char * buf);
   int index_next_same(unsigned char *buf, const unsigned char *key, uint32_t keylen);
-  int rnd_init(bool scan);
+  int doStartTableScan(bool scan);
   int rnd_next(unsigned char *buf);
   int rnd_pos(unsigned char * buf, unsigned char *pos);
-  int restart_rnd_next(unsigned char *buf, unsigned char *pos);
   void position(const unsigned char *record);
   int info(uint);
   int extra(enum drizzled::ha_extra_function operation);

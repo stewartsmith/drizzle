@@ -54,7 +54,7 @@ show COLUMNS FROM t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 GROUP_ID	INTEGER	FALSE	0	FALSE	
 LANG_ID	INTEGER	FALSE	0	FALSE	
-NAME	VARCHAR	FALSE	0	FALSE	
+NAME	VARCHAR	FALSE		FALSE	
 DROP TABLE t1;
 create table t1 (n int);
 insert into t1 values(9),(3),(12),(10);
@@ -99,7 +99,7 @@ select * from mysqltest.t1;
 name
 mysqltest
 alter table t1 rename mysqltest.t1;
-ERROR 42S01: Table 't1' already exists
+ERROR 42S01: Table 'mysqltest.t1' already exists
 select * from t1;
 name
 current
@@ -177,7 +177,7 @@ alter table t2 rename t1, add c char(10) comment "no comment";
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 i	INTEGER	FALSE	0	FALSE	
-c	VARCHAR	TRUE	0	TRUE	
+c	VARCHAR	TRUE		TRUE	
 drop table t1;
 create table t1 (a int, b int);
 set autocommit=0;
@@ -527,13 +527,13 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int DEFAULT NULL,
   KEY `i1` (`a`)
-) ENGINE=DEFAULT ROW_FORMAT=COMPACT
+) ENGINE=DEFAULT ROW_FORMAT='COMPACT'
 DROP INDEX i1 ON t1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int DEFAULT NULL
-) ENGINE=DEFAULT ROW_FORMAT=COMPACT
+) ENGINE=DEFAULT ROW_FORMAT='COMPACT'
 DROP TABLE t1;
 DROP TABLE IF EXISTS bug24219;
 DROP TABLE IF EXISTS bug24219_2;
@@ -789,13 +789,13 @@ CREATE TABLE `t+1` (c1 INT);
 ALTER TABLE  `t+1` RENAME `t+2`;
 CREATE TABLE `t+1` (c1 INT);
 ALTER TABLE  `t+1` RENAME `t+2`;
-ERROR 42S01: Table 't+2' already exists
+ERROR 42S01: Table 'test.t+2' already exists
 DROP TABLE   `t+1`, `t+2`;
 CREATE TEMPORARY TABLE `tt+1` (c1 INT);
 ALTER TABLE  `tt+1` RENAME `tt+2`;
 CREATE TEMPORARY TABLE `tt+1` (c1 INT);
 ALTER TABLE  `tt+1` RENAME `tt+2`;
-ERROR 42S01: Table 'tt+2' already exists
+ERROR 42S01: Table 'test.#tt+2' already exists
 SHOW CREATE TABLE `tt+1`;
 Table	Create Table
 tt+1	CREATE TEMPORARY TABLE `tt+1` (

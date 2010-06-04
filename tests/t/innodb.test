@@ -834,9 +834,6 @@ create table t3 (a int, b varchar(200), c text not null) engine=innodb;
 insert t1 values (1, "aaa", "bbb"), (NULL, "", "ccccc"), (0, NULL, "");
 insert t2 select * from t1;
 insert t3 select * from t1;
-checksum table t1, t2, t3, t4;
-checksum table t1, t2, t3, t4;
-checksum table t1, t2, t3, t4;
 --replace_column 1 #  6 # 7 # 8 # 9 # 10 #
 drop table t1,t2,t3;
 
@@ -1152,18 +1149,6 @@ select * from t1;
 drop table t1;
 
 #
-# Test that update does not change internal auto-increment value
-#
-
-create table t1 (a int not null auto_increment primary key, val int) engine=InnoDB;
-insert into t1 (val) values (1);
-update t1 set a=2 where a=1;
-# We should get the following error because InnoDB does not update the counter
---error ER_DUP_ENTRY
-insert into t1 (val) values (1);
-select * from t1;
-drop table t1;
-#
 # Bug #10465
 #
 
@@ -1267,13 +1252,13 @@ drop table t1, t2, t3, t4;
 create table t1 (col1 varchar(768) primary key)
  engine = innodb;
 --error 1071
-create table t2 (col1 varbinary(768) primary key)
+create table t2 (col1 varbinary(1024) primary key)
  engine = innodb;
 --error 1071
 create table t3 (col1 text, primary key(col1(768)))
  engine = innodb;
 --error 1071
-create table t4 (col1 blob, primary key(col1(768)))
+create table t4 (col1 blob, primary key(col1(1024)))
  engine = innodb;
 
 #
@@ -1311,49 +1296,6 @@ SET FOREIGN_KEY_CHECKS=1;
 INSERT INTO t2 VALUES(3);
 
 DROP TABLE t2;
-#
-# Test that checksum table uses a consistent read Bug #12669
-#
-connect (a,localhost,root,,);
-connect (b,localhost,root,,);
-connection a;
-create table t1(a int not null) engine=innodb;
-insert into t1 values (1),(2);
-set autocommit=0;
-checksum table t1;
-connection b;
-insert into t1 values(3);
-connection a;
-#
-# Here checksum should not see insert
-#
-checksum table t1;
-connection a;
-commit;
-checksum table t1;
-commit;
-drop table t1;
-#
-# autocommit = 1
-#
-connection a;
-create table t1(a int not null) engine=innodb;
-insert into t1 values (1),(2);
-set autocommit=1;
-checksum table t1;
-connection b;
-set autocommit=1;
-insert into t1 values(3);
-connection a;
-#
-# Here checksum sees insert
-#
-checksum table t1;
-drop table t1;
-
-connection default;
-disconnect a;
-disconnect b;
 
 # tests for bugs #9802 and #13778
 
@@ -1420,7 +1362,7 @@ create table t1 (a varchar(255),
                  b varchar(255),
                  c varchar(255),
                  d varchar(255),
-                 key (a,b,c,d)) engine=innodb;
+                 key (a(200),b(200),c(200),d(200))) engine=innodb;
 drop table t1;
 --error ER_TOO_LONG_KEY
 create table t1 (a varchar(255),

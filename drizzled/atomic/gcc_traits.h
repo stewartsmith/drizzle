@@ -32,36 +32,37 @@ public:
 
   gcc_traits() {}
 
-  /* YES. I know these are semantically backwards...
-   * so... TODO: Ensure we're doing the "right" thing here
-   */
-  inline value_type fetch_and_add(volatile value_type *value, D addend )
+  inline value_type add_and_fetch(volatile value_type *value, D addend )
   {
     return __sync_add_and_fetch(value, addend);
   }
 
+  inline value_type fetch_and_add(volatile value_type *value, D addend )
+  {
+    return __sync_fetch_and_add(value, addend);
+  }
+
   inline value_type fetch_and_increment(volatile value_type *value)
   {
-    return __sync_add_and_fetch(value, 1);
+    return __sync_fetch_and_add(value, 1);
   }
 
   inline value_type fetch_and_decrement(volatile value_type *value)
   {
-    return __sync_sub_and_fetch(value, 1);
+    return __sync_fetch_and_sub(value, 1);
   }
 
   inline value_type fetch_and_store(volatile value_type *value,
                                     value_type new_value)
   {
-    /* TODO: Is this the right one? */
     return __sync_lock_test_and_set(value, new_value);
   }
 
-  inline value_type compare_and_swap(volatile value_type *value,
+  inline bool compare_and_swap(volatile value_type *value,
                                      value_type new_value,
                                      value_type comparand )
   {
-    return __sync_val_compare_and_swap(value, comparand, new_value);
+    return __sync_bool_compare_and_swap(value, comparand, new_value);
   }
 
   inline value_type fetch(const volatile value_type *value) const volatile
@@ -76,7 +77,7 @@ public:
      * Look at how to rewrite the below to something that ICC feels is
      * OK and yet respects memory barriers.
      */
-    return __sync_add_and_fetch(const_cast<value_type *>(value), 0);
+    return __sync_fetch_and_add(const_cast<value_type *>(value), 0);
   }
 
   inline value_type store_with_release(volatile value_type *value,

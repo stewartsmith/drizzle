@@ -35,14 +35,9 @@ class Session;
 class TableList;
 typedef struct st_ha_check_opt HA_CHECK_OPT;
 class Table;
-typedef struct st_key KEY;
 typedef struct st_ha_create_information HA_CREATE_INFO;
 class AlterInfo;
 class Cursor;
-
-/* Flags for conversion functions. */
-static const uint32_t FN_FROM_IS_TMP(1 << 0);
-static const uint32_t FN_TO_IS_TMP(1 << 0);
 
 namespace message { class Table; }
 class TableIdentifier;
@@ -59,8 +54,6 @@ void close_cached_table(Session *session, Table *table);
 void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function);
 
-bool mysql_checksum_table(Session* session, TableList* table_list,
-                          HA_CHECK_OPT* check_opt);
 bool mysql_check_table(Session* session, TableList* table_list,
                        HA_CHECK_OPT* check_opt);
 bool mysql_analyze_table(Session* session, TableList* table_list,
@@ -71,7 +64,7 @@ bool mysql_optimize_table(Session* session, TableList* table_list,
 void write_bin_log(Session *session,
                    char const *query);
 
-bool is_primary_key(KEY *key_info);
+bool is_primary_key(KeyInfo *key_info);
 const char* is_primary_key_name(const char* key_name);
 bool check_engine(Session *, const char *, message::Table *, HA_CREATE_INFO *);
 void set_table_default_charset(HA_CREATE_INFO *create_info, const char *db);

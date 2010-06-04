@@ -38,6 +38,7 @@
 #define Lex (YYSession->lex)
 
 #include "config.h"
+#include <cstdio>
 #include "drizzled/parser.h"
 
 int yylex(void *yylval, void *yysession);
@@ -372,7 +373,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 88 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 88
+%expect 94
 
 /*
    Comments for TOKENS.
@@ -417,8 +418,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BIN_NUM
 %token  BIT_SYM                       /* MYSQL-FUNC */
 %token  BLOB_SYM                      /* SQL-2003-R */
-%token  BLOCK_SIZE_SYM
-%token  BLOCK_SYM
 %token  BOOLEAN_SYM                   /* SQL-2003-R */
 %token  BOOL_SYM
 %token  BOTH                          /* SQL-2003-R */
@@ -873,8 +872,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 
 %type <interval_time_st> interval_time_stamp
 
-%type <row_type> row_types
-
 %type <column_format_type> column_format_types
 
 %type <tx_isolation> isolation_types
@@ -902,7 +899,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         insert_values update delete truncate rename
         show describe load alter flush
         begin commit rollback savepoint release
-        analyze check start checksum
+        analyze check start
         field_list field_list_item field_spec kill column_def key_def
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
@@ -989,7 +986,6 @@ statement:
           alter
         | analyze
         | check
-        | checksum
         | commit
         | create
         | delete
@@ -1040,7 +1036,7 @@ create:
 	    message::Table &proto= statement->create_table_message;
 	   
 	    proto.set_name($5->table.str);
-	    if($2)
+	    if ($2)
 	      proto.set_type(message::Table::TEMPORARY);
 	    else
 	      proto.set_type(message::Table::STANDARD);
@@ -1191,6 +1187,42 @@ opt_as:
 opt_create_database_options:
           /* empty */ {}
         | default_collation_schema {}
+        | opt_database_custom_options {}
+        ;
+
+opt_database_custom_options:
+        custom_database_option
+        | custom_database_option ',' opt_database_custom_options
+        ;
+
+custom_database_option:
+          ident_or_text
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+        }
+        | ident_or_text equal ident_or_text
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+          opt->set_state($3.str);
+        }
+        | ident_or_text equal ulonglong_num
+        {
+          statement::CreateSchema *statement= (statement::CreateSchema *)Lex->statement;
+          char number_as_string[22];
+
+          snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
+
+          drizzled::message::Engine::Option *opt= statement->schema_message.mutable_engine()->add_options();
+
+          opt->set_name($1.str);
+          opt->set_state(number_as_string);
+        }
         ;
 
 opt_table_options:
@@ -1217,27 +1249,18 @@ create_table_options:
           create_table_option
         | create_table_option     create_table_options
         | create_table_option ',' create_table_options
-        ;
 
 create_table_option:
-          ENGINE_SYM opt_equal ident_or_text
+          custom_engine_option;
+
+custom_engine_option:
+        ENGINE_SYM equal ident_or_text
           {
             statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-            message::Table::StorageEngine *protoengine;
-            protoengine= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine();
 
             statement->is_engine_set= true;
 
-            protoengine->set_name($3.str);
-          }
-        | BLOCK_SIZE_SYM opt_equal ulong_num
-          {
-	    message::Table::TableOptions *tableopts;
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-	    tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
-
-            tableopts->set_block_size($3);
-            statement->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
+            ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->set_name($3.str);
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
@@ -1257,25 +1280,23 @@ create_table_option:
             statement->create_info.used_fields|= HA_CREATE_USED_AUTO;
 	    tableopts->set_auto_increment_value($3);
           }
-        | ROW_FORMAT_SYM opt_equal row_types
+        |  ident_or_text equal ident_or_text
           {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
+	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
 
-            statement->create_info.row_type= $3;
-            statement->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
-            statement->alter_info.flags.set(ALTER_ROW_FORMAT);
+            opt->set_name($1.str);
+            opt->set_state($3.str);
+          }
+        | ident_or_text equal ulonglong_num
+          {
+            char number_as_string[22];
+            snprintf(number_as_string, sizeof(number_as_string), "%"PRIu64, $3);
+
+	    drizzled::message::Engine::Option *opt= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_engine()->add_options();
+            opt->set_name($1.str);
+            opt->set_state(number_as_string);
           }
         | default_collation
-        | KEY_BLOCK_SIZE opt_equal ulong_num
-          {
-            statement::CreateTable *statement= (statement::CreateTable *)Lex->statement;
-
-            statement->create_info.used_fields|= HA_CREATE_USED_KEY_BLOCK_SIZE;
-
-            message::Table::TableOptions *tableopts;
-            tableopts= ((statement::CreateTable *)Lex->statement)->create_table_message.mutable_options();
-            tableopts->set_key_block_size($3);
-          }
         ;
 
 default_collation:
@@ -1312,15 +1333,6 @@ column_format_types:
         | FIXED_SYM   { $$= COLUMN_FORMAT_TYPE_FIXED; }
         | DYNAMIC_SYM { $$= COLUMN_FORMAT_TYPE_DYNAMIC; };
 
-row_types:
-          DEFAULT        { $$= ROW_TYPE_DEFAULT; }
-        | FIXED_SYM      { $$= ROW_TYPE_FIXED; }
-        | DYNAMIC_SYM    { $$= ROW_TYPE_DYNAMIC; }
-        | COMPRESSED_SYM { $$= ROW_TYPE_COMPRESSED; }
-        | REDUNDANT_SYM  { $$= ROW_TYPE_REDUNDANT; }
-        | COMPACT_SYM    { $$= ROW_TYPE_COMPACT; }
-        | PAGE_SYM       { $$= ROW_TYPE_PAGE; }
-        ;
 
 opt_select_from:
           opt_limit_clause {}
@@ -1587,11 +1599,18 @@ type:
               $$=DRIZZLE_TYPE_BLOB;
               Lex->length=(char*) 0; /* use default length */
 
-            statement::CreateTable *statement=
-              (statement::CreateTable *)Lex->statement;
+              statement::CreateTable *statement=
+                (statement::CreateTable *)Lex->statement;
 
-            if (statement->current_proto_field)
-              statement->current_proto_field->set_type(message::Table::Field::BLOB);
+              if (statement->current_proto_field)
+              {
+                statement->current_proto_field->set_type(message::Table::Field::BLOB);
+                message::Table::Field::StringFieldOptions *string_field_options;
+
+                string_field_options= statement->current_proto_field->mutable_string_options();
+                string_field_options->set_collation_id(my_charset_bin.number);
+                string_field_options->set_collation(my_charset_bin.name);
+              }
             }
           | TEXT_SYM
             {
@@ -2377,21 +2396,6 @@ start_transaction_opts:
             $$= START_TRANS_OPT_WITH_CONS_SNAPSHOT;
           }
         ;
-
-
-checksum:
-          CHECKSUM_SYM table_or_tables
-          {
-            LEX *lex=Lex;
-            lex->sql_command = SQLCOM_CHECKSUM;
-            lex->statement= new(std::nothrow) statement::Checksum(YYSession);
-            if (lex->statement == NULL)
-              DRIZZLE_YYABORT;
-          }
-          table_list
-          {}
-        ;
-
 
 analyze:
           ANALYZE_SYM table_or_tables
@@ -4301,7 +4305,7 @@ select_var_ident:
           {
             LEX *lex=Lex;
             if (lex->result)
-              ((select_dumpvar *)lex->result)->var_list.push_back( new my_var($2,0,0,(enum_field_types)0));
+              ((select_dumpvar *)lex->result)->var_list.push_back( new var($2,0,0,(enum_field_types)0));
             else
               /*
                 The parser won't create select_result instance only
@@ -4707,13 +4711,13 @@ show_param:
            DATABASES show_wild
            {
              LEX *lex= Lex;
+             Session *session= YYSession;
+
              lex->sql_command= SQLCOM_SELECT;
              lex->statement=
-               new(std::nothrow) statement::Select(YYSession);
+               new(std::nothrow) statement::Select(session);
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
-
-             Session *session= YYSession;
 
              std::string column_name= "Database";
              if (Lex->wild)
@@ -4725,12 +4729,12 @@ show_param:
 
              if (Lex->current_select->where)
              {
-               if (prepare_new_schema_table(YYSession, lex, "SCHEMAS"))
+               if (prepare_new_schema_table(session, lex, "SCHEMAS"))
                  DRIZZLE_YYABORT;
              }
              else
              {
-               if (prepare_new_schema_table(YYSession, lex, "SCHEMA_NAMES"))
+               if (prepare_new_schema_table(session, lex, "SHOW_SCHEMAS"))
                  DRIZZLE_YYABORT;
              }
 
@@ -4744,29 +4748,42 @@ show_param:
          | TABLES opt_db show_wild
            {
              LEX *lex= Lex;
+             Session *session= YYSession;
+
              lex->sql_command= SQLCOM_SELECT;
-             lex->statement=
+
+             statement::Select *select=
                new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
              if (lex->statement == NULL)
                DRIZZLE_YYABORT;
 
-              Session *session= YYSession;
 
               std::string column_name= "Tables_in_";
 
               if ($2)
               {
+		SchemaIdentifier identifier($2);
                 column_name.append($2);
                 lex->select_lex.db= $2;
-                if (not plugin::StorageEngine::doesSchemaExist($2))
+                if (not plugin::StorageEngine::doesSchemaExist(identifier))
                 {
                   my_error(ER_BAD_DB_ERROR, MYF(0), $2);
                 }
+                select->setShowPredicate($2, "");
+              }
+              else if (not session->db.empty())
+              {
+                column_name.append(session->db);
+                select->setShowPredicate(session->db, "");
               }
               else
               {
-                column_name.append(session->db);
+                 my_error(ER_NO_DB_ERROR, MYF(0));
               }
+
 
              if (Lex->wild)
              {
@@ -4775,16 +4792,8 @@ show_param:
                column_name.append(")");
              }
 
-             if (Lex->current_select->where)
-             {
-               if (prepare_new_schema_table(YYSession, lex, "TABLES"))
-                 DRIZZLE_YYABORT;
-             }
-             else
-             {
-               if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
-                 DRIZZLE_YYABORT;
-             }
+             if (prepare_new_schema_table(YYSession, lex, "SHOW_TABLES"))
+               DRIZZLE_YYABORT;
 
              Item_field *my_field= new Item_field(&session->lex->current_select->context, NULL, NULL, "TABLE_NAME");
              my_field->is_autogenerated_name= false;
@@ -4792,6 +4801,32 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+           }
+         | TEMPORARY_SYM TABLES show_wild
+           {
+             LEX *lex= Lex;
+             Session *session= YYSession;
+
+             lex->sql_command= SQLCOM_SELECT;
+
+             statement::Select *select=
+               new(std::nothrow) statement::Select(YYSession);
+
+             lex->statement= select;
+
+             if (lex->statement == NULL)
+               DRIZZLE_YYABORT;
+
+
+             if (prepare_new_schema_table(YYSession, lex, "SHOW_TEMPORARY_TABLES"))
+               DRIZZLE_YYABORT;
+
+             if (session->add_item_to_list( new Item_field(&session->lex->current_select->
+                                                           context,
+                                                           NULL, NULL, "*")))
+               DRIZZLE_YYABORT;
+             (session->lex->current_select->with_wild)++;
+
            }
          | TABLE_SYM STATUS_SYM opt_db show_wild
            {
@@ -4813,7 +4848,8 @@ show_param:
              {
                lex->select_lex.db= $3;
 
-               if (not plugin::StorageEngine::doesSchemaExist($3))
+	       SchemaIdentifier identifier($3);
+               if (not plugin::StorageEngine::doesSchemaExist(identifier))
                {
                  my_error(ER_BAD_DB_ERROR, MYF(0), $3);
                }
@@ -4908,7 +4944,7 @@ show_param:
                }
              }
 
-             if (prepare_new_schema_table(session, lex, "show_indexes"))
+             if (prepare_new_schema_table(session, lex, "SHOW_INDEXES"))
                DRIZZLE_YYABORT;
 
              if (session->add_item_to_list( new Item_field(&session->lex->current_select->
@@ -5766,8 +5802,6 @@ keyword_sp:
         | AVG_ROW_LENGTH           {}
         | AVG_SYM                  {}
         | BIT_SYM                  {}
-        | BLOCK_SIZE_SYM           {}
-        | BLOCK_SYM                {}
         | BOOL_SYM                 {}
         | BOOLEAN_SYM              {}
         | BTREE_SYM                {}

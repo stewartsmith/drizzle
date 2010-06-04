@@ -20,7 +20,9 @@ test_archive_LDADD = \
 			$(LIBINTL) \
 			$(LTLIBZ)
 
+if BUILD_ARCHIVE_PLUGIN
 noinst_LTLIBRARIES+=  plugin/archive/libazio.la
+endif
 noinst_HEADERS+= \
                  plugin/archive/azio.h
 plugin_archive_libazio_la_SOURCES= \
@@ -43,7 +45,8 @@ plugin_archive_archive_test_SOURCES= plugin/archive/archive_test.cc
 plugin_archive_archive_test_LDADD= $(test_archive_LDADD)
 
 plugin_archive_archive_reader_SOURCES= plugin/archive/archive_reader.cc
-plugin_archive_archive_reader_LDADD= $(test_archive_LDADD)
+plugin_archive_archive_reader_LDADD= $(test_archive_LDADD) ${BOOST_LIBS}
+plugin_archive_archive_reader_CXXFLAGS= ${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
 
 plugin_archive_concurrency_test_SOURCES= plugin/archive/concurrency_test.cc
 plugin_archive_concurrency_test_LDADD= $(test_archive_LDADD)

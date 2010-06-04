@@ -31,6 +31,7 @@
 #include <drizzled/sql_error.h>
 #include <drizzled/file_exchange.h>
 #include <drizzled/select_result_interceptor.h>
+#include <drizzled/statistics_variables.h>
 #include <drizzled/xid.h>
 #include "drizzled/query_id.h"
 #include "drizzled/named_savepoint.h"
@@ -59,7 +60,9 @@ namespace plugin
 {
 class Client;
 class Scheduler;
+class EventObserverList;
 }
+
 namespace message
 {
 class Transaction;
@@ -74,6 +77,8 @@ class Lex_input_stream;
 class user_var_entry;
 class CopyField;
 class Table_ident;
+
+class TableShareInstance;
 
 extern char internal_table_name[2];
 extern char empty_c_string[1];
@@ -141,8 +146,6 @@ class Time_zone;
 
 #define Session_SENTRY_MAGIC 0xfeedd1ff
 #define Session_SENTRY_GONE  0xdeadbeef
-
-#define Session_CHECK_SENTRY(session) assert(session->dbug_sentry == Session_SENTRY_MAGIC)
 
 struct system_variables
 {
@@ -224,81 +227,10 @@ extern struct system_variables global_system_variables;
 namespace drizzled
 {
 
-/**
- * Per-session local status counters
- */
-typedef struct system_status_var
-{
-  uint64_t bytes_received;
-  uint64_t bytes_sent;
-  ulong com_other;
-  ulong com_stat[(uint32_t) SQLCOM_END];
-  ulong created_tmp_disk_tables;
-  ulong created_tmp_tables;
-  ulong ha_commit_count;
-  ulong ha_delete_count;
-  ulong ha_read_first_count;
-  ulong ha_read_last_count;
-  ulong ha_read_key_count;
-  ulong ha_read_next_count;
-  ulong ha_read_prev_count;
-  ulong ha_read_rnd_count;
-  ulong ha_read_rnd_next_count;
-  ulong ha_rollback_count;
-  ulong ha_update_count;
-  ulong ha_write_count;
-  ulong ha_prepare_count;
-  ulong ha_savepoint_count;
-  ulong ha_savepoint_rollback_count;
-
-  /* KEY_CACHE parts. These are copies of the original */
-  ulong key_blocks_changed;
-  ulong key_blocks_used;
-  ulong key_cache_r_requests;
-  ulong key_cache_read;
-  ulong key_cache_w_requests;
-  ulong key_cache_write;
-  /* END OF KEY_CACHE parts */
-
-  ulong net_big_packet_count;
-  ulong select_full_join_count;
-  ulong select_full_range_join_count;
-  ulong select_range_count;
-  ulong select_range_check_count;
-  ulong select_scan_count;
-  ulong long_query_count;
-  ulong filesort_merge_passes;
-  ulong filesort_range_count;
-  ulong filesort_rows;
-  ulong filesort_scan_count;
-  /*
-    Number of statements sent from the client
-  */
-  ulong questions;
-
-  /*
-    IMPORTANT!
-    SEE last_system_status_var DEFINITION BELOW.
-
-    Below 'last_system_status_var' are all variables which doesn't make any
-    sense to add to the /global/ status variable counter.
-  */
-  double last_query_cost;
-} system_status_var;
-
-/*
-  This is used for 'SHOW STATUS'. It must be updated to the last ulong
-  variable in system_status_var which is makes sens to add to the global
-  counter
-*/
-
-#define last_system_status_var questions
-
 void mark_transaction_to_rollback(Session *session, bool all);
 
 extern pthread_mutex_t LOCK_xid_cache;
 extern HASH xid_cache;
-
 
 /**
   Storage engine specific thread local data.
@@ -369,31 +301,31 @@ public:
   enum enum_mark_columns mark_used_columns;
   inline void* alloc(size_t size)
   {
-    return alloc_root(mem_root,size);
+    return mem_root->alloc_root(size);
   }
   inline void* calloc(size_t size)
   {
     void *ptr;
-    if ((ptr= alloc_root(mem_root,size)))
+    if ((ptr= mem_root->alloc_root(size)))
       memset(ptr, 0, size);
     return ptr;
   }
   inline char *strdup(const char *str)
   {
-    return strdup_root(mem_root,str);
+    return mem_root->strdup_root(str);
   }
   inline char *strmake(const char *str, size_t size)
   {
-    return strmake_root(mem_root,str,size);
+    return mem_root->strmake_root(str,size);
   }
   inline void *memdup(const void *str, size_t size)
   {
-    return memdup_root(mem_root,str,size);
+    return mem_root->memdup_root(str, size);
   }
   inline void *memdup_w_gap(const void *str, size_t size, uint32_t gap)
   {
     void *ptr;
-    if ((ptr= alloc_root(mem_root,size+gap)))
+    if ((ptr= mem_root->alloc_root(size + gap)))
       memcpy(ptr,str,size);
     return ptr;
   }
@@ -405,6 +337,12 @@ public:
    */
   Item *free_list;
   memory::Root *mem_root; /**< Pointer to current memroot */
+
+
+  memory::Root *getMemRoot()
+  {
+    return mem_root;
+  }
   /**
    * Uniquely identifies each statement object in thread scope; change during
    * statement lifetime.
@@ -465,6 +403,11 @@ public:
 
 private:
   SecurityContext security_ctx;
+
+  inline void checkSentry() const
+  {
+    assert(this->dbug_sentry == Session_SENTRY_MAGIC);
+  }
 public:
   const SecurityContext& getSecurityContext() const
   {
@@ -1101,8 +1044,6 @@ public:
     return (abort_on_warning);
   }
   void set_status_var_init();
-  void reset_n_backup_open_tables_state(Open_tables_state *backup);
-  void restore_backup_open_tables_state(Open_tables_state *backup);
 
   /**
     Set the current database; use deep copy of C-string.
@@ -1125,7 +1066,7 @@ public:
       @retval false Success
       @retval true  Out-of-memory error
   */
-  bool set_db(const char *new_db, size_t new_db_len);
+  bool set_db(const std::string &new_db);
 
   /*
     Copy the current database to the argument. Use the current arena to
@@ -1249,7 +1190,50 @@ private:
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
   message::Statement *statement_message;
-  /** Microsecond timestamp of when Session connected */
+  plugin::EventObserverList *session_event_observers;
+  
+  /* Schema observers are mapped to databases. */
+  std::map<std::string, plugin::EventObserverList *> schema_event_observers;
+
+ 
+public:
+  plugin::EventObserverList *getSessionObservers() 
+  { 
+    return session_event_observers;
+  }
+  
+  void setSessionObservers(plugin::EventObserverList *observers) 
+  { 
+    session_event_observers= observers;
+  }
+  
+  /* For schema event observers there is one set of observers per database. */
+  plugin::EventObserverList *getSchemaObservers(const std::string &db_name) 
+  { 
+    std::map<std::string, plugin::EventObserverList *>::iterator it;
+    
+    it= schema_event_observers.find(db_name);
+    if (it == schema_event_observers.end())
+      return NULL;
+      
+    return it->second;
+  }
+  
+  void setSchemaObservers(const std::string &db_name, plugin::EventObserverList *observers) 
+  { 
+    std::map<std::string, plugin::EventObserverList *>::iterator it;
+
+    it= schema_event_observers.find(db_name);
+    if (it != schema_event_observers.end())
+      schema_event_observers.erase(it);;
+
+    if (observers)
+      schema_event_observers[db_name] = observers;
+  }
+  
+  
+ private:
+ /** Microsecond timestamp of when Session connected */
   uint64_t connect_microseconds;
   const char *proc_info;
 
@@ -1351,6 +1335,7 @@ public:
   void close_old_data_files(bool morph_locks= false,
                             bool send_refresh= false);
   void close_open_tables();
+  void close_data_files_and_morph_locks(TableIdentifier &identifier);
   void close_data_files_and_morph_locks(const char *db, const char *table_name);
 
 private:
@@ -1408,37 +1393,56 @@ public:
   Table *openTable(TableList *table_list, bool *refresh, uint32_t flags= 0);
 
   void unlink_open_table(Table *find);
-  void drop_open_table(Table *table, const char *db_name,
-                       const char *table_name);
+  void drop_open_table(Table *table, TableIdentifier &identifier);
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
   Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
+
+  typedef unordered_map<std::string, message::Table> TableMessageCache;
+  TableMessageCache table_message_cache;
+
+  bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);
+  bool removeTableMessage(TableIdentifier &identifier);
+  bool getTableMessage(TableIdentifier &identifier, message::Table &table_message);
+  bool doesTableMessageExist(TableIdentifier &identifier);
+  bool renameTableMessage(TableIdentifier &from, TableIdentifier &to);
 
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
   Table *find_temporary_table(const char *db, const char *table_name);
+  Table *find_temporary_table(TableIdentifier &identifier);
+
   void doGetTableNames(CachedDirectory &directory,
-                       const std::string& db_name,
+                       SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
-  int doGetTableDefinition(const char *path,
-                           const char *db,
-                           const char *table_name,
-                           const bool is_tmp,
-                           message::Table *table_proto);
+  void doGetTableNames(SchemaIdentifier &schema_identifier,
+                       std::set<std::string>& set_of_names);
+
+  void doGetTableIdentifiers(CachedDirectory &directory,
+                             SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
+  void doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
+
+  int doGetTableDefinition(drizzled::TableIdentifier &identifier,
+                           message::Table &table_proto);
+  bool doDoesTableExist(TableIdentifier &identifier);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);
   // The method below just handles the de-allocation of the table. In
   // a better memory type world, this would not be needed.
 private:
-  void close_temporary(Table *table);
+  void nukeTable(Table *table);
 public:
 
+  void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(TableList *table_list);
-  bool rm_temporary_table(plugin::StorageEngine *base, const char *path);
+  bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
   bool rm_temporary_table(TableIdentifier &identifier);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);
@@ -1451,6 +1455,9 @@ public:
   void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
+
+  Table *create_virtual_tmp_table(List<CreateField> &field_list);
+
 
 
   /**
@@ -1470,9 +1477,17 @@ public:
 
   static void unlink(Session *session);
 
+  void get_xid(DRIZZLE_XID *xid); // Innodb only
+
+private:
+  std::vector<TableShareInstance *> temporary_shares;
+
+public:
+  TableShareInstance *getTemporaryShare(const char *tmpname_arg);
+  TableShareInstance *getTemporaryShare();
 };
 
-class JOIN;
+class Join;
 
 #define ESCAPE_CHARS "ntrb0ZN" // keep synchronous with READ_INFO::unescape
 
@@ -1525,7 +1540,7 @@ typedef struct st_sort_buffer
 #include <drizzled/table_ident.h>
 #include <drizzled/user_var_entry.h>
 #include <drizzled/unique.h>
-#include <drizzled/my_var.h>
+#include <drizzled/var.h>
 #include <drizzled/select_dumpvar.h>
 
 namespace drizzled

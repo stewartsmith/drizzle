@@ -60,7 +60,7 @@ TablesTool::TablesTool() :
   add_field("TABLE_COLLATION");
   add_field("TABLE_CREATION_TIME");
   add_field("TABLE_UPDATE_TIME");
-  add_field("TABLE_COMMENT", 2048);
+  add_field("TABLE_COMMENT", plugin::TableFunction::STRING, 2048, true);
 }
 
 TablesTool::Generator::Generator(Field **arg) :
@@ -81,7 +81,8 @@ bool TablesTool::Generator::nextTableCore()
      return false;
 
     table_names.clear();
-    plugin::StorageEngine::getTableNames(schema_name(), table_names);
+    SchemaIdentifier identifier(schema_name());
+    plugin::StorageEngine::getTableNames(getSession(), identifier, table_names);
     table_iterator= table_names.begin();
     is_tables_primed= true;
   }
@@ -91,19 +92,11 @@ bool TablesTool::Generator::nextTableCore()
 
   table_proto.Clear();
   {
-    Session *session= current_session;
-    char path[FN_REFLEN];
-    build_table_filename(path, sizeof(path), schema_name().c_str(), table_name().c_str(), false);
-    plugin::StorageEngine::getTableDefinition(*session,
-                                             path,
-                                             schema_name().c_str(),
-                                             table_name().c_str(),
-                                             false,
-                                             &table_proto);
+    TableIdentifier identifier(schema_name().c_str(), table_name().c_str());
+    plugin::StorageEngine::getTableDefinition(getSession(),
+                                             identifier,
+                                             table_proto);
   }
-
-  if (checkTableName())
-    return false;
 
   return true;
 }
@@ -118,21 +111,11 @@ bool TablesTool::Generator::nextTable()
 
     if (not nextSchema())
       return false;
+
     is_tables_primed= false;
   }
 
   return true;
-}
-
-bool TablesTool::Generator::checkTableName()
-{
-  if (isWild(table_name()))
-    return true;
-
-  if (not table_predicate.empty() && table_predicate.compare(table_name()))
-    return true;
-
-  return false;
 }
 
 bool TablesTool::Generator::populate()
@@ -220,10 +203,10 @@ void TablesTool::Generator::fill()
   */
 
   /* TABLE_SCHEMA */
-  push(schema_name());
+  push(table_proto.schema());
 
   /* TABLE_NAME */
-  push(table_name());
+  push(table_proto.name());
 
   /* TABLE_TYPE */
   {
@@ -270,16 +253,12 @@ void TablesTool::Generator::fill()
   push(buffer);
 
   /* TABLE_COMMENT */
-  push(table_proto.options().comment());
-}
-
-bool ShowTables::Generator::checkSchema()
-{
-  Session *session= current_session;
-
-  if (session->lex->select_lex.db)
+  if (table_proto.options().has_comment())
   {
-    return schema_name().compare(session->lex->select_lex.db);
+    push(table_proto.options().comment());
   }
-  return session->db.compare(schema_name());
+  else
+  {
+    push();
+  }
 }

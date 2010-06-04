@@ -29,6 +29,7 @@
 #include "drizzled/join.h"
 #include "drizzled/internal/m_string.h"
 
+#include <cstdio>
 #include <string>
 #include <sstream>
 
@@ -233,7 +234,7 @@ void optimizer::ExplainPlan::printPlan()
       /* Build "possible_keys" value and add it to item_list */
       if (tab->keys.any())
       {
-        for (uint32_t j= 0; j < table->s->keys; j++)
+        for (uint32_t j= 0; j < table->getShare()->sizeKeys(); j++)
         {
           if (tab->keys.test(j))
           {
@@ -253,7 +254,7 @@ void optimizer::ExplainPlan::printPlan()
       /* Build "key", "key_len", and "ref" values and add them to item_list */
       if (tab->ref.key_parts)
       {
-        KEY *key_info= table->key_info+ tab->ref.key;
+        KeyInfo *key_info= table->key_info+ tab->ref.key;
         item_list.push_back(new Item_string(key_info->name,
                                             strlen(key_info->name),
                                             system_charset_info));
@@ -274,7 +275,7 @@ void optimizer::ExplainPlan::printPlan()
       }
       else if (tab->type == AM_NEXT)
       {
-        KEY *key_info=table->key_info+ tab->index;
+        KeyInfo *key_info=table->key_info+ tab->index;
         item_list.push_back(new Item_string(key_info->name,
               strlen(key_info->name),cs));
         uint32_t length= internal::int64_t2str(key_info->key_length, keylen_str_buf, 10) -

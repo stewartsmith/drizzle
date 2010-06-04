@@ -65,7 +65,7 @@ let $_diff_i=2;
 while ($_diff_i) {
 
   # Parse out any leading "master:" or "slave:" from the table
-  # specification and connect the appropriate server.
+  # specification and connect to the appropriate server.
   let $_diff_conn_master=`SELECT SUBSTR('$_diff_table', 1, 7) = 'master:'`;
   if ($_diff_conn_master) {
     let $_diff_table=`SELECT SUBSTR('$_diff_table', 8)`;
@@ -78,32 +78,30 @@ while ($_diff_i) {
   }
 
   # Sanity-check the input.
-  let $_diff_error= `SELECT '$_diff_table' NOT LIKE '_%._%'`;
-  if ($_diff_error) {
-    --echo !!!ERROR IN TEST: \$diff_table_$_diff_i='$_diff_table' is not in the form database.table
-    exit;
+  if (`SELECT '$_diff_table' NOT LIKE '_%._%'`) {
+    --echo !!!ERROR IN TEST: \$diff_table_$_diff_i='$_diff_table'
+    --echo                   is not in the form   database.table
+    --die
   }
 
-  # We need the output files to be sorted (so that diff_files does not
-  # think the files are different just because they are differently
-  # ordered).  To this end, we first generate a query that sorts the
-  # table by all columns.  Since ORDER BY accept column indices, we
-  # just generate a comma-separated list of all numbers from 1 to the
-  # number of columns in the table.
-  let $_diff_column_index=`SELECT MAX(ordinal_position)
-                           FROM information_schema.columns
-                           WHERE CONCAT(table_schema, '.', table_name) =
-                                 '$_diff_table'`;
-  let $_diff_column_list=$_diff_column_index;
-  dec $_diff_column_index;
-  while ($_diff_column_index) {
-    let $_diff_column_list=$_diff_column_index, $_diff_column_list;
-    dec $_diff_column_index;
+  # Check if the table exists
+  if (`SELECT COUNT(*) = 0 FROM data_dictionary.tables
+       WHERE CONCAT(table_schema, '.', table_name) = '$_diff_table'`) {
+    --echo !!!ERROR IN TEST: The table '$_diff_table' does not exist
+    --die
   }
+
+
+  #let $_diff_column_list=$_diff_column_index;
+  #dec $_diff_column_index;
+  #while ($_diff_column_index) {
+  #  let $_diff_column_list=$_diff_column_index, $_diff_column_list;
+  #  dec $_diff_column_index;
+  #}
 
   # Now that we have the comma-separated list of columns, we can write
   # the table to a file.
-  eval SELECT * FROM $_diff_table ORDER BY $_diff_column_list
+  eval SELECT * FROM $_diff_table ORDER BY 1 
               INTO OUTFILE '$MYSQLTEST_VARDIR/tmp/diff_table_$_diff_i';
 
   # Do the same for $diff_table_1.

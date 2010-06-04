@@ -35,7 +35,7 @@ IndexesTool::IndexesTool() :
   add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
   add_field("KEY_LENGTH", plugin::TableFunction::NUMBER);
   add_field("INDEX_TYPE");
-  add_field("INDEX_COMMENT", 1024);
+  add_field("INDEX_COMMENT", plugin::TableFunction::STRING, 1024, true);
 }
 
 IndexesTool::Generator::Generator(Field **arg) :
@@ -93,10 +93,10 @@ bool IndexesTool::Generator::populate()
 void IndexesTool::Generator::fill()
 {
   /* TABLE_SCHEMA */
-  push(schema_name());
+  push(getTableProto().schema());
 
   /* TABLE_NAME */
-  push(table_name());
+  push(getTableProto().name());
 
   /* INDEX_NAME */
   push(index.name());
@@ -146,5 +146,12 @@ void IndexesTool::Generator::fill()
   }
 
  /* "INDEX_COMMENT" */
-  push(index.comment());
+  if (index.has_comment())
+  {
+    push(index.comment());
+  }
+  else
+  {
+    push();
+  }
 }
