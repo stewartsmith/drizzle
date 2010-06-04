@@ -455,7 +455,7 @@ bool SchemaEventData::callEventObservers()
 //--------
 bool TableEventData::callEventObservers()
 {
-  observerList= table.getTableObservers();
+  observerList= table.s->getTableObservers();
   
   return EventData::callEventObservers();
 }
@@ -504,57 +504,57 @@ bool EventObserver::afterRenameTable(Session &session, TableIdentifier &from, Ta
 /* Static meathods called by drizzle to notify interested plugins 
  * of a table event,
  */
-bool EventObserver::beforeInsertRecord(Session &session, TableShare &table_share, unsigned char *buf)
+bool EventObserver::beforeInsertRecord(Table &table, unsigned char *buf)
 {
   if (all_event_plugins.empty())
     return false;
     
-  BeforeInsertRecordEventData eventData(session, table_share, buf);
+  BeforeInsertRecordEventData eventData(*(table.in_use), table, buf);
   return eventData.callEventObservers();
 }
 
-bool EventObserver::afterInsertRecord(Session &session, TableShare &table_share, const unsigned char *buf, int err)
+bool EventObserver::afterInsertRecord(Table &table, const unsigned char *buf, int err)
 {
   if (all_event_plugins.empty())
     return false;
     
-  AfterInsertRecordEventData eventData(session, table_share, buf, err);
+  AfterInsertRecordEventData eventData(*(table.in_use), table, buf, err);
   return eventData.callEventObservers();
 }
 
-bool EventObserver::beforeDeleteRecord(Session &session, TableShare &table_share, const unsigned char *buf)
+bool EventObserver::beforeDeleteRecord(Table &table, const unsigned char *buf)
 {
   if (all_event_plugins.empty())
     return false;
     
-  BeforeDeleteRecordEventData eventData(session, table_share, buf);
+  BeforeDeleteRecordEventData eventData(*(table.in_use), table, buf);
   return eventData.callEventObservers();
 }
 
-bool EventObserver::afterDeleteRecord(Session &session, TableShare &table_share, const unsigned char *buf, int err)
+bool EventObserver::afterDeleteRecord(Table &table, const unsigned char *buf, int err)
 {
   if (all_event_plugins.empty())
     return false;
     
-  AfterDeleteRecordEventData eventData(session, table_share, buf, err);
+  AfterDeleteRecordEventData eventData(*(table.in_use), table, buf, err);
   return eventData.callEventObservers();
 }
 
-bool EventObserver::beforeUpdateRecord(Session &session, TableShare &table_share, const unsigned char *old_data, unsigned char *new_data)
+bool EventObserver::beforeUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data)
 {
   if (all_event_plugins.empty())
     return false;
     
-  BeforeUpdateRecordEventData eventData(session, table_share, old_data, new_data);
+  BeforeUpdateRecordEventData eventData(*(table.in_use), table, old_data, new_data);
   return eventData.callEventObservers();
 }
 
-bool EventObserver::afterUpdateRecord(Session &session, TableShare &table_share, const unsigned char *old_data, unsigned char *new_data, int err)
+bool EventObserver::afterUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data, int err)
 {
   if (all_event_plugins.empty())
     return false;
     
- AfterUpdateRecordEventData eventData(session, table_share, old_data, new_data, err);
+ AfterUpdateRecordEventData eventData(*(table.in_use), table, old_data, new_data, err);
   return eventData.callEventObservers();
 }
 
