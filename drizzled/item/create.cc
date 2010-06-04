@@ -1701,7 +1701,7 @@ Create_func_cot::create(Session *session, Item *arg1)
 {
   Item *i1= new (session->mem_root) Item_int((char*) "1", 1, 1);
   Item *i2= new (session->mem_root) Item_func_tan(arg1);
-  return new (session->mem_root) Item_func_div(i1, i2);
+  return new (session->mem_root) Item_func_div(session, i1, i2);
 }
 
 Create_func_date_format Create_func_date_format::s_singleton;

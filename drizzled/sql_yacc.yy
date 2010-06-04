@@ -2859,7 +2859,7 @@ bit_expr:
         | bit_expr '*' bit_expr %prec '*'
           { $$= new Item_func_mul($1,$3); }
         | bit_expr '/' bit_expr %prec '/'
-          { $$= new Item_func_div($1,$3); }
+          { $$= new Item_func_div(YYSession,$1,$3); }
         | bit_expr '%' bit_expr %prec '%'
           { $$= new Item_func_mod($1,$3); }
         | bit_expr DIV_SYM bit_expr %prec DIV_SYM
