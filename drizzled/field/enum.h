@@ -37,6 +37,8 @@ public:
   using Field::val_str;
   using Field::cmp;
 
+  static const int max_supported_elements = 0x10000;
+
   /** Internal storage for the string values of the ENUM */
   TYPELIB *typelib;
   Field_enum(unsigned char *ptr_arg,

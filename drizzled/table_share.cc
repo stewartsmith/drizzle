@@ -891,12 +891,13 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
 
-    if (field_options.field_value_size() > 0x10000)
+    if (field_options.field_value_size() > Field_enum::max_supported_elements)
     {
       char errmsg[100];
       snprintf(errmsg, sizeof(errmsg),
                _("ENUM column %s has greater than %d possible values"),
-               pfield.name().c_str(), 0x10000);
+               pfield.name().c_str(),
+               Field_enum::max_supported_elements);
       errmsg[99]='\0';
 
       my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);

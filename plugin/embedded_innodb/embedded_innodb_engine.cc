@@ -99,6 +99,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/field.h>
 #include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
 #include "drizzled/field/blob.h"
+#include "drizzled/field/enum.h"
 #include <drizzled/session.h>
 
 using namespace std;
@@ -681,7 +682,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
                                     column_attr, 0, 2);
     else
     {
-      assert(field_options.field_value_size() < (int)0x10000);
+      assert(field_options.field_value_size() <= Field_enum::max_supported_elements);
     }
     break;
   }
