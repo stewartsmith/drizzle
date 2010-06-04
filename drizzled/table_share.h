@@ -258,6 +258,17 @@ public:
     field.resize(arg);
   }
 
+  uint32_t positionFields(Field **arg) const
+  {
+    return (arg - (Field **)&field[0]);
+  }
+
+  void pushField(Field *arg)
+  {
+    fields++;
+    field.push_back(arg);
+  }
+
 
   Field **found_next_number_field;
 private:

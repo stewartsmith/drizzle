@@ -1648,7 +1648,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[(uint32_t) (found_next_number_field - getFields(true))];
+      outparam.field[positionFields(found_next_number_field)];
   if (timestamp_field)
     outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
 

@@ -2509,7 +2509,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         field_ptr points to field in TableShare. Convert it to the matching
         field in table
       */
-      field_ptr= (table->field + (field_ptr - (table->getMutableShare()->getFields(true))));
+      field_ptr= (table->field + table->getShare()->positionFields(field_ptr));
     }
   }
   else
