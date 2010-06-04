@@ -166,6 +166,7 @@ const uint32_t MAX_COLUMN_LENGTH= 1024;
 
 /* Buffer to hold 'version' and 'version_comment' */
 const int MAX_SERVER_VERSION_LENGTH= 128;
+const string PASSWORD_SENTINEL("\0\0\0\0\0", 5);
 
 #define PROMPT_CHAR '\\'
 
@@ -1352,23 +1353,24 @@ static pair<string, string> parse_password_arg(std::string s)
   {
     if (s == "--password")
     {
-      // Check if no argument is passed.
-      return make_pair("password", "☃PASSWORD☃");
+      tty_password= true;
+      //check if no argument is passed.
+      return make_pair("password", PASSWORD_SENTINEL);
     }
 
-    if (s.substr(10,3) == "=\"\"")
+    if (s.substr(10,3) == "=\"\"" || s.substr(10,3) == "=''")
     {
-      // Check if --password=""
-      return make_pair("password","☃PASSWORD☃");
+      // Check if --password="" or --password=''
+      return make_pair("password", PASSWORD_SENTINEL);
     }
     
-    if (s.substr(10) == "=")
+    if(s.substr(10) == "=" && s.length() == 11)
     {
       // check if --password= and return a default value
-      return make_pair("password","☃PASSWORD☃");
+      return make_pair("password", PASSWORD_SENTINEL);
     }
 
-    if (s.length()>12 && s[10] == '\"')
+    if(s.length()>12 && (s[10] == '"' || s[10] == '\''))
     {
       // check if --password has quotes, remove quotes and return the value
       return make_pair("password", s.substr(11,s.length()-1));
@@ -1507,9 +1509,9 @@ try
   N_("Use MySQL Protocol."))
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
   N_("Connect to host"))
-  ("password,P", po::value<string>(&current_password)->default_value(""),
+  ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
   N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
-  ("port,p", po::value<uint32_t>()->default_value(0),
+  ("port,p", po::value<uint32_t>()->default_value(3306),
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
   ("user,u", po::value<string>(&current_user)->default_value(""),
   N_("User for login if not current user."))
@@ -1696,10 +1698,15 @@ try
   {
     if (!opt_password.empty())
       opt_password.erase();
-    if (current_password=="☃PASSWORD☃")
+    if (current_password == PASSWORD_SENTINEL)
+    {
       opt_password= "";
+    }
     else
+    {
       opt_password= current_password;
+      tty_password= false;
+    }
     char *start= (char *)current_password.c_str();
     char *temp_pass= (char *)current_password.c_str();
     while (*temp_pass)
@@ -1711,11 +1718,10 @@ try
     {
       start[1]= 0;
     }
-    tty_password= 0;
   }
   else
   {
-      tty_password= 1;
+      tty_password= true;
   }
   
 
