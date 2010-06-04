@@ -1822,7 +1822,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     }
 
     /* Close all instances of the table to allow repair to rename files */
-    if (lock_type == TL_WRITE && table->table->getShare()->version)
+    if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
       pthread_mutex_lock(&LOCK_open); /* Lock type is TL_WRITE and we lock to repair the table */
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
@@ -1920,11 +1920,15 @@ send_result:
     if (table->table)
     {
       if (fatal_error)
-        table->table->getMutableShare()->version=0;               // Force close of table
+      {
+        table->table->getMutableShare()->resetVersion();               // Force close of table
+      }
       else if (open_for_modify)
       {
         if (table->table->getShare()->tmp_table)
+        {
           table->table->cursor->info(HA_STATUS_CONST);
+        }
         else
         {
           pthread_mutex_lock(&LOCK_open);

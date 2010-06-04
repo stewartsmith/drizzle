@@ -464,7 +464,6 @@ int movepoint(MI_INFO *info,unsigned char *record,drizzled::internal::my_off_t o
 	      drizzled::internal::my_off_t newpos, uint32_t prot_key);
 int write_data_suffix(SORT_INFO *sort_info, bool fix_datafile);
 int test_if_almost_full(MI_INFO *info);
-int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename);
 bool mi_test_if_sort_rep(MI_INFO *info, drizzled::ha_rows rows, uint64_t key_map,
 			    bool force);
 

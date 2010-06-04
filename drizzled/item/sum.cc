@@ -1028,7 +1028,7 @@ bool Item_sum_distinct::setup(Session *session)
     return(true);
 
   /* XXX: check that the case of CHAR(0) works OK */
-  tree_key_length= table->getShare()->reclength - table->getShare()->null_bytes;
+  tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
 
   /*
     Unique handles all unique elements in a tree until they can't fit
@@ -2494,7 +2494,7 @@ int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Item_sum_count_distinct* item = (Item_sum_count_distinct*)arg;
   Field **field    = item->table->field;
-  Field **field_end= field + item->table->getShare()->fields;
+  Field **field_end= field + item->table->getShare()->sizeFields();
   uint32_t *lengths=item->field_lengths;
   for (; field < field_end; ++field)
   {
@@ -2617,7 +2617,7 @@ bool Item_sum_count_distinct::setup(Session *session)
     qsort_cmp2 compare_key;
     void* cmp_arg;
     Field **field= table->field;
-    Field **field_end= field + table->getShare()->fields;
+    Field **field_end= field + table->getShare()->sizeFields();
     bool all_binary= true;
 
     for (tree_key_length= 0; field < field_end; ++field)
@@ -2638,7 +2638,7 @@ bool Item_sum_count_distinct::setup(Session *session)
     }
     else
     {
-      if (table->getShare()->fields == 1)
+      if (table->getShare()->sizeFields() == 1)
       {
         /*
           If we have only one field, which is the most common use of
@@ -2655,7 +2655,7 @@ bool Item_sum_count_distinct::setup(Session *session)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->alloc(table->getShare()->fields * sizeof(uint32_t));
+        field_lengths= (uint32_t*) session->alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
         for (tree_key_length= 0, length= field_lengths, field= table->field;
              field < field_end; ++field, ++length)
         {
@@ -2873,7 +2873,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
-  String tmp((char *)table->record[1], table->getShare()->reclength,
+  String tmp((char *)table->record[1], table->getShare()->getRecordLength(),
              default_charset_info);
   String tmp2;
   String *result= &item->result;
@@ -2902,7 +2902,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
       Field *field= (*arg)->get_tmp_table_field();
       uint32_t offset= (field->offset(field->table->record[0]) -
                     table->getShare()->null_bytes);
-      assert(offset < table->getShare()->reclength);
+      assert(offset < table->getShare()->getRecordLength());
       res= field->val_str(&tmp, key + offset);
     }
     else
@@ -3269,7 +3269,7 @@ bool Item_func_group_concat::setup(Session *session)
      Don't reserve space for NULLs: if any of gconcat arguments is NULL,
      the row is not added to the result.
   */
-  uint32_t tree_key_length= table->getShare()->reclength - table->getShare()->null_bytes;
+  uint32_t tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
 
   if (arg_count_order)
   {

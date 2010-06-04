@@ -476,7 +476,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   cursor->update_create_info(&create_info);
   primary_key= table->getShare()->primary_key;
 
-  for (uint32_t i=0 ; i < table->getShare()->keys ; i++,key_info++)
+  for (uint32_t i=0 ; i < table->getShare()->sizeKeys() ; i++,key_info++)
   {
     KeyPartInfo *key_part= key_info->key_part;
     bool found_primary=0;

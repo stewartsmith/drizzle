@@ -3536,7 +3536,7 @@ build_template(
     the clustered index */
   }
 
-  n_fields = (ulint)table->getShare()->fields; /* number of columns */
+  n_fields = (ulint)table->getShare()->sizeFields(); /* number of columns */
 
   if (!prebuilt->mysql_template) {
     prebuilt->mysql_template = (mysql_row_templ_t*)
@@ -4028,7 +4028,7 @@ calc_row_difference(
   dict_index_t* clust_index;
   uint    i= 0;
 
-  n_fields = table->getShare()->fields;
+  n_fields = table->getShare()->sizeFields();
   clust_index = dict_table_get_first_index(prebuilt->table);
 
   /* We use upd_buff to convert changed fields */
@@ -4648,7 +4648,7 @@ ha_innobase::innobase_get_index(
   ut_ad(user_session == table->in_use);
   ut_a(prebuilt->trx == session_to_trx(user_session));
 
-  if (keynr != MAX_KEY && table->getShare()->keys > 0) 
+  if (keynr != MAX_KEY && table->getShare()->sizeKeys() > 0) 
   {
     index = dict_table_get_index_on_name(prebuilt->table,
                                          table->getShare()->getTableProto()->indexes(keynr).name().c_str());
@@ -5089,7 +5089,7 @@ create_table_def(
   ulint   charset_no;
   ulint   i;
 
-  n_cols = form->getShare()->fields;
+  n_cols = form->getShare()->sizeFields();
 
   /* We pass 0 as the space id, and determine at a lower level the space
   id where to store the table */
@@ -5235,7 +5235,8 @@ create_index(
     the length of the key part versus the column. */
 
     field = NULL;
-    for (j = 0; j < form->getShare()->fields; j++) {
+    for (j = 0; j < form->getShare()->sizeFields(); j++)
+    {
 
       field = form->field[j];
 
@@ -5248,7 +5249,7 @@ create_index(
       }
     }
 
-    ut_a(j < form->getShare()->fields);
+    ut_a(j < form->getShare()->sizeFields());
 
     col_type = get_innobase_type_from_mysql_type(
           &is_unsigned, key_part->field);
@@ -5385,7 +5386,7 @@ InnobaseEngine::doCreateTable(
 
   const char *table_name= identifier.getPath().c_str();
 
-  if (form.getShare()->fields > 1000) {
+  if (form.getShare()->sizeFields() > 1000) {
     /* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
       but we play safe here */
 
@@ -5516,7 +5517,7 @@ InnobaseEngine::doCreateTable(
 
   /* Create the keys */
 
-  if (form.getShare()->keys == 0 || primary_key_no == -1) {
+  if (form.getShare()->sizeKeys() == 0 || primary_key_no == -1) {
     /* Create an index which is used as the clustered index;
       order the rows by their row id which is internally generated
       by InnoDB */
@@ -5535,7 +5536,7 @@ InnobaseEngine::doCreateTable(
     }
   }
 
-  for (i = 0; i < form.getShare()->keys; i++) {
+  for (i = 0; i < form.getShare()->sizeKeys(); i++) {
     if (i != (uint) primary_key_no) {
 
       if ((error = create_index(trx, &form, iflags, norm_name,
@@ -6376,7 +6377,7 @@ ha_innobase::info(
       index = dict_table_get_next_index(index);
     }
 
-    for (i = 0; i < table->getShare()->keys; i++) {
+    for (i = 0; i < table->getShare()->sizeKeys(); i++) {
       if (index == NULL) {
         errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains fewer "
             "indexes inside InnoDB than "
