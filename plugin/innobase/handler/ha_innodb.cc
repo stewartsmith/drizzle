@@ -3563,9 +3563,10 @@ build_template(
 
   /* Note that in InnoDB, i is the column number. MySQL calls columns
   'fields'. */
-  for (i = 0; i < n_fields; i++) {
+  for (i = 0; i < n_fields; i++) 
+  {
     templ = prebuilt->mysql_template + n_requested_fields;
-    field = table->field[i];
+    field = table->getField(i);
 
     if (UNIV_LIKELY(templ_type == ROW_MYSQL_REC_FIELDS)) {
       /* Decide which columns we should fetch
@@ -4024,7 +4025,6 @@ calc_row_difference(
   Session*  )   /*!< in: user thread */
 {
   unsigned char*    original_upd_buff = upd_buff;
-  Field*    field;
   enum_field_types field_mysql_type;
   uint    n_fields;
   ulint   o_len;
@@ -4048,7 +4048,7 @@ calc_row_difference(
   buf = (byte*) upd_buff;
 
   for (i = 0; i < n_fields; i++) {
-    field = table->field[i];
+    Field *field= table->getField(i);
 
     o_ptr = (const byte*) old_row + get_field_offset(table, field);
     n_ptr = (const byte*) new_row + get_field_offset(table, field);
@@ -5149,7 +5149,7 @@ create_table_def(
   }
 
   for (i = 0; i < n_cols; i++) {
-    field = form->field[i];
+    field = form->getField(i);
 
     col_type = get_innobase_type_from_mysql_type(&unsigned_type,
                   field);
@@ -5285,7 +5285,7 @@ create_index(
     for (j = 0; j < form->getShare()->sizeFields(); j++)
     {
 
-      field = form->field[j];
+      field = form->getField(j);
 
       if (0 == innobase_strcasecmp(
           field->field_name,

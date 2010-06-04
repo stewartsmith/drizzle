@@ -95,9 +95,14 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Read record that is identified by table->cursor->ref. */
   (void) table->cursor->rnd_pos(table->record[1], table->cursor->ref);
   /* Copy the newly read columns into the new record. */
-  for (field_p= table->field; (field= *field_p); field_p++)
+  for (field_p= table->getFields(); (field= *field_p); field_p++)
+  {
     if (unique_map.isBitSet(field->field_index))
+    {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
+    }
+  }
+
 
   return;
 }

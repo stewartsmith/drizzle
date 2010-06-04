@@ -354,7 +354,7 @@ void key_unpack(String *to, Table *table, uint32_t idx)
       field->setReadSet();
       field->val_str(&tmp);
       if (cs->mbmaxlen > 1 &&
-          table->field[key_part->fieldnr - 1]->field_length !=
+          table->getField(key_part->fieldnr - 1)->field_length !=
           key_part->length)
       {
         /*

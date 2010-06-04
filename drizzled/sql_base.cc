@@ -2495,9 +2495,9 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   /* We assume here that table->field < NO_CACHED_FIELD_INDEX = UINT_MAX */
   if (cached_field_index < table->getShare()->sizeFields() &&
       !my_strcasecmp(system_charset_info,
-                     table->field[cached_field_index]->field_name, name))
+                     table->getField(cached_field_index)->field_name, name))
   {
-    field_ptr= table->field + cached_field_index;
+    field_ptr= table->getFields() + cached_field_index;
   }
   else if (table->getShare()->name_hash.records)
   {
@@ -2509,12 +2509,12 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         field_ptr points to field in TableShare. Convert it to the matching
         field in table
       */
-      field_ptr= (table->field + table->getShare()->positionFields(field_ptr));
+      field_ptr= (table->getFields() + table->getShare()->positionFields(field_ptr));
     }
   }
   else
   {
-    if (!(field_ptr= table->field))
+    if (!(field_ptr= table->getFields()))
       return((Field *)0);
     for (; *field_ptr; ++field_ptr)
       if (!my_strcasecmp(system_charset_info, (*field_ptr)->field_name, name))
@@ -2523,7 +2523,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
   if (field_ptr && *field_ptr)
   {
-    *cached_field_index_ptr= field_ptr - table->field;
+    *cached_field_index_ptr= field_ptr - table->getFields();
     field= *field_ptr;
   }
   else
@@ -2532,7 +2532,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         my_strcasecmp(system_charset_info, name, "_rowid") ||
         table->getShare()->rowid_field_offset == 0)
       return((Field*) 0);
-    field= table->field[table->getShare()->rowid_field_offset-1];
+    field= table->getField(table->getShare()->rowid_field_offset-1);
   }
 
   update_field_dependencies(session, field, table);

@@ -146,7 +146,7 @@ innobase_rec_to_mysql(
 	ut_ad(n_fields == dict_table_get_n_user_cols(index->table));
 
 	for (i = 0; i < n_fields; i++) {
-		Field*		field	= table->field[i];
+		Field*		field	= table->getField(i);
 		ulint		ipos;
 		ulint		ilen;
 		const unsigned char*	ifield;
@@ -190,7 +190,7 @@ innobase_rec_reset(
 	uint	i;
 
 	for (i = 0; i < n_fields; i++) {
-		table->field[i]->set_default();
+		table->getField(i)->set_default();
 	}
 }
 

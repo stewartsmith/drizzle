@@ -1646,7 +1646,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
     goto err;
   }
 
-  outparam.field= field_ptr;
+  outparam.setFields(field_ptr);
 
   record= (unsigned char*) outparam.record[0]-1;	/* Fieldstart = 1 */
 
@@ -1662,9 +1662,9 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[positionFields(found_next_number_field)];
+      outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
+    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field_offset);
 
 
   /* Fix key->name and key_part->field */
@@ -1696,7 +1696,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
            key_part < key_part_end ;
            key_part++)
       {
-        Field *local_field= key_part->field= outparam.field[key_part->fieldnr-1];
+        Field *local_field= key_part->field= outparam.getField(key_part->fieldnr-1);
 
         if (local_field->key_length() != key_part->length &&
             !(local_field->flags & BLOB_FLAG))

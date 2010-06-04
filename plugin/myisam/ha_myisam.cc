@@ -296,7 +296,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
     minpos= share->getRecordLength();
     length= 0;
 
-    for (field= table_arg->field; *field; field++)
+    for (field= table_arg->getFields(); *field; field++)
     {
       if ((fieldpos= (*field)->offset(record)) >= recpos &&
           fieldpos <= minpos)

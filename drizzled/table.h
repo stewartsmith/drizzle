@@ -63,7 +63,29 @@ class Table
 public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
 
+private:
   Field **field; /**< Pointer to fields collection */
+public:
+
+  Field **getFields() const
+  {
+    return field;
+  }
+
+  Field *getField(uint32_t arg) const
+  {
+    return field[arg];
+  }
+
+  void setFields(Field **arg)
+  {
+    field= arg;
+  }
+
+  void setFieldAt(Field *arg, uint32_t arg_pos)
+  {
+    field[arg_pos]= arg;
+  }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
   Table *next;

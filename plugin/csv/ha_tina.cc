@@ -573,7 +573,7 @@ int ha_tina::encode_quote(unsigned char *)
 
   buffer.length(0);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
   {
     const char *ptr;
     const char *end_ptr;
@@ -719,7 +719,7 @@ int ha_tina::find_current_row(unsigned char *buf)
 
   memset(buf, 0, table->getShare()->null_bytes);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field=table->getFields() ; *field ; field++)
   {
     char curr_char;
 

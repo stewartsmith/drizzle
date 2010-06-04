@@ -1047,9 +1047,9 @@ bool Item_sum_distinct::setup(Session *session)
 
 bool Item_sum_distinct::add()
 {
-  args[0]->save_in_field(table->field[0], false);
+  args[0]->save_in_field(table->getField(0), false);
   is_evaluated= false;
-  if (!table->field[0]->is_null())
+  if (!table->getField(0)->is_null())
   {
     assert(tree);
     null_value= 0;
@@ -1057,7 +1057,7 @@ bool Item_sum_distinct::add()
       '0' values are also stored in the tree. This doesn't matter
       for SUM(DISTINCT), but is important for AVG(DISTINCT)
     */
-    return tree->unique_add(table->field[0]->ptr);
+    return tree->unique_add(table->getField(0)->ptr);
   }
   return 0;
 }
@@ -1065,9 +1065,9 @@ bool Item_sum_distinct::add()
 
 bool Item_sum_distinct::unique_walk_function(void *element)
 {
-  memcpy(table->field[0]->ptr, element, tree_key_length);
+  memcpy(table->getField(0)->ptr, element, tree_key_length);
   ++count;
-  val.traits->add(&val, table->field[0]);
+  val.traits->add(&val, table->getField(0));
   return 0;
 }
 
@@ -1109,7 +1109,7 @@ void Item_sum_distinct::calculate_val_and_count()
      */
     if (tree)
     {
-      table->field[0]->set_notnull();
+      table->getField(0)->set_notnull();
       tree->walk(item_sum_distinct_walk, (void*) this);
     }
     is_evaluated= true;
@@ -2493,7 +2493,7 @@ int simple_str_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Item_sum_count_distinct* item = (Item_sum_count_distinct*)arg;
-  Field **field    = item->table->field;
+  Field **field    = item->table->getFields();
   Field **field_end= field + item->table->getShare()->sizeFields();
   uint32_t *lengths=item->field_lengths;
   for (; field < field_end; ++field)
@@ -2616,7 +2616,7 @@ bool Item_sum_count_distinct::setup(Session *session)
     */
     qsort_cmp2 compare_key;
     void* cmp_arg;
-    Field **field= table->field;
+    Field **field= table->getFields();
     Field **field_end= field + table->getShare()->sizeFields();
     bool all_binary= true;
 
@@ -2647,7 +2647,7 @@ bool Item_sum_count_distinct::setup(Session *session)
           about other fields.
         */
         compare_key= (qsort_cmp2) simple_str_key_cmp;
-        cmp_arg= (void*) table->field[0];
+        cmp_arg= (void*) table->getField(0);
         /* tree_key_length has been set already */
       }
       else
@@ -2656,7 +2656,7 @@ bool Item_sum_count_distinct::setup(Session *session)
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
         field_lengths= (uint32_t*) session->alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
-        for (tree_key_length= 0, length= field_lengths, field= table->field;
+        for (tree_key_length= 0, length= field_lengths, field= table->getFields();
              field < field_end; ++field, ++length)
         {
           *length= (*field)->pack_length();
@@ -2711,9 +2711,13 @@ bool Item_sum_count_distinct::add()
   copy_fields(tmp_table_param);
   copy_funcs(tmp_table_param->items_to_copy);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
+  {
     if ((*field)->is_real_null(0))
+    {
       return 0;					// Don't count NULL
+    }
+  }
 
   is_evaluated= false;
   if (tree)

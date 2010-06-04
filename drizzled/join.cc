@@ -5385,10 +5385,9 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
     join->unit->select_limit_cnt= 1;		// Only send first row
     return(0);
   }
-  Field **first_field=entry->field+entry->getShare()->sizeFields() - field_count;
+  Field **first_field=entry->getFields() + entry->getShare()->sizeFields() - field_count;
   offset= (field_count ?
-           entry->field[entry->getShare()->sizeFields() - field_count]->
-           offset(entry->record[0]) : 0);
+           entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->record[0]) : 0);
   reclength= entry->getShare()->getRecordLength() - offset;
 
   entry->free_io_cache();				// Safety
@@ -6049,8 +6048,7 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 
   for (uint32_t i=0 ; i < join_tab->ref.key_parts ; i++)
   {
-    Field *field=table->field[table->key_info[join_tab->ref.key].key_part[i].
-			      fieldnr-1];
+    Field *field=table->getField(table->key_info[join_tab->ref.key].key_part[i].fieldnr - 1);
     Item *value=join_tab->ref.items[i];
     cond->add(new Item_func_equal(new Item_field(field), value));
   }
