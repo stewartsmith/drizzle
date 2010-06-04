@@ -33,16 +33,35 @@
 #include "Defs_ms.h"
 
 #include "pbms.h"
+class MSOpenTable;
 
 class MSEngine : public CSObject {
 public:
 	
+#ifdef DRIZZLED
+	static int startUp(PBMSResultPtr ) { return 0;}
+	static void shutDown() {}
+#else
 	static int startUp(PBMSResultPtr result);
 
 	static void shutDown();
 
 	static const PBMSEnginePtr getEngineInfoAt(int indx);
-
+#endif
+	
+	static int32_t	createBlob(const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result);
+	static int32_t	referenceBlob(const char *db_name, const char *tab_name, PBMSBlobURLPtr  ret_blob_url, char *blob_url, uint16_t col_index, PBMSResultPtr result);
+	static int32_t	dereferenceBlob(const char *db_name, const char *tab_name, char *blob_url, PBMSResultPtr result);
+	static int32_t	dropTable(const char *db_name, const char *tab_name, PBMSResultPtr result);
+	static int32_t	renameTable(const char *from_db_name, const char *from_table, const char *to_db_name, const char *to_table, PBMSResultPtr result);
+	static void		callCompleted(bool ok);
+	
+	static bool couldBeURL(const char *url, size_t length);
+	
+	private:
+	static MSOpenTable *openTable(const char *db_name, const char *tab_name, bool create);
+	static bool renameTable(const char *db_name, const char *from_table, const char *to_db_name, const char *to_table);
+	static void completeRenameTable(struct UnDoInfo *info, bool ok);
 };
 
 #endif

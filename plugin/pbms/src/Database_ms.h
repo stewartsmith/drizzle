@@ -191,9 +191,6 @@ private:
 	uint64_t				iNextBlobRefId;
 	
 public:
-	static uint64_t			gBackupDatabaseID;
-	static uint64_t			gRepoThreshold;
-	static uint64_t			gTempLogThreshold;
 
 	CSSyncSortedList	iHTTPMetaDataHeaders;
 	static void startUp(const char *default_http_headers);

@@ -48,8 +48,7 @@
 #include "OpenTable_ms.h"
 #include "ConnectionHandler_ms.h"
 #include "metadata_ms.h"
-
-u_long MSRepository::gGarbageThreshold;
+#include "parameters_ms.h"
 
 /*
  * ---------------------------------------------------------------
@@ -1533,8 +1532,8 @@ void MSRepository::writeBlobHead(MSOpenTable *otab, uint64_t offset, uint8_t ref
 void MSRepository::setRepoFileSize(MSOpenTable *otab, off64_t offset)
 {
 	myRepoFileSize = offset;
-	if (myRepoFileSize >= MSDatabase::gRepoThreshold
-		/**/ || getGarbageLevel() >= MSRepository::gGarbageThreshold)
+	if (myRepoFileSize >= PBMSParameters::getRepoThreshold()
+		/**/ || getGarbageLevel() >= PBMSParameters::getGarbageThreshold())
 		otab->closeForWriting();
 }
 
@@ -1680,7 +1679,7 @@ void MSRepository::signalCompactor()
 {
 #ifndef MS_COMPACTOR_POLLS
 	if (!mustBeDeleted) {
-		if (getGarbageLevel() >= MSRepository::gGarbageThreshold) {
+		if (getGarbageLevel() >= PBMSParameters::getGarbageThreshold()) {
 			if (myRepoDatabase->myCompactorThread)
 				myRepoDatabase->myCompactorThread->wakeup();
 		}

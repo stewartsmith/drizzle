@@ -45,6 +45,7 @@
 
 #include "Engine_ms.h"
 #include "Util_ms.h"
+#include "pbms_version.h"
 
 /*
  * A file name has the form:
@@ -159,7 +160,8 @@ void ms_build_blob_url(MSBlobURLPtr blob, char *url)
 #define STR(x) _STR(x)
 const char *ms_version()
 {
-	return STR(PBMS_VERSION);
+	//return STR(PBMS_VERSION);
+	return PBMS_VERSION;
 }
 
 

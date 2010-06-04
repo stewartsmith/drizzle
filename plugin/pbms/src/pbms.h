@@ -141,7 +141,7 @@ typedef void (*ECDeregisterdFunc)(PBMSEnginePtr engine);
  *
  * The BLOB URL must still be retained or it will automaticly be deleted after a timeout expires.
  */
-typedef int (*ECCreateBlobsFunc)(bool built_in, const char *db_name, const char *tab_name, char *blob, size_t blob_len, char *blob_url, PBMSResultPtr result);
+typedef int (*ECCreateBlobsFunc)(bool built_in, const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result);
 
 /*
  * Call this function for each BLOB to be retained. When a BLOB is used, the 
@@ -151,7 +151,7 @@ typedef int (*ECCreateBlobsFunc)(bool built_in, const char *db_name, const char 
  * The returned URL must be inserted into the row in place of the given
  * URL.
  */
-typedef int (*ECRetainBlobsFunc)(bool built_in, const char *db_name, const char *tab_name, char *ret_blob_url, char *blob_url, unsigned short col_index, PBMSResultPtr result);
+typedef int (*ECRetainBlobsFunc)(bool built_in, const char *db_name, const char *tab_name, PBMSBlobURLPtr ret_blob_url, char *blob_url, unsigned short col_index, PBMSResultPtr result);
 
 /*
  * If a row containing a BLOB is deleted, then the BLOBs in the
@@ -164,7 +164,7 @@ typedef int (*ECReleaseBlobFunc)(bool built_in, const char *db_name, const char 
 
 typedef int (*ECDropTable)(bool built_in, const char *db_name, const char *tab_name, PBMSResultPtr result);
 
-typedef int (*ECRenameTable)(bool built_in, const char *db_name, const char *from_table, const char *to_table, PBMSResultPtr result);
+typedef int (*ECRenameTable)(bool built_in, const char *db_name, const char *from_table, const char *to_db, const char *to_table, PBMSResultPtr result);
 
 typedef void (*ECCallCompleted)(bool built_in, bool ok);
 
@@ -362,7 +362,7 @@ public:
 		}
 	}
 	
-	int couldBeURL(char *blob_url, int size)
+	static bool couldBeURL(const char *blob_url, size_t size)
 	{
 		if (blob_url && (size < PBMS_BLOB_URL_SIZE)) {
 			char			buffer[PBMS_BLOB_URL_SIZE+1];
@@ -386,18 +386,18 @@ public:
 			scanned = sscanf(blob_url, URL_FMT"%4s", &db_id, &type, &tab_id, &blob_id, &auth_code, &server_id, &blob_ref_id, &blob_size, junk);
 			if (scanned != 8) {// If junk is found at the end this will also result in an invalid URL. 
 				//printf("Bad URL \"%s\": scanned = %d, junk: %d, %d, %d, %d\n", blob_url, scanned, junk[0], junk[1], junk[2], junk[3]); 
-				return 0;
+				return false;
 			}
 			
 			if (junk[0] || (type != '~' && type != '_')) {
 				//printf("Bad URL \"%s\": scanned = %d, junk: %d, %d, %d, %d\n", blob_url, scanned, junk[0], junk[1], junk[2], junk[3]); 
-				return 0;
+				return false;
 			}
 		
-			return 1;
+			return true;
 		}
 		
-		return 0;
+		return false;
 	}
 	
 	bool isPBMSLoaded()
@@ -409,7 +409,7 @@ public:
 		return (sharedMemory->sm_callbacks != NULL);
 	}
 	
-	int  retainBlob(const char *db_name, const char *tab_name, char *ret_blob_url, char *blob_url, size_t blob_size, unsigned short col_index, PBMSResultPtr result)
+	int  retainBlob(const char *db_name, const char *tab_name, PBMSBlobURLPtr ret_blob_url, char *blob_url, size_t blob_size, unsigned short col_index, PBMSResultPtr result)
 	{
 		int err;
 		char safe_url[PBMS_BLOB_URL_SIZE+1];
@@ -421,14 +421,14 @@ public:
 		if (!couldBeURL(blob_url, blob_size)) {
 		
 			if (!sharedMemory->sm_callbacks)  {
-				*ret_blob_url = 0;
+				ret_blob_url->bu_data[0] = 0;
 				return MS_OK;
 			}
 			err = sharedMemory->sm_callbacks->cb_create_blob(built_in, db_name, tab_name, blob_url, blob_size, ret_blob_url, result);
 			if (err)
 				return err;
 				
-			blob_url = ret_blob_url;
+			blob_url = ret_blob_url->bu_data;
 		} else {
 			// Make sure the url is a C string:
 			if (blob_url[blob_size]) {
@@ -485,7 +485,7 @@ public:
 		return sharedMemory->sm_callbacks->cb_drop_table(built_in, db_name, tab_name, result);
 	}
 
-	int renameTable(const char *db_name, const char *from_table, const char *to_table, PBMSResultPtr result)
+	int renameTable(const char *db_name, const char *from_table, const char *to_db, const char *to_table, PBMSResultPtr result)
 	{
 		int err;
 
@@ -495,7 +495,7 @@ public:
 		if (!sharedMemory->sm_callbacks)
 			return MS_OK;
 			
-		return sharedMemory->sm_callbacks->cb_rename_table(built_in, db_name, from_table, to_table, result);
+		return sharedMemory->sm_callbacks->cb_rename_table(built_in, db_name, from_table, to_db, to_table, result);
 	}
 
 	void completed(int ok)

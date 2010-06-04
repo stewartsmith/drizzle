@@ -27,13 +27,13 @@
  * For debugging memory leaks search for "DEBUG-BREAK-POINT" and watch mm_tracking_id
  */
 
-#include <inttypes.h>
 #include "CSConfig.h"
 
 #include <assert.h>
 #include <string.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "CSException.h"
 #include "CSMemory.h"

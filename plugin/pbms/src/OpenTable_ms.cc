@@ -546,7 +546,7 @@ void MSOpenTable::closeForWriting()
 	if (myWriteRepo) {
 		myWriteRepo->unlockRepo(REPO_WRITE);
 #ifndef MS_COMPACTOR_POLLS
-		if (myWriteRepo->getGarbageLevel() >= MSRepository::gGarbageThreshold) {
+		if (myWriteRepo->getGarbageLevel() >= PBMSParameters::getGarbageThreshold()) {
 			if (myWriteRepo->myRepoDatabase->myCompactorThread)
 				myWriteRepo->myRepoDatabase->myCompactorThread->wakeup();
 		}

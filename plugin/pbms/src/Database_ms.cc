@@ -62,14 +62,12 @@
 #include "Transaction_ms.h"
 //#include "SysTab_variable.h"
 #include "SysTab_httpheader.h"
+#include "parameters_ms.h"
 
 
 
-uint64_t				MSDatabase::gRepoThreshold;
-uint64_t				MSDatabase::gTempLogThreshold;
 CSSyncSortedList	*MSDatabase::gDatabaseList;
 CSSparseArray		*MSDatabase::gDatabaseArray;
-uint64_t				MSDatabase::gBackupDatabaseID;
 /*
  * -------------------------------------------------------------------------
  * PBMS DATABASES
@@ -381,7 +379,7 @@ MSRepository *MSDatabase::getRepoFullOfTrash(time_t *ret_wait_time)
 					lock_(myRepostoryList);
 					goto retry;
 				}
-				if (repo->getGarbageLevel() >= MSRepository::gGarbageThreshold) {
+				if (repo->getGarbageLevel() >= PBMSParameters::getGarbageThreshold()) {
 					/* Make sure there are not temp BLOBs in this repository that have
 					 * not yet timed out:
 					 */
@@ -389,7 +387,7 @@ MSRepository *MSDatabase::getRepoFullOfTrash(time_t *ret_wait_time)
 					time_t then = repo->myLastTempTime;
 
 					/* Check if there are any temp BLOBs to be removed: */
-					if (now > (time_t)(then + MSTempLog::gTempBlobTimeout)) {
+					if (now > (time_t)(then + PBMSParameters::getTempBlobTimeout())) {
 						repo->lockRepo(REPO_COMPACTING); 
 						repo->retain();
 						break;
@@ -421,9 +419,9 @@ MSRepository *MSDatabase::lockRepo(off64_t size)
 	/* Find an unlocked repository file that is below the write threshold: */
 	for (uint32_t i=0; i<myRepostoryList->size(); i++) {
 		if ((repo = (MSRepository *) myRepostoryList->get(i))) {
-			if (!repo->isRepoLocked() && !repo->isRemovingFP && !repo->mustBeDeleted &&
-				repo->myRepoFileSize + size < gRepoThreshold 
-				/**/ && repo->getGarbageLevel() < MSRepository::gGarbageThreshold)
+			if ((!repo->isRepoLocked()) && (!repo->isRemovingFP) && (!repo->mustBeDeleted) &&
+				((repo->myRepoFileSize + size) < PBMSParameters::getRepoThreshold()) 
+				/**/ && (repo->getGarbageLevel() < PBMSParameters::getGarbageThreshold()))
 				goto found1;
 		}
 		else {
@@ -554,7 +552,7 @@ void MSDatabase::queueTempLogEvent(MSOpenTable *otab, int type, uint32_t tab_id,
 		otab->myTempLogFile = iWriteTempLog->openTempLog();
 	}
 
-	if (iWriteTempLog->myTempLogSize >= gTempLogThreshold) {
+	if (iWriteTempLog->myTempLogSize >= PBMSParameters::getTempLogThreshold()) {
 		uint32_t tmp_log_id = iWriteTempLog->myLogID + 1;
 
 		new_(iWriteTempLog, MSTempLog(tmp_log_id, this, 0));
@@ -774,7 +772,7 @@ void MSDatabase::startUp(const char *default_http_headers)
 	new_(gDatabaseArray, CSSparseArray(5));
 	MSHTTPHeaderTable::setDefaultMetaDataHeaders(default_http_headers);
 	PBMSSystemTables::systemTablesStartUp();
-	gBackupDatabaseID = 1;
+	PBMSParameters::setBackupDatabaseID(1);
 	exit_();
 }
 
@@ -845,7 +843,8 @@ void MSDatabase::setBackupDatabase()
 	// are safe to use as fake IDs.
 	 
 	lock_(gDatabaseList);
-	myDatabaseID = gBackupDatabaseID++;
+	myDatabaseID = PBMSParameters::getBackupDatabaseID() +1;
+	PBMSParameters::setBackupDatabaseID(myDatabaseID);
 	gDatabaseArray->set(myDatabaseID, RETAIN(this));
 	isBackup = true;
 	

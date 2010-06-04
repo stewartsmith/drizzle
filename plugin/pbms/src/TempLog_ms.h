@@ -124,7 +124,6 @@ private:
 	bool			iDeleteLog;
 
 public:
-	static u_long	gTempBlobTimeout;
 
 	static time_t adjustWaitTime(time_t then, time_t now);
 };

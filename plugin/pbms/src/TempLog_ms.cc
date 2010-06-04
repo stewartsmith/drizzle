@@ -37,8 +37,8 @@
 #include "OpenTable_ms.h"
 #include "TransLog_ms.h"
 #include "Transaction_ms.h"
+#include "parameters_ms.h"
 
-u_long MSTempLog::gTempBlobTimeout;
 
 // Search the transaction log for a MS_ReferenceTxn record for the given BLOB.
 // Just search the log file and not the cache. Seaching the cache may be faster but
@@ -223,8 +223,8 @@ time_t MSTempLog::adjustWaitTime(time_t then, time_t now)
 {
 	time_t wait;
 
-	if (now < (time_t)(then + gTempBlobTimeout)) {
-		wait = ((then + gTempBlobTimeout - now) * 1000);
+	if (now < (time_t)(then + PBMSParameters::getTempBlobTimeout())) {
+		wait = ((then + PBMSParameters::getTempBlobTimeout() - now) * 1000);
 		if (wait < 2000)
 			wait = 2000;
 		else if (wait > 120 * 1000)
@@ -293,7 +293,7 @@ bool MSTempLogThread::doWork()
 				 * it to be created before we delete and
 				 * close the current log.
 				 */
-				myWaitTime = MSTempLog::gTempBlobTimeout * 1000;
+				myWaitTime = PBMSParameters::getTempBlobTimeout() * 1000;
 				break;
 			}
 
@@ -326,7 +326,7 @@ bool MSTempLogThread::doWork()
 			then = CS_GET_DISK_4(log_item.ti_time_4);
 
 			now = time(NULL);
-			if (now < (time_t)(then + MSTempLog::gTempBlobTimeout)) {
+			if (now < (time_t)(then + PBMSParameters::getTempBlobTimeout())) {
 				/* Time has not yet exired, adjust wait time: */
 				myWaitTime = MSTempLog::adjustWaitTime(then, now);
 				break;

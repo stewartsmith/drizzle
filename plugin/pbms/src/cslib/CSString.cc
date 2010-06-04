@@ -26,8 +26,8 @@
  *
  */
 
-#include <inttypes.h>
 #include "CSConfig.h"
+#include <inttypes.h>
 
 #include <assert.h>
 #include <string.h>

@@ -28,15 +28,42 @@
 #define __PARAMETERS_MS_H__
 
 class PBMSParameters {
-	static uint32_t server_id;
-	
 	public:
 	
-	static uint32_t getServerID() { return server_id;}
-	static void setServerID(uint32_t id) { server_id = id;}
-	
-	static bool isBLOBDatabase(const char *) { return true;}
+	static uint32_t getPortNumber();
 
+	static uint32_t getServerID();
+	
+	static uint64_t getRepoThreshold();
+
+	static uint64_t getTempLogThreshold();
+	
+	static uint32_t getTempBlobTimeout();
+	
+	static uint32_t getGarbageThreshold();
+	
+	static uint32_t getMaxKeepAlive();
+	
+	static uint64_t getBackupDatabaseID();
+	static void setBackupDatabaseID(uint64_t id);
+	
+	static const char *getDefaultMetaDataHeaders();
+	
+	static void blackListedDB(const char *db);
+
+	static bool isBlackListedDB(const char *db);
+	
+	static bool isBLOBDatabase(const char *db);
+	
+	static bool isBLOBTable(const char *db, const char *table);
+
+	static bool isPBMSEventsEnabled();
+	
+#ifdef DRIZZLED
+	static int32_t getBeforeUptateEventPosition();
+	
+	static int32_t getBeforeInsertEventPosition();	
+#endif
 };
 
 #endif // __PARAMETERS_MS_H__

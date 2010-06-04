@@ -39,6 +39,7 @@ noinst_HEADERS+= \
 		plugin/pbms/src/Defs_ms.h \
 		plugin/pbms/src/Discover_ms.h \
 		plugin/pbms/src/Engine_ms.h \
+		plugin/pbms/src/events_ms.h \
 		plugin/pbms/src/ha_pbms.h \
 		plugin/pbms/src/metadata_ms.h \
 		plugin/pbms/src/ms_mysql.h \
@@ -52,7 +53,6 @@ noinst_HEADERS+= \
 		plugin/pbms/src/SysTab_backup.h \
 		plugin/pbms/src/SysTab_cloud.h \
 		plugin/pbms/src/SysTab_dump.h \
-		plugin/pbms/src/SysTab_enabled.h \
 		plugin/pbms/src/SysTab_httpheader.h \
 		plugin/pbms/src/SysTab_util.h \
 		plugin/pbms/src/SysTab_variable.h \
@@ -78,15 +78,16 @@ plugin_pbms_libpbms_la_SOURCES= \
 	plugin/pbms/src/Database_ms.cc \
 	plugin/pbms/src/Discover_ms.cc \
 	plugin/pbms/src/Engine_ms.cc \
+	plugin/pbms/src/events_ms.cc \
 	plugin/pbms/src/ms_mysql.cc \
 	plugin/pbms/src/Network_ms.cc \
 	plugin/pbms/src/OpenTable_ms.cc \
 	plugin/pbms/src/parameters_ms.cc \
+	plugin/pbms/src/ha_pbms.cc \
 	plugin/pbms/src/Repository_ms.cc \
 	plugin/pbms/src/SysTab_backup.cc \
 	plugin/pbms/src/SysTab_cloud.cc \
 	plugin/pbms/src/SysTab_dump.cc \
-	plugin/pbms/src/SysTab_enabled.cc \
 	plugin/pbms/src/SysTab_httpheader.cc \
 	plugin/pbms/src/SysTab_util.cc \
 	plugin/pbms/src/SysTab_variable.cc \

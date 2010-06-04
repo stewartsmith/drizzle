@@ -86,9 +86,7 @@ typedef struct internal_table_info {
 } INTERRNAL_TABLE_INFO;
 
 
-#ifdef DRIZZLED
-int ms_create_proto_table(const char *engine_name, const char *name, DT_FIELD_INFO *info, DT_KEY_INFO *keys, drizzled::message::Table *table);
-#else
+#ifndef DRIZZLED
 int ms_create_table_frm(handlerton *hton, THD* thd, const char *db, const char *name, DT_FIELD_INFO *info, DT_KEY_INFO *keys, uchar **frmblob, size_t *frmlen);
 #endif
 

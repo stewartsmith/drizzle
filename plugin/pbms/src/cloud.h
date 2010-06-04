@@ -21,8 +21,8 @@
  *  Created by Barry Leslie on 3/20/09.
  *
  */
-#include <inttypes.h>
 #include "cslib/CSMd5.h"
+#include <inttypes.h>
 
 
 /* NOTES:

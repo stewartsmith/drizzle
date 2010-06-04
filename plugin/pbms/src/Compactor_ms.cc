@@ -36,6 +36,7 @@
 #include "Compactor_ms.h"
 #include "OpenTable_ms.h"
 #include "Repository_ms.h"
+#include "parameters_ms.h"
 
 /*
  * ---------------------------------------------------------------
@@ -213,7 +214,7 @@ bool MSCompactorThread::doWork()
 							if (temp_log->read(&log_item, temp_log_offset, sizeof(MSTempLogItemRec), 0) == sizeof(MSTempLogItemRec)) {
 								then = CS_GET_DISK_4(log_item.ti_time_4);
 								now = time(NULL);
-								if (now < (time_t)(then + MSTempLog::gTempBlobTimeout)) {
+								if (now < (time_t)(then + PBMSParameters::getTempBlobTimeout())) {
 									/* Wait for the BLOB to expire before we continue: */									
 									release_(temp_log);
 									unlock_(mylock);

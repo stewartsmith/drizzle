@@ -75,9 +75,8 @@
 #include "SysTab_cloud.h"
 #include "SysTab_backup.h"
 #include "SysTab_enabled.h"
-#ifndef DRIZZLED
 #include "Discover_ms.h"
-#endif
+#include "parameters_ms.h"
 
 ///* Note: mysql_priv.h messes with new, which caused a crash. */
 //#ifdef new
@@ -200,7 +199,9 @@ typedef enum {	SYS_REP = 0,
 				SYS_VARIABLE, 
 				SYS_CLOUD, 
 				SYS_BACKUP, 
+#ifndef DRIZZLED
 				SYS_ENABLED, 
+#endif
 				SYS_UNKNOWN} SysTableType;
 				
 static const char *sysTableNames[] = {
@@ -216,7 +217,9 @@ static const char *sysTableNames[] = {
 	VARIABLES_TABLE_NAME,
 	CLOUD_TABLE_NAME,
 	BACKUP_TABLE_NAME,
+#ifndef DRIZZLED
 	ENABLED_TABLE_NAME,
+#endif
 	NULL
 };
 
@@ -235,7 +238,9 @@ static INTERRNAL_TABLE_INFO pbms_internal_tables[]=
 	{ false, sysTableNames[SYS_VARIABLE], pbms_variable_info, pbms_variable_keys},
 	{ true, sysTableNames[SYS_CLOUD], pbms_cloud_info, pbms_cloud_keys},
 	{ true, sysTableNames[SYS_BACKUP], pbms_backup_info, pbms_backup_keys},
+#ifndef DRIZZLED
 	{ true, sysTableNames[SYS_ENABLED], pbms_enabled_info, pbms_enabled_keys},
+#endif
 #else
 	{ false, sysTableNames[SYS_REP], pbms_repository_info, NULL},
 	{ false, sysTableNames[SYS_REF], pbms_reference_info, NULL},
@@ -249,7 +254,9 @@ static INTERRNAL_TABLE_INFO pbms_internal_tables[]=
 	{ false, sysTableNames[SYS_VARIABLE], pbms_variable_info, NULL},
 	{ true, sysTableNames[SYS_CLOUD], pbms_cloud_info, NULL},
 	{ true, sysTableNames[SYS_BACKUP], pbms_backup_info, NULL},
+#ifndef DRIZZLED
 	{ true, sysTableNames[SYS_ENABLED], pbms_enabled_info, NULL},
+#endif
 #endif
 
 	{ false, NULL, NULL, NULL}
@@ -267,9 +274,16 @@ static SysTableType pbms_systable_type(const char *table)
 }
 
 //--------------------------
-bool PBMSSystemTables::isSystable(const char *table)
+bool PBMSSystemTables::isSystemTable(bool isPBMS, const char *table)
 {
-	return( pbms_systable_type(table) !=  SYS_UNKNOWN);
+	SysTableType i;
+	
+	i = pbms_systable_type(table);
+
+	if (i == SYS_UNKNOWN)
+		return false;
+		
+	return (pbms_internal_tables[i].is_pbms == isPBMS);
 }
 
 //--------------------------
@@ -278,18 +292,18 @@ using namespace std;
 using namespace drizzled;
 #undef TABLE
 #undef Field
-static int pbms_create_proto_table(const char *engine_name, const char *name, DT_FIELD_INFO *info, DT_KEY_INFO *keys, drizzled::message::Table *table)
+static int pbms_create_proto_table(const char *engine_name, const char *name, DT_FIELD_INFO *info, DT_KEY_INFO *keys, drizzled::message::Table &table)
 {
   message::Table::Field *field;
   message::Table::Field::FieldConstraints *field_constraints;
   message::Table::Field::StringFieldOptions *string_field_options;
 
-	table->set_name(name);
-	table->set_type(message::Table::STANDARD);
-	table->mutable_engine()->set_name(engine_name);
+	table.set_name(name);
+	table.set_type(message::Table::STANDARD);
+	table.mutable_engine()->set_name(engine_name);
 	
 	while (info->field_name) {	
-		field= table->add_field();
+		field= table.add_field();
 		
 		field->set_name(info->field_name);
 		if (info->comment)
@@ -345,9 +359,8 @@ static int pbms_create_proto_table(const char *engine_name, const char *name, DT
 				
 			default:
 				assert(0); 
-			
-				
 		}
+		info++;
 	}
 	
 			
@@ -363,7 +376,7 @@ static int pbms_create_proto_table(const char *engine_name, const char *name, DT
 #define TABLE								drizzled::Table
 #define Field								drizzled::Field
 
-int PBMSSystemTables::getSystemTableInfo(const char *name, drizzled::message::Table *table)
+int PBMSSystemTables::getSystemTableInfo(const char *name, drizzled::message::Table &table)
 {
 	int err = 1, i = 0;
 			
@@ -1516,7 +1529,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 			if (iRefTempLog->read(&log_item, ref_data->rd_temp_log_offset, sizeof(MSTempLogItemRec), 0) == sizeof(MSTempLogItemRec)) {
 				have_times = true;
 				delete_time = CS_GET_DISK_4(log_item.ti_time_4);
-				countdown = (int32_t) (delete_time + MSTempLog::gTempBlobTimeout) - (int32_t) time(NULL);
+				countdown = (int32_t) (delete_time + PBMSParameters::getTempBlobTimeout()) - (int32_t) time(NULL);
 			}
 		}
 	}
@@ -1527,7 +1540,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 				have_times = true;
 				iRefOpenTable->getDBTable()->getDeleteInfo(&ref_data->rd_temp_log_id, &ref_data->rd_temp_log_offset, &delete_time);
 				ref_data->rd_col_index = INVALID_INDEX;
-				countdown = (int32_t) (delete_time + MSTempLog::gTempBlobTimeout) - (int32_t) time(NULL);
+				countdown = (int32_t) (delete_time + PBMSParameters::getTempBlobTimeout()) - (int32_t) time(NULL);
 			}
 		}
 		else
@@ -2371,9 +2384,11 @@ MSOpenSystemTable *MSSystemTableShare::openSystemTable(const char *table_path, T
 		case SYS_BACKUP:
 			new_(otab, MSBackupTable(share, table));
 			break;
+#ifndef DRIZZLED
 		case SYS_ENABLED:
 			new_(otab, MSEnabledTable(share, table));
 			break;
+#endif
 		case SYS_UNKNOWN:
 			break;
 	}

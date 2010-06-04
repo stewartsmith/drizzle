@@ -43,9 +43,10 @@
 #include <drizzled/field.h>
 #endif
 
+#include "cslib/CSConfig.h"
+
 #include <inttypes.h>
 
-#include "cslib/CSConfig.h"
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSStorage.h"

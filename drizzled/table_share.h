@@ -50,6 +50,8 @@ namespace plugin
 class EventObserverList;
 }
 
+class Field_blob;
+
 class TableShare
 {
   typedef std::vector<std::string> StringVector;
@@ -446,6 +448,12 @@ public:
     return reclength;
   }
 
+  Field_blob *getBlobFieldAt(uint32_t i)
+  {
+	if (i < blob_fields)
+	  return (Field_blob*) field[blob_field[i]];
+	return NULL;
+  }
 private:
   /* Max rows is a hint to HEAP during a create tmp table */
   uint64_t max_rows;

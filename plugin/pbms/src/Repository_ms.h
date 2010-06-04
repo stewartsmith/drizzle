@@ -286,7 +286,6 @@ public:
 	void writeBlobChunk(PBMSBlobIDPtr blob_id, uint64_t rep_offset, uint64_t blob_offset, uint64_t data_size, char *data);
 	//void sendBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint64_t size, CSHTTPOutputStream *stream);
 	void sendBlob(MSOpenTable *otab, uint64_t offset, uint64_t req_offset, uint64_t req_size, uint32_t auth_code, bool with_auth_code, bool info_only, CSHTTPOutputStream *stream);
-	void retainBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id, uint32_t auth_code, uint16_t col_index);
 	void referenceBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id, uint32_t auth_code, uint16_t col_index);
 	void setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char *meta_data, uint16_t meta_data_len, bool reset_alias, const char  *alias);
 	void releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_size, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id, uint32_t auth_code);
@@ -417,8 +416,6 @@ private:
 	CSPath *getRepoFilePath();
 	void signalCompactor();
 
-public:
-	static u_long		gGarbageThreshold;
 };
 
 #endif

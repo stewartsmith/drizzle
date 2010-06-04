@@ -90,11 +90,11 @@ class PBMSSystemTables
 	public:
 	
 	#ifdef DRIZZLED
-	static int getSystemTableInfo(const char *name, drizzled::message::Table *table);
+	static int getSystemTableInfo(const char *name, drizzled::message::Table &table);
 	static void getSystemTableNames(bool isPBMS, std::set<std::string> &set_of_names);
 	#endif
 
-	static bool isSystable(const char *name);
+	static bool isSystemTable(bool isPBMS, const char *name);
 
 	static void transferSystemTables(MSDatabase *dst_db, MSDatabase *src_db);
 	static void loadSystemTables(MSDatabase *db);

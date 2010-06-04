@@ -94,22 +94,15 @@ using namespace drizzled::plugin;
 #undef new
 #endif
 
-#ifndef PBMS_PORT
-#define PBMS_PORT 8080
-#endif
-
-static int		pbms_port = PBMS_PORT; 
-static char		*pbms_repository_threshold;
-static char		*pbms_temp_log_threshold;
-static char		*pbms_http_metadata_headers;
 
 #ifdef DRIZZLED
+
 static int pbms_done_func(void *);
 
 class PBMSStorageEngine : public drizzled::plugin::TransactionalStorageEngine {
 public:
-	PBMSStorageEngine(std::string name_arg)
-	: TransactionalStorageEngine(name_arg, HTON_NO_FLAGS | HTON_HIDDEN) {}
+	PBMSStorageEngine()
+	: TransactionalStorageEngine(std::string("PBMS"), HTON_NO_FLAGS | HTON_HIDDEN) {}
 
 	~PBMSStorageEngine()
 	{
@@ -181,13 +174,32 @@ public:
   {
 		int err;
 		const char *tab_name = identifier.getTableName().c_str();
+
+		// Set some required table proto info:
+ 		table_proto.set_schema(identifier.getSchemaName().c_str());
+		table_proto.set_creation_timestamp(0);
+		table_proto.set_update_timestamp(0);
 		
-		err = PBMSSystemTables::getSystemTableInfo(tab_name, &table_proto);
+		err = PBMSSystemTables::getSystemTableInfo(tab_name, table_proto);
 		if (err)
 			return err;
 			
 		return EEXIST;
   }
+
+	bool doDoesTableExist(Session&, TableIdentifier &identifier)
+	{
+		const char *tab_name = identifier.getTableName().c_str();
+		const char *db_name = identifier.getSchemaName().c_str();
+		bool isPBMS = identifier.getSchemaName().compare("PBMS");
+		
+		if (isPBMS || PBMSParameters::isBLOBDatabase(db_name)) {
+			return PBMSSystemTables::isSystemTable(isPBMS, tab_name);									 
+		}
+		
+		return false;		
+	}
+
 
 };
 
@@ -566,10 +578,10 @@ static bool pbms_started = false;
 
 
 #ifdef DRIZZLED
-static int pbms_init_func(Context &registry)
+int pbms_init_func(Context &registry)
 #else
 int pbms_discover_system_tables(handlerton *hton, THD* thd, const char *db, const char *name, uchar **frmblob, size_t *frmlen);
-static int pbms_init_func(void *p)
+int pbms_init_func(void *p)
 #endif
 {
 	PBMSResultRec		result;
@@ -580,9 +592,6 @@ static int pbms_init_func(void *p)
 	ASSERT(!pbms_started);
 	pbms_started = false;
 	
-	MSDatabase::gRepoThreshold = (uint64_t) cs_byte_size_to_int8(pbms_repository_threshold);
-	MSDatabase::gTempLogThreshold = (uint64_t) cs_byte_size_to_int8(pbms_temp_log_threshold);
-
 	{
 		char info[120];
 		snprintf(info, 120, "PrimeBase Media Stream (PBMS) Daemon %s loaded...", ms_version());
@@ -596,7 +605,7 @@ static int pbms_init_func(void *p)
 	}
 
 #ifdef DRIZZLED
-		pbms_hton= new PBMSStorageEngine(std::string("PBMS"));
+		pbms_hton= new PBMSStorageEngine();
 		registry.add(pbms_hton);
 #else
 	pbms_hton = (handlerton *) p;
@@ -634,10 +643,10 @@ static int pbms_init_func(void *p)
 	try_(a) {
 		thread->threadName = CSString::newString("startup");
 		//CSTest::runAll();
-		MSDatabase::startUp(pbms_http_metadata_headers);
+		MSDatabase::startUp(PBMSParameters::getDefaultMetaDataHeaders());
 		MSTableList::startUp();
 		MSSystemTableShare::startUp();
-		MSNetwork::startUp(pbms_port);
+		MSNetwork::startUp(PBMSParameters::getPortNumber());
 		MSTransactionManager::startUp();
 		MSNetwork::startNetwork();
 	}
@@ -677,7 +686,11 @@ static int pbms_init_func(void *p)
 	return(my_res);
 }
 
+#ifdef DRIZZLED
 static int pbms_done_func(void *)
+#else
+int pbms_done_func(void *)
+#endif
 {
 	CSThread	*thread;
 
@@ -1137,6 +1150,13 @@ bool ha_pbms::get_error_message(int , String *buf)
 }
 
 
+#ifdef XXXXXXX
+static int		pbms_port = PBMS_PORT; 
+static char		*pbms_repository_threshold;
+static char		*pbms_temp_log_threshold;
+static char		*pbms_http_metadata_headers;
+
+
 #ifdef DRIZZLED
 #define st_mysql_sys_var drizzled::drizzle_sys_var
 #else
@@ -1283,7 +1303,7 @@ static MYSQL_SYSVAR_ULONG(max_keep_alive, MSConnectionHandler::gMaxKeepAlive,
 	"The timeout, in milli-seconds, before the HTTP server will close an inactive HTTP connection.",
 	NULL, NULL, MS_DEFAULT_KEEP_ALIVE, 1, UINT32_MAX, 1);
 
-static struct st_mysql_sys_var* pbms_system_variables[] = {
+struct st_mysql_sys_var* pbms_system_variables[] = {
 	MYSQL_SYSVAR(port),
 	MYSQL_SYSVAR(repository_threshold),
 	MYSQL_SYSVAR(temp_log_threshold),
@@ -1295,40 +1315,6 @@ static struct st_mysql_sys_var* pbms_system_variables[] = {
 };
 #endif
 
-#ifdef DRIZZLED
-DRIZZLE_DECLARE_PLUGIN
-{
-	DRIZZLE_VERSION_ID,
-	"PBMS",
-	"1.0",
-	"Barry Leslie, PrimeBase Technologies GmbH",
-	"The Media Stream daemon for Drizzle",
-	PLUGIN_LICENSE_GPL,
-	pbms_init_func, /* Plugin Init */
-	pbms_system_variables,          /* system variables                */
-	NULL                                            /* config options                  */
-}
-DRIZZLE_DECLARE_PLUGIN_END;
-#else
-mysql_declare_plugin(pbms)
-{
-	MYSQL_STORAGE_ENGINE_PLUGIN,
-	&pbms_engine_handler,
-	"PBMS",
-	"Barry Leslie, PrimeBase Technologies GmbH",
-	"The Media Stream daemon for MySQL",
-	PLUGIN_LICENSE_GPL,
-	pbms_init_func, /* Plugin Init */
-	pbms_done_func, /* Plugin Deinit */
-	0x0001 /* 0.1 */,
-	NULL, 											/* status variables								*/
-#if MYSQL_VERSION_ID >= 50118
-	pbms_system_variables, 							/* system variables								*/
-#else
-	NULL,
-#endif
-	NULL											/* config options								*/
-}
-mysql_declare_plugin_end;
-#endif //DRIZZLED
+
+#endif //XXXXX
 
