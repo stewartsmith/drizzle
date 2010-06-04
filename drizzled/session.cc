@@ -344,7 +344,6 @@ void Session::cleanup(void)
 Session::~Session()
 {
   this->checkSentry();
-  add_to_status(&global_status_var, &status_var);
 
   if (client->isConnected())
   {
@@ -1748,9 +1747,6 @@ extern time_t flush_status_time;
 void Session::refresh_status()
 {
   pthread_mutex_lock(&LOCK_status);
-
-  /* Add thread's status variabes to global status */
-  add_to_status(&global_status_var, &status_var);
 
   /* Reset thread's status variables */
   memset(&status_var, 0, sizeof(status_var));

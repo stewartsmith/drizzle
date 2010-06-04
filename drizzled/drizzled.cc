@@ -313,7 +313,6 @@ FILE *stderror_file=0;
 
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
-struct system_status_var global_status_var;
 struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
@@ -1440,7 +1439,6 @@ static void drizzle_init_variables(void)
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
   drizzled_user= drizzled_chroot= 0;
-  memset(&global_status_var, 0, sizeof(global_status_var));
   memset(&current_global_counters, 0, sizeof(current_global_counters));
   key_map_full.set();
 

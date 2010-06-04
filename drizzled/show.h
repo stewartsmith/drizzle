@@ -48,8 +48,6 @@ struct TableList;
 class Table;
 typedef class Item COND;
 
-extern struct system_status_var global_status_var;
-
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 
 int wild_case_compare(const CHARSET_INFO * const cs, 
