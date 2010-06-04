@@ -1511,7 +1511,7 @@ try
   N_("Connect to host"))
   ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
   N_("Password to use when connecting to server. If password is not given it's asked from the tty."))
-  ("port,p", po::value<uint32_t>()->default_value(3306),
+  ("port,p", po::value<uint32_t>()->default_value(0),
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
   ("user,u", po::value<string>(&current_user)->default_value(""),
   N_("User for login if not current user."))
@@ -1687,7 +1687,7 @@ try
     /* If the port number is > 65535 it is not a valid port
        This also helps with potential data loss casting unsigned long to a
        uint32_t. */
-    if ((opt_drizzle_port == 0) || (opt_drizzle_port > 65535))
+    if (opt_drizzle_port > 65535)
     {
       printf(_("Error: Value of %" PRIu32 " supplied for port is not valid.\n"), opt_drizzle_port);
       exit(-1);
