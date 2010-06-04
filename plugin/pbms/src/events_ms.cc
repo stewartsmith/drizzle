@@ -39,7 +39,6 @@ using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
-#define GET_BLOB_FIELD(d, i) (Field_blob *)(data.table.field[t->s->blob_field[i]])
 
 //==================================
 // My table event observers: 
@@ -54,12 +53,12 @@ static bool insertRecord(TableEventData &data, unsigned char *new_row)
 	int32_t err;
 	PBMSResultRec result;
 	
-	for (i= 0; i < data.table.blob_fields; i++) {
+	for (i= 0; i < data.table.sizeBlobFields(); i++) {
 		field = data.table.getBlobFieldAt(i);
 
 		// Get the blob record:
-		blob_rec = new_row + field->offset(field->table->record[0]);
-		packlength = field->pack_length() - data.table.blob_ptr_size;
+		blob_rec = new_row + field->offset(new_row);
+		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
 		length = field->get_length(blob_rec);
 		memcpy(&possible_blob_url, blob_rec +packlength, sizeof(char*));
@@ -132,12 +131,12 @@ static bool deleteRecord(TableEventData &data, const unsigned char *old_row)
 	PBMSResultRec result;
 	bool call_failed = false;
 	
-	for (i= 0; i < data.table.blob_fields; i++) {
+	for (i= 0; i < data.table.sizeBlobFields(); i++) {
 		field = data.table.getBlobFieldAt(i);
 
 		// Get the blob record:
-		blob_rec = (char *)old_row + field->offset(field->table->record[0]);
-		packlength = field->pack_length() - data.table.blob_ptr_size;
+		blob_rec = (char *)old_row + field->offset(old_row);
+		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
 		length = field->get_length((unsigned char *)blob_rec);
 		memcpy(&blob_url, blob_rec +packlength, sizeof(char*));
@@ -172,7 +171,7 @@ static bool deleteRecord(TableEventData &data, const unsigned char *old_row)
 //---
 static bool observeBeforeInsertRecord(BeforeInsertRecordEventData &data)
 {
-	if  (data.table.blob_fields == 0)
+	if  (data.table.sizeBlobFields() == 0)
 		return false;
 
 	return insertRecord(data, data.row);
@@ -181,7 +180,7 @@ static bool observeBeforeInsertRecord(BeforeInsertRecordEventData &data)
 //---
 static bool observeAfterInsertRecord(AfterInsertRecordEventData &data)
 {
-	if  (data.table.blob_fields > 0)
+	if  (data.table.sizeBlobFields() > 0)
 		MSEngine::callCompleted(data.err == 0);
 	
 	return false;
@@ -190,7 +189,7 @@ static bool observeAfterInsertRecord(AfterInsertRecordEventData &data)
 //---
 static bool observeBeforeUpdateRecord(BeforeUpdateRecordEventData &data)
 {
-	if (data.table.blob_fields == 0)
+	if (data.table.sizeBlobFields() == 0)
 		return false;
 
 	if (deleteRecord(data, data.new_row))
@@ -202,7 +201,7 @@ static bool observeBeforeUpdateRecord(BeforeUpdateRecordEventData &data)
 //---
 static bool observeAfterUpdateRecord(AfterUpdateRecordEventData &data)
 {
-	if  (data.table.blob_fields > 0)
+	if  (data.table.sizeBlobFields() > 0)
 		MSEngine::callCompleted(data.err == 0);
 	
   return false;
@@ -211,7 +210,7 @@ static bool observeAfterUpdateRecord(AfterUpdateRecordEventData &data)
 //---
 static bool observeAfterDeleteRecord(AfterDeleteRecordEventData &data)
 {
-	if ((data.err != 0) || (data.table.blob_fields == 0))
+	if ((data.err != 0) || (data.table.sizeBlobFields() == 0))
 		return false;
 
 	bool call_failed = deleteRecord(data, data.row);

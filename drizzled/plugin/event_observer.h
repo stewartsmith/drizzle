@@ -50,6 +50,7 @@
 namespace drizzled
 {
 
+class Table;
 class TableShare;
 
 namespace plugin
@@ -208,12 +209,12 @@ public:
   /* Static meathods called by drizzle to notify interested plugins 
    * of a table an event,
    */
-  static bool beforeInsertRecord(Session &session, TableShare &table_share, unsigned char *buf);
-  static bool afterInsertRecord(Session &session, TableShare &table_share, const unsigned char *buf, int err);
-  static bool beforeDeleteRecord(Session &session, TableShare &table_share, const unsigned char *buf);
-  static bool afterDeleteRecord(Session &session, TableShare &table_share, const unsigned char *buf, int err);
-  static bool beforeUpdateRecord(Session &session, TableShare &table_share, const unsigned char *old_data, unsigned char *new_data);
-  static bool afterUpdateRecord(Session &session, TableShare &table_share, const unsigned char *old_data, unsigned char *new_data, int err);
+  static bool beforeInsertRecord(Table &table, unsigned char *buf);
+  static bool afterInsertRecord(Table &table, const unsigned char *buf, int err);
+  static bool beforeDeleteRecord(Table &table, const unsigned char *buf);
+  static bool afterDeleteRecord(Table &table, const unsigned char *buf, int err);
+  static bool beforeUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data);
+  static bool afterUpdateRecord(Table &table, const unsigned char *old_data, unsigned char *new_data, int err);
 
   /*==========================================================*/
   /* Static meathods called by drizzle to notify interested plugins 
@@ -289,9 +290,9 @@ class TableEventData: public EventData
 {
 public:
   Session &session;
-  TableShare &table;  
+  Table &table;  
   
-  TableEventData(EventObserver::EventType event_arg, Session &session_arg, TableShare &table_arg): 
+  TableEventData(EventObserver::EventType event_arg, Session &session_arg, Table &table_arg): 
     EventData(event_arg),
     session(session_arg),
     table(table_arg)
@@ -417,7 +418,7 @@ class BeforeInsertRecordEventData: public TableEventData
 public:
   unsigned char *row;
 
-  BeforeInsertRecordEventData(Session &session_arg, TableShare &table_arg, unsigned char *row_arg): 
+  BeforeInsertRecordEventData(Session &session_arg, Table &table_arg, unsigned char *row_arg): 
   TableEventData(EventObserver::BEFORE_INSERT_RECORD, session_arg, table_arg), 
   row(row_arg)
   {}  
@@ -430,7 +431,7 @@ public:
   const unsigned char *row;
   int err;
 
-  AfterInsertRecordEventData(Session &session_arg, TableShare &table_arg, const unsigned char *row_arg, int err_arg): 
+  AfterInsertRecordEventData(Session &session_arg, Table &table_arg, const unsigned char *row_arg, int err_arg): 
   TableEventData(EventObserver::AFTER_INSERT_RECORD, session_arg, table_arg), 
   row(row_arg),
   err(err_arg)
@@ -443,7 +444,7 @@ class BeforeDeleteRecordEventData: public TableEventData
 public:
   const unsigned char *row;
 
-  BeforeDeleteRecordEventData(Session &session_arg, TableShare &table_arg, const unsigned char *row_arg): 
+  BeforeDeleteRecordEventData(Session &session_arg, Table &table_arg, const unsigned char *row_arg): 
   TableEventData(EventObserver::BEFORE_DELETE_RECORD, session_arg, table_arg), 
   row(row_arg)
   {}  
@@ -456,7 +457,7 @@ public:
   const unsigned char *row;
   int err;
 
-  AfterDeleteRecordEventData(Session &session_arg, TableShare &table_arg, const unsigned char *row_arg, int err_arg): 
+  AfterDeleteRecordEventData(Session &session_arg, Table &table_arg, const unsigned char *row_arg, int err_arg): 
   TableEventData(EventObserver::AFTER_DELETE_RECORD, session_arg, table_arg), 
   row(row_arg),
   err(err_arg)
@@ -470,7 +471,7 @@ public:
   const unsigned char *old_row;
   unsigned char *new_row;
 
-  BeforeUpdateRecordEventData(Session &session_arg, TableShare &table_arg,  
+  BeforeUpdateRecordEventData(Session &session_arg, Table &table_arg,  
     const unsigned char *old_row_arg, 
     unsigned char *new_row_arg): 
       TableEventData(EventObserver::BEFORE_UPDATE_RECORD, session_arg, table_arg), 
@@ -487,7 +488,7 @@ public:
   const unsigned char *new_row;
   int err;
 
-  AfterUpdateRecordEventData(Session &session_arg, TableShare &table_arg, 
+  AfterUpdateRecordEventData(Session &session_arg, Table &table_arg, 
     const unsigned char *old_row_arg, 
     const unsigned char *new_row_arg, 
     int err_arg): 
