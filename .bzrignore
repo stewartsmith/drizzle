@@ -308,3 +308,4 @@ config/pandora_vc_revinfo
 drizzled/message/schema_writer
 drizzled/generated_probes.h
 .DS_Store
+./unittests/uwagi.txt

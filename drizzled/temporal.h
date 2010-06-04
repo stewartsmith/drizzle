@@ -285,22 +285,6 @@ public:
 
 
   /**
-   * Operator overload for adding/subtracting a TemporalInterval
-   * instance to this temporal.
-   *
-   * @param TemporalInterval instance to add/subtract to/from
-   */
-  Date& operator+=(const TemporalIntervalYear &rhs);
-  Date& operator+=(const TemporalIntervalDayOrLess &rhs);
-  Date& operator+=(const TemporalIntervalDayOrWeek &rhs);
-  Date& operator+=(const TemporalIntervalYearMonth &rhs);
-  Date& operator-=(const TemporalIntervalYear &rhs);
-  Date& operator-=(const TemporalIntervalDayOrLess &rhs);
-  Date& operator-=(const TemporalIntervalDayOrWeek &rhs);
-  Date& operator-=(const TemporalIntervalYearMonth &rhs);
-
-
-  /**
    * Operator overload for when a DateTime instance is
    * assigned to a Date.  We do a copy of the DateTime's
    * date-related components.
