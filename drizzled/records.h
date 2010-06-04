@@ -41,11 +41,11 @@ struct ReadRecord {			/* Parameter to read_record */
   unsigned char *record;
   unsigned char *rec_buf;                /* to read field values  after filesort */
 private:
-  std::vector<unsigned char> cache;
+  unsigned char	*cache;
 public:
   unsigned char *getCache()
   {
-    return &cache[0];
+    return cache;
   }
   unsigned char *cache_pos;
   unsigned char *cache_end;

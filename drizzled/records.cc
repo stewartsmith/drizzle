@@ -53,6 +53,7 @@ void ReadRecord::init_read_record_idx(Session *,
                                       uint32_t idx)
 {
   table_arg->emptyRecord();
+  memset(this, 0, sizeof(*this));
   table= table_arg;
   cursor=  table->cursor;
   record= table->record[0];
@@ -74,6 +75,7 @@ void ReadRecord::init_read_record(Session *session_arg,
 {
   internal::IO_CACHE *tempfile;
 
+  memset(this, 0, sizeof(*this));
   session= session_arg;
   table= table_arg;
   cursor= table->cursor;
@@ -170,7 +172,11 @@ void ReadRecord::init_read_record(Session *session_arg,
 
 void ReadRecord::end_read_record()
 {                   /* free cache if used */
-  cache.resize(0);
+  if (cache)
+  {
+    free((char*) cache);
+    cache= NULL;
+  }
   if (table)
   {
     table->filesort_free_buffers();
@@ -399,12 +405,17 @@ bool ReadRecord::init_rr_cache()
   rec_cache_size= cache_records * ref_length;
 
   // We have to allocate one more byte to use uint3korr (see comments for it)
-  if (cache_records <= 2)
+  if (cache_records <= 2 ||
+      !(cache=(unsigned char*) malloc(local_rec_cache_size + cache_records * struct_length + 1)))
+  {
     return false;
-
-  cache.resize(local_rec_cache_size + cache_records * struct_length + 1);
-  read_positions= &cache[0] + local_rec_cache_size;
-  cache_pos= cache_end= &cache[0];
+  }
+#ifdef HAVE_purify
+  // Avoid warnings in qsort
+  memset(cache, 0, local_rec_cache_size + cache_records * struct_length + 1);
+#endif
+  read_positions= cache + local_rec_cache_size;
+  cache_pos= cache_end= cache;
 
   return true;
 } /* init_rr_cache */
@@ -464,11 +475,11 @@ static int rr_from_cache(ReadRecord *info)
     position=info->read_positions;
     for (i=0 ; i < length ; i++)
     {
-      memcpy(info->ref_pos,position,(size_t) info->ref_length);
+      memcpy(info->ref_pos, position, (size_t)info->ref_length);
       position+=MAX_REFLENGTH;
       record=uint3korr(position);
       position+=3;
-      record_pos=info->getCache() + record * info->reclength;
+      record_pos= info->getCache() + record * info->reclength;
       if ((error=(int16_t) info->cursor->rnd_pos(record_pos,info->ref_pos)))
       {
         record_pos[info->error_offset]=1;
