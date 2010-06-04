@@ -317,14 +317,14 @@ static bool setup_select_in_parentheses(Session *session, LEX *lex)
   return false;
 }
 
-static Item* reserved_keyword_function(const std::string &name, List<Item> *item_list)
+static Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list)
 {
   const plugin::Function *udf= plugin::Function::get(name.c_str(), name.length());
   Item *item= NULL;
 
   if (udf)
   {
-    item= Create_udf_func::s_singleton.create(current_session, udf, item_list);
+    item= Create_udf_func::s_singleton.create(session, udf, item_list);
   } else {
     my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
   }
@@ -3001,7 +3001,7 @@ function_call_keyword:
         | CURRENT_USER optional_braces
           {
             std::string user_str("user");
-            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, user_str, NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3062,7 +3062,7 @@ function_call_keyword:
         | USER '(' ')'
           {
             std::string user_str("user");
-            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, user_str, NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3124,7 +3124,7 @@ function_call_nonkeyword:
             args->push_back($3);
             args->push_back($5);
             args->push_back($7);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3135,7 +3135,7 @@ function_call_nonkeyword:
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3147,7 +3147,7 @@ function_call_nonkeyword:
             args->push_back($3);
             args->push_back($5);
             args->push_back($7);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3158,7 +3158,7 @@ function_call_nonkeyword:
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3194,7 +3194,7 @@ function_call_conflict:
         | DATABASE '(' ')'
           {
             std::string database_str("database");
-            if (! ($$= reserved_keyword_function(database_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, database_str, NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3216,7 +3216,7 @@ function_call_conflict:
             std::string reverse_str("reverse");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
