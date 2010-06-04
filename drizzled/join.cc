@@ -495,8 +495,7 @@ int Join::optimize()
     {           /* Impossible cond */
       zero_result_cause=  having_value == Item::COND_FALSE ?
                            "Impossible HAVING" : "Impossible WHERE";
-      error= 0;
-      return(0);
+      goto setup_subq_exit;
     }
   }
 
@@ -515,8 +514,7 @@ int Join::optimize()
       if (res == HA_ERR_KEY_NOT_FOUND)
       {
         zero_result_cause= "No matching min/max row";
-        error=0;
-        return(0);
+        goto setup_subq_exit;
       }
       if (res > 1)
       {
@@ -526,8 +524,7 @@ int Join::optimize()
       if (res < 0)
       {
         zero_result_cause= "No matching min/max row";
-        error=0;
-        return(0);
+        goto setup_subq_exit;
       }
       zero_result_cause= "Select tables optimized away";
       tables_list= 0;       // All tables resolved
@@ -546,6 +543,7 @@ int Join::optimize()
         COND *table_independent_conds= make_cond_for_table(conds, PSEUDO_TABLE_BITS, 0, 0);
         conds= table_independent_conds;
       }
+      goto setup_subq_exit;
     }
   }
   if (!tables_list)
@@ -578,8 +576,7 @@ int Join::optimize()
        select_lex->master_unit() == &session->lex->unit)) // upper level SELECT
   {
     zero_result_cause= "no matching row in const table";
-    error= 0;
-    return(0);
+    goto setup_subq_exit;
   }
   if (!(session->options & OPTION_BIG_SELECTS) &&
       best_read > (double) session->variables.max_join_size &&
@@ -645,7 +642,7 @@ int Join::optimize()
   {
     zero_result_cause=
       "Impossible WHERE noticed after reading const tables";
-    return(0);        // error == 0
+    goto setup_subq_exit;
   }
 
   error= -1;          /* if goto err */
@@ -1110,6 +1107,15 @@ int Join::optimize()
 
   error= 0;
   return(0);
+
+setup_subq_exit:
+  /* Even with zero matching rows, subqueries in the HAVING clause
+     may need to be evaluated if there are aggregate functions in the query.
+  */
+  if (setup_subquery_materialization())
+    return 1;
+  error= 0;
+  return 0;
 }
 
 /**
