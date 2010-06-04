@@ -45,11 +45,9 @@ public:
 
   void logStatusVar(drizzled::Session *session);
 
+  bool hasBeenFlushed(drizzled::Session *session);
+
   void merge(StatusVars *status_vars);
-
- //TMP
-  void test();
-
 
   void copySystemStatusVar(drizzled::system_status_var *to_var, 
                            drizzled::system_status_var *from_var);

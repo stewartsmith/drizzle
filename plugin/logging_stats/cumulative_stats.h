@@ -31,9 +31,9 @@
 #define PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H
 
 #include "scoreboard_slot.h"
-#include "global_stats.h"
-#include "status_vars.h"
 #include "scoreboard.h"
+#include "global_stats.h"
+
 #include <drizzled/atomics.h>
 
 #include <vector>

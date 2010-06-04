@@ -85,9 +85,13 @@
  */
 
 #include "config.h"
-#include "status_tool.h"
+#include "user_commands.h"
+#include "status_vars.h"
+#include "global_stats.h"
 #include "logging_stats.h"
+#include "status_tool.h"
 #include "stats_schema.h"
+
 #include <drizzled/session.h>
 
 using namespace drizzled;
@@ -123,6 +127,11 @@ void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
 
   scoreboard_slot->getUserCommands()->logCommand(sql_command);
 
+  /* If a flush occurred copy over values before setting new values */
+  if (scoreboard_slot->getStatusVars()->hasBeenFlushed(session))
+  {
+    cumulative_stats->logGlobalStatusVars(scoreboard_slot);
+  }
   scoreboard_slot->getStatusVars()->logStatusVar(session);
 }
 

@@ -33,8 +33,9 @@
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/field.h>
 
-#include "logging_stats.h"
+#include "user_commands.h"
 #include "global_stats.h"
+#include "logging_stats.h"
 
 #include <vector>
 

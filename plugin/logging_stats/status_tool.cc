@@ -30,7 +30,6 @@
 #include "config.h"
 
 #include "status_tool.h"
-#include "status_vars.h"
 
 #include <vector>
 #include <sstream>

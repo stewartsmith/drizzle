@@ -84,10 +84,9 @@
  * +----------------+---------+-------+---------+-----------------+-----------+
  */
 
-#include <config.h>          
+#include <config.h>
+
 #include "stats_schema.h"
-#include "scoreboard.h"
-#include "status_vars.h"
 
 #include <sstream>
 

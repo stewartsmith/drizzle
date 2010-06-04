@@ -180,10 +180,19 @@ void StatusVars::logStatusVar(Session *session)
   copySystemStatusVar(status_var_counters, &session->status_var);
 }
 
-//TMP
-void StatusVars::test()
+bool StatusVars::hasBeenFlushed(Session *session)
 {
-  drizzle_show_var show_var= status_vars_defs[0];
-  show_var.value= (char*) "test";
-}
+  system_status_var *current_status_var= &session->status_var;
 
+  /* check bytes received if its lower then a flush has occurred */
+  uint64_t current_bytes_received= current_status_var->bytes_received;
+  uint64_t my_bytes_received= status_var_counters->bytes_received;
+  if (current_bytes_received < my_bytes_received)
+  {
+    return true;
+  }
+  else 
+  {
+    return false;
+  }
+}
