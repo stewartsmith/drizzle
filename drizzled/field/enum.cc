@@ -54,6 +54,8 @@ enum ha_base_keytype Field_enum::key_type() const
 
 void Field_enum::store_type(uint64_t value)
 {
+  value--; /* we store as starting from 0, although SQL starts from 1 */
+
   switch (packlength) {
   case 1: ptr[0]= (unsigned char) value;  break;
   case 2:
@@ -152,7 +154,7 @@ int64_t Field_enum::val_int(void)
 
   switch (packlength) {
   case 1:
-    return (int64_t) ptr[0];
+    return ((int64_t) ptr[0]) + 1; /* SQL is from 1, we store from 0 */
   case 2:
   {
     uint16_t tmp;
@@ -162,7 +164,7 @@ int64_t Field_enum::val_int(void)
     else
 #endif
       shortget(tmp,ptr);
-    return (int64_t) tmp;
+    return ((int64_t) tmp) + 1; /* SQL is from 1, we store from 0 */
   }
   default:
     assert(packlength <= 2);
@@ -201,7 +203,7 @@ int Field_enum::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 
 void Field_enum::sort_string(unsigned char *to,uint32_t )
 {
-  uint64_t value=Field_enum::val_int();
+  uint64_t value=Field_enum::val_int()-1; /* SQL is 1 based, stored as 0 based*/
   to+=packlength-1;
   for (uint32_t i=0 ; i < packlength ; i++)
   {
