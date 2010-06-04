@@ -502,7 +502,6 @@ void clean_up(bool print_message)
   module::Registry &modules= module::Registry::singleton();
   modules.shutdownModules();
   xid_cache_free();
-  free_status_vars();
   if (defaults_argv)
     internal::free_defaults(defaults_argv);
   if (opt_secure_file_priv)

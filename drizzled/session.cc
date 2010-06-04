@@ -1751,9 +1751,6 @@ void Session::refresh_status()
   /* Reset thread's status variables */
   memset(&status_var, 0, sizeof(status_var));
 
-  /* Reset some global variables */
-  reset_status_vars();
-
   /* Reset the counters of all key caches (default and named). */
   reset_key_cache_counters();
   flush_status_time= time((time_t*) 0);

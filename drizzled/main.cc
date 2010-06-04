@@ -283,8 +283,6 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  init_status_vars();
-
   errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_STARTUP)), internal::my_progname,
                 PANDORA_RELEASE_VERSION, COMPILATION_COMMENT);
 

@@ -58,10 +58,6 @@ bool mysqld_show_create_db(Session &session, SchemaIdentifier &, bool if_not_exi
 
 bool mysqld_show_column_types(Session *session);
 
-void init_status_vars();
-void free_status_vars();
-void reset_status_vars();
-
 int get_quote_char_for_identifier();
 
 } /* namespace drizzled */
