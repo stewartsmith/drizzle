@@ -1,0 +1,17 @@
+insert into max_enum_values values (0);
+ERROR HY000: Received an invalid enum value '0'.
+insert into max_enum_values values (1);
+insert into max_enum_values values (65535);
+insert into max_enum_values values (100000);
+ERROR HY000: Received an invalid enum value '100000'.
+insert into max_enum_values values (65536);
+insert into max_enum_values values (65537);
+ERROR HY000: Received an invalid enum value '65537'.
+SHOW WARNINGS;
+Level	Code	Message
+select * from max_enum_values order by many_values;
+many_values
+a0
+a65534
+a65535
+DROP TABLE max_enum_values;
