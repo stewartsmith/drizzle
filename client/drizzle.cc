@@ -348,7 +348,7 @@ void tee_puts(const char *s, FILE *file);
 void tee_putc(int c, FILE *file);
 static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool);
 /* The names of functions that actually do the manipulation. */
-static int get_options(void);
+static int process_options(void);
 static int com_quit(string *str,const char*),
   com_go(string *str,const char*), com_ego(string *str,const char*),
   com_print(string *str,const char*),
@@ -362,7 +362,7 @@ static int com_quit(string *str,const char*),
   com_nopager(string *str, const char*), com_pager(string *str, const char*);
 
 static int read_and_execute(bool interactive);
-static int sql_connect(char *host, char *database, char *user, char *password,
+static int sql_connect(const string &host, const string &database, const string &user, const string &password,
                        uint32_t silent);
 static const char *server_version_string(drizzle_con_st *con);
 static int put_info(const char *str,INFO_TYPE info,uint32_t error,
@@ -1184,7 +1184,7 @@ static Commands commands[] = {
 
 int history_length;
 static int not_in_history(const char *line);
-static void initialize_readline (const char *name);
+static void initialize_readline (char *name);
 static void fix_history(string *final_command);
 
 static Commands *find_command(const char *name,char cmd_name);
@@ -1326,7 +1326,7 @@ static bool execute_commands(int *error)
 static void check_timeout_value(uint32_t in_connect_timeout)
 {
   opt_connect_timeout= 0;
-  if(in_connect_timeout>3600*12)
+  if (in_connect_timeout > 3600*12)
   {
     cout<<N_("Error: Invalid Value for connect_timeout"); 
     exit(-1);
@@ -1337,7 +1337,7 @@ static void check_timeout_value(uint32_t in_connect_timeout)
 static void check_max_input_line(uint32_t in_max_input_line)
 {
   opt_max_input_line= 0;
-  if( in_max_input_line<4096 || in_max_input_line>(int64_t)2*1024L*1024L*1024L)
+  if (in_max_input_line<4096 || in_max_input_line>(int64_t)2*1024L*1024L*1024L)
   {
     cout<<N_("Error: Invalid Value for max_input_line");
     exit(-1);
@@ -1346,29 +1346,29 @@ static void check_max_input_line(uint32_t in_max_input_line)
   opt_max_input_line*=1024;
 }
 
-static pair<string, string> reg_password(std::string s)
+static pair<string, string> parse_password_arg(std::string s)
 {
-  if (s.find("--password")==0)
+  if (s.find("--password") == 0)
   {
-    if (s=="--password")
+    if (s == "--password")
     {
-      //check if no argument is passed.
+      // Check if no argument is passed.
       return make_pair("password", "☃PASSWORD☃");
     }
 
-    if (s.substr(10,3)=="=\"\"")
+    if (s.substr(10,3) == "=\"\"")
     {
       // Check if --password=""
       return make_pair("password","☃PASSWORD☃");
     }
     
-    if(s.substr(10)=="=")
+    if (s.substr(10) == "=")
     {
       // check if --password= and return a default value
       return make_pair("password","☃PASSWORD☃");
     }
 
-    if(s.length()>12 && s[10]=='\"')
+    if (s.length()>12 && s[10] == '\"')
     {
       // check if --password has quotes, remove quotes and return the value
       return make_pair("password", s.substr(11,s.length()-1));
@@ -1526,15 +1526,11 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
 
-  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
-                         getenv("DRIZZLE_PS1") :
-                         "drizzle> ");
- 
   po::variables_map vm;
 
-  po::store(po::command_line_parser(argc, argv).options(long_options).extra_parser(reg_password).run(), vm);
+  po::store(po::command_line_parser(argc, argv).options(long_options).extra_parser(parse_password_arg).run(), vm);
 
-  if (!vm["no-defaults"].as<bool>())
+  if (! vm["no-defaults"].as<bool>())
   {
     ifstream user_drizzle_ifs("~/.drizzle/drizzleslap.cnf");
     po::store(parse_config_file(user_drizzle_ifs, drizzle_options), vm);
@@ -1551,6 +1547,9 @@ try
 
   po::notify(vm);
 
+  default_prompt= strdup(getenv("DRIZZLE_PS1") ?
+                         getenv("DRIZZLE_PS1") :
+                         "drizzle> ");
   if (default_prompt == NULL)
   {
     fprintf(stderr, _("Memory allocation error while constructing initial "
@@ -1725,7 +1724,7 @@ try
     verbose= opt_verbose.length();
   }
 
-  if(vm.count("batch"))
+  if (vm.count("batch"))
   {
     status.setBatch(1);
     status.setAddToHistory(0);
@@ -1734,11 +1733,11 @@ try
       opt_silent= 1;
     }
   }
-  if(vm.count("silent"))
+  if (vm.count("silent"))
   {
     opt_silent++;
   }
-  if(vm.count("version"))
+  if (vm.count("version"))
   {
     printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
            VER.c_str(), drizzle_version(),
@@ -1748,7 +1747,7 @@ try
     exit(0);
   }
   
-  if(vm.count("help"))
+  if (vm.count("help"))
   {
     printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
            VER.c_str(), drizzle_version(),
@@ -1765,7 +1764,7 @@ try
   }
  
 
-  if (get_options())
+  if (process_options())
   {
     exit(1);
   }
@@ -1777,7 +1776,7 @@ try
     current_db= strdup(*argv);
   }
   memset(&drizzle, 0, sizeof(drizzle));
-  if (sql_connect((char *)current_host.c_str(), (char *)current_db.c_str(), (char *)current_user.c_str(), (char *)opt_password.c_str(),opt_silent))
+  if (sql_connect(current_host, current_db, current_user, opt_password,opt_silent))
   {
     quick= 1;          // Avoid history
     status.setExitStatus(1);
@@ -1831,7 +1830,7 @@ try
           server_version_string(&con));
   put_info(output_buff, INFO_INFO, 0, 0);
 
-  initialize_readline(current_prompt.c_str());
+  initialize_readline((char *)current_prompt.c_str());
   if (!status.getBatch() && !quick)
   {
     /* read-history from file, default ~/.drizzle_history*/
@@ -1975,7 +1974,7 @@ void window_resize(int)
 
 
 
-static int get_options(void)
+static int process_options(void)
 {
   char *tmp, *pagpoint;
   
@@ -2516,7 +2515,7 @@ static int not_in_history(const char *line)
   return 1;
 }
 
-static void initialize_readline (const char *name)
+static void initialize_readline (char *name)
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
   rl_readline_name= name;
@@ -3786,7 +3785,7 @@ com_connect(string *buffer, const char *line)
   }
   else
     opt_rehash= 0;
-  error=sql_connect((char *)current_host.c_str(), (char *)current_db.c_str(), (char *)current_user.c_str(), (char *)opt_password.c_str(),0);
+  error=sql_connect(current_host, current_db, current_user, opt_password,0);
   opt_rehash= save_rehash;
 
   if (connected)
@@ -4057,7 +4056,7 @@ char *get_arg(char *line, bool get_next_arg)
 
 
 static int
-sql_connect(char *host, char *database, char *user, char *password,
+sql_connect(const string &host, const string &database, const string &user, const string &password,
                  uint32_t silent)
 {
   drizzle_return_t ret;
@@ -4068,8 +4067,8 @@ sql_connect(char *host, char *database, char *user, char *password,
     drizzle_free(&drizzle);
   }
   drizzle_create(&drizzle);
-  if (drizzle_con_add_tcp(&drizzle, &con, host, opt_drizzle_port, user,
-                          password, database, opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(), opt_drizzle_port, (char *)user.c_str(),
+                          (char *)password.c_str(), (char *)database.c_str(), opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
