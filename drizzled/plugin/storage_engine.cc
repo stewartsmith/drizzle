@@ -823,15 +823,8 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     {
       const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
 
-      if (key_nr == 0 &&
-          (table->key_info[0].key_part[0].field->flags &
-           AUTO_INCREMENT_FLAG)
-          && (current_session)->lex->sql_command == SQLCOM_ALTER_TABLE)
-      {
-        err_msg= ER(ER_DUP_ENTRY_AUTOINCREMENT_CASE);
-      }
-
       print_keydup_error(key_nr, err_msg, *table);
+
       return;
     }
     textno=ER_DUP_KEY;
