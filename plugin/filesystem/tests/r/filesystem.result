@@ -1,0 +1,5 @@
+drop table if exists t1;
+CREATE TABLE t1 (a int, b VARCHAR(20)) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/fs.txt";
+select * from t1;
+a	b
+111	aaa
