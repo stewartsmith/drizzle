@@ -8,4 +8,34 @@ drop table if exists t1;
 
 CREATE TABLE t1 (a int, b VARCHAR(20)) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/fs.txt";
 
-select * from t1;
+SELECT * FROM t1;
+
+# test INSERT
+INSERT INTO t1 VALUES (222, "bbb");
+INSERT INTO t1 VALUES (333, "ccc");
+INSERT INTO t1 VALUES (444, "ddd");
+INSERT INTO t1 VALUES (555, "eee");
+INSERT INTO t1 VALUES (666, "fff");
+
+SELECT * FROM t1;
+
+# test DELETE
+DELETE FROM t1 WHERE a = 444;
+DELETE FROM t1 WHERE a = 111;
+
+SELECT * FROM t1;
+
+# test UPDATE
+UPDATE t1 SET a = 777 WHERE b = "ccc";
+UPDATE t1 SET b = "zzz" WHERE a = 555;
+
+SELECT * FROM t1;
+
+DELETE FROM t1 WHERE b != "zzz";
+SELECT * FROM t1;
+
+UPDATE t1 SET a = 111 WHERE b = "zzz";
+UPDATE t1 SET b = "aaa" WHERE b = "zzz";
+
+# back to the original, so we can execute more than once
+SELECT * FROM t1;
