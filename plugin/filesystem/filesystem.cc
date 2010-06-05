@@ -496,6 +496,7 @@ int ha_filesystem::doEndTableScan()
 
 int ha_filesystem::doInsertRecord(unsigned char * buf)
 {
+  (void)buf;
   ha_statistic_increment(&system_status_var::ha_write_count);
   char attribute_buffer[1024];
   drizzled::String attribute(attribute_buffer, sizeof(attribute_buffer),
