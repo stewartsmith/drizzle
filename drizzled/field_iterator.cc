@@ -34,13 +34,13 @@ const char *Field_iterator_table::name()
 
 void Field_iterator_table::set(TableList *table)
 {
-  ptr= table->table->field;
+  ptr= table->table->getFields();
 }
 
 
 void Field_iterator_table::set_table(Table *table)
 {
-  ptr= table->field;
+  ptr= table->getFields();
 }
 
 
@@ -200,7 +200,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     /* The field belongs to a stored table. */
     Field *tmp_field= table_field_it.field();
     nj_col= new Natural_join_column(tmp_field, table_ref);
-    field_count= table_ref->table->getShare()->fields;
+    field_count= table_ref->table->getShare()->sizeFields();
   }
   else
   {

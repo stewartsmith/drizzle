@@ -573,7 +573,7 @@ int ha_tina::encode_quote(unsigned char *)
 
   buffer.length(0);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
   {
     const char *ptr;
     const char *end_ptr;
@@ -719,7 +719,7 @@ int ha_tina::find_current_row(unsigned char *buf)
 
   memset(buf, 0, table->getShare()->null_bytes);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field=table->getFields() ; *field ; field++)
   {
     char curr_char;
 
@@ -1404,9 +1404,15 @@ int Tina::doCreateTable(Session &session,
   /*
     check columns
   */
-  for (Field **field= table_arg.getMutableShare()->getFields(); *field; field++)
+  const drizzled::TableShare::Fields fields(table_arg.getShare()->getFields());
+  for (drizzled::TableShare::Fields::const_iterator iter= fields.begin();
+       iter != fields.end();
+       iter++)
   {
-    if ((*field)->real_maybe_null())
+    if (not *iter) // Historical legacy for NULL array end.
+      continue;
+
+    if ((*iter)->real_maybe_null())
     {
       my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "nullable columns");
       return(HA_ERR_UNSUPPORTED);

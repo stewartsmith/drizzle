@@ -5385,26 +5385,29 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
     join->unit->select_limit_cnt= 1;		// Only send first row
     return(0);
   }
-  Field **first_field=entry->field+entry->getShare()->fields - field_count;
+  Field **first_field=entry->getFields() + entry->getShare()->sizeFields() - field_count;
   offset= (field_count ?
-           entry->field[entry->getShare()->fields - field_count]->
-           offset(entry->record[0]) : 0);
-  reclength= entry->getShare()->reclength-offset;
+           entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->record[0]) : 0);
+  reclength= entry->getShare()->getRecordLength() - offset;
 
   entry->free_io_cache();				// Safety
   entry->cursor->info(HA_STATUS_VARIABLE);
   if (entry->getShare()->db_type() == heap_engine ||
       (!entry->getShare()->blob_fields &&
        ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->cursor->stats.records <
-	session->variables.sortbuff_size)))
+        session->variables.sortbuff_size)))
+  {
     error= remove_dup_with_hash_index(join->session, entry,
-				     field_count, first_field,
-				     reclength, having);
+                                      field_count, first_field,
+                                      reclength, having);
+  }
   else
-    error= remove_dup_with_compare(join->session, entry, first_field, offset,
-				  having);
+  {
+    error= remove_dup_with_compare(join->session, entry, first_field, offset, having);
+  }
 
   free_blobs(first_field);
+
   return(error);
 }
 
@@ -5507,7 +5510,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     table->reginfo.join_tab=s;
     table->reginfo.not_exists_optimize=0;
     memset(table->const_key_parts, 0,
-           sizeof(key_part_map)*table->getShare()->keys);
+           sizeof(key_part_map)*table->getShare()->sizeKeys());
     all_table_map|= table->map;
     s->join=join;
     s->info=0;					// For describe
@@ -6045,8 +6048,7 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 
   for (uint32_t i=0 ; i < join_tab->ref.key_parts ; i++)
   {
-    Field *field=table->field[table->key_info[join_tab->ref.key].key_part[i].
-			      fieldnr-1];
+    Field *field=table->getField(table->key_info[join_tab->ref.key].key_part[i].fieldnr - 1);
     Item *value=join_tab->ref.items[i];
     cond->add(new Item_func_equal(new Item_field(field), value));
   }

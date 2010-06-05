@@ -117,12 +117,18 @@ void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
                                                    drizzled::SchemaIdentifier &schema_identifier,
                                                    drizzled::TableIdentifiers &set_of_identifiers)
 {
-  set_of_identifiers.push_back(TableIdentifier(schema_identifier, "t1"));
+  if (schema_identifier.compare("test"))
+  {
+    set_of_identifiers.push_back(TableIdentifier(schema_identifier, "t1"));
+    set_of_identifiers.push_back(TableIdentifier(schema_identifier, "too_many_enum_values"));
+  }
 }
 
 bool TableProtoTesterEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
 {
   if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
+    return true;
+  if (strcmp(identifier.getPath().c_str(), "./test/too_many_enum_values") == 0)
     return true;
 
   return false;
@@ -175,6 +181,40 @@ static void fill_table1(message::Table &table)
   }
 
 }
+
+static void fill_table_too_many_enum_values(message::Table &table)
+{
+  message::Table::Field *field;
+  message::Table::TableOptions *tableopts;
+
+  table.set_schema("test");
+  table.set_name("too_many_enum_values");
+  table.set_type(message::Table::STANDARD);
+  table.mutable_engine()->set_name("tableprototester");
+  table.set_creation_timestamp(0);
+  table.set_update_timestamp(0);
+  
+
+  tableopts= table.mutable_options();
+  tableopts->set_comment("Table with too many enum options");
+
+  {
+    field= table.add_field();
+    field->set_name("many_values");
+    field->set_type(message::Table::Field::ENUM);
+
+    message::Table::Field::EnumerationValues *field_options= field->mutable_enumeration_values();
+    for(int i=0; i<70000; i++)
+    {
+      char enum_value[100];
+      snprintf(enum_value, sizeof(enum_value), "a%d", i);
+      field_options->add_field_value(enum_value);
+    }
+  }
+
+}
+
+
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                                  drizzled::TableIdentifier &identifier,
                                                  drizzled::message::Table &table_proto)
@@ -182,6 +222,11 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
   if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
   {
     fill_table1(table_proto);
+    return EEXIST;
+  }
+  else if (strcmp(identifier.getPath().c_str(), "./test/too_many_enum_values")==0)
+  {
+    fill_table_too_many_enum_values(table_proto);
     return EEXIST;
   }
   return ENOENT;

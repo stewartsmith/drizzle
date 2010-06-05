@@ -129,10 +129,3 @@ TEST(calendar_in_unix_epoch_range_test, InsideRange)
   year= 2020; month= 7; day= 13; hour= 16; minute= 56; second= 59;
   EXPECT_TRUE(in_unix_epoch_range(year, month, day, hour, minute, second));
 }
-
-
-int main(int argc, char **argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

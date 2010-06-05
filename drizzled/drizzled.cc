@@ -678,22 +678,6 @@ void Session::unlink(Session *session)
 }
 
 
-#ifdef THREAD_SPECIFIC_SIGPIPE
-/**
-
-  @todo
-    One should have to fix that thr_alarm know about this thread too.
-*/
-extern "C" void abort_thread(int )
-{
-  Session *session=current_session;
-  if (session)
-    session->killed= Session::KILL_CONNECTION;
-  return;;
-}
-#endif
-
-
 #ifndef SA_RESETHAND
 #define SA_RESETHAND 0
 #endif

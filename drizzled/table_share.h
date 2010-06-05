@@ -50,6 +50,8 @@ namespace plugin
 class EventObserverList;
 }
 
+class Field_blob;
+
 class TableShare
 {
   typedef std::vector<std::string> StringVector;
@@ -57,7 +59,6 @@ public:
   TableShare() :
     table_category(TABLE_UNKNOWN_CATEGORY),
     open_count(0),
-    field(NULL),
     found_next_number_field(NULL),
     timestamp_field(NULL),
     key_info(NULL),
@@ -127,7 +128,6 @@ public:
              const char *new_path) :
     table_category(TABLE_UNKNOWN_CATEGORY),
     open_count(0),
-    field(NULL),
     found_next_number_field(NULL),
     timestamp_field(NULL),
     key_info(NULL),
@@ -241,17 +241,53 @@ public:
   }
 
   /* The following is copied to each Table on OPEN */
+  typedef std::vector<Field *> Fields;
 private:
-  Field **field;
+  Fields field;
 public:
-  Field ** getFields()
+  const Fields getFields() const
   {
     return field;
   }
 
+  Field ** getFields(bool)
+  {
+    return &field[0];
+  }
+
+  void setFields(uint32_t arg)
+  {
+    field.resize(arg);
+  }
+
+  uint32_t positionFields(Field **arg) const
+  {
+    return (arg - (Field **)&field[0]);
+  }
+
+  void pushField(Field *arg)
+  {
+    fields++;
+    field.push_back(arg);
+  }
+
 
   Field **found_next_number_field;
+private:
   Field *timestamp_field;               /* Used only during open */
+public:
+
+  Field *getTimestampField() const               /* Used only during open */
+  {
+    return timestamp_field;
+  }
+
+  void setTimestampField(Field *arg) /* Used only during open */
+  {
+    timestamp_field= arg;
+  }
+
+
 private:
   KeyInfo  *key_info;			/* data of keys in database */
 public:
@@ -369,17 +405,17 @@ private:
   LEX_STRING normalized_path;		/* unpack_filename(path) */
 public:
 
-  const char *getNormalizedPath()
+  const char *getNormalizedPath() const
   {
     return normalized_path.str;
   }
 
-  const char *getPath()
+  const char *getPath() const
   {
     return path.str;
   }
 
-  const char *getCacheKey()
+  const char *getCacheKey() const
   {
     return table_cache_key.str;
   }
@@ -416,11 +452,6 @@ public:
     return table_cache_key.str;
   }
 
-  const char *getPath() const
-  {
-    return path.str;
-  }
-
   const std::string &getTableName(std::string &name_arg) const
   {
     name_arg.clear();
@@ -444,20 +475,47 @@ public:
 
   uint32_t   block_size;                   /* create information */
 
+private:
   uint64_t   version;
-  uint64_t getVersion()
+public:
+  uint64_t getVersion() const
   {
     return version;
   }
 
+  void refreshVersion()
+  {
+   version= refresh_version;
+  }
+
+  void resetVersion()
+  {
+    version= 0;
+  }
+
   uint32_t   timestamp_offset;		/* Set to offset+1 of record */
+private:
   uint32_t   reclength;			/* Recordlength */
+public:
   uint32_t   stored_rec_length;         /* Stored record length*/
   enum row_type row_type;		/* How rows are stored */
 
-  uint32_t getRecordLength()
+  uint32_t getRecordLength() const
   {
     return reclength;
+  }
+
+  void setRecordLength(uint32_t arg)
+  {
+    reclength= arg;
+  }
+
+  const Field_blob *getBlobFieldAt(uint32_t arg) const
+  {
+    if (arg < blob_fields)
+      return (Field_blob*) field[blob_field[arg]];
+
+    return NULL;
   }
 
 private:
@@ -538,17 +596,36 @@ public:
 
   TableIdentifier::Type tmp_table;
 
+private:
   uint32_t ref_count;       /* How many Table objects uses this */
-  uint32_t getTableCount()
+public:
+  uint32_t getTableCount() const
   {
     return ref_count;
+  }
+
+  void incrementTableCount()
+  {
+    ref_count++;
   }
 
   uint32_t null_bytes;
   uint32_t last_null_bit_pos;
   uint32_t fields;				/* Number of fields */
+
+  uint32_t sizeFields() const
+  {
+    return fields;
+  }
+
   uint32_t rec_buff_length;                 /* Size of table->record[] buffer */
-  uint32_t keys, key_parts;
+  uint32_t keys;
+
+  uint32_t sizeKeys() const
+  {
+    return keys;
+  }
+  uint32_t key_parts;
   uint32_t max_key_length, max_unique_length, total_key_length;
   uint32_t uniques;                         /* Number of UNIQUE index */
   uint32_t null_fields;			/* number of null fields */
@@ -579,7 +656,9 @@ public:
   uint8_t blob_ptr_size;			/* 4 or 8 */
   bool db_low_byte_first;		/* Portable row format */
 
+private:
   bool name_lock;
+public:
   bool isNameLock() const
   {
     return name_lock;
@@ -587,7 +666,9 @@ public:
 
   bool replace_with_name_lock;
 
+private:
   bool waiting_on_cond;                 /* Protection against free */
+public:
   bool isWaitingOnCondition()
   {
     return waiting_on_cond;
@@ -675,6 +756,7 @@ public:
     use key_length= 0 as neither table_cache_key or key_length will be used).
   */
 
+private:
   void init()
   {
     init("", 0, "", "");
@@ -705,6 +787,7 @@ public:
 
     return;
   }
+public:
 
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 

@@ -3,21 +3,24 @@
 # All paths should be given relative to the root
 
 if HAVE_LIBGTEST
-check_PROGRAMS += unittests/calendar_test
+check_PROGRAMS += 	unittests/unittests
 
-unittests_calendar_test_LDADD= \
+unittests_calendar_test_SOURCES =
+			     unittests/atomics_test.cc \
+			     unittests/calendar_test.cc \
+					 unittests/date_test.cc \
+					 unittests/date_time_test.cc \
+					 unittests/generator.cc \
+			     unittests/main.cc \
+					 unittests/micro_timestamp_test.cc \
+					 unittests/nano_timestamp_test.cc \
+			     unittests/pthread_atomics_test.cc \
+					 unittests/temporal_format_test.cc \
+					 unittests/temporal_interval_test.cc \
+					 unittests/time_test.cc \
+					 unittests/timestamp_test.cc
+
+unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
   ${drizzled_drizzled_LDADD} ${LTLIBGTEST}
-
-unittests_calendar_test_SOURCES = unittests/calendar_test.cc \
-	unittests/date_test.cc \
-	unittests/date_time_test.cc \
-	unittests/generator.cc \
-	unittests/micro_timestamp_test.cc \
-	unittests/nano_timestamp_test.cc \
-	unittests/temporal_format_test.cc \
-	unittests/temporal_interval_test.cc \
-	unittests/time_test.cc \
-	unittests/timestamp_test.cc
 endif
-

@@ -51,6 +51,7 @@ public:
   uint32_t index_flags(uint32_t inx) const;
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
+  int external_lock(drizzled::Session* session, int lock_type);
   int doInsertRecord(unsigned char * buf);
   int doStartTableScan(bool scan);
   int rnd_next(unsigned char *buf);

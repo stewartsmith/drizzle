@@ -694,7 +694,8 @@ bool mysql_create_like_table(Session* session,
                              bool is_if_not_exists,
                              bool is_engine_set);
 
-bool mysql_rename_table(plugin::StorageEngine *base,
+bool mysql_rename_table(Session &session,
+                        plugin::StorageEngine *base,
                         TableIdentifier &old_identifier,
                         TableIdentifier &new_identifier);
 

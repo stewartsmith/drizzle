@@ -199,7 +199,7 @@ static TableShare *foundTableShare(TableShare *share)
     return NULL;
   }
 
-  share->ref_count++;
+  share->incrementTableCount();
   (void) pthread_mutex_unlock(&share->mutex);
 
   return share;
@@ -473,7 +473,6 @@ TableDefinitionCache &TableShare::getCache()
 TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   open_count(0),
-  field(NULL),
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
@@ -522,6 +521,7 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
+  event_observers(NULL),
   newed(true)
 {
   memset(&name_hash, 0, sizeof(HASH));
@@ -742,7 +742,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       key_part->store_length= key_part->length;
 
       /* key_part->offset is set later */
-      key_part->key_type= part.key_type();
+      key_part->key_type= 0;
     }
 
     if (! indx.has_comment())
@@ -767,7 +767,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   fields= table.field_size();
 
-  field= (Field**) alloc_root(((fields+1) * sizeof(Field*)));
+  setFields(fields + 1);
   field[fields]= NULL;
 
   uint32_t local_null_fields= 0;
@@ -890,6 +890,20 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       continue;
 
     message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
+
+    if (field_options.field_value_size() > Field_enum::max_supported_elements)
+    {
+      char errmsg[100];
+      snprintf(errmsg, sizeof(errmsg),
+               _("ENUM column %s has greater than %d possible values"),
+               pfield.name().c_str(),
+               Field_enum::max_supported_elements);
+      errmsg[99]='\0';
+
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
+      return ER_CORRUPT_TABLE_DEFINITION;
+    }
+
 
     const CHARSET_INFO *charset= get_charset(field_options.has_collation_id() ?
                                              field_options.collation_id() : 0);
@@ -1430,15 +1444,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (blob_fields)
   {
-    Field **ptr;
     uint32_t k, *save;
 
     /* Store offsets to blob fields to find them fast */
     blob_field.resize(blob_fields);
     save= &blob_field[0];
-    for (k= 0, ptr= field ; *ptr ; ptr++, k++)
+    k= 0;
+    for (Fields::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
     {
-      if ((*ptr)->flags & BLOB_FLAG)
+      if ((*iter)->flags & BLOB_FLAG)
         (*save++)= k;
     }
   }
@@ -1633,7 +1647,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
     goto err;
   }
 
-  outparam.field= field_ptr;
+  outparam.setFields(field_ptr);
 
   record= (unsigned char*) outparam.record[0]-1;	/* Fieldstart = 1 */
 
@@ -1649,9 +1663,9 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[(uint32_t) (found_next_number_field - field)];
+      outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
+    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field_offset);
 
 
   /* Fix key->name and key_part->field */
@@ -1683,7 +1697,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
            key_part < key_part_end ;
            key_part++)
       {
-        Field *local_field= key_part->field= outparam.field[key_part->fieldnr-1];
+        Field *local_field= key_part->field= outparam.getField(key_part->fieldnr-1);
 
         if (local_field->key_length() != key_part->length &&
             !(local_field->flags & BLOB_FLAG))
@@ -1715,15 +1729,12 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   local_error= 2;
   if (db_stat)
   {
+    assert(!(db_stat & HA_WAIT_IF_LOCKED));
     int ha_err;
     if ((ha_err= (outparam.cursor->
                   ha_open(&outparam, getNormalizedPath(),
                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
-                          (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE :
-                           (db_stat & HA_WAIT_IF_LOCKED) ?  HA_OPEN_WAIT_IF_LOCKED :
-                           (db_stat & (HA_ABORT_IF_LOCKED | HA_GET_INFO)) ?
-                           HA_OPEN_ABORT_IF_LOCKED :
-                           HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
+                          (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE : HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {
       switch (ha_err)
       {
@@ -1795,22 +1806,9 @@ void TableShare::open_table_error(int pass_error, int db_errno, int pass_errarg)
     break;
   case 2:
     {
-      Cursor *cursor= 0;
-      const char *datext= "";
-
-      if (db_type() != NULL)
-      {
-        if ((cursor= db_type()->getCursor(*this, current_session->mem_root)))
-        {
-          if (!(datext= *db_type()->bas_ext()))
-            datext= "";
-        }
-      }
       err_no= (db_errno == ENOENT) ? ER_FILE_NOT_FOUND : (db_errno == EAGAIN) ?
         ER_FILE_USED : ER_CANT_OPEN_FILE;
-      snprintf(buff, sizeof(buff), "%s%s", normalized_path.str,datext);
-      my_error(err_no,errortype, buff, db_errno);
-      delete cursor;
+      my_error(err_no, errortype, normalized_path.str, db_errno);
       break;
     }
   case 5:
