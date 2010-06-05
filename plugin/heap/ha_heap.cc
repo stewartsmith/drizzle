@@ -735,7 +735,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
 
   for (column_idx= 0; column_idx < column_count; column_idx++)
   {
-    Field* field= *(table_arg->field + column_idx);
+    Field* field= *(table_arg->getFields() + column_idx);
     HP_COLUMNDEF* column= columndef + column_idx;
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();

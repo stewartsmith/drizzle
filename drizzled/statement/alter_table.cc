@@ -273,7 +273,7 @@ static bool mysql_prepare_alter_table(Session *session,
   /* First collect all fields from table which isn't in drop_list */
   Field **f_ptr;
   Field *field;
-  for (f_ptr= table->field; (field= *f_ptr); f_ptr++)
+  for (f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
     AlterDrop *drop;
@@ -1419,7 +1419,7 @@ copy_data_between_tables(Table *from, Table *to,
   List_iterator<CreateField> it(create);
   CreateField *def;
   copy_end=copy;
-  for (Field **ptr=to->field ; *ptr ; ptr++)
+  for (Field **ptr= to->getFields(); *ptr ; ptr++)
   {
     def=it++;
     if (def->field)

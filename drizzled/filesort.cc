@@ -180,7 +180,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
       Get the descriptors of all fields whose values are appended
       to sorted fields and get its total length in param.spack_length.
     */
-    param.addon_field= get_addon_fields(session, table->field,
+    param.addon_field= get_addon_fields(session, table->getFields(),
                                         param.sort_length,
                                         &param.addon_length);
   }

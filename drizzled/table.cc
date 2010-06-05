@@ -210,7 +210,9 @@ void free_blobs(register Table *table)
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
        ptr != end ;
        ptr++)
-    ((Field_blob*) table->field[*ptr])->free();
+  {
+    ((Field_blob*) table->getField(*ptr))->free();
+  }
 }
 
 
@@ -910,7 +912,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   session->mem_root= table->getMemRoot();
 
   share->setFields(field_count+1);
-  reg_field= table->field= share->getFields(true);
+  table->setFields(share->getFields(true));
+  reg_field= share->getFields(true);
   table->alias= table_alias;
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
@@ -1071,8 +1074,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       null_count= 0;
     }
   }
-  assert(fieldnr == (uint32_t) (reg_field - table->field));
-  assert(field_count >= (uint32_t) (reg_field - table->field));
+  assert(fieldnr == (uint32_t) (reg_field - table->getFields()));
+  assert(field_count >= (uint32_t) (reg_field - table->getFields()));
   field_count= fieldnr;
   *reg_field= 0;
   *blob_field= 0;				// End marker
@@ -1159,7 +1162,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
   null_count= (blob_count == 0) ? 1 : 0;
   hidden_field_count=param->hidden_field_count;
-  for (i= 0,reg_field=table->field; i < field_count; i++,reg_field++,recinfo++)
+  for (i= 0,reg_field= table->getFields(); i < field_count; i++,reg_field++,recinfo++)
   {
     Field *field= *reg_field;
     uint32_t length;
@@ -1390,7 +1393,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       key_part_info++;
     }
     /* Create a distinct key over the columns we are going to return */
-    for (i=param->hidden_field_count, reg_field=table->field + i ;
+    for (i=param->hidden_field_count, reg_field=table->getFields() + i ;
 	 i < field_count;
 	 i++, reg_field++, key_part_info++)
     {
@@ -1490,11 +1493,14 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
 
   table= share->getTable();
   share->setFields(field_count + 1);
-  field= table->field= share->getFields(true);
+  table->setFields(share->getFields(true));
+  field= share->getFields(true);
   share->blob_field.resize(field_count+1);
   share->fields= field_count;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   table->setup_tmp_table_column_bitmaps(bitmaps);
+
+  table->in_use= this;           /* field->reset() may access table->in_use */
 
   /* Create all fields and calculate the total length of record */
   List_iterator_fast<CreateField> it(field_list);
@@ -1519,7 +1525,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
       null_count++;
 
     if ((*field)->flags & BLOB_FLAG)
-      share->blob_field[blob_count++]= (uint32_t) (field - table->field);
+      share->blob_field[blob_count++]= (uint32_t) (field - table->getFields());
 
     field++;
   }
@@ -1540,15 +1546,13 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
     share->null_fields= null_count;
     share->null_bytes= null_pack_length;
   }
-
-  table->in_use= this;           /* field->reset() may access table->in_use */
   {
     /* Set up field pointers */
     unsigned char *null_pos= table->record[0];
     unsigned char *field_pos= null_pos + share->null_bytes;
     uint32_t null_bit= 1;
 
-    for (field= table->field; *field; ++field)
+    for (field= table->getFields(); *field; ++field)
     {
       Field *cur_field= *field;
       if ((cur_field->flags & NOT_NULL_FLAG))
@@ -1568,10 +1572,14 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
       field_pos+= cur_field->pack_length();
     }
   }
+
   return table;
+
 error:
-  for (field= table->field; *field; ++field)
+  for (field= table->getFields(); *field; ++field)
+  {
     delete *field;                         /* just invokes field destructor */
+  }
   return 0;
 }
 
@@ -1751,7 +1759,9 @@ void Table::free_tmp_table(Session *session)
 
   /* free blobs */
   for (Field **ptr= field ; *ptr ; ptr++)
+  {
     (*ptr)->free();
+  }
   free_io_cache();
 
   own_root.free_root(MYF(0)); /* the table is allocated in its own root */

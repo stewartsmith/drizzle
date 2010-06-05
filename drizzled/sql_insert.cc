@@ -370,7 +370,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     {
       table->restoreRecordAsDefault();	// Get empty record
 
-      if (fill_record(session, table->field, *values))
+      if (fill_record(session, table->getFields(), *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -956,7 +956,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 {
   int err= 0;
 
-  for (Field **field=entry->field ; *field ; field++)
+  for (Field **field=entry->getFields() ; *field ; field++)
   {
     if (((*field)->isWriteSet()) == false)
     {
@@ -1299,7 +1299,7 @@ void select_insert::store_values(List<Item> &values)
   if (fields->elements)
     fill_record(session, *fields, values, true);
   else
-    fill_record(session, table->field, values, true);
+    fill_record(session, table->getFields(), values, true);
 }
 
 void select_insert::send_error(uint32_t errcode,const char *err)
@@ -1646,7 +1646,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   }
 
  /* First field to copy */
-  field= table->field+table->getShare()->sizeFields() - values.elements;
+  field= table->getFields() + table->getShare()->sizeFields() - values.elements;
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)

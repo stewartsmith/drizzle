@@ -59,7 +59,7 @@ bool select_union::send_data(List<Item> &values)
     unit->offset_limit_cnt--;
     return 0;
   }
-  fill_record(session, table->field, values, true);
+  fill_record(session, table->getFields(), values, true);
   if (session->is_error())
     return 1;
 

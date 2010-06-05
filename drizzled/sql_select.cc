@@ -853,7 +853,7 @@ void calc_used_field_length(Session *, JoinTable *join_tab)
   Field **f_ptr,*field;
 
   null_fields= blobs= fields= rec_length=0;
-  for (f_ptr=join_tab->table->field ; (field= *f_ptr) ; f_ptr++)
+  for (f_ptr=join_tab->table->getFields() ; (field= *f_ptr) ; f_ptr++)
   {
     if (field->isReadSet())
     {

@@ -34,13 +34,13 @@ const char *Field_iterator_table::name()
 
 void Field_iterator_table::set(TableList *table)
 {
-  ptr= table->table->field;
+  ptr= table->table->getFields();
 }
 
 
 void Field_iterator_table::set_table(Table *table)
 {
-  ptr= table->field;
+  ptr= table->getFields();
 }
 
 
