@@ -38,6 +38,7 @@
 #include <sstream>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 
 using namespace std;
 using namespace drizzled;
@@ -427,25 +428,28 @@ int ha_filesystem::rnd_next(unsigned char *buf)
     return HA_ERR_END_OF_FILE;
 
   memset(buf, 0, table->s->null_bytes); //getNullBytes()
-  istringstream is(line);
-  for (Field **field = table->field; *field; ++field)
+
+  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+  boost::char_separator<char> sepa(sep == "" ? " \t" : sep.c_str());
+  tokenizer tokens(line, sepa);
+  tokenizer::iterator tok_iter = tokens.begin();
+  for (Field **field = table->field;
+       *field && tok_iter != tokens.end();
+       ++field, ++tok_iter)
   {
     buffer.length(0);
-    string word;
-    if (is >> word)
+    string word = *tok_iter;
+    cerr << "field: " << word << endl;
+    buffer.append(word.c_str());
+    if ((*field)->isReadSet() || (*field)->isWriteSet())
     {
-      cerr << "field: " << word << endl;
-      buffer.append(word.c_str());
-      if ((*field)->isReadSet() || (*field)->isWriteSet())
-      {
-        // this is very important to use 'select',
-        // as said in csv file, it's a bug in select ???
-        (*field)->setWriteSet();
-        (*field)->store(buffer.ptr()/* pointer */,
-                        buffer.length()/* length */,
-                        buffer.charset()/* charset */,
-                        CHECK_FIELD_WARN/* check flag */);
-      }
+      // this is very important to use 'select',
+      // as said in csv file, it's a bug in select ???
+      (*field)->setWriteSet();
+      (*field)->store(buffer.ptr()/* pointer */,
+                      buffer.length()/* length */,
+                      buffer.charset()/* charset */,
+                      CHECK_FIELD_WARN/* check flag */);
     }
   }
   return 0;
