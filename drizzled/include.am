@@ -454,7 +454,6 @@ drizzled_drizzled_LDADD= \
 				$(LDADD) \
 				$(LIBUUID) \
 				$(LIBDL_LIBS) \
-				$(LIBPROTOBUF) \
 				$(LIBPCRE) \
 				$(LIBTBB) \
 				$(GCOV_LIBS) 
