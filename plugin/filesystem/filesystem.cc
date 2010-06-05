@@ -422,6 +422,7 @@ int ha_filesystem::rnd_next(unsigned char *buf)
   if (!fd.is_open())
     return HA_ERR_END_OF_FILE;
 
+  prev_pos = fd.tellg();
   if (!getline(fd, line))
     return HA_ERR_END_OF_FILE;
 
@@ -494,28 +495,45 @@ int ha_filesystem::doEndTableScan()
   return 0;
 }
 
-int ha_filesystem::doInsertRecord(unsigned char * buf)
+void ha_filesystem::getAllFields(drizzled::String& output)
 {
-  (void)buf;
-  ha_statistic_increment(&system_status_var::ha_write_count);
-  char attribute_buffer[1024];
-  drizzled::String attribute(attribute_buffer, sizeof(attribute_buffer),
-                   &my_charset_bin);
-  drizzled::String output_line;
+  bool first = true;
+  drizzled::String attribute;
+  string s = getSeparator();
   for (Field **field= table->field; *field; ++field)
   {
+    if (first == true)
+    {
+      first = false;
+    }
+    else
+    {
+      output.append(s.c_str());
+    }
+
     if (not (*field)->is_null())
     {
       (*field)->setReadSet();
       (*field)->val_str(&attribute, &attribute);
 
-      output_line.append(attribute);
+      output.append(attribute);
     }
     else
     {
-      output_line.append(" 0 "); // SEP. TODO
+      output.append("0");
     }
   }
+  output.append("\n");
+}
+
+int ha_filesystem::doInsertRecord(unsigned char * buf)
+{
+  (void)buf;
+  ha_statistic_increment(&system_status_var::ha_write_count);
+
+  drizzled::String output_line;
+  getAllFields(output_line);
+
   // write output_line to real file
   ofstream fout(real_file_name.c_str(), ios::app);
   if (not fout.is_open())
@@ -528,17 +546,94 @@ int ha_filesystem::doInsertRecord(unsigned char * buf)
   return 0;
 }
 
-int ha_filesystem::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
+int ha_filesystem::updateRealFile(const char *buf, size_t len)
 {
-  (void)old_data;
-  (void)new_data;
-  return HA_ERR_WRONG_COMMAND;
+  // make up the name of temp file
+  string temp_file_name = real_file_name + ".TEMP";
+
+  ifstream fin(real_file_name.c_str());
+  ofstream fout(temp_file_name.c_str());
+  if (not fin.is_open() || not fout.is_open())
+    return HA_ERR_CRASHED_ON_USAGE;
+
+  string line;
+  while (fin.tellg() < prev_pos && getline(fin, line))
+  {
+    line+= "\n";
+    fout.write(line.c_str(), line.length());
+  }
+  // omit this line
+  getline(fin, line);
+  // update this line if necessary
+  if (buf)
+  {
+    fout.write(buf, len);
+  }
+  while (getline(fin, line))
+  {
+    line+= "\n";
+    fout.write(line.c_str(), line.length());
+  }
+  fin.close();
+  fout.close();
+  // rename the temp file
+  int err = rename(temp_file_name.c_str(), real_file_name.c_str());
+  if (err != 0)
+    return HA_ERR_CRASHED_ON_USAGE;
+  return 0;
 }
 
-int ha_filesystem::doDeleteRecord(const unsigned char *buf)
+string ha_filesystem::getSeparator()
 {
-  (void)buf;
-  return HA_ERR_WRONG_COMMAND;
+  char ch;
+  if (sep.length() == 0)
+    ch = ' ';
+  else
+    ch = sep[0];
+  return string(1, ch);
+}
+
+int ha_filesystem::doUpdateRecord(const unsigned char *, unsigned char *)
+{
+  if (!fd.is_open())
+    return HA_ERR_END_OF_FILE;
+
+  // get the update information
+  drizzled::String output_line;
+  getAllFields(output_line);
+
+  int err = updateRealFile(output_line.ptr(), output_line.length());
+  if (err)
+    return HA_ERR_CRASHED_ON_USAGE;
+
+  // re-open this file
+  fd.open(real_file_name.c_str());
+  if (not fd.is_open())
+    return HA_ERR_CRASHED_ON_USAGE;
+  fd.seekg(prev_pos);
+
+  return 0;
+}
+
+int ha_filesystem::doDeleteRecord(const unsigned char *)
+{
+  if (not fd.is_open())
+    return HA_ERR_END_OF_FILE;
+
+  // close this file first, as we're scanning this file
+  fd.close();
+
+  int err = updateRealFile(NULL, 0);
+  if (err)
+    return HA_ERR_CRASHED_ON_USAGE;
+
+  // re-open this file
+  fd.open(real_file_name.c_str());
+  if (not fd.is_open())
+    return HA_ERR_CRASHED_ON_USAGE;
+  fd.seekg(prev_pos);
+
+  return 0;
 }
 
 bool FilesystemEngine::validateCreateTableOption(const std::string &key,
