@@ -50,6 +50,8 @@ namespace plugin
 class EventObserverList;
 }
 
+class Field_blob;
+
 class TableShare
 {
   typedef std::vector<std::string> StringVector;
@@ -506,6 +508,14 @@ public:
   void setRecordLength(uint32_t arg)
   {
     reclength= arg;
+  }
+
+  const Field_blob *getBlobFieldAt(uint32_t arg) const
+  {
+    if (arg < blob_fields)
+      return (Field_blob*) field[blob_field[arg]];
+
+    return NULL;
   }
 
 private:

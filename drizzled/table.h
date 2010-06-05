@@ -322,9 +322,20 @@ public:
   inline uint32_t getRecordLength() const { return s->getRecordLength(); }
   inline uint32_t sizeBlobFields() { return s->blob_fields; }
   inline uint32_t *getBlobField() { return &s->blob_field[0]; }
+
+  Field_blob *getBlobFieldAt(uint32_t arg) const
+  {
+    if (arg < s->blob_fields)
+      return (Field_blob*) field[s->blob_field[arg]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
+
+    return NULL;
+  }
+  inline uint8_t getBlobPtrSize() { return s->blob_ptr_size; }
   inline uint32_t getNullBytes() { return s->null_bytes; }
   inline uint32_t getNullFields() { return s->null_fields; }
   inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
+  inline const char *getSchemaName()  const { return s->getSchemaName(); }
+  inline const char *getTableName()  const { return s->getTableName(); }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
   inline bool isNameLock() const { return s->isNameLock(); }

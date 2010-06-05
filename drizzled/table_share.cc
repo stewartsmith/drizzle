@@ -521,6 +521,7 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
+  event_observers(NULL),
   newed(true)
 {
   memset(&name_hash, 0, sizeof(HASH));
