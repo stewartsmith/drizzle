@@ -1457,7 +1457,7 @@ try
   ("no-auto-rehash,A",N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of drizzle_st and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."))
   ("auto-vertical-output", po::value<bool>(&auto_vertical_output)->default_value(false)->zero_tokens(),
   N_("Automatically switch to vertical output mode if the result is wider than the terminal width."))
-  ("database,D", po::value<string>(&current_db)->default_value("test"),
+  ("database,D", po::value<string>(&current_db)->default_value(""),
   N_("Database to use."))
   ("default-character-set",po::value<string>(),
   N_("(not used)"))
