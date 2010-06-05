@@ -80,6 +80,8 @@ public:
   int info(uint);
   int doEndTableScan();
   int doInsertRecord(unsigned char * buf);
+  int doUpdateRecord(const unsigned char *, unsigned char *);
+  int doDeleteRecord(const unsigned char *);
 
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,

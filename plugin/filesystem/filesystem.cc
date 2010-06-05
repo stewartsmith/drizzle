@@ -528,6 +528,19 @@ int ha_filesystem::doInsertRecord(unsigned char * buf)
   return 0;
 }
 
+int ha_filesystem::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
+{
+  (void)old_data;
+  (void)new_data;
+  return HA_ERR_WRONG_COMMAND;
+}
+
+int ha_filesystem::doDeleteRecord(const unsigned char *buf)
+{
+  (void)buf;
+  return HA_ERR_WRONG_COMMAND;
+}
+
 bool FilesystemEngine::validateCreateTableOption(const std::string &key,
                                                  const std::string &state)
 {
