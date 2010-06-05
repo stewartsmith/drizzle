@@ -27,7 +27,6 @@ select log10(100),log10(18),log10(-4),log10(0),log10(NULL);
 explain extended select log10(100),log10(18),log10(-4),log10(0),log10(NULL);
 select pow(10,log10(10)),power(2,4);
 explain extended select pow(10,log10(10)),power(2,4);
-explain extended select rand(999999),rand();
 select pi(),format(sin(pi()/2),6),format(cos(pi()/2),6),format(abs(tan(pi())),6),format(cot(1),6),format(asin(1),6),format(acos(0),6),format(atan(1),6);
 explain extended select pi(),format(sin(pi()/2),6),format(cos(pi()/2),6),format(abs(tan(pi())),6),format(cot(1),6),format(asin(1),6),format(acos(0),6),format(atan(1),6);
 select degrees(pi()),radians(360);
@@ -63,13 +62,6 @@ SELECT ASIN(1.2-0.2);
 select format(4.55, 1), format(4.551, 1);
 
 explain extended select degrees(pi()),radians(360);
-
-#
-# Bug #7281: problem with rand()
-#
-
---error 1054
-select rand(rand);
 
 # End of 4.1 tests
 

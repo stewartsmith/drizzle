@@ -121,7 +121,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/math/ord.h \
 			      drizzled/function/math/plus.h \
 			      drizzled/function/math/pow.h \
-			      drizzled/function/math/rand.h \
 			      drizzled/function/math/real.h \
 			      drizzled/function/math/round.h \
 			      drizzled/function/math/sin.h \
@@ -536,7 +535,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/math/ord.cc \
 				 drizzled/function/math/plus.cc \
 				 drizzled/function/math/pow.cc \
-				 drizzled/function/math/rand.cc \
 				 drizzled/function/math/real.cc \
 				 drizzled/function/math/round.cc \
 				 drizzled/function/math/sin.cc \
@@ -777,7 +775,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/xid.cc
 
 sbin_PROGRAMS+= drizzled/drizzled
-
 
 noinst_LTLIBRARIES+= \
 		     drizzled/libcached_directory.la \
