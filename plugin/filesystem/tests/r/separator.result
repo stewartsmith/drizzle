@@ -1,0 +1,9 @@
+drop table if exists t1;
+CREATE TABLE t1 (c1 int, c2 VARCHAR(20),
+c3 int, c4 VARCHAR(20),
+c5 DECIMAL(3, 2))
+ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/sep.txt",SEP="|/";
+SELECT * FROM t1;
+c1	c2	c3	c4	c5
+111	aaa	222	bbb	4.32
+333	zzz	888	yyy	1.89
