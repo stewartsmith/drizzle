@@ -98,7 +98,7 @@ using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
-static bool sysvar_logging_stats_enabled= false;
+static bool sysvar_logging_stats_enabled= true;
 
 static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
@@ -331,7 +331,7 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            N_("Enable Logging Statistics Collection"),
                            NULL, /* check func */
                            enable, /* update func */
-                           false /* default */);
+                           true /* default */);
 
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(max_user_count),

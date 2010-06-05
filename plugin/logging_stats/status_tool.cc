@@ -84,6 +84,36 @@ StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
   all_status_vars_it= all_status_vars->begin();
   all_status_vars_end= all_status_vars->end();
 
+  init();
+
+/*
+  status_var_to_display= NULL;
+  if (isLocal)
+  {
+    Session *this_session= current_session;
+    ScoreboardSlot *scoreboard_slot= logging_stats->getCurrentScoreboard()->findOurScoreboardSlot(this_session);
+
+    if (scoreboard_slot != NULL)
+    {
+      status_var_to_display= scoreboard_slot->getStatusVars();
+    } 
+    else 
+    {
+      status_var_to_display= NULL;
+    }
+  }
+  else // global status 
+  {
+    status_var_to_display= new StatusVars();
+    CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
+    cumulativeStats->sumCurrentScoreboardStatusVars(logging_stats->getCurrentScoreboard(), status_var_to_display);
+    status_var_to_display->merge(logging_stats->getCumulativeStats()->getGlobalStatusVars());
+  }
+*/
+}
+
+void StatusTool::Generator::init()
+{
   status_var_to_display= NULL;
   if (isLocal)
   {
@@ -94,8 +124,12 @@ StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
     {
       status_var_to_display= scoreboard_slot->getStatusVars();
     }
+    else
+    {
+      status_var_to_display= NULL;
+    }
   }
-  else // global status 
+  else // global status
   {
     status_var_to_display= new StatusVars();
     CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
@@ -114,6 +148,11 @@ StatusTool::Generator::~Generator()
 
 bool StatusTool::Generator::populate()
 {
+  if (status_var_to_display == NULL)
+  {
+    return false;
+  }
+
   while (all_status_vars_it != all_status_vars_end)
   {
     drizzle_show_var *variables= *all_status_vars_it;
@@ -140,7 +179,7 @@ bool StatusTool::Generator::populate()
 
     if (isWild(variables->name))
     {
-      variables++;
+      ++all_status_vars_it;
       continue;
     }
 
