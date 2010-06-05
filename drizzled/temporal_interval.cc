@@ -323,7 +323,7 @@ bool TemporalInterval::getIntervalFromString(const char *str,
     if (str == end && x != count-1)
     {
       x++;
-      /* Change values[0...x-1] -> values[0...count-1] */
+      /* Change values[0...x-1] -> values[count-x...count-1] */
       internal::bmove_upp((unsigned char*) (values+count),
                           (unsigned char*) (values+x),
                           sizeof(*values)*x);

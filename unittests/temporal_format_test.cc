@@ -23,6 +23,7 @@
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
 #include <gtest/gtest.h>
+#include <vector>
 
 #include "generator.h"
 
@@ -118,4 +119,30 @@ TEST_F(TemporalFormatTest, matches_FormatWithNanoSecondIndexSet_shouldAddTrailin
   tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
   
   ASSERT_EQ(432100000, temporal->nseconds());
+}
+
+extern std::vector<TemporalFormat *> known_datetime_formats;
+extern std::vector<TemporalFormat *> known_date_formats;
+extern std::vector<TemporalFormat *> known_time_formats;
+extern std::vector<TemporalFormat *> all_temporal_formats;
+
+TEST(TemporalFormatInitTest, init_temporal_formats_vectorsWithKnownFormats_shouldHaveExpectedLengths)
+{
+  init_temporal_formats();
+
+  EXPECT_EQ(13, known_datetime_formats.size());
+  EXPECT_EQ(8, known_date_formats.size());
+  EXPECT_EQ(6, known_time_formats.size());
+  EXPECT_EQ(19, all_temporal_formats.size());
+}
+
+TEST(TemporalFormatDeinitTest, deinit_temporal_formats_vectorsWithKnownFormats_shouldHaveZeroLengths)
+{
+  init_temporal_formats();
+  deinit_temporal_formats();
+  
+  EXPECT_EQ(0, known_datetime_formats.size());
+  EXPECT_EQ(0, known_date_formats.size());
+  EXPECT_EQ(0, known_time_formats.size());
+  EXPECT_EQ(0, all_temporal_formats.size());
 }

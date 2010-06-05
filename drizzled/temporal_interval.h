@@ -73,7 +73,7 @@ public:
    * Sets whether or not this object specifies a negative interval
    * @param[in] in_neg true if this is a negative interval, false if not
    */
-  void setNegative(bool in_neg= true)
+  inline void setNegative(bool in_neg= true)
   {
     neg= in_neg;
   }
@@ -81,7 +81,7 @@ public:
   /**
    * reverse boolean value of the negative flag
    */
-  void toggleNegative()
+  inline void toggleNegative()
   {
     neg= !neg;
   }
@@ -90,10 +90,18 @@ public:
    * @retval true this is a negative temporal interval
    * @retval false this is a positive temporal interval
    */
-  bool getNegative() const
+  inline bool getNegative() const
   {
     return neg;
   }
+
+  inline uint32_t  get_year() { return year; };
+  inline uint32_t  get_month(){ return month; };
+  inline uint32_t  get_day(){ return day; };
+  inline uint32_t  get_hour(){ return hour; };
+  inline uint64_t  get_minute(){ return minute; };
+  inline uint64_t  get_second(){ return second; };
+  inline uint64_t  get_second_part(){ return second_part; };
 
   /**
    * Populate this TemporalInterval from a string value
