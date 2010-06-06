@@ -417,12 +417,18 @@ static bool operator==(typelib_set_member const& a, typelib_set_member const& b)
                        (const unsigned char*)b.s.c_str(), b.s.length())==0);
 }
 
-boost::hash<const typelib_set_member> typelib_set_member_hasher;
 
-static std::size_t hash_value(const typelib_set_member& t)
+namespace
+{
+class typelib_set_member_hasher
 {
   boost::hash<string> hasher;
-  return hasher(t.s);
+public:
+  std::size_t operator()(const typelib_set_member& t) const
+  {
+    return hasher(t.s);
+  }
+};
 }
 
 static bool check_duplicates_in_interval(const char *set_or_name,
@@ -435,7 +441,7 @@ static bool check_duplicates_in_interval(const char *set_or_name,
   unsigned int *cur_length= typelib->type_lengths;
   *dup_val_count= 0;
 
-  boost::unordered_set<typelib_set_member, boost::hash<typelib_set_member> > interval_set;
+  boost::unordered_set<typelib_set_member, typelib_set_member_hasher> interval_set;
 
   for ( ; tmp.count > 0; cur_value++, cur_length++)
   {

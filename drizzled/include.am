@@ -433,10 +433,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/unordered_map.h \
 			      drizzled/unordered_set.h \
 			      drizzled/user_var_entry.h \
-			      drizzled/utf8.h \
-			      drizzled/utf8/checked.h \
-			      drizzled/utf8/core.h \
-			      drizzled/utf8/unchecked.h \
+			      drizzled/utf8/utf8.h \
 			      drizzled/var.h \
 			      drizzled/version.h \
 			      drizzled/visibility.h \
@@ -457,7 +454,6 @@ drizzled_drizzled_LDADD= \
 				$(LDADD) \
 				$(LIBUUID) \
 				$(LIBDL_LIBS) \
-				$(LIBPROTOBUF) \
 				$(LIBPCRE) \
 				$(LIBTBB) \
 				$(GCOV_LIBS) 
