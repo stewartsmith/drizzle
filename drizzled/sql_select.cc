@@ -853,7 +853,7 @@ void calc_used_field_length(Session *, JoinTable *join_tab)
   Field **f_ptr,*field;
 
   null_fields= blobs= fields= rec_length=0;
-  for (f_ptr=join_tab->table->field ; (field= *f_ptr) ; f_ptr++)
+  for (f_ptr=join_tab->table->getFields() ; (field= *f_ptr) ; f_ptr++)
   {
     if (field->isReadSet())
     {
@@ -3221,7 +3221,7 @@ Next_select_func setup_end_select_func(Join *join)
     if (table->group && tmp_tbl->sum_func_count &&
         !tmp_tbl->precomputed_group_by)
     {
-      if (table->getShare()->keys)
+      if (table->getShare()->sizeKeys())
       {
         end_select= end_update;
       }
@@ -3288,7 +3288,7 @@ int do_select(Join *join, List<Item> *fields, Table *table)
     table->cursor->extra(HA_EXTRA_WRITE_CACHE);
     table->emptyRecord();
     if (table->group && join->tmp_table_param.sum_func_count &&
-        table->getShare()->keys && !table->cursor->inited)
+        table->getShare()->sizeKeys() && !table->cursor->inited)
       table->cursor->startIndexScan(0, 0);
   }
   /* Set up select_end */
@@ -3942,10 +3942,10 @@ int join_init_quick_read_record(JoinTable *tab)
   return join_init_read_record(tab);
 }
 
-int rr_sequential(ReadRecord *info);
 int init_read_record_seq(JoinTable *tab)
 {
-  tab->read_record.read_record= rr_sequential;
+  tab->read_record.init_reard_record_sequential();
+
   if (tab->read_record.cursor->startTableScan(1))
     return 1;
   return (*tab->read_record.read_record)(&tab->read_record);
@@ -4614,7 +4614,7 @@ static uint32_t test_if_subkey(order_st *order,
   KeyPartInfo *ref_key_part= table->key_info[ref].key_part;
   KeyPartInfo *ref_key_part_end= ref_key_part + ref_key_parts;
 
-  for (nr= 0 ; nr < table->getShare()->keys ; nr++)
+  for (nr= 0 ; nr < table->getShare()->sizeKeys() ; nr++)
   {
     if (usable_keys->test(nr) &&
 	table->key_info[nr].key_length < min_length &&
@@ -4663,7 +4663,7 @@ static uint32_t test_if_subkey(order_st *order,
 */
 bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *), void *data)
 {
-  for (uint32_t keynr= 0; keynr < table->getShare()->keys; keynr++)
+  for (uint32_t keynr= 0; keynr < table->getShare()->sizeKeys(); keynr++)
   {
     if (keynr == table->getShare()->primary_key ||
          (table->key_info[keynr].flags & HA_NOSAME))
@@ -4964,7 +4964,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       fanout*= cur_pos.getFanout(); // fanout is always >= 1
     }
 
-    for (nr=0; nr < table->getShare()->keys ; nr++)
+    for (nr=0; nr < table->getShare()->sizeKeys() ; nr++)
     {
       int direction;
       if (keys.test(nr) &&
@@ -5252,7 +5252,6 @@ int create_sort_index(Session *session, Join *join, order_st *order, ha_rows fil
     goto err;
 
   table->sort.io_cache= new internal::IO_CACHE;
-  memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
   table->status=0;				// May be wrong if quick_select
 
   // If table has a range, move it to select
@@ -5323,7 +5322,7 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   char *org_record,*new_record;
   unsigned char *record;
   int error;
-  uint32_t reclength= table->getShare()->reclength - offset;
+  uint32_t reclength= table->getShare()->getRecordLength() - offset;
 
   org_record=(char*) (record=table->record[0])+offset;
   new_record=(char*) table->record[1]+offset;
@@ -5416,22 +5415,19 @@ int remove_dup_with_hash_index(Session *session,
   int error;
   Cursor *cursor= table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
-  uint32_t *field_lengths,*field_length;
+  uint32_t *field_length;
   HASH hash;
-  std::vector<unsigned char>key_buffer;
+  std::vector<unsigned char> key_buffer;
+  std::vector<uint32_t> field_lengths;
 
   key_buffer.resize((key_length + extra_length) * (long) cursor->stats.records);
-
-  field_lengths= (uint32_t *)std::malloc(field_count * sizeof(*field_lengths));
-
-  if (field_lengths == NULL)
-    return(1);
+  field_lengths.resize(field_count);
 
   {
     Field **ptr;
     uint32_t total_length= 0;
 
-    for (ptr= first_field, field_length=field_lengths ; *ptr ; ptr++)
+    for (ptr= first_field, field_length= &field_lengths[0] ; *ptr ; ptr++)
     {
       uint32_t length= (*ptr)->sort_length();
       (*field_length++)= length;
@@ -5445,7 +5441,6 @@ int remove_dup_with_hash_index(Session *session,
   if (hash_init(&hash, &my_charset_bin, (uint32_t) cursor->stats.records, 0,
 		key_length, (hash_get_key) 0, 0, 0))
   {
-    free((char*) field_lengths);
     return(1);
   }
 
@@ -5477,7 +5472,7 @@ int remove_dup_with_hash_index(Session *session,
 
     /* copy fields to key buffer */
     org_key_pos= key_pos;
-    field_length=field_lengths;
+    field_length= &field_lengths[0];
     for (Field **ptr= first_field ; *ptr ; ptr++)
     {
       (*ptr)->sort_string(key_pos,*field_length);
@@ -5494,14 +5489,12 @@ int remove_dup_with_hash_index(Session *session,
       (void) my_hash_insert(&hash, org_key_pos);
     key_pos+=extra_length;
   }
-  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->endTableScan();
   return(0);
 
 err:
-  free((char*) field_lengths);
   hash_free(&hash);
   cursor->extra(HA_EXTRA_NO_CACHE);
   (void) cursor->endTableScan();
@@ -5740,7 +5733,7 @@ static bool find_order_in_list(Session *session,
       push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR),
                           ((Item_ident*) order_item)->field_name,
-                          current_session->where);
+                          session->where);
     }
   }
 
@@ -6594,8 +6587,7 @@ void print_join(Session *session, String *str,
 void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
 {
   /* QQ: session may not be set for sub queries, but this should be fixed */
-  if (!session)
-    session= current_session;
+  assert(session);
 
   str->append(STRING_WITH_LEN("select "));
 

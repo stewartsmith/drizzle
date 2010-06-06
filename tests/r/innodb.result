@@ -2119,15 +2119,6 @@ rowid	val
 3	1
 4	2
 drop table t1;
-create table t1 (a int not null auto_increment primary key, val int) engine=InnoDB;
-insert into t1 (val) values (1);
-update t1 set a=2 where a=1;
-insert into t1 (val) values (1);
-ERROR 23000: Duplicate entry '2' for key 'PRIMARY'
-select * from t1;
-a	val
-2	1
-drop table t1;
 CREATE TABLE t1 (GRADE DECIMAL(4) NOT NULL, PRIMARY KEY (GRADE)) ENGINE=INNODB;
 INSERT INTO t1 (GRADE) VALUES (151),(252),(343);
 SELECT GRADE  FROM t1 WHERE GRADE > 160 AND GRADE < 300;

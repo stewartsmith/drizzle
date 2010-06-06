@@ -377,7 +377,7 @@ exist yet.
         global read lock won't sneak in.
       */
       if (table->reginfo.lock_type < TL_WRITE_ALLOW_WRITE)
-        table->getMutableShare()->version= refresh_version;
+        table->getMutableShare()->refreshVersion();
     }
   }
 
@@ -968,7 +968,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
     This also allows us to assume that no other connection will sneak in
     before we will get table-level lock on this table.
   */
-  share->version=0;
+  share->resetVersion();
   table->in_use = this;
 
   if (link_in)
@@ -1269,7 +1269,7 @@ c2: open t1; -- blocks
       if (flags & DRIZZLE_LOCK_IGNORE_FLUSH)
       {
         /* Force close at once after usage */
-        version= table->getShare()->version;
+        version= table->getShare()->getVersion();
         continue;
       }
 
@@ -1403,7 +1403,7 @@ c2: open t1; -- blocks
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->getShare()->ref_count > 0 || table->getShare()->tmp_table != message::Table::STANDARD);
+  assert(table->getShare()->getTableCount() > 0 || table->getShare()->tmp_table != message::Table::STANDARD);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -1858,7 +1858,7 @@ bool wait_for_tables(Session *session)
 */
 
 
-Table *drop_locked_tables(Session *session,const char *db, const char *table_name)
+Table *drop_locked_tables(Session *session, const char *db, const char *table_name)
 {
   Table *table,*next,**prev, *found= 0;
   prev= &session->open_tables;
@@ -1975,7 +1975,7 @@ retry:
   {
     if (error == 7)                             // Table def changed
     {
-      share->version= 0;                        // Mark share as old
+      share->resetVersion();                        // Mark share as old
       if (discover_retry_count++)               // Retry once
         goto err;
 
@@ -1998,7 +1998,7 @@ retry:
         To avoid deadlock, only wait for release if no one else is
         using the share.
       */
-      if (share->ref_count != 1)
+      if (share->getTableCount() != 1)
         goto err;
       /* Free share and wait until it's released by all threads */
       TableShare::release(share);
@@ -2493,10 +2493,12 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   uint32_t cached_field_index= *cached_field_index_ptr;
 
   /* We assume here that table->field < NO_CACHED_FIELD_INDEX = UINT_MAX */
-  if (cached_field_index < table->getShare()->fields &&
+  if (cached_field_index < table->getShare()->sizeFields() &&
       !my_strcasecmp(system_charset_info,
-                     table->field[cached_field_index]->field_name, name))
-    field_ptr= table->field + cached_field_index;
+                     table->getField(cached_field_index)->field_name, name))
+  {
+    field_ptr= table->getFields() + cached_field_index;
+  }
   else if (table->getShare()->name_hash.records)
   {
     field_ptr= (Field**) hash_search(&table->getShare()->name_hash, (unsigned char*) name,
@@ -2507,12 +2509,12 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         field_ptr points to field in TableShare. Convert it to the matching
         field in table
       */
-      field_ptr= (table->field + (field_ptr - table->getMutableShare()->getFields()));
+      field_ptr= (table->getFields() + table->getShare()->positionFields(field_ptr));
     }
   }
   else
   {
-    if (!(field_ptr= table->field))
+    if (!(field_ptr= table->getFields()))
       return((Field *)0);
     for (; *field_ptr; ++field_ptr)
       if (!my_strcasecmp(system_charset_info, (*field_ptr)->field_name, name))
@@ -2521,7 +2523,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
   if (field_ptr && *field_ptr)
   {
-    *cached_field_index_ptr= field_ptr - table->field;
+    *cached_field_index_ptr= field_ptr - table->getFields();
     field= *field_ptr;
   }
   else
@@ -2530,7 +2532,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         my_strcasecmp(system_charset_info, name, "_rowid") ||
         table->getShare()->rowid_field_offset == 0)
       return((Field*) 0);
-    field= table->field[table->getShare()->rowid_field_offset-1];
+    field= table->getField(table->getShare()->rowid_field_offset-1);
   }
 
   update_field_dependencies(session, field, table);
@@ -4162,7 +4164,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       For NATURAL joins, used_tables is updated in the IF above.
     */
     if (table)
-      table->used_fields= table->getShare()->fields;
+      table->used_fields= table->getShare()->sizeFields();
   }
   if (found)
     return false;
@@ -4450,12 +4452,12 @@ void remove_db_from_cache(SchemaIdentifier &schema_identifier)
     Table *table=(Table*) hash_element(&open_cache,idx);
     if (not schema_identifier.getPath().compare(table->getMutableShare()->getSchemaName()))
     {
-      table->getMutableShare()->version= 0L;			/* Free when thread is ready */
+      table->getMutableShare()->resetVersion();			/* Free when thread is ready */
       if (not table->in_use)
         relink_unused(table);
     }
   }
-  while (unused_tables && !unused_tables->getShare()->version)
+  while (unused_tables && !unused_tables->getShare()->getVersion())
     hash_delete(&open_cache,(unsigned char*) unused_tables);
 }
 
@@ -4502,7 +4504,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
     {
       Session *in_use;
 
-      table->getMutableShare()->version=0L;		/* Free when thread is ready */
+      table->getMutableShare()->resetVersion();		/* Free when thread is ready */
       if (!(in_use=table->in_use))
       {
         relink_unused(table);
@@ -4540,7 +4542,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
       else
         result= result || (flags & RTFC_OWNED_BY_Session_FLAG);
     }
-    while (unused_tables && !unused_tables->getShare()->version)
+    while (unused_tables && !unused_tables->getShare()->getVersion())
       hash_delete(&open_cache,(unsigned char*) unused_tables);
 
     /* Remove table from table definition cache if it's not in use */

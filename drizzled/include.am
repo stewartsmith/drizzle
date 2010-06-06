@@ -121,7 +121,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/math/ord.h \
 			      drizzled/function/math/plus.h \
 			      drizzled/function/math/pow.h \
-			      drizzled/function/math/rand.h \
 			      drizzled/function/math/real.h \
 			      drizzled/function/math/round.h \
 			      drizzled/function/math/sin.h \
@@ -434,10 +433,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/unordered_map.h \
 			      drizzled/unordered_set.h \
 			      drizzled/user_var_entry.h \
-			      drizzled/utf8.h \
-			      drizzled/utf8/checked.h \
-			      drizzled/utf8/core.h \
-			      drizzled/utf8/unchecked.h \
+			      drizzled/utf8/utf8.h \
 			      drizzled/var.h \
 			      drizzled/version.h \
 			      drizzled/visibility.h \
@@ -458,7 +454,6 @@ drizzled_drizzled_LDADD= \
 				$(LDADD) \
 				$(LIBUUID) \
 				$(LIBDL_LIBS) \
-				$(LIBPROTOBUF) \
 				$(LIBPCRE) \
 				$(LIBTBB) \
 				$(GCOV_LIBS) 
@@ -536,7 +531,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/math/ord.cc \
 				 drizzled/function/math/plus.cc \
 				 drizzled/function/math/pow.cc \
-				 drizzled/function/math/rand.cc \
 				 drizzled/function/math/real.cc \
 				 drizzled/function/math/round.cc \
 				 drizzled/function/math/sin.cc \
@@ -777,7 +771,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/xid.cc
 
 sbin_PROGRAMS+= drizzled/drizzled
-
 
 noinst_LTLIBRARIES+= \
 		     drizzled/libcached_directory.la \

@@ -2969,7 +2969,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
      table since it will not be used, and tell the caller we failed to
      initialize the engine.
   */
-  if (tmp_table->getShare()->keys == 0)
+  if (tmp_table->getShare()->sizeKeys() == 0)
   {
     assert(tmp_table->getShare()->db_type() == myisam_engine);
     assert(
@@ -2987,7 +2987,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     Make sure there is only one index on the temp table, and it doesn't have
     the extra key part created when s->uniques > 0.
   */
-  assert(tmp_table->getShare()->keys == 1 && tmp_columns->elements == tmp_key_parts);
+  assert(tmp_table->getShare()->sizeKeys() == 1 && tmp_columns->elements == tmp_key_parts);
 
 
   /* 2. Create/initialize execution related objects. */

@@ -83,6 +83,7 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   */
   if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
+
   if (new_handler && !new_handler->ha_open(table,
                                            table->getMutableShare()->getNormalizedPath(),
                                            table->getDBStat(),
@@ -918,7 +919,6 @@ Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   range_seq_t seq_it;
   ha_rows rows, total_rows= 0;
   uint32_t n_ranges=0;
-  Session *session= current_session;
 
   /* Default MRR implementation doesn't need buffer */
   *bufsz= 0;
@@ -926,9 +926,6 @@ Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   seq_it= seq->init(seq_init_param, n_ranges, *flags);
   while (!seq->next(seq_it, &range))
   {
-    if (unlikely(session->killed != 0))
-      return HA_POS_ERROR;
-
     n_ranges++;
     key_range *min_endp, *max_endp;
     {
@@ -1463,14 +1460,14 @@ int Cursor::insertRecord(unsigned char *buf)
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   
-  if (unlikely(plugin::EventObserver::beforeInsertRecord(*(table->in_use), *table_share, buf)))
+  if (unlikely(plugin::EventObserver::beforeInsertRecord(*table, buf)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doInsertRecord(buf);
-    if (unlikely(plugin::EventObserver::afterInsertRecord(*(table->in_use), *table_share, buf, error))) 
+    if (unlikely(plugin::EventObserver::afterInsertRecord(*table, buf, error))) 
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1502,14 +1499,14 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*(table->in_use), *table_share, old_data, new_data)))
+  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*table, old_data, new_data)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doUpdateRecord(old_data, new_data);
-    if (unlikely(plugin::EventObserver::afterUpdateRecord(*(table->in_use), *table_share, old_data, new_data, error)))
+    if (unlikely(plugin::EventObserver::afterUpdateRecord(*table, old_data, new_data, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1534,14 +1531,14 @@ int Cursor::deleteRecord(const unsigned char *buf)
 
   DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*(table->in_use), *table_share, buf)))
+  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*table, buf)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doDeleteRecord(buf);
-    if (unlikely(plugin::EventObserver::afterDeleteRecord(*(table->in_use), *table_share, buf, error)))
+    if (unlikely(plugin::EventObserver::afterDeleteRecord(*table, buf, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }

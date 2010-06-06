@@ -218,14 +218,14 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   TableShare *share= table_arg->getMutableShare();
   uint32_t options= share->db_options_in_use;
   if (!(memory::multi_malloc(false,
-          recinfo_out, (share->fields * 2 + 2) * sizeof(MI_COLUMNDEF),
-          keydef_out, share->keys * sizeof(MI_KEYDEF),
-          &keyseg, (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
+          recinfo_out, (share->sizeFields() * 2 + 2) * sizeof(MI_COLUMNDEF),
+          keydef_out, share->sizeKeys() * sizeof(MI_KEYDEF),
+          &keyseg, (share->key_parts + share->sizeKeys()) * sizeof(HA_KEYSEG),
           NULL)))
     return(HA_ERR_OUT_OF_MEM);
   keydef= *keydef_out;
   recinfo= *recinfo_out;
-  for (i= 0; i < share->keys; i++)
+  for (i= 0; i < share->sizeKeys(); i++)
   {
     KeyInfo *pos= &table_arg->key_info[i];
     keydef[i].flag= ((uint16_t) pos->flags & (HA_NOSAME));
@@ -293,10 +293,10 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   while (recpos < (uint) share->stored_rec_length)
   {
     Field **field, *found= 0;
-    minpos= share->reclength;
+    minpos= share->getRecordLength();
     length= 0;
 
-    for (field= table_arg->field; *field; field++)
+    for (field= table_arg->getFields(); *field; field++)
     {
       if ((fieldpos= (*field)->offset(record)) >= recpos &&
           fieldpos <= minpos)
@@ -595,7 +595,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     {
       goto err;
     }
-    if (check_definition(keyinfo, recinfo, table->getShare()->keys, recs,
+    if (check_definition(keyinfo, recinfo, table->getShare()->sizeKeys(), recs,
                          file->s->keyinfo, file->s->rec,
                          file->s->base.keys, file->s->base.fields, true))
     {
@@ -604,6 +604,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
     }
   }
 
+  assert(test_if_locked);
   if (test_if_locked & (HA_OPEN_IGNORE_IF_LOCKED | HA_OPEN_TMP_TABLE))
     mi_extra(file, HA_EXTRA_NO_WAIT_LOCK, 0);
 
@@ -615,7 +616,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
 
 
   keys_with_parts.reset();
-  for (i= 0; i < table->getShare()->keys; i++)
+  for (i= 0; i < table->getShare()->sizeKeys(); i++)
   {
     table->key_info[i].block_size= file->s->keyinfo[i].block_length;
 
@@ -726,18 +727,6 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
       local_testflag|= T_STATISTICS;
       param.testflag|= T_STATISTICS;		// We get this for free
       statistics_done=1;
-      if (repair_threads > 1)
-      {
-        char buf[40];
-        /* TODO: respect myisam_repair_threads variable */
-        snprintf(buf, 40, "Repair with %d threads", internal::my_count_bits(key_map));
-        session->set_proc_info(buf);
-        error = mi_repair_parallel(&param, file, fixed_name,
-            param.testflag & T_QUICK);
-        session->set_proc_info("Repair done"); // to reset proc_info, as
-                                      // it was pointing to local buffer
-      }
-      else
       {
         session->set_proc_info("Repair by sorting");
         error = mi_repair_by_sort(&param, file, fixed_name,
@@ -1240,7 +1229,7 @@ int ha_myisam::info(uint32_t flag)
     /* Update share */
     if (share->tmp_table == message::Table::STANDARD)
       pthread_mutex_lock(&share->mutex);
-    set_prefix(share->keys_in_use, share->keys);
+    set_prefix(share->keys_in_use, share->sizeKeys());
     /*
      * Due to bug 394932 (32-bit solaris build failure), we need
      * to convert the uint64_t key_map member of the misam_info
@@ -1398,7 +1387,7 @@ int MyisamEngine::doCreateTable(Session &session,
   /* TODO: Check that the following internal::fn_format is really needed */
   error= mi_create(internal::fn_format(buff, identifier.getPath().c_str(), "", "",
                                        MY_UNPACK_FILENAME|MY_APPEND_EXT),
-                   share->keys, keydef,
+                   share->sizeKeys(), keydef,
                    create_records, recinfo,
                    0, (MI_UNIQUEDEF*) 0,
                    &create_info, create_flags);

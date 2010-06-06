@@ -391,11 +391,11 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   */
   old_map= table->use_all_columns(table->read_set);
 
-  for (ptr=table->field ; (field= *ptr); ptr++)
+  for (ptr= table->getFields() ; (field= *ptr); ptr++)
   {
     uint32_t flags = field->flags;
 
-    if (ptr != table->field)
+    if (ptr != table->getFields())
       packet->append(STRING_WITH_LEN(",\n"));
 
     packet->append(STRING_WITH_LEN("  "));
@@ -476,7 +476,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
   cursor->update_create_info(&create_info);
   primary_key= table->getShare()->primary_key;
 
-  for (uint32_t i=0 ; i < table->getShare()->keys ; i++,key_info++)
+  for (uint32_t i=0 ; i < table->getShare()->sizeKeys() ; i++,key_info++)
   {
     KeyPartInfo *key_part= key_info->key_part;
     bool found_primary=0;
@@ -511,7 +511,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
                                   strlen(key_part->field->field_name));
       if (key_part->field &&
           (key_part->length !=
-           table->field[key_part->fieldnr-1]->key_length()))
+           table->getField(key_part->fieldnr-1)->key_length()))
       {
         buff.assign("(");
         buff.append(to_string((int32_t) key_part->length /

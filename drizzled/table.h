@@ -63,7 +63,29 @@ class Table
 public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
 
+private:
   Field **field; /**< Pointer to fields collection */
+public:
+
+  Field **getFields() const
+  {
+    return field;
+  }
+
+  Field *getField(uint32_t arg) const
+  {
+    return field[arg];
+  }
+
+  void setFields(Field **arg)
+  {
+    field= arg;
+  }
+
+  void setFieldAt(Field *arg, uint32_t arg_pos)
+  {
+    field[arg_pos]= arg;
+  }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
   Table *next;
@@ -295,19 +317,30 @@ public:
   inline bool hasShare() const { return s ? true : false ; } /* Get rid of this long term */
   inline TableShare *getMutableShare() { assert(s); return s; } /* Get rid of this long term */
   inline void setShare(TableShare *new_share) { s= new_share; } /* Get rid of this long term */
-  inline uint32_t sizeKeys() { return s->keys; }
-  inline uint32_t sizeFields() { return s->fields; }
-  inline uint32_t getRecordLength() { return s->reclength; }
+  inline uint32_t sizeKeys() { return s->sizeKeys(); }
+  inline uint32_t sizeFields() { return s->sizeFields(); }
+  inline uint32_t getRecordLength() const { return s->getRecordLength(); }
   inline uint32_t sizeBlobFields() { return s->blob_fields; }
   inline uint32_t *getBlobField() { return &s->blob_field[0]; }
+
+  Field_blob *getBlobFieldAt(uint32_t arg) const
+  {
+    if (arg < s->blob_fields)
+      return (Field_blob*) field[s->blob_field[arg]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
+
+    return NULL;
+  }
+  inline uint8_t getBlobPtrSize() { return s->blob_ptr_size; }
   inline uint32_t getNullBytes() { return s->null_bytes; }
   inline uint32_t getNullFields() { return s->null_fields; }
   inline unsigned char *getDefaultValues() { return  s->getDefaultValues(); }
+  inline const char *getSchemaName()  const { return s->getSchemaName(); }
+  inline const char *getTableName()  const { return s->getTableName(); }
 
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
-  inline bool isNameLock() { return s->name_lock; }
+  inline bool isNameLock() const { return s->isNameLock(); }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
-  inline bool isWaitingOnCondition() { return s->waiting_on_cond; } /* Protection against free */
+  inline bool isWaitingOnCondition() const { return s->isWaitingOnCondition(); } /* Protection against free */
 
   uint32_t index_flags(uint32_t idx) const
   {
@@ -457,7 +490,7 @@ public:
   */
   inline bool needs_reopen_or_name_lock()
   { 
-    return s->version != refresh_version;
+    return s->getVersion() != refresh_version;
   }
 
   /**
@@ -785,7 +818,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length);
 
 int rename_file_ext(const char * from,const char * to,const char * ext);
 bool check_column_name(const char *name);
-bool check_db_name(SchemaIdentifier &schema);
+bool check_db_name(Session *session, SchemaIdentifier &schema);
 bool check_table_name(const char *name, uint32_t length);
 
 } /* namespace drizzled */

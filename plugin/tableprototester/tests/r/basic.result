@@ -1,3 +1,4 @@
 SHOW TABLES;
 Tables_in_test
 t1
+too_many_enum_values

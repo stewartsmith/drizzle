@@ -216,10 +216,12 @@ void make_truncated_value_warning(Session *session,
       break;
   }
   if (field_name)
+  {
     cs->cset->snprintf(cs, warn_buff, sizeof(warn_buff),
                        ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                        type_str, str.c_ptr(), field_name,
                        (uint32_t) session->row_count);
+  }
   else
   {
     if (time_type > DRIZZLE_TIMESTAMP_ERROR)

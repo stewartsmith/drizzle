@@ -25,7 +25,7 @@ Copyright (c) 2000, 2009, MySQL AB & Innobase Oy. All Rights Reserved.
 Copyright (c) 2008, 2009 Google Inc.
 
 Portions of this file contain modifications contributed and copyrighted by
-staticGoogle, Inc. Those modifications are gratefully acknowledged and are described
+Google, Inc. Those modifications are gratefully acknowledged and are described
 briefly in the InnoDB documentation. The contributions by Google are
 incorporated with their permission, and subject to the conditions contained in
 the file COPYING.Google.
@@ -99,6 +99,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/field.h>
 #include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
 #include "drizzled/field/blob.h"
+#include "drizzled/field/enum.h"
 #include <drizzled/session.h>
 
 using namespace std;
@@ -225,15 +226,35 @@ static ib_trx_t* get_trx(Session* session)
   return (ib_trx_t*) session->getEngineData(embedded_innodb_engine);
 }
 
+static ib_trx_level_t tx_isolation_to_ib_trx_level(enum_tx_isolation level)
+{
+  switch(level)
+  {
+  case ISO_REPEATABLE_READ:
+    return IB_TRX_REPEATABLE_READ;
+  case ISO_READ_COMMITTED:
+    return IB_TRX_READ_COMMITTED;
+  case ISO_SERIALIZABLE:
+    return IB_TRX_SERIALIZABLE;
+  case ISO_READ_UNCOMMITTED:
+    return IB_TRX_READ_UNCOMMITTED;
+  }
+
+  assert(0);
+  return IB_TRX_REPEATABLE_READ;
+}
+
 int EmbeddedInnoDBEngine::doStartTransaction(Session *session,
                                              start_transaction_option_t options)
 {
   ib_trx_t *transaction;
+  ib_trx_level_t isolation_level;
 
   (void)options;
 
   transaction= get_trx(session);
-  *transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+  isolation_level= tx_isolation_to_ib_trx_level((enum_tx_isolation)session_tx_isolation(session));
+  *transaction= ib_trx_begin(isolation_level);
 
   return 0;
 }
@@ -512,8 +533,8 @@ THR_LOCK_DATA **EmbeddedInnoDBCursor::store_lock(Session *session,
 
   if(*get_trx(session) == NULL)
   {
-    ib_trx_t *transaction= get_trx(session);
-    *transaction= ib_trx_begin(IB_TRX_REPEATABLE_READ);
+    static_cast<EmbeddedInnoDBEngine*>(getEngine())->
+                    doStartTransaction(session, START_TRANS_NO_OPTIONS);
   }
 
   if (lock_type != TL_UNLOCK)
@@ -639,6 +660,16 @@ int EmbeddedInnoDBCursor::close(void)
   return 0;
 }
 
+int EmbeddedInnoDBCursor::external_lock(Session* session, int lock_type)
+{
+  ib_cursor_stmt_begin(cursor);
+
+  (void)session;
+  (void)lock_type;
+
+  return 0;
+}
+
 static int create_table_add_field(ib_tbl_sch_t schema,
                                   const message::Table::Field &field,
                                   ib_err_t *err)
@@ -681,7 +712,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
                                     column_attr, 0, 2);
     else
     {
-      assert(field_options.field_value_size() < (int)0x10000);
+      assert(field_options.field_value_size() <= Field_enum::max_supported_elements);
     }
     break;
   }
@@ -1588,7 +1619,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
 
   }
 
-  write_row_to_innodb_tuple(table->field, tuple);
+  write_row_to_innodb_tuple(table->getFields(), tuple);
 
   if (share->has_hidden_primary_key)
   {
@@ -1621,7 +1652,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
       err= ib_cursor_first(cursor);
       assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
-      write_row_to_innodb_tuple(table->field, tuple);
+      write_row_to_innodb_tuple(table->getFields(), tuple);
 
       err= ib_cursor_insert_row(cursor, tuple);
       assert(err==DB_SUCCESS); // probably be nice and process errors
@@ -1653,7 +1684,7 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
 
-  write_row_to_innodb_tuple(table->field, update_tuple);
+  write_row_to_innodb_tuple(table->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
@@ -1775,7 +1806,7 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   if (table->s->primary_key != MAX_KEY)
     table->mark_columns_used_by_index_no_reset(table->s->primary_key);
 
-  for (Field **field=table->field ; *field ; field++, colnr++)
+  for (Field **field= table->getFields() ; *field ; field++, colnr++)
   {
     if (! (**field).isReadSet())
       continue;

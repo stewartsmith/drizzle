@@ -22,41 +22,13 @@
 
 #include <gtest/gtest.h>
 
-# if defined(__SUNPRO_CC)
-#  include <drizzled/atomic/sun_studio.h>
-# endif
-
-# if !defined(__ICC) && (defined(HAVE_GCC_ATOMIC_BUILTINS) || defined(__SUNPRO_CC))
-#  include <drizzled/atomic/gcc_traits.h>
-#  define ATOMIC_TRAITS internal::gcc_traits
-# else  /* use pthread impl */
-#  define ATOMIC_TRAITS internal::pthread_traits
-# endif
-
-#include <pthread.h>
-#include <drizzled/atomic/pthread_traits.h>
-
 #include <drizzled/atomics.h>
 
 using namespace drizzled;
 
-template<typename T>
-struct atomic_pthread {
-};
-
-#   define __DRIZZLE_DECL_ATOMIC_PTHREAD(T)                              \
-  template<> struct atomic_pthread<T>                                   \
-  : internal::atomic_impl<T,T, internal::pthread_traits<T,T> > {         \
-    atomic_pthread<T>()                                                 \
-      : internal::atomic_impl<T,T, internal::pthread_traits<T,T> >() {}  \
-    T operator=( T rhs ) { return store_with_release(rhs); }            \
-  };
-
-__DRIZZLE_DECL_ATOMIC_PTHREAD(unsigned int)
-
-TEST(pthread_atomic_operations, fetch_and_store)
+TEST(atomic_operations, fetch_and_store)
 {
-  atomic_pthread<uint32_t> u235;
+  atomic<uint32_t> u235;
 
   EXPECT_EQ(0, u235.fetch_and_store(1));
 
@@ -66,33 +38,33 @@ TEST(pthread_atomic_operations, fetch_and_store)
   EXPECT_EQ(100, u235);
 }
 
-TEST(pthread_atomic_operations, fetch_and_increment)
+TEST(atomic_operations, fetch_and_increment)
 {
-  atomic_pthread<uint32_t> u235;
+  atomic<uint32_t> u235;
 
   EXPECT_EQ(0, u235.fetch_and_increment());
   EXPECT_EQ(1, u235);
 }
 
-TEST(pthread_atomic_operations, fetch_and_add)
+TEST(atomic_operations, fetch_and_add)
 {
-  atomic_pthread<uint32_t> u235;
+  atomic<uint32_t> u235;
 
   EXPECT_EQ(0, u235.fetch_and_add(2));
   EXPECT_EQ(2, u235);
 }
 
-TEST(pthread_atomic_operations, add_and_fetch)
+TEST(atomic_operations, add_and_fetch)
 {
-  atomic_pthread<uint32_t> u235;
+  atomic<uint32_t> u235;
 
   EXPECT_EQ(10, u235.add_and_fetch(10));
   EXPECT_EQ(10, u235);
 }
 
-TEST(pthread_atomic_operations, fetch_and_decrement)
+TEST(atomic_operations, fetch_and_decrement)
 {
-  atomic_pthread<uint32_t> u235;
+  atomic<uint32_t> u235;
 
   u235.fetch_and_store(15);
 
@@ -100,9 +72,9 @@ TEST(pthread_atomic_operations, fetch_and_decrement)
   EXPECT_EQ(14, u235);
 }
 
-TEST(pthread_atomic_operations, compare_and_swap)
+TEST(atomic_operations, compare_and_swap)
 {
-  atomic_pthread<uint32_t> u235;
+  atomic<uint32_t> u235;
 
   u235.fetch_and_store(100);
 
@@ -111,29 +83,37 @@ TEST(pthread_atomic_operations, compare_and_swap)
   EXPECT_EQ(200, u235);
 }
 
-TEST(pthread_atomic_operations, increment)
+TEST(atomic_operations, increment)
 {
-  atomic_pthread<uint32_t> u235;
+  atomic<uint32_t> u235;
   u235.fetch_and_store(200);
   EXPECT_EQ(201, u235.increment());
 }
 
-TEST(pthread_atomic_operations, decrement)
+TEST(atomic_operations, decrement)
 {
-  atomic_pthread<uint32_t> u235;
+  atomic<uint32_t> u235;
   u235.fetch_and_store(200);
 
   EXPECT_EQ(199, u235.decrement());
 }
 
-// these don't build for whatever reason
-//  EXPECT_EQ(242, u235+=42);
-//  EXPECT_EQ(200, u235-=42);
-
-
-
-int main(int argc, char **argv)
+/*
+TEST(atomic_operations, increment_assign)
 {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  atomic<uint32_t> u235;
+  u235.fetch_and_store(200);
+
+  EXPECT_EQ(242, u235+=42);
 }
+
+TEST(atomic_operations, decrement_assign)
+{
+  atomic<uint32_t> u235;
+  u235.fetch_and_store(200);
+
+  EXPECT_EQ(158, u235-=42);
+}
+*/
+
+
