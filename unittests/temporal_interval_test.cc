@@ -30,6 +30,8 @@
 #include <drizzled/temporal_interval.h>
 #include <drizzled/plugin/listen.h>
 
+#include "generator.h"
+
 using namespace drizzled;
 
 class ItemStub : public Item
@@ -118,7 +120,7 @@ TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond)
   EXPECT_EQ(777000, interval.get_second_part());
 }
 
-TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond_tooFewArguments_shouldLeaveHighEndItems)
+TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond_tooFewArguments_shouldOmitHighEndItems)
 {
   char string[] = "45:19.777";
   item->string_to_return->set_ascii(string, strlen(string));
@@ -132,3 +134,93 @@ TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond_tooFewArguments
   EXPECT_EQ(777000, interval.get_second_part());
 }
 
+
+TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond)
+{
+  DRIZZLE_TIME drizzle_time = {1990, 3, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
+  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+                               0, 0, 6, 13, 54, 3, 435675, false);
+
+  interval->addDate(&drizzle_time, INTERVAL_DAY_MICROSECOND);
+
+  EXPECT_EQ(1990, drizzle_time.year);
+  EXPECT_EQ(4, drizzle_time.month);
+  EXPECT_EQ(1, drizzle_time.day);
+  EXPECT_EQ(4, drizzle_time.hour);
+  EXPECT_EQ(59, drizzle_time.minute);
+  EXPECT_EQ(20, drizzle_time.second);
+  EXPECT_EQ(312218, drizzle_time.second_part);
+}
+
+TEST(TemporalIntervalAddDateTest, addDate_negativeDayMicrosecond)
+{
+  DRIZZLE_TIME drizzle_time = {1990, 4, 1, 4, 59, 20, 312218, false, DRIZZLE_TIMESTAMP_DATETIME};
+  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+                               0, 0, 6, 13, 54, 3, 435675, true);
+  
+  interval->addDate(&drizzle_time, INTERVAL_DAY_MICROSECOND);
+  
+  EXPECT_EQ(1990, drizzle_time.year);
+  EXPECT_EQ(3, drizzle_time.month);
+  EXPECT_EQ(25, drizzle_time.day);
+  EXPECT_EQ(15, drizzle_time.hour);
+  EXPECT_EQ(5, drizzle_time.minute);
+  EXPECT_EQ(16, drizzle_time.second);
+  EXPECT_EQ(876543, drizzle_time.second_part);
+}
+
+TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond_shouldCountLeapDayToo)
+{
+  DRIZZLE_TIME drizzle_time = {2004, 2, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
+  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+                               0, 0, 6, 13, 54, 3, 435675, false);
+  
+  interval->addDate(&drizzle_time, INTERVAL_DAY_MICROSECOND);
+  
+  EXPECT_EQ(2004, drizzle_time.year);
+  EXPECT_EQ(3, drizzle_time.month);
+  EXPECT_EQ(3, drizzle_time.day);
+  EXPECT_EQ(4, drizzle_time.hour);
+  EXPECT_EQ(59, drizzle_time.minute);
+  EXPECT_EQ(20, drizzle_time.second);
+  EXPECT_EQ(312218, drizzle_time.second_part);
+}
+
+TEST(TemporalIntervalAddDateTest, addDate_negativeWeek)
+{
+  DRIZZLE_TIME drizzle_time = {1998, 1, 25, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+                              0, 0, 28, 0, 0, 0, 0, true);
+  
+  interval->addDate(&drizzle_time, INTERVAL_WEEK);
+  
+  EXPECT_EQ(1997, drizzle_time.year);
+  EXPECT_EQ(12, drizzle_time.month);
+  EXPECT_EQ(28, drizzle_time.day);
+}
+
+TEST(TemporalIntervalAddDateTest, addDate_addPositiveYearToLeapDay)
+{
+  DRIZZLE_TIME drizzle_time = {2004, 2, 29, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+                               5, 0, 0, 0, 0, 0, 0, false);
+  
+  interval->addDate(&drizzle_time, INTERVAL_YEAR);
+  
+  EXPECT_EQ(2009, drizzle_time.year);
+  EXPECT_EQ(2, drizzle_time.month);
+  EXPECT_EQ(28, drizzle_time.day);
+}
+
+TEST(TemporalIntervalAddDateTest, addDate_addOneMonthToLastDayInMonth_shouldChangeToProperLastDay)
+{
+  DRIZZLE_TIME drizzle_time = {2004, 7, 31, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+                               0, 2, 0, 0, 0, 0, 0, false);
+  
+  interval->addDate(&drizzle_time, INTERVAL_MONTH);
+  
+  EXPECT_EQ(2004, drizzle_time.year);
+  EXPECT_EQ(9, drizzle_time.month);
+  EXPECT_EQ(30, drizzle_time.day);
+}

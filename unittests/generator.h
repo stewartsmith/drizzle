@@ -27,6 +27,12 @@ namespace drizzled
 {
   class Date;
   class TemporalFormat;
+  class Temporal;
+  class Time;
+  class DateTime;
+  class Timestamp;
+  class MicroTimestamp;
+  class NanoTimestamp;
 }
 
 class Generator 
@@ -90,6 +96,20 @@ public:
                                      int32_t second_part_index,
                                      int32_t usecond_part_index,
                                      int32_t nsecond_part_index);
+  };
+
+  class TemporalIntervalGen
+  {
+  public:
+    static drizzled::TemporalInterval *make_temporal_interval(
+                                                              uint32_t  year,
+                                                              uint32_t  month,
+                                                              uint32_t  day,
+                                                              uint32_t  hour,
+                                                              uint64_t  minute,
+                                                              uint64_t  second,
+                                                              uint64_t  second_part,
+                                                              bool neg);
   };
 };
 

@@ -22,6 +22,7 @@
 
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
+#include <drizzled/temporal_interval.h>
 
 #include "generator.h"
 
@@ -164,4 +165,28 @@ drizzled::TemporalFormat *Generator::TemporalFormatGen::make_temporal_format(con
   temporal_format->set_nsecond_part_index(nsecond_part_index);
 
   return temporal_format;
+}
+
+drizzled::TemporalInterval *Generator::TemporalIntervalGen::make_temporal_interval(
+                                                              uint32_t  year,
+                                                              uint32_t  month,
+                                                              uint32_t  day,
+                                                              uint32_t  hour,
+                                                              uint64_t  minute,
+                                                              uint64_t  second,
+                                                              uint64_t  second_part,
+                                                              bool neg)
+{
+  drizzled::TemporalInterval *interval = new drizzled::TemporalInterval();
+
+  interval->set_year(year);
+  interval->set_month(month);
+  interval->set_day(day);
+  interval->set_hour(hour);
+  interval->set_minute(minute);
+  interval->set_second(second);
+  interval->set_second_part(second_part);
+  interval->setNegative(neg);
+
+  return interval;
 }
