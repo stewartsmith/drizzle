@@ -181,7 +181,7 @@ bool Cursor::has_transactions()
   return (table->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
-void Cursor::ha_statistic_increment(ulong system_status_var::*offset) const
+void Cursor::ha_statistic_increment(uint64_t system_status_var::*offset) const
 {
   status_var_increment(table->in_use->status_var.*offset);
 }
