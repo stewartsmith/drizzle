@@ -57,7 +57,6 @@ public:
     StatusVars *status_var_to_display;
     std::vector<drizzled::drizzle_show_var *>::iterator all_status_vars_it;
     std::vector<drizzled::drizzle_show_var *>::iterator all_status_vars_end;
-    void init();
     void fill(const std::string &name, char *value, drizzled::SHOW_TYPE show_type); 
   };
 

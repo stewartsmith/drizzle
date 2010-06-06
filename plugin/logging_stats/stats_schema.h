@@ -151,30 +151,4 @@ private:
   LoggingStats *outer_logging_stats;
 };
 
-class StatusVarTool : public drizzled::plugin::TableFunction
-{
-public:
-
-  StatusVarTool(LoggingStats *logging_stats);
-
-  class Generator : public drizzled::plugin::TableFunction::Generator
-  {
-  public:
-    Generator(drizzled::Field **arg, LoggingStats *logging_stats);
-
-    bool populate();
-  private:
-    LoggingStats *inner_logging_stats;
-    int32_t record_number;
-    int32_t last_valid_index;
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg, outer_logging_stats);
-  }
-private:
-  LoggingStats *outer_logging_stats;
-};
-
 #endif /* PLUGIN_LOGGING_STATS_STATS_SCHEMA_H */

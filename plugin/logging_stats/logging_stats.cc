@@ -185,8 +185,6 @@ static GlobalStatementsTool *global_statements_tool= NULL;
 
 static SessionStatementsTool *session_statements_tool= NULL;
 
-static StatusVarTool *status_var_tool= NULL;
-
 static StatusTool *global_status_tool= NULL;
 
 static StatusTool *session_status_tool= NULL;
@@ -241,13 +239,6 @@ static bool initTable()
     return true;
   }
 
-  status_var_tool= new(nothrow)StatusVarTool(logging_stats);
-
-  if (! status_var_tool)
-  {
-    return true;
-  }
-
   session_status_tool= new(nothrow)StatusTool(logging_stats, true);
 
   if (! session_status_tool)
@@ -279,10 +270,8 @@ static int init(module::Context &context)
   context.add(cumulative_commands_tool);
   context.add(global_statements_tool);
   context.add(session_statements_tool);
-  context.add(status_var_tool);
   context.add(session_status_tool);
   context.add(global_status_tool);
-
 
   if (sysvar_logging_stats_enabled)
   {
