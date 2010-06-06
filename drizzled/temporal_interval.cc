@@ -311,7 +311,7 @@ bool TemporalInterval::getIntervalFromString(const char *str,
     const char *start= str;
     for (value= 0 ; str != end && my_isdigit(cs,*str) ; str++)
       value= value * 10L + (int64_t) (*str - '0');
-    if (transform_msec && x == count - 1) // microseconds always last
+    if (transform_msec && (x == count - 1 || str == end)) // microseconds always last
     {
       long msec_length= 6 - (str - start);
       if (msec_length > 0)

@@ -121,16 +121,19 @@ TEST_F(TemporalFormatTest, matches_FormatWithNanoSecondIndexSet_shouldAddTrailin
   ASSERT_EQ(432100000, temporal->nseconds());
 }
 
+namespace drizzled
+{
 extern std::vector<TemporalFormat *> known_datetime_formats;
 extern std::vector<TemporalFormat *> known_date_formats;
 extern std::vector<TemporalFormat *> known_time_formats;
 extern std::vector<TemporalFormat *> all_temporal_formats;
+}
 
 TEST(TemporalFormatInitTest, init_temporal_formats_vectorsWithKnownFormats_shouldHaveExpectedLengths)
 {
   init_temporal_formats();
 
-  EXPECT_EQ(13, known_datetime_formats.size());
+  EXPECT_EQ(13, known_datetime_formats.size());	
   EXPECT_EQ(8, known_date_formats.size());
   EXPECT_EQ(6, known_time_formats.size());
   EXPECT_EQ(19, all_temporal_formats.size());

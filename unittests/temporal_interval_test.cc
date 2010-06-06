@@ -31,7 +31,7 @@
 #include <drizzled/plugin/listen.h>
 
 using namespace drizzled;
-/*
+
 class ItemStub : public Item
 {
   ItemStub(Session *fake_session) : Item(fake_session, this)
@@ -81,6 +81,8 @@ class TemporalIntervalTest : public ::testing::Test
     {
       fake_client= plugin::Listen::getNullClient();
       fake_session = new Session(fake_client);
+      fake_session->thread_stack= (char*) &fake_session;
+      fake_session->initGlobals();
       item = ItemStub::get_item_stub(fake_session);
 
       string_to_return.alloc(100);//TODO: some reasonable size here
@@ -93,7 +95,7 @@ class TemporalIntervalTest : public ::testing::Test
 
 TEST_F(TemporalIntervalTest, initFromItem_intervalWeek)
 {
-  char string[] = "aaa";
+  char string[] = "30";
   item->string_to_return->set_ascii(string, strlen(string));
   item->int_to_return = 30;
 
@@ -101,4 +103,32 @@ TEST_F(TemporalIntervalTest, initFromItem_intervalWeek)
 
   ASSERT_EQ(210, interval.get_day());
 }
-*/
+
+TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond)
+{
+  char string[] = "7 12:45:19.777";
+  item->string_to_return->set_ascii(string, strlen(string));
+
+  interval.initFromItem(item.get(), INTERVAL_DAY_MICROSECOND, &buffer);
+
+  EXPECT_EQ(7, interval.get_day());
+  EXPECT_EQ(12, interval.get_hour());
+  EXPECT_EQ(45, interval.get_minute());
+  EXPECT_EQ(19, interval.get_second());
+  EXPECT_EQ(777000, interval.get_second_part());
+}
+
+TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond_tooFewArguments_shouldLeaveHighEndItems)
+{
+  char string[] = "45:19.777";
+  item->string_to_return->set_ascii(string, strlen(string));
+  
+  interval.initFromItem(item.get(), INTERVAL_DAY_MICROSECOND, &buffer);
+  
+  EXPECT_EQ(0, interval.get_day());
+  EXPECT_EQ(0, interval.get_hour());
+  EXPECT_EQ(45, interval.get_minute());
+  EXPECT_EQ(19, interval.get_second());
+  EXPECT_EQ(777000, interval.get_second_part());
+}
+
