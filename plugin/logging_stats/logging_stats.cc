@@ -52,7 +52,9 @@
  * in the scoreboard.
  *
  * A read lock is taken on the scoreboard vector when the table is queried 
- * in the data_dictionary.
+ * in the data_dictionary. The "show status" and "show global status" do
+ * not take a read lock when the data_dictionary table is queried, the 
+ * user is not displayed in these results so it is not necessary. 
  *
  * Atomics
  *

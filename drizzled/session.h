@@ -1564,12 +1564,6 @@ static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMA
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
 
-/* Functions in sql_class.cc */
-void add_to_status(system_status_var *to_var, system_status_var *from_var);
-
-void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
-                        system_status_var *dec_var);
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_SESSION_H */

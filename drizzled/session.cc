@@ -380,54 +380,6 @@ Session::~Session()
   pthread_mutex_destroy(&LOCK_delete);
 }
 
-/*
-  Add all status variables to another status variable array
-
-  SYNOPSIS
-   add_to_status()
-   to_var       add to this array
-   from_var     from this array
-
-  NOTES
-    This function assumes that all variables are long/ulong.
-    If this assumption will change, then we have to explictely add
-    the other variables after the while loop
-*/
-void add_to_status(system_status_var *to_var, system_status_var *from_var)
-{
-  ulong *end= (ulong*) ((unsigned char*) to_var +
-                        offsetof(system_status_var, last_system_status_var) +
-			sizeof(ulong));
-  ulong *to= (ulong*) to_var, *from= (ulong*) from_var;
-
-  while (to != end)
-    *(to++)+= *(from++);
-}
-
-/*
-  Add the difference between two status variable arrays to another one.
-
-  SYNOPSIS
-    add_diff_to_status
-    to_var       add to this array
-    from_var     from this array
-    dec_var      minus this array
-
-  NOTE
-    This function assumes that all variables are long/ulong.
-*/
-void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
-                        system_status_var *dec_var)
-{
-  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(system_status_var,
-						  last_system_status_var) +
-			sizeof(ulong));
-  ulong *to= (ulong*) to_var, *from= (ulong*) from_var, *dec= (ulong*) dec_var;
-
-  while (to != end)
-    *(to++)+= *(from++) - *(dec++);
-}
-
 void Session::awake(Session::killed_state state_to_set)
 {
   this->checkSentry();
