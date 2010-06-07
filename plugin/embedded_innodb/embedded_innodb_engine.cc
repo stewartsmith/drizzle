@@ -80,6 +80,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <fcntl.h>
 
 #include <string>
+#include <boost/algorithm/string.hpp>
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
@@ -148,6 +149,9 @@ public:
   const char **bas_ext() const {
     return EmbeddedInnoDBCursor_exts;
   }
+
+  bool validateCreateTableOption(const std::string &key,
+                                 const std::string &state);
 
   int doCreateTable(Session&,
                     Table& table_arg,
@@ -773,6 +777,41 @@ cleanup:
   return err;
 }
 
+bool EmbeddedInnoDBEngine::validateCreateTableOption(const std::string &key,
+                                                     const std::string &state)
+{
+  if (boost::iequals(key, "ROW_FORMAT"))
+  {
+    if (boost::iequals(state, "COMPRESSED"))
+      return true;
+
+    if (boost::iequals(state, "COMPACT"))
+      return true;
+
+    if (boost::iequals(state, "DYNAMIC"))
+      return true;
+
+    if (boost::iequals(state, "REDUNDANT"))
+      return true;
+  }
+
+  return false;
+}
+
+static ib_tbl_fmt_t parse_ib_table_format(const std::string &value)
+{
+  if (boost::iequals(value, "REDUNDANT"))
+    return IB_TBL_REDUNDANT;
+  else if (boost::iequals(value, "COMPACT"))
+    return IB_TBL_COMPACT;
+  else if (boost::iequals(value, "DYNAMIC"))
+    return IB_TBL_DYNAMIC;
+  else if (boost::iequals(value, "COMPRESSED"))
+    return IB_TBL_COMPRESSED;
+
+  assert(false); /* You need to add possible table formats here */
+  return IB_TBL_COMPACT;
+}
 
 int EmbeddedInnoDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
@@ -791,8 +830,21 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
   TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
 
+  ib_tbl_fmt_t innodb_table_format= IB_TBL_COMPACT;
+
+  const size_t num_engine_options= table_message.engine().options_size();
+  for (size_t x= 0; x < num_engine_options; x++)
+  {
+    const message::Engine::Option &engine_option= table_message.engine().options(x);
+    if (boost::iequals(engine_option.name(), "ROW_FORMAT"))
+    {
+      innodb_table_format= parse_ib_table_format(engine_option.state());
+    }
+  }
+
   innodb_err= ib_table_schema_create(innodb_table_name.c_str(),
-                                     &innodb_table_schema, IB_TBL_COMPACT, 0);
+                                     &innodb_table_schema,
+                                     innodb_table_format, 0);
 
   if (innodb_err != DB_SUCCESS)
   {
