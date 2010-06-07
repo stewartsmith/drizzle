@@ -1057,7 +1057,7 @@ uint32_t ha_blitz::max_row_length(void) {
   uint32_t *end = pos + table->sizeBlobFields();
 
   while (pos != end) {
-    length += 2 + ((Field_blob*)table->field[*pos])->get_length();
+    length += 2 + ((Field_blob *)table->getField(*pos))->get_length();
     pos++;
   }
 
@@ -1235,8 +1235,8 @@ size_t ha_blitz::pack_row(unsigned char *row_buffer,
 
   /* Nothing special to do if the table is fixed length */
   if (share->fixed_length_table) {
-    memcpy(row_buffer, row_to_pack, table->s->reclength);
-    return (size_t)table->s->reclength;
+    memcpy(row_buffer, row_to_pack, table->s->getRecordLength());
+    return (size_t)table->s->getRecordLength();
   }
 
   /* Copy NULL bits */
@@ -1244,7 +1244,7 @@ size_t ha_blitz::pack_row(unsigned char *row_buffer,
   pos = row_buffer + table->s->null_bytes;
 
   /* Pack each field into the buffer */
-  for (Field **field = table->field; *field; field++) {
+  for (Field **field = table->getFields(); *field; field++) {
     if (!((*field)->is_null()))
       pos = (*field)->pack(pos, row_to_pack + (*field)->offset(row_to_pack));
   }
@@ -1269,7 +1269,7 @@ bool ha_blitz::unpack_row(unsigned char *to, const char *from,
   pos += table->s->null_bytes;
 
   /* Unpack all fields in the provided row. */
-  for (Field **field = table->field; *field; field++) {
+  for (Field **field = table->getFields(); *field; field++) {
     if (!((*field)->is_null())) {
       pos = (*field)->unpack(to + (*field)->offset(table->record[0]), pos);
     }
@@ -1328,7 +1328,7 @@ BlitzShare *ha_blitz::get_share(const char *name) {
   }
 
   /* Prepare Index Structure(s) */
-  KeyInfo *curr = table->s->key_info;
+  KeyInfo *curr = &table->s->getKeyInfo(0);
   share_ptr->btrees = new BlitzTree[table->s->keys];
 
   for (uint32_t i = 0; i < table->s->keys; i++, curr++) {

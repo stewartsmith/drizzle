@@ -1,5 +1,5 @@
-SHOW TABLES;
-Tables_in_test
+SHOW TABLES like 't1';
+Tables_in_test (t1)
 t1
 SHOW CREATE TABLE t1;
 ERROR HY000: Corrupt or invalid table definition: schema, engine, creation_timestamp, update_timestamp

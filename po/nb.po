@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-03-05 21:56+0000\n"
-"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
+"POT-Creation-Date: 2010-03-31 06:13+0000\n"
+"PO-Revision-Date: 2010-04-17 09:12+0000\n"
+"Last-Translator: johnb <Unknown>\n"
 "Language-Team: Norwegian Bokmal <nb@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-04-18 03:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -95,14 +95,13 @@ msgstr ""
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Velkommen til Drizzle-klienten. Kommandoer slutter med ; eller \\g."
 
-#, fuzzy
-msgid "Your Drizzle connection id is "
+#, c-format
+msgid ""
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
 msgstr ""
 "Din Drizzle-tilkoblingsid er %u\n"
 "Serverversjon: %s\n"
-
-msgid "Server version: "
-msgstr ""
 
 #, c-format
 msgid "Reading history-file %s\n"
@@ -454,10 +453,8 @@ msgstr ""
 
 #, fuzzy
 msgid ""
-"                              Reading table information for completion of "
-"table and column names\n"
-"                                  You can turn off this feature to get a "
-"quicker startup with -A\n"
+"Reading table information for completion of table and column names\n"
+"You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 "Leser tabellinformasjon for automatisk utfylling av tabell- og kolonnenavn\n"
@@ -1515,9 +1512,9 @@ msgstr ""
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find symbol '%-.128s' in library '%-.128s'"
-msgstr "Klarte ikke å finne raden i '%-192s'"
+msgstr ""
 
 #, c-format
 msgid "Function '%-.192s' is not defined"
@@ -3723,9 +3720,9 @@ msgstr ""
 msgid "Corrupt or invalid table definition: %s"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Schema does not exist: %s"
-msgstr "Tabellen eksisterer ikke i databasemotoren"
+msgstr ""
 
 #, c-format
 msgid "Error altering schema: %s"
@@ -3736,6 +3733,14 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
+msgstr ""
+
+#, c-format
+msgid "Unknown table engine option key/pair %s = %s."
+msgstr ""
+
+#, c-format
+msgid "Unknown schema engine option key/pair %s = %s."
 msgstr ""
 
 #, c-format
@@ -3859,6 +3864,69 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' init function returned error.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin library named '%s'.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin named '%s'.\n"
+msgstr ""
+
+msgid "Out of memory."
+msgstr ""
+
+#, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr ""
+
+#, c-format
+msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
+msgstr ""
+
+#, c-format
+msgid "Fatal error: Failed initializing %s plugin.\n"
 msgstr ""
 
 msgid "Warning: "
@@ -3992,61 +4060,6 @@ msgid "Listening on %s:%s\n"
 msgstr ""
 
 #, c-format
-msgid ""
-"Plugin '%s' contains the name '%s' in its manifest, which has already been "
-"registered.\n"
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' init function returned error.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin library named '%s'.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
-
-msgid "Out of memory."
-msgstr ""
-
-#, c-format
-msgid "Unknown variable type code 0x%x in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid ""
-"Server variable %s of plugin %s was forced to be read-only: string variable "
-"without update_func and PLUGIN_VAR_MEMALLOC flag"
-msgstr ""
-
-#, c-format
-msgid "Missing variable name in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Thread local variable '%s' not allocated in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Out of memory for plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Bad options for plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Parsing options for plugin '%s' failed."
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' has conflicting system variables"
-msgstr ""
-
-#, c-format
 msgid "logging '%s' pre() failed"
 msgstr ""
 
@@ -4076,14 +4089,6 @@ msgstr ""
 
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
-msgstr ""
-
-#, c-format
-msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
-msgstr ""
-
-#, c-format
-msgid "Fatal error: Failed initializing %s plugin.\n"
 msgstr ""
 
 #, c-format
@@ -4157,6 +4162,10 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr ""
+
+#, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
@@ -4172,10 +4181,6 @@ msgstr "Ukjent sorteringsangivelse '%s' i tabelldefinisjonen for '%-.64s'"
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
 "read"
-msgstr ""
-
-#, c-format
-msgid "Got error %d when reading table '%s'"
 msgstr ""
 
 #, c-format
@@ -4244,9 +4249,8 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "Databasen som skal brukes."
+msgstr ""
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -4832,9 +4836,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "Socket-fil som skal brukes for tilkobling"
+msgstr "Sti til filen du vil bruke som transaksjonslogg"
 
 msgid "Name of the replicator plugin to use (default='default_replicator')"
 msgstr ""
@@ -4851,7 +4854,7 @@ msgid "Number of slots for in-memory write buffers (default=8)."
 msgstr ""
 
 msgid "Failed to open transaction log file "
-msgstr ""
+msgstr "Åpning av transaksjonsloggen feilet "
 
 #, c-format
 msgid ""
@@ -4873,61 +4876,14 @@ msgstr ""
 
 #, c-format
 msgid "Unable to parse transaction. Got error: %s.\n"
-msgstr ""
+msgstr "Klarte ikke analysere transaksjonen. Feil: %s.\n"
 
 #, c-format
 msgid "BUFFER: %s\n"
-msgstr ""
+msgstr "BUFFER: %s\n"
 
-#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
-#~ msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
-
-#~ msgid "Error reading file '%s' (Errcode: %d)"
-#~ msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
-
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
-
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "Tomt for minne (Trengte %u bytes)"
-
-#~ msgid "Error on delete of '%s' (Errcode: %d)"
-#~ msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
-
-#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-#~ msgstr "Klarte ikke å bytte navn på '%s' til '%s' (Feilkode: %d)"
-
-#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-#~ msgstr "Uventet slutt-på-fil (EOF) inntraff da vi leste '%s' (Feilkode: %d)"
-
-#~ msgid "Can't lock file (Errcode: %d)"
-#~ msgstr "Kan ikke låse filen (Feilkode: %d)"
-
-#~ msgid "Can't read dir of '%s' (Errcode: %d)"
-#~ msgstr "Kan ikke lese katalogen '%s' (Feilkode: %d)"
-
-#~ msgid "Can't get stat of '%s' (Errcode: %d)"
-#~ msgstr "Kan ikke 'stat'-e '%s' (Feilkode: %d)"
-
-#~ msgid "Can't get working dirctory (Errcode: %d)"
-#~ msgstr "Fikk ikke tak i arbeidskatalogen (Feilkode: %d)"
-
-#~ msgid "Can't change dir to '%s' (Errcode: %d)"
-#~ msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
-
-#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-#~ msgstr ""
-#~ "Disken er full når vi prøver å skrive '%s'. Venter på at noen skal frigi "
-#~ "plass..."
-
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
-
-#~ msgid "Undefined handler error 125"
-#~ msgstr "Udefinert håndteringsfeil 125"
-
-#~ msgid "Undefined handler error 129"
-#~ msgstr "Udefinert håndteringsfeil 129"
+#~ msgid "Set the default character set."
+#~ msgstr "Setter standardtegnsett."
 
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "Sjekk minnebruk og bruk av åpne filer ved avslutning"
@@ -4935,14 +4891,64 @@ msgstr ""
 #~ msgid "Print some debug info at exit."
 #~ msgstr "Vis litt debug-informasjon og avslutt."
 
-#~ msgid "Set the default character set."
-#~ msgstr "Setter standardtegnsett."
+#~ msgid "Socket file to use for connection."
+#~ msgstr "Socket-fil som skal brukes for tilkobling"
 
 #~ msgid "Unknown command '\\%c'."
 #~ msgstr "Ukjent kommando '\\%c'."
 
 #~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 #~ msgstr "%s Ver %s Distrib %s, for %s (%s) bruker %s %s\n"
+
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
+
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
+
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
+
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Klarte ikke å bytte navn på '%s' til '%s' (Feilkode: %d)"
+
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Tomt for minne (Trengte %u bytes)"
+
+#~ msgid "Can't lock file (Errcode: %d)"
+#~ msgstr "Kan ikke låse filen (Feilkode: %d)"
+
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr "Uventet slutt-på-fil (EOF) inntraff da vi leste '%s' (Feilkode: %d)"
+
+#~ msgid "Can't read dir of '%s' (Errcode: %d)"
+#~ msgstr "Kan ikke lese katalogen '%s' (Feilkode: %d)"
+
+#~ msgid "Can't get stat of '%s' (Errcode: %d)"
+#~ msgstr "Kan ikke 'stat'-e '%s' (Feilkode: %d)"
+
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "Disken er full når vi prøver å skrive '%s'. Venter på at noen skal frigi "
+#~ "plass..."
+
+#~ msgid "Can't change dir to '%s' (Errcode: %d)"
+#~ msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
+
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Fikk ikke tak i arbeidskatalogen (Feilkode: %d)"
+
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
+
+#~ msgid "Undefined handler error 129"
+#~ msgstr "Udefinert håndteringsfeil 129"
+
+#~ msgid "Undefined handler error 125"
+#~ msgstr "Udefinert håndteringsfeil 125"
 
 #~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "

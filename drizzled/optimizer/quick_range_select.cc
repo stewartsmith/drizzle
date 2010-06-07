@@ -96,7 +96,7 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
   }
   else
   {
-    column_bitmap.init(bitmap, head->getShare()->fields);
+    column_bitmap.init(bitmap, head->getShare()->sizeFields());
   }
 }
 

@@ -467,7 +467,7 @@ int ha_archive::open(const char *name, int, uint32_t)
 
   assert(share);
 
-  record_buffer= create_record_buffer(table->getShare()->reclength +
+  record_buffer= create_record_buffer(table->getShare()->getRecordLength() +
                                       ARCHIVE_ROW_HEADER_SIZE);
 
   if (!record_buffer)
@@ -542,7 +542,7 @@ int ArchiveEngine::doCreateTable(Session &,
 
   for (uint32_t key= 0; key < table_arg.sizeKeys(); key++)
   {
-    KeyInfo *pos= table_arg.key_info+key;
+    KeyInfo *pos= &table_arg.key_info[key];
     KeyPartInfo *key_part=     pos->key_part;
     KeyPartInfo *key_part_end= key_part + pos->key_parts;
 
@@ -655,7 +655,7 @@ uint32_t ha_archive::max_row_length(const unsigned char *)
        ptr != end ;
        ptr++)
   {
-      length += 2 + ((Field_blob*)table->field[*ptr])->get_length();
+      length += 2 + ((Field_blob*)table->getField(*ptr))->get_length();
   }
 
   return length;
@@ -673,7 +673,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   memcpy(record_buffer->buffer, record, table->getShare()->null_bytes);
   ptr= record_buffer->buffer + table->getShare()->null_bytes;
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field=table->getFields() ; *field ; field++)
   {
     if (!((*field)->is_null()))
       ptr= (*field)->pack(ptr, record + (*field)->offset(record));
@@ -712,7 +712,6 @@ int ha_archive::doInsertRecord(unsigned char *buf)
 
   if (table->next_number_field && record == table->record[0])
   {
-    KeyInfo *mkey= &table->getShare()->key_info[0]; // We only support one key right now
     update_auto_increment();
     temp_auto= table->next_number_field->val_int();
 
@@ -721,7 +720,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
       just cry.
     */
     if (temp_auto <= share->archive_write.auto_increment &&
-        mkey->flags & HA_NOSAME)
+        table->getShare()->getKeyInfo(0).flags & HA_NOSAME)
     {
       rc= HA_ERR_FOUND_DUPP_KEY;
       goto error;
@@ -773,8 +772,7 @@ int ha_archive::index_read(unsigned char *buf, const unsigned char *key,
 {
   int rc;
   bool found= 0;
-  KeyInfo *mkey= &table->getShare()->key_info[0];
-  current_k_offset= mkey->key_part->offset;
+  current_k_offset= table->getShare()->getKeyInfo(0).key_part->offset;
   current_key= key;
   current_key_len= key_len;
 
@@ -892,7 +890,7 @@ int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
   /* Copy null bits */
   memcpy(record, ptr, table->getNullBytes());
   ptr+= table->getNullBytes();
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
   {
     if (!((*field)->is_null()))
     {

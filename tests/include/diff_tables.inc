@@ -91,49 +91,6 @@ while ($_diff_i) {
     --die
   }
 
-  # NOTE:  We disable this ORDERING bit as it 
-  # was causing fits for drizzledump_restore.test
-  # The returned ORDINAL_POSITION value was 0 instead of 1 as we
-  # expect in MySQL and things didn't work out
-  # As the only test that uses this include file is
-  # drizzledump_restore, it doesn't cause any problems
-  # Leaving the code here at the moment in case someone should need
-  # it, but recommend removing this entirely ~1 year from commit
-  # date - 19 May 2010
-
-  # We need the output files to be sorted (so that diff_files does not
-  # think the files are different just because they are differently
-  # ordered).  To this end, we first generate a query that sorts the
-  # table by all columns.  Since ORDER BY accept column indices, we
-  # just generate a comma-separated list of all numbers from 1 to the
-  # number of columns in the table.
-  let $_diff_column_index=`SELECT MAX(ordinal_position)
-                           FROM data_dictionary.columns
-                           WHERE CONCAT(table_schema, '.', table_name) =
-                                 '$_diff_table'`;
-
-  # The content of $_diff_column_index must be an integer >= 0.
-  # If not the following might happen:
-  # Result of SELECT | $_diff_column_index | dec $_diff_column_index
-  #    NULL          | empty string        | -1
-  #    ''            | empty string        | -1
-  #    'a1'          | a1                  | -1
-  #    '1a'          | 1a                  |  0
-  #    ........................
-  # (Bug#51057 Weak code in diff_tables.inc can lead to 100% CPU consumption)
-  # In case $i = 1 the soone following loop
-  # while ($i) {
-  #   ...
-  #   dec $i;
-  # }
-  # will never terminate.
-  #if (`SELECT CAST(CAST('$_diff_column_index' AS UNSIGNED) AS CHAR(65))
-  #            <> '$_diff_column_index'
-  #         OR CAST('$_diff_column_index' AS UNSIGNED) < 1`) {
-  #  --echo !!!ERROR IN TEST: \$_diff_column_index is '$_diff_column_index'
-  #  --echo                   but must be an unsigned integer > 0
-  #  --die
-  #}
 
   #let $_diff_column_list=$_diff_column_index;
   #dec $_diff_column_index;

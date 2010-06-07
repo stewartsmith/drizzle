@@ -4515,7 +4515,7 @@ static void check_eol_junk(const char *eol)
   terminated by new line '\n' regardless how many "delimiter" it contain.
 */
 
-#define MAX_QUERY (256*1024*2) /* 256K -- a test in sp-big is >128K */
+#define MAX_QUERY (768*1024*2) /* 256K -- a test in sp-big is >128K */
 static char read_command_buf[MAX_QUERY];
 
 static int read_command(struct st_command** command_ptr)

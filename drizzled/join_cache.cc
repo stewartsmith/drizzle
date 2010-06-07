@@ -100,7 +100,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   {
     uint32_t null_fields=0, used_fields;
     Field **f_ptr,*field;
-    for (f_ptr= tables[i].table->field,used_fields= tables[i].used_fields; used_fields; f_ptr++)
+    for (f_ptr= tables[i].table->getFields(), used_fields= tables[i].used_fields; used_fields; f_ptr++)
     {
       field= *f_ptr;
       if (field->isReadSet())

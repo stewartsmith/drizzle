@@ -56,7 +56,8 @@ static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffer_file,
                                              uint32_t count,
                                              unsigned char *buf);
 
-static ha_rows find_all_keys(SORTPARAM *param,
+static ha_rows find_all_keys(Session *session,
+                             SORTPARAM *param,
                              optimizer::SqlSelect *select,
 			     unsigned char * *sort_keys, 
                              internal::IO_CACHE *buffer_file,
@@ -180,7 +181,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
       Get the descriptors of all fields whose values are appended
       to sorted fields and get its total length in param.spack_length.
     */
-    param.addon_field= get_addon_fields(session, table->field,
+    param.addon_field= get_addon_fields(session, table->getFields(),
                                         param.sort_length,
                                         &param.addon_length);
   }
@@ -267,7 +268,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
   param.keys--;  			/* TODO: check why we do this */
   param.sort_form= table;
   param.end=(param.local_sortorder=sortorder)+s_length;
-  if ((records=find_all_keys(&param,select,sort_keys, &buffpek_pointers,
+  if ((records=find_all_keys(session, &param,select,sort_keys, &buffpek_pointers,
 			     &tempfile, selected_records_file)) ==
       HA_POS_ERROR)
     goto err;
@@ -473,7 +474,8 @@ static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffpek_pointer
     HA_POS_ERROR on error.
 */
 
-static ha_rows find_all_keys(SORTPARAM *param, 
+static ha_rows find_all_keys(Session *session,
+                             SORTPARAM *param, 
                              optimizer::SqlSelect *select,
 			     unsigned char **sort_keys,
 			     internal::IO_CACHE *buffpek_pointers,
@@ -484,7 +486,6 @@ static ha_rows find_all_keys(SORTPARAM *param,
   unsigned char *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
   internal::my_off_t record;
   Table *sort_form;
-  Session *session= current_session;
   volatile Session::killed_state *killed= &session->killed;
   Cursor *file;
   MyBitmap *save_read_set, *save_write_set;
@@ -507,7 +508,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
     next_pos=(unsigned char*) 0;			/* Find records in sequence */
     file->startTableScan(1);
     file->extra_opt(HA_EXTRA_CACHE,
-		    current_session->variables.read_buff_size);
+		    session->variables.read_buff_size);
   }
 
   ReadRecord read_record_info;
@@ -516,7 +517,7 @@ static ha_rows find_all_keys(SORTPARAM *param,
     if (select->quick->reset())
       return(HA_POS_ERROR);
 
-    read_record_info.init_read_record(current_session, select->quick->head, select, 1, 1);
+    read_record_info.init_read_record(session, select->quick->head, select, 1, 1);
   }
 
   /* Remember original bitmaps */

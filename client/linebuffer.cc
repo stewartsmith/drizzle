@@ -45,9 +45,7 @@ char *LineBuffer::readline()
 
   if (file && !eof)
   {
-    if ((read_count= internal::my_read(fileno(file),
-                             (unsigned char *) (&line[0]),
-                             max_size-1,MYF(MY_WME))))
+    if ((read_count= read(fileno(file), (&line[0]), max_size-1)))
     {
       line[read_count+1]= '\0';
       buffer << &line[0];

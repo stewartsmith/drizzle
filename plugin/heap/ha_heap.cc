@@ -263,7 +263,7 @@ Cursor *ha_heap::clone(memory::Root *mem_root)
 
 const char *ha_heap::index_type(uint32_t inx)
 {
-  return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
+  return ((table_share->getKeyInfo(inx).algorithm == HA_KEY_ALG_BTREE) ?
           "BTREE" : "HASH");
 }
 
@@ -287,7 +287,7 @@ const char *ha_heap::index_type(uint32_t inx)
 void ha_heap::set_keys_for_scanning(void)
 {
   btree_keys.reset();
-  for (uint32_t i= 0 ; i < table->getShare()->keys ; i++)
+  for (uint32_t i= 0 ; i < table->getShare()->sizeKeys() ; i++)
   {
     if (table->key_info[i].algorithm == HA_KEY_ALG_BTREE)
       btree_keys.set(i);
@@ -297,9 +297,9 @@ void ha_heap::set_keys_for_scanning(void)
 
 void ha_heap::update_key_stats()
 {
-  for (uint32_t i= 0; i < table->getShare()->keys; i++)
+  for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++)
   {
-    KeyInfo *key=table->key_info+i;
+    KeyInfo *key= &table->key_info[i];
     if (!key->rec_per_key)
       continue;
     if (key->algorithm != HA_KEY_ALG_BTREE)
@@ -661,7 +661,7 @@ int HeapEngine::doRenameTable(Session &session, TableIdentifier &from, TableIden
 ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
                                   key_range *max_key)
 {
-  KeyInfo *key=table->key_info+inx;
+  KeyInfo *key= &table->key_info[inx];
   if (key->algorithm == HA_KEY_ALG_BTREE)
     return hp_rb_records_in_range(file, inx, min_key, max_key);
 
@@ -709,10 +709,10 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
-  uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->getShare()->keys;
+  uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->getShare()->sizeKeys();
   uint32_t auto_key= 0, auto_key_type= 0;
   uint32_t max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
-  uint32_t column_idx, column_count= table_arg->getShare()->fields;
+  uint32_t column_idx, column_count= table_arg->getShare()->sizeFields();
   HP_COLUMNDEF *columndef;
   HP_KEYDEF *keydef;
   HA_KEYSEG *seg;
@@ -735,7 +735,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
 
   for (column_idx= 0; column_idx < column_count; column_idx++)
   {
-    Field* field= *(table_arg->field + column_idx);
+    Field* field= *(table_arg->getFields() + column_idx);
     HP_COLUMNDEF* column= columndef + column_idx;
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();
@@ -775,7 +775,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   seg= reinterpret_cast<HA_KEYSEG*> (keydef + keys);
   for (key= 0; key < keys; key++)
   {
-    KeyInfo *pos= table_arg->key_info+key;
+    KeyInfo *pos= &table_arg->key_info[key];
     KeyPartInfo *key_part=     pos->key_part;
     KeyPartInfo *key_part_end= key_part + pos->key_parts;
 
@@ -888,7 +888,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
                     keys, keydef,
                     column_count, columndef,
                     max_key_fieldnr, key_part_size,
-                    table_arg->getShare()->reclength, mem_per_row_keys,
+                    table_arg->getShare()->getRecordLength(), mem_per_row_keys,
                     static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
                     0, // Factor out MIN
                     &hp_create_info, internal_share);
