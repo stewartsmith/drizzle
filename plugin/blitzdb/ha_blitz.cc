@@ -455,9 +455,8 @@ int ha_blitz::info(uint32_t flag) {
     stats.data_file_length = share->dict.table_size();
   }
 
-  /* TODO: Check if it's worthwhile to add 1 to this assignment */
   if (flag & HA_STATUS_AUTO)
-    stats.auto_increment_value = share->auto_increment_value;
+    stats.auto_increment_value = share->auto_increment_value + 1;
 
   if (flag & HA_STATUS_ERRKEY)
     errkey = errkey_id;
@@ -794,8 +793,11 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
 
   /* Prepare Auto Increment field if one exists. */
   if (table->next_number_field && drizzle_row == table->record[0]) {
-    if ((rv = update_auto_increment()) != 0)
+    pthread_mutex_lock(&blitz_utility_mutex);
+    if ((rv = update_auto_increment()) != 0) {
+      pthread_mutex_unlock(&blitz_utility_mutex);
       return rv;
+    }
 
     uint64_t next_val = table->next_number_field->val_int();
 
@@ -803,6 +805,7 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
       share->auto_increment_value = next_val;
       stats.auto_increment_value = share->auto_increment_value + 1;
     }
+    pthread_mutex_unlock(&blitz_utility_mutex);
   }
 
   /* Serialize a primary key for this row. If a PK doesn't exist,
