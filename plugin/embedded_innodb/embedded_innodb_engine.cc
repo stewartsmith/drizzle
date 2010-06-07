@@ -389,7 +389,7 @@ int EmbeddedInnoDBEngine::doReleaseSavepoint(Session* session,
   err= ib_savepoint_release(*transaction, savepoint.getName().c_str(),
                             savepoint.getName().length());
   if (err != DB_SUCCESS)
-    return -1;
+    return ib_err_t_to_drizzle_error(err);
 
   return 0;
 }
@@ -404,7 +404,7 @@ int EmbeddedInnoDBEngine::doCommit(Session* session, bool all)
     err= ib_trx_commit(*transaction);
 
     if (err != DB_SUCCESS)
-      return -1;
+      return ib_err_t_to_drizzle_error(err);
 
     *transaction= NULL;
   }
@@ -422,7 +422,7 @@ int EmbeddedInnoDBEngine::doRollback(Session* session, bool all)
     err= ib_trx_rollback(*transaction);
 
     if (err != DB_SUCCESS)
-      return -1;
+      return ib_err_t_to_drizzle_error(err);
 
     *transaction= NULL;
   }
@@ -431,7 +431,7 @@ int EmbeddedInnoDBEngine::doRollback(Session* session, bool all)
     err= ib_savepoint_rollback(*transaction, statement_savepoint_name.c_str(),
                                statement_savepoint_name.length());
     if (err != DB_SUCCESS)
-      return -1;
+      return ib_err_t_to_drizzle_error(err);
   }
 
   return 0;
@@ -705,8 +705,10 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 {
   ib_err_t err= ib_cursor_open_table(name+2, NULL, &cursor);
   bool has_hidden_primary_key= false;
-  assert (err == DB_SUCCESS);
   ib_id_t idx_id;
+
+  if (err != DB_SUCCESS)
+    return ib_err_t_to_drizzle_error(err);
 
   err= ib_index_get_id(name+2, "HIDDEN_PRIMARY", &idx_id);
   if (err == DB_SUCCESS)
@@ -735,7 +737,7 @@ int EmbeddedInnoDBCursor::close(void)
 {
   ib_err_t err= ib_cursor_close(cursor);
   if (err != DB_SUCCESS)
-    return -1; // FIXME
+    return ib_err_t_to_drizzle_error(err);
 
   free_share();
 
@@ -892,7 +894,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
                         ER_CANT_CREATE_TABLE,
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
                         innodb_table_name.c_str(), innodb_err, ib_strerror(innodb_err));
-    return HA_ERR_GENERIC;
+    return ib_err_t_to_drizzle_error(innodb_err);
   }
 
   for (int colnr= 0; colnr < table_message.field_size() ; colnr++)
@@ -913,7 +915,7 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
                             " InnoDB Error %d (%s)\n"),
                           field.name().c_str(), innodb_table_name.c_str(),
                           innodb_err, ib_strerror(innodb_err));
-      return HA_ERR_GENERIC;
+      return ib_err_t_to_drizzle_error(innodb_err);
     }
     if (field_err != 0)
       return field_err;
@@ -1047,7 +1049,7 @@ schema_error:
                         _("Cannot create table %s. InnoDB Error %d (%s)\n"),
                         innodb_table_name.c_str(),
                         innodb_err, ib_strerror(innodb_err));
-    return HA_ERR_GENERIC;
+    return ib_err_t_to_drizzle_error(innodb_err);
   }
 
   return 0;
