@@ -327,7 +327,7 @@ TEST_F(TimeTest, from_string_validString_secondsOnly_shouldPopulateCorrectly)
   
   EXPECT_EQ(59, seconds);
 }
-/*
+
 class TimeFromStringTest: public ::testing::TestWithParam<const char*>
 {
   protected:
@@ -353,7 +353,7 @@ class TimeFromStringTest: public ::testing::TestWithParam<const char*>
     }
 };
 
-TEST_P(TimeFromStringTest, from_string_validString_formatsWithAllTimeComponentsPresent_shouldPopulateCorrectly)
+TEST_P(TimeFromStringTest, from_string)
 {
   const char *valid_string = GetParam();
 
@@ -367,11 +367,14 @@ TEST_P(TimeFromStringTest, from_string_validString_formatsWithAllTimeComponentsP
   EXPECT_EQ(9, seconds);
 }
 
-INSTANTIATE_TEST_CASE_P(FormatsWithAllTimeComponentsPresent, TimeFromStringTest,
+/* TODO:for some reason this was not declared by the macro, needs clarification*/
+testing::internal::ParamGenerator<const char*> gtest_ValidStringTimeFromStringTest_EvalGenerator_();
+
+INSTANTIATE_TEST_CASE_P(ValidString, TimeFromStringTest,
                         ::testing::Values("080409",
                                           "80409",
                                           "08:04:09",
                                           "8:04:09",
                                           "8:04:9",
                                           "8:4:9"));
-*/                                          
+                                          

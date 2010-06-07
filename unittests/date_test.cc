@@ -468,3 +468,55 @@ TEST_F(DateTest, to_decimal)
 
   ASSERT_EQ(19870506, to.buf[0]);
 }
+
+class DateFromStringTest: public ::testing::TestWithParam<const char*>
+{
+  protected:
+    Date date;
+    bool result;
+    uint32_t years, months, days;
+    
+    virtual void SetUp()
+    {
+      init_temporal_formats();
+    }
+    
+    virtual void TearDown()
+    {
+      deinit_temporal_formats();
+    }
+    
+    void assign_date_values()
+    {
+      years= date.years();
+      months= date.months();
+      days= date.days();
+    }
+};
+
+TEST_P(DateFromStringTest, from_string)
+{
+  const char *valid_string = GetParam();
+  
+  result= date.from_string(valid_string, strlen(valid_string));
+  ASSERT_TRUE(result);
+  
+  assign_date_values();
+  
+  EXPECT_EQ(2010, years);
+  EXPECT_EQ(6, months);
+  EXPECT_EQ(7, days);
+}
+
+/* TODO:for some reason this was not declared by the macro, needs clarification*/
+testing::internal::ParamGenerator<const char*> gtest_ValidStringDateFromStringTest_EvalGenerator_();
+
+INSTANTIATE_TEST_CASE_P(ValidString, DateFromStringTest,
+                        ::testing::Values("20100607", /* YYYYMMDD */
+                                          "06/07/2010",/* MM[-/.]DD[-/.]YYYY (US common format)*/
+                                          "10.06.07",/* YY[-/.]MM[-/.]DD */
+                                          "10/6/7",/* YY[-/.][M]M[-/.][D]D */
+                                          "2010-6-7"/* YYYY[-/.][M]M[-/.][D]D */));
+                                          
+
+                                          

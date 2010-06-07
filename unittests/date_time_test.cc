@@ -308,8 +308,8 @@ TEST_F(DateTimeTest, to_decimal)
 }
 
 
-/*
-class DateTimeFromStringTest: public ::testing::TestWithParam<const char*>
+
+class DateTimeFromStringTest
 {
   protected:
     DateTime datetime;
@@ -317,12 +317,12 @@ class DateTimeFromStringTest: public ::testing::TestWithParam<const char*>
     uint32_t years, months, days;
     uint32_t hours, minutes, seconds;
 
-    virtual void SetUp()
+    void init()
     {
       init_temporal_formats();
     }
 
-    virtual void TearDown()
+    void deinit()
     {
       deinit_temporal_formats();
     }
@@ -338,7 +338,46 @@ class DateTimeFromStringTest: public ::testing::TestWithParam<const char*>
     }
 };
 
-TEST_P(DateTimeFromStringTest, from_string_validString_formatsWithDateAndTimePresent_shouldPopulateCorrectly)
+class DateTimeFromStringFullFormatTest: public ::testing::TestWithParam<const char*>, public DateTimeFromStringTest
+{
+  virtual void SetUp()
+  {
+    init();
+  }
+  
+  virtual void TearDown()
+  {
+    deinit();
+  }  
+};
+
+class DateTimeFromStringNoSecondFormatTest: public ::testing::TestWithParam<const char*>, public DateTimeFromStringTest
+{
+  virtual void SetUp()
+  {
+    init();
+  }
+  
+  virtual void TearDown()
+  {
+    deinit();
+  }
+};
+
+class DateTimeFromStringDateOnlyTest: public ::testing::TestWithParam<const char*>, public DateTimeFromStringTest
+{
+  virtual void SetUp()
+  {
+    init();
+  }
+  
+  virtual void TearDown()
+  {
+    deinit();
+  }
+};
+
+TEST_P(DateTimeFromStringFullFormatTest, from_string_validString)
 {
   const char *valid_string = GetParam();
 
@@ -354,8 +393,9 @@ TEST_P(DateTimeFromStringTest, from_string_validString_formatsWithDateAndTimePre
   EXPECT_EQ(7, minutes);
   EXPECT_EQ(6, seconds);
 }
-
-INSTANTIATE_TEST_CASE_P(FormatsWithDateAndTimePresent, DateTimeFromStringTest,
+/* TODO:for some reason this was not declared by the macro, needs clarification*/
+testing::internal::ParamGenerator<const char*> gtest_ValidStringDateTimeFromStringFullFormatTest_EvalGenerator_();
+INSTANTIATE_TEST_CASE_P(ValidString, DateTimeFromStringFullFormatTest,
                         ::testing::Values("20100501080706",
                                           "2010-05-01 08:07:06",
                                           "2010/05/01T08:07:06",
@@ -364,7 +404,8 @@ INSTANTIATE_TEST_CASE_P(FormatsWithDateAndTimePresent, DateTimeFromStringTest,
                                           "10/5/1 08:07:06",
                                           "10.5.1 08:07:06"));
 
-TEST_P(DateTimeFromStringTest, from_string_validString_formatsWithDateHourAndMinutePresent_shouldPopulateCorrectly)
+                                          
+TEST_P(DateTimeFromStringNoSecondFormatTest, from_string_validString)
 {
   const char *valid_string = GetParam();
 
@@ -380,11 +421,39 @@ TEST_P(DateTimeFromStringTest, from_string_validString_formatsWithDateHourAndMin
   EXPECT_EQ(7, minutes);
 }
 
-INSTANTIATE_TEST_CASE_P(FormatsWithDateHourAndMinutePresent, DateTimeFromStringTest,
+/* TODO:for some reason this was not declared by the macro, needs clarification*/
+testing::internal::ParamGenerator<const char*> gtest_ValidStringDateTimeFromStringNoSecondFormatTest_EvalGenerator_();
+INSTANTIATE_TEST_CASE_P(ValidString, DateTimeFromStringNoSecondFormatTest,
                         ::testing::Values("2010-05-01 08:07",
-                                          "2010/05/01 08:07"
+                                          "2010/05/01 08:07",
                                           "2010.5.1 08:07",
                                           "10-05-01 08:07",
                                           "10/5/1 08:07",
                                           "10.5.1 08:07"));
-*/
+
+
+
+TEST_P(DateTimeFromStringDateOnlyTest, from_string_validString)
+{
+  const char *valid_string = GetParam();
+
+  result = datetime.from_string(valid_string, strlen(valid_string));
+  ASSERT_TRUE(result);
+
+  assignDateTimeValues();
+
+  EXPECT_EQ(2010, years);
+  EXPECT_EQ(6, months);
+  EXPECT_EQ(7, days);
+}
+
+/* TODO:for some reason this was not declared by the macro, needs clarification*/
+testing::internal::ParamGenerator<const char*> gtest_ValidStringDateTimeFromStringDateOnlyTest_EvalGenerator_();
+INSTANTIATE_TEST_CASE_P(ValidString, DateTimeFromStringDateOnlyTest,
+                        ::testing::Values("20100607", /* YYYYMMDD */
+                                          "06/07/2010",/* MM[-/.]DD[-/.]YYYY (US common format)*/
+                                          "10.06.07",/* YY[-/.]MM[-/.]DD */
+                                          "10/6/7",/* YY[-/.][M]M[-/.][D]D */
+                                          "2010-6-7"/* YYYY[-/.][M]M[-/.][D]D */));
+
+                                          
