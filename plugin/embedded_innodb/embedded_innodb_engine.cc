@@ -1755,7 +1755,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
       ret= HA_ERR_FOUND_DUPP_KEY;
   }
   else if (err != DB_SUCCESS)
-    ret= -1;
+    ret= ib_err_t_to_drizzle_error(err);
 
   tuple= ib_tuple_clear(tuple);
   ib_tuple_delete(tuple);
