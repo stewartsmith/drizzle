@@ -281,11 +281,12 @@ TEST_F(TimeTest, from_time_t)
 TEST_F(TimeTest, to_decimal)
 {
   drizzled::my_decimal to;
-  Generator::TimeGen::make_time(&sample_time, 8, 4, 9);
+  Generator::TimeGen::make_time(&sample_time, 8, 4, 9, 56);
 
   sample_time.to_decimal(&to);
   
   ASSERT_EQ(80409, to.buf[0]);
+  ASSERT_EQ(56000, to.buf[1]);
 }
 
 TEST_F(TimeTest, from_string_invalidString_shouldReturn_False)

@@ -58,7 +58,8 @@ public:
   class TimeGen
   {
   public:
-    static void make_time(drizzled::Time *time, uint32_t hours, uint32_t minutes, uint32_t seconds);
+    static void make_time(drizzled::Time *time, uint32_t hours, uint32_t minutes, uint32_t seconds,
+                          uint32_t useconds = 0);
   };
   
   class DateTimeGen
@@ -66,7 +67,7 @@ public:
   public:
     static void make_datetime(drizzled::DateTime *datetime,
                               uint32_t years, uint32_t months, uint32_t days, uint32_t hours,
-                              uint32_t minutes, uint32_t seconds);
+                              uint32_t minutes, uint32_t seconds, uint32_t useconds = 0);
     static void make_valid_datetime(drizzled::DateTime *datetime);
   };
   

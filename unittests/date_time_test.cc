@@ -179,13 +179,13 @@ TEST_F(DateTimeTest, is_valid_onInvalidDateTimeWithSecondsAboveMaximum61_shouldR
 
 TEST_F(DateTimeTest, to_string_shouldProduce_hyphenSeperatedDateElements_and_colonSeperatedTimeElements)
 {
-  char expected[DateTime::MAX_STRING_LENGTH]= "2010-05-01 08:07:06";
+  char expected[DateTime::MAX_STRING_LENGTH]= "2010-05-01 08:07:06.123456";
   char returned[DateTime::MAX_STRING_LENGTH];
-  Generator::DateTimeGen::make_datetime(&datetime, 2010, 5, 1, 8, 7, 6);
+  Generator::DateTimeGen::make_datetime(&datetime, 2010, 5, 1, 8, 7, 6, 123456);
   
   datetime.to_string(returned, DateTime::MAX_STRING_LENGTH);
   
-  ASSERT_STREQ(expected, returned);  
+  ASSERT_STREQ(expected, returned);
 }
 
 TEST_F(DateTimeTest, to_string_nullBuffer_noMicroSeconds_shouldReturnProperLengthAnyway)
@@ -299,12 +299,13 @@ TEST_F(DateTimeTest, DISABLED_to_tm)
 TEST_F(DateTimeTest, to_decimal)
 {
   drizzled::my_decimal to;
-  Generator::DateTimeGen::make_datetime(&datetime, 1987, 6, 13, 5, 10, 13);
+  Generator::DateTimeGen::make_datetime(&datetime, 1987, 6, 13, 5, 10, 13, 456);
 
   datetime.to_decimal(&to);
   
-  ASSERT_EQ(19870,to.buf[0]);
-  ASSERT_EQ(613051013,to.buf[1]);
+  EXPECT_EQ(19870,to.buf[0]);
+  EXPECT_EQ(613051013,to.buf[1]);
+  EXPECT_EQ(456000,to.buf[2]);
 }
 
 
