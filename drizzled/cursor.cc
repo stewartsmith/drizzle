@@ -192,13 +192,6 @@ void **Cursor::ha_data(Session *session) const
   return session->getEngineData(engine);
 }
 
-Session *Cursor::ha_session(void) const
-{
-  assert(!table || !table->in_use || table->in_use == current_session);
-  return (table && table->in_use) ? table->in_use : current_session;
-}
-
-
 bool Cursor::is_fatal_error(int error, uint32_t flags)
 {
   if (!error ||
@@ -652,7 +645,17 @@ inline
 void
 Cursor::setTransactionReadWrite()
 {
-  ResourceContext *resource_context= ha_session()->getResourceContext(engine);
+  ResourceContext *resource_context;
+
+  /*
+   * If the cursor has not context for execution then there should be no
+   * possible resource to gain (and if there is... then there is a bug such
+   * that in_use should have been set.
+ */
+  if (not table || not table->in_use)
+    return;
+
+  resource_context= table->in_use->getResourceContext(engine);
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
