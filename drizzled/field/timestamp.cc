@@ -96,10 +96,10 @@ Field_timestamp::Field_timestamp(unsigned char *ptr_arg,
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
   flags|= UNSIGNED_FLAG;
   unireg_check= unireg_check_arg;
-  if (! share->timestamp_field && unireg_check != NONE)
+  if (! share->getTimestampField() && unireg_check != NONE)
   {
     /* This timestamp has auto-update */
-    share->timestamp_field= this;
+    share->setTimestampField(this);
     flags|= TIMESTAMP_FLAG;
     if (unireg_check != TIMESTAMP_DN_FIELD)
       flags|= ON_UPDATE_NOW_FLAG;

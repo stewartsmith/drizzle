@@ -25,8 +25,7 @@ noinst_HEADERS+= \
 		drizzled/internal/my_pthread.h \
 		drizzled/internal/my_static.h \
 		drizzled/internal/my_sys.h \
-		drizzled/internal/t_ctype.h \
-		drizzled/internal/utf8.h
+		drizzled/internal/t_ctype.h
 
 drizzled_internal_libinternal_la_LIBADD= \
 		drizzled/libcharset.la \

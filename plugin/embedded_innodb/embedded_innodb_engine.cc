@@ -99,6 +99,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/field.h>
 #include "drizzled/field/timestamp.h" // needed for UPDATE NOW()
 #include "drizzled/field/blob.h"
+#include "drizzled/field/enum.h"
 #include <drizzled/session.h>
 
 using namespace std;
@@ -322,6 +323,9 @@ static ib_trx_level_t tx_isolation_to_ib_trx_level(enum_tx_isolation level)
   case ISO_READ_UNCOMMITTED:
     return IB_TRX_READ_UNCOMMITTED;
   }
+
+  assert(0);
+  return IB_TRX_REPEATABLE_READ;
 }
 
 int EmbeddedInnoDBEngine::doStartTransaction(Session *session,
@@ -800,7 +804,7 @@ static int create_table_add_field(ib_tbl_sch_t schema,
                                     column_attr, 0, 2);
     else
     {
-      assert(field_options.field_value_size() < (int)0x10000);
+      assert(field_options.field_value_size() <= Field_enum::max_supported_elements);
     }
     break;
   }
@@ -1707,7 +1711,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
 
   }
 
-  write_row_to_innodb_tuple(table->field, tuple);
+  write_row_to_innodb_tuple(table->getFields(), tuple);
 
   if (share->has_hidden_primary_key)
   {
@@ -1740,7 +1744,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
       err= ib_cursor_first(cursor);
       assert(err == DB_SUCCESS || err == DB_END_OF_INDEX);
 
-      write_row_to_innodb_tuple(table->field, tuple);
+      write_row_to_innodb_tuple(table->getFields(), tuple);
 
       err= ib_cursor_insert_row(cursor, tuple);
       assert(err==DB_SUCCESS); // probably be nice and process errors
@@ -1772,7 +1776,7 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
     table->timestamp_field->set_time();
 
-  write_row_to_innodb_tuple(table->field, update_tuple);
+  write_row_to_innodb_tuple(table->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
 
@@ -1902,7 +1906,7 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   if (table->s->primary_key != MAX_KEY)
     table->mark_columns_used_by_index_no_reset(table->s->primary_key);
 
-  for (Field **field=table->field ; *field ; field++, colnr++)
+  for (Field **field= table->getFields() ; *field ; field++, colnr++)
   {
     if (! (**field).isReadSet())
       continue;

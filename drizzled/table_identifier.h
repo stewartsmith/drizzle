@@ -133,9 +133,9 @@ public:
 
   void copyToTableMessage(message::Table &message);
 
-  bool operator<(TableIdentifier &right)
+  friend bool operator<(const TableIdentifier &left, const TableIdentifier &right)
   {
-    int first= getLower().compare(right.getLower());
+    int first= left.getLower().compare(right.getLower());
 
     if (first < 0)
     {
@@ -147,7 +147,7 @@ public:
     }
     else
     {
-      int val= lower_table_name.compare(right.lower_table_name);
+      int val= left.lower_table_name.compare(right.lower_table_name);
 
       if (val < 0)
       {
@@ -159,7 +159,7 @@ public:
       }
       else
       {
-        if (type < right.type)
+        if (left.type < right.type)
         {
           return true;
         }

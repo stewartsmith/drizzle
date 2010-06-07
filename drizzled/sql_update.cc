@@ -73,7 +73,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  unique_map.init(unique_map_buf, table->getMutableShare()->fields);
+  unique_map.init(unique_map_buf, table->getMutableShare()->sizeFields());
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
@@ -95,9 +95,14 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Read record that is identified by table->cursor->ref. */
   (void) table->cursor->rnd_pos(table->record[1], table->cursor->ref);
   /* Copy the newly read columns into the new record. */
-  for (field_p= table->field; (field= *field_p); field_p++)
+  for (field_p= table->getFields(); (field= *field_p); field_p++)
+  {
     if (unique_map.isBitSet(field->field_index))
+    {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
+    }
+  }
+
 
   return;
 }
@@ -293,7 +298,6 @@ int mysql_update(Session *session, TableList *table_list,
       ha_rows examined_rows;
 
       table->sort.io_cache = new internal::IO_CACHE;
-      memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
           (table->sort.found_records= filesort(session, table, sortorder, length,

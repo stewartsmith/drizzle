@@ -26,7 +26,7 @@
 namespace drizzled
 {
 
-class Field_enum :public Field_str 
+class Field_enum :public Field_str
 {
 protected:
   uint32_t packlength;
@@ -36,6 +36,8 @@ public:
   using Field::val_int;
   using Field::val_str;
   using Field::cmp;
+
+  static const int max_supported_elements = 0x10000;
 
   /** Internal storage for the string values of the ENUM */
   TYPELIB *typelib;
@@ -95,15 +97,11 @@ public:
   {
     return DRIZZLE_TYPE_ENUM;
   }
-  uint32_t pack_length_from_metadata(uint32_t field_metadata)
-  {
-    return (field_metadata & 0x00ff);
-  }
   virtual bool zero_pack() const
   {
     return false;
   }
-  bool optimize_range(uint32_t, uint32_t) 
+  bool optimize_range(uint32_t, uint32_t)
   {
     return false;
   }

@@ -617,7 +617,7 @@ bool mysql_change_db(Session *session, SchemaIdentifier &schema_identifier)
     return true;
   }
 
-  if (not check_db_name(schema_identifier))
+  if (not check_db_name(session, schema_identifier))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), schema_identifier.getSQLPath().c_str());
 
