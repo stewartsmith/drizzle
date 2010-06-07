@@ -44,12 +44,12 @@ class DateTimeTest: public ::testing::Test
 
     void assignDateTimeValues()
     {
-      years = datetime.years();
-      months = datetime.months();
-      days = datetime.days();
-      hours = datetime.hours();
-      minutes = datetime.minutes();
-      seconds = datetime.seconds();
+      years= datetime.years();
+      months= datetime.months();
+      days= datetime.days();
+      hours= datetime.hours();
+      minutes= datetime.minutes();
+      seconds= datetime.seconds();
     }
 };
 
@@ -277,7 +277,7 @@ TEST_F(DateTimeTest, from_int64_t_with_conversion_format_YYMMDDHHMMSS_yearBelow2
 
 TEST_F(DateTimeTest, DISABLED_to_tm)
 {
-  years = 2030, months = 8, days = 17, hours = 14, minutes = 45, seconds = 13;
+  years= 2030, months= 8, days= 17, hours= 14, minutes= 45, seconds= 13;
   Generator::DateTimeGen::make_datetime(&datetime, years, months, days, hours, minutes, seconds);
   struct tm filled;
   
@@ -290,7 +290,7 @@ TEST_F(DateTimeTest, DISABLED_to_tm)
   EXPECT_EQ(45, filled.tm_min);
   EXPECT_EQ(13, filled.tm_sec);
 
-  /* these fail, shouldn't they also be set properly? */
+  /* TODO:these fail, shouldn't they also be set properly? */
   EXPECT_EQ(228, filled.tm_yday);
   EXPECT_EQ(6, filled.tm_wday);
   EXPECT_EQ(-1, filled.tm_isdst);
@@ -330,12 +330,12 @@ class DateTimeFromStringTest
 
     void assignDateTimeValues()
     {
-      years = datetime.years();
-      months = datetime.months();
-      days = datetime.days();
-      hours = datetime.hours();
-      minutes = datetime.minutes();
-      seconds = datetime.seconds();
+      years= datetime.years();
+      months= datetime.months();
+      days= datetime.days();
+      hours= datetime.hours();
+      minutes= datetime.minutes();
+      seconds= datetime.seconds();
     }
 };
 
@@ -380,9 +380,9 @@ class DateTimeFromStringDateOnlyTest: public ::testing::TestWithParam<const char
 
 TEST_P(DateTimeFromStringFullFormatTest, from_string_validString)
 {
-  const char *valid_string = GetParam();
+  const char *valid_string= GetParam();
 
-  result = datetime.from_string(valid_string, strlen(valid_string));
+  result= datetime.from_string(valid_string, strlen(valid_string));
   ASSERT_TRUE(result);
 
   assignDateTimeValues();
@@ -408,9 +408,9 @@ INSTANTIATE_TEST_CASE_P(ValidString, DateTimeFromStringFullFormatTest,
                                           
 TEST_P(DateTimeFromStringNoSecondFormatTest, from_string_validString)
 {
-  const char *valid_string = GetParam();
+  const char *valid_string= GetParam();
 
-  result = datetime.from_string(valid_string, strlen(valid_string));
+  result= datetime.from_string(valid_string, strlen(valid_string));
   ASSERT_TRUE(result);
 
   assignDateTimeValues();
@@ -436,9 +436,9 @@ INSTANTIATE_TEST_CASE_P(ValidString, DateTimeFromStringNoSecondFormatTest,
 
 TEST_P(DateTimeFromStringDateOnlyTest, from_string_validString)
 {
-  const char *valid_string = GetParam();
+  const char *valid_string= GetParam();
 
-  result = datetime.from_string(valid_string, strlen(valid_string));
+  result= datetime.from_string(valid_string, strlen(valid_string));
   ASSERT_TRUE(result);
 
   assignDateTimeValues();

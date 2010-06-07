@@ -180,7 +180,7 @@ drizzled::TemporalInterval *Generator::TemporalIntervalGen::make_temporal_interv
                                                               uint64_t  second_part,
                                                               bool neg)
 {
-  drizzled::TemporalInterval *interval = new drizzled::TemporalInterval();
+  drizzled::TemporalInterval *interval= new drizzled::TemporalInterval();
 
   interval->set_year(year);
   interval->set_month(month);

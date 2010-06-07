@@ -356,7 +356,7 @@ class TimeFromStringTest: public ::testing::TestWithParam<const char*>
 
 TEST_P(TimeFromStringTest, from_string)
 {
-  const char *valid_string = GetParam();
+  const char *valid_string= GetParam();
 
   result= time.from_string(valid_string, strlen(valid_string));
   ASSERT_TRUE(result);

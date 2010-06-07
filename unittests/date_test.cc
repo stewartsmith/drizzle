@@ -197,7 +197,7 @@ class DateTest : public ::testing::Test
 
 TEST_F(DateTest, operatorAssign_shouldCopyDateRelatadComponents)
 {
-  Date copy = date;
+  Date copy= date;
 
   EXPECT_EQ(date.years(), copy.years());
   EXPECT_EQ(date.months(), copy.months());
@@ -409,7 +409,7 @@ TEST_F(DateTest, DISABLED_to_tm)
   EXPECT_EQ(0, filled.tm_min);
   EXPECT_EQ(0, filled.tm_sec);
 
-  /* these fail, shouldn't they also be set properly? */
+  /* TODO:these fail, shouldn't they also be set properly? */
   EXPECT_EQ(228, filled.tm_yday);
   EXPECT_EQ(6, filled.tm_wday);
   EXPECT_EQ(-1, filled.tm_isdst);
@@ -496,7 +496,7 @@ class DateFromStringTest: public ::testing::TestWithParam<const char*>
 
 TEST_P(DateFromStringTest, from_string)
 {
-  const char *valid_string = GetParam();
+  const char *valid_string= GetParam();
   
   result= date.from_string(valid_string, strlen(valid_string));
   ASSERT_TRUE(result);

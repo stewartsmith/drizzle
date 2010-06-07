@@ -38,8 +38,8 @@ class ItemStub : public Item
 {
   ItemStub(Session *fake_session) : Item(fake_session, this)
   {
-    string_to_return = NULL;
-    int_to_return = 0;
+    string_to_return= NULL;
+    int_to_return= 0;
   }
   
   public:
@@ -82,24 +82,26 @@ class TemporalIntervalTest : public ::testing::Test
     virtual void SetUp()
     {
       fake_client= plugin::Listen::getNullClient();
-      fake_session = new Session(fake_client);
+      fake_session= new Session(fake_client);
       fake_session->thread_stack= (char*) &fake_session;
       fake_session->initGlobals();
-      item = ItemStub::get_item_stub(fake_session);
+      item= ItemStub::get_item_stub(fake_session);
 
-      string_to_return.alloc(100);//TODO: some reasonable size here
-      buffer.alloc(100);
-      item->string_to_return = &string_to_return;
-      item->int_to_return = 0;
-      item->null_value = false;
+
+      /*28 for full date and time format with sign*/
+      string_to_return.alloc(28);
+      buffer.alloc(28);
+      item->string_to_return= &string_to_return;
+      item->int_to_return= 0;
+      item->null_value= false;
     }
 };
 
 TEST_F(TemporalIntervalTest, initFromItem_intervalWeek)
 {
-  char string[] = "30";
+  char string[]= "30";
   item->string_to_return->set_ascii(string, strlen(string));
-  item->int_to_return = 30;
+  item->int_to_return= 30;
 
   interval.initFromItem(item.get(), INTERVAL_WEEK, &buffer);
 
@@ -108,7 +110,7 @@ TEST_F(TemporalIntervalTest, initFromItem_intervalWeek)
 
 TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond)
 {
-  char string[] = "7 12:45:19.777";
+  char string[]= "7 12:45:19.777";
   item->string_to_return->set_ascii(string, strlen(string));
 
   interval.initFromItem(item.get(), INTERVAL_DAY_MICROSECOND, &buffer);
@@ -122,7 +124,7 @@ TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond)
 
 TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond_tooFewArguments_shouldOmitHighEndItems)
 {
-  char string[] = "45:19.777";
+  char string[]= "45:19.777";
   item->string_to_return->set_ascii(string, strlen(string));
   
   interval.initFromItem(item.get(), INTERVAL_DAY_MICROSECOND, &buffer);
@@ -137,8 +139,8 @@ TEST_F(TemporalIntervalTest, initFromItem_intervalDayMicrosecond_tooFewArguments
 
 TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond)
 {
-  DRIZZLE_TIME drizzle_time = {1990, 3, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
-  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+  DRIZZLE_TIME drizzle_time= {1990, 3, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
+  TemporalInterval *interval= Generator::TemporalIntervalGen::make_temporal_interval(
                                0, 0, 6, 13, 54, 3, 435675, false);
 
   interval->addDate(&drizzle_time, INTERVAL_DAY_MICROSECOND);
@@ -154,8 +156,8 @@ TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond)
 
 TEST(TemporalIntervalAddDateTest, addDate_negativeDayMicrosecond)
 {
-  DRIZZLE_TIME drizzle_time = {1990, 4, 1, 4, 59, 20, 312218, false, DRIZZLE_TIMESTAMP_DATETIME};
-  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+  DRIZZLE_TIME drizzle_time= {1990, 4, 1, 4, 59, 20, 312218, false, DRIZZLE_TIMESTAMP_DATETIME};
+  TemporalInterval *interval= Generator::TemporalIntervalGen::make_temporal_interval(
                                0, 0, 6, 13, 54, 3, 435675, true);
   
   interval->addDate(&drizzle_time, INTERVAL_DAY_MICROSECOND);
@@ -171,8 +173,8 @@ TEST(TemporalIntervalAddDateTest, addDate_negativeDayMicrosecond)
 
 TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond_shouldCountLeapDayToo)
 {
-  DRIZZLE_TIME drizzle_time = {2004, 2, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
-  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+  DRIZZLE_TIME drizzle_time= {2004, 2, 25, 15, 5, 16, 876543, false, DRIZZLE_TIMESTAMP_DATETIME};
+  TemporalInterval *interval= Generator::TemporalIntervalGen::make_temporal_interval(
                                0, 0, 6, 13, 54, 3, 435675, false);
   
   interval->addDate(&drizzle_time, INTERVAL_DAY_MICROSECOND);
@@ -188,8 +190,8 @@ TEST(TemporalIntervalAddDateTest, addDate_positiveDayMicrosecond_shouldCountLeap
 
 TEST(TemporalIntervalAddDateTest, addDate_negativeWeek)
 {
-  DRIZZLE_TIME drizzle_time = {1998, 1, 25, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
-  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+  DRIZZLE_TIME drizzle_time= {1998, 1, 25, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  TemporalInterval *interval= Generator::TemporalIntervalGen::make_temporal_interval(
                               0, 0, 28, 0, 0, 0, 0, true);
   
   interval->addDate(&drizzle_time, INTERVAL_WEEK);
@@ -201,8 +203,8 @@ TEST(TemporalIntervalAddDateTest, addDate_negativeWeek)
 
 TEST(TemporalIntervalAddDateTest, addDate_addPositiveYearToLeapDay)
 {
-  DRIZZLE_TIME drizzle_time = {2004, 2, 29, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
-  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+  DRIZZLE_TIME drizzle_time= {2004, 2, 29, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  TemporalInterval *interval= Generator::TemporalIntervalGen::make_temporal_interval(
                                5, 0, 0, 0, 0, 0, 0, false);
   
   interval->addDate(&drizzle_time, INTERVAL_YEAR);
@@ -214,8 +216,8 @@ TEST(TemporalIntervalAddDateTest, addDate_addPositiveYearToLeapDay)
 
 TEST(TemporalIntervalAddDateTest, addDate_addOneMonthToLastDayInMonth_shouldChangeToProperLastDay)
 {
-  DRIZZLE_TIME drizzle_time = {2004, 7, 31, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
-  TemporalInterval *interval = Generator::TemporalIntervalGen::make_temporal_interval(
+  DRIZZLE_TIME drizzle_time= {2004, 7, 31, 0, 0, 0, 0, false, DRIZZLE_TIMESTAMP_DATE};
+  TemporalInterval *interval= Generator::TemporalIntervalGen::make_temporal_interval(
                                0, 2, 0, 0, 0, 0, 0, false);
   
   interval->addDate(&drizzle_time, INTERVAL_MONTH);

@@ -256,7 +256,7 @@ TEST_F(TimestampTest, outputStreamOperator_shouldWrite_hyphenSeperatedDateElemen
   Generator::TimestampGen::make_timestamp(&timestamp, 2010, 5, 1, 8, 7, 6);
   
   output << timestamp;
-  returned = output.str();
+  returned= output.str();
   
   ASSERT_EQ(expected, returned);
 }

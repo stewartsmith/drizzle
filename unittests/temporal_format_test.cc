@@ -82,13 +82,13 @@ TEST_F(TemporalFormatTest, matches_OnNotMatchingString_shouldReturn_False)
 
 TEST_F(TemporalFormatTest, matches_OnMatchingString_FormatWithIndexesSet_shouldPopulateTemporal)
 {
-  char regexp[] = "^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})$";
+  char regexp[]= "^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})$";
   char matched[]= "1999/9/14T23:29:05";
   tf= Generator::TemporalFormatGen::make_temporal_format(regexp, 1, 2, 3, 4, 5, 6, 0, 0);
   temporal= new DateTime();
 
   
-  result = tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
+  result= tf->matches(matched, sizeof(matched) - sizeof(char), temporal);
   ASSERT_TRUE(result);
   
   EXPECT_EQ(1999, temporal->years());
