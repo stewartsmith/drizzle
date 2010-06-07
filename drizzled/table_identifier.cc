@@ -59,7 +59,7 @@ static size_t build_tmptable_filename(std::string &path);
   RETURN
     Table name length.
 */
-uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
+uint32_t TableIdentifier::filename_to_tablename(const char *from, char *to, uint32_t to_length)
 {
   uint32_t length= 0;
 
@@ -166,7 +166,7 @@ static size_t build_tmptable_filename(std::string &buffer)
     path length on success, 0 on failure
 */
 
-size_t build_table_filename(std::string &path, const char *db, const char *table_name, bool is_tmp)
+size_t TableIdentifier::build_table_filename(std::string &path, const char *db, const char *table_name, bool is_tmp)
 {
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];

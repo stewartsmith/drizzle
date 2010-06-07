@@ -503,7 +503,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
 
@@ -572,7 +572,7 @@ void InnobaseEngine::doGetTableNames(CachedDirectory &directory, SchemaIdentifie
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
       set_of_names.insert(uname);
@@ -1684,7 +1684,7 @@ innobase_convert_identifier(
     nz[idlen] = 0;
 
     s = nz2;
-    idlen = filename_to_tablename(nz, nz2, sizeof nz2);
+    idlen = TableIdentifier::filename_to_tablename(nz, nz2, sizeof nz2);
   }
 
   /* See if the identifier needs to be quoted. */
@@ -6719,12 +6719,12 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
       i++;
     }
     db_name[i] = 0;
-    ulen= filename_to_tablename(db_name, uname, sizeof(uname));
+    ulen= TableIdentifier::filename_to_tablename(db_name, uname, sizeof(uname));
     LEX_STRING *tmp_referenced_db = session->make_lex_string(NULL, uname, ulen, true);
 
     /* Table name */
     tmp_buff += i + 1;
-    ulen= filename_to_tablename(tmp_buff, uname, sizeof(uname));
+    ulen= TableIdentifier::filename_to_tablename(tmp_buff, uname, sizeof(uname));
     LEX_STRING *tmp_referenced_table = session->make_lex_string(NULL, uname, ulen, true);
 
     /** Foreign Fields **/
