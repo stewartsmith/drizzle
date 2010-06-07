@@ -1294,7 +1294,7 @@ rollback:
   assert(rollback_err == DB_SUCCESS);
   rollback_err= ib_trx_rollback(innodb_schema_transaction);
   assert(rollback_err == DB_SUCCESS);
-  return -1;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
