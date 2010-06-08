@@ -1590,7 +1590,7 @@ static void option_error_reporter(enum loglevel level, const char *format, ...)
   /* Don't print warnings for --loose options during bootstrap */
   if (level == ERROR_LEVEL || global_system_variables.log_warnings)
   {
-    plugin::ErrorMessage::vprintf(current_session, ERROR_LEVEL, format, args);
+    plugin::ErrorMessage::vprintf(NULL, ERROR_LEVEL, format, args);
   }
   va_end(args);
 }

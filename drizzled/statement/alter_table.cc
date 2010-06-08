@@ -372,8 +372,7 @@ static bool mysql_prepare_alter_table(Session *session,
     if ((def->sql_type == DRIZZLE_TYPE_DATE ||
          def->sql_type == DRIZZLE_TYPE_DATETIME) &&
         ! alter_info->datetime_field &&
-        ! (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
-        session->variables.sql_mode & MODE_NO_ZERO_DATE)
+        ! (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)))
     {
       alter_info->datetime_field= def;
       alter_info->error_if_not_empty= true;

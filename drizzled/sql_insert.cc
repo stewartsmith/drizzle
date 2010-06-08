@@ -121,8 +121,10 @@ static int check_insert_fields(Session *session, TableList *table_list,
     if (table->timestamp_field)	// Don't automaticly set timestamp if used
     {
       if (table->timestamp_field->isWriteSet())
+      {
         clear_timestamp_auto_bits(table->timestamp_field_type,
                                   TIMESTAMP_AUTO_SET_ON_INSERT);
+      }
       else
       {
         table->setWriteSet(table->timestamp_field->field_index);
@@ -177,10 +179,15 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
   {
     /* Don't set timestamp column if this is modified. */
     if (table->timestamp_field->isWriteSet())
+    {
       clear_timestamp_auto_bits(table->timestamp_field_type,
                                 TIMESTAMP_AUTO_SET_ON_UPDATE);
+    }
+
     if (timestamp_mark)
+    {
       table->setWriteSet(table->timestamp_field->field_index);
+    }
   }
   return 0;
 }

@@ -380,7 +380,7 @@ uint64_t EmbeddedInnoDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
 {
   uint64_t nr;
   ib_err_t err;
-  ib_trx_t transaction= *get_trx(ha_session());
+  ib_trx_t transaction= *get_trx(table->in_use);
   ib_cursor_attach_trx(cursor, transaction);
   tuple= ib_clust_read_tuple_create(cursor);
   err= ib_cursor_last(cursor);
@@ -1556,7 +1556,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   ib_err_t err;
   int ret= 0;
 
-  ib_trx_t transaction= *get_trx(ha_session());
+  ib_trx_t transaction= *get_trx(table->in_use);
 
   tuple= ib_clust_read_tuple_create(cursor);
 
@@ -1582,7 +1582,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
     err= ib_cursor_reset(cursor);
     innodb_engine->doCommit(current_session, true);
     innodb_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
-    transaction= *get_trx(ha_session());
+    transaction= *get_trx(table->in_use);
     assert(err == DB_SUCCESS);
     ib_cursor_attach_trx(cursor, transaction);
     err= ib_cursor_first(cursor);
@@ -1681,9 +1681,6 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
-
   write_row_to_innodb_tuple(table->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
@@ -1718,7 +1715,7 @@ int EmbeddedInnoDBCursor::delete_all_rows(void)
      so only support TRUNCATE and not DELETE FROM t;
      (this is what ha_innodb does)
   */
-  if (session_sql_command(ha_session()) != SQLCOM_TRUNCATE)
+  if (session_sql_command(table->in_use) != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
 
   ib_id_t id;
@@ -1733,7 +1730,7 @@ int EmbeddedInnoDBCursor::delete_all_rows(void)
   {
     ib_err_t rollback_err= ib_trx_rollback(transaction);
 
-    push_warning_printf(ha_session(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
                         _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
                         err, ib_strerror(err));
@@ -1773,7 +1770,7 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
     doEndTableScan();
   in_table_scan= true;
 
-  transaction= *get_trx(ha_session());
+  transaction= *get_trx(table->in_use);
 
   assert(transaction != NULL);
 
@@ -2021,7 +2018,7 @@ int EmbeddedInnoDBCursor::info(uint32_t flag)
 
 int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
 {
-  ib_trx_t transaction= *get_trx(ha_session());
+  ib_trx_t transaction= *get_trx(table->in_use);
 
   active_index= keynr;
 

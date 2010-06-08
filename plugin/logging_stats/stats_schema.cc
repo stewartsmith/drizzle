@@ -110,9 +110,24 @@ SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_s
   /* Set user_commands */
   Scoreboard *current_scoreboard= logging_stats->getCurrentScoreboard();
 
-  Session *this_session= current_session;
+  uint32_t bucket_number= current_scoreboard->getBucketNumber(&getSession());
 
-  ScoreboardSlot *scoreboard_slot= current_scoreboard->findOurScoreboardSlot(this_session);
+  vector<ScoreboardSlot* > *scoreboard_vector=
+     current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
+
+  vector<ScoreboardSlot *>::iterator scoreboard_vector_it= scoreboard_vector->begin();
+  vector<ScoreboardSlot *>::iterator scoreboard_vector_end= scoreboard_vector->end();
+
+  ScoreboardSlot *scoreboard_slot= NULL;
+  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+       it != scoreboard_vector->end(); ++it)
+  {
+    scoreboard_slot= *it;
+    if (scoreboard_slot->getSessionId() == getSession().getSessionId())
+    {
+      break;
+    }
+  }
 
   user_commands= NULL;
 

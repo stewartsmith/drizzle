@@ -88,8 +88,7 @@ StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
   status_var_to_display= NULL;
   if (isLocal)
   {
-    Session *this_session= current_session;
-    ScoreboardSlot *scoreboard_slot= logging_stats->getCurrentScoreboard()->findOurScoreboardSlot(this_session);
+    ScoreboardSlot *scoreboard_slot= logging_stats->getCurrentScoreboard()->findOurScoreboardSlot(&getSession());
 
     if (scoreboard_slot != NULL)
     {

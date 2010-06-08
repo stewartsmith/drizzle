@@ -548,7 +548,7 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   }
   else
   {
-    build_table_filename(_path, db.str, table_name.str, false);
+    TableIdentifier::build_table_filename(_path, db.str, table_name.str, false);
   }
 
   if (mem_root.multi_alloc_root(0, &key_buff, key_length,

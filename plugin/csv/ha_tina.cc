@@ -1005,9 +1005,6 @@ int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
 
   ha_statistic_increment(&system_status_var::ha_update_count);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
-
   size= encode_quote(new_data);
 
   /*
