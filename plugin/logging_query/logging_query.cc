@@ -163,11 +163,16 @@ class Logging_query: public drizzled::plugin::Logging
   pcre *re;
   pcre_extra *pe;
 
+  /** Format of the output string */
+  boost::format formatter;
+
 public:
 
   Logging_query()
     : drizzled::plugin::Logging("Logging_query"),
-      fd(-1), re(NULL), pe(NULL)
+      fd(-1), re(NULL), pe(NULL),
+      formatter("%1%,%2%,%3%,\"%4%\",\"%5%\",\"%6%\",%7%,%8%,"
+                "%9%,%10%,%11%,%12%,%13%,%14%,\"%15%\"\n")
   {
 
     /* if there is no destination filename, dont bother doing anything */
@@ -267,8 +272,6 @@ public:
     // to avoid trying to printf %s something that is potentially NULL
     const char *dbs= session->db.empty() ? "" : session->db.c_str();
 
-    boost::format formatter("%1%,%2%,%3%,\"%4%\",\"%5%\",\"%6%\",%7%,%8%,"
-                            "%9%,%10%,%11%,%12%,%13%,%14%,\"%15%\"\n");
     formatter % t_mark
               % session->thread_id
               % session->getQueryId()
