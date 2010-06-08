@@ -28,7 +28,7 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include "ha_filesystem.h"
+#include "filesystem.h"
 
 #include <fcntl.h>
 
@@ -76,7 +76,7 @@ public:
   virtual Cursor *create(TableShare &table,
                          drizzled::memory::Root *mem_root)
   {
-    return new (mem_root) ha_filesystem(*this, table);
+    return new (mem_root) FilesystemCursor(*this, table);
   }
 
   const char **bas_ext() const {
@@ -280,7 +280,7 @@ FilesystemShare::~FilesystemShare()
 /*
   Simple lock controls.
 */
-FilesystemShare *ha_filesystem::get_share(const char *table_name)
+FilesystemShare *FilesystemCursor::get_share(const char *table_name)
 {
   pthread_mutex_lock(&filesystem_mutex);
 
@@ -312,7 +312,7 @@ FilesystemShare *ha_filesystem::get_share(const char *table_name)
   return share;
 }
 
-ha_filesystem::ha_filesystem(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
+FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
   :Cursor(engine_arg, table_arg)
 {
 }
@@ -322,7 +322,7 @@ ha_filesystem::ha_filesystem(drizzled::plugin::StorageEngine &engine_arg, TableS
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_filesystem::open(const char *name, int, uint32_t)
+int FilesystemCursor::open(const char *name, int, uint32_t)
 {
   if (!(share= get_share(name)))
     return HA_ERR_OUT_OF_MEM; // TODO: code style???
@@ -359,7 +359,7 @@ int ha_filesystem::open(const char *name, int, uint32_t)
   Close a database file. We remove ourselves from the shared strucutre.
   If it is empty we destroy it.
 */
-int ha_filesystem::close(void)
+int FilesystemCursor::close(void)
 {
   return 0;
 }
@@ -392,7 +392,7 @@ int ha_filesystem::close(void)
 
 */
 
-int ha_filesystem::doStartTableScan(bool)
+int FilesystemCursor::doStartTableScan(bool)
 {
   // open the real file
   fd.open(real_file_name.c_str());
@@ -415,7 +415,7 @@ int ha_filesystem::doStartTableScan(bool)
   NULL and "". This is ok since this table Cursor is for spreadsheets and
   they don't know about them either :)
 */
-int ha_filesystem::rnd_next(unsigned char *buf)
+int FilesystemCursor::rnd_next(unsigned char *buf)
 {
   drizzled::String buffer;
   string line;
@@ -464,7 +464,7 @@ int ha_filesystem::rnd_next(unsigned char *buf)
   its just a position. Look at the bdb code if you want to see a case
   where something other then a number is stored.
 */
-void ha_filesystem::position(const unsigned char *)
+void FilesystemCursor::position(const unsigned char *)
 {
   return;
 }
@@ -475,7 +475,7 @@ void ha_filesystem::position(const unsigned char *)
   internal::my_get_ptr() retrieves the data for you.
 */
 
-int ha_filesystem::rnd_pos(unsigned char * buf, unsigned char *pos)
+int FilesystemCursor::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   (void)buf;
   (void)pos;
@@ -487,19 +487,19 @@ int ha_filesystem::rnd_pos(unsigned char * buf, unsigned char *pos)
   Currently this table Cursor doesn't implement most of the fields
   really needed. SHOW also makes use of this data
 */
-int ha_filesystem::info(uint32_t)
+int FilesystemCursor::info(uint32_t)
 {
   return 0;
 }
 
-int ha_filesystem::doEndTableScan()
+int FilesystemCursor::doEndTableScan()
 {
   // close the real file
   fd.close();
   return 0;
 }
 
-void ha_filesystem::getAllFields(drizzled::String& output)
+void FilesystemCursor::getAllFields(drizzled::String& output)
 {
   bool first = true;
   drizzled::String attribute;
@@ -530,7 +530,7 @@ void ha_filesystem::getAllFields(drizzled::String& output)
   output.append("\n");
 }
 
-int ha_filesystem::doInsertRecord(unsigned char * buf)
+int FilesystemCursor::doInsertRecord(unsigned char * buf)
 {
   (void)buf;
   ha_statistic_increment(&system_status_var::ha_write_count);
@@ -550,7 +550,7 @@ int ha_filesystem::doInsertRecord(unsigned char * buf)
   return 0;
 }
 
-int ha_filesystem::updateRealFile(const char *buf, size_t len)
+int FilesystemCursor::updateRealFile(const char *buf, size_t len)
 {
   // make up the name of temp file
   string temp_file_name = real_file_name + ".TEMP";
@@ -587,7 +587,7 @@ int ha_filesystem::updateRealFile(const char *buf, size_t len)
   return 0;
 }
 
-string ha_filesystem::getSeparator()
+string FilesystemCursor::getSeparator()
 {
   char ch;
   if (sep.length() == 0)
@@ -597,7 +597,7 @@ string ha_filesystem::getSeparator()
   return string(1, ch);
 }
 
-int ha_filesystem::doUpdateRecord(const unsigned char *, unsigned char *)
+int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 {
   if (!fd.is_open())
     return HA_ERR_END_OF_FILE;
@@ -619,7 +619,7 @@ int ha_filesystem::doUpdateRecord(const unsigned char *, unsigned char *)
   return 0;
 }
 
-int ha_filesystem::doDeleteRecord(const unsigned char *)
+int FilesystemCursor::doDeleteRecord(const unsigned char *)
 {
   if (not fd.is_open())
     return HA_ERR_END_OF_FILE;

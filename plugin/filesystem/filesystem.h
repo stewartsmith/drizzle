@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_FILESYSTEM_HA_FILESYSTEM_H
-#define PLUGIN_FILESYSTEM_HA_FILESYSTEM_H
+#ifndef PLUGIN_FILESYSTEM_FILESYSTEM_H
+#define PLUGIN_FILESYSTEM_FILESYSTEM_H
 
 #include <drizzled/cursor.h>
 #include <drizzled/thr_lock.h>
@@ -43,7 +43,7 @@ public:
   drizzled::THR_LOCK lock;
 };
 
-class ha_filesystem : public drizzled::Cursor
+class FilesystemCursor : public drizzled::Cursor
 {
   drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
   FilesystemShare *share;       /* Shared lock info */
@@ -53,8 +53,8 @@ class ha_filesystem : public drizzled::Cursor
   streampos prev_pos;
 
 public:
-  ha_filesystem(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
-  ~ha_filesystem()
+  FilesystemCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
+  ~FilesystemCursor()
   {
   }
 
@@ -95,4 +95,4 @@ private:
   void getAllFields(drizzled::String& output);
 };
 
-#endif /* PLUGIN_FILESYSTEM_HA_FILESYSTEM_H */
+#endif /* PLUGIN_FILESYSTEM_FILESYSTEM_H */
