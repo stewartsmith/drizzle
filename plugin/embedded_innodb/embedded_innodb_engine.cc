@@ -1681,9 +1681,6 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
-
   write_row_to_innodb_tuple(table->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);

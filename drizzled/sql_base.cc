@@ -1429,7 +1429,9 @@ reset:
   assert(!table->auto_increment_field_not_null);
   table->auto_increment_field_not_null= false;
   if (table->timestamp_field)
+  {
     table->timestamp_field_type= table->timestamp_field->get_auto_set_type();
+  }
   table->pos_in_table_list= table_list;
   table->clear_column_bitmaps();
   assert(table->key_read == 0);

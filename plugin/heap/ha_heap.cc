@@ -347,8 +347,6 @@ int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_
 {
   int res;
   ha_statistic_increment(&system_status_var::ha_update_count);
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
   res= heap_update(file,old_data,new_data);
   if (!res && ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
               file->s->records)

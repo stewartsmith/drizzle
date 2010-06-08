@@ -175,12 +175,16 @@ int mysql_update(Session *session, TableList *table_list,
   {
     // Don't set timestamp column if this is modified
     if (table->timestamp_field->isWriteSet())
+    {
       table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+    }
     else
     {
       if (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
           table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH)
+      {
         table->setWriteSet(table->timestamp_field->field_index);
+      }
     }
   }
 
@@ -214,7 +218,9 @@ int mysql_update(Session *session, TableList *table_list,
       table->timestamp_field &&
       (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
        table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
+  {
     bitmap_union(table->read_set, table->write_set);
+  }
   // Don't count on usage of 'only index' when calculating which key to use
   table->covering_keys.reset();
 
