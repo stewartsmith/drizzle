@@ -138,7 +138,7 @@ void FilesystemEngine::doGetTableNames(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       uname[file_name_len - sizeof(FST) + 1]= '\0'; // Subtract ending, place NULL
       set_of_names.insert(uname);
     }
@@ -258,7 +258,7 @@ void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &director
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       uname[file_name_len - sizeof(FST) + 1]= '\0'; // Subtract ending, place NULL
       set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
     }
@@ -433,7 +433,7 @@ int ha_filesystem::rnd_next(unsigned char *buf)
   boost::char_separator<char> sepa(sep == "" ? " \t" : sep.c_str());
   tokenizer tokens(line, sepa);
   tokenizer::iterator tok_iter = tokens.begin();
-  for (Field **field = table->field;
+  for (Field **field = table->getFields();
        *field && tok_iter != tokens.end();
        ++field, ++tok_iter)
   {
@@ -504,7 +504,7 @@ void ha_filesystem::getAllFields(drizzled::String& output)
   bool first = true;
   drizzled::String attribute;
   string s = getSeparator();
-  for (Field **field= table->field; *field; ++field)
+  for (Field **field= table->getFields(); *field; ++field)
   {
     if (first == true)
     {
@@ -689,7 +689,7 @@ int FilesystemEngine::doCreateTable(Session &,
 
 static FilesystemEngine *filesystem_engine= NULL;
 
-static int filesystem_init_func(drizzled::plugin::Context &context)
+static int filesystem_init_func(drizzled::module::Context &context)
 {
   filesystem_engine = new FilesystemEngine("FILESYSTEM");
   context.add(filesystem_engine);
