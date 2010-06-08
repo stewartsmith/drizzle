@@ -28,14 +28,14 @@
 #include <fstream>
 using namespace std;
 
-class FilesystemShare
+class FilesystemTableShare
 {
-  FilesystemShare();
-  FilesystemShare(const FilesystemShare &);
-  FilesystemShare& operator=(const FilesystemShare &);
+  FilesystemTableShare();
+  FilesystemTableShare(const FilesystemTableShare &);
+  FilesystemTableShare& operator=(const FilesystemTableShare &);
 public:
-  explicit FilesystemShare(const std::string name);
-  ~FilesystemShare();
+  explicit FilesystemTableShare(const std::string name);
+  ~FilesystemTableShare();
 
   uint32_t use_count;
   const std::string table_name;
@@ -46,7 +46,7 @@ public:
 class FilesystemCursor : public drizzled::Cursor
 {
   drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
-  FilesystemShare *share;       /* Shared lock info */
+  FilesystemTableShare *share;       /* Shared lock info */
   std::ifstream fd;
   std::string real_file_name;
   std::string sep;
@@ -88,7 +88,7 @@ public:
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values) { (void)offset; (void)increment; (void)nb_desired_values; (void)first_value; (void)nb_reserved_values; };
-  FilesystemShare *get_share(const char *table_name);
+  FilesystemTableShare *get_share(const char *table_name);
 private:
   int updateRealFile(const char *buf, size_t len);
   string getSeparator();

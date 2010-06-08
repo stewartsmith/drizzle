@@ -55,7 +55,7 @@ static const char *ha_filesystem_exts[] = {
 class FilesystemEngine : public drizzled::plugin::StorageEngine
 {
 private:
-  typedef std::map<string, FilesystemShare*> FilesystemMap;
+  typedef std::map<string, FilesystemTableShare*> FilesystemMap;
   FilesystemMap fs_open_tables;
 public:
   FilesystemEngine(const string& name_arg)
@@ -99,9 +99,9 @@ public:
 
   int doDropTable(Session&, TableIdentifier &);
 
-  /* operations on FilesystemShare */
-  FilesystemShare *findOpenTable(const string table_name);
-  void addOpenTable(const string &table_name, FilesystemShare *);
+  /* operations on FilesystemTableShare */
+  FilesystemTableShare *findOpenTable(const string table_name);
+  void addOpenTable(const string &table_name, FilesystemTableShare *);
   void deleteOpenTable(const string &table_name);
 
   uint32_t max_keys()          const { return 0; }
@@ -170,7 +170,7 @@ bool FilesystemEngine::doDoesTableExist(Session &, TableIdentifier &identifier)
   return true;
 }
 
-FilesystemShare *FilesystemEngine::findOpenTable(const string table_name)
+FilesystemTableShare *FilesystemEngine::findOpenTable(const string table_name)
 {
   FilesystemMap::iterator find_iter=
     fs_open_tables.find(table_name);
@@ -181,7 +181,7 @@ FilesystemShare *FilesystemEngine::findOpenTable(const string table_name)
     return NULL;
 }
 
-void FilesystemEngine::addOpenTable(const string &table_name, FilesystemShare *share)
+void FilesystemEngine::addOpenTable(const string &table_name, FilesystemTableShare *share)
 {
   fs_open_tables[table_name]= share;
 }
@@ -265,13 +265,13 @@ void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &director
   }
 }
 
-FilesystemShare::FilesystemShare(const string table_name_arg)
+FilesystemTableShare::FilesystemTableShare(const string table_name_arg)
   : use_count(0), table_name(table_name_arg)
 {
   thr_lock_init(&lock);
 }
 
-FilesystemShare::~FilesystemShare()
+FilesystemTableShare::~FilesystemTableShare()
 {
   thr_lock_delete(&lock);
   pthread_mutex_destroy(&mutex);
@@ -280,7 +280,7 @@ FilesystemShare::~FilesystemShare()
 /*
   Simple lock controls.
 */
-FilesystemShare *FilesystemCursor::get_share(const char *table_name)
+FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
 {
   pthread_mutex_lock(&filesystem_mutex);
 
@@ -293,7 +293,7 @@ FilesystemShare *FilesystemCursor::get_share(const char *table_name)
   */
   if (share == NULL)
   {
-    share= new (nothrow) FilesystemShare(table_name);
+    share= new (nothrow) FilesystemTableShare(table_name);
     if (share == NULL)
     {
       pthread_mutex_unlock(&filesystem_mutex);
