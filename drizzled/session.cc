@@ -224,6 +224,7 @@ Session::Session(plugin::Client *client_arg) :
   query_id= 0;
   warn_query_id= 0;
   mysys_var= 0;
+  scoreboard_index= -1;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);

@@ -404,6 +404,8 @@ public:
 private:
   SecurityContext security_ctx;
 
+  int32_t scoreboard_index;
+
   inline void checkSentry() const
   {
     assert(this->dbug_sentry == Session_SENTRY_MAGIC);
@@ -417,6 +419,16 @@ public:
   SecurityContext& getSecurityContext()
   {
     return security_ctx;
+  }
+
+  int32_t getScoreboardIndex()
+  {
+    return scoreboard_index;
+  }
+
+  void setScoreboardIndex(int32_t in_scoreboard_index)
+  {
+    scoreboard_index= in_scoreboard_index;
   }
 
   /**
