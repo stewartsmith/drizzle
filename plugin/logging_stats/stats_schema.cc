@@ -32,7 +32,7 @@
  *
  * This class defines the following DATA_DICTIONARY tables:
  *
- * drizzle> describe GLOBAL_STATEMENTS_NEW;
+ * drizzle> describe GLOBAL_STATEMENTS;
  * +----------------+---------+-------+---------+-----------------+-----------+
  * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +----------------+---------+-------+---------+-----------------+-----------+
@@ -40,7 +40,7 @@
  * | VARIABLE_VALUE | BIGINT  | FALSE |         | FALSE           |           |
  * +----------------+---------+-------+---------+-----------------+-----------+
  *
- * drizzle> describe SESSION_STATEMENTS_NEW;
+ * drizzle> describe SESSION_STATEMENTS;
  * +----------------+---------+-------+---------+-----------------+-----------+
  * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +----------------+---------+-------+---------+-----------------+-----------+

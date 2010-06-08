@@ -30,26 +30,28 @@
 /**
  * @details
  *
- * This plugin tracks the current user commands for a session, and copies
- * them into a cumulative vector of all commands run by a user over time. 
- * The commands are logged using the post() and postEnd() logging APIs.
- * User commands are stored in a Scoreboard where each active session
- * owns a ScoreboardSlot.  
- *
+ * This plugin tracks session and global statistics, as well as user statistics. 
+ * The commands are logged using the post() and postEnd() logging APIs. 
+ * The statistics are stored in a Scoreboard where each active session owns a 
+ * ScoreboardSlot during the sessions active lifetime. 
+ * 
  * Scoreboard
  *
- * The scoreboard is a pre-allocated vector of vectors of ScoreboardSlots. It
- * can be thought of as a vector of buckets where each bucket contains
- * pre-allocated ScoreboardSlots. To determine which bucket gets used for
- * recording statistics the modulus operator is used on the session_id. This
- * will result in a bucket to search for a unused ScoreboardSlot.
+ * The scoreboard is a pre-allocated vector of vectors of ScoreboardSlots. It 
+ * can be thought of as a vector of buckets where each bucket contains 
+ * pre-allocated ScoreboardSlots. To determine which bucket gets used for 
+ * recording statistics the modulus operator is used on the session_id. This 
+ * will result in a bucket to search for a unused ScoreboardSlot. Once a 
+ * ScoreboardSlot is found the index of the slot is stored in the Session 
+ * for later use. 
  *
  * Locking  
  * 
  * Each vector in the Scoreboard has its own lock. This allows session 2 
  * to not have to wait for session 1 to locate a slot to use, as they
  * will be in different buckets.  A lock is taken to locate a open slot
- * in the scoreboard.
+ * in the scoreboard. Subsequent queries by the session will not take
+ * a lock.  
  *
  * A read lock is taken on the scoreboard vector when the table is queried 
  * in the data_dictionary. The "show status" and "show global status" do
@@ -79,10 +81,6 @@
  * TODO 
  *
  * Allow expansion of Scoreboard and cumulative vector 
- * 
- * Possibly add a scoreboard_slot_index variable onto the Session class
- * this would avoid having to relocate the Scoreboard slot for each Session
- * doing multiple statements. 
  * 
  */
 

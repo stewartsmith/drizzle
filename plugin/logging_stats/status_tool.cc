@@ -27,6 +27,30 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @details
+ *
+ * This class defines the "show status" and "show global status" 
+ * DATA_DICTIONARY tables:
+ * 
+ * drizzle> describe SESSION_STATUS;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | VARIABLE_NAME  | VARCHAR | FALSE |         | FALSE           |           | 
+ * | VARIABLE_VALUE | VARCHAR | FALSE |         | FALSE           |           | 
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe GLOBAL_STATUS;
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ * | VARIABLE_NAME  | VARCHAR | FALSE |         | FALSE           |           | 
+ * | VARIABLE_VALUE | VARCHAR | FALSE |         | FALSE           |           | 
+ * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ */
+
 #include "config.h"
 
 #include "status_tool.h"
