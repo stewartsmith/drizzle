@@ -100,7 +100,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
   {
     uint32_t null_fields=0, used_fields;
     Field **f_ptr,*field;
-    for (f_ptr= tables[i].table->field,used_fields= tables[i].used_fields; used_fields; f_ptr++)
+    for (f_ptr= tables[i].table->getFields(), used_fields= tables[i].used_fields; used_fields; f_ptr++)
     {
       field= *f_ptr;
       if (field->isReadSet())
@@ -119,7 +119,7 @@ int join_init_cache(Session *session, JoinTable *tables, uint32_t table_count)
     if (null_fields && tables[i].table->getNullFields())
     {						/* must copy null bits */
       copy->str= tables[i].table->null_flags;
-      copy->length= tables[i].table->s->null_bytes;
+      copy->length= tables[i].table->getShare()->null_bytes;
       copy->strip=0;
       copy->blob_field=0;
       copy->get_rowid= NULL;

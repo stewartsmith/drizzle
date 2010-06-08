@@ -33,6 +33,9 @@
 namespace drizzled
 {
 
+/* Global value for how we extend our temporary directory */
+#define GLOBAL_TEMPORARY_EXT ".temporary"
+
 /* These paths are converted to other systems (WIN95) before use */
 
 #define LANGUAGE	"english/"
@@ -182,8 +185,6 @@ namespace drizzled
 
 /** Characters shown for the command in 'show processlist'. */
 #define PROCESS_LIST_WIDTH 100
-/* Characters shown for the command in 'information_schema.processlist' */
-#define PROCESS_LIST_INFO_WIDTH 65535
 
 #define PRECISION_FOR_DOUBLE 53
 #define PRECISION_FOR_FLOAT  24

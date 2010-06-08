@@ -95,18 +95,39 @@ static int visit_table(void* arg_param, const char* name, ib_tbl_fmt_t tbl_fmt,
   return 0;
 }
 
-static int visit_table_col(void *, const char*, ib_col_type_t, ib_ulint_t, ib_col_attr_t)
+static int visit_table_col(void *arg_param, const char* name, ib_col_type_t, ib_ulint_t, ib_col_attr_t)
 {
+  struct schema_visitor_arg *arg= (struct schema_visitor_arg*)arg_param;
+  std::stringstream ss;
+
+  ss << "  COL: " << name << endl;
+
+  arg->str->append(ss.str());
+
   return 0;
 }
 
-static int visit_index(void *, const char*, ib_bool_t, ib_bool_t, int)
+static int visit_index(void *arg_param, const char* name, ib_bool_t, ib_bool_t, int)
 {
+  struct schema_visitor_arg *arg= (struct schema_visitor_arg*)arg_param;
+  std::stringstream ss;
+
+  ss << "  IDX: " << name << endl;
+
+  arg->str->append(ss.str());
+
   return 0;
 }
 
-static int visit_index_col(void*, const char*, ib_ulint_t)
+static int visit_index_col(void* arg_param, const char* name, ib_ulint_t)
 {
+  struct schema_visitor_arg *arg= (struct schema_visitor_arg*)arg_param;
+  std::stringstream ss;
+
+  ss << "    IDXCOL: " << name << endl;
+
+  arg->str->append(ss.str());
+
   return 0;
 }
 
@@ -167,7 +188,7 @@ String *LibinnodbDatadictDumpFunction::val_str(String *str)
 
 plugin::Create_function<LibinnodbDatadictDumpFunction> *libinnodb_datadict_dump_func= NULL;
 
-int libinnodb_datadict_dump_func_initialize(plugin::Context &context)
+int libinnodb_datadict_dump_func_initialize(module::Context &context)
 {
   libinnodb_datadict_dump_func= new plugin::Create_function<LibinnodbDatadictDumpFunction>("libinnodb_datadict_dump");
   context.add(libinnodb_datadict_dump_func);

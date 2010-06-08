@@ -53,7 +53,7 @@ String *VersionFunction::val_str(String *str)
 
 plugin::Create_function<VersionFunction> *versionudf= NULL;
 
-static int initialize(plugin::Context &context)
+static int initialize(module::Context &context)
 {
   versionudf= new plugin::Create_function<VersionFunction>("version");
   context.add(versionudf);

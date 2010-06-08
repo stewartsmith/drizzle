@@ -71,7 +71,7 @@ int64_t Crc32Function::val_int()
 
 plugin::Create_function<Crc32Function> *crc32udf= NULL;
 
-static int initialize(plugin::Context &context)
+static int initialize(module::Context &context)
 {
   crc32udf= new plugin::Create_function<Crc32Function>("crc32");
   context.add(crc32udf);

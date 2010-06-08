@@ -178,7 +178,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
   if (!fields_vars.elements)
   {
     Field **field;
-    for (field=table->field; *field ; field++)
+    for (field= table->getFields(); *field ; field++)
       fields_vars.push_back(new Item_field(*field));
     table->setWriteSet();
     table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;

@@ -140,7 +140,7 @@ Item_field::Item_field(Session *,
                        Name_resolution_context *context_arg,
                        Field *f) :
   Item_ident(context_arg,
-             f->table->s->getSchemaName(),
+             f->table->getShare()->getSchemaName(),
              *f->table_name,
              f->field_name),
    item_equal(0),
@@ -194,7 +194,7 @@ void Item_field::set_field(Field *field_par)
   max_length= field_par->max_display_length();
   table_name= *field_par->table_name;
   field_name= field_par->field_name;
-  db_name= field_par->table->s->getSchemaName();
+  db_name= field_par->table->getShare()->getSchemaName();
   alias_name_used= field_par->table->alias_name_used;
   unsigned_flag=test(field_par->flags & UNSIGNED_FLAG);
   collation.set(field_par->charset(), field_par->derivation());
@@ -789,7 +789,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       {
         uint32_t counter;
         enum_resolution_type resolution;
-        Item** res= find_item_in_list(this, session->lex->current_select->item_list,
+        Item** res= find_item_in_list(session,
+                                      this, session->lex->current_select->item_list,
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution);
         if (!res)

@@ -89,7 +89,6 @@
 #include <drizzled/function/numhybrid.h>
 #include <drizzled/function/math/ord.h>
 #include <drizzled/function/math/pow.h>
-#include <drizzled/function/math/rand.h>
 #include <drizzled/function/math/real.h>
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
@@ -1114,19 +1113,6 @@ protected:
 };
 
 
-class Create_func_rand : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_rand s_singleton;
-
-protected:
-  Create_func_rand() {}
-  virtual ~Create_func_rand() {}
-};
-
-
 class Create_func_round : public Create_native_func
 {
 public:
@@ -1701,7 +1687,7 @@ Create_func_cot::create(Session *session, Item *arg1)
 {
   Item *i1= new (session->mem_root) Item_int((char*) "1", 1, 1);
   Item *i2= new (session->mem_root) Item_func_tan(arg1);
-  return new (session->mem_root) Item_func_div(i1, i2);
+  return new (session->mem_root) Item_func_div(session, i1, i2);
 }
 
 Create_func_date_format Create_func_date_format::s_singleton;
@@ -2334,42 +2320,6 @@ Create_func_radians::create(Session *session, Item *arg1)
                                              M_PI/180, 0.0);
 }
 
-
-Create_func_rand Create_func_rand::s_singleton;
-
-Item*
-Create_func_rand::create_native(Session *session, LEX_STRING name,
-                                List<Item> *item_list)
-{
-  Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  switch (arg_count) {
-  case 0:
-  {
-    func= new (session->mem_root) Item_func_rand();
-    break;
-  }
-  case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (session->mem_root) Item_func_rand(param_1);
-    break;
-  }
-  default:
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
-  }
-  }
-
-  return func;
-}
-
-
 Create_func_round Create_func_round::s_singleton;
 
 Item*
@@ -2654,7 +2604,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("POWER") }, BUILDER(Create_func_pow)},
   { { C_STRING_WITH_LEN("QUOTE") }, BUILDER(Create_func_quote)},
   { { C_STRING_WITH_LEN("RADIANS") }, BUILDER(Create_func_radians)},
-  { { C_STRING_WITH_LEN("RAND") }, BUILDER(Create_func_rand)},
   { { C_STRING_WITH_LEN("ROUND") }, BUILDER(Create_func_round)},
   { { C_STRING_WITH_LEN("ROW_COUNT") }, BUILDER(Create_func_row_count)},
   { { C_STRING_WITH_LEN("RPAD") }, BUILDER(Create_func_rpad)},

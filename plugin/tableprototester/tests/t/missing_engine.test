@@ -1,5 +1,5 @@
 
-SHOW TABLES;
+SHOW TABLES like 't1';
 
 --error 1693
 SHOW CREATE TABLE t1;

@@ -953,7 +953,8 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
     Search for a column or derived column named as 'ref' in the SELECT
     clause of the current select.
   */
-  if (!(select_ref= find_item_in_list(ref, *(select->get_item_list()),
+  if (!(select_ref= find_item_in_list(session,
+                                      ref, *(select->get_item_list()),
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution)))
     return NULL; /* Some error occurred. */
@@ -1126,7 +1127,7 @@ Field *Item::make_string_field(Table *table)
     field= new Field_blob(max_length, maybe_null, name,
                           collation.collation);
   else
-    field= new Field_varstring(max_length, maybe_null, name, table->s,
+    field= new Field_varstring(max_length, maybe_null, name, table->getMutableShare(),
                                collation.collation);
 
   if (field)
@@ -1596,7 +1597,7 @@ static Field *create_tmp_field_from_item(Session *,
              convert_blob_length <= Field_varstring::MAX_SIZE &&
              convert_blob_length)
       new_field= new Field_varstring(convert_blob_length, maybe_null,
-                                     item->name, table->s,
+                                     item->name, table->getMutableShare(),
                                      item->collation.collation);
     else
       new_field= item->make_string_field(table);

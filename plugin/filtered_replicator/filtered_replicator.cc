@@ -494,7 +494,7 @@ void FilteredReplicator::setTableFilter(const string &input)
 
 static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicator */
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   filtered_replicator= new(std::nothrow) 
     FilteredReplicator("filtered_replicator",

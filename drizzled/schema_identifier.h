@@ -57,9 +57,9 @@ class SchemaIdentifier
   // identifier for current db.
 public:
 
-  const std::string &getLower()
+  const std::string &getLower() const
   {
-   return lower_db;
+    return lower_db;
   }
 
 public:

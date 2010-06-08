@@ -73,7 +73,7 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Create unique_map with all fields used by that index. */
-  unique_map.init(unique_map_buf, table->s->fields);
+  unique_map.init(unique_map_buf, table->getMutableShare()->sizeFields());
   table->mark_columns_used_by_index_no_reset(keynr, &unique_map);
 
   /* Subtract read_set and write_set. */
@@ -95,9 +95,14 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Read record that is identified by table->cursor->ref. */
   (void) table->cursor->rnd_pos(table->record[1], table->cursor->ref);
   /* Copy the newly read columns into the new record. */
-  for (field_p= table->field; (field= *field_p); field_p++)
+  for (field_p= table->getFields(); (field= *field_p); field_p++)
+  {
     if (unique_map.isBitSet(field->field_index))
-      field->copy_from_tmp(table->s->rec_buff_length);
+    {
+      field->copy_from_tmp(table->getShare()->rec_buff_length);
+    }
+  }
+
 
   return;
 }
@@ -156,7 +161,7 @@ int mysql_update(Session *session, TableList *table_list,
   table= table_list->table;
 
   /* Calculate "table->covering_keys" based on the WHERE */
-  table->covering_keys= table->s->keys_in_use;
+  table->covering_keys= table->getShare()->keys_in_use;
   table->quick_keys.reset();
 
   if (mysql_prepare_update(session, table_list, &conds, order_num, order))
@@ -293,7 +298,6 @@ int mysql_update(Session *session, TableList *table_list,
       ha_rows examined_rows;
 
       table->sort.io_cache = new internal::IO_CACHE;
-      memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
       if (!(sortorder=make_unireg_sortorder(order, &length, NULL)) ||
           (table->sort.found_records= filesort(session, table, sortorder, length,
@@ -319,7 +323,7 @@ int mysql_update(Session *session, TableList *table_list,
       */
 
       internal::IO_CACHE tempfile;
-      if (open_cached_file(&tempfile, drizzle_tmpdir,TEMP_PREFIX,
+      if (open_cached_file(&tempfile, drizzle_tmpdir.c_str(),TEMP_PREFIX,
 			   DISK_BUFFER_SIZE, MYF(MY_WME)))
 	goto err;
 
@@ -462,6 +466,9 @@ int mysql_update(Session *session, TableList *table_list,
         /* Non-batched update */
         error= table->cursor->updateRecord(table->record[1],
                                             table->record[0]);
+
+        table->auto_increment_field_not_null= false;
+
         if (!error || error == HA_ERR_RECORD_IS_THE_SAME)
 	{
           if (error != HA_ERR_RECORD_IS_THE_SAME)

@@ -74,7 +74,7 @@ Cursor::~Cursor(void)
 
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
-  Cursor *new_handler= table->s->db_type()->getCursor(*table->s, mem_root);
+  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare(), mem_root);
 
   /*
     Allocate Cursor->ref here because otherwise ha_open will allocate it
@@ -83,8 +83,9 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   */
   if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
+
   if (new_handler && !new_handler->ha_open(table,
-                                           table->s->getNormalizedPath(),
+                                           table->getMutableShare()->getNormalizedPath(),
                                            table->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
@@ -101,9 +102,8 @@ uint32_t Cursor::calculate_key_len(uint32_t key_position, key_part_map keypart_m
   /* works only with key prefixes */
   assert(((keypart_map_arg + 1) & keypart_map_arg) == 0);
 
-  KeyInfo *key_info_found= table->s->key_info + key_position;
-  KeyPartInfo *key_part_found= key_info_found->key_part;
-  KeyPartInfo *end_key_part_found= key_part_found + key_info_found->key_parts;
+  const KeyPartInfo *key_part_found= table->getShare()->getKeyInfo(key_position).key_part;
+  const KeyPartInfo *end_key_part_found= key_part_found + table->getShare()->getKeyInfo(key_position).key_parts;
   uint32_t length= 0;
 
   while (key_part_found < end_key_part_found && keypart_map_arg)
@@ -179,7 +179,7 @@ const key_map *Cursor::keys_to_use_for_scanning()
 
 bool Cursor::has_transactions()
 {
-  return (table->s->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
+  return (table->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
 void Cursor::ha_statistic_increment(ulong system_status_var::*offset) const
@@ -191,13 +191,6 @@ void **Cursor::ha_data(Session *session) const
 {
   return session->getEngineData(engine);
 }
-
-Session *Cursor::ha_session(void) const
-{
-  assert(!table || !table->in_use || table->in_use == current_session);
-  return (table && table->in_use) ? table->in_use : current_session;
-}
-
 
 bool Cursor::is_fatal_error(int error, uint32_t flags)
 {
@@ -226,7 +219,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   int error;
 
   table= table_arg;
-  assert(table->s == table_share);
+  assert(table->getShare() == table_share);
 
   if ((error=open(name, mode, test_if_locked)))
   {
@@ -243,7 +236,7 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
   }
   else
   {
-    if (table->s->db_options_in_use & HA_OPTION_READ_ONLY_DATA)
+    if (table->getShare()->db_options_in_use & HA_OPTION_READ_ONLY_DATA)
       table->db_stat|=HA_READ_ONLY;
     (void) extra(HA_EXTRA_NO_READCHECK);	// Not needed in SQL
 
@@ -257,26 +250,6 @@ int Cursor::ha_open(Table *table_arg, const char *name, int mode,
       dup_ref=ref+ALIGN_SIZE(ref_length);
   }
   return error;
-}
-
-/**
-  one has to use this method when to find
-  random position by record as the plain
-  position() call doesn't work for some
-  handlers for random position
-*/
-
-int Cursor::rnd_pos_by_record(unsigned char *record)
-{
-  register int error;
-
-  position(record);
-  if (inited && (error= endIndexScan()))
-    return error;
-  if ((error= startTableScan(false)))
-    return error;
-
-  return rnd_pos(record, ref);
 }
 
 /**
@@ -554,7 +527,7 @@ int Cursor::update_auto_increment()
       nr= compute_next_insert_id(nr-1, variables);
     }
 
-    if (table->s->next_number_keypart == 0)
+    if (table->getShare()->next_number_keypart == 0)
     {
       /* We must defer the appending until "nr" has been possibly truncated */
       append= true;
@@ -672,7 +645,17 @@ inline
 void
 Cursor::setTransactionReadWrite()
 {
-  ResourceContext *resource_context= ha_session()->getResourceContext(engine);
+  ResourceContext *resource_context;
+
+  /*
+   * If the cursor has not context for execution then there should be no
+   * possible resource to gain (and if there is... then there is a bug such
+   * that in_use should have been set.
+ */
+  if (not table || not table->in_use)
+    return;
+
+  resource_context= table->in_use->getResourceContext(engine);
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -939,7 +922,6 @@ Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   range_seq_t seq_it;
   ha_rows rows, total_rows= 0;
   uint32_t n_ranges=0;
-  Session *session= current_session;
 
   /* Default MRR implementation doesn't need buffer */
   *bufsz= 0;
@@ -947,9 +929,6 @@ Cursor::multi_range_read_info_const(uint32_t keyno, RANGE_SEQ_IF *seq,
   seq_it= seq->init(seq_init_param, n_ranges, *flags);
   while (!seq->next(seq_it, &range))
   {
-    if (unlikely(session->killed != 0))
-      return HA_POS_ERROR;
-
     n_ranges++;
     key_range *min_endp, *max_endp;
     {
@@ -1303,7 +1282,7 @@ static bool log_row_for_replication(Table* table,
   TransactionServices &transaction_services= TransactionServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->s->tmp_table || not transaction_services.shouldConstructMessages())
+  if (table->getShare()->tmp_table || not transaction_services.shouldConstructMessages())
     return false;
 
   bool result= false;
@@ -1454,9 +1433,9 @@ int Cursor::ha_reset()
 {
   /* Check that we have called all proper deallocation functions */
   assert((unsigned char*) table->def_read_set.getBitmap() +
-              table->s->column_bitmap_size ==
+              table->getShare()->column_bitmap_size ==
               (unsigned char*) table->def_write_set.getBitmap());
-  assert(table->s->all_set.isSetAll());
+  assert(table->getShare()->all_set.isSetAll());
   assert(table->key_read == 0);
   /* ensure that ha_index_end / endTableScan has been called */
   assert(inited == NONE);
@@ -1484,14 +1463,14 @@ int Cursor::insertRecord(unsigned char *buf)
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
   
-  if (unlikely(plugin::EventObserver::beforeInsertRecord(*(table->in_use), *table_share, buf)))
+  if (unlikely(plugin::EventObserver::beforeInsertRecord(*table, buf)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doInsertRecord(buf);
-    if (unlikely(plugin::EventObserver::afterInsertRecord(*(table->in_use), *table_share, buf, error))) 
+    if (unlikely(plugin::EventObserver::afterInsertRecord(*table, buf, error))) 
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1523,14 +1502,14 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*(table->in_use), *table_share, old_data, new_data)))
+  if (unlikely(plugin::EventObserver::beforeUpdateRecord(*table, old_data, new_data)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doUpdateRecord(old_data, new_data);
-    if (unlikely(plugin::EventObserver::afterUpdateRecord(*(table->in_use), *table_share, old_data, new_data, error)))
+    if (unlikely(plugin::EventObserver::afterUpdateRecord(*table, old_data, new_data, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
@@ -1555,14 +1534,14 @@ int Cursor::deleteRecord(const unsigned char *buf)
 
   DRIZZLE_DELETE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
-  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*(table->in_use), *table_share, buf)))
+  if (unlikely(plugin::EventObserver::beforeDeleteRecord(*table, buf)))
   {
     error= ER_EVENT_OBSERVER_PLUGIN;
   }
   else
   {
     error= doDeleteRecord(buf);
-    if (unlikely(plugin::EventObserver::afterDeleteRecord(*(table->in_use), *table_share, buf, error)))
+    if (unlikely(plugin::EventObserver::afterDeleteRecord(*table, buf, error)))
     {
       error= ER_EVENT_OBSERVER_PLUGIN;
     }

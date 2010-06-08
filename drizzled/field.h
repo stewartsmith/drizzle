@@ -536,7 +536,7 @@ public:
     return max_length;
   }
 
-  inline uint32_t offset(unsigned char *record)
+  inline uint32_t offset(const unsigned char *record)
   {
     return (uint32_t) (ptr - record);
   }

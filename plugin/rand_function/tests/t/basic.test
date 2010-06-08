@@ -1,0 +1,8 @@
+explain extended select rand(999999),rand();
+#
+# Bug #7281: problem with rand()
+#
+
+--error 1054
+select rand(rand);
+

@@ -59,7 +59,7 @@ static char *sysvar_memcached_servers= NULL;
  * @param[in] registry the drizzled::plugin::Registry singleton
  * @return false on success; true on failure.
  */
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
 
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();

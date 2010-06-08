@@ -66,10 +66,10 @@ class ha_innobase: public Cursor
 	INNOBASE_SHARE*	share;		/*!< information for MySQL
 					table locking */
 
-	unsigned char*	upd_buff;	/*!< buffer used in updates */
-	unsigned char*	key_val_buff;	/*!< buffer used in converting
-					search key values from MySQL format
-					to Innodb format */
+        std::vector<unsigned char> upd_buff; /*!< buffer used in updates */
+        std::vector<unsigned char> key_val_buff; /*!< buffer used in converting
+                                                     search key values from MySQL format
+                                                     to Innodb format */
 	ulong		upd_and_key_val_buff_len;
 					/* the length of each of the previous
 					two buffers */
@@ -85,7 +85,6 @@ class ha_innobase: public Cursor
 	UNIV_INTERN uint store_key_val_for_row(uint keynr, char* buff, 
                                    uint buff_len, const unsigned char* record);
 	UNIV_INTERN void update_session(Session* session);
-	UNIV_INTERN void update_session();
 	UNIV_INTERN int change_active_index(uint32_t keynr);
 	UNIV_INTERN int general_fetch(unsigned char* buf, uint32_t direction, uint32_t match_mode);
 	UNIV_INTERN ulint innobase_lock_autoinc();
@@ -188,11 +187,15 @@ class ha_innobase: public Cursor
 	UNIV_INTERN int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
 	/** Fast index creation (smart ALTER TABLE) @see handler0alter.cc @{ */
         // Don't use these, I have just left them in here as reference for
-        // the future. -Brian
-	UNIV_INTERN int add_index(TABLE *table_arg, KeyInfo *key_info, uint num_of_keys);
-	UNIV_INTERN int prepare_drop_index(TABLE *table_arg, uint *key_num,
+        // the future. -Brian 
+#if 0
+	UNIV_INTERN int add_index(Session *session, TABLE *table_arg, KeyInfo *key_info, uint num_of_keys);
+	UNIV_INTERN int prepare_drop_index(Session *session,
+                                           TABLE *table_arg,
+                                           uint *key_num,
                                            uint num_of_keys);
-        UNIV_INTERN int final_drop_index(TABLE *table_arg);
+        UNIV_INTERN int final_drop_index(Session *session, TABLE *table_arg);
+#endif
 	/** @} */
 public:
   int read_range_first(const key_range *start_key, const key_range *end_key,
@@ -221,12 +224,6 @@ uint64_t drizzle_bin_log_file_pos(void);
 */
 int session_slave_thread(const Session *session);
 
-/**
-  Mark transaction to rollback and mark error as fatal to a sub-statement.
-  @param  session   Thread handle
-  @param  all   TRUE <=> rollback main transaction.
-*/
-void session_mark_transaction_to_rollback(Session *session, bool all);
 }
 
 typedef struct trx_struct trx_t;

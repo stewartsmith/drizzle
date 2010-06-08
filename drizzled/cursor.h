@@ -161,6 +161,11 @@ public:
   unsigned char *ref;				/* Pointer to current row */
   unsigned char *dup_ref;			/* Pointer to duplicate row */
 
+  TableShare *getShare() const
+  {
+    return table_share;
+  }
+
   ha_statistics stats;
   /** MultiRangeRead-related members: */
   range_seq_t mrr_iter;    /* Interator to traverse the range sequence */
@@ -383,13 +388,6 @@ public:
   int compare_key(key_range *range);
   virtual int rnd_next(unsigned char *)=0;
   virtual int rnd_pos(unsigned char *, unsigned char *)=0;
-  /**
-    One has to use this method when to find
-    random position by record as the plain
-    position() call doesn't work for some
-    handlers for random position.
-  */
-  virtual int rnd_pos_by_record(unsigned char *record);
   virtual int read_first_row(unsigned char *buf, uint32_t primary_key);
   virtual int rnd_same(unsigned char *, uint32_t)
     { return HA_ERR_WRONG_COMMAND; }
@@ -522,7 +520,6 @@ protected:
   /* Service methods for use by storage engines. */
   void ha_statistic_increment(ulong system_status_var::*offset) const;
   void **ha_data(Session *) const;
-  Session *ha_session(void) const;
 
 private:
   /* Private helpers */
@@ -696,7 +693,8 @@ bool mysql_create_like_table(Session* session,
                              bool is_if_not_exists,
                              bool is_engine_set);
 
-bool mysql_rename_table(plugin::StorageEngine *base,
+bool mysql_rename_table(Session &session,
+                        plugin::StorageEngine *base,
                         TableIdentifier &old_identifier,
                         TableIdentifier &new_identifier);
 

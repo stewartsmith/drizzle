@@ -30,13 +30,12 @@ struct passwd;
 namespace drizzled
 {
 
-namespace plugin
+namespace module
 {
 class Registry;
 }
 
 extern std::bitset<12> test_flags;
-extern uint32_t max_used_connections;
 extern atomic<uint32_t> connection_count;
 extern bool calling_initgroups;
 extern const char *load_default_groups[];
@@ -50,7 +49,7 @@ extern char *drizzled_user;
 
 extern const char * const DRIZZLE_CONFIG_NAME;
 
-int init_server_components(plugin::Registry &plugins);
+int init_server_components(module::Registry &modules);
 int init_common_variables(const char *conf_file_name, int argc,
                           char **argv, const char **groups);
 

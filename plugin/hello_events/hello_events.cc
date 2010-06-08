@@ -33,6 +33,7 @@ set global hello_events_watch_tables = "x,y";
 
 #include "config.h"
 #include <string>
+#include <cstdio>
 
 #include "drizzled/session.h"
 #include "hello_events.h"
@@ -282,7 +283,7 @@ static void set_table_list(Session *,
 }
 
 
-static int init(Context &context)
+static int init(module::Context &context)
 {
   hello_events= new HelloEvents(PLUGIN_NAME);
 

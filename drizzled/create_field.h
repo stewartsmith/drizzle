@@ -65,7 +65,6 @@ public:
 
   uint8_t interval_id;	// For rea_create_table
   uint32_t offset;
-  uint32_t pack_flag;
 
   CreateField() :after(0) {}
   CreateField(Field *field, Field *orig_field);

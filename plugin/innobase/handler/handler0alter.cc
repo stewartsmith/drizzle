@@ -140,13 +140,13 @@ innobase_rec_to_mysql(
 	const ulint*		offsets)	/*!< in: rec_get_offsets(
 						rec, index, ...) */
 {
-	uint	n_fields	= table->s->fields;
+	uint	n_fields	= table->getShare()->sizeFields();
 	uint	i;
 
 	ut_ad(n_fields == dict_table_get_n_user_cols(index->table));
 
 	for (i = 0; i < n_fields; i++) {
-		Field*		field	= table->field[i];
+		Field*		field	= table->getField(i);
 		ulint		ipos;
 		ulint		ilen;
 		const unsigned char*	ifield;
@@ -186,14 +186,15 @@ innobase_rec_reset(
 /*===============*/
 	Table*			table)		/*!< in/out: MySQL table */
 {
-	uint	n_fields	= table->s->fields;
+	uint	n_fields	= table->getShare()->sizeFields();
 	uint	i;
 
 	for (i = 0; i < n_fields; i++) {
-		table->field[i]->set_default();
+		table->getField(i)->set_default();
 	}
 }
 
+#if 0 // This is a part of the fast index code.
 /******************************************************************//**
 Removes the filename encoding of a database and table name. */
 static
@@ -220,6 +221,7 @@ innobase_convert_tablename(
 		strncpy(t, slash, slash - t + strlen(slash));
 	}
 }
+
 
 /*******************************************************************//**
 This function checks that index keys are sensible.
@@ -484,6 +486,7 @@ ENDIF
 
 
 @return	key definitions or NULL */
+
 static
 merge_index_def_t*
 innobase_create_key_def(
@@ -596,6 +599,7 @@ innobase_create_temporary_tablename(
 	return(name);
 }
 
+
 /*******************************************************************//**
 Create indexes.
 @return	0 or error number */
@@ -603,6 +607,7 @@ UNIV_INTERN
 int
 ha_innobase::add_index(
 /*===================*/
+                       Session *session,
 	Table*	i_table,	/*!< in: Table where indexes are created */
 	KeyInfo*	key_info,	/*!< in: Indexes to be created */
 	uint	num_of_keys)	/*!< in: Number of indexes to be created */
@@ -627,7 +632,7 @@ ha_innobase::add_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	heap = mem_heap_create(1024);
 
@@ -907,6 +912,7 @@ UNIV_INTERN
 int
 ha_innobase::prepare_drop_index(
 /*============================*/
+                                Session *session,
 	Table*	i_table,	/*!< in: Table where indexes are dropped */
 	uint*	key_num,	/*!< in: Key nums to be dropped */
 	uint	num_of_keys)	/*!< in: Number of keys to be dropped */
@@ -922,7 +928,7 @@ ha_innobase::prepare_drop_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 	trx = prebuilt->trx;
@@ -1107,6 +1113,7 @@ UNIV_INTERN
 int
 ha_innobase::final_drop_index(
 /*==========================*/
+                              Session *session,
 	Table*	)		/*!< in: Table where indexes are dropped */
 {
 	dict_index_t*	index;		/*!< Index to be dropped */
@@ -1117,7 +1124,7 @@ ha_innobase::final_drop_index(
 		return(HA_ERR_WRONG_COMMAND);
 	}
 
-	update_session();
+	update_session(session);
 
 	trx_search_latch_release_if_reserved(prebuilt->trx);
 	trx_start_if_not_started(prebuilt->trx);
@@ -1198,3 +1205,4 @@ func_exit:
 
 	return(err);
 }
+#endif
