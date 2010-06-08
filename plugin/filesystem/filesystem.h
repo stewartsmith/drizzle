@@ -49,7 +49,8 @@ class FilesystemCursor : public drizzled::Cursor
   FilesystemTableShare *share;       /* Shared lock info */
   std::ifstream fd;
   std::string real_file_name;
-  std::string sep;
+  std::string row_separator;
+  std::string col_separator;
   streampos prev_pos;
 
 public:

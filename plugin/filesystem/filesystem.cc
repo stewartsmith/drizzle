@@ -45,6 +45,10 @@ using namespace drizzled;
 
 #define FST ".FST"
 
+static const char* FILESYSTEM_OPTION_FILE_PATH= "FILE";
+static const char* FILESYSTEM_OPTION_ROW_SEPARATOR= "ROW_SEPARATOR";
+static const char* FILESYSTEM_OPTION_COL_SEPARATOR= "COL_SEPARATOR";
+
 /* Stuff for shares */
 pthread_mutex_t filesystem_mutex;
 
@@ -327,30 +331,27 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
   if (!(share= get_share(name)))
     return HA_ERR_OUT_OF_MEM; // TODO: code style???
 
-  string db_path = share->table_name + FST;
-  fd.open(db_path.c_str());
+  message::Table* table_proto = table->getShare()->getTableProto();
+
+  for (int i = 0; i < table_proto->engine().options_size(); i++)
+  {
+    const message::Engine::Option& option= table_proto->engine().options(i);
+
+    if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
+      real_file_name= option.state();
+    else if (boost::iequals(option.name(), FILESYSTEM_OPTION_ROW_SEPARATOR))
+      row_separator= option.state();
+    else if (boost::iequals(option.name(), FILESYSTEM_OPTION_COL_SEPARATOR))
+      col_separator= option.state();
+  }
+
+  fd.open(real_file_name.c_str());
   if (not fd.is_open())
   {
-    return -2; // TODO more correct return value;
+    this->close();
+    return HA_ERR_ERRORS; // TODO
   }
-  message::Table table_proto;
-  if (not table_proto.ParseFromIstream(&fd))
-  {
-    fd.close();
-    return -3; // TODO more correct return value;
-  }
-  fd.close();
-  for (int i = 0; i < table_proto.engine().options_size(); i++)
-  {
-    if (boost::iequals(table_proto.engine().options(i).name(), "FILE"))
-    {
-      real_file_name = table_proto.engine().options(i).state();
-    }
-    else if (boost::iequals(table_proto.engine().options(i).name(), "SEP"))
-    {
-      sep = table_proto.engine().options(i).state();
-    }
-  }
+
   thr_lock_data_init(&share->lock, &lock, NULL);
   return 0;
 }
@@ -361,6 +362,10 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
 */
 int FilesystemCursor::close(void)
 {
+  real_file_name= "";
+  row_separator= "";
+  col_separator= "";
+  fd.close();
   return 0;
 }
 
@@ -394,10 +399,6 @@ int FilesystemCursor::close(void)
 
 int FilesystemCursor::doStartTableScan(bool)
 {
-  // open the real file
-  fd.open(real_file_name.c_str());
-  if (not fd.is_open())
-    cerr << "can't open " << real_file_name << " file." << endl;
   return 0;
 }
 
@@ -430,7 +431,7 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
   memset(buf, 0, table->s->null_bytes); //getNullBytes()
 
   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-  boost::char_separator<char> sepa(sep == "" ? " \t" : sep.c_str());
+  boost::char_separator<char> sepa(row_separator == "" ? " \t" : row_separator.c_str());
   tokenizer tokens(line, sepa);
   tokenizer::iterator tok_iter = tokens.begin();
   for (Field **field = table->getFields();
@@ -494,8 +495,6 @@ int FilesystemCursor::info(uint32_t)
 
 int FilesystemCursor::doEndTableScan()
 {
-  // close the real file
-  fd.close();
   return 0;
 }
 
@@ -590,10 +589,10 @@ int FilesystemCursor::updateRealFile(const char *buf, size_t len)
 string FilesystemCursor::getSeparator()
 {
   char ch;
-  if (sep.length() == 0)
+  if (row_separator.length() == 0)
     ch = ' ';
   else
-    ch = sep[0];
+    ch = row_separator[0];
   return string(1, ch);
 }
 
