@@ -76,7 +76,7 @@ int BlitzTree::rename(const char *from, const char *to, const int key_num) {
   snprintf(from_buf, FN_REFLEN, "%s_%02d%s", from, key_num, BLITZ_INDEX_EXT);
   snprintf(to_buf, FN_REFLEN, "%s_%02d%s", to, key_num, BLITZ_INDEX_EXT);
 
-  return std::rename(from_buf, to_buf);
+  return drizzled::internal::my_rename(from_buf, to_buf, MYF(0));
 }
 
 int BlitzTree::close(void) {

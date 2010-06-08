@@ -29,6 +29,7 @@
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 #include "drizzled/cached_directory.h"
+#include "drizzled/internal/my_sys.h"
 #include <tchdb.h>
 #include <tcbdb.h>
 
