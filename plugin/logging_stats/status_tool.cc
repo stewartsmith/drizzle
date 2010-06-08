@@ -30,6 +30,7 @@
 #include "config.h"
 
 #include "status_tool.h"
+#include "drizzled/status_helper.h"
 
 #include <vector>
 #include <sstream>
@@ -63,7 +64,7 @@ StatusTool::StatusTool(LoggingStats *in_logging_stats, bool inIsLocal) :
   vector<drizzle_show_var *>::iterator all_status_vars_iterator;          
   while (true)
   {
-    var= &StatusVars::status_vars_defs[count];
+    var= &StatusHelper::status_vars_defs[count];
     if ((var == NULL) || (var->name == NULL))
     {
       break;
@@ -163,8 +164,6 @@ bool StatusTool::Generator::populate()
   return false;
 }
 
-extern drizzled::KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
-
 void StatusTool::Generator::fill(const string &name, char *value, SHOW_TYPE show_type)
 {
   struct system_status_var *status_var;
@@ -173,81 +172,7 @@ void StatusTool::Generator::fill(const string &name, char *value, SHOW_TYPE show
 
   status_var= status_var_to_display->getStatusVarCounters();
 
-  /*
-    note that value may be == buff. All SHOW_xxx code below
-    should still work in this case
-  */
-  switch (show_type)
-  {
-  case SHOW_DOUBLE_STATUS:
-    value= ((char *) status_var + (ulong) value);
-    /* fall through */
-  case SHOW_DOUBLE:
-    oss.precision(6);
-    oss << *(double *) value;
-    return_value= oss.str();
-    break;
-  case SHOW_LONG_STATUS:
-    value= ((char *) status_var + (ulong) value);
-    /* fall through */
-  case SHOW_LONG:
-    oss << *(long*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_LONGLONG_STATUS:
-    value= ((char *) status_var + (uint64_t) value);
-    /* fall through */
-  case SHOW_LONGLONG:
-    oss << *(int64_t*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_SIZE:
-    oss << *(size_t*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_HA_ROWS:
-    oss << (int64_t) *(ha_rows*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_BOOL:
-  case SHOW_MY_BOOL:
-    return_value= *(bool*) value ? "ON" : "OFF";
-    break;
-  case SHOW_INT:
-  case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-    oss << (long) *(uint32_t*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_CHAR:
-    {
-      if (value)
-        return_value= value;
-      break;
-    }
-  case SHOW_CHAR_PTR:
-    {
-      if (*(char**) value)
-        return_value= *(char**) value;
-
-      break;
-    }
-  case SHOW_KEY_CACHE_LONG:
-    value= (char*) dflt_key_cache + (unsigned long)value;
-    oss << *(long*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_KEY_CACHE_LONGLONG:
-    value= (char*) dflt_key_cache + (unsigned long)value;
-    oss << *(int64_t*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_UNDEF:
-    break;                                        // Return empty string
-  case SHOW_SYS:                                  // Cannot happen
-  default:
-    assert(0);
-    break;
-  }
+  return_value= StatusHelper::fillHelper(status_var, value, show_type);
 
   push(name);
   if (return_value.length())

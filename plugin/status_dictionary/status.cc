@@ -25,6 +25,7 @@
 #include <drizzled/pthread_globals.h>
 #include <drizzled/internal/m_string.h>
 #include <drizzled/definitions.h>
+#include <drizzled/status_helper.h>
 
 #include <vector>
 #include <string>
@@ -105,61 +106,8 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
                                                  &null_lex_str);
   }
 
-  /*
-    note that value may be == buff. All SHOW_xxx code below
-    should still work in this case
-  */
-  switch (show_type) {
-  case SHOW_DOUBLE:
-    oss.precision(6);
-    oss << *(double *) value;
-    return_value= oss.str();
-    break;
-  case SHOW_LONG:
-    oss << *(long*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_LONGLONG:
-    oss << *(int64_t*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_SIZE:
-    oss << *(size_t*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_HA_ROWS:
-    oss << (int64_t) *(ha_rows*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_BOOL:
-  case SHOW_MY_BOOL:
-    return_value= *(bool*) value ? "ON" : "OFF";
-    break;
-  case SHOW_INT:
-  case SHOW_INT_NOFLUSH: // the difference lies in refresh_status()
-    oss << (long) *(uint32_t*) value;
-    return_value= oss.str();
-    break;
-  case SHOW_CHAR:
-    {
-      if (value)
-        return_value= value;
-      break;
-    }
-  case SHOW_CHAR_PTR:
-    {
-      if (*(char**) value)
-        return_value= *(char**) value;
+  return_value= StatusHelper::fillHelper(NULL, value, show_type); 
 
-      break;
-    }
-  case SHOW_UNDEF:
-    break;                                        // Return empty string
-  case SHOW_SYS:                                  // Cannot happen
-  default:
-    assert(0);
-    break;
-  }
   pthread_mutex_unlock(&LOCK_global_system_variables);
   push(name);
   if (return_value.length())

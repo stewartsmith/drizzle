@@ -57,8 +57,6 @@ public:
     return status_var_counters;
   }
 
-  static drizzled::drizzle_show_var status_vars_defs[];
-
 private:
   drizzled::system_status_var *status_var_counters;
 };
