@@ -24,6 +24,7 @@
 
 #include "cslib/CSLog.h"
 
+
 class SysTabRec: public CSRefStringBuffer {	
 	void logError(const char *text = NULL);
 

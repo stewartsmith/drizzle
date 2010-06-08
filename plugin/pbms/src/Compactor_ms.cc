@@ -49,11 +49,6 @@ iCompactorDatabase(db)
 {
 }
 
-MSCompactorThread::~MSCompactorThread()
-{
-	close();
-}
-
 void MSCompactorThread::close()
 {
 }

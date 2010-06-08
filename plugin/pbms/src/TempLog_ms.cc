@@ -250,10 +250,6 @@ iLogOffset(0)
 {
 }
 
-MSTempLogThread::~MSTempLogThread()
-{
-	close();
-}
 
 void MSTempLogThread::close()
 {

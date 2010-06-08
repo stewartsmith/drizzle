@@ -41,7 +41,6 @@ AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 ])
 
-
 PANDORA_RUN_CPPLINT
 
 PANDORA_REQUIRE_LIBPROTOBUF
@@ -64,6 +63,7 @@ PANDORA_DRIZZLE_BUILD
 AC_DEFINE([BUILDING_DRIZZLE],[1],
           [Define indicating we are building and not consuming drizzle.])
 
+PANDORA_HAVE_LIBGTEST
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -103,7 +103,7 @@ AC_DEFINE_UNQUOTED([COMPILATION_COMMENT],["$COMPILATION_COMMENT"],
 
 dnl Has to be done late, as the plugin may need to check for existence of
 dnl functions tested above
-PANDORA_PLUGINS([drizzled/plugin/load_list.h])
+PANDORA_PLUGINS([drizzled/module/load_list.h])
 
 dnl GCC Precompiled Header Support
 dnl re-enable later
@@ -156,6 +156,21 @@ echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
 echo "   * C++ shared_ptr namespace:  $ac_cv_shared_ptr_namespace"
 echo ""
 echo "---"
+
+case "$host_os" in
+  *freebsd*)
+    echo "*****"
+    echo "*"
+    echo "*  NOTE: You are on FreeBSD. BSD make will not work."
+    echo "*"
+    echo "*   use 'gmake' To build Drizzle"
+    echo "*"
+    echo "*  And ensure that /usr/local/lib/gcc44 is in your LD_LIBRARY_PATH"
+    echo "*" 
+    echo "*****"
+  ;;
+esac
+
 
 dnl libtoolize scans configure.ac  and needs to see some text
 m4_define([LIBTOOLIZE_AC_INIT], [])

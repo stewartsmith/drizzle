@@ -911,7 +911,7 @@ static bool find_key_for_maxmin(bool max_fl,
   uint32_t idx= 0;
 
   KeyInfo *keyinfo,*keyinfo_end= NULL;
-  for (keyinfo= table->key_info, keyinfo_end= keyinfo+table->s->keys;
+  for (keyinfo= table->key_info, keyinfo_end= keyinfo+table->getShare()->sizeKeys();
        keyinfo != keyinfo_end;
        keyinfo++,idx++)
   {

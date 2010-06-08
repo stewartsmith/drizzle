@@ -29,7 +29,7 @@ static VariablesTool *global_variables;
 static VariablesTool *session_variables;
 
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   global_status= new(std::nothrow)StatusTool(true);
   session_status= new(std::nothrow)StatusTool(false);

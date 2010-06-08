@@ -555,6 +555,17 @@ typedef struct XTPathStr {
  * BYTE ORDER
  */
 
+/* Missing on some Solaris machines: */
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN 4321
+#endif
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN 1234
+#endif
+#ifndef PDP_ENDIAN
+#define PDP_ENDIAN 3412
+#endif
+
 /*
  * Byte order on the disk is little endian! This is the byte order of the i386.
  * Little endian byte order starts with the least significant byte.
@@ -823,8 +834,10 @@ extern xtBool				pbxt_crash_debug;
 #define THD									Session
 #define MYSQL_THD							Session *
 #define THR_THD								THR_Session
-#define STRUCT_TABLE						class drizzled::Table
+#define STRUCT_TABLE						class drizzled::TableShare
 #define TABLE_SHARE							TableShare
+#define GET_TABLE_SHARE(x)					(x)
+#define GET_TABLE_FIELDS(x)					(x)->getFields()
 
 #define MYSQL_TYPE_STRING					DRIZZLE_TYPE_VARCHAR
 #define MYSQL_TYPE_VARCHAR					DRIZZLE_TYPE_VARCHAR
@@ -929,6 +942,8 @@ class Session;
 #else
 #define STRUCT_TABLE						struct st_table
 #endif
+#define GET_TABLE_SHARE(x)					(x)->s
+#define GET_TABLE_FIELDS(x)					(x)->field
 #if MYSQL_VERSION_ID >= 60009
 #define storage_media						default_storage_media
 #endif

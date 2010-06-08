@@ -382,59 +382,57 @@ void MSBackupTable::seqScanRead(uint8_t *pos, char *buf)
 
 void MSBackupTable::updateRow(char *old_data, char *new_data) 
 {
-	TABLE	*table = mySQLTable;	
 	uint32_t n_id, db_id, cloud_ref, cloud_backup_no, n_indx;
 	uint32_t o_id, o_db_id, o_cloud_ref, o_cloud_backup_no, o_indx;
-	String name_val, start_val, end_val, isRunning_val, isDump_val, location_val, *name = &name_val, *start = &start_val, *end = &end_val, *isRunning = &isRunning_val, *isDump = &isDump_val, *location = &location_val;
-	String o_name_val, o_start_val, o_end_val, o_isRunning_val, o_isDump_val, o_location_val, *o_name = &o_name_val, *o_start = &o_start_val, *o_end = &o_end_val, *o_isRunning = &o_isRunning_val, *o_isDump = &o_isDump_val, *o_location = &o_location_val;
+	String name, start, end, isRunning, isDump, location;
+	String o_name, o_start, o_end, o_isRunning, o_isDump, o_location;
 	MSBackupInfo *info, *old_info;
 
 	enter_();
 	
-	GET_INT_FIELD(o_id, 0, table, old_data);
-	GET_INT_FIELD(n_id, 0, table, new_data);
-		
-	GET_STR_FIELD(name, 1, table, new_data);
-	GET_INT_FIELD(db_id, 2, table, new_data);
-	GET_STR_FIELD(start, 3, table, new_data);
-	GET_STR_FIELD(end, 4, table, new_data);
-	GET_STR_FIELD(isRunning, 5, table, new_data); 
-	GET_STR_FIELD(isDump, 6, table, new_data);
-	GET_STR_FIELD(location, 7, table, new_data);
-	GET_INT_FIELD(cloud_ref, 8, table, new_data);
-	GET_INT_FIELD(cloud_backup_no, 9, table, new_data);
-	
-	GET_STR_FIELD(o_name, 1, table, old_data);
-	GET_INT_FIELD(o_db_id, 2, table, old_data);
-	GET_STR_FIELD(o_start, 3, table, old_data);
-	GET_STR_FIELD(o_end, 4, table, old_data);
-	GET_STR_FIELD(o_isRunning, 5, table, new_data); 
-	GET_STR_FIELD(o_isDump, 6, table, old_data);
-	GET_STR_FIELD(o_location, 7, table, old_data);
-	GET_INT_FIELD(o_cloud_ref, 8, table, old_data);
-	GET_INT_FIELD(o_cloud_backup_no, 9, table, old_data);
-	
+	getFieldValue(new_data, 0, &n_id);
+	getFieldValue(new_data, 1, &name);
+	getFieldValue(new_data, 2, &db_id);
+	getFieldValue(new_data, 3, &start);
+	getFieldValue(new_data, 4, &end);
+	getFieldValue(new_data, 5, &isRunning);
+	getFieldValue(new_data, 6, &isDump);
+	getFieldValue(new_data, 7, &location);
+	getFieldValue(new_data, 8, &cloud_ref);
+	getFieldValue(new_data, 9, &cloud_backup_no);
+
+	getFieldValue(old_data, 0, &o_id);
+	getFieldValue(old_data, 1, &o_name);
+	getFieldValue(old_data, 2, &o_db_id);
+	getFieldValue(old_data, 3, &o_start);
+	getFieldValue(old_data, 4, &o_end);
+	getFieldValue(old_data, 5, &o_isRunning);
+	getFieldValue(old_data, 6, &o_isDump);
+	getFieldValue(old_data, 7, &o_location);
+	getFieldValue(old_data, 8, &o_cloud_ref);
+	getFieldValue(old_data, 9, &o_cloud_backup_no);
+
 	// The only fields that are allowed to be updated are 'Location' and 'Cloud_Ref'.
 	// It makes no scence to update any of the other fields.
 	if (n_id != o_id )
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only field (Id) in the "BACKUP_TABLE_NAME" table.");
 	
-	if (strcmp(name->c_ptr(), o_name->c_ptr()) == 0 )
+	if (strcmp(name.c_ptr(), o_name.c_ptr()) == 0 )
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only field (Database_Name) in the "BACKUP_TABLE_NAME" table.");
 	
 	if (db_id != o_db_id )
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only field (Database_Id) in the "BACKUP_TABLE_NAME" table.");
 	
-	if (strcmp(start->c_ptr(), o_start->c_ptr()) == 0 )
+	if (strcmp(start.c_ptr(), o_start.c_ptr()) == 0 )
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only field (Started) in the "BACKUP_TABLE_NAME" table.");
 	
-	if (strcmp(end->c_ptr(), o_end->c_ptr()) == 0 )
+	if (strcmp(end.c_ptr(), o_end.c_ptr()) == 0 )
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only field (Completed) in the "BACKUP_TABLE_NAME" table.");
 	
-	if (strcmp(isRunning->c_ptr(), o_isRunning->c_ptr()) == 0 )
+	if (strcmp(isRunning.c_ptr(), o_isRunning.c_ptr()) == 0 )
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only field (isRunning) in the "BACKUP_TABLE_NAME" table.");
 	
-	if (strcmp(isDump->c_ptr(), o_isDump->c_ptr()) == 0 )
+	if (strcmp(isDump.c_ptr(), o_isDump.c_ptr()) == 0 )
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only field (IsDump) in the "BACKUP_TABLE_NAME" table.");
 	
 	if (cloud_backup_no != o_cloud_backup_no )
@@ -442,7 +440,7 @@ void MSBackupTable::updateRow(char *old_data, char *new_data)
 
 	old_info = (MSBackupInfo*)  MSBackupInfo::gBackupInfo->get(o_id); // A non referenced object.
 	
-	new_(info, MSBackupInfo(n_id, old_info->getName(), db_id, old_info->getStart(), old_info->getEnd(), old_info->isDump(), location->c_ptr(), cloud_ref, cloud_backup_no));
+	new_(info, MSBackupInfo(n_id, old_info->getName(), db_id, old_info->getStart(), old_info->getEnd(), old_info->isDump(), location.c_ptr(), cloud_ref, cloud_backup_no));
 	push_(info);
 	
 	o_indx = MSBackupInfo::gBackupInfo->getIndex(o_id);
@@ -463,9 +461,8 @@ void MSBackupTable::updateRow(char *old_data, char *new_data)
 
 void MSBackupTable::insertRow(char *data) 
 {
-	TABLE	*table = mySQLTable;	
 	uint32_t ref_id = 0, db_id, cloud_ref, cloud_backup_no;
-	String name_val, start_val, end_val, isRunning_val, isDump_val, location_val, *name = &name_val, *start = &start_val, *end = &end_val, *isRunning = &isRunning_val, *isDump = &isDump_val, *location = &location_val;
+	String name, start, end, isRunning, isDump, location;
 	MSBackupInfo *info = NULL;
 	const char *db_name;
 	bool duplicate = true;
@@ -473,7 +470,7 @@ void MSBackupTable::insertRow(char *data)
 	enter_();
 
 	try_(a) {
-		GET_INT_FIELD(ref_id, 0, table, data);
+		getFieldValue(data, 0, &ref_id);
 			
 		// The id must be unique.
 		if (ref_id && MSBackupInfo::gBackupInfo->get(ref_id)) {
@@ -483,26 +480,25 @@ void MSBackupTable::insertRow(char *data)
 		
 		// The 'Database_Id', 'Start', 'Completion' and "IsDump" fields are ignored.
 		// I still need to get the fields though to advance the field position pointer.
-		GET_STR_FIELD(name, 1, table, data);
-		GET_INT_FIELD(db_id, 2, table, data);
-		GET_STR_FIELD(start, 3, table, data);
-		GET_STR_FIELD(end, 4, table, data);
-		GET_STR_FIELD(isRunning, 5, table, data);
-		GET_STR_FIELD(isDump, 6, table, data);
-		GET_STR_FIELD(location, 7, table, data);
-		GET_INT_FIELD(cloud_ref, 8, table, data);
-		GET_INT_FIELD(cloud_backup_no, 9, table, data);
-		
+		getFieldValue(data, 1, &name);
+		getFieldValue(data, 2, &db_id);
+		getFieldValue(data, 3, &start);
+		getFieldValue(data, 4, &end);
+		getFieldValue(data, 5, &isRunning);
+		getFieldValue(data, 6, &isDump);
+		getFieldValue(data, 7, &location);
+		getFieldValue(data, 8, &cloud_ref);
+		getFieldValue(data, 9, &cloud_backup_no);
 		
 		if (ref_id == 0)
 			ref_id = MSBackupInfo::gMaxInfoRef++;
 		else if (ref_id >= MSBackupInfo::gMaxInfoRef)
 			MSBackupInfo::gMaxInfoRef = ref_id +1;
 		
-		db_name	= name->c_ptr();
+		db_name	= name.c_ptr();
 		db_id = MSDatabase::getDatabaseID(db_name, false);
 		
-		new_(info, MSBackupInfo(ref_id, db_name, db_id, 0, 0, false, location->c_ptr(), cloud_ref, cloud_backup_no));
+		new_(info, MSBackupInfo(ref_id, db_name, db_id, 0, 0, false, location.c_ptr(), cloud_ref, cloud_backup_no));
 		MSBackupInfo::gBackupInfo->set(ref_id, info);
 		
 		// There is no need to call this now, startBackup() will call it
@@ -524,13 +520,11 @@ void MSBackupTable::insertRow(char *data)
 
 void MSBackupTable::deleteRow(char *data) 
 {
-	TABLE	*table = mySQLTable;	
 	uint32_t ref_id, indx;
-
 
 	enter_();
 	
-	GET_INT_FIELD(ref_id, 0, table, data);
+	getFieldValue(data, 0, &ref_id);
 	
 	// Adjust the current position in the array if required.
 	indx = MSBackupInfo::gBackupInfo->getIndex(ref_id);

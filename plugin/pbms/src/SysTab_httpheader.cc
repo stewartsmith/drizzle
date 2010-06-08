@@ -26,6 +26,7 @@
 #include <drizzled/common.h>
 #include <drizzled/session.h>
 #include <drizzled/field/blob.h>
+#include <drizzled/field/varstring.h>
 #endif
 
 #include "cslib/CSConfig.h"
@@ -386,34 +387,30 @@ void MSHTTPHeaderTable::seqScanRead(uint8_t *pos, char *buf)
 void MSHTTPHeaderTable::insertRow(char *data) 
 {
 	CSString *header;
-	TABLE	*table = mySQLTable;
-	String str1, *name = &str1;	
-	
+	String name;	
 	enter_();
 	
-	GET_STR_FIELD(name,	0, table, data);
+	getFieldValue(data, 0, &name);
 
-	header = CSString::newString(name->c_ptr_safe());
+	header = CSString::newString(name.c_ptr_safe());
 	myShare->mySysDatabase->iHTTPMetaDataHeaders.add(header);
-	
 	iDirty = true;
+	
 	exit_();
-
 }
 
 void MSHTTPHeaderTable::deleteRow(char *data) 
 {
 	CSString *header;
-	TABLE	*table = mySQLTable;
-	String str1, *name = &str1;
-		
+	String name;	
 	enter_();
 	
-	GET_STR_FIELD(name,	0, table, data);
-
-	header = CSString::newString(name->c_ptr_safe());
+	getFieldValue(data, 0, &name);
 	
+	header = CSString::newString(name.c_ptr_safe());
+	push_(header);
 	myShare->mySysDatabase->iHTTPMetaDataHeaders.remove(header);
+	release_(header);
 	iDirty = true;
 		
 	exit_();

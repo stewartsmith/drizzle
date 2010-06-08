@@ -58,12 +58,6 @@ MSConnectionHandler::MSConnectionHandler(CSThreadList *list):
 {
 }
 
-MSConnectionHandler::~MSConnectionHandler()
-{
-	close();
-}
-
-
 void MSConnectionHandler::close()
 {
 	closeStream();

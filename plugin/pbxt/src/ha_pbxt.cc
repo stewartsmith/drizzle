@@ -82,7 +82,7 @@ using namespace drizzled::plugin;
 
 #ifdef DEBUG
 //#define XT_USE_SYS_PAR_DEBUG_SIZES
-#define PBXT_HANDLER_TRACE
+//#define PBXT_HANDLER_TRACE
 //#define PBXT_TRACE_RETURN
 //#define XT_PRINT_INDEX_OPT
 //#define XT_SHOW_DUMPS_TRACE
@@ -1143,7 +1143,7 @@ static bool pbxt_show_status(handlerton *XT_UNUSED(hton), THD* thd,
  * return 1 on error, else 0.
  */
 #ifdef DRIZZLED
-static int pbxt_init(Context &registry)
+static int pbxt_init(module::Context &registry)
 #else
 static int pbxt_init(void *p)
 #endif
@@ -1528,19 +1528,9 @@ static int pbxt_rollback(handlerton *hton, THD *thd, bool all)
 	return 0;
 }
 
-#ifdef DRIZZLED
 Cursor *PBXTStorageEngine::create(TableShare& table, memory::Root *mem_root)
 {
-	PBXTStorageEngine * const hton = this;
-	if (XTSystemTableShare::isSystemTable(table.getPath()))
-#else
-static handler *pbxt_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root)
-{
-	if (table && XTSystemTableShare::isSystemTable(table->getPath()))
-#endif
-		return new (mem_root) ha_xtsys(hton, table);
-	else
-		return new (mem_root) ha_pbxt(hton, table);
+	return new (mem_root) ha_pbxt(*this, table);
 }
 
 /*
@@ -2071,11 +2061,7 @@ static int pbxt_exit_statistics(void *XT_UNUSED(p))
  *
  */
 
-#ifdef DRIZZLED
-ha_pbxt::ha_pbxt(handlerton *hton, TableShare& table_arg) : handler(*hton, table_arg)
-#else
-ha_pbxt::ha_pbxt(handlerton *hton, TABLE_SHARE *table_arg) : handler(hton, table_arg)
-#endif
+ha_pbxt::ha_pbxt(plugin::StorageEngine &engine_arg, TableShare &table_arg) : Cursor(engine_arg, table_arg)
 {
 	pb_share = NULL;
 	pb_open_tab = NULL;
@@ -5614,7 +5600,6 @@ ha_rows ha_pbxt::records_in_range(uint inx, key_range *min_key, key_range *max_k
 
  * Called from handle.cc by ha_create_table().
 */
-#ifdef DRIZZLED
 int PBXTStorageEngine::doCreateTable(Session&, 
                                      Table& table_arg, 
                                      TableIdentifier& ident,
@@ -5622,10 +5607,6 @@ int PBXTStorageEngine::doCreateTable(Session&,
 {
 	const std::string& path = ident.getPath();
 	const char *table_path = path.c_str();
-#else
-int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *create_info)
-{
-#endif
 	THD				*thd = current_thd;
 	int				err = 0;
 	XTThreadPtr		self;
@@ -5645,7 +5626,6 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
 
 	if (!(self = ha_set_current_thread(thd, &err)))
 		return xt_ha_pbxt_to_mysql_error(err);
-#ifdef DRIZZLED
 	XT_PRINT2(self, "create (%s) %s\n", table_path, (proto.type() == message::Table::TEMPORARY) ? "temporary" : "");
         switch(ident.getType()) {
         	case message::Table::STANDARD:
@@ -5664,26 +5644,16 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
                 	dic.dic_table_type = XT_TABLE_TYPE_FUNCTION;
 			break;
 	}
-#else
-	XT_PRINT2(self, "create (%s) %s\n", table_path, (create_info->options & HA_LEX_CREATE_TMP_TABLE) ? "temporary" : "");
-#endif
 
 	STAT_TRACE(self, *thd_query(thd));
 
 	try_(a) {
 		xt_ha_open_database_of_table(self, (XTPathStrPtr) table_path);
 
-#ifdef DRIZZLED
-		for (uint i=0; i<TS(&table_arg)->keys; i++) {
+		for (uint i=0; i<table_arg.s->keys; i++) {
 			if (table_arg.key_info[i].key_length > XT_INDEX_MAX_KEY_SIZE)
 				xt_throw_sulxterr(XT_CONTEXT, XT_ERR_KEY_TOO_LARGE, table_arg.key_info[i].name, (u_long) XT_INDEX_MAX_KEY_SIZE);
 		}
-#else
-		for (uint i=0; i<TS(table_arg)->keys; i++) {
-			if (table_arg->key_info[i].key_length > XT_INDEX_MAX_KEY_SIZE)
-				xt_throw_sulxterr(XT_CONTEXT, XT_ERR_KEY_TOO_LARGE, table_arg->key_info[i].name, (u_long) XT_INDEX_MAX_KEY_SIZE);
-		}
-#endif
 
 		/* ($) auto_increment_value will be zero if 
 		 * AUTO_INCREMENT is not used. Otherwise
@@ -5695,21 +5665,13 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
 			source_dic.dic_tab_flags |= XT_TF_MEMORY_TABLE;
 #endif
 
-#ifdef DRIZZLED
 		StorageEngine::writeDefinitionFromPath(ident, proto);
 
-		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, &table_arg), &source_dic);
+		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, const_cast<char *>(thd->getQueryString().c_str()), myxt_create_table_from_table(self, table_arg.s), &source_dic);
 		tab_def->checkForeignKeys(self, proto.type() == message::Table::TEMPORARY);
-#else
-		// tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, *thd_query(thd), myxt_create_table_from_table(self, table_arg));
-		tab_def = xt_ri_create_table(self, true, (XTPathStrPtr) table_path, *thd_query(thd), myxt_create_table_from_table(self, table_arg), &source_dic);
-		tab_def->checkForeignKeys(self, create_info->options & HA_LEX_CREATE_TMP_TABLE);
-		dic.dic_table_type = XT_TABLE_TYPE_STANDARD;
-#endif
 
 		dic.dic_table = tab_def;
-#ifdef DRIZZLED
-		dic.dic_my_table = &table_arg;
+		dic.dic_my_table = table_arg.s;
 		dic.dic_tab_flags = source_dic.dic_tab_flags;
 		//if (create_info.storage_media == HA_SM_MEMORY)
 		//	dic.dic_tab_flags |= XT_TF_MEMORY_TABLE;
@@ -5720,20 +5682,6 @@ int ha_pbxt::create(const char *table_path, TABLE *table_arg, HA_CREATE_INFO *cr
 
 		dic.dic_min_auto_inc = (xtWord8) proto.options().auto_increment_value(); /* ($) */
 		dic.dic_def_ave_row_size =  proto.options().avg_row_length();
-#else
-		dic.dic_my_table = table_arg;
-		dic.dic_tab_flags = source_dic.dic_tab_flags;
-
-		if (create_info->storage_media == HA_SM_MEMORY)
-			dic.dic_tab_flags |= XT_TF_MEMORY_TABLE;
-		if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
-			dic.dic_tab_flags |= XT_TF_REAL_TEMP_TABLE;
-		if (myxt_temp_table_name(table_path))
-			dic.dic_tab_flags |= XT_TF_DDL_TEMP_TABLE;
-
-		dic.dic_min_auto_inc = (xtWord8) create_info->auto_increment_value; /* ($) */
-		dic.dic_def_ave_row_size = (xtWord8) table_arg->s->avg_row_length;
-#endif
 		myxt_setup_dictionary(self, &dic);
 
 		/*

@@ -140,7 +140,7 @@ class MSBackup :public CSDaemon {
 public:
 
 	MSBackup();
-	~MSBackup();
+	~MSBackup(){} // Do nothing here because 'self' will no longer be valid, use finalize().
 	
 	virtual bool doWork();
 

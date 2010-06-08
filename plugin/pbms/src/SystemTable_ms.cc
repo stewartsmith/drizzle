@@ -294,13 +294,19 @@ using namespace drizzled;
 #undef Field
 static int pbms_create_proto_table(const char *engine_name, const char *name, DT_FIELD_INFO *info, DT_KEY_INFO *keys, drizzled::message::Table &table)
 {
-  message::Table::Field *field;
-  message::Table::Field::FieldConstraints *field_constraints;
-  message::Table::Field::StringFieldOptions *string_field_options;
+	message::Table::Field *field;
+	message::Table::Field::FieldConstraints *field_constraints;
+	message::Table::Field::StringFieldOptions *string_field_options;
+	message::Table::TableOptions *table_options;
 
+	table.set_name(name);
 	table.set_name(name);
 	table.set_type(message::Table::STANDARD);
 	table.mutable_engine()->set_name(engine_name);
+	
+	table_options = table.mutable_options();
+	table_options->set_collation_id(my_charset_utf8_bin.number);
+	table_options->set_collation(my_charset_utf8_bin.name);
 	
 	while (info->field_name) {	
 		field= table.add_field();
@@ -665,6 +671,12 @@ void MSOpenSystemTable::setNotNullInRecord(Field *field, char *record)
 {
 	if (field->null_ptr)
 		record[(uint) (field->null_ptr - (uchar *) field->table->record[0])] &= (uchar) ~field->null_bit;
+}
+
+void MSOpenSystemTable::setNullInRecord(Field *field, char *record)
+{
+	if (field->null_ptr)
+		record[(uint) (field->null_ptr - (uchar *) field->table->record[0])] |= field->null_bit;
 }
 
 /*
@@ -1610,7 +1622,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 					setNotNullInRecord(curr_field, buf);
 				}
 				else
-					curr_field->store((uint64_t) 0, true);
+					setNullInRecord(curr_field, buf);
 				break;
 			case 'R':
 				switch (curr_field->field_name[5]) {
@@ -1978,9 +1990,8 @@ bool MSMetaDataTable::matchAlias(uint32_t repo_id, uint64_t offset, const char *
 
 void MSMetaDataTable::insertRow(char *buf)
 {
-	TABLE	*table = mySQLTable;
 	uint32_t repo_index;
-	String str1, str2, *meta_name = &str1, *meta_value = &str2;	
+	String meta_name, meta_value;	
 	uint16_t data_len;
 	uint64_t repo_offset;
 	char *data;		
@@ -1995,10 +2006,10 @@ void MSMetaDataTable::insertRow(char *buf)
 		
 	seqScanReset();
 
-	GET_INT_FIELD(repo_index,	0, table, buf);
-	GET_INT_FIELD(repo_offset,	1, table, buf);
-	GET_STR_FIELD(meta_name,	2, table, buf);
-	GET_STR_FIELD(meta_value,	3, table, buf);
+	getFieldValue(buf, 0, &repo_index);
+	getFieldValue(buf, 1, &repo_offset);
+	getFieldValue(buf, 2, &meta_name);
+	getFieldValue(buf, 3, &meta_value);
 	
 	if (!repo_index)
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id");
@@ -2007,7 +2018,7 @@ void MSMetaDataTable::insertRow(char *buf)
 	if (!resetScan(true, &have_data, repo_index -1))
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id or Repo_blob_offset");
 	
-	const char *alias = NULL, *tag = meta_name->c_ptr_safe();
+	const char *alias = NULL, *tag = meta_name.c_ptr_safe();
 	
 	if (iMetDataSize) {
 		MetaData md(iMetData->getBuffer(0), iMetDataSize);
@@ -2028,7 +2039,7 @@ void MSMetaDataTable::insertRow(char *buf)
 #endif
 		data = NULL;
 		
-	iMetData->setLength(iMetDataSize + meta_name->length() + meta_value->length()  + 2);
+	iMetData->setLength(iMetDataSize + meta_name.length() + meta_value.length()  + 2);
 	
 #ifdef HAVE_ALIAS_SUPPORT
 	if (alias && (data != iMetData->getBuffer(0))) // The buffer moved, adjust the alias.
@@ -2045,14 +2056,14 @@ void MSMetaDataTable::insertRow(char *buf)
 		alias = data + data_len + meta_name->length() + 1; // Set the alias to the value location.
 	} else 
 #endif
-		memcpy(data + data_len, meta_name->c_ptr_quick(), meta_name->length());
+		memcpy(data + data_len, meta_name.c_ptr_quick(), meta_name.length());
 		
-	data_len += meta_name->length();
+	data_len += meta_name.length();
 	data[data_len] = 0;
 	data_len++;
 
-	memcpy(data + data_len, meta_value->c_ptr_quick(), meta_value->length());
-	data_len += meta_value->length();
+	memcpy(data + data_len, meta_value.c_ptr_quick(), meta_value.length());
+	data_len += meta_value.length();
 	data[data_len] = 0;
 	data_len++;
 	
@@ -2086,9 +2097,8 @@ delete from pbms_mata_data where Repo_blob_offset = 921;
 
 void MSMetaDataTable::deleteRow(char *buf)
 {
-	TABLE	*table = mySQLTable;
 	uint32_t repo_index;
-	String str1, str2, *meta_name = &str1, *meta_value = &str2;	
+	String meta_name, meta_value;	
 	uint16_t record_size;
 	uint64_t repo_offset;
 	char *data;
@@ -2098,10 +2108,10 @@ void MSMetaDataTable::deleteRow(char *buf)
 	
 	seqScanReset();
 
-	GET_INT_FIELD(repo_index,	0, table, buf);
-	GET_INT_FIELD(repo_offset,	1, table, buf);
-	GET_STR_FIELD(meta_name,	2, table, buf);
-	GET_STR_FIELD(meta_value,	3, table, buf);
+	getFieldValue(buf, 0, &repo_index);
+	getFieldValue(buf, 1, &repo_offset);
+	getFieldValue(buf, 2, &meta_name);
+	getFieldValue(buf, 3, &meta_value);
 
 	if (!repo_index)
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id");
@@ -2110,7 +2120,7 @@ void MSMetaDataTable::deleteRow(char *buf)
 	if (!resetScan(true, &have_data, repo_index -1))
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id or Repo_blob_offset");
 	
-	const char *alias = NULL, *value = NULL, *tag = meta_name->c_ptr_safe();
+	const char *alias = NULL, *value = NULL, *tag = meta_name.c_ptr_safe();
 	char *location;
 	
 	// Check to see name exists.
@@ -2156,11 +2166,9 @@ void MSMetaDataTable::deleteRow(char *buf)
 
 void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 {
-	TABLE	*table = mySQLTable;
-	//Field	*current_field;
 	uint32_t o_repo_index, n_repo_index;
-	String n_str1, n_str2, *n_meta_name = &n_str1, *n_meta_value = &n_str2;	
-	String o_str1, o_str2, *o_meta_name = &o_str1, *o_meta_value = &o_str2;	
+	String n_meta_name, n_meta_value;	
+	String o_meta_name, o_meta_value;	
 	uint16_t record_size;
 	uint64_t o_repo_offset, n_repo_offset;
 	char *data;	
@@ -2170,16 +2178,16 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 	
 	seqScanReset();
 
-	GET_INT_FIELD(n_repo_index, 0, table, new_data);
-	GET_INT_FIELD(n_repo_offset,1, table, new_data);
-	GET_STR_FIELD(n_meta_name,	2, table, new_data);
-	GET_STR_FIELD(n_meta_value, 3, table, new_data);
-	
-	GET_INT_FIELD(o_repo_index,	0, table, old_data);
-	GET_INT_FIELD(o_repo_offset,1, table, old_data);
-	GET_STR_FIELD(o_meta_name,	2, table, old_data);
-	GET_STR_FIELD(o_meta_value, 3, table, old_data);
-	
+	getFieldValue(new_data, 0, &n_repo_index);
+	getFieldValue(new_data, 1, &n_repo_offset);
+	getFieldValue(new_data, 2, &n_meta_name);
+	getFieldValue(new_data, 3, &n_meta_value);
+
+	getFieldValue(old_data, 0, &o_repo_index);
+	getFieldValue(old_data, 1, &o_repo_offset);
+	getFieldValue(old_data, 2, &o_meta_name);
+	getFieldValue(old_data, 3, &o_meta_value);
+
 	if ((!o_repo_index) || (!n_repo_index))
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id");
 	
@@ -2202,7 +2210,7 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 		CSException::throwException(CS_CONTEXT, HA_ERR_CANNOT_ADD_FOREIGN, "Invalid Repository_id or Repo_blob_offset");
 	
 	char *location;
-	const char *value, *alias = NULL, *n_tag = n_meta_name->c_ptr_safe(), *o_tag = o_meta_name->c_ptr_safe();
+	const char *value, *alias = NULL, *n_tag = n_meta_name.c_ptr_safe(), *o_tag = o_meta_name.c_ptr_safe();
 	
 	if (!my_strcasecmp(&UTF8_CHARSET, o_tag, n_tag))
 		n_tag = NULL;
@@ -2237,7 +2245,7 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 	memmove(location, location + record_size, iMetDataSize - (location - data)); // Shift the meta data down
 	
 	// Add the updated meta data to the end of the block.
-	iMetData->setLength(iMetDataSize + n_meta_name->length() + n_meta_value->length()  + 2);
+	iMetData->setLength(iMetDataSize + n_meta_name.length() + n_meta_value.length()  + 2);
 	
 	md.use_data(iMetData->getBuffer(0), iMetDataSize); // Reset this incase the buffer moved.
 #ifdef HAVE_ALIAS_SUPPORT
@@ -2251,18 +2259,18 @@ void MSMetaDataTable::updateRow(char *old_data, char *new_data)
 #ifdef HAVE_ALIAS_SUPPORT
 	if ((!alias) && !my_strcasecmp(&UTF8_CHARSET, MS_ALIAS_TAG, n_tag)) {
 		reset_alias = true;
-		memcpy(data + iMetDataSize, MS_ALIAS_TAG, n_meta_name->length()); // Use my alias tag so we do not need to wory about case.
-		alias = data + iMetDataSize + n_meta_name->length() + 1; // Set the alias to the value location.
+		memcpy(data + iMetDataSize, MS_ALIAS_TAG, n_meta_name.length()); // Use my alias tag so we do not need to wory about case.
+		alias = data + iMetDataSize + n_meta_name.length() + 1; // Set the alias to the value location.
 	} else 
 #endif
-		memcpy(data + iMetDataSize, n_meta_name->c_ptr_quick(), n_meta_name->length());
+		memcpy(data + iMetDataSize, n_meta_name.c_ptr_quick(), n_meta_name.length());
 		
-	iMetDataSize += n_meta_name->length();
+	iMetDataSize += n_meta_name.length();
 	data[iMetDataSize] = 0;
 	iMetDataSize++;
 
-	memcpy(data + iMetDataSize, n_meta_value->c_ptr_quick(), n_meta_value->length());
-	iMetDataSize += n_meta_value->length();
+	memcpy(data + iMetDataSize, n_meta_value.c_ptr_quick(), n_meta_value.length());
+	iMetDataSize += n_meta_value.length();
 	data[iMetDataSize] = 0;
 	iMetDataSize++;
 	

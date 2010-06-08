@@ -41,10 +41,12 @@
 #include "drizzled/charset_info.h"
 #include <drizzled/table_proto.h>
 #include <drizzled/field.h>
+#include <drizzled/field/varstring.h>
 #endif
 
 #include "cslib/CSConfig.h"
 
+#include <sys/types.h>
 #include <inttypes.h>
 
 #include "cslib/CSGlobal.h"
@@ -198,27 +200,6 @@ bu_ID(0),
 bu_start_time(0),
 bu_TransactionManagerSuspended(false)
 {
-}
-
-MSBackup::~MSBackup()
-{
-
-	if (bu_SourceDatabase || bu_BackupList || bu_Compactor || bu_info) {
-		// We shouldn't be here
-		CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "MSBackup::completeBackup() not called");
-		if (bu_SourceDatabase)
-			 bu_SourceDatabase->release();
-			
-		if (bu_BackupList)
-			 bu_BackupList->release();
-			
-		if (bu_Compactor)
-			 bu_Compactor->release();
-			
-		if (bu_info)
-			 bu_info->release();
-	}
-		
 }
 
 MSBackup *MSBackup::newMSBackup(MSBackupInfo *info)
@@ -651,5 +632,31 @@ bool MSBackup::doWork()
 
 void *MSBackup::finalize()
 {
+	if (bu_SourceDatabase || bu_BackupList || bu_Compactor || bu_info) {
+		// We shouldn't be here
+		CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "MSBackup::completeBackup() not called");
+		if (bu_SourceDatabase) {
+			 bu_SourceDatabase->release();
+			 bu_SourceDatabase = NULL;
+		}
+			
+		if (bu_BackupList) {
+			 bu_BackupList->release();
+			 bu_BackupList = NULL;
+		}
+
+			
+		if (bu_Compactor) {
+			 bu_Compactor->release();
+			 bu_Compactor = NULL;
+		}
+
+			
+		if (bu_info) {
+			 bu_info->release();
+			 bu_info = NULL;
+		}
+
+	}
 	return NULL;
 }

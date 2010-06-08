@@ -25,17 +25,20 @@
 
 namespace drizzled
 {
+namespace module
+{
+class Module;
+}
+
 namespace plugin
 {
-
-class Module;
 
 class Plugin
 {
 private:
   const std::string name;
   bool is_active;
-  Module *module;
+  module::Module *module;
   const std::string type_name;
 
   Plugin();
@@ -66,7 +69,7 @@ public:
     return name;
   } 
 
-  void setModule(Module *module_arg)
+  void setModule(module::Module *module_arg)
   {
     module= module_arg;
   }

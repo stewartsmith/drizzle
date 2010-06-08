@@ -488,15 +488,12 @@ int prepare_create_field(CreateField *sql_field,
 
   switch (sql_field->sql_type) {
   case DRIZZLE_TYPE_BLOB:
-    sql_field->pack_flag= pack_length_to_packflag(sql_field->pack_length - portable_sizeof_char_ptr);
     sql_field->length= 8; // Unireg field length
     (*blob_columns)++;
     break;
   case DRIZZLE_TYPE_VARCHAR:
-    sql_field->pack_flag=0;
     break;
   case DRIZZLE_TYPE_ENUM:
-    sql_field->pack_flag=pack_length_to_packflag(sql_field->pack_length);
     if (check_duplicates_in_interval("ENUM",
                                      sql_field->field_name,
                                      sql_field->interval,
@@ -507,10 +504,8 @@ int prepare_create_field(CreateField *sql_field,
   case DRIZZLE_TYPE_DATE:  // Rest of string types
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_NULL:
-    sql_field->pack_flag=f_settype((uint32_t) sql_field->sql_type);
     break;
   case DRIZZLE_TYPE_DECIMAL:
-    sql_field->pack_flag= 0;
     break;
   case DRIZZLE_TYPE_TIMESTAMP:
     /* We should replace old TIMESTAMP fields with their newer analogs */
@@ -522,7 +517,9 @@ int prepare_create_field(CreateField *sql_field,
         (*timestamps_with_niladic)++;
       }
       else
+      {
         sql_field->unireg_check= Field::NONE;
+      }
     }
     else if (sql_field->unireg_check != Field::NONE)
       (*timestamps_with_niladic)++;
@@ -530,10 +527,9 @@ int prepare_create_field(CreateField *sql_field,
     (*timestamps)++;
     /* fall-through */
   default:
-    sql_field->pack_flag=(0 |
-                          f_settype((uint32_t) sql_field->sql_type));
     break;
   }
+
   return 0;
 }
 
@@ -1060,7 +1056,7 @@ static int mysql_prepare_create_table(Session *session,
 
       key_part_info->fieldnr= field;
       key_part_info->offset=  (uint16_t) sql_field->offset;
-      key_part_info->key_type=sql_field->pack_flag;
+      key_part_info->key_type= 0;
       length= sql_field->key_length;
 
       if (column->length)
@@ -1418,7 +1414,6 @@ bool mysql_create_table_no_lock(Session *session,
   uint		db_options, key_count;
   KeyInfo		*key_info_buffer;
   bool		error= true;
-  TableShare share;
 
   /* Check for duplicate fields and check type of table to create */
   if (not alter_info->create_list.elements)
@@ -1603,6 +1598,7 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 
   SYNOPSIS
     mysql_rename_table()
+      session
       base                      The plugin::StorageEngine handle.
       old_db                    The old database name.
       old_name                  The old table name.
@@ -1615,11 +1611,11 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 */
 
 bool
-mysql_rename_table(plugin::StorageEngine *base,
+mysql_rename_table(Session &session,
+                   plugin::StorageEngine *base,
                    TableIdentifier &from,
                    TableIdentifier &to)
 {
-  Session *session= current_session;
   int error= 0;
 
   assert(base);
@@ -1630,7 +1626,7 @@ mysql_rename_table(plugin::StorageEngine *base,
     return true;
   }
 
-  error= base->renameTable(*session, from, to);
+  error= base->renameTable(session, from, to);
 
   if (error == HA_ERR_WRONG_COMMAND)
   {
@@ -1678,8 +1674,8 @@ void wait_while_table_is_used(Session *session, Table *table,
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  remove_table_from_cache(session, table->s->getSchemaName(),
-                          table->s->getTableName(),
+  remove_table_from_cache(session, table->getMutableShare()->getSchemaName(),
+                          table->getMutableShare()->getTableName(),
                           RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
@@ -1826,14 +1822,14 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     }
 
     /* Close all instances of the table to allow repair to rename files */
-    if (lock_type == TL_WRITE && table->table->s->version)
+    if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
       pthread_mutex_lock(&LOCK_open); /* Lock type is TL_WRITE and we lock to repair the table */
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
-      remove_table_from_cache(session, table->table->s->getSchemaName(),
-                              table->table->s->getTableName(),
+      remove_table_from_cache(session, table->table->getMutableShare()->getSchemaName(),
+                              table->table->getMutableShare()->getTableName(),
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
@@ -1924,16 +1920,20 @@ send_result:
     if (table->table)
     {
       if (fatal_error)
-        table->table->s->version=0;               // Force close of table
+      {
+        table->table->getMutableShare()->resetVersion();               // Force close of table
+      }
       else if (open_for_modify)
       {
-        if (table->table->s->tmp_table)
+        if (table->table->getShare()->tmp_table)
+        {
           table->table->cursor->info(HA_STATUS_CONST);
+        }
         else
         {
           pthread_mutex_lock(&LOCK_open);
-          remove_table_from_cache(session, table->table->s->getSchemaName(),
-                                  table->table->s->getTableName(), RTFC_NO_FLAG);
+          remove_table_from_cache(session, table->table->getMutableShare()->getSchemaName(),
+                                  table->table->getMutableShare()->getTableName(), RTFC_NO_FLAG);
           pthread_mutex_unlock(&LOCK_open);
         }
       }
@@ -2123,8 +2123,8 @@ bool mysql_create_like_table(Session* session,
   if (session->open_tables_from_list(&src_table, &not_used))
     return true;
 
-  TableIdentifier src_identifier(src_table->table->s->getSchemaName(),
-                                 src_table->table->s->getTableName(), src_table->table->s->tmp_table);
+  TableIdentifier src_identifier(src_table->table->getMutableShare()->getSchemaName(),
+                                 src_table->table->getMutableShare()->getTableName(), src_table->table->getMutableShare()->tmp_table);
 
 
 
@@ -2199,7 +2199,7 @@ bool mysql_create_like_table(Session* session,
       } 
       else
       {
-        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->s->tmp_table), is_if_not_exists);
+        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->getShare()->tmp_table), is_if_not_exists);
         (void)rc;
 
         res= false;

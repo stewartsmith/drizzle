@@ -43,7 +43,7 @@ public:
 	time_t	lastUse;
 
 	MSConnectionHandler(CSThreadList *list);
-	virtual ~MSConnectionHandler();
+	virtual ~MSConnectionHandler(){} // Do nothing here because 'self' will no longer be valid, use finalize().
 
 	void close();
 

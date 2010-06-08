@@ -3492,8 +3492,8 @@ static void best_access_path(Join *join,
                 records=
                   ((double) s->records / (double) rec *
                    (1.0 +
-                    ((double) (table->s->max_key_length-keyinfo->key_length) /
-                     (double) table->s->max_key_length)));
+                    ((double) (table->getShare()->max_key_length-keyinfo->key_length) /
+                     (double) table->getShare()->max_key_length)));
                 if (records < 2.0)
                   records=2.0;               /* Can't be as good as a unique */
               }
@@ -5385,26 +5385,30 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
     join->unit->select_limit_cnt= 1;		// Only send first row
     return(0);
   }
-  Field **first_field=entry->field+entry->s->fields - field_count;
+  Field **first_field=entry->field+entry->getShare()->sizeFields() - field_count;
   offset= (field_count ?
-           entry->field[entry->s->fields - field_count]->
+           entry->field[entry->getShare()->sizeFields() - field_count]->
            offset(entry->record[0]) : 0);
-  reclength= entry->s->reclength-offset;
+  reclength= entry->getShare()->getRecordLength() - offset;
 
   entry->free_io_cache();				// Safety
   entry->cursor->info(HA_STATUS_VARIABLE);
-  if (entry->s->db_type() == heap_engine ||
-      (!entry->s->blob_fields &&
+  if (entry->getShare()->db_type() == heap_engine ||
+      (!entry->getShare()->blob_fields &&
        ((ALIGN_SIZE(reclength) + HASH_OVERHEAD) * entry->cursor->stats.records <
-	session->variables.sortbuff_size)))
+        session->variables.sortbuff_size)))
+  {
     error= remove_dup_with_hash_index(join->session, entry,
-				     field_count, first_field,
-				     reclength, having);
+                                      field_count, first_field,
+                                      reclength, having);
+  }
   else
-    error= remove_dup_with_compare(join->session, entry, first_field, offset,
-				  having);
+  {
+    error= remove_dup_with_compare(join->session, entry, first_field, offset, having);
+  }
 
   free_blobs(first_field);
+
   return(error);
 }
 
@@ -5507,7 +5511,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     table->reginfo.join_tab=s;
     table->reginfo.not_exists_optimize=0;
     memset(table->const_key_parts, 0,
-           sizeof(key_part_map)*table->s->keys);
+           sizeof(key_part_map)*table->getShare()->sizeKeys());
     all_table_map|= table->map;
     s->join=join;
     s->info=0;					// For describe

@@ -73,15 +73,9 @@ CREATE TABLE pbms_reference (
 #include "Repository_ms.h"
 #include "cloud.h"
 
-#if MYSQL_VERSION_ID < 50114
-#define SET_FIELD(f, i, t, b) {f = t->field[i]; f->ptr = (byte *)b + f->offset();}
+#ifdef DRIZZLED
+using namespace drizzled;
 #else
-#define SET_FIELD(f, i, t, b) {f = t->field[i]; f->ptr = (byte *)b + f->offset(f->table->record[0]);}
-#endif
-#define GET_INT_FIELD(v, i, t, b) {byte *s; Field *f; s = t->field[i]->ptr; SET_FIELD(f, i, t, b); v = f->val_int(); f->ptr =s;}
-#define GET_STR_FIELD(v, i, t, b) {byte *s; Field *f; s = t->field[i]->ptr; SET_FIELD(f, i, t, b); v = f->val_str(v); f->ptr =s;}
-
-#ifndef DRIZZLED
 int pbms_discover_system_tables(handlerton *hton, THD* thd, const char *db, const char *name, uchar **frmblob, size_t *frmlen);
 #endif
 
@@ -121,6 +115,43 @@ public:
 	MSOpenSystemTable(MSSystemTableShare *share, TABLE *table);
 	virtual ~MSOpenSystemTable();
 
+	/*
+	 * The getFieldValue() methods access fields in a server record.
+	 * They assumes the caller knows what it is doing and does no error checking.
+	 */
+	inline void getFieldValue(const char *row, uint16_t column_index, String *value)
+	{
+		Field *assumed_str_field = mySQLTable->field[column_index];
+		unsigned char *old_ptr = assumed_str_field->ptr;
+		
+		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->record[0]);
+
+		assumed_str_field->setReadSet();
+		value = assumed_str_field->val_str(value);
+		
+		assumed_str_field->ptr = old_ptr;
+	}
+
+	inline void getFieldValue(const char *row, uint16_t column_index, uint64_t *value)
+	{
+		Field *assumed_int_field = mySQLTable->field[column_index];
+		unsigned char *old_ptr = assumed_int_field->ptr;
+
+		assumed_int_field->ptr = (unsigned char *)row + assumed_int_field->offset(mySQLTable->record[0]);
+
+		assumed_int_field->setReadSet();
+		*value = assumed_int_field->val_int();
+		
+		assumed_int_field->ptr = old_ptr;
+	}
+
+	inline void getFieldValue(const char *row, uint16_t column_index, uint32_t *value)
+	{
+		uint64_t v64;
+		getFieldValue(row, column_index, &v64);
+		*value = (uint32_t) v64;
+	}
+
 	virtual void use() { }
 	virtual void unuse() { }
 	virtual void backupSeqScanInit() { }
@@ -147,6 +178,7 @@ public:
 */
 	
 	static void setNotNullInRecord(Field *field, char *record);
+	static void setNullInRecord(Field *field, char *record);
 
 private:
 };

@@ -91,13 +91,23 @@ public:
 	void drop_table(const char *name __attribute__((unused))) {}
 
 	int close(void);
+#ifdef DRIZZLED
+	int		doInsertRecord(byte * buf);
+	int		doUpdateRecord(const byte * old_data, byte * new_data);
+	int		doDeleteRecord(const byte * buf);
+
+#else
 	int write_row(unsigned char * buf);
 	int update_row(const unsigned char * old_data, unsigned char * new_data);
 	int delete_row(const unsigned char * buf);
+#endif
 
 	/* Sequential scan functions: */
-	int	doStartTableScan(bool ) { return 0;}
+#ifdef DRIZZLED
+	int	doStartTableScan(bool scan);
+#else
 	int rnd_init(bool scan);
+#endif
 	int rnd_next(byte *buf);
 	int rnd_pos(byte * buf, byte *pos);
 	void position(const byte *record);

@@ -64,7 +64,8 @@ class MSTransactionThread : public CSDaemon {
 public:
 	MSTransactionThread(MSTrans *txn_log);
 	
-	virtual ~MSTransactionThread();
+	virtual ~MSTransactionThread(){} // Do nothing here because 'self' will no longer be valid, use finalize().
+
 
 	void close();
 
@@ -89,17 +90,6 @@ log(txn_log),
 lostLog(NULL)
 {
 	log->txn_SetReader(this);
-}
-
-MSTransactionThread::~MSTransactionThread()
-{
-	close();
-	
-	if (log)
-		log->release();
-		
-	if (lostLog)
-		lostLog->release();
 }
 
 void MSTransactionThread::close()
@@ -288,6 +278,12 @@ bool MSTransactionThread::doWork()
 void *MSTransactionThread::finalize()
 {
 	close();
+	
+	if (log)
+		log->release();
+		
+	if (lostLog)
+		lostLog->release();
 	return NULL;
 }
 

@@ -24,7 +24,6 @@ namespace drizzled
 {
 
 struct st_thr_lock;
-extern uint32_t locks_immediate,locks_waited ;
 
 namespace internal
 {

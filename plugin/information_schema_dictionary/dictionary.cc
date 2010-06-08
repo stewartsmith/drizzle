@@ -44,7 +44,7 @@ static ViewColumnUsage *view_column_usage;
 static ViewTableUsage *view_table_usage;
 static Views *views;
 
-static int init(drizzled::plugin::Context &context)
+static int init(drizzled::module::Context &context)
 {
   check_constraints = new(std::nothrow)CheckConstraints;
   column_domain_usage = new(std::nothrow)ColumnDomainUsage;

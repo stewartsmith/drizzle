@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.127])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.133])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -77,9 +77,9 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_CANONICAL_TARGET
   
   m4_if(PCT_DONT_SUPRESS_INCLUDE,yes,[
-    AM_INIT_AUTOMAKE(-Wall -Werror subdir-objects foreign)
+    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability subdir-objects foreign)
   ],[
-    AM_INIT_AUTOMAKE(-Wall -Werror nostdinc subdir-objects foreign)
+    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability nostdinc subdir-objects foreign)
   ])
 
   m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -89,7 +89,9 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   ])
   
   AC_REQUIRE([AC_PROG_CC])
-  AC_REQUIRE([PANDORA_MAC_GCC42])
+  m4_if(PCT_FORCE_GCC42, [yes], [
+    AC_REQUIRE([PANDORA_ENSURE_GCC_VERSION])
+  ])
   AC_REQUIRE([PANDORA_64BIT])
 
   m4_if(PCT_VERSION_FROM_VC,yes,[
@@ -106,9 +108,6 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AM_PROG_CC_C_O
 
 
-  m4_if(PCT_FORCE_GCC42, [yes], [
-    AS_IF([test "$GCC" = "yes"], PANDORA_ENSURE_GCC_VERSION)
-  ])
 
   PANDORA_PLATFORM
 

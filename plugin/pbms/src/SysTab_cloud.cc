@@ -328,27 +328,26 @@ void MSCloudTable::seqScanRead(uint8_t *pos, char *buf)
 
 void MSCloudTable::updateRow(char *old_data, char *new_data) 
 {
-	TABLE	*table = mySQLTable;	
 	uint32_t n_id, o_id, o_indx, n_indx;
 	const char *realPrivKey;
-	String server_val, bucket_val, pubKey_val, privKey_val, *server = &server_val, *bucket = &bucket_val, *pubKey = &pubKey_val, *privKey = &privKey_val;
-	String o_server_val, o_bucket_val, o_pubKey_val, o_privKey_val, *o_server = &o_server_val, *o_bucket = &o_bucket_val, *o_pubKey = &o_pubKey_val, *o_privKey = &o_privKey_val;
+	String server, bucket, pubKey, privKey;
+	String o_server, o_bucket, o_pubKey, o_privKey;
 	MSCloudInfo *info;
 
 	enter_();
 	
-	GET_INT_FIELD(n_id, 0, table, new_data);		
-	GET_STR_FIELD(server, 1, table, new_data);
-	GET_STR_FIELD(bucket, 2, table, new_data);
-	GET_STR_FIELD(pubKey, 3, table, new_data);
-	GET_STR_FIELD(privKey, 4, table, new_data);
-	
-	GET_INT_FIELD(o_id, 0, table, old_data);
-	GET_STR_FIELD(o_server, 1, table, old_data);
-	GET_STR_FIELD(o_bucket, 2, table, old_data);
-	GET_STR_FIELD(o_pubKey, 3, table, old_data);
-	GET_STR_FIELD(o_privKey, 4, table, old_data);
-	
+	getFieldValue(new_data, 0, &n_id);
+	getFieldValue(new_data, 1, &server);
+	getFieldValue(new_data, 2, &bucket);
+	getFieldValue(new_data, 3, &pubKey);
+	getFieldValue(new_data, 4, &privKey);
+
+	getFieldValue(old_data, 0, &o_id);
+	getFieldValue(old_data, 1, &o_server);
+	getFieldValue(old_data, 2, &o_bucket);
+	getFieldValue(old_data, 3, &o_pubKey);
+	getFieldValue(old_data, 4, &o_privKey);
+
 	// The cloud ID must be unique
 	if ((o_id !=  n_id) && MSCloudInfo::gCloudInfo->get(n_id)) {
 		CSException::throwException(CS_CONTEXT, MS_ERR_DUPLICATE, "Attempt to update a row with a duplicate key in the "CLOUD_TABLE_NAME" table.");
@@ -357,14 +356,14 @@ void MSCloudTable::updateRow(char *old_data, char *new_data)
 	// The private key is masked when returned to the caller, so
 	// unless the caller has updated it we need to get the real 
 	// private key from the old record.
-	if (strcmp(privKey->c_ptr(), o_privKey->c_ptr()))
-		realPrivKey = privKey->c_ptr();
+	if (strcmp(privKey.c_ptr(), o_privKey.c_ptr()))
+		realPrivKey = privKey.c_ptr();
 	else {
 		info = (MSCloudInfo*) MSCloudInfo::gCloudInfo->get(o_id); // unreference pointer
 		realPrivKey = info->getPrivateKey();
 	}
 	
-	new_(info, MSCloudInfo(	n_id, server->c_ptr(), bucket->c_ptr(), pubKey->c_ptr(), realPrivKey));
+	new_(info, MSCloudInfo(	n_id, server.c_ptr(), bucket.c_ptr(), pubKey.c_ptr(), realPrivKey));
 	push_(info);
 	
 	o_indx = MSCloudInfo::gCloudInfo->getIndex(o_id);
@@ -384,31 +383,30 @@ void MSCloudTable::updateRow(char *old_data, char *new_data)
 
 void MSCloudTable::insertRow(char *data) 
 {
-	TABLE	*table = mySQLTable;	
 	uint32_t ref_id;
-	String server_val, bucket_val, pubKey_val, privKey_val, *server = &server_val, *bucket = &bucket_val, *pubKey = &pubKey_val, *privKey = &privKey_val;
+	String server, bucket, pubKey, privKey;
 	MSCloudInfo *info;
 
 	enter_();
 	
-	GET_INT_FIELD(ref_id, 0, table, data);
+	getFieldValue(data, 0, &ref_id);
 		
 	// The cloud ID must be unique
 	if (ref_id && MSCloudInfo::gCloudInfo->get(ref_id)) {
 		CSException::throwException(CS_CONTEXT, MS_ERR_DUPLICATE, "Attempt to insert a row with a duplicate key in the "CLOUD_TABLE_NAME" table.");
 	}
 	
-	GET_STR_FIELD(server, 1, table, data);
-	GET_STR_FIELD(bucket, 2, table, data);
-	GET_STR_FIELD(pubKey, 3, table, data);
-	GET_STR_FIELD(privKey, 4, table, data);
-	
+	getFieldValue(data, 1, &server);
+	getFieldValue(data, 2, &bucket);
+	getFieldValue(data, 3, &pubKey);
+	getFieldValue(data, 4, &privKey);
+
 	if (ref_id == 0)
 		ref_id = MSCloudInfo::gMaxInfoRef++;
 	else if (ref_id >= MSCloudInfo::gMaxInfoRef)
 		MSCloudInfo::gMaxInfoRef = ref_id +1;
 		
-	new_(info, MSCloudInfo(	ref_id, server->c_ptr(), bucket->c_ptr(), pubKey->c_ptr(), privKey->c_ptr()));
+	new_(info, MSCloudInfo(	ref_id, server.c_ptr(), bucket.c_ptr(), pubKey.c_ptr(), privKey.c_ptr()));
 	MSCloudInfo::gCloudInfo->set(ref_id, info);
 	
 	saveTable(RETAIN(myShare->mySysDatabase));
@@ -417,12 +415,11 @@ void MSCloudTable::insertRow(char *data)
 
 void MSCloudTable::deleteRow(char *data) 
 {
-	TABLE	*table = mySQLTable;	
 	uint32_t ref_id, indx;
 
 	enter_();
 	
-	GET_INT_FIELD(ref_id, 0, table, data);
+	getFieldValue(data, 0, &ref_id);
 		
 	// Adjust the current position in the array if required.
 	indx = MSCloudInfo::gCloudInfo->getIndex(ref_id);

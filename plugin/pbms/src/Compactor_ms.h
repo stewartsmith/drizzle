@@ -45,7 +45,7 @@ class MSDatabase;
 class MSCompactorThread : public CSDaemon {
 public:
 	MSCompactorThread(time_t wait_time, MSDatabase *db);
-	virtual ~MSCompactorThread();
+	virtual ~MSCompactorThread(){} // Do nothing here because 'self' will no longer be valid, use finalize().
 
 	void close();
 

@@ -200,6 +200,10 @@ static sys_var_readonly sys_tmpdir(&vars, "tmpdir", OPT_GLOBAL, SHOW_CHAR, get_t
 
 static sys_var_const_str_ptr sys_secure_file_priv(&vars, "secure_file_priv",
                                              &opt_secure_file_priv);
+
+static sys_var_const_str_ptr sys_scheduler(&vars, "scheduler",
+                                           &opt_scheduler);
+
 static sys_var_uint32_t_ptr  sys_server_id(&vars, "server_id", &server_id,
                                            fix_server_id);
 
@@ -1431,8 +1435,8 @@ static unsigned char *get_error_count(Session *session)
 */
 static unsigned char *get_tmpdir(Session *)
 {
-  assert(drizzle_tmpdir);
-  return (unsigned char*)drizzle_tmpdir;
+  assert(drizzle_tmpdir.size());
+  return (unsigned char*)drizzle_tmpdir.c_str();
 }
 
 /****************************************************************************

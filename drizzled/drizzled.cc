@@ -54,6 +54,7 @@
 #include "drizzled/charset.h"
 #include "plugin/myisam/myisam.h"
 #include "drizzled/drizzled.h"
+#include "drizzled/module/registry.h"
 
 #include <google/protobuf/stubs/common.h>
 
@@ -217,8 +218,7 @@ char *drizzled_user;
 bool volatile select_thread_in_use;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-uint32_t max_used_connections;
-const string opt_scheduler_default("multi_thread");
+char *opt_scheduler_default;
 char *opt_scheduler= NULL;
 
 size_t my_thread_stack_size= 65536;
@@ -242,8 +242,6 @@ uint32_t back_log;
 uint32_t server_id;
 uint64_t table_cache_size;
 size_t table_def_size;
-uint64_t aborted_threads;
-uint64_t aborted_connects;
 uint64_t max_connect_errors;
 uint32_t global_thread_id= 1UL;
 pid_t current_pid;
@@ -299,7 +297,7 @@ key_map key_map_full(0);                        // Will be initialized later
 
 uint32_t data_home_len;
 char data_home_buff[2], *data_home=data_home_real;
-char *drizzle_tmpdir= NULL;
+std::string drizzle_tmpdir;
 char *opt_drizzle_tmpdir= NULL;
 
 /** name of reference on left espression in rewritten IN subquery */
@@ -316,6 +314,7 @@ FILE *stderror_file=0;
 struct system_variables global_system_variables;
 struct system_variables max_system_variables;
 struct system_status_var global_status_var;
+struct global_counters current_global_counters;
 
 const CHARSET_INFO *system_charset_info, *files_charset_info ;
 const CHARSET_INFO *table_alias_charset;
@@ -501,13 +500,12 @@ void clean_up(bool print_message)
   TableShare::cacheStop();
   set_var_free();
   free_charsets();
-  plugin::Registry &plugins= plugin::Registry::singleton();
-  plugin_shutdown(plugins);
+  module::Registry &modules= module::Registry::singleton();
+  modules.shutdownModules();
   xid_cache_free();
   free_status_vars();
   if (defaults_argv)
     internal::free_defaults(defaults_argv);
-  free(drizzle_tmpdir);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
 
@@ -680,22 +678,6 @@ void Session::unlink(Session *session)
 }
 
 
-#ifdef THREAD_SPECIFIC_SIGPIPE
-/**
-
-  @todo
-    One should have to fix that thr_alarm know about this thread too.
-*/
-extern "C" void abort_thread(int )
-{
-  Session *session=current_session;
-  if (session)
-    session->killed= Session::KILL_CONNECTION;
-  return;;
-}
-#endif
-
-
 #ifndef SA_RESETHAND
 #define SA_RESETHAND 0
 #endif
@@ -727,13 +709,23 @@ static int show_flushstatustime(drizzle_show_var *var, char *buff)
   return 0;
 }
 
+static int show_connection_count(drizzle_show_var *var, char *buff)
+{
+  var->type= SHOW_INT;
+  var->value= buff;
+  *((uint32_t *)buff)= connection_count;
+  return 0;
+}
+
 static st_show_var_func_container show_starttime_cont= { &show_starttime };
 
 static st_show_var_func_container show_flushstatustime_cont= { &show_flushstatustime };
 
+static st_show_var_func_container show_connection_count_cont= { &show_connection_count };
+
 static drizzle_show_var status_vars[]= {
-  {"Aborted_clients",          (char*) &aborted_threads,        SHOW_LONGLONG},
-  {"Aborted_connects",         (char*) &aborted_connects,       SHOW_LONGLONG},
+  {"Aborted_clients",          (char*) &current_global_counters.aborted_threads, SHOW_LONGLONG},
+  {"Aborted_connects",         (char*) &current_global_counters.aborted_connects, SHOW_LONGLONG},
   {"Bytes_received",           (char*) offsetof(system_status_var, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(system_status_var, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Connections",              (char*) &global_thread_id, SHOW_INT_NOFLUSH},
@@ -762,7 +754,7 @@ static drizzle_show_var status_vars[]= {
   {"Key_write_requests",       (char*) offsetof(KEY_CACHE, global_cache_w_requests), SHOW_KEY_CACHE_LONGLONG},
   {"Key_writes",               (char*) offsetof(KEY_CACHE, global_cache_write), SHOW_KEY_CACHE_LONGLONG},
   {"Last_query_cost",          (char*) offsetof(system_status_var, last_query_cost), SHOW_DOUBLE_STATUS},
-  {"Max_used_connections",     (char*) &max_used_connections,  SHOW_INT},
+  {"Max_used_connections",     (char*) &current_global_counters.max_used_connections,  SHOW_INT},
   {"Questions",                (char*) offsetof(system_status_var, questions), SHOW_LONG_STATUS},
   {"Select_full_join",         (char*) offsetof(system_status_var, select_full_join_count), SHOW_LONG_STATUS},
   {"Select_full_range_join",   (char*) offsetof(system_status_var, select_full_range_join_count), SHOW_LONG_STATUS},
@@ -774,9 +766,9 @@ static drizzle_show_var status_vars[]= {
   {"Sort_range",	       (char*) offsetof(system_status_var, filesort_range_count), SHOW_LONG_STATUS},
   {"Sort_rows",		       (char*) offsetof(system_status_var, filesort_rows), SHOW_LONG_STATUS},
   {"Sort_scan",		       (char*) offsetof(system_status_var, filesort_scan_count), SHOW_LONG_STATUS},
-  {"Table_locks_immediate",    (char*) &locks_immediate,        SHOW_INT},
-  {"Table_locks_waited",       (char*) &locks_waited,           SHOW_INT},
-  {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
+  {"Table_locks_immediate",    (char*) &current_global_counters.locks_immediate,        SHOW_INT},
+  {"Table_locks_waited",       (char*) &current_global_counters.locks_waited,           SHOW_INT},
+  {"Threads_connected",        (char*) &show_connection_count_cont,  SHOW_FUNC},
   {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
   {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
   {NULL, NULL, SHOW_LONGLONG}
@@ -924,7 +916,7 @@ static int init_thread_environment()
 }
 
 
-int init_server_components(plugin::Registry &plugins)
+int init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -997,6 +989,7 @@ int init_server_components(plugin::Registry &plugins)
   else
   {
     scheduler_name= opt_scheduler_default;
+    opt_scheduler= opt_scheduler_default; 
   }
 
   if (plugin::Scheduler::setPlugin(scheduler_name))
@@ -1514,10 +1507,9 @@ static void drizzle_init_variables(void)
   wake_thread=0;
   abort_loop= select_thread_in_use= false;
   ready_to_exit= shutdown_in_progress= 0;
-  aborted_threads= aborted_connects= 0;
-  max_used_connections= 0;
   drizzled_user= drizzled_chroot= 0;
   memset(&global_status_var, 0, sizeof(global_status_var));
+  memset(&current_global_counters, 0, sizeof(current_global_counters));
   key_map_full.set();
 
   /* Character sets */
@@ -1557,6 +1549,7 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
+  opt_scheduler_default= (char*) "multi_thread";
 
   /* Variables that depends on compile options */
 #ifdef HAVE_BROKEN_REALPATH
@@ -1857,16 +1850,40 @@ static void fix_paths(string &progname)
     tmp_string= getenv("TMPDIR");
 
     if (opt_drizzle_tmpdir)
-      drizzle_tmpdir= strdup(opt_drizzle_tmpdir);
-    else if (tmp_string == NULL)
-      drizzle_tmpdir= strdup(P_tmpdir);
-    else
-      drizzle_tmpdir= strdup(tmp_string);
-
-    assert(drizzle_tmpdir);
-
-    if (stat(drizzle_tmpdir, &buf) || (S_ISDIR(buf.st_mode) == false))
     {
+      drizzle_tmpdir.append(opt_drizzle_tmpdir);
+    }
+    else if (tmp_string == NULL)
+    {
+      drizzle_tmpdir.append(data_home);
+    }
+    else
+    {
+      drizzle_tmpdir.append(tmp_string);
+    }
+
+    assert(drizzle_tmpdir.size());
+    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    {
+      perror(drizzle_tmpdir.c_str());
+      exit(1);
+    }
+
+    drizzle_tmpdir.append(FN_ROOTDIR);
+    drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
+
+    if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
+    {
+      if (errno != EEXIST)
+      {
+        perror(drizzle_tmpdir.c_str());
+        exit(1);
+      }
+    }
+
+    if (stat(drizzle_tmpdir.c_str(), &buf) || (S_ISDIR(buf.st_mode) == false))
+    {
+      perror(drizzle_tmpdir.c_str());
       exit(1);
     }
   }

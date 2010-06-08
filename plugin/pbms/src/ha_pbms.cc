@@ -578,7 +578,7 @@ static bool pbms_started = false;
 
 
 #ifdef DRIZZLED
-int pbms_init_func(Context &registry)
+int pbms_init_func(module::Context &registry)
 #else
 int pbms_discover_system_tables(handlerton *hton, THD* thd, const char *db, const char *name, uchar **frmblob, size_t *frmlen);
 int pbms_init_func(void *p)
@@ -972,7 +972,11 @@ int ha_pbms::index_read_last(byte * buf, const byte * key, uint key_len)
 #endif // PBMS_HAS_KEYS
 
 /* Sequential scan functions: */
+#ifdef DRIZZLED
+int ha_pbms::doStartTableScan(bool )
+#else
 int ha_pbms::rnd_init(bool )
+#endif
 {
 	int err = 0;
 	enter_();
@@ -1027,7 +1031,11 @@ int ha_pbms::rnd_pos(unsigned char * buf, unsigned char *pos)
 }
 
 //////////////////////////////
+#ifdef DRIZZLED
+int	ha_pbms::doInsertRecord(byte * buf)
+#else
 int ha_pbms::write_row(unsigned char * buf)
+#endif
 {
 	int err = 0;
 	enter_();
@@ -1042,7 +1050,11 @@ int ha_pbms::write_row(unsigned char * buf)
 	return_(err);
 }
 
-int ha_pbms::delete_row(const unsigned char * buf)
+#ifdef DRIZZLED
+int	ha_pbms::doDeleteRecord(const byte * buf)
+#else
+int ha_pbms::delete_row(const  unsigned char * buf)
+#endif
 {
 	int err = 0;
 	enter_();
@@ -1057,7 +1069,11 @@ int ha_pbms::delete_row(const unsigned char * buf)
 	return_(err);
 }
 
+#ifdef DRIZZLED
+int	ha_pbms::doUpdateRecord(const byte * old_data, byte * new_data)
+#else
 int ha_pbms::update_row(const unsigned char * old_data, unsigned char * new_data)
+#endif
 {
 	int err = 0;
 	enter_();

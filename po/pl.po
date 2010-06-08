@@ -7,16 +7,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-12-25 06:16+0000\n"
-"Last-Translator: dap <Unknown>\n"
+"POT-Creation-Date: 2010-04-28 02:45+0000\n"
+"PO-Revision-Date: 2010-04-29 20:38+0000\n"
+"Last-Translator: Przemysław Liszka <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-04-30 03:49+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -98,14 +98,13 @@ msgstr ""
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Witaj w kliencie Drizzle. Komendy kończą się ; lub \\g."
 
-#, fuzzy
-msgid "Your Drizzle connection id is "
+#, c-format
+msgid ""
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
 msgstr ""
 "Twój identyfikator połączenia Drizzle to %u\n"
 "Wersja serwera: %s\n"
-
-msgid "Server version: "
-msgstr ""
 
 #, c-format
 msgid "Reading history-file %s\n"
@@ -407,7 +406,7 @@ msgid "Ping the server to check if it's alive."
 msgstr "Pinguj server, aby sprawdzić czy jest dostępny."
 
 msgid "Use MySQL Protocol."
-msgstr ""
+msgstr "Użyj protokołu MySQL"
 
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
@@ -461,17 +460,11 @@ msgstr "Linia procesu: %<PRIu32>\n"
 msgid "Unknown command: "
 msgstr "Nieznane polecenie: "
 
-#, fuzzy
 msgid ""
-"                              Reading table information for completion of "
-"table and column names\n"
-"                                  You can turn off this feature to get a "
-"quicker startup with -A\n"
+"Reading table information for completion of table and column names\n"
+"You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
-"Wczytywanie informacji o tabeli w celu uzupełnienia nazw tabeli i kolumn\n"
-"    Możesz to wyłączyć aby przyśpieszyć uruchamianie używając: -A\n"
-"\n"
 
 msgid "No connection. Trying to reconnect..."
 msgstr "Brak połączenia. Próba ponownego połączenia."
@@ -638,7 +631,7 @@ msgstr "-- Pobieranie struktury dla tabeli %s...\n"
 
 #, c-format
 msgid "%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"
-msgstr ""
+msgstr "%s: Ostrzeżenie: Nie można ustawić opcji SQL_QUOTE_SHOW_CREATE (%s)\n"
 
 #, c-format
 msgid "%s: Can't get keys for table %s\n"
@@ -683,7 +676,7 @@ msgstr ""
 
 #, c-format
 msgid "%s: Error in field count for table: %s !  Aborting.\n"
-msgstr ""
+msgstr "%s: Błąd w polu liczby tabel: %s ! Anulowanie.\n"
 
 #, c-format
 msgid "%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"
@@ -698,7 +691,7 @@ msgid "Not enough fields from table %s! Aborting.\n"
 msgstr ""
 
 msgid "when doing refresh"
-msgstr ""
+msgstr "kiedy odświeżam"
 
 msgid "alloc_root failure."
 msgstr ""
@@ -718,11 +711,11 @@ msgstr ""
 
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
-msgstr ""
+msgstr "Nie można otworzyć '%s' do odczytu: errno = %d"
 
 #, c-format
 msgid "Out of memory"
-msgstr ""
+msgstr "Brak wolnej pamięci"
 
 msgid "Aborting\n"
 msgstr ""
@@ -742,6 +735,8 @@ msgid ""
 "Fatal error: Can't change to run as user '%s' ;  Please check that the user "
 "exists!\n"
 msgstr ""
+"Błąd krytyczny: Nie można przejść w tryb użytkownika '%s' ; Proszę sprawdzić "
+"czy użytkownik istnieje!\n"
 
 #, c-format
 msgid "gethostname failed, using '%s' as hostname"
@@ -768,9 +763,9 @@ msgstr ""
 msgid "No scheduler found, cannot continue!\n"
 msgstr "Nie znaleziono kontrolera procesów, nie można kontynuować!\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr "Nieznany/niewspierany tyb tabeli: %s"
+msgstr ""
 
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
@@ -796,7 +791,7 @@ msgid "Chroot drizzled daemon during startup."
 msgstr ""
 
 msgid "Set the default collation."
-msgstr ""
+msgstr "Ustaw domyślne zestawienie"
 
 msgid "Default completion type."
 msgstr ""
@@ -817,7 +812,7 @@ msgid "Used for debugging;  Use at your own risk!"
 msgstr "Używane do debugowania; Używasz na własne ryzyko!"
 
 msgid "Set up signals usable for debugging"
-msgstr ""
+msgstr "Ustaw sygnały używane do debugowania"
 
 msgid "(IGNORED)"
 msgstr "(ZIGNOROWANO)"
@@ -829,12 +824,14 @@ msgid "Log some not critical warnings to the log file."
 msgstr "Loguj niektrytyczne ostrzeżenia do pliku."
 
 msgid "Pid file used by safe_mysqld."
-msgstr ""
+msgstr "Pliki PID używane przez safe_mysqld."
 
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
 msgstr ""
+"Maksymalny czas oczekiwania na zwolnienie portu w sekundach. (Domyślnie: "
+"brak oczekiwania)"
 
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
@@ -849,10 +846,10 @@ msgid ""
 msgstr ""
 
 msgid "Don't print a stack trace on failure."
-msgstr ""
+msgstr "Nie wyświetlaj zapisu stosu przy błędzie."
 
 msgid "Enable symbolic link support."
-msgstr ""
+msgstr "Włącz wspomaganie linków symbolicznych."
 
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
@@ -898,9 +895,11 @@ msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
 msgstr ""
+"Jeśli istnieje więcej niż tyle przerwanych połączeń z tym hostem, host ten "
+"będzie zablokowany dla dalszych połączeń."
 
 msgid "Max number of errors/warnings to store for a statement."
-msgstr ""
+msgstr "Maksymalna liczba błędów/ostrzeżeń do zapisu dla instrukcji."
 
 msgid "Don't allow creation of heap tables bigger than this."
 msgstr "Nie pozwól na tworzenie sterty tablel większych niż to."
@@ -913,10 +912,12 @@ msgstr ""
 "max_join_size zwrócą błąd."
 
 msgid "Max number of bytes in sorted records."
-msgstr ""
+msgstr "Maksymalna liczba bajtów w posortowanych rekordach."
 
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
+"Ogranicz przyjętą maksymalną liczbę przeszukań podczas wyszukiwania wierszy "
+"opierającego się na kluczu."
 
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
@@ -956,30 +957,21 @@ msgstr ""
 msgid "Directory for plugins."
 msgstr "Katalog wtyczek"
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
 msgstr ""
-"Lista dodatkowych parametrów do załadowania przy starcie oddzielona "
-"przecinkami. [np: --plugin_load=crc32,logger_gearman]"
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
 "removes a plugin from the list of plugins to be loaded. [for example: --"
 "plugin_remove=crc32,logger_gearman]"
 msgstr ""
-"Lista dodatkowych parametrów do załadowania przy starcie oddzielona "
-"przecinkami. [np: --plugin_load=crc32,logger_gearman]"
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
-"Lista dodatkowych parametrów do załadowania przy starcie oddzielona "
-"przecinkami. [np: --plugin_load=crc32,logger_gearman]"
 
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
@@ -1023,7 +1015,7 @@ msgid ""
 msgstr ""
 
 msgid "The stack size for each thread."
-msgstr ""
+msgstr "Wielkość sterty dla każdego wątku."
 
 msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
@@ -1040,7 +1032,7 @@ msgstr ""
 
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
-msgstr ""
+msgstr "Użycie: %s [OPTIONS]\n"
 
 #, c-format
 msgid ""
@@ -1049,14 +1041,14 @@ msgid ""
 msgstr ""
 
 msgid "Can't start server: cannot resolve hostname!"
-msgstr ""
+msgstr "Nie można uruchomić serwera: nie można uzyskać hostname!"
 
 msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
 
 #, c-format
 msgid "Unknown error %d"
-msgstr ""
+msgstr "Nieznany błąd %d"
 
 msgid "NO"
 msgstr "NIE"
@@ -1107,7 +1099,7 @@ msgstr "Nie można pobrać statusu '%-.200s' (nr błedu: %d)"
 
 #, c-format
 msgid "Can't get working directory (errno: %d)"
-msgstr ""
+msgstr "Nie można pobrać aktywnego katalogu (nr błedu: %d)"
 
 #, c-format
 msgid "Can't lock file (errno: %d)"
@@ -1558,9 +1550,9 @@ msgstr "Nie można zainicjować funkcji '%-.192s'; %-.80s"
 msgid "No paths allowed for plugin library"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Plugin '%-.192s' already exists"
-msgstr "Funkcja '%-.192s' już istnieje"
+msgstr ""
 
 #, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
@@ -1568,9 +1560,9 @@ msgstr ""
 "Nie można otworzyć współdzielonej biblioteki '%-.192s' (numer błędu: %d "
 "%-.128s)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find symbol '%-.128s' in library '%-.128s'"
-msgstr "Nie można znaleźć symbolu '%-.128s' w bibliotece"
+msgstr ""
 
 #, c-format
 msgid "Function '%-.192s' is not defined"
@@ -3792,6 +3784,14 @@ msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
 msgstr ""
 
 #, c-format
+msgid "Unknown table engine option key/pair %s = %s."
+msgstr ""
+
+#, c-format
+msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+#, c-format
 msgid "Can't unlock file (Errcode: %d)"
 msgstr ""
 
@@ -3911,6 +3911,69 @@ msgstr ""
 msgid "Usage: %s TRANSACTION_LOG\n"
 msgstr ""
 
+#, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' init function returned error.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin library named '%s'.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin named '%s'.\n"
+msgstr ""
+
+msgid "Out of memory."
+msgstr ""
+
+#, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr "Brak nazwy zmiennej w pluginie '%s'."
+
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr ""
+
+#, c-format
+msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
+msgstr ""
+
+#, c-format
+msgid "Fatal error: Failed initializing %s plugin.\n"
+msgstr ""
+
 msgid "Warning: "
 msgstr ""
 
@@ -3968,9 +4031,9 @@ msgstr ""
 msgid "errmsg plugin '%s' errmsg() failed"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "A function named %s already exists!\n"
-msgstr "Funkcja '%-.192s' już istnieje"
+msgstr ""
 
 msgid "Could not add Function!\n"
 msgstr ""
@@ -4038,61 +4101,6 @@ msgid "Listening on %s:%s\n"
 msgstr ""
 
 #, c-format
-msgid ""
-"Plugin '%s' contains the name '%s' in its manifest, which has already been "
-"registered.\n"
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' init function returned error.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin library named '%s'.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
-
-msgid "Out of memory."
-msgstr ""
-
-#, c-format
-msgid "Unknown variable type code 0x%x in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid ""
-"Server variable %s of plugin %s was forced to be read-only: string variable "
-"without update_func and PLUGIN_VAR_MEMALLOC flag"
-msgstr ""
-
-#, c-format
-msgid "Missing variable name in plugin '%s'."
-msgstr "Brak nazwy zmiennej w pluginie '%s'."
-
-#, c-format
-msgid "Thread local variable '%s' not allocated in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Out of memory for plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Bad options for plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Parsing options for plugin '%s' failed."
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' has conflicting system variables"
-msgstr ""
-
-#, c-format
 msgid "logging '%s' pre() failed"
 msgstr ""
 
@@ -4123,14 +4131,6 @@ msgstr ""
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
 msgstr ""
-
-#, c-format
-msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
-msgstr ""
-
-#, fuzzy, c-format
-msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr "Zainicjowanie wtyczek nieudane."
 
 #, c-format
 msgid ""
@@ -4180,13 +4180,13 @@ msgstr ""
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "Nieudana próba usunięcia tabeli tymczasowej: '%s', błąd: %d"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Variable named %s already exists!\n"
-msgstr "Tabela '%-.192s' już istnieje"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not add Variable: %s\n"
-msgstr "Nie można znaleźć tabeli: \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
@@ -4203,6 +4203,10 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr "Wystąpił błąd %d podczas odczytu tabeli '%s'"
+
+#, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
@@ -4217,10 +4221,6 @@ msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
 "read"
 msgstr ""
-
-#, c-format
-msgid "Got error %d when reading table '%s'"
-msgstr "Wystąpił błąd %d podczas odczytu tabeli '%s'"
 
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
@@ -4288,17 +4288,13 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "Baza danych do użycia"
+msgstr ""
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
 msgstr ""
-"Numer portu użytego do połączenia lub 0 jako domyślne, według ustawień w "
-"drizzle.cnf, $DRIZZLE_TCP_PORT "
 
 msgid "Connect Timeout."
 msgstr ""
@@ -4315,9 +4311,8 @@ msgstr ""
 msgid "Buffer length."
 msgstr ""
 
-#, fuzzy
 msgid "Address to bind to."
-msgstr "Adres IP do powiązania"
+msgstr ""
 
 msgid "Unknown Drizzle error"
 msgstr "Nieznany błąd Drizzle"
@@ -4843,12 +4838,9 @@ msgstr ""
 msgid "Tablespace not empty"
 msgstr "Tablespace nie jest pusta"
 
-#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
-"Numer portu użytego do połączenia lub 0 jako domyślne, według ustawień w "
-"drizzle.cnf, $DRIZZLE_TCP_PORT "
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
@@ -4884,9 +4876,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "Do połączenia używaj pliku."
+msgstr ""
 
 msgid "Name of the replicator plugin to use (default='default_replicator')"
 msgstr ""
@@ -4931,17 +4922,14 @@ msgstr ""
 msgid "BUFFER: %s\n"
 msgstr ""
 
-#~ msgid "Error while loading database options: '%s':"
-#~ msgstr "Błąd odczytu opcji bazy danych: '%s':"
+#~ msgid "Set the default character set."
+#~ msgstr "Ustawia domyślny zestaw znaków."
 
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "Błąd zapisu pliku '%s' (Kod błędu: %d)"
+#~ msgid "Unknown command '\\%c'."
+#~ msgstr "Nierozpoznana komenda '\\%c'."
 
-#~ msgid "Error on close of '%s' (Errcode: %d)"
-#~ msgstr "Błąd konsoli '%s' (Kod błędu: %d)"
-
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "Brak pamięci (Potrzebne %u bajtów)"
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Nie znaleziono pliku: '%s' (Kod błedu: %d)"
 
 #~ msgid "Error on delete of '%s' (Errcode: %d)"
 #~ msgstr "Błąd podczas usuwania '%s' (Kod błędu: %d)"
@@ -4949,37 +4937,28 @@ msgstr ""
 #~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
 #~ msgstr "Błąd podczas zmiany nazwy z '%s' na '%s' (Kod błędu: %d)"
 
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "Błąd zapisu pliku '%s' (Kod błędu: %d)"
+
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "Brak pamięci (Potrzebne %u bajtów)"
+
 #~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
 #~ msgstr ""
 #~ "Nieoczekiwane wystąpienie końca pliku podczas odczytu pliku '%s' (Kod "
 #~ "błędu: %d)"
 
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Nie znaleziono pliku: '%s' (Kod błedu: %d)"
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr "Sprawdź pamięć, po czym otwórz używany używany plik."
-
-#~ msgid "Print some debug info at exit."
-#~ msgstr "Wyświetl informacje debugera przy wyjściu."
-
-#~ msgid "Can't init databases"
-#~ msgstr "Inicjacja baz danych nieudana"
-
-#~ msgid "Default storage engine (%s) is not available"
-#~ msgstr "Domyślny silnik magazynowania (%s) jest niedostępny"
-
-#~ msgid "Lock drizzled in memory."
-#~ msgstr "Zablokuj drizzled w pamięci"
-
-#~ msgid "Couldn't repair table: %s.%s"
-#~ msgstr "Nieudana próba naprawy tabeli: %s.%s"
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Błąd konsoli '%s' (Kod błędu: %d)"
 
 #~ msgid "plugin-load parameter too long"
 #~ msgstr "Parametr plugin-load jest za długi"
 
-#~ msgid "Set the default character set."
-#~ msgstr "Ustawia domyślny zestaw znaków."
+#~ msgid "Couldn't repair table: %s.%s"
+#~ msgstr "Nieudana próba naprawy tabeli: %s.%s"
 
-#~ msgid "Unknown command '\\%c'."
-#~ msgstr "Nierozpoznana komenda '\\%c'."
+#~ msgid "Error while loading database options: '%s':"
+#~ msgstr "Błąd odczytu opcji bazy danych: '%s':"
+
+#~ msgid "Print some debug info at exit."
+#~ msgstr "Wyświetl informacje debugera przy wyjściu."

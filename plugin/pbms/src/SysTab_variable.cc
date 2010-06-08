@@ -523,6 +523,7 @@ bool MSVariableTable::seqScanNext(char *buf)
 			case 'I':
 				ASSERT(strcmp(curr_field->field_name, "Id") == 0);
 				curr_field->store(iVariableIndex, true);
+				setNotNullInRecord(curr_field, buf);
 				break;
 
 			case 'N':
@@ -573,23 +574,22 @@ void MSVariableTable::seqScanRead(uint8_t *pos, char *buf)
 
 void MSVariableTable::updateRow(char *old_data, char *new_data) 
 {
-	TABLE	*table = mySQLTable;	
 	uint32_t n_id, o_id;
-	String n_str1, n_str2, *n_var_name = &n_str1, *n_var_value = &n_str2;	
-	String o_str1, *o_var_name = &o_str1;	
+	String n_var_name, n_var_value;	
+	String o_var_name;	
 	const char *clean_value;
 
 	enter_();
 	
-	GET_INT_FIELD(o_id, 0, table, old_data);
-	GET_STR_FIELD(o_var_name, 1, table, old_data);
-
-	GET_INT_FIELD(n_id, 0, table, new_data);
-	GET_STR_FIELD(n_var_name, 1, table, new_data);
-	GET_STR_FIELD(n_var_value, 2, table, new_data);
-
+	getFieldValue(old_data, 0, &o_id);
+	getFieldValue(old_data, 1, &o_var_name);
+	
+	getFieldValue(new_data, 0, &n_id);
+	getFieldValue(new_data, 1, &n_var_name);
+	getFieldValue(new_data, 2, &n_var_value);
+	
 	// The command names must match.
-	if ((n_id != o_id) || my_strcasecmp(&UTF8_CHARSET, o_var_name->c_ptr_safe(), n_var_name->c_ptr_safe()))
+	if ((n_id != o_id) || my_strcasecmp(&UTF8_CHARSET, o_var_name.c_ptr_safe(), n_var_name.c_ptr_safe()))
 		CSException::throwException(CS_CONTEXT, HA_ERR_TABLE_READONLY, "Attempt to update read only fields in the "VARIABLES_TABLE_NAME" table.");
 		
 	n_id--;
@@ -599,7 +599,7 @@ void MSVariableTable::updateRow(char *old_data, char *new_data)
 	CSStringBuffer *value;	
 	new_(value, CSStringBuffer(0));
 	push_(value);
-	value->append(n_var_value->c_ptr(), n_var_value->length());
+	value->append(n_var_value.c_ptr(), n_var_value.length());
 	
 	// check the input value converting it to a standard format where aplicable:
 	if (variables[n_id].check) {

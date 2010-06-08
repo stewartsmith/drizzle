@@ -40,7 +40,13 @@ struct ReadRecord {			/* Parameter to read_record */
   unsigned char *ref_pos;				/* pointer to form->refpos */
   unsigned char *record;
   unsigned char *rec_buf;                /* to read field values  after filesort */
+private:
   unsigned char	*cache;
+public:
+  unsigned char *getCache()
+  {
+    return cache;
+  }
   unsigned char *cache_pos;
   unsigned char *cache_end;
   unsigned char *read_positions;
@@ -175,6 +181,9 @@ struct ReadRecord {			/* Parameter to read_record */
                             Table *table,
                             bool print_error, 
                             uint32_t idx);
+
+  void init_reard_record_sequential();
+
   bool init_rr_cache();
 };
 

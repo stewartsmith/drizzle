@@ -37,7 +37,7 @@ using namespace drizzled;
 
 static ReplicationStreamsTool *streams_tool;
 
-static int init(plugin::Context &context)
+static int init(module::Context &context)
 {
   streams_tool= new (nothrow) ReplicationStreamsTool;
 

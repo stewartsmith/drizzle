@@ -131,7 +131,7 @@ public:
 class MSTempLogThread : public CSDaemon {
 public:
 	MSTempLogThread(time_t wait_time, MSDatabase *db);
-	virtual ~MSTempLogThread();
+	virtual ~MSTempLogThread(){} // Do nothing here because 'self' will no longer be valid, use finalize().
 
 	void close();
 

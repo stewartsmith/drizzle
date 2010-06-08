@@ -81,7 +81,7 @@ static bool insertRecord(TableEventData &data, unsigned char *new_row)
 			// The BLOB URL may not be null terminate, if so
 			// then copy it to a safe buffer and terminate it.
 			if (possible_blob_url[length]) {
-				memcpy(safe_url, blob_url, length);
+				memcpy(safe_url, possible_blob_url, length);
 				safe_url[length] = 0;
 				blob_url = safe_url;
 			} else

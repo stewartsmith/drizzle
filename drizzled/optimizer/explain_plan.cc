@@ -234,7 +234,7 @@ void optimizer::ExplainPlan::printPlan()
       /* Build "possible_keys" value and add it to item_list */
       if (tab->keys.any())
       {
-        for (uint32_t j= 0; j < table->s->keys; j++)
+        for (uint32_t j= 0; j < table->getShare()->sizeKeys(); j++)
         {
           if (tab->keys.test(j))
           {
