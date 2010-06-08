@@ -43,7 +43,7 @@
 using namespace std;
 using namespace drizzled;
 
-#define FST ".FST"
+static const char* FILESYSTEM_EXT= ".FILESYSTEM";
 
 static const char* FILESYSTEM_OPTION_FILE_PATH= "FILE";
 static const char* FILESYSTEM_OPTION_ROW_SEPARATOR= "ROW_SEPARATOR";
@@ -70,7 +70,7 @@ public:
                                      HTON_AUTO_PART_KEY),
      fs_open_tables()
   {
-    table_definition_ext = FST;  // should we set this first?
+    table_definition_ext = FILESYSTEM_EXT;  // should we set this first?
   }
   virtual ~FilesystemEngine()
   {
@@ -134,7 +134,7 @@ void FilesystemEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 
     const char *ext= strchr(filename->c_str(), '.');
 
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, FST) ||
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, FILESYSTEM_EXT) ||
         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     {  }
     else
@@ -143,7 +143,7 @@ void FilesystemEngine::doGetTableNames(drizzled::CachedDirectory &directory,
       uint32_t file_name_len;
 
       file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      uname[file_name_len - sizeof(FST) + 1]= '\0'; // Subtract ending, place NULL
+      uname[file_name_len - sizeof(FILESYSTEM_EXT) + 1]= '\0'; // Subtract ending, place NULL
       set_of_names.insert(uname);
     }
   }
@@ -152,7 +152,7 @@ void FilesystemEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 int FilesystemEngine::doDropTable(Session &, TableIdentifier &identifier)
 {
   string new_path(identifier.getPath());
-  new_path+= FST;
+  new_path+= FILESYSTEM_EXT;
   int err= unlink(new_path.c_str());
   if (err)
   {
@@ -164,7 +164,7 @@ int FilesystemEngine::doDropTable(Session &, TableIdentifier &identifier)
 bool FilesystemEngine::doDoesTableExist(Session &, TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
-  proto_path.append(FST);
+  proto_path.append(FILESYSTEM_EXT);
 
   if (access(proto_path.c_str(), F_OK))
   {
@@ -202,7 +202,7 @@ int FilesystemEngine::doGetTableDefinition(Session &,
   string new_path;
 
   new_path= identifier.getPath();
-  new_path+= FST;
+  new_path+= FILESYSTEM_EXT;
 
   int fd= open(new_path.c_str(), O_RDONLY);
 
@@ -254,7 +254,7 @@ void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &director
 
     const char *ext= strchr(filename->c_str(), '.');
 
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, FST) ||
+    if (ext == NULL || my_strcasecmp(system_charset_info, ext, FILESYSTEM_EXT) ||
         (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
     {  }
     else
@@ -263,7 +263,7 @@ void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &director
       uint32_t file_name_len;
 
       file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      uname[file_name_len - sizeof(FST) + 1]= '\0'; // Subtract ending, place NULL
+      uname[file_name_len - sizeof(FILESYSTEM_EXT) + 1]= '\0'; // Subtract ending, place NULL
       set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
     }
   }
@@ -670,7 +670,7 @@ int FilesystemEngine::doCreateTable(Session &,
   // check for option proto.engine().options(i).name() / state()
 
   new_path= identifier.getPath();
-  new_path+= FST;
+  new_path+= FILESYSTEM_EXT;
   fstream output(new_path.c_str(), ios::out | ios::binary);
 
   if (! output)
