@@ -116,11 +116,17 @@ public:
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
+private:
+  void getTableNamesFromFilesystem(drizzled::CachedDirectory &directory,
+                                   drizzled::SchemaIdentifier &schema_identifier,
+                                   drizzled::plugin::TableNameList *set_of_names,
+                                   drizzled::TableIdentifiers *set_of_identifiers);
 };
 
-void FilesystemEngine::doGetTableNames(drizzled::CachedDirectory &directory,
-                                       drizzled::SchemaIdentifier &, /* database name? */
-                                       drizzled::plugin::TableNameList &set_of_names)
+void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &directory,
+                                                   drizzled::SchemaIdentifier &schema_identifier,
+                                                   drizzled::plugin::TableNameList *set_of_names,
+                                                   drizzled::TableIdentifiers *set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
@@ -144,9 +150,26 @@ void FilesystemEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 
       file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       uname[file_name_len - sizeof(FILESYSTEM_EXT) + 1]= '\0'; // Subtract ending, place NULL
-      set_of_names.insert(uname);
+      if (set_of_names)
+        set_of_names->insert(uname);
+      if (set_of_identifiers)
+        set_of_identifiers->push_back(TableIdentifier(schema_identifier, uname));
     }
   }
+}
+
+void FilesystemEngine::doGetTableNames(drizzled::CachedDirectory &directory,
+                                       drizzled::SchemaIdentifier &schema_identifier,
+                                       drizzled::plugin::TableNameList &set_of_names)
+{
+  getTableNamesFromFilesystem(directory, schema_identifier, &set_of_names, NULL);
+}
+
+void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
+                                             drizzled::SchemaIdentifier &schema_identifier,
+                                             drizzled::TableIdentifiers &set_of_identifiers)
+{
+  getTableNamesFromFilesystem(directory, schema_identifier, NULL, &set_of_identifiers);
 }
 
 int FilesystemEngine::doDropTable(Session &, TableIdentifier &identifier)
@@ -236,37 +259,6 @@ int FilesystemEngine::doGetTableDefinition(Session &,
   delete input;
 
   return EEXIST;
-}
-
-void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                           drizzled::SchemaIdentifier &schema_identifier,
-                           drizzled::TableIdentifiers &set_of_identifiers)
-{
-  drizzled::CachedDirectory::Entries entries= directory.getEntries();
-
-  for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
-       entry_iter != entries.end(); ++entry_iter)
-  {
-    drizzled::CachedDirectory::Entry *entry= *entry_iter;
-    const string *filename= &entry->filename;
-
-    assert(filename->size());
-
-    const char *ext= strchr(filename->c_str(), '.');
-
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, FILESYSTEM_EXT) ||
-        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
-    {  }
-    else
-    {
-      char uname[NAME_LEN + 1];
-      uint32_t file_name_len;
-
-      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      uname[file_name_len - sizeof(FILESYSTEM_EXT) + 1]= '\0'; // Subtract ending, place NULL
-      set_of_identifiers.push_back(TableIdentifier(schema_identifier, uname));
-    }
-  }
 }
 
 FilesystemTableShare::FilesystemTableShare(const string table_name_arg)
