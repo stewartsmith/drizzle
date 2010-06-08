@@ -1,14 +1,10 @@
-This is a demo for filesystem plugin. To make it work,
-you have to put a file name 'demo.txt' in your deployment
-directory.
-
 Here's the corresponding example used in mysql-filesystem-engine.
 drizzle> CREATE TABLE LoadAverage (
             load1 DECIMAL(3, 2), 
             load5 DECIMAL(3, 2), 
             load15 DECIMAL(3, 2), 
             active_processes VARCHAR(12), 
-            lastpid INTEGER) ENGINE=FILESYSTEM;
+            lastpid INTEGER) ENGINE=FILESYSTEM, FILE="/proc/loadavg";
 
 drizzle> select * from LoadAverage;
 +-------+-------+--------+------------------+---------+
@@ -16,7 +12,3 @@ drizzle> select * from LoadAverage;
 +-------+-------+--------+------------------+---------+
 |  0.00 |  0.00 |   0.00 | 1/97             |    6061 | 
 +-------+-------+--------+------------------+---------+
-
-NOTE: as right now, the file path can't be passed to storage engine
-easily without modification to the parser. So this demo only uses
-a static file put in your deployment directory.
