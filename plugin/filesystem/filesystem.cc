@@ -49,6 +49,9 @@ static const char* FILESYSTEM_OPTION_FILE_PATH= "FILE";
 static const char* FILESYSTEM_OPTION_ROW_SEPARATOR= "ROW_SEPARATOR";
 static const char* FILESYSTEM_OPTION_COL_SEPARATOR= "COL_SEPARATOR";
 
+static const char* DEFAULT_ROW_SEPARATOR= "\n";
+static const char* DEFAULT_COL_SEPARATOR= " \t";
+
 /* Stuff for shares */
 pthread_mutex_t filesystem_mutex;
 
@@ -310,7 +313,9 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
 }
 
 FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
-  : Cursor(engine_arg, table_arg), row_separator("\n"), col_separator(" \t")
+  : Cursor(engine_arg, table_arg),
+  row_separator(DEFAULT_ROW_SEPARATOR),
+  col_separator(DEFAULT_COL_SEPARATOR)
 {
   file_buff= new TransparentFile();
 }
@@ -322,6 +327,7 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
 
   message::Table* table_proto = table->getShare()->getTableProto();
 
+  real_file_name.clear();
   for (int i = 0; i < table_proto->engine().options_size(); i++)
   {
     const message::Engine::Option& option= table_proto->engine().options(i);
@@ -334,6 +340,8 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
       col_separator= option.state();
   }
 
+  if (real_file_name.empty())
+    return -1;
   filedes= ::open(real_file_name.c_str(), O_RDONLY);
   if (filedes < 0)
     return -1;
@@ -345,9 +353,6 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
 
 int FilesystemCursor::close(void)
 {
-  real_file_name= "";
-  row_separator= "\n";
-  col_separator= " \t";
   ::close(filedes);
   return 0;
 }
