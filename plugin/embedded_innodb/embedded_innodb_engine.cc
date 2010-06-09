@@ -1983,6 +1983,7 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
   if (err != DB_SUCCESS && err != DB_END_OF_INDEX)
   {
     previous_error= ib_err_t_to_drizzle_error(err);
+    err= ib_cursor_reset(cursor);
     return previous_error;
   }
 
