@@ -903,7 +903,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
   }
   else if (mode == HA_KEY_SWITCH_NONUNIQ_SAVE)
   {
-    Session *session=current_session;
+    Session *session= table->in_use;
     MI_CHECK param;
     const char *save_proc_info= session->get_proc_info();
     session->set_proc_info("Creating index");
@@ -979,7 +979,7 @@ int ha_myisam::indexes_are_disabled(void)
 
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
-  Session *session= current_session;
+  Session *session= table->in_use;
   ulong size= session->variables.read_buff_size;
 
   /* don't enable row cache if too few rows */
@@ -1034,8 +1034,6 @@ int ha_myisam::end_bulk_insert()
 int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
   ha_statistic_increment(&system_status_var::ha_update_count);
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
   return mi_update(file,old_data,new_data);
 }
 

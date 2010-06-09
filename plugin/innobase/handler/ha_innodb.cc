@@ -4163,9 +4163,6 @@ ha_innobase::doUpdateRecord(
 
   ha_statistic_increment(&system_status_var::ha_update_count);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
-
   if (prebuilt->upd_node) {
     uvect = prebuilt->upd_node->update;
   } else {

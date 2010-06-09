@@ -1458,7 +1458,9 @@ int Cursor::insertRecord(unsigned char *buf)
    * Cursor interface and into the fill_record() method.
    */
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+  {
     table->timestamp_field->set_time();
+  }
 
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
@@ -1508,6 +1510,11 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
   }
   else
   {
+    if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+    {
+      table->timestamp_field->set_time();
+    }
+
     error= doUpdateRecord(old_data, new_data);
     if (unlikely(plugin::EventObserver::afterUpdateRecord(*table, old_data, new_data, error)))
     {
