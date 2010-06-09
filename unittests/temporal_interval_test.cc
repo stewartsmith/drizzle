@@ -30,7 +30,7 @@
 #include <drizzled/temporal_interval.h>
 #include <drizzled/plugin/listen.h>
 
-#include "generator.h"
+#include "temporal_generator.h"
 
 using namespace drizzled;
 

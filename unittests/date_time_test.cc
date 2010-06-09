@@ -25,7 +25,7 @@
 #include <drizzled/temporal.h>
 #include <drizzled/temporal_format.h>
 
-#include "generator.h"
+#include "temporal_generator.h"
 
 using namespace drizzled;
 
