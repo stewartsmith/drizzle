@@ -777,6 +777,14 @@ int ha_blitz::doEndIndexScan(void) {
   return 0;
 }
 
+int ha_blitz::enable_indexes(uint32_t) {
+  return HA_ERR_UNSUPPORTED;
+}
+
+int ha_blitz::disable_indexes(uint32_t) {
+  return HA_ERR_UNSUPPORTED;
+}
+
 /* Find the estimated number of rows between min_key and max_key.
    Leave the proper implementation of this for now since there are
    too many exceptions to cover. */

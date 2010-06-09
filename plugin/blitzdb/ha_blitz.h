@@ -320,6 +320,8 @@ public:
                      const unsigned char *key, uint32_t key_len,
                      enum drizzled::ha_rkey_function find_flag);
   int doEndIndexScan(void);
+  int enable_indexes(uint32_t mode);  /* For ALTER ... ENABLE KEYS */
+  int disable_indexes(uint32_t mode); /* For ALTER ... DISABLE KEYS */
 
   drizzled::ha_rows records_in_range(uint32_t key_num,
                                      drizzled::key_range *min_key,
