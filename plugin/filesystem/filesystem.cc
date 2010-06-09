@@ -420,6 +420,8 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
   if (!getline(fd, line))
     return HA_ERR_END_OF_FILE;
 
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
+
   memset(buf, 0, table->s->null_bytes); //getNullBytes()
 
   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -472,6 +474,7 @@ int FilesystemCursor::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   (void)buf;
   (void)pos;
+  ha_statistic_increment(&system_status_var::ha_read_rnd_count);
   return 0;
 }
 
@@ -590,6 +593,8 @@ string FilesystemCursor::getSeparator()
 
 int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 {
+  ha_statistic_increment(&system_status_var::ha_update_count);
+
   if (!fd.is_open())
     return HA_ERR_END_OF_FILE;
 
@@ -612,6 +617,8 @@ int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 
 int FilesystemCursor::doDeleteRecord(const unsigned char *)
 {
+  ha_statistic_increment(&system_status_var::ha_delete_count);
+
   if (not fd.is_open())
     return HA_ERR_END_OF_FILE;
 
