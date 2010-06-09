@@ -24,6 +24,7 @@
  
  #include "config.h"
  #include <drizzled/plugin/client.h>
+ #include <drizzled/plugin/error_message.h>
  #include <cstring>
  
 class ClientStub : public drizzled::plugin::Client
@@ -195,5 +196,20 @@ class ClientStub : public drizzled::plugin::Client
     virtual bool wasAborted(void) { return false;};
 };
 
+class ErrorMessageStub : public drizzled::plugin::ErrorMessage
+{
+
+  public:
+    ErrorMessageStub() : ErrorMessage("ErrorMessageStub") {}
+    
+    virtual bool errmsg(drizzled::Session *session, int priority, const char *format, va_list ap)
+    {
+      (void)session;
+      (void)priority;
+      (void)format;
+      (void)ap;
+      return false;
+    }
+};
 
 #endif /* UNITTESTS_STUB_PLUGIN_STUBS_H */

@@ -15,6 +15,7 @@ unittests_unittests_SOURCES = \
 					 unittests/micro_timestamp_test.cc \
 					 unittests/nano_timestamp_test.cc \
 					 unittests/plugin/client_test.cc \
+					 unittests/plugin/error_message_test.cc \
 			     unittests/pthread_atomics_test.cc \
 					 unittests/temporal_format_test.cc \
 					 unittests/temporal_interval_test.cc \
