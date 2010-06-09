@@ -63,7 +63,29 @@ class Table
 public:
   TableShare *s; /**< Pointer to the shared metadata about the table */
 
+private:
   Field **field; /**< Pointer to fields collection */
+public:
+
+  Field **getFields() const
+  {
+    return field;
+  }
+
+  Field *getField(uint32_t arg) const
+  {
+    return field[arg];
+  }
+
+  void setFields(Field **arg)
+  {
+    field= arg;
+  }
+
+  void setFieldAt(Field *arg, uint32_t arg_pos)
+  {
+    field[arg_pos]= arg;
+  }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
   Table *next;
@@ -300,11 +322,13 @@ public:
   inline uint32_t getRecordLength() const { return s->getRecordLength(); }
   inline uint32_t sizeBlobFields() { return s->blob_fields; }
   inline uint32_t *getBlobField() { return &s->blob_field[0]; }
-  inline Field_blob *getBlobFieldAt(uint32_t i)
+
+  Field_blob *getBlobFieldAt(uint32_t arg) const
   {
-	if (i < s->blob_fields)
-	  return (Field_blob*) field[s->blob_field[i]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
-	return NULL;
+    if (arg < s->blob_fields)
+      return (Field_blob*) field[s->blob_field[arg]]; /*NOTE: Using 'Table.field' NOT SharedTable.field. */
+
+    return NULL;
   }
   inline uint8_t getBlobPtrSize() { return s->blob_ptr_size; }
   inline uint32_t getNullBytes() { return s->null_bytes; }

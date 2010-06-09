@@ -274,7 +274,7 @@ static bool mysql_prepare_alter_table(Session *session,
   /* First collect all fields from table which isn't in drop_list */
   Field **f_ptr;
   Field *field;
-  for (f_ptr= table->field; (field= *f_ptr); f_ptr++)
+  for (f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
     AlterDrop *drop;
@@ -372,8 +372,7 @@ static bool mysql_prepare_alter_table(Session *session,
     if ((def->sql_type == DRIZZLE_TYPE_DATE ||
          def->sql_type == DRIZZLE_TYPE_DATETIME) &&
         ! alter_info->datetime_field &&
-        ! (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
-        session->variables.sql_mode & MODE_NO_ZERO_DATE)
+        ! (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)))
     {
       alter_info->datetime_field= def;
       alter_info->error_if_not_empty= true;
@@ -1422,7 +1421,7 @@ copy_data_between_tables(Session *session,
   List_iterator<CreateField> it(create);
   CreateField *def;
   copy_end=copy;
-  for (Field **ptr=to->field ; *ptr ; ptr++)
+  for (Field **ptr= to->getFields(); *ptr ; ptr++)
   {
     def=it++;
     if (def->field)

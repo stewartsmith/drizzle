@@ -37,13 +37,15 @@ public:
   PBMSEvents(): EventObserver(std::string("PBMSEvents"))
   {
 	// Databases that I never want to observe events in.
-	PBMSParameters::blackListedDB("PBMS");
-	PBMSParameters::blackListedDB("Schema_info");
+	PBMSParameters::blackListedDB("pbms");
+	PBMSParameters::blackListedDB("DATA_DICTIONARY");
+	PBMSParameters::blackListedDB("INFORMATION_SCHEMA");
   }
 
   void registerTableEventsDo(TableShare &table_share, EventObserverList &observers);
   void registerSchemaEventsDo(const std::string &db, EventObserverList &observers);
- 
+  void registerSessionEventsDo(Session &session, EventObserverList &observers);
+
   bool observeEventDo(EventData &);
 
 };

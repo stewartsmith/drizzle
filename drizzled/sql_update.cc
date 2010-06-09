@@ -95,9 +95,14 @@ static void prepare_record_for_error_message(int error, Table *table)
   /* Read record that is identified by table->cursor->ref. */
   (void) table->cursor->rnd_pos(table->record[1], table->cursor->ref);
   /* Copy the newly read columns into the new record. */
-  for (field_p= table->field; (field= *field_p); field_p++)
+  for (field_p= table->getFields(); (field= *field_p); field_p++)
+  {
     if (unique_map.isBitSet(field->field_index))
+    {
       field->copy_from_tmp(table->getShare()->rec_buff_length);
+    }
+  }
+
 
   return;
 }
@@ -170,12 +175,16 @@ int mysql_update(Session *session, TableList *table_list,
   {
     // Don't set timestamp column if this is modified
     if (table->timestamp_field->isWriteSet())
+    {
       table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
+    }
     else
     {
       if (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
           table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH)
+      {
         table->setWriteSet(table->timestamp_field->field_index);
+      }
     }
   }
 
@@ -209,7 +218,9 @@ int mysql_update(Session *session, TableList *table_list,
       table->timestamp_field &&
       (table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_UPDATE ||
        table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
+  {
     bitmap_union(table->read_set, table->write_set);
+  }
   // Don't count on usage of 'only index' when calculating which key to use
   table->covering_keys.reset();
 

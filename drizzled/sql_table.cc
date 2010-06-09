@@ -49,6 +49,8 @@
 #include <algorithm>
 #include <sstream>
 
+#include <boost/unordered_set.hpp>
+
 using namespace std;
 
 namespace drizzled
@@ -395,6 +397,40 @@ static int sort_keys(KeyInfo *a, KeyInfo *b)
     1             Error
 */
 
+class typelib_set_member
+{
+public:
+  string s;
+  const CHARSET_INFO * const cs;
+
+  typelib_set_member(const char* value, unsigned int length,
+                     const CHARSET_INFO * const charset)
+    : s(value, length),
+      cs(charset)
+  {}
+};
+
+static bool operator==(typelib_set_member const& a, typelib_set_member const& b)
+{
+  return (my_strnncoll(a.cs,
+                       (const unsigned char*)a.s.c_str(), a.s.length(),
+                       (const unsigned char*)b.s.c_str(), b.s.length())==0);
+}
+
+
+namespace
+{
+class typelib_set_member_hasher
+{
+  boost::hash<string> hasher;
+public:
+  std::size_t operator()(const typelib_set_member& t) const
+  {
+    return hasher(t.s);
+  }
+};
+}
+
 static bool check_duplicates_in_interval(const char *set_or_name,
                                          const char *name, TYPELIB *typelib,
                                          const CHARSET_INFO * const cs,
@@ -405,17 +441,21 @@ static bool check_duplicates_in_interval(const char *set_or_name,
   unsigned int *cur_length= typelib->type_lengths;
   *dup_val_count= 0;
 
-  for ( ; tmp.count > 1; cur_value++, cur_length++)
+  boost::unordered_set<typelib_set_member, typelib_set_member_hasher> interval_set;
+
+  for ( ; tmp.count > 0; cur_value++, cur_length++)
   {
     tmp.type_names++;
     tmp.type_lengths++;
     tmp.count--;
-    if (find_type2(&tmp, (const char*)*cur_value, *cur_length, cs))
+    if (interval_set.find(typelib_set_member(*cur_value, *cur_length, cs)) != interval_set.end())
     {
       my_error(ER_DUPLICATED_VALUE_IN_TYPE, MYF(0),
                name,*cur_value,set_or_name);
       return 1;
     }
+    else
+      interval_set.insert(typelib_set_member(*cur_value, *cur_length, cs));
   }
   return 0;
 }

@@ -221,6 +221,23 @@ static bool observeAfterDeleteRecord(AfterDeleteRecordEventData &data)
 }
 
 //==================================
+// My session event observers: 
+static bool observeAfterDropDatabase(AfterDropDatabaseEventData &data)
+{
+	PBMSResultRec result;
+	if (data.err != 0)
+		return false;
+
+	if (MSEngine::dropDatabase(data.db.c_str(), &result) != 0) {
+		fprintf(stderr, "PBMSEvents: dropDatabase(\"%s\") error (%d):'%s'\n", 
+			data.db.c_str(), result.mr_code,  result.mr_message);
+	}
+	
+	// Always return no error for after drop database. What could the server do about it?
+	return false;
+}
+
+//==================================
 // My schema event observers: 
 static bool observeAfterDropTable(AfterDropTableEventData &data)
 {
@@ -290,12 +307,26 @@ void PBMSEvents::registerSchemaEventsDo(const std::string &db, EventObserverList
 }
 
 //==================================
+/* This is where I register which schema events my pluggin is interested in.*/
+void PBMSEvents::registerSessionEventsDo(Session &, EventObserverList &observers)
+{
+  if (PBMSParameters::isPBMSEventsEnabled() == false) 
+    return;
+    
+  registerEvent(observers, AFTER_DROP_DATABASE);
+}
+
+//==================================
 /* The event observer.*/
 bool PBMSEvents::observeEventDo(EventData &data)
 {
   bool result= false;
   
   switch (data.event) {
+  case AFTER_DROP_DATABASE:
+    result = observeAfterDropDatabase((AfterDropDatabaseEventData &)data);
+    break;
+    
   case AFTER_DROP_TABLE:
     result = observeAfterDropTable((AfterDropTableEventData &)data);
     break;

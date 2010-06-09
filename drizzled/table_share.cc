@@ -548,7 +548,7 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   }
   else
   {
-    build_table_filename(_path, db.str, table_name.str, false);
+    TableIdentifier::build_table_filename(_path, db.str, table_name.str, false);
   }
 
   if (mem_root.multi_alloc_root(0, &key_buff, key_length,
@@ -890,6 +890,20 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       continue;
 
     message::Table::Field::EnumerationValues field_options= pfield.enumeration_values();
+
+    if (field_options.field_value_size() > Field_enum::max_supported_elements)
+    {
+      char errmsg[100];
+      snprintf(errmsg, sizeof(errmsg),
+               _("ENUM column %s has greater than %d possible values"),
+               pfield.name().c_str(),
+               Field_enum::max_supported_elements);
+      errmsg[99]='\0';
+
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
+      return ER_CORRUPT_TABLE_DEFINITION;
+    }
+
 
     const CHARSET_INFO *charset= get_charset(field_options.has_collation_id() ?
                                              field_options.collation_id() : 0);
@@ -1430,15 +1444,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (blob_fields)
   {
-    Field **ptr;
     uint32_t k, *save;
 
     /* Store offsets to blob fields to find them fast */
     blob_field.resize(blob_fields);
     save= &blob_field[0];
-    for (k= 0, ptr= getFields() ; *ptr ; ptr++, k++)
+    k= 0;
+    for (Fields::iterator iter= field.begin(); iter != field.end()-1; iter++, k++)
     {
-      if ((*ptr)->flags & BLOB_FLAG)
+      if ((*iter)->flags & BLOB_FLAG)
         (*save++)= k;
     }
   }
@@ -1633,7 +1647,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
     goto err;
   }
 
-  outparam.field= field_ptr;
+  outparam.setFields(field_ptr);
 
   record= (unsigned char*) outparam.record[0]-1;	/* Fieldstart = 1 */
 
@@ -1649,9 +1663,9 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
 
   if (found_next_number_field)
     outparam.found_next_number_field=
-      outparam.field[(uint32_t) (found_next_number_field - getFields())];
+      outparam.getField(positionFields(found_next_number_field));
   if (timestamp_field)
-    outparam.timestamp_field= (Field_timestamp*) outparam.field[timestamp_field_offset];
+    outparam.timestamp_field= (Field_timestamp*) outparam.getField(timestamp_field_offset);
 
 
   /* Fix key->name and key_part->field */
@@ -1683,7 +1697,7 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
            key_part < key_part_end ;
            key_part++)
       {
-        Field *local_field= key_part->field= outparam.field[key_part->fieldnr-1];
+        Field *local_field= key_part->field= outparam.getField(key_part->fieldnr-1);
 
         if (local_field->key_length() != key_part->length &&
             !(local_field->flags & BLOB_FLAG))

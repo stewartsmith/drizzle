@@ -495,8 +495,7 @@ int Join::optimize()
     {           /* Impossible cond */
       zero_result_cause=  having_value == Item::COND_FALSE ?
                            "Impossible HAVING" : "Impossible WHERE";
-      error= 0;
-      return(0);
+      goto setup_subq_exit;
     }
   }
 
@@ -515,8 +514,7 @@ int Join::optimize()
       if (res == HA_ERR_KEY_NOT_FOUND)
       {
         zero_result_cause= "No matching min/max row";
-        error=0;
-        return(0);
+        goto setup_subq_exit;
       }
       if (res > 1)
       {
@@ -526,8 +524,7 @@ int Join::optimize()
       if (res < 0)
       {
         zero_result_cause= "No matching min/max row";
-        error=0;
-        return(0);
+        goto setup_subq_exit;
       }
       zero_result_cause= "Select tables optimized away";
       tables_list= 0;       // All tables resolved
@@ -546,6 +543,7 @@ int Join::optimize()
         COND *table_independent_conds= make_cond_for_table(conds, PSEUDO_TABLE_BITS, 0, 0);
         conds= table_independent_conds;
       }
+      goto setup_subq_exit;
     }
   }
   if (!tables_list)
@@ -578,8 +576,7 @@ int Join::optimize()
        select_lex->master_unit() == &session->lex->unit)) // upper level SELECT
   {
     zero_result_cause= "no matching row in const table";
-    error= 0;
-    return(0);
+    goto setup_subq_exit;
   }
   if (!(session->options & OPTION_BIG_SELECTS) &&
       best_read > (double) session->variables.max_join_size &&
@@ -645,7 +642,7 @@ int Join::optimize()
   {
     zero_result_cause=
       "Impossible WHERE noticed after reading const tables";
-    return(0);        // error == 0
+    goto setup_subq_exit;
   }
 
   error= -1;          /* if goto err */
@@ -1110,6 +1107,15 @@ int Join::optimize()
 
   error= 0;
   return(0);
+
+setup_subq_exit:
+  /* Even with zero matching rows, subqueries in the HAVING clause
+     may need to be evaluated if there are aggregate functions in the query.
+  */
+  if (setup_subquery_materialization())
+    return 1;
+  error= 0;
+  return 0;
 }
 
 /**
@@ -5385,10 +5391,9 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
     join->unit->select_limit_cnt= 1;		// Only send first row
     return(0);
   }
-  Field **first_field=entry->field+entry->getShare()->sizeFields() - field_count;
+  Field **first_field=entry->getFields() + entry->getShare()->sizeFields() - field_count;
   offset= (field_count ?
-           entry->field[entry->getShare()->sizeFields() - field_count]->
-           offset(entry->record[0]) : 0);
+           entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->record[0]) : 0);
   reclength= entry->getShare()->getRecordLength() - offset;
 
   entry->free_io_cache();				// Safety
@@ -6049,8 +6054,7 @@ static bool add_ref_to_table_cond(Session *session, JoinTable *join_tab)
 
   for (uint32_t i=0 ; i < join_tab->ref.key_parts ; i++)
   {
-    Field *field=table->field[table->key_info[join_tab->ref.key].key_part[i].
-			      fieldnr-1];
+    Field *field=table->getField(table->key_info[join_tab->ref.key].key_part[i].fieldnr - 1);
     Item *value=join_tab->ref.items[i];
     cond->add(new Item_func_equal(new Item_field(field), value));
   }

@@ -115,7 +115,7 @@ public:
 	int doCommit(Session *, bool);
 	int doRollback(Session *, bool);
 	Cursor *create(TableShare& table, memory::Root *mem_root);
-	void drop_database(char *);
+	bool doDropSchema(drizzled::SchemaIdentifier&);
 	
 	/*
 	* Indicates to a storage engine the start of a
@@ -549,12 +549,26 @@ static int pbms_savepoint_release(handlerton *hton, THD *thd, void *sv)
 #endif
 
 #ifdef DRIZZLED
-void PBMSStorageEngine::drop_database(char *path)
+bool  PBMSStorageEngine::doDropSchema(drizzled::SchemaIdentifier &schema)
 {
+	CSThread *self;
+	PBMSResultRec result;
+	
+	if (pbms_enter_conn_no_thd(&self, &result))
+		return false;
+	inner_();
+	
+	try_(a) {
+		MSDatabase::dropDatabase(schema.getSchemaName().c_str());
+	}
+	catch_(a);
+	self->logException();
+	cont_(a);
+	return_(false);
+}
 #else
 static void pbms_drop_database(handlerton *, char *path)
 {
-#endif
 	CSThread *self;
 	char db_name[PATH_MAX];
 	PBMSResultRec result;
@@ -573,6 +587,7 @@ static void pbms_drop_database(handlerton *, char *path)
 	cont_(a);
 	exit_();
 }
+#endif
 
 static bool pbms_started = false;
 

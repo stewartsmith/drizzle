@@ -316,6 +316,24 @@ int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, cha
 	return_(err);
 }
 
+int32_t MSEngine::dropDatabase(const char *db_name, PBMSResultPtr result)
+{
+	CSThread *self;
+	int		err;
+	
+	if ((err = pbms_enter_conn_no_thd(&self, result)))
+		return err;
+	inner_();
+	
+	try_(a) {
+		MSDatabase::dropDatabase(db_name);
+	}
+	catch_(a) {
+		err = pbms_exception_to_result(&self->myException, result);
+	}
+	cont_(a);
+	return_(err);
+}
 //---------------
 typedef struct UnDoInfo {
 	bool udo_WasRename;
@@ -414,7 +432,7 @@ exit: ;
 }
 
 //---------------
-static void complete_delete(UnDoInfoPtr info, bool ok)
+static void completeDeleteTable(UnDoInfoPtr info, bool ok)
 {
 	// TO DO: figure out a way to undo the delete.
 	cs_free(info);
@@ -554,15 +572,10 @@ void MSEngine::callCompleted(bool ok)
 	if (self->myInfo) {
 		UnDoInfoPtr info = (UnDoInfoPtr) self->myInfo;
 		if (info->udo_WasRename) 
-				completeRenameTable(info, ok);
-		else {
-			// TO DO: figure out a way to undo the delete.
-			cs_free(info);
-			if (!ok) 
-				CSException::throwException(CS_CONTEXT, MS_ERR_NOT_IMPLEMENTED, "Cannot undo delete table.");
-		}
+			completeRenameTable(info, ok);
+		else 
+			completeDeleteTable(info, ok);
 
-			complete_delete(info, ok);
 		
 		self->myInfo = NULL;
 	} else if (self->myTID && (self->myIsAutoCommit || !ok)) {

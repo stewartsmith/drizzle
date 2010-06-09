@@ -156,7 +156,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
       set_of_names.insert(uname);
@@ -655,7 +655,7 @@ uint32_t ha_archive::max_row_length(const unsigned char *)
        ptr != end ;
        ptr++)
   {
-      length += 2 + ((Field_blob*)table->field[*ptr])->get_length();
+      length += 2 + ((Field_blob*)table->getField(*ptr))->get_length();
   }
 
   return length;
@@ -673,7 +673,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   memcpy(record_buffer->buffer, record, table->getShare()->null_bytes);
   ptr= record_buffer->buffer + table->getShare()->null_bytes;
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field=table->getFields() ; *field ; field++)
   {
     if (!((*field)->is_null()))
       ptr= (*field)->pack(ptr, record + (*field)->offset(record));
@@ -890,7 +890,7 @@ int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
   /* Copy null bits */
   memcpy(record, ptr, table->getNullBytes());
   ptr+= table->getNullBytes();
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
   {
     if (!((*field)->is_null()))
     {
@@ -1366,7 +1366,7 @@ void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
 

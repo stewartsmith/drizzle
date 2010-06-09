@@ -121,7 +121,7 @@ public:
 	 */
 	inline void getFieldValue(const char *row, uint16_t column_index, String *value)
 	{
-		Field *assumed_str_field = mySQLTable->field[column_index];
+		Field *assumed_str_field = mySQLTable->getField(column_index);
 		unsigned char *old_ptr = assumed_str_field->ptr;
 		
 		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->record[0]);
@@ -134,7 +134,7 @@ public:
 
 	inline void getFieldValue(const char *row, uint16_t column_index, uint64_t *value)
 	{
-		Field *assumed_int_field = mySQLTable->field[column_index];
+		Field *assumed_int_field = mySQLTable->getField(column_index);
 		unsigned char *old_ptr = assumed_int_field->ptr;
 
 		assumed_int_field->ptr = (unsigned char *)row + assumed_int_field->offset(mySQLTable->record[0]);

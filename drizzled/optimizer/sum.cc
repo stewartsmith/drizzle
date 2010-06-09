@@ -938,7 +938,7 @@ static bool find_key_for_maxmin(bool max_fl,
       }
 
       /* Check whether the index component is partial */
-      Field *part_field= table->field[part->fieldnr-1];
+      Field *part_field= table->getField(part->fieldnr-1);
       part_field->setWriteSet();
 
       if ((part_field->flags & BLOB_FLAG) ||

@@ -960,7 +960,7 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 	table->write_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -1122,7 +1122,7 @@ bool MSBlobDataTable::returnRow(MSBlobHeadPtr blob, char *buf)
 	table->write_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -1212,7 +1212,7 @@ bool MSBlobAliasTable::returnRow(MSBlobHeadPtr blob, char *buf)
 	table->write_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -1565,7 +1565,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 	table->read_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -1924,7 +1924,7 @@ void MSMetaDataTable::returnRow(char *name, char *value, char *buf)
 	table->write_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;

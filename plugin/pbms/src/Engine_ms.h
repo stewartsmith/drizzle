@@ -49,6 +49,7 @@ public:
 	static const PBMSEnginePtr getEngineInfoAt(int indx);
 #endif
 	
+	static int32_t	dropDatabase(const char *db_name, PBMSResultPtr result);
 	static int32_t	createBlob(const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result);
 	static int32_t	referenceBlob(const char *db_name, const char *tab_name, PBMSBlobURLPtr  ret_blob_url, char *blob_url, uint16_t col_index, PBMSResultPtr result);
 	static int32_t	dereferenceBlob(const char *db_name, const char *tab_name, char *blob_url, PBMSResultPtr result);

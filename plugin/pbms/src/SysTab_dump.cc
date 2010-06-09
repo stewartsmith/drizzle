@@ -160,7 +160,7 @@ bool MSDumpTable::returnDumpRow(char *record, uint64_t record_size, char *buf)
 	table->write_set = NULL;
 	memset(buf, 0xFF, table->s->null_bytes);
 	
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -424,7 +424,7 @@ void MSDumpTable::insertRow(char *buf)
 	uint32_t packlength, length;
 	const char *blob_rec, *blob_ptr;
 	
-	field = (Field_blob *)(table->field[0]);
+	field = (Field_blob *)table->getField(0);
 	
     /* Get the blob record: */
     blob_rec= buf + field->offset(table->record[0]);

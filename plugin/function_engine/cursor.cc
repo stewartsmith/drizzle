@@ -70,7 +70,7 @@ int FunctionCursor::close(void)
 int FunctionCursor::doStartTableScan(bool)
 {
   rows_returned= 0;
-  generator= tool->generator(table->field);
+  generator= tool->generator(table->getFields());
 
   return 0;
 }
@@ -82,7 +82,7 @@ int FunctionCursor::rnd_next(unsigned char *)
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
   /* Fix bug in the debug logic for field */
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
   {
     (*field)->setWriteSet();
   }

@@ -241,10 +241,16 @@ public:
   }
 
   /* The following is copied to each Table on OPEN */
+  typedef std::vector<Field *> Fields;
 private:
-  std::vector<Field *> field;
+  Fields field;
 public:
-  Field ** getFields()
+  const Fields getFields() const
+  {
+    return field;
+  }
+
+  Field ** getFields(bool)
   {
     return &field[0];
   }
@@ -252,6 +258,17 @@ public:
   void setFields(uint32_t arg)
   {
     field.resize(arg);
+  }
+
+  uint32_t positionFields(Field **arg) const
+  {
+    return (arg - (Field **)&field[0]);
+  }
+
+  void pushField(Field *arg)
+  {
+    fields++;
+    field.push_back(arg);
   }
 
 
@@ -487,17 +504,18 @@ public:
   {
     return reclength;
   }
-  
+
   void setRecordLength(uint32_t arg)
   {
     reclength= arg;
   }
 
-  Field_blob *getBlobFieldAt(uint32_t i)
+  const Field_blob *getBlobFieldAt(uint32_t arg) const
   {
-	if (i < blob_fields)
-	  return (Field_blob*) field[blob_field[i]];
-	return NULL;
+    if (arg < blob_fields)
+      return (Field_blob*) field[blob_field[arg]];
+
+    return NULL;
   }
 
 private:

@@ -1429,7 +1429,9 @@ reset:
   assert(!table->auto_increment_field_not_null);
   table->auto_increment_field_not_null= false;
   if (table->timestamp_field)
+  {
     table->timestamp_field_type= table->timestamp_field->get_auto_set_type();
+  }
   table->pos_in_table_list= table_list;
   table->clear_column_bitmaps();
   assert(table->key_read == 0);
@@ -2495,8 +2497,10 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   /* We assume here that table->field < NO_CACHED_FIELD_INDEX = UINT_MAX */
   if (cached_field_index < table->getShare()->sizeFields() &&
       !my_strcasecmp(system_charset_info,
-                     table->field[cached_field_index]->field_name, name))
-    field_ptr= table->field + cached_field_index;
+                     table->getField(cached_field_index)->field_name, name))
+  {
+    field_ptr= table->getFields() + cached_field_index;
+  }
   else if (table->getShare()->name_hash.records)
   {
     field_ptr= (Field**) hash_search(&table->getShare()->name_hash, (unsigned char*) name,
@@ -2507,12 +2511,12 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         field_ptr points to field in TableShare. Convert it to the matching
         field in table
       */
-      field_ptr= (table->field + (field_ptr - table->getMutableShare()->getFields()));
+      field_ptr= (table->getFields() + table->getShare()->positionFields(field_ptr));
     }
   }
   else
   {
-    if (!(field_ptr= table->field))
+    if (!(field_ptr= table->getFields()))
       return((Field *)0);
     for (; *field_ptr; ++field_ptr)
       if (!my_strcasecmp(system_charset_info, (*field_ptr)->field_name, name))
@@ -2521,7 +2525,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
 
   if (field_ptr && *field_ptr)
   {
-    *cached_field_index_ptr= field_ptr - table->field;
+    *cached_field_index_ptr= field_ptr - table->getFields();
     field= *field_ptr;
   }
   else
@@ -2530,7 +2534,7 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
         my_strcasecmp(system_charset_info, name, "_rowid") ||
         table->getShare()->rowid_field_offset == 0)
       return((Field*) 0);
-    field= table->field[table->getShare()->rowid_field_offset-1];
+    field= table->getField(table->getShare()->rowid_field_offset-1);
   }
 
   update_field_dependencies(session, field, table);
@@ -2940,7 +2944,8 @@ Item **not_found_item= (Item**) 0x1;
 
 
 Item **
-find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
+find_item_in_list(Session *session,
+                  Item *find, List<Item> &items, uint32_t *counter,
                   find_item_error_report_type report_error,
                   enum_resolution_type *resolution)
 {
@@ -3020,7 +3025,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
             */
             if (report_error != IGNORE_ERRORS)
               my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                       find->full_name(), current_session->where);
+                       find->full_name(), session->where);
             return (Item**) 0;
           }
           found_unaliased= li.ref();
@@ -3051,7 +3056,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
               continue;                           // Same field twice
             if (report_error != IGNORE_ERRORS)
               my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                       find->full_name(), current_session->where);
+                       find->full_name(), session->where);
             return (Item**) 0;
           }
           found= li.ref();
@@ -3103,7 +3108,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
     {
       if (report_error != IGNORE_ERRORS)
         my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                 find->full_name(), current_session->where);
+                 find->full_name(), session->where);
       return (Item **) 0;
     }
     if (found_unaliased)
@@ -3119,7 +3124,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
   {
     if (report_error == REPORT_ALL_ERRORS)
       my_error(ER_BAD_FIELD_ERROR, MYF(0),
-               find->full_name(), current_session->where);
+               find->full_name(), session->where);
     return (Item **) 0;
   }
   else
@@ -3440,7 +3445,7 @@ false   OK
 */
 
 static bool
-store_natural_using_join_columns(Session *,
+store_natural_using_join_columns(Session *session,
                                  TableList *natural_using_join,
                                  TableList *table_ref_1,
                                  TableList *table_ref_2,
@@ -3494,7 +3499,7 @@ store_natural_using_join_columns(Session *,
         if (!(common_field= it++))
         {
           my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr,
-                   current_session->where);
+                   session->where);
           goto err;
         }
         if (!my_strcasecmp(system_charset_info,

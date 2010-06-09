@@ -84,7 +84,7 @@ typedef enum {MATCH_ALL, MATCH_DBS, MATCH_SOME, MATCH_NONE, MATCH_UNKNOWN, MATCH
 static char *my_table_list = NULL;
 static const char *dflt_my_table_list = "*";
 
-static TableMatchState my_table_match = MATCH_ALL;
+static TableMatchState my_table_match = MATCH_UNKNOWN;
 
 #ifdef DRIZZLED
 static int32_t my_before_insert_position= 1;      // Call this event observer first.

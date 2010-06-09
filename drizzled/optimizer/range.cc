@@ -3968,7 +3968,7 @@ static bool is_key_scan_ror(optimizer::Parameter *param, uint32_t keynr, uint8_t
   {
     uint16_t fieldnr= param->table->key_info[keynr].
                     key_part[kp - table_key->key_part].fieldnr - 1;
-    if (param->table->field[fieldnr]->key_length() != kp->length)
+    if (param->table->getField(fieldnr)->key_length() != kp->length)
       return false;
   }
 
@@ -4731,7 +4731,7 @@ get_best_group_min_max(optimizer::Parameter *param, optimizer::SEL_TREE *tree)
       /* For each table field */
       for (uint32_t i= 0; i < table->getShare()->sizeFields(); i++)
       {
-        Field *cur_field= table->field[i];
+        Field *cur_field= table->getField(i);
         /*
           If the field is used in the current query ensure that it's
           part of 'cur_index'
