@@ -40,7 +40,7 @@ SUBDIRS = ${po} \
 
 DIST_SUBDIRS = ${SUBDIRS} tests
 
-BUILT_SOURCES=		drizzled/configmake.h
+BUILT_SOURCES=
 EXTRA_DIST= \
 	    DRIZZLE.FAQ \
 	    Doxyfile \
@@ -73,6 +73,7 @@ EXTRA_DIST+=	${man_MANS}
 .PHONY: \
 	indent
 
+
 doxygen:
 	doxygen Doxyfile
 
@@ -83,6 +84,7 @@ indent:
                -o indentoutput.tmp && mv indentoutput.tmp "$$f" ;\
         done
 
+%.cc: %{top_builddir}/drizzled/configmake.h
 drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	@echo "Making $@"
 	@rm -f $@-t $@
