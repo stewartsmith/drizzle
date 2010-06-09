@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 ziminq
+ *  Copyright (C) 2010 Zimin
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -646,7 +646,7 @@ DRIZZLE_DECLARE_PLUGIN
   DRIZZLE_VERSION_ID,
   "FILESYSTEM",
   "1.0",
-  "ziminq",
+  "Zimin",
   "Filesystem Engine",
   PLUGIN_LICENSE_GPL,
   filesystem_init_func, /* Plugin Init */
