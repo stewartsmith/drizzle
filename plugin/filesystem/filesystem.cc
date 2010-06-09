@@ -315,11 +315,6 @@ FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, 
   file_buff= new TransparentFile();
 }
 
-/*
-  Open a database file. Keep in mind that tables are caches, so
-  this will not be called for every request. Any sort of positions
-  that need to be reset should be kept in the ::extra() call.
-*/
 int FilesystemCursor::open(const char *name, int, uint32_t)
 {
   if (!(share= get_share(name)))
@@ -348,10 +343,6 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
   return 0;
 }
 
-/*
-  Close a database file. We remove ourselves from the shared strucutre.
-  If it is empty we destroy it.
-*/
 int FilesystemCursor::close(void)
 {
   real_file_name= "";
@@ -361,54 +352,12 @@ int FilesystemCursor::close(void)
   return 0;
 }
 
-/*
-  All table scans call this first.
-  The order of a table scan is:
-
-  ha_tina::info
-  ha_tina::rnd_init
-  ha_tina::extra
-  ENUM HA_EXTRA_CACHE   Cash record in HA_rrnd()
-  ha_tina::rnd_next
-  ha_tina::rnd_next
-  ha_tina::rnd_next
-  ha_tina::rnd_next
-  ha_tina::rnd_next
-  ha_tina::rnd_next
-  ha_tina::rnd_next
-  ha_tina::rnd_next
-  ha_tina::rnd_next
-  ha_tina::extra
-  ENUM HA_EXTRA_NO_CACHE   End cacheing of records (def)
-  ha_tina::extra
-  ENUM HA_EXTRA_RESET   Reset database to after open
-
-  Each call to ::rnd_next() represents a row returned in the can. When no more
-  rows can be returned, rnd_next() returns a value of HA_ERR_END_OF_FILE.
-  The ::info() call is just for the optimizer.
-
-*/
-
 int FilesystemCursor::doStartTableScan(bool)
 {
   current_position= 0;
   return 0;
 }
 
-/*
-  ::rnd_next() does all the heavy lifting for a table scan. You will need to
-  populate *buf with the correct field data. You can walk the field to
-  determine at what position you should store the data (take a look at how
-  ::find_current_row() works). The structure is something like:
-  0Foo  Dog  Friend
-  The first offset is for the first attribute. All space before that is
-  reserved for null count.
-  Basically this works as a mask for which rows are nulled (compared to just
-  empty).
-  This table Cursor doesn't do nulls and does not know the difference between
-  NULL and "". This is ok since this table Cursor is for spreadsheets and
-  they don't know about them either :)
-*/
 int FilesystemCursor::rnd_next(unsigned char *buf)
 {
   (void)buf;
@@ -478,25 +427,10 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
   return 0;
 }
 
-/*
-  In the case of an order by rows will need to be sorted.
-  ::position() is called after each call to ::rnd_next(),
-  the data it stores is to a byte array. You can store this
-  data via my_store_ptr(). ref_length is a variable defined to the
-  class that is the sizeof() of position being stored. In our case
-  its just a position. Look at the bdb code if you want to see a case
-  where something other then a number is stored.
-*/
 void FilesystemCursor::position(const unsigned char *)
 {
   return;
 }
-
-
-/*
-  Used to fetch a row from a posiion stored with ::position().
-  internal::my_get_ptr() retrieves the data for you.
-*/
 
 int FilesystemCursor::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
@@ -506,11 +440,6 @@ int FilesystemCursor::rnd_pos(unsigned char * buf, unsigned char *pos)
   return 0;
 }
 
-/*
-  ::info() is used to return information to the optimizer.
-  Currently this table Cursor doesn't implement most of the fields
-  really needed. SHOW also makes use of this data
-*/
 int FilesystemCursor::info(uint32_t)
 {
   return 0;
@@ -676,10 +605,6 @@ bool FilesystemEngine::validateCreateTableOption(const std::string &key,
   return false;
 }
 
-/*
-  Create a table. You do not want to leave the table open after a call to
-  this (the database will call ::open() if it needs to).
-*/
 int FilesystemEngine::doCreateTable(Session &,
                         Table&,
                         drizzled::TableIdentifier &identifier,
@@ -687,8 +612,6 @@ int FilesystemEngine::doCreateTable(Session &,
 {
   string serialized_proto;
   string new_path;
-
-  // check for option proto.engine().options(i).name() / state()
 
   new_path= identifier.getPath();
   new_path+= FILESYSTEM_EXT;
