@@ -25,7 +25,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-#include "generator.h"
+#include "temporal_generator.h"
 
 using namespace drizzled;
 

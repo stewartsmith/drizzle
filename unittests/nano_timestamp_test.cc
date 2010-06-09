@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 #include <drizzled/temporal.h>
 
-#include "generator.h"
+#include "temporal_generator.h"
 
 using namespace drizzled;
 
