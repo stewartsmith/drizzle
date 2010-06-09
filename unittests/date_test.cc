@@ -42,30 +42,30 @@ class DateTestCompareOperators : public ::testing::Test
 
   virtual void SetUp()
   {
-    Generator::DateGen::make_date(&sample_date, 2010, 9, 8);
+    TemporalGenerator::DateGen::make_date(&sample_date, 2010, 9, 8);
     initBeforeIdenticalAfter();
   }
 };
 
 template<> void DateTestCompareOperators<Date>::initBeforeIdenticalAfter()
 {
-  Generator::DateGen::make_date(&before_sample_date, 1980, 1, 1);
-  Generator::DateGen::make_date(&identical_with_sample_date, 2010, 9, 8);
-  Generator::DateGen::make_date(&after_sample_date, 2019, 5, 30);
+  TemporalGenerator::DateGen::make_date(&before_sample_date, 1980, 1, 1);
+  TemporalGenerator::DateGen::make_date(&identical_with_sample_date, 2010, 9, 8);
+  TemporalGenerator::DateGen::make_date(&after_sample_date, 2019, 5, 30);
 }
 
 template<> void DateTestCompareOperators<DateTime>::initBeforeIdenticalAfter()
 {
-  Generator::DateTimeGen::make_datetime(&before_sample_date, 1990, 12, 31, 12, 12, 30);
-  Generator::DateTimeGen::make_datetime(&identical_with_sample_date, 2010, 9, 8, 0, 0, 0);
-  Generator::DateTimeGen::make_datetime(&after_sample_date, 2020, 4, 4, 4, 4, 4);
+  TemporalGenerator::DateTimeGen::make_datetime(&before_sample_date, 1990, 12, 31, 12, 12, 30);
+  TemporalGenerator::DateTimeGen::make_datetime(&identical_with_sample_date, 2010, 9, 8, 0, 0, 0);
+  TemporalGenerator::DateTimeGen::make_datetime(&after_sample_date, 2020, 4, 4, 4, 4, 4);
 }
 
 template<> void DateTestCompareOperators<Timestamp>::initBeforeIdenticalAfter()
 {
-  Generator::TimestampGen::make_timestamp(&before_sample_date, 1980, 1, 1, 13, 56, 41);
-  Generator::TimestampGen::make_timestamp(&identical_with_sample_date, 2010, 9, 8, 0, 0, 0);
-  Generator::TimestampGen::make_timestamp(&after_sample_date, 2019, 5, 30, 9, 10, 13);
+  TemporalGenerator::TimestampGen::make_timestamp(&before_sample_date, 1980, 1, 1, 13, 56, 41);
+  TemporalGenerator::TimestampGen::make_timestamp(&identical_with_sample_date, 2010, 9, 8, 0, 0, 0);
+  TemporalGenerator::TimestampGen::make_timestamp(&after_sample_date, 2019, 5, 30, 9, 10, 13);
 }
 
 typedef ::testing::Types<Date, DateTime, Timestamp> typesForDateTestCompareOperators;
@@ -191,7 +191,7 @@ class DateTest : public ::testing::Test
     
     virtual void SetUp()
     {
-      Generator::DateGen::make_valid_date(&date);
+      TemporalGenerator::DateGen::make_valid_date(&date);
     }
 };
 
@@ -267,7 +267,7 @@ TEST_F(DateTest, is_valid_onInvalidDateWithDayAboveDaysInMonth_shouldReturn_Fals
 
 TEST_F(DateTest, is_valid_onInvalidDateWithLeapDayInNonLeapYear_shouldReturn_False)
 {
-  Generator::TemporalGen::leap_day_in_non_leap_year(&date);
+  TemporalGenerator::TemporalGen::leap_day_in_non_leap_year(&date);
   
   result= date.is_valid();
   
@@ -276,7 +276,7 @@ TEST_F(DateTest, is_valid_onInvalidDateWithLeapDayInNonLeapYear_shouldReturn_Fal
 
 TEST_F(DateTest, is_valid_onValidDateWithLeapDayInLeapYear_shouldReturn_True)
 {
-  Generator::TemporalGen::leap_day_in_leap_year(&date);
+  TemporalGenerator::TemporalGen::leap_day_in_leap_year(&date);
   
   result= date.is_valid();
   
@@ -287,7 +287,7 @@ TEST_F(DateTest, to_string_shouldProduce_hyphenSeperatedDateElements)
 {
   char expected[Date::MAX_STRING_LENGTH]= "2010-05-01";
   char returned[Date::MAX_STRING_LENGTH];
-  Generator::DateGen::make_date(&date, 2010, 5, 1);
+  TemporalGenerator::DateGen::make_date(&date, 2010, 5, 1);
   
   date.to_string(returned, Date::MAX_STRING_LENGTH);
   
@@ -335,7 +335,7 @@ TEST_F(DateTest, from_string_invalidString_shouldReturn_False)
 
 TEST_F(DateTest, to_int64_t)
 {
-  Generator::DateGen::make_date(&date, 2030, 8, 17);
+  TemporalGenerator::DateGen::make_date(&date, 2030, 8, 17);
   int64_t representation;
   
   date.to_int64_t(&representation);
@@ -345,7 +345,7 @@ TEST_F(DateTest, to_int64_t)
 
 TEST_F(DateTest, to_int32_t)
 {
-  Generator::DateGen::make_date(&date, 2030, 8, 17);
+  TemporalGenerator::DateGen::make_date(&date, 2030, 8, 17);
   int32_t representation;
 
   date.to_int32_t(&representation);
@@ -371,7 +371,7 @@ TEST_F(DateTest, from_int32_t_shouldPopulateDateCorrectly)
 TEST_F(DateTest, to_julian_day_number)
 {
   int64_t julian_day;
-  Generator::DateGen::make_date(&date, 1999, 12, 31);
+  TemporalGenerator::DateGen::make_date(&date, 1999, 12, 31);
   
   date.to_julian_day_number(&julian_day);
   
@@ -397,7 +397,7 @@ TEST_F(DateTest, from_julian_day_number)
 TEST_F(DateTest, DISABLED_to_tm)
 {
   uint32_t years= 2030, months= 8, days= 17;
-  Generator::DateGen::make_date(&date, years, months, days);
+  TemporalGenerator::DateGen::make_date(&date, years, months, days);
   struct tm filled;
   
   date.to_tm(&filled);
@@ -437,7 +437,7 @@ TEST_F(DateTest, from_tm)
 TEST_F(DateTest, to_time_t)
 {
   time_t time;
-  Generator::DateGen::make_date(&date, 1990, 9, 9);
+  TemporalGenerator::DateGen::make_date(&date, 1990, 9, 9);
   
   date.to_time_t(&time);
   
@@ -462,7 +462,7 @@ TEST_F(DateTest, from_time_t)
 TEST_F(DateTest, to_decimal)
 {
   drizzled::my_decimal to;
-  Generator::DateGen::make_date(&date, 1987, 5, 6);
+  TemporalGenerator::DateGen::make_date(&date, 1987, 5, 6);
 
   date.to_decimal(&to);
 

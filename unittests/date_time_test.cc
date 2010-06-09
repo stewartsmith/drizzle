@@ -39,7 +39,7 @@ class DateTimeTest: public ::testing::Test
     
     virtual void SetUp()
     {
-      Generator::DateTimeGen::make_valid_datetime(&datetime);
+      TemporalGenerator::DateTimeGen::make_valid_datetime(&datetime);
     }
 
     void assignDateTimeValues()
@@ -116,7 +116,7 @@ TEST_F(DateTimeTest, is_valid_onInvalidDateTimeWithDayAboveDaysInMonth_shouldRet
 
 TEST_F(DateTimeTest, is_valid_onInvalidDateTimeWithLeapDayInNonLeapYear_shouldReturn_False)
 {
-  Generator::TemporalGen::leap_day_in_non_leap_year(&datetime);
+  TemporalGenerator::TemporalGen::leap_day_in_non_leap_year(&datetime);
   
   result= datetime.is_valid();
   
@@ -125,7 +125,7 @@ TEST_F(DateTimeTest, is_valid_onInvalidDateTimeWithLeapDayInNonLeapYear_shouldRe
 
 TEST_F(DateTimeTest, is_valid_onValidDateTimeWithLeapDayInLeapYear_shouldReturn_True)
 {
-  Generator::TemporalGen::leap_day_in_leap_year(&datetime);
+  TemporalGenerator::TemporalGen::leap_day_in_leap_year(&datetime);
   
   result= datetime.is_valid();
   
@@ -134,7 +134,7 @@ TEST_F(DateTimeTest, is_valid_onValidDateTimeWithLeapDayInLeapYear_shouldReturn_
 
 TEST_F(DateTimeTest, is_valid_onValidMinimalTime_shouldReturn_True)
 {
-  Generator::TemporalGen::make_min_time(&datetime);
+  TemporalGenerator::TemporalGen::make_min_time(&datetime);
   
   result= datetime.is_valid();
   
@@ -143,7 +143,7 @@ TEST_F(DateTimeTest, is_valid_onValidMinimalTime_shouldReturn_True)
 
 TEST_F(DateTimeTest, is_valid_onValidMaximalTime_shouldReturn_True)
 {
-  Generator::TemporalGen::make_max_time(&datetime);
+  TemporalGenerator::TemporalGen::make_max_time(&datetime);
   
   result= datetime.is_valid();
   
@@ -181,7 +181,7 @@ TEST_F(DateTimeTest, to_string_shouldProduce_hyphenSeperatedDateElements_and_col
 {
   char expected[DateTime::MAX_STRING_LENGTH]= "2010-05-01 08:07:06.123456";
   char returned[DateTime::MAX_STRING_LENGTH];
-  Generator::DateTimeGen::make_datetime(&datetime, 2010, 5, 1, 8, 7, 6, 123456);
+  TemporalGenerator::DateTimeGen::make_datetime(&datetime, 2010, 5, 1, 8, 7, 6, 123456);
   
   datetime.to_string(returned, DateTime::MAX_STRING_LENGTH);
   
@@ -197,7 +197,7 @@ TEST_F(DateTimeTest, to_string_nullBuffer_noMicroSeconds_shouldReturnProperLengt
 
 TEST_F(DateTimeTest, to_int64_t)
 {
-  Generator::DateTimeGen::make_datetime(&datetime, 2030, 8, 7, 14, 5, 13);
+  TemporalGenerator::DateTimeGen::make_datetime(&datetime, 2030, 8, 7, 14, 5, 13);
   int64_t representation;
 
   datetime.to_int64_t(&representation);
@@ -278,7 +278,7 @@ TEST_F(DateTimeTest, from_int64_t_with_conversion_format_YYMMDDHHMMSS_yearBelow2
 TEST_F(DateTimeTest, DISABLED_to_tm)
 {
   years= 2030, months= 8, days= 17, hours= 14, minutes= 45, seconds= 13;
-  Generator::DateTimeGen::make_datetime(&datetime, years, months, days, hours, minutes, seconds);
+  TemporalGenerator::DateTimeGen::make_datetime(&datetime, years, months, days, hours, minutes, seconds);
   struct tm filled;
   
   datetime.to_tm(&filled);
@@ -299,7 +299,7 @@ TEST_F(DateTimeTest, DISABLED_to_tm)
 TEST_F(DateTimeTest, to_decimal)
 {
   drizzled::my_decimal to;
-  Generator::DateTimeGen::make_datetime(&datetime, 1987, 6, 13, 5, 10, 13, 456);
+  TemporalGenerator::DateTimeGen::make_datetime(&datetime, 1987, 6, 13, 5, 10, 13, 456);
 
   datetime.to_decimal(&to);
   

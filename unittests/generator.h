@@ -35,7 +35,7 @@ namespace drizzled
   class NanoTimestamp;
 }
 
-class Generator 
+class TemporalGenerator 
 {
 public:
 

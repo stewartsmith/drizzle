@@ -40,11 +40,11 @@ protected:
   
   virtual void SetUp()
   {
-    Generator::TimeGen::make_time(&sample_time, 18, 34, 59);
+    TemporalGenerator::TimeGen::make_time(&sample_time, 18, 34, 59);
     
-    Generator::TimeGen::make_time(&before_sample_time, 18, 34, 58);
-    Generator::TimeGen::make_time(&identical_with_sample_time, 18, 34, 59);
-    Generator::TimeGen::make_time(&after_sample_time, 18, 35, 0);
+    TemporalGenerator::TimeGen::make_time(&before_sample_time, 18, 34, 58);
+    TemporalGenerator::TimeGen::make_time(&identical_with_sample_time, 18, 34, 59);
+    TemporalGenerator::TimeGen::make_time(&after_sample_time, 18, 35, 0);
     
   }
 
@@ -187,7 +187,7 @@ TEST_F(TimeTest, is_valid_onValidTime_shouldReturn_True)
 
 TEST_F(TimeTest, is_valid_onValidMinimalTime_shouldReturn_True)
 {
-  Generator::TemporalGen::make_min_time(&sample_time);
+  TemporalGenerator::TemporalGen::make_min_time(&sample_time);
   
   result= sample_time.is_valid();
   
@@ -196,7 +196,7 @@ TEST_F(TimeTest, is_valid_onValidMinimalTime_shouldReturn_True)
 
 TEST_F(TimeTest, is_valid_onValidMaximalTime_shouldReturn_True)
 {
-  Generator::TemporalGen::make_max_time(&sample_time);
+  TemporalGenerator::TemporalGen::make_max_time(&sample_time);
   
   result= sample_time.is_valid();
   
@@ -281,7 +281,7 @@ TEST_F(TimeTest, from_time_t)
 TEST_F(TimeTest, to_decimal)
 {
   drizzled::my_decimal to;
-  Generator::TimeGen::make_time(&sample_time, 8, 4, 9, 56);
+  TemporalGenerator::TimeGen::make_time(&sample_time, 8, 4, 9, 56);
 
   sample_time.to_decimal(&to);
   

@@ -37,7 +37,7 @@ class NanoTimestampTest : public ::testing::Test
 TEST_F(NanoTimestampTest, is_valid_minOfNanoTimestampRange_shouldReturn_True)
 {
   uint32_t year= 1970, month= 1, day= 1, hour= 0, minute= 0, second= 0, nanosecond= 0;
-  Generator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
+  TemporalGenerator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
 
   result= nano_timestamp.is_valid();
 
@@ -47,7 +47,7 @@ TEST_F(NanoTimestampTest, is_valid_minOfNanoTimestampRange_shouldReturn_True)
 TEST_F(NanoTimestampTest, is_valid_maxOfNanoTimestampRange_shouldReturn_True)
 {
   uint32_t year= 2038, month= 1, day= 19, hour= 3, minute= 14, second= 7, nanosecond= 0;
-  Generator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
+  TemporalGenerator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
 
   result= nano_timestamp.is_valid();
 
@@ -57,7 +57,7 @@ TEST_F(NanoTimestampTest, is_valid_maxOfNanoTimestampRange_shouldReturn_True)
 TEST_F(NanoTimestampTest, is_valid_oneMicroSecondBeforeNanoTimestampMinOfRange_shouldReturn_False)
 {
   uint32_t year= 1969, month= 12, day= 31, hour= 23, minute= 59, second= 59, nanosecond= 999999999;
-  Generator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
+  TemporalGenerator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
 
   result= nano_timestamp.is_valid();
 
@@ -67,7 +67,7 @@ TEST_F(NanoTimestampTest, is_valid_oneMicroSecondBeforeNanoTimestampMinOfRange_s
 TEST_F(NanoTimestampTest, is_valid_oneMicroSecondAfterNanoTimestampMaxOfRange_shouldReturn_False)
 {
   uint32_t year= 2038, month= 1, day= 19, hour= 3, minute= 14, second= 8, nanosecond= 1;
-  Generator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
+  TemporalGenerator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
 
   result= nano_timestamp.is_valid();
 
@@ -77,7 +77,7 @@ TEST_F(NanoTimestampTest, is_valid_oneMicroSecondAfterNanoTimestampMaxOfRange_sh
 TEST_F(NanoTimestampTest, is_valid_InsideOfNanoTimestampRange_shouldReturn_True)
 {
   uint32_t year= 1980, month= 11, day= 1, hour= 5, minute= 8, second= 5, nanosecond= 3265832;
-  Generator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
+  TemporalGenerator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
 
   result= nano_timestamp.is_valid();
 
@@ -88,7 +88,7 @@ TEST_F(NanoTimestampTest, to_timespec)
 {
   struct timespec filled;
   uint32_t year= 2009, month= 6, day= 3, hour= 4, minute= 59, second= 1, nanosecond= 675;
-  Generator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
+  TemporalGenerator::TimestampGen::make_nano_timestamp(&nano_timestamp, year, month, day, hour, minute, second, nanosecond);
 
   nano_timestamp.to_timespec(&filled);
 

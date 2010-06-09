@@ -37,7 +37,7 @@ class MicroTimestampTest : public ::testing::Test
 TEST_F(MicroTimestampTest, is_valid_minOfMicroTimestampRange_shouldReturn_True)
 {
   uint32_t year= 1970, month= 1, day= 1, hour= 0, minute= 0, second= 0, microsecond= 0;
-  Generator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
+  TemporalGenerator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
 
   result= micro_timestamp.is_valid();
 
@@ -47,7 +47,7 @@ TEST_F(MicroTimestampTest, is_valid_minOfMicroTimestampRange_shouldReturn_True)
 TEST_F(MicroTimestampTest, is_valid_maxOfMicroTimestampRange_shouldReturn_True)
 {
   uint32_t year= 2038, month= 1, day= 19, hour= 3, minute= 14, second= 7, microsecond= 0;
-  Generator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
+  TemporalGenerator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
 
   result= micro_timestamp.is_valid();
 
@@ -57,7 +57,7 @@ TEST_F(MicroTimestampTest, is_valid_maxOfMicroTimestampRange_shouldReturn_True)
 TEST_F(MicroTimestampTest, is_valid_oneMicroSecondBeforeMicroTimestampMinOfRange_shouldReturn_False)
 {
   uint32_t year= 1969, month= 12, day= 31, hour= 23, minute= 59, second= 59, microsecond= 999999;
-  Generator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
+  TemporalGenerator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
 
   result= micro_timestamp.is_valid();
 
@@ -67,7 +67,7 @@ TEST_F(MicroTimestampTest, is_valid_oneMicroSecondBeforeMicroTimestampMinOfRange
 TEST_F(MicroTimestampTest, is_valid_oneMicroSecondAfterMicroTimestampMaxOfRange_shouldReturn_False)
 {
   uint32_t year= 2038, month= 1, day= 19, hour= 3, minute= 14, second= 8, microsecond= 1;
-  Generator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
+  TemporalGenerator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
 
   result= micro_timestamp.is_valid();
 
@@ -77,7 +77,7 @@ TEST_F(MicroTimestampTest, is_valid_oneMicroSecondAfterMicroTimestampMaxOfRange_
 TEST_F(MicroTimestampTest, is_valid_InsideOfMicroTimestampRange_shouldReturn_True)
 {
   uint32_t year= 1980, month= 11, day= 1, hour= 5, minute= 8, second= 5, microsecond= 18263;
-  Generator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
+  TemporalGenerator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
 
   result= micro_timestamp.is_valid();
 
@@ -88,7 +88,7 @@ TEST_F(MicroTimestampTest, to_string_shouldProduce_hyphenSeperatedDateElements_a
 {
   char expected[MicroTimestamp::MAX_STRING_LENGTH]= "2010-05-01 08:07:06.007654";
   char returned[MicroTimestamp::MAX_STRING_LENGTH];
-  Generator::TimestampGen::make_micro_timestamp(&micro_timestamp, 2010, 5, 1, 8, 7, 6, 7654);
+  TemporalGenerator::TimestampGen::make_micro_timestamp(&micro_timestamp, 2010, 5, 1, 8, 7, 6, 7654);
   
   micro_timestamp.to_string(returned, MicroTimestamp::MAX_STRING_LENGTH);
   
@@ -99,7 +99,7 @@ TEST_F(MicroTimestampTest, to_timeval)
 {
   struct timeval filled;
   uint32_t year= 2009, month= 6, day= 3, hour= 4, minute= 59, second= 1, microsecond= 675;
-  Generator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
+  TemporalGenerator::TimestampGen::make_micro_timestamp(&micro_timestamp, year, month, day, hour, minute, second, microsecond);
 
   micro_timestamp.to_timeval(&filled);
 

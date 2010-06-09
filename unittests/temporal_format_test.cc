@@ -84,7 +84,7 @@ TEST_F(TemporalFormatTest, matches_OnMatchingString_FormatWithIndexesSet_shouldP
 {
   char regexp[]= "^(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})[T|\\s+](\\d{2}):(\\d{2}):(\\d{2})$";
   char matched[]= "1999/9/14T23:29:05";
-  tf= Generator::TemporalFormatGen::make_temporal_format(regexp, 1, 2, 3, 4, 5, 6, 0, 0);
+  tf= TemporalGenerator::TemporalFormatGen::make_temporal_format(regexp, 1, 2, 3, 4, 5, 6, 0, 0);
   temporal= new DateTime();
 
   
@@ -101,7 +101,7 @@ TEST_F(TemporalFormatTest, matches_OnMatchingString_FormatWithIndexesSet_shouldP
 
 TEST_F(TemporalFormatTest, matches_FormatWithMicroSecondIndexSet_shouldAddTrailingZeros)
 {
-  tf= Generator::TemporalFormatGen::make_temporal_format("^(\\d{1,6})$", 0, 0, 0, 0, 0, 0, 1, 0);
+  tf= TemporalGenerator::TemporalFormatGen::make_temporal_format("^(\\d{1,6})$", 0, 0, 0, 0, 0, 0, 1, 0);
   char matched[]= "560";
   temporal= new Time();
   
@@ -112,7 +112,7 @@ TEST_F(TemporalFormatTest, matches_FormatWithMicroSecondIndexSet_shouldAddTraili
 
 TEST_F(TemporalFormatTest, matches_FormatWithNanoSecondIndexSet_shouldAddTrailingZeros)
 {
-  tf= Generator::TemporalFormatGen::make_temporal_format("^(\\d{1,9})$", 0, 0, 0, 0, 0, 0, 0, 1);
+  tf= TemporalGenerator::TemporalFormatGen::make_temporal_format("^(\\d{1,9})$", 0, 0, 0, 0, 0, 0, 0, 1);
   char matched[]= "4321";
   temporal= new Time();
   
