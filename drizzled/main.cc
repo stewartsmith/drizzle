@@ -183,12 +183,31 @@ static void init_signals(void)
     sigdelset(&set, thr_kill_signal);
   }
   else
+  {
     sigaddset(&set,SIGINT);
+  }
   sigprocmask(SIG_SETMASK,&set,NULL);
   pthread_sigmask(SIG_SETMASK,&set,NULL);
   return;
 }
 
+static void GoogleProtoErrorThrower(google::protobuf::LogLevel level, const char* filename,
+                       int line, const string& message) throw(const char *)
+{
+  (void)filename;
+  (void)line;
+  (void)message;
+  switch(level)
+  {
+  case google::protobuf::LOGLEVEL_INFO:
+    break;
+  case google::protobuf::LOGLEVEL_WARNING:
+  case google::protobuf::LOGLEVEL_ERROR:
+  case google::protobuf::LOGLEVEL_FATAL:
+  default:
+    throw("error in google protocol buffer parsing");
+  }
+}
 
 int main(int argc, char **argv)
 {
@@ -213,6 +232,8 @@ int main(int argc, char **argv)
 #else
   thr_kill_signal= SIGINT;
 #endif
+
+  google::protobuf::SetLogHandler(&GoogleProtoErrorThrower);
 
   if (init_common_variables(DRIZZLE_CONFIG_NAME,
 			    argc, argv, load_default_groups))
