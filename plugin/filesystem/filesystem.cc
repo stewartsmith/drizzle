@@ -131,25 +131,25 @@ void FilesystemEngine::getTableNamesFromFilesystem(drizzled::CachedDirectory &di
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
 
   for (drizzled::CachedDirectory::Entries::iterator entry_iter= entries.begin();
-      entry_iter != entries.end(); ++entry_iter)
+      entry_iter != entries.end();
+      ++entry_iter)
   {
     drizzled::CachedDirectory::Entry *entry= *entry_iter;
     const string *filename= &entry->filename;
 
-    assert(filename->size());
+    assert(not filename->empty());
 
-    const char *ext= strchr(filename->c_str(), '.');
+    string::size_type suffix_pos= filename->rfind('.');
 
-    if (ext == NULL || my_strcasecmp(system_charset_info, ext, FILESYSTEM_EXT) ||
-        (filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX) == 0))
-    {  }
-    else
+    if (suffix_pos != string::npos &&
+        boost::iequals(filename->substr(suffix_pos), FILESYSTEM_EXT) &&
+        filename->compare(0, strlen(TMP_FILE_PREFIX), TMP_FILE_PREFIX))
     {
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
       file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
-      uname[file_name_len - sizeof(FILESYSTEM_EXT) + 1]= '\0'; // Subtract ending, place NULL
+      uname[file_name_len - sizeof(FILESYSTEM_EXT) + 1]= '\0';
       if (set_of_names)
         set_of_names->insert(uname);
       if (set_of_identifiers)
