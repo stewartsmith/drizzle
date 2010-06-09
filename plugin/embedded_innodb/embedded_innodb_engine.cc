@@ -2403,15 +2403,21 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
   ib_err_t err;
 
   if (advance_cursor)
-    err= ib_cursor_prev(cursor);
-
-  if (active_index == 0)
   {
-    tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(buf, cursor, tuple, table,
-                              share->has_hidden_primary_key,
-                              &hidden_autoinc_pkey_position);
+    err= ib_cursor_prev(cursor);
+    if (err != DB_SUCCESS)
+    {
+      if (err == DB_END_OF_INDEX)
+        return HA_ERR_END_OF_FILE;
+      else
+        return -1; // FIXME
+    }
   }
+
+  tuple= ib_tuple_clear(tuple);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
 
   advance_cursor= true;
 
@@ -2458,14 +2464,11 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
       return -1; // FIXME
   }
 
-  if (active_index == 0)
-  {
-    tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(buf, cursor, tuple, table,
-                              share->has_hidden_primary_key,
-                              &hidden_autoinc_pkey_position);
-    advance_cursor= true;
-  }
+  tuple= ib_tuple_clear(tuple);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
+  advance_cursor= true;
 
   return ret;
 }
