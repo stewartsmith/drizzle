@@ -52,11 +52,12 @@ class FilesystemCursor : public drizzled::Cursor
   TransparentFile *file_buff;
   int filedes;
   off_t current_position;
+  off_t next_position;
   std::string real_file_name;
   std::string row_separator;
   std::string col_separator;
-  streampos prev_pos;
-  ifstream fd; // temp
+  /* each slot means an interval in a file which will be deleted later */
+  std::vector< std::pair<off_t, off_t> > slots;
 
 public:
   FilesystemCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
@@ -101,6 +102,7 @@ private:
   int updateRealFile(const char *buf, size_t len);
   string getSeparator();
   void getAllFields(drizzled::String& output);
+  void addSlot();
 };
 
 #endif /* PLUGIN_FILESYSTEM_FILESYSTEM_H */

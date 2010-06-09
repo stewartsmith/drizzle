@@ -360,6 +360,7 @@ int FilesystemCursor::close(void)
 int FilesystemCursor::doStartTableScan(bool)
 {
   current_position= 0;
+  next_position= 0;
   return 0;
 }
 
@@ -368,12 +369,14 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
   (void)buf;
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
+  current_position= next_position;
+
   string content;
   bool line_done= false;
   Field **field= table->getFields();
-  for (; !line_done && *field; ++current_position)
+  for (; !line_done && *field; ++next_position)
   {
-    char ch= file_buff->get_value(current_position);
+    char ch= file_buff->get_value(next_position);
     if (ch == '\0')
       return HA_ERR_END_OF_FILE;
 
@@ -422,10 +425,10 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
     // eat up characters when line_done
     while (!line_done)
     {
-      char ch= file_buff->get_value(current_position);
+      char ch= file_buff->get_value(next_position);
       if (row_separator.find(ch) != string::npos)
         line_done= true;
-      ++current_position;
+      ++next_position;
     }
   }
 
@@ -577,26 +580,18 @@ int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
   return 0;
 }
 
+void FilesystemCursor::addSlot()
+{
+  if (slots.size() > 0 && slots.back().second == current_position)
+    slots.back().second= next_position;
+  else
+    slots.push_back(make_pair(current_position, next_position));
+}
+
 int FilesystemCursor::doDeleteRecord(const unsigned char *)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
-
-  if (not fd.is_open())
-    return HA_ERR_END_OF_FILE;
-
-  // close this file first, as we're scanning this file
-  fd.close();
-
-  int err = updateRealFile(NULL, 0);
-  if (err)
-    return HA_ERR_CRASHED_ON_USAGE;
-
-  // re-open this file
-  fd.open(real_file_name.c_str());
-  if (not fd.is_open())
-    return HA_ERR_CRASHED_ON_USAGE;
-  fd.seekg(prev_pos);
-
+  addSlot();
   return 0;
 }
 
