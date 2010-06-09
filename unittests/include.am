@@ -10,7 +10,7 @@ unittests_unittests_SOURCES = \
 			     unittests/calendar_test.cc \
 					 unittests/date_test.cc \
 					 unittests/date_time_test.cc \
-					 unittests/generator.cc \
+					 unittests/temporal_generator.cc \
 			     unittests/main.cc \
 					 unittests/micro_timestamp_test.cc \
 					 unittests/nano_timestamp_test.cc \
