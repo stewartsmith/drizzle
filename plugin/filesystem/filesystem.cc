@@ -43,7 +43,7 @@
 using namespace std;
 using namespace drizzled;
 
-static const char* FILESYSTEM_EXT= ".FILESYSTEM";
+#define FILESYSTEM_EXT ".FST"
 
 static const char* FILESYSTEM_OPTION_FILE_PATH= "FILE";
 static const char* FILESYSTEM_OPTION_ROW_SEPARATOR= "ROW_SEPARATOR";
@@ -53,6 +53,7 @@ static const char* FILESYSTEM_OPTION_COL_SEPARATOR= "COL_SEPARATOR";
 pthread_mutex_t filesystem_mutex;
 
 static const char *ha_filesystem_exts[] = {
+  FILESYSTEM_EXT,
   NULL
 };
 
@@ -309,8 +310,9 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
 }
 
 FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
-  :Cursor(engine_arg, table_arg)
+  : Cursor(engine_arg, table_arg), row_separator("\n"), col_separator(" \t")
 {
+  file_buff= new TransparentFile();
 }
 
 /*
@@ -337,12 +339,10 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
       col_separator= option.state();
   }
 
-  fd.open(real_file_name.c_str());
-  if (not fd.is_open())
-  {
-    this->close();
-    return HA_ERR_ERRORS; // TODO
-  }
+  filedes= ::open(real_file_name.c_str(), O_RDONLY);
+  if (filedes < 0)
+    return -1;
+  file_buff->init_buff(filedes);
 
   thr_lock_data_init(&share->lock, &lock, NULL);
   return 0;
@@ -355,9 +355,9 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
 int FilesystemCursor::close(void)
 {
   real_file_name= "";
-  row_separator= "";
-  col_separator= "";
-  fd.close();
+  row_separator= "\n";
+  col_separator= " \t";
+  ::close(filedes);
   return 0;
 }
 
@@ -391,6 +391,7 @@ int FilesystemCursor::close(void)
 
 int FilesystemCursor::doStartTableScan(bool)
 {
+  current_position= 0;
   return 0;
 }
 
@@ -410,43 +411,70 @@ int FilesystemCursor::doStartTableScan(bool)
 */
 int FilesystemCursor::rnd_next(unsigned char *buf)
 {
-  drizzled::String buffer;
-  string line;
-
-  if (!fd.is_open())
-    return HA_ERR_END_OF_FILE;
-
-  prev_pos = fd.tellg();
-  if (!getline(fd, line))
-    return HA_ERR_END_OF_FILE;
-
+  (void)buf;
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
 
-  memset(buf, 0, table->s->null_bytes); //getNullBytes()
-
-  typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-  boost::char_separator<char> sepa(row_separator == "" ? " \t" : row_separator.c_str());
-  tokenizer tokens(line, sepa);
-  tokenizer::iterator tok_iter = tokens.begin();
-  for (Field **field = table->getFields();
-       *field && tok_iter != tokens.end();
-       ++field, ++tok_iter)
+  string content;
+  bool line_done= false;
+  Field **field= table->getFields();
+  for (; !line_done && *field; ++current_position)
   {
-    buffer.length(0);
-    string word = *tok_iter;
-    cerr << "field: " << word << endl;
-    buffer.append(word.c_str());
-    if ((*field)->isReadSet() || (*field)->isWriteSet())
+    char ch= file_buff->get_value(current_position);
+    if (ch == '\0')
+      return HA_ERR_END_OF_FILE;
+
+    // if we find separator
+    if (row_separator.find(ch) != string::npos ||
+        col_separator.find(ch) != string::npos)
     {
-      // this is very important to use 'select',
-      // as said in csv file, it's a bug in select ???
-      (*field)->setWriteSet();
-      (*field)->store(buffer.ptr()/* pointer */,
-                      buffer.length()/* length */,
-                      buffer.charset()/* charset */,
-                      CHECK_FIELD_WARN/* check flag */);
+      if (!content.empty())
+      {
+        (*field)->set_notnull();
+        if ((*field)->isReadSet() || (*field)->isWriteSet())
+        {
+          (*field)->setWriteSet();
+          (*field)->store(content.c_str(),
+                          (uint32_t)content.length(),
+                          &my_charset_bin,
+                          CHECK_FIELD_WARN);
+        }
+        else
+          (*field)->set_default();
+      }
+      else
+        (*field)->set_null();
+
+      content.clear();
+      ++field;
+
+      if (row_separator.find(ch) != string::npos)
+        line_done= true;
+
+      continue;
+    }
+    content.push_back(ch);
+  }
+  // line_done == true || *field == NULL
+  if (line_done)
+  {
+    for (; *field; ++field)
+    {
+      (*field)->set_notnull();
+      (*field)->set_default();
     }
   }
+  else
+  {
+    // eat up characters when line_done
+    while (!line_done)
+    {
+      char ch= file_buff->get_value(current_position);
+      if (row_separator.find(ch) != string::npos)
+        line_done= true;
+      ++current_position;
+    }
+  }
+
   return 0;
 }
 
@@ -639,18 +667,12 @@ int FilesystemCursor::doDeleteRecord(const unsigned char *)
 }
 
 bool FilesystemEngine::validateCreateTableOption(const std::string &key,
-                                                 const std::string &state)
+                                                 const std::string &)
 {
-  (void)state;
-  // FILE and SEP
-  if (boost::iequals(key, "FILE"))
-  {
+  if (boost::iequals(key, FILESYSTEM_OPTION_FILE_PATH) ||
+      boost::iequals(key, FILESYSTEM_OPTION_ROW_SEPARATOR) ||
+      boost::iequals(key, FILESYSTEM_OPTION_COL_SEPARATOR))
     return true;
-  }
-  else if (boost::iequals(key, "SEP"))
-  {
-    return true;
-  }
   return false;
 }
 

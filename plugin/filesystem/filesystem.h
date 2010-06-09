@@ -28,6 +28,8 @@
 #include <fstream>
 using namespace std;
 
+#include "transparent_file.h"
+
 class FilesystemTableShare
 {
   FilesystemTableShare();
@@ -47,16 +49,21 @@ class FilesystemCursor : public drizzled::Cursor
 {
   drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
   FilesystemTableShare *share;       /* Shared lock info */
-  std::ifstream fd;
+  TransparentFile *file_buff;
+  int filedes;
+  off_t current_position;
   std::string real_file_name;
   std::string row_separator;
   std::string col_separator;
   streampos prev_pos;
+  ifstream fd; // temp
 
 public:
   FilesystemCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
   ~FilesystemCursor()
   {
+    if (file_buff)
+      delete file_buff;
   }
 
   /** @brief
