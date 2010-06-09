@@ -14,11 +14,13 @@ unittests_unittests_SOURCES = \
 			     unittests/main.cc \
 					 unittests/micro_timestamp_test.cc \
 					 unittests/nano_timestamp_test.cc \
+					 unittests/plugin/client_test.cc \
 			     unittests/pthread_atomics_test.cc \
 					 unittests/temporal_format_test.cc \
 					 unittests/temporal_interval_test.cc \
 					 unittests/time_test.cc \
 					 unittests/timestamp_test.cc
+
 
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
