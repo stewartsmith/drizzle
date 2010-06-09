@@ -21,17 +21,17 @@
 
 using namespace drizzled;
 
-Transparent_file::Transparent_file() : lower_bound(0), buff_size(IO_SIZE)
+TransparentFile::TransparentFile() : lower_bound(0), buff_size(IO_SIZE)
 {
   buff= static_cast<unsigned char *>(malloc(buff_size*sizeof(unsigned char)));
 }
 
-Transparent_file::~Transparent_file()
+TransparentFile::~TransparentFile()
 {
   free(buff);
 }
 
-void Transparent_file::init_buff(int filedes_arg)
+void TransparentFile::init_buff(int filedes_arg)
 {
   filedes= filedes_arg;
   /* read the beginning of the file */
@@ -41,27 +41,27 @@ void Transparent_file::init_buff(int filedes_arg)
     upper_bound= internal::my_read(filedes, buff, buff_size, MYF(0));
 }
 
-unsigned char *Transparent_file::ptr()
+unsigned char *TransparentFile::ptr()
 {
   return buff;
 }
 
-off_t Transparent_file::start()
+off_t TransparentFile::start()
 {
   return lower_bound;
 }
 
-off_t Transparent_file::end()
+off_t TransparentFile::end()
 {
   return upper_bound;
 }
 
-off_t Transparent_file::read_next()
+off_t TransparentFile::read_next()
 {
   size_t bytes_read;
 
   /*
-     No need to seek here, as the file managed by Transparent_file class
+     No need to seek here, as the file managed by TransparentFile class
      always points to upper_bound byte
   */
   if ((bytes_read= internal::my_read(filedes, buff, buff_size, MYF(0))) == MY_FILE_ERROR)
@@ -78,7 +78,7 @@ off_t Transparent_file::read_next()
 }
 
 
-char Transparent_file::get_value(off_t offset)
+char TransparentFile::get_value(off_t offset)
 {
   size_t bytes_read;
 
