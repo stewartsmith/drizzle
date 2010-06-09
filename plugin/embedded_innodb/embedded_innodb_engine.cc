@@ -80,6 +80,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <fcntl.h>
 
 #include <string>
+#include <boost/algorithm/string.hpp>
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
@@ -148,6 +149,9 @@ public:
   const char **bas_ext() const {
     return EmbeddedInnoDBCursor_exts;
   }
+
+  bool validateCreateTableOption(const std::string &key,
+                                 const std::string &state);
 
   int doCreateTable(Session&,
                     Table& table_arg,
@@ -684,13 +688,26 @@ fetch:
   *nb_reserved_values= 1;
 }
 
+static const char* table_path_to_innodb_name(const char* name)
+{
+  size_t l= strlen(name);
+
+  int slashes= 2;
+  while(slashes>0 && l > 0)
+  {
+    l--;
+    if (name[l] == '/')
+      slashes--;
+  }
+  if (slashes==0)
+    l++;
+
+  return &name[l];
+}
+
 static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
 {
-  str->reserve(identifier.getSchemaName().length() + identifier.getTableName().length() + 1);
-//  str->append(identifier.getPath().c_str()+2);
-  str->assign(identifier.getSchemaName());
-  str->append("/");
-  str->append(identifier.getTableName());
+  str->assign(table_path_to_innodb_name(identifier.getPath().c_str()));
 }
 
 EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
@@ -703,14 +720,16 @@ EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engi
 
 int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 {
-  ib_err_t err= ib_cursor_open_table(name+2, NULL, &cursor);
+  const char* innodb_table_name= table_path_to_innodb_name(name);
+  ib_err_t err= ib_cursor_open_table(innodb_table_name, NULL, &cursor);
   bool has_hidden_primary_key= false;
   ib_id_t idx_id;
 
   if (err != DB_SUCCESS)
     return ib_err_t_to_drizzle_error(err);
 
-  err= ib_index_get_id(name+2, "HIDDEN_PRIMARY", &idx_id);
+  err= ib_index_get_id(innodb_table_name, "HIDDEN_PRIMARY", &idx_id);
+
   if (err == DB_SUCCESS)
     has_hidden_primary_key= true;
 
@@ -867,6 +886,41 @@ cleanup:
   return err;
 }
 
+bool EmbeddedInnoDBEngine::validateCreateTableOption(const std::string &key,
+                                                     const std::string &state)
+{
+  if (boost::iequals(key, "ROW_FORMAT"))
+  {
+    if (boost::iequals(state, "COMPRESSED"))
+      return true;
+
+    if (boost::iequals(state, "COMPACT"))
+      return true;
+
+    if (boost::iequals(state, "DYNAMIC"))
+      return true;
+
+    if (boost::iequals(state, "REDUNDANT"))
+      return true;
+  }
+
+  return false;
+}
+
+static ib_tbl_fmt_t parse_ib_table_format(const std::string &value)
+{
+  if (boost::iequals(value, "REDUNDANT"))
+    return IB_TBL_REDUNDANT;
+  else if (boost::iequals(value, "COMPACT"))
+    return IB_TBL_COMPACT;
+  else if (boost::iequals(value, "DYNAMIC"))
+    return IB_TBL_DYNAMIC;
+  else if (boost::iequals(value, "COMPRESSED"))
+    return IB_TBL_COMPRESSED;
+
+  assert(false); /* You need to add possible table formats here */
+  return IB_TBL_COMPACT;
+}
 
 int EmbeddedInnoDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
@@ -883,10 +937,30 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
   (void)table_obj;
 
+  if (table_message.type() == message::Table::TEMPORARY)
+  {
+    ib_bool_t create_db_err= ib_database_create(GLOBAL_TEMPORARY_EXT);
+    if (create_db_err != IB_TRUE)
+      return -1;
+  }
+
   TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
 
+  ib_tbl_fmt_t innodb_table_format= IB_TBL_COMPACT;
+
+  const size_t num_engine_options= table_message.engine().options_size();
+  for (size_t x= 0; x < num_engine_options; x++)
+  {
+    const message::Engine::Option &engine_option= table_message.engine().options(x);
+    if (boost::iequals(engine_option.name(), "ROW_FORMAT"))
+    {
+      innodb_table_format= parse_ib_table_format(engine_option.state());
+    }
+  }
+
   innodb_err= ib_table_schema_create(innodb_table_name.c_str(),
-                                     &innodb_table_schema, IB_TBL_COMPACT, 0);
+                                     &innodb_table_schema,
+                                     innodb_table_format, 0);
 
   if (innodb_err != DB_SUCCESS)
   {
@@ -1030,9 +1104,15 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
     return HA_ERR_GENERIC;
   }
 
-  innodb_err= store_table_message(innodb_schema_transaction,
-                                  innodb_table_name.c_str(),
-                                  table_message);
+  if (table_message.type() == message::Table::TEMPORARY)
+  {
+    session.storeTableMessage(identifier, table_message);
+    innodb_err= DB_SUCCESS;
+  }
+  else
+    innodb_err= store_table_message(innodb_schema_transaction,
+                                    innodb_table_name.c_str(),
+                                    table_message);
 
   if (innodb_err == DB_SUCCESS)
     innodb_err= ib_trx_commit(innodb_schema_transaction);
@@ -1116,12 +1196,21 @@ int EmbeddedInnoDBEngine::doDropTable(Session &session,
     return HA_ERR_GENERIC;
   }
 
-  if (delete_table_message_from_innodb(innodb_schema_transaction, innodb_table_name.c_str()) != DB_SUCCESS)
+  if (identifier.getType() == message::Table::TEMPORARY)
   {
-    ib_schema_unlock(innodb_schema_transaction);
-    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
-    assert(rollback_err == DB_SUCCESS);
-    return HA_ERR_GENERIC;
+      session.removeTableMessage(identifier);
+      delete_table_message_from_innodb(innodb_schema_transaction,
+                                       innodb_table_name.c_str());
+  }
+  else
+  {
+    if (delete_table_message_from_innodb(innodb_schema_transaction, innodb_table_name.c_str()) != DB_SUCCESS)
+    {
+      ib_schema_unlock(innodb_schema_transaction);
+      ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
+      assert(rollback_err == DB_SUCCESS);
+      return HA_ERR_GENERIC;
+    }
   }
 
   innodb_err= ib_table_drop(innodb_schema_transaction, innodb_table_name.c_str());
@@ -1257,6 +1346,13 @@ int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session &session,
   ib_err_t err;
   string from_innodb_table_name;
   string to_innodb_table_name;
+
+  if (to.getType() == message::Table::TEMPORARY
+      && from.getType() == message::Table::TEMPORARY)
+  {
+    session.renameTableMessage(from, to);
+    return 0;
+  }
 
   TableIdentifier_to_innodb_name(from, &from_innodb_table_name);
   TableIdentifier_to_innodb_name(to, &to_innodb_table_name);
@@ -1501,12 +1597,16 @@ rollback_close_err:
   return -1;
 }
 
-int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
+int EmbeddedInnoDBEngine::doGetTableDefinition(Session& session,
                                                TableIdentifier &identifier,
                                                drizzled::message::Table &table)
 {
   ib_crsr_t innodb_cursor= NULL;
   string innodb_table_name;
+
+  /* Check temporary tables!? */
+  if (session.getTableMessage(identifier, table))
+    return EEXIST;
 
   TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
 
@@ -2133,7 +2233,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
 
   ib_cursor_attach_trx(cursor, transaction);
 
-  if (active_index == 0)
+  if (active_index == 0 && ! share->has_hidden_primary_key)
   {
     tuple= ib_clust_read_tuple_create(cursor);
   }
@@ -2141,7 +2241,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
   {
     ib_err_t err;
     ib_id_t index_id;
-    err= ib_index_get_id(table_share->getPath()+2,
+    err= ib_index_get_id(table_path_to_innodb_name(table_share->getPath()),
                          table_share->getKeyInfo(keynr).name,
                          &index_id);
     if (err != DB_SUCCESS)
@@ -2283,7 +2383,7 @@ int EmbeddedInnoDBCursor::innodb_index_read(unsigned char *buf,
 
   search_mode= ha_rkey_function_to_ib_srch_mode(find_flag);
 
-  if (active_index == 0)
+  if (active_index == 0 && ! share->has_hidden_primary_key)
     search_tuple= ib_clust_search_tuple_create(cursor);
   else
     search_tuple= ib_sec_search_tuple_create(cursor);
@@ -2417,15 +2517,21 @@ int EmbeddedInnoDBCursor::index_prev(unsigned char *buf)
   ib_err_t err;
 
   if (advance_cursor)
-    err= ib_cursor_prev(cursor);
-
-  if (active_index == 0)
   {
-    tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(buf, cursor, tuple, table,
-                              share->has_hidden_primary_key,
-                              &hidden_autoinc_pkey_position);
+    err= ib_cursor_prev(cursor);
+    if (err != DB_SUCCESS)
+    {
+      if (err == DB_END_OF_INDEX)
+        return HA_ERR_END_OF_FILE;
+      else
+        return -1; // FIXME
+    }
   }
+
+  tuple= ib_tuple_clear(tuple);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
 
   advance_cursor= true;
 
@@ -2472,14 +2578,11 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
       return -1; // FIXME
   }
 
-  if (active_index == 0)
-  {
-    tuple= ib_tuple_clear(tuple);
-    ret= read_row_from_innodb(buf, cursor, tuple, table,
-                              share->has_hidden_primary_key,
-                              &hidden_autoinc_pkey_position);
-    advance_cursor= true;
-  }
+  tuple= ib_tuple_clear(tuple);
+  ret= read_row_from_innodb(buf, cursor, tuple, table,
+                            share->has_hidden_primary_key,
+                            &hidden_autoinc_pkey_position);
+  advance_cursor= true;
 
   return ret;
 }
