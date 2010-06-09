@@ -919,6 +919,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
   table->copy_blobs= 1;
+  assert(session);
   table->in_use= session;
   table->quick_keys.reset();
   table->covering_keys.reset();
@@ -1435,6 +1436,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 				       &param->recinfo, select_options))
       goto err;
   }
+  assert(table->in_use);
   if (table->open_tmp_table())
     goto err;
 

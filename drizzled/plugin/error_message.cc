@@ -90,7 +90,7 @@ public:
 
 
 bool plugin::ErrorMessage::vprintf(Session *session, int priority,
-                                 char const *format, va_list ap)
+                                   char const *format, va_list ap)
 {
 
   /* check to see if any errmsg plugin has been loaded

@@ -5666,7 +5666,7 @@ static bool find_order_in_list(Session *session,
     return false;
   }
   /* Lookup the current GROUP/order_st field in the SELECT clause. */
-  select_item= find_item_in_list(order_item, fields, &counter,
+  select_item= find_item_in_list(session, order_item, fields, &counter,
                                  REPORT_EXCEPT_NOT_FOUND, &resolution);
   if (!select_item)
     return true; /* The item is not unique, or some other error occured. */

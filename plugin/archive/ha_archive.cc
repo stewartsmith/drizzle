@@ -156,7 +156,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
       set_of_names.insert(uname);
@@ -1366,7 +1366,7 @@ void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
 

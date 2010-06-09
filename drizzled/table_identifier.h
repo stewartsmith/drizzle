@@ -51,9 +51,6 @@ namespace drizzled {
 
 class Table;
 
-uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
-
 class TableIdentifier : public SchemaIdentifier
 {
 public:
@@ -133,9 +130,9 @@ public:
 
   void copyToTableMessage(message::Table &message);
 
-  bool operator<(TableIdentifier &right)
+  friend bool operator<(const TableIdentifier &left, const TableIdentifier &right)
   {
-    int first= getLower().compare(right.getLower());
+    int first= left.getLower().compare(right.getLower());
 
     if (first < 0)
     {
@@ -147,7 +144,7 @@ public:
     }
     else
     {
-      int val= lower_table_name.compare(right.lower_table_name);
+      int val= left.lower_table_name.compare(right.lower_table_name);
 
       if (val < 0)
       {
@@ -159,7 +156,7 @@ public:
       }
       else
       {
-        if (type < right.type)
+        if (left.type < right.type)
         {
           return true;
         }
@@ -217,6 +214,10 @@ public:
 
     return false;
   }
+
+  static uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
+  static size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
+
 
 };
 
