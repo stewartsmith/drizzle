@@ -2126,7 +2126,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
 
   ib_cursor_attach_trx(cursor, transaction);
 
-  if (active_index == 0)
+  if (active_index == 0 && ! share->has_hidden_primary_key)
   {
     tuple= ib_clust_read_tuple_create(cursor);
   }
@@ -2272,7 +2272,7 @@ int EmbeddedInnoDBCursor::innodb_index_read(unsigned char *buf,
 
   search_mode= ha_rkey_function_to_ib_srch_mode(find_flag);
 
-  if (active_index == 0)
+  if (active_index == 0 && ! share->has_hidden_primary_key)
     search_tuple= ib_clust_search_tuple_create(cursor);
   else
     search_tuple= ib_sec_search_tuple_create(cursor);
