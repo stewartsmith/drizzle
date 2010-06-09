@@ -100,9 +100,9 @@ using namespace std;
 
 static bool sysvar_logging_stats_enabled= true;
 
-static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
+static uint32_t sysvar_logging_stats_scoreboard_size= 1000;
 
-static uint32_t sysvar_logging_stats_max_user_count= 1000;
+static uint32_t sysvar_logging_stats_max_user_count= 500;
 
 static uint32_t sysvar_logging_stats_bucket_count= 10;
 
@@ -287,8 +287,8 @@ static DRIZZLE_SYSVAR_UINT(max_user_count,
                            N_("Max number of users that will be logged"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           1000, /* default */
-                           500, /* minimum */
+                           500, /* default */
+                           100, /* minimum */
                            50000,
                            0);
 
@@ -309,7 +309,7 @@ static DRIZZLE_SYSVAR_UINT(scoreboard_size,
                            N_("Max number of concurrent sessions that will be logged"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           2000, /* default */
+                           1000, /* default */
                            10, /* minimum */
                            50000, 
                            0);
