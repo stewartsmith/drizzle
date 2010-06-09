@@ -9,6 +9,6 @@ drop table if exists t1;
 CREATE TABLE t1 (c1 int, c2 VARCHAR(20),
                  c3 int, c4 VARCHAR(20),
                  c5 DECIMAL(3, 2))
-ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/sep.txt",SEP="|/";
+ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/sep.txt",COL_SEPARATOR="|/",ROW_SEPARATOR=";\n";
 
 SELECT * FROM t1;
