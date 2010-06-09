@@ -604,13 +604,26 @@ fetch:
   *nb_reserved_values= 1;
 }
 
+static const char* table_path_to_innodb_name(const char* name)
+{
+  size_t l= strlen(name);
+
+  int slashes= 2;
+  while(slashes>0 && l > 0)
+  {
+    l--;
+    if (name[l] == '/')
+      slashes--;
+  }
+  if (slashes==0)
+    l++;
+
+  return &name[l];
+}
+
 static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
 {
-  str->reserve(identifier.getSchemaName().length() + identifier.getTableName().length() + 1);
-//  str->append(identifier.getPath().c_str()+2);
-  str->assign(identifier.getSchemaName());
-  str->append("/");
-  str->append(identifier.getTableName());
+  str->assign(table_path_to_innodb_name(identifier.getPath().c_str()));
 }
 
 EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engine_arg,
@@ -622,12 +635,13 @@ EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engi
 
 int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 {
-  ib_err_t err= ib_cursor_open_table(name+2, NULL, &cursor);
+  const char* innodb_table_name= table_path_to_innodb_name(name);
+  ib_err_t err= ib_cursor_open_table(innodb_table_name, NULL, &cursor);
   bool has_hidden_primary_key= false;
   assert (err == DB_SUCCESS);
   ib_id_t idx_id;
 
-  err= ib_index_get_id(name+2, "HIDDEN_PRIMARY", &idx_id);
+  err= ib_index_get_id(innodb_table_name, "HIDDEN_PRIMARY", &idx_id);
   if (err == DB_SUCCESS)
     has_hidden_primary_key= true;
 
@@ -828,6 +842,13 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
   (void)table_obj;
 
+  if (table_message.type() == message::Table::TEMPORARY)
+  {
+    ib_bool_t create_db_err= ib_database_create(GLOBAL_TEMPORARY_EXT);
+    if (create_db_err != IB_TRUE)
+      return -1;
+  }
+
   TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
 
   ib_tbl_fmt_t innodb_table_format= IB_TBL_COMPACT;
@@ -988,9 +1009,15 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
     return HA_ERR_GENERIC;
   }
 
-  innodb_err= store_table_message(innodb_schema_transaction,
-                                  innodb_table_name.c_str(),
-                                  table_message);
+  if (table_message.type() == message::Table::TEMPORARY)
+  {
+    session.storeTableMessage(identifier, table_message);
+    innodb_err= DB_SUCCESS;
+  }
+  else
+    innodb_err= store_table_message(innodb_schema_transaction,
+                                    innodb_table_name.c_str(),
+                                    table_message);
 
   if (innodb_err == DB_SUCCESS)
     innodb_err= ib_trx_commit(innodb_schema_transaction);
@@ -1074,12 +1101,21 @@ int EmbeddedInnoDBEngine::doDropTable(Session &session,
     return HA_ERR_GENERIC;
   }
 
-  if (delete_table_message_from_innodb(innodb_schema_transaction, innodb_table_name.c_str()) != DB_SUCCESS)
+  if (identifier.getType() == message::Table::TEMPORARY)
   {
-    ib_schema_unlock(innodb_schema_transaction);
-    ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
-    assert(rollback_err == DB_SUCCESS);
-    return HA_ERR_GENERIC;
+      session.removeTableMessage(identifier);
+      delete_table_message_from_innodb(innodb_schema_transaction,
+                                       innodb_table_name.c_str());
+  }
+  else
+  {
+    if (delete_table_message_from_innodb(innodb_schema_transaction, innodb_table_name.c_str()) != DB_SUCCESS)
+    {
+      ib_schema_unlock(innodb_schema_transaction);
+      ib_err_t rollback_err= ib_trx_rollback(innodb_schema_transaction);
+      assert(rollback_err == DB_SUCCESS);
+      return HA_ERR_GENERIC;
+    }
   }
 
   innodb_err= ib_table_drop(innodb_schema_transaction, innodb_table_name.c_str());
@@ -1215,6 +1251,13 @@ int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session &session,
   ib_err_t err;
   string from_innodb_table_name;
   string to_innodb_table_name;
+
+  if (to.getType() == message::Table::TEMPORARY
+      && from.getType() == message::Table::TEMPORARY)
+  {
+    session.renameTableMessage(from, to);
+    return 0;
+  }
 
   TableIdentifier_to_innodb_name(from, &from_innodb_table_name);
   TableIdentifier_to_innodb_name(to, &to_innodb_table_name);
@@ -1459,12 +1502,16 @@ rollback_close_err:
   return -1;
 }
 
-int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
+int EmbeddedInnoDBEngine::doGetTableDefinition(Session& session,
                                                TableIdentifier &identifier,
                                                drizzled::message::Table &table)
 {
   ib_crsr_t innodb_cursor= NULL;
   string innodb_table_name;
+
+  /* Check temporary tables!? */
+  if (session.getTableMessage(identifier, table))
+    return EEXIST;
 
   TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
 
@@ -2087,7 +2134,7 @@ int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
   {
     ib_err_t err;
     ib_id_t index_id;
-    err= ib_index_get_id(table_share->getPath()+2,
+    err= ib_index_get_id(table_path_to_innodb_name(table_share->getPath()),
                          table_share->getKeyInfo(keynr).name,
                          &index_id);
     if (err != DB_SUCCESS)
