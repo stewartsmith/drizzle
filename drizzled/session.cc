@@ -1924,17 +1924,27 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   assert(ret == false);
   if (open_tables_from_list(&tables, &counter, flags) ||
       mysql_handle_derived(lex, &mysql_derived_prepare))
+  {
     return true;
+  }
   return false;
 }
 
-bool Session::rm_temporary_table(TableIdentifier &identifier)
+/*
+  @note "best_effort" is used in cases were if a failure occurred on this
+  operation it would not be surprising because we are only removing because there
+  might be an issue (lame engines).
+*/
+
+bool Session::rm_temporary_table(TableIdentifier &identifier, bool best_effort)
 {
   if (plugin::StorageEngine::dropTable(*this, identifier))
   {
-    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getSQLPath().c_str(), errno);
-    dumpTemporaryTableNames("rm_temporary_table()");
+    if (not best_effort)
+    {
+      errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+                    identifier.getSQLPath().c_str(), errno);
+    }
 
     return true;
   }
@@ -1950,7 +1960,6 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &i
   {
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   identifier.getSQLPath().c_str(), errno);
-    dumpTemporaryTableNames("rm_temporary_table()");
 
     return true;
   }

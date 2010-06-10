@@ -2187,12 +2187,12 @@ bool mysql_create_like_table(Session* session,
                                         src_identifier, is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
-        (void) session->rm_temporary_table(destination_identifier);
+        (void) session->rm_temporary_table(destination_identifier, true);
       }
       else if (not session->open_temporary_table(destination_identifier))
       {
         // We created, but we can't open... also, a hack.
-        (void) session->rm_temporary_table(destination_identifier);
+        (void) session->rm_temporary_table(destination_identifier, true);
       }
       else
       {

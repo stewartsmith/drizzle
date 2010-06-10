@@ -525,6 +525,15 @@ private:
   message::Table *table_proto;
 public:
 
+  /*
+    @note Without a table_proto, we assume we are building a STANDARD table.
+    This will be modified once we use Identifiers in the Share itself.
+  */
+  message::Table::TableType getTableType() const
+  {
+    return table_proto ? table_proto->type() : message::Table::STANDARD;
+  }
+
   const std::string &getTableTypeAsString() const
   {
     switch (table_proto->type())
