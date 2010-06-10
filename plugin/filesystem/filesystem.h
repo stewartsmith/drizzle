@@ -103,7 +103,6 @@ public:
                                   uint64_t *nb_reserved_values) { (void)offset; (void)increment; (void)nb_desired_values; (void)first_value; (void)nb_reserved_values; };
   FilesystemTableShare *get_share(const char *table_name);
 private:
-  string getSeparator();
   void getAllFields(drizzled::String& output);
   void addSlot();
   int openUpdateFile();

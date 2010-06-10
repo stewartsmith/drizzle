@@ -548,7 +548,6 @@ void FilesystemCursor::getAllFields(drizzled::String& output)
 {
   bool first = true;
   drizzled::String attribute;
-  string s = getSeparator();
   for (Field **field= table->getFields(); *field; ++field)
   {
     if (first == true)
@@ -557,7 +556,7 @@ void FilesystemCursor::getAllFields(drizzled::String& output)
     }
     else
     {
-      output.append(s.c_str());
+      output.append(col_separator[0]);
     }
 
     if (not (*field)->is_null())
@@ -572,7 +571,7 @@ void FilesystemCursor::getAllFields(drizzled::String& output)
       output.append("0");
     }
   }
-  output.append("\n");
+  output.append(row_separator[0]);
 }
 
 int FilesystemCursor::doInsertRecord(unsigned char * buf)
@@ -593,16 +592,6 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   fout.close();
 
   return 0;
-}
-
-string FilesystemCursor::getSeparator()
-{
-  char ch;
-  if (row_separator.length() == 0)
-    ch = ' ';
-  else
-    ch = row_separator[0];
-  return string(1, ch);
 }
 
 int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
