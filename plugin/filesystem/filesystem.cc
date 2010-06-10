@@ -452,6 +452,8 @@ int FilesystemCursor::rnd_pos(unsigned char * buf, unsigned char *pos)
 
 int FilesystemCursor::info(uint32_t)
 {
+  if (stats.records < 2)
+    stats.records= 2;
   return 0;
 }
 
