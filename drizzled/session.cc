@@ -1636,7 +1636,7 @@ void Session::close_temporary_tables()
 
   for (table= temporary_tables; table; table= tmp_next)
   {
-    tmp_next= table->next;
+    tmp_next= table->getNext();
     nukeTable(table);
   }
   temporary_tables= NULL;
@@ -1648,11 +1648,13 @@ void Session::close_temporary_tables()
 
 void Session::close_temporary_table(Table *table)
 {
-  if (table->prev)
+  if (table->getPrev())
   {
-    table->prev->next= table->next;
-    if (table->prev->next)
-      table->next->prev= table->prev;
+    table->getPrev()->setNext(table->getNext());
+    if (table->getPrev()->getNext())
+    {
+      table->getNext()->setPrev(table->getPrev());
+    }
   }
   else
   {
@@ -1663,9 +1665,11 @@ void Session::close_temporary_table(Table *table)
       passing non-zero value to end_slave via rli->save_temporary_tables
       when no temp tables opened, see an invariant below.
     */
-    temporary_tables= table->next;
+    temporary_tables= table->getNext();
     if (temporary_tables)
-      table->next->prev= NULL;
+    {
+      table->getNext()->setPrev(NULL);
+    }
   }
   nukeTable(table);
 }
@@ -1740,7 +1744,7 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
 
 void Session::mark_temp_tables_as_free_for_reuse()
 {
-  for (Table *table= temporary_tables ; table ; table= table->next)
+  for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
     if (table->query_id == query_id)
     {
@@ -1752,7 +1756,7 @@ void Session::mark_temp_tables_as_free_for_reuse()
 
 void Session::mark_used_tables_as_free_for_reuse(Table *table)
 {
-  for (; table ; table= table->next)
+  for (; table ; table= table->getNext())
   {
     if (table->query_id == query_id)
     {
@@ -1912,7 +1916,7 @@ void Session::dumpTemporaryTableNames(const char *foo)
     return;
 
   cerr << "Begin Run: " << foo << "\n";
-  for (table= temporary_tables; table; table= table->next)
+  for (table= temporary_tables; table; table= table->getNext())
   {
     bool have_proto= false;
 
