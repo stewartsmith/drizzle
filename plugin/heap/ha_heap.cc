@@ -365,7 +365,7 @@ int ha_heap::doDeleteRecord(const unsigned char * buf)
   int res;
   ha_statistic_increment(&system_status_var::ha_delete_count);
   res= heap_delete(file,buf);
-  if (!res && table->getShare()->tmp_table == message::Table::STANDARD &&
+  if (!res && table->getShare()->getType() == message::Table::STANDARD &&
       ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)
   {
     /*
@@ -523,7 +523,7 @@ int ha_heap::reset()
 int ha_heap::delete_all_rows()
 {
   heap_clear(file);
-  if (table->getShare()->tmp_table == message::Table::STANDARD)
+  if (table->getShare()->getType() == message::Table::STANDARD)
   {
     /*
        We can perform this safely since only one writer at the time is

@@ -151,7 +151,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     the table defintion cache as soon as the last instance is removed
   */
   share= new TableShare(const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
-  share->tmp_table= message::Table::INTERNAL;       // for intern_close_table()
+  share->setType(message::Table::INTERNAL);       // for intern_close_table()
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -503,7 +503,7 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->getShare()->tmp_table == message::Table::STANDARD) &&
+    if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD) &&
         strcasecmp(table->db, db_name) == 0 &&
         strcasecmp(table->table_name, table_name) == 0)
       break;
@@ -567,7 +567,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   if (table->table)
   {
     /* temporary table is always unique */
-    if (table->table && table->table->getShare()->tmp_table != message::Table::STANDARD)
+    if (table->table && table->table->getShare()->getType() != message::Table::STANDARD)
       return 0;
     table= table->find_underlying_table(table->table);
     /*
@@ -642,7 +642,7 @@ bool Session::doDoesTableExist(TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->getShare()->tmp_table == message::Table::TEMPORARY)
+    if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
       if (identifier.compare(table->getShare()->getSchemaName(), table->getShare()->getTableName()))
       {
@@ -659,7 +659,7 @@ int Session::doGetTableDefinition(TableIdentifier &identifier,
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->getShare()->tmp_table == message::Table::TEMPORARY)
+    if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
       if (identifier.compare(table->getShare()->getSchemaName(), table->getShare()->getTableName()))
       {
@@ -848,7 +848,7 @@ void Session::unlink_open_table(Table *find)
 
 void Session::drop_open_table(Table *table, TableIdentifier &identifier)
 {
-  if (table->getShare()->tmp_table)
+  if (table->getShare()->getType())
   {
     close_temporary_table(table);
   }
@@ -1404,7 +1404,7 @@ c2: open t1; -- blocks
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->getShare()->getTableCount() > 0 || table->getShare()->tmp_table != message::Table::STANDARD);
+  assert(table->getShare()->getTableCount() > 0 || table->getShare()->getType() != message::Table::STANDARD);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -2141,7 +2141,7 @@ restart:
     {
       if (tables->lock_type == TL_WRITE_DEFAULT)
         tables->table->reginfo.lock_type= update_lock_default;
-      else if (tables->table->getShare()->tmp_table == message::Table::STANDARD)
+      else if (tables->table->getShare()->getType() == message::Table::STANDARD)
         tables->table->reginfo.lock_type= tables->lock_type;
     }
   }
@@ -2335,7 +2335,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  share->tmp_table= message::Table::TEMPORARY;
+  share->setType(message::Table::TEMPORARY);
 
   if (link_in_list)
   {

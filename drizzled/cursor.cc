@@ -1282,7 +1282,7 @@ static bool log_row_for_replication(Table* table,
   TransactionServices &transaction_services= TransactionServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->getShare()->tmp_table || not transaction_services.shouldConstructMessages())
+  if (table->getShare()->getType() || not transaction_services.shouldConstructMessages())
     return false;
 
   bool result= false;

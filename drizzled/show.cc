@@ -374,7 +374,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
   table->restoreRecordAsDefault(); // Get empty record
 
-  if (table->getShare()->tmp_table)
+  if (table->getShare()->getType())
     packet->append(STRING_WITH_LEN("CREATE TEMPORARY TABLE "));
   else
     packet->append(STRING_WITH_LEN("CREATE TABLE "));

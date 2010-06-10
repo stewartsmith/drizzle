@@ -1717,7 +1717,7 @@ bool select_create::send_eof()
       tables.  This can fail, but we should unlock the table
       nevertheless.
     */
-    if (!table->getShare()->tmp_table)
+    if (!table->getShare()->getType())
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
       transaction_services.autocommitOrRollback(session, 0);

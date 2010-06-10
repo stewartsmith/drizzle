@@ -476,7 +476,19 @@ public:
     return storage_engine;
   }
 
+private:
   TableIdentifier::Type tmp_table;
+public:
+
+  TableIdentifier::Type getType() const
+  {
+    return tmp_table;
+  }
+
+  TableIdentifier::Type setType(TableIdentifier::Type arg)
+  {
+    return tmp_table= arg;
+  }
 
 private:
   uint32_t ref_count;       /* How many Table objects uses this */
