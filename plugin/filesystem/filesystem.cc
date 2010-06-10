@@ -366,10 +366,9 @@ int FilesystemCursor::doStartTableScan(bool)
   return 0;
 }
 
-int FilesystemCursor::rnd_next(unsigned char *buf)
+int FilesystemCursor::find_current_row(unsigned char *buf)
 {
-  (void)buf;
-  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
+  ptrdiff_t row_offset= buf - table->record[0];
 
   current_position= next_position;
 
@@ -381,6 +380,8 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
     char ch= file_buff->get_value(next_position);
     if (ch == '\0')
       return HA_ERR_END_OF_FILE;
+
+    (*field)->move_field_offset(row_offset);
 
     // if we find separator
     if (row_separator.find(ch) != string::npos ||
@@ -408,18 +409,21 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
 
       if (row_separator.find(ch) != string::npos)
         line_done= true;
-
-      continue;
     }
-    content.push_back(ch);
+    else
+      content.push_back(ch);
+
+    (*field)->move_field_offset(-row_offset);
   }
   // line_done == true || *field == NULL
   if (line_done)
   {
     for (; *field; ++field)
     {
+      (*field)->move_field_offset(-row_offset);
       (*field)->set_notnull();
       (*field)->set_default();
+      (*field)->move_field_offset(-row_offset);
     }
   }
   else
@@ -433,21 +437,25 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
       ++next_position;
     }
   }
-
   return 0;
+}
+
+int FilesystemCursor::rnd_next(unsigned char *buf)
+{
+  ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
+  return find_current_row(buf);
 }
 
 void FilesystemCursor::position(const unsigned char *)
 {
-  return;
+  internal::my_store_ptr(ref, ref_length, current_position);
 }
 
 int FilesystemCursor::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
-  (void)buf;
-  (void)pos;
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
-  return 0;
+  current_position= (off_t)internal::my_get_ptr(pos,ref_length);
+  return find_current_row(buf);
 }
 
 int FilesystemCursor::info(uint32_t)

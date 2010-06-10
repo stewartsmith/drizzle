@@ -106,6 +106,7 @@ private:
   void getAllFields(drizzled::String& output);
   void addSlot();
   int openUpdateFile();
+  int find_current_row(unsigned char *buf);
 };
 
 #endif /* PLUGIN_FILESYSTEM_FILESYSTEM_H */
