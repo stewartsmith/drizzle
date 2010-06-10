@@ -85,7 +85,7 @@ StatusTool::StatusTool(LoggingStats *in_logging_stats, bool inIsLocal) :
 
   drizzle_show_var *var= NULL;
   uint32_t count= 0;
-  vector<drizzle_show_var *>::iterator all_status_vars_iterator;          
+  vector<drizzle_show_var *>::iterator all_status_vars_iterator= all_status_vars.begin();
   while (true)
   {
     var= &StatusHelper::status_vars_defs[count];
