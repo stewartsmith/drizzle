@@ -50,7 +50,7 @@ bool ShowTemporaryTables::Generator::populate()
     {
       break;
     }
-    table= table->next;
+    table= table->getNext();
   }
 
   if (not table)
@@ -58,7 +58,7 @@ bool ShowTemporaryTables::Generator::populate()
 
   fill();
 
-  table= table->next;
+  table= table->getNext();
 
   return true;
 }
