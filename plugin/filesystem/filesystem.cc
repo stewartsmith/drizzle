@@ -266,7 +266,7 @@ int FilesystemEngine::doGetTableDefinition(Session &,
 }
 
 FilesystemTableShare::FilesystemTableShare(const string table_name_arg)
-  : use_count(0), table_name(table_name_arg)
+  : use_count(0), table_name(table_name_arg), update_file_opened(false)
 {
   thr_lock_init(&lock);
 }
@@ -342,10 +342,10 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
 
   if (real_file_name.empty())
     return -1;
-  filedes= ::open(real_file_name.c_str(), O_RDONLY);
-  if (filedes < 0)
+  file_desc= ::open(real_file_name.c_str(), O_RDONLY);
+  if (file_desc < 0)
     return -1;
-  file_buff->init_buff(filedes);
+  file_buff->init_buff(file_desc);
 
   thr_lock_data_init(&share->lock, &lock, NULL);
   return 0;
@@ -353,7 +353,7 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
 
 int FilesystemCursor::close(void)
 {
-  ::close(filedes);
+  ::close(file_desc);
   return 0;
 }
 
@@ -361,6 +361,8 @@ int FilesystemCursor::doStartTableScan(bool)
 {
   current_position= 0;
   next_position= 0;
+  slots.clear();
+  file_buff->init_buff(file_desc);
   return 0;
 }
 
@@ -453,8 +455,92 @@ int FilesystemCursor::info(uint32_t)
   return 0;
 }
 
+int FilesystemCursor::openUpdateFile()
+{
+  if (!share->update_file_opened)
+  {
+    struct stat st;
+    if (stat(real_file_name.c_str(), &st) < 0)
+      return -1;
+    update_file_name= real_file_name;
+    update_file_name.append(".UPDATE");
+    update_file_desc= ::open(update_file_name.c_str(),
+                             O_RDWR | O_CREAT | O_TRUNC,
+                             st.st_mode);
+    if (update_file_desc < 0)
+    {
+      cerr << "update file error!" << endl;
+      return -1;
+    }
+    share->update_file_opened= true;
+    update_file_length= 0;
+  }
+  return 0;
+}
+
 int FilesystemCursor::doEndTableScan()
 {
+  if (slots.size() == 0)
+    return 0;
+
+  if (openUpdateFile() < 0)
+    return -1;
+
+  sort(slots.begin(), slots.end());
+  vector< pair<off_t, off_t> >::iterator slot_iter= slots.begin();
+  file_buff->init_buff(file_desc);
+  off_t write_start= 0;
+  off_t write_end= 0;
+  off_t file_buffer_start= 0;
+  while (file_buffer_start != -1)
+  {
+    bool in_hole= false;
+
+    write_end= file_buff->end();
+    if (slot_iter != slots.end() &&
+      write_end >= slot_iter->first)
+    {
+      write_end= slot_iter->first;
+      in_hole= true;
+    }
+
+    off_t write_length= write_end - write_start;
+    if (::write(update_file_desc,
+                file_buff->ptr() + (write_start - file_buff->start()),
+                write_length) != write_length)
+    {
+    }
+    update_file_length+= write_length;
+    cerr << "write: " << write_start << " -> " << write_end << endl;
+
+    if (in_hole)
+    {
+      while (file_buff->end() <= slot_iter->second && file_buffer_start != -1)
+        file_buffer_start= file_buff->read_next();
+      write_start= slot_iter->second;
+      ++slot_iter;
+    }
+    else
+      write_start= write_end;
+
+    if (write_end == file_buff->end())
+      file_buffer_start= file_buff->read_next();
+  }
+  // close update file
+  if (::fsync(update_file_desc) ||
+      ::close(update_file_desc))
+    return -1;
+  share->update_file_opened= false;
+
+  // close current file
+  ::close(file_desc);
+  if (::rename(update_file_name.c_str(), real_file_name.c_str()))
+    return -1;
+
+  // reopen the data file
+  file_desc= ::open(real_file_name.c_str(), O_RDONLY);
+  if (file_desc < 0)
+    return -1;
   return 0;
 }
 
@@ -509,43 +595,6 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   return 0;
 }
 
-int FilesystemCursor::updateRealFile(const char *buf, size_t len)
-{
-  // make up the name of temp file
-  string temp_file_name = real_file_name + ".TEMP";
-
-  ifstream fin(real_file_name.c_str());
-  ofstream fout(temp_file_name.c_str());
-  if (not fin.is_open() || not fout.is_open())
-    return HA_ERR_CRASHED_ON_USAGE;
-
-  string line;
-  while (fin.tellg() < prev_pos && getline(fin, line))
-  {
-    line+= "\n";
-    fout.write(line.c_str(), line.length());
-  }
-  // omit this line
-  getline(fin, line);
-  // update this line if necessary
-  if (buf)
-  {
-    fout.write(buf, len);
-  }
-  while (getline(fin, line))
-  {
-    line+= "\n";
-    fout.write(line.c_str(), line.length());
-  }
-  fin.close();
-  fout.close();
-  // rename the temp file
-  int err = rename(temp_file_name.c_str(), real_file_name.c_str());
-  if (err != 0)
-    return HA_ERR_CRASHED_ON_USAGE;
-  return 0;
-}
-
 string FilesystemCursor::getSeparator()
 {
   char ch;
@@ -560,22 +609,19 @@ int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 {
   ha_statistic_increment(&system_status_var::ha_update_count);
 
-  if (!fd.is_open())
-    return HA_ERR_END_OF_FILE;
+  if (openUpdateFile())
+    return -1;
+
+  addSlot();
 
   // get the update information
   drizzled::String output_line;
   getAllFields(output_line);
 
-  int err = updateRealFile(output_line.ptr(), output_line.length());
-  if (err)
-    return HA_ERR_CRASHED_ON_USAGE;
-
-  // re-open this file
-  fd.open(real_file_name.c_str());
-  if (not fd.is_open())
-    return HA_ERR_CRASHED_ON_USAGE;
-  fd.seekg(prev_pos);
+  if (::write(update_file_desc, output_line.ptr(), output_line.length())
+      != output_line.length())
+    return -1;
+  update_file_length+= output_line.length();
 
   return 0;
 }

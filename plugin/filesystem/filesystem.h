@@ -41,6 +41,7 @@ public:
 
   uint32_t use_count;
   const std::string table_name;
+  bool update_file_opened;
   pthread_mutex_t mutex;
   drizzled::THR_LOCK lock;
 };
@@ -50,7 +51,10 @@ class FilesystemCursor : public drizzled::Cursor
   drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
   FilesystemTableShare *share;       /* Shared lock info */
   TransparentFile *file_buff;
-  int filedes;
+  int file_desc;
+  std::string update_file_name;
+  int update_file_desc;
+  size_t update_file_length;
   off_t current_position;
   off_t next_position;
   std::string real_file_name;
@@ -99,10 +103,10 @@ public:
                                   uint64_t *nb_reserved_values) { (void)offset; (void)increment; (void)nb_desired_values; (void)first_value; (void)nb_reserved_values; };
   FilesystemTableShare *get_share(const char *table_name);
 private:
-  int updateRealFile(const char *buf, size_t len);
   string getSeparator();
   void getAllFields(drizzled::String& output);
   void addSlot();
+  int openUpdateFile();
 };
 
 #endif /* PLUGIN_FILESYSTEM_FILESYSTEM_H */
