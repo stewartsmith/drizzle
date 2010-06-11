@@ -40,8 +40,7 @@ noinst_HEADERS+= \
 		 client/client_priv.h \
 		 client/errname.h \
 		 client/get_password.h \
-		 client/linebuffer.h \
-		 drizzled/configmake.h
+		 client/linebuffer.h
 
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
