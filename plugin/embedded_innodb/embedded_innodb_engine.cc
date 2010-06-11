@@ -718,6 +718,20 @@ EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engi
    blobroot(NULL)
 { }
 
+static unsigned int get_first_unique_index(drizzled::Table *table)
+{
+  unsigned int k;
+  for (k=0; k < table->getShare()->keys; k++)
+  {
+    if (table->key_info[k].flags & HA_NOSAME)
+    {
+      return k;
+    }
+  }
+  assert(k < table->getShare()->keys);
+  return 0;
+}
+
 int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 {
   const char* innodb_table_name= table_path_to_innodb_name(name);
@@ -744,7 +758,8 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
     ref_length= sizeof(uint64_t);
   else
   {
-    ref_length= 0; // FIXME: this is a bug. we need to work out what index it is.
+    unsigned int keynr= get_first_unique_index(table);
+    ref_length= table->key_info[keynr].key_length;
   }
 
   in_table_scan= false;
@@ -2121,8 +2136,14 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   }
   else
   {
+    unsigned int keynr;
+    if (table->getShare()->primary_key != MAX_KEY)
+      keynr= table->getShare()->primary_key;
+    else
+      keynr= get_first_unique_index(table);
+
     fill_ib_search_tpl_from_drizzle_key(search_tuple,
-                                        table->key_info + 0,
+                                        table->key_info + keynr,
                                         pos, ref_length);
   }
 
@@ -2204,11 +2225,20 @@ static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, i
 
 void EmbeddedInnoDBCursor::position(const unsigned char *record)
 {
-  if (table->getShare()->primary_key != MAX_KEY)
-    store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
-                                ref, ref_length, record);
-  else
+  if (share->has_hidden_primary_key)
     *((uint64_t*) ref)= hidden_autoinc_pkey_position;
+  else
+  {
+    unsigned int keynr;
+    if (table->getShare()->primary_key != MAX_KEY)
+      keynr= table->getShare()->primary_key;
+    else
+      keynr= get_first_unique_index(table);
+
+    store_key_value_from_innodb(table->key_info + keynr,
+                                ref, ref_length, record);
+  }
+
   return;
 }
 
