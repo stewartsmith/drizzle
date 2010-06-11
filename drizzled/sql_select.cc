@@ -5289,7 +5289,7 @@ int create_sort_index(Session *session, Join *join, order_st *order, ha_rows fil
     }
   }
 
-  if (table->getShare()->tmp_table)
+  if (table->getShare()->getType())
     table->cursor->info(HA_STATUS_VARIABLE);	// Get record count
   table->sort.found_records=filesort(session, table,join->sortorder, length,
                                      select, filesort_limit, 0,

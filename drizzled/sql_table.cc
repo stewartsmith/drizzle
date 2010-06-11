@@ -1965,7 +1965,7 @@ send_result:
       }
       else if (open_for_modify)
       {
-        if (table->table->getShare()->tmp_table)
+        if (table->table->getShare()->getType())
         {
           table->table->cursor->info(HA_STATUS_CONST);
         }
@@ -2164,7 +2164,7 @@ bool mysql_create_like_table(Session* session,
     return true;
 
   TableIdentifier src_identifier(src_table->table->getMutableShare()->getSchemaName(),
-                                 src_table->table->getMutableShare()->getTableName(), src_table->table->getMutableShare()->tmp_table);
+                                 src_table->table->getMutableShare()->getTableName(), src_table->table->getMutableShare()->getType());
 
 
 
@@ -2187,12 +2187,12 @@ bool mysql_create_like_table(Session* session,
                                         src_identifier, is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
-        (void) session->rm_temporary_table(destination_identifier);
+        (void) session->rm_temporary_table(destination_identifier, true);
       }
       else if (not session->open_temporary_table(destination_identifier))
       {
         // We created, but we can't open... also, a hack.
-        (void) session->rm_temporary_table(destination_identifier);
+        (void) session->rm_temporary_table(destination_identifier, true);
       }
       else
       {
@@ -2239,7 +2239,7 @@ bool mysql_create_like_table(Session* session,
       } 
       else
       {
-        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->getShare()->tmp_table), is_if_not_exists);
+        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->getShare()->getType()), is_if_not_exists);
         (void)rc;
 
         res= false;

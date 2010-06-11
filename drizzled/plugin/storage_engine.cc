@@ -512,7 +512,7 @@ int StorageEngine::createTable(Session &session,
 {
   int error= 1;
   Table table;
-  TableShare share(identifier.getSchemaName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
+  TableShare share(identifier);
   message::Table tmp_proto;
 
   if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, "", 0, 0, table))
