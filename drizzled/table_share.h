@@ -56,14 +56,17 @@ class TableShare
 {
   typedef std::vector<std::string> StringVector;
 public:
-  TableShare();
+  TableShare(TableIdentifier::Type type_arg= message::Table::STANDARD);
 
-  TableShare(const char *key,
+  TableShare(TableIdentifier::Type type_arg,
+             const char *key,
              uint32_t key_length,
              const char *new_table_name,
              const char *new_path);
 
-  TableShare(char *key, uint32_t key_length, char *path_arg= NULL, uint32_t path_length_arg= 0);
+  TableShare(TableIdentifier &identifier);
+
+  TableShare(TableIdentifier::Type type_arg, char *key, uint32_t key_length, char *path_arg= NULL, uint32_t path_length_arg= 0);
 
   ~TableShare() 
   {
@@ -483,11 +486,6 @@ public:
   TableIdentifier::Type getType() const
   {
     return tmp_table;
-  }
-
-  TableIdentifier::Type setType(TableIdentifier::Type arg)
-  {
-    return tmp_table= arg;
   }
 
 private:

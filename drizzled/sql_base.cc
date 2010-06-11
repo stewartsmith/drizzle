@@ -150,8 +150,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     This has to be done to ensure that the table share is removed from
     the table defintion cache as soon as the last instance is removed
   */
-  share= new TableShare(const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
-  share->setType(message::Table::INTERNAL);       // for intern_close_table()
+  share= new TableShare(message::Table::INTERNAL, const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -2308,7 +2307,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   key_length= TableShare::createKey(cache_key, const_cast<char*>(identifier.getSchemaName().c_str()),
                                     const_cast<char*>(identifier.getTableName().c_str()));
 
-  share= new TableShare(cache_key, key_length,
+  share= new TableShare(message::Table::TEMPORARY, cache_key, key_length,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table))))
@@ -2335,7 +2334,6 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  share->setType(message::Table::TEMPORARY);
 
   if (link_in_list)
   {
