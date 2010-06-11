@@ -67,6 +67,7 @@ public:
   FilesystemCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
   ~FilesystemCursor()
   {
+    std::cerr << "CURSOR DCTOR" << std::endl;
     if (file_buff)
       delete file_buff;
   }
@@ -102,6 +103,7 @@ public:
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values) { (void)offset; (void)increment; (void)nb_desired_values; (void)first_value; (void)nb_reserved_values; };
   FilesystemTableShare *get_share(const char *table_name);
+  void free_share();
 private:
   void getAllFields(drizzled::String& output);
   void addSlot();

@@ -277,9 +277,6 @@ FilesystemTableShare::~FilesystemTableShare()
   pthread_mutex_destroy(&mutex);
 }
 
-/*
-  Simple lock controls.
-*/
 FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
 {
   pthread_mutex_lock(&filesystem_mutex);
@@ -302,14 +299,23 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
 
     a_engine->addOpenTable(share->table_name, share);
 
-    // initialize FormatInfo if necessary
-    // initialize per share mutex
     pthread_mutex_init(&share->mutex,MY_MUTEX_INIT_FAST);
   }
   share->use_count++;
   pthread_mutex_unlock(&filesystem_mutex);
 
   return share;
+}
+
+void FilesystemCursor::free_share()
+{
+  pthread_mutex_lock(&filesystem_mutex);
+  if (!--share->use_count){
+    FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(engine);
+    a_engine->deleteOpenTable(share->table_name);
+    delete share;
+  }
+  pthread_mutex_unlock(&filesystem_mutex);
 }
 
 FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
@@ -322,9 +328,6 @@ FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, 
 
 int FilesystemCursor::open(const char *name, int, uint32_t)
 {
-  if (!(share= get_share(name)))
-    return HA_ERR_OUT_OF_MEM; // TODO: code style???
-
   message::Table* table_proto = table->getShare()->getTableProto();
 
   real_file_name.clear();
@@ -341,11 +344,17 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
   }
 
   if (real_file_name.empty())
-    return -1;
+    return ER_FILE_NOT_FOUND;
   file_desc= ::open(real_file_name.c_str(), O_RDONLY);
   if (file_desc < 0)
-    return -1;
+    return ER_CANT_OPEN_FILE;
   file_buff->init_buff(file_desc);
+
+  if (!(share= get_share(name)))
+  {
+    ::close(file_desc);
+    return ENOENT;
+  }
 
   thr_lock_data_init(&share->lock, &lock, NULL);
   return 0;
@@ -354,6 +363,7 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
 int FilesystemCursor::close(void)
 {
   ::close(file_desc);
+  free_share();
   return 0;
 }
 
