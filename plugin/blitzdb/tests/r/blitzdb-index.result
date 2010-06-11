@@ -925,3 +925,15 @@ Schwartz	1500
 Smith	45530
 Yamada	120
 drop table t1;
+create table t1 (a int, b int, c int, d int, primary key(a, b)) engine = blitzdb;
+ERROR HY000: Can't create table 'test.t1' (errno: 138)
+create table t1 (a int, b int, c int, d int, primary key(a, b, c)) engine = blitzdb;
+ERROR HY000: Can't create table 'test.t1' (errno: 138)
+create table t1 (a int, b int, c int, d int, index(a, b)) engine = blitzdb;
+ERROR HY000: Can't create table 'test.t1' (errno: 138)
+create table t1 (a int, b int, c int, d int, index(a, b, c)) engine = blitzdb;
+ERROR HY000: Can't create table 'test.t1' (errno: 138)
+create table t1 (a int, b int, c int, d int, unique(a, b)) engine = blitzdb;
+ERROR HY000: Can't create table 'test.t1' (errno: 138)
+create table t1 (a int, b int, c int, d int, unique(a, b, c)) engine = blitzdb;
+ERROR HY000: Can't create table 'test.t1' (errno: 138)

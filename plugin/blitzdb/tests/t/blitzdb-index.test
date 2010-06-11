@@ -498,3 +498,20 @@ select sum(price) from t1;
 select lastname, sum(price) from t1 group by lastname;
 
 drop table t1;
+
+# +-----------------------+
+# | COMPOSITE INDEX CHECK |
+# +-----------------------+
+
+--error 1005
+create table t1 (a int, b int, c int, d int, primary key(a, b)) engine = blitzdb;
+--error 1005
+create table t1 (a int, b int, c int, d int, primary key(a, b, c)) engine = blitzdb;
+--error 1005
+create table t1 (a int, b int, c int, d int, index(a, b)) engine = blitzdb;
+--error 1005
+create table t1 (a int, b int, c int, d int, index(a, b, c)) engine = blitzdb;
+--error 1005
+create table t1 (a int, b int, c int, d int, unique(a, b)) engine = blitzdb;
+--error 1005
+create table t1 (a int, b int, c int, d int, unique(a, b, c)) engine = blitzdb;

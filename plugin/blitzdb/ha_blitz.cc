@@ -123,6 +123,13 @@ int BlitzEngine::doCreateTable(drizzled::Session &,
   BlitzTree btree;
   int ecode;
 
+  /* Temporary fix for blocking composite keys. We need to add this
+     check because version 1 doesn't handle composite indexes. */
+  for (uint32_t i = 0; i < table.s->keys; i++) {
+    if (table.key_info[i].key_parts > 1)
+      return HA_ERR_UNSUPPORTED;
+  }
+
   /* Create relevant files for a new table and close them immediately.
      All we want to do here is somewhat like UNIX touch(1). */
   if ((ecode = dict.create_data_table(proto, table, identifier)) != 0)
