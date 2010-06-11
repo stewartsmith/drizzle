@@ -381,12 +381,12 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
     if (ch == '\0')
       return HA_ERR_END_OF_FILE;
 
-    (*field)->move_field_offset(row_offset);
 
     // if we find separator
     if (row_separator.find(ch) != string::npos ||
         col_separator.find(ch) != string::npos)
     {
+      (*field)->move_field_offset(row_offset);
       if (!content.empty())
       {
         (*field)->set_notnull();
@@ -403,24 +403,23 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
       }
       else
         (*field)->set_null();
+      (*field)->move_field_offset(-row_offset);
 
       content.clear();
       ++field;
 
       if (row_separator.find(ch) != string::npos)
         line_done= true;
-    }
-    else
-      content.push_back(ch);
 
-    (*field)->move_field_offset(-row_offset);
+      continue;
+    }
+    content.push_back(ch);
   }
-  // line_done == true || *field == NULL
   if (line_done)
   {
     for (; *field; ++field)
     {
-      (*field)->move_field_offset(-row_offset);
+      (*field)->move_field_offset(row_offset);
       (*field)->set_notnull();
       (*field)->set_default();
       (*field)->move_field_offset(-row_offset);
