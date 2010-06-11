@@ -1091,7 +1091,17 @@ int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message:
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (not table_message.SerializeToZeroCopyStream(output))
+  bool success;
+
+  try {
+    success= table_message.SerializeToZeroCopyStream(output);
+  }
+  catch (...)
+  {
+    success= false;
+  }
+
+  if (not success)
   {
     my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
              table_message.InitializationErrorString().c_str());
@@ -1172,13 +1182,17 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
 
   if (input.good())
   {
-    if (table_message.ParseFromIstream(&input))
-    {
-      return true;
+    try {
+      if (table_message.ParseFromIstream(&input))
+      {
+        return true;
+      }
     }
-
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             table_message.InitializationErrorString().c_str());
+    catch (...)
+    {
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_message.InitializationErrorString().empty() ? "": table_message.InitializationErrorString().c_str());
+    }
   }
   else
   {
