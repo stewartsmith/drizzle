@@ -224,6 +224,7 @@ Session::Session(plugin::Client *client_arg) :
   query_id= 0;
   warn_query_id= 0;
   mysys_var= 0;
+  scoreboard_index= -1;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
@@ -344,7 +345,6 @@ void Session::cleanup(void)
 Session::~Session()
 {
   this->checkSentry();
-  add_to_status(&global_status_var, &status_var);
 
   if (client->isConnected())
   {
@@ -379,54 +379,6 @@ Session::~Session()
   /* Ensure that no one is using Session */
   pthread_mutex_unlock(&LOCK_delete);
   pthread_mutex_destroy(&LOCK_delete);
-}
-
-/*
-  Add all status variables to another status variable array
-
-  SYNOPSIS
-   add_to_status()
-   to_var       add to this array
-   from_var     from this array
-
-  NOTES
-    This function assumes that all variables are long/ulong.
-    If this assumption will change, then we have to explictely add
-    the other variables after the while loop
-*/
-void add_to_status(system_status_var *to_var, system_status_var *from_var)
-{
-  ulong *end= (ulong*) ((unsigned char*) to_var +
-                        offsetof(system_status_var, last_system_status_var) +
-			sizeof(ulong));
-  ulong *to= (ulong*) to_var, *from= (ulong*) from_var;
-
-  while (to != end)
-    *(to++)+= *(from++);
-}
-
-/*
-  Add the difference between two status variable arrays to another one.
-
-  SYNOPSIS
-    add_diff_to_status
-    to_var       add to this array
-    from_var     from this array
-    dec_var      minus this array
-
-  NOTE
-    This function assumes that all variables are long/ulong.
-*/
-void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
-                        system_status_var *dec_var)
-{
-  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(system_status_var,
-						  last_system_status_var) +
-			sizeof(ulong));
-  ulong *to= (ulong*) to_var, *from= (ulong*) from_var, *dec= (ulong*) dec_var;
-
-  while (to != end)
-    *(to++)+= *(from++) - *(dec++);
 }
 
 void Session::awake(Session::killed_state state_to_set)
@@ -1753,14 +1705,8 @@ void Session::refresh_status()
 {
   pthread_mutex_lock(&LOCK_status);
 
-  /* Add thread's status variabes to global status */
-  add_to_status(&global_status_var, &status_var);
-
   /* Reset thread's status variables */
   memset(&status_var, 0, sizeof(status_var));
-
-  /* Reset some global variables */
-  reset_status_vars();
 
   /* Reset the counters of all key caches (default and named). */
   reset_key_cache_counters();
