@@ -66,7 +66,7 @@ client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 client_drizzleslap_CXXFLAGS=	${CLIENT_CXXFLAGS}
 
 client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
-client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
+client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
 client_drizzletest_CXXFLAGS=	${CLIENT_CXXFLAGS}
  
 
