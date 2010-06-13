@@ -1998,61 +1998,6 @@ err:
   return(true);
 }
 
-/*
-  We have to write the query before we unlock the named table.
-
-  Since temporary tables are not replicated under row-based
-  replication, CREATE TABLE ... LIKE ... needs special
-  treatement.  We have four cases to consider, according to the
-  following decision table:
-
-  ==== ========= ========= ==============================
-  Case    Target    Source Write to binary log
-  ==== ========= ========= ==============================
-  1       normal    normal Original statement
-  2       normal temporary Generated statement
-  3    temporary    normal Nothing
-  4    temporary temporary Nothing
-  ==== ========= ========= ==============================
-*/
-static bool replicateCreateTableLike(Session *session, TableList *table, Table *name_lock,
-                                     bool is_src_table_tmp, bool is_if_not_exists)
-{
-  if (is_src_table_tmp)
-  {
-    char buf[2048];
-    String query(buf, sizeof(buf), system_charset_info);
-    query.length(0);  // Have to zero it since constructor doesn't
-
-
-    /*
-      Here we open the destination table, on which we already have
-      name-lock. This is needed for store_create_info() to work.
-      The table will be closed by unlink_open_table() at the end
-      of this function.
-    */
-    table->table= name_lock;
-    pthread_mutex_lock(&LOCK_open); /* Open new table we have just acquired */
-    if (session->reopen_name_locked_table(table, false))
-    {
-      pthread_mutex_unlock(&LOCK_open);
-      return false;
-    }
-    pthread_mutex_unlock(&LOCK_open);
-
-    int result= store_create_info(table, &query, is_if_not_exists);
-
-    assert(result == 0); // store_create_info() always return 0
-    write_bin_log(session, query.ptr());
-  }
-  else                                      // Case 1
-  {
-    write_bin_log(session, session->query.c_str());
-  }
-
-  return true;
-}
-
   /*
     Create a new table by copying from source table
 
@@ -2121,6 +2066,12 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
                                               destination_identifier,
                                               new_proto);
 
+  if (err == false && not destination_identifier.isTmp())
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.createTable(&session, new_proto);
+  }
+
   return err ? false : true;
 }
 
@@ -2184,7 +2135,7 @@ bool mysql_create_like_table(Session* session,
     else
     {
       bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                        src_identifier, is_engine_set);
+                                             src_identifier, is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
         (void) session->rm_temporary_table(destination_identifier, true);
@@ -2228,7 +2179,7 @@ bool mysql_create_like_table(Session* session,
     {
       pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
       bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                        src_identifier, is_engine_set);
+                                             src_identifier, is_engine_set);
       pthread_mutex_unlock(&LOCK_open);
 
       // So we blew the creation of the table, and we scramble to clean up
@@ -2239,9 +2190,6 @@ bool mysql_create_like_table(Session* session,
       } 
       else
       {
-        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->getShare()->getType()), is_if_not_exists);
-        (void)rc;
-
         res= false;
       }
     }
