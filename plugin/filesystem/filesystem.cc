@@ -650,11 +650,17 @@ int FilesystemCursor::doDeleteRecord(const unsigned char *)
 }
 
 bool FilesystemEngine::validateCreateTableOption(const std::string &key,
-                                                 const std::string &)
+                                                 const std::string &state)
 {
-  if (boost::iequals(key, FILESYSTEM_OPTION_FILE_PATH) ||
-      boost::iequals(key, FILESYSTEM_OPTION_ROW_SEPARATOR) ||
-      boost::iequals(key, FILESYSTEM_OPTION_COL_SEPARATOR))
+  if (boost::iequals(key, FILESYSTEM_OPTION_FILE_PATH))
+  {
+    if (state.empty() || ::access(state.c_str(), F_OK))
+      return false;
+    return true;
+  }
+  if ((boost::iequals(key, FILESYSTEM_OPTION_ROW_SEPARATOR) ||
+       boost::iequals(key, FILESYSTEM_OPTION_COL_SEPARATOR)) &&
+      ! state.empty())
     return true;
   return false;
 }
