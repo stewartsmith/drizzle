@@ -116,7 +116,7 @@ public:
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
   bool doDoesTableExist(Session& , TableIdentifier &);
-  int doRenameTable(Session&, TableIdentifier &, TableIdentifier &) { return false;}
+  int doRenameTable(Session&, TableIdentifier &, TableIdentifier &);
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
@@ -651,6 +651,13 @@ int FilesystemCursor::doDeleteRecord(const unsigned char *)
 {
   ha_statistic_increment(&system_status_var::ha_delete_count);
   addSlot();
+  return 0;
+}
+
+int FilesystemEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+{
+  if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), FILESYSTEM_EXT))
+    return errno;
   return 0;
 }
 
