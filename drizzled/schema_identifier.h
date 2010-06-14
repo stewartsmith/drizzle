@@ -63,26 +63,20 @@ public:
   }
 
 public:
-  SchemaIdentifier(const std::string &db_arg) :
-    db(db_arg),
-    lower_db(db_arg)
-  { 
-    std::transform(lower_db.begin(), lower_db.end(),
-                   lower_db.begin(), ::tolower);
-  }
+  SchemaIdentifier(const std::string &db_arg);
 
   virtual ~SchemaIdentifier()
   { }
 
   virtual const std::string &getSQLPath();
-  const std::string &getPath();
+  const std::string &getPath() const;
 
   const std::string &getSchemaName() const
   {
     return db;
   }
 
-  bool isValid();
+  bool isValid() const;
   bool compare(std::string arg) const;
 
   friend bool operator<(const SchemaIdentifier &left, const SchemaIdentifier &right)

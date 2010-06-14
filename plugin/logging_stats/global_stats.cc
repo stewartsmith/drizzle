@@ -28,6 +28,8 @@
  *
  */
 
+#include "config.h"
+#include <drizzled/plugin.h>
 #include "global_stats.h"
 
 GlobalStats::GlobalStats()

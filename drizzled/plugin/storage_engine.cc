@@ -512,7 +512,7 @@ int StorageEngine::createTable(Session &session,
 {
   int error= 1;
   Table table;
-  TableShare share(identifier.getSchemaName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
+  TableShare share(identifier);
   message::Table tmp_proto;
 
   if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, "", 0, 0, table))
@@ -823,15 +823,8 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     {
       const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
 
-      if (key_nr == 0 &&
-          (table->key_info[0].key_part[0].field->flags &
-           AUTO_INCREMENT_FLAG)
-          && (current_session)->lex->sql_command == SQLCOM_ALTER_TABLE)
-      {
-        err_msg= ER(ER_DUP_ENTRY_AUTOINCREMENT_CASE);
-      }
-
       print_keydup_error(key_nr, err_msg, *table);
+
       return;
     }
     textno=ER_DUP_KEY;
@@ -1098,7 +1091,17 @@ int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message:
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (not table_message.SerializeToZeroCopyStream(output))
+  bool success;
+
+  try {
+    success= table_message.SerializeToZeroCopyStream(output);
+  }
+  catch (...)
+  {
+    success= false;
+  }
+
+  if (not success)
   {
     my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
              table_message.InitializationErrorString().c_str());
@@ -1179,13 +1182,17 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
 
   if (input.good())
   {
-    if (table_message.ParseFromIstream(&input))
-    {
-      return true;
+    try {
+      if (table_message.ParseFromIstream(&input))
+      {
+        return true;
+      }
     }
-
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             table_message.InitializationErrorString().c_str());
+    catch (...)
+    {
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_message.InitializationErrorString().empty() ? "": table_message.InitializationErrorString().c_str());
+    }
   }
   else
   {

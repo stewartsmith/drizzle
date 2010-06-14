@@ -150,8 +150,7 @@ void close_handle_and_leave_table_as_lock(Table *table)
     This has to be done to ensure that the table share is removed from
     the table defintion cache as soon as the last instance is removed
   */
-  share= new TableShare(const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
-  share->tmp_table= message::Table::INTERNAL;       // for intern_close_table()
+  share= new TableShare(message::Table::INTERNAL, const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -193,11 +192,11 @@ void free_cache_entry(void *entry)
   table->intern_close_table();
   if (not table->in_use)
   {
-    table->next->prev=table->prev;		/* remove from used chain */
-    table->prev->next=table->next;
+    table->getNext()->setPrev(table->getPrev());		/* remove from used chain */
+    table->getPrev()->setNext(table->getNext());
     if (table == unused_tables)
     {
-      unused_tables= unused_tables->next;
+      unused_tables= unused_tables->getNext();
       if (table == unused_tables)
         unused_tables= NULL;
     }
@@ -370,7 +369,7 @@ exist yet.
     result= session->reopen_tables(true, true);
 
     /* Set version for table */
-    for (Table *table= session->open_tables; table ; table= table->next)
+    for (Table *table= session->open_tables; table ; table= table->getNext())
     {
       /*
         Preserve the version (0) of write locked tables so that a impending
@@ -409,7 +408,7 @@ bool Session::free_cached_table()
   assert(table->key_read == 0);
   assert(!table->cursor || table->cursor->inited == Cursor::NONE);
 
-  open_tables= table->next;
+  open_tables= table->getNext();
 
   if (table->needs_reopen_or_name_lock() ||
       version != refresh_version || !table->db_stat)
@@ -431,14 +430,15 @@ bool Session::free_cached_table()
 
     if (unused_tables)
     {
-      table->next= unused_tables;		/* Link in last */
-      table->prev= unused_tables->prev;
-      unused_tables->prev= table;
-      table->prev->next= table;
+      table->setNext(unused_tables);		/* Link in last */
+      table->setPrev(unused_tables->getPrev());
+      unused_tables->setPrev(table);
+      table->getPrev()->setNext(table);
     }
     else
     {
-      unused_tables= table->next= table->prev=table;
+      table->setPrev(unused_tables= table);
+      table->setNext(table->getPrev());
     }
   }
 
@@ -502,7 +502,7 @@ TableList *find_table_in_list(TableList *table,
 {
   for (; table; table= table->*link )
   {
-    if ((table->table == 0 || table->table->getShare()->tmp_table == message::Table::STANDARD) &&
+    if ((table->table == 0 || table->table->getShare()->getType() == message::Table::STANDARD) &&
         strcasecmp(table->db, db_name) == 0 &&
         strcasecmp(table->table_name, table_name) == 0)
       break;
@@ -566,7 +566,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
   if (table->table)
   {
     /* temporary table is always unique */
-    if (table->table && table->table->getShare()->tmp_table != message::Table::STANDARD)
+    if (table->table && table->table->getShare()->getType() != message::Table::STANDARD)
       return 0;
     table= table->find_underlying_table(table->table);
     /*
@@ -600,7 +600,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
 void Session::doGetTableNames(SchemaIdentifier &schema_identifier,
                               std::set<std::string>& set_of_names)
 {
-  for (Table *table= temporary_tables ; table ; table= table->next)
+  for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
     if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
@@ -619,7 +619,7 @@ void Session::doGetTableNames(CachedDirectory &,
 void Session::doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
                                     TableIdentifiers &set_of_identifiers)
 {
-  for (Table *table= temporary_tables ; table ; table= table->next)
+  for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
     if (schema_identifier.compare(table->getShare()->getSchemaName()))
     {
@@ -639,9 +639,9 @@ void Session::doGetTableIdentifiers(CachedDirectory &,
 
 bool Session::doDoesTableExist(TableIdentifier &identifier)
 {
-  for (Table *table= temporary_tables ; table ; table= table->next)
+  for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->getShare()->tmp_table == message::Table::TEMPORARY)
+    if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
       if (identifier.compare(table->getShare()->getSchemaName(), table->getShare()->getTableName()))
       {
@@ -656,9 +656,9 @@ bool Session::doDoesTableExist(TableIdentifier &identifier)
 int Session::doGetTableDefinition(TableIdentifier &identifier,
                                   message::Table &table_proto)
 {
-  for (Table *table= temporary_tables ; table ; table= table->next)
+  for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->getShare()->tmp_table == message::Table::TEMPORARY)
+    if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
       if (identifier.compare(table->getShare()->getSchemaName(), table->getShare()->getTableName()))
       {
@@ -679,7 +679,7 @@ Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 
   key_length= TableShare::createKey(key, new_db, table_name);
 
-  for (Table *table= temporary_tables ; table ; table= table->next)
+  for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
     if (table->getShare()->getCacheKeySize() == key_length &&
         not memcmp(table->getMutableShare()->getCacheKey(), key, key_length))
@@ -702,7 +702,7 @@ Table *Session::find_temporary_table(TableIdentifier &identifier)
 
   key_length= TableShare::createKey(key, identifier);
 
-  for (Table *table= temporary_tables ; table ; table= table->next)
+  for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
     if (table->getShare()->getCacheKeySize() == key_length &&
         not memcmp(table->getMutableShare()->getCacheKey(), key, key_length))
@@ -766,13 +766,13 @@ static void relink_unused(Table *table)
 {
   if (table != unused_tables)
   {
-    table->prev->next=table->next;		/* Remove from unused list */
-    table->next->prev=table->prev;
-    table->next=unused_tables;			/* Link in unused tables */
-    table->prev=unused_tables->prev;
-    unused_tables->prev->next=table;
-    unused_tables->prev=table;
-    unused_tables=table;
+    table->getPrev()->setNext(table->getNext());		/* Remove from unused list */
+    table->getNext()->setPrev(table->getPrev());
+    table->setNext(unused_tables);			/* Link in unused tables */
+    table->setPrev(unused_tables->getPrev());
+    unused_tables->getPrev()->setNext(table);
+    unused_tables->setPrev(table);
+    unused_tables= table;
   }
 }
 
@@ -809,7 +809,7 @@ void Session::unlink_open_table(Table *find)
         not memcmp(list->getMutableShare()->getCacheKey(), key, key_length))
     {
       /* Remove table from open_tables list. */
-      *prev= list->next;
+      *prev= list->getNext();
 
       /* Close table. */
       hash_delete(&open_cache,(unsigned char*) list); // Close table
@@ -817,7 +817,7 @@ void Session::unlink_open_table(Table *find)
     else
     {
       /* Step to next entry in open_tables list. */
-      prev= &list->next;
+      prev= list->getNextPtr();
     }
   }
 
@@ -847,7 +847,7 @@ void Session::unlink_open_table(Table *find)
 
 void Session::drop_open_table(Table *table, TableIdentifier &identifier)
 {
-  if (table->getShare()->tmp_table)
+  if (table->getShare()->getType())
   {
     close_temporary_table(table);
   }
@@ -973,7 +973,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
 
   if (link_in)
   {
-    table->next= open_tables;
+    table->setNext(open_tables);
     open_tables= table;
   }
   else
@@ -982,7 +982,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
       Table object should be already in Session::open_tables list so we just
       need to set Table::next correctly.
     */
-    table->next= orig_table.next;
+    table->setNext(orig_table.getNext());
   }
 
   table->tablenr= current_tablenr++;
@@ -1085,7 +1085,7 @@ bool Session::lock_table_name_if_not_cached(const char *new_db,
     return true;
   }
   (*table)->open_placeholder= true;
-  (*table)->next= open_tables;
+  (*table)->setNext(open_tables);
   open_tables= *table;
   pthread_mutex_unlock(&LOCK_open);
 
@@ -1156,7 +1156,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     same name. This block implements the behaviour.
     TODO -> move this block into a separate function.
   */
-  for (table= temporary_tables; table ; table=table->next)
+  for (table= temporary_tables; table ; table=table->getNext())
   {
     if (table->getShare()->getCacheKeySize() == key_length && !memcmp(table->getMutableShare()->getCacheKey(), key, key_length))
     {
@@ -1330,12 +1330,12 @@ c2: open t1; -- blocks
     /* Unlink the table from "unused_tables" list. */
     if (table == unused_tables)
     {  // First unused
-      unused_tables=unused_tables->next; // Remove from link
+      unused_tables= unused_tables->getNext(); // Remove from link
       if (table == unused_tables)
         unused_tables= NULL;
     }
-    table->prev->next=table->next; /* Remove from unused list */
-    table->next->prev=table->prev;
+    table->getPrev()->setNext(table->getNext()); /* Remove from unused list */
+    table->getNext()->setPrev(table->getPrev());
     table->in_use= this;
   }
   else
@@ -1366,7 +1366,7 @@ c2: open t1; -- blocks
           by other trying to take name-lock.
         */
         table->open_placeholder= true;
-        table->next= open_tables;
+        table->setNext(open_tables);
         open_tables= table;
         pthread_mutex_unlock(&LOCK_open);
 
@@ -1397,13 +1397,13 @@ c2: open t1; -- blocks
   pthread_mutex_unlock(&LOCK_open);
   if (refresh)
   {
-    table->next= open_tables; /* Link into simple list */
+    table->setNext(open_tables); /* Link into simple list */
     open_tables= table;
   }
   table->reginfo.lock_type= TL_READ; /* Assume read */
 
 reset:
-  assert(table->getShare()->getTableCount() > 0 || table->getShare()->tmp_table != message::Table::STANDARD);
+  assert(table->getShare()->getTableCount() > 0 || table->getShare()->getType() != message::Table::STANDARD);
 
   if (lex->need_correct_ident())
     table->alias_name_used= my_strcasecmp(table_alias_charset,
@@ -1429,7 +1429,9 @@ reset:
   assert(!table->auto_increment_field_not_null);
   table->auto_increment_field_not_null= false;
   if (table->timestamp_field)
+  {
     table->timestamp_field_type= table->timestamp_field->get_auto_set_type();
+  }
   table->pos_in_table_list= table_list;
   table->clear_column_bitmaps();
   assert(table->key_read == 0);
@@ -1567,7 +1569,7 @@ void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
     for target table name if we process ALTER Table ... RENAME.
     So loop below makes sense even if we are not under LOCK TABLES.
   */
-  for (table= open_tables; table ; table=table->next)
+  for (table= open_tables; table ; table=table->getNext())
   {
     if (!strcmp(table->getMutableShare()->getTableName(), identifier.getTableName().c_str()) &&
         !strcasecmp(table->getMutableShare()->getSchemaName(), identifier.getSchemaName().c_str()))
@@ -1620,7 +1622,7 @@ bool Session::reopen_tables(bool get_locks, bool)
     */
     uint32_t opens= 0;
 
-    for (table= open_tables; table ; table=table->next)
+    for (table= open_tables; table ; table=table->getNext())
     {
       opens++;
     }
@@ -1635,7 +1637,7 @@ bool Session::reopen_tables(bool get_locks, bool)
   prev= &open_tables;
   for (table= open_tables; table ; table=next)
   {
-    next= table->next;
+    next= table->getNext();
 
     my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
     hash_delete(&open_cache,(unsigned char*) table);
@@ -1698,7 +1700,7 @@ void Session::close_old_data_files(bool morph_locks, bool send_refresh)
 
   Table *table= open_tables;
 
-  for (; table ; table=table->next)
+  for (; table ; table=table->getNext())
   {
     /*
       Reopen marked for flush.
@@ -1797,7 +1799,7 @@ bool table_is_used(Table *table, bool wait_for_name_lock)
            (search->is_name_opened() && search->needs_reopen_or_name_lock()))
         return 1;
     }
-  } while ((table=table->next));
+  } while ((table=table->getNext()));
   return 0;
 }
 
@@ -1872,7 +1874,7 @@ Table *drop_locked_tables(Session *session, const char *db, const char *table_na
   */
   for (table= session->open_tables; table ; table=next)
   {
-    next=table->next;
+    next=table->getNext();
     if (!strcmp(table->getMutableShare()->getTableName(), table_name) &&
         !strcasecmp(table->getMutableShare()->getSchemaName(), db))
     {
@@ -1897,7 +1899,7 @@ Table *drop_locked_tables(Session *session, const char *db, const char *table_na
     else
     {
       *prev=table;
-      prev= &table->next;
+      prev= table->getNextPtr();
     }
   }
   *prev=0;
@@ -1917,7 +1919,7 @@ Table *drop_locked_tables(Session *session, const char *db, const char *table_na
 void abort_locked_tables(Session *session,const char *db, const char *table_name)
 {
   Table *table;
-  for (table= session->open_tables; table ; table= table->next)
+  for (table= session->open_tables; table ; table= table->getNext())
   {
     if (!strcmp(table->getMutableShare()->getTableName(), table_name) &&
         !strcmp(table->getMutableShare()->getSchemaName(), db))
@@ -2138,7 +2140,7 @@ restart:
     {
       if (tables->lock_type == TL_WRITE_DEFAULT)
         tables->table->reginfo.lock_type= update_lock_default;
-      else if (tables->table->getShare()->tmp_table == message::Table::STANDARD)
+      else if (tables->table->getShare()->getType() == message::Table::STANDARD)
         tables->table->reginfo.lock_type= tables->lock_type;
     }
   }
@@ -2305,7 +2307,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   key_length= TableShare::createKey(cache_key, const_cast<char*>(identifier.getSchemaName().c_str()),
                                     const_cast<char*>(identifier.getTableName().c_str()));
 
-  share= new TableShare(cache_key, key_length,
+  share= new TableShare(message::Table::TEMPORARY, cache_key, key_length,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
   if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table))))
@@ -2332,16 +2334,17 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   }
 
   new_tmp_table->reginfo.lock_type= TL_WRITE;	 // Simulate locked
-  share->tmp_table= message::Table::TEMPORARY;
 
   if (link_in_list)
   {
     /* growing temp list at the head */
-    new_tmp_table->next= this->temporary_tables;
-    if (new_tmp_table->next)
-      new_tmp_table->next->prev= new_tmp_table;
+    new_tmp_table->setNext(this->temporary_tables);
+    if (new_tmp_table->getNext())
+    {
+      new_tmp_table->getNext()->setPrev(new_tmp_table);
+    }
     this->temporary_tables= new_tmp_table;
-    this->temporary_tables->prev= 0;
+    this->temporary_tables->setPrev(0);
   }
   new_tmp_table->pos_in_table_list= 0;
 
@@ -2942,7 +2945,8 @@ Item **not_found_item= (Item**) 0x1;
 
 
 Item **
-find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
+find_item_in_list(Session *session,
+                  Item *find, List<Item> &items, uint32_t *counter,
                   find_item_error_report_type report_error,
                   enum_resolution_type *resolution)
 {
@@ -3022,7 +3026,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
             */
             if (report_error != IGNORE_ERRORS)
               my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                       find->full_name(), current_session->where);
+                       find->full_name(), session->where);
             return (Item**) 0;
           }
           found_unaliased= li.ref();
@@ -3053,7 +3057,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
               continue;                           // Same field twice
             if (report_error != IGNORE_ERRORS)
               my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                       find->full_name(), current_session->where);
+                       find->full_name(), session->where);
             return (Item**) 0;
           }
           found= li.ref();
@@ -3105,7 +3109,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
     {
       if (report_error != IGNORE_ERRORS)
         my_error(ER_NON_UNIQ_ERROR, MYF(0),
-                 find->full_name(), current_session->where);
+                 find->full_name(), session->where);
       return (Item **) 0;
     }
     if (found_unaliased)
@@ -3121,7 +3125,7 @@ find_item_in_list(Item *find, List<Item> &items, uint32_t *counter,
   {
     if (report_error == REPORT_ALL_ERRORS)
       my_error(ER_BAD_FIELD_ERROR, MYF(0),
-               find->full_name(), current_session->where);
+               find->full_name(), session->where);
     return (Item **) 0;
   }
   else
@@ -3442,7 +3446,7 @@ false   OK
 */
 
 static bool
-store_natural_using_join_columns(Session *,
+store_natural_using_join_columns(Session *session,
                                  TableList *natural_using_join,
                                  TableList *table_ref_1,
                                  TableList *table_ref_2,
@@ -3496,7 +3500,7 @@ store_natural_using_join_columns(Session *,
         if (!(common_field= it++))
         {
           my_error(ER_BAD_FIELD_ERROR, MYF(0), using_field_name_ptr,
-                   current_session->where);
+                   session->where);
           goto err;
         }
         if (!my_strcasecmp(system_charset_info,
@@ -4532,7 +4536,7 @@ bool remove_table_from_cache(Session *session, const char *db, const char *table
         */
         for (Table *session_table= in_use->open_tables;
              session_table ;
-             session_table= session_table->next)
+             session_table= session_table->getNext())
         {
           /* Do not handle locks of MERGE children. */
           if (session_table->db_stat)	// If table is open
