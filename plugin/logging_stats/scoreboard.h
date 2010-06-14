@@ -67,6 +67,14 @@ public:
    */
   ScoreboardSlot* findAndResetScoreboardSlot(drizzled::Session *session);
 
+  /**
+   * Finds the ScoreboardSlot for a given session. This function differs
+   * from findAndResetScoreboardSlot() as it returns the actual pointer
+   * rather then a copy. Its possible that values could be changed in 
+   * the underlying status variables, callers should beware. 
+   */
+  ScoreboardSlot* findOurScoreboardSlot(drizzled::Session *session);
+
   uint32_t getBucketNumber(drizzled::Session *session);
 
   uint32_t getNumberBuckets()
@@ -90,12 +98,7 @@ private:
   std::vector<std::vector<ScoreboardSlot* >* > vector_of_scoreboard_vectors;
   std::vector<pthread_rwlock_t* > vector_of_scoreboard_locks;
 
-  ScoreboardSlot* claimOpenScoreboardSlot(drizzled::Session *session, 
-                                          uint32_t bucket_number, 
-                                          std::vector<ScoreboardSlot* > *scoreboard_vector);
-
-  ScoreboardSlot* findOurScoreboardSlot(drizzled::Session *session, 
-                                        std::vector<ScoreboardSlot* > *scoreboard_vector);
+  ScoreboardSlot* claimOpenScoreboardSlot(drizzled::Session *session); 
 };
 
 #endif /* PLUGIN_LOGGING_STATS_SCOREBOARD_H */

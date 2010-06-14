@@ -26,7 +26,6 @@
 #include "drizzled/session.h"
 
 #include "plugin/status_dictionary/state_tool.h"
-#include "plugin/status_dictionary/status.h"
 #include "plugin/status_dictionary/variables.h"
 
 #endif /* PLUGIN_STATUS_DICTIONARY_DICTIONARY_H */
