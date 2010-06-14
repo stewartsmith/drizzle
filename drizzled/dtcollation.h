@@ -94,7 +94,10 @@ bool agg_item_collations_for_comparison(DTCollation &c, const char *name,
                                         Item **items, uint32_t nitems,
                                         uint32_t flags);
 
-/**
+/*
+
+ @note In Drizzle we have just one charset, so no conversion is required (though collation may).
+
   Collect arguments' character sets together.
 
   We allow to apply automatic character set conversion in some cases.

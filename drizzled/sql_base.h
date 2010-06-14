@@ -89,7 +89,8 @@ enum enum_resolution_type {
   RESOLVED_WITH_NO_ALIAS,
   RESOLVED_AGAINST_ALIAS
 };
-Item ** find_item_in_list(Item *item, List<Item> &items, uint32_t *counter,
+Item ** find_item_in_list(Session *session,
+                          Item *item, List<Item> &items, uint32_t *counter,
                           find_item_error_report_type report_error,
                           enum_resolution_type *resolution);
 bool insert_fields(Session *session, Name_resolution_context *context,

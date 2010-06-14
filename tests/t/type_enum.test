@@ -39,11 +39,10 @@ drop table t1;
 
 #
 # Bug #2077
+# Drizzle -> We only handle UTF-8 for ENUM names.
 #
+--error 1693
 create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
-show columns from t1;
-show create table t1;
-drop table t1;
 
 # and now with what it's meant to be doing (from looking at mysql result)
 create table t1 (a enum(0xC3A4, '1', '2') not null default 0xC3A4);
@@ -55,13 +54,13 @@ drop table t1;
 # Bug #5628 German characters in field-defs will be '?'
 # with some table definitions
 #
+# Drizzle -> We only handle UTF-8 for ENUM names.
+#
+--error 1693
 CREATE TABLE t1 (
   a INT  default 1,
   b ENUM('value','öäü_value','ÊÃÕ') NOT NULL
 );
-show create table t1;
-show columns from t1;
-drop table t1;
 
 # in utf8 land we don't convert ä into ae to store in latin1 encoding.
 # I think this is correct.
@@ -82,13 +81,12 @@ DROP TABLE t1;
 # Check latin1 -> utf8 conversion
 # (this is semi-pointless for Drizzle)
 #
+# Drizzle -> We only handle UTF-8 for ENUM names.
+#
+--error 1693
 CREATE TABLE t1 (
   a ENUM('ä','ö','ü') default 'ü'
 );
-show create table t1;
-insert into t1 values ('ä'), ('ö'), ('ü');
-select a from t1 order by a;
-drop table t1;
 
 # Test currently turned off because of this bug:
 # Bug 308841 queries with German umlauts in insert statements fail
@@ -130,17 +128,20 @@ drop table t1;
 #
 # Bug#24660 "enum" field type definition problem
 #
+# Drizzle -> We only handle UTF-8 for ENUM names.
+#
+--error 1693
 create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
-show create table t1;
-drop table t1;
+
 #
 create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
 show create table t1;
 drop table t1;
 #
+# Drizzle -> We only handle UTF-8 for ENUM names.
+#
+--error 1693
 create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
-show create table t1;
-drop table t1;
 
 #
 # Bug #29251: MySQL coerces special 0 enum values to normal '' value

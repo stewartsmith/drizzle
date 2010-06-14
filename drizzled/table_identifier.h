@@ -47,12 +47,11 @@
 #include <algorithm>
 #include <functional>
 
+#include <boost/functional/hash.hpp>
+
 namespace drizzled {
 
 class Table;
-
-uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
-size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
 
 class TableIdentifier : public SchemaIdentifier
 {
@@ -65,6 +64,7 @@ private:
   std::string table_name;
   std::string lower_table_name;
   std::string sql_path;
+  size_t hash_value;
 
   void init();
 
@@ -119,7 +119,7 @@ public:
 
   const std::string &getSQLPath();
 
-  const std::string &getPath();
+  const std::string &getPath() const;
 
   void setPath(const std::string &new_path)
   {
@@ -135,8 +135,9 @@ public:
 
   friend bool operator<(const TableIdentifier &left, const TableIdentifier &right)
   {
+    // Compare the schema names. You must use schema, path is not valid for
+    // this operation.
     int first= left.getLower().compare(right.getLower());
-
     if (first < 0)
     {
       return true;
@@ -147,6 +148,7 @@ public:
     }
     else
     {
+      // Compare the tables names.
       int val= left.lower_table_name.compare(right.lower_table_name);
 
       if (val < 0)
@@ -197,6 +199,8 @@ public:
     output << type_str;
     output << ", ";
     output << identifier.path;
+    output << ", ";
+    output << identifier.getHashValue();
     output << ")";
 
     return output;  // for multiple << operators.
@@ -218,7 +222,16 @@ public:
     return false;
   }
 
+  static uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
+  static size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
+
+  size_t getHashValue() const
+  {
+    return hash_value;
+  }
 };
+
+std::size_t hash_value(TableIdentifier const& b);
 
 typedef std::vector <TableIdentifier> TableIdentifierList;
 typedef std::list <TableIdentifier> TableIdentifiers;
