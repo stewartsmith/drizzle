@@ -33,7 +33,8 @@ class TablePlaceholder : public Table
 
 public:
   TablePlaceholder(const char *key, uint32_t key_length) :
-    Table()
+    Table(),
+    private_share(message::Table::INTERNAL)
   {
     is_placeholder_created= true;
     setShare(&private_share);
@@ -42,7 +43,6 @@ public:
 
     memcpy(&key_buff[0], key, key_length);
     getMutableShare()->set_table_cache_key(&key_buff[0], key_length);
-    getMutableShare()->tmp_table= message::Table::INTERNAL;  // for intern_close_table
     locked_by_name= true;
   }
 };

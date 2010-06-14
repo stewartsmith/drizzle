@@ -222,7 +222,7 @@ drop table t1;
 create table t1 (a bigint);
 insert into t1 values (1), (2), (3), (0), (0);
 alter table t1 modify a bigint not null auto_increment primary key;
-ERROR 23000: ALTER TABLE causes auto_increment resequencing, resulting in duplicate entry '0' for key 'PRIMARY'
+ERROR 23000: Duplicate entry '0' for key 'PRIMARY'
 select * from t1;
 a
 1
