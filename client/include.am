@@ -40,8 +40,7 @@ noinst_HEADERS+= \
 		 client/client_priv.h \
 		 client/errname.h \
 		 client/get_password.h \
-		 client/linebuffer.h \
-		 drizzled/configmake.h
+		 client/linebuffer.h
 
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
@@ -58,7 +57,7 @@ client_drizzledump_LDADD=	${CLIENT_LDADD}
 client_drizzledump_CXXFLAGS=	${CLIENT_CXXFLAGS}
 
 client_drizzleimport_SOURCES=	client/drizzleimport.cc
-client_drizzleimport_LDADD=	${CLIENT_LDADD} 
+client_drizzleimport_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 client_drizzleimport_CXXFLAGS=	${CLIENT_CXXFLAGS}
 
 client_drizzleslap_SOURCES=	client/drizzleslap.cc

@@ -730,7 +730,14 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
                                  session->thread_id,
                                  const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
         /* Actually execute the query */
-        mysql_execute_command(session);
+        try {
+          mysql_execute_command(session);
+        }
+        catch (...)
+        {
+          // Just try to catch any random failures that could have come
+          // during execution.
+        }
         DRIZZLE_QUERY_EXEC_DONE(0);
       }
     }
@@ -744,8 +751,6 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
-
-  return;
 }
 
 

@@ -404,6 +404,8 @@ public:
 private:
   SecurityContext security_ctx;
 
+  int32_t scoreboard_index;
+
   inline void checkSentry() const
   {
     assert(this->dbug_sentry == Session_SENTRY_MAGIC);
@@ -417,6 +419,16 @@ public:
   SecurityContext& getSecurityContext()
   {
     return security_ctx;
+  }
+
+  int32_t getScoreboardIndex()
+  {
+    return scoreboard_index;
+  }
+
+  void setScoreboardIndex(int32_t in_scoreboard_index)
+  {
+    scoreboard_index= in_scoreboard_index;
   }
 
   /**
@@ -1443,7 +1455,7 @@ public:
   void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(TableList *table_list);
   bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
-  bool rm_temporary_table(TableIdentifier &identifier);
+  bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);
 
@@ -1563,12 +1575,6 @@ static const std::bitset<CF_BIT_SIZE> CF_HAS_ROW_COUNT(1 << CF_BIT_HAS_ROW_COUNT
 static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
-
-/* Functions in sql_class.cc */
-void add_to_status(system_status_var *to_var, system_status_var *from_var);
-
-void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
-                        system_status_var *dec_var);
 
 } /* namespace drizzled */
 
