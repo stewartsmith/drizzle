@@ -384,6 +384,7 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
 
   string content;
   bool line_done= false;
+  bool line_blank= true;
   Field **field= table->getFields();
   for (; !line_done && *field; ++next_position)
   {
@@ -391,10 +392,13 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
     if (ch == '\0')
       return HA_ERR_END_OF_FILE;
 
-
     // if we find separator
-    if (row_separator.find(ch) != string::npos ||
-        col_separator.find(ch) != string::npos)
+    bool is_row= (row_separator.find(ch) != string::npos);
+    bool is_col= (col_separator.find(ch) != string::npos);
+    if (is_row && content.empty() && line_blank)
+      continue;
+
+    if (is_row || is_col)
     {
       (*field)->move_field_offset(row_offset);
       if (!content.empty())
@@ -418,7 +422,8 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
       content.clear();
       ++field;
 
-      if (row_separator.find(ch) != string::npos)
+      line_blank= false;
+      if (is_row)
         line_done= true;
 
       continue;
