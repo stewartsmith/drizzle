@@ -17,7 +17,6 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/current_session.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
 #include "drizzled/plugin/daemon.h"
@@ -199,7 +198,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
     HP_SHARE *internal_share= NULL;
     message::Table create_proto;
 
-    if (!heap_storage_engine->heap_create_table(ha_session(), name, table,
+    if (!heap_storage_engine->heap_create_table(table->in_use, name, table,
                                                 internal_table,
                                                 create_proto,
                                                 &internal_share))
@@ -348,8 +347,6 @@ int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_
 {
   int res;
   ha_statistic_increment(&system_status_var::ha_update_count);
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
   res= heap_update(file,old_data,new_data);
   if (!res && ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
               file->s->records)
@@ -368,7 +365,7 @@ int ha_heap::doDeleteRecord(const unsigned char * buf)
   int res;
   ha_statistic_increment(&system_status_var::ha_delete_count);
   res= heap_delete(file,buf);
-  if (!res && table->getShare()->tmp_table == message::Table::STANDARD &&
+  if (!res && table->getShare()->getType() == message::Table::STANDARD &&
       ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)
   {
     /*
@@ -526,7 +523,7 @@ int ha_heap::reset()
 int ha_heap::delete_all_rows()
 {
   heap_clear(file);
-  if (table->getShare()->tmp_table == message::Table::STANDARD)
+  if (table->getShare()->getType() == message::Table::STANDARD)
   {
     /*
        We can perform this safely since only one writer at the time is

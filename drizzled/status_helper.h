@@ -1,12 +1,12 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Sun Microsystems
+ *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2010 Joseph Daly 
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  the Free Software Foundation; version 2 of the License.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,20 +18,25 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_STATUS_DICTIONARY_STATUS_H
-#define PLUGIN_STATUS_DICTIONARY_STATUS_H
+#ifndef DRIZZLED_STATUS_HELPER_H
+#define DRIZZLED_STATUS_HELPER_H
 
-class StatusTool : public StateTool
+#include "drizzled/plugin.h"
+#include "drizzled/statistics_variables.h"
+
+namespace drizzled
+{
+
+class StatusHelper 
 {
 public:
-  StatusTool(bool global) :
-    StateTool(global ? "GLOBAL_STATUS" : "SESSION_STATUS", global)
-  { }
 
-  drizzled::drizzle_show_var *getVariables()
-  {
-    return drizzled::getFrontOfStatusVars();
-  }
+  static std::string fillHelper(drizzled::system_status_var *status_var, char *value, 
+                                SHOW_TYPE show_type);
+
+  static drizzled::drizzle_show_var status_vars_defs[];
 };
 
-#endif /* PLUGIN_STATUS_DICTIONARY_STATUS_H */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_STATUS_HELPER_H */

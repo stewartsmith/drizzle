@@ -27,65 +27,50 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
-#define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
+#ifndef PLUGIN_LOGGING_STATS_STATUS_TOOL_H
+#define PLUGIN_LOGGING_STATS_STATUS_TOOL_H
 
-#include "scoreboard_slot.h"
-#include "cumulative_stats.h"
-#include "scoreboard.h"
+#include "logging_stats.h"
 
-#include <drizzled/atomics.h>
-#include <drizzled/enum.h>
-#include <drizzled/session.h>
-#include <drizzled/plugin/logging.h>
+#include <drizzled/plugin/table_function.h>
+#include <drizzled/field.h>
 
-#include <string>
-#include <vector>
-
-class LoggingStats: public drizzled::plugin::Logging
-{
+class StatusTool : public drizzled::plugin::TableFunction
+{            
 public:
 
-  LoggingStats(std::string name_arg);
+  StatusTool(LoggingStats *logging_stats, bool isLocal);
+    
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  { 
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats,
+              std::vector<drizzled::drizzle_show_var *> *all_status_vars, 
+              bool isLocal);
 
-  ~LoggingStats();
+    ~Generator();
 
-  virtual bool post(drizzled::Session *session);
+    bool populate();
+  private:
+    LoggingStats *logging_stats;
+    bool isLocal;
+    StatusVars *status_var_to_display;
+    std::vector<drizzled::drizzle_show_var *>::iterator all_status_vars_it;
+    std::vector<drizzled::drizzle_show_var *>::iterator all_status_vars_end;
+    void fill(const std::string &name, char *value, drizzled::SHOW_TYPE show_type); 
+  };
 
-  virtual bool postEnd(drizzled::Session *session);
-
-  bool isEnabled() const
+  Generator *generator(drizzled::Field **arg)
   {
-    return is_enabled;
-  }
-
-  void enable()
-  {
-    is_enabled= true;
-  }
-
-  void disable()
-  {
-    is_enabled= false;
-  }
-
-  Scoreboard *getCurrentScoreboard()
-  {          
-    return current_scoreboard;
-  }
-
-  CumulativeStats *getCumulativeStats()
-  {
-    return cumulative_stats;
+    return new Generator(arg, outer_logging_stats, &all_status_vars, isLocal);
   }
 
 private:
-  Scoreboard *current_scoreboard;
+  LoggingStats *outer_logging_stats;
 
-  CumulativeStats *cumulative_stats;
+  bool isLocal;
 
-  drizzled::atomic<bool> is_enabled;
-
-  void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
+  std::vector<drizzled::drizzle_show_var *> all_status_vars;
 };
-#endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */
+
+#endif /* PLUGIN_LOGGING_STATS_STATUS_TOOL_H */

@@ -2676,9 +2676,6 @@ int ha_pbxt::doInsertRecord(byte *buf)
 			pb_import_row_count++;
 	}
 
-	if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-		table->timestamp_field->set_time();
-
 	if (table->next_number_field && buf == table->record[0]) {
 		int update_err = update_auto_increment();
 		if (update_err) {
@@ -2778,9 +2775,6 @@ int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 		self->st_is_update = pb_open_tab;
 		pb_open_tab->ot_update_id++;
 	}
-
-	if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-		table->timestamp_field->set_time();
 
 #ifdef PBMS_ENABLED
 	PBMSResultRec result;
