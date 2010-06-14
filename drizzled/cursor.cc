@@ -182,7 +182,7 @@ bool Cursor::has_transactions()
   return (table->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
-void Cursor::ha_statistic_increment(ulong system_status_var::*offset) const
+void Cursor::ha_statistic_increment(uint64_t system_status_var::*offset) const
 {
   status_var_increment(table->in_use->status_var.*offset);
 }
@@ -1282,7 +1282,7 @@ static bool log_row_for_replication(Table* table,
   TransactionServices &transaction_services= TransactionServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->getShare()->tmp_table || not transaction_services.shouldConstructMessages())
+  if (table->getShare()->getType() || not transaction_services.shouldConstructMessages())
     return false;
 
   bool result= false;

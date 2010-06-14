@@ -48,10 +48,6 @@ struct TableList;
 class Table;
 typedef class Item COND;
 
-extern struct system_status_var global_status_var;
-
-drizzle_show_var *getFrontOfStatusVars();
-
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists);
 
 int wild_case_compare(const CHARSET_INFO * const cs, 
@@ -61,13 +57,6 @@ bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_no
 bool mysqld_show_create_db(Session &session, SchemaIdentifier &, bool if_not_exists);
 
 bool mysqld_show_column_types(Session *session);
-void calc_sum_of_all_status(struct system_status_var *to);
-
-int add_status_vars(drizzle_show_var *list);
-void remove_status_vars(drizzle_show_var *list);
-void init_status_vars();
-void free_status_vars();
-void reset_status_vars();
 
 int get_quote_char_for_identifier();
 
