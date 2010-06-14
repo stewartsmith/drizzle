@@ -245,7 +245,7 @@ TableShare *TableShare::getShare(Session *session,
     return foundTableShare(share);
   }
 
-  if (not (share= new TableShare(key, key_length)))
+  if (not (share= new TableShare(message::Table::STANDARD, key, key_length)))
   {
     return NULL;
   }
@@ -470,7 +470,7 @@ TableDefinitionCache &TableShare::getCache()
   return table_def_cache;
 }
 
-TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg) :
+TableShare::TableShare(TableIdentifier::Type type_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   open_count(0),
   found_next_number_field(NULL),
@@ -486,7 +486,228 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
-  tmp_table(message::Table::STANDARD),
+  tmp_table(type_arg),
+  ref_count(0),
+  null_bytes(0),
+  last_null_bit_pos(0),
+  fields(0),
+  rec_buff_length(0),
+  keys(0),
+  key_parts(0),
+  max_key_length(0),
+  max_unique_length(0),
+  total_key_length(0),
+  uniques(0),
+  null_fields(0),
+  blob_fields(0),
+  timestamp_field_offset(0),
+  varchar_fields(0),
+  db_create_options(0),
+  db_options_in_use(0),
+  db_record_offset(0),
+  rowid_field_offset(0),
+  primary_key(0),
+  next_number_index(0),
+  next_number_key_offset(0),
+  next_number_keypart(0),
+  error(0),
+  open_errno(0),
+  errarg(0),
+  column_bitmap_size(0),
+  blob_ptr_size(0),
+  db_low_byte_first(false),
+  name_lock(false),
+  replace_with_name_lock(false),
+  waiting_on_cond(false),
+  keys_in_use(0),
+  keys_for_keyread(0),
+  event_observers(NULL),
+  newed(true)
+{
+  memset(&name_hash, 0, sizeof(HASH));
+
+  table_charset= 0;
+  memset(&table_cache_key, 0, sizeof(LEX_STRING));
+  memset(&db, 0, sizeof(LEX_STRING));
+  memset(&table_name, 0, sizeof(LEX_STRING));
+  memset(&path, 0, sizeof(LEX_STRING));
+  memset(&normalized_path, 0, sizeof(LEX_STRING));
+
+  init();
+}
+
+TableShare::TableShare(TableIdentifier::Type type_arg,
+                       const char *key,
+                       uint32_t key_length,
+                       const char *new_table_name,
+                       const char *new_path) :
+  table_category(TABLE_UNKNOWN_CATEGORY),
+  open_count(0),
+  found_next_number_field(NULL),
+  timestamp_field(NULL),
+  key_info(NULL),
+  blob_field(NULL),
+  block_size(0),
+  version(0),
+  timestamp_offset(0),
+  reclength(0),
+  stored_rec_length(0),
+  row_type(ROW_TYPE_DEFAULT),
+  max_rows(0),
+  table_proto(NULL),
+  storage_engine(NULL),
+  tmp_table(type_arg),
+  ref_count(0),
+  null_bytes(0),
+  last_null_bit_pos(0),
+  fields(0),
+  rec_buff_length(0),
+  keys(0),
+  key_parts(0),
+  max_key_length(0),
+  max_unique_length(0),
+  total_key_length(0),
+  uniques(0),
+  null_fields(0),
+  blob_fields(0),
+  timestamp_field_offset(0),
+  varchar_fields(0),
+  db_create_options(0),
+  db_options_in_use(0),
+  db_record_offset(0),
+  rowid_field_offset(0),
+  primary_key(0),
+  next_number_index(0),
+  next_number_key_offset(0),
+  next_number_keypart(0),
+  error(0),
+  open_errno(0),
+  errarg(0),
+  column_bitmap_size(0),
+  blob_ptr_size(0),
+  db_low_byte_first(false),
+  name_lock(false),
+  replace_with_name_lock(false),
+  waiting_on_cond(false),
+  keys_in_use(0),
+  keys_for_keyread(0),
+  event_observers(NULL),
+  newed(true)
+{
+  memset(&name_hash, 0, sizeof(HASH));
+
+  table_charset= 0;
+  memset(&table_cache_key, 0, sizeof(LEX_STRING));
+  memset(&db, 0, sizeof(LEX_STRING));
+  memset(&table_name, 0, sizeof(LEX_STRING));
+  memset(&path, 0, sizeof(LEX_STRING));
+  memset(&normalized_path, 0, sizeof(LEX_STRING));
+  init(key, key_length, new_table_name, new_path);
+  assert(type_arg == message::Table::INTERNAL);
+}
+
+
+TableShare::TableShare(TableIdentifier &identifier) :
+  table_category(TABLE_UNKNOWN_CATEGORY),
+  open_count(0),
+  found_next_number_field(NULL),
+  timestamp_field(NULL),
+  key_info(NULL),
+  blob_field(NULL),
+  block_size(0),
+  version(0),
+  timestamp_offset(0),
+  reclength(0),
+  stored_rec_length(0),
+  row_type(ROW_TYPE_DEFAULT),
+  max_rows(0),
+  table_proto(NULL),
+  storage_engine(NULL),
+  tmp_table(identifier.getType()),
+  ref_count(0),
+  null_bytes(0),
+  last_null_bit_pos(0),
+  fields(0),
+  rec_buff_length(0),
+  keys(0),
+  key_parts(0),
+  max_key_length(0),
+  max_unique_length(0),
+  total_key_length(0),
+  uniques(0),
+  null_fields(0),
+  blob_fields(0),
+  timestamp_field_offset(0),
+  varchar_fields(0),
+  db_create_options(0),
+  db_options_in_use(0),
+  db_record_offset(0),
+  rowid_field_offset(0),
+  primary_key(0),
+  next_number_index(0),
+  next_number_key_offset(0),
+  next_number_keypart(0),
+  error(0),
+  open_errno(0),
+  errarg(0),
+  column_bitmap_size(0),
+  blob_ptr_size(0),
+  db_low_byte_first(false),
+  name_lock(false),
+  replace_with_name_lock(false),
+  waiting_on_cond(false),
+  keys_in_use(0),
+  keys_for_keyread(0),
+  event_observers(NULL),
+  newed(true)
+{
+  memset(&name_hash, 0, sizeof(HASH));
+
+  table_charset= 0;
+  memset(&table_cache_key, 0, sizeof(LEX_STRING));
+  memset(&db, 0, sizeof(LEX_STRING));
+  memset(&table_name, 0, sizeof(LEX_STRING));
+  memset(&path, 0, sizeof(LEX_STRING));
+  memset(&normalized_path, 0, sizeof(LEX_STRING));
+
+  {
+    memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    table_category=         TABLE_CATEGORY_TEMPORARY;
+    tmp_table=              message::Table::INTERNAL;
+    db.str= const_cast<char *>(identifier.getSchemaName().c_str());
+    db.length= identifier.getSchemaName().length();
+    table_cache_key.str= const_cast<char *>(identifier.getSchemaName().c_str());
+    table_cache_key.length= 0;
+    table_name.str= const_cast<char *>(identifier.getTableName().c_str());
+    table_name.length= identifier.getTableName().length();
+    path.str= const_cast<char *>(identifier.getPath().c_str());
+    normalized_path.str= const_cast<char *>(identifier.getPath().c_str());
+    path.length= normalized_path.length= strlen(path.str);
+  }
+}
+
+
+TableShare::TableShare(TableIdentifier::Type type_arg,
+                       char *key,
+                       uint32_t key_length,
+                       char *path_arg,
+                       uint32_t path_length_arg) :
+  table_category(TABLE_UNKNOWN_CATEGORY),
+  open_count(0),
+  found_next_number_field(NULL),
+  timestamp_field(NULL),
+  key_info(NULL),
+  blob_field(NULL),
+  block_size(0),
+  version(0),
+  timestamp_offset(0),
+  reclength(0),
+  stored_rec_length(0),
+  row_type(ROW_TYPE_DEFAULT),
+  max_rows(0),
+  table_proto(NULL),
+  storage_engine(NULL),
+  tmp_table(type_arg),
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
@@ -548,7 +769,7 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   }
   else
   {
-    build_table_filename(_path, db.str, table_name.str, false);
+    TableIdentifier::build_table_filename(_path, db.str, table_name.str, false);
   }
 
   if (mem_root.multi_alloc_root(0, &key_buff, key_length,
@@ -573,6 +794,24 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   }
 
   newed= true;
+}
+
+void TableShare::init(const char *key,
+                      uint32_t key_length, const char *new_table_name,
+                      const char *new_path)
+{
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  table_category=         TABLE_CATEGORY_TEMPORARY;
+  tmp_table=              message::Table::INTERNAL;
+  db.str=                 (char*) key;
+  db.length=		 strlen(key);
+  table_cache_key.str=    (char*) key;
+  table_cache_key.length= key_length;
+  table_name.str=         (char*) new_table_name;
+  table_name.length=      strlen(new_table_name);
+  path.str=               (char*) new_path;
+  normalized_path.str=    (char*) new_path;
+  path.length= normalized_path.length= strlen(new_path);
 }
 
 int TableShare::inner_parse_table_proto(Session& session, message::Table &table)

@@ -182,7 +182,7 @@ bool Cursor::has_transactions()
   return (table->getShare()->db_type()->check_flag(HTON_BIT_DOES_TRANSACTIONS));
 }
 
-void Cursor::ha_statistic_increment(ulong system_status_var::*offset) const
+void Cursor::ha_statistic_increment(uint64_t system_status_var::*offset) const
 {
   status_var_increment(table->in_use->status_var.*offset);
 }
@@ -191,13 +191,6 @@ void **Cursor::ha_data(Session *session) const
 {
   return session->getEngineData(engine);
 }
-
-Session *Cursor::ha_session(void) const
-{
-  assert(!table || !table->in_use || table->in_use == current_session);
-  return (table && table->in_use) ? table->in_use : current_session;
-}
-
 
 bool Cursor::is_fatal_error(int error, uint32_t flags)
 {
@@ -652,7 +645,17 @@ inline
 void
 Cursor::setTransactionReadWrite()
 {
-  ResourceContext *resource_context= ha_session()->getResourceContext(engine);
+  ResourceContext *resource_context;
+
+  /*
+   * If the cursor has not context for execution then there should be no
+   * possible resource to gain (and if there is... then there is a bug such
+   * that in_use should have been set.
+ */
+  if (not table || not table->in_use)
+    return;
+
+  resource_context= table->in_use->getResourceContext(engine);
   /*
     When a storage engine method is called, the transaction must
     have been started, unless it's a DDL call, for which the
@@ -1279,7 +1282,7 @@ static bool log_row_for_replication(Table* table,
   TransactionServices &transaction_services= TransactionServices::singleton();
   Session *const session= table->in_use;
 
-  if (table->getShare()->tmp_table || not transaction_services.shouldConstructMessages())
+  if (table->getShare()->getType() || not transaction_services.shouldConstructMessages())
     return false;
 
   bool result= false;
@@ -1455,7 +1458,9 @@ int Cursor::insertRecord(unsigned char *buf)
    * Cursor interface and into the fill_record() method.
    */
   if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
+  {
     table->timestamp_field->set_time();
+  }
 
   DRIZZLE_INSERT_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();
@@ -1505,6 +1510,11 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
   }
   else
   {
+    if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
+    {
+      table->timestamp_field->set_time();
+    }
+
     error= doUpdateRecord(old_data, new_data);
     if (unlikely(plugin::EventObserver::afterUpdateRecord(*table, old_data, new_data, error)))
     {

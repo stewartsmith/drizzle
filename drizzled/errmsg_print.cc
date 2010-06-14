@@ -25,7 +25,6 @@
 #include "config.h"
 
 #include <drizzled/errmsg_print.h>
-#include <drizzled/current_session.h>
 #include <drizzled/plugin/error_message.h>
 
 #include <cerrno>
@@ -45,7 +44,7 @@ bool errmsg_printf (int priority, char const *format, ...)
   bool rv;
   va_list args;
   va_start(args, format);
-  rv= plugin::ErrorMessage::vprintf(current_session, priority, format, args);
+  rv= plugin::ErrorMessage::vprintf(NULL, priority, format, args);
   va_end(args);
   return rv;
 }
