@@ -1,0 +1,24 @@
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+# test file not existed
+--error 1698
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/_FILE_NOT_EXISTED_";
+
+# test col separator not empty
+--error 1698
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data",COL_SEPARATOR="";
+
+# test row separator not empty
+--error 1698
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data",ROW_SEPARATOR="";
+
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data";
+
+--error 1050
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data";
+
+SHOW CREATE TABLE t1;
+
+DROP TABLE t1;

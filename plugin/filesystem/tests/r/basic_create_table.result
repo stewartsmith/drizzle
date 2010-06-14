@@ -1,0 +1,16 @@
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/_FILE_NOT_EXISTED_";
+ERROR HY000: Unknown table engine option key/pair FILE = ../../../plugin/filesystem/tests/t/_FILE_NOT_EXISTED_.
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data",COL_SEPARATOR="";
+ERROR HY000: Unknown table engine option key/pair COL_SEPARATOR = .
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data",ROW_SEPARATOR="";
+ERROR HY000: Unknown table engine option key/pair ROW_SEPARATOR = .
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data";
+ERROR 42S01: Table 'test.t1' already exists
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int DEFAULT NULL
+) ENGINE=FILESYSTEM FILE='../../../plugin/filesystem/tests/t/basic_create_table.data'
+DROP TABLE t1;
