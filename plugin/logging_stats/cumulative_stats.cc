@@ -49,6 +49,7 @@ CumulativeStats::CumulativeStats(uint32_t in_cumulative_stats_by_user_max)
   last_valid_index= INVALID_INDEX;
   isOpenUserSlots= true;
   global_stats= new GlobalStats();
+  global_status_vars= new StatusVars();
 }
 
 CumulativeStats::~CumulativeStats()
@@ -61,6 +62,7 @@ CumulativeStats::~CumulativeStats()
   cumulative_stats_by_user_vector->clear();
   delete cumulative_stats_by_user_vector;
   delete global_stats;
+  delete global_status_vars;
 }
 
 void CumulativeStats::logUserStats(ScoreboardSlot *scoreboard_slot)
@@ -122,7 +124,12 @@ void CumulativeStats::logGlobalStats(ScoreboardSlot* scoreboard_slot)
   global_stats->updateUserCommands(scoreboard_slot); 
 }
 
-int32_t  CumulativeStats::getCumulativeStatsLastValidIndex()
+void CumulativeStats::logGlobalStatusVars(ScoreboardSlot* scoreboard_slot)
+{
+  global_status_vars->merge(scoreboard_slot->getStatusVars());
+}
+
+int32_t CumulativeStats::getCumulativeStatsLastValidIndex()
 {
   if (last_valid_index < cumulative_stats_by_user_max)
   {
@@ -131,5 +138,35 @@ int32_t  CumulativeStats::getCumulativeStatsLastValidIndex()
   else 
   {
     return cumulative_stats_by_user_max;
+  }
+}
+
+void CumulativeStats::sumCurrentScoreboardStatusVars(Scoreboard *scoreboard,
+                                                     StatusVars *current_status_vars)
+{
+  /* the vector of vectors */
+  vector<vector<ScoreboardSlot* >* > *vector_of_scoreboard_vectors= 
+    scoreboard->getVectorOfScoreboardVectors();
+
+  /* iterate through each vector from above and sum each ScoreboardSlot */
+
+  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_begin_it= vector_of_scoreboard_vectors->begin(); 
+
+  vector<vector<ScoreboardSlot* >* >::iterator v_of_scoreboard_v_end_it= vector_of_scoreboard_vectors->end(); 
+
+  for (; v_of_scoreboard_v_begin_it != v_of_scoreboard_v_end_it; ++v_of_scoreboard_v_begin_it)
+  {
+    vector<ScoreboardSlot* > *scoreboard_vector= *v_of_scoreboard_v_begin_it;
+    
+    vector<ScoreboardSlot* >::iterator scoreboard_vector_it= scoreboard_vector->begin();
+    vector<ScoreboardSlot* >::iterator scoreboard_vector_end= scoreboard_vector->end();
+    for (; scoreboard_vector_it != scoreboard_vector_end; ++scoreboard_vector_it)
+    {
+      ScoreboardSlot *scoreboard_slot= *scoreboard_vector_it;
+      if (scoreboard_slot->isInUse())
+      {
+        current_status_vars->merge(scoreboard_slot->getStatusVars());
+      }
+    }
   }
 }

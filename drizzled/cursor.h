@@ -518,9 +518,8 @@ public:
 
 protected:
   /* Service methods for use by storage engines. */
-  void ha_statistic_increment(ulong system_status_var::*offset) const;
+  void ha_statistic_increment(uint64_t system_status_var::*offset) const;
   void **ha_data(Session *) const;
-  Session *ha_session(void) const;
 
 private:
   /* Private helpers */

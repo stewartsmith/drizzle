@@ -589,7 +589,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   if (!(file=mi_open(name, mode, test_if_locked)))
     return (errno ? errno : -1);
 
-  if (!table->getShare()->tmp_table) /* No need to perform a check for tmp table */
+  if (!table->getShare()->getType()) /* No need to perform a check for tmp table */
   {
     if ((errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
     {
@@ -706,7 +706,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
-  if (mi_lock_database(file, table->getShare()->tmp_table ? F_EXTRA_LCK : F_WRLCK))
+  if (mi_lock_database(file, table->getShare()->getType() ? F_EXTRA_LCK : F_WRLCK))
   {
     mi_check_print_error(&param,ER(ER_CANT_LOCK),errno);
     return(HA_ADMIN_FAILED);
@@ -903,7 +903,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
   }
   else if (mode == HA_KEY_SWITCH_NONUNIQ_SAVE)
   {
-    Session *session=current_session;
+    Session *session= table->in_use;
     MI_CHECK param;
     const char *save_proc_info= session->get_proc_info();
     session->set_proc_info("Creating index");
@@ -979,7 +979,7 @@ int ha_myisam::indexes_are_disabled(void)
 
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
-  Session *session= current_session;
+  Session *session= table->in_use;
   ulong size= session->variables.read_buff_size;
 
   /* don't enable row cache if too few rows */
@@ -1034,8 +1034,6 @@ int ha_myisam::end_bulk_insert()
 int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
   ha_statistic_increment(&system_status_var::ha_update_count);
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
   return mi_update(file,old_data,new_data);
 }
 
@@ -1227,7 +1225,7 @@ int ha_myisam::info(uint32_t flag)
     stats.block_size= myisam_key_cache_block_size;        /* record block size */
 
     /* Update share */
-    if (share->tmp_table == message::Table::STANDARD)
+    if (share->getType() == message::Table::STANDARD)
       pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->sizeKeys());
     /*
@@ -1281,7 +1279,7 @@ int ha_myisam::info(uint32_t flag)
       memcpy(table->key_info[0].rec_per_key,
 	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
-    if (share->tmp_table == message::Table::STANDARD)
+    if (share->getType() == message::Table::STANDARD)
       pthread_mutex_unlock(&share->mutex);
 
    /*
@@ -1346,7 +1344,7 @@ int MyisamEngine::doDropTable(Session &session,
 int ha_myisam::external_lock(Session *session, int lock_type)
 {
   file->in_use= session;
-  return mi_lock_database(file, !table->getShare()->tmp_table ?
+  return mi_lock_database(file, !table->getShare()->getType() ?
 			  lock_type : ((lock_type == F_UNLCK) ?
 				       F_UNLCK : F_EXTRA_LCK));
 }

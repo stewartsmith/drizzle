@@ -746,11 +746,11 @@ static bool locked_named_table(TableList *table_list)
     Table *table= table_list->table;
     if (table)
     {
-      Table *save_next= table->next;
+      Table *save_next= table->getNext();
       bool result;
-      table->next= 0;
+      table->setNext(NULL);
       result= table_is_used(table_list->table, 0);
-      table->next= save_next;
+      table->setNext(save_next);
       if (result)
         return 1;
     }

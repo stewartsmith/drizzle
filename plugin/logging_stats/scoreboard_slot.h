@@ -31,6 +31,7 @@
 #ifndef PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
 #define PLUGIN_LOGGING_STATS_SCOREBOARD_SLOT_H
 
+#include "status_vars.h"
 #include "user_commands.h"
 
 #include <string>
@@ -45,6 +46,8 @@ public:
   ScoreboardSlot(const ScoreboardSlot &scoreboad_slot);
 
   UserCommands* getUserCommands();
+
+  StatusVars* getStatusVars();
 
   void setSessionId(uint64_t in_session_id);
 
@@ -68,6 +71,7 @@ public:
 
 private:
   UserCommands *user_commands;
+  StatusVars *status_vars;
   std::string user;
   std::string ip;
   bool in_use;

@@ -34,9 +34,9 @@ typedef struct global_counters
 {
   uint64_t aborted_threads;
   uint64_t aborted_connects;
-  uint32_t max_used_connections;
-  uint32_t locks_immediate;
-  uint32_t locks_waited;
+  uint64_t max_used_connections;
+  uint64_t locks_immediate;
+  uint64_t locks_waited;
 } global_counters;
 
 /* 
@@ -48,48 +48,48 @@ typedef struct system_status_var
 {
   uint64_t bytes_received;
   uint64_t bytes_sent;
-  ulong com_other;
-  ulong created_tmp_disk_tables;
-  ulong created_tmp_tables;
-  ulong ha_commit_count;
-  ulong ha_delete_count;
-  ulong ha_read_first_count;
-  ulong ha_read_last_count;
-  ulong ha_read_key_count;
-  ulong ha_read_next_count;
-  ulong ha_read_prev_count;
-  ulong ha_read_rnd_count;
-  ulong ha_read_rnd_next_count;
-  ulong ha_rollback_count;
-  ulong ha_update_count;
-  ulong ha_write_count;
-  ulong ha_prepare_count;
-  ulong ha_savepoint_count;
-  ulong ha_savepoint_rollback_count;
+  uint64_t com_other;
+  uint64_t created_tmp_disk_tables;
+  uint64_t created_tmp_tables;
+  uint64_t ha_commit_count;
+  uint64_t ha_delete_count;
+  uint64_t ha_read_first_count;
+  uint64_t ha_read_last_count;
+  uint64_t ha_read_key_count;
+  uint64_t ha_read_next_count;
+  uint64_t ha_read_prev_count;
+  uint64_t ha_read_rnd_count;
+  uint64_t ha_read_rnd_next_count;
+  uint64_t ha_rollback_count;
+  uint64_t ha_update_count;
+  uint64_t ha_write_count;
+  uint64_t ha_prepare_count;
+  uint64_t ha_savepoint_count;
+  uint64_t ha_savepoint_rollback_count;
 
   /* KEY_CACHE parts. These are copies of the original */
-  ulong key_blocks_changed;
-  ulong key_blocks_used;
-  ulong key_cache_r_requests;
-  ulong key_cache_read;
-  ulong key_cache_w_requests;
-  ulong key_cache_write;
+  uint64_t key_blocks_changed;
+  uint64_t key_blocks_used;
+  uint64_t key_cache_r_requests;
+  uint64_t key_cache_read;
+  uint64_t key_cache_w_requests;
+  uint64_t key_cache_write;
   /* END OF KEY_CACHE parts */
 
-  ulong select_full_join_count;
-  ulong select_full_range_join_count;
-  ulong select_range_count;
-  ulong select_range_check_count;
-  ulong select_scan_count;
-  ulong long_query_count;
-  ulong filesort_merge_passes;
-  ulong filesort_range_count;
-  ulong filesort_rows;
-  ulong filesort_scan_count;
+  uint64_t select_full_join_count;
+  uint64_t select_full_range_join_count;
+  uint64_t select_range_count;
+  uint64_t select_range_check_count;
+  uint64_t select_scan_count;
+  uint64_t long_query_count;
+  uint64_t filesort_merge_passes;
+  uint64_t filesort_range_count;
+  uint64_t filesort_rows;
+  uint64_t filesort_scan_count;
   /*
     Number of statements sent from the client
   */
-  ulong questions;
+  uint64_t questions;
   /*
     IMPORTANT!
     SEE last_system_status_var DEFINITION BELOW.

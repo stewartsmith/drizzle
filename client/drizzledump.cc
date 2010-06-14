@@ -2296,9 +2296,23 @@ static int init_dumping(char *database, int init_func(char*))
 {
   drizzle_result_st result;
   drizzle_return_t ret;
+  char qbuf[512];
+  
+  /* If this DB contains non-standard tables we don't want it */
 
-  if (!my_strcasecmp(&my_charset_utf8_general_ci, database, "information_schema"))
-    return 1;
+  snprintf(qbuf, sizeof(qbuf), "SELECT TABLE_NAME FROM DATA_DICTIONARY.TABLES WHERE TABLE_SCHEMA='%s' AND TABLE_TYPE != 'STANDARD'", database);
+  
+  if (drizzle_query_str(&dcon, &result, qbuf, &ret) != NULL)
+  {
+    drizzle_result_buffer(&result);
+    if (drizzle_result_row_count(&result) > 0)
+    {
+      drizzle_result_free(&result);
+      return 1;
+    }
+  }
+
+  drizzle_result_free(&result);
 
   if (drizzle_select_db(&dcon, &result, database, &ret) == NULL ||
       ret != DRIZZLE_RETURN_OK)

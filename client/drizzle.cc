@@ -1779,12 +1779,6 @@ try
     exit(1);
   }
 
-  if (argc == 1)
-  {
-    skip_updates= 0;
-    current_db.erase();
-    current_db= strdup(*argv);
-  }
   memset(&drizzle, 0, sizeof(drizzle));
   if (sql_connect(current_host, current_db, current_user, opt_password,opt_silent))
   {
@@ -1991,7 +1985,7 @@ static int process_options(void)
 
   tmp= (char *) getenv("DRIZZLE_HOST");
   if (tmp)
-    current_host= strdup(tmp);
+    current_host.assign(tmp);
 
   pagpoint= getenv("PAGER");
   if (!((char*) (pagpoint)))
@@ -2768,7 +2762,7 @@ static void get_current_db(void)
     {
       drizzle_row_t row= drizzle_row_next(&res);
       if (row[0])
-        current_db= strdup(row[0]);
+        current_db.assign(row[0]);
       drizzle_result_free(&res);
     }
   }
@@ -3779,7 +3773,7 @@ com_connect(string *buffer, const char *line)
     if (tmp && *tmp)
     {
       current_db.erase();
-      current_db= strdup(tmp);
+      current_db.assign(tmp);
       tmp= get_arg(buff, 1);
       if (tmp)
       {
@@ -3981,7 +3975,7 @@ com_use(string *, const char *line)
         drizzle_result_free(&result);
     }
     current_db.erase();
-    current_db= strdup(tmp);
+    current_db.assign(tmp);
     if (select_db > 1)
       build_completion_hash(opt_rehash, 1);
   }
