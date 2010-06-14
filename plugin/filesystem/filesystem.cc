@@ -349,6 +349,7 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
     return ENOENT;
   }
 
+  ref_length= sizeof(off_t);
   thr_lock_data_init(&share->lock, &lock, NULL);
   return 0;
 }
@@ -373,7 +374,7 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
 {
   ptrdiff_t row_offset= buf - table->record[0];
 
-  current_position= next_position;
+  next_position= current_position;
 
   string content;
   bool line_done= false;
@@ -450,6 +451,7 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
 int FilesystemCursor::rnd_next(unsigned char *buf)
 {
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
+  current_position= next_position;
   return find_current_row(buf);
 }
 
