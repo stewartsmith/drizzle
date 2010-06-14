@@ -67,6 +67,7 @@ void StatusVars::copySystemStatusVar(system_status_var *to_var,
   {
     *(to++)= *(from++);
   }
+  to_var->last_query_cost= from_var->last_query_cost;
 }
 
 void StatusVars::merge(StatusVars *status_vars)
