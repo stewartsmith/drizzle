@@ -3650,7 +3650,7 @@ Handler_read_key	5
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	0
-Handler_read_rnd_next	12
+Handler_read_rnd_next	6
 DROP TABLE t1, t2;
 End of 5.0 tests
 create table t1(a INT, KEY (a));

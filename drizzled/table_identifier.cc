@@ -24,7 +24,6 @@
 
 #include "drizzled/table_identifier.h"
 #include "drizzled/session.h"
-#include "drizzled/current_session.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/data_home.h"
 
@@ -33,6 +32,8 @@
 #include <algorithm>
 #include <sstream>
 #include <cstdio>
+
+#include <boost/thread.hpp>
 
 using namespace std;
 
@@ -59,7 +60,7 @@ static size_t build_tmptable_filename(std::string &path);
   RETURN
     Table name length.
 */
-uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
+uint32_t TableIdentifier::filename_to_tablename(const char *from, char *to, uint32_t to_length)
 {
   uint32_t length= 0;
 
@@ -114,18 +115,39 @@ uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length)
     path length on success, 0 on failure
 */
 
+#ifdef _GLIBCXX_HAVE_TLS 
+__thread uint32_t counter= 0;
+
+static uint32_t get_counter()
+{
+  return ++counter;
+}
+
+#else
+boost::mutex counter_mutex;
+static uint32_t counter= 1;
+
+static uint32_t get_counter()
+{
+  boost::mutex::scoped_lock lock(counter_mutex);
+  uint32_t x;
+  x= ++counter;
+
+  return x;
+}
+
+#endif
+
 static size_t build_tmptable_filename(std::string &buffer)
 {
   size_t tmpdir_length;
   ostringstream post_tmpdir_str;
 
-  Session *session= current_session;
-
   buffer.append(drizzle_tmpdir);
   tmpdir_length= buffer.length();
 
   post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
-  post_tmpdir_str << session->thread_id << session->tmp_table++;
+  post_tmpdir_str << pthread_self() << "-" << get_counter();
 
   buffer.append(post_tmpdir_str.str());
 
@@ -166,7 +188,7 @@ static size_t build_tmptable_filename(std::string &buffer)
     path length on success, 0 on failure
 */
 
-size_t build_table_filename(std::string &path, const char *db, const char *table_name, bool is_tmp)
+size_t TableIdentifier::build_table_filename(std::string &path, const char *db, const char *table_name, bool is_tmp)
 {
   char dbbuff[FN_REFLEN];
   char tbbuff[FN_REFLEN];
@@ -275,9 +297,9 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
 }
 
 TableIdentifier::TableIdentifier(const drizzled::Table &table) :
-  SchemaIdentifier(table.getShare()->getTableProto()->schema()),
-  type(table.getShare()->getTableProto()->type()),
-  table_name(table.getShare()->getTableProto()->name())
+  SchemaIdentifier(table.getShare()->getSchemaName()),
+  type(table.getShare()->getTableType()),
+  table_name(table.getShare()->getTableName())
 {
   if (type == message::Table::TEMPORARY)
     path= table.getShare()->getPath();
@@ -290,34 +312,30 @@ void TableIdentifier::init()
   lower_table_name.append(table_name);
   std::transform(lower_table_name.begin(), lower_table_name.end(),
                  lower_table_name.begin(), ::tolower);
+
+  switch (type) {
+  case message::Table::FUNCTION:
+  case message::Table::STANDARD:
+    build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), false);
+    break;
+  case message::Table::INTERNAL:
+    build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), true);
+    break;
+  case message::Table::TEMPORARY:
+    if (path.empty())
+    {
+      build_tmptable_filename(path);
+    }
+    break;
+  }
+
+  boost::hash<std::string> hasher;
+  hash_value= hasher(path);
 }
 
 
-const std::string &TableIdentifier::getPath()
+const std::string &TableIdentifier::getPath() const
 {
-  assert(not lower_table_name.empty());
-
-  if (path.empty())
-  {
-    switch (type) {
-    case message::Table::STANDARD:
-      build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), false);
-      break;
-    case message::Table::INTERNAL:
-      build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), true);
-      break;
-    case message::Table::TEMPORARY:
-      build_tmptable_filename(path);
-      break;
-    case message::Table::FUNCTION:
-      path.append(getSchemaName());
-      path.append(".");
-      path.append(table_name);
-      break;
-    }
-    assert(path.length()); // TODO throw exception, this is a possibility
-  }
-
   return path;
 }
 
@@ -368,6 +386,11 @@ void TableIdentifier::copyToTableMessage(message::Table &message)
 {
   message.set_name(table_name);
   message.set_schema(getSchemaName());
+}
+
+std::size_t hash_value(TableIdentifier const& b)
+{
+  return b.getHashValue();
 }
 
 } /* namespace drizzled */

@@ -30,29 +30,33 @@
 /**
  * @details
  *
- * This plugin tracks the current user commands for a session, and copies
- * them into a cumulative vector of all commands run by a user over time. 
- * The commands are logged using the post() and postEnd() logging APIs.
- * User commands are stored in a Scoreboard where each active session
- * owns a ScoreboardSlot.  
- *
+ * This plugin tracks session and global statistics, as well as user statistics. 
+ * The commands are logged using the post() and postEnd() logging APIs. 
+ * The statistics are stored in a Scoreboard where each active session owns a 
+ * ScoreboardSlot during the sessions active lifetime. 
+ * 
  * Scoreboard
  *
- * The scoreboard is a pre-allocated vector of vectors of ScoreboardSlots. It
- * can be thought of as a vector of buckets where each bucket contains
- * pre-allocated ScoreboardSlots. To determine which bucket gets used for
- * recording statistics the modulus operator is used on the session_id. This
- * will result in a bucket to search for a unused ScoreboardSlot.
+ * The scoreboard is a pre-allocated vector of vectors of ScoreboardSlots. It 
+ * can be thought of as a vector of buckets where each bucket contains 
+ * pre-allocated ScoreboardSlots. To determine which bucket gets used for 
+ * recording statistics the modulus operator is used on the session_id. This 
+ * will result in a bucket to search for a unused ScoreboardSlot. Once a 
+ * ScoreboardSlot is found the index of the slot is stored in the Session 
+ * for later use. 
  *
  * Locking  
  * 
  * Each vector in the Scoreboard has its own lock. This allows session 2 
  * to not have to wait for session 1 to locate a slot to use, as they
  * will be in different buckets.  A lock is taken to locate a open slot
- * in the scoreboard.
+ * in the scoreboard. Subsequent queries by the session will not take
+ * a lock.  
  *
  * A read lock is taken on the scoreboard vector when the table is queried 
- * in the data_dictionary.
+ * in the data_dictionary. The "show status" and "show global status" do
+ * not take a read lock when the data_dictionary table is queried, the 
+ * user is not displayed in these results so it is not necessary. 
  *
  * Atomics
  *
@@ -78,26 +82,27 @@
  *
  * Allow expansion of Scoreboard and cumulative vector 
  * 
- * Possibly add a scoreboard_slot_index variable onto the Session class
- * this would avoid having to relocate the Scoreboard slot for each Session
- * doing multiple statements. 
- * 
  */
 
 #include "config.h"
+#include "user_commands.h"
+#include "status_vars.h"
+#include "global_stats.h"
 #include "logging_stats.h"
+#include "status_tool.h"
 #include "stats_schema.h"
+
 #include <drizzled/session.h>
 
 using namespace drizzled;
 using namespace plugin;
 using namespace std;
 
-static bool sysvar_logging_stats_enabled= false;
+static bool sysvar_logging_stats_enabled= true;
 
 static uint32_t sysvar_logging_stats_scoreboard_size= 2000;
 
-static uint32_t sysvar_logging_stats_max_user_count= 1000;
+static uint32_t sysvar_logging_stats_max_user_count= 500;
 
 static uint32_t sysvar_logging_stats_bucket_count= 10;
 
@@ -120,9 +125,14 @@ void LoggingStats::updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot,
 {
   enum_sql_command sql_command= session->lex->sql_command;
 
-  UserCommands *user_commands= scoreboard_slot->getUserCommands();
+  scoreboard_slot->getUserCommands()->logCommand(sql_command);
 
-  user_commands->logCommand(sql_command);
+  /* If a flush occurred copy over values before setting new values */
+  if (scoreboard_slot->getStatusVars()->hasBeenFlushed(session))
+  {
+    cumulative_stats->logGlobalStatusVars(scoreboard_slot);
+  }
+  scoreboard_slot->getStatusVars()->logStatusVar(session);
 }
 
 bool LoggingStats::post(Session *session)
@@ -156,6 +166,7 @@ bool LoggingStats::postEnd(Session *session)
   {
     cumulative_stats->logUserStats(scoreboard_slot);
     cumulative_stats->logGlobalStats(scoreboard_slot);
+    cumulative_stats->logGlobalStatusVars(scoreboard_slot);
     delete scoreboard_slot;
   }
 
@@ -173,6 +184,10 @@ static CumulativeCommandsTool *cumulative_commands_tool= NULL;
 static GlobalStatementsTool *global_statements_tool= NULL;
 
 static SessionStatementsTool *session_statements_tool= NULL;
+
+static StatusTool *global_status_tool= NULL;
+
+static StatusTool *session_status_tool= NULL;
 
 static void enable(Session *,
                    drizzle_sys_var *,
@@ -224,6 +239,20 @@ static bool initTable()
     return true;
   }
 
+  session_status_tool= new(nothrow)StatusTool(logging_stats, true);
+
+  if (! session_status_tool)
+  {
+    return true;
+  }
+
+  global_status_tool= new(nothrow)StatusTool(logging_stats, false);
+
+  if (! global_status_tool)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -241,6 +270,8 @@ static int init(module::Context &context)
   context.add(cumulative_commands_tool);
   context.add(global_statements_tool);
   context.add(session_statements_tool);
+  context.add(session_status_tool);
+  context.add(global_status_tool);
 
   if (sysvar_logging_stats_enabled)
   {
@@ -256,8 +287,8 @@ static DRIZZLE_SYSVAR_UINT(max_user_count,
                            N_("Max number of users that will be logged"),
                            NULL, /* check func */
                            NULL, /* update func */
-                           1000, /* default */
-                           500, /* minimum */
+                           500, /* default */
+                           100, /* minimum */
                            50000,
                            0);
 
@@ -289,7 +320,7 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            N_("Enable Logging Statistics Collection"),
                            NULL, /* check func */
                            enable, /* update func */
-                           false /* default */);
+                           true /* default */);
 
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(max_user_count),

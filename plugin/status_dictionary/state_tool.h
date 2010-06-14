@@ -31,30 +31,16 @@ public:
 
   virtual drizzled::drizzle_show_var *getVariables()= 0;
 
-  virtual bool hasStatus()
-  {
-    return true;
-  }
-
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     drizzled::sql_var_t option_type;
-    bool has_status;
     drizzled::drizzle_show_var *variables;
-    drizzled::system_status_var status;
-    drizzled::system_status_var *status_ptr;
 
     void fill(const std::string &name, char *value, drizzled::SHOW_TYPE show_type);
 
-    drizzled::system_status_var *getStatus()
-    {
-      return status_ptr;
-    }
-
   public:
     Generator(drizzled::Field **arg, drizzled::sql_var_t option_arg,
-              drizzled::drizzle_show_var *show_arg,
-              bool status_arg);
+              drizzled::drizzle_show_var *show_arg);
     ~Generator();
 
     bool populate();
@@ -63,7 +49,7 @@ public:
 
   Generator *generator(drizzled::Field **arg)
   {
-    return new Generator(arg, option_type, getVariables(), hasStatus());
+    return new Generator(arg, option_type, getVariables());
   }
 };
 

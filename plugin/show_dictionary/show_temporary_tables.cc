@@ -36,10 +36,10 @@ ShowTemporaryTables::ShowTemporaryTables() :
 }
 
 ShowTemporaryTables::Generator::Generator(Field **arg) :
-  plugin::TableFunction::Generator(arg)
+  plugin::TableFunction::Generator(arg),
+  session(getSession())
 {
-  session= current_session;
-  table= session->temporary_tables;
+  table= session.temporary_tables;
 }
 
 bool ShowTemporaryTables::Generator::populate()
@@ -50,7 +50,7 @@ bool ShowTemporaryTables::Generator::populate()
     {
       break;
     }
-    table= table->next;
+    table= table->getNext();
   }
 
   if (not table)
@@ -58,7 +58,7 @@ bool ShowTemporaryTables::Generator::populate()
 
   fill();
 
-  table= table->next;
+  table= table->getNext();
 
   return true;
 }
