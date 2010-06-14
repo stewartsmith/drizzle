@@ -105,7 +105,7 @@ public:
   FilesystemTableShare *get_share(const char *table_name);
   void free_share();
 private:
-  void getAllFields(drizzled::String& output);
+  void getAllFields(std::string& output);
   void addSlot();
   int openUpdateFile();
   int find_current_row(unsigned char *buf);

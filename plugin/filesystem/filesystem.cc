@@ -561,7 +561,7 @@ int FilesystemCursor::doEndTableScan()
   return 0;
 }
 
-void FilesystemCursor::getAllFields(drizzled::String& output)
+void FilesystemCursor::getAllFields(string& output)
 {
   bool first = true;
   drizzled::String attribute;
@@ -573,7 +573,7 @@ void FilesystemCursor::getAllFields(drizzled::String& output)
     }
     else
     {
-      output.append(col_separator[0]);
+      output.append(col_separator.substr(0, 1));
     }
 
     if (not (*field)->is_null())
@@ -581,14 +581,14 @@ void FilesystemCursor::getAllFields(drizzled::String& output)
       (*field)->setReadSet();
       (*field)->val_str(&attribute, &attribute);
 
-      output.append(attribute);
+      output.append(attribute.ptr(), attribute.length());
     }
     else
     {
       output.append("0");
     }
   }
-  output.append(row_separator[0]);
+  output.append(row_separator.substr(0, 1));
 }
 
 int FilesystemCursor::doInsertRecord(unsigned char * buf)
@@ -596,16 +596,16 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   (void)buf;
   ha_statistic_increment(&system_status_var::ha_write_count);
 
-  drizzled::String output_line;
+  string output_line;
   getAllFields(output_line);
 
   // write output_line to real file
   ofstream fout(real_file_name.c_str(), ios::app);
   if (not fout.is_open())
   {
-    return -5;
+    return ENOENT;
   }
-  fout.write(output_line.ptr(), output_line.length());
+  fout.write(output_line.c_str(), output_line.length());
   fout.close();
 
   return 0;
@@ -621,11 +621,10 @@ int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
   addSlot();
 
   // get the update information
-  drizzled::String output_line;
+  string output_line;
   getAllFields(output_line);
 
-  if (::write(update_file_desc, output_line.ptr(), output_line.length())
-      != output_line.length())
+  if (::write(update_file_desc, output_line.c_str(), output_line.length()) < 0)
     return -1;
   update_file_length+= output_line.length();
 
