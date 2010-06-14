@@ -40,6 +40,7 @@
 #include "OpenTable_ms.h"
 #include "TransLog_ms.h"
 #include "Transaction_ms.h"
+#include "pbmsdaemon_ms.h"
 
 MSTrans *MSTransactionManager::tm_Log;
 MSTransactionThread *MSTransactionManager::tm_Reader;
@@ -74,28 +75,31 @@ public:
 	virtual void *finalize();
 	
 	void flush();
+	
+	bool trt_is_ready;
 private:
 	void reportLostReference(MSTransPtr rec, MS_TxnState state);
 	void dereference(MSTransPtr rec, MS_TxnState state);
 	void commitReference(MSTransPtr rec, MS_TxnState state);
 	
-	MSTrans *log;
-	CSFile	*lostLog;
+	MSTrans *trt_log;
+	CSFile	*trt_lostLog;
 
 };
 
 MSTransactionThread::MSTransactionThread(MSTrans *txn_log):
 CSDaemon(0, NULL),
-log(txn_log),
-lostLog(NULL)
+trt_is_ready(false),
+trt_log(txn_log),
+trt_lostLog(NULL)
 {
-	log->txn_SetReader(this);
+	trt_log->txn_SetReader(this);
 }
 
 void MSTransactionThread::close()
 {
-	if (lostLog)
-		lostLog->close();
+	if (trt_lostLog)
+		trt_lostLog->close();
 }
 
 void MSTransactionThread::reportLostReference(MSTransPtr rec, MS_TxnState state)
@@ -103,6 +107,10 @@ void MSTransactionThread::reportLostReference(MSTransPtr rec, MS_TxnState state)
 	MSDiskLostRec lrec;
 	const char *t_txt, *s_txt;
 	char b1[16], b2[16], msg[100];
+	
+	//if (PBMSDaemon::isDaemonState(PBMSDaemon::DaemonStartUp) == true)
+		//return;
+
 	enter_();
 	
 	switch (state) {
@@ -146,19 +154,19 @@ void MSTransactionThread::reportLostReference(MSTransPtr rec, MS_TxnState state)
 	CS_SET_DISK_8(lrec.lr_blob_id_8, rec->tr_blob_id);
 	CS_SET_DISK_8(lrec.lr_blob_ref_id_8, rec->tr_blob_ref_id);
 	
-	if (!lostLog) {
+	if (!trt_lostLog) {
 		CSPath *path;
-		char *str = cs_strdup(log->txn_GetTXNLogPath());
+		char *str = cs_strdup(trt_log->txn_GetTXNLogPath());
 		cs_remove_last_name_of_path(str);
 		
 		path = CSPath::newPath(str, "pbms_lost_txn.dat");
 		cs_free(str);
 		
-		lostLog = CSFile::newFile(path);
-		lostLog->open(CSFile::CREATE);
+		trt_lostLog = CSFile::newFile(path);
+		trt_lostLog->open(CSFile::CREATE);
 	}
-	lostLog->write(&lrec, lostLog->getEOF(), sizeof(MSDiskLostRec));
-	lostLog->sync();
+	trt_lostLog->write(&lrec, trt_lostLog->getEOF(), sizeof(MSDiskLostRec));
+	trt_lostLog->sync();
 	exit_();
 	
 }
@@ -216,7 +224,7 @@ void MSTransactionThread::flush()
 	// other committed transaction in the log and apply them if found.
 	
 	wakeup(); // Incase the reader is sleeping.
-	while (log->txn_haveNextTransaction() && !isSuspend())
+	while (trt_log->txn_haveNextTransaction() && !isSuspend() && self->myMustQuit)
 		self->sleep(10);		
 	exit_();
 }
@@ -231,7 +239,7 @@ bool MSTransactionThread::doWork()
 		while (!myMustQuit) {
 			// This will sleep while waiting for the next 
 			// completed transaction.
-			log->txn_GetNextTransaction(&rec, &state); 
+			trt_log->txn_GetNextTransaction(&rec, &state); 
 			if (myMustQuit)
 				break;
 				
@@ -279,11 +287,11 @@ void *MSTransactionThread::finalize()
 {
 	close();
 	
-	if (log)
-		log->release();
+	if (trt_log)
+		trt_log->release();
 		
-	if (lostLog)
-		lostLog->release();
+	if (trt_lostLog)
+		trt_lostLog->release();
 	return NULL;
 }
 
@@ -293,20 +301,20 @@ void *MSTransactionThread::finalize()
  */
 void MSTransactionManager::startUpReader()
 {
-	CSStringBuffer *log;
+	char pbms_path[PATH_MAX];
 	enter_();
 	
-	new_(log, CSStringBuffer(20));
-	push_(log);
-	log->append(ms_my_get_mysql_home_path());
-	log->append("pbms");
-	log->append("/ms-trans-log.dat");
-
-	tm_Log = MSTrans::txn_NewMSTrans(log->getCString());
+	cs_strcpy(PATH_MAX, pbms_path, PBMSDaemon::getPBMSDir()); 
+	cs_add_name_to_path(PATH_MAX, pbms_path, "ms-trans-log.dat");
+	
+	tm_Log = MSTrans::txn_NewMSTrans(pbms_path);
 	new_(tm_Reader, MSTransactionThread(RETAIN(tm_Log)));
-	release_(log);
 
 	tm_Reader->start();
+	
+	// Wait for the transaction reader to recover any old transaction:
+	tm_Reader->flush();
+		
 	exit_();
 }
 
@@ -316,7 +324,7 @@ void MSTransactionManager::startUp()
 	enter_();
 	
 	// Do not start the reader if the pbms dir doesn't exist.
-	path = CSPath::newPath(ms_my_get_mysql_home_path(), "pbms");
+	path = CSPath::newPath(PBMSDaemon::getPBMSDir());
 	push_(path);
 	if (path->exists()) {
 		startUpReader();
@@ -376,6 +384,7 @@ void MSTransactionManager::commit()
 		
 	self->myStmtCount = 0;
 	self->myStartStmt = 0;
+
 	tm_Log->txn_LogTransaction(MS_CommitTxn);
 	
 
@@ -391,6 +400,7 @@ void MSTransactionManager::rollback()
 		
 	self->myStmtCount = 0;
 	self->myStartStmt = 0;
+
 	tm_Log->txn_LogTransaction(MS_RollBackTxn);
 
 	exit_();
@@ -417,7 +427,9 @@ void MSTransactionManager::setSavepoint(const char *savePoint)
 	
 	new_(checkPoint, MSTransactionCheckPoint(savePoint, self->myStmtCount));
 	
+	push_(checkPoint);
 	self->mySavePoints.add(checkPoint);
+	pop_(checkPoint);
 	
 	exit_();
 }
@@ -494,17 +506,17 @@ void MSTransactionManager::logTransaction(bool ref, uint32_t db_id, uint32_t tab
 	if (!tm_Log)
 		startUpReader();
 
-#ifndef DRIZZLED
 	if (!self->myTID) {
 		bool autocommit = false;
 		autocommit = ms_is_autocommit();
+#ifndef DRIZZLED
 		if (!autocommit)
 			pbms_take_part_in_transaction(ms_my_get_thread());
+#endif
 			
 		self->myIsAutoCommit = autocommit;
 	}
 	
-#endif
 	// PBMS always explicitly commits
 	tm_Log->txn_LogTransaction((ref)?MS_ReferenceTxn:MS_DereferenceTxn, false /*autocommit*/, db_id, tab_id, blob_id, blob_ref_id);
 

@@ -317,9 +317,9 @@ static int pbms_create_proto_table(const char *engine_name, const char *name, DT
 			
 		field_constraints= field->mutable_constraints();
 		if (info->field_flags & NOT_NULL_FLAG)
-			field_constraints->set_is_nullable(true);
-		else
 			field_constraints->set_is_nullable(false);
+		else
+			field_constraints->set_is_nullable(true);
 		
 		if (info->field_flags & UNSIGNED_FLAG)
 			field_constraints->set_is_unsigned(true);
@@ -671,12 +671,6 @@ void MSOpenSystemTable::setNotNullInRecord(Field *field, char *record)
 {
 	if (field->null_ptr)
 		record[(uint) (field->null_ptr - (uchar *) field->table->record[0])] &= (uchar) ~field->null_bit;
-}
-
-void MSOpenSystemTable::setNullInRecord(Field *field, char *record)
-{
-	if (field->null_ptr)
-		record[(uint) (field->null_ptr - (uchar *) field->table->record[0])] |= field->null_bit;
 }
 
 /*
@@ -1594,7 +1588,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 						ASSERT(strcmp(curr_field->field_name, "Blob_url") == 0);
 						if (ref_data->rd_tab_id != 0xFFFFFFFF) {
 							iRefOpenTable->formatBlobURL(blob_url, ref_data->rd_blob_id, iRefAuthCode, iRefBlobSize, ref_data->rd_blob_ref_id);
-							curr_field->store(blob_url, strlen(blob_url), &UTF8_CHARSET);
+							curr_field->store(blob_url, strlen(blob_url) +1, &UTF8_CHARSET); // Include the null char in the url. This is the way it is stored in user tables.
 							setNotNullInRecord(curr_field, buf);
 						}
 						break;
@@ -1621,8 +1615,6 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 					curr_field->store(ms_my_1970_to_mysql_time(delete_time), true);
 					setNotNullInRecord(curr_field, buf);
 				}
-				else
-					setNullInRecord(curr_field, buf);
 				break;
 			case 'R':
 				switch (curr_field->field_name[5]) {

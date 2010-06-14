@@ -88,6 +88,7 @@ using namespace drizzled::plugin;
 #include "SysTab_httpheader.h"
 #include "SystemTable_ms.h"
 #include "parameters_ms.h"
+#include "pbmsdaemon_ms.h"
 
 /* Note: 'new' used here is NOT CSObject::new which is a DEBUG define*/
 #ifdef new
@@ -391,23 +392,26 @@ static handler *pbms_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_RO
 #endif
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::doStartTransaction(Session *session, start_transaction_option_t options)
+int PBMSStorageEngine::doStartTransaction(Session *thd, start_transaction_option_t options)
 {
-	(void)session;
+	(void)thd;
 	(void)options;
-	
 	return 0;
 }
 
-int PBMSStorageEngine::doCommit(Session *thd, bool all __attribute__((unused)))
+int PBMSStorageEngine::doCommit(Session *thd, bool all)
 {
 #else
-static int pbms_commit(handlerton *, THD *thd, bool all __attribute__((unused)))
+static int pbms_commit(handlerton *, THD *thd, bool all)
 {
 #endif
 	int			err = 0;
 	CSThread	*self;
 	PBMSResultRec result;
+
+	// I am not interesed in single statement transactions.
+	if (all == false)
+		return 0;
 
 	if (pbms_enter_conn(thd, &self, &result, false))
 		return 0;
@@ -419,6 +423,7 @@ static int pbms_commit(handlerton *, THD *thd, bool all __attribute__((unused)))
 		err = pbms_exception_to_result(&self->myException, &result);
 	}
 	cont_(a);
+	self->myIsAutoCommit = true;
 	return_(err);
 }
 
@@ -443,6 +448,7 @@ static int pbms_rollback(handlerton *, THD *thd, bool all __attribute__((unused)
 		err = pbms_exception_to_result(&self->myException, &result);
 	}
 	cont_(a);
+	self->myIsAutoCommit = true;
 	return_(err);
 }
 
@@ -606,6 +612,7 @@ int pbms_init_func(void *p)
 
 	ASSERT(!pbms_started);
 	pbms_started = false;
+	PBMSDaemon::setDaemonState(PBMSDaemon::DaemonStartUp);
 	
 	{
 		char info[120];
@@ -616,6 +623,7 @@ int pbms_init_func(void *p)
 	
 	if ((err = MSEngine::startUp(&result))) {
 		CSL.logLine(NULL, CSLog::Error, result.mr_message);
+		PBMSDaemon::setDaemonState(PBMSDaemon::DaemonError);
 		return(1);
 	}
 
@@ -645,9 +653,11 @@ int pbms_init_func(void *p)
 	CSThread::startUp();
 	if (!(thread = CSThread::newCSThread())) {
 		CSException::logOSError(CS_CONTEXT, ENOMEM);
+		PBMSDaemon::setDaemonState(PBMSDaemon::DaemonError);
 		return(1);
 	}
 	if (!CSThread::attach(thread)) {
+		PBMSDaemon::setDaemonState(PBMSDaemon::DaemonError);
 		thread->myException.log(NULL);
 		CSThread::shutDown();
 		cs_exit_memory();
@@ -698,6 +708,11 @@ int pbms_init_func(void *p)
 		
 	}
 
+	if (pbms_started)
+		PBMSDaemon::setDaemonState(PBMSDaemon::DaemonRunning);
+	else
+		PBMSDaemon::setDaemonState(PBMSDaemon::DaemonError);
+
 	return(my_res);
 }
 
@@ -712,6 +727,7 @@ int pbms_done_func(void *)
 	if (!pbms_started)
 		return 0;
 
+	PBMSDaemon::setDaemonState(PBMSDaemon::DaemonShuttingDown);
 	CSL.logLine(NULL, CSLog::Protocol, "PrimeBase Media Stream (PBMS) Daemon shutdown...");
 	
 	/* Shutdown the Media Stream network. */
@@ -1150,7 +1166,7 @@ int PBMSStorageEngine::doCreateTable(Session&, Table&, TableIdentifier& , drizzl
 int PBMSStorageEngine::doDropTable(Session &, TableIdentifier& )
 {
 	/* You cannot delete PBMS tables. */
-	return( HA_ERR_WRONG_COMMAND );
+	return( 0 );
 }
 
 int PBMSStorageEngine::doRenameTable(Session&, TableIdentifier &, TableIdentifier &)

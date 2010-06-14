@@ -63,6 +63,7 @@
 //#include "SysTab_variable.h"
 #include "SysTab_httpheader.h"
 #include "parameters_ms.h"
+#include "pbmsdaemon_ms.h"
 
 
 
@@ -1001,7 +1002,7 @@ MSDatabase *MSDatabase::getDatabase(uint32_t db_id)
 		db->retain();
 	else {
 		// Look for the database folder with the correct ID:
-		CSPath *path = CSPath::newPath(ms_my_get_mysql_home_path(), "pbms");
+		CSPath *path = CSPath::newPath(PBMSDaemon::getPBMSDir());
 		push_(path);
 		if (path->exists()) {
 			CSDirectory *dir;
@@ -1487,7 +1488,7 @@ void MSDatabase::removeDatabasePath(CSString *doomedDatabasePath )
 
 	release_(doomedDatabasePath);
 	
-	path = CSPath::newPath(ms_my_get_mysql_home_path(), "pbms");
+	path = CSPath::newPath(PBMSDaemon::getPBMSDir());
 	push_(path);
 	if (path->isEmpty() && !path->isLink()) {
 		path->removeDir();

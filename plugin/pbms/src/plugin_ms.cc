@@ -62,6 +62,7 @@ int my_init(module::Context &registry)
 {
 	int rtc;
 	
+	PBMSParameters::startUp();
 	rtc = pbms_init_func(registry);
 	if (rtc == 0) {
 		pbms_events = new PBMSEvents();

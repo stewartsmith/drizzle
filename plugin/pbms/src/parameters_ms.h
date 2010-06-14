@@ -29,6 +29,9 @@
 
 class PBMSParameters {
 	public:
+	static void startUp();
+	
+	static void shutDown(){}
 	
 	static uint32_t getPortNumber();
 

@@ -28,16 +28,12 @@
  */
 
 
-//#include "mysql_priv.h"
 #ifdef DRIZZLED
-//#define DRIZZLE_SERVER 1
-//#include <config.h>
-//#include <drizzled/global.h>
+#include "config.h"
 #include <drizzled/common.h>
-//#include <drizzled/plugin.h>
-//#include <drizzled/show.h>
 #include <drizzled/data_home.h>
 #include <drizzled/current_session.h>
+#include <drizzled/session.h>
 #else
 #include "cslib/CSConfig.h"
 #endif
@@ -64,6 +60,11 @@ void *ms_my_get_thread()
 const char *ms_my_get_mysql_home_path()
 {
 	return drizzled::data_home;
+}
+
+bool ms_is_autocommit()
+{
+	return (session_test_options(current_thd, (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))) == 0;
 }
 
 #else

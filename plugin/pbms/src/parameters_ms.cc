@@ -296,6 +296,14 @@ static const char* locate_db(const char *list, const char *db, int len)
 	return NULL;
 }
 
+//--------------
+// Parameter update functions are not called for parameters that are set on
+// the command line. PBMSParameters::startUp() will perform any initialization required.
+void PBMSParameters::startUp()
+{ 
+	my_table_match = set_match_type(my_table_list);
+}
+
 //-----------------
 bool PBMSParameters::isBlackListedDB(const char *db)
 {
@@ -314,7 +322,10 @@ void PBMSParameters::blackListedDB(const char *db)
 //-----------------
 bool PBMSParameters::isBLOBDatabase(const char *db)
 {
-	bool found;
+	CSThread *self;
+	int		err;
+	PBMSResultRec result;
+	bool found = false;
 	
 	if (isBlackListedDB(db))
 		return false;
@@ -327,20 +338,41 @@ bool PBMSParameters::isBLOBDatabase(const char *db)
 
 	if (my_table_match <= MATCH_DBS)
 		return true;
-
-	enter_();
-	lock_(&my_table_list_lock);	
 	
+	if ((err = pbms_enter_conn_no_thd(&self, &result)) == 0) {
+
+		inner_();
+		try_(a) {
+			lock_(&my_table_list_lock);	
+			
+				
+			found = (locate_db(my_table_list, db, strlen(db)) != NULL);
+				
+			unlock_(&my_table_list_lock);
+		}
 		
-	found = (locate_db(my_table_list, db, strlen(db)) != NULL);
-		
-	unlock_(&my_table_list_lock);	
-	return_(found);
+		catch_(a) {
+			err = pbms_exception_to_result(&self->myException, &result);
+		}
+		cont_(a);
+		outer_();
+	
+	}
+	
+	if (err) {
+		fprintf(stderr, "PBMSParameters::isBLOBDatabase(\"%s\") error (%d):'%s'\n", 
+			db, result.mr_code,  result.mr_message);
+	}
+	
+	return found;
 }
 	
 //-----------------
 bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 {
+	CSThread *self;
+	int		err;
+	PBMSResultRec result;
 	bool found = false;
 	const char *ptr;
 	int db_len, table_len, match_len;
@@ -357,36 +389,53 @@ bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 	if (my_table_match <= MATCH_ALL)
 		return true;
 
-	enter_();
-	lock_(&my_table_list_lock);	
+	if ((err = pbms_enter_conn_no_thd(&self, &result)) == 0) {
+
+		inner_();
+		try_(a) {
+			lock_(&my_table_list_lock);	
+					
+			db_len = strlen(db);
+			table_len = strlen(table);
 			
-	db_len = strlen(db);
-	table_len = strlen(table);
-	
-	ptr = my_table_list;
-	while (ptr) {
-		ptr = locate_db(ptr, db, db_len);
-		if (ptr) {
-			match_len = 0;
-			if (*ptr == '*')
-				match_len = 1;
-			else if (strncmp(ptr, table, table_len) == 0)
-				match_len = table_len;
-				
-			if (match_len) {
-				ptr += match_len;
-				if ((!*ptr) || (*ptr == ',') || isspace(*ptr)) {
-					found = true;
-					break;
+			ptr = my_table_list;
+			while (ptr) {
+				ptr = locate_db(ptr, db, db_len);
+				if (ptr) {
+					match_len = 0;
+					if (*ptr == '*')
+						match_len = 1;
+					else if (strncmp(ptr, table, table_len) == 0)
+						match_len = table_len;
+						
+					if (match_len) {
+						ptr += match_len;
+						if ((!*ptr) || (*ptr == ',') || isspace(*ptr)) {
+							found = true;
+							break;
+						}
+					}
+					
+					NEXT_IN_TABLE_LIST(ptr);
 				}
 			}
-			
-			NEXT_IN_TABLE_LIST(ptr);
+				
+			unlock_(&my_table_list_lock);
 		}
+		catch_(a) {
+			err = pbms_exception_to_result(&self->myException, &result);
+		}
+		cont_(a);
+		outer_();
+	
 	}
-		
-	unlock_(&my_table_list_lock);	
-	return_(found);
+	
+	if (err) {
+		fprintf(stderr, "PBMSParameters::isBLOBTable(\"%s\", \"%s\") error (%d):'%s'\n", 
+			db, table, result.mr_code,  result.mr_message);
+	}
+	
+	return found;
 }
 
 
@@ -500,7 +549,7 @@ static void set_table_list(THD *, struct st_mysql_sys_var *, void *var_ptr, CONS
 
 static MYSQL_SYSVAR_STR(watch_tables,
                            my_table_list,
-                           PLUGIN_VAR_OPCMDARG,
+                           PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_MEMALLOC,
                            N_("A comma delimited list of tables to watch of the format: <database>.<table>, ..."),
                            check_table_list, /* check func */
                            set_table_list, /* update func */
@@ -508,7 +557,7 @@ static MYSQL_SYSVAR_STR(watch_tables,
 
 static MYSQL_SYSVAR_BOOL(watch_enable,
                            my_events_enabled,
-                           PLUGIN_VAR_NOCMDARG,
+                           PLUGIN_VAR_OPCMDARG,
                            N_("Enable PBMS daemon Insert/Update/Delete event scanning"),
                            NULL, /* check func */
                            NULL, /* update func */
@@ -517,7 +566,7 @@ static MYSQL_SYSVAR_BOOL(watch_enable,
 #ifdef DRIZZLED
 static MYSQL_SYSVAR_INT(before_insert_position,
                            my_before_insert_position,
-                           PLUGIN_VAR_NOCMDARG,
+                           PLUGIN_VAR_OPCMDARG,
                            N_("Before insert row event observer call position"),
                            NULL, /* check func */
                            NULL, /* update func */
@@ -528,7 +577,7 @@ static MYSQL_SYSVAR_INT(before_insert_position,
 
 static MYSQL_SYSVAR_INT(before_update_position,
                            my_before_update_position,
-                           PLUGIN_VAR_NOCMDARG,
+                           PLUGIN_VAR_OPCMDARG,
                            N_("Before update row event observer call position"),
                            NULL, /* check func */
                            NULL, /* update func */

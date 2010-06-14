@@ -49,6 +49,7 @@
 #include "ConnectionHandler_ms.h"
 #include "metadata_ms.h"
 #include "parameters_ms.h"
+#include "pbmsdaemon_ms.h"
 
 /*
  * ---------------------------------------------------------------
@@ -897,7 +898,7 @@ void MSRepoFile::releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_s
 		 * same time!
 		 */
 		write(otab->myOTBuffer + MS_BLOB_STAT_OFFS, offset + MS_BLOB_STAT_OFFS, head_size - MS_BLOB_STAT_OFFS);
-	} else {
+	} else if (PBMSDaemon::isDaemonState(PBMSDaemon::DaemonStartUp) == false) {
 		char message[100];
 		snprintf(message, 100, "BLOB reference not found: db_id: %"PRIu32", tab_id:%"PRIu32", blob_ref_id: %"PRIu64"\n", myRepo->myRepoDatabase->myDatabaseID, tab_id, blob_ref_id);
 		/* The reference already exists so there is nothing to do... */
@@ -987,10 +988,12 @@ void MSRepoFile::commitBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_si
 		size -= ref_size;
 	}
 
-	char message[100];
-	snprintf(message, 100, "BLOB reference not found: db_id: %"PRIu32", tab_id:%"PRIu32", blob_ref_id: %"PRIu64"\n", myRepo->myRepoDatabase->myDatabaseID, tab_id, blob_ref_id);
-	self->myException.log(self, message);
-
+	if (PBMSDaemon::isDaemonState(PBMSDaemon::DaemonStartUp) == false) {
+		char message[100];
+		snprintf(message, 100, "BLOB reference not found: db_id: %"PRIu32", tab_id:%"PRIu32", blob_ref_id: %"PRIu64"\n", myRepo->myRepoDatabase->myDatabaseID, tab_id, blob_ref_id);
+		self->myException.log(self, message);
+	}
+	
 	exit:
 	unlock_(lock);
 	exit_();

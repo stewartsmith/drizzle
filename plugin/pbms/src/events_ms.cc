@@ -57,7 +57,7 @@ static bool insertRecord(TableEventData &data, unsigned char *new_row)
 		field = data.table.getBlobFieldAt(i);
 
 		// Get the blob record:
-		blob_rec = new_row + field->offset(new_row);
+		blob_rec = new_row + field->offset(data.table.record[0]);
 		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
 		length = field->get_length(blob_rec);
@@ -135,7 +135,7 @@ static bool deleteRecord(TableEventData &data, const unsigned char *old_row)
 		field = data.table.getBlobFieldAt(i);
 
 		// Get the blob record:
-		blob_rec = (char *)old_row + field->offset(old_row);
+		blob_rec = (char *)old_row + field->offset(data.table.record[0]);
 		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
 		length = field->get_length((unsigned char *)blob_rec);
@@ -192,7 +192,13 @@ static bool observeBeforeUpdateRecord(BeforeUpdateRecordEventData &data)
 	if (data.table.sizeBlobFields() == 0)
 		return false;
 
-	if (deleteRecord(data, data.new_row))
+	// NOTE: The simple way to do this is to just do a delete followed by an insert.
+	// But in the majority of cases this is probably a waste of time since the BLOB
+	// will most likely NOT be the target of the update. What I need to do is check if
+	// the BLOB was updated and then only delete/insert those BLOBs.
+	//
+	// But for now I will be lazy.
+	if (deleteRecord(data, data.old_row))
 		return true;
 		
 	return insertRecord(data, data.new_row);

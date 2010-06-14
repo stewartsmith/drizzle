@@ -130,7 +130,7 @@ public:
 
 	/* Transaction references. */
 #ifdef DRIZZLED
-	CSHashTable		mySavePoints;
+	CSSortedList	mySavePoints;
 #endif
 	uint32_t			myTID;			// Current transaction ID
 	uint32_t			myTransRef;		// Reference to the current transaction cache index
@@ -164,7 +164,7 @@ public:
 		pbms_api_owner(false),
 		myTID(0),
 		myTransRef(0),
-		myIsAutoCommit(false),
+		myIsAutoCommit(true),
 		myCacheVersion(0),
 		myStartTxn(true),
 		myStmtCount(0),

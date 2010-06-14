@@ -687,17 +687,52 @@ CRASH_POINT(10);
 	exit_();
 }
 
+/*
+static const char *txnName(MS_Txn type)
+{
+	switch (type) {
+		case MS_RollBackTxn:
+			return "Rollback";
+		case MS_PartialRollBackTxn:
+			return "PartialRollBack";
+		case MS_CommitTxn:
+			return "Commit";
+		case MS_ReferenceTxn:
+			return "Reference";
+		case MS_DereferenceTxn:
+			return "Dereference";
+		case MS_RecoveredTxn:
+			return "Recovered";
+	}
+	
+	return "???";
+}
+*/
 void MSTrans::txn_LogTransaction(MS_Txn type, bool autocommit, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id)
 {
 	enter_();
 	
 	lock_(this);
 	if (!self->myTID) {
+		switch (type) {
+			case MS_RollBackTxn:
+			case MS_PartialRollBackTxn:
+			case MS_CommitTxn: {
+				unlock_(this);
+				exit_();;
+			}
+			case MS_ReferenceTxn:
+			case MS_DereferenceTxn:
+			case MS_RecoveredTxn:
+				break;
+		}
 		txn_MaxTID++;
 		self->myTID = txn_MaxTID;
 		self->myTransRef = TRANS_CACHE_NEW_REF;
 		self->myStartTxn = true;
 	}
+
+	//fprintf(stderr, "MSTrans::txn_LogTransaction(%d, autocommit = %s, %s)\n", self->myTID, (autocommit)?"On":"Off", txnName(type));
 
 	txn_AddTransaction(type, autocommit, db_id, tab_id, blob_id, blob_ref_id);
 	if (autocommit || TRANS_TYPE_IS_TERMINATED(type))
@@ -979,7 +1014,7 @@ void MSTrans::txn_GetNextTransaction(MSTransPtr tran, MS_TxnState *state)
 		}
 		
 		if (self->myMustQuit)
-			exit_();
+			break;
 			
 		if (txn_TransCache->tc_GetRecAt(txn_CurrentTxn, txn_TxnIndex++, tran, state)) 
 			break;
