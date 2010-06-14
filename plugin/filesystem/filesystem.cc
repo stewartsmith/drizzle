@@ -226,25 +226,18 @@ int FilesystemEngine::doGetTableDefinition(Session &,
                                drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_proto)
 {
-  string new_path;
+  string new_path(identifier.getPath());
+  new_path.append(FILESYSTEM_EXT);
 
-  new_path= identifier.getPath();
-  new_path+= FILESYSTEM_EXT;
-
-  int fd= open(new_path.c_str(), O_RDONLY);
-
-  if (fd == -1)
-  {
-    cerr << "can't open!" << endl;
-    return errno;
-  }
+  int fd= ::open(new_path.c_str(), O_RDONLY);
+  if (fd < 0)
+    return ENOENT;
 
   google::protobuf::io::ZeroCopyInputStream* input=
     new google::protobuf::io::FileInputStream(fd);
 
-  if (not input) {
+  if (not input)
     return HA_ERR_CRASHED_ON_USAGE;
-  }
 
   if (not table_proto.ParseFromZeroCopyStream(input))
   {
