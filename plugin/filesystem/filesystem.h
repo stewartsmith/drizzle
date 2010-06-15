@@ -67,7 +67,6 @@ public:
   FilesystemCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
   ~FilesystemCursor()
   {
-    std::cerr << "CURSOR DCTOR" << std::endl;
     if (file_buff)
       delete file_buff;
   }
