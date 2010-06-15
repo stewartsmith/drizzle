@@ -687,27 +687,34 @@ CRASH_POINT(10);
 	exit_();
 }
 
-/*
-static const char *txnName(MS_Txn type)
+#define PRINT_TRANS(tid, a, t) 
+
+#ifndef PRINT_TRANS
+#define PRINT_TRANS(tid, a, t) printTrans(tid, a, t)
+static void printTrans(uint32_t tid, bool autocommit, MS_Txn type)
 {
+	const char *type_name = "???";
+	
 	switch (type) {
 		case MS_RollBackTxn:
-			return "Rollback";
+			type_name = "Rollback";
 		case MS_PartialRollBackTxn:
-			return "PartialRollBack";
+			type_name = "PartialRollBack";
 		case MS_CommitTxn:
-			return "Commit";
+			type_name = "Commit";
 		case MS_ReferenceTxn:
-			return "Reference";
+			type_name = "Reference";
 		case MS_DereferenceTxn:
-			return "Dereference";
+			type_name = "Dereference";
 		case MS_RecoveredTxn:
-			return "Recovered";
+			type_name = "Recovered";
 	}
 	
-	return "???";
+	fprintf(stderr, "MSTrans::txn_LogTransaction(%d, autocommit = %s, %s)\n", tid, (autocommit)?"On":"Off", type_name);
+
 }
-*/
+#endif
+
 void MSTrans::txn_LogTransaction(MS_Txn type, bool autocommit, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint64_t blob_ref_id)
 {
 	enter_();
@@ -732,8 +739,8 @@ void MSTrans::txn_LogTransaction(MS_Txn type, bool autocommit, uint32_t db_id, u
 		self->myStartTxn = true;
 	}
 
-	//fprintf(stderr, "MSTrans::txn_LogTransaction(%d, autocommit = %s, %s)\n", self->myTID, (autocommit)?"On":"Off", txnName(type));
-
+	PRINT_TRANS(self->myTID, autocommit, type);
+	
 	txn_AddTransaction(type, autocommit, db_id, tab_id, blob_id, blob_ref_id);
 	if (autocommit || TRANS_TYPE_IS_TERMINATED(type))
 		txn_NewTransaction();
