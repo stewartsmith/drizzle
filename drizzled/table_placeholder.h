@@ -29,20 +29,16 @@ namespace drizzled
 class TablePlaceholder : public Table
 {
   TableShare private_share;
-  std::vector<char> key_buff;
 
 public:
-  TablePlaceholder(const char *key, uint32_t key_length) :
+  TablePlaceholder(Session *session, TableIdentifier &identifier) :
     Table(),
-    private_share(message::Table::INTERNAL)
+    private_share(identifier, identifier.getKey())
   {
     is_placeholder_created= true;
     setShare(&private_share);
+    in_use= session;
 
-    key_buff.resize(key_length);
-
-    memcpy(&key_buff[0], key, key_length);
-    getMutableShare()->set_table_cache_key(&key_buff[0], key_length);
     locked_by_name= true;
   }
 };
