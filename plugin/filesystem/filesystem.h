@@ -60,6 +60,7 @@ class FilesystemCursor : public drizzled::Cursor
   std::string real_file_name;
   std::string row_separator;
   std::string col_separator;
+  int separator_mode;   /* 1 for strict, 2 for general, 3 for weak */
   /* each slot means an interval in a file which will be deleted later */
   std::vector< std::pair<off_t, off_t> > slots;
 

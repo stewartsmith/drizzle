@@ -48,6 +48,10 @@ using namespace drizzled;
 static const char* FILESYSTEM_OPTION_FILE_PATH= "FILE";
 static const char* FILESYSTEM_OPTION_ROW_SEPARATOR= "ROW_SEPARATOR";
 static const char* FILESYSTEM_OPTION_COL_SEPARATOR= "COL_SEPARATOR";
+static const char* FILESYSTEM_OPTION_SEPARATOR_MODE= "SEPARATOR_MODE";
+static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT= "STRICT";
+static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL= "GENERAL";
+static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK= "WEAK";
 
 static const char* DEFAULT_ROW_SEPARATOR= "\n";
 static const char* DEFAULT_COL_SEPARATOR= " \t";
@@ -314,7 +318,8 @@ void FilesystemCursor::free_share()
 FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
   : Cursor(engine_arg, table_arg),
   row_separator(DEFAULT_ROW_SEPARATOR),
-  col_separator(DEFAULT_COL_SEPARATOR)
+  col_separator(DEFAULT_COL_SEPARATOR),
+  separator_mode(2)
 {
   file_buff= new TransparentFile();
 }
@@ -334,6 +339,15 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
       row_separator= option.state();
     else if (boost::iequals(option.name(), FILESYSTEM_OPTION_COL_SEPARATOR))
       col_separator= option.state();
+    else if (boost::iequals(option.name(), FILESYSTEM_OPTION_SEPARATOR_MODE))
+    {
+      if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT))
+        separator_mode= 1;
+      else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL))
+        separator_mode= 2;
+      else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK))
+        separator_mode= 3;
+    }
   }
 
   if (real_file_name.empty())
@@ -389,8 +403,13 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
     // if we find separator
     bool is_row= (row_separator.find(ch) != string::npos);
     bool is_col= (col_separator.find(ch) != string::npos);
-    if (is_row && content.empty() && line_blank)
-      continue;
+    if (content.empty())
+    {
+      if (separator_mode >= 2 && is_row && line_blank)
+        continue;
+      if (separator_mode >= 3 && is_col)
+        continue;
+    }
 
     if (is_row || is_col)
     {
@@ -667,6 +686,11 @@ bool FilesystemEngine::validateCreateTableOption(const std::string &key,
   if ((boost::iequals(key, FILESYSTEM_OPTION_ROW_SEPARATOR) ||
        boost::iequals(key, FILESYSTEM_OPTION_COL_SEPARATOR)) &&
       ! state.empty())
+    return true;
+  if (boost::iequals(key, FILESYSTEM_OPTION_SEPARATOR_MODE) &&
+      (boost::iequals(state, FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT) ||
+       boost::iequals(state, FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL) ||
+       boost::iequals(state, FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK)))
     return true;
   return false;
 }
