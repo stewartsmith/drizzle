@@ -42,6 +42,7 @@ using namespace std;
 
 //==================================
 // My table event observers: 
+#ifdef OLD_WAY
 static bool insertRecord(TableEventData &data, unsigned char *new_row)
 {
 	Field_blob *field;
@@ -125,7 +126,7 @@ static bool deleteRecord(TableEventData &data, const unsigned char *old_row)
 {
 	Field_blob *field;
 	const char *blob_rec;
-	char *blob_url;
+	unsigned char *blob_url;
 	size_t packlength, i, length;
 	int32_t err;
 	PBMSResultRec result;
@@ -167,20 +168,149 @@ static bool deleteRecord(TableEventData &data, const unsigned char *old_row)
 
 	return call_failed;
 }
+#endif
+
+static bool insertRecord(const char *db, const char *table_name, char *possible_blob_url,  size_t length, 
+	Session &session, Field_blob *field, unsigned char *blob_rec, size_t packlength)
+{
+	char *blob_url;
+	char safe_url[PBMS_BLOB_URL_SIZE+1];
+	PBMSBlobURLRec blob_url_buffer;
+	size_t org_length = length;
+	int32_t err;
+	PBMSResultRec result;
+	
+	// Tell PBMS to record a new reference to the BLOB.
+	// If 'blob' is not a BLOB URL then it will be stored in the repositor as a new BLOB
+	// and a reference to it will be created.
+	
+	if (MSEngine::couldBeURL(possible_blob_url, length) == false) {
+		err = MSEngine::createBlob(db, table_name, possible_blob_url, length, &blob_url_buffer, &result);
+		if (err) {
+			// If it fails log the error and continue to try and release any other BLOBs in the row.
+			fprintf(stderr, "PBMSEvents: createBlob(\"%s.%s\") error (%d):'%s'\n", 
+				db, table_name, result.mr_code,  result.mr_message);
+				
+			return true;
+		}				
+		blob_url = blob_url_buffer.bu_data;
+	} else {
+		// The BLOB URL may not be null terminate, if so
+		// then copy it to a safe buffer and terminate it.
+		if (possible_blob_url[length]) {
+			memcpy(safe_url, possible_blob_url, length);
+			safe_url[length] = 0;
+			blob_url = safe_url;
+		} else
+			blob_url = possible_blob_url;
+	}
+	
+	// Tell PBMS to add a reference to the BLOB.
+	err = MSEngine::referenceBlob(db, table_name, &blob_url_buffer, blob_url, field->field_index, &result);
+	if (err) {
+		// If it fails log the error and continue to try and release any other BLOBs in the row.
+		fprintf(stderr, "PBMSEvents: referenceBlob(\"%s.%s\", \"%s\" ) error (%d):'%s'\n", 
+			db, table_name, blob_url, result.mr_code,  result.mr_message);
+			
+		return true;
+	}
+	
+	// The URL is modified on insert so if the BLOB length changed reset it. 
+	// This will happen if the BLOB data was replaced with a BLOB reference. 
+	length = strlen(blob_url_buffer.bu_data)  +1;
+	if ((length != org_length) || memcmp(blob_url_buffer.bu_data, possible_blob_url, length)) {
+		char *blob = possible_blob_url; // This is the BLOB as the server currently sees it.
+		
+		if (length != org_length) {
+			field->store_length(blob_rec, packlength, length);
+		}
+		
+		if (length > org_length) {
+			// This can only happen if the BLOB URL is actually larger than the BLOB itself.
+			blob = (char *) session.alloc(length);
+			memcpy(blob_rec+packlength, &blob, sizeof(char*));
+		}			
+		memcpy(blob, blob_url_buffer.bu_data, length);
+	} 
+
+	return false;
+}
+
+//---
+static bool deleteRecord(const char *db, const char *table_name, char *blob_url,  size_t length)
+{
+	int32_t err;
+	char safe_url[PBMS_BLOB_URL_SIZE+1];
+	PBMSResultRec result;
+	bool call_failed = false;
+	
+	// Check to see if this is a valid URL.
+	if (MSEngine::couldBeURL(blob_url, length)) {
+	
+		// The BLOB URL may not be null terminate, if so
+		// then copy it to a safe buffer and terminate it.
+		if (blob_url[length]) {
+			memcpy(safe_url, blob_url, length);
+			safe_url[length] = 0;
+			blob_url = safe_url;
+		}
+		
+		// Signal PBMS to delete the reference to the BLOB.
+		err = MSEngine::dereferenceBlob(db, table_name, blob_url, &result);
+		if (err) {
+			// If it fails log the error and continue to try and release any other BLOBs in the row.
+			fprintf(stderr, "PBMSEvents: dereferenceBlob(\"%s.%s\") error (%d):'%s'\n", 
+				db, table_name, result.mr_code,  result.mr_message);
+				
+			call_failed = true;
+		}
+	}
+
+	return call_failed;
+}
 
 //---
 static bool observeBeforeInsertRecord(BeforeInsertRecordEventData &data)
 {
-	if  (data.table.sizeBlobFields() == 0)
-		return false;
+	Field_blob *field;
+	unsigned char *blob_rec;
+	char *blob_url;
+	size_t packlength, i, length;
 
-	return insertRecord(data, data.row);
+	for (i= 0; i < data.table.sizeBlobFields(); i++) {
+		field = data.table.getBlobFieldAt(i);
+		
+		if (field->is_null_in_record(data.row))
+			continue;
+			
+		// Get the blob record:
+		packlength = field->pack_length() - data.table.getBlobPtrSize();
+
+		blob_rec = (unsigned char *)data.row + field->offset(data.table.record[0]);
+		length = field->get_length(blob_rec);
+		memcpy(&blob_url, blob_rec +packlength, sizeof(char*));
+
+		if (insertRecord(data.table.getSchemaName(), data.table.getTableName(), 
+			blob_url, length, data.session, field, blob_rec, packlength))
+			return true;
+	}
+
+	return false;
 }
 
 //---
 static bool observeAfterInsertRecord(AfterInsertRecordEventData &data)
 {
-	if  (data.table.sizeBlobFields() > 0)
+	bool has_blob = false;
+	
+	for (uint32_t i= 0; (i < data.table.sizeBlobFields()) && (has_blob == false); i++) {
+		Field_blob *field = data.table.getBlobFieldAt(i);
+		
+		if ( field->is_null_in_record(data.row) == false)
+			has_blob = true;
+	}
+	
+	if  (has_blob)
 		MSEngine::callCompleted(data.err == 0);
 	
 	return false;
@@ -189,40 +319,138 @@ static bool observeAfterInsertRecord(AfterInsertRecordEventData &data)
 //---
 static bool observeBeforeUpdateRecord(BeforeUpdateRecordEventData &data)
 {
-	if (data.table.sizeBlobFields() == 0)
-		return false;
+	Field_blob *field;
+	uint32_t field_offset;
+	const unsigned char *old_blob_rec;
+	unsigned char *new_blob_rec;
+	char *old_blob_url, *new_blob_url;
+	size_t packlength, i, old_length, new_length;
+	const unsigned char *old_row = data.old_row;
+	unsigned char *new_row = data.new_row;
+	const char *db = data.table.getSchemaName();
+	const char *table_name = data.table.getTableName();
+	bool old_null, new_null;
 
-	// NOTE: The simple way to do this is to just do a delete followed by an insert.
-	// But in the majority of cases this is probably a waste of time since the BLOB
-	// will most likely NOT be the target of the update. What I need to do is check if
-	// the BLOB was updated and then only delete/insert those BLOBs.
-	//
-	// But for now I will be lazy.
-	if (deleteRecord(data, data.old_row))
-		return true;
+	for (i= 0; i < data.table.sizeBlobFields(); i++) {
+		field = data.table.getBlobFieldAt(i);
 		
-	return insertRecord(data, data.new_row);
+		new_null = field->is_null_in_record(new_row);		
+		old_null = field->is_null_in_record(old_row);
+		
+		if (new_null && old_null)
+			continue;
+		
+		// Check to see if the BLOB data was updated.
+
+		// Get the blob records:
+		field_offset = field->offset(data.table.record[0]);
+		packlength = field->pack_length() - data.table.getBlobPtrSize();
+
+		if (new_null) {
+			new_blob_url = NULL;
+		} else {
+			new_blob_rec = new_row + field_offset;
+			new_length = field->get_length(new_blob_rec);
+			memcpy(&new_blob_url, new_blob_rec +packlength, sizeof(char*));
+		}
+		
+		if (old_null) {
+			old_blob_url = NULL;
+		} else {
+			old_blob_rec = old_row + field_offset;
+			old_length = field->get_length(old_blob_rec);
+			memcpy(&old_blob_url, old_blob_rec +packlength, sizeof(char*));
+		}
+		
+		// Check to see if the BLOBs are the same.
+		// I am assuming that if the BLOB pointer is different then teh BLOB has changed.
+		// Zero length BLOBs are a special case because they may have a NULL data pointer,
+		// to catch this and distiguish it from a NULL BLOB I do a check to see if one field was NULL:
+		// (old_null != new_null)
+		if ((old_blob_url != new_blob_url) || (old_null != new_null)) {
+			
+			// The BLOB was updated so delete the old one and insert the new one.
+			if ((old_null == false) && deleteRecord(db, table_name, old_blob_url, old_length))
+				return true;
+				
+			if ((new_null == false) && insertRecord(db, table_name, new_blob_url, new_length, data.session, field, new_blob_rec, packlength))
+				return true;
+
+		}
+		
+	}
+
+	return false;
 }
 
 //---
 static bool observeAfterUpdateRecord(AfterUpdateRecordEventData &data)
 {
-	if  (data.table.sizeBlobFields() > 0)
-		MSEngine::callCompleted(data.err == 0);
+	bool has_blob = false;
+	const unsigned char *old_row = data.old_row;
+	const unsigned char *new_row = data.new_row;
 	
+	for (uint32_t i= 0; (i < data.table.sizeBlobFields()) && (has_blob == false); i++) {
+		Field_blob *field = data.table.getBlobFieldAt(i);		
+		bool new_null = field->is_null_in_record(new_row);		
+		bool old_null = field->is_null_in_record(old_row);
+		
+		if ( (new_null == false) || (old_null == false)) {
+			const unsigned char *blob_rec;			
+			size_t field_offset = field->offset(data.table.record[0]);
+			size_t packlength = field->pack_length() - data.table.getBlobPtrSize();
+			char *old_blob_url, *new_blob_url;
+			
+			blob_rec = new_row + field_offset;
+			memcpy(&new_blob_url, blob_rec +packlength, sizeof(char*));
+
+			blob_rec = old_row + field_offset;
+			memcpy(&old_blob_url, blob_rec +packlength, sizeof(char*));
+
+			has_blob = ((old_blob_url != new_blob_url) || (old_null != new_null));
+		}
+	}
+	
+	if  (has_blob)
+		MSEngine::callCompleted(data.err == 0);
+
   return false;
 }
 
 //---
 static bool observeAfterDeleteRecord(AfterDeleteRecordEventData &data)
 {
-	if ((data.err != 0) || (data.table.sizeBlobFields() == 0))
+	Field_blob *field;
+	const unsigned char *blob_rec;
+	char *blob_url;
+	size_t packlength, i, length;
+	bool call_failed = false;
+	bool has_blob = false;
+	
+	if (data.err != 0)
 		return false;
 
-	bool call_failed = deleteRecord(data, data.row);
-	
-	MSEngine::callCompleted(call_failed == false);
+	for (i= 0; (i < data.table.sizeBlobFields()) && (call_failed == false); i++) {
+		field = data.table.getBlobFieldAt(i);
+		
+		if (field->is_null_in_record(data.row))
+			continue;
+			
+		has_blob = true;	
+		// Get the blob record:
+		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
+		blob_rec = data.row + field->offset(data.table.record[0]);
+		length = field->get_length(blob_rec);
+		memcpy(&blob_url, blob_rec +packlength, sizeof(char*));
+
+		if (deleteRecord(data.table.getSchemaName(), data.table.getTableName(), blob_url, length))
+			call_failed = true;
+	}
+	
+	if (has_blob)
+		MSEngine::callCompleted(call_failed == false);
+		
 	return call_failed;
 }
 
