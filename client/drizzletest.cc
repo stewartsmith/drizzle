@@ -3692,16 +3692,16 @@ static void do_close_connection(struct st_command *command)
 
 */
 
-static void safe_connect(drizzle_con_st *con, const string name,
-                         string host, const string user, const string pass,
-                         const string db, int port)
+static void safe_connect(drizzle_con_st *con, const char *name,
+                         const string host, const string user, const char *pass,
+                         const string db, uint32_t port)
 {
   uint32_t failed_attempts= 0;
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
   drizzle_return_t ret;
 
   drizzle_con_set_tcp(con, host.c_str(), port);
-  drizzle_con_set_auth(con, user.c_str(), pass.c_str());
+  drizzle_con_set_auth(con, user.c_str(), pass);
   drizzle_con_set_db(con, db.c_str());
   while((ret= drizzle_con_connect(con)) != DRIZZLE_RETURN_OK)
   {
@@ -3724,10 +3724,10 @@ static void safe_connect(drizzle_con_st *con, const string name,
     else
     {
       if (failed_attempts > 0)
-        die("Could not open connection '%s' after %d attempts: %d %s", name.c_str(),
+        die("Could not open connection '%s' after %d attempts: %d %s", name,
             failed_attempts, ret, drizzle_con_error(con));
       else
-        die("Could not open connection '%s': %d %s", name.c_str(), ret,
+        die("Could not open connection '%s': %d %s", name, ret,
             drizzle_con_error(con));
     }
     failed_attempts++;
@@ -5493,7 +5493,7 @@ try
   "Connect to host.")
   ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
   N_("Use MySQL Protocol."))
-  ("password,P", po::value<string>(&password)->default_value(""),
+  ("password,P", po::value<string>(&password)->default_value("PASSWORD_SENTINEL"),
   "Password to use when connecting to server.")
   ("port,p", po::value<uint32_t>(&opt_port)->default_value(0),
   "Port number to use for connection or 0 for default")
@@ -5633,12 +5633,14 @@ try
   {
     if (!opt_password.empty())
       opt_password.erase();
-    opt_password= password;
-    if (opt_password.c_str() == NULL)
+    if (password == PASSWORD_SENTINEL)
     {
-      fprintf(stderr, _("Memory allocation error while copying password. "
-                        "Aborting.\n"));
-      exit(EXIT_OUT_OF_MEMORY);
+      opt_password= "";
+    }
+    else
+    {
+      opt_password= password;
+      tty_password= false;
     }
     char *start= (char *)password.c_str();
     char *temp_pass= (char *)password.c_str();
@@ -5705,7 +5707,7 @@ try
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");
-
+//  cout << opt_host << endl << opt_user << endl << opt_pass <<endl << opt_db; 
   safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
 
