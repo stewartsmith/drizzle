@@ -1471,7 +1471,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				      TableIdentifier &identifier)
 {
   Table tmp_table;		// Used during 'CreateField()'
-  TableShare share;
+  TableShare share(message::Table::INTERNAL);
   Table *table= 0;
   uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
@@ -1632,7 +1632,9 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 					  alter_info, &values,
 					  is_if_not_exists,
 					  &extra_lock, identifier)))
+  {
     return(-1);				// abort() deletes table
+  }
 
   if (extra_lock)
   {
@@ -1717,7 +1719,7 @@ bool select_create::send_eof()
       tables.  This can fail, but we should unlock the table
       nevertheless.
     */
-    if (!table->getShare()->tmp_table)
+    if (!table->getShare()->getType())
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
       transaction_services.autocommitOrRollback(session, 0);

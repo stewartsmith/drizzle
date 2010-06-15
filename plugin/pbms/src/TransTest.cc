@@ -48,8 +48,8 @@
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSStorage.h"
 
-#include "TransCache_ms.h"
-#include "TransLog_ms.h"
+#include "trans_cache_ms.h"
+#include "trans_log_ms.h"
 
 #include "mysql.h"
 

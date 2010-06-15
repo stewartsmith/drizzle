@@ -62,7 +62,7 @@ using namespace drizzled::plugin;
 #include <inttypes.h>
 
 
-#include "Defs_ms.h"
+#include "defs_ms.h"
 
 #include "cslib/CSDefs.h"
 #include "cslib/CSObject.h"
@@ -72,21 +72,21 @@ using namespace drizzled::plugin;
 #include "cslib/CSTest.h"
 #include "cslib/CSLog.h"
 
-#include "Engine_ms.h"	
+#include "engine_ms.h"	
 #include "ha_pbms.h"
-#include "Network_ms.h"
-#include "ConnectionHandler_ms.h"
-#include "OpenTable_ms.h"
-#include "Database_ms.h"
-#include "TempLog_ms.h"
-#include "Util_ms.h"
-#include "SystemTable_ms.h"
-#include "ms_mysql.h"
-#include "Discover_ms.h"
+#include "network_ms.h"
+#include "connection_handler_ms.h"
+#include "open_table_ms.h"
+#include "database_ms.h"
+#include "temp_log_ms.h"
+#include "util_ms.h"
+#include "system_table_ms.h"
+#include "mysql_ms.h"
+#include "discover_ms.h"
 #include "metadata_ms.h"
-#include "Transaction_ms.h"
-#include "SysTab_httpheader.h"
-#include "SystemTable_ms.h"
+#include "transaction_ms.h"
+#include "systab_httpheader_ms.h"
+#include "system_table_ms.h"
 #include "parameters_ms.h"
 #include "pbmsdaemon_ms.h"
 

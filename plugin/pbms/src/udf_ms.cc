@@ -44,7 +44,7 @@
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSThread.h"
 
-#include "Engine_ms.h"
+#include "engine_ms.h"
 
 #ifdef MOVE_THIS_TO_ITS_OWN_FILE
 bool pbms_enabled(const char *name)

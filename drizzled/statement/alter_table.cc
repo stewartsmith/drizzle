@@ -571,7 +571,7 @@ static bool mysql_prepare_alter_table(Session *session,
       && table->getMutableShare()->hasComment())
     table_options->set_comment(table->getMutableShare()->getComment());
 
-  if (table->getShare()->tmp_table)
+  if (table->getShare()->getType())
   {
     table_message.set_type(message::Table::TEMPORARY);
   }
@@ -887,7 +887,7 @@ static bool internal_alter_table(Session *session,
     tmp.reset(ALTER_KEYS_ONOFF);
     tmp&= alter_info->flags;
 
-    if (! (tmp.any()) && ! table->getShare()->tmp_table) // no need to touch frm
+    if (! (tmp.any()) && ! table->getShare()->getType()) // no need to touch frm
     {
       switch (alter_info->keys_onoff)
       {
@@ -1588,7 +1588,7 @@ static Table *open_alter_table(Session *session, Table *table, TableIdentifier &
   Table *new_table;
 
   /* Open the table so we need to copy the data to it. */
-  if (table->getShare()->tmp_table)
+  if (table->getShare()->getType())
   {
     TableList tbl;
     tbl.db= const_cast<char *>(identifier.getSchemaName().c_str());

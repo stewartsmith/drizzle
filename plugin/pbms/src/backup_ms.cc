@@ -53,16 +53,16 @@
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSStorage.h"
 
-#include "Defs_ms.h"
-#include "SystemTable_ms.h"
-#include "OpenTable_ms.h"
-#include "Table_ms.h"
-#include "Database_ms.h"
-#include "Repository_ms.h"
+#include "defs_ms.h"
+#include "system_table_ms.h"
+#include "open_table_ms.h"
+#include "table_ms.h"
+#include "database_ms.h"
+#include "repository_ms.h"
 #include "backup_ms.h"
-#include "Transaction_ms.h"
-#include "SysTab_variable.h"
-#include "SysTab_backup.h"
+#include "transaction_ms.h"
+#include "systab_variable_ms.h"
+#include "systab_backup_ms.h"
 
 uint32_t MSBackupInfo::gMaxInfoRef;
 CSSyncSparseArray *MSBackupInfo::gBackupInfo;

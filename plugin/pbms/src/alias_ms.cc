@@ -39,8 +39,8 @@
 #include "cslib/CSLog.h"
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSFile.h"
-#include "SystemTable_ms.h"
-#include "Database_ms.h"
+#include "system_table_ms.h"
+#include "database_ms.h"
 
 #include "alias_ms.h"
 

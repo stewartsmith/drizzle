@@ -29,8 +29,8 @@
 #ifndef __HA_PBMS_H__
 #define __HA_PBMS_H__
 
-#include "Defs_ms.h"
-#include "Engine_ms.h"
+#include "defs_ms.h"
+#include "engine_ms.h"
 
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */

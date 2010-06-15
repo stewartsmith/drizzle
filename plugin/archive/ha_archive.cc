@@ -572,11 +572,19 @@ int ArchiveEngine::doCreateTable(Session &,
     goto error2;
   }
 
-  proto.SerializeToString(&serialized_proto);
+  try {
+    proto.SerializeToString(&serialized_proto);
+  }
+  catch (...)
+  {
+    goto error2;
+  }
 
   if (azwrite_frm(&create_stream, serialized_proto.c_str(),
                   serialized_proto.length()))
+  {
     goto error2;
+  }
 
   if (proto.options().has_comment())
   {

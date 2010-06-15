@@ -32,7 +32,6 @@
 
 #include "scoreboard_slot.h"
 #include "cumulative_stats.h"
-#include "user_commands.h"
 #include "scoreboard.h"
 
 #include <drizzled/atomics.h>

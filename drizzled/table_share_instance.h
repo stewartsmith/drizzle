@@ -37,7 +37,7 @@ public:
   }
 
   TableShareInstance(const char *tmpname_arg) :
-    TableShare("", 0, tmpname_arg, tmpname_arg)
+    TableShare(message::Table::INTERNAL, "", 0, tmpname_arg, tmpname_arg)
   {
     private_table.setShare(this);
   }

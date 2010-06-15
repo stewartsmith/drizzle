@@ -33,7 +33,7 @@
 
 #include "events_ms.h"
 #include "parameters_ms.h"
-#include "Engine_ms.h"
+#include "engine_ms.h"
 
 using namespace drizzled;
 using namespace plugin;

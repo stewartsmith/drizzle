@@ -46,9 +46,9 @@ using namespace drizzled::plugin;
 #include "cslib/CSThread.h"
 #include "cslib/CSStrUtil.h"
 
-#include "Defs_ms.h"
+#include "defs_ms.h"
 #include "util_ms.h"
-#include "ms_mysql.h"
+#include "mysql_ms.h"
 #include "pbmsdaemon_ms.h"
 
 

@@ -31,7 +31,7 @@
 #include "cslib/CSConfig.h"
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
-#include "Engine_ms.h"
+#include "engine_ms.h"
 
 /*
 	select * from information_schema.plugins;

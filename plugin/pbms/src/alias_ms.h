@@ -31,7 +31,7 @@
 #define __ALIAS_MS_H__
 #include <stddef.h>
 
-#include "Defs_ms.h"
+#include "defs_ms.h"
 #include "cslib/CSStorage.h"
 
 #define MS_ALIAS_FILE_MAGIC			0x5954228A

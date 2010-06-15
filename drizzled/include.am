@@ -402,6 +402,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/statement/unlock_tables.h \
 			      drizzled/statement/update.h \
  			      drizzled/statistics_variables.h \
+			      drizzled/status_helper.h \
 			      drizzled/stored_key.h \
 			      drizzled/strfunc.h \
 			      drizzled/structs.h \
@@ -455,6 +456,7 @@ drizzled_drizzled_LDADD= \
 				$(LIBUUID) \
 				$(LIBDL_LIBS) \
 				$(LIBPCRE) \
+				$(LTLIBPROTOBUF) \
 				$(LIBTBB) \
 				$(GCOV_LIBS) 
 
@@ -754,6 +756,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/statement/truncate.cc \
 				 drizzled/statement/unlock_tables.cc \
 				 drizzled/statement/update.cc \
+				 drizzled/status_helper.cc \
 				 drizzled/strfunc.cc \
 				 drizzled/table.cc \
 				 drizzled/table_function_container.cc \

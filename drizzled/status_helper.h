@@ -1,0 +1,42 @@
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2010 Joseph Daly 
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; version 2 of the License.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#ifndef DRIZZLED_STATUS_HELPER_H
+#define DRIZZLED_STATUS_HELPER_H
+
+#include "drizzled/plugin.h"
+#include "drizzled/statistics_variables.h"
+
+namespace drizzled
+{
+
+class StatusHelper 
+{
+public:
+
+  static std::string fillHelper(drizzled::system_status_var *status_var, char *value, 
+                                SHOW_TYPE show_type);
+
+  static drizzled::drizzle_show_var status_vars_defs[];
+};
+
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_STATUS_HELPER_H */

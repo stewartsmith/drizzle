@@ -68,7 +68,7 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
       table_list.push_back(table);
     }
 
-    for (table= getSession().temporary_tables; table; table= table->next)
+    for (table= getSession().temporary_tables; table; table= table->getNext())
     {
       if (table->getShare())
       {

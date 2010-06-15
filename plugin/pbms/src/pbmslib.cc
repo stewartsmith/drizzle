@@ -54,7 +54,7 @@
 #include "cslib/CSHTTPStream.h"
 #include "cslib/CSMd5.h"
 #include "cslib/CSS3Protocol.h"
-#include "Util_ms.h"
+#include "util_ms.h"
 #include "metadata_ms.h"
 
 #define CLEAR_SELF()	CSThread::setSelf(NULL)

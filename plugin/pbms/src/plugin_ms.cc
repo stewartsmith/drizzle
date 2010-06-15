@@ -44,7 +44,7 @@ using namespace drizzled::plugin;
 #include <inttypes.h>
 
 
-#include "Defs_ms.h"
+#include "defs_ms.h"
 
 
 /////////////////////////

@@ -32,6 +32,7 @@
 #include <drizzled/message/table.pb.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/message.h>
 
 #include <drizzled/table_proto.h>
 
@@ -417,6 +418,32 @@ static int fill_table_proto(message::Table &table_proto,
       idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr);
 
       idxpart->set_compare_length(key_info[i].key_part[j].length);
+    }
+  }
+
+  if (not table_proto.IsInitialized())
+  {
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), table_proto.InitializationErrorString().c_str());
+    return 1;
+  }
+
+  /*
+    Here we test to see if we can validate the Table Message before we continue. 
+    We do this by serializing the protobuffer.
+  */
+  {
+    string tmp_string;
+
+    try {
+      table_proto.SerializeToString(&tmp_string);
+    }
+
+    catch (...)
+    {
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_proto.InitializationErrorString().empty() ? "": table_proto.InitializationErrorString().c_str());
+
+      return 1;
     }
   }
 

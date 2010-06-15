@@ -53,9 +53,9 @@ using namespace drizzled::plugin;
 #include "cslib/CSPath.h"
 #include "cslib/CSLog.h"
 
-#include "Defs_ms.h"
+#include "defs_ms.h"
 #include "util_ms.h"
-#include "Database_ms.h"
+#include "database_ms.h"
 #include "parameters_ms.h"
 
 #ifndef PBMS_PORT
