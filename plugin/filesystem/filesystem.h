@@ -43,6 +43,10 @@ public:
   const std::string table_name;
   bool update_file_opened;
   pthread_mutex_t mutex;
+  std::string real_file_name;
+  std::string row_separator;
+  std::string col_separator;
+  int separator_mode;   /* 1 for strict, 2 for general, 3 for weak */
   drizzled::THR_LOCK lock;
 };
 
@@ -56,10 +60,6 @@ class FilesystemCursor : public drizzled::Cursor
   int update_file_desc;
   off_t current_position;
   off_t next_position;
-  std::string real_file_name;
-  std::string row_separator;
-  std::string col_separator;
-  int separator_mode;   /* 1 for strict, 2 for general, 3 for weak */
   /* each slot means an interval in a file which will be deleted later */
   std::vector< std::pair<off_t, off_t> > slots;
 

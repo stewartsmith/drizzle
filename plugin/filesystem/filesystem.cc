@@ -263,7 +263,10 @@ int FilesystemEngine::doGetTableDefinition(Session &,
 }
 
 FilesystemTableShare::FilesystemTableShare(const string table_name_arg)
-  : use_count(0), table_name(table_name_arg), update_file_opened(false)
+  : use_count(0), table_name(table_name_arg), update_file_opened(false),
+  row_separator(DEFAULT_ROW_SEPARATOR),
+  col_separator(DEFAULT_COL_SEPARATOR),
+  separator_mode(2)
 {
   thr_lock_init(&lock);
 }
@@ -293,10 +296,39 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
       pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
     }
+    message::Table* table_proto = table->getShare()->getTableProto();
+
+    share->real_file_name.clear();
+    for (int i = 0; i < table_proto->engine().options_size(); i++)
+    {
+      const message::Engine::Option& option= table_proto->engine().options(i);
+
+      if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
+        share->real_file_name= option.state();
+      else if (boost::iequals(option.name(), FILESYSTEM_OPTION_ROW_SEPARATOR))
+        share->row_separator= option.state();
+      else if (boost::iequals(option.name(), FILESYSTEM_OPTION_COL_SEPARATOR))
+        share->col_separator= option.state();
+      else if (boost::iequals(option.name(), FILESYSTEM_OPTION_SEPARATOR_MODE))
+      {
+        if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT))
+          share->separator_mode= 1;
+        else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL))
+          share->separator_mode= 2;
+        else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK))
+          share->separator_mode= 3;
+      }
+    }
+
+    if (share->real_file_name.empty())
+    {
+      pthread_mutex_unlock(&filesystem_mutex);
+      return NULL;
+    }
 
     a_engine->addOpenTable(share->table_name, share);
 
-    pthread_mutex_init(&share->mutex,MY_MUTEX_INIT_FAST);
+    pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
   }
   share->use_count++;
   pthread_mutex_unlock(&filesystem_mutex);
@@ -316,52 +348,23 @@ void FilesystemCursor::free_share()
 }
 
 FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
-  : Cursor(engine_arg, table_arg),
-  row_separator(DEFAULT_ROW_SEPARATOR),
-  col_separator(DEFAULT_COL_SEPARATOR),
-  separator_mode(2)
+  : Cursor(engine_arg, table_arg)
 {
   file_buff= new TransparentFile();
 }
 
 int FilesystemCursor::open(const char *name, int, uint32_t)
 {
-  message::Table* table_proto = table->getShare()->getTableProto();
-
-  real_file_name.clear();
-  for (int i = 0; i < table_proto->engine().options_size(); i++)
-  {
-    const message::Engine::Option& option= table_proto->engine().options(i);
-
-    if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
-      real_file_name= option.state();
-    else if (boost::iequals(option.name(), FILESYSTEM_OPTION_ROW_SEPARATOR))
-      row_separator= option.state();
-    else if (boost::iequals(option.name(), FILESYSTEM_OPTION_COL_SEPARATOR))
-      col_separator= option.state();
-    else if (boost::iequals(option.name(), FILESYSTEM_OPTION_SEPARATOR_MODE))
-    {
-      if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT))
-        separator_mode= 1;
-      else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL))
-        separator_mode= 2;
-      else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK))
-        separator_mode= 3;
-    }
-  }
-
-  if (real_file_name.empty())
-    return ER_FILE_NOT_FOUND;
-  file_desc= ::open(real_file_name.c_str(), O_RDONLY);
-  if (file_desc < 0)
-    return ER_CANT_OPEN_FILE;
-  file_buff->init_buff(file_desc);
-
   if (!(share= get_share(name)))
-  {
-    ::close(file_desc);
     return ENOENT;
+
+  file_desc= ::open(share->real_file_name.c_str(), O_RDONLY);
+  if (file_desc < 0)
+  {
+    free_share();
+    return ER_CANT_OPEN_FILE;
   }
+  file_buff->init_buff(file_desc);
 
   ref_length= sizeof(off_t);
   thr_lock_data_init(&share->lock, &lock, NULL);
@@ -401,13 +404,13 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
       return HA_ERR_END_OF_FILE;
 
     // if we find separator
-    bool is_row= (row_separator.find(ch) != string::npos);
-    bool is_col= (col_separator.find(ch) != string::npos);
+    bool is_row= (share->row_separator.find(ch) != string::npos);
+    bool is_col= (share->col_separator.find(ch) != string::npos);
     if (content.empty())
     {
-      if (separator_mode >= 2 && is_row && line_blank)
+      if (share->separator_mode >= 2 && is_row && line_blank)
         continue;
-      if (separator_mode >= 3 && is_col)
+      if (share->separator_mode >= 3 && is_col)
         continue;
     }
 
@@ -459,7 +462,7 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
     while (!line_done)
     {
       char ch= file_buff->get_value(next_position);
-      if (row_separator.find(ch) != string::npos)
+      if (share->row_separator.find(ch) != string::npos)
         line_done= true;
       ++next_position;
     }
@@ -498,9 +501,9 @@ int FilesystemCursor::openUpdateFile()
   if (!share->update_file_opened)
   {
     struct stat st;
-    if (stat(real_file_name.c_str(), &st) < 0)
+    if (stat(share->real_file_name.c_str(), &st) < 0)
       return -1;
-    update_file_name= real_file_name;
+    update_file_name= share->real_file_name;
     update_file_name.append(".UPDATE");
     update_file_desc= ::open(update_file_name.c_str(),
                              O_RDWR | O_CREAT | O_TRUNC,
@@ -575,11 +578,11 @@ int FilesystemCursor::doEndTableScan()
 
   // close current file
   ::close(file_desc);
-  if (::rename(update_file_name.c_str(), real_file_name.c_str()))
+  if (::rename(update_file_name.c_str(), share->real_file_name.c_str()))
     goto error;
 
   // reopen the data file
-  file_desc= ::open(real_file_name.c_str(), O_RDONLY);
+  file_desc= ::open(share->real_file_name.c_str(), O_RDONLY);
   if (file_desc < 0)
     goto error;
   err= 0;
@@ -600,7 +603,7 @@ void FilesystemCursor::getAllFields(string& output)
     }
     else
     {
-      output.append(col_separator.substr(0, 1));
+      output.append(share->col_separator.substr(0, 1));
     }
 
     if (not (*field)->is_null())
@@ -615,7 +618,7 @@ void FilesystemCursor::getAllFields(string& output)
       output.append("0");
     }
   }
-  output.append(row_separator.substr(0, 1));
+  output.append(share->row_separator.substr(0, 1));
 }
 
 int FilesystemCursor::doInsertRecord(unsigned char * buf)
@@ -627,7 +630,7 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   getAllFields(output_line);
 
   pthread_mutex_lock(&share->mutex);
-  int fd= ::open(real_file_name.c_str(), O_WRONLY | O_APPEND);
+  int fd= ::open(share->real_file_name.c_str(), O_WRONLY | O_APPEND);
   if (fd < 0)
   {
     pthread_mutex_unlock(&share->mutex);
