@@ -324,7 +324,6 @@ void ha_heap::update_key_stats()
 int ha_heap::doInsertRecord(unsigned char * buf)
 {
   int res;
-  ha_statistic_increment(&system_status_var::ha_write_count);
   if (table->next_number_field && buf == table->record[0])
   {
     if ((res= update_auto_increment()))

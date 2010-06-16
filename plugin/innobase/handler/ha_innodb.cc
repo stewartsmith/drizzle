@@ -3793,8 +3793,6 @@ ha_innobase::doInsertRecord(
     ut_error;
   }
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   sql_command = session_sql_command(user_session);
 
   if ((sql_command == SQLCOM_ALTER_TABLE

@@ -1477,7 +1477,9 @@ int Cursor::insertRecord(unsigned char *buf)
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
   }
- 
+
+  ha_statistic_increment(&system_status_var::ha_write_count);
+
   DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(error))
