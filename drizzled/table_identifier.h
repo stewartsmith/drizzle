@@ -57,6 +57,7 @@ class TableIdentifier : public SchemaIdentifier
 {
 public:
   typedef message::Table::TableType Type;
+  typedef std::vector<char> Key;
 private:
 
   Type type;
@@ -64,9 +65,15 @@ private:
   std::string table_name;
   std::string lower_table_name;
   std::string sql_path;
+  Key key;
   size_t hash_value;
 
   void init();
+
+  size_t getKeySize() const
+  {
+    return getSchemaName().size() + getTableName().size() + 2;
+  }
 
 public:
   TableIdentifier(const Table &table);
@@ -103,7 +110,7 @@ public:
   }
 
   using SchemaIdentifier::compare;
-  bool compare(std::string schema_arg, std::string table_arg);
+  bool compare(std::string schema_arg, std::string table_arg) const;
 
   bool isTmp() const
   {
@@ -224,10 +231,64 @@ public:
 
   static uint32_t filename_to_tablename(const char *from, char *to, uint32_t to_length);
   static size_t build_table_filename(std::string &buff, const char *db, const char *table_name, bool is_tmp);
+  static size_t build_tmptable_filename(std::string &buffer);
+  static size_t build_tmptable_filename(std::vector<char> &buffer);
+
+  /*
+    Create a table cache key
+
+    SYNOPSIS
+    createKey()
+    key			Create key here (must be of size MAX_DBKEY_LENGTH)
+    table_list		Table definition
+
+    IMPLEMENTATION
+    The table cache_key is created from:
+    db_name + \0
+    table_name + \0
+
+    if the table is a tmp table, we add the following to make each tmp table
+    unique on the slave:
+
+    4 bytes for master thread id
+    4 bytes pseudo thread id
+
+    RETURN
+    Length of key
+  */
+  static uint32_t createKey(char *key, const char *db_arg, const char *table_name_arg)
+  {
+    uint32_t key_length;
+    char *key_pos= key;
+
+    key_pos= strcpy(key_pos, db_arg) + strlen(db_arg);
+    key_pos= strcpy(key_pos+1, table_name_arg) +
+      strlen(table_name_arg);
+    key_length= (uint32_t)(key_pos-key)+1;
+
+    return key_length;
+  }
+
+  static uint32_t createKey(char *key, const TableIdentifier &identifier)
+  {
+    uint32_t key_length;
+    char *key_pos= key;
+
+    key_pos= strcpy(key_pos, identifier.getSchemaName().c_str()) + identifier.getSchemaName().length();
+    key_pos= strcpy(key_pos + 1, identifier.getTableName().c_str()) + identifier.getTableName().length();
+    key_length= (uint32_t)(key_pos-key)+1;
+
+    return key_length;
+  }
 
   size_t getHashValue() const
   {
     return hash_value;
+  }
+
+  const Key &getKey() const
+  {
+    return key;
   }
 };
 

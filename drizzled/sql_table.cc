@@ -222,7 +222,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       Table *locked_table;
       abort_locked_tables(session, db, table->table_name);
-      remove_table_from_cache(session, db, table->table_name,
+      TableIdentifier identifier(db, table->table_name);
+      remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       /*
@@ -1714,9 +1715,8 @@ void wait_while_table_is_used(Session *session, Table *table,
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  remove_table_from_cache(session, table->getMutableShare()->getSchemaName(),
-                          table->getMutableShare()->getTableName(),
-                          RTFC_WAIT_OTHER_THREAD_FLAG);
+  TableIdentifier identifier(table->getMutableShare()->getSchemaName(), table->getMutableShare()->getTableName());
+  remove_table_from_cache(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
 /*
@@ -1868,8 +1868,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
-      remove_table_from_cache(session, table->table->getMutableShare()->getSchemaName(),
-                              table->table->getMutableShare()->getTableName(),
+      TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
+      remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
@@ -1972,8 +1972,8 @@ send_result:
         else
         {
           pthread_mutex_lock(&LOCK_open);
-          remove_table_from_cache(session, table->table->getMutableShare()->getSchemaName(),
-                                  table->table->getMutableShare()->getTableName(), RTFC_NO_FLAG);
+	  TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
+          remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
           pthread_mutex_unlock(&LOCK_open);
         }
       }

@@ -1111,7 +1111,7 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
    *
    * Multi-column primary keys are handled how exactly?
    */
-  if (in_table->getShare()->primary_key == MAX_KEY)
+  if (not in_table->getShare()->hasPrimaryKey())
   {
     my_error(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, MYF(0));
     return true;
