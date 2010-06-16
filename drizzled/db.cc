@@ -399,10 +399,12 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     table_type= table->db_type;
 
+    TableIdentifier identifier(db, table->table_name);
+
     {
       Table *locked_table;
       abort_locked_tables(session, db, table->table_name);
-      remove_table_from_cache(session, db, table->table_name,
+      remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       /*
@@ -418,8 +420,6 @@ static int rm_table_part2(Session *session, TableList *tables)
         goto err_with_placeholders;
       }
     }
-
-    TableIdentifier identifier(db, table->table_name);
     identifier.getPath();
 
     if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))

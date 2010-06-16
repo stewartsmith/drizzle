@@ -2828,7 +2828,7 @@ ha_innobase::open(
 
   /* Looks like MySQL-3.23 sometimes has primary key number != 0 */
 
-  primary_key = table->getShare()->primary_key;
+  primary_key = table->getShare()->getPrimaryKey();
   key_used_on_scan = primary_key;
 
   /* Allocate a buffer for a 'row reference'. A row reference is
@@ -5240,7 +5240,7 @@ create_index(
 
   ind_type = 0;
 
-  if (key_num == form->getShare()->primary_key) {
+  if (key_num == form->getShare()->getPrimaryKey()) {
     ind_type = ind_type | DICT_CLUSTERED;
   }
 
@@ -5537,8 +5537,8 @@ InnobaseEngine::doCreateTable(
 
   /* Look for a primary key */
 
-  primary_key_no= (form.getShare()->primary_key != MAX_KEY ?
-                   (int) form.getShare()->primary_key :
+  primary_key_no= (form.getShare()->hasPrimaryKey() ?
+                   (int) form.getShare()->getPrimaryKey() :
                    -1);
 
   /* Our function row_get_mysql_key_number_for_index assumes
@@ -6202,7 +6202,7 @@ ha_innobase::read_time(
   ha_rows total_rows;
   double  time_for_scan;
 
-  if (index != table->getShare()->primary_key) {
+  if (index != table->getShare()->getPrimaryKey()) {
     /* Not clustered */
     return(Cursor::read_time(index, ranges, rows));
   }
@@ -7726,10 +7726,10 @@ ha_innobase::cmp_ref(
   /* Do a type-aware comparison of primary key fields. PK fields
   are always NOT NULL, so no checks for NULL are performed. */
 
-  key_part = table->key_info[table->getShare()->primary_key].key_part;
+  key_part = table->key_info[table->getShare()->getPrimaryKey()].key_part;
 
   key_part_end = key_part
-      + table->key_info[table->getShare()->primary_key].key_parts;
+      + table->key_info[table->getShare()->getPrimaryKey()].key_parts;
 
   for (; key_part != key_part_end; ++key_part) {
     field = key_part->field;
