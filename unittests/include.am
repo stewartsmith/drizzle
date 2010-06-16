@@ -4,6 +4,11 @@
 
 if HAVE_LIBGTEST
 check_PROGRAMS += unittests/unittests
+endif
+
+noinst_HEADERS += \
+		  unittests/plugin/plugin_stubs.h \
+		  unittests/temporal_generator.h
 
 unittests_unittests_SOURCES = \
 			      unittests/atomics_test.cc \
@@ -28,4 +33,3 @@ unittests_unittests_SOURCES = \
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
   ${drizzled_drizzled_LDADD} ${LTLIBGTEST}
-endif
