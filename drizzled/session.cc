@@ -2013,22 +2013,9 @@ bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
   return true;
 }
 
-TableShareInstance *Session::getTemporaryShare()
+TableShareInstance *Session::getTemporaryShare(TableIdentifier::Type type_arg)
 {
-  temporary_shares.push_back(new TableShareInstance()); // This will not go into the tableshare cache, so no key is used.
-
-  TableShareInstance *tmp_share= temporary_shares.back();
-
-  assert(tmp_share);
-
-  return tmp_share;
-}
-
-TableShareInstance *Session::getTemporaryShare(const char *tmpname_arg)
-{
-  assert(tmpname_arg);
-
-  temporary_shares.push_back(new TableShareInstance(tmpname_arg)); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new TableShareInstance(type_arg)); // This will not go into the tableshare cache, so no key is used.
 
   TableShareInstance *tmp_share= temporary_shares.back();
 
