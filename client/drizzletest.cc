@@ -5707,7 +5707,6 @@ try
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");
-//  cout << opt_host << endl << opt_user << endl << opt_pass <<endl << opt_db; 
   safe_connect(&cur_con->con, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
 
