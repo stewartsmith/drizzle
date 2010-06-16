@@ -1524,6 +1524,8 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
     }
   }
 
+  ha_statistic_increment(&system_status_var::ha_update_count);
+
   DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(error))

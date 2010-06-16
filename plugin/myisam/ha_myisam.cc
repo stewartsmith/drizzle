@@ -1031,7 +1031,6 @@ int ha_myisam::end_bulk_insert()
 
 int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
-  ha_statistic_increment(&system_status_var::ha_update_count);
   return mi_update(file,old_data,new_data);
 }
 

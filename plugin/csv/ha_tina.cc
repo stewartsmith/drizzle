@@ -962,8 +962,6 @@ int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
   int size;
   int rc= -1;
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   size= encode_quote(new_data);
 
   /*

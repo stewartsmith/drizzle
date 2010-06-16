@@ -4159,8 +4159,6 @@ ha_innobase::doUpdateRecord(
 
   ut_a(prebuilt->trx == trx);
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   if (prebuilt->upd_node) {
     uvect = prebuilt->upd_node->update;
   } else {

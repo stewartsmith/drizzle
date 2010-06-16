@@ -345,7 +345,7 @@ int ha_heap::doInsertRecord(unsigned char * buf)
 int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_data)
 {
   int res;
-  ha_statistic_increment(&system_status_var::ha_update_count);
+
   res= heap_update(file,old_data,new_data);
   if (!res && ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
               file->s->records)
