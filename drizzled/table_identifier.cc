@@ -147,7 +147,7 @@ static size_t build_tmptable_filename(std::string &buffer)
   tmpdir_length= buffer.length();
 
   post_tmpdir_str << "/" << TMP_FILE_PREFIX << current_pid;
-  post_tmpdir_str << pthread_self() << get_counter();
+  post_tmpdir_str << pthread_self() << "-" << get_counter();
 
   buffer.append(post_tmpdir_str.str());
 
@@ -297,9 +297,9 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
 }
 
 TableIdentifier::TableIdentifier(const drizzled::Table &table) :
-  SchemaIdentifier(table.getShare()->getTableProto()->schema()),
-  type(table.getShare()->getTableProto()->type()),
-  table_name(table.getShare()->getTableProto()->name())
+  SchemaIdentifier(table.getShare()->getSchemaName()),
+  type(table.getShare()->getTableType()),
+  table_name(table.getShare()->getTableName())
 {
   if (type == message::Table::TEMPORARY)
     path= table.getShare()->getPath();
@@ -312,34 +312,30 @@ void TableIdentifier::init()
   lower_table_name.append(table_name);
   std::transform(lower_table_name.begin(), lower_table_name.end(),
                  lower_table_name.begin(), ::tolower);
+
+  switch (type) {
+  case message::Table::FUNCTION:
+  case message::Table::STANDARD:
+    build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), false);
+    break;
+  case message::Table::INTERNAL:
+    build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), true);
+    break;
+  case message::Table::TEMPORARY:
+    if (path.empty())
+    {
+      build_tmptable_filename(path);
+    }
+    break;
+  }
+
+  boost::hash<std::string> hasher;
+  hash_value= hasher(path);
 }
 
 
-const std::string &TableIdentifier::getPath()
+const std::string &TableIdentifier::getPath() const
 {
-  assert(not lower_table_name.empty());
-
-  if (path.empty())
-  {
-    switch (type) {
-    case message::Table::STANDARD:
-      build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), false);
-      break;
-    case message::Table::INTERNAL:
-      build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), true);
-      break;
-    case message::Table::TEMPORARY:
-      build_tmptable_filename(path);
-      break;
-    case message::Table::FUNCTION:
-      path.append(getSchemaName());
-      path.append(".");
-      path.append(table_name);
-      break;
-    }
-    assert(path.length()); // TODO throw exception, this is a possibility
-  }
-
   return path;
 }
 
@@ -390,6 +386,11 @@ void TableIdentifier::copyToTableMessage(message::Table &message)
 {
   message.set_name(table_name);
   message.set_schema(getSchemaName());
+}
+
+std::size_t hash_value(TableIdentifier const& b)
+{
+  return b.getHashValue();
 }
 
 } /* namespace drizzled */

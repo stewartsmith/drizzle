@@ -28,6 +28,11 @@
  *
  */
 
+#include "config.h"
+#include <drizzled/plugin.h>
+#include <drizzled/statistics_variables.h>
+#include <drizzled/session.h>
+
 #include "scoreboard_slot.h"
 
 using namespace std;
@@ -38,16 +43,19 @@ ScoreboardSlot::ScoreboardSlot()
     session_id(0)
 {
   user_commands= new UserCommands();
+  status_vars= new StatusVars();
 }
 
 ScoreboardSlot::~ScoreboardSlot()
 {
   delete user_commands;
+  delete status_vars;
 }
 
 ScoreboardSlot::ScoreboardSlot(const ScoreboardSlot &scoreboard_slot)
 {
   user_commands= new UserCommands(*scoreboard_slot.user_commands);
+  status_vars= new StatusVars(*scoreboard_slot.status_vars);
   user.assign(scoreboard_slot.user);
   ip.assign(scoreboard_slot.ip);
   in_use= scoreboard_slot.in_use;
@@ -57,6 +65,11 @@ ScoreboardSlot::ScoreboardSlot(const ScoreboardSlot &scoreboard_slot)
 UserCommands* ScoreboardSlot::getUserCommands()
 {
   return user_commands;
+}
+
+StatusVars* ScoreboardSlot::getStatusVars()
+{
+  return status_vars;
 }
 
 void ScoreboardSlot::setSessionId(uint64_t in_session_id)
@@ -102,6 +115,7 @@ const string& ScoreboardSlot::getIp()
 void ScoreboardSlot::merge(ScoreboardSlot *score_board_slot)
 {
   user_commands->merge(score_board_slot->getUserCommands());
+  status_vars->merge(score_board_slot->getStatusVars());
 }
 
 void ScoreboardSlot::reset()
@@ -109,4 +123,5 @@ void ScoreboardSlot::reset()
   in_use= false;
   session_id= 0;
   user_commands->reset();
+  status_vars->reset();
 }

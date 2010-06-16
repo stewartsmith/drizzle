@@ -133,19 +133,27 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
   return false;
 }
 
+SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
+  db(db_arg),
+  lower_db(db_arg)
+{ 
+  std::transform(lower_db.begin(), lower_db.end(),
+                 lower_db.begin(), ::tolower);
+
+  if (not lower_db.empty())
+  {
+    drizzled::build_schema_filename(db_path, lower_db.c_str());
+    assert(db_path.length()); // TODO throw exception, this is a possibility
+  }
+}
+
 const std::string &SchemaIdentifier::getSQLPath()
 {
   return getSchemaName();
 }
 
-const std::string &SchemaIdentifier::getPath()
+const std::string &SchemaIdentifier::getPath() const
 {
-  if (db_path.empty() && not lower_db.empty())
-  {
-    drizzled::build_schema_filename(db_path, lower_db.c_str());
-    assert(db_path.length()); // TODO throw exception, this is a possibility
-  }
-
   return db_path;
 }
 
@@ -157,7 +165,7 @@ bool SchemaIdentifier::compare(std::string arg) const
   return arg == lower_db;
 }
 
-bool SchemaIdentifier::isValid()
+bool SchemaIdentifier::isValid() const
 {
   if (lower_db.empty())
     return false;
