@@ -1348,7 +1348,6 @@ public:
                             bool send_refresh= false);
   void close_open_tables();
   void close_data_files_and_morph_locks(TableIdentifier &identifier);
-  void close_data_files_and_morph_locks(const char *db, const char *table_name);
 
 private:
   bool free_cached_table();
@@ -1409,7 +1408,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  Table *table_cache_insert_placeholder(const char *db_name, const char *table_name, const char *key, uint32_t key_length);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
@@ -1495,8 +1494,7 @@ private:
   std::vector<TableShareInstance *> temporary_shares;
 
 public:
-  TableShareInstance *getTemporaryShare(const char *tmpname_arg);
-  TableShareInstance *getTemporaryShare();
+  TableShareInstance *getTemporaryShare(TableIdentifier::Type type_arg);
 };
 
 class Join;

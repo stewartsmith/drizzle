@@ -650,8 +650,8 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
   thr_lock_data_init(&share->lock, &lock, NULL);
 
 
-  if (table->getShare()->primary_key != MAX_KEY)
-    ref_length= table->key_info[table->getShare()->primary_key].key_length;
+  if (table->getShare()->getPrimaryKey() != MAX_KEY)
+    ref_length= table->key_info[table->getShare()->getPrimaryKey()].key_length;
   else if (share->has_hidden_primary_key)
     ref_length= sizeof(uint64_t);
   else
@@ -1743,7 +1743,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   {
     if (write_can_replace)
     {
-      store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
+      store_key_value_from_innodb(table->key_info + table->getShare()->getPrimaryKey(),
                                   ref, ref_length, record);
 
       ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
@@ -1911,8 +1911,8 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   int colnr= 0;
 
   /* We need the primary key for ::position() to work */
-  if (table->s->primary_key != MAX_KEY)
-    table->mark_columns_used_by_index_no_reset(table->s->primary_key);
+  if (table->s->getPrimaryKey() != MAX_KEY)
+    table->mark_columns_used_by_index_no_reset(table->s->getPrimaryKey());
 
   for (Field **field= table->getFields() ; *field ; field++, colnr++)
   {
@@ -2105,8 +2105,8 @@ static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, i
 
 void EmbeddedInnoDBCursor::position(const unsigned char *record)
 {
-  if (table->getShare()->primary_key != MAX_KEY)
-    store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
+  if (table->getShare()->getPrimaryKey() != MAX_KEY)
+    store_key_value_from_innodb(table->key_info + table->getShare()->getPrimaryKey(),
                                 ref, ref_length, record);
   else
     *((uint64_t*) ref)= hidden_autoinc_pkey_position;
