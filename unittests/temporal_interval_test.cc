@@ -29,6 +29,7 @@
 #include <drizzled/sql_string.h>
 #include <drizzled/temporal_interval.h>
 #include <drizzled/plugin/listen.h>
+#include <drizzled/drizzled.h>
 
 #include "temporal_generator.h"
 
@@ -81,6 +82,7 @@ class TemporalIntervalTest : public ::testing::Test
     
     virtual void SetUp()
     {
+      init_thread_environment();
       fake_client= plugin::Listen::getNullClient();
       fake_session= new Session(fake_client);
       fake_session->thread_stack= (char*) &fake_session;
