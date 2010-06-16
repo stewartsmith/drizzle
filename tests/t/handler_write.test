@@ -12,7 +12,10 @@ CREATE TABLE t2 LIKE t1;
 SHOW STATUS LIKE 'Handler_write';
 INSERT INTO t2 SELECT * FROM t1;
 SHOW STATUS LIKE 'Handler_write';
+begin;
+insert into t1 values (42);
+rollback;
+SHOW STATUS LIKE 'Handler_write';
 DROP TABLE t1, t2;
 SHOW STATUS LIKE 'Handler_write';
-
 FLUSH STATUS;

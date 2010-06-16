@@ -26,8 +26,14 @@ INSERT INTO t2 SELECT * FROM t1;
 SHOW STATUS LIKE 'Handler_write';
 Variable_name	Value
 Handler_write	14
+begin;
+insert into t1 values (42);
+rollback;
+SHOW STATUS LIKE 'Handler_write';
+Variable_name	Value
+Handler_write	15
 DROP TABLE t1, t2;
 SHOW STATUS LIKE 'Handler_write';
 Variable_name	Value
-Handler_write	14
+Handler_write	15
 FLUSH STATUS;
