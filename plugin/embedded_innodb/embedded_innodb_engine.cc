@@ -2146,8 +2146,8 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
   else
   {
     unsigned int keynr;
-    if (table->getShare()->primary_key != MAX_KEY)
-      keynr= table->getShare()->primary_key;
+    if (table->getShare()->getPrimaryKey() != MAX_KEY)
+      keynr= table->getShare()->getPrimaryKey();
     else
       keynr= get_first_unique_index(table);
 
