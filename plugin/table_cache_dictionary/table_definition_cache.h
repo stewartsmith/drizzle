@@ -33,7 +33,7 @@ public:
   {
     bool is_primed;
     drizzled::TableShare *share;
-    drizzled::TableDefinitionCache::iterator table_share_iterator;
+    drizzled::TableDefinitionCache::const_iterator table_share_iterator;
 
     void fill();
 
