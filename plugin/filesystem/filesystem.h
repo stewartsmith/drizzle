@@ -54,7 +54,6 @@ class FilesystemCursor : public drizzled::Cursor
   int file_desc;
   std::string update_file_name;
   int update_file_desc;
-  size_t update_file_length;
   off_t current_position;
   off_t next_position;
   std::string real_file_name;

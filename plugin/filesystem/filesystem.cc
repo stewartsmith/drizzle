@@ -511,7 +511,6 @@ int FilesystemCursor::openUpdateFile()
       return -1;
     }
     share->update_file_opened= true;
-    update_file_length= 0;
   }
   return 0;
 }
@@ -521,15 +520,19 @@ int FilesystemCursor::doEndTableScan()
   if (slots.size() == 0)
     return 0;
 
-  if (openUpdateFile() < 0)
-    return -1;
-
+  int err= -1;
   sort(slots.begin(), slots.end());
   vector< pair<off_t, off_t> >::iterator slot_iter= slots.begin();
   file_buff->init_buff(file_desc);
   off_t write_start= 0;
   off_t write_end= 0;
   off_t file_buffer_start= 0;
+
+  pthread_mutex_lock(&share->mutex);
+
+  if (openUpdateFile() < 0)
+    goto error;
+
   while (file_buffer_start != -1)
   {
     bool in_hole= false;
@@ -548,8 +551,6 @@ int FilesystemCursor::doEndTableScan()
                 write_length) != write_length)
     {
     }
-    update_file_length+= write_length;
-    cerr << "write: " << write_start << " -> " << write_end << endl;
 
     if (in_hole)
     {
@@ -567,19 +568,24 @@ int FilesystemCursor::doEndTableScan()
   // close update file
   if (::fsync(update_file_desc) ||
       ::close(update_file_desc))
-    return -1;
+  {
+    goto error;
+  }
   share->update_file_opened= false;
 
   // close current file
   ::close(file_desc);
   if (::rename(update_file_name.c_str(), real_file_name.c_str()))
-    return -1;
+    goto error;
 
   // reopen the data file
   file_desc= ::open(real_file_name.c_str(), O_RDONLY);
   if (file_desc < 0)
-    return -1;
-  return 0;
+    goto error;
+  err= 0;
+error:
+  pthread_mutex_unlock(&share->mutex);
+  return err;
 }
 
 void FilesystemCursor::getAllFields(string& output)
@@ -620,14 +626,16 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   string output_line;
   getAllFields(output_line);
 
-  // write output_line to real file
-  ofstream fout(real_file_name.c_str(), ios::app);
-  if (not fout.is_open())
+  pthread_mutex_lock(&share->mutex);
+  int fd= ::open(real_file_name.c_str(), O_WRONLY | O_APPEND);
+  if (fd < 0)
   {
+    pthread_mutex_unlock(&share->mutex);
     return ENOENT;
   }
-  fout.write(output_line.c_str(), output_line.length());
-  fout.close();
+  ::write(fd, output_line.c_str(), output_line.length());
+  ::close(fd);
+  pthread_mutex_unlock(&share->mutex);
 
   return 0;
 }
@@ -647,7 +655,6 @@ int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 
   if (::write(update_file_desc, output_line.c_str(), output_line.length()) < 0)
     return -1;
-  update_file_length+= output_line.length();
 
   return 0;
 }
