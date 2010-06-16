@@ -137,8 +137,7 @@ void remove_db_from_cache(SchemaIdentifier &schema_identifier);
 #define RTFC_OWNED_BY_Session_FLAG      0x0001
 #define RTFC_WAIT_OTHER_THREAD_FLAG 0x0002
 #define RTFC_CHECK_KILLED_FLAG      0x0004
-bool remove_table_from_cache(Session *session, const char *db, const char *table,
-                             uint32_t flags);
+bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint32_t flags);
 
 void mem_alloc_error(size_t size);
 
