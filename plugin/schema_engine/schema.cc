@@ -280,7 +280,17 @@ bool Schema::writeSchemaFile(SchemaIdentifier &schema_identifier, const message:
     return false;
   }
 
-  if (not db.SerializeToFileDescriptor(fd))
+  bool success;
+
+  try {
+    success= db.SerializeToFileDescriptor(fd);
+  }
+  catch (...)
+  {
+    success= false;
+  }
+
+  if (not success)
   {
     my_error(ER_CORRUPT_SCHEMA_DEFINITION, MYF(0), schema_file.c_str(),
              db.InitializationErrorString().empty() ? "unknown" :  db.InitializationErrorString().c_str());

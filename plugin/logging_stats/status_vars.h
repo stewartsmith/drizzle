@@ -27,65 +27,38 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PLUGIN_LOGGING_STATS_LOGGING_STATS_H
-#define PLUGIN_LOGGING_STATS_LOGGING_STATS_H
+#ifndef PLUGIN_LOGGING_STATS_STATUS_VARS_H
+#define PLUGIN_LOGGING_STATS_STATUS_VARS_H
 
-#include "scoreboard_slot.h"
-#include "cumulative_stats.h"
-#include "scoreboard.h"
-
-#include <drizzled/atomics.h>
-#include <drizzled/enum.h>
 #include <drizzled/session.h>
-#include <drizzled/plugin/logging.h>
 
-#include <string>
-#include <vector>
-
-class LoggingStats: public drizzled::plugin::Logging
+class StatusVars
 {
 public:
+  StatusVars();
 
-  LoggingStats(std::string name_arg);
+  StatusVars(const StatusVars &status_vars);
 
-  ~LoggingStats();
+  ~StatusVars();
 
-  virtual bool post(drizzled::Session *session);
+  void reset();
 
-  virtual bool postEnd(drizzled::Session *session);
+  void logStatusVar(drizzled::Session *session);
 
-  bool isEnabled() const
+  bool hasBeenFlushed(drizzled::Session *session);
+
+  void merge(StatusVars *status_vars);
+
+  void copySystemStatusVar(drizzled::system_status_var *to_var, 
+                           drizzled::system_status_var *from_var);
+
+  drizzled::system_status_var* getStatusVarCounters()
   {
-    return is_enabled;
-  }
-
-  void enable()
-  {
-    is_enabled= true;
-  }
-
-  void disable()
-  {
-    is_enabled= false;
-  }
-
-  Scoreboard *getCurrentScoreboard()
-  {          
-    return current_scoreboard;
-  }
-
-  CumulativeStats *getCumulativeStats()
-  {
-    return cumulative_stats;
+    return status_var_counters;
   }
 
 private:
-  Scoreboard *current_scoreboard;
-
-  CumulativeStats *cumulative_stats;
-
-  drizzled::atomic<bool> is_enabled;
-
-  void updateCurrentScoreboard(ScoreboardSlot *scoreboard_slot, drizzled::Session *session);
+  drizzled::system_status_var *status_var_counters;
 };
-#endif /* PLUGIN_LOGGING_STATS_LOGGING_STATS_H */
+
+#endif /* PLUGIN_LOGGING_STATS_STATUS_VARS_H */

@@ -96,7 +96,7 @@ int Table::delete_table(bool free_share)
 
   if (free_share)
   {
-    if (s->tmp_table == message::Table::STANDARD)
+    if (s->getType() == message::Table::STANDARD)
     {
       TableShare::release(s);
     }

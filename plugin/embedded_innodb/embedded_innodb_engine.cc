@@ -754,7 +754,13 @@ static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name
   if (err != DB_SUCCESS)
     goto cleanup;
 
-  table_message.SerializeToString(&serialized_message);
+  try {
+    table_message.SerializeToString(&serialized_message);
+  }
+  catch (...)
+  {
+    goto cleanup;
+  }
 
   err= ib_col_set_value(message_tuple, 1, serialized_message.c_str(),
                         serialized_message.length());
@@ -1137,7 +1143,13 @@ static ib_err_t rename_table_message(ib_trx_t transaction, TableIdentifier &from
 
   err= ib_col_set_value(update_tuple, 0, to, strlen(to));
 
-  table_message.SerializeToString(&serialized_message);
+  try {
+    table_message.SerializeToString(&serialized_message);
+  }
+  catch (...)
+  {
+    goto rollback;
+  }
 
   err= ib_col_set_value(update_tuple, 1, serialized_message.c_str(),
                         serialized_message.length());

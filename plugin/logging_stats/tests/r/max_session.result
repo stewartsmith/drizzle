@@ -26,3 +26,52 @@ drizzle	0	0	0	1	0	0	0	0	0	0
 drizzle	0	0	0	1	0	0	0	0	0	0
 drizzle	0	0	0	1	0	0	0	0	0	0
 DROP TABLE b;
+show global status;
+Variable_name	Value
+Aborted_clients	#
+Aborted_connects	#
+Bytes_received	#
+Bytes_sent	#
+Connections	#
+Created_tmp_disk_tables	#
+Created_tmp_tables	#
+Flush_commands	#
+Handler_commit	#
+Handler_delete	#
+Handler_prepare	#
+Handler_read_first	#
+Handler_read_key	#
+Handler_read_next	#
+Handler_read_prev	#
+Handler_read_rnd	#
+Handler_read_rnd_next	#
+Handler_rollback	#
+Handler_savepoint	#
+Handler_savepoint_rollback	#
+Handler_update	#
+Handler_write	#
+Key_blocks_not_flushed	#
+Key_blocks_unused	#
+Key_blocks_used	#
+Key_read_requests	#
+Key_reads	#
+Key_write_requests	#
+Key_writes	#
+Last_query_cost	#
+Max_used_connections	#
+Questions	#
+Select_full_join	#
+Select_full_range_join	#
+Select_range	#
+Select_range_check	#
+Select_scan	#
+Slow_queries	#
+Sort_merge_passes	#
+Sort_range	#
+Sort_rows	#
+Sort_scan	#
+Table_locks_immediate	#
+Table_locks_waited	#
+Threads_connected	#
+Uptime	#
+Uptime_since_flush_status	#
