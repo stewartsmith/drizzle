@@ -1558,6 +1558,8 @@ int Cursor::deleteRecord(const unsigned char *buf)
     }
   }
 
+  ha_statistic_increment(&system_status_var::ha_delete_count);
+
   DRIZZLE_DELETE_ROW_DONE(error);
 
   if (unlikely(error))

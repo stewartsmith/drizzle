@@ -4293,8 +4293,6 @@ ha_innobase::doDeleteRecord(
 
   ut_a(prebuilt->trx == trx);
 
-  ha_statistic_increment(&system_status_var::ha_delete_count);
-
   if (!prebuilt->upd_node) {
     row_get_prebuilt_update_vector(prebuilt);
   }

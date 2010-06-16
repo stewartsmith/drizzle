@@ -1036,7 +1036,6 @@ int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_
 
 int ha_myisam::doDeleteRecord(const unsigned char *buf)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
   return mi_delete(file,buf);
 }
 

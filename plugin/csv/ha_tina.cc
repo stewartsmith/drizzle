@@ -999,7 +999,6 @@ err:
 */
 int ha_tina::doDeleteRecord(const unsigned char *)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (chain_append())
     return(-1);
