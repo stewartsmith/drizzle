@@ -3680,7 +3680,7 @@ int join_read_system(JoinTable *tab)
   if (table->status & STATUS_GARBAGE)		// If first read
   {
     if ((error=table->cursor->read_first_row(table->record[0],
-					   table->getShare()->primary_key)))
+					   table->getShare()->getPrimaryKey())))
     {
       if (error != HA_ERR_END_OF_FILE)
         return table->report_error(error);
@@ -4526,12 +4526,12 @@ static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx, uin
       */
       if (!on_primary_key &&
           (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
-          table->getShare()->primary_key != MAX_KEY)
+          table->getShare()->hasPrimaryKey())
       {
         on_primary_key= true;
-        key_part= table->key_info[table->getShare()->primary_key].key_part;
-        key_part_end=key_part+table->key_info[table->getShare()->primary_key].key_parts;
-        const_key_parts=table->const_key_parts[table->getShare()->primary_key];
+        key_part= table->key_info[table->getShare()->getPrimaryKey()].key_part;
+        key_part_end=key_part+table->key_info[table->getShare()->getPrimaryKey()].key_parts;
+        const_key_parts=table->const_key_parts[table->getShare()->getPrimaryKey()];
 
         for (; const_key_parts & 1 ; const_key_parts>>= 1)
           key_part++;
@@ -4665,7 +4665,7 @@ bool list_contains_unique_index(Table *table, bool (*find_func) (Field *, void *
 {
   for (uint32_t keynr= 0; keynr < table->getShare()->sizeKeys(); keynr++)
   {
-    if (keynr == table->getShare()->primary_key ||
+    if (keynr == table->getShare()->getPrimaryKey() ||
          (table->key_info[keynr].flags & HA_NOSAME))
     {
       KeyInfo *keyinfo= table->key_info + keynr;
@@ -4970,7 +4970,7 @@ bool test_if_skip_sort_order(JoinTable *tab, order_st *order, ha_rows select_lim
       if (keys.test(nr) &&
           (direction= test_if_order_by_key(order, table, nr, &used_key_parts)))
       {
-        bool is_covering= table->covering_keys.test(nr) || (nr == table->getShare()->primary_key && table->cursor->primary_key_is_clustered());
+        bool is_covering= table->covering_keys.test(nr) || (nr == table->getShare()->getPrimaryKey() && table->cursor->primary_key_is_clustered());
 
         /*
           Don't use an index scan with ORDER BY without limit.

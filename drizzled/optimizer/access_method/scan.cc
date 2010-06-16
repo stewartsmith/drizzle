@@ -131,10 +131,10 @@ bool optimizer::Scan::getStats(Table *table,
              See bug #26447: "Using the clustered index for a table scan
              is always faster than using a secondary index".
            */
-          if (table->getShare()->primary_key != MAX_KEY &&
+          if (table->getShare()->hasPrimaryKey() &&
               table->cursor->primary_key_is_clustered())
           {
-            join_tab->index= table->getShare()->primary_key;
+            join_tab->index= table->getShare()->getPrimaryKey();
           }
           else
           {
@@ -146,6 +146,7 @@ bool optimizer::Scan::getStats(Table *table,
       }
     }
   }
+
   return false;
 }
 
