@@ -141,8 +141,9 @@ int32_t CumulativeStats::getCumulativeStatsLastValidIndex()
   }
 }
 
-void CumulativeStats::sumCurrentScoreboardStatusVars(Scoreboard *scoreboard,
-                                                     StatusVars *current_status_vars)
+void CumulativeStats::sumCurrentScoreboard(Scoreboard *scoreboard,
+                                           StatusVars *current_status_vars,
+                                           UserCommands *current_user_commands)
 {
   /* the vector of vectors */
   vector<vector<ScoreboardSlot* >* > *vector_of_scoreboard_vectors= 
@@ -165,7 +166,15 @@ void CumulativeStats::sumCurrentScoreboardStatusVars(Scoreboard *scoreboard,
       ScoreboardSlot *scoreboard_slot= *scoreboard_vector_it;
       if (scoreboard_slot->isInUse())
       {
-        current_status_vars->merge(scoreboard_slot->getStatusVars());
+        if (current_status_vars)
+        {
+          current_status_vars->merge(scoreboard_slot->getStatusVars());
+        }
+
+        if (current_user_commands)
+        {
+          current_user_commands->merge(scoreboard_slot->getUserCommands());
+        }
       }
     }
   }
