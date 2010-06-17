@@ -380,7 +380,7 @@ uint64_t EmbeddedInnoDBCursor::getHiddenPrimaryKeyInitialAutoIncrementValue()
 {
   uint64_t nr;
   ib_err_t err;
-  ib_trx_t transaction= *get_trx(ha_session());
+  ib_trx_t transaction= *get_trx(table->in_use);
   ib_cursor_attach_trx(cursor, transaction);
   tuple= ib_clust_read_tuple_create(cursor);
   err= ib_cursor_last(cursor);
@@ -632,8 +632,8 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
   thr_lock_data_init(&share->lock, &lock, NULL);
 
 
-  if (table->getShare()->primary_key != MAX_KEY)
-    ref_length= table->key_info[table->getShare()->primary_key].key_length;
+  if (table->getShare()->getPrimaryKey() != MAX_KEY)
+    ref_length= table->key_info[table->getShare()->getPrimaryKey()].key_length;
   else if (share->has_hidden_primary_key)
     ref_length= sizeof(uint64_t);
   else
@@ -754,7 +754,13 @@ static ib_err_t store_table_message(ib_trx_t transaction, const char* table_name
   if (err != DB_SUCCESS)
     goto cleanup;
 
-  table_message.SerializeToString(&serialized_message);
+  try {
+    table_message.SerializeToString(&serialized_message);
+  }
+  catch (...)
+  {
+    goto cleanup;
+  }
 
   err= ib_col_set_value(message_tuple, 1, serialized_message.c_str(),
                         serialized_message.length());
@@ -1137,7 +1143,13 @@ static ib_err_t rename_table_message(ib_trx_t transaction, TableIdentifier &from
 
   err= ib_col_set_value(update_tuple, 0, to, strlen(to));
 
-  table_message.SerializeToString(&serialized_message);
+  try {
+    table_message.SerializeToString(&serialized_message);
+  }
+  catch (...)
+  {
+    goto rollback;
+  }
 
   err= ib_col_set_value(update_tuple, 1, serialized_message.c_str(),
                         serialized_message.length());
@@ -1556,7 +1568,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   ib_err_t err;
   int ret= 0;
 
-  ib_trx_t transaction= *get_trx(ha_session());
+  ib_trx_t transaction= *get_trx(table->in_use);
 
   tuple= ib_clust_read_tuple_create(cursor);
 
@@ -1582,7 +1594,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
     err= ib_cursor_reset(cursor);
     innodb_engine->doCommit(current_session, true);
     innodb_engine->doStartTransaction(current_session, START_TRANS_NO_OPTIONS);
-    transaction= *get_trx(ha_session());
+    transaction= *get_trx(table->in_use);
     assert(err == DB_SUCCESS);
     ib_cursor_attach_trx(cursor, transaction);
     err= ib_cursor_first(cursor);
@@ -1632,7 +1644,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   {
     if (write_can_replace)
     {
-      store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
+      store_key_value_from_innodb(table->key_info + table->getShare()->getPrimaryKey(),
                                   ref, ref_length, record);
 
       ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
@@ -1681,9 +1693,6 @@ int EmbeddedInnoDBCursor::doUpdateRecord(const unsigned char *,
   err= ib_tuple_copy(update_tuple, tuple);
   assert(err == DB_SUCCESS);
 
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
-
   write_row_to_innodb_tuple(table->getFields(), update_tuple);
 
   err= ib_cursor_update_row(cursor, tuple, update_tuple);
@@ -1718,7 +1727,7 @@ int EmbeddedInnoDBCursor::delete_all_rows(void)
      so only support TRUNCATE and not DELETE FROM t;
      (this is what ha_innodb does)
   */
-  if (session_sql_command(ha_session()) != SQLCOM_TRUNCATE)
+  if (session_sql_command(table->in_use) != SQLCOM_TRUNCATE)
     return HA_ERR_WRONG_COMMAND;
 
   ib_id_t id;
@@ -1733,7 +1742,7 @@ int EmbeddedInnoDBCursor::delete_all_rows(void)
   {
     ib_err_t rollback_err= ib_trx_rollback(transaction);
 
-    push_warning_printf(ha_session(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_CANT_DELETE_FILE,
                         _("Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"),
                         err, ib_strerror(err));
@@ -1773,7 +1782,7 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
     doEndTableScan();
   in_table_scan= true;
 
-  transaction= *get_trx(ha_session());
+  transaction= *get_trx(table->in_use);
 
   assert(transaction != NULL);
 
@@ -1803,8 +1812,8 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   int colnr= 0;
 
   /* We need the primary key for ::position() to work */
-  if (table->s->primary_key != MAX_KEY)
-    table->mark_columns_used_by_index_no_reset(table->s->primary_key);
+  if (table->s->getPrimaryKey() != MAX_KEY)
+    table->mark_columns_used_by_index_no_reset(table->s->getPrimaryKey());
 
   for (Field **field= table->getFields() ; *field ; field++, colnr++)
   {
@@ -1997,8 +2006,8 @@ static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, i
 
 void EmbeddedInnoDBCursor::position(const unsigned char *record)
 {
-  if (table->getShare()->primary_key != MAX_KEY)
-    store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
+  if (table->getShare()->getPrimaryKey() != MAX_KEY)
+    store_key_value_from_innodb(table->key_info + table->getShare()->getPrimaryKey(),
                                 ref, ref_length, record);
   else
     *((uint64_t*) ref)= hidden_autoinc_pkey_position;
@@ -2021,7 +2030,7 @@ int EmbeddedInnoDBCursor::info(uint32_t flag)
 
 int EmbeddedInnoDBCursor::doStartIndexScan(uint32_t keynr, bool)
 {
-  ib_trx_t transaction= *get_trx(ha_session());
+  ib_trx_t transaction= *get_trx(table->in_use);
 
   active_index= keynr;
 

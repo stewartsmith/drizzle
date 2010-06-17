@@ -3,17 +3,33 @@
 # All paths should be given relative to the root
 
 if HAVE_LIBGTEST
-check_PROGRAMS += 	unittests/unittests
+check_PROGRAMS += unittests/unittests
+endif
 
-unittests_unittests_SOURCES= \
-			     unittests/atomics_test.cc \
-			     unittests/calendar_test.cc \
-			     unittests/main.cc \
-			     unittests/pthread_atomics_test.cc \
-			     unittests/utf8_test.cc
+noinst_HEADERS += \
+		  unittests/plugin/plugin_stubs.h \
+		  unittests/temporal_generator.h
+
+unittests_unittests_SOURCES = \
+			      unittests/atomics_test.cc \
+			      unittests/calendar_test.cc \
+			      unittests/date_test.cc \
+			      unittests/date_time_test.cc \
+			      unittests/main.cc \
+			      unittests/micro_timestamp_test.cc \
+			      unittests/nano_timestamp_test.cc \
+			      unittests/plugin/authentication_test.cc \
+			      unittests/plugin/client_test.cc \
+			      unittests/plugin/error_message_test.cc \
+			      unittests/pthread_atomics_test.cc \
+			      unittests/table_identifier.cc \
+			      unittests/temporal_format_test.cc \
+			      unittests/temporal_generator.cc \
+			      unittests/temporal_interval_test.cc \
+			      unittests/time_test.cc \
+			      unittests/timestamp_test.cc \
+			      unittests/utf8_test.cc
 
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
   ${drizzled_drizzled_LDADD} ${LTLIBGTEST}
-
-endif

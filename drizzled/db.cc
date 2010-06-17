@@ -53,7 +53,7 @@ using namespace std;
 namespace drizzled
 {
 
-static long mysql_rm_known_files(Session *session,
+static long drop_tables_via_filenames(Session *session,
                                  SchemaIdentifier &schema_identifier,
                                  plugin::TableNameList &dropped_tables);
 static void mysql_change_db_impl(Session *session);
@@ -272,7 +272,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
 
 
     error= -1;
-    deleted= mysql_rm_known_files(session, schema_identifier, dropped_tables);
+    deleted= drop_tables_via_filenames(session, schema_identifier, dropped_tables);
     if (deleted >= 0)
     {
       error= 0;
@@ -399,10 +399,12 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     table_type= table->db_type;
 
+    TableIdentifier identifier(db, table->table_name);
+
     {
       Table *locked_table;
       abort_locked_tables(session, db, table->table_name);
-      remove_table_from_cache(session, db, table->table_name,
+      remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       /*
@@ -418,8 +420,6 @@ static int rm_table_part2(Session *session, TableList *tables)
         goto err_with_placeholders;
       }
     }
-
-    TableIdentifier identifier(db, table->table_name);
     identifier.getPath();
 
     if (table_type == NULL && not plugin::StorageEngine::doesTableExist(*session, identifier))
@@ -488,9 +488,9 @@ err_with_placeholders:
   session MUST be set when calling this function!
 */
 
-static long mysql_rm_known_files(Session *session,
-                                 SchemaIdentifier &schema_identifier,
-                                 plugin::TableNameList &dropped_tables)
+static long drop_tables_via_filenames(Session *session,
+                                      SchemaIdentifier &schema_identifier,
+                                      plugin::TableNameList &dropped_tables)
 {
   long deleted= 0;
   TableList *tot_list= NULL, **tot_list_next;
@@ -516,8 +516,7 @@ static long mysql_rm_known_files(Session *session,
 
     table_list->db= (char*) (table_list+1);
     table_list->table_name= strcpy(table_list->db, schema_identifier.getSchemaName().c_str()) + db_len + 1;
-    filename_to_tablename((*it).c_str(), table_list->table_name,
-                          (*it).size() + 1);
+    TableIdentifier::filename_to_tablename((*it).c_str(), table_list->table_name, (*it).size() + 1);
     table_list->alias= table_list->table_name;  // If lower_case_table_names=2
     table_list->internal_tmp_table= (strncmp((*it).c_str(),
                                              TMP_FILE_PREFIX,

@@ -28,11 +28,18 @@
  *
  */
 
+#include "config.h"
+#include <drizzled/plugin.h>
 #include "global_stats.h"
 
 GlobalStats::GlobalStats()
 {
   user_commands= new UserCommands();
+}
+
+GlobalStats::GlobalStats(const GlobalStats &global_stats)
+{
+  user_commands= new UserCommands(*global_stats.user_commands);
 }
 
 GlobalStats::~GlobalStats()
@@ -43,6 +50,11 @@ GlobalStats::~GlobalStats()
 UserCommands* GlobalStats::getUserCommands()
 {
   return user_commands;
+}
+
+void GlobalStats::merge(GlobalStats *global_stats)
+{
+  user_commands->merge(global_stats->getUserCommands());
 }
 
 void GlobalStats::updateUserCommands(ScoreboardSlot *scoreboard_slot)

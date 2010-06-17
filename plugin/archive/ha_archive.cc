@@ -156,7 +156,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
       set_of_names.insert(uname);
@@ -572,11 +572,19 @@ int ArchiveEngine::doCreateTable(Session &,
     goto error2;
   }
 
-  proto.SerializeToString(&serialized_proto);
+  try {
+    proto.SerializeToString(&serialized_proto);
+  }
+  catch (...)
+  {
+    goto error2;
+  }
 
   if (azwrite_frm(&create_stream, serialized_proto.c_str(),
                   serialized_proto.length()))
+  {
     goto error2;
+  }
 
   if (proto.options().has_comment())
   {
@@ -1366,7 +1374,7 @@ void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
 

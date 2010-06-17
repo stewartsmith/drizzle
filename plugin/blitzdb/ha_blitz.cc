@@ -302,8 +302,10 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len = filename_to_tablename(filename->c_str(), uname,
-                                            sizeof(uname));
+      file_name_len = TableIdentifier::filename_to_tablename(filename->c_str(),
+                                                             uname,
+                                                             sizeof(uname));
+
       uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';
       set_of_names.insert(uname);
     }
@@ -331,7 +333,9 @@ void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len = filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len = TableIdentifier::filename_to_tablename(filename->c_str(),
+                                                             uname,
+                                                             sizeof(uname));
 
       uname[file_name_len - sizeof(BLITZ_DATA_EXT) + 1]= '\0';
       ids.push_back(TableIdentifier(schema_id, uname));
@@ -434,7 +438,7 @@ int ha_blitz::open(const char *table_name, int, uint32_t) {
      will use to uniquely identify a row. The actual allocation is
      done by the kernel so all we do here is specify the size of it.*/
   if (share->primary_key_exists) {
-    ref_length = table->key_info[table->s->primary_key].key_length;
+    ref_length = table->key_info[table->s->getPrimaryKey()].key_length;
   } else {
     ref_length = sizeof(held_key_len) + sizeof(uint64_t);
   }
@@ -945,7 +949,7 @@ int ha_blitz::doUpdateRecord(const unsigned char *old_row,
       /* Now write the new key. */
       prefix_len = make_index_key(key_buffer, i, new_row);
 
-      if (i == table->s->primary_key) {
+      if (i == table->s->getPrimaryKey()) {
         key = merge_key(key_buffer, prefix_len, key_buffer, prefix_len, &klen);
         rv = share->btrees[i].write(key, klen);
       } else {
@@ -972,13 +976,13 @@ int ha_blitz::doUpdateRecord(const unsigned char *old_row,
   if (table_based) {
     rv = share->dict.write_row(held_key, held_key_len, row_buf, row_len);
   } else {
-    int klen = make_index_key(key_buffer, table->s->primary_key, old_row);
+    int klen = make_index_key(key_buffer, table->s->getPrimaryKey(), old_row);
 
     /* Delete with the old key. */
     share->dict.delete_row(key_buffer, klen);
 
     /* Write with the new key. */
-    klen = make_index_key(key_buffer, table->s->primary_key, new_row);
+    klen = make_index_key(key_buffer, table->s->getPrimaryKey(), new_row);
     rv = share->dict.write_row(key_buffer, klen, row_buf, row_len);
   }
 
@@ -1092,7 +1096,7 @@ size_t ha_blitz::make_primary_key(char *pack_to, const unsigned char *row) {
   /* Getting here means that there is a PK in this table. Get the
      binary representation of the PK, pack it to BlitzDB's key buffer
      and return the size of it. */
-  return make_index_key(pack_to, table->s->primary_key, row);
+  return make_index_key(pack_to, table->s->getPrimaryKey(), row);
 }
 
 size_t ha_blitz::make_index_key(char *pack_to, int key_num,
@@ -1390,7 +1394,7 @@ BlitzShare *ha_blitz::get_share(const char *name) {
   share_ptr->fixed_length_table = !(table->s->db_create_options
                                     & HA_OPTION_PACK_RECORD);
 
-  if (table->s->primary_key >= MAX_KEY)
+  if (table->s->getPrimaryKey() >= MAX_KEY)
     share_ptr->primary_key_exists = false;
   else
     share_ptr->primary_key_exists = true;

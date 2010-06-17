@@ -89,7 +89,8 @@ enum enum_resolution_type {
   RESOLVED_WITH_NO_ALIAS,
   RESOLVED_AGAINST_ALIAS
 };
-Item ** find_item_in_list(Item *item, List<Item> &items, uint32_t *counter,
+Item ** find_item_in_list(Session *session,
+                          Item *item, List<Item> &items, uint32_t *counter,
                           find_item_error_report_type report_error,
                           enum_resolution_type *resolution);
 bool insert_fields(Session *session, Name_resolution_context *context,
@@ -136,8 +137,7 @@ void remove_db_from_cache(SchemaIdentifier &schema_identifier);
 #define RTFC_OWNED_BY_Session_FLAG      0x0001
 #define RTFC_WAIT_OTHER_THREAD_FLAG 0x0002
 #define RTFC_CHECK_KILLED_FLAG      0x0004
-bool remove_table_from_cache(Session *session, const char *db, const char *table,
-                             uint32_t flags);
+bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint32_t flags);
 
 void mem_alloc_error(size_t size);
 

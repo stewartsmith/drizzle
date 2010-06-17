@@ -88,8 +88,41 @@ public:
   }
 
   Cursor *cursor; /**< Pointer to the storage engine's Cursor managing this table */
+private:
   Table *next;
+public:
+  Table *getNext() const
+  {
+    return next;
+  }
+
+  Table **getNextPtr()
+  {
+    return &next;
+  }
+
+  void setNext(Table *arg)
+  {
+    next= arg;
+  }
+
+private:
   Table *prev;
+public:
+  Table *getPrev() const
+  {
+    return prev;
+  }
+
+  Table **getPrevPtr()
+  {
+    return &prev;
+  }
+
+  void setPrev(Table *arg)
+  {
+    prev= arg;
+  }
 
   MyBitmap *read_set; /* Active column sets */
   MyBitmap *write_set; /* Active column sets */
@@ -508,7 +541,6 @@ public:
     memset(null_flags, 255, s->null_bytes);
   }
 
-  bool renameAlterTemporaryTable(TableIdentifier &identifier);
   void free_io_cache();
   void filesort_free_buffers(bool full= false);
   void intern_close_table();

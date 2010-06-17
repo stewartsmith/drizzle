@@ -463,6 +463,33 @@ COLUMN_NAME
 #
 #
 #
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 count(*)
 #
@@ -575,6 +602,33 @@ COUNT(*)
 use data_dictionary;
 SELECT TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME from COLUMNS ORDER BY TABLE_SCHEMA,TABLE_NAME;
 TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
 #	#	#
 #	#	#
 #	#	#
@@ -1473,8 +1527,62 @@ TABLE_NAME	TABLE_SCHEMA	COLUMN_NAME
 #	#	#
 #	#	#
 #	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
 SELECT TABLE_NAME,TABLE_SCHEMA,COLUMN_NAME from COLUMNS ORDER BY TABLE_NAME,TABLE_SCHEMA;
 TABLE_NAME	TABLE_SCHEMA	COLUMN_NAME
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
+#	#	#
 #	#	#
 #	#	#
 #	#	#

@@ -80,7 +80,7 @@ namespace drizzled
 {
 
 extern size_t table_def_size;
-TableDefinitionCache table_def_cache;
+static TableDefinitionCache table_def_cache;
 static pthread_mutex_t LOCK_table_share;
 bool table_def_inited= false;
 
@@ -146,11 +146,10 @@ void TableShare::release(TableShare *share)
 
   if (to_be_deleted)
   {
-    const string key_string(share->getCacheKey(),
-                            share->getCacheKeySize());
+    TableIdentifier identifier(share->getSchemaName(), share->getTableName());
     plugin::EventObserver::deregisterTableEvents(*share);
    
-    TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
+    TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
     if (iter != table_def_cache.end())
     {
       table_def_cache.erase(iter);
@@ -161,11 +160,9 @@ void TableShare::release(TableShare *share)
   pthread_mutex_unlock(&share->mutex);
 }
 
-void TableShare::release(const char *key, uint32_t key_length)
+void TableShare::release(TableIdentifier &identifier)
 {
-  const string key_string(key, key_length);
-
-  TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
+  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
   {
     TableShare *share= (*iter).second;
@@ -174,7 +171,7 @@ void TableShare::release(const char *key, uint32_t key_length)
     {
       pthread_mutex_lock(&share->mutex);
       plugin::EventObserver::deregisterTableEvents(*share);
-      table_def_cache.erase(key_string);
+      table_def_cache.erase(identifier.getKey());
       delete share;
     }
   }
@@ -228,24 +225,23 @@ static TableShare *foundTableShare(TableShare *share)
 #  Share for table
 */
 
-TableShare *TableShare::getShare(Session *session, 
-                                 char *key,
-                                 uint32_t key_length, int *error)
+TableShare *TableShare::getShareCreate(Session *session, 
+                                       TableIdentifier &identifier,
+                                       int *error)
 {
-  const string key_string(key, key_length);
   TableShare *share= NULL;
 
   *error= 0;
 
   /* Read table definition from cache */
-  TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
+  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
   {
     share= (*iter).second;
     return foundTableShare(share);
   }
 
-  if (not (share= new TableShare(key, key_length)))
+  if (not (share= new TableShare(message::Table::STANDARD, identifier)))
   {
     return NULL;
   }
@@ -260,7 +256,7 @@ TableShare *TableShare::getShare(Session *session,
    * @TODO: we need to eject something if we exceed table_def_size
  */
   pair<TableDefinitionCache::iterator, bool> ret=
-    table_def_cache.insert(make_pair(key_string, share));
+    table_def_cache.insert(make_pair(identifier.getKey(), share));
   if (ret.second == false)
   {
     delete share;
@@ -268,11 +264,10 @@ TableShare *TableShare::getShare(Session *session,
     return NULL;
   }
 
-  TableIdentifier identifier(share->getSchemaName(), share->getTableName());
   if (share->open_table_def(*session, identifier))
   {
     *error= share->error;
-    table_def_cache.erase(key_string);
+    table_def_cache.erase(identifier.getKey());
     delete share;
 
     return NULL;
@@ -301,15 +296,9 @@ TableShare *TableShare::getShare(Session *session,
 */
 TableShare *TableShare::getShare(TableIdentifier &identifier)
 {
-  char key[MAX_DBKEY_LENGTH];
-  uint32_t key_length;
   safe_mutex_assert_owner(&LOCK_open);
 
-  key_length= TableShare::createKey(key, identifier);
-
-  const string key_string(key, key_length);
-
-  TableDefinitionCache::iterator iter= table_def_cache.find(key_string);
+  TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
   {
     return (*iter).second;
@@ -465,12 +454,12 @@ bool TableShare::fieldInPrimaryKey(Field *in_field) const
   return false;
 }
 
-TableDefinitionCache &TableShare::getCache()
+const TableDefinitionCache &TableShare::getCache()
 {
   return table_def_cache;
 }
 
-TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t path_length_arg) :
+TableShare::TableShare(TableIdentifier::Type type_arg) :
   table_category(TABLE_UNKNOWN_CATEGORY),
   open_count(0),
   found_next_number_field(NULL),
@@ -486,7 +475,7 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
-  tmp_table(message::Table::STANDARD),
+  tmp_table(type_arg),
   ref_count(0),
   null_bytes(0),
   last_null_bit_pos(0),
@@ -506,7 +495,7 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   db_options_in_use(0),
   db_record_offset(0),
   rowid_field_offset(0),
-  primary_key(0),
+  primary_key(MAX_KEY),
   next_number_index(0),
   next_number_key_offset(0),
   next_number_keypart(0),
@@ -527,19 +516,265 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   memset(&name_hash, 0, sizeof(HASH));
 
   table_charset= 0;
-  memset(&table_cache_key, 0, sizeof(LEX_STRING));
+  memset(&db, 0, sizeof(LEX_STRING));
+  memset(&table_name, 0, sizeof(LEX_STRING));
+  memset(&path, 0, sizeof(LEX_STRING));
+  memset(&normalized_path, 0, sizeof(LEX_STRING));
+
+  if (type_arg == message::Table::INTERNAL)
+  {
+    TableIdentifier::build_tmptable_filename(private_key_for_cache);
+    init(&private_key_for_cache[0], &private_key_for_cache[0]);
+  }
+  else
+  {
+    init("", "");
+  }
+}
+
+TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key) :// Used by placeholder
+  table_category(TABLE_UNKNOWN_CATEGORY),
+  open_count(0),
+  found_next_number_field(NULL),
+  timestamp_field(NULL),
+  key_info(NULL),
+  blob_field(NULL),
+  block_size(0),
+  version(0),
+  timestamp_offset(0),
+  reclength(0),
+  stored_rec_length(0),
+  row_type(ROW_TYPE_DEFAULT),
+  max_rows(0),
+  table_proto(NULL),
+  storage_engine(NULL),
+  tmp_table(message::Table::INTERNAL),
+  ref_count(0),
+  null_bytes(0),
+  last_null_bit_pos(0),
+  fields(0),
+  rec_buff_length(0),
+  keys(0),
+  key_parts(0),
+  max_key_length(0),
+  max_unique_length(0),
+  total_key_length(0),
+  uniques(0),
+  null_fields(0),
+  blob_fields(0),
+  timestamp_field_offset(0),
+  varchar_fields(0),
+  db_create_options(0),
+  db_options_in_use(0),
+  db_record_offset(0),
+  rowid_field_offset(0),
+  primary_key(MAX_KEY),
+  next_number_index(0),
+  next_number_key_offset(0),
+  next_number_keypart(0),
+  error(0),
+  open_errno(0),
+  errarg(0),
+  column_bitmap_size(0),
+  blob_ptr_size(0),
+  db_low_byte_first(false),
+  name_lock(false),
+  replace_with_name_lock(false),
+  waiting_on_cond(false),
+  keys_in_use(0),
+  keys_for_keyread(0),
+  event_observers(NULL),
+  newed(true)
+{
+  memset(&name_hash, 0, sizeof(HASH));
+
+  assert(identifier.getKey() == key);
+
+  table_charset= 0;
+  memset(&path, 0, sizeof(LEX_STRING));
+  memset(&normalized_path, 0, sizeof(LEX_STRING));
+
+  private_key_for_cache= key;
+
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  table_category=         TABLE_CATEGORY_TEMPORARY;
+  tmp_table=              message::Table::INTERNAL;
+
+  db.str= &private_key_for_cache[0];
+  db.length= strlen(&private_key_for_cache[0]);
+
+  table_name.str= &private_key_for_cache[0] + strlen(&private_key_for_cache[0]) + 1;
+  table_name.length= strlen(table_name.str);
+  path.str= (char *)"";
+  normalized_path.str= path.str;
+  path.length= normalized_path.length= 0;
+  assert(strcmp(identifier.getTableName().c_str(), table_name.str) == 0);
+  assert(strcmp(identifier.getSchemaName().c_str(), db.str) == 0);
+}
+
+
+TableShare::TableShare(TableIdentifier &identifier) : // Just used during createTable()
+  table_category(TABLE_UNKNOWN_CATEGORY),
+  open_count(0),
+  found_next_number_field(NULL),
+  timestamp_field(NULL),
+  key_info(NULL),
+  blob_field(NULL),
+  block_size(0),
+  version(0),
+  timestamp_offset(0),
+  reclength(0),
+  stored_rec_length(0),
+  row_type(ROW_TYPE_DEFAULT),
+  max_rows(0),
+  table_proto(NULL),
+  storage_engine(NULL),
+  tmp_table(identifier.getType()),
+  ref_count(0),
+  null_bytes(0),
+  last_null_bit_pos(0),
+  fields(0),
+  rec_buff_length(0),
+  keys(0),
+  key_parts(0),
+  max_key_length(0),
+  max_unique_length(0),
+  total_key_length(0),
+  uniques(0),
+  null_fields(0),
+  blob_fields(0),
+  timestamp_field_offset(0),
+  varchar_fields(0),
+  db_create_options(0),
+  db_options_in_use(0),
+  db_record_offset(0),
+  rowid_field_offset(0),
+  primary_key(MAX_KEY),
+  next_number_index(0),
+  next_number_key_offset(0),
+  next_number_keypart(0),
+  error(0),
+  open_errno(0),
+  errarg(0),
+  column_bitmap_size(0),
+  blob_ptr_size(0),
+  db_low_byte_first(false),
+  name_lock(false),
+  replace_with_name_lock(false),
+  waiting_on_cond(false),
+  keys_in_use(0),
+  keys_for_keyread(0),
+  event_observers(NULL),
+  newed(true)
+{
+  memset(&name_hash, 0, sizeof(HASH));
+
+  table_charset= 0;
+  memset(&db, 0, sizeof(LEX_STRING));
+  memset(&table_name, 0, sizeof(LEX_STRING));
+  memset(&path, 0, sizeof(LEX_STRING));
+  memset(&normalized_path, 0, sizeof(LEX_STRING));
+
+  private_key_for_cache= identifier.getKey();
+  assert(identifier.getPath().size()); // Since we are doing a create table, this should be a positive value
+  private_normalized_path.resize(identifier.getPath().size() + 1);
+  memcpy(&private_normalized_path[0], identifier.getPath().c_str(), identifier.getPath().size());
+
+  {
+    memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+    table_category=         TABLE_CATEGORY_TEMPORARY;
+    tmp_table=              message::Table::INTERNAL;
+    db.str= &private_key_for_cache[0];
+    db.length= strlen(&private_key_for_cache[0]);
+    table_name.str= db.str + 1;
+    table_name.length= strlen(table_name.str);
+    path.str= &private_normalized_path[0];
+    normalized_path.str= path.str;
+    path.length= normalized_path.length= private_normalized_path.size();
+  }
+}
+
+
+/*
+  Used for shares that will go into the cache.
+*/
+TableShare::TableShare(TableIdentifier::Type type_arg,
+                       TableIdentifier &identifier,
+                       char *path_arg,
+                       uint32_t path_length_arg) :
+  table_category(TABLE_UNKNOWN_CATEGORY),
+  open_count(0),
+  found_next_number_field(NULL),
+  timestamp_field(NULL),
+  key_info(NULL),
+  blob_field(NULL),
+  block_size(0),
+  version(0),
+  timestamp_offset(0),
+  reclength(0),
+  stored_rec_length(0),
+  row_type(ROW_TYPE_DEFAULT),
+  max_rows(0),
+  table_proto(NULL),
+  storage_engine(NULL),
+  tmp_table(type_arg),
+  ref_count(0),
+  null_bytes(0),
+  last_null_bit_pos(0),
+  fields(0),
+  rec_buff_length(0),
+  keys(0),
+  key_parts(0),
+  max_key_length(0),
+  max_unique_length(0),
+  total_key_length(0),
+  uniques(0),
+  null_fields(0),
+  blob_fields(0),
+  timestamp_field_offset(0),
+  varchar_fields(0),
+  db_create_options(0),
+  db_options_in_use(0),
+  db_record_offset(0),
+  rowid_field_offset(0),
+  primary_key(MAX_KEY),
+  next_number_index(0),
+  next_number_key_offset(0),
+  next_number_keypart(0),
+  error(0),
+  open_errno(0),
+  errarg(0),
+  column_bitmap_size(0),
+  blob_ptr_size(0),
+  db_low_byte_first(false),
+  name_lock(false),
+  replace_with_name_lock(false),
+  waiting_on_cond(false),
+  keys_in_use(0),
+  keys_for_keyread(0),
+  event_observers(NULL),
+  newed(true)
+{
+  memset(&name_hash, 0, sizeof(HASH));
+
+  table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
   memset(&table_name, 0, sizeof(LEX_STRING));
   memset(&path, 0, sizeof(LEX_STRING));
   memset(&normalized_path, 0, sizeof(LEX_STRING));
 
   mem_root.init_alloc_root(TABLE_ALLOC_BLOCK_SIZE);
-  char *key_buff, *path_buff;
+  char *path_buff;
   std::string _path;
 
-  db.str= key;
-  db.length= strlen(db.str);
-  table_name.str= db.str + db.length + 1;
+  private_key_for_cache= identifier.getKey();
+  /*
+    Let us use the fact that the key is "db/0/table_name/0" + optional
+    part for temporary tables.
+  */
+  db.str= &private_key_for_cache[0];
+  db.length=         strlen(db.str);
+  table_name.str=    db.str + db.length + 1;
   table_name.length= strlen(table_name.str);
 
   if (path_arg)
@@ -548,16 +783,13 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   }
   else
   {
-    build_table_filename(_path, db.str, table_name.str, false);
+    TableIdentifier::build_table_filename(_path, db.str, table_name.str, false);
   }
 
-  if (mem_root.multi_alloc_root(0, &key_buff, key_length,
+  if (mem_root.multi_alloc_root(0,
                                 &path_buff, _path.length() + 1,
                                 NULL))
   {
-    memcpy(key_buff, key, key_length);
-    set_table_cache_key(key_buff, key_length, db.length, table_name.length);
-
     setPath(path_buff, _path.length());
     strcpy(path_buff, _path.c_str());
     setNormalizedPath(path_buff, _path.length());
@@ -573,6 +805,71 @@ TableShare::TableShare(char *key, uint32_t key_length, char *path_arg, uint32_t 
   }
 
   newed= true;
+}
+
+void TableShare::init(const char *new_table_name,
+                      const char *new_path)
+{
+
+  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
+  table_category=         TABLE_CATEGORY_TEMPORARY;
+  tmp_table=              message::Table::INTERNAL;
+  db.str= (char *)"";
+  db.length= 0;
+  table_name.str=         (char*) new_table_name;
+  table_name.length=      strlen(new_table_name);
+  path.str=               (char*) new_path;
+  normalized_path.str=    (char*) new_path;
+  path.length= normalized_path.length= strlen(new_path);
+}
+
+TableShare::~TableShare() 
+{
+  assert(ref_count == 0);
+
+  /*
+    If someone is waiting for this to be deleted, inform it about this.
+    Don't do a delete until we know that no one is refering to this anymore.
+  */
+  if (tmp_table == message::Table::STANDARD)
+  {
+    /* share->mutex is locked in release_table_share() */
+    while (waiting_on_cond)
+    {
+      pthread_cond_broadcast(&cond);
+      pthread_cond_wait(&cond, &mutex);
+    }
+    /* No thread refers to this anymore */
+    pthread_mutex_unlock(&mutex);
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond);
+  }
+  hash_free(&name_hash);
+
+  storage_engine= NULL;
+
+  delete table_proto;
+  table_proto= NULL;
+
+  mem_root.free_root(MYF(0));                 // Free's share
+}
+
+void TableShare::setIdentifier(TableIdentifier &identifier_arg)
+{
+  private_key_for_cache.clear();
+  private_key_for_cache= identifier_arg.getKey();
+
+  /*
+    Let us use the fact that the key is "db/0/table_name/0" + optional
+    part for temporary tables.
+  */
+  db.str= &private_key_for_cache[0];
+  db.length=         strlen(db.str);
+  table_name.str=    db.str + db.length + 1;
+  table_name.length= strlen(table_name.str);
+
+  table_proto->set_name(identifier_arg.getTableName());
+  table_proto->set_schema(identifier_arg.getSchemaName());
 }
 
 int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
@@ -1412,14 +1709,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         }
       }
     }
-    else
-    {
-      primary_key = MAX_KEY; // we do not have a primary key
-    }
-  }
-  else
-  {
-    primary_key= MAX_KEY;
   }
 
   if (found_next_number_field)

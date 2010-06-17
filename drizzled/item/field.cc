@@ -789,7 +789,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       {
         uint32_t counter;
         enum_resolution_type resolution;
-        Item** res= find_item_in_list(this, session->lex->current_select->item_list,
+        Item** res= find_item_in_list(session,
+                                      this, session->lex->current_select->item_list,
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution);
         if (!res)

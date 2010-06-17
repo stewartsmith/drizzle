@@ -32,7 +32,7 @@
  *
  * This class defines the following DATA_DICTIONARY tables:
  *
- * drizzle> describe GLOBAL_STATEMENTS_NEW;
+ * drizzle> describe GLOBAL_STATEMENTS;
  * +----------------+---------+-------+---------+-----------------+-----------+
  * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +----------------+---------+-------+---------+-----------------+-----------+
@@ -40,7 +40,7 @@
  * | VARIABLE_VALUE | BIGINT  | FALSE |         | FALSE           |           |
  * +----------------+---------+-------+---------+-----------------+-----------+
  *
- * drizzle> describe SESSION_STATEMENTS_NEW;
+ * drizzle> describe SESSION_STATEMENTS;
  * +----------------+---------+-------+---------+-----------------+-----------+
  * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +----------------+---------+-------+---------+-----------------+-----------+
@@ -84,9 +84,9 @@
  * +----------------+---------+-------+---------+-----------------+-----------+
  */
 
-#include <config.h>          
+#include <config.h>
+
 #include "stats_schema.h"
-#include "scoreboard.h"
 
 #include <sstream>
 
@@ -110,9 +110,7 @@ SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_s
   /* Set user_commands */
   Scoreboard *current_scoreboard= logging_stats->getCurrentScoreboard();
 
-  Session *this_session= current_session;
-
-  uint32_t bucket_number= current_scoreboard->getBucketNumber(this_session);
+  uint32_t bucket_number= current_scoreboard->getBucketNumber(&getSession());
 
   vector<ScoreboardSlot* > *scoreboard_vector=
      current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
@@ -125,7 +123,7 @@ SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_s
        it != scoreboard_vector->end(); ++it)
   {
     scoreboard_slot= *it;
-    if (scoreboard_slot->getSessionId() == this_session->getSessionId())
+    if (scoreboard_slot->getSessionId() == getSession().getSessionId())
     {
       break;
     }
@@ -174,7 +172,17 @@ GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_st
   plugin::TableFunction::Generator(arg)
 {
   count= 0;
-  global_stats= logging_stats->getCumulativeStats()->getGlobalStats();
+  /* add the current scoreboard and the saved global statements */
+  global_stats_to_display= new GlobalStats();
+  CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
+  cumulativeStats->sumCurrentScoreboard(logging_stats->getCurrentScoreboard(), 
+                                        NULL, global_stats_to_display->getUserCommands());
+  global_stats_to_display->merge(logging_stats->getCumulativeStats()->getGlobalStats()); 
+}
+
+GlobalStatementsTool::Generator::~Generator()
+{
+  delete global_stats_to_display;
 }
 
 bool GlobalStatementsTool::Generator::populate()
@@ -187,7 +195,7 @@ bool GlobalStatementsTool::Generator::populate()
 
   push(UserCommands::COM_STATUS_VARS[count]);
   ostringstream oss;
-  oss << global_stats->getUserCommands()->getCount(count);
+  oss << global_stats_to_display->getUserCommands()->getCount(count);
   push(oss.str());
 
   ++count;

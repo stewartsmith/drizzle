@@ -96,7 +96,7 @@ int Table::delete_table(bool free_share)
 
   if (free_share)
   {
-    if (s->tmp_table == message::Table::STANDARD)
+    if (s->getType() == message::Table::STANDARD)
     {
       TableShare::release(s);
     }
@@ -473,9 +473,9 @@ void Table::prepare_for_position()
 {
 
   if ((cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
-      s->primary_key < MAX_KEY)
+      s->hasPrimaryKey())
   {
-    mark_columns_used_by_index_no_reset(s->primary_key);
+    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
   }
   return;
 }
@@ -593,14 +593,14 @@ void Table::mark_columns_needed_for_delete()
     be able to do an delete
 
   */
-  if (s->primary_key == MAX_KEY)
+  if (not s->hasPrimaryKey())
   {
     /* fallback to use all columns in the table to identify row */
     use_all_columns();
     return;
   }
   else
-    mark_columns_used_by_index_no_reset(s->primary_key);
+    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
 
   /* If we the engine wants all predicates we mark all keys */
   if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
@@ -641,14 +641,14 @@ void Table::mark_columns_needed_for_update()
     the primary key, the hidden primary key or all columns to be
     able to do an update
   */
-  if (s->primary_key == MAX_KEY)
+  if (not s->hasPrimaryKey())
   {
     /* fallback to use all columns in the table to identify row */
     use_all_columns();
     return;
   }
   else
-    mark_columns_used_by_index_no_reset(s->primary_key);
+    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
 
   if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
   {
@@ -790,14 +790,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 #define AVG_STRING_LENGTH_TO_PACK_ROWS   64
 #define RATIO_TO_PACK_ROWS	       2
 
-static void make_internal_temporary_table_path(Session *session, char *path)
-{
-  snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-           session->thread_id, session->tmp_table++);
-
-  internal::fn_format(path, path, drizzle_tmpdir.c_str(), "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
-}
-
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
@@ -815,8 +807,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   bool  using_unique_constraint= false;
   bool  use_packed_rows= true;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
-  char  *tmpname;
-  char  path[FN_REFLEN];
   unsigned char	*pos, *group_buff, *bitmaps;
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
@@ -830,8 +820,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint64_t max_rows= 0;
 
   status_var_increment(session->status_var.created_tmp_tables);
-
-  make_internal_temporary_table_path(session, path);
 
   if (group)
   {
@@ -872,14 +860,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  if (not session->getMemRoot()->multi_alloc_root(0, &tmpname, (uint32_t) strlen(path)+1, NULL))
-  {
-    return NULL;
-  }
-
-  strcpy(tmpname, path);
-
-  TableShareInstance *share= session->getTemporaryShare(tmpname); // This will not go into the tableshare cache, so no key is used.
+  TableShareInstance *share= session->getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
 
   if (not share->getMemRoot()->multi_alloc_root(0,
                                                 &default_field, sizeof(Field*) * (field_count),
@@ -919,6 +900,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
   table->copy_blobs= 1;
+  assert(session);
   table->in_use= session;
   table->quick_keys.reset();
   table->covering_keys.reset();
@@ -930,7 +912,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
   share->table_charset= param->table_charset;
-  share->primary_key= MAX_KEY;               // Indicate no primary key
   share->keys_for_keyread.reset();
   share->keys_in_use.reset();
 
@@ -1435,6 +1416,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 				       &param->recinfo, select_options))
       goto err;
   }
+  assert(table->in_use);
   if (table->open_tmp_table())
     goto err;
 
@@ -1482,7 +1464,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   unsigned char *bitmaps;
   Table *table;
 
-  TableShareInstance *share= getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
+  TableShareInstance *share= getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
 
   if (! share->getMemRoot()->multi_alloc_root(0,
                                               &bitmaps, bitmap_buffer_size(field_count)*2,
@@ -2028,34 +2010,6 @@ bool Table::fill_item_list(List<Item> *item_list) const
     if (!item || item_list->push_back(item))
       return true;
   }
-  return false;
-}
-
-/*
-  Used by ALTER Table when the table is a temporary one. It changes something
-  only if the ALTER contained a RENAME clause (otherwise, table_name is the old
-  name).
-  Prepares a table cache key, which is the concatenation of db, table_name and
-  session->slave_proxy_id, separated by '\0'.
-*/
-
-bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
-{
-  char *key;
-  uint32_t key_length;
-  TableShare *share= s;
-
-  if (not (key=(char*) share->alloc_root(MAX_DBKEY_LENGTH)))
-    return true;
-
-  key_length= TableShare::createKey(key, identifier);
-  share->set_table_cache_key(key, key_length);
-
-  message::Table *message= share->getTableProto();
-
-  message->set_name(identifier.getTableName());
-  message->set_schema(identifier.getSchemaName());
-
   return false;
 }
 
