@@ -37,6 +37,11 @@ GlobalStats::GlobalStats()
   user_commands= new UserCommands();
 }
 
+GlobalStats::GlobalStats(const GlobalStats &global_stats)
+{
+  user_commands= new UserCommands(*global_stats.user_commands);
+}
+
 GlobalStats::~GlobalStats()
 {
   delete user_commands;
@@ -45,6 +50,11 @@ GlobalStats::~GlobalStats()
 UserCommands* GlobalStats::getUserCommands()
 {
   return user_commands;
+}
+
+void GlobalStats::merge(GlobalStats *global_stats)
+{
+  user_commands->merge(global_stats->getUserCommands());
 }
 
 void GlobalStats::updateUserCommands(ScoreboardSlot *scoreboard_slot)

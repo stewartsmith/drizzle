@@ -22,8 +22,11 @@
 
 #include <gtest/gtest.h>
 
+#include <drizzled/internal/my_sys.h>
+
 int main(int argc, char **argv)
 {
+	MY_INIT(argv[0]);
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
