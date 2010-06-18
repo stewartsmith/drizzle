@@ -40,9 +40,6 @@
 #include "drizzled/decimal.h"
 #include "drizzled/calendar.h"
 #include "drizzled/temporal.h"
-#ifdef NOTYETIMPLEMENTED
-#include "drizzled/temporal_interval.h"
-#endif
 #include "drizzled/temporal_format.h"
 #include "drizzled/time_functions.h"
 #include "time.h"
@@ -796,199 +793,7 @@ Date& Date::operator+=(const DateTime &rhs)
 
   return *this;
 }
-#ifdef NOTYETIMPLEMENTED
-Date& Date::operator+=(const TemporalIntervalYear &rhs)
-{
-  /* Simple one...add the years and adjust for any leaps */
-  int64_t new_years= _years;
-  new_years+= rhs._years;
-  if (new_years > DRIZZLE_MAX_YEARS_SQL)
-  {
-    /* 
-     * Set everything to zero. We got an overflow.
-     * @TODO Exceptions would be great here...
-     */
-    _reset();
-    _overflow= true;
-    return *this;
-  }
-  _years= (uint32_t) new_years;
-  if (_months == 2 && _days == 29 && days_in_gregorian_year_month(_years, _months) != 366)
-    _days= 28;
-  return *this;
-} 
 
-Date& Date::operator-=(const TemporalIntervalYear &rhs)
-{
-  /* Simple one...subtract the years and adjust for any leaps */
-  int64_t new_years= _years;
-  new_years-= rhs._years;
-  if (new_years < 0)
-  {
-    /* 
-     * Set everything to zero. We got an overflow.
-     * @TODO Exceptions would be great here...
-     */
-    _reset();
-    _overflow= true;
-    return *this;
-  }
-  _years= (uint32_t) new_years;
-  if (_months == 2 && _days == 29 && days_in_gregorian_year_month(_years, _months) != 366)
-    _days= 28;
-  return *this;
-} 
-
-Date& Date::operator+=(const TemporalIntervalDayOrWeek &rhs)
-{
-  /* Simple one...add the days */
-  int64_t julian_day= julian_day_number_from_gregorian_date(_years, _months, _days) + rhs._days;
-  gregorian_date_from_julian_day_number(julian_day, &_years, &_months, &_days);
-  return *this;
-} 
-
-Date& Date::operator-=(const TemporalIntervalDayOrWeek &rhs)
-{
-  /* Simple one...subtract the days */
-  int64_t julian_day= julian_day_number_from_gregorian_date(_years, _months, _days) - rhs._days;
-  gregorian_date_from_julian_day_number(julian_day, &_years, &_months, &_days);
-  return *this;
-} 
-
-Date& Date::operator+=(const TemporalIntervalYearMonth &rhs)
-{
-  /* Simple one...add the months in the period adjust */
-  int64_t period= (_years * 12) + (rhs._years * 12) + (_months - 1) + rhs._months;
-  int64_t new_years= (period / 12);
-  if (new_years > DRIZZLE_MAX_YEARS_SQL)
-  {
-    /* 
-     * Set everything to zero. We got an overflow.
-     * @TODO Exceptions would be great here...
-     */
-    _reset();
-    _overflow= true;
-    return *this;
-  }
-  _years= (uint32_t) new_years;
-  _months= (uint32_t) (period % 12) + 1;
-  
-  /* Adjust day if the new month doesn't have enough days */
-  uint32_t days_in_new_month= days_in_gregorian_year_month(_years, _months);
-  if (_days > days_in_new_month)
-    _days= days_in_new_month;
-  return *this;
-} 
-
-Date& Date::operator-=(const TemporalIntervalYearMonth &rhs)
-{
-  /* Simple one...subtract the months in the period and adjust */
-  int64_t period= (_years * 12) - (rhs._years * 12) + (_months - 1) - rhs._months;
-  int64_t new_years= (period / 12);
-  if (new_years < 0)
-  {
-    /* 
-     * Set everything to zero. We got an overflow.
-     * @TODO Exceptions would be great here...
-     */
-    _reset();
-    _overflow= true;
-    return *this;
-  }
-  _years= (uint32_t) (period / 12);
-  _months= (uint32_t) (period % 12) + 1;
-  
-  /* Adjust day if the new month doesn't have enough days */
-  uint32_t days_in_new_month= days_in_gregorian_year_month(_years, _months);
-  if (_days > days_in_new_month)
-    _days= days_in_new_month;
-  return *this;
-} 
-
-Date& Date::operator+=(const TemporalIntervalDayOrLess &rhs)
-{
-  /* 
-   * Convert the temporal and the interval into a number of 
-   * microseconds, then add them together and convert the
-   * resulting microseconds back into a broken-down temporal
-   * component.
-   */
-  int64_t new_seconds;
-  int64_t new_microseconds;
-  int64_t extra_sec;
-  int64_t new_days;
-  new_microseconds= _useconds + rhs._useconds;
-  extra_sec= new_microseconds / INT64_C(1000000);
-  new_microseconds= new_microseconds % INT64_C(1000000);
-
-  new_seconds= ((_days - 1) * 3600 * 24) + (_hours * 3600) + (_minutes * 60) + _seconds;
-  new_seconds+= (rhs._days * 3600 * 24) + (rhs._hours * 3600) + (rhs._minutes * 60) + rhs._seconds;
-  new_seconds+= extra_sec;
-
-  if (new_microseconds < 0)
-  {
-    new_microseconds+= INT64_C(1000000);
-    new_seconds--;
-  }
-  
-  new_days= new_seconds / (3600 * 24L);
-  new_seconds-= new_days * 3600 * 24L;
-  if (new_seconds < 0)
-  {
-    new_days--;
-    new_seconds+= 3600 * 24L;
-  }
-  _useconds= (uint32_t) new_microseconds;
-  _seconds= (uint32_t) (new_seconds % 60);
-  _minutes= (uint32_t) ((new_seconds / 60) % 60);
-  _hours= (uint32_t) (new_seconds / 3600);
-  int64_t julian_day= julian_day_number_from_gregorian_date(_years, _months, 1) + new_days;
-  gregorian_date_from_julian_day_number(julian_day, &_years, &_months, &_days);
-  return *this;
-}
-
-Date& Date::operator-=(const TemporalIntervalDayOrLess &rhs)
-{
-  /* 
-   * Convert the temporal and the interval into a number of 
-   * microseconds, then subtract them from each other and convert 
-   * the resulting microseconds back into a broken-down temporal
-   * component.
-   */
-  int64_t new_seconds;
-  int64_t new_microseconds;
-  int64_t extra_sec;
-  int64_t new_days;
-  new_microseconds= _useconds - rhs._useconds;
-  extra_sec= new_microseconds / INT64_C(1000000);
-  new_microseconds= new_microseconds % INT64_C(1000000);
-
-  new_seconds= ((_days - 1) * 3600 * 24) + (_hours * 3600) + (_minutes * 60) + _seconds;
-  new_seconds-= (rhs._days * 3600 * 24) + (rhs._hours * 3600) + (rhs._minutes * 60) + rhs._seconds;
-  new_seconds+= extra_sec;
-
-  if (new_microseconds < 0)
-  {
-    new_microseconds+= INT64_C(1000000);
-    new_seconds--;
-  }
-  
-  new_days= new_seconds / (3600 * 24L);
-  new_seconds-= new_days * 3600 * 24L;
-  if (new_seconds < 0)
-  {
-    new_days--;
-    new_seconds+= 3600 * 24L;
-  }
-  _useconds= (uint32_t) new_microseconds;
-  _seconds= (uint32_t) (new_seconds % 60);
-  _minutes= (uint32_t) ((new_seconds / 60) % 60);
-  _hours= (uint32_t) (new_seconds / 3600);
-  int64_t julian_day= julian_day_number_from_gregorian_date(_years, _months, 1) + new_days;
-  gregorian_date_from_julian_day_number(julian_day, &_years, &_months, &_days);
-  return *this;
-}
-#endif /* NOTYETIMPLEMENTED */
 /*
  * Comparison operators between a Date and a Timestamp
  */
@@ -1020,11 +825,11 @@ bool Date::operator<=(const Timestamp& rhs)
 }
 bool Date::operator>(const Timestamp& rhs)
 {
-  return ! (*this < rhs);
+  return ! (*this <= rhs);
 }
 bool Date::operator>=(const Timestamp& rhs)
 {
-  return ! (*this <= rhs);
+  return ! (*this < rhs);
 }
 /*
  * Comparison operators between a Timestamp and a Date
@@ -1057,11 +862,11 @@ bool Timestamp::operator<=(const Date& rhs)
 }
 bool Timestamp::operator>(const Date& rhs)
 {
-  return ! (*this < rhs);
+  return ! (*this <= rhs);
 }
 bool Timestamp::operator>=(const Date& rhs)
 {
-  return ! (*this <= rhs);
+  return ! (*this < rhs);
 }
 /*
  * Comparison operators between a Timestamp and a DateTime
@@ -1110,11 +915,11 @@ bool Timestamp::operator<=(const DateTime& rhs)
 }
 bool Timestamp::operator>(const DateTime& rhs)
 {
-  return ! (*this < rhs);
+  return ! (*this <= rhs);
 }
 bool Timestamp::operator>=(const DateTime& rhs)
 {
-  return ! (*this <= rhs);
+  return ! (*this < rhs);
 }
 /*
  * Comparison operators between two Timestamps
@@ -1137,11 +942,11 @@ bool Timestamp::operator<=(const Timestamp& rhs)
 }
 bool Timestamp::operator>(const Timestamp& rhs)
 {
-  return ! (*this < rhs);
+  return ! (*this <= rhs);
 }
 bool Timestamp::operator>=(const Timestamp& rhs)
 {
-  return ! (*this <= rhs);
+  return ! (*this < rhs);
 }
 
 /**
@@ -1342,9 +1147,9 @@ bool Date::from_int32_t(const int32_t from)
 bool Time::from_int32_t(const int32_t from)
 {
   uint32_t copy_from= (uint32_t) from;
-  _hours= copy_from % INT32_C(10000);
-  _minutes= copy_from % INT32_C(100);
-  _seconds= copy_from & 3; /* Masks off all but last 2 digits */
+  _hours= copy_from / INT32_C(10000);
+  _minutes= (copy_from % INT32_C(10000)) / INT32_C(100);
+  _seconds= copy_from % INT32_C(100); /* Masks off all but last 2 digits */
   return is_valid();
 }
 
@@ -1383,7 +1188,7 @@ bool DateTime::from_int64_t(const int64_t from, bool convert)
     else if (copy_from <  DRIZZLE_YY_PART_YEAR * 10000000000LL + 101000000LL)
       return false;
     else if (copy_from <= 991231235959LL)
-      copy_from= copy_from + 19000000000000LL;		/* YYMMDDHHMMSS, 1970-1999 */
+      copy_from= copy_from + 19000000000000LL;    /* YYMMDDHHMMSS, 1970-1999 */
   }
 
   part1= (int64_t) (copy_from / 1000000LL);

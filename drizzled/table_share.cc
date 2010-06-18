@@ -591,8 +591,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   assert(identifier.getKey() == key);
 
   table_charset= 0;
-  memset(&db, 0, sizeof(LEX_STRING));
-  memset(&table_name, 0, sizeof(LEX_STRING));
   memset(&path, 0, sizeof(LEX_STRING));
   memset(&normalized_path, 0, sizeof(LEX_STRING));
 
@@ -823,6 +821,37 @@ void TableShare::init(const char *new_table_name,
   path.str=               (char*) new_path;
   normalized_path.str=    (char*) new_path;
   path.length= normalized_path.length= strlen(new_path);
+}
+
+TableShare::~TableShare() 
+{
+  assert(ref_count == 0);
+
+  /*
+    If someone is waiting for this to be deleted, inform it about this.
+    Don't do a delete until we know that no one is refering to this anymore.
+  */
+  if (tmp_table == message::Table::STANDARD)
+  {
+    /* share->mutex is locked in release_table_share() */
+    while (waiting_on_cond)
+    {
+      pthread_cond_broadcast(&cond);
+      pthread_cond_wait(&cond, &mutex);
+    }
+    /* No thread refers to this anymore */
+    pthread_mutex_unlock(&mutex);
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond);
+  }
+  hash_free(&name_hash);
+
+  storage_engine= NULL;
+
+  delete table_proto;
+  table_proto= NULL;
+
+  mem_root.free_root(MYF(0));                 // Free's share
 }
 
 void TableShare::setIdentifier(TableIdentifier &identifier_arg)

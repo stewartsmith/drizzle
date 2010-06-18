@@ -7,7 +7,6 @@
 *.orig
 *.rej
 *.reject
-*.reject
 *.rpm
 *replication.pb.*
 *stamp-h
@@ -48,7 +47,6 @@ config.status
 config.sub
 config/bzr_revinfo
 config/pandora-plugin.list
-config/pandora_vc_revinfo
 config/pandora_vc_revinfo
 config/plugin-list.ac
 config/plugin-list.am
@@ -91,7 +89,6 @@ drizzled/message/replication_event_writer
 drizzled/message/schema.pb.cc
 drizzled/message/schema.pb.h
 drizzled/message/schema_reader
-drizzled/message/schema_writer
 drizzled/message/schema_writer
 drizzled/message/table.pb.cc
 drizzled/message/table.pb.h
@@ -302,6 +299,7 @@ uniques.gcno
 unittests/atomics_test
 unittests/calendar_test
 unittests/unittests
+unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap

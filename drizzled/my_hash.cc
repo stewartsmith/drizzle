@@ -122,7 +122,6 @@ void hash_free(HASH *hash)
   hash_free_elements(hash);
   hash->free= 0;
   delete_dynamic(&hash->array);
-  return;
 }
 
 /* some helper functions */
