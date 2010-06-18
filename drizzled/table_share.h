@@ -66,36 +66,7 @@ public:
              TableIdentifier &identifier,
              char *path_arg= NULL, uint32_t path_length_arg= 0); // Shares for cache
 
-  ~TableShare() 
-  {
-    assert(ref_count == 0);
-
-    /*
-      If someone is waiting for this to be deleted, inform it about this.
-      Don't do a delete until we know that no one is refering to this anymore.
-    */
-    if (tmp_table == message::Table::STANDARD)
-    {
-      /* share->mutex is locked in release_table_share() */
-      while (waiting_on_cond)
-      {
-        pthread_cond_broadcast(&cond);
-        pthread_cond_wait(&cond, &mutex);
-      }
-      /* No thread refers to this anymore */
-      pthread_mutex_unlock(&mutex);
-      pthread_mutex_destroy(&mutex);
-      pthread_cond_destroy(&cond);
-    }
-    hash_free(&name_hash);
-
-    storage_engine= NULL;
-
-    delete table_proto;
-    table_proto= NULL;
-
-    mem_root.free_root(MYF(0));                 // Free's share
-  };
+  ~TableShare();
 
 private:
   /** Category of this table. */
@@ -290,10 +261,10 @@ public:
     return path.str;
   }
 
-  const char *getCacheKey() const // This should never be called when we aren't looking at a cache.
+  const TableIdentifier::Key& getCacheKey() const // This should never be called when we aren't looking at a cache.
   {
     assert(private_key_for_cache.size());
-    return &private_key_for_cache[0];
+    return private_key_for_cache;
   }
 
   size_t getCacheKeySize() const

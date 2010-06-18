@@ -86,8 +86,8 @@ unsigned char *table_cache_key(const unsigned char *record,
                                bool )
 {
   Table *entry=(Table*) record;
-  *length= entry->getShare()->getCacheKeySize();
-  return (unsigned char*) entry->getMutableShare()->getCacheKey();
+  *length= entry->getShare()->getCacheKey().size();
+  return (unsigned char*) &entry->getShare()->getCacheKey()[0];
 }
 
 HASH *get_open_cache()
@@ -142,8 +142,8 @@ uint32_t cached_open_tables(void)
 void close_handle_and_leave_table_as_lock(Table *table)
 {
   TableShare *share, *old_share= table->getMutableShare();
-
   assert(table->db_stat);
+  assert(table->getShare()->getType() == message::Table::STANDARD);
 
   /*
     Make a local copy of the table share and free the current one.
@@ -151,9 +151,10 @@ void close_handle_and_leave_table_as_lock(Table *table)
     the table defintion cache as soon as the last instance is removed
   */
   TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), message::Table::INTERNAL);
+  const TableIdentifier::Key &key(identifier.getKey());
   share= new TableShare(identifier.getType(),
                         identifier,
-                        const_cast<char *>(old_share->getCacheKey()),  static_cast<uint32_t>(old_share->getCacheKeySize()));
+                        const_cast<char *>(&key[0]),  static_cast<uint32_t>(old_share->getCacheKeySize()));
 
   table->cursor->close();
   table->db_stat= 0;                            // Mark cursor closed
@@ -687,8 +688,9 @@ Table *Session::find_temporary_table(const char *new_db, const char *table_name)
 
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->getShare()->getCacheKeySize() == key_length &&
-        not memcmp(table->getMutableShare()->getCacheKey(), key, key_length))
+    const TableIdentifier::Key &share_key(table->getShare()->getCacheKey());
+    if (share_key.size() == key_length &&
+        not memcmp(&share_key[0], key, key_length))
     {
       return table;
     }
@@ -703,13 +705,9 @@ Table *Session::find_temporary_table(TableList *table_list)
 
 Table *Session::find_temporary_table(TableIdentifier &identifier)
 {
-  const TableIdentifier::Key &key(identifier.getKey());
-
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
-    if (table->getShare()->getCacheKeySize() == key.size() &&
-        not memcmp(table->getMutableShare()->getCacheKey(), &key[0], key.size()))
-
+    if (identifier.getKey() == table->getShare()->getCacheKey())
       return table;
   }
 
@@ -793,10 +791,9 @@ void Session::unlink_open_table(Table *find)
   char key[MAX_DBKEY_LENGTH];
   uint32_t key_length= find->getShare()->getCacheKeySize();
   Table *list, **prev;
-
   safe_mutex_assert_owner(&LOCK_open);
 
-  memcpy(key, find->getMutableShare()->getCacheKey(), key_length);
+  memcpy(key, &find->getMutableShare()->getCacheKey()[0], key_length);
   /*
     Note that we need to hold LOCK_open while changing the
     open_tables list. Another thread may work on it.
@@ -809,7 +806,7 @@ void Session::unlink_open_table(Table *find)
     list= *prev;
 
     if (list->getShare()->getCacheKeySize() == key_length &&
-        not memcmp(list->getMutableShare()->getCacheKey(), key, key_length))
+        not memcmp(&list->getShare()->getCacheKey()[0], key, key_length))
     {
       /* Remove table from open_tables list. */
       *prev= list->getNext();
@@ -1158,7 +1155,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
   */
   for (table= temporary_tables; table ; table=table->getNext())
   {
-    if (table->getShare()->getCacheKeySize() == key_length && !memcmp(table->getMutableShare()->getCacheKey(), &key[0], key_length))
+    if (table->getShare()->getCacheKey() == key)
     {
       /*
         We're trying to use the same temporary table twice in a query.
@@ -1776,15 +1773,14 @@ bool table_is_used(Table *table, bool wait_for_name_lock)
 {
   do
   {
-    char *key= const_cast<char *>(table->getMutableShare()->getCacheKey());
-    uint32_t key_length= table->getShare()->getCacheKeySize();
+    const TableIdentifier::Key &key(table->getShare()->getCacheKey());
 
     HASH_SEARCH_STATE state;
-    for (Table *search= (Table*) hash_first(&open_cache, (unsigned char*) key,
-                                            key_length, &state);
+    for (Table *search= (Table*) hash_first(&open_cache, (unsigned char*) &key[0],
+                                            key.size(), &state);
          search ;
-         search= (Table*) hash_next(&open_cache, (unsigned char*) key,
-                                    key_length, &state))
+         search= (Table*) hash_next(&open_cache, (unsigned char*) &key[0],
+                                    key.size(), &state))
     {
       if (search->in_use == table->in_use)
         continue;                               // Name locked by this thread
