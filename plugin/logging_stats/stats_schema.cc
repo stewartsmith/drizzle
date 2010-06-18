@@ -172,7 +172,17 @@ GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_st
   plugin::TableFunction::Generator(arg)
 {
   count= 0;
-  global_stats= logging_stats->getCumulativeStats()->getGlobalStats();
+  /* add the current scoreboard and the saved global statements */
+  global_stats_to_display= new GlobalStats();
+  CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
+  cumulativeStats->sumCurrentScoreboard(logging_stats->getCurrentScoreboard(), 
+                                        NULL, global_stats_to_display->getUserCommands());
+  global_stats_to_display->merge(logging_stats->getCumulativeStats()->getGlobalStats()); 
+}
+
+GlobalStatementsTool::Generator::~Generator()
+{
+  delete global_stats_to_display;
 }
 
 bool GlobalStatementsTool::Generator::populate()
@@ -185,7 +195,7 @@ bool GlobalStatementsTool::Generator::populate()
 
   push(UserCommands::COM_STATUS_VARS[count]);
   ostringstream oss;
-  oss << global_stats->getUserCommands()->getCount(count);
+  oss << global_stats_to_display->getUserCommands()->getCount(count);
   push(oss.str());
 
   ++count;

@@ -1156,12 +1156,7 @@ static bool internal_alter_table(Session *session,
     session->close_temporary_table(table);
 
     /* Should pass the 'new_name' as we store table name in the cache */
-    if (new_table->renameAlterTemporaryTable(new_table_identifier))
-    {
-      session->close_temporary_table(new_table);
-
-      return true;
-    }
+    new_table->getMutableShare()->setIdentifier(new_table_identifier);
 
     new_table_identifier.setPath(new_table_as_temporary.getPath());
 
@@ -1438,7 +1433,7 @@ copy_data_between_tables(Session *session,
 
   if (order)
   {
-    if (to->getShare()->primary_key != MAX_KEY && to->cursor->primary_key_is_clustered())
+    if (to->getShare()->hasPrimaryKey() && to->cursor->primary_key_is_clustered())
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff),

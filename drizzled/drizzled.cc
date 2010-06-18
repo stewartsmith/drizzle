@@ -365,7 +365,6 @@ bool drizzle_rm_tmp_tables();
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 int drizzled_get_one_option(int, const struct option *, char *);
-static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string &progname);
 
@@ -798,7 +797,7 @@ int init_common_variables(const char *conf_file_name, int argc,
 }
 
 
-static int init_thread_environment()
+int init_thread_environment()
 {
    pthread_mutexattr_t attr; 
    pthread_mutexattr_init(&attr);
