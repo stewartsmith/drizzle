@@ -41,11 +41,15 @@ class GlobalStats
 public:
   GlobalStats(); 
 
+  GlobalStats(const GlobalStats &global_stats);
+
   ~GlobalStats(); 
 
   UserCommands* getUserCommands();
 
   void updateUserCommands(ScoreboardSlot *scoreboard_slot);
+
+  void merge(GlobalStats *global_stats);
 
 private:
   UserCommands *user_commands;
