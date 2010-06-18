@@ -1531,7 +1531,7 @@ try
   po::variables_map vm;
 
   po::positional_options_description p;
-  p.add("database", -1);
+  p.add("database", 1);
 
   po::store(po::command_line_parser(argc, argv).options(long_options).
             positional(p).extra_parser(parse_password_arg).run(), vm);
