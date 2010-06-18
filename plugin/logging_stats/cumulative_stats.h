@@ -80,8 +80,9 @@ public:
     return isOpenUserSlots;
   }
 
-  void sumCurrentScoreboardStatusVars(Scoreboard *scoreboard, 
-                                      StatusVars *current_status_vars);
+  void sumCurrentScoreboard(Scoreboard *scoreboard, 
+                            StatusVars *current_status_vars,
+                            UserCommands *current_user_commands);
 
 private:
   std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;

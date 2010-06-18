@@ -49,10 +49,12 @@ public:
   public:
     Generator(drizzled::Field **arg, LoggingStats *logging_stats);
 
+    ~Generator();
+
     bool populate();
 
   private:
-    GlobalStats *global_stats; 
+    GlobalStats *global_stats_to_display; 
     uint32_t count;
   };
 

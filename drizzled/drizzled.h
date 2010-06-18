@@ -49,6 +49,7 @@ extern char *drizzled_user;
 
 extern const char * const DRIZZLE_CONFIG_NAME;
 
+int init_thread_environment();
 int init_server_components(module::Registry &modules);
 int init_common_variables(const char *conf_file_name, int argc,
                           char **argv, const char **groups);
