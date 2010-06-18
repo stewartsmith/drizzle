@@ -29,7 +29,7 @@ using namespace drizzled;
 TEST(calendar_julian_day_number_from_gregorian_date_test, CalculationTest)
 {
   uint32_t year, month, day;
-  
+
   year= 2010; month= 4; day= 2;
   EXPECT_EQ(2455289, julian_day_number_from_gregorian_date(year, month, day));
   
@@ -129,4 +129,3 @@ TEST(calendar_in_unix_epoch_range_test, InsideRange)
   year= 2020; month= 7; day= 13; hour= 16; minute= 56; second= 59;
   EXPECT_TRUE(in_unix_epoch_range(year, month, day, hour, minute, second));
 }
-
