@@ -44,13 +44,13 @@ static const char hexchars[]= "0123456789abcdef";
 
 static bool tablename_to_filename(const char *from, char *to, size_t to_length);
 
-static size_t build_schema_filename(std::string &path, const char *db)
+static size_t build_schema_filename(std::string &path, const std::string &db)
 {
   char dbbuff[FN_REFLEN];
   bool conversion_error= false;
 
   memset(dbbuff, 0, sizeof(dbbuff));
-  conversion_error= tablename_to_filename(db, dbbuff, sizeof(dbbuff));
+  conversion_error= tablename_to_filename(db.c_str(), dbbuff, sizeof(dbbuff));
   if (conversion_error)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -135,6 +135,7 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
 
 SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
   db(db_arg),
+  db_path(""),
   lower_db(db_arg)
 { 
   std::transform(lower_db.begin(), lower_db.end(),
@@ -142,7 +143,7 @@ SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
 
   if (not lower_db.empty())
   {
-    drizzled::build_schema_filename(db_path, lower_db.c_str());
+    drizzled::build_schema_filename(db_path, lower_db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
 }
