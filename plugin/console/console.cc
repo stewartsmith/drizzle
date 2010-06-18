@@ -21,8 +21,12 @@
 
 #include <iostream>
 
+#include <boost/program_options.hpp>
+
 using namespace std;
 using namespace drizzled;
+
+namespace po= boost::program_options;
 
 static bool enabled= false;
 static bool debug_enabled= false;
@@ -319,15 +323,25 @@ static int init(drizzled::module::Context &context)
 
 static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Enable the console."), NULL, NULL, false);
-
 static DRIZZLE_SYSVAR_BOOL(debug, debug_enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Turn on extra debugging."), NULL, NULL, false);
+
 static DRIZZLE_SYSVAR_STR(user, user, PLUGIN_VAR_READONLY,
                           N_("User to use for auth."), NULL, NULL, NULL);
 static DRIZZLE_SYSVAR_STR(password, password, PLUGIN_VAR_READONLY,
                           N_("Password to use for auth."), NULL, NULL, NULL);
 static DRIZZLE_SYSVAR_STR(db, db, PLUGIN_VAR_READONLY,
                           N_("Default database to use."), NULL, NULL, NULL);
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("enable",
+          po::value<bool>(&enabled)->default_value(false)->zero_tokens(),
+          N_("Enable the console."));
+  context("debug",
+          po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
+          N_("Turn on extra debugging."));
+}
 
 static drizzle_sys_var* vars[]= {
   DRIZZLE_SYSVAR(enable),
@@ -348,6 +362,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init */
   vars,   /* system variables */
-  NULL    /* config options */
+  init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
