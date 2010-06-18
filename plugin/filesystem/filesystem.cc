@@ -510,7 +510,6 @@ int FilesystemCursor::openUpdateFile()
                              st.st_mode);
     if (update_file_desc < 0)
     {
-      cerr << "update file error!" << endl;
       return -1;
     }
     share->update_file_opened= true;
