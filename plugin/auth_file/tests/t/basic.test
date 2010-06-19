@@ -17,3 +17,6 @@ SELECT 1;
 --replace_regex /@'.*?'/@'LOCALHOST'/
 --error ER_ACCESS_DENIED_ERROR
 connect (bad_user_password,localhost,auth_file_password,bad_password,,);
+
+# Test that the command line client processes direct passwords properly
+--exec $DRIZZLE_TEST_DIR/../client/drizzle --host=localhost --port=$MASTER_MYPORT -e "SELECT 1" --user=auth_file_password --password=test_password 2>&1

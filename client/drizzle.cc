@@ -1699,17 +1699,6 @@ try
       opt_password= current_password;
       tty_password= false;
     }
-    char *start= (char *)current_password.c_str();
-    char *temp_pass= (char *)current_password.c_str();
-    while (*temp_pass)
-    {
-        /* Overwriting password with 'x' */
-        *temp_pass++= 'x';
-    }
-    if (*start)
-    {
-      start[1]= 0;
-    }
   }
   else
   {
