@@ -1369,21 +1369,9 @@ static pair<string, string> parse_password_arg(std::string s)
       // check if --password= and return a default value
       return make_pair("password", PASSWORD_SENTINEL);
     }
-
-    if(s.length()>12 && (s[10] == '"' || s[10] == '\''))
-    {
-      // check if --password has quotes, remove quotes and return the value
-      return make_pair("password", s.substr(11,s.length()-1));
-    }
-
-    // if all above are false, it implies that --password=value, return value.
-    return make_pair("password", s.substr(11));
   }
 
-  else
-  {
-    return make_pair(string(""), string(""));
-  } 
+  return make_pair(string(""), string(""));
 }
 
 int main(int argc,char *argv[])
@@ -1710,17 +1698,6 @@ try
     {
       opt_password= current_password;
       tty_password= false;
-    }
-    char *start= (char *)current_password.c_str();
-    char *temp_pass= (char *)current_password.c_str();
-    while (*temp_pass)
-    {
-        /* Overwriting password with 'x' */
-        *temp_pass++= 'x';
-    }
-    if (*start)
-    {
-      start[1]= 0;
     }
   }
   else
