@@ -145,8 +145,7 @@ static bool opt_preserve= true;
 static bool opt_only_print;
 static bool opt_burnin;
 static bool opt_ignore_sql_errors= false;
-static bool tty_password= false,
-  opt_silent,
+static bool opt_silent,
   auto_generate_sql_autoincrement,
   auto_generate_sql_guid_primary,
   auto_generate_sql;

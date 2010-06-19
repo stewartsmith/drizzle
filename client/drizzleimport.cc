@@ -63,7 +63,7 @@ static char *add_load_option(char *ptr,const char *object,
 static bool verbose= false, lock_tables= false, ignore_errors= false,
             opt_delete= false, opt_replace= false, silent= false,
             ignore_unique= false, opt_low_priority= false,
-            tty_password= false, opt_mysql= false, opt_local_file;
+            opt_mysql= false, opt_local_file;
 
 static uint32_t opt_use_threads= 0;
 static uint32_t opt_drizzle_port= 0;

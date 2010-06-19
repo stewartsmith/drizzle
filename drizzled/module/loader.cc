@@ -22,6 +22,9 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <iostream>
+
+#include <boost/program_options.hpp>
 
 #include "drizzled/option.h"
 #include "drizzled/my_hash.h"
@@ -31,6 +34,7 @@
 #include "drizzled/module/load_list.h"
 #include "drizzled/module/library.h"
 #include "drizzled/module/registry.h"
+#include "drizzled/module/option_context.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/show.h"
 #include "drizzled/cursor.h"
@@ -48,6 +52,8 @@
 #ifndef RTLD_NOW
 #define RTLD_NOW 1
 #endif
+
+namespace po=boost::program_options;
 
 using namespace std;
 
@@ -1653,7 +1659,8 @@ void drizzle_del_plugin_sysvar()
   NOTE:
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static int test_plugin_options(memory::Root *tmp_root, module::Module *tmp,
+static int test_plugin_options(memory::Root *module_root,
+                               module::Module *test_module,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
@@ -1664,22 +1671,65 @@ static int test_plugin_options(memory::Root *tmp_root, module::Module *tmp,
   struct st_bookmark *var;
   uint32_t len, count= EXTRA_OPTIONS;
 
-  for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
-    count++;
+  if (test_module->getManifest().init_options != NULL)
+  {
+    cout << "Calling init_options: " << test_module->getName() << endl;
+    po::options_description module_options("Options used by plugins");
+    module::option_context opt_ctx(test_module->getName(),
+                                   module_options.add_options());
+    test_module->getManifest().init_options(opt_ctx);
 
+    po::variables_map vm;
+
+    po::parsed_options parsed= po::command_line_parser(*argc, argv).
+      options(module_options).allow_unregistered().run();
+
+    po::store(parsed, vm);
+
+    vector<string> to_pass_further= po::collect_unrecognized(parsed.options,
+                                                             po::include_positional);
+
+
+    /* Copy the left over options back into argv for further processing.
+       Once the core is using program options, this whole thing will be done
+       differently.
+     */
+    for (vector<string>::iterator iter= to_pass_further.begin();
+         iter != to_pass_further.end();
+         ++iter)
+    {
+      size_t pos= iter-to_pass_further.begin()+1;
+      memcpy(argv[pos], (*iter).c_str(), (*iter).size()+1);
+      cout << "arg: *" << argv[pos] << "*" << endl;
+    }
+    *argc= to_pass_further.size() + 1;
+
+    po::notify(vm);
+  }
+  else
+  {
+
+  for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
+  {
+    count++;
+  }
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
   {
-    if (!(opts= (option*) tmp_root->alloc_root(sizeof(option) * count)))
+    if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory for plugin '%s'."), tmp->getName().c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Out of memory for plugin '%s'."),
+                    test_module->getName().c_str());
       return(-1);
     }
     memset(opts, 0, sizeof(option) * count);
 
-    if (construct_options(tmp_root, tmp, opts))
+    if (construct_options(module_root, test_module, opts))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Bad options for plugin '%s'."), tmp->getName().c_str());
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Bad options for plugin '%s'."),
+                    test_module->getName().c_str());
       return(-1);
     }
 
@@ -1688,27 +1738,31 @@ static int test_plugin_options(memory::Root *tmp_root, module::Module *tmp,
 
     if (error)
     {
-       errmsg_printf(ERRMSG_LVL_ERROR, _("Parsing options for plugin '%s' failed."),
-                       tmp->getName().c_str());
-       goto err;
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Parsing options for plugin '%s' failed."),
+                    test_module->getName().c_str());
+      goto err;
     }
+  }
   }
 
   error= 1;
 
   {
-    for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
+    for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
     {
       sys_var *v;
       if (((o= *opt)->flags & PLUGIN_VAR_NOSYSVAR))
         continue;
 
-      if ((var= find_bookmark(tmp->getName(), o->name, o->flags)))
+      if ((var= find_bookmark(test_module->getName(), o->name, o->flags)))
+      {
         v= new sys_var_pluginvar(var->key + 1, o);
+      }
       else
       {
-        len= tmp->getName().length() + strlen(o->name) + 2;
-        string vname(tmp->getName());
+        len= test_module->getName().length() + strlen(o->name) + 2;
+        string vname(test_module->getName());
         vname.push_back('-');
         vname.append(o->name);
         transform(vname.begin(), vname.end(), vname.begin(), ::tolower);
@@ -1737,11 +1791,12 @@ static int test_plugin_options(memory::Root *tmp_root, module::Module *tmp,
       chain.last->setNext(NULL);
       if (mysql_add_sys_var_chain(chain.first, NULL))
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has conflicting system variables"),
-                        tmp->getName().c_str());
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Plugin '%s' has conflicting system variables"),
+                      test_module->getName().c_str());
         goto err;
       }
-      tmp->system_vars= chain.first;
+      test_module->system_vars= chain.first;
     }
     return(0);
   }

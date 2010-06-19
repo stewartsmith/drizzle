@@ -37,20 +37,19 @@ using namespace std;
 namespace drizzled
 {
 
-extern std::string drizzle_tmpdir;
+extern string drizzle_tmpdir;
 extern pid_t current_pid;
 
 static const char hexchars[]= "0123456789abcdef";
 
-static bool tablename_to_filename(const char *from, char *to, size_t to_length);
+static bool tablename_to_filename(const string &from, string &to);
 
-static size_t build_schema_filename(std::string &path, const std::string &db)
+static size_t build_schema_filename(string &path, const string &db)
 {
-  char dbbuff[FN_REFLEN];
+  string dbbuff("");
   bool conversion_error= false;
 
-  memset(dbbuff, 0, sizeof(dbbuff));
-  conversion_error= tablename_to_filename(db.c_str(), dbbuff, sizeof(dbbuff));
+  conversion_error= tablename_to_filename(db, dbbuff);
   if (conversion_error)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
@@ -86,49 +85,43 @@ static size_t build_schema_filename(std::string &path, const std::string &db)
     tablename_to_filename()
       from                      The table name
       to                OUT     The cursor name
-      to_length                 The size of the cursor name buffer.
 
   RETURN
     true if errors happen. false on success.
 */
-static bool tablename_to_filename(const char *from, char *to, size_t to_length)
+static bool tablename_to_filename(const string &from, string &to)
 {
   
-  size_t length= 0;
-  for (; *from  && length < to_length; length++, from++)
+  string::const_iterator iter= from.begin();
+  for (; iter != from.end(); ++iter)
   {
-    if ((*from >= '0' && *from <= '9') ||
-        (*from >= 'A' && *from <= 'Z') ||
-        (*from >= 'a' && *from <= 'z') ||
+    if ((*iter >= '0' && *iter <= '9') ||
+        (*iter >= 'A' && *iter <= 'Z') ||
+        (*iter >= 'a' && *iter <= 'z') ||
 /* OSX defines an extra set of high-bit and multi-byte characters
    that cannot be used on the filesystem. Instead of trying to sort
    those out, we'll just escape encode all high-bit-set chars on OSX.
    It won't really hurt anything - it'll just make some filenames ugly. */
 #if !defined(TARGET_OS_OSX)
-        ((unsigned char)*from >= 128) ||
+        ((unsigned char)*iter >= 128) ||
 #endif
-        (*from == '_') ||
-        (*from == ' ') ||
-        (*from == '-'))
+        (*iter == '_') ||
+        (*iter == ' ') ||
+        (*iter == '-'))
     {
-      to[length]= *from;
+      to.push_back(*iter);
       continue;
     }
    
-    if (length + 3 >= to_length)
-      return true;
-
     /* We need to escape this char in a way that can be reversed */
-    to[length++]= '@';
-    to[length++]= hexchars[(*from >> 4) & 15];
-    to[length]= hexchars[(*from) & 15];
+    to.push_back('@');
+    to.push_back(hexchars[(*iter >> 4) & 15]);
+    to.push_back(hexchars[(*iter) & 15]);
   }
 
-  if (internal::check_if_legal_tablename(to) &&
-      length + 4 < to_length)
+  if (internal::check_if_legal_tablename(to.c_str()))
   {
-    memcpy(to + length, "@@@", 4);
-    length+= 3;
+    to.append("@@@");
   }
   return false;
 }

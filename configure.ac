@@ -60,7 +60,7 @@ AC_LANG_POP
 PANDORA_USE_BETTER_MALLOC
 
 PANDORA_DRIZZLE_BUILD
-AC_DEFINE([BUILDING_DRIZZLE],[1],
+AC_DEFINE([BUILDING_DRIZZLED],[1],
           [Define indicating we are building and not consuming drizzle.])
 
 PANDORA_HAVE_LIBGTEST
