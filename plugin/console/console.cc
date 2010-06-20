@@ -31,9 +31,9 @@ namespace po= boost::program_options;
 
 static bool enabled= false;
 static bool debug_enabled= false;
-static char* username= (char *)"";
-static char* password= (char *)"";
-static char* db= (char *)"";
+static char* username= NULL;
+static char* password= NULL;
+static char* db= NULL;
 
 
 class ClientConsole: public plugin::Client
@@ -271,8 +271,8 @@ class ListenConsole: public plugin::Listen
   int pipe_fds[2];
 
 public:
-  ListenConsole(std::string name_arg)
-    : plugin::Listen(name_arg)
+  ListenConsole(const std::string &name_arg) :
+    plugin::Listen(name_arg)
   {
     pipe_fds[0]= -1;
   }
@@ -284,6 +284,11 @@ public:
       close(pipe_fds[0]);
       close(pipe_fds[1]);
     }
+
+    /* Cleanup from the module strdup'ing these below */
+    free(username);
+    free(password);
+    free(db);
   }
 
   virtual bool getFileDescriptors(std::vector<int> &fds)
@@ -313,23 +318,27 @@ public:
   }
 };
 
-static ListenConsole *listen_obj= NULL;
-
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
-  /* the casting here is TERRIBLE, but required for now. We need these vars
-     to be global static char* instances, and we have nowhere to free the
-     memory we might allocate if we were to new them right here. */
+  /* duplicating these here means they need to be freed. They're global, so
+     we'll just have the ListenConsole object do it in its destructor */
   if (vm.count("username"))
-    username= const_cast<char *>(vm["username"].as<string>().c_str());
-  if (vm.count("password"))
-    password= const_cast<char *>(vm["password"].as<string>().c_str());
-  if (vm.count("db"))
-    db= const_cast<char *>(vm["db"].as<string>().c_str());
+    username= strdup(vm["username"].as<string>().c_str());
+  else
+    username= strdup("");
 
-  listen_obj= new ListenConsole("console");
-  context.add(listen_obj);
+  if (vm.count("password"))
+    password= strdup(vm["password"].as<string>().c_str());
+  else
+    password= strdup("");
+
+  if (vm.count("db"))
+    db= strdup(vm["db"].as<string>().c_str());
+  else
+    db= strdup("");
+
+  context.add(new ListenConsole("console"));
   return 0;
 }
 
