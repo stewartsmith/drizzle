@@ -318,12 +318,15 @@ static ListenConsole *listen_obj= NULL;
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
+  /* the casting here is TERRIBLE, but required for now. We need these vars
+     to be global static char* instances, and we have nowhere to free the
+     memory we might allocate if we were to new them right here. */
   if (vm.count("username"))
-    username= (char *)(vm["username"].as<string>().c_str());
+    username= const_cast<char *>(vm["username"].as<string>().c_str());
   if (vm.count("password"))
-    password= (char *)(vm["password"].as<string>().c_str());
+    password= const_cast<char *>(vm["password"].as<string>().c_str());
   if (vm.count("db"))
-    db= (char *)(vm["db"].as<string>().c_str());
+    db= const_cast<char *>(vm["db"].as<string>().c_str());
 
   listen_obj= new ListenConsole("console");
   context.add(listen_obj);
