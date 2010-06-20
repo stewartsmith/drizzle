@@ -18,6 +18,7 @@
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/session.h>
+#include <drizzled/module/option_map.h>
 
 #include <iostream>
 
@@ -30,9 +31,9 @@ namespace po= boost::program_options;
 
 static bool enabled= false;
 static bool debug_enabled= false;
-static char* user = (char*)"";
-static char* password = (char*)"";
-static char* db = NULL;
+static char* user= (char *)"";
+static char* password= (char *)"";
+static char* db= (char *)"";
 
 
 class ClientConsole: public plugin::Client
@@ -316,6 +317,11 @@ static ListenConsole *listen_obj= NULL;
 
 static int init(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+  user= (char *)vm["user"].as<string>().c_str();
+  password= (char *)vm["password"].as<string>().c_str();
+  db= (char *)vm["db"].as<string>().c_str();
+
   listen_obj= new ListenConsole("console");
   context.add(listen_obj);
   return 0;
@@ -341,6 +347,15 @@ static void init_options(drizzled::module::option_context &context)
   context("debug",
           po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
           N_("Turn on extra debugging."));
+  context("user",
+          po::value<string>(),
+          N_("User to use for auth."));
+  context("password",
+          po::value<string>(),
+          N_("Password to use for auth."));
+  context("db",
+          po::value<string>(),
+          N_("Default database to use."));
 }
 
 static drizzle_sys_var* vars[]= {
