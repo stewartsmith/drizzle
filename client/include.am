@@ -55,7 +55,6 @@ client_drizzleimport_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
 
 client_drizzleslap_SOURCES=	client/drizzleslap.cc
 client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
-client_drizzleslap_CXXFLAGS=	${BOOSTSKIP_WARNINGS}
 
 client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
 client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
