@@ -1679,7 +1679,7 @@ static int test_plugin_options(memory::Root *module_root,
                                    module_options.add_options());
     test_module->getManifest().init_options(opt_ctx);
 
-    po::variables_map vm;
+    po::variables_map &vm= test_module->getVariableMap();
 
     po::parsed_options parsed= po::command_line_parser(*argc, argv).
       options(module_options).allow_unregistered().run();
@@ -1688,7 +1688,6 @@ static int test_plugin_options(memory::Root *module_root,
 
     vector<string> to_pass_further= po::collect_unrecognized(parsed.options,
                                                              po::include_positional);
-
 
     /* Copy the left over options back into argv for further processing.
        Once the core is using program options, this whole thing will be done
@@ -1709,41 +1708,41 @@ static int test_plugin_options(memory::Root *module_root,
   else
   {
 
-  for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
-  {
-    count++;
-  }
-
-  if (count > EXTRA_OPTIONS || (*argc > 1))
-  {
-    if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
+    for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Out of memory for plugin '%s'."),
-                    test_module->getName().c_str());
-      return(-1);
-    }
-    memset(opts, 0, sizeof(option) * count);
-
-    if (construct_options(module_root, test_module, opts))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Bad options for plugin '%s'."),
-                    test_module->getName().c_str());
-      return(-1);
+      count++;
     }
 
-    error= handle_options(argc, &argv, opts, get_one_plugin_option);
-    (*argc)++; /* add back one for the program name */
-
-    if (error)
+    if (count > EXTRA_OPTIONS || (*argc > 1))
     {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Parsing options for plugin '%s' failed."),
-                    test_module->getName().c_str());
-      goto err;
+      if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Out of memory for plugin '%s'."),
+                      test_module->getName().c_str());
+        return(-1);
+      }
+      memset(opts, 0, sizeof(option) * count);
+
+      if (construct_options(module_root, test_module, opts))
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Bad options for plugin '%s'."),
+                      test_module->getName().c_str());
+        return(-1);
+      }
+
+      error= handle_options(argc, &argv, opts, get_one_plugin_option);
+      (*argc)++; /* add back one for the program name */
+
+      if (error)
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Parsing options for plugin '%s' failed."),
+                      test_module->getName().c_str());
+        goto err;
+      }
     }
-  }
   }
 
   error= 1;

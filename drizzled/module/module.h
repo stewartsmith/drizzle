@@ -29,8 +29,11 @@
  */
 
 #include <cassert>
+#include <boost/program_options.hpp>
 
 #include "drizzled/module/manifest.h"
+#include "drizzled/module/registry.h"
+
 
 namespace drizzled
 {
@@ -48,22 +51,20 @@ class Module
 {
   const std::string name;
   const Manifest *manifest;
+  boost::program_options::variables_map vm;
+
 public:
   Library *plugin_dl;
   bool isInited;
   sys_var *system_vars;         /* server variables for this plugin */
-  Module(const Manifest *manifest_arg, Library *library_arg)
-    : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(library_arg),
-      isInited(false),
-      system_vars(NULL)
-  {
-    assert(manifest != NULL);
-  }
-      
-  Module(const Manifest *manifest_arg)
-    : name(manifest_arg->name), manifest(manifest_arg), plugin_dl(NULL),
-      isInited(false),
-      system_vars(NULL)
+  Module(const Manifest *manifest_arg,
+         Library *library_arg) :
+    name(manifest_arg->name),
+    manifest(manifest_arg),
+    vm(),
+    plugin_dl(library_arg),
+    isInited(false),
+    system_vars(NULL)
   {
     assert(manifest != NULL);
   }
@@ -76,6 +77,16 @@ public:
   const Manifest& getManifest() const
   {
     return *manifest;
+  }
+
+  const boost::program_options::variables_map &getVariableMap() const
+  {
+    return vm;
+  }
+
+  boost::program_options::variables_map &getVariableMap()
+  {
+    return vm;
   }
 };
 
