@@ -69,13 +69,13 @@ public:
 
   int doCreateTable(Session&,
                     Table&,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, drizzled::TableIdentifier &identifier);
+  int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
 
   int doGetTableDefinition(Session &session,
-                           drizzled::TableIdentifier &identifier,
+                           const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
@@ -101,9 +101,9 @@ public:
             HA_KEYREAD_ONLY);
   }
 
-  bool doDoesTableExist(Session &session, TableIdentifier &identifier);
+  bool doDoesTableExist(Session &session, const drizzled::TableIdentifier &identifier);
 
-  int doRenameTable(Session&, TableIdentifier&, TableIdentifier&)
+  int doRenameTable(Session&, const drizzled::TableIdentifier&, const drizzled::TableIdentifier&)
   {
     return EPERM;
   }
@@ -124,7 +124,7 @@ void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
   }
 }
 
-bool TableProtoTesterEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::TableIdentifier &identifier)
 {
   if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
     return true;
@@ -151,14 +151,14 @@ int TableProtoTesterCursor::close(void)
 
 int TableProtoTesterEngine::doCreateTable(Session&,
                                           Table&,
-                                          drizzled::TableIdentifier&,
+                                          const drizzled::TableIdentifier&,
                                           drizzled::message::Table&)
 {
   return EEXIST;
 }
 
 
-int TableProtoTesterEngine::doDropTable(Session&, drizzled::TableIdentifier&)
+int TableProtoTesterEngine::doDropTable(Session&, const drizzled::TableIdentifier&)
 {
   return EPERM;
 }
@@ -216,7 +216,7 @@ static void fill_table_too_many_enum_values(message::Table &table)
 
 
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
-                                                 drizzled::TableIdentifier &identifier,
+                                                 const drizzled::TableIdentifier &identifier,
                                                  drizzled::message::Table &table_proto)
 {
   if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)

@@ -138,7 +138,7 @@ public:
     return table_name;
   }
 
-  void copyToTableMessage(message::Table &message);
+  void copyToTableMessage(message::Table &message) const;
 
   friend bool operator<(const TableIdentifier &left, const TableIdentifier &right)
   {

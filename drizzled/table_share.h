@@ -60,7 +60,7 @@ public:
 
   TableShare(TableIdentifier &identifier, const TableIdentifier::Key &key); // Used by placeholder
 
-  TableShare(TableIdentifier &identifier); // Just used during createTable()
+  TableShare(const TableIdentifier &identifier); // Just used during createTable()
 
   TableShare(TableIdentifier::Type type_arg,
              TableIdentifier &identifier,

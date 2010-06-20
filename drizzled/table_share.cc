@@ -615,7 +615,7 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
 }
 
 
-TableShare::TableShare(TableIdentifier &identifier) : // Just used during createTable()
+TableShare::TableShare(const TableIdentifier &identifier) : // Just used during createTable()
   table_category(TABLE_UNKNOWN_CATEGORY),
   open_count(0),
   found_next_number_field(NULL),
