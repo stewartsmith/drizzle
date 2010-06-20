@@ -17,7 +17,6 @@ server.
 
 import sys
 import optparse
-import time
 import socket
 import unittest
 from prototest.mysql import *
@@ -60,7 +59,6 @@ class TestHandshake(unittest.TestCase):
 
   def reconnect(self):
     self.tearDown()
-    time.sleep(1)
     self.setUp()
 
   def testNullClientHandshake(self):
