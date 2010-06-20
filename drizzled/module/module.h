@@ -79,12 +79,12 @@ public:
     return *manifest;
   }
 
-  void setVariableMap(const boost::program_options::variables_map &vm_arg)
+  const boost::program_options::variables_map &getVariableMap() const
   {
-    vm= vm_arg;
+    return vm;
   }
 
-  const boost::program_options::variables_map &getVariableMap() const
+  boost::program_options::variables_map &getVariableMap()
   {
     return vm;
   }

@@ -1679,7 +1679,7 @@ static int test_plugin_options(memory::Root *module_root,
                                    module_options.add_options());
     test_module->getManifest().init_options(opt_ctx);
 
-    po::variables_map vm;
+    po::variables_map &vm= test_module->getVariableMap();
 
     po::parsed_options parsed= po::command_line_parser(*argc, argv).
       options(module_options).allow_unregistered().run();
@@ -1704,7 +1704,6 @@ static int test_plugin_options(memory::Root *module_root,
     *argc= to_pass_further.size() + 1;
 
     po::notify(vm);
-    test_module->setVariableMap(vm);
   }
   else
   {

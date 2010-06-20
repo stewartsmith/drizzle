@@ -31,7 +31,7 @@ namespace po= boost::program_options;
 
 static bool enabled= false;
 static bool debug_enabled= false;
-static char* user= (char *)"";
+static char* username= (char *)"";
 static char* password= (char *)"";
 static char* db= (char *)"";
 
@@ -94,7 +94,7 @@ public:
   virtual bool authenticate(void)
   {
     printDebug("authenticate");
-    session->getSecurityContext().setUser(user);
+    session->getSecurityContext().setUser(username);
     return session->checkUser(password, strlen(password), db);
   }
 
@@ -318,9 +318,12 @@ static ListenConsole *listen_obj= NULL;
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
-  user= (char *)vm["user"].as<string>().c_str();
-  password= (char *)vm["password"].as<string>().c_str();
-  db= (char *)vm["db"].as<string>().c_str();
+  if (vm.count("username"))
+    username= (char *)(vm["username"].as<string>().c_str());
+  if (vm.count("password"))
+    password= (char *)(vm["password"].as<string>().c_str());
+  if (vm.count("db"))
+    db= (char *)(vm["db"].as<string>().c_str());
 
   listen_obj= new ListenConsole("console");
   context.add(listen_obj);
@@ -332,7 +335,7 @@ static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
 static DRIZZLE_SYSVAR_BOOL(debug, debug_enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Turn on extra debugging."), NULL, NULL, false);
 
-static DRIZZLE_SYSVAR_STR(user, user, PLUGIN_VAR_READONLY,
+static DRIZZLE_SYSVAR_STR(username, username, PLUGIN_VAR_READONLY,
                           N_("User to use for auth."), NULL, NULL, NULL);
 static DRIZZLE_SYSVAR_STR(password, password, PLUGIN_VAR_READONLY,
                           N_("Password to use for auth."), NULL, NULL, NULL);
@@ -347,7 +350,7 @@ static void init_options(drizzled::module::option_context &context)
   context("debug",
           po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
           N_("Turn on extra debugging."));
-  context("user",
+  context("username",
           po::value<string>(),
           N_("User to use for auth."));
   context("password",
@@ -361,7 +364,7 @@ static void init_options(drizzled::module::option_context &context)
 static drizzle_sys_var* vars[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(debug),
-  DRIZZLE_SYSVAR(user),
+  DRIZZLE_SYSVAR(username),
   DRIZZLE_SYSVAR(password),
   DRIZZLE_SYSVAR(db),
   NULL
