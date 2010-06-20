@@ -644,7 +644,7 @@ void Session::doGetTableIdentifiers(CachedDirectory &,
   doGetTableIdentifiers(schema_identifier, set_of_identifiers);
 }
 
-bool Session::doDoesTableExist(TableIdentifier &identifier)
+bool Session::doDoesTableExist(const TableIdentifier &identifier)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
@@ -660,7 +660,7 @@ bool Session::doDoesTableExist(TableIdentifier &identifier)
   return false;
 }
 
-int Session::doGetTableDefinition(TableIdentifier &identifier,
+int Session::doGetTableDefinition(const TableIdentifier &identifier,
                                   message::Table &table_proto)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())

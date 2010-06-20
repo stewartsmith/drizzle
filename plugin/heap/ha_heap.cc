@@ -73,7 +73,7 @@ public:
 
   int doCreateTable(Session &session,
                     Table &table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const TableIdentifier &identifier,
                     message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
@@ -87,12 +87,12 @@ public:
                         message::Table &create_proto,
                         HP_SHARE **internal_share);
 
-  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
 
-  int doDropTable(Session&, TableIdentifier &identifier);
+  int doDropTable(Session&, const TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
@@ -112,25 +112,25 @@ public:
             HA_KEY_SCAN_NOT_ROR);
   }
 
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
-  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+  bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
+  void doGetTableIdentifiers(CachedDirectory &directory,
+                             SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
 };
 
-void HeapEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                       drizzled::SchemaIdentifier&,
-                                       drizzled::TableIdentifiers&)
+void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
+                                       SchemaIdentifier&,
+                                       TableIdentifiers&)
 {
 }
 
-bool HeapEngine::doDoesTableExist(Session& session, TableIdentifier &identifier)
+bool HeapEngine::doDoesTableExist(Session& session, const TableIdentifier &identifier)
 {
   return session.doesTableMessageExist(identifier);
 }
 
 int HeapEngine::doGetTableDefinition(Session &session,
-                                     TableIdentifier &identifier,
+                                     const TableIdentifier &identifier,
                                      message::Table &table_proto)
 {
   if (session.getTableMessage(identifier, table_proto))
@@ -142,7 +142,7 @@ int HeapEngine::doGetTableDefinition(Session &session,
   We have to ignore ENOENT entries as the MEMORY table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDropTable(Session &session, TableIdentifier &identifier)
+int HeapEngine::doDropTable(Session &session, const TableIdentifier &identifier)
 {
   session.removeTableMessage(identifier);
 
@@ -648,7 +648,7 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+int HeapEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   session.renameTableMessage(from, to);
   return heap_rename(from.getPath().c_str(), to.getPath().c_str());
@@ -679,7 +679,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 
 int HeapEngine::doCreateTable(Session &session,
                               Table &table_arg,
-                              drizzled::TableIdentifier &identifier,
+                              const TableIdentifier &identifier,
                               message::Table& create_proto)
 {
   int error;
