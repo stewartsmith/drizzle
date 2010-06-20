@@ -18,6 +18,7 @@ unittests_unittests_SOURCES = \
 			      unittests/main.cc \
 			      unittests/micro_timestamp_test.cc \
 			      unittests/nano_timestamp_test.cc \
+			      unittests/option_context.cc \
 			      unittests/plugin/authentication_test.cc \
 			      unittests/plugin/client_test.cc \
 			      unittests/plugin/error_message_test.cc \
@@ -32,4 +33,4 @@ unittests_unittests_SOURCES = \
 
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
-  ${drizzled_drizzled_LDADD} ${LTLIBGTEST}
+  ${drizzled_drizzled_LDADD} ${LTLIBGTEST} ${BOOST_LIBS}

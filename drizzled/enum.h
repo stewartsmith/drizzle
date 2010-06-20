@@ -21,8 +21,6 @@
 #ifndef DRIZZLED_ENUM_H
 #define DRIZZLED_ENUM_H
 
-#include "drizzled/message/table.pb.h"
-
 namespace drizzled
 {
 

@@ -109,15 +109,15 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const TableIdentifier &identifier,
                     message::Table&);
 
-  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
 
-  int doDropTable(Session&, drizzled::TableIdentifier &identifier);
+  int doDropTable(Session&, const TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           drizzled::TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
@@ -135,7 +135,7 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
@@ -158,13 +158,13 @@ void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
 {
 }
 
-bool MyisamEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool MyisamEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
   return session.doesTableMessageExist(identifier);
 }
 
 int MyisamEngine::doGetTableDefinition(Session &session,
-                                       drizzled::TableIdentifier &identifier,
+                                       const TableIdentifier &identifier,
                                        message::Table &table_message)
 {
   if (session.getTableMessage(identifier, table_message))
@@ -1333,7 +1333,7 @@ int ha_myisam::delete_all_rows()
 }
 
 int MyisamEngine::doDropTable(Session &session,
-                              drizzled::TableIdentifier &identifier)
+                              const TableIdentifier &identifier)
 {
   session.removeTableMessage(identifier);
 
@@ -1351,7 +1351,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 
 int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
-                                drizzled::TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 message::Table& create_proto)
 {
   int error;
@@ -1397,7 +1397,7 @@ int MyisamEngine::doCreateTable(Session &session,
 }
 
 
-int MyisamEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+int MyisamEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   session.renameTableMessage(from, to);
 

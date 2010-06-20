@@ -84,7 +84,7 @@ public:
 /*
   Return value is "if parsed"
 */
-bool StorageEngine::getSchemaDefinition(TableIdentifier &identifier, message::Schema &proto)
+bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::Schema &proto)
 {
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
