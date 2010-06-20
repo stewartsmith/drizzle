@@ -654,8 +654,6 @@ int ha_myisam::close(void)
 
 int ha_myisam::doInsertRecord(unsigned char *buf)
 {
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   /*
     If we have an auto_increment column and we are writing a changed row
     or a new row, then update the auto_increment value in the record.
@@ -1033,13 +1031,11 @@ int ha_myisam::end_bulk_insert()
 
 int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
-  ha_statistic_increment(&system_status_var::ha_update_count);
   return mi_update(file,old_data,new_data);
 }
 
 int ha_myisam::doDeleteRecord(const unsigned char *buf)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
   return mi_delete(file,buf);
 }
 
