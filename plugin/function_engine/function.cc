@@ -47,7 +47,7 @@ Cursor *Function::create(TableShare &table, memory::Root *mem_root)
 }
 
 int Function::doGetTableDefinition(Session &,
-                                   TableIdentifier &identifier,
+                                   const TableIdentifier &identifier,
                                    message::Table &table_proto)
 {
   string tab_name(identifier.getPath());
@@ -100,14 +100,14 @@ bool Function::doGetSchemaDefinition(SchemaIdentifier &schema_identifier, messag
   return true;
 }
 
-bool Function::doCanCreateTable(drizzled::TableIdentifier &table_identifier)
+bool Function::doCanCreateTable(const drizzled::TableIdentifier &table_identifier)
 {
-  if (static_cast<SchemaIdentifier&>(table_identifier) == INFORMATION_SCHEMA_IDENTIFIER)
+  if (static_cast<const SchemaIdentifier&>(table_identifier) == INFORMATION_SCHEMA_IDENTIFIER)
   {
     return false;
   }
 
-  else if (static_cast<SchemaIdentifier&>(table_identifier) == DATA_DICTIONARY_IDENTIFIER)
+  else if (static_cast<const SchemaIdentifier&>(table_identifier) == DATA_DICTIONARY_IDENTIFIER)
   {
     return false;
   }
@@ -115,7 +115,7 @@ bool Function::doCanCreateTable(drizzled::TableIdentifier &table_identifier)
   return true;
 }
 
-bool Function::doDoesTableExist(Session&, TableIdentifier &identifier)
+bool Function::doDoesTableExist(Session&, const TableIdentifier &identifier)
 {
   drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
 

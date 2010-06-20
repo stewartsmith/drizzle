@@ -104,7 +104,7 @@ public:
   /* DATA DICTIONARY CREATION RELATED */
   int create_data_table(drizzled::message::Table &proto,
                         drizzled::Table &table,
-                        drizzled::TableIdentifier &identifier);
+                        const drizzled::TableIdentifier &identifier);
 
   int open_data_table(const char *path, const int mode);
   int close_data_table(void);

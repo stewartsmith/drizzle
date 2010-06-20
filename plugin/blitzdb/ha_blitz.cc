@@ -62,18 +62,18 @@ public:
 
   int doCreateTable(drizzled::Session &session,
                     drizzled::Table &table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table &table_proto);
 
   int doRenameTable(drizzled::Session &session,
-                    drizzled::TableIdentifier &from_identifier,
-                    drizzled::TableIdentifier &to_identifier);
+                    const drizzled::TableIdentifier &from_identifier,
+                    const drizzled::TableIdentifier &to_identifier);
 
   int doDropTable(drizzled::Session &session,
-                  drizzled::TableIdentifier &identifier);
+                  const drizzled::TableIdentifier &identifier);
 
   int doGetTableDefinition(drizzled::Session &session,
-                           drizzled::TableIdentifier &identifier,
+                           const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
@@ -85,7 +85,7 @@ public:
                              drizzled::TableIdentifiers &set_of_identifiers);
 
   bool doDoesTableExist(drizzled::Session &session,
-                        drizzled::TableIdentifier &identifier);
+                        const drizzled::TableIdentifier &identifier);
 
   bool doCreateTableCache(void);
 
@@ -117,7 +117,7 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
 
 int BlitzEngine::doCreateTable(drizzled::Session &,
                                drizzled::Table &table,
-                               drizzled::TableIdentifier &identifier,
+                               const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &proto) {
   BlitzData dict;
   BlitzTree btree;
@@ -158,8 +158,8 @@ int BlitzEngine::doCreateTable(drizzled::Session &,
 }
 
 int BlitzEngine::doRenameTable(drizzled::Session &,
-                               drizzled::TableIdentifier &from,
-                               drizzled::TableIdentifier &to) {
+                               const drizzled::TableIdentifier &from,
+                               const drizzled::TableIdentifier &to) {
   int rv = 0;
 
   BlitzData blitz_table;
@@ -201,7 +201,7 @@ int BlitzEngine::doRenameTable(drizzled::Session &,
 }
 
 int BlitzEngine::doDropTable(drizzled::Session &,
-                             drizzled::TableIdentifier &identifier) {
+                             const drizzled::TableIdentifier &identifier) {
   BlitzData dict;
   BlitzTree btree;
   char buf[FN_REFLEN];
@@ -242,7 +242,7 @@ int BlitzEngine::doDropTable(drizzled::Session &,
 }
 
 int BlitzEngine::doGetTableDefinition(drizzled::Session &,
-                                      drizzled::TableIdentifier &identifier,
+                                      const drizzled::TableIdentifier &identifier,
                                       drizzled::message::Table &proto) {
   struct stat stat_info;
   std::string path(identifier.getPath());
@@ -344,7 +344,7 @@ void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
 }
 
 bool BlitzEngine::doDoesTableExist(drizzled::Session &,
-                                   drizzled::TableIdentifier &identifier) {
+                                   const drizzled::TableIdentifier &identifier) {
   std::string proto_path(identifier.getPath());
   proto_path.append(BLITZ_DATA_EXT);
 

@@ -52,7 +52,7 @@ int BlitzData::shutdown() {
 /* Similar to UNIX touch(1) but generates a TCHDB file. */
 int BlitzData::create_data_table(drizzled::message::Table &proto,
                                  drizzled::Table &table_info,
-                                 drizzled::TableIdentifier &identifier) {
+                                 const drizzled::TableIdentifier &identifier) {
   uint64_t autoinc = 0;
   int mode = (HDBOWRITER | HDBOCREAT);
   int rv;
