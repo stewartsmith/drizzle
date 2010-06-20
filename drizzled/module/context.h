@@ -44,7 +44,9 @@ class sys_var;
 
 namespace module
 {
+
 class Module;
+class option_map;
 
 class Context
 {
@@ -76,6 +78,8 @@ public:
   }
 
   void registerVariable(sys_var *var);
+
+  option_map getOptions();
 };
 
 inline void Context::registerVariable(sys_var *)

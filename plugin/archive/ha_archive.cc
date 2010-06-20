@@ -710,7 +710,6 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
   pthread_mutex_lock(&share->mutex);
 
   if (share->archive_write_open == false)

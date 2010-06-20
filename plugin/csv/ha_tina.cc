@@ -906,8 +906,6 @@ int ha_tina::doInsertRecord(unsigned char * buf)
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   size= encode_quote(buf);
 
   if (!share->tina_write_opened)
@@ -964,8 +962,6 @@ int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
   int size;
   int rc= -1;
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   size= encode_quote(new_data);
 
   /*
@@ -1003,7 +999,6 @@ err:
 */
 int ha_tina::doDeleteRecord(const unsigned char *)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (chain_append())
     return(-1);

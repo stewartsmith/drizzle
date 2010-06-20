@@ -3793,8 +3793,6 @@ ha_innobase::doInsertRecord(
     ut_error;
   }
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   sql_command = session_sql_command(user_session);
 
   if ((sql_command == SQLCOM_ALTER_TABLE
@@ -4161,8 +4159,6 @@ ha_innobase::doUpdateRecord(
 
   ut_a(prebuilt->trx == trx);
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   if (prebuilt->upd_node) {
     uvect = prebuilt->upd_node->update;
   } else {
@@ -4296,8 +4292,6 @@ ha_innobase::doDeleteRecord(
   trx_t*    trx = session_to_trx(user_session);
 
   ut_a(prebuilt->trx == trx);
-
-  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (!prebuilt->upd_node) {
     row_get_prebuilt_update_vector(prebuilt);

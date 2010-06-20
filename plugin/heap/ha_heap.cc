@@ -324,7 +324,6 @@ void ha_heap::update_key_stats()
 int ha_heap::doInsertRecord(unsigned char * buf)
 {
   int res;
-  ha_statistic_increment(&system_status_var::ha_write_count);
   if (table->next_number_field && buf == table->record[0])
   {
     if ((res= update_auto_increment()))
@@ -346,7 +345,7 @@ int ha_heap::doInsertRecord(unsigned char * buf)
 int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_data)
 {
   int res;
-  ha_statistic_increment(&system_status_var::ha_update_count);
+
   res= heap_update(file,old_data,new_data);
   if (!res && ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
               file->s->records)
@@ -363,7 +362,7 @@ int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_
 int ha_heap::doDeleteRecord(const unsigned char * buf)
 {
   int res;
-  ha_statistic_increment(&system_status_var::ha_delete_count);
+
   res= heap_delete(file,buf);
   if (!res && table->getShare()->getType() == message::Table::STANDARD &&
       ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)

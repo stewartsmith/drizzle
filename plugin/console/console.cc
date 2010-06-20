@@ -18,6 +18,7 @@
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
 #include <drizzled/session.h>
+#include <drizzled/module/option_map.h>
 
 #include <iostream>
 
@@ -30,9 +31,9 @@ namespace po= boost::program_options;
 
 static bool enabled= false;
 static bool debug_enabled= false;
-static char* user = (char*)"";
-static char* password = (char*)"";
-static char* db = NULL;
+static char* username= NULL;
+static char* password= NULL;
+static char* db= NULL;
 
 
 class ClientConsole: public plugin::Client
@@ -93,7 +94,7 @@ public:
   virtual bool authenticate(void)
   {
     printDebug("authenticate");
-    session->getSecurityContext().setUser(user);
+    session->getSecurityContext().setUser(username);
     return session->checkUser(password, strlen(password), db);
   }
 
@@ -270,8 +271,8 @@ class ListenConsole: public plugin::Listen
   int pipe_fds[2];
 
 public:
-  ListenConsole(std::string name_arg)
-    : plugin::Listen(name_arg)
+  ListenConsole(const std::string &name_arg) :
+    plugin::Listen(name_arg)
   {
     pipe_fds[0]= -1;
   }
@@ -283,6 +284,11 @@ public:
       close(pipe_fds[0]);
       close(pipe_fds[1]);
     }
+
+    /* Cleanup from the module strdup'ing these below */
+    free(username);
+    free(password);
+    free(db);
   }
 
   virtual bool getFileDescriptors(std::vector<int> &fds)
@@ -312,12 +318,27 @@ public:
   }
 };
 
-static ListenConsole *listen_obj= NULL;
-
 static int init(drizzled::module::Context &context)
 {
-  listen_obj= new ListenConsole("console");
-  context.add(listen_obj);
+  const module::option_map &vm= context.getOptions();
+  /* duplicating these here means they need to be freed. They're global, so
+     we'll just have the ListenConsole object do it in its destructor */
+  if (vm.count("username"))
+    username= strdup(vm["username"].as<string>().c_str());
+  else
+    username= strdup("");
+
+  if (vm.count("password"))
+    password= strdup(vm["password"].as<string>().c_str());
+  else
+    password= strdup("");
+
+  if (vm.count("db"))
+    db= strdup(vm["db"].as<string>().c_str());
+  else
+    db= strdup("");
+
+  context.add(new ListenConsole("console"));
   return 0;
 }
 
@@ -326,7 +347,7 @@ static DRIZZLE_SYSVAR_BOOL(enable, enabled, PLUGIN_VAR_NOCMDARG,
 static DRIZZLE_SYSVAR_BOOL(debug, debug_enabled, PLUGIN_VAR_NOCMDARG,
                            N_("Turn on extra debugging."), NULL, NULL, false);
 
-static DRIZZLE_SYSVAR_STR(user, user, PLUGIN_VAR_READONLY,
+static DRIZZLE_SYSVAR_STR(username, username, PLUGIN_VAR_READONLY,
                           N_("User to use for auth."), NULL, NULL, NULL);
 static DRIZZLE_SYSVAR_STR(password, password, PLUGIN_VAR_READONLY,
                           N_("Password to use for auth."), NULL, NULL, NULL);
@@ -341,12 +362,21 @@ static void init_options(drizzled::module::option_context &context)
   context("debug",
           po::value<bool>(&debug_enabled)->default_value(false)->zero_tokens(),
           N_("Turn on extra debugging."));
+  context("username",
+          po::value<string>(),
+          N_("User to use for auth."));
+  context("password",
+          po::value<string>(),
+          N_("Password to use for auth."));
+  context("db",
+          po::value<string>(),
+          N_("Default database to use."));
 }
 
 static drizzle_sys_var* vars[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(debug),
-  DRIZZLE_SYSVAR(user),
+  DRIZZLE_SYSVAR(username),
   DRIZZLE_SYSVAR(password),
   DRIZZLE_SYSVAR(db),
   NULL
