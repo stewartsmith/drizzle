@@ -531,7 +531,7 @@ private:
     the corresponding 'ha_*' method above.
   */
 
-  virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
+  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; };
   virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
   virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }

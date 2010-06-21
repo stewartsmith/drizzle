@@ -2721,11 +2721,9 @@ database.
 @return 1 if error, 0 if success */
 UNIV_INTERN
 int
-ha_innobase::open(
-/*==============*/
-  const char* name,   /*!< in: table name */
-  int   mode,   /*!< in: not used */
-  uint    test_if_locked) /*!< in: not used */
+ha_innobase::doOpen(const TableIdentifier &identifier,
+                    int   mode,   /*!< in: not used */
+                    uint    test_if_locked) /*!< in: not used */
 {
   dict_table_t* ib_table;
   char    norm_name[FN_REFLEN];
@@ -2743,11 +2741,11 @@ ha_innobase::open(
     getTransactionalEngine()->releaseTemporaryLatches(session);
   }
 
-  normalize_table_name(norm_name, name);
+  normalize_table_name(norm_name, identifier.getPath().c_str());
 
   user_session = NULL;
 
-  if (!(share=get_share(name))) {
+  if (!(share=get_share(identifier.getPath().c_str()))) {
 
     return(1);
   }
@@ -2840,7 +2838,7 @@ ha_innobase::open(
   if (!row_table_got_default_clust_index(ib_table)) {
     if (primary_key >= MAX_KEY) {
       errmsg_printf(ERRMSG_LVL_ERROR, "Table %s has a primary key in InnoDB data "
-          "dictionary, but not in MySQL!", name);
+          "dictionary, but not in MySQL!", identifier.getTableName().c_str());
     }
 
     prebuilt->clust_index_was_generated = FALSE;
@@ -2862,7 +2860,7 @@ ha_innobase::open(
           "columns, then MySQL internally treats that "
           "key as the primary key. You can fix this "
           "error by dump + DROP + CREATE + reimport "
-          "of the table.", name);
+          "of the table.", identifier.getTableName().c_str());
     }
 
     prebuilt->clust_index_was_generated = TRUE;
@@ -2881,7 +2879,7 @@ ha_innobase::open(
       errmsg_printf(ERRMSG_LVL_WARN, 
         "Table %s key_used_on_scan is %lu even "
         "though there is no primary key inside "
-        "InnoDB.", name, (ulong) key_used_on_scan);
+        "InnoDB.", identifier.getTableName().c_str(), (ulong) key_used_on_scan);
     }
   }
 
