@@ -1636,7 +1636,7 @@ Create_func_concat::create_native(Session *session, LEX_STRING name,
     return NULL;
   }
 
-  return new (session->mem_root) Item_func_concat(*item_list);
+  return new (session->mem_root) Item_func_concat(*session, *item_list);
 }
 
 
@@ -1658,7 +1658,7 @@ Create_func_concat_ws::create_native(Session *session, LEX_STRING name,
     return NULL;
   }
 
-  return new (session->mem_root) Item_func_concat_ws(*item_list);
+  return new (session->mem_root) Item_func_concat_ws(*session, *item_list);
 }
 
 

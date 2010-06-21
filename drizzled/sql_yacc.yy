@@ -3210,7 +3210,7 @@ function_call_conflict:
         | REPEAT_SYM '(' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_repeat($3,$5); }
         | REPLACE '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_replace($3,$5,$7); }
+          { $$= new (YYSession->mem_root) Item_func_replace(*YYSession, $3, $5, $7); }
         | REVERSE_SYM '(' expr ')'
           {
             std::string reverse_str("reverse");
