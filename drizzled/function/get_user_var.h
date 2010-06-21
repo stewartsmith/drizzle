@@ -31,11 +31,16 @@ class Item_func_get_user_var :public Item_func
 {
   user_var_entry *var_entry;
   Item_result m_cached_result_type;
+  Session &session;
 
 public:
   LEX_STRING name; // keep it public
-  Item_func_get_user_var(LEX_STRING a):
-    Item_func(), m_cached_result_type(STRING_RESULT), name(a) {}
+  Item_func_get_user_var(Session &session_arg, LEX_STRING a):
+    Item_func(),
+    m_cached_result_type(STRING_RESULT),
+    session(session_arg),
+    name(a)
+  {}
   enum Functype functype() const { return GUSERVAR_FUNC; }
   LEX_STRING get_name() { return name; }
   double val_real();

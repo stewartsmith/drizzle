@@ -3389,7 +3389,7 @@ variable_aux:
           }
         | ident_or_text
           {
-            $$= new Item_func_get_user_var($1);
+            $$= new Item_func_get_user_var(*YYSession, $1);
           }
         | '@' opt_var_ident_type ident_or_text opt_component
           {
