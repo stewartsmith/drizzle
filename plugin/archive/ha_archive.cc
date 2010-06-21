@@ -443,10 +443,10 @@ int ha_archive::init_archive_reader()
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name, int, uint32_t)
+int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
   int rc= 0;
-  share= get_share(name, &rc);
+  share= get_share(identifier.getPath().c_str(), &rc);
 
   /** 
     We either fix it ourselves, or we just take it offline 
@@ -479,6 +479,13 @@ int ha_archive::open(const char *name, int, uint32_t)
   thr_lock_data_init(&share->lock, &lock, NULL);
 
   return(rc);
+}
+
+// Should never be called
+int ha_archive::open(const char *, int, uint32_t)
+{
+  assert(0);
+  return -1;
 }
 
 
