@@ -117,7 +117,7 @@ void Item_func_get_user_var::fix_length_and_dec()
 
 bool Item_func_get_user_var::const_item() const
 {
-  return (!var_entry || current_session->getQueryId() != var_entry->update_query_id);
+  return (!var_entry || session.getQueryId() != var_entry->update_query_id);
 }
 
 

@@ -2427,7 +2427,7 @@ Create_func_space::create(Session *session, Item *arg1)
     sp= new (session->mem_root) Item_string(" ", 1, cs, DERIVATION_COERCIBLE);
   }
 
-  return new (session->mem_root) Item_func_repeat(sp, arg1);
+  return new (session->mem_root) Item_func_repeat(*session, sp, arg1);
 }
 
 

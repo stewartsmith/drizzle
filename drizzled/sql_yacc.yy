@@ -3013,7 +3013,7 @@ function_call_keyword:
         | HOUR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_hour($3); }
         | INSERT '(' expr ',' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_insert($3,$5,$7,$9); }
+          { $$= new (YYSession->mem_root) Item_func_insert(*YYSession, $3, $5, $7, $9); }
         | INTERVAL_SYM '(' expr ',' expr ')' %prec INTERVAL_SYM
           {
             Session *session= YYSession;
@@ -3208,7 +3208,7 @@ function_call_conflict:
         | QUARTER_SYM '(' expr ')'
           { $$ = new (YYSession->mem_root) Item_func_quarter($3); }
         | REPEAT_SYM '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_repeat($3,$5); }
+          { $$= new (YYSession->mem_root) Item_func_repeat(*YYSession, $3, $5); }
         | REPLACE '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_replace(*YYSession, $3, $5, $7); }
         | REVERSE_SYM '(' expr ')'
