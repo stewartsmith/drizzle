@@ -164,9 +164,11 @@ static void plugin_prune_list(vector<string> &plugin_list,
 static bool plugin_load_list(module::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
                              const set<string> &plugin_list,
+                             po::options_description &long_options,
                              bool builtin= false);
 static int test_plugin_options(memory::Root *, module::Module *,
-                               int *, char **);
+                               int *, char **,
+                               po::options_description &long_options);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
@@ -250,7 +252,8 @@ static int item_val_real(drizzle_value *value, double *buf)
 */
 static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
                        module::Library *library,
-                       int *argc, char **argv)
+                       int *argc, char **argv,
+                       po::options_description &long_options)
 {
   if (! initialized)
     return true;
@@ -280,7 +283,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
   if (tmp == NULL)
     return true;
 
-  if (!test_plugin_options(tmp_root, tmp, argc, argv))
+  if (!test_plugin_options(tmp_root, tmp, argc, argv, long_options))
   {
     registry.add(tmp);
     return false;
@@ -380,7 +383,8 @@ static unsigned char *get_bookmark_hash_key(const unsigned char *buff,
 */
 bool plugin_init(module::Registry &registry,
                  int *argc, char **argv,
-                 bool skip_init)
+                 bool skip_init,
+                 po::options_description &long_options)
 {
   module::Module *module;
   memory::Root tmp_root(4096);
@@ -430,7 +434,7 @@ bool plugin_init(module::Registry &registry,
   */
   const set<string> builtin_list_set(builtin_list.begin(), builtin_list.end());
   load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                builtin_list_set, true);
+                                builtin_list_set, long_options, true);
   if (load_failed)
   {
     tmp_root.free_root(MYF(0));
@@ -442,7 +446,7 @@ bool plugin_init(module::Registry &registry,
   
   /* Register all dynamic plugins */
   load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                plugin_list_set);
+                                plugin_list_set, long_options);
   if (load_failed)
   {
     tmp_root.free_root(MYF(0));
@@ -517,6 +521,7 @@ static void plugin_prune_list(vector<string> &plugin_list,
 static bool plugin_load_list(module::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
                              const set<string> &plugin_list,
+                             po::options_description &long_options,
                              bool builtin)
 {
   module::Library *library= NULL;
@@ -537,7 +542,7 @@ static bool plugin_load_list(module::Registry &registry,
     }
 
     tmp_root->free_root(MYF(memory::MARK_BLOCKS_FREE));
-    if (plugin_add(registry, tmp_root, library, argc, argv))
+    if (plugin_add(registry, tmp_root, library, argc, argv, long_options))
     {
       registry.removeLibrary(plugin_name);
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -1661,7 +1666,8 @@ void drizzle_del_plugin_sysvar()
 */
 static int test_plugin_options(memory::Root *module_root,
                                module::Module *test_module,
-                               int *argc, char **argv)
+                               int *argc, char **argv,
+                               po::options_description &long_options)
 {
   struct sys_var_chain chain= { NULL, NULL };
   drizzle_sys_var **opt;
@@ -1678,6 +1684,7 @@ static int test_plugin_options(memory::Root *module_root,
     module::option_context opt_ctx(test_module->getName(),
                                    module_options.add_options());
     test_module->getManifest().init_options(opt_ctx);
+    long_options.add(module_options);
 
     po::variables_map &vm= test_module->getVariableMap();
 
@@ -1821,7 +1828,8 @@ public:
 };
 
 
-void my_print_help_inc_plugins(option *main_options)
+void my_print_help_inc_plugins(option *main_options,
+                               po::options_description &long_options)
 {
   module::Registry &registry= module::Registry::singleton();
   vector<option> all_options;
@@ -1876,6 +1884,7 @@ void my_print_help_inc_plugins(option *main_options)
   all_options.push_back(*main_options);
 
   my_print_help(&*(all_options.begin()));
+  cout << long_options << endl;
   my_print_variables(&*(all_options.begin()));
 
   mem_root.free_root(MYF(0));

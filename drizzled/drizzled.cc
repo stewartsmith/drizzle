@@ -28,6 +28,8 @@
 #include <signal.h>
 #include <limits.h>
 
+#include <boost/program_options.hpp>
+
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
@@ -125,6 +127,8 @@
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
 
 using namespace std;
+namespace po=boost::program_options;
+
 
 namespace drizzled
 {
@@ -370,6 +374,8 @@ static void fix_paths(string &progname);
 
 static void usage(void);
 void close_connections(void);
+
+po::options_description long_options("Allowed Options");
  
 /****************************************************************************
 ** Code to end drizzled
@@ -854,7 +860,7 @@ int init_server_components(module::Registry &plugins)
   ha_init_errors();
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? true : false)))
+                  ((opt_help) ? true : false), long_options))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
@@ -1385,7 +1391,7 @@ static void usage(void)
      puts("");
  
      /* Print out all the options including plugin supplied options */
-     my_print_help_inc_plugins(my_long_options);
+     my_print_help_inc_plugins(my_long_options, long_options);
   }
 }
 
