@@ -102,6 +102,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/blob.h"
 #include "drizzled/field/enum.h"
 #include <drizzled/session.h>
+#include <drizzled/charset.h>
 
 using namespace std;
 using namespace google;
@@ -1049,9 +1050,27 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
     for (int partnr= 0; partnr < index->index_part_size(); partnr++)
     {
-      /* TODO: Index prefix lengths */
       const message::Table::Index::IndexPart part= index->index_part(partnr);
-      innodb_err= ib_index_schema_add_col(innodb_index, table_message.field(part.fieldnr()).name().c_str(), 0);
+      const message::Table::Field::FieldType part_type= table_message.field(part.fieldnr()).type();
+      uint64_t compare_length= 0;
+
+      if (part_type == message::Table::Field::BLOB)
+        compare_length= part.compare_length();
+      else if (part_type == message::Table::Field::VARCHAR)
+      {
+        const message::Table::Field::StringFieldOptions field_options= table_message.field(part.fieldnr()).string_options();
+
+        const CHARSET_INFO *cs= get_charset(field_options.has_collation_id() ?
+                                            field_options.collation_id() : 0);
+        if (! cs)
+          cs= default_charset_info;
+
+        compare_length= part.compare_length() / cs->mbmaxlen;
+      }
+
+      innodb_err= ib_index_schema_add_col(innodb_index,
+                            table_message.field(part.fieldnr()).name().c_str(),
+                                          compare_length);
       if (innodb_err != DB_SUCCESS)
         goto schema_error;
     }
