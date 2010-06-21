@@ -630,7 +630,7 @@ bool MSBackup::doWork()
 	return_(true);
 }
 
-void *MSBackup::finalize()
+void *MSBackup::completeWork()
 {
 	if (bu_SourceDatabase || bu_BackupList || bu_Compactor || bu_info) {
 		// We shouldn't be here

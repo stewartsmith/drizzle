@@ -107,6 +107,15 @@ class MSDatabase;
 class CSDaemon;
 class MSTempLogFile;
 
+#ifdef DRIZZLED
+#define GET_FIELD(table, column_index) table->getField(column_index)
+#define GET_TABLE_FIELDS(table) table->getFields()
+#else
+#define GET_FIELD(table, column_index) table->field[column_index]
+#define GET_TABLE_FIELDS(table) table->field
+#endif
+
+
 class MSOpenSystemTable : public CSRefObject {
 public:
 	MSSystemTableShare		*myShare;
@@ -121,12 +130,14 @@ public:
 	 */
 	inline void getFieldValue(const char *row, uint16_t column_index, String *value)
 	{
-		Field *assumed_str_field = mySQLTable->getField(column_index);
+		Field *assumed_str_field = GET_FIELD(mySQLTable, column_index);
 		unsigned char *old_ptr = assumed_str_field->ptr;
 		
 		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->record[0]);
 
+#ifdef DRIZZLED
 		assumed_str_field->setReadSet();
+#endif
 		value = assumed_str_field->val_str(value);
 		
 		assumed_str_field->ptr = old_ptr;
@@ -134,12 +145,14 @@ public:
 
 	inline void getFieldValue(const char *row, uint16_t column_index, uint64_t *value)
 	{
-		Field *assumed_int_field = mySQLTable->getField(column_index);
+		Field *assumed_int_field = GET_FIELD(mySQLTable, column_index);
 		unsigned char *old_ptr = assumed_int_field->ptr;
 
 		assumed_int_field->ptr = (unsigned char *)row + assumed_int_field->offset(mySQLTable->record[0]);
 
+#ifdef DRIZZLED
 		assumed_int_field->setReadSet();
+#endif
 		*value = assumed_int_field->val_int();
 		
 		assumed_int_field->ptr = old_ptr;
@@ -355,6 +368,8 @@ private:
 public:
 	static CSSyncSortedList	*gSystemTableList;
 
+	// Close all open system tables for the database being dropped.
+	static void removeDatabaseSystemTables(MSDatabase *doomed_db); 
 	static void startUp();
 	static void shutDown();
 

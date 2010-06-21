@@ -144,6 +144,23 @@ bool CSFile::transfer(CSFile *dst_file, off64_t dst_offset, CSFile *src_file, of
 	return true;
 }
 
+void CSFile::streamOut(CSOutputStream *dst_stream, off64_t src_offset, off64_t size, char *buffer, size_t buffer_size)
+{
+	size_t tfer;
+
+	while (size > 0) {
+		if (size > (off64_t) buffer_size)
+			tfer = buffer_size;
+		else
+			tfer = (size_t) size;
+      
+		read(buffer, src_offset, tfer, tfer);
+		dst_stream->write(buffer, tfer);
+    
+		src_offset += tfer;
+		size -= tfer;
+	}
+}
 
 #define CS_MASK				((S_IRUSR | S_IWUSR) | (S_IRGRP | S_IWGRP) | (S_IROTH))
 
@@ -157,9 +174,9 @@ void CSFile::close()
 
 off64_t CSFile::getEOF()
 {
-	off_t eof;
+	off64_t eof;
 
-	if ((eof = lseek(iFH, 0, SEEK_END)) == -1)
+	if ((eof = lseek(iFH, 0, SEEK_END)) == (off64_t) -1)
 		CSException::throwFileError(CS_CONTEXT, myFilePath->getCString(), errno);
 
      return eof;

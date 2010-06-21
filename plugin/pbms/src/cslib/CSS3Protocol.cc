@@ -22,18 +22,15 @@
 #include "CSConfig.h"
 #include <inttypes.h>
 
-#undef NO_XML2
 
 #include <curl/curl.h>
-#ifndef	NO_XML2 
-#include <libxml/parser.h>
-#endif
 
 #include "CSGlobal.h"
 #include "CSString.h"
 #include "CSStrUtil.h"
 #include "CSEncode.h"
 #include "CSS3Protocol.h"
+#include "CSXML.h"
 
 #ifdef S3_UNIT_TEST
 //#define SHOW_SIGNING
@@ -42,6 +39,7 @@
 #define DUMP_ERRORS
 #endif
 
+//#define DEBUG_CURL
 #define DUMP_ERRORS
 //#define SHOW_SIGNING
 
@@ -64,138 +62,59 @@ static size_t receive_data(void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t receive_header(void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t send_callback(void *ptr, size_t size, size_t nmemb, void *stream);
 
-//==========================
-typedef struct {
-	bool thow_error; // Must be the first field.
-}ParserInfoRec, *ParserInfoPtr;
-
-typedef struct {
-	bool thow_error; // Must be the first field.
-	class S3ProtocolCon *s3Con;
-	char code[32];
-	CSStringBuffer *buffer;
-	CSStringBuffer *message;
-} ParserErrorInfoRec, *ParserErrorInfoPtr;
-
-//-------------------------------
-// There shouldn't be any XML parser errors unless we received an
-// incomplete reply from te S3 server.
-static void saxError(void *user_data, const char *msg, ...)
-{
-	ParserInfoPtr info = (ParserInfoPtr) user_data;
-	(void)msg;
-/*	
-	va_list args;
-	va_start(args, msg);
-	vprintf( msg, args );
-	va_end(args);
-*/
-	if (!info->thow_error) {
-		enter_();
-		CSException::RecordException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "xml SAX parser error");
-		info->thow_error = true;
-		outer_();
-	}
-}
-
-class S3ProtocolCon : public CSObject {
+class S3ProtocolCon : CSXMLBuffer, public CSObject {
 
 	private:
 	
-	static void saxEndErrorElement(void *user_data, const xmlChar *name)
-	{
-		ParserErrorInfoPtr info = (ParserErrorInfoPtr) user_data;
-
-		if (info->thow_error)
-		return;
-
-		enter_();
-		try_(a) {
-			if (!strcmp("Code", (char *) name)) {		
-				cs_strcpy(32, info->code, info->buffer->getBuffer(0), info->buffer->length());
+	virtual bool openNode(char *path, char *value) {
+		if (value && *value && (strcmp(path,"/error/code/") == 0)) {
+			printf("S3 ERROR Code: %s\n", value);
+			for (int i = 0; retryCodes[i] && !ms_retry; i++)
+				ms_retry = (strcmp(value, retryCodes[i]) == 0);
 				
-				for (int i = 0; retryCodes[i] && !info->s3Con->ms_retry; i++)
-					info->s3Con->ms_retry = (strcmp(info->code, retryCodes[i]) == 0);
-					
-				if (info->s3Con->ms_retry && !strcmp("SlowDown", info->code)) 
-					info->s3Con->ms_slowDown = true;
-					
-			} else if (!strcmp("Message", (char *) name)) {
-				info->message->append(info->buffer->getBuffer(0), info->buffer->length());
-			}
+			if (ms_retry && !strcmp("slowdown", value)) 
+				ms_slowDown = true;
+		} else if (value && *value && (strcmp(path,"/error/message/") == 0)) {
+			printf("S3 ERROR MESSAGE: %s\n", value);
 		}
-		catch_(a);
-		info->thow_error = true;
-		cont_(a);
-		outer_();
-		
-		info->buffer->setLength(0);
+		return true;
 	}
 
-	//-------------------------------
-	static void saxErrorData(void *user_data, const xmlChar *ch, int len)
-	{
-		ParserErrorInfoPtr info = (ParserErrorInfoPtr) user_data;
-
-		if (info->thow_error) 
-			return;
-
-		enter_();
-		try_(a) {
-			info->buffer->append( (char*) ch, len);
-		}
-		catch_(a);
-		info->thow_error = true;
-		cont_(a);
-		outer_();
-
+	virtual bool closeNode(char *path) {
+		(void)path;
+		return true;
 	}
 
+	virtual bool addAttribute(char *path, char *name, char *value) {
+		(void)path;
+		(void)name;
+		(void)value;
+		return true;
+	}
+	
 	//-------------------------------
 	void parse_s3_error()
 	{
-		ParserErrorInfoRec parser_info = {false, NULL, {}, NULL, NULL};
-		struct _xmlSAXHandler sax_handler;
-		
 		enter_();
-		
-		memset(&sax_handler, 0, sizeof(sax_handler));
-		parser_info.s3Con = this;
-		
+
 		if (!ms_errorReply)
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Missing HTTP reply: possible S3 connection failure.");
 
-#ifdef DUMP_ERRORS
+	#ifdef DUMP_ERRORS
 		printf("ms_errorReply:\n===========\n%s\n===========\n", ms_errorReply->getCString());
-#endif
+	#endif
 		
-		//sax_handler.startElement = &saxStartErrorElement;
-		sax_handler.endElement = &saxEndErrorElement;
-		sax_handler.characters = &saxErrorData;
-		sax_handler.cdataBlock = &saxErrorData;
-		sax_handler.error = &saxError;
-		sax_handler.fatalError = &saxError;
-		
-		new_(parser_info.buffer, CSStringBuffer());
-		push_(parser_info.buffer);
-		
-		new_(parser_info.message, CSStringBuffer());
-		push_(parser_info.message);
-		
-		if (xmlSAXUserParseMemory(&sax_handler, &parser_info, ms_errorReply->getBuffer(0), ms_errorReply->length())) {
-			if (!parser_info.thow_error)
-				CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "xml SAX parser error");
+		if (!parseData(ms_errorReply->getCString(), ms_errorReply->length(), 0)){
+			int		err;
+			char	*msg;
+
+			getError(&err, &msg);
+			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, msg);
 		}
 		
-		if (parser_info.thow_error)
-			throw_();
-			
-		release_(parser_info.message);
-		release_(parser_info.buffer);
-
 		exit_();
 	}
-
+	
 	public:
 	
 	CSHTTPHeaders	ms_reply_headers;
@@ -221,7 +140,9 @@ class S3ProtocolCon : public CSObject {
 	
 	unsigned int	ms_replyStatus;
 	bool			ms_throw_error;	// Gets set if an exception occurs in a callback.
-
+	bool			ms_old_libcurl;
+	char			*ms_safe_url;
+	
 	S3ProtocolCon():
 		ms_curl(NULL),
 		ms_header_list(NULL),
@@ -233,12 +154,26 @@ class S3ProtocolCon : public CSObject {
 		ms_errorReply(NULL),
 		ms_data_size(0),
 		ms_replyStatus(0),
-		ms_throw_error(false)
+		ms_throw_error(false),
+		ms_old_libcurl(false),
+		ms_safe_url(NULL)
 	{
 	
 		ms_curl = curl_easy_init();
 		if (!ms_curl)
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "curl_easy_init() failed.");
+
+		curl_version_info_data *curl_ver = curl_version_info(CURLVERSION_NOW); 
+		
+		// libCurl versions prior to 7.17.0 did not make copies of strings passed into curl_easy_setopt()
+		// If this version requirement is a problem I can do this myself, if I have to, I guess. :(
+		if (curl_ver->version_num < 0X071700 ) {
+			ms_old_libcurl = true;
+			
+			//char msg[200];
+			//snprintf(msg, 200, "libcurl version %s is too old, require version 7.17.0 or newer.", curl_ver->version);
+			//CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, msg);
+		}
 		
 		if (curl_easy_setopt(ms_curl, CURLOPT_ERRORBUFFER, ms_curl_error))
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "curl_easy_setopt(CURLOPT_ERRORBUFFER) failed.");
@@ -276,6 +211,9 @@ class S3ProtocolCon : public CSObject {
 			ms_errorReply->release();
 			
 		ms_reply_headers.clearHeaders();
+		
+		if (ms_safe_url)
+			cs_free(ms_safe_url);
 	}
 
 	inline void check_reply_status() 
@@ -344,6 +282,11 @@ class S3ProtocolCon : public CSObject {
 			ms_inputStream->release();
 			ms_inputStream = NULL;
 		}
+		
+		if (ms_safe_url) {
+			cs_free(ms_safe_url);
+			ms_safe_url = NULL;
+		}
 	}
 	
 	inline void ms_setHeader(const char *header)
@@ -352,12 +295,27 @@ class S3ProtocolCon : public CSObject {
 		if (!ms_header_list) 
 			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "curl_slist_append() failed.");
 	}
+
+
+private:	
+	inline const char *safe_url(const char *url)
+	{
+		if (ms_old_libcurl == false)
+			return url;
+			
+		if (ms_safe_url) {
+			cs_free(ms_safe_url);
+			ms_safe_url = NULL;
+		}
+		ms_safe_url = cs_strdup(url);
+		return ms_safe_url;
+	}
 	
+public:	
 	inline void ms_setURL(const char *url)
 	{
 		//printf("URL: \"%s\n", url);
-
-		THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_URL, url));
+		THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_URL, safe_url(url)));
 	}
 	
 	inline void ms_execute_delete_request()
@@ -938,118 +896,68 @@ retry:
 	return_(replyHeaders);
 }
 
-typedef struct {
-	bool thow_error; // Must be the first field.
+class S3ListParser : public CSXMLBuffer {
+
 	CSVector *list;
-	CSStringBuffer *buffer;
-	bool isKey;
-} ParserListInfoRec, *ParserListInfoPtr;
-
-#ifndef	NO_XML2 
-//==========================
-// XML parser callbacks:
+	public:
 
 
-//-------------------------------
-static void saxStartListElement(void *user_data, const xmlChar *name, const xmlChar **)
-{
-	 ParserListInfoPtr info = (ParserListInfoPtr) user_data;
-
-	if (!strcmp("Key", (char *) name)) {
-		if (info->isKey) {
-			enter_();
-			CSException::RecordException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Unexpected <Key> tag");
-			info->thow_error = true;
-			outer_();
-			return;
-		}
-		info->isKey = true;
+	bool parseData(const char *data, size_t len, CSVector *keys)
+	{
+		list = keys;
+		return CSXMLBuffer::parseData(data, len, 0);
 	}
-}
 
-
-//-------------------------------
-static void saxEndListElement(void *user_data, const xmlChar *name)
-{
-	ParserListInfoPtr info = (ParserListInfoPtr) user_data;
-
-	if (info->thow_error)
-	return;
-
-	if (!strcmp("Key", (char *) name)) {
-		enter_();
-		try_(a) {
-			if (!info->isKey) 
-				CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "Unexpected </Key> tag");
-
-//printf("%s\n", info->buffer->getCString());
-			info->isKey = false;
-			info->list->add(CSString::newString(info->buffer->getCString()));
-			info->buffer->setLength(0);
-		}
-		catch_(a);
-		info->thow_error = true;
-		cont_(a);
-		outer_();
+	private:
+	virtual bool openNode(char *path, char *value) {
+		if (value && *value && (strcmp(path,"/listbucketresult/contents/key/") == 0))
+			list->add(CSString::newString(value));
+		return true;
 	}
-}
 
+	virtual bool closeNode(char *path) {
+		(void)path;
+		return true;
+	}
 
-//-------------------------------
-static void saxListData(void *user_data, const xmlChar *ch, int len)
-{
-	ParserListInfoPtr info = (ParserListInfoPtr) user_data;
+	virtual bool addAttribute(char *path, char *name, char *value) {
+		(void)path;
+		(void)name;
+		(void)value;
+		return true;
+	}
 
-	if (info->thow_error || !info->isKey) 
-		return;
-
-	info->buffer->append( (char*) ch, len);
-
-}
-
+};
 
 //-------------------------------
 static CSVector *parse_s3_list(CSMemoryOutputStream *output)
 {
-	ParserListInfoRec parser_info = {false, NULL, NULL, false};
-	struct _xmlSAXHandler sax_handler;
+	S3ListParser s3ListParser;
 	const char *data;
+	CSVector *vector;
 	size_t len;
 	
 	enter_();
-	
-	memset(&sax_handler, 0, sizeof(sax_handler));
-	
+
 	push_(output);
+	
+	new_(vector, CSVector(10));	
+	push_(vector);	
+
 	data = (const char *) output->getMemory(&len);
-	
-	sax_handler.startElement = &saxStartListElement;
-	sax_handler.endElement = &saxEndListElement;
-	sax_handler.characters = &saxListData;
-	sax_handler.cdataBlock = &saxListData;
-	sax_handler.error = &saxError;
-	sax_handler.fatalError = &saxError;
-	
-	new_(parser_info.list, CSVector(10));
-	push_(parser_info.list);
-	
-	new_(parser_info.buffer, CSStringBuffer());
-	push_(parser_info.buffer);
-	
-	if (xmlSAXUserParseMemory(&sax_handler, &parser_info, data, len)) {
-		if (!parser_info.thow_error)
-			CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, "xml SAX parser error");
+	if (!s3ListParser.parseData(data, len, vector)) {
+		int		err;
+		char	*msg;
+
+		s3ListParser.getError(&err, &msg);
+		CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, msg);
 	}
-	
-	if (parser_info.thow_error)
-		throw_();
-		
-	
-	release_(parser_info.buffer);
-	pop_(parser_info.list);
+
+	pop_(vector);
 	release_(output);
-	return_(parser_info.list);
+	return_(vector);
 }
+
 
 //-------------------------------
 CSVector *CSS3Protocol::s3_list(const char *bucket, const char *key_prefix, uint32_t max)
@@ -1060,7 +968,6 @@ CSVector *CSS3Protocol::s3_list(const char *bucket, const char *key_prefix, uint
 	CSMemoryOutputStream *output;
 	uint32_t retry_count = 0;
 	S3ProtocolCon *con_data;
-
 	enter_();
 
 	new_(s3_buffer, CSStringBuffer());
@@ -1134,7 +1041,6 @@ retry:
 	release_(s3_buffer);
 	return_(parse_s3_list(output));
 }
-#endif //	NO_XML2 
 
 //-------------------------------
 CSString *CSS3Protocol::s3_getAuthorization(const char *bucket, const char *key, const char *content_type, uint32_t *s3AuthorizationTime)

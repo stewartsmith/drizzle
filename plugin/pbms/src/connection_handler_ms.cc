@@ -138,7 +138,7 @@ void MSConnectionHandler::writeException(const char *qualifier)
 	iOutputStream->appendBody(myException.getStackTrace());
 	iOutputStream->appendBody(EXCEPTION_REPLY_STACK_TRACE_SUFFIX_TAG);
 	iOutputStream->appendBody("MySQL ");
-	iOutputStream->appendBody(PBMS_VERSION);
+	iOutputStream->appendBody(ms_version());
 	iOutputStream->appendBody(", PBMS ");
 	iOutputStream->appendBody(ms_version());
 	iOutputStream->appendBody("<br>Copyright &#169; 2009, PrimeBase Technologies GmbH</font></P></BODY></HTML>");
@@ -591,7 +591,7 @@ void MSConnectionHandler::serviceConnection()
 	}
 }
 
-bool MSConnectionHandler::initialize()
+bool MSConnectionHandler::initializeWork()
 {
 	return true;
 }
@@ -618,7 +618,7 @@ bool MSConnectionHandler::doWork()
 	return_(false);
 }
 
-void *MSConnectionHandler::finalize()
+void *MSConnectionHandler::completeWork()
 {
 	shuttingDown = true;
 	/* Close the stream, if it was openned. */

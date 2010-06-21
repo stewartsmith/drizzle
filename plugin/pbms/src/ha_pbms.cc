@@ -524,7 +524,7 @@ static int pbms_savepoint_set(handlerton *hton, THD *thd, void *sv)
 	if (pbms_enter_conn(thd, &self, &result, false))
 		return 0;
 		
-	*((csWord4*)sv) = self->myStmtCount;
+	*((uint32_t*)sv) = self->myStmtCount;
 	return 0;	
 }
 
@@ -538,7 +538,7 @@ static int pbms_savepoint_rollback(handlerton *hton, THD *thd, void *sv)
 		return 0;
 	inner_();
 	try_(a) {
-		MSTransactionManager::rollbackToPosition(*((csWord4*)sv));
+		MSTransactionManager::rollbackToPosition(*((uint32_t*)sv));
 	}
 	catch_(a) {
 		err = pbms_exception_to_result(&self->myException, &result);
@@ -1177,9 +1177,11 @@ int PBMSStorageEngine::doRenameTable(Session&, TableIdentifier &, TableIdentifie
 
 #else // DRIZZLED
 
-int ha_pbms::create(const char *table_name, TABLE *, HA_CREATE_INFO *)
+int ha_pbms::create(const char *table_name, TABLE *table, HA_CREATE_INFO *)
 {
-	if (PBMSSystemTables::isSystable(cs_last_name_of_path(table_name)))
+	bool isPBMS = (strcasecmp(table->s->db.str, "PBMS") == 0);
+	
+	if (PBMSSystemTables::isSystemTable(isPBMS, cs_last_name_of_path(table_name)))
 		return(0);
 		
 	/* Create only works for system tables. */

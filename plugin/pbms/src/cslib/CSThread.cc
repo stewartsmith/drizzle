@@ -617,7 +617,7 @@ void *CSDaemon::run()
 	bool must_sleep = false;
 
 	enter_();
-	myMustQuit = !initialize();
+	myMustQuit = !initializeWork();
 
 	restart:
 	try_(a) {
@@ -645,10 +645,10 @@ void *CSDaemon::run()
 		goto restart;
 	}
 
-	/* Prevent signals from going off in finalize! */
+	/* Prevent signals from going off in completeWork! */
 	ignoreSignals = true;
 
-	return_(finalize());
+	return_(completeWork());
 }
 
 bool CSDaemon::doWork()

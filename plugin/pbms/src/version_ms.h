@@ -22,6 +22,9 @@
 #ifndef __PBMS_VERSION_H__
 #define __PBMS_VERSION_H__
 
-#define PBMS_VERSION "0.5.14-beta"
+// The stand alone build will define this in the config file.
+#ifndef PBMS_VERSION
+#define PBMS_VERSION 0.5.14-beta
+#endif
 
 #endif // __PBMS_VERSION_H__

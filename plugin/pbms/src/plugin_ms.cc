@@ -85,10 +85,16 @@ DRIZZLE_DECLARE_PLUGIN
 	NULL                                            /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
+
 #else
+
 extern int pbms_init_func(void *p);
 extern int pbms_done_func(void *);
 extern struct st_mysql_sys_var* pbms_system_variables[];
+
+struct st_mysql_storage_engine pbms_engine_handler = {
+	MYSQL_HANDLERTON_INTERFACE_VERSION
+};
 
 mysql_declare_plugin(pbms)
 {

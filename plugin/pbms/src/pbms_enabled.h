@@ -64,21 +64,28 @@ extern void pbms_finalize(const char *engine_name);
 /*
  * pbms_write_row_blobs() should be called from the engine's 'write_row' function.
  * It can alter the row data so it must be called before any other function using the row data.
- * It should also be called from engine's 'update_row' function for the new row.
  *
  * pbms_completed() must be called after calling pbms_write_row_blobs() and just before
  * returning from write_row() to indicate if the operation completed successfully.
  */
-extern int pbms_write_row_blobs(TABLE *table, unsigned char *buf, PBMSResultPtr result);
+extern int pbms_write_row_blobs(const TABLE *table, unsigned char *buf, PBMSResultPtr result);
+
+/*
+ * pbms_update_row_blobs() should be called from the engine's 'update_row' function.
+ * It can alter the row data so it must be called before any other function using the row data.
+ *
+ * pbms_completed() must be called after calling pbms_write_row_blobs() and just before
+ * returning from write_row() to indicate if the operation completed successfully.
+ */
+extern int pbms_update_row_blobs(const TABLE *table, const unsigned char *old_row, unsigned char *new_row, PBMSResultPtr result);
 
 /*
  * pbms_delete_row_blobs() should be called from the engine's 'delete_row' function.
- * It should also be called from engine's 'update_row' function for the old row.
  *
  * pbms_completed() must be called after calling pbms_delete_row_blobs() and just before
  * returning from delete_row() to indicate if the operation completed successfully.
  */
-extern int pbms_delete_row_blobs(TABLE *table, const unsigned char *buf, PBMSResultPtr result);
+extern int pbms_delete_row_blobs(const TABLE *table, const unsigned char *buf, PBMSResultPtr result);
 
 /*
  * pbms_rename_table_with_blobs() should be called from the engine's 'rename_table' function.
@@ -109,6 +116,6 @@ extern int pbms_delete_table_with_blobs(const char *table_path, PBMSResultPtr re
  * pbms_completed() has the effect of committing or rolling back the changes made if the session
  * is in 'autocommit' mode.
  */
-extern void pbms_completed(TABLE *table, bool ok);
+extern void pbms_completed(const TABLE *table, bool ok);
 
 #endif

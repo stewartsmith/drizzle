@@ -954,7 +954,7 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 	table->write_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->getFields() ; *field ; field++) {
+ 	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -1116,7 +1116,7 @@ bool MSBlobDataTable::returnRow(MSBlobHeadPtr blob, char *buf)
 	table->write_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->getFields() ; *field ; field++) {
+ 	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -1206,7 +1206,7 @@ bool MSBlobAliasTable::returnRow(MSBlobHeadPtr blob, char *buf)
 	table->write_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->getFields() ; *field ; field++) {
+ 	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -1559,7 +1559,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 	table->read_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->getFields() ; *field ; field++) {
+ 	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -1916,7 +1916,7 @@ void MSMetaDataTable::returnRow(char *name, char *value, char *buf)
 	table->write_set = NULL;
 
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->getFields() ; *field ; field++) {
+ 	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -2398,6 +2398,26 @@ MSOpenSystemTable *MSSystemTableShare::openSystemTable(const char *table_path, T
 
 	release_(table_url);
 	return_(otab);
+}
+
+void MSSystemTableShare::removeDatabaseSystemTables(MSDatabase *doomed_db)
+{
+	MSOpenSystemTable *tab;
+	uint32_t i= 0;
+	enter_();
+	
+	push_(doomed_db);
+	lock_(gSystemTableList);
+	while ((tab = (MSOpenSystemTable *) gSystemTableList->itemAt(i))) {
+		if (tab->myShare->mySysDatabase == doomed_db) {
+			gSystemTableList->remove(tab->myShare->myTablePath);
+		} else
+			i++;
+	}
+	
+	unlock_(gSystemTableList);
+	release_(doomed_db);
+	exit_();
 }
 
 void MSSystemTableShare::releaseSystemTable(MSOpenSystemTable *tab)

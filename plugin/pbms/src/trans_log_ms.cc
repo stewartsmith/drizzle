@@ -698,16 +698,22 @@ static void printTrans(uint32_t tid, bool autocommit, MS_Txn type)
 	switch (type) {
 		case MS_RollBackTxn:
 			type_name = "Rollback";
+			break;
 		case MS_PartialRollBackTxn:
 			type_name = "PartialRollBack";
+			break;
 		case MS_CommitTxn:
 			type_name = "Commit";
+			break;
 		case MS_ReferenceTxn:
 			type_name = "Reference";
+			break;
 		case MS_DereferenceTxn:
 			type_name = "Dereference";
+			break;
 		case MS_RecoveredTxn:
 			type_name = "Recovered";
+			break;
 	}
 	
 	fprintf(stderr, "MSTrans::txn_LogTransaction(%d, autocommit = %s, %s)\n", tid, (autocommit)?"On":"Off", type_name);

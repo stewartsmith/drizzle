@@ -43,15 +43,15 @@ public:
 	time_t	lastUse;
 
 	MSConnectionHandler(CSThreadList *list);
-	virtual ~MSConnectionHandler(){} // Do nothing here because 'self' will no longer be valid, use finalize().
+	virtual ~MSConnectionHandler(){} // Do nothing here because 'self' will no longer be valid, use completeWork().
 
 	void close();
 
-	virtual bool initialize();
+	virtual bool initializeWork();
 
 	virtual bool doWork();
 
-	virtual void *finalize();
+	virtual void *completeWork();
 
 	virtual bool handleException();
 

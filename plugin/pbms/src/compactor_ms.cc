@@ -333,7 +333,7 @@ bool MSCompactorThread::doWork()
 	return_(true);
 }
 
-void *MSCompactorThread::finalize()
+void *MSCompactorThread::completeWork()
 {
 	close();
 	return NULL;

@@ -45,7 +45,7 @@
 class CSObject {
 public:
 	CSObject() { }
-	virtual ~CSObject() { }
+	virtual ~CSObject() { finalize(); }
 
 	virtual void retain();
 	virtual void release();
@@ -54,6 +54,7 @@ public:
 	 * All objects are sortable, hashable and linkable,
 	 * as long as these methods are implemented:
 	 */
+	virtual void finalize() { }
 	virtual CSObject *getKey();
 	virtual int compareKey(CSObject *);
 	virtual uint32_t hashKey();
@@ -113,6 +114,15 @@ public:
 
 #ifndef DEBUG
 private:
+#endif
+	uint32_t	iRefCount;
+};
+
+class CSStaticObject : public CSObject {
+	virtual void retain() {}
+	virtual void release(){ finalize();}
+#ifdef DEBUG
+	int		iTrackMe;
 #endif
 	uint32_t	iRefCount;
 };

@@ -52,6 +52,7 @@ class PBMSParameters {
 	
 	static const char *getDefaultMetaDataHeaders();
 	
+#ifdef DRIZZLED
 	static void blackListedDB(const char *db);
 
 	static bool isBlackListedDB(const char *db);
@@ -62,7 +63,6 @@ class PBMSParameters {
 
 	static bool isPBMSEventsEnabled();
 	
-#ifdef DRIZZLED
 	static int32_t getBeforeUptateEventPosition();
 	
 	static int32_t getBeforeInsertEventPosition();	

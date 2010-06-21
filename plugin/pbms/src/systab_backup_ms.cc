@@ -270,7 +270,7 @@ bool MSBackupTable::seqScanNext(char *buf)
 	new_(timeVal, CSTime());
 	push_(timeVal);
 	memset(buf, 0xFF, table->s->null_bytes);
- 	for (Field **field=table->getFields() ; *field ; field++) {
+ 	for (Field **field=GET_TABLE_FIELDS(table) ; *field ; field++) {
  		curr_field = *field;
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114

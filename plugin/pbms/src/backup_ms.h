@@ -140,11 +140,11 @@ class MSBackup :public CSDaemon {
 public:
 
 	MSBackup();
-	~MSBackup(){} // Do nothing here because 'self' will no longer be valid, use finalize().
+	~MSBackup(){} // Do nothing here because 'self' will no longer be valid, use completeWork().
 	
 	virtual bool doWork();
 
-	virtual void *finalize();
+	virtual void *completeWork();
 	
 	void startBackup(MSDatabase *src_db);
 	uint64_t getBackupSize() { return bu_size;}

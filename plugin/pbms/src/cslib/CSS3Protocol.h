@@ -112,11 +112,9 @@ class CSS3Protocol: public CSRefObject {
 	
 	void s3_copy(const char *dest_server, const char *dest_bucket, const char *dest_key, const char *src_bucket, const char *src_key);
 	
-#ifndef	NO_XML2 
 	// s3_list() returns a CSString list if the keys in the bucket with the specified prefix.
 	// The list size returned can be limited with the 'max' parameter. The value 0 indicates no max.
 	CSVector *s3_list(const char *bucket, const char *key_prefix = NULL, uint32_t max = 0);
-#endif 
 
 	CSString *s3_getDataURL(const char *bucket, const char *key, uint32_t keep_alive);
 };

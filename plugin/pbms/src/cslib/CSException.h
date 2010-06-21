@@ -82,6 +82,7 @@ public:
 	void log(CSThread *self);
 	void log(CSThread *self, const char *message);
 
+	void initException(CSException &exception);
 	void initException(const char *func, const char *file, int line, int err, const char *message);
 	void initAssertion(const char *func, const char *file, int line, const char *message);
 	void getCoreError(uint32_t size, char *buffer, int err);

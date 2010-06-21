@@ -118,6 +118,8 @@ private:
 	virtual void openFile(int mode);
 
 public:
+	void streamOut(CSOutputStream *dst_stream, off64_t src_offset, off64_t size, char *buffer, size_t buffer_size);
+
 	static bool isDirNotFound(CSException *e) { return e->getErrorCode() == ENOENT; }
 	static bool isDirExists(CSException *e) { return e->getErrorCode() == EEXIST; }
 

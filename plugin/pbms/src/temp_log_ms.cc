@@ -412,7 +412,7 @@ bool MSTempLogThread::doWork()
 	return_(true);
 }
 
-void *MSTempLogThread::finalize()
+void *MSTempLogThread::completeWork()
 {
 	close();
 	return NULL;

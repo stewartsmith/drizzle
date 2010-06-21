@@ -40,6 +40,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdint.h>
 
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
@@ -49,12 +50,16 @@
  * Format: "~*"<db_id><'~' || '_'><tab_id>"-"<blob_id>"-"<auth_code>"-"<server_id>"-"<blob_ref_id>"-"<blob_size>
  */
 //If URL_FMT changes do not forget to update couldBeURL() in this file and isBlobURL() in Util.java.
- 
+
+#ifndef  PRIu64
+#define URL_FMT "~*%u%c%u-%llu-%x-%u-%llu-%llu"
+#else
 #define URL_FMT "~*%"PRIu32"%c%"PRIu32"-%"PRIu64"-%x-%"PRIu32"-%"PRIu64"-%"PRIu64""
+#endif
 
 #define MS_SHARED_MEMORY_MAGIC			0x7E9A120C
-#define MS_ENGINE_VERSION				2
-#define MS_CALLBACK_VERSION				5
+#define MS_ENGINE_VERSION				3
+#define MS_CALLBACK_VERSION				6
 #define MS_SHARED_MEMORY_VERSION		2
 #define MS_ENGINE_LIST_SIZE				10
 #define MS_TEMP_FILE_PREFIX				"pbms_temp_"
@@ -96,6 +101,7 @@
 #define MS_RESULT_STACK_SIZE			200
 
 typedef struct PBMSResultRec {
+	u_int8_t				mr_had_blobs;							/* A flag to indicate if the statement had any PBMS blobs. */
 	int						mr_code;								/* Engine specific error code. */ 
 	char					mr_message[MS_RESULT_MESSAGE_SIZE];		/* Error message, required if non-zero return code. */
 	char					mr_stack[MS_RESULT_STACK_SIZE];			/* Trace information about where the error occurred. */

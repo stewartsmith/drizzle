@@ -39,11 +39,16 @@ bool pbms_initialize(const char *engine_name __attribute__((unused)),
 					IsPBMSFilterFunc is_pbms_blob __attribute__((unused))
 					) { return true;}
 void pbms_finalize() {}
-int pbms_write_row_blobs(TABLE *table __attribute__((unused)), 
+int pbms_write_row_blobs(const TABLE *table __attribute__((unused)), 
 						unsigned char *buf __attribute__((unused)), 
 						PBMSResultPtr result __attribute__((unused))
 						){ return 0;}
-int pbms_delete_row_blobs(TABLE *table __attribute__((unused)), 
+int pbms_update_row_blobs(const TABLE *table __attribute__((unused)), 
+						const unsigned char *old_row __attribute__((unused)), 
+						unsigned char *new_row __attribute__((unused)), 
+						PBMSResultPtr result __attribute__((unused))
+						){ return 0;}
+int pbms_delete_row_blobs(const TABLE *table __attribute__((unused)), 
 						const unsigned char *buf __attribute__((unused)), 
 						PBMSResultPtr result __attribute__((unused))
 						){ return 0;}
@@ -117,15 +122,50 @@ void pbms_finalize(const char *engine_name)
 	pbms_api.deregisterEngine(engine_name);
 }
 
+//==================================
+static int insertRecord(Field_blob *field, char *blob,  size_t org_length, unsigned char *blob_rec, size_t packlength, PBMSResultPtr result)
+{
+	int err;
+	size_t length;
+	PBMSBlobURLRec blob_url;
+	
+	err = pbms_api.retainBlob(DB_NAME(field), TAB_NAME(field), &blob_url, blob, org_length, field->field_index, result);
+	if (err)
+		return err;
+		
+	// If the BLOB length changed reset it. 
+	// This will happen if the BLOB data was replaced with a BLOB reference. 
+	length = strlen(blob_url.bu_data)  +1;
+	if ((length != org_length) || memcmp(blob_url.bu_data, blob, length)) {
+		if (length != org_length) {
+			field->store_length(blob_rec, packlength, length);
+		}
+		
+		if (length > org_length) {
+			// This can only happen if the BLOB URL is actually larger than the BLOB itself.
+			blob = (char *) session_alloc(current_session, length);
+			memcpy(blob_rec+packlength, &blob, sizeof(char*));
+		}			
+		memcpy(blob, blob_url.bu_data, length);
+	} 
+		
+	return 0;
+}
+
 //====================
-int pbms_write_row_blobs(TABLE *table, unsigned char *row_buffer, PBMSResultPtr result)
+int pbms_update_row_blobs(const TABLE *table, const unsigned char *old_row, unsigned char *new_row, PBMSResultPtr result)
 {
 	Field_blob *field;
-	char *blob_rec, *blob;
-	size_t packlength, i, org_length, length;
-	char blob_url_buffer[PBMS_BLOB_URL_SIZE];
+	uint32_t field_offset;
+	const unsigned char *old_blob_rec;
+	unsigned char *new_blob_rec;
+	char *old_blob_url, *new_blob_url;
+	size_t packlength, i, old_length, new_length;
 	int err;
+	bool old_null_blob, new_null_blob;
 
+	result->mr_had_blobs = false;
+	
 	if (!pbms_api.isPBMSLoaded())
 		return 0;
 		
@@ -135,7 +175,11 @@ int pbms_write_row_blobs(TABLE *table, unsigned char *row_buffer, PBMSResultPtr 
 	for (i= 0; i < table->s->blob_fields; i++) {
 		field = GET_BLOB_FIELD(table, i);
 
-#ifndef DRIZZLED
+		old_null_blob = field->is_null_in_record(old_row);
+		new_null_blob = field->is_null_in_record(new_row);
+		if (old_null_blob && new_null_blob)
+			continue;
+
 		{
 			String type_name;
 			// Note: field->type() always returns MYSQL_TYPE_BLOB regardless of the type of BLOB
@@ -143,40 +187,46 @@ int pbms_write_row_blobs(TABLE *table, unsigned char *row_buffer, PBMSResultPtr 
 			if (strcasecmp(type_name.c_ptr(), "LongBlob"))
 				continue;
 		}
-#endif
 			
 		if( is_pbms_blob && !is_pbms_blob(field) )
 			continue;
 			
+			
 		// Get the blob record:
-		blob_rec = (char *)row_buffer + field->offset(field->table->record[0]);
+		field_offset = field->offset(field->table->record[0]);
 		packlength = field->pack_length() - field->table->s->blob_ptr_size;
 
-		memcpy(&blob, blob_rec +packlength, sizeof(char*));
-		org_length = field->get_length((unsigned char *)blob_rec);
-
+		if (new_null_blob) {
+			new_blob_url = NULL;
+		} else {
+			new_blob_rec = new_row + field_offset;
+			new_length = field->get_length(new_blob_rec);
+			memcpy(&new_blob_url, new_blob_rec +packlength, sizeof(char*));
+		}
 		
-		// Signal PBMS to record a new reference to the BLOB.
-		// If 'blob' is not a BLOB URL then it will be stored in the repositor as a new BLOB
-		// and a reference to it will be created.
-		err = pbms_api.retainBlob(DB_NAME(field), TAB_NAME(field), blob_url_buffer, blob, org_length, field->field_index, result);
-		if (err)
-			return err;
+		if (old_null_blob) {
+			old_blob_url = NULL;
+		} else {
+			old_blob_rec = old_row + field_offset;
+			old_length = field->get_length(old_blob_rec);
+			memcpy(&old_blob_url, old_blob_rec +packlength, sizeof(char*));
+		}
+		
+		// Check to see if the BLOBs are the same.
+		// I am assuming that if the BLOB pointer is different then teh BLOB has changed.
+		// Zero length BLOBs are a special case because they may have a NULL data pointer,
+		// to catch this and distiguish it from a NULL BLOB I do a check to see if one field was NULL:
+		// (old_null_blob != new_null_blob)
+		if ((old_blob_url != new_blob_url) || (old_null_blob != new_null_blob)) {
 			
-		// If the BLOB length changed reset it. 
-		// This will happen if the BLOB data was replaced with a BLOB reference. 
-		length = strlen(blob_url_buffer)  +1;
-		if ((length != org_length) || memcmp(blob_url_buffer, blob, length)) {
-			if (length != org_length) {
-				field->store_length((unsigned char *)blob_rec, packlength, length);
-			}
-			
-			if (length > org_length) {
-				// This can only happen if the BLOB URL is actually larger than the BLOB itself.
-				blob = (char *) session_alloc(current_session, length);
-				memcpy(blob_rec+packlength, &blob, sizeof(char*));
-			}			
-			memcpy(blob, blob_url_buffer, length);
+			result->mr_had_blobs = true;
+
+			// The BLOB was updated so delete the old one and insert the new one.
+			if ((old_null_blob == false) && (err = pbms_api.releaseBlob(DB_NAME(field), TAB_NAME(field), old_blob_url, old_length, result)))
+				return err;
+				
+			if ((new_null_blob == false) && (err = insertRecord(field, new_blob_url, new_length, new_blob_rec, packlength, result)))
+				return err;
 		} 
 	}
 	
@@ -184,13 +234,67 @@ int pbms_write_row_blobs(TABLE *table, unsigned char *row_buffer, PBMSResultPtr 
 }
 
 //====================
-int pbms_delete_row_blobs(TABLE *table, const unsigned char *row_buffer, PBMSResultPtr result)
+int pbms_write_row_blobs(const TABLE *table, unsigned char *row_buffer, PBMSResultPtr result)
 {
+
 	Field_blob *field;
-	const char *blob_rec;
-	char *blob;
+	unsigned char *blob_rec;
+	char *blob_url;
 	size_t packlength, i, length;
 	int err;
+
+	result->mr_had_blobs = false;
+
+	if (!pbms_api.isPBMSLoaded())
+		return 0;
+		
+	if (table->s->blob_fields == 0)
+		return 0;
+		
+	for (i= 0; i <  table->s->blob_fields; i++) {
+		field =  GET_BLOB_FIELD(table, i);
+		
+		if (field->is_null_in_record(row_buffer))
+			continue;
+			
+		{
+			String type_name;
+			// Note: field->type() always returns MYSQL_TYPE_BLOB regardless of the type of BLOB
+			field->sql_type(type_name);
+			if (strcasecmp(type_name.c_ptr(), "LongBlob"))
+				continue;
+		}
+			
+		if( is_pbms_blob && !is_pbms_blob(field) )
+			continue;
+
+		result->mr_had_blobs = true;
+
+		// Get the blob record:
+		packlength = field->pack_length() - field->table->s->blob_ptr_size;
+		blob_rec = row_buffer + field->offset(field->table->record[0]);
+		
+		length = field->get_length(blob_rec);
+		memcpy(&blob_url, blob_rec +packlength, sizeof(char*));
+
+		if ((err = insertRecord(field, blob_url, length, blob_rec, packlength, result)))
+			return err;
+	}
+
+	return 0;
+}
+
+//====================
+int pbms_delete_row_blobs(const TABLE *table, const unsigned char *row_buffer, PBMSResultPtr result)
+{
+	Field_blob *field;
+	const unsigned char *blob_rec;
+	char *blob;
+	size_t packlength, i, length;
+	bool call_failed = false;
+	int err;
+	
+	result->mr_had_blobs = false;
 
 	if (!pbms_api.isPBMSLoaded())
 		return 0;
@@ -200,8 +304,10 @@ int pbms_delete_row_blobs(TABLE *table, const unsigned char *row_buffer, PBMSRes
 		
 	for (i= 0; i < table->s->blob_fields; i++) {
 		field = GET_BLOB_FIELD(table, i);
-
-#ifndef DRIZZLED
+		
+		if (field->is_null_in_record(row_buffer))
+			continue;
+			
 		{
 			String type_name;
 			// Note: field->type() always returns MYSQL_TYPE_BLOB regardless of the type of BLOB
@@ -209,18 +315,19 @@ int pbms_delete_row_blobs(TABLE *table, const unsigned char *row_buffer, PBMSRes
 			if (strcasecmp(type_name.c_ptr(), "LongBlob"))
 				continue;
 		}
-#endif
 			
 		if(is_pbms_blob && !is_pbms_blob(field) )
 			continue;
-			
+
+		result->mr_had_blobs = true;	
+		
 		// Get the blob record:
-		blob_rec = (char *)row_buffer + field->offset(field->table->record[0]);
 		packlength = field->pack_length() - field->table->s->blob_ptr_size;
 
-		length = field->get_length((unsigned char *)blob_rec);
+		blob_rec = row_buffer + field->offset(field->table->record[0]);
+		length = field->get_length(blob_rec);
 		memcpy(&blob, blob_rec +packlength, sizeof(char*));
-		
+
 		// Signal PBMS to delete the reference to the BLOB.
 		err = pbms_api.releaseBlob(DB_NAME(field), TAB_NAME(field), blob, length, result);
 		if (err)
@@ -266,13 +373,16 @@ int pbms_rename_table_with_blobs(const char *old_table_path, const char *new_tab
 {
 	char o_db_name[MAX_NAME_SIZE], n_db_name[MAX_NAME_SIZE], o_tab_name[MAX_NAME_SIZE], n_tab_name[MAX_NAME_SIZE];
 
+	result->mr_had_blobs = false; 
 	if (!pbms_api.isPBMSLoaded())
 		return 0;
 		
+	result->mr_had_blobs = true; // Assume it has blobs.
+	
 	parse_table_path(old_table_path, o_db_name, o_tab_name);
 	parse_table_path(new_table_path, n_db_name, n_tab_name);
 	
-	return pbms_api.renameTable(o_db_name, o_tab_name, n_tab_name, result);
+	return pbms_api.renameTable(o_db_name, o_tab_name, n_db_name, n_tab_name, result);
 }
 
 //====================
@@ -280,16 +390,18 @@ int pbms_delete_table_with_blobs(const char *table_path, PBMSResultPtr result)
 {
 	char db_name[MAX_NAME_SIZE], tab_name[MAX_NAME_SIZE];
 		
+	result->mr_had_blobs = false; 
 	if (!pbms_api.isPBMSLoaded())
 		return 0;
 		
+	result->mr_had_blobs = true; // Assume it has blobs.
 	parse_table_path(table_path, db_name, tab_name);
 
 	return pbms_api.dropTable(db_name, tab_name, result);
 }
 
 //====================
-void pbms_completed(TABLE *table, bool ok)
+void pbms_completed(const TABLE *table, bool ok)
 {
 	if (!pbms_api.isPBMSLoaded())
 		return;

@@ -160,8 +160,7 @@ void ms_build_blob_url(MSBlobURLPtr blob, char *url)
 #define STR(x) _STR(x)
 const char *ms_version()
 {
-	//return STR(PBMS_VERSION);
-	return PBMS_VERSION;
+	return STR(PBMS_VERSION);
 }
 
 

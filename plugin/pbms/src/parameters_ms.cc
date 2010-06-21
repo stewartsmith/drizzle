@@ -62,7 +62,6 @@ using namespace drizzled::plugin;
 #define PBMS_PORT 8080
 #endif
 
-static set<string> my_black_list;
 
 static int my_port_number = PBMS_PORT;
 
@@ -77,6 +76,8 @@ static u_long	my_max_keep_alive = MS_DEFAULT_KEEP_ALIVE;
 static uint64_t my_backup_db_id = 1;
 static uint32_t my_server_id = 1;
 
+#ifdef DRIZZLED
+static set<string> my_black_list;
 static bool my_events_enabled = true;
 static CSMutex my_table_list_lock;
 
@@ -86,7 +87,6 @@ static const char *dflt_my_table_list = "*";
 
 static TableMatchState my_table_match = MATCH_UNKNOWN;
 
-#ifdef DRIZZLED
 static int32_t my_before_insert_position= 1;      // Call this event observer first.
 static int32_t my_before_update_position= 1;
 
@@ -95,10 +95,6 @@ using namespace drizzled::plugin;
 
 #define st_mysql_sys_var drizzled::drizzle_sys_var
 #else
-
-struct st_mysql_storage_engine pbms_engine_handler = {
-	MYSQL_HANDLERTON_INTERFACE_VERSION
-};
 
 struct st_mysql_sys_var
 {
@@ -173,6 +169,7 @@ uint64_t PBMSParameters::getBackupDatabaseID() { return my_backup_db_id;}
 //-----------------
 void PBMSParameters::setBackupDatabaseID(uint64_t id) { my_backup_db_id = id;}
 
+#ifdef DRIZZLED
 //-----------------
 bool PBMSParameters::isPBMSEventsEnabled() { return my_events_enabled;}
 
@@ -439,13 +436,12 @@ bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 }
 
 
-#ifdef DRIZZLED
 //-----------------
 int32_t PBMSParameters::getBeforeUptateEventPosition() { return my_before_update_position;}
 
 //-----------------
 int32_t PBMSParameters::getBeforeInsertEventPosition() { return my_before_insert_position;}
-#endif
+#endif // DRIZZLED
 
 //-----------------
 static void pbms_temp_blob_timeout_func(THD *, struct st_mysql_sys_var *, void *, CONST_SAVE void *)
@@ -465,7 +461,6 @@ static void pbms_temp_blob_timeout_func(THD *, struct st_mysql_sys_var *, void *
 
 //-----------------
 //-----------------
-#if MYSQL_VERSION_ID >= 50118
 static MYSQL_SYSVAR_INT(port, my_port_number,
 	PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
 	"The port for the server stream-based communications.",
@@ -508,7 +503,7 @@ static MYSQL_SYSVAR_ULONGLONG(next_backup_db_id, my_backup_db_id,
 	NULL, NULL, 1, 1, UINT64_MAX, 1);
 
 
-/////////////
+#ifdef DRIZZLED
 
 //----------
 static int check_table_list(THD *, struct st_mysql_sys_var *, void *save, drizzle_value *value)
@@ -563,7 +558,6 @@ static MYSQL_SYSVAR_BOOL(watch_enable,
                            NULL, /* update func */
                            true /* default */);
 
-#ifdef DRIZZLED
 static MYSQL_SYSVAR_INT(before_insert_position,
                            my_before_insert_position,
                            PLUGIN_VAR_OPCMDARG,
@@ -586,8 +580,8 @@ static MYSQL_SYSVAR_INT(before_update_position,
                            INT32_MAX -1, /* max */
                            0 /* blk */);
 
-#endif
-/////////////
+#endif // DRIZZLED
+
 struct st_mysql_sys_var* pbms_system_variables[] = {
 	MYSQL_SYSVAR(port),
 	MYSQL_SYSVAR(repository_threshold),
@@ -598,17 +592,16 @@ struct st_mysql_sys_var* pbms_system_variables[] = {
 	MYSQL_SYSVAR(max_keep_alive),
 	MYSQL_SYSVAR(next_backup_db_id),
 	
+#ifdef DRIZZLED
 	MYSQL_SYSVAR(watch_tables),
 	MYSQL_SYSVAR(watch_enable),
 	
-#ifdef DRIZZLED
 	MYSQL_SYSVAR(before_insert_position),
 	MYSQL_SYSVAR(before_update_position),
 #endif
   
 	NULL
 };
-#endif
 
 
 

@@ -42,6 +42,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "string.h"
 
@@ -1186,10 +1187,10 @@ MSDatabase *MSDatabase::newDatabase(const char *db_location, CSString *db_name, 
 	MSRepository	*repo;
 	CSPath			*path;
 	const char		*file_name;
-	uint32_t			file_id;
+	uint32_t		file_id;
 	off64_t			file_size;
 	MSTempLog		*log;
-	uint32_t			to_delete = 0;
+	uint32_t		to_delete = 0;
 	CSString		*db_path;
 	bool			is_pbms = false;
 
@@ -1522,6 +1523,7 @@ void MSDatabase::dropDatabase(MSDatabase *doomedDatabase, const char *db_name )
 		doomedDatabasePath->retain(); // Hold on to this path after the database has been released.
 		
 		MSTableList::removeDatabaseTables(RETAIN(doomedDatabase));
+		MSSystemTableShare::removeDatabaseSystemTables(RETAIN(doomedDatabase));
 
 		doomedDatabase->dropDatabase(); // Shutdown database threads.
 		

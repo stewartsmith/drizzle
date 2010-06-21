@@ -92,6 +92,17 @@ void CSException::initException(const char *func, const char *file, int line, in
 	cs_strcpy(CS_EXC_MESSAGE_SIZE, iMessage, message);
 }
 
+void CSException::initException(CSException &exception)
+{
+	iErrorCode = exception.iErrorCode;
+	strcpy(iContext, exception.iContext);
+	strcpy(iMessage, exception.iMessage);
+	
+	iStackTrace.setLength(0);
+	iStackTrace.append(exception.iStackTrace.getCString());
+
+}
+
 void CSException::initAssertion(const char *func, const char *file, int line, const char *message)
 {
 	cs_format_context(CS_EXC_CONTEXT_SIZE, iContext, func, file, line);

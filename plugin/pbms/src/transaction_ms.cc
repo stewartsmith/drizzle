@@ -65,14 +65,14 @@ class MSTransactionThread : public CSDaemon {
 public:
 	MSTransactionThread(MSTrans *txn_log);
 	
-	virtual ~MSTransactionThread(){} // Do nothing here because 'self' will no longer be valid, use finalize().
+	virtual ~MSTransactionThread(){} // Do nothing here because 'self' will no longer be valid, use completeWork().
 
 
 	void close();
 
 	virtual bool doWork();
 
-	virtual void *finalize();
+	virtual void *completeWork();
 	
 	void flush();
 	
@@ -283,7 +283,7 @@ bool MSTransactionThread::doWork()
 	return_(true);
 }
 
-void *MSTransactionThread::finalize()
+void *MSTransactionThread::completeWork()
 {
 	close();
 	
@@ -420,6 +420,7 @@ class MSTransactionCheckPoint: public CSCString
 	uint32_t position;
 };
 
+#ifdef DRIZZLED
 void MSTransactionManager::setSavepoint(const char *savePoint)
 {
 	MSTransactionCheckPoint *checkPoint;
@@ -473,6 +474,7 @@ void MSTransactionManager::rollbackTo(const char *savePoint)
 		
 	exit_();
 }
+#endif
 
 void MSTransactionManager::rollbackToPosition(uint32_t position)
 {

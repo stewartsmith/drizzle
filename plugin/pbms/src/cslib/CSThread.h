@@ -314,11 +314,11 @@ public:
 
 	virtual void *run();
 
-	virtual bool initialize() { return true; };
+	virtual bool initializeWork() { return true; };
 
 	virtual bool doWork();
 
-	virtual void *finalize() { return NULL; };
+	virtual void *completeWork() { return NULL; };
 
 	virtual bool handleException();
 
