@@ -650,7 +650,9 @@ public:
 
   int open_table_def(Session& session, TableIdentifier &identifier);
 
-  int open_table_from_share(Session *session, const char *alias,
+  int open_table_from_share(Session *session,
+                            const TableIdentifier &identifier,
+                            const char *alias,
                             uint32_t db_stat, uint32_t ha_open_flags,
                             Table &outparam);
   int parse_table_proto(Session& session, message::Table &table);
