@@ -381,10 +381,8 @@ int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
 
   err= ib_savepoint_rollback(*transaction, savepoint.getName().c_str(),
                              savepoint.getName().length());
-  if (err != DB_SUCCESS)
-    return -1;
 
-  return 0;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int EmbeddedInnoDBEngine::doReleaseSavepoint(Session* session,
