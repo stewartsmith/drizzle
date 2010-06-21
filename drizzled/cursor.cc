@@ -84,7 +84,12 @@ Cursor *Cursor::clone(memory::Root *mem_root)
   if (!(new_handler->ref= (unsigned char*) mem_root->alloc_root(ALIGN_SIZE(ref_length)*2)))
     return NULL;
 
-  if (new_handler && !new_handler->ha_open(table,
+  TableIdentifier identifier(table->getShare()->getSchemaName(),
+                             table->getShare()->getTableName(),
+                             table->getShare()->getType());
+
+  if (new_handler && !new_handler->ha_open(identifier,
+                                           table,
                                            table->getMutableShare()->getNormalizedPath(),
                                            table->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
@@ -213,8 +218,9 @@ uint64_t Cursor::rowSize() { return table->getRecordLength() + table->sizeFields
   Try O_RDONLY if cannot open as O_RDWR
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
-int Cursor::ha_open(Table *table_arg, const char *name, int mode,
-                     int test_if_locked)
+int Cursor::ha_open(const TableIdentifier &,
+                    Table *table_arg, const char *name, int mode,
+                    int test_if_locked)
 {
   int error;
 

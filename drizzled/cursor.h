@@ -230,7 +230,7 @@ public:
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
-  int ha_open(Table *table, const char *name, int mode, int test_if_locked);
+  int ha_open(const TableIdentifier &identifier, Table *table, const char *name, int mode, int test_if_locked);
   int startIndexScan(uint32_t idx, bool sorted);
   int endIndexScan();
   int startTableScan(bool scan);
