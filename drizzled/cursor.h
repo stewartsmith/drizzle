@@ -532,6 +532,7 @@ private:
   */
 
   virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
+  virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
   virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
   virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }

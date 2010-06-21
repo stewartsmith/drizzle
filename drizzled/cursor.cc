@@ -72,6 +72,11 @@ Cursor::~Cursor(void)
 }
 
 
+/*
+ * @note this only used in
+ * optimizer::QuickRangeSelect::init_ror_merged_scan(bool reuse_handler) as
+ * of the writing of this comment. -Brian
+ */
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
   Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare(), mem_root);
@@ -212,13 +217,18 @@ ha_rows Cursor::records() { return stats.records; }
 uint64_t Cursor::tableSize() { return stats.index_file_length + stats.data_file_length; }
 uint64_t Cursor::rowSize() { return table->getRecordLength() + table->sizeFields(); }
 
+int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked)
+{
+  return open(identifier.getPath().c_str(), mode, test_if_locked);
+}
+
 /**
   Open database-Cursor.
 
   Try O_RDONLY if cannot open as O_RDWR
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
-int Cursor::ha_open(const TableIdentifier &,
+int Cursor::ha_open(const TableIdentifier &identifier,
                     Table *table_arg, const char *name, int mode,
                     int test_if_locked)
 {
@@ -227,13 +237,14 @@ int Cursor::ha_open(const TableIdentifier &,
   table= table_arg;
   assert(table->getShare() == table_share);
 
-  if ((error=open(name, mode, test_if_locked)))
+  assert(identifier.getPath().compare(name) == 0);
+  if ((error= doOpen(identifier, mode, test_if_locked)))
   {
     if ((error == EACCES || error == EROFS) && mode == O_RDWR &&
         (table->db_stat & HA_TRY_READ_ONLY))
     {
       table->db_stat|=HA_READ_ONLY;
-      error=open(name,O_RDONLY,test_if_locked);
+      error= doOpen(identifier, O_RDONLY,test_if_locked);
     }
   }
   if (error)
