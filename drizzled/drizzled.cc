@@ -1761,6 +1761,7 @@ static void fix_paths(string &progname)
   internal::convert_dirname(buff,buff,NULL);
   (void) internal::my_load_path(language,language,buff);
 
+  if (not opt_help and not opt_help_extended)
   {
     char *tmp_string;
     struct stat buf;
