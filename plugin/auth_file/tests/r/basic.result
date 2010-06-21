@@ -8,3 +8,5 @@ SELECT 1;
 1
 connect(localhost,auth_file_password,bad_password,test,MASTER_PORT,);
 ERROR 28000: Access denied for user 'auth_file_password'@'LOCALHOST' (using password: YES)
+1
+1

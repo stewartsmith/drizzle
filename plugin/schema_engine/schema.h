@@ -53,7 +53,7 @@ public:
   ~Schema();
 
 
-  bool doCanCreateTable(drizzled::TableIdentifier &identifier);
+  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 
   drizzled::Cursor *create(drizzled::TableShare &,
                            drizzled::memory::Root *)
@@ -73,7 +73,7 @@ public:
   // Below are table methods that we don't implement (and don't need)
 
   int doGetTableDefinition(drizzled::Session&,
-                           drizzled::TableIdentifier&,
+                           const drizzled::TableIdentifier&,
                            drizzled::message::Table&)
   {
     return ENOENT;
@@ -86,25 +86,25 @@ public:
   {
   }
 
-  bool doDoesTableExist(drizzled::Session&, drizzled::TableIdentifier&)
+  bool doDoesTableExist(drizzled::Session&, const drizzled::TableIdentifier&)
   {
     return false;
   }
 
-  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier&, drizzled::TableIdentifier&)
+  int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier&, const drizzled::TableIdentifier&)
   {
     return EPERM;
   }
 
   int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
-                    drizzled::TableIdentifier&,
+                    const drizzled::TableIdentifier&,
                     drizzled::message::Table&)
   {
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, drizzled::TableIdentifier&)
+  int doDropTable(drizzled::Session&, const drizzled::TableIdentifier&)
   {
     return 0;
   }

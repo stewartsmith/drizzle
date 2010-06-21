@@ -31,13 +31,8 @@ class TableShareInstance : public TableShare
   Table private_table;
 
 public:
-  TableShareInstance()
-  {
-    private_table.setShare(this);
-  }
-
-  TableShareInstance(const char *tmpname_arg) :
-    TableShare(message::Table::INTERNAL, "", 0, tmpname_arg, tmpname_arg)
+  TableShareInstance(TableIdentifier::Type type_arg) :
+    TableShare(type_arg)
   {
     private_table.setShare(this);
   }

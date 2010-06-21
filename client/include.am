@@ -10,10 +10,6 @@ CLIENT_LDADD= \
 	      gnulib/libgnu.la \
 	      client/libgetpassword.la
 
-CLIENT_CXXFLAGS= \
-                 ${AM_CXXFLAGS} \
-		 ${BOOSTSKIP_WARNINGS}
-
 noinst_LTLIBRARIES+= \
 		     client/libgetpassword.la
 
@@ -50,22 +46,18 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				$(LIBZ) \
 				gnulib/libgnu.la \
 				client/libgetpassword.la
-client_drizzle_CXXFLAGS=	${CLIENT_CXXFLAGS}
 
 client_drizzledump_SOURCES=	client/drizzledump.cc
 client_drizzledump_LDADD=	${CLIENT_LDADD}
-client_drizzledump_CXXFLAGS=	${CLIENT_CXXFLAGS}
 
 client_drizzleimport_SOURCES=	client/drizzleimport.cc
 client_drizzleimport_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
-client_drizzleimport_CXXFLAGS=	${CLIENT_CXXFLAGS}
 
 client_drizzleslap_SOURCES=	client/drizzleslap.cc
 client_drizzleslap_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
-client_drizzleslap_CXXFLAGS=	${CLIENT_CXXFLAGS}
+client_drizzleslap_CXXFLAGS=	${AM_CXXFLAGS} ${BOOSTSKIP_WARNINGS}
 
 client_drizzletest_SOURCES=	client/drizzletest.cc client/errname.cc
-client_drizzletest_LDADD=	${CLIENT_LDADD} ${LIBPCRE}
-client_drizzletest_CXXFLAGS=	${CLIENT_CXXFLAGS}
+client_drizzletest_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE} 
  
 

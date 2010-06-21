@@ -729,6 +729,8 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
         DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
                                  session->thread_id,
                                  const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+        // Implement Views here --Brian
+
         /* Actually execute the query */
         try {
           mysql_execute_command(session);

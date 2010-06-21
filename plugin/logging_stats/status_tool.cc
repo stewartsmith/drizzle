@@ -127,7 +127,7 @@ StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
   {
     status_var_to_display= new StatusVars();
     CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
-    cumulativeStats->sumCurrentScoreboardStatusVars(logging_stats->getCurrentScoreboard(), status_var_to_display);
+    cumulativeStats->sumCurrentScoreboard(logging_stats->getCurrentScoreboard(), status_var_to_display, NULL);
     status_var_to_display->merge(logging_stats->getCumulativeStats()->getGlobalStatusVars());
   }
 }

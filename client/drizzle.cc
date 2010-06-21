@@ -166,7 +166,6 @@ const uint32_t MAX_COLUMN_LENGTH= 1024;
 
 /* Buffer to hold 'version' and 'version_comment' */
 const int MAX_SERVER_VERSION_LENGTH= 128;
-const string PASSWORD_SENTINEL("\0\0\0\0\0", 5);
 
 #define PROMPT_CHAR '\\'
 
@@ -290,7 +289,7 @@ static bool ignore_errors= false, quick= false,
   opt_compress= false, opt_shutdown= false, opt_ping= false,
   vertical= false, line_numbers= true, column_names= true,
   opt_nopager= true, opt_outfile= false, named_cmds= false,
-  tty_password= false, opt_nobeep= false, opt_reconnect= true,
+  opt_nobeep= false, opt_reconnect= true,
   opt_secure_auth= false,
   default_pager_set= false, opt_sigint_ignore= false,
   auto_vertical_output= false,
@@ -1347,45 +1346,6 @@ static void check_max_input_line(uint32_t in_max_input_line)
   opt_max_input_line*=1024;
 }
 
-static pair<string, string> parse_password_arg(std::string s)
-{
-  if (s.find("--password") == 0)
-  {
-    if (s == "--password")
-    {
-      tty_password= true;
-      //check if no argument is passed.
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-
-    if (s.substr(10,3) == "=\"\"" || s.substr(10,3) == "=''")
-    {
-      // Check if --password="" or --password=''
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-    
-    if(s.substr(10) == "=" && s.length() == 11)
-    {
-      // check if --password= and return a default value
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-
-    if(s.length()>12 && (s[10] == '"' || s[10] == '\''))
-    {
-      // check if --password has quotes, remove quotes and return the value
-      return make_pair("password", s.substr(11,s.length()-1));
-    }
-
-    // if all above are false, it implies that --password=value, return value.
-    return make_pair("password", s.substr(11));
-  }
-
-  else
-  {
-    return make_pair(string(""), string(""));
-  } 
-}
-
 int main(int argc,char *argv[])
 {
 try
@@ -1531,7 +1491,7 @@ try
   po::variables_map vm;
 
   po::positional_options_description p;
-  p.add("database", -1);
+  p.add("database", 1);
 
   po::store(po::command_line_parser(argc, argv).options(long_options).
             positional(p).extra_parser(parse_password_arg).run(), vm);
@@ -1710,17 +1670,6 @@ try
     {
       opt_password= current_password;
       tty_password= false;
-    }
-    char *start= (char *)current_password.c_str();
-    char *temp_pass= (char *)current_password.c_str();
-    while (*temp_pass)
-    {
-        /* Overwriting password with 'x' */
-        *temp_pass++= 'x';
-    }
-    if (*start)
-    {
-      start[1]= 0;
     }
   }
   else

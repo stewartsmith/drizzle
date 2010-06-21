@@ -1348,7 +1348,6 @@ public:
                             bool send_refresh= false);
   void close_open_tables();
   void close_data_files_and_morph_locks(TableIdentifier &identifier);
-  void close_data_files_and_morph_locks(const char *db, const char *table_name);
 
 private:
   bool free_cached_table();
@@ -1409,7 +1408,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  Table *table_cache_insert_placeholder(const char *db_name, const char *table_name, const char *key, uint32_t key_length);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
@@ -1417,11 +1416,11 @@ public:
   typedef unordered_map<std::string, message::Table> TableMessageCache;
   TableMessageCache table_message_cache;
 
-  bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);
-  bool removeTableMessage(TableIdentifier &identifier);
-  bool getTableMessage(TableIdentifier &identifier, message::Table &table_message);
-  bool doesTableMessageExist(TableIdentifier &identifier);
-  bool renameTableMessage(TableIdentifier &from, TableIdentifier &to);
+  bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+  bool removeTableMessage(const TableIdentifier &identifier);
+  bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+  bool doesTableMessageExist(const TableIdentifier &identifier);
+  bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
@@ -1440,9 +1439,9 @@ public:
   void doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
 
-  int doGetTableDefinition(drizzled::TableIdentifier &identifier,
+  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
-  bool doDoesTableExist(TableIdentifier &identifier);
+  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);
@@ -1495,8 +1494,7 @@ private:
   std::vector<TableShareInstance *> temporary_shares;
 
 public:
-  TableShareInstance *getTemporaryShare(const char *tmpname_arg);
-  TableShareInstance *getTemporaryShare();
+  TableShareInstance *getTemporaryShare(TableIdentifier::Type type_arg);
 };
 
 class Join;

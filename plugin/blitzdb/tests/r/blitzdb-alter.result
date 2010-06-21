@@ -1,0 +1,22 @@
+drop table if exists t1;
+CREATE TABLE `t1` (
+`col_varchar_10_key` varchar(10),
+`col_varchar_10` varchar(10),
+`col_int` int,
+`col_varchar_1024_key` varchar(1024),
+`col_varchar_1024` varchar(1024),
+`col_int_key` int,
+pk integer auto_increment,
+/*Indices*/
+key (`col_varchar_10_key` ),
+key (`col_varchar_1024_key` ),
+key (`col_int_key` ),
+primary key (pk)
+) ENGINE=blitzdb ;
+Warnings:
+Warning	1071	Specified key was too long; max key length is 1024 bytes
+ALTER TABLE `t1` DISABLE KEYS;
+ERROR 42000: Table 't1' uses an extension that doesn't exist in this Drizzle version
+ALTER TABLE `t1` ENABLE KEYS;
+ERROR 42000: Table 't1' uses an extension that doesn't exist in this Drizzle version
+DROP TABLE `t1`;

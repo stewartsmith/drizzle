@@ -1477,7 +1477,9 @@ int Cursor::insertRecord(unsigned char *buf)
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
   }
- 
+
+  ha_statistic_increment(&system_status_var::ha_write_count);
+
   DRIZZLE_INSERT_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1522,6 +1524,8 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
     }
   }
 
+  ha_statistic_increment(&system_status_var::ha_update_count);
+
   DRIZZLE_UPDATE_ROW_DONE(error);
 
   if (unlikely(error))
@@ -1553,6 +1557,8 @@ int Cursor::deleteRecord(const unsigned char *buf)
       error= ER_EVENT_OBSERVER_PLUGIN;
     }
   }
+
+  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   DRIZZLE_DELETE_ROW_DONE(error);
 

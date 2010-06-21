@@ -28,6 +28,8 @@
 #include <signal.h>
 #include <limits.h>
 
+#include <boost/program_options.hpp>
+
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
@@ -125,6 +127,8 @@
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
 
 using namespace std;
+namespace po=boost::program_options;
+
 
 namespace drizzled
 {
@@ -365,12 +369,13 @@ bool drizzle_rm_tmp_tables();
 static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 int drizzled_get_one_option(int, const struct option *, char *);
-static int init_thread_environment();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string &progname);
 
 static void usage(void);
 void close_connections(void);
+
+po::options_description long_options("Allowed Options");
  
 /****************************************************************************
 ** Code to end drizzled
@@ -798,7 +803,7 @@ int init_common_variables(const char *conf_file_name, int argc,
 }
 
 
-static int init_thread_environment()
+int init_thread_environment()
 {
    pthread_mutexattr_t attr; 
    pthread_mutexattr_init(&attr);
@@ -855,7 +860,7 @@ int init_server_components(module::Registry &plugins)
   ha_init_errors();
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? true : false)))
+                  ((opt_help) ? true : false), long_options))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
@@ -1386,7 +1391,7 @@ static void usage(void)
      puts("");
  
      /* Print out all the options including plugin supplied options */
-     my_print_help_inc_plugins(my_long_options);
+     my_print_help_inc_plugins(my_long_options, long_options);
   }
 }
 
@@ -1756,6 +1761,7 @@ static void fix_paths(string &progname)
   internal::convert_dirname(buff,buff,NULL);
   (void) internal::my_load_path(language,language,buff);
 
+  if (not opt_help and not opt_help_extended)
   {
     char *tmp_string;
     struct stat buf;

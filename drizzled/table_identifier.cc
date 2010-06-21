@@ -46,7 +46,6 @@ extern pid_t current_pid;
 static const char hexchars[]= "0123456789abcdef";
 
 static bool tablename_to_filename(const char *from, char *to, size_t to_length);
-static size_t build_tmptable_filename(std::string &path);
 
 /*
   Translate a cursor name to a table name (WL #1324).
@@ -138,7 +137,7 @@ static uint32_t get_counter()
 
 #endif
 
-static size_t build_tmptable_filename(std::string &buffer)
+size_t TableIdentifier::build_tmptable_filename(std::string &buffer)
 {
   size_t tmpdir_length;
   ostringstream post_tmpdir_str;
@@ -155,6 +154,21 @@ static size_t build_tmptable_filename(std::string &buffer)
 
   return buffer.length();
 }
+
+size_t TableIdentifier::build_tmptable_filename(std::vector<char> &buffer)
+{
+  ostringstream post_tmpdir_str;
+
+  post_tmpdir_str << drizzle_tmpdir << "/" << TMP_FILE_PREFIX << current_pid;
+  post_tmpdir_str << pthread_self() << "-" << get_counter();
+
+  buffer.resize(post_tmpdir_str.str().length() + 1);
+  memcpy(&buffer[0], post_tmpdir_str.str().c_str(), post_tmpdir_str.str().size());
+  buffer[post_tmpdir_str.str().size()]= 0;
+
+  return buffer.size();
+}
+
 
 /*
   Creates path to a cursor: drizzle_data_dir/db/table.ext
@@ -331,6 +345,11 @@ void TableIdentifier::init()
 
   boost::hash<std::string> hasher;
   hash_value= hasher(path);
+
+  key.resize(getKeySize());
+  size_t key_length= TableIdentifier::createKey(&key[0], *this);
+
+  assert(key_length == getKeySize()); // If this is off, then we have a memory issue.
 }
 
 
@@ -339,7 +358,7 @@ const std::string &TableIdentifier::getPath() const
   return path;
 }
 
-bool TableIdentifier::compare(std::string schema_arg, std::string table_arg)
+bool TableIdentifier::compare(std::string schema_arg, std::string table_arg) const
 {
   std::transform(schema_arg.begin(), schema_arg.end(),
                  schema_arg.begin(), ::tolower);
@@ -382,7 +401,7 @@ const std::string &TableIdentifier::getSQLPath()
 }
 
 
-void TableIdentifier::copyToTableMessage(message::Table &message)
+void TableIdentifier::copyToTableMessage(message::Table &message) const
 {
   message.set_name(table_name);
   message.set_schema(getSchemaName());

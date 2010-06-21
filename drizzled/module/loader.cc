@@ -22,6 +22,9 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <iostream>
+
+#include <boost/program_options.hpp>
 
 #include "drizzled/option.h"
 #include "drizzled/my_hash.h"
@@ -31,6 +34,7 @@
 #include "drizzled/module/load_list.h"
 #include "drizzled/module/library.h"
 #include "drizzled/module/registry.h"
+#include "drizzled/module/option_context.h"
 #include "drizzled/sql_parse.h"
 #include "drizzled/show.h"
 #include "drizzled/cursor.h"
@@ -48,6 +52,8 @@
 #ifndef RTLD_NOW
 #define RTLD_NOW 1
 #endif
+
+namespace po=boost::program_options;
 
 using namespace std;
 
@@ -158,9 +164,11 @@ static void plugin_prune_list(vector<string> &plugin_list,
 static bool plugin_load_list(module::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
                              const set<string> &plugin_list,
+                             po::options_description &long_options,
                              bool builtin= false);
 static int test_plugin_options(memory::Root *, module::Module *,
-                               int *, char **);
+                               int *, char **,
+                               po::options_description &long_options);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
 static void plugin_vars_free_values(sys_var *vars);
@@ -244,7 +252,8 @@ static int item_val_real(drizzle_value *value, double *buf)
 */
 static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
                        module::Library *library,
-                       int *argc, char **argv)
+                       int *argc, char **argv,
+                       po::options_description &long_options)
 {
   if (! initialized)
     return true;
@@ -274,7 +283,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
   if (tmp == NULL)
     return true;
 
-  if (!test_plugin_options(tmp_root, tmp, argc, argv))
+  if (!test_plugin_options(tmp_root, tmp, argc, argv, long_options))
   {
     registry.add(tmp);
     return false;
@@ -374,7 +383,8 @@ static unsigned char *get_bookmark_hash_key(const unsigned char *buff,
 */
 bool plugin_init(module::Registry &registry,
                  int *argc, char **argv,
-                 bool skip_init)
+                 bool skip_init,
+                 po::options_description &long_options)
 {
   module::Module *module;
   memory::Root tmp_root(4096);
@@ -424,7 +434,7 @@ bool plugin_init(module::Registry &registry,
   */
   const set<string> builtin_list_set(builtin_list.begin(), builtin_list.end());
   load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                builtin_list_set, true);
+                                builtin_list_set, long_options, true);
   if (load_failed)
   {
     tmp_root.free_root(MYF(0));
@@ -436,7 +446,7 @@ bool plugin_init(module::Registry &registry,
   
   /* Register all dynamic plugins */
   load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
-                                plugin_list_set);
+                                plugin_list_set, long_options);
   if (load_failed)
   {
     tmp_root.free_root(MYF(0));
@@ -511,6 +521,7 @@ static void plugin_prune_list(vector<string> &plugin_list,
 static bool plugin_load_list(module::Registry &registry,
                              memory::Root *tmp_root, int *argc, char **argv,
                              const set<string> &plugin_list,
+                             po::options_description &long_options,
                              bool builtin)
 {
   module::Library *library= NULL;
@@ -531,7 +542,7 @@ static bool plugin_load_list(module::Registry &registry,
     }
 
     tmp_root->free_root(MYF(memory::MARK_BLOCKS_FREE));
-    if (plugin_add(registry, tmp_root, library, argc, argv))
+    if (plugin_add(registry, tmp_root, library, argc, argv, long_options))
     {
       registry.removeLibrary(plugin_name);
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -1653,8 +1664,10 @@ void drizzle_del_plugin_sysvar()
   NOTE:
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
-static int test_plugin_options(memory::Root *tmp_root, module::Module *tmp,
-                               int *argc, char **argv)
+static int test_plugin_options(memory::Root *module_root,
+                               module::Module *test_module,
+                               int *argc, char **argv,
+                               po::options_description &long_options)
 {
   struct sys_var_chain chain= { NULL, NULL };
   drizzle_sys_var **opt;
@@ -1664,51 +1677,97 @@ static int test_plugin_options(memory::Root *tmp_root, module::Module *tmp,
   struct st_bookmark *var;
   uint32_t len, count= EXTRA_OPTIONS;
 
-  for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
-    count++;
-
-
-  if (count > EXTRA_OPTIONS || (*argc > 1))
+  if (test_module->getManifest().init_options != NULL)
   {
-    if (!(opts= (option*) tmp_root->alloc_root(sizeof(option) * count)))
+    po::options_description module_options("Options used by plugins");
+    module::option_context opt_ctx(test_module->getName(),
+                                   module_options.add_options());
+    test_module->getManifest().init_options(opt_ctx);
+    long_options.add(module_options);
+
+    po::variables_map &vm= test_module->getVariableMap();
+
+    po::parsed_options parsed= po::command_line_parser(*argc, argv).
+      options(module_options).allow_unregistered().run();
+
+    po::store(parsed, vm);
+
+    vector<string> to_pass_further= po::collect_unrecognized(parsed.options,
+                                                             po::include_positional);
+
+    /* Copy the left over options back into argv for further processing.
+       Once the core is using program options, this whole thing will be done
+       differently.
+     */
+    for (vector<string>::iterator iter= to_pass_further.begin();
+         iter != to_pass_further.end();
+         ++iter)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory for plugin '%s'."), tmp->getName().c_str());
-      return(-1);
+      size_t pos= iter-to_pass_further.begin()+1;
+      memcpy(argv[pos], (*iter).c_str(), (*iter).size()+1);
+      cout << "arg: *" << argv[pos] << "*" << endl;
     }
-    memset(opts, 0, sizeof(option) * count);
+    *argc= to_pass_further.size() + 1;
 
-    if (construct_options(tmp_root, tmp, opts))
+    po::notify(vm);
+  }
+  else
+  {
+
+    for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Bad options for plugin '%s'."), tmp->getName().c_str());
-      return(-1);
+      count++;
     }
 
-    error= handle_options(argc, &argv, opts, get_one_plugin_option);
-    (*argc)++; /* add back one for the program name */
-
-    if (error)
+    if (count > EXTRA_OPTIONS || (*argc > 1))
     {
-       errmsg_printf(ERRMSG_LVL_ERROR, _("Parsing options for plugin '%s' failed."),
-                       tmp->getName().c_str());
-       goto err;
+      if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Out of memory for plugin '%s'."),
+                      test_module->getName().c_str());
+        return(-1);
+      }
+      memset(opts, 0, sizeof(option) * count);
+
+      if (construct_options(module_root, test_module, opts))
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Bad options for plugin '%s'."),
+                      test_module->getName().c_str());
+        return(-1);
+      }
+
+      error= handle_options(argc, &argv, opts, get_one_plugin_option);
+      (*argc)++; /* add back one for the program name */
+
+      if (error)
+      {
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Parsing options for plugin '%s' failed."),
+                      test_module->getName().c_str());
+        goto err;
+      }
     }
   }
 
   error= 1;
 
   {
-    for (opt= tmp->getManifest().system_vars; opt && *opt; opt++)
+    for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
     {
       sys_var *v;
       if (((o= *opt)->flags & PLUGIN_VAR_NOSYSVAR))
         continue;
 
-      if ((var= find_bookmark(tmp->getName(), o->name, o->flags)))
+      if ((var= find_bookmark(test_module->getName(), o->name, o->flags)))
+      {
         v= new sys_var_pluginvar(var->key + 1, o);
+      }
       else
       {
-        len= tmp->getName().length() + strlen(o->name) + 2;
-        string vname(tmp->getName());
+        len= test_module->getName().length() + strlen(o->name) + 2;
+        string vname(test_module->getName());
         vname.push_back('-');
         vname.append(o->name);
         transform(vname.begin(), vname.end(), vname.begin(), ::tolower);
@@ -1737,11 +1796,12 @@ static int test_plugin_options(memory::Root *tmp_root, module::Module *tmp,
       chain.last->setNext(NULL);
       if (mysql_add_sys_var_chain(chain.first, NULL))
       {
-        errmsg_printf(ERRMSG_LVL_ERROR, _("Plugin '%s' has conflicting system variables"),
-                        tmp->getName().c_str());
+        errmsg_printf(ERRMSG_LVL_ERROR,
+                      _("Plugin '%s' has conflicting system variables"),
+                      test_module->getName().c_str());
         goto err;
       }
-      tmp->system_vars= chain.first;
+      test_module->system_vars= chain.first;
     }
     return(0);
   }
@@ -1767,7 +1827,8 @@ public:
 };
 
 
-void my_print_help_inc_plugins(option *main_options)
+void my_print_help_inc_plugins(option *main_options,
+                               po::options_description &long_options)
 {
   module::Registry &registry= module::Registry::singleton();
   vector<option> all_options;
@@ -1784,6 +1845,11 @@ void my_print_help_inc_plugins(option *main_options)
     {
       module::Module *p= (*modules).second;
       ++modules;
+
+      /* If we have an init_options function, we are registering
+         commmand line options that way, so don't do them this way */
+      if (p->getManifest().init_options != NULL)
+        continue;
 
       if (p->getManifest().system_vars == NULL)
         continue;
@@ -1822,6 +1888,7 @@ void my_print_help_inc_plugins(option *main_options)
   all_options.push_back(*main_options);
 
   my_print_help(&*(all_options.begin()));
+  cout << long_options << endl;
   my_print_variables(&*(all_options.begin()));
 
   mem_root.free_root(MYF(0));

@@ -151,20 +151,20 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table& proto);
 
-  int doDropTable(Session&, TableIdentifier &identifier);
+  int doDropTable(Session&, const TableIdentifier &identifier);
 
   int doRenameTable(drizzled::Session&,
-                    drizzled::TableIdentifier&,
-                    drizzled::TableIdentifier&);
+                    const drizzled::TableIdentifier&,
+                    const drizzled::TableIdentifier&);
 
   int doGetTableDefinition(Session& session,
-                           TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
-  bool doDoesTableExist(Session&, TableIdentifier &identifier);
+  bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
 private:
   void getTableNamesInSchemaFromInnoDB(drizzled::SchemaIdentifier &schema,
@@ -600,7 +600,7 @@ fetch:
   *nb_reserved_values= 1;
 }
 
-static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
+static void TableIdentifier_to_innodb_name(const TableIdentifier &identifier, std::string *str)
 {
   str->reserve(identifier.getSchemaName().length() + identifier.getTableName().length() + 1);
 //  str->append(identifier.getPath().c_str()+2);
@@ -632,8 +632,8 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
   thr_lock_data_init(&share->lock, &lock, NULL);
 
 
-  if (table->getShare()->primary_key != MAX_KEY)
-    ref_length= table->key_info[table->getShare()->primary_key].key_length;
+  if (table->getShare()->getPrimaryKey() != MAX_KEY)
+    ref_length= table->key_info[table->getShare()->getPrimaryKey()].key_length;
   else if (share->has_hidden_primary_key)
     ref_length= sizeof(uint64_t);
   else
@@ -782,7 +782,7 @@ cleanup:
 
 int EmbeddedInnoDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
-                                        drizzled::TableIdentifier &identifier,
+                                        const drizzled::TableIdentifier &identifier,
                                         drizzled::message::Table& table_message)
 {
   ib_tbl_sch_t innodb_table_schema= NULL;
@@ -1004,7 +1004,7 @@ rollback:
 }
 
 int EmbeddedInnoDBEngine::doDropTable(Session &session,
-                                      TableIdentifier &identifier)
+                                      const TableIdentifier &identifier)
 {
   ib_trx_t innodb_schema_transaction;
   ib_err_t innodb_err;
@@ -1077,7 +1077,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session &session,
   return 0;
 }
 
-static ib_err_t rename_table_message(ib_trx_t transaction, TableIdentifier &from_identifier, TableIdentifier &to_identifier)
+static ib_err_t rename_table_message(ib_trx_t transaction, const TableIdentifier &from_identifier, const TableIdentifier &to_identifier)
 {
   ib_crsr_t cursor;
   ib_tpl_t search_tuple;
@@ -1168,8 +1168,8 @@ rollback:
 }
 
 int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session &session,
-                                        drizzled::TableIdentifier &from,
-                                        drizzled::TableIdentifier &to)
+                                        const drizzled::TableIdentifier &from,
+                                        const drizzled::TableIdentifier &to)
 {
   ib_trx_t innodb_schema_transaction;
   ib_err_t err;
@@ -1420,7 +1420,7 @@ rollback_close_err:
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
-                                               TableIdentifier &identifier,
+                                               const TableIdentifier &identifier,
                                                drizzled::message::Table &table)
 {
   ib_crsr_t innodb_cursor= NULL;
@@ -1441,7 +1441,7 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
 }
 
 bool EmbeddedInnoDBEngine::doDoesTableExist(Session &,
-                                            TableIdentifier& identifier)
+                                            const TableIdentifier& identifier)
 {
   ib_crsr_t innodb_cursor;
   string innodb_table_name;
@@ -1644,7 +1644,7 @@ int EmbeddedInnoDBCursor::doInsertRecord(unsigned char *record)
   {
     if (write_can_replace)
     {
-      store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
+      store_key_value_from_innodb(table->key_info + table->getShare()->getPrimaryKey(),
                                   ref, ref_length, record);
 
       ib_tpl_t search_tuple= ib_clust_search_tuple_create(cursor);
@@ -1812,8 +1812,8 @@ int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, T
   int colnr= 0;
 
   /* We need the primary key for ::position() to work */
-  if (table->s->primary_key != MAX_KEY)
-    table->mark_columns_used_by_index_no_reset(table->s->primary_key);
+  if (table->s->getPrimaryKey() != MAX_KEY)
+    table->mark_columns_used_by_index_no_reset(table->s->getPrimaryKey());
 
   for (Field **field= table->getFields() ; *field ; field++, colnr++)
   {
@@ -2006,8 +2006,8 @@ static void store_key_value_from_innodb(KeyInfo *key_info, unsigned char* ref, i
 
 void EmbeddedInnoDBCursor::position(const unsigned char *record)
 {
-  if (table->getShare()->primary_key != MAX_KEY)
-    store_key_value_from_innodb(table->key_info + table->getShare()->primary_key,
+  if (table->getShare()->getPrimaryKey() != MAX_KEY)
+    store_key_value_from_innodb(table->key_info + table->getShare()->getPrimaryKey(),
                                 ref, ref_length, record);
   else
     *((uint64_t*) ref)= hidden_autoinc_pkey_position;

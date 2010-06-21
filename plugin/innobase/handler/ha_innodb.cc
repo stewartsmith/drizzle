@@ -419,10 +419,10 @@ public:
 
   UNIV_INTERN int doCreateTable(Session &session,
                                 Table &form,
-                                drizzled::TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 message::Table&);
-  UNIV_INTERN int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
-  UNIV_INTERN int doDropTable(Session &session, TableIdentifier &identifier);
+  UNIV_INTERN int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+  UNIV_INTERN int doDropTable(Session &session, const TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -441,14 +441,14 @@ public:
   }
 
   int doGetTableDefinition(drizzled::Session& session,
-                           drizzled::TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
            drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string> &set_of_names);
 
-  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
@@ -512,7 +512,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
   }
 }
 
-bool InnobaseEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
@@ -529,7 +529,7 @@ bool InnobaseEngine::doDoesTableExist(Session &session, TableIdentifier &identif
 }
 
 int InnobaseEngine::doGetTableDefinition(Session &session,
-                                         drizzled::TableIdentifier &identifier,
+                                         const TableIdentifier &identifier,
                                          message::Table &table_proto)
 {
   string proto_path(identifier.getPath());
@@ -2828,7 +2828,7 @@ ha_innobase::open(
 
   /* Looks like MySQL-3.23 sometimes has primary key number != 0 */
 
-  primary_key = table->getShare()->primary_key;
+  primary_key = table->getShare()->getPrimaryKey();
   key_used_on_scan = primary_key;
 
   /* Allocate a buffer for a 'row reference'. A row reference is
@@ -3793,8 +3793,6 @@ ha_innobase::doInsertRecord(
     ut_error;
   }
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   sql_command = session_sql_command(user_session);
 
   if ((sql_command == SQLCOM_ALTER_TABLE
@@ -4161,8 +4159,6 @@ ha_innobase::doUpdateRecord(
 
   ut_a(prebuilt->trx == trx);
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   if (prebuilt->upd_node) {
     uvect = prebuilt->upd_node->update;
   } else {
@@ -4296,8 +4292,6 @@ ha_innobase::doDeleteRecord(
   trx_t*    trx = session_to_trx(user_session);
 
   ut_a(prebuilt->trx == trx);
-
-  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (!prebuilt->upd_node) {
     row_get_prebuilt_update_vector(prebuilt);
@@ -5240,7 +5234,7 @@ create_index(
 
   ind_type = 0;
 
-  if (key_num == form->getShare()->primary_key) {
+  if (key_num == form->getShare()->getPrimaryKey()) {
     ind_type = ind_type | DICT_CLUSTERED;
   }
 
@@ -5397,7 +5391,7 @@ InnobaseEngine::doCreateTable(
 /*================*/
   Session         &session, /*!< in: Session */
   Table&    form,   /*!< in: information on table columns and indexes */
-        drizzled::TableIdentifier &identifier,
+        const TableIdentifier &identifier,
         message::Table& create_proto)
 {
   int   error;
@@ -5537,8 +5531,8 @@ InnobaseEngine::doCreateTable(
 
   /* Look for a primary key */
 
-  primary_key_no= (form.getShare()->primary_key != MAX_KEY ?
-                   (int) form.getShare()->primary_key :
+  primary_key_no= (form.getShare()->hasPrimaryKey() ?
+                   (int) form.getShare()->getPrimaryKey() :
                    -1);
 
   /* Our function row_get_mysql_key_number_for_index assumes
@@ -5743,7 +5737,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session &session,
-        TableIdentifier &identifier)
+        const TableIdentifier &identifier)
 {
   int error;
   trx_t*  parent_trx;
@@ -5969,7 +5963,7 @@ innobase_rename_table(
 /*********************************************************************//**
 Renames an InnoDB table.
 @return 0 or error code */
-UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   // A temp table alter table/rename is a shallow rename and only the
   // definition needs to be updated.
@@ -6202,7 +6196,7 @@ ha_innobase::read_time(
   ha_rows total_rows;
   double  time_for_scan;
 
-  if (index != table->getShare()->primary_key) {
+  if (index != table->getShare()->getPrimaryKey()) {
     /* Not clustered */
     return(Cursor::read_time(index, ranges, rows));
   }
@@ -7726,10 +7720,10 @@ ha_innobase::cmp_ref(
   /* Do a type-aware comparison of primary key fields. PK fields
   are always NOT NULL, so no checks for NULL are performed. */
 
-  key_part = table->key_info[table->getShare()->primary_key].key_part;
+  key_part = table->key_info[table->getShare()->getPrimaryKey()].key_part;
 
   key_part_end = key_part
-      + table->key_info[table->getShare()->primary_key].key_parts;
+      + table->key_info[table->getShare()->getPrimaryKey()].key_parts;
 
   for (; key_part != key_part_end; ++key_part) {
     field = key_part->field;
