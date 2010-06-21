@@ -1,4 +1,4 @@
-CREATE TABLE t1 (pk int primary key, a varbinary(4096) unique);
+CREATE TABLE t1 (pk int primary key, a varbinary(767) unique);
 drop table t1;
 --error 1071
 CREATE TABLE t1 (pk int primary key, a varbinary(4097) unique);
