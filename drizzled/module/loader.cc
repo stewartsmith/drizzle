@@ -1847,6 +1847,11 @@ void my_print_help_inc_plugins(option *main_options,
       module::Module *p= (*modules).second;
       ++modules;
 
+      /* If we have an init_options function, we are registering
+         commmand line options that way, so don't do them this way */
+      if (p->getManifest().init_options != NULL)
+        continue;
+
       if (p->getManifest().system_vars == NULL)
         continue;
 
