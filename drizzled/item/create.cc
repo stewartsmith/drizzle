@@ -2079,7 +2079,7 @@ Create_func_load_file Create_func_load_file::s_singleton;
 Item*
 Create_func_load_file::create(Session *session, Item *arg1)
 {
-  return new (session->mem_root) Item_load_file(arg1);
+  return new (session->mem_root) Item_load_file(*session, arg1);
 }
 
 
@@ -2184,7 +2184,7 @@ Create_func_lpad Create_func_lpad::s_singleton;
 Item*
 Create_func_lpad::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
 {
-  return new (session->mem_root) Item_func_lpad(arg1, arg2, arg3);
+  return new (session->mem_root) Item_func_lpad(*session, arg1, arg2, arg3);
 }
 
 
@@ -2209,7 +2209,7 @@ Create_func_makedate::create(Session *session, Item *arg1, Item *arg2)
 Create_func_make_set Create_func_make_set::s_singleton;
 
 Item*
-Create_func_make_set::create_native(Session *session, LEX_STRING name,
+Create_func_make_set::create_native(Session *session_arg, LEX_STRING name,
                                     List<Item> *item_list)
 {
   int arg_count= 0;
@@ -2224,7 +2224,7 @@ Create_func_make_set::create_native(Session *session, LEX_STRING name,
   }
 
   Item *param_1= item_list->pop();
-  return new (session->mem_root) Item_func_make_set(param_1, *item_list);
+  return new (session_arg->mem_root) Item_func_make_set(*session_arg, param_1, *item_list);
 }
 
 
@@ -2372,7 +2372,7 @@ Create_func_rpad Create_func_rpad::s_singleton;
 Item*
 Create_func_rpad::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
 {
-  return new (session->mem_root) Item_func_rpad(arg1, arg2, arg3);
+  return new (session->mem_root) Item_func_rpad(*session, arg1, arg2, arg3);
 }
 
 
