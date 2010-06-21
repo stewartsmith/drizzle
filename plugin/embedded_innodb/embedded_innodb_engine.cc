@@ -309,6 +309,9 @@ static int ib_err_t_to_drizzle_error(ib_err_t err)
   case DB_TOO_MANY_CONCURRENT_TRXS:
     return HA_ERR_RECORD_FILE_FULL; /* need better error code */
 
+  case DB_END_OF_INDEX:
+    return HA_ERR_END_OF_FILE;
+
   case DB_UNSUPPORTED:
     return HA_ERR_UNSUPPORTED;
   }
@@ -2555,12 +2558,7 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
 
   err= ib_cursor_first(cursor);
   if (err != DB_SUCCESS)
-  {
-    if (err == DB_END_OF_INDEX)
-      return HA_ERR_END_OF_FILE;
-    else
-      return -1; // FIXME
-  }
+    return ib_err_t_to_drizzle_error(err);
 
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(buf, cursor, tuple, table,
