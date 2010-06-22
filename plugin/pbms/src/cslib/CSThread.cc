@@ -138,6 +138,7 @@ void CSThreadList::signalAllThreads(int sig)
 	finally_(a) {
 		unlock();
 	}
+	finally_end_block(a);
 	exit_();
 }
 
@@ -158,6 +159,7 @@ void CSThreadList::quitAllThreads()
 	finally_(a) {
 		unlock();
 	}
+	finally_end_block(a);
 	exit_();
 }
 
@@ -183,6 +185,7 @@ void CSThreadList::stopAllThreads()
 		finally_(a) {
 			unlock();
 		}
+		finally_end_block(a);
 		if (!thread)
 			break;
 
@@ -192,6 +195,7 @@ void CSThreadList::stopAllThreads()
 		finally_(b) {
 			thread->release();
 		}
+		finally_end_block(b);
 	}
 	exit_();
 }

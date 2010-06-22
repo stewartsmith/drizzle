@@ -407,6 +407,7 @@ void CSHTTPInputStream::readHead()
 		finally_(a) {
 			sb->release();
 		}
+		finally_end_block(a);
 	}
 	exit_();
 }

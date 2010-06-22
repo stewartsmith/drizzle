@@ -122,8 +122,10 @@ int prof_setjmp(void);
 							(self)->jumpDepth++; profile_setjmp; \
 							if (setjmp((self)->jumpEnv[(self)->jumpDepth-1].jb_buffer)) goto catch_##n;
 #define catch_(n)			(self)->jumpDepth--; goto cont_##n; catch_##n: (self)->jumpDepth--; self->caught();
-#define finally_(n)			(self)->jumpDepth--; goto final_##n; catch_##n: throw_##n = 1; (self)->jumpDepth--; self->caught(); final_##n:
 #define cont_(n)			if (throw_##n) throw_(); cont_##n:
+#define finally_(n)			(self)->jumpDepth--; goto final_##n; catch_##n: throw_##n = 1; (self)->jumpDepth--; self->caught(); final_##n: {
+#define finally_end_block(n) } if (throw_##n) throw_();
+#define finally_end_block_no_throw(n) }
 
 /*
  * -----------------------------------------------------------------------

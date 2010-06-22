@@ -550,6 +550,7 @@ void MSConnectionHandler::handlePut()
 	finally_(a) {
 		otab->returnToPool();
 	}
+	finally_end_block(a);
 
 	exit_();
 }

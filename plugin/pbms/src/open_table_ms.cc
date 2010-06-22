@@ -514,6 +514,7 @@ bool MSOpenTable::deleteReferences(uint32_t temp_log_id, uint32_t temp_log_offse
 		if (repo_file)
 			repo_file->returnToPool();
 	}
+	finally_end_block(a);
 
 	exit:
 	return_(result);

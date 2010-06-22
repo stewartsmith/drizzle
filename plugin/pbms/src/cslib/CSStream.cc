@@ -73,6 +73,7 @@ void CSStream::pipe(CSOutputStream *out, CSInputStream *in)
 		in->close();
 		out->close();
 	}
+	finally_end_block(a);
 	release_(in);
 	release_(out);
 	exit_();

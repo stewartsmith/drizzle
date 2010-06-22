@@ -305,6 +305,7 @@ void CloudDB::cl_restoreDB()
 		if (dst_cloud)
 			dst_cloud->release();
 	}
+	finally_end_block(a);
 	
 	blob_recovery_no = 0;
 	release_(list);

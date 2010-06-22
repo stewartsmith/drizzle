@@ -83,6 +83,7 @@ CSFile *CSPath::createFile(int mode)
 			finally_(b) {
 				dir->release();
 			}
+			finally_end_block(b);
 
 			retry = true;
 		}
@@ -161,6 +162,7 @@ void CSPath::makePath()
 	finally_(a) {
 		path->release();
 	}
+	finally_end_block(a);
 	exit_();
 }
 
@@ -252,6 +254,7 @@ bool CSPath::isEmpty()
 	finally_(a) {
 		dir->release();	
 	}
+	finally_end_block(a);
 	return_(result);
 }
 
@@ -285,6 +288,7 @@ void CSPath::emptyDir()
 			path->release();
 		dir->release();	
 	}
+	finally_end_block(a);
 	exit_();
 }
 
@@ -334,6 +338,7 @@ void CSPath::moveTo(CSPath *in_to_path)
 		if (to_path != in_to_path)
 			to_path->release();
 	}
+	finally_end_block(a);
 
 	exit_();
 }

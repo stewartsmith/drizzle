@@ -761,7 +761,7 @@ void PBMS_ConHandle::throw_http_reply_exception()
 		if (reply) reply->release();
 		if (error_text) error_text->release();
 	}	
-	cont_(a);
+	finally_end_block(a);
 	
 	exit_();
 }

@@ -107,7 +107,8 @@ void *tst_telnet_thread_run()
 		if (sb)
 			sb->release();
 	}
-	cont_(a);
+	finally_end_block(a);
+	
 	return_(NULL);
 }
 
