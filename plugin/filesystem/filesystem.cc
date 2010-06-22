@@ -631,7 +631,6 @@ void FilesystemCursor::getAllFields(string& output)
 int FilesystemCursor::doInsertRecord(unsigned char * buf)
 {
   (void)buf;
-  ha_statistic_increment(&system_status_var::ha_write_count);
 
   string output_line;
   getAllFields(output_line);
@@ -652,8 +651,6 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
 
 int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 {
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   if (openUpdateFile())
     return -1;
 
@@ -679,7 +676,6 @@ void FilesystemCursor::addSlot()
 
 int FilesystemCursor::doDeleteRecord(const unsigned char *)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
   addSlot();
   return 0;
 }
