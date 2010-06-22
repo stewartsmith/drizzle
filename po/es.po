@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-05-26 01:18+0000\n"
-"PO-Revision-Date: 2010-06-09 10:32+0000\n"
+"PO-Revision-Date: 2010-06-21 08:06+0000\n"
 "Last-Translator: Javi Sol <Unknown>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-06-10 03:35+0000\n"
+"X-Launchpad-Export-Date: 2010-06-22 03:51+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -1007,17 +1007,26 @@ msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
 msgstr ""
+"Lista opcional de plugins separada por comas a cargar al inicio en adición a "
+"la lista de plugins por defecto. [por ejemplo: --"
+"plugin_add=crc32,logger_gearman]"
 
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
 "removes a plugin from the list of plugins to be loaded. [for example: --"
 "plugin_remove=crc32,logger_gearman]"
 msgstr ""
+"Lista opcional de plugins separada por comas que no se ha de cargar al "
+"inicio. De hecho, borra un plugin de la lista de plugins a cargar. [por "
+"ejemplo: --plugin_remove=crc32,logger_gearman}"
 
 msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
+"Lista opcional de plugins separada por comas a cargar al inicio en lugar de "
+"la lista de plugins por defecto. [por ejemplo: --"
+"plugin_load=crc32,logger_gearman]"
 
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
@@ -4377,6 +4386,8 @@ msgstr "no se puede abir archivo: %s\n"
 #, c-format
 msgid "Found a non-transaction message in log.  Currently, not supported.\n"
 msgstr ""
+"Encontrado un mensaje de no-transacción e el log. Actualmente no está "
+"soportado.\n"
 
 #, c-format
 msgid "Attempted to read record bigger than INT_MAX\n"
@@ -4411,7 +4422,7 @@ msgstr "No se puede analizar de comandos.  error: %s\n"
 
 #, c-format
 msgid "Checksum failed. Wanted %<PRIu32> got %<PRIu32>\n"
-msgstr ""
+msgstr "Fallo el checksum. Se requería %<PRIu32> se obtuvo %<PRIu32>\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
@@ -4429,11 +4440,11 @@ msgstr "Plugin '%s' función init ha devuelto un error.\n"
 
 #, c-format
 msgid "Couldn't load plugin library named '%s'.\n"
-msgstr ""
+msgstr "No se puedo cargar la librería del plugin llamada '%s'.\n"
 
 #, c-format
 msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
+msgstr "No se pudo cargar el plugin llamado '%s'.\n"
 
 msgid "Out of memory."
 msgstr "No hay suficiente memoria."
@@ -4476,11 +4487,11 @@ msgstr "plugin '%s' tiene conflicto con variables del sistema"
 
 #, c-format
 msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
-msgstr ""
+msgstr "Falló la carga del plugin %s: un plugin con ese nombre ya existe.\n"
 
 #, c-format
 msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr ""
+msgstr "Error fatal: Falló la inicialización del plugin %s.\n"
 
 msgid "Warning: "
 msgstr "Advertencia: "
