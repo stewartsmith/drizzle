@@ -1497,7 +1497,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     if (default_value)
     {
       enum_check_fields old_count_cuted_fields= session.count_cuted_fields;
-      session.count_cuted_fields= CHECK_FIELD_WARN;
+      session.count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
       int res= default_value->save_in_field(f, 1);
       session.count_cuted_fields= old_count_cuted_fields;
       if (res != 0 && res != 3) /* @TODO Huh? */
