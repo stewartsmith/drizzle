@@ -131,8 +131,9 @@ int prof_setjmp(void);
  */
 
 #define push_(r)			do { \
-								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) \
+								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) {\
 									CSException::throwCoreError(CS_CONTEXT, CS_ERR_RELEASE_OVERFLOW); \
+								} \
 								(self)->relTop->r_type = CS_RELEASE_OBJECT; \
 								(self)->relTop->x.r_object = (r); \
 								(self)->relTop++; \
@@ -140,12 +141,13 @@ int prof_setjmp(void);
 
 #define pop_(r)				do { \
 								ASSERT((self)->relTop > (self)->relStack); \
-								if (((self)->relTop - 1)->r_type == CS_RELEASE_OBJECT) \
+								if (((self)->relTop - 1)->r_type == CS_RELEASE_OBJECT) {\
 									ASSERT(((self)->relTop - 1)->x.r_object == ((CSObject *) r)); \
-								else if (((self)->relTop - 1)->r_type == CS_RELEASE_MUTEX) \
+								} else if (((self)->relTop - 1)->r_type == CS_RELEASE_MUTEX) {\
 									ASSERT(((self)->relTop - 1)->x.r_mutex == ((CSMutex *) r)); \
-								else \
+								} else {\
 									ASSERT(((self)->relTop - 1)->x.r_pooled == ((CSPooled *) r)); \
+								} \
 								(self)->relTop--; \
 							} while (0)
 
@@ -165,8 +167,9 @@ int prof_setjmp(void);
 							} while (0)
 
 #define lock_(r)			do { \
-								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) \
+								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) {\
 									CSException::throwCoreError(CS_CONTEXT, CS_ERR_RELEASE_OVERFLOW); \
+								} \
 								(r)->lock(); \
 								(self)->relTop->r_type = CS_RELEASE_MUTEX; \
 								(self)->relTop->x.r_mutex = (r); \
@@ -184,8 +187,9 @@ int prof_setjmp(void);
 							} while (0)
 
 #define frompool_(r)		do { \
-								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) \
+								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) {\
 									CSException::throwCoreError(CS_CONTEXT, CS_ERR_RELEASE_OVERFLOW); \
+								} \
 								(self)->relTop->r_type = CS_RELEASE_POOLED; \
 								(self)->relTop->x.r_pooled = (r); \
 								(self)->relTop++; \

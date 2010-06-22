@@ -71,9 +71,9 @@ public:
 	virtual ~CSException() { }
 
 	void setErrorCode(int e) { iErrorCode = e; }
-	const int getErrorCode() const { return iErrorCode; }
-	const char *getContext() const { return iContext; }
-	const char *getMessage() const { return iMessage; }
+	int getErrorCode() { return iErrorCode; }
+	const char *getContext(){ return iContext; }
+	const char *getMessage(){ return iMessage; }
 
 	void setStackTrace(CSThread *self, const char *stack);
 	void setStackTrace(CSThread *self);

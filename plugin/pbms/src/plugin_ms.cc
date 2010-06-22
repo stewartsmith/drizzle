@@ -58,7 +58,7 @@ static PBMSEvents *pbms_events= NULL;
 extern int pbms_init_func(module::Context &registry);
 extern struct drizzled::drizzle_sys_var* pbms_system_variables[];
 
-int my_init(module::Context &registry)
+static int my_init(module::Context &registry)
 {
 	int rtc;
 	

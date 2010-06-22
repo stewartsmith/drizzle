@@ -21,7 +21,7 @@
  */
 #include "CSConfig.h"
 #include <inttypes.h>
-
+#include <stdlib.h>
 
 #include <curl/curl.h>
 
