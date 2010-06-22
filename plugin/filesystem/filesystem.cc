@@ -98,17 +98,17 @@ public:
 
   int doCreateTable(Session &,
                     Table &table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& ,
-                           TableIdentifier &,
+                           const drizzled::TableIdentifier &,
                            drizzled::message::Table &);
 
   /* Temp only engine, so do not return values. */
   void doGetTableNames(drizzled::CachedDirectory &, drizzled::SchemaIdentifier &, drizzled::plugin::TableNameList &);
 
-  int doDropTable(Session&, TableIdentifier &);
+  int doDropTable(Session&, const TableIdentifier &);
 
   /* operations on FilesystemTableShare */
   FilesystemTableShare *findOpenTable(const string table_name);
@@ -118,8 +118,8 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
-  bool doDoesTableExist(Session& , TableIdentifier &);
-  int doRenameTable(Session&, TableIdentifier &, TableIdentifier &);
+  bool doDoesTableExist(Session& , const TableIdentifier &);
+  int doRenameTable(Session&, const TableIdentifier &, const TableIdentifier &);
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
@@ -179,7 +179,7 @@ void FilesystemEngine::doGetTableIdentifiers(drizzled::CachedDirectory &director
   getTableNamesFromFilesystem(directory, schema_identifier, NULL, &set_of_identifiers);
 }
 
-int FilesystemEngine::doDropTable(Session &, TableIdentifier &identifier)
+int FilesystemEngine::doDropTable(Session &, const TableIdentifier &identifier)
 {
   string new_path(identifier.getPath());
   new_path+= FILESYSTEM_EXT;
@@ -191,7 +191,7 @@ int FilesystemEngine::doDropTable(Session &, TableIdentifier &identifier)
   return err;
 }
 
-bool FilesystemEngine::doDoesTableExist(Session &, TableIdentifier &identifier)
+bool FilesystemEngine::doDoesTableExist(Session &, const TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(FILESYSTEM_EXT);
@@ -226,7 +226,7 @@ void FilesystemEngine::deleteOpenTable(const string &table_name)
 }
 
 int FilesystemEngine::doGetTableDefinition(Session &,
-                               drizzled::TableIdentifier &identifier,
+                               const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_proto)
 {
   string new_path(identifier.getPath());
@@ -684,7 +684,7 @@ int FilesystemCursor::doDeleteRecord(const unsigned char *)
   return 0;
 }
 
-int FilesystemEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+int FilesystemEngine::doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to)
 {
   if (rename_file_ext(from.getPath().c_str(), to.getPath().c_str(), FILESYSTEM_EXT))
     return errno;
@@ -724,7 +724,7 @@ THR_LOCK_DATA **FilesystemCursor::store_lock(Session *,
 
 int FilesystemEngine::doCreateTable(Session &,
                         Table&,
-                        drizzled::TableIdentifier &identifier,
+                        const drizzled::TableIdentifier &identifier,
                         drizzled::message::Table &proto)
 {
   string serialized_proto;
