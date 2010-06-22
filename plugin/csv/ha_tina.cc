@@ -852,9 +852,9 @@ void ha_tina::update_status()
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_tina::open(const char *name, int, uint32_t)
+int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
-  if (!(share= get_share(name)))
+  if (!(share= get_share(identifier.getPath().c_str())))
     return(ENOENT);
 
   if (share->crashed)
@@ -881,7 +881,6 @@ int ha_tina::open(const char *name, int, uint32_t)
 
   return(0);
 }
-
 
 /*
   Close a database file. We remove ourselves from the shared strucutre.
