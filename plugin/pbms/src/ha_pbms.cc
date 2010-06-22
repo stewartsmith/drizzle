@@ -137,10 +137,10 @@ public:
 		(void) session;
 	}
 	
-	int doCreateTable(Session&, Table&, TableIdentifier& ident, drizzled::message::Table& );	
-	int doDropTable(Session &, TableIdentifier& );
+	int doCreateTable(Session&, Table&, const TableIdentifier& ident, drizzled::message::Table& );	
+	int doDropTable(Session &, const TableIdentifier& );
 	
-	int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+	int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
 	
 	void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
                              drizzled::SchemaIdentifier &schema,
@@ -170,7 +170,7 @@ public:
 	int doReleaseSavepoint(Session *session, NamedSavepoint &savepoint);
 	const char **bas_ext() const;
 
-  int doGetTableDefinition(Session&, TableIdentifier &identifier,
+  int doGetTableDefinition(Session&, const TableIdentifier &identifier,
                                           drizzled::message::Table &table_proto)
   {
 		int err;
@@ -188,7 +188,7 @@ public:
 		return EEXIST;
   }
 
-	bool doDoesTableExist(Session&, TableIdentifier &identifier)
+	bool doDoesTableExist(Session&, const TableIdentifier &identifier)
 	{
 		const char *tab_name = identifier.getTableName().c_str();
 		const char *db_name = identifier.getSchemaName().c_str();
@@ -1157,19 +1157,19 @@ THR_LOCK_DATA **ha_pbms::store_lock(THD *, THR_LOCK_DATA **to, enum thr_lock_typ
 
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::doCreateTable(Session&, Table&, TableIdentifier& , drizzled::message::Table& )
+int PBMSStorageEngine::doCreateTable(Session&, Table&, const TableIdentifier& , drizzled::message::Table& )
 {
 	/* You cannot create PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );
 }
 
-int PBMSStorageEngine::doDropTable(Session &, TableIdentifier& )
+int PBMSStorageEngine::doDropTable(Session &, const TableIdentifier& )
 {
 	/* You cannot delete PBMS tables. */
 	return( 0 );
 }
 
-int PBMSStorageEngine::doRenameTable(Session&, TableIdentifier &, TableIdentifier &)
+int PBMSStorageEngine::doRenameTable(Session&, const TableIdentifier &, const TableIdentifier &)
 {
 	/* You cannot rename PBMS tables. */
 	return( HA_ERR_WRONG_COMMAND );
