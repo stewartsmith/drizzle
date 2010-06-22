@@ -309,6 +309,9 @@ static int ib_err_t_to_drizzle_error(ib_err_t err)
   case DB_TOO_MANY_CONCURRENT_TRXS:
     return HA_ERR_RECORD_FILE_FULL; /* need better error code */
 
+  case DB_END_OF_INDEX:
+    return HA_ERR_END_OF_FILE;
+
   case DB_UNSUPPORTED:
     return HA_ERR_UNSUPPORTED;
   }
@@ -378,10 +381,8 @@ int EmbeddedInnoDBEngine::doRollbackToSavepoint(Session* session,
 
   err= ib_savepoint_rollback(*transaction, savepoint.getName().c_str(),
                              savepoint.getName().length());
-  if (err != DB_SUCCESS)
-    return -1;
 
-  return 0;
+  return ib_err_t_to_drizzle_error(err);
 }
 
 int EmbeddedInnoDBEngine::doReleaseSavepoint(Session* session,
@@ -2586,12 +2587,7 @@ int EmbeddedInnoDBCursor::index_first(unsigned char *buf)
 
   err= ib_cursor_first(cursor);
   if (err != DB_SUCCESS)
-  {
-    if (err == DB_END_OF_INDEX)
-      return HA_ERR_END_OF_FILE;
-    else
-      return -1; // FIXME
-  }
+    return ib_err_t_to_drizzle_error(err);
 
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(buf, cursor, tuple, table,
@@ -2611,12 +2607,7 @@ int EmbeddedInnoDBCursor::index_last(unsigned char *buf)
 
   err= ib_cursor_last(cursor);
   if (err != DB_SUCCESS)
-  {
-    if (err == DB_END_OF_INDEX)
-      return HA_ERR_END_OF_FILE;
-    else
-      return -1; // FIXME
-  }
+    return ib_err_t_to_drizzle_error(err);
 
   tuple= ib_tuple_clear(tuple);
   ret= read_row_from_innodb(buf, cursor, tuple, table,
