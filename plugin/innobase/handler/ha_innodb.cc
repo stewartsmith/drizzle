@@ -419,10 +419,10 @@ public:
 
   UNIV_INTERN int doCreateTable(Session &session,
                                 Table &form,
-                                drizzled::TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 message::Table&);
-  UNIV_INTERN int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
-  UNIV_INTERN int doDropTable(Session &session, TableIdentifier &identifier);
+  UNIV_INTERN int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+  UNIV_INTERN int doDropTable(Session &session, const TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -441,14 +441,14 @@ public:
   }
 
   int doGetTableDefinition(drizzled::Session& session,
-                           drizzled::TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
            drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string> &set_of_names);
 
-  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
@@ -512,7 +512,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
   }
 }
 
-bool InnobaseEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
@@ -529,7 +529,7 @@ bool InnobaseEngine::doDoesTableExist(Session &session, TableIdentifier &identif
 }
 
 int InnobaseEngine::doGetTableDefinition(Session &session,
-                                         drizzled::TableIdentifier &identifier,
+                                         const TableIdentifier &identifier,
                                          message::Table &table_proto)
 {
   string proto_path(identifier.getPath());
@@ -3793,8 +3793,6 @@ ha_innobase::doInsertRecord(
     ut_error;
   }
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   sql_command = session_sql_command(user_session);
 
   if ((sql_command == SQLCOM_ALTER_TABLE
@@ -4161,8 +4159,6 @@ ha_innobase::doUpdateRecord(
 
   ut_a(prebuilt->trx == trx);
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   if (prebuilt->upd_node) {
     uvect = prebuilt->upd_node->update;
   } else {
@@ -4296,8 +4292,6 @@ ha_innobase::doDeleteRecord(
   trx_t*    trx = session_to_trx(user_session);
 
   ut_a(prebuilt->trx == trx);
-
-  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (!prebuilt->upd_node) {
     row_get_prebuilt_update_vector(prebuilt);
@@ -5397,7 +5391,7 @@ InnobaseEngine::doCreateTable(
 /*================*/
   Session         &session, /*!< in: Session */
   Table&    form,   /*!< in: information on table columns and indexes */
-        drizzled::TableIdentifier &identifier,
+        const TableIdentifier &identifier,
         message::Table& create_proto)
 {
   int   error;
@@ -5743,7 +5737,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session &session,
-        TableIdentifier &identifier)
+        const TableIdentifier &identifier)
 {
   int error;
   trx_t*  parent_trx;
@@ -5969,7 +5963,7 @@ innobase_rename_table(
 /*********************************************************************//**
 Renames an InnoDB table.
 @return 0 or error code */
-UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   // A temp table alter table/rename is a shallow rename and only the
   // definition needs to be updated.

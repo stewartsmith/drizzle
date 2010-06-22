@@ -102,7 +102,6 @@ static bool opt_dump_date= true;
 static bool opt_autocommit= false; 
 static bool opt_disable_keys= true;
 static bool opt_xml= false;
-static bool tty_password= false;
 static bool opt_single_transaction= false; 
 static bool opt_comments= false;
 static bool opt_compact= false;

@@ -109,15 +109,15 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const TableIdentifier &identifier,
                     message::Table&);
 
-  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
 
-  int doDropTable(Session&, drizzled::TableIdentifier &identifier);
+  int doDropTable(Session&, const TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           drizzled::TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
@@ -135,7 +135,7 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
                              drizzled::SchemaIdentifier &schema_identifier,
@@ -158,13 +158,13 @@ void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
 {
 }
 
-bool MyisamEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool MyisamEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
   return session.doesTableMessageExist(identifier);
 }
 
 int MyisamEngine::doGetTableDefinition(Session &session,
-                                       drizzled::TableIdentifier &identifier,
+                                       const TableIdentifier &identifier,
                                        message::Table &table_message)
 {
   if (session.getTableMessage(identifier, table_message))
@@ -654,8 +654,6 @@ int ha_myisam::close(void)
 
 int ha_myisam::doInsertRecord(unsigned char *buf)
 {
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   /*
     If we have an auto_increment column and we are writing a changed row
     or a new row, then update the auto_increment value in the record.
@@ -1033,13 +1031,11 @@ int ha_myisam::end_bulk_insert()
 
 int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
-  ha_statistic_increment(&system_status_var::ha_update_count);
   return mi_update(file,old_data,new_data);
 }
 
 int ha_myisam::doDeleteRecord(const unsigned char *buf)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
   return mi_delete(file,buf);
 }
 
@@ -1333,7 +1329,7 @@ int ha_myisam::delete_all_rows()
 }
 
 int MyisamEngine::doDropTable(Session &session,
-                              drizzled::TableIdentifier &identifier)
+                              const TableIdentifier &identifier)
 {
   session.removeTableMessage(identifier);
 
@@ -1351,7 +1347,7 @@ int ha_myisam::external_lock(Session *session, int lock_type)
 
 int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
-                                drizzled::TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 message::Table& create_proto)
 {
   int error;
@@ -1397,7 +1393,7 @@ int MyisamEngine::doCreateTable(Session &session,
 }
 
 
-int MyisamEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+int MyisamEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   session.renameTableMessage(from, to);
 

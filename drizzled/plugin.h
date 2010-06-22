@@ -28,6 +28,7 @@
 
 #include "drizzled/lex_string.h"
 #include "drizzled/xid.h"
+#include <boost/program_options.hpp>
 
 namespace drizzled
 {
@@ -373,8 +374,10 @@ struct drizzle_value
 
 extern bool plugin_init(module::Registry &registry,
                         int *argc, char **argv,
-                        bool skip_init);
-extern void my_print_help_inc_plugins(option *options);
+                        bool skip_init,
+                        boost::program_options::options_description &long_options);
+extern void my_print_help_inc_plugins(option *options,
+                                      boost::program_options::options_description &long_options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
 extern void plugin_sessionvar_init(Session *session);
 extern void plugin_sessionvar_cleanup(Session *session);

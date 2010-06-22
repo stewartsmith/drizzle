@@ -362,9 +362,9 @@ bool Schema::readSchemaFile(const std::string &schema_file_name, drizzled::messa
   return false;
 }
 
-bool Schema::doCanCreateTable(drizzled::TableIdentifier &identifier)
+bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (static_cast<SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
+  if (static_cast<const SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
   {
     return false;
   }

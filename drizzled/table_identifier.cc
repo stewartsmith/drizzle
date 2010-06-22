@@ -401,7 +401,7 @@ const std::string &TableIdentifier::getSQLPath()
 }
 
 
-void TableIdentifier::copyToTableMessage(message::Table &message)
+void TableIdentifier::copyToTableMessage(message::Table &message) const
 {
   message.set_name(table_name);
   message.set_schema(getSchemaName());

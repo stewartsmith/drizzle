@@ -145,8 +145,7 @@ static bool opt_preserve= true;
 static bool opt_only_print;
 static bool opt_burnin;
 static bool opt_ignore_sql_errors= false;
-static bool tty_password= false,
-  opt_silent,
+static bool opt_silent,
   auto_generate_sql_autoincrement,
   auto_generate_sql_guid_primary,
   auto_generate_sql;
@@ -861,304 +860,304 @@ int main(int argc, char **argv)
   char *password= NULL;
   try
   {
-  po::options_description commandline_options("Options used only in command line");
-  commandline_options.add_options()
-  ("help,?","Display this help and exit")
-  ("info,i","Gives information and exit")
-  ("burnin",po::value<bool>(&opt_burnin)->default_value(false)->zero_tokens(),
-  "Run full test case in infinite loop")
-  ("ignore-sql-errors", po::value<bool>(&opt_ignore_sql_errors)->default_value(false)->zero_tokens(),
-  "Ignore SQL errors in query run")
-  ("create-schema",po::value<string>(&create_schema_string)->default_value("drizzleslap"),
-  "Schema to run tests in")
-  ("create",po::value<string>(&create_string)->default_value(""),
-  "File or string to use to create tables")
-  ("detach",po::value<uint32_t>(&detach_rate)->default_value(0),
-  "Detach (close and re open) connections after X number of requests")
-  ("iterations,i",po::value<uint32_t>(&iterations)->default_value(1),
-  "Number of times to run the tests")
-  ("label",po::value<string>(&opt_label)->default_value(""),
-  "Label to use for print and csv")
-  ("number-blob-cols",po::value<string>(&num_blob_cols_opt)->default_value(""),
-  "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ")
-  ("number-char-cols,x",po::value<string>(&num_char_cols_opt)->default_value(""),
-  "Number of VARCHAR columns to create in table if specifying --auto-generate-sql.")
-  ("number-int-cols,y",po::value<string>(&num_int_cols_opt)->default_value(""),
-  "Number of INT columns to create in table if specifying --auto-generate-sql.")
-  ("number-of-queries",
-  po::value<uint64_t>(&num_of_query)->default_value(0),
-  "Limit each client to this number of queries(this is not exact)") 
-  ("only-print",po::value<bool>(&opt_only_print)->default_value(false)->zero_tokens(),
-  "This causes drizzleslap to not connect to the database instead print out what it would have done instead")
-  ("post-query", po::value<string>(&user_supplied_post_statements)->default_value(""),
-  "Query to run or file containing query to execute after tests have completed.")
-  ("post-system",po::value<string>(&post_system)->default_value(""),
-  "system() string to execute after tests have completed")
-  ("pre-query",
-  po::value<string>(&user_supplied_pre_statements)->default_value(""),
-  "Query to run or file containing query to execute before running tests.")
-  ("pre-system",po::value<string>(&pre_system)->default_value(""),
-  "system() string to execute before running tests.")
-  ("query,q",po::value<vector<string> >(&user_supplied_queries)->composing()->notifier(&combine_queries),
-  "Query to run or file containing query")
-  ("verbose,v", po::value<string>(&opt_verbose)->default_value("v"), "Increase verbosity level by one.")
-  ("version,V","Output version information and exit") 
-  ;
+    po::options_description commandline_options("Options used only in command line");
+    commandline_options.add_options()
+      ("help,?","Display this help and exit")
+      ("info,i","Gives information and exit")
+      ("burnin",po::value<bool>(&opt_burnin)->default_value(false)->zero_tokens(),
+       "Run full test case in infinite loop")
+      ("ignore-sql-errors", po::value<bool>(&opt_ignore_sql_errors)->default_value(false)->zero_tokens(),
+       "Ignore SQL errors in query run")
+      ("create-schema",po::value<string>(&create_schema_string)->default_value("drizzleslap"),
+       "Schema to run tests in")
+      ("create",po::value<string>(&create_string)->default_value(""),
+       "File or string to use to create tables")
+      ("detach",po::value<uint32_t>(&detach_rate)->default_value(0),
+       "Detach (close and re open) connections after X number of requests")
+      ("iterations,i",po::value<uint32_t>(&iterations)->default_value(1),
+       "Number of times to run the tests")
+      ("label",po::value<string>(&opt_label)->default_value(""),
+       "Label to use for print and csv")
+      ("number-blob-cols",po::value<string>(&num_blob_cols_opt)->default_value(""),
+       "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ")
+      ("number-char-cols,x",po::value<string>(&num_char_cols_opt)->default_value(""),
+       "Number of VARCHAR columns to create in table if specifying --auto-generate-sql.")
+      ("number-int-cols,y",po::value<string>(&num_int_cols_opt)->default_value(""),
+       "Number of INT columns to create in table if specifying --auto-generate-sql.")
+      ("number-of-queries",
+       po::value<uint64_t>(&num_of_query)->default_value(0),
+       "Limit each client to this number of queries(this is not exact)") 
+      ("only-print",po::value<bool>(&opt_only_print)->default_value(false)->zero_tokens(),
+       "This causes drizzleslap to not connect to the database instead print out what it would have done instead")
+      ("post-query", po::value<string>(&user_supplied_post_statements)->default_value(""),
+       "Query to run or file containing query to execute after tests have completed.")
+      ("post-system",po::value<string>(&post_system)->default_value(""),
+       "system() string to execute after tests have completed")
+      ("pre-query",
+       po::value<string>(&user_supplied_pre_statements)->default_value(""),
+       "Query to run or file containing query to execute before running tests.")
+      ("pre-system",po::value<string>(&pre_system)->default_value(""),
+       "system() string to execute before running tests.")
+      ("query,q",po::value<vector<string> >(&user_supplied_queries)->composing()->notifier(&combine_queries),
+       "Query to run or file containing query")
+      ("verbose,v", po::value<string>(&opt_verbose)->default_value("v"), "Increase verbosity level by one.")
+      ("version,V","Output version information and exit") 
+      ;
 
-  po::options_description slap_options("Options specific to drizzleslap");
-  slap_options.add_options()
-  ("auto-generate-sql-select-columns",
-  po::value<string>(&auto_generate_selected_columns_opt)->default_value(""),
-  "Provide a string to use for the select fields used in auto tests")
-  ("auto-generate-sql,a",po::value<bool>(&auto_generate_sql)->default_value(false)->zero_tokens(),
-  "Generate SQL where not supplied by file or command line")  
-  ("auto-generate-sql-add-autoincrement",
-  po::value<bool>(&auto_generate_sql_autoincrement)->default_value(false)->zero_tokens(),
-  "Add an AUTO_INCREMENT column to auto-generated tables")
-  ("auto-generate-sql-execute-number",
-  po::value<uint64_t>(&auto_actual_queries)->default_value(0),
-  "See this number and generate a set of queries to run")
-  ("auto-generate-sql-guid-primary",
-  po::value<bool>(&auto_generate_sql_guid_primary)->default_value(false)->zero_tokens(),
-  "Add GUID based primary keys to auto-generated tables")
-  ("auto-generate-sql-load-type",
-  po::value<string>(&opt_auto_generate_sql_type)->default_value("mixed"),
-  "Specify test load type: mixed, update, write, key or read; default is mixed")  
-  ("auto-generate-sql-secondary-indexes",
-  po::value<uint32_t>(&auto_generate_sql_secondary_indexes)->default_value(0),
-  "Number of secondary indexes to add to auto-generated tables")
-  ("auto-generated-sql-unique-query-number",
-  po::value<uint64_t>(&auto_generate_sql_unique_query_number)->default_value(10),
-  "Number of unique queries to generate for automatic tests")
-  ("auto-generate-sql-unique-write-number",
-  po::value<uint64_t>(&auto_generate_sql_unique_write_number)->default_value(10),
-  "Number of unique queries to generate for auto-generate-sql-write-number")
-  ("auto-generate-sql-write-number",
-  po::value<uint64_t>(&auto_generate_sql_number)->default_value(100),
-  "Number of row inserts to perform for each thread (default is 100).")
-  ("commit",po::value<uint32_t>(&commit_rate)->default_value(0),
-  "Commit records every X number of statements")
-  ("concurrency,c",po::value<string>(&concurrency_str)->default_value(""),
-  "Number of clients to simulate for query to run")
-  ("csv",po::value<std::string>(&opt_csv_str)->default_value(""),
-  "Generate CSV output to named file or to stdout if no file is name.")
-  ("delayed-start",po::value<uint32_t>(&opt_delayed_start)->default_value(0),
-  "Delay the startup of threads by a random number of microsends (the maximum of the delay")
-  ("delimiter,F",po::value<string>(&delimiter)->default_value("\n"),
-  "Delimiter to use in SQL statements supplied in file or command line")
-  ("engine ,e",po::value<string>(&default_engine)->default_value(""),
-  "Storage engien to use for creating the table")
-  ("set-random-seed",
-  po::value<uint32_t>(&opt_set_random_seed)->default_value(0), 
-  "Seed for random number generator (srandom(3)) ") 
-  ("silent,s",po::value<bool>(&opt_silent)->default_value(false)->zero_tokens(),
-  "Run program in silent mode - no output. ") 
-  ("timer-length",po::value<uint32_t>(&opt_timer_length)->default_value(0),
-  "Require drizzleslap to run each specific test a certain amount of time in seconds")  
-  ;
+    po::options_description slap_options("Options specific to drizzleslap");
+    slap_options.add_options()
+      ("auto-generate-sql-select-columns",
+       po::value<string>(&auto_generate_selected_columns_opt)->default_value(""),
+       "Provide a string to use for the select fields used in auto tests")
+      ("auto-generate-sql,a",po::value<bool>(&auto_generate_sql)->default_value(false)->zero_tokens(),
+       "Generate SQL where not supplied by file or command line")  
+      ("auto-generate-sql-add-autoincrement",
+       po::value<bool>(&auto_generate_sql_autoincrement)->default_value(false)->zero_tokens(),
+       "Add an AUTO_INCREMENT column to auto-generated tables")
+      ("auto-generate-sql-execute-number",
+       po::value<uint64_t>(&auto_actual_queries)->default_value(0),
+       "See this number and generate a set of queries to run")
+      ("auto-generate-sql-guid-primary",
+       po::value<bool>(&auto_generate_sql_guid_primary)->default_value(false)->zero_tokens(),
+       "Add GUID based primary keys to auto-generated tables")
+      ("auto-generate-sql-load-type",
+       po::value<string>(&opt_auto_generate_sql_type)->default_value("mixed"),
+       "Specify test load type: mixed, update, write, key or read; default is mixed")  
+      ("auto-generate-sql-secondary-indexes",
+       po::value<uint32_t>(&auto_generate_sql_secondary_indexes)->default_value(0),
+       "Number of secondary indexes to add to auto-generated tables")
+      ("auto-generated-sql-unique-query-number",
+       po::value<uint64_t>(&auto_generate_sql_unique_query_number)->default_value(10),
+       "Number of unique queries to generate for automatic tests")
+      ("auto-generate-sql-unique-write-number",
+       po::value<uint64_t>(&auto_generate_sql_unique_write_number)->default_value(10),
+       "Number of unique queries to generate for auto-generate-sql-write-number")
+      ("auto-generate-sql-write-number",
+       po::value<uint64_t>(&auto_generate_sql_number)->default_value(100),
+       "Number of row inserts to perform for each thread (default is 100).")
+      ("commit",po::value<uint32_t>(&commit_rate)->default_value(0),
+       "Commit records every X number of statements")
+      ("concurrency,c",po::value<string>(&concurrency_str)->default_value(""),
+       "Number of clients to simulate for query to run")
+      ("csv",po::value<std::string>(&opt_csv_str)->default_value(""),
+       "Generate CSV output to named file or to stdout if no file is name.")
+      ("delayed-start",po::value<uint32_t>(&opt_delayed_start)->default_value(0),
+       "Delay the startup of threads by a random number of microsends (the maximum of the delay")
+      ("delimiter,F",po::value<string>(&delimiter)->default_value("\n"),
+       "Delimiter to use in SQL statements supplied in file or command line")
+      ("engine ,e",po::value<string>(&default_engine)->default_value(""),
+       "Storage engien to use for creating the table")
+      ("set-random-seed",
+       po::value<uint32_t>(&opt_set_random_seed)->default_value(0), 
+       "Seed for random number generator (srandom(3)) ") 
+      ("silent,s",po::value<bool>(&opt_silent)->default_value(false)->zero_tokens(),
+       "Run program in silent mode - no output. ") 
+      ("timer-length",po::value<uint32_t>(&opt_timer_length)->default_value(0),
+       "Require drizzleslap to run each specific test a certain amount of time in seconds")  
+      ;
 
-  po::options_description client_options("Options specific to the client");
-  client_options.add_options()
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-  N_("Use MySQL Protocol."))
-  ("host,h",po::value<string>(&host)->default_value("localhost"),"Connect to the host")
-  ("password,P",po::value<char *>(&password),
-  "Password to use when connecting to server. If password is not given it's asked from the tty")
-  ("port,p",po::value<uint32_t>(), "Port number to use for connection")
-  ("protocol",po::value<string>(),
-  "The protocol of connection (tcp,socket,pipe,memory).")
-  ("user,u",po::value<string>(&user)->default_value(""),
-  "User for login if not current user")  
-  ;
+    po::options_description client_options("Options specific to the client");
+    client_options.add_options()
+      ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
+       N_("Use MySQL Protocol."))
+      ("host,h",po::value<string>(&host)->default_value("localhost"),"Connect to the host")
+      ("password,P",po::value<char *>(&password),
+       "Password to use when connecting to server. If password is not given it's asked from the tty")
+      ("port,p",po::value<uint32_t>(), "Port number to use for connection")
+      ("protocol",po::value<string>(),
+       "The protocol of connection (tcp,socket,pipe,memory).")
+      ("user,u",po::value<string>(&user)->default_value(""),
+       "User for login if not current user")  
+      ;
 
-  po::options_description long_options("Allowed Options");
-  long_options.add(commandline_options).add(slap_options).add(client_options);
+    po::options_description long_options("Allowed Options");
+    long_options.add(commandline_options).add(slap_options).add(client_options);
 
-  std::string system_config_dir_slap(SYSCONFDIR); 
-  system_config_dir_slap.append("/drizzle/drizzleslap.cnf");
+    std::string system_config_dir_slap(SYSCONFDIR); 
+    system_config_dir_slap.append("/drizzle/drizzleslap.cnf");
 
-  std::string system_config_dir_client(SYSCONFDIR); 
-  system_config_dir_client.append("/drizzle/client.cnf");
+    std::string system_config_dir_client(SYSCONFDIR); 
+    system_config_dir_client.append("/drizzle/client.cnf");
 
-  uint64_t temp_drizzle_port= 0;
-  drizzle_con_st con;
-  OptionString *eptr;
-  uint32_t x;
+    uint64_t temp_drizzle_port= 0;
+    drizzle_con_st con;
+    OptionString *eptr;
+    uint32_t x;
 
-  
-  po::variables_map vm;
-  po::store(po::parse_command_line(argc,argv,long_options),vm);
 
-  ifstream user_slap_ifs("~/.drizzle/drizzleslap.cnf");
-  po::store(parse_config_file(user_slap_ifs, slap_options), vm);
- 
-  ifstream system_slap_ifs(system_config_dir_slap.c_str());
-  store(parse_config_file(system_slap_ifs, slap_options), vm);
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc,argv,long_options),vm);
 
-  ifstream user_client_ifs("~/.drizzle/client.cnf");
-  po::store(parse_config_file(user_client_ifs, client_options), vm);
- 
-  ifstream system_client_ifs(system_config_dir_client.c_str());
-  store(parse_config_file(system_client_ifs, client_options), vm);
+    ifstream user_slap_ifs("~/.drizzle/drizzleslap.cnf");
+    po::store(parse_config_file(user_slap_ifs, slap_options), vm);
 
-  po::notify(vm);
+    ifstream system_slap_ifs(system_config_dir_slap.c_str());
+    store(parse_config_file(system_slap_ifs, slap_options), vm);
 
-  if (process_options())
-    exit(1);
+    ifstream user_client_ifs("~/.drizzle/client.cnf");
+    po::store(parse_config_file(user_client_ifs, client_options), vm);
 
-  if( vm.count("help") || vm.count("info"))
-  {
-     printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
-       drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
-     puts("Copyright (C) 2008 Sun Microsystems");
-     puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
-      \nand you are welcome to modify and redistribute it under the GPL \
-      license\n");
-    puts("Run a query multiple times against the server\n");
-    cout<<long_options<<endl;
-    exit(0);
-  }   
+    ifstream system_client_ifs(system_config_dir_client.c_str());
+    store(parse_config_file(system_client_ifs, client_options), vm);
 
-  if(vm.count("port")) 
-  {
-    temp_drizzle_port= vm["port"].as<uint32_t>();
-    
-    if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
-    {
-      fprintf(stderr, _("Value supplied for port is not valid.\n"));
+    po::notify(vm);
+
+    if (process_options())
       exit(1);
+
+    if( vm.count("help") || vm.count("info"))
+    {
+      printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
+          drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
+      puts("Copyright (C) 2008 Sun Microsystems");
+      puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
+          \nand you are welcome to modify and redistribute it under the GPL \
+          license\n");
+      puts("Run a query multiple times against the server\n");
+      cout<<long_options<<endl;
+      exit(0);
+    }   
+
+    if(vm.count("port")) 
+    {
+      temp_drizzle_port= vm["port"].as<uint32_t>();
+
+      if ((temp_drizzle_port == 0) || (temp_drizzle_port > 65535))
+      {
+        fprintf(stderr, _("Value supplied for port is not valid.\n"));
+        exit(1);
+      }
+      else
+      {
+        opt_drizzle_port= (uint32_t) temp_drizzle_port;
+      }
+    }
+
+    if( vm.count("password") )
+    {
+      char *start= vm["password"].as<char *>();
+      if (!opt_password.empty())
+        opt_password.erase();
+      opt_password = strdup(vm["password"].as<char *>());
+      if (opt_password.c_str() == NULL)
+      {
+        fprintf(stderr, "Memory allocation error while copying password. "
+            "Aborting.\n");
+        exit(ENOMEM);
+      }
+
+      while (*password)
+      {
+        /* Overwriting password with 'x' */
+        *password++= 'x';
+      }
+
+      if (*start)
+      {
+        /* Cut length of argument */
+        start[1]= 0;
+      }
+      tty_password= 0;
     }
     else
-    {
-      opt_drizzle_port= (uint32_t) temp_drizzle_port;
-    }
-  }
+      tty_password= 1;
 
-  if( vm.count("password") )
-  {
-    char *start= vm["password"].as<char *>();
+
+    if( vm.count("version") )
+    {
+      printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
+          drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
+      exit(0);
+    }
+
+    /* Seed the random number generator if we will be using it. */
+    if (auto_generate_sql)
+    {
+      if (opt_set_random_seed == 0)
+        opt_set_random_seed= (unsigned int)time(NULL);
+      srandom(opt_set_random_seed);
+    }
+
+    /* globals? Yes, so we only have to run strlen once */
+    delimiter_length= delimiter.length();
+
+    slap_connect(&con, false);
+
+    pthread_mutex_init(&counter_mutex, NULL);
+    pthread_cond_init(&count_threshhold, NULL);
+    pthread_mutex_init(&sleeper_mutex, NULL);
+    pthread_cond_init(&sleep_threshhold, NULL);
+    pthread_mutex_init(&timer_alarm_mutex, NULL);
+    pthread_cond_init(&timer_alarm_threshold, NULL);
+
+
+    /* Main iterations loop */
+burnin:
+    eptr= engine_options;
+    do
+    {
+      /* For the final stage we run whatever queries we were asked to run */
+      uint32_t *current;
+
+      if (verbose >= 2)
+        printf("Starting Concurrency Test\n");
+
+      if (*concurrency)
+      {
+        for (current= concurrency; current && *current; current++)
+          concurrency_loop(&con, *current, eptr);
+      }
+      else
+      {
+        uint32_t infinite= 1;
+        do {
+          concurrency_loop(&con, infinite, eptr);
+        }
+        while (infinite++);
+      }
+
+      if (!opt_preserve)
+        drop_schema(&con, create_schema_string.c_str());
+
+    } while (eptr ? (eptr= eptr->getNext()) : 0);
+
+    if (opt_burnin)
+      goto burnin;
+
+    pthread_mutex_destroy(&counter_mutex);
+    pthread_cond_destroy(&count_threshhold);
+    pthread_mutex_destroy(&sleeper_mutex);
+    pthread_cond_destroy(&sleep_threshhold);
+    pthread_mutex_destroy(&timer_alarm_mutex);
+    pthread_cond_destroy(&timer_alarm_threshold);
+
+    slap_close(&con);
+
+    /* now free all the strings we created */
     if (!opt_password.empty())
       opt_password.erase();
-    opt_password = strdup(vm["password"].as<char *>());
-  if (opt_password.c_str() == NULL)
-  {
-    fprintf(stderr, "Memory allocation error while copying password. "
-                    "Aborting.\n");
-    exit(ENOMEM);
-  }
-  
-  while (*password)
-  {
-    /* Overwriting password with 'x' */
-    *password++= 'x';
-  }
-  
-  if (*start)
-  {
-    /* Cut length of argument */
-    start[1]= 0;
-  }
-  tty_password= 0;
-  }
-  else
-    tty_password= 1;
-  
 
-  if( vm.count("version") )
-  {
-    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
-           drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
-    exit(0);
-  }
+    free(concurrency);
 
-  /* Seed the random number generator if we will be using it. */
-  if (auto_generate_sql)
-  {
-    if (opt_set_random_seed == 0)
-      opt_set_random_seed= (unsigned int)time(NULL);
-    srandom(opt_set_random_seed);
-  }
-
-  /* globals? Yes, so we only have to run strlen once */
-  delimiter_length= delimiter.length();
-
-  slap_connect(&con, false);
-
-  pthread_mutex_init(&counter_mutex, NULL);
-  pthread_cond_init(&count_threshhold, NULL);
-  pthread_mutex_init(&sleeper_mutex, NULL);
-  pthread_cond_init(&sleep_threshhold, NULL);
-  pthread_mutex_init(&timer_alarm_mutex, NULL);
-  pthread_cond_init(&timer_alarm_threshold, NULL);
-
-
-  /* Main iterations loop */
-burnin:
-  eptr= engine_options;
-  do
-  {
-    /* For the final stage we run whatever queries we were asked to run */
-    uint32_t *current;
-
-    if (verbose >= 2)
-      printf("Starting Concurrency Test\n");
-
-    if (*concurrency)
-    {
-      for (current= concurrency; current && *current; current++)
-        concurrency_loop(&con, *current, eptr);
-    }
-    else
-    {
-      uint32_t infinite= 1;
-      do {
-        concurrency_loop(&con, infinite, eptr);
-      }
-      while (infinite++);
-    }
-
-    if (!opt_preserve)
-      drop_schema(&con, create_schema_string.c_str());
-
-  } while (eptr ? (eptr= eptr->getNext()) : 0);
-
-  if (opt_burnin)
-    goto burnin;
-
-  pthread_mutex_destroy(&counter_mutex);
-  pthread_cond_destroy(&count_threshhold);
-  pthread_mutex_destroy(&sleeper_mutex);
-  pthread_cond_destroy(&sleep_threshhold);
-  pthread_mutex_destroy(&timer_alarm_mutex);
-  pthread_cond_destroy(&timer_alarm_threshold);
-
-  slap_close(&con);
-
-  /* now free all the strings we created */
-  if (!opt_password.empty())
-    opt_password.erase();
-
-  free(concurrency);
-
-  statement_cleanup(create_statements);
-  for (x= 0; x < query_statements_count; x++)
-    statement_cleanup(query_statements[x]);
-  free(query_statements);
-  statement_cleanup(pre_statements);
-  statement_cleanup(post_statements);
-  option_cleanup(engine_options);
-  option_cleanup(query_options);
+    statement_cleanup(create_statements);
+    for (x= 0; x < query_statements_count; x++)
+      statement_cleanup(query_statements[x]);
+    free(query_statements);
+    statement_cleanup(pre_statements);
+    statement_cleanup(post_statements);
+    option_cleanup(engine_options);
+    option_cleanup(query_options);
 
 #ifdef HAVE_SMEM
-  if (shared_memory_base_name)
-    free(shared_memory_base_name);
+    if (shared_memory_base_name)
+      free(shared_memory_base_name);
 #endif
 
   }
 
-  catch(exception &err)
+  catch(std::exception &err)
   {
-  cerr<<"Error:"<<err.what()<<endl;
+    cerr<<"Error:"<<err.what()<<endl;
   }
   return 0;
 }
