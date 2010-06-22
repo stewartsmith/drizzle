@@ -417,7 +417,7 @@ void MSConnectionHandler::handleGet()
 
 void MSConnectionHandler::handlePut()
 {
-	MSOpenTable *otab;
+	MSOpenTable *otab = NULL;
 	uint32_t		db_id = 0, tab_id;
 
 	enter_();

@@ -237,13 +237,13 @@ void CloudDB::cl_createDB()
 // Restore all the 
 void CloudDB::cl_restoreDB()
 {
-	CSVector *list;
-	CSString *key;
-	CloudObjectKey *src_objectKey, *dst_objectKey;
+	CSVector *list = NULL;
+	CSString *key = NULL;
+	CloudObjectKey *src_objectKey = NULL, *dst_objectKey = NULL;
 	CloudKeyRec		cloudKey;
-	uint32_t			src_cloudRef, dst_cloudRef = 0;
-	MSBackupInfo	*backup_info;
-	MSCloudInfo		*src_cloud, *dst_cloud;
+	uint32_t		src_cloudRef, dst_cloudRef = 0;
+	MSBackupInfo	*backup_info = NULL;
+	MSCloudInfo		*src_cloud = NULL, *dst_cloud = NULL;
 	enter_();
 
 	if (!blob_recovery_no)
@@ -350,7 +350,7 @@ void CloudDB::cl_backupBLOB(CloudKeyPtr key)
 {
 	CloudObjectKey *src_objectKey, *dst_objectKey;
 	uint32_t cloudRef, backupNo;
-	MSCloudInfo *src_cloud, *dst_cloud;
+	MSCloudInfo *src_cloud = NULL, *dst_cloud = NULL;
 	enter_();
 
 	ASSERT(backupInfo);
@@ -394,7 +394,7 @@ void CloudDB::cl_restoreBLOB(CloudKeyPtr key, uint32_t backup_db_id)
 {
 	CloudObjectKey *src_objectKey, *dst_objectKey;
 	uint32_t cloudRef, backupNo;
-	MSCloudInfo *src_cloud, *dst_cloud;
+	MSCloudInfo *src_cloud = NULL, *dst_cloud = NULL;
 	enter_();
 
 	ASSERT(backupInfo);
