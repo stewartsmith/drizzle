@@ -42,6 +42,7 @@ public:
   uint32_t use_count;
   const std::string table_name;
   bool update_file_opened;
+  bool needs_reopen;
   pthread_mutex_t mutex;
   std::string real_file_name;
   std::string row_separator;
@@ -97,6 +98,9 @@ public:
   int doUpdateRecord(const unsigned char *, unsigned char *);
   int doDeleteRecord(const unsigned char *);
 
+  drizzled::THR_LOCK_DATA **store_lock(drizzled::Session *,
+                                       drizzled::THR_LOCK_DATA **to,
+                                       drizzled::thr_lock_type);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,

@@ -74,7 +74,6 @@ public:
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_NULL_IN_KEY |
                                      HTON_CAN_INDEX_BLOBS |
-                                     HTON_SKIP_STORE_LOCK |
                                      HTON_AUTO_PART_KEY),
      fs_open_tables()
   {
@@ -263,7 +262,9 @@ int FilesystemEngine::doGetTableDefinition(Session &,
 }
 
 FilesystemTableShare::FilesystemTableShare(const string table_name_arg)
-  : use_count(0), table_name(table_name_arg), update_file_opened(false),
+  : use_count(0), table_name(table_name_arg),
+  update_file_opened(false),
+  needs_reopen(false),
   row_separator(DEFAULT_ROW_SEPARATOR),
   col_separator(DEFAULT_COL_SEPARATOR),
   separator_mode(2)
@@ -364,7 +365,6 @@ int FilesystemCursor::open(const char *name, int, uint32_t)
     free_share();
     return ER_CANT_OPEN_FILE;
   }
-  file_buff->init_buff(file_desc);
 
   ref_length= sizeof(off_t);
   thr_lock_data_init(&share->lock, &lock, NULL);
@@ -383,6 +383,13 @@ int FilesystemCursor::doStartTableScan(bool)
   current_position= 0;
   next_position= 0;
   slots.clear();
+  if (share->needs_reopen)
+  {
+    file_desc= ::open(share->real_file_name.c_str(), O_RDONLY);
+    if (file_desc < 0)
+      return HA_ERR_CRASHED_ON_USAGE;
+    share->needs_reopen= false;
+  }
   file_buff->init_buff(file_desc);
   return 0;
 }
@@ -525,13 +532,13 @@ int FilesystemCursor::doEndTableScan()
   int err= -1;
   sort(slots.begin(), slots.end());
   vector< pair<off_t, off_t> >::iterator slot_iter= slots.begin();
-  file_buff->init_buff(file_desc);
   off_t write_start= 0;
   off_t write_end= 0;
   off_t file_buffer_start= 0;
 
   pthread_mutex_lock(&share->mutex);
 
+  file_buff->init_buff(file_desc);
   if (openUpdateFile() < 0)
     goto error;
 
@@ -582,6 +589,7 @@ int FilesystemCursor::doEndTableScan()
 
   // reopen the data file
   file_desc= ::open(share->real_file_name.c_str(), O_RDONLY);
+  share->needs_reopen= true;
   if (file_desc < 0)
     goto error;
   err= 0;
@@ -702,6 +710,16 @@ bool FilesystemEngine::validateCreateTableOption(const std::string &key,
        boost::iequals(state, FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK)))
     return true;
   return false;
+}
+
+THR_LOCK_DATA **FilesystemCursor::store_lock(Session *,
+                                             THR_LOCK_DATA **to,
+                                             thr_lock_type lock_type)
+{
+  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
+    lock.type=lock_type;
+  *to++= &lock;
+  return to;
 }
 
 int FilesystemEngine::doCreateTable(Session &,
