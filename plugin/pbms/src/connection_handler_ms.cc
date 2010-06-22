@@ -418,7 +418,7 @@ void MSConnectionHandler::handleGet()
 void MSConnectionHandler::handlePut()
 {
 	MSOpenTable *otab = NULL;
-	uint32_t		db_id = 0, tab_id;
+	uint32_t	db_id = 0, tab_id;
 
 	enter_();
 	self->myException.setErrorCode(0);
@@ -431,6 +431,7 @@ void MSConnectionHandler::handlePut()
 	if (iTableURI->length() != 0)
 		MSDatabase::convertTablePathToIDs(iTableURI->getCString(), &db_id, &tab_id, true);
 
+
 	if ((!db_id) || !(otab = MSTableList::getOpenTableByID(db_id, tab_id))) {
 		char buffer[CS_EXC_MESSAGE_SIZE];
 
@@ -438,119 +439,116 @@ void MSConnectionHandler::handlePut()
 		cs_strcat(CS_EXC_MESSAGE_SIZE, buffer, iInputStream->getRequestURI()->getCString());
 		CSException::throwException(CS_CONTEXT, MS_ERR_INCORRECT_URL, buffer);
 	}
-
-	try_(a) {
-		uint64_t			blob_len, cloud_blob_len = 0;
-		PBMSBlobURLRec	bh;
-		size_t			handle_len;
-		uint16_t			metadata_size = 0; 
-		CSStringBuffer	*metadata;
+	frompool_(otab);
+	
+	uint64_t			blob_len, cloud_blob_len = 0;
+	PBMSBlobURLRec	bh;
+	size_t			handle_len;
+	uint16_t			metadata_size = 0; 
+	CSStringBuffer	*metadata;
+	
+	new_(metadata, CSStringBuffer(80));
+	push_(metadata);
+	
+	blob_len = iInputStream->getContentLength();
+	
+	// Collect the meta data.
+	for (uint32_t i = 0; i < iInputStream->numHeaders(); i++) {
+		CSHeader *header = iInputStream->getHeader(i);
+		const char *name = header->getNameCString();
 		
-		new_(metadata, CSStringBuffer(80));
-		push_(metadata);
+		push_(header);
 		
-		blob_len = iInputStream->getContentLength();
-		
-		// Collect the meta data.
-		for (uint32_t i = 0; i < iInputStream->numHeaders(); i++) {
-			CSHeader *header = iInputStream->getHeader(i);
-			const char *name = header->getNameCString();
+		if (!strcmp(name, MS_BLOB_SIZE)) { // The actual BLOB data size if it is being stored in a cloud.
+			sscanf(header->getValueCString(), "%"PRIu64"", &cloud_blob_len);
+		}
 			
-			push_(header);
+		if (name && otab->getDB()->isValidHeaderField(name)) {
+			uint16_t rec_size, name_size, value_size;
+			const char *value = header->getValueCString();
+			char *buf;
+			if (!value)
+				value = "";
+				
+			name_size = strlen(name);
+			value_size = strlen(value);
 			
-			if (!strcmp(name, MS_BLOB_SIZE)) { // The actual BLOB data size if it is being stored in a cloud.
-				sscanf(header->getValueCString(), "%"PRIu64"", &cloud_blob_len);
-			}
-				
-			if (name && otab->getDB()->isValidHeaderField(name)) {
-				uint16_t rec_size, name_size, value_size;
-				const char *value = header->getValueCString();
-				char *buf;
-				if (!value)
-					value = "";
-					
-				name_size = strlen(name);
-				value_size = strlen(value);
-				
-				rec_size = name_size + value_size + 2;
-				metadata->setLength(metadata_size + rec_size);
-				
-				buf = metadata->getBuffer(metadata_size);
-				metadata_size += rec_size;
-				
-				memcpy(buf, name, name_size);
-				buf += name_size;
-				*buf = 0; buf++;
-				
-				memcpy(buf, value, value_size);
-				buf += value_size;
-				*buf = 0;
-			}
+			rec_size = name_size + value_size + 2;
+			metadata->setLength(metadata_size + rec_size);
 			
-			release_(header);
+			buf = metadata->getBuffer(metadata_size);
+			metadata_size += rec_size;
+			
+			memcpy(buf, name, name_size);
+			buf += name_size;
+			*buf = 0; buf++;
+			
+			memcpy(buf, value, value_size);
+			buf += value_size;
+			*buf = 0;
 		}
 		
-		if (blob_len) {
-			char hex_checksum[33];
-			Md5Digest checksum;
+		release_(header);
+	}
+	
+	if (blob_len) {
+		char hex_checksum[33];
+		Md5Digest checksum;
+		
+		otab->createBlob(&bh, blob_len, metadata->getBuffer(0), metadata_size, RETAIN(iInputStream), NULL, &checksum);
+
+		cs_bin_to_hex(33, hex_checksum, 16, checksum.val);
+		hex_checksum[32] = 0;
+		iOutputStream->addHeader(MS_CHECKSUM_TAG, hex_checksum);
+	} else { // If there is no BLOB data then the client will send it to the cloud server themselves.
+		if (!cloud_blob_len)
+			CSException::throwException(CS_CONTEXT, CS_ERR_MISSING_HTTP_HEADER, "Missing BLOB length header for cloud BLOB.");
+		if (otab->getDB()->myBlobType == MS_CLOUD_STORAGE) {
+			CloudKeyRec cloud_key;
+			uint32_t signature_time;
+			char time_str[20];
+			CloudDB *cloud = otab->getDB()->myBlobCloud;
+			MSCloudInfo *info;
 			
-			otab->createBlob(&bh, blob_len, metadata->getBuffer(0), metadata_size, RETAIN(iInputStream), NULL, &checksum);
-
-			cs_bin_to_hex(33, hex_checksum, 16, checksum.val);
-			hex_checksum[32] = 0;
-			iOutputStream->addHeader(MS_CHECKSUM_TAG, hex_checksum);
-		} else { // If there is no BLOB data then the client will send it to the cloud server themselves.
-			if (!cloud_blob_len)
-				CSException::throwException(CS_CONTEXT, CS_ERR_MISSING_HTTP_HEADER, "Missing BLOB length header for cloud BLOB.");
-			if (otab->getDB()->myBlobType == MS_CLOUD_STORAGE) {
-				CloudKeyRec cloud_key;
-				uint32_t signature_time;
-				char time_str[20];
-				CloudDB *cloud = otab->getDB()->myBlobCloud;
-				MSCloudInfo *info;
-				
-				
-				cloud->cl_getNewKey(&cloud_key);
-				otab->createBlob(&bh, cloud_blob_len, metadata->getBuffer(0), metadata_size, NULL, &cloud_key);
-				
-				CSString *signature;
-				signature = cloud->cl_getSignature(&cloud_key, iInputStream->getHeaderValue("Content-Type"), &signature_time);
-				push_(signature);
-				
-				info = cloud->cl_getCloudInfo(cloud_key.cloud_ref);
-				push_(info);
-				iOutputStream->addHeader(MS_CLOUD_SERVER, info->getServer());
-				iOutputStream->addHeader(MS_CLOUD_BUCKET, info->getBucket());
-				iOutputStream->addHeader(MS_CLOUD_KEY, info->getPublicKey());
-				iOutputStream->addHeader(MS_CLOUD_OBJECT_KEY, cloud->cl_getObjectKey(&cloud_key));
-				iOutputStream->addHeader(MS_BLOB_SIGNATURE, signature->getCString());
-				release_(info);
-				
-				release_(signature);
-				snprintf(time_str, 20, "%"PRIu32"", signature_time);
-				iOutputStream->addHeader(MS_BLOB_DATE, time_str);
-				
-			} else {
-				// If the database is not using cloud storage then the client will
-				// resend the BLOB data as a normal BLOB when it fails to get the
-				// expected cloud server infor headers back.
-				bh.bu_data[0] = 0;
-			}
+			
+			cloud->cl_getNewKey(&cloud_key);
+			otab->createBlob(&bh, cloud_blob_len, metadata->getBuffer(0), metadata_size, NULL, &cloud_key);
+			
+			CSString *signature;
+			signature = cloud->cl_getSignature(&cloud_key, iInputStream->getHeaderValue("Content-Type"), &signature_time);
+			push_(signature);
+			
+			info = cloud->cl_getCloudInfo(cloud_key.cloud_ref);
+			push_(info);
+			iOutputStream->addHeader(MS_CLOUD_SERVER, info->getServer());
+			iOutputStream->addHeader(MS_CLOUD_BUCKET, info->getBucket());
+			iOutputStream->addHeader(MS_CLOUD_KEY, info->getPublicKey());
+			iOutputStream->addHeader(MS_CLOUD_OBJECT_KEY, cloud->cl_getObjectKey(&cloud_key));
+			iOutputStream->addHeader(MS_BLOB_SIGNATURE, signature->getCString());
+			release_(info);
+			
+			release_(signature);
+			snprintf(time_str, 20, "%"PRIu32"", signature_time);
+			iOutputStream->addHeader(MS_BLOB_DATE, time_str);
+			
+		} else {
+			// If the database is not using cloud storage then the client will
+			// resend the BLOB data as a normal BLOB when it fails to get the
+			// expected cloud server infor headers back.
+			bh.bu_data[0] = 0;
 		}
-		handle_len = strlen(bh.bu_data);
-		iOutputStream->setContentLength(handle_len);
-
-		replyPending = false;
-		iOutputStream->writeHead();
-		iOutputStream->write(bh.bu_data, handle_len);
-		iOutputStream->flush();
-
-		release_(metadata);
 	}
-	finally_(a) {
-		otab->returnToPool();
-	}
-	finally_end_block(a);
+	handle_len = strlen(bh.bu_data);
+	iOutputStream->setContentLength(handle_len);
+
+	replyPending = false;
+	iOutputStream->writeHead();
+	iOutputStream->write(bh.bu_data, handle_len);
+	iOutputStream->flush();
+
+	release_(metadata);
+
+	backtopool_(otab);
 
 	exit_();
 }

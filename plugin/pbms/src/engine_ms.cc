@@ -501,8 +501,8 @@ bool MSEngine::renameTable(const char *from_db_name, const char *from_table, con
 int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, const char *to_db_name, const char *to_table, PBMSResultPtr result)
 {
 	CSThread	*self;
-	int			err = 0;
-	UnDoInfoPtr undo_info = NULL;
+	NOCLOBBER int err = 0;
+	NOCLOBBER UnDoInfoPtr undo_info = NULL;
 
 	if ((err = pbms_enter_conn_no_thd(&self, result)))
 		return err;

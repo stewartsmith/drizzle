@@ -106,6 +106,21 @@ int cs_hope(const char *func, const char *file, int line, const char *message);
  * Throwing and catching (the jump stack)
  */
 
+/*
+ * Quote from the C99 spec on setjmp:
+ * All accessible objects have values, and all other components of the abstract 
+ * machine have state, as of the time the longjmp function was called, except that 
+ * the values of objects of automatic storage duration that are local to the function 
+ * containing the invocation of the corresponding setjmp macro that do not have 
+ * volatile-qualified type and have been changed between the setjmp invocation and 
+ * longjmp call are indeterminate. 
+ *
+ * This means that any local variable that is declared before a try_() block and then
+ * used again after must be declared volatile because after the longjump you can not be
+ * sure what may be in the register where it is expecting the local variable to be.
+ */
+#define NOCLOBBER	volatile
+
 int prof_setjmp(void);
 
 #define TX_CHK_JMP()		if ((self)->jumpDepth < 0 || (self)->jumpDepth >= CS_JUMP_STACK_SIZE) CSException::throwCoreError(__FUNC__, __FILE__, __LINE__, CS_ERR_JUMP_OVERFLOW)
