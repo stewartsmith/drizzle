@@ -173,6 +173,8 @@ CSSocket *MSNetwork::openConnection(MSConnectionHandler *handler)
 {
 	CSSocket *sock;
 
+	CLOBBER_PROTECT(sock);
+
 	enter_();
 	
 	if(!MSNetwork::gListenerSocket) {

@@ -210,15 +210,12 @@ CSString *CSString::concat(CSString *cat_str)
 	len_a = length();
 	len_b = cat_str->length();
 	new_str = clone(len_a + len_b);
-	try_(a) {
-		for (uint32_t i=0; i<len_b; i++)
-			new_str->setCharAt(len_a+i, cat_str->charAt(i));
-	}
-	catch_(a) {
-		new_str->release();
-		throw_();
-	}
-	cont_(a);
+	push_(new_str);
+	
+	for (uint32_t i=0; i<len_b; i++)
+		new_str->setCharAt(len_a+i, cat_str->charAt(i));
+
+	pop_(new_str);
 	return_(new_str);
 }
 
@@ -231,15 +228,12 @@ CSString *CSString::concat(const char *cat_str)
 	len_a = length();
 	len_b = strlen(cat_str);
 	new_str = clone(len_a + len_b);
-	try_(a) {
-		for (uint32_t i=0; i<len_b; i++)
-			new_str->setCharAt(len_a+i, cat_str[i]);
-	}
-	catch_(a) {
-		new_str->release();
-		throw_();
-	}
-	cont_(a);
+	push_(new_str);
+	
+	for (uint32_t i=0; i<len_b; i++)
+		new_str->setCharAt(len_a+i, cat_str[i]);
+
+	pop_(new_str);
 	return_(new_str);
 }
 
@@ -249,16 +243,14 @@ CSString *CSString::toUpper()
 	uint32_t len;
 
 	enter_();
+	new_str = clone();
+	push_(new_str);
+	
 	len = new_str->length();
-	try_(a) {
-		for (uint32_t i=0; i<len; i++)
-			new_str->setCharAt(i, upperCharAt(i));
-	}
-	catch_(a) {
-		new_str->release();
-		throw_();
-	}
-	cont_(a);
+	for (uint32_t i=0; i<len; i++)
+		new_str->setCharAt(i, upperCharAt(i));
+
+	pop_(new_str);
 	return_(new_str);
 }
 
@@ -540,28 +532,25 @@ CSString *CSCString::clone(uint32_t pos, uint32_t len)
 	
 	enter_();
 	new_(str, CSCString());
-	try_(a) {
-		str->myCString = (char *) cs_malloc(len + 1);
-		str->myStrLen = len;
-		if (pos > myStrLen)
-			pos = myStrLen;
-		if (len > myStrLen - pos) {
-			/* More space has been allocated than required.
-			 * It may be that this space will be used up.
-			 * Set the zero terminator at the end
-			 * of the space!
-			 */
-			str->myCString[len] = 0;
-			len = myStrLen - pos;
-		}
-		memcpy(str->myCString, myCString+pos, len);
+	push_(str);
+	
+	str->myCString = (char *) cs_malloc(len + 1);
+	str->myStrLen = len;
+	if (pos > myStrLen)
+		pos = myStrLen;
+	if (len > myStrLen - pos) {
+		/* More space has been allocated than required.
+		 * It may be that this space will be used up.
+		 * Set the zero terminator at the end
+		 * of the space!
+		 */
 		str->myCString[len] = 0;
+		len = myStrLen - pos;
 	}
-	catch_(a) {
-		str->release();
-		throw_();
-	}
-	cont_(a);
+	memcpy(str->myCString, myCString+pos, len);
+	str->myCString[len] = 0;
+
+	pop_(str);
 	return_(str);
 }
 

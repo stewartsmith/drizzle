@@ -729,40 +729,35 @@ void PBMS_ConHandle::throw_http_reply_exception()
 	
 	enter_();
 	
-	try_(a) {
-		size_t size = 0;
-		 //dump_headers();
-		 
-		if (ms_errorReply)
-			size = ms_errorReply->length();
+	size_t size = 0;
+	 //dump_headers();
+	 
+	if (ms_errorReply)
+		size = ms_errorReply->length();
+	
+	if (!size) {
+		error_text = CSString::newString("Missing HTTP reply: possible Media Stream engine connection failure.");
+	} else {
+		uint32_t start, end;
+	
+		reply = CSString::newString(ms_errorReply);
+		push_(reply);
+		ms_errorReply = NULL;
 		
-		if (!size) {
-			error_text = CSString::newString("Missing HTTP reply: possible Media Stream engine connection failure.");
+		start = reply->locate(EXCEPTION_REPLY_MESSAGE_PREFIX_TAG, 1);
+		start += strlen(EXCEPTION_REPLY_MESSAGE_PREFIX_TAG);
+		end = reply->locate(EXCEPTION_REPLY_MESSAGE_SUFFIX_TAG, 1); 
+		if (start < end) {
+			error_text = reply->substr(start, end - start);
+			push_(error_text);
 		} else {
-			uint32_t start, end;
-		
-			reply = CSString::newString(ms_errorReply);
-			ms_errorReply = NULL;
-			
-			start = reply->locate(EXCEPTION_REPLY_MESSAGE_PREFIX_TAG, 1);
-			start += strlen(EXCEPTION_REPLY_MESSAGE_PREFIX_TAG);
-			end = reply->locate(EXCEPTION_REPLY_MESSAGE_SUFFIX_TAG, 1); 
-			if (start < end)
-				error_text = reply->substr(start, end - start);
-			else {
-				error_text = reply;
-				reply->retain();
-			}
+			error_text = reply;
 		}
-		CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, error_text->getCString());
 	}
 	
-	finally_(a) {
-		if (reply) reply->release();
-		if (error_text) error_text->release();
-	}	
-	finally_end_block(a);
+	CSException::throwException(CS_CONTEXT, CS_ERR_GENERIC_ERROR, error_text->getCString());
 	
+	// We never get here.
 	exit_();
 }
 

@@ -126,19 +126,15 @@ void CSThreadList::signalAllThreads(int sig)
 	CSThread *ptr;
 
 	enter_();
-	lock();
-	try_(a) {
-		ptr = (CSThread *) getBack();
-		while (ptr) {
-			if (ptr != self)
-				ptr->signal(sig);
-			ptr = (CSThread *) ptr->getNextLink();
-		}
+	lock_(this);
+	ptr = (CSThread *) getBack();
+	while (ptr) {
+		if (ptr != self)
+			ptr->signal(sig);
+		ptr = (CSThread *) ptr->getNextLink();
 	}
-	finally_(a) {
-		unlock();
-	}
-	finally_end_block(a);
+	unlock_(this);
+
 	exit_();
 }
 
@@ -147,19 +143,16 @@ void CSThreadList::quitAllThreads()
 	CSThread *ptr;
 
 	enter_();
-	lock();
-	try_(a) {
-		ptr = (CSThread *) getBack();
-		while (ptr) {
-			if (ptr != self)
-				ptr->myMustQuit = true;
-			ptr = (CSThread *) ptr->getNextLink();
-		}
+	lock_(this);
+	
+	ptr = (CSThread *) getBack();
+	while (ptr) {
+		if (ptr != self)
+			ptr->myMustQuit = true;
+		ptr = (CSThread *) ptr->getNextLink();
 	}
-	finally_(a) {
-		unlock();
-	}
-	finally_end_block(a);
+	
+	unlock_(this);
 	exit_();
 }
 
@@ -170,32 +163,24 @@ void CSThreadList::stopAllThreads()
 	enter_();
 	for (;;) {
 		/* Get a thread that is not self! */
-		lock();
-		try_(a) {
-			if ((thread = (CSThread *) getBack())) {
-				while (thread) {
-					if (thread != self)
-						break;
-					thread = (CSThread *) thread->getNextLink();
-				}
+		lock_(this);
+		if ((thread = (CSThread *) getBack())) {
+			while (thread) {
+				if (thread != self)
+					break;
+				thread = (CSThread *) thread->getNextLink();
 			}
-			if (thread)
-				thread->retain();
 		}
-		finally_(a) {
-			unlock();
-		}
-		finally_end_block(a);
+		if (thread)
+			thread->retain();
+		unlock_(this);
+		
 		if (!thread)
 			break;
-
-		try_(b) {
-			thread->stop();
-		}
-		finally_(b) {
-			thread->release();
-		}
-		finally_end_block(b);
+			
+		push_(thread);
+		thread->stop();
+		release_(thread);
 	}
 	exit_();
 }

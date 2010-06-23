@@ -777,7 +777,7 @@ bool MSRepositoryTable::resetScan(bool positioned, uint32_t repo_index)
 		return true;
 		
 	enter_();
-	MSRepository	*repo;
+	MSRepository	*repo = NULL;
 	CSSyncVector	*repo_list = myShare->mySysDatabase->getRepositoryList();
 
 	lock_(repo_list);
@@ -1507,7 +1507,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 	MY_BITMAP		*save_read_set;
 	bool			have_times = false;
 	time_t			delete_time;
-	int32_t			countdown;
+	int32_t			countdown = 0;
 
 	if (iRefOpenTable) {
 		if (iRefOpenTable->getDBTable()->myTableID != ref_data->rd_tab_id) {
@@ -2332,7 +2332,7 @@ MSOpenSystemTable *MSSystemTableShare::openSystemTable(const char *table_path, T
 {
 	CSString			*table_url;
 	MSSystemTableShare	*share;
-	MSOpenSystemTable	*otab;
+	MSOpenSystemTable	*otab = NULL;
 	SysTableType		table_type;
 
 	enter_();

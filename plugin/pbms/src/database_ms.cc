@@ -920,6 +920,7 @@ void MSDatabase::startBackup(MSBackupInfo *backup_info)
 	pop_(backup_info);
 	iBackupThread = MSBackup::newMSBackup(backup_info);
 	
+	push_(iBackupThread);
 	try_(a) {
 		iBackupThread->startBackup(RETAIN(this));
 	}

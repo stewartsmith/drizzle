@@ -419,14 +419,9 @@ void CSVector::add(CSObject *obj)
 {
 	enter_();
 	if (iUsage == iMaxSize) {
-		try_(a) {
-			cs_realloc((void **) &iArray, sizeof(CSObject *) * (iMaxSize + iGrowSize));
-		}
-		catch_(a) {
-			obj->release();
-			throw_();
-		}
-		cont_(a);
+		push_(obj);
+		cs_realloc((void **) &iArray, sizeof(CSObject *) * (iMaxSize + iGrowSize));
+		pop_(obj);
 		iMaxSize += iGrowSize;
 	}
 	iArray[iUsage] = obj;

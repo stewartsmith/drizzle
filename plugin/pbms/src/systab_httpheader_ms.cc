@@ -112,7 +112,7 @@ void MSHTTPHeaderTable::setDefaultMetaDataHeaders(const char *defaults)
 void MSHTTPHeaderTable::loadTable(MSDatabase *db)
 {
 	CSPath		*path;
-	SysTabRec	*headerData;
+	SysTabRec	*headerData = NULL;
 
 	enter_();
 	

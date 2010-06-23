@@ -203,6 +203,8 @@ int32_t	MSEngine::createBlob(const char *db_name, const char *tab_name, char *bl
 	MSOpenTable		*otab;
 	CSInputStream	*i_stream = NULL;
 	
+	CLOBBER_PROTECT(err);
+
 	if ((err = pbms_enter_conn_no_thd(&self, result)))
 		return err;
 
@@ -235,6 +237,8 @@ int32_t	MSEngine::referenceBlob(const char *db_name, const char *tab_name, PBMSB
 	MSBlobURLRec	blob;
 	MSOpenTable		*otab;
 	
+	CLOBBER_PROTECT(err);
+
 	if ((err = pbms_enter_conn_no_thd(&self, result)))
 		return err;
 
@@ -270,6 +274,8 @@ int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, cha
 	int32_t			err = MS_OK;
 	MSBlobURLRec	blob;
 	MSOpenTable		*otab;
+
+	CLOBBER_PROTECT(err);
 
 	if ((err = pbms_enter_conn_no_thd(&self, result)))
 		return err;
@@ -317,8 +323,10 @@ int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, cha
 int32_t MSEngine::dropDatabase(const char *db_name, PBMSResultPtr result)
 {
 	CSThread *self;
-	int		err;
+	int		err = MS_OK;;
 	
+	CLOBBER_PROTECT(err);
+
 	if ((err = pbms_enter_conn_no_thd(&self, result)))
 		return err;
 	inner_();
@@ -344,7 +352,9 @@ typedef struct UnDoInfo {
 int32_t	MSEngine::dropTable(const char *db_name, const char *tab_name, PBMSResultPtr result)
 {
 	CSThread	*self;
-	int			err;
+	int			err = MS_OK;
+
+	CLOBBER_PROTECT(err);
 
 	if ((err = pbms_enter_conn_no_thd(&self, result)))
 		return err;
@@ -499,7 +509,9 @@ bool MSEngine::renameTable(const char *from_db_name, const char *from_table, con
 int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, const char *to_db_name, const char *to_table, PBMSResultPtr result)
 {
 	CSThread	*self;
-	int err;
+	int err = MS_OK;
+
+	CLOBBER_PROTECT(err);
 
 	if ((err = pbms_enter_conn_no_thd(&self, result)))
 		return err;
@@ -507,7 +519,7 @@ int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, 
 	inner_();
 	try_(a) {
 		UnDoInfoPtr undo_info = (UnDoInfoPtr) cs_malloc(sizeof(UnDoInfoRec));
-		push_ptr(undo_info);
+		push_ptr_(undo_info);
 
 		undo_info->udo_WasRename = true;
 		if (renameTable(from_db_name, from_table, to_db_name, to_table)) {		

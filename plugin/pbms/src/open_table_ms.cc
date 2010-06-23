@@ -113,6 +113,9 @@ void MSOpenTable::createBlob(PBMSBlobURLPtr bh, uint64_t blob_size, char *metada
 	CloudKeyRec cloud_key_rec;
 	enter_();
 	
+	CLOBBER_PROTECT(cloud_key);
+	CLOBBER_PROTECT(checksum);
+
 	if (!checksum)
 		checksum = &my_checksum;
 		
@@ -485,36 +488,36 @@ bool MSOpenTable::deleteReferences(uint32_t temp_log_id, uint32_t temp_log_offse
 		goto exit;
 	}
 
-	try_(a) {
-		blob_id = CS_GET_DISK_2(tab_head.th_head_size_2);
-		while (blob_id + sizeof(MSTableBlobRec) <= getDBTable()->getTableFileSize()) {
-			if (*must_quit) {
-				/* Bit of a waste of work, but we must quit! */
-				result = false;
-				break;
-			}
-			if (myTableFile->read(&tab_blob, blob_id, sizeof(MSTableBlobRec), 0) < sizeof(MSTableBlobRec))
-				break;
-			repo_id = CS_GET_DISK_3(tab_blob.tb_repo_id_3);
-			repo_offset = CS_GET_DISK_6(tab_blob.tb_offset_6);
-			head_size = CS_GET_DISK_2(tab_blob.tb_header_size_2);
-			auth_code = CS_GET_DISK_4(tab_blob.tb_auth_code_4);
-			if (repo_file && repo_file->myRepo->myRepoID != repo_id) {
-				repo_file->returnToPool();
-				repo_file = NULL;
-			}
-			if (!repo_file)
-				repo_file = getDB()->getRepoFileFromPool(repo_id, true);
-			if (repo_file)
-				repo_file->freeTableReference(this, repo_offset, head_size, getDBTable()->myTableID, blob_id, auth_code);
-			blob_id += sizeof(MSTableBlobRec);
+	blob_id = CS_GET_DISK_2(tab_head.th_head_size_2);
+	while (blob_id + sizeof(MSTableBlobRec) <= getDBTable()->getTableFileSize()) {
+		if (*must_quit) {
+			/* Bit of a waste of work, but we must quit! */
+			result = false;
+			break;
 		}
+		if (myTableFile->read(&tab_blob, blob_id, sizeof(MSTableBlobRec), 0) < sizeof(MSTableBlobRec))
+			break;
+		repo_id = CS_GET_DISK_3(tab_blob.tb_repo_id_3);
+		repo_offset = CS_GET_DISK_6(tab_blob.tb_offset_6);
+		head_size = CS_GET_DISK_2(tab_blob.tb_header_size_2);
+		auth_code = CS_GET_DISK_4(tab_blob.tb_auth_code_4);
+		if (repo_file && repo_file->myRepo->myRepoID != repo_id) {
+			backtopool_(repo_file);
+			repo_file = NULL;
+		}
+		if (!repo_file) {
+			repo_file = getDB()->getRepoFileFromPool(repo_id, true);
+			if (repo_file)
+				frompool_(repo_file);
+		}
+		if (repo_file) 
+			repo_file->freeTableReference(this, repo_offset, head_size, getDBTable()->myTableID, blob_id, auth_code);
+		
+		blob_id += sizeof(MSTableBlobRec);
 	}
-	finally_(a) {
-		if (repo_file)
-			repo_file->returnToPool();
-	}
-	finally_end_block(a);
+	
+	if (repo_file)
+		backtopool_(repo_file);
 
 	exit:
 	return_(result);

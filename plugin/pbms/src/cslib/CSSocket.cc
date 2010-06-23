@@ -189,19 +189,18 @@ void SCSocket::publish(char *service, int default_port)
 
 void SCSocket::open(CSSocket *listener)
 {
-	int listener_handle;
-	char address[CS_SOCKET_ADDRESS_SIZE];
-
 	enter_();
-
-	/* First get all the information we need from the listener: */
-	listener_handle = ((SCSocket *) listener)->iHandle;
-	listener->formatAddress(CS_SOCKET_ADDRESS_SIZE, address);
 
 	close();
 	try_(a) {
+		int listener_handle;
+		char address[CS_SOCKET_ADDRESS_SIZE];
 		struct sockaddr_in	remote;
 		socklen_t			addrlen = sizeof(remote);
+
+		/* First get all the information we need from the listener: */
+		listener_handle = ((SCSocket *) listener)->iHandle;
+		listener->formatAddress(CS_SOCKET_ADDRESS_SIZE, address);
 
 		/* I want to make sure no error occurs after the connect!
 		 * So I allocate a buffer for the host name up front.

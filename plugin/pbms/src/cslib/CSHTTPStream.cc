@@ -153,15 +153,11 @@ void CSHTTPHeaders::addHeader(const char *name, const char *value)
 		new_(iHeaders, CSVector(5));
 
 	new_(h, CSHeader());
-	try_(a) {
-		h->setName(name);
-		h->setValue(value);
-	}
-	catch_(a) {
-		h->release();
-		throw_();
-	}
-	cont_(a);
+	push_(h);
+	h->setName(name);
+	h->setValue(value);
+	pop_(h);
+
 	addHeader(h);
 	exit_();
 }
@@ -175,15 +171,10 @@ void CSHTTPHeaders::addHeader(const char *name, uint32_t nlen, const char *value
 		new_(iHeaders, CSVector(5));
 
 	new_(h, CSHeader());
-	try_(a) {
-		h->setName(name, nlen);
-		h->setValue(value, vlen);
-	}
-	catch_(a) {
-		h->release();
-		throw_();
-	}
-	cont_(a);
+	push_(h);
+	h->setName(name, nlen);
+	h->setValue(value, vlen);
+	pop_(h);
 	addHeader(h);
 	exit_();
 }
@@ -346,68 +337,66 @@ void CSHTTPInputStream::readHead()
 			sb->release();
 			break;
 		}
-		try_(a) {
-			if (first_line) {
-				CSString *str;
-				start = sb->ignore(0, ' ');
+		push_(sb);
+		
+		if (first_line) {
+			CSString *str;
+			start = sb->ignore(0, ' ');
+			end = sb->find(start, ' ');
+			str = sb->substr(start, end - start);
+			if (str->startsWith("HTTP")) { // Reply header
+				iMethod = NULL;
+				iRequestURI = NULL;
+				iHTTPVersion = str;
+				start = sb->ignore(end, ' ');
 				end = sb->find(start, ' ');
+				if (start > end)
+					CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
+
 				str = sb->substr(start, end - start);
-				if (str->startsWith("HTTP")) { // Reply header
-					iMethod = NULL;
-					iRequestURI = NULL;
-					iHTTPVersion = str;
-					start = sb->ignore(end, ' ');
-					end = sb->find(start, ' ');
-					if (start > end)
-						CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
-
-					str = sb->substr(start, end - start);
-					iStatus = atol(str->getCString());
-					str->release();
-					start = sb->ignore(end, ' ');
-					end = sb->find(start, '\r');
-					if (start > end)
-						CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
-					iStatusPhrase = sb->substr(start, end - start);
-				} else {
-					iStatus = 0;
-					iStatusPhrase = NULL;
-					iMethod = str;
+				iStatus = atol(str->getCString());
+				str->release();
 				start = sb->ignore(end, ' ');
-				end = sb->find(start, ' ');
+				end = sb->find(start, '\r');
 				if (start > end)
 					CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
-				iRequestURI = sb->substr(start, end - start);
-				start = sb->ignore(end, ' ');
-				end = sb->find(start, ' ');
-				if (start > end)
-					CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
-				iHTTPVersion = sb->substr(start, end - start);
-				} 				
-				first_line = false;
-			}
-			else {
-				uint32_t nstart, nend;
-				uint32_t vstart, vend;
-
-				nstart = sb->ignore(0, ' ');
-				nend = sb->find(nstart, ':');
-
-				vstart = sb->ignore(nend+1, ' ');
-				vend = sb->find(vstart, '\r');
-
-				nend = sb->trim(nend, ' ');
-				vend = sb->trim(vend, ' ');
-				
-				if (vstart > vend)
-					CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
-				addHeader(sb->getBuffer(nstart), nend-nstart, sb->getBuffer(vstart), vend-vstart);
-			}
+				iStatusPhrase = sb->substr(start, end - start);
+			} else {
+				iStatus = 0;
+				iStatusPhrase = NULL;
+				iMethod = str;
+			start = sb->ignore(end, ' ');
+			end = sb->find(start, ' ');
+			if (start > end)
+				CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
+			iRequestURI = sb->substr(start, end - start);
+			start = sb->ignore(end, ' ');
+			end = sb->find(start, ' ');
+			if (start > end)
+				CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
+			iHTTPVersion = sb->substr(start, end - start);
+			} 				
+			first_line = false;
 		}
-		finally_(a) {
-			sb->release();
+		else {
+			uint32_t nstart, nend;
+			uint32_t vstart, vend;
+
+			nstart = sb->ignore(0, ' ');
+			nend = sb->find(nstart, ':');
+
+			vstart = sb->ignore(nend+1, ' ');
+			vend = sb->find(vstart, '\r');
+
+			nend = sb->trim(nend, ' ');
+			vend = sb->trim(vend, ' ');
+			
+			if (vstart > vend)
+				CSException::throwException(CS_CONTEXT, CS_ERR_BAD_HTTP_HEADER, "Bad HTTP header");
+			addHeader(sb->getBuffer(nstart), nend-nstart, sb->getBuffer(vstart), vend-vstart);
 		}
-		finally_end_block(a);
+
+		release_(sb);
 	}
 	exit_();
 }

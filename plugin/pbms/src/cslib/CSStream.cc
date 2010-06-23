@@ -55,25 +55,21 @@ void CSStream::pipe(CSOutputStream *out, CSInputStream *in)
 	push_(out);
 	push_(in);
 	
-	try_(a) {
-		buffer = (char *) cs_malloc(DEFAULT_BUFFER_SIZE);
-		
-		for (;;) {
-			size = in->read(buffer, DEFAULT_BUFFER_SIZE);
-			self->interrupted();
-			if (!size)
-				break;
-			out->write(buffer, size);
-			self->interrupted();
-		}
+	buffer = (char *) cs_malloc(DEFAULT_BUFFER_SIZE);
+	push_ptr_(buffer);
+	
+	for (;;) {
+		size = in->read(buffer, DEFAULT_BUFFER_SIZE);
+		self->interrupted();
+		if (!size)
+			break;
+		out->write(buffer, size);
+		self->interrupted();
 	}
-	finally_(a) {
-		if (buffer)
-			cs_free(buffer);
-		in->close();
-		out->close();
-	}
-	finally_end_block(a);
+	in->close();
+	out->close();
+	
+	release_(buffer);
 	release_(in);
 	release_(out);
 	exit_();
@@ -94,21 +90,18 @@ CSStringBuffer *CSInputStream::readLine()
 	ch = read();
 	if (ch != -1) {
 		new_(sb, CSStringBuffer(20));
-		try_(a) {
-			while (ch != '\n' && ch != '\r' && ch != -1) {
-				sb->append((char) ch);
+		push_(sb);
+		
+		while (ch != '\n' && ch != '\r' && ch != -1) {
+			sb->append((char) ch);
+			ch = read();
+		}
+		if (ch == '\r') {
+			if (peek() == '\n')
 				ch = read();
-			}
-			if (ch == '\r') {
-				if (peek() == '\n')
-					ch = read();
-			}
 		}
-		catch_(a) {
-			sb->release();
-			throw_();
-		}
-		cont_(a);
+
+		pop_(sb);
 	}
 
 	return_(sb);

@@ -115,11 +115,11 @@ int cs_hope(const char *func, const char *file, int line, const char *message);
  * volatile-qualified type and have been changed between the setjmp invocation and 
  * longjmp call are indeterminate. 
  *
- * This means that any local variable that is declared before a try_() block and then
- * used again after must be declared volatile because after the longjump you can not be
- * sure what may be in the register where it is expecting the local variable to be.
+ * GCC will not put variables into registers for which the address gets taken do use
+ * CLOBBER_PROTECT() to protect variables from being clobbered.
+ * This came from Jens Thoms Toerring. Thanks!
  */
-#define NOCLOBBER	volatile
+#define CLOBBER_PROTECT(a) do { if ((void *)&(a) == (void*) 1) (a) = (a);} while(0)
 
 int prof_setjmp(void);
 
@@ -156,7 +156,7 @@ int prof_setjmp(void);
 								(self)->relTop++; \
 							} while (0)
 
-#define push_ptr(r)			do { \
+#define push_ptr_(r)			do { \
 								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) {\
 									CSException::throwCoreError(CS_CONTEXT, CS_ERR_RELEASE_OVERFLOW); \
 								} \
@@ -191,13 +191,13 @@ int prof_setjmp(void);
 								if (((self)->relTop - 1)->r_type == CS_RELEASE_OBJECT) {\
 									register CSObject *rp; \
 									rp = ((self)->relTop - 1)->x.r_object; \
-									ASSERT(rp == (r)); \
+									ASSERT(rp == (CSObject *)(r)); \
 									(self)->relTop--; \
 									rp->release(); \
 								} else if (((self)->relTop - 1)->r_type == CS_RELEASE_MEM) {\
 									register void *mem; \
 									mem = ((self)->relTop - 1)->x.r_mem; \
-									ASSERT(mem == (r)); \
+									ASSERT(mem == (void *)(r)); \
 									(self)->relTop--; \
 									cs_free(mem); \
 								}  else {\
