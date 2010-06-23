@@ -58,6 +58,7 @@ typedef struct CSCallStack {
 #define CS_RELEASE_OBJECT		1
 #define CS_RELEASE_MUTEX		2
 #define CS_RELEASE_POOLED		3
+#define CS_RELEASE_MEM			4
 
 typedef struct CSRelease {
 	int						r_type;
@@ -65,6 +66,7 @@ typedef struct CSRelease {
 		CSObject			*r_object;					/* The object to be released. */
 		CSMutex				*r_mutex;					/* The mutex to be unlocked! */
 		CSPooled			*r_pooled;
+		void				*r_mem;
 	} x;
 } CSReleaseRec, *CSReleasePtr;
 

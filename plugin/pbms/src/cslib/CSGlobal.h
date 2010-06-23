@@ -156,14 +156,27 @@ int prof_setjmp(void);
 								(self)->relTop++; \
 							} while (0)
 
+#define push_ptr(r)			do { \
+								if ((self)->relTop >= (self)->relStack + CS_RELEASE_STACK_SIZE) {\
+									CSException::throwCoreError(CS_CONTEXT, CS_ERR_RELEASE_OVERFLOW); \
+								} \
+								(self)->relTop->r_type = CS_RELEASE_MEM; \
+								(self)->relTop->x.r_mem = (r); \
+								(self)->relTop++; \
+							} while (0)
+
 #define pop_(r)				do { \
 								ASSERT((self)->relTop > (self)->relStack); \
 								if (((self)->relTop - 1)->r_type == CS_RELEASE_OBJECT) {\
 									ASSERT(((self)->relTop - 1)->x.r_object == ((CSObject *) r)); \
 								} else if (((self)->relTop - 1)->r_type == CS_RELEASE_MUTEX) {\
 									ASSERT(((self)->relTop - 1)->x.r_mutex == ((CSMutex *) r)); \
-								} else {\
+								} else if (((self)->relTop - 1)->r_type == CS_RELEASE_POOLED) {\
 									ASSERT(((self)->relTop - 1)->x.r_pooled == ((CSPooled *) r)); \
+								} else if (((self)->relTop - 1)->r_type == CS_RELEASE_MEM) {\
+									ASSERT(((self)->relTop - 1)->x.r_mem == ((CSPooled *) r)); \
+								}  else {\
+									ASSERT(false); \
 								} \
 								(self)->relTop--; \
 							} while (0)
@@ -174,13 +187,22 @@ int prof_setjmp(void);
 							} while (0)
 
 #define release_(r)			do {  \
-								register CSObject *rp; \
 								ASSERT((self)->relTop > (self)->relStack); \
-								ASSERT(((self)->relTop - 1)->r_type == CS_RELEASE_OBJECT); \
-								rp = ((self)->relTop - 1)->x.r_object; \
-								ASSERT(rp == (r)); \
-								(self)->relTop--; \
-								rp->release(); \
+								if (((self)->relTop - 1)->r_type == CS_RELEASE_OBJECT) {\
+									register CSObject *rp; \
+									rp = ((self)->relTop - 1)->x.r_object; \
+									ASSERT(rp == (r)); \
+									(self)->relTop--; \
+									rp->release(); \
+								} else if (((self)->relTop - 1)->r_type == CS_RELEASE_MEM) {\
+									register void *mem; \
+									mem = ((self)->relTop - 1)->x.r_mem; \
+									ASSERT(mem == (r)); \
+									(self)->relTop--; \
+									cs_free(mem); \
+								}  else {\
+									ASSERT(false); \
+								} \
 							} while (0)
 
 #define lock_(r)			do { \

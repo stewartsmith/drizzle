@@ -41,7 +41,7 @@
 #include "util_ms.h"
 #include "engine_ms.h"
 
-#include "version_ms.h"
+//#include "version_ms.h"
 //#include "mysql_ms.h"
 
 u_long MSConnectionHandler::gMaxKeepAlive;

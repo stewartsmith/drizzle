@@ -305,9 +305,7 @@ int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, cha
 			CSException::throwException(CS_CONTEXT, MS_ERR_INCORRECT_URL, buffer);
 		}
 		
-		backtopool_(otab);
-		
-		
+		backtopool_(otab);				
 	}
 	catch_(a) {
 		err = pbms_exception_to_result(&self->myException, result);
@@ -501,31 +499,40 @@ bool MSEngine::renameTable(const char *from_db_name, const char *from_table, con
 int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, const char *to_db_name, const char *to_table, PBMSResultPtr result)
 {
 	CSThread	*self;
-	NOCLOBBER int err = 0;
-	NOCLOBBER UnDoInfoPtr undo_info = NULL;
+	int err;
 
 	if ((err = pbms_enter_conn_no_thd(&self, result)))
 		return err;
 
 	inner_();
 	try_(a) {
-		undo_info = (UnDoInfoPtr) cs_malloc(sizeof(UnDoInfoRec));
+		UnDoInfoPtr undo_info = (UnDoInfoPtr) cs_malloc(sizeof(UnDoInfoRec));
+		push_ptr(undo_info);
 
 		undo_info->udo_WasRename = true;
 		if (renameTable(from_db_name, from_table, to_db_name, to_table)) {		
 			undo_info->udo_fromDatabaseName = CSString::newString(from_db_name);
+			push_(undo_info->udo_fromDatabaseName);
+
 			undo_info->udo_toDatabaseName = CSString::newString(to_db_name);
+			push_(undo_info->udo_toDatabaseName);
+
 			undo_info->udo_OldName = CSString::newString(from_table);
+			push_(undo_info->udo_OldName);
+
 			undo_info->udo_NewName = CSString::newString(to_table);
+			
+			pop_(undo_info->udo_OldName);
+			pop_(undo_info->udo_toDatabaseName);
+			pop_(undo_info->udo_fromDatabaseName);
 		} else {
 			undo_info->udo_fromDatabaseName = undo_info->udo_toDatabaseName = undo_info->udo_OldName = undo_info->udo_NewName = NULL;
 		}
 		self->myInfo = undo_info;
+		pop_(undo_info);
 	}
 	catch_(a) {
 		err = pbms_exception_to_result(&self->myException, result);
-		if (undo_info)
-			cs_free(undo_info);
 	}
 	cont_(a);
 	outer_();
