@@ -187,6 +187,8 @@ uint64_t MSTransCache::tc_StartCacheReload(bool startup)
 {
 	enter_();
 	
+	(void) startup;
+	
 	ASSERT((startup) || tc_Full);
 	tc_ReLoadingThread = self;
 	tc_OverFlowTID = tc_OverFlow->tid;

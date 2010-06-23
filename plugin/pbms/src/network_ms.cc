@@ -171,7 +171,7 @@ void MSNetwork::startConnectionHandler()
  */
 CSSocket *MSNetwork::openConnection(MSConnectionHandler *handler)
 {
-	CSSocket *sock;
+	CSSocket *sock = NULL;
 
 	CLOBBER_PROTECT(sock);
 

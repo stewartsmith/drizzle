@@ -89,6 +89,8 @@ void CSFile::open(int mode)
 	CSPath	*dir;
 	bool	retry = false;
 
+	CLOBBER_PROTECT(retry);
+
 	enter_();
 	if (mode & CREATE) {
 		/* Create and open the file: */

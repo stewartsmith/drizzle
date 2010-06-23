@@ -64,6 +64,8 @@ CSFile *CSPath::createFile(int mode)
 	CSPath	*dir;
 	bool	retry = false;
 
+	CLOBBER_PROTECT(retry);
+
 	enter_();
 	/* Create and open the file: */
 	do {

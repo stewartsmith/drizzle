@@ -495,7 +495,7 @@ void CSThread::detach(CSThread *thread)
 
 CSThread* CSThread::getSelf()
 {
-	CSThread* self;
+	CSThread* self = NULL;
 	
 	if ((!isUp) || !(self = (CSThread*) pthread_getspecific(sThreadKey)))
 		return (CSThread*) NULL;
@@ -604,6 +604,8 @@ iSuspendCount(0)
 void *CSDaemon::run()
 {
 	bool must_sleep = false;
+
+	CLOBBER_PROTECT(must_sleep);
 
 	enter_();
 	myMustQuit = !initializeWork();

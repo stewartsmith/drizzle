@@ -193,6 +193,8 @@ MSTrans *MSTrans::txn_NewMSTrans(const char *log_path, bool dump_log)
 	uint64_t log_size;
 	enter_();
 
+	(void) dump_log;
+	
 	new_(trans, MSTrans());
 	push_(trans);
 

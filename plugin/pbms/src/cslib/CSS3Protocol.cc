@@ -583,6 +583,12 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 	size_t size = objs * obj_size;
 	char *end, *ptr = (char*) header, *name, *value;
 	uint32_t name_len, value_len;
+	
+	CLOBBER_PROTECT(size);
+	CLOBBER_PROTECT(ptr);
+	CLOBBER_PROTECT(value);
+	CLOBBER_PROTECT(value_len);
+
 //printf(	"receive_header: %s\n", ptr);
 	end = ptr + size;
 	if (*(end -2) == '\r' && *(end -1) == '\n')

@@ -764,14 +764,14 @@ void MSRepoFile::releaseBlob(MSOpenTable *otab, uint64_t offset, uint16_t head_s
 {
 	CSMutex				*lock;
 	MSRepoPointersRec	ptr;
-	uint32_t				table_ref_count = 0;
-	uint32_t				size;
+	uint32_t			table_ref_count = 0;
+	uint32_t			size;
 	size_t				ref_size, ref_count, read_size;
 	MSRepoTempRefPtr	temp_ref = NULL;
-	uint16_t				tab_index;
+	uint16_t			tab_index = 0;
 	MSRepoTableRefPtr	tab_ref;
-	uint16_t				alias_offset;
-	uint32_t				alias_hash;
+	uint16_t			alias_offset;
+	uint32_t			alias_hash;
 
 	enter_();
 	/* Lock the BLOB: */
@@ -1573,8 +1573,8 @@ MSRepoFile *MSRepository::openRepoFile()
 		size_t			size;
 		int				status;
 		int				ref_size;
-		uint16_t			head_size;
-		uint64_t			blob_size;
+		uint16_t		head_size;
+		uint64_t		blob_size;
 
 		lock_(this);
 		/* Check again after locking: */
@@ -1632,7 +1632,7 @@ MSRepoFile *MSRepository::openRepoFile()
 				status = CS_GET_DISK_1(blob.rb_status_1);
 				ref_size = CS_GET_DISK_1(blob.rb_ref_size_1);
 				ref_count = CS_GET_DISK_2(blob.rb_ref_count_2);
-				mdata_size = CS_GET_DISK_2(blob.rb_mdata_size_2);
+				head_size = CS_GET_DISK_2(blob.rb_head_size_2);
 				mdata_size = CS_GET_DISK_2(blob.rb_mdata_size_2);
 				mdata_offset = CS_GET_DISK_2(blob.rb_mdata_offset_2);
 				blob_size = CS_GET_DISK_6(blob.rb_blob_repo_size_6);
