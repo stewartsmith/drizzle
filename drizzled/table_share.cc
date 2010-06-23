@@ -613,7 +613,7 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
 }
 
 
-TableShare::TableShare(TableIdentifier &identifier) : // Just used during createTable()
+TableShare::TableShare(const TableIdentifier &identifier) : // Just used during createTable()
   table_category(TABLE_UNKNOWN_CATEGORY),
   open_count(0),
   found_next_number_field(NULL),
@@ -1865,7 +1865,9 @@ err_not_open:
   7    Table definition has changed in engine
 */
 
-int TableShare::open_table_from_share(Session *session, const char *alias,
+int TableShare::open_table_from_share(Session *session,
+                                      const TableIdentifier &identifier,
+                                      const char *alias,
                                       uint32_t db_stat, uint32_t ha_open_flags,
                                       Table &outparam)
 {
@@ -2020,8 +2022,8 @@ int TableShare::open_table_from_share(Session *session, const char *alias,
   {
     assert(!(db_stat & HA_WAIT_IF_LOCKED));
     int ha_err;
-    if ((ha_err= (outparam.cursor->
-                  ha_open(&outparam, getNormalizedPath(),
+
+    if ((ha_err= (outparam.cursor->ha_open(identifier, &outparam, getNormalizedPath(),
                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
                           (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE : HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {

@@ -165,7 +165,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 }
 
 
-int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
+int ArchiveEngine::doDropTable(Session&, const TableIdentifier &identifier)
 {
   string new_path(identifier.getPath());
 
@@ -182,7 +182,7 @@ int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
 }
 
 int ArchiveEngine::doGetTableDefinition(Session&,
-                                        TableIdentifier &identifier,
+                                        const TableIdentifier &identifier,
                                         drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
@@ -443,10 +443,10 @@ int ha_archive::init_archive_reader()
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name, int, uint32_t)
+int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
   int rc= 0;
-  share= get_share(name, &rc);
+  share= get_share(identifier.getPath().c_str(), &rc);
 
   /** 
     We either fix it ourselves, or we just take it offline 
@@ -479,6 +479,13 @@ int ha_archive::open(const char *name, int, uint32_t)
   thr_lock_data_init(&share->lock, &lock, NULL);
 
   return(rc);
+}
+
+// Should never be called
+int ha_archive::open(const char *, int, uint32_t)
+{
+  assert(0);
+  return -1;
 }
 
 
@@ -529,7 +536,7 @@ int ha_archive::close(void)
 
 int ArchiveEngine::doCreateTable(Session &,
                                  Table& table_arg,
-                                 drizzled::TableIdentifier &identifier,
+                                 const drizzled::TableIdentifier &identifier,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
@@ -710,7 +717,6 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
   pthread_mutex_lock(&share->mutex);
 
   if (share->archive_write_open == false)
@@ -1319,7 +1325,7 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   return;
 }
 
-int ArchiveEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+int ArchiveEngine::doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to)
 {
   int error= 0;
 
@@ -1337,7 +1343,7 @@ int ArchiveEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifie
 }
 
 bool ArchiveEngine::doDoesTableExist(Session&,
-                                     TableIdentifier &identifier)
+                                     const TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(ARZ);
