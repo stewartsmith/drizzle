@@ -27,10 +27,19 @@ namespace drizzled
 
 class Item_func_concat :public Item_str_func
 {
+  Session &session;
   String tmp_value;
 public:
-  Item_func_concat(List<Item> &list) :Item_str_func(list) {}
-  Item_func_concat(Item *a,Item *b) :Item_str_func(a,b) {}
+  Item_func_concat(Session &session_arg, List<Item> &list) :
+    Item_str_func(list),
+    session(session_arg)
+  {}
+
+  Item_func_concat(Session &session_arg, Item *a, Item *b) :
+    Item_str_func(a, b),
+    session(session_arg)
+  {}
+
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "concat"; }
@@ -38,9 +47,13 @@ public:
 
 class Item_func_concat_ws :public Item_str_func
 {
+  Session &session;
   String tmp_value;
 public:
-  Item_func_concat_ws(List<Item> &list) :Item_str_func(list) {}
+  Item_func_concat_ws(Session &session_arg, List<Item> &list) :
+    Item_str_func(list),
+    session(session_arg)
+  {}
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "concat_ws"; }

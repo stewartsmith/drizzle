@@ -27,21 +27,25 @@ namespace drizzled
 
 class Item_func_make_set :public Item_str_func
 {
+  Session &session;
   Item *item;
   String tmp_str;
 
 public:
   using Item::split_sum_func;
-  Item_func_make_set(Item *a,List<Item> &list) :Item_str_func(list),item(a) {}
+  Item_func_make_set(Session &session_arg, Item *a, List<Item> &list) :
+    Item_str_func(list), 
+    session(session_arg),
+    item(a) {}
   String *val_str(String *str);
-  bool fix_fields(Session *session, Item **ref)
+  bool fix_fields(Session *session_arg, Item **ref)
   {
     assert(fixed == 0);
-    return ((!item->fixed && item->fix_fields(session, &item)) ||
+    return ((!item->fixed && item->fix_fields(session_arg, &item)) ||
             item->check_cols(1) ||
-            Item_func::fix_fields(session, ref));
+            Item_func::fix_fields(session_arg, ref));
   }
-  void split_sum_func(Session *session, Item **ref_pointer_array, List<Item> &fields);
+  void split_sum_func(Session *session_arg, Item **ref_pointer_array, List<Item> &fields);
   void fix_length_and_dec();
   void update_used_tables();
   const char *func_name() const { return "make_set"; }
