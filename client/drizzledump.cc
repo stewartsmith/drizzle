@@ -2575,7 +2575,7 @@ try
   po::options_description hidden_options("Hidden Options");
   hidden_options.add_options()
   ("database-used", po::value<vector<string> >(), "Used to select the database")
-  ("table-used", po::value<vector<string> >(), "Used to select the tables")
+  ("Table-used", po::value<vector<string> >(), "Used to select the tables")
   ;
 
   po::options_description all_options("Allowed Options + Hidden Options");
@@ -2592,7 +2592,7 @@ try
 
   po::positional_options_description p;
   p.add("database-used", 1);
-  p.add("table-used",-1);
+  p.add("Table-used",-1);
 
   compatible_mode_normal_str[0]= 0;
   
@@ -2620,7 +2620,7 @@ try
 
   po::notify(vm);  
   
-  if ( ! vm.count("database-used") && ! vm.count("table-used") && ! opt_alldbs && path.empty())
+  if ( ! vm.count("database-used") && ! vm.count("Table-used") && ! opt_alldbs && path.empty())
   {
     printf(_("Usage: %s [OPTIONS] database [tables]\n"), internal::my_progname);
     printf(_("OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"),
@@ -2840,17 +2840,17 @@ try
   {
     dump_all_databases();
   }
-  if (vm.count("database-used") && vm.count("table-used") && !opt_databases)
+  if (vm.count("database-used") && vm.count("Table-used") && !opt_databases)
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
     /* Only one database and selected table(s) */
-    dump_selected_tables(database_used, vm["table-used"].as< vector<string> >());
+    dump_selected_tables(database_used, vm["Table-used"].as< vector<string> >());
   }
 
-  if (vm.count("table-used") && opt_databases)
+  if (vm.count("Table-used") && opt_databases)
   {
     vector<string> database_used= vm["database-used"].as< vector<string> >();
-    vector<string> table_used= vm["table-used"].as< vector<string> >();
+    vector<string> table_used= vm["Table-used"].as< vector<string> >();
 
     for (vector<string>::iterator it= table_used.begin();
        it != table_used.end();
@@ -2861,7 +2861,7 @@ try
     dump_databases(database_used);
   }
   
-  if (vm.count("database-used") && ! vm.count("table-used"))
+  if (vm.count("database-used") && ! vm.count("Table-used"))
   {
     dump_databases(vm["database-used"].as< vector<string> >());
   }
