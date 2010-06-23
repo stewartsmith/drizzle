@@ -1679,7 +1679,6 @@ static int test_plugin_options(memory::Root *module_root,
 
   if (test_module->getManifest().init_options != NULL)
   {
-    cout << "Calling init_options: " << test_module->getName() << endl;
     po::options_description module_options("Options used by plugins");
     module::option_context opt_ctx(test_module->getName(),
                                    module_options.add_options());

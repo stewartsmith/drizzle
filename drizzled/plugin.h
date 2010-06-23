@@ -68,7 +68,7 @@ namespace plugin { class StorageEngine; }
 
 
 #define DRIZZLE_DECLARE_PLUGIN_END
-#define DRIZZLE_PLUGIN(init,system) \
+#define DRIZZLE_PLUGIN(init,system,options) \
   DRIZZLE_DECLARE_PLUGIN \
   { \
     DRIZZLE_VERSION_ID, \
@@ -77,7 +77,7 @@ namespace plugin { class StorageEngine; }
     STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
     STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
     PANDORA_MODULE_LICENSE, \
-    init, system, NULL \
+    init, system, options \
   } 
 
 

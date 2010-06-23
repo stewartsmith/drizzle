@@ -1497,7 +1497,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
-  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'drizzle-protocol-port'};
+  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'drizzle-protocol.port'};
 
   $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
 
@@ -2574,7 +2574,7 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--mysql-protocol-port=%d", $prefix,
               $mysqld->{'port'});
 
-  mtr_add_arg($args, "%s--drizzle-protocol-port=%d", $prefix,
+  mtr_add_arg($args, "%s--drizzle-protocol.port=%d", $prefix,
               $mysqld->{'secondary_port'});
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
@@ -2739,6 +2739,7 @@ sub mysqld_start ($$$) {
 
   if ( defined $exe )
   {
+    mtr_verbose("running Drizzle with: $exe @$args");
     $pid= mtr_spawn($exe, $args, "",
 		    $mysqld->{'path_myerr'},
 		    $mysqld->{'path_myerr'},
