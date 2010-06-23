@@ -354,9 +354,9 @@ FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, 
   file_buff= new TransparentFile();
 }
 
-int FilesystemCursor::open(const char *name, int, uint32_t)
+int FilesystemCursor::doOpen(const drizzled::TableIdentifier &identifier, int, uint32_t)
 {
-  if (!(share= get_share(name)))
+  if (!(share= get_share(identifier.getPath().c_str())))
     return ENOENT;
 
   file_desc= ::open(share->real_file_name.c_str(), O_RDONLY);
