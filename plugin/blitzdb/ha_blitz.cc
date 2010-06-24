@@ -482,7 +482,7 @@ int ha_blitz::doStartTableScan(bool scan) {
   table_based = true;
 
   /* Obtain the most suitable lock for the given statement type. */
-  critical_section_enter();
+  blitz_optimal_lock();
 
   /* Get the first record from TCHDB. Let the scanner take
      care of checking return value errors. */
@@ -554,7 +554,7 @@ int ha_blitz::doEndTableScan() {
   table_based = false;
 
   if (thread_locked)
-    critical_section_exit();
+    blitz_optimal_unlock();
 
   return 0;
 }
@@ -609,9 +609,9 @@ int ha_blitz::doStartIndexScan(uint32_t key_num, bool) {
      sure that this thread will get the most appropriate lock for
      the current statement. */
   if (thread_locked)
-    critical_section_exit();
+    blitz_optimal_unlock();
 
-  critical_section_enter();
+  blitz_optimal_lock();
   return 0;
 }
 
@@ -783,7 +783,7 @@ int ha_blitz::doEndIndexScan(void) {
   btree_cursor[active_index].moved = false;
 
   if (thread_locked)
-    critical_section_exit();
+    blitz_optimal_unlock();
 
   return 0;
 }

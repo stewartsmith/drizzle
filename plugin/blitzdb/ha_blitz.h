@@ -343,8 +343,8 @@ public:
   int free_share(void);
 
   /* LOCK RELATED FUNCTIONS (BLITZDB SPECIFIC) */
-  int critical_section_enter();
-  int critical_section_exit();
+  int blitz_optimal_lock();
+  int blitz_optimal_unlock();
   uint32_t max_row_length(void);
 
   /* INDEX KEY RELATED FUNCTIONS (BLITZDB SPECIFIC) */

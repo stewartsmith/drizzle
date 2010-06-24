@@ -14,6 +14,9 @@ insert into t1 values (5, 5, 5), (6, 6, 6), (7, 7, 7), (8, 8, 8);
 insert into t1 values (9, 9, 9), (10, 10, 10), (11, 11, 11), (12, 12, 12);
 insert into t1 values (13, 13, 13), (14, 14, 14), (15, 15, 15), (16, 16, 16);
 
+# this statement should be 'optimized away'.
+explain select count (*) from t1;
+
 # overflow
 --error 1264
 insert into t1 values (2147483648, 1, 1);
@@ -70,8 +73,19 @@ select count (id) from t1;
 select count (a) from t1;
 select count (b) from t1;
 select * from t1 order by id;
-delete from t1;
+
+# delete by pk range
+delete from t1 where id > 10 and id < 14;
+select * from t1 order by id;
 select count (*) from t1;
+delete from t1 where id >= 20 and id <= 23;
+select * from t1 order by id;
+select count (*) from t1;
+
+# impossible range
+delete from t1 where a > 20;
+select count(*) from t1;
+
 drop table t1;
 
 # +---------------------+
@@ -225,6 +239,11 @@ select * from t1 where id = 'paris';
 delete from t1 where id = 'geneva';
 delete from t1 where id = 'fukuoka';
 select count (id) from t1;
+select count (*) from t1;
+select * from t1 order by id;
+
+# Delete by Range
+delete from t1 where id < 'london';
 select count (*) from t1;
 select * from t1 order by id;
 drop table t1;
