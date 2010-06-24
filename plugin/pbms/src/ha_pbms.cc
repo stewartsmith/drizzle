@@ -599,8 +599,10 @@ static bool pbms_started = false;
 
 
 #ifdef DRIZZLED
+int pbms_init_func(module::Context &registry);
 int pbms_init_func(module::Context &registry)
 #else
+int pbms_init_func(void *p);
 int pbms_discover_system_tables(handlerton *hton, THD* thd, const char *db, const char *name, uchar **frmblob, size_t *frmlen);
 int pbms_init_func(void *p)
 #endif

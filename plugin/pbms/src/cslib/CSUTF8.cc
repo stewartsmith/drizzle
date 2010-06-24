@@ -35,10 +35,10 @@
 #include "CSMemory.h"
 #include "CSGlobal.h"
 
-size_t cs_utf_to_uni_char(const char *in_string, uint32_t *ret_value)
+size_t cs_utf_to_uni_char(const u_char *in_string, uint32_t *ret_value)
 {
-	u_char	*i_string = (u_char *) in_string;
-	size_t	s_len = strlen(in_string);
+	const u_char *i_string =  in_string;
+	size_t	s_len = strlen((char*)in_string);
 	u_char	ch;
 	uint32_t	val;
 	size_t	clen;
@@ -132,7 +132,7 @@ size_t cs_utf_to_uni_char(const char *in_string, uint32_t *ret_value)
 	return(clen);
 }
 
-void cs_utf8_to_uni(size_t out_len, unichar *out_string, const char *in_string)
+void cs_utf8_to_uni(size_t out_len, unichar *out_string, const u_char *in_string)
 {
 	uint32_t	utf_value;
 
@@ -151,7 +151,7 @@ void cs_utf8_to_uni(size_t out_len, unichar *out_string, const char *in_string)
 	*out_string = 0;
 }
 
-void cs_utf8_to_uni_no_term(size_t out_len, unichar *out_string, const char *in_string)
+void cs_utf8_to_uni_no_term(size_t out_len, unichar *out_string, const u_char *in_string)
 {
 	uint32_t	utf_value;
 
@@ -261,6 +261,7 @@ size_t cs_uni_to_utf8_len(const unichar *in_string, s_int in_len)
 	return slen;
 }
 
+/*
 size_t cs_uni_len(const unichar *in_string)
 {
 	size_t len = 0;
@@ -268,4 +269,5 @@ size_t cs_uni_len(const unichar *in_string)
 	while (*in_string++) len++;
 	return len;
 }
+*/
 

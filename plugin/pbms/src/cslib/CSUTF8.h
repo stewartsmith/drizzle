@@ -38,10 +38,10 @@
  */
 size_t cs_utf_to_uni_char(const u_char *in_string, uint32_t *uni_value);
 
-void cs_utf8_to_uni(size_t out_len, unichar *out_string, const char *in_string);
+void cs_utf8_to_uni(size_t out_len, unichar *out_string, const u_char *in_string);
 
 /* Convert to UTF-8 without a terminator: */
-void cs_utf8_to_uni_no_term(size_t out_len, unichar *out_string, const char *in_string);
+void cs_utf8_to_uni_no_term(size_t out_len, unichar *out_string, const u_char *in_string);
 
 void cs_uni_to_utf8(size_t out_len, char *out_string, const unichar *in_string);
 void cs_uni_to_utf8(size_t out_len, char *out_string, const unichar *in_string, s_int in_len);

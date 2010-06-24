@@ -222,7 +222,7 @@ static void set_StorageType(MSDatabase *db, const char *value)
 }
 
 //---------------------------
-const char *get_StorageType(MSDatabase *db, const char *)
+static const char *get_StorageType(MSDatabase *db, const char *)
 {
 	const char *value = "Unknown";
 	enter_();

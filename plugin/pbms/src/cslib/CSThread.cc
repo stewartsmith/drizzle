@@ -538,6 +538,7 @@ void CSThread::sleep(unsigned long timeout)
 	exit_();
 }
 
+#ifdef DEBUG
 int cs_assert(const char *func, const char *file, int line, const char *message)
 {
 	CSException::throwAssertion(func, file, line, message);
@@ -552,6 +553,7 @@ int cs_hope(const char *func, const char *file, int line, const char *message)
 	e.log(NULL);
 	return 0;
 }
+#endif
 
 CSThread *CSThread::newThread(CSString *name, ThreadRunFunc run_func, CSThreadList *list)
 {

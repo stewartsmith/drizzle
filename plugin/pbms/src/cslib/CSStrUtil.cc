@@ -274,7 +274,7 @@ void cs_remove_last_name_of_path(char *path)
 		*ptr = 0;
 }
 
-void cs_remove_last_directory_of_path(char *path)
+static void cs_remove_last_directory_of_path(char *path)
 {
 	char *ptr;
 
@@ -334,7 +334,7 @@ const char *cs_next_name_of_path(const char *path)
 	return path;
 }
 
-void cs_adjust_absolute_path(size_t max, char *path, const char *rel_path)
+static void cs_adjust_absolute_path(size_t max, char *path, const char *rel_path)
 {
 	while (*rel_path) {
 		if (*rel_path == '.') {

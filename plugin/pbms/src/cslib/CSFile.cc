@@ -38,6 +38,11 @@
 #include <errno.h>
 #include <string.h>
 
+#include "CSFile.h"
+#include "CSStream.h"
+#include "CSGlobal.h"
+
+
 static int unix_file_open(const char *path, int flags, mode_t mode)
 {
 	return open(path, flags, mode);
@@ -47,10 +52,6 @@ int unix_file_close(int fh)
 {
 	return close(fh);
 }
-
-#include "CSFile.h"
-#include "CSStream.h"
-#include "CSGlobal.h"
 
 /*
  * ---------------------------------------------------------------
