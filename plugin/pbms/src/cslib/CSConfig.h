@@ -42,6 +42,7 @@
 #include "my_global.h"
 #include "mysql_priv.h"
 #endif
+
 /* Note: mysql_priv.h messes with new, which caused a crash. */
 #ifdef new
 #undef new
@@ -49,9 +50,11 @@
 
 #else
 #include "config.h"
-#endif
+#endif	//defined(MYSQL_SERVER) ||  defined(DRIZZLED)
 
+#include <sys/types.h>
 #include <inttypes.h>
+#include <unistd.h>
 
 /*
  * This enables everything that GNU can do. The macro is actually

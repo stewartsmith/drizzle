@@ -124,7 +124,7 @@ void cs_strcat(size_t size, char *to, uint32_t i)
 
 void cs_strcat(size_t size, char *to, uint64_t i)
 {
-	char buffer[4];
+	char buffer[40];
 	
 	snprintf(buffer, 40, "%"PRIu64"", i);
 	cs_strcat(size, to, buffer);
