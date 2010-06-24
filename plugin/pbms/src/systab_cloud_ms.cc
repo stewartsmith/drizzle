@@ -50,7 +50,6 @@
 #include "mysql_ms.h"
 #include "database_ms.h"
 #include "open_table_ms.h"
-#include "util_ms.h"
 #include "discover_ms.h"
 #include "systab_util_ms.h"
 

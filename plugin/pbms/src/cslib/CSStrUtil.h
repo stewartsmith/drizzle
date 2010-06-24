@@ -68,7 +68,7 @@ void		cs_make_absolute_path(size_t max, char *path, const char *rel_path, const 
 void		cs_replace_string(size_t size, char *into, const char ch, const char *str);
 int64_t		cs_str_to_int8(const char *ptr, bool *overflow);
 int64_t		cs_byte_size_to_int8(const char *ptr);
-uint64_t		cs_str_to_word8(const char *ptr, bool *overflow);
+uint64_t	cs_str_to_word8(const char *ptr, bool *overflow);
 size_t		cs_hex_to_bin(size_t size, void *bin, size_t len, const char *hex);
 size_t		cs_bin_to_hex(size_t size, char *hex, size_t len, const void *bin);
 void		cs_strToUpper(char *ptr);

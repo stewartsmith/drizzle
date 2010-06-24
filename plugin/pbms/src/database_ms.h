@@ -224,6 +224,9 @@ private:
 	static CSPath *createDatabasePath(const char *location, CSString *db_name, uint32_t *db_id_ptr, bool *create, bool is_pbms = false);
 	static MSDatabase *newDatabase(const char *db_location, CSString *db_name, uint32_t	db_id, bool create);
 	static MSDatabase *loadDatabase(CSString *db_name,  bool create);
+	static uint32_t fileToTableId(const char *file_name, const char *name_part = NULL);
+	const char *fileToTableName(size_t size, char *tab_name, const char *file_name);
+
 };
 
 #endif

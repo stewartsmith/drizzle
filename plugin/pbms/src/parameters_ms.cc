@@ -54,7 +54,6 @@ using namespace drizzled::plugin;
 #include "cslib/CSLog.h"
 
 #include "defs_ms.h"
-#include "util_ms.h"
 #include "database_ms.h"
 #include "parameters_ms.h"
 
@@ -336,7 +335,7 @@ bool PBMSParameters::isBLOBDatabase(const char *db)
 	if (my_table_match <= MATCH_DBS)
 		return true;
 	
-	if ((err = pbms_enter_conn_no_thd(&self, &result)) == 0) {
+	if ((err = MSEngine::enterConnectionNoThd(&self, &result)) == 0) {
 
 		inner_();
 		try_(a) {
@@ -349,7 +348,7 @@ bool PBMSParameters::isBLOBDatabase(const char *db)
 		}
 		
 		catch_(a) {
-			err = pbms_exception_to_result(&self->myException, &result);
+			err = MSEngine::exceptionToResult(&self->myException, &result);
 		}
 		cont_(a);
 		outer_();
@@ -386,7 +385,7 @@ bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 	if (my_table_match <= MATCH_ALL)
 		return true;
 
-	if ((err = pbms_enter_conn_no_thd(&self, &result)) == 0) {
+	if ((err = MSEngine::enterConnectionNoThd(&self, &result)) == 0) {
 
 		inner_();
 		try_(a) {
@@ -420,7 +419,7 @@ bool PBMSParameters::isBLOBTable(const char *db, const char *table)
 			unlock_(&my_table_list_lock);
 		}
 		catch_(a) {
-			err = pbms_exception_to_result(&self->myException, &result);
+			err = MSEngine::exceptionToResult(&self->myException, &result);
 		}
 		cont_(a);
 		outer_();
@@ -449,7 +448,7 @@ static void pbms_temp_blob_timeout_func(THD *, struct st_mysql_sys_var *, void *
 	CSThread		*self;
 	PBMSResultRec	result;
 
-	if (pbms_enter_conn_no_thd(&self, &result))
+	if (MSEngine::enterConnectionNoThd(&self, &result))
 		return;
 	try_(a) {
 		MSDatabase::wakeTempLogThreads();

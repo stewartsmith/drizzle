@@ -42,7 +42,6 @@
 #include "database_ms.h"
 #include "compactor_ms.h"
 #include "open_table_ms.h"
-#include "util_ms.h"
 #include "discover_ms.h"
 #include "transaction_ms.h"
 #include "systab_variable_ms.h"

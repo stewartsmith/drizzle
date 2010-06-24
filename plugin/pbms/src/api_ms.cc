@@ -35,7 +35,6 @@
 
 #include "repository_ms.h"
 #include "open_table_ms.h"
-#include "util_ms.h"
 #include "mysql_ms.h"
 
 //-----------------------------------------------------------------------------------------------
@@ -215,7 +214,7 @@ bool PBMSReadBlob(PBMSBlobIDPtr blob_id, char *buffer, size_t *size, size_t offs
 }
 
 //-----------------------------------------------------------------------------------------------
-bool PBMSIDToURL(PBMSBlobIDPtr blob_id, char *url)
+bool PBMSIDToURL(PBMSBlobIDPtr blob_id, PBMSBlobURLPtr url)
 {	
 	MSBlobURL ms_blob;
 
@@ -228,7 +227,7 @@ bool PBMSIDToURL(PBMSBlobIDPtr blob_id, char *url)
 	ms_blob.bu_blob_size = blob_id->bi_blob_size; 
 	ms_blob.bu_server_id = ms_my_get_server_id();
 	
-	ms_build_blob_url(&ms_blob, url);
+	PBMSBlobURLTools::buildBlobURL(&ms_blob, url);
 	return true;
 }
 
@@ -241,7 +240,7 @@ bool PBMSURLToID(char *url, PBMSBlobIDPtr blob_id)
 
 	try_(a) {
 	
-		if (!ms_parse_blob_url(&ms_blob, url)){
+		if (!PBMSBlobURLTools::couldBeURL(url, &ms_blob)){
 			char buffer[CS_EXC_MESSAGE_SIZE];
 
 			cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Incorrect URL: ");

@@ -63,7 +63,6 @@
 #include "database_ms.h"
 #include "compactor_ms.h"
 #include "open_table_ms.h"
-#include "util_ms.h"
 #include "metadata_ms.h"
 #include "alias_ms.h"
 #include "cloud_ms.h"
@@ -74,7 +73,9 @@
 #include "systab_variable_ms.h"
 #include "systab_cloud_ms.h"
 #include "systab_backup_ms.h"
+#ifndef DRIZZLED
 #include "systab_enabled_ms.h"
+#endif
 #include "discover_ms.h"
 #include "parameters_ms.h"
 
@@ -1583,12 +1584,12 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 						break;
 					case 'u':
 						// Blob_url          VARCHAR(120),
-						char blob_url[PBMS_BLOB_URL_SIZE];
+						PBMSBlobURLRec blob_url;
 
 						ASSERT(strcmp(curr_field->field_name, "Blob_url") == 0);
 						if (ref_data->rd_tab_id != 0xFFFFFFFF) {
-							iRefOpenTable->formatBlobURL(blob_url, ref_data->rd_blob_id, iRefAuthCode, iRefBlobSize, ref_data->rd_blob_ref_id);
-							curr_field->store(blob_url, strlen(blob_url) +1, &UTF8_CHARSET); // Include the null char in the url. This is the way it is stored in user tables.
+							iRefOpenTable->formatBlobURL(&blob_url, ref_data->rd_blob_id, iRefAuthCode, iRefBlobSize, ref_data->rd_blob_ref_id);
+							curr_field->store(blob_url.bu_data, strlen(blob_url.bu_data) +1, &UTF8_CHARSET); // Include the null char in the url. This is the way it is stored in user tables.
 							setNotNullInRecord(curr_field, buf);
 						}
 						break;

@@ -33,7 +33,6 @@
 
 #include "network_ms.h"
 #include "connection_handler_ms.h"
-#include "util_ms.h"
 
 MSSystemThread		*MSNetwork::gSystemThread;
 time_t				MSNetwork::gCurrentTime;

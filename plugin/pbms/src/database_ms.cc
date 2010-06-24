@@ -55,7 +55,6 @@
 #include "open_table_ms.h"
 #include "backup_ms.h"
 #include "table_ms.h"
-#include "util_ms.h"
 #include "temp_log_ms.h"
 #include "network_ms.h"
 #include "mysql_ms.h"
@@ -158,6 +157,60 @@ MSDatabase::~MSDatabase()
 	}
 }
 
+uint32_t MSDatabase::fileToTableId(const char *file_name, const char *name_part)
+{
+	uint32_t value = 0;
+
+	if (file_name) {
+		const char *num = file_name +  strlen(file_name) - 1;
+		
+		while (num >= file_name && *num != '-')
+			num--;
+		if (name_part) {
+			/* Check the name part of the file: */
+			int len = strlen(name_part);
+			
+			if (len != num - file_name)
+				return 0;
+			if (strncmp(file_name, name_part, len) != 0)
+				return 0;
+		}
+		num++;
+		if (isdigit(*num))
+			sscanf(num, "%"PRIu32"", &value);
+	}
+	return value;
+}
+
+const char *MSDatabase::fileToTableName(size_t size, char *tab_name, const char *file_name)
+{
+	const char	*cptr;
+	size_t		len;
+
+	file_name = cs_last_name_of_path(file_name);
+	cptr = file_name + strlen(file_name) - 1;
+	while (cptr > file_name && *cptr != '.')
+		cptr--;
+	if (cptr > file_name && *cptr == '.') {
+		if (strncmp(cptr, ".bs", 2) == 0) {
+			cptr--;
+			while (cptr > file_name && isdigit(*cptr))
+				cptr--;
+		}
+	}
+
+	len = cptr - file_name;
+	if (len > size-1)
+		len = size-1;
+
+	memcpy(tab_name, file_name, len);
+	tab_name[len] = 0;
+
+	/* Return a pointer to what was removed! */
+	return file_name + len;
+}
+
+
 const char *MSDatabase::getDatabaseNameCString()
 {
 	return myDatabaseName->getCString();
@@ -255,8 +308,8 @@ void MSDatabase::addTableFromFile(CSDirectory *dir, const char *file_name, bool 
 	char	tab_name[MS_TABLE_NAME_SIZE];
 
 	dir->info(NULL, &file_size, NULL);
-	file_id = ms_file_to_table_id(file_name);
-	ms_file_to_table_name(MS_TABLE_NAME_SIZE, tab_name, file_name);
+	file_id = fileToTableId(file_name);
+	fileToTableName(MS_TABLE_NAME_SIZE, tab_name, file_name);
 	addTable(file_id, tab_name, file_size, to_delete);
 }
 
@@ -1274,7 +1327,7 @@ MSDatabase *MSDatabase::newDatabase(const char *db_location, CSString *db_name, 
 			while (dir->next()) {
 				file_name = dir->name();
 				if (dir->isFile() && cs_is_extension(file_name, "bs")) {
-					if ((file_id = ms_file_to_table_id(file_name, "repo"))) {
+					if ((file_id = fileToTableId(file_name, "repo"))) {
 						dir->info(NULL, &file_size, NULL);
 						new_(repo, MSRepository(file_id, db, file_size));
 						db->myRepostoryList->set(file_id - 1, repo);
@@ -1297,7 +1350,7 @@ MSDatabase *MSDatabase::newDatabase(const char *db_location, CSString *db_name, 
 				file_name = dir->name();
 				if (dir->isFile()) {
 					if (cs_is_extension(file_name, "bs")) {
-						if ((file_id = ms_file_to_table_id(file_name, "temp"))) {
+						if ((file_id = fileToTableId(file_name, "temp"))) {
 							dir->info(NULL, &file_size, NULL);
 							new_(log, MSTempLog(file_id, db, file_size));
 							db->myTempLogArray->set(file_id, log);

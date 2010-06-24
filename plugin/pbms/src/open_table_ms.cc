@@ -37,7 +37,6 @@
 #include "table_ms.h"
 #include "connection_handler_ms.h"
 #include "engine_ms.h"
-#include "util_ms.h"
 #include "transaction_ms.h"
 #include "parameters_ms.h"
 
@@ -154,12 +153,12 @@ void MSOpenTable::createBlob(PBMSBlobURLPtr bh, uint64_t blob_size, char *metada
 		repo_id = myWriteRepo->myRepoID;
 		if (isNotATable) {	
 			getDB()->queueForDeletion(this, MS_TL_REPO_REF, repo_id, repo_offset, auth_code, &log_id, &log_offset, &temp_time);
-			formatRepoURL(bh->bu_data, repo_id, repo_offset, auth_code, blob_size);
+			formatRepoURL(bh, repo_id, repo_offset, auth_code, blob_size);
 		}
 		else {
 			blob_id = getDBTable()->createBlobHandle(this, myWriteRepo->myRepoID, repo_offset, blob_size, head_size, auth_code);
 			getDB()->queueForDeletion(this, MS_TL_BLOB_REF, getDBTable()->myTableID, blob_id, auth_code, &log_id, &log_offset, &temp_time);
-			formatBlobURL(bh->bu_data, blob_id, auth_code, blob_size, 0);
+			formatBlobURL(bh, blob_id, auth_code, blob_size, 0);
 		}
 		
 		myWriteRepo->writeBlobHead(this, repo_offset, myWriteRepo->myRepoDefRefSize, head_size, blob_size, checksum, metadata, metadata_size, blob_id, auth_code, log_id, log_offset, getDB()->myBlobType, cloud_key);
@@ -285,7 +284,7 @@ void MSOpenTable::commitReference(uint64_t blob_id, uint64_t blob_ref_id)
 	exit_();
 }
 
-void MSOpenTable::useBlob(int type, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code, uint16_t col_index, uint64_t blob_size, uint64_t blob_ref_id, char *ret_blob_url)
+void MSOpenTable::useBlob(int type, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code, uint16_t col_index, uint64_t blob_size, uint64_t blob_ref_id, PBMSBlobURLPtr ret_blob_url)
 {
 	MSRepoFile		*repo_file;
 	MSBlobHeadRec	blob;
@@ -575,7 +574,7 @@ MSDatabase *MSOpenTable::getDB()
 	return myPool->myPoolDB;
 }
 
-void MSOpenTable::formatBlobURL(char *blob_url, uint64_t blob_id, uint32_t auth_code, uint64_t blob_size, uint32_t tab_id, uint64_t blob_ref_id)
+void MSOpenTable::formatBlobURL(PBMSBlobURLPtr blob_url, uint64_t blob_id, uint32_t auth_code, uint64_t blob_size, uint32_t tab_id, uint64_t blob_ref_id)
 {
 	MSBlobURLRec blob;
 	
@@ -588,14 +587,14 @@ void MSOpenTable::formatBlobURL(char *blob_url, uint64_t blob_id, uint32_t auth_
 	blob.bu_blob_size = blob_size;
 	blob.bu_blob_ref_id = blob_ref_id;
 	
-	ms_build_blob_url(&blob, blob_url);
+	PBMSBlobURLTools::buildBlobURL(&blob, blob_url);
 	
 }
-void MSOpenTable::formatBlobURL(char *blob_url, uint64_t blob_id, uint32_t auth_code, uint64_t blob_size, uint64_t blob_ref_id)
+void MSOpenTable::formatBlobURL(PBMSBlobURLPtr blob_url, uint64_t blob_id, uint32_t auth_code, uint64_t blob_size, uint64_t blob_ref_id)
 {
 	formatBlobURL(blob_url, blob_id, auth_code, blob_size, getDBTable()->myTableID, blob_ref_id);
 }
-void MSOpenTable::formatRepoURL(char *blob_url, uint32_t log_id, uint64_t log_offset, uint32_t auth_code, uint64_t blob_size)
+void MSOpenTable::formatRepoURL(PBMSBlobURLPtr blob_url, uint32_t log_id, uint64_t log_offset, uint32_t auth_code, uint64_t blob_size)
 {
 	MSBlobURLRec blob;
 	
@@ -608,7 +607,7 @@ void MSOpenTable::formatRepoURL(char *blob_url, uint32_t log_id, uint64_t log_of
 	blob.bu_blob_size = blob_size;
 	blob.bu_blob_ref_id = 0;
 	
-	ms_build_blob_url(&blob, blob_url);
+	PBMSBlobURLTools::buildBlobURL(&blob, blob_url);
 }
 
 MSOpenTable *MSOpenTable::newOpenTable(MSOpenTablePool *pool)

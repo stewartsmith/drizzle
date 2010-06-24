@@ -35,12 +35,16 @@
 #include "cslib/CSLog.h"
 
 #include "defs_ms.h"
-#include "util_ms.h"
 #include "mysql_ms.h"
 #include "open_table_ms.h"
 #include "trans_log_ms.h"
 #include "transaction_ms.h"
 #include "pbmsdaemon_ms.h"
+
+/*
+ * The pbms_ functions are utility functions supplied by ha_pbms.cc
+ */
+void	pbms_take_part_in_transaction(void *thread);
 
 MSTrans *MSTransactionManager::tm_Log;
 MSTransactionThread *MSTransactionManager::tm_Reader;

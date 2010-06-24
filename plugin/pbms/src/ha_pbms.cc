@@ -79,7 +79,6 @@ using namespace drizzled::plugin;
 #include "open_table_ms.h"
 #include "database_ms.h"
 #include "temp_log_ms.h"
-#include "util_ms.h"
 #include "system_table_ms.h"
 #include "mysql_ms.h"
 #include "discover_ms.h"
@@ -89,6 +88,7 @@ using namespace drizzled::plugin;
 #include "system_table_ms.h"
 #include "parameters_ms.h"
 #include "pbmsdaemon_ms.h"
+#include "version_ms.h"
 
 /* Note: 'new' used here is NOT CSObject::new which is a DEBUG define*/
 #ifdef new
@@ -238,14 +238,6 @@ const char **ha_pbms::bas_ext() const
 }
 
 #ifdef DRIZZLED
-#define GET_MY_SELF(thd) ((CSThread *) *thd->getEngineData(pbms_hton))
-#define SET_MY_SELF(thd, self) *thd->getEngineData(pbms_hton) = (void *)self
-#else
-#define GET_MY_SELF(thd) ((CSThread *) *thd_ha_data(thd, pbms_hton))
-#define SET_MY_SELF(thd, self) *thd_ha_data(thd, pbms_hton) = (void *)self
-#endif
-
-#ifdef DRIZZLED
 int PBMSStorageEngine::close_connection(Session *thd)
 {
 #else
@@ -253,124 +245,11 @@ static int pbms_close_connection(handlerton *hton, THD* thd)
 {
 	(void)hton;
 #endif
-	CSThread	*self;
-
-	self = CSThread::getSelf();
-	if (self && self->pbms_api_owner)
-		return 0;
-
-	if (thd) {
-		if ((self = GET_MY_SELF(thd))) {
-			SET_MY_SELF(thd, NULL);
-			CSThread::setSelf(self);
-			CSThread::detach(self);
-		}
-	}
-	else {
-		self = CSThread::getSelf();
-		CSThread::detach(self);
-	}
+	MSEngine::closeConnection(thd);
 	return 0;
 }
 
 
-static int pbms_enter_conn(THD *thd, CSThread **r_self, PBMSResultPtr result, bool doCreate)
-{
-	CSThread	*self = NULL;
-
-#ifndef DRIZZLED
-	// In drizzle there is no 1:1 relationship between pthreads and sessions
-	// so we must always get it from the session handle NOT the current pthread.
-	self = CSThread::getSelf();
-#endif
-	if (!self) {	
-		if (thd) {
-			if (!(self = GET_MY_SELF(thd))) {
-				if (!doCreate)
-					return MS_ERR_NOT_FOUND;
-					
-				if (!(self = CSThread::newCSThread()))
-					return pbms_os_error_result(CS_CONTEXT, ENOMEM, result);
-				if (!CSThread::attach(self))
-					return pbms_exception_to_result(&self->myException, result);
-				SET_MY_SELF(thd, self);
-			} else {
-				if (!CSThread::setSelf(self))
-					return pbms_exception_to_result(&self->myException, result);
-			}
-		} else {
-			if (!doCreate)
-				return MS_ERR_NOT_FOUND;
-				
-			if (!(self = CSThread::newCSThread()))
-				return pbms_os_error_result(CS_CONTEXT, ENOMEM, result);
-			if (!CSThread::attach(self))
-				return pbms_exception_to_result(&self->myException, result);
-		}
-	}
-
-	*r_self = self;
-	return MS_OK;
-}
-
-int pbms_enter_conn_no_thd(CSThread **r_self, PBMSResultPtr result)
-{
-	return pbms_enter_conn(current_thd, r_self, result, true);
-}
-
-void pbms_exit_conn()
-{
-	THD			*thd = (THD *) current_thd;
-	CSThread	*self;
-
-	self = CSThread::getSelf();
-	if (self && self->pbms_api_owner)
-		return;
-
-
-	if (thd)
-		CSThread::setSelf(NULL);
-	else {
-		self = CSThread::getSelf();
-		CSThread::detach(self);
-	}
-}
-
-int pbms_exception_to_result(CSException *e, PBMSResultPtr result)
-{
-	const char *context, *trace;
-
-	result->mr_code = e->getErrorCode();
-	cs_strcpy(MS_RESULT_MESSAGE_SIZE, result->mr_message, e->getMessage());
-	context = e->getContext();
-	trace = e->getStackTrace();
-	if (context && *context) {
-		cs_strcpy(MS_RESULT_STACK_SIZE, result->mr_stack, context);
-		if (trace && *trace)
-			cs_strcat(MS_RESULT_STACK_SIZE, result->mr_stack, "\n");
-	}
-	else
-		*result->mr_stack = 0;
-	if (trace && *trace)
-		cs_strcat(MS_RESULT_STACK_SIZE, result->mr_stack, trace);
-	return MS_ERR_ENGINE;
-}
-
-int pbms_os_error_result(const char *func, const char *file, int line, int err, PBMSResultPtr result)
-{
-	CSException e;
-		
-	e.initOSError(func, file, line, err);
-	return pbms_exception_to_result(&e, result);
-}
-
-int pbms_error_result(const char *func, const char *file, int line, int err, const char *message, PBMSResultPtr result)
-{
-	CSException e;
-		
-	e.initException(func, file, line, err, message);
-	return pbms_exception_to_result(&e, result);
-}
 
 /*
  * ---------------------------------------------------------------
@@ -413,14 +292,14 @@ static int pbms_commit(handlerton *, THD *thd, bool all)
 	if (all == false)
 		return 0;
 
-	if (pbms_enter_conn(thd, &self, &result, false))
+	if (MSEngine::enterConnection(thd, &self, &result, false))
 		return 0;
 	inner_();
 	try_(a) {
 		MSTransactionManager::commit();
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, &result);
+		err = MSEngine::exceptionToResult(&self->myException, &result);
 	}
 	cont_(a);
 	self->myIsAutoCommit = true;
@@ -438,14 +317,14 @@ static int pbms_rollback(handlerton *, THD *thd, bool all __attribute__((unused)
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn(thd, &self, &result, false))
+	if (MSEngine::enterConnection(thd, &self, &result, false))
 		return 0;
 	inner_();
 	try_(a) {
 		MSTransactionManager::rollback();
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, &result);
+		err = MSEngine::exceptionToResult(&self->myException, &result);
 	}
 	cont_(a);
 	self->myIsAutoCommit = true;
@@ -459,7 +338,7 @@ int PBMSStorageEngine::doSetSavepoint(Session *thd, NamedSavepoint &savepoint)
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn(thd, &self, &result, false))
+	if (MSEngine::enterConnection(thd, &self, &result, false))
 		return 0;
 	
 	inner_();
@@ -467,7 +346,7 @@ int PBMSStorageEngine::doSetSavepoint(Session *thd, NamedSavepoint &savepoint)
 		MSTransactionManager::setSavepoint(savepoint.getName().c_str());
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, &result);
+		err = MSEngine::exceptionToResult(&self->myException, &result);
 	}
 	cont_(a);
 	return_(err);
@@ -480,14 +359,14 @@ int PBMSStorageEngine::doRollbackToSavepoint(Session *session, NamedSavepoint &s
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn(session, &self, &result, false))
+	if (MSEngine::enterConnection(session, &self, &result, false))
 		return 0;
 	inner_();
 	try_(a) {
 		MSTransactionManager::rollbackTo(savepoint.getName().c_str());
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, &result);
+		err = MSEngine::exceptionToResult(&self->myException, &result);
 	}
 	cont_(a);
 	return_(err);
@@ -500,7 +379,7 @@ int PBMSStorageEngine::doReleaseSavepoint(Session *session, NamedSavepoint &save
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn(session, &self, &result, false))
+	if (MSEngine::enterConnection(session, &self, &result, false))
 		return 0;
 		
 	inner_();
@@ -508,7 +387,7 @@ int PBMSStorageEngine::doReleaseSavepoint(Session *session, NamedSavepoint &save
 		MSTransactionManager::releaseSavepoint(savepoint.getName().c_str());
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, &result);
+		err = MSEngine::exceptionToResult(&self->myException, &result);
 	}
 	cont_(a);
 	return_(err);
@@ -521,7 +400,7 @@ static int pbms_savepoint_set(handlerton *hton, THD *thd, void *sv)
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn(thd, &self, &result, false))
+	if (MSEngine::enterConnection(thd, &self, &result, false))
 		return 0;
 		
 	*((uint32_t*)sv) = self->myStmtCount;
@@ -534,14 +413,14 @@ static int pbms_savepoint_rollback(handlerton *hton, THD *thd, void *sv)
 	CSThread	*self;
 	PBMSResultRec result;
 
-	if (pbms_enter_conn(thd, &self, &result, false))
+	if (MSEngine::enterConnection(thd, &self, &result, false))
 		return 0;
 	inner_();
 	try_(a) {
 		MSTransactionManager::rollbackToPosition(*((uint32_t*)sv));
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, &result);
+		err = MSEngine::exceptionToResult(&self->myException, &result);
 	}
 	cont_(a);
 	return_(err);
@@ -560,7 +439,7 @@ bool  PBMSStorageEngine::doDropSchema(drizzled::SchemaIdentifier &schema)
 	CSThread *self;
 	PBMSResultRec result;
 	
-	if (pbms_enter_conn_no_thd(&self, &result))
+	if (MSEngine::enterConnectionNoThd(&self, &result))
 		return false;
 	inner_();
 	
@@ -579,7 +458,7 @@ static void pbms_drop_database(handlerton *, char *path)
 	char db_name[PATH_MAX];
 	PBMSResultRec result;
 	
-	if (pbms_enter_conn_no_thd(&self, &result))
+	if (MSEngine::enterConnectionNoThd(&self, &result))
 		return;
 	inner_();
 	
@@ -618,7 +497,7 @@ int pbms_init_func(void *p)
 	
 	{
 		char info[120];
-		snprintf(info, 120, "PrimeBase Media Stream (PBMS) Daemon %s loaded...", ms_version());
+		snprintf(info, 120, "PrimeBase Media Stream (PBMS) Daemon %s loaded...", PBMSVersion::getCString());
 		CSL.logLine(NULL, CSLog::Protocol, info);
 	}
 	CSL.logLine(NULL, CSLog::Protocol, "Barry Leslie, PrimeBase Technologies GmbH, http://www.primebase.org");
@@ -812,7 +691,7 @@ int ha_pbms::open(const char *table_path, int , uint )
 {
 	CSThread *self;
 
-	if ((ha_error = pbms_enter_conn(current_thd, &self, &ha_result, true)))
+	if ((ha_error = MSEngine::enterConnection(current_thd, &self, &ha_result, true)))
 		return 1;
 
 	inner_();
@@ -822,7 +701,7 @@ int ha_pbms::open(const char *table_path, int , uint )
 		ref_length = ha_open_tab->getRefLen();
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 	}
 	cont_(a);
 	return_(ha_error != MS_OK);
@@ -832,7 +711,7 @@ int ha_pbms::close(void)
 {
 	CSThread *self;
 
-	if ((ha_error = pbms_enter_conn(current_thd, &self, &ha_result, true)))
+	if ((ha_error = MSEngine::enterConnection(current_thd, &self, &ha_result, true)))
 		return 1;
 
 	inner_();
@@ -841,7 +720,7 @@ int ha_pbms::close(void)
 		ha_open_tab = NULL;
 	}
 	outer_();
-	pbms_exit_conn();
+	MSEngine::exitConnection();
 	return 0;
 }
 
@@ -855,7 +734,7 @@ int ha_pbms::index_init(uint idx, bool sorted __attribute__((unused)))
 		ha_open_tab->index_init(idx);
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -871,7 +750,7 @@ int ha_pbms::index_end()
 		ha_open_tab->index_end();
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -890,7 +769,7 @@ int ha_pbms::index_read(byte * buf, const byte * key,
 
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -908,7 +787,7 @@ int ha_pbms::index_read_idx(byte * buf, uint idx, const byte * key,
 			err = HA_ERR_KEY_NOT_FOUND;
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -925,7 +804,7 @@ int ha_pbms::index_next(byte * buf)
 			err = HA_ERR_END_OF_FILE;
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -942,7 +821,7 @@ int ha_pbms::index_prev(byte * buf)
 			err = HA_ERR_END_OF_FILE;
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -959,7 +838,7 @@ int ha_pbms::index_first(byte * buf)
 			err = HA_ERR_END_OF_FILE;
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -976,7 +855,7 @@ int ha_pbms::index_last(byte * buf)
 			err = HA_ERR_END_OF_FILE;
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -993,7 +872,7 @@ int ha_pbms::index_read_last(byte * buf, const byte * key, uint key_len)
 			err = HA_ERR_KEY_NOT_FOUND;
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -1017,7 +896,7 @@ int ha_pbms::rnd_init(bool )
 		ha_open_tab->seqScanInit();
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -1034,7 +913,7 @@ int ha_pbms::rnd_next(unsigned char *buf)
 			err = HA_ERR_END_OF_FILE;
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -1056,7 +935,7 @@ int ha_pbms::rnd_pos(unsigned char * buf, unsigned char *pos)
 		ha_open_tab->seqScanRead((uint8_t *) pos, (char *) buf);
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -1076,7 +955,7 @@ int ha_pbms::write_row(unsigned char * buf)
 		ha_open_tab->insertRow((char *) buf);
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -1095,7 +974,7 @@ int ha_pbms::delete_row(const  unsigned char * buf)
 		ha_open_tab->deleteRow((char *) buf);
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -1114,7 +993,7 @@ int ha_pbms::update_row(const unsigned char * old_data, unsigned char * new_data
 		ha_open_tab->updateRow((char *) old_data, (char *) new_data);
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -1131,7 +1010,7 @@ int ha_pbms::external_lock(THD *thd, int lock_type)
 	CSThread	*self;
 	int			err = 0;
 
-	if ((ha_error = pbms_enter_conn(thd, &self, &ha_result, true)))
+	if ((ha_error = MSEngine::enterConnection(thd, &self, &ha_result, true)))
 		return 1;
 
 	inner_();
@@ -1142,7 +1021,7 @@ int ha_pbms::external_lock(THD *thd, int lock_type)
 			ha_open_tab->use();
 	}
 	catch_(a) {
-		ha_error = pbms_exception_to_result(&self->myException, &ha_result);
+		ha_error = MSEngine::exceptionToResult(&self->myException, &ha_result);
 		err = 1;
 	}
 	cont_(a);
@@ -1201,171 +1080,14 @@ bool ha_pbms::get_error_message(int , String *buf)
 }
 
 
-#ifdef XXXXXXX
-static int		pbms_port = PBMS_PORT; 
-static char		*pbms_repository_threshold;
-static char		*pbms_temp_log_threshold;
-static char		*pbms_http_metadata_headers;
-
-
+CSThread *pbms_getMySelf(THD *thd);
+void pbms_setMySelf(THD *thd, CSThread *self);
 #ifdef DRIZZLED
-#define st_mysql_sys_var drizzled::drizzle_sys_var
+CSThread *pbms_getMySelf(THD *thd) { return ((CSThread *) *thd->getEngineData(pbms_hton));}
+void pbms_setMySelf(THD *thd, CSThread *self) { *thd->getEngineData(pbms_hton) = (void *)self;}
 #else
-
-struct st_mysql_storage_engine pbms_engine_handler = {
-	MYSQL_HANDLERTON_INTERFACE_VERSION
-};
-
-struct st_mysql_sys_var
-{
-  MYSQL_PLUGIN_VAR_HEADER;
-};
-
+CSThread *pbms_getMySelf(THD *thd) { return ((CSThread *) *thd_ha_data(thd, pbms_hton));}
+void pbms_setMySelf(THD *thd, CSThread *self) { *thd_ha_data(thd, pbms_hton) = (void *)self;}
 #endif
 
-#if MYSQL_VERSION_ID < 60000
-#if MYSQL_VERSION_ID >= 50124
-#define USE_CONST_SAVE
-#endif
-#else
-#if MYSQL_VERSION_ID >= 60005
-#define USE_CONST_SAVE
-#endif
-#endif
-
-#ifdef USE_CONST_SAVE
-static void pbms_repository_threshold_func(THD *, struct st_mysql_sys_var *var, void *tgt, const void *save)
-#else
-static void pbms_repository_threshold_func(THD *, struct st_mysql_sys_var *var, void *tgt, void *save)
-#endif
-{
-	char *old= *(char **) tgt;
-	*(char **)tgt= *(char **) save;
-	if (var->flags & PLUGIN_VAR_MEMALLOC)
-	{
-		*(char **)tgt= my_strdup(*(char **) save, MYF(0));
-		my_free(old, MYF(0));
-	}
-	MSDatabase::gRepoThreshold = (uint64_t) cs_byte_size_to_int8(pbms_repository_threshold);
-#ifdef DEBUG
-	char buffer[200];
-
-	snprintf(buffer, 200, "pbms_repository_threshold=%"PRIu64"\n", MSDatabase::gRepoThreshold);
-	CSL.log(NULL, CSLog::Protocol, buffer);
-#endif
-}
-
-#ifdef USE_CONST_SAVE
-static void pbms_temp_log_threshold_func(THD *, struct st_mysql_sys_var *var, void *tgt, const void *save)
-#else
-static void pbms_temp_log_threshold_func(THD *, struct st_mysql_sys_var *var, void *tgt, void *save)
-#endif
-{
-	char *old= *(char **) tgt;
-	*(char **)tgt= *(char **) save;
-	if (var->flags & PLUGIN_VAR_MEMALLOC)
-	{
-		*(char **)tgt= my_strdup(*(char **) save, MYF(0));
-		my_free(old, MYF(0));
-	}
-	MSDatabase::gTempLogThreshold = (uint64_t) cs_byte_size_to_int8(pbms_temp_log_threshold);
-#ifdef DEBUG
-	char buffer[200];
-
-	snprintf(buffer, 200, "pbms_temp_log_threshold=%"PRIu64"\n",MSDatabase::gTempLogThreshold);
-	CSL.log(NULL, CSLog::Protocol, buffer);
-#endif
-}
-
-#ifdef USE_CONST_SAVE
-static void pbms_http_metadata_headers_func(THD *, struct st_mysql_sys_var *var, void *tgt, const void *save)
-#else
-static void pbms_http_metadata_headers_func(THD *, struct st_mysql_sys_var *var, void *tgt, void *save)
-#endif
-{
-	char *old= *(char **) tgt;
-	*(char **)tgt= *(char **) save;
-	if (var->flags & PLUGIN_VAR_MEMALLOC)
-	{
-		*(char **)tgt= my_strdup(*(char **) save, MYF(0));
-		my_free(old, MYF(0));
-	}
-	
-	MSHTTPHeaderTable::setDefaultMetaDataHeaders(pbms_http_metadata_headers);
-	
-#ifdef DEBUG
-	char buffer[200];
-
-	snprintf(buffer, 200, "pbms_http_metadata_headers=%s\n", pbms_http_metadata_headers);
-	CSL.log(NULL, CSLog::Protocol, buffer);
-#endif
-}
-
-#ifdef USE_CONST_SAVE
-static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *, void *tgt, const void *save)
-#else
-static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *, void *tgt, void *save)
-#endif
-{
-	CSThread		*self;
-	PBMSResultRec	result;
-
-	*(long *)tgt= *(long *) save;
-
-	if (pbms_enter_conn(thd, &self, &result, true))
-		return;
-	MSDatabase::wakeTempLogThreads();
-}
-
-#if MYSQL_VERSION_ID >= 50118
-static MYSQL_SYSVAR_INT(port, pbms_port,
-	PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_READONLY,
-	"The port for the server stream-based communications.",
-	NULL, NULL, pbms_port, 0, 64*1024, 1);
-
-static MYSQL_SYSVAR_STR(repository_threshold, pbms_repository_threshold,
-	PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_MEMALLOC,
-	"The maximum size of a BLOB repository file.",
-	NULL, /*NULL*/ /**/pbms_repository_threshold_func/**/, MS_REPO_THRESHOLD_DEF);
-
-static MYSQL_SYSVAR_STR(temp_log_threshold, pbms_temp_log_threshold,
-	PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_MEMALLOC,
-	"The maximum size of a temorary BLOB log file.",
-	NULL, /*NULL*/ /**/pbms_temp_log_threshold_func/**/, MS_TEMP_LOG_THRESHOLD_DEF);
-
-static MYSQL_SYSVAR_STR(http_metadata_headers, pbms_http_metadata_headers,
-	PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_MEMALLOC,
-	"A ':' delimited list of metadata header names to be used to initialize the pbms_metadata_header table when a database is created.",
-	NULL, /*NULL*/ /**/pbms_http_metadata_headers_func/**/, MS_HTTP_METADATA_HEADERS_DEF);
-
-static MYSQL_SYSVAR_ULONG(temp_blob_timeout, MSTempLog::gTempBlobTimeout,
-	PLUGIN_VAR_OPCMDARG,
-	"The timeout, in seconds, for temporary BLOBs. Uploaded blob data is removed after this time, unless committed to the database.",
-	NULL, pbms_temp_blob_timeout_func, MS_DEFAULT_TEMP_LOG_WAIT, 1, ~0L, 1);
-
-static MYSQL_SYSVAR_ULONG(garbage_threshold, MSRepository::gGarbageThreshold,
-	PLUGIN_VAR_OPCMDARG,
-	"The percentage of garbage in a repository file before it is compacted.",
-	NULL, NULL, MS_DEFAULT_GARBAGE_LEVEL, 0, 100, 1);
-
-
-static MYSQL_SYSVAR_ULONG(max_keep_alive, MSConnectionHandler::gMaxKeepAlive,
-	PLUGIN_VAR_OPCMDARG,
-	"The timeout, in milli-seconds, before the HTTP server will close an inactive HTTP connection.",
-	NULL, NULL, MS_DEFAULT_KEEP_ALIVE, 1, UINT32_MAX, 1);
-
-struct st_mysql_sys_var* pbms_system_variables[] = {
-	MYSQL_SYSVAR(port),
-	MYSQL_SYSVAR(repository_threshold),
-	MYSQL_SYSVAR(temp_log_threshold),
-	MYSQL_SYSVAR(temp_blob_timeout),
-	MYSQL_SYSVAR(garbage_threshold),
-	MYSQL_SYSVAR(http_metadata_headers),
-	MYSQL_SYSVAR(max_keep_alive),
-	NULL
-};
-#endif
-
-
-#endif //XXXXX
 

@@ -104,10 +104,8 @@ public:
 	void createBlob(PBMSBlobURLPtr bh, uint64_t size, char *metadata, uint16_t metadata_size, CSInputStream *stream, CloudKeyPtr cloud_key = NULL, Md5Digest *checksum = NULL);
 	void createBlob(PBMSBlobIDPtr blob_id, uint64_t blob_size, char *metadata, uint16_t metadata_size);
 	void sendRepoBlob(uint64_t blob_id, uint64_t req_offset, uint64_t req_size, uint32_t auth_code, bool info_only, CSHTTPOutputStream *stream);
-	void useBlob(int type, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code, uint16_t col_index, uint64_t blob_size, uint64_t blob_ref_id, char *ret_blob_url);
-//	void useBlob(int type, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code, uint16_t col_index, uint64_t blob_size, char **ret_blob_url);
-//	void unUseBlobs();
-//	void retainReferences();
+	void useBlob(int type, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code, uint16_t col_index, uint64_t blob_size, uint64_t blob_ref_id, PBMSBlobURLPtr ret_blob_url);
+
 	void releaseReference(uint64_t blob_id, uint64_t blob_ref_id);
 	void freeReference(uint64_t blob_id, uint64_t blob_ref_id);
 	void commitReference(uint64_t blob_id, uint64_t blob_ref_id);
@@ -121,9 +119,9 @@ public:
 	MSTable *getDBTable();
 	MSDatabase *getDB();
 
-	void formatBlobURL(char *blob_url, uint64_t blob_id, uint32_t auth_code, uint64_t blob_size, uint32_t tab_id, uint64_t blob_ref_id);
-	void formatBlobURL(char *blob_url, uint64_t blob_id, uint32_t auth_code, uint64_t blob_size, uint64_t blob_ref_id);
-	void formatRepoURL(char *blob_url, uint32_t log_id, uint64_t log_offset, uint32_t auth_code, uint64_t blob_size);
+	void formatBlobURL(PBMSBlobURLPtr blob_url, uint64_t blob_id, uint32_t auth_code, uint64_t blob_size, uint32_t tab_id, uint64_t blob_ref_id);
+	void formatBlobURL(PBMSBlobURLPtr blob_url, uint64_t blob_id, uint32_t auth_code, uint64_t blob_size, uint64_t blob_ref_id);
+	void formatRepoURL(PBMSBlobURLPtr blob_url, uint32_t log_id, uint64_t log_offset, uint32_t auth_code, uint64_t blob_size);
 
 	/* Make this object linkable: */
 	virtual CSObject *getNextLink() { return iNextLink; }

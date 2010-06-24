@@ -26,18 +26,21 @@
  * Engine interface.
  *
  */
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#endif
+
 
 #include "cslib/CSConfig.h"
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSThread.h"
 
-#define PBMS_API	pbms_api_PBMS
-
 #include "engine_ms.h"
 #include "connection_handler_ms.h"
 #include "open_table_ms.h"
-#include "util_ms.h"
 #include "network_ms.h"
 #include "transaction_ms.h"
 #include "mysql_ms.h"
@@ -47,6 +50,9 @@
 #undef new
 #endif
 
+// From ha-pbms.cc:
+extern CSThread *pbms_getMySelf(THD *thd);
+extern void pbms_setMySelf(THD *thd, CSThread *self);
 
 #ifndef DRIZZLED
 
@@ -78,7 +84,7 @@ static void ms_deregister_engine(PBMSEnginePtr engine __attribute__((unused)))
 static int ms_create_blob(bool internal, const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result)
 {
 	if (have_handler_support && !internal) {
-		pbms_error_result(CS_CONTEXT, MS_ERR_INVALID_OPERATION, "Invalid ms_create_blob() call", result);
+		errorResult(CS_CONTEXT, MS_ERR_INVALID_OPERATION, "Invalid ms_create_blob() call", result);
 		return MS_ERR_ENGINE;
 	}
 
@@ -205,7 +211,7 @@ int32_t	MSEngine::createBlob(const char *db_name, const char *tab_name, char *bl
 	
 	CLOBBER_PROTECT(err);
 
-	if ((err = pbms_enter_conn_no_thd(&self, result)))
+	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
 
 	inner_();
@@ -222,7 +228,7 @@ int32_t	MSEngine::createBlob(const char *db_name, const char *tab_name, char *bl
 		backtopool_(otab);
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, result);
+		err = exceptionToResult(&self->myException, result);
 	}
 	cont_(a);
 	return_(err);
@@ -239,13 +245,13 @@ int32_t	MSEngine::referenceBlob(const char *db_name, const char *tab_name, PBMSB
 	
 	CLOBBER_PROTECT(err);
 
-	if ((err = pbms_enter_conn_no_thd(&self, result)))
+	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
 
 	inner_();
 	try_(a) {
 		
-		if (! ms_parse_blob_url(&blob, blob_url)){
+		if (! PBMSBlobURLTools::couldBeURL(blob_url, &blob)){
 			char buffer[CS_EXC_MESSAGE_SIZE];
 			
 			cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Incorrect URL: ");
@@ -256,12 +262,12 @@ int32_t	MSEngine::referenceBlob(const char *db_name, const char *tab_name, PBMSB
 		otab = openTable(db_name, tab_name, true);
 		frompool_(otab);
 
-		otab->useBlob(blob.bu_type, blob.bu_db_id, blob.bu_tab_id, blob.bu_blob_id, blob.bu_auth_code, col_index, blob.bu_blob_size, blob.bu_blob_ref_id, ret_blob_url->bu_data);
+		otab->useBlob(blob.bu_type, blob.bu_db_id, blob.bu_tab_id, blob.bu_blob_id, blob.bu_auth_code, col_index, blob.bu_blob_size, blob.bu_blob_ref_id, ret_blob_url);
 
 		backtopool_(otab);
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, result);
+		err = exceptionToResult(&self->myException, result);
 	}
 	cont_(a);
 	return_(err);
@@ -277,12 +283,12 @@ int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, cha
 
 	CLOBBER_PROTECT(err);
 
-	if ((err = pbms_enter_conn_no_thd(&self, result)))
+	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
 
 	inner_();
 	try_(a) {
-		if (! ms_parse_blob_url(&blob, blob_url)){
+		if (! PBMSBlobURLTools::couldBeURL(blob_url, &blob)){
 			char buffer[CS_EXC_MESSAGE_SIZE];
 
 			cs_strcpy(CS_EXC_MESSAGE_SIZE, buffer, "Incorrect URL: ");
@@ -314,7 +320,7 @@ int32_t	MSEngine::dereferenceBlob(const char *db_name, const char *tab_name, cha
 		backtopool_(otab);				
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, result);
+		err = exceptionToResult(&self->myException, result);
 	}
 	cont_(a);
 	return_(err);
@@ -327,7 +333,7 @@ int32_t MSEngine::dropDatabase(const char *db_name, PBMSResultPtr result)
 	
 	CLOBBER_PROTECT(err);
 
-	if ((err = pbms_enter_conn_no_thd(&self, result)))
+	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
 	inner_();
 	
@@ -335,7 +341,7 @@ int32_t MSEngine::dropDatabase(const char *db_name, PBMSResultPtr result)
 		MSDatabase::dropDatabase(db_name);
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, result);
+		err = exceptionToResult(&self->myException, result);
 	}
 	cont_(a);
 	return_(err);
@@ -356,7 +362,7 @@ int32_t	MSEngine::dropTable(const char *db_name, const char *tab_name, PBMSResul
 
 	CLOBBER_PROTECT(err);
 
-	if ((err = pbms_enter_conn_no_thd(&self, result)))
+	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
 
 	inner_();
@@ -431,11 +437,11 @@ exit: ;
 	}
 	
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, result);
+		err = exceptionToResult(&self->myException, result);
 	}
 	cont_(a);
 	outer_();
-	pbms_exit_conn();
+	exitConnection();
 	return err;
 }
 
@@ -513,7 +519,7 @@ int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, 
 
 	CLOBBER_PROTECT(err);
 
-	if ((err = pbms_enter_conn_no_thd(&self, result)))
+	if ((err = enterConnectionNoThd(&self, result)))
 		return err;
 
 	inner_();
@@ -544,11 +550,11 @@ int32_t	MSEngine::renameTable(const char *from_db_name, const char *from_table, 
 		pop_(undo_info);
 	}
 	catch_(a) {
-		err = pbms_exception_to_result(&self->myException, result);
+		err = exceptionToResult(&self->myException, result);
 	}
 	cont_(a);
 	outer_();
-	pbms_exit_conn();
+	exitConnection();
 	return err;
 }
 
@@ -585,7 +591,7 @@ void MSEngine::callCompleted(bool ok)
 	CSThread	*self;
 	PBMSResultRec	result;
 	
-	if (pbms_enter_conn_no_thd(&self, &result))
+	if (enterConnectionNoThd(&self, &result))
 		return ;
 
 	if (self->myInfo) {
@@ -633,8 +639,136 @@ MSOpenTable *MSEngine::openTable(const char *db_name, const char *tab_name, bool
 //---------------
 bool MSEngine::couldBeURL(const char *blob_url, size_t length)
 {
-	return pbms_api_PBMS::couldBeURL(blob_url, length);
+	MSBlobURLRec blob;
+	return PBMSBlobURLTools::couldBeURL(blob_url, length, &blob);
 }
+
+//---------------
+int MSEngine::exceptionToResult(CSException *e, PBMSResultPtr result)
+{
+	const char *context, *trace;
+
+	result->mr_code = e->getErrorCode();
+	cs_strcpy(MS_RESULT_MESSAGE_SIZE, result->mr_message, e->getMessage());
+	context = e->getContext();
+	trace = e->getStackTrace();
+	if (context && *context) {
+		cs_strcpy(MS_RESULT_STACK_SIZE, result->mr_stack, context);
+		if (trace && *trace)
+			cs_strcat(MS_RESULT_STACK_SIZE, result->mr_stack, "\n");
+	}
+	else
+		*result->mr_stack = 0;
+	if (trace && *trace)
+		cs_strcat(MS_RESULT_STACK_SIZE, result->mr_stack, trace);
+	return MS_ERR_ENGINE;
+}
+
+//---------------
+int MSEngine::errorResult(const char *func, const char *file, int line, int err, const char *message, PBMSResultPtr result)
+{
+	CSException e;
+		
+	e.initException(func, file, line, err, message);
+	return exceptionToResult(&e, result);
+}
+
+//---------------
+int MSEngine::osErrorResult(const char *func, const char *file, int line, int err, PBMSResultPtr result)
+{
+	CSException e;
+		
+	e.initOSError(func, file, line, err);
+	return MSEngine::exceptionToResult(&e, result);
+}
+
+//---------------
+int MSEngine::enterConnection(THD *thd, CSThread **r_self, PBMSResultPtr result, bool doCreate)
+{
+	CSThread	*self = NULL;
+
+#ifndef DRIZZLED
+	// In drizzle there is no 1:1 relationship between pthreads and sessions
+	// so we must always get it from the session handle NOT the current pthread.
+	self = CSThread::getSelf();
+#endif
+	if (!self) {	
+		if (thd) {
+			if (!(self = pbms_getMySelf(thd))) {
+				if (!doCreate)
+					return MS_ERR_NOT_FOUND;
+					
+				if (!(self = CSThread::newCSThread()))
+					return osErrorResult(CS_CONTEXT, ENOMEM, result);
+				if (!CSThread::attach(self))
+					return MSEngine::exceptionToResult(&self->myException, result);
+				pbms_setMySelf(thd, self);
+			} else {
+				if (!CSThread::setSelf(self))
+					return MSEngine::exceptionToResult(&self->myException, result);
+			}
+		} else {
+			if (!doCreate)
+				return MS_ERR_NOT_FOUND;
+				
+			if (!(self = CSThread::newCSThread()))
+				return osErrorResult(CS_CONTEXT, ENOMEM, result);
+			if (!CSThread::attach(self))
+				return MSEngine::exceptionToResult(&self->myException, result);
+		}
+	}
+
+	*r_self = self;
+	return MS_OK;
+}
+
+//---------------
+int MSEngine::enterConnectionNoThd(CSThread **r_self, PBMSResultPtr result)
+{
+	return enterConnection(current_thd, r_self, result, true);
+}
+
+//---------------
+void MSEngine::exitConnection()
+{
+	THD			*thd = (THD *) current_thd;
+	CSThread	*self;
+
+	self = CSThread::getSelf();
+	if (self && self->pbms_api_owner)
+		return;
+
+
+	if (thd)
+		CSThread::setSelf(NULL);
+	else {
+		self = CSThread::getSelf();
+		CSThread::detach(self);
+	}
+}
+
+//---------------
+void MSEngine::closeConnection(THD* thd)
+{
+	CSThread	*self;
+
+	self = CSThread::getSelf();
+	if (self && self->pbms_api_owner)
+		return;
+
+	if (thd) {
+		if ((self = pbms_getMySelf(thd))) {
+			pbms_setMySelf(thd, NULL);
+			CSThread::setSelf(self);
+			CSThread::detach(self);
+		}
+	}
+	else {
+		self = CSThread::getSelf();
+		CSThread::detach(self);
+	}
+}
+
 
 
 

@@ -38,10 +38,9 @@
 #include "connection_handler_ms.h"
 #include "network_ms.h"
 #include "open_table_ms.h"
-#include "util_ms.h"
 #include "engine_ms.h"
+#include "version_ms.h"
 
-//#include "version_ms.h"
 //#include "mysql_ms.h"
 
 u_long MSConnectionHandler::gMaxKeepAlive;
@@ -138,9 +137,9 @@ void MSConnectionHandler::writeException(const char *qualifier)
 	iOutputStream->appendBody(myException.getStackTrace());
 	iOutputStream->appendBody(EXCEPTION_REPLY_STACK_TRACE_SUFFIX_TAG);
 	iOutputStream->appendBody("MySQL ");
-	iOutputStream->appendBody(ms_version());
+	iOutputStream->appendBody(PBMSVersion::getCString());
 	iOutputStream->appendBody(", PBMS ");
-	iOutputStream->appendBody(ms_version());
+	iOutputStream->appendBody(PBMSVersion::getCString());
 	iOutputStream->appendBody("<br>Copyright &#169; 2009, PrimeBase Technologies GmbH</font></P></BODY></HTML>");
 
 	replyPending = false;
@@ -300,7 +299,7 @@ void MSConnectionHandler::handleGet()
 	if (iTableURI->equals("favicon.ico")) {
 		iOutputStream->setStatus(200); 
 		writeFile(iTableURI);
-	} else if (ms_parse_blob_url(&blob, iTableURI->getCString())) {  
+	} else if (PBMSBlobURLTools::couldBeURL(iTableURI->getCString(), &blob)) {  
 		uint64_t size, offset;
     
 		if ((! info_only) && iInputStream->getRange(&size, &offset)) { 

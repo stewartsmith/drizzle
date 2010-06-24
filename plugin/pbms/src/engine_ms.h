@@ -35,6 +35,14 @@
 #include "pbms.h"
 class MSOpenTable;
 
+#ifdef DRIZZLED
+namespace drizzled
+{
+class Session;
+} /* namespace drizzled */
+#else
+#endif
+
 class MSEngine : public CSObject {
 public:
 	
@@ -49,6 +57,14 @@ public:
 	static const PBMSEnginePtr getEngineInfoAt(int indx);
 #endif
 	
+	static int exceptionToResult(CSException *e, PBMSResultPtr result);
+	static int errorResult(const char *func, const char *file, int line, int err, const char *message, PBMSResultPtr result);
+	static int osErrorResult(const char *func, const char *file, int line, int err, PBMSResultPtr result);
+	static int enterConnectionNoThd(CSThread **r_self, PBMSResultPtr result);
+	static int enterConnection(THD *thd, CSThread **r_self, PBMSResultPtr result, bool doCreate);
+	static void exitConnection();
+	static void closeConnection(THD* thd);
+
 	static int32_t	dropDatabase(const char *db_name, PBMSResultPtr result);
 	static int32_t	createBlob(const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result);
 	static int32_t	referenceBlob(const char *db_name, const char *tab_name, PBMSBlobURLPtr  ret_blob_url, char *blob_url, uint16_t col_index, PBMSResultPtr result);

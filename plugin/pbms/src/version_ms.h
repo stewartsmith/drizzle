@@ -22,9 +22,20 @@
 #ifndef __PBMS_VERSION_H__
 #define __PBMS_VERSION_H__
 
-// The stand alone build will define this in the config file.
+// In the MySQL build the version number is set in configure.in AM_INIT_AUTOMAKE()
+// In the drizzle build it is set in plugin.in
+
 #ifndef PBMS_VERSION
-#define PBMS_VERSION 0.5.14-beta
+#define PBMS_VERSION 0.5.14-betaxx
 #endif
+
+#define _PBMSSTR(x) #x
+#define PBMSSTR(x) _PBMSSTR(x)
+
+class PBMSVersion
+{
+public:
+	static const char *getCString() { return PBMSSTR(PBMS_VERSION); }
+};
 
 #endif // __PBMS_VERSION_H__

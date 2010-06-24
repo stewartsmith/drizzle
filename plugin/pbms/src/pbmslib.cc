@@ -43,7 +43,6 @@
 #include "cslib/CSHTTPStream.h"
 #include "cslib/CSMd5.h"
 #include "cslib/CSS3Protocol.h"
-#include "util_ms.h"
 #include "metadata_ms.h"
 
 #define CLEAR_SELF()	CSThread::setSelf(NULL)
@@ -649,7 +648,7 @@ void PBMS_ConHandle::ms_init_get_blob(const char *ref, bool is_alias, bool info_
 	
 #ifdef HAVE_ALIAS_SUPPORT
 	MSBlobURLRec blob;
-	if (is_alias || !ms_parse_blob_url(&blob, ref)) {
+	if (is_alias || !PBMSBlobURLTools::couldBeURL(ref, &blob)) {
 		ms_url_str->append(ms_database->getCString());
 		ms_url_str->append("/");
 	}
@@ -1142,7 +1141,7 @@ pbms_bool pbms_is_blob_reference(PBMS myhndl, const char *ref)
 	
 	try_(a) {
 		MSBlobURLRec blob;
-		if (ms_parse_blob_url(&blob, (char *)ref)) 
+		if (PBMSBlobURLTools::couldBeURL(ref, &blob)) 
 			ok = true;
 	}
 	
@@ -1162,7 +1161,7 @@ pbms_bool pbms_get_blob_size(PBMS myhndl, const char *ref, size_t *size)
 	
 	try_(a) {
 		MSBlobURLRec blob;
-		if (ms_parse_blob_url(&blob, (char *)ref)) {
+		if (PBMSBlobURLTools::couldBeURL(ref, &blob)) {
 			*size = blob.bu_blob_size;
 			ok = true;
 		} 

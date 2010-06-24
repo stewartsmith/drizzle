@@ -26,8 +26,8 @@
  * are streaming enabled.
  *
  */
-#ifndef __streaming_unx_h__
-#define __streaming_unx_h__
+#ifndef __PBMS_H__
+#define __PBMS_H__
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -46,16 +46,6 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
-/*			2	10		1			10			20			10				10			20				20
- * Format: "~*"<db_id><'~' || '_'><tab_id>"-"<blob_id>"-"<auth_code>"-"<server_id>"-"<blob_ref_id>"-"<blob_size>
- */
-//If URL_FMT changes do not forget to update couldBeURL() in this file and isBlobURL() in Util.java.
-
-#ifndef  PRIu64
-#define URL_FMT "~*%u%c%u-%llu-%x-%u-%llu-%llu"
-#else
-#define URL_FMT "~*%"PRIu32"%c%"PRIu32"-%"PRIu64"-%x-%"PRIu32"-%"PRIu64"-%"PRIu64""
-#endif
 
 #define MS_SHARED_MEMORY_MAGIC			0x7E9A120C
 #define MS_ENGINE_VERSION				3
@@ -119,6 +109,19 @@ typedef struct PBMSBlobID {
 	u_int32_t				bi_blob_type;
 } PBMSBlobIDRec, *PBMSBlobIDPtr;
 
+
+typedef struct MSBlobURL {
+	uint8_t					bu_type;
+	uint32_t				bu_db_id;
+	uint32_t				bu_tab_id;				// or repo ID if type = REPO
+	uint64_t				bu_blob_id;				// or repo file offset if type = REPO
+	uint32_t				bu_auth_code;
+	uint32_t				bu_server_id;
+	uint64_t				bu_blob_size;			
+	uint64_t				bu_blob_ref_id;			// Unique identifier of the blob reference
+} MSBlobURLRec, *MSBlobURLPtr;
+
+
 typedef struct PBMSBlobURL {
 	char					bu_data[PBMS_BLOB_URL_SIZE];
 } PBMSBlobURLRec, *PBMSBlobURLPtr;
@@ -132,6 +135,75 @@ typedef struct PBMSEngineRec {
 	int						ms_has_transactions;				/* TRUE (1) if the engine supports transactions. */
 } PBMSEngineRec, *PBMSEnginePtr;
 
+/*			2	10		1			10			20			10				10			20				20
+ * Format: "~*"<db_id><'~' || '_'><tab_id>"-"<blob_id>"-"<auth_code>"-"<server_id>"-"<blob_ref_id>"-"<blob_size>
+ */
+
+#ifndef  PRIu64
+#define URL_FMT "~*%u%c%u-%llu-%x-%u-%llu-%llu"
+#else
+#define URL_FMT "~*%"PRIu32"%c%"PRIu32"-%"PRIu64"-%x-%"PRIu32"-%"PRIu64"-%"PRIu64""
+#endif
+#define MS_URL_TYPE_BLOB	'~'
+#define MS_URL_TYPE_REPO	'_'
+class PBMSBlobURLTools
+{
+	public:
+	static bool couldBeURL(const char *blob_url, size_t size, MSBlobURLPtr blob)
+	{
+		if (blob_url && (size < PBMS_BLOB_URL_SIZE)) {
+			char	buffer[PBMS_BLOB_URL_SIZE+1];
+			char	junk[5];
+			int		scanned;
+
+			junk[0] = 0;
+			if (blob_url[size]) { // There is no guarantee that the URL will be null terminated.
+				memcpy(buffer, blob_url, size);
+				buffer[size] = 0;
+				blob_url = buffer;
+			}
+			
+			scanned = sscanf(blob_url, URL_FMT"%4s", 
+				&blob->bu_db_id, 
+				&blob->bu_type, 
+				&blob->bu_tab_id, 
+				&blob->bu_blob_id, 
+				&blob->bu_auth_code, 
+				&blob->bu_server_id, 
+				&blob->bu_blob_ref_id, 
+				&blob->bu_blob_size, 
+				junk);
+				
+			if ((scanned != 8) || (blob->bu_type != MS_URL_TYPE_BLOB && blob->bu_type != MS_URL_TYPE_REPO)) {// If junk is found at the end this will also result in an invalid URL. 
+				//printf("Bad URL \"%s\": scanned = %d, junk: %d, %d, %d, %d\n", blob_url, scanned, junk[0], junk[1], junk[2], junk[3]); 
+				return false;
+			}
+		
+			return true;
+		}
+		
+		return false;
+	}
+	
+	static bool couldBeURL(const char *blob_url, MSBlobURLPtr blob)
+	{
+		return couldBeURL(blob_url, strlen(blob_url), blob);
+	}
+	
+	static void buildBlobURL(MSBlobURLPtr blob, PBMSBlobURLPtr url)
+	{
+		snprintf(url->bu_data, PBMS_BLOB_URL_SIZE, URL_FMT,	blob->bu_db_id, 
+								blob->bu_type, 
+								blob->bu_tab_id, 
+								blob->bu_blob_id, 
+								blob->bu_auth_code, 
+								blob->bu_server_id, 
+								blob->bu_blob_ref_id, 
+								blob->bu_blob_size);
+	}
+};
+
+#ifndef DRIZZLED
 /*
  * This function should never be called directly, it is called
  * by deregisterEngine() below.
@@ -368,44 +440,6 @@ public:
 		}
 	}
 	
-	static bool couldBeURL(const char *blob_url, size_t size)
-	{
-		if (blob_url && (size < PBMS_BLOB_URL_SIZE)) {
-			char			buffer[PBMS_BLOB_URL_SIZE+1];
-			u_int32_t		db_id = 0;
-			u_int32_t		tab_id = 0;
-			u_int64_t		blob_id = 0;
-			u_int64_t		blob_ref_id = 0;
-			u_int64_t		blob_size = 0;
-			u_int32_t		auth_code = 0;
-			u_int32_t		server_id = 0;
-			char		type, junk[5];
-			int			scanned;
-
-			junk[0] = 0;
-			if (blob_url[size]) { // There is no guarantee that the URL will be null terminated.
-				memcpy(buffer, blob_url, size);
-				buffer[size] = 0;
-				blob_url = buffer;
-			}
-			
-			scanned = sscanf(blob_url, URL_FMT"%4s", &db_id, &type, &tab_id, &blob_id, &auth_code, &server_id, &blob_ref_id, &blob_size, junk);
-			if (scanned != 8) {// If junk is found at the end this will also result in an invalid URL. 
-				//printf("Bad URL \"%s\": scanned = %d, junk: %d, %d, %d, %d\n", blob_url, scanned, junk[0], junk[1], junk[2], junk[3]); 
-				return false;
-			}
-			
-			if (junk[0] || (type != '~' && type != '_')) {
-				//printf("Bad URL \"%s\": scanned = %d, junk: %d, %d, %d, %d\n", blob_url, scanned, junk[0], junk[1], junk[2], junk[3]); 
-				return false;
-			}
-		
-			return true;
-		}
-		
-		return false;
-	}
-	
 	bool isPBMSLoaded()
 	{
 		PBMSResultRec result;
@@ -424,7 +458,7 @@ public:
 		if ((err = getSharedMemory(false, result)))
 			return err;
 
-		if (!couldBeURL(blob_url, blob_size)) {
+		if (!PBMSBlobURLTools::couldBeURL(blob_url, blob_size)) {
 		
 			if (!sharedMemory->sm_callbacks)  {
 				ret_blob_url->bu_data[0] = 0;
@@ -466,7 +500,7 @@ public:
 		if (!sharedMemory->sm_callbacks)
 			return MS_OK;
 
-		if (!couldBeURL(blob_url, blob_size))
+		if (!PBMSBlobURLTools::couldBeURL(blob_url, blob_size))
 			return MS_OK;
 
 		if (blob_url[blob_size]) {
@@ -768,5 +802,7 @@ extern bool PBMSIDToURL(PBMSBlobIDPtr blob_id, char *url);
 * PBMSIDToURL():Convert a blob URL to a blob ID.
 */
 extern bool PBMSURLToID(char *url, PBMSBlobIDPtr blob_id);
+#endif //DRIZZLED 
 
-#endif
+
+#endif //__PBMS_H__

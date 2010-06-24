@@ -107,7 +107,7 @@ void CSLog::log(CSThread *self, const char *func, const char *file, int line, in
 			header(self, func, file, line, level);
 		}
 		/* Write until the next \n... */
-		if ((end_ptr = strchr(buffer, '\n'))) {
+		if ((end_ptr = strchr((char*)buffer, '\n'))) {
 			len = end_ptr - buffer;
 			fwrite(buffer, len, 1, iStream);
 			fprintf(iStream, "\n");

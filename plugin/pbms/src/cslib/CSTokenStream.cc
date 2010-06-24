@@ -92,7 +92,7 @@ CSToken *UXTokenStream::nextToken()
 		nextChar();
 
 	/* Handle the singletons: */
-	if ((ptr = strchr(CSToken::singletons, iChar))) {
+	if ((ptr = strchr((char*)CSToken::singletons, iChar))) {
 		int ch = iChar;
 
 		iChar = -2;
@@ -166,7 +166,7 @@ CSToken *UXTokenStream::nextToken()
 				/* Singletons terminate the text as well, unless they
 				 * were escaped or in quotes.
 				 */
-				if ((ptr = strchr(CSToken::singletons, iChar)))
+				if ((ptr = strchr((char*)CSToken::singletons, iChar)))
 					goto exit_loop;
 				text->append((char) iChar);
 				nextChar();

@@ -51,6 +51,7 @@
 #include "config.h"
 #endif
 
+#include <inttypes.h>
 
 /*
  * This enables everything that GNU can do. The macro is actually
