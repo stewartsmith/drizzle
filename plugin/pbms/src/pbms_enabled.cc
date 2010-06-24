@@ -29,7 +29,8 @@
  *
  */
 
-#if defined(MSDOS) || defined(__WIN__) || defined(DRIZZLED)
+#ifndef DRIZZLED
+#if defined(MSDOS) || defined(__WIN__)
 #include "pbms_enabled.h"
 
 // Windows is not supported yet so just stub out the functions..
@@ -405,3 +406,4 @@ void pbms_completed(const TABLE *table, bool ok)
 	 return ;
 }
 #endif
+#endif // DRIZZLED

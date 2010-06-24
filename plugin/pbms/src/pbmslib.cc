@@ -20,29 +20,18 @@
  *
  * H&G2JCtL
  */
+#ifdef DRIZZLED
+#include "config.h"
+#include <drizzled/common.h>
+#include <drizzled/session.h>
+#include <drizzled/charset_info.h>
+#endif
+
 #include "cslib/CSConfig.h"
 #include <inttypes.h>
 
 #include <curl/curl.h>
 #include <string.h>
-
-#ifdef DRIZZLED
-#include <libdrizzle/drizzle_client.h>
-#define MYSQL drizzle_con_st
-#define MYSQL_RES drizzle_result_st
-#define MYSQL_ROW DRIZZLE_ROW
-
-#define mysql_query			drizzle_query
-#define mysql_store_result	drizzle_store_result
-#define mysql_errno			drizzle_errno
-#define mysql_error			drizzle_error
-#define mysql_num_rows		drizzle_num_rows
-#define mysql_fetch_row		drizzle_fetch_row
-#define mysql_free_result	drizzle_free_result
-
-#else
-#include "mysql.h"
-#endif
 
 #include "pbmslib.h"
 #include "pbms.h"
@@ -401,6 +390,8 @@ static size_t receive_data(void *vptr, size_t objs, size_t obj_size, void *v_con
 	size_t data_len = objs * obj_size;
 	char *ptr = (char*)vptr;
 
+	CLOBBER_PROTECT(data_len);
+
 	if (con->ms_replyStatus >= 400) { // Collect the error reply.
 		enter_();
 		try_(a) {
@@ -438,10 +429,17 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 {
 	PBMS_ConHandle *con = (PBMS_ConHandle*) v_con;
 	size_t size = objs * obj_size;
-	char *end, *ptr = (char*) header, *value;
-	const char *name;
-	uint32_t name_len, value_len;
+	char *end, *ptr = (char*) header, *value = NULL;
+	const char *name = NULL;
+	uint32_t name_len =0, value_len =0;
 	
+	CLOBBER_PROTECT(size);
+	CLOBBER_PROTECT(ptr);
+	CLOBBER_PROTECT(value);
+	CLOBBER_PROTECT(name_len);
+	CLOBBER_PROTECT(value_len);
+	CLOBBER_PROTECT(name);
+
 	end = ptr + size;
 	if (*(end -2) == '\r' && *(end -1) == '\n')
 		end -=2;
@@ -1093,6 +1091,7 @@ PBMS pbms_connect(const char* host, unsigned int port, const char *database)
 {
 	PBMS_ConHandle *con = NULL;
 	CLEAR_SELF(); 
+	CLOBBER_PROTECT(con);
 	
 	clear_global_error();
 
@@ -1282,6 +1281,8 @@ pbms_bool pbms_next_metadata(PBMS myhndl, char *name, char *value, size_t *v_siz
 	bool ok = false;
 	size_t null_size = MS_META_VALUE_SIZE;
 	
+	CLOBBER_PROTECT(v_size);
+
 	con->ms_setSelf();	
 	enter_();
 	
