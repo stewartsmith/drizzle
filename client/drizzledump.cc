@@ -166,11 +166,11 @@ static void print_value(FILE *file, drizzle_result_st *result,
                         int string_value);
 static const char* fetch_named_row(drizzle_result_st *result, drizzle_row_t row,
                                    const char* name);
-static int dump_selected_tables(string db, vector<string> table_names);
+static int dump_selected_tables(const string &db, const vector<string> &table_names);
 static int dump_all_tables_in_db(char *db);
 static int init_dumping_tables(char *);
 static int init_dumping(char *, int init_func(char*));
-static int dump_databases(vector<string>);
+static int dump_databases(const vector<string> &db_names);
 static int dump_all_databases(void);
 static char *quote_name(const char *name, char *buff, bool force);
 char check_if_ignore_table(const char *table_name, char *table_type);
@@ -536,9 +536,9 @@ static int connect_to_db(string host, string user,string passwd)
 /*
  ** dbDisconnect -- disconnects from the host.
 */
-static void dbDisconnect(char *host)
+static void dbDisconnect(string &host)
 {
-  verbose_msg(_("-- Disconnecting from %s...\n"), host ? host : "localhost");
+  verbose_msg(_("-- Disconnecting from %s...\n"), ! host.empty() ? host.c_str() : "localhost");
   drizzle_con_free(&dcon);
   drizzle_free(&drizzle);
 } /* dbDisconnect */
@@ -1826,11 +1826,11 @@ static int dump_all_databases()
 /* dump_all_databases */
 
 
-static int dump_databases(vector<string> db_names)
+static int dump_databases(const vector<string> &db_names)
 {
   int result=0;
   string temp;
-  for (vector<string>::iterator it= db_names.begin(); it != db_names.end(); ++it)
+  for (vector<string>::const_iterator it= db_names.begin(); it != db_names.end(); ++it)
   {
     temp= *it;
     if (dump_all_tables_in_db((char *)temp.c_str()))
@@ -2064,7 +2064,7 @@ static char *get_actual_table_name(const char *old_table_name,
 }
 
 
-static int dump_selected_tables(string db, vector<string> table_names)
+static int dump_selected_tables(const string &db, const vector<string> &table_names)
 {
   drizzled::memory::Root root;
   char **dump_tables, **pos, **end;
@@ -2079,11 +2079,11 @@ static int dump_selected_tables(string db, vector<string> table_names)
   if (!(dump_tables= pos= (char**) root.alloc_root(table_names.size() * sizeof(char *))))
     die(EX_EOM, _("alloc_root failure."));
 
-  for (vector<string>::iterator it= table_names.begin(); it != table_names.end(); ++it)
+  for (vector<string>::const_iterator it= table_names.begin(); it != table_names.end(); ++it)
   {
     string temp= *it;
     /* the table name passed on commandline may be wrong case */
-    if ((*pos= get_actual_table_name((char *)temp.c_str(), &root)))
+    if ((*pos= get_actual_table_name(temp.c_str(), &root)))
     {
       pos++;
     }
@@ -2603,7 +2603,7 @@ try
   po::store(po::command_line_parser(argc, argv).options(all_options).
             positional(p).extra_parser(parse_password_arg).run(), vm);
 
-  if(! vm.count("no-defaults"))
+  if (! vm.count("no-defaults"))
   {
     ifstream user_dump_ifs("~/.drizzle/drizzledump.cnf");
     po::store(parse_config_file(user_dump_ifs, dump_options), vm);
@@ -2642,7 +2642,7 @@ try
     }
   }
 
-  if( vm.count("password") )
+  if(vm.count("password"))
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -2689,13 +2689,13 @@ try
     }
   }
 
-  if(vm.count("version"))
+  if (vm.count("version"))
   {
      printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), internal::my_progname,
        VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
   }
  
-  if(vm.count("xml"))
+  if (vm.count("xml"))
   { 
     opt_xml= 1;
     extended_insert= opt_drop= opt_disable_keys= opt_autocommit= opt_create_db= 0;
@@ -2840,7 +2840,7 @@ try
   {
     dump_all_databases();
   }
-  if (vm.count("database-used") && vm.count("Table-used") && !opt_databases)
+  if (vm.count("database-used") && vm.count("Table-used") && ! opt_databases)
   {
     string database_used= *vm["database-used"].as< vector<string> >().begin();
     /* Only one database and selected table(s) */
@@ -2881,7 +2881,7 @@ try
     server.
   */
 err:
-  dbDisconnect((char *)current_host.c_str());
+  dbDisconnect(current_host);
   if (path.empty())
     write_footer(md_result_file);
   free_resources();
@@ -2892,7 +2892,7 @@ err:
 
   catch(exception &err)
   {
-  cerr<<"Error:"<<err.what()<<endl;
+    cerr << err.what() << endl;
   }
   
   return(first_error);
