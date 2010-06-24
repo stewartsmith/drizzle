@@ -28,7 +28,8 @@
  * in file ha_pbxt.cc. Search for 'PBMS_ENABLED'.
  *
  */
-#if defined(MSDOS) || defined(__WIN__)
+
+#if defined(MSDOS) || defined(__WIN__) || defined(DRIZZLED)
 #include "pbms_enabled.h"
 
 // Windows is not supported yet so just stub out the functions..
@@ -66,18 +67,10 @@ void pbms_completed(TABLE *table __attribute__((unused)),
 #define PBMS_API	pbms_enabled_api
 
 #include "pbms_enabled.h"
-#ifdef DRIZZLED
-#include <sys/stat.h>
-#include <drizzled/common.h>
-#include <drizzled/field/blob.h>
-#include <drizzled/session.h>
-#include <drizzled/plugin.h>
-#else
 #include "mysql_priv.h"
 #include <mysql/plugin.h>
 #define session_alloc(sess, size) thd_alloc(sess, size);
 #define current_session current_thd
-#endif 
 
 #define GET_BLOB_FIELD(t, i) (Field_blob *)(t->field[t->s->blob_field[i]])
 #define DB_NAME(f) (f->table->s->db.str)

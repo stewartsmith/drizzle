@@ -608,6 +608,8 @@ void *CSDaemon::run()
 	CLOBBER_PROTECT(must_sleep);
 
 	enter_();
+	CLOBBER_PROTECT(self);
+
 	myMustQuit = !initializeWork();
 
 	restart:

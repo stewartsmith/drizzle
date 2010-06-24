@@ -98,24 +98,66 @@ class  PBMS_ConHandle:public CSThread {
 	uint64_t			ms_range_start;
 	uint64_t			ms_range_end;
 
+	unsigned int		ms_replyStatus;
+	CSHTTPHeaders		ms_headers; 
+	CSHTTPHeaders		ms_metadata_out;
+	uint32_t				ms_next_header;
+	uint32_t				ms_max_header;	
+	unsigned int		ms_port;
+	unsigned int		ms_transmition_timeout; // In the future this may have some effect but for now it is always be 0 (no timeout).
+	unsigned int		ms_url_base_len;
+	bool				ms_throw_error;	// Gets set if an exception occurs in a callback.
+
+	int					ms_errno;
+	char				ms_err_message[MS_RESULT_MESSAGE_SIZE];
+	
+	
+	char ms_curl_error[CURL_ERROR_SIZE];
+	
+	size_t ms_DataToBeTransfered;
+	// Get data caller parameters:
+	u_char				*ms_getBuffer;
+	size_t				ms_getBufferSize;
+	PBMS_WRITE_CALLBACK_FUNC	ms_writeCB;
+	void				*ms_getCBData;
+	
+	// Put data caller parameters:
+	const u_char		*ms_putData;
+	size_t				ms_putDataLen;
+	size_t				ms_putDataOffset;
+	PBMS_READ_CALLBACK_FUNC	ms_readCB;
+	void				*ms_putCBData;
+	
 	PBMS_ConHandle():
 		CSThread(pbms_thread_list),
 		ms_host(NULL),
 		ms_database(NULL),
-		ms_port(0),
-		ms_transmition_timeout(0),
-		ms_curl(NULL),
 		ms_header_list(NULL),
 		ms_info_only(NULL),
 		ms_ping_header(NULL),
+		ms_url_str(NULL),
+		ms_curl(NULL),	
 		ms_buffer(NULL),
 		ms_errorReply(NULL),
-		ms_url_str(NULL),
 		ms_cloud(NULL),
-		ms_errno(0),
+		ms_range_start(0),
+		ms_range_end(0),
+		ms_replyStatus(0),
+		ms_next_header(0),
+		ms_max_header(0),	
+		ms_port(0),
+		ms_transmition_timeout(0),
+		ms_url_base_len(0),
 		ms_throw_error(false),
-		ms_range_start(1),
-		ms_range_end(0)
+		ms_errno(0),
+		ms_DataToBeTransfered(0),
+		ms_getBuffer(NULL),
+		ms_getBufferSize(0),
+		ms_getCBData(NULL),
+		ms_putData(NULL),
+		ms_putDataLen(0),
+		ms_putDataOffset(0),
+		ms_putCBData(NULL)
 	{
 		}
 		
@@ -154,29 +196,6 @@ class  PBMS_ConHandle:public CSThread {
 		ms_metadata_out.clearHeaders();
 			
 	}
-	unsigned int		ms_replyStatus;
-	CSHTTPHeaders		ms_headers; 
-	CSHTTPHeaders		ms_metadata_out;
-	uint32_t				ms_next_header;
-	uint32_t				ms_max_header;	
-	unsigned int		ms_port;
-	unsigned int		ms_transmition_timeout; // In the future this may have some effect but for now it is always be 0 (no timeout).
-	unsigned int		ms_url_base_len;
-	bool				ms_throw_error;	// Gets set if an exception occurs in a callback.
-
-	int					ms_errno;
-	char				ms_err_message[MS_RESULT_MESSAGE_SIZE];
-	
-	
-	char ms_curl_error[CURL_ERROR_SIZE];
-	
-	size_t ms_DataToBeTransfered;
-	// Get data caller parameters:
-	u_char				*ms_getBuffer;
-	size_t				ms_getBufferSize;
-	PBMS_WRITE_CALLBACK_FUNC	ms_writeCB;
-	void				*ms_getCBData;
-	
 	void set_downLoadUserData(u_char *buffer, size_t buffer_size, PBMS_WRITE_CALLBACK_FUNC cb = NULL, void *caller_data = NULL)	
 	{
 		ms_DataToBeTransfered = buffer_size;
@@ -185,13 +204,6 @@ class  PBMS_ConHandle:public CSThread {
 		ms_writeCB = cb;
 		ms_getCBData = caller_data;		
 	}
-	
-	// Put data caller parameters:
-	const u_char		*ms_putData;
-	size_t				ms_putDataLen;
-	size_t				ms_putDataOffset;
-	PBMS_READ_CALLBACK_FUNC	ms_readCB;
-	void				*ms_putCBData;
 	
 	void set_upLoadUserData(const u_char *buffer, size_t size, PBMS_READ_CALLBACK_FUNC cb = NULL, void *caller_data = NULL)	
 	{
@@ -542,6 +554,8 @@ void PBMS_ConHandle::ms_init_put_blob(curl_off_t size, const char *table, const 
 	int buffer_size = MS_META_VALUE_SIZE + MS_META_NAME_SIZE +2;
 	bool have_content_type = false;
 	
+	(void)alias;
+	
 	ms_url_str->setLength(ms_url_base_len);
 
 	ms_url_str->append(ms_database->getCString());
@@ -631,11 +645,12 @@ void PBMS_ConHandle::ms_init_put_blob(curl_off_t size, const char *table, const 
 //------------------------------------------------
 void PBMS_ConHandle::ms_init_get_blob(const char *ref, bool is_alias, bool info_only)
 {
-	MSBlobURLRec blob;
+	(void)is_alias;
 	
 	ms_url_str->setLength(ms_url_base_len);
 	
 #ifdef HAVE_ALIAS_SUPPORT
+	MSBlobURLRec blob;
 	if (is_alias || !ms_parse_blob_url(&blob, ref)) {
 		ms_url_str->append(ms_database->getCString());
 		ms_url_str->append("/");
@@ -1027,7 +1042,7 @@ void pbms_library_end()
 
 		if (pbms_thread_list) {
 			PBMS_ConHandle *con;
-			while (con = (PBMS_ConHandle *) pbms_thread_list->getFront()) {
+			while ((con = (PBMS_ConHandle *) pbms_thread_list->getFront())) {
 				con->ms_setSelf();
 				CSThread::detach(con);
 			}

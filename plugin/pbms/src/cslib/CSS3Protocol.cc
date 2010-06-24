@@ -581,8 +581,8 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 {
 	S3ProtocolCon *con = (S3ProtocolCon*) v_con;
 	size_t size = objs * obj_size;
-	char *end, *ptr = (char*) header, *name, *value;
-	uint32_t name_len, value_len;
+	char *end, *ptr = (char*) header, *name, *value = NULL;
+	uint32_t name_len, value_len = 0;
 	
 	CLOBBER_PROTECT(size);
 	CLOBBER_PROTECT(ptr);

@@ -21,12 +21,7 @@
  * System dump table.
  *
  */
-#ifdef DRIZZLED
-#include "config.h"
-#include <drizzled/common.h>
-#include <drizzled/session.h>
-#include <drizzled/field/blob.h>
-#endif
+#ifndef DRIZZLED
 
 #include "cslib/CSConfig.h"
 
@@ -184,5 +179,6 @@ void MSEnabledTable::seqScanRead(uint8_t *pos, char *buf)
 	seqScanNext(buf);
 }
 
+#endif // DRIZZLED
 
 

@@ -259,7 +259,7 @@ try_again:
 		
 		trans->txn_TransCache = MSTransCache::newMSTransCache(DFLT_TRANS_CACHE_SIZE);
 	} else { // The transaction log already exists
-		bool overflow, recovered;
+		bool overflow = false, recovered = false;
 		
 		CSFile *tr_file = path->createFile(CSFile::DEFAULT); // Open read/write
 		push_(tr_file);
