@@ -1496,13 +1496,16 @@ create  table t1 (v varchar(10), c char(10), t text);
 insert into t1 values('+ ', '+ ', '+ ');
 set @a=repeat(' ',20);
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
-Warnings:
-Note	1265	Data truncated for column 'v' at row 1
-Note	1265	Data truncated for column 'c' at row 1
+ERROR 22001: Data too long for column 'v' at row 1
+set @a=repeat(' ',10);
+insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
+ERROR 22001: Data too long for column 'v' at row 1
+set @a=repeat(' ',9);
+insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
-*+         *+         *+                    *
+*+         *+         *+         *
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -1543,8 +1546,6 @@ t1	CREATE TABLE `t1` (
   `t` text
 ) ENGINE=InnoDB
 alter table t1 modify t varchar(10);
-Warnings:
-Note	1265	Data truncated for column 't' at row 2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -1998,7 +1999,7 @@ ERROR 23000: Duplicate entry 'a ' for key 'a'
 insert into t1 values ('a     ');
 ERROR 23000: Duplicate entry 'a     ' for key 'a'
 insert into t1 values ('a          ');
-ERROR 23000: Duplicate entry 'a         ' for key 'a'
+ERROR 22001: Data too long for column 'a' at row 1
 insert into t1 values ('a ');
 ERROR 23000: Duplicate entry 'a ' for key 'a'
 update t1 set a='a  ' where a like 'a%';
