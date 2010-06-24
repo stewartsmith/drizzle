@@ -1685,31 +1685,6 @@ static int test_plugin_options(memory::Root *module_root,
     test_module->getManifest().init_options(opt_ctx);
     long_options.add(module_options);
 
-    po::variables_map &vm= test_module->getVariableMap();
-
-    po::parsed_options parsed= po::command_line_parser(*argc, argv).
-      options(module_options).allow_unregistered().run();
-
-    po::store(parsed, vm);
-
-    vector<string> to_pass_further= po::collect_unrecognized(parsed.options,
-                                                             po::include_positional);
-
-    /* Copy the left over options back into argv for further processing.
-       Once the core is using program options, this whole thing will be done
-       differently.
-     */
-    for (vector<string>::iterator iter= to_pass_further.begin();
-         iter != to_pass_further.end();
-         ++iter)
-    {
-      size_t pos= iter-to_pass_further.begin()+1;
-      memcpy(argv[pos], (*iter).c_str(), (*iter).size()+1);
-      cout << "arg: *" << argv[pos] << "*" << endl;
-    }
-    *argc= to_pass_further.size() + 1;
-
-    po::notify(vm);
   }
   else
   {
