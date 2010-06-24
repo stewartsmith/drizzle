@@ -105,7 +105,6 @@ public:
     select_lex(NULL),
     next_leaf(NULL),
     outer_join(0),
-    shared(0),
     db_length(0),
     table_name_length(0),
     dep_tables(0),
@@ -116,9 +115,7 @@ public:
     db_type(NULL),
     internal_tmp_table(false),
     is_alias(false),
-    is_fqtn(false),
-    has_db_lookup_value(false),
-    has_table_lookup_value(false)
+    is_fqtn(false)
   {}
 
   /**
@@ -176,6 +173,11 @@ public:
    */
   bool create;
 
+  /*
+    is the table a cartesian join, assumption is yes unless "solved"
+  */
+  bool isCartesian() const;
+
   /** Field names in a USING clause for JOIN ... USING. */
   List<String> *join_using_fields;
   /**
@@ -211,7 +213,6 @@ public:
   TableList *next_leaf;
   thr_lock_type lock_type;
   uint32_t outer_join; ///< Which join type
-  uint32_t shared; ///<Used in multi-upd
   size_t db_length;
   size_t table_name_length;
   table_map dep_tables; ///< tables the table depends on
@@ -229,9 +230,6 @@ public:
    * qualified name (<db_name>.<table_name>).
    */
   bool is_fqtn;
-
-  bool has_db_lookup_value;
-  bool has_table_lookup_value;
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
@@ -405,6 +403,35 @@ public:
    *  Length of key
    */
   uint32_t create_table_def_key(char *key);
+
+  friend std::ostream& operator<<(std::ostream& output, const TableList &list)
+  {
+    output << "TableList:(";
+    output << list.db;
+    output << ", ";
+    output << list.table_name;
+    output << ", ";
+    output << list.alias;
+    output << ", ";
+    output << "is_natural_join:" << list.is_natural_join;
+    output << ", ";
+    output << "is_join_columns_complete:" << list.is_join_columns_complete;
+    output << ", ";
+    output << "straight:" << list.straight;
+    output << ", ";
+    output << "force_index" << list.force_index;
+    output << ", ";
+    output << "ignore_leaves:" << list.ignore_leaves;
+    output << ", ";
+    output << "create:" << list.create;
+    output << ", ";
+    output << "outer_join:" << list.outer_join;
+    output << ", ";
+    output << "nested_join:" << list.nested_join;
+    output << ")";
+
+    return output;  // for multiple << operators.
+  }
 };
 
 void close_thread_tables(Session *session);
