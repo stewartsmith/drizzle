@@ -37,11 +37,14 @@
  * macro (in particular the "pretty" function
  * macro must be defined here.
  */
-#ifdef __MWERKS__
-#define __FUNC__			__PRETTY_FUNCTION__
+#ifdef OS_WINDOWS
+#define __FUNC__				__FUNCTION__
+#elif defined(OS_SOLARIS)
+#define __FUNC__				"__func__"
 #else
-#define __FUNC__			__FUNCTION__
+#define __FUNC__				__PRETTY_FUNCTION__
 #endif
+
 
 /* This is the call context: */
 #define CS_CONTEXT			__FUNC__, __FILE__, __LINE__

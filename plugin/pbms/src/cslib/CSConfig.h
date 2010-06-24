@@ -81,9 +81,14 @@
 #define OS_MACINTOSH
 #endif
 
-#if defined(MSDOS) || defined(__WIN__)
+#if defined(MSDOS) || defined(__WIN__) || defined(_WIN64)
 #define OS_WINDOWS
 #endif
+
+#ifdef __sun
+#define OS_SOLARIS
+#endif
+
 
 #ifdef OS_WINDOWS
 #ifdef _DEBUG

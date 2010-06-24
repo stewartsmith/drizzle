@@ -91,7 +91,7 @@
 #define MS_RESULT_STACK_SIZE			200
 
 typedef struct PBMSResultRec {
-	u_int8_t				mr_had_blobs;							/* A flag to indicate if the statement had any PBMS blobs. */
+	uint8_t				mr_had_blobs;							/* A flag to indicate if the statement had any PBMS blobs. */
 	int						mr_code;								/* Engine specific error code. */ 
 	char					mr_message[MS_RESULT_MESSAGE_SIZE];		/* Error message, required if non-zero return code. */
 	char					mr_stack[MS_RESULT_STACK_SIZE];			/* Trace information about where the error occurred. */
@@ -100,13 +100,13 @@ typedef struct PBMSResultRec {
 
 
 typedef struct PBMSBlobID {
-	u_int32_t				bi_db_id;	
-	u_int64_t				bi_blob_size;	
-	u_int64_t				bi_blob_id;				// or repo file offset if type = REPO
-	u_int64_t				bi_blob_ref_id;			
-	u_int32_t				bi_tab_id;				// or repo ID if type = REPO
-	u_int32_t				bi_auth_code;
-	u_int32_t				bi_blob_type;
+	uint32_t				bi_db_id;	
+	uint64_t				bi_blob_size;	
+	uint64_t				bi_blob_id;				// or repo file offset if type = REPO
+	uint64_t				bi_blob_ref_id;			
+	uint32_t				bi_tab_id;				// or repo ID if type = REPO
+	uint32_t				bi_auth_code;
+	uint32_t				bi_blob_type;
 } PBMSBlobIDRec, *PBMSBlobIDPtr;
 
 

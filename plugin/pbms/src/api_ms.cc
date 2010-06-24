@@ -87,7 +87,7 @@ void PBMSDeinitBlobStreamingThread(void *v_bs_thread)
 }
 
 //-----------------------------------------------------------------------------------------------
-bool PBMSCreateBlob(PBMSBlobIDPtr blob_id, char *database_name, u_int64_t size)
+bool PBMSCreateBlob(PBMSBlobIDPtr blob_id, char *database_name, uint64_t size)
 {
 	MSOpenTable *otab = NULL;
 	CSString *iTableURI =  NULL;
