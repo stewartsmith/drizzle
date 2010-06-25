@@ -1343,7 +1343,7 @@ c2: open t1; -- blocks
     while (open_cache.records > table_cache_size && unused_tables)
       hash_delete(&open_cache,(unsigned char*) unused_tables);
 
-    if (table_list->create)
+    if (table_list->getCreate())
     {
       TableIdentifier  lock_table_identifier(table_list->db, table_list->table_name, message::Table::STANDARD);
 

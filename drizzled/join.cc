@@ -5361,7 +5361,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
       while ((tbl= it++))
       {
         tbl->embedding= table->embedding;
-        tbl->join_list= table->join_list;
+        tbl->setJoinList(table->getJoinList());
       }
       li.replace(nested_join->join_list);
     }
