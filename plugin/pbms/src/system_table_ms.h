@@ -169,13 +169,13 @@ public:
 	virtual void unuse() { }
 	virtual void backupSeqScanInit() { }
 	virtual void seqScanInit() { }
-	virtual bool seqScanNext(char *buf __attribute__((unused))) { return false; }
+	virtual bool seqScanNext(char *buf) { UNUSED(buf); return false; }
 	virtual int	getRefLen() { return 0; }
-	virtual void seqScanPos(uint8_t *pos __attribute__((unused))) { }
-	virtual void seqScanRead(uint8_t *pos __attribute__((unused)), char *buf __attribute__((unused))) { }
-	virtual void insertRow(char *buf __attribute__((unused))) { }
-	virtual void deleteRow(char *buf __attribute__((unused))) {  }
-	virtual void updateRow(char *old_data __attribute__((unused)), char *new_data __attribute__((unused))) { }
+	virtual void seqScanPos(uint8_t *pos) { UNUSED(pos);}
+	virtual void seqScanRead(uint8_t *pos , char *buf) {UNUSED(pos);UNUSED(buf); }
+	virtual void insertRow(char *buf) {UNUSED(buf); }
+	virtual void deleteRow(char *buf) {UNUSED(buf);  }
+	virtual void updateRow(char *old_data, char *new_data) {UNUSED(old_data);UNUSED(new_data); }
 /*	
 	virtual void index_init(uint8_t idx) { }
 	virtual void index_end() { }

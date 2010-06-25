@@ -77,8 +77,9 @@ static void ms_register_engine(PBMSEnginePtr engine)
 		have_handler_support = true;
 }
 
-static void ms_deregister_engine(PBMSEnginePtr engine __attribute__((unused)))
+static void ms_deregister_engine(PBMSEnginePtr engine)
 {
+	UNUSED(engine);
 }
 
 static int ms_create_blob(bool internal, const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result)

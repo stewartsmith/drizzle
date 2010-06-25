@@ -307,16 +307,18 @@ static int pbms_commit(handlerton *, THD *thd, bool all)
 }
 
 #ifdef DRIZZLED
-int PBMSStorageEngine::doRollback(THD *thd, bool all __attribute__((unused)))
+int PBMSStorageEngine::doRollback(THD *thd, bool all)
 {
 #else
-static int pbms_rollback(handlerton *, THD *thd, bool all __attribute__((unused)))
+static int pbms_rollback(handlerton *, THD *thd, bool all)
 {
 #endif
 	int			err = 0;
 	CSThread	*self;
 	PBMSResultRec result;
-
+	
+	UNUSED(all);
+	
 	if (MSEngine::enterConnection(thd, &self, &result, false))
 		return 0;
 	inner_();
@@ -726,9 +728,11 @@ int ha_pbms::close(void)
 
 #ifdef PBMS_HAS_KEYS
 /* Index access functions: */
-int ha_pbms::index_init(uint idx, bool sorted __attribute__((unused)))
+int ha_pbms::index_init(uint idx, bool sorted)
 {
 	int err = 0;
+	UNUSED(sorted);
+	
 	enter_();
 	try_(a) {
 		ha_open_tab->index_init(idx);

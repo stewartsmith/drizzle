@@ -61,6 +61,9 @@
 /* Forward declartion of a thread: */
 class CSThread;
 
+// Used to avoid warnings about unused parameters.
+#define UNUSED(x) (void)x
+
 #ifdef OS_WINDOWS
 
 #define CS_DEFAULT_EOL		"\r\n"

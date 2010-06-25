@@ -70,7 +70,8 @@ public:
 		return cs_mm_malloc(func, file, line, size);
 	}
 
-	static void operator delete(void *ptr, size_t size  __attribute__((unused))) {
+	static void operator delete(void *ptr, size_t size) {
+		UNUSED(size);
 		cs_mm_free(ptr);
 	}
 

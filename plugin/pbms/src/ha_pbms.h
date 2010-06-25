@@ -74,7 +74,7 @@ public:
 
 	const char *table_type() const { return "PBMS"; }
 
-	const char *index_type(uint inx __attribute__((unused))) { return "NONE"; }
+	const char *index_type(uint inx) { UNUSED(inx); return "NONE"; }
 
 #ifndef DRIZZLED
 	const char **bas_ext() const;
@@ -82,13 +82,19 @@ public:
 	MX_TABLE_TYPES_T table_flags() const;
 #endif
 
-	MX_ULONG_T index_flags(uint inx __attribute__((unused)), uint part __attribute__((unused)), bool all_parts __attribute__((unused))) const { return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY); }
+	MX_ULONG_T index_flags(uint inx, uint part , bool all_parts ) const 
+	{ 
+		UNUSED(inx); 
+		UNUSED(part); 
+		UNUSED(all_parts); 
+		return (HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE | HA_KEYREAD_ONLY); 
+	}
 	uint	max_supported_keys()			const { return 512; }
 	uint	max_supported_key_length()    const { return 1024; }
 	uint	max_supported_key_part_length() const { return 1024; }
 
 	int open(const char *name, int mode, uint test_if_locked);
-	void drop_table(const char *name __attribute__((unused))) {}
+	void drop_table(const char *name) {UNUSED(name);}
 
 	int close(void);
 #ifdef DRIZZLED
