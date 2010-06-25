@@ -21,15 +21,19 @@
 #include "drizzled/module/context.h"
 #include "drizzled/module/option_map.h"
 #include "drizzled/module/module.h"
+#include "drizzled/drizzled.h"
 
 namespace drizzled
 {
+
+extern boost::program_options::variables_map vm;
+
 namespace module
 {
 
 module::option_map Context::getOptions()
 {
-  return module::option_map(module->getName(), module->getVariableMap());
+  return module::option_map(module->getName(), getVariablesMap());
 }
 
 } /* namespace module */
