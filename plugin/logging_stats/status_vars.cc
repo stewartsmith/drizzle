@@ -112,3 +112,11 @@ bool StatusVars::hasBeenFlushed(Session *session)
     return false;
   }
 }
+
+void StatusVars::copyGlobalVariables(StatusVars *global_status_vars)
+{
+  system_status_var* from_var= global_status_vars->getStatusVarCounters();
+  status_var_counters->aborted_connects= from_var->aborted_connects;  
+  status_var_counters->aborted_threads= from_var->aborted_threads;
+  status_var_counters->connection_time= from_var->connection_time;
+}

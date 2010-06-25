@@ -116,7 +116,10 @@ StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
 
     if (scoreboard_slot != NULL)
     {
-      status_var_to_display= scoreboard_slot->getStatusVars();
+      status_var_to_display= new StatusVars(*scoreboard_slot->getStatusVars());
+      CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
+      cumulativeStats->sumCurrentScoreboard(logging_stats->getCurrentScoreboard(), status_var_to_display, NULL);
+      status_var_to_display->copyGlobalVariables(logging_stats->getCumulativeStats()->getGlobalStatusVars());
     } 
     else 
     {

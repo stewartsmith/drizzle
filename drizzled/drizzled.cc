@@ -348,10 +348,6 @@ static char **defaults_argv;
 
 passwd *user_info;
 
-/**
-  Number of currently active user connections. The variable is protected by
-  LOCK_thread_count.
-*/
 atomic<uint32_t> connection_count;
 
 /** 

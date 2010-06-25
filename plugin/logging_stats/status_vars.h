@@ -52,6 +52,8 @@ public:
   void copySystemStatusVar(drizzled::system_status_var *to_var, 
                            drizzled::system_status_var *from_var);
 
+  void copyGlobalVariables(StatusVars *status_vars);
+
   drizzled::system_status_var* getStatusVarCounters()
   {
     return status_var_counters;

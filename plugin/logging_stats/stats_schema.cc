@@ -359,3 +359,70 @@ bool CumulativeCommandsTool::Generator::populate()
 
   return false;
 }
+
+CumulativeUserStatsTool::CumulativeUserStatsTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "CUMULATIVE_USER_STATS")
+{
+  outer_logging_stats= logging_stats;
+
+  add_field("USER");
+  add_field("BYTES_RECEIVED");
+  add_field("BYTES_SENT");
+  add_field("DENIED_CONNECTIONS");
+  add_field("LOST_CONNECTIONS");
+  add_field("ACCESS_DENIED");
+  add_field("CONNECTED_TIME_SEC");
+  add_field("EXECUTION_TIME_NSEC");
+}
+
+CumulativeUserStatsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  inner_logging_stats= logging_stats;
+  record_number= 0;
+
+  if (inner_logging_stats->isEnabled())
+  {
+    last_valid_index= inner_logging_stats->getCumulativeStats()->getCumulativeStatsLastValidIndex();
+  }
+  else
+  {
+    last_valid_index= INVALID_INDEX;
+  }
+}
+
+bool CumulativeUserStatsTool::Generator::populate()
+{
+  if ((record_number > last_valid_index) || (last_valid_index == INVALID_INDEX))
+  {
+    return false;
+  }
+
+  while (record_number <= last_valid_index)
+  {
+    ScoreboardSlot *cumulative_scoreboard_slot=
+      inner_logging_stats->getCumulativeStats()->getCumulativeStatsByUserVector()->at(record_number);
+
+    if (cumulative_scoreboard_slot->isInUse())
+    {
+      StatusVars *status_vars= cumulative_scoreboard_slot->getStatusVars();
+      push(cumulative_scoreboard_slot->getUser());
+
+      push(status_vars->getStatusVarCounters()->bytes_received);
+      push(status_vars->getStatusVarCounters()->bytes_sent);
+      push(status_vars->getStatusVarCounters()->aborted_connects);
+      push(status_vars->getStatusVarCounters()->aborted_threads);
+      push(status_vars->getStatusVarCounters()->access_denied);
+      push(status_vars->getStatusVarCounters()->connection_time);
+      push(status_vars->getStatusVarCounters()->execution_time_nsec);
+      ++record_number;
+      return true;
+    }
+    else
+    {
+      ++record_number;
+    }
+  }
+
+  return false;
+}

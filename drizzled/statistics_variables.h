@@ -32,8 +32,6 @@ extern struct global_counters current_global_counters;
  */
 typedef struct global_counters
 {
-  uint64_t aborted_threads;
-  uint64_t aborted_connects;
   uint64_t max_used_connections;
   uint64_t locks_immediate;
   uint64_t locks_waited;
@@ -46,6 +44,9 @@ typedef struct global_counters
  */
 typedef struct system_status_var
 {
+  uint64_t aborted_connects;
+  uint64_t aborted_threads;
+  uint64_t access_denied;
   uint64_t bytes_received;
   uint64_t bytes_sent;
   uint64_t com_other;
@@ -86,6 +87,8 @@ typedef struct system_status_var
   uint64_t filesort_range_count;
   uint64_t filesort_rows;
   uint64_t filesort_scan_count;
+  uint64_t connection_time;
+  uint64_t execution_time_nsec;
   /*
     Number of statements sent from the client
   */
