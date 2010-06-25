@@ -64,7 +64,9 @@
 #include "compactor_ms.h"
 #include "open_table_ms.h"
 #include "metadata_ms.h"
+#ifdef HAVE_ALIAS_SUPPORT
 #include "alias_ms.h"
+#endif
 #include "cloud_ms.h"
 #include "transaction_ms.h"
 

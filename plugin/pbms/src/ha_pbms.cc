@@ -69,7 +69,6 @@ using namespace drizzled::plugin;
 #include "cslib/CSGlobal.h"
 #include "cslib/CSThread.h"
 #include "cslib/CSStrUtil.h"
-#include "cslib/CSTest.h"
 #include "cslib/CSLog.h"
 
 #include "engine_ms.h"	
@@ -550,7 +549,6 @@ int pbms_init_func(void *p)
 	enter_();
 	try_(a) {
 		thread->threadName = CSString::newString("startup");
-		//CSTest::runAll();
 		MSDatabase::startUp(PBMSParameters::getDefaultMetaDataHeaders());
 		MSTableList::startUp();
 		MSSystemTableShare::startUp();

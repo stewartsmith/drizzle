@@ -36,7 +36,9 @@
 
 #include "table_ms.h"
 #include "repository_ms.h"
+#ifdef HAVE_ALIAS_SUPPORT
 #include "alias_ms.h"
+#endif
 #include "temp_log_ms.h"
 #include "compactor_ms.h"
 #include "cloud_ms.h"
