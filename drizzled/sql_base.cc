@@ -2612,7 +2612,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
     TODO-> Ensure that table_name, db_name and tables->db always points to something !
   */
   if (/* Exclude nested joins. */
-      (!table_list->nested_join) &&
+      (!table_list->getNestedJoin()) &&
       /* Include merge views and information schema tables. */
       /*
         Test if the field qualifiers match the table reference we plan
@@ -2626,7 +2626,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
 
   *actual_table= NULL;
 
-  if (!table_list->nested_join)
+  if (!table_list->getNestedJoin())
   {
     /* 'table_list' is a stored table. */
     assert(table_list->table);
@@ -2646,7 +2646,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
     */
     if (table_name && table_name[0])
     {
-      List_iterator<TableList> it(table_list->nested_join->join_list);
+      List_iterator<TableList> it(table_list->getNestedJoin()->join_list);
       TableList *table;
       while ((table= it++))
       {
@@ -3238,11 +3238,11 @@ mark_common_columns(Session *session, TableList *table_ref_1, TableList *table_r
     Leaf table references to which new natural join columns are added
     if the leaves are != NULL.
   */
-  TableList *leaf_1= (table_ref_1->nested_join &&
-                      !table_ref_1->is_natural_join) ?
+  TableList *leaf_1= (table_ref_1->getNestedJoin() &&
+                      ! table_ref_1->is_natural_join) ?
     NULL : table_ref_1;
-  TableList *leaf_2= (table_ref_2->nested_join &&
-                      !table_ref_2->is_natural_join) ?
+  TableList *leaf_2= (table_ref_2->getNestedJoin() &&
+                      ! table_ref_2->is_natural_join) ?
     NULL : table_ref_2;
 
   *found_using_fields= 0;
@@ -3567,9 +3567,9 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
   bool result= true;
 
   /* Call the procedure recursively for each nested table reference. */
-  if (table_ref->nested_join)
+  if (table_ref->getNestedJoin())
   {
-    List_iterator_fast<TableList> nested_it(table_ref->nested_join->join_list);
+    List_iterator_fast<TableList> nested_it(table_ref->getNestedJoin()->join_list);
     TableList *same_level_left_neighbor= nested_it++;
     TableList *same_level_right_neighbor= NULL;
     /* Left/right-most neighbors, possibly at higher levels in the join tree. */
@@ -3594,7 +3594,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
           cur_table_ref->outer_join & JOIN_TYPE_RIGHT)
       {
         /* This can happen only for JOIN ... ON. */
-        assert(table_ref->nested_join->join_list.elements == 2);
+        assert(table_ref->getNestedJoin()->join_list.elements == 2);
         std::swap(same_level_left_neighbor, cur_table_ref);
       }
 
@@ -3607,7 +3607,7 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
       real_right_neighbor= (same_level_right_neighbor) ?
         same_level_right_neighbor : right_neighbor;
 
-      if (cur_table_ref->nested_join &&
+      if (cur_table_ref->getNestedJoin() &&
           store_top_level_join_columns(session, cur_table_ref,
                                        real_left_neighbor, real_right_neighbor))
         goto err;
@@ -3621,9 +3621,9 @@ store_top_level_join_columns(Session *session, TableList *table_ref,
   */
   if (table_ref->is_natural_join)
   {
-    assert(table_ref->nested_join &&
-           table_ref->nested_join->join_list.elements == 2);
-    List_iterator_fast<TableList> operand_it(table_ref->nested_join->join_list);
+    assert(table_ref->getNestedJoin() &&
+           table_ref->getNestedJoin()->join_list.elements == 2);
+    List_iterator_fast<TableList> operand_it(table_ref->getNestedJoin()->join_list);
     /*
       Notice that the order of join operands depends on whether table_ref
       represents a LEFT or a RIGHT join. In a RIGHT join, the operands are
@@ -4253,10 +4253,10 @@ int Session::setup_conds(TableList *leaves, COND **conds)
           goto err_no_arena;
         select_lex->cond_count++;
       }
-      embedding= embedded->embedding;
+      embedding= embedded->getEmbedding();
     }
     while (embedding &&
-           embedding->nested_join->join_list.head() == embedded);
+           embedding->getNestedJoin()->join_list.head() == embedded);
 
   }
   session->session_marker= save_session_marker;

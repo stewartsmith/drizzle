@@ -213,10 +213,6 @@ public:
   uint32_t outer_join; ///< Which join type
   size_t db_length;
   size_t table_name_length;
-  table_map dep_tables; ///< tables the table depends on
-  table_map on_expr_dep_tables; ///< tables on expression depends on
-  nested_join_st *nested_join; ///< if the element is a nested join
-  TableList *embedding; ///< nested join containing the table
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
@@ -450,6 +446,26 @@ public:
     join_list= in_join_list;
   }
 
+  void setEmbedding(TableList *in_embedding)
+  {
+    embedding= in_embedding;
+  }
+
+  void setNestedJoin(nested_join_st *in_nested_join)
+  {
+    nested_join= in_nested_join;
+  }
+
+  void setDepTables(table_map in_dep_tables)
+  {
+    dep_tables= in_dep_tables;
+  }
+
+  void setOnExprDepTables(table_map in_on_expr_dep_tables)
+  {
+    on_expr_dep_tables= in_on_expr_dep_tables;
+  }
+
   bool getIsAlias() const
   {
     return is_alias;
@@ -475,13 +491,37 @@ public:
     return db_type;
   }
 
+  TableList *getEmbedding() const
+  {
+    return embedding;
+  }
+
   List<TableList> *getJoinList() const
   {
     return join_list;
   }
 
+  nested_join_st *getNestedJoin() const
+  {
+    return nested_join;
+  }
+
+  table_map getDepTables() const
+  {
+    return dep_tables;
+  }
+
+  table_map getOnExprDepTables() const
+  {
+    return on_expr_dep_tables;
+  }
+
 private:
 
+  table_map dep_tables; ///< tables the table depends on
+  table_map on_expr_dep_tables; ///< tables on expression depends on
+  nested_join_st *nested_join; ///< if the element is a nested join
+  TableList *embedding; ///< nested join containing the table
   List<TableList> *join_list; ///< join list the table belongs to
   plugin::StorageEngine *db_type; ///< table_type for handler
   char timestamp_buffer[20]; ///< buffer for timestamp (19+1)

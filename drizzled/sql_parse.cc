@@ -1030,11 +1030,10 @@ bool Select_Lex::init_nested_join(Session *session)
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
                                        sizeof(nested_join_st))))
     return true;
-  nested_join= ptr->nested_join=
-    ((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList))));
-
+  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  nested_join= ptr->getNestedJoin();
   join_list->push_front(ptr);
-  ptr->embedding= embedding;
+  ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nested_join)";
   embedding= ptr;
@@ -1066,14 +1065,14 @@ TableList *Select_Lex::end_nested_join(Session *)
   assert(embedding);
   ptr= embedding;
   join_list= ptr->getJoinList();
-  embedding= ptr->embedding;
-  nested_join= ptr->nested_join;
+  embedding= ptr->getEmbedding();
+  nested_join= ptr->getNestedJoin();
   if (nested_join->join_list.elements == 1)
   {
     TableList *embedded= nested_join->join_list.head();
     join_list->pop();
     embedded->setJoinList(join_list);
-    embedded->embedding= embedding;
+    embedded->setEmbedding(embedding);
     join_list->push_front(embedded);
     ptr= embedded;
   }
@@ -1108,10 +1107,9 @@ TableList *Select_Lex::nest_last_join(Session *session)
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
                                        sizeof(nested_join_st))))
     return NULL;
-  nested_join= ptr->nested_join=
-    ((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList))));
-
-  ptr->embedding= embedding;
+  ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
+  nested_join= ptr->getNestedJoin();
+  ptr->setEmbedding(embedding);
   ptr->setJoinList(join_list);
   ptr->alias= (char*) "(nest_last_join)";
   embedded_list= &nested_join->join_list;
@@ -1121,7 +1119,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
   {
     TableList *table= join_list->pop();
     table->setJoinList(embedded_list);
-    table->embedding= ptr;
+    table->setEmbedding(ptr);
     embedded_list->push_back(table);
     if (table->natural_join)
     {
@@ -1158,7 +1156,7 @@ void Select_Lex::add_joined_table(TableList *table)
 {
   join_list->push_front(table);
   table->setJoinList(join_list);
-  table->embedding= embedding;
+  table->setEmbedding(embedding);
 }
 
 
