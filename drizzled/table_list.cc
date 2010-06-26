@@ -65,6 +65,11 @@ TableList *TableList::find_underlying_table(Table *table_to_find)
   return NULL;
 }
 
+bool TableList::isCartesian() const
+{
+  return false;
+}
+
 bool TableList::placeholder()
 {
   return derived || (create && !table->getDBStat()) || !table;

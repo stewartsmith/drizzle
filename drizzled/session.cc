@@ -205,7 +205,7 @@ Session::Session(plugin::Client *client_arg) :
   */
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= NULL;
-  count_cuted_fields= CHECK_FIELD_IGNORE;
+  count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
   killed= NOT_KILLED;
   col_access= 0;
   tmp_table= 0;
