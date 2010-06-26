@@ -47,8 +47,6 @@ class DRIZZLED_API option_context
   const std::string &module_name;
   po::options_description_easy_init po_options;
 
-  std::string prepend_name(const char *name) const;
-
 public:
 
   option_context(const std::string &module_name_in,
@@ -63,6 +61,9 @@ public:
   option_context& operator()(const char* name,
                              const po::value_semantic* s,
                              const char* description);
+
+  static std::string prepend_name(std::string module_name_in,
+                                  const char *name);
 
 private:
   
@@ -81,17 +82,6 @@ private:
    */
   option_context& operator=(const option_context &);
 };
-
-/*
- * Private methods.
- */
-inline std::string option_context::prepend_name(const char *name_in) const
-{
-  std::string new_name(module_name);
-  new_name.push_back('.');
-  new_name.append(name_in);
-  return new_name;
-}
 
 } /* namespace module */
 } /* namespace drizzled */
