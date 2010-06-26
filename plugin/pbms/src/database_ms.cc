@@ -100,6 +100,7 @@ iWriteTempLog(NULL),
 iDropping(false),
 iNextBlobRefId(0)
 {
+//startTracking();
 }
 
 MSDatabase::~MSDatabase()

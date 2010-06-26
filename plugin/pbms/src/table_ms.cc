@@ -30,6 +30,7 @@
 #include "cslib/CSConfig.h"
 
 #include <stdlib.h>
+#include <stddef.h>
 
 #include "cslib/CSGlobal.h"
 #include "cslib/CSLog.h"

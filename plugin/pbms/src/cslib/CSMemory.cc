@@ -599,19 +599,20 @@ void cs_mm_print_track(const char *func, const char *file, uint32_t line, void *
 	if (!track_me && !mm_tracking_id)
 		return;
 
+
 	if (func) {
 		cs_format_context(300, buffer, func, file, line);
-		printf("TRACKING (%"PRIu32"): %s %2"PRIu32" %s", debug_ptr->md_id, inc ? "INC" : "DEC", ref_cnt, buffer);
+		fprintf(stderr, "TRACKING (%"PRIu32"): %s %2"PRIu32" %s", debug_ptr->md_id, inc ? "INC" : "DEC", ref_cnt, buffer);
 	}
 	else
-		printf("TRACKING (%"PRIu32"): %s %2"PRIu32"", debug_ptr->md_id, inc ? "INC" : "DEC", ref_cnt);
+		fprintf(stderr, "TRACKING (%"PRIu32"): %s %2"PRIu32"", debug_ptr->md_id, inc ? "INC" : "DEC", ref_cnt);
 
 	for (int i = self->callTop-1; i>=0 && cnt < 4; i--) {
 		cs_format_context(300, buffer, self->callStack[i].cs_func, self->callStack[i].cs_file, self->callStack[i].cs_line);
-		printf(" %s", buffer);
+		fprintf(stderr," %s", buffer);
 		cnt++;
 	}
-	printf("\n");
+	fprintf(stderr,"\n");
 }
 
 void cs_mm_track_memory(const char *func, const char *file, uint32_t line, void *p, bool inc, uint32_t ref_cnt, int track_me)

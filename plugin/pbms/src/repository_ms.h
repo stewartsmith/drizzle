@@ -29,6 +29,7 @@
 
 #ifndef __REPOSITORY_MS_H__
 #define __REPOSITORY_MS_H__
+#include <stddef.h>
 
 #include "cslib/CSDefs.h"
 #include "cslib/CSFile.h"

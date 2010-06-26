@@ -2405,15 +2405,15 @@ MSOpenSystemTable *MSSystemTableShare::openSystemTable(const char *table_path, T
 
 void MSSystemTableShare::removeDatabaseSystemTables(MSDatabase *doomed_db)
 {
-	MSOpenSystemTable *tab;
+	MSSystemTableShare	*share;
 	uint32_t i= 0;
 	enter_();
 	
 	push_(doomed_db);
 	lock_(gSystemTableList);
-	while ((tab = (MSOpenSystemTable *) gSystemTableList->itemAt(i))) {
-		if (tab->myShare->mySysDatabase == doomed_db) {
-			gSystemTableList->remove(tab->myShare->myTablePath);
+	while ((share = (MSSystemTableShare *) gSystemTableList->itemAt(i))) {
+		if (share->mySysDatabase == doomed_db) {
+			gSystemTableList->remove(share->myTablePath);
 		} else
 			i++;
 	}

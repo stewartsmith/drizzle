@@ -718,12 +718,12 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 		mdata_offset = 0;
 	mdata_size	= meta_data_len;
 		
-	uint32_t alias_hash = INVALID_ALIAS_HASH;
 	
 	CS_SET_DISK_2(ptr.rp_head->rb_mdata_size_2, mdata_size);
 	CS_SET_DISK_2(ptr.rp_head->rb_mdata_offset_2, mdata_offset);
 	
 #ifdef HAVE_ALIAS_SUPPORT
+	uint32_t alias_hash = INVALID_ALIAS_HASH;
 	if (alias) {
 		alias_hash = CS_GET_DISK_4(ptr.rp_head->rb_alias_hash_4);
 		alias_offset = CS_GET_DISK_2(ptr.rp_head->rb_alias_offset_2);
@@ -742,6 +742,7 @@ void MSRepoFile::setBlobMetaData(MSOpenTable *otab, uint64_t offset, const char 
 		alias_offset = 0;
 	}
 #else
+	uint32_t alias_hash = -1;
 	if (alias || reset_alias) {
 		CSException::throwException(CS_CONTEXT, MS_ERR_NOT_IMPLEMENTED, "No BLOB alias support.");
 	}

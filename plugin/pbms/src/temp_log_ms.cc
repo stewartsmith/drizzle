@@ -29,6 +29,8 @@
 
 #include "cslib/CSConfig.h"
 
+#include <stddef.h>
+
 #include "cslib/CSGlobal.h"
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSStorage.h"
