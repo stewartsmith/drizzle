@@ -157,4 +157,4 @@ static drizzle_sys_var* system_variables[]= {
 
 } // namespace syslog_module
 
-DRIZZLE_PLUGIN(syslog_module::init, syslog_module::system_variables);
+DRIZZLE_PLUGIN(syslog_module::init, syslog_module::system_variables, NULL);
