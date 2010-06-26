@@ -41,7 +41,7 @@ using namespace std;
 
 class CSDirectory : public CSObject {
 public:
-	CSDirectory(): iDir(NULL), iPath(NULL) { }
+	CSDirectory(): iEntry(NULL), iDir(NULL), iPath(NULL) { }
 
 	virtual ~CSDirectory();
 
@@ -67,9 +67,18 @@ public:
 	static CSDirectory *newDirectory(CSString *);
 
 private:
-	struct dirent iEntry;
+	/* Solaris requires od_entry.d_name member to have size at least as returned
+	 * by pathconf() function on per-directory basis. As a result 'struct dirent'
+	 * cannot be staticly alloacted. 
+	 */
+	union var_dirent {
+		struct dirent entry;
+		char space[1];
+	} *iEntry;
+	
 	DIR *iDir;
 	CSString *iPath;
+	void getFilePath(char *path, size_t size);
 };
 
 

@@ -49,6 +49,9 @@ CSDirectory::~CSDirectory()
 	close();
 	if (iPath)
 		iPath->release();
+	if (iEntry)
+		cs_free(iEntry);
+		
 	exit_();
 }
 
@@ -110,20 +113,20 @@ bool CSDirectory::next()
 
 	enter_();
 	for (;;) {
-		err = readdir_r(iDir, &iEntry, &result);
+		err = readdir_r(iDir, &iEntry->entry, &result);
 		self->interrupted();
 		if (err)
 			CSException::throwFileError(CS_CONTEXT, iPath->getCString(), err);
 		if (!result)
 			break;
 		/* Filter out '.' and '..': */
-		if (iEntry.d_name[0] == '.') {
-			if (iEntry.d_name[1] == '.') {
-				if (iEntry.d_name[2] == '\0')
+		if (iEntry->entry.d_name[0] == '.') {
+			if (iEntry->entry.d_name[1] == '.') {
+				if (iEntry->entry.d_name[2] == '\0')
 					continue;
 			}
 			else {
-				if (iEntry.d_name[1] == '\0')
+				if (iEntry->entry.d_name[1] == '\0')
 					continue;
 			}
 		}
@@ -132,14 +135,19 @@ bool CSDirectory::next()
 	return_(result ? true : false);
 }
 
+void CSDirectory::getFilePath(char *path, size_t size)
+{
+	cs_strcpy(size, path, iPath->getCString());
+	cs_add_dir_char(size, path);
+	cs_strcat(size, path, iEntry->entry.d_name);
+}
+
 void CSDirectory::deleteEntry()
 {
 	char path[PATH_MAX];
 
 	enter_();
-	cs_strcpy(PATH_MAX, path, iPath->getCString());
-	cs_add_dir_char(PATH_MAX, path);
-	cs_strcat(PATH_MAX, path, iEntry.d_name);
+	getFilePath(path, PATH_MAX);
 
 	CSPath *cs_path = CSPath::newPath(path);
 	push_(cs_path);
@@ -151,13 +159,28 @@ void CSDirectory::deleteEntry()
 
 const char *CSDirectory::name()
 {
-	return iEntry.d_name;
+	return iEntry->entry.d_name;
 }
 
 bool CSDirectory::isFile()
 {
-	if (iEntry.d_type & DT_DIR)
+#ifdef OS_SOLARIS
+	char path[PATH_MAX];
+	struct stat sb;
+
+	getFilePath(path, PATH_MAX);
+
+	if (stat(path, &sb) == -1) {
+		CSException::throwFileError(CS_CONTEXT, path, errno);
+		return false; // Never reached.
+	}
+
+	if ( sb.st_mode & S_IFDIR )
 		return false;
+#else
+	if (iEntry->entry.d_type & DT_DIR)
+		return false;
+#endif
 	return true;
 }
 
@@ -166,9 +189,7 @@ void CSDirectory::info(bool *is_dir, off64_t *size, CSTime *mod_time)
 	char path[PATH_MAX];
 
 	enter_();
-	cs_strcpy(PATH_MAX, path, iPath->getCString());
-	cs_add_dir_char(PATH_MAX, path);
-	cs_strcat(PATH_MAX, path, iEntry.d_name);
+	getFilePath(path, PATH_MAX);
 
 	CSPath *cs_path = CSPath::newPath(path);
 	push_(cs_path);
@@ -178,30 +199,39 @@ void CSDirectory::info(bool *is_dir, off64_t *size, CSTime *mod_time)
 	exit_();
 }
 
-CSDirectory *CSDirectory::newDirectory(CSPath *path)
-{
-	CSDirectory *dir;
-
-	if (!(dir = new CSDirectory())) {
-		path->release();
-		CSException::throwOSError(CS_CONTEXT, ENOMEM);
-	}
-	dir->iPath = path->getString();
-	dir->iPath->retain();
-	path->release();
-	return dir;
-}
-
 CSDirectory *CSDirectory::newDirectory(CSString *path)
 {
 	CSDirectory *dir;
+	size_t size;
+	enter_();
+	push_(path);
+	
+#ifdef OS_SOLARIS
+	size = pathconf(path->getCString(), _PC_NAME_MAX) + sizeof(struct dirent)  + 1;
+#else
+	size = sizeof(struct dirent);
+#endif
 
 	if (!(dir = new CSDirectory())) {
-		path->release();
 		CSException::throwOSError(CS_CONTEXT, ENOMEM);
 	}
+	pop_(path);
 	dir->iPath = path;
-	return dir;
+	push_(dir);
+	
+	dir->iEntry = (union var_dirent *) cs_malloc(size);
+	pop_(dir);
+	
+	return_(dir);
+}
+
+CSDirectory *CSDirectory::newDirectory(CSPath *path)
+{
+	CSString *str = path->getString();
+	str->retain();
+	path->release();
+	
+	return newDirectory(str);
 }
 
 
