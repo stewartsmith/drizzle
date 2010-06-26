@@ -89,6 +89,9 @@ typedef struct system_status_var
   uint64_t filesort_scan_count;
   uint64_t connection_time;
   uint64_t execution_time_nsec;
+  uint64_t updated_row_count;
+  uint64_t deleted_row_count;
+  uint64_t inserted_row_count;
   /*
     Number of statements sent from the client
   */

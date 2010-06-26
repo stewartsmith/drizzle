@@ -40,6 +40,7 @@ StatusVars::StatusVars()
 {
   status_var_counters= (system_status_var*) malloc(sizeof(system_status_var));
   memset(status_var_counters, 0, sizeof(system_status_var));
+  sent_row_count= 0;
 }
 
 StatusVars::StatusVars(const StatusVars &status_vars)
@@ -47,6 +48,7 @@ StatusVars::StatusVars(const StatusVars &status_vars)
   status_var_counters= (system_status_var*) malloc(sizeof(system_status_var));
   memset(status_var_counters, 0, sizeof(system_status_var));
   copySystemStatusVar(status_var_counters, status_vars.status_var_counters); 
+  sent_row_count= 0;
 }
 
 StatusVars::~StatusVars()
@@ -84,16 +86,20 @@ void StatusVars::merge(StatusVars *status_vars)
   {
     *(to++)+= *(from++);
   }
+
+  sent_row_count+= status_vars->sent_row_count;
 }
 
 void StatusVars::reset()
 {
   memset(status_var_counters, 0, sizeof(system_status_var));
+  sent_row_count= 0;
 }
 
 void StatusVars::logStatusVar(Session *session)
 {
   copySystemStatusVar(status_var_counters, &session->status_var);
+  sent_row_count+= session->sent_row_count;
 }
 
 bool StatusVars::hasBeenFlushed(Session *session)

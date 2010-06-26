@@ -373,6 +373,10 @@ CumulativeUserStatsTool::CumulativeUserStatsTool(LoggingStats *logging_stats) :
   add_field("ACCESS_DENIED");
   add_field("CONNECTED_TIME_SEC");
   add_field("EXECUTION_TIME_NSEC");
+  add_field("ROWS_FETCHED");
+  add_field("ROWS_UPDATED");
+  add_field("ROWS_DELETED");
+  add_field("ROWS_INSERTED");
 }
 
 CumulativeUserStatsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
@@ -415,6 +419,11 @@ bool CumulativeUserStatsTool::Generator::populate()
       push(status_vars->getStatusVarCounters()->access_denied);
       push(status_vars->getStatusVarCounters()->connection_time);
       push(status_vars->getStatusVarCounters()->execution_time_nsec);
+      push(status_vars->sent_row_count);
+      push(status_vars->getStatusVarCounters()->updated_row_count);
+      push(status_vars->getStatusVarCounters()->deleted_row_count);
+      push(status_vars->getStatusVarCounters()->inserted_row_count);
+
       ++record_number;
       return true;
     }
