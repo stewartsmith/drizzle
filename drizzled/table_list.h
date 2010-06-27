@@ -476,7 +476,7 @@ public:
     return is_fqtn;
   }
 
-  bool getCreate() const
+  bool isCreate() const
   {
     return create;
   }
