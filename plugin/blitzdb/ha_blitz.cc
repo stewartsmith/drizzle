@@ -32,6 +32,9 @@ static const char *ha_blitz_exts[] = {
   NULL
 };
 
+/* Global Variables for Startup Options */
+uint64_t blitz_estimated_rows;
+
 class BlitzEngine : public drizzled::plugin::StorageEngine {
 private:
   TCMAP *blitz_table_cache;
@@ -1457,4 +1460,23 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
   return pos + skip_len + sizeof(uint16_t);
 }
 
-DRIZZLE_PLUGIN(blitz_init, NULL);
+
+static DRIZZLE_SYSVAR_ULONGLONG (
+  estimated_rows,
+  blitz_estimated_rows,
+  PLUGIN_VAR_RQCMDARG,
+  "Estimated number of rows that a BlitzDB table will store.",
+  NULL,
+  NULL,
+  0,
+  0,
+  UINT64_MAX,
+  0
+);
+
+static drizzle_sys_var *blitz_system_variables[] = {
+  DRIZZLE_SYSVAR(estimated_rows),
+  NULL
+};
+
+DRIZZLE_PLUGIN(blitz_init, blitz_system_variables);

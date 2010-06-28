@@ -49,6 +49,8 @@
 const std::string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const std::string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
 
+extern uint64_t blitz_estimated_rows;
+
 /* Class Prototype */
 class BlitzLock;
 class BlitzData;
