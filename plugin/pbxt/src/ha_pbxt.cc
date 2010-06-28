@@ -5857,7 +5857,7 @@ void PBXTStorageEngine::doGetTableNames(
 }
 #endif
 
-bool PBXTStorageEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+bool PBXTStorageEngine::doDoesTableExist(Session&, const TableIdentifier &identifier)
 {
   std::string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);

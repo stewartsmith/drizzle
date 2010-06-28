@@ -106,7 +106,7 @@ public:
 					SchemaIdentifier&, 
 					std::set<std::string>&) {}
 
-	/* override */ bool doDoesTableExist(Session&, TableIdentifier &identifier);
+	/* override */ bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
         ~PBXTStorageEngine();
 };
