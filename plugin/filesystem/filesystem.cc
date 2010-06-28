@@ -719,12 +719,9 @@ int FilesystemEngine::doRenameTable(Session&, const TableIdentifier &from, const
 bool FilesystemEngine::validateCreateTableOption(const std::string &key,
                                                  const std::string &state)
 {
-  if (boost::iequals(key, FILESYSTEM_OPTION_FILE_PATH))
-  {
-    if (state.empty() || ::access(state.c_str(), F_OK))
-      return false;
+  if (boost::iequals(key, FILESYSTEM_OPTION_FILE_PATH) &&
+      ! state.empty())
     return true;
-  }
   if ((boost::iequals(key, FILESYSTEM_OPTION_ROW_SEPARATOR) ||
        boost::iequals(key, FILESYSTEM_OPTION_COL_SEPARATOR)) &&
       ! state.empty())
@@ -752,10 +749,20 @@ int FilesystemEngine::doCreateTable(Session &,
                         const drizzled::TableIdentifier &identifier,
                         drizzled::message::Table &proto)
 {
-  string serialized_proto;
-  string new_path;
+  for (int i = 0; i < proto.engine().options_size(); i++)
+  {
+    const message::Engine::Option& option= proto.engine().options(i);
 
-  new_path= identifier.getPath();
+    if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
+    {
+      int err= ::open(option.state().c_str(), O_RDONLY);
+      if (err < 0)
+        return errno;
+      break;
+    }
+  }
+
+  string new_path(identifier.getPath());
   new_path+= FILESYSTEM_EXT;
   fstream output(new_path.c_str(), ios::out | ios::binary);
 
