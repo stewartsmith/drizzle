@@ -373,9 +373,13 @@ int FilesystemCursor::doOpen(const drizzled::TableIdentifier &identifier, int, u
 
 int FilesystemCursor::close(void)
 {
-  ::close(file_desc);
+  int err;
+  while ((err= ::close(file_desc)) < 0 && errno == EINTR)
+    ;
+  if (err < 0)
+    err= errno;
   free_share();
-  return 0;
+  return err;
 }
 
 int FilesystemCursor::doStartTableScan(bool)
