@@ -887,14 +887,17 @@ transformTableDefinitionToSql(const Table &table,
     destination.append(table.engine().name());
 
     size_t num_engine_options= table.engine().options_size();
+    if (num_engine_options > 0)
+      destination.append(" ", 1);
     for (size_t x= 0; x < num_engine_options; ++x)
     {
       const Engine::Option &option= table.engine().options(x);
-      destination.push_back('\n');
       destination.append(option.name());
-      destination.append(" = ", 3);
+      destination.append("='", 2);
       destination.append(option.state());
-      destination.push_back('\n');
+      destination.append("'", 1);
+      if(x != num_engine_options-1)
+        destination.append(", ", 2);
     }
   }
 
