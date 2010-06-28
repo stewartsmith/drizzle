@@ -17,8 +17,8 @@ message Table {
 
   message TableOptions {
     optional uint64 auto_increment = 1;
-    optional string collation = 2;
-    optional uint32 collation_id = 3;
+    optional string collation = 2 [ default = "utf8_general_ci" ];
+    optional uint32 collation_id = 3 [ default = 45 ];
     optional string data_file_name = 5;
     optional string index_file_name = 6;
     optional uint64 max_rows = 7;

@@ -310,7 +310,8 @@ static int fill_table_proto(message::Table &table_proto,
     }
   }
 
-  if (create_info->default_table_charset)
+  if (create_info->default_table_charset
+      && create_info->default_table_charset != default_charset_info)
   {
     table_options->set_collation_id(
 			       create_info->default_table_charset->number);

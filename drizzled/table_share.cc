@@ -909,22 +909,17 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   block_size= table_options.has_block_size() ?
     table_options.block_size() : 0;
 
-  table_charset= get_charset(table_options.has_collation_id()?
-                                    table_options.collation_id() : 0);
+  if (table_options.has_collation_id())
+    table_charset= get_charset(table_options.collation_id());
+  else
+    table_charset= default_charset_info;
 
   if (!table_charset)
   {
-    /* unknown charset in head[38] or pre-3.23 frm */
-    if (use_mb(default_charset_info))
-    {
-      /* Warn that we may be changing the size of character columns */
-      errmsg_printf(ERRMSG_LVL_WARN,
-                    _("'%s' had no or invalid character set, "
-                      "and default character set is multi-byte, "
-                      "so character column sizes may have changed"),
-                    getPath());
-    }
-    table_charset= default_charset_info;
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("'%s' had an invalid or unknown character set."),
+                  getPath());
+    return ER_CORRUPT_TABLE_DEFINITION;
   }
 
   db_record_offset= 1;
