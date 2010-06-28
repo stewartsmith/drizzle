@@ -1090,7 +1090,12 @@ transformFieldDefinitionToSql(const Table::Field &field,
     break;
   case Table::Field::VARCHAR:
     {
-      destination.append(" varchar(", 9);
+      if (field.string_options().has_collation()
+          && field.string_options().collation().compare("binary") == 0)
+        destination.append(" varbinary(", 11);
+      else
+        destination.append(" varchar(", 9);
+
       stringstream ss;
       ss << field.string_options().length() << ")";
       destination.append(ss.str());
@@ -1175,7 +1180,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
   if (field.type() == Table::Field::BLOB ||
       field.type() == Table::Field::VARCHAR)
   {
-    if (field.string_options().has_collation())
+    if (field.string_options().has_collation()
+        && (field.string_options().collation().compare("binary")
+            && field.string_options().collation().compare("utf8_general_ci")))
     {
       destination.append(" COLLATE ", 9);
       destination.append(field.string_options().collation());
