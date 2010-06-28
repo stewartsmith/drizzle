@@ -490,13 +490,13 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
 
 void FilesystemCursor::position(const unsigned char *)
 {
-  internal::my_store_ptr(ref, ref_length, current_position);
+  *reinterpret_cast<off_t *>(ref)= current_position;
 }
 
 int FilesystemCursor::rnd_pos(unsigned char * buf, unsigned char *pos)
 {
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
-  current_position= (off_t)internal::my_get_ptr(pos,ref_length);
+  current_position= *reinterpret_cast<off_t *>(pos);
   return find_current_row(buf);
 }
 
