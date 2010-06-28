@@ -810,7 +810,7 @@ static int mysql_prepare_create_table(Session *session,
     /** @todo Get rid of this MyISAM-specific crap. */
     if (not create_proto.engine().name().compare("MyISAM") &&
         ((sql_field->flags & BLOB_FLAG) ||
-         (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED)))
+         (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)))
       (*db_options)|= HA_OPTION_PACK_RECORD;
     it2.rewind();
   }
@@ -1465,9 +1465,6 @@ bool mysql_create_table_no_lock(Session *session,
   }
   assert(identifier.getTableName() == table_proto.name());
   db_options= create_info->table_options;
-
-  if (create_info->row_type == ROW_TYPE_DYNAMIC)
-    db_options|=HA_OPTION_PACK_RECORD;
 
   set_table_default_charset(create_info, identifier.getSchemaName().c_str());
 
