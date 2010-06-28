@@ -3555,13 +3555,19 @@ join_table:
             left-associative joins.
           */
           table_ref normal_join table_ref %prec TABLE_REF_PRIORITY
-          { DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); }
+          { 
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3));
+            Lex->is_cross= false;
+          }
         | table_ref STRAIGHT_JOIN table_factor
-          { DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; }
+          { 
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; 
+          }
         | table_ref normal_join table_ref
           ON
           {
             DRIZZLE_YYABORT_UNLESS($1 && $3);
+            DRIZZLE_YYABORT_UNLESS( not Lex->is_cross );
             /* Change the current name resolution context to a local context. */
             if (push_new_name_resolution_context(YYSession, $1, $3))
               DRIZZLE_YYABORT;
@@ -3681,7 +3687,7 @@ join_table:
 normal_join:
           JOIN_SYM {}
         | INNER_SYM JOIN_SYM {}
-        | CROSS JOIN_SYM {}
+        | CROSS JOIN_SYM { Lex->is_cross= true; }
         ;
 
 /*

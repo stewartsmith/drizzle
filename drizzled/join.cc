@@ -184,7 +184,9 @@ int Join::prepare(Item ***rref_pointer_array,
       setup_tables_and_check_access(session, &select_lex->context, join_list,
                                     tables_list, &select_lex->leaf_tables,
                                     false))
+  {
       return(-1);
+  }
 
   TableList *table_ptr;
   for (table_ptr= select_lex->leaf_tables;
