@@ -438,8 +438,7 @@ void CSPath::info(bool *is_dir, off64_t *size, CSTime *mod_time)
 		/* This is the Linux version: */
 		mod_time->setUTC1970(sb.st_mtim.tv_sec, sb.st_mtim.tv_nsec);
 #else
-		/* This is the Mac OS X version: */
-		mod_time->setUTC1970(sb.st_mtimespec.tv_sec, sb.st_mtimespec.tv_nsec);
+		mod_time->setUTC1970(sb.st_mtime, 0);
 #endif
 }
 
