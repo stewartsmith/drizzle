@@ -1165,13 +1165,6 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-
-  if (field.has_constraints() &&
-      ! field.constraints().is_nullable())
-  {
-    destination.append(" NOT NULL", 9);
-  }
-
   if (field.type() == Table::Field::INTEGER || 
       field.type() == Table::Field::BIGINT)
   {
@@ -1193,6 +1186,12 @@ transformFieldDefinitionToSql(const Table::Field &field,
       destination.append(" COLLATE ", 9);
       destination.append(field.string_options().collation());
     }
+  }
+
+  if (field.has_constraints() &&
+      ! field.constraints().is_nullable())
+  {
+    destination.append(" NOT NULL", 9);
   }
 
   if (field.options().has_default_value())
