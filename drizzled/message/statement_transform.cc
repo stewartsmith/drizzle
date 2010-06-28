@@ -1084,23 +1084,23 @@ transformFieldDefinitionToSql(const Table::Field &field,
   switch (field_type)
   {
     case Table::Field::DOUBLE:
-    destination.append(" DOUBLE", 7);
+    destination.append(" double", 7);
     break;
   case Table::Field::VARCHAR:
     {
-      destination.append(" VARCHAR(", 9);
+      destination.append(" varchar(", 9);
       stringstream ss;
       ss << field.string_options().length() << ")";
       destination.append(ss.str());
     }
     break;
   case Table::Field::BLOB:
-    destination.append(" BLOB", 5);
+    destination.append(" blob", 5);
     break;
   case Table::Field::ENUM:
     {
       size_t num_field_values= field.enumeration_values().field_value_size();
-      destination.append(" ENUM(", 6);
+      destination.append(" enum(", 6);
       for (size_t x= 0; x < num_field_values; ++x)
       {
         const string &type= field.enumeration_values().field_value(x);
@@ -1116,14 +1116,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
       break;
     }
   case Table::Field::INTEGER:
-    destination.append(" INT", 4);
+    destination.append(" int", 4);
     break;
   case Table::Field::BIGINT:
-    destination.append(" BIGINT", 7);
+    destination.append(" bigint", 7);
     break;
   case Table::Field::DECIMAL:
     {
-      destination.append(" DECIMAL(", 9);
+      destination.append(" decimal(", 9);
       stringstream ss;
       ss << field.numeric_options().precision() << ",";
       ss << field.numeric_options().scale() << ")";
@@ -1131,13 +1131,13 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
     break;
   case Table::Field::DATE:
-    destination.append(" DATE", 5);
+    destination.append(" date", 5);
     break;
   case Table::Field::TIMESTAMP:
-    destination.append(" TIMESTAMP",  10);
+    destination.append(" timestamp",  10);
     break;
   case Table::Field::DATETIME:
-    destination.append(" DATETIME",  9);
+    destination.append(" datetime",  9);
     break;
   }
 
