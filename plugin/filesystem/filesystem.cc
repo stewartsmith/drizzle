@@ -517,6 +517,7 @@ int FilesystemCursor::openUpdateFile()
       return -1;
     update_file_name= share->real_file_name;
     update_file_name.append(".UPDATE");
+    unlink(update_file_name.c_str());
     update_file_desc= ::open(update_file_name.c_str(),
                              O_RDWR | O_CREAT | O_TRUNC,
                              st.st_mode);
