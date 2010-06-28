@@ -853,8 +853,10 @@ transformTableDefinitionToSql(const Table &table,
     if (x != 0)
       destination.append(",\n", 2);
 
+    destination.append("  ");
+
     result= transformFieldDefinitionToSql(field, destination, sql_variant);
-    
+
     if (result != NONE)
       return result;
   }
