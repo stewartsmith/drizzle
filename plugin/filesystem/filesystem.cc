@@ -612,7 +612,7 @@ error:
   return err;
 }
 
-void FilesystemCursor::getAllFields(string& output)
+void FilesystemCursor::recordToString(string& output)
 {
   bool first = true;
   drizzled::String attribute;
@@ -649,7 +649,7 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   int err_close= 0;
 
   string output_line;
-  getAllFields(output_line);
+  recordToString(output_line);
 
   pthread_mutex_lock(&share->mutex);
   int fd= ::open(share->real_file_name.c_str(), O_WRONLY | O_APPEND);
@@ -695,7 +695,7 @@ int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 
   // get the update information
   string output_line;
-  getAllFields(output_line);
+  recordToString(output_line);
 
   if (::write(update_file_desc, output_line.c_str(), output_line.length()) < 0)
     return -1;
