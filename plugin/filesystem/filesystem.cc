@@ -637,6 +637,8 @@ void FilesystemCursor::getAllFields(string& output)
 int FilesystemCursor::doInsertRecord(unsigned char * buf)
 {
   (void)buf;
+  int err_write= 0;
+  int err_close= 0;
 
   string output_line;
   getAllFields(output_line);
@@ -648,11 +650,32 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
     pthread_mutex_unlock(&share->mutex);
     return ENOENT;
   }
-  ::write(fd, output_line.c_str(), output_line.length());
-  ::close(fd);
+  int left_len= output_line.length();
+  const char *buf_write= output_line.c_str();
+
+  while (left_len > 0)
+  {
+    ssize_t r;
+    while ((r= ::write(fd, buf_write, left_len)) < 0
+           && errno == EINTR)
+      ;
+    if (r < 0)
+    {
+      err_write= errno;
+      break;
+    }
+    left_len-= r;
+    buf_write+= r;
+  }
+
+  while ((err_close= ::close(fd)) < 0 && errno == EINTR)
+    ;
+  if (err_close < 0)
+    err_close= errno;
+
   pthread_mutex_unlock(&share->mutex);
 
-  return 0;
+  return (err_write || err_close);
 }
 
 int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
