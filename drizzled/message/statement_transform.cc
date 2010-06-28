@@ -1074,8 +1074,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
                               enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
+  char quoted_default;
   if (sql_variant == ANSI)
     quoted_identifier= '"';
+
+  if (sql_variant == DRIZZLE)
+    quoted_default= '\'';
+  else
+    quoted_default= quoted_identifier;
 
   destination.push_back(quoted_identifier);
   destination.append(field.name());
@@ -1192,9 +1198,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
   if (field.options().has_default_value())
   {
     destination.append(" DEFAULT ", 9);
-    destination.push_back(quoted_identifier);
+    destination.push_back(quoted_default);
     destination.append(field.options().default_value());
-    destination.push_back(quoted_identifier);
+    destination.push_back(quoted_default);
   }
 
   if (field.options().has_default_bin_value())
@@ -1220,9 +1226,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
   if (field.has_comment())
   {
     destination.append(" COMMENT ", 9);
-    destination.push_back(quoted_identifier);
+    destination.push_back(quoted_default);
     destination.append(field.comment());
-    destination.push_back(quoted_identifier);
+    destination.push_back(quoted_default);
   }
   return NONE;
 }
