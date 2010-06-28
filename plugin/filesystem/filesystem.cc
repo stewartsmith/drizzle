@@ -52,6 +52,12 @@ static const char* FILESYSTEM_OPTION_SEPARATOR_MODE= "SEPARATOR_MODE";
 static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT= "STRICT";
 static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL= "GENERAL";
 static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK= "WEAK";
+enum filesystem_option_separator_mode_type
+{
+  FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT_ENUM= 1,
+  FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM,
+  FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK_ENUM
+};
 
 static const char* DEFAULT_ROW_SEPARATOR= "\n";
 static const char* DEFAULT_COL_SEPARATOR= " \t";
@@ -268,7 +274,7 @@ FilesystemTableShare::FilesystemTableShare(const string table_name_arg)
   needs_reopen(false),
   row_separator(DEFAULT_ROW_SEPARATOR),
   col_separator(DEFAULT_COL_SEPARATOR),
-  separator_mode(2)
+  separator_mode(FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM)
 {
   thr_lock_init(&lock);
 }
@@ -314,11 +320,11 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
       else if (boost::iequals(option.name(), FILESYSTEM_OPTION_SEPARATOR_MODE))
       {
         if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT))
-          share->separator_mode= 1;
+          share->separator_mode= FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT_ENUM;
         else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL))
-          share->separator_mode= 2;
+          share->separator_mode= FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM;
         else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK))
-          share->separator_mode= 3;
+          share->separator_mode= FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK_ENUM;
       }
     }
 
@@ -420,9 +426,11 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
     bool is_col= (share->col_separator.find(ch) != string::npos);
     if (content.empty())
     {
-      if (share->separator_mode >= 2 && is_row && line_blank)
+      if (share->separator_mode >= FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM
+          && is_row && line_blank)
         continue;
-      if (share->separator_mode >= 3 && is_col)
+      if (share->separator_mode >= FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK_ENUM
+          && is_col)
         continue;
     }
 
