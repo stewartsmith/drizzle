@@ -1093,6 +1093,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
   {
     case Table::Field::DOUBLE:
     destination.append(" double", 7);
+    if (field.has_numeric_options()
+        && field.numeric_options().has_precision())
+    {
+      stringstream ss;
+      ss << "(" << field.numeric_options().precision() << ",";
+      ss << field.numeric_options().scale() << ")";
+      destination.append(ss.str());
+    }
     break;
   case Table::Field::VARCHAR:
     {
