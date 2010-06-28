@@ -48,6 +48,8 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/message/statement_transform.h"
+
 
 #include <sys/stat.h>
 
@@ -67,9 +69,6 @@ str_or_nil(const char *str)
 {
   return str ? str : "<nil>";
 }
-
-static void store_key_options(String *packet, Table *table, KeyInfo *key_info);
-
 
 int wild_case_compare(const CHARSET_INFO * const cs, const char *str, const char *wildstr)
 {
@@ -287,57 +286,6 @@ int get_quote_char_for_identifier()
 
 #define LIST_PROCESS_HOST_LEN 64
 
-static bool get_field_default_value(Field *timestamp_field,
-                                    Field *field, String *def_value,
-                                    bool quoted)
-{
-  bool has_default;
-  bool has_now_default;
-
-  /*
-     We are using CURRENT_TIMESTAMP instead of NOW because it is
-     more standard
-  */
-  has_now_default= (timestamp_field == field &&
-                    field->unireg_check != Field::TIMESTAMP_UN_FIELD);
-
-  has_default= (field->type() != DRIZZLE_TYPE_BLOB &&
-                !(field->flags & NO_DEFAULT_VALUE_FLAG) &&
-                field->unireg_check != Field::NEXT_NUMBER);
-
-  def_value->length(0);
-  if (has_default)
-  {
-    if (has_now_default)
-      def_value->append(STRING_WITH_LEN("CURRENT_TIMESTAMP"));
-    else if (!field->is_null())
-    {                                             // Not null by default
-      char tmp[MAX_FIELD_WIDTH];
-      String type(tmp, sizeof(tmp), field->charset());
-      field->val_str(&type);
-      if (type.length())
-      {
-        String def_val;
-        uint32_t dummy_errors;
-        /* convert to system_charset_info == utf8 */
-        def_val.copy(type.ptr(), type.length(), field->charset(),
-                     system_charset_info, &dummy_errors);
-        if (quoted)
-          append_unescaped(def_value, def_val.ptr(), def_val.length());
-        else
-          def_value->append(def_val.ptr(), def_val.length());
-      }
-      else if (quoted)
-        def_value->append(STRING_WITH_LEN("''"));
-    }
-    else if (field->maybe_null() && quoted)
-      def_value->append(STRING_WITH_LEN("NULL"));    // Null as default
-    else
-      return false;
-  }
-  return has_default;
-}
-
 /*
   Build a CREATE TABLE statement for a table.
 
@@ -358,251 +306,24 @@ static bool get_field_default_value(Field *timestamp_field,
 
 int store_create_info(TableList *table_list, String *packet, bool is_if_not_exists)
 {
-  List<Item> field_list;
-  char tmp[MAX_FIELD_WIDTH], *for_str, def_value_buf[MAX_FIELD_WIDTH];
-  const char *alias;
-  string buff;
-  String type(tmp, sizeof(tmp), system_charset_info);
-  String def_value(def_value_buf, sizeof(def_value_buf), system_charset_info);
-  Field **ptr,*field;
-  uint32_t primary_key;
-  KeyInfo *key_info;
   Table *table= table_list->table;
-  Cursor *cursor= table->cursor;
-  HA_CREATE_INFO create_info;
-  my_bitmap_map *old_map;
 
   table->restoreRecordAsDefault(); // Get empty record
 
-  if (table->getShare()->getType())
-    packet->append(STRING_WITH_LEN("CREATE TEMPORARY TABLE "));
-  else
-    packet->append(STRING_WITH_LEN("CREATE TABLE "));
-  if (is_if_not_exists)
-    packet->append(STRING_WITH_LEN("IF NOT EXISTS "));
-  alias= table->getShare()->getTableName();
+  string create_sql;
 
-  packet->append_identifier(alias, strlen(alias));
-  packet->append(STRING_WITH_LEN(" (\n"));
-  /*
-    We need this to get default values from the table
-    We have to restore the read_set if we are called from insert in case
-    of row based replication.
-  */
-  old_map= table->use_all_columns(table->read_set);
+  enum drizzled::message::TransformSqlError transform_err;
 
-  for (ptr= table->getFields() ; (field= *ptr); ptr++)
-  {
-    uint32_t flags = field->flags;
+  (void)is_if_not_exists;
 
-    if (ptr != table->getFields())
-      packet->append(STRING_WITH_LEN(",\n"));
+  transform_err= message::transformTableDefinitionToSql(*(table->getShare()->getTableProto()),
+                                                        create_sql,
+                                                        message::DRIZZLE,
+                                                        false);
 
-    packet->append(STRING_WITH_LEN("  "));
-    packet->append_identifier(field->field_name, strlen(field->field_name));
-    packet->append(' ');
-    // check for surprises from the previous call to Field::sql_type()
-    if (type.ptr() != tmp)
-      type.set(tmp, sizeof(tmp), system_charset_info);
-    else
-      type.set_charset(system_charset_info);
-
-    field->sql_type(type);
-    packet->append(type.ptr(), type.length(), system_charset_info);
-
-    if (field->has_charset())
-    {
-      /*
-        For string types dump collation name only if
-        collation is not primary for the given charset
-      */
-      if (!(field->charset()->state & MY_CS_PRIMARY))
-      {
-        packet->append(STRING_WITH_LEN(" COLLATE "));
-        packet->append(field->charset()->name);
-      }
-    }
-
-    if (flags & NOT_NULL_FLAG)
-      packet->append(STRING_WITH_LEN(" NOT NULL"));
-    else if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
-    {
-      /*
-        TIMESTAMP field require explicit NULL flag, because unlike
-        all other fields they are treated as NOT NULL by default.
-      */
-      packet->append(STRING_WITH_LEN(" NULL"));
-    }
-    {
-      /*
-        Add field flags about FIELD FORMAT (FIXED or DYNAMIC)
-        and about STORAGE (DISK or MEMORY).
-      */
-      enum column_format_type column_format= (enum column_format_type)
-        ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
-      if (column_format)
-      {
-        packet->append(STRING_WITH_LEN(" /*!"));
-        packet->append(STRING_WITH_LEN(" COLUMN_FORMAT"));
-        if (column_format == COLUMN_FORMAT_TYPE_FIXED)
-          packet->append(STRING_WITH_LEN(" FIXED */"));
-        else
-          packet->append(STRING_WITH_LEN(" DYNAMIC */"));
-      }
-    }
-    if (get_field_default_value(table->timestamp_field, field, &def_value, 1))
-    {
-      packet->append(STRING_WITH_LEN(" DEFAULT "));
-      packet->append(def_value.ptr(), def_value.length(), system_charset_info);
-    }
-
-    if (table->timestamp_field == field && field->unireg_check != Field::TIMESTAMP_DN_FIELD)
-      packet->append(STRING_WITH_LEN(" ON UPDATE CURRENT_TIMESTAMP"));
-
-    if (field->unireg_check == Field::NEXT_NUMBER)
-      packet->append(STRING_WITH_LEN(" AUTO_INCREMENT"));
-
-    if (field->comment.length)
-    {
-      packet->append(STRING_WITH_LEN(" COMMENT "));
-      append_unescaped(packet, field->comment.str, field->comment.length);
-    }
-  }
-
-  key_info= table->key_info;
-  memset(&create_info, 0, sizeof(create_info));
-  /* Allow update_create_info to update row type */
-  create_info.row_type= table->getShare()->row_type;
-  cursor->update_create_info(&create_info);
-  primary_key= table->getShare()->getPrimaryKey();
-
-  for (uint32_t i=0 ; i < table->getShare()->sizeKeys() ; i++,key_info++)
-  {
-    KeyPartInfo *key_part= key_info->key_part;
-    bool found_primary=0;
-    packet->append(STRING_WITH_LEN(",\n  "));
-
-    if (i == primary_key && is_primary_key(key_info))
-    {
-      found_primary=1;
-      /*
-        No space at end, because a space will be added after where the
-        identifier would go, but that is not added for primary key.
-      */
-      packet->append(STRING_WITH_LEN("PRIMARY KEY"));
-    }
-    else if (key_info->flags & HA_NOSAME)
-      packet->append(STRING_WITH_LEN("UNIQUE KEY "));
-    else
-      packet->append(STRING_WITH_LEN("KEY "));
-
-    if (!found_primary)
-     packet->append_identifier(key_info->name, strlen(key_info->name));
-
-    packet->append(STRING_WITH_LEN(" ("));
-
-    for (uint32_t j=0 ; j < key_info->key_parts ; j++,key_part++)
-    {
-      if (j)
-        packet->append(',');
-
-      if (key_part->field)
-        packet->append_identifier(key_part->field->field_name,
-                                  strlen(key_part->field->field_name));
-      if (key_part->field &&
-          (key_part->length !=
-           table->getField(key_part->fieldnr-1)->key_length()))
-      {
-        buff.assign("(");
-        buff.append(to_string((int32_t) key_part->length /
-                              key_part->field->charset()->mbmaxlen));
-        buff.append(")");
-        packet->append(buff.c_str(), buff.length());
-      }
-    }
-    packet->append(')');
-    store_key_options(packet, table, key_info);
-  }
-
-  /*
-    Get possible foreign key definitions stored in InnoDB and append them
-    to the CREATE TABLE statement
-  */
-
-  if ((for_str= cursor->get_foreign_key_create_info()))
-  {
-    packet->append(for_str, strlen(for_str));
-    cursor->free_foreign_key_create_info(for_str);
-  }
-
-  packet->append(STRING_WITH_LEN("\n)"));
-  {
-    /*
-      Get possible table space definitions and append them
-      to the CREATE TABLE statement
-    */
-
-    /* 
-      We should always store engine since we will now be 
-      making sure engines accept options (aka... no
-      dangling arguments for engines.
-    */
-    packet->append(STRING_WITH_LEN(" ENGINE="));
-    packet->append(cursor->getEngine()->getName().c_str());
-
-    size_t num_engine_options= table->getShare()->getTableProto()->engine().options_size();
-    for (size_t x= 0; x < num_engine_options; ++x)
-    {
-      const message::Engine::Option &option= table->getShare()->getTableProto()->engine().options(x);
-      packet->append(" ");
-      packet->append(option.name().c_str());
-      packet->append("=");
-      append_unescaped(packet, option.state().c_str(), option.state().length());
-    }
-
-#if 0
-    if (create_info.row_type != ROW_TYPE_DEFAULT)
-    {
-      packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
-      packet->append(ha_row_type[(uint32_t) create_info.row_type]);
-    }
-#endif
-    if (table->getShare()->block_size)
-    {
-      packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
-      buff= to_string(table->getShare()->block_size);
-      packet->append(buff.c_str(), buff.length());
-    }
-    table->cursor->append_create_info(packet);
-    if (table->getMutableShare()->hasComment() && table->getMutableShare()->getCommentLength())
-    {
-      packet->append(STRING_WITH_LEN(" COMMENT="));
-      append_unescaped(packet, table->getMutableShare()->getComment(),
-                       table->getMutableShare()->getCommentLength());
-    }
-  }
-  table->restore_column_map(old_map);
+  packet->append(create_sql.c_str());
   return(0);
 }
-
-static void store_key_options(String *packet, Table *, KeyInfo *key_info)
-{
-  if (key_info->algorithm == HA_KEY_ALG_BTREE)
-    packet->append(STRING_WITH_LEN(" USING BTREE"));
-
-  if (key_info->algorithm == HA_KEY_ALG_HASH)
-    packet->append(STRING_WITH_LEN(" USING HASH"));
-
-  assert(test(key_info->flags & HA_USES_COMMENT) ==
-              (key_info->comment.length > 0));
-  if (key_info->flags & HA_USES_COMMENT)
-  {
-    packet->append(STRING_WITH_LEN(" COMMENT "));
-    append_unescaped(packet, key_info->comment.str,
-                     key_info->comment.length);
-  }
-}
-
 
 /****************************************************************************
   Return info about all processes
