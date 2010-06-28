@@ -883,7 +883,7 @@ transformTableDefinitionToSql(const Table &table,
   /* Add ENGINE = " clause */
   if (table.has_engine())
   {
-    destination.append("\nENGINE = ", 10);
+    destination.append(" ENGINE=", 8);
     destination.append(table.engine().name());
 
     size_t num_engine_options= table.engine().options_size();
