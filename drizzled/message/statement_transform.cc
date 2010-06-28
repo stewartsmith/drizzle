@@ -1160,12 +1160,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
   }
 
 
-  if (! (field.has_constraints() &&
-         field.constraints().is_nullable()))
+  if (field.has_constraints() &&
+      ! field.constraints().is_nullable())
   {
-    destination.append(" NOT", 4);
+    destination.append(" NOT NULL", 9);
   }
-  destination.append(" NULL", 5);
 
   if (field.type() == Table::Field::INTEGER || 
       field.type() == Table::Field::BIGINT)
@@ -1204,6 +1203,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
     {
       printf("%.2x", *(v.c_str() + x));
     }
+  }
+
+  if (field.options().has_default_null())
+  {
+    destination.append(" DEFAULT NULL", 13);
   }
 
   if (field.type() == Table::Field::TIMESTAMP)
