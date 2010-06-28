@@ -823,8 +823,6 @@ static bool internal_alter_table(Session *session,
   ha_rows copied= 0;
   ha_rows deleted= 0;
 
-  message::Table *original_table_definition= table->getMutableShare()->getTableProto();
-
   session->set_proc_info("init");
 
   table->use_all_columns();
@@ -863,15 +861,6 @@ static bool internal_alter_table(Session *session,
     my_error(ER_ILLEGAL_HA, MYF(0), new_table_identifier.getSQLPath().c_str());
 
     return true;
-  }
-
-  if (create_info->row_type == ROW_TYPE_NOT_USED)
-  {
-    message::Table::TableOptions *table_options;
-    table_options= create_proto.mutable_options();
-
-    create_info->row_type= table->getShare()->row_type;
-    table_options->set_row_type(original_table_definition->options().row_type());
   }
 
   session->set_proc_info("setup");

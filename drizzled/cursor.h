@@ -320,12 +320,6 @@ public:
   virtual ha_rows estimate_rows_upper_bound()
   { return stats.records+EXTRA_RECORDS; }
 
-  /**
-    Get the row type from the storage engine.  If this method returns
-    ROW_TYPE_NOT_USED, the information in HA_CREATE_INFO should be used.
-  */
-  virtual enum row_type get_row_type() const { return ROW_TYPE_NOT_USED; }
-
   virtual const char *index_type(uint32_t)
   { assert(0); return "";}
 
