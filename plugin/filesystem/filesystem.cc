@@ -77,7 +77,8 @@ public:
                                      HTON_AUTO_PART_KEY),
      fs_open_tables()
   {
-    table_definition_ext = FILESYSTEM_EXT;  // should we set this first?
+    table_definition_ext = FILESYSTEM_EXT;
+    pthread_mutex_init(&filesystem_mutex, MY_MUTEX_INIT_FAST);
   }
   virtual ~FilesystemEngine()
   {
@@ -754,7 +755,6 @@ static int filesystem_init_func(drizzled::module::Context &context)
   filesystem_engine = new FilesystemEngine("FILESYSTEM");
   context.add(filesystem_engine);
 
-  pthread_mutex_init(&filesystem_mutex, MY_MUTEX_INIT_FAST);
   return 0;
 }
 
