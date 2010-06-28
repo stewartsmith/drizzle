@@ -1009,17 +1009,24 @@ transformIndexDefinitionToSql(const Table::Index &index,
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
+  destination.append("  ", 2);
+
   if (index.is_primary())
     destination.append("PRIMARY ", 8);
   else if (index.is_unique())
     destination.append("UNIQUE ", 7);
 
   destination.append("KEY ", 4);
-  destination.push_back(quoted_identifier);
-  destination.append(index.name());
-  destination.push_back(quoted_identifier);
-  destination.append(" (", 2);
-  
+  if (! (index.is_primary() && index.name().compare("PRIMARY")==0))
+  {
+    destination.push_back(quoted_identifier);
+    destination.append(index.name());
+    destination.push_back(quoted_identifier);
+    destination.append(" (", 2);
+  }
+  else
+    destination.append("(", 1);
+
   size_t num_parts= index.index_part_size();
   for (size_t x= 0; x < num_parts; ++x)
   {
