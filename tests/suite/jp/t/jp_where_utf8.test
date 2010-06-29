@@ -30,12 +30,15 @@ CREATE TEMPORARY TABLE `Ｔ９` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = M
 # jisx0212 supplemental character data
 
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
+--error 1406
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
+--error 1406
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
+--error 1406
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
 

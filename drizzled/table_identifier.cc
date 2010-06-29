@@ -330,9 +330,11 @@ void TableIdentifier::init()
   switch (type) {
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
+    assert(path.size() == 0);
     build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), false);
     break;
   case message::Table::INTERNAL:
+    assert(path.size() == 0);
     build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), true);
     break;
   case message::Table::TEMPORARY:
