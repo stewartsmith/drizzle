@@ -23,9 +23,6 @@
 using namespace std;
 using namespace drizzled;
 
-#define BLITZ_TC_EXTRA_MMAP_SIZE (1024 * 1024 * 256)
-#define BLITZ_TC_BUCKET_NUM 1000000
-
 int BlitzData::startup(const char *path) {
   int rv = 0;
 
@@ -83,7 +80,10 @@ int BlitzData::open_data_table(const char *path, const int mode) {
     return HA_ERR_CRASHED_ON_USAGE;
   }
 
-  if (!tchdbtune(data_table, BLITZ_TC_BUCKET_NUM, -1, -1, 0)) {
+  uint64_t hash_buckets = (blitz_estimated_rows == 0) ? BLITZ_TC_BUCKETS
+                                                      : blitz_estimated_rows;
+
+  if (!tchdbtune(data_table, hash_buckets, -1, -1, 0)) {
     tchdbdel(data_table);
     return HA_ERR_CRASHED_ON_USAGE;
   }

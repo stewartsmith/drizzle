@@ -36,15 +36,22 @@
 #include <string>
 #include <sys/stat.h>
 
+/* File Extensions */
 #define BLITZ_DATA_EXT         ".bzd"
 #define BLITZ_INDEX_EXT        ".bzx"
 #define BLITZ_SYSTEM_EXT       ".bzs"
+
+/* Constants for BlitzDB */
 #define BLITZ_LOCK_SLOTS       16
 #define BLITZ_MAX_INDEX        8
 #define BLITZ_MAX_META_LEN     128
 #define BLITZ_MAX_ROW_STACK    2048
 #define BLITZ_MAX_KEY_LEN      1024 
 #define BLITZ_WORST_CASE_RANGE 4
+
+/* Constants for TC */
+#define BLITZ_TC_EXTRA_MMAP_SIZE (1024 * 1024 * 256)
+#define BLITZ_TC_BUCKETS 1000000
 
 const std::string BLITZ_TABLE_PROTO_KEY = "table_definition";
 const std::string BLITZ_TABLE_PROTO_COMMENT_KEY = "table_definition_comment";
