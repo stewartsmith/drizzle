@@ -11,7 +11,7 @@ CREATE TABLE t1 (
   plnfl VARCHAR(6) NOT NULL DEFAULT '',
   vornr VARCHAR(4) NOT NULL DEFAULT '',
   xstatus_vor INT NOT NULL DEFAULT '0'
-) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/rnd_pos.data";
+) ENGINE=FILESYSTEM,FILE="../filesystem_ln/rnd_pos.data";
 
 DELETE FROM t1;
 

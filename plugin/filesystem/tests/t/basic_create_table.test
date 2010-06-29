@@ -4,20 +4,21 @@ DROP TABLE IF EXISTS t1;
 
 # test file not existed
 --error 1005
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/_FILE_NOT_EXISTED_";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../filesystem_ln/_FILE_NOT_EXISTED_";
 
 # test col separator not empty
 --error 1698
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data",COL_SEPARATOR="";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../filesystem_ln/basic_create_table.data",COL_SEPARATOR="";
 
 # test row separator not empty
 --error 1698
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data",ROW_SEPARATOR="";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../filesystem_ln/basic_create_table.data",ROW_SEPARATOR="";
 
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../filesystem_ln/basic_create_table.data";
 
+# test table existed
 --error 1050
-CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../../../plugin/filesystem/tests/t/basic_create_table.data";
+CREATE TABLE t1 (a INT) ENGINE=FILESYSTEM,FILE="../filesystem_ln/basic_create_table.data";
 
 SHOW CREATE TABLE t1;
 
