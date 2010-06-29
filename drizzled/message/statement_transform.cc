@@ -1173,17 +1173,6 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.type() == Table::Field::INTEGER || 
-      field.type() == Table::Field::BIGINT)
-  {
-    /* AUTO_INCREMENT must be after NOT NULL */
-    if (field.has_numeric_options() &&
-        field.numeric_options().is_autoincrement())
-    {
-      destination.append(" AUTO_INCREMENT", 15);
-    }
-  }
-
   if (field.type() == Table::Field::BLOB ||
       field.type() == Table::Field::VARCHAR)
   {
@@ -1203,6 +1192,17 @@ transformFieldDefinitionToSql(const Table::Field &field,
   }
   else if (field.type() == Table::Field::TIMESTAMP)
     destination.append(" NULL", 5);
+
+  if (field.type() == Table::Field::INTEGER || 
+      field.type() == Table::Field::BIGINT)
+  {
+    /* AUTO_INCREMENT must be after NOT NULL */
+    if (field.has_numeric_options() &&
+        field.numeric_options().is_autoincrement())
+    {
+      destination.append(" AUTO_INCREMENT", 15);
+    }
+  }
 
   if (field.options().has_default_value())
   {
