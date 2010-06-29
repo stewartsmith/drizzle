@@ -1189,10 +1189,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.type() == Table::Field::TIMESTAMP)
-    if (field.timestamp_options().has_auto_updates() &&
-        field.timestamp_options().auto_updates())
-      destination.append(" ON UPDATE CURRENT_TIMESTAMP", 28);
+  if (field.has_options() && field.options().has_update_value())
+  {
+    destination.append(" ON UPDATE ", 11);
+    destination.append(field.options().update_value());
+  }
 
   if (field.has_comment())
   {
