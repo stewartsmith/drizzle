@@ -60,6 +60,8 @@ message Table {
       optional string update_value = 2;
       optional bool default_null = 3 [default = false];
       optional bytes default_bin_value = 4;
+      optional string default_expression = 5;
+      optional string update_expression = 6;
     }
 
     message FieldConstraints {
