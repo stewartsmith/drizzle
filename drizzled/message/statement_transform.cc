@@ -1201,6 +1201,8 @@ transformFieldDefinitionToSql(const Table::Field &field,
   {
     destination.append(" NOT NULL", 9);
   }
+  else if (field.type() == Table::Field::TIMESTAMP)
+    destination.append(" NULL", 5);
 
   if (field.options().has_default_value())
   {
