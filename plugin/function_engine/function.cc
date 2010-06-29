@@ -68,7 +68,7 @@ int Function::doGetTableDefinition(Session &,
 
 
 void Function::doGetTableNames(drizzled::CachedDirectory&, 
-                               drizzled::SchemaIdentifier &schema_identifier,
+                               const drizzled::SchemaIdentifier &schema_identifier,
                                set<string> &set_of_names)
 {
   drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
@@ -80,7 +80,7 @@ void Function::doGetSchemaIdentifiers(SchemaIdentifierList& schemas)
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
 }
 
-bool Function::doGetSchemaDefinition(SchemaIdentifier &schema_identifier, message::Schema &schema_message)
+bool Function::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::Schema &schema_message)
 {
   if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
   {
@@ -127,7 +127,7 @@ bool Function::doDoesTableExist(Session&, const TableIdentifier &identifier)
 
 
 void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                     drizzled::SchemaIdentifier &schema_identifier,
+                                     const drizzled::SchemaIdentifier &schema_identifier,
                                      drizzled::TableIdentifiers &set_of_identifiers)
 {
   set<string> set_of_names;

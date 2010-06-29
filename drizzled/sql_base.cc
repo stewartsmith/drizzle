@@ -676,7 +676,7 @@ TableList* unique_table(TableList *table, TableList *table_list,
 }
 
 
-void Session::doGetTableNames(SchemaIdentifier &schema_identifier,
+void Session::doGetTableNames(const SchemaIdentifier &schema_identifier,
                               std::set<std::string>& set_of_names)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
@@ -689,13 +689,13 @@ void Session::doGetTableNames(SchemaIdentifier &schema_identifier,
 }
 
 void Session::doGetTableNames(CachedDirectory &,
-			      SchemaIdentifier &schema_identifier,
+			      const SchemaIdentifier &schema_identifier,
                               std::set<std::string> &set_of_names)
 {
   doGetTableNames(schema_identifier, set_of_names);
 }
 
-void Session::doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+void Session::doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
                                     TableIdentifiers &set_of_identifiers)
 {
   for (Table *table= temporary_tables ; table ; table= table->getNext())
@@ -710,7 +710,7 @@ void Session::doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
 }
 
 void Session::doGetTableIdentifiers(CachedDirectory &,
-                                    SchemaIdentifier &schema_identifier,
+                                    const SchemaIdentifier &schema_identifier,
                                     TableIdentifiers &set_of_identifiers)
 {
   doGetTableIdentifiers(schema_identifier, set_of_identifiers);
@@ -4488,7 +4488,7 @@ We can't use hash_delete when looping hash_elements. We mark them first
 and afterwards delete those marked unused.
 */
 
-void remove_db_from_cache(SchemaIdentifier &schema_identifier)
+void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
 {
   safe_mutex_assert_owner(&LOCK_open);
 
