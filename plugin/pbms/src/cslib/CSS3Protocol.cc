@@ -652,7 +652,7 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 	
 	catch_(a);
 	con->ms_throw_error = true;
-	return_(-1);
+	size = (size_t)-1;
 		
 	cont_(a);
 	return_(size);
@@ -910,10 +910,10 @@ class S3ListParser : public CSXMLBuffer {
 	public:
 
 
-	bool parseData(const char *data, size_t len, CSVector *keys)
+	bool parseListData(const char *data, size_t len, CSVector *keys)
 	{
 		list = keys;
-		return CSXMLBuffer::parseData(data, len, 0);
+		return parseData(data, len, 0);
 	}
 
 	private:
@@ -953,7 +953,7 @@ static CSVector *parse_s3_list(CSMemoryOutputStream *output)
 	push_(vector);	
 
 	data = (const char *) output->getMemory(&len);
-	if (!s3ListParser.parseData(data, len, vector)) {
+	if (!s3ListParser.parseListData(data, len, vector)) {
 		int		err;
 		char	*msg;
 
