@@ -31,7 +31,7 @@ void table_cache_free(void);
 bool table_cache_init(void);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
-HASH *get_open_cache();
+HASH &get_open_cache();
 
 void kill_drizzle(void);
 
