@@ -39,7 +39,6 @@
 #include <sstream>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
 
 using namespace std;
 using namespace drizzled;
