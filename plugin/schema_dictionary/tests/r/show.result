@@ -798,7 +798,7 @@ show columns from project;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 project_id	INTEGER	FALSE	0	FALSE	
 description	BLOB	FALSE		FALSE	
-last_update	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
+last_update	TIMESTAMP	FALSE	CURRENT_TIMESTAMP	FALSE	CURRENT_TIMESTAMP
 short_description	VARCHAR	FALSE		FALSE	
 url_cvs	VARCHAR	FALSE		FALSE	
 url_faq	VARCHAR	FALSE		FALSE	
@@ -829,7 +829,7 @@ url_osx	VARCHAR	FALSE		FALSE
 url_rpm	VARCHAR	FALSE		FALSE	
 project_id	INTEGER	FALSE	0	FALSE	
 version	VARCHAR	FALSE	latest	FALSE	
-created	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
+created	TIMESTAMP	FALSE	CURRENT_TIMESTAMP	FALSE	CURRENT_TIMESTAMP
 url_source_rpm	VARCHAR	FALSE		FALSE	
 show columns from revision;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -837,7 +837,7 @@ node_id	INTEGER	FALSE	0	FALSE
 inside_workspace	INTEGER	FALSE	0	FALSE	
 revision_id	INTEGER	FALSE	0	FALSE	
 xml	BLOB	FALSE		FALSE	
-tstamp	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
+tstamp	TIMESTAMP	FALSE	CURRENT_TIMESTAMP	FALSE	CURRENT_TIMESTAMP
 show columns from setting;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 setting_id	INTEGER	FALSE		FALSE	
@@ -870,7 +870,7 @@ version_id	INTEGER	FALSE	0	FALSE
 version	INTEGER	FALSE	1	FALSE	
 show columns from weblog;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-tstamp	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
+tstamp	TIMESTAMP	FALSE	CURRENT_TIMESTAMP	FALSE	CURRENT_TIMESTAMP
 linkedby_user	INTEGER	FALSE	0	FALSE	
 removedby_user	INTEGER	FALSE	0	FALSE	
 linkedtime	DATETIME	FALSE		FALSE	
