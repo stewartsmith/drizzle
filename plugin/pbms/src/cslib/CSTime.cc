@@ -37,38 +37,43 @@
 #include "CSGlobal.h"
 #include "CSStrUtil.h"
 
-#ifdef OS_SOLARIS
-/* This is an implimentation of timegm() for solaris
- * which originated here: http://www.opensync.org/changeset/1769
+/*
+ * timegm() is a none portable function so....
+ * This is an implimentation of timegm() based on one found
+ * here: http://www.opensync.org/changeset/1769
  */
-time_t my_timegm(struct tm *t)
+static time_t my_timegm(struct tm *my_time)
 {
-	time_t tl, tb;
-	struct tm *tg;
+	time_t local_secs, gm_secs;
+	struct tm gm__rec, *gm_time;
 
-	tl = mktime(t);
-	if (tl == -1) {
-		t->tm_hour--;
-		tl = mktime (t);
-		if (tl == -1)
+	// Interpret 't' as the local time and convert it to seconds since the Epoch
+	local_secs = mktime(my_time);
+	if (local_secs == -1) {
+		my_time->tm_hour--;
+		local_secs = mktime (my_time);
+		if (local_secs == -1)
 			return -1; 
-		tl += 3600;
+		local_secs += 3600;
 	}
-	tg = gmtime(&tl);
-	tg->tm_isdst = 0;
-	tb = mktime (tg);
-	if (tb == -1) {
-		tg->tm_hour--;
-		tb = mktime (tg);
-		if (tb == -1)
+	
+	// Get the gmtime based on the local seconds since the Epoch
+	gm_time = gmtime_r(&local_secs, &gm__rec);
+	gm_time->tm_isdst = 0;
+	
+	// Interpret gmtime as the local time and convert it to seconds since the Epoch
+	gm_secs = mktime (gm_time);
+	if (gm_secs == -1) {
+		gm_time->tm_hour--;
+		gm_secs = mktime (gm_time);
+		if (gm_secs == -1)
 			return -1; 
-			tb += 3600;
+		gm_secs += 3600;
 	}
-	return (tl - (tb - tl));
+	
+	// Return the local time adjusted by the difference from GM time.
+	return (local_secs - (gm_secs - local_secs));
 }
-#else
-#define my_timegm(x) timegm(x)
-#endif
 
 CSTime::CSTime(s_int year, s_int mon, s_int day, s_int hour, s_int min, s_int sec, s_int nsec)
 {
