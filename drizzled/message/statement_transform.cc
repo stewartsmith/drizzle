@@ -1219,10 +1219,17 @@ transformFieldDefinitionToSql(const Table::Field &field,
   else if (field.options().has_default_bin_value())
   {
     const string &v= field.options().default_bin_value();
-    destination.append(" DEFAULT 0x", 11);
-    for (size_t x= 0; x < v.length(); x++)
+    if (v.length() == 0)
+      destination.append(" DEFAULT ''", 11);
+    else
     {
-      printf("%.2x", *(v.c_str() + x));
+      destination.append(" DEFAULT 0x", 11);
+      for (size_t x= 0; x < v.length(); x++)
+      {
+        char hex[3];
+        snprintf(hex, sizeof(hex), "%.2X", *(v.c_str() + x));
+        destination.append(hex, 2);
+      }
     }
   }
   else if (field.options().has_default_null())
