@@ -93,7 +93,7 @@ public:
                            drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-		       SchemaIdentifier &,
+		       const SchemaIdentifier &,
                        set<string>& set_of_names)
   {
     drizzled::CachedDirectory::Entries entries= directory.getEntries();
@@ -141,13 +141,13 @@ public:
   bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
   int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 
 void BlackholeEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                            drizzled::SchemaIdentifier &schema_identifier,
+                                            const drizzled::SchemaIdentifier &schema_identifier,
                                             drizzled::TableIdentifiers &set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();

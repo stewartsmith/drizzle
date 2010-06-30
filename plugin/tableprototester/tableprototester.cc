@@ -79,7 +79,7 @@ public:
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-		       SchemaIdentifier &,
+		       const SchemaIdentifier &,
 		       set<string>& set_of_names)
   {
     (void)directory;
@@ -109,12 +109,12 @@ public:
   }
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                                   drizzled::SchemaIdentifier &schema_identifier,
+                                                   const drizzled::SchemaIdentifier &schema_identifier,
                                                    drizzled::TableIdentifiers &set_of_identifiers)
 {
   if (schema_identifier.compare("test"))
