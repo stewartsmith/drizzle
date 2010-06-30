@@ -37,7 +37,7 @@
 #include "CSGlobal.h"
 #include "CSStrUtil.h"
 
-//#ifdef OS_SOLARIS
+#ifdef OS_SOLARIS
 /* This is an implimentation of timegm() for solaris
  * which originated here: http://www.opensync.org/changeset/1769
  */
@@ -66,7 +66,9 @@ time_t my_timegm(struct tm *t)
 	}
 	return (tl - (tb - tl));
 }
-//#endif
+#else
+#define my_timegm(x) timegm(x)
+#endif
 
 CSTime::CSTime(s_int year, s_int mon, s_int day, s_int hour, s_int min, s_int sec, s_int nsec)
 {
