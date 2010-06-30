@@ -29,6 +29,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #include "filesystem.h"
+#include "utility.h"
 
 #include <fcntl.h>
 
@@ -569,10 +570,12 @@ int FilesystemCursor::doEndTableScan()
     }
 
     off_t write_length= write_end - write_start;
-    if (::write(update_file_desc,
-                file_buff->ptr() + (write_start - file_buff->start()),
-                write_length) != write_length)
+    if (xwrite(update_file_desc,
+               file_buff->ptr() + (write_start - file_buff->start()),
+               write_length) != write_length)
     {
+      err= errno;
+      goto error;
     }
 
     if (in_hole)
@@ -658,47 +661,39 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
     pthread_mutex_unlock(&share->mutex);
     return ENOENT;
   }
-  int left_len= output_line.length();
-  const char *buf_write= output_line.c_str();
 
-  while (left_len > 0)
-  {
-    ssize_t r;
-    while ((r= ::write(fd, buf_write, left_len)) < 0
-           && errno == EINTR)
-      ;
-    if (r < 0)
-    {
-      err_write= errno;
-      break;
-    }
-    left_len-= r;
-    buf_write+= r;
-  }
+  err_write= xwrite(fd, output_line.c_str(), output_line.length());
+  if (err_write < 0)
+    err_write= errno;
+  else
+    err_write= 0;
 
-  while ((err_close= ::close(fd)) < 0 && errno == EINTR)
-    ;
+  err_close= xclose(fd);
   if (err_close < 0)
     err_close= errno;
 
   pthread_mutex_unlock(&share->mutex);
 
-  return (err_write || err_close);
+  if (err_write)
+    return err_write;
+  if (err_close)
+    return err_close;
+  return 0;
 }
 
 int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 {
   if (openUpdateFile())
-    return -1;
-
-  addSlot();
+    return errno;
 
   // get the update information
-  string output_line;
-  recordToString(output_line);
+  string str;
+  recordToString(str);
 
-  if (::write(update_file_desc, output_line.c_str(), output_line.length()) < 0)
-    return -1;
+  if (xwrite(update_file_desc, str.c_str(), str.length()) < 0)
+    return errno;
+
+  addSlot();
 
   return 0;
 }
