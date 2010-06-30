@@ -380,9 +380,7 @@ int FilesystemCursor::doOpen(const drizzled::TableIdentifier &identifier, int, u
 
 int FilesystemCursor::close(void)
 {
-  int err;
-  while ((err= ::close(file_desc)) < 0 && errno == EINTR)
-    ;
+  int err= xclose(file_desc);
   if (err < 0)
     err= errno;
   free_share();
@@ -572,10 +570,7 @@ int FilesystemCursor::doEndTableScan()
     if (xwrite(update_file_desc,
                file_buff->ptr() + (write_start - file_buff->start()),
                write_length) != write_length)
-    {
-      err= errno;
       goto error;
-    }
 
     if (in_hole)
     {
@@ -592,14 +587,13 @@ int FilesystemCursor::doEndTableScan()
   }
   // close update file
   if (::fsync(update_file_desc) ||
-      ::close(update_file_desc))
-  {
+      xclose(update_file_desc))
     goto error;
-  }
   share->update_file_opened= false;
 
   // close current file
-  ::close(file_desc);
+  if (xclose(file_desc))
+    goto error;
   if (::rename(update_file_name.c_str(), share->real_file_name.c_str()))
     goto error;
 
@@ -610,6 +604,7 @@ int FilesystemCursor::doEndTableScan()
     goto error;
   err= 0;
 error:
+  err= errno;
   pthread_mutex_unlock(&share->mutex);
   return err;
 }
