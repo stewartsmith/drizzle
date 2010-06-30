@@ -919,7 +919,7 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_comment())
   {
-    destination.append("\nCOMMENT = '", 12);
+    destination.append(" COMMENT='", 10);
     destination.append(options.comment());
     destination.push_back('\'');
   }
