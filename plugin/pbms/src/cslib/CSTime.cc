@@ -27,6 +27,7 @@
 #include "CSConfig.h"
 
 #include <string.h>
+#include <time.h>
 
 #ifdef OS_WINDOWS
 #include <Windows.h>
@@ -35,6 +36,37 @@
 #include "CSTime.h"
 #include "CSGlobal.h"
 #include "CSStrUtil.h"
+
+//#ifdef OS_SOLARIS
+/* This is an implimentation of timegm() for solaris
+ * which originated here: http://www.opensync.org/changeset/1769
+ */
+time_t my_timegm(struct tm *t)
+{
+	time_t tl, tb;
+	struct tm *tg;
+
+	tl = mktime(t);
+	if (tl == -1) {
+		t->tm_hour--;
+		tl = mktime (t);
+		if (tl == -1)
+			return -1; 
+		tl += 3600;
+	}
+	tg = gmtime(&tl);
+	tg->tm_isdst = 0;
+	tb = mktime (tg);
+	if (tb == -1) {
+		tg->tm_hour--;
+		tb = mktime (tg);
+		if (tb == -1)
+			return -1; 
+			tb += 3600;
+	}
+	return (tl - (tb - tl));
+}
+//#endif
 
 CSTime::CSTime(s_int year, s_int mon, s_int day, s_int hour, s_int min, s_int sec, s_int nsec)
 {
@@ -163,7 +195,7 @@ void CSTime::getUTC1970(time_t& sec, s_int& nsec)
 	ltime.tm_mday = iDay;
 	ltime.tm_mon = iMonth - 1;
 	ltime.tm_year = iYear - 1900;
-	sec = timegm(&ltime);
+	sec = my_timegm(&ltime);
 #endif
 	nsec = iNanoSeconds;
 }

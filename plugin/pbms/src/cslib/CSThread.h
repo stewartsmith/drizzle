@@ -259,8 +259,6 @@ public:
 
 	friend class CSDaemon;
 
-	friend void *td_dispatch(void *arg);
-
 private:
 	pthread_t		iThread;
 	bool			iIsMain;
@@ -304,6 +302,10 @@ public:
 
 	static CSThread *newCSThread();
 	static CSThread *newThread(CSString *name, ThreadRunFunc run_func, CSThreadList *list);
+
+	/* called for a newly created thread. */
+	static void *dispatch(void *arg);
+
 };
 
 class CSDaemon : public CSThread, public CSSync {

@@ -225,7 +225,7 @@ void CSThread::removeFromList()
 	this->release();
 }
 
-void *td_dispatch(void *arg)
+void *CSThread::dispatch(void *arg)
 {
 	CSThread		*self;
 	void			*return_data = NULL;
@@ -270,6 +270,12 @@ void *td_dispatch(void *arg)
 	return return_data;
 }
 
+
+static void *dispatch_wrapper(void *arg)
+{
+	return CSThread::dispatch(arg);
+}
+
 void *CSThread::run()
 {
 	if (iRunFunc)
@@ -281,7 +287,7 @@ void CSThread::start()
 {
 	int err;
 
-	err = pthread_create(&iThread, NULL, td_dispatch, (void *) this);
+	err = pthread_create(&iThread, NULL, dispatch_wrapper, (void *) this);
 	if (err)
 		CSException::throwOSError(CS_CONTEXT, err);
 	while (!isRunning) {
