@@ -497,6 +497,7 @@ int Join::optimize()
     {           /* Impossible cond */
       zero_result_cause=  having_value == Item::COND_FALSE ?
                            "Impossible HAVING" : "Impossible WHERE";
+      tables = 0;
       goto setup_subq_exit;
     }
   }
@@ -516,6 +517,7 @@ int Join::optimize()
       if (res == HA_ERR_KEY_NOT_FOUND)
       {
         zero_result_cause= "No matching min/max row";
+        tables = 0;
         goto setup_subq_exit;
       }
       if (res > 1)
@@ -526,10 +528,12 @@ int Join::optimize()
       if (res < 0)
       {
         zero_result_cause= "No matching min/max row";
+        tables = 0;
         goto setup_subq_exit;
       }
       zero_result_cause= "Select tables optimized away";
       tables_list= 0;       // All tables resolved
+      const_tables= tables;
       /*
         Extract all table-independent conditions and replace the WHERE
         clause with them. All other conditions were computed by optimizer::sum_query

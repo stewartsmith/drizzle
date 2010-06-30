@@ -2172,24 +2172,6 @@ int subselect_single_select_engine::exec()
       return(1);
     }
   }
-  /*
-   *If condition is evaluated to FALSE by Optimize code("Impossible WHERE" case),
-   *Reset pushed down predicate flags.
-   */
-  if( select_lex->cond_value == Item::Item::COND_FALSE )  {
-    //If there are any predicates pushed down , clear these flags as we are
-    //not really gonna need to execute them. Optimizer, in fact, may have
-    //removed those predicates.
-    //Currently guarded conds are only supported for Item_in_subselect item.
-    Item_in_subselect* pInSelect = dynamic_cast<Item_in_subselect*>(item);
-    if(  pInSelect && pInSelect->have_guarded_conds() )  {
-      uint32_t nCols =  pInSelect->left_expr->cols();
-      for( uint32_t uColIdx = 0; uColIdx < nCols; uColIdx++ )  {
-         pInSelect->set_cond_guard_var(uColIdx, false);
-      }
-    }
-  }
-
   if (select_lex->uncacheable &&
       select_lex->uncacheable != UNCACHEABLE_EXPLAIN
       && executed)

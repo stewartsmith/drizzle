@@ -320,7 +320,8 @@ public:
   };
   enum_exec_method exec_method;
 
-  Item* get_left_expr() const  {
+  Item* get_left_expr() const
+  {
     return left_expr;
   }
 
@@ -333,14 +334,11 @@ public:
     if ( pushed_cond_guards)
       pushed_cond_guards[i]= v;
   }
-  bool have_guarded_conds() {
+  bool have_guarded_conds()
+  {
     if( NULL == pushed_cond_guards )
       return false;
-    uint32_t nCol = get_left_expr()->cols();
-    bool bCondGuardOn = false;
-    for( uint32_t uColIdx = 0; uColIdx < nCol; uColIdx++)
-      bCondGuardOn |= pushed_cond_guards[uColIdx];
-    return bCondGuardOn;
+    return true;
   }
 
   Item_func_not_all *upper_item; // point on NOT/NOP before ALL/SOME subquery
