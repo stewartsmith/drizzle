@@ -1211,8 +1211,12 @@ transformFieldDefinitionToSql(const Table::Field &field,
     destination.append(field.options().default_value());
     destination.push_back(quoted_default);
   }
-
-  if (field.options().has_default_bin_value())
+  else if (field.options().has_default_expression())
+  {
+    destination.append(" DEFAULT ", 9);
+    destination.append(field.options().default_expression());
+  }
+  else if (field.options().has_default_bin_value())
   {
     const string &v= field.options().default_bin_value();
     destination.append(" DEFAULT 0x", 11);
@@ -1221,16 +1225,15 @@ transformFieldDefinitionToSql(const Table::Field &field,
       printf("%.2x", *(v.c_str() + x));
     }
   }
-
-  if (field.options().has_default_null())
+  else if (field.options().has_default_null())
   {
     destination.append(" DEFAULT NULL", 13);
   }
 
-  if (field.has_options() && field.options().has_update_value())
+  if (field.has_options() && field.options().has_update_expression())
   {
     destination.append(" ON UPDATE ", 11);
-    destination.append(field.options().update_value());
+    destination.append(field.options().update_expression());
   }
 
   if (field.has_comment())
