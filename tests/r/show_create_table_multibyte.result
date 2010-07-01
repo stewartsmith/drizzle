@@ -1,0 +1,7 @@
+create table `чем` (a int comment 'чем');
+show create table `чем`;
+Table	Create Table
+чем	CREATE TABLE `чем` (
+  `a` int DEFAULT NULL COMMENT 'чем'
+) ENGINE=InnoDB
+drop table `чем`;
