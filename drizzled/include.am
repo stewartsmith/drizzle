@@ -330,6 +330,7 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/records.h \
 			      drizzled/replication_services.h \
 			      drizzled/resource_context.h \
+			      drizzled/schema_generator.h \
 			      drizzled/schema_identifier.h \
 			      drizzled/security_context.h \
 			      drizzled/select_create.h \
@@ -701,6 +702,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/records.cc \
 				 drizzled/replication_services.cc \
 				 drizzled/resource_context.cc \
+				 drizzled/schema_generator.cc \
 				 drizzled/schema_identifier.cc \
 				 drizzled/session.cc \
 				 drizzled/session_list.cc \

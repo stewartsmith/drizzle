@@ -21,22 +21,24 @@
 #ifndef PLUGIN_SCHEMA_DICTIONARY_TABLES_H
 #define PLUGIN_SCHEMA_DICTIONARY_TABLES_H
 
-class TablesTool : public SchemasTool
+class TablesTool : public drizzled::plugin::TableFunction
 {
 public:
 
   TablesTool();
 
   TablesTool(const char *schema_arg, const char *table_arg) :
-    SchemasTool(schema_arg, table_arg)
+    drizzled::plugin::TableFunction(schema_arg, table_arg)
   { }
 
   TablesTool(const char *table_arg) :
-    SchemasTool(table_arg)
+    drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
   { }
 
-  class Generator : public SchemasTool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
+    drizzled::SchemaGenerator schema_generator;
+    const drizzled::SchemaIdentifier *schema_ptr;
     drizzled::message::Table table_proto;
     std::set<std::string> table_names;
     std::set<std::string>::iterator table_iterator;

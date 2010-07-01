@@ -50,7 +50,7 @@ static const string TIMESTAMP("TIMESTAMP");
 static const string DATETIME("DATETIME");
 
 TablesTool::TablesTool() :
-  SchemasTool("TABLES")
+  plugin::TableFunction("DATA_DICTIONARY", "TABLES")
 {
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
@@ -64,9 +64,11 @@ TablesTool::TablesTool() :
 }
 
 TablesTool::Generator::Generator(Field **arg) :
-  SchemasTool::Generator(arg),
+  plugin::TableFunction::Generator(arg),
+  schema_generator(getSession()),
   is_tables_primed(false)
 {
+  (schema_ptr= schema_generator);
 }
 
 bool TablesTool::Generator::nextTableCore()
@@ -77,12 +79,8 @@ bool TablesTool::Generator::nextTableCore()
   }
   else
   {
-    if (not isSchemaPrimed())
-     return false;
-
     table_names.clear();
-    SchemaIdentifier identifier(schema_name());
-    plugin::StorageEngine::getTableNames(getSession(), identifier, table_names);
+    plugin::StorageEngine::getTableNames(getSession(), *schema_ptr, table_names);
     table_iterator= table_names.begin();
     is_tables_primed= true;
   }
@@ -92,7 +90,7 @@ bool TablesTool::Generator::nextTableCore()
 
   table_proto.Clear();
   {
-    TableIdentifier identifier(schema_name().c_str(), table_name().c_str());
+    TableIdentifier identifier(schema_ptr->getSchemaName(), table_name().c_str());
     plugin::StorageEngine::getTableDefinition(getSession(),
                                              identifier,
                                              table_proto);
@@ -105,11 +103,10 @@ bool TablesTool::Generator::nextTable()
 {
   while (not nextTableCore())
   {
-
-    if (is_tables_primed && table_iterator != table_names.end())
+    if (is_tables_primed && table_iterator != table_names.end()) // Covers empty table
       continue;
 
-    if (not nextSchema())
+    if (not (schema_ptr= schema_generator))
       return false;
 
     is_tables_primed= false;
