@@ -34,6 +34,9 @@
 #include "drizzled/message/statement_transform.h"
 #include "drizzled/message/transaction.pb.h"
 #include "drizzled/message/table.pb.h"
+#include "drizzled/charset.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/global_charset_info.h"
 
 #include <string>
 #include <vector>
@@ -47,6 +50,57 @@ namespace drizzled
 
 namespace message
 {
+
+/* Incredibly similar to append_unescaped() in table.cc, but for std::string */
+static void append_escaped_string(std::string *res, const std::string &input, const char quote='\'')
+{
+  const char *pos= input.c_str();
+  const char *end= input.c_str()+input.length();
+  res->push_back(quote);
+
+  for (; pos != end ; pos++)
+  {
+    uint32_t mblen;
+    if (use_mb(default_charset_info) &&
+        (mblen= my_ismbchar(default_charset_info, pos, end)))
+    {
+      res->append(pos, mblen);
+      pos+= mblen - 1;
+      if (pos >= end)
+        break;
+      continue;
+    }
+
+    switch (*pos) {
+    case 0:				/* Must be escaped for 'mysql' */
+      res->push_back('\\');
+      res->push_back('0');
+      break;
+    case '\n':				/* Must be escaped for logs */
+      res->push_back('\\');
+      res->push_back('n');
+      break;
+    case '\r':
+      res->push_back('\\');		/* This gives better readability */
+      res->push_back('r');
+      break;
+    case '\\':
+      res->push_back('\\');		/* Because of the sql syntax */
+      res->push_back('\\');
+      break;
+    default:
+      if (*pos == quote) /* SQL syntax for quoting a quote */
+      {
+        res->push_back(quote);
+        res->push_back(quote);
+      }
+      else
+        res->push_back(*pos);
+      break;
+    }
+  }
+  res->push_back(quote);
+}
 
 enum TransformSqlError
 transformStatementToSql(const Statement &source,
@@ -834,14 +888,10 @@ transformTableDefinitionToSql(const Table &table,
   destination.append("TABLE ", 6);
   if (with_schema)
   {
-    destination.push_back(quoted_identifier);
-    destination.append(table.schema());
-    destination.push_back(quoted_identifier);
+    append_escaped_string(&destination, table.schema(), quoted_identifier);
     destination.push_back('.');
   }
-  destination.push_back(quoted_identifier);
-  destination.append(table.name());
-  destination.push_back(quoted_identifier);
+  append_escaped_string(&destination, table.name(), quoted_identifier);
   destination.append(" (\n", 3);
 
   enum TransformSqlError result= NONE;
@@ -919,9 +969,8 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_comment())
   {
-    destination.append(" COMMENT='", 10);
-    destination.append(options.comment());
-    destination.push_back('\'');
+    destination.append(" COMMENT=", 9);
+    append_escaped_string(&destination, options.comment());
   }
 
   if (options.has_collation())
@@ -1075,6 +1124,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
 {
   char quoted_identifier= '`';
   char quoted_default;
+
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
@@ -1083,9 +1133,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
   else
     quoted_default= quoted_identifier;
 
-  destination.push_back(quoted_identifier);
-  destination.append(field.name());
-  destination.push_back(quoted_identifier);
+  append_escaped_string(&destination, field.name(), quoted_identifier);
 
   Table::Field::FieldType field_type= field.type();
 
@@ -1207,9 +1255,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
   if (field.options().has_default_value())
   {
     destination.append(" DEFAULT ", 9);
-    destination.push_back(quoted_default);
-    destination.append(field.options().default_value());
-    destination.push_back(quoted_default);
+    append_escaped_string(&destination, field.options().default_value());
   }
   else if (field.options().has_default_expression())
   {
@@ -1246,9 +1292,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
   if (field.has_comment())
   {
     destination.append(" COMMENT ", 9);
-    destination.push_back(quoted_default);
-    destination.append(field.comment());
-    destination.push_back(quoted_default);
+    append_escaped_string(&destination, field.comment(), quoted_default);
   }
   return NONE;
 }

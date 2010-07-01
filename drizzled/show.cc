@@ -321,7 +321,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
                                                         message::DRIZZLE,
                                                         false);
 
-  packet->append(create_sql.c_str(), create_sql.length());
+  packet->append(create_sql.c_str(), create_sql.length(), default_charset_info);
   return(0);
 }
 
