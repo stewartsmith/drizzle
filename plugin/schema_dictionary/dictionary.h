@@ -32,6 +32,7 @@
 #include "drizzled/message/schema.pb.h"
 
 #include "drizzled/schema_generator.h"
+#include "drizzled/table_generator.h"
 
 #include "plugin/schema_dictionary/schemas.h"
 #include "plugin/schema_dictionary/tables.h"

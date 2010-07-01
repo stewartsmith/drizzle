@@ -24,8 +24,8 @@ insert into t5 values (10);
 select table_name from data_dictionary.TABLES
 where table_schema = "mysqltest" and table_name like "t%";
 table_name
-t1
 t4
+t1
 show tables like 't%';
 Tables_in_test (t%)
 t2

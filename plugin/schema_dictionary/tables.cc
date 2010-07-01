@@ -66,50 +66,32 @@ TablesTool::TablesTool() :
 TablesTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
   schema_generator(getSession()),
-  is_tables_primed(false)
+  table_generator(getSession())
 {
-  (schema_ptr= schema_generator);
 }
 
 bool TablesTool::Generator::nextTableCore()
 {
-  if (is_tables_primed)
+  while ((table_ptr= table_generator))
   {
-    table_iterator++;
-  }
-  else
-  {
-    table_names.clear();
-    plugin::StorageEngine::getTableNames(getSession(), *schema_ptr, table_names);
-    table_iterator= table_names.begin();
-    is_tables_primed= true;
-  }
-
-  if (table_iterator == table_names.end())
-    return false;
-
-  table_proto.Clear();
-  {
-    TableIdentifier identifier(schema_ptr->getSchemaName(), table_name().c_str());
+    table_proto.Clear();
     plugin::StorageEngine::getTableDefinition(getSession(),
-                                             identifier,
-                                             table_proto);
+                                              *table_ptr,
+                                              table_proto);
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 bool TablesTool::Generator::nextTable()
 {
   while (not nextTableCore())
   {
-    if (is_tables_primed && table_iterator != table_names.end()) // Covers empty table
-      continue;
-
     if (not (schema_ptr= schema_generator))
       return false;
 
-    is_tables_primed= false;
+    table_generator.reset(*schema_ptr);
   }
 
   return true;

@@ -38,11 +38,10 @@ public:
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
     drizzled::SchemaGenerator schema_generator;
+    drizzled::TableGenerator table_generator;
     const drizzled::SchemaIdentifier *schema_ptr;
+    const drizzled::TableIdentifier *table_ptr;
     drizzled::message::Table table_proto;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator table_iterator;
-    bool is_tables_primed;
 
     virtual void fill();
     bool nextTableCore();
@@ -55,7 +54,7 @@ public:
 
     const std::string &table_name()
     {
-      return (*table_iterator);
+      return table_proto.name();
     }
 
     const drizzled::message::Table& getTableProto()
@@ -65,7 +64,7 @@ public:
 
     bool isTablesPrimed()
     {
-      return is_tables_primed;
+      return true;
     }
 
     bool populate();
