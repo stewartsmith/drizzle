@@ -77,7 +77,7 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
   drizzled::plugin::TableFunction::getNames(tab_name, set_of_names);
 }
 
-void Function::doGetSchemaIdentifiers(SchemaIdentifierList& schemas)
+void Function::doGetSchemaIdentifiers(SchemaIdentifiers& schemas)
 {
   schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
