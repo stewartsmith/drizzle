@@ -3,7 +3,7 @@
  *
  *  Definitions required for Query Cache plugin
  *
- *  Copyright (C) 2008 Sun Microsystems, Toru Maesaka
+ *  Copyright (C) 2008 Sun Microsystems, Toru Maesaka, Djellel Eddine Difallah
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +22,14 @@
 #ifndef DRIZZLED_PLUGIN_QUERY_CACHE_H
 #define DRIZZLED_PLUGIN_QUERY_CACHE_H
 
+#include "drizzled/plugin.h"
 #include "drizzled/plugin/plugin.h"
+#include <drizzled/sql_list.h>
 
 namespace drizzled
 {
 class Session;
+class select_result;
 
 namespace plugin
 {
@@ -51,26 +54,26 @@ public:
   {}
 
   virtual ~QueryCache() {}
+  
+  /* these are the Query Cache interface functions */
+  
   /* Lookup the cache and transmit the data back to the client */
-  virtual bool tryFetchAndSend(Session *session,
-                               bool is_transactional)= 0;
-
-  virtual bool set(Session *session, bool is_transactional)= 0;
-  virtual bool invalidateTable(Session *session, bool is_transactional)= 0;
-  virtual bool invalidateDb(Session *session, const char *db_name,
-                            bool transactional)= 0;
-  virtual bool flush(Session *session)= 0;
-
+  virtual bool tryFetchAndSend(Session *session)= 0;
+  /* Send the current Resultset to the cache */
+  virtual bool setResultset(Session *session)= 0;
+  /* initiate a new Resultset (header) */
+  virtual bool prepareResultset(Session *session)= 0;
+  /* push a record to the current Resultset */
+  virtual bool insertRecord(Session *session, List<Item> &item)= 0;
+  
   static bool addPlugin(QueryCache *handler);
   static void removePlugin(QueryCache *handler);
 
   /* These are the functions called by the rest of the Drizzle server */
-  static bool tryFetchAndSendDo(Session *session, bool transactional);
-  static bool setDo(Session *session, bool transactional);
-  static bool invalidateTableDo(Session *session, bool transactional);
-  static bool invalidateDbDo(Session *session, const char *db_name,
-                            bool transactional);
-  static bool flushDo(Session *session);
+  static bool tryFetchAndSendDo(Session *session);
+  static bool prepareResultsetDo(Session *session);
+  static bool setResultsetDo(Session *session);
+  static bool insertRecordDo(Session *session, List<Item> &item);
 };
 
 } /* namespace plugin */

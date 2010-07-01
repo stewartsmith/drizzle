@@ -41,9 +41,11 @@
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/global_charset_info.h"
+#include "drizzled/enum.h"
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/query_rewrite.h"
+#include "drizzled/plugin/query_cache.h"
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
@@ -476,9 +478,7 @@ mysql_execute_command(Session *session)
 
   /* now we are ready to execute the statement */
   res= lex->statement->execute();
-
   session->set_proc_info("query end");
-
   /*
     The return value for ROW_COUNT() is "implementation dependent" if the
     statement is not DELETE, INSERT or UPDATE, but -1 is what JDBC and ODBC
@@ -492,7 +492,6 @@ mysql_execute_command(Session *session)
 
   return (res || session->is_error());
 }
-
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
   LEX	*lex= session->lex;
@@ -540,9 +539,17 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     {
       if (!result && !(result= new select_send()))
         return true;
+
+      /* Init the Query Cache plugin */
+      plugin::QueryCache::prepareResultsetDo(session); 
+      
       res= handle_select(session, lex, result, 0);
+      
+      /* Send the Resultset to the cache */
+      plugin::QueryCache::setResultsetDo(session); 
+
       if (result != lex->result)
-        delete result;
+          delete result;
     }
   }
   return res;
@@ -714,7 +721,14 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
   lex_start(session);
   session->reset_for_next_command();
-
+ /* first try to fetch the result from the cache
+    ToDo: 
+    1) Here the tryFetchAndSendDo is called before the parsing of the query, 
+    thus the plugin need to detect if it's a SELECT statement
+    2) if further information (one that is generated after the parsing) is needed then 
+       we shall move the call to a deeper step */
+ if(plugin::QueryCache::tryFetchAndSendDo(session))
+ {
   LEX *lex= session->lex;
 
   Lex_input_stream lip(session, inBuf, length);
@@ -753,6 +767,9 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
+ }
+  else
+    cout << "Cached Results" << endl;
 }
 
 

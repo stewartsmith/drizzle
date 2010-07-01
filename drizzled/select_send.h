@@ -20,8 +20,10 @@
 
 #ifndef DRIZZLED_SELECT_SEND_H
 #define DRIZZLED_SELECT_SEND_H
+#include <iostream>
 
 #include <drizzled/plugin/client.h>
+#include <drizzled/plugin/query_cache.h>
 #include <drizzled/plugin/transactional_storage_engine.h>
 
 namespace drizzled
@@ -111,6 +113,10 @@ public:
         break;
       }
     }
+    /* Insert this record to the Resultset into the cache */
+    if (session->query_cache_key == "")
+     plugin::QueryCache::insertRecordDo(session, items);
+
     session->sent_row_count++;
     if (session->is_error())
       return true;
