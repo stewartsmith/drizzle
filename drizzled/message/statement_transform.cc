@@ -1132,6 +1132,12 @@ transformIndexDefinitionToSql(const Table::Index &index,
     break;
   }
 
+  if (index.has_comment())
+  {
+    destination.append(" COMMENT ", 9);
+    append_escaped_string(&destination, index.comment());
+  }
+
   return NONE;
 }
 
