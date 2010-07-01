@@ -1303,6 +1303,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
   else if (field.options().has_default_null()
+           && field.options().default_null()
            && field.type() != Table::Field::BLOB)
   {
     destination.append(" DEFAULT NULL", 13);
