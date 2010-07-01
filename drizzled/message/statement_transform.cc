@@ -1164,7 +1164,13 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
     break;
   case Table::Field::BLOB:
-    destination.append(" blob", 5);
+    {
+      if (field.string_options().has_collation()
+          && field.string_options().collation().compare("binary") == 0)
+        destination.append(" blob", 5);
+      else
+        destination.append(" text", 5);
+    }
     break;
   case Table::Field::ENUM:
     {
@@ -1278,7 +1284,8 @@ transformFieldDefinitionToSql(const Table::Field &field,
       }
     }
   }
-  else if (field.options().has_default_null())
+  else if (field.options().has_default_null()
+           && field.type() != Table::Field::BLOB)
   {
     destination.append(" DEFAULT NULL", 13);
   }
