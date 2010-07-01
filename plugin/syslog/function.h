@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Monty Taylor
+ *  Copyright (C) 2010 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,24 +17,29 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/module/context.h"
-#include "drizzled/module/option_map.h"
-#include "drizzled/module/module.h"
-#include "drizzled/drizzled.h"
+#ifndef PLUGIN_SYSLOG_FUNCTION_H
+#define PLUGIN_SYSLOG_FUNCTION_H
 
-namespace drizzled
+#include "module.h"
+
+#include <drizzled/plugin/function.h>
+#include <drizzled/item/func.h>
+#include <drizzled/function/str/strfunc.h>
+
+class Function_syslog : public drizzled::Item_str_func
 {
+private:
+  Function_syslog(const Function_syslog&);
+  Function_syslog& operator=(const Function_syslog&);
 
-extern boost::program_options::variables_map vm;
+public:
+  Function_syslog();
 
-namespace module
-{
+  const char *func_name() const { return "syslog"; }
 
-module::option_map Context::getOptions()
-{
-  return module::option_map(module->getName(), getVariablesMap());
-}
+  drizzled::String *val_str(drizzled::String *s);
+  void fix_length_and_dec();
+  bool check_argument_count(int n);
+};
 
-} /* namespace module */
-} /* namespace drizzled */
+#endif /* PLUGIN_SYSLOG_FUNCTION_H */

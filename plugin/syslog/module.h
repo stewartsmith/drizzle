@@ -1,7 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Monty Taylor
+ *  Copyright (C) 2010 Mark Atwood
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,24 +17,22 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include "drizzled/module/context.h"
-#include "drizzled/module/option_map.h"
-#include "drizzled/module/module.h"
-#include "drizzled/drizzled.h"
+#ifndef PLUGIN_SYSLOG_MODULE_H
+#define PLUGIN_SYSLOG_MODULE_H
 
-namespace drizzled
+namespace syslog_module
 {
 
-extern boost::program_options::variables_map vm;
+extern char* sysvar_ident;
+extern char* sysvar_facility;
+extern bool sysvar_logging_enable;
+extern char* sysvar_logging_priority;
+extern unsigned long sysvar_logging_threshold_slow;
+extern unsigned long sysvar_logging_threshold_big_resultset;
+extern unsigned long sysvar_logging_threshold_big_examined;
+extern bool sysvar_errmsg_enable;
+extern char* sysvar_errmsg_priority;
 
-namespace module
-{
+} // namespace syslog_module
 
-module::option_map Context::getOptions()
-{
-  return module::option_map(module->getName(), getVariablesMap());
-}
-
-} /* namespace module */
-} /* namespace drizzled */
+#endif /* PLUGIN_SYSLOG_MODULE_H */

@@ -133,7 +133,7 @@ void ArchiveEngine::deleteOpenTable(const string &table_name)
 
 
 void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory, 
-				    SchemaIdentifier&,
+				    const SchemaIdentifier&,
                                     set<string>& set_of_names)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
@@ -1357,7 +1357,7 @@ bool ArchiveEngine::doDoesTableExist(Session&,
 }
 
 void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                          drizzled::SchemaIdentifier &schema_identifier,
+                                          const drizzled::SchemaIdentifier &schema_identifier,
                                           drizzled::TableIdentifiers &set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();

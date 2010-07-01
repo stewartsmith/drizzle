@@ -377,7 +377,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     internal::my_close(file,MYF(0));
   free_blobs(table);				/* if pack_blob was used */
   table->copy_blobs=0;
-  session->count_cuted_fields= CHECK_FIELD_IGNORE;
+  session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
   /*
      simulated killing in the middle of per-row loop
      must be effective for binlogging
