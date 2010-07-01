@@ -699,7 +699,7 @@ f1 decimal (0,0) not null default 0);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f0` decimal(30,30) NOT NULL DEFAULT '0.000000000000000000000000000000',
+  `f0` decimal(30,30) NOT NULL DEFAULT '0',
   `f1` decimal(10,0) NOT NULL DEFAULT '0'
 ) ENGINE=X
 drop table t1;
