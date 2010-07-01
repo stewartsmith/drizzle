@@ -1114,6 +1114,24 @@ transformIndexDefinitionToSql(const Table::Index &index,
   }
   destination.push_back(')');
 
+  switch (index.type())
+  {
+  case Table::Index::UNKNOWN_INDEX:
+    break;
+  case Table::Index::BTREE:
+    destination.append(" USING BTREE", 12);
+    break;
+  case Table::Index::RTREE:
+    destination.append(" USING RTREE", 12);
+    break;
+  case Table::Index::HASH:
+    destination.append(" USING HASH", 11);
+    break;
+  case Table::Index::FULLTEXT:
+    destination.append(" USING FULLTEXT", 15);
+    break;
+  }
+
   return NONE;
 }
 
