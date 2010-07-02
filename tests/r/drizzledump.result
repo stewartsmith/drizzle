@@ -1061,7 +1061,7 @@ t1	CREATE TABLE `t1` (
   `t1_id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`t1_id`),
   KEY `t1_name` (`t1_name`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB AUTO_INCREMENT=1000
 DROP TABLE `t1`;
 select * from t1;
 t1_name	t1_id
@@ -1075,7 +1075,7 @@ t1	CREATE TABLE `t1` (
   `t1_id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`t1_id`),
   KEY `t1_name` (`t1_name`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB AUTO_INCREMENT=1000
 drop table `t1`;
 #
 # Bug #18536: wrong table order
