@@ -36,6 +36,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` varchar(10) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
+COLLATE = utf8_bin
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
