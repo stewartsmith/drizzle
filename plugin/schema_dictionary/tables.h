@@ -37,8 +37,8 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::SchemaGenerator schema_generator;
-    drizzled::TableGenerator table_generator;
+    drizzled::generator::Schema schema_generator;
+    drizzled::generator::Table table_generator;
     const drizzled::SchemaIdentifier *schema_ptr;
     const drizzled::TableIdentifier *table_ptr;
     drizzled::message::Table table_proto;

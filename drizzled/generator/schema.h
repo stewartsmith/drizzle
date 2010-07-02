@@ -18,49 +18,49 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_TABLE_GENERATOR_H
-#define DRIZZLED_TABLE_GENERATOR_H
+#ifndef DRIZZLED_GENERATOR_SCHEMA_H
+#define DRIZZLED_GENERATOR_SCHEMA_H
 
 #include "drizzled/session.h"
 #include "drizzled/plugin/storage_engine.h"
 
 namespace drizzled {
+namespace generator {
 
-class TableGenerator
+class Schema
 {
   Session &session;
-  message::Table table;
+  message::Schema schema;
 
-  TableIdentifiers table_names;
-  TableIdentifiers::const_iterator table_iterator;
+  SchemaIdentifiers schema_names;
+  SchemaIdentifiers::const_iterator schema_iterator;
 
 public:
 
-  TableGenerator(Session &arg);
+  Schema(Session &arg);
 
-  void reset(const SchemaIdentifier &schema_identifier);
-
-  operator const drizzled::message::Table*()
+  operator const drizzled::message::Schema*()
   {
-    while (table_iterator != table_names.end())
+    while (schema_iterator != schema_names.end())
     {
-      table.Clear();
-      bool is_table_parsed= plugin::StorageEngine::getTableDefinition(session, *table_iterator, table);
-      table_iterator++;
+      schema.Clear();
+      SchemaIdentifier schema_identifier(*schema_iterator);
+      bool is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
+      schema_iterator++;
 
-      if (is_table_parsed)
-        return &table;
+      if (is_schema_parsed)
+        return &schema;
     }
 
     return NULL;
   }
 
-  operator const drizzled::TableIdentifier*()
+  operator const drizzled::SchemaIdentifier*()
   {
-    while (table_iterator != table_names.end())
+    while (schema_iterator != schema_names.end())
     {
-      const drizzled::TableIdentifier *_ptr= &(*table_iterator);
-      table_iterator++;
+      const drizzled::SchemaIdentifier *_ptr= &(*schema_iterator);
+      schema_iterator++;
 
       return _ptr;
     }
@@ -69,6 +69,7 @@ public:
   }
 };
 
+} /* namespace generator */
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_GENERATOR_H */
+#endif /* DRIZZLED_GENERATOR_SCHEMA_H */

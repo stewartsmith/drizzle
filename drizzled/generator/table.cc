@@ -20,24 +20,27 @@
 
 #include "config.h"
 
-#include "drizzled/table_generator.h"
+#include "drizzled/generator/table.h"
 
 using namespace std;
 
 namespace drizzled
 {
+namespace generator
+{
 
-TableGenerator::TableGenerator(Session &arg) :
+Table::Table(Session &arg) :
   session(arg)
 {
   table_iterator= table_names.end();
 }
 
-void TableGenerator::reset(const SchemaIdentifier &schema_identifier)
+void Table::reset(const SchemaIdentifier &schema_identifier)
 {
   table_names.clear();
   plugin::StorageEngine::getTableIdentifiers(session, schema_identifier, table_names);
   table_iterator= table_names.begin();
 }
 
+} /* namespace generator */
 } /* namespace drizzled */

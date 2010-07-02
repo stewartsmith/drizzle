@@ -39,7 +39,7 @@ public:
   {
     drizzled::message::Schema schema;
 
-    drizzled::SchemaGenerator schema_generator;
+    drizzled::generator::Schema schema_generator;
 
     virtual void fill();
 

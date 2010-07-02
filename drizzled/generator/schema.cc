@@ -20,14 +20,16 @@
 
 #include "config.h"
 
-#include "drizzled/schema_generator.h"
+#include "drizzled/generator/schema.h"
 
 using namespace std;
 
 namespace drizzled
 {
+namespace generator
+{
 
-SchemaGenerator::SchemaGenerator(Session &arg) :
+Schema::Schema(Session &arg) :
   session(arg)
   {
     plugin::StorageEngine::getSchemaIdentifiers(session, schema_names);
@@ -35,4 +37,5 @@ SchemaGenerator::SchemaGenerator(Session &arg) :
     schema_iterator= schema_names.begin();
   }
 
+} /* namespace generator */
 } /* namespace drizzled */
