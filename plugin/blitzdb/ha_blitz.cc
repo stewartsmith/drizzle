@@ -90,6 +90,9 @@ public:
   bool doDoesTableExist(drizzled::Session &session,
                         const drizzled::TableIdentifier &identifier);
 
+  bool validateCreateTableOption(const std::string &key,
+                                 const std::string &state);
+
   bool doCreateTableCache(void);
 
   BlitzShare *getTableShare(const std::string &name);
@@ -117,6 +120,8 @@ public:
    the dictionary key by calculating the offset. */
 static char *skip_btree_key(const char *key, const size_t skip_len,
                             int *return_klen);
+
+static bool str_is_numeric(const std::string &str);
 
 int BlitzEngine::doCreateTable(drizzled::Session &,
                                drizzled::Table &table,
@@ -352,6 +357,15 @@ bool BlitzEngine::doDoesTableExist(drizzled::Session &,
   proto_path.append(BLITZ_DATA_EXT);
 
   return (access(proto_path.c_str(), F_OK)) ? false : true;
+}
+
+bool BlitzEngine::validateCreateTableOption(const std::string &key,
+                                            const std::string &state) {
+  if (key == "ESTIMATED_ROWS" || key == "estimated_rows") {
+    if (str_is_numeric(state))
+      return true;
+  }
+  return false;
 }
 
 bool BlitzEngine::doCreateTableCache(void) {
@@ -1460,6 +1474,13 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
   return pos + skip_len + sizeof(uint16_t);
 }
 
+static bool str_is_numeric(const std::string &str) {
+  for (uint32_t i = 0; i < str.length(); i++) {
+    if (!std::isdigit(str[i]))
+      return false;
+  }
+  return true;
+}
 
 static DRIZZLE_SYSVAR_ULONGLONG (
   estimated_rows,
