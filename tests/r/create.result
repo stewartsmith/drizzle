@@ -1503,6 +1503,7 @@ t1	CREATE TABLE `t1` (
   `c5` varchar(255) COLLATE utf8_unicode_ci DEFAULT 'b',
   `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT
+COLLATE = utf8_bin
 
 CREATE TABLE t2 AS SELECT * FROM t1;
 
