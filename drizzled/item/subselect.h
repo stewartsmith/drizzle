@@ -320,11 +320,6 @@ public:
   };
   enum_exec_method exec_method;
 
-  Item* get_left_expr() const
-  {
-    return left_expr;
-  }
-
   bool *get_cond_guard(int i)
   {
     return pushed_cond_guards ? pushed_cond_guards + i : NULL;
@@ -334,12 +329,7 @@ public:
     if ( pushed_cond_guards)
       pushed_cond_guards[i]= v;
   }
-  bool have_guarded_conds()
-  {
-    if( NULL == pushed_cond_guards )
-      return false;
-    return true;
-  }
+  bool have_guarded_conds() { return test(pushed_cond_guards); }
 
   Item_func_not_all *upper_item; // point on NOT/NOP before ALL/SOME subquery
 
