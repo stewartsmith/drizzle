@@ -1428,15 +1428,15 @@ public:
   Table *find_temporary_table(TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
-                       SchemaIdentifier &schema_identifier,
+                       const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
-  void doGetTableNames(SchemaIdentifier &schema_identifier,
+  void doGetTableNames(const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
 
   void doGetTableIdentifiers(CachedDirectory &directory,
-                             SchemaIdentifier &schema_identifier,
+                             const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
-  void doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
 
   int doGetTableDefinition(const drizzled::TableIdentifier &identifier,

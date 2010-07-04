@@ -562,12 +562,12 @@ class AddTableName :
   public unary_function<StorageEngine *, void>
 {
   CachedDirectory &directory;
-  SchemaIdentifier &identifier;
+  const SchemaIdentifier &identifier;
   TableNameList &set_of_names;
 
 public:
 
-  AddTableName(CachedDirectory &directory_arg, SchemaIdentifier &identifier_arg, set<string>& of_names) :
+  AddTableName(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, set<string>& of_names) :
     directory(directory_arg),
     identifier(identifier_arg),
     set_of_names(of_names)
@@ -584,12 +584,12 @@ class AddTableIdentifier :
   public unary_function<StorageEngine *, void>
 {
   CachedDirectory &directory;
-  SchemaIdentifier &identifier;
+  const SchemaIdentifier &identifier;
   TableIdentifiers &set_of_identifiers;
 
 public:
 
-  AddTableIdentifier(CachedDirectory &directory_arg, SchemaIdentifier &identifier_arg, TableIdentifiers &of_names) :
+  AddTableIdentifier(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, TableIdentifiers &of_names) :
     directory(directory_arg),
     identifier(identifier_arg),
     set_of_identifiers(of_names)
@@ -606,7 +606,7 @@ public:
 static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
 static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
 
-void StorageEngine::getTableNames(Session &session, SchemaIdentifier &schema_identifier, TableNameList &set_of_names)
+void StorageEngine::getTableNames(Session &session, const SchemaIdentifier &schema_identifier, TableNameList &set_of_names)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
@@ -620,7 +620,7 @@ void StorageEngine::getTableNames(Session &session, SchemaIdentifier &schema_ide
     {
       errno= directory.getError();
       if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_identifier.getSQLPath().c_str());
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), const_cast<SchemaIdentifier &>(schema_identifier).getSQLPath().c_str());
       else
         my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
       return;
@@ -633,7 +633,7 @@ void StorageEngine::getTableNames(Session &session, SchemaIdentifier &schema_ide
   session.doGetTableNames(directory, schema_identifier, set_of_names);
 }
 
-void StorageEngine::getTableIdentifiers(Session &session, SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
+void StorageEngine::getTableIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
@@ -647,7 +647,7 @@ void StorageEngine::getTableIdentifiers(Session &session, SchemaIdentifier &sche
     {
       errno= directory.getError();
       if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_identifier.getSQLPath().c_str());
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), const_cast<SchemaIdentifier &>(schema_identifier).getSQLPath().c_str());
       else
         my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
       return;

@@ -94,7 +94,6 @@ public:
     straight(false),
     force_index(false),
     ignore_leaves(false),
-    create(false),
     join_using_fields(NULL),
     join_columns(NULL),
     next_name_resolution_table(NULL),
@@ -115,7 +114,8 @@ public:
     db_type(NULL),
     internal_tmp_table(false),
     is_alias(false),
-    is_fqtn(false)
+    is_fqtn(false),
+    create(false)
   {}
 
   /**
@@ -128,7 +128,6 @@ public:
   /** link in a global list of all queries tables */
   TableList *next_global; 
   TableList **prev_global;
-
   char *db;
   const char *alias;
   char *table_name;
@@ -171,7 +170,6 @@ public:
    * so it is possible that it does not exist (used in CREATE TABLE
    * ... SELECT implementation).
    */
-  bool create;
 
   /*
     is the table a cartesian join, assumption is yes unless "solved"
@@ -215,21 +213,6 @@ public:
   uint32_t outer_join; ///< Which join type
   size_t db_length;
   size_t table_name_length;
-  table_map dep_tables; ///< tables the table depends on
-  table_map on_expr_dep_tables; ///< tables on expression depends on
-  nested_join_st *nested_join; ///< if the element is a nested join
-  TableList *embedding; ///< nested join containing the table
-  List<TableList> *join_list; ///< join list the table belongs to
-  plugin::StorageEngine *db_type; ///< table_type for handler
-  char timestamp_buffer[20]; ///< buffer for timestamp (19+1)
-  bool internal_tmp_table;
-  /** true if an alias for this table was specified in the SQL. */
-  bool is_alias;
-  /** 
-   * true if the table is referred to in the statement using a fully
-   * qualified name (<db_name>.<table_name>).
-   */
-  bool is_fqtn;
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
@@ -432,6 +415,127 @@ public:
 
     return output;  // for multiple << operators.
   }
+
+  void setIsAlias(bool in_is_alias)
+  {
+    is_alias= in_is_alias;
+  }
+
+  void setIsFqtn(bool in_is_fqtn)
+  {
+    is_fqtn= in_is_fqtn;
+  }
+
+  void setCreate(bool in_create)
+  {
+    create= in_create;
+  }
+
+  void setInternalTmpTable(bool in_internal_tmp_table)
+  {
+    internal_tmp_table= in_internal_tmp_table;
+  }
+
+  void setDbType(plugin::StorageEngine *in_db_type)
+  {
+    db_type= in_db_type;
+  }
+
+  void setJoinList(List<TableList> *in_join_list)
+  {
+    join_list= in_join_list;
+  }
+
+  void setEmbedding(TableList *in_embedding)
+  {
+    embedding= in_embedding;
+  }
+
+  void setNestedJoin(nested_join_st *in_nested_join)
+  {
+    nested_join= in_nested_join;
+  }
+
+  void setDepTables(table_map in_dep_tables)
+  {
+    dep_tables= in_dep_tables;
+  }
+
+  void setOnExprDepTables(table_map in_on_expr_dep_tables)
+  {
+    on_expr_dep_tables= in_on_expr_dep_tables;
+  }
+
+  bool getIsAlias() const
+  {
+    return is_alias;
+  }
+
+  bool getIsFqtn() const
+  {
+    return is_fqtn;
+  }
+
+  bool isCreate() const
+  {
+    return create;
+  }
+
+  bool getInternalTmpTable() const
+  {
+    return internal_tmp_table;
+  }
+
+  plugin::StorageEngine *getDbType() const
+  {
+    return db_type;
+  }
+
+  TableList *getEmbedding() const
+  {
+    return embedding;
+  }
+
+  List<TableList> *getJoinList() const
+  {
+    return join_list;
+  }
+
+  nested_join_st *getNestedJoin() const
+  {
+    return nested_join;
+  }
+
+  table_map getDepTables() const
+  {
+    return dep_tables;
+  }
+
+  table_map getOnExprDepTables() const
+  {
+    return on_expr_dep_tables;
+  }
+
+private:
+
+  table_map dep_tables; ///< tables the table depends on
+  table_map on_expr_dep_tables; ///< tables on expression depends on
+  nested_join_st *nested_join; ///< if the element is a nested join
+  TableList *embedding; ///< nested join containing the table
+  List<TableList> *join_list; ///< join list the table belongs to
+  plugin::StorageEngine *db_type; ///< table_type for handler
+  char timestamp_buffer[20]; ///< buffer for timestamp (19+1)
+  bool internal_tmp_table;
+  /** true if an alias for this table was specified in the SQL. */
+  bool is_alias;
+
+  /** 
+   * true if the table is referred to in the statement using a fully
+   * qualified name (<db_name>.<table_name>).
+   */
+  bool is_fqtn;
+  bool create;
+
 };
 
 void close_thread_tables(Session *session);
