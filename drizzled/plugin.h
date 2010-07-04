@@ -189,7 +189,7 @@ typedef void (*mysql_var_update_func)(Session *session,
   mysql_var_check_func check;   \
   mysql_var_update_func update
 
-#define DRIZZLE_SYSVAR_NAME(name) mysql_sysvar_ ## name
+#define DRIZZLE_SYSVAR_NAME(name) drizzle_sysvar_ ## name
 #define DRIZZLE_SYSVAR(name) \
   ((drizzle_sys_var *)(&(DRIZZLE_SYSVAR_NAME(name))))
 
