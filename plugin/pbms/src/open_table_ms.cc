@@ -286,7 +286,7 @@ void MSOpenTable::commitReference(uint64_t blob_id, uint64_t blob_ref_id)
 
 void MSOpenTable::useBlob(int type, uint32_t db_id, uint32_t tab_id, uint64_t blob_id, uint32_t auth_code, uint16_t col_index, uint64_t blob_size, uint64_t blob_ref_id, PBMSBlobURLPtr ret_blob_url)
 {
-	MSRepoFile		*repo_file;
+	MSRepoFile		*repo_file= NULL;
 	MSBlobHeadRec	blob;
 	CSInputStream	*stream;
 	MSDatabase		*blob_db;

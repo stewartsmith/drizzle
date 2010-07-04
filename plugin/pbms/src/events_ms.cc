@@ -322,9 +322,9 @@ static bool observeBeforeUpdateRecord(BeforeUpdateRecordEventData &data)
 	Field_blob *field;
 	uint32_t field_offset;
 	const unsigned char *old_blob_rec;
-	unsigned char *new_blob_rec;
+	unsigned char *new_blob_rec= NULL;
 	char *old_blob_url, *new_blob_url;
-	size_t packlength, i, old_length, new_length;
+	size_t packlength, i, old_length= 0, new_length= 0;
 	const unsigned char *old_row = data.old_row;
 	unsigned char *new_row = data.new_row;
 	const char *db = data.table.getSchemaName();
