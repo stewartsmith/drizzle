@@ -29,11 +29,13 @@
 #include <inttypes.h>
 
 
-#include "string.h"
-#include "stdlib.h"
-#include "ctype.h"
-#include "stdio.h"
-#include "errno.h"
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <errno.h>
+
+#include <boost/algorithm/string.hpp>
 
 #include "CSXML.h"
 
@@ -1211,11 +1213,11 @@ int32_t CSXMLProcessor::charset_transformer(wchar_t ch)
 			if (this->ip) {
 				if (strcasecmp(this->pr_name, "encoding") == 0) {
 					strcpy(this->charset, this->pr_value);
-					if (strcasestr(this->charset, "utf-8"))
+					if (boost::ifind_first(this->charset, "utf-8"))
 						this->charset_type = CHARSET_UTF_8;
-					else if (strcasestr(this->charset, "ucs-2") ||
-						strcasestr(this->charset, "ucs-4") ||
-						strcasestr(this->charset, "unicode"))
+					else if (boost::ifind_first(this->charset, "ucs-2") ||
+						boost::ifind_first(this->charset, "ucs-4") ||
+						boost::ifind_first(this->charset, "unicode"))
 						this->charset_type = CHARSET_STANDARD;
 					else {
 						this->charset_type = CHARSET_TO_CONVERT_8_BIT;
