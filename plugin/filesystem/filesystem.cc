@@ -83,7 +83,7 @@ public:
                                      HTON_AUTO_PART_KEY),
      fs_open_tables()
   {
-    table_definition_ext = FILESYSTEM_EXT;
+    table_definition_ext= FILESYSTEM_EXT;
     pthread_mutex_init(&filesystem_mutex, MY_MUTEX_INIT_FAST);
   }
   virtual ~FilesystemEngine()
@@ -304,7 +304,7 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
       pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
     }
-    message::Table* table_proto = table->getShare()->getTableProto();
+    message::Table* table_proto= table->getShare()->getTableProto();
 
     share->real_file_name.clear();
     for (int x= 0; x < table_proto->engine().options_size(); x++)
@@ -611,13 +611,13 @@ error:
 
 void FilesystemCursor::recordToString(string& output)
 {
-  bool first = true;
+  bool first= true;
   drizzled::String attribute;
   for (Field **field= table->getFields(); *field; ++field)
   {
     if (first == true)
     {
-      first = false;
+      first= false;
     }
     else
     {
@@ -736,7 +736,7 @@ THR_LOCK_DATA **FilesystemCursor::store_lock(Session *,
                                              thr_lock_type lock_type)
 {
   if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-    lock.type=lock_type;
+    lock.type= lock_type;
   *to++= &lock;
   return to;
 }
@@ -780,7 +780,7 @@ static FilesystemEngine *filesystem_engine= NULL;
 
 static int filesystem_init_func(drizzled::module::Context &context)
 {
-  filesystem_engine = new FilesystemEngine("FILESYSTEM");
+  filesystem_engine= new FilesystemEngine("FILESYSTEM");
   context.add(filesystem_engine);
 
   return 0;
