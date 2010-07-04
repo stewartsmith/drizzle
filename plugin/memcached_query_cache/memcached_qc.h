@@ -30,6 +30,8 @@
 #define MEMCACHED_QC_H
 
 #include "drizzled/plugin/query_cache.h"
+#include "query_cache_service.h"
+#include "drizzled/atomics.h"
 #include <libmemcached/memcached.hpp>
 
 namespace drizzled 
@@ -40,19 +42,24 @@ namespace drizzled
 }
 class Memcached_Qc : public drizzled::plugin::QueryCache
 {
-public:
+private:
+  pthread_mutex_t mutex;  
   memcache::Memcache* client;
+  drizzled::QueryCacheService queryCacheService;
+
+public:
   explicit Memcached_Qc(std::string name_arg): drizzled::plugin::QueryCache(name_arg)
   {
     client= new memcache::Memcache("localhost:11211");
+    queryCacheService= drizzled::QueryCacheService::singleton();
   }
   ~Memcached_Qc(){}
-  bool tryFetchAndSend(drizzled::Session *session);
-  bool prepareResultset(drizzled::Session *session);
-  bool setResultset(drizzled::Session *session);
-  bool insertRecord(drizzled::Session *session, drizzled::List<drizzled::Item> &item);
+  bool doIsCached(drizzled::Session *session);
+  bool doSendCachedResultset(drizzled::Session *session);
+  bool doPrepareResultset(drizzled::Session *session);
+  bool doInsertRecord(drizzled::Session *session, drizzled::List<drizzled::Item> &item);
+  bool doSetResultset(drizzled::Session *session);
   char* md5_key(const char* str);
+  bool isSelect(std::string query);
 };
-
-
 #endif /* MEMCACHED_QC_h */

@@ -31,8 +31,8 @@
 
 #include "config.h"
 #include "memcached_qc.h"
-#include "query_cache_service.h"
 #include "drizzled/session.h"
+#include "drizzled/select_send.h"
 
 #include <gcrypt.h>
 #include <iostream>
@@ -41,14 +41,14 @@
 using namespace drizzled;
 using namespace std;
 
-bool Memcached_Qc::tryFetchAndSend(Session *session)
+bool Memcached_Qc::isSelect(string query)
 {
   uint i= 0;
   /*
    Skip '(' characters in queries like following:
    (select a from t1) union (select a from t1);
   */
-  const char* sql= session->query.c_str();
+  const char* sql= query.c_str();
   while (sql[i] == '(')
     i++;
   /*
@@ -63,42 +63,69 @@ bool Memcached_Qc::tryFetchAndSend(Session *session)
        my_toupper(system_charset_info, sql[i + 2]) != 'L') &&
       sql[i] != '/')
   {
-    return true;
-  }     
-  /* ToDo: Check against the cache content */
-  string query= session->query+session->db;
-  char* key= md5_key(query.c_str());
-  if(QueryCacheService::isCached(key))
     return false;
+  }
+  return true;
+}
+
+bool Memcached_Qc::doIsCached(Session *session)
+{
+  if (isSelect(session->query))
+  {
+    /* ToDo: Check against the cache content */
+    string query= session->query+session->db;
+    char* key= md5_key(query.c_str());
+    if(queryCacheService.isCached(key))
+    {
+     return true;
+    }
+  }
+  return false;
+}
+
+bool Memcached_Qc::doSendCachedResultset(Session *session)
+{
+  /* TODO implement the send resultset functionality */
+  (void) session;
   return true;
 }
 
 /* init the current resultset in the session
- * set the header message (hashkey, sql, schema)
+ * set the header message (hashkey= sql + schema)
  */
-bool Memcached_Qc::prepareResultset(Session *session)
+bool Memcached_Qc::doPrepareResultset(Session *session)
 {		
   /* Prepare and set the key for the session */
   string query= session->query+session->db;
   char* key= md5_key(query.c_str());
-  session->query_cache_key= key;
 
-  /* create the Resultset */
-  QueryCacheService &query_cache_service= QueryCacheService::singleton();
-  message::Resultset &resultset= query_cache_service.getCurrentResultsetMessage(session, session->lex->query_tables);
+  /* make sure only one thread will cache the query 
+   * if executed concurently
+   */
+  pthread_mutex_lock(&mutex);
 
-  /* setting the resultset infos */
-  resultset.set_key(key);
-  resultset.set_schema(session->db);
-  resultset.set_sql(session->query);
+  if(not queryCacheService.isCached(key))
+  {
+    session->query_cache_key= key;
 
+    /* create the Resultset */
+    message::Resultset &resultset= queryCacheService.getCurrentResultsetMessage(session);
+  
+    /* setting the resultset infos */
+    resultset.set_key(key);
+    resultset.set_schema(session->db);
+    resultset.set_sql(session->query);
+    pthread_mutex_unlock(&mutex);
+    return true;
+  }
+  pthread_mutex_unlock(&mutex);
   return false;
 }
 
 /* Send the current resultset to memcached
  * Reset the current resultset of the session
  */
-bool Memcached_Qc::setResultset(Session *session)
+bool Memcached_Qc::doSetResultset(Session *session)
 {		
   message::Resultset *resultset= session->getResultsetMessage();
   if (resultset != NULL)
@@ -114,20 +141,31 @@ bool Memcached_Qc::setResultset(Session *session)
     memcpy(&raw[0], &output, output.size());
     client->set(session->query_cache_key, raw, expiry, flags);
 
+    /* Generate the final Header 
+     * and clear the Selectdata from the Resultset to be localy cached
+     */
+    queryCacheService.setResultsetHeader(*resultset, session, session->lex->query_tables);
+    resultset->clear_select_data();
+
+    /* add the Resultset (including the header) to the hash 
+     * This is done before the final set (this can be a problem)
+     * ToDo: fix that
+     */
+    queryCacheService.cache[session->query_cache_key]= *resultset;
+
     /* endup the current statement */
     session->setResultsetMessage(NULL);
-    return false;
+    return true;
   }
-  return true;
+  return false;
 }
 
 /* Adds a record (List<Item>) to the current Resultset.SelectData
  */
-bool Memcached_Qc::insertRecord(Session *session, List<Item> &list)
+bool Memcached_Qc::doInsertRecord(Session *session, List<Item> &list)
 {		
-  QueryCacheService &query_cache_service= QueryCacheService::singleton();
-  query_cache_service.addRecord(session, list);
-  return false;
+  queryCacheService.addRecord(session, list);
+  return true;
 }
 
 char* Memcached_Qc::md5_key(const char *str)
@@ -168,7 +206,7 @@ DRIZZLE_DECLARE_PLUGIN
   "memcached_qc",
   "0.2",
   "Djellel Eddine Difallah",
-  "Caches to memcached",
+  "Cache of Select Data into memcached",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
   NULL, /* system variables */

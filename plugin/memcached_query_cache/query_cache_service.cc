@@ -32,13 +32,14 @@
 #include "query_cache_service.h"
 #include "drizzled/table_list.h"
 
-using namespace drizzled;
 using namespace std;
 
-map<string, message::Resultset> QueryCacheService::cache;
+namespace drizzled
+{
 
-message::Resultset &QueryCacheService::getCurrentResultsetMessage(Session *in_session,
-                                            TableList *in_table)
+std::map<std::string, drizzled::message::Resultset> QueryCacheService::cache;
+
+message::Resultset &QueryCacheService::getCurrentResultsetMessage(Session *in_session)
 {
   message::Resultset *resultset= in_session->getResultsetMessage();
 
@@ -49,15 +50,11 @@ message::Resultset &QueryCacheService::getCurrentResultsetMessage(Session *in_se
      * deleting Resultset message when done with it.
      */
     resultset= new (nothrow) message::Resultset();
-    setResultsetHeader(*resultset, in_session, in_table);
     in_session->setResultsetMessage(resultset);
 
-    /* add the Resultset (including the header) to the hash 
-     * This is done before the final set (this can be a problem)
-     * ToDo: fix that
+    /* for Atomic purpose, reserve an entry for the following query
      */
-    cout << cache.size() << endl;
-    cache[in_session->query_cache_key]= *resultset;
+    cache[in_session->query_cache_key]= message::Resultset();
   }
   return *resultset;
 }
@@ -67,50 +64,64 @@ void QueryCacheService::setResultsetHeader(message::Resultset &resultset,
 {
   /* Set up the Select header */
   message::SelectHeader *header= resultset.mutable_select_header();
-  message::TableMetadata *table_metadata= header->add_table_metadata();
+  
+  (void) in_session;
 
-  /* I could extract only the first table in the From clause
-   * ToDo: generate the list of all tables
+  /* Extract all the tables mentioned in the query and 
+   * add the metadata to the SelectHeader
    */
-  string table_name(in_table->table_name);
-  string schema_name(in_table->db);
 
-  table_metadata->set_schema_name(schema_name.c_str(), schema_name.length());
-  table_metadata->set_table_name(table_name.c_str(), table_name.length());
-
-  /* try to extract the fields */
-  List_iterator_fast<Item> li(in_session->lex->select_lex.item_list);
-  String *string_value= new (in_session->mem_root) String(QueryCacheService::DEFAULT_RECORD_SIZE);
-  string_value->set_charset(system_charset_info);
-  Item *item;
-  while ((item=li++))
+  for (TableList* tmp_table= in_table; tmp_table; tmp_table= tmp_table->next_global)
   {
-    cout << item << endl;
-    string_value->free();
-  }
+    message::TableMeta *table_meta= header->add_table_meta();
+    table_meta->set_schema_name(tmp_table->db, strlen(tmp_table->db));
+    table_meta->set_table_name(tmp_table->table_name, strlen(tmp_table->table_name));
+  } 
+
+  /* Extract the returned fields 
+   * and add the fieldeta to the SelectHeader
+   */
+  List_iterator_fast<Item> it(in_session->lex->select_lex.item_list);
+  Item *item;
+  while ((item=it++))
+  {
+    SendField field;
+    item->make_field(&field);
+    
+    message::FieldMeta *field_meta= header->add_field_meta();
+    field_meta->set_field_name(field.col_name, strlen(field.col_name));    
+    field_meta->set_schema_name(field.db_name, strlen(field.db_name));
+    field_meta->set_table_name(field.table_name, strlen(field.table_name));
+    field_meta->set_field_alias(field.org_col_name, strlen(field.org_col_name));
+    field_meta->set_table_alias(field.org_table_name, strlen(field.org_table_name));
+   }
 }
 
 bool QueryCacheService::addRecord(Session *in_session, List<Item> &list)
 {
-  message::Resultset &resultset= getCurrentResultsetMessage(in_session, in_session->lex->query_tables);
-
-  message::SelectData *data= resultset.mutable_select_data();
-  data->set_segment_id(1);
-  data->set_end_segment(true);
-  message::SelectRecord *record= data->add_record();
-
-  List_iterator_fast<Item> li(list);
-
-  String *string_value= new (in_session->mem_root) String(QueryCacheService::DEFAULT_RECORD_SIZE);
-  string_value->set_charset(system_charset_info);
-  Item *item;
-  while ((item=li++))
+  message::Resultset &resultset= *in_session->getResultsetMessage();
+  
+  if (&resultset != NULL)
   {
-    string_value= item->val_str(string_value);
-    record->add_record_value(string_value->c_ptr(), string_value->length());
-    string_value->free();
+    message::SelectData *data= resultset.mutable_select_data();
+    data->set_segment_id(1);
+    data->set_end_segment(true);
+    message::SelectRecord *record= data->add_record();
+
+    List_iterator_fast<Item> li(list);
+
+    String *string_value= new (in_session->mem_root) String(QueryCacheService::DEFAULT_RECORD_SIZE);
+    string_value->set_charset(system_charset_info);
+    Item *item;
+    while ((item=li++))
+    {
+      string_value= item->val_str(string_value);
+      record->add_record_value(string_value->c_ptr(), string_value->length());
+      string_value->free();
+    }
+    return false;
   }
-  return false;
+  return true;
 }
 
 bool QueryCacheService::isCached(string query)
@@ -120,3 +131,4 @@ bool QueryCacheService::isCached(string query)
      return true;
   return false;
 }
+} /* namespace drizzled */

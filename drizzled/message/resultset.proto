@@ -3,7 +3,34 @@ option optimize_for = SPEED;
 
 import "table.proto";
 import "schema.proto";
-import "transaction.proto";
+
+
+/*
+ * Some minimal information transferred in the header of Statement
+ * submessage classes which identifies metadata about a specific
+ * field involved in a Statemet.
+ */
+message FieldMeta
+{
+  required string field_name = 1; /* Name of the field */
+  optional string field_alias = 2;
+  required string table_name = 3;
+  optional string table_alias = 4;
+  required string schema_name = 5;
+}
+
+/*
+ * Minimal information transferred in the header of Statement submessage
+ * classes which identifies metadata about the schema objects being
+ * modified in a Statement.
+ */
+message TableMeta
+{
+  required string schema_name = 1; /* Name of the containing schema */
+  required string table_name = 2; /* Name of the table */
+  optional string table_alias = 3; /* alias if defined */
+}
+
 
 /*
  * Represents a single record being returned
@@ -20,8 +47,8 @@ message SelectRecord
 
 message SelectHeader
 {
-  repeated TableMetadata table_metadata = 1; /* Minimal metadata about the table affected */
-  repeated FieldMetadata field_metadata = 2; /* Collection of metadata about fields affected */
+  repeated TableMeta table_meta = 1; /* Minimal metadata about the table affected */
+  repeated FieldMeta field_meta = 2; /* Collection of metadata about fields affected */
 }
 
 message SelectData

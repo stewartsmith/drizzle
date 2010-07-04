@@ -45,35 +45,42 @@ namespace plugin
 */
 class QueryCache : public Plugin
 {
+private:  
+  
   QueryCache();
   QueryCache(const QueryCache &);
   QueryCache& operator=(const QueryCache &);
-public:
+
+public:  
+
   explicit QueryCache(std::string name_arg)
     : Plugin(name_arg, "QueryCache")
   {}
 
   virtual ~QueryCache() {}
-  
+
   /* these are the Query Cache interface functions */
-  
+
   /* Lookup the cache and transmit the data back to the client */
-  virtual bool tryFetchAndSend(Session *session)= 0;
+  virtual bool doIsCached(Session* session)= 0;  
+  /* Lookup the cache and transmit the data back to the client */
+  virtual bool doSendCachedResultset(Session *session)= 0;
   /* Send the current Resultset to the cache */
-  virtual bool setResultset(Session *session)= 0;
+  virtual bool doSetResultset(Session *session)= 0;
   /* initiate a new Resultset (header) */
-  virtual bool prepareResultset(Session *session)= 0;
+  virtual bool doPrepareResultset(Session *session)= 0;
   /* push a record to the current Resultset */
-  virtual bool insertRecord(Session *session, List<Item> &item)= 0;
-  
+  virtual bool doInsertRecord(Session *session, List<Item> &item)= 0;
+
   static bool addPlugin(QueryCache *handler);
   static void removePlugin(QueryCache *handler);
 
   /* These are the functions called by the rest of the Drizzle server */
-  static bool tryFetchAndSendDo(Session *session);
-  static bool prepareResultsetDo(Session *session);
-  static bool setResultsetDo(Session *session);
-  static bool insertRecordDo(Session *session, List<Item> &item);
+  static bool isCached(Session *session);
+  static bool sendCachedResultset(Session *session);
+  static bool prepareResultset(Session *session);
+  static bool setResultset(Session *session);
+  static bool insertRecord(Session *session, List<Item> &item);
 };
 
 } /* namespace plugin */

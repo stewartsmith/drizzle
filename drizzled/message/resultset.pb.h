@@ -24,7 +24,6 @@
 #include <google/protobuf/generated_message_reflection.h>
 #include "table.pb.h"
 #include "schema.pb.h"
-#include "transaction.pb.h"
 
 namespace drizzled {
 namespace message {
@@ -34,12 +33,268 @@ void  protobuf_AddDesc_resultset_2eproto();
 void protobuf_AssignDesc_resultset_2eproto();
 void protobuf_ShutdownFile_resultset_2eproto();
 
+class FieldMeta;
+class TableMeta;
 class SelectRecord;
 class SelectHeader;
 class SelectData;
 class Resultset;
 
 // ===================================================================
+
+class FieldMeta : public ::google::protobuf::Message {
+ public:
+  FieldMeta();
+  virtual ~FieldMeta();
+  
+  FieldMeta(const FieldMeta& from);
+  
+  inline FieldMeta& operator=(const FieldMeta& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const FieldMeta& default_instance();
+  void Swap(FieldMeta* other);
+  
+  // implements Message ----------------------------------------------
+  
+  FieldMeta* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const FieldMeta& from);
+  void MergeFrom(const FieldMeta& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const { _cached_size_ = size; }
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required string field_name = 1;
+  inline bool has_field_name() const;
+  inline void clear_field_name();
+  static const int kFieldNameFieldNumber = 1;
+  inline const ::std::string& field_name() const;
+  inline void set_field_name(const ::std::string& value);
+  inline void set_field_name(const char* value);
+  inline void set_field_name(const char* value, size_t size);
+  inline ::std::string* mutable_field_name();
+  
+  // optional string field_alias = 2;
+  inline bool has_field_alias() const;
+  inline void clear_field_alias();
+  static const int kFieldAliasFieldNumber = 2;
+  inline const ::std::string& field_alias() const;
+  inline void set_field_alias(const ::std::string& value);
+  inline void set_field_alias(const char* value);
+  inline void set_field_alias(const char* value, size_t size);
+  inline ::std::string* mutable_field_alias();
+  
+  // required string table_name = 3;
+  inline bool has_table_name() const;
+  inline void clear_table_name();
+  static const int kTableNameFieldNumber = 3;
+  inline const ::std::string& table_name() const;
+  inline void set_table_name(const ::std::string& value);
+  inline void set_table_name(const char* value);
+  inline void set_table_name(const char* value, size_t size);
+  inline ::std::string* mutable_table_name();
+  
+  // optional string table_alias = 4;
+  inline bool has_table_alias() const;
+  inline void clear_table_alias();
+  static const int kTableAliasFieldNumber = 4;
+  inline const ::std::string& table_alias() const;
+  inline void set_table_alias(const ::std::string& value);
+  inline void set_table_alias(const char* value);
+  inline void set_table_alias(const char* value, size_t size);
+  inline ::std::string* mutable_table_alias();
+  
+  // required string schema_name = 5;
+  inline bool has_schema_name() const;
+  inline void clear_schema_name();
+  static const int kSchemaNameFieldNumber = 5;
+  inline const ::std::string& schema_name() const;
+  inline void set_schema_name(const ::std::string& value);
+  inline void set_schema_name(const char* value);
+  inline void set_schema_name(const char* value, size_t size);
+  inline ::std::string* mutable_schema_name();
+  
+ private:
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  mutable int _cached_size_;
+  
+  ::std::string* field_name_;
+  static const ::std::string _default_field_name_;
+  ::std::string* field_alias_;
+  static const ::std::string _default_field_alias_;
+  ::std::string* table_name_;
+  static const ::std::string _default_table_name_;
+  ::std::string* table_alias_;
+  static const ::std::string _default_table_alias_;
+  ::std::string* schema_name_;
+  static const ::std::string _default_schema_name_;
+  friend void  protobuf_AddDesc_resultset_2eproto();
+  friend void protobuf_AssignDesc_resultset_2eproto();
+  friend void protobuf_ShutdownFile_resultset_2eproto();
+  
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  
+  // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
+  inline bool _has_bit(int index) const {
+    return (_has_bits_[index / 32] & (1u << (index % 32))) != 0;
+  }
+  inline void _set_bit(int index) {
+    _has_bits_[index / 32] |= (1u << (index % 32));
+  }
+  inline void _clear_bit(int index) {
+    _has_bits_[index / 32] &= ~(1u << (index % 32));
+  }
+  
+  void InitAsDefaultInstance();
+  static FieldMeta* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class TableMeta : public ::google::protobuf::Message {
+ public:
+  TableMeta();
+  virtual ~TableMeta();
+  
+  TableMeta(const TableMeta& from);
+  
+  inline TableMeta& operator=(const TableMeta& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TableMeta& default_instance();
+  void Swap(TableMeta* other);
+  
+  // implements Message ----------------------------------------------
+  
+  TableMeta* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const TableMeta& from);
+  void MergeFrom(const TableMeta& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const { _cached_size_ = size; }
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required string schema_name = 1;
+  inline bool has_schema_name() const;
+  inline void clear_schema_name();
+  static const int kSchemaNameFieldNumber = 1;
+  inline const ::std::string& schema_name() const;
+  inline void set_schema_name(const ::std::string& value);
+  inline void set_schema_name(const char* value);
+  inline void set_schema_name(const char* value, size_t size);
+  inline ::std::string* mutable_schema_name();
+  
+  // required string table_name = 2;
+  inline bool has_table_name() const;
+  inline void clear_table_name();
+  static const int kTableNameFieldNumber = 2;
+  inline const ::std::string& table_name() const;
+  inline void set_table_name(const ::std::string& value);
+  inline void set_table_name(const char* value);
+  inline void set_table_name(const char* value, size_t size);
+  inline ::std::string* mutable_table_name();
+  
+  // optional string table_alias = 3;
+  inline bool has_table_alias() const;
+  inline void clear_table_alias();
+  static const int kTableAliasFieldNumber = 3;
+  inline const ::std::string& table_alias() const;
+  inline void set_table_alias(const ::std::string& value);
+  inline void set_table_alias(const char* value);
+  inline void set_table_alias(const char* value, size_t size);
+  inline ::std::string* mutable_table_alias();
+  
+ private:
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  mutable int _cached_size_;
+  
+  ::std::string* schema_name_;
+  static const ::std::string _default_schema_name_;
+  ::std::string* table_name_;
+  static const ::std::string _default_table_name_;
+  ::std::string* table_alias_;
+  static const ::std::string _default_table_alias_;
+  friend void  protobuf_AddDesc_resultset_2eproto();
+  friend void protobuf_AssignDesc_resultset_2eproto();
+  friend void protobuf_ShutdownFile_resultset_2eproto();
+  
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  
+  // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
+  inline bool _has_bit(int index) const {
+    return (_has_bits_[index / 32] & (1u << (index % 32))) != 0;
+  }
+  inline void _set_bit(int index) {
+    _has_bits_[index / 32] |= (1u << (index % 32));
+  }
+  inline void _clear_bit(int index) {
+    _has_bits_[index / 32] &= ~(1u << (index % 32));
+  }
+  
+  void InitAsDefaultInstance();
+  static TableMeta* default_instance_;
+};
+// -------------------------------------------------------------------
 
 class SelectRecord : public ::google::protobuf::Message {
  public:
@@ -190,32 +445,32 @@ class SelectHeader : public ::google::protobuf::Message {
   
   // accessors -------------------------------------------------------
   
-  // repeated .drizzled.message.TableMetadata table_metadata = 1;
-  inline int table_metadata_size() const;
-  inline void clear_table_metadata();
-  static const int kTableMetadataFieldNumber = 1;
-  inline const ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMetadata >& table_metadata() const;
-  inline ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMetadata >* mutable_table_metadata();
-  inline const ::drizzled::message::TableMetadata& table_metadata(int index) const;
-  inline ::drizzled::message::TableMetadata* mutable_table_metadata(int index);
-  inline ::drizzled::message::TableMetadata* add_table_metadata();
+  // repeated .drizzled.message.TableMeta table_meta = 1;
+  inline int table_meta_size() const;
+  inline void clear_table_meta();
+  static const int kTableMetaFieldNumber = 1;
+  inline const ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMeta >& table_meta() const;
+  inline ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMeta >* mutable_table_meta();
+  inline const ::drizzled::message::TableMeta& table_meta(int index) const;
+  inline ::drizzled::message::TableMeta* mutable_table_meta(int index);
+  inline ::drizzled::message::TableMeta* add_table_meta();
   
-  // repeated .drizzled.message.FieldMetadata field_metadata = 2;
-  inline int field_metadata_size() const;
-  inline void clear_field_metadata();
-  static const int kFieldMetadataFieldNumber = 2;
-  inline const ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMetadata >& field_metadata() const;
-  inline ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMetadata >* mutable_field_metadata();
-  inline const ::drizzled::message::FieldMetadata& field_metadata(int index) const;
-  inline ::drizzled::message::FieldMetadata* mutable_field_metadata(int index);
-  inline ::drizzled::message::FieldMetadata* add_field_metadata();
+  // repeated .drizzled.message.FieldMeta field_meta = 2;
+  inline int field_meta_size() const;
+  inline void clear_field_meta();
+  static const int kFieldMetaFieldNumber = 2;
+  inline const ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMeta >& field_meta() const;
+  inline ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMeta >* mutable_field_meta();
+  inline const ::drizzled::message::FieldMeta& field_meta(int index) const;
+  inline ::drizzled::message::FieldMeta* mutable_field_meta(int index);
+  inline ::drizzled::message::FieldMeta* add_field_meta();
   
  private:
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   mutable int _cached_size_;
   
-  ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMetadata > table_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMetadata > field_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMeta > table_meta_;
+  ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMeta > field_meta_;
   friend void  protobuf_AddDesc_resultset_2eproto();
   friend void protobuf_AssignDesc_resultset_2eproto();
   friend void protobuf_ShutdownFile_resultset_2eproto();
@@ -481,6 +736,350 @@ class Resultset : public ::google::protobuf::Message {
 
 // ===================================================================
 
+// FieldMeta
+
+// required string field_name = 1;
+inline bool FieldMeta::has_field_name() const {
+  return _has_bit(0);
+}
+inline void FieldMeta::clear_field_name() {
+  if (field_name_ != &_default_field_name_) {
+    field_name_->clear();
+  }
+  _clear_bit(0);
+}
+inline const ::std::string& FieldMeta::field_name() const {
+  return *field_name_;
+}
+inline void FieldMeta::set_field_name(const ::std::string& value) {
+  _set_bit(0);
+  if (field_name_ == &_default_field_name_) {
+    field_name_ = new ::std::string;
+  }
+  field_name_->assign(value);
+}
+inline void FieldMeta::set_field_name(const char* value) {
+  _set_bit(0);
+  if (field_name_ == &_default_field_name_) {
+    field_name_ = new ::std::string;
+  }
+  field_name_->assign(value);
+}
+inline void FieldMeta::set_field_name(const char* value, size_t size) {
+  _set_bit(0);
+  if (field_name_ == &_default_field_name_) {
+    field_name_ = new ::std::string;
+  }
+  field_name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* FieldMeta::mutable_field_name() {
+  _set_bit(0);
+  if (field_name_ == &_default_field_name_) {
+    field_name_ = new ::std::string;
+  }
+  return field_name_;
+}
+
+// optional string field_alias = 2;
+inline bool FieldMeta::has_field_alias() const {
+  return _has_bit(1);
+}
+inline void FieldMeta::clear_field_alias() {
+  if (field_alias_ != &_default_field_alias_) {
+    field_alias_->clear();
+  }
+  _clear_bit(1);
+}
+inline const ::std::string& FieldMeta::field_alias() const {
+  return *field_alias_;
+}
+inline void FieldMeta::set_field_alias(const ::std::string& value) {
+  _set_bit(1);
+  if (field_alias_ == &_default_field_alias_) {
+    field_alias_ = new ::std::string;
+  }
+  field_alias_->assign(value);
+}
+inline void FieldMeta::set_field_alias(const char* value) {
+  _set_bit(1);
+  if (field_alias_ == &_default_field_alias_) {
+    field_alias_ = new ::std::string;
+  }
+  field_alias_->assign(value);
+}
+inline void FieldMeta::set_field_alias(const char* value, size_t size) {
+  _set_bit(1);
+  if (field_alias_ == &_default_field_alias_) {
+    field_alias_ = new ::std::string;
+  }
+  field_alias_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* FieldMeta::mutable_field_alias() {
+  _set_bit(1);
+  if (field_alias_ == &_default_field_alias_) {
+    field_alias_ = new ::std::string;
+  }
+  return field_alias_;
+}
+
+// required string table_name = 3;
+inline bool FieldMeta::has_table_name() const {
+  return _has_bit(2);
+}
+inline void FieldMeta::clear_table_name() {
+  if (table_name_ != &_default_table_name_) {
+    table_name_->clear();
+  }
+  _clear_bit(2);
+}
+inline const ::std::string& FieldMeta::table_name() const {
+  return *table_name_;
+}
+inline void FieldMeta::set_table_name(const ::std::string& value) {
+  _set_bit(2);
+  if (table_name_ == &_default_table_name_) {
+    table_name_ = new ::std::string;
+  }
+  table_name_->assign(value);
+}
+inline void FieldMeta::set_table_name(const char* value) {
+  _set_bit(2);
+  if (table_name_ == &_default_table_name_) {
+    table_name_ = new ::std::string;
+  }
+  table_name_->assign(value);
+}
+inline void FieldMeta::set_table_name(const char* value, size_t size) {
+  _set_bit(2);
+  if (table_name_ == &_default_table_name_) {
+    table_name_ = new ::std::string;
+  }
+  table_name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* FieldMeta::mutable_table_name() {
+  _set_bit(2);
+  if (table_name_ == &_default_table_name_) {
+    table_name_ = new ::std::string;
+  }
+  return table_name_;
+}
+
+// optional string table_alias = 4;
+inline bool FieldMeta::has_table_alias() const {
+  return _has_bit(3);
+}
+inline void FieldMeta::clear_table_alias() {
+  if (table_alias_ != &_default_table_alias_) {
+    table_alias_->clear();
+  }
+  _clear_bit(3);
+}
+inline const ::std::string& FieldMeta::table_alias() const {
+  return *table_alias_;
+}
+inline void FieldMeta::set_table_alias(const ::std::string& value) {
+  _set_bit(3);
+  if (table_alias_ == &_default_table_alias_) {
+    table_alias_ = new ::std::string;
+  }
+  table_alias_->assign(value);
+}
+inline void FieldMeta::set_table_alias(const char* value) {
+  _set_bit(3);
+  if (table_alias_ == &_default_table_alias_) {
+    table_alias_ = new ::std::string;
+  }
+  table_alias_->assign(value);
+}
+inline void FieldMeta::set_table_alias(const char* value, size_t size) {
+  _set_bit(3);
+  if (table_alias_ == &_default_table_alias_) {
+    table_alias_ = new ::std::string;
+  }
+  table_alias_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* FieldMeta::mutable_table_alias() {
+  _set_bit(3);
+  if (table_alias_ == &_default_table_alias_) {
+    table_alias_ = new ::std::string;
+  }
+  return table_alias_;
+}
+
+// required string schema_name = 5;
+inline bool FieldMeta::has_schema_name() const {
+  return _has_bit(4);
+}
+inline void FieldMeta::clear_schema_name() {
+  if (schema_name_ != &_default_schema_name_) {
+    schema_name_->clear();
+  }
+  _clear_bit(4);
+}
+inline const ::std::string& FieldMeta::schema_name() const {
+  return *schema_name_;
+}
+inline void FieldMeta::set_schema_name(const ::std::string& value) {
+  _set_bit(4);
+  if (schema_name_ == &_default_schema_name_) {
+    schema_name_ = new ::std::string;
+  }
+  schema_name_->assign(value);
+}
+inline void FieldMeta::set_schema_name(const char* value) {
+  _set_bit(4);
+  if (schema_name_ == &_default_schema_name_) {
+    schema_name_ = new ::std::string;
+  }
+  schema_name_->assign(value);
+}
+inline void FieldMeta::set_schema_name(const char* value, size_t size) {
+  _set_bit(4);
+  if (schema_name_ == &_default_schema_name_) {
+    schema_name_ = new ::std::string;
+  }
+  schema_name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* FieldMeta::mutable_schema_name() {
+  _set_bit(4);
+  if (schema_name_ == &_default_schema_name_) {
+    schema_name_ = new ::std::string;
+  }
+  return schema_name_;
+}
+
+// -------------------------------------------------------------------
+
+// TableMeta
+
+// required string schema_name = 1;
+inline bool TableMeta::has_schema_name() const {
+  return _has_bit(0);
+}
+inline void TableMeta::clear_schema_name() {
+  if (schema_name_ != &_default_schema_name_) {
+    schema_name_->clear();
+  }
+  _clear_bit(0);
+}
+inline const ::std::string& TableMeta::schema_name() const {
+  return *schema_name_;
+}
+inline void TableMeta::set_schema_name(const ::std::string& value) {
+  _set_bit(0);
+  if (schema_name_ == &_default_schema_name_) {
+    schema_name_ = new ::std::string;
+  }
+  schema_name_->assign(value);
+}
+inline void TableMeta::set_schema_name(const char* value) {
+  _set_bit(0);
+  if (schema_name_ == &_default_schema_name_) {
+    schema_name_ = new ::std::string;
+  }
+  schema_name_->assign(value);
+}
+inline void TableMeta::set_schema_name(const char* value, size_t size) {
+  _set_bit(0);
+  if (schema_name_ == &_default_schema_name_) {
+    schema_name_ = new ::std::string;
+  }
+  schema_name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* TableMeta::mutable_schema_name() {
+  _set_bit(0);
+  if (schema_name_ == &_default_schema_name_) {
+    schema_name_ = new ::std::string;
+  }
+  return schema_name_;
+}
+
+// required string table_name = 2;
+inline bool TableMeta::has_table_name() const {
+  return _has_bit(1);
+}
+inline void TableMeta::clear_table_name() {
+  if (table_name_ != &_default_table_name_) {
+    table_name_->clear();
+  }
+  _clear_bit(1);
+}
+inline const ::std::string& TableMeta::table_name() const {
+  return *table_name_;
+}
+inline void TableMeta::set_table_name(const ::std::string& value) {
+  _set_bit(1);
+  if (table_name_ == &_default_table_name_) {
+    table_name_ = new ::std::string;
+  }
+  table_name_->assign(value);
+}
+inline void TableMeta::set_table_name(const char* value) {
+  _set_bit(1);
+  if (table_name_ == &_default_table_name_) {
+    table_name_ = new ::std::string;
+  }
+  table_name_->assign(value);
+}
+inline void TableMeta::set_table_name(const char* value, size_t size) {
+  _set_bit(1);
+  if (table_name_ == &_default_table_name_) {
+    table_name_ = new ::std::string;
+  }
+  table_name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* TableMeta::mutable_table_name() {
+  _set_bit(1);
+  if (table_name_ == &_default_table_name_) {
+    table_name_ = new ::std::string;
+  }
+  return table_name_;
+}
+
+// optional string table_alias = 3;
+inline bool TableMeta::has_table_alias() const {
+  return _has_bit(2);
+}
+inline void TableMeta::clear_table_alias() {
+  if (table_alias_ != &_default_table_alias_) {
+    table_alias_->clear();
+  }
+  _clear_bit(2);
+}
+inline const ::std::string& TableMeta::table_alias() const {
+  return *table_alias_;
+}
+inline void TableMeta::set_table_alias(const ::std::string& value) {
+  _set_bit(2);
+  if (table_alias_ == &_default_table_alias_) {
+    table_alias_ = new ::std::string;
+  }
+  table_alias_->assign(value);
+}
+inline void TableMeta::set_table_alias(const char* value) {
+  _set_bit(2);
+  if (table_alias_ == &_default_table_alias_) {
+    table_alias_ = new ::std::string;
+  }
+  table_alias_->assign(value);
+}
+inline void TableMeta::set_table_alias(const char* value, size_t size) {
+  _set_bit(2);
+  if (table_alias_ == &_default_table_alias_) {
+    table_alias_ = new ::std::string;
+  }
+  table_alias_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* TableMeta::mutable_table_alias() {
+  _set_bit(2);
+  if (table_alias_ == &_default_table_alias_) {
+    table_alias_ = new ::std::string;
+  }
+  return table_alias_;
+}
+
+// -------------------------------------------------------------------
+
 // SelectRecord
 
 // repeated bytes record_value = 1;
@@ -531,54 +1130,54 @@ inline void SelectRecord::add_record_value(const void* value, size_t size) {
 
 // SelectHeader
 
-// repeated .drizzled.message.TableMetadata table_metadata = 1;
-inline int SelectHeader::table_metadata_size() const {
-  return table_metadata_.size();
+// repeated .drizzled.message.TableMeta table_meta = 1;
+inline int SelectHeader::table_meta_size() const {
+  return table_meta_.size();
 }
-inline void SelectHeader::clear_table_metadata() {
-  table_metadata_.Clear();
+inline void SelectHeader::clear_table_meta() {
+  table_meta_.Clear();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMetadata >&
-SelectHeader::table_metadata() const {
-  return table_metadata_;
+inline const ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMeta >&
+SelectHeader::table_meta() const {
+  return table_meta_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMetadata >*
-SelectHeader::mutable_table_metadata() {
-  return &table_metadata_;
+inline ::google::protobuf::RepeatedPtrField< ::drizzled::message::TableMeta >*
+SelectHeader::mutable_table_meta() {
+  return &table_meta_;
 }
-inline const ::drizzled::message::TableMetadata& SelectHeader::table_metadata(int index) const {
-  return table_metadata_.Get(index);
+inline const ::drizzled::message::TableMeta& SelectHeader::table_meta(int index) const {
+  return table_meta_.Get(index);
 }
-inline ::drizzled::message::TableMetadata* SelectHeader::mutable_table_metadata(int index) {
-  return table_metadata_.Mutable(index);
+inline ::drizzled::message::TableMeta* SelectHeader::mutable_table_meta(int index) {
+  return table_meta_.Mutable(index);
 }
-inline ::drizzled::message::TableMetadata* SelectHeader::add_table_metadata() {
-  return table_metadata_.Add();
+inline ::drizzled::message::TableMeta* SelectHeader::add_table_meta() {
+  return table_meta_.Add();
 }
 
-// repeated .drizzled.message.FieldMetadata field_metadata = 2;
-inline int SelectHeader::field_metadata_size() const {
-  return field_metadata_.size();
+// repeated .drizzled.message.FieldMeta field_meta = 2;
+inline int SelectHeader::field_meta_size() const {
+  return field_meta_.size();
 }
-inline void SelectHeader::clear_field_metadata() {
-  field_metadata_.Clear();
+inline void SelectHeader::clear_field_meta() {
+  field_meta_.Clear();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMetadata >&
-SelectHeader::field_metadata() const {
-  return field_metadata_;
+inline const ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMeta >&
+SelectHeader::field_meta() const {
+  return field_meta_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMetadata >*
-SelectHeader::mutable_field_metadata() {
-  return &field_metadata_;
+inline ::google::protobuf::RepeatedPtrField< ::drizzled::message::FieldMeta >*
+SelectHeader::mutable_field_meta() {
+  return &field_meta_;
 }
-inline const ::drizzled::message::FieldMetadata& SelectHeader::field_metadata(int index) const {
-  return field_metadata_.Get(index);
+inline const ::drizzled::message::FieldMeta& SelectHeader::field_meta(int index) const {
+  return field_meta_.Get(index);
 }
-inline ::drizzled::message::FieldMetadata* SelectHeader::mutable_field_metadata(int index) {
-  return field_metadata_.Mutable(index);
+inline ::drizzled::message::FieldMeta* SelectHeader::mutable_field_meta(int index) {
+  return field_meta_.Mutable(index);
 }
-inline ::drizzled::message::FieldMetadata* SelectHeader::add_field_metadata() {
-  return field_metadata_.Add();
+inline ::drizzled::message::FieldMeta* SelectHeader::add_field_meta() {
+  return field_meta_.Add();
 }
 
 // -------------------------------------------------------------------

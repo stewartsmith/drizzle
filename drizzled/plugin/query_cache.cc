@@ -37,27 +37,61 @@ vector<plugin::QueryCache *> all_query_cache;
 
 /* Namespaces are here to prevent global symbol clashes with these classes */
 
-class TryFetchAndSendIterate
+class IsCachedIterate
  : public unary_function<plugin::QueryCache *, bool>
 {
   Session *session;
 public:
-  TryFetchAndSendIterate(Session *session_arg) :
+  IsCachedIterate(Session* session_arg) :
     unary_function<plugin::QueryCache *, bool>(),
     session(session_arg) { }
 
   inline result_type operator()(argument_type handler)
   {
-    if (handler->tryFetchAndSend(session))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("qcache plugin '%s' try_fetch_and_send() failed \r"),
-                    handler->getName().c_str());
-      return true;
-    }
-    return false;
+    return handler->doIsCached(session);
   }
 };
+
+bool plugin::QueryCache::isCached(Session *session)
+{
+  /* Use find_if instead of foreach so that we can collect return codes */
+  vector<plugin::QueryCache *>::iterator iter=
+    find_if(all_query_cache.begin(), all_query_cache.end(),
+            IsCachedIterate(session));
+  /* If iter is == end() here, that means that all of the plugins returned
+   * false, which in this case means they all succeeded. Since we want to 
+   * return false on success, we return the value of the two being != 
+   */
+  return iter != all_query_cache.end();
+}
+
+
+class SendCachedResultsetIterate
+ : public unary_function<plugin::QueryCache *, bool>
+{
+  Session *session;
+public:
+  SendCachedResultsetIterate(Session *session_arg) :
+    unary_function<plugin::QueryCache *, bool>(),
+    session(session_arg) { }
+
+  inline result_type operator()(argument_type handler)
+  {
+    return handler->doSendCachedResultset(session);
+  }
+};
+bool plugin::QueryCache::sendCachedResultset(Session *session)
+{
+  /* Use find_if instead of foreach so that we can collect return codes */
+  vector<plugin::QueryCache *>::iterator iter=
+    find_if(all_query_cache.begin(), all_query_cache.end(),
+            SendCachedResultsetIterate(session));
+  /* If iter is == end() here, that means that all of the plugins returned
+   * false, which in this case means they all succeeded. Since we want to 
+   * return false on success, we return the value of the two being != 
+   */
+  return iter != all_query_cache.end();
+}
 
 class PrepareResultsetIterate
  : public unary_function<plugin::QueryCache *, bool>
@@ -69,15 +103,21 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-    if (handler->prepareResultset(session))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' prepareResultset() failed\r"),
-                    handler->getName().c_str());
-      return true;
-    }
-    return false;
+    return handler->doPrepareResultset(session);
   }
 };
+bool plugin::QueryCache::prepareResultset(Session *session)
+{
+  /* Use find_if instead of foreach so that we can collect return codes */
+  vector<plugin::QueryCache *>::iterator iter=
+    find_if(all_query_cache.begin(), all_query_cache.end(),
+            PrepareResultsetIterate(session));
+  /* If iter is == end() here, that means that all of the plugins returned
+   * false, which in this case means they all succeeded. Since we want to 
+   * return false on success, we return the value of the two being != 
+   */
+  return iter != all_query_cache.end();
+}
 
 class SetResultsetIterate
  : public unary_function<plugin::QueryCache *, bool>
@@ -90,16 +130,22 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-
-    if (handler->setResultset(session))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s' setResultset() failed\r"),
-                    handler->getName().c_str());
-      return true;
-    }
-    return false;
+    return handler->doSetResultset(session);
   }
 };
+
+bool plugin::QueryCache::setResultset(Session *session)
+{
+  /* Use find_if instead of foreach so that we can collect return codes */
+  vector<plugin::QueryCache *>::iterator iter=
+    find_if(all_query_cache.begin(), all_query_cache.end(),
+            SetResultsetIterate(session));
+  /* If iter is == end() here, that means that all of the plugins returned
+   * false, which in this case means they all succeeded. Since we want to 
+   * return false on success, we return the value of the two being != 
+   */
+  return iter != all_query_cache.end();
+}
 
 class InsertRecordIterate
  : public unary_function<plugin::QueryCache *, bool>
@@ -113,16 +159,21 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-
-    if (handler->insertRecord(session, item))
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("qcache plugin '%s'  insertRecord() failed\r"),
-                    handler->getName().c_str());
-      return true;
-    }
-    return false;
+    return handler->doInsertRecord(session, item);
   }
 };
+bool plugin::QueryCache::insertRecord(Session *session, List<Item> &items)
+{
+  /* Use find_if instead of foreach so that we can collect return codes */
+  vector<plugin::QueryCache *>::iterator iter=
+    find_if(all_query_cache.begin(), all_query_cache.end(),
+            InsertRecordIterate(session, items));
+  /* If iter is == end() here, that means that all of the plugins returned
+   * false, which in this case means they all succeeded. Since we want to 
+   * return false on success, we return the value of the two being != 
+   */
+  return iter != all_query_cache.end();
+}
 
 
 
@@ -137,59 +188,5 @@ void plugin::QueryCache::removePlugin(plugin::QueryCache *handler)
   all_query_cache.erase(find(all_query_cache.begin(), all_query_cache.end(),
                         handler));
 }
-
-
-bool plugin::QueryCache::tryFetchAndSendDo(Session *session)
-{
-  /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
-            TryFetchAndSendIterate(session));
-  /* If iter is == end() here, that means that all of the plugins returned
-   * false, which in this case means they all succeeded. Since we want to 
-   * return false on success, we return the value of the two being != 
-   */
-  return iter != all_query_cache.end();
-}
-
-bool plugin::QueryCache::prepareResultsetDo(Session *session)
-{
-  /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
-            PrepareResultsetIterate(session));
-  /* If iter is == end() here, that means that all of the plugins returned
-   * false, which in this case means they all succeeded. Since we want to 
-   * return false on success, we return the value of the two being != 
-   */
-  return iter != all_query_cache.end();
-}
-
-bool plugin::QueryCache::setResultsetDo(Session *session)
-{
-  /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
-            SetResultsetIterate(session));
-  /* If iter is == end() here, that means that all of the plugins returned
-   * false, which in this case means they all succeeded. Since we want to 
-   * return false on success, we return the value of the two being != 
-   */
-  return iter != all_query_cache.end();
-}
-
-bool plugin::QueryCache::insertRecordDo(Session *session, List<Item> &items)
-{
-  /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
-    find_if(all_query_cache.begin(), all_query_cache.end(),
-            InsertRecordIterate(session, items));
-  /* If iter is == end() here, that means that all of the plugins returned
-   * false, which in this case means they all succeeded. Since we want to 
-   * return false on success, we return the value of the two being != 
-   */
-  return iter != all_query_cache.end();
-}
-
 
 } /* namespace drizzled */

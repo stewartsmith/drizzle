@@ -114,8 +114,8 @@ public:
       }
     }
     /* Insert this record to the Resultset into the cache */
-    if (session->query_cache_key == "")
-     plugin::QueryCache::insertRecordDo(session, items);
+    if (session->query_cache_key != "" && session->getResultsetMessage() != NULL)
+      plugin::QueryCache::insertRecord(session, items);
 
     session->sent_row_count++;
     if (session->is_error())

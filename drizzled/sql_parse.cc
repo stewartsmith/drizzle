@@ -541,15 +541,13 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
         return true;
 
       /* Init the Query Cache plugin */
-      plugin::QueryCache::prepareResultsetDo(session); 
-      
+      plugin::QueryCache::prepareResultset(session); 
       res= handle_select(session, lex, result, 0);
-      
       /* Send the Resultset to the cache */
-      plugin::QueryCache::setResultsetDo(session); 
+      plugin::QueryCache::setResultset(session); 
 
       if (result != lex->result)
-          delete result;
+        delete result;
     }
   }
   return res;
@@ -721,55 +719,52 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
   lex_start(session);
   session->reset_for_next_command();
- /* first try to fetch the result from the cache
-    ToDo: 
-    1) Here the tryFetchAndSendDo is called before the parsing of the query, 
-    thus the plugin need to detect if it's a SELECT statement
-    2) if further information (one that is generated after the parsing) is needed then 
-       we shall move the call to a deeper step */
- if(plugin::QueryCache::tryFetchAndSendDo(session))
- {
-  LEX *lex= session->lex;
-
-  Lex_input_stream lip(session, inBuf, length);
-
-  bool err= parse_sql(session, &lip);
-
-  if (!err)
+  /* Check if the Query is Cached if and return true if yes
+   * TODO the plugin has to make sure that the query is cacheble
+   * by setting the query_safe_cache param to TRUE
+   */
+  if(not plugin::QueryCache::isCached(session))
   {
+    LEX *lex= session->lex;
+    Lex_input_stream lip(session, inBuf, length);
+    bool err= parse_sql(session, &lip);
+    if (!err)
     {
-      if (! session->is_error())
       {
-        DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
-                                 session->thread_id,
-                                 const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
-        // Implement Views here --Brian
-
-        /* Actually execute the query */
-        try {
-          mysql_execute_command(session);
-        }
-        catch (...)
+        if (! session->is_error())
         {
-          // Just try to catch any random failures that could have come
-          // during execution.
+          DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
+                                   session->thread_id,
+                                   const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+          // Implement Views here --Brian
+          /* Actually execute the query */
+          try 
+          {
+            mysql_execute_command(session);
+          }
+          catch (...)
+          {
+            // Just try to catch any random failures that could have come
+            // during execution.
+          }
+          DRIZZLE_QUERY_EXEC_DONE(0);
         }
-        DRIZZLE_QUERY_EXEC_DONE(0);
       }
     }
+    else
+    {
+      assert(session->is_error());
+    }
+    lex->unit.cleanup();
+    session->set_proc_info("freeing items");
+    session->end_statement();
+    session->cleanup_after_query();
   }
   else
   {
-    assert(session->is_error());
+    cout << "Results are cached" << endl;
+    plugin::QueryCache::sendCachedResultset(session);
   }
-
-  lex->unit.cleanup();
-  session->set_proc_info("freeing items");
-  session->end_statement();
-  session->cleanup_after_query();
- }
-  else
-    cout << "Cached Results" << endl;
 }
 
 

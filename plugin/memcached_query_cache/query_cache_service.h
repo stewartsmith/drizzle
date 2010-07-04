@@ -40,19 +40,19 @@ namespace message
 {
   class Resultset;
 }
-}
+
 
 class QueryCacheService
 {
-private:
-  static std::map<std::string, drizzled::message::Resultset> cache;
-
 public:
+
   static const size_t DEFAULT_RECORD_SIZE= 100;
+  static std::map<std::string, drizzled::message::Resultset> cache; // ToDo: make private
+  drizzled::List<drizzled::Item> previousItem;  //ToDo: remove
 
   /**
    * Singleton method
-   * Returns the singleton instance of TransactionServices
+   * Returns the singleton instance of QueryCacheService
    */
   static inline QueryCacheService &singleton()
   {
@@ -65,9 +65,9 @@ public:
    * for the supplied Session.  If one is not found, a new Resultset
    * message is allocated, initialized, and returned.
    *
-   * @param The session processing the transaction
+   * @param The session processing the Select
    */
-  drizzled::message::Resultset &getCurrentResultsetMessage(drizzled::Session *in_session, drizzled::TableList *in_table);
+  drizzled::message::Resultset &getCurrentResultsetMessage(drizzled::Session *in_session);
 
   /**
    * Helper method which initializes the header message for
@@ -92,6 +92,6 @@ public:
   /* cache fetching */
   static bool isCached(std::string query);
   
-}; /* namespace drizzled */
-
+}; 
+} /* namespace drizzled */
 #endif /* MEMCACHED_QC_QUERY_CACHE_H */
