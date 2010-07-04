@@ -115,7 +115,7 @@ public:
 	int doCommit(Session *, bool);
 	int doRollback(Session *, bool);
 	Cursor *create(TableShare& table, memory::Root *mem_root);
-	bool doDropSchema(drizzled::SchemaIdentifier&);
+	bool doDropSchema(const drizzled::SchemaIdentifier&);
 	
 	/*
 	* Indicates to a storage engine the start of a
@@ -142,7 +142,7 @@ public:
 	int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
 	
 	void doGetTableIdentifiers(drizzled::CachedDirectory &dir,
-                             drizzled::SchemaIdentifier &schema,
+                             const drizzled::SchemaIdentifier &schema,
                              drizzled::TableIdentifiers &set_of_identifiers) 
 	{
 		std::set<std::string> set_of_names;
@@ -155,7 +155,7 @@ public:
 	}
 	
 	void doGetTableNames(CachedDirectory&, 
-					SchemaIdentifier &schema, 
+					const SchemaIdentifier &schema, 
 					std::set<std::string> &set_of_names) 
 	{
 		bool isPBMS = schema.compare("PBMS");
@@ -435,7 +435,7 @@ static int pbms_savepoint_release(handlerton *hton, THD *thd, void *sv)
 #endif
 
 #ifdef DRIZZLED
-bool  PBMSStorageEngine::doDropSchema(drizzled::SchemaIdentifier &schema)
+bool  PBMSStorageEngine::doDropSchema(const drizzled::SchemaIdentifier &schema)
 {
 	CSThread *self;
 	PBMSResultRec result;

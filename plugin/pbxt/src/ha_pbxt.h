@@ -99,11 +99,11 @@ public:
 	/* override */ uint32_t max_supported_key_part_length(void) const { return MAX_KEY_LENGTH; }
 
 	/* override */ void doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                           drizzled::SchemaIdentifier&,
+                                           const drizzled::SchemaIdentifier&,
                                            drizzled::TableIdentifiers&) {}
 
 	/* override */ void doGetTableNames(CachedDirectory&, 
-					SchemaIdentifier&, 
+					const SchemaIdentifier&, 
 					std::set<std::string>&) {}
 
 	/* override */ bool doDoesTableExist(Session&, const TableIdentifier &identifier);
