@@ -354,7 +354,7 @@ void key_unpack(String *to, Table *table, uint32_t idx)
       field->setReadSet();
       field->val_str(&tmp);
       if (cs->mbmaxlen > 1 &&
-          table->field[key_part->fieldnr - 1]->field_length !=
+          table->getField(key_part->fieldnr - 1)->field_length !=
           key_part->length)
       {
         /*
@@ -410,9 +410,11 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     If table handler has primary key as part of the index, check that primary
     key is not updated
   */
-  if (idx != table->getShare()->primary_key && table->getShare()->primary_key < MAX_KEY &&
+  if (idx != table->getShare()->getPrimaryKey() && table->getShare()->hasPrimaryKey() &&
       (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
-    return is_key_used(table, table->getShare()->primary_key, fields);
+  {
+    return is_key_used(table, table->getShare()->getPrimaryKey(), fields);
+  }
   return 0;
 }
 

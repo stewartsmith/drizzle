@@ -1364,7 +1364,7 @@ Handler_read_key	3
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	0
-Handler_read_rnd_next	13
+Handler_read_rnd_next	7
 drop table t1,t2;
 CREATE TABLE t1(c1 VARCHAR(33), KEY USING BTREE (c1));
 DROP TABLE t1;
@@ -1452,10 +1452,10 @@ t1	CREATE TABLE `t1` (
   `ID` bigint NOT NULL DEFAULT '0',
   `USER` varchar(16) NOT NULL DEFAULT '',
   `HOST` varchar(1025) NOT NULL DEFAULT '',
-  `DB` varchar(64) NOT NULL DEFAULT '',
+  `DB` varchar(256) NOT NULL DEFAULT '',
   `COMMAND` varchar(16) NOT NULL DEFAULT '',
   `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(64) NOT NULL DEFAULT '',
+  `STATE` varchar(256) NOT NULL DEFAULT '',
   `INFO` varchar(100) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB
 drop table t1;
@@ -1468,10 +1468,10 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `ID` bigint NOT NULL DEFAULT '0',
   `USER` varchar(16) NOT NULL DEFAULT '',
   `HOST` varchar(1025) NOT NULL DEFAULT '',
-  `DB` varchar(64) NOT NULL DEFAULT '',
+  `DB` varchar(256) NOT NULL DEFAULT '',
   `COMMAND` varchar(16) NOT NULL DEFAULT '',
   `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(64) NOT NULL DEFAULT '',
+  `STATE` varchar(256) NOT NULL DEFAULT '',
   `INFO` varchar(100) NOT NULL DEFAULT ''
 ) ENGINE=MyISAM
 drop table t1;

@@ -135,7 +135,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
   for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
     TableList *embedded= NULL;
-    for (embedded= tl; embedded; embedded= embedded->embedding)
+    for (embedded= tl; embedded; embedded= embedded->getEmbedding())
     {
       if (embedded->on_expr)
         break;
@@ -911,7 +911,7 @@ static bool find_key_for_maxmin(bool max_fl,
   uint32_t idx= 0;
 
   KeyInfo *keyinfo,*keyinfo_end= NULL;
-  for (keyinfo= table->key_info, keyinfo_end= keyinfo+table->getShare()->keys;
+  for (keyinfo= table->key_info, keyinfo_end= keyinfo+table->getShare()->sizeKeys();
        keyinfo != keyinfo_end;
        keyinfo++,idx++)
   {
@@ -938,7 +938,7 @@ static bool find_key_for_maxmin(bool max_fl,
       }
 
       /* Check whether the index component is partial */
-      Field *part_field= table->field[part->fieldnr-1];
+      Field *part_field= table->getField(part->fieldnr-1);
       part_field->setWriteSet();
 
       if ((part_field->flags & BLOB_FLAG) ||

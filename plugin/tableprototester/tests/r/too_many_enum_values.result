@@ -1,0 +1,4 @@
+SHOW CREATE TABLE too_many_enum_values;
+ERROR HY000: Corrupt or invalid table definition: ENUM column many_values has greater than 65536 possible values
+SELECT * FROM too_many_enum_values;
+ERROR HY000: Corrupt or invalid table definition: ENUM column many_values has greater than 65536 possible values

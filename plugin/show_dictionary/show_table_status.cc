@@ -59,16 +59,13 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   {
     pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
 
-    drizzled::HASH *open_cache=
-      get_open_cache();
-
-    for (uint32_t idx= 0; idx < open_cache->records; idx++ )
+    for (uint32_t idx= 0; idx < get_open_cache().records; idx++ )
     {
-      table= (Table*) hash_element(open_cache, idx);
+      table= (Table*) hash_element(&get_open_cache(), idx);
       table_list.push_back(table);
     }
 
-    for (table= getSession().temporary_tables; table; table= table->next)
+    for (table= getSession().temporary_tables; table; table= table->getNext())
     {
       if (table->getShare())
       {
@@ -169,7 +166,7 @@ void ShowTableStatus::Generator::fill()
   push(table->getEngine()->getName());
 
   /* Version 6 */
-  push(static_cast<int64_t>(table->getShare()->version));
+  push(static_cast<int64_t>(table->getShare()->getVersion()));
 
   /* Rows 7 */
   push(static_cast<uint64_t>(table->getCursor().records()));

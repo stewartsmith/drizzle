@@ -56,7 +56,7 @@ static const std::vector<std::string> empty_aliases;
 extern struct system_variables max_system_variables;
 extern size_t table_def_size;
 
-extern char *drizzle_tmpdir;
+extern std::string drizzle_tmpdir;
 extern const char *first_keyword;
 extern const char *in_left_expr_name;
 extern const char *in_additional_cond;
@@ -68,6 +68,8 @@ extern char pidfile_name[FN_REFLEN];
 extern char system_time_zone[30];
 extern char *opt_tc_log_file;
 extern uint64_t session_startup_options;
+extern time_t server_start_time;
+extern time_t flush_status_time;
 extern uint32_t global_thread_id;
 extern uint64_t table_cache_size;
 extern uint64_t max_connect_errors;
@@ -81,6 +83,7 @@ extern uint32_t volatile global_read_lock;
 extern bool opt_readonly;
 extern char* opt_secure_file_priv;
 extern char *default_tz_name;
+extern char *opt_scheduler;
 
 uint64_t fix_unsigned(Session *, uint64_t, const struct option *);
 

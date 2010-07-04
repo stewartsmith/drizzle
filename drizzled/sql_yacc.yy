@@ -38,6 +38,7 @@
 #define Lex (YYSession->lex)
 
 #include "config.h"
+#include <cstdio>
 #include "drizzled/parser.h"
 
 int yylex(void *yylval, void *yysession);
@@ -66,7 +67,8 @@ int yylex(void *yylval, void *yysession);
 #define DRIZZLE_YYABORT_UNLESS(A)         \
   if (!(A))                             \
   {                                     \
-    my_parse_error(ER(ER_SYNTAX_ERROR));\
+    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };\
+    my_parse_error(&pass);\
     DRIZZLE_YYABORT;                      \
   }
 
@@ -101,9 +103,18 @@ static bool check_reserved_words(LEX_STRING *name)
   parser.
 */
 
-static void my_parse_error(const char *s)
+struct my_parse_error_st {
+  const char *s;
+  Session *session;
+};
+
+static void my_parse_error(void *arg)
 {
-  Session *session= current_session;
+ struct my_parse_error_st *ptr= (struct my_parse_error_st *)arg;
+
+  const char *s= ptr->s;
+  Session *session= ptr->session;
+
   Lex_input_stream *lip= session->m_lip;
 
   const char *yytext= lip->get_tok_start();
@@ -147,7 +158,9 @@ static void DRIZZLEerror(const char *s)
   /* "parse error" changed into "syntax error" between bison 1.75 and 1.875 */
   if (strcmp(s,"parse error") == 0 || strcmp(s,"syntax error") == 0)
     s= ER(ER_SYNTAX_ERROR);
-  my_parse_error(s);
+
+  struct my_parse_error_st pass= { s, session };
+  my_parse_error(&pass);
 }
 
 /**
@@ -239,7 +252,7 @@ static Item* handle_sql2003_note184_exception(Session *session,
    @return <code>false</code> if successful, <code>true</code> if an error was
    reported. In the latter case parsing should stop.
  */
-static bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
+static bool add_select_to_union_list(Session *session, LEX *lex, bool is_union_distinct)
 {
   if (lex->result)
   {
@@ -249,7 +262,8 @@ static bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
   }
   if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE)
   {
-    my_parse_error(ER(ER_SYNTAX_ERROR));
+    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    my_parse_error(&pass);
     return true;
   }
   /* This counter shouldn't be incremented for UNION parts */
@@ -271,12 +285,13 @@ static bool add_select_to_union_list(LEX *lex, bool is_union_distinct)
    @return false if successful, true if an error was reported. In the latter
    case parsing should stop.
  */
-static bool setup_select_in_parentheses(LEX *lex)
+static bool setup_select_in_parentheses(Session *session, LEX *lex)
 {
   Select_Lex * sel= lex->current_select;
   if (sel->set_braces(1))
   {
-    my_parse_error(ER(ER_SYNTAX_ERROR));
+    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    my_parse_error(&pass);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -284,7 +299,8 @@ static bool setup_select_in_parentheses(LEX *lex)
       sel->master_unit()->first_select()->linkage ==
       UNION_TYPE)
   {
-    my_parse_error(ER(ER_SYNTAX_ERROR));
+    struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), session };
+    my_parse_error(&pass);
     return true;
   }
   if (sel->linkage == UNION_TYPE &&
@@ -301,14 +317,14 @@ static bool setup_select_in_parentheses(LEX *lex)
   return false;
 }
 
-static Item* reserved_keyword_function(const std::string &name, List<Item> *item_list)
+static Item* reserved_keyword_function(Session *session, const std::string &name, List<Item> *item_list)
 {
   const plugin::Function *udf= plugin::Function::get(name.c_str(), name.length());
   Item *item= NULL;
 
   if (udf)
   {
-    item= Create_udf_func::s_singleton.create(current_session, udf, item_list);
+    item= Create_udf_func::s_singleton.create(session, udf, item_list);
   } else {
     my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", name.c_str());
   }
@@ -2478,7 +2494,7 @@ select_init:
 select_paren:
           SELECT_SYM select_part2
           {
-            if (setup_select_in_parentheses(Lex))
+            if (setup_select_in_parentheses(YYSession, Lex))
               DRIZZLE_YYABORT;
           }
         | '(' select_paren ')'
@@ -2488,7 +2504,7 @@ select_paren:
 select_paren_derived:
           SELECT_SYM select_part2_derived
           {
-            if (setup_select_in_parentheses(Lex))
+            if (setup_select_in_parentheses(YYSession, Lex))
               DRIZZLE_YYABORT;
           }
         | '(' select_paren_derived ')'
@@ -2501,13 +2517,15 @@ select_init2:
             Select_Lex * sel= lex->current_select;
             if (lex->current_select->set_braces(0))
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -2858,7 +2876,7 @@ bit_expr:
         | bit_expr '*' bit_expr %prec '*'
           { $$= new Item_func_mul($1,$3); }
         | bit_expr '/' bit_expr %prec '/'
-          { $$= new Item_func_div($1,$3); }
+          { $$= new Item_func_div(YYSession,$1,$3); }
         | bit_expr '%' bit_expr %prec '%'
           { $$= new Item_func_mod($1,$3); }
         | bit_expr DIV_SYM bit_expr %prec DIV_SYM
@@ -2983,7 +3001,7 @@ function_call_keyword:
         | CURRENT_USER optional_braces
           {
             std::string user_str("user");
-            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, user_str, NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -2995,7 +3013,7 @@ function_call_keyword:
         | HOUR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_hour($3); }
         | INSERT '(' expr ',' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_insert($3,$5,$7,$9); }
+          { $$= new (YYSession->mem_root) Item_func_insert(*YYSession, $3, $5, $7, $9); }
         | INTERVAL_SYM '(' expr ',' expr ')' %prec INTERVAL_SYM
           {
             Session *session= YYSession;
@@ -3044,7 +3062,7 @@ function_call_keyword:
         | USER '(' ')'
           {
             std::string user_str("user");
-            if (! ($$= reserved_keyword_function(user_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, user_str, NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3106,7 +3124,7 @@ function_call_nonkeyword:
             args->push_back($3);
             args->push_back($5);
             args->push_back($7);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3117,7 +3135,7 @@ function_call_nonkeyword:
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3129,7 +3147,7 @@ function_call_nonkeyword:
             args->push_back($3);
             args->push_back($5);
             args->push_back($7);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3140,7 +3158,7 @@ function_call_nonkeyword:
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
             args->push_back($5);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3176,7 +3194,7 @@ function_call_conflict:
         | DATABASE '(' ')'
           {
             std::string database_str("database");
-            if (! ($$= reserved_keyword_function(database_str, NULL)))
+            if (! ($$= reserved_keyword_function(YYSession, database_str, NULL)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3190,15 +3208,15 @@ function_call_conflict:
         | QUARTER_SYM '(' expr ')'
           { $$ = new (YYSession->mem_root) Item_func_quarter($3); }
         | REPEAT_SYM '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_repeat($3,$5); }
+          { $$= new (YYSession->mem_root) Item_func_repeat(*YYSession, $3, $5); }
         | REPLACE '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_replace($3,$5,$7); }
+          { $$= new (YYSession->mem_root) Item_func_replace(*YYSession, $3, $5, $7); }
         | REVERSE_SYM '(' expr ')'
           {
             std::string reverse_str("reverse");
             List<Item> *args= new (YYSession->mem_root) List<Item>;
             args->push_back($3);
-            if (! ($$= reserved_keyword_function(reverse_str, args)))
+            if (! ($$= reserved_keyword_function(YYSession, reverse_str, args)))
             {
               DRIZZLE_YYABORT;
             }
@@ -3371,14 +3389,15 @@ variable_aux:
           }
         | ident_or_text
           {
-            $$= new Item_func_get_user_var($1);
+            $$= new Item_func_get_user_var(*YYSession, $1);
           }
         | '@' opt_var_ident_type ident_or_text opt_component
           {
             /* disallow "SELECT @@global.global.variable" */
             if ($3.str && $4.str && check_reserved_words(&$3))
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (!($$= get_system_var(YYSession, $2, $3, $4)))
@@ -3420,7 +3439,8 @@ in_sum_expr:
             LEX *lex= Lex;
             if (lex->current_select->inc_in_sum_expr())
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3535,13 +3555,19 @@ join_table:
             left-associative joins.
           */
           table_ref normal_join table_ref %prec TABLE_REF_PRIORITY
-          { DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); }
+          { 
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3));
+            Lex->is_cross= false;
+          }
         | table_ref STRAIGHT_JOIN table_factor
-          { DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; }
+          { 
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; 
+          }
         | table_ref normal_join table_ref
           ON
           {
             DRIZZLE_YYABORT_UNLESS($1 && $3);
+            DRIZZLE_YYABORT_UNLESS( not Lex->is_cross );
             /* Change the current name resolution context to a local context. */
             if (push_new_name_resolution_context(YYSession, $1, $3))
               DRIZZLE_YYABORT;
@@ -3661,7 +3687,7 @@ join_table:
 normal_join:
           JOIN_SYM {}
         | INNER_SYM JOIN_SYM {}
-        | CROSS JOIN_SYM {}
+        | CROSS JOIN_SYM { Lex->is_cross= true; }
         ;
 
 /*
@@ -3694,7 +3720,8 @@ table_factor:
             {
               if (sel->set_braces(1))
               {
-                my_parse_error(ER(ER_SYNTAX_ERROR));
+                struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+                my_parse_error(&pass);
                 DRIZZLE_YYABORT;
               }
               /* select in braces, can't contain global parameters */
@@ -3731,7 +3758,7 @@ table_factor:
             /* Use $2 instead of Lex->current_select as derived table will
                alter value of Lex->current_select. */
             if (!($3 || $5) && $2->embedding &&
-                !$2->embedding->nested_join->join_list.elements)
+                !$2->embedding->getNestedJoin()->join_list.elements)
             {
               /* we have a derived table ($3 == NULL) but no alias,
                  Since we are nested in further parentheses so we
@@ -3759,7 +3786,8 @@ table_factor:
             else if (($3->select_lex && $3->select_lex->master_unit()->is_union()) || $5)
             {
               /* simple nested joins cannot have aliases or unions */
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             else
@@ -3773,7 +3801,7 @@ select_derived_union:
           UNION_SYM
           union_option
           {
-            if (add_select_to_union_list(Lex, (bool)$3))
+            if (add_select_to_union_list(YYSession, Lex, (bool)$3))
               DRIZZLE_YYABORT;
           }
           query_specification
@@ -3795,13 +3823,15 @@ select_init2_derived:
             Select_Lex * sel= lex->current_select;
             if (lex->current_select->set_braces(0))
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (sel->linkage == UNION_TYPE &&
                 sel->master_unit()->first_select()->braces)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3841,7 +3871,8 @@ select_derived:
               DRIZZLE_YYABORT;
             if (!$3 && $$)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
           }
@@ -3853,7 +3884,8 @@ select_derived2:
             lex->derived_tables|= DERIVED_SUBQUERY;
             if (!lex->expr_allows_subselect)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             if (lex->current_select->linkage == GLOBAL_OPTIONS_TYPE ||
@@ -3884,12 +3916,13 @@ select_derived_init:
             if (!sel->embedding || sel->end_nested_join(lex->session))
             {
               /* we are not in parentheses */
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             embedding= Lex->current_select->embedding;
             $$= embedding &&
-                !embedding->nested_join->join_list.elements;
+                !embedding->getNestedJoin()->join_list.elements;
             /* return true if we are deeply nested */
           }
         ;
@@ -6200,7 +6233,7 @@ union_clause:
 union_list:
           UNION_SYM union_option
           {
-            if (add_select_to_union_list(Lex, (bool)$2))
+            if (add_select_to_union_list(YYSession, Lex, (bool)$2))
               DRIZZLE_YYABORT;
           }
           select_init
@@ -6270,7 +6303,7 @@ query_expression_body:
         | query_expression_body
           UNION_SYM union_option
           {
-            if (add_select_to_union_list(Lex, (bool)$3))
+            if (add_select_to_union_list(YYSession, Lex, (bool)$3))
               DRIZZLE_YYABORT;
           }
           query_specification
@@ -6293,7 +6326,8 @@ subselect_start:
             LEX *lex=Lex;
             if (!lex->expr_allows_subselect)
             {
-              my_parse_error(ER(ER_SYNTAX_ERROR));
+              struct my_parse_error_st pass= { ER(ER_SYNTAX_ERROR), YYSession };
+              my_parse_error(&pass);
               DRIZZLE_YYABORT;
             }
             /*

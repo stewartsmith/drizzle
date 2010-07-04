@@ -44,7 +44,9 @@
 using namespace std;
 using namespace drizzled;
 
-static SchemaIdentifier TEMPORARY_IDENTIFIER("TEMPORARY");
+// This should always be the same value as GLOBAL_TEMPORARY_EXT but be
+// CASE_UP. --Brian
+static SchemaIdentifier TEMPORARY_IDENTIFIER(".TEMPORARY");
 
 #define MY_DB_OPT_FILE "db.opt"
 #define DEFAULT_FILE_EXTENSION ".dfe" // Deep Fried Elephant
@@ -79,6 +81,9 @@ void Schema::prime()
   {
     CachedDirectory::Entry *entry= *fileIter;
     message::Schema schema_message;
+
+    if (not entry->filename.compare(GLOBAL_TEMPORARY_EXT))
+      continue;
 
     if (readSchemaFile(entry->filename, schema_message))
     {
@@ -125,7 +130,7 @@ void Schema::doGetSchemaIdentifiers(SchemaIdentifierList &set_of_names)
   }
 }
 
-bool Schema::doGetSchemaDefinition(SchemaIdentifier &schema_identifier, message::Schema &schema_message)
+bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::Schema &schema_message)
 {
   if (not pthread_rwlock_rdlock(&schema_lock))
   {
@@ -176,7 +181,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   return true;
 }
 
-bool Schema::doDropSchema(SchemaIdentifier &schema_identifier)
+bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
 {
   message::Schema schema_message;
 
@@ -255,7 +260,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   @note we do the rename to make it crash safe.
 */
-bool Schema::writeSchemaFile(SchemaIdentifier &schema_identifier, const message::Schema &db)
+bool Schema::writeSchemaFile(const SchemaIdentifier &schema_identifier, const message::Schema &db)
 {
   char schema_file_tmp[FN_REFLEN];
   string schema_file(schema_identifier.getPath());
@@ -275,10 +280,20 @@ bool Schema::writeSchemaFile(SchemaIdentifier &schema_identifier, const message:
     return false;
   }
 
-  if (not db.SerializeToFileDescriptor(fd))
+  bool success;
+
+  try {
+    success= db.SerializeToFileDescriptor(fd);
+  }
+  catch (...)
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             db.InitializationErrorString().c_str());
+    success= false;
+  }
+
+  if (not success)
+  {
+    my_error(ER_CORRUPT_SCHEMA_DEFINITION, MYF(0), schema_file.c_str(),
+             db.InitializationErrorString().empty() ? "unknown" :  db.InitializationErrorString().c_str());
 
     if (close(fd) == -1)
       perror(schema_file_tmp);
@@ -336,8 +351,8 @@ bool Schema::readSchemaFile(const std::string &schema_file_name, drizzled::messa
       return true;
     }
 
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             schema_message.InitializationErrorString().c_str());
+    my_error(ER_CORRUPT_SCHEMA_DEFINITION, MYF(0), db_opt_path.c_str(),
+             schema_message.InitializationErrorString().empty() ? "unknown" :  schema_message.InitializationErrorString().c_str());
   }
   else
   {
@@ -347,9 +362,9 @@ bool Schema::readSchemaFile(const std::string &schema_file_name, drizzled::messa
   return false;
 }
 
-bool Schema::doCanCreateTable(drizzled::TableIdentifier &identifier)
+bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (static_cast<SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
+  if (static_cast<const SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
   {
     return false;
   }
@@ -358,7 +373,7 @@ bool Schema::doCanCreateTable(drizzled::TableIdentifier &identifier)
 }
 
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                   drizzled::SchemaIdentifier&,
+                                   const drizzled::SchemaIdentifier&,
                                    drizzled::TableIdentifiers&)
 {
 }

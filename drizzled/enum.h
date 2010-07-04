@@ -21,8 +21,6 @@
 #ifndef DRIZZLED_ENUM_H
 #define DRIZZLED_ENUM_H
 
-#include "drizzled/message/table.pb.h"
-
 namespace drizzled
 {
 
@@ -1059,7 +1057,9 @@ enum drizzled_error_code {
   ER_UNKNOWN_ENGINE_OPTION,
   ER_UNKNOWN_SCHEMA_OPTION,
   ER_EVENT_OBSERVER_PLUGIN,
-  ER_ERROR_LAST= ER_EVENT_OBSERVER_PLUGIN
+  ER_CORRUPT_SCHEMA_DEFINITION,
+  ER_CARTESIAN_JOIN_ATTEMPTED,
+  ER_ERROR_LAST= ER_CARTESIAN_JOIN_ATTEMPTED
 };
 
 enum drizzle_exit_codes {

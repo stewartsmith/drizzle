@@ -33,6 +33,9 @@
 namespace drizzled
 {
 
+/* Global value for how we extend our temporary directory */
+#define GLOBAL_TEMPORARY_EXT ".temporary"
+
 /* These paths are converted to other systems (WIN95) before use */
 
 #define LANGUAGE	"english/"

@@ -68,7 +68,7 @@ static int check_insert_fields(Session *session, TableList *table_list,
 
   if (fields.elements == 0 && values.elements != 0)
   {
-    if (values.elements != table->s->fields)
+    if (values.elements != table->getShare()->sizeFields())
     {
       my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1L);
       return -1;
@@ -121,8 +121,10 @@ static int check_insert_fields(Session *session, TableList *table_list,
     if (table->timestamp_field)	// Don't automaticly set timestamp if used
     {
       if (table->timestamp_field->isWriteSet())
+      {
         clear_timestamp_auto_bits(table->timestamp_field_type,
                                   TIMESTAMP_AUTO_SET_ON_INSERT);
+      }
       else
       {
         table->setWriteSet(table->timestamp_field->field_index);
@@ -177,10 +179,15 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
   {
     /* Don't set timestamp column if this is modified. */
     if (table->timestamp_field->isWriteSet())
+    {
       clear_timestamp_auto_bits(table->timestamp_field_type,
                                 TIMESTAMP_AUTO_SET_ON_UPDATE);
+    }
+
     if (timestamp_mark)
+    {
       table->setWriteSet(table->timestamp_field->field_index);
+    }
   }
   return 0;
 }
@@ -321,10 +328,8 @@ bool mysql_insert(Session *session,TableList *table_list,
     For single line insert, generate an error if try to set a NOT NULL field
     to NULL.
   */
-  session->count_cuted_fields= ((values_list.elements == 1 &&
-                                 !ignore) ?
-                                CHECK_FIELD_ERROR_FOR_NULL :
-                                CHECK_FIELD_WARN);
+  session->count_cuted_fields= ignore ? CHECK_FIELD_WARN : CHECK_FIELD_ERROR_FOR_NULL;
+
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
@@ -370,7 +375,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     {
       table->restoreRecordAsDefault();	// Get empty record
 
-      if (fill_record(session, table->field, *values))
+      if (fill_record(session, table->getFields(), *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -673,7 +678,7 @@ bool mysql_prepare_insert(Session *session, TableList *table_list,
 
 static int last_uniq_key(Table *table,uint32_t keynr)
 {
-  while (++keynr < table->s->keys)
+  while (++keynr < table->getShare()->sizeKeys())
     if (table->key_info[keynr].flags & HA_NOSAME)
       return 0;
   return 1;
@@ -765,7 +770,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
       */
       if (info->handle_duplicates == DUP_REPLACE &&
           table->next_number_field &&
-          key_nr == table->s->next_number_index &&
+          key_nr == table->getShare()->next_number_index &&
 	  (insert_id_for_cur_row > 0))
 	goto err;
       if (table->cursor->getEngine()->check_flag(HTON_BIT_DUPLICATE_POS))
@@ -783,7 +788,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 
 	if (!key)
 	{
-	  if (!(key=(char*) malloc(table->s->max_unique_length)))
+	  if (!(key=(char*) malloc(table->getShare()->max_unique_length)))
 	  {
 	    error=ENOMEM;
 	    goto err;
@@ -956,7 +961,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 {
   int err= 0;
 
-  for (Field **field=entry->field ; *field ; field++)
+  for (Field **field=entry->getFields() ; *field ; field++)
   {
     if (((*field)->isWriteSet()) == false)
     {
@@ -1299,7 +1304,7 @@ void select_insert::store_values(List<Item> &values)
   if (fields->elements)
     fill_record(session, *fields, values, true);
   else
-    fill_record(session, table->field, values, true);
+    fill_record(session, table->getFields(), values, true);
 }
 
 void select_insert::send_error(uint32_t errcode,const char *err)
@@ -1464,7 +1469,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				      TableIdentifier &identifier)
 {
   Table tmp_table;		// Used during 'CreateField()'
-  TableShare share;
+  TableShare share(message::Table::INTERNAL);
   Table *table= 0;
   uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
@@ -1491,15 +1496,15 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 
   tmp_table.alias= 0;
   tmp_table.timestamp_field= 0;
-  tmp_table.s= &share;
+  tmp_table.setShare(&share);
 
-  tmp_table.s->db_create_options=0;
-  tmp_table.s->blob_ptr_size= portable_sizeof_char_ptr;
+  tmp_table.getMutableShare()->db_create_options= 0;
+  tmp_table.getMutableShare()->blob_ptr_size= portable_sizeof_char_ptr;
 
   if (not table_proto.engine().name().compare("MyISAM"))
-    tmp_table.s->db_low_byte_first= true;
+    tmp_table.getMutableShare()->db_low_byte_first= true;
   else if (not table_proto.engine().name().compare("MEMORY"))
-    tmp_table.s->db_low_byte_first= true;
+    tmp_table.getMutableShare()->db_low_byte_first= true;
 
   tmp_table.null_row= false;
   tmp_table.maybe_null= false;
@@ -1625,7 +1630,9 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 					  alter_info, &values,
 					  is_if_not_exists,
 					  &extra_lock, identifier)))
+  {
     return(-1);				// abort() deletes table
+  }
 
   if (extra_lock)
   {
@@ -1639,14 +1646,14 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
     *m_plock= extra_lock;
   }
 
-  if (table->s->fields < values.elements)
+  if (table->getShare()->sizeFields() < values.elements)
   {
     my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1);
     return(-1);
   }
 
  /* First field to copy */
-  field= table->field+table->s->fields - values.elements;
+  field= table->getFields() + table->getShare()->sizeFields() - values.elements;
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
@@ -1710,7 +1717,7 @@ bool select_create::send_eof()
       tables.  This can fail, but we should unlock the table
       nevertheless.
     */
-    if (!table->s->tmp_table)
+    if (!table->getShare()->getType())
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
       transaction_services.autocommitOrRollback(session, 0);

@@ -28,7 +28,7 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
-    drizzled::Session *session;
+    drizzled::Session &session;
     drizzled::Table *table;
 
     void fill();

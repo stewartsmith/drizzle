@@ -469,7 +469,7 @@ ErrorMap::ErrorMap()
   add(ER_COLLATION_CHARSET_MISMATCH, N_("COLLATION '%s' is not valid for CHARACTER SET '%s'"));
   add(ER_SLAVE_WAS_RUNNING, N_("Slave is already running"));
   add(ER_SLAVE_WAS_NOT_RUNNING, N_("Slave already has been stopped"));
-  add(ER_TOO_BIG_FOR_UNCOMPRESS, N_("Uncompressed data size too large; the maximum size is %d (probably, length of uncompressed data was corrupted)"));
+  add(ER_TOO_BIG_FOR_UNCOMPRESS, N_("Uncompressed data size too large; the maximum size is %d (based on max_allowed_packet). The length of uncompressed data may also be corrupted."));
   add(ER_ZLIB_Z_MEM_ERROR, N_("ZLIB: Not enough memory"));
   add(ER_ZLIB_Z_BUF_ERROR, N_("ZLIB: Not enough room in the output buffer (probably, length of uncompressed data was corrupted)"));
   add(ER_ZLIB_Z_DATA_ERROR, N_("ZLIB: Input data corrupted"));
@@ -906,12 +906,14 @@ ErrorMap::ErrorMap()
   add(ER_INVALID_ENUM_VALUE, N_("Received an invalid enum value '%s'."));
   add(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, N_("Tables which are replicated require a primary key."));
   add(ER_CORRUPT_TABLE_DEFINITION, N_("Corrupt or invalid table definition: %s"));
+  add(ER_CORRUPT_SCHEMA_DEFINITION, N_("Corrupt or invalid schema definition for %s : %s"));
   add(ER_SCHEMA_DOES_NOT_EXIST, N_("Schema does not exist: %s"));
   add(ER_ALTER_SCHEMA, N_("Error altering schema: %s"));
   add(ER_DROP_SCHEMA, +N_("Error droppping Schema : %s"));
   add(ER_USE_SQL_BIG_RESULT, N_("Temporary table too large, rerun with SQL_BIG_RESULT."));
   add(ER_UNKNOWN_ENGINE_OPTION, N_("Unknown table engine option key/pair %s = %s."));
   add(ER_UNKNOWN_SCHEMA_OPTION, N_("Unknown schema engine option key/pair %s = %s."));
+  add(ER_CARTESIAN_JOIN_ATTEMPTED, N_("Implicit cartesian join attempted."));
 
   add(EE_CANTUNLOCK, N_("Can't unlock file (Errcode: %d)"));
   add(EE_CANT_CHSIZE, N_("Can't change size of file (Errcode: %d)"));

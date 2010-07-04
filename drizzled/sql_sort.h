@@ -81,7 +81,7 @@ struct BUFFPEK_COMPARE_CONTEXT
   void *key_compare_arg;
 };
 
-typedef struct st_sort_param {
+struct st_sort_param {
   uint32_t rec_length;          /* Length of sorted records */
   uint32_t sort_length;			/* Length of sorted columns */
   uint32_t ref_length;			/* Length of record ref. */
@@ -99,7 +99,9 @@ typedef struct st_sort_param {
   /* The fields below are used only by Unique class */
   qsort2_cmp compare;
   BUFFPEK_COMPARE_CONTEXT cmp_context;
-} SORTPARAM;
+};
+
+typedef struct st_sort_param SORTPARAM;
 
 
 int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,

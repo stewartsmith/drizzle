@@ -33,6 +33,7 @@ set global hello_events_watch_tables = "x,y";
 
 #include "config.h"
 #include <string>
+#include <cstdio>
 
 #include "drizzled/session.h"
 #include "hello_events.h"

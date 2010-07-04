@@ -108,7 +108,7 @@ Open_tables_state::Open_tables_state(uint64_t version_arg) :
 int mysql_tmpfile(const char *prefix)
 {
   char filename[FN_REFLEN];
-  int fd = internal::create_temp_file(filename, drizzle_tmpdir, prefix, MYF(MY_WME));
+  int fd = internal::create_temp_file(filename, drizzle_tmpdir.c_str(), prefix, MYF(MY_WME));
   if (fd >= 0) {
     unlink(filename);
   }
@@ -205,7 +205,7 @@ Session::Session(plugin::Client *client_arg) :
   */
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= NULL;
-  count_cuted_fields= CHECK_FIELD_IGNORE;
+  count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
   killed= NOT_KILLED;
   col_access= 0;
   tmp_table= 0;
@@ -224,6 +224,7 @@ Session::Session(plugin::Client *client_arg) :
   query_id= 0;
   warn_query_id= 0;
   mysys_var= 0;
+  scoreboard_index= -1;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
   pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
@@ -344,7 +345,6 @@ void Session::cleanup(void)
 Session::~Session()
 {
   this->checkSentry();
-  add_to_status(&global_status_var, &status_var);
 
   if (client->isConnected())
   {
@@ -379,54 +379,6 @@ Session::~Session()
   /* Ensure that no one is using Session */
   pthread_mutex_unlock(&LOCK_delete);
   pthread_mutex_destroy(&LOCK_delete);
-}
-
-/*
-  Add all status variables to another status variable array
-
-  SYNOPSIS
-   add_to_status()
-   to_var       add to this array
-   from_var     from this array
-
-  NOTES
-    This function assumes that all variables are long/ulong.
-    If this assumption will change, then we have to explictely add
-    the other variables after the while loop
-*/
-void add_to_status(system_status_var *to_var, system_status_var *from_var)
-{
-  ulong *end= (ulong*) ((unsigned char*) to_var +
-                        offsetof(system_status_var, last_system_status_var) +
-			sizeof(ulong));
-  ulong *to= (ulong*) to_var, *from= (ulong*) from_var;
-
-  while (to != end)
-    *(to++)+= *(from++);
-}
-
-/*
-  Add the difference between two status variable arrays to another one.
-
-  SYNOPSIS
-    add_diff_to_status
-    to_var       add to this array
-    from_var     from this array
-    dec_var      minus this array
-
-  NOTE
-    This function assumes that all variables are long/ulong.
-*/
-void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
-                        system_status_var *dec_var)
-{
-  ulong *end= (ulong*) ((unsigned char*) to_var + offsetof(system_status_var,
-						  last_system_status_var) +
-			sizeof(ulong));
-  ulong *to= (ulong*) to_var, *from= (ulong*) from_var, *dec= (ulong*) dec_var;
-
-  while (to != end)
-    *(to++)+= *(from++) - *(dec++);
 }
 
 void Session::awake(Session::killed_state state_to_set)
@@ -1684,7 +1636,7 @@ void Session::close_temporary_tables()
 
   for (table= temporary_tables; table; table= tmp_next)
   {
-    tmp_next= table->next;
+    tmp_next= table->getNext();
     nukeTable(table);
   }
   temporary_tables= NULL;
@@ -1696,11 +1648,13 @@ void Session::close_temporary_tables()
 
 void Session::close_temporary_table(Table *table)
 {
-  if (table->prev)
+  if (table->getPrev())
   {
-    table->prev->next= table->next;
-    if (table->prev->next)
-      table->next->prev= table->prev;
+    table->getPrev()->setNext(table->getNext());
+    if (table->getPrev()->getNext())
+    {
+      table->getNext()->setPrev(table->getPrev());
+    }
   }
   else
   {
@@ -1711,9 +1665,11 @@ void Session::close_temporary_table(Table *table)
       passing non-zero value to end_slave via rli->save_temporary_tables
       when no temp tables opened, see an invariant below.
     */
-    temporary_tables= table->next;
+    temporary_tables= table->getNext();
     if (temporary_tables)
-      table->next->prev= NULL;
+    {
+      table->getNext()->setPrev(NULL);
+    }
   }
   nukeTable(table);
 }
@@ -1749,14 +1705,8 @@ void Session::refresh_status()
 {
   pthread_mutex_lock(&LOCK_status);
 
-  /* Add thread's status variabes to global status */
-  add_to_status(&global_status_var, &status_var);
-
   /* Reset thread's status variables */
   memset(&status_var, 0, sizeof(status_var));
-
-  /* Reset some global variables */
-  reset_status_vars();
 
   /* Reset the counters of all key caches (default and named). */
   reset_key_cache_counters();
@@ -1794,7 +1744,7 @@ user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists
 
 void Session::mark_temp_tables_as_free_for_reuse()
 {
-  for (Table *table= temporary_tables ; table ; table= table->next)
+  for (Table *table= temporary_tables ; table ; table= table->getNext())
   {
     if (table->query_id == query_id)
     {
@@ -1806,7 +1756,7 @@ void Session::mark_temp_tables_as_free_for_reuse()
 
 void Session::mark_used_tables_as_free_for_reuse(Table *table)
 {
-  for (; table ; table= table->next)
+  for (; table ; table= table->getNext())
   {
     if (table->query_id == query_id)
     {
@@ -1920,17 +1870,27 @@ bool Session::openTables(TableList *tables, uint32_t flags)
   assert(ret == false);
   if (open_tables_from_list(&tables, &counter, flags) ||
       mysql_handle_derived(lex, &mysql_derived_prepare))
+  {
     return true;
+  }
   return false;
 }
 
-bool Session::rm_temporary_table(TableIdentifier &identifier)
+/*
+  @note "best_effort" is used in cases were if a failure occurred on this
+  operation it would not be surprising because we are only removing because there
+  might be an issue (lame engines).
+*/
+
+bool Session::rm_temporary_table(TableIdentifier &identifier, bool best_effort)
 {
   if (plugin::StorageEngine::dropTable(*this, identifier))
   {
-    errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
-                  identifier.getSQLPath().c_str(), errno);
-    dumpTemporaryTableNames("rm_temporary_table()");
+    if (not best_effort)
+    {
+      errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
+                    identifier.getSQLPath().c_str(), errno);
+    }
 
     return true;
   }
@@ -1946,7 +1906,6 @@ bool Session::rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &i
   {
     errmsg_printf(ERRMSG_LVL_WARN, _("Could not remove temporary table: '%s', error: %d"),
                   identifier.getSQLPath().c_str(), errno);
-    dumpTemporaryTableNames("rm_temporary_table()");
 
     return true;
   }
@@ -1966,7 +1925,7 @@ void Session::dumpTemporaryTableNames(const char *foo)
     return;
 
   cerr << "Begin Run: " << foo << "\n";
-  for (table= temporary_tables; table; table= table->next)
+  for (table= temporary_tables; table; table= table->getNext())
   {
     bool have_proto= false;
 
@@ -1986,14 +1945,14 @@ void Session::dumpTemporaryTableNames(const char *foo)
   }
 }
 
-bool Session::storeTableMessage(TableIdentifier &identifier, message::Table &table_message)
+bool Session::storeTableMessage(const TableIdentifier &identifier, message::Table &table_message)
 {
   table_message_cache.insert(make_pair(identifier.getPath(), table_message));
 
   return true;
 }
 
-bool Session::removeTableMessage(TableIdentifier &identifier)
+bool Session::removeTableMessage(const TableIdentifier &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2007,7 +1966,7 @@ bool Session::removeTableMessage(TableIdentifier &identifier)
   return true;
 }
 
-bool Session::getTableMessage(TableIdentifier &identifier, message::Table &table_message)
+bool Session::getTableMessage(const TableIdentifier &identifier, message::Table &table_message)
 {
   TableMessageCache::iterator iter;
 
@@ -2021,7 +1980,7 @@ bool Session::getTableMessage(TableIdentifier &identifier, message::Table &table
   return true;
 }
 
-bool Session::doesTableMessageExist(TableIdentifier &identifier)
+bool Session::doesTableMessageExist(const TableIdentifier &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -2035,7 +1994,7 @@ bool Session::doesTableMessageExist(TableIdentifier &identifier)
   return true;
 }
 
-bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
+bool Session::renameTableMessage(const TableIdentifier &from, const TableIdentifier &to)
 {
   TableMessageCache::iterator iter;
 
@@ -2054,22 +2013,9 @@ bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
   return true;
 }
 
-TableShareInstance *Session::getTemporaryShare()
+TableShareInstance *Session::getTemporaryShare(TableIdentifier::Type type_arg)
 {
-  temporary_shares.push_back(new TableShareInstance()); // This will not go into the tableshare cache, so no key is used.
-
-  TableShareInstance *tmp_share= temporary_shares.back();
-
-  assert(tmp_share);
-
-  return tmp_share;
-}
-
-TableShareInstance *Session::getTemporaryShare(const char *tmpname_arg)
-{
-  assert(tmpname_arg);
-
-  temporary_shares.push_back(new TableShareInstance(tmpname_arg)); // This will not go into the tableshare cache, so no key is used.
+  temporary_shares.push_back(new TableShareInstance(type_arg)); // This will not go into the tableshare cache, so no key is used.
 
   TableShareInstance *tmp_share= temporary_shares.back();
 

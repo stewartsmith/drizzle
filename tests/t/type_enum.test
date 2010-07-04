@@ -37,50 +37,56 @@ update t1 set a = replace(a,'x','y');
 select * from t1;
 drop table t1;
 
-##
-## Bug #2077
-##
-#create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
-#show columns from t1;
-#show create table t1;
-#drop table t1;
-
-# Test currently turned off because of this bug:
-# Bug 308841 queries with German umlauts in insert statem
 #
+# Bug #2077
+# Drizzle -> We only handle UTF-8 for ENUM names.
+#
+--error 1693
+create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
+
+# and now with what it's meant to be doing (from looking at mysql result)
+create table t1 (a enum(0xC3A4, '1', '2') not null default 0xC3A4);
+show columns from t1;
+show create table t1;
+drop table t1;
+
+
 # Bug #5628 German characters in field-defs will be '?'
 # with some table definitions
 #
-#set names latin1;
-#CREATE TABLE t1 (
-#  a INT  default 1,
-#  b ENUM('value','öäü_value','ÊÃÕ') character set latin1 NOT NULL
-#);
-#show create table t1;
-#show columns from t1;
-#drop table t1;
-
-# Test currently turned off because of this bug:
-# Bug 308841 queries with German umlauts in insert statem
-#CREATE TABLE t1 (c enum('ae','oe','ue','ss') collate utf8_swedish_ci);
-#INSERT INTO t1 VALUES ('ä'),('ö'),('ü'),('ß');
-#SELECT * FROM t1;
-#DROP TABLE t1;
-
-# Test currently turned off because of this bug:
-# Bug 308841 queries with German umlauts in insert statements fail
+# Drizzle -> We only handle UTF-8 for ENUM names.
 #
-# Bug #6379: ENUM values are incorrectly converted
+--error 1693
+CREATE TABLE t1 (
+  a INT  default 1,
+  b ENUM('value','öäü_value','ÊÃÕ') NOT NULL
+);
+
+# in utf8 land we don't convert ä into ae to store in latin1 encoding.
+# I think this is correct.
+CREATE TABLE t1 (c enum('ae','oe','ue','ss') collate utf8_unicode_ci);
+--error 1691
+INSERT INTO t1 VALUES ('ä');
+--error 1691
+INSERT INTO t1 values ('ö');
+--error 1691
+INSERT INTO t1 values ('ü');
+--error 1691
+INSERT INTO t1 values ('ß');
+SELECT * FROM t1;
+DROP TABLE t1;
+
+# MySQL Bug #6379: ENUM values are incorrectly converted
 #
 # Check latin1 -> utf8 conversion
+# (this is semi-pointless for Drizzle)
 #
-#CREATE TABLE t1 (
-#  a ENUM('ä','ö','ü') character set utf8 default 'ü'
-#);
-#show create table t1;
-#insert into t1 values ('ä'), ('ö'), ('ü');
-#select a from t1 order by a;
-#drop table t1;
+# Drizzle -> We only handle UTF-8 for ENUM names.
+#
+--error 1693
+CREATE TABLE t1 (
+  a ENUM('ä','ö','ü') default 'ü'
+);
 
 # Test currently turned off because of this bug:
 # Bug 308841 queries with German umlauts in insert statements fail
@@ -88,14 +94,16 @@ drop table t1;
 # Now check utf8 -> latin1 conversion
 # This test emulates loading a script generated with mysqldump
 #
-#CREATE TABLE t1 (
-#  a ENUM('Ã¤','Ã¶','Ã¼') character set latin1 default 'Ã¼'
-#);
-#insert into t1 values ('Ã¤'),('Ã¶'),('Ã¼');
+# (this is semi pointless with Drizzle as we're just UTF8... but syntax should work)
+#
+CREATE TABLE t1 (
+  a ENUM('Ã¤','Ã¶','Ã¼') default 'Ã¼'
+);
+insert into t1 values ('Ã¤'),('Ã¶'),('Ã¼');
 # Now check what has been loaded
-#show create table t1;
-#select a from t1 order by a;
-#drop table t1;
+show create table t1;
+select a from t1 order by a;
+drop table t1;
 
 #
 # Test bug where enum fields where extended for each ALTER TABLE
@@ -120,17 +128,20 @@ drop table t1;
 #
 # Bug#24660 "enum" field type definition problem
 #
-#create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
-#show create table t1;
-#drop table t1;
+# Drizzle -> We only handle UTF-8 for ENUM names.
 #
-#create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
-#show create table t1;
-#drop table t1;
+--error 1693
+create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
+
 #
-#create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
-#show create table t1;
-#drop table t1;
+create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
+show create table t1;
+drop table t1;
+#
+# Drizzle -> We only handle UTF-8 for ENUM names.
+#
+--error 1693
+create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
 
 #
 # Bug #29251: MySQL coerces special 0 enum values to normal '' value

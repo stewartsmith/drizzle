@@ -180,6 +180,7 @@ set @c = repeat(' ', 256);
 set @q = repeat('q', 256);
 
 # BUG, 309791 currently only gives a warning but should give error
+--error 1406
 insert into t1 values(@c, @c, @c);
 show warnings;
 --error 1406

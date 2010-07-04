@@ -178,9 +178,13 @@ typedef struct wild_file_pack	/* Struct to hold info when selecting files */
 
 enum cache_type
 {
-  TYPE_NOT_SET= 0, READ_CACHE, WRITE_CACHE,
-  SEQ_READ_APPEND		/* sequential read or append */,
-  READ_FIFO, READ_NET,WRITE_NET};
+  TYPE_NOT_SET= 0,
+  READ_CACHE,
+  WRITE_CACHE,
+  READ_FIFO,
+  READ_NET,
+  WRITE_NET
+};
 
 typedef struct st_record_cache	/* Used when cacheing records */
 {
