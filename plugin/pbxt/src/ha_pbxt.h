@@ -81,9 +81,9 @@ public:
 	/* override */ void drop_database(char *);
 	/* override */ bool show_status(Session *, stat_print_fn *, enum ha_stat_type);
         /* override */ const char **bas_ext() const;
-	/* override */ int doCreateTable(Session& session, Table &table_arg, TableIdentifier& ident,  drizzled::message::Table &proto);
-	/* override */ int doRenameTable(Session& session, TableIdentifier& from, TableIdentifier& to);
-	/* override */ int doDropTable(Session &session, TableIdentifier& ident);
+	/* override */ int doCreateTable(Session& session, Table &table_arg, const TableIdentifier& ident,  drizzled::message::Table &proto);
+	/* override */ int doRenameTable(Session& session, const TableIdentifier& from, const TableIdentifier& to);
+	/* override */ int doDropTable(Session &session, const TableIdentifier& ident);
 
 	/* override */ int doStartTransaction(Session *session, start_transaction_option_t options);
 	/* override */ int doStartConsistentSnapshot(Session *) { /* obsolete */ return -1; }
@@ -106,7 +106,7 @@ public:
 					SchemaIdentifier&, 
 					std::set<std::string>&) {}
 
-	/* override */ bool doDoesTableExist(Session&, TableIdentifier &identifier);
+	/* override */ bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
         ~PBXTStorageEngine();
 };
