@@ -307,9 +307,9 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
     message::Table* table_proto = table->getShare()->getTableProto();
 
     share->real_file_name.clear();
-    for (int i = 0; i < table_proto->engine().options_size(); i++)
+    for (int x= 0; x < table_proto->engine().options_size(); x++)
     {
-      const message::Engine::Option& option= table_proto->engine().options(i);
+      const message::Engine::Option& option= table_proto->engine().options(x);
 
       if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
         share->real_file_name= option.state();
@@ -746,9 +746,9 @@ int FilesystemEngine::doCreateTable(Session &,
                         const drizzled::TableIdentifier &identifier,
                         drizzled::message::Table &proto)
 {
-  for (int i = 0; i < proto.engine().options_size(); i++)
+  for (int x= 0; x < proto.engine().options_size(); x++)
   {
-    const message::Engine::Option& option= proto.engine().options(i);
+    const message::Engine::Option& option= proto.engine().options(x);
 
     if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
     {
