@@ -272,9 +272,13 @@ void *CSThread::dispatch(void *arg)
 
 
 extern "C"
+{
+
 static void *dispatch_wrapper(void *arg)
 {
 	return CSThread::dispatch(arg);
+}
+
 }
 
 void *CSThread::run()

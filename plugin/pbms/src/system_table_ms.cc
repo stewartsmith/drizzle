@@ -494,7 +494,7 @@ void PBMSSystemTables::loadSystemTables(MSDatabase *db)
 	enter_();
 	push_(db);
 	
-	for ( int i = 0; i < 4; i++) {
+	for ( volatile int i = 0; i < 4; i++) {
 		try_(a) {
 			switch (i) {
 				case 0:
@@ -542,9 +542,9 @@ typedef union {
 
 CSStringBuffer *PBMSSystemTables::dumpSystemTables(MSDatabase *db)
 {
-	CSStringBuffer *sysDump, *tabDump;
+	CSStringBuffer *sysDump, *tabDump = NULL;
 	uint32_t size, pos, tab_version;
-	uint8_t tab_id;
+	uint8_t tab_id = 0;
 	DumpDiskData	d;
 
 	enter_();
