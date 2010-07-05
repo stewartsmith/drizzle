@@ -121,6 +121,7 @@ void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
   {
     set_of_identifiers.push_back(TableIdentifier(schema_identifier, "t1"));
     set_of_identifiers.push_back(TableIdentifier(schema_identifier, "too_many_enum_values"));
+    set_of_identifiers.push_back(TableIdentifier(schema_identifier, "invalid_table_collation"));
   }
 }
 
@@ -129,6 +130,8 @@ bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::TableIde
   if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
     return true;
   if (strcmp(identifier.getPath().c_str(), "./test/too_many_enum_values") == 0)
+    return true;
+  if (strcmp(identifier.getPath().c_str(), "./test/invalid_table_collation") == 0)
     return true;
 
   return false;
@@ -214,6 +217,31 @@ static void fill_table_too_many_enum_values(message::Table &table)
 
 }
 
+static void fill_table_invalid_table_collation(message::Table &table)
+{
+  message::Table::Field *field;
+  message::Table::TableOptions *tableopts;
+
+  table.set_name("invalid_table_collation");
+  table.set_type(message::Table::STANDARD);
+  table.set_schema("test");
+  table.set_creation_timestamp(0);
+  table.set_update_timestamp(0);
+  table.mutable_engine()->set_name("tableprototester");
+
+  tableopts= table.mutable_options();
+  tableopts->set_comment("Invalid table collation ");
+
+  {
+    field= table.add_field();
+    field->set_name("number");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+
+  tableopts->set_collation("pi_pi_pi");
+  tableopts->set_collation_id(123456);
+
+}
 
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                                  const drizzled::TableIdentifier &identifier,
@@ -227,6 +255,11 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
   else if (strcmp(identifier.getPath().c_str(), "./test/too_many_enum_values")==0)
   {
     fill_table_too_many_enum_values(table_proto);
+    return EEXIST;
+  }
+  else if (strcmp(identifier.getPath().c_str(), "./test/invalid_table_collation")==0)
+  {
+    fill_table_invalid_table_collation(table_proto);
     return EEXIST;
   }
   return ENOENT;
