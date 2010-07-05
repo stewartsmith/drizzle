@@ -916,9 +916,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   if (!table_charset)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("'%s' had an invalid or unknown character set."),
-                  getPath());
+    char errmsg[100];
+    snprintf(errmsg, sizeof(errmsg),
+             _("Table %s has invalid/unknown collation: %d,%s"),
+             getPath(),
+             table_options.collation_id(),
+             table_options.collation().c_str());
+    errmsg[99]='\0';
+
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
     return ER_CORRUPT_TABLE_DEFINITION;
   }
 
