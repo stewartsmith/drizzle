@@ -86,11 +86,317 @@ msgstr "各ステートメントの後で警告を表示する。"
 msgid "Don't show warnings after every statement."
 msgstr "各ステートメントの後で警告を表示しない。"
 
+msgid "Error: Invalid Value for connect_timeout"
+msgstr ""
+
+msgid "Error: Invalid Value for max_input_line"
+msgstr ""
+
+#, fuzzy
+msgid "Displays this help and exit."
+msgstr "ヘルプを表示して終了する。"
+
+msgid ""
+"Don't use history file. Disable interactive behavior. (Enables --silent)"
+msgstr ""
+"履歴ファイルを使用しない。インタラクティブな振る舞いを無効にする。（--silent"
+"オプションを有効にします。）"
+
+msgid "Display column type information."
+msgstr "カラムのデータ型に関する情報を表示する。"
+
+msgid ""
+"Preserve comments. Send comments to the server. The default is --skip-"
+"comments (discard comments), enable with --comments"
+msgstr ""
+"コメントを保存し、コメントをサーバへ送信する。デフォルトは--skip-comments（コ"
+"メント機能は無効）で、--commentsオプションをつけることにより有効になります。"
+
+msgid "Use compression in server/client protocol."
+msgstr "サーバ・クライアントプロトコルにおいて圧縮を利用する。"
+
+msgid "Print the output of a query (rows) vertically."
+msgstr "結果を縦に表示する。"
+
+msgid "Continue even if we get an sql error."
+msgstr "sqlエラーが発生しても続行する。"
+
+msgid ""
+"Enable named commands. Named commands mean this program's internal commands; "
+"see drizzle> help . When enabled, the named commands can be used from any "
+"line of the query, otherwise only from the first line, before an enter. "
+"Disable with --disable-named-commands. This option is disabled by default."
+msgstr ""
+"指定コマンドを有効にする。指定コマンドとは本プログラムの名言うコマンドのこと"
+"です。詳細は「drizzle> help」を参照してください。有効である場合、指定コマンド"
+"は複数行にクエリがまたがる場合にどの行においても使用することができます。無効"
+"である場合は、先頭行のみで使用することが可能です。--disable-named-commandsオ"
+"プションにより無効にすることが可能です。デフォルトは無効です。"
+
+msgid ""
+"Named commands are disabled. Use \\* form only, or use named commands only "
+"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
+"the client now starts with this option ENABLED by default! Disable with '-"
+"G'. Long format commands still work from the first line. WARNING: option "
+"deprecated; use --disable-named-commands instead."
+msgstr ""
+"指定コマンドを無効にする。「\\*」という書式のものをお使い頂くか、指定コマンド"
+"を先頭行（セミコロン「;」まで）のみで使用して下さい。バージョン10.9から、この"
+"オプションはデフォルトになっています。「-G」オプションを指定すると、このオプ"
+"ションが無効になります。長い書式のコマンドは、先頭行においては使用することが"
+"可能です。警告：このオプションは廃止予定です。--disable-named-commandsを代わ"
+"りに使用して下さい。"
+
+msgid "Ignore space after function names."
+msgstr "関数の後のスペースを無視する。"
+
+msgid "Turn off beep on error."
+msgstr "エラー発生時にビープ音を出さない。"
+
+msgid "Write line numbers for errors."
+msgstr "エラーに行番号を表示する。"
+
+msgid ""
+"Don't write line number for errors. WARNING: -L is deprecated, use long "
+"version of this option instead."
+msgstr ""
+"エラーに行番号を表示しない。警告：「-L」は廃止予定です。長い書式のオプション"
+"を代わりに使用して下さい。"
+
+msgid "Write column names in results."
+msgstr "結果においてカラム名を記載する。"
+
+msgid ""
+"Don't write column names in results. WARNING: -N is deprecated, use long "
+"version of this options instead."
+msgstr ""
+"カラム名を結果に表示しない。警告：「-N」は廃止予定です。長い書式のオプション"
+"を使用して下さい。"
+
+msgid ""
+"Change the value of a variable. Please note that this option is deprecated; "
+"you can set variables directly with --variable-name=value."
+msgstr ""
+"変数の値を変更する。このオプションは廃止予定です。変数は「--変数名=値」という"
+"書式を用いて直接設定することが出来ます。"
+
+msgid "Output in table format."
+msgstr "表形式で出力する。"
+
+msgid "Only allow UPDATE and DELETE that uses keys."
+msgstr "キーを使用してUPDATEとDELETEのみを許可する。"
+
+msgid "Synonym for option --safe-updates, -U."
+msgstr "--safe-updates, -U オプションと同じ。"
+
+msgid "-v vvv implies that verbose= 3, Used to specify verbose"
+msgstr ""
+
+msgid "Output version information and exit."
+msgstr "バージョン情報を出力し終了する。"
+
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr "古いプロトコル(4.1.1以前)を使用している場合は接続を拒否"
+
+msgid "Number of lines before each import progress report."
+msgstr "インポート実行時に進捗が表示される行数の間隔。"
+
+msgid "Ping the server to check if it's alive."
+msgstr "サーバーの生存を確認するために接続試験を行う。"
+
+msgid "Configuration file defaults are not used if no-defaults is set"
+msgstr ""
+
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+"自動的な再ハッシュを有効にする。テーブルやフィールドの補完のために「rehash」"
+"する必要がなくなりますが、起動時間が長くなる場合があります。--disable-auto-"
+"rehashオプションで無効にすることができます。"
+
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+"自動的な再ハッシュを行わない。テーブルの補完を行うには、「rehash」コマンドを"
+"利用する必要がある。これにより、drizzle_stの起動を高速化し、再接続時のrehash"
+"を行わないようにする効果がある。警告：このオプションは廃止予定です。代わり"
+"に--disable-auto-rehashを指定して下さい。"
+
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr "出力結果がターミナルの幅よりも広い場合、自動的に垂直表示に切り替える。"
+
+msgid "Database to use."
+msgstr "使用するデータベース。"
+
+msgid "(not used)"
+msgstr "（未使用）"
+
+msgid "Delimiter to be used."
+msgstr "区切りに使用する文字。"
+
+msgid "Execute command and quit. (Disables --force and history file)"
+msgstr "コマンドを実行して終了する。（--forceと履歴ファイルを無効化）"
+
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr "LOAD DATA LOCAL INFILEの有効/無効を切り替える。"
+
+msgid "Flush buffer after each query."
+msgstr "クエリの後に毎回バッファをフラッシュする。"
+
+msgid "Ignore SIGINT (CTRL-C)"
+msgstr "SIGINT（CTRL-C）を無視する。"
+
+msgid ""
+"Only update the default database. This is useful for skipping updates to "
+"other database in the update log."
+msgstr ""
+"デフォルトデータベースのみを更新する。このオプションはバイナリログを適用する"
+"際に他のデータベースへの更新を止めたい場合などに便利です。"
+
+msgid ""
+"Pager to use to display results. If you don't supply an option the default "
+"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
+"cat [> filename], etc. See interactive help (\\h) also. This option does not "
+"work in batch mode. Disable with --disable-pager. This option is disabled by "
+"default."
+msgstr ""
+"結果を表示するためのページャを指定する。もしこのオプションが指定されなかった"
+"場合には、PAGER環境変数で指定されたものが使われる。使用可能なページャはless、"
+"more、cat [> ファイル名]などです。ヘルプ「\\h」も合わせて参照して下さい。この"
+"オプションはバッチモードでは作用しません。「--disable-pager」オプションで無効"
+"にすることができます。このオプションはデフォルトで無効になっています。"
+
+#, fuzzy
+msgid "Disable pager and print to stdout. See interactive help (\\h) also."
+msgstr ""
+"ページャを無効にして標準出力へ表示する。ヘルプ「\\h」も合わせて参照して下さ"
+"い。警告：このオプションは廃止予定です。代わりに「--disable-pager」を使用して"
+"下さい。"
+
+msgid "Set the drizzle prompt to this value."
+msgstr "drizzleのプロンプトをこの値にする。"
+
+msgid ""
+"Don't cache result, print it row by row. This may slow down the server if "
+"the output is suspended. Doesn't use history file."
+msgstr ""
+"結果をキャッシュしないで一行ずつ表示する。これは、出力が一時的に停止された場"
+"合にサーバーの処理を低下させます。履歴ファイルには使用しないで下さい。"
+
+msgid "Write fields without conversion. Used with --batch."
+msgstr ""
+"コンバージョン無しでフィールドを出力する。--batch オプションで使用されます。"
+
+msgid ""
+"Reconnect if the connection is lost. Disable with --disable-reconnect. This "
+"option is enabled by default."
+msgstr ""
+"接続が切れた際に再接続をする。--disable-recconect オプションで無効になりま"
+"す。規定では有効になっています。"
+
+#, fuzzy
+msgid "Shutdown the server"
+msgstr "サーバーをシャットダウンする。"
+
+msgid ""
+"Be more silent. Print results with a tab as separator, each row on new line."
+msgstr "さらに出力を抑制する。タブ区切り、１行ごとに出力する。"
+
+msgid ""
+"Append everything into outfile. See interactive help (\\h) also. Does not "
+"work in batch mode. Disable with --disable-tee. This option is disabled by "
+"default."
+msgstr ""
+"出力ファイルに追記する。help(\\h)を参照して下さい。batchモードでは機能しませ"
+"ん。--disable-tee オプションで無効となります。規定では無効になっています。"
+
+#, fuzzy
+msgid "Disable outfile. See interactive help (\\h) also."
+msgstr ""
+"outfileを無効にする。help(\\h)を参照して下さい。警告: このオプションは廃止予"
+"定です; 代わりに --disable-tee オプションを使用して下さい。"
+
+msgid "Wait and retry if connection is down."
+msgstr "接続が切れた場合に再試行をする。"
+
+msgid "Number of seconds before connection timeout."
+msgstr "コネクションタイムアウトとなるまでの時間(秒)。"
+
+msgid "Max length of input line"
+msgstr "入力行の最大幅。"
+
+msgid "Automatic limit for SELECT when using --safe-updates"
+msgstr "--safe-updates を使用した時のSELECTに対して自動的に設定される上限"
+
+msgid "Automatic limit for rows in a join when using --safe-updates"
+msgstr "--safe-updatesを使用した特のjoinに対して自動的に設定される行数の上限"
+
+msgid "Use MySQL Protocol."
+msgstr "MySQLプロトコルを使用"
+
+#, fuzzy
+msgid "Connect to host"
+msgstr "接続するホスト。"
+
+msgid ""
+"Password to use when connecting to server. If password is not given it's "
+"asked from the tty."
+msgstr ""
+"サーバーに接続する際のパスワード。パスワードの入力がない場合、端末での入力が"
+"要求されます。"
+
+#, fuzzy
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
+msgstr ""
+"接続に利用するポート番号を指定。0にすることでデフォルト値を利用。設定の優先順"
+"位はdrizzle.cnf、$DRIZZLE_TCP_PORTの順で決まります。 "
+
+msgid "User for login if not current user."
+msgstr "別のユーザでログインする際のユーザ名。"
+
+msgid "The protocol of connection (tcp,socket,pipe,memory)."
+msgstr ""
+
 #, c-format
 msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 "プロンプトを初期化中にメモリアロケーションエラーが発生しました。プログラムを"
 "終了します。\n"
+
+msgid "DELIMITER cannot contain a backslash character"
+msgstr "DELIMITER にはバックスラッシュを含めることはできません。"
+
+#, fuzzy, c-format
+msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
+msgstr "ポート番号に指定された値は無効です。\n"
+
+#, c-format
+msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Copyright (C) 2008 Sun Microsystems\n"
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+"Copyright (C) 2008 Sun Microsystems\n"
+"このソフトウェアは全くの無保証で提供されています。このソフトウェアはフリーソ"
+"フトウェア、\n"
+"つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布すること"
+"ができます。\n"
+
+#, fuzzy, c-format
+msgid "Usage: drizzle [OPTIONS] [database]\n"
+msgstr "使用方法: %s [オプション] [データベース]\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr ""
@@ -130,326 +436,6 @@ msgstr "さようなら。"
 
 msgid "Query aborted by Ctrl+C\n"
 msgstr "クエリが「Ctrl+C」により中断されました。\n"
-
-msgid "Display this help and exit."
-msgstr "ヘルプを表示して終了する。"
-
-msgid "Synonym for -?"
-msgstr "「-?」と同じ。"
-
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-"自動的な再ハッシュを有効にする。テーブルやフィールドの補完のために「rehash」"
-"する必要がなくなりますが、起動時間が長くなる場合があります。--disable-auto-"
-"rehashオプションで無効にすることができます。"
-
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-"自動的な再ハッシュを行わない。テーブルの補完を行うには、「rehash」コマンドを"
-"利用する必要がある。これにより、drizzle_stの起動を高速化し、再接続時のrehash"
-"を行わないようにする効果がある。警告：このオプションは廃止予定です。代わり"
-"に--disable-auto-rehashを指定して下さい。"
-
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr "出力結果がターミナルの幅よりも広い場合、自動的に垂直表示に切り替える。"
-
-msgid ""
-"Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr ""
-"履歴ファイルを使用しない。インタラクティブな振る舞いを無効にする。（--silent"
-"オプションを有効にします。）"
-
-msgid "Display column type information."
-msgstr "カラムのデータ型に関する情報を表示する。"
-
-msgid ""
-"Preserve comments. Send comments to the server. The default is --skip-"
-"comments (discard comments), enable with --comments"
-msgstr ""
-"コメントを保存し、コメントをサーバへ送信する。デフォルトは--skip-comments（コ"
-"メント機能は無効）で、--commentsオプションをつけることにより有効になります。"
-
-msgid "Use compression in server/client protocol."
-msgstr "サーバ・クライアントプロトコルにおいて圧縮を利用する。"
-
-msgid "Database to use."
-msgstr "使用するデータベース。"
-
-msgid "(not used)"
-msgstr "（未使用）"
-
-msgid "Delimiter to be used."
-msgstr "区切りに使用する文字。"
-
-msgid "Execute command and quit. (Disables --force and history file)"
-msgstr "コマンドを実行して終了する。（--forceと履歴ファイルを無効化）"
-
-msgid "Print the output of a query (rows) vertically."
-msgstr "結果を縦に表示する。"
-
-msgid "Continue even if we get an sql error."
-msgstr "sqlエラーが発生しても続行する。"
-
-msgid ""
-"Enable named commands. Named commands mean this program's internal commands; "
-"see drizzle> help . When enabled, the named commands can be used from any "
-"line of the query, otherwise only from the first line, before an enter. "
-"Disable with --disable-named-commands. This option is disabled by default."
-msgstr ""
-"指定コマンドを有効にする。指定コマンドとは本プログラムの名言うコマンドのこと"
-"です。詳細は「drizzle> help」を参照してください。有効である場合、指定コマンド"
-"は複数行にクエリがまたがる場合にどの行においても使用することができます。無効"
-"である場合は、先頭行のみで使用することが可能です。--disable-named-commandsオ"
-"プションにより無効にすることが可能です。デフォルトは無効です。"
-
-msgid ""
-"Named commands are disabled. Use \\* form only, or use named commands only "
-"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
-"the client now starts with this option ENABLED by default! Disable with '-"
-"G'. Long format commands still work from the first line. WARNING: option "
-"deprecated; use --disable-named-commands instead."
-msgstr ""
-"指定コマンドを無効にする。「\\*」という書式のものをお使い頂くか、指定コマンド"
-"を先頭行（セミコロン「;」まで）のみで使用して下さい。バージョン10.9から、この"
-"オプションはデフォルトになっています。「-G」オプションを指定すると、このオプ"
-"ションが無効になります。長い書式のコマンドは、先頭行においては使用することが"
-"可能です。警告：このオプションは廃止予定です。--disable-named-commandsを代わ"
-"りに使用して下さい。"
-
-msgid "Ignore space after function names."
-msgstr "関数の後のスペースを無視する。"
-
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "LOAD DATA LOCAL INFILEの有効/無効を切り替える。"
-
-msgid "Turn off beep on error."
-msgstr "エラー発生時にビープ音を出さない。"
-
-msgid "Connect to host."
-msgstr "接続するホスト。"
-
-msgid "Write line numbers for errors."
-msgstr "エラーに行番号を表示する。"
-
-msgid ""
-"Don't write line number for errors. WARNING: -L is deprecated, use long "
-"version of this option instead."
-msgstr ""
-"エラーに行番号を表示しない。警告：「-L」は廃止予定です。長い書式のオプション"
-"を代わりに使用して下さい。"
-
-msgid "Flush buffer after each query."
-msgstr "クエリの後に毎回バッファをフラッシュする。"
-
-msgid "Write column names in results."
-msgstr "結果においてカラム名を記載する。"
-
-msgid ""
-"Don't write column names in results. WARNING: -N is deprecated, use long "
-"version of this options instead."
-msgstr ""
-"カラム名を結果に表示しない。警告：「-N」は廃止予定です。長い書式のオプション"
-"を使用して下さい。"
-
-msgid ""
-"Change the value of a variable. Please note that this option is deprecated; "
-"you can set variables directly with --variable-name=value."
-msgstr ""
-"変数の値を変更する。このオプションは廃止予定です。変数は「--変数名=値」という"
-"書式を用いて直接設定することが出来ます。"
-
-msgid "Ignore SIGINT (CTRL-C)"
-msgstr "SIGINT（CTRL-C）を無視する。"
-
-msgid ""
-"Only update the default database. This is useful for skipping updates to "
-"other database in the update log."
-msgstr ""
-"デフォルトデータベースのみを更新する。このオプションはバイナリログを適用する"
-"際に他のデータベースへの更新を止めたい場合などに便利です。"
-
-msgid ""
-"Pager to use to display results. If you don't supply an option the default "
-"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
-"cat [> filename], etc. See interactive help (\\h) also. This option does not "
-"work in batch mode. Disable with --disable-pager. This option is disabled by "
-"default."
-msgstr ""
-"結果を表示するためのページャを指定する。もしこのオプションが指定されなかった"
-"場合には、PAGER環境変数で指定されたものが使われる。使用可能なページャはless、"
-"more、cat [> ファイル名]などです。ヘルプ「\\h」も合わせて参照して下さい。この"
-"オプションはバッチモードでは作用しません。「--disable-pager」オプションで無効"
-"にすることができます。このオプションはデフォルトで無効になっています。"
-
-msgid ""
-"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-"option deprecated; use --disable-pager instead."
-msgstr ""
-"ページャを無効にして標準出力へ表示する。ヘルプ「\\h」も合わせて参照して下さ"
-"い。警告：このオプションは廃止予定です。代わりに「--disable-pager」を使用して"
-"下さい。"
-
-msgid ""
-"Password to use when connecting to server. If password is not given it's "
-"asked from the tty."
-msgstr ""
-"サーバーに接続する際のパスワード。パスワードの入力がない場合、端末での入力が"
-"要求されます。"
-
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-"接続に利用するポート番号を指定。0にすることでデフォルト値を利用。設定の優先順"
-"位はdrizzle.cnf、$DRIZZLE_TCP_PORTの順で決まります。 "
-
-msgid "built-in default"
-msgstr "組み込まれたデフォルト"
-
-msgid "Set the drizzle prompt to this value."
-msgstr "drizzleのプロンプトをこの値にする。"
-
-msgid ""
-"Don't cache result, print it row by row. This may slow down the server if "
-"the output is suspended. Doesn't use history file."
-msgstr ""
-"結果をキャッシュしないで一行ずつ表示する。これは、出力が一時的に停止された場"
-"合にサーバーの処理を低下させます。履歴ファイルには使用しないで下さい。"
-
-msgid "Write fields without conversion. Used with --batch."
-msgstr ""
-"コンバージョン無しでフィールドを出力する。--batch オプションで使用されます。"
-
-msgid ""
-"Reconnect if the connection is lost. Disable with --disable-reconnect. This "
-"option is enabled by default."
-msgstr ""
-"接続が切れた際に再接続をする。--disable-recconect オプションで無効になりま"
-"す。規定では有効になっています。"
-
-msgid "Shutdown the server."
-msgstr "サーバーをシャットダウンする。"
-
-msgid ""
-"Be more silent. Print results with a tab as separator, each row on new line."
-msgstr "さらに出力を抑制する。タブ区切り、１行ごとに出力する。"
-
-msgid "Output in table format."
-msgstr "表形式で出力する。"
-
-msgid ""
-"Append everything into outfile. See interactive help (\\h) also. Does not "
-"work in batch mode. Disable with --disable-tee. This option is disabled by "
-"default."
-msgstr ""
-"出力ファイルに追記する。help(\\h)を参照して下さい。batchモードでは機能しませ"
-"ん。--disable-tee オプションで無効となります。規定では無効になっています。"
-
-msgid ""
-"Disable outfile. See interactive help (\\h) also. WARNING: option "
-"deprecated; use --disable-tee instead"
-msgstr ""
-"outfileを無効にする。help(\\h)を参照して下さい。警告: このオプションは廃止予"
-"定です; 代わりに --disable-tee オプションを使用して下さい。"
-
-msgid "User for login if not current user."
-msgstr "別のユーザでログインする際のユーザ名。"
-
-msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr "キーを使用してUPDATEとDELETEのみを許可する。"
-
-msgid "Synonym for option --safe-updates, -U."
-msgstr "--safe-updates, -U オプションと同じ。"
-
-msgid "Write more. (-v -v -v gives the table output format)."
-msgstr "詳細を出力する。(-v -v -v で表形式で出力)。"
-
-msgid "Output version information and exit."
-msgstr "バージョン情報を出力し終了する。"
-
-msgid "Wait and retry if connection is down."
-msgstr "接続が切れた場合に再試行をする。"
-
-msgid "Number of seconds before connection timeout."
-msgstr "コネクションタイムアウトとなるまでの時間(秒)。"
-
-msgid "Max length of input line"
-msgstr "入力行の最大幅。"
-
-msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr "--safe-updates を使用した時のSELECTに対して自動的に設定される上限"
-
-msgid "Automatic limit for rows in a join when using --safe-updates"
-msgstr "--safe-updatesを使用した特のjoinに対して自動的に設定される行数の上限"
-
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr "古いプロトコル(4.1.1以前)を使用している場合は接続を拒否"
-
-msgid "Number of lines before each import progress report."
-msgstr "インポート実行時に進捗が表示される行数の間隔。"
-
-msgid "Ping the server to check if it's alive."
-msgstr "サーバーの生存を確認するために接続試験を行う。"
-
-msgid "Use MySQL Protocol."
-msgstr "MySQLプロトコルを使用"
-
-#, c-format
-msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Copyright (C) 2008 Sun Microsystems\n"
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-"Copyright (C) 2008 Sun Microsystems\n"
-"このソフトウェアは全くの無保証で提供されています。このソフトウェアはフリーソ"
-"フトウェア、\n"
-"つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布すること"
-"ができます。\n"
-
-#, c-format
-msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr "使用方法: %s [オプション] [データベース]\n"
-
-msgid "DELIMITER cannot contain a backslash character"
-msgstr "DELIMITER にはバックスラッシュを含めることはできません。"
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr ""
-"警告: このオプションは廃止予定です。代わりに --disable-tee を使用してくださ"
-"い。\n"
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr ""
-"警告: このオプションは廃止予定です。代わりに --disable-pager を使用してくださ"
-"い。\n"
-
-#, c-format
-msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr "警告: --server-arg はこの設定ではサポートされていません。\n"
-
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
-msgstr ""
-"ポート番号に対して整数でない値が指定されました。もしパスワードを指定したいの"
-"なら、代わりに--paswordオプションを使用してください。"
-
-msgid "Value supplied for port is not valid."
-msgstr "ポート番号に指定された値は無効です。"
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
@@ -505,74 +491,9 @@ msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "クエリ OK, %ld 行が変更されました"
 
-msgid "Number of rows before each output progress report (requires --verbose)."
-msgstr "進捗が報告されるまでの行数（--verboseオプションが必要です。）"
-
 #, c-format
 msgid "Got errno %d on write"
 msgstr "書き込み中にエラー番号 %d が発生しました。"
-
-#, c-format
-msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr "使用方法: %s [オプション] データベース名 [テーブル名（複数可）]\n"
-
-#, c-format
-msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr "または %s [オプション] --databases [オプション] DB1 [DB2 DB3...]\n"
-
-#, c-format
-msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr "または %s [オプション] --all-databases [オプション]\n"
-
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-"このソフトウェアは全くの無保証で提供されています。このソフトウェアはフリーソ"
-"フトウェア、\n"
-"つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布すること"
-"ができます。\n"
-
-msgid "Dumps definitions and data from a Drizzle database server"
-msgstr "Drizzleデータベースサーバから定義とデータをダンプ"
-
-#, c-format
-msgid "For more options, use %s --help\n"
-msgstr "詳細なオプションを見るには %s --help コマンドを実行してください。\n"
-
-#, c-format
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead.\n"
-msgstr ""
-"ポート番号に対して整数でない値が指定されました。もしパスワードを指定したいの"
-"なら、代わりに--paswordオプションを使用してください。\n"
-
-#, c-format
-msgid "Value supplied for port is not valid.\n"
-msgstr "ポート番号に指定された値は無効です。\n"
-
-#, c-format
-msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr ""
-"プロンプトを初期化中にメモリアロケーションエラーが発生しました。プログラムを"
-"終了します。\n"
-
-#, c-format
-msgid "Input filename too long: %s"
-msgstr "ファイル名が長すぎます: %s"
-
-#, c-format
-msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr "オプション--ignore-table=<database>.<table>の使い方が不正です。\n"
-
-#, c-format
-msgid "Invalid mode to --compatible: %s\n"
-msgstr "--compatibleに指定されたモードが不適切です: %s\n"
 
 #, c-format
 msgid "%s: You must use option --tab with --fields-...\n"
@@ -733,6 +654,62 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "エラー: ORDER BY句を保持するためのメモリを確保することが出来ません。\n"
 
+msgid "Number of rows before each output progress report (requires --verbose)."
+msgstr "進捗が報告されるまでの行数（--verboseオプションが必要です。）"
+
+#, c-format
+msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgstr "使用方法: %s [オプション] データベース名 [テーブル名（複数可）]\n"
+
+#, c-format
+msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
+msgstr "または %s [オプション] --databases [オプション] DB1 [DB2 DB3...]\n"
+
+#, c-format
+msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
+msgstr "または %s [オプション] --all-databases [オプション]\n"
+
+#, c-format
+msgid "Value supplied for port is not valid.\n"
+msgstr "ポート番号に指定された値は無効です。\n"
+
+#, c-format
+msgid "Input filename too long: %s"
+msgstr "ファイル名が長すぎます: %s"
+
+#, c-format
+msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
+msgstr ""
+
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+"このソフトウェアは全くの無保証で提供されています。このソフトウェアはフリーソ"
+"フトウェア、\n"
+"つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布すること"
+"ができます。\n"
+
+msgid "Dumps definitions and data from a Drizzle database server"
+msgstr "Drizzleデータベースサーバから定義とデータをダンプ"
+
+#, c-format
+msgid "Illegal use of option --ignore-table=<database>.<table>\n"
+msgstr "オプション--ignore-table=<database>.<table>の使い方が不正です。\n"
+
+#, c-format
+msgid "Invalid mode to --compatible: %s\n"
+msgstr "--compatibleに指定されたモードが不適切です: %s\n"
+
+msgid "Error: Invalid Value for opt_max_connect_retries"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_tail_lines"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_sleep"
+msgstr ""
+
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
@@ -790,6 +767,9 @@ msgstr "スケジューラが見つかりません．処理を継続できませ
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
 msgstr ""
+
+msgid "Display this help and exit."
+msgstr "ヘルプを表示して終了する。"
 
 msgid "Display this help and exit after initializing plugins."
 msgstr "プラグインを初期化した後，このヘルプを表示して終了します．"
@@ -2081,8 +2061,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Uncompressed data size too large; the maximum size is %d (probably, length "
-"of uncompressed data was corrupted)"
+"Uncompressed data size too large; the maximum size is %d (based on "
+"max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
@@ -3795,6 +3775,10 @@ msgid "Corrupt or invalid table definition: %s"
 msgstr ""
 
 #, c-format
+msgid "Corrupt or invalid schema definition for %s : %s"
+msgstr ""
+
+#, c-format
 msgid "Schema does not exist: %s"
 msgstr ""
 
@@ -3815,6 +3799,9 @@ msgstr ""
 
 #, c-format
 msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+msgid "Implicit cartesian join attempted."
 msgstr ""
 
 #, c-format
@@ -4110,18 +4097,18 @@ msgid "setsockopt(TCP_NODELAY) failed with errno %d"
 msgstr ""
 
 #, c-format
-msgid "Retrying bind() on %u"
+msgid "Retrying bind() on %u\n"
 msgstr ""
 
 #, c-format
-msgid "bind() failed with errno: %d"
+msgid "bind() failed with errno: %d\n"
 msgstr ""
 
-msgid "Do you already have another drizzled running?"
+msgid "Do you already have another drizzled running?\n"
 msgstr ""
 
 #, c-format
-msgid "listen() failed with errno %d"
+msgid "listen() failed with errno %d\n"
 msgstr ""
 
 #, c-format
@@ -4238,6 +4225,10 @@ msgstr ""
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
+msgstr ""
+
+#, c-format
+msgid "ENUM column %s has greater than %d possible values"
 msgstr ""
 
 #, c-format
@@ -4598,29 +4589,6 @@ msgstr ""
 msgid "Log queries to a CSV file"
 msgstr ""
 
-#, c-format
-msgid "syslog facility \"%s\" not known, using \"local0\""
-msgstr ""
-
-#, c-format
-msgid "syslog priority \"%s\" not known, using \"info\""
-msgstr ""
-
-msgid "Enable logging to syslog"
-msgstr ""
-
-msgid "Syslog Ident"
-msgstr ""
-
-msgid "Syslog Facility"
-msgstr ""
-
-msgid "Syslog Priority"
-msgstr ""
-
-msgid "Log to syslog"
-msgstr ""
-
 msgid "List of memcached servers."
 msgstr ""
 
@@ -4869,6 +4837,18 @@ msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
 
 #, c-format
+msgid "syslog facility \"%s\" not known, using \"local0\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"warn\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"info\""
+msgstr ""
+
+#, c-format
 msgid "Unable to create background worker thread. Got error %s.\n"
 msgstr ""
 
@@ -4943,6 +4923,53 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr ""
+
+#~ msgid "Synonym for -?"
+#~ msgstr "「-?」と同じ。"
+
+#~ msgid "built-in default"
+#~ msgstr "組み込まれたデフォルト"
+
+#~ msgid "Write more. (-v -v -v gives the table output format)."
+#~ msgstr "詳細を出力する。(-v -v -v で表形式で出力)。"
+
+#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
+#~ msgstr ""
+#~ "警告: このオプションは廃止予定です。代わりに --disable-tee を使用してくだ"
+#~ "さい。\n"
+
+#~ msgid "WARNING: option deprecated; use --disable-pager instead.\n"
+#~ msgstr ""
+#~ "警告: このオプションは廃止予定です。代わりに --disable-pager を使用してく"
+#~ "ださい。\n"
+
+#~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
+#~ msgstr "警告: --server-arg はこの設定ではサポートされていません。\n"
+
+#~ msgid ""
+#~ "Non-integer value supplied for port.  If you are trying to enter a "
+#~ "password please use --password instead."
+#~ msgstr ""
+#~ "ポート番号に対して整数でない値が指定されました。もしパスワードを指定したい"
+#~ "のなら、代わりに--paswordオプションを使用してください。"
+
+#~ msgid "Value supplied for port is not valid."
+#~ msgstr "ポート番号に指定された値は無効です。"
+
+#~ msgid "For more options, use %s --help\n"
+#~ msgstr "詳細なオプションを見るには %s --help コマンドを実行してください。\n"
+
+#~ msgid ""
+#~ "Non-integer value supplied for port.  If you are trying to enter a "
+#~ "password please use --password instead.\n"
+#~ msgstr ""
+#~ "ポート番号に対して整数でない値が指定されました。もしパスワードを指定したい"
+#~ "のなら、代わりに--paswordオプションを使用してください。\n"
+
+#~ msgid "Memory allocation error while copying password. Aborting.\n"
+#~ msgstr ""
+#~ "プロンプトを初期化中にメモリアロケーションエラーが発生しました。プログラム"
+#~ "を終了します。\n"
 
 #~ msgid "Got signal %d from thread %<PRIu64>"
 #~ msgstr "シグナル %d がスレッド %<PRIu64> で発生しました。"

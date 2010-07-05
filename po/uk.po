@@ -1,33 +1,32 @@
-# Hungarian translation for drizzle
-# Copyright (c) 2009 Rosetta Contributors and Canonical Ltd 2009
+# Ukrainian translation for drizzle
+# Copyright (c) 2010 Rosetta Contributors and Canonical Ltd 2010
 # This file is distributed under the same license as the drizzle package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2009.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2010-04-28 02:45+0000\n"
-"PO-Revision-Date: 2010-05-14 03:13+0000\n"
-"Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
-"Language-Team: Hungarian <hu@li.org>\n"
+"POT-Creation-Date: 2010-05-26 01:18+0000\n"
+"PO-Revision-Date: 2010-07-03 12:54+0000\n"
+"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
+"Language-Team: Ukrainian <uk@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-05-20 05:18+0000\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Launchpad-Export-Date: 2010-07-04 03:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
-msgstr "A 'segítség' szinonímája."
+msgstr ""
 
 msgid "Clear command."
-msgstr "Parancs törlés."
+msgstr ""
 
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr ""
-"Újra kapcsolódás a szerverhez. Opcionálisan megadható az adatbázis és a "
-"kiszolgáló."
 
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
@@ -61,7 +60,7 @@ msgid "Change your drizzle prompt."
 msgstr ""
 
 msgid "Quit drizzle."
-msgstr "Kilépés a drizzle-ből."
+msgstr ""
 
 msgid "Rebuild completion hash."
 msgstr ""
@@ -70,7 +69,7 @@ msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
 
 msgid "Get status information from the server."
-msgstr "Állapotinformáció kérése a kiszolgálótól"
+msgstr ""
 
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
@@ -90,16 +89,15 @@ msgstr ""
 msgid "Error: Invalid Value for max_input_line"
 msgstr ""
 
-#, fuzzy
 msgid "Displays this help and exit."
-msgstr "Megmutatja ezt a súgót, majd kilép."
+msgstr ""
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
 
 msgid "Display column type information."
-msgstr "Mező típus információ megjelenítés."
+msgstr ""
 
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
@@ -107,13 +105,13 @@ msgid ""
 msgstr ""
 
 msgid "Use compression in server/client protocol."
-msgstr "Tömörítés használata a szerver/kliens protokollban."
+msgstr ""
 
 msgid "Print the output of a query (rows) vertically."
 msgstr ""
 
 msgid "Continue even if we get an sql error."
-msgstr "Folytatás sql hiba esetén is."
+msgstr ""
 
 msgid ""
 "Enable named commands. Named commands mean this program's internal commands; "
@@ -137,7 +135,7 @@ msgid "Turn off beep on error."
 msgstr ""
 
 msgid "Write line numbers for errors."
-msgstr "Sorszámok megjelenítése hibákhoz."
+msgstr ""
 
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
@@ -161,7 +159,7 @@ msgid "Output in table format."
 msgstr ""
 
 msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr "Csak kulcsokat használó UPDATE and DELETE utasítások engedélyezése."
+msgstr ""
 
 msgid "Synonym for option --safe-updates, -U."
 msgstr ""
@@ -170,7 +168,7 @@ msgid "-v vvv implies that verbose= 3, Used to specify verbose"
 msgstr ""
 
 msgid "Output version information and exit."
-msgstr "Verzióinformáció megjelenítése és kilépés."
+msgstr ""
 
 msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
@@ -214,13 +212,13 @@ msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
 
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "LOAD DATA LOCAL INFILE engedélyezése/tiltása."
+msgstr ""
 
 msgid "Flush buffer after each query."
-msgstr "Buffer űrítés minden lekérdezés után."
+msgstr ""
 
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr "SIGINT (Ctrl-C) figyelmen kívül hagyása"
+msgstr ""
 
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
@@ -253,12 +251,9 @@ msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
 msgstr ""
-"Újrakapcsolódás ha a kapcsolat megszakad. Letiltás ezzel --disable-"
-"reconnect. Ez az opció alapértelmezetten engedélyezve van."
 
-#, fuzzy
 msgid "Shutdown the server"
-msgstr "Szerver leállítása."
+msgstr ""
 
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
@@ -277,7 +272,7 @@ msgid "Wait and retry if connection is down."
 msgstr ""
 
 msgid "Number of seconds before connection timeout."
-msgstr "Másodpercek száma a kapcsolat időtűllépése elött."
+msgstr ""
 
 msgid "Max length of input line"
 msgstr ""
@@ -289,11 +284,10 @@ msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
 msgid "Use MySQL Protocol."
-msgstr "MySQL protokoll használata."
+msgstr ""
 
-#, fuzzy
 msgid "Connect to host"
-msgstr "Csatlakozás kiszolgálóhoz."
+msgstr ""
 
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
@@ -316,11 +310,11 @@ msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 
 msgid "DELIMITER cannot contain a backslash character"
-msgstr "DELIMITER nem tartalmazhat backslash karaktert"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
-msgstr "A portnak megadott érték érvénytelen."
+msgstr ""
 
 #, c-format
 msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
@@ -362,20 +356,20 @@ msgid "Writing history-file %s\n"
 msgstr ""
 
 msgid "Aborted"
-msgstr "Megszakítva"
+msgstr ""
 
 msgid "Bye"
 msgstr ""
 
 msgid "Query aborted by Ctrl+C\n"
-msgstr "Lekérdezés megszakítva Ctrl+C -vel\n"
+msgstr ""
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
-msgstr "Sor feldolgozása: %<PRIu32>\n"
+msgstr ""
 
 msgid "Unknown command: "
-msgstr "Ismeretlen parancs: "
+msgstr ""
 
 msgid ""
 "Reading table information for completion of table and column names\n"
@@ -390,7 +384,7 @@ msgid "Can't connect to the server\n"
 msgstr ""
 
 msgid "List of all Drizzle commands:"
-msgstr "Az összes Drizzle parancs listázása:"
+msgstr ""
 
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
@@ -453,7 +447,7 @@ msgstr ""
 
 #, c-format
 msgid "Couldn't execute '%s': %s (%d)"
-msgstr "A(z) '%s' nem végrehajtható: %s (%d)"
+msgstr ""
 
 #, c-format
 msgid "-- Connecting to %s...\n"
@@ -661,7 +655,7 @@ msgid "Unknown/unsupported storage engine: %s"
 msgstr ""
 
 msgid "Display this help and exit."
-msgstr "Megmutatja ezt a súgót, majd kilép."
+msgstr ""
 
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
@@ -922,7 +916,7 @@ msgstr ""
 
 #, c-format
 msgid "Unknown error %d"
-msgstr "Ismeretlen hiba %d"
+msgstr ""
 
 msgid "NO"
 msgstr ""
@@ -4631,7 +4625,7 @@ msgid "Table needs to be upgraded before it can be used"
 msgstr ""
 
 msgid "Table is read only"
-msgstr "A tábla csak olvasható"
+msgstr ""
 
 msgid "Failed to get next auto increment value"
 msgstr ""
@@ -4723,7 +4717,7 @@ msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 msgid "Enable transaction log"
-msgstr "Tranzakciós napló engedélyezése"
+msgstr ""
 
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
@@ -4772,10 +4766,4 @@ msgstr ""
 
 #, c-format
 msgid "BUFFER: %s\n"
-msgstr "BUFFER: %s\n"
-
-#~ msgid "Server version: "
-#~ msgstr "Szerver vezió: "
-
-#~ msgid "Synonym for -?"
-#~ msgstr "A -? szinonímája"
+msgstr ""
