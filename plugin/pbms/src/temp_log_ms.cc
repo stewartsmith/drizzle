@@ -303,7 +303,7 @@ bool MSTempLogThread::doWork()
 			/* We have a record: */
 			int		type;
 			uint32_t tab_id;
-			uint64_t blob_id;
+			volatile uint64_t blob_id;
 			uint32_t auth_code;
 			uint32_t then;
 			time_t	now;
