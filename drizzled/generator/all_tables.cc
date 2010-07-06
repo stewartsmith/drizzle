@@ -18,6 +18,32 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
+#include "config.h"
+
 #include "drizzled/generator/all_tables.h"
+
+using namespace std;
+
+namespace drizzled
+{
+namespace generator
+{
+
+AllTables::AllTables(Session &arg) :
+  session(arg),
+  schema_generator(arg)
+{
+  table_iterator= table_names.end();
+}
+
+bool AllTables::table_setup()
+{
+  table_names.clear();
+  plugin::StorageEngine::getTableIdentifiers(session, *schema_ptr, table_names);
+  table_iterator= table_names.begin();
+
+  return true;
+}
+
+} /* namespace generator */
+} /* namespace drizzled */

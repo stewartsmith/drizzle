@@ -37,29 +37,32 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::generator::Schema schema_generator;
-    drizzled::generator::Table table_generator;
-    const drizzled::SchemaIdentifier *schema_ptr;
-    const drizzled::TableIdentifier *table_ptr;
-    drizzled::message::Table table_proto;
+    drizzled::generator::AllTables all_tables_generator;
+    drizzled::message::Table table_message;
 
     virtual void fill();
-    bool nextTableCore();
 
   public:
     Generator(drizzled::Field **arg);
+
+    bool nextTable();
 
     void pushRow(drizzled::message::Table::TableOptions::RowType type);
     void pushType(drizzled::message::Table::Field::FieldType type);
 
     const std::string &table_name()
     {
-      return table_proto.name();
+      return table_message.name();
     }
 
     const drizzled::message::Table& getTableProto()
     {
-      return table_proto;
+      return table_message;
+    }
+
+    const drizzled::message::Table& getTableMessage()
+    {
+      return table_message;
     }
 
     bool isTablesPrimed()
@@ -68,7 +71,6 @@ public:
     }
 
     bool populate();
-    bool nextTable();
   };
 
   Generator *generator(drizzled::Field **arg)

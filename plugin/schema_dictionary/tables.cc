@@ -65,46 +65,31 @@ TablesTool::TablesTool() :
 
 TablesTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
-  schema_generator(getSession()),
-  table_generator(getSession())
+  all_tables_generator(getSession())
 {
 }
 
-bool TablesTool::Generator::nextTableCore()
+bool TablesTool::Generator::nextTable()
 {
-  while ((table_ptr= table_generator))
+  const drizzled::message::Table *table_ptr;
+  while ((table_ptr= all_tables_generator))
   {
-    table_proto.Clear();
-    plugin::StorageEngine::getTableDefinition(getSession(),
-                                              *table_ptr,
-                                              table_proto);
+    table_message.CopyFrom(*table_ptr);
     return true;
   }
 
   return false;
 }
 
-bool TablesTool::Generator::nextTable()
-{
-  while (not nextTableCore())
-  {
-    if (not (schema_ptr= schema_generator))
-      return false;
-
-    table_generator.reset(*schema_ptr);
-  }
-
-  return true;
-}
-
 bool TablesTool::Generator::populate()
 {
-  if (not nextTable())
-    return false;
+  if (nextTable())
+  {
+    fill();
+    return true;
+  }
 
-  fill();
-
-  return true;
+  return false;
 }
 
 void TablesTool::Generator::pushRow(message::Table::TableOptions::RowType type)
@@ -182,14 +167,14 @@ void TablesTool::Generator::fill()
   */
 
   /* TABLE_SCHEMA */
-  push(table_proto.schema());
+  push(getTableMessage().schema());
 
   /* TABLE_NAME */
-  push(table_proto.name());
+  push(getTableMessage().name());
 
   /* TABLE_TYPE */
   {
-    switch (table_proto.type())
+    switch (getTableMessage().type())
     {
     default:
     case message::Table::STANDARD:
@@ -208,16 +193,16 @@ void TablesTool::Generator::fill()
   }
 
   /* ENGINE */
-  push(table_proto.engine().name());
+  push(getTableMessage().engine().name());
 
   /* ROW_FORMAT */
-  pushRow(table_proto.options().row_type());
+  pushRow(getTableMessage().options().row_type());
 
   /* TABLE_COLLATION */
-  push(table_proto.options().collation());
+  push(getTableMessage().options().collation());
 
   /* TABLE_CREATION_TIME */
-  time_t time_arg= table_proto.creation_timestamp();
+  time_t time_arg= getTableMessage().creation_timestamp();
   char buffer[40];
   struct tm tm_buffer;
 
@@ -226,15 +211,15 @@ void TablesTool::Generator::fill()
   push(buffer);
 
   /* TABLE_UPDATE_TIME */
-  time_arg= table_proto.update_timestamp();
+  time_arg= getTableMessage().update_timestamp();
   localtime_r(&time_arg, &tm_buffer);
   strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
   push(buffer);
 
   /* TABLE_COMMENT */
-  if (table_proto.options().has_comment())
+  if (getTableMessage().options().has_comment())
   {
-    push(table_proto.options().comment());
+    push(getTableMessage().options().comment());
   }
   else
   {
