@@ -896,7 +896,7 @@ static int init(drizzled::module::Context &context)
   { 
     if (port > 65535)
     {
-      cout << "Invalid value of port";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of port\n"));
       exit(-1);
     }
   }
@@ -905,7 +905,7 @@ static int init(drizzled::module::Context &context)
   {
     if (connect_timeout < 1 || connect_timeout > 300)
     {
-      cout << "Invalid value for connect_timeout";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for connect_timeout\n"));
       exit(-1);
     }
   }
@@ -914,7 +914,7 @@ static int init(drizzled::module::Context &context)
   {
     if (read_timeout < 1 || read_timeout > 300)
     {
-      cout << "Invalid value for read_timeout";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read_timeout\n"));
       exit(-1);
     }
   }
@@ -923,7 +923,7 @@ static int init(drizzled::module::Context &context)
   {
     if (write_timeout < 1 || write_timeout > 300)
     {
-      cout << "Invalid value for write_timeout";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for write_timeout\n"));
       exit(-1);
     }
   }
@@ -932,7 +932,7 @@ static int init(drizzled::module::Context &context)
   {
     if (retry_count < 1 || retry_count > 100)
     {
-      cout << "Invalid value for retry_count";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for retry_count"));
       exit(-1);
     }
   }
@@ -941,7 +941,7 @@ static int init(drizzled::module::Context &context)
   {
     if (buffer_length < 1024 || buffer_length > 1024*1024)
     {
-      cout << "Invalid value for buffer_length";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer_length\n"));
       exit(-1);
     }
   }
