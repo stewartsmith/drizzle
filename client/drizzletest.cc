@@ -5398,6 +5398,8 @@ try
 
   TMPDIR[0]= 0;
 
+  internal::my_init();
+
   po::options_description commandline_options("Options used only in command line");
   commandline_options.add_options()
   ("help,?", "Display this help and exit.")
