@@ -167,17 +167,17 @@ public:
   bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
 private:
-  void getTableNamesInSchemaFromInnoDB(drizzled::SchemaIdentifier &schema,
+  void getTableNamesInSchemaFromInnoDB(const drizzled::SchemaIdentifier &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
                                        drizzled::TableIdentifiers *identifiers);
 
 public:
   void doGetTableNames(drizzled::CachedDirectory &,
-                       drizzled::SchemaIdentifier &schema,
+                       const drizzled::SchemaIdentifier &schema,
                        drizzled::plugin::TableNameList &set_of_names);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
-                             drizzled::SchemaIdentifier &schema,
+                             const drizzled::SchemaIdentifier &schema,
                              drizzled::TableIdentifiers &identifiers);
 
   /* The following defines can be increased if necessary */
@@ -1216,7 +1216,7 @@ rollback:
 }
 
 void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
-                                 drizzled::SchemaIdentifier &schema,
+                                 const drizzled::SchemaIdentifier &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
                                  drizzled::TableIdentifiers *identifiers)
 {
@@ -1287,14 +1287,14 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
 }
 
 void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
-                                           drizzled::SchemaIdentifier &schema,
+                                           const drizzled::SchemaIdentifier &schema,
                                            drizzled::plugin::TableNameList &set_of_names)
 {
   getTableNamesInSchemaFromInnoDB(schema, &set_of_names, NULL);
 }
 
 void EmbeddedInnoDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
-                                                 drizzled::SchemaIdentifier &schema,
+                                                 const drizzled::SchemaIdentifier &schema,
                                                  drizzled::TableIdentifiers &identifiers)
 {
   getTableNamesInSchemaFromInnoDB(schema, NULL, &identifiers);

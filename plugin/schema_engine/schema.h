@@ -36,7 +36,7 @@ static const char *schema_exts[] = {
 
 class Schema : public drizzled::plugin::StorageEngine
 {
-  bool writeSchemaFile(drizzled::SchemaIdentifier &schema_identifier, const drizzled::message::Schema &db);
+  bool writeSchemaFile(const drizzled::SchemaIdentifier &schema_identifier, const drizzled::message::Schema &db);
   bool readSchemaFile(const std::string &schema_file_name, drizzled::message::Schema &schema);
 
   void prime();
@@ -62,13 +62,13 @@ public:
   }
 
   void doGetSchemaIdentifiers(drizzled::SchemaIdentifierList &set_of_names);
-  bool doGetSchemaDefinition(drizzled::SchemaIdentifier&, drizzled::message::Schema &proto);
+  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::Schema &proto);
 
   bool doCreateSchema(const drizzled::message::Schema &schema_message);
 
   bool doAlterSchema(const drizzled::message::Schema &schema_message);
 
-  bool doDropSchema(drizzled::SchemaIdentifier&);
+  bool doDropSchema(const drizzled::SchemaIdentifier&);
 
   // Below are table methods that we don't implement (and don't need)
 
@@ -81,7 +81,7 @@ public:
 
 
   void doGetTableNames(drizzled::CachedDirectory&,
-                       drizzled::SchemaIdentifier&,
+                       const drizzled::SchemaIdentifier&,
                        std::set<std::string>&)
   {
   }
@@ -120,7 +120,7 @@ public:
                           uint64_t *)
   {}
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 
