@@ -60,4 +60,4 @@ static int initialize(module::Context &context)
   return 0;
 }
 
-DRIZZLE_PLUGIN(initialize, NULL);
+DRIZZLE_PLUGIN(initialize, NULL, NULL);
