@@ -116,8 +116,11 @@ bool QueryCacheService::addRecord(Session *in_session, List<Item> &list)
     while ((item=li++))
     {
       string_value= item->val_str(string_value);
-      record->add_record_value(string_value->c_ptr(), string_value->length());
-      string_value->free();
+      if (string_value)
+      {
+        record->add_record_value(string_value->c_ptr(), string_value->length());
+        string_value->free();
+      }
     }
     return false;
   }
@@ -126,7 +129,7 @@ bool QueryCacheService::addRecord(Session *in_session, List<Item> &list)
 
 bool QueryCacheService::isCached(string query)
 {
-  map<string, message::Resultset>::iterator it= QueryCacheService::cache.find(query);
+  Entries::iterator it= QueryCacheService::cache.find(query);
   if (it != QueryCacheService::cache.end())
      return true;
   return false;

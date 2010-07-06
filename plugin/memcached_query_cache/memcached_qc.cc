@@ -31,6 +31,8 @@
 
 #include "config.h"
 #include "memcached_qc.h"
+#include "print_query_cache_meta.h"
+#include "data_dictionary_schema.h"
 #include "drizzled/session.h"
 #include "drizzled/select_send.h"
 
@@ -87,7 +89,7 @@ bool Memcached_Qc::doSendCachedResultset(Session *session)
 {
   /* TODO implement the send resultset functionality */
   (void) session;
-  return true;
+  return false;
 }
 
 /* init the current resultset in the session
@@ -152,7 +154,6 @@ bool Memcached_Qc::doSetResultset(Session *session)
      * ToDo: fix that
      */
     queryCacheService.cache[session->query_cache_key]= *resultset;
-
     /* endup the current statement */
     session->setResultsetMessage(NULL);
     return true;
@@ -193,10 +194,26 @@ char* Memcached_Qc::md5_key(const char *str)
   return out;
 }
 
+/** UDF **/
+extern plugin::Create_function<PrintQueryCacheMetaFunction> *print_query_cache_meta_func_factory;
+
+/** DATA_DICTIONARY view */
+static QueryCacheTool *query_cache_tool;
+
 static int init(module::Context &context)
 {
   Memcached_Qc* memc= new Memcached_Qc("memcached_qc");
   context.add(memc);
+
+  /* Setup the module's UDFs */
+  print_query_cache_meta_func_factory=
+    new plugin::Create_function<PrintQueryCacheMetaFunction>("print_query_cache_meta");
+  context.add(print_query_cache_meta_func_factory);
+
+  /* Setup the module's UDFs */
+  query_cache_tool= new (nothrow) QueryCacheTool();
+  context.add(query_cache_tool);
+
   return 0;
 }
 

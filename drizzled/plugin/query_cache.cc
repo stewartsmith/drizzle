@@ -77,7 +77,9 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-    return handler->doSendCachedResultset(session);
+    if (handler->doSendCachedResultset(session))
+      return false;
+    return true;
   }
 };
 bool plugin::QueryCache::sendCachedResultset(Session *session)

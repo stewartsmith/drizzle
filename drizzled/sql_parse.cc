@@ -723,48 +723,48 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
    * TODO the plugin has to make sure that the query is cacheble
    * by setting the query_safe_cache param to TRUE
    */
-  if(not plugin::QueryCache::isCached(session))
+  bool res= true;
+  if (plugin::QueryCache::isCached(session))
   {
-    LEX *lex= session->lex;
-    Lex_input_stream lip(session, inBuf, length);
-    bool err= parse_sql(session, &lip);
-    if (!err)
+    cout << "Results are cached" << endl;
+    res= plugin::QueryCache::sendCachedResultset(session);
+  }
+  if (not res)
+    return;
+  LEX *lex= session->lex;
+  Lex_input_stream lip(session, inBuf, length);
+  bool err= parse_sql(session, &lip);
+  if (!err)
+  {
     {
+      if (! session->is_error())
       {
-        if (! session->is_error())
+        DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
+                                 session->thread_id,
+                                 const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
+        // Implement Views here --Brian
+        /* Actually execute the query */
+        try 
         {
-          DRIZZLE_QUERY_EXEC_START(session->query.c_str(),
-                                   session->thread_id,
-                                   const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
-          // Implement Views here --Brian
-          /* Actually execute the query */
-          try 
-          {
-            mysql_execute_command(session);
-          }
-          catch (...)
-          {
-            // Just try to catch any random failures that could have come
-            // during execution.
-          }
-          DRIZZLE_QUERY_EXEC_DONE(0);
+          mysql_execute_command(session);
         }
+        catch (...)
+        {
+          // Just try to catch any random failures that could have come
+          // during execution.
+        }
+        DRIZZLE_QUERY_EXEC_DONE(0);
       }
     }
-    else
-    {
-      assert(session->is_error());
-    }
-    lex->unit.cleanup();
-    session->set_proc_info("freeing items");
-    session->end_statement();
-    session->cleanup_after_query();
   }
   else
   {
-    cout << "Results are cached" << endl;
-    plugin::QueryCache::sendCachedResultset(session);
+    assert(session->is_error());
   }
+  lex->unit.cleanup();
+  session->set_proc_info("freeing items");
+  session->end_statement();
+  session->cleanup_after_query();
 }
 
 

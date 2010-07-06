@@ -35,20 +35,22 @@
 
 namespace drizzled
 {
-  class TableList;
+class TableList;
+class Item;
+
 namespace message
 {
-  class Resultset;
+class Resultset;
 }
-
 
 class QueryCacheService
 {
 public:
-
+  typedef std::map<std::string, drizzled::message::Resultset> Entries;
+  typedef std::pair<const std::string, drizzled::message::Resultset> Entry;
   static const size_t DEFAULT_RECORD_SIZE= 100;
-  static std::map<std::string, drizzled::message::Resultset> cache; // ToDo: make private
-  drizzled::List<drizzled::Item> previousItem;  //ToDo: remove
+  static Entries cache; // ToDo: make private
+  List<Item> previousItem;  //ToDo: remove
 
   /**
    * Singleton method
