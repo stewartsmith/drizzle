@@ -7,22 +7,22 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2009-03-05 22:00+0000\n"
-"Last-Translator: Monty Taylor <mordred@inaugust.com>\n"
+"POT-Creation-Date: 2010-05-26 01:18+0000\n"
+"PO-Revision-Date: 2010-06-30 07:21+0000\n"
+"Last-Translator: chandni jaswal <Unknown>\n"
 "Language-Team: Hindi <hi@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-07-01 03:43+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
-msgstr ""
+msgstr "'सहायता' के लिए पर्याय"
 
 msgid "Clear command."
-msgstr "साफ़ करने की कमांड"
+msgstr "सॉफ करने का निर्देश"
 
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr ""
@@ -83,14 +83,294 @@ msgstr "हर विवरण के बाद चेतावनी दिख�
 msgid "Don't show warnings after every statement."
 msgstr "हर विवरण के बाद चेतावनी मत दिखाए"
 
+msgid "Error: Invalid Value for connect_timeout"
+msgstr ""
+
+msgid "Error: Invalid Value for max_input_line"
+msgstr ""
+
+#, fuzzy
+msgid "Displays this help and exit."
+msgstr "इस सहायता को पर्दर्शित करे और बाहर निकले."
+
+msgid ""
+"Don't use history file. Disable interactive behavior. (Enables --silent)"
+msgstr ""
+"इतिहासिक फाइल का उपयोग न करे. परस्पर व्यवहार को अक्षम करता है. (--silent को सक्षम "
+"करता है)"
+
+msgid "Display column type information."
+msgstr "कालम टाइप की जानकारी पर्दर्शित करे."
+
+msgid ""
+"Preserve comments. Send comments to the server. The default is --skip-"
+"comments (discard comments), enable with --comments"
+msgstr ""
+"टिप्पणियाँ संरक्षित करो. टिप्पणियाँ सर्वर को भेजो. --skip-comments डिफ़ॉल्ट होता है, "
+"सक्षम करने के लिए --comments का उपयोग करें."
+
+msgid "Use compression in server/client protocol."
+msgstr "सर्वर/क्लाइंट प्रोटोकॉल में संपीडन का प्रयोग करे."
+
+msgid "Print the output of a query (rows) vertically."
+msgstr "कुएरी के उत्पादन (पंक्तियाँ) को लाम्बिक मुद्रा में प्रिंट करे"
+
+msgid "Continue even if we get an sql error."
+msgstr "SQL त्रुटी आने पर भी आगे बढे."
+
+msgid ""
+"Enable named commands. Named commands mean this program's internal commands; "
+"see drizzle> help . When enabled, the named commands can be used from any "
+"line of the query, otherwise only from the first line, before an enter. "
+"Disable with --disable-named-commands. This option is disabled by default."
+msgstr ""
+"नामधारी कमांड्स को सक्षम करे. इस प्रोग्राम की अंदरूनी कमांड्स को नामधारी कमांड्स कहते है; "
+"drizzle> help देखे. सक्षम करने के बाद नामधारी कमांड्स को क्वैरी की किसी भी लाइन के इंटर "
+"से पहले उपयोग किया जा सकता है, अन्यथा केवल पहली लाइन पर. --disable-named-commands "
+"इसको अक्षम करता है. डिफ़ॉल्ट तौर पर ये अक्षम होता है."
+
+msgid ""
+"Named commands are disabled. Use \\* form only, or use named commands only "
+"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
+"the client now starts with this option ENABLED by default! Disable with '-"
+"G'. Long format commands still work from the first line. WARNING: option "
+"deprecated; use --disable-named-commands instead."
+msgstr ""
+
+msgid "Ignore space after function names."
+msgstr "फंकशन के नाम के बाद के स्पेस पर ध्यान ना दे."
+
+msgid "Turn off beep on error."
+msgstr "त्रुटी आने पर बीप न की जाए."
+
+msgid "Write line numbers for errors."
+msgstr "त्रुटियों के लिए लाइन संख्या लिखें."
+
+msgid ""
+"Don't write line number for errors. WARNING: -L is deprecated, use long "
+"version of this option instead."
+msgstr ""
+"त्रुटियों के लिए लाइन संख्या मत लिखें. चेतावनी: -L पदावनत है, इसकी बजाये इस विकल्प के लंबे "
+"संस्करण का उपयोग करें."
+
+msgid "Write column names in results."
+msgstr "स्तम्भ के नाम परिणाम में लिखें"
+
+msgid ""
+"Don't write column names in results. WARNING: -N is deprecated, use long "
+"version of this options instead."
+msgstr ""
+"कालम के नाम परिणाम में मत लिखें. चेतावनी: -N पदावनत है, इसकी बजाये इस विकल्प के लंबे "
+"संस्करण का उपयोग करें."
+
+msgid ""
+"Change the value of a variable. Please note that this option is deprecated; "
+"you can set variables directly with --variable-name=value."
+msgstr ""
+"चर के मूल्य को बदले. कृपया ध्यान दें कि ये विकल्प पदावनत है, चरों के मूल्य को आप सीधा --"
+"variable-name=value से सेट कर सकते है."
+
+msgid "Output in table format."
+msgstr "तालिका प्रारूप में निर्गम किया जाए."
+
+msgid "Only allow UPDATE and DELETE that uses keys."
+msgstr "केवल उन अद्यतन और मिटाने कि कमांड को अनुमति दें जो कुंजी का उपयोग करती हो"
+
+msgid "Synonym for option --safe-updates, -U."
+msgstr "--safe-updates, -U विकल्प का पर्याय"
+
+msgid "-v vvv implies that verbose= 3, Used to specify verbose"
+msgstr ""
+
+msgid "Output version information and exit."
+msgstr "संस्करण सूचना प्रिंट करे और बाहर निकले."
+
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr ""
+"सर्वर क्लाइंट के कनेक्शन को इनकार करे यदि वह पुराने (पूर्व-4.1.1) प्रोटोकॉल का उपयोग कर "
+"रहा हो तो."
+
+msgid "Number of lines before each import progress report."
+msgstr ""
+
+msgid "Ping the server to check if it's alive."
+msgstr ""
+
+msgid "Configuration file defaults are not used if no-defaults is set"
+msgstr ""
+
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr ""
+
+msgid "Database to use."
+msgstr "प्रयोग किया जाने वाला डाटाबेस."
+
+msgid "(not used)"
+msgstr ""
+
+msgid "Delimiter to be used."
+msgstr "उपयोग किया जाने वाला परिसीमक."
+
+msgid "Execute command and quit. (Disables --force and history file)"
+msgstr "कमांड को चलाकर बाहर निकले. ( --force एवं इतिहासिक फाइल को निष्क्रिय करता है)"
+
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr "LOAD DATA LOCAL INFILE सक्षम/अक्षम करे."
+
+msgid "Flush buffer after each query."
+msgstr "हर एक कुएरी के बाद बफ़र फ्लश करे."
+
+msgid "Ignore SIGINT (CTRL-C)"
+msgstr "SIGINT (CTRL-C) की ओर ध्यान ना दे."
+
+msgid ""
+"Only update the default database. This is useful for skipping updates to "
+"other database in the update log."
+msgstr ""
+"केवल देफौल्ट डाटाबेस का ही अद्यतन करें. ये अद्यतन लॉग में दूसरे डाटाबेसस के अद्यतन को छोड़ने के "
+"काम आता है."
+
+msgid ""
+"Pager to use to display results. If you don't supply an option the default "
+"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
+"cat [> filename], etc. See interactive help (\\h) also. This option does not "
+"work in batch mode. Disable with --disable-pager. This option is disabled by "
+"default."
+msgstr ""
+
+#, fuzzy
+msgid "Disable pager and print to stdout. See interactive help (\\h) also."
+msgstr ""
+"पेजर को निष्क्रिय करके stdout पे प्रिंट करें. परस्पर सक्रिय सहायता (\\h) भी देखें. चेतावनी: "
+"विकल्प पदावनत है, इसकी बजाये --disable-pager का उपयोग करें."
+
+msgid "Set the drizzle prompt to this value."
+msgstr "डरीझल टत्पर को इस मूल्य पे सेट करो"
+
+msgid ""
+"Don't cache result, print it row by row. This may slow down the server if "
+"the output is suspended. Doesn't use history file."
+msgstr ""
+"परिणाम को कैश न करें. ये सर्वर को धीमा कर सकता है अगर परिणाम निलंबित हो. इतिहासिक "
+"फाइल का उपयोग नही होगा."
+
+msgid "Write fields without conversion. Used with --batch."
+msgstr "फ़िल्डस को बिना रूपांतरण के लिखे. --batch के साथ प्रयुक्त है"
+
+msgid ""
+"Reconnect if the connection is lost. Disable with --disable-reconnect. This "
+"option is enabled by default."
+msgstr ""
+"पुन: कनेक्ट करे अगर कनेक्शन टूट गया हो. --disable-reconnect से निष्क्रिय कर सकते है. यह "
+"विकल्प डिफ़ॉल्ट रूप से सक्षम है."
+
+msgid "Shutdown the server"
+msgstr ""
+
+msgid ""
+"Be more silent. Print results with a tab as separator, each row on new line."
+msgstr ""
+"अधिक मूक रहो. परिणाम प्रिंट करते समय टैब को विभाजक के रूप में उपयोग करे, प्रत्येक पंक्ति को "
+"नई लाइन पर रखते हुए."
+
+msgid ""
+"Append everything into outfile. See interactive help (\\h) also. Does not "
+"work in batch mode. Disable with --disable-tee. This option is disabled by "
+"default."
+msgstr ""
+"सब कुछ outfile में संलग्न करे. परस्पर सहायता (\\h) भी देखें. ये बैच मोड में काम नहीं करता "
+"है. --disable-tee इसको निष्क्रिय करता है. यह विकल्प डिफ़ॉल्ट रूप से अक्षम है."
+
+#, fuzzy
+msgid "Disable outfile. See interactive help (\\h) also."
+msgstr ""
+"outfile को निष्क्रिय करे. परस्पर सहायता (\\h) भी देखें. चेतावनी: विकल्प पदावनत है; "
+"इसकी बजाये --disable-tee उपयोग करे"
+
+msgid "Wait and retry if connection is down."
+msgstr "यदि कनेक्शन टूट गया हो तो प्रतीक्षा के बाद पुन: प्रयास किया जाए."
+
+msgid "Number of seconds before connection timeout."
+msgstr "कनेक्शन की समयसमाप्ति से पहले सेकंड्स की संख्या."
+
+msgid "Max length of input line"
+msgstr ""
+
+msgid "Automatic limit for SELECT when using --safe-updates"
+msgstr ""
+
+msgid "Automatic limit for rows in a join when using --safe-updates"
+msgstr "--safe-updates का उपयोग करते समय ज्वाइन में स्वत: पंक्ति-गणना को सीमित करे."
+
+msgid "Use MySQL Protocol."
+msgstr ""
+
+#, fuzzy
+msgid "Connect to host"
+msgstr "होस्ट से कनेक्ट करने के लिए ."
+
+msgid ""
+"Password to use when connecting to server. If password is not given it's "
+"asked from the tty."
+msgstr ""
+"सर्वर से कनेक्ट करने के लिए पासवर्ड का प्रयोग करें. यदि पासवर्ड नही दिया गया हो तो tty "
+"पर पुछा जाए."
+
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
+msgstr ""
+
+msgid "User for login if not current user."
+msgstr "उपभोक्ता का नाम बताएं अगर आप वर्तमान उपभोक्ता नही है"
+
+msgid "The protocol of connection (tcp,socket,pipe,memory)."
+msgstr ""
+
 #, c-format
 msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 
+msgid "DELIMITER cannot contain a backslash character"
+msgstr "परिसीमक में backslash नही हो सकता है"
+
+#, c-format
+msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Copyright (C) 2008 Sun Microsystems\n"
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Usage: drizzle [OPTIONS] [database]\n"
+msgstr "उपयोग: %s [विकल्प] [डाटाबेस]\n"
+
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "डरीझल क्लाइंट में आपका स्वागत है. कमांड ';' या '\\g' से समाप्त होती है."
 
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
@@ -122,296 +402,6 @@ msgstr "बाय"
 
 msgid "Query aborted by Ctrl+C\n"
 msgstr "कुएरी Ctrl+C द्वारा रद्द की गई.\n"
-
-msgid "Display this help and exit."
-msgstr "इस सहायता को पर्दर्शित करे और बाहर निकले."
-
-msgid "Synonym for -?"
-msgstr "-? का परयाय."
-
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr ""
-
-msgid ""
-"Don't use history file. Disable interactive behavior. (Enables --silent)"
-msgstr ""
-"इतिहासिक फाइल का उपयोग न करे. परस्पर व्यवहार को अक्षम करता है. (--silent को सक्षम "
-"करता है)"
-
-msgid "Display column type information."
-msgstr "कालम टाइप की जानकारी पर्दर्शित करे."
-
-msgid ""
-"Preserve comments. Send comments to the server. The default is --skip-"
-"comments (discard comments), enable with --comments"
-msgstr ""
-"टिप्पणियाँ संरक्षित करो. टिप्पणियाँ सर्वर को भेजो. --skip-comments डिफ़ॉल्ट होता है, "
-"सक्षम करने के लिए --comments का उपयोग करें."
-
-msgid "Use compression in server/client protocol."
-msgstr "सर्वर/क्लाइंट प्रोटोकॉल में संपीडन का प्रयोग करे."
-
-msgid "Database to use."
-msgstr "प्रयोग किया जाने वाला डाटाबेस."
-
-msgid "(not used)"
-msgstr ""
-
-msgid "Delimiter to be used."
-msgstr "उपयोग किया जाने वाला परिसीमक."
-
-msgid "Execute command and quit. (Disables --force and history file)"
-msgstr "कमांड को चलाकर बाहर निकले. ( --force एवं इतिहासिक फाइल को निष्क्रिय करता है)"
-
-msgid "Print the output of a query (rows) vertically."
-msgstr "कुएरी के उत्पादन (पंक्तियाँ) को लाम्बिक मुद्रा में प्रिंट करे"
-
-msgid "Continue even if we get an sql error."
-msgstr "SQL त्रुटी आने पर भी आगे बढे."
-
-msgid ""
-"Enable named commands. Named commands mean this program's internal commands; "
-"see drizzle> help . When enabled, the named commands can be used from any "
-"line of the query, otherwise only from the first line, before an enter. "
-"Disable with --disable-named-commands. This option is disabled by default."
-msgstr ""
-"नामधारी कमांड्स को सक्षम करे. इस प्रोग्राम की अंदरूनी कमांड्स को नामधारी कमांड्स कहते है; "
-"drizzle> help देखे. सक्षम करने के बाद नामधारी कमांड्स को क्वैरी की किसी भी लाइन के इंटर "
-"से पहले उपयोग किया जा सकता है, अन्यथा केवल पहली लाइन पर. --disable-named-commands "
-"इसको अक्षम करता है. डिफ़ॉल्ट तौर पर ये अक्षम होता है."
-
-msgid ""
-"Named commands are disabled. Use \\* form only, or use named commands only "
-"in the beginning of a line ending with a semicolon (;) Since version 10.9 "
-"the client now starts with this option ENABLED by default! Disable with '-"
-"G'. Long format commands still work from the first line. WARNING: option "
-"deprecated; use --disable-named-commands instead."
-msgstr ""
-
-msgid "Ignore space after function names."
-msgstr "फंकशन के नाम के बाद के स्पेस पर ध्यान ना दे."
-
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "LOAD DATA LOCAL INFILE सक्षम/अक्षम करे."
-
-msgid "Turn off beep on error."
-msgstr "त्रुटी आने पर बीप न की जाए."
-
-msgid "Connect to host."
-msgstr "होस्ट से कनेक्ट करने के लिए ."
-
-msgid "Write line numbers for errors."
-msgstr "त्रुटियों के लिए लाइन संख्या लिखें."
-
-msgid ""
-"Don't write line number for errors. WARNING: -L is deprecated, use long "
-"version of this option instead."
-msgstr ""
-"त्रुटियों के लिए लाइन संख्या मत लिखें. चेतावनी: -L पदावनत है, इसकी बजाये इस विकल्प के लंबे "
-"संस्करण का उपयोग करें."
-
-msgid "Flush buffer after each query."
-msgstr "हर एक कुएरी के बाद बफ़र फ्लश करे."
-
-msgid "Write column names in results."
-msgstr "स्तम्भ के नाम परिणाम में लिखें"
-
-msgid ""
-"Don't write column names in results. WARNING: -N is deprecated, use long "
-"version of this options instead."
-msgstr ""
-"कालम के नाम परिणाम में मत लिखें. चेतावनी: -N पदावनत है, इसकी बजाये इस विकल्प के लंबे "
-"संस्करण का उपयोग करें."
-
-msgid ""
-"Change the value of a variable. Please note that this option is deprecated; "
-"you can set variables directly with --variable-name=value."
-msgstr ""
-"चर के मूल्य को बदले. कृपया ध्यान दें कि ये विकल्प पदावनत है, चरों के मूल्य को आप सीधा --"
-"variable-name=value से सेट कर सकते है."
-
-msgid "Ignore SIGINT (CTRL-C)"
-msgstr "SIGINT (CTRL-C) की ओर ध्यान ना दे."
-
-msgid ""
-"Only update the default database. This is useful for skipping updates to "
-"other database in the update log."
-msgstr ""
-"केवल देफौल्ट डाटाबेस का ही अद्यतन करें. ये अद्यतन लॉग में दूसरे डाटाबेसस के अद्यतन को छोड़ने के "
-"काम आता है."
-
-msgid ""
-"Pager to use to display results. If you don't supply an option the default "
-"pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
-"cat [> filename], etc. See interactive help (\\h) also. This option does not "
-"work in batch mode. Disable with --disable-pager. This option is disabled by "
-"default."
-msgstr ""
-
-msgid ""
-"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-"option deprecated; use --disable-pager instead."
-msgstr ""
-"पेजर को निष्क्रिय करके stdout पे प्रिंट करें. परस्पर सक्रिय सहायता (\\h) भी देखें. चेतावनी: "
-"विकल्प पदावनत है, इसकी बजाये --disable-pager का उपयोग करें."
-
-msgid ""
-"Password to use when connecting to server. If password is not given it's "
-"asked from the tty."
-msgstr ""
-"सर्वर से कनेक्ट करने के लिए पासवर्ड का प्रयोग करें. यदि पासवर्ड नही दिया गया हो तो tty "
-"पर पुछा जाए."
-
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-
-msgid "built-in default"
-msgstr "निर्मित डिफ़ॉल्ट"
-
-msgid "Set the drizzle prompt to this value."
-msgstr "डरीझल टत्पर को इस मूल्य पे सेट करो"
-
-msgid ""
-"Don't cache result, print it row by row. This may slow down the server if "
-"the output is suspended. Doesn't use history file."
-msgstr ""
-"परिणाम को कैश न करें. ये सर्वर को धीमा कर सकता है अगर परिणाम निलंबित हो. इतिहासिक "
-"फाइल का उपयोग नही होगा."
-
-msgid "Write fields without conversion. Used with --batch."
-msgstr "फ़िल्डस को बिना रूपांतरण के लिखे. --batch के साथ प्रयुक्त है"
-
-msgid ""
-"Reconnect if the connection is lost. Disable with --disable-reconnect. This "
-"option is enabled by default."
-msgstr ""
-"पुन: कनेक्ट करे अगर कनेक्शन टूट गया हो. --disable-reconnect से निष्क्रिय कर सकते है. यह "
-"विकल्प डिफ़ॉल्ट रूप से सक्षम है."
-
-msgid "Shutdown the server."
-msgstr ""
-
-msgid ""
-"Be more silent. Print results with a tab as separator, each row on new line."
-msgstr ""
-"अधिक मूक रहो. परिणाम प्रिंट करते समय टैब को विभाजक के रूप में उपयोग करे, प्रत्येक पंक्ति को "
-"नई लाइन पर रखते हुए."
-
-msgid "Output in table format."
-msgstr "तालिका प्रारूप में निर्गम किया जाए."
-
-msgid ""
-"Append everything into outfile. See interactive help (\\h) also. Does not "
-"work in batch mode. Disable with --disable-tee. This option is disabled by "
-"default."
-msgstr ""
-"सब कुछ outfile में संलग्न करे. परस्पर सहायता (\\h) भी देखें. ये बैच मोड में काम नहीं करता "
-"है. --disable-tee इसको निष्क्रिय करता है. यह विकल्प डिफ़ॉल्ट रूप से अक्षम है."
-
-msgid ""
-"Disable outfile. See interactive help (\\h) also. WARNING: option "
-"deprecated; use --disable-tee instead"
-msgstr ""
-"outfile को निष्क्रिय करे. परस्पर सहायता (\\h) भी देखें. चेतावनी: विकल्प पदावनत है; "
-"इसकी बजाये --disable-tee उपयोग करे"
-
-msgid "User for login if not current user."
-msgstr "उपभोक्ता का नाम बताएं अगर आप वर्तमान उपभोक्ता नही है"
-
-msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr "केवल उन अद्यतन और मिटाने कि कमांड को अनुमति दें जो कुंजी का उपयोग करती हो"
-
-msgid "Synonym for option --safe-updates, -U."
-msgstr "--safe-updates, -U विकल्प का पर्याय"
-
-msgid "Write more. (-v -v -v gives the table output format)."
-msgstr "अधिक लिखें . (-v -v -v तालिका उत्पादन प्रारूप देता है) ."
-
-msgid "Output version information and exit."
-msgstr "संस्करण सूचना प्रिंट करे और बाहर निकले."
-
-msgid "Wait and retry if connection is down."
-msgstr "यदि कनेक्शन टूट गया हो तो प्रतीक्षा के बाद पुन: प्रयास किया जाए."
-
-msgid "Number of seconds before connection timeout."
-msgstr "कनेक्शन की समयसमाप्ति से पहले सेकंड्स की संख्या."
-
-msgid "Max length of input line"
-msgstr ""
-
-msgid "Automatic limit for SELECT when using --safe-updates"
-msgstr ""
-
-msgid "Automatic limit for rows in a join when using --safe-updates"
-msgstr "--safe-updates का उपयोग करते समय ज्वाइन में स्वत: पंक्ति-गणना को सीमित करे."
-
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr ""
-"सर्वर क्लाइंट के कनेक्शन को इनकार करे यदि वह पुराने (पूर्व-4.1.1) प्रोटोकॉल का उपयोग कर "
-"रहा हो तो."
-
-msgid "Number of lines before each import progress report."
-msgstr ""
-
-msgid "Ping the server to check if it's alive."
-msgstr ""
-
-msgid "Use MySQL Protocol."
-msgstr ""
-
-#, c-format
-msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Copyright (C) 2008 Sun Microsystems\n"
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr "उपयोग: %s [विकल्प] [डाटाबेस]\n"
-
-msgid "DELIMITER cannot contain a backslash character"
-msgstr "परिसीमक में backslash नही हो सकता है"
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-tee का उपयोग करे.\n"
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-pager का उपयोग करे.\n"
-
-#, c-format
-msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr "चेतावनी : --server-arg विकल्प इस विन्यास में समर्थित नहीं है .\n"
-
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
-msgstr ""
-
-msgid "Value supplied for port is not valid."
-msgstr ""
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
@@ -463,67 +453,8 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "क्वैरी ओ.के, %ld पंक्ति प्रभावित"
 msgstr[1] "क्वैरी ओ.के, %ld पंक्तियाँ प्रभावित"
 
-msgid "Number of rows before each output progress report (requires --verbose)."
-msgstr ""
-
 #, c-format
 msgid "Got errno %d on write"
-msgstr ""
-
-#, c-format
-msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr ""
-
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-"ये सॉफ्टवेर कदापि वार्रंटी के साथ नही आता, यह एक फ्री सॉफ्टवेर है\n"
-"एवं आपको इसे GPL लाईसेन्स के अंतर्गत संशोधित और पुनर्वितरण करने की पूरी छूट है\n"
-
-msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
-
-#, c-format
-msgid "For more options, use %s --help\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead.\n"
-msgstr ""
-
-#, c-format
-msgid "Value supplied for port is not valid.\n"
-msgstr ""
-
-#, c-format
-msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr ""
-
-#, c-format
-msgid "Input filename too long: %s"
-msgstr ""
-
-#, c-format
-msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr ""
-
-#, c-format
-msgid "Invalid mode to --compatible: %s\n"
 msgstr ""
 
 #, c-format
@@ -659,6 +590,60 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
+msgid "Number of rows before each output progress report (requires --verbose)."
+msgstr ""
+
+#, c-format
+msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
+msgstr ""
+
+#, c-format
+msgid "Value supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "Input filename too long: %s"
+msgstr ""
+
+#, c-format
+msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
+msgstr ""
+
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+"ये सॉफ्टवेर कदापि वार्रंटी के साथ नही आता, यह एक फ्री सॉफ्टवेर है\n"
+"एवं आपको इसे GPL लाईसेन्स के अंतर्गत संशोधित और पुनर्वितरण करने की पूरी छूट है\n"
+
+msgid "Dumps definitions and data from a Drizzle database server"
+msgstr ""
+
+#, c-format
+msgid "Illegal use of option --ignore-table=<database>.<table>\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid mode to --compatible: %s\n"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_max_connect_retries"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_tail_lines"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_sleep"
+msgstr ""
+
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
@@ -710,6 +695,9 @@ msgstr ""
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
 msgstr ""
+
+msgid "Display this help and exit."
+msgstr "इस सहायता को पर्दर्शित करे और बाहर निकले."
 
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
@@ -1967,8 +1955,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Uncompressed data size too large; the maximum size is %d (probably, length "
-"of uncompressed data was corrupted)"
+"Uncompressed data size too large; the maximum size is %d (based on "
+"max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
@@ -3681,6 +3669,10 @@ msgid "Corrupt or invalid table definition: %s"
 msgstr ""
 
 #, c-format
+msgid "Corrupt or invalid schema definition for %s : %s"
+msgstr ""
+
+#, c-format
 msgid "Schema does not exist: %s"
 msgstr ""
 
@@ -3701,6 +3693,9 @@ msgstr ""
 
 #, c-format
 msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+msgid "Implicit cartesian join attempted."
 msgstr ""
 
 #, c-format
@@ -3994,18 +3989,18 @@ msgid "setsockopt(TCP_NODELAY) failed with errno %d"
 msgstr ""
 
 #, c-format
-msgid "Retrying bind() on %u"
+msgid "Retrying bind() on %u\n"
 msgstr ""
 
 #, c-format
-msgid "bind() failed with errno: %d"
+msgid "bind() failed with errno: %d\n"
 msgstr ""
 
-msgid "Do you already have another drizzled running?"
+msgid "Do you already have another drizzled running?\n"
 msgstr ""
 
 #, c-format
-msgid "listen() failed with errno %d"
+msgid "listen() failed with errno %d\n"
 msgstr ""
 
 #, c-format
@@ -4125,6 +4120,10 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "ENUM column %s has greater than %d possible values"
+msgstr ""
+
+#, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr ""
 
@@ -4200,9 +4199,8 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "प्रयोग किया जाने वाला डाटाबेस."
+msgstr ""
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -4483,29 +4481,6 @@ msgstr ""
 msgid "Log queries to a CSV file"
 msgstr ""
 
-#, c-format
-msgid "syslog facility \"%s\" not known, using \"local0\""
-msgstr ""
-
-#, c-format
-msgid "syslog priority \"%s\" not known, using \"info\""
-msgstr ""
-
-msgid "Enable logging to syslog"
-msgstr ""
-
-msgid "Syslog Ident"
-msgstr ""
-
-msgid "Syslog Facility"
-msgstr ""
-
-msgid "Syslog Priority"
-msgstr ""
-
-msgid "Log to syslog"
-msgstr ""
-
 msgid "List of memcached servers."
 msgstr ""
 
@@ -4748,6 +4723,18 @@ msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
 
 #, c-format
+msgid "syslog facility \"%s\" not known, using \"local0\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"warn\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"info\""
+msgstr ""
+
+#, c-format
 msgid "Unable to create background worker thread. Got error %s.\n"
 msgstr ""
 
@@ -4777,9 +4764,8 @@ msgstr ""
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "कनेक्शन के लिए उपयोग की जाने वाली सोकेट फाइल."
+msgstr ""
 
 msgid "Name of the replicator plugin to use (default='default_replicator')"
 msgstr ""
@@ -4824,17 +4810,35 @@ msgstr ""
 msgid "BUFFER: %s\n"
 msgstr ""
 
-#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
-#~ msgstr "'%s' फाइल को बनाने/लिखने के समय विफल हुआ (त्रुटि कोड: %d)"
+#~ msgid "Synonym for -?"
+#~ msgstr "-? का परयाय."
 
-#~ msgid "Error reading file '%s' (Errcode: %d)"
-#~ msgstr "फ़ाइल '%s' पढ़ने में त्रुटि (त्रुटि कोड: %d)"
+#~ msgid "built-in default"
+#~ msgstr "निर्मित डिफ़ॉल्ट"
 
-#~ msgid "Error writing file '%s' (Errcode: %d)"
-#~ msgstr "फ़ाइल '%s' लिखने में त्रुटि (त्रुटि कोड: %d)"
+#~ msgid "Write more. (-v -v -v gives the table output format)."
+#~ msgstr "अधिक लिखें . (-v -v -v तालिका उत्पादन प्रारूप देता है) ."
 
-#~ msgid "Out of memory (Needed %u bytes)"
-#~ msgstr "मेमोरी समाप्त (%u बाईट्स की और ज़रूरत थी)"
+#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
+#~ msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-tee का उपयोग करे.\n"
+
+#~ msgid "WARNING: option deprecated; use --disable-pager instead.\n"
+#~ msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-pager का उपयोग करे.\n"
+
+#~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
+#~ msgstr "चेतावनी : --server-arg विकल्प इस विन्यास में समर्थित नहीं है .\n"
+
+#~ msgid "Set the default character set."
+#~ msgstr "डीफौल्ट चारसेट सेट करे."
+
+#~ msgid "Print some debug info at exit."
+#~ msgstr "बाहर निकलते समय कुछ डीबग जानकारी पर्दर्शित करे."
+
+#~ msgid "Socket file to use for connection."
+#~ msgstr "कनेक्शन के लिए उपयोग की जाने वाली सोकेट फाइल."
+
+#~ msgid "Unknown command '\\%c'."
+#~ msgstr "अज्ञात कमांड '\\%c'"
 
 #~ msgid "Error on delete of '%s' (Errcode: %d)"
 #~ msgstr "'%s' को मिटाने पर त्रुटी (त्रुटी कोड: %d)"
@@ -4842,23 +4846,26 @@ msgstr ""
 #~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
 #~ msgstr "'%s' का नाम '%s' में बदलते हुए त्रुटी (त्रुटी कोड: %d)"
 
-#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-#~ msgstr "'%s' फाइल को पढ़ते हुए अप्रत्याशित अंत (eof) मिला (त्रुटी कोड: %d)"
+#~ msgid "Out of memory (Needed %u bytes)"
+#~ msgstr "मेमोरी समाप्त (%u बाईट्स की और ज़रूरत थी)"
 
 #~ msgid "Can't lock file (Errcode: %d)"
 #~ msgstr "फ़ाइल लॉक नहीं कर सकता (त्रुटी कोड: %d)"
 
+#~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
+#~ msgstr "'%s' फाइल को पढ़ते हुए अप्रत्याशित अंत (eof) मिला (त्रुटी कोड: %d)"
+
 #~ msgid "File '%s' not found (Errcode: %d)"
 #~ msgstr "'%s' फाइल नही मिली (त्रुटी कोड: %d)"
+
+#~ msgid "Error reading file '%s' (Errcode: %d)"
+#~ msgstr "फ़ाइल '%s' पढ़ने में त्रुटि (त्रुटि कोड: %d)"
+
+#~ msgid "Error writing file '%s' (Errcode: %d)"
+#~ msgstr "फ़ाइल '%s' लिखने में त्रुटि (त्रुटि कोड: %d)"
 
 #~ msgid "Check memory and open file usage at exit ."
 #~ msgstr "बाहर निकलते समय मेमोरी एवं खुली हुई फाइलों की जांच करें."
 
-#~ msgid "Print some debug info at exit."
-#~ msgstr "बाहर निकलते समय कुछ डीबग जानकारी पर्दर्शित करे."
-
-#~ msgid "Set the default character set."
-#~ msgstr "डीफौल्ट चारसेट सेट करे."
-
-#~ msgid "Unknown command '\\%c'."
-#~ msgstr "अज्ञात कमांड '\\%c'"
+#~ msgid "Can't create/write to file '%s' (Errcode: %d)"
+#~ msgstr "'%s' फाइल को बनाने/लिखने के समय विफल हुआ (त्रुटि कोड: %d)"
