@@ -1028,6 +1028,24 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
       key_part->length= part.compare_length();
 
+      int mbmaxlen= 1;
+
+      if (table.field(part.fieldnr()).type() == message::Table::Field::VARCHAR
+          || table.field(part.fieldnr()).type() == message::Table::Field::BLOB)
+      {
+        uint32_t collation_id;
+
+        if (table.field(part.fieldnr()).string_options().has_collation_id())
+          collation_id= table.field(part.fieldnr()).string_options().collation_id();
+        else
+          collation_id= table.options().collation_id();
+
+        const CHARSET_INFO *cs= get_charset(collation_id);
+
+        mbmaxlen= cs->mbmaxlen;
+      }
+      key_part->length*= mbmaxlen;
+
       key_part->store_length= key_part->length;
 
       /* key_part->offset is set later */
