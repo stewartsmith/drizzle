@@ -29,15 +29,9 @@ namespace drizzled
 namespace generator
 {
 
-Table::Table(Session &arg) :
+Table::Table(Session &arg, const SchemaIdentifier &schema_identifier) :
   session(arg)
 {
-  table_iterator= table_names.end();
-}
-
-void Table::reset(const SchemaIdentifier &schema_identifier)
-{
-  table_names.clear();
   plugin::StorageEngine::getTableIdentifiers(session, schema_identifier, table_names);
   table_iterator= table_names.begin();
 }

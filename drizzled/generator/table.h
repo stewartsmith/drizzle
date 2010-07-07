@@ -37,9 +37,7 @@ class Table
 
 public:
 
-  Table(Session &arg);
-
-  void reset(const SchemaIdentifier &schema_identifier);
+  Table(Session &arg, const SchemaIdentifier &schema_identifier);
 
   operator const drizzled::message::Table*()
   {
