@@ -28,6 +28,8 @@
 #include <signal.h>
 #include <limits.h>
 
+#include <boost/program_options.hpp>
+
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
@@ -125,6 +127,8 @@
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
 
 using namespace std;
+namespace po=boost::program_options;
+
 
 namespace drizzled
 {
@@ -366,6 +370,14 @@ static void fix_paths(string &progname);
 
 static void usage(void);
 void close_connections(void);
+
+po::options_description long_options("Allowed Options");
+po::variables_map vm;
+
+po::variables_map &getVariablesMap()
+{
+  return vm;
+}
  
 /****************************************************************************
 ** Code to end drizzled
@@ -850,45 +862,37 @@ int init_server_components(module::Registry &plugins)
   ha_init_errors();
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? true : false)))
+                  ((opt_help) ? true : false), long_options))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
+
   if (opt_help || opt_help_extended)
     unireg_abort(0);
 
+  po::parsed_options parsed= po::command_line_parser(defaults_argc,
+                                                     defaults_argv).
+    options(long_options).allow_unregistered().run();
+
+  vector<string> unknown_options=
+    po::collect_unrecognized(parsed.options, po::include_positional);
+
   /* we do want to exit if there are any other unknown options */
-  if (defaults_argc > 1)
+  /** @TODO: We should perhaps remove allowed_unregistered() and catch the
+    exception here */
+  if (unknown_options.size() > 0)
   {
-    int ho_error;
-    char **tmp_argv= defaults_argv;
-    struct option no_opts[]=
-    {
-      {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
-    };
-    /*
-      We need to eat any 'loose' arguments first before we conclude
-      that there are unprocessed options.
-      But we need to preserve defaults_argv pointer intact for
-      internal::free_defaults() to work. Thus we use a copy here.
-    */
-    my_getopt_skip_unknown= 0;
-
-    if ((ho_error= handle_options(&defaults_argc, &tmp_argv, no_opts,
-                                  drizzled_get_one_option)))
-      unireg_abort(ho_error);
-
-    if (defaults_argc)
-    {
-      fprintf(stderr,
-              _("%s: Too many arguments (first extra is '%s').\n"
-                "Use --verbose --help to get a list of available options\n"),
-              internal::my_progname, *tmp_argv);
+     fprintf(stderr,
+            _("%s: Too many arguments (first extra is '%s').\n"
+              "Use --verbose --help to get a list of available options\n"),
+            internal::my_progname, unknown_options[0].c_str());
       unireg_abort(1);
-    }
   }
+
+  po::store(parsed, vm);
+  po::notify(vm);
 
   string scheduler_name;
   if (opt_scheduler)
@@ -1381,7 +1385,7 @@ static void usage(void)
      puts("");
  
      /* Print out all the options including plugin supplied options */
-     my_print_help_inc_plugins(my_long_options);
+     my_print_help_inc_plugins(my_long_options, long_options);
   }
 }
 
@@ -1751,6 +1755,7 @@ static void fix_paths(string &progname)
   internal::convert_dirname(buff,buff,NULL);
   (void) internal::my_load_path(language,language,buff);
 
+  if (not opt_help and not opt_help_extended)
   {
     char *tmp_string;
     struct stat buf;

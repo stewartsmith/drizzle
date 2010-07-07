@@ -103,7 +103,6 @@ const char *unix_sock= NULL;
 static uint32_t opt_port= 0;
 static uint32_t opt_max_connect_retries;
 static bool silent= false, verbose= false;
-static bool tty_password= false;
 static bool opt_mark_progress= false;
 static bool parsing_disabled= false;
 static bool display_result_vertically= false,
@@ -115,7 +114,6 @@ static bool abort_on_error= true;
 static bool server_initialized= false;
 static bool is_windows= false;
 static bool opt_mysql= false;
-const string PASSWORD_SENTINEL("\0\0\0\0\0", 5);
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
 std::string opt_basedir,
@@ -5388,45 +5386,6 @@ static void check_sleep(int32_t in_opt_sleep)
   opt_sleep= in_opt_sleep;
 }
 
-static pair<string, string> parse_password_arg(std::string s)
-{
-  if (s.find("--password") == 0)
-  {
-    if (s == "--password")
-    {
-      tty_password= true;
-      //check if no argument is passed.
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-
-    if (s.substr(10,3) == "=\"\"" || s.substr(10,3) == "=''")
-    {
-      // Check if --password="" or --password=''
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-    
-    if(s.substr(10) == "=" && s.length() == 11)
-    {
-      // check if --password= and return a default value
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-
-    if(s.length()>12 && (s[10] == '"' || s[10] == '\''))
-    {
-      // check if --password has quotes, remove quotes and return the value
-      return make_pair("password", s.substr(11,s.length()-1));
-    }
-
-    // if all above are false, it implies that --password=value, return value.
-    return make_pair("password", s.substr(11));
-  }
-
-  else
-  {
-    return make_pair(string(""), string(""));
-  } 
-}
-
 int main(int argc, char **argv)
 {
 try
@@ -5629,7 +5588,7 @@ try
     }
   }
 
-  if (vm.count("password"))
+  if( vm.count("password") )
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -5641,17 +5600,6 @@ try
     {
       opt_password= password;
       tty_password= false;
-    }
-    char *start= (char *)password.c_str();
-    char *temp_pass= (char *)password.c_str();
-    while (*temp_pass)
-    {
-        /* Overwriting password with 'x' */
-        *temp_pass++= 'x';
-    }
-    if (*start)
-    {
-      start[1]= 0;
     }
   }
   else

@@ -1568,7 +1568,12 @@ error:
 bool Table::open_tmp_table()
 {
   int error;
-  if ((error=cursor->ha_open(this, s->getTableName(),O_RDWR,
+  
+  TableIdentifier identifier(s->getSchemaName(), s->getTableName(), s->getPath());
+  if ((error=cursor->ha_open(identifier,
+                             this,
+                             s->getTableName(),
+                             O_RDWR,
                              HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
     print_error(error, MYF(0));
@@ -1984,11 +1989,11 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   null_row= 0;
   status= STATUS_NO_RECORD;
   maybe_null= table_list->outer_join;
-  TableList *embedding= table_list->embedding;
+  TableList *embedding= table_list->getEmbedding();
   while (!maybe_null && embedding)
   {
     maybe_null= embedding->outer_join;
-    embedding= embedding->embedding;
+    embedding= embedding->getEmbedding();
   }
   tablenr= table_number;
   map= (table_map) 1 << table_number;

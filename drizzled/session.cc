@@ -205,7 +205,7 @@ Session::Session(plugin::Client *client_arg) :
   */
   memory::init_sql_alloc(&main_mem_root, memory::ROOT_MIN_BLOCK_SIZE, 0);
   thread_stack= NULL;
-  count_cuted_fields= CHECK_FIELD_IGNORE;
+  count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
   killed= NOT_KILLED;
   col_access= 0;
   tmp_table= 0;
@@ -1947,14 +1947,14 @@ void Session::dumpTemporaryTableNames(const char *foo)
   }
 }
 
-bool Session::storeTableMessage(TableIdentifier &identifier, message::Table &table_message)
+bool Session::storeTableMessage(const TableIdentifier &identifier, message::Table &table_message)
 {
   table_message_cache.insert(make_pair(identifier.getPath(), table_message));
 
   return true;
 }
 
-bool Session::removeTableMessage(TableIdentifier &identifier)
+bool Session::removeTableMessage(const TableIdentifier &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -1968,7 +1968,7 @@ bool Session::removeTableMessage(TableIdentifier &identifier)
   return true;
 }
 
-bool Session::getTableMessage(TableIdentifier &identifier, message::Table &table_message)
+bool Session::getTableMessage(const TableIdentifier &identifier, message::Table &table_message)
 {
   TableMessageCache::iterator iter;
 
@@ -1982,7 +1982,7 @@ bool Session::getTableMessage(TableIdentifier &identifier, message::Table &table
   return true;
 }
 
-bool Session::doesTableMessageExist(TableIdentifier &identifier)
+bool Session::doesTableMessageExist(const TableIdentifier &identifier)
 {
   TableMessageCache::iterator iter;
 
@@ -1996,7 +1996,7 @@ bool Session::doesTableMessageExist(TableIdentifier &identifier)
   return true;
 }
 
-bool Session::renameTableMessage(TableIdentifier &from, TableIdentifier &to)
+bool Session::renameTableMessage(const TableIdentifier &from, const TableIdentifier &to)
 {
   TableMessageCache::iterator iter;
 

@@ -28,9 +28,8 @@ namespace drizzled
 int64_t Item_func_found_rows::val_int()
 {
   assert(fixed == 1);
-  Session *session= current_session;
 
-  return session->found_rows();
+  return getSession().found_rows();
 }
 
 } /* namespace drizzled */

@@ -257,6 +257,8 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/module/library.h \
 			      drizzled/module/manifest.h \
 			      drizzled/module/module.h \
+			      drizzled/module/option_context.h \
+			      drizzled/module/option_map.h \
 			      drizzled/module/registry.h \
 			      drizzled/my_hash.h \
 			      drizzled/name_resolution_context.h \
@@ -458,6 +460,7 @@ drizzled_drizzled_LDADD= \
 				$(LIBPCRE) \
 				$(LTLIBPROTOBUF) \
 				$(LIBTBB) \
+				$(BOOST_LIBS) \
 				$(GCOV_LIBS) 
 
 drizzled_drizzled_DEPENDENCIES= \
@@ -643,8 +646,11 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/key_map.cc \
 				 drizzled/lock.cc \
 				 drizzled/lookup_symbol.cc \
+				 drizzled/module/context.cc \
 				 drizzled/module/library.cc \
 				 drizzled/module/loader.cc \
+				 drizzled/module/option_context.cc \
+				 drizzled/module/option_map.cc \
 				 drizzled/module/registry.cc \
 				 drizzled/my_getsystime.cc \
 				 drizzled/my_hash.cc \

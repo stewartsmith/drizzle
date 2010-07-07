@@ -63,7 +63,7 @@ static char *add_load_option(char *ptr,const char *object,
 static bool verbose= false, lock_tables= false, ignore_errors= false,
             opt_delete= false, opt_replace= false, silent= false,
             ignore_unique= false, opt_low_priority= false,
-            tty_password= false, opt_mysql= false, opt_local_file;
+            opt_mysql= false, opt_local_file;
 
 static uint32_t opt_use_threads= 0;
 static uint32_t opt_drizzle_port= 0;
@@ -469,7 +469,8 @@ try
   system_config_dir_client.append("/drizzle/client.cnf");
   
   po::variables_map vm;
-  po::store(po::command_line_parser(argc, argv).options(long_options).run(), vm);
+  po::store(po::command_line_parser(argc, argv).options(long_options).
+            extra_parser(parse_password_arg).run(), vm);
 
   ifstream user_import_ifs("~/.drizzle/drizzleimport.cnf");
   po::store(parse_config_file(user_import_ifs, import_options), vm);
@@ -498,33 +499,25 @@ try
     }
   }
 
-  if (vm.count("password"))
+  if( vm.count("password") )
   {
     if (!opt_password.empty())
       opt_password.erase();
-    opt_password= password;
-    if (opt_password.c_str() == NULL)
+    if (password == PASSWORD_SENTINEL)
     {
-      fprintf(stderr, _("Memory allocation error while copying password. "
-                        "Aborting.\n"));
-      exit(EXIT_OUT_OF_MEMORY);
+      opt_password= "";
     }
-    char *start= (char *)password.c_str();
-    char *temp_pass= (char *)password.c_str();
-    while (*temp_pass)
+    else
     {
-        /* Overwriting password with 'x' */
-        *temp_pass++= 'x';
-    }
-    if (*start)
-    {
-      start[1]= 0;
+      opt_password= password;
+      tty_password= false;
     }
   }
   else
   {
       tty_password= true;
   }
+
 
   if (vm.count("version"))
   {

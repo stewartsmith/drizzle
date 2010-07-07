@@ -1415,11 +1415,11 @@ public:
   typedef unordered_map<std::string, message::Table> TableMessageCache;
   TableMessageCache table_message_cache;
 
-  bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);
-  bool removeTableMessage(TableIdentifier &identifier);
-  bool getTableMessage(TableIdentifier &identifier, message::Table &table_message);
-  bool doesTableMessageExist(TableIdentifier &identifier);
-  bool renameTableMessage(TableIdentifier &from, TableIdentifier &to);
+  bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+  bool removeTableMessage(const TableIdentifier &identifier);
+  bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+  bool doesTableMessageExist(const TableIdentifier &identifier);
+  bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
@@ -1427,20 +1427,20 @@ public:
   Table *find_temporary_table(TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
-                       SchemaIdentifier &schema_identifier,
+                       const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
-  void doGetTableNames(SchemaIdentifier &schema_identifier,
+  void doGetTableNames(const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
 
   void doGetTableIdentifiers(CachedDirectory &directory,
-                             SchemaIdentifier &schema_identifier,
+                             const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
-  void doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
 
-  int doGetTableDefinition(drizzled::TableIdentifier &identifier,
+  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
-  bool doDoesTableExist(TableIdentifier &identifier);
+  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);

@@ -130,7 +130,7 @@ void Schema::doGetSchemaIdentifiers(SchemaIdentifierList &set_of_names)
   }
 }
 
-bool Schema::doGetSchemaDefinition(SchemaIdentifier &schema_identifier, message::Schema &schema_message)
+bool Schema::doGetSchemaDefinition(const SchemaIdentifier &schema_identifier, message::Schema &schema_message)
 {
   if (not pthread_rwlock_rdlock(&schema_lock))
   {
@@ -181,7 +181,7 @@ bool Schema::doCreateSchema(const drizzled::message::Schema &schema_message)
   return true;
 }
 
-bool Schema::doDropSchema(SchemaIdentifier &schema_identifier)
+bool Schema::doDropSchema(const SchemaIdentifier &schema_identifier)
 {
   message::Schema schema_message;
 
@@ -260,7 +260,7 @@ bool Schema::doAlterSchema(const drizzled::message::Schema &schema_message)
 
   @note we do the rename to make it crash safe.
 */
-bool Schema::writeSchemaFile(SchemaIdentifier &schema_identifier, const message::Schema &db)
+bool Schema::writeSchemaFile(const SchemaIdentifier &schema_identifier, const message::Schema &db)
 {
   char schema_file_tmp[FN_REFLEN];
   string schema_file(schema_identifier.getPath());
@@ -362,9 +362,9 @@ bool Schema::readSchemaFile(const std::string &schema_file_name, drizzled::messa
   return false;
 }
 
-bool Schema::doCanCreateTable(drizzled::TableIdentifier &identifier)
+bool Schema::doCanCreateTable(const drizzled::TableIdentifier &identifier)
 {
-  if (static_cast<SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
+  if (static_cast<const SchemaIdentifier&>(identifier) == TEMPORARY_IDENTIFIER)
   {
     return false;
   }
@@ -373,7 +373,7 @@ bool Schema::doCanCreateTable(drizzled::TableIdentifier &identifier)
 }
 
 void Schema::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                   drizzled::SchemaIdentifier&,
+                                   const drizzled::SchemaIdentifier&,
                                    drizzled::TableIdentifiers&)
 {
 }

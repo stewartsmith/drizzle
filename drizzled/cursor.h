@@ -230,7 +230,7 @@ public:
 
   /* ha_ methods: pubilc wrappers for private virtual API */
 
-  int ha_open(Table *table, const char *name, int mode, int test_if_locked);
+  int ha_open(const TableIdentifier &identifier, Table *table, const char *name, int mode, int test_if_locked);
   int startIndexScan(uint32_t idx, bool sorted);
   int endIndexScan();
   int startTableScan(bool scan);
@@ -531,7 +531,8 @@ private:
     the corresponding 'ha_*' method above.
   */
 
-  virtual int open(const char *name, int mode, uint32_t test_if_locked)=0;
+  virtual int open(const char *, int , uint32_t ) { assert(0); return -1; };
+  virtual int doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if_locked);
   virtual int doStartIndexScan(uint32_t idx, bool)
   { active_index= idx; return 0; }
   virtual int doEndIndexScan() { active_index= MAX_KEY; return 0; }
