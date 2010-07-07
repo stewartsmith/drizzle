@@ -33,37 +33,39 @@ Tables::Tables() :
   add_field("TABLE_TYPE");
 }
 
-void Tables::Generator::fill()
-{
-}
-
-bool Tables::Generator::nextCore()
-{
-  return false;
-}
-
-bool Tables::Generator::next()
-{
-  while (not nextCore())
-  {
-    return false;
-  }
-
-  return true;
-}
-
 Tables::Generator::Generator(drizzled::Field **arg) :
   InformationSchema::Generator(arg),
-  is_primed(false)
+  generator(getSession())
 {
 }
 
 bool Tables::Generator::populate()
 {
-  if (not next())
-    return false;
+  const drizzled::TableIdentifier *identifier;
 
-  fill();
+  while ((identifier= generator))
+  {
+    /* TABLE_CATALOG */
+    push(identifier->getCatalogName());
 
-  return true;
+    /* TABLE_SCHEMA */
+    push(identifier->getSchemaName());
+
+    /* TABLE_NAME */
+    push(identifier->getTableName());
+
+    /* TABLE_TYPE */
+    if (identifier->getType() == message::Table::FUNCTION)
+    {
+      push("VIEW");
+    }
+    else
+    {
+      push("BASE");
+    }
+
+    return true;
+  }
+
+  return false;
 }

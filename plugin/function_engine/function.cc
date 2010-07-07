@@ -138,7 +138,7 @@ void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
 
   for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
-    set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter));
+    set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter, drizzled::message::Table::FUNCTION));
   }
 }
 
