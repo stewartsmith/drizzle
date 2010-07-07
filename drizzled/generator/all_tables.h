@@ -21,9 +21,7 @@
 #ifndef DRIZZLED_GENERATOR_ALL_TABLES_H
 #define DRIZZLED_GENERATOR_ALL_TABLES_H
 
-#include "drizzled/session.h"
 #include "drizzled/plugin/storage_engine.h"
-#include "drizzled/generator.h"
 
 namespace drizzled {
 namespace generator {

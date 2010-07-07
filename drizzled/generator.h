@@ -23,3 +23,4 @@
 #include "drizzled/generator/schema.h"
 #include "drizzled/generator/table.h"
 #include "drizzled/generator/all_tables.h"
+#include "drizzled/generator/all_fields.h"

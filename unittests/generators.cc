@@ -55,3 +55,13 @@ TEST(generator_test, all_tables)
   if ((table_ptr= generator))
     ASSERT_TRUE(0);
 }
+
+TEST(generator_test, all_fields)
+{
+  drizzled::Session session(drizzled::plugin::Listen::getNullClient());
+  drizzled::generator::AllFields generator(session);
+  const drizzled::message::Table::Field *field_ptr;
+
+  if ((field_ptr= generator))
+    ASSERT_TRUE(0);
+}

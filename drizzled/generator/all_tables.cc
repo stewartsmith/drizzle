@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include "drizzled/generator/all_tables.h"
+#include "drizzled/generator.h"
 
 using namespace std;
 
