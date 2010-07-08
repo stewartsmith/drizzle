@@ -59,6 +59,9 @@ struct schema_visitor_arg
   string *str;
 };
 
+extern "C"
+{
+
 static int visit_table(void* arg_param, const char* name, ib_tbl_fmt_t tbl_fmt,
                        ib_ulint_t page_size, int n_cols, int n_indexes)
 {
@@ -129,6 +132,8 @@ static int visit_index_col(void* arg_param, const char* name, ib_ulint_t)
   arg->str->append(ss.str());
 
   return 0;
+}
+
 }
 
 static const ib_schema_visitor_t visitor = {
