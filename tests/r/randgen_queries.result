@@ -43,7 +43,7 @@ key (`col_char_not_null_key` ),
 key (`col_text_key`  (255)),
 key (`col_enum_key` )) ENGINE=innodb;
 set AUTOCOMMIT=OFF;
-select table_schema, 
+select SQL_BIG_RESULT table_schema, 
 table_name, 
 CASE WHEN table_type = 'STANDARD' THEN 'table' 
 WHEN table_type = 'FUNCTION' then 'function' 
@@ -53,7 +53,7 @@ CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary'
 WHEN IS_INDEXED = 'TRUE' THEN 'indexed' 
 ELSE 'indexed' END 
 FROM data_dictionary.tables INNER JOIN
-data_dictionary.columns USING(table_schema, table_name) limit 20;
+data_dictionary.columns USING(table_schema, table_name) ORDER BY table_schema, table_name limit 20;
 table_schema	table_name	CASE WHEN table_type = 'STANDARD' THEN 'table' 
 WHEN table_type = 'FUNCTION' then 'function' 
 ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 

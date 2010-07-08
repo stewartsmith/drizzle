@@ -45,8 +45,8 @@ key (`col_text_key`  (255)),
 key (`col_enum_key` )) ENGINE=innodb;
 set AUTOCOMMIT=OFF;
 
-#
-select table_schema, 
+# bookkeeping query in Executor/Drizzle.pm in randgen
+select SQL_BIG_RESULT table_schema, 
        table_name, 
        CASE WHEN table_type = 'STANDARD' THEN 'table' 
             WHEN table_type = 'FUNCTION' then 'function' 
@@ -56,8 +56,8 @@ select table_schema,
              WHEN IS_INDEXED = 'TRUE' THEN 'indexed' 
        ELSE 'indexed' END 
        FROM data_dictionary.tables INNER JOIN
-            data_dictionary.columns USING(table_schema, table_name) limit 20;
-
+            data_dictionary.columns USING(table_schema, table_name) ORDER BY table_schema, table_name limit 20;
+# end bookkeeping test
 
 select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
                         (SUM(`col_int_key`) + SUM(`col_int`)) / COUNT(*) AS average2,
