@@ -119,6 +119,13 @@ public:
     return false;
   }
 
+  bool isView() const // Not a SQL view, but a view for I_S
+  {
+    if (type == message::Table::FUNCTION)
+      return true;
+    return false;
+  }
+
   Type getType() const
   {
     return type;

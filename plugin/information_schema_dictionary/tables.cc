@@ -55,7 +55,7 @@ bool Tables::Generator::populate()
     push(identifier->getTableName());
 
     /* TABLE_TYPE */
-    if (identifier->getType() == message::Table::FUNCTION)
+    if (identifier->isView())
     {
       push("VIEW");
     }
