@@ -26,6 +26,7 @@
 #define DRIZZLED_MODULE_OPTION_MAP_H
 
 #include "drizzled/visibility.h"
+#include "drizzled/module/option_context.h"
 
 #include <boost/program_options.hpp>
 
@@ -53,18 +54,12 @@ public:
 
   const boost::program_options::variable_value& operator[](const std::string &name_in) const
   {
-    std::string new_name(module_name);
-    new_name.push_back('.');
-    new_name.append(name_in);
-    return vm[new_name];
+    return vm[option_context::prepend_name(module_name, name_in.c_str())];
   }
 
   size_t count(const std::string &name_in) const
   {
-    std::string new_name(module_name);
-    new_name.push_back('.');
-    new_name.append(name_in);
-    return vm.count(new_name);
+    return vm.count(option_context::prepend_name(module_name, name_in.c_str()));
   }
 
 private:
