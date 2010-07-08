@@ -26,7 +26,7 @@
 
 --exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write --timer-length=1 --commit=100
 
---exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write --delayed_start=1234 --commit=100
+--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write --delayed-start=1234 --commit=100
 
 # no blob yet
 #--exec $DRIZZLE_SLAP --silent --concurrency=5 --iterations=1 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=write  --number-blob-cols=2:1024/2048 --commit=100
