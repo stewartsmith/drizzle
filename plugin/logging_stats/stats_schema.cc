@@ -82,6 +82,25 @@
  * | COUNT_DROP     | BIGINT  | FALSE |         | FALSE           |           |
  * | COUNT_ADMIN    | BIGINT  | FALSE |         | FALSE           |           |
  * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe CUMULATIVE_USER_STATS;
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ * | Field               | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ * | USER                | VARCHAR | FALSE |         | FALSE           |           | 
+ * | BYTES_RECEIVED      | VARCHAR | FALSE |         | FALSE           |           | 
+ * | BYTES_SENT          | VARCHAR | FALSE |         | FALSE           |           | 
+ * | DENIED_CONNECTIONS  | VARCHAR | FALSE |         | FALSE           |           | 
+ * | LOST_CONNECTIONS    | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ACCESS_DENIED       | VARCHAR | FALSE |         | FALSE           |           | 
+ * | CONNECTED_TIME_SEC  | VARCHAR | FALSE |         | FALSE           |           | 
+ * | EXECUTION_TIME_NSEC | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_FETCHED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_UPDATED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_DELETED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_INSERTED       | VARCHAR | FALSE |         | FALSE           |           | 
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ *
  */
 
 #include <config.h>
