@@ -27,8 +27,8 @@ using namespace drizzled;
 Schemata::Schemata() :
   InformationSchema("SCHEMATA")
 {
-  add_field("CATALOG_NAME");
-  add_field("SCHEMA_NAME");
+  add_field("CATALOG_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("SCHEMA_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("SCHEMA_OWNER");
   add_field("DEFAULT_CHARACTER_SET_CATALOG");
   add_field("DEFAULT_CHARACTER_SET_SCHEMA");

@@ -27,10 +27,10 @@ using namespace drizzled;
 Tables::Tables() :
   InformationSchema("TABLES")
 {
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
-  add_field("TABLE_TYPE");
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_TYPE", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 }
 
 Tables::Generator::Generator(drizzled::Field **arg) :
