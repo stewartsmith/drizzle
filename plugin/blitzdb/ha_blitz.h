@@ -105,7 +105,9 @@ private:
   drizzled::atomic<uint64_t> current_hidden_row_id;
 
 public:
-  BlitzData() { current_hidden_row_id = 0; }
+  BlitzData() : data_table(NULL), system_table(NULL), tc_meta_buffer(NULL) {
+    current_hidden_row_id = 0;
+  }
   ~BlitzData() {}
   int startup(const char *table_path);
   int shutdown(void);
