@@ -180,12 +180,8 @@ bool LoggingStats::postEnd(Session *session)
     scoreboard_slot->setIp(session->getSecurityContext().getIp());
   }
 
-  
-
   scoreboard_slot->getStatusVars()->logStatusVar(session);
-
   scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= time(NULL) - session->start_time; 
-
 
   cumulative_stats->logUserStats(scoreboard_slot, isInScoreboard);
   cumulative_stats->logGlobalStats(scoreboard_slot);
