@@ -33,6 +33,9 @@ Table::Table(Session &arg, const SchemaIdentifier &schema_identifier) :
   session(arg)
 {
   plugin::StorageEngine::getTableIdentifiers(session, schema_identifier, table_names);
+#if defined(DEBUG)
+  random_shuffle(table_names.begin(), table_names.end());
+#endif
   table_iterator= table_names.begin();
 }
 

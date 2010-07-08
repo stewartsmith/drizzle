@@ -24,8 +24,8 @@ insert into t5 values (10);
 select table_name from data_dictionary.TABLES
 where table_schema = "mysqltest" and table_name like "t%";
 table_name
-t4
 t1
+t4
 show tables like 't%';
 Tables_in_test (t%)
 t2
@@ -98,13 +98,13 @@ FROM DATA_DICTIONARY.COLUMNS
 WHERE TABLE_NAME= 't1';
 COLUMN_NAME	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH
 x_bigint	0	0
-x_integer	0	0
-x_int	0	0
 x_decimal	0	0
+x_double_precision	0	0
+x_float	0	0
+x_int	0	0
+x_integer	0	0
 x_numeric	0	0
 x_real	0	0
-x_float	0	0
-x_double_precision	0	0
 drop table t1;
 SELECT table_schema, count(*) FROM data_dictionary.TABLES
 WHERE table_name NOT LIKE 'ndb_%' AND 
@@ -184,16 +184,16 @@ character_maximum_length	character_octet_length
 32	128
 64	256
 drop table t1;
-select DATA_TYPE, group_concat(table_schema, '.', table_name), count(*) as num
+select DATA_TYPE, group_concat(table_schema, '.', table_name) as a, count(*) as num
 from data_dictionary.columns where
 table_schema='data_dictionary' and
 (DATA_TYPE = 'varchar' or DATA_TYPE = 'varchar'
  or DATA_TYPE = 'varchar')
 group by DATA_TYPE order by DATA_TYPE, num;
-DATA_TYPE	group_concat(table_schema, '.', table_name)	num
-VARCHAR	DATA_DICTIONARY.CHARACTER_SETS,DATA_DICTIONARY.CHARACTER_SETS,DATA_DICTIONARY.CHARACTER_SETS,DATA_DICTIONARY.COLLATIONS,DATA_DICTIONARY.COLLATIONS,DATA_DICTIONARY.COLLATIONS,DATA_DICTIONARY.COLLATIONS,DATA_DICTIONARY.COLLATIONS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.COLUMNS,DATA_DICTIONARY.CUMULATIVE_SQL_COMMANDS,DATA_DICTIONARY.CURRENT_SQL_COMMANDS,DATA_DICTIONARY.CURRENT_SQL_COMMANDS,DATA_DICTIONARY.GLOBAL_STATEMENTS,DATA_DICTIONARY.GLOBAL_STATEMENTS,DATA_DICTIONARY.GLOBAL_STATUS,DATA_DICTIONARY.GLOBAL_STATUS,DATA_DICTIONARY.GLOBAL_VARIABLES,DATA_DICTIONARY.GLOBAL_VARIABLES,DATA_DICTIONARY.INDEXES,DATA_DICTIONARY.INDEXES,DATA_DICTIONARY.INDEXES,DATA_DICTIONARY.INDEXES,DATA_DIC	149
+DATA_TYPE	a	num
+VARCHAR	#	149
 Warnings:
-Warning	1260	1 line(s) were cut by GROUP_CONCAT()
+Warning	#	1 line(s) were cut by GROUP_CONCAT()
 create table t1(f1 char(1) not null, f2 char(9) not null);
 select CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH from
 data_dictionary.columns where table_schema='test' and table_name = 't1';

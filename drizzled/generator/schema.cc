@@ -33,7 +33,9 @@ Schema::Schema(Session &arg) :
   session(arg)
   {
     plugin::StorageEngine::getSchemaIdentifiers(session, schema_names);
-    schema_names.sort();
+#if defined(DEBUG)
+    random_shuffle(schema_names.begin(), schema_names.end());
+#endif
     schema_iterator= schema_names.begin();
   }
 

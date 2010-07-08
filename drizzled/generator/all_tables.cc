@@ -40,6 +40,9 @@ bool AllTables::table_setup()
 {
   table_names.clear();
   plugin::StorageEngine::getTableIdentifiers(session, *schema_ptr, table_names);
+#if defined(DEBUG)
+  random_shuffle(table_names.begin(), table_names.end());
+#endif
   table_iterator= table_names.begin();
 
   return true;

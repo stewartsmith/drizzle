@@ -301,7 +301,7 @@ public:
 
 std::size_t hash_value(TableIdentifier const& b);
 
-typedef std::list <TableIdentifier> TableIdentifiers;
+typedef std::vector <TableIdentifier> TableIdentifiers;
 
 } /* namespace drizzled */
 

@@ -118,7 +118,7 @@ public:
 
 };
 
-typedef std::list <SchemaIdentifier> SchemaIdentifiers;
+typedef std::vector <SchemaIdentifier> SchemaIdentifiers;
 
 } /* namespace drizzled */
 
