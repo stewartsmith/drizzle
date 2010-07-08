@@ -144,6 +144,9 @@ static const ib_schema_visitor_t visitor = {
   visit_index_col
 };
 
+extern "C"
+{
+
 static int visit_tables(void* arg_param, const char *name, int len)
 {
   ib_err_t        err;
@@ -155,6 +158,7 @@ static int visit_tables(void* arg_param, const char *name, int len)
   return(err == DB_SUCCESS ? 0 : -1);
 }
 
+}
 String *LibinnodbDatadictDumpFunction::val_str(String *str)
 {
   assert(fixed == true);
