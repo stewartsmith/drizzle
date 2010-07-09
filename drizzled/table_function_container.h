@@ -34,7 +34,7 @@ class TableFunctionContainer {
 public:
   plugin::TableFunction *getFunction(const std::string &path);
 
-  void getNames(const std::string &predicate,
+  void getNames(std::string predicate,
                 std::set<std::string> &set_of_names);
 
 

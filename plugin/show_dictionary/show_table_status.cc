@@ -30,7 +30,7 @@ using namespace std;
 ShowTableStatus::ShowTableStatus() :
   plugin::TableFunction("DATA_DICTIONARY", "SHOW_TABLE_STATUS")
 {
-  add_field("Session", plugin::TableFunction::NUMBER);
+  add_field("Session", plugin::TableFunction::NUMBER, 0, false);
   add_field("Schema");
   add_field("Name");
   add_field("Type");

@@ -101,7 +101,7 @@ void Schema::prime()
   pthread_rwlock_unlock(&schema_lock);
 }
 
-void Schema::doGetSchemaIdentifiers(SchemaIdentifierList &set_of_names)
+void Schema::doGetSchemaIdentifiers(SchemaIdentifiers &set_of_names)
 {
   if (not pthread_rwlock_rdlock(&schema_lock))
   {

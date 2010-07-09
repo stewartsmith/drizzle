@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,32 +18,35 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_INFORMATION_SCHEMA_DICTIONARY_INFORMATION_SCHEMA_H
-#define PLUGIN_INFORMATION_SCHEMA_DICTIONARY_INFORMATION_SCHEMA_H
+#include "config.h"
 
-class InformationSchema : public drizzled::plugin::TableFunction
+#include "drizzled/generator.h"
+
+using namespace std;
+
+namespace drizzled
 {
-public:
+namespace generator
+{
 
-  InformationSchema(const char *table_arg) :
-    drizzled::plugin::TableFunction("INFORMATION_SCHEMA", table_arg)
-  { }
+AllTables::AllTables(Session &arg) :
+  session(arg),
+  schema_generator(arg)
+{
+  table_iterator= table_names.end();
+}
 
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-  public:
-    Generator(drizzled::Field **arg):
-      drizzled::plugin::TableFunction::Generator(arg)
-    { }
+bool AllTables::table_setup()
+{
+  table_names.clear();
+  plugin::StorageEngine::getTableIdentifiers(session, *schema_ptr, table_names);
+#if defined(DEBUG)
+  random_shuffle(table_names.begin(), table_names.end());
+#endif
+  table_iterator= table_names.begin();
 
-    void pushType(drizzled::message::Table::Field::FieldType type);
-  };
+  return true;
+}
 
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-
-};
-
-#endif /* PLUGIN_INFORMATION_SCHEMA_DICTIONARY_INFORMATION_SCHEMA_H */
+} /* namespace generator */
+} /* namespace drizzled */

@@ -91,9 +91,9 @@ void plugin::TableFunction::add_field(const char *label,
 }
 
 void plugin::TableFunction::add_field(const char *label,
-                              TableFunction::ColumnType type,
-                              uint32_t field_length,
-                              bool is_default_null)
+                                      TableFunction::ColumnType type,
+                                      uint32_t field_length,
+                                      bool is_default_null)
 {
   drizzled::message::Table::Field *field;
   drizzled::message::Table::Field::FieldOptions *field_options;
@@ -136,8 +136,6 @@ void plugin::TableFunction::add_field(const char *label,
     break;
   case TableFunction::NUMBER: // Currently NUMBER always has a value
     field->set_type(drizzled::message::Table::Field::BIGINT);
-    field_options->set_default_null(false);
-    field_constraints->set_is_nullable(false);
     break;
   }
 }
@@ -194,7 +192,9 @@ void plugin::TableFunction::Generator::push(const char *arg, uint32_t length)
 
 void plugin::TableFunction::Generator::push()
 {
-  assert((*columns_iterator)->type()  == DRIZZLE_TYPE_VARCHAR);
+#if 0 // @note this needs to be rewritten such that a drizzled::Field object can determine if it should ever be null
+  assert((*columns_iterator)->getTable()->getShare()->getTableProto()->field((*columns_iterator)->getTable()->getFields() - columns_iterator).constraints().is_nullable());
+#endif
   (*columns_iterator)->set_null();
   columns_iterator++;
 }

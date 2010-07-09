@@ -4776,6 +4776,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TABLES opt_db show_wild
            {
@@ -4833,6 +4836,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TEMPORARY_SYM TABLES show_wild
            {

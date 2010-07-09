@@ -1,4 +1,4 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,32 +18,9 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_INFORMATION_SCHEMA_DICTIONARY_INFORMATION_SCHEMA_H
-#define PLUGIN_INFORMATION_SCHEMA_DICTIONARY_INFORMATION_SCHEMA_H
+#include "drizzled/session.h"
 
-class InformationSchema : public drizzled::plugin::TableFunction
-{
-public:
-
-  InformationSchema(const char *table_arg) :
-    drizzled::plugin::TableFunction("INFORMATION_SCHEMA", table_arg)
-  { }
-
-  class Generator : public drizzled::plugin::TableFunction::Generator 
-  {
-  public:
-    Generator(drizzled::Field **arg):
-      drizzled::plugin::TableFunction::Generator(arg)
-    { }
-
-    void pushType(drizzled::message::Table::Field::FieldType type);
-  };
-
-  Generator *generator(drizzled::Field **arg)
-  {
-    return new Generator(arg);
-  }
-
-};
-
-#endif /* PLUGIN_INFORMATION_SCHEMA_DICTIONARY_INFORMATION_SCHEMA_H */
+#include "drizzled/generator/schema.h"
+#include "drizzled/generator/table.h"
+#include "drizzled/generator/all_tables.h"
+#include "drizzled/generator/all_fields.h"
