@@ -44,4 +44,4 @@ EXTRA_DIST+= \
 
 # If you know of a better way of getting pbmslib.h into $(includedir) please do it. 
 install-data-hook:
-		cp plugin/pbms/src/pbmslib.h  $(includedir); 
+		cp $(srcdir)/plugin/pbms/src/pbmslib.h  $(includedir); 
