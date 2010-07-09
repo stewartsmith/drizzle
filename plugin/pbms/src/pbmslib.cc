@@ -105,7 +105,7 @@ class  PBMS_ConHandle:public CSThread {
 	const u_char		*ms_putData;
 	size_t				ms_putDataLen;
 	size_t				ms_putDataOffset;
-	PBMS_READ_CALLBACK_FUNC	ms_readCB;
+	CSStreamReadCallbackFunc ms_readCB;
 	void				*ms_putCBData;
 	
 	PBMS_ConHandle():
@@ -185,7 +185,7 @@ class  PBMS_ConHandle:public CSThread {
 		ms_getCBData = caller_data;		
 	}
 	
-	void set_upLoadUserData(const u_char *buffer, size_t size, PBMS_READ_CALLBACK_FUNC cb = NULL, void *caller_data = NULL)	
+	void set_upLoadUserData(const u_char *buffer, size_t size, CSStreamReadCallbackFunc cb = NULL, void *caller_data = NULL)	
 	{
 		ms_DataToBeTransfered = size;
 		ms_putData = buffer;
@@ -266,7 +266,7 @@ class  PBMS_ConHandle:public CSThread {
 	
 	pbms_bool ms_downLoadData(const char *ref, u_char *buffer, size_t buffer_size, PBMS_WRITE_CALLBACK_FUNC cb = NULL, void *caller_data = NULL);
 
-	pbms_bool ms_upLoadData(const char *table, const char *alias, const char *checksum, char *ref, size_t size, const u_char *data, PBMS_READ_CALLBACK_FUNC cb = NULL, void *caller_data = NULL);
+	pbms_bool ms_upLoadData(const char *table, const char *alias, const char *checksum, char *ref, size_t size, const u_char *data, CSStreamReadCallbackFunc cb = NULL, void *caller_data = NULL);
 	
 	uint32_t ms_init_fetch() {ms_next_header =0; return ms_max_header = ms_headers.numHeaders();}
 	
@@ -507,7 +507,7 @@ static size_t receive_header(void *header, size_t objs, size_t obj_size, void *v
 	
 	catch_(a);
 	con->ms_throw_error = true;
-	return_(-1);
+	size= -1;
 		
 	cont_(a);
 	return_(size);
@@ -903,7 +903,7 @@ void PBMS_ConHandle::ms_addS3HeadersHeaders(CSVector *s3Headers)
 	exit_();
 }
 //------------------------------------------------
-pbms_bool PBMS_ConHandle::ms_upLoadData(const char *table, const char *alias, const char *checksum, char *ref, size_t size, const u_char *data, PBMS_READ_CALLBACK_FUNC cb, void *caller_data)
+pbms_bool PBMS_ConHandle::ms_upLoadData(const char *table, const char *alias, const char *checksum, char *ref, size_t size, const u_char *data, CSStreamReadCallbackFunc cb, void *caller_data)
 {
 	pbms_bool ok = true, use_cloud = (ms_cloud != NULL);
 	
@@ -1127,6 +1127,8 @@ pbms_bool pbms_is_blob_reference(PBMS myhndl, const char *ref)
 	PBMS_ConHandle *con = (PBMS_ConHandle*) myhndl;
 	pbms_bool ok = false;
 	
+	CLOBBER_PROTECT(ref);
+
 	con->ms_setSelf();	
 	enter_();
 	
@@ -1147,6 +1149,9 @@ pbms_bool pbms_get_blob_size(PBMS myhndl, const char *ref, size_t *size)
 	PBMS_ConHandle *con = (PBMS_ConHandle*) myhndl;
 	bool ok = false;
 	
+	CLOBBER_PROTECT(ref);
+	CLOBBER_PROTECT(size);
+
 	con->ms_setSelf();	
 	enter_();
 	
@@ -1376,7 +1381,7 @@ pbms_bool pbms_put_data_cb(PBMS myhndl, const char *table, const char *checksum,
 {
 	PBMS_ConHandle *con = (PBMS_ConHandle*) myhndl;
 	
-	return con->ms_upLoadData(table, NULL, checksum, ref, size, NULL, cb, caller_data);
+	return con->ms_upLoadData(table, NULL, checksum, ref, size, NULL, (CSStreamReadCallbackFunc)cb, caller_data);
 }
 
 //------------------------------------------------
