@@ -18,9 +18,14 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifndef DRIZZLED_GENERATOR_H
+#define DRIZZLED_GENERATOR_H
+
 #include "drizzled/session.h"
 
 #include "drizzled/generator/schema.h"
 #include "drizzled/generator/table.h"
 #include "drizzled/generator/all_tables.h"
 #include "drizzled/generator/all_fields.h"
+
+#endif /* DRIZZLED_GENERATOR_H */
