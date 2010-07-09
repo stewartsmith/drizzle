@@ -30,6 +30,7 @@ plugin_pbms_libpbmscl_la_LDFLAGS =	-lcurl
 plugin_pbms_libpbmscl_la_CXXFLAGS =	$(AM_CXXFLAGS) -DDRIZZLED
 
 lib_LTLIBRARIES += plugin/pbms/libpbmscl.la
+dist_include_HEADERS += plugin/pbms/src/pbmslib.h
 
 EXTRA_DIST+= \
              plugin/pbms/src/TransTest.cc \
@@ -42,6 +43,3 @@ EXTRA_DIST+= \
              plugin/pbms/src/systab_enabled_ms.h \
              plugin/pbms/src/udf_ms.cc
 
-# If you know of a better way of getting pbmslib.h into $(includedir) please do it. 
-install-data-hook:
-		cp $(srcdir)/plugin/pbms/src/pbmslib.h  $(includedir); 
