@@ -137,6 +137,8 @@ public:
 
 #ifdef DRIZZLED
 		assumed_str_field->setReadSet();
+#else
+		assumed_str_field->table->use_all_columns();
 #endif
 		value = assumed_str_field->val_str(value);
 		
@@ -152,6 +154,8 @@ public:
 
 #ifdef DRIZZLED
 		assumed_int_field->setReadSet();
+#else
+		assumed_int_field->table->use_all_columns();
 #endif
 		*value = assumed_int_field->val_int();
 		

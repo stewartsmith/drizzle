@@ -41,6 +41,10 @@
  * timegm() is a none portable function so....
  * This is an implimentation of timegm() based on one found
  * here: http://www.opensync.org/changeset/1769
+ *
+ * Note to self: There is a better way to do this.
+ * Since this is just used internally and tm_isdst is always 0
+ * we only need to calculate the timezone offset to GM time once.
  */
 static time_t my_timegm(struct tm *my_time)
 {

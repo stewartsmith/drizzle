@@ -20,13 +20,6 @@
  *
  * H&G2JCtL
  */
-#ifdef DRIZZLED
-#include "config.h"
-#include <drizzled/common.h>
-#include <drizzled/session.h>
-#include <drizzled/charset_info.h>
-#endif
-
 #include "cslib/CSConfig.h"
 #include <inttypes.h>
 
@@ -39,11 +32,9 @@
 #include "cslib/CSThread.h"
 #include "cslib/CSString.h"
 #include "cslib/CSStrUtil.h"
-//#include "cslib/CSSocket.h"
 #include "cslib/CSHTTPStream.h"
 #include "cslib/CSMd5.h"
 #include "cslib/CSS3Protocol.h"
-#include "metadata_ms.h"
 
 #define CLEAR_SELF()	CSThread::setSelf(NULL)
 #define MAX_STMT_SIZE	1024
@@ -85,6 +76,7 @@ class  PBMS_ConHandle:public CSThread {
 	CSS3Protocol		*ms_cloud;
 	uint64_t			ms_range_start;
 	uint64_t			ms_range_end;
+	char				ms_range_buffer[80]; // Required for old style libcurl that uses the callers buffer.
 
 	unsigned int		ms_replyStatus;
 	CSHTTPHeaders		ms_headers; 
@@ -128,7 +120,7 @@ class  PBMS_ConHandle:public CSThread {
 		ms_buffer(NULL),
 		ms_errorReply(NULL),
 		ms_cloud(NULL),
-		ms_range_start(0),
+		ms_range_start(1), // (ms_range_start > ms_range_end) indicates that no range is not being used.
 		ms_range_end(0),
 		ms_replyStatus(0),
 		ms_next_header(0),
@@ -662,9 +654,8 @@ void PBMS_ConHandle::ms_init_get_blob(const char *ref, bool is_alias, bool info_
 	
 	// NOTE: range 0-0 is valid, it returns the first byte.
 	if (ms_range_start <= ms_range_end) {
-		char range[80];
-		snprintf(range, 80, "%"PRIu64"-%"PRIu64"", ms_range_start, ms_range_end);
-		THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_RANGE, range));
+		snprintf(ms_range_buffer, 80, "%"PRIu64"-%"PRIu64"", ms_range_start, ms_range_end);
+		THROW_CURL_IF(curl_easy_setopt(ms_curl, CURLOPT_RANGE, ms_range_buffer));
 		ms_range_start = 1;
 		ms_range_end = 0;
 	} else {
@@ -750,17 +741,17 @@ void PBMS_ConHandle::throw_http_reply_exception()
 	if (!size) {
 		error_text = CSString::newString("Missing HTTP reply: possible Media Stream engine connection failure.");
 	} else {
-		uint32_t start, end;
+		uint32_t my_start, my_end;
 	
 		reply = CSString::newString(ms_errorReply);
 		push_(reply);
 		ms_errorReply = NULL;
 		
-		start = reply->locate(EXCEPTION_REPLY_MESSAGE_PREFIX_TAG, 1);
-		start += strlen(EXCEPTION_REPLY_MESSAGE_PREFIX_TAG);
-		end = reply->locate(EXCEPTION_REPLY_MESSAGE_SUFFIX_TAG, 1); 
-		if (start < end) {
-			error_text = reply->substr(start, end - start);
+		my_start = reply->locate(EXCEPTION_REPLY_MESSAGE_PREFIX_TAG, 1);
+		my_start += strlen(EXCEPTION_REPLY_MESSAGE_PREFIX_TAG);
+		my_end = reply->locate(EXCEPTION_REPLY_MESSAGE_SUFFIX_TAG, 1); 
+		if (my_start < my_end) {
+			error_text = reply->substr(my_start, my_end - my_start);
 			push_(error_text);
 		} else {
 			error_text = reply;

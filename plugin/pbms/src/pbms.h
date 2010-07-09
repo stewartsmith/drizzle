@@ -152,10 +152,14 @@ class PBMSBlobURLTools
 	static bool couldBeURL(const char *blob_url, size_t size, MSBlobURLPtr blob)
 	{
 		if (blob_url && (size < PBMS_BLOB_URL_SIZE)) {
+			MSBlobURLRec ignored_blob;
 			char	buffer[PBMS_BLOB_URL_SIZE+1];
 			char	junk[5];
 			int		scanned;
-
+			
+			if (!blob)
+				blob = &ignored_blob;
+			
 			junk[0] = 0;
 			if (blob_url[size]) { // There is no guarantee that the URL will be null terminated.
 				memcpy(buffer, blob_url, size);
@@ -458,7 +462,7 @@ public:
 		if ((err = getSharedMemory(false, result)))
 			return err;
 
-		if (!PBMSBlobURLTools::couldBeURL(blob_url, blob_size)) {
+		if (!PBMSBlobURLTools::couldBeURL(blob_url, blob_size, NULL)) {
 		
 			if (!sharedMemory->sm_callbacks)  {
 				ret_blob_url->bu_data[0] = 0;
@@ -500,7 +504,7 @@ public:
 		if (!sharedMemory->sm_callbacks)
 			return MS_OK;
 
-		if (!PBMSBlobURLTools::couldBeURL(blob_url, blob_size))
+		if (!PBMSBlobURLTools::couldBeURL(blob_url, blob_size, NULL))
 			return MS_OK;
 
 		if (blob_url[blob_size]) {

@@ -41,6 +41,7 @@ namespace drizzled
 class Session;
 } /* namespace drizzled */
 #else
+class THD;
 #endif
 
 class MSEngine : public CSObject {

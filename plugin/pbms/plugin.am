@@ -1,3 +1,36 @@
+
+plugin_pbms_libpbmscl_la_SOURCES =  \
+		plugin/pbms/src/pbmslib.cc   \
+		plugin/pbms/src/cslib/CSDirectory.cc \
+		plugin/pbms/src/cslib/CSEncode.cc \
+		plugin/pbms/src/cslib/CSException.cc \
+		plugin/pbms/src/cslib/CSFile.cc \
+		plugin/pbms/src/cslib/CSHTTPStream.cc \
+		plugin/pbms/src/cslib/CSLog.cc \
+		plugin/pbms/src/cslib/CSMd5.cc \
+		plugin/pbms/src/cslib/CSMemory.cc \
+		plugin/pbms/src/cslib/CSMutex.cc \
+		plugin/pbms/src/cslib/CSObject.cc \
+		plugin/pbms/src/cslib/CSPath.cc \
+		plugin/pbms/src/cslib/CSS3Protocol.cc \
+		plugin/pbms/src/cslib/CSSha1.cc \
+		plugin/pbms/src/cslib/CSSocket.cc \
+		plugin/pbms/src/cslib/CSStorage.cc \
+		plugin/pbms/src/cslib/CSStream.cc \
+		plugin/pbms/src/cslib/CSString.cc \
+		plugin/pbms/src/cslib/CSStrUtil.cc \
+		plugin/pbms/src/cslib/CSThread.cc \
+		plugin/pbms/src/cslib/CSTime.cc \
+		plugin/pbms/src/cslib/CSTokenStream.cc \
+		plugin/pbms/src/cslib/CSUTF8.cc \
+		plugin/pbms/src/cslib/CSXML.cc
+
+plugin_pbms_libpbmscl_la_LDFLAGS =	-lcurl 
+
+plugin_pbms_libpbmscl_la_CXXFLAGS =	$(AM_CXXFLAGS) -DDRIZZLED
+
+lib_LTLIBRARIES += plugin/pbms/libpbmscl.la
+
 EXTRA_DIST+= \
              plugin/pbms/src/TransTest.cc \
              plugin/pbms/src/alias_ms.cc \
@@ -5,7 +38,10 @@ EXTRA_DIST+= \
              plugin/pbms/src/discover_ms.cc \
              plugin/pbms/src/pbms_enabled.cc \
              plugin/pbms/src/pbms_enabled.h \
-             plugin/pbms/src/pbmslib.cc \
              plugin/pbms/src/systab_enabled_ms.cc \
              plugin/pbms/src/systab_enabled_ms.h \
              plugin/pbms/src/udf_ms.cc
+
+# If you know of a better way of getting pbmslib.h into $(includedir) please do it. 
+install-data-hook:
+		cp plugin/pbms/src/pbmslib.h  $(includedir); 
