@@ -646,16 +646,10 @@ void StorageEngine::getTableIdentifiers(Session &session, const SchemaIdentifier
     if (directory.fail())
     {
       errno= directory.getError();
-      /* @TODO: It is possible (in the generator unittest) for us to get here
-         and have  schema_identifier and directory be invalid objects.
-         This manifests on OSX running the unittests but no where else
-       We should figure this out and then uncomment this section */
-      /* 
       if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_identifier.getSQLPath().c_str());
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), const_cast<SchemaIdentifier &>(schema_identifier).getSQLPath().c_str());
       else
         my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
-      */
       return;
     }
   }
