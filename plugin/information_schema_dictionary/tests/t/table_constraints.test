@@ -1,0 +1,5 @@
+create schema everything;
+use everything;
+-- source include/everything.sql
+select * from information_schema.TABLE_CONSTRAINTS WHERE table_schema="everything" ORDER BY CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, CONSTRAINT_NAME;
+drop schema everything;
