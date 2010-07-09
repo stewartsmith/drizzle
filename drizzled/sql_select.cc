@@ -555,7 +555,7 @@ bool update_ref_and_keys(Session *session,
                          Select_Lex *select_lex,
                          vector<optimizer::SargableParam> &sargables)
 {
-  uint	and_level,i,found_eq_constant;
+  uint	and_level,found_eq_constant;
   optimizer::KeyField *key_fields, *end, *field;
   uint32_t sz;
   uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
@@ -578,7 +578,7 @@ bool update_ref_and_keys(Session *session,
     substitutions.
   */
   sz= sizeof(optimizer::KeyField) *
-      (((session->lex->current_select->cond_count+1) +
+      (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
   if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
     return true;
@@ -602,7 +602,7 @@ bool update_ref_and_keys(Session *session,
       }
     }
   }
-  for (i= 0; i < tables; i++)
+  for (uint32_t i= 0; i < tables; i++)
   {
     /*
       Block the creation of keys for inner tables of outer joins.
@@ -657,35 +657,39 @@ bool update_ref_and_keys(Session *session,
     use= save_pos= dynamic_element(keyuse, 0, optimizer::KeyUse*);
     prev= &key_end;
     found_eq_constant= 0;
-    for (i= 0; i < keyuse->elements-1; i++, use++)
     {
-      if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
-        use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
-      if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
+      uint32_t i;
+
+      for (i= 0; i < keyuse->elements-1; i++, use++)
       {
-        if (prev->getKeypart() + 1 < use->getKeypart() || 
-            ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
-          continue;				/* remove */
-      }
-      else if (use->getKeypart() != 0)		// First found must be 0
-        continue;
+        if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
+          use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
+        if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
+        {
+          if (prev->getKeypart() + 1 < use->getKeypart() || 
+              ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
+            continue;				/* remove */
+        }
+        else if (use->getKeypart() != 0)		// First found must be 0
+          continue;
 
 #ifdef HAVE_purify
-      /* Valgrind complains about overlapped memcpy when save_pos==use. */
-      if (save_pos != use)
+        /* Valgrind complains about overlapped memcpy when save_pos==use. */
+        if (save_pos != use)
 #endif
-        *save_pos= *use;
-      prev=use;
-      found_eq_constant= ! use->getUsedTables();
-      /* Save ptr to first use */
-      if (! use->getTable()->reginfo.join_tab->keyuse)
-        use->getTable()->reginfo.join_tab->keyuse= save_pos;
-      use->getTable()->reginfo.join_tab->checked_keys.set(use->getKey());
-      save_pos++;
+          *save_pos= *use;
+        prev=use;
+        found_eq_constant= ! use->getUsedTables();
+        /* Save ptr to first use */
+        if (! use->getTable()->reginfo.join_tab->keyuse)
+          use->getTable()->reginfo.join_tab->keyuse= save_pos;
+        use->getTable()->reginfo.join_tab->checked_keys.set(use->getKey());
+        save_pos++;
+      }
+      i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
+      set_dynamic(keyuse, (unsigned char*) &key_end, i);
+      keyuse->elements= i;
     }
-    i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
-    set_dynamic(keyuse, (unsigned char*) &key_end, i);
-    keyuse->elements= i;
   }
   return false;
 }
