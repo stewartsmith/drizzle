@@ -57,7 +57,8 @@ Columns::Generator::Generator(drizzled::Field **arg) :
   generator(getSession()),
   field_iterator(0)
 {
-  while (not (table_message= generator));
+  while (not (table_message= generator))
+  { };
 }
 
 bool Columns::Generator::populate()
