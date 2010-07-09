@@ -165,12 +165,6 @@ public:
   bool force_index; ///< prefer index over table scan
   bool ignore_leaves; ///< preload only non-leaf nodes
 
-  /**
-   * This TableList object corresponds to the table to be created
-   * so it is possible that it does not exist (used in CREATE TABLE
-   * ... SELECT implementation).
-   */
-
   /*
     is the table a cartesian join, assumption is yes unless "solved"
   */
@@ -534,6 +528,11 @@ private:
    * qualified name (<db_name>.<table_name>).
    */
   bool is_fqtn;
+  /**
+   * This TableList object corresponds to the table to be created
+   * so it is possible that it does not exist (used in CREATE TABLE
+   * ... SELECT implementation).
+   */
   bool create;
 
 };
