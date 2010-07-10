@@ -1,0 +1,3 @@
+# Test for bug #597905
+# The .sh alongside this creates the .directory file and chowns it as 000
+# Nothing really needed for this as buildup will fail for test to fail
