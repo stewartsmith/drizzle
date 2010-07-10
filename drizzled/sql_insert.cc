@@ -473,6 +473,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     session->my_ok((ulong) session->row_count_func,
                    info.copied + info.deleted + info.touched, id, buff);
   }
+  session->status_var.inserted_row_count+= session->row_count_func;
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_DONE(0, session->row_count_func);
   return false;
@@ -1364,6 +1365,7 @@ bool select_insert::send_eof()
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   session->my_ok((ulong) session->row_count_func,
                  info.copied + info.deleted + info.touched, id, buff);
+  session->status_var.inserted_row_count+= session->row_count_func; 
   DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
   return 0;
 }
