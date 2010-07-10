@@ -27,47 +27,82 @@ using namespace drizzled;
 KeyColumnUsage::KeyColumnUsage() :
   InformationSchema("KEY_COLUMN_USAGE")
 {
-  add_field("CONSTRAINT_CATALOG");
-  add_field("CONSTRAINT_SCHEMA");
-  add_field("CONSTRAINT_NAME");
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
-  add_field("COLUMN_NAME");
-  add_field("ORDINAL_POSITION");
-}
-
-void KeyColumnUsage::Generator::fill()
-{
-}
-
-bool KeyColumnUsage::Generator::nextCore()
-{
-  return false;
-}
-
-bool KeyColumnUsage::Generator::next()
-{
-  while (not nextCore())
-  {
-    return false;
-  }
-
-  return true;
+  add_field("CONSTRAINT_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CONSTRAINT_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CONSTRAINT_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("COLUMN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER, 0, false);
 }
 
 KeyColumnUsage::Generator::Generator(drizzled::Field **arg) :
   InformationSchema::Generator(arg),
-  is_primed(false)
+  generator(getSession()),
+  index_iterator(0),
+  index_part_iterator(0)
 {
+  while (not (table_message= generator));
 }
 
 bool KeyColumnUsage::Generator::populate()
 {
-  if (not next())
+  if (not table_message)
     return false;
 
-  fill();
+  do 
+  {
+    if (index_iterator != table_message->indexes_size())
+    {
+      drizzled::message::Table::Index index= table_message->indexes(index_iterator);
 
-  return true;
+      if (index.is_primary() || index.is_unique())
+      {
+        /* Constraints live in the same catalog.schema as the table they refer too. */
+        /* CONSTRAINT_CATALOG */
+        push(table_message->catalog());
+
+        /* CONSTRAINT_SCHEMA */
+        push(table_message->schema());
+
+        /* CONSTRAINT_NAME */
+        push(index.name());
+
+        /* TABLE_CATALOG */
+        push(table_message->catalog());
+
+        /* TABLE_SCHEMA */
+        push(table_message->schema());
+
+        /* TABLE_NAME */
+        push(table_message->name());
+
+        /* COLUMN_NAME */
+        int32_t fieldnr= index.index_part(index_part_iterator).fieldnr();
+        push(table_message->field(fieldnr).name());
+
+        /* ORDINAL_POSITION */
+        push(static_cast<int64_t>(index_part_iterator));
+
+        if (index_part_iterator == index.index_part_size() -1)
+        {
+          index_iterator++;
+          index_part_iterator= 0;
+        }
+        else
+        {
+          index_part_iterator++;
+        }
+
+        return true;
+      }
+    }
+
+    index_iterator= 0;
+    index_part_iterator= 0;
+
+  } while ((table_message= generator));
+
+  return false;
 }
