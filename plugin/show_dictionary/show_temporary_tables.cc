@@ -30,8 +30,8 @@ ShowTemporaryTables::ShowTemporaryTables() :
 {
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
-  add_field("RECORDS", plugin::TableFunction::NUMBER);
-  add_field("RECORD_LENGTH", plugin::TableFunction::NUMBER);
+  add_field("RECORDS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("RECORD_LENGTH", plugin::TableFunction::NUMBER, 0, false);
   add_field("ENGINE");
 }
 

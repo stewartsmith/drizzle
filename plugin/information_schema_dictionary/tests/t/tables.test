@@ -1,0 +1,51 @@
+--sorted_result
+select * from INFORMATION_SCHEMA.SCHEMATA;
+--sorted_result
+select * from INFORMATION_SCHEMA.TABLES;
+
+use information_schema;
+show schemas;
+--sorted_result
+select * from INFORMATION_SCHEMA.TABLES;
+--sorted_result
+select * from INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG=NULL;
+--sorted_result
+select * from INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=NULL;
+--sorted_result
+select * from INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME=NULL;
+--sorted_result
+select * from INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA="information_schema" AND TABLE_TYPE="STANDARD";
+--sorted_result
+select * from INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA="information_schema" AND TABLE_TYPE="VIEW";
+select * from INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME;
+
+## Now lets test schema creation;
+create schema a;
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA="a";
+
+use a;
+
+create table a (a int );
+create table b (a int );
+create table c (a int );
+create table d (a int );
+create table ds (a int );
+create table aa (a int );
+
+show tables;
+
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME="a";
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME like "a%";
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME like "%a";
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME like "%s";
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA="a" ORDER BY TABLE_NAME;
+
+drop schema a;
+
+--sorted_result
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA="a";

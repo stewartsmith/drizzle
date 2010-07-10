@@ -61,7 +61,7 @@ public:
     return NULL;
   }
 
-  void doGetSchemaIdentifiers(drizzled::SchemaIdentifierList &set_of_names);
+  void doGetSchemaIdentifiers(drizzled::SchemaIdentifiers &set_of_names);
   bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::Schema &proto);
 
   bool doCreateSchema(const drizzled::message::Schema &schema_message);
