@@ -214,6 +214,59 @@ void FilesystemEngine::deleteOpenTable(const string &table_name)
   fs_open_tables.erase(table_name);
 }
 
+static int parseTaggedFile(const FormatInfo &fi, map<string, string> &kv)
+{
+  int filedesc= ::open(fi.getFileName().c_str(), O_RDONLY);
+  if (filedesc < 0)
+    return errno;
+
+  TransparentFile *filebuffer= new TransparentFile();
+  filebuffer->init_buff(filedesc);
+
+  int pos= 0;
+  string line;
+  while (1)
+  {
+    char ch= filebuffer->get_value(pos);
+    if (ch == '\0')
+      break;
+    ++pos;
+
+    if (!fi.isRowSeparator(ch))
+    {
+      line.push_back(ch);
+      continue;
+    }
+
+    // if we have a new empty line,
+    // it means we got the end of the parsing
+    if (line.empty())
+      break;
+
+    // parse the line
+    vector<string> sv, svcopy;
+    boost::split(sv, line, boost::is_any_of(fi.getColSeparator()));
+    for (vector<string>::iterator iter= sv.begin();
+         iter != sv.end();
+         ++iter)
+    {
+      if (!iter->empty())
+        svcopy.push_back(*iter);
+    }
+    // the first splitted string as key,
+    // and the second splitted string as value.
+    if (svcopy.size() >= 2)
+      kv[svcopy[0]]= svcopy[1];
+    else if (svcopy.size() >= 1)
+      kv[svcopy[0]]= "";
+
+    line.clear();
+  }
+  delete filebuffer;
+  close(filedesc);
+  return 0;
+}
+
 int FilesystemEngine::doGetTableDefinition(Session &,
                                const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_proto)
@@ -245,64 +298,30 @@ int FilesystemEngine::doGetTableDefinition(Session &,
     return HA_ERR_CRASHED_ON_USAGE;
   }
   delete input;
-#if 0
-  // if the file is a taggered file such as /proc/meminfo
+
+  // if the file is a tagged file such as /proc/meminfo
   // then columns of this table are added dynamically here.
-  string file_path;
-  bool should_parse= false;
-  for (int x= 0; x < table_proto.engine().options_size(); x++)
-  {
-    const message::Engine::Option& option= table_proto.engine().options(x);
+  FormatInfo format;
+  format.parseFromTable(&table_proto);
+  if (!format.isTagFormat() || !format.isFileGiven())
+    return EEXIST;
 
-    if (boost::iequals(option.name(), FILESYSTEM_OPTION_FORMAT) &&
-	boost::iequasl(option.state(), "KEY_VALUE"))
-      should_parse= true;
-    if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
-      file_path= option.state();
+  map<string, string> kv;
+  if (parseTaggedFile(format, kv) != 0)
+    return EEXIST;
+
+  table_proto.clear_field();
+  for (map<string, string>::iterator iter= kv.begin();
+       iter != kv.end();
+       ++iter)
+  {
+    // add columns to table proto
+    message::Table::Field *field= table_proto.add_field();
+    field->set_name(iter->first);
+    field->set_type(drizzled::message::Table::Field::VARCHAR);
+    message::Table::Field::StringFieldOptions *stringoption= field->mutable_string_options();
+    stringoption->set_length(iter->second.length() + 1);
   }
-  if (!should_parse || file_path.empty())
-    return EEXIST;
-
-  // user should not set any fields
-  if (table_proto.field_size() > 0)
-    return EEXIST;
-
-  int fd= ::open(file_path.c_str(), O_RDONLY);
-  if (fd < 0)
-    return EEXIST;
-  TransparentFile filebuffer= new TransparentFile();
-  filebuffer->init_buff(fd);
-
-  int pos= 0;
-  string line;
-  while (1)
-  {
-    char ch= file_buff->get_value(pos);
-    if (ch == '\0')
-      break;
-    ++pos;
-
-    if (row_separator.find(ch) == string::npos)
-      continue;
-    // found the line ending character
-
-    // if we have a new empty line,
-    // it means we got the end of the parsing
-    if (line.empty())
-      break;
-
-    // parse the line
-    for (int x= 0; x < line.length(); x++)
-      if (col_separator.find(line[x]) != string::npos)
-        column= line.substr(0, x);
-    if (column.empty())
-      continue;
-
-    message::Table::Field *field= add_field();
-    field->set_name();
-    field->set_type();
-
-#endif
   return EEXIST;
 }
 
@@ -339,14 +358,25 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
       pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
     }
-    share->format.parseFromTable(table->getShare()->getTableProto());
 
+    share->format.parseFromTable(table->getShare()->getTableProto());
     if (!share->format.isFileGiven())
     {
       pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
     }
-
+    /*
+     * for taggered file such as /proc/meminfo,
+     * we pre-process it first, and store the parsing result in a map.
+     */
+    if (share->format.isTagFormat())
+    {
+      if (parseTaggedFile(share->format, share->kv) != 0)
+      {
+        pthread_mutex_unlock(&filesystem_mutex);
+        return NULL;
+      }
+    }
     a_engine->addOpenTable(share->table_name, share);
 
     pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
@@ -402,6 +432,12 @@ int FilesystemCursor::close(void)
 
 int FilesystemCursor::doStartTableScan(bool)
 {
+  if (share->format.isTagFormat())
+  {
+    tag_depth= 1;
+    return 0;
+  }
+
   current_position= 0;
   next_position= 0;
   slots.clear();
@@ -502,6 +538,43 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
 int FilesystemCursor::rnd_next(unsigned char *buf)
 {
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
+  if (share->format.isTagFormat())
+  {
+    if (tag_depth-- <= 0)
+      return HA_ERR_END_OF_FILE;
+
+    ptrdiff_t row_offset= buf - table->record[0];
+    for (Field **field= table->getFields(); *field; field++)
+    {
+      string key((*field)->field_name);
+      string content= share->kv[key];
+
+      (*field)->move_field_offset(row_offset);
+      if (!content.empty())
+      {
+        (*field)->set_notnull();
+        if ((*field)->isReadSet() || (*field)->isWriteSet())
+        {
+          (*field)->setWriteSet();
+          (*field)->store(content.c_str(),
+                          (uint32_t)content.length(),
+                          &my_charset_bin,
+                          CHECK_FIELD_WARN);
+        }
+        else
+        {
+          (*field)->set_default();
+        }
+      }
+      else
+      {
+        (*field)->set_null();
+      }
+      (*field)->move_field_offset(-row_offset);
+    }
+    return 0;
+  }
+  // normal file
   current_position= next_position;
   return find_current_row(buf);
 }
@@ -549,6 +622,9 @@ int FilesystemCursor::openUpdateFile()
 
 int FilesystemCursor::doEndTableScan()
 {
+  if (share->format.isTagFormat())
+    return 0;
+
   if (slots.size() == 0)
     return 0;
 
@@ -653,6 +729,10 @@ void FilesystemCursor::recordToString(string& output)
 int FilesystemCursor::doInsertRecord(unsigned char * buf)
 {
   (void)buf;
+
+  if (share->format.isTagFormat())
+    return 0;
+
   int err_write= 0;
   int err_close= 0;
 
@@ -688,6 +768,8 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
 
 int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
 {
+  if (share->format.isTagFormat())
+    return 0;
   if (openUpdateFile())
     return errno;
 
@@ -713,6 +795,8 @@ void FilesystemCursor::addSlot()
 
 int FilesystemCursor::doDeleteRecord(const unsigned char *)
 {
+  if (share->format.isTagFormat())
+    return 0;
   addSlot();
   return 0;
 }

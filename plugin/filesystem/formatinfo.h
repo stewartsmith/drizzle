@@ -31,14 +31,17 @@ public:
   bool isColSeparator(char ch) const;
   std::string getRowSeparatorHead() const;
   std::string getColSeparatorHead() const;
+  std::string getColSeparator() const;
   std::string getFileName() const;
   bool isSeparatorModeGeneral() const;
   bool isSeparatorModeWeak() const;
+  bool isTagFormat() const;
   static bool validateOption(const std::string &key, const std::string &state);
 private:
   std::string real_file_name;
   std::string row_separator;
   std::string col_separator;
+  std::string file_format;
   int separator_mode;
 };
 

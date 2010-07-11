@@ -28,11 +28,13 @@ using namespace std;
 static const char* FORMAT_INFO_FILE_PATH= "FILE";
 static const char* FORMAT_INFO_ROW_SEPARATOR= "ROW_SEPARATOR";
 static const char* FORMAT_INFO_COL_SEPARATOR= "COL_SEPARATOR";
-//static const char* FORMAT_INFO_FORMAT= "FORMAT";
+static const char* FORMAT_INFO_FORMAT= "FORMAT";
 static const char* FORMAT_INFO_SEPARATOR_MODE= "SEPARATOR_MODE";
 static const char* FORMAT_INFO_SEPARATOR_MODE_STRICT= "STRICT";
 static const char* FORMAT_INFO_SEPARATOR_MODE_GENERAL= "GENERAL";
 static const char* FORMAT_INFO_SEPARATOR_MODE_WEAK= "WEAK";
+static const char* FORMAT_INFO_FORMAT_TAG= "KEY_VALUE";
+static const char* FORMAT_INFO_FORMAT_NORMAL= "NORMAL";
 enum filesystem_option_separator_mode_type
 {
   FORMAT_INFO_SEPARATOR_MODE_STRICT_ENUM= 1,
@@ -46,6 +48,7 @@ static const char* DEFAULT_COL_SEPARATOR= " \t";
 FormatInfo::FormatInfo()
   : row_separator(DEFAULT_ROW_SEPARATOR),
   col_separator(DEFAULT_COL_SEPARATOR),
+  file_format(FORMAT_INFO_FORMAT_NORMAL),
   separator_mode(FORMAT_INFO_SEPARATOR_MODE_GENERAL_ENUM)
 {
 }
@@ -65,6 +68,8 @@ void FormatInfo::parseFromTable(drizzled::message::Table *proto)
       row_separator= option.state();
     else if (boost::iequals(option.name(), FORMAT_INFO_COL_SEPARATOR))
       col_separator= option.state();
+    else if (boost::iequals(option.name(), FORMAT_INFO_FORMAT))
+      file_format= option.state();
     else if (boost::iequals(option.name(), FORMAT_INFO_SEPARATOR_MODE))
     {
       if (boost::iequals(option.state(), FORMAT_INFO_SEPARATOR_MODE_STRICT))
@@ -107,9 +112,17 @@ string FormatInfo::getColSeparatorHead() const
   return col_separator.substr(0, 1);
 }
 
+string FormatInfo::getColSeparator() const
+{
+  return col_separator;
+}
+
 bool FormatInfo::validateOption(const std::string &key, const std::string &state)
 {
   if (boost::iequals(key, FORMAT_INFO_FILE_PATH) &&
+      ! state.empty())
+    return true;
+  if (boost::iequals(key, FORMAT_INFO_FORMAT) &&
       ! state.empty())
     return true;
   if ((boost::iequals(key, FORMAT_INFO_ROW_SEPARATOR) ||
@@ -132,4 +145,9 @@ bool FormatInfo::isSeparatorModeGeneral() const
 bool FormatInfo::isSeparatorModeWeak() const
 {
   return (separator_mode >= FORMAT_INFO_SEPARATOR_MODE_WEAK_ENUM);
+}
+
+bool FormatInfo::isTagFormat() const
+{
+  return boost::iequals(file_format, FORMAT_INFO_FORMAT_TAG);
 }
