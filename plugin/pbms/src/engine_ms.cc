@@ -38,6 +38,11 @@
 #include "cslib/CSStrUtil.h"
 #include "cslib/CSThread.h"
 
+#ifndef DRIZZLED
+#define PBMS_API pbms_internal  
+#include "pbms.h"
+#endif
+
 #include "engine_ms.h"
 #include "connection_handler_ms.h"
 #include "open_table_ms.h"
@@ -85,7 +90,7 @@ static void ms_deregister_engine(PBMSEnginePtr engine)
 static int ms_create_blob(bool internal, const char *db_name, const char *tab_name, char *blob, size_t blob_len, PBMSBlobURLPtr blob_url, PBMSResultPtr result)
 {
 	if (have_handler_support && !internal) {
-		errorResult(CS_CONTEXT, MS_ERR_INVALID_OPERATION, "Invalid ms_create_blob() call", result);
+		MSEngine::errorResult(CS_CONTEXT, MS_ERR_INVALID_OPERATION, "Invalid ms_create_blob() call", result);
 		return MS_ERR_ENGINE;
 	}
 
