@@ -341,7 +341,7 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
     }
     share->format.parseFromTable(table->getShare()->getTableProto());
 
-    if (!share->isFileGiven())
+    if (!share->format.isFileGiven())
     {
       pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
@@ -379,7 +379,7 @@ int FilesystemCursor::doOpen(const drizzled::TableIdentifier &identifier, int, u
   if (!(share= get_share(identifier.getPath().c_str())))
     return ENOENT;
 
-  file_desc= ::open(share->real_file_name.c_str(), O_RDONLY);
+  file_desc= ::open(share->format.getFileName().c_str(), O_RDONLY);
   if (file_desc < 0)
   {
     free_share();
@@ -407,7 +407,7 @@ int FilesystemCursor::doStartTableScan(bool)
   slots.clear();
   if (share->needs_reopen)
   {
-    file_desc= ::open(share->real_file_name.c_str(), O_RDONLY);
+    file_desc= ::open(share->format.getFileName().c_str(), O_RDONLY);
     if (file_desc < 0)
       return HA_ERR_CRASHED_ON_USAGE;
     share->needs_reopen= false;
@@ -437,11 +437,9 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
     bool is_col= share->format.isColSeparator(ch);
     if (content.empty())
     {
-      if (share->separator_mode >= FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM
-          && is_row && line_blank)
+      if (share->format.isSeparatorModeGeneral() && is_row && line_blank)
         continue;
-      if (share->separator_mode >= FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK_ENUM
-          && is_col)
+      if (share->format.isSeparatorModeWeak() && is_col)
         continue;
     }
 
@@ -532,9 +530,9 @@ int FilesystemCursor::openUpdateFile()
   if (!share->update_file_opened)
   {
     struct stat st;
-    if (stat(share->real_file_name.c_str(), &st) < 0)
+    if (stat(share->format.getFileName().c_str(), &st) < 0)
       return -1;
-    update_file_name= share->real_file_name;
+    update_file_name= share->format.getFileName();
     update_file_name.append(".UPDATE");
     unlink(update_file_name.c_str());
     update_file_desc= ::open(update_file_name.c_str(),
@@ -607,11 +605,11 @@ int FilesystemCursor::doEndTableScan()
   // close current file
   if (xclose(file_desc))
     goto error;
-  if (::rename(update_file_name.c_str(), share->real_file_name.c_str()))
+  if (::rename(update_file_name.c_str(), share->format.getFileName().c_str()))
     goto error;
 
   // reopen the data file
-  file_desc= ::open(share->real_file_name.c_str(), O_RDONLY);
+  file_desc= ::open(share->format.getFileName().c_str(), O_RDONLY);
   share->needs_reopen= true;
   if (file_desc < 0)
     goto error;
@@ -662,7 +660,7 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   recordToString(output_line);
 
   pthread_mutex_lock(&share->mutex);
-  int fd= ::open(share->real_file_name.c_str(), O_WRONLY | O_APPEND);
+  int fd= ::open(share->format.getFileName().c_str(), O_WRONLY | O_APPEND);
   if (fd < 0)
   {
     pthread_mutex_unlock(&share->mutex);
@@ -729,19 +727,7 @@ int FilesystemEngine::doRenameTable(Session&, const TableIdentifier &from, const
 bool FilesystemEngine::validateCreateTableOption(const std::string &key,
                                                  const std::string &state)
 {
-  if (boost::iequals(key, FILESYSTEM_OPTION_FILE_PATH) &&
-      ! state.empty())
-    return true;
-  if ((boost::iequals(key, FILESYSTEM_OPTION_ROW_SEPARATOR) ||
-       boost::iequals(key, FILESYSTEM_OPTION_COL_SEPARATOR)) &&
-      ! state.empty())
-    return true;
-  if (boost::iequals(key, FILESYSTEM_OPTION_SEPARATOR_MODE) &&
-      (boost::iequals(state, FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT) ||
-       boost::iequals(state, FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL) ||
-       boost::iequals(state, FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK)))
-    return true;
-  return false;
+  return FormatInfo::validateOption(key, state);
 }
 
 THR_LOCK_DATA **FilesystemCursor::store_lock(Session *,
@@ -759,17 +745,13 @@ int FilesystemEngine::doCreateTable(Session &,
                         const drizzled::TableIdentifier &identifier,
                         drizzled::message::Table &proto)
 {
-  for (int x= 0; x < proto.engine().options_size(); x++)
+  FormatInfo format;
+  format.parseFromTable(&proto);
+  if (format.isFileGiven())
   {
-    const message::Engine::Option& option= proto.engine().options(x);
-
-    if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
-    {
-      int err= ::open(option.state().c_str(), O_RDONLY);
-      if (err < 0)
-        return errno;
-      break;
-    }
+    int err= ::open(format.getFileName().c_str(), O_RDONLY);
+    if (err < 0)
+      return errno;
   }
 
   string new_path(identifier.getPath());
