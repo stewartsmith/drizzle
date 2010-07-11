@@ -27,6 +27,7 @@
 #include <fstream>
 
 #include "transparent_file.h"
+#include "formatinfo.h"
 
 class FilesystemTableShare
 {
@@ -42,10 +43,7 @@ public:
   bool update_file_opened;
   bool needs_reopen;
   pthread_mutex_t mutex;
-  std::string real_file_name;
-  std::string row_separator;
-  std::string col_separator;
-  int separator_mode;   /* 1 for strict, 2 for general, 3 for weak */
+  FormatInfo format;
   drizzled::THR_LOCK lock;
 };
 

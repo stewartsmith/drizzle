@@ -44,24 +44,6 @@ using namespace drizzled;
 
 #define FILESYSTEM_EXT ".FST"
 
-static const char* FILESYSTEM_OPTION_FILE_PATH= "FILE";
-static const char* FILESYSTEM_OPTION_ROW_SEPARATOR= "ROW_SEPARATOR";
-static const char* FILESYSTEM_OPTION_COL_SEPARATOR= "COL_SEPARATOR";
-static const char* FILESYSTEM_OPTION_FORMAT= "FORMAT";
-static const char* FILESYSTEM_OPTION_SEPARATOR_MODE= "SEPARATOR_MODE";
-static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT= "STRICT";
-static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL= "GENERAL";
-static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK= "WEAK";
-enum filesystem_option_separator_mode_type
-{
-  FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT_ENUM= 1,
-  FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM,
-  FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK_ENUM
-};
-
-static const char* DEFAULT_ROW_SEPARATOR= "\n";
-static const char* DEFAULT_COL_SEPARATOR= " \t";
-
 /* Stuff for shares */
 pthread_mutex_t filesystem_mutex;
 
@@ -263,6 +245,7 @@ int FilesystemEngine::doGetTableDefinition(Session &,
     return HA_ERR_CRASHED_ON_USAGE;
   }
   delete input;
+#if 0
   // if the file is a taggered file such as /proc/meminfo
   // then columns of this table are added dynamically here.
   string file_path;
@@ -319,16 +302,14 @@ int FilesystemEngine::doGetTableDefinition(Session &,
     field->set_name();
     field->set_type();
 
+#endif
   return EEXIST;
 }
 
 FilesystemTableShare::FilesystemTableShare(const string table_name_arg)
   : use_count(0), table_name(table_name_arg),
   update_file_opened(false),
-  needs_reopen(false),
-  row_separator(DEFAULT_ROW_SEPARATOR),
-  col_separator(DEFAULT_COL_SEPARATOR),
-  separator_mode(FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM)
+  needs_reopen(false)
 {
   thr_lock_init(&lock);
 }
@@ -358,31 +339,9 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
       pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
     }
-    message::Table* table_proto= table->getShare()->getTableProto();
+    share->format.parseFromTable(table->getShare()->getTableProto());
 
-    share->real_file_name.clear();
-    for (int x= 0; x < table_proto->engine().options_size(); x++)
-    {
-      const message::Engine::Option& option= table_proto->engine().options(x);
-
-      if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
-        share->real_file_name= option.state();
-      else if (boost::iequals(option.name(), FILESYSTEM_OPTION_ROW_SEPARATOR))
-        share->row_separator= option.state();
-      else if (boost::iequals(option.name(), FILESYSTEM_OPTION_COL_SEPARATOR))
-        share->col_separator= option.state();
-      else if (boost::iequals(option.name(), FILESYSTEM_OPTION_SEPARATOR_MODE))
-      {
-        if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT))
-          share->separator_mode= FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT_ENUM;
-        else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL))
-          share->separator_mode= FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM;
-        else if (boost::iequals(option.state(), FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK))
-          share->separator_mode= FILESYSTEM_OPTION_SEPARATOR_MODE_WEAK_ENUM;
-      }
-    }
-
-    if (share->real_file_name.empty())
+    if (!share->isFileGiven())
     {
       pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
@@ -474,8 +433,8 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
       return HA_ERR_END_OF_FILE;
 
     // if we find separator
-    bool is_row= (share->row_separator.find(ch) != string::npos);
-    bool is_col= (share->col_separator.find(ch) != string::npos);
+    bool is_row= share->format.isRowSeparator(ch);
+    bool is_col= share->format.isColSeparator(ch);
     if (content.empty())
     {
       if (share->separator_mode >= FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL_ENUM
@@ -534,7 +493,7 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
     while (!line_done)
     {
       char ch= file_buff->get_value(next_position);
-      if (share->row_separator.find(ch) != string::npos)
+      if (share->format.isRowSeparator(ch))
         line_done= true;
       ++next_position;
     }
@@ -675,7 +634,7 @@ void FilesystemCursor::recordToString(string& output)
     }
     else
     {
-      output.append(share->col_separator.substr(0, 1));
+      output.append(share->format.getColSeparatorHead());
     }
 
     if (not (*field)->is_null())
@@ -690,7 +649,7 @@ void FilesystemCursor::recordToString(string& output)
       output.append("0");
     }
   }
-  output.append(share->row_separator.substr(0, 1));
+  output.append(share->format.getRowSeparatorHead());
 }
 
 int FilesystemCursor::doInsertRecord(unsigned char * buf)

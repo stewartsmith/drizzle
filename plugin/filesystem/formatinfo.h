@@ -27,6 +27,8 @@ public:
   bool isFileGiven() const;
   bool isRowSeparator(char ch) const;
   bool isColSeparator(char ch) const;
+  std::string getRowSeparatorHead() const;
+  std::string getColSeparatorHead() const;
 private:
   std::string real_file_name;
   std::string row_separator;
