@@ -43,7 +43,8 @@ KeyColumnUsage::Generator::Generator(drizzled::Field **arg) :
   index_iterator(0),
   index_part_iterator(0)
 {
-  while (not (table_message= generator));
+  while (not (table_message= generator))
+  { };
 }
 
 bool KeyColumnUsage::Generator::populate()

@@ -43,7 +43,8 @@ TableConstraints::Generator::Generator(drizzled::Field **arg) :
   generator(getSession()),
   index_iterator(0)
 {
-  while (not (table_message= generator));
+  while (not (table_message= generator))
+  { };
 }
 
 bool TableConstraints::Generator::populate()
