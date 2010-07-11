@@ -336,36 +336,36 @@ PRIMARY KEY  (`workspace_id`)
 ) ;
 select * from information_schema.TABLE_CONSTRAINTS WHERE table_schema="everything" ORDER BY CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, CONSTRAINT_NAME;
 CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE	IS_DEFERRABLE	INITIALLY_DEFERRED
-	everything	PRIMARY		everything	mail	PRIMARY KEY		
-	everything	PRIMARY		everything	setting	PRIMARY KEY		
-	everything	PRIMARY		everything	nodemethod	PRIMARY KEY		
-	everything	PRIMARY		everything	themesetting	PRIMARY KEY		
-	everything	PRIMARY		everything	revision	PRIMARY KEY		
-	everything	PRIMARY		everything	nodetype	PRIMARY KEY		
 	everything	PRIMARY		everything	branch	PRIMARY KEY		
-	everything	PRIMARY		everything	javascript	PRIMARY KEY		
-	everything	PRIMARY		everything	document	PRIMARY KEY		
-	everything	PRIMARY		everything	typeversion	PRIMARY KEY		
-	everything	PRIMARY		everything	genstats_attributes	PRIMARY KEY		
-	everything	PRIMARY		everything	question	PRIMARY KEY		
-	everything	PRIMARY		everything	project_document	PRIMARY KEY		
-	everything	PRIMARY		everything	releases	PRIMARY KEY		
-	everything	PRIMARY		everything	redirects	PRIMARY KEY		
-	everything	PRIMARY		everything	htmlcode	PRIMARY KEY		
-	everything	PRIMARY		everything	links	PRIMARY KEY		
-	everything	PRIMARY		everything	project	PRIMARY KEY		
-	everything	PRIMARY		everything	nodegroup	PRIMARY KEY		
-	everything	PRIMARY		everything	knowledge_item	PRIMARY KEY		
-	everything	PRIMARY		everything	image	PRIMARY KEY		
-	everything	PRIMARY		everything	workspace	PRIMARY KEY		
-	everything	PRIMARY		everything	symlink	PRIMARY KEY		
-	everything	PRIMARY		everything	version	PRIMARY KEY		
-	everything	PRIMARY		everything	nodelet	PRIMARY KEY		
-	everything	PRIMARY		everything	node	PRIMARY KEY		
-	everything	PRIMARY		everything	htmlpage	PRIMARY KEY		
 	everything	PRIMARY		everything	container	PRIMARY KEY		
+	everything	PRIMARY		everything	document	PRIMARY KEY		
+	everything	PRIMARY		everything	genstats_attributes	PRIMARY KEY		
+	everything	PRIMARY		everything	htmlcode	PRIMARY KEY		
+	everything	PRIMARY		everything	htmlpage	PRIMARY KEY		
+	everything	PRIMARY		everything	image	PRIMARY KEY		
+	everything	PRIMARY		everything	javascript	PRIMARY KEY		
+	everything	PRIMARY		everything	knowledge_item	PRIMARY KEY		
+	everything	PRIMARY		everything	links	PRIMARY KEY		
+	everything	PRIMARY		everything	mail	PRIMARY KEY		
+	everything	PRIMARY		everything	node	PRIMARY KEY		
+	everything	PRIMARY		everything	nodegroup	PRIMARY KEY		
+	everything	PRIMARY		everything	nodelet	PRIMARY KEY		
+	everything	PRIMARY		everything	nodemethod	PRIMARY KEY		
+	everything	PRIMARY		everything	nodetype	PRIMARY KEY		
+	everything	PRIMARY		everything	project	PRIMARY KEY		
+	everything	PRIMARY		everything	project_document	PRIMARY KEY		
+	everything	PRIMARY		everything	question	PRIMARY KEY		
+	everything	PRIMARY		everything	redirects	PRIMARY KEY		
+	everything	PRIMARY		everything	releases	PRIMARY KEY		
+	everything	PRIMARY		everything	revision	PRIMARY KEY		
+	everything	PRIMARY		everything	setting	PRIMARY KEY		
+	everything	PRIMARY		everything	symlink	PRIMARY KEY		
+	everything	PRIMARY		everything	themesetting	PRIMARY KEY		
+	everything	PRIMARY		everything	typeversion	PRIMARY KEY		
 	everything	PRIMARY		everything	user	PRIMARY KEY		
+	everything	PRIMARY		everything	version	PRIMARY KEY		
 	everything	PRIMARY		everything	weblog	PRIMARY KEY		
+	everything	PRIMARY		everything	workspace	PRIMARY KEY		
 drop schema everything;
 create schema slashdot;
 use slashdot;
@@ -3290,9 +3290,194 @@ UNIQUE KEY `site` (`site`,`ts`,`nonce`)
 );
 select * from information_schema.TABLE_CONSTRAINTS WHERE table_schema="slashdot" ORDER BY CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, CONSTRAINT_NAME;
 CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	CONSTRAINT_TYPE	IS_DEFERRABLE	INITIALLY_DEFERRED
+	slashdot	PRIMARY		slashdot	abusers	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	accesslog_build_unique_uid	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	accesslog_temp_host_addr	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	achievements	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	ajax_ops	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	al2	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	al2_log	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	al2_log_comments	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	al2_types	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	anniversary	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	authors_cache	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	auto_poll	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	backup_blocks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	badge_ids	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	blobs	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	blocks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	bookmark_feeds	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	bookmarks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	bpn_sources	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	classes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	clout_types	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	code_param	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	comment_log	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	comment_promote_log	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	comment_text	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	commentmodes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	comments	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	content_filters	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	css	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	css_type	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	dateformats	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	daypass_available	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	daypass_confcodes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	daypass_keys	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	dbs	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	dbs_readerstatus_queries	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	discussion_kinds	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	discussions	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	dst	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	dynamic_blocks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	dynamic_user_blocks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	farm_globjid	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	farm_ipid	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	farm_uid	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	file_queue	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_ogaspt	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_section	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_section_settings	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_setting_log	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_skin_volume	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_tab	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_text	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_update_log	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_update_log_temp	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_view	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	firehose_view_settings	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	formkeys	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	globj_adminnotes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	globj_types	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	globj_urls	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	globjs	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	globjs_viewed	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	globjs_viewed_archived	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	hooks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	humanconf	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	humanconf_pool	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	humanconf_questions	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	journal_themes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	journal_transfer	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	journals	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	journals_text	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	links	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	links_for_stories	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	memcached_stats	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	menus	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	message_codes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	message_deliverymodes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	message_drop	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	message_web	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	message_web_text	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	metamodlog	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	microbin	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	misc_user_opts	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	moderatorlog	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	modreasons	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	open_proxies	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	people	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	pollanswers	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	pollquestions	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	preview	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	preview_param	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	projects	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	related_links	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	related_stories	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	remarks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	reskey_failures	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	reskey_resource_checks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	reskey_resources	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	reskey_sessions	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	reskeys	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	rss_raw	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	search_index_dump	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	section_extras	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	section_subsections	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	section_topics	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	sections	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	sections_contained	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	sessions	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	shill_ids	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	signoff	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	site_info	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	skins	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	slashd_status	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	soap_methods	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	spamarmors	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	sphinx_index	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	static_files	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	stats_daily	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	stories	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	stories_media	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	story_dirty	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	story_files	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	story_param	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	story_render_dirty	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	story_text	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	string_param	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	submission_param	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	submissions	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	submissions_notes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	subscribe_payments	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	subsections	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	surv_answers	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	surv_answers_params	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	surv_choices	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	surv_questions	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	surv_surveys	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	surv_surveys_params	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tagbox_metamod_history	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tagboxes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tagboxlog_feeder	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tagboxlog_feeder_archived	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tagcommand_adminlog	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tagname_cache	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tagnames	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tags	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tags_dayofweek	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tags_deactivated	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tags_hourofday	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tags_peerclout	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tags_searched	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tags_udc	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tags_userchange	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	templates	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	topic_nexus	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	topic_nexus_dirty	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	topic_nexus_extras	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	topic_param	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	topics	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	topics_changetid	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	tzcodes	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	uncommonstorywords	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	urls	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	user_achievement_streaks	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	user_achievements	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_acl	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_clout	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_comments	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_hits	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_index	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_info	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_logtokens	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_messages	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_openid	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_openid_reskeys	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_param	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	users_prefs	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	vars	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	wow_char_armorylog	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	wow_char_data	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	wow_char_types	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	wow_chars	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	wow_guilds	PRIMARY KEY		
+	slashdot	PRIMARY		slashdot	wow_realms	PRIMARY KEY		
 	slashdot	achievement		slashdot	achievements	UNIQUE		
-	slashdot	achievement		slashdot	user_achievements	UNIQUE		
 	slashdot	achievement		slashdot	user_achievement_streaks	UNIQUE		
+	slashdot	achievement		slashdot	user_achievements	UNIQUE		
 	slashdot	bid		slashdot	blocks	UNIQUE		
 	slashdot	bitpos		slashdot	al2_types	UNIQUE		
 	slashdot	charid_wcdtype		slashdot	wow_char_data	UNIQUE		
@@ -3306,222 +3491,37 @@ CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	
 	slashdot	code_key		slashdot	users_messages	UNIQUE		
 	slashdot	container		slashdot	sections_contained	UNIQUE		
 	slashdot	country_realm		slashdot	wow_realms	UNIQUE		
-	slashdot	daypasskey		slashdot	daypass_keys	UNIQUE		
 	slashdot	day_key_pair		slashdot	stats_daily	UNIQUE		
+	slashdot	daypasskey		slashdot	daypass_keys	UNIQUE		
 	slashdot	degree_of_separation		slashdot	people	UNIQUE		
 	slashdot	discussion_id		slashdot	users_comments_read_log	UNIQUE		
 	slashdot	extra		slashdot	section_extras	UNIQUE		
 	slashdot	formkey		slashdot	humanconf	UNIQUE		
 	slashdot	globjid		slashdot	firehose	UNIQUE		
 	slashdot	globjid_secsin		slashdot	firehose_history	UNIQUE		
-	slashdot	globjid_uid		slashdot	globjs_viewed_archived	UNIQUE		
 	slashdot	globjid_uid		slashdot	globjs_viewed	UNIQUE		
+	slashdot	globjid_uid		slashdot	globjs_viewed_archived	UNIQUE		
 	slashdot	globjid_url_id		slashdot	globj_urls	UNIQUE		
 	slashdot	hook_param		slashdot	hooks	UNIQUE		
 	slashdot	host_addr		slashdot	accesslog_temp_host_addr	UNIQUE		
+	slashdot	id_tid		slashdot	firehose_topics_rendered	UNIQUE		
 	slashdot	idx_name		slashdot	wow_guilds	UNIQUE		
 	slashdot	idx_uid_name		slashdot	dynamic_user_blocks	UNIQUE		
-	slashdot	id_tid		slashdot	firehose_topics_rendered	UNIQUE		
 	slashdot	keyword		slashdot	topics	UNIQUE		
 	slashdot	maintable		slashdot	globj_types	UNIQUE		
-	slashdot	name		slashdot	sphinx_index	UNIQUE		
-	slashdot	name		slashdot	journal_themes	UNIQUE		
-	slashdot	name		slashdot	clout_types	UNIQUE		
-	slashdot	name		slashdot	dynamic_user_blocks	UNIQUE		
 	slashdot	name		slashdot	al2_types	UNIQUE		
-	slashdot	name		slashdot	wow_char_types	UNIQUE		
-	slashdot	name		slashdot	tagboxes	UNIQUE		
-	slashdot	name		slashdot	skins	UNIQUE		
+	slashdot	name		slashdot	clout_types	UNIQUE		
 	slashdot	name		slashdot	discussion_kinds	UNIQUE		
+	slashdot	name		slashdot	dynamic_user_blocks	UNIQUE		
+	slashdot	name		slashdot	journal_themes	UNIQUE		
+	slashdot	name		slashdot	skins	UNIQUE		
+	slashdot	name		slashdot	sphinx_index	UNIQUE		
+	slashdot	name		slashdot	tagboxes	UNIQUE		
+	slashdot	name		slashdot	wow_char_types	UNIQUE		
 	slashdot	name_rkrid		slashdot	reskey_vars	UNIQUE		
 	slashdot	op		slashdot	ajax_ops	UNIQUE		
 	slashdot	openid_url		slashdot	users_openid	UNIQUE		
 	slashdot	page_labels_un		slashdot	menus	UNIQUE		
-	slashdot	PRIMARY		slashdot	tags_hourofday	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	topics	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_logtokens	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	stories	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	story_files	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	wow_chars	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	content_filters	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	misc_user_opts	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	uncommonstorywords	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	globjs_viewed_archived	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tags_searched	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	stats_daily	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_param	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tagnames	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	related_stories	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tags_userchange	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tagbox_metamod_history	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	blobs	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_setting_log	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	farm_ipid	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	spamarmors	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	achievements	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	abusers	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	comment_text	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	story_dirty	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	related_links	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	stories_media	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	message_web_text	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	globj_urls	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tzcodes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tagcommand_adminlog	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	wow_guilds	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	reskey_resources	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	microbin	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	al2_log	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_hits	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	sphinx_index	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	classes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	dbs	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_prefs	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	topic_nexus	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	comments	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	site_info	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	reskey_sessions	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	accesslog_temp_host_addr	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	rss_raw	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	story_param	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_index	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	templates	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	code_param	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	section_extras	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	sessions	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	css	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	vars	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	pollquestions	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	story_text	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tags_deactivated	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	people	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	dbs_readerstatus_queries	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	humanconf_questions	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_openid	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	globj_types	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	journal_themes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	preview	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	clout_types	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	signoff	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	ajax_ops	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	search_index_dump	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	reskey_resource_checks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	submissions_notes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tags_udc	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	string_param	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tags	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	subsections	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	bookmarks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_tab	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	journal_transfer	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	dynamic_user_blocks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	bpn_sources	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	commentmodes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_openid_reskeys	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	backup_blocks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	surv_surveys	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	al2_types	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	daypass_keys	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_section_settings	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	urls	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	reskeys	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	projects	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	wow_char_types	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	hooks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	submissions	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_messages	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tagboxlog_feeder	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	file_queue	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_skin_volume	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_update_log_temp	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	links_for_stories	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	message_drop	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	globj_adminnotes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	links	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_ogaspt	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	reskey_failures	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	topic_nexus_dirty	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	shill_ids	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	message_web	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	surv_surveys_params	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	section_topics	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	section_subsections	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_section	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	globjs	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	wow_char_armorylog	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	subscribe_payments	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	comment_promote_log	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	wow_char_data	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tagname_cache	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	open_proxies	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	daypass_available	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	submission_param	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tagboxlog_feeder_archived	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	auto_poll	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	user_achievements	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	surv_choices	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	soap_methods	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	daypass_confcodes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	farm_uid	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_view_settings	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	css_type	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	static_files	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	wow_realms	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_clout	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	message_codes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	blocks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	preview_param	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	story_render_dirty	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_comments	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	authors_cache	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	modreasons	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	comment_log	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	surv_questions	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	journals	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	accesslog_build_unique_uid	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	al2_log_comments	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_text	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_update_log	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	firehose_view	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	memcached_stats	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tags_dayofweek	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	bookmark_feeds	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	globjs_viewed	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	dst	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	user_achievement_streaks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	pollanswers	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	badge_ids	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	slashd_status	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	humanconf	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	journals_text	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	al2	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	discussions	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	topic_nexus_extras	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tagboxes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	sections_contained	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	anniversary	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	farm_globjid	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	topic_param	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	topics_changetid	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	surv_answers	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	metamodlog	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	menus	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	message_deliverymodes	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_info	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	users_acl	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	remarks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	skins	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	humanconf_pool	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	dateformats	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	discussion_kinds	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	sections	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	moderatorlog	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	dynamic_blocks	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	surv_answers_params	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	formkeys	PRIMARY KEY		
-	slashdot	PRIMARY		slashdot	tags_peerclout	PRIMARY KEY		
 	slashdot	realm_name		slashdot	wow_chars	UNIQUE		
 	slashdot	reskey		slashdot	reskeys	UNIQUE		
 	slashdot	reskey_name		slashdot	reskey_sessions	UNIQUE		
@@ -3538,15 +3538,15 @@ CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	
 	slashdot	src_completion		slashdot	sphinx_counter_archived	UNIQUE		
 	slashdot	status		slashdot	microbin	UNIQUE		
 	slashdot	story_key		slashdot	story_param	UNIQUE		
-	slashdot	story_topic		slashdot	story_topics_rendered	UNIQUE		
 	slashdot	story_topic		slashdot	story_topics_chosen	UNIQUE		
-	slashdot	submission_key		slashdot	submission_param	UNIQUE		
+	slashdot	story_topic		slashdot	story_topics_rendered	UNIQUE		
 	slashdot	submission_key		slashdot	preview_param	UNIQUE		
+	slashdot	submission_key		slashdot	submission_param	UNIQUE		
 	slashdot	svsid		slashdot	surv_surveys	UNIQUE		
-	slashdot	tagname		slashdot	tagnames	UNIQUE		
-	slashdot	tagname		slashdot	tagname_cache	UNIQUE		
-	slashdot	tagname_name		slashdot	tagname_params	UNIQUE		
 	slashdot	tag_name		slashdot	tag_params	UNIQUE		
+	slashdot	tagname		slashdot	tagname_cache	UNIQUE		
+	slashdot	tagname		slashdot	tagnames	UNIQUE		
+	slashdot	tagname_name		slashdot	tagname_params	UNIQUE		
 	slashdot	target		slashdot	globjs	UNIQUE		
 	slashdot	tid_keyword		slashdot	topic_nexus_extras	UNIQUE		
 	slashdot	topic_key		slashdot	topic_param	UNIQUE		
@@ -3556,13 +3556,13 @@ CONSTRAINT_CATALOG	CONSTRAINT_SCHEMA	CONSTRAINT_NAME	TABLE_CATALOG	TABLE_SCHEMA	
 	slashdot	type_vu		slashdot	dbs	UNIQUE		
 	slashdot	uber_signature		slashdot	rss_raw	UNIQUE		
 	slashdot	uid		slashdot	sessions	UNIQUE		
-	slashdot	uid_clid		slashdot	users_clout	UNIQUE		
 	slashdot	uid_clid		slashdot	tags_peerclout	UNIQUE		
+	slashdot	uid_clid		slashdot	users_clout	UNIQUE		
 	slashdot	uid_fsid		slashdot	firehose_section_settings	UNIQUE		
-	slashdot	uid_globjid		slashdot	firehose_tfhp	UNIQUE		
 	slashdot	uid_globjid		slashdot	firehose_tfh	UNIQUE		
-	slashdot	uid_key		slashdot	users_param	UNIQUE		
+	slashdot	uid_globjid		slashdot	firehose_tfhp	UNIQUE		
 	slashdot	uid_key		slashdot	users_acl	UNIQUE		
+	slashdot	uid_key		slashdot	users_param	UNIQUE		
 	slashdot	uid_locationid_temp_public		slashdot	users_logtokens	UNIQUE		
 	slashdot	uid_tabname		slashdot	firehose_tab	UNIQUE		
 	slashdot	unixname		slashdot	projects	UNIQUE		
