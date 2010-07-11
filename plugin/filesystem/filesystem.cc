@@ -47,6 +47,7 @@ using namespace drizzled;
 static const char* FILESYSTEM_OPTION_FILE_PATH= "FILE";
 static const char* FILESYSTEM_OPTION_ROW_SEPARATOR= "ROW_SEPARATOR";
 static const char* FILESYSTEM_OPTION_COL_SEPARATOR= "COL_SEPARATOR";
+static const char* FILESYSTEM_OPTION_FORMAT= "FORMAT";
 static const char* FILESYSTEM_OPTION_SEPARATOR_MODE= "SEPARATOR_MODE";
 static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_STRICT= "STRICT";
 static const char* FILESYSTEM_OPTION_SEPARATOR_MODE_GENERAL= "GENERAL";
@@ -261,8 +262,62 @@ int FilesystemEngine::doGetTableDefinition(Session &,
 
     return HA_ERR_CRASHED_ON_USAGE;
   }
-
   delete input;
+  // if the file is a taggered file such as /proc/meminfo
+  // then columns of this table are added dynamically here.
+  string file_path;
+  bool should_parse= false;
+  for (int x= 0; x < table_proto.engine().options_size(); x++)
+  {
+    const message::Engine::Option& option= table_proto.engine().options(x);
+
+    if (boost::iequals(option.name(), FILESYSTEM_OPTION_FORMAT) &&
+	boost::iequasl(option.state(), "KEY_VALUE"))
+      should_parse= true;
+    if (boost::iequals(option.name(), FILESYSTEM_OPTION_FILE_PATH))
+      file_path= option.state();
+  }
+  if (!should_parse || file_path.empty())
+    return EEXIST;
+
+  // user should not set any fields
+  if (table_proto.field_size() > 0)
+    return EEXIST;
+
+  int fd= ::open(file_path.c_str(), O_RDONLY);
+  if (fd < 0)
+    return EEXIST;
+  TransparentFile filebuffer= new TransparentFile();
+  filebuffer->init_buff(fd);
+
+  int pos= 0;
+  string line;
+  while (1)
+  {
+    char ch= file_buff->get_value(pos);
+    if (ch == '\0')
+      break;
+    ++pos;
+
+    if (row_separator.find(ch) == string::npos)
+      continue;
+    // found the line ending character
+
+    // if we have a new empty line,
+    // it means we got the end of the parsing
+    if (line.empty())
+      break;
+
+    // parse the line
+    for (int x= 0; x < line.length(); x++)
+      if (col_separator.find(line[x]) != string::npos)
+        column= line.substr(0, x);
+    if (column.empty())
+      continue;
+
+    message::Table::Field *field= add_field();
+    field->set_name();
+    field->set_type();
 
   return EEXIST;
 }
