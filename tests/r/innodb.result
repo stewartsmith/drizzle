@@ -1282,7 +1282,7 @@ t2	CREATE TABLE `t2` (
   PRIMARY KEY (`a`),
   UNIQUE KEY `b_2` (`b`),
   KEY `b` (`b`),
-  CONSTRAINT `t2_ibfk_1` FOREIGN KEY (`b`) REFERENCES `t1` (`id`)
+  FOREIGN KEY (`b`) REFERENCES `t1` (`id`)
 ) ENGINE=InnoDB
 drop table t2;
 create table t2 (a int auto_increment primary key, b int, foreign key (b) references t1(id), foreign key (b) references t1(id), unique(b)) engine=innodb;
@@ -1293,8 +1293,8 @@ t2	CREATE TABLE `t2` (
   `b` int DEFAULT NULL,
   PRIMARY KEY (`a`),
   UNIQUE KEY `b` (`b`),
-  CONSTRAINT `t2_ibfk_1` FOREIGN KEY (`b`) REFERENCES `t1` (`id`),
-  CONSTRAINT `t2_ibfk_2` FOREIGN KEY (`b`) REFERENCES `t1` (`id`)
+  FOREIGN KEY (`b`) REFERENCES `t1` (`id`),
+  FOREIGN KEY (`b`) REFERENCES `t1` (`id`)
 ) ENGINE=InnoDB
 drop table t2, t1;
 create table t1 (c char(10), index (c,c)) engine=innodb;
