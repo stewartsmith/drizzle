@@ -22,7 +22,9 @@ MESSAGE_LDADD= \
 	       ${LIBUUID} \
 	       ${LTLIBINTL} \
 	       $(GCOV_LIBS) \
-	       ${top_builddir}/gnulib/libgnu.la
+	       ${top_builddir}/gnulib/libgnu.la \
+		drizzled/libcharset.la \
+		drizzled/internal/libinternal.la
 
 MESSAGE_AM_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
