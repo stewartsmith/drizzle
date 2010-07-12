@@ -25,7 +25,7 @@ product_order	CREATE TABLE `product_order` (
   PRIMARY KEY (`no`),
   KEY `product_category` (`product_category`,`product_id`),
   KEY `customer_id` (`customer_id`),
-  FOREIGN KEY (`product_category`,`product_id`) REFERENCES `product` (`category`,`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  FOREIGN KEY (`product_category`, `product_id`) REFERENCES `product` (`category`,`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
   FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
 ) ENGINE=InnoDB
 drop table product_order, customer, product;

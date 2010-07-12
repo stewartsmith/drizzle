@@ -1201,7 +1201,7 @@ transformForeignKeyConstraintDefinitionToSql(const Table::ForeignKeyConstraint &
   for (ssize_t x= 0; x < fkey.column_names_size(); ++x)
   {
     if (x != 0)
-      destination.push_back(',');
+      destination.append(", ", 2);
 
     append_escaped_string(&destination, fkey.column_names(x),
                           quoted_identifier);
