@@ -62,12 +62,6 @@ extern "C" {
 #define DEFAULT_PBMS_PORT PBMS_PORT
 #endif
 
-#ifdef DRIZZLED
-#define SERVER_CON struct st_drizzle
-#else
-#define SERVER_CON struct st_mysql
-#endif
-
 /* PBMS handle types. */
 typedef void *PBMS;				// A connection handle.
 

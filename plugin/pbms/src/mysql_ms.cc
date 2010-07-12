@@ -41,7 +41,6 @@
 #include "cslib/CSGlobal.h"
 #include "cslib/CSException.h"
 #include "defs_ms.h"
-#include "defs_ms.h"
 #include "mysql_ms.h"
 
 /* Note: 'new' used here is NOT CSObject::new which is a DEBUG define*/
