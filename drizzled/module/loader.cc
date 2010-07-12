@@ -1686,33 +1686,33 @@ static int test_plugin_options(memory::Root *module_root,
     long_options.add(module_options);
 
   }
-  else
-  {
 
-    for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
+  for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
+  {
+    count++;
+  }
+
+  if (count > EXTRA_OPTIONS || (*argc > 1))
+  {
+    if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
     {
-      count++;
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Out of memory for plugin '%s'."),
+                    test_module->getName().c_str());
+      return(-1);
+    }
+    memset(opts, 0, sizeof(option) * count);
+
+    if (construct_options(module_root, test_module, opts))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Bad options for plugin '%s'."),
+                    test_module->getName().c_str());
+      return(-1);
     }
 
-    if (count > EXTRA_OPTIONS || (*argc > 1))
+    if (test_module->getManifest().init_options == NULL)
     {
-      if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Out of memory for plugin '%s'."),
-                      test_module->getName().c_str());
-        return(-1);
-      }
-      memset(opts, 0, sizeof(option) * count);
-
-      if (construct_options(module_root, test_module, opts))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Bad options for plugin '%s'."),
-                      test_module->getName().c_str());
-        return(-1);
-      }
-
       error= handle_options(argc, &argv, opts, get_one_plugin_option);
       (*argc)++; /* add back one for the program name */
 

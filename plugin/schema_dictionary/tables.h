@@ -21,53 +21,56 @@
 #ifndef PLUGIN_SCHEMA_DICTIONARY_TABLES_H
 #define PLUGIN_SCHEMA_DICTIONARY_TABLES_H
 
-class TablesTool : public SchemasTool
+class TablesTool : public drizzled::plugin::TableFunction
 {
 public:
 
   TablesTool();
 
   TablesTool(const char *schema_arg, const char *table_arg) :
-    SchemasTool(schema_arg, table_arg)
+    drizzled::plugin::TableFunction(schema_arg, table_arg)
   { }
 
   TablesTool(const char *table_arg) :
-    SchemasTool(table_arg)
+    drizzled::plugin::TableFunction("DATA_DICTIONARY", table_arg)
   { }
 
-  class Generator : public SchemasTool::Generator 
+  class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::message::Table table_proto;
-    std::set<std::string> table_names;
-    std::set<std::string>::iterator table_iterator;
-    bool is_tables_primed;
+    drizzled::generator::AllTables all_tables_generator;
+    drizzled::message::Table table_message;
 
     virtual void fill();
-    bool nextTableCore();
 
   public:
     Generator(drizzled::Field **arg);
+
+    bool nextTable();
 
     void pushRow(drizzled::message::Table::TableOptions::RowType type);
     void pushType(drizzled::message::Table::Field::FieldType type);
 
     const std::string &table_name()
     {
-      return (*table_iterator);
+      return table_message.name();
     }
 
     const drizzled::message::Table& getTableProto()
     {
-      return table_proto;
+      return table_message;
+    }
+
+    const drizzled::message::Table& getTableMessage()
+    {
+      return table_message;
     }
 
     bool isTablesPrimed()
     {
-      return is_tables_primed;
+      return true;
     }
 
     bool populate();
-    bool nextTable();
   };
 
   Generator *generator(drizzled::Field **arg)

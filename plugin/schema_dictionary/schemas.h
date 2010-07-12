@@ -39,11 +39,7 @@ public:
   {
     drizzled::message::Schema schema;
 
-    drizzled::SchemaIdentifierList schema_names;
-    drizzled::SchemaIdentifierList::const_iterator schema_iterator;
-
-    bool is_schema_primed;
-    bool is_schema_parsed;
+    drizzled::generator::Schema schema_generator;
 
     virtual void fill();
 
@@ -52,16 +48,14 @@ public:
 
     const std::string &schema_name()
     {
-      assert(is_schema_primed);
       return schema.name();
     }
 
     bool populate();
-    bool nextSchemaCore();
     bool nextSchema();
     bool isSchemaPrimed()
     {
-      return is_schema_primed;
+      return true;
     }
   };
 

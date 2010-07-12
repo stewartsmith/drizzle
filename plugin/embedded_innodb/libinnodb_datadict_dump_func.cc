@@ -59,6 +59,9 @@ struct schema_visitor_arg
   string *str;
 };
 
+extern "C"
+{
+
 static int visit_table(void* arg_param, const char* name, ib_tbl_fmt_t tbl_fmt,
                        ib_ulint_t page_size, int n_cols, int n_indexes)
 {
@@ -131,6 +134,8 @@ static int visit_index_col(void* arg_param, const char* name, ib_ulint_t)
   return 0;
 }
 
+}
+
 static const ib_schema_visitor_t visitor = {
   IB_SCHEMA_VISITOR_TABLE_AND_INDEX_COL,
   visit_table,
@@ -138,6 +143,9 @@ static const ib_schema_visitor_t visitor = {
   visit_index,
   visit_index_col
 };
+
+extern "C"
+{
 
 static int visit_tables(void* arg_param, const char *name, int len)
 {
@@ -150,6 +158,7 @@ static int visit_tables(void* arg_param, const char *name, int len)
   return(err == DB_SUCCESS ? 0 : -1);
 }
 
+}
 String *LibinnodbDatadictDumpFunction::val_str(String *str)
 {
   assert(fixed == true);

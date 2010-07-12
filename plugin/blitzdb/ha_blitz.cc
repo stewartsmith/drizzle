@@ -1500,4 +1500,4 @@ static drizzle_sys_var *blitz_system_variables[] = {
   NULL
 };
 
-DRIZZLE_PLUGIN(blitz_init, blitz_system_variables);
+DRIZZLE_PLUGIN(blitz_init, blitz_system_variables, NULL);
