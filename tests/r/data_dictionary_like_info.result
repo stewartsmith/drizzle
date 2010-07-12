@@ -36,11 +36,11 @@ Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_incr
 #	test	t5	STANDARD	InnoDB	#	#	#	#	#
 show columns from t3 like "a%";
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	TRUE		TRUE	
+a	INTEGER	YES		YES	
 select * from data_dictionary.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	ORDINAL_POSITION	COLUMN_DEFAULT	COLUMN_DEFAULT_IS_NULL	COLUMN_DEFAULT_UPDATE	IS_NULLABLE	IS_INDEXED	IS_USED_IN_PRIMARY	IS_UNIQUE	IS_MULTI	IS_FIRST_IN_MULTI	INDEXES_FOUND_IN	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	COLLATION_NAME	COLUMN_COMMENT
-mysqltest	t1	a	INTEGER	0	NULL	TRUE		TRUE	FALSE	FALSE	FALSE	FALSE	FALSE	0	INTEGER	0	0	0	0		NULL
+mysqltest	t1	a	INTEGER	0	NULL	YES		YES	NO	NO	NO	NO	NO	0	INTEGER	0	0	0	0		NULL
 select table_name, column_name from data_dictionary.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 table_name	column_name
@@ -48,8 +48,8 @@ t1	a
 t1	b
 show columns from mysqltest.t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	TRUE		TRUE	
-b	VARCHAR	TRUE		TRUE	
+a	INTEGER	YES		YES	
+b	VARCHAR	YES		YES	
 drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
 select * from data_dictionary.CHARACTER_SETS
@@ -140,13 +140,13 @@ use data_dictionary;
 select column_name, column_default,column_default_is_null from columns
 where table_schema='test' and table_name='t1';
 column_name	column_default	column_default_is_null
-a	NULL	FALSE
-b	NULL	TRUE
+a	NULL	NO
+b	NULL	YES
 use test;
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	FALSE		FALSE	
-b	INTEGER	TRUE		TRUE	
+a	INTEGER	NO		NO	
+b	INTEGER	YES		YES	
 drop table t1;
 alter database data_dictionary;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near '' at line 1
@@ -169,13 +169,13 @@ drop table t1;
 create temporary table t1(f1 int, index(f1));
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f1	INTEGER	TRUE		TRUE	
+f1	INTEGER	YES		YES	
 describe t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f1	INTEGER	TRUE		TRUE	
+f1	INTEGER	YES		YES	
 show indexes from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	FALSE	f1	1	f1
+t1	NO	f1	1	f1
 drop table t1;
 create table t1(f1 varbinary(32), f2 varbinary(64));
 select character_maximum_length, character_octet_length
@@ -301,24 +301,24 @@ f8 datetime default '2006-01-01'
 );
 select column_name,column_default,column_default_is_null from data_dictionary.columns where table_name= 't1';
 column_name	column_default	column_default_is_null
-f1	NULL	TRUE
-f2	NULL	FALSE
-f3		FALSE
-f4	NULL	TRUE
-f5	NULL	FALSE
-f6	10	FALSE
-f7	NULL	FALSE
-f8	2006-01-01	FALSE
+f1	NULL	YES
+f2	NULL	NO
+f3		NO
+f4	NULL	YES
+f5	NULL	NO
+f6	10	NO
+f7	NULL	NO
+f8	2006-01-01	NO
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f1	VARCHAR	TRUE		TRUE	
-f2	VARCHAR	FALSE		FALSE	
-f3	VARCHAR	TRUE		FALSE	
-f4	VARCHAR	TRUE		TRUE	
-f5	BIGINT	FALSE		FALSE	
-f6	BIGINT	FALSE	10	FALSE	
-f7	DATETIME	FALSE		FALSE	
-f8	DATETIME	TRUE	2006-01-01	FALSE	
+f1	VARCHAR	YES		YES	
+f2	VARCHAR	NO		NO	
+f3	VARCHAR	YES		NO	
+f4	VARCHAR	YES		YES	
+f5	BIGINT	NO		NO	
+f6	BIGINT	NO	10	NO	
+f7	DATETIME	NO		NO	
+f8	DATETIME	YES	2006-01-01	NO	
 drop table t1;
 SET max_heap_table_size = DEFAULT;
 USE test;
@@ -356,29 +356,29 @@ CHARACTER_SET_NAME	DEFAULT_COLLATE_NAME	DESCRIPTION	MAXLEN
 #	#	#	4
 SELECT * FROM data_dictionary.collations ORDER BY collation_name;
 CHARACTER_SET_NAME	COLLATION_NAME	DESCRIPTION	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
-binary	binary	binary	63	TRUE	TRUE	1
-utf8_general_ci	utf8_bin	utf8	46	FALSE	TRUE	1
-utf8_general_ci	utf8_czech_ci	utf8	234	FALSE	TRUE	8
-utf8_general_ci	utf8_danish_ci	utf8	235	FALSE	TRUE	8
-utf8_general_ci	utf8_esperanto_ci	utf8	241	FALSE	TRUE	8
-utf8_general_ci	utf8_estonian_ci	utf8	230	FALSE	TRUE	8
-utf8_general_ci	utf8_general_ci	utf8	45	TRUE	TRUE	1
-utf8_general_ci	utf8_hungarian_ci	utf8	242	FALSE	TRUE	8
-utf8_general_ci	utf8_icelandic_ci	utf8	225	FALSE	TRUE	8
-utf8_general_ci	utf8_latvian_ci	utf8	226	FALSE	TRUE	8
-utf8_general_ci	utf8_lithuanian_ci	utf8	236	FALSE	TRUE	8
-utf8_general_ci	utf8_persian_ci	utf8	240	FALSE	TRUE	8
-utf8_general_ci	utf8_polish_ci	utf8	229	FALSE	TRUE	8
-utf8_general_ci	utf8_romanian_ci	utf8	227	FALSE	TRUE	8
-utf8_general_ci	utf8_roman_ci	utf8	239	FALSE	TRUE	8
-utf8_general_ci	utf8_sinhala_ci	utf8	243	FALSE	TRUE	8
-utf8_general_ci	utf8_slovak_ci	utf8	237	FALSE	TRUE	8
-utf8_general_ci	utf8_slovenian_ci	utf8	228	FALSE	TRUE	8
-utf8_general_ci	utf8_spanish2_ci	utf8	238	FALSE	TRUE	8
-utf8_general_ci	utf8_spanish_ci	utf8	231	FALSE	TRUE	8
-utf8_general_ci	utf8_swedish_ci	utf8	232	FALSE	TRUE	8
-utf8_general_ci	utf8_turkish_ci	utf8	233	FALSE	TRUE	8
-utf8_general_ci	utf8_unicode_ci	utf8	224	FALSE	TRUE	8
+binary	binary	binary	63	YES	YES	1
+utf8_general_ci	utf8_bin	utf8	46	NO	YES	1
+utf8_general_ci	utf8_czech_ci	utf8	234	NO	YES	8
+utf8_general_ci	utf8_danish_ci	utf8	235	NO	YES	8
+utf8_general_ci	utf8_esperanto_ci	utf8	241	NO	YES	8
+utf8_general_ci	utf8_estonian_ci	utf8	230	NO	YES	8
+utf8_general_ci	utf8_general_ci	utf8	45	YES	YES	1
+utf8_general_ci	utf8_hungarian_ci	utf8	242	NO	YES	8
+utf8_general_ci	utf8_icelandic_ci	utf8	225	NO	YES	8
+utf8_general_ci	utf8_latvian_ci	utf8	226	NO	YES	8
+utf8_general_ci	utf8_lithuanian_ci	utf8	236	NO	YES	8
+utf8_general_ci	utf8_persian_ci	utf8	240	NO	YES	8
+utf8_general_ci	utf8_polish_ci	utf8	229	NO	YES	8
+utf8_general_ci	utf8_romanian_ci	utf8	227	NO	YES	8
+utf8_general_ci	utf8_roman_ci	utf8	239	NO	YES	8
+utf8_general_ci	utf8_sinhala_ci	utf8	243	NO	YES	8
+utf8_general_ci	utf8_slovak_ci	utf8	237	NO	YES	8
+utf8_general_ci	utf8_slovenian_ci	utf8	228	NO	YES	8
+utf8_general_ci	utf8_spanish2_ci	utf8	238	NO	YES	8
+utf8_general_ci	utf8_spanish_ci	utf8	231	NO	YES	8
+utf8_general_ci	utf8_swedish_ci	utf8	232	NO	YES	8
+utf8_general_ci	utf8_turkish_ci	utf8	233	NO	YES	8
+utf8_general_ci	utf8_unicode_ci	utf8	224	NO	YES	8
 SELECT table_name, column_name
 FROM data_dictionary.columns
 WHERE table_name IN
