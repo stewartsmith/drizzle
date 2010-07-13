@@ -68,7 +68,7 @@ namespace plugin { class StorageEngine; }
 
 
 #define DRIZZLE_DECLARE_PLUGIN_END
-#define DRIZZLE_PLUGIN(init,system) \
+#define DRIZZLE_PLUGIN(init,system,options) \
   DRIZZLE_DECLARE_PLUGIN \
   { \
     DRIZZLE_VERSION_ID, \
@@ -77,7 +77,7 @@ namespace plugin { class StorageEngine; }
     STRINGIFY_ARG(PANDORA_MODULE_AUTHOR), \
     STRINGIFY_ARG(PANDORA_MODULE_TITLE), \
     PANDORA_MODULE_LICENSE, \
-    init, system, NULL \
+    init, system, options \
   } 
 
 
@@ -189,7 +189,7 @@ typedef void (*mysql_var_update_func)(Session *session,
   mysql_var_check_func check;   \
   mysql_var_update_func update
 
-#define DRIZZLE_SYSVAR_NAME(name) mysql_sysvar_ ## name
+#define DRIZZLE_SYSVAR_NAME(name) drizzle_sysvar_ ## name
 #define DRIZZLE_SYSVAR(name) \
   ((drizzle_sys_var *)(&(DRIZZLE_SYSVAR_NAME(name))))
 

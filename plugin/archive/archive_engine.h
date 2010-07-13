@@ -90,7 +90,7 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory, drizzled::SchemaIdentifier&, std::set<std::string>& set_of_names);
+  void doGetTableNames(drizzled::CachedDirectory &directory, const drizzled::SchemaIdentifier&, std::set<std::string>& set_of_names);
 
   int doDropTable(drizzled::Session&, const drizzled::TableIdentifier &identifier);
 
@@ -111,7 +111,7 @@ public:
   int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 

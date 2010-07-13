@@ -1,0 +1,13 @@
+create schema everything;
+use everything;
+-- source include/everything.sql
+--sorted_result
+select * from information_schema.TABLE_CONSTRAINTS WHERE table_schema="everything" ORDER BY CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, CONSTRAINT_NAME;
+drop schema everything;
+
+create schema slashdot;
+use slashdot;
+-- source include/slashdot.sql
+--sorted_result
+select * from information_schema.TABLE_CONSTRAINTS WHERE table_schema="slashdot" ORDER BY CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA, CONSTRAINT_NAME;
+drop schema slashdot;

@@ -497,6 +497,7 @@ int Join::optimize()
     {           /* Impossible cond */
       zero_result_cause=  having_value == Item::COND_FALSE ?
                            "Impossible HAVING" : "Impossible WHERE";
+      tables = 0;
       goto setup_subq_exit;
     }
   }
@@ -516,6 +517,7 @@ int Join::optimize()
       if (res == HA_ERR_KEY_NOT_FOUND)
       {
         zero_result_cause= "No matching min/max row";
+        tables = 0;
         goto setup_subq_exit;
       }
       if (res > 1)
@@ -526,10 +528,12 @@ int Join::optimize()
       if (res < 0)
       {
         zero_result_cause= "No matching min/max row";
+        tables = 0;
         goto setup_subq_exit;
       }
       zero_result_cause= "Select tables optimized away";
       tables_list= 0;       // All tables resolved
+      const_tables= tables;
       /*
         Extract all table-independent conditions and replace the WHERE
         clause with them. All other conditions were computed by optimizer::sum_query
@@ -4454,7 +4458,7 @@ static void make_outerjoin_info(Join *join)
     JoinTable *tab=join->join_tab+i;
     Table *table=tab->table;
     TableList *tbl= table->pos_in_table_list;
-    TableList *embedding= tbl->embedding;
+    TableList *embedding= tbl->getEmbedding();
 
     if (tbl->outer_join)
     {
@@ -4467,14 +4471,14 @@ static void make_outerjoin_info(Join *join)
       tab->on_expr_ref= &tbl->on_expr;
       tab->cond_equal= tbl->cond_equal;
       if (embedding)
-        tab->first_upper= embedding->nested_join->first_nested;
+        tab->first_upper= embedding->getNestedJoin()->first_nested;
     }
-    for ( ; embedding ; embedding= embedding->embedding)
+    for ( ; embedding ; embedding= embedding->getEmbedding())
     {
       /* Ignore sj-nests: */
       if (!embedding->on_expr)
         continue;
-      nested_join_st *nested_join= embedding->nested_join;
+      nested_join_st *nested_join= embedding->getNestedJoin();
       if (!nested_join->counter_)
       {
         /*
@@ -4484,8 +4488,8 @@ static void make_outerjoin_info(Join *join)
         nested_join->first_nested= tab;
         tab->on_expr_ref= &embedding->on_expr;
         tab->cond_equal= tbl->cond_equal;
-        if (embedding->embedding)
-          tab->first_upper= embedding->embedding->nested_join->first_nested;
+        if (embedding->getEmbedding())
+          tab->first_upper= embedding->getEmbedding()->getNestedJoin()->first_nested;
       }
       if (!tab->first_inner)
         tab->first_inner= nested_join->first_nested;
@@ -5227,7 +5231,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     table_map used_tables;
     table_map not_null_tables= (table_map) 0;
 
-    if ((nested_join= table->nested_join))
+    if ((nested_join= table->getNestedJoin()))
     {
       /*
          If the element of join_list is a nested join apply
@@ -5269,10 +5273,10 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
         not_null_tables= conds->not_null_tables();
     }
 
-    if (table->embedding)
+    if (table->getEmbedding())
     {
-      table->embedding->nested_join->used_tables|= used_tables;
-      table->embedding->nested_join->not_null_tables|= not_null_tables;
+      table->getEmbedding()->getNestedJoin()->used_tables|= used_tables;
+      table->getEmbedding()->getNestedJoin()->not_null_tables|= not_null_tables;
     }
 
     if (!table->outer_join || (used_tables & not_null_tables))
@@ -5308,30 +5312,30 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     */
     if (table->on_expr)
     {
-      table->dep_tables|= table->on_expr->used_tables();
-      if (table->embedding)
+      table->setDepTables(table->getDepTables() | table->on_expr->used_tables());
+      if (table->getEmbedding())
       {
-        table->dep_tables&= ~table->embedding->nested_join->used_tables;
+        table->setDepTables(table->getDepTables() & ~table->getEmbedding()->getNestedJoin()->used_tables);
         /*
            Embedding table depends on tables used
            in embedded on expressions.
         */
-        table->embedding->on_expr_dep_tables|= table->on_expr->used_tables();
+        table->getEmbedding()->setOnExprDepTables(table->getEmbedding()->getOnExprDepTables() & table->on_expr->used_tables());
       }
       else
-        table->dep_tables&= ~table->table->map;
+        table->setDepTables(table->getDepTables() & ~table->table->map);
     }
 
     if (prev_table)
     {
       /* The order of tables is reverse: prev_table follows table */
       if (prev_table->straight)
-        prev_table->dep_tables|= used_tables;
+        prev_table->setDepTables(prev_table->getDepTables() | used_tables);
       if (prev_table->on_expr)
       {
-        prev_table->dep_tables|= table->on_expr_dep_tables;
-        table_map prev_used_tables= prev_table->nested_join ?
-	                            prev_table->nested_join->used_tables :
+        prev_table->setDepTables(prev_table->getDepTables() | table->getOnExprDepTables());
+        table_map prev_used_tables= prev_table->getNestedJoin() ?
+	                            prev_table->getNestedJoin()->used_tables :
 	                            prev_table->table->map;
         /*
           If on expression contains only references to inner tables
@@ -5340,7 +5344,7 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
           for them. Yet this is really a rare case.
 	      */
         if (!(prev_table->on_expr->used_tables() & ~prev_used_tables))
-          prev_table->dep_tables|= used_tables;
+          prev_table->setDepTables(prev_table->getDepTables() | used_tables);
       }
     }
     prev_table= table;
@@ -5353,15 +5357,15 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
   li.rewind();
   while ((table= li++))
   {
-    nested_join= table->nested_join;
+    nested_join= table->getNestedJoin();
     if (nested_join && !table->on_expr)
     {
       TableList *tbl;
       List_iterator<TableList> it(nested_join->join_list);
       while ((tbl= it++))
       {
-        tbl->embedding= table->embedding;
-        tbl->join_list= table->join_list;
+        tbl->setEmbedding(table->getEmbedding());
+        tbl->setJoinList(table->getJoinList());
       }
       li.replace(nested_join->join_list);
     }
@@ -5500,7 +5504,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
        tables;
        s++, tables= tables->next_leaf, i++)
   {
-    TableList *embedding= tables->embedding;
+    TableList *embedding= tables->getEmbedding();
     stat_vector[i]=s;
     s->keys.reset();
     s->const_keys.reset();
@@ -5523,7 +5527,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     s->join=join;
     s->info=0;					// For describe
 
-    s->dependent= tables->dep_tables;
+    s->dependent= tables->getDepTables();
     s->key_dependent= 0;
     table->quick_condition_rows= table->cursor->stats.records;
 
@@ -5539,20 +5543,20 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
       }
       outer_join|= table->map;
       s->embedding_map.reset();
-      for (;embedding; embedding= embedding->embedding)
-        s->embedding_map|= embedding->nested_join->nj_map;
+      for (;embedding; embedding= embedding->getEmbedding())
+        s->embedding_map|= embedding->getNestedJoin()->nj_map;
       continue;
     }
-    if (embedding && !(false && ! embedding->embedding))
+    if (embedding && !(false && ! embedding->getEmbedding()))
     {
       /* s belongs to a nested join, maybe to several embedded joins */
       s->embedding_map.reset();
       do
       {
-        nested_join_st *nested_join= embedding->nested_join;
+        nested_join_st *nested_join= embedding->getNestedJoin();
         s->embedding_map|= nested_join->nj_map;
-        s->dependent|= embedding->dep_tables;
-        embedding= embedding->embedding;
+        s->dependent|= embedding->getDepTables();
+        embedding= embedding->getEmbedding();
         outer_join|= nested_join->used_tables;
       }
       while (embedding);
@@ -5686,7 +5690,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           continue;
         if (table->cursor->stats.records <= 1L &&
             (table->cursor->getEngine()->check_flag(HTON_BIT_STATS_RECORDS_IS_EXACT)) &&
-                  !table->pos_in_table_list->embedding)
+                  !table->pos_in_table_list->getEmbedding())
         {					// system table
           int tmp= 0;
           s->type= AM_SYSTEM;
@@ -5731,7 +5735,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
           } while (keyuse->getTable() == table && keyuse->getKey() == key);
 
           if (is_keymap_prefix(eq_part, table->key_info[key].key_parts) &&
-              ! table->pos_in_table_list->embedding)
+              ! table->pos_in_table_list->getEmbedding())
           {
             if ((table->key_info[key].flags & (HA_NOSAME)) == HA_NOSAME)
             {
@@ -5818,7 +5822,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     add_group_and_distinct_keys(join, s);
 
     if (s->const_keys.any() &&
-        !s->table->pos_in_table_list->embedding)
+        !s->table->pos_in_table_list->getEmbedding())
     {
       ha_rows records;
       optimizer::SqlSelect *select= NULL;
@@ -5909,7 +5913,7 @@ static uint32_t build_bitmap_for_nested_joins(List<TableList> *join_list, uint32
   while ((table= li++))
   {
     nested_join_st *nested_join;
-    if ((nested_join= table->nested_join))
+    if ((nested_join= table->getNestedJoin()))
     {
       /*
         It is guaranteed by simplify_joins() function that a nested join
@@ -5980,7 +5984,7 @@ static void reset_nj_counters(List<TableList> *join_list)
   while ((table= li++))
   {
     nested_join_st *nested_join;
-    if ((nested_join= table->nested_join))
+    if ((nested_join= table->getNestedJoin()))
     {
       nested_join->counter_= 0;
       reset_nj_counters(&nested_join->join_list);
@@ -6020,21 +6024,21 @@ static bool test_if_subpart(order_st *a,order_st *b)
 */
 static void restore_prev_nj_state(JoinTable *last)
 {
-  TableList *last_emb= last->table->pos_in_table_list->embedding;
+  TableList *last_emb= last->table->pos_in_table_list->getEmbedding();
   Join *join= last->join;
   while (last_emb)
   {
     if (last_emb->on_expr)
     {
-      if (!(--last_emb->nested_join->counter_))
-        join->cur_embedding_map&= ~last_emb->nested_join->nj_map;
-      else if (last_emb->nested_join->join_list.elements-1 ==
-               last_emb->nested_join->counter_)
-        join->cur_embedding_map|= last_emb->nested_join->nj_map;
+      if (!(--last_emb->getNestedJoin()->counter_))
+        join->cur_embedding_map&= ~last_emb->getNestedJoin()->nj_map;
+      else if (last_emb->getNestedJoin()->join_list.elements-1 ==
+               last_emb->getNestedJoin()->counter_)
+        join->cur_embedding_map|= last_emb->getNestedJoin()->nj_map;
       else
         break;
     }
-    last_emb= last_emb->embedding;
+    last_emb= last_emb->getEmbedding();
   }
 }
 

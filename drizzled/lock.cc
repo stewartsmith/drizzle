@@ -98,8 +98,6 @@ namespace drizzled
   @{
 */
 
-extern HASH open_cache;
-
 static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table,
                                    uint32_t count,
                                    bool should_lock, Table **write_locked);
@@ -691,10 +689,10 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
   if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
-    for (table=(Table*) hash_first(&open_cache, (unsigned char*)&key[0],
+    for (table=(Table*) hash_first(&get_open_cache(), (unsigned char*)&key[0],
                                    key.size(), &state);
          table ;
-         table = (Table*) hash_next(&open_cache,(unsigned char*)&key[0],
+         table = (Table*) hash_next(&get_open_cache(),(unsigned char*)&key[0],
                                     key.size(), &state))
     {
       if (table->reginfo.lock_type < TL_WRITE)
@@ -730,7 +728,7 @@ void unlock_table_name(TableList *table_list)
 {
   if (table_list->table)
   {
-    hash_delete(&open_cache, (unsigned char*) table_list->table);
+    hash_delete(&get_open_cache(), (unsigned char*) table_list->table);
     broadcast_refresh();
   }
 }
