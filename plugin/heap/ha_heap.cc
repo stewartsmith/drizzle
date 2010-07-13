@@ -96,7 +96,7 @@ public:
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, SchemaIdentifier& , set<string>&) { };
+  void doGetTableNames(CachedDirectory &, const SchemaIdentifier& , set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MAX_KEY; }
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
@@ -114,12 +114,12 @@ public:
 
   bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
   void doGetTableIdentifiers(CachedDirectory &directory,
-                             SchemaIdentifier &schema_identifier,
+                             const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
 };
 
 void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
-                                       SchemaIdentifier&,
+                                       const SchemaIdentifier&,
                                        TableIdentifiers&)
 {
 }

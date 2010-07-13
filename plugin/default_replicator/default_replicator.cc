@@ -66,4 +66,4 @@ static int init(module::Context &context)
   return 0;
 }
 
-DRIZZLE_PLUGIN(init,  NULL);
+DRIZZLE_PLUGIN(init,  NULL, NULL);

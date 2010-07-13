@@ -383,7 +383,6 @@ public:
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
   struct system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
-  struct system_status_var *initial_status_var; /* used by show status */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
@@ -1428,15 +1427,15 @@ public:
   Table *find_temporary_table(TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
-                       SchemaIdentifier &schema_identifier,
+                       const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
-  void doGetTableNames(SchemaIdentifier &schema_identifier,
+  void doGetTableNames(const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
 
   void doGetTableIdentifiers(CachedDirectory &directory,
-                             SchemaIdentifier &schema_identifier,
+                             const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
-  void doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
 
   int doGetTableDefinition(const drizzled::TableIdentifier &identifier,

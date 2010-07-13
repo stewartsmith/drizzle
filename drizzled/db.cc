@@ -362,10 +362,10 @@ static int rm_table_part2(Session *session, TableList *tables)
   {
     TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
-    table->db_type= NULL;
+    table->setDbType(NULL);
     if ((share= TableShare::getShare(identifier)))
     {
-      table->db_type= share->db_type();
+      table->setDbType(share->db_type());
     }
   }
 
@@ -397,7 +397,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       error= 0;
     }
 
-    table_type= table->db_type;
+    table_type= table->getDbType();
 
     TableIdentifier identifier(db, table->table_name);
 
@@ -518,9 +518,9 @@ static long drop_tables_via_filenames(Session *session,
     table_list->table_name= strcpy(table_list->db, schema_identifier.getSchemaName().c_str()) + db_len + 1;
     TableIdentifier::filename_to_tablename((*it).c_str(), table_list->table_name, (*it).size() + 1);
     table_list->alias= table_list->table_name;  // If lower_case_table_names=2
-    table_list->internal_tmp_table= (strncmp((*it).c_str(),
+    table_list->setInternalTmpTable((strncmp((*it).c_str(),
                                              TMP_FILE_PREFIX,
-                                             strlen(TMP_FILE_PREFIX)) == 0);
+                                             strlen(TMP_FILE_PREFIX)) == 0));
     /* Link into list */
     (*tot_list_next)= table_list;
     tot_list_next= &table_list->next_local;

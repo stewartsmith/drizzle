@@ -837,6 +837,7 @@ extern xtBool				pbxt_crash_debug;
 #define STRUCT_TABLE						class drizzled::TableShare
 #define TABLE_SHARE							TableShare
 #define GET_TABLE_SHARE(x)					(x)
+#define GET_TABLE_FIELDS(x)				        (&(x)->getFields()[0])
 
 #define MYSQL_TYPE_STRING					DRIZZLE_TYPE_VARCHAR
 #define MYSQL_TYPE_VARCHAR					DRIZZLE_TYPE_VARCHAR
