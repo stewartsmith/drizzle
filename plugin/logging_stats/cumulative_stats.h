@@ -47,7 +47,7 @@ public:
 
   ~CumulativeStats();
 
-  void logUserStats(ScoreboardSlot* scoreboard_slot);
+  void logUserStats(ScoreboardSlot* scoreboard_slot, bool reserveSlot);
 
   void logGlobalStats(ScoreboardSlot* scoreboard_slot);
 

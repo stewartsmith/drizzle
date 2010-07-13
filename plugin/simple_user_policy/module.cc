@@ -36,4 +36,4 @@ static int init(module::Context &context)
 
 } /* namespace simple_user_policy */
 
-DRIZZLE_PLUGIN(simple_user_policy::init, NULL);
+DRIZZLE_PLUGIN(simple_user_policy::init, NULL, NULL);
