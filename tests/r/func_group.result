@@ -686,12 +686,12 @@ insert into t1 values (now());
 create table t2 select f2 from (select max(now()) f2 from t1) a;
 show columns from t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f2	DATETIME	TRUE		TRUE	
+f2	DATETIME	YES		YES	
 drop table t2;
 create table t2 select f2 from (select now() f2 from t1) a;
 show columns from t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f2	DATETIME	TRUE		TRUE	
+f2	DATETIME	YES		YES	
 drop table t2, t1;
 CREATE TABLE t1(
 id int PRIMARY KEY,

@@ -358,7 +358,7 @@ void XTLocationTable::loadRow(char *buf, xtWord4 row_id)
 
 	tp_ptr = *((XTTablePathPtr *) xt_sl_item_at(ost_db->db_table_paths, row_id));
 
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
@@ -469,7 +469,7 @@ void XTStatisticsTable::loadRow(char *buf, xtWord4 rec_id)
 	stat_name = xt_get_stat_meta_data(rec_id)->sm_name;
 	stat_value = xt_get_statistic(&tt_statistics, ost_db, rec_id);
 
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;

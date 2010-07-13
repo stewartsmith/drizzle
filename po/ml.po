@@ -86,79 +86,15 @@ msgstr "ഓരോ സ്റ്ററ്റ്മെന്റിന്റ്യ�
 msgid "Don't show warnings after every statement."
 msgstr "ഓരോ സ്റ്ററ്റ്മെന്റിന്റ്യും അവസ്സാനം ​സൂചനകള്‍ കാണിക്കേണ്ടതില്ല"
 
-#, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid "Error: Invalid Value for connect_timeout"
 msgstr ""
-"തുടങ്ങുന്നതിന്റെ ഭാഗമായി മെമ്മറി കൊടുത്തില്‍ കുഴപ്പമുണ്ടായി. അടിയന്തിരമായി പുറത്തുകടക്കുന്നു\n"
 
-msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "ഡ്രിസ്സില്‍ ക്ലയ്ന്റിലേക്കു സ്വാഗതം.കമാന്റുകള്‍ ; അല്ലെങ്കില്‍ \\g വച്ച് അവസ്സാനിപ്പിക്കണം."
-
-#, fuzzy, c-format
-msgid ""
-"Your Drizzle connection id is %u\n"
-"Server version: %s\n"
+msgid "Error: Invalid Value for max_input_line"
 msgstr ""
-"നിങ്ങളുടെ ഡ്രിസ്സില്‍ കണക്ഷന്‍ ഐഡി %u ആണ്.\n"
-"സെര്‍വര്‍ വേര്‍ഷന്‍ %s ആണ്\n"
 
-#, c-format
-msgid "Reading history-file %s\n"
-msgstr "history-file %s (ചരിത്രം) വായിക്കുന്നു\n"
-
-#, c-format
-msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "temp histfile നു മെമ്മറി കൊടുക്കാന്‍ സാധിക്കുന്നില്ല.\n"
-
-msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
-msgstr ""
-"സഹായം കിട്ടാന്‍ help; അല്ല്ലെങ്കില്‍ \\h എന്നു ടയ്പ് ചെയ്യുക. ബഫറില്‍ ഉള്ളതു വൃത്തിയാക്കാന്‍ \\c "
-"എന്നു ടയ്പ് ചെയ്യുക\n"
-
-#, c-format
-msgid "Writing history-file %s\n"
-msgstr "history-file %s ലേക്ക് എഴുതിക്കൊണ്ടിരിക്കുന്നു\n"
-
-msgid "Aborted"
-msgstr "അടിയന്തിരമായി പുറത്തു കടന്നു."
-
-msgid "Bye"
-msgstr "ബൈ. തത്കാലം ​വിട"
-
-msgid "Query aborted by Ctrl+C\n"
-msgstr "Ctrl+C കാരണം അടിയന്തിരമായി query നിര്‍ത്തുന്നു\n"
-
-msgid "Display this help and exit."
+#, fuzzy
+msgid "Displays this help and exit."
 msgstr "ഈ സഹായം കാണിച്ചതിനു ശേഷം പുറത്തിറങ്ങുക."
-
-msgid "Synonym for -?"
-msgstr "-? നു പകരമുള്ള വാക്ക് (സിനൊണിം)"
-
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-"ഓട്ടോമാറ്റിക് റീഹാഷിങ് എനേബിള്‍ ചെയ്യുക. 'rehash' എന്നു പറയേണ്ടതില്ല. പക്ഷെ സ്റ്റാര്‍ ട്ടു "
-"ചെയ്യുന്നതിനും വീണ്ടും കണക്റ്റ് ചെയ്യുന്നതിനും താമസം ഉണ്ടാവും. --disable-auto-rehash വച്ചു "
-"ഡിസ്സേബിള്‍ ചെയ്യാം"
-
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-"ഓട്ടോമാറ്റിക് റീഹാഷിങ് ഇല്ല. റ്റേബിളും ഫീല്ഡും കമ്പ്ലീറ്റ് ചെയ്യുന്നതിനു 'rehash' എന്നു പ്രത്യേകം "
-"പറയണം . ഇതു വീണ്ടും കണക്റ്റുചെയ്യുമ്പോള്‍ റീഹാഷിങ് ഒഴിവാക്കാനും പെട്ടെന്നു സ്റ്റാര്‍ ട്ടുചെയ്യാന്‍ "
-"സഹായിക്കും. \r\n"
-"സൂചന: ഈ ഒപ്ഷന്‍ പഴഞ്ചനായി. പകരം --disable-auto-rehash എന്നു ഉപയോഗിക്കുക"
-
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr ""
-"റിസ്സള്‍റ്റ് റ്റെര്മിനലിന്റെ വീതിയെക്കാളും കൂടുതല്‍ ഉണ്ടെങ്കില്‍ കുത്തനെ കാണിക്കുന്ന രീതിയിലോട്ടു "
-"തനിയെ മാറുക."
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
@@ -178,19 +114,6 @@ msgstr ""
 
 msgid "Use compression in server/client protocol."
 msgstr "സെര്‍വര്‍ / ക്ലയെന്റ്റ് പ്രോടോകോളില്‍ കമ്പ്രഷന്‍ ഉപയോഗിക്കുക."
-
-msgid "Database to use."
-msgstr "ഉപയോഗിക്കേണ്ട ഡാറ്റാബേസ്."
-
-msgid "(not used)"
-msgstr "(ഉപയോഗിച്ചിട്ടില്ലാത്തത്)"
-
-msgid "Delimiter to be used."
-msgstr "ഡീലിമിറ്റെര്‍ ഉപയോഗിക്കണം"
-
-msgid "Execute command and quit. (Disables --force and history file)"
-msgstr ""
-"കമാന്‍ഡ് എക്സിക്യൂട്ട് ചെയ്തതിനു ശേഷം പുറത്തു കടക്കുക (--force ഉം ഹിസ്റ്ററി ഫയലും ഒഴിവാക്കുക)"
 
 msgid "Print the output of a query (rows) vertically."
 msgstr ""
@@ -229,14 +152,8 @@ msgstr ""
 msgid "Ignore space after function names."
 msgstr "ഫങ്ങ്ഷന്റെ പെരിനു ശേഷമുള്ള സ്പേസുകള്‍ ഉപേക്ഷിക്കുക."
 
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "എനേബിള്‍ / ഡിസേബിള്‍ LOAD DATA LOCAL INFILE"
-
 msgid "Turn off beep on error."
 msgstr "പിശകുണ്ടാകുന്പോഴുള്ള ബീപ്പ് ശബ്ദം ഒഴിവാക്കുക."
-
-msgid "Connect to host."
-msgstr "വ്യൂഹത്തിലേക്ക് ബന്ധിപ്പിക്കുക."
 
 msgid "Write line numbers for errors."
 msgstr "പിശകുകള്ക്ക് വരിയുടെ അക്കവും കുറിക്കുക."
@@ -247,9 +164,6 @@ msgid ""
 msgstr ""
 "തെറ്റിന്റെ (എറോര്‍) കൂടെ ലൈന്‍ നമ്പര്‍ എഴുതേണ്ടതില്ല. മുന്നറിയിപ്പ്: -L  എന്ന ഒപ്ഷന്‍ കാലഹരണപെട്ടു. "
 "പകരം ഇതിന്റെ നീളത്തില്‍ ഉള്ള വെര്‍ഷന്‍ഉപയോഗിക്കൂ"
-
-msgid "Flush buffer after each query."
-msgstr "എല്ലാ ക്വറിയുടെയും അവസ്സാനം ബഫെര്‍ കളയൂ (ഫ്ലെഷ് ചെയ്യൂ)"
 
 msgid "Write column names in results."
 msgstr "ഫലങ്ങളുടെ കൂടെ കോളങ്ങളുടെ നാമവും എഴുതുക."
@@ -267,6 +181,78 @@ msgid ""
 msgstr ""
 "വേരിയബ്ലിന്റെ വാല്യൂ മാറ്റുക. ഈ ഓപ്ഷന്‍ കാലഹരന്നപെട്ടു എന്ന് ഓര്‍ക്കുക. --variable-name=value "
 "എന്ന രീതിയില്‍ വേരിയബിള്‍ സെറ്റ് ചെയ്യാവുന്നതാന്നു."
+
+msgid "Output in table format."
+msgstr "പട്ടിക രൂപത്തിലുള്ള ഫലം."
+
+msgid "Only allow UPDATE and DELETE that uses keys."
+msgstr ""
+
+msgid "Synonym for option --safe-updates, -U."
+msgstr ""
+
+msgid "-v vvv implies that verbose= 3, Used to specify verbose"
+msgstr ""
+
+msgid "Output version information and exit."
+msgstr "വേര്ഷന്‍ വിവരങ്ങള്‍ കാണിച്ചു നിര്ത്തുക."
+
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr ""
+
+msgid "Number of lines before each import progress report."
+msgstr ""
+
+msgid "Ping the server to check if it's alive."
+msgstr "ശൃംഖല സജീവമാണോ എന്നരിയാന്‍ തട്ടിനോക്കുക."
+
+msgid "Configuration file defaults are not used if no-defaults is set"
+msgstr ""
+
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+"ഓട്ടോമാറ്റിക് റീഹാഷിങ് എനേബിള്‍ ചെയ്യുക. 'rehash' എന്നു പറയേണ്ടതില്ല. പക്ഷെ സ്റ്റാര്‍ ട്ടു "
+"ചെയ്യുന്നതിനും വീണ്ടും കണക്റ്റ് ചെയ്യുന്നതിനും താമസം ഉണ്ടാവും. --disable-auto-rehash വച്ചു "
+"ഡിസ്സേബിള്‍ ചെയ്യാം"
+
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+"ഓട്ടോമാറ്റിക് റീഹാഷിങ് ഇല്ല. റ്റേബിളും ഫീല്ഡും കമ്പ്ലീറ്റ് ചെയ്യുന്നതിനു 'rehash' എന്നു പ്രത്യേകം "
+"പറയണം . ഇതു വീണ്ടും കണക്റ്റുചെയ്യുമ്പോള്‍ റീഹാഷിങ് ഒഴിവാക്കാനും പെട്ടെന്നു സ്റ്റാര്‍ ട്ടുചെയ്യാന്‍ "
+"സഹായിക്കും. \r\n"
+"സൂചന: ഈ ഒപ്ഷന്‍ പഴഞ്ചനായി. പകരം --disable-auto-rehash എന്നു ഉപയോഗിക്കുക"
+
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr ""
+"റിസ്സള്‍റ്റ് റ്റെര്മിനലിന്റെ വീതിയെക്കാളും കൂടുതല്‍ ഉണ്ടെങ്കില്‍ കുത്തനെ കാണിക്കുന്ന രീതിയിലോട്ടു "
+"തനിയെ മാറുക."
+
+msgid "Database to use."
+msgstr "ഉപയോഗിക്കേണ്ട ഡാറ്റാബേസ്."
+
+msgid "(not used)"
+msgstr "(ഉപയോഗിച്ചിട്ടില്ലാത്തത്)"
+
+msgid "Delimiter to be used."
+msgstr "ഡീലിമിറ്റെര്‍ ഉപയോഗിക്കണം"
+
+msgid "Execute command and quit. (Disables --force and history file)"
+msgstr ""
+"കമാന്‍ഡ് എക്സിക്യൂട്ട് ചെയ്തതിനു ശേഷം പുറത്തു കടക്കുക (--force ഉം ഹിസ്റ്ററി ഫയലും ഒഴിവാക്കുക)"
+
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr "എനേബിള്‍ / ഡിസേബിള്‍ LOAD DATA LOCAL INFILE"
+
+msgid "Flush buffer after each query."
+msgstr "എല്ലാ ക്വറിയുടെയും അവസ്സാനം ബഫെര്‍ കളയൂ (ഫ്ലെഷ് ചെയ്യൂ)"
 
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "SIGINT (CTRL-C) അവഗണിക്കുക"
@@ -286,25 +272,9 @@ msgid ""
 "default."
 msgstr ""
 
-msgid ""
-"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-"option deprecated; use --disable-pager instead."
-msgstr ""
-
-msgid ""
-"Password to use when connecting to server. If password is not given it's "
-"asked from the tty."
-msgstr ""
-"ശൃംഖലയിലേക്കു ബന്ധപ്പെടുന്നതിന്‍ രഹസ്യാടയാളവാക്ക് ഉപയോഗിക്കുക. രഹസ്യാടയാളവാക്ക് "
-"നല്കിയില്ലെന്കില്‍  tty-യിലൂടെ അതു ചോദിക്കപ്പെടുന്നതാണ്‍."
-
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-
-msgid "built-in default"
-msgstr "നിര്മിത സഹജമായി നിര്‍വചിക്കപ്പെട്ട മൂല്യം"
+#, fuzzy
+msgid "Disable pager and print to stdout. See interactive help (\\h) also."
+msgstr "പേജര്‍ ഒഴിവാക്കി, stdout ല്‍ പ്രിന്റ് ചെയ്യുക"
 
 msgid "Set the drizzle prompt to this value."
 msgstr ""
@@ -322,15 +292,13 @@ msgid ""
 "option is enabled by default."
 msgstr ""
 
-msgid "Shutdown the server."
+#, fuzzy
+msgid "Shutdown the server"
 msgstr "ശൃംഖല നിര്ത്തുക."
 
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
-
-msgid "Output in table format."
-msgstr "പട്ടിക രൂപത്തിലുള്ള ഫലം."
 
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
@@ -338,25 +306,8 @@ msgid ""
 "default."
 msgstr ""
 
-msgid ""
-"Disable outfile. See interactive help (\\h) also. WARNING: option "
-"deprecated; use --disable-tee instead"
+msgid "Disable outfile. See interactive help (\\h) also."
 msgstr ""
-
-msgid "User for login if not current user."
-msgstr ""
-
-msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr ""
-
-msgid "Synonym for option --safe-updates, -U."
-msgstr ""
-
-msgid "Write more. (-v -v -v gives the table output format)."
-msgstr ""
-
-msgid "Output version information and exit."
-msgstr "വേര്ഷന്‍ വിവരങ്ങള്‍ കാണിച്ചു നിര്ത്തുക."
 
 msgid "Wait and retry if connection is down."
 msgstr "ബന്ധം പോയിക്കിടക്കുകയാണെന്കില്‍ കാത്തിരുന്നു വീണ്ടും പരിശ്രമിക്കുക"
@@ -373,20 +324,45 @@ msgstr ""
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr ""
-
-msgid "Number of lines before each import progress report."
-msgstr ""
-
-msgid "Ping the server to check if it's alive."
-msgstr "ശൃംഖല സജീവമാണോ എന്നരിയാന്‍ തട്ടിനോക്കുക."
-
 msgid "Use MySQL Protocol."
 msgstr ""
 
+#, fuzzy
+msgid "Connect to host"
+msgstr "വ്യൂഹത്തിലേക്ക് ബന്ധിപ്പിക്കുക."
+
+msgid ""
+"Password to use when connecting to server. If password is not given it's "
+"asked from the tty."
+msgstr ""
+"ശൃംഖലയിലേക്കു ബന്ധപ്പെടുന്നതിന്‍ രഹസ്യാടയാളവാക്ക് ഉപയോഗിക്കുക. രഹസ്യാടയാളവാക്ക് "
+"നല്കിയില്ലെന്കില്‍  tty-യിലൂടെ അതു ചോദിക്കപ്പെടുന്നതാണ്‍."
+
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
+msgstr ""
+
+msgid "User for login if not current user."
+msgstr ""
+
+msgid "The protocol of connection (tcp,socket,pipe,memory)."
+msgstr ""
+
 #, c-format
-msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
+msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+"തുടങ്ങുന്നതിന്റെ ഭാഗമായി മെമ്മറി കൊടുത്തില്‍ കുഴപ്പമുണ്ടായി. അടിയന്തിരമായി പുറത്തുകടക്കുന്നു\n"
+
+msgid "DELIMITER cannot contain a backslash character"
+msgstr ""
+
+#, c-format
+msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
 msgstr ""
 
 #, c-format
@@ -397,31 +373,45 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "Usage: %s [OPTIONS] [database]\n"
+msgid "Usage: drizzle [OPTIONS] [database]\n"
 msgstr ""
 
-msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
+msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
+msgstr "ഡ്രിസ്സില്‍ ക്ലയ്ന്റിലേക്കു സ്വാഗതം.കമാന്റുകള്‍ ; അല്ലെങ്കില്‍ \\g വച്ച് അവസ്സാനിപ്പിക്കണം."
 
-#, c-format
-msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr ""
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr ""
-
-#, c-format
-msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
-
+#, fuzzy, c-format
 msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
 msgstr ""
+"നിങ്ങളുടെ ഡ്രിസ്സില്‍ കണക്ഷന്‍ ഐഡി %u ആണ്.\n"
+"സെര്‍വര്‍ വേര്‍ഷന്‍ %s ആണ്\n"
 
-msgid "Value supplied for port is not valid."
+#, c-format
+msgid "Reading history-file %s\n"
+msgstr "history-file %s (ചരിത്രം) വായിക്കുന്നു\n"
+
+#, c-format
+msgid "Couldn't allocate memory for temp histfile!\n"
+msgstr "temp histfile നു മെമ്മറി കൊടുക്കാന്‍ സാധിക്കുന്നില്ല.\n"
+
+msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
+"സഹായം കിട്ടാന്‍ help; അല്ല്ലെങ്കില്‍ \\h എന്നു ടയ്പ് ചെയ്യുക. ബഫറില്‍ ഉള്ളതു വൃത്തിയാക്കാന്‍ \\c "
+"എന്നു ടയ്പ് ചെയ്യുക\n"
+
+#, c-format
+msgid "Writing history-file %s\n"
+msgstr "history-file %s ലേക്ക് എഴുതിക്കൊണ്ടിരിക്കുന്നു\n"
+
+msgid "Aborted"
+msgstr "അടിയന്തിരമായി പുറത്തു കടന്നു."
+
+msgid "Bye"
+msgstr "ബൈ. തത്കാലം ​വിട"
+
+msgid "Query aborted by Ctrl+C\n"
+msgstr "Ctrl+C കാരണം അടിയന്തിരമായി query നിര്‍ത്തുന്നു\n"
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
@@ -472,65 +462,8 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "ചോദ്യം(Query) ശരിയാണ്‍, %ld വരിയെ ബാധിച്ചു"
 msgstr[1] "ചോദ്യം(Query) ശരിയാണ്‍, %ld വരികളെ ബാധിച്ചു"
 
-msgid "Number of rows before each output progress report (requires --verbose)."
-msgstr ""
-
 #, c-format
 msgid "Got errno %d on write"
-msgstr ""
-
-#, c-format
-msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr ""
-
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-
-msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
-
-#, c-format
-msgid "For more options, use %s --help\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead.\n"
-msgstr ""
-
-#, c-format
-msgid "Value supplied for port is not valid.\n"
-msgstr ""
-
-#, c-format
-msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr ""
-
-#, c-format
-msgid "Input filename too long: %s"
-msgstr "നിക്ഷേപിക്കപ്പെട്ട രചനാനാമം വളരെ ദീര്ഘിച്ചുപോയി: %s"
-
-#, c-format
-msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr ""
-
-#, c-format
-msgid "Invalid mode to --compatible: %s\n"
 msgstr ""
 
 #, c-format
@@ -666,6 +599,58 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
+msgid "Number of rows before each output progress report (requires --verbose)."
+msgstr ""
+
+#, c-format
+msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
+msgstr ""
+
+#, c-format
+msgid "Value supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "Input filename too long: %s"
+msgstr "നിക്ഷേപിക്കപ്പെട്ട രചനാനാമം വളരെ ദീര്ഘിച്ചുപോയി: %s"
+
+#, c-format
+msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
+msgstr ""
+
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+
+msgid "Dumps definitions and data from a Drizzle database server"
+msgstr ""
+
+#, c-format
+msgid "Illegal use of option --ignore-table=<database>.<table>\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid mode to --compatible: %s\n"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_max_connect_retries"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_tail_lines"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_sleep"
+msgstr ""
+
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
@@ -717,6 +702,9 @@ msgstr ""
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
 msgstr ""
+
+msgid "Display this help and exit."
+msgstr "ഈ സഹായം കാണിച്ചതിനു ശേഷം പുറത്തിറങ്ങുക."
 
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
@@ -1974,8 +1962,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Uncompressed data size too large; the maximum size is %d (probably, length "
-"of uncompressed data was corrupted)"
+"Uncompressed data size too large; the maximum size is %d (based on "
+"max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
@@ -3688,6 +3676,10 @@ msgid "Corrupt or invalid table definition: %s"
 msgstr ""
 
 #, c-format
+msgid "Corrupt or invalid schema definition for %s : %s"
+msgstr ""
+
+#, c-format
 msgid "Schema does not exist: %s"
 msgstr ""
 
@@ -3708,6 +3700,9 @@ msgstr ""
 
 #, c-format
 msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+msgid "Implicit cartesian join attempted."
 msgstr ""
 
 #, c-format
@@ -4001,18 +3996,18 @@ msgid "setsockopt(TCP_NODELAY) failed with errno %d"
 msgstr ""
 
 #, c-format
-msgid "Retrying bind() on %u"
+msgid "Retrying bind() on %u\n"
 msgstr ""
 
 #, c-format
-msgid "bind() failed with errno: %d"
+msgid "bind() failed with errno: %d\n"
 msgstr ""
 
-msgid "Do you already have another drizzled running?"
+msgid "Do you already have another drizzled running?\n"
 msgstr ""
 
 #, c-format
-msgid "listen() failed with errno %d"
+msgid "listen() failed with errno %d\n"
 msgstr ""
 
 #, c-format
@@ -4129,6 +4124,10 @@ msgstr ""
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
+msgstr ""
+
+#, c-format
+msgid "ENUM column %s has greater than %d possible values"
 msgstr ""
 
 #, c-format
@@ -4489,29 +4488,6 @@ msgstr ""
 msgid "Log queries to a CSV file"
 msgstr ""
 
-#, c-format
-msgid "syslog facility \"%s\" not known, using \"local0\""
-msgstr ""
-
-#, c-format
-msgid "syslog priority \"%s\" not known, using \"info\""
-msgstr ""
-
-msgid "Enable logging to syslog"
-msgstr ""
-
-msgid "Syslog Ident"
-msgstr ""
-
-msgid "Syslog Facility"
-msgstr ""
-
-msgid "Syslog Priority"
-msgstr ""
-
-msgid "Log to syslog"
-msgstr ""
-
 msgid "List of memcached servers."
 msgstr ""
 
@@ -4754,6 +4730,18 @@ msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
 
 #, c-format
+msgid "syslog facility \"%s\" not known, using \"local0\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"warn\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"info\""
+msgstr ""
+
+#, c-format
 msgid "Unable to create background worker thread. Got error %s.\n"
 msgstr ""
 
@@ -4828,6 +4816,12 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr ""
+
+#~ msgid "Synonym for -?"
+#~ msgstr "-? നു പകരമുള്ള വാക്ക് (സിനൊണിം)"
+
+#~ msgid "built-in default"
+#~ msgstr "നിര്മിത സഹജമായി നിര്‍വചിക്കപ്പെട്ട മൂല്യം"
 
 #~ msgid "Writing a core file\n"
 #~ msgstr "ഒരു പ്രധാന രചന എഴുതുന്നു\n"

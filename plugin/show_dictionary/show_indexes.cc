@@ -30,9 +30,9 @@ ShowIndexes::ShowIndexes() :
   plugin::TableFunction("DATA_DICTIONARY", "SHOW_INDEXES")
 {
   add_field("Table");
-  add_field("Unique", plugin::TableFunction::BOOLEAN);
+  add_field("Unique", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("Key_name");
-  add_field("Seq_in_index", plugin::TableFunction::NUMBER);
+  add_field("Seq_in_index", plugin::TableFunction::NUMBER, 0, false);
   add_field("Column_name");
 }
 

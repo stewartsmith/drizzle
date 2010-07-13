@@ -32,13 +32,13 @@ IndexPartsTool::IndexPartsTool() :
   add_field("TABLE_NAME");
   add_field("INDEX_NAME");
   add_field("COLUMN_NAME");
-  add_field("COLUMN_NUMBER", plugin::TableFunction::NUMBER);
-  add_field("SEQUENCE_IN_INDEX", plugin::TableFunction::NUMBER);
-  add_field("COMPARE_LENGTH", plugin::TableFunction::NUMBER);
-  add_field("IS_ORDER_REVERSE", plugin::TableFunction::BOOLEAN);
-  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN);
-  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
-  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
+  add_field("COLUMN_NUMBER", plugin::TableFunction::NUMBER, 0, false);
+  add_field("SEQUENCE_IN_INDEX", plugin::TableFunction::NUMBER, 0, false);
+  add_field("COMPARE_LENGTH", plugin::TableFunction::NUMBER, 0, false);
+  add_field("IS_ORDER_REVERSE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 IndexPartsTool::Generator::Generator(Field **arg) :

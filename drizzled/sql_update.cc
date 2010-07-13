@@ -568,6 +568,7 @@ int mysql_update(Session *session, TableList *table_list,
      */
     session->main_da.reset_diagnostics_area();
     session->my_ok((ulong) session->row_count_func, found, id, buff);
+    session->status_var.updated_row_count+= session->row_count_func;
   }
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;		/* calc cuted fields */
   session->abort_on_warning= 0;
