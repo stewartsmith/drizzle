@@ -29,10 +29,10 @@ public:
 
   class Generator : public InformationSchema::Generator 
   {
-    bool is_primed;
-    void fill();
-    bool nextCore();
-    bool next();
+    const drizzled::message::Table *table_message;
+    drizzled::generator::AllTables generator;
+    int32_t index_iterator;
+    int32_t index_part_iterator;
 
   public:
     Generator(drizzled::Field **arg);

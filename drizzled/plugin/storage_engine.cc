@@ -682,11 +682,11 @@ public:
 class DropTables: public unary_function<StorageEngine *, void>
 {
   Session &session;
-  TableIdentifierList &table_identifiers;
+  TableIdentifiers &table_identifiers;
 
 public:
 
-  DropTables(Session &session_arg, TableIdentifierList &table_identifiers_arg) :
+  DropTables(Session &session_arg, TableIdentifiers &table_identifiers_arg) :
     session(session_arg),
     table_identifiers(table_identifiers_arg)
   { }
@@ -710,7 +710,7 @@ public:
 void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
-  TableIdentifierList table_identifiers;
+  TableIdentifiers table_identifiers;
 
   if (dir.fail())
   {

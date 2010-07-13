@@ -30,15 +30,15 @@ using namespace std;
 table_cache_dictionary::TableCache::TableCache() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLE_CACHE")
 {
-  add_field("SESSION_ID", plugin::TableFunction::NUMBER);
+  add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
-  add_field("VERSION", plugin::TableFunction::NUMBER);
-  add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN);
-  add_field("ROWS", plugin::TableFunction::NUMBER);
-  add_field("AVG_ROW_LENGTH", plugin::TableFunction::NUMBER);
-  add_field("TABLE_SIZE", plugin::TableFunction::NUMBER);
-  add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER);
+  add_field("VERSION", plugin::TableFunction::NUMBER, 0, false);
+  add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("ROWS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("AVG_ROW_LENGTH", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TABLE_SIZE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER, 0, false);
 }
 
 table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) :

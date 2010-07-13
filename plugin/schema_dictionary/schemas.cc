@@ -35,49 +35,20 @@ SchemasTool::SchemasTool() :
 
 SchemasTool::Generator::Generator(Field **arg) :
   plugin::TableFunction::Generator(arg),
-  is_schema_primed(false),
-  is_schema_parsed(false)
+  schema_generator(getSession())
 {
-}
-
-bool SchemasTool::Generator::nextSchemaCore()
-{
-  if (is_schema_primed)
-  {
-    schema_iterator++;
-  }
-  else
-  {
-    plugin::StorageEngine::getSchemaIdentifiers(getSession(), schema_names);
-    schema_names.sort();
-    schema_iterator= schema_names.begin();
-    is_schema_primed= true;
-  }
-
-  if (schema_iterator == schema_names.end())
-    return false;
-
-  schema.Clear();
-  SchemaIdentifier schema_identifier(*schema_iterator);
-  is_schema_parsed= plugin::StorageEngine::getSchemaDefinition(schema_identifier, schema);
-
-  if (not is_schema_parsed)
-  {
-    return false;
-  }
-
-  return true;
 }
   
 bool SchemasTool::Generator::nextSchema()
 {
-  while (not nextSchemaCore())
+  const drizzled::message::Schema *schema_ptr;
+  while ((schema_ptr= schema_generator))
   {
-    if (schema_iterator == schema_names.end())
-      return false;
+    schema.CopyFrom(*schema_ptr);
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 
@@ -101,10 +72,7 @@ void SchemasTool::Generator::fill()
   push(schema.name());
 
   /* DEFAULT_COLLATION_NAME */
-  if (is_schema_parsed)
-    push(schema.collation());
-  else
-    push(scs->name);
+  push(schema.collation());
 
   /* SCHEMA_CREATION_TIME */
   time_t time_arg= schema.creation_timestamp();

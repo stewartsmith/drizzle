@@ -116,7 +116,17 @@ StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
 
     if (scoreboard_slot != NULL)
     {
-      status_var_to_display= scoreboard_slot->getStatusVars();
+      /* A copy of the current status vars for a particular session */ 
+      status_var_to_display= new StatusVars(*scoreboard_slot->getStatusVars());
+
+      /* Sum the current scoreboard this will give us a value for any variables that have global meaning */
+      StatusVars current_scoreboard_status_vars;
+      CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
+      cumulativeStats->sumCurrentScoreboard(logging_stats->getCurrentScoreboard(), &current_scoreboard_status_vars, NULL);
+
+      /* Copy the above to get a value for any variables that have global meaning */  
+      status_var_to_display->copyGlobalVariables(logging_stats->getCumulativeStats()->getGlobalStatusVars());
+      status_var_to_display->copyGlobalVariables(&current_scoreboard_status_vars); 
     } 
     else 
     {
@@ -134,10 +144,7 @@ StatusTool::Generator::Generator(Field **arg, LoggingStats *in_logging_stats,
 
 StatusTool::Generator::~Generator()
 {
-  if (! isLocal) 
-  {
-    delete status_var_to_display;
-  }
+  delete status_var_to_display;
 }
 
 bool StatusTool::Generator::populate()

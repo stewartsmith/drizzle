@@ -1457,4 +1457,4 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
   return pos + skip_len + sizeof(uint16_t);
 }
 
-DRIZZLE_PLUGIN(blitz_init, NULL);
+DRIZZLE_PLUGIN(blitz_init, NULL, NULL);
