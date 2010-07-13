@@ -121,7 +121,7 @@ public:
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, SchemaIdentifier &, set<string>&) { };
+  void doGetTableNames(CachedDirectory &, const SchemaIdentifier &, set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
@@ -138,7 +138,7 @@ public:
   bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state)
   {
@@ -153,7 +153,7 @@ public:
 };
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                         drizzled::SchemaIdentifier&,
+                                         const drizzled::SchemaIdentifier&,
                                          drizzled::TableIdentifiers&)
 {
 }

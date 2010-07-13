@@ -3756,7 +3756,7 @@ table_factor:
             /* Use $2 instead of Lex->current_select as derived table will
                alter value of Lex->current_select. */
             if (!($3 || $5) && $2->embedding &&
-                !$2->embedding->nested_join->join_list.elements)
+                !$2->embedding->getNestedJoin()->join_list.elements)
             {
               /* we have a derived table ($3 == NULL) but no alias,
                  Since we are nested in further parentheses so we
@@ -3920,7 +3920,7 @@ select_derived_init:
             }
             embedding= Lex->current_select->embedding;
             $$= embedding &&
-                !embedding->nested_join->join_list.elements;
+                !embedding->getNestedJoin()->join_list.elements;
             /* return true if we are deeply nested */
           }
         ;
@@ -4774,6 +4774,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TABLES opt_db show_wild
            {
@@ -4831,6 +4834,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TEMPORARY_SYM TABLES show_wild
            {

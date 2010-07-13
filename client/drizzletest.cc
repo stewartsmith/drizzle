@@ -5590,7 +5590,7 @@ try
     }
   }
 
-  if (vm.count("password"))
+  if( vm.count("password") )
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -5602,17 +5602,6 @@ try
     {
       opt_password= password;
       tty_password= false;
-    }
-    char *start= (char *)password.c_str();
-    char *temp_pass= (char *)password.c_str();
-    while (*temp_pass)
-    {
-        /* Overwriting password with 'x' */
-        *temp_pass++= 'x';
-    }
-    if (*start)
-    {
-      start[1]= 0;
     }
   }
   else

@@ -1989,11 +1989,11 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   null_row= 0;
   status= STATUS_NO_RECORD;
   maybe_null= table_list->outer_join;
-  TableList *embedding= table_list->embedding;
+  TableList *embedding= table_list->getEmbedding();
   while (!maybe_null && embedding)
   {
     maybe_null= embedding->outer_join;
-    embedding= embedding->embedding;
+    embedding= embedding->getEmbedding();
   }
   tablenr= table_number;
   map= (table_map) 1 << table_number;

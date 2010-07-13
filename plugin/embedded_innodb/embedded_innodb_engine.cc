@@ -167,17 +167,17 @@ public:
   bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
 private:
-  void getTableNamesInSchemaFromInnoDB(drizzled::SchemaIdentifier &schema,
+  void getTableNamesInSchemaFromInnoDB(const drizzled::SchemaIdentifier &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
                                        drizzled::TableIdentifiers *identifiers);
 
 public:
   void doGetTableNames(drizzled::CachedDirectory &,
-                       drizzled::SchemaIdentifier &schema,
+                       const drizzled::SchemaIdentifier &schema,
                        drizzled::plugin::TableNameList &set_of_names);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
-                             drizzled::SchemaIdentifier &schema,
+                             const drizzled::SchemaIdentifier &schema,
                              drizzled::TableIdentifiers &identifiers);
 
   /* The following defines can be increased if necessary */
@@ -1216,7 +1216,7 @@ rollback:
 }
 
 void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
-                                 drizzled::SchemaIdentifier &schema,
+                                 const drizzled::SchemaIdentifier &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
                                  drizzled::TableIdentifiers *identifiers)
 {
@@ -1287,14 +1287,14 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
 }
 
 void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
-                                           drizzled::SchemaIdentifier &schema,
+                                           const drizzled::SchemaIdentifier &schema,
                                            drizzled::plugin::TableNameList &set_of_names)
 {
   getTableNamesInSchemaFromInnoDB(schema, &set_of_names, NULL);
 }
 
 void EmbeddedInnoDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
-                                                 drizzled::SchemaIdentifier &schema,
+                                                 const drizzled::SchemaIdentifier &schema,
                                                  drizzled::TableIdentifiers &identifiers)
 {
   getTableNamesInSchemaFromInnoDB(schema, NULL, &identifiers);
@@ -2892,7 +2892,7 @@ static DRIZZLE_SYSVAR_STR(log_group_home_dir, innobase_log_group_home_dir,
 static DRIZZLE_SYSVAR_LONGLONG(log_file_size, innodb_log_file_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Size of each log file in a log group.",
-  NULL, NULL, 5*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
+  NULL, NULL, 20*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
 
 static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, innodb_log_files_in_group,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,

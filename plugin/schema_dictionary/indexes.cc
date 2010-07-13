@@ -30,10 +30,10 @@ IndexesTool::IndexesTool() :
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
   add_field("INDEX_NAME");
-  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN);
-  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
-  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
-  add_field("KEY_LENGTH", plugin::TableFunction::NUMBER);
+  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("KEY_LENGTH", plugin::TableFunction::NUMBER, 0, false);
   add_field("INDEX_TYPE");
   add_field("INDEX_COMMENT", plugin::TableFunction::STRING, 1024, true);
 }

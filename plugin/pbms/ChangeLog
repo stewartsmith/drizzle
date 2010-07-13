@@ -1,0 +1,650 @@
+  190 Barry.Leslie@PrimeBase.com	2010-02-25
+      Pulled the BLOB alias support out of the  daemon. This was done because
+      supporting it in a transactional environment would have been complicated and
+      since it is not part of the core objectives of the PBMS daemon I felt that it was
+      not worth the effort it would take.
+
+  189 Barry.Leslie@PrimeBase.com	2010-01-26
+      Changed references to PBMS engine to PBMS daemon.
+
+  188 Barry.Leslie@PrimeBase.com	2010-01-26
+      Fix problem with enabled engine registration caused by static engine structure in pbms_enabled.cc..
+
+  187 Barry.Leslie@PrimeBase.com	2010-01-25
+      Fixed comiler errors for linux build.
+
+  186 Barry.Leslie@PrimeBase.com	2010-01-25
+       Renamed new source files.
+
+  185 Barry.Leslie@PrimeBase.com	2010-01-25
+      Changes for S3 support,
+
+  184 Barry.Leslie@PrimeBase.com	2010-01-25
+      Updated make files.
+
+  183 Barry.Leslie@PrimeBase.com	2010-01-25
+      Added SysTab_enabled.cc file.
+
+  182 Barry.Leslie@PrimeBase.com	2010-01-25
+      Updated init function for internal engine API.
+
+  181 Barry.Leslie@PrimeBase.com	2010-01-25
+      Added UTF8_CHARSET.
+
+  180 Barry.Leslie@PrimeBase.com	2010-01-25
+      Added pbms_enabled table and UTF8_CHARSET macro.
+
+  179 Barry.Leslie@PrimeBase.com	2010-01-25
+      Added pbms_enabled table and UTF8_CHARSET macro.
+
+  178 Barry.Leslie@PrimeBase.com	2010-01-25
+      Added UTF8_CHARSET macro.
+
+  177 Barry.Leslie@PrimeBase.com	2010-01-25
+      Added macro for PBMS port.
+
+  176 Barry.Leslie@PrimeBase.com	2010-01-25
+       Fixed compiler warning.
+
+  175 Barry.Leslie@PrimeBase.com	2010-01-25
+      Changed engine to Daemon in logged message.
+
+  174 Barry.Leslie@PrimeBase.com	2010-01-25
+      Removed some dead code.
+
+  173 Barry.Leslie@PrimeBase.com	2010-01-25
+      Fixed some compiler warnings.
+
+  172 Barry.Leslie@PrimeBase.com	2010-01-25
+      Updated version number and added configure option --with-pbms-port.
+
+  171 Barry.Leslie@PrimeBase.com	2010-01-25
+      Removed DEBUG_CURL.
+
+  170 Barry.Leslie@PrimeBase.com	2010-01-25
+      Removed unused make files.
+
+  169 Barry.Leslie@PrimeBase.com	2010-01-25
+      Added some more debug output on error.
+
+  168 Barry.Leslie@PrimeBase.com	2010-01-25
+      Fixed compiler warnings.
+
+  167 Barry.Leslie@PrimeBase.com	2010-01-25
+      Added compiler flag to treat warnings as errors.
+
+  166 Barry.Leslie@PrimeBase.com	2010-01-12
+      Added support for changes made to the THD class in MySQL 5141.
+
+  165 Barry.Leslie@PrimeBase.com	2009-12-21
+      Reorganized the java conector source tree.
+      Renamed 'mybs' to 'pbms'
+      Corrected the BLOB reference URL format code.
+      Corrected the test build shell runtest.sh.
+
+  164 Barry.Leslie@PrimeBase.com	2009-12-21
+      pbms_reset_metadata() now returns an unsigned int instead of a signed int.
+      Removed pbms_mysql_connect() from the API because it was to depenndent on the structure of
+      the server's schema tables. The equivalent function is now in the test code "pbmstest.c" in
+      case amybody want it.
+
+  163 Barry.Leslie@PrimeBase.com	2009-12-21
+      Bug fix: startsWith() would return a false match if the seached string terminated before the 
+      end of the target string was reached.
+
+  162 Barry.Leslie@PrimeBase.com	2009-12-17
+      Updated copyright info.
+
+  161 Barry.Leslie@PrimeBase.com	2009-12-17
+      Added Documentation.
+
+  160 Barry.Leslie@PrimeBase.com	2009-12-01
+      Converted to using the RETAIN() macro where possible.
+
+  159 Barry.Leslie@PrimeBase.com	2009-12-01
+      Converted from using sprintf() to snprintf()
+
+  158 Barry.Leslie@PrimeBase.com	2009-11-12
+      oops
+
+  157 Barry.Leslie@PrimeBase.com	2009-11-12
+      Added libxml2 path
+
+  156 Barry.Leslie@PrimeBase.com	2009-11-11
+      Added a test for droping the database with unwritten transactions still on it.
+
+  155 Barry.Leslie@PrimeBase.com	2009-11-11
+      The reply for the BLOB upload now includes the checksum.
+
+  154 Barry.Leslie@PrimeBase.com	2009-11-11
+      Bug fix for repository dump recovery and fixes for brain dead bitwise operation bugs.
+
+  153 Barry.Leslie@PrimeBase.com	2009-11-11
+      Bug fix for recovering empty system tables.
+
+  152 Barry.Leslie@PrimeBase.com	2009-11-11
+      Added code to remove transactions referencing a database that is being dropped.
+
+  151 Barry.Leslie@PrimeBase.com	2009-11-11
+      Bug fix for dropping a table during repository recovery that lead to BLOB references being deleted.
+
+  150 Barry.Leslie@PrimeBase.com	2009-11-04
+      Updated the todo list and the change log.
+
+  149 Barry.Leslie@PrimeBase.com	2009-11-04
+      Canges made to support the new API callbacks.
+
+  148 Barry.Leslie@PrimeBase.com	2009-11-04
+      Chances made to the PHP module and tests to support S3 cloud storage.
+
+  147 Barry.Leslie@PrimeBase.com	2009-11-04
+      S3 cloud storage now works with backups. Added pbms_backup and pbms_cloud tables.
+
+  146 Barry.Leslie@PrimeBase.com	2009-10-22
+      Added support for cload storage.
+
+  145 Barry.Leslie@PrimeBase.com	2009-10-22
+      Added support for the S3 protocol.
+
+  144 Barry.Leslie@PrimeBase.com	2009-10-22
+      Added support for the S3 protocol.
+
+  143 Barry.Leslie@PrimeBase.com	2009-10-01
+      bugfix for:
+      #416969	PBMS does not allow renaming tables across databases, even when there are no BLOBs in the table
+
+  142 Barry.Leslie@PrimeBase.com	2009-10-01
+      Removing unwanted test file.
+
+  141 Barry.Leslie@PrimeBase.com	2009-10-01 [merge]
+      merging with trunk.
+
+  140 Barry.Leslie@PrimeBase.com	2009-10-01
+      Changes made for building with drizzle.
+
+  139 Barry.Leslie@PrimeBase.com	2009-10-01
+      Bug fix for:
+      #430503	pbms.h does not compile under Windows
+      #416969	PBMS does not allow renaming tables across databases, even when there are no BLOBs in the table
+      
+      Also contains changes for drizzle and new callback to allow the engine to check if a table column should be treated as a PBMS BLOB column.
+
+  138 Barry.Leslie@PrimeBase.com	2009-08-15
+      Minor changes.
+
+  137 Barry.Leslie@PrimeBase.com	2009-08-15
+      Bug fix for server crash if no backup location was given.
+
+  136 Barry.Leslie@PrimeBase.com	2009-08-15
+      PHP test case fixes.
+
+  135 Barry.Leslie@PrimeBase.com	2009-08-15
+      Updates for release v0.5.09
+
+  134 Barry.Leslie@PrimeBase.com	2009-08-15
+      For some reason on 64 bit machiles printing a 4byte value with the format %lx resulted in incorrect output.
+
+  133 Barry.Leslie@PrimeBase.com	2009-08-15
+      Compiler warning fix.
+
+  132 Barry.Leslie@PrimeBase.com	2009-08-15
+      Updated tests and documentation.
+
+  131 Barry.Leslie@PrimeBase.com	2009-08-15
+      Bug fix for 64 bit platforms.
+
+  130 Barry.Leslie@PrimeBase.com	2009-08-13
+      Part 2 of the shutdown problem bug fix.
+
+  129 Barry.Leslie@PrimeBase.com	2009-08-13
+      iBug fix for hanging problem during transaction log flushing.
+
+  128 Barry.Leslie@PrimeBase.com	2009-08-13
+      Bug fix for shutdown problem where the compactor thread did not shutdown.
+
+  127 Barry.Leslie@PrimeBase.com	2009-08-13
+      PHP module cleanup.
+
+  126 Barry.Leslie@PrimeBase.com	2009-08-12
+      Minor changes to make the compiler happy.
+
+  125 Barry.Leslie@PrimeBase.com	2009-08-12
+      Minor chnages to make the compiler happy.
+
+  124 Barry.Leslie@PrimeBase.com	2009-08-12
+      'ifdef'ed out the S3 cloud code for now.
+
+  123 Barry.Leslie@PrimeBase.com	2009-08-12
+      Added more php test cases and renamed the old ones.
+
+  122 Barry.Leslie@PrimeBase.com	2009-08-12
+      Removed some debug code and fixed a few compiler warnings.
+
+  121 Barry.Leslie@PrimeBase.com	2009-08-12
+      Turned off debug logging.
+
+  120 Barry.Leslie@PrimeBase.com	2009-08-12
+      Added transaction log flushing for committed transactions.
+
+  119 Barry.Leslie@PrimeBase.com	2009-08-11
+      Removed some debug code and fixed test for relocated repository records.
+
+  118 Barry.Leslie@PrimeBase.com	2009-08-11
+      Added support for proper setting and getting of backup location.
+
+  117 Barry.Leslie@PrimeBase.com	2009-08-11
+      Made changes so that MySQLdump backup would work correctly with transactions.
+
+  116 Barry.Leslie@PrimeBase.com	2009-08-11
+      Fixed IS_COMMITED() test.
+
+  115 Barry.Leslie@PrimeBase.com	2009-08-11
+      Changed default debug settings.
+
+  114 Barry.Leslie@PrimeBase.com	2009-08-11
+      Added storage for backup location.
+
+  113 Barry.Leslie@PrimeBase.com	2009-08-11
+      Ignore keepalive
+
+  112 Barry.Leslie@PrimeBase.com	2009-08-07
+      All BLOB columns were being stored in PBMS, we only want longblob columns.
+
+  111 Barry.Leslie@PrimeBase.com	2009-08-07
+      I cannot be too fussy about reporting bad blob references in checkBlob() because
+      of the way the temp log gets reread when the server starts up.
+
+  110 Barry.Leslie@PrimeBase.com	2009-08-07
+      init needed to be called on the handler in file discovery or else you are accessing
+      uninitialised data.
+
+  109 Barry.Leslie@PrimeBase.com	2009-08-07
+      Using curl CURLOPT_POST for data upload rather than CURLOPT_UPLOAD which was very slow.
+
+  108 Barry.Leslie@PrimeBase.com	2009-08-06
+      Minor document update.
+
+  107 Barry.Leslie@PrimeBase.com	2009-08-06
+      Changes made to allow selective clearing of metadata fields from PBMS connections.
+
+  106 Barry.Leslie@PrimeBase.com	2009-08-06
+      Created PBMS PHP documentation.
+
+  105 Barry.Leslie@PrimeBase.com	2009-08-03
+      Assorted changes and bug fixes related to the new PHP API.
+
+  104 Barry.Leslie@PrimeBase.com	2009-08-03
+      Added transaction support for backup.
+
+  103 Barry.Leslie@PrimeBase.com	2009-08-03
+      Added support to handle BLOBs that have been forced to move because their
+      headers have grown while a backup is running.
+
+  102 Barry.Leslie@PrimeBase.com	2009-08-03
+      Fixed bug where BLOB url is not null terminated.
+
+  101 Barry.Leslie@PrimeBase.com	2009-08-03
+      Added code to suspend and resume the rtansaction reader thread.
+
+  100 Barry.Leslie@PrimeBase.com	2009-08-03
+      Added a backup ID to keep track of changes that occur in the database while it is being backued up.
+
+   99 Barry.Leslie@PrimeBase.com	2009-08-03
+      Added support for a connection ping request.
+
+   98 Barry.Leslie@PrimeBase.com	2009-08-03
+      Added PHP extension with a set of basic test cases.
+
+   97 Barry.Leslie@PrimeBase.com	2009-07-24
+      Added support for transaction save points.
+
+   96 Barry.Leslie@PrimeBase.com	2009-07-24
+      Updated the engine level api and did some code cleanup.
+
+   95 Barry.Leslie@PrimeBase.com	2009-07-24
+      Bug fixes for some memory leaks when dropping a table.
+
+   94 Barry.Leslie@PrimeBase.com	2009-07-22
+      Fixed assorted bugs, mostly relating to the most recent changes. 
+      Fixed a bug that resulted in multiple table entries being made when a BLOB
+      reference was copied from one table to another. 
+      Did some general code cleanup also.
+      
+      THis version works with PBMS enabled innoDB.
+
+   93 Barry.Leslie@PrimeBase.com	2009-07-21
+      This commit contains a lot of changes that touch almost everything. The main changes are:
+      
+      - Making the PBMS engine transactional. 
+      - Simplifying the API used by supporting engines to reference and dereference BLOBs.
+      - Added support for an engine level backup of BLOB data.
+      
+      The code being committed here is NOT stable and still needs a lot of testing.
+
+   92 Barry.Leslie@PrimeBase.com	2009-07-03
+      Added dynamic circular transaction log and caching code. 
+
+   91 Barry.Leslie@PrimeBase.com	2009-05-29
+      This commit contains a lot of changes, some of them minor like adding my name to the 
+      headers in the files and other more major changes such as:
+      
+      - All code has been removed that was used to support callbacks from PBMS up into the 
+      registered engines. This was used to support the feature that allowed users to access 
+      the records in which BLOBs were stored via the HTTP server. This feature is no longer supported 
+      and so the code was removed. The removal of this code greatly simplified the interface between
+      PBMS and supporting engines and as a result the engine interface was also changed.
+      
+      - The BLOB URLs stored in tables no longer contain the database name but instead contain
+      a database ID. This simplifies support for backup recovery and possible database renaming.
+      
+      - Support has been added for backup and recovery of teh BLOB repository using standard mysqldump.
+
+   90 Barry.Leslie@PrimeBase.com	2009-04-19
+      The state of the cloud version as of the MySQL conference.
+      
+      (Not stable)
+
+   89 Barry.Leslie@PrimeBase.com	2009-03-31
+      New files required for the cload version of PBMS.
+
+   88 Barry.Leslie@PrimeBase.com	2009-03-31
+      Converted the pbms client lib over to use lubcurl.
+      This is a demo version in which the PBMS engine  transfers the BLOB data directly to S3 storage
+      and client request for BLOBs receive a resirect to S3. The redirect is handled with in the client
+      API so that it is transparent to the caller.
+
+   87 Barry.Leslie@PrimeBase.com	2009-03-25
+      The first steps in makeing a version that stores BLOBs in Amazon S3 storage. (Doesn't build yet).
+
+   86 Barry.Leslie@PrimeBase.com	2009-03-24
+      Set the version number to v0.5.07.
+      Implemented the set and get API functions for the MD5 digest.
+      Added a bulk blob generation function to the test app.
+
+   85 Barry.Leslie@PrimeBase.com	2009-03-23
+      Changed the debug flag.
+      Fixed assorted memory leaks.
+
+   84 Barry.Leslie@PrimeBase.com	2009-03-20
+      Updated release notes.
+
+   83 Barry.Leslie@PrimeBase.com	2009-03-20
+      Conversion from const char * to char * was giving a warning.
+
+   82 Barry.Leslie@PrimeBase.com	2009-03-20
+      Minor changes for a cleaner build.
+
+   81 Barry.Leslie@PrimeBase.com	2009-03-20
+      Changes to the build environment.
+
+   80 Barry.Leslie@PrimeBase.com	2009-03-20
+      Added a build script to reconfigure things when changes to the build environment are made.
+      I borrowed this from the MySQL BUILD folder.
+
+   79 Barry.Leslie@PrimeBase.com	2009-03-20
+      Romoved tests that are no longer used.
+
+   78 Barry.Leslie@PrimeBase.com	2009-03-20
+      Missing CRLF at the end of the file.
+
+   77 Barry.Leslie@PrimeBase.com	2009-03-20
+      Missed a change in the last commit.
+
+   76 Barry.Leslie@PrimeBase.com	2009-03-20
+      Fixed illegal jump over declaration.
+
+   75 Barry.Leslie@PrimeBase.com	2009-03-20
+      The value of MS_OT_BUFFER_SIZE can not be more than max unsigned short.
+
+   74 Barry.Leslie@PrimeBase.com	2009-03-13
+      Removed the 'statement' handle type from the API and went back to just having a single connection handle.
+      Made some assorted API changes.
+      Fixed a bug with BLOB aliases containing '/' characters.
+
+   73 Barry.Leslie@PrimeBase.com	2009-03-13
+      Added the latest PHP module from Raj.
+
+   72 Barry.Leslie@PrimeBase.com	2009-03-04
+      - Changes made to get the drizzle version working with MySQL again.
+      - Added new functions to the 'C' API for metadata.
+      - Fixed assorted bugs.
+
+   71 Barry.Leslie@PrimeBase.com	2009-02-26
+      Must include defines for Dynamic lib for both MySQL and Drizzle
+
+   70 Barry.Leslie@PrimeBase.com	2009-02-26
+      added missing file requierd for configuration.
+
+   69 Barry.Leslie@PrimeBase.com	2009-02-26
+      A long list of changes relating to metadata support and BLOB alias indexing.
+      Includes updates to the API.
+
+   68 Barry.Leslie@PrimeBase.com	2009-01-13
+      Added a system table "pbms_http_fields" to contain the HTTP header names for 
+      HTTP headers that are to be saved as BLOB meta data.
+
+   67 Barry.Leslie@PrimeBase.com	2009-01-13
+      Meta data is now collected by the HTTP server when BLOBs are received.
+      When BLOBs are moved from one database to another the entire header including
+      meta data is also copied.
+
+   66 Barry.Leslie@PrimeBase.com	2009-01-08
+      Added Insert, Update, and Delete support for the meta data table.
+
+   65 Barry.Leslie@PrimeBase.com	2009-01-06
+      All PBMS files are now creatd in their own sub directory in the database folder.
+      This lessens the name polution problem in the database folder.
+
+   64 Barry.Leslie@PrimeBase.com	2009-01-06
+      Made changes to the BLOB header structure for meta data storage. These changes 
+      break backward compatability. 
+      
+      The structure of the system tables has also been changed and meta data system
+      tables have been added.
+
+   63 Barry.Leslie@PrimeBase.com	2008-12-30
+      This is a temporary commit which I expect to uncommit later. It is
+      intended as a backup before I start hacking things apart when I add
+      blob aliases and meta data.
+
+   62 Barry.Leslie@PrimeBase.com	2008-12-29
+      Implemented row positioning for sytem tables. 'ORDER BY' now works.
+
+   61 Barry.Leslie@PrimeBase.com	2008-12-09
+      Added directory for the PHP module code.
+
+   60 Barry.Leslie@PrimeBase.com	2008-10-15
+      Fixed assorted warning messages.
+
+   59 Barry.Leslie@PrimeBase.com	2008-10-15
+      Fixed a problem in pbmslib.cc with jumping over a variable definition.
+
+   58 Barry.Leslie@PrimeBase.com	2008-10-14
+      Fixed some warning messages. Removed reference to udf_ms.h from src/MakeFile.am. 
+      Added some documentation to the pbmslib.h file.
+
+   57 Barry.Leslie@PrimeBase.com	2008-10-10 [merge]
+      ommiting merged changes.
+
+   56 Barry Leslie <	2008-10-09
+      Changes made for supporting the use of PBMS with non PBMS enabled engines.
+
+   55 Paul McCullagh	2008-09-15
+      Removed mybs directory
+
+   54 barry_leslie	2008-09-12
+      Internal name changes from MyBS to PBMS.
+
+   53 barry_leslie	2008-09-12
+      Renaming MyBS to PBMS
+
+   52 barry_leslie	2008-09-12
+      Doing rename of MyBS to PBMS.
+
+   51 paul-mccullagh	2008-09-10
+      reconf java
+
+   50 barry_leslie	2008-09-10
+      Discover tables with a non existing database crashed.
+
+   49 barry_leslie	2008-09-09
+      Added transmition timeout flag. At this time it doesn't do anything though.
+
+   48 barry_leslie	2008-09-05
+      Made changes to mybs_put_data() and mybs_get_data() so that they can be used with out callbacks.
+      Also changed the callback function parameters.
+      Updated the test application to use the new functions.
+
+   47 barry_leslie	2008-09-04
+      Set release date.
+
+   46 barry_leslie	2008-09-04
+      Handle wierd config.status changes on Darwin 9.4.0
+
+   45 barry_leslie	2008-09-04
+      Upodating the ChangeLog and TODO list.
+
+   44 barry_leslie	2008-09-04
+      Bug fix for creation of connections. In debug builds an assertion was raised because methods requiring a 'self' pointer were being called before the self pointer was being set for the thread.
+
+   43 barry_leslie	2008-09-04
+       Removed unneeded mybs_ping() function and updated documentation in the header.
+
+   42 barry_leslie	2008-09-04
+      Bug Fix for warning when linking the MyBS test application. The MyBS client lib was being built as a module and not a shared lib.
+
+   41 paul-mccullagh	2008-08-30
+      Updated project
+
+   40 paul-mccullagh	2008-08-30
+      Updated project
+
+   39 barry_leslie	2008-08-28
+      Added discover tables support.
+
+   38 barry_leslie	2008-08-28
+       I have simplified the configuration. You now only need to supply
+      the path to the MySQL source and then the project will be configured using the 
+      same settings as the MySQL build. This includeis compiler settings. If --with-debug 
+      is not specified then the build defaults to that used for the MySQL build.
+
+   37 barry_leslie	2008-08-25
+      libtool added a /.lib onto the lib path even though I had included it in the path. I have now removed it from my path so libtool is happy.
+
+   36 barry_leslie	2008-08-22
+      Added search paths to local locations so the build find the mybs headers and libs locally if they are not
+      in the installed location.
+
+   35 barry_leslie	2008-08-22
+      Added search paths to local locations so the build find the mybs headers and libs locally if they are not
+      in the installed location.
+
+   34 barry_leslie	2008-08-18
+      Added some more functionality to the MyBS client API tests.
+
+   33 barry_leslie	2008-08-18
+      Added mybs_init_system_tables() to the MyBS client lib API.
+
+   32 barry_leslie	2008-08-15
+      Fixed a bug that caused a server crash when a blob reference from one database was inserted into a different database.
+
+   31 barry_leslie	2008-08-15
+      Two threads may try to create the directory at the same time when
+      the first blob is inserted into a database.
+
+   30 barry_leslie	2008-08-13
+      Found a way to get mybs to install libraries into 2 different locations. Also added changes that got missed last time.
+
+   29 barry_leslie	2008-08-12
+      Updated the config and make environments so that mybstest will build correctly and also so that the MyBS client library will be installed correctly.
+      
+      Note that the configure parameters for this project have changed. Look in the updated INSTALL file.
+
+   28 barry_leslie	2008-08-12
+      Bug fix for a deadlock condition when dropping a blob table from a database.
+
+   27 barry_leslie	2008-08-08
+      Added a client API lib and an example/test shell application to MyBS.
+
+   26 paul-mccullagh	2008-07-21
+      Fixed crash when dropping database and MyBS system tables exist
+
+   25 paul-mccullagh	2008-07-21
+      Fixed crash when dropping database and MyBS system tables exist
+
+   24 paul-mccullagh	2008-07-15
+      Fixed bug associated with TRUNCATE and ALTER TABLE
+
+   23 barry_leslie	2008-06-05
+      To drop a table it must be first opened. This prevented blob tables from being cleaned up.
+
+   22 barry_leslie	2008-06-03
+      Bug fix for drop database. The BS files and folders in the database are now cleaned up when the last table
+      containing blobs is dropped.
+
+   21 barry_leslie	2008-06-03
+      Buf fix for leaked file handles.
+
+   20 paul-mccullagh	2008-05-30
+      Latest updates to mybs header
+
+   19 paul-mccullagh	2008-05-28
+      Added const to remove warnings
+
+   18 paul-mccullagh	2008-05-28
+      Added const to remove warnings
+
+   17 paul-mccullagh	2008-05-28
+      Added const to remove warnings
+
+   16 paul-mccullagh	2008-05-28
+      Added const to remove warnings
+
+   15 paul-mccullagh	2008-05-28
+      Added const to remove warnings
+
+   14 paul-mccullagh	2008-05-28
+      Added const to remove warnings
+
+   13 paul-mccullagh	2008-05-28
+      Removed C++ header due to compile problems
+
+   12 paul-mccullagh	2008-05-28
+      Removed C++ header due to compile problems
+
+   11 paul-mccullagh	2008-05-28
+      Removed C++ header
+
+   10 paul-mccullagh	2008-05-28
+      Changed version number
+
+    9 paul-mccullagh	2008-05-28
+      Adjustment for 64-bit procs
+
+    8 paul-mccullagh	2008-05-28
+      plug.in file enables drop in compile in the MySQL tree
+
+    7 paul-mccullagh	2008-05-28
+      Fixed configure
+
+    6 paul-mccullagh	2008-05-27
+      Now compiles under MySQL 5.1.24 (and MySQL 6.0.4)
+
+    5 barry_leslie	2008-05-15
+      Allow reading of repository blobs.
+
+    4 barry_leslie	2008-04-11
+      Made changes so that by setting the mybs_port to 0 publishing of the blob streaming engine could be turned off.
+
+    3 barry_leslie	2008-04-08
+      Changed #endif to #else
+
+    2 barry_leslie	2008-04-08
+      - Fixed a bug where a 'goto' was jumping out of a 'try_' block.
+      - Added an API allowing engines direct access to read, write, and create blobs.
+      - Added a blob size field to the blob URL returned by the server so that clients can know in advance what size of blob they are about to fetch.
+      - Fixed a bug where MyBS assumed that all databases where in the current working directory.
+
+    1 paul-mccullagh	2008-03-26
+      Initial import
+

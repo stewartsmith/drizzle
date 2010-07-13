@@ -43,7 +43,7 @@ static const string TIMESTAMP("TIMESTAMP");
 static const string DATETIME("DATETIME");
 
 TablesTool::TablesTool() :
-  SchemasTool("TABLES")
+  plugin::TableFunction("DATA_DICTIONARY", "TABLES")
 {
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
@@ -57,68 +57,32 @@ TablesTool::TablesTool() :
 }
 
 TablesTool::Generator::Generator(Field **arg) :
-  SchemasTool::Generator(arg),
-  is_tables_primed(false)
+  plugin::TableFunction::Generator(arg),
+  all_tables_generator(getSession())
 {
-}
-
-bool TablesTool::Generator::nextTableCore()
-{
-  if (is_tables_primed)
-  {
-    table_iterator++;
-  }
-  else
-  {
-    if (not isSchemaPrimed())
-     return false;
-
-    table_names.clear();
-    SchemaIdentifier identifier(schema_name());
-    plugin::StorageEngine::getTableNames(getSession(), identifier, table_names);
-    table_iterator= table_names.begin();
-    is_tables_primed= true;
-  }
-
-  if (table_iterator == table_names.end())
-    return false;
-
-  table_proto.Clear();
-  {
-    TableIdentifier identifier(schema_name().c_str(), table_name().c_str());
-    plugin::StorageEngine::getTableDefinition(getSession(),
-                                             identifier,
-                                             table_proto);
-  }
-
-  return true;
 }
 
 bool TablesTool::Generator::nextTable()
 {
-  while (not nextTableCore())
+  const drizzled::message::Table *table_ptr;
+  while ((table_ptr= all_tables_generator))
   {
-
-    if (is_tables_primed && table_iterator != table_names.end())
-      continue;
-
-    if (not nextSchema())
-      return false;
-
-    is_tables_primed= false;
+    table_message.CopyFrom(*table_ptr);
+    return true;
   }
 
-  return true;
+  return false;
 }
 
 bool TablesTool::Generator::populate()
 {
-  if (not nextTable())
-    return false;
+  if (nextTable())
+  {
+    fill();
+    return true;
+  }
 
-  fill();
-
-  return true;
+  return false;
 }
 
 void TablesTool::Generator::pushType(message::Table::Field::FieldType type)
@@ -167,14 +131,14 @@ void TablesTool::Generator::fill()
   */
 
   /* TABLE_SCHEMA */
-  push(table_proto.schema());
+  push(getTableMessage().schema());
 
   /* TABLE_NAME */
-  push(table_proto.name());
+  push(getTableMessage().name());
 
   /* TABLE_TYPE */
   {
-    switch (table_proto.type())
+    switch (getTableMessage().type())
     {
     default:
     case message::Table::STANDARD:
@@ -193,16 +157,16 @@ void TablesTool::Generator::fill()
   }
 
   /* ENGINE */
-  push(table_proto.engine().name());
+  push(getTableMessage().engine().name());
 
   /* ROW_FORMAT */
   push("DEFAULT");
 
   /* TABLE_COLLATION */
-  push(table_proto.options().collation());
+  push(getTableMessage().options().collation());
 
   /* TABLE_CREATION_TIME */
-  time_t time_arg= table_proto.creation_timestamp();
+  time_t time_arg= getTableMessage().creation_timestamp();
   char buffer[40];
   struct tm tm_buffer;
 
@@ -211,15 +175,15 @@ void TablesTool::Generator::fill()
   push(buffer);
 
   /* TABLE_UPDATE_TIME */
-  time_arg= table_proto.update_timestamp();
+  time_arg= getTableMessage().update_timestamp();
   localtime_r(&time_arg, &tm_buffer);
   strftime(buffer, sizeof(buffer), "%a %b %d %H:%M:%S %Y", &tm_buffer);
   push(buffer);
 
   /* TABLE_COMMENT */
-  if (table_proto.options().has_comment())
+  if (getTableMessage().options().has_comment())
   {
-    push(table_proto.options().comment());
+    push(getTableMessage().options().comment());
   }
   else
   {
