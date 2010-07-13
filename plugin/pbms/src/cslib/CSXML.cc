@@ -35,7 +35,12 @@
 #include <stdio.h>
 #include <errno.h>
 
+#ifdef DRIZZLED
 #include <boost/algorithm/string.hpp>
+#define STRCASESTR(s1, s2) boost::ifind_first(s1, s2)
+#else
+#define STRCASESTR(s1, s2) strcasestr(s1, s2)
+#endif
 
 #include "CSXML.h"
 
@@ -1213,11 +1218,11 @@ int32_t CSXMLProcessor::charset_transformer(wchar_t ch)
 			if (this->ip) {
 				if (strcasecmp(this->pr_name, "encoding") == 0) {
 					strcpy(this->charset, this->pr_value);
-					if (boost::ifind_first(this->charset, "utf-8"))
+					if (STRCASESTR(this->charset, "utf-8"))
 						this->charset_type = CHARSET_UTF_8;
-					else if (boost::ifind_first(this->charset, "ucs-2") ||
-						boost::ifind_first(this->charset, "ucs-4") ||
-						boost::ifind_first(this->charset, "unicode"))
+					else if (STRCASESTR(this->charset, "ucs-2") ||
+						STRCASESTR(this->charset, "ucs-4") ||
+						STRCASESTR(this->charset, "unicode"))
 						this->charset_type = CHARSET_STANDARD;
 					else {
 						this->charset_type = CHARSET_TO_CONVERT_8_BIT;

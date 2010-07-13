@@ -72,7 +72,7 @@ static u_long	my_temp_blob_timeout = MS_DEFAULT_TEMP_LOG_WAIT;
 static u_long	my_garbage_threshold = MS_DEFAULT_GARBAGE_LEVEL;
 static u_long	my_max_keep_alive = MS_DEFAULT_KEEP_ALIVE;
 
-static uint64_t my_backup_db_id = 1;
+static u_long	my_backup_db_id = 1;
 static uint32_t my_server_id = 1;
 
 #ifdef DRIZZLED
@@ -163,10 +163,10 @@ const char * PBMSParameters::getDefaultMetaDataHeaders()
 }
 
 //-----------------
-uint64_t PBMSParameters::getBackupDatabaseID() { return my_backup_db_id;}
+uint32_t PBMSParameters::getBackupDatabaseID() { return my_backup_db_id;}
 
 //-----------------
-void PBMSParameters::setBackupDatabaseID(uint64_t id) { my_backup_db_id = id;}
+void PBMSParameters::setBackupDatabaseID(uint32_t id) { my_backup_db_id = id;}
 
 #ifdef DRIZZLED
 //-----------------
@@ -443,11 +443,16 @@ int32_t PBMSParameters::getBeforeInsertEventPosition() { return my_before_insert
 #endif // DRIZZLED
 
 //-----------------
-static void pbms_temp_blob_timeout_func(THD *, struct st_mysql_sys_var *, void *, CONST_SAVE void *)
+static void pbms_temp_blob_timeout_func(THD *thd, struct st_mysql_sys_var *var, void *trg, CONST_SAVE void *save)
 {
 	CSThread		*self;
 	PBMSResultRec	result;
 
+	(void)thd;
+	(void)var;
+	
+	*(u_long *)trg= *(u_long *) save;
+	
 	if (MSEngine::enterConnectionNoThd(&self, &result))
 		return;
 	try_(a) {
@@ -496,10 +501,10 @@ static MYSQL_SYSVAR_ULONG(max_keep_alive, my_max_keep_alive,
 	"The timeout, in milli-seconds, before the HTTP server will close an inactive HTTP connection.",
 	NULL, NULL, MS_DEFAULT_KEEP_ALIVE, 1, UINT32_MAX, 1);
 
-static MYSQL_SYSVAR_ULONGLONG(next_backup_db_id, my_backup_db_id,
+static MYSQL_SYSVAR_ULONG(next_backup_db_id, my_backup_db_id,
 	PLUGIN_VAR_OPCMDARG,
 	"The next backup ID to use when backing up a PBMS database.",
-	NULL, NULL, 1, 1, UINT64_MAX, 1);
+	NULL, NULL, 1, 1, UINT32_MAX, 1);
 
 
 #ifdef DRIZZLED

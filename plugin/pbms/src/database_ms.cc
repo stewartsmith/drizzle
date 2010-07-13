@@ -974,7 +974,6 @@ void MSDatabase::startBackup(MSBackupInfo *backup_info)
 	pop_(backup_info);
 	iBackupThread = MSBackup::newMSBackup(backup_info);
 	
-	push_(iBackupThread);
 	try_(a) {
 		iBackupThread->startBackup(RETAIN(this));
 	}
@@ -1255,7 +1254,11 @@ MSDatabase *MSDatabase::newDatabase(const char *db_location, CSString *db_name, 
 
 	//is_pbms = (strcmp(db_name->getCString(), "pbms") == 0); To be done later.
 	
-	/* Block the creation of the pbms database if there is no MySQL database. */
+	/*
+	 * Block the creation of the pbms database if there is no MySQL database. 
+	 * The database name is case sensitive here if the file system names are
+	 * case sensitive. This is desirable.
+	 */
 	path = CSPath::newPath(ms_my_get_mysql_home_path(), RETAIN(db_name));
 	push_(path);
 	if (create && !path->exists()) {

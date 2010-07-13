@@ -123,7 +123,7 @@ test	t1	table	col_int_key	indexed
 test	t1	table	col_char_key	indexed
 test	t1	table	col_enum_not_null	indexed
 test	t1	table	col_text_not_null_key	indexed
-test	t1	table	pk	primary
+test	t1	table	pk	indexed
 test	t1	table	col_bigint_key	indexed
 DROP SCHEMA randgen_query_test;
 USE test;

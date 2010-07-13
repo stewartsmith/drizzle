@@ -491,10 +491,13 @@ void PBMSSystemTables::removeSystemTables(CSString *db_path)
 //----------------
 void PBMSSystemTables::loadSystemTables(MSDatabase *db)
 {
+	int i = 0;
+	
+	CLOBBER_PROTECT(i);
 	enter_();
 	push_(db);
 	
-	for ( volatile int i = 0; i < 4; i++) {
+	for ( i = 0; i < 4; i++) {
 		try_(a) {
 			switch (i) {
 				case 0:
