@@ -44,7 +44,7 @@ public:
   bool needs_reopen;
   pthread_mutex_t mutex;
   FormatInfo format;
-  std::map<std::string, std::string> kv;
+  std::vector< std::map<std::string, std::string> > vm;
   drizzled::THR_LOCK lock;
 };
 
@@ -56,7 +56,7 @@ class FilesystemCursor : public drizzled::Cursor
   int file_desc;
   std::string update_file_name;
   int update_file_desc;
-  int tag_depth;
+  size_t tag_depth;
   off_t current_position;
   off_t next_position;
   /* each slot means an interval in a file which will be deleted later */

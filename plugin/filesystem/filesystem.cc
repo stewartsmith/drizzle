@@ -214,7 +214,7 @@ void FilesystemEngine::deleteOpenTable(const string &table_name)
   fs_open_tables.erase(table_name);
 }
 
-static int parseTaggedFile(const FormatInfo &fi, map<string, string> &kv)
+static int parseTaggedFile(const FormatInfo &fi, vector< map<string, string> > &v)
 {
   int filedesc= ::open(fi.getFileName().c_str(), O_RDONLY);
   if (filedesc < 0)
@@ -223,13 +223,22 @@ static int parseTaggedFile(const FormatInfo &fi, map<string, string> &kv)
   TransparentFile *filebuffer= new TransparentFile();
   filebuffer->init_buff(filedesc);
 
+  bool last_line_empty= false;
+  map<string, string> kv;
   int pos= 0;
   string line;
   while (1)
   {
     char ch= filebuffer->get_value(pos);
     if (ch == '\0')
+    {
+      if (!last_line_empty)
+      {
+        v.push_back(kv);
+        kv.clear();
+      }
       break;
+    }
     ++pos;
 
     if (!fi.isRowSeparator(ch))
@@ -239,9 +248,17 @@ static int parseTaggedFile(const FormatInfo &fi, map<string, string> &kv)
     }
 
     // if we have a new empty line,
-    // it means we got the end of the parsing
+    // it means we got the end of a section, push it to vector
     if (line.empty())
-      break;
+    {
+      if (!last_line_empty)
+      {
+        v.push_back(kv);
+        kv.clear();
+      }
+      last_line_empty= true;
+      continue;
+    }
 
     // parse the line
     vector<string> sv, svcopy;
@@ -253,13 +270,21 @@ static int parseTaggedFile(const FormatInfo &fi, map<string, string> &kv)
       if (!iter->empty())
         svcopy.push_back(*iter);
     }
+
     // the first splitted string as key,
     // and the second splitted string as value.
+    string key(svcopy[0]);
+    boost::trim(key);
     if (svcopy.size() >= 2)
-      kv[svcopy[0]]= svcopy[1];
+    {
+      string value(svcopy[1]);
+      boost::trim(value);
+      kv[key]= value;
+    }
     else if (svcopy.size() >= 1)
-      kv[svcopy[0]]= "";
+      kv[key]= "";
 
+    last_line_empty= false;
     line.clear();
   }
   delete filebuffer;
@@ -268,8 +293,8 @@ static int parseTaggedFile(const FormatInfo &fi, map<string, string> &kv)
 }
 
 int FilesystemEngine::doGetTableDefinition(Session &,
-                               const drizzled::TableIdentifier &identifier,
-                               drizzled::message::Table &table_proto)
+                                           const drizzled::TableIdentifier &identifier,
+                                           drizzled::message::Table &table_proto)
 {
   string new_path(identifier.getPath());
   new_path.append(FILESYSTEM_EXT);
@@ -306,11 +331,16 @@ int FilesystemEngine::doGetTableDefinition(Session &,
   if (!format.isTagFormat() || !format.isFileGiven())
     return EEXIST;
 
-  map<string, string> kv;
-  if (parseTaggedFile(format, kv) != 0)
+  vector< map<string, string> > vm;
+  if (parseTaggedFile(format, vm) != 0)
+    return EEXIST;
+  if (vm.size() == 0)
     return EEXIST;
 
+  // we don't care what user provides, just clear them all
   table_proto.clear_field();
+  // we take the first section as sample
+  map<string, string> kv= vm[0];
   for (map<string, string>::iterator iter= kv.begin();
        iter != kv.end();
        ++iter)
@@ -371,7 +401,7 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
      */
     if (share->format.isTagFormat())
     {
-      if (parseTaggedFile(share->format, share->kv) != 0)
+      if (parseTaggedFile(share->format, share->vm) != 0)
       {
         pthread_mutex_unlock(&filesystem_mutex);
         return NULL;
@@ -434,7 +464,7 @@ int FilesystemCursor::doStartTableScan(bool)
 {
   if (share->format.isTagFormat())
   {
-    tag_depth= 1;
+    tag_depth= 0;
     return 0;
   }
 
@@ -540,14 +570,14 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
   ha_statistic_increment(&system_status_var::ha_read_rnd_next_count);
   if (share->format.isTagFormat())
   {
-    if (tag_depth-- <= 0)
+    if (tag_depth >= share->vm.size())
       return HA_ERR_END_OF_FILE;
 
     ptrdiff_t row_offset= buf - table->record[0];
     for (Field **field= table->getFields(); *field; field++)
     {
       string key((*field)->field_name);
-      string content= share->kv[key];
+      string content= share->vm[tag_depth][key];
 
       (*field)->move_field_offset(row_offset);
       if (!content.empty())
@@ -572,6 +602,7 @@ int FilesystemCursor::rnd_next(unsigned char *buf)
       }
       (*field)->move_field_offset(-row_offset);
     }
+    ++tag_depth;
     return 0;
   }
   // normal file
