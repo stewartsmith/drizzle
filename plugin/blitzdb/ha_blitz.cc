@@ -77,11 +77,11 @@ public:
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-                       drizzled::SchemaIdentifier &schema_identifier,
+                       const drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 
   bool doDoesTableExist(drizzled::Session &session,
@@ -284,7 +284,7 @@ int BlitzEngine::doGetTableDefinition(drizzled::Session &,
 }
 
 void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory,
-                                  drizzled::SchemaIdentifier &,
+                                  const drizzled::SchemaIdentifier &,
                                   std::set<string> &set_of_names) {
   drizzled::CachedDirectory::Entries entries = directory.getEntries();
 
@@ -313,7 +313,7 @@ void BlitzEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 }
 
 void BlitzEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                        drizzled::SchemaIdentifier &schema_id,
+                                        const drizzled::SchemaIdentifier &schema_id,
                                         drizzled::TableIdentifiers &ids) {
   drizzled::CachedDirectory::Entries entries = directory.getEntries();
 
@@ -1457,4 +1457,4 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
   return pos + skip_len + sizeof(uint16_t);
 }
 
-DRIZZLE_PLUGIN(blitz_init, NULL);
+DRIZZLE_PLUGIN(blitz_init, NULL, NULL);

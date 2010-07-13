@@ -455,8 +455,8 @@ static void fix_list_after_tbl_changes(Select_Lex *new_parent, List<TableList> *
   {
     if (table->on_expr)
       table->on_expr->fix_after_pullout(new_parent, &table->on_expr);
-    if (table->nested_join)
-      fix_list_after_tbl_changes(new_parent, &table->nested_join->join_list);
+    if (table->getNestedJoin())
+      fix_list_after_tbl_changes(new_parent, &table->getNestedJoin()->join_list);
   }
 }
 
@@ -555,7 +555,7 @@ bool update_ref_and_keys(Session *session,
                          Select_Lex *select_lex,
                          vector<optimizer::SargableParam> &sargables)
 {
-  uint	and_level,i,found_eq_constant;
+  uint	and_level,found_eq_constant;
   optimizer::KeyField *key_fields, *end, *field;
   uint32_t sz;
   uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
@@ -578,7 +578,7 @@ bool update_ref_and_keys(Session *session,
     substitutions.
   */
   sz= sizeof(optimizer::KeyField) *
-      (((session->lex->current_select->cond_count+1) +
+      (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
   if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
     return true;
@@ -602,7 +602,7 @@ bool update_ref_and_keys(Session *session,
       }
     }
   }
-  for (i= 0; i < tables; i++)
+  for (uint32_t i= 0; i < tables; i++)
   {
     /*
       Block the creation of keys for inner tables of outer joins.
@@ -625,7 +625,7 @@ bool update_ref_and_keys(Session *session,
     TableList *table;
     while ((table= li++))
     {
-      if (table->nested_join)
+      if (table->getNestedJoin())
         add_key_fields_for_nj(join_tab->join, table, &end, &and_level,
                               sargables);
     }
@@ -657,35 +657,39 @@ bool update_ref_and_keys(Session *session,
     use= save_pos= dynamic_element(keyuse, 0, optimizer::KeyUse*);
     prev= &key_end;
     found_eq_constant= 0;
-    for (i= 0; i < keyuse->elements-1; i++, use++)
     {
-      if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
-        use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
-      if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
+      uint32_t i;
+
+      for (i= 0; i < keyuse->elements-1; i++, use++)
       {
-        if (prev->getKeypart() + 1 < use->getKeypart() || 
-            ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
-          continue;				/* remove */
-      }
-      else if (use->getKeypart() != 0)		// First found must be 0
-        continue;
+        if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
+          use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
+        if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
+        {
+          if (prev->getKeypart() + 1 < use->getKeypart() || 
+              ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
+            continue;				/* remove */
+        }
+        else if (use->getKeypart() != 0)		// First found must be 0
+          continue;
 
 #ifdef HAVE_purify
-      /* Valgrind complains about overlapped memcpy when save_pos==use. */
-      if (save_pos != use)
+        /* Valgrind complains about overlapped memcpy when save_pos==use. */
+        if (save_pos != use)
 #endif
-        *save_pos= *use;
-      prev=use;
-      found_eq_constant= ! use->getUsedTables();
-      /* Save ptr to first use */
-      if (! use->getTable()->reginfo.join_tab->keyuse)
-        use->getTable()->reginfo.join_tab->keyuse= save_pos;
-      use->getTable()->reginfo.join_tab->checked_keys.set(use->getKey());
-      save_pos++;
+          *save_pos= *use;
+        prev=use;
+        found_eq_constant= ! use->getUsedTables();
+        /* Save ptr to first use */
+        if (! use->getTable()->reginfo.join_tab->keyuse)
+          use->getTable()->reginfo.join_tab->keyuse= save_pos;
+        use->getTable()->reginfo.join_tab->checked_keys.set(use->getKey());
+        save_pos++;
+      }
+      i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
+      set_dynamic(keyuse, (unsigned char*) &key_end, i);
+      keyuse->elements= i;
     }
-    i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
-    set_dynamic(keyuse, (unsigned char*) &key_end, i);
-    keyuse->elements= i;
   }
   return false;
 }
@@ -2266,8 +2270,8 @@ static COND *build_equal_items(Session *session, COND *cond,
     {
       if (table->on_expr)
       {
-        List<TableList> *nested_join_list= table->nested_join ?
-          &table->nested_join->join_list : NULL;
+        List<TableList> *nested_join_list= table->getNestedJoin() ?
+          &table->getNestedJoin()->join_list : NULL;
         /*
           We can modify table->on_expr because its old value will
           be restored before re-execution of PS/SP.
@@ -2858,7 +2862,7 @@ static void propagate_cond_constants(Session *session,
 */
 bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
 {
-  TableList *next_emb= next_tab->table->pos_in_table_list->embedding;
+  TableList *next_emb= next_tab->table->pos_in_table_list->getEmbedding();
   Join *join= last_tab->join;
 
   if ((join->cur_embedding_map & ~next_tab->embedding_map).any())
@@ -2874,28 +2878,28 @@ bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
     Do update counters for "pairs of brackets" that we've left (marked as
     X,Y,Z in the above picture)
   */
-  for (;next_emb; next_emb= next_emb->embedding)
+  for (;next_emb; next_emb= next_emb->getEmbedding())
   {
-    next_emb->nested_join->counter_++;
-    if (next_emb->nested_join->counter_ == 1)
+    next_emb->getNestedJoin()->counter_++;
+    if (next_emb->getNestedJoin()->counter_ == 1)
     {
       /*
         next_emb is the first table inside a nested join we've "entered". In
         the picture above, we're looking at the 'X' bracket. Don't exit yet as
         X bracket might have Y pair bracket.
       */
-      join->cur_embedding_map |= next_emb->nested_join->nj_map;
+      join->cur_embedding_map |= next_emb->getNestedJoin()->nj_map;
     }
 
-    if (next_emb->nested_join->join_list.elements !=
-        next_emb->nested_join->counter_)
+    if (next_emb->getNestedJoin()->join_list.elements !=
+        next_emb->getNestedJoin()->counter_)
       break;
 
     /*
       We're currently at Y or Z-bracket as depicted in the above picture.
       Mark that we've left it and continue walking up the brackets hierarchy.
     */
-    join->cur_embedding_map &= ~next_emb->nested_join->nj_map;
+    join->cur_embedding_map &= ~next_emb->getNestedJoin()->nj_map;
   }
   return false;
 }
@@ -3664,10 +3668,10 @@ int join_read_const_table(JoinTable *tab, optimizer::Position *pos)
       embedded= embedding;
       if (embedded->on_expr)
          update_const_equal_items(embedded->on_expr, tab);
-      embedding= embedded->embedding;
+      embedding= embedded->getEmbedding();
     }
     while (embedding &&
-           embedding->nested_join->join_list.head() == embedded);
+           embedding->getNestedJoin()->join_list.head() == embedded);
   }
 
   return(0);

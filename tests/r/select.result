@@ -1936,31 +1936,31 @@ show tables from test like "t?";
 Tables_in_test (t?)
 show columns from t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-auto	INTEGER	FALSE		FALSE	
-fld1	INTEGER	FALSE	0	FALSE	
-companynr	INTEGER	FALSE	0	FALSE	
-fld3	VARCHAR	FALSE		FALSE	
-fld4	VARCHAR	FALSE		FALSE	
-fld5	VARCHAR	FALSE		FALSE	
-fld6	VARCHAR	FALSE		FALSE	
+auto	INTEGER	NO		NO	
+fld1	INTEGER	NO	0	NO	
+companynr	INTEGER	NO	0	NO	
+fld3	VARCHAR	NO		NO	
+fld4	VARCHAR	NO		NO	
+fld5	VARCHAR	NO		NO	
+fld6	VARCHAR	NO		NO	
 show columns from t2 from test like 'f%';
 Field	Type	Null	Default	Default_is_NULL	On_Update
-auto	INTEGER	FALSE		FALSE	
-fld1	INTEGER	FALSE	0	FALSE	
-companynr	INTEGER	FALSE	0	FALSE	
-fld3	VARCHAR	FALSE		FALSE	
-fld4	VARCHAR	FALSE		FALSE	
-fld5	VARCHAR	FALSE		FALSE	
-fld6	VARCHAR	FALSE		FALSE	
+auto	INTEGER	NO		NO	
+fld1	INTEGER	NO	0	NO	
+companynr	INTEGER	NO	0	NO	
+fld3	VARCHAR	NO		NO	
+fld4	VARCHAR	NO		NO	
+fld5	VARCHAR	NO		NO	
+fld6	VARCHAR	NO		NO	
 show columns from t2 from test like 's%';
 Field	Type	Null	Default	Default_is_NULL	On_Update
-auto	INTEGER	FALSE		FALSE	
-fld1	INTEGER	FALSE	0	FALSE	
-companynr	INTEGER	FALSE	0	FALSE	
-fld3	VARCHAR	FALSE		FALSE	
-fld4	VARCHAR	FALSE		FALSE	
-fld5	VARCHAR	FALSE		FALSE	
-fld6	VARCHAR	FALSE		FALSE	
+auto	INTEGER	NO		NO	
+fld1	INTEGER	NO	0	NO	
+companynr	INTEGER	NO	0	NO	
+fld3	VARCHAR	NO		NO	
+fld4	VARCHAR	NO		NO	
+fld5	VARCHAR	NO		NO	
+fld6	VARCHAR	NO		NO	
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
 id bigint NOT NULL auto_increment,

@@ -97,6 +97,12 @@ public:
    * only inside of val_*() and store() members (e.g. you can't use it in cons)
    */
   Table *table;
+  Table *getTable()
+  {
+    assert(table);
+    return table;
+  }
+
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
   const char **table_name; /**< Pointer to the name of the table. @TODO This is redundant with Table::table_name. */
   const char *field_name; /**< Name of the field */

@@ -61,7 +61,6 @@ bool ShowTables::Generator::nextCore()
 
     SchemaIdentifier identifier(schema_name);
     plugin::StorageEngine::getTableIdentifiers(getSession(), identifier, set_of_identifiers);
-    set_of_identifiers.sort();
     table_iterator= set_of_identifiers.begin();
     is_primed= true;
   }

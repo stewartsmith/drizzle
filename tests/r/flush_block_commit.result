@@ -35,5 +35,5 @@ a
 10
 show create database test;
 Database	Create Database
-test	CREATE DATABASE `test`
+test	CREATE DATABASE `test` COLLATE = utf8_general_ci
 drop table t1;

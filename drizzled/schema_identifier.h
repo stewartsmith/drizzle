@@ -45,13 +45,17 @@
 #include <functional>
 #include <iostream>
 
+
 namespace drizzled {
+
+static std::string catalog("");
 
 class SchemaIdentifier
 {
   std::string db;
   std::string db_path;
   std::string lower_db;
+
 
   // @note this should be changed to protected once Session contains an
   // identifier for current db.
@@ -74,6 +78,11 @@ public:
   const std::string &getSchemaName() const
   {
     return db;
+  }
+
+  const std::string &getCatalogName() const
+  {
+    return catalog;
   }
 
   bool isValid() const;
@@ -109,7 +118,7 @@ public:
 
 };
 
-typedef std::list <SchemaIdentifier> SchemaIdentifierList;
+typedef std::vector <SchemaIdentifier> SchemaIdentifiers;
 
 } /* namespace drizzled */
 

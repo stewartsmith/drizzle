@@ -135,7 +135,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
   for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
     TableList *embedded= NULL;
-    for (embedded= tl; embedded; embedded= embedded->embedding)
+    for (embedded= tl; embedded; embedded= embedded->getEmbedding())
     {
       if (embedded->on_expr)
         break;

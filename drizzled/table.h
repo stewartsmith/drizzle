@@ -106,6 +106,12 @@ public:
     next= arg;
   }
 
+  void unlink()
+  {
+    getNext()->setPrev(getPrev());		/* remove from used chain */
+    getPrev()->setNext(getNext());
+  }
+
 private:
   Table *prev;
 public:

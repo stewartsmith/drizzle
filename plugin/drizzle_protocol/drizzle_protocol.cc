@@ -26,7 +26,9 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include <algorithm>
-
+#include <iostream>
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include "pack.h"
 #include "errmsg.h"
 #include "drizzle_protocol.h"
@@ -38,7 +40,7 @@ namespace drizzled
 {
 extern uint32_t global_thread_id;
 }
-
+namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
 
@@ -812,12 +814,74 @@ void ClientDrizzleProtocol::writeEOFPacket(uint32_t server_status,
   drizzleclient_net_write(&net, buff, 5);
 }
 
-static ListenDrizzleProtocol *listen_obj= NULL;
-
 static int init(module::Context &context)
 {
-  listen_obj= new ListenDrizzleProtocol("drizzle_protocol", false);
-  context.add(listen_obj); 
+  const module::option_map &vm= context.getOptions();
+  if (vm.count("port"))
+  { 
+    if (port > 65535)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of port\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("connect-timeout"))
+  {
+    if (connect_timeout < 1 || connect_timeout > 300)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for connect_timeout\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("read-timeout"))
+  {
+    if (read_timeout < 1 || read_timeout > 300)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read_timeout\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("write-timeout"))
+  {
+    if (write_timeout < 1 || write_timeout > 300)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for write_timeout\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("retry-count"))
+  {
+    if (retry_count < 1 || retry_count > 100)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for retry_count\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("buffer-length"))
+  {
+    if (buffer_length < 1024 || buffer_length > 1024*1024)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for buffer_length\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("bind-address"))
+  {
+    bind_address= strdup(vm["bind-address"].as<string>().c_str());
+  }
+
+  else
+  {
+    bind_address= NULL;
+  }
+  
+  context.add(new ListenDrizzleProtocol("drizzle_protocol", false)); 
   return 0;
 }
 
@@ -842,6 +906,34 @@ static DRIZZLE_SYSVAR_UINT(buffer_length, buffer_length, PLUGIN_VAR_RQCMDARG,
 static DRIZZLE_SYSVAR_STR(bind_address, bind_address, PLUGIN_VAR_READONLY,
                           N_("Address to bind to."), NULL, NULL, NULL);
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("port",
+          po::value<uint32_t>(&port)->default_value(0),
+          N_("Port number to use for connection or 0 for "
+                              "default to, in order of "
+                              "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+                              "built-in default (4427)."));
+  context("connect-timeout",
+          po::value<uint32_t>(&connect_timeout)->default_value(10),
+          N_("Connect Timeout."));
+  context("read-timeout",
+          po::value<uint32_t>(&read_timeout)->default_value(30),
+          N_("Read Timeout."));
+  context("write-timeout",
+          po::value<uint32_t>(&write_timeout)->default_value(60),
+          N_("Write Timeout."));
+  context("retry-count",
+          po::value<uint32_t>(&retry_count)->default_value(10),
+          N_("Retry Count."));
+  context("buffer-length",
+          po::value<uint32_t>(&buffer_length)->default_value(16384),
+          N_("Buffer length."));
+  context("bind-address",
+          po::value<string>(),
+          N_("Address to bind to."));
+}
+
 static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(port),
   DRIZZLE_SYSVAR(connect_timeout),
@@ -855,4 +947,4 @@ static drizzle_sys_var* sys_variables[]= {
 
 } /* namespace drizzle_protocol */
 
-DRIZZLE_PLUGIN(drizzle_protocol::init, drizzle_protocol::sys_variables);
+DRIZZLE_PLUGIN(drizzle_protocol::init, drizzle_protocol::sys_variables, drizzle_protocol::init_options);

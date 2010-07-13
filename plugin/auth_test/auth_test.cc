@@ -106,4 +106,4 @@ static int init(module::Context &context)
 
 } /* namespace auth_test */
 
-DRIZZLE_PLUGIN(auth_test::init, NULL);
+DRIZZLE_PLUGIN(auth_test::init, NULL, NULL);
