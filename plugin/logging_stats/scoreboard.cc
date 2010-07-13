@@ -202,27 +202,3 @@ ScoreboardSlot* Scoreboard::findOurScoreboardSlot(Session *session)
   ScoreboardSlot *scoreboard_slot= scoreboard_vector->at(session_scoreboard_slot);
   return scoreboard_slot;
 }
-
-ScoreboardSlot* Scoreboard::findAndResetScoreboardSlot(Session *session)
-{
-  /* our bucket */
-  uint32_t bucket_number= session->getSessionId() % number_buckets;
-
-  /* our vector corresponding to bucket_number */
-  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
-
-  /* Check if this session has already claimed a slot */
-  int32_t session_scoreboard_slot= session->getScoreboardIndex();
-
-  /* Its possible if the plugin was being enabled/disabled to get this far and have -1 */
-  if (session_scoreboard_slot == -1)
-  {
-    return NULL;
-  }
-
-  ScoreboardSlot *scoreboard_slot= scoreboard_vector->at(session_scoreboard_slot);
-  ScoreboardSlot *return_scoreboard_slot= new ScoreboardSlot(*scoreboard_slot);
-  scoreboard_slot->reset();
-
-  return return_scoreboard_slot;
-}

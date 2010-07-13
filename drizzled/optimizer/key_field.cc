@@ -74,24 +74,24 @@ void optimizer::add_key_fields_for_nj(Join *join,
                                       uint32_t *and_level,
                                       vector<optimizer::SargableParam> &sargables)
 {
-  List_iterator<TableList> li(nested_join_table->nested_join->join_list);
-  List_iterator<TableList> li2(nested_join_table->nested_join->join_list);
+  List_iterator<TableList> li(nested_join_table->getNestedJoin()->join_list);
+  List_iterator<TableList> li2(nested_join_table->getNestedJoin()->join_list);
   bool have_another= false;
   table_map tables= 0;
   TableList *table;
-  assert(nested_join_table->nested_join);
+  assert(nested_join_table->getNestedJoin());
 
   while ((table= li++) || (have_another && (li=li2, have_another=false,
                                             (table= li++))))
   {
-    if (table->nested_join)
+    if (table->getNestedJoin())
     {
       if (! table->on_expr)
       {
         /* It's a semi-join nest. Walk into it as if it wasn't a nest */
         have_another= true;
         li2= li;
-        li= List_iterator<TableList>(table->nested_join->join_list);
+        li= List_iterator<TableList>(table->getNestedJoin()->join_list);
       }
       else
         add_key_fields_for_nj(join, table, end, and_level, sargables);

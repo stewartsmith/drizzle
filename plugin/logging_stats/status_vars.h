@@ -52,13 +52,18 @@ public:
   void copySystemStatusVar(drizzled::system_status_var *to_var, 
                            drizzled::system_status_var *from_var);
 
+  void copyGlobalVariables(StatusVars *status_vars);
+
   drizzled::system_status_var* getStatusVarCounters()
   {
     return status_var_counters;
   }
 
+  uint64_t sent_row_count;
+
 private:
   drizzled::system_status_var *status_var_counters;
+
 };
 
 #endif /* PLUGIN_LOGGING_STATS_STATUS_VARS_H */

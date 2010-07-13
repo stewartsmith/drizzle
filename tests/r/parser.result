@@ -242,7 +242,7 @@ CREATE TABLE table_25930_a ( blah INT );
 CREATE TABLE table_25930_b SELECT "blah" - 1 FROM table_25930_a;
 desc table_25930_b;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-"blah" - 1	DOUBLE	FALSE		FALSE	
+"blah" - 1	DOUBLE	NO		NO	
 DROP TABLE table_25930_a;
 DROP TABLE table_25930_b;
 select pi(3.14);

@@ -119,6 +119,13 @@ public:
     return false;
   }
 
+  bool isView() const // Not a SQL view, but a view for I_S
+  {
+    if (type == message::Table::FUNCTION)
+      return true;
+    return false;
+  }
+
   Type getType() const
   {
     return type;
@@ -294,8 +301,7 @@ public:
 
 std::size_t hash_value(TableIdentifier const& b);
 
-typedef std::vector <TableIdentifier> TableIdentifierList;
-typedef std::list <TableIdentifier> TableIdentifiers;
+typedef std::vector <TableIdentifier> TableIdentifiers;
 
 } /* namespace drizzled */
 

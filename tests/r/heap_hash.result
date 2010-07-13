@@ -7,7 +7,7 @@ Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_incr
 #	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 show keys from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	a
+t1	YES	PRIMARY	1	a
 select * from t1;
 a	b
 2	2
@@ -327,14 +327,14 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	heap_idx	heap_idx	82	const	9	Using where
 show index from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	id
-t1	FALSE	heap_idx	1	name
-t1	FALSE	btree_idx	1	name
+t1	YES	PRIMARY	1	id
+t1	NO	heap_idx	1	name
+t1	NO	btree_idx	1	name
 show index from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	id
-t1	FALSE	heap_idx	1	name
-t1	FALSE	btree_idx	1	name
+t1	YES	PRIMARY	1	id
+t1	NO	heap_idx	1	name
+t1	NO	btree_idx	1	name
 create temporary table t3
 (
 a varchar(20) not null,
@@ -344,12 +344,12 @@ key (a,b)
 insert into t3 select name, name from t1;
 show index from t3;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t3	FALSE	a	1	a
-t3	FALSE	a	2	b
+t3	NO	a	1	a
+t3	NO	a	2	b
 show index from t3;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t3	FALSE	a	1	a
-t3	FALSE	a	2	b
+t3	NO	a	1	a
+t3	NO	a	2	b
 explain select * from t1 ignore key(btree_idx), t3 where t1.name='matt' and t3.a = concat('',t1.name) and t3.b=t1.name;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	heap_idx	heap_idx	82	const	9	Using where
