@@ -33,17 +33,17 @@ ColumnsTool::ColumnsTool() :
 
   add_field("COLUMN_NAME");
   add_field("COLUMN_TYPE");
-  add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER);
+  add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER, 0, false);
   add_field("COLUMN_DEFAULT", plugin::TableFunction::VARBINARY, 65535, true);
-  add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN);
+  add_field("COLUMN_DEFAULT_IS_NULL", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("COLUMN_DEFAULT_UPDATE");
-  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN);
-  add_field("IS_INDEXED", plugin::TableFunction::BOOLEAN);
-  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN);
-  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN);
-  add_field("IS_MULTI", plugin::TableFunction::BOOLEAN);
-  add_field("IS_FIRST_IN_MULTI", plugin::TableFunction::BOOLEAN);
-  add_field("INDEXES_FOUND_IN", plugin::TableFunction::NUMBER);
+  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_INDEXED", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_USED_IN_PRIMARY", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_UNIQUE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_MULTI", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("IS_FIRST_IN_MULTI", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("INDEXES_FOUND_IN", plugin::TableFunction::NUMBER, 0, false);
   add_field("DATA_TYPE");
 
   add_field("CHARACTER_MAXIMUM_LENGTH", plugin::TableFunction::NUMBER);
@@ -133,13 +133,21 @@ void ColumnsTool::Generator::fill()
 
   /* COLUMN_DEFAULT */
   if (column.options().has_default_value())
+  {
     push(column.options().default_value());
+  }
   else if (column.options().has_default_bin_value())
+  {
     push(column.options().default_bin_value().c_str(), column.options().default_bin_value().length());
+  }
   else if (column.options().has_default_expression())
+  {
     push(column.options().default_expression());
+  }
   else
+  {
     push();
+  }
 
   /* COLUMN_DEFAULT_IS_NULL */
   push(column.options().default_null());

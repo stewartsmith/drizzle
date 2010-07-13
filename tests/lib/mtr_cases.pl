@@ -578,7 +578,8 @@ sub collect_one_test_case($$$$$$$$$) {
     $tinfo->{'slave_num'}= 1;
   }
 
-  my $master_opt_file= "$testdir/$tname-master.opt";
+  my $global_master_opt_file= "$testdir/master.opt";
+  my $test_master_opt_file= "$testdir/$tname-master.opt";
   my $slave_opt_file=  "$testdir/$tname-slave.opt";
   my $slave_mi_file=   "$testdir/$tname.slave-mi";
   my $master_sh=       "$testdir/$tname-master.sh";
@@ -599,72 +600,75 @@ sub collect_one_test_case($$$$$$$$$) {
     push(@{$tinfo->{'slave_opt'}}, $opt);
   }
 
-  # Add master opts
-  if ( -f $master_opt_file )
+  foreach  my $master_opt_file ($global_master_opt_file, $test_master_opt_file)
   {
-
-    my $master_opt= mtr_get_opts_from_file($master_opt_file);
-
-    foreach my $opt ( @$master_opt )
+    # Add master opts
+    if ( -f $master_opt_file )
     {
-      my $value;
 
-      # The opt file is used both to send special options to the mysqld
-      # as well as pass special test case specific options to this
-      # script
+      my $master_opt= mtr_get_opts_from_file($master_opt_file);
 
-      $value= mtr_match_prefix($opt, "--timezone=");
-      if ( defined $value )
+      foreach my $opt ( @$master_opt )
       {
-	$tinfo->{'timezone'}= $value;
-	next;
-      }
+        my $value;
 
-      $value= mtr_match_prefix($opt, "--slave-num=");
-      if ( defined $value )
-      {
-	$tinfo->{'slave_num'}= $value;
-	next;
-      }
+        # The opt file is used both to send special options to the mysqld
+        # as well as pass special test case specific options to this
+        # script
 
-      $value= mtr_match_prefix($opt, "--result-file=");
-      if ( defined $value )
-      {
-	# Specifies the file mysqltest should compare
-	# output against
-	if ( -f "r/$::opt_engine/$value.result")
+        $value= mtr_match_prefix($opt, "--timezone=");
+        if ( defined $value )
         {
-	  $tinfo->{'result_file'}= "r/$::opt_engine/$value.result";
-        }
-        else
-        {
-	  $tinfo->{'result_file'}= "r/$value.result";
+          $tinfo->{'timezone'}= $value;
+          next;
         }
 
-	next;
-      }
+        $value= mtr_match_prefix($opt, "--slave-num=");
+        if ( defined $value )
+        {
+          $tinfo->{'slave_num'}= $value;
+          next;
+        }
 
-      # If we set default time zone, remove the one we have
-      $value= mtr_match_prefix($opt, "--default-time-zone=");
-      if ( defined $value )
-      {
-	# Set timezone for this test case to something different
-	$tinfo->{'timezone'}= "GMT-8";
-	# Fallthrough, add the --default-time-zone option
-      }
+        $value= mtr_match_prefix($opt, "--result-file=");
+        if ( defined $value )
+        {
+          # Specifies the file mysqltest should compare
+          # output against
+          if ( -f "r/$::opt_engine/$value.result")
+          {
+            $tinfo->{'result_file'}= "r/$::opt_engine/$value.result";
+          }
+          else
+          {
+            $tinfo->{'result_file'}= "r/$value.result";
+          }
 
-      # The --restart option forces a restart even if no special
-      # option is set. If the options are the same as next testcase
-      # there is no need to restart after the testcase
-      # has completed
-      if ( $opt eq "--force-restart" )
-      {
-	$tinfo->{'force_restart'}= 1;
-	next;
-      }
+          next;
+        }
 
-      # Ok, this was a real option, add it
-      push(@{$tinfo->{'master_opt'}}, $opt);
+        # If we set default time zone, remove the one we have
+        $value= mtr_match_prefix($opt, "--default-time-zone=");
+        if ( defined $value )
+        {
+          # Set timezone for this test case to something different
+          $tinfo->{'timezone'}= "GMT-8";
+          # Fallthrough, add the --default-time-zone option
+        }
+
+        # The --restart option forces a restart even if no special
+        # option is set. If the options are the same as next testcase
+        # there is no need to restart after the testcase
+        # has completed
+        if ( $opt eq "--force-restart" )
+        {
+          $tinfo->{'force_restart'}= 1;
+          next;
+        }
+
+        # Ok, this was a real option, add it
+        push(@{$tinfo->{'master_opt'}}, $opt);
+      }
     }
   }
 
