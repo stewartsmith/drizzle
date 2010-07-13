@@ -86,3 +86,32 @@ SELECT DISTINCT AVG(DISTINCT OUTR . `col_int_not_null` ) AS X FROM `bb` AS OUTR2
 
 DROP TABLE `bb`, `cc`;
 --echo End Bug#600664 test
+
+--echo Bug#595305
+--echo - Assertion failed - exec_method != MATERIALIZATION || (exec_method == MATERIALIZATION && engine->engine_type() == subselect_engine::HASH_SJ_ENGINE)", file=<value optimized out>, line=318, function=0x84fae0 "virtual bool drizzled::Item_in_subselect::exec()
+--disable_warnings
+DROP TABLE IF EXISTS `bb`;
+--enable_warnings
+
+CREATE TABLE `bb` (
+  `pk` int NOT NULL AUTO_INCREMENT,
+  `col_text_not_null` text NOT NULL,
+  `col_bigint_key` bigint DEFAULT NULL,
+  `col_int` int DEFAULT NULL,
+  `col_char` varchar(1) DEFAULT NULL,
+  `col_text` text,
+  `col_text_not_null_key` text NOT NULL,
+  `col_char_not_null` varchar(1) NOT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_text_not_null_key` (`col_text_not_null_key`(255))
+) ENGINE=InnoDB;
+
+ALTER TABLE `bb` DISABLE KEYS;
+INSERT INTO `bb` VALUES (1,'',NULL,NULL,'h',NULL,'','f'),(2,'',NULL,1756299264,'p',NULL,'','w'),(3,'',6,-1990000640,'w',NULL,'','w'),(4,'',NULL,NULL,'f',NULL,'','k'),(5,'',NULL,NULL,'k',NULL,'','t'),(6,'',9,NULL,'m',NULL,'','c'),(7,'',6451687941184946176,0,'z',NULL,'','f'),(8,'',8960474408607023104,1805844480,'h',NULL,'','k'),(9,'',8,7,'y',NULL,'','m'),(10,'',NULL,-415629312,'t',NULL,'','h');
+ALTER TABLE `bb` ENABLE KEYS;
+
+SELECT DISTINCT OUTR . `col_text` AS X FROM BB AS OUTR2 LEFT JOIN BB AS OUTR ON ( OUTR2 . `col_char` <> OUTR . `col_text` ) WHERE OUTR . `col_bigint_key` IN ( SELECT INNR . `pk` AS Y FROM BB AS INNR WHERE INNR . `col_bigint_key` > INNR . `col_int` AND INNR . `col_text_not_null_key` >= INNR . `col_char_not_null` ) AND OUTR . `col_bigint_key` = 9 ORDER BY OUTR . `col_text_not_null` , OUTR . `pk`;
+
+DROP TABLE BB;
+--echo End Bug#595305 test
