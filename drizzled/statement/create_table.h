@@ -57,9 +57,9 @@ public:
   HA_CREATE_INFO create_info;
   AlterInfo alter_info;
   KEY_CREATE_INFO key_create_info;
-  enum Foreign_key::fk_match_opt fk_match_option;
-  enum Foreign_key::fk_option fk_update_opt;
-  enum Foreign_key::fk_option fk_delete_opt;
+  message::Table::ForeignKeyConstraint::ForeignKeyMatchOption fk_match_option;
+  message::Table::ForeignKeyConstraint::ForeignKeyOption fk_update_opt;
+  message::Table::ForeignKeyConstraint::ForeignKeyOption fk_delete_opt;
 
   /* The text in a CHANGE COLUMN clause in ALTER TABLE */
   char *change;
