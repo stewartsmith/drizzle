@@ -160,15 +160,41 @@ bool LoggingStats::postEnd(Session *session)
     return false;
   }
 
-  ScoreboardSlot *scoreboard_slot= current_scoreboard->findAndResetScoreboardSlot(session);
+  bool isInScoreboard= false;
+  ScoreboardSlot *scoreboard_slot= current_scoreboard->findOurScoreboardSlot(session);
 
   if (scoreboard_slot)
   {
-    cumulative_stats->logUserStats(scoreboard_slot);
-    cumulative_stats->logGlobalStats(scoreboard_slot);
-    cumulative_stats->logGlobalStatusVars(scoreboard_slot);
-    delete scoreboard_slot;
+    isInScoreboard= true;
+  } 
+  else 
+  { 
+    /* the session did not have a slot reserved, that could be because the scoreboard was
+       full, but most likely its a failed authentication so post() is never called where
+       the slot is assigned. Log the global status values below, and if the user has a slot
+       log to it, but do not reserve a new slot for a user. If it was a failed authentication
+       the scoreboard would be filled up quickly with invalid users. 
+    */
+    scoreboard_slot= new ScoreboardSlot();
+    scoreboard_slot->setUser(session->getSecurityContext().getUser());
+    scoreboard_slot->setIp(session->getSecurityContext().getIp());
   }
+
+  scoreboard_slot->getStatusVars()->logStatusVar(session);
+  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= time(NULL) - session->start_time; 
+
+  cumulative_stats->logUserStats(scoreboard_slot, isInScoreboard);
+  cumulative_stats->logGlobalStats(scoreboard_slot);
+  cumulative_stats->logGlobalStatusVars(scoreboard_slot);
+
+  if (isInScoreboard)
+  {
+    scoreboard_slot->reset();
+  } 
+  else 
+  {
+    delete scoreboard_slot;
+  } 
 
   return false;
 }
@@ -188,6 +214,8 @@ static SessionStatementsTool *session_statements_tool= NULL;
 static StatusTool *global_status_tool= NULL;
 
 static StatusTool *session_status_tool= NULL;
+
+static CumulativeUserStatsTool *cumulative_user_stats_tool= NULL;
 
 static void enable(Session *,
                    drizzle_sys_var *,
@@ -253,6 +281,13 @@ static bool initTable()
     return true;
   }
 
+  cumulative_user_stats_tool= new(nothrow)CumulativeUserStatsTool(logging_stats);
+
+  if (! cumulative_user_stats_tool)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -272,6 +307,7 @@ static int init(module::Context &context)
   context.add(session_statements_tool);
   context.add(session_status_tool);
   context.add(global_status_tool);
+  context.add(cumulative_user_stats_tool);
 
   if (sysvar_logging_stats_enabled)
   {

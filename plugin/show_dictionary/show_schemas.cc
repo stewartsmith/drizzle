@@ -56,7 +56,6 @@ bool ShowSchemas::Generator::nextSchemaCore()
   else
   {
     plugin::StorageEngine::getSchemaIdentifiers(getSession(), schema_names);
-    schema_names.sort();
     schema_iterator= schema_names.begin();
     is_schema_primed= true;
   }

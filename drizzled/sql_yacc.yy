@@ -372,7 +372,7 @@ using namespace drizzled;
   enum drizzled::index_hint_type index_hint;
   enum drizzled::enum_filetype filetype;
   enum drizzled::ha_build_method build_method;
-  enum drizzled::Foreign_key::fk_option m_fk_option;
+  drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;
 }
 
 %{
@@ -1945,29 +1945,29 @@ ref_list:
 
 opt_match_clause:
           /* empty */
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_UNDEF; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_UNDEFINED; }
         | MATCH FULL
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_FULL; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_FULL; }
         | MATCH PARTIAL
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_PARTIAL; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_PARTIAL; }
         | MATCH SIMPLE_SYM
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_SIMPLE; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_SIMPLE; }
         ;
 
 opt_on_update_delete:
           /* empty */
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON UPDATE_SYM delete_option
           {
             ((statement::CreateTable *)Lex->statement)->fk_update_opt= $3;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON DELETE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
             ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $3;
           }
         | ON UPDATE_SYM delete_option
@@ -1985,11 +1985,11 @@ opt_on_update_delete:
         ;
 
 delete_option:
-          RESTRICT      { $$= Foreign_key::FK_OPTION_RESTRICT; }
-        | CASCADE       { $$= Foreign_key::FK_OPTION_CASCADE; }
-        | SET NULL_SYM  { $$= Foreign_key::FK_OPTION_SET_NULL; }
-        | NO_SYM ACTION { $$= Foreign_key::FK_OPTION_NO_ACTION; }
-        | SET DEFAULT   { $$= Foreign_key::FK_OPTION_DEFAULT;  }
+          RESTRICT      { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_RESTRICT; }
+        | CASCADE       { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_CASCADE; }
+        | SET NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
+        | NO_SYM ACTION { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_NO_ACTION; }
+        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_DEFAULT;  }
         ;
 
 key_type:
@@ -3756,7 +3756,7 @@ table_factor:
             /* Use $2 instead of Lex->current_select as derived table will
                alter value of Lex->current_select. */
             if (!($3 || $5) && $2->embedding &&
-                !$2->embedding->nested_join->join_list.elements)
+                !$2->embedding->getNestedJoin()->join_list.elements)
             {
               /* we have a derived table ($3 == NULL) but no alias,
                  Since we are nested in further parentheses so we
@@ -3920,7 +3920,7 @@ select_derived_init:
             }
             embedding= Lex->current_select->embedding;
             $$= embedding &&
-                !embedding->nested_join->join_list.elements;
+                !embedding->getNestedJoin()->join_list.elements;
             /* return true if we are deeply nested */
           }
         ;
@@ -4774,6 +4774,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TABLES opt_db show_wild
            {
@@ -4831,6 +4834,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TEMPORARY_SYM TABLES show_wild
            {

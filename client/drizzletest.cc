@@ -5398,6 +5398,8 @@ try
 
   TMPDIR[0]= 0;
 
+  internal::my_init();
+
   po::options_description commandline_options("Options used only in command line");
   commandline_options.add_options()
   ("help,?", "Display this help and exit.")
@@ -5588,7 +5590,7 @@ try
     }
   }
 
-  if (vm.count("password"))
+  if( vm.count("password") )
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -5600,17 +5602,6 @@ try
     {
       opt_password= password;
       tty_password= false;
-    }
-    char *start= (char *)password.c_str();
-    char *temp_pass= (char *)password.c_str();
-    while (*temp_pass)
-    {
-        /* Overwriting password with 'x' */
-        *temp_pass++= 'x';
-    }
-    if (*start)
-    {
-      start[1]= 0;
     }
   }
   else

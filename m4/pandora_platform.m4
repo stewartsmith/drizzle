@@ -23,9 +23,18 @@ AC_DEFUN([PANDORA_PLATFORM],[
 
 
   case "$host_os" in
-    *solaris*|*freebsd*)
+    *solaris*)
     AS_IF([test "x${ac_cv_env_CPPFLAGS_set}" = "x"],[
       CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+    ])
+
+    AS_IF([test "x${ac_cv_env_LDFLAGS_set}" = "x"],[
+      LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+    ])
+    ;;
+    *freebsd*)
+    AS_IF([test "x${ac_cv_env_CPPFLAGS_set}" = "x"],[
+      CPPFLAGS="${CPPFLAGS} -isystem /usr/local/include"
     ])
 
     AS_IF([test "x${ac_cv_env_LDFLAGS_set}" = "x"],[

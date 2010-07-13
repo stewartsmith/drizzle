@@ -144,11 +144,11 @@ drop table t1;
 create table t1 (a int not null unique, b int unique, c int, d int not null primary key, key(c), e int not null unique);
 show keys from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	d
-t1	TRUE	a	1	a
-t1	TRUE	e	1	e
-t1	TRUE	b	1	b
-t1	FALSE	c	1	c
+t1	YES	PRIMARY	1	d
+t1	YES	a	1	a
+t1	YES	e	1	e
+t1	YES	b	1	b
+t1	NO	c	1	c
 drop table t1;
 CREATE TABLE t1 (c VARCHAR(10) NOT NULL,i INT PRIMARY KEY NOT NULL AUTO_INCREMENT, UNIQUE (c,i));
 INSERT INTO t1 (c) VALUES (NULL),(NULL);
@@ -302,8 +302,8 @@ UNIQUE i1idx (i1),
 UNIQUE i2idx (i2));
 desc t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-i1	INTEGER	FALSE		FALSE	
-i2	INTEGER	FALSE		FALSE	
+i1	INTEGER	NO		NO	
+i2	INTEGER	NO		NO	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -358,27 +358,27 @@ drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null unique);
 desc t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	FALSE		FALSE	
-b	VARCHAR	FALSE		FALSE	
+a	INTEGER	NO		NO	
+b	VARCHAR	NO		NO	
 drop table t1;
 create table t1 (a int not null primary key, b int not null unique);
 desc t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	FALSE		FALSE	
-b	INTEGER	FALSE		FALSE	
+a	INTEGER	NO		NO	
+b	INTEGER	NO		NO	
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null, unique (b(10)));
 desc t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	FALSE		FALSE	
-b	VARCHAR	FALSE		FALSE	
+a	INTEGER	NO		NO	
+b	VARCHAR	NO		NO	
 drop table t1;
 create table t1 (a int not null primary key, b varchar(20) not null, c varchar(20) not null, unique(b(10),c(10)));
 desc t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	FALSE		FALSE	
-b	VARCHAR	FALSE		FALSE	
-c	VARCHAR	FALSE		FALSE	
+a	INTEGER	NO		NO	
+b	VARCHAR	NO		NO	
+c	VARCHAR	NO		NO	
 drop table t1;
 create table t1 (
 c1 int,
@@ -494,9 +494,9 @@ b char(10) not null, unique key bb(b(1)),
 c char(4) not null, unique key cc(c));
 desc t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	FALSE		FALSE	
-b	VARCHAR	FALSE		FALSE	
-c	VARCHAR	FALSE		FALSE	
+a	INTEGER	NO		NO	
+b	VARCHAR	NO		NO	
+c	VARCHAR	NO		NO	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
@@ -513,15 +513,15 @@ b char(10) not null, unique key bb(b(1)),
 c char(4) not null);
 desc t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	FALSE		FALSE	
-b	VARCHAR	FALSE		FALSE	
-c	VARCHAR	FALSE		FALSE	
+a	INTEGER	NO		NO	
+b	VARCHAR	NO		NO	
+c	VARCHAR	NO		NO	
 alter table t1 add unique key cc(c);
 desc t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	FALSE		FALSE	
-b	VARCHAR	FALSE		FALSE	
-c	VARCHAR	FALSE		FALSE	
+a	INTEGER	NO		NO	
+b	VARCHAR	NO		NO	
+c	VARCHAR	NO		NO	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (

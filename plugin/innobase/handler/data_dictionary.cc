@@ -42,12 +42,12 @@ CmpTool::CmpTool(bool in_reset) :
   plugin::TableFunction("DATA_DICTIONARY", in_reset ? "INNODB_CMP_RESET" : "INNODB_CMP"),
   outer_reset(in_reset)
 {
-  add_field("PAGE_SIZE", plugin::TableFunction::NUMBER);
-  add_field("COMPRESS_OPS", plugin::TableFunction::NUMBER);
-  add_field("COMPRESS_OPS_OK", plugin::TableFunction::NUMBER);
-  add_field("COMPRESS_TIME", plugin::TableFunction::NUMBER);
-  add_field("UNCOMPRESS_OPS", plugin::TableFunction::NUMBER);
-  add_field("UNCOMPRESS_TIME", plugin::TableFunction::NUMBER);
+  add_field("PAGE_SIZE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("COMPRESS_OPS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("COMPRESS_OPS_OK", plugin::TableFunction::NUMBER, 0, false);
+  add_field("COMPRESS_TIME", plugin::TableFunction::NUMBER, 0, false);
+  add_field("UNCOMPRESS_OPS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("UNCOMPRESS_TIME", plugin::TableFunction::NUMBER, 0, false);
 }
 
 CmpTool::Generator::Generator(Field **arg, bool in_reset) :
@@ -98,11 +98,11 @@ CmpmemTool::CmpmemTool(bool in_reset) :
   plugin::TableFunction("DATA_DICTIONARY", in_reset ? "INNODB_CMPMEM_RESET" : "INNODB_CMPMEM"),
   outer_reset(in_reset)
 {
-  add_field("PAGE_SIZE", plugin::TableFunction::NUMBER);
-  add_field("PAGES_USED", plugin::TableFunction::NUMBER);
-  add_field("PAGES_FREE", plugin::TableFunction::NUMBER);
-  add_field("RELOCATION_OPS", plugin::TableFunction::NUMBER);
-  add_field("RELOCATION_TIME", plugin::TableFunction::NUMBER);
+  add_field("PAGE_SIZE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("PAGES_USED", plugin::TableFunction::NUMBER, 0, false);
+  add_field("PAGES_FREE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("RELOCATION_OPS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("RELOCATION_TIME", plugin::TableFunction::NUMBER, 0, false);
 }
 
 CmpmemTool::Generator::Generator(Field **arg, bool in_reset) :
@@ -159,11 +159,11 @@ InnodbTrxTool::InnodbTrxTool(const char* in_table_name) :
   {
     add_field("TRX_ID");
     add_field("TRX_STATE");
-    add_field("TRX_STARTED", plugin::TableFunction::NUMBER);
+    add_field("TRX_STARTED", plugin::TableFunction::NUMBER, 0, false);
     add_field("TRX_REQUESTED_LOCK_ID");
-    add_field("TRX_WAIT_STARTED", plugin::TableFunction::NUMBER);
-    add_field("TRX_WEIGHT", plugin::TableFunction::NUMBER);
-    add_field("TRX_DRIZZLE_THREAD_ID", plugin::TableFunction::NUMBER);
+    add_field("TRX_WAIT_STARTED", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_WEIGHT", plugin::TableFunction::NUMBER, 0, false);
+    add_field("TRX_DRIZZLE_THREAD_ID", plugin::TableFunction::NUMBER, 0, false);
     add_field("TRX_QUERY");
   }
   else if (innobase_strcasecmp(table_name, "INNODB_LOCKS") == 0)
@@ -174,9 +174,9 @@ InnodbTrxTool::InnodbTrxTool(const char* in_table_name) :
     add_field("LOCK_TYPE");
     add_field("LOCK_TABLE");
     add_field("LOCK_INDEX");
-    add_field("LOCK_SPACE", plugin::TableFunction::NUMBER);
-    add_field("LOCK_PAGE", plugin::TableFunction::NUMBER);
-    add_field("LOCK_REC", plugin::TableFunction::NUMBER);
+    add_field("LOCK_SPACE", plugin::TableFunction::NUMBER, 0, false);
+    add_field("LOCK_PAGE", plugin::TableFunction::NUMBER, 0, false);
+    add_field("LOCK_REC", plugin::TableFunction::NUMBER, 0, false);
     add_field("LOCK_DATA");
   }
   else if (innobase_strcasecmp(table_name, "INNODB_LOCK_WAITS") == 0)

@@ -136,7 +136,7 @@ public:
                            drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, SchemaIdentifier&, set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, const SchemaIdentifier&, set<string>&) { };
 
   int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
@@ -151,12 +151,12 @@ public:
   int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                 drizzled::SchemaIdentifier&,
+                                 const drizzled::SchemaIdentifier&,
                                  drizzled::TableIdentifiers&)
 {
 }

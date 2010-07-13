@@ -27,45 +27,46 @@ using namespace drizzled;
 Schemata::Schemata() :
   InformationSchema("SCHEMATA")
 {
-  add_field("CATALOG_NAME");
-  add_field("SCHEMA_NAME");
+  add_field("CATALOG_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("SCHEMA_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
   add_field("SCHEMA_OWNER");
   add_field("DEFAULT_CHARACTER_SET_CATALOG");
   add_field("DEFAULT_CHARACTER_SET_SCHEMA");
   add_field("DEFAULT_CHARACTER_SET_NAME");
 }
 
-void Schemata::Generator::fill()
-{
-}
-
-bool Schemata::Generator::nextCore()
-{
-  return false;
-}
-
-bool Schemata::Generator::next()
-{
-  while (not nextCore())
-  {
-    return false;
-  }
-
-  return true;
-}
-
 Schemata::Generator::Generator(drizzled::Field **arg) :
   InformationSchema::Generator(arg),
-  is_primed(false)
+  schema_generator(getSession())
 {
 }
 
 bool Schemata::Generator::populate()
 {
-  if (not next())
-    return false;
+  const drizzled::message::Schema *schema_ptr;
 
-  fill();
+  while ((schema_ptr= schema_generator))
+  {
+    /* CATALOG_NAME */
+    push(schema_ptr->catalog());
 
-  return true;
+    /* SCHEMA_NAME */
+    push(schema_ptr->name());
+
+    /* SCHEMA_OWNER */
+    push();
+
+    /* DEFAULT_CHARACTER_SET_CATALOG */
+    push();
+
+    /* DEFAULT_CHARACTER_SET_SCHEMA */
+    push();
+
+    /* DEFAULT_CHARACTER_SET_NAME */
+    push();
+
+    return true;
+  }
+
+  return false;
 }

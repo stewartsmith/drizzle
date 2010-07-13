@@ -183,11 +183,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
-    table->db_type= NULL;
+    table->setDbType(NULL);
 
     if ((share= TableShare::getShare(identifier)))
     {
-      table->db_type= share->db_type();
+      table->setDbType(share->db_type());
     }
   }
 
@@ -239,7 +239,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
     }
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? message::Table::INTERNAL : message::Table::STANDARD);
+    TableIdentifier identifier(db, table->table_name, table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
     if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -574,29 +574,6 @@ int prepare_create_field(CreateField *sql_field,
   return 0;
 }
 
-static message::Table::ForeignKeyConstraint::ForeignKeyOption fk_option_to_proto_option(uint32_t option)
-{
-  switch (option)
-  {
-  case Foreign_key::FK_OPTION_UNDEF:
-    return message::Table::ForeignKeyConstraint::OPTION_UNDEF;
-  case Foreign_key::FK_OPTION_RESTRICT:
-    return message::Table::ForeignKeyConstraint::OPTION_RESTRICT;
-  case Foreign_key::FK_OPTION_CASCADE:
-    return message::Table::ForeignKeyConstraint::OPTION_CASCADE;
-  case Foreign_key::FK_OPTION_SET_NULL:
-    return message::Table::ForeignKeyConstraint::OPTION_SET_NULL;
-  case Foreign_key::FK_OPTION_NO_ACTION:
-    return message::Table::ForeignKeyConstraint::OPTION_NO_ACTION;
-  case Foreign_key::FK_OPTION_DEFAULT:
-    return message::Table::ForeignKeyConstraint::OPTION_DEFAULT;
-  }
-
-  assert(false);
-
-  return message::Table::ForeignKeyConstraint::OPTION_UNDEF;
-}
-
 static int mysql_prepare_create_table(Session *session,
                                       HA_CREATE_INFO *create_info,
                                       message::Table &create_proto,
@@ -915,23 +892,10 @@ static int mysql_prepare_create_table(Session *session,
       message::Table::ForeignKeyConstraint *pfkey= create_proto.add_fk_constraint();
       if (fk_key->name.str)
         pfkey->set_name(fk_key->name.str);
-      switch (fk_key->match_opt)
-      {
-      case Foreign_key::FK_MATCH_UNDEF:
-        pfkey->set_match(message::Table::ForeignKeyConstraint::MATCH_UNDEFINED);
-        break;
-      case Foreign_key::FK_MATCH_FULL:
-        pfkey->set_match(message::Table::ForeignKeyConstraint::MATCH_FULL);
-        break;
-      case Foreign_key::FK_MATCH_PARTIAL:
-        pfkey->set_match(message::Table::ForeignKeyConstraint::MATCH_PARTIAL);
-        break;
-      case Foreign_key::FK_MATCH_SIMPLE:
-        pfkey->set_match(message::Table::ForeignKeyConstraint::MATCH_SIMPLE);
-        break;
-      }
-      pfkey->set_update_option(fk_option_to_proto_option(fk_key->update_opt));
-      pfkey->set_delete_option(fk_option_to_proto_option(fk_key->delete_opt));
+
+      pfkey->set_match(fk_key->match_opt);
+      pfkey->set_update_option(fk_key->update_opt);
+      pfkey->set_delete_option(fk_key->delete_opt);
 
       pfkey->set_references_table_name(fk_key->ref_table->table.str);
 

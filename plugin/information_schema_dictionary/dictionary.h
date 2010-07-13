@@ -28,6 +28,8 @@
 
 #include "plugin/information_schema_dictionary/information_schema.h"
 
+#include "drizzled/generator.h"
+
 #include "plugin/information_schema_dictionary/check_constraints.h"
 #include "plugin/information_schema_dictionary/column_domain_usage.h"
 #include "plugin/information_schema_dictionary/column_privileges.h"

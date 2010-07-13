@@ -73,18 +73,18 @@ public:
 
 
   void doGetTableNames(drizzled::CachedDirectory&, 
-                       drizzled::SchemaIdentifier &schema_identifier,
+                       const drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string> &set_of_names);
 
   int doGetTableDefinition(drizzled::Session &session,
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::SchemaIdentifierList&);
+  void doGetSchemaIdentifiers(drizzled::SchemaIdentifiers&);
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
 
-  bool doGetSchemaDefinition(drizzled::SchemaIdentifier &schema, drizzled::message::Schema &schema_message);
+  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier &schema, drizzled::message::Schema &schema_message);
 
   int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &, const drizzled::TableIdentifier &)
   {
@@ -92,7 +92,7 @@ public:
   }
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 
