@@ -986,7 +986,8 @@ int main(int argc, char **argv)
 
 
     po::variables_map vm;
-    po::store(po::parse_command_line(argc,argv,long_options),vm);
+    po::store(po::command_line_parser(argc, argv).options(long_options).
+            extra_parser(parse_password_arg).run(), vm);
 
     ifstream user_slap_ifs("~/.drizzle/drizzleslap.cnf");
     po::store(parse_config_file(user_slap_ifs, slap_options), vm);
@@ -1033,34 +1034,25 @@ int main(int argc, char **argv)
       }
     }
 
-    if( vm.count("password") )
+  if( vm.count("password") )
+  {
+    if (!opt_password.empty())
+      opt_password.erase();
+    if (password == PASSWORD_SENTINEL)
     {
-      char *start= vm["password"].as<char *>();
-      if (!opt_password.empty())
-        opt_password.erase();
-      opt_password = strdup(vm["password"].as<char *>());
-      if (opt_password.c_str() == NULL)
-      {
-        fprintf(stderr, "Memory allocation error while copying password. "
-            "Aborting.\n");
-        exit(ENOMEM);
-      }
-
-      while (*password)
-      {
-        /* Overwriting password with 'x' */
-        *password++= 'x';
-      }
-
-      if (*start)
-      {
-        /* Cut length of argument */
-        start[1]= 0;
-      }
-      tty_password= 0;
+      opt_password= "";
     }
     else
-      tty_password= 1;
+    {
+      opt_password= password;
+      tty_password= false;
+    }
+  }
+  else
+  {
+      tty_password= true;
+  }
+
 
 
     if( vm.count("version") )

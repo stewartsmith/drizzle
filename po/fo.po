@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
-"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
+"Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-04-28 02:45+0000\n"
 "PO-Revision-Date: 2010-05-15 20:20+0000\n"
 "Last-Translator: Gunleif Joensen <Unknown>\n"
@@ -82,67 +82,15 @@ msgstr "Vís ávaringar eftir hvønn setning."
 msgid "Don't show warnings after every statement."
 msgstr "Vís ikki ávaringar eftir hvønn setning."
 
-#, c-format
-msgid ""
-"Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid "Error: Invalid Value for connect_timeout"
 msgstr ""
 
-msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
+msgid "Error: Invalid Value for max_input_line"
 msgstr ""
 
-msgid "Your Drizzle connection id is "
-msgstr ""
-
-msgid "Server version: "
-msgstr "Ambætara útgáva: "
-
-#, c-format
-msgid "Reading history-file %s\n"
-msgstr "Lesi søgu-fíluna %s\n"
-
-#, c-format
-msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "Kundi ikki útluta ritminni til fyribils søgufílu!\n"
-
-msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
-msgstr ""
-"Skriva 'help;' ella'\\h' fyri hjálp. Skriva '\\c' til at reinsa tippið.\n"
-
-#, c-format
-msgid "Writing history-file %s\n"
-msgstr "Skrivi søgufílu %s\n"
-
-msgid "Aborted"
-msgstr "Ógildað"
-
-msgid "Bye"
-msgstr "Farvæl"
-
-msgid "Query aborted by Ctrl+C\n"
-msgstr ""
-
-msgid "Display this help and exit."
+#, fuzzy
+msgid "Displays this help and exit."
 msgstr "Sýn hesa hjálp, og gevst."
-
-msgid "Synonym for -?"
-msgstr ""
-
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr ""
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
@@ -157,18 +105,6 @@ msgid ""
 msgstr ""
 
 msgid "Use compression in server/client protocol."
-msgstr ""
-
-msgid "Database to use."
-msgstr "Dátustovnur ið skal nýtast."
-
-msgid "(not used)"
-msgstr "(ikki nýtt)"
-
-msgid "Delimiter to be used."
-msgstr ""
-
-msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
 
 msgid "Print the output of a query (rows) vertically."
@@ -195,14 +131,8 @@ msgstr ""
 msgid "Ignore space after function names."
 msgstr ""
 
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
-
 msgid "Turn off beep on error."
 msgstr ""
-
-msgid "Connect to host."
-msgstr "Sambind við vert."
 
 msgid "Write line numbers for errors."
 msgstr ""
@@ -211,9 +141,6 @@ msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr ""
-
-msgid "Flush buffer after each query."
-msgstr "Skola tippið, eftir hvønn fyrispurning."
 
 msgid "Write column names in results."
 msgstr ""
@@ -227,6 +154,68 @@ msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+
+msgid "Output in table format."
+msgstr ""
+
+msgid "Only allow UPDATE and DELETE that uses keys."
+msgstr ""
+
+msgid "Synonym for option --safe-updates, -U."
+msgstr ""
+
+msgid "-v vvv implies that verbose= 3, Used to specify verbose"
+msgstr ""
+
+msgid "Output version information and exit."
+msgstr ""
+
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr ""
+
+msgid "Number of lines before each import progress report."
+msgstr ""
+
+msgid "Ping the server to check if it's alive."
+msgstr ""
+
+msgid "Configuration file defaults are not used if no-defaults is set"
+msgstr ""
+
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr ""
+
+msgid "Database to use."
+msgstr "Dátustovnur ið skal nýtast."
+
+msgid "(not used)"
+msgstr "(ikki nýtt)"
+
+msgid "Delimiter to be used."
+msgstr ""
+
+msgid "Execute command and quit. (Disables --force and history file)"
+msgstr ""
+
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr ""
+
+msgid "Flush buffer after each query."
+msgstr "Skola tippið, eftir hvønn fyrispurning."
 
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr ""
@@ -244,22 +233,7 @@ msgid ""
 "default."
 msgstr ""
 
-msgid ""
-"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-"option deprecated; use --disable-pager instead."
-msgstr ""
-
-msgid ""
-"Password to use when connecting to server. If password is not given it's "
-"asked from the tty."
-msgstr ""
-
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-
-msgid "built-in default"
+msgid "Disable pager and print to stdout. See interactive help (\\h) also."
 msgstr ""
 
 msgid "Set the drizzle prompt to this value."
@@ -278,14 +252,11 @@ msgid ""
 "option is enabled by default."
 msgstr ""
 
-msgid "Shutdown the server."
+msgid "Shutdown the server"
 msgstr ""
 
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
-msgstr ""
-
-msgid "Output in table format."
 msgstr ""
 
 msgid ""
@@ -294,24 +265,7 @@ msgid ""
 "default."
 msgstr ""
 
-msgid ""
-"Disable outfile. See interactive help (\\h) also. WARNING: option "
-"deprecated; use --disable-tee instead"
-msgstr ""
-
-msgid "User for login if not current user."
-msgstr ""
-
-msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr ""
-
-msgid "Synonym for option --safe-updates, -U."
-msgstr ""
-
-msgid "Write more. (-v -v -v gives the table output format)."
-msgstr ""
-
-msgid "Output version information and exit."
+msgid "Disable outfile. See interactive help (\\h) also."
 msgstr ""
 
 msgid "Wait and retry if connection is down."
@@ -329,21 +283,42 @@ msgstr ""
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
-msgid ""
-"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr ""
-
-msgid "Number of lines before each import progress report."
-msgstr ""
-
-msgid "Ping the server to check if it's alive."
-msgstr ""
-
 msgid "Use MySQL Protocol."
 msgstr ""
 
+#, fuzzy
+msgid "Connect to host"
+msgstr "Sambind við vert."
+
+msgid ""
+"Password to use when connecting to server. If password is not given it's "
+"asked from the tty."
+msgstr ""
+
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
+msgstr ""
+
+msgid "User for login if not current user."
+msgstr ""
+
+msgid "The protocol of connection (tcp,socket,pipe,memory)."
+msgstr ""
+
 #, c-format
-msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
+msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+
+msgid "DELIMITER cannot contain a backslash character"
+msgstr ""
+
+#, c-format
+msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
 msgstr ""
 
 #, c-format
@@ -354,30 +329,41 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid "Usage: %s [OPTIONS] [database]\n"
+msgid "Usage: drizzle [OPTIONS] [database]\n"
 msgstr ""
 
-msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-tee instead.\n"
+msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr ""
 
 #, c-format
-msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr ""
-
-#, c-format
-msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
-
 msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
 msgstr ""
 
-msgid "Value supplied for port is not valid."
+#, c-format
+msgid "Reading history-file %s\n"
+msgstr "Lesi søgu-fíluna %s\n"
+
+#, c-format
+msgid "Couldn't allocate memory for temp histfile!\n"
+msgstr "Kundi ikki útluta ritminni til fyribils søgufílu!\n"
+
+msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
+msgstr ""
+"Skriva 'help;' ella'\\h' fyri hjálp. Skriva '\\c' til at reinsa tippið.\n"
+
+#, c-format
+msgid "Writing history-file %s\n"
+msgstr "Skrivi søgufílu %s\n"
+
+msgid "Aborted"
+msgstr "Ógildað"
+
+msgid "Bye"
+msgstr "Farvæl"
+
+msgid "Query aborted by Ctrl+C\n"
 msgstr ""
 
 #, c-format
@@ -388,10 +374,8 @@ msgid "Unknown command: "
 msgstr ""
 
 msgid ""
-"                              Reading table information for completion of "
-"table and column names\n"
-"                                  You can turn off this feature to get a "
-"quicker startup with -A\n"
+"Reading table information for completion of table and column names\n"
+"You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 
@@ -431,66 +415,8 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid ""
-"Number of rows before each output progress report (requires --verbose)."
-msgstr ""
-
 #, c-format
 msgid "Got errno %d on write"
-msgstr ""
-
-#, c-format
-msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr ""
-
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-
-msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
-
-#, c-format
-msgid "For more options, use %s --help\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead.\n"
-msgstr ""
-
-#, c-format
-msgid "Value supplied for port is not valid.\n"
-msgstr ""
-
-#, c-format
-msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr ""
-
-#, c-format
-msgid "Input filename too long: %s"
-msgstr ""
-
-#, c-format
-msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr ""
-
-#, c-format
-msgid "Invalid mode to --compatible: %s\n"
 msgstr ""
 
 #, c-format
@@ -626,6 +552,58 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
+msgid "Number of rows before each output progress report (requires --verbose)."
+msgstr ""
+
+#, c-format
+msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
+msgstr ""
+
+#, c-format
+msgid "Value supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "Input filename too long: %s"
+msgstr ""
+
+#, c-format
+msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
+msgstr ""
+
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+
+msgid "Dumps definitions and data from a Drizzle database server"
+msgstr ""
+
+#, c-format
+msgid "Illegal use of option --ignore-table=<database>.<table>\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid mode to --compatible: %s\n"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_max_connect_retries"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_tail_lines"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_sleep"
+msgstr ""
+
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
@@ -678,6 +656,9 @@ msgstr ""
 msgid "Unknown/unsupported storage engine: %s"
 msgstr ""
 
+msgid "Display this help and exit."
+msgstr "Sýn hesa hjálp, og gevst."
+
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
 
@@ -685,8 +666,8 @@ msgid "Auto-increment columns are incremented by this"
 msgstr ""
 
 msgid ""
-"Offset added to Auto-increment columns. Used when auto-increment-increment "
-"!= 1"
+"Offset added to Auto-increment columns. Used when auto-increment-increment !"
+"= 1"
 msgstr ""
 
 msgid ""
@@ -1416,8 +1397,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Table handler doesn't support NULL in given index. Please change column '%-"
-".192s' to be NOT NULL or use another handler"
+"Table handler doesn't support NULL in given index. Please change column "
+"'%-.192s' to be NOT NULL or use another handler"
 msgstr ""
 
 #, c-format
@@ -1666,8 +1647,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: '%-.64s' "
-"(%-.64s)"
+"Aborted connection %<PRIi64> to db: '%-.192s' user: '%-.48s' host: "
+"'%-.64s' (%-.64s)"
 msgstr ""
 
 msgid "The storage engine for the table does not support binary table dump"
@@ -1934,8 +1915,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Uncompressed data size too large; the maximum size is %d (probably, length "
-"of uncompressed data was corrupted)"
+"Uncompressed data size too large; the maximum size is %d (based on "
+"max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
@@ -1990,8 +1971,7 @@ msgid "Can't revoke all privileges for one or more of the requested users"
 msgstr ""
 
 #, c-format
-msgid ""
-"Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
 msgstr ""
 
 #, c-format
@@ -2000,8 +1980,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Variable '%-.64s' is not a variable component (can't be used as "
-"XXXX.variable_name)"
+"Variable '%-.64s' is not a variable component (can't be used as XXXX."
+"variable_name)"
 msgstr ""
 
 #, c-format
@@ -2026,8 +2006,7 @@ msgid ""
 "SELECT #%d"
 msgstr ""
 
-msgid ""
-"Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
 msgstr ""
 
 msgid ""
@@ -2294,8 +2273,7 @@ msgstr ""
 msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
 msgstr ""
 
-msgid ""
-"EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
 msgstr ""
 
 #, c-format
@@ -2327,14 +2305,13 @@ msgid ""
 "View merge algorithm can't be used here for now (assumed undefined algorithm)"
 msgstr ""
 
-msgid ""
-"View being updated does not have complete key of underlying table in it"
+msgid "View being updated does not have complete key of underlying table in it"
 msgstr ""
 
 #, c-format
 msgid ""
-"View '%-.192s.%-.192s' references invalid table(s) or column(s) or "
-"function(s) or definer/invoker of view lack rights to use them"
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
+"(s) or definer/invoker of view lack rights to use them"
 msgstr ""
 
 #, c-format
@@ -2607,8 +2584,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '%-"
-".192s')."
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
+"'%-.192s')."
 msgstr ""
 
 msgid ""
@@ -2639,8 +2616,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"The data source connection string '%-.64s' is not in the correct format"
+msgid "The data source connection string '%-.64s' is not in the correct format"
 msgstr ""
 
 #, c-format
@@ -2682,8 +2658,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The definition of table '%-.192s' prevents operation %.192s on table '%-"
-".192s'."
+"The definition of table '%-.192s' prevents operation %.192s on table "
+"'%-.192s'."
 msgstr ""
 
 msgid ""
@@ -2760,8 +2736,7 @@ msgid "Incorrect routine name '%-.192s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
 msgstr ""
 
 msgid "AGGREGATE is not supported for stored functions"
@@ -2769,8 +2744,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Can't create more than max_prepared_stmt_count statements (current value: "
-"%lu)"
+"Can't create more than max_prepared_stmt_count statements (current value: %"
+"lu)"
 msgstr ""
 
 #, c-format
@@ -2847,8 +2822,7 @@ msgid ""
 msgstr ""
 
 #, c-format
-msgid ""
-"Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
 msgstr ""
 
 msgid "MAXVALUE can only be used in last partition definition"
@@ -2866,8 +2840,7 @@ msgstr ""
 msgid "Wrong number of subpartitions defined, mismatch with previous setting"
 msgstr ""
 
-msgid ""
-"Constant/Random expression in (sub)partitioning function is not allowed"
+msgid "Constant/Random expression in (sub)partitioning function is not allowed"
 msgstr ""
 
 msgid "Expression in RANGE/LIST VALUES must be constant"
@@ -2928,8 +2901,7 @@ msgid "A BLOB field is not allowed in partition function"
 msgstr ""
 
 #, c-format
-msgid ""
-"A %-.192s must include all columns in the table's partitioning function"
+msgid "A %-.192s must include all columns in the table's partitioning function"
 msgstr ""
 
 #, c-format
@@ -2986,8 +2958,7 @@ msgstr ""
 msgid "It is not allowed to shut off binlog on this command"
 msgstr ""
 
-msgid ""
-"When reorganizing a set of partitions they must be in consecutive order"
+msgid "When reorganizing a set of partitions they must be in consecutive order"
 msgstr ""
 
 msgid ""
@@ -3117,8 +3088,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use "
-"%s instead"
+"The syntax '%s' is deprecated and will be removed in Drizzle %s. Please use %"
+"s instead"
 msgstr ""
 
 msgid "You can't write-lock a log table. Only read access is possible"
@@ -3129,8 +3100,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key "
-"%d would lead to a duplicate entry"
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
 msgstr ""
 
 #, c-format
@@ -3527,8 +3498,7 @@ msgid "Error when polling %-.64s backup driver for its image data"
 msgstr ""
 
 #, c-format
-msgid ""
-"Error when sending image data (for table #%d) to %-.64s restore driver"
+msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
 msgstr ""
 
 #, c-format
@@ -3659,6 +3629,10 @@ msgid "Corrupt or invalid table definition: %s"
 msgstr ""
 
 #, c-format
+msgid "Corrupt or invalid schema definition for %s : %s"
+msgstr ""
+
+#, c-format
 msgid "Schema does not exist: %s"
 msgstr ""
 
@@ -3671,6 +3645,17 @@ msgid "Error droppping Schema : %s"
 msgstr ""
 
 msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
+msgstr ""
+
+#, c-format
+msgid "Unknown table engine option key/pair %s = %s."
+msgstr ""
+
+#, c-format
+msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+msgid "Implicit cartesian join attempted."
 msgstr ""
 
 #, c-format
@@ -3793,6 +3778,69 @@ msgstr ""
 msgid "Usage: %s TRANSACTION_LOG\n"
 msgstr ""
 
+#, c-format
+msgid ""
+"Plugin '%s' contains the name '%s' in its manifest, which has already been "
+"registered.\n"
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' init function returned error.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin library named '%s'.\n"
+msgstr ""
+
+#, c-format
+msgid "Couldn't load plugin named '%s'.\n"
+msgstr ""
+
+msgid "Out of memory."
+msgstr ""
+
+#, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr ""
+
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr ""
+
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr ""
+
+#, c-format
+msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
+msgstr ""
+
+#, c-format
+msgid "Fatal error: Failed initializing %s plugin.\n"
+msgstr ""
+
 msgid "Warning: "
 msgstr ""
 
@@ -3901,77 +3949,22 @@ msgid "setsockopt(TCP_NODELAY) failed with errno %d"
 msgstr ""
 
 #, c-format
-msgid "Retrying bind() on %u"
+msgid "Retrying bind() on %u\n"
 msgstr ""
 
 #, c-format
-msgid "bind() failed with errno: %d"
+msgid "bind() failed with errno: %d\n"
 msgstr ""
 
-msgid "Do you already have another drizzled running?"
+msgid "Do you already have another drizzled running?\n"
 msgstr ""
 
 #, c-format
-msgid "listen() failed with errno %d"
+msgid "listen() failed with errno %d\n"
 msgstr ""
 
 #, c-format
 msgid "Listening on %s:%s\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Plugin '%s' contains the name '%s' in its manifest, which has already been "
-"registered.\n"
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' init function returned error.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin library named '%s'.\n"
-msgstr ""
-
-#, c-format
-msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
-
-msgid "Out of memory."
-msgstr ""
-
-#, c-format
-msgid "Unknown variable type code 0x%x in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid ""
-"Server variable %s of plugin %s was forced to be read-only: string variable "
-"without update_func and PLUGIN_VAR_MEMALLOC flag"
-msgstr ""
-
-#, c-format
-msgid "Missing variable name in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Thread local variable '%s' not allocated in plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Out of memory for plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Bad options for plugin '%s'."
-msgstr ""
-
-#, c-format
-msgid "Parsing options for plugin '%s' failed."
-msgstr ""
-
-#, c-format
-msgid "Plugin '%s' has conflicting system variables"
 msgstr ""
 
 #, c-format
@@ -4004,14 +3997,6 @@ msgstr ""
 
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
-msgstr ""
-
-#, c-format
-msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
-msgstr ""
-
-#, c-format
-msgid "Fatal error: Failed initializing %s plugin.\n"
 msgstr ""
 
 #, c-format
@@ -4085,9 +4070,17 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr ""
+
+#, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
+msgstr ""
+
+#, c-format
+msgid "ENUM column %s has greater than %d possible values"
 msgstr ""
 
 #, c-format
@@ -4098,10 +4091,6 @@ msgstr ""
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
 "read"
-msgstr ""
-
-#, c-format
-msgid "Got error %d when reading table '%s'"
 msgstr ""
 
 #, c-format
@@ -4452,29 +4441,6 @@ msgstr ""
 msgid "Log queries to a CSV file"
 msgstr ""
 
-#, c-format
-msgid "syslog facility \"%s\" not known, using \"local0\""
-msgstr ""
-
-#, c-format
-msgid "syslog priority \"%s\" not known, using \"info\""
-msgstr ""
-
-msgid "Enable logging to syslog"
-msgstr ""
-
-msgid "Syslog Ident"
-msgstr ""
-
-msgid "Syslog Facility"
-msgstr ""
-
-msgid "Syslog Priority"
-msgstr ""
-
-msgid "Log to syslog"
-msgstr ""
-
 msgid "List of memcached servers."
 msgstr ""
 
@@ -4717,6 +4683,18 @@ msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
 
 #, c-format
+msgid "syslog facility \"%s\" not known, using \"local0\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"warn\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"info\""
+msgstr ""
+
+#, c-format
 msgid "Unable to create background worker thread. Got error %s.\n"
 msgstr ""
 
@@ -4737,8 +4715,7 @@ msgid "Failed to initialize the Transaction Log Index.  Got error: %s\n"
 msgstr ""
 
 #, c-format
-msgid ""
-"Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
+msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
 msgid "Enable transaction log"
@@ -4792,3 +4769,6 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr ""
+
+#~ msgid "Server version: "
+#~ msgstr "Ambætara útgáva: "
