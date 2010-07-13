@@ -1332,8 +1332,8 @@ unsigned char *ha_blitz::get_pack_buffer(const size_t size) {
 
       secondary_row_buffer_size = size;
       secondary_row_buffer = (unsigned char *)new_ptr;
-      buf = secondary_row_buffer;
     }
+    buf = secondary_row_buffer;
   }
   return buf;
 }
