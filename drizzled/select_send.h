@@ -20,7 +20,6 @@
 
 #ifndef DRIZZLED_SELECT_SEND_H
 #define DRIZZLED_SELECT_SEND_H
-#include <iostream>
 
 #include <drizzled/plugin/client.h>
 #include <drizzled/plugin/query_cache.h>

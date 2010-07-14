@@ -2,6 +2,7 @@
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2008 Sun Microsystems
+ *  Copyright (C) 2010 Djellel Eddine Difallah
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -77,9 +78,7 @@ public:
 
   inline result_type operator()(argument_type handler)
   {
-    if (handler->doSendCachedResultset(session))
-      return false;
-    return true;
+    return handler->doSendCachedResultset(session);
   }
 };
 bool plugin::QueryCache::sendCachedResultset(Session *session)

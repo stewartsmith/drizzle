@@ -79,6 +79,7 @@ bool Memcached_Qc::doIsCached(Session *session)
     char* key= md5_key(query.c_str());
     if(queryCacheService.isCached(key))
     {
+     session->query_cache_key= key;
      return true;
     }
   }
@@ -88,7 +89,47 @@ bool Memcached_Qc::doIsCached(Session *session)
 bool Memcached_Qc::doSendCachedResultset(Session *session)
 {
   /* TODO implement the send resultset functionality */
-  (void) session;
+  //(void) session;
+  /** TODO: pay attention to the case where the cache value is empty
+  * ie: there is a session in the process of caching the query
+  * and didn't finish the work
+  */ 
+  
+  /*LEX *lex= session->lex;
+  register Select_Lex *select_lex= &lex->select_lex;
+  select_result *result=lex->result;
+  if (!result && !(result= new select_send()))
+    return true;
+  Select_Lex_Unit *unit= &lex->unit;
+  unit->set_limit(unit->global_parameters);
+    
+  result->prepare(select_lex->item_list, unit);
+  
+  result->send_data(QueryCacheService::previousItem);*/
+  // if (result->prepare(fields_list, select_lex->master_unit()))   /* select_lex.master = lex->unit :D */
+
+
+
+  map<string, message::Resultset>::iterator it= QueryCacheService::cache.find(session->query_cache_key);
+  // must handle the wrong key case !
+  message::Resultset resultset_message= it->second;
+  message::SelectHeader header= resultset_message.select_header();
+  size_t num_fields= header.field_meta_size();
+  message::SelectData data= resultset_message.select_data();
+  char buff[MAX_FIELD_WIDTH];
+  String str(buff, sizeof(buff), &my_charset_bin);
+  size_t y;
+  for ( int j= 0; j < data.record_size(); j++)
+  {
+    message::SelectRecord record= data.record(j);
+    for ( y= 0; y < num_fields; y++)
+    {
+      string value=record.record_value(y);
+      str.set(value.c_str(), value.length(), system_charset_info);
+      session->client->store(value);
+    }
+  }
+  session->query_cache_key= "";
   return false;
 }
 
@@ -147,7 +188,7 @@ bool Memcached_Qc::doSetResultset(Session *session)
      * and clear the Selectdata from the Resultset to be localy cached
      */
     queryCacheService.setResultsetHeader(*resultset, session, session->lex->query_tables);
-    resultset->clear_select_data();
+    //resultset->clear_select_data();
 
     /* add the Resultset (including the header) to the hash 
      * This is done before the final set (this can be a problem)

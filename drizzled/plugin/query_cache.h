@@ -1,9 +1,8 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Definitions required for Query Cache plugin
- *
- *  Copyright (C) 2008 Sun Microsystems, Toru Maesaka, Djellel Eddine Difallah
+ *  Copyright (C) 2008 Sun Microsystems, Toru Maesaka
+ *  Copyright (C) 2010 Djellel Eddine Difallah
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,13 +35,8 @@ namespace plugin
 
 /* 
   This is the API that a qcache plugin must implement.
-  it should implement each of these function pointers.
-  if a function pointer is NULL (not loaded), that's ok.
-
-  Return:
-    false = success
-    true  = failure
 */
+
 class QueryCache : public Plugin
 {
 private:  

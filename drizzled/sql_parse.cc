@@ -41,7 +41,6 @@
 #include "drizzled/probes.h"
 #include "drizzled/session_list.h"
 #include "drizzled/global_charset_info.h"
-#include "drizzled/enum.h"
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/query_rewrite.h"
