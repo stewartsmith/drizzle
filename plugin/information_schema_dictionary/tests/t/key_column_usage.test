@@ -1,0 +1,7 @@
+create schema everything;
+use everything;
+-- source include/everything.sql
+--sorted_result
+select * from information_schema.key_column_usage WHERE table_schema="everything" ORDER BY TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME;
+drop schema everything;
+

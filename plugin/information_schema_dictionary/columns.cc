@@ -27,63 +27,170 @@ using namespace drizzled;
 Columns::Columns() :
   InformationSchema("COLUMNS")
 {
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
-  add_field("COLUMN_NAME");
-  add_field("ORDINAL_POSITION");
-  add_field("COLUMN_DEFAULT");
-  add_field("IS_NULLABLE");
-  add_field("DATA_TYPE");
-  add_field("CHARACTER_MAXIMUM_LENGTH");
-  add_field("CHARACTER_OCTET_LENGTH");
-  add_field("NUMERIC_PRECISION");
-  add_field("NUMERIC_PRECISION_RADIX");
-  add_field("NUMERIC_SCALE");
-  add_field("DATETIME_PRECISION");
-  add_field("CHARACTER_SET_CATALOG");
-  add_field("CHARACTER_SET_SCHEMA");
-  add_field("CHARACTER_SET_NAME");
-  add_field("COLLATION_CATALOG");
-  add_field("COLLATION_SCHEMA");
-  add_field("COLLATION_NAME");
-  add_field("DOMAIN_CATALOG");
-  add_field("DOMAIN_SCHEMA");
-  add_field("DOMAIN_NAME");
-}
-
-
-void Columns::Generator::fill()
-{
-}
-
-bool Columns::Generator::nextCore()
-{
-  return false;
-}
-
-bool Columns::Generator::next()
-{
-  while (not nextCore())
-  {
-    return false;
-  }
-
-  return true;
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("COLUMN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("ORDINAL_POSITION", plugin::TableFunction::NUMBER, 0, false);
+  add_field("COLUMN_DEFAULT", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("IS_NULLABLE", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("DATA_TYPE", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("CHARACTER_MAXIMUM_LENGTH", plugin::TableFunction::NUMBER, 0, true);
+  add_field("CHARACTER_OCTET_LENGTH", plugin::TableFunction::NUMBER, 0, true);
+  add_field("NUMERIC_PRECISION", plugin::TableFunction::NUMBER, 0, true);
+  add_field("NUMERIC_PRECISION_RADIX", plugin::TableFunction::NUMBER, 0, true);
+  add_field("NUMERIC_SCALE", plugin::TableFunction::NUMBER, 0, true);
+  add_field("DATETIME_PRECISION", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("CHARACTER_SET_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("CHARACTER_SET_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("CHARACTER_SET_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("COLLATION_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("COLLATION_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("COLLATION_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("DOMAIN_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("DOMAIN_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
+  add_field("DOMAIN_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, true);
 }
 
 Columns::Generator::Generator(drizzled::Field **arg) :
   InformationSchema::Generator(arg),
-  is_primed(false)
+  generator(getSession()),
+  field_iterator(0)
 {
+  while (not (table_message= generator))
+  { };
 }
 
 bool Columns::Generator::populate()
 {
-  if (not next())
+  if (not table_message)
     return false;
 
-  fill();
+  do 
+  {
+    if (field_iterator != table_message->field_size())
+    {
+      drizzled::message::Table::Field field= table_message->field(field_iterator);
 
-  return true;
+      /* TABLE_CATALOG */
+      push(table_message->catalog());
+
+      /* TABLE_SCHEMA */
+      push(table_message->schema());
+
+      /* TABLE_NAME */
+      push(table_message->name());
+
+      /* COLUMN_NAME */
+      push(field.name());
+
+      /* ORDINAL_POSITION */
+      push(static_cast<int64_t>(field_iterator));
+
+      /* COLUMN_NAME */
+      if (field.options().has_default_value())
+      {
+        push(field.options().default_value());
+      }
+      else
+      {
+        push();
+      }
+
+      /* IS_NULLABLE */
+      push(field.constraints().is_nullable());
+
+      /* DATA_TYPE */
+      pushType(field.type());
+
+      /* "CHARACTER_MAXIMUM_LENGTH" */
+      if (field.string_options().has_length())
+      {
+        push(static_cast<int64_t>(field.string_options().length()));
+      }
+      else
+      {
+        push();
+      }
+
+      /* "CHARACTER_OCTET_LENGTH" */
+      if (field.string_options().has_length())
+      {
+        push(static_cast<int64_t>(field.string_options().length() * 4));
+      }
+      else
+      {
+        push();
+      }
+
+      /* "NUMERIC_PRECISION" */
+      if (field.numeric_options().has_precision())
+      {
+        push(static_cast<int64_t>(field.numeric_options().precision()));
+      }
+      else
+      {
+        push();
+      }
+
+      /* NUMERIC_PRECISION_RADIX */
+      push();
+
+      /* "NUMERIC_SCALE" */
+      if (field.numeric_options().has_scale())
+      {
+        push(static_cast<int64_t>(field.numeric_options().scale()));
+      }
+      else
+      {
+        push();
+      }
+
+      /* DATETIME_PRECISION */
+      push();
+
+      /* CHARACTER_SET_CATALOG */
+      push();
+
+      /* CHARACTER_SET_SCHEMA */
+      push();
+
+      /* CHARACTER_SET_NAME */
+      push();
+
+      /* COLLATION_CATALOG */
+      push();
+
+      /* COLLATION_SCHEMA */
+      push();
+
+      /* COLLATION_NAME */
+      if (field.string_options().has_collation())
+      {
+        push(field.string_options().collation());
+      }
+      else
+      {
+        push();
+      }
+
+      /* DOMAIN_CATALOG */
+      push();
+
+      /* DOMAIN_SCHEMA */
+      push();
+
+      /* DOMAIN_NAME */
+      push();
+
+      field_iterator++;
+
+      return true;
+    }
+
+    field_iterator= 0;
+
+  } while ((table_message= generator));
+
+  return false;
 }

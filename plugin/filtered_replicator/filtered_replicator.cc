@@ -611,4 +611,4 @@ static drizzle_sys_var* filtered_replicator_system_variables[]= {
   NULL
 };
 
-DRIZZLE_PLUGIN(init, filtered_replicator_system_variables);
+DRIZZLE_PLUGIN(init, filtered_replicator_system_variables, NULL);

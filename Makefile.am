@@ -151,6 +151,7 @@ TESTS += ${check_PROGRAMS}
 
 merge-clean:
 	find ./ | $(GREP) \.orig | xargs rm -f
+	find ./ | $(GREP) \.moved | xargs rm -f
 	find ./ | $(GREP) \.rej | xargs rm -f
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns

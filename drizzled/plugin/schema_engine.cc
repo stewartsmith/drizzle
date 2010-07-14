@@ -38,11 +38,11 @@ namespace plugin
 class AddSchemaNames : 
   public unary_function<StorageEngine *, void>
 {
-  SchemaIdentifierList &schemas;
+  SchemaIdentifiers &schemas;
 
 public:
 
-  AddSchemaNames(SchemaIdentifierList &of_names) :
+  AddSchemaNames(SchemaIdentifiers &of_names) :
     schemas(of_names)
   {
   }
@@ -53,7 +53,7 @@ public:
   }
 };
 
-void StorageEngine::getSchemaIdentifiers(Session &session, SchemaIdentifierList &schemas)
+void StorageEngine::getSchemaIdentifiers(Session &session, SchemaIdentifiers &schemas)
 {
   // Add hook here for engines to register schema.
   for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),

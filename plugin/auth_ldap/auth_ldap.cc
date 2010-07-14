@@ -490,4 +490,4 @@ static drizzle_sys_var* sys_variables[]=
 
 } /* namespace auth_ldap */
 
-DRIZZLE_PLUGIN(auth_ldap::init, auth_ldap::sys_variables);
+DRIZZLE_PLUGIN(auth_ldap::init, auth_ldap::sys_variables, NULL);

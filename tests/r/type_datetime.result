@@ -342,57 +342,57 @@ create table t1 (f1 date, f2 datetime, f3 varchar(20));
 create table t2 as select coalesce(f1,f1) as f4 from t1;
 desc t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATE	TRUE		TRUE	
+f4	DATE	YES		YES	
 create table t3 as select coalesce(f1,f2) as f4 from t1;
 desc t3;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATETIME	TRUE		TRUE	
+f4	DATETIME	YES		YES	
 create table t4 as select coalesce(f2,f2) as f4 from t1;
 desc t4;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATETIME	TRUE		TRUE	
+f4	DATETIME	YES		YES	
 create table t5 as select coalesce(f1,f3) as f4 from t1;
 desc t5;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	VARCHAR	TRUE		TRUE	
+f4	VARCHAR	YES		YES	
 create table t6 as select coalesce(f2,f3) as f4 from t1;
 desc t6;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	VARCHAR	TRUE		TRUE	
+f4	VARCHAR	YES		YES	
 create table t7 as select coalesce(makedate(1997,1),f2) as f4 from t1;
 desc t7;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATETIME	TRUE		TRUE	
+f4	DATETIME	YES		YES	
 create table t8 as select coalesce(cast('01-01-01' as datetime),f2) as f4
 from t1;
 desc t8;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATETIME	TRUE		TRUE	
+f4	DATETIME	YES		YES	
 create table t9 as select case when 1 then cast('01-01-01' as date)
 when 0 then cast('01-01-01' as date) end as f4 from t1;
 desc t9;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATE	TRUE		TRUE	
+f4	DATE	YES		YES	
 create table t10 as select case when 1 then cast('01-01-01' as datetime)
 when 0 then cast('01-01-01' as datetime) end as f4 from t1;
 desc t10;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATETIME	TRUE		TRUE	
+f4	DATETIME	YES		YES	
 create table t11 as select if(1, cast('01-01-01' as datetime),
 cast('01-01-01' as date)) as f4 from t1;
 desc t11;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATE	TRUE		TRUE	
+f4	DATE	YES		YES	
 create table t12 as select least(cast('01-01-01' as datetime),
 cast('01-01-01' as date)) as f4 from t1;
 desc t12;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATE	TRUE		TRUE	
+f4	DATE	YES		YES	
 create table t13 as select ifnull(cast('01-01-01' as datetime),
 cast('01-01-01' as date)) as f4 from t1;
 desc t13;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f4	DATE	TRUE		TRUE	
+f4	DATE	YES		YES	
 drop tables t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13;
 ###################################################################
 create table t1 (a int);
