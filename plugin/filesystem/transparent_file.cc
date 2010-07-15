@@ -39,7 +39,7 @@ void TransparentFile::init_buff(int filedes_arg)
   lower_bound= 0;
   lseek(filedes, 0, SEEK_SET);
   if (filedes && buff)
-    upper_bound= xread(filedes, buff, buff_size);
+    upper_bound= ::read(filedes, buff, buff_size);
 }
 
 unsigned char *TransparentFile::ptr()
