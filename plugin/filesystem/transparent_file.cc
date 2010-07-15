@@ -65,7 +65,7 @@ off_t TransparentFile::read_next()
      No need to seek here, as the file managed by TransparentFile class
      always points to upper_bound byte
   */
-  if ((bytes_read= xread(filedes, buff, buff_size)) < 0)
+  if ((bytes_read= ::read(filedes, buff, buff_size)) < 0)
     return (off_t) -1;
 
   /* end of file */
@@ -89,7 +89,7 @@ char TransparentFile::get_value(off_t offset)
 
   lseek(filedes, offset, SEEK_SET);
   /* read appropriate portion of the file */
-  if ((bytes_read= xread(filedes, buff, buff_size)) < 0)
+  if ((bytes_read= ::read(filedes, buff, buff_size)) < 0)
     return 0;
 
   lower_bound= offset;

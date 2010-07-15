@@ -19,26 +19,7 @@
 #ifndef PLUGIN_FILESYSTEM_UTILITY_H
 #define PLUGIN_FILESYSTEM_UTILITY_H
 
-static inline ssize_t xread(int fd, void *buf, size_t count)
-{
-  char *p= (char*)buf;
-  ssize_t total= 0;
-  while (count > 0)
-  {
-    ssize_t nr;
-    while ((nr= ::read(fd, p, count)) < 0 &&
-           (errno == EINTR || errno == EAGAIN))
-      ;
-    if (nr <= 0)
-      return total ? total : nr;
-    p+= nr;
-    count-= nr;
-    total+= nr;
-  }
-  return total;
-}
-
-static inline ssize_t xwrite(int fd, const void *buf, size_t count)
+static inline ssize_t write_in_all(int fd, const void *buf, size_t count)
 {
   const char *p= (const char*)buf;
   ssize_t total= 0;
@@ -60,14 +41,6 @@ static inline ssize_t xwrite(int fd, const void *buf, size_t count)
     count-= len;
   }
   return total;
-}
-
-static inline int xclose(int fd)
-{
-  int err;
-  while ((err= ::close(fd)) < 0 && errno == EINTR)
-    ;
-  return err;
 }
 
 #endif /* PLUGIN_FILESYSTEM_UTILITY_H */

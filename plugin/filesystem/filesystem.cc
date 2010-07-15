@@ -453,7 +453,7 @@ int FilesystemCursor::doOpen(const drizzled::TableIdentifier &identifier, int, u
 
 int FilesystemCursor::close(void)
 {
-  int err= xclose(file_desc);
+  int err= ::close(file_desc);
   if (err < 0)
     err= errno;
   free_share();
@@ -685,7 +685,7 @@ int FilesystemCursor::doEndTableScan()
     }
 
     off_t write_length= write_end - write_start;
-    if (xwrite(update_file_desc,
+    if (write_in_all(update_file_desc,
                file_buff->ptr() + (write_start - file_buff->start()),
                write_length) != write_length)
       goto error;
@@ -705,12 +705,12 @@ int FilesystemCursor::doEndTableScan()
   }
   // close update file
   if (::fsync(update_file_desc) ||
-      xclose(update_file_desc))
+      ::close(update_file_desc))
     goto error;
   share->update_file_opened= false;
 
   // close current file
-  if (xclose(file_desc))
+  if (::close(file_desc))
     goto error;
   if (::rename(update_file_name.c_str(), share->format.getFileName().c_str()))
     goto error;
@@ -778,13 +778,13 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
     return ENOENT;
   }
 
-  err_write= xwrite(fd, output_line.c_str(), output_line.length());
+  err_write= write_in_all(fd, output_line.c_str(), output_line.length());
   if (err_write < 0)
     err_write= errno;
   else
     err_write= 0;
 
-  err_close= xclose(fd);
+  err_close= ::close(fd);
   if (err_close < 0)
     err_close= errno;
 
@@ -808,7 +808,7 @@ int FilesystemCursor::doUpdateRecord(const unsigned char *, unsigned char *)
   string str;
   recordToString(str);
 
-  if (xwrite(update_file_desc, str.c_str(), str.length()) < 0)
+  if (write_in_all(update_file_desc, str.c_str(), str.length()) < 0)
     return errno;
 
   addSlot();
