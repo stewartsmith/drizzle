@@ -22,7 +22,7 @@
 
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
 
 /* Definitions for parameters to do with Cursor-routines */
 

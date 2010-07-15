@@ -24,7 +24,7 @@
 #include "drizzled/common.h"
 #include "drizzled/lex_string.h"
 #include "drizzled/comp_creator.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 
 namespace drizzled
 {
