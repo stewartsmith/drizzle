@@ -28,6 +28,7 @@
 
 #include "transparent_file.h"
 #include "formatinfo.h"
+#include "filesystemlock.h"
 
 class FilesystemTableShare
 {
@@ -45,12 +46,11 @@ public:
   pthread_mutex_t mutex;
   FormatInfo format;
   std::vector< std::map<std::string, std::string> > vm;
-  drizzled::THR_LOCK lock;
+  FilesystemLock filesystem_lock;
 };
 
 class FilesystemCursor : public drizzled::Cursor
 {
-  drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
   FilesystemTableShare *share;       /* Shared lock info */
   TransparentFile *file_buff;
   int file_desc;
@@ -59,6 +59,8 @@ class FilesystemCursor : public drizzled::Cursor
   size_t tag_depth;
   off_t current_position;
   off_t next_position;
+  bool thread_locked;
+  uint32_t sql_command_type; /* Type of SQL command to process */
   /* each slot means an interval in a file which will be deleted later */
   std::vector< std::pair<off_t, off_t> > slots;
 
@@ -96,15 +98,14 @@ public:
   int doUpdateRecord(const unsigned char *, unsigned char *);
   int doDeleteRecord(const unsigned char *);
 
-  drizzled::THR_LOCK_DATA **store_lock(drizzled::Session *,
-                                       drizzled::THR_LOCK_DATA **to,
-                                       drizzled::thr_lock_type);
   virtual void get_auto_increment(uint64_t offset, uint64_t increment,
                                   uint64_t nb_desired_values,
                                   uint64_t *first_value,
                                   uint64_t *nb_reserved_values) { (void)offset; (void)increment; (void)nb_desired_values; (void)first_value; (void)nb_reserved_values; };
   FilesystemTableShare *get_share(const char *table_name);
   void free_share();
+  void critical_section_enter();
+  void critical_section_exit();
 private:
   void recordToString(std::string& output);
   void addSlot();

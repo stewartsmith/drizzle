@@ -61,6 +61,7 @@ public:
   FilesystemEngine(const string& name_arg)
    : drizzled::plugin::StorageEngine(name_arg,
                                      HTON_NULL_IN_KEY |
+                                     HTON_SKIP_STORE_LOCK |
                                      HTON_CAN_INDEX_BLOBS |
                                      HTON_AUTO_PART_KEY),
      fs_open_tables()
@@ -360,12 +361,10 @@ FilesystemTableShare::FilesystemTableShare(const string table_name_arg)
   update_file_opened(false),
   needs_reopen(false)
 {
-  thr_lock_init(&lock);
 }
 
 FilesystemTableShare::~FilesystemTableShare()
 {
-  thr_lock_delete(&lock);
   pthread_mutex_destroy(&mutex);
 }
 
@@ -428,8 +427,41 @@ void FilesystemCursor::free_share()
   pthread_mutex_unlock(&filesystem_mutex);
 }
 
+void FilesystemCursor::critical_section_enter()
+{
+  if (sql_command_type == SQLCOM_ALTER_TABLE ||
+      sql_command_type == SQLCOM_UPDATE ||
+      sql_command_type == SQLCOM_DELETE ||
+      sql_command_type == SQLCOM_INSERT ||
+      sql_command_type == SQLCOM_INSERT_SELECT ||
+      sql_command_type == SQLCOM_REPLACE ||
+      sql_command_type == SQLCOM_REPLACE_SELECT)
+    share->filesystem_lock.scan_update_begin();
+  else
+    share->filesystem_lock.scan_begin();
+
+  thread_locked = true;
+}
+
+void FilesystemCursor::critical_section_exit()
+{
+  if (sql_command_type == SQLCOM_ALTER_TABLE ||
+      sql_command_type == SQLCOM_UPDATE ||
+      sql_command_type == SQLCOM_DELETE ||
+      sql_command_type == SQLCOM_INSERT ||
+      sql_command_type == SQLCOM_INSERT_SELECT ||
+      sql_command_type == SQLCOM_REPLACE ||
+      sql_command_type == SQLCOM_REPLACE_SELECT)
+    share->filesystem_lock.scan_update_end();
+  else
+    share->filesystem_lock.scan_end();
+
+  thread_locked = false;
+}
+
 FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
-  : Cursor(engine_arg, table_arg)
+  : Cursor(engine_arg, table_arg),
+    thread_locked(false)
 {
   file_buff= new TransparentFile();
 }
@@ -447,7 +479,6 @@ int FilesystemCursor::doOpen(const drizzled::TableIdentifier &identifier, int, u
   }
 
   ref_length= sizeof(off_t);
-  thr_lock_data_init(&share->lock, &lock, NULL);
   return 0;
 }
 
@@ -462,6 +493,12 @@ int FilesystemCursor::close(void)
 
 int FilesystemCursor::doStartTableScan(bool)
 {
+  sql_command_type = session_sql_command(table->getSession());
+
+  if (thread_locked)
+    critical_section_exit();
+  critical_section_enter();
+
   if (share->format.isTagFormat())
   {
     tag_depth= 0;
@@ -653,11 +690,21 @@ int FilesystemCursor::openUpdateFile()
 
 int FilesystemCursor::doEndTableScan()
 {
+  sql_command_type = session_sql_command(table->getSession());
+
   if (share->format.isTagFormat())
+  {
+    if (thread_locked)
+      critical_section_exit();
     return 0;
+  }
 
   if (slots.size() == 0)
+  {
+    if (thread_locked)
+      critical_section_exit();
     return 0;
+  }
 
   int err= -1;
   sort(slots.begin(), slots.end());
@@ -724,6 +771,9 @@ int FilesystemCursor::doEndTableScan()
 error:
   err= errno;
   pthread_mutex_unlock(&share->mutex);
+
+  if (thread_locked)
+    critical_section_exit();
   return err;
 }
 
@@ -764,17 +814,20 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   if (share->format.isTagFormat())
     return 0;
 
+  sql_command_type = session_sql_command(table->getSession());
+
+  critical_section_enter();
+
   int err_write= 0;
   int err_close= 0;
 
   string output_line;
   recordToString(output_line);
 
-  pthread_mutex_lock(&share->mutex);
   int fd= ::open(share->format.getFileName().c_str(), O_WRONLY | O_APPEND);
   if (fd < 0)
   {
-    pthread_mutex_unlock(&share->mutex);
+    critical_section_exit();
     return ENOENT;
   }
 
@@ -788,7 +841,7 @@ int FilesystemCursor::doInsertRecord(unsigned char * buf)
   if (err_close < 0)
     err_close= errno;
 
-  pthread_mutex_unlock(&share->mutex);
+  critical_section_exit();
 
   if (err_write)
     return err_write;
@@ -843,16 +896,6 @@ bool FilesystemEngine::validateCreateTableOption(const std::string &key,
                                                  const std::string &state)
 {
   return FormatInfo::validateOption(key, state);
-}
-
-THR_LOCK_DATA **FilesystemCursor::store_lock(Session *,
-                                             THR_LOCK_DATA **to,
-                                             thr_lock_type lock_type)
-{
-  if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK)
-    lock.type= lock_type;
-  *to++= &lock;
-  return to;
 }
 
 int FilesystemEngine::doCreateTable(Session &,
