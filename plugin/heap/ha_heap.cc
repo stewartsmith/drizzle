@@ -738,7 +738,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
     HP_COLUMNDEF* column= columndef + column_idx;
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();
-    column->offset= field->offset(field->table->record[0]);
+    column->offset= field->offset(field->getTable()->record[0]);
 
     if (field->null_bit)
     {

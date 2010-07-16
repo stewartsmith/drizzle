@@ -598,7 +598,7 @@ bool update_ref_and_keys(Session *session,
       if (field->getValue()->type() == Item::NULL_ITEM &&
 	  ! field->getField()->real_maybe_null())
       {
-	field->getField()->table->reginfo.not_exists_optimize= 1;
+	field->getField()->getTable()->reginfo.not_exists_optimize= 1;
       }
     }
   }
@@ -933,7 +933,7 @@ StoredKey *get_store_key(Session *session,
 bool store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
 {
   bool error;
-  Table *table= field->table;
+  Table *table= field->getTable();
   Session *session= table->in_use;
   ha_rows cuted_fields=session->cuted_fields;
 
@@ -1159,7 +1159,7 @@ void add_not_null_conds(Join *join)
           Item *notnull;
           assert(item->type() == Item::FIELD_ITEM);
           Item_field *not_null_item= (Item_field*)item;
-          JoinTable *referred_tab= not_null_item->field->table->reginfo.join_tab;
+          JoinTable *referred_tab= not_null_item->field->getTable()->reginfo.join_tab;
           /*
             For UPDATE queries such as:
             UPDATE t1 SET t1.f2=(SELECT MAX(t2.f4) FROM t2 WHERE t2.f3=t1.f1);
@@ -1288,7 +1288,7 @@ static bool uses_index_fields_only(Item *item, Table *tbl, uint32_t keyno, bool 
   case Item::FIELD_ITEM:
     {
       Item_field *item_field= (Item_field*)item;
-      if (item_field->field->table != tbl)
+      if (item_field->field->getTable() != tbl)
         return true;
       return item_field->field->part_of_key.test(keyno);
     }
@@ -2324,7 +2324,7 @@ static int compare_fields_by_table_order(Item_field *field1,
   if (outer_ref)
     return cmp;
   JoinTable **idx= (JoinTable **) table_join_idx;
-  cmp= idx[field2->field->table->tablenr]-idx[field1->field->table->tablenr];
+  cmp= idx[field2->field->getTable()->tablenr]-idx[field1->field->getTable()->tablenr];
   return cmp < 0 ? -1 : (cmp ? 1 : 0);
 }
 
@@ -2571,9 +2571,9 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
       while ((item_field= it++))
       {
         Field *field= item_field->field;
-        JoinTable *stat= field->table->reginfo.join_tab;
+        JoinTable *stat= field->getTable()->reginfo.join_tab;
         key_map possible_keys= field->key_start;
-        possible_keys&= field->table->keys_in_use_for_query;
+        possible_keys&= field->getTable()->keys_in_use_for_query;
         stat[0].const_keys|= possible_keys;
 
         /*
@@ -2583,7 +2583,7 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
         */
         if (possible_keys.any())
         {
-          Table *field_tab= field->table;
+          Table *field_tab= field->getTable();
           optimizer::KeyUse *use;
           for (use= stat->keyuse; use && use->getTable() == field_tab; use++)
             if (possible_keys.test(use->getKey()) &&
@@ -3027,7 +3027,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     {
       Field *field= ((Item_field*) args[0])->field;
       if (field->flags & AUTO_INCREMENT_FLAG 
-          && ! field->table->maybe_null 
+          && ! field->getTable()->maybe_null 
           && session->options & OPTION_AUTO_IS_NULL
           && (
             session->first_successful_insert_id_in_prev_stmt > 0 
@@ -4276,9 +4276,9 @@ bool test_if_ref(Item_field *left_item,Item *right_item)
 {
   Field *field=left_item->field;
   // No need to change const test. We also have to keep tests on LEFT JOIN
-  if (!field->table->const_table && !field->table->maybe_null)
+  if (not field->getTable()->const_table && !field->getTable()->maybe_null)
   {
-    Item *ref_item=part_of_refkey(field->table,field);
+    Item *ref_item=part_of_refkey(field->getTable(),field);
     if (ref_item && ref_item->eq(right_item,1))
     {
       right_item= right_item->real_item();
@@ -6145,7 +6145,7 @@ bool setup_copy_fields(Session *session,
           saved value
         */
         field= item->field;
-        item->result_field=field->new_field(session->mem_root,field->table, 1);
+        item->result_field=field->new_field(session->mem_root,field->getTable(), 1);
               /*
                 We need to allocate one extra byte for null handling and
                 another extra byte to not get warnings from purify in
@@ -6278,7 +6278,7 @@ bool change_to_use_tmp_fields(Session *session,
       }
       else if ((field= item->get_tmp_table_field()))
       {
-        if (item->type() == Item::SUM_FUNC_ITEM && field->table->group)
+        if (item->type() == Item::SUM_FUNC_ITEM && field->getTable()->group)
           item_field= ((Item_sum*) item)->result_item(field);
         else
           item_field= (Item*) new Item_field(field);

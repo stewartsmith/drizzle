@@ -96,11 +96,24 @@ public:
    * @note You can use table->in_use as replacement for current_session member
    * only inside of val_*() and store() members (e.g. you can't use it in cons)
    */
+private:
   Table *table;
+public:
   Table *getTable()
   {
     assert(table);
     return table;
+  }
+
+  Table *getTable() const
+  {
+    assert(table);
+    return table;
+  }
+
+  void setTable(Table *table_arg)
+  {
+    table= table_arg;
   }
 
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */

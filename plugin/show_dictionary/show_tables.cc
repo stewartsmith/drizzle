@@ -21,7 +21,7 @@
 
 #include "config.h"
 #include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 
 using namespace std;
 using namespace drizzled;

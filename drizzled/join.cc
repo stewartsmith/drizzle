@@ -5779,9 +5779,9 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     while (iter != sargables.end())
     {
       Field *field= (*iter).getField();
-      JoinTable *join_tab= field->table->reginfo.join_tab;
+      JoinTable *join_tab= field->getTable()->reginfo.join_tab;
       key_map possible_keys= field->key_start;
-      possible_keys&= field->table->keys_in_use_for_query;
+      possible_keys&= field->getTable()->keys_in_use_for_query;
       bool is_const= true;
       for (uint32_t j= 0; j < (*iter).getNumValues(); j++)
         is_const&= (*iter).isConstItem(j);

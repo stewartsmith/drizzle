@@ -28,8 +28,7 @@
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/sql_string.h"
-#include "drizzled/schema_identifier.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 #include "drizzled/cached_directory.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 

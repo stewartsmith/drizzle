@@ -36,7 +36,7 @@
 #include "drizzled/transaction_services.h"
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
 #include "drizzled/internal/m_string.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"

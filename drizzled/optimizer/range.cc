@@ -2567,7 +2567,7 @@ static optimizer::SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *par
   field->setWriteSet();
 
   Item_result cmp_type= field->cmp_type();
-  if (!((ref_tables | field->table->map) & param_comp))
+  if (!((ref_tables | field->getTable()->map) & param_comp))
     ftree= get_func_mm_tree(param, cond_func, field, value, cmp_type, inv);
   Item_equal *item_equal= field_item->item_equal;
   if (item_equal)
@@ -2581,7 +2581,7 @@ static optimizer::SEL_TREE *get_full_func_mm_tree(optimizer::RangeParameter *par
 
       if (field->eq(f))
         continue;
-      if (!((ref_tables | f->table->map) & param_comp))
+      if (!((ref_tables | f->getTable()->map) & param_comp))
       {
         tree= get_func_mm_tree(param, cond_func, f, value, cmp_type, inv);
         ftree= !ftree ? tree : tree_and(param, ftree, tree);
@@ -2732,7 +2732,7 @@ static optimizer::SEL_TREE *get_mm_tree(optimizer::RangeParameter *param, COND *
       field->setWriteSet();
 
       Item_result cmp_type= field->cmp_type();
-      if (!((ref_tables | field->table->map) & param_comp))
+      if (!((ref_tables | field->getTable()->map) & param_comp))
       {
         tree= get_mm_parts(param, cond, field, Item_func::EQ_FUNC,
 		           value,cmp_type);
@@ -2771,7 +2771,7 @@ get_mm_parts(optimizer::RangeParameter *param,
 	           Item_func::Functype type,
 	           Item *value, Item_result)
 {
-  if (field->table != param->table)
+  if (field->getTable() != param->table)
     return 0;
 
   KEY_PART *key_part = param->key_parts;
@@ -2841,7 +2841,7 @@ get_mm_leaf(optimizer::RangeParameter *param,
   param->session->mem_root= param->old_root;
   if (!value)					// IS NULL or IS NOT NULL
   {
-    if (field->table->maybe_null)		// Can't use a key on this
+    if (field->getTable()->maybe_null)		// Can't use a key on this
       goto end;
     if (!maybe_null)				// Not null field
     {
