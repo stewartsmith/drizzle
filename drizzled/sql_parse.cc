@@ -712,6 +712,7 @@ void create_select_for_variable(const char *var_name)
 
 void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
+  uint64_t start_time= my_getsystime();
   lex_start(session);
   session->reset_for_next_command();
 
@@ -753,6 +754,7 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
+  session->status_var.execution_time_nsec+= my_getsystime() - start_time;
 }
 
 

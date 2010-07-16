@@ -336,7 +336,7 @@ public:
   { (void)identifier;  return true; }
 
   // @note All schema methods defined here
-  static void getSchemaIdentifiers(Session &session, SchemaIdentifierList &schemas);
+  static void getSchemaIdentifiers(Session &session, SchemaIdentifiers &schemas);
   static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::Schema &proto);
   static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::Schema &proto);
   static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);
@@ -346,7 +346,7 @@ public:
   static bool alterSchema(const drizzled::message::Schema &schema_message);
 
   // @note make private/protected
-  virtual void doGetSchemaIdentifiers(SchemaIdentifierList&)
+  virtual void doGetSchemaIdentifiers(SchemaIdentifiers&)
   { }
 
   virtual bool doGetSchemaDefinition(const drizzled::SchemaIdentifier&, drizzled::message::Schema&)

@@ -33,8 +33,8 @@ public:
 
   class Generator : public drizzled::plugin::TableFunction::Generator 
   {
-    drizzled::SchemaIdentifierList schema_names;
-    drizzled::SchemaIdentifierList::const_iterator schema_iterator;
+    drizzled::SchemaIdentifiers schema_names;
+    drizzled::SchemaIdentifiers::const_iterator schema_iterator;
 
     bool is_schema_primed;
 

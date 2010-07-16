@@ -237,4 +237,4 @@ static drizzle_sys_var* sys_variables[]=
 
 } /* namespace auth_file */
 
-DRIZZLE_PLUGIN(auth_file::init, auth_file::sys_variables);
+DRIZZLE_PLUGIN(auth_file::init, auth_file::sys_variables, NULL);

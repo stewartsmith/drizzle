@@ -188,6 +188,11 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/units.h \
 			      drizzled/function/user_var_as_out_param.h \
 			      drizzled/function_hash.h \
+			      drizzled/generator.h \
+			      drizzled/generator/all_fields.h \
+			      drizzled/generator/all_tables.h \
+			      drizzled/generator/schema.h \
+			      drizzled/generator/table.h \
 			      drizzled/gettext.h \
 			      drizzled/global_charset_info.h \
 			      drizzled/ha_statistics.h \
@@ -601,6 +606,10 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/time/year.cc \
 				 drizzled/function/units.cc \
 				 drizzled/function/user_var_as_out_param.cc \
+				 drizzled/generator/all_fields.cc \
+				 drizzled/generator/all_tables.cc \
+				 drizzled/generator/schema.cc \
+				 drizzled/generator/table.cc \
 				 drizzled/ha_commands.cc \
 				 drizzled/hybrid_type_traits.cc \
 				 drizzled/hybrid_type_traits_decimal.cc \

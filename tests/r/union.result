@@ -1097,8 +1097,8 @@ select f2,a1 from (select a1, CAST('2004-12-31' AS DATE) f2 from t1) a
 order by f2, a1;
 show columns from t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-f2	DATE	TRUE		TRUE	
-a1	INTEGER	TRUE		TRUE	
+f2	DATE	YES		YES	
+a1	INTEGER	YES		YES	
 drop table t1, t2;
 create table t1 (f1 int);
 create table t2 (f1 int, f2 int ,f3 date);
@@ -1123,7 +1123,7 @@ order by t1.f1, t3.f1, t2.f3
 order by sdate;
 show columns from t4;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-sdate	DATE	TRUE		TRUE	
+sdate	DATE	YES		YES	
 drop table t1, t2, t3, t4;
 create table t1 (a int not null, b char (10) not null);
 insert into t1 values(1,'a'),(2,'b'),(3,'c'),(3,'c');
@@ -1433,23 +1433,23 @@ INSERT INTO t1 VALUES (1), (2), (3);
 CREATE TABLE t2 SELECT * FROM (SELECT NULL) a UNION SELECT a FROM t1;
 DESC t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-NULL	INTEGER	TRUE		TRUE	
+NULL	INTEGER	YES		YES	
 CREATE TABLE t3 SELECT a FROM t1 UNION SELECT * FROM (SELECT NULL) a;
 DESC t3;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	TRUE		TRUE	
+a	INTEGER	YES		YES	
 CREATE TABLE t4 SELECT NULL;
 DESC t4;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-NULL	VARCHAR	TRUE		TRUE	
+NULL	VARCHAR	YES		YES	
 CREATE TABLE t5 SELECT NULL UNION SELECT NULL;
 DESC t5;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-NULL	VARCHAR	TRUE		TRUE	
+NULL	VARCHAR	YES		YES	
 CREATE TABLE t6 
 SELECT * FROM (SELECT * FROM (SELECT NULL)a) b UNION SELECT a FROM t1;
 DESC t6;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-NULL	INTEGER	TRUE		TRUE	
+NULL	INTEGER	YES		YES	
 DROP TABLE t1, t2, t3, t4, t5, t6;
 End of 5.0 tests

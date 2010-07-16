@@ -142,8 +142,8 @@ string StatusHelper::fillHelper(system_status_var *status_var, char *value, SHOW
 
 drizzle_show_var StatusHelper::status_vars_defs[]=
 {
-  {"Aborted_clients",           (char*) &current_global_counters.aborted_threads, SHOW_LONGLONG},
-  {"Aborted_connects",          (char*) &current_global_counters.aborted_connects, SHOW_LONGLONG},
+  {"Aborted_clients",           (char*) offsetof(system_status_var, aborted_threads), SHOW_LONGLONG_STATUS},
+  {"Aborted_connects",          (char*) offsetof(system_status_var, aborted_connects), SHOW_LONGLONG_STATUS},
   {"Bytes_received",            (char*) offsetof(system_status_var, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",                (char*) offsetof(system_status_var, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Connections",               (char*) &global_thread_id, SHOW_INT_NOFLUSH},
