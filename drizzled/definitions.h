@@ -44,6 +44,9 @@ namespace drizzled
 
 #define ER(X) ::drizzled::error_message((X))
 
+/* buffer size for strerror_r() */
+#define STRERROR_MAX 256
+
 /* extra 4+4 bytes for slave tmp tables */
 #define MAX_DBKEY_LENGTH (NAME_LEN*2+1+1+4+4)
 #define MAX_ALIAS_NAME 256
