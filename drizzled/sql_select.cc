@@ -2850,8 +2850,6 @@ static void propagate_cond_constants(Session *session,
   @endverbatim
 
   @param join       Join being processed
-  @param last_tab   Last table in current partial join order (this function is
-                    not called for empty partial join orders)
   @param next_tab   Table we're going to extend the current partial join with
 
   @retval
@@ -2860,10 +2858,10 @@ static void propagate_cond_constants(Session *session,
   @retval
     true   Requested join order extension not allowed.
 */
-bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
+bool check_interleaving_with_nj(JoinTable *next_tab)
 {
   TableList *next_emb= next_tab->table->pos_in_table_list->getEmbedding();
-  Join *join= last_tab->join;
+  Join *join= next_tab->join;
 
   if ((join->cur_embedding_map & ~next_tab->embedding_map).any())
   {
