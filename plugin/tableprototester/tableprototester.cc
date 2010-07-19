@@ -196,10 +196,11 @@ static void fill_table_too_many_enum_values(message::Table &table)
   table.mutable_engine()->set_name("tableprototester");
   table.set_creation_timestamp(0);
   table.set_update_timestamp(0);
-  
 
   tableopts= table.mutable_options();
   tableopts->set_comment("Table with too many enum options");
+  tableopts->set_collation("utf8_general_ci");
+  tableopts->set_collation_id(45);
 
   {
     field= table.add_field();
