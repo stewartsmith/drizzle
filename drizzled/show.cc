@@ -636,19 +636,5 @@ public:
       state_info(state_info_arg), query(query_arg)
   {}
 };
-  void print_cond(COND* cond);
-  void print_cond(COND* cond)  {
-    if(cond == NULL)  {
-      fprintf(stderr, "%s\n", "NULL");
-      return;
-    }
-    char str_buf[256];
-    String cond_str(str_buf, 256, system_charset_info);
-    cond_str.length(0);
-    cond->print(&cond_str, QT_ORDINARY);
-    cond_str.append('\0');
-    fprintf(stderr, "%s\n", cond_str.ptr());
-    return;
-  }
 
 } /* namespace drizzled */
