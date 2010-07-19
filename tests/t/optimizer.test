@@ -119,6 +119,11 @@ DROP TABLE BB;
 --echo Bug#592444 
 --echo - Segfault - operator= (join=0x1fd0fd8, tables=<value optimized out>, conds=<value optimized out>, keyuse_array=<value optimized out>) at ./drizzled/join_table.h:73
 --disable_warnings
+DROP TABLE IF EXISTS `a`;
+DROP TABLE IF EXISTS `d`;
+DROP TABLE IF EXISTS `h`;
+DROP TABLE IF EXISTS `k`;
+DROP TABLE IF EXISTS `n`;
 DROP TABLE IF EXISTS `p`;
 --enable_warnings
 CREATE TABLE `p` (
@@ -144,7 +149,6 @@ ALTER TABLE `n` DISABLE KEYS;
 INSERT INTO `n` VALUES (1,'rdtxodtcmi'),(2,'corrdtxodt'),(3,'v'),(4,'dcorrdtxod'),(5,'s'),(6,'my'),(7,'e'),(8,'qxszmrdcor'),(9,'bqxszmrdco'),(10,'wbqxszmrdc'),(11,'v'),(12,'kywbqxszmr'),(13,'v'),(14,'lngrakywbq'),(15,'umtlngraky'),(16,'could'),(17,'peiywumtln'),(18,'will'),(19,'tell'),(20,'w'),(21,'jenpeiywum'),(22,'cejenpeiyw'),(23,'x'),(24,'vxcejenpei');
 ALTER TABLE `n` ENABLE KEYS;
 
-DROP TABLE IF EXISTS `d`;
 CREATE TABLE `d` (
   `pk` int NOT NULL AUTO_INCREMENT,
   `col_varchar_10` varchar(10) DEFAULT NULL,
@@ -155,7 +159,6 @@ ALTER TABLE `d` DISABLE KEYS;
 INSERT INTO `d` VALUES (1,'f'),(2,'zdvoleqxer'),(3,'i'),(4,'u'),(5,'q');
 ALTER TABLE `d` ENABLE KEYS;
 
-DROP TABLE IF EXISTS `h`;
 CREATE TABLE `h` (
   `col_varchar_10` varchar(10) DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
@@ -170,13 +173,11 @@ ALTER TABLE `h` DISABLE KEYS;
 INSERT INTO `h` VALUES ('n',1,'rshrrbmsyd',4),('h',2,'okay',NULL),('ok',3,'i',-802095104),('just',4,'z',6),('hfnrshrrbm',5,'his',8),('f',6,'xhfnrshrrb',1),('h',7,'wxhfnrshrr',7),('wtwxhfnrsh',8,'v',7),('of',9,'cwtwxhfnrs',-1258487808);
 ALTER TABLE `h` ENABLE KEYS;
 
-DROP TABLE IF EXISTS `a`;
 CREATE TABLE `a` (
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`)
 ) ENGINE=InnoDB;
 
-DROP TABLE IF EXISTS `k`;
 CREATE TABLE `k` (
   `pk` int NOT NULL AUTO_INCREMENT,
   `col_varchar_10` varchar(10) DEFAULT NULL,
@@ -211,4 +212,7 @@ ON table3 . `col_varchar_10` = table7 . `col_varchar_10`
 WHERE (
 ( table3 . `pk` IN (6) )
 OR table7 . `col_int_key` IN (1, 1, 1, 2) ) ;
+
+# Cleanup
+DROP TABLE a, d, h, k, n , p ;
 --echo End Bug#592444 test

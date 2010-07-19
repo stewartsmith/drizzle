@@ -100,6 +100,11 @@ DROP TABLE BB;
 End Bug#595305 test
 Bug#592444 
 - Segfault - operator= (join=0x1fd0fd8, tables=<value optimized out>, conds=<value optimized out>, keyuse_array=<value optimized out>) at ./drizzled/join_table.h:73
+DROP TABLE IF EXISTS `a`;
+DROP TABLE IF EXISTS `d`;
+DROP TABLE IF EXISTS `h`;
+DROP TABLE IF EXISTS `k`;
+DROP TABLE IF EXISTS `n`;
 DROP TABLE IF EXISTS `p`;
 CREATE TABLE `p` (
 `pk` int NOT NULL AUTO_INCREMENT,
@@ -130,9 +135,6 @@ INSERT INTO `n` VALUES (1,'rdtxodtcmi'),(2,'corrdtxodt'),(3,'v'),(4,'dcorrdtxod'
 ALTER TABLE `n` ENABLE KEYS;
 Warnings:
 Note	1031	Table storage engine for 'n' doesn't have this option
-DROP TABLE IF EXISTS `d`;
-Warnings:
-Note	1051	Unknown table 'd'
 CREATE TABLE `d` (
 `pk` int NOT NULL AUTO_INCREMENT,
 `col_varchar_10` varchar(10) DEFAULT NULL,
@@ -145,9 +147,6 @@ INSERT INTO `d` VALUES (1,'f'),(2,'zdvoleqxer'),(3,'i'),(4,'u'),(5,'q');
 ALTER TABLE `d` ENABLE KEYS;
 Warnings:
 Note	1031	Table storage engine for 'd' doesn't have this option
-DROP TABLE IF EXISTS `h`;
-Warnings:
-Note	1051	Unknown table 'h'
 CREATE TABLE `h` (
 `col_varchar_10` varchar(10) DEFAULT NULL,
 `pk` int NOT NULL AUTO_INCREMENT,
@@ -164,16 +163,10 @@ INSERT INTO `h` VALUES ('n',1,'rshrrbmsyd',4),('h',2,'okay',NULL),('ok',3,'i',-8
 ALTER TABLE `h` ENABLE KEYS;
 Warnings:
 Note	1031	Table storage engine for 'h' doesn't have this option
-DROP TABLE IF EXISTS `a`;
-Warnings:
-Note	1051	Unknown table 'a'
 CREATE TABLE `a` (
 `pk` int NOT NULL AUTO_INCREMENT,
 PRIMARY KEY (`pk`)
 ) ENGINE=InnoDB;
-DROP TABLE IF EXISTS `k`;
-Warnings:
-Note	1051	Unknown table 'k'
 CREATE TABLE `k` (
 `pk` int NOT NULL AUTO_INCREMENT,
 `col_varchar_10` varchar(10) DEFAULT NULL,
@@ -211,4 +204,5 @@ WHERE (
 ( table3 . `pk` IN (6) )
 OR table7 . `col_int_key` IN (1, 1, 1, 2) ) ;
 field4
+DROP TABLE a, d, h, k, n , p ;
 End Bug#592444 test
