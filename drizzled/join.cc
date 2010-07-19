@@ -4040,6 +4040,15 @@ static bool greedy_search(Join      *join,
     */
     join->setPosInPartialPlan(idx, best_pos);
 
+    /*
+      We need to make best_extension_by_limited_search aware of the fact
+      that it's not starting from top level, but from a rather specific
+      position in the list of nested joins.
+    */
+    check_interleaving_with_nj (best_table);
+    
+      
+
     /* find the position of 'best_table' in 'join->best_ref' */
     best_idx= idx;
     JoinTable *pos= join->best_ref[best_idx];
@@ -4201,13 +4210,9 @@ static bool best_extension_by_limited_search(Join *join,
   for (JoinTable **pos= join->best_ref + idx ; (s= *pos) ; pos++)
   {
     table_map real_table_bit= s->table->map;
-    if (idx)
-    {
-      partial_pos= join->getPosFromPartialPlan(idx - 1);
-    }
     if ((remaining_tables & real_table_bit) &&
         ! (remaining_tables & s->dependent) &&
-        (! idx || ! check_interleaving_with_nj(partial_pos.getJoinTable(), s)))
+        (! idx || ! check_interleaving_with_nj(s)))
     {
       double current_record_count, current_read_time;
 
@@ -6014,34 +6019,74 @@ static bool test_if_subpart(order_st *a,order_st *b)
 /**
   Nested joins perspective: Remove the last table from the join order.
 
+  The algorithm is the reciprocal of check_interleaving_with_nj(), hence
+  parent join nest nodes are updated only when the last table in its child
+  node is removed. The ASCII graphic below will clarify.
+
+  %A table nesting such as <tt> t1 x [ ( t2 x t3 ) x ( t4 x t5 ) ] </tt>is
+  represented by the below join nest tree.
+
+  @verbatim
+                     NJ1
+                  _/ /  \
+                _/  /    NJ2
+              _/   /     / \ 
+             /    /     /   \
+   t1 x [ (t2 x t3) x (t4 x t5) ]
+  @endverbatim
+
+  At the point in time when check_interleaving_with_nj() adds the table t5 to
+  the query execution plan, QEP, it also directs the node named NJ2 to mark
+  the table as covered. NJ2 does so by incrementing its @c counter
+  member. Since all of NJ2's tables are now covered by the QEP, the algorithm
+  proceeds up the tree to NJ1, incrementing its counter as well. All join
+  nests are now completely covered by the QEP.
+
+  restore_prev_nj_state() does the above in reverse. As seen above, the node
+  NJ1 contains the nodes t2, t3, and NJ2. Its counter being equal to 3 means
+  that the plan covers t2, t3, and NJ2, @e and that the sub-plan (t4 x t5)
+  completely covers NJ2. The removal of t5 from the partial plan will first
+  decrement NJ2's counter to 1. It will then detect that NJ2 went from being
+  completely to partially covered, and hence the algorithm must continue
+  upwards to NJ1 and decrement its counter to 2. %A subsequent removal of t4
+  will however not influence NJ1 since it did not un-cover the last table in
+  NJ2.
+
+  SYNOPSIS
+    restore_prev_nj_state()
+      last  join table to remove, it is assumed to be the last in current 
+            partial join order.
+     
+  DESCRIPTION
+
     Remove the last table from the partial join order and update the nested
-    joins counters and join->cur_embedding_map. It is ok to call this
-    function for the first table in join order (for which
+    joins counters and join->cur_embedding_map. It is ok to call this 
+    function for the first table in join order (for which 
     check_interleaving_with_nj has not been called)
 
   @param last  join table to remove, it is assumed to be the last in current
                partial join order.
 */
+
 static void restore_prev_nj_state(JoinTable *last)
 {
   TableList *last_emb= last->table->pos_in_table_list->getEmbedding();
   Join *join= last->join;
-  while (last_emb)
+  for (;last_emb != NULL; last_emb= last_emb->getEmbedding())
   {
-    if (last_emb->on_expr)
-    {
-      if (!(--last_emb->getNestedJoin()->counter_))
-        join->cur_embedding_map&= ~last_emb->getNestedJoin()->nj_map;
-      else if (last_emb->getNestedJoin()->join_list.elements-1 ==
-               last_emb->getNestedJoin()->counter_)
-        join->cur_embedding_map|= last_emb->getNestedJoin()->nj_map;
-      else
-        break;
-    }
-    last_emb= last_emb->getEmbedding();
+    nested_join_st *nest= last_emb->getNestedJoin();
+    
+    bool was_fully_covered= nest->is_fully_covered();
+    
+    if (--nest->counter_ == 0)
+      join->cur_embedding_map&= ~nest->nj_map;
+    
+    if (!was_fully_covered)
+      break;
+    
+    join->cur_embedding_map|= nest->nj_map;
   }
 }
-
 
 /**
   Create a condition for a const reference and add this to the

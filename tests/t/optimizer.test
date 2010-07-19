@@ -86,3 +86,129 @@ SELECT DISTINCT AVG(DISTINCT OUTR . `col_int_not_null` ) AS X FROM `bb` AS OUTR2
 
 DROP TABLE `bb`, `cc`;
 --echo End Bug#600664 test
+
+--echo Bug#595305
+--echo - Assertion failed - exec_method != MATERIALIZATION || (exec_method == MATERIALIZATION && engine->engine_type() == subselect_engine::HASH_SJ_ENGINE)", file=<value optimized out>, line=318, function=0x84fae0 "virtual bool drizzled::Item_in_subselect::exec()
+--disable_warnings
+DROP TABLE IF EXISTS `bb`;
+--enable_warnings
+
+CREATE TABLE `bb` (
+  `pk` int NOT NULL AUTO_INCREMENT,
+  `col_text_not_null` text NOT NULL,
+  `col_bigint_key` bigint DEFAULT NULL,
+  `col_int` int DEFAULT NULL,
+  `col_char` varchar(1) DEFAULT NULL,
+  `col_text` text,
+  `col_text_not_null_key` text NOT NULL,
+  `col_char_not_null` varchar(1) NOT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_bigint_key` (`col_bigint_key`),
+  KEY `col_text_not_null_key` (`col_text_not_null_key`(255))
+) ENGINE=InnoDB;
+
+ALTER TABLE `bb` DISABLE KEYS;
+INSERT INTO `bb` VALUES (1,'',NULL,NULL,'h',NULL,'','f'),(2,'',NULL,1756299264,'p',NULL,'','w'),(3,'',6,-1990000640,'w',NULL,'','w'),(4,'',NULL,NULL,'f',NULL,'','k'),(5,'',NULL,NULL,'k',NULL,'','t'),(6,'',9,NULL,'m',NULL,'','c'),(7,'',6451687941184946176,0,'z',NULL,'','f'),(8,'',8960474408607023104,1805844480,'h',NULL,'','k'),(9,'',8,7,'y',NULL,'','m'),(10,'',NULL,-415629312,'t',NULL,'','h');
+ALTER TABLE `bb` ENABLE KEYS;
+
+SELECT DISTINCT OUTR . `col_text` AS X FROM BB AS OUTR2 LEFT JOIN BB AS OUTR ON ( OUTR2 . `col_char` <> OUTR . `col_text` ) WHERE OUTR . `col_bigint_key` IN ( SELECT INNR . `pk` AS Y FROM BB AS INNR WHERE INNR . `col_bigint_key` > INNR . `col_int` AND INNR . `col_text_not_null_key` >= INNR . `col_char_not_null` ) AND OUTR . `col_bigint_key` = 9 ORDER BY OUTR . `col_text_not_null` , OUTR . `pk`;
+
+DROP TABLE BB;
+--echo End Bug#595305 test
+
+--echo Bug#592444 
+--echo - Segfault - operator= (join=0x1fd0fd8, tables=<value optimized out>, conds=<value optimized out>, keyuse_array=<value optimized out>) at ./drizzled/join_table.h:73
+--disable_warnings
+DROP TABLE IF EXISTS `p`;
+--enable_warnings
+CREATE TABLE `p` (
+  `pk` int NOT NULL AUTO_INCREMENT,
+  `col_int_key` int DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `p` DISABLE KEYS;
+INSERT INTO `p` VALUES (1,NULL),(2,261947392),(3,-1761017856),(4,NULL),(5,NULL),(6,NULL),(7,1941635072),(8,-610992128),(9,NULL),(10,-1486618624),(11,1047199744),(12,5),(13,2),(14,NULL),(15,NULL),(16,-828899328),(17,5),(18,NULL),(19,-1573322752),(20,NULL),(21,1),(22,1080360960),(23,NULL),(24,9),(25,243335168),(26,NULL),(27,2),(28,351469568),(29,NULL),(30,0),(31,1626865664),(32,NULL),(33,NULL),(34,6),(35,NULL),(36,6),(37,NULL),(38,838598656),(39,-1732706304),(40,-120061952),(41,NULL),(42,3),(43,2),(44,8),(45,-1234436096),(46,4),(47,-1542324224),(48,NULL),(49,1607073792),(50,0),(51,9),(52,NULL),(53,NULL),(54,-921174016),(55,-184877056),(56,NULL),(57,-1291059200),(58,0),(59,NULL),(60,565379072),(61,NULL),(62,506855424),(63,NULL),(64,NULL),(65,NULL),(66,5),(67,5),(68,5),(69,2),(70,6),(71,NULL),(72,9),(73,7),(74,-2108555264),(75,6),(76,1057095680),(77,8),(78,-409468928),(79,-438960128),(80,-939393024),(81,-927203328),(82,NULL),(83,-1834680320),(84,NULL),(85,1984561152),(86,8),(87,NULL),(88,8),(89,-326500352),(90,NULL),(91,4),(92,NULL),(93,NULL),(94,-1369833472),(95,NULL),(96,0),(97,31260672),(98,NULL),(99,NULL),(100,0);
+ALTER TABLE `p` ENABLE KEYS;
+
+DROP TABLE IF EXISTS `n`;
+CREATE TABLE `n` (
+  `pk` int NOT NULL AUTO_INCREMENT,
+  `col_varchar_10_key` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_varchar_10_key` (`col_varchar_10_key`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `n` DISABLE KEYS;
+INSERT INTO `n` VALUES (1,'rdtxodtcmi'),(2,'corrdtxodt'),(3,'v'),(4,'dcorrdtxod'),(5,'s'),(6,'my'),(7,'e'),(8,'qxszmrdcor'),(9,'bqxszmrdco'),(10,'wbqxszmrdc'),(11,'v'),(12,'kywbqxszmr'),(13,'v'),(14,'lngrakywbq'),(15,'umtlngraky'),(16,'could'),(17,'peiywumtln'),(18,'will'),(19,'tell'),(20,'w'),(21,'jenpeiywum'),(22,'cejenpeiyw'),(23,'x'),(24,'vxcejenpei');
+ALTER TABLE `n` ENABLE KEYS;
+
+DROP TABLE IF EXISTS `d`;
+CREATE TABLE `d` (
+  `pk` int NOT NULL AUTO_INCREMENT,
+  `col_varchar_10` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`pk`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `d` DISABLE KEYS;
+INSERT INTO `d` VALUES (1,'f'),(2,'zdvoleqxer'),(3,'i'),(4,'u'),(5,'q');
+ALTER TABLE `d` ENABLE KEYS;
+
+DROP TABLE IF EXISTS `h`;
+CREATE TABLE `h` (
+  `col_varchar_10` varchar(10) DEFAULT NULL,
+  `pk` int NOT NULL AUTO_INCREMENT,
+  `col_varchar_10_key` varchar(10) DEFAULT NULL,
+  `col_int_key` int DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_varchar_10_key` (`col_varchar_10_key`),
+  KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `h` DISABLE KEYS;
+INSERT INTO `h` VALUES ('n',1,'rshrrbmsyd',4),('h',2,'okay',NULL),('ok',3,'i',-802095104),('just',4,'z',6),('hfnrshrrbm',5,'his',8),('f',6,'xhfnrshrrb',1),('h',7,'wxhfnrshrr',7),('wtwxhfnrsh',8,'v',7),('of',9,'cwtwxhfnrs',-1258487808);
+ALTER TABLE `h` ENABLE KEYS;
+
+DROP TABLE IF EXISTS `a`;
+CREATE TABLE `a` (
+  `pk` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`pk`)
+) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS `k`;
+CREATE TABLE `k` (
+  `pk` int NOT NULL AUTO_INCREMENT,
+  `col_varchar_10` varchar(10) DEFAULT NULL,
+  `col_varchar_10_key` varchar(10) DEFAULT NULL,
+  `col_int_key` int DEFAULT NULL,
+  PRIMARY KEY (`pk`),
+  KEY `col_varchar_10_key` (`col_varchar_10_key`),
+  KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `k` DISABLE KEYS;
+INSERT INTO `k` VALUES (1,'bwylrhande','hbwylrhand',-522452992),(2,'how','about',2098200576),(3,'ephbwylrha','pephbwylrh',904331264),(4,'okay','ipephbwylr',-1176633344),(5,'but','one',-1177288704),(6,'tnwkipephb','j',5),(7,'hqtnwkipep','a',9),(8,'with','wdhqtnwkip',NULL),(9,'eyxwdhqtnw','jeyxwdhqtn',2),(10,'right','something',3),(11,'z','ujeyxwdhqt',5),(12,'yyujeyxwdh','we',NULL),(13,'can','syyujeyxwd',0),(14,'s','oh',21037056),(15,'ngvsyyujey','something',1224867840),(16,'gngvsyyuje','qgngvsyyuj',1),(17,'this','really',4),(18,'p','bbuqgngvsy',1865023488),(19,'okay','from',1),(20,'dmbbuqgngv','but',9),(21,'one','rdmbbuqgng',0);
+ALTER TABLE `k` ENABLE KEYS;
+
+SELECT
+table2 . `pk` AS field4
+FROM p AS table1 LEFT JOIN
+n AS table2 LEFT JOIN
+d AS table3
+ON table2 . `pk` = table3 . `pk`
+RIGHT OUTER JOIN h AS table4
+LEFT OUTER JOIN a AS table5
+ON table4 . `pk` = table5 . `pk`
+ON table2 . `col_varchar_10_key` = table4 . `col_varchar_10_key`
+ON table1 . `col_int_key` = table5 . `pk`
+LEFT JOIN h AS table6
+LEFT JOIN k AS table7
+ON table6 . `col_int_key` = table7 . `col_int_key`
+LEFT OUTER JOIN h AS table8
+ON table7 . `col_varchar_10_key` = table8 . `col_varchar_10`
+ON table3 . `col_varchar_10` = table7 . `col_varchar_10`
+WHERE (
+( table3 . `pk` IN (6) )
+OR table7 . `col_int_key` IN (1, 1, 1, 2) ) ;
+--echo End Bug#592444 test
