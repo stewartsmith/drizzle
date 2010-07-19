@@ -902,10 +902,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   block_size= table_options.has_block_size() ?
     table_options.block_size() : 0;
 
-  if (table_options.has_collation_id())
-    table_charset= get_charset(table_options.collation_id());
-  else
-    table_charset= default_charset_info;
+  table_charset= get_charset(table_options.collation_id());
 
   if (!table_charset)
   {
