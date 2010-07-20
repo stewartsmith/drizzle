@@ -59,19 +59,21 @@ void Item_func::set_arguments(List<Item> &list)
   list.empty();          // Fields are used
 }
 
-Item_func::Item_func(List<Item> &list)
-  :allowed_arg_cols(1)
+Item_func::Item_func(List<Item> &list) :
+  _session(*current_session),
+  allowed_arg_cols(1)
 {
   set_arguments(list);
 }
 
-Item_func::Item_func(Session *session, Item_func *item)
-  :Item_result_field(session, item),
-   allowed_arg_cols(item->allowed_arg_cols),
-   arg_count(item->arg_count),
-   used_tables_cache(item->used_tables_cache),
-   not_null_tables_cache(item->not_null_tables_cache),
-   const_item_cache(item->const_item_cache)
+Item_func::Item_func(Session *session, Item_func *item) :
+  Item_result_field(session, item),
+  _session(*current_session),
+  allowed_arg_cols(item->allowed_arg_cols),
+  arg_count(item->arg_count),
+  used_tables_cache(item->used_tables_cache),
+  not_null_tables_cache(item->not_null_tables_cache),
+  const_item_cache(item->const_item_cache)
 {
   if (arg_count)
   {
@@ -279,7 +281,7 @@ Item *Item_func::transform(Item_transformer transformer, unsigned char *argument
         change records at each execution.
       */
       if (*arg != new_item)
-        current_session->change_item_tree(arg, new_item);
+        getSession().change_item_tree(arg, new_item);
     }
   }
   return (this->*transformer)(argument);
@@ -618,8 +620,7 @@ void Item_func::count_real_length()
 
 void Item_func::signal_divide_by_null()
 {
-  Session *session= current_session;
-  push_warning(session, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
+  push_warning(getSessionPtr(), DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
   null_value= 1;
 }
 

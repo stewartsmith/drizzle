@@ -22,6 +22,7 @@ check_PROGRAMS =
 noinst_HEADERS =
 nobase_nodist_include_HEADERS =
 nobase_dist_include_HEADERS =
+dist_include_HEADERS =
 sbin_PROGRAMS =
 lib_LTLIBRARIES = 
 noinst_LTLIBRARIES =
@@ -40,7 +41,7 @@ SUBDIRS = ${po} \
 
 DIST_SUBDIRS = ${SUBDIRS} tests
 
-BUILT_SOURCES=		drizzled/configmake.h
+BUILT_SOURCES=
 EXTRA_DIST= \
 	    DRIZZLE.FAQ \
 	    Doxyfile \
@@ -73,6 +74,7 @@ EXTRA_DIST+=	${man_MANS}
 .PHONY: \
 	indent
 
+
 doxygen:
 	doxygen Doxyfile
 
@@ -83,6 +85,8 @@ indent:
                -o indentoutput.tmp && mv indentoutput.tmp "$$f" ;\
         done
 
+BUILT_SOURCES+= drizzled/configmake.h
+nobase_nodist_include_HEADERS+= drizzled/configmake.h
 drizzled/configmake.h: ${top_srcdir}/Makefile.in
 	@echo "Making $@"
 	@rm -f $@-t $@
@@ -127,6 +131,9 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
 
+distclean-local:
+	rm -r -f unittests/.libs
+
 include config/lint-source.am
 
 include drizzled/message/include.am
@@ -138,9 +145,13 @@ include client/include.am
 include extra/include.am
 include support-files/include.am
 include tests/include.am
+include unittests/include.am
+
+TESTS += ${check_PROGRAMS}
 
 merge-clean:
 	find ./ | $(GREP) \.orig | xargs rm -f
+	find ./ | $(GREP) \.moved | xargs rm -f
 	find ./ | $(GREP) \.rej | xargs rm -f
 	find ./ | $(GREP) \~$$ | xargs rm -f
 	bzr unknowns

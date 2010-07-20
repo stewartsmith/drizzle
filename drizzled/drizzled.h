@@ -22,6 +22,7 @@
 #define DRIZZLED_DRIZZLED_H
 
 #include <bitset>
+#include <boost/program_options.hpp>
 
 #include "drizzled/atomics.h"
 
@@ -49,6 +50,9 @@ extern char *drizzled_user;
 
 extern const char * const DRIZZLE_CONFIG_NAME;
 
+boost::program_options::variables_map &getVariablesMap();
+
+int init_thread_environment();
 int init_server_components(module::Registry &modules);
 int init_common_variables(const char *conf_file_name, int argc,
                           char **argv, const char **groups);

@@ -30,7 +30,7 @@ CharacterSetsTool::CharacterSetsTool() :
   add_field("CHARACTER_SET_NAME");
   add_field("DEFAULT_COLLATE_NAME");
   add_field("DESCRIPTION");
-  add_field("MAXLEN", plugin::TableFunction::NUMBER);
+  add_field("MAXLEN", plugin::TableFunction::NUMBER, 0, false);
 }
 
 CharacterSetsTool::Generator::Generator(Field **arg) :

@@ -37,12 +37,12 @@ using namespace drizzled;
 ProcesslistTool::ProcesslistTool() :
   plugin::TableFunction("DATA_DICTIONARY", "PROCESSLIST")
 {
-  add_field("ID", plugin::TableFunction::NUMBER);
+  add_field("ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("USER", 16);
   add_field("HOST", NI_MAXHOST);
   add_field("DB");
   add_field("COMMAND", 16);
-  add_field("TIME", plugin::TableFunction::NUMBER);
+  add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
   add_field("STATE");
   add_field("INFO", PROCESS_LIST_WIDTH);
 }

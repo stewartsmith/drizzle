@@ -20,7 +20,7 @@
 
 #include "config.h"
 #include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 
 
 using namespace std;
@@ -42,9 +42,9 @@ ShowColumns::ShowColumns() :
 {
   add_field("Field");
   add_field("Type");
-  add_field("Null", plugin::TableFunction::BOOLEAN);
+  add_field("Null", plugin::TableFunction::BOOLEAN, 0 , false);
   add_field("Default");
-  add_field("Default_is_NULL", plugin::TableFunction::BOOLEAN);
+  add_field("Default_is_NULL", plugin::TableFunction::BOOLEAN, 0, false);
   add_field("On_Update");
 }
 

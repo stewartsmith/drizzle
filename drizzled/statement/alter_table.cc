@@ -51,7 +51,8 @@ namespace drizzled
 
 extern pid_t current_pid;
 
-static int copy_data_between_tables(Table *from,Table *to,
+static int copy_data_between_tables(Session *session,
+                                    Table *from,Table *to,
                                     List<CreateField> &create,
                                     bool ignore,
                                     uint32_t order_num,
@@ -273,7 +274,7 @@ static bool mysql_prepare_alter_table(Session *session,
   /* First collect all fields from table which isn't in drop_list */
   Field **f_ptr;
   Field *field;
-  for (f_ptr= table->field; (field= *f_ptr); f_ptr++)
+  for (f_ptr= table->getFields(); (field= *f_ptr); f_ptr++)
   {
     /* Check if field should be dropped */
     AlterDrop *drop;
@@ -371,8 +372,7 @@ static bool mysql_prepare_alter_table(Session *session,
     if ((def->sql_type == DRIZZLE_TYPE_DATE ||
          def->sql_type == DRIZZLE_TYPE_DATETIME) &&
         ! alter_info->datetime_field &&
-        ! (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
-        session->variables.sql_mode & MODE_NO_ZERO_DATE)
+        ! (~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)))
     {
       alter_info->datetime_field= def;
       alter_info->error_if_not_empty= true;
@@ -434,7 +434,7 @@ static bool mysql_prepare_alter_table(Session *session,
     Collect all keys which isn't in drop list. Add only those
     for which some fields exists.
   */
-  for (uint32_t i= 0; i < table->getShare()->keys; i++, key_info++)
+  for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++, key_info++)
   {
     char *key_name= key_info->name;
     AlterDrop *drop;
@@ -571,7 +571,7 @@ static bool mysql_prepare_alter_table(Session *session,
       && table->getMutableShare()->hasComment())
     table_options->set_comment(table->getMutableShare()->getComment());
 
-  if (table->getShare()->tmp_table)
+  if (table->getShare()->getType())
   {
     table_message.set_type(message::Table::TEMPORARY);
   }
@@ -685,7 +685,8 @@ err:
     false  OK
     true   Error
 */
-static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
+static bool alter_table_manage_keys(Session *session,
+                                    Table *table, int indexes_were_disabled,
                                     enum enum_enable_or_disable keys_onoff)
 {
   int error= 0;
@@ -703,7 +704,7 @@ static bool alter_table_manage_keys(Table *table, int indexes_were_disabled,
 
   if (error == HA_ERR_WRONG_COMMAND)
   {
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+    push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                         ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                         table->getMutableShare()->getTableName());
     error= 0;
@@ -886,7 +887,7 @@ static bool internal_alter_table(Session *session,
     tmp.reset(ALTER_KEYS_ONOFF);
     tmp&= alter_info->flags;
 
-    if (! (tmp.any()) && ! table->getShare()->tmp_table) // no need to touch frm
+    if (! (tmp.any()) && ! table->getShare()->getType()) // no need to touch frm
     {
       switch (alter_info->keys_onoff)
       {
@@ -962,7 +963,7 @@ static bool internal_alter_table(Session *session,
         }
         else
         {
-          if (mysql_rename_table(original_engine, original_table_identifier, new_table_identifier))
+          if (mysql_rename_table(*session, original_engine, original_table_identifier, new_table_identifier))
           {
             error= -1;
           }
@@ -1038,7 +1039,8 @@ static bool internal_alter_table(Session *session,
 
   /* Copy the data if necessary. */
   {
-    session->count_cuted_fields= CHECK_FIELD_WARN;	// calc cuted fields
+    /* We must not ignore bad input! */
+    session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;	// calc cuted fields
     session->cuted_fields= 0L;
     session->set_proc_info("copy to tmp table");
     copied= deleted= 0;
@@ -1046,7 +1048,8 @@ static bool internal_alter_table(Session *session,
     /* We don't want update TIMESTAMP fields during ALTER Table. */
     new_table->timestamp_field_type= TIMESTAMP_NO_AUTO_SET;
     new_table->next_number_field= new_table->found_next_number_field;
-    error= copy_data_between_tables(table,
+    error= copy_data_between_tables(session,
+                                    table,
                                     new_table,
                                     alter_info->create_list,
                                     ignore,
@@ -1058,7 +1061,7 @@ static bool internal_alter_table(Session *session,
                                     alter_info->error_if_not_empty);
 
     /* We must not ignore bad input! */
-    session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
+    assert(session->count_cuted_fields == CHECK_FIELD_ERROR_FOR_NULL);
   }
 
   /* Now we need to resolve what just happened with the data copy. */
@@ -1154,16 +1157,11 @@ static bool internal_alter_table(Session *session,
     session->close_temporary_table(table);
 
     /* Should pass the 'new_name' as we store table name in the cache */
-    if (new_table->renameAlterTemporaryTable(new_table_identifier))
-    {
-      session->close_temporary_table(new_table);
-
-      return true;
-    }
+    new_table->getMutableShare()->setIdentifier(new_table_identifier);
 
     new_table_identifier.setPath(new_table_as_temporary.getPath());
 
-    if (mysql_rename_table(new_engine, new_table_as_temporary, new_table_identifier) != 0)
+    if (mysql_rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
     {
       return true;
     }
@@ -1230,14 +1228,14 @@ static bool internal_alter_table(Session *session,
     TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
                                            old_name, message::Table::TEMPORARY);
 
-    if (mysql_rename_table(original_engine, original_table_identifier, original_table_to_drop))
+    if (mysql_rename_table(*session, original_engine, original_table_identifier, original_table_to_drop))
     {
       error= 1;
       quick_rm_table(*session, new_table_as_temporary);
     }
     else
     {
-      if (mysql_rename_table(new_engine, new_table_as_temporary, new_table_identifier) != 0)
+      if (mysql_rename_table(*session, new_engine, new_table_as_temporary, new_table_identifier) != 0)
       {
         /* Try to get everything back. */
         error= 1;
@@ -1246,7 +1244,7 @@ static bool internal_alter_table(Session *session,
 
         quick_rm_table(*session, new_table_as_temporary);
 
-        mysql_rename_table(original_engine, original_table_to_drop, original_table_identifier);
+        mysql_rename_table(*session, original_engine, original_table_to_drop, original_table_identifier);
       }
       else
       {
@@ -1361,7 +1359,8 @@ bool alter_table(Session *session,
 /* alter_table */
 
 static int
-copy_data_between_tables(Table *from, Table *to,
+copy_data_between_tables(Session *session,
+                         Table *from, Table *to,
                          List<CreateField> &create,
                          bool ignore,
                          uint32_t order_num, order_st *order,
@@ -1373,7 +1372,6 @@ copy_data_between_tables(Table *from, Table *to,
   int error= 0;
   CopyField *copy,*copy_end;
   ulong found_count,delete_count;
-  Session *session= current_session;
   uint32_t length= 0;
   SORT_FIELD *sortorder;
   ReadRecord info;
@@ -1401,15 +1399,14 @@ copy_data_between_tables(Table *from, Table *to,
    */
   to->s->getEngine()->startStatement(session);
 
-  if (!(copy= new CopyField[to->s->fields]))
-  if (!(copy= new CopyField[to->getShare()->fields]))
+  if (!(copy= new CopyField[to->getShare()->sizeFields()]))
     return -1;
 
   if (to->cursor->ha_external_lock(session, F_WRLCK))
     return -1;
 
   /* We need external lock before we can disable/enable keys */
-  alter_table_manage_keys(to, from->cursor->indexes_are_disabled(), keys_onoff);
+  alter_table_manage_keys(session, to, from->cursor->indexes_are_disabled(), keys_onoff);
 
   /* We can abort alter table for any table type */
   session->abort_on_warning= !ignore;
@@ -1420,7 +1417,7 @@ copy_data_between_tables(Table *from, Table *to,
   List_iterator<CreateField> it(create);
   CreateField *def;
   copy_end=copy;
-  for (Field **ptr=to->field ; *ptr ; ptr++)
+  for (Field **ptr= to->getFields(); *ptr ; ptr++)
   {
     def=it++;
     if (def->field)
@@ -1437,7 +1434,7 @@ copy_data_between_tables(Table *from, Table *to,
 
   if (order)
   {
-    if (to->getShare()->primary_key != MAX_KEY && to->cursor->primary_key_is_clustered())
+    if (to->getShare()->hasPrimaryKey() && to->cursor->primary_key_is_clustered())
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff),
@@ -1450,7 +1447,6 @@ copy_data_between_tables(Table *from, Table *to,
     else
     {
       from->sort.io_cache= new internal::IO_CACHE;
-      memset(from->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
       memset(&tables, 0, sizeof(tables));
       tables.table= from;
@@ -1588,7 +1584,7 @@ static Table *open_alter_table(Session *session, Table *table, TableIdentifier &
   Table *new_table;
 
   /* Open the table so we need to copy the data to it. */
-  if (table->getShare()->tmp_table)
+  if (table->getShare()->getType())
   {
     TableList tbl;
     tbl.db= const_cast<char *>(identifier.getSchemaName().c_str());

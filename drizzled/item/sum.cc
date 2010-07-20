@@ -1028,7 +1028,7 @@ bool Item_sum_distinct::setup(Session *session)
     return(true);
 
   /* XXX: check that the case of CHAR(0) works OK */
-  tree_key_length= table->getShare()->reclength - table->getShare()->null_bytes;
+  tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
 
   /*
     Unique handles all unique elements in a tree until they can't fit
@@ -1047,9 +1047,9 @@ bool Item_sum_distinct::setup(Session *session)
 
 bool Item_sum_distinct::add()
 {
-  args[0]->save_in_field(table->field[0], false);
+  args[0]->save_in_field(table->getField(0), false);
   is_evaluated= false;
-  if (!table->field[0]->is_null())
+  if (!table->getField(0)->is_null())
   {
     assert(tree);
     null_value= 0;
@@ -1057,7 +1057,7 @@ bool Item_sum_distinct::add()
       '0' values are also stored in the tree. This doesn't matter
       for SUM(DISTINCT), but is important for AVG(DISTINCT)
     */
-    return tree->unique_add(table->field[0]->ptr);
+    return tree->unique_add(table->getField(0)->ptr);
   }
   return 0;
 }
@@ -1065,9 +1065,9 @@ bool Item_sum_distinct::add()
 
 bool Item_sum_distinct::unique_walk_function(void *element)
 {
-  memcpy(table->field[0]->ptr, element, tree_key_length);
+  memcpy(table->getField(0)->ptr, element, tree_key_length);
   ++count;
-  val.traits->add(&val, table->field[0]);
+  val.traits->add(&val, table->getField(0));
   return 0;
 }
 
@@ -1109,7 +1109,7 @@ void Item_sum_distinct::calculate_val_and_count()
      */
     if (tree)
     {
-      table->field[0]->set_notnull();
+      table->getField(0)->set_notnull();
       tree->walk(item_sum_distinct_walk, (void*) this);
     }
     is_evaluated= true;
@@ -2493,8 +2493,8 @@ int simple_str_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 int composite_key_cmp(void* arg, unsigned char* key1, unsigned char* key2)
 {
   Item_sum_count_distinct* item = (Item_sum_count_distinct*)arg;
-  Field **field    = item->table->field;
-  Field **field_end= field + item->table->getShare()->fields;
+  Field **field    = item->table->getFields();
+  Field **field_end= field + item->table->getShare()->sizeFields();
   uint32_t *lengths=item->field_lengths;
   for (; field < field_end; ++field)
   {
@@ -2616,8 +2616,8 @@ bool Item_sum_count_distinct::setup(Session *session)
     */
     qsort_cmp2 compare_key;
     void* cmp_arg;
-    Field **field= table->field;
-    Field **field_end= field + table->getShare()->fields;
+    Field **field= table->getFields();
+    Field **field_end= field + table->getShare()->sizeFields();
     bool all_binary= true;
 
     for (tree_key_length= 0; field < field_end; ++field)
@@ -2638,7 +2638,7 @@ bool Item_sum_count_distinct::setup(Session *session)
     }
     else
     {
-      if (table->getShare()->fields == 1)
+      if (table->getShare()->sizeFields() == 1)
       {
         /*
           If we have only one field, which is the most common use of
@@ -2647,7 +2647,7 @@ bool Item_sum_count_distinct::setup(Session *session)
           about other fields.
         */
         compare_key= (qsort_cmp2) simple_str_key_cmp;
-        cmp_arg= (void*) table->field[0];
+        cmp_arg= (void*) table->getField(0);
         /* tree_key_length has been set already */
       }
       else
@@ -2655,8 +2655,8 @@ bool Item_sum_count_distinct::setup(Session *session)
         uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32_t*) session->alloc(table->getShare()->fields * sizeof(uint32_t));
-        for (tree_key_length= 0, length= field_lengths, field= table->field;
+        field_lengths= (uint32_t*) session->alloc(table->getShare()->sizeFields() * sizeof(uint32_t));
+        for (tree_key_length= 0, length= field_lengths, field= table->getFields();
              field < field_end; ++field, ++length)
         {
           *length= (*field)->pack_length();
@@ -2711,9 +2711,13 @@ bool Item_sum_count_distinct::add()
   copy_fields(tmp_table_param);
   copy_funcs(tmp_table_param->items_to_copy);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
+  {
     if ((*field)->is_real_null(0))
+    {
       return 0;					// Don't count NULL
+    }
+  }
 
   is_evaluated= false;
   if (tree)
@@ -2813,7 +2817,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
     */
     Field *field= item->get_tmp_table_field();
     int res;
-    uint32_t offset= field->offset(field->table->record[0])-table->getShare()->null_bytes;
+    uint32_t offset= field->offset(field->getTable()->record[0])-table->getShare()->null_bytes;
     if((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
       return res;
   }
@@ -2850,7 +2854,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
     if (field && !item->const_item())
     {
       int res;
-      uint32_t offset= (field->offset(field->table->record[0]) -
+      uint32_t offset= (field->offset(field->getTable()->record[0]) -
                     table->getShare()->null_bytes);
       if ((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
         return (*order_item)->asc ? res : -res;
@@ -2873,7 +2877,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
-  String tmp((char *)table->record[1], table->getShare()->reclength,
+  String tmp((char *)table->record[1], table->getShare()->getRecordLength(),
              default_charset_info);
   String tmp2;
   String *result= &item->result;
@@ -2900,9 +2904,9 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
         because it contains both order and arg list fields.
       */
       Field *field= (*arg)->get_tmp_table_field();
-      uint32_t offset= (field->offset(field->table->record[0]) -
+      uint32_t offset= (field->offset(field->getTable()->record[0]) -
                     table->getShare()->null_bytes);
-      assert(offset < table->getShare()->reclength);
+      assert(offset < table->getShare()->getRecordLength());
       res= field->val_str(&tmp, key + offset);
     }
     else
@@ -3269,7 +3273,7 @@ bool Item_func_group_concat::setup(Session *session)
      Don't reserve space for NULLs: if any of gconcat arguments is NULL,
      the row is not added to the result.
   */
-  uint32_t tree_key_length= table->getShare()->reclength - table->getShare()->null_bytes;
+  uint32_t tree_key_length= table->getShare()->getRecordLength() - table->getShare()->null_bytes;
 
   if (arg_count_order)
   {

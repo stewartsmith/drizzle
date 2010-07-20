@@ -208,14 +208,14 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key
       field->setReadSet();
       from_key+= HA_KEY_BLOB_LENGTH;
       key_length-= HA_KEY_BLOB_LENGTH;
-      field->set_ptr_offset(to_record - field->table->record[0],
+      field->set_ptr_offset(to_record - field->getTable()->record[0],
                             (ulong) blob_length, from_key);
       length= key_part->length;
     }
     else if (key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       Field *field= key_part->field;
-      ptrdiff_t ptrdiff= to_record - field->table->record[0];
+      ptrdiff_t ptrdiff= to_record - field->getTable()->record[0];
 
       field->setReadSet();
       field->setWriteSet();
@@ -354,7 +354,7 @@ void key_unpack(String *to, Table *table, uint32_t idx)
       field->setReadSet();
       field->val_str(&tmp);
       if (cs->mbmaxlen > 1 &&
-          table->field[key_part->fieldnr - 1]->field_length !=
+          table->getField(key_part->fieldnr - 1)->field_length !=
           key_part->length)
       {
         /*
@@ -410,9 +410,11 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
     If table handler has primary key as part of the index, check that primary
     key is not updated
   */
-  if (idx != table->getShare()->primary_key && table->getShare()->primary_key < MAX_KEY &&
+  if (idx != table->getShare()->getPrimaryKey() && table->getShare()->hasPrimaryKey() &&
       (table->cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)))
-    return is_key_used(table, table->getShare()->primary_key, fields);
+  {
+    return is_key_used(table, table->getShare()->getPrimaryKey(), fields);
+  }
   return 0;
 }
 

@@ -32,7 +32,7 @@
  *
  * This class defines the following DATA_DICTIONARY tables:
  *
- * drizzle> describe GLOBAL_STATEMENTS_NEW;
+ * drizzle> describe GLOBAL_STATEMENTS;
  * +----------------+---------+-------+---------+-----------------+-----------+
  * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +----------------+---------+-------+---------+-----------------+-----------+
@@ -40,7 +40,7 @@
  * | VARIABLE_VALUE | BIGINT  | FALSE |         | FALSE           |           |
  * +----------------+---------+-------+---------+-----------------+-----------+
  *
- * drizzle> describe SESSION_STATEMENTS_NEW;
+ * drizzle> describe SESSION_STATEMENTS;
  * +----------------+---------+-------+---------+-----------------+-----------+
  * | Field          | Type    | Null  | Default | Default_is_NULL | On_Update |
  * +----------------+---------+-------+---------+-----------------+-----------+
@@ -82,11 +82,30 @@
  * | COUNT_DROP     | BIGINT  | FALSE |         | FALSE           |           |
  * | COUNT_ADMIN    | BIGINT  | FALSE |         | FALSE           |           |
  * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe CUMULATIVE_USER_STATS;
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ * | Field               | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ * | USER                | VARCHAR | FALSE |         | FALSE           |           | 
+ * | BYTES_RECEIVED      | VARCHAR | FALSE |         | FALSE           |           | 
+ * | BYTES_SENT          | VARCHAR | FALSE |         | FALSE           |           | 
+ * | DENIED_CONNECTIONS  | VARCHAR | FALSE |         | FALSE           |           | 
+ * | LOST_CONNECTIONS    | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ACCESS_DENIED       | VARCHAR | FALSE |         | FALSE           |           | 
+ * | CONNECTED_TIME_SEC  | VARCHAR | FALSE |         | FALSE           |           | 
+ * | EXECUTION_TIME_NSEC | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_FETCHED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_UPDATED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_DELETED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_INSERTED       | VARCHAR | FALSE |         | FALSE           |           | 
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ *
  */
 
-#include <config.h>          
+#include <config.h>
+
 #include "stats_schema.h"
-#include "scoreboard.h"
 
 #include <sstream>
 
@@ -110,9 +129,7 @@ SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_s
   /* Set user_commands */
   Scoreboard *current_scoreboard= logging_stats->getCurrentScoreboard();
 
-  Session *this_session= current_session;
-
-  uint32_t bucket_number= current_scoreboard->getBucketNumber(this_session);
+  uint32_t bucket_number= current_scoreboard->getBucketNumber(&getSession());
 
   vector<ScoreboardSlot* > *scoreboard_vector=
      current_scoreboard->getVectorOfScoreboardVectors()->at(bucket_number);
@@ -125,7 +142,7 @@ SessionStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_s
        it != scoreboard_vector->end(); ++it)
   {
     scoreboard_slot= *it;
-    if (scoreboard_slot->getSessionId() == this_session->getSessionId())
+    if (scoreboard_slot->getSessionId() == getSession().getSessionId())
     {
       break;
     }
@@ -174,7 +191,17 @@ GlobalStatementsTool::Generator::Generator(Field **arg, LoggingStats *logging_st
   plugin::TableFunction::Generator(arg)
 {
   count= 0;
-  global_stats= logging_stats->getCumulativeStats()->getGlobalStats();
+  /* add the current scoreboard and the saved global statements */
+  global_stats_to_display= new GlobalStats();
+  CumulativeStats *cumulativeStats= logging_stats->getCumulativeStats();
+  cumulativeStats->sumCurrentScoreboard(logging_stats->getCurrentScoreboard(), 
+                                        NULL, global_stats_to_display->getUserCommands());
+  global_stats_to_display->merge(logging_stats->getCumulativeStats()->getGlobalStats()); 
+}
+
+GlobalStatementsTool::Generator::~Generator()
+{
+  delete global_stats_to_display;
 }
 
 bool GlobalStatementsTool::Generator::populate()
@@ -187,7 +214,7 @@ bool GlobalStatementsTool::Generator::populate()
 
   push(UserCommands::COM_STATUS_VARS[count]);
   ostringstream oss;
-  oss << global_stats->getUserCommands()->getCount(count);
+  oss << global_stats_to_display->getUserCommands()->getCount(count);
   push(oss.str());
 
   ++count;
@@ -344,6 +371,82 @@ bool CumulativeCommandsTool::Generator::populate()
       return true;
     } 
     else 
+    {
+      ++record_number;
+    }
+  }
+
+  return false;
+}
+
+CumulativeUserStatsTool::CumulativeUserStatsTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "CUMULATIVE_USER_STATS")
+{
+  outer_logging_stats= logging_stats;
+
+  add_field("USER");
+  add_field("BYTES_RECEIVED");
+  add_field("BYTES_SENT");
+  add_field("DENIED_CONNECTIONS");
+  add_field("LOST_CONNECTIONS");
+  add_field("ACCESS_DENIED");
+  add_field("CONNECTED_TIME_SEC");
+  add_field("EXECUTION_TIME_NSEC");
+  add_field("ROWS_FETCHED");
+  add_field("ROWS_UPDATED");
+  add_field("ROWS_DELETED");
+  add_field("ROWS_INSERTED");
+}
+
+CumulativeUserStatsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  inner_logging_stats= logging_stats;
+  record_number= 0;
+
+  if (inner_logging_stats->isEnabled())
+  {
+    last_valid_index= inner_logging_stats->getCumulativeStats()->getCumulativeStatsLastValidIndex();
+  }
+  else
+  {
+    last_valid_index= INVALID_INDEX;
+  }
+}
+
+bool CumulativeUserStatsTool::Generator::populate()
+{
+  if ((record_number > last_valid_index) || (last_valid_index == INVALID_INDEX))
+  {
+    return false;
+  }
+
+  while (record_number <= last_valid_index)
+  {
+    ScoreboardSlot *cumulative_scoreboard_slot=
+      inner_logging_stats->getCumulativeStats()->getCumulativeStatsByUserVector()->at(record_number);
+
+    if (cumulative_scoreboard_slot->isInUse())
+    {
+      StatusVars *status_vars= cumulative_scoreboard_slot->getStatusVars();
+      push(cumulative_scoreboard_slot->getUser());
+
+      push(status_vars->getStatusVarCounters()->bytes_received);
+      push(status_vars->getStatusVarCounters()->bytes_sent);
+      push(status_vars->getStatusVarCounters()->aborted_connects);
+      push(status_vars->getStatusVarCounters()->aborted_threads);
+      push(status_vars->getStatusVarCounters()->access_denied);
+      push(status_vars->getStatusVarCounters()->connection_time);
+      push(status_vars->getStatusVarCounters()->execution_time_nsec);
+      push(status_vars->sent_row_count);
+      push(status_vars->getStatusVarCounters()->updated_row_count);
+      push(status_vars->getStatusVarCounters()->deleted_row_count);
+      push(status_vars->getStatusVarCounters()->inserted_row_count);
+
+      ++record_number;
+      return true;
+    }
+    else
     {
       ++record_number;
     }

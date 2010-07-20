@@ -2676,9 +2676,6 @@ int ha_pbxt::doInsertRecord(byte *buf)
 			pb_import_row_count++;
 	}
 
-	if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_INSERT)
-		table->timestamp_field->set_time();
-
 	if (table->next_number_field && buf == table->record[0]) {
 		int update_err = update_auto_increment();
 		if (update_err) {
@@ -2778,9 +2775,6 @@ int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 		self->st_is_update = pb_open_tab;
 		pb_open_tab->ot_update_id++;
 	}
-
-	if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-		table->timestamp_field->set_time();
 
 #ifdef PBMS_ENABLED
 	PBMSResultRec result;
@@ -3967,7 +3961,7 @@ int ha_pbxt::info(uint flag)
 			stats.block_size = XT_INDEX_PAGE_SIZE;
 
 #ifdef DRIZZLED
-			if (share->tmp_table == message::Table::STANDARD)
+			if (share->getType() == message::Table::STANDARD)
 #else
 			if (share->tmp_table == NO_TMP_TABLE)
 #endif
@@ -4023,7 +4017,7 @@ int ha_pbxt::info(uint flag)
 	 				table->key_info[i].rec_per_key[j] = (ulong) rec_per_key;
 			}
 #ifdef DRIZZLED
-			if (share->tmp_table == message::Table::STANDARD)
+			if (share->getType() == message::Table::STANDARD)
 #else
 			if (share->tmp_table == NO_TMP_TABLE)
 #endif
@@ -5258,7 +5252,7 @@ THR_LOCK_DATA **ha_pbxt::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_
  * the storage engine.
 */
 #ifdef DRIZZLED
-int PBXTStorageEngine::doDropTable(Session &, TableIdentifier& ident)
+int PBXTStorageEngine::doDropTable(Session &, const TableIdentifier& ident)
 {
 	const std::string& path = ident.getPath();
 	const char *table_path = path.c_str();
@@ -5410,8 +5404,8 @@ int ha_pbxt::delete_system_table(const char *table_path)
  */
 #ifdef DRIZZLED
 int PBXTStorageEngine::doRenameTable(Session&,
-                                     TableIdentifier& from_ident,
-                                     TableIdentifier& to_ident)
+                                     const TableIdentifier& from_ident,
+                                     const TableIdentifier& to_ident)
 {
 	const char *from = from_ident.getPath().c_str();
 	const char *to = to_ident.getPath().c_str();
@@ -5602,7 +5596,7 @@ ha_rows ha_pbxt::records_in_range(uint inx, key_range *min_key, key_range *max_k
 */
 int PBXTStorageEngine::doCreateTable(Session&, 
                                      Table& table_arg, 
-                                     TableIdentifier& ident,
+                                     const TableIdentifier& ident,
 				     drizzled::message::Table& proto)
 {
 	const std::string& path = ident.getPath();
@@ -5863,7 +5857,7 @@ void PBXTStorageEngine::doGetTableNames(
 }
 #endif
 
-bool PBXTStorageEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+bool PBXTStorageEngine::doDoesTableExist(Session&, const TableIdentifier &identifier)
 {
   std::string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);

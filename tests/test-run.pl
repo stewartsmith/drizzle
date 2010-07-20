@@ -118,6 +118,8 @@ our $path_current_test_log;
 our $path_my_basedir;
 
 our $opt_vardir;                 # A path but set directly on cmd line
+our $opt_top_srcdir;
+our $opt_top_builddir;
 our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
 our $opt_suitepath;
@@ -126,6 +128,8 @@ our $opt_testdir;
 our $opt_subunit;
 
 our $default_vardir;
+our $default_top_srcdir;
+our $default_top_builddir;
 
 our $opt_usage;
 our $opt_suites;
@@ -241,7 +245,7 @@ our $opt_user;
 my $opt_valgrind= 0;
 my $opt_valgrind_mysqld= 0;
 my $opt_valgrind_drizzletest= 0;
-my @default_valgrind_args= ("--show-reachable=yes");
+my @default_valgrind_args= ("--show-reachable=yes --malloc-fill=0xDEADBEEF --free-fill=0xDEADBEEF");
 my @valgrind_args;
 my $opt_valgrind_path;
 my $opt_callgrind;
@@ -557,6 +561,8 @@ sub command_line_setup () {
 	     # Directories
              'tmpdir=s'                 => \$opt_tmpdir,
              'vardir=s'                 => \$opt_vardir,
+             'top-builddir=s'           => \$opt_top_builddir,
+             'top-srcdir=s'             => \$opt_top_srcdir,
              'suitepath=s'              => \$opt_suitepath,
              'testdir=s'                => \$opt_testdir,
              'benchdir=s'               => \$glob_mysql_bench_dir,
@@ -620,6 +626,8 @@ sub command_line_setup () {
     $glob_mysql_test_dir= $opt_testdir;
   }
   $default_vardir= "$glob_mysql_test_dir/var";
+  $default_top_srcdir= "$glob_mysql_test_dir/..";
+  $default_top_builddir= "$glob_mysql_test_dir/..";
 
   if ( ! $opt_suitepath )
   {
@@ -774,6 +782,24 @@ sub command_line_setup () {
   if ( ! $opt_vardir )
   {
     $opt_vardir= $default_vardir;
+  }
+
+  if ( ! $opt_top_srcdir )
+  {
+    $opt_top_srcdir= $default_top_srcdir;
+  }
+  else
+  {
+    $opt_top_srcdir= rel2abs($opt_top_srcdir);
+  }
+
+  if ( ! $opt_top_builddir )
+  {
+    $opt_top_builddir= $default_top_builddir;
+  }
+  else
+  {
+    $opt_top_builddir= rel2abs($opt_top_builddir);
   }
 
   $path_vardir_trace= $opt_vardir;
@@ -1459,6 +1485,8 @@ sub environment_setup () {
   $ENV{'USE_RUNNING_SERVER'}= $opt_extern;
   $ENV{'DRIZZLE_TEST_DIR'}=     collapse_path($glob_mysql_test_dir);
   $ENV{'MYSQLTEST_VARDIR'}=   $opt_vardir;
+  $ENV{'TOP_SRCDIR'}= $opt_top_srcdir;
+  $ENV{'TOP_BUILDDIR'}= $opt_top_builddir;
   $ENV{'DRIZZLE_TMP_DIR'}=      $opt_tmpdir;
   $ENV{'MASTER_MYSOCK'}=      $master->[0]->{'path_sock'};
   $ENV{'MASTER_MYSOCK1'}=     $master->[1]->{'path_sock'};
@@ -1469,7 +1497,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
-  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'drizzle-protocol-port'};
+  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'drizzle-protocol.port'};
 
   $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
 
@@ -2530,7 +2558,7 @@ sub mysqld_arguments ($$$$) {
   # Increase default connect_timeout to avoid intermittent
   # disconnects when test servers are put under load
   # see BUG#28359
-  mtr_add_arg($args, "%s--mysql-protocol-connect-timeout=60", $prefix);
+  mtr_add_arg($args, "%s--mysql-protocol.connect-timeout=60", $prefix);
 
 
   # When mysqld is run by a root user(euid is 0), it will fail
@@ -2543,10 +2571,10 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--pid-file=%s", $prefix,
 	      $mysqld->{'path_pid'});
 
-  mtr_add_arg($args, "%s--mysql-protocol-port=%d", $prefix,
+  mtr_add_arg($args, "%s--mysql-protocol.port=%d", $prefix,
               $mysqld->{'port'});
 
-  mtr_add_arg($args, "%s--drizzle-protocol-port=%d", $prefix,
+  mtr_add_arg($args, "%s--drizzle-protocol.port=%d", $prefix,
               $mysqld->{'secondary_port'});
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
@@ -2711,6 +2739,7 @@ sub mysqld_start ($$$) {
 
   if ( defined $exe )
   {
+    mtr_verbose("running Drizzle with: $exe @$args");
     $pid= mtr_spawn($exe, $args, "",
 		    $mysqld->{'path_myerr'},
 		    $mysqld->{'path_myerr'},

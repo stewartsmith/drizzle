@@ -41,7 +41,6 @@ extern size_t my_thread_stack_size;
 bool check_stack_overrun(Session *session, long margin, void *)
 {
   long stack_used;
-  assert(session == current_session);
   if ((stack_used=used_stack(session->thread_stack,(char*) &stack_used)) >=
       (long) (my_thread_stack_size - margin))
   {

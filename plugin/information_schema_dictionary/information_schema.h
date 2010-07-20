@@ -35,6 +35,8 @@ public:
     Generator(drizzled::Field **arg):
       drizzled::plugin::TableFunction::Generator(arg)
     { }
+
+    void pushType(drizzled::message::Table::Field::FieldType type);
   };
 
   Generator *generator(drizzled::Field **arg)

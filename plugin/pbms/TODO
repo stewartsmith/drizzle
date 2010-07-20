@@ -1,0 +1,114 @@
+Media Streaming To-Do List
+=========================
+------- 2010-01-13
+0047: Make the default port something in the 50,00 -> 60,000 range and add a build config option to set it at build time.
+
+------- 2009-08-16
+0046: An daemon level default backup location.
+
+0045: Better error reporting for daemon level backup. [RESOLVED: RN141]
+
+0044: Rewrite/reformat PBMS documentation. [RESOLVED: RN161]
+
+0043: Fix the problem where it is possible for data that was commited at the time of the backup not to be included in the backup.
+
+0042: Fix BLOB indexing bug.  [Feature removed: RN190]
+
+0041: Fix transaction errors when a table or database is dropped. [RESOLVED: RN156]
+
+0040: Make data stored in the pnms_variable table persistent. [RESOLVED: RN141]
+
+0039: Enable cloud storage. [RESOLVED: RN141]
+
+0038: Add Drizzle support. 
+
+0036: Provide a patch to for MySQL to make all engines PBMS enabled.
+
+0035: Provide a patch for InnoDB to make it PBMS enabled.
+
+0034: Implement incremental backup.
+
+0033: Implement remote repositories.
+
+0032: Implement daemon level replication.
+
+------- 2009-03-11
+0031: Implement PBMS_OPTION_TRANSMITION_TIMEOUT.
+
+0030: Implement pbms_keep_alive. This could be done at the socket level. The threads could set a timeout value before beginning a read/write operation. A seperater thread would monitor the workers and interupt them if the timeout expired.
+
+------- 2009-01-13
+
+0025: Port to Windows.
+
+0024: Add a system table for HTTP meta data fields.[RESOLVED: RN54]
+
+0023: Implement index support for all PBMS system tables.
+
+0022: Add support for BLOB access via the BLOB alias.[RESOLVED: RN53] [Feature removed: RN190]
+
+0021: Add transaction support.[RESOLVED: RN64]
+
+------- 2008-09-11
+0020: Add built in functions for use in triggers to enable non Media Streaming enabled engines to use PBMS.[RESOLVED: RN45] [Feature removed: RN59] 
+
+0019: Register a port number to be used as the default HTTP port number used by the daemon.
+
+0018: Enable the  HTTP server to handle 1000+ connections efficiently.
+
+0017: Make the HTTP server more robust so that it can tolerate HTTP connections that do not have the keep-alive set but do not terminate immediately after receiving a reply.
+
+0016: Add a connection timeout so that the HTTP server can close idle HTTP connections.
+
+------- 2007-07-25
+
+0015: Implement index support for the repository tables. 
+
+0014: Implement UPDATE/INSERT support for the repository tables.[RESOLVED: RN51, RN52]
+
+0013: Implement support for sorting the repository tables.[RESOLVED: RN58]
+
+0012: Check limits and formats of given system variable values.
+
+0011: Implement built-in functions BLOB_DATA() and/or BLOB_URL().
+
+------- 2007-07-05
+
+0010: Add content types [RESOLVED: RN10].
+
+0009: Add create, access and reference timestamps [RESOLVED: RN9].
+
+0008: Only open one file handle per file under UNIX.
+
+0007: Implement RENAME TABLE with Blobs in the repository [RESOLVED: RN8].
+
+0006: Implement DROP TABLE with Blobs in the repository [RESOLVED: RN7].
+
+0005: Implement the MyBS compactor thread [RESOLVED: RN6].
+
+0004: Implement the MyBS virtual tables [RESOLVED: RN11].
+
+0003: Insert reference into a table. Implement reference and dereference BLOB [RESOLVED: RN5].
+
+0002: Implement the file handle pool.
+
+0001: Implement the temp BLOB list, including the temp list monitoring thread [RESOLVED: RN4].
+
+------- 2007-06-19
+
+There is still a lot to be done. The first version of the BLOB Streaming daemon only allows download of selected column. The BLOBs must still be INSERTed into the database normally.
+
+The next step is add support of the upload of BLOBs. It will then be possible to store BLOBs of any size in the database.
+
+The streaming enabled storage daemon will support this by storing BLOBs "out of record". When SELECTing these BLOBs from the server, a URL will be returned instead of the BLOB data. The URL can then be used GET the BLOB via the BLOB Streaming daemon.
+
+One of the top priorities is to introduce a security concept for the BLOB Streaming daemon.
+
+The current idea is to introduce a database user with a specific name (e.g. "mybs") who's grant profile reflects the columns that can be accessed via the BLOB Streaming daemon.
+
+I am still gathering ideas on this and other issue so input is welcome!
+
+Barry Leslie
+PrimeBase Technologies GmbH
+barry.leslie@primebase.com
+www.blobstreaming.org

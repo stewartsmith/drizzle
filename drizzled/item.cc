@@ -830,7 +830,7 @@ void mark_select_range_as_dependent(Session *session,
                   0);
     }
     else
-      prev_subselect_item->used_tables_cache|= found_field->table->map;
+      prev_subselect_item->used_tables_cache|= found_field->getTable()->map;
     prev_subselect_item->const_item_cache= 0;
     mark_as_dependent(session, last_select, current_sel, resolved_item,
                       dependent);
@@ -953,7 +953,8 @@ Item** resolve_ref_in_select_and_group(Session *session, Item_ident *ref, Select
     Search for a column or derived column named as 'ref' in the SELECT
     clause of the current select.
   */
-  if (!(select_ref= find_item_in_list(ref, *(select->get_item_list()),
+  if (!(select_ref= find_item_in_list(session,
+                                      ref, *(select->get_item_list()),
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution)))
     return NULL; /* Some error occurred. */

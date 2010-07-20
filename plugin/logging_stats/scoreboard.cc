@@ -45,6 +45,7 @@
  */
 
 #include "config.h"
+#include <drizzled/plugin.h>
 #include "scoreboard.h"
 
 #include <math.h>
@@ -133,97 +134,71 @@ uint32_t Scoreboard::getBucketNumber(Session *session)
   return (session->getSessionId() % number_buckets);
 }
 
-ScoreboardSlot* Scoreboard::findOurScoreboardSlot(Session *session, 
-                                                  vector<ScoreboardSlot* > *scoreboard_vector)
-{
-  ScoreboardSlot *scoreboard_slot= NULL;
-
-  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
-       it != scoreboard_vector->end(); ++it)
-  {
-    scoreboard_slot= *it;
-
-    if (scoreboard_slot->getSessionId() == session->getSessionId())
-    {
-      return scoreboard_slot; 
-    }
-  }
-  return NULL;
-}
-
-ScoreboardSlot* Scoreboard::claimOpenScoreboardSlot(Session *session, 
-                                                    uint32_t bucket_number, 
-                                                    vector<ScoreboardSlot* > *scoreboard_vector)
-{
-  pthread_rwlock_t *LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
-  pthread_rwlock_wrlock(LOCK_scoreboard_vector);
-
-  ScoreboardSlot *scoreboard_slot= NULL;
-
-  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
-       it != scoreboard_vector->end(); ++it)
-  {
-    scoreboard_slot= *it;
-
-    if (scoreboard_slot->isInUse() == false)
-    {
-      scoreboard_slot->setInUse(true);
-      scoreboard_slot->setSessionId(session->getSessionId());
-      scoreboard_slot->setUser(session->getSecurityContext().getUser());
-      scoreboard_slot->setIp(session->getSecurityContext().getIp());
-      pthread_rwlock_unlock(LOCK_scoreboard_vector);
-      return scoreboard_slot; 
-    }
-  }
-
-  pthread_rwlock_unlock(LOCK_scoreboard_vector);
-
-  return NULL; 
-}
-
-ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
+ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session) 
 {
   /* our bucket */
-  uint32_t bucket_number= getBucketNumber(session); 
-
-  /* our vector corresponding to bucket_number */
-  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number); 
-  
-  ScoreboardSlot* scoreboard_slot= NULL;
-
-  scoreboard_slot= findOurScoreboardSlot(session, scoreboard_vector);
-
-  if (scoreboard_slot == NULL)
-  {
-    scoreboard_slot= claimOpenScoreboardSlot(session, bucket_number, scoreboard_vector);
-  }
-
-  return scoreboard_slot;
-}
-
-ScoreboardSlot* Scoreboard::findAndResetScoreboardSlot(Session *session)
-{
-  /* our bucket */
-  uint32_t bucket_number= session->getSessionId() % number_buckets;
+  uint32_t bucket_number= getBucketNumber(session);
 
   /* our vector corresponding to bucket_number */
   vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
 
-  ScoreboardSlot *scoreboard_slot;
-  ScoreboardSlot *return_scoreboard_slot= NULL;
+  /* Check if this session has already claimed a slot */
+  int32_t session_scoreboard_slot= session->getScoreboardIndex();
 
-  for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
-       it != scoreboard_vector->end(); ++it)
+  if (session_scoreboard_slot == -1)
   {
-    scoreboard_slot= *it;
+    pthread_rwlock_t *LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
+    pthread_rwlock_wrlock(LOCK_scoreboard_vector);
 
-    if (scoreboard_slot->getSessionId() == session->getSessionId())
+    ScoreboardSlot *scoreboard_slot= NULL;
+
+    int32_t slot_index= 0;
+    for (vector<ScoreboardSlot *>::iterator it= scoreboard_vector->begin();
+         it != scoreboard_vector->end(); ++it, ++slot_index)
     {
-      return_scoreboard_slot = new ScoreboardSlot(*scoreboard_slot);
-      scoreboard_slot->reset(); 
-      break;
+      scoreboard_slot= *it;
+
+      if (scoreboard_slot->isInUse() == false)
+      {
+        scoreboard_slot->setInUse(true);
+        scoreboard_slot->setSessionId(session->getSessionId());
+        scoreboard_slot->setUser(session->getSecurityContext().getUser());
+        scoreboard_slot->setIp(session->getSecurityContext().getIp());
+        session->setScoreboardIndex(slot_index);
+        pthread_rwlock_unlock(LOCK_scoreboard_vector);
+        return scoreboard_slot; 
+      }
     }
+
+    pthread_rwlock_unlock(LOCK_scoreboard_vector);
+  } 
+  else // already claimed a slot just do a lookup
+  {
+    ScoreboardSlot *scoreboard_slot= scoreboard_vector->at(session_scoreboard_slot);
+    return scoreboard_slot;  
   }
 
-  return return_scoreboard_slot;
+  /* its possible we did not claim a slot if the scoreboard size is somehow smaller then the 
+     active connections */ 
+  return NULL; 
+}
+
+ScoreboardSlot* Scoreboard::findOurScoreboardSlot(Session *session)
+{
+  /* our bucket */
+  uint32_t bucket_number= getBucketNumber(session);
+
+  /* our vector corresponding to bucket_number */
+  vector<ScoreboardSlot* > *scoreboard_vector= vector_of_scoreboard_vectors.at(bucket_number);
+
+  /* Check if this session has already claimed a slot */
+  int32_t session_scoreboard_slot= session->getScoreboardIndex();
+
+  if (session_scoreboard_slot == -1) 
+  {
+    return NULL;
+  }
+
+  ScoreboardSlot *scoreboard_slot= scoreboard_vector->at(session_scoreboard_slot);
+  return scoreboard_slot;
 }

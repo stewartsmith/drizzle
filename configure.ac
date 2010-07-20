@@ -41,7 +41,6 @@ AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 ])
 
-
 PANDORA_RUN_CPPLINT
 
 PANDORA_REQUIRE_LIBPROTOBUF
@@ -61,9 +60,10 @@ AC_LANG_POP
 PANDORA_USE_BETTER_MALLOC
 
 PANDORA_DRIZZLE_BUILD
-AC_DEFINE([BUILDING_DRIZZLE],[1],
+AC_DEFINE([BUILDING_DRIZZLED],[1],
           [Define indicating we are building and not consuming drizzle.])
 
+PANDORA_HAVE_LIBGTEST
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -143,17 +143,15 @@ echo "Configuration summary for $PACKAGE_NAME version $VERSION $PANDORA_RELEASE_
 echo ""
 echo "   * Installation prefix:       $prefix"
 echo "   * System type:               $host_vendor-$host_os"
+echo "   * pandora-build version:     PANDORA_CANONICAL_VERSION"
 echo "   * Host CPU:                  $host_cpu"
 echo "   * C Compiler:                $CC_VERSION"
 echo "   * C++ Compiler:              $CXX_VERSION"
-echo "   * Build auth_pam:            $ac_cv_libpam"
 echo "   * Assertions enabled:        $ac_cv_assert"
 echo "   * Debug enabled:             $with_debug"
 echo "   * Profiling enabled:         $ac_profiling"
 echo "   * Coverage enabled:          $ac_coverage"
 echo "   * Warnings as failure:       $ac_cv_warnings_as_errors"
-echo "   * C++ cstdint location:      $ac_cv_cxx_cstdint"
-echo "   * C++ shared_ptr namespace:  $ac_cv_shared_ptr_namespace"
 echo ""
 echo "---"
 

@@ -108,8 +108,8 @@ bool Item_field::find_item_in_field_list_processor(unsigned char *arg)
 bool Item_field::register_field_in_read_map(unsigned char *arg)
 {
   Table *table= (Table *) arg;
-  if (field->table == table || !table)
-    field->table->setReadSet(field->field_index);
+  if (field->getTable() == table || !table)
+    field->getTable()->setReadSet(field->field_index);
 
   return 0;
 }
@@ -140,7 +140,7 @@ Item_field::Item_field(Session *,
                        Name_resolution_context *context_arg,
                        Field *f) :
   Item_ident(context_arg,
-             f->table->getShare()->getSchemaName(),
+             f->getTable()->getShare()->getSchemaName(),
              *f->table_name,
              f->field_name),
    item_equal(0),
@@ -194,8 +194,8 @@ void Item_field::set_field(Field *field_par)
   max_length= field_par->max_display_length();
   table_name= *field_par->table_name;
   field_name= field_par->field_name;
-  db_name= field_par->table->getShare()->getSchemaName();
-  alias_name_used= field_par->table->alias_name_used;
+  db_name= field_par->getTable()->getShare()->getSchemaName();
+  alias_name_used= field_par->getTable()->alias_name_used;
   unsigned_flag=test(field_par->flags & UNSIGNED_FLAG);
   collation.set(field_par->charset(), field_par->derivation());
   fixed= 1;
@@ -372,9 +372,9 @@ bool Item_field::eq(const Item *item, bool) const
 
 table_map Item_field::used_tables() const
 {
-  if (field->table->const_table)
+  if (field->getTable()->const_table)
     return 0;					// const item
-  return (depended_from ? OUTER_REF_TABLE_BIT : field->table->map);
+  return (depended_from ? OUTER_REF_TABLE_BIT : field->getTable()->map);
 }
 
 enum Item_result Item_field::result_type () const
@@ -530,7 +530,7 @@ Item_field::fix_outer_field(Session *session, Field **from_field, Item **referen
       {
         if (*from_field != view_ref_found)
         {
-          prev_subselect_item->used_tables_cache|= (*from_field)->table->map;
+          prev_subselect_item->used_tables_cache|= (*from_field)->getTable()->map;
           prev_subselect_item->const_item_cache= 0;
           set_field(*from_field);
           if (!last_checked_context->select_lex->having_fix_field &&
@@ -789,7 +789,8 @@ bool Item_field::fix_fields(Session *session, Item **reference)
       {
         uint32_t counter;
         enum_resolution_type resolution;
-        Item** res= find_item_in_list(this, session->lex->current_select->item_list,
+        Item** res= find_item_in_list(session,
+                                      this, session->lex->current_select->item_list,
                                       &counter, REPORT_EXCEPT_NOT_FOUND,
                                       &resolution);
         if (!res)
@@ -887,7 +888,7 @@ bool Item_field::fix_fields(Session *session, Item **reference)
   }
   else if (session->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    Table *table= field->table;
+    Table *table= field->getTable();
     MyBitmap *current_bitmap, *other_bitmap;
     if (session->mark_used_columns == MARK_COLUMNS_READ)
     {
@@ -1199,7 +1200,7 @@ void Item_field::update_null_value()
     need to set no_errors to prevent warnings about type conversion
     popping up.
   */
-  Session *session= field->table->in_use;
+  Session *session= field->getTable()->in_use;
   int no_errors;
 
   no_errors= session->no_errors;
@@ -1236,7 +1237,7 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
   Select_Lex *select= (Select_Lex*)select_arg;
   assert(fixed);
 
-  if (field->table != select->context.table_list->table)
+  if (field->getTable() != select->context.table_list->table)
   {
     List<Item> *all_fields= &select->join->all_fields;
     Item **ref_pointer_array= select->ref_pointer_array;
@@ -1255,7 +1256,7 @@ Item *Item_field::update_value_transformer(unsigned char *select_arg)
 
 void Item_field::print(String *str, enum_query_type query_type)
 {
-  if (field && field->table->const_table)
+  if (field && field->getTable()->const_table)
   {
     char buff[MAX_FIELD_WIDTH];
     String tmp(buff,sizeof(buff),str->charset());

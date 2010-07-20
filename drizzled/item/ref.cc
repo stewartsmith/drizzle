@@ -244,7 +244,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
               } while (outer_context && outer_context->select_lex &&
                        cached_table->select_lex != outer_context->select_lex);
             }
-            prev_subselect_item->used_tables_cache|= from_field->table->map;
+            prev_subselect_item->used_tables_cache|= from_field->getTable()->map;
             prev_subselect_item->const_item_cache= 0;
             break;
           }

@@ -96,7 +96,7 @@ int Table::delete_table(bool free_share)
 
   if (free_share)
   {
-    if (s->tmp_table == message::Table::STANDARD)
+    if (s->getType() == message::Table::STANDARD)
     {
       TableShare::release(s);
     }
@@ -210,7 +210,9 @@ void free_blobs(register Table *table)
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
        ptr != end ;
        ptr++)
-    ((Field_blob*) table->field[*ptr])->free();
+  {
+    ((Field_blob*) table->getField(*ptr))->free();
+  }
 }
 
 
@@ -336,7 +338,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
 
 void Table::setup_tmp_table_column_bitmaps(unsigned char *bitmaps)
 {
-  uint32_t field_count= s->fields;
+  uint32_t field_count= s->sizeFields();
 
   this->def_read_set.init((my_bitmap_map*) bitmaps, field_count);
   this->tmp_set.init((my_bitmap_map*) (bitmaps+ bitmap_buffer_size(field_count)), field_count);
@@ -372,9 +374,9 @@ int rename_file_ext(const char * from,const char * to,const char * ext)
     true ok
 */
 
-bool check_db_name(SchemaIdentifier &schema_identifier)
+bool check_db_name(Session *session, SchemaIdentifier &schema_identifier)
 {
-  if (not plugin::Authorization::isAuthorized(current_session->getSecurityContext(), schema_identifier))
+  if (not plugin::Authorization::isAuthorized(session->getSecurityContext(), schema_identifier))
   {
     return false;
   }
@@ -471,9 +473,9 @@ void Table::prepare_for_position()
 {
 
   if ((cursor->getEngine()->check_flag(HTON_BIT_PRIMARY_KEY_IN_READ_INDEX)) &&
-      s->primary_key < MAX_KEY)
+      s->hasPrimaryKey())
   {
-    mark_columns_used_by_index_no_reset(s->primary_key);
+    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
   }
   return;
 }
@@ -591,14 +593,14 @@ void Table::mark_columns_needed_for_delete()
     be able to do an delete
 
   */
-  if (s->primary_key == MAX_KEY)
+  if (not s->hasPrimaryKey())
   {
     /* fallback to use all columns in the table to identify row */
     use_all_columns();
     return;
   }
   else
-    mark_columns_used_by_index_no_reset(s->primary_key);
+    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
 
   /* If we the engine wants all predicates we mark all keys */
   if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
@@ -639,14 +641,14 @@ void Table::mark_columns_needed_for_update()
     the primary key, the hidden primary key or all columns to be
     able to do an update
   */
-  if (s->primary_key == MAX_KEY)
+  if (not s->hasPrimaryKey())
   {
     /* fallback to use all columns in the table to identify row */
     use_all_columns();
     return;
   }
   else
-    mark_columns_used_by_index_no_reset(s->primary_key);
+    mark_columns_used_by_index_no_reset(s->getPrimaryKey());
 
   if (cursor->getEngine()->check_flag(HTON_BIT_REQUIRES_KEY_COLUMNS_FOR_DELETE))
   {
@@ -737,7 +739,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
                                    org_field->charset());
   else
     new_field= org_field->new_field(session->mem_root, table,
-                                    table == org_field->table);
+                                    table == org_field->getTable());
   if (new_field)
   {
     new_field->init(table);
@@ -788,14 +790,6 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
 #define AVG_STRING_LENGTH_TO_PACK_ROWS   64
 #define RATIO_TO_PACK_ROWS	       2
 
-static void make_internal_temporary_table_path(Session *session, char *path)
-{
-  snprintf(path, FN_REFLEN, "%s%lx_%"PRIx64"_%x", TMP_FILE_PREFIX, (unsigned long)current_pid,
-           session->thread_id, session->tmp_table++);
-
-  internal::fn_format(path, path, drizzle_tmpdir.c_str(), "", MY_REPLACE_EXT|MY_UNPACK_FILENAME);
-}
-
 Table *
 create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 		 order_st *group, bool distinct, bool save_sum_fields,
@@ -813,8 +807,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   bool  using_unique_constraint= false;
   bool  use_packed_rows= true;
   bool  not_all_columns= !(select_options & TMP_TABLE_ALL_COLUMNS);
-  char  *tmpname;
-  char  path[FN_REFLEN];
   unsigned char	*pos, *group_buff, *bitmaps;
   unsigned char *null_flags;
   Field **reg_field, **from_field, **default_field;
@@ -828,8 +820,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   uint64_t max_rows= 0;
 
   status_var_increment(session->status_var.created_tmp_tables);
-
-  make_internal_temporary_table_path(session, path);
 
   if (group)
   {
@@ -870,16 +860,9 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     copy_func_count+= param->sum_func_count;
   }
 
-  if (not session->getMemRoot()->multi_alloc_root(0, &tmpname, (uint32_t) strlen(path)+1, NULL))
-  {
-    return NULL;
-  }
+  TableShareInstance *share= session->getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
 
-  strcpy(tmpname, path);
-
-  TableShareInstance *share= session->getTemporaryShare(tmpname); // This will not go into the tableshare cache, so no key is used.
-
-  if (not share->getMemRoot()->multi_alloc_root(0, &reg_field, sizeof(Field*) * (field_count+1),
+  if (not share->getMemRoot()->multi_alloc_root(0,
                                                 &default_field, sizeof(Field*) * (field_count),
                                                 &from_field, sizeof(Field*)*field_count,
                                                 &copy_func, sizeof(*copy_func)*(copy_func_count+1),
@@ -903,19 +886,21 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 
   table= share->getTable();
 
-  memset(reg_field, 0, sizeof(Field*)*(field_count+1));
   memset(default_field, 0, sizeof(Field*) * (field_count));
   memset(from_field, 0, sizeof(Field*)*field_count);
 
   mem_root_save= session->mem_root;
   session->mem_root= table->getMemRoot();
 
-  table->field=reg_field;
+  share->setFields(field_count+1);
+  table->setFields(share->getFields(true));
+  reg_field= share->getFields(true);
   table->alias= table_alias;
   table->reginfo.lock_type=TL_WRITE;	/* Will be updated */
   table->db_stat=HA_OPEN_KEYFILE+HA_OPEN_RNDFILE;
   table->map=1;
   table->copy_blobs= 1;
+  assert(session);
   table->in_use= session;
   table->quick_keys.reset();
   table->covering_keys.reset();
@@ -927,7 +912,6 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   share->blob_ptr_size= portable_sizeof_char_ptr;
   share->db_low_byte_first=1;                // True for HEAP and MyISAM
   share->table_charset= param->table_charset;
-  share->primary_key= MAX_KEY;               // Indicate no primary key
   share->keys_for_keyread.reset();
   share->keys_in_use.reset();
 
@@ -1071,8 +1055,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       null_count= 0;
     }
   }
-  assert(fieldnr == (uint32_t) (reg_field - table->field));
-  assert(field_count >= (uint32_t) (reg_field - table->field));
+  assert(fieldnr == (uint32_t) (reg_field - table->getFields()));
+  assert(field_count >= (uint32_t) (reg_field - table->getFields()));
   field_count= fieldnr;
   *reg_field= 0;
   *blob_field= 0;				// End marker
@@ -1125,7 +1109,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   if (blob_count || ((string_total_length >= STRING_TOTAL_LENGTH_TO_PACK_ROWS) && (reclength / string_total_length <= RATIO_TO_PACK_ROWS || (string_total_length / string_count) >= AVG_STRING_LENGTH_TO_PACK_ROWS)))
     use_packed_rows= 1;
 
-  share->reclength= reclength;
+  share->setRecordLength(reclength);
   {
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
@@ -1159,7 +1143,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   }
   null_count= (blob_count == 0) ? 1 : 0;
   hidden_field_count=param->hidden_field_count;
-  for (i= 0,reg_field=table->field; i < field_count; i++,reg_field++,recinfo++)
+  for (i= 0,reg_field= table->getFields(); i < field_count; i++,reg_field++,recinfo++)
   {
     Field *field= *reg_field;
     uint32_t length;
@@ -1206,7 +1190,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       ptrdiff_t diff;
       Field *orig_field= default_field[i];
       /* Get the value from default_values */
-      diff= (ptrdiff_t) (orig_field->table->getDefaultValues() - orig_field->table->record[0]);
+      diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->record[0]);
       orig_field->move_field_offset(diff);      // Points now at default_values
       if (orig_field->is_real_null())
         field->set_null();
@@ -1244,13 +1228,17 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->storeRecordAsDefault();        // Make empty default record
 
   if (session->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
+  {
     max_rows= ~(uint64_t) 0;
+  }
   else
+  {
     max_rows= (uint64_t) (((share->db_type() == heap_engine) ?
-                          min(session->variables.tmp_table_size,
-                              session->variables.max_heap_table_size) :
-                          session->variables.tmp_table_size) /
-                         share->reclength);
+                           min(session->variables.tmp_table_size,
+                               session->variables.max_heap_table_size) :
+                           session->variables.tmp_table_size) /
+                          share->getRecordLength());
+  }
 
   set_if_bigger(max_rows, (uint64_t)1);	// For dummy start options
   /*
@@ -1386,7 +1374,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       key_part_info++;
     }
     /* Create a distinct key over the columns we are going to return */
-    for (i=param->hidden_field_count, reg_field=table->field + i ;
+    for (i=param->hidden_field_count, reg_field=table->getFields() + i ;
 	 i < field_count;
 	 i++, reg_field++, key_part_info++)
     {
@@ -1428,6 +1416,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 				       &param->recinfo, select_options))
       goto err;
   }
+  assert(table->in_use);
   if (table->open_tmp_table())
     goto err;
 
@@ -1475,9 +1464,9 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   unsigned char *bitmaps;
   Table *table;
 
-  TableShareInstance *share= getTemporaryShare(); // This will not go into the tableshare cache, so no key is used.
+  TableShareInstance *share= getTemporaryShare(message::Table::INTERNAL); // This will not go into the tableshare cache, so no key is used.
 
-  if (! share->getMemRoot()->multi_alloc_root(0, &field, (field_count + 1) * sizeof(Field*),
+  if (! share->getMemRoot()->multi_alloc_root(0,
                                               &bitmaps, bitmap_buffer_size(field_count)*2,
                                               NULL))
   {
@@ -1485,11 +1474,15 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   }
 
   table= share->getTable();
-  table->field= field;
+  share->setFields(field_count + 1);
+  table->setFields(share->getFields(true));
+  field= share->getFields(true);
   share->blob_field.resize(field_count+1);
   share->fields= field_count;
   share->blob_ptr_size= portable_sizeof_char_ptr;
   table->setup_tmp_table_column_bitmaps(bitmaps);
+
+  table->in_use= this;           /* field->reset() may access table->in_use */
 
   /* Create all fields and calculate the total length of record */
   List_iterator_fast<CreateField> it(field_list);
@@ -1514,7 +1507,7 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
       null_count++;
 
     if ((*field)->flags & BLOB_FLAG)
-      share->blob_field[blob_count++]= (uint32_t) (field - table->field);
+      share->blob_field[blob_count++]= (uint32_t) (field - table->getFields());
 
     field++;
   }
@@ -1523,8 +1516,8 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   share->blob_fields= blob_count;
 
   null_pack_length= (null_count + 7)/8;
-  share->reclength= record_length + null_pack_length;
-  share->rec_buff_length= ALIGN_SIZE(share->reclength + 1);
+  share->setRecordLength(record_length + null_pack_length);
+  share->rec_buff_length= ALIGN_SIZE(share->getRecordLength() + 1);
   table->record[0]= (unsigned char*)alloc(share->rec_buff_length);
   if (!table->record[0])
     goto error;
@@ -1535,15 +1528,13 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
     share->null_fields= null_count;
     share->null_bytes= null_pack_length;
   }
-
-  table->in_use= this;           /* field->reset() may access table->in_use */
   {
     /* Set up field pointers */
     unsigned char *null_pos= table->record[0];
     unsigned char *field_pos= null_pos + share->null_bytes;
     uint32_t null_bit= 1;
 
-    for (field= table->field; *field; ++field)
+    for (field= table->getFields(); *field; ++field)
     {
       Field *cur_field= *field;
       if ((cur_field->flags & NOT_NULL_FLAG))
@@ -1563,18 +1554,27 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
       field_pos+= cur_field->pack_length();
     }
   }
+
   return table;
+
 error:
-  for (field= table->field; *field; ++field)
+  for (field= table->getFields(); *field; ++field)
+  {
     delete *field;                         /* just invokes field destructor */
+  }
   return 0;
 }
 
 bool Table::open_tmp_table()
 {
   int error;
-  if ((error=cursor->ha_open(this, s->getTableName(),O_RDWR,
-                                  HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
+  
+  TableIdentifier identifier(s->getSchemaName(), s->getTableName(), s->getPath());
+  if ((error=cursor->ha_open(identifier,
+                             this,
+                             s->getTableName(),
+                             O_RDWR,
+                             HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
     print_error(error, MYF(0));
     db_stat= 0;
@@ -1624,7 +1624,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
   MI_UNIQUEDEF uniquedef;
   TableShare *share= s;
 
-  if (share->keys)
+  if (share->sizeKeys())
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
     HA_KEYSEG *seg= (HA_KEYSEG*) this->mem_root.alloc_root(sizeof(*seg) * keyinfo->key_parts);
@@ -1650,7 +1650,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
       (*recinfo)->type= FIELD_CHECK;
       (*recinfo)->length=MI_UNIQUE_HASH_LENGTH;
       (*recinfo)++;
-      share->reclength+=MI_UNIQUE_HASH_LENGTH;
+      share->setRecordLength(share->getRecordLength() + MI_UNIQUE_HASH_LENGTH);
     }
     else
     {
@@ -1701,7 +1701,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
       OPTION_BIG_TABLES)
     create_info.data_file_length= ~(uint64_t) 0;
 
-  if ((error=mi_create(share->getTableName(), share->keys, &keydef,
+  if ((error=mi_create(share->getTableName(), share->sizeKeys(), &keydef,
 		       (uint32_t) (*recinfo-start_recinfo),
 		       start_recinfo,
 		       share->uniques, &uniquedef,
@@ -1746,7 +1746,9 @@ void Table::free_tmp_table(Session *session)
 
   /* free blobs */
   for (Field **ptr= field ; *ptr ; ptr++)
+  {
     (*ptr)->free();
+  }
   free_io_cache();
 
   own_root.free_root(MYF(0)); /* the table is allocated in its own root */
@@ -1771,7 +1773,7 @@ uint32_t Table::find_shortest_key(const key_map *usable_keys)
   uint32_t best= MAX_KEY;
   if (usable_keys->any())
   {
-    for (uint32_t nr= 0; nr < s->keys ; nr++)
+    for (uint32_t nr= 0; nr < s->sizeKeys() ; nr++)
     {
       if (usable_keys->test(nr))
       {
@@ -1809,7 +1811,7 @@ bool Table::compare_record(Field **ptr)
 bool Table::compare_record()
 {
   if (s->blob_fields + s->varchar_fields == 0)
-    return memcmp(this->record[0], this->record[1], (size_t) s->reclength);
+    return memcmp(this->record[0], this->record[1], (size_t) s->getRecordLength());
   
   /* Compare null bits */
   if (memcmp(null_flags, null_flags + s->rec_buff_length, s->null_bytes))
@@ -1831,7 +1833,7 @@ bool Table::compare_record()
  */
 void Table::storeRecord()
 {
-  memcpy(record[1], record[0], (size_t) s->reclength);
+  memcpy(record[1], record[0], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1840,7 +1842,7 @@ void Table::storeRecord()
  */
 void Table::storeRecordAsInsert()
 {
-  memcpy(insert_values, record[0], (size_t) s->reclength);
+  memcpy(insert_values, record[0], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1849,7 +1851,7 @@ void Table::storeRecordAsInsert()
  */
 void Table::storeRecordAsDefault()
 {
-  memcpy(s->getDefaultValues(), record[0], (size_t) s->reclength);
+  memcpy(s->getDefaultValues(), record[0], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1858,7 +1860,7 @@ void Table::storeRecordAsDefault()
  */
 void Table::restoreRecord()
 {
-  memcpy(record[0], record[1], (size_t) s->reclength);
+  memcpy(record[0], record[1], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1867,7 +1869,7 @@ void Table::restoreRecord()
  */
 void Table::restoreRecordAsDefault()
 {
-  memcpy(record[0], s->getDefaultValues(), (size_t) s->reclength);
+  memcpy(record[0], s->getDefaultValues(), (size_t) s->getRecordLength());
 }
 
 /*
@@ -1987,11 +1989,11 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   null_row= 0;
   status= STATUS_NO_RECORD;
   maybe_null= table_list->outer_join;
-  TableList *embedding= table_list->embedding;
+  TableList *embedding= table_list->getEmbedding();
   while (!maybe_null && embedding)
   {
     maybe_null= embedding->outer_join;
-    embedding= embedding->embedding;
+    embedding= embedding->getEmbedding();
   }
   tablenr= table_number;
   map= (table_map) 1 << table_number;
@@ -2013,34 +2015,6 @@ bool Table::fill_item_list(List<Item> *item_list) const
     if (!item || item_list->push_back(item))
       return true;
   }
-  return false;
-}
-
-/*
-  Used by ALTER Table when the table is a temporary one. It changes something
-  only if the ALTER contained a RENAME clause (otherwise, table_name is the old
-  name).
-  Prepares a table cache key, which is the concatenation of db, table_name and
-  session->slave_proxy_id, separated by '\0'.
-*/
-
-bool Table::renameAlterTemporaryTable(TableIdentifier &identifier)
-{
-  char *key;
-  uint32_t key_length;
-  TableShare *share= s;
-
-  if (not (key=(char*) share->alloc_root(MAX_DBKEY_LENGTH)))
-    return true;
-
-  key_length= TableShare::createKey(key, identifier);
-  share->set_table_cache_key(key, key_length);
-
-  message::Table *message= share->getTableProto();
-
-  message->set_name(identifier.getTableName());
-  message->set_schema(identifier.getSchemaName());
-
   return false;
 }
 

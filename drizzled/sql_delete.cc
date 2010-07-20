@@ -197,7 +197,6 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     if (usable_index == MAX_KEY)
     {
       table->sort.io_cache= new internal::IO_CACHE;
-      memset(table->sort.io_cache, 0, sizeof(internal::IO_CACHE));
 
 
       if (!(sortorder= make_unireg_sortorder((order_st*) order->first,
@@ -325,6 +324,7 @@ cleanup:
     session->main_da.reset_diagnostics_area();    
     session->my_ok((ha_rows) session->row_count_func);
   }
+  session->status_var.deleted_row_count+= deleted;
   return (error >= 0 || session->is_error());
 
 err:

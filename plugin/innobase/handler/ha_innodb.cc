@@ -380,7 +380,7 @@ public:
   doDropSchema(
   /*===================*/
         /* out: error number */
-    SchemaIdentifier  &identifier); /* in: database path; inside InnoDB the name
+    const SchemaIdentifier  &identifier); /* in: database path; inside InnoDB the name
         of the last directory in the path is used as
         the database name: for example, in 'mysql/data/test'
         the database name is 'test' */
@@ -419,10 +419,10 @@ public:
 
   UNIV_INTERN int doCreateTable(Session &session,
                                 Table &form,
-                                drizzled::TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 message::Table&);
-  UNIV_INTERN int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
-  UNIV_INTERN int doDropTable(Session &session, TableIdentifier &identifier);
+  UNIV_INTERN int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+  UNIV_INTERN int doDropTable(Session &session, const TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -441,17 +441,17 @@ public:
   }
 
   int doGetTableDefinition(drizzled::Session& session,
-                           drizzled::TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-           drizzled::SchemaIdentifier &schema_identifier,
+                       const drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string> &set_of_names);
 
-  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
@@ -480,7 +480,7 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 }
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                           drizzled::SchemaIdentifier &schema_identifier,
+                                           const drizzled::SchemaIdentifier &schema_identifier,
                                            drizzled::TableIdentifiers &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
@@ -503,7 +503,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
 
@@ -512,7 +512,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
   }
 }
 
-bool InnobaseEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
@@ -529,7 +529,7 @@ bool InnobaseEngine::doDoesTableExist(Session &session, TableIdentifier &identif
 }
 
 int InnobaseEngine::doGetTableDefinition(Session &session,
-                                         drizzled::TableIdentifier &identifier,
+                                         const TableIdentifier &identifier,
                                          message::Table &table_proto)
 {
   string proto_path(identifier.getPath());
@@ -550,7 +550,7 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
   return ENOENT;
 }
 
-void InnobaseEngine::doGetTableNames(CachedDirectory &directory, SchemaIdentifier&, set<string>& set_of_names)
+void InnobaseEngine::doGetTableNames(CachedDirectory &directory, const SchemaIdentifier&, set<string>& set_of_names)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -572,7 +572,7 @@ void InnobaseEngine::doGetTableNames(CachedDirectory &directory, SchemaIdentifie
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(DEFAULT_FILE_EXTENSION) + 1]= '\0'; // Subtract ending, place NULL 
       set_of_names.insert(uname);
@@ -1638,6 +1638,7 @@ ha_innobase::update_session(
 {
   trx_t*    trx;
 
+  assert(session);
   trx = check_trx_exists(session);
 
   if (prebuilt->trx != trx) {
@@ -1646,20 +1647,6 @@ ha_innobase::update_session(
   }
 
   user_session = session;
-}
-
-/*********************************************************************//**
-Updates the user_thd field in a handle and also allocates a new InnoDB
-transaction handle if needed, and updates the transaction fields in the
-prebuilt struct. */
-UNIV_INTERN
-void
-ha_innobase::update_session()
-/*=====================*/
-{
-  Session*  session = ha_session();
-  ut_ad(EQ_CURRENT_SESSION(session));
-  update_session(session);
 }
 
 /*****************************************************************//**
@@ -1697,7 +1684,7 @@ innobase_convert_identifier(
     nz[idlen] = 0;
 
     s = nz2;
-    idlen = filename_to_tablename(nz, nz2, sizeof nz2);
+    idlen = TableIdentifier::filename_to_tablename(nz, nz2, sizeof nz2);
   }
 
   /* See if the identifier needs to be quoted. */
@@ -2734,11 +2721,9 @@ database.
 @return 1 if error, 0 if success */
 UNIV_INTERN
 int
-ha_innobase::open(
-/*==============*/
-  const char* name,   /*!< in: table name */
-  int   mode,   /*!< in: not used */
-  uint    test_if_locked) /*!< in: not used */
+ha_innobase::doOpen(const TableIdentifier &identifier,
+                    int   mode,   /*!< in: not used */
+                    uint    test_if_locked) /*!< in: not used */
 {
   dict_table_t* ib_table;
   char    norm_name[FN_REFLEN];
@@ -2747,7 +2732,7 @@ ha_innobase::open(
   UT_NOT_USED(mode);
   UT_NOT_USED(test_if_locked);
 
-  session = ha_session();
+  session= table->in_use;
 
   /* Under some cases Drizzle seems to call this function while
   holding btr_search_latch. This breaks the latching order as
@@ -2756,11 +2741,11 @@ ha_innobase::open(
     getTransactionalEngine()->releaseTemporaryLatches(session);
   }
 
-  normalize_table_name(norm_name, name);
+  normalize_table_name(norm_name, identifier.getPath().c_str());
 
   user_session = NULL;
 
-  if (!(share=get_share(name))) {
+  if (!(share=get_share(identifier.getPath().c_str()))) {
 
     return(1);
   }
@@ -2841,7 +2826,7 @@ ha_innobase::open(
 
   /* Looks like MySQL-3.23 sometimes has primary key number != 0 */
 
-  primary_key = table->getShare()->primary_key;
+  primary_key = table->getShare()->getPrimaryKey();
   key_used_on_scan = primary_key;
 
   /* Allocate a buffer for a 'row reference'. A row reference is
@@ -2853,7 +2838,7 @@ ha_innobase::open(
   if (!row_table_got_default_clust_index(ib_table)) {
     if (primary_key >= MAX_KEY) {
       errmsg_printf(ERRMSG_LVL_ERROR, "Table %s has a primary key in InnoDB data "
-          "dictionary, but not in MySQL!", name);
+          "dictionary, but not in MySQL!", identifier.getTableName().c_str());
     }
 
     prebuilt->clust_index_was_generated = FALSE;
@@ -2875,7 +2860,7 @@ ha_innobase::open(
           "columns, then MySQL internally treats that "
           "key as the primary key. You can fix this "
           "error by dump + DROP + CREATE + reimport "
-          "of the table.", name);
+          "of the table.", identifier.getTableName().c_str());
     }
 
     prebuilt->clust_index_was_generated = TRUE;
@@ -2894,7 +2879,7 @@ ha_innobase::open(
       errmsg_printf(ERRMSG_LVL_WARN, 
         "Table %s key_used_on_scan is %lu even "
         "though there is no primary key inside "
-        "InnoDB.", name, (ulong) key_used_on_scan);
+        "InnoDB.", identifier.getTableName().c_str(), (ulong) key_used_on_scan);
     }
   }
 
@@ -2954,7 +2939,7 @@ ha_innobase::close(void)
 {
   Session*  session;
 
-  session = ha_session();
+  session= table->in_use;
   if (session != NULL) {
     getTransactionalEngine()->releaseTemporaryLatches(session);
   }
@@ -3549,7 +3534,7 @@ build_template(
     the clustered index */
   }
 
-  n_fields = (ulint)table->getShare()->fields; /* number of columns */
+  n_fields = (ulint)table->getShare()->sizeFields(); /* number of columns */
 
   if (!prebuilt->mysql_template) {
     prebuilt->mysql_template = (mysql_row_templ_t*)
@@ -3563,9 +3548,10 @@ build_template(
 
   /* Note that in InnoDB, i is the column number. MySQL calls columns
   'fields'. */
-  for (i = 0; i < n_fields; i++) {
+  for (i = 0; i < n_fields; i++) 
+  {
     templ = prebuilt->mysql_template + n_requested_fields;
-    field = table->field[i];
+    field = table->getField(i);
 
     if (UNIV_LIKELY(templ_type == ROW_MYSQL_REC_FIELDS)) {
       /* Decide which columns we should fetch
@@ -3805,8 +3791,6 @@ ha_innobase::doInsertRecord(
     ut_error;
   }
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   sql_command = session_sql_command(user_session);
 
   if ((sql_command == SQLCOM_ALTER_TABLE
@@ -4024,7 +4008,6 @@ calc_row_difference(
   Session*  )   /*!< in: user thread */
 {
   unsigned char*    original_upd_buff = upd_buff;
-  Field*    field;
   enum_field_types field_mysql_type;
   uint    n_fields;
   ulint   o_len;
@@ -4041,14 +4024,14 @@ calc_row_difference(
   dict_index_t* clust_index;
   uint    i= 0;
 
-  n_fields = table->getShare()->fields;
+  n_fields = table->getShare()->sizeFields();
   clust_index = dict_table_get_first_index(prebuilt->table);
 
   /* We use upd_buff to convert changed fields */
   buf = (byte*) upd_buff;
 
   for (i = 0; i < n_fields; i++) {
-    field = table->field[i];
+    Field *field= table->getField(i);
 
     o_ptr = (const byte*) old_row + get_field_offset(table, field);
     n_ptr = (const byte*) new_row + get_field_offset(table, field);
@@ -4174,11 +4157,6 @@ ha_innobase::doUpdateRecord(
 
   ut_a(prebuilt->trx == trx);
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
-
   if (prebuilt->upd_node) {
     uvect = prebuilt->upd_node->update;
   } else {
@@ -4196,6 +4174,40 @@ ha_innobase::doUpdateRecord(
   prebuilt->upd_node->is_delete = FALSE;
 
   ut_a(prebuilt->template_type == ROW_MYSQL_WHOLE_ROW);
+
+  if (table->found_next_number_field)
+  {
+    uint64_t  auto_inc;
+    uint64_t  col_max_value;
+
+    auto_inc = table->found_next_number_field->val_int();
+
+    /* We need the upper limit of the col type to check for
+    whether we update the table autoinc counter or not. */
+    col_max_value = innobase_get_int_col_max_value(
+      table->found_next_number_field);
+
+    uint64_t current_autoinc;
+    ulint autoinc_error= innobase_get_autoinc(&current_autoinc);
+    if (autoinc_error == DB_SUCCESS
+        && auto_inc <= col_max_value && auto_inc != 0
+        && auto_inc >= current_autoinc)
+    {
+
+      uint64_t  need;
+      uint64_t  offset;
+
+      offset = prebuilt->autoinc_offset;
+      need = prebuilt->autoinc_increment;
+
+      auto_inc = innobase_next_autoinc(
+        auto_inc, need, offset, col_max_value);
+
+      dict_table_autoinc_update_if_greater(prebuilt->table, auto_inc);
+    }
+
+    dict_table_autoinc_unlock(prebuilt->table);
+  }
 
   innodb_srv_conc_enter_innodb(trx);
 
@@ -4279,8 +4291,6 @@ ha_innobase::doDeleteRecord(
 
   ut_a(prebuilt->trx == trx);
 
-  ha_statistic_increment(&system_status_var::ha_delete_count);
-
   if (!prebuilt->upd_node) {
     row_get_prebuilt_update_vector(prebuilt);
   }
@@ -4356,7 +4366,7 @@ void
 ha_innobase::try_semi_consistent_read(bool yes)
 /*===========================================*/
 {
-  ut_a(prebuilt->trx == session_to_trx(ha_session()));
+  ut_a(prebuilt->trx == session_to_trx(table->in_use));
 
   /* Row read type is set to semi consistent read if this was
   requested by the MySQL and either innodb_locks_unsafe_for_binlog
@@ -4658,10 +4668,10 @@ ha_innobase::innobase_get_index(
 
   ha_statistic_increment(&system_status_var::ha_read_key_count);
 
-  ut_ad(user_session == ha_session());
+  ut_ad(user_session == table->in_use);
   ut_a(prebuilt->trx == session_to_trx(user_session));
 
-  if (keynr != MAX_KEY && table->getShare()->keys > 0) 
+  if (keynr != MAX_KEY && table->getShare()->sizeKeys() > 0) 
   {
     index = dict_table_get_index_on_name(prebuilt->table,
                                          table->getShare()->getTableProto()->indexes(keynr).name().c_str());
@@ -4691,7 +4701,7 @@ ha_innobase::change_active_index(
       index, even if it was internally generated by
       InnoDB */
 {
-  ut_ad(user_session == ha_session());
+  ut_ad(user_session == table->in_use);
   ut_a(prebuilt->trx == session_to_trx(user_session));
 
   active_index = keynr;
@@ -4997,7 +5007,7 @@ ha_innobase::rnd_pos(
 
   ha_statistic_increment(&system_status_var::ha_read_rnd_count);
 
-  ut_a(prebuilt->trx == session_to_trx(ha_session()));
+  ut_a(prebuilt->trx == session_to_trx(table->in_use));
 
   if (prebuilt->clust_index_was_generated) {
     /* No primary key was defined for the table and we
@@ -5043,7 +5053,7 @@ ha_innobase::position(
 {
   uint    len;
 
-  ut_a(prebuilt->trx == session_to_trx(ha_session()));
+  ut_a(prebuilt->trx == session_to_trx(table->in_use));
 
   if (prebuilt->clust_index_was_generated) {
     /* No primary key was defined for the table and we
@@ -5102,7 +5112,7 @@ create_table_def(
   ulint   charset_no;
   ulint   i;
 
-  n_cols = form->getShare()->fields;
+  n_cols = form->getShare()->sizeFields();
 
   /* We pass 0 as the space id, and determine at a lower level the space
   id where to store the table */
@@ -5115,7 +5125,7 @@ create_table_def(
   }
 
   for (i = 0; i < n_cols; i++) {
-    field = form->field[i];
+    field = form->getField(i);
 
     col_type = get_innobase_type_from_mysql_type(&unsigned_type,
                   field);
@@ -5222,7 +5232,7 @@ create_index(
 
   ind_type = 0;
 
-  if (key_num == form->getShare()->primary_key) {
+  if (key_num == form->getShare()->getPrimaryKey()) {
     ind_type = ind_type | DICT_CLUSTERED;
   }
 
@@ -5248,9 +5258,10 @@ create_index(
     the length of the key part versus the column. */
 
     field = NULL;
-    for (j = 0; j < form->getShare()->fields; j++) {
+    for (j = 0; j < form->getShare()->sizeFields(); j++)
+    {
 
-      field = form->field[j];
+      field = form->getField(j);
 
       if (0 == innobase_strcasecmp(
           field->field_name,
@@ -5261,7 +5272,7 @@ create_index(
       }
     }
 
-    ut_a(j < form->getShare()->fields);
+    ut_a(j < form->getShare()->sizeFields());
 
     col_type = get_innobase_type_from_mysql_type(
           &is_unsigned, key_part->field);
@@ -5378,7 +5389,7 @@ InnobaseEngine::doCreateTable(
 /*================*/
   Session         &session, /*!< in: Session */
   Table&    form,   /*!< in: information on table columns and indexes */
-        drizzled::TableIdentifier &identifier,
+        const TableIdentifier &identifier,
         message::Table& create_proto)
 {
   int   error;
@@ -5398,7 +5409,7 @@ InnobaseEngine::doCreateTable(
 
   const char *table_name= identifier.getPath().c_str();
 
-  if (form.getShare()->fields > 1000) {
+  if (form.getShare()->sizeFields() > 1000) {
     /* The limit probably should be REC_MAX_N_FIELDS - 3 = 1020,
       but we play safe here */
 
@@ -5518,8 +5529,8 @@ InnobaseEngine::doCreateTable(
 
   /* Look for a primary key */
 
-  primary_key_no= (form.getShare()->primary_key != MAX_KEY ?
-                   (int) form.getShare()->primary_key :
+  primary_key_no= (form.getShare()->hasPrimaryKey() ?
+                   (int) form.getShare()->getPrimaryKey() :
                    -1);
 
   /* Our function row_get_mysql_key_number_for_index assumes
@@ -5529,7 +5540,7 @@ InnobaseEngine::doCreateTable(
 
   /* Create the keys */
 
-  if (form.getShare()->keys == 0 || primary_key_no == -1) {
+  if (form.getShare()->sizeKeys() == 0 || primary_key_no == -1) {
     /* Create an index which is used as the clustered index;
       order the rows by their row id which is internally generated
       by InnoDB */
@@ -5548,7 +5559,7 @@ InnobaseEngine::doCreateTable(
     }
   }
 
-  for (i = 0; i < form.getShare()->keys; i++) {
+  for (i = 0; i < form.getShare()->sizeKeys(); i++) {
     if (i != (uint) primary_key_no) {
 
       if ((error = create_index(trx, &form, iflags, norm_name,
@@ -5659,7 +5670,7 @@ ha_innobase::discard_or_import_tablespace(
 
   ut_a(prebuilt->trx);
   ut_a(prebuilt->trx->magic_n == TRX_MAGIC_N);
-  ut_a(prebuilt->trx == session_to_trx(ha_session()));
+  ut_a(prebuilt->trx == session_to_trx(table->in_use));
 
   dict_table = prebuilt->table;
   trx = prebuilt->trx;
@@ -5688,7 +5699,7 @@ ha_innobase::delete_all_rows(void)
   /* Get the transaction associated with the current session, or create one
   if not yet created, and update prebuilt->trx */
 
-  update_session(ha_session());
+  update_session(table->in_use);
 
   if (session_sql_command(user_session) != SQLCOM_TRUNCATE) {
   fallback:
@@ -5724,7 +5735,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session &session,
-        TableIdentifier &identifier)
+        const TableIdentifier &identifier)
 {
   int error;
   trx_t*  parent_trx;
@@ -5813,7 +5824,7 @@ Removes all tables in the named database inside InnoDB. */
 bool
 InnobaseEngine::doDropSchema(
 /*===================*/
-                             SchemaIdentifier &identifier)
+                             const SchemaIdentifier &identifier)
     /*!< in: database path; inside InnoDB the name
       of the last directory in the path is used as
       the database name: for example, in 'mysql/data/test'
@@ -5950,7 +5961,7 @@ innobase_rename_table(
 /*********************************************************************//**
 Renames an InnoDB table.
 @return 0 or error code */
-UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   // A temp table alter table/rename is a shallow rename and only the
   // definition needs to be updated.
@@ -6024,7 +6035,7 @@ ha_innobase::records_in_range(
   ulint   mode2;
   mem_heap_t* heap;
 
-  ut_a(prebuilt->trx == session_to_trx(ha_session()));
+  ut_a(prebuilt->trx == session_to_trx(table->in_use));
 
   prebuilt->trx->op_info = (char*)"estimating records in index range";
 
@@ -6119,7 +6130,7 @@ ha_innobase::estimate_rows_upper_bound(void)
   external_lock(). To be safe, update the session of the current table
   handle. */
 
-  update_session(ha_session());
+  update_session(table->in_use);
 
   prebuilt->trx->op_info = (char*)
          "calculating upper bound for table rows";
@@ -6183,7 +6194,7 @@ ha_innobase::read_time(
   ha_rows total_rows;
   double  time_for_scan;
 
-  if (index != table->getShare()->primary_key) {
+  if (index != table->getShare()->getPrimaryKey()) {
     /* Not clustered */
     return(Cursor::read_time(index, ranges, rows));
   }
@@ -6242,7 +6253,7 @@ ha_innobase::info(
   external_lock(). To be safe, update the session of the current table
   handle. */
 
-  update_session(ha_session());
+  update_session(table->in_use);
 
   /* In case MySQL calls this in the middle of a SELECT query, release
   possible adaptive hash latch to avoid deadlocks of threads */
@@ -6353,7 +6364,8 @@ ha_innobase::info(
 
         Session*  session;
 
-        session = ha_session();
+        session= table->in_use;
+        assert(session);
 
         push_warning_printf(
           session,
@@ -6388,7 +6400,7 @@ ha_innobase::info(
       index = dict_table_get_next_index(index);
     }
 
-    for (i = 0; i < table->getShare()->keys; i++) {
+    for (i = 0; i < table->getShare()->sizeKeys(); i++) {
       if (index == NULL) {
         errmsg_printf(ERRMSG_LVL_ERROR, "Table %s contains fewer "
             "indexes inside InnoDB than "
@@ -6499,7 +6511,7 @@ ha_innobase::check(
 {
   ulint   ret;
 
-  assert(session == ha_session());
+  assert(session == table->in_use);
   ut_a(prebuilt->trx);
   ut_a(prebuilt->trx->magic_n == TRX_MAGIC_N);
   ut_a(prebuilt->trx == session_to_trx(session));
@@ -6543,7 +6555,7 @@ ha_innobase::update_table_comment(
     return((char*)comment); /* string too long */
   }
 
-  update_session(ha_session());
+  update_session(table->in_use);
 
   prebuilt->trx->op_info = (char*)"returning table comment";
 
@@ -6614,7 +6626,7 @@ ha_innobase::get_foreign_key_create_info(void)
   external_lock(). To be safe, update the session of the current table
   handle. */
 
-  update_session(ha_session());
+  update_session(table->in_use);
 
   prebuilt->trx->op_info = (char*)"getting info on foreign keys";
 
@@ -6663,7 +6675,7 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
   dict_foreign_t* foreign;
 
   ut_a(prebuilt != NULL);
-  update_session(ha_session());
+  update_session(table->in_use);
   prebuilt->trx->op_info = (char*)"getting list of foreign keys";
   trx_search_latch_release_if_reserved(prebuilt->trx);
   mutex_enter(&(dict_sys->mutex));
@@ -6696,12 +6708,12 @@ ha_innobase::get_foreign_key_list(Session *session, List<ForeignKeyInfo> *f_key_
       i++;
     }
     db_name[i] = 0;
-    ulen= filename_to_tablename(db_name, uname, sizeof(uname));
+    ulen= TableIdentifier::filename_to_tablename(db_name, uname, sizeof(uname));
     LEX_STRING *tmp_referenced_db = session->make_lex_string(NULL, uname, ulen, true);
 
     /* Table name */
     tmp_buff += i + 1;
-    ulen= filename_to_tablename(tmp_buff, uname, sizeof(uname));
+    ulen= TableIdentifier::filename_to_tablename(tmp_buff, uname, sizeof(uname));
     LEX_STRING *tmp_referenced_table = session->make_lex_string(NULL, uname, ulen, true);
 
     /** Foreign Fields **/
@@ -6801,7 +6813,7 @@ ha_innobase::can_switch_engines(void)
 {
   bool  can_switch;
 
-  ut_a(prebuilt->trx == session_to_trx(ha_session()));
+  ut_a(prebuilt->trx == session_to_trx(table->in_use));
 
   prebuilt->trx->op_info =
       "determining if there are foreign key constraints";
@@ -6889,16 +6901,16 @@ ha_innobase::extra(
       either, because the calling threads may change.
       CAREFUL HERE, OR MEMORY CORRUPTION MAY OCCUR! */
     case HA_EXTRA_IGNORE_DUP_KEY:
-      session_to_trx(ha_session())->duplicates |= TRX_DUP_IGNORE;
+      session_to_trx(table->in_use)->duplicates |= TRX_DUP_IGNORE;
       break;
     case HA_EXTRA_WRITE_CAN_REPLACE:
-      session_to_trx(ha_session())->duplicates |= TRX_DUP_REPLACE;
+      session_to_trx(table->in_use)->duplicates |= TRX_DUP_REPLACE;
       break;
     case HA_EXTRA_WRITE_CANNOT_REPLACE:
-      session_to_trx(ha_session())->duplicates &= ~TRX_DUP_REPLACE;
+      session_to_trx(table->in_use)->duplicates &= ~TRX_DUP_REPLACE;
       break;
     case HA_EXTRA_NO_IGNORE_DUP_KEY:
-      session_to_trx(ha_session())->duplicates &=
+      session_to_trx(table->in_use)->duplicates &=
         ~(TRX_DUP_IGNORE | TRX_DUP_REPLACE);
       break;
     default:/* Do nothing */
@@ -7544,7 +7556,7 @@ ha_innobase::get_auto_increment(
   uint64_t  autoinc = 0;
 
   /* Prepare prebuilt->trx in the table handle */
-  update_session(ha_session());
+  update_session(table->in_use);
 
   error = innobase_get_autoinc(&autoinc);
 
@@ -7640,7 +7652,7 @@ ha_innobase::reset_auto_increment(
 {
   int error;
 
-  update_session(ha_session());
+  update_session(table->in_use);
 
   error = row_lock_table_autoinc_for_mysql(prebuilt);
 
@@ -7706,10 +7718,10 @@ ha_innobase::cmp_ref(
   /* Do a type-aware comparison of primary key fields. PK fields
   are always NOT NULL, so no checks for NULL are performed. */
 
-  key_part = table->key_info[table->getShare()->primary_key].key_part;
+  key_part = table->key_info[table->getShare()->getPrimaryKey()].key_part;
 
   key_part_end = key_part
-      + table->key_info[table->getShare()->primary_key].key_parts;
+      + table->key_info[table->getShare()->getPrimaryKey()].key_parts;
 
   for (; key_part != key_part_end; ++key_part) {
     field = key_part->field;

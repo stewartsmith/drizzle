@@ -383,7 +383,6 @@ public:
   HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
   struct system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
-  struct system_status_var *initial_status_var; /* used by show status */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
@@ -404,6 +403,8 @@ public:
 private:
   SecurityContext security_ctx;
 
+  int32_t scoreboard_index;
+
   inline void checkSentry() const
   {
     assert(this->dbug_sentry == Session_SENTRY_MAGIC);
@@ -417,6 +418,16 @@ public:
   SecurityContext& getSecurityContext()
   {
     return security_ctx;
+  }
+
+  int32_t getScoreboardIndex()
+  {
+    return scoreboard_index;
+  }
+
+  void setScoreboardIndex(int32_t in_scoreboard_index)
+  {
+    scoreboard_index= in_scoreboard_index;
   }
 
   /**
@@ -1336,7 +1347,6 @@ public:
                             bool send_refresh= false);
   void close_open_tables();
   void close_data_files_and_morph_locks(TableIdentifier &identifier);
-  void close_data_files_and_morph_locks(const char *db, const char *table_name);
 
 private:
   bool free_cached_table();
@@ -1397,7 +1407,7 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const char *key, uint32_t key_length);
+  Table *table_cache_insert_placeholder(const char *db_name, const char *table_name, const char *key, uint32_t key_length);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
   bool lock_table_name_if_not_cached(const char *db,
                                      const char *table_name, Table **table);
@@ -1405,11 +1415,11 @@ public:
   typedef unordered_map<std::string, message::Table> TableMessageCache;
   TableMessageCache table_message_cache;
 
-  bool storeTableMessage(TableIdentifier &identifier, message::Table &table_message);
-  bool removeTableMessage(TableIdentifier &identifier);
-  bool getTableMessage(TableIdentifier &identifier, message::Table &table_message);
-  bool doesTableMessageExist(TableIdentifier &identifier);
-  bool renameTableMessage(TableIdentifier &from, TableIdentifier &to);
+  bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+  bool removeTableMessage(const TableIdentifier &identifier);
+  bool getTableMessage(const TableIdentifier &identifier, message::Table &table_message);
+  bool doesTableMessageExist(const TableIdentifier &identifier);
+  bool renameTableMessage(const TableIdentifier &from, const TableIdentifier &to);
 
   /* Work with temporary tables */
   Table *find_temporary_table(TableList *table_list);
@@ -1417,20 +1427,20 @@ public:
   Table *find_temporary_table(TableIdentifier &identifier);
 
   void doGetTableNames(CachedDirectory &directory,
-                       SchemaIdentifier &schema_identifier,
+                       const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
-  void doGetTableNames(SchemaIdentifier &schema_identifier,
+  void doGetTableNames(const SchemaIdentifier &schema_identifier,
                        std::set<std::string>& set_of_names);
 
   void doGetTableIdentifiers(CachedDirectory &directory,
-                             SchemaIdentifier &schema_identifier,
+                             const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
-  void doGetTableIdentifiers(SchemaIdentifier &schema_identifier,
+  void doGetTableIdentifiers(const SchemaIdentifier &schema_identifier,
                              TableIdentifiers &set_of_identifiers);
 
-  int doGetTableDefinition(drizzled::TableIdentifier &identifier,
+  int doGetTableDefinition(const drizzled::TableIdentifier &identifier,
                            message::Table &table_proto);
-  bool doDoesTableExist(TableIdentifier &identifier);
+  bool doDoesTableExist(const drizzled::TableIdentifier &identifier);
 
   void close_temporary_tables();
   void close_temporary_table(Table *table);
@@ -1443,7 +1453,7 @@ public:
   void dumpTemporaryTableNames(const char *id);
   int drop_temporary_table(TableList *table_list);
   bool rm_temporary_table(plugin::StorageEngine *base, TableIdentifier &identifier);
-  bool rm_temporary_table(TableIdentifier &identifier);
+  bool rm_temporary_table(TableIdentifier &identifier, bool best_effort= false);
   Table *open_temporary_table(TableIdentifier &identifier,
                               bool link_in_list= true);
 
@@ -1483,8 +1493,7 @@ private:
   std::vector<TableShareInstance *> temporary_shares;
 
 public:
-  TableShareInstance *getTemporaryShare(const char *tmpname_arg);
-  TableShareInstance *getTemporaryShare();
+  TableShareInstance *getTemporaryShare(TableIdentifier::Type type_arg);
 };
 
 class Join;
@@ -1563,12 +1572,6 @@ static const std::bitset<CF_BIT_SIZE> CF_HAS_ROW_COUNT(1 << CF_BIT_HAS_ROW_COUNT
 static const std::bitset<CF_BIT_SIZE> CF_STATUS_COMMAND(1 << CF_BIT_STATUS_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_SHOW_TABLE_COMMAND(1 << CF_BIT_SHOW_TABLE_COMMAND);
 static const std::bitset<CF_BIT_SIZE> CF_WRITE_LOGS_COMMAND(1 << CF_BIT_WRITE_LOGS_COMMAND);
-
-/* Functions in sql_class.cc */
-void add_to_status(system_status_var *to_var, system_status_var *from_var);
-
-void add_diff_to_status(system_status_var *to_var, system_status_var *from_var,
-                        system_status_var *dec_var);
 
 } /* namespace drizzled */
 
