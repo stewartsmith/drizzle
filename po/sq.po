@@ -4072,9 +4072,7 @@ msgid "Got error %d when reading table '%s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
 msgstr ""
 
 #, c-format
@@ -4158,6 +4156,24 @@ msgid "Password to use for auth."
 msgstr ""
 
 msgid "Default database to use."
+msgstr ""
+
+msgid "Invalid value of port\n"
+msgstr ""
+
+msgid "Invalid value for connect_timeout\n"
+msgstr ""
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+msgid "Invalid value for retry_count\n"
+msgstr ""
+
+msgid "Invalid value for buffer_length\n"
 msgstr ""
 
 msgid ""
@@ -4418,13 +4434,16 @@ msgstr ""
 msgid "fail open() fn=%s er=%s\n"
 msgstr ""
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
-msgstr ""
-
-msgid "File to log to"
-msgstr ""
-
-msgid "PCRE to match the query against"
 msgstr ""
 
 msgid "Threshold for logging slow queries, in microseconds"
@@ -4434,6 +4453,12 @@ msgid "Threshold for logging big queries, for rows returned"
 msgstr ""
 
 msgid "Threshold for logging big queries, for rows examined"
+msgstr ""
+
+msgid "File to log to"
+msgstr ""
+
+msgid "PCRE to match the query against"
 msgstr ""
 
 msgid "Log queries to a CSV file"
@@ -4670,6 +4695,9 @@ msgid "No such table space"
 msgstr ""
 
 msgid "Tablespace not empty"
+msgstr ""
+
+msgid "Invalid value for retry_count"
 msgstr ""
 
 msgid ""

@@ -242,13 +242,12 @@ void MSConnectionHandler::writeFile(CSString *file_path)
 * OR
  * Request URI: /<database>/<blob alias>
  */
-void MSConnectionHandler::handleGet()
+void MSConnectionHandler::handleGet(bool info_only)
 {
 	const char	*bad_url_comment = "Incorrect URL: ";
 	MSOpenTable	*otab;
 	CSString	*info_request;
 	CSString	*ping_request;
-	bool		info_only = false;
 
 	enter_();
 	self->myException.setErrorCode(0);
@@ -580,10 +579,12 @@ void MSConnectionHandler::serviceConnection()
 		}
 		replyPending = true;
 		if (strcmp(method, "GET") == 0)
-			handleGet();
+			handleGet(false);
 		else if (strcmp(method, "PUT") == 0 ||
 			strcmp(method, "POST") == 0)
 			handlePut();
+		else if (strcmp(method, "HEAD"))
+			handleGet(true);
 		else
 			CSException::throwCoreError(CS_CONTEXT, CS_ERR_UNKNOWN_METHOD, method);
 	}

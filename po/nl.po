@@ -4677,12 +4677,8 @@ msgid "Got error %d when reading table '%s'"
 msgstr "Kreeg fout %d bij het lezen van tabel '%s'"
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
 msgstr ""
-"'%s' heeft geen of een ongeldige karakterset, en de standaard karakterset is "
-"multi-byte, dus de groottes van de karakter kolommen kunnen gewijzigd zijn"
 
 #, c-format
 msgid "ENUM column %s has greater than %d possible values"
@@ -4768,6 +4764,27 @@ msgstr "Paswoord om te gebruiken voor authenticatie."
 
 msgid "Default database to use."
 msgstr "Standaard te gebruiken databank."
+
+#, fuzzy
+msgid "Invalid value of port\n"
+msgstr "Ongeldig gebruik van null pointer"
+
+#, fuzzy
+msgid "Invalid value for connect_timeout\n"
+msgstr "Foutief gebruik van group functie"
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+#, fuzzy
+msgid "Invalid value for retry_count\n"
+msgstr "Foutief gebruik van group functie"
+
+msgid "Invalid value for buffer_length\n"
+msgstr ""
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -5050,14 +5067,17 @@ msgstr "Log queries naar een Gearman server"
 msgid "fail open() fn=%s er=%s\n"
 msgstr "mislukt open() fn=%s er=%s\n"
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
 msgstr "Schakel logging naar CSV bestand in"
-
-msgid "File to log to"
-msgstr "Bestand om naar te loggen"
-
-msgid "PCRE to match the query against"
-msgstr "PCRE waarmee de query vergeleken wordt"
 
 msgid "Threshold for logging slow queries, in microseconds"
 msgstr "Drempel voor het loggen van trage queries, in microseconden"
@@ -5069,6 +5089,12 @@ msgstr ""
 msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 "Drempel voor het loggen van grote queries wat onderzochte rijen betreft"
+
+msgid "File to log to"
+msgstr "Bestand om naar te loggen"
+
+msgid "PCRE to match the query against"
+msgstr "PCRE waarmee de query vergeleken wordt"
 
 msgid "Log queries to a CSV file"
 msgstr "Log queries naar een CSV bestand"
@@ -5326,6 +5352,10 @@ msgstr "Onbestaande tablespace"
 msgid "Tablespace not empty"
 msgstr "Tablespace is niet leeg"
 
+#, fuzzy
+msgid "Invalid value for retry_count"
+msgstr "Foutief gebruik van group functie"
+
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
@@ -5431,6 +5461,14 @@ msgstr "Kon de transactie niet interpreteren. Kreeg fout: %s.\n"
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "BUFFER: %s\n"
+
+#~ msgid ""
+#~ "'%s' had no or invalid character set, and default character set is multi-"
+#~ "byte, so character column sizes may have changed"
+#~ msgstr ""
+#~ "'%s' heeft geen of een ongeldige karakterset, en de standaard karakterset "
+#~ "is multi-byte, dus de groottes van de karakter kolommen kunnen gewijzigd "
+#~ "zijn"
 
 #~ msgid "Synonym for -?"
 #~ msgstr "Synoniem voor -?"

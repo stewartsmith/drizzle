@@ -68,7 +68,7 @@ public:
 	void freeRequestURI();
 
 	void writeFile(CSString *file_path);
-	void handleGet();
+	void handleGet(bool info_only);
 	void handlePut();
 
 	bool replyPending;

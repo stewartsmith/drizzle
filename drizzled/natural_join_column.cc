@@ -28,7 +28,7 @@ namespace drizzled
 Natural_join_column::Natural_join_column(Field *field_param,
                                          TableList *tab)
 {
-  assert(tab->table == field_param->table);
+  assert(tab->table == field_param->getTable());
   table_field= field_param;
   table_ref= tab;
   is_common= false;
