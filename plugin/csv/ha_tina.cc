@@ -53,6 +53,8 @@ TODO:
 
 #include <fcntl.h>
 
+#include <algorithm>
+#include <vector>
 #include <string>
 #include <map>
 
@@ -86,19 +88,6 @@ pthread_mutex_t tina_mutex;
 /*****************************************************************************
  ** TINA tables
  *****************************************************************************/
-
-/*
-  Used for sorting chains with qsort().
-*/
-static int sort_set (tina_set *a, tina_set *b)
-{
-  /*
-    We assume that intervals do not intersect. So, it is enought to compare
-    any two points. Here we take start of intervals for comparison.
-  */
-  return ( a->begin > b->begin ? 1 : ( a->begin < b->begin ? -1 : 0 ) );
-}
-
 
 /*
   If frm_error() is called in table.cc this is called to find out what file
@@ -139,17 +128,17 @@ public:
 
   int doCreateTable(Session &,
                     Table &table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
-                           TableIdentifier &identifier,
+                           const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, SchemaIdentifier&, set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, const SchemaIdentifier&, set<string>&) { };
 
-  int doDropTable(Session&, TableIdentifier &identifier);
+  int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -158,22 +147,22 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
-  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
+  int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                 drizzled::SchemaIdentifier&,
+                                 const drizzled::SchemaIdentifier&,
                                  drizzled::TableIdentifiers&)
 {
 }
 
 int Tina::doRenameTable(Session &session,
-                        TableIdentifier &from, TableIdentifier &to)
+                        const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
@@ -191,14 +180,14 @@ int Tina::doRenameTable(Session &session,
   return error;
 }
 
-bool Tina::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool Tina::doDoesTableExist(Session &session, const drizzled::TableIdentifier &identifier)
 {
   return session.doesTableMessageExist(identifier);
 }
 
 
 int Tina::doDropTable(Session &session,
-                      TableIdentifier &identifier)
+                      const drizzled::TableIdentifier &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -246,7 +235,7 @@ void Tina::deleteOpenTable(const string &table_name)
 
 
 int Tina::doGetTableDefinition(Session &session,
-                               drizzled::TableIdentifier &identifier,
+                               const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
   if (session.getTableMessage(identifier, table_message))
@@ -551,12 +540,10 @@ ha_tina::ha_tina(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_
     They are not probably completely right.
   */
   current_position(0), next_position(0), local_saved_data_file_length(0),
-  file_buff(0), chain_alloced(0), chain_size(DEFAULT_CHAIN_LENGTH),
-  local_data_file_version(0), records_is_known(0)
+  file_buff(0), local_data_file_version(0), records_is_known(0)
 {
   /* Set our original buffers from pre-allocated memory */
   buffer.set((char*)byte_buffer, IO_SIZE, &my_charset_bin);
-  chain= chain_buffer;
   file_buff= new Transparent_file();
 }
 
@@ -573,7 +560,7 @@ int ha_tina::encode_quote(unsigned char *)
 
   buffer.length(0);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
   {
     const char *ptr;
     const char *end_ptr;
@@ -661,36 +648,10 @@ int ha_tina::encode_quote(unsigned char *)
 */
 int ha_tina::chain_append()
 {
-  if ( chain_ptr != chain && (chain_ptr -1)->end == current_position)
-    (chain_ptr -1)->end= next_position;
+  if (chain.size() > 0 && chain.back().second == current_position)
+    chain.back().second= next_position;
   else
-  {
-    /* We set up for the next position */
-    if ((off_t)(chain_ptr - chain) == (chain_size -1))
-    {
-      off_t location= chain_ptr - chain;
-      chain_size += DEFAULT_CHAIN_LENGTH;
-      if (chain_alloced)
-      {
-        if ((chain= (tina_set *) realloc(chain, chain_size)) == NULL)
-          return -1;
-      }
-      else
-      {
-        tina_set *ptr= (tina_set *) malloc(chain_size * sizeof(tina_set));
-        if (ptr == NULL)
-          return -1;
-        memcpy(ptr, chain, DEFAULT_CHAIN_LENGTH * sizeof(tina_set));
-        chain= ptr;
-        chain_alloced++;
-      }
-      chain_ptr= chain + location;
-    }
-    chain_ptr->begin= current_position;
-    chain_ptr->end= next_position;
-    chain_ptr++;
-  }
-
+    chain.push_back(make_pair(current_position, next_position));
   return 0;
 }
 
@@ -719,7 +680,7 @@ int ha_tina::find_current_row(unsigned char *buf)
 
   memset(buf, 0, table->getShare()->null_bytes);
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field=table->getFields() ; *field ; field++)
   {
     char curr_char;
 
@@ -891,9 +852,9 @@ void ha_tina::update_status()
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_tina::open(const char *name, int, uint32_t)
+int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
-  if (!(share= get_share(name)))
+  if (!(share= get_share(identifier.getPath().c_str())))
     return(ENOENT);
 
   if (share->crashed)
@@ -921,7 +882,6 @@ int ha_tina::open(const char *name, int, uint32_t)
   return(0);
 }
 
-
 /*
   Close a database file. We remove ourselves from the shared strucutre.
   If it is empty we destroy it.
@@ -944,8 +904,6 @@ int ha_tina::doInsertRecord(unsigned char * buf)
 
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);
-
-  ha_statistic_increment(&system_status_var::ha_write_count);
 
   size= encode_quote(buf);
 
@@ -1003,11 +961,6 @@ int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
   int size;
   int rc= -1;
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
-
   size= encode_quote(new_data);
 
   /*
@@ -1045,7 +998,6 @@ err:
 */
 int ha_tina::doDeleteRecord(const unsigned char *)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (chain_append())
     return(-1);
@@ -1125,7 +1077,7 @@ int ha_tina::doStartTableScan(bool)
   current_position= next_position= 0;
   stats.records= 0;
   records_is_known= 0;
-  chain_ptr= chain;
+  chain.clear();
 
   blobroot.init_alloc_root(BLOB_MEMROOT_ALLOC_SIZE);
 
@@ -1214,14 +1166,14 @@ int ha_tina::info(uint32_t)
   to the given "hole", stored in the buffer. "Valid" here means,
   not listed in the chain of deleted records ("holes").
 */
-bool ha_tina::get_write_pos(off_t *end_pos, tina_set *closest_hole)
+bool ha_tina::get_write_pos(off_t *end_pos, vector< pair<off_t, off_t> >::iterator &closest_hole)
 {
-  if (closest_hole == chain_ptr) /* no more chains */
+  if (closest_hole == chain.end()) /* no more chains */
     *end_pos= file_buff->end();
   else
     *end_pos= std::min(file_buff->end(),
-                       closest_hole->begin);
-  return (closest_hole != chain_ptr) && (*end_pos == closest_hole->begin);
+                       closest_hole->first);
+  return (closest_hole != chain.end()) && (*end_pos == closest_hole->first);
 }
 
 
@@ -1239,9 +1191,9 @@ int ha_tina::doEndTableScan()
   blobroot.free_root(MYF(0));
   records_is_known= 1;
 
-  if ((chain_ptr - chain)  > 0)
+  if (chain.size() > 0)
   {
-    tina_set *ptr= chain;
+    vector< pair<off_t, off_t> >::iterator ptr= chain.begin();
 
     /*
       Re-read the beginning of a file (as the buffer should point to the
@@ -1253,8 +1205,7 @@ int ha_tina::doEndTableScan()
       The sort is needed when there were updates/deletes with random orders.
       It sorts so that we move the firts blocks to the beginning.
     */
-    internal::my_qsort(chain, (size_t)(chain_ptr - chain), sizeof(tina_set),
-                       (qsort_cmp)sort_set);
+    sort(chain.begin(), chain.end());
 
     off_t write_begin= 0, write_end;
 
@@ -1285,10 +1236,10 @@ int ha_tina::doEndTableScan()
       if (in_hole)
       {
         /* skip hole */
-        while (file_buff->end() <= ptr->end && file_buffer_start != -1)
+        while (file_buff->end() <= ptr->second && file_buffer_start != -1)
           file_buffer_start= file_buff->read_next();
-        write_begin= ptr->end;
-        ptr++;
+        write_begin= ptr->second;
+        ++ptr;
       }
       else
         write_begin= write_end;
@@ -1395,7 +1346,7 @@ int ha_tina::delete_all_rows()
 
 int Tina::doCreateTable(Session &session,
                         Table& table_arg,
-                        drizzled::TableIdentifier &identifier,
+                        const drizzled::TableIdentifier &identifier,
                         drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];
@@ -1404,9 +1355,15 @@ int Tina::doCreateTable(Session &session,
   /*
     check columns
   */
-  for (Field **field= table_arg.getMutableShare()->getFields(); *field; field++)
+  const drizzled::TableShare::Fields fields(table_arg.getShare()->getFields());
+  for (drizzled::TableShare::Fields::const_iterator iter= fields.begin();
+       iter != fields.end();
+       iter++)
   {
-    if ((*field)->real_maybe_null())
+    if (not *iter) // Historical legacy for NULL array end.
+      continue;
+
+    if ((*iter)->real_maybe_null())
     {
       my_error(ER_CHECK_NOT_IMPLEMENTED, MYF(0), "nullable columns");
       return(HA_ERR_UNSUPPORTED);

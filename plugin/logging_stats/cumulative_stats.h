@@ -31,6 +31,7 @@
 #define PLUGIN_LOGGING_STATS_CUMULATIVE_STATS_H
 
 #include "scoreboard_slot.h"
+#include "scoreboard.h"
 #include "global_stats.h"
 
 #include <drizzled/atomics.h>
@@ -46,9 +47,11 @@ public:
 
   ~CumulativeStats();
 
-  void logUserStats(ScoreboardSlot* scoreboard_slot);
+  void logUserStats(ScoreboardSlot* scoreboard_slot, bool reserveSlot);
 
   void logGlobalStats(ScoreboardSlot* scoreboard_slot);
+
+  void logGlobalStatusVars(ScoreboardSlot* scoreboard_slot);
 
   std::vector<ScoreboardSlot* > *getCumulativeStatsByUserVector()
   {
@@ -58,6 +61,11 @@ public:
   GlobalStats *getGlobalStats()
   {
     return global_stats;
+  }
+
+  StatusVars *getGlobalStatusVars()
+  {
+    return global_status_vars;
   }
 
   int32_t getCumulativeStatsByUserMax()
@@ -72,9 +80,14 @@ public:
     return isOpenUserSlots;
   }
 
+  void sumCurrentScoreboard(Scoreboard *scoreboard, 
+                            StatusVars *current_status_vars,
+                            UserCommands *current_user_commands);
+
 private:
   std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
   GlobalStats *global_stats; 
+  StatusVars *global_status_vars;
   int32_t cumulative_stats_by_user_max;
   drizzled::atomic<int32_t> last_valid_index;
   bool isOpenUserSlots;

@@ -17,7 +17,6 @@
 #include <drizzled/error.h>
 #include <drizzled/table.h>
 #include <drizzled/session.h>
-#include <drizzled/current_session.h>
 #include <drizzled/field/timestamp.h>
 #include <drizzled/field/varstring.h>
 #include "drizzled/plugin/daemon.h"
@@ -74,7 +73,7 @@ public:
 
   int doCreateTable(Session &session,
                     Table &table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const TableIdentifier &identifier,
                     message::Table &create_proto);
 
   /* For whatever reason, internal tables can be created by Cursor::open()
@@ -88,16 +87,16 @@ public:
                         message::Table &create_proto,
                         HP_SHARE **internal_share);
 
-  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
 
-  int doDropTable(Session&, TableIdentifier &identifier);
+  int doDropTable(Session&, const TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, SchemaIdentifier& , set<string>&) { };
+  void doGetTableNames(CachedDirectory &, const SchemaIdentifier& , set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MAX_KEY; }
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
@@ -113,25 +112,25 @@ public:
             HA_KEY_SCAN_NOT_ROR);
   }
 
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
-  void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
-                             drizzled::TableIdentifiers &set_of_identifiers);
+  bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
+  void doGetTableIdentifiers(CachedDirectory &directory,
+                             const SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
 };
 
-void HeapEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                       drizzled::SchemaIdentifier&,
-                                       drizzled::TableIdentifiers&)
+void HeapEngine::doGetTableIdentifiers(CachedDirectory&,
+                                       const SchemaIdentifier&,
+                                       TableIdentifiers&)
 {
 }
 
-bool HeapEngine::doDoesTableExist(Session& session, TableIdentifier &identifier)
+bool HeapEngine::doDoesTableExist(Session& session, const TableIdentifier &identifier)
 {
   return session.doesTableMessageExist(identifier);
 }
 
 int HeapEngine::doGetTableDefinition(Session &session,
-                                     TableIdentifier &identifier,
+                                     const TableIdentifier &identifier,
                                      message::Table &table_proto)
 {
   if (session.getTableMessage(identifier, table_proto))
@@ -143,7 +142,7 @@ int HeapEngine::doGetTableDefinition(Session &session,
   We have to ignore ENOENT entries as the MEMORY table is created on open and
   not when doing a CREATE on the table.
 */
-int HeapEngine::doDropTable(Session &session, TableIdentifier &identifier)
+int HeapEngine::doDropTable(Session &session, const TableIdentifier &identifier)
 {
   session.removeTableMessage(identifier);
 
@@ -199,7 +198,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
     HP_SHARE *internal_share= NULL;
     message::Table create_proto;
 
-    if (!heap_storage_engine->heap_create_table(ha_session(), name, table,
+    if (!heap_storage_engine->heap_create_table(table->in_use, name, table,
                                                 internal_table,
                                                 create_proto,
                                                 &internal_share))
@@ -253,8 +252,11 @@ int ha_heap::close(void)
 Cursor *ha_heap::clone(memory::Root *mem_root)
 {
   Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*(table->getMutableShare()), mem_root);
+  TableIdentifier identifier(table->getShare()->getSchemaName(),
+                             table->getShare()->getTableName(),
+                             table->getShare()->getPath());
 
-  if (new_handler && !new_handler->ha_open(table, file->s->name, table->db_stat,
+  if (new_handler && !new_handler->ha_open(identifier, table, file->s->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
@@ -325,7 +327,6 @@ void ha_heap::update_key_stats()
 int ha_heap::doInsertRecord(unsigned char * buf)
 {
   int res;
-  ha_statistic_increment(&system_status_var::ha_write_count);
   if (table->next_number_field && buf == table->record[0])
   {
     if ((res= update_auto_increment()))
@@ -347,9 +348,7 @@ int ha_heap::doInsertRecord(unsigned char * buf)
 int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_data)
 {
   int res;
-  ha_statistic_increment(&system_status_var::ha_update_count);
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
+
   res= heap_update(file,old_data,new_data);
   if (!res && ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
               file->s->records)
@@ -366,9 +365,9 @@ int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_
 int ha_heap::doDeleteRecord(const unsigned char * buf)
 {
   int res;
-  ha_statistic_increment(&system_status_var::ha_delete_count);
+
   res= heap_delete(file,buf);
-  if (!res && table->getShare()->tmp_table == message::Table::STANDARD &&
+  if (!res && table->getShare()->getType() == message::Table::STANDARD &&
       ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)
   {
     /*
@@ -526,7 +525,7 @@ int ha_heap::reset()
 int ha_heap::delete_all_rows()
 {
   heap_clear(file);
-  if (table->getShare()->tmp_table == message::Table::STANDARD)
+  if (table->getShare()->getType() == message::Table::STANDARD)
   {
     /*
        We can perform this safely since only one writer at the time is
@@ -651,7 +650,7 @@ void ha_heap::drop_table(const char *)
 }
 
 
-int HeapEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+int HeapEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   session.renameTableMessage(from, to);
   return heap_rename(from.getPath().c_str(), to.getPath().c_str());
@@ -682,7 +681,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
 
 int HeapEngine::doCreateTable(Session &session,
                               Table &table_arg,
-                              drizzled::TableIdentifier &identifier,
+                              const TableIdentifier &identifier,
                               message::Table& create_proto)
 {
   int error;
@@ -735,11 +734,11 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
 
   for (column_idx= 0; column_idx < column_count; column_idx++)
   {
-    Field* field= *(table_arg->field + column_idx);
+    Field* field= *(table_arg->getFields() + column_idx);
     HP_COLUMNDEF* column= columndef + column_idx;
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();
-    column->offset= field->offset(field->table->record[0]);
+    column->offset= field->offset(field->getTable()->record[0]);
 
     if (field->null_bit)
     {

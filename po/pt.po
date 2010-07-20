@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2009-09-29 17:09-0700\n"
-"PO-Revision-Date: 2010-03-05 17:51+0000\n"
+"POT-Creation-Date: 2010-05-26 01:18+0000\n"
+"PO-Revision-Date: 2010-06-11 17:44+0000\n"
 "Last-Translator: Manuel Padilha <Unknown>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-03-12 17:32+0000\n"
+"X-Launchpad-Export-Date: 2010-06-12 03:44+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -89,80 +89,15 @@ msgstr "Exibe avisos após cada comando."
 msgid "Don't show warnings after every statement."
 msgstr "Não mostra avisos após cada comando."
 
-#, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgid "Error: Invalid Value for connect_timeout"
 msgstr ""
-"Erro de alocação de memória durante a criação do prompt inicial. Abortando.\n"
 
-msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "Bem-vindo ao Drizzle client.. Comandos terminam com ; ou \\g."
-
-#, fuzzy, c-format
-msgid ""
-"Your Drizzle connection id is %u\n"
-"Server version: %s\n"
+msgid "Error: Invalid Value for max_input_line"
 msgstr ""
-"O id de sua conexão é %u\n"
-"Versão do servidor: %s\n"
 
-#, c-format
-msgid "Reading history-file %s\n"
-msgstr "Lendo arquivo de histórico %s\n"
-
-#, c-format
-msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr ""
-"Não foi possível alocar memória para temporário arquivo de histórico.\n"
-
-msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
-msgstr ""
-"Escreva 'help:' ou '\\h' para ajuda. Escreva '\\c' para limpar o buffer.\n"
-
-#, c-format
-msgid "Writing history-file %s\n"
-msgstr "Escrevendo arquivo de histórico %s\n"
-
-msgid "Aborted"
-msgstr "Abortado"
-
-msgid "Bye"
-msgstr "Adeus"
-
-msgid "Query aborted by Ctrl+C\n"
-msgstr "Query abortada por Ctrl+C\n"
-
-msgid "Display this help and exit."
+#, fuzzy
+msgid "Displays this help and exit."
 msgstr "Mostra esta ajuda e sai."
-
-msgid "Synonym for -?"
-msgstr "Sinônimo para -?"
-
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-"Active rehash automático. Não é necessário usar 'rehash' para obter "
-"preenchimento automático de nomes de campos e tabelas, mas o período de "
-"arranque e reconecção pode ser mais longo. Desactive com --disable-auto-"
-"rehash."
-
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-"Sem rehash automático. É necessário usar 'rehash' para obter preenchimento "
-"automático de tabelas e campos. Esta opção permite arrancar drizzle_st mais "
-"rapidamente da próxima vez e desactiva o rehash na próxima ligação. AVISO: "
-"esta opção está obsoleta; usar --disable-auto-rehash em substituição."
-
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr ""
-"Automaticamente muda para modo vertical de exibição se o resultado é maior "
-"que a largura do terminal."
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
@@ -182,18 +117,6 @@ msgstr ""
 
 msgid "Use compression in server/client protocol."
 msgstr "Usa compressão no protocolo servidor/cliente."
-
-msgid "Database to use."
-msgstr "Banco de dados para usar."
-
-msgid "(not used)"
-msgstr "(não usado)"
-
-msgid "Delimiter to be used."
-msgstr "Delimitador a ser usado."
-
-msgid "Execute command and quit. (Disables --force and history file)"
-msgstr "Executa o comando e sai. (Desabilita --force e arquivo de histórico)"
 
 msgid "Print the output of a query (rows) vertically."
 msgstr "Mostra a saída de uma query (linhas) verticalmente."
@@ -230,14 +153,8 @@ msgstr ""
 msgid "Ignore space after function names."
 msgstr "Ignora espaço após nome de funções."
 
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "Habilita/desabilita LOAD DATA LOCAL INFILE."
-
 msgid "Turn off beep on error."
 msgstr "Desactivar o beep em caso de erro"
-
-msgid "Connect to host."
-msgstr "Conecta ao host."
 
 msgid "Write line numbers for errors."
 msgstr "Numera as linhas de erro."
@@ -248,9 +165,6 @@ msgid ""
 msgstr ""
 "Não numera as linhas de erros. AVISO: A opção -L está obsoleta, utilize em "
 "alternativa a versão longa desta opção."
-
-msgid "Flush buffer after each query."
-msgstr "Libera o buffer após cada query."
 
 msgid "Write column names in results."
 msgstr "Escreve o nome das colunas nos resultados."
@@ -268,6 +182,81 @@ msgid ""
 msgstr ""
 "Modifica o valor de uma variável. Esta opção está obsoleta; pode alterar o "
 "valor de variáveis directamente com --variable-name=valor."
+
+msgid "Output in table format."
+msgstr "Output em formato tabular."
+
+msgid "Only allow UPDATE and DELETE that uses keys."
+msgstr "Permitir apenas UPDATE e DELETE que usem chaves."
+
+msgid "Synonym for option --safe-updates, -U."
+msgstr "Sinônimo para opção --safe-updates, -U."
+
+msgid "-v vvv implies that verbose= 3, Used to specify verbose"
+msgstr ""
+
+msgid "Output version information and exit."
+msgstr "Imprimir informação de versão e sair."
+
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr ""
+"Recusar a ligação de um cliente ao servidor se estiver a usar uma versão "
+"antiga (pre-4.1.1) do protocolo."
+
+msgid "Number of lines before each import progress report."
+msgstr ""
+"Número de linhas entre cada informação de progresso durante a importação."
+
+msgid "Ping the server to check if it's alive."
+msgstr "Fazer ping ao servidor para verificar se está vivo."
+
+msgid "Configuration file defaults are not used if no-defaults is set"
+msgstr ""
+
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+"Active rehash automático. Não é necessário usar 'rehash' para obter "
+"preenchimento automático de nomes de campos e tabelas, mas o período de "
+"arranque e reconecção pode ser mais longo. Desactive com --disable-auto-"
+"rehash."
+
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+"Sem rehash automático. É necessário usar 'rehash' para obter preenchimento "
+"automático de tabelas e campos. Esta opção permite arrancar drizzle_st mais "
+"rapidamente da próxima vez e desactiva o rehash na próxima ligação. AVISO: "
+"esta opção está obsoleta; usar --disable-auto-rehash em substituição."
+
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr ""
+"Automaticamente muda para modo vertical de exibição se o resultado é maior "
+"que a largura do terminal."
+
+msgid "Database to use."
+msgstr "Banco de dados para usar."
+
+msgid "(not used)"
+msgstr "(não usado)"
+
+msgid "Delimiter to be used."
+msgstr "Delimitador a ser usado."
+
+msgid "Execute command and quit. (Disables --force and history file)"
+msgstr "Executa o comando e sai. (Desabilita --force e arquivo de histórico)"
+
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr "Habilita/desabilita LOAD DATA LOCAL INFILE."
+
+msgid "Flush buffer after each query."
+msgstr "Libera o buffer após cada query."
 
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "Ignora SIGINT (CTRL-C)"
@@ -292,27 +281,9 @@ msgstr ""
 "interactiva (\\h). Esta opção não funciona em modo batch. Desactive com --"
 "disable-pager."
 
-msgid ""
-"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-"option deprecated; use --disable-pager instead."
+#, fuzzy
+msgid "Disable pager and print to stdout. See interactive help (\\h) also."
 msgstr "Desactiva paginador e direcciona as saídas para o stdout."
-
-msgid ""
-"Password to use when connecting to server. If password is not given it's "
-"asked from the tty."
-msgstr ""
-"A password a utilizar na ligação ao servidor. Se não for especificada, será "
-"perguntada no tty."
-
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-"Número da porta que deve ser usada para a ligação, ou 0 para assumir o valor "
-"definido em (por ordem de preferência), drizzle.cnf, $DRIZZLE_TCP_PORT, "
-
-msgid "built-in default"
-msgstr "valor pré-definido"
 
 msgid "Set the drizzle prompt to this value."
 msgstr "Altera a prompt do drizzle para este valor."
@@ -334,7 +305,8 @@ msgstr ""
 "Reconecta se a conexão for perdida. Desabilite com --disable-reconnect. Esta "
 "opção é habilitada por padrão."
 
-msgid "Shutdown the server."
+#, fuzzy
+msgid "Shutdown the server"
 msgstr "Parar o servidor"
 
 msgid ""
@@ -342,9 +314,6 @@ msgid ""
 msgstr ""
 "Mais silencioso. Imprime os resultados com um tab como separador, cada fila "
 "numa nova linha."
-
-msgid "Output in table format."
-msgstr "Output em formato tabular."
 
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
@@ -355,27 +324,11 @@ msgstr ""
 "(\\h). Não funciona em modo batch. Desactive com --disable-tee. Esta opção "
 "está inactiva por omissão."
 
-msgid ""
-"Disable outfile. See interactive help (\\h) also. WARNING: option "
-"deprecated; use --disable-tee instead"
+#, fuzzy
+msgid "Disable outfile. See interactive help (\\h) also."
 msgstr ""
 "Desactiva a saída para ficheiro. Veja também a ajuda interactiva (\\h). "
 "AVISO: opção obsoleta, utilize antes --disable-tee."
-
-msgid "User for login if not current user."
-msgstr "Usuário para login se não for o usuário atual."
-
-msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr "Permitir apenas UPDATE e DELETE que usem chaves."
-
-msgid "Synonym for option --safe-updates, -U."
-msgstr "Sinônimo para opção --safe-updates, -U."
-
-msgid "Write more. (-v -v -v gives the table output format)."
-msgstr "Escrever mais informação (-v -v -v mostra o output em forma tabular)."
-
-msgid "Output version information and exit."
-msgstr "Imprimir informação de versão e sair."
 
 msgid "Wait and retry if connection is down."
 msgstr "Espera e tenta conectar novamente se a conexão é fechada."
@@ -393,23 +346,49 @@ msgstr ""
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr "Limite automático para linhas em um join quando usando --safe-updates"
 
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr ""
-"Recusar a ligação de um cliente ao servidor se estiver a usar uma versão "
-"antiga (pre-4.1.1) do protocolo."
-
-msgid "Number of lines before each import progress report."
-msgstr ""
-"Número de linhas entre cada informação de progresso durante a importação."
-
-msgid "Ping the server to check if it's alive."
-msgstr "Fazer ping ao servidor para verificar se está vivo."
-
 msgid "Use MySQL Protocol."
+msgstr "Usar protocolo MySQL"
+
+#, fuzzy
+msgid "Connect to host"
+msgstr "Conecta ao host."
+
+msgid ""
+"Password to use when connecting to server. If password is not given it's "
+"asked from the tty."
+msgstr ""
+"A password a utilizar na ligação ao servidor. Se não for especificada, será "
+"perguntada no tty."
+
+#, fuzzy
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
+msgstr ""
+"Número da porta a ser usado para ligação ou 0 para assumir o valor definido "
+"em (por ordem de preferência) drizzle.cnf, $DRIZZLE_TCP_PORT, valor pré-"
+"definido ("
+
+msgid "User for login if not current user."
+msgstr "Usuário para login se não for o usuário atual."
+
+msgid "The protocol of connection (tcp,socket,pipe,memory)."
 msgstr ""
 
 #, c-format
-msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
+msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr ""
+"Erro de alocação de memória durante a criação do prompt inicial. Abortando.\n"
+
+msgid "DELIMITER cannot contain a backslash character"
+msgstr "DELIMITER não pode conter barra-invertida"
+
+#, fuzzy, c-format
+msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
+msgstr "O valor fornecido para a porta não é válido.\n"
+
+#, fuzzy, c-format
+msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
 msgstr "%s  Ver %s Distrib %s, para %s-%s (%s) usando %s %s\n"
 
 #, c-format
@@ -422,34 +401,46 @@ msgstr ""
 "Este software é fornecido SEM QUALQUER GARANTIA. É software livre e\n"
 "e você é livre de o modificar e redistribuir sob os termos da licença GPL\n"
 
-#, c-format
-msgid "Usage: %s [OPTIONS] [database]\n"
+#, fuzzy, c-format
+msgid "Usage: drizzle [OPTIONS] [database]\n"
 msgstr "Uso: %s [OPTIONS] [database]\n"
 
-msgid "DELIMITER cannot contain a backslash character"
-msgstr "DELIMITER não pode conter barra-invertida"
+msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
+msgstr "Bem-vindo ao Drizzle client.. Comandos terminam com ; ou \\g."
 
 #, c-format
-msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr "AVISO: opção obsoleta; use --disable-tee ao invés.\n"
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr "AVISO: opção obsoleta; use --disable-pager ao invés.\n"
-
-#, c-format
-msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr "AVISO: opção --server-arg não é suportada nesta configuração.\n"
-
 msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
 msgstr ""
-"Foi fornecido um valor não inteiro para o número da porta. Se pretendia "
-"fornecer a password deve utilizar a opção --password."
+"O id de sua conexão é %u\n"
+"Versão do servidor: %s\n"
 
-msgid "Value supplied for port is not valid."
-msgstr "O valor fornecido para a porta não é válido."
+#, c-format
+msgid "Reading history-file %s\n"
+msgstr "Lendo arquivo de histórico %s\n"
+
+#, c-format
+msgid "Couldn't allocate memory for temp histfile!\n"
+msgstr ""
+"Não foi possível alocar memória para temporário arquivo de histórico.\n"
+
+msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
+msgstr ""
+"Escreva 'help:' ou '\\h' para ajuda. Escreva '\\c' para limpar o buffer.\n"
+
+#, c-format
+msgid "Writing history-file %s\n"
+msgstr "Escrevendo arquivo de histórico %s\n"
+
+msgid "Aborted"
+msgstr "Abortado"
+
+msgid "Bye"
+msgstr "Adeus"
+
+msgid "Query aborted by Ctrl+C\n"
+msgstr "Query abortada por Ctrl+C\n"
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
@@ -458,17 +449,11 @@ msgstr "Processando a linha: %<PRIu32>\n"
 msgid "Unknown command: "
 msgstr "Comando desconhecido: "
 
-#, fuzzy
 msgid ""
 "Reading table information for completion of table and column names\n"
 "You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
-"A ler informação das tabelas para completar automaticamente os nomes de "
-"tabelas e colunas\n"
-"    Pode desactivar esta funcionalidade para obter um arranque mais rápido "
-"usando a opção -A\n"
-"\n"
 
 msgid "No connection. Trying to reconnect..."
 msgstr "Sem conexão. Tentando reconectar..."
@@ -508,71 +493,9 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Query OK, %ld linha afectada"
 msgstr[1] "Query OK, %ld linhas afectadas"
 
-msgid "Number of rows before each output progress report (requires --verbose)."
-msgstr ""
-"Número de filas antes de cada relatório de progresso (obriga a --verbose)."
-
 #, c-format
 msgid "Got errno %d on write"
 msgstr "Ocorreu o erro número %d durante a escrita"
-
-#, c-format
-msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr "%s  Drizzle %s libdrizzle %s, para %s-%s (%s)\n"
-
-#, c-format
-msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr "Utilização: %s [OPTIONS] database [tables]\n"
-
-#, c-format
-msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-
-#, c-format
-msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-"Este software é fornecido SEM QUALQUER GARANTIA. É software livre e\n"
-"você é livre de o modificar e redistribuir sob os termos da licença GPL\n"
-
-msgid "Dumps definitions and data from a Drizzle database server"
-msgstr "Exporta as definições e os dados de um servidor Drizzle"
-
-#, c-format
-msgid "For more options, use %s --help\n"
-msgstr "Para mais opções, use %s --help\n"
-
-#, c-format
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead.\n"
-msgstr ""
-"Foi fornecido um valor não inteiro para o número da porta. Se pretendia "
-"fornecer a password deve utilizar a opção --password.\n"
-
-#, c-format
-msgid "Value supplied for port is not valid.\n"
-msgstr "O valor fornecido para a porta não é válido.\n"
-
-#, c-format
-msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr "Erro de alocação de memória durante a cópia da password. Abortando.\n"
-
-#, c-format
-msgid "Input filename too long: %s"
-msgstr "O nome do ficheiro de input é demasiado longo: %s"
-
-#, c-format
-msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr "Utilização incorrecta da opção --ignore-table=<database>.<table>\n"
-
-#, c-format
-msgid "Invalid mode to --compatible: %s\n"
-msgstr "Modo inválido com --compatible: %s\n"
 
 #, c-format
 msgid "%s: You must use option --tab with --fields-...\n"
@@ -723,6 +646,61 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr "Erro: Não há memória suficiente para guardar a cláusula ORDER BY\n"
 
+msgid "Number of rows before each output progress report (requires --verbose)."
+msgstr ""
+"Número de filas antes de cada relatório de progresso (obriga a --verbose)."
+
+#, c-format
+msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgstr "Utilização: %s [OPTIONS] database [tables]\n"
+
+#, c-format
+msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
+msgstr "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
+
+#, c-format
+msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
+msgstr "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
+
+#, c-format
+msgid "Value supplied for port is not valid.\n"
+msgstr "O valor fornecido para a porta não é válido.\n"
+
+#, c-format
+msgid "Input filename too long: %s"
+msgstr "O nome do ficheiro de input é demasiado longo: %s"
+
+#, c-format
+msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
+msgstr "%s  Drizzle %s libdrizzle %s, para %s-%s (%s)\n"
+
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+"Este software é fornecido SEM QUALQUER GARANTIA. É software livre e\n"
+"você é livre de o modificar e redistribuir sob os termos da licença GPL\n"
+
+msgid "Dumps definitions and data from a Drizzle database server"
+msgstr "Exporta as definições e os dados de um servidor Drizzle"
+
+#, c-format
+msgid "Illegal use of option --ignore-table=<database>.<table>\n"
+msgstr "Utilização incorrecta da opção --ignore-table=<database>.<table>\n"
+
+#, c-format
+msgid "Invalid mode to --compatible: %s\n"
+msgstr "Modo inválido com --compatible: %s\n"
+
+msgid "Error: Invalid Value for opt_max_connect_retries"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_tail_lines"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_sleep"
+msgstr ""
+
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
@@ -777,9 +755,12 @@ msgstr ""
 msgid "No scheduler found, cannot continue!\n"
 msgstr "Não foi encontrado nenhum escalonador, não é possível continuar!\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported storage engine: %s"
-msgstr "Tipo de tabela desconhecido ou não suportado: %s"
+msgstr ""
+
+msgid "Display this help and exit."
+msgstr "Mostra esta ajuda e sai."
 
 msgid "Display this help and exit after initializing plugins."
 msgstr "Mostrar a ajuda e sair depois de inicializar os plugins."
@@ -996,30 +977,21 @@ msgstr ""
 msgid "Directory for plugins."
 msgstr "Directoria para plugins."
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
 msgstr ""
-"Lista opcional, separada por vírgulas, dos plugins a carregar no arranque. "
-"[por exemplo: --plugin_load=crc32,logger_gearman]"
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
 "removes a plugin from the list of plugins to be loaded. [for example: --"
 "plugin_remove=crc32,logger_gearman]"
 msgstr ""
-"Lista opcional, separada por vírgulas, dos plugins a carregar no arranque. "
-"[por exemplo: --plugin_load=crc32,logger_gearman]"
 
-#, fuzzy
 msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
-"Lista opcional, separada por vírgulas, dos plugins a carregar no arranque. "
-"[por exemplo: --plugin_load=crc32,logger_gearman]"
 
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
@@ -1450,9 +1422,9 @@ msgstr "%s: Foi recebido o sinal %d. Abortando!\n"
 msgid "%s: Shutdown complete\n"
 msgstr "%s: Processo de terminação concluído\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Forcing close of thread %<PRIu64> user: '%-.48s'\n"
-msgstr "%s: Forçando a terminação do thread %ld  utilizador: '%-.48s'\n"
+msgstr ""
 
 msgid "Can't create IP socket"
 msgstr "Não foi possível criar socket IP"
@@ -1656,22 +1628,21 @@ msgstr "Não foi possível carregar a função '%-.192s'"
 msgid "Can't initialize function '%-.192s'; %-.80s"
 msgstr "Não foi possível inicializar a função '%-.192s'; %-.80s"
 
-#, fuzzy
 msgid "No paths allowed for plugin library"
-msgstr "Nenhum caminho autorizado para a biblioteca partilhada"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Plugin '%-.192s' already exists"
-msgstr "A função '%-.192s' já existe"
+msgstr ""
 
 #, c-format
 msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
 msgstr ""
 "Não foi possível abrir a biblioteca partilhada '%-.192s' (errno: %d %-.128s)"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find symbol '%-.128s' in library '%-.128s'"
-msgstr "Não foi possível encontrar o símbolo '%-.128s' na biblioteca"
+msgstr ""
 
 #, c-format
 msgid "Function '%-.192s' is not defined"
@@ -2198,8 +2169,8 @@ msgstr "O escravo já foi terminado"
 
 #, c-format
 msgid ""
-"Uncompressed data size too large; the maximum size is %d (probably, length "
-"of uncompressed data was corrupted)"
+"Uncompressed data size too large; the maximum size is %d (based on "
+"max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
@@ -3973,13 +3944,17 @@ msgstr ""
 msgid "Tables which are replicated require a primary key."
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Corrupt or invalid table definition: %s"
-msgstr "O número de definições de tabelas guardadas em cache."
+msgstr ""
 
 #, fuzzy, c-format
+msgid "Corrupt or invalid schema definition for %s : %s"
+msgstr "Definição incorrecta de chave estrangeira para '%-.192s': %s"
+
+#, c-format
 msgid "Schema does not exist: %s"
-msgstr "O trigger não existe"
+msgstr ""
 
 #, c-format
 msgid "Error altering schema: %s"
@@ -3998,6 +3973,9 @@ msgstr ""
 
 #, c-format
 msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+msgid "Implicit cartesian join attempted."
 msgstr ""
 
 #, c-format
@@ -4075,9 +4053,9 @@ msgstr ""
 "'infinito'; poderá não ser possível gerar ficheiros de core após recepção de "
 "sinais"
 
-#, fuzzy, c-format
+#, c-format
 msgid "Data directory %s does not exist\n"
-msgstr "%s %s não existe"
+msgstr ""
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
@@ -4122,9 +4100,9 @@ msgstr ""
 msgid "Checksum failed. Wanted %<PRIu32> got %<PRIu32>\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
-msgstr "Modo de utilização: %s [OPTIONS]\n"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -4185,9 +4163,9 @@ msgstr ""
 msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr "A inicialização de plugins falhou."
+msgstr ""
 
 msgid "Warning: "
 msgstr "Aviso: "
@@ -4250,9 +4228,9 @@ msgstr "(Desactivado)\n"
 msgid "errmsg plugin '%s' errmsg() failed"
 msgstr "A função errmsg() do errmsg plugin '%s' falhou"
 
-#, fuzzy, c-format
+#, c-format
 msgid "A function named %s already exists!\n"
-msgstr "A função '%-.192s' já existe"
+msgstr ""
 
 msgid "Could not add Function!\n"
 msgstr ""
@@ -4300,20 +4278,21 @@ msgstr ""
 msgid "setsockopt(TCP_NODELAY) failed with errno %d"
 msgstr ""
 
-#, c-format
-msgid "Retrying bind() on %u"
-msgstr ""
+#, fuzzy, c-format
+msgid "Retrying bind() on %u\n"
+msgstr "Tentando novamente escutar na porta TCP/IP %u"
 
-#, c-format
-msgid "bind() failed with errno: %d"
-msgstr ""
+#, fuzzy, c-format
+msgid "bind() failed with errno: %d\n"
+msgstr "listen() em TCP/IP falhou com erro %d"
 
-msgid "Do you already have another drizzled running?"
-msgstr ""
+#, fuzzy
+msgid "Do you already have another drizzled running?\n"
+msgstr "Será que já tem outro servidor drizzled a correr na porta: %d?"
 
-#, c-format
-msgid "listen() failed with errno %d"
-msgstr ""
+#, fuzzy, c-format
+msgid "listen() failed with errno %d\n"
+msgstr "listen() em TCP/IP falhou com erro %d"
 
 #, c-format
 msgid "Listening on %s:%s\n"
@@ -4327,9 +4306,9 @@ msgstr ""
 msgid "logging '%s' post() failed"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "logging '%s' postEnd() failed"
-msgstr "A função errmsg() do errmsg plugin '%s' falhou"
+msgstr ""
 
 #, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
@@ -4339,13 +4318,13 @@ msgstr ""
 msgid "qcache plugin '%s' set() failed"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' invalidateTable() failed"
-msgstr "A função errmsg() do errmsg plugin '%s' falhou"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "qcache plugin '%s' invalidateDb() failed"
-msgstr "A função errmsg() do errmsg plugin '%s' falhou"
+msgstr ""
 
 #, c-format
 msgid "qcache plugin '%s' flush() failed"
@@ -4399,13 +4378,13 @@ msgstr ""
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Variable named %s already exists!\n"
-msgstr "A tabela '%-.192s' já existe"
+msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Could not add Variable: %s\n"
-msgstr "Não foi possível encontrar a tabela: \"%s\""
+msgstr ""
 
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
@@ -4426,9 +4405,11 @@ msgid "Got error %d when reading table '%s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
+msgstr ""
+
+#, c-format
+msgid "ENUM column %s has greater than %d possible values"
 msgstr ""
 
 #, c-format
@@ -4507,18 +4488,34 @@ msgstr ""
 msgid "Password to use for auth."
 msgstr ""
 
-#, fuzzy
 msgid "Default database to use."
-msgstr "Banco de dados para usar."
+msgstr ""
 
 #, fuzzy
+msgid "Invalid value of port\n"
+msgstr "Utilização inválida de ponteiro nulo"
+
+#, fuzzy
+msgid "Invalid value for connect_timeout\n"
+msgstr "Utilização inválida da função group"
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+#, fuzzy
+msgid "Invalid value for retry_count\n"
+msgstr "Utilização inválida da função group"
+
+msgid "Invalid value for buffer_length\n"
+msgstr ""
+
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default (4427)."
 msgstr ""
-"Número da porta a ser usado para ligação ou 0 para assumir o valor definido "
-"em (por ordem de preferência) drizzle.cnf, $DRIZZLE_TCP_PORT, valor pré-"
-"definido ("
 
 msgid "Connect Timeout."
 msgstr "Timeout de ligação."
@@ -4535,9 +4532,8 @@ msgstr "Contagem de repetição de tentativas."
 msgid "Buffer length."
 msgstr ""
 
-#, fuzzy
 msgid "Address to bind to."
-msgstr "Endereço IP no qual escutar."
+msgstr ""
 
 msgid "Unknown Drizzle error"
 msgstr "Erro Drizzle desconhecido"
@@ -4793,14 +4789,17 @@ msgstr ""
 msgid "fail open() fn=%s er=%s\n"
 msgstr "Erro de open() fn=%s er=%s\n"
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
 msgstr "Activar opção de guardar log para um ficheiro CSV"
-
-msgid "File to log to"
-msgstr "Ficheiro de log"
-
-msgid "PCRE to match the query against"
-msgstr ""
 
 msgid "Threshold for logging slow queries, in microseconds"
 msgstr "Limite para guardar log de queries lentas, em microsegundos"
@@ -4813,31 +4812,14 @@ msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 "Limite para guardar log de queries grandes, em número de linhas examinadas"
 
-msgid "Log queries to a CSV file"
-msgstr "Guardar log de queries para um ficheiro CSV"
+msgid "File to log to"
+msgstr "Ficheiro de log"
 
-#, c-format
-msgid "syslog facility \"%s\" not known, using \"local0\""
-msgstr "a facility \"%s\" do syslog é desconhecida, substituída por \"local0\""
-
-#, c-format
-msgid "syslog priority \"%s\" not known, using \"info\""
-msgstr "a prioridade \"%s\" do syslog é desconhecida, substituída por \"info\""
-
-msgid "Enable logging to syslog"
-msgstr "Activar opção de guardar log para o syslog"
-
-msgid "Syslog Ident"
+msgid "PCRE to match the query against"
 msgstr ""
 
-msgid "Syslog Facility"
-msgstr "Syslog Facility"
-
-msgid "Syslog Priority"
-msgstr "Prioridade Syslog"
-
-msgid "Log to syslog"
-msgstr "Guardar log para syslog"
+msgid "Log queries to a CSV file"
+msgstr "Guardar log de queries para um ficheiro CSV"
 
 msgid "List of memcached servers."
 msgstr ""
@@ -5084,15 +5066,28 @@ msgid "Tablespace not empty"
 msgstr "Tablespace vazio"
 
 #, fuzzy
+msgid "Invalid value for retry_count"
+msgstr "Utilização inválida da função group"
+
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
-"Número da porta que deve ser usada para a ligação, ou 0 para assumir o valor "
-"definido em (por ordem de preferência), drizzle.cnf, $DRIZZLE_TCP_PORT, "
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr "Impossível criar interrupt-thread (erro: %d, errno: %d)"
+
+#, c-format
+msgid "syslog facility \"%s\" not known, using \"local0\""
+msgstr "a facility \"%s\" do syslog é desconhecida, substituída por \"local0\""
+
+#, fuzzy, c-format
+msgid "syslog priority \"%s\" not known, using \"warn\""
+msgstr "a prioridade \"%s\" do syslog é desconhecida, substituída por \"info\""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"info\""
+msgstr "a prioridade \"%s\" do syslog é desconhecida, substituída por \"info\""
 
 #, c-format
 msgid "Unable to create background worker thread. Got error %s.\n"
@@ -5118,16 +5113,14 @@ msgstr ""
 msgid "Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"
 msgstr ""
 
-#, fuzzy
 msgid "Enable transaction log"
-msgstr "Activar opção de guardar log para o syslog"
+msgstr ""
 
 msgid "DEBUGGING - Truncate transaction log"
 msgstr ""
 
-#, fuzzy
 msgid "Path to the file to use for transaction log"
-msgstr "Ficheiro de socket usado para a ligação."
+msgstr ""
 
 msgid "Name of the replicator plugin to use (default='default_replicator')"
 msgstr ""
@@ -5152,9 +5145,9 @@ msgid ""
 "offset %<PRId64>, but only wrote %<PRId32> bytes.  Error: %s\n"
 msgstr ""
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to sync log file. Got error: %s\n"
-msgstr "Não foi possível bloquear memória. Errno: %d\n"
+msgstr ""
 
 #, c-format
 msgid "Failed to open transaction log file %s.  Got error: %s\n"
@@ -5172,124 +5165,96 @@ msgstr ""
 msgid "BUFFER: %s\n"
 msgstr ""
 
-#, fuzzy
-#~ msgid "Got signal %d from thread %<PRIu64>"
-#~ msgstr "Foi recebido o sinal %d do thread %<PRIu64>"
-
-#~ msgid "Fatal signal %d while backtracing\n"
-#~ msgstr "Sinal fatal %d ao retroceder\n"
+#~ msgid "Synonym for -?"
+#~ msgstr "Sinônimo para -?"
 
 #~ msgid ""
-#~ "We will try our best to scrape up some info that will hopefully help "
-#~ "diagnose\n"
-#~ "the problem, but since we have already crashed, something is definitely "
-#~ "wrong\n"
-#~ "and this may fail.\n"
-#~ "\n"
+#~ "Port number to use for connection or 0 for default to, in order of "
+#~ "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
 #~ msgstr ""
-#~ "Vamos fazer os possíveis para reunir alguma informação que, esperemos, "
-#~ "irá ajudar no diagnóstico\n"
-#~ "do problema, mas como o servidor parou com erro, alguma coisa está muito "
-#~ "errada\n"
-#~ "e isto pode falhar\n"
-#~ "\n"
+#~ "Número da porta que deve ser usada para a ligação, ou 0 para assumir o "
+#~ "valor definido em (por ordem de preferência), drizzle.cnf, "
+#~ "$DRIZZLE_TCP_PORT, "
+
+#~ msgid "built-in default"
+#~ msgstr "valor pré-definido"
+
+#~ msgid "Write more. (-v -v -v gives the table output format)."
+#~ msgstr ""
+#~ "Escrever mais informação (-v -v -v mostra o output em forma tabular)."
+
+#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
+#~ msgstr "AVISO: opção obsoleta; use --disable-tee ao invés.\n"
+
+#~ msgid "WARNING: option deprecated; use --disable-pager instead.\n"
+#~ msgstr "AVISO: opção obsoleta; use --disable-pager ao invés.\n"
+
+#~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
+#~ msgstr "AVISO: opção --server-arg não é suportada nesta configuração.\n"
 
 #~ msgid ""
-#~ "It is possible that drizzled could use up to \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
-#~ "bytes of memory\n"
-#~ "Hope that's ok; if not, decrease some variables in the equation.\n"
-#~ "\n"
+#~ "Non-integer value supplied for port.  If you are trying to enter a "
+#~ "password please use --password instead."
 #~ msgstr ""
-#~ "É possível que o drizzled use até \n"
-#~ "key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
-#~ "bytes de memória\n"
-#~ "Se o valor não for aceitável reduza algumas variáveis da equação.\n"
-#~ "\n"
+#~ "Foi fornecido um valor não inteiro para o número da porta. Se pretendia "
+#~ "fornecer a password deve utilizar a opção --password."
+
+#~ msgid "Value supplied for port is not valid."
+#~ msgstr "O valor fornecido para a porta não é válido."
+
+#~ msgid "For more options, use %s --help\n"
+#~ msgstr "Para mais opções, use %s --help\n"
 
 #~ msgid ""
-#~ "Attempting backtrace. You can use the following information to find out\n"
-#~ "where drizzled died. If you see no messages after this, something went\n"
-#~ "terribly wrong...\n"
+#~ "Non-integer value supplied for port.  If you are trying to enter a "
+#~ "password please use --password instead.\n"
 #~ msgstr ""
-#~ "A tentar recolher informação para trás. Pode usar esta informação para "
-#~ "descobrir\n"
-#~ "onde o drizzled morreu. Se não vir mais mensagens apóes esta, alguma "
-#~ "coisa correu\n"
-#~ "muito mal...\n"
+#~ "Foi fornecido um valor não inteiro para o número da porta. Se pretendia "
+#~ "fornecer a password deve utilizar a opção --password.\n"
 
-#~ msgid ""
-#~ "Trying to get some variables.\n"
-#~ "Some pointers may be invalid and cause the dump to abort...\n"
+#~ msgid "Memory allocation error while copying password. Aborting.\n"
 #~ msgstr ""
-#~ "A tentar obter alguma variáveis.\n"
-#~ "Algumas referências poderão estar inválidas e causar a paragem no "
-#~ "dump...\n"
+#~ "Erro de alocação de memória durante a cópia da password. Abortando.\n"
 
-#~ msgid ""
-#~ "\n"
-#~ "This crash occurred while the server was calling initgroups(). This is\n"
-#~ "often due to the use of a drizzled that is statically linked against "
-#~ "glibc\n"
-#~ "and configured to use LDAP in /etc/nsswitch.conf. You will need to "
-#~ "either\n"
-#~ "upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
-#~ "later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
-#~ "drizzled that is not statically linked.\n"
+#~ msgid "Enable logging to syslog"
+#~ msgstr "Activar opção de guardar log para o syslog"
+
+#~ msgid "Syslog Facility"
+#~ msgstr "Syslog Facility"
+
+#~ msgid "Syslog Priority"
+#~ msgstr "Prioridade Syslog"
+
+#~ msgid "Log to syslog"
+#~ msgstr "Guardar log para syslog"
+
+#~ msgid "Set the default character set."
+#~ msgstr "Define o conjunto de caracteres padrão."
+
+#~ msgid "Print some debug info at exit."
+#~ msgstr "Exibe alguma informação de debug na saída."
+
+#~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
+#~ msgstr "%s Ver %s Distrib %s, para %s (%s) usando %s %s\n"
+
+#~ msgid "Check memory and open file usage at exit ."
 #~ msgstr ""
-#~ "\n"
-#~ "Este crash ocorreu enquanto o servidor chamava initgroups().\n"
-#~ "Frequentemente isto é devido à utilização de um drizzled ligado\n"
-#~ "estaticamente á glibc e configurado para usar LDAP  em /etc/nsswitch."
-#~ "conf.\n"
-#~ "Terá que actualizar para uma versão da glibc que não tenha este\n"
-#~ "problema (2.3.4 ou superior quando usada com o nscd), desactivar o LDAP\n"
-#~ "no ficheiro nsswitch.conf, ou usar uma versão do drizzled que não seja\n"
-#~ "ligada estaticamente.\n"
+#~ "Verifica a utilização de memória e o número de ficheiro abertos à saída."
 
-#~ msgid ""
-#~ "\n"
-#~ "You are running a statically-linked LinuxThreads binary on an NPTL "
-#~ "system.\n"
-#~ "This can result in crashes on some distributions due to LT/NPTL "
-#~ "conflicts.\n"
-#~ "You should either build a dynamically-linked binary, or force "
-#~ "LinuxThreads\n"
-#~ "to be used with the LD_ASSUME_KERNEL environment variable. Please "
-#~ "consult\n"
-#~ "the documentation for your distribution on how to do that.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Está a usar um executável compilado estaticamente com LinuxThreads num "
-#~ "sistema NPTL.\n"
-#~ "Em algumas distribuições isto pode resultar em crashes devido a conflitos "
-#~ "LT/NPTL.\n"
-#~ "Deve criar um executável compilado dinamicamente, ou forçar a utilização "
-#~ "de LinuxThreads\n"
-#~ "recorrendo à utilização da variável de ambiente LD_ASSUME_KERNEL. "
-#~ "Consulte a\n"
-#~ "documentação da sua distribuição sobre a melhor forma de o fazer.\n"
+#~ msgid "Socket file to use for connection."
+#~ msgstr "Ficheiro de socket usado para a ligação."
 
-#~ msgid "Writing a core file\n"
-#~ msgstr "Criando ficheiro de core\n"
+#~ msgid "Unknown command '\\%c'."
+#~ msgstr "Comando desconhecido '\\%c'."
 
-#~ msgid "Error while loading database options: '%s':"
-#~ msgstr "Erro ao carregar as opções de base de dados: '%s'"
+#~ msgid "File '%s' not found (Errcode: %d)"
+#~ msgstr "Ficheiro '%s' não foi encontrado (Código de erro: %d)"
 
-#~ msgid "Enable default replicator"
-#~ msgstr "Activar replicador predefinido"
+#~ msgid "Error on delete of '%s' (Errcode: %d)"
+#~ msgstr "Erro ao remover '%s' (Código de erro: %d)"
 
-#~ msgid "Default Replicator"
-#~ msgstr "Replicador predefinido"
-
-#~ msgid "Enable filtered replicator"
-#~ msgstr "Activar replicador com filtragem"
-
-#~ msgid "Filtered Replicator"
-#~ msgstr "Replicador de Filtragem"
-
-#~ msgid "UNUSED"
-#~ msgstr "NÃO UTILIZADO"
+#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
+#~ msgstr "Erro ao renomear '%s' para '%s' (Código de erro: %d)"
 
 #~ msgid "Can't create/write to file '%s' (Errcode: %d)"
 #~ msgstr "Não é possível criar/escrever o ficheiro '%s' (Código de erro: %d)"
@@ -5300,22 +5265,41 @@ msgstr ""
 #~ msgid "Error writing file '%s' (Errcode: %d)"
 #~ msgstr "Erro ao escrever no ficheiro '%s' (Código de erro: %d)"
 
-#~ msgid "Error on close of '%s' (Errcode: %d)"
-#~ msgstr "Erro ao fechar o ficheiro '%s' (Código de erro: %d)"
-
 #~ msgid "Out of memory (Needed %u bytes)"
 #~ msgstr "Memória esgotada (seriam necessários %u bytes)"
-
-#~ msgid "Error on delete of '%s' (Errcode: %d)"
-#~ msgstr "Erro ao remover '%s' (Código de erro: %d)"
-
-#~ msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-#~ msgstr "Erro ao renomear '%s' para '%s' (Código de erro: %d)"
 
 #~ msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
 #~ msgstr ""
 #~ "Foi encontrado um EOF inesperado ao ler o ficheiro '%s' (Código de erro: %"
 #~ "d)"
+
+#~ msgid "Error on close of '%s' (Errcode: %d)"
+#~ msgstr "Erro ao fechar o ficheiro '%s' (Código de erro: %d)"
+
+#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
+#~ msgstr ""
+#~ "O disco encheu ao escrever '%s'. Aguardando que algum espaço fique "
+#~ "livre..."
+
+#~ msgid "Can't get working dirctory (Errcode: %d)"
+#~ msgstr "Não foi possível obter a directoria actual (Código de erro: %d)"
+
+#~ msgid "Plugin '%s' init function returned error."
+#~ msgstr "A função de inicialização do plugin '%s' devolveu um erro."
+
+#~ msgid "Error while loading database options: '%s':"
+#~ msgstr "Erro ao carregar as opções de base de dados: '%s'"
+
+#~ msgid ""
+#~ "Reading table information for completion of table and column names\n"
+#~ "    You can turn off this feature to get a quicker startup with -A\n"
+#~ "\n"
+#~ msgstr ""
+#~ "A ler informação das tabelas para completar automaticamente os nomes de "
+#~ "tabelas e colunas\n"
+#~ "    Pode desactivar esta funcionalidade para obter um arranque mais "
+#~ "rápido usando a opção -A\n"
+#~ "\n"
 
 #~ msgid "Can't lock file (Errcode: %d)"
 #~ msgstr "Não foi possível bloquear o ficheiro (Código de erro: %d)"
@@ -5326,116 +5310,27 @@ msgstr ""
 #~ msgid "Can't get stat of '%s' (Errcode: %d)"
 #~ msgstr "Não foi possível obter informação de '%s' (Código de erro: %d)"
 
-#~ msgid "Can't get working dirctory (Errcode: %d)"
-#~ msgstr "Não foi possível obter a directoria actual (Código de erro: %d)"
-
 #~ msgid "Can't change dir to '%s' (Errcode: %d)"
 #~ msgstr ""
 #~ "Não foi possível mudar a directoria actual para '%s' (Código de erro: %d)"
 
-#~ msgid "Disk is full writing '%s'. Waiting for someone to free space..."
-#~ msgstr ""
-#~ "O disco encheu ao escrever '%s'. Aguardando que algum espaço fique "
-#~ "livre..."
+#~ msgid "Got signal %d from thread %<PRIu64>"
+#~ msgstr "Foi recebido o sinal %d do thread %<PRIu64>"
 
-#~ msgid "File '%s' not found (Errcode: %d)"
-#~ msgstr "Ficheiro '%s' não foi encontrado (Código de erro: %d)"
-
-#~ msgid "Check memory and open file usage at exit ."
-#~ msgstr ""
-#~ "Verifica a utilização de memória e o número de ficheiro abertos à saída."
-
-#~ msgid "Print some debug info at exit."
-#~ msgstr "Exibe alguma informação de debug na saída."
-
-#~ msgid ""
-#~ "\n"
-#~ "The '--memlock' argument, which was enabled, uses system calls that are\n"
-#~ "unreliable and unstable on some operating systems and operating-system\n"
-#~ "versions (notably, some versions of Linux).  This crash could be due to "
-#~ "use\n"
-#~ "of those buggy OS calls.  You should consider whether you really need "
-#~ "the\n"
-#~ "'--memlock' parameter and/or consult the OS distributor about 'mlockall'\n"
-#~ " bugs.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "O argumento '--memlock', que foi usado, usa chamadas ao sistema\n"
-#~ "instáveis e que não são fiáveis em algumas versões de sistemas "
-#~ "operativos\n"
-#~ "(por exemplo em algumas versões de Linux). Este crash pode ter sido\n"
-#~ "causado pela utilização dessas chamadas ao sistema defeituosas. "
-#~ "Considere\n"
-#~ "se realmente precisa do parâmetro '--memlock' e/ou consulte o distribuir "
-#~ "do SO\n"
-#~ "sobre erros em 'mlockall'.\n"
+#~ msgid "Writing a core file\n"
+#~ msgstr "Criando ficheiro de core\n"
 
 #~ msgid "Can't init databases"
 #~ msgstr "Não foi possível inicializar as bases de dados"
 
-#~ msgid "Default storage engine (%s) is not available"
-#~ msgstr "O motor de armazenamento usado por omissão (%s) não está disponível"
+#~ msgid "Unknown/unsupported table type: %s"
+#~ msgstr "Tipo de tabela desconhecido ou não suportado: %s"
 
-#~ msgid "Lock drizzled in memory."
-#~ msgstr "Bloquear drizzled em memória"
+#~ msgid "Failed to lock memory. Errno: %d\n"
+#~ msgstr "Não foi possível bloquear memória. Errno: %d\n"
 
-#~ msgid "The default size of key cache blocks"
-#~ msgstr "a"
-
-#~ msgid "Buffer length for TCP/IP and socket communication."
-#~ msgstr "Comprimento do buffer para comunicação TCP/IP e por sockets."
-
-#~ msgid "Allocation block size for transactions to be stored in binary log"
-#~ msgstr ""
-#~ "Tamanho do bloco de alocação para transacções a serem guardadas no log "
-#~ "binário"
-
-#~ msgid "Persistent buffer for transactions to be stored in binary log"
-#~ msgstr ""
-#~ "Buffer persistente para transacções a serem guardadas no log binário"
-
-#~ msgid "File '%-.192s' has unknown type '%-.64s' in its header"
-#~ msgstr ""
-#~ "O ficheiro '%-.192s' tem no seu cabeçalho o tipo desconhecido '%-.64s'"
-
-#~ msgid "Maximum number of user threads available."
-#~ msgstr "Número máximo de threads de utilizador disponíveis."
-
-#~ msgid "event_add error in libevent_add_session_callback\n"
-#~ msgstr "Erro event_add em libevent_add_session_callback\n"
-
-#~ msgid "init_pipe(session_add_pipe) error in libevent_init\n"
-#~ msgstr "Erro init_pipe(session_add_pipe) em libevent_init\n"
-
-#~ msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
-#~ msgstr "Erro init_pipe(session_kill_pipe) em libevent_init\n"
-
-#~ msgid "session_add_event event_add error in libevent_init\n"
-#~ msgstr "Erro session_add_event event_add em libevent_init\n"
-
-#~ msgid "libevent_thread_proc: my_thread_init() failed\n"
-#~ msgstr "libevent_thread_proc: my_thread_init() falhou\n"
-
-#~ msgid "Size of Pool."
-#~ msgstr "Tamanho da pool."
-
-#~ msgid "Set the default character set."
-#~ msgstr "Define o conjunto de caracteres padrão."
-
-#~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
-#~ msgstr "%s Ver %s Distrib %s, para %s (%s) usando %s %s\n"
-
-#~ msgid "Unknown command '\\%c'."
-#~ msgstr "Comando desconhecido '\\%c'."
-
-#~ msgid "Plugin '%s' init function returned error."
-#~ msgstr "A função de inicialização do plugin '%s' devolveu um erro."
-
-#~ msgid "Retrying bind on TCP/IP port %u"
-#~ msgstr "Tentando novamente escutar na porta TCP/IP %u"
-
-#~ msgid "Do you already have another drizzled server running on port: %d ?"
-#~ msgstr "Será que já tem outro servidor drizzled a correr na porta: %d?"
+#~ msgid "IP address to bind to."
+#~ msgstr "Endereço IP no qual escutar."
 
 #~ msgid "drizzled: Got error %d from select"
 #~ msgstr "drizzled: Foi recebido o erro %d do select"
@@ -5449,6 +5344,9 @@ msgstr ""
 #~ msgstr ""
 #~ "Sintaxe: myisam-recover[=option[,option...]], em que option pode ser "
 #~ "DEFAULT, BACKUP, FORCE ou QUICK."
+
+#~ msgid "Lock drizzled in memory."
+#~ msgstr "Bloquear drizzled em memória"
 
 #~ msgid ""
 #~ "Using this option will cause most temporary files created to use a small "
@@ -5464,6 +5362,9 @@ msgstr ""
 #~ msgstr ""
 #~ "Número de segundos que o servidor drizzled aguarda por um packet de "
 #~ "ligação antes de responder com 'Bad handshake'."
+
+#~ msgid "The default size of key cache blocks"
+#~ msgstr "a"
 
 #~ msgid "Maximum number of temporary tables a client can keep open at a time."
 #~ msgstr ""
@@ -5533,17 +5434,44 @@ msgstr ""
 #~ "%s: pronto para receber ligações.\n"
 #~ "Versão: '%s' socket: '%s' porta: %d"
 
+#~ msgid "File '%-.192s' has unknown type '%-.64s' in its header"
+#~ msgstr ""
+#~ "O ficheiro '%-.192s' tem no seu cabeçalho o tipo desconhecido '%-.64s'"
+
 #~ msgid "Can't start server: Bind on TCP/IP port"
 #~ msgstr "Não foi possível iniciar o servidor. Ligação a porto TCP/IP"
 
 #~ msgid "Fatal "
 #~ msgstr "Fatal "
 
-#~ msgid "listen() on TCP/IP failed with error %d"
-#~ msgstr "listen() em TCP/IP falhou com erro %d"
-
 #~ msgid "Can't start server: listen() on TCP/IP port"
 #~ msgstr "Não foi possível iniciar o servidor: listen() em porto TCP/IP"
+
+#~ msgid ""
+#~ "We will try our best to scrape up some info that will hopefully help "
+#~ "diagnose\n"
+#~ "the problem, but since we have already crashed, something is definitely "
+#~ "wrong\n"
+#~ "and this may fail.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Vamos fazer os possíveis para reunir alguma informação que, esperemos, "
+#~ "irá ajudar no diagnóstico\n"
+#~ "do problema, mas como o servidor parou com erro, alguma coisa está muito "
+#~ "errada\n"
+#~ "e isto pode falhar\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "Attempting backtrace. You can use the following information to find out\n"
+#~ "where drizzled died. If you see no messages after this, something went\n"
+#~ "terribly wrong...\n"
+#~ msgstr ""
+#~ "A tentar recolher informação para trás. Pode usar esta informação para "
+#~ "descobrir\n"
+#~ "onde o drizzled morreu. Se não vir mais mensagens apóes esta, alguma "
+#~ "coisa correu\n"
+#~ "muito mal...\n"
 
 #~ msgid ""
 #~ "It is possible that drizzled could use up to \n"
@@ -5561,6 +5489,14 @@ msgstr ""
 #~ "equação.\n"
 #~ "\n"
 
+#~ msgid ""
+#~ "Trying to get some variables.\n"
+#~ "Some pointers may be invalid and cause the dump to abort...\n"
+#~ msgstr ""
+#~ "A tentar obter alguma variáveis.\n"
+#~ "Algumas referências poderão estar inválidas e causar a paragem no "
+#~ "dump...\n"
+
 #~ msgid "Type of DELAY_KEY_WRITE."
 #~ msgstr "Tipo de DELAY_KEY_WRITE."
 
@@ -5569,3 +5505,26 @@ msgstr ""
 
 #~ msgid "Log all MyISAM changes to file."
 #~ msgstr "Regista todas as alterações MyISAM em ficheiro."
+
+#~ msgid ""
+#~ "\n"
+#~ "You are running a statically-linked LinuxThreads binary on an NPTL "
+#~ "system.\n"
+#~ "This can result in crashes on some distributions due to LT/NPTL "
+#~ "conflicts.\n"
+#~ "You should either build a dynamically-linked binary, or force "
+#~ "LinuxThreads\n"
+#~ "to be used with the LD_ASSUME_KERNEL environment variable. Please "
+#~ "consult\n"
+#~ "the documentation for your distribution on how to do that.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Está a usar um executável compilado estaticamente com LinuxThreads num "
+#~ "sistema NPTL.\n"
+#~ "Em algumas distribuições isto pode resultar em crashes devido a conflitos "
+#~ "LT/NPTL.\n"
+#~ "Deve criar um executável compilado dinamicamente, ou forçar a utilização "
+#~ "de LinuxThreads\n"
+#~ "recorrendo à utilização da variável de ambiente LD_ASSUME_KERNEL. "
+#~ "Consulte a\n"
+#~ "documentação da sua distribuição sobre a melhor forma de o fazer.\n"

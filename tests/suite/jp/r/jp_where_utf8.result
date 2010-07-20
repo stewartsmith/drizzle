@@ -18,25 +18,21 @@ CREATE TEMPORARY TABLE `Ｔ８` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = M
 CREATE TEMPORARY TABLE `Ｔ９` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = MEMORY;
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
-Warnings:
-Note	1265	Data truncated for column 'Ｃ１' at row 30
+ERROR 22001: Data too long for column 'Ｃ１' at row 30
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
-Warnings:
-Note	1265	Data truncated for column 'Ｃ１' at row 30
+ERROR 22001: Data too long for column 'Ｃ１' at row 30
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
-Warnings:
-Note	1265	Data truncated for column 'Ｃ１' at row 30
+ERROR 22001: Data too long for column 'Ｃ１' at row 30
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
 SELECT * FROM `Ｔ１` WHERE `Ｃ１` = 'ｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿ';
 Ｃ１
 ｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿ
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` = '・ぁあぃいぅうぇえぉおかがきぎくぐけげこ';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ３` WHERE `Ｃ１` = '鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃齄齅齆齇齓齕齖';
 Ｃ１
 鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃齄齅齆齇齓齕齖
@@ -45,7 +41,6 @@ SELECT * FROM `Ｔ４` WHERE `Ｃ１` = 'ｰｱｲｳｴｵｶｷｸｹｺｻｼ
 ｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿ
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` = '・ぁあぃいぅうぇえぉおかがきぎくぐけげこ';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ６` WHERE `Ｃ１` = '鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃齄齅齆齇齓齕齖';
 Ｃ１
 鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃齄齅齆齇齓齕齖

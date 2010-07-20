@@ -727,8 +727,6 @@ void mi_check_print_warning(MI_CHECK *param, const char *fmt,...);
 void mi_check_print_info(MI_CHECK *param, const char *fmt,...);
 int flush_pending_blocks(MI_SORT_PARAM *param);
 int thr_write_keys(MI_SORT_PARAM *sort_param);
-/* needs extern "C" because we pass it to pthread_create */
-extern "C" pthread_handler_t thr_find_all_keys(void *arg);
 int flush_blocks(MI_CHECK *param, drizzled::KEY_CACHE *key_cache, int file);
 
 int sort_write_record(MI_SORT_PARAM *sort_param);

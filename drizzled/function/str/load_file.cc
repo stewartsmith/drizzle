@@ -58,12 +58,12 @@ String *Item_load_file::val_str(String *str)
     /* my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), file_name->c_ptr()); */
     goto err;
   }
-  if (stat_info.st_size > (long) current_session->variables.max_allowed_packet)
+  if (stat_info.st_size > (long) session.variables.max_allowed_packet)
   {
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_WARN_ALLOWED_PACKET_OVERFLOWED,
                         ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-                        func_name(), current_session->variables.max_allowed_packet);
+                        func_name(), session.variables.max_allowed_packet);
     goto err;
   }
   if (tmp_value.alloc((size_t)stat_info.st_size))

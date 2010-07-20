@@ -133,7 +133,7 @@ void ArchiveEngine::deleteOpenTable(const string &table_name)
 
 
 void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory, 
-				    SchemaIdentifier&,
+				    const SchemaIdentifier&,
                                     set<string>& set_of_names)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
@@ -156,7 +156,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
       set_of_names.insert(uname);
@@ -165,7 +165,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 }
 
 
-int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
+int ArchiveEngine::doDropTable(Session&, const TableIdentifier &identifier)
 {
   string new_path(identifier.getPath());
 
@@ -182,7 +182,7 @@ int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
 }
 
 int ArchiveEngine::doGetTableDefinition(Session&,
-                                        TableIdentifier &identifier,
+                                        const TableIdentifier &identifier,
                                         drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
@@ -443,10 +443,10 @@ int ha_archive::init_archive_reader()
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name, int, uint32_t)
+int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
   int rc= 0;
-  share= get_share(name, &rc);
+  share= get_share(identifier.getPath().c_str(), &rc);
 
   /** 
     We either fix it ourselves, or we just take it offline 
@@ -479,6 +479,13 @@ int ha_archive::open(const char *name, int, uint32_t)
   thr_lock_data_init(&share->lock, &lock, NULL);
 
   return(rc);
+}
+
+// Should never be called
+int ha_archive::open(const char *, int, uint32_t)
+{
+  assert(0);
+  return -1;
 }
 
 
@@ -529,7 +536,7 @@ int ha_archive::close(void)
 
 int ArchiveEngine::doCreateTable(Session &,
                                  Table& table_arg,
-                                 drizzled::TableIdentifier &identifier,
+                                 const drizzled::TableIdentifier &identifier,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
@@ -572,11 +579,19 @@ int ArchiveEngine::doCreateTable(Session &,
     goto error2;
   }
 
-  proto.SerializeToString(&serialized_proto);
+  try {
+    proto.SerializeToString(&serialized_proto);
+  }
+  catch (...)
+  {
+    goto error2;
+  }
 
   if (azwrite_frm(&create_stream, serialized_proto.c_str(),
                   serialized_proto.length()))
+  {
     goto error2;
+  }
 
   if (proto.options().has_comment())
   {
@@ -655,7 +670,7 @@ uint32_t ha_archive::max_row_length(const unsigned char *)
        ptr != end ;
        ptr++)
   {
-      length += 2 + ((Field_blob*)table->field[*ptr])->get_length();
+      length += 2 + ((Field_blob*)table->getField(*ptr))->get_length();
   }
 
   return length;
@@ -673,7 +688,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
   memcpy(record_buffer->buffer, record, table->getShare()->null_bytes);
   ptr= record_buffer->buffer + table->getShare()->null_bytes;
 
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field=table->getFields() ; *field ; field++)
   {
     if (!((*field)->is_null()))
       ptr= (*field)->pack(ptr, record + (*field)->offset(record));
@@ -702,7 +717,6 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
   pthread_mutex_lock(&share->mutex);
 
   if (share->archive_write_open == false)
@@ -890,7 +904,7 @@ int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
   /* Copy null bits */
   memcpy(record, ptr, table->getNullBytes());
   ptr+= table->getNullBytes();
-  for (Field **field=table->field ; *field ; field++)
+  for (Field **field= table->getFields() ; *field ; field++)
   {
     if (!((*field)->is_null()))
     {
@@ -1311,7 +1325,7 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   return;
 }
 
-int ArchiveEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+int ArchiveEngine::doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to)
 {
   int error= 0;
 
@@ -1329,7 +1343,7 @@ int ArchiveEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifie
 }
 
 bool ArchiveEngine::doDoesTableExist(Session&,
-                                     TableIdentifier &identifier)
+                                     const TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(ARZ);
@@ -1343,7 +1357,7 @@ bool ArchiveEngine::doDoesTableExist(Session&,
 }
 
 void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                          drizzled::SchemaIdentifier &schema_identifier,
+                                          const drizzled::SchemaIdentifier &schema_identifier,
                                           drizzled::TableIdentifiers &set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
@@ -1366,7 +1380,7 @@ void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
       char uname[NAME_LEN + 1];
       uint32_t file_name_len;
 
-      file_name_len= filename_to_tablename(filename->c_str(), uname, sizeof(uname));
+      file_name_len= TableIdentifier::filename_to_tablename(filename->c_str(), uname, sizeof(uname));
       // TODO: Remove need for memory copy here
       uname[file_name_len - sizeof(ARZ) + 1]= '\0'; // Subtract ending, place NULL 
 

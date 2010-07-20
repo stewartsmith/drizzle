@@ -36,7 +36,7 @@
 #include "drizzled/transaction_services.h"
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
 #include "drizzled/internal/m_string.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"
@@ -48,6 +48,8 @@
 
 #include <algorithm>
 #include <sstream>
+
+#include <boost/unordered_set.hpp>
 
 using namespace std;
 
@@ -181,11 +183,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
-    table->db_type= NULL;
+    table->setDbType(NULL);
 
     if ((share= TableShare::getShare(identifier)))
     {
-      table->db_type= share->db_type();
+      table->setDbType(share->db_type());
     }
   }
 
@@ -220,7 +222,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     {
       Table *locked_table;
       abort_locked_tables(session, db, table->table_name);
-      remove_table_from_cache(session, db, table->table_name,
+      TableIdentifier identifier(db, table->table_name);
+      remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       /*
@@ -236,7 +239,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
     }
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? message::Table::INTERNAL : message::Table::STANDARD);
+    TableIdentifier identifier(db, table->table_name, table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
     if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -395,6 +398,40 @@ static int sort_keys(KeyInfo *a, KeyInfo *b)
     1             Error
 */
 
+class typelib_set_member
+{
+public:
+  string s;
+  const CHARSET_INFO * const cs;
+
+  typelib_set_member(const char* value, unsigned int length,
+                     const CHARSET_INFO * const charset)
+    : s(value, length),
+      cs(charset)
+  {}
+};
+
+static bool operator==(typelib_set_member const& a, typelib_set_member const& b)
+{
+  return (my_strnncoll(a.cs,
+                       (const unsigned char*)a.s.c_str(), a.s.length(),
+                       (const unsigned char*)b.s.c_str(), b.s.length())==0);
+}
+
+
+namespace
+{
+class typelib_set_member_hasher
+{
+  boost::hash<string> hasher;
+public:
+  std::size_t operator()(const typelib_set_member& t) const
+  {
+    return hasher(t.s);
+  }
+};
+}
+
 static bool check_duplicates_in_interval(const char *set_or_name,
                                          const char *name, TYPELIB *typelib,
                                          const CHARSET_INFO * const cs,
@@ -405,17 +442,21 @@ static bool check_duplicates_in_interval(const char *set_or_name,
   unsigned int *cur_length= typelib->type_lengths;
   *dup_val_count= 0;
 
-  for ( ; tmp.count > 1; cur_value++, cur_length++)
+  boost::unordered_set<typelib_set_member, typelib_set_member_hasher> interval_set;
+
+  for ( ; tmp.count > 0; cur_value++, cur_length++)
   {
     tmp.type_names++;
     tmp.type_lengths++;
     tmp.count--;
-    if (find_type2(&tmp, (const char*)*cur_value, *cur_length, cs))
+    if (interval_set.find(typelib_set_member(*cur_value, *cur_length, cs)) != interval_set.end())
     {
       my_error(ER_DUPLICATED_VALUE_IN_TYPE, MYF(0),
                name,*cur_value,set_or_name);
       return 1;
     }
+    else
+      interval_set.insert(typelib_set_member(*cur_value, *cur_length, cs));
   }
   return 0;
 }
@@ -1598,6 +1639,7 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 
   SYNOPSIS
     mysql_rename_table()
+      session
       base                      The plugin::StorageEngine handle.
       old_db                    The old database name.
       old_name                  The old table name.
@@ -1610,11 +1652,11 @@ make_unique_key_name(const char *field_name,KeyInfo *start,KeyInfo *end)
 */
 
 bool
-mysql_rename_table(plugin::StorageEngine *base,
+mysql_rename_table(Session &session,
+                   plugin::StorageEngine *base,
                    TableIdentifier &from,
                    TableIdentifier &to)
 {
-  Session *session= current_session;
   int error= 0;
 
   assert(base);
@@ -1625,7 +1667,7 @@ mysql_rename_table(plugin::StorageEngine *base,
     return true;
   }
 
-  error= base->renameTable(*session, from, to);
+  error= base->renameTable(session, from, to);
 
   if (error == HA_ERR_WRONG_COMMAND)
   {
@@ -1673,9 +1715,8 @@ void wait_while_table_is_used(Session *session, Table *table,
   mysql_lock_abort(session, table);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
-  remove_table_from_cache(session, table->getMutableShare()->getSchemaName(),
-                          table->getMutableShare()->getTableName(),
-                          RTFC_WAIT_OTHER_THREAD_FLAG);
+  TableIdentifier identifier(table->getMutableShare()->getSchemaName(), table->getMutableShare()->getTableName());
+  remove_table_from_cache(session, identifier, RTFC_WAIT_OTHER_THREAD_FLAG);
 }
 
 /*
@@ -1827,8 +1868,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
-      remove_table_from_cache(session, table->table->getMutableShare()->getSchemaName(),
-                              table->table->getMutableShare()->getTableName(),
+      TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
+      remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       session->exit_cond(old_message);
@@ -1924,15 +1965,15 @@ send_result:
       }
       else if (open_for_modify)
       {
-        if (table->table->getShare()->tmp_table)
+        if (table->table->getShare()->getType())
         {
           table->table->cursor->info(HA_STATUS_CONST);
         }
         else
         {
           pthread_mutex_lock(&LOCK_open);
-          remove_table_from_cache(session, table->table->getMutableShare()->getSchemaName(),
-                                  table->table->getMutableShare()->getTableName(), RTFC_NO_FLAG);
+	  TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
+          remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
           pthread_mutex_unlock(&LOCK_open);
         }
       }
@@ -1955,61 +1996,6 @@ err:
   if (table)
     table->table=0;
   return(true);
-}
-
-/*
-  We have to write the query before we unlock the named table.
-
-  Since temporary tables are not replicated under row-based
-  replication, CREATE TABLE ... LIKE ... needs special
-  treatement.  We have four cases to consider, according to the
-  following decision table:
-
-  ==== ========= ========= ==============================
-  Case    Target    Source Write to binary log
-  ==== ========= ========= ==============================
-  1       normal    normal Original statement
-  2       normal temporary Generated statement
-  3    temporary    normal Nothing
-  4    temporary temporary Nothing
-  ==== ========= ========= ==============================
-*/
-static bool replicateCreateTableLike(Session *session, TableList *table, Table *name_lock,
-                                     bool is_src_table_tmp, bool is_if_not_exists)
-{
-  if (is_src_table_tmp)
-  {
-    char buf[2048];
-    String query(buf, sizeof(buf), system_charset_info);
-    query.length(0);  // Have to zero it since constructor doesn't
-
-
-    /*
-      Here we open the destination table, on which we already have
-      name-lock. This is needed for store_create_info() to work.
-      The table will be closed by unlink_open_table() at the end
-      of this function.
-    */
-    table->table= name_lock;
-    pthread_mutex_lock(&LOCK_open); /* Open new table we have just acquired */
-    if (session->reopen_name_locked_table(table, false))
-    {
-      pthread_mutex_unlock(&LOCK_open);
-      return false;
-    }
-    pthread_mutex_unlock(&LOCK_open);
-
-    int result= store_create_info(table, &query, is_if_not_exists);
-
-    assert(result == 0); // store_create_info() always return 0
-    write_bin_log(session, query.ptr());
-  }
-  else                                      // Case 1
-  {
-    write_bin_log(session, session->query.c_str());
-  }
-
-  return true;
 }
 
   /*
@@ -2080,6 +2066,12 @@ static bool create_table_wrapper(Session &session, const message::Table& create_
                                               destination_identifier,
                                               new_proto);
 
+  if (err == false && not destination_identifier.isTmp())
+  {
+    TransactionServices &transaction_services= TransactionServices::singleton();
+    transaction_services.createTable(&session, new_proto);
+  }
+
   return err ? false : true;
 }
 
@@ -2123,7 +2115,7 @@ bool mysql_create_like_table(Session* session,
     return true;
 
   TableIdentifier src_identifier(src_table->table->getMutableShare()->getSchemaName(),
-                                 src_table->table->getMutableShare()->getTableName(), src_table->table->getMutableShare()->tmp_table);
+                                 src_table->table->getMutableShare()->getTableName(), src_table->table->getMutableShare()->getType());
 
 
 
@@ -2143,15 +2135,15 @@ bool mysql_create_like_table(Session* session,
     else
     {
       bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                        src_identifier, is_engine_set);
+                                             src_identifier, is_engine_set);
       if (not was_created) // This is pretty paranoid, but we assume something might not clean up after itself
       {
-        (void) session->rm_temporary_table(destination_identifier);
+        (void) session->rm_temporary_table(destination_identifier, true);
       }
       else if (not session->open_temporary_table(destination_identifier))
       {
         // We created, but we can't open... also, a hack.
-        (void) session->rm_temporary_table(destination_identifier);
+        (void) session->rm_temporary_table(destination_identifier, true);
       }
       else
       {
@@ -2187,7 +2179,7 @@ bool mysql_create_like_table(Session* session,
     {
       pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
       bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                        src_identifier, is_engine_set);
+                                             src_identifier, is_engine_set);
       pthread_mutex_unlock(&LOCK_open);
 
       // So we blew the creation of the table, and we scramble to clean up
@@ -2198,9 +2190,6 @@ bool mysql_create_like_table(Session* session,
       } 
       else
       {
-        bool rc= replicateCreateTableLike(session, table, name_lock, (src_table->table->getShare()->tmp_table), is_if_not_exists);
-        (void)rc;
-
         res= false;
       }
     }

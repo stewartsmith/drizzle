@@ -292,4 +292,4 @@ static drizzle_sys_var* sys_variables[]= {
   NULL
 };
 
-DRIZZLE_PLUGIN(init, sys_variables);
+DRIZZLE_PLUGIN(init, sys_variables, NULL);

@@ -259,6 +259,8 @@ void lex_start(Session *session)
 
   lex->is_lex_started= true;
   lex->statement= NULL;
+  
+  lex->is_cross= false;
 }
 
 void lex_end(LEX *lex)

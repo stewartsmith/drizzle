@@ -42,7 +42,7 @@ Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	FALSE	a	1	a
+t1	NO	a	1	a
 drop table t1;
 End of 4.1 tests
 End of 5.0 tests

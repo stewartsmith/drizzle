@@ -98,8 +98,6 @@ namespace drizzled
   @{
 */
 
-extern HASH open_cache;
-
 static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table,
                                    uint32_t count,
                                    bool should_lock, Table **write_locked);
@@ -680,25 +678,22 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
     > 0  table locked, but someone is using it
 */
 
-int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
+static int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
 {
   Table *table;
-  char  key[MAX_DBKEY_LENGTH];
-  char *db= table_list->db;
-  uint32_t  key_length;
   bool  found_locked_table= false;
   HASH_SEARCH_STATE state;
-
-  key_length= table_list->create_table_def_key(key);
+  TableIdentifier identifier(table_list->db, table_list->table_name);
+  const TableIdentifier::Key &key(identifier.getKey());
 
   if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
-    for (table=(Table*) hash_first(&open_cache, (unsigned char*)key,
-                                   key_length, &state);
+    for (table=(Table*) hash_first(&get_open_cache(), (unsigned char*)&key[0],
+                                   key.size(), &state);
          table ;
-         table = (Table*) hash_next(&open_cache,(unsigned char*) key,
-                                    key_length, &state))
+         table = (Table*) hash_next(&get_open_cache(),(unsigned char*)&key[0],
+                                    key.size(), &state))
     {
       if (table->reginfo.lock_type < TL_WRITE)
       {
@@ -716,16 +711,16 @@ int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
     }
   }
 
-  if (!(table= session->table_cache_insert_placeholder(key, key_length)))
+  if (!(table= session->table_cache_insert_placeholder(table_list->db, table_list->table_name, &key[0], key.size())))
   {
     return -1;
   }
 
-  table_list->table=table;
+  table_list->table= table;
 
   /* Return 1 if table is in use */
-  return(test(remove_table_from_cache(session, db, table_list->table_name,
-             check_in_use ? RTFC_NO_FLAG : RTFC_WAIT_OTHER_THREAD_FLAG)));
+  return(test(remove_table_from_cache(session, identifier,
+				      check_in_use ? RTFC_NO_FLAG : RTFC_WAIT_OTHER_THREAD_FLAG)));
 }
 
 
@@ -733,7 +728,7 @@ void unlock_table_name(TableList *table_list)
 {
   if (table_list->table)
   {
-    hash_delete(&open_cache, (unsigned char*) table_list->table);
+    hash_delete(&get_open_cache(), (unsigned char*) table_list->table);
     broadcast_refresh();
   }
 }
@@ -746,11 +741,11 @@ static bool locked_named_table(TableList *table_list)
     Table *table= table_list->table;
     if (table)
     {
-      Table *save_next= table->next;
+      Table *save_next= table->getNext();
       bool result;
-      table->next= 0;
+      table->setNext(NULL);
       result= table_is_used(table_list->table, 0);
-      table->next= save_next;
+      table->setNext(save_next);
       if (result)
         return 1;
     }
@@ -793,7 +788,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
     1	Fatal error (end of memory ?)
 */
 
-bool lock_table_names(Session *session, TableList *table_list)
+static bool lock_table_names(Session *session, TableList *table_list)
 {
   bool got_all_locks=1;
   TableList *lock_table;
@@ -801,7 +796,7 @@ bool lock_table_names(Session *session, TableList *table_list)
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
     int got_lock;
-    if ((got_lock= lock_table_name(session,lock_table, true)) < 0)
+    if ((got_lock= lock_table_name(session, lock_table, true)) < 0)
       goto end;					// Fatal error
     if (got_lock)
       got_all_locks=0;				// Someone is using table

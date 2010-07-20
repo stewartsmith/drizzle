@@ -31,7 +31,7 @@
 namespace drizzled
 {
 
-int rr_sequential(ReadRecord *info);
+static int rr_sequential(ReadRecord *info);
 static int rr_quick(ReadRecord *info);
 static int rr_from_tempfile(ReadRecord *info);
 static int rr_unpack_from_tempfile(ReadRecord *info);
@@ -41,6 +41,11 @@ static int rr_from_cache(ReadRecord *info);
 static int rr_cmp(unsigned char *a,unsigned char *b);
 static int rr_index_first(ReadRecord *info);
 static int rr_index(ReadRecord *info);
+
+void ReadRecord::init_reard_record_sequential()
+{
+  read_record= rr_sequential;
+}
 
 void ReadRecord::init_read_record_idx(Session *, 
                                       Table *table_arg,
@@ -104,7 +109,8 @@ void ReadRecord::init_read_record(Session *session_arg,
   if (tempfile && my_b_inited(tempfile)) // Test if ref-records was used
   {
     read_record= (table->sort.addon_field ?
-                        rr_unpack_from_tempfile : rr_from_tempfile);
+                  rr_unpack_from_tempfile : rr_from_tempfile);
+
     io_cache=tempfile;
     reinit_io_cache(io_cache,internal::READ_CACHE,0L,0,0);
     ref_pos=table->cursor->ref;
@@ -131,13 +137,13 @@ void ReadRecord::init_read_record(Session *session_arg,
     {
       if (init_rr_cache())
       {
-        read_record=rr_from_cache;
+        read_record= rr_from_cache;
       }
     }
   }
   else if (select && select->quick)
   {
-    read_record=rr_quick;
+    read_record= rr_quick;
   }
   else if (table->sort.record_pointers)
   {
@@ -155,7 +161,9 @@ void ReadRecord::init_read_record(Session *session_arg,
         (use_record_cache > 0 ||
         (int) table->reginfo.lock_type <= (int) TL_READ_WITH_SHARED_LOCKS ||
         !(table->getShare()->db_options_in_use & HA_OPTION_PACK_RECORD)))
+    {
       table->cursor->extra_opt(HA_EXTRA_CACHE, session->variables.read_buff_size);
+    }
   }
 
   return;
@@ -333,6 +341,7 @@ static int rr_from_pointers(ReadRecord *info)
   int tmp;
   unsigned char *cache_pos;
 
+
   for (;;)
   {
     if (info->cache_pos == info->cache_end)
@@ -439,16 +448,19 @@ static int rr_from_cache(ReadRecord *info)
       return ((int) error);
     }
     length=info->rec_cache_size;
-    rest_of_file=info->io_cache->end_of_file - my_b_tell(info->io_cache);
+    rest_of_file= info->io_cache->end_of_file - my_b_tell(info->io_cache);
     if ((internal::my_off_t) length > rest_of_file)
+    {
       length= (uint32_t) rest_of_file;
-    if (!length || my_b_read(info->io_cache,info->cache,length))
+    }
+
+    if (!length || my_b_read(info->io_cache, info->getCache(), length))
     {
       return -1;			/* End of cursor */
     }
 
     length/=info->ref_length;
-    position=info->cache;
+    position=info->getCache();
     ref_position=info->read_positions;
     for (i=0 ; i < length ; i++,position+=info->ref_length)
     {
@@ -463,11 +475,11 @@ static int rr_from_cache(ReadRecord *info)
     position=info->read_positions;
     for (i=0 ; i < length ; i++)
     {
-      memcpy(info->ref_pos,position,(size_t) info->ref_length);
+      memcpy(info->ref_pos, position, (size_t)info->ref_length);
       position+=MAX_REFLENGTH;
       record=uint3korr(position);
       position+=3;
-      record_pos=info->cache+record*info->reclength;
+      record_pos= info->getCache() + record * info->reclength;
       if ((error=(int16_t) info->cursor->rnd_pos(record_pos,info->ref_pos)))
       {
         record_pos[info->error_offset]=1;
@@ -476,7 +488,7 @@ static int rr_from_cache(ReadRecord *info)
       else
         record_pos[info->error_offset]=0;
     }
-    info->cache_end=(info->cache_pos=info->cache)+length*info->reclength;
+    info->cache_end= (info->cache_pos= info->getCache())+length*info->reclength;
   }
 } /* rr_from_cache */
 

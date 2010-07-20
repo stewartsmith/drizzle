@@ -36,7 +36,7 @@ class Item_field;
 
 uint32_t TableList::create_table_def_key(char *key)
 {
-  return TableShare::createKey(key, db, table_name);
+  return TableIdentifier::createKey(key, db, table_name);
 }
 
 bool TableList::set_insert_values(memory::Root *mem_root)
@@ -63,6 +63,11 @@ TableList *TableList::find_underlying_table(Table *table_to_find)
     return this;
 
   return NULL;
+}
+
+bool TableList::isCartesian() const
+{
+  return false;
 }
 
 bool TableList::placeholder()

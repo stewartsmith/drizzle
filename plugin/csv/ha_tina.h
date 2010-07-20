@@ -23,7 +23,6 @@
 #include <sys/stat.h>
 #include "transparent_file.h"
 
-#define DEFAULT_CHAIN_LENGTH 512
 /*
   Version for file format.
   1 - Initial Version. That is, the version when the metafile was introduced.
@@ -60,11 +59,6 @@ public:
   uint32_t data_file_version;   /* Version of the data file used */
 };
 
-struct tina_set {
-  off_t begin;
-  off_t end;
-};
-
 class ha_tina: public drizzled::Cursor
 {
   drizzled::THR_LOCK_DATA lock;      /* MySQL lock */
@@ -83,16 +77,13 @@ class ha_tina: public drizzled::Cursor
     deletes/updates. It is used in doEndTableScan() to get rid of them
     in the end of the query.
   */
-  tina_set chain_buffer[DEFAULT_CHAIN_LENGTH];
-  tina_set *chain;
-  tina_set *chain_ptr;
-  unsigned char chain_alloced;
-  uint32_t chain_size;
+  std::vector< std::pair<off_t, off_t> > chain;
   uint32_t local_data_file_version;  /* Saved version of the data file used */
   bool records_is_known;
   drizzled::memory::Root blobroot;
 
-  bool get_write_pos(off_t *end_pos, tina_set *closest_hole);
+  bool get_write_pos(off_t *end_pos,
+                     std::vector< std::pair<off_t, off_t> >::iterator &closest_hole);
   int open_update_temp_file_if_needed();
   int init_tina_writer();
   int init_data_file();
@@ -101,8 +92,6 @@ public:
   ha_tina(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
   ~ha_tina()
   {
-    if (chain_alloced)
-      free(chain);
     if (file_buff)
       delete file_buff;
   }
@@ -124,7 +113,8 @@ public:
   */
   drizzled::ha_rows estimate_rows_upper_bound() { return HA_POS_ERROR; }
 
-  int open(const char *name, int mode, uint32_t open_options);
+  int doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  int open(const char *, int , uint32_t ) { assert(0); return -1; }
   int close(void);
   int doInsertRecord(unsigned char * buf);
   int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);

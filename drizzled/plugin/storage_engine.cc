@@ -97,7 +97,7 @@ void StorageEngine::setTransactionReadWrite(Session& session)
 }
 
 
-int StorageEngine::renameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+int StorageEngine::renameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   int error;
   setTransactionReadWrite(session);
@@ -133,7 +133,7 @@ int StorageEngine::renameTable(Session &session, TableIdentifier &from, TableIde
   @retval
     !0  Error
 */
-int StorageEngine::doDropTable(Session&, TableIdentifier &identifier)
+int StorageEngine::doDropTable(Session&, const TableIdentifier &identifier)
                                
 {
   int error= 0;
@@ -295,13 +295,13 @@ bool StorageEngine::flushLogs(StorageEngine *engine)
 class StorageEngineGetTableDefinition: public unary_function<StorageEngine *,bool>
 {
   Session& session;
-  TableIdentifier &identifier;
+  const TableIdentifier &identifier;
   message::Table &table_message;
   int &err;
 
 public:
   StorageEngineGetTableDefinition(Session& session_arg,
-                                  TableIdentifier &identifier_arg,
+                                  const TableIdentifier &identifier_arg,
                                   message::Table &table_message_arg,
                                   int &err_arg) :
     session(session_arg), 
@@ -323,10 +323,10 @@ public:
 class StorageEngineDoesTableExist: public unary_function<StorageEngine *, bool>
 {
   Session& session;
-  TableIdentifier &identifier;
+  const TableIdentifier &identifier;
 
 public:
-  StorageEngineDoesTableExist(Session& session_arg, TableIdentifier &identifier_arg) :
+  StorageEngineDoesTableExist(Session& session_arg, const TableIdentifier &identifier_arg) :
     session(session_arg), 
     identifier(identifier_arg) 
   { }
@@ -341,7 +341,7 @@ public:
   Utility method which hides some of the details of getTableDefinition()
 */
 bool plugin::StorageEngine::doesTableExist(Session &session,
-                                           TableIdentifier &identifier,
+                                           const TableIdentifier &identifier,
                                            bool include_temporary_tables)
 {
   if (include_temporary_tables)
@@ -362,7 +362,7 @@ bool plugin::StorageEngine::doesTableExist(Session &session,
   return true;
 }
 
-bool plugin::StorageEngine::doDoesTableExist(Session&, TableIdentifier&)
+bool plugin::StorageEngine::doDoesTableExist(Session&, const drizzled::TableIdentifier&)
 {
   cerr << " Engine was called for doDoesTableExist() and does not implement it: " << this->getName() << "\n";
   assert(0);
@@ -375,7 +375,7 @@ bool plugin::StorageEngine::doDoesTableExist(Session&, TableIdentifier&)
   or any dropped tables that need to be removed from disk
 */
 int StorageEngine::getTableDefinition(Session& session,
-                                      TableIdentifier &identifier,
+                                      const TableIdentifier &identifier,
                                       message::Table &table_message,
                                       bool include_temporary_tables)
 {
@@ -433,7 +433,7 @@ handle_error(uint32_t ,
    returns ENOENT if the file doesn't exists.
 */
 int StorageEngine::dropTable(Session& session,
-                             TableIdentifier &identifier)
+                             const TableIdentifier &identifier)
 {
   int error= 0;
   int error_proto;
@@ -446,7 +446,7 @@ int StorageEngine::dropTable(Session& session,
   {
     string error_message;
 
-    error_message.append(identifier.getSQLPath());
+    error_message.append(const_cast<TableIdentifier &>(identifier).getSQLPath());
     error_message.append(" : ");
     error_message.append(src_proto.InitializationErrorString());
 
@@ -459,7 +459,7 @@ int StorageEngine::dropTable(Session& session,
 
   if (not engine)
   {
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), identifier.getSQLPath().c_str());
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), const_cast<TableIdentifier &>(identifier).getSQLPath().c_str());
 
     return ER_CORRUPT_TABLE_DEFINITION;
   }
@@ -474,7 +474,7 @@ int StorageEngine::dropTable(Session& session,
 
 int StorageEngine::dropTable(Session& session,
                              StorageEngine &engine,
-                             TableIdentifier &identifier)
+                             const TableIdentifier &identifier)
 {
   int error;
 
@@ -507,15 +507,15 @@ int StorageEngine::dropTable(Session& session,
    1  error
 */
 int StorageEngine::createTable(Session &session,
-                               TableIdentifier &identifier,
+                               const TableIdentifier &identifier,
                                message::Table& table_message)
 {
   int error= 1;
   Table table;
-  TableShare share(identifier.getSchemaName().c_str(), 0, identifier.getTableName().c_str(), identifier.getPath().c_str());
+  TableShare share(identifier);
   message::Table tmp_proto;
 
-  if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, "", 0, 0, table))
+  if (share.parse_table_proto(session, table_message) || share.open_table_from_share(&session, identifier, "", 0, 0, table))
   { 
     // @note Error occured, we should probably do a little more here.
   }
@@ -544,7 +544,7 @@ int StorageEngine::createTable(Session &session,
 
     if (error)
     {
-      my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), identifier.getSQLPath().c_str(), error);
+      my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), const_cast<TableIdentifier &>(identifier).getSQLPath().c_str(), error);
     }
 
     table.delete_table(false);
@@ -558,38 +558,16 @@ Cursor *StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
   return create(share, alloc);
 }
 
-class AddTableName : 
-  public unary_function<StorageEngine *, void>
-{
-  CachedDirectory &directory;
-  SchemaIdentifier &identifier;
-  TableNameList &set_of_names;
-
-public:
-
-  AddTableName(CachedDirectory &directory_arg, SchemaIdentifier &identifier_arg, set<string>& of_names) :
-    directory(directory_arg),
-    identifier(identifier_arg),
-    set_of_names(of_names)
-  {
-  }
-
-  result_type operator() (argument_type engine)
-  {
-    engine->doGetTableNames(directory, identifier, set_of_names);
-  }
-};
-
 class AddTableIdentifier : 
   public unary_function<StorageEngine *, void>
 {
   CachedDirectory &directory;
-  SchemaIdentifier &identifier;
+  const SchemaIdentifier &identifier;
   TableIdentifiers &set_of_identifiers;
 
 public:
 
-  AddTableIdentifier(CachedDirectory &directory_arg, SchemaIdentifier &identifier_arg, TableIdentifiers &of_names) :
+  AddTableIdentifier(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, TableIdentifiers &of_names) :
     directory(directory_arg),
     identifier(identifier_arg),
     set_of_identifiers(of_names)
@@ -606,7 +584,7 @@ public:
 static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
 static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
 
-void StorageEngine::getTableNames(Session &session, SchemaIdentifier &schema_identifier, TableNameList &set_of_names)
+void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
@@ -620,34 +598,7 @@ void StorageEngine::getTableNames(Session &session, SchemaIdentifier &schema_ide
     {
       errno= directory.getError();
       if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_identifier.getSQLPath().c_str());
-      else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
-      return;
-    }
-  }
-
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, schema_identifier, set_of_names));
-
-  session.doGetTableNames(directory, schema_identifier, set_of_names);
-}
-
-void StorageEngine::getTableIdentifiers(Session &session, SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
-{
-  CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
-
-  if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
-  { }
-  else if (schema_identifier == DATA_DICTIONARY_IDENTIFIER)
-  { }
-  else
-  {
-    if (directory.fail())
-    {
-      errno= directory.getError();
-      if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), schema_identifier.getSQLPath().c_str());
+        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), const_cast<SchemaIdentifier &>(schema_identifier).getSQLPath().c_str());
       else
         my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
       return;
@@ -682,11 +633,11 @@ public:
 class DropTables: public unary_function<StorageEngine *, void>
 {
   Session &session;
-  TableIdentifierList &table_identifiers;
+  TableIdentifiers &table_identifiers;
 
 public:
 
-  DropTables(Session &session_arg, TableIdentifierList &table_identifiers_arg) :
+  DropTables(Session &session_arg, TableIdentifiers &table_identifiers_arg) :
     session(session_arg),
     table_identifiers(table_identifiers_arg)
   { }
@@ -710,7 +661,7 @@ public:
 void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
-  TableIdentifierList table_identifiers;
+  TableIdentifiers table_identifiers;
 
   if (dir.fail())
   {
@@ -823,15 +774,8 @@ void StorageEngine::print_error(int error, myf errflag, Table *table)
     {
       const char *err_msg= ER(ER_DUP_ENTRY_WITH_KEY_NAME);
 
-      if (key_nr == 0 &&
-          (table->key_info[0].key_part[0].field->flags &
-           AUTO_INCREMENT_FLAG)
-          && (current_session)->lex->sql_command == SQLCOM_ALTER_TABLE)
-      {
-        err_msg= ER(ER_DUP_ENTRY_AUTOINCREMENT_CASE);
-      }
-
       print_keydup_error(key_nr, err_msg, *table);
+
       return;
     }
     textno=ER_DUP_KEY;
@@ -1040,7 +984,7 @@ void StorageEngine::print_keydup_error(uint32_t key_nr, const char *msg, Table &
 }
 
 
-int StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
+int StorageEngine::deleteDefinitionFromPath(const TableIdentifier &identifier)
 {
   string path(identifier.getPath());
 
@@ -1049,7 +993,7 @@ int StorageEngine::deleteDefinitionFromPath(TableIdentifier &identifier)
   return internal::my_delete(path.c_str(), MYF(0));
 }
 
-int StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifier &src)
+int StorageEngine::renameDefinitionFromPath(const TableIdentifier &dest, const TableIdentifier &src)
 {
   message::Table table_message;
   string src_path(src.getPath());
@@ -1078,7 +1022,7 @@ int StorageEngine::renameDefinitionFromPath(TableIdentifier &dest, TableIdentifi
   return error;
 }
 
-int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message::Table &table_message)
+int StorageEngine::writeDefinitionFromPath(const TableIdentifier &identifier, message::Table &table_message)
 {
   char definition_file_tmp[FN_REFLEN];
   string file_name(identifier.getPath());
@@ -1098,7 +1042,17 @@ int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message:
   google::protobuf::io::ZeroCopyOutputStream* output=
     new google::protobuf::io::FileOutputStream(fd);
 
-  if (not table_message.SerializeToZeroCopyStream(output))
+  bool success;
+
+  try {
+    success= table_message.SerializeToZeroCopyStream(output);
+  }
+  catch (...)
+  {
+    success= false;
+  }
+
+  if (not success)
   {
     my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
              table_message.InitializationErrorString().c_str());
@@ -1142,10 +1096,10 @@ int StorageEngine::writeDefinitionFromPath(TableIdentifier &identifier, message:
 
 class CanCreateTable: public unary_function<StorageEngine *, bool>
 {
-  TableIdentifier &identifier;
+  const TableIdentifier &identifier;
 
 public:
-  CanCreateTable(TableIdentifier &identifier_arg) :
+  CanCreateTable(const TableIdentifier &identifier_arg) :
     identifier(identifier_arg)
   { }
 
@@ -1159,7 +1113,7 @@ public:
 /**
   @note on success table can be created.
 */
-bool StorageEngine::canCreateTable(drizzled::TableIdentifier &identifier)
+bool StorageEngine::canCreateTable(const TableIdentifier &identifier)
 {
   EngineVector::iterator iter=
     find_if(vector_of_engines.begin(), vector_of_engines.end(),
@@ -1179,13 +1133,17 @@ bool StorageEngine::readTableFile(const std::string &path, message::Table &table
 
   if (input.good())
   {
-    if (table_message.ParseFromIstream(&input))
-    {
-      return true;
+    try {
+      if (table_message.ParseFromIstream(&input))
+      {
+        return true;
+      }
     }
-
-    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
-             table_message.InitializationErrorString().c_str());
+    catch (...)
+    {
+      my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0),
+               table_message.InitializationErrorString().empty() ? "": table_message.InitializationErrorString().c_str());
+    }
   }
   else
   {

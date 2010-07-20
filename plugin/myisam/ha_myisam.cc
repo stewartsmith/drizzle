@@ -109,19 +109,19 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const TableIdentifier &identifier,
                     message::Table&);
 
-  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
 
-  int doDropTable(Session&, drizzled::TableIdentifier &identifier);
+  int doDropTable(Session&, const TableIdentifier &identifier);
 
   int doGetTableDefinition(Session& session,
-                           drizzled::TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, SchemaIdentifier &, set<string>&) { };
+  void doGetTableNames(CachedDirectory &, const SchemaIdentifier &, set<string>&) { };
 
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
@@ -135,10 +135,10 @@ public:
             HA_READ_ORDER |
             HA_KEYREAD_ONLY);
   }
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
+  bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state)
   {
@@ -153,18 +153,18 @@ public:
 };
 
 void MyisamEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                         drizzled::SchemaIdentifier&,
+                                         const drizzled::SchemaIdentifier&,
                                          drizzled::TableIdentifiers&)
 {
 }
 
-bool MyisamEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool MyisamEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
   return session.doesTableMessageExist(identifier);
 }
 
 int MyisamEngine::doGetTableDefinition(Session &session,
-                                       drizzled::TableIdentifier &identifier,
+                                       const TableIdentifier &identifier,
                                        message::Table &table_message)
 {
   if (session.getTableMessage(identifier, table_message))
@@ -296,7 +296,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
     minpos= share->getRecordLength();
     length= 0;
 
-    for (field= table_arg->field; *field; field++)
+    for (field= table_arg->getFields(); *field; field++)
     {
       if ((fieldpos= (*field)->offset(record)) >= recpos &&
           fieldpos <= minpos)
@@ -589,7 +589,7 @@ int ha_myisam::open(const char *name, int mode, uint32_t test_if_locked)
   if (!(file=mi_open(name, mode, test_if_locked)))
     return (errno ? errno : -1);
 
-  if (!table->getShare()->tmp_table) /* No need to perform a check for tmp table */
+  if (!table->getShare()->getType()) /* No need to perform a check for tmp table */
   {
     if ((errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
     {
@@ -654,8 +654,6 @@ int ha_myisam::close(void)
 
 int ha_myisam::doInsertRecord(unsigned char *buf)
 {
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   /*
     If we have an auto_increment column and we are writing a changed row
     or a new row, then update the auto_increment value in the record.
@@ -706,7 +704,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   strcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK Table
-  if (mi_lock_database(file, table->getShare()->tmp_table ? F_EXTRA_LCK : F_WRLCK))
+  if (mi_lock_database(file, table->getShare()->getType() ? F_EXTRA_LCK : F_WRLCK))
   {
     mi_check_print_error(&param,ER(ER_CANT_LOCK),errno);
     return(HA_ADMIN_FAILED);
@@ -727,18 +725,6 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
       local_testflag|= T_STATISTICS;
       param.testflag|= T_STATISTICS;		// We get this for free
       statistics_done=1;
-      if (repair_threads > 1)
-      {
-        char buf[40];
-        /* TODO: respect myisam_repair_threads variable */
-        snprintf(buf, 40, "Repair with %d threads", internal::my_count_bits(key_map));
-        session->set_proc_info(buf);
-        error = mi_repair_parallel(&param, file, fixed_name,
-            param.testflag & T_QUICK);
-        session->set_proc_info("Repair done"); // to reset proc_info, as
-                                      // it was pointing to local buffer
-      }
-      else
       {
         session->set_proc_info("Repair by sorting");
         error = mi_repair_by_sort(&param, file, fixed_name,
@@ -915,7 +901,7 @@ int ha_myisam::enable_indexes(uint32_t mode)
   }
   else if (mode == HA_KEY_SWITCH_NONUNIQ_SAVE)
   {
-    Session *session=current_session;
+    Session *session= table->in_use;
     MI_CHECK param;
     const char *save_proc_info= session->get_proc_info();
     session->set_proc_info("Creating index");
@@ -991,7 +977,7 @@ int ha_myisam::indexes_are_disabled(void)
 
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
-  Session *session= current_session;
+  Session *session= table->in_use;
   ulong size= session->variables.read_buff_size;
 
   /* don't enable row cache if too few rows */
@@ -1045,15 +1031,11 @@ int ha_myisam::end_bulk_insert()
 
 int ha_myisam::doUpdateRecord(const unsigned char *old_data, unsigned char *new_data)
 {
-  ha_statistic_increment(&system_status_var::ha_update_count);
-  if (table->timestamp_field_type & TIMESTAMP_AUTO_SET_ON_UPDATE)
-    table->timestamp_field->set_time();
   return mi_update(file,old_data,new_data);
 }
 
 int ha_myisam::doDeleteRecord(const unsigned char *buf)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
   return mi_delete(file,buf);
 }
 
@@ -1239,7 +1221,7 @@ int ha_myisam::info(uint32_t flag)
     stats.block_size= myisam_key_cache_block_size;        /* record block size */
 
     /* Update share */
-    if (share->tmp_table == message::Table::STANDARD)
+    if (share->getType() == message::Table::STANDARD)
       pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->sizeKeys());
     /*
@@ -1293,7 +1275,7 @@ int ha_myisam::info(uint32_t flag)
       memcpy(table->key_info[0].rec_per_key,
 	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
-    if (share->tmp_table == message::Table::STANDARD)
+    if (share->getType() == message::Table::STANDARD)
       pthread_mutex_unlock(&share->mutex);
 
    /*
@@ -1347,7 +1329,7 @@ int ha_myisam::delete_all_rows()
 }
 
 int MyisamEngine::doDropTable(Session &session,
-                              drizzled::TableIdentifier &identifier)
+                              const TableIdentifier &identifier)
 {
   session.removeTableMessage(identifier);
 
@@ -1358,14 +1340,14 @@ int MyisamEngine::doDropTable(Session &session,
 int ha_myisam::external_lock(Session *session, int lock_type)
 {
   file->in_use= session;
-  return mi_lock_database(file, !table->getShare()->tmp_table ?
+  return mi_lock_database(file, !table->getShare()->getType() ?
 			  lock_type : ((lock_type == F_UNLCK) ?
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
 int MyisamEngine::doCreateTable(Session &session,
                                 Table& table_arg,
-                                drizzled::TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 message::Table& create_proto)
 {
   int error;
@@ -1411,7 +1393,7 @@ int MyisamEngine::doCreateTable(Session &session,
 }
 
 
-int MyisamEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+int MyisamEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   session.renameTableMessage(from, to);
 

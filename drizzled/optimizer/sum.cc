@@ -135,7 +135,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
   for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
     TableList *embedded= NULL;
-    for (embedded= tl; embedded; embedded= embedded->embedding)
+    for (embedded= tl; embedded; embedded= embedded->getEmbedding())
     {
       if (embedded->on_expr)
         break;
@@ -239,7 +239,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
 
               ref.key_buff= key_buff;
               Item_field *item_field= (Item_field*) (expr->real_item());
-              Table *table= item_field->field->table;
+              Table *table= item_field->field->getTable();
 
               /*
                  Look for a partial key that can be used for optimization.
@@ -407,7 +407,7 @@ int optimizer::sum_query(TableList *tables, List<Item> &all_fields, COND *conds)
 
               ref.key_buff= key_buff;
               Item_field *item_field= (Item_field*) (expr->real_item());
-              Table *table= item_field->field->table;
+              Table *table= item_field->field->getTable();
 
               /*
                  Look for a partial key that can be used for optimization.
@@ -662,7 +662,7 @@ static bool matching_cond(bool max_fl,
 
   field->setWriteSet();
 
-  if (! (cond->used_tables() & field->table->map))
+  if (! (cond->used_tables() & field->getTable()->map))
   {
     /* Condition doesn't restrict the used table */
     return 1;
@@ -907,7 +907,7 @@ static bool find_key_for_maxmin(bool max_fl,
     return 0; // Not key field
   }
 
-  Table *table= field->table;
+  Table *table= field->getTable();
   uint32_t idx= 0;
 
   KeyInfo *keyinfo,*keyinfo_end= NULL;
@@ -938,7 +938,7 @@ static bool find_key_for_maxmin(bool max_fl,
       }
 
       /* Check whether the index component is partial */
-      Field *part_field= table->field[part->fieldnr-1];
+      Field *part_field= table->getField(part->fieldnr-1);
       part_field->setWriteSet();
 
       if ((part_field->flags & BLOB_FLAG) ||
@@ -1028,7 +1028,7 @@ static int reckey_in_range(bool max_fl,
                            uint32_t range_fl,
                            uint32_t prefix_len)
 {
-  if (key_cmp_if_same(field->table, ref->key_buff, ref->key, prefix_len))
+  if (key_cmp_if_same(field->getTable(), ref->key_buff, ref->key, prefix_len))
   {
     return 1;
   }
@@ -1069,7 +1069,7 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond)
     return 0;
   }
 
-  if (cond->used_tables() != field->table->map)
+  if (cond->used_tables() != field->getTable()->map)
   {
     return 0;
   }

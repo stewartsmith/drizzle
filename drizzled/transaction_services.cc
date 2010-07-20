@@ -1083,7 +1083,7 @@ void TransactionServices::setInsertHeader(message::Statement &statement,
   table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
-  Field **table_fields= in_table->field;
+  Field **table_fields= in_table->getFields();
 
   message::FieldMetadata *field_metadata;
 
@@ -1111,7 +1111,7 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
    *
    * Multi-column primary keys are handled how exactly?
    */
-  if (in_table->getShare()->primary_key == MAX_KEY)
+  if (not in_table->getShare()->hasPrimaryKey())
   {
     my_error(ER_NO_PRIMARY_KEY_ON_REPLICATED_TABLE, MYF(0));
     return true;
@@ -1125,7 +1125,7 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
   message::InsertRecord *record= data->add_record();
 
   Field *current_field;
-  Field **table_fields= in_table->field;
+  Field **table_fields= in_table->getFields();
 
   String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
@@ -1201,7 +1201,7 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
   table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
-  Field **table_fields= in_table->field;
+  Field **table_fields= in_table->getFields();
 
   message::FieldMetadata *field_metadata;
 
@@ -1257,7 +1257,7 @@ void TransactionServices::updateRecord(Session *in_session,
   message::UpdateRecord *record= data->add_record();
 
   Field *current_field;
-  Field **table_fields= in_table->field;
+  Field **table_fields= in_table->getFields();
   String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 
@@ -1380,7 +1380,7 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   table_metadata->set_table_name(table_name.c_str(), table_name.length());
 
   Field *current_field;
-  Field **table_fields= in_table->field;
+  Field **table_fields= in_table->getFields();
 
   message::FieldMetadata *field_metadata;
 
@@ -1414,7 +1414,7 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
   message::DeleteRecord *record= data->add_record();
 
   Field *current_field;
-  Field **table_fields= in_table->field;
+  Field **table_fields= in_table->getFields();
   String *string_value= new (in_session->mem_root) String(TransactionServices::DEFAULT_RECORD_SIZE);
   string_value->set_charset(system_charset_info);
 

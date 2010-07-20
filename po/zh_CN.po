@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2010-04-28 02:45+0000\n"
-"PO-Revision-Date: 2010-05-16 10:06+0000\n"
+"POT-Creation-Date: 2010-05-26 01:18+0000\n"
+"PO-Revision-Date: 2010-06-09 11:25+0000\n"
 "Last-Translator: ziminq <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Launchpad-Export-Date: 2010-05-20 05:18+0000\n"
+"X-Launchpad-Export-Date: 2010-06-10 03:35+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -82,70 +82,15 @@ msgstr "每条语句后显示警告。"
 msgid "Don't show warnings after every statement."
 msgstr "每个指令句后不要显示警告。"
 
-#, c-format
-msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
-msgstr "构建初始提示符时内存分配失败。正在退出。\n"
-
-msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "欢迎来到Drizzle客户端。请使用;或\\g指示当前命令结束。"
-
-#, c-format
-msgid ""
-"Your Drizzle connection id is %u\n"
-"Server version: %s\n"
+msgid "Error: Invalid Value for connect_timeout"
 msgstr ""
 
-#, c-format
-msgid "Reading history-file %s\n"
-msgstr "正在读取历史文件%s\n"
+msgid "Error: Invalid Value for max_input_line"
+msgstr ""
 
-#, c-format
-msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "无法为临时历史文件分配内存空间！\n"
-
-msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
-msgstr "欲获取帮助请键入‘help;’或‘\\h’。键入’\\c‘将清除缓冲。\n"
-
-#, c-format
-msgid "Writing history-file %s\n"
-msgstr "正在写入历史文件%s\n"
-
-msgid "Aborted"
-msgstr "会话终止"
-
-msgid "Bye"
-msgstr "再见"
-
-msgid "Query aborted by Ctrl+C\n"
-msgstr "用户使用Ctrl+C放弃查询。\n"
-
-msgid "Display this help and exit."
+#, fuzzy
+msgid "Displays this help and exit."
 msgstr "显示此帮助信息并退出。"
-
-msgid "Synonym for -?"
-msgstr "同-?。"
-
-msgid ""
-"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
-"and field completion, but startup and reconnecting may take a longer time. "
-"Disable with --disable-auto-rehash."
-msgstr ""
-"开启自动更新。不必使用rehash命令来开启键入表和字段时的自动补全功能，但是"
-"Drizzle客户端的启动和重连需要更长时间。可使用--disable-auto-rehash关闭之。"
-
-msgid ""
-"No automatic rehashing. One has to use 'rehash' to get table and field "
-"completion. This gives a quicker start of drizzle_st and disables rehashing "
-"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
-msgstr ""
-"不提供自动更新。请使用rehash命令来开启键入表和字段时的自动补全功能。开启此选"
-"项可以加速Drizzle客户端的启动和重连过程。警告：此选项已过时；请使用--disable-"
-"auto-rehash选项。"
-
-msgid ""
-"Automatically switch to vertical output mode if the result is wider than the "
-"terminal width."
-msgstr "如果结果比终端宽度更宽，则自动调整为直排输出模式。"
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
@@ -163,18 +108,6 @@ msgstr ""
 
 msgid "Use compression in server/client protocol."
 msgstr "在服务器/客户端通讯协议中启用压缩。"
-
-msgid "Database to use."
-msgstr "要使用的数据库。"
-
-msgid "(not used)"
-msgstr "(尚未指定)"
-
-msgid "Delimiter to be used."
-msgstr "要使用的定义符号。"
-
-msgid "Execute command and quit. (Disables --force and history file)"
-msgstr "执行命令并退出。(禁用 --force 和历史文件)"
 
 msgid "Print the output of a query (rows) vertically."
 msgstr "打印查询结果"
@@ -200,14 +133,8 @@ msgstr ""
 msgid "Ignore space after function names."
 msgstr "忽略函数名字后的空格。"
 
-msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "激活/禁止 LOAD DATA LOCAL INFILE （从本地读取数据文件）"
-
 msgid "Turn off beep on error."
 msgstr "发生错误时关闭"
-
-msgid "Connect to host."
-msgstr "链接到主机。"
 
 msgid "Write line numbers for errors."
 msgstr "显示发生错误的行号"
@@ -216,9 +143,6 @@ msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr "不显示发生错误的行号。警告：-L 不建议使用，请在long版中使用该选项。"
-
-msgid "Flush buffer after each query."
-msgstr "每次查询之后刷新缓存。"
 
 msgid "Write column names in results."
 msgstr "在结果中显示列名"
@@ -234,6 +158,73 @@ msgid ""
 msgstr ""
 "变更一个变量的值。不推荐使用此选项；可以用 --variable-name=value 直接赋值变"
 "量。"
+
+msgid "Output in table format."
+msgstr "以表格结构输出"
+
+msgid "Only allow UPDATE and DELETE that uses keys."
+msgstr "只允许使用了键值的 UPDATE 和 DELETE。"
+
+msgid "Synonym for option --safe-updates, -U."
+msgstr ""
+
+msgid "-v vvv implies that verbose= 3, Used to specify verbose"
+msgstr ""
+
+msgid "Output version information and exit."
+msgstr "输出版本信息并退出。"
+
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+msgstr "使用旧协议 (4.1.1之前) 时，拒绝客户端连接到服务器。"
+
+msgid "Number of lines before each import progress report."
+msgstr "每次导入进度报告前的行数。"
+
+msgid "Ping the server to check if it's alive."
+msgstr "Ping 服务器以检验服务器是否工作。"
+
+msgid "Configuration file defaults are not used if no-defaults is set"
+msgstr ""
+
+msgid ""
+"Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
+"and field completion, but startup and reconnecting may take a longer time. "
+"Disable with --disable-auto-rehash."
+msgstr ""
+"开启自动更新。不必使用rehash命令来开启键入表和字段时的自动补全功能，但是"
+"Drizzle客户端的启动和重连需要更长时间。可使用--disable-auto-rehash关闭之。"
+
+msgid ""
+"No automatic rehashing. One has to use 'rehash' to get table and field "
+"completion. This gives a quicker start of drizzle_st and disables rehashing "
+"on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
+msgstr ""
+"不提供自动更新。请使用rehash命令来开启键入表和字段时的自动补全功能。开启此选"
+"项可以加速Drizzle客户端的启动和重连过程。警告：此选项已过时；请使用--disable-"
+"auto-rehash选项。"
+
+msgid ""
+"Automatically switch to vertical output mode if the result is wider than the "
+"terminal width."
+msgstr "如果结果比终端宽度更宽，则自动调整为直排输出模式。"
+
+msgid "Database to use."
+msgstr "要使用的数据库。"
+
+msgid "(not used)"
+msgstr "(尚未指定)"
+
+msgid "Delimiter to be used."
+msgstr "要使用的定义符号。"
+
+msgid "Execute command and quit. (Disables --force and history file)"
+msgstr "执行命令并退出。(禁用 --force 和历史文件)"
+
+msgid "Enable/disable LOAD DATA LOCAL INFILE."
+msgstr "激活/禁止 LOAD DATA LOCAL INFILE （从本地读取数据文件）"
+
+msgid "Flush buffer after each query."
+msgstr "每次查询之后刷新缓存。"
 
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "忽略 SIGINT （CTRL-C）"
@@ -251,26 +242,12 @@ msgid ""
 "default."
 msgstr ""
 
-msgid ""
-"Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
-"option deprecated; use --disable-pager instead."
-msgstr ""
-
-msgid ""
-"Password to use when connecting to server. If password is not given it's "
-"asked from the tty."
-msgstr ""
-
-msgid ""
-"Port number to use for connection or 0 for default to, in order of "
-"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-msgstr ""
-
-msgid "built-in default"
-msgstr "内建默认值"
+#, fuzzy
+msgid "Disable pager and print to stdout. See interactive help (\\h) also."
+msgstr "禁用当前指定的结果文字处理程序(pager)，直接在标准输出上打印结果"
 
 msgid "Set the drizzle prompt to this value."
-msgstr ""
+msgstr "设置drizzle提示符为这个值"
 
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
@@ -284,16 +261,16 @@ msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
 msgstr ""
+"当连接断开时自动重新连接。可以通过 --disable-reconnect 来禁止该功能。该功能默"
+"认启用。"
 
-msgid "Shutdown the server."
+#, fuzzy
+msgid "Shutdown the server"
 msgstr "关闭服务器。"
 
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
-
-msgid "Output in table format."
-msgstr "以表格结构输出"
 
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
@@ -301,25 +278,8 @@ msgid ""
 "default."
 msgstr ""
 
-msgid ""
-"Disable outfile. See interactive help (\\h) also. WARNING: option "
-"deprecated; use --disable-tee instead"
+msgid "Disable outfile. See interactive help (\\h) also."
 msgstr ""
-
-msgid "User for login if not current user."
-msgstr "无当前用户时的登陆用户"
-
-msgid "Only allow UPDATE and DELETE that uses keys."
-msgstr "只允许使用了键值的 UPDATE 和 DELETE。"
-
-msgid "Synonym for option --safe-updates, -U."
-msgstr ""
-
-msgid "Write more. (-v -v -v gives the table output format)."
-msgstr ""
-
-msgid "Output version information and exit."
-msgstr "输出版本信息并退出。"
 
 msgid "Wait and retry if connection is down."
 msgstr "断开连接时等待并重试。"
@@ -336,20 +296,43 @@ msgstr ""
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
-msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
-msgstr "使用旧协议 (4.1.1之前) 时，拒绝客户端连接到服务器。"
+msgid "Use MySQL Protocol."
+msgstr "使用 MySQL 协议"
 
-msgid "Number of lines before each import progress report."
-msgstr "每次导入进度报告前的行数。"
+#, fuzzy
+msgid "Connect to host"
+msgstr "链接到主机。"
 
-msgid "Ping the server to check if it's alive."
+msgid ""
+"Password to use when connecting to server. If password is not given it's "
+"asked from the tty."
 msgstr ""
 
-msgid "Use MySQL Protocol."
+#, fuzzy
+msgid ""
+"Port number to use for connection or 0 for default to, in order of "
+"preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
+msgstr "用以连接的端口号或者设置0使用MySQL协议"
+
+msgid "User for login if not current user."
+msgstr "无当前用户时的登陆用户"
+
+msgid "The protocol of connection (tcp,socket,pipe,memory)."
 msgstr ""
 
 #, c-format
-msgid "%s  Ver %s Distrib %s, for %s-%s (%s) using %s %s\n"
+msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
+msgstr "构建初始提示符时内存分配失败。正在退出。\n"
+
+msgid "DELIMITER cannot contain a backslash character"
+msgstr ""
+
+#, fuzzy, c-format
+msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
+msgstr "给出的端口值不合法。"
+
+#, c-format
+msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
 msgstr ""
 
 #, c-format
@@ -359,32 +342,44 @@ msgid ""
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr "版权所有 (C) 2008 Sun Microsystem\n"
 
-#, c-format
-msgid "Usage: %s [OPTIONS] [database]\n"
+#, fuzzy, c-format
+msgid "Usage: drizzle [OPTIONS] [database]\n"
 msgstr "用法: %s [选项] [数据库]\n"
 
-msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
+msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
+msgstr "欢迎来到Drizzle客户端。请使用;或\\g指示当前命令结束。"
 
 #, c-format
-msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr ""
-
-#, c-format
-msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr ""
-
-#, c-format
-msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
-
 msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead."
+"Your Drizzle connection id is %u\n"
+"Server version: %s\n"
 msgstr ""
+"当前的Drizzle会话的连接ID为%u\n"
+"服务器版本: %s\n"
 
-msgid "Value supplied for port is not valid."
-msgstr "给出的端口值不合法。"
+#, c-format
+msgid "Reading history-file %s\n"
+msgstr "正在读取历史文件%s\n"
+
+#, c-format
+msgid "Couldn't allocate memory for temp histfile!\n"
+msgstr "无法为临时历史文件分配内存空间！\n"
+
+msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
+msgstr "欲获取帮助请键入‘help;’或‘\\h’。键入’\\c‘将清除缓冲。\n"
+
+#, c-format
+msgid "Writing history-file %s\n"
+msgstr "正在写入历史文件%s\n"
+
+msgid "Aborted"
+msgstr "会话终止"
+
+msgid "Bye"
+msgstr "再见"
+
+msgid "Query aborted by Ctrl+C\n"
+msgstr "用户使用Ctrl+C放弃查询。\n"
 
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
@@ -435,65 +430,8 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Number of rows before each output progress report (requires --verbose)."
-msgstr ""
-
 #, c-format
 msgid "Got errno %d on write"
-msgstr ""
-
-#, c-format
-msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
-msgstr ""
-
-#, c-format
-msgid "Usage: %s [OPTIONS] database [tables]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
-msgstr ""
-
-#, c-format
-msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
-msgstr ""
-
-msgid ""
-"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
-"and you are welcome to modify and redistribute it under the GPL license\n"
-msgstr ""
-
-msgid "Dumps definitions and data from a Drizzle database server"
-msgstr ""
-
-#, c-format
-msgid "For more options, use %s --help\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"Non-integer value supplied for port.  If you are trying to enter a password "
-"please use --password instead.\n"
-msgstr ""
-
-#, c-format
-msgid "Value supplied for port is not valid.\n"
-msgstr ""
-
-#, c-format
-msgid "Memory allocation error while copying password. Aborting.\n"
-msgstr ""
-
-#, c-format
-msgid "Input filename too long: %s"
-msgstr ""
-
-#, c-format
-msgid "Illegal use of option --ignore-table=<database>.<table>\n"
-msgstr ""
-
-#, c-format
-msgid "Invalid mode to --compatible: %s\n"
 msgstr ""
 
 #, c-format
@@ -629,6 +567,58 @@ msgstr ""
 msgid "Error: Not enough memory to store ORDER BY clause\n"
 msgstr ""
 
+msgid "Number of rows before each output progress report (requires --verbose)."
+msgstr ""
+
+#, c-format
+msgid "Usage: %s [OPTIONS] database [tables]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
+msgstr ""
+
+#, c-format
+msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
+msgstr ""
+
+#, c-format
+msgid "Value supplied for port is not valid.\n"
+msgstr ""
+
+#, c-format
+msgid "Input filename too long: %s"
+msgstr ""
+
+#, c-format
+msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
+msgstr ""
+
+msgid ""
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+msgstr ""
+
+msgid "Dumps definitions and data from a Drizzle database server"
+msgstr ""
+
+#, c-format
+msgid "Illegal use of option --ignore-table=<database>.<table>\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid mode to --compatible: %s\n"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_max_connect_retries"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_tail_lines"
+msgstr ""
+
+msgid "Error: Invalid Value for opt_sleep"
+msgstr ""
+
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
@@ -680,6 +670,9 @@ msgstr ""
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
 msgstr ""
+
+msgid "Display this help and exit."
+msgstr "显示此帮助信息并退出。"
 
 msgid "Display this help and exit after initializing plugins."
 msgstr ""
@@ -1937,8 +1930,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Uncompressed data size too large; the maximum size is %d (probably, length "
-"of uncompressed data was corrupted)"
+"Uncompressed data size too large; the maximum size is %d (based on "
+"max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
 
 msgid "ZLIB: Not enough memory"
@@ -3651,6 +3644,10 @@ msgid "Corrupt or invalid table definition: %s"
 msgstr ""
 
 #, c-format
+msgid "Corrupt or invalid schema definition for %s : %s"
+msgstr ""
+
+#, c-format
 msgid "Schema does not exist: %s"
 msgstr ""
 
@@ -3671,6 +3668,9 @@ msgstr ""
 
 #, c-format
 msgid "Unknown schema engine option key/pair %s = %s."
+msgstr ""
+
+msgid "Implicit cartesian join attempted."
 msgstr ""
 
 #, c-format
@@ -3964,18 +3964,18 @@ msgid "setsockopt(TCP_NODELAY) failed with errno %d"
 msgstr ""
 
 #, c-format
-msgid "Retrying bind() on %u"
+msgid "Retrying bind() on %u\n"
 msgstr ""
 
 #, c-format
-msgid "bind() failed with errno: %d"
+msgid "bind() failed with errno: %d\n"
 msgstr ""
 
-msgid "Do you already have another drizzled running?"
+msgid "Do you already have another drizzled running?\n"
 msgstr ""
 
 #, c-format
-msgid "listen() failed with errno %d"
+msgid "listen() failed with errno %d\n"
 msgstr ""
 
 #, c-format
@@ -4089,9 +4089,11 @@ msgid "Got error %d when reading table '%s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
+msgstr ""
+
+#, c-format
+msgid "ENUM column %s has greater than %d possible values"
 msgstr ""
 
 #, c-format
@@ -4171,6 +4173,24 @@ msgid "Password to use for auth."
 msgstr ""
 
 msgid "Default database to use."
+msgstr ""
+
+msgid "Invalid value of port\n"
+msgstr ""
+
+msgid "Invalid value for connect_timeout\n"
+msgstr ""
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+msgid "Invalid value for retry_count\n"
+msgstr ""
+
+msgid "Invalid value for buffer_length\n"
 msgstr ""
 
 msgid ""
@@ -4431,13 +4451,16 @@ msgstr ""
 msgid "fail open() fn=%s er=%s\n"
 msgstr ""
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
-msgstr ""
-
-msgid "File to log to"
-msgstr ""
-
-msgid "PCRE to match the query against"
 msgstr ""
 
 msgid "Threshold for logging slow queries, in microseconds"
@@ -4449,30 +4472,13 @@ msgstr ""
 msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 
+msgid "File to log to"
+msgstr ""
+
+msgid "PCRE to match the query against"
+msgstr ""
+
 msgid "Log queries to a CSV file"
-msgstr ""
-
-#, c-format
-msgid "syslog facility \"%s\" not known, using \"local0\""
-msgstr ""
-
-#, c-format
-msgid "syslog priority \"%s\" not known, using \"info\""
-msgstr ""
-
-msgid "Enable logging to syslog"
-msgstr ""
-
-msgid "Syslog Ident"
-msgstr ""
-
-msgid "Syslog Facility"
-msgstr ""
-
-msgid "Syslog Priority"
-msgstr ""
-
-msgid "Log to syslog"
 msgstr ""
 
 msgid "List of memcached servers."
@@ -4708,17 +4714,32 @@ msgstr "分配表空间错误"
 msgid "Tablespace not empty"
 msgstr "表非空"
 
+msgid "Invalid value for retry_count"
+msgstr ""
+
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
-msgstr ""
+msgstr "用以连接的端口号或者设置0使用MySQL协议"
 
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
 
 #, c-format
-msgid "Unable to create background worker thread. Got error %s.\n"
+msgid "syslog facility \"%s\" not known, using \"local0\""
 msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"warn\""
+msgstr ""
+
+#, c-format
+msgid "syslog priority \"%s\" not known, using \"info\""
+msgstr ""
+
+#, c-format
+msgid "Unable to create background worker thread. Got error %s.\n"
+msgstr "无法创建后台进程。获得错误：%s。\n"
 
 #, c-format
 msgid "Failed to allocate the TransactionLog instance.  Got error: %s\n"
@@ -4791,6 +4812,12 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "缓冲区： %s\n"
+
+#~ msgid "Synonym for -?"
+#~ msgstr "同-?。"
+
+#~ msgid "built-in default"
+#~ msgstr "内建默认值"
 
 #~ msgid "Print some debug info at exit."
 #~ msgstr "退出时打印部份调试信息。"

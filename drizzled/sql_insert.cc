@@ -121,8 +121,10 @@ static int check_insert_fields(Session *session, TableList *table_list,
     if (table->timestamp_field)	// Don't automaticly set timestamp if used
     {
       if (table->timestamp_field->isWriteSet())
+      {
         clear_timestamp_auto_bits(table->timestamp_field_type,
                                   TIMESTAMP_AUTO_SET_ON_INSERT);
+      }
       else
       {
         table->setWriteSet(table->timestamp_field->field_index);
@@ -177,10 +179,15 @@ static int check_update_fields(Session *session, TableList *insert_table_list,
   {
     /* Don't set timestamp column if this is modified. */
     if (table->timestamp_field->isWriteSet())
+    {
       clear_timestamp_auto_bits(table->timestamp_field_type,
                                 TIMESTAMP_AUTO_SET_ON_UPDATE);
+    }
+
     if (timestamp_mark)
+    {
       table->setWriteSet(table->timestamp_field->field_index);
+    }
   }
   return 0;
 }
@@ -321,10 +328,8 @@ bool mysql_insert(Session *session,TableList *table_list,
     For single line insert, generate an error if try to set a NOT NULL field
     to NULL.
   */
-  session->count_cuted_fields= ((values_list.elements == 1 &&
-                                 !ignore) ?
-                                CHECK_FIELD_ERROR_FOR_NULL :
-                                CHECK_FIELD_WARN);
+  session->count_cuted_fields= ignore ? CHECK_FIELD_WARN : CHECK_FIELD_ERROR_FOR_NULL;
+
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
@@ -370,7 +375,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     {
       table->restoreRecordAsDefault();	// Get empty record
 
-      if (fill_record(session, table->field, *values))
+      if (fill_record(session, table->getFields(), *values))
       {
 	if (values_list.elements != 1 && ! session->is_error())
 	{
@@ -468,6 +473,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     session->my_ok((ulong) session->row_count_func,
                    info.copied + info.deleted + info.touched, id, buff);
   }
+  session->status_var.inserted_row_count+= session->row_count_func;
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_DONE(0, session->row_count_func);
   return false;
@@ -956,7 +962,7 @@ int check_that_all_fields_are_given_values(Session *session, Table *entry,
 {
   int err= 0;
 
-  for (Field **field=entry->field ; *field ; field++)
+  for (Field **field=entry->getFields() ; *field ; field++)
   {
     if (((*field)->isWriteSet()) == false)
     {
@@ -1299,7 +1305,7 @@ void select_insert::store_values(List<Item> &values)
   if (fields->elements)
     fill_record(session, *fields, values, true);
   else
-    fill_record(session, table->field, values, true);
+    fill_record(session, table->getFields(), values, true);
 }
 
 void select_insert::send_error(uint32_t errcode,const char *err)
@@ -1359,6 +1365,7 @@ bool select_insert::send_eof()
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   session->my_ok((ulong) session->row_count_func,
                  info.copied + info.deleted + info.touched, id, buff);
+  session->status_var.inserted_row_count+= session->row_count_func; 
   DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
   return 0;
 }
@@ -1464,7 +1471,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 				      TableIdentifier &identifier)
 {
   Table tmp_table;		// Used during 'CreateField()'
-  TableShare share;
+  TableShare share(message::Table::INTERNAL);
   Table *table= 0;
   uint32_t select_field_count= items->elements;
   /* Add selected items to field list */
@@ -1625,7 +1632,9 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 					  alter_info, &values,
 					  is_if_not_exists,
 					  &extra_lock, identifier)))
+  {
     return(-1);				// abort() deletes table
+  }
 
   if (extra_lock)
   {
@@ -1646,7 +1655,7 @@ select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
   }
 
  /* First field to copy */
-  field= table->field+table->getShare()->sizeFields() - values.elements;
+  field= table->getFields() + table->getShare()->sizeFields() - values.elements;
 
   /* Mark all fields that are given values */
   for (Field **f= field ; *f ; f++)
@@ -1710,7 +1719,7 @@ bool select_create::send_eof()
       tables.  This can fail, but we should unlock the table
       nevertheless.
     */
-    if (!table->getShare()->tmp_table)
+    if (!table->getShare()->getType())
     {
       TransactionServices &transaction_services= TransactionServices::singleton();
       transaction_services.autocommitOrRollback(session, 0);

@@ -1645,6 +1645,54 @@ update t1 set a = replace(a,'x','y');
 select * from t1;
 a
 drop table t1;
+create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
+ERROR HY000: Corrupt or invalid table definition: 
+create table t1 (a enum(0xC3A4, '1', '2') not null default 0xC3A4);
+show columns from t1;
+Field	Type	Null	Default	Default_is_NULL	On_Update
+a	ENUM	NO	Ã¤	NO	
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` enum('Ã¤','1','2') NOT NULL DEFAULT 'Ã¤'
+) ENGINE=InnoDB
+drop table t1;
+CREATE TABLE t1 (
+a INT  default 1,
+b ENUM('value','öäü_value','ÊÃÕ') NOT NULL
+);
+ERROR HY000: Corrupt or invalid table definition: 
+CREATE TABLE t1 (c enum('ae','oe','ue','ss') collate utf8_unicode_ci);
+INSERT INTO t1 VALUES ('ä');
+ERROR HY000: Received an invalid enum value 'ä'.
+INSERT INTO t1 values ('ö');
+ERROR HY000: Received an invalid enum value 'ö'.
+INSERT INTO t1 values ('ü');
+ERROR HY000: Received an invalid enum value 'ü'.
+INSERT INTO t1 values ('ß');
+ERROR HY000: Received an invalid enum value 'ß'.
+SELECT * FROM t1;
+c
+DROP TABLE t1;
+CREATE TABLE t1 (
+a ENUM('ä','ö','ü') default 'ü'
+);
+ERROR HY000: Corrupt or invalid table definition: 
+CREATE TABLE t1 (
+a ENUM('Ã¤','Ã¶','Ã¼') default 'Ã¼'
+);
+insert into t1 values ('Ã¤'),('Ã¶'),('Ã¼');
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` enum('Ã¤','Ã¶','Ã¼') DEFAULT 'Ã¼'
+) ENGINE=InnoDB
+select a from t1 order by a;
+a
+Ã¤
+Ã¶
+Ã¼
+drop table t1;
 create table t1 (a enum ('Y','N') COLLATE utf8_bin);
 insert into t1 values ('Y');
 alter table t1 add c enum ('Y','N') COLLATE utf8_bin;
@@ -1664,6 +1712,17 @@ t1	CREATE TABLE `t1` (
   `f2` enum('Y','N') DEFAULT NULL
 ) ENGINE=InnoDB
 drop table t1;
+create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
+ERROR HY000: Corrupt or invalid table definition: 
+create table t1(denormal enum('E','F','E,F','F,E') NOT NULL DEFAULT'E');
+show create table t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `denormal` enum('E','F','E,F','F,E') NOT NULL DEFAULT 'E'
+) ENGINE=InnoDB
+drop table t1;
+create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
+ERROR HY000: Corrupt or invalid table definition: 
 CREATE TABLE t1 (
 id INT AUTO_INCREMENT PRIMARY KEY,
 c1 ENUM('a', '', 'b')

@@ -33,8 +33,9 @@
 #include <drizzled/plugin/table_function.h>
 #include <drizzled/field.h>
 
-#include "logging_stats.h"
+#include "user_commands.h"
 #include "global_stats.h"
+#include "logging_stats.h"
 
 #include <vector>
 
@@ -48,10 +49,12 @@ public:
   public:
     Generator(drizzled::Field **arg, LoggingStats *logging_stats);
 
+    ~Generator();
+
     bool populate();
 
   private:
-    GlobalStats *global_stats; 
+    GlobalStats *global_stats_to_display; 
     uint32_t count;
   };
 
@@ -129,6 +132,32 @@ class CumulativeCommandsTool : public drizzled::plugin::TableFunction
 public:
 
   CumulativeCommandsTool(LoggingStats *logging_stats);
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg, LoggingStats *logging_stats);
+
+    bool populate();
+  private:
+    LoggingStats *inner_logging_stats;
+    int32_t record_number;
+    int32_t last_valid_index;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg, outer_logging_stats);
+  }
+private:
+  LoggingStats *outer_logging_stats;
+};
+
+class CumulativeUserStatsTool : public drizzled::plugin::TableFunction
+{
+public:
+
+  CumulativeUserStatsTool(LoggingStats *logging_stats);
 
   class Generator : public drizzled::plugin::TableFunction::Generator
   {
