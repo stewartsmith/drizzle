@@ -22,7 +22,7 @@
 
 #include <drizzled/xid.h>
 #include <drizzled/discrete_interval.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
 
 /* Definitions for parameters to do with Cursor-routines */
 
@@ -448,8 +448,6 @@ public:
       insert_id_for_cur_row;
   }
 
-  virtual void update_create_info(HA_CREATE_INFO *) {}
-  int check_old_types(void);
   /* end of the list of admin commands */
 
   virtual int indexes_are_disabled(void) {return 0;}

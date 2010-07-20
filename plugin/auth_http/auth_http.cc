@@ -23,15 +23,16 @@
 
 #include <string>
 #include <cassert>
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include "drizzled/security_context.h"
 #include "drizzled/plugin/authentication.h"
 #include "drizzled/gettext.h"
-
+namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
 
-static bool sysvar_auth_http_enable= false;
+static bool sysvar_auth_http_enable;
 static char* sysvar_auth_http_url= NULL;
 
 static size_t curl_cb_read(void *ptr, size_t size, size_t nmemb, void *stream)
@@ -136,6 +137,12 @@ static int initialize(drizzled::module::Context &context)
   return 0;
 }
 
+static void init_options(drizzled::module::option_context &context)
+{
+   context("enable", po::value<bool>(&sysvar_auth_http_enable)->default_value(false)->zero_tokens(),
+           N_("Enable HTTP Auth check"));
+} 
+
 static DRIZZLE_SYSVAR_BOOL(
   enable,
   sysvar_auth_http_enable,
@@ -165,13 +172,13 @@ static drizzle_sys_var* auth_http_system_variables[]= {
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "auth_http",
+  "auth-http",
   "0.1",
   "Mark Atwood",
   "HTTP based authenication.",
   PLUGIN_LICENSE_GPL,
   initialize, /* Plugin Init */
   auth_http_system_variables,
-  NULL    /* config options */
+  init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
