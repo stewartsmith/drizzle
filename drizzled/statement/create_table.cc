@@ -23,7 +23,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
 
 #include <iostream>
 

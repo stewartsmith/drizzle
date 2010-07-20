@@ -2817,7 +2817,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
     */
     Field *field= item->get_tmp_table_field();
     int res;
-    uint32_t offset= field->offset(field->table->record[0])-table->getShare()->null_bytes;
+    uint32_t offset= field->offset(field->getTable()->record[0])-table->getShare()->null_bytes;
     if((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
       return res;
   }
@@ -2854,7 +2854,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
     if (field && !item->const_item())
     {
       int res;
-      uint32_t offset= (field->offset(field->table->record[0]) -
+      uint32_t offset= (field->offset(field->getTable()->record[0]) -
                     table->getShare()->null_bytes);
       if ((res= field->cmp((unsigned char*)key1 + offset, (unsigned char*)key2 + offset)))
         return (*order_item)->asc ? res : -res;
@@ -2904,7 +2904,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
         because it contains both order and arg list fields.
       */
       Field *field= (*arg)->get_tmp_table_field();
-      uint32_t offset= (field->offset(field->table->record[0]) -
+      uint32_t offset= (field->offset(field->getTable()->record[0]) -
                     table->getShare()->null_bytes);
       assert(offset < table->getShare()->getRecordLength());
       res= field->val_str(&tmp, key + offset);

@@ -1509,7 +1509,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
     /* hack to undo f->init() */
-    f->table= NULL;
+    f->setTable(NULL);
     f->orig_table= NULL;
 
     f->field_index= fieldnr;
