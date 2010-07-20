@@ -4405,9 +4405,7 @@ msgid "Got error %d when reading table '%s'"
 msgstr ""
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
 msgstr ""
 
 #, c-format
@@ -4491,6 +4489,27 @@ msgid "Password to use for auth."
 msgstr ""
 
 msgid "Default database to use."
+msgstr ""
+
+#, fuzzy
+msgid "Invalid value of port\n"
+msgstr "Utilização inválida de ponteiro nulo"
+
+#, fuzzy
+msgid "Invalid value for connect_timeout\n"
+msgstr "Utilização inválida da função group"
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+#, fuzzy
+msgid "Invalid value for retry_count\n"
+msgstr "Utilização inválida da função group"
+
+msgid "Invalid value for buffer_length\n"
 msgstr ""
 
 msgid ""
@@ -4770,14 +4789,17 @@ msgstr ""
 msgid "fail open() fn=%s er=%s\n"
 msgstr "Erro de open() fn=%s er=%s\n"
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
 msgstr "Activar opção de guardar log para um ficheiro CSV"
-
-msgid "File to log to"
-msgstr "Ficheiro de log"
-
-msgid "PCRE to match the query against"
-msgstr ""
 
 msgid "Threshold for logging slow queries, in microseconds"
 msgstr "Limite para guardar log de queries lentas, em microsegundos"
@@ -4789,6 +4811,12 @@ msgstr ""
 msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 "Limite para guardar log de queries grandes, em número de linhas examinadas"
+
+msgid "File to log to"
+msgstr "Ficheiro de log"
+
+msgid "PCRE to match the query against"
+msgstr ""
 
 msgid "Log queries to a CSV file"
 msgstr "Guardar log de queries para um ficheiro CSV"
@@ -5036,6 +5064,10 @@ msgstr "Tablespace inexistente"
 
 msgid "Tablespace not empty"
 msgstr "Tablespace vazio"
+
+#, fuzzy
+msgid "Invalid value for retry_count"
+msgstr "Utilização inválida da função group"
 
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
