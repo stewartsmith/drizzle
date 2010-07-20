@@ -326,7 +326,6 @@ public:
   static int dropTable(Session& session,
                        StorageEngine &engine,
                        const drizzled::TableIdentifier &identifier);
-  static void getTableNames(Session &session, const drizzled::SchemaIdentifier& schema_identifier, TableNameList &set_of_names);
   static void getTableIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
