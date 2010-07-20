@@ -1,6 +1,7 @@
 /* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
+ *  Copyright (C) 2010 Brian Aker
  *  Copyright (C) 2009 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -29,14 +30,14 @@
   This will replace Table_ident.
   */
 
-#ifndef DRIZZLED_TABLE_IDENTIFIER_H
-#define DRIZZLED_TABLE_IDENTIFIER_H
+#ifndef DRIZZLED_IDENTIFIER_TABLE_H
+#define DRIZZLED_IDENTIFIER_TABLE_H
 
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
 #include "drizzled/message/table.pb.h"
 
-#include "drizzled/schema_identifier.h"
+#include "drizzled/identifier.h"
 
 #include <string.h>
 
@@ -305,4 +306,4 @@ typedef std::vector <TableIdentifier> TableIdentifiers;
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_TABLE_IDENTIFIER_H */
+#endif /* DRIZZLED_IDENTIFIER_TABLE_H */

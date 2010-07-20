@@ -144,7 +144,7 @@ bool change_refs_to_tmp_fields(Session *session,
                                uint32_t elements,
 			                         List<Item> &all_fields);
 bool change_group_ref(Session *session, Item_func *expr, order_st *group_list, bool *changed);
-bool check_interleaving_with_nj(JoinTable *last, JoinTable *next);
+bool check_interleaving_with_nj(JoinTable *next);
 
 int join_read_const_table(JoinTable *tab, optimizer::Position *pos);
 int join_read_system(JoinTable *tab);

@@ -127,11 +127,11 @@ void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
 
 bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
+  if (not identifier.getPath().compare("./test/t1"))
     return true;
-  if (strcmp(identifier.getPath().c_str(), "./test/too_many_enum_values") == 0)
+  if (not identifier.getPath().compare("./test/too_many_enum_values"))
     return true;
-  if (strcmp(identifier.getPath().c_str(), "./test/invalid_table_collation") == 0)
+  if (not identifier.getPath().compare("./test/invalid_table_collation"))
     return true;
 
   return false;
@@ -248,17 +248,17 @@ int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                                  const drizzled::TableIdentifier &identifier,
                                                  drizzled::message::Table &table_proto)
 {
-  if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
+  if (not identifier.getPath().compare("./test/t1"))
   {
     fill_table1(table_proto);
     return EEXIST;
   }
-  else if (strcmp(identifier.getPath().c_str(), "./test/too_many_enum_values")==0)
+  else if (not identifier.getPath().compare("./test/too_many_enum_values"))
   {
     fill_table_too_many_enum_values(table_proto);
     return EEXIST;
   }
-  else if (strcmp(identifier.getPath().c_str(), "./test/invalid_table_collation")==0)
+  else if (not identifier.getPath().compare("./test/invalid_table_collation"))
   {
     fill_table_invalid_table_collation(table_proto);
     return EEXIST;

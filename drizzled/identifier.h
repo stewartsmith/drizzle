@@ -18,26 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
+#ifndef DRIZZLED_IDENTIFIER_H
+#define DRIZZLED_IDENTIFIER_H
 
-#include "drizzled/generator/table.h"
+#include "drizzled/identifier/schema.h"
+#include "drizzled/identifier/table.h"
 
-using namespace std;
-
-namespace drizzled
-{
-namespace generator
-{
-
-Table::Table(Session &arg, const SchemaIdentifier &schema_identifier) :
-  session(arg)
-{
-  plugin::StorageEngine::getIdentifiers(session, schema_identifier, table_names);
-#if defined(DEBUG)
-  random_shuffle(table_names.begin(), table_names.end());
-#endif
-  table_iterator= table_names.begin();
-}
-
-} /* namespace generator */
-} /* namespace drizzled */
+#endif /* DRIZZLED_IDENTIFIER_H */
