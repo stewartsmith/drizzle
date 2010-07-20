@@ -24,7 +24,7 @@
 
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/security_context.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
 #include "drizzled/gettext.h"

@@ -830,7 +830,7 @@ void mark_select_range_as_dependent(Session *session,
                   0);
     }
     else
-      prev_subselect_item->used_tables_cache|= found_field->table->map;
+      prev_subselect_item->used_tables_cache|= found_field->getTable()->map;
     prev_subselect_item->const_item_cache= 0;
     mark_as_dependent(session, last_select, current_sel, resolved_item,
                       dependent);
