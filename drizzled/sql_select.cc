@@ -2850,8 +2850,6 @@ static void propagate_cond_constants(Session *session,
   @endverbatim
 
   @param join       Join being processed
-  @param last_tab   Last table in current partial join order (this function is
-                    not called for empty partial join orders)
   @param next_tab   Table we're going to extend the current partial join with
 
   @retval
@@ -2860,10 +2858,10 @@ static void propagate_cond_constants(Session *session,
   @retval
     true   Requested join order extension not allowed.
 */
-bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
+bool check_interleaving_with_nj(JoinTable *next_tab)
 {
   TableList *next_emb= next_tab->table->pos_in_table_list->getEmbedding();
-  Join *join= last_tab->join;
+  Join *join= next_tab->join;
 
   if ((join->cur_embedding_map & ~next_tab->embedding_map).any())
   {
@@ -3085,12 +3083,12 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
   /*
     TODO:
     Excluding all expensive functions is too restritive we should exclude only
-    materialized IN because it is created later than this phase, and cannot be
-    evaluated at this point.
-    The condition should be something as (need to fix member access):
-      !(cond->type() == Item::FUNC_ITEM &&
-        ((Item_func*)cond)->func_name() == "<in_optimizer>" &&
-        ((Item_in_optimizer*)cond)->is_expensive()))
+    materialized IN subquery predicates because they can't yet be evaluated
+    here (they need additional initialization that is done later on).
+
+    The proper way to exclude the subqueries would be to walk the cond tree and
+    check for materialized subqueries there.
+
   */
   {
     *cond_value= eval_const_cond(cond) ? Item::COND_TRUE : Item::COND_FALSE;
