@@ -497,7 +497,7 @@ static long drop_tables_via_filenames(Session *session,
 
   tot_list_next= &tot_list;
 
-  plugin::StorageEngine::getTableIdentifiers(*session, schema_identifier, dropped_tables);
+  plugin::StorageEngine::getIdentifiers(*session, schema_identifier, dropped_tables);
 
   for (TableIdentifiers::iterator it= dropped_tables.begin();
        it != dropped_tables.end();

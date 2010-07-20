@@ -584,7 +584,7 @@ public:
 static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
 static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
 
-void StorageEngine::getTableIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
+void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
