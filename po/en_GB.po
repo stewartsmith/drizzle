@@ -4485,12 +4485,8 @@ msgid "Got error %d when reading table '%s'"
 msgstr "Got error %d when reading table '%s'"
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
 msgstr ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
 
 #, c-format
 msgid "ENUM column %s has greater than %d possible values"
@@ -4576,6 +4572,27 @@ msgstr "Password to use for auth."
 
 msgid "Default database to use."
 msgstr "Default database to use."
+
+#, fuzzy
+msgid "Invalid value of port\n"
+msgstr "Invalid use of null pointer"
+
+#, fuzzy
+msgid "Invalid value for connect_timeout\n"
+msgstr "Invalid use of group function"
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+#, fuzzy
+msgid "Invalid value for retry_count\n"
+msgstr "Invalid use of group function"
+
+msgid "Invalid value for buffer_length\n"
+msgstr ""
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -4852,14 +4869,17 @@ msgstr "Log queries to a Gearman server"
 msgid "fail open() fn=%s er=%s\n"
 msgstr "fail open() fn=%s er=%s\n"
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
 msgstr "Enable logging to CSV file"
-
-msgid "File to log to"
-msgstr "File to log to"
-
-msgid "PCRE to match the query against"
-msgstr "PCRE to match the query against"
 
 msgid "Threshold for logging slow queries, in microseconds"
 msgstr "Threshold for logging slow queries, in microseconds"
@@ -4869,6 +4889,12 @@ msgstr "Threshold for logging big queries, for rows returned"
 
 msgid "Threshold for logging big queries, for rows examined"
 msgstr "Threshold for logging big queries, for rows examined"
+
+msgid "File to log to"
+msgstr "File to log to"
+
+msgid "PCRE to match the query against"
+msgstr "PCRE to match the query against"
 
 msgid "Log queries to a CSV file"
 msgstr "Log queries to a CSV file"
@@ -5121,6 +5147,10 @@ msgstr "No such table space"
 msgid "Tablespace not empty"
 msgstr "Tablespace not empty"
 
+#, fuzzy
+msgid "Invalid value for retry_count"
+msgstr "Invalid use of group function"
+
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr "Port number to use for connection or use 0 for MySQL protocol default."
@@ -5221,6 +5251,13 @@ msgstr "Unable to parse transaction. Got error: %s.\n"
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "BUFFER: %s\n"
+
+#~ msgid ""
+#~ "'%s' had no or invalid character set, and default character set is multi-"
+#~ "byte, so character column sizes may have changed"
+#~ msgstr ""
+#~ "'%s' had no or invalid character set, and default character set is multi-"
+#~ "byte, so character column sizes may have changed"
 
 #~ msgid "Synonym for -?"
 #~ msgstr "Synonym for -?"

@@ -22,7 +22,7 @@
 
 #include <gtest/gtest.h>
 
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
 
 using namespace drizzled;
 

@@ -2500,7 +2500,7 @@ find_field_in_natural_join(Session *session, TableList *table_ref,
     return NULL;
   {
     /* This is a base table. */
-    assert(nj_col->table_ref->table == nj_col->table_field->table);
+    assert(nj_col->table_ref->table == nj_col->table_field->getTable());
     found_field= nj_col->table_field;
     update_field_dependencies(session, found_field, nj_col->table_ref->table);
   }
@@ -2740,7 +2740,7 @@ find_field_in_table_ref(Session *session, TableList *table_list,
         field_to_set= fld;
       if (field_to_set)
       {
-        Table *table= field_to_set->table;
+        Table *table= field_to_set->getTable();
         if (session->mark_used_columns == MARK_COLUMNS_READ)
           table->setReadSet(field_to_set->field_index);
         else
@@ -4171,7 +4171,7 @@ insert_fields(Session *session, Name_resolution_context *context, const char *db
       if ((field= field_iterator.field()))
       {
         /* Mark fields as used to allow storage engine to optimze access */
-        field->table->setReadSet(field->field_index);
+        field->getTable()->setReadSet(field->field_index);
         if (table)
         {
           table->covering_keys&= field->part_of_key;
@@ -4361,7 +4361,7 @@ fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignor
       thus we safely can take table from the first field.
     */
     field= static_cast<Item_field *>(f++);
-    table= field->field->table;
+    table= field->field->getTable();
     table->auto_increment_field_not_null= false;
     f.rewind();
   }
@@ -4371,7 +4371,7 @@ fill_record(Session *session, List<Item> &fields, List<Item> &values, bool ignor
     value= v++;
 
     Field *rfield= field->field;
-    table= rfield->table;
+    table= rfield->getTable();
 
     if (rfield == table->next_number_field)
       table->auto_increment_field_not_null= true;
@@ -4428,13 +4428,13 @@ bool fill_record(Session *session, Field **ptr, List<Item> &values, bool)
       On INSERT or UPDATE fields are checked to be from the same table,
       thus we safely can take table from the first field.
     */
-    table= (*ptr)->table;
+    table= (*ptr)->getTable();
     table->auto_increment_field_not_null= false;
   }
   while ((field = *ptr++) && ! session->is_error())
   {
     value=v++;
-    table= field->table;
+    table= field->getTable();
     if (field == table->next_number_field)
       table->auto_increment_field_not_null= true;
     if (value->save_in_field(field, 0) < 0)
