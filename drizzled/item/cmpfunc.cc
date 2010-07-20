@@ -5101,7 +5101,7 @@ int64_t Item_equal::val_int()
   while ((item_field= it++))
   {
     /* Skip fields of non-const tables. They haven't been read yet */
-    if (item_field->field->table->const_table)
+    if (item_field->field->getTable()->const_table)
     {
       if ((null_value= item_field->null_value) || eval_item->cmp(item_field))
         return 0;

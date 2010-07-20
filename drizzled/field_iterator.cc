@@ -67,7 +67,7 @@ void Field_iterator_natural_join::next()
   cur_column_ref= column_ref_it++;
   assert(!cur_column_ref || ! cur_column_ref->table_field ||
               cur_column_ref->table_ref->table ==
-              cur_column_ref->table_field->table);
+              cur_column_ref->table_field->getTable());
 }
 
 
@@ -215,7 +215,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     assert(nj_col);
   }
   assert(!nj_col->table_field ||
-              nj_col->table_ref->table == nj_col->table_field->table);
+              nj_col->table_ref->table == nj_col->table_field->getTable());
 
   /*
     If the natural join column was just created add it to the list of
@@ -280,7 +280,7 @@ Field_iterator_table_ref::get_natural_column_ref()
   nj_col= natural_join_it.column_ref();
   assert(nj_col &&
               (!nj_col->table_field ||
-               nj_col->table_ref->table == nj_col->table_field->table));
+               nj_col->table_ref->table == nj_col->table_field->getTable()));
   return nj_col;
 }
 
