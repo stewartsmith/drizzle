@@ -739,7 +739,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
                                    org_field->charset());
   else
     new_field= org_field->new_field(session->mem_root, table,
-                                    table == org_field->table);
+                                    table == org_field->getTable());
   if (new_field)
   {
     new_field->init(table);
@@ -1190,7 +1190,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       ptrdiff_t diff;
       Field *orig_field= default_field[i];
       /* Get the value from default_values */
-      diff= (ptrdiff_t) (orig_field->table->getDefaultValues() - orig_field->table->record[0]);
+      diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->record[0]);
       orig_field->move_field_offset(diff);      // Points now at default_values
       if (orig_field->is_real_null())
         field->set_null();
