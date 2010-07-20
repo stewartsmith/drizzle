@@ -4698,13 +4698,8 @@ msgid "Got error %d when reading table '%s'"
 msgstr "error obtenido %d cuando se leia la tabla '%s'"
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
 msgstr ""
-"'%s' no tenía un conjunto de caracteres no válidos, y el conjunto de "
-"caracteres por defecto es multi-byte, pero los tamaños de las columnas de "
-"caracteres pueden haber cambiado"
 
 #, c-format
 msgid "ENUM column %s has greater than %d possible values"
@@ -4790,6 +4785,27 @@ msgstr ""
 
 msgid "Default database to use."
 msgstr "Base de datos predeterminada a usar"
+
+#, fuzzy
+msgid "Invalid value of port\n"
+msgstr "Uso invalido de punto nulo"
+
+#, fuzzy
+msgid "Invalid value for connect_timeout\n"
+msgstr "Uso inválido de la función de agrupamiento"
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+#, fuzzy
+msgid "Invalid value for retry_count\n"
+msgstr "Uso inválido de la función de agrupamiento"
+
+msgid "Invalid value for buffer_length\n"
+msgstr ""
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -5073,14 +5089,17 @@ msgstr "Registro de las consultas a un servidor Gearman"
 msgid "fail open() fn=%s er=%s\n"
 msgstr "fallo open() fn=%s er=%s\n"
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
 msgstr "Habilitar el registro de un archivo CSV"
-
-msgid "File to log to"
-msgstr "archivo de registro para"
-
-msgid "PCRE to match the query against"
-msgstr "PCRE para que coincida con la consulta contra la"
 
 msgid "Threshold for logging slow queries, in microseconds"
 msgstr "Umbral para el registro de consultas lentas, en microsegundos"
@@ -5091,6 +5110,12 @@ msgstr "Umbral para el registro consultas grandes, para las filas devueltas"
 msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 "Umbral para el registro consultas grandes, para los registros examinados"
+
+msgid "File to log to"
+msgstr "archivo de registro para"
+
+msgid "PCRE to match the query against"
+msgstr "PCRE para que coincida con la consulta contra la"
 
 msgid "Log queries to a CSV file"
 msgstr "Registro de las consultas a un archivo CSV"
@@ -5349,6 +5374,10 @@ msgstr "Espacio de tabla no existe"
 msgid "Tablespace not empty"
 msgstr "Espacio de tabla no vacio"
 
+#, fuzzy
+msgid "Invalid value for retry_count"
+msgstr "Uso inválido de la función de agrupamiento"
+
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
@@ -5445,6 +5474,14 @@ msgstr ""
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "MEM:% s\n"
+
+#~ msgid ""
+#~ "'%s' had no or invalid character set, and default character set is multi-"
+#~ "byte, so character column sizes may have changed"
+#~ msgstr ""
+#~ "'%s' no tenía un conjunto de caracteres no válidos, y el conjunto de "
+#~ "caracteres por defecto es multi-byte, pero los tamaños de las columnas de "
+#~ "caracteres pueden haber cambiado"
 
 #~ msgid "Synonym for -?"
 #~ msgstr "Sinónimo de -?"
