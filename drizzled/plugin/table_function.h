@@ -26,7 +26,7 @@
 #include <drizzled/definitions.h>
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/charset.h"
 #include "drizzled/field.h"

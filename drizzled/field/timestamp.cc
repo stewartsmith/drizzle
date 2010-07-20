@@ -142,7 +142,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
       function should be called only for first of them (i.e. the one
       having auto-set property).
     */
-    assert(table->timestamp_field == this);
+    assert(getTable()->timestamp_field == this);
     /* Fall-through */
   case TIMESTAMP_DNUN_FIELD:
     return TIMESTAMP_AUTO_SET_ON_BOTH;
@@ -234,7 +234,7 @@ int64_t Field_timestamp::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
     temp= uint4korr(ptr);
   else
 #endif
@@ -259,7 +259,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *)
   to= (char *) val_buffer->ptr();
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
     temp= uint4korr(ptr);
   else
 #endif
@@ -283,7 +283,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint32_t)
   uint32_t temp;
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
     temp= uint4korr(ptr);
   else
 #endif
@@ -316,7 +316,7 @@ int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int32_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
   {
     a=sint4korr(a_ptr);
     b=sint4korr(b_ptr);
@@ -334,7 +334,7 @@ int Field_timestamp::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_timestamp::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!table || !table->s->db_low_byte_first)
+  if (!getTable() || !getTable()->s->db_low_byte_first)
   {
     to[0] = ptr[0];
     to[1] = ptr[1];
@@ -358,7 +358,7 @@ void Field_timestamp::sql_type(String &res) const
 
 void Field_timestamp::set_time()
 {
-  Session *session= table ? table->in_use : current_session;
+  Session *session= getTable() ? getTable()->in_use : current_session;
   long tmp= (long) session->query_start();
   set_notnull();
   store_timestamp(tmp);
@@ -366,7 +366,7 @@ void Field_timestamp::set_time()
 
 void Field_timestamp::set_default()
 {
-  if (table->timestamp_field == this &&
+  if (getTable()->timestamp_field == this &&
       unireg_check != TIMESTAMP_UN_FIELD)
     set_time();
   else
@@ -378,7 +378,7 @@ long Field_timestamp::get_timestamp(bool *null_value)
   if ((*null_value= is_null()))
     return 0;
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
     return sint4korr(ptr);
 #endif
   long tmp;
@@ -389,7 +389,7 @@ long Field_timestamp::get_timestamp(bool *null_value)
 void Field_timestamp::store_timestamp(time_t timestamp)
 {
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
   {
     int4store(ptr,timestamp);
   }

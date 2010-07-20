@@ -29,8 +29,8 @@
   This will replace Table_ident.
   */
 
-#ifndef DRIZZLED_SCHEMA_IDENTIFIER_H
-#define DRIZZLED_SCHEMA_IDENTIFIER_H
+#ifndef DRIZZLED_IDENTIFIER_SCHEMA_H
+#define DRIZZLED_IDENTIFIER_SCHEMA_H
 
 #include <drizzled/enum.h>
 #include "drizzled/definitions.h"
@@ -122,4 +122,4 @@ typedef std::vector <SchemaIdentifier> SchemaIdentifiers;
 
 } /* namespace drizzled */
 
-#endif /* DRIZZLED_SCHEMA_IDENTIFIER_H */
+#endif /* DRIZZLED_IDENTIFIER_SCHEMA_H */
