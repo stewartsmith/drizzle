@@ -4713,13 +4713,8 @@ msgid "Got error %d when reading table '%s'"
 msgstr "Ricevuto errore %d durante lettura della tabella '%s'"
 
 #, c-format
-msgid ""
-"'%s' had no or invalid character set, and default character set is multi-"
-"byte, so character column sizes may have changed"
+msgid "Table %s has invalid/unknown collation: %d,%s"
 msgstr ""
-"'%s' non ha un definito un insieme di caratteri oppure l'insiee di caratteri "
-"non è valido, inoltre l'insieme di caratteri predefinito è multi-byte, "
-"quindi le dimensioni delle colonne di delle colonne possono essere variate"
 
 #, c-format
 msgid "ENUM column %s has greater than %d possible values"
@@ -4806,6 +4801,27 @@ msgid "Password to use for auth."
 msgstr ""
 
 msgid "Default database to use."
+msgstr ""
+
+#, fuzzy
+msgid "Invalid value of port\n"
+msgstr "Uso non valido di puntatori NULL"
+
+#, fuzzy
+msgid "Invalid value for connect_timeout\n"
+msgstr "Utilizzo invalido di funzione di ragruppamento"
+
+msgid "Invalid value for read_timeout\n"
+msgstr ""
+
+msgid "Invalid value for write_timeout\n"
+msgstr ""
+
+#, fuzzy
+msgid "Invalid value for retry_count\n"
+msgstr "Utilizzo invalido di funzione di ragruppamento"
+
+msgid "Invalid value for buffer_length\n"
 msgstr ""
 
 msgid ""
@@ -5090,14 +5106,17 @@ msgstr "Code di accesso ad un server Gearman"
 msgid "fail open() fn=%s er=%s\n"
 msgstr "fallito open() fn=%s er=%s\n"
 
+msgid "Invalid value for threshold-slow"
+msgstr ""
+
+msgid "Invalid value for threshold-big-resultset"
+msgstr ""
+
+msgid "Invalid value for threshold-big-examined"
+msgstr ""
+
 msgid "Enable logging to CSV file"
 msgstr "Abilita l'accesso ad un file CSV"
-
-msgid "File to log to"
-msgstr "File in cui scrivere il log"
-
-msgid "PCRE to match the query against"
-msgstr ""
 
 msgid "Threshold for logging slow queries, in microseconds"
 msgstr "Soglia per la memorizzazione delle query lente, in microsecondi"
@@ -5107,6 +5126,12 @@ msgstr "Soglia per la memorizzazione delle query grandi, per righe restituite"
 
 msgid "Threshold for logging big queries, for rows examined"
 msgstr "Soglia per la memorizzazione delle query grandi, per righe esaminate"
+
+msgid "File to log to"
+msgstr "File in cui scrivere il log"
+
+msgid "PCRE to match the query against"
+msgstr ""
 
 msgid "Log queries to a CSV file"
 msgstr "Code di accesso per un file CVS"
@@ -5370,6 +5395,10 @@ msgstr "Non esiste un tablespace simile"
 msgid "Tablespace not empty"
 msgstr "Tablespace non vuoto"
 
+#, fuzzy
+msgid "Invalid value for retry_count"
+msgstr "Utilizzo invalido di funzione di ragruppamento"
+
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
@@ -5466,6 +5495,15 @@ msgstr "Impossibile analizzare la transazione. Errore: %s.\n"
 #, c-format
 msgid "BUFFER: %s\n"
 msgstr "BUFFER: %s\n"
+
+#~ msgid ""
+#~ "'%s' had no or invalid character set, and default character set is multi-"
+#~ "byte, so character column sizes may have changed"
+#~ msgstr ""
+#~ "'%s' non ha un definito un insieme di caratteri oppure l'insiee di "
+#~ "caratteri non è valido, inoltre l'insieme di caratteri predefinito è "
+#~ "multi-byte, quindi le dimensioni delle colonne di delle colonne possono "
+#~ "essere variate"
 
 #~ msgid "Synonym for -?"
 #~ msgstr "Sinonimo per -?"

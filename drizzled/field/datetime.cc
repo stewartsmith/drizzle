@@ -61,7 +61,7 @@ int Field_datetime::store(const char *from,
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
   {
     int8store(ptr, int_value);
   }
@@ -116,7 +116,7 @@ int Field_datetime::store(int64_t from, bool)
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
   {
     int8store(ptr, int_value);
   }
@@ -152,7 +152,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime, enum enum_drizzle_timestamp_
   temporal.to_int64_t(&int_value);
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
   {
     int8store(ptr, int_value);
   }
@@ -174,7 +174,7 @@ int64_t Field_datetime::val_int(void)
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
     j=sint8korr(ptr);
   else
 #endif
@@ -193,7 +193,7 @@ String *Field_datetime::val_str(String *val_buffer,
   ASSERT_COLUMN_MARKED_FOR_READ;
 
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
     tmp=sint8korr(ptr);
   else
 #endif
@@ -249,7 +249,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 {
   int64_t a,b;
 #ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
+  if (getTable() && getTable()->s->db_low_byte_first)
   {
     a=sint8korr(a_ptr);
     b=sint8korr(b_ptr);
@@ -267,7 +267,7 @@ int Field_datetime::cmp(const unsigned char *a_ptr, const unsigned char *b_ptr)
 void Field_datetime::sort_string(unsigned char *to,uint32_t )
 {
 #ifdef WORDS_BIGENDIAN
-  if (!table || !table->s->db_low_byte_first)
+  if (!getTable() || !getTable()->s->db_low_byte_first)
   {
     to[0] = ptr[0];
     to[1] = ptr[1];

@@ -961,7 +961,7 @@ static void register_used_fields(SORTPARAM *param)
     Field *field;
     if ((field= sort_field->field))
     {
-      if (field->table == table)
+      if (field->getTable() == table)
         table->setReadSet(field->field_index);
     }
     else

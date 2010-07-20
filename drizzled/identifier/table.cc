@@ -22,7 +22,7 @@
 
 #include <assert.h>
 
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 #include "drizzled/session.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/data_home.h"
