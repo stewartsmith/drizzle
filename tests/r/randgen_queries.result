@@ -49,15 +49,15 @@ CASE WHEN table_type = 'STANDARD' THEN 'table'
 WHEN table_type = 'FUNCTION' then 'function' 
 ELSE 'misc' END, 
 column_name,
-CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
-WHEN IS_INDEXED = 'TRUE' THEN 'indexed' 
+CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary' 
+WHEN IS_INDEXED = 'YES' THEN 'indexed' 
 ELSE 'indexed' END 
 FROM data_dictionary.tables INNER JOIN
 data_dictionary.columns USING(table_schema, table_name) ORDER BY table_schema, table_name limit 20;
 table_schema	table_name	CASE WHEN table_type = 'STANDARD' THEN 'table' 
 WHEN table_type = 'FUNCTION' then 'function' 
-ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
-WHEN IS_INDEXED = 'TRUE' THEN 'indexed' 
+ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary' 
+WHEN IS_INDEXED = 'YES' THEN 'indexed' 
 ELSE 'indexed' END 
 
 DATA_DICTIONARY	CHARACTER_SETS	function	CHARACTER_SET_NAME	indexed
@@ -93,16 +93,16 @@ CASE WHEN table_type = 'STANDARD' THEN 'table'
             WHEN table_type = 'FUNCTION' then 'function'
        ELSE 'misc' END,
 column_name,
-CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary'
-             WHEN IS_INDEXED = 'TRUE' THEN 'indexed'
+CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary'
+             WHEN IS_INDEXED = 'YES' THEN 'indexed'
        ELSE 'indexed' END
 FROM data_dictionary.tables INNER JOIN
 data_dictionary.columns USING(table_schema, table_name) WHERE table_schema NOT IN ('DATA_DICTIONARY','INFORMATION_SCHEMA')
 ORDER BY table_schema, table_name limit 20;
 table_schema	table_name	CASE WHEN table_type = 'STANDARD' THEN 'table'
             WHEN table_type = 'FUNCTION' then 'function'
-       ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary'
-             WHEN IS_INDEXED = 'TRUE' THEN 'indexed'
+       ELSE 'misc' END	column_name	CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary'
+             WHEN IS_INDEXED = 'YES' THEN 'indexed'
        ELSE 'indexed' END
 
 randgen_query_test	t1	table	a	indexed
@@ -123,7 +123,7 @@ test	t1	table	col_int_key	indexed
 test	t1	table	col_char_key	indexed
 test	t1	table	col_enum_not_null	indexed
 test	t1	table	col_text_not_null_key	indexed
-test	t1	table	pk	indexed
+test	t1	table	pk	primary
 test	t1	table	col_bigint_key	indexed
 DROP SCHEMA randgen_query_test;
 USE test;
