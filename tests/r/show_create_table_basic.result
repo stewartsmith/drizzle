@@ -5,4 +5,5 @@ t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=InnoDB
+COLLATE = utf8_general_ci
 DROP TABLE t1;
