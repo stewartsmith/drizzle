@@ -95,8 +95,7 @@ t2	CREATE TEMPORARY TABLE `t2` (
   `z` varbinary(20) NOT NULL DEFAULT 0x20,
   `a1` varbinary(30) NOT NULL DEFAULT 0x20,
   `b1` blob
-) ENGINE=MyISAM
-COLLATE = utf8_bin
+) ENGINE=MyISAM COLLATE = utf8_bin
 INSERT into t2 (b) values ('1');
 SHOW WARNINGS;
 Level	Code	Message
