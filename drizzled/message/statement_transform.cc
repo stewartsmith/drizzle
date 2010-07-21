@@ -994,7 +994,7 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_collation())
   {
-    destination.append("COLLATE = ", 10);
+    destination.append(" COLLATE = ", 11);
     destination.append(options.collation());
   }
 
