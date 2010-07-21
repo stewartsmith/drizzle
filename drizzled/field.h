@@ -44,8 +44,8 @@ namespace drizzled
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
 #ifdef DEBUG
-#define ASSERT_COLUMN_MARKED_FOR_READ assert(!table || (table->read_set == NULL || isReadSet()))
-#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!table || (table->write_set == NULL || isWriteSet()))
+#define ASSERT_COLUMN_MARKED_FOR_READ assert(!getTable() || (getTable()->read_set == NULL || isReadSet()))
+#define ASSERT_COLUMN_MARKED_FOR_WRITE assert(!getTable() || (getTable()->write_set == NULL || isWriteSet()))
 #else
 #define ASSERT_COLUMN_MARKED_FOR_READ
 #define ASSERT_COLUMN_MARKED_FOR_WRITE
