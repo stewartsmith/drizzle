@@ -10,5 +10,5 @@ about:text	CREATE TEMPORARY TABLE `about:text` (
   `_id` int NOT NULL AUTO_INCREMENT,
   `about:text` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`_id`)
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table `about:text`;
