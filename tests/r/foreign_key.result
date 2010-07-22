@@ -27,7 +27,7 @@ product_order	CREATE TABLE `product_order` (
   KEY `customer_id` (`customer_id`),
   FOREIGN KEY (`product_category`, `product_id`) REFERENCES `product` (`category`,`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
   FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table product_order, customer, product;
 drop table if exists t_34455;
 create table t_34455 (
