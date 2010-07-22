@@ -22,7 +22,7 @@ t1	CREATE TABLE `t1` (
   `database()` varbinary(136) DEFAULT NULL,
   `user()` varbinary(308) DEFAULT NULL,
   `version` varchar(60) DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 select TRUE,FALSE,NULL;
 TRUE	FALSE	NULL
