@@ -118,7 +118,8 @@ bool QueryCacheService::addRecord(Session *in_session, List<Item> &list)
       string_value= item->val_str(string_value);
       if (string_value)
       {
-        record->add_record_value(string_value->c_ptr(), string_value->length());
+        string s= String_to_std_string(*string_value); 
+        record->add_record_value(s.c_str(), s.length());
         string_value->free();
       }
     }
