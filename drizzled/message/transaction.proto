@@ -320,6 +320,7 @@ message TransactionContext
 message InsertRecord
 {
   repeated bytes insert_value = 1;
+  repeated bool is_null = 2;
 }
 
 /*
@@ -366,6 +367,7 @@ message UpdateRecord
   repeated bytes key_value = 1; /* The value of keys of updated records (unique or primary key) */
   repeated bytes after_value = 2; /* The value of the field after the update */
   repeated bytes before_value = 3; /* The value of the field before the update (optional) */
+  repeated bool is_null = 4;
 }
 
 /*
@@ -411,6 +413,7 @@ message UpdateData
 message DeleteRecord
 {
   repeated bytes key_value = 1;
+  repeated bool is_null = 2;
 }
 
 /*
