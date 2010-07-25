@@ -1150,8 +1150,8 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
 
   while ((current_field= *table_fields++) != NULL) 
   {
-    record->add_is_null(current_field->is_null());
     string_value= current_field->val_str(string_value);
+    record->add_is_null(current_field->is_null());
     record->add_insert_value(string_value->c_ptr(), string_value->length());
     string_value->free();
   }
@@ -1467,6 +1467,7 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
 
   while ((current_field= *table_fields++) != NULL) 
   {
+
     /*
      * Add the WHERE clause values now...for now, this means the
      * primary key field value.  Replication only supports tables
@@ -1475,11 +1476,10 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
     if (in_table->getShare()->fieldInPrimaryKey(current_field))
     {
       string_value= current_field->val_str(string_value);      
-      record->add_is_null(current_field->is_null());
       record->add_key_value(string_value->c_ptr(), string_value->length());
       /**
-        * @TODO Store optional old record value in the before data member
-        */
+       * @TODO Store optional old record value in the before data member
+       */
       string_value->free();
     }
   }
