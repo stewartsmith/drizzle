@@ -1150,16 +1150,10 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
 
   while ((current_field= *table_fields++) != NULL) 
   {
-    if (current_field->is_null())
-    {
-      record->add_is_null(true);
-    }
-    else
-    {
-      string_value= current_field->val_str(string_value);
-      record->add_insert_value(string_value->c_ptr(), string_value->length());
-      string_value->free();
-    }
+    record->add_is_null(current_field->is_null());
+    string_value= current_field->val_str(string_value);
+    record->add_insert_value(string_value->c_ptr(), string_value->length());
+    string_value->free();
   }
   return false;
 }
@@ -1337,14 +1331,8 @@ void TransactionServices::updateRecord(Session *in_session,
        */
       current_field->setReadSet(is_read_set);
 
-      if (current_field->is_null())
-      {
-        record->add_is_null(true);
-      }
-      else
-      {
-        record->add_after_value(string_value->c_ptr(), string_value->length());
-      }
+      record->add_is_null(current_field->is_null());
+      record->add_after_value(string_value->c_ptr(), string_value->length());
       string_value->free();
     }
 
@@ -1486,19 +1474,13 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
      */
     if (in_table->getShare()->fieldInPrimaryKey(current_field))
     {
-      if (current_field->is_null())
-      {
-        record->add_is_null(true);
-      }
-      else
-      {   
-        string_value= current_field->val_str(string_value);
-        record->add_key_value(string_value->c_ptr(), string_value->length());
-        /**
-         * @TODO Store optional old record value in the before data member
-         */
-        string_value->free();
-      }
+      string_value= current_field->val_str(string_value);      
+      record->add_is_null(current_field->is_null());
+      record->add_key_value(string_value->c_ptr(), string_value->length());
+      /**
+        * @TODO Store optional old record value in the before data member
+        */
+      string_value->free();
     }
   }
 }

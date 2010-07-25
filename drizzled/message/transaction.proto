@@ -413,7 +413,6 @@ message UpdateData
 message DeleteRecord
 {
   repeated bytes key_value = 1;
-  repeated bool is_null = 2;
 }
 
 /*
