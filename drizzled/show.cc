@@ -471,9 +471,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
   key_info= table->key_info;
   memset(&create_info, 0, sizeof(create_info));
-  /* Allow update_create_info to update row type */
   create_info.row_type= table->getShare()->row_type;
-  cursor->update_create_info(&create_info);
   primary_key= table->getShare()->getPrimaryKey();
 
   for (uint32_t i=0 ; i < table->getShare()->sizeKeys() ; i++,key_info++)

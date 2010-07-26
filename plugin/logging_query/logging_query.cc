@@ -29,9 +29,11 @@
 #include <fcntl.h>
 #include <string>
 #include <boost/format.hpp>
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include <cstdio>
 
+namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
 
@@ -302,10 +304,54 @@ static Logging_query *handler= NULL;
 
 static int logging_query_plugin_init(drizzled::module::Context &context)
 {
+
+  const module::option_map &vm= context.getOptions();
+  if (vm.count("threshold-slow"))
+  {
+    if (sysvar_logging_query_threshold_slow > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-slow"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("threshold-big-resultset"))
+  {
+    if (sysvar_logging_query_threshold_big_resultset > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-big-resultset"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("threshold-big-examined"))
+  {
+    if (sysvar_logging_query_threshold_big_examined > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for threshold-big-examined"));
+      exit(-1);
+    }
+  }
   handler= new Logging_query();
   context.add(handler);
 
   return 0;
+}
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("enable",
+          po::value<bool>(&sysvar_logging_query_enable)->default_value(false)->zero_tokens(),
+          N_("Enable logging to CSV file"));
+  context("threshold-slow",
+          po::value<unsigned long>(&sysvar_logging_query_threshold_slow)->default_value(0),
+          N_("Threshold for logging slow queries, in microseconds"));
+  context("threshold-big-resultset",
+          po::value<unsigned long>(&sysvar_logging_query_threshold_big_resultset)->default_value(0),
+          N_("Threshold for logging big queries, for rows returned"));
+  context("threshold-big-examined",
+          po::value<unsigned long>(&sysvar_logging_query_threshold_big_examined)->default_value(0),
+          N_("Threshold for logging big queries, for rows examined"));
 }
 
 static DRIZZLE_SYSVAR_BOOL(
@@ -384,13 +430,13 @@ static drizzle_sys_var* logging_query_system_variables[]= {
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "logging_query",
+  "logging-query",
   "0.2",
   "Mark Atwood <mark@fallenpegasus.com>",
   N_("Log queries to a CSV file"),
   PLUGIN_LICENSE_GPL,
   logging_query_plugin_init,
   logging_query_system_variables,
-  NULL
+  init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

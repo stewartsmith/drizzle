@@ -32,7 +32,7 @@ namespace generator
 Schema::Schema(Session &arg) :
   session(arg)
   {
-    plugin::StorageEngine::getSchemaIdentifiers(session, schema_names);
+    plugin::StorageEngine::getIdentifiers(session, schema_names);
 #if defined(DEBUG)
     random_shuffle(schema_names.begin(), schema_names.end());
 #endif
