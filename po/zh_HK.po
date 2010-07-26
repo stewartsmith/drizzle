@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-07-25 18:49-0700\n"
+"POT-Creation-Date: 2010-07-25 20:16-0700\n"
 "PO-Revision-Date: 2009-10-26 02:03+0000\n"
 "Last-Translator: CL <klrkdekira@gmail.com>\n"
 "Language-Team: Chinese (Hong Kong) <zh_HK@li.org>\n"
@@ -4684,6 +4684,18 @@ msgstr ""
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
 
+#: ../drizzled/identifier/schema.cc:56 ../drizzled/identifier/table.cc:232
+msgid ""
+"Schema name cannot be encoded and fit within filesystem name length "
+"restrictions."
+msgstr ""
+
+#: ../drizzled/identifier/table.cc:222
+msgid ""
+"Table name cannot be encoded and fit within filesystem name length "
+"restrictions."
+msgstr ""
+
 #. *
 #. * @todo
 #. * Since clients still use this code, we use fprintf here.
@@ -4736,12 +4748,16 @@ msgid "Memory allocation failure trying to allocate %<PRIu64> bytes.\n"
 msgstr ""
 
 #: ../drizzled/message/transaction_reader.cc:199
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:144
+#: ../plugin/transaction_log/print_transaction_message.cc:142
 #: ../plugin/transaction_log/transaction_log_reader.cc:148
 #, c-format
 msgid "Could not read transaction message.\n"
 msgstr ""
 
 #: ../drizzled/message/transaction_reader.cc:200
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:145
+#: ../plugin/transaction_log/print_transaction_message.cc:143
 #: ../plugin/transaction_log/transaction_log_reader.cc:149
 #, c-format
 msgid "GPB ERROR: %s.\n"
@@ -4770,6 +4786,13 @@ msgstr ""
 #: ../drizzled/message/transaction_writer.cc:365
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
+msgstr ""
+
+#: ../drizzled/module/library.cc:149
+#, c-format
+msgid ""
+"Plugin module %s was compiled for version %<PRIu64>, which does not match "
+"the current running version of Drizzle: %<PRIu64>."
 msgstr ""
 
 #: ../drizzled/module/loader.cc:275
@@ -4922,6 +4945,18 @@ msgstr "(停用)\n"
 msgid "errmsg plugin '%s' errmsg() failed"
 msgstr ""
 
+#: ../drizzled/plugin/event_observer.cc:132
+#, c-format
+msgid ""
+"EventObserverList::addEventObserver() Duplicate event position %d for event "
+"'%s' from EventObserver plugin '%s'"
+msgstr ""
+
+#: ../drizzled/plugin/event_observer.cc:399
+#, c-format
+msgid "EventIterate event handler '%s' failed for event '%s'"
+msgstr ""
+
 #: ../drizzled/plugin/function.cc:45
 #, c-format
 msgid "A function named %s already exists!\n"
@@ -5061,6 +5096,11 @@ msgstr ""
 msgid "Attempted to configure %s as the scheduler, which did not exist.\n"
 msgstr ""
 
+#: ../drizzled/plugin/schema_engine.cc:131
+#, c-format
+msgid "Error while loading database options: '%s':"
+msgstr ""
+
 #: ../drizzled/plugin/xa_resource_manager.cc:116
 #, c-format
 msgid "Found %d prepared transaction(s) in resource manager."
@@ -5116,6 +5156,96 @@ msgstr ""
 #, c-format
 msgid "Could not add Variable: %s\n"
 msgstr ""
+
+#: ../drizzled/signal_handler.cc:50
+#, c-format
+msgid "Got signal %d from thread %<PRIu64>"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:92
+#, c-format
+msgid "Fatal signal %d while backtracing\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:101
+#, c-format
+msgid "Fatal: time() call failed\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:107
+#, c-format
+msgid ""
+"%02d%02d%02d %2d:%02d:%02d - drizzled got signal %d;\n"
+"This could be because you hit a bug. It is also possible that this binary\n"
+" or one of the libraries it was linked against is corrupt, improperly "
+"built,\n"
+" or misconfigured. This error can also be caused by malfunctioning "
+"hardware.\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:115
+#, c-format
+msgid ""
+"We will try our best to scrape up some info that will hopefully help "
+"diagnose\n"
+"the problem, but since we have already crashed, something is definitely "
+"wrong\n"
+"and this may fail.\n"
+"\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:124
+#, c-format
+msgid ""
+"It is possible that drizzled could use up to \n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*thread_count\n"
+"bytes of memory\n"
+"Hope that's ok; if not, decrease some variables in the equation.\n"
+"\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:137
+#, c-format
+msgid ""
+"Attempting backtrace. You can use the following information to find out\n"
+"where drizzled died. If you see no messages after this, something went\n"
+"terribly wrong...\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:165
+#, c-format
+msgid ""
+"Trying to get some variables.\n"
+"Some pointers may be invalid and cause the dump to abort...\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:176
+#, c-format
+msgid ""
+"\n"
+"This crash occurred while the server was calling initgroups(). This is\n"
+"often due to the use of a drizzled that is statically linked against glibc\n"
+"and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n"
+"upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
+"later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
+"drizzled that is not statically linked.\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:190
+#, c-format
+msgid ""
+"\n"
+"You are running a statically-linked LinuxThreads binary on an NPTL system.\n"
+"This can result in crashes on some distributions due to LT/NPTL conflicts.\n"
+"You should either build a dynamically-linked binary, or force LinuxThreads\n"
+"to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n"
+"the documentation for your distribution on how to do that.\n"
+msgstr ""
+
+#: ../drizzled/signal_handler.cc:203
+#, fuzzy, c-format
+msgid "Writing a core file\n"
+msgstr "寫入歷史-檔案 %s中。\n"
 
 #: ../drizzled/sql_base.cc:1517
 #, c-format
@@ -5223,12 +5353,64 @@ msgstr ""
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr ""
 
+#: ../plugin/auth_file/auth_file.cc:214
+#, c-format
+msgid "Could not load auth file: %s\n"
+msgstr ""
+
+#: ../plugin/auth_file/auth_file.cc:227
+msgid "File to load for usernames and passwords"
+msgstr ""
+
 #: ../plugin/auth_http/auth_http.cc:143 ../plugin/auth_http/auth_http.cc:150
 msgid "Enable HTTP Auth check"
 msgstr ""
 
 #: ../plugin/auth_http/auth_http.cc:160
 msgid "URL for HTTP Auth check"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:285
+#, c-format
+msgid "Reconnect failed: %s\n"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:304
+#, c-format
+msgid "ldap_search_ext_s failed: %s\n"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:410
+#, c-format
+msgid "Could not load auth ldap: %s\n"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:423
+msgid "URI of the LDAP server to contact"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:431
+msgid "DN to use when binding to the LDAP server"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:439
+msgid "Password to use when binding the DN"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:447
+msgid "DN to use when searching"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:455
+msgid "Attribute in LDAP with plain text password"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:463
+msgid "Attribute in LDAP with MySQL hashed password"
+msgstr ""
+
+#: ../plugin/auth_ldap/auth_ldap.cc:471
+msgid "How often to empty the users cache, 0 to disable"
 msgstr ""
 
 #: ../plugin/console/console.cc:346 ../plugin/console/console.cc:361
@@ -5583,6 +5765,37 @@ msgstr ""
 msgid "Statement closed indirectly because of a preceding %s() call"
 msgstr ""
 
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:807
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:937
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:961
+#, c-format
+msgid "Cannot create table %s. InnoDB Error %d (%s)\n"
+msgstr ""
+
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:826
+#, c-format
+msgid "Cannot create field %s on table %s. InnoDB Error %d (%s)\n"
+msgstr ""
+
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:916
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:1023
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:1188
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:1747
+#, c-format
+msgid "Cannot Lock Embedded InnoDB Data Dictionary. InnoDB Error %d (%s)\n"
+msgstr ""
+
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:1053
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:1069
+#, c-format
+msgid "Cannot DROP table %s. InnoDB Error %d (%s)\n"
+msgstr ""
+
+#: ../plugin/embedded_innodb/embedded_innodb_engine.cc:2679
+#, c-format
+msgid "Error starting Embedded InnoDB %d (%s)\n"
+msgstr ""
+
 #: ../plugin/errmsg_notify/errmsg_notify.cc:80
 #, c-format
 msgid "Failed to send error message to libnotify\n"
@@ -5608,6 +5821,55 @@ msgstr ""
 
 #: ../plugin/filtered_replicator/filtered_replicator.cc:634
 msgid "Regular expression to apply to tables to filter"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:294
+msgid "Invalid value of before-write-position\n"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:303
+#: ../plugin/hello_events/hello_events.cc:312
+msgid "Invalid value of before-update-position\n"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:352
+#: ../plugin/hello_events/hello_events.cc:355
+#: ../plugin/hello_events/hello_events.cc:373
+msgid "A comma delimited list of databases to watch"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:358
+#: ../plugin/hello_events/hello_events.cc:389
+msgid "Enable Example Events Plugin"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:361
+#: ../plugin/hello_events/hello_events.cc:397
+msgid "Before write row event observer call position"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:364
+#: ../plugin/hello_events/hello_events.cc:408
+#: ../plugin/pbms/src/parameters_ms.cc:579
+msgid "Before update row event observer call position"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:367
+#: ../plugin/hello_events/hello_events.cc:419
+msgid "After drop database event observer call position"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:381
+msgid "A comma delimited list of tables to watch"
+msgstr ""
+
+#: ../plugin/hello_events/hello_events.cc:443
+msgid "An example events Plugin"
+msgstr ""
+
+#: ../plugin/innobase/handler/data_dictionary.cc:202
+#, c-format
+msgid "Warning: data in %s truncated due to memory limit of %d bytes\n"
 msgstr ""
 
 #: ../plugin/logging_gearman/logging_gearman.cc:196
@@ -5660,17 +5922,17 @@ msgid "Enable logging to CSV file"
 msgstr ""
 
 #: ../plugin/logging_query/logging_query.cc:348
-#: ../plugin/logging_query/logging_query.cc:388
+#: ../plugin/logging_query/logging_query.cc:388 ../plugin/syslog/module.cc:95
 msgid "Threshold for logging slow queries, in microseconds"
 msgstr ""
 
 #: ../plugin/logging_query/logging_query.cc:351
-#: ../plugin/logging_query/logging_query.cc:400
+#: ../plugin/logging_query/logging_query.cc:400 ../plugin/syslog/module.cc:107
 msgid "Threshold for logging big queries, for rows returned"
 msgstr ""
 
 #: ../plugin/logging_query/logging_query.cc:354
-#: ../plugin/logging_query/logging_query.cc:412
+#: ../plugin/logging_query/logging_query.cc:412 ../plugin/syslog/module.cc:119
 msgid "Threshold for logging big queries, for rows examined"
 msgstr ""
 
@@ -5686,12 +5948,63 @@ msgstr ""
 msgid "Log queries to a CSV file"
 msgstr ""
 
+#: ../plugin/logging_stats/logging_stats.cc:323
+msgid "Max number of users that will be logged"
+msgstr ""
+
+#: ../plugin/logging_stats/logging_stats.cc:334
+msgid "Max number of vector buckets to construct for logging"
+msgstr ""
+
+#: ../plugin/logging_stats/logging_stats.cc:345
+msgid "Max number of concurrent sessions that will be logged"
+msgstr ""
+
+#: ../plugin/logging_stats/logging_stats.cc:356
+msgid "Enable Logging Statistics Collection"
+msgstr ""
+
+#: ../plugin/logging_stats/logging_stats.cc:375
+msgid "User Statistics as DATA_DICTIONARY tables"
+msgstr ""
+
+#: ../plugin/md5/md5.cc:99
+msgid "libgcrypt library version mismatch\n"
+msgstr ""
+
+#: ../plugin/memcached_stats/analysis_table.cc:76
+#: ../plugin/memcached_stats/stats_table.cc:144
+msgid "No value in MEMCACHED_STATS_SERVERS variable."
+msgstr ""
+
 #: ../plugin/memcached_stats/memcached_stats.cc:114
 msgid "List of memcached servers."
 msgstr ""
 
 #: ../plugin/memcached_stats/memcached_stats.cc:131
 msgid "Memcached Stats as I_S tables"
+msgstr ""
+
+#: ../plugin/memcached_stats/stats_table.cc:76
+#, c-format
+msgid ""
+"Unable get stats from memcached server %s.  Got error from "
+"memcached_stat_servername()."
+msgstr ""
+
+#: ../plugin/memcached_stats/stats_table.cc:151
+msgid "Unable to create memcached struct.  Got error from memcached_create()."
+msgstr ""
+
+#: ../plugin/memcached_stats/stats_table.cc:159
+#, c-format
+msgid ""
+"Unable to create memcached server list.  Got error from "
+"memcached_servers_parse(%s)."
+msgstr ""
+
+#: ../plugin/multi_thread/multi_thread.cc:100
+msgid "Maximum number of user threads available."
 msgstr ""
 
 #: ../plugin/myisam/ha_myisam.cc:529
@@ -6002,6 +6315,100 @@ msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
 msgstr ""
 
+#: ../plugin/pbms/src/parameters_ms.cc:552
+msgid ""
+"A comma delimited list of tables to watch of the format: <database>."
+"<table>, ..."
+msgstr ""
+
+#: ../plugin/pbms/src/parameters_ms.cc:560
+msgid "Enable PBMS daemon Insert/Update/Delete event scanning"
+msgstr ""
+
+#: ../plugin/pbms/src/parameters_ms.cc:568
+msgid "Before insert row event observer call position"
+msgstr ""
+
+#: ../plugin/pool_of_threads/pool_of_threads.cc:230
+msgid "event_add error in libevent_add_session_callback\n"
+msgstr ""
+
+#: ../plugin/pool_of_threads/pool_of_threads.cc:308
+msgid "libevent_thread_proc: internal::my_thread_init() failed\n"
+msgstr ""
+
+#: ../plugin/pool_of_threads/pool_of_threads.cc:585
+msgid "init_pipe(session_add_pipe) error in libevent_init\n"
+msgstr ""
+
+#: ../plugin/pool_of_threads/pool_of_threads.cc:592
+msgid "init_pipe(session_kill_pipe) error in libevent_init\n"
+msgstr ""
+
+#: ../plugin/pool_of_threads/pool_of_threads.cc:604
+msgid "session_add_event event_add error in libevent_init\n"
+msgstr ""
+
+#: ../plugin/pool_of_threads/pool_of_threads.cc:617
+#, fuzzy, c-format
+msgid "Can't create completion port thread (error %d)"
+msgstr "不能建立干擾-索(錯誤 %d, 錯誤號碼: %d)"
+
+#: ../plugin/pool_of_threads/pool_of_threads.cc:655
+msgid "Size of Pool."
+msgstr "儲備大小"
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:106
+msgid "Failed to allocate enough memory to transaction message\n"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:151
+#, c-format
+msgid "Failed to allocate the RabbitMQHandler.  Got error: %s\n"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:161
+#, c-format
+msgid "Failed to allocate the RabbitMQLog instance.  Got error: %s\n"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:179
+msgid "Enable rabbitmq log"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:188
+msgid "Host name to connect to"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:197
+msgid "RabbitMQ Port"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:208
+msgid "RabbitMQ username"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:216
+msgid "RabbitMQ password"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:224
+msgid "RabbitMQ virtualhost"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:232
+msgid "Name of RabbitMQ exchange to publish to"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:240
+msgid "Name of RabbitMQ routing key to use"
+msgstr ""
+
+#: ../plugin/rabbitmq/rabbitmq_log.cc:248
+#: ../plugin/transaction_log/module.cc:247
+msgid "Name of the replicator plugin to use (default='default_replicator')"
+msgstr ""
+
 #: ../plugin/signal_handler/signal_handler.cc:233
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
@@ -6022,10 +6429,62 @@ msgstr ""
 msgid "syslog priority \"%s\" not known, using \"info\""
 msgstr ""
 
+#: ../plugin/syslog/module.cc:59
+msgid "Syslog Ident"
+msgstr ""
+
+#: ../plugin/syslog/module.cc:68
+msgid "Syslog Facility"
+msgstr ""
+
+#: ../plugin/syslog/module.cc:77
+msgid "Enable logging to syslog of the query log"
+msgstr ""
+
+#: ../plugin/syslog/module.cc:86
+msgid "Syslog Priority of query logging"
+msgstr ""
+
+#: ../plugin/syslog/module.cc:131
+msgid "Enable logging to syslog of the error messages"
+msgstr ""
+
+#: ../plugin/syslog/module.cc:140
+msgid "Syslog Priority of error messages"
+msgstr ""
+
 #: ../plugin/transaction_log/background_worker.cc:74
 #, fuzzy, c-format
 msgid "Unable to create background worker thread. Got error %s.\n"
 msgstr "不能建造完成端口索(錯誤 %d)"
+
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:104
+#: ../plugin/transaction_log/print_transaction_message.cc:102
+#: ../plugin/transaction_log/transaction_log_reader.cc:95
+#, c-format
+msgid "Failed to open transaction log file %s.  Got error: %s\n"
+msgstr ""
+
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:146
+#: ../plugin/transaction_log/print_transaction_message.cc:144
+#: ../plugin/transaction_log/transaction_log_reader.cc:150
+#, c-format
+msgid "Raw buffer read: %s.\n"
+msgstr ""
+
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:164
+#: ../plugin/transaction_log/print_transaction_message.cc:150
+#: ../plugin/transaction_log/transaction_log_reader.cc:157
+#, c-format
+msgid "Unable to parse transaction. Got error: %s.\n"
+msgstr ""
+
+#: ../plugin/transaction_log/hexdump_transaction_message.cc:166
+#: ../plugin/transaction_log/print_transaction_message.cc:152
+#: ../plugin/transaction_log/transaction_log_reader.cc:159
+#, c-format
+msgid "BUFFER: %s\n"
+msgstr ""
 
 #: ../plugin/transaction_log/module.cc:122
 #, c-format
@@ -6064,10 +6523,6 @@ msgstr ""
 msgid "Path to the file to use for transaction log"
 msgstr ""
 
-#: ../plugin/transaction_log/module.cc:247
-msgid "Name of the replicator plugin to use (default='default_replicator')"
-msgstr ""
-
 #: ../plugin/transaction_log/module.cc:255
 msgid "Enable CRC32 Checksumming of each written transaction log entry"
 msgstr ""
@@ -6098,26 +6553,6 @@ msgstr ""
 msgid "Failed to sync log file. Got error: %s\n"
 msgstr ""
 
-#: ../plugin/transaction_log/transaction_log_reader.cc:95
-#, c-format
-msgid "Failed to open transaction log file %s.  Got error: %s\n"
-msgstr ""
-
-#: ../plugin/transaction_log/transaction_log_reader.cc:150
-#, c-format
-msgid "Raw buffer read: %s.\n"
-msgstr ""
-
-#: ../plugin/transaction_log/transaction_log_reader.cc:157
-#, c-format
-msgid "Unable to parse transaction. Got error: %s.\n"
-msgstr ""
-
-#: ../plugin/transaction_log/transaction_log_reader.cc:159
-#, c-format
-msgid "BUFFER: %s\n"
-msgstr ""
-
 #~ msgid "built-in default"
 #~ msgstr "內建的預設值"
 
@@ -6138,6 +6573,3 @@ msgstr ""
 
 #~ msgid "File '%s' not found (Errcode: %d)"
 #~ msgstr "找不到檔案 '%s' (錯誤碼: %d)"
-
-#~ msgid "Size of Pool."
-#~ msgstr "儲備大小"
