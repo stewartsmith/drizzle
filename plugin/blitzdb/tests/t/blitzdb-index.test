@@ -14,6 +14,9 @@ insert into t1 values (5, 5, 5), (6, 6, 6), (7, 7, 7), (8, 8, 8);
 insert into t1 values (9, 9, 9), (10, 10, 10), (11, 11, 11), (12, 12, 12);
 insert into t1 values (13, 13, 13), (14, 14, 14), (15, 15, 15), (16, 16, 16);
 
+# this statement should be 'optimized away'.
+explain select count (*) from t1;
+
 # overflow
 --error 1264
 insert into t1 values (2147483648, 1, 1);
@@ -70,8 +73,19 @@ select count (id) from t1;
 select count (a) from t1;
 select count (b) from t1;
 select * from t1 order by id;
-delete from t1;
+
+# delete by pk range
+delete from t1 where id > 10 and id < 14;
+select * from t1 order by id;
 select count (*) from t1;
+delete from t1 where id >= 20 and id <= 23;
+select * from t1 order by id;
+select count (*) from t1;
+
+# impossible range
+delete from t1 where a > 20;
+select count(*) from t1;
+
 drop table t1;
 
 # +---------------------+
@@ -225,6 +239,11 @@ select * from t1 where id = 'paris';
 delete from t1 where id = 'geneva';
 delete from t1 where id = 'fukuoka';
 select count (id) from t1;
+select count (*) from t1;
+select * from t1 order by id;
+
+# Delete by Range
+delete from t1 where id < 'london';
 select count (*) from t1;
 select * from t1 order by id;
 drop table t1;
@@ -515,3 +534,28 @@ create table t1 (a int, b int, c int, d int, index(a, b, c)) engine = blitzdb;
 create table t1 (a int, b int, c int, d int, unique(a, b)) engine = blitzdb;
 --error 1005
 create table t1 (a int, b int, c int, d int, unique(a, b, c)) engine = blitzdb;
+
+# +------------------------------------------+
+# | LARGE KEYS : Testcase from Patrick Crews |
+# +------------------------------------------+
+
+create table `t1` (
+  `col_varchar_10_key` varchar(10),
+  `col_int_key` int,
+  `col_varchar_1024_key` varchar(1024),
+  pk integer auto_increment,
+  `col_varchar_10` varchar(10),
+  `col_int` int,
+  `col_varchar_1024` varchar(1024),
+  key (`col_varchar_10_key`),
+  key (`col_int_key`),
+  key (`col_varchar_1024_key`),
+  primary key (pk)
+) engine = blitzdb;
+
+insert /*! IGNORE */ into t1 values ('x', NULL, 'keyone', NULL, 'could', 1322188800, 'I\'m');
+insert /*! IGNORE */ into t1 values ('y', NULL, 'keytwo', NULL, 'could', 1322188800, 'I\'m');
+insert /*! IGNORE */ into t1 values ('z', NULL, 'keythree', NULL, 'could', 1322188800, 'I\'m');
+select * from t1;
+
+drop table t1;
