@@ -1401,6 +1401,16 @@ key_def:
                                       statement->fk_delete_opt,
                                       statement->fk_update_opt,
                                       statement->fk_match_option);
+
+	    add_foreign_key_to_table_message(&(statement->create_table_message),
+                                             $4.str ? $4.str : $1.str,
+                                             lex->col_list,
+                                             $8,
+                                             lex->ref_list,
+                                             statement->fk_delete_opt,
+                                             statement->fk_update_opt,
+                                             statement->fk_match_option);
+
             statement->alter_info.key_list.push_back(key);
             key= new Key(Key::MULTIPLE, $1.str ? $1 : $4,
                          &default_key_create_info, 1,
