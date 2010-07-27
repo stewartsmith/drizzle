@@ -25,8 +25,8 @@ product_order	CREATE TABLE `product_order` (
   PRIMARY KEY (`no`),
   KEY `product_category` (`product_category`,`product_id`),
   KEY `customer_id` (`customer_id`),
-  FOREIGN KEY (`product_category`, `product_id`) REFERENCES `product` (`category`,`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
+  CONSTRAINT `product_order_ibfk_1` FOREIGN KEY (`product_category`, `product_id`) REFERENCES `product` (`category`,`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT `product_order_ibfk_2` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table product_order, customer, product;
 drop table if exists t_34455;
