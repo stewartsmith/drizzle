@@ -32,12 +32,20 @@ int BlitzTree::open(const char *path, const int key_num, int mode) {
 
   if (!tcbdbsetmutex(btree)) {
     tcbdbdel(btree);
-    return HA_ERR_CRASHED_ON_USAGE;
+    return HA_ERR_GENERIC;
+  }
+
+  if (blitz_estimated_rows != 0) {
+    uint64_t tree_buckets = blitz_estimated_rows / 10;
+    if (!tcbdbtune(btree, 0, 0, tree_buckets, -1, -1, 0)) {
+      tcbdbdel(btree);
+      return HA_ERR_GENERIC;
+    }
   }
 
   if (!tcbdbsetcmpfunc(btree, blitz_keycmp_cb, this)) {
     tcbdbdel(btree);
-    return HA_ERR_CRASHED_ON_USAGE;
+    return HA_ERR_GENERIC;
   }
 
   snprintf(buf, FN_REFLEN, "%s_%02d%s", path, key_num, BLITZ_INDEX_EXT);
