@@ -44,6 +44,7 @@ drizzled/sql_base.cc
 drizzled/sql_select.cc
 drizzled/sql_table.cc
 drizzled/sql_yacc.cc
+drizzled/stacktrace.cc
 drizzled/statement/alter_table.cc
 drizzled/table.cc
 drizzled/table_share.cc
@@ -65,6 +66,7 @@ plugin/errmsg_stderr/errmsg_stderr.cc
 plugin/filtered_replicator/filtered_replicator.cc
 plugin/hello_events/hello_events.cc
 plugin/innobase/handler/data_dictionary.cc
+plugin/innobase/ut/ut0auxconf_pause.c
 plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_stats/logging_stats.cc
