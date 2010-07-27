@@ -19,6 +19,8 @@
 #ifndef PLUGIN_FILESYSTEM_FILESYSTEMLOCK_H
 #define PLUGIN_FILESYSTEM_FILESYSTEMLOCK_H
 
+#include <pthread.h>
+
 class FilesystemLock
 {
 public:
@@ -34,6 +36,25 @@ private:
   pthread_mutex_t mutex;
   int scanner_count;
   int updater_count;
+};
+
+class Guard
+{
+public:
+  Guard(pthread_mutex_t& mutex) : mutex_(&mutex)
+  {
+    pthread_mutex_lock(mutex_);
+  }
+
+  ~Guard()
+  {
+    if (mutex_)
+    {
+      pthread_mutex_unlock(mutex_);
+    }
+  }
+private:
+  pthread_mutex_t *mutex_;
 };
 
 #endif /* PLUGIN_FILESYSTEM_FILESYSTEMLOCK_H */

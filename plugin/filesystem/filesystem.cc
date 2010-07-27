@@ -370,7 +370,7 @@ FilesystemTableShare::~FilesystemTableShare()
 
 FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
 {
-  pthread_mutex_lock(&filesystem_mutex);
+  Guard g(filesystem_mutex);
 
   FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(engine);
   share= a_engine->findOpenTable(table_name);
@@ -384,14 +384,12 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
     share= new (nothrow) FilesystemTableShare(table_name);
     if (share == NULL)
     {
-      pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
     }
 
     share->format.parseFromTable(table->getShare()->getTableProto());
     if (!share->format.isFileGiven())
     {
-      pthread_mutex_unlock(&filesystem_mutex);
       return NULL;
     }
     /*
@@ -402,7 +400,6 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
     {
       if (parseTaggedFile(share->format, share->vm) != 0)
       {
-        pthread_mutex_unlock(&filesystem_mutex);
         return NULL;
       }
     }
@@ -411,20 +408,19 @@ FilesystemTableShare *FilesystemCursor::get_share(const char *table_name)
     pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
   }
   share->use_count++;
-  pthread_mutex_unlock(&filesystem_mutex);
 
   return share;
 }
 
 void FilesystemCursor::free_share()
 {
-  pthread_mutex_lock(&filesystem_mutex);
+  Guard g(filesystem_mutex);
+
   if (!--share->use_count){
     FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(engine);
     a_engine->deleteOpenTable(share->table_name);
     delete share;
   }
-  pthread_mutex_unlock(&filesystem_mutex);
 }
 
 void FilesystemCursor::critical_section_enter()
