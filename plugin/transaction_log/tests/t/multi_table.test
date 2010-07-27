@@ -1,0 +1,13 @@
+#
+# Tests changes to multiple tables within the same transaction
+#
+
+# Populate log with some records...
+--source ../plugin/transaction_log/tests/t/multi_table.inc
+
+# Read in the transaction.log.
+
+--exec ../drizzled/message/transaction_reader var/master-data/transaction.log
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
