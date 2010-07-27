@@ -68,6 +68,10 @@ AC_DEFUN([PANDORA_PLATFORM],[
       AC_DEFINE([TARGET_OS_FREEBSD], [1], [Whether we are building for FreeBSD])
       AC_DEFINE([__APPLE_CC__],[1],[Workaround for bug in FreeBSD headers])
       ;;
+    *mingw32*)
+      TARGET_WINDOWS="true"
+      AC_SUBST(TARGET_WINDOWS)
+      AC_DEFINE([TARGET_OS_WINDOWS], [1], [Whether we are building for Windows])
     *)
       ;;
   esac
