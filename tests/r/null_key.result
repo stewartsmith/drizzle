@@ -81,7 +81,7 @@ t2	CREATE TEMPORARY TABLE `t2` (
   `b` int NOT NULL,
   UNIQUE KEY `a` (`a`,`b`),
   KEY `b` (`b`)
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 insert into t2 select * from t1;
 alter table t1 modify b blob not null, add c int not null, drop key a, add unique key (a,b(20),c), drop key b, add key (b(10));
 explain select * from t1 where a is null and b = 2;
