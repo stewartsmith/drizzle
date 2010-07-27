@@ -101,7 +101,7 @@ t2	CREATE TABLE `t2` (
   `a` int DEFAULT NULL,
   `b` int DEFAULT NULL,
   `c` varchar(255) DEFAULT NULL
-) ENGINE=BLITZDB
+) ENGINE=BLITZDB COLLATE = utf8_general_ci
 select count(*) from t2;
 count(*)
 8
