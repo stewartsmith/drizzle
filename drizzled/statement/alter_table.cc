@@ -533,15 +533,53 @@ static bool mysql_prepare_alter_table(Session *session,
       new_key_list.push_back(key);
     }
   }
+
+  /* Copy over existing foreign keys */
+  for (int j= 0; j < original_proto.fk_constraint_size(); j++)
+  {
+    AlterDrop *drop;
+    drop_it.rewind();
+    while ((drop= drop_it++))
+    {
+      if (drop->type == AlterDrop::FOREIGN_KEY &&
+          ! my_strcasecmp(system_charset_info, original_proto.fk_constraint(j).name().c_str(), drop->name))
+      {
+        break;
+      }
+    }
+    if (drop)
+    {
+      drop_it.remove();
+      continue;
+    }
+
+    message::Table::ForeignKeyConstraint *pfkey= table_message.add_fk_constraint();
+    *pfkey= original_proto.fk_constraint(j);
+  }
+
   {
     Key *key;
     while ((key= key_it++)) /* Add new keys */
     {
-      if (key->type == Key::FOREIGN_KEY &&
-          ((Foreign_key *)key)->validate(new_create_list))
-        goto err;
+      if (key->type == Key::FOREIGN_KEY)
+      {
+        if (((Foreign_key *)key)->validate(new_create_list))
+          goto err;
+
+        Foreign_key *fkey= (Foreign_key*)key;
+        add_foreign_key_to_table_message(&table_message,
+                                         fkey->name.str,
+                                         fkey->columns,
+                                         fkey->ref_table,
+                                         fkey->ref_columns,
+                                         fkey->delete_opt,
+                                         fkey->update_opt,
+                                         fkey->match_opt);
+      }
+
       if (key->type != Key::FOREIGN_KEY)
         new_key_list.push_back(key);
+
       if (key->name.str && is_primary_key_name(key->name.str))
       {
         my_error(ER_WRONG_NAME_FOR_INDEX,
@@ -549,6 +587,23 @@ static bool mysql_prepare_alter_table(Session *session,
                  key->name.str);
         goto err;
       }
+    }
+  }
+
+  /* Fix names of foreign keys being added */
+  for (int j= 0; j < table_message.fk_constraint_size(); j++)
+  {
+    if (! table_message.fk_constraint(j).has_name())
+    {
+      std::string name(table->getMutableShare()->getTableName());
+      char number[20];
+
+      name.append("_ibfk_");
+      snprintf(number, sizeof(number), "%d", j+1);
+      name.append(number);
+
+      message::Table::ForeignKeyConstraint *pfkey= table_message.mutable_fk_constraint(j);
+      pfkey->set_name(name);
     }
   }
 

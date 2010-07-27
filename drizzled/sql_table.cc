@@ -878,7 +878,18 @@ static int mysql_prepare_create_table(Session *session,
       fk_key_count++;
       if (((Foreign_key *)key)->validate(alter_info->create_list))
         return true;
+
       Foreign_key *fk_key= (Foreign_key*) key;
+
+      add_foreign_key_to_table_message(&create_proto,
+                                       fk_key->name.str,
+                                       fk_key->columns,
+                                       fk_key->ref_table,
+                                       fk_key->ref_columns,
+                                       fk_key->delete_opt,
+                                       fk_key->update_opt,
+                                       fk_key->match_opt);
+
       if (fk_key->ref_columns.elements &&
 	  fk_key->ref_columns.elements != fk_key->columns.elements)
       {

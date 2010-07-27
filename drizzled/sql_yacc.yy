@@ -1402,15 +1402,6 @@ key_def:
                                       statement->fk_update_opt,
                                       statement->fk_match_option);
 
-	    add_foreign_key_to_table_message(&(statement->create_table_message),
-                                             $4.str ? $4.str : $1.str,
-                                             lex->col_list,
-                                             $8,
-                                             lex->ref_list,
-                                             statement->fk_delete_opt,
-                                             statement->fk_update_opt,
-                                             statement->fk_match_option);
-
             statement->alter_info.key_list.push_back(key);
             key= new Key(Key::MULTIPLE, $1.str ? $1 : $4,
                          &default_key_create_info, 1,
@@ -2266,7 +2257,8 @@ alter_list_item:
         | DROP FOREIGN KEY_SYM opt_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
+            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY,
+                                                                    $4.str));
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
             statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
           }

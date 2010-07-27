@@ -45,6 +45,17 @@ void add_foreign_key_to_table_message(
   message::Table::ForeignKeyConstraint *pfkey= table_message->add_fk_constraint();
   if (fkey_name)
     pfkey->set_name(fkey_name);
+  else if (table_message->has_name())
+  {
+    std::string name(table_message->name());
+    char number[20];
+
+    name.append("_ibfk_");
+    snprintf(number, sizeof(number), "%d", table_message->fk_constraint_size());
+    name.append(number);
+
+    pfkey->set_name(name);
+  }
 
   pfkey->set_match(match_opt_arg);
   pfkey->set_update_option(update_opt_arg);
