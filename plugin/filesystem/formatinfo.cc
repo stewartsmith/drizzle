@@ -23,6 +23,7 @@
 
 #include "formatinfo.h"
 
+#include <iostream>
 using namespace std;
 
 static const char* FORMAT_INFO_FILE_PATH= "FILE";
@@ -35,6 +36,7 @@ static const char* FORMAT_INFO_SEPARATOR_MODE_GENERAL= "GENERAL";
 static const char* FORMAT_INFO_SEPARATOR_MODE_WEAK= "WEAK";
 static const char* FORMAT_INFO_FORMAT_TAG= "KEY_VALUE";
 static const char* FORMAT_INFO_FORMAT_NORMAL= "NORMAL";
+static const char* FORMAT_INFO_ESCAPE= "ESCAPED_BY";
 enum filesystem_option_separator_mode_type
 {
   FORMAT_INFO_SEPARATOR_MODE_STRICT_ENUM= 1,
@@ -70,6 +72,8 @@ void FormatInfo::parseFromTable(drizzled::message::Table *proto)
       col_separator= option.state();
     else if (boost::iequals(option.name(), FORMAT_INFO_FORMAT))
       file_format= option.state();
+    else if (boost::iequals(option.name(), FORMAT_INFO_ESCAPE))
+      escape= option.state();
     else if (boost::iequals(option.name(), FORMAT_INFO_SEPARATOR_MODE))
     {
       if (boost::iequals(option.state(), FORMAT_INFO_SEPARATOR_MODE_STRICT))
@@ -119,10 +123,14 @@ string FormatInfo::getColSeparator() const
 
 bool FormatInfo::validateOption(const std::string &key, const std::string &state)
 {
+  cerr << "validateOption: " << key << " , " << state << endl;
   if (boost::iequals(key, FORMAT_INFO_FILE_PATH) &&
       ! state.empty())
     return true;
   if (boost::iequals(key, FORMAT_INFO_FORMAT) &&
+      ! state.empty())
+    return true;
+  if (boost::iequals(key, FORMAT_INFO_ESCAPE) &&
       ! state.empty())
     return true;
   if ((boost::iequals(key, FORMAT_INFO_ROW_SEPARATOR) ||
@@ -150,4 +158,30 @@ bool FormatInfo::isSeparatorModeWeak() const
 bool FormatInfo::isTagFormat() const
 {
   return boost::iequals(file_format, FORMAT_INFO_FORMAT_TAG);
+}
+
+bool FormatInfo::isEscapedChar(char ch) const
+{
+  return (!escape.empty() && escape.find(ch) != string::npos);
+}
+
+char FormatInfo::getEscapedChar(const char ch)
+{
+  char escaped= ch;
+  switch (ch)
+  {
+    case 't':
+      escaped= '\t';
+      break;
+    case 'b':
+      escaped= '\b';
+      break;
+    case 'r':
+      escaped= '\r';
+      break;
+    case 'n':
+      escaped= '\n';
+      break;
+  }
+  return escaped;
 }

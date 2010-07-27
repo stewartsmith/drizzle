@@ -531,6 +531,18 @@ int FilesystemCursor::find_current_row(unsigned char *buf)
     if (ch == '\0')
       return HA_ERR_END_OF_FILE;
 
+    if (share->format.isEscapedChar(ch))
+    {
+      // read next character
+      ch= file_buff->get_value(++next_position);
+      if (ch == '\0')
+        return HA_ERR_END_OF_FILE;
+
+      content.push_back(FormatInfo::getEscapedChar(ch));
+
+      continue;
+    }
+
     // if we find separator
     bool is_row= share->format.isRowSeparator(ch);
     bool is_col= share->format.isColSeparator(ch);
