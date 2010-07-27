@@ -160,9 +160,9 @@ int session_sql_command(const Session *session)
   return (int) session->lex->sql_command;
 }
 
-int session_tx_isolation(const Session *session)
+enum_tx_isolation session_tx_isolation(const Session *session)
 {
-  return (int) session->variables.tx_isolation;
+  return (enum_tx_isolation)session->variables.tx_isolation;
 }
 
 Session::Session(plugin::Client *client_arg) :
