@@ -10,7 +10,7 @@ START TRANSACTION;
 DROP TABLE IF EXISTS `test`.`t1`;
 COMMIT;
 START TRANSACTION;
-CREATE TABLE `test`.`t1` ( `id` INT NOT NULL, `padding` VARCHAR(200) NOT NULL COLLATE utf8_general_ci, PRIMARY KEY `PRIMARY` (`id`) ) ENGINE = InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `id` int NOT NULL,   `padding` varchar(200) NOT NULL,   PRIMARY KEY (`id`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`id`,`padding`) VALUES (1,'I love testing.');
