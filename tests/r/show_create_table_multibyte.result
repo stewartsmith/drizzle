@@ -3,5 +3,5 @@ show create table `чем`;
 Table	Create Table
 чем	CREATE TABLE `чем` (
   `a` int DEFAULT NULL COMMENT 'чем'
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table `чем`;
