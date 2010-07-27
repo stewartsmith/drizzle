@@ -483,7 +483,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int DEFAULT NULL
-) ENGINE=InnoDB COMMENT='123'
+) ENGINE=InnoDB COMMENT='123' COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (a CHAR(2), KEY (a)) ENGINE = InnoDB;
 INSERT INTO t1 VALUES ('uk'),('bg');
@@ -941,7 +941,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` text,
   KEY `a` (`a`(255))
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (
 a INT,
@@ -1154,7 +1154,7 @@ t1	CREATE TABLE `t1` (
   `b` varchar(4) NOT NULL,
   UNIQUE KEY `bb` (`b`),
   UNIQUE KEY `aa` (`a`(1))
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (id int, type char(6), d int, INDEX idx(id,d)) ENGINE=InnoDB;
 INSERT INTO t1 VALUES 
