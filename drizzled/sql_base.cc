@@ -2346,7 +2346,6 @@ RETURN
 Table *Session::open_temporary_table(TableIdentifier &identifier,
                                      bool link_in_list)
 {
-  Table *new_tmp_table;
   TableShare *share;
 
   assert(identifier.isTmp());
@@ -2355,11 +2354,9 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
 
-  if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table))))
+  Table *new_tmp_table= new Table;
+  if (not new_tmp_table)
     return NULL;
-
-  memset(new_tmp_table, 0, sizeof(*new_tmp_table));
-
 
   /*
     First open the share, and then open the table from the share we just opened.
