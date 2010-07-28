@@ -64,7 +64,6 @@ private:
   Type type;
   std::string path;
   std::string table_name;
-  std::string lower_table_name;
   std::string sql_path;
   Key key;
   size_t hash_value;
@@ -111,7 +110,6 @@ public:
   }
 
   using SchemaIdentifier::compare;
-  bool compare(std::string schema_arg, std::string table_arg) const;
 
   bool isTmp() const
   {
