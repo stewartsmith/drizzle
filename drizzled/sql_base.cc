@@ -307,14 +307,7 @@ void free_cache_entry(Table *table)
     unused_tables.unlink(table);
   }
 
-  if (table->isPlaceHolder())
-  {
-    delete table;
-  }
-  else
-  {
-    free(table);
-  }
+  delete table;
 }
 
 /* Free resources allocated by filesort() and read_record() */
@@ -1436,8 +1429,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     }
 
     /* make a new table */
-    table= (Table *)malloc(sizeof(Table));
-    memset(table, 0, sizeof(Table));
+    table= new Table;
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
@@ -1447,7 +1439,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     error= open_unireg_entry(this, table, alias, identifier);
     if (error != 0)
     {
-      free(table);
+      delete table;
       pthread_mutex_unlock(&LOCK_open);
       return NULL;
     }
@@ -2354,7 +2346,6 @@ RETURN
 Table *Session::open_temporary_table(TableIdentifier &identifier,
                                      bool link_in_list)
 {
-  Table *new_tmp_table;
   TableShare *share;
 
   assert(identifier.isTmp());
@@ -2363,11 +2354,9 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
                         const_cast<char *>(identifier.getPath().c_str()), static_cast<uint32_t>(identifier.getPath().length()));
 
 
-  if (!(new_tmp_table= (Table*) malloc(sizeof(*new_tmp_table))))
+  Table *new_tmp_table= new Table;
+  if (not new_tmp_table)
     return NULL;
-
-  memset(new_tmp_table, 0, sizeof(*new_tmp_table));
-
 
   /*
     First open the share, and then open the table from the share we just opened.
