@@ -370,7 +370,7 @@ void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock)
   if (sql_lock->lock_count)
     thr_multi_unlock(sql_lock->locks,sql_lock->lock_count);
   if (sql_lock->table_count)
-    unlock_external(session,sql_lock->table,sql_lock->table_count);
+    unlock_external(session, sql_lock->table, sql_lock->table_count);
   free((unsigned char*) sql_lock);
   return;
 }
@@ -680,21 +680,21 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
 
 static int lock_table_name(Session *session, TableList *table_list, bool check_in_use)
 {
-  Table *table;
   bool  found_locked_table= false;
-  HASH_SEARCH_STATE state;
   TableIdentifier identifier(table_list->db, table_list->table_name);
   const TableIdentifier::Key &key(identifier.getKey());
 
   if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
-    for (table=(Table*) hash_first(&get_open_cache(), (unsigned char*)&key[0],
-                                   key.size(), &state);
-         table ;
-         table = (Table*) hash_next(&get_open_cache(),(unsigned char*)&key[0],
-                                    key.size(), &state))
+    TableOpenCacheRange ppp;
+
+    ppp= get_open_cache().equal_range(key);
+
+    for (TableOpenCache::const_iterator iter= ppp.first;
+         iter != ppp.second; ++iter)
     {
+      Table *table= (*iter).second;
       if (table->reginfo.lock_type < TL_WRITE)
       {
         if (table->in_use == session)
@@ -711,7 +711,8 @@ static int lock_table_name(Session *session, TableList *table_list, bool check_i
     }
   }
 
-  if (!(table= session->table_cache_insert_placeholder(table_list->db, table_list->table_name, &key[0], key.size())))
+  Table *table;
+  if (!(table= session->table_cache_insert_placeholder(table_list->db, table_list->table_name)))
   {
     return -1;
   }
@@ -728,7 +729,7 @@ void unlock_table_name(TableList *table_list)
 {
   if (table_list->table)
   {
-    hash_delete(&get_open_cache(), (unsigned char*) table_list->table);
+    remove_table(table_list->table);
     broadcast_refresh();
   }
 }
