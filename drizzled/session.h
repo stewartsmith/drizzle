@@ -53,6 +53,8 @@
 
 #include <drizzled/plugin/authorization.h>
 
+#include <boost/unordered_map.hpp>
+
 #define MIN_HANDSHAKE_SIZE      6
 
 namespace drizzled
@@ -1412,7 +1414,7 @@ public:
   Table *table_cache_insert_placeholder(const char *db_name, const char *table_name);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
-  typedef unordered_map<std::string, message::Table> TableMessageCache;
+  typedef boost::unordered_map<std::string, message::Table> TableMessageCache;
   TableMessageCache table_message_cache;
 
   bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);

@@ -144,7 +144,7 @@ public:
 
   /* hash of field names (contains pointers to elements of field array) */
 private:
-  typedef boost::unordered_map < std::string, Field **, insensitive_hash, insensitive_equal_to> FieldMap;
+  typedef boost::unordered_map < std::string, Field **, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
   typedef std::pair< std::string, Field ** > FieldMapPair;
   FieldMap name_hash; /* hash of field names */
 public:

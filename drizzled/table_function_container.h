@@ -28,7 +28,7 @@
 namespace drizzled {
 
 class TableFunctionContainer {
-  typedef boost::unordered_map<std::string, plugin::TableFunction *, insensitive_hash, insensitive_equal_to> ToolMap;
+  typedef boost::unordered_map<std::string, plugin::TableFunction *, util::insensitive_hash, util::insensitive_equal_to> ToolMap;
 
   ToolMap table_map;
 

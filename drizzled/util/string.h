@@ -43,6 +43,9 @@
 namespace drizzled
 {
 
+namespace util
+{
+
 struct insensitive_equal_to : std::binary_function<std::string, std::string, bool>
 {
   bool operator()(std::string const& x, std::string const& y) const
@@ -67,6 +70,7 @@ struct insensitive_hash : std::unary_function<std::string, std::size_t>
   }
 };
 
+} /* namespace util */
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_UTIL_STRING_H */
