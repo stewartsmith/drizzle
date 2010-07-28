@@ -2555,10 +2555,9 @@ find_field_in_table(Session *session, Table *table, const char *name, uint32_t l
   {
     field_ptr= table->getFields() + cached_field_index;
   }
-  else if (table->getShare()->name_hash.records)
+  else if (table->getShare()->getNamedFieldSize())
   {
-    field_ptr= (Field**) hash_search(&table->getShare()->name_hash, (unsigned char*) name,
-                                     length);
+    field_ptr= table->getMutableShare()->getNamedField(std::string(name, length));
     if (field_ptr)
     {
       /*

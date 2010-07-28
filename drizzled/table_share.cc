@@ -309,14 +309,6 @@ TableShare *TableShare::getShare(TableIdentifier &identifier)
   }
 }
 
-/* Get column name from column hash */
-
-static unsigned char *get_field_name(Field **buff, size_t *length, bool)
-{
-  *length= (uint32_t) strlen((*buff)->field_name);
-  return (unsigned char*) (*buff)->field_name;
-}
-
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 {
   enum_field_types field_type;
@@ -513,7 +505,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   event_observers(NULL),
   newed(true)
 {
-  memset(&name_hash, 0, sizeof(HASH));
 
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
@@ -586,8 +577,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   event_observers(NULL),
   newed(true)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   assert(identifier.getKey() == key);
 
   table_charset= 0;
@@ -667,8 +656,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   event_observers(NULL),
   newed(true)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
   memset(&table_name, 0, sizeof(LEX_STRING));
@@ -755,8 +742,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   event_observers(NULL),
   newed(true)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
   memset(&table_name, 0, sizeof(LEX_STRING));
@@ -844,7 +829,6 @@ TableShare::~TableShare()
     pthread_mutex_destroy(&mutex);
     pthread_cond_destroy(&cond);
   }
-  hash_free(&name_hash);
 
   storage_engine= NULL;
 
@@ -1241,16 +1225,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   bool use_hash= fields >= MAX_FIELDS_BEFORE_HASH;
 
-  if (use_hash)
-    use_hash= ! hash_init(&name_hash,
-                          system_charset_info,
-                          fields,
-                          0,
-                          0,
-                          (hash_get_key) get_field_name,
-                          0,
-                          0);
-
   unsigned char* null_pos= getDefaultValues();
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
@@ -1538,8 +1512,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       timestamp_field_offset= fieldnr;
 
     if (use_hash) /* supposedly this never fails... but comments lie */
-      (void) my_hash_insert(&name_hash,
-                            (unsigned char*)&(field[fieldnr]));
+    {
+      const char *local_field_name= field[fieldnr]->field_name;
+      name_hash.insert(make_pair(local_field_name, &(field[fieldnr])));
+    }
 
   }
 
@@ -1764,7 +1740,6 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
   error= local_error;
   open_errno= errno;
   errarg= 0;
-  hash_free(&name_hash);
   open_table_error(local_error, open_errno, 0);
 
   return local_error;

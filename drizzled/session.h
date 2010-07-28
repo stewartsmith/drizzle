@@ -37,6 +37,8 @@
 #include "drizzled/named_savepoint.h"
 #include "drizzled/transaction_context.h"
 
+#include "drizzled/my_hash.h"
+
 #include <netdb.h>
 #include <map>
 #include <string>
