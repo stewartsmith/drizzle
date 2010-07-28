@@ -293,6 +293,9 @@ static int fill_table_proto(message::Table &table_proto,
   if (create_info->table_options & HA_OPTION_PACK_RECORD)
     table_options->set_pack_record(true);
 
+  if (table_options->has_comment() && table_options->comment().length() == 0)
+    table_options->clear_comment();
+
   if (table_options->has_comment())
   {
     uint32_t tmp_len;
