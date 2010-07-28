@@ -74,10 +74,6 @@ message Table {
       optional bytes default_bin_value = 4;
     }
 
-    message TimestampFieldOptions {
-      optional bool auto_updates = 1 [default = false];
-    }
-
     message FieldConstraints {
       required bool is_nullable = 1 [default = true];
       optional bool is_unsigned = 2 [default = false];
@@ -112,7 +108,6 @@ message Table {
 
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional EnumerationValues enumeration_values = 17;
-    optional TimestampFieldOptions timestamp_options = 18;
   }
 
   message Index {
