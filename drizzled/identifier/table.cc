@@ -323,7 +323,7 @@ TableIdentifier::TableIdentifier(const drizzled::Table &table) :
 
 void TableIdentifier::init()
 {
-  lower_table_name.append(table_name);
+  std::string lower_table_name(table_name);
   std::transform(lower_table_name.begin(), lower_table_name.end(),
                  lower_table_name.begin(), ::tolower);
 
@@ -358,22 +358,6 @@ void TableIdentifier::init()
 const std::string &TableIdentifier::getPath() const
 {
   return path;
-}
-
-bool TableIdentifier::compare(std::string schema_arg, std::string table_arg) const
-{
-  std::transform(schema_arg.begin(), schema_arg.end(),
-                 schema_arg.begin(), ::tolower);
-
-  std::transform(table_arg.begin(), table_arg.end(),
-                 table_arg.begin(), ::tolower);
-
-  if (schema_arg == getLower() && table_arg == lower_table_name)
-  {
-    return true;
-  }
-
-  return false;
 }
 
 const std::string &TableIdentifier::getSQLPath()
