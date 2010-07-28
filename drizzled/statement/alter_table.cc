@@ -1127,7 +1127,6 @@ static bool internal_alter_table(Session *session,
         new_table->intern_close_table();
         if (new_table->hasShare())
         {
-          assert(new_table->getShare()->newed);
           delete new_table->s;
           new_table->s= NULL;
         }
@@ -1179,7 +1178,6 @@ static bool internal_alter_table(Session *session,
 
       if (new_table->hasShare())
       {
-        assert(new_table->getShare()->newed);
         delete new_table->s;
         new_table->s= NULL;
       }

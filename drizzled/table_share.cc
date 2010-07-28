@@ -510,8 +510,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
   memset(&name_hash, 0, sizeof(HASH));
 
@@ -583,8 +582,7 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
   memset(&name_hash, 0, sizeof(HASH));
 
@@ -664,8 +662,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
   memset(&name_hash, 0, sizeof(HASH));
 
@@ -752,8 +749,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
   memset(&name_hash, 0, sizeof(HASH));
 
@@ -803,8 +799,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   {
     assert(0); // We should throw here.
   }
-
-  newed= true;
 }
 
 void TableShare::init(const char *new_table_name,

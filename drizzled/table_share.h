@@ -634,8 +634,6 @@ public:
     return output;  // for multiple << operators.
   }
 
-  bool newed;
-
   Field *make_field(unsigned char *ptr,
                     uint32_t field_length,
                     bool is_nullable,
