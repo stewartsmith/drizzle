@@ -150,37 +150,9 @@ public:
 
   friend bool operator<(const TableIdentifier &left, const TableIdentifier &right)
   {
-    // Compare the schema names. You must use schema, path is not valid for
-    // this operation.
-    int first= left.getLower().compare(right.getLower());
-    if (first < 0)
+    if (left.getKey() < right.getKey())
     {
       return true;
-    }
-    else if (first > 0)
-    {
-      return false;
-    }
-    else
-    {
-      // Compare the tables names.
-      int val= left.lower_table_name.compare(right.lower_table_name);
-
-      if (val < 0)
-      {
-        return true;
-      }
-      else if (val > 0)
-      {
-        return false;
-      }
-      else
-      {
-        if (left.type < right.type)
-        {
-          return true;
-        }
-      }
     }
 
     return false;
@@ -223,16 +195,8 @@ public:
 
   friend bool operator==(TableIdentifier &left, TableIdentifier &right)
   {
-    if (left.type == right.type)
-    {
-      if (static_cast<SchemaIdentifier &>(left) == static_cast<SchemaIdentifier &>(right))
-      {
-        if (left.lower_table_name == right.lower_table_name)
-        {
-          return true;
-        }
-      }
-    }
+    if (left.getKey() == right.getKey())
+      return true;
 
     return false;
   }
