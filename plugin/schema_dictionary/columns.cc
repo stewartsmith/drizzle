@@ -140,6 +140,10 @@ void ColumnsTool::Generator::fill()
   {
     push(column.options().default_bin_value().c_str(), column.options().default_bin_value().length());
   }
+  else if (column.options().has_default_expression())
+  {
+    push(column.options().default_expression());
+  }
   else
   {
     push();
@@ -149,7 +153,7 @@ void ColumnsTool::Generator::fill()
   push(column.options().default_null());
 
   /* COLUMN_DEFAULT_UPDATE */
-  push(column.options().update_value());
+  push(column.options().update_expression());
 
   /* IS_NULLABLE */
   push(column.constraints().is_nullable());
