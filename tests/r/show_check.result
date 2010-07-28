@@ -188,7 +188,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL,
   `b` varchar(10) DEFAULT NULL,
   KEY `b` (`b`)
-) ENGINE=MyISAM ROW_FORMAT='default'
+) ENGINE=MyISAM ROW_FORMAT='default' COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
