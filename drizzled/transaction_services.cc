@@ -1150,10 +1150,18 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
 
   while ((current_field= *table_fields++) != NULL) 
   {
-    string_value= current_field->val_str(string_value);
-    record->add_is_null(current_field->is_null());
-    record->add_insert_value(string_value->c_ptr(), string_value->length());
-    string_value->free();
+    if (current_field->is_null())
+    {
+      record->add_is_null(true);
+      record->add_insert_value(NULL, 0);
+    } 
+    else 
+    {
+      string_value= current_field->val_str(string_value);
+      record->add_is_null(false);
+      record->add_insert_value(string_value->c_ptr(), string_value->length());
+      string_value->free();
+    }
   }
   return false;
 }
@@ -1331,8 +1339,16 @@ void TransactionServices::updateRecord(Session *in_session,
        */
       current_field->setReadSet(is_read_set);
 
-      record->add_is_null(current_field->is_null());
-      record->add_after_value(string_value->c_ptr(), string_value->length());
+      if (current_field->is_null())
+      {
+        record->add_is_null(true);
+        record->add_after_value(NULL, 0);
+      }
+      else
+      {
+        record->add_is_null(false);
+        record->add_after_value(string_value->c_ptr(), string_value->length());
+      }
       string_value->free();
     }
 
