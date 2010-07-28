@@ -307,14 +307,7 @@ void free_cache_entry(Table *table)
     unused_tables.unlink(table);
   }
 
-  if (table->isPlaceHolder())
-  {
-    delete table;
-  }
-  else
-  {
-    free(table);
-  }
+  delete table;
 }
 
 /* Free resources allocated by filesort() and read_record() */
@@ -1436,8 +1429,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     }
 
     /* make a new table */
-    table= (Table *)malloc(sizeof(Table));
-    memset(table, 0, sizeof(Table));
+    table= new Table;
     if (table == NULL)
     {
       pthread_mutex_unlock(&LOCK_open);
@@ -1447,7 +1439,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     error= open_unireg_entry(this, table, alias, identifier);
     if (error != 0)
     {
-      free(table);
+      delete table;
       pthread_mutex_unlock(&LOCK_open);
       return NULL;
     }
