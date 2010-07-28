@@ -742,7 +742,7 @@ bool Session::doDoesTableExist(const TableIdentifier &identifier)
   {
     if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
-      if (identifier.compare(table->getShare()->getSchemaName(), table->getShare()->getTableName()))
+      if (identifier.getKey() == table->getShare()->getCacheKey())
       {
         return true;
       }
@@ -759,7 +759,7 @@ int Session::doGetTableDefinition(const TableIdentifier &identifier,
   {
     if (table->getShare()->getType() == message::Table::TEMPORARY)
     {
-      if (identifier.compare(table->getShare()->getSchemaName(), table->getShare()->getTableName()))
+      if (identifier.getKey() == table->getShare()->getCacheKey())
       {
         table_proto.CopyFrom(*(table->getShare()->getTableProto()));
 
