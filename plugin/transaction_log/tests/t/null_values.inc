@@ -1,0 +1,25 @@
+# 
+# Tests inserting/deleting/updating null values 
+#
+
+--disable_warnings
+DROP TABLE IF EXISTS t1, t2;
+--enable_warnings
+
+CREATE TABLE t1 (a INT NOT NULL, b CHAR(1000), PRIMARY KEY (a));
+
+INSERT INTO t1 VALUES (1,"update me");
+INSERT INTO t1 VALUES (2,'');
+INSERT INTO t1 VALUES (3,NULL);
+
+UPDATE t1 SET b= "updated" WHERE a= 2;
+UPDATE t1 SET a= 4 WHERE b IS NULL;
+UPDATE t1 SET b= NULL WHERE a= 1;
+
+DELETE FROM t1 where b is NULL;
+
+CREATE TABLE t2 (a INT NOT NULL AUTO_INCREMENT, b INT, PRIMARY KEY(a));
+INSERT INTO t2 (b) VALUES(NULL);
+INSERT INTO t2 (b) VALUES(0);
+
+DROP TABLE t1, t2;
