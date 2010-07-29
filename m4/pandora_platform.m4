@@ -72,7 +72,6 @@ AC_DEFUN([PANDORA_PLATFORM],[
       TARGET_WINDOWS="true"
       AC_SUBST(TARGET_WINDOWS)
       AC_DEFINE([TARGET_OS_WINDOWS], [1], [Whether we are building for Windows])
-    *)
       ;;
   esac
 
