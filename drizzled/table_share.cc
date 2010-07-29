@@ -463,7 +463,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
-  row_type(ROW_TYPE_DEFAULT),
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
@@ -534,7 +533,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
-  row_type(ROW_TYPE_DEFAULT),
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
@@ -612,7 +610,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
-  row_type(ROW_TYPE_DEFAULT),
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
@@ -697,7 +694,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
-  row_type(ROW_TYPE_DEFAULT),
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
@@ -880,9 +876,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   */
   db_create_options= (local_db_create_options & 0x0000FFFF);
   db_options_in_use= db_create_options;
-
-  row_type= table_options.has_row_type() ?
-    (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
 
   block_size= table_options.has_block_size() ?
     table_options.block_size() : 0;

@@ -107,18 +107,6 @@ enum sql_var_t
   OPT_GLOBAL
 };
 
-enum row_type
-{
-  ROW_TYPE_NOT_USED=-1,
-  ROW_TYPE_DEFAULT,
-  ROW_TYPE_FIXED,
-  ROW_TYPE_DYNAMIC,
-  ROW_TYPE_COMPRESSED,
-  ROW_TYPE_REDUNDANT,
-  ROW_TYPE_COMPACT,
-  ROW_TYPE_PAGE
-};
-
 enum column_format_type
 {
   COLUMN_FORMAT_TYPE_NOT_USED= -1,

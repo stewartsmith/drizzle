@@ -359,7 +359,6 @@ private:
   uint32_t   reclength;			/* Recordlength */
 public:
   uint32_t   stored_rec_length;         /* Stored record length*/
-  enum row_type row_type;		/* How rows are stored */
 
   uint32_t getRecordLength() const
   {

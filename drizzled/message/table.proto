@@ -31,18 +31,6 @@ message Table {
     optional bool checksum = 17;
     optional bool page_checksum = 18;
     optional bool delay_key_write = 19;
-
-    enum RowType {
-    	 ROW_TYPE_DEFAULT = 0;
-	 ROW_TYPE_FIXED = 1;
-	 ROW_TYPE_DYNAMIC = 2;
-      	 ROW_TYPE_COMPRESSED = 3;
-         ROW_TYPE_REDUNDANT = 4;
-	 ROW_TYPE_COMPACT = 5;
-	 ROW_TYPE_PAGE = 6;
-    }
-
-    optional RowType row_type = 20;
   }
 
   message ForeignKeyConstraint {
@@ -72,10 +60,6 @@ message Table {
       optional string update_value = 2;
       optional bool default_null = 3 [default = false];
       optional bytes default_bin_value = 4;
-    }
-
-    message TimestampFieldOptions {
-      optional bool auto_updates = 1 [default = false];
     }
 
     message FieldConstraints {
@@ -112,7 +96,6 @@ message Table {
 
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional EnumerationValues enumeration_values = 17;
-    optional TimestampFieldOptions timestamp_options = 18;
   }
 
   message Index {
