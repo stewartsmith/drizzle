@@ -189,7 +189,9 @@ public:
   bool null_row;
 
   bool force_index;
-  bool distinct,const_table,no_rows;
+  bool distinct;
+  bool const_table;
+  bool no_rows;
   bool key_read;
   bool no_keyread;
   /*
@@ -354,7 +356,7 @@ public:
    * @param If true if we also want to free table_share
    * @note this should all be the destructor
    */
-  int delete_table(bool free_share);
+  int delete_table(bool free_share= false);
 
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 
