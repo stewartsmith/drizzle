@@ -695,7 +695,7 @@ int ha_myisam::repair(Session *session, MI_CHECK &param, bool do_optimize)
   }
 
   param.db_name=    table->getShare()->getSchemaName();
-  param.table_name= table->alias;
+  param.table_name= table->getAlias();
   param.tmpfile_createflag = O_RDWR | O_TRUNC;
   param.using_global_keycache = 1;
   param.session= session;

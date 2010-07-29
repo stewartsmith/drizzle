@@ -309,14 +309,6 @@ TableShare *TableShare::getShare(TableIdentifier &identifier)
   }
 }
 
-/* Get column name from column hash */
-
-static unsigned char *get_field_name(Field **buff, size_t *length, bool)
-{
-  *length= (uint32_t) strlen((*buff)->field_name);
-  return (unsigned char*) (*buff)->field_name;
-}
-
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 {
   enum_field_types field_type;
@@ -509,10 +501,8 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
-  memset(&name_hash, 0, sizeof(HASH));
 
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
@@ -581,11 +571,8 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   assert(identifier.getKey() == key);
 
   table_charset= 0;
@@ -661,11 +648,8 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
   memset(&table_name, 0, sizeof(LEX_STRING));
@@ -748,11 +732,8 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
   memset(&table_name, 0, sizeof(LEX_STRING));
@@ -799,8 +780,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   {
     assert(0); // We should throw here.
   }
-
-  newed= true;
 }
 
 void TableShare::init(const char *new_table_name,
@@ -840,7 +819,6 @@ TableShare::~TableShare()
     pthread_mutex_destroy(&mutex);
     pthread_cond_destroy(&cond);
   }
-  hash_free(&name_hash);
 
   storage_engine= NULL;
 
@@ -1234,16 +1212,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   bool use_hash= fields >= MAX_FIELDS_BEFORE_HASH;
 
-  if (use_hash)
-    use_hash= ! hash_init(&name_hash,
-                          system_charset_info,
-                          fields,
-                          0,
-                          0,
-                          (hash_get_key) get_field_name,
-                          0,
-                          0);
-
   unsigned char* null_pos= getDefaultValues();
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
@@ -1531,8 +1499,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       timestamp_field_offset= fieldnr;
 
     if (use_hash) /* supposedly this never fails... but comments lie */
-      (void) my_hash_insert(&name_hash,
-                            (unsigned char*)&(field[fieldnr]));
+    {
+      const char *local_field_name= field[fieldnr]->field_name;
+      name_hash.insert(make_pair(local_field_name, &(field[fieldnr])));
+    }
 
   }
 
@@ -1757,7 +1727,6 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
   error= local_error;
   open_errno= errno;
   errarg= 0;
-  hash_free(&name_hash);
   open_table_error(local_error, open_errno, 0);
 
   return local_error;
@@ -1873,7 +1842,6 @@ int TableShare::open_table_from_share(Session *session,
 
   local_error= 1;
   outparam.resetTable(session, this, db_stat);
-
 
   if (not (outparam.alias= strdup(alias)))
     goto err;
@@ -2062,6 +2030,7 @@ err:
   outparam.db_stat= 0;
   outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
   free((char*) outparam.alias);
+
   return (local_error);
 }
 
