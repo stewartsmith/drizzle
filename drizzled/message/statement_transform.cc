@@ -960,14 +960,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     destination.append(ss.str());
     ss.clear();
   }
-  
-  if (options.has_row_type())
-  {
-    ss << options.row_type();
-    destination.append("\nROW_TYPE = ", 12);
-    destination.append(ss.str());
-    ss.clear();
-  }
 
   if (options.has_data_file_name())
   {

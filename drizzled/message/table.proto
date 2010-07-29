@@ -31,18 +31,6 @@ message Table {
     optional bool checksum = 17;
     optional bool page_checksum = 18;
     optional bool delay_key_write = 19;
-
-    enum RowType {
-    	 ROW_TYPE_DEFAULT = 0;
-	 ROW_TYPE_FIXED = 1;
-	 ROW_TYPE_DYNAMIC = 2;
-      	 ROW_TYPE_COMPRESSED = 3;
-         ROW_TYPE_REDUNDANT = 4;
-	 ROW_TYPE_COMPACT = 5;
-	 ROW_TYPE_PAGE = 6;
-    }
-
-    optional RowType row_type = 20;
   }
 
   message ForeignKeyConstraint {
