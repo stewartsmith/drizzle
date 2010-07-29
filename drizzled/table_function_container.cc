@@ -40,12 +40,9 @@ plugin::TableFunction *TableFunctionContainer::getFunction(const std::string &pa
   return (*iter).second;
 }
 
-void TableFunctionContainer::getNames(string predicate,
+void TableFunctionContainer::getNames(const string &predicate,
                                       std::set<std::string> &set_of_names)
 {
-  std::transform(predicate.begin(), predicate.end(),
-                 predicate.begin(), ::tolower);
-
   for (ToolMap::iterator it= table_map.begin();
        it != table_map.end();
        it++)

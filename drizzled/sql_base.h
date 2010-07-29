@@ -31,7 +31,12 @@ void table_cache_free(void);
 bool table_cache_init(void);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
-HASH &get_open_cache();
+
+typedef boost::unordered_multimap< TableIdentifier::Key, Table *> TableOpenCache;
+typedef std::pair< TableOpenCache::const_iterator, TableOpenCache::const_iterator > TableOpenCacheRange;
+
+TableOpenCache &get_open_cache();
+void remove_table(Table *arg);
 
 void kill_drizzle(void);
 
