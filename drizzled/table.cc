@@ -102,7 +102,6 @@ int Table::delete_table(bool free_share)
     }
     else
     {
-      assert(s->newed);
       delete s;
     }
 

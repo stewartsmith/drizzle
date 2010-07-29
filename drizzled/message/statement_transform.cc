@@ -377,7 +377,14 @@ transformInsertRecordToSql(const InsertHeader &header,
 
     const FieldMetadata &field_metadata= header.field_metadata(x);
 
-    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    if (record.is_null(x))
+    {
+      should_quote_field_value= false;
+    }
+    else 
+    {
+      should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    }
 
     if (should_quote_field_value)
       destination.push_back('\'');
@@ -395,7 +402,14 @@ transformInsertRecordToSql(const InsertHeader &header,
     }
     else
     {
-      destination.append(record.insert_value(x));
+      if (record.is_null(x))
+      {
+        destination.append("NULL");
+      }
+      else 
+      {
+        destination.append(record.insert_value(x));
+      } 
     }
 
     if (should_quote_field_value)
@@ -522,7 +536,14 @@ transformUpdateRecordToSql(const UpdateHeader &header,
     destination.push_back(quoted_identifier);
     destination.push_back('=');
 
-    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    if (record.is_null(x))
+    {
+      should_quote_field_value= false;
+    }
+    else 
+    {
+      should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    }    
 
     if (should_quote_field_value)
       destination.push_back('\'');
@@ -540,7 +561,14 @@ transformUpdateRecordToSql(const UpdateHeader &header,
     }
     else
     {
-      destination.append(record.after_value(x));
+      if (record.is_null(x))
+      {
+        destination.append("NULL");
+      }
+      else
+      {
+        destination.append(record.after_value(x));
+      }
     }
 
     if (should_quote_field_value)
