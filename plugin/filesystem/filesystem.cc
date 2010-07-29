@@ -419,6 +419,7 @@ void FilesystemCursor::free_share()
   if (!--share->use_count){
     FilesystemEngine *a_engine= static_cast<FilesystemEngine *>(engine);
     a_engine->deleteOpenTable(share->table_name);
+    pthread_mutex_destroy(&share->mutex);
     delete share;
   }
 }
