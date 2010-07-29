@@ -457,7 +457,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
-  blob_field(NULL),
+  mem_root(TABLE_ALLOC_BLOCK_SIZE),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -527,7 +527,7 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
-  blob_field(NULL),
+  mem_root(TABLE_ALLOC_BLOCK_SIZE),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -581,7 +581,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
 
   private_key_for_cache= key;
 
-  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
 
@@ -604,7 +603,7 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
-  blob_field(NULL),
+  mem_root(TABLE_ALLOC_BLOCK_SIZE),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -662,7 +661,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   memcpy(&private_normalized_path[0], identifier.getPath().c_str(), identifier.getPath().size());
 
   {
-    memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
     table_category=         TABLE_CATEGORY_TEMPORARY;
     tmp_table=              message::Table::INTERNAL;
     db.str= &private_key_for_cache[0];
@@ -688,7 +686,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   found_next_number_field(NULL),
   timestamp_field(NULL),
   key_info(NULL),
-  blob_field(NULL),
+  mem_root(TABLE_ALLOC_BLOCK_SIZE),
   block_size(0),
   version(0),
   timestamp_offset(0),
@@ -740,7 +738,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   memset(&path, 0, sizeof(LEX_STRING));
   memset(&normalized_path, 0, sizeof(LEX_STRING));
 
-  mem_root.init_alloc_root(TABLE_ALLOC_BLOCK_SIZE);
   char *path_buff;
   std::string _path;
 
@@ -786,7 +783,6 @@ void TableShare::init(const char *new_table_name,
                       const char *new_path)
 {
 
-  memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   table_category=         TABLE_CATEGORY_TEMPORARY;
   tmp_table=              message::Table::INTERNAL;
   db.str= (char *)"";
