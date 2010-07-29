@@ -403,7 +403,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     {
       Table *locked_table;
-      abort_locked_tables(session, db, table->table_name);
+      abort_locked_tables(session, identifier);
       remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -411,7 +411,7 @@ static int rm_table_part2(Session *session, TableList *tables)
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
       */
-      if ((locked_table= drop_locked_tables(session, db, table->table_name)))
+      if ((locked_table= drop_locked_tables(session, identifier)))
         table->table= locked_table;
 
       if (session->killed)
