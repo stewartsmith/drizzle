@@ -584,7 +584,6 @@ int Field::warn_if_overflow(int op_result)
 void Field::init(Table *table_arg)
 {
   orig_table= table= table_arg;
-  table_name= &table_arg->alias;
 }
 
 /// This is used as a table name when the table structure is not set up
@@ -599,7 +598,6 @@ Field::Field(unsigned char *ptr_arg,
     null_ptr(null_ptr_arg),
     table(NULL),
     orig_table(NULL),
-    table_name(NULL),
     field_name(field_name_arg),
     key_start(0),
     part_of_key(0),
