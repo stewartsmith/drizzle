@@ -29,6 +29,8 @@
 
 #include "drizzled/table.h"
 
+#include "drizzled/util/string.h"
+
 #include <algorithm>
 #include <sstream>
 #include <cstdio>
@@ -345,7 +347,7 @@ void TableIdentifier::init()
     break;
   }
 
-  boost::hash<std::string> hasher;
+  util::insensitive_hash hasher;
   hash_value= hasher(path);
 
   key.resize(getKeySize());
