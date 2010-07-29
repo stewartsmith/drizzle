@@ -22,6 +22,8 @@
 #include <drizzled/cursor.h>
 #include <drizzled/thr_lock.h>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fstream>
@@ -52,7 +54,7 @@ public:
 class FilesystemCursor : public drizzled::Cursor
 {
   FilesystemTableShare *share;       /* Shared lock info */
-  TransparentFile *file_buff;
+  boost::scoped_ptr<TransparentFile> file_buff;
   int file_desc;
   std::string update_file_name;
   int update_file_desc;
@@ -68,8 +70,6 @@ public:
   FilesystemCursor(drizzled::plugin::StorageEngine &engine, drizzled::TableShare &table_arg);
   ~FilesystemCursor()
   {
-    if (file_buff)
-      delete file_buff;
   }
 
   /** @brief

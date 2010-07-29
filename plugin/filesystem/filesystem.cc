@@ -458,9 +458,9 @@ void FilesystemCursor::critical_section_exit()
 
 FilesystemCursor::FilesystemCursor(drizzled::plugin::StorageEngine &engine_arg, TableShare &table_arg)
   : Cursor(engine_arg, table_arg),
+    file_buff(new TransparentFile),
     thread_locked(false)
 {
-  file_buff= new TransparentFile();
 }
 
 int FilesystemCursor::doOpen(const drizzled::TableIdentifier &identifier, int, uint32_t)
