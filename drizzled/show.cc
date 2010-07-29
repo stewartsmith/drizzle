@@ -156,7 +156,7 @@ bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_no
   if (session->client->sendFields(&field_list))
     return true;
   {
-    session->client->store(table_list->table->alias);
+    session->client->store(table_list->table->getAlias());
   }
 
   session->client->store(buffer.ptr(), buffer.length());

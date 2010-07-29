@@ -726,7 +726,7 @@ void Field::make_field(SendField *field)
     field->org_table_name= field->db_name= "";
   if (orig_table)
   {
-    field->table_name= orig_table->alias;
+    field->table_name= orig_table->getAlias();
     field->org_col_name= field_name;
   }
   else
