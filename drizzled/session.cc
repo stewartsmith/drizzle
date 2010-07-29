@@ -1697,7 +1697,7 @@ void Session::nukeTable(Table *table)
   delete table->getMutableShare();
 
   /* This makes me sad, but we're allocating it via malloc */
-  free(table);
+  delete table;
 }
 
 /** Clear most status variables. */

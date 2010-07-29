@@ -1496,7 +1496,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     return NULL;
   }
 
-  tmp_table.alias= 0;
   tmp_table.timestamp_field= 0;
   tmp_table.setShare(&share);
 

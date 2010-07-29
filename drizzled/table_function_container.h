@@ -21,20 +21,21 @@
 #ifndef DRIZZLED_TABLE_FUNCTION_CONTAINER_H
 #define DRIZZLED_TABLE_FUNCTION_CONTAINER_H
 
-#include <drizzled/unordered_map.h>
 #include <set>
+#include <boost/unordered_map.hpp>
+#include "drizzled/util/string.h"
 
 namespace drizzled {
 
 class TableFunctionContainer {
-  typedef unordered_map<std::string, plugin::TableFunction *> ToolMap;
+  typedef boost::unordered_map<std::string, plugin::TableFunction *, util::insensitive_hash, util::insensitive_equal_to> ToolMap;
 
   ToolMap table_map;
 
 public:
   plugin::TableFunction *getFunction(const std::string &path);
 
-  void getNames(std::string predicate,
+  void getNames(const std::string &predicate,
                 std::set<std::string> &set_of_names);
 
 

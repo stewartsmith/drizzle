@@ -47,10 +47,11 @@ table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) 
 {
   pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
 
-  for (uint32_t idx= 0; idx < get_open_cache().records; idx++ )
-  {
-    table= (Table*) hash_element(&get_open_cache(), idx);
-    table_list.push_back(table);
+  for (TableOpenCache::const_iterator iter= get_open_cache().begin();
+       iter != get_open_cache().end();
+       iter++)
+   {
+    table_list.push_back((*iter).second);
   }
   std::sort(table_list.begin(), table_list.end(), Table::compare);
 }
