@@ -816,7 +816,6 @@ static bool internal_alter_table(Session *session,
                                  order_st *order,
                                  bool ignore)
 {
-  Table *new_table= NULL;
   int error= 0;
   char tmp_name[80];
   char old_name[32];
@@ -927,7 +926,7 @@ static bool internal_alter_table(Session *session,
         error= 0;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->alias);
+                            table->getAlias());
       }
 
       pthread_mutex_lock(&LOCK_open); /* Lock to remove all instances of table from table cache before ALTER */
@@ -975,7 +974,7 @@ static bool internal_alter_table(Session *session,
         error= 0;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->alias);
+                            table->getAlias());
       }
 
       if (error == 0)
@@ -1029,7 +1028,8 @@ static bool internal_alter_table(Session *session,
   }
 
   /* Open the table so we need to copy the data to it. */
-  new_table= open_alter_table(session, table, new_table_as_temporary);
+  Table *new_table= open_alter_table(session, table, new_table_as_temporary);
+
 
   if (not new_table)
   {
@@ -1127,12 +1127,11 @@ static bool internal_alter_table(Session *session,
         new_table->intern_close_table();
         if (new_table->hasShare())
         {
-          assert(new_table->getShare()->newed);
           delete new_table->s;
           new_table->s= NULL;
         }
 
-        free(new_table);
+        delete new_table;
       }
 
       pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
@@ -1179,12 +1178,11 @@ static bool internal_alter_table(Session *session,
 
       if (new_table->hasShare())
       {
-        assert(new_table->getShare()->newed);
         delete new_table->s;
         new_table->s= NULL;
       }
 
-      free(new_table);
+      delete new_table;
     }
 
     pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */

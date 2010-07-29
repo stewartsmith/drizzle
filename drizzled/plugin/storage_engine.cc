@@ -558,28 +558,6 @@ Cursor *StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
   return create(share, alloc);
 }
 
-class AddTableName : 
-  public unary_function<StorageEngine *, void>
-{
-  CachedDirectory &directory;
-  const SchemaIdentifier &identifier;
-  TableNameList &set_of_names;
-
-public:
-
-  AddTableName(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, set<string>& of_names) :
-    directory(directory_arg),
-    identifier(identifier_arg),
-    set_of_names(of_names)
-  {
-  }
-
-  result_type operator() (argument_type engine)
-  {
-    engine->doGetTableNames(directory, identifier, set_of_names);
-  }
-};
-
 class AddTableIdentifier : 
   public unary_function<StorageEngine *, void>
 {
@@ -606,34 +584,7 @@ public:
 static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
 static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
 
-void StorageEngine::getTableNames(Session &session, const SchemaIdentifier &schema_identifier, TableNameList &set_of_names)
-{
-  CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
-
-  if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
-  { }
-  else if (schema_identifier == DATA_DICTIONARY_IDENTIFIER)
-  { }
-  else
-  {
-    if (directory.fail())
-    {
-      errno= directory.getError();
-      if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), const_cast<SchemaIdentifier &>(schema_identifier).getSQLPath().c_str());
-      else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
-      return;
-    }
-  }
-
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, schema_identifier, set_of_names));
-
-  session.doGetTableNames(directory, schema_identifier, set_of_names);
-}
-
-void StorageEngine::getTableIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
+void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
