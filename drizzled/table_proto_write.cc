@@ -36,6 +36,8 @@
 
 #include <drizzled/table_proto.h>
 
+#include "drizzled/function/time/typecast.h"
+
 using namespace std;
 
 namespace drizzled {
@@ -261,6 +263,43 @@ static int fill_table_proto(message::Table &table_proto,
 	  my_error(ER_INVALID_DEFAULT, MYF(0), field_arg->field_name);
 	  return 1;
 	}
+
+        if (field_arg->sql_type == DRIZZLE_TYPE_DATE
+            || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
+            || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
+        {
+          DRIZZLE_TIME ltime;
+
+          if (field_arg->def->get_date(&ltime, TIME_FUZZY_DATE))
+          {
+            my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR),
+                     default_value->c_str());
+            return 1;
+          }
+
+          /* We now do the casting down to the appropriate type.
+
+             Yes, this implicit casting is balls.
+             It was previously done on reading the proto back in,
+             but we really shouldn't store the bogus things in the proto,
+             and instead do the casting behaviour here.
+
+             the timestamp errors are taken care of elsewhere.
+          */
+
+          if (field_arg->sql_type == DRIZZLE_TYPE_DATETIME)
+          {
+            Item *typecast= new Item_datetime_typecast(field_arg->def);
+            typecast->quick_fix_field();
+            typecast->val_str(default_value);
+          }
+          else if (field_arg->sql_type == DRIZZLE_TYPE_DATE)
+          {
+            Item *typecast= new Item_date_typecast(field_arg->def);
+            typecast->quick_fix_field();
+            typecast->val_str(default_value);
+          }
+        }
 
 	if ((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
 	    && field_arg->charset==&my_charset_bin)
