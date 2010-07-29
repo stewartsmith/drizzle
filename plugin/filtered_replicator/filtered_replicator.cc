@@ -209,7 +209,6 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
   string table_name;
 
   size_t num_statements= to_replicate.statement_size();
-  size_t x;
 
   /* 
    * We build a new transaction message containing only Statement
@@ -221,7 +220,7 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
    */
   message::Transaction filtered_transaction;
 
-  for (x= 0; x < num_statements; ++x)
+  for (size_t x= 0; x < num_statements; ++x)
   {
     schema_name.clear();
     table_name.clear();
