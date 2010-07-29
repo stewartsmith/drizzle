@@ -221,8 +221,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     if (drop_temporary == false)
     {
       Table *locked_table;
-      abort_locked_tables(session, db, table->table_name);
       TableIdentifier identifier(db, table->table_name);
+      abort_locked_tables(session, identifier);
       remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -230,7 +230,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
       */
-      if ((locked_table= drop_locked_tables(session, db, table->table_name)))
+      if ((locked_table= drop_locked_tables(session, identifier)))
         table->table= locked_table;
 
       if (session->killed)
@@ -2155,7 +2155,7 @@ bool mysql_create_like_table(Session* session,
   {
     Table *name_lock= 0;
 
-    if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
+    if (session->lock_table_name_if_not_cached(destination_identifier, &name_lock))
     {
       if (name_lock)
       {

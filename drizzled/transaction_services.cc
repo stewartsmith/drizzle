@@ -1153,7 +1153,7 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
     if (current_field->is_null())
     {
       record->add_is_null(true);
-      record->add_insert_value(NULL, 0);
+      record->add_insert_value("", 0);
     } 
     else 
     {
@@ -1342,7 +1342,7 @@ void TransactionServices::updateRecord(Session *in_session,
       if (current_field->is_null())
       {
         record->add_is_null(true);
-        record->add_after_value(NULL, 0);
+        record->add_after_value("", 0);
       }
       else
       {
