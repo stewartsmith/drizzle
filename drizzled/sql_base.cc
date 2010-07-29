@@ -836,7 +836,7 @@ int Session::drop_temporary_table(TableList *table_list)
   /* Table might be in use by some outer statement. */
   if (table->query_id && table->query_id != query_id)
   {
-    my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
+    my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
     return -1;
   }
 
@@ -1226,7 +1226,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       */
       if (table->query_id)
       {
-        my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
+        my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
         return NULL;
       }
       table->query_id= getQueryId();
@@ -1461,7 +1461,7 @@ reset:
     table->alias_name_used= my_strcasecmp(table_alias_charset,
                                           table->getMutableShare()->getTableName(), alias);
   /* Fix alias if table name changes */
-  if (strcmp(table->alias, alias))
+  if (strcmp(table->getAlias(), alias))
   {
     uint32_t length=(uint32_t) strlen(alias)+1;
     table->alias= (char*) realloc((char*) table->alias, length);
@@ -1688,7 +1688,7 @@ bool Session::reopen_tables(bool get_locks, bool)
   {
     next= table->getNext();
 
-    my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->alias);
+    my_error(ER_CANT_REOPEN_TABLE, MYF(0), table->getAlias());
     remove_table(table);
     error= 1;
   }

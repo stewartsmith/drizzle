@@ -926,7 +926,7 @@ static bool internal_alter_table(Session *session,
         error= 0;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->alias);
+                            table->getAlias());
       }
 
       pthread_mutex_lock(&LOCK_open); /* Lock to remove all instances of table from table cache before ALTER */
@@ -974,7 +974,7 @@ static bool internal_alter_table(Session *session,
         error= 0;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->alias);
+                            table->getAlias());
       }
 
       if (error == 0)

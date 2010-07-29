@@ -1875,7 +1875,6 @@ int TableShare::open_table_from_share(Session *session,
   local_error= 1;
   outparam.resetTable(session, this, db_stat);
 
-
   if (not (outparam.alias= strdup(alias)))
     goto err;
 
@@ -2063,6 +2062,7 @@ err:
   outparam.db_stat= 0;
   outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
   free((char*) outparam.alias);
+
   return (local_error);
 }
 

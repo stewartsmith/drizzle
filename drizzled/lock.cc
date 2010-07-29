@@ -612,7 +612,7 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
       *write_lock_used=table;
       if (table->db_stat & HA_READ_ONLY)
       {
-	my_error(ER_OPEN_AS_READONLY,MYF(0),table->alias);
+	my_error(ER_OPEN_AS_READONLY, MYF(0), table->getAlias());
         /* Clear the lock type of the lock data that are stored already. */
         sql_lock->lock_count= locks - sql_lock->locks;
         reset_lock_data_and_free(&sql_lock);
