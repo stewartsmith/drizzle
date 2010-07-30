@@ -1674,7 +1674,9 @@ static int test_plugin_options(memory::Root *module_root,
 
   if (test_module->getManifest().init_options != NULL)
   {
-    po::options_description module_options("Options used by plugins");
+    string plugin_section_title("Options used by ");
+    plugin_section_title.append(test_module->getName());
+    po::options_description module_options(plugin_section_title);
     module::option_context opt_ctx(test_module->getName(),
                                    module_options.add_options());
     test_module->getManifest().init_options(opt_ctx);
