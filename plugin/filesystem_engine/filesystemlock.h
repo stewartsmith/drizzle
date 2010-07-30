@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_FILESYSTEM_FILESYSTEMLOCK_H
-#define PLUGIN_FILESYSTEM_FILESYSTEMLOCK_H
+#ifndef PLUGIN_FILESYSTEM_ENGINE_FILESYSTEMLOCK_H
+#define PLUGIN_FILESYSTEM_ENGINE_FILESYSTEMLOCK_H
 
 #include <pthread.h>
 
@@ -57,4 +57,4 @@ private:
   pthread_mutex_t *mutex_;
 };
 
-#endif /* PLUGIN_FILESYSTEM_FILESYSTEMLOCK_H */
+#endif /* PLUGIN_FILESYSTEM_ENGINE_FILESYSTEMLOCK_H */

@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_FILESYSTEM_FORMATINFO_H
-#define PLUGIN_FILESYSTEM_FORMATINFO_H
+#ifndef PLUGIN_FILESYSTEM_ENGINE_FORMATINFO_H
+#define PLUGIN_FILESYSTEM_ENGINE_FORMATINFO_H
 
 #include <drizzled/message/table.pb.h>
 
@@ -48,4 +48,4 @@ private:
   int separator_mode;
 };
 
-#endif /* PLUGIN_FILESYSTEM_FORMATINFO_H */
+#endif /* PLUGIN_FILESYSTEM_ENGINE_FORMATINFO_H */

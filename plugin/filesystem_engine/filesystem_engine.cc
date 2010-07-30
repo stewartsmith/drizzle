@@ -27,7 +27,7 @@
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include "filesystem.h"
+#include "filesystem_engine.h"
 #include "utility.h"
 
 #include <fcntl.h>

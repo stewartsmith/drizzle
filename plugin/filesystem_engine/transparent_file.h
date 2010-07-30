@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef PLUGIN_FILESYSTEM_TRANSPARENT_FILE_H
-#define PLUGIN_FILESYSTEM_TRANSPARENT_FILE_H
+#ifndef PLUGIN_FILESYSTEM_ENGINE_TRANSPARENT_FILE_H
+#define PLUGIN_FILESYSTEM_ENGINE_TRANSPARENT_FILE_H
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,4 +41,4 @@ public:
   off_t read_next();
 };
 
-#endif /* PLUGIN_FILESYSTEM_TRANSPARENT_FILE_H */
+#endif /* PLUGIN_FILESYSTEM_ENGINE_TRANSPARENT_FILE_H */

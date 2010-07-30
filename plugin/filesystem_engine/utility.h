@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_FILESYSTEM_UTILITY_H
-#define PLUGIN_FILESYSTEM_UTILITY_H
+#ifndef PLUGIN_FILESYSTEM_ENGINE_UTILITY_H
+#define PLUGIN_FILESYSTEM_ENGINE_UTILITY_H
 
 static inline ssize_t write_in_all(int fd, const void *buf, size_t count)
 {
@@ -43,4 +43,4 @@ static inline ssize_t write_in_all(int fd, const void *buf, size_t count)
   return total;
 }
 
-#endif /* PLUGIN_FILESYSTEM_UTILITY_H */
+#endif /* PLUGIN_FILESYSTEM_ENGINE_UTILITY_H */

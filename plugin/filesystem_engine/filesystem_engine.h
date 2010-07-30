@@ -16,8 +16,8 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef PLUGIN_FILESYSTEM_FILESYSTEM_H
-#define PLUGIN_FILESYSTEM_FILESYSTEM_H
+#ifndef PLUGIN_FILESYSTEM_ENGINE_FILESYSTEM_ENGINE_H
+#define PLUGIN_FILESYSTEM_ENGINE_FILESYSTEM_ENGINE_H
 
 #include <drizzled/cursor.h>
 #include <drizzled/thr_lock.h>
@@ -113,4 +113,4 @@ private:
   int find_current_row(unsigned char *buf);
 };
 
-#endif /* PLUGIN_FILESYSTEM_FILESYSTEM_H */
+#endif /* PLUGIN_FILESYSTEM_ENGINE_FILESYSTEM_ENGINE_H */
