@@ -848,9 +848,9 @@ static void combine_queries(vector<string> queries)
 
  * long_options is the union of commandline_options, slap_options and client_options.
 
- * There are two configuration files per set of options, one which is defined by the user and
- * which is found at ~/.drizzle directory and the other which is the system configuration
- * file which is found in the SYSCONFDIR/drizzle directory.
+ * There are two configuration files per set of options, one which is defined by the user
+ * which is found at either $XDG_CONFIG_HOME/drizzle or ~/.config/drizzle directory and the other which 
+ * is the system configuration file which is found in the SYSCONFDIR/drizzle directory.
 
  * The system configuration file is over ridden by the user's configuration file which
  * in turn is over ridden by the command line.
@@ -979,6 +979,8 @@ int main(int argc, char **argv)
     std::string system_config_dir_client(SYSCONFDIR); 
     system_config_dir_client.append("/drizzle/client.cnf");
 
+    std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
     uint64_t temp_drizzle_port= 0;
     drizzle_con_st con;
     OptionString *eptr;
@@ -989,14 +991,20 @@ int main(int argc, char **argv)
     po::store(po::command_line_parser(argc, argv).options(long_options).
             extra_parser(parse_password_arg).run(), vm);
 
-    ifstream user_slap_ifs("~/.drizzle/drizzleslap.cnf");
+    std::string user_config_dir_slap(user_config_dir);
+    user_config_dir_slap.append("/drizzle/drizzleslap.cnf"); 
+
+    std::string user_config_dir_client(user_config_dir);
+    user_config_dir_client.append("/drizzle/client.cnf");
+
+    ifstream user_slap_ifs(user_config_dir_slap.c_str());
     po::store(parse_config_file(user_slap_ifs, slap_options), vm);
+
+    ifstream user_client_ifs(user_config_dir_client.c_str());
+    po::store(parse_config_file(user_client_ifs, client_options), vm);
 
     ifstream system_slap_ifs(system_config_dir_slap.c_str());
     store(parse_config_file(system_slap_ifs, slap_options), vm);
-
-    ifstream user_client_ifs("~/.drizzle/client.cnf");
-    po::store(parse_config_file(user_client_ifs, client_options), vm);
 
     ifstream system_client_ifs(system_config_dir_client.c_str());
     store(parse_config_file(system_client_ifs, client_options), vm);
@@ -1006,7 +1014,7 @@ int main(int argc, char **argv)
     if (process_options())
       exit(1);
 
-    if( vm.count("help") || vm.count("info"))
+    if ( vm.count("help") || vm.count("info"))
     {
       printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
           drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
@@ -1015,11 +1023,11 @@ int main(int argc, char **argv)
           \nand you are welcome to modify and redistribute it under the GPL \
           license\n");
       puts("Run a query multiple times against the server\n");
-      cout<<long_options<<endl;
+      cout << long_options << endl;
       exit(0);
     }   
 
-    if(vm.count("port")) 
+    if (vm.count("port")) 
     {
       temp_drizzle_port= vm["port"].as<uint32_t>();
 
@@ -1034,7 +1042,7 @@ int main(int argc, char **argv)
       }
     }
 
-  if( vm.count("password") )
+  if ( vm.count("password") )
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -1055,7 +1063,7 @@ int main(int argc, char **argv)
 
 
 
-    if( vm.count("version") )
+    if ( vm.count("version") )
     {
       printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
           drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
