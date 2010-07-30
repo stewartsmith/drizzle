@@ -147,7 +147,7 @@ public:
   }
 
   unsigned char *record[2]; /**< Pointer to "records" */
-  unsigned char *insert_values; /* used by INSERT ... UPDATE */
+  std::vector<unsigned char> insert_values; /* used by INSERT ... UPDATE */
   KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */

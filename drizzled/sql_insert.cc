@@ -808,7 +808,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           that matches, is updated. If update causes a conflict again,
           an error is returned
         */
-	assert(table->insert_values != NULL);
+	assert(table->insert_values.size());
         table->storeRecordAsInsert();
         table->restoreRecord();
         assert(info->update_fields->elements ==

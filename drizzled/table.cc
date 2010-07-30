@@ -134,7 +134,7 @@ void Table::resetTable(Session *session,
   record[0]= (unsigned char *) NULL;
   record[1]= (unsigned char *) NULL;
 
-  insert_values= NULL;
+  insert_values.clear();
   key_info= NULL;
   next_number_field= NULL;
   found_next_number_field= NULL;
@@ -1837,7 +1837,8 @@ void Table::storeRecord()
  */
 void Table::storeRecordAsInsert()
 {
-  memcpy(insert_values, record[0], (size_t) s->getRecordLength());
+  assert(insert_values.size() >= s->getRecordLength());
+  memcpy(&insert_values[0], record[0], (size_t) s->getRecordLength());
 }
 
 /*
@@ -1888,7 +1889,6 @@ Table::Table() :
   tablenr(0),
   db_stat(0),
   in_use(NULL),
-  insert_values(NULL),
   key_info(NULL),
   next_number_field(NULL),
   found_next_number_field(NULL),
