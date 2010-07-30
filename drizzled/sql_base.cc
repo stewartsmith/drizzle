@@ -2370,7 +2370,7 @@ Table *Session::open_temporary_table(TableIdentifier &identifier,
   {
     /* No need to lock share->mutex as this is not needed for tmp tables */
     delete share;
-    free((char*) new_tmp_table);
+    delete new_tmp_table;
 
     return 0;
   }
