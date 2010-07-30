@@ -385,8 +385,6 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
-    if (default_value->compare("NOW()") == 0)
-      break;
   case DRIZZLE_TYPE_ENUM:
     default_item= new Item_string(default_value->c_str(),
                                   default_value->length(),
@@ -1228,15 +1226,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
     if (pfield.has_options() &&
-        pfield.options().has_default_value() &&
-        pfield.options().default_value().compare("NOW()") == 0)
+        pfield.options().has_default_expression() &&
+        pfield.options().default_expression().compare("NOW()") == 0)
     {
-      if (pfield.options().has_update_value() &&
-          pfield.options().update_value().compare("NOW()") == 0)
+      if (pfield.options().has_update_expression() &&
+          pfield.options().update_expression().compare("NOW()") == 0)
       {
         unireg_type= Field::TIMESTAMP_DNUN_FIELD;
       }
-      else if (! pfield.options().has_update_value())
+      else if (! pfield.options().has_update_expression())
       {
         unireg_type= Field::TIMESTAMP_DN_FIELD;
       }
@@ -1244,8 +1242,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         assert(1); // Invalid update value.
     }
     else if (pfield.has_options() &&
-             pfield.options().has_update_value() &&
-             pfield.options().update_value().compare("NOW()") == 0)
+             pfield.options().has_update_expression() &&
+             pfield.options().update_expression().compare("NOW()") == 0)
     {
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
