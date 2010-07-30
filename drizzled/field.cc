@@ -438,7 +438,7 @@ void Field::reset_fields()
 
 void Field::set_default()
 {
-  ptrdiff_t l_offset= (ptrdiff_t) (table->getDefaultValues() - table->record[0]);
+  ptrdiff_t l_offset= (ptrdiff_t) (table->getDefaultValues() - table->getInsertRecord());
   memcpy(ptr, ptr + l_offset, pack_length());
   if (null_ptr)
     *null_ptr= ((*null_ptr & (unsigned char) ~null_bit) | (null_ptr[l_offset] & null_bit));
@@ -523,7 +523,7 @@ bool Field::is_null_in_record(const unsigned char *record)
 {
   if (! null_ptr)
     return false;
-  return test(record[(uint32_t) (null_ptr -table->record[0])] & null_bit);
+  return test(record[(uint32_t) (null_ptr -table->getInsertRecord())] & null_bit);
 }
 
 bool Field::is_null_in_record_with_offset(ptrdiff_t with_offset)
@@ -846,7 +846,7 @@ Field *Field::clone(memory::Root *root, Table *new_table)
   if ((tmp= (Field*) root->memdup_root((char*) this,size_of())))
   {
     tmp->init(new_table);
-    tmp->move_field_offset((ptrdiff_t) (new_table->record[0] -
+    tmp->move_field_offset((ptrdiff_t) (new_table->getInsertRecord() -
                                            new_table->getDefaultValues()));
   }
   return tmp;

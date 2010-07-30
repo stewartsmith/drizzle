@@ -689,7 +689,7 @@ size_t Table::max_row_length(const unsigned char *data)
   {
     Field_blob* const blob= (Field_blob*) field[*ptr];
     length+= blob->get_length((const unsigned char*)
-                              (data + blob->offset(record[0]))) +
+                              (data + blob->offset(getInsertRecord()))) +
       HA_KEY_BLOB_LENGTH;
   }
   return length;
@@ -1112,12 +1112,11 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   {
     uint32_t alloc_length=ALIGN_SIZE(reclength+MI_UNIQUE_HASH_LENGTH+1);
     share->rec_buff_length= alloc_length;
-    if (!(table->record[0]= (unsigned char*)
-                            table->alloc_root(alloc_length*2)))
+    if (!(table->record[0]= (unsigned char*) table->alloc_root(alloc_length*2)))
     {
       goto err;
     }
-    table->record[1]= table->record[0]+alloc_length;
+    table->record[1]= table->getInsertRecord()+alloc_length;
     share->resizeDefaultValues(alloc_length);
   }
   copy_func[0]= 0;				// End marker
@@ -1126,8 +1125,8 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   table->setup_tmp_table_column_bitmaps(bitmaps);
 
   recinfo=param->start_recinfo;
-  null_flags=(unsigned char*) table->record[0];
-  pos=table->record[0]+ null_pack_length;
+  null_flags=(unsigned char*) table->getInsertRecord();
+  pos=table->getInsertRecord()+ null_pack_length;
   if (null_pack_length)
   {
     memset(recinfo, 0, sizeof(*recinfo));
@@ -1136,7 +1135,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     recinfo++;
     memset(null_flags, 255, null_pack_length);	// Set null fields
 
-    table->null_flags= (unsigned char*) table->record[0];
+    table->null_flags= (unsigned char*) table->getInsertRecord();
     share->null_fields= null_count+ hidden_null_count;
     share->null_bytes= null_pack_length;
   }
@@ -1189,7 +1188,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       ptrdiff_t diff;
       Field *orig_field= default_field[i];
       /* Get the value from default_values */
-      diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->record[0]);
+      diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->getInsertRecord());
       orig_field->move_field_offset(diff);      // Points now at default_values
       if (orig_field->is_real_null())
         field->set_null();
@@ -1198,7 +1197,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
         field->set_notnull();
         memcpy(field->ptr, orig_field->ptr, field->pack_length());
       }
-      orig_field->move_field_offset(-diff);     // Back to record[0]
+      orig_field->move_field_offset(-diff);     // Back to getInsertRecord()
     }
 
     if (from_field[i])
@@ -1270,7 +1269,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       bool maybe_null=(*cur_group->item)->maybe_null;
       key_part_info->null_bit= 0;
       key_part_info->field=  field;
-      key_part_info->offset= field->offset(table->record[0]);
+      key_part_info->offset= field->offset(table->getInsertRecord());
       key_part_info->length= (uint16_t) field->key_length();
       key_part_info->type=   (uint8_t) field->key_type();
       key_part_info->key_type= 
@@ -1298,7 +1297,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
 	  keyinfo->flags|= HA_NULL_ARE_EQUAL;	// def. that NULL == NULL
 	  key_part_info->null_bit=field->null_bit;
 	  key_part_info->null_offset= (uint32_t) (field->null_ptr -
-					      (unsigned char*) table->record[0]);
+					      (unsigned char*) table->getInsertRecord());
           cur_group->buff++;                        // Pointer to field data
 	  group_buff++;                         // Skipp null flag
 	}
@@ -1354,7 +1353,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       key_part_info->null_bit= 0;
       key_part_info->offset=hidden_null_pack_length;
       key_part_info->length=null_pack_length;
-      key_part_info->field= new Field_varstring(table->record[0],
+      key_part_info->field= new Field_varstring(table->getInsertRecord(),
                                                 (uint32_t) key_part_info->length,
                                                 0,
                                                 (unsigned char*) 0,
@@ -1376,7 +1375,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
     {
       key_part_info->null_bit= 0;
       key_part_info->field=    *reg_field;
-      key_part_info->offset=   (*reg_field)->offset(table->record[0]);
+      key_part_info->offset=   (*reg_field)->offset(table->getInsertRecord());
       key_part_info->length=   (uint16_t) (*reg_field)->pack_length();
       /* @todo The below method of computing the key format length of the
         key part is a copy/paste from optimizer/range.cc, and table.cc.
@@ -1435,7 +1434,7 @@ err:
     The created table doesn't have a table Cursor associated with
     it, has no keys, no group/distinct, no copy_funcs array.
     The sole purpose of this Table object is to use the power of Field
-    class to read/write data to/from table->record[0]. Then one can store
+    class to read/write data to/from table->getInsertRecord(). Then one can store
     the record in any container (RB tree, hash, etc).
     The table is created in Session mem_root, so are the table's fields.
     Consequently, if you don't BLOB fields, you don't need to free it.
@@ -1514,18 +1513,18 @@ Table *Session::create_virtual_tmp_table(List<CreateField> &field_list)
   share->setRecordLength(record_length + null_pack_length);
   share->rec_buff_length= ALIGN_SIZE(share->getRecordLength() + 1);
   table->record[0]= (unsigned char*)alloc(share->rec_buff_length);
-  if (!table->record[0])
+  if (not table->getInsertRecord())
     goto error;
 
   if (null_pack_length)
   {
-    table->null_flags= (unsigned char*) table->record[0];
+    table->null_flags= (unsigned char*) table->getInsertRecord();
     share->null_fields= null_count;
     share->null_bytes= null_pack_length;
   }
   {
     /* Set up field pointers */
-    unsigned char *null_pos= table->record[0];
+    unsigned char *null_pos= table->getInsertRecord();
     unsigned char *field_pos= null_pos + share->null_bytes;
     uint32_t null_bit= 1;
 
@@ -1678,7 +1677,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
       if (!(key_field->flags & NOT_NULL_FLAG))
       {
 	seg->null_bit= key_field->null_bit;
-	seg->null_pos= (uint32_t) (key_field->null_ptr - (unsigned char*) record[0]);
+	seg->null_pos= (uint32_t) (key_field->null_ptr - (unsigned char*) getInsertRecord());
 	/*
 	  We are using a GROUP BY on something that contains NULL
 	  In this case we have to tell MyISAM that two NULL should
@@ -1806,7 +1805,7 @@ bool Table::compare_record(Field **ptr)
 bool Table::compare_record()
 {
   if (s->blob_fields + s->varchar_fields == 0)
-    return memcmp(this->record[0], this->record[1], (size_t) s->getRecordLength());
+    return memcmp(this->getInsertRecord(), this->getUpdateRecord(), (size_t) s->getRecordLength());
   
   /* Compare null bits */
   if (memcmp(null_flags, null_flags + s->rec_buff_length, s->null_bytes))
@@ -1828,7 +1827,7 @@ bool Table::compare_record()
  */
 void Table::storeRecord()
 {
-  memcpy(record[1], record[0], (size_t) s->getRecordLength());
+  memcpy(getUpdateRecord(), getInsertRecord(), (size_t) s->getRecordLength());
 }
 
 /*
@@ -1838,7 +1837,7 @@ void Table::storeRecord()
 void Table::storeRecordAsInsert()
 {
   assert(insert_values.size() >= s->getRecordLength());
-  memcpy(&insert_values[0], record[0], (size_t) s->getRecordLength());
+  memcpy(&insert_values[0], getInsertRecord(), (size_t) s->getRecordLength());
 }
 
 /*
@@ -1847,7 +1846,7 @@ void Table::storeRecordAsInsert()
  */
 void Table::storeRecordAsDefault()
 {
-  memcpy(s->getDefaultValues(), record[0], (size_t) s->getRecordLength());
+  memcpy(s->getDefaultValues(), getInsertRecord(), (size_t) s->getRecordLength());
 }
 
 /*
@@ -1856,7 +1855,7 @@ void Table::storeRecordAsDefault()
  */
 void Table::restoreRecord()
 {
-  memcpy(record[0], record[1], (size_t) s->getRecordLength());
+  memcpy(getInsertRecord(), getUpdateRecord(), (size_t) s->getRecordLength());
 }
 
 /*
@@ -1865,7 +1864,7 @@ void Table::restoreRecord()
  */
 void Table::restoreRecordAsDefault()
 {
-  memcpy(record[0], s->getDefaultValues(), (size_t) s->getRecordLength());
+  memcpy(getInsertRecord(), s->getDefaultValues(), (size_t) s->getRecordLength());
 }
 
 /*

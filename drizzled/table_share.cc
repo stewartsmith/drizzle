@@ -1867,7 +1867,7 @@ int TableShare::open_table_from_share(Session *session,
     if (records > 1)
       outparam.record[1]= record+ rec_buff_length;
     else
-      outparam.record[1]= outparam.record[0];   // Safety
+      outparam.record[1]= outparam.getInsertRecord();   // Safety
   }
 
 #ifdef HAVE_purify
@@ -1877,15 +1877,15 @@ int TableShare::open_table_from_share(Session *session,
   */
   if (records > 1)
   {
-    memcpy(outparam.record[0], getDefaultValues(), rec_buff_length);
-    memcpy(outparam.record[1], getDefaultValues(), null_bytes);
+    memcpy(outparam.getInsertRecord(), getDefaultValues(), rec_buff_length);
+    memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
     if (records > 2)
-      memcpy(outparam.record[1], getDefaultValues(), rec_buff_length);
+      memcpy(outparam.getUpdateRecord(), getDefaultValues(), rec_buff_length);
   }
 #endif
   if (records > 1)
   {
-    memcpy(outparam.record[1], getDefaultValues(), null_bytes);
+    memcpy(outparam.getUpdateRecord(), getDefaultValues(), null_bytes);
   }
 
   if (!(field_ptr = (Field **) outparam.alloc_root( (uint32_t) ((fields+1)* sizeof(Field*)))))
@@ -1895,7 +1895,7 @@ int TableShare::open_table_from_share(Session *session,
 
   outparam.setFields(field_ptr);
 
-  record= (unsigned char*) outparam.record[0]-1;	/* Fieldstart = 1 */
+  record= (unsigned char*) outparam.getInsertRecord()-1;	/* Fieldstart = 1 */
 
   outparam.null_flags= (unsigned char*) record+1;
 

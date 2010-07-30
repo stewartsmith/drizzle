@@ -146,6 +146,16 @@ public:
     return in_use;
   }
 
+  unsigned char *getInsertRecord()
+  {
+    return record[0];
+  }
+
+  unsigned char *getUpdateRecord()
+  {
+    return record[1];
+  }
+
   unsigned char *record[2]; /**< Pointer to "records" */
   std::vector<unsigned char> insert_values; /* used by INSERT ... UPDATE */
   KeyInfo  *key_info; /**< data of keys in database */
@@ -169,7 +179,7 @@ public:
   uint32_t lock_data_start; /**< Start pos. in DRIZZLE_LOCK.locks */
   uint32_t lock_count; /**< Number of locks */
   uint32_t used_fields;
-  uint32_t status; /* What's in record[0] */
+  uint32_t status; /* What's in getInsertRecord() */
   /* number of select if it is derived table */
   uint32_t derived_select_number;
   int current_lock; /**< Type of lock on table */
