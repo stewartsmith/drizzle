@@ -221,6 +221,12 @@ int ArchiveEngine::doGetTableDefinition(Session&,
     free(proto_string);
   }
 
+  /* We set the name from what we've asked for as in RENAME TABLE for ARCHIVE
+     we do not rewrite the table proto (as it's wedged in the file header)
+  */
+  table_proto.set_schema(identifier.getSchemaName());
+  table_proto.set_name(identifier.getTableName());
+
   return error;
 }
 

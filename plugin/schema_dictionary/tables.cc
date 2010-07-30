@@ -30,13 +30,6 @@ static const string TEMPORARY("TEMPORARY");
 static const string INTERNAL("INTERNAL");
 static const string FUNCTION("FUNCTION");
 
-static const string DEFAULT("DEFAULT");
-static const string FIXED("FIXED");
-static const string DYNAMIC("DYNAMIC");
-static const string COMPRESSED("COMPRESSED");
-static const string REDUNDANT("REDUNDANT");
-static const string COMPACT("COMPACT");
-static const string PAGE("PAGE");
 
 static const string VARCHAR("VARCHAR");
 static const string DOUBLE("DOUBLE");
@@ -90,35 +83,6 @@ bool TablesTool::Generator::populate()
   }
 
   return false;
-}
-
-void TablesTool::Generator::pushRow(message::Table::TableOptions::RowType type)
-{
-  switch (type)
-  {
-  default:
-  case message::Table::TableOptions::ROW_TYPE_DEFAULT:
-    push(DEFAULT);
-    break;
-  case message::Table::TableOptions::ROW_TYPE_FIXED:
-    push(FIXED);
-    break;
-  case message::Table::TableOptions::ROW_TYPE_DYNAMIC:
-    push(DYNAMIC);
-    break;
-  case message::Table::TableOptions::ROW_TYPE_COMPRESSED:
-    push(COMPRESSED);
-    break;
-  case message::Table::TableOptions::ROW_TYPE_REDUNDANT:
-    push(REDUNDANT);
-    break;
-  case message::Table::TableOptions::ROW_TYPE_COMPACT:
-    push(COMPACT);
-    break;
-  case message::Table::TableOptions::ROW_TYPE_PAGE:
-    push(PAGE);
-    break;
-  }
 }
 
 void TablesTool::Generator::pushType(message::Table::Field::FieldType type)
@@ -196,7 +160,7 @@ void TablesTool::Generator::fill()
   push(getTableMessage().engine().name());
 
   /* ROW_FORMAT */
-  pushRow(getTableMessage().options().row_type());
+  push("DEFAULT");
 
   /* TABLE_COLLATION */
   push(getTableMessage().options().collation());

@@ -2517,43 +2517,6 @@ InnobaseEngine::close_connection(
 *****************************************************************************/
 
 /****************************************************************//**
-Get the record format from the data dictionary.
-@return one of ROW_TYPE_REDUNDANT, ROW_TYPE_COMPACT,
-ROW_TYPE_COMPRESSED, ROW_TYPE_DYNAMIC */
-UNIV_INTERN
-enum row_type
-ha_innobase::get_row_type() const
-/*=============================*/
-{
-  if (prebuilt && prebuilt->table) {
-    const ulint flags = prebuilt->table->flags;
-
-    if (UNIV_UNLIKELY(!flags)) {
-      return(ROW_TYPE_REDUNDANT);
-    }
-
-    ut_ad(flags & DICT_TF_COMPACT);
-
-    switch (flags & DICT_TF_FORMAT_MASK) {
-    case DICT_TF_FORMAT_51 << DICT_TF_FORMAT_SHIFT:
-      return(ROW_TYPE_COMPACT);
-    case DICT_TF_FORMAT_ZIP << DICT_TF_FORMAT_SHIFT:
-      if (flags & DICT_TF_ZSSIZE_MASK) {
-        return(ROW_TYPE_COMPRESSED);
-      } else {
-        return(ROW_TYPE_DYNAMIC);
-      }
-#if DICT_TF_FORMAT_ZIP != DICT_TF_FORMAT_MAX
-# error "DICT_TF_FORMAT_ZIP != DICT_TF_FORMAT_MAX"
-#endif
-    }
-  }
-  ut_ad(0);
-  return(ROW_TYPE_NOT_USED);
-}
-
-
-/****************************************************************//**
 Returns the index type. */
 UNIV_INTERN
 const char*
