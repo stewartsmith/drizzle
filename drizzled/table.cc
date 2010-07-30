@@ -102,7 +102,6 @@ int Table::delete_table(bool free_share)
     }
     else
     {
-      assert(s->newed);
       delete s;
     }
 
@@ -739,7 +738,7 @@ Field *create_tmp_field_from_field(Session *session, Field *org_field,
                                    org_field->charset());
   else
     new_field= org_field->new_field(session->mem_root, table,
-                                    table == org_field->table);
+                                    table == org_field->getTable());
   if (new_field)
   {
     new_field->init(table);
@@ -1190,7 +1189,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       ptrdiff_t diff;
       Field *orig_field= default_field[i];
       /* Get the value from default_values */
-      diff= (ptrdiff_t) (orig_field->table->getDefaultValues() - orig_field->table->record[0]);
+      diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->record[0]);
       orig_field->move_field_offset(diff);      // Points now at default_values
       if (orig_field->is_real_null())
         field->set_null();
@@ -1568,7 +1567,12 @@ error:
 bool Table::open_tmp_table()
 {
   int error;
-  if ((error=cursor->ha_open(this, s->getTableName(),O_RDWR,
+  
+  TableIdentifier identifier(s->getSchemaName(), s->getTableName(), s->getPath());
+  if ((error=cursor->ha_open(identifier,
+                             this,
+                             s->getTableName(),
+                             O_RDWR,
                              HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {
     print_error(error, MYF(0));
@@ -1984,11 +1988,11 @@ void Table::setup_table_map(TableList *table_list, uint32_t table_number)
   null_row= 0;
   status= STATUS_NO_RECORD;
   maybe_null= table_list->outer_join;
-  TableList *embedding= table_list->embedding;
+  TableList *embedding= table_list->getEmbedding();
   while (!maybe_null && embedding)
   {
     maybe_null= embedding->outer_join;
-    embedding= embedding->embedding;
+    embedding= embedding->getEmbedding();
   }
   tablenr= table_number;
   map= (table_map) 1 << table_number;

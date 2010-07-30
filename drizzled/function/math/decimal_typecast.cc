@@ -20,7 +20,7 @@
 #include "config.h"
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/error.h>
-#include <drizzled/current_session.h>
+#include <drizzled/session.h>
 #include "drizzled/internal/m_string.h"
 
 namespace drizzled
@@ -87,7 +87,7 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
   return dec;
 
 err:
-  push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+  push_warning_printf(getSessionPtr(), DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                       ER_WARN_DATA_OUT_OF_RANGE,
                       ER(ER_WARN_DATA_OUT_OF_RANGE),
                       name, 1);

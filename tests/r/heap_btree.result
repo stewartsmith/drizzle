@@ -7,7 +7,7 @@ Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_incr
 #	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 show keys from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	a
+t1	YES	PRIMARY	1	a
 select * from t1;
 a	b
 2	2

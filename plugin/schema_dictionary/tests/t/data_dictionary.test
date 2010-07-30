@@ -2,25 +2,24 @@
 
 use data_dictionary;
 
---replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+--sorted_result
 SELECT count(*) FROM columns;
 
---replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+--sorted_result
 SELECT count(*) FROM indexes;
 
---replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+--sorted_result
 SELECT count(*) FROM index_parts;
 
---replace_column 1 #  6 # 7 # 8 # 9 # 10 #
-SELECT SCHEMA_NAME  FROM schemas;
+SELECT SCHEMA_NAME  FROM schemas ORDER BY SCHEMA_NAME;
 
---replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+--sorted_result
 SELECT COLUMN_NAME  FROM columns;
 
---replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+--sorted_result
 SELECT count(*) FROM REFERENTIAL_CONSTRAINTS;
 
---replace_column 1 #  6 # 7 # 8 # 9 # 10 #
+--sorted_result
 SELECT count(*) FROM TABLE_CONSTRAINTS;
 
 # Make sure we don't change the names of the columns
@@ -37,17 +36,18 @@ show create table TABLE_CONSTRAINTS ;
 CREATE SCHEMA A;
 use A;
 create table A (a int);
+--sorted_result
 SELECT COUNT(*) FROM data_dictionary.tables WHERE TABLE_NAME = "A";
 
 # Here to confirm fix for bug lp:514009
 use data_dictionary;
---replace_column 1 # 2 # 3 #
-SELECT TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME from COLUMNS ORDER BY TABLE_SCHEMA,TABLE_NAME;
+--sorted_result
+SELECT TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME from COLUMNS ORDER BY TABLE_SCHEMA,TABLE_NAME, COLUMN_NAME;
 
---replace_column 1 # 2 # 3 #
-SELECT TABLE_NAME,TABLE_SCHEMA,COLUMN_NAME from COLUMNS ORDER BY TABLE_SCHEMA,TABLE_NAME;
+--sorted_result
+SELECT TABLE_NAME,TABLE_SCHEMA,COLUMN_NAME from COLUMNS ORDER BY TABLE_SCHEMA,TABLE_NAME, COLUMN_NAME;
 
---replace_column 1 # 2 # 3 #
-SELECT TABLE_NAME,TABLE_SCHEMA,COLUMN_NAME from COLUMNS ORDER BY TABLE_NAME,TABLE_SCHEMA;
+--sorted_result
+SELECT TABLE_NAME,TABLE_SCHEMA,COLUMN_NAME from COLUMNS ORDER BY TABLE_NAME,TABLE_SCHEMA, COLUMN_NAME;
 
 DROP SCHEMA A;

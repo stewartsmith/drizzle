@@ -23,7 +23,7 @@
 #include <drizzled/lock.h>
 #include <drizzled/session.h>
 #include <drizzled/statement/create_table.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
 
 #include <iostream>
 
@@ -139,7 +139,7 @@ bool statement::CreateTable::execute()
     if (not lex_identified_temp_table)
     {
       session->lex->link_first_table_back(create_table, link_to_local);
-      create_table->create= true;
+      create_table->setCreate(true);
     }
 
     if (not (res= session->openTablesLock(session->lex->query_tables)))

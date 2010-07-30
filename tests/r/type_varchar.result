@@ -332,7 +332,7 @@ This is a test
 This is a test
 This is a test
 Warnings:
-Warning	1265	Data truncated for column 'v' at row 1
+Error	1406	Data too long for column 'v' at row 1
 select * from t1 where v like 'S%' order by v;
 v
 Short string
@@ -345,7 +345,7 @@ explain select * from t1 where v='This is a test' order by v;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	v	v	43	const	4	Using where
 Warnings:
-Warning	1265	Data truncated for column 'v' at row 1
+Error	1406	Data too long for column 'v' at row 1
 explain select * from t1 where v like 'S%' order by v;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	range	v	v	43	NULL	3	Using where; Using filesort

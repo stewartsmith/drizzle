@@ -151,33 +151,33 @@ public:
 
   int doCreateTable(Session&,
                     Table& table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table& proto);
 
-  int doDropTable(Session&, TableIdentifier &identifier);
+  int doDropTable(Session&, const TableIdentifier &identifier);
 
   int doRenameTable(drizzled::Session&,
-                    drizzled::TableIdentifier&,
-                    drizzled::TableIdentifier&);
+                    const drizzled::TableIdentifier&,
+                    const drizzled::TableIdentifier&);
 
   int doGetTableDefinition(Session& session,
-                           TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
-  bool doDoesTableExist(Session&, TableIdentifier &identifier);
+  bool doDoesTableExist(Session&, const TableIdentifier &identifier);
 
 private:
-  void getTableNamesInSchemaFromInnoDB(drizzled::SchemaIdentifier &schema,
+  void getTableNamesInSchemaFromInnoDB(const drizzled::SchemaIdentifier &schema,
                                        drizzled::plugin::TableNameList *set_of_names,
                                        drizzled::TableIdentifiers *identifiers);
 
 public:
   void doGetTableNames(drizzled::CachedDirectory &,
-                       drizzled::SchemaIdentifier &schema,
+                       const drizzled::SchemaIdentifier &schema,
                        drizzled::plugin::TableNameList &set_of_names);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &,
-                             drizzled::SchemaIdentifier &schema,
+                             const drizzled::SchemaIdentifier &schema,
                              drizzled::TableIdentifiers &identifiers);
 
   /* The following defines can be increased if necessary */
@@ -600,7 +600,7 @@ fetch:
   *nb_reserved_values= 1;
 }
 
-static void TableIdentifier_to_innodb_name(TableIdentifier &identifier, std::string *str)
+static void TableIdentifier_to_innodb_name(const TableIdentifier &identifier, std::string *str)
 {
   str->reserve(identifier.getSchemaName().length() + identifier.getTableName().length() + 1);
 //  str->append(identifier.getPath().c_str()+2);
@@ -782,7 +782,7 @@ cleanup:
 
 int EmbeddedInnoDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
-                                        drizzled::TableIdentifier &identifier,
+                                        const drizzled::TableIdentifier &identifier,
                                         drizzled::message::Table& table_message)
 {
   ib_tbl_sch_t innodb_table_schema= NULL;
@@ -1004,7 +1004,7 @@ rollback:
 }
 
 int EmbeddedInnoDBEngine::doDropTable(Session &session,
-                                      TableIdentifier &identifier)
+                                      const TableIdentifier &identifier)
 {
   ib_trx_t innodb_schema_transaction;
   ib_err_t innodb_err;
@@ -1077,7 +1077,7 @@ int EmbeddedInnoDBEngine::doDropTable(Session &session,
   return 0;
 }
 
-static ib_err_t rename_table_message(ib_trx_t transaction, TableIdentifier &from_identifier, TableIdentifier &to_identifier)
+static ib_err_t rename_table_message(ib_trx_t transaction, const TableIdentifier &from_identifier, const TableIdentifier &to_identifier)
 {
   ib_crsr_t cursor;
   ib_tpl_t search_tuple;
@@ -1168,8 +1168,8 @@ rollback:
 }
 
 int EmbeddedInnoDBEngine::doRenameTable(drizzled::Session &session,
-                                        drizzled::TableIdentifier &from,
-                                        drizzled::TableIdentifier &to)
+                                        const drizzled::TableIdentifier &from,
+                                        const drizzled::TableIdentifier &to)
 {
   ib_trx_t innodb_schema_transaction;
   ib_err_t err;
@@ -1216,7 +1216,7 @@ rollback:
 }
 
 void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
-                                 drizzled::SchemaIdentifier &schema,
+                                 const drizzled::SchemaIdentifier &schema,
                                  drizzled::plugin::TableNameList *set_of_names,
                                  drizzled::TableIdentifiers *identifiers)
 {
@@ -1287,14 +1287,14 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
 }
 
 void EmbeddedInnoDBEngine::doGetTableNames(drizzled::CachedDirectory &,
-                                           drizzled::SchemaIdentifier &schema,
+                                           const drizzled::SchemaIdentifier &schema,
                                            drizzled::plugin::TableNameList &set_of_names)
 {
   getTableNamesInSchemaFromInnoDB(schema, &set_of_names, NULL);
 }
 
 void EmbeddedInnoDBEngine::doGetTableIdentifiers(drizzled::CachedDirectory &,
-                                                 drizzled::SchemaIdentifier &schema,
+                                                 const drizzled::SchemaIdentifier &schema,
                                                  drizzled::TableIdentifiers &identifiers)
 {
   getTableNamesInSchemaFromInnoDB(schema, NULL, &identifiers);
@@ -1420,7 +1420,7 @@ rollback_close_err:
 }
 
 int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
-                                               TableIdentifier &identifier,
+                                               const TableIdentifier &identifier,
                                                drizzled::message::Table &table)
 {
   ib_crsr_t innodb_cursor= NULL;
@@ -1441,7 +1441,7 @@ int EmbeddedInnoDBEngine::doGetTableDefinition(Session&,
 }
 
 bool EmbeddedInnoDBEngine::doDoesTableExist(Session &,
-                                            TableIdentifier& identifier)
+                                            const TableIdentifier& identifier)
 {
   ib_crsr_t innodb_cursor;
   string innodb_table_name;
@@ -2892,7 +2892,7 @@ static DRIZZLE_SYSVAR_STR(log_group_home_dir, innobase_log_group_home_dir,
 static DRIZZLE_SYSVAR_LONGLONG(log_file_size, innodb_log_file_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Size of each log file in a log group.",
-  NULL, NULL, 5*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
+  NULL, NULL, 20*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
 
 static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, innodb_log_files_in_group,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,

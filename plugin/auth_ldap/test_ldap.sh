@@ -19,7 +19,7 @@ datadir=$1
   --auth-ldap-base-dn="dc=drizzle,dc=org" \
   --auth-ldap-cache-timeout=1 \
   --mysql-protocol-port=12345 \
-  --drizzle-protocol-port=12346 \
+  --drizzle-protocol.port=12346 \
   --pid-file=pid &
 
 sleep 3

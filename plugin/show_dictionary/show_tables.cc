@@ -21,7 +21,7 @@
 
 #include "config.h"
 #include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 
 using namespace std;
 using namespace drizzled;
@@ -60,8 +60,7 @@ bool ShowTables::Generator::nextCore()
     }
 
     SchemaIdentifier identifier(schema_name);
-    plugin::StorageEngine::getTableIdentifiers(getSession(), identifier, set_of_identifiers);
-    set_of_identifiers.sort();
+    plugin::StorageEngine::getIdentifiers(getSession(), identifier, set_of_identifiers);
     table_iterator= set_of_identifiers.begin();
     is_primed= true;
   }

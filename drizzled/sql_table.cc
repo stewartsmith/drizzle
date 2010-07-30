@@ -36,7 +36,7 @@
 #include "drizzled/transaction_services.h"
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/client.h>
-#include <drizzled/table_identifier.h>
+#include <drizzled/identifier.h>
 #include "drizzled/internal/m_string.h"
 #include "drizzled/global_charset_info.h"
 #include "drizzled/charset.h"
@@ -183,11 +183,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   {
     TableIdentifier identifier(table->db, table->table_name);
     TableShare *share;
-    table->db_type= NULL;
+    table->setDbType(NULL);
 
     if ((share= TableShare::getShare(identifier)))
     {
-      table->db_type= share->db_type();
+      table->setDbType(share->db_type());
     }
   }
 
@@ -221,8 +221,8 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     if (drop_temporary == false)
     {
       Table *locked_table;
-      abort_locked_tables(session, db, table->table_name);
       TableIdentifier identifier(db, table->table_name);
+      abort_locked_tables(session, identifier);
       remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -230,7 +230,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
       */
-      if ((locked_table= drop_locked_tables(session, db, table->table_name)))
+      if ((locked_table= drop_locked_tables(session, identifier)))
         table->table= locked_table;
 
       if (session->killed)
@@ -239,7 +239,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
         goto err_with_placeholders;
       }
     }
-    TableIdentifier identifier(db, table->table_name, table->internal_tmp_table ? message::Table::INTERNAL : message::Table::STANDARD);
+    TableIdentifier identifier(db, table->table_name, table->getInternalTmpTable() ? message::Table::INTERNAL : message::Table::STANDARD);
 
     if (drop_temporary || not plugin::StorageEngine::doesTableExist(*session, identifier))
     {
@@ -810,7 +810,7 @@ static int mysql_prepare_create_table(Session *session,
     /** @todo Get rid of this MyISAM-specific crap. */
     if (not create_proto.engine().name().compare("MyISAM") &&
         ((sql_field->flags & BLOB_FLAG) ||
-         (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED)))
+         (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR)))
       (*db_options)|= HA_OPTION_PACK_RECORD;
     it2.rewind();
   }
@@ -1465,9 +1465,6 @@ bool mysql_create_table_no_lock(Session *session,
   }
   assert(identifier.getTableName() == table_proto.name());
   db_options= create_info->table_options;
-
-  if (create_info->row_type == ROW_TYPE_DYNAMIC)
-    db_options|=HA_OPTION_PACK_RECORD;
 
   set_table_default_charset(create_info, identifier.getSchemaName().c_str());
 
@@ -2155,7 +2152,7 @@ bool mysql_create_like_table(Session* session,
   {
     Table *name_lock= 0;
 
-    if (session->lock_table_name_if_not_cached(db, table_name, &name_lock))
+    if (session->lock_table_name_if_not_cached(destination_identifier, &name_lock))
     {
       if (name_lock)
       {

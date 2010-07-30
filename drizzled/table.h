@@ -106,6 +106,12 @@ public:
     next= arg;
   }
 
+  void unlink()
+  {
+    getNext()->setPrev(getPrev());		/* remove from used chain */
+    getPrev()->setNext(getNext());
+  }
+
 private:
   Table *prev;
 public:
@@ -149,7 +155,14 @@ public:
 
   TableList *pos_in_table_list; /* Element referring to this table */
   order_st *group;
+  
+  const char *getAlias() const
+  {
+    return alias;
+  }
+
   const char *alias; /**< alias or table name if no alias */
+
   unsigned char *null_flags;
 
   uint32_t lock_position; /**< Position in DRIZZLE_LOCK.table */

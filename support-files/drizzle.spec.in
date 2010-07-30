@@ -522,8 +522,6 @@ you will need to install %{name}-devel.
 %{_libdir}/drizzle/liblength_plugin.so
 %{_libdir}/drizzle/liblogging_query_plugin.la
 %{_libdir}/drizzle/liblogging_query_plugin.so
-%{_libdir}/drizzle/liblogging_syslog_plugin.la
-%{_libdir}/drizzle/liblogging_syslog_plugin.so
 %{_libdir}/drizzle/libmd5_plugin.la
 %{_libdir}/drizzle/libmd5_plugin.so
 %{_libdir}/drizzle/libmemcached_functions_plugin.la
@@ -542,6 +540,8 @@ you will need to install %{name}-devel.
 %{_libdir}/drizzle/libsingle_thread_plugin.so
 %{_libdir}/drizzle/libsleep_plugin.la
 %{_libdir}/drizzle/libsleep_plugin.so
+%{_libdir}/drizzle/libsyslog_plugin.la
+%{_libdir}/drizzle/libsyslog_plugin.so
 %{_libdir}/drizzle/libtableprototester_plugin.la
 %{_libdir}/drizzle/libtableprototester_plugin.so
 %{_libdir}/drizzle/libtransaction_log_plugin.la

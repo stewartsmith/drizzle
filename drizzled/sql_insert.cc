@@ -328,10 +328,8 @@ bool mysql_insert(Session *session,TableList *table_list,
     For single line insert, generate an error if try to set a NOT NULL field
     to NULL.
   */
-  session->count_cuted_fields= ((values_list.elements == 1 &&
-                                 !ignore) ?
-                                CHECK_FIELD_ERROR_FOR_NULL :
-                                CHECK_FIELD_WARN);
+  session->count_cuted_fields= ignore ? CHECK_FIELD_WARN : CHECK_FIELD_ERROR_FOR_NULL;
+
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
@@ -475,6 +473,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     session->my_ok((ulong) session->row_count_func,
                    info.copied + info.deleted + info.touched, id, buff);
   }
+  session->status_var.inserted_row_count+= session->row_count_func;
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_DONE(0, session->row_count_func);
   return false;
@@ -1366,6 +1365,7 @@ bool select_insert::send_eof()
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   session->my_ok((ulong) session->row_count_func,
                  info.copied + info.deleted + info.touched, id, buff);
+  session->status_var.inserted_row_count+= session->row_count_func; 
   DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
   return 0;
 }
@@ -1496,7 +1496,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     return NULL;
   }
 
-  tmp_table.alias= 0;
   tmp_table.timestamp_field= 0;
   tmp_table.setShare(&share);
 
