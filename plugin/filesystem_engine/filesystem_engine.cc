@@ -221,7 +221,7 @@ static int parseTaggedFile(const FormatInfo &fi, vector< map<string, string> > &
   if (filedesc < 0)
     return errno;
 
-  TransparentFile *filebuffer= new TransparentFile();
+  boost::scoped_ptr<TransparentFile> filebuffer(new TransparentFile);
   filebuffer->init_buff(filedesc);
 
   bool last_line_empty= false;
@@ -288,7 +288,6 @@ static int parseTaggedFile(const FormatInfo &fi, vector< map<string, string> > &
     last_line_empty= false;
     line.clear();
   }
-  delete filebuffer;
   close(filedesc);
   return 0;
 }
