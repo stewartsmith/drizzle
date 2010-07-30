@@ -226,8 +226,12 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   m4_if(m4_substr(m4_esyscmd(test -d po && echo 0),0,1),0, [
     AM_PO_SUBDIRS
     IT_PROG_INTLTOOL([0.35],[no-xml])
+    
+    dnl AS_IF([test "x{TARGET_SOLARIS}" = "xyes"], [USE_NLS="no"])
     GETTEXT_PACKAGE=$PACKAGE
     AC_SUBST([GETTEXT_PACKAGE])
+    AS_IF([test "x${USE_NLS}" = "xyes"],
+          [AC_DEFINE([ENABLE_NLS],[1],[Turn on language support])])
   ])
 
   AS_IF([test "x${gl_LIBOBJS}" != "x"],[

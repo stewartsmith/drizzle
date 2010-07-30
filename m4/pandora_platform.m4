@@ -59,6 +59,7 @@ AC_DEFUN([PANDORA_PLATFORM],[
     *solaris*)
       TARGET_SOLARIS="true"
       PANDORA_OPTIMIZE_BITFIELD=0
+      LIBS="${LIBS} -lintl"
       AC_SUBST(TARGET_SOLARIS)
       AC_DEFINE([TARGET_OS_SOLARIS], [1], [Whether we are building for Solaris])
       ;;
