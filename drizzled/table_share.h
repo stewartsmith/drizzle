@@ -31,9 +31,9 @@
 #include <boost/unordered_map.hpp>
 
 #include "drizzled/typelib.h"
-#include "drizzled/my_hash.h"
 #include "drizzled/memory/root.h"
 #include "drizzled/message/table.pb.h"
+#include "drizzled/util/string.h"
 
 namespace drizzled
 {
@@ -143,7 +143,26 @@ public:
   std::vector<uint>	blob_field;			/* Index to blobs in Field arrray*/
 
   /* hash of field names (contains pointers to elements of field array) */
-  HASH	name_hash;			/* hash of field names */
+private:
+  typedef boost::unordered_map < std::string, Field **, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
+  typedef std::pair< std::string, Field ** > FieldMapPair;
+  FieldMap name_hash; /* hash of field names */
+public:
+  size_t getNamedFieldSize() const
+  {
+    return name_hash.size();
+  }
+
+  Field **getNamedField(const std::string &arg)
+  {
+    FieldMap::iterator iter= name_hash.find(arg);
+
+    if (iter == name_hash.end())
+        return 0;
+
+    return (*iter).second;
+  }
+
 private:
   memory::Root mem_root;
 public:
@@ -340,7 +359,6 @@ private:
   uint32_t   reclength;			/* Recordlength */
 public:
   uint32_t   stored_rec_length;         /* Stored record length*/
-  enum row_type row_type;		/* How rows are stored */
 
   uint32_t getRecordLength() const
   {
@@ -633,8 +651,6 @@ public:
 
     return output;  // for multiple << operators.
   }
-
-  bool newed;
 
   Field *make_field(unsigned char *ptr,
                     uint32_t field_length,

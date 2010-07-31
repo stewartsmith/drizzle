@@ -501,15 +501,6 @@ int ha_heap::info(uint32_t flag)
   return 0;
 }
 
-
-enum row_type ha_heap::get_row_type() const
-{
-  if (file->s->recordspace.is_variable_size)
-    return ROW_TYPE_DYNAMIC;
-
-  return ROW_TYPE_FIXED;
-}
-
 int ha_heap::extra(enum ha_extra_function operation)
 {
   return heap_extra(file,operation);
@@ -738,7 +729,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
     HP_COLUMNDEF* column= columndef + column_idx;
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();
-    column->offset= field->offset(field->table->record[0]);
+    column->offset= field->offset(field->getTable()->record[0]);
 
     if (field->null_bit)
     {
@@ -880,7 +871,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= table_arg->getShare()->block_size;
-  hp_create_info.is_dynamic= (table_arg->getShare()->row_type == ROW_TYPE_DYNAMIC);
+  hp_create_info.is_dynamic= false;
 
   error= heap_create(internal::fn_format(buff,table_name,"","",
                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),
