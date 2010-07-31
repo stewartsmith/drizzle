@@ -383,10 +383,8 @@ static unsigned char *get_bookmark_hash_key(const unsigned char *buff,
 */
 bool plugin_init(module::Registry &registry,
                  int *argc, char **argv,
-                 bool skip_init,
                  po::options_description &long_options)
 {
-  module::Module *module;
   memory::Root tmp_root(4096);
 
   if (initialized)
@@ -453,11 +451,13 @@ bool plugin_init(module::Registry &registry,
     return true;
   }
 
-  if (skip_init)
-  {
-    tmp_root.free_root(MYF(0));
-    return false;
-  }
+  tmp_root.free_root(MYF(0));
+
+  return false;
+}
+
+void plugin_finalize(module::Registry &registry)
+{
 
   /*
     Now we initialize all remaining plugins
@@ -467,7 +467,7 @@ bool plugin_init(module::Registry &registry,
     
   while (modules != registry.getModulesMap().end())
   {
-    module= (*modules).second;
+    module::Module *module= (*modules).second;
     ++modules;
     if (module->isInited == false)
     {
@@ -477,11 +477,6 @@ bool plugin_init(module::Registry &registry,
         delete_module(module);
     }
   }
-
-
-  tmp_root.free_root(MYF(0));
-
-  return false;
 }
 
 class PrunePlugin :
@@ -1679,7 +1674,9 @@ static int test_plugin_options(memory::Root *module_root,
 
   if (test_module->getManifest().init_options != NULL)
   {
-    po::options_description module_options("Options used by plugins");
+    string plugin_section_title("Options used by ");
+    plugin_section_title.append(test_module->getName());
+    po::options_description module_options(plugin_section_title);
     module::option_context opt_ctx(test_module->getName(),
                                    module_options.add_options());
     test_module->getManifest().init_options(opt_ctx);

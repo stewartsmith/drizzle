@@ -20,7 +20,7 @@
 
 #include "config.h"
 #include "plugin/show_dictionary/dictionary.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 
 
 using namespace std;
@@ -163,11 +163,16 @@ void ShowColumns::Generator::fill()
   push(column.constraints().is_nullable());
 
   /* Default */
-  push(column.options().default_value());
+  if (column.options().has_default_value())
+    push(column.options().default_value());
+  else if (column.options().has_default_expression())
+    push(column.options().default_expression());
+  else
+    push(column.options().default_bin_value());
 
   /* Default_is_NULL */
   push(column.options().default_null());
 
   /* On_Update */
-  push(column.options().update_value());
+  push(column.options().update_expression());
 }

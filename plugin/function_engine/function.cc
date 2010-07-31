@@ -50,11 +50,7 @@ int Function::doGetTableDefinition(Session &,
                                    const TableIdentifier &identifier,
                                    message::Table &table_proto)
 {
-  string tab_name(identifier.getPath());
-  transform(tab_name.begin(), tab_name.end(),
-            tab_name.begin(), ::tolower);
-
-  drizzled::plugin::TableFunction *function= getFunction(tab_name);
+  drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
 
   if (not function)
   {
@@ -71,10 +67,7 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
                                const drizzled::SchemaIdentifier &schema_identifier,
                                set<string> &set_of_names)
 {
-  string tab_name(schema_identifier.getPath());
-  transform(tab_name.begin(), tab_name.end(),
-            tab_name.begin(), ::tolower);
-  drizzled::plugin::TableFunction::getNames(tab_name, set_of_names);
+  drizzled::plugin::TableFunction::getNames(schema_identifier.getPath(), set_of_names);
 }
 
 void Function::doGetSchemaIdentifiers(SchemaIdentifiers& schemas)

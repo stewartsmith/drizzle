@@ -90,8 +90,8 @@ bool Item_func_set_user_var::register_field_in_read_map(unsigned char *arg)
   if (result_field)
   {
     Table *table= (Table *) arg;
-    if (result_field->table == table || !table)
-      result_field->table->setReadSet(result_field->field_index);
+    if (result_field->getTable() == table || !table)
+      result_field->getTable()->setReadSet(result_field->field_index);
   }
   return 0;
 }

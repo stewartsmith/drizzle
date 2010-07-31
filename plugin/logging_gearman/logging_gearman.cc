@@ -21,7 +21,8 @@
 #include <drizzled/plugin/logging.h>
 #include <drizzled/gettext.h>
 #include <drizzled/session.h>
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include <libgearman/gearman.h>
 #include <limits.h>
 #include <sys/time.h>
@@ -31,12 +32,12 @@
 #include <cstdio>
 
 using namespace drizzled;
-
+namespace po= boost::program_options;
 
 /* TODO make this dynamic as needed */
 static const int MAX_MSG_LEN= 32*1024;
 
-static bool sysvar_logging_gearman_enable= false;
+static bool sysvar_logging_gearman_enable;
 static char* sysvar_logging_gearman_host= NULL;
 static char* sysvar_logging_gearman_function= NULL;
 
@@ -298,6 +299,13 @@ static int logging_gearman_plugin_init(module::Context &context)
   return 0;
 }
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("enable",
+          po::value<bool>(&sysvar_logging_gearman_enable)->default_value(false)->zero_tokens(),
+          N_("Enable logging to a gearman server"));
+}
+
 static DRIZZLE_SYSVAR_BOOL(
                            enable,
                            sysvar_logging_gearman_enable,
@@ -335,13 +343,13 @@ static drizzle_sys_var* logging_gearman_system_variables[]= {
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-    "logging_gearman",
+    "logging-gearman",
     "0.1",
     "Mark Atwood <mark@fallenpegasus.com>",
     N_("Log queries to a Gearman server"),
     PLUGIN_LICENSE_GPL,
     logging_gearman_plugin_init,
     logging_gearman_system_variables,
-    NULL
+    init_options
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -1,0 +1,35 @@
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a int) ENGINE=FILESYSTEM,FILE="../filesystem_ln/select_cpuinfo.data",FORMAT="KEY_VALUE",COL_SEPARATOR=":";
+SELECT * FROM t1;
+address sizes	apicid	bogomips	cache size	cache_alignment	clflush size	core id	cpu MHz	cpu cores	cpu family	cpuid level	flags	fpu	fpu_exception	initial apicid	model	model name	physical id	power management	processor	siblings	stepping	vendor_id	wp
+36 bits physical, 48 bits virtual	0	5999.27	6144 KB	64	64	0	2000.000	2	6	13	fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good nopl pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 lahf_lm	yes	yes	0	23	Intel(R) Core(TM)2 Duo CPU     E8400  @ 3.00GHz	0	NULL	0	2	10	GenuineIntel	yes
+36 bits physical, 48 bits virtual	1	5999.08	6144 KB	64	64	1	2000.000	2	6	13	fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc arch_perfmon pebs bts rep_good nopl pni monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr sse4_1 lahf_lm	yes	yes	1	23	Intel(R) Core(TM)2 Duo CPU     E8400  @ 3.00GHz	0	NULL	1	2	10	GenuineIntel	yes
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `address sizes` varchar(34) DEFAULT NULL,
+  `apicid` varchar(2) DEFAULT NULL,
+  `bogomips` varchar(8) DEFAULT NULL,
+  `cache size` varchar(8) DEFAULT NULL,
+  `cache_alignment` varchar(3) DEFAULT NULL,
+  `clflush size` varchar(3) DEFAULT NULL,
+  `core id` varchar(2) DEFAULT NULL,
+  `cpu MHz` varchar(9) DEFAULT NULL,
+  `cpu cores` varchar(2) DEFAULT NULL,
+  `cpu family` varchar(2) DEFAULT NULL,
+  `cpuid level` varchar(3) DEFAULT NULL,
+  `flags` varchar(249) DEFAULT NULL,
+  `fpu` varchar(4) DEFAULT NULL,
+  `fpu_exception` varchar(4) DEFAULT NULL,
+  `initial apicid` varchar(2) DEFAULT NULL,
+  `model` varchar(3) DEFAULT NULL,
+  `model name` varchar(48) DEFAULT NULL,
+  `physical id` varchar(2) DEFAULT NULL,
+  `power management` varchar(1) DEFAULT NULL,
+  `processor` varchar(2) DEFAULT NULL,
+  `siblings` varchar(2) DEFAULT NULL,
+  `stepping` varchar(3) DEFAULT NULL,
+  `vendor_id` varchar(13) DEFAULT NULL,
+  `wp` varchar(4) DEFAULT NULL
+) ENGINE=FILESYSTEM FILE='../filesystem_ln/select_cpuinfo.data' FORMAT='KEY_VALUE' COL_SEPARATOR=':'
+DROP TABLE t1;
