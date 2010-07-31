@@ -36,7 +36,7 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include <stdarg.h>
-#include <drizzled/unordered_set.h>
+#include <boost/unordered_set.hpp>
 #include <algorithm>
 #include <fstream>
 #include <drizzled/gettext.h>
@@ -155,7 +155,7 @@ static const char *compatible_mode_names[]=
 static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
   "", compatible_mode_names, NULL};
 
-unordered_set<string> ignore_table;
+boost::unordered_set<string> ignore_table;
 
 static void maybe_exit(int error);
 static void die(int error, const char* reason, ...);
@@ -1964,7 +1964,7 @@ static int init_dumping(char *database, int init_func(char*))
 static bool include_table(const char *hash_key, size_t key_size)
 {
   string match(hash_key, key_size);
-  unordered_set<string>::iterator iter= ignore_table.find(match);
+  boost::unordered_set<string>::iterator iter= ignore_table.find(match);
   return (iter == ignore_table.end());
 }
 

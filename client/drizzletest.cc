@@ -60,7 +60,7 @@
 #include PCRE_HEADER
 
 #include <stdarg.h>
-#include <drizzled/unordered_map.h>
+#include <boost/unordered_map.hpp>
 
 #include "errname.h"
 
@@ -215,7 +215,7 @@ typedef struct st_var
 VAR var_reg[10];
 
 
-unordered_map<string, VAR *> var_hash;
+boost::unordered_map<string, VAR *> var_hash;
 
 struct st_connection
 {
@@ -1709,7 +1709,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    unordered_map<string, VAR*>::iterator iter=
+    boost::unordered_map<string, VAR*>::iterator iter=
       var_hash.find(save_var_name_str);
     if (iter == var_hash.end())
     {
@@ -1747,7 +1747,7 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  unordered_map<string, VAR*>::iterator iter=
+  boost::unordered_map<string, VAR*>::iterator iter=
     var_hash.find(var_name);
   if (iter != var_hash.end())
     return (*iter).second;
