@@ -322,11 +322,11 @@ static int init(drizzled::module::Context &context)
       exit(-1);
     }
     else
-      sysvar_logging_stats_scoreboard_size= vm["scoreboard-size"].as<uint32_t>();
+      sysvar_logging_stats_scoreboard_size= vm["scoreboard-size"].as<uint32_t>(); 
   }
 
   cout << "Value is " << sysvar_logging_stats_scoreboard_size << endl;
-
+  cout << vm["scoreboard-size"].as<uint32_t>() << endl;
   logging_stats= new LoggingStats("logging_stats");
 
   if (initTable())
