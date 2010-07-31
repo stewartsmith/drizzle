@@ -28,12 +28,9 @@
 #include <drizzled/message/table.pb.h>
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/sql_string.h"
-#include "drizzled/schema_identifier.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 #include "drizzled/cached_directory.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
-
-#include <drizzled/unordered_map.h>
 
 #include <bitset>
 #include <string>
@@ -120,7 +117,6 @@ class NamedSavepoint;
 namespace plugin
 {
 
-typedef unordered_map<std::string, StorageEngine *> EngineMap;
 typedef std::vector<StorageEngine *> EngineVector;
 
 typedef std::set<std::string> TableNameList;
@@ -327,8 +323,9 @@ public:
   static int dropTable(Session& session,
                        StorageEngine &engine,
                        const drizzled::TableIdentifier &identifier);
-  static void getTableNames(Session &session, const drizzled::SchemaIdentifier& schema_identifier, TableNameList &set_of_names);
-  static void getTableIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers);
+  static void getIdentifiers(Session &session,
+                             const SchemaIdentifier &schema_identifier,
+                             TableIdentifiers &set_of_identifiers);
 
   // Check to see if any SE objects to creation.
   static bool canCreateTable(const drizzled::TableIdentifier &identifier);
@@ -336,7 +333,7 @@ public:
   { (void)identifier;  return true; }
 
   // @note All schema methods defined here
-  static void getSchemaIdentifiers(Session &session, SchemaIdentifiers &schemas);
+  static void getIdentifiers(Session &session, SchemaIdentifiers &schemas);
   static bool getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::Schema &proto);
   static bool getSchemaDefinition(const drizzled::SchemaIdentifier &identifier, message::Schema &proto);
   static bool doesSchemaExist(const drizzled::SchemaIdentifier &identifier);

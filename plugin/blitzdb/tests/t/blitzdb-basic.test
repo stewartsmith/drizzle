@@ -217,3 +217,12 @@ delete from t2;
 insert into t2 (a, b) select * from t1;
 select * from t2;
 drop table t1;
+
+# Large VARCHAR type (exceeds BlitzDB's stack space).
+create table t1 (a int, b varchar(2048)) engine = blitzdb;
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+select * from t1;
+drop table t1;

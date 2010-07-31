@@ -208,14 +208,14 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key
       field->setReadSet();
       from_key+= HA_KEY_BLOB_LENGTH;
       key_length-= HA_KEY_BLOB_LENGTH;
-      field->set_ptr_offset(to_record - field->table->record[0],
+      field->set_ptr_offset(to_record - field->getTable()->record[0],
                             (ulong) blob_length, from_key);
       length= key_part->length;
     }
     else if (key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       Field *field= key_part->field;
-      ptrdiff_t ptrdiff= to_record - field->table->record[0];
+      ptrdiff_t ptrdiff= to_record - field->getTable()->record[0];
 
       field->setReadSet();
       field->setWriteSet();

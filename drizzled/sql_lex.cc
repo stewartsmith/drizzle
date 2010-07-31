@@ -1860,8 +1860,14 @@ void Query_tables_list::reset_query_tables_list(bool init)
     for this.
 */
 LEX::LEX()
-  :result(0), yacc_yyss(0), yacc_yyvs(0),
-   sql_command(SQLCOM_END), option_type(OPT_DEFAULT), is_lex_started(0)
+  :
+    result(0), 
+    yacc_yyss(0), 
+    yacc_yyvs(0),
+    charset(NULL),
+    sql_command(SQLCOM_END), 
+    option_type(OPT_DEFAULT), 
+    is_lex_started(0)
 {
   reset_query_tables_list(true);
   statement= NULL;

@@ -309,14 +309,6 @@ TableShare *TableShare::getShare(TableIdentifier &identifier)
   }
 }
 
-/* Get column name from column hash */
-
-static unsigned char *get_field_name(Field **buff, size_t *length, bool)
-{
-  *length= (uint32_t) strlen((*buff)->field_name);
-  return (unsigned char*) (*buff)->field_name;
-}
-
 static enum_field_types proto_field_type_to_drizzle_type(uint32_t proto_field_type)
 {
   enum_field_types field_type;
@@ -393,8 +385,6 @@ static Item *default_value_item(enum_field_types field_type,
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_DATE:
-    if (default_value->compare("NOW()") == 0)
-      break;
   case DRIZZLE_TYPE_ENUM:
     default_item= new Item_string(default_value->c_str(),
                                   default_value->length(),
@@ -471,7 +461,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
-  row_type(ROW_TYPE_DEFAULT),
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
@@ -510,10 +499,8 @@ TableShare::TableShare(TableIdentifier::Type type_arg) :
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
-  memset(&name_hash, 0, sizeof(HASH));
 
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
@@ -544,7 +531,6 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
-  row_type(ROW_TYPE_DEFAULT),
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
@@ -583,11 +569,8 @@ TableShare::TableShare(TableIdentifier &identifier, const TableIdentifier::Key &
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   assert(identifier.getKey() == key);
 
   table_charset= 0;
@@ -625,7 +608,6 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
-  row_type(ROW_TYPE_DEFAULT),
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
@@ -664,11 +646,8 @@ TableShare::TableShare(const TableIdentifier &identifier) : // Just used during 
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
   memset(&table_name, 0, sizeof(LEX_STRING));
@@ -713,7 +692,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   timestamp_offset(0),
   reclength(0),
   stored_rec_length(0),
-  row_type(ROW_TYPE_DEFAULT),
   max_rows(0),
   table_proto(NULL),
   storage_engine(NULL),
@@ -752,11 +730,8 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   waiting_on_cond(false),
   keys_in_use(0),
   keys_for_keyread(0),
-  event_observers(NULL),
-  newed(true)
+  event_observers(NULL)
 {
-  memset(&name_hash, 0, sizeof(HASH));
-
   table_charset= 0;
   memset(&db, 0, sizeof(LEX_STRING));
   memset(&table_name, 0, sizeof(LEX_STRING));
@@ -803,8 +778,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
   {
     assert(0); // We should throw here.
   }
-
-  newed= true;
 }
 
 void TableShare::init(const char *new_table_name,
@@ -844,7 +817,6 @@ TableShare::~TableShare()
     pthread_mutex_destroy(&mutex);
     pthread_cond_destroy(&cond);
   }
-  hash_free(&name_hash);
 
   storage_engine= NULL;
 
@@ -903,28 +875,23 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
   db_create_options= (local_db_create_options & 0x0000FFFF);
   db_options_in_use= db_create_options;
 
-  row_type= table_options.has_row_type() ?
-    (enum row_type) table_options.row_type() : ROW_TYPE_DEFAULT;
-
   block_size= table_options.has_block_size() ?
     table_options.block_size() : 0;
 
-  table_charset= get_charset(table_options.has_collation_id()?
-                                    table_options.collation_id() : 0);
+  table_charset= get_charset(table_options.collation_id());
 
   if (!table_charset)
   {
-    /* unknown charset in head[38] or pre-3.23 frm */
-    if (use_mb(default_charset_info))
-    {
-      /* Warn that we may be changing the size of character columns */
-      errmsg_printf(ERRMSG_LVL_WARN,
-                    _("'%s' had no or invalid character set, "
-                      "and default character set is multi-byte, "
-                      "so character column sizes may have changed"),
-                    getPath());
-    }
-    table_charset= default_charset_info;
+    char errmsg[100];
+    snprintf(errmsg, sizeof(errmsg),
+             _("Table %s has invalid/unknown collation: %d,%s"),
+             getPath(),
+             table_options.collation_id(),
+             table_options.collation().c_str());
+    errmsg[99]='\0';
+
+    my_error(ER_CORRUPT_TABLE_DEFINITION, MYF(0), errmsg);
+    return ER_CORRUPT_TABLE_DEFINITION;
   }
 
   db_record_offset= 1;
@@ -1243,16 +1210,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
   bool use_hash= fields >= MAX_FIELDS_BEFORE_HASH;
 
-  if (use_hash)
-    use_hash= ! hash_init(&name_hash,
-                          system_charset_info,
-                          fields,
-                          0,
-                          0,
-                          (hash_get_key) get_field_name,
-                          0,
-                          0);
-
   unsigned char* null_pos= getDefaultValues();
   int null_bit_pos= (table_options.pack_record()) ? 0 : 1;
 
@@ -1269,15 +1226,15 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
     if (pfield.has_options() &&
-        pfield.options().has_default_value() &&
-        pfield.options().default_value().compare("NOW()") == 0)
+        pfield.options().has_default_expression() &&
+        pfield.options().default_expression().compare("NOW()") == 0)
     {
-      if (pfield.options().has_update_value() &&
-          pfield.options().update_value().compare("NOW()") == 0)
+      if (pfield.options().has_update_expression() &&
+          pfield.options().update_expression().compare("NOW()") == 0)
       {
         unireg_type= Field::TIMESTAMP_DNUN_FIELD;
       }
-      else if (! pfield.options().has_update_value())
+      else if (! pfield.options().has_update_expression())
       {
         unireg_type= Field::TIMESTAMP_DN_FIELD;
       }
@@ -1285,8 +1242,8 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
         assert(1); // Invalid update value.
     }
     else if (pfield.has_options() &&
-             pfield.options().has_update_value() &&
-             pfield.options().update_value().compare("NOW()") == 0)
+             pfield.options().has_update_expression() &&
+             pfield.options().update_expression().compare("NOW()") == 0)
     {
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
@@ -1520,7 +1477,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
 
     /* hack to undo f->init() */
-    f->table= NULL;
+    f->setTable(NULL);
     f->orig_table= NULL;
 
     f->field_index= fieldnr;
@@ -1540,8 +1497,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
       timestamp_field_offset= fieldnr;
 
     if (use_hash) /* supposedly this never fails... but comments lie */
-      (void) my_hash_insert(&name_hash,
-                            (unsigned char*)&(field[fieldnr]));
+    {
+      const char *local_field_name= field[fieldnr]->field_name;
+      name_hash.insert(make_pair(local_field_name, &(field[fieldnr])));
+    }
 
   }
 
@@ -1766,7 +1725,6 @@ int TableShare::parse_table_proto(Session& session, message::Table &table)
   error= local_error;
   open_errno= errno;
   errarg= 0;
-  hash_free(&name_hash);
   open_table_error(local_error, open_errno, 0);
 
   return local_error;
@@ -1882,7 +1840,6 @@ int TableShare::open_table_from_share(Session *session,
 
   local_error= 1;
   outparam.resetTable(session, this, db_stat);
-
 
   if (not (outparam.alias= strdup(alias)))
     goto err;
@@ -2071,6 +2028,7 @@ err:
   outparam.db_stat= 0;
   outparam.getMemRoot()->free_root(MYF(0));       // Safe to call on zeroed root
   free((char*) outparam.alias);
+
   return (local_error);
 }
 

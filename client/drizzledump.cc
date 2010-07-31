@@ -2590,6 +2590,8 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
 
+  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
   po::positional_options_description p;
   p.add("database-used", 1);
   p.add("Table-used",-1);
@@ -2605,15 +2607,21 @@ try
 
   if (! vm.count("no-defaults"))
   {
-    ifstream user_dump_ifs("~/.drizzle/drizzledump.cnf");
-    po::store(parse_config_file(user_dump_ifs, dump_options), vm);
- 
-    ifstream system_dump_ifs(system_config_dir_dump.c_str());
-    store(parse_config_file(system_dump_ifs, dump_options), vm);
+    std::string user_config_dir_dump(user_config_dir);
+    user_config_dir_dump.append("/drizzle/drizzledump.cnf"); 
 
-    ifstream user_client_ifs("~/.drizzle/client.cnf");
+    std::string user_config_dir_client(user_config_dir);
+    user_config_dir_client.append("/drizzle/client.cnf");
+
+    ifstream user_dump_ifs(user_config_dir_dump.c_str());
+    po::store(parse_config_file(user_dump_ifs, dump_options), vm);
+
+    ifstream user_client_ifs(user_config_dir_client.c_str());
     po::store(parse_config_file(user_client_ifs, client_options), vm);
- 
+
+    ifstream system_dump_ifs(system_config_dir_dump.c_str());
+    po::store(parse_config_file(system_dump_ifs, dump_options), vm);
+
     ifstream system_client_ifs(system_config_dir_client.c_str());
     po::store(parse_config_file(system_client_ifs, client_options), vm);
   }

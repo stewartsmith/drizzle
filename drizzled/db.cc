@@ -55,7 +55,7 @@ namespace drizzled
 
 static long drop_tables_via_filenames(Session *session,
                                  SchemaIdentifier &schema_identifier,
-                                 plugin::TableNameList &dropped_tables);
+                                 TableIdentifiers &dropped_tables);
 static void mysql_change_db_impl(Session *session);
 static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
 
@@ -214,7 +214,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
 {
   long deleted=0;
   int error= false;
-  plugin::TableNameList dropped_tables;
+  TableIdentifiers dropped_tables;
   message::Schema schema_proto;
 
   /*
@@ -299,14 +299,14 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     query_end= query + MAX_DROP_TABLE_Q_LEN;
 
     TransactionServices &transaction_services= TransactionServices::singleton();
-    for (plugin::TableNameList::iterator it= dropped_tables.begin();
+    for (TableIdentifiers::iterator it= dropped_tables.begin();
          it != dropped_tables.end();
          it++)
     {
       uint32_t tbl_name_len;
 
       /* 3 for the quotes and the comma*/
-      tbl_name_len= (*it).length() + 3;
+      tbl_name_len= (*it).getTableName().length() + 3;
       if (query_pos + tbl_name_len + 1 >= query_end)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
@@ -315,7 +315,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
       }
 
       *query_pos++ = '`';
-      query_pos= strcpy(query_pos, (*it).c_str()) + (tbl_name_len-3);
+      query_pos= strcpy(query_pos, (*it).getTableName().c_str()) + (tbl_name_len-3);
       *query_pos++ = '`';
       *query_pos++ = ',';
     }
@@ -403,7 +403,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     {
       Table *locked_table;
-      abort_locked_tables(session, db, table->table_name);
+      abort_locked_tables(session, identifier);
       remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -411,7 +411,7 @@ static int rm_table_part2(Session *session, TableList *tables)
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
       */
-      if ((locked_table= drop_locked_tables(session, db, table->table_name)))
+      if ((locked_table= drop_locked_tables(session, identifier)))
         table->table= locked_table;
 
       if (session->killed)
@@ -490,16 +490,16 @@ err_with_placeholders:
 
 static long drop_tables_via_filenames(Session *session,
                                       SchemaIdentifier &schema_identifier,
-                                      plugin::TableNameList &dropped_tables)
+                                      TableIdentifiers &dropped_tables)
 {
   long deleted= 0;
   TableList *tot_list= NULL, **tot_list_next;
 
   tot_list_next= &tot_list;
 
-  plugin::StorageEngine::getTableNames(*session, schema_identifier, dropped_tables);
+  plugin::StorageEngine::getIdentifiers(*session, schema_identifier, dropped_tables);
 
-  for (plugin::TableNameList::iterator it= dropped_tables.begin();
+  for (TableIdentifiers::iterator it= dropped_tables.begin();
        it != dropped_tables.end();
        it++)
   {
@@ -509,16 +509,16 @@ static long drop_tables_via_filenames(Session *session,
     TableList *table_list=(TableList*)
       session->calloc(sizeof(*table_list) +
                       db_len + 1 +
-                      (*it).length() + 1);
+                      (*it).getTableName().length() + 1);
 
     if (not table_list)
       return -1;
 
     table_list->db= (char*) (table_list+1);
     table_list->table_name= strcpy(table_list->db, schema_identifier.getSchemaName().c_str()) + db_len + 1;
-    TableIdentifier::filename_to_tablename((*it).c_str(), table_list->table_name, (*it).size() + 1);
+    TableIdentifier::filename_to_tablename((*it).getTableName().c_str(), table_list->table_name, (*it).getTableName().size() + 1);
     table_list->alias= table_list->table_name;  // If lower_case_table_names=2
-    table_list->setInternalTmpTable((strncmp((*it).c_str(),
+    table_list->setInternalTmpTable((strncmp((*it).getTableName().c_str(),
                                              TMP_FILE_PREFIX,
                                              strlen(TMP_FILE_PREFIX)) == 0));
     /* Link into list */

@@ -150,17 +150,17 @@ int Field_decimal::store(const char *from, uint32_t length,
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
                            from, length, charset_arg,
                            &decimal_value)) &&
-      table->in_use->abort_on_warning)
+      getTable()->in_use->abort_on_warning)
   {
     /* Because "from" is not NUL-terminated and we use %s in the ER() */
     String from_as_str;
     from_as_str.copy(from, length, &my_charset_bin);
 
-    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(getTable()->in_use, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                         ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                         "decimal", from_as_str.c_ptr(), field_name,
-                        (uint32_t) table->in_use->row_count);
+                        (uint32_t) getTable()->in_use->row_count);
 
     return(err);
   }
@@ -180,11 +180,11 @@ int Field_decimal::store(const char *from, uint32_t length,
       String from_as_str;
       from_as_str.copy(from, length, &my_charset_bin);
 
-      push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(getTable()->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                           ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                           "decimal", from_as_str.c_ptr(), field_name,
-                          (uint32_t) table->in_use->row_count);
+                          (uint32_t) getTable()->in_use->row_count);
       my_decimal_set_zero(&decimal_value);
 
       break;
@@ -216,11 +216,11 @@ int Field_decimal::store(double nr)
     if (check_overflow(err))
       set_value_on_overflow(&decimal_value, decimal_value.sign());
     /* Only issue a warning if store_value doesn't issue an warning */
-    table->in_use->got_warning= 0;
+    getTable()->in_use->got_warning= 0;
   }
   if (store_value(&decimal_value))
     err= 1;
-  else if (err && !table->in_use->got_warning)
+  else if (err && !getTable()->in_use->got_warning)
     err= warn_if_overflow(err);
   return(err);
 }
@@ -239,11 +239,11 @@ int Field_decimal::store(int64_t nr, bool unsigned_val)
     if (check_overflow(err))
       set_value_on_overflow(&decimal_value, decimal_value.sign());
     /* Only issue a warning if store_value doesn't issue an warning */
-    table->in_use->got_warning= 0;
+    getTable()->in_use->got_warning= 0;
   }
   if (store_value(&decimal_value))
     err= 1;
-  else if (err && !table->in_use->got_warning)
+  else if (err && not getTable()->in_use->got_warning)
     err= warn_if_overflow(err);
   return err;
 }
