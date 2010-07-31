@@ -47,7 +47,6 @@ public:
 
     bool nextTable();
 
-    void pushRow(drizzled::message::Table::TableOptions::RowType type);
     void pushType(drizzled::message::Table::Field::FieldType type);
 
     const std::string &table_name()

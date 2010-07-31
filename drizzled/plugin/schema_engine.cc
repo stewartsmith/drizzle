@@ -53,7 +53,7 @@ public:
   }
 };
 
-void StorageEngine::getSchemaIdentifiers(Session &session, SchemaIdentifiers &schemas)
+void StorageEngine::getIdentifiers(Session &session, SchemaIdentifiers &schemas)
 {
   // Add hook here for engines to register schema.
   for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),

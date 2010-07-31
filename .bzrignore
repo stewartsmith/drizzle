@@ -191,7 +191,6 @@ plugin/myisam/myisamchk
 plugin/myisam/myisamlog
 plugin/myisam/myisampack
 po/POTFILES
-po/POTFILES.in
 po/remove-potcdate.sed
 po/stamp-po
 protocol.gcno
@@ -303,3 +302,5 @@ unittests/uwagi.txt
 virtual_column_info.gcno
 xid.gcno
 ylwrap
+po/stamp-it
+drizzle.pot
