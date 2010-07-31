@@ -227,8 +227,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AM_PO_SUBDIRS
     IT_PROG_INTLTOOL([0.35],[no-xml])
     
-    dnl AS_IF([test "x{TARGET_SOLARIS}" = "xyes"], [USE_NLS="no"])
     GETTEXT_PACKAGE=$PACKAGE
+    AC_CHECK_LIB(intl, libintl_gettext)
     AC_SUBST([GETTEXT_PACKAGE])
     AS_IF([test "x${USE_NLS}" = "xyes"],
           [AC_DEFINE([ENABLE_NLS],[1],[Turn on language support])])
