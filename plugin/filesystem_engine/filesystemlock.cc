@@ -48,7 +48,6 @@ void FilesystemLock::scan_begin()
     }
     pthread_cond_wait(&condition, &mutex);
   }
-  pthread_mutex_unlock(&mutex);
 }
 
 void FilesystemLock::scan_end() {
@@ -74,7 +73,6 @@ void FilesystemLock::scan_update_begin()
     }
     pthread_cond_wait(&condition, &mutex);
   }
-  pthread_mutex_unlock(&mutex);
 }
 
 void FilesystemLock::scan_update_end()
