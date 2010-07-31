@@ -23,12 +23,14 @@
 #include <plugin/pool_of_threads/pool_of_threads.h>
 #include "drizzled/pthread_globals.h"
 #include "drizzled/internal/my_pthread.h"
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 
+namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
 /* Global's (TBR) */
-static PoolOfThreadsScheduler *scheduler= NULL;
 
 /**
  * Set this to true to trigger killing of all threads in the pool
@@ -56,7 +58,7 @@ extern "C" {
   void libevent_kill_session_callback(int Fd, short Operation, void *ctx);
 }
 
-static uint32_t pool_size= 0;
+static uint32_t pool_size;
 
 /**
  * @brief 
@@ -638,10 +640,20 @@ bool PoolOfThreadsScheduler::libevent_init(void)
  */
 static int init(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+ 
+  if (vm.count("size"))
+  {
+    if (pool_size > 1024 || pool_size < 1)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for size\n"));
+      exit(-1);
+    }
+  }
+
   assert(pool_size != 0);
 
-  scheduler= new PoolOfThreadsScheduler("pool_of_threads");
-  context.add(scheduler);
+  context.add(new PoolOfThreadsScheduler("pool_of_threads"));
 
   return 0;
 }
@@ -654,6 +666,13 @@ static DRIZZLE_SYSVAR_UINT(size, pool_size,
                            PLUGIN_VAR_RQCMDARG,
                            N_("Size of Pool."),
                            NULL, NULL, 8, 1, 1024, 0);
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("size",
+          po::value<uint32_t>(&pool_size)->default_value(8),
+          N_("Size of Pool."));
+}
 
 static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(size),
@@ -670,6 +689,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   sys_variables,   /* system variables */
-  NULL    /* config options */
+  init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
