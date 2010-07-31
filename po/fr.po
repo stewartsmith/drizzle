@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-07-20 09:29+0000\n"
+"PO-Revision-Date: 2010-07-30 09:02+0000\n"
 "Last-Translator: Damien Seguy <damien.seguy@gmail.com>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-07-21 03:41+0000\n"
+"X-Launchpad-Export-Date: 2010-07-31 03:40+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -4857,7 +4857,7 @@ msgstr "Erreur %d à la lecture de la table '%s'"
 
 #, c-format
 msgid "Table %s has invalid/unknown collation: %d,%s"
-msgstr ""
+msgstr "La table %s a une collation invalide ou inconnue : %d,%s"
 
 #, c-format
 msgid "ENUM column %s has greater than %d possible values"
@@ -4945,22 +4945,22 @@ msgid "Default database to use."
 msgstr "Base de données à utiliser par défaut."
 
 msgid "Invalid value of port\n"
-msgstr ""
+msgstr "Valeur de port invalide\n"
 
 msgid "Invalid value for connect_timeout\n"
-msgstr ""
+msgstr "Valeur de connect_timeout invalide\n"
 
 msgid "Invalid value for read_timeout\n"
-msgstr ""
+msgstr "Valeur de read_timeout invalide\n"
 
 msgid "Invalid value for write_timeout\n"
-msgstr ""
+msgstr "Valeur de write_timeout invalide\n"
 
 msgid "Invalid value for retry_count\n"
-msgstr ""
+msgstr "Valeur de retry_count invalide\n"
 
 msgid "Invalid value for buffer_length\n"
-msgstr ""
+msgstr "Valeur de buffer_length invalide\n"
 
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -5251,13 +5251,13 @@ msgid "fail open() fn=%s er=%s\n"
 msgstr "Echec : open() fn=%s er=%s\n"
 
 msgid "Invalid value for threshold-slow"
-msgstr ""
+msgstr "Valeur de threshold-slow invalide"
 
 msgid "Invalid value for threshold-big-resultset"
-msgstr ""
+msgstr "Valeur de threshold-big-resultset invalide"
 
 msgid "Invalid value for threshold-big-examined"
-msgstr ""
+msgstr "Valeur de threshold-big-examined invalide"
 
 msgid "Enable logging to CSV file"
 msgstr "Activation du log en fichier CSV"
@@ -5542,7 +5542,7 @@ msgid "Tablespace not empty"
 msgstr "L'espace de tables n'est pas vide"
 
 msgid "Invalid value for retry_count"
-msgstr ""
+msgstr "Valeur de retry_count invalide"
 
 msgid ""
 "Port number to use for connection or 0 for default to with MySQL protocol."
