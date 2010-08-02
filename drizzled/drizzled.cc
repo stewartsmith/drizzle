@@ -861,8 +861,7 @@ int init_server_components(module::Registry &plugins)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-  if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? true : false), long_options))
+  if (plugin_init(plugins, &defaults_argc, defaults_argv, long_options))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
@@ -893,6 +892,8 @@ int init_server_components(module::Registry &plugins)
 
   po::store(parsed, vm);
   po::notify(vm);
+
+  plugin_finalize(plugins);
 
   string scheduler_name;
   if (opt_scheduler)

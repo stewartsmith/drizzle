@@ -103,7 +103,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
     ptrdiff_t diff;
 
     /* Get the value from default_values */
-    diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->record[0]);
+    diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->getInsertRecord());
     orig_field->move_field_offset(diff);	// Points now at default_values
     if (! orig_field->is_real_null())
     {
@@ -113,7 +113,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       pos= (char*) memory::sql_strmake(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
-    orig_field->move_field_offset(-diff);	// Back to record[0]
+    orig_field->move_field_offset(-diff);	// Back to getInsertRecord()
   }
 }
 

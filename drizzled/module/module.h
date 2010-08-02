@@ -51,7 +51,6 @@ class Module
 {
   const std::string name;
   const Manifest *manifest;
-  boost::program_options::variables_map vm;
 
 public:
   Library *plugin_dl;
@@ -61,7 +60,6 @@ public:
          Library *library_arg) :
     name(manifest_arg->name),
     manifest(manifest_arg),
-    vm(),
     plugin_dl(library_arg),
     isInited(false),
     system_vars(NULL)
@@ -79,15 +77,6 @@ public:
     return *manifest;
   }
 
-  const boost::program_options::variables_map &getVariableMap() const
-  {
-    return vm;
-  }
-
-  boost::program_options::variables_map &getVariableMap()
-  {
-    return vm;
-  }
 };
 
 } /* namespace module */
