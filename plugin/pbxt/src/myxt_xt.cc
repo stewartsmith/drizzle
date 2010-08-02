@@ -613,7 +613,7 @@ static void mx_set_notnull_in_record(STRUCT_TABLE *table, Field *field, char *re
 #else
 	ASSERT(table == field->table);
 	if (field->null_ptr)
-		record[(uint) (field->null_ptr - (uchar *) table->record[0])] &= (uchar) ~field->null_bit;
+		record[(uint) (field->null_ptr - (uchar *) table->getInsertRecord())] &= (uchar) ~field->null_bit;
 #endif
 }
 
@@ -625,7 +625,7 @@ static xtBool mx_is_null_in_record(STRUCT_TABLE *table, Field *field, char *reco
 			return TRUE;
 #else
 		ASSERT(table == field->table);
-		if (record[(uint) (field->null_ptr - (uchar *) table->record[0])] & (uchar) field->null_bit)
+		if (record[(uint) (field->null_ptr - (uchar *) table->getInsertRecord())] & (uchar) field->null_bit)
 			return TRUE;
 #endif
 	}
@@ -645,7 +645,7 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 	from = dest + field->offset(table->getDefaultValues());
 #else
 	ASSERT(table == field->table);
-	from = dest + field->offset(table->record[0]);
+	from = dest + field->offset(table->getInsertRecord());
 #endif
 	switch (field->real_type()) {
 #ifndef DRIZZLED
@@ -768,7 +768,7 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 	from = dest + field->offset(table->getDefaultValues());
 #else
 	ASSERT(table == field->table);
-	from = dest + field->offset(table->record[0]);
+	from = dest + field->offset(table->getInsertRecord());
 #endif
 	switch (field->real_type()) {
 #ifndef DRIZZLED
@@ -1858,7 +1858,7 @@ xtPublic void myxt_get_column_as_string(XTOpenTablePtr ot, char *buffer, u_int c
 #ifdef DRIZZLED
 		field->ptr = (byte *) buffer + field->offset(table->getDefaultValues());
 #else
-		field->ptr = (byte *) buffer + field->offset(field->table->record[0]);
+		field->ptr = (byte *) buffer + field->offset(field->table->getInsertRecord());
 #endif
 		field->val_str(&val);
 		field->ptr = save;					// Restore org row pointer
@@ -1890,7 +1890,7 @@ xtPublic xtBool myxt_set_column(XTOpenTablePtr ot, char *buffer, u_int col_idx, 
 #ifdef DRIZZLED
 	field->ptr = (byte *) buffer + field->offset(table->getDefaultValues());
 #else
-	field->ptr = (byte *) buffer + field->offset(field->table->record[0]);
+	field->ptr = (byte *) buffer + field->offset(field->table->getInsertRecord());
 #endif
 	error = field->store(value, len, &my_charset_utf8_general_ci);
 	field->ptr = save;					// Restore org row pointer
@@ -2420,7 +2420,7 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 #ifdef DRIZZLED
 			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->getDefaultValues());
 #else
-			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->record[0]);
+			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->getInsertRecord());
 #endif
 		}
 		else {
@@ -2452,7 +2452,7 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 		else if (field->type() == MYSQL_TYPE_BIT) {
 			seg->bit_length = ((Field_bit *) field)->bit_len;
 			seg->bit_start = ((Field_bit *) field)->bit_ofs;
-			seg->bit_pos = (uint) (((Field_bit *) field)->bit_ptr - (uchar*) table_arg->record[0]);
+			seg->bit_pos = (uint) (((Field_bit *) field)->bit_ptr - (uchar*) table_arg->getInsertRecord());
 		}
 #else
 		/* Drizzle uses HA_KEYTYPE_ULONG_INT keys for enums > 1 byte, which is not consistent with MySQL, so we fix it here  */
@@ -2870,7 +2870,7 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 #ifdef DRIZZLED
 			dic->dic_ind_rec_len = curr_field->offset(my_tab->getDefaultValues());
 #else
-			dic->dic_ind_rec_len = curr_field->offset(my_tab->record[0]);
+			dic->dic_ind_rec_len = curr_field->offset(my_tab->getInsertRecord());
 #endif
 		}
 	}

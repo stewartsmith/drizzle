@@ -930,6 +930,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
     return NULL;
+
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
@@ -1107,7 +1108,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
   List<TableList> *embedded_list;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
+                                          sizeof(nested_join_st))))
     return NULL;
   ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();

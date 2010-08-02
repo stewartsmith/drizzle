@@ -5,10 +5,16 @@ dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([_PANDORA_SEARCH_BOOST_THREAD],[
   AC_REQUIRE([AC_LIB_PREFIX])
+  AC_REQUIRE([ACX_PTHREAD])
 
   dnl --------------------------------------------------------------------
   dnl  Check for boost::thread
   dnl --------------------------------------------------------------------
+
+  save_CFLAGS="${CFLAGS}"
+  save_CXXFLAGS="${CXXFLAGS}"
+  CFLAGS="${PTHREAD_CFLAGS} ${CFLAGS}"
+  CXXFLAGS="${PTHREAD_CFLAGS} ${CXXFLAGS}"
 
   AC_LANG_PUSH(C++)
   AC_LIB_HAVE_LINKFLAGS(boost_thread-mt,,[
@@ -24,6 +30,9 @@ AC_DEFUN([_PANDORA_SEARCH_BOOST_THREAD],[
     ])
   ])
   AC_LANG_POP()
+  CFLAGS="${save_CFLAGS}"
+  CXXFLAGS="${save_CXXFLAGS}"
+
   
   AM_CONDITIONAL(HAVE_BOOST_THREAD,
     [test "x${ac_cv_libboost_thread}" = "xyes" -o "x${ac_cv_libboost_thread_mt}" = "xyes"])

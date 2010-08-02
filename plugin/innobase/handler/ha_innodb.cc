@@ -2933,7 +2933,7 @@ get_field_offset(
   Table*  table,  /*!< in: MySQL table object */
   Field*  field)  /*!< in: MySQL field object */
 {
-  return((uint) (field->ptr - table->record[0]));
+  return((uint) (field->ptr - table->getInsertRecord()));
 }
 
 /**************************************************************//**
@@ -2956,7 +2956,7 @@ field_in_record_is_null(
   }
 
   null_offset = (uint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
   if (record[null_offset] & field->null_bit) {
 
@@ -2980,7 +2980,7 @@ set_field_in_record_to_null(
   int null_offset;
 
   null_offset = (uint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
   record[null_offset] = record[null_offset] | field->null_bit;
 }
@@ -3574,7 +3574,7 @@ include_field:
     if (field->null_ptr) {
       templ->mysql_null_byte_offset =
         (ulint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
       templ->mysql_null_bit_mask = (ulint) field->null_bit;
     } else {
@@ -3822,7 +3822,7 @@ no_commit:
   num_write_row++;
 
   /* This is the case where the table has an auto-increment column */
-  if (table->next_number_field && record == table->record[0]) {
+  if (table->next_number_field && record == table->getInsertRecord()) {
 
     /* Reset the error code before calling
     innobase_get_auto_increment(). */
@@ -4186,7 +4186,7 @@ ha_innobase::doUpdateRecord(
 
   if (error == DB_SUCCESS
       && table->next_number_field
-      && new_row == table->record[0]
+      && new_row == table->getInsertRecord()
       && session_sql_command(user_session) == SQLCOM_INSERT
       && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
     == TRX_DUP_IGNORE)  {

@@ -28,10 +28,10 @@ NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｶｶ	VARCHAR	TRUE		TRUE	
-ｷｷｷ	VARCHAR	FALSE		FALSE	
-ｸｸｸ	VARCHAR	TRUE		TRUE	
-ｹｹｹ	VARCHAR	TRUE		TRUE	
+ｶｶ	VARCHAR	YES		YES	
+ｷｷｷ	VARCHAR	NO		NO	
+ｸｸｸ	VARCHAR	YES		YES	
+ｹｹｹ	VARCHAR	YES		YES	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TABLE `ｱｱｱ` (
@@ -56,7 +56,7 @@ SELECT * FROM `ｱｱｱ`;
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｷｷｷ	VARCHAR	FALSE		FALSE	
+ｷｷｷ	VARCHAR	NO		NO	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TABLE `ｱｱｱ` (
@@ -77,10 +77,10 @@ NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-かか	VARCHAR	TRUE		TRUE	
-ききき	VARCHAR	FALSE		FALSE	
-くくく	VARCHAR	TRUE		TRUE	
-けけけ	VARCHAR	TRUE		TRUE	
+かか	VARCHAR	YES		YES	
+ききき	VARCHAR	NO		NO	
+くくく	VARCHAR	YES		YES	
+けけけ	VARCHAR	YES		YES	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TABLE `あああ` (
@@ -105,7 +105,7 @@ SELECT * FROM `あああ`;
 ううううう
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ききき	VARCHAR	FALSE		FALSE	
+ききき	VARCHAR	NO		NO	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TABLE `あああ` (
@@ -126,10 +126,10 @@ NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丄丄	VARCHAR	TRUE		TRUE	
-丂丂丂	VARCHAR	FALSE		FALSE	
-丅丅丅	VARCHAR	TRUE		TRUE	
-乚乚乚	VARCHAR	TRUE		TRUE	
+丄丄	VARCHAR	YES		YES	
+丂丂丂	VARCHAR	NO		NO	
+丅丅丅	VARCHAR	YES		YES	
+乚乚乚	VARCHAR	YES		YES	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TABLE `龖龖龖` (
@@ -154,7 +154,7 @@ SELECT * FROM `龖龖龖`;
 丅丅丅丅丅
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丂丂丂	VARCHAR	FALSE		FALSE	
+丂丂丂	VARCHAR	NO		NO	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TABLE `龖龖龖` (
@@ -190,10 +190,10 @@ NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｶｶ	VARCHAR	TRUE		TRUE	
-ｷｷｷ	VARCHAR	FALSE		FALSE	
-ｸｸｸ	VARCHAR	TRUE		TRUE	
-ｹｹｹ	VARCHAR	TRUE		TRUE	
+ｶｶ	VARCHAR	YES		YES	
+ｷｷｷ	VARCHAR	NO		NO	
+ｸｸｸ	VARCHAR	YES		YES	
+ｹｹｹ	VARCHAR	YES		YES	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -218,7 +218,7 @@ SELECT * FROM `ｱｱｱ`;
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｷｷｷ	VARCHAR	FALSE		FALSE	
+ｷｷｷ	VARCHAR	NO		NO	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -239,10 +239,10 @@ NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-かか	VARCHAR	TRUE		TRUE	
-ききき	VARCHAR	FALSE		FALSE	
-くくく	VARCHAR	TRUE		TRUE	
-けけけ	VARCHAR	TRUE		TRUE	
+かか	VARCHAR	YES		YES	
+ききき	VARCHAR	NO		NO	
+くくく	VARCHAR	YES		YES	
+けけけ	VARCHAR	YES		YES	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
@@ -267,7 +267,7 @@ SELECT * FROM `あああ`;
 ううううう
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ききき	VARCHAR	FALSE		FALSE	
+ききき	VARCHAR	NO		NO	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
@@ -288,10 +288,10 @@ NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丄丄	VARCHAR	TRUE		TRUE	
-丂丂丂	VARCHAR	FALSE		FALSE	
-丅丅丅	VARCHAR	TRUE		TRUE	
-乚乚乚	VARCHAR	TRUE		TRUE	
+丄丄	VARCHAR	YES		YES	
+丂丂丂	VARCHAR	NO		NO	
+丅丅丅	VARCHAR	YES		YES	
+乚乚乚	VARCHAR	YES		YES	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
@@ -316,7 +316,7 @@ SELECT * FROM `龖龖龖`;
 丅丅丅丅丅
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丂丂丂	VARCHAR	FALSE		FALSE	
+丂丂丂	VARCHAR	NO		NO	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
@@ -352,10 +352,10 @@ NULL	ｲｲｲｲｲ	NULL	NULL
 NULL	ｳｳｳｳｳ	NULL	NULL
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｶｶ	VARCHAR	TRUE		TRUE	
-ｷｷｷ	VARCHAR	FALSE		FALSE	
-ｸｸｸ	VARCHAR	TRUE		TRUE	
-ｹｹｹ	VARCHAR	TRUE		TRUE	
+ｶｶ	VARCHAR	YES		YES	
+ｷｷｷ	VARCHAR	NO		NO	
+ｸｸｸ	VARCHAR	YES		YES	
+ｹｹｹ	VARCHAR	YES		YES	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -380,7 +380,7 @@ SELECT * FROM `ｱｱｱ`;
 ｳｳｳｳｳ
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｷｷｷ	VARCHAR	FALSE		FALSE	
+ｷｷｷ	VARCHAR	NO		NO	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -401,10 +401,10 @@ NULL	いいいいい	NULL	NULL
 NULL	ううううう	NULL	NULL
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-かか	VARCHAR	TRUE		TRUE	
-ききき	VARCHAR	FALSE		FALSE	
-くくく	VARCHAR	TRUE		TRUE	
-けけけ	VARCHAR	TRUE		TRUE	
+かか	VARCHAR	YES		YES	
+ききき	VARCHAR	NO		NO	
+くくく	VARCHAR	YES		YES	
+けけけ	VARCHAR	YES		YES	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
@@ -429,7 +429,7 @@ SELECT * FROM `あああ`;
 ううううう
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ききき	VARCHAR	FALSE		FALSE	
+ききき	VARCHAR	NO		NO	
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
@@ -450,10 +450,10 @@ NULL	丄丄丄丄丄	NULL	NULL
 NULL	丅丅丅丅丅	NULL	NULL
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丄丄	VARCHAR	TRUE		TRUE	
-丂丂丂	VARCHAR	FALSE		FALSE	
-丅丅丅	VARCHAR	TRUE		TRUE	
-乚乚乚	VARCHAR	TRUE		TRUE	
+丄丄	VARCHAR	YES		YES	
+丂丂丂	VARCHAR	NO		NO	
+丅丅丅	VARCHAR	YES		YES	
+乚乚乚	VARCHAR	YES		YES	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
@@ -478,7 +478,7 @@ SELECT * FROM `龖龖龖`;
 丅丅丅丅丅
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丂丂丂	VARCHAR	FALSE		FALSE	
+丂丂丂	VARCHAR	NO		NO	
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
