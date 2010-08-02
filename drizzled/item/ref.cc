@@ -184,6 +184,8 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
           condition, so that we can give a better error message -
           ER_WRONG_FIELD_WITH_GROUP, instead of the less informative
           ER_BAD_FIELD_ERROR which we produce now.
+
+          @todo determine if this is valid.
         */
         if ((place != IN_HAVING ||
              (!select->with_sum_func &&

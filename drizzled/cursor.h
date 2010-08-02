@@ -320,12 +320,6 @@ public:
   virtual ha_rows estimate_rows_upper_bound()
   { return stats.records+EXTRA_RECORDS; }
 
-  /**
-    Get the row type from the storage engine.  If this method returns
-    ROW_TYPE_NOT_USED, the information in HA_CREATE_INFO should be used.
-  */
-  virtual enum row_type get_row_type() const { return ROW_TYPE_NOT_USED; }
-
   virtual const char *index_type(uint32_t)
   { assert(0); return "";}
 
@@ -728,8 +722,8 @@ bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
-Table *drop_locked_tables(Session *session,const char *db, const char *table_name);
-void abort_locked_tables(Session *session,const char *db, const char *table_name);
+Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
+void abort_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
 extern Field *not_found_field;
 extern Field *view_ref_found;
 
