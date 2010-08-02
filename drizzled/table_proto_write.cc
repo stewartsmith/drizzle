@@ -221,7 +221,7 @@ static int fill_table_proto(message::Table &table_proto,
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
-      field_options->set_default_expression("NOW()");
+      field_options->set_default_expression("CURRENT_TIMESTAMP");
     }
 
     if (field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
@@ -229,7 +229,7 @@ static int fill_table_proto(message::Table &table_proto,
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
-      field_options->set_update_expression("NOW()");
+      field_options->set_update_expression("CURRENT_TIMESTAMP");
     }
 
     if (field_arg->def == NULL  && attribute->constraints().is_nullable())
