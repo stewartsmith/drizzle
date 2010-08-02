@@ -1689,7 +1689,7 @@ void Session::nukeTable(Table *table)
   plugin::StorageEngine *table_type= table->getShare()->db_type();
 
   table->free_io_cache();
-  table->delete_table(false);
+  table->delete_table();
 
   TableIdentifier identifier(table->getShare()->getSchemaName(), table->getShare()->getTableName(), table->getShare()->getPath());
   rm_temporary_table(table_type, identifier);
