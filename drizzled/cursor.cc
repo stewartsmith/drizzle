@@ -814,23 +814,23 @@ int Cursor::index_next_same(unsigned char *buf, const unsigned char *key, uint32
   int error;
   if (!(error=index_next(buf)))
   {
-    ptrdiff_t ptrdiff= buf - table->record[0];
+    ptrdiff_t ptrdiff= buf - table->getInsertRecord();
     unsigned char *save_record_0= NULL;
     KeyInfo *key_info= NULL;
     KeyPartInfo *key_part;
     KeyPartInfo *key_part_end= NULL;
 
     /*
-      key_cmp_if_same() compares table->record[0] against 'key'.
-      In parts it uses table->record[0] directly, in parts it uses
-      field objects with their local pointers into table->record[0].
-      If 'buf' is distinct from table->record[0], we need to move
-      all record references. This is table->record[0] itself and
+      key_cmp_if_same() compares table->getInsertRecord() against 'key'.
+      In parts it uses table->getInsertRecord() directly, in parts it uses
+      field objects with their local pointers into table->getInsertRecord().
+      If 'buf' is distinct from table->getInsertRecord(), we need to move
+      all record references. This is table->getInsertRecord() itself and
       the field pointers of the fields used in this key.
     */
     if (ptrdiff)
     {
-      save_record_0= table->record[0];
+      save_record_0= table->getInsertRecord();
       table->record[0]= buf;
       key_info= table->key_info + active_index;
       key_part= key_info->key_part;
@@ -1170,7 +1170,7 @@ scan_it_again:
   @param sorted		Set to 1 if result should be sorted per key
 
   @note
-    Record is read into table->record[0]
+    Record is read into table->getInsertRecord()
 
   @retval
     0			Found row
@@ -1198,9 +1198,9 @@ int Cursor::read_range_first(const key_range *start_key,
   range_key_part= table->key_info[active_index].key_part;
 
   if (!start_key)			// Read first record
-    result= index_first(table->record[0]);
+    result= index_first(table->getInsertRecord());
   else
-    result= index_read_map(table->record[0],
+    result= index_read_map(table->getInsertRecord(),
                            start_key->key,
                            start_key->keypart_map,
                            start_key->flag);
@@ -1217,7 +1217,7 @@ int Cursor::read_range_first(const key_range *start_key,
   Read next row between two endpoints.
 
   @note
-    Record is read into table->record[0]
+    Record is read into table->getInsertRecord()
 
   @retval
     0			Found row
@@ -1233,11 +1233,11 @@ int Cursor::read_range_next()
   if (eq_range)
   {
     /* We trust that index_next_same always gives a row in range */
-    return(index_next_same(table->record[0],
+    return(index_next_same(table->getInsertRecord(),
                                 end_range->key,
                                 end_range->length));
   }
-  result= index_next(table->record[0]);
+  result= index_next(table->getInsertRecord());
   if (result)
     return result;
   return(compare_key(end_range) <= 0 ? 0 : HA_ERR_END_OF_FILE);
@@ -1516,10 +1516,10 @@ int Cursor::updateRecord(const unsigned char *old_data, unsigned char *new_data)
   int error;
 
   /*
-    Some storage engines require that the new record is in record[0]
-    (and the old record is in record[1]).
+    Some storage engines require that the new record is in getInsertRecord()
+    (and the old record is in getUpdateRecord()).
    */
-  assert(new_data == table->record[0]);
+  assert(new_data == table->getInsertRecord());
 
   DRIZZLE_UPDATE_ROW_START(table_share->getSchemaName(), table_share->getTableName());
   setTransactionReadWrite();

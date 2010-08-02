@@ -48,49 +48,49 @@ CREATE TEMPORARY TABLE `龡龡龡`(`丌丌丌` char(1)) engine=INNODB;
 CREATE TEMPORARY TABLE `龢龢龢`(`丒丒丒` char(1)) engine=INNODB;
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｶｶｶ	VARCHAR	TRUE		TRUE	
+ｶｶｶ	VARCHAR	YES		YES	
 DESC `ｲｲｲ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｷｷｷ	VARCHAR	TRUE		TRUE	
+ｷｷｷ	VARCHAR	YES		YES	
 DESC `ｳｳｳ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｸｸｸ	VARCHAR	TRUE		TRUE	
+ｸｸｸ	VARCHAR	YES		YES	
 DESC `ｴｴｴ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｹｹｹ	VARCHAR	TRUE		TRUE	
+ｹｹｹ	VARCHAR	YES		YES	
 DESC `ｵｵｵ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｺｺｺ	VARCHAR	TRUE		TRUE	
+ｺｺｺ	VARCHAR	YES		YES	
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-かかか	VARCHAR	TRUE		TRUE	
+かかか	VARCHAR	YES		YES	
 DESC `いいい`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ききき	VARCHAR	TRUE		TRUE	
+ききき	VARCHAR	YES		YES	
 DESC `ううう`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-くくく	VARCHAR	TRUE		TRUE	
+くくく	VARCHAR	YES		YES	
 DESC `えええ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-けけけ	VARCHAR	TRUE		TRUE	
+けけけ	VARCHAR	YES		YES	
 DESC `おおお`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-こここ	VARCHAR	TRUE		TRUE	
+こここ	VARCHAR	YES		YES	
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丂丂丂	VARCHAR	TRUE		TRUE	
+丂丂丂	VARCHAR	YES		YES	
 DESC `龗龗龗`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丄丄丄	VARCHAR	TRUE		TRUE	
+丄丄丄	VARCHAR	YES		YES	
 DESC `龞龞龞`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丅丅丅	VARCHAR	TRUE		TRUE	
+丅丅丅	VARCHAR	YES		YES	
 DESC `龡龡龡`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丌丌丌	VARCHAR	TRUE		TRUE	
+丌丌丌	VARCHAR	YES		YES	
 DESC `龢龢龢`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丒丒丒	VARCHAR	TRUE		TRUE	
+丒丒丒	VARCHAR	YES		YES	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TABLE `ｱｱｱ` (
@@ -216,49 +216,49 @@ CREATE TEMPORARY TABLE `龡龡龡`(`丌丌丌` char(1))  engine=MyISAM;
 CREATE TEMPORARY TABLE `龢龢龢`(`丒丒丒` char(1))  engine=MyISAM;
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｶｶｶ	VARCHAR	TRUE		TRUE	
+ｶｶｶ	VARCHAR	YES		YES	
 DESC `ｲｲｲ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｷｷｷ	VARCHAR	TRUE		TRUE	
+ｷｷｷ	VARCHAR	YES		YES	
 DESC `ｳｳｳ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｸｸｸ	VARCHAR	TRUE		TRUE	
+ｸｸｸ	VARCHAR	YES		YES	
 DESC `ｴｴｴ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｹｹｹ	VARCHAR	TRUE		TRUE	
+ｹｹｹ	VARCHAR	YES		YES	
 DESC `ｵｵｵ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｺｺｺ	VARCHAR	TRUE		TRUE	
+ｺｺｺ	VARCHAR	YES		YES	
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-かかか	VARCHAR	TRUE		TRUE	
+かかか	VARCHAR	YES		YES	
 DESC `いいい`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ききき	VARCHAR	TRUE		TRUE	
+ききき	VARCHAR	YES		YES	
 DESC `ううう`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-くくく	VARCHAR	TRUE		TRUE	
+くくく	VARCHAR	YES		YES	
 DESC `えええ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-けけけ	VARCHAR	TRUE		TRUE	
+けけけ	VARCHAR	YES		YES	
 DESC `おおお`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-こここ	VARCHAR	TRUE		TRUE	
+こここ	VARCHAR	YES		YES	
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丂丂丂	VARCHAR	TRUE		TRUE	
+丂丂丂	VARCHAR	YES		YES	
 DESC `龗龗龗`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丄丄丄	VARCHAR	TRUE		TRUE	
+丄丄丄	VARCHAR	YES		YES	
 DESC `龞龞龞`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丅丅丅	VARCHAR	TRUE		TRUE	
+丅丅丅	VARCHAR	YES		YES	
 DESC `龡龡龡`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丌丌丌	VARCHAR	TRUE		TRUE	
+丌丌丌	VARCHAR	YES		YES	
 DESC `龢龢龢`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丒丒丒	VARCHAR	TRUE		TRUE	
+丒丒丒	VARCHAR	YES		YES	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
@@ -384,49 +384,49 @@ CREATE TEMPORARY TABLE `龡龡龡`(`丌丌丌` char(1))  engine=MEMORY;
 CREATE TEMPORARY TABLE `龢龢龢`(`丒丒丒` char(1))  engine=MEMORY;
 DESC `ｱｱｱ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｶｶｶ	VARCHAR	TRUE		TRUE	
+ｶｶｶ	VARCHAR	YES		YES	
 DESC `ｲｲｲ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｷｷｷ	VARCHAR	TRUE		TRUE	
+ｷｷｷ	VARCHAR	YES		YES	
 DESC `ｳｳｳ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｸｸｸ	VARCHAR	TRUE		TRUE	
+ｸｸｸ	VARCHAR	YES		YES	
 DESC `ｴｴｴ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｹｹｹ	VARCHAR	TRUE		TRUE	
+ｹｹｹ	VARCHAR	YES		YES	
 DESC `ｵｵｵ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ｺｺｺ	VARCHAR	TRUE		TRUE	
+ｺｺｺ	VARCHAR	YES		YES	
 DESC `あああ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-かかか	VARCHAR	TRUE		TRUE	
+かかか	VARCHAR	YES		YES	
 DESC `いいい`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-ききき	VARCHAR	TRUE		TRUE	
+ききき	VARCHAR	YES		YES	
 DESC `ううう`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-くくく	VARCHAR	TRUE		TRUE	
+くくく	VARCHAR	YES		YES	
 DESC `えええ`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-けけけ	VARCHAR	TRUE		TRUE	
+けけけ	VARCHAR	YES		YES	
 DESC `おおお`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-こここ	VARCHAR	TRUE		TRUE	
+こここ	VARCHAR	YES		YES	
 DESC `龖龖龖`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丂丂丂	VARCHAR	TRUE		TRUE	
+丂丂丂	VARCHAR	YES		YES	
 DESC `龗龗龗`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丄丄丄	VARCHAR	TRUE		TRUE	
+丄丄丄	VARCHAR	YES		YES	
 DESC `龞龞龞`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丅丅丅	VARCHAR	TRUE		TRUE	
+丅丅丅	VARCHAR	YES		YES	
 DESC `龡龡龡`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丌丌丌	VARCHAR	TRUE		TRUE	
+丌丌丌	VARCHAR	YES		YES	
 DESC `龢龢龢`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-丒丒丒	VARCHAR	TRUE		TRUE	
+丒丒丒	VARCHAR	YES		YES	
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (

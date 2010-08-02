@@ -410,15 +410,15 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
   doStartIndexScan(table->getShare()->next_number_index, 1);
   if (table->getShare()->next_number_keypart == 0)
   {						// Autoincrement at key-start
-    error=index_last(table->record[1]);
+    error=index_last(table->getUpdateRecord());
   }
   else
   {
     unsigned char key[MAX_KEY_LENGTH];
-    key_copy(key, table->record[0],
+    key_copy(key, table->getInsertRecord(),
              table->key_info + table->getShare()->next_number_index,
              table->getShare()->next_number_key_offset);
-    error= index_read_map(table->record[1], key,
+    error= index_read_map(table->getUpdateRecord(), key,
                           make_prev_keypart_map(table->getShare()->next_number_keypart),
                           HA_READ_PREFIX_LAST);
   }
@@ -1802,7 +1802,7 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
 int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot)
 {
   ib_err_t err;
-  ptrdiff_t row_offset= buf - table->record[0];
+  ptrdiff_t row_offset= buf - table->getInsertRecord();
 
   err= ib_cursor_read_row(cursor, tuple);
 
