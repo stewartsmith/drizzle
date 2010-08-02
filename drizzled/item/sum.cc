@@ -2877,7 +2877,7 @@ int dump_leaf_key(unsigned char* key, uint32_t ,
                   Item_func_group_concat *item)
 {
   Table *table= item->table;
-  String tmp((char *)table->record[1], table->getShare()->getRecordLength(),
+  String tmp((char *)table->getUpdateRecord(), table->getShare()->getRecordLength(),
              default_charset_info);
   String tmp2;
   String *result= &item->result;

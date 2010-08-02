@@ -101,7 +101,7 @@ int pbms_write_row_blobs(TABLE *table, uchar *row_buffer, PBMSResultPtr result)
 			continue;
 			
 		// Get the blob record:
-		blob_rec = (char *)row_buffer + field->offset(field->table->record[0]);
+		blob_rec = (char *)row_buffer + field->offset(field->table->getInsertRecord());
 		packlength = field->pack_length() - field->table->s->blob_ptr_size;
 
 		memcpy(&blob, blob_rec +packlength, sizeof(char*));
@@ -157,7 +157,7 @@ int pbms_delete_row_blobs(TABLE *table, const uchar *row_buffer, PBMSResultPtr r
 			continue;
 			
 		// Get the blob record:
-		blob_rec = (char *)row_buffer + field->offset(field->table->record[0]);
+		blob_rec = (char *)row_buffer + field->offset(field->table->getInsertRecord());
 		packlength = field->pack_length() - field->table->s->blob_ptr_size;
 
 		length = field->get_length((uchar *)blob_rec);

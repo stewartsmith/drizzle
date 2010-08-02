@@ -272,7 +272,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
       {
         keydef[i].seg[j].null_bit= field->null_bit;
         keydef[i].seg[j].null_pos= (uint) (field->null_ptr-
-                                           (unsigned char*) table_arg->record[0]);
+                                           (unsigned char*) table_arg->getInsertRecord());
       }
       else
       {
@@ -291,7 +291,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
   }
   if (table_arg->found_next_number_field)
     keydef[share->next_number_index].flag|= HA_AUTO_KEY;
-  record= table_arg->record[0];
+  record= table_arg->getInsertRecord();
   recpos= 0;
   recinfo_pos= recinfo;
   while (recpos < (uint) share->stored_rec_length)
@@ -340,7 +340,7 @@ static int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
     {
       recinfo_pos->null_bit= found->null_bit;
       recinfo_pos->null_pos= (uint) (found->null_ptr -
-                                     (unsigned char*) table_arg->record[0]);
+                                     (unsigned char*) table_arg->getInsertRecord());
     }
     else
     {
@@ -662,7 +662,7 @@ int ha_myisam::doInsertRecord(unsigned char *buf)
     If we have an auto_increment column and we are writing a changed row
     or a new row, then update the auto_increment value in the record.
   */
-  if (table->next_number_field && buf == table->record[0])
+  if (table->next_number_field && buf == table->getInsertRecord())
   {
     int error;
     if ((error= update_auto_increment()))
@@ -1428,17 +1428,17 @@ void ha_myisam::get_auto_increment(uint64_t ,
   mi_flush_bulk_insert(file, table->getShare()->next_number_index);
 
   (void) extra(HA_EXTRA_KEYREAD);
-  key_copy(key, table->record[0],
+  key_copy(key, table->getInsertRecord(),
            &table->key_info[table->getShare()->next_number_index],
            table->getShare()->next_number_key_offset);
-  error= mi_rkey(file, table->record[1], (int) table->getShare()->next_number_index,
+  error= mi_rkey(file, table->getUpdateRecord(), (int) table->getShare()->next_number_index,
                  key, make_prev_keypart_map(table->getShare()->next_number_keypart),
                  HA_READ_PREFIX_LAST);
   if (error)
     nr= 1;
   else
   {
-    /* Get data from record[1] */
+    /* Get data from getUpdateRecord() */
     nr= ((uint64_t) table->next_number_field->
          val_int_offset(table->getShare()->rec_buff_length)+1);
   }
