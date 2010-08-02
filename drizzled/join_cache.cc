@@ -220,7 +220,7 @@ bool JoinCache::store_record_in_cache()
     {
       // SemiJoinDuplicateElimination: Get the rowid into table->ref:
       if (copy->get_rowid)
-        copy->get_rowid->cursor->position(copy->get_rowid->record[0]);
+        copy->get_rowid->cursor->position(copy->get_rowid->getInsertRecord());
 
       if (copy->strip)
       {

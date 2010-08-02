@@ -26,8 +26,6 @@
 namespace drizzled
 {
 
-extern boost::program_options::variables_map vm;
-
 namespace module
 {
 

@@ -542,7 +542,7 @@ static ha_rows find_all_keys(Session *session,
         error= HA_ERR_END_OF_FILE;
         break;
       }
-      file->position(sort_form->record[0]);
+      file->position(sort_form->getInsertRecord());
     }
     else					/* Not quick-select */
     {
@@ -553,11 +553,11 @@ static ha_rows find_all_keys(Session *session,
 	  error= errno ? errno : -1;		/* Abort */
 	  break;
 	}
-	error=file->rnd_pos(sort_form->record[0],next_pos);
+	error=file->rnd_pos(sort_form->getInsertRecord(),next_pos);
       }
       else
       {
-	error=file->rnd_next(sort_form->record[0]);
+	error=file->rnd_next(sort_form->getInsertRecord());
 
 	if (!flag)
 	{
@@ -565,7 +565,7 @@ static ha_rows find_all_keys(Session *session,
 	  record+= sort_form->getShare()->db_record_offset;
 	}
 	else if (!error)
-	  file->position(sort_form->record[0]);
+	  file->position(sort_form->getInsertRecord());
       }
       if (error && error != HA_ERR_RECORD_DELETED)
 	break;

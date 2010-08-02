@@ -44,9 +44,9 @@ namespace module
 class DRIZZLED_API option_map
 {
   const std::string &module_name;
+public:
   const boost::program_options::variables_map &vm;
 
-public:
 
   option_map(const std::string &module_name_in,
              const boost::program_options::variables_map &vm_in);
