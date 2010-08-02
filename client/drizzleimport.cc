@@ -468,18 +468,27 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
   
+  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
   po::variables_map vm;
+
   po::store(po::command_line_parser(argc, argv).options(long_options).
             extra_parser(parse_password_arg).run(), vm);
 
-  ifstream user_import_ifs("~/.drizzle/drizzleimport.cnf");
+  std::string user_config_dir_import(user_config_dir);
+  user_config_dir_import.append("/drizzle/drizzleimport.cnf"); 
+
+  std::string user_config_dir_client(user_config_dir);
+  user_config_dir_client.append("/drizzle/client.cnf");
+
+  ifstream user_import_ifs(user_config_dir_import.c_str());
   po::store(parse_config_file(user_import_ifs, import_options), vm);
- 
+
+  ifstream user_client_ifs(user_config_dir_client.c_str());
+  po::store(parse_config_file(user_client_ifs, client_options), vm);
+
   ifstream system_import_ifs(system_config_dir_import.c_str());
   store(parse_config_file(system_import_ifs, import_options), vm);
-
-  ifstream user_client_ifs("~/.drizzle/client.cnf");
-  po::store(parse_config_file(user_client_ifs, client_options), vm);
  
   ifstream system_client_ifs(system_config_dir_client.c_str());
   po::store(parse_config_file(system_client_ifs, client_options), vm);
