@@ -161,8 +161,8 @@ void  print_stacktrace(unsigned char* stack_bottom, size_t thread_stack)
 #endif
   if (!fp)
   {
-    fprintf(stderr, "frame pointer is NULL, did you compile with\n\
--fomit-frame-pointer? Aborting backtrace!\n");
+    fprintf(stderr, "frame pointer is NULL, did you compile with\n"
+                    "-fomit-frame-pointer? Aborting backtrace!\n");
     return;
   }
 
@@ -177,8 +177,9 @@ void  print_stacktrace(unsigned char* stack_bottom, size_t thread_stack)
   if (fp > (unsigned char**) stack_bottom ||
       fp < (unsigned char**) stack_bottom - thread_stack)
   {
-    fprintf(stderr, "Bogus stack limit or frame pointer,\
- fp=%p, stack_bottom=%p, thread_stack=%"PRIu64", aborting backtrace.\n",
+    fprintf(stderr, "Bogus stack limit or frame pointer, "
+                    "fp=%p, stack_bottom=%p, thread_stack=%"PRIu64", "
+                    "aborting backtrace.\n",
 	    (void *)fp, (void *)stack_bottom, (uint64_t)thread_stack);
     return;
   }
@@ -198,8 +199,8 @@ void  print_stacktrace(unsigned char* stack_bottom, size_t thread_stack)
 
     if (new_fp <= fp )
     {
-      fprintf(stderr, "New value of fp=%p failed sanity check,\
- terminating stack trace!\n", (void *)new_fp);
+      fprintf(stderr, "New value of fp=%p failed sanity check, "
+                      "terminating stack trace!\n", (void *)new_fp);
       goto end;
     }
     fp = new_fp;
