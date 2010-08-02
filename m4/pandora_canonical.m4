@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.138])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.141])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -227,8 +227,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     AM_PO_SUBDIRS
     IT_PROG_INTLTOOL([0.35],[no-xml])
     
-    dnl AS_IF([test "x{TARGET_SOLARIS}" = "xyes"], [USE_NLS="no"])
     GETTEXT_PACKAGE=$PACKAGE
+    AC_CHECK_LIB(intl, libintl_gettext)
     AC_SUBST([GETTEXT_PACKAGE])
     AS_IF([test "x${USE_NLS}" = "xyes"],
           [AC_DEFINE([ENABLE_NLS],[1],[Turn on language support])])
