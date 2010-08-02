@@ -547,7 +547,7 @@ int StorageEngine::createTable(Session &session,
       my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), const_cast<TableIdentifier &>(identifier).getSQLPath().c_str(), error);
     }
 
-    table.delete_table(false);
+    table.delete_table();
   }
 
   return(error != 0);

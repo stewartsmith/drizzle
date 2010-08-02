@@ -718,7 +718,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   int rc;
   unsigned char *read_buf= NULL;
   uint64_t temp_auto;
-  unsigned char *record=  table->record[0];
+  unsigned char *record=  table->getInsertRecord();
 
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
@@ -730,7 +730,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
       return(HA_ERR_CRASHED_ON_USAGE);
 
 
-  if (table->next_number_field && record == table->record[0])
+  if (table->next_number_field && record == table->getInsertRecord())
   {
     update_auto_increment();
     temp_auto= table->next_number_field->val_int();
@@ -914,7 +914,7 @@ int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
   {
     if (!((*field)->is_null()))
     {
-      ptr= (*field)->unpack(record + (*field)->offset(table->record[0]), ptr);
+      ptr= (*field)->unpack(record + (*field)->offset(table->getInsertRecord()), ptr);
     }
   }
   return(0);
@@ -1071,12 +1071,12 @@ int ha_archive::optimize()
 
       for (x= 0; x < rows_restored ; x++)
       {
-        rc= get_row(&archive, table->record[0]);
+        rc= get_row(&archive, table->getInsertRecord());
 
         if (rc != 0)
           break;
 
-        real_write_row(table->record[0], &writer);
+        real_write_row(table->getInsertRecord(), &writer);
         /*
           Long term it should be possible to optimize this so that
           it is not called on each row.
@@ -1089,8 +1089,8 @@ int ha_archive::optimize()
           field->setReadSet();
 
           uint64_t auto_value=
-            (uint64_t) field->val_int(table->record[0] +
-                                       field->offset(table->record[0]));
+            (uint64_t) field->val_int(table->getInsertRecord() +
+                                       field->offset(table->getInsertRecord()));
           if (share->archive_write.auto_increment < auto_value)
             stats.auto_increment_value=
               (share->archive_write.auto_increment= auto_value) + 1;
@@ -1287,7 +1287,7 @@ int ha_archive::check(Session* session)
   read_data_header(&archive);
   for (x= 0; x < share->archive_write.rows; x++)
   {
-    rc= get_row(&archive, table->record[0]);
+    rc= get_row(&archive, table->getInsertRecord());
 
     if (rc != 0)
       break;

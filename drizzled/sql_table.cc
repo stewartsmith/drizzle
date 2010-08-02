@@ -147,7 +147,7 @@ void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_n
 			In this case we give an warning of level 'NOTE'
     drop_temporary	Only drop temporary tables
 
-  TODO:
+  @todo
     When logging to the binary log, we should log
     tmp_tables and transactional tables as separate statements if we
     are in a transaction;  This is needed to get these tables into the
@@ -924,7 +924,7 @@ static int mysql_prepare_create_table(Session *session,
              key2->name.str != ignore_key &&
              !foreign_key_prefix(key, key2)))
         {
-          /* TODO: issue warning message */
+          /* @todo issue warning message */
           /* mark that the generated key should be ignored */
           if (!key2->generated ||
               (key->generated && key->columns.elements <
@@ -1818,8 +1818,7 @@ static bool mysql_admin_table(Session* session, TableList* tables,
       /*
         Time zone tables and SP tables can be add to lex->query_tables list,
         so it have to be prepared.
-        TODO: Investigate if we can put extra tables into argument instead of
-        using lex->query_tables
+        @todo Investigate if we can put extra tables into argument instead of using lex->query_tables
       */
       lex->query_tables= table;
       lex->query_tables_last= &table->next_global;
