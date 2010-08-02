@@ -28,14 +28,9 @@ lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
 noinst_PROGRAMS =
 
-# Process this file with automake to create Makefile.in
-if BUILD_GETTEXT
-  po=po
-endif
-
 VERSION=$(PANDORA_RELEASE_VERSION)
 
-SUBDIRS = ${po} \
+SUBDIRS = po \
 	  gnulib \
 	  .
 
@@ -61,7 +56,10 @@ CLEANFILES=		${BUILT_SOURCES}
 DISTCLEANFILES=		ac_available_languages_fragment \
 			.plugin.scan \
 			config/bzr_revinfo \
-			config/top.h
+			config/top.h \
+			intltool-extract \
+			intltool-merge \
+			intltool-update
 
 MAINTAINERCLEANFILES=	autom4te.cache
 

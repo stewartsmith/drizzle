@@ -146,8 +146,18 @@ public:
     return in_use;
   }
 
+  unsigned char *getInsertRecord()
+  {
+    return record[0];
+  }
+
+  unsigned char *getUpdateRecord()
+  {
+    return record[1];
+  }
+
   unsigned char *record[2]; /**< Pointer to "records" */
-  unsigned char *insert_values; /* used by INSERT ... UPDATE */
+  std::vector<unsigned char> insert_values; /* used by INSERT ... UPDATE */
   KeyInfo  *key_info; /**< data of keys in database */
   Field *next_number_field; /**< Set if next_number is activated. @TODO What the heck is the difference between this and the next member? */
   Field *found_next_number_field; /**< Points to the "next-number" field (autoincrement field) */
@@ -169,7 +179,7 @@ public:
   uint32_t lock_data_start; /**< Start pos. in DRIZZLE_LOCK.locks */
   uint32_t lock_count; /**< Number of locks */
   uint32_t used_fields;
-  uint32_t status; /* What's in record[0] */
+  uint32_t status; /* What's in getInsertRecord() */
   /* number of select if it is derived table */
   uint32_t derived_select_number;
   int current_lock; /**< Type of lock on table */
@@ -189,7 +199,9 @@ public:
   bool null_row;
 
   bool force_index;
-  bool distinct,const_table,no_rows;
+  bool distinct;
+  bool const_table;
+  bool no_rows;
   bool key_read;
   bool no_keyread;
   /*
@@ -354,7 +366,7 @@ public:
    * @param If true if we also want to free table_share
    * @note this should all be the destructor
    */
-  int delete_table(bool free_share);
+  int delete_table(bool free_share= false);
 
   void resetTable(Session *session, TableShare *share, uint32_t db_stat_arg);
 

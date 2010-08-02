@@ -327,7 +327,7 @@ void ha_heap::update_key_stats()
 int ha_heap::doInsertRecord(unsigned char * buf)
 {
   int res;
-  if (table->next_number_field && buf == table->record[0])
+  if (table->next_number_field && buf == table->getInsertRecord())
   {
     if ((res= update_auto_increment()))
       return res;
@@ -729,12 +729,12 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
     HP_COLUMNDEF* column= columndef + column_idx;
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();
-    column->offset= field->offset(field->getTable()->record[0]);
+    column->offset= field->offset(field->getTable()->getInsertRecord());
 
     if (field->null_bit)
     {
       column->null_bit= field->null_bit;
-      column->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->record[0]);
+      column->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->getInsertRecord());
     }
     else
     {
@@ -823,7 +823,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
       if (field->null_ptr)
       {
 	seg->null_bit= field->null_bit;
-	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->record[0]);
+	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->getInsertRecord());
       }
       else
       {
