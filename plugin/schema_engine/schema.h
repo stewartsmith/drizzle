@@ -55,8 +55,7 @@ public:
 
   bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 
-  drizzled::Cursor *create(drizzled::TableShare &,
-                           drizzled::memory::Root *)
+  drizzled::Cursor *create(drizzled::TableShare &)
   {
     return NULL;
   }

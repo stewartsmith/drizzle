@@ -145,7 +145,7 @@ inline key_part_map make_prev_keypart_map(T a)
   If a blob column has NULL value, then its length and blob data pointer
   must be set to 0.
 */
-class Cursor :public memory::SqlAlloc
+class Cursor
 {
 protected:
   TableShare *table_share;   /* The table definition */

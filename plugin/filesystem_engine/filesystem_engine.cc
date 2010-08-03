@@ -74,10 +74,9 @@ public:
     pthread_mutex_destroy(&filesystem_mutex);
   }
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) FilesystemCursor(*this, table);
+    return new FilesystemCursor(*this, table);
   }
 
   const char **bas_ext() const {
