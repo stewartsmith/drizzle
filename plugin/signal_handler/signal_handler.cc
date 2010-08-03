@@ -246,16 +246,20 @@ public:
   */
   ~SignalHandler()
   {
-    uint32_t i;
     /*
-      Wait up to 10 seconds for signal thread to die. We use this mainly to
+      Wait up to 100000 micro-seconds for signal thread to die. We use this mainly to
       avoid getting warnings that internal::my_thread_end has not been called
     */
-    for (i= 0 ; i < 100 && signal_thread_in_use; i++)
+    for (uint32_t i= 0 ; i < 100 && signal_thread_in_use; i++)
     {
       if (pthread_kill(signal_thread, SIGTERM) != ESRCH)
         break;
-      usleep(100);				// Give it time to die
+
+      struct timespec tm;
+      tm.tv_sec= 0;
+      tm.tv_nsec= 100000;
+
+      nanosleep(&tm, NULL);				// Give it time to die
     }
 
   }

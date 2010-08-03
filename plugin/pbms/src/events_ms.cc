@@ -58,7 +58,7 @@ static bool insertRecord(TableEventData &data, unsigned char *new_row)
 		field = data.table.getBlobFieldAt(i);
 
 		// Get the blob record:
-		blob_rec = new_row + field->offset(data.table.record[0]);
+		blob_rec = new_row + field->offset(data.table.getInsertRecord());
 		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
 		length = field->get_length(blob_rec);
@@ -136,7 +136,7 @@ static bool deleteRecord(TableEventData &data, const unsigned char *old_row)
 		field = data.table.getBlobFieldAt(i);
 
 		// Get the blob record:
-		blob_rec = (char *)old_row + field->offset(data.table.record[0]);
+		blob_rec = (char *)old_row + field->offset(data.table.getInsertRecord());
 		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
 		length = field->get_length((unsigned char *)blob_rec);
@@ -286,7 +286,7 @@ static bool observeBeforeInsertRecord(BeforeInsertRecordEventData &data)
 		// Get the blob record:
 		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
-		blob_rec = (unsigned char *)data.row + field->offset(data.table.record[0]);
+		blob_rec = (unsigned char *)data.row + field->offset(data.table.getInsertRecord());
 		length = field->get_length(blob_rec);
 		memcpy(&blob_url, blob_rec +packlength, sizeof(char*));
 
@@ -343,7 +343,7 @@ static bool observeBeforeUpdateRecord(BeforeUpdateRecordEventData &data)
 		// Check to see if the BLOB data was updated.
 
 		// Get the blob records:
-		field_offset = field->offset(data.table.record[0]);
+		field_offset = field->offset(data.table.getInsertRecord());
 		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
 		if (new_null) {
@@ -397,7 +397,7 @@ static bool observeAfterUpdateRecord(AfterUpdateRecordEventData &data)
 		
 		if ( (new_null == false) || (old_null == false)) {
 			const unsigned char *blob_rec;			
-			size_t field_offset = field->offset(data.table.record[0]);
+			size_t field_offset = field->offset(data.table.getInsertRecord());
 			size_t packlength = field->pack_length() - data.table.getBlobPtrSize();
 			char *old_blob_url, *new_blob_url;
 			
@@ -440,7 +440,7 @@ static bool observeAfterDeleteRecord(AfterDeleteRecordEventData &data)
 		// Get the blob record:
 		packlength = field->pack_length() - data.table.getBlobPtrSize();
 
-		blob_rec = data.row + field->offset(data.table.record[0]);
+		blob_rec = data.row + field->offset(data.table.getInsertRecord());
 		length = field->get_length(blob_rec);
 		memcpy(&blob_url, blob_rec +packlength, sizeof(char*));
 

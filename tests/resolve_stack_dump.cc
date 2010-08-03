@@ -80,10 +80,13 @@ static void usage(void)
 	 internal::my_progname);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
-  printf("\n\
-The symbols-file should include the output from:  'nm --numeric-sort drizzled'.\n\
-The numeric-dump-file should contain a numeric stack trace from drizzled.\n\
-If the numeric-dump-file is not given, the stack trace is read from stdin.\n");
+  printf("\n"
+         "The symbols-file should include the output from: \n"
+         "  'nm --numeric-sort drizzled'.\n"
+         "The numeric-dump-file should contain a numeric stack trace "
+         "from drizzled.\n"
+         "If the numeric-dump-file is not given, the stack trace is "
+         "read from stdin.\n");
 }
 
 static void die(const char* fmt, ...)
@@ -160,8 +163,8 @@ static void open_files(void)
   /* if name not given, assume stdin*/
 
   if (!sym_fname)
-    die("Please run nm --numeric-sort on drizzled binary that produced stack \
-trace dump and specify the path to it with -s or --symbols-file");
+    die("Please run nm --numeric-sort on drizzled binary that produced stack "
+        "trace dump and specify the path to it with -s or --symbols-file");
   if (!(fp_sym= fopen(sym_fname, "r")))
     die("Could not open %s", sym_fname);
 
@@ -248,8 +251,9 @@ static void verify_sort()
     SYM_ENTRY se;
     get_dynamic(&sym_table, (unsigned char*)&se, i);
     if (se.addr < last)
-      die("sym table does not appear to be sorted, did you forget \
---numeric-sort arg to nm? trouble addr = %p, last = %p", se.addr, last);
+      die("sym table does not appear to be sorted, did you forget "
+          "--numeric-sort arg to nm? trouble addr = %p, last = %p",
+          se.addr, last);
     last = se.addr;
   }
 }
