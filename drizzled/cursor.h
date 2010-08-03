@@ -170,7 +170,7 @@ public:
   /** MultiRangeRead-related members: */
   range_seq_t mrr_iter;    /* Interator to traverse the range sequence */
   RANGE_SEQ_IF mrr_funcs;  /* Range sequence traversal functions */
-  HANDLER_BUFFER *multi_range_buffer; /* MRR buffer info */
+
   uint32_t ranges_in_seq; /* Total number of ranges in the traversed sequence */
   /* true <=> source MRR ranges and the output are ordered */
   bool mrr_is_output_sorted;
