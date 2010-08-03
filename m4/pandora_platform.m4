@@ -73,8 +73,13 @@ AC_DEFUN([PANDORA_PLATFORM],[
       TARGET_WINDOWS="true"
       AC_SUBST(TARGET_WINDOWS)
       AC_DEFINE([TARGET_OS_WINDOWS], [1], [Whether we are building for Windows])
+      AC_DEFINE([WINVER], [WindowsXP], [Version of Windows])
+      AC_DEFINE([_WIN32_WINNT], [0x0501], [Magical number to make things work])
+      LIBS="$LIBS -lwsock32 -lws2_32"
+      AM_CFLAGS="${AM_CFLAGS} -I\${top_srcdir}/win32 -I\${top_builddir}/win32"
       ;;
   esac
+  AM_CONDITIONAL(BUILD_WIN32, [test "x${TARGET_WINDOWS}" = "xtrue"])
 
   AC_SUBST(PANDORA_OPTIMIZE_BITFIELD)
 

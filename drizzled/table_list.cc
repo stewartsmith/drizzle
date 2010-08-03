@@ -39,13 +39,11 @@ uint32_t TableList::create_table_def_key(char *key)
   return TableIdentifier::createKey(key, db, table_name);
 }
 
-bool TableList::set_insert_values(memory::Root *mem_root)
+bool TableList::set_insert_values(memory::Root *)
 {
   if (table)
   {
-    if (!table->insert_values &&
-        !(table->insert_values= (unsigned char *)mem_root->alloc_root(table->getShare()->rec_buff_length)))
-      return true;
+    table->insert_values.resize(table->getShare()->rec_buff_length);
   }
 
   return false;

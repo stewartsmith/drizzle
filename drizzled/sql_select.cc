@@ -3589,7 +3589,7 @@ int safe_index_read(JoinTable *tab)
 {
   int error;
   Table *table= tab->table;
-  if ((error=table->cursor->index_read_map(table->record[0],
+  if ((error=table->cursor->index_read_map(table->getInsertRecord(),
                                          tab->ref.key_buff,
                                          make_prev_keypart_map(tab->ref.key_parts),
                                          HA_READ_KEY_EXACT)))
@@ -3681,7 +3681,7 @@ int join_read_system(JoinTable *tab)
   int error;
   if (table->status & STATUS_GARBAGE)		// If first read
   {
-    if ((error=table->cursor->read_first_row(table->record[0],
+    if ((error=table->cursor->read_first_row(table->getInsertRecord(),
 					   table->getShare()->getPrimaryKey())))
     {
       if (error != HA_ERR_END_OF_FILE)
@@ -3721,7 +3721,7 @@ int join_read_const(JoinTable *tab)
       error= HA_ERR_KEY_NOT_FOUND;
     else
     {
-      error=table->cursor->index_read_idx_map(table->record[0],tab->ref.key,
+      error=table->cursor->index_read_idx_map(table->getInsertRecord(),tab->ref.key,
                                             (unsigned char*) tab->ref.key_buff,
                                             make_prev_keypart_map(tab->ref.key_parts),
                                             HA_READ_KEY_EXACT);
@@ -3781,7 +3781,7 @@ int join_read_key(JoinTable *tab)
       table->status=STATUS_NOT_FOUND;
       return -1;
     }
-    error=table->cursor->index_read_map(table->record[0],
+    error=table->cursor->index_read_map(table->getInsertRecord(),
                                       tab->ref.key_buff,
                                       make_prev_keypart_map(tab->ref.key_parts),
                                       HA_READ_KEY_EXACT);
@@ -3828,7 +3828,7 @@ int join_read_always_key(JoinTable *tab)
 
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
-  if ((error=table->cursor->index_read_map(table->record[0],
+  if ((error=table->cursor->index_read_map(table->getInsertRecord(),
                                          tab->ref.key_buff,
                                          make_prev_keypart_map(tab->ref.key_parts),
                                          HA_READ_KEY_EXACT)))
@@ -3854,7 +3854,7 @@ int join_read_last_key(JoinTable *tab)
     table->cursor->startIndexScan(tab->ref.key, tab->sorted);
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
-  if ((error=table->cursor->index_read_last_map(table->record[0],
+  if ((error=table->cursor->index_read_last_map(table->getInsertRecord(),
                                               tab->ref.key_buff,
                                               make_prev_keypart_map(tab->ref.key_parts))))
   {
@@ -3883,7 +3883,7 @@ int join_read_next_same_diff(ReadRecord *info)
       /* Save index tuple from record to the buffer */
       key_copy(tab->insideout_buf, info->record, key, 0);
 
-      if ((error=table->cursor->index_next_same(table->record[0],
+      if ((error=table->cursor->index_next_same(table->getInsertRecord(),
                                               tab->ref.key_buff,
                                               tab->ref.key_length)))
       {
@@ -3907,7 +3907,7 @@ int join_read_next_same(ReadRecord *info)
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
 
-  if ((error=table->cursor->index_next_same(table->record[0],
+  if ((error=table->cursor->index_next_same(table->getInsertRecord(),
 					  tab->ref.key_buff,
 					  tab->ref.key_length)))
   {
@@ -3926,7 +3926,7 @@ int join_read_prev_same(ReadRecord *info)
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
 
-  if ((error=table->cursor->index_prev(table->record[0])))
+  if ((error=table->cursor->index_prev(table->getInsertRecord())))
     return table->report_error(error);
   if (key_cmp_if_same(table, tab->ref.key_buff, tab->ref.key,
                       tab->ref.key_length))
@@ -3985,7 +3985,7 @@ int join_read_first(JoinTable *tab)
   tab->read_record.table=table;
   tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
-  tab->read_record.record=table->record[0];
+  tab->read_record.record=table->getInsertRecord();
   if (tab->insideout_match_tab)
   {
     tab->read_record.do_insideout_scan= tab;
@@ -4000,7 +4000,7 @@ int join_read_first(JoinTable *tab)
 
   if (!table->cursor->inited)
     table->cursor->startIndexScan(tab->index, tab->sorted);
-  if ((error=tab->table->cursor->index_first(tab->table->record[0])))
+  if ((error=tab->table->cursor->index_first(tab->table->getInsertRecord())))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
       table->report_error(error);
@@ -4056,10 +4056,10 @@ int join_read_last(JoinTable *tab)
   tab->read_record.table=table;
   tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
-  tab->read_record.record=table->record[0];
+  tab->read_record.record=table->getInsertRecord();
   if (!table->cursor->inited)
     table->cursor->startIndexScan(tab->index, 1);
-  if ((error= tab->table->cursor->index_last(tab->table->record[0])))
+  if ((error= tab->table->cursor->index_last(tab->table->getInsertRecord())))
     return table->report_error(error);
 
   return 0;
@@ -4220,7 +4220,7 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
         copy_sum_funcs(join->sum_funcs, join->sum_funcs_end[send_group_parts]);
         if (!join->having || join->having->val_int())
         {
-          int error= table->cursor->insertRecord(table->record[0]);
+          int error= table->cursor->insertRecord(table->getInsertRecord());
 
           if (error)
           {
@@ -5326,8 +5326,8 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   int error;
   uint32_t reclength= table->getShare()->getRecordLength() - offset;
 
-  org_record=(char*) (record=table->record[0])+offset;
-  new_record=(char*) table->record[1]+offset;
+  org_record=(char*) (record=table->getInsertRecord())+offset;
+  new_record=(char*) table->getUpdateRecord()+offset;
 
   cursor->startTableScan(1);
   error=cursor->rnd_next(record);
@@ -5413,7 +5413,7 @@ int remove_dup_with_hash_index(Session *session,
                                uint32_t key_length,
                                Item *having)
 {
-  unsigned char *key_pos, *record=table->record[0];
+  unsigned char *key_pos, *record=table->getInsertRecord();
   int error;
   Cursor *cursor= table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
