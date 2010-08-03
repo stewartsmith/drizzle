@@ -28,7 +28,7 @@
 #include "drizzled/error.h"
 #include "drizzled/gettext.h"
 
-#include <drizzled/unordered_map.h>
+#include <boost/unordered_map.hpp>
 #include <exception>
 
 namespace drizzled
@@ -70,7 +70,7 @@ private:
   ErrorMap(const ErrorMap &e);
   ErrorMap& operator=(const ErrorMap &e);
 
-  typedef unordered_map<uint32_t, std::string> ErrorMessageMap;
+  typedef boost::unordered_map<uint32_t, std::string> ErrorMessageMap;
   ErrorMessageMap mapping_;
 };
 
