@@ -439,8 +439,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/tztime.h \
 			      drizzled/unique.h \
 			      drizzled/unireg.h \
-			      drizzled/unordered_map.h \
-			      drizzled/unordered_set.h \
 			      drizzled/user_var_entry.h \
 			      drizzled/utf8/utf8.h \
 			      drizzled/var.h \
