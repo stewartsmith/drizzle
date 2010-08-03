@@ -54,9 +54,8 @@ public:
     tcmapdel(blitz_table_cache);
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table,
-                                   drizzled::memory::Root *mem_root) {
-    return new (mem_root) ha_blitz(*this, table);
+  virtual drizzled::Cursor *create(drizzled::TableShare &table) {
+    return new ha_blitz(*this, table);
   }
 
   const char **bas_ext() const {
