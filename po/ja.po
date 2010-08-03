@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-07-25 20:16-0700\n"
+"POT-Creation-Date: 2010-08-03 10:16-0400\n"
 "PO-Revision-Date: 2010-03-19 15:13+0000\n"
 "Last-Translator: tetu-s <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -18,120 +18,120 @@ msgstr ""
 "X-Launchpad-Export-Date: 2010-03-20 04:41+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
-#: ../client/drizzle.cc:463
+#: ../client/drizzle.cc:464
 msgid "Synonym for `help'."
 msgstr "ヘルプ"
 
-#: ../client/drizzle.cc:464
+#: ../client/drizzle.cc:465
 msgid "Clear command."
 msgstr "コマンドをクリアする。"
 
-#: ../client/drizzle.cc:466
+#: ../client/drizzle.cc:467
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr "サーバへ再接続する。任意の引数としてdbとhostを指定することが可能。"
 
-#: ../client/drizzle.cc:468
+#: ../client/drizzle.cc:469
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
 "ステートメントの区切り文字を指定する。注意：以降の行から区切り文字が変更され"
 "ます。"
 
-#: ../client/drizzle.cc:470
+#: ../client/drizzle.cc:471
 msgid "Send command to drizzle server, display result vertically."
 msgstr "drizzleサーバへコマンドを送信し、結果を垂直に表示する。"
 
-#: ../client/drizzle.cc:471
+#: ../client/drizzle.cc:472
 msgid "Exit drizzle. Same as quit."
 msgstr "drizzleを終了する。（quitと同じ。）"
 
-#: ../client/drizzle.cc:472
+#: ../client/drizzle.cc:473
 msgid "Send command to drizzle server."
 msgstr "drizzleサーバへコマンドを送信する。"
 
-#: ../client/drizzle.cc:473
+#: ../client/drizzle.cc:474
 msgid "Display this help."
 msgstr "このヘルプを表示する。"
 
-#: ../client/drizzle.cc:474
+#: ../client/drizzle.cc:475
 msgid "Disable pager, print to stdout."
 msgstr "ページャを無効にし、stdoutへ出力する。"
 
-#: ../client/drizzle.cc:475
+#: ../client/drizzle.cc:476
 msgid "Don't write into outfile."
 msgstr "outfileへ書き込まない。"
 
-#: ../client/drizzle.cc:477
+#: ../client/drizzle.cc:478
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr "ページャを[to_pager]へ変更し、クエリの結果をページャへ表示する。"
 
-#: ../client/drizzle.cc:478
+#: ../client/drizzle.cc:479
 msgid "Print current command."
 msgstr "現在のコマンドを表示する。"
 
-#: ../client/drizzle.cc:479
+#: ../client/drizzle.cc:480
 msgid "Change your drizzle prompt."
 msgstr "drizzleのプロンプトを変更する。"
 
-#: ../client/drizzle.cc:480
+#: ../client/drizzle.cc:481
 msgid "Quit drizzle."
 msgstr "drizzleを終了する。"
 
-#: ../client/drizzle.cc:481
+#: ../client/drizzle.cc:482
 msgid "Rebuild completion hash."
 msgstr "補完ハッシュを再構築する。"
 
-#: ../client/drizzle.cc:483
+#: ../client/drizzle.cc:484
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr ""
 "SQLスクリプトファイルを実行する。ファイル名を引数として指定して下さい。"
 
-#: ../client/drizzle.cc:484
+#: ../client/drizzle.cc:485
 msgid "Get status information from the server."
 msgstr "サーバから情報を取得する。"
 
-#: ../client/drizzle.cc:486
+#: ../client/drizzle.cc:487
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
 "outfileを[to_outfile]に設定する。以降の出力はすべてoutfileへ追加されます。"
 
-#: ../client/drizzle.cc:488
+#: ../client/drizzle.cc:489
 msgid "Use another database. Takes database name as argument."
 msgstr "他のデータベースを使用する。データベース名を引数として指定して下さい。"
 
-#: ../client/drizzle.cc:490 ../client/drizzle.cc:1404
+#: ../client/drizzle.cc:491 ../client/drizzle.cc:1405
 msgid "Show warnings after every statement."
 msgstr "各ステートメントの後で警告を表示する。"
 
-#: ../client/drizzle.cc:492
+#: ../client/drizzle.cc:493
 msgid "Don't show warnings after every statement."
 msgstr "各ステートメントの後で警告を表示しない。"
 
-#: ../client/drizzle.cc:1331
+#: ../client/drizzle.cc:1332
 msgid "Error: Invalid Value for connect_timeout"
 msgstr ""
 
-#: ../client/drizzle.cc:1342
+#: ../client/drizzle.cc:1343
 msgid "Error: Invalid Value for max_input_line"
 msgstr ""
 
-#: ../client/drizzle.cc:1363
+#: ../client/drizzle.cc:1364
 #, fuzzy
 msgid "Displays this help and exit."
 msgstr "ヘルプを表示して終了する。"
 
-#: ../client/drizzle.cc:1364
+#: ../client/drizzle.cc:1365
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
 "履歴ファイルを使用しない。インタラクティブな振る舞いを無効にする。（--silent"
 "オプションを有効にします。）"
 
-#: ../client/drizzle.cc:1366
+#: ../client/drizzle.cc:1367
 msgid "Display column type information."
 msgstr "カラムのデータ型に関する情報を表示する。"
 
-#: ../client/drizzle.cc:1368
+#: ../client/drizzle.cc:1369
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
@@ -139,19 +139,19 @@ msgstr ""
 "コメントを保存し、コメントをサーバへ送信する。デフォルトは--skip-comments（コ"
 "メント機能は無効）で、--commentsオプションをつけることにより有効になります。"
 
-#: ../client/drizzle.cc:1370
+#: ../client/drizzle.cc:1371
 msgid "Use compression in server/client protocol."
 msgstr "サーバ・クライアントプロトコルにおいて圧縮を利用する。"
 
-#: ../client/drizzle.cc:1372
+#: ../client/drizzle.cc:1373
 msgid "Print the output of a query (rows) vertically."
 msgstr "結果を縦に表示する。"
 
-#: ../client/drizzle.cc:1374
+#: ../client/drizzle.cc:1375
 msgid "Continue even if we get an sql error."
 msgstr "sqlエラーが発生しても続行する。"
 
-#: ../client/drizzle.cc:1376
+#: ../client/drizzle.cc:1377
 msgid ""
 "Enable named commands. Named commands mean this program's internal commands; "
 "see drizzle> help . When enabled, the named commands can be used from any "
@@ -164,7 +164,7 @@ msgstr ""
 "である場合は、先頭行のみで使用することが可能です。--disable-named-commandsオ"
 "プションにより無効にすることが可能です。デフォルトは無効です。"
 
-#: ../client/drizzle.cc:1378
+#: ../client/drizzle.cc:1379
 msgid ""
 "Named commands are disabled. Use \\* form only, or use named commands only "
 "in the beginning of a line ending with a semicolon (;) Since version 10.9 "
@@ -179,19 +179,19 @@ msgstr ""
 "可能です。警告：このオプションは廃止予定です。--disable-named-commandsを代わ"
 "りに使用して下さい。"
 
-#: ../client/drizzle.cc:1379
+#: ../client/drizzle.cc:1380
 msgid "Ignore space after function names."
 msgstr "関数の後のスペースを無視する。"
 
-#: ../client/drizzle.cc:1381
+#: ../client/drizzle.cc:1382
 msgid "Turn off beep on error."
 msgstr "エラー発生時にビープ音を出さない。"
 
-#: ../client/drizzle.cc:1383
+#: ../client/drizzle.cc:1384
 msgid "Write line numbers for errors."
 msgstr "エラーに行番号を表示する。"
 
-#: ../client/drizzle.cc:1385
+#: ../client/drizzle.cc:1386
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
@@ -199,11 +199,11 @@ msgstr ""
 "エラーに行番号を表示しない。警告：「-L」は廃止予定です。長い書式のオプション"
 "を代わりに使用して下さい。"
 
-#: ../client/drizzle.cc:1387
+#: ../client/drizzle.cc:1388
 msgid "Write column names in results."
 msgstr "結果においてカラム名を記載する。"
 
-#: ../client/drizzle.cc:1389
+#: ../client/drizzle.cc:1390
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
@@ -211,7 +211,7 @@ msgstr ""
 "カラム名を結果に表示しない。警告：「-N」は廃止予定です。長い書式のオプション"
 "を使用して下さい。"
 
-#: ../client/drizzle.cc:1391
+#: ../client/drizzle.cc:1392
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
@@ -219,43 +219,43 @@ msgstr ""
 "変数の値を変更する。このオプションは廃止予定です。変数は「--変数名=値」という"
 "書式を用いて直接設定することが出来ます。"
 
-#: ../client/drizzle.cc:1393
+#: ../client/drizzle.cc:1394
 msgid "Output in table format."
 msgstr "表形式で出力する。"
 
-#: ../client/drizzle.cc:1395
+#: ../client/drizzle.cc:1396
 msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr "キーを使用してUPDATEとDELETEのみを許可する。"
 
-#: ../client/drizzle.cc:1397
+#: ../client/drizzle.cc:1398
 msgid "Synonym for option --safe-updates, -U."
 msgstr "--safe-updates, -U オプションと同じ。"
 
-#: ../client/drizzle.cc:1399
+#: ../client/drizzle.cc:1400
 msgid "-v vvv implies that verbose= 3, Used to specify verbose"
 msgstr ""
 
-#: ../client/drizzle.cc:1400 ../drizzled/drizzled.cc:1152
+#: ../client/drizzle.cc:1401 ../drizzled/drizzled.cc:1153
 msgid "Output version information and exit."
 msgstr "バージョン情報を出力し終了する。"
 
-#: ../client/drizzle.cc:1402
+#: ../client/drizzle.cc:1403
 msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr "古いプロトコル(4.1.1以前)を使用している場合は接続を拒否"
 
-#: ../client/drizzle.cc:1406
+#: ../client/drizzle.cc:1407
 msgid "Number of lines before each import progress report."
 msgstr "インポート実行時に進捗が表示される行数の間隔。"
 
-#: ../client/drizzle.cc:1408
+#: ../client/drizzle.cc:1409
 msgid "Ping the server to check if it's alive."
 msgstr "サーバーの生存を確認するために接続試験を行う。"
 
-#: ../client/drizzle.cc:1410
+#: ../client/drizzle.cc:1411
 msgid "Configuration file defaults are not used if no-defaults is set"
 msgstr ""
 
-#: ../client/drizzle.cc:1416
+#: ../client/drizzle.cc:1417
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
 "and field completion, but startup and reconnecting may take a longer time. "
@@ -265,7 +265,7 @@ msgstr ""
 "する必要がなくなりますが、起動時間が長くなる場合があります。--disable-auto-"
 "rehashオプションで無効にすることができます。"
 
-#: ../client/drizzle.cc:1417
+#: ../client/drizzle.cc:1418
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
@@ -276,41 +276,41 @@ msgstr ""
 "を行わないようにする効果がある。警告：このオプションは廃止予定です。代わり"
 "に--disable-auto-rehashを指定して下さい。"
 
-#: ../client/drizzle.cc:1419
+#: ../client/drizzle.cc:1420
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr "出力結果がターミナルの幅よりも広い場合、自動的に垂直表示に切り替える。"
 
-#: ../client/drizzle.cc:1421
+#: ../client/drizzle.cc:1422
 msgid "Database to use."
 msgstr "使用するデータベース。"
 
-#: ../client/drizzle.cc:1423
+#: ../client/drizzle.cc:1424
 msgid "(not used)"
 msgstr "（未使用）"
 
-#: ../client/drizzle.cc:1425
+#: ../client/drizzle.cc:1426
 msgid "Delimiter to be used."
 msgstr "区切りに使用する文字。"
 
-#: ../client/drizzle.cc:1427
+#: ../client/drizzle.cc:1428
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr "コマンドを実行して終了する。（--forceと履歴ファイルを無効化）"
 
-#: ../client/drizzle.cc:1429
+#: ../client/drizzle.cc:1430
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
 msgstr "LOAD DATA LOCAL INFILEの有効/無効を切り替える。"
 
-#: ../client/drizzle.cc:1431
+#: ../client/drizzle.cc:1432
 msgid "Flush buffer after each query."
 msgstr "クエリの後に毎回バッファをフラッシュする。"
 
-#: ../client/drizzle.cc:1433
+#: ../client/drizzle.cc:1434
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "SIGINT（CTRL-C）を無視する。"
 
-#: ../client/drizzle.cc:1435
+#: ../client/drizzle.cc:1436
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
@@ -318,7 +318,7 @@ msgstr ""
 "デフォルトデータベースのみを更新する。このオプションはバイナリログを適用する"
 "際に他のデータベースへの更新を止めたい場合などに便利です。"
 
-#: ../client/drizzle.cc:1437
+#: ../client/drizzle.cc:1438
 msgid ""
 "Pager to use to display results. If you don't supply an option the default "
 "pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
@@ -332,7 +332,7 @@ msgstr ""
 "オプションはバッチモードでは作用しません。「--disable-pager」オプションで無効"
 "にすることができます。このオプションはデフォルトで無効になっています。"
 
-#: ../client/drizzle.cc:1439
+#: ../client/drizzle.cc:1440
 #, fuzzy
 msgid "Disable pager and print to stdout. See interactive help (\\h) also."
 msgstr ""
@@ -340,11 +340,11 @@ msgstr ""
 "い。警告：このオプションは廃止予定です。代わりに「--disable-pager」を使用して"
 "下さい。"
 
-#: ../client/drizzle.cc:1441
+#: ../client/drizzle.cc:1442
 msgid "Set the drizzle prompt to this value."
 msgstr "drizzleのプロンプトをこの値にする。"
 
-#: ../client/drizzle.cc:1443
+#: ../client/drizzle.cc:1444
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
@@ -352,12 +352,12 @@ msgstr ""
 "結果をキャッシュしないで一行ずつ表示する。これは、出力が一時的に停止された場"
 "合にサーバーの処理を低下させます。履歴ファイルには使用しないで下さい。"
 
-#: ../client/drizzle.cc:1445
+#: ../client/drizzle.cc:1446
 msgid "Write fields without conversion. Used with --batch."
 msgstr ""
 "コンバージョン無しでフィールドを出力する。--batch オプションで使用されます。"
 
-#: ../client/drizzle.cc:1447
+#: ../client/drizzle.cc:1448
 msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
@@ -365,17 +365,17 @@ msgstr ""
 "接続が切れた際に再接続をする。--disable-recconect オプションで無効になりま"
 "す。規定では有効になっています。"
 
-#: ../client/drizzle.cc:1449
+#: ../client/drizzle.cc:1450
 #, fuzzy
 msgid "Shutdown the server"
 msgstr "サーバーをシャットダウンする。"
 
-#: ../client/drizzle.cc:1450
+#: ../client/drizzle.cc:1451
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr "さらに出力を抑制する。タブ区切り、１行ごとに出力する。"
 
-#: ../client/drizzle.cc:1452
+#: ../client/drizzle.cc:1453
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
@@ -384,45 +384,45 @@ msgstr ""
 "出力ファイルに追記する。help(\\h)を参照して下さい。batchモードでは機能しませ"
 "ん。--disable-tee オプションで無効となります。規定では無効になっています。"
 
-#: ../client/drizzle.cc:1454
+#: ../client/drizzle.cc:1455
 #, fuzzy
 msgid "Disable outfile. See interactive help (\\h) also."
 msgstr ""
 "outfileを無効にする。help(\\h)を参照して下さい。警告: このオプションは廃止予"
 "定です; 代わりに --disable-tee オプションを使用して下さい。"
 
-#: ../client/drizzle.cc:1455
+#: ../client/drizzle.cc:1456
 msgid "Wait and retry if connection is down."
 msgstr "接続が切れた場合に再試行をする。"
 
-#: ../client/drizzle.cc:1457
+#: ../client/drizzle.cc:1458
 msgid "Number of seconds before connection timeout."
 msgstr "コネクションタイムアウトとなるまでの時間(秒)。"
 
-#: ../client/drizzle.cc:1459
+#: ../client/drizzle.cc:1460
 msgid "Max length of input line"
 msgstr "入力行の最大幅。"
 
-#: ../client/drizzle.cc:1461
+#: ../client/drizzle.cc:1462
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr "--safe-updates を使用した時のSELECTに対して自動的に設定される上限"
 
-#: ../client/drizzle.cc:1463
+#: ../client/drizzle.cc:1464
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr "--safe-updatesを使用した特のjoinに対して自動的に設定される行数の上限"
 
-#: ../client/drizzle.cc:1469 ../client/drizzledump.cc:2564
+#: ../client/drizzle.cc:1470 ../client/drizzledump.cc:2564
 #: ../client/drizzleimport.cc:451 ../client/drizzleslap.cc:962
 #: ../client/drizzletest.cc:5456
 msgid "Use MySQL Protocol."
 msgstr "MySQLプロトコルを使用"
 
-#: ../client/drizzle.cc:1471
+#: ../client/drizzle.cc:1472
 #, fuzzy
 msgid "Connect to host"
 msgstr "接続するホスト。"
 
-#: ../client/drizzle.cc:1473
+#: ../client/drizzle.cc:1474
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
@@ -430,7 +430,7 @@ msgstr ""
 "サーバーに接続する際のパスワード。パスワードの入力がない場合、端末での入力が"
 "要求されます。"
 
-#: ../client/drizzle.cc:1475
+#: ../client/drizzle.cc:1476
 #, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
@@ -439,37 +439,37 @@ msgstr ""
 "接続に利用するポート番号を指定。0にすることでデフォルト値を利用。設定の優先順"
 "位はdrizzle.cnf、$DRIZZLE_TCP_PORTの順で決まります。 "
 
-#: ../client/drizzle.cc:1477
+#: ../client/drizzle.cc:1478
 msgid "User for login if not current user."
 msgstr "別のユーザでログインする際のユーザ名。"
 
-#: ../client/drizzle.cc:1479
+#: ../client/drizzle.cc:1480
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
 msgstr ""
 
-#: ../client/drizzle.cc:1521 ../client/drizzle.cc:1528
+#: ../client/drizzle.cc:1530 ../client/drizzle.cc:1537
 #, c-format
 msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 "プロンプトを初期化中にメモリアロケーションエラーが発生しました。プログラムを"
 "終了します。\n"
 
-#: ../client/drizzle.cc:1579
+#: ../client/drizzle.cc:1588
 msgid "DELIMITER cannot contain a backslash character"
 msgstr "DELIMITER にはバックスラッシュを含めることはできません。"
 
-#: ../client/drizzle.cc:1656
+#: ../client/drizzle.cc:1665
 #, fuzzy, c-format
 msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
 msgstr "ポート番号に指定された値は無効です。\n"
 
-#: ../client/drizzle.cc:1701 ../client/drizzle.cc:1711
-#: ../client/drizzle.cc:4083
+#: ../client/drizzle.cc:1710 ../client/drizzle.cc:1720
+#: ../client/drizzle.cc:4092
 #, c-format
 msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
 msgstr ""
 
-#: ../client/drizzle.cc:1715
+#: ../client/drizzle.cc:1724
 #, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
@@ -482,17 +482,17 @@ msgstr ""
 "つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布すること"
 "ができます。\n"
 
-#: ../client/drizzle.cc:1720
+#: ../client/drizzle.cc:1729
 #, fuzzy, c-format
 msgid "Usage: drizzle [OPTIONS] [database]\n"
 msgstr "使用方法: %s [オプション] [データベース]\n"
 
-#: ../client/drizzle.cc:1771
+#: ../client/drizzle.cc:1780
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr ""
 "Drizzleクライアントへようこそ！コマンドの区切りは「;」または「\\g」です。"
 
-#: ../client/drizzle.cc:1781
+#: ../client/drizzle.cc:1790
 #, fuzzy, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
@@ -501,50 +501,50 @@ msgstr ""
 "あなたのDrizzleコネクションIDは %u です。\n"
 "サーバのバージョンは %s です。\n"
 
-#: ../client/drizzle.cc:1813
+#: ../client/drizzle.cc:1822
 #, c-format
 msgid "Reading history-file %s\n"
 msgstr "履歴ファイル「%s」を読み込んでいます。\n"
 
-#: ../client/drizzle.cc:1817
+#: ../client/drizzle.cc:1826
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
 msgstr ""
 "一時的な履歴ファイルのためにメモリを割り当てることができませんでした。\n"
 
-#: ../client/drizzle.cc:1824
+#: ../client/drizzle.cc:1833
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
 "ヘルプを表示するには「help;」または「\\h」、バッファをクリアするには「\\c」と"
 "入力してください。\n"
 
-#: ../client/drizzle.cc:1847
+#: ../client/drizzle.cc:1856
 #, c-format
 msgid "Writing history-file %s\n"
 msgstr "履歴ファイル「%s」に書き込んでいます。\n"
 
-#: ../client/drizzle.cc:1855
+#: ../client/drizzle.cc:1864
 msgid "Aborted"
 msgstr "中断しました。"
 
-#: ../client/drizzle.cc:1855
+#: ../client/drizzle.cc:1864
 msgid "Bye"
 msgstr "さようなら。"
 
-#: ../client/drizzle.cc:1907
+#: ../client/drizzle.cc:1916
 msgid "Query aborted by Ctrl+C\n"
 msgstr "クエリが「Ctrl+C」により中断されました。\n"
 
-#: ../client/drizzle.cc:1991
+#: ../client/drizzle.cc:2000
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
 msgstr "%<PRIu32> 行目を処理中・・・\n"
 
-#: ../client/drizzle.cc:2209
+#: ../client/drizzle.cc:2218
 msgid "Unknown command: "
 msgstr "無効なコマンド "
 
-#: ../client/drizzle.cc:2623
+#: ../client/drizzle.cc:2632
 #, fuzzy
 msgid ""
 "Reading table information for completion of table and column names\n"
@@ -556,47 +556,47 @@ msgstr ""
 "　　　　無効にするとコマンドの開始が早くなることが期待出来ます。\n"
 "\n"
 
-#: ../client/drizzle.cc:2689
+#: ../client/drizzle.cc:2698
 msgid "No connection. Trying to reconnect..."
 msgstr "接続していません。再接続をしています。。。"
 
-#: ../client/drizzle.cc:2695
+#: ../client/drizzle.cc:2704
 msgid "Can't connect to the server\n"
 msgstr "サーバに接続できません。\n"
 
-#: ../client/drizzle.cc:2773
+#: ../client/drizzle.cc:2782
 msgid "List of all Drizzle commands:"
 msgstr "すべてのコマンドの一覧:"
 
-#: ../client/drizzle.cc:2775
+#: ../client/drizzle.cc:2784
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
 "次のコマンド（短縮形でないもの）は行の最初から始まりセミコロン（;）で終了する"
 "必要があります。"
 
-#: ../client/drizzle.cc:2830
+#: ../client/drizzle.cc:2839
 msgid "No query specified\n"
 msgstr "クエリがありません\n"
 
-#: ../client/drizzle.cc:2845
+#: ../client/drizzle.cc:2854
 msgid "Ignoring query to other database"
 msgstr "他のデータベースへのクエリを無視します"
 
-#: ../client/drizzle.cc:2895
+#: ../client/drizzle.cc:2904
 msgid "Empty set"
 msgstr "空の結果"
 
-#: ../client/drizzle.cc:2908
+#: ../client/drizzle.cc:2917
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] "%ld 行の結果"
 
-#: ../client/drizzle.cc:2917
+#: ../client/drizzle.cc:2926
 msgid "Query OK"
 msgstr "クエリー完了"
 
-#: ../client/drizzle.cc:2919
+#: ../client/drizzle.cc:2928
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
@@ -804,23 +804,23 @@ msgstr "エラー: ORDER BY句を保持するためのメモリを確保する�
 msgid "Number of rows before each output progress report (requires --verbose)."
 msgstr "進捗が報告されるまでの行数（--verboseオプションが必要です。）"
 
-#: ../client/drizzledump.cc:2625 ../client/drizzledump.cc:2712
+#: ../client/drizzledump.cc:2633 ../client/drizzledump.cc:2720
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
 msgstr "使用方法: %s [オプション] データベース名 [テーブル名（複数可）]\n"
 
-#: ../client/drizzledump.cc:2626 ../client/drizzledump.cc:2713
+#: ../client/drizzledump.cc:2634 ../client/drizzledump.cc:2721
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 msgstr "または %s [オプション] --databases [オプション] DB1 [DB2 DB3...]\n"
 
-#: ../client/drizzledump.cc:2628 ../client/drizzledump.cc:2715
+#: ../client/drizzledump.cc:2636 ../client/drizzledump.cc:2723
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "または %s [オプション] --all-databases [オプション]\n"
 
-#: ../client/drizzledump.cc:2640 ../client/drizzleimport.cc:497
-#: ../client/drizzleslap.cc:1028 ../client/drizzletest.cc:5588
+#: ../client/drizzledump.cc:2648 ../client/drizzleimport.cc:506
+#: ../client/drizzleslap.cc:1036 ../client/drizzletest.cc:5596
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr "ポート番号に指定された値は無効です。\n"
@@ -831,17 +831,17 @@ msgstr "ポート番号に指定された値は無効です。\n"
 #. a crash even if the input destination buffer is large enough
 #. to hold the output.
 #.
-#: ../client/drizzledump.cc:2687
+#: ../client/drizzledump.cc:2695
 #, c-format
 msgid "Input filename too long: %s"
 msgstr "ファイル名が長すぎます: %s"
 
-#: ../client/drizzledump.cc:2694 ../client/drizzledump.cc:2706
+#: ../client/drizzledump.cc:2702 ../client/drizzledump.cc:2714
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
 msgstr ""
 
-#: ../client/drizzledump.cc:2709
+#: ../client/drizzledump.cc:2717
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
@@ -851,16 +851,16 @@ msgstr ""
 "つまり自由なソフトウェアであり、変更を加えてGPLライセンスの下で再配布すること"
 "ができます。\n"
 
-#: ../client/drizzledump.cc:2710
+#: ../client/drizzledump.cc:2718
 msgid "Dumps definitions and data from a Drizzle database server"
 msgstr "Drizzleデータベースサーバから定義とデータをダンプ"
 
-#: ../client/drizzledump.cc:2746
+#: ../client/drizzledump.cc:2754
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
 msgstr "オプション--ignore-table=<database>.<table>の使い方が不正です。\n"
 
-#: ../client/drizzledump.cc:2789
+#: ../client/drizzledump.cc:2797
 #, c-format
 msgid "Invalid mode to --compatible: %s\n"
 msgstr "--compatibleに指定されたモードが不適切です: %s\n"
@@ -877,12 +877,12 @@ msgstr ""
 msgid "Error: Invalid Value for opt_sleep"
 msgstr ""
 
-#: ../client/drizzletest.cc:5556
+#: ../client/drizzletest.cc:5564
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr ""
 
-#: ../client/drizzletest.cc:5561 ../drizzled/drizzled.cc:857
+#: ../client/drizzletest.cc:5569 ../drizzled/drizzled.cc:857
 #, c-format
 msgid "Out of memory"
 msgstr "メモリが不足しています。"
@@ -926,11 +926,11 @@ msgstr "不明なロケールです: 「%s」"
 msgid "Can't create thread-keys"
 msgstr "thead-keysを作成できません"
 
-#: ../drizzled/drizzled.cc:867
+#: ../drizzled/drizzled.cc:866
 msgid "Failed to initialize plugins."
 msgstr "プラグインの初期化に失敗しました。"
 
-#: ../drizzled/drizzled.cc:888
+#: ../drizzled/drizzled.cc:887
 #, c-format
 msgid ""
 "%s: Too many arguments (first extra is '%s').\n"
@@ -939,28 +939,28 @@ msgstr ""
 "%s: 引数が多すぎます。（最初の余分なオプションは「%s」です。）\n"
 "利用可能なオプションの詳細については、--verbose --helpを利用下さい。\n"
 
-#: ../drizzled/drizzled.cc:911
+#: ../drizzled/drizzled.cc:912
 msgid "No scheduler found, cannot continue!\n"
 msgstr "スケジューラが見つかりません．処理を継続できません！\n"
 
-#: ../drizzled/drizzled.cc:935
+#: ../drizzled/drizzled.cc:936
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1026
+#: ../drizzled/drizzled.cc:1027
 msgid "Display this help and exit."
 msgstr "ヘルプを表示して終了する。"
 
-#: ../drizzled/drizzled.cc:1030
+#: ../drizzled/drizzled.cc:1031
 msgid "Display this help and exit after initializing plugins."
 msgstr "プラグインを初期化した後，このヘルプを表示して終了します．"
 
-#: ../drizzled/drizzled.cc:1034
+#: ../drizzled/drizzled.cc:1035
 msgid "Auto-increment columns are incremented by this"
 msgstr "AUTO_INCREMENTが指定されたカラムは、この値によって増分されます。"
 
-#: ../drizzled/drizzled.cc:1039
+#: ../drizzled/drizzled.cc:1040
 msgid ""
 "Offset added to Auto-increment columns. Used when auto-increment-increment !"
 "= 1"
@@ -968,7 +968,7 @@ msgstr ""
 "AUTO_INCREMENTカラムに対して追加されるオフセット。auto-increment-increment !"
 "= 1のとき使用される。"
 
-#: ../drizzled/drizzled.cc:1045
+#: ../drizzled/drizzled.cc:1046
 msgid ""
 "Path to installation directory. All paths are usually resolved relative to "
 "this."
@@ -976,66 +976,66 @@ msgstr ""
 "インストールディレクトリへのパス。全てのパスは通常このディレクトリからの相対"
 "パスとして解決される。"
 
-#: ../drizzled/drizzled.cc:1050
+#: ../drizzled/drizzled.cc:1051
 msgid "Chroot drizzled daemon during startup."
 msgstr "drizzledデーモンが起動時にchrootするかどうか。"
 
-#: ../drizzled/drizzled.cc:1054
+#: ../drizzled/drizzled.cc:1055
 msgid "Set the default collation."
 msgstr "デフォルトの文字列照合順序。"
 
-#: ../drizzled/drizzled.cc:1058
+#: ../drizzled/drizzled.cc:1059
 msgid "Default completion type."
 msgstr "デフォルトのトランザクション完了時の動作を指定する。"
 
-#: ../drizzled/drizzled.cc:1063
+#: ../drizzled/drizzled.cc:1064
 msgid "Write core on errors."
 msgstr "エラーが発生した際にコアファイルを書き込むかどうか。"
 
-#: ../drizzled/drizzled.cc:1067
+#: ../drizzled/drizzled.cc:1068
 msgid "Path to the database root."
 msgstr "データディレクトリ。（データベースのrootディレクトリ）"
 
-#: ../drizzled/drizzled.cc:1071
+#: ../drizzled/drizzled.cc:1072
 msgid "Set the default storage engine (table type) for tables."
 msgstr "デフォルトのストレージエンジン。"
 
-#: ../drizzled/drizzled.cc:1075
+#: ../drizzled/drizzled.cc:1076
 msgid "Set the default time zone."
 msgstr "デフォルトのタイムゾーン。"
 
-#: ../drizzled/drizzled.cc:1080
+#: ../drizzled/drizzled.cc:1081
 msgid "Used for debugging;  Use at your own risk!"
 msgstr "デバッグに用いるフラグ。自己責任で使用すること。"
 
-#: ../drizzled/drizzled.cc:1085
+#: ../drizzled/drizzled.cc:1086
 msgid "Set up signals usable for debugging"
 msgstr "デバッグ用にシグナルを設定する。"
 
-#: ../drizzled/drizzled.cc:1089
+#: ../drizzled/drizzled.cc:1090
 msgid "(IGNORED)"
 msgstr "(無視)"
 
-#: ../drizzled/drizzled.cc:1093
+#: ../drizzled/drizzled.cc:1094
 msgid "Set the language used for the month names and the days of the week."
 msgstr "月および週の名前を表示する言語を指定する。"
 
-#: ../drizzled/drizzled.cc:1098
+#: ../drizzled/drizzled.cc:1099
 msgid "Log some not critical warnings to the log file."
 msgstr "クリティカルでない警告をログファイルに記録する。"
 
-#: ../drizzled/drizzled.cc:1103
+#: ../drizzled/drizzled.cc:1104
 msgid "Pid file used by safe_mysqld."
 msgstr "safe_mysqldによって利用されるpidファイル。"
 
-#: ../drizzled/drizzled.cc:1107
+#: ../drizzled/drizzled.cc:1108
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
 msgstr ""
 "TCP/IPのポートがフリーになるまで待つ最大の秒数（デフォルト: ウェイト無し）"
 
-#: ../drizzled/drizzled.cc:1112
+#: ../drizzled/drizzled.cc:1113
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
 "specified directory"
@@ -1043,41 +1043,41 @@ msgstr ""
 "LOAD DATA、SELECT ... OUTFILEおよびLOAD_FILE()コマンドがアクセスするファイル"
 "を、特定のディレクトリに限定する。"
 
-#: ../drizzled/drizzled.cc:1117
+#: ../drizzled/drizzled.cc:1118
 msgid ""
 "Uniquely identifies the server instance in the community of replication "
 "partners."
 msgstr ""
 "レプリケーションサーバ群においてこのサーバを特定するためのユニークなID。"
 
-#: ../drizzled/drizzled.cc:1122
+#: ../drizzled/drizzled.cc:1123
 msgid "Don't print a stack trace on failure."
 msgstr "問題発生時にスタックトレースを表示しない。"
 
-#: ../drizzled/drizzled.cc:1126
+#: ../drizzled/drizzled.cc:1127
 msgid "Enable symbolic link support."
 msgstr "シンボリックリンクのサポートを有効にする。"
 
-#: ../drizzled/drizzled.cc:1135
+#: ../drizzled/drizzled.cc:1136
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
 msgstr ""
 "mutexの時間を計測するかどうかを指定する。（現時点このオプションをサポートして"
 "いるのはInnoDBのみ）"
 
-#: ../drizzled/drizzled.cc:1140
+#: ../drizzled/drizzled.cc:1141
 msgid "Path for temporary files."
 msgstr "テンポラリファイルのパス。"
 
-#: ../drizzled/drizzled.cc:1144
+#: ../drizzled/drizzled.cc:1145
 msgid "Default transaction isolation level."
 msgstr "デフォルトのトランザクション分離レベル。"
 
-#: ../drizzled/drizzled.cc:1148
+#: ../drizzled/drizzled.cc:1149
 msgid "Run drizzled daemon as user."
 msgstr "drizzledデーモンを実行するユーザー。"
 
-#: ../drizzled/drizzled.cc:1156
+#: ../drizzled/drizzled.cc:1157
 msgid ""
 "The number of outstanding connection requests Drizzle can have. This comes "
 "into play when the main Drizzle thread gets very many connection requests in "
@@ -1086,7 +1086,7 @@ msgstr ""
 "Drizzleが保留することができる接続数。このオプションはDrizzleのメインスレッド"
 "が短時間のうちに大量の接続要求を受け取った場合に作用する。"
 
-#: ../drizzled/drizzled.cc:1162
+#: ../drizzled/drizzled.cc:1163
 msgid ""
 "Size of tree cache used in bulk insert optimization. Note that this is a "
 "limit per thread!"
@@ -1094,24 +1094,24 @@ msgstr ""
 "バルクインサート最適化のために利用されるツリー状キャッシュのサイズ。スレッド"
 "ごとの制限である。"
 
-#: ../drizzled/drizzled.cc:1168
+#: ../drizzled/drizzled.cc:1169
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
 msgstr "除算（/）の結果に対する精度（小数点以下の桁数）。"
 
-#: ../drizzled/drizzled.cc:1174
+#: ../drizzled/drizzled.cc:1175
 msgid "The maximum length of the result of function  group_concat."
 msgstr "group_concat関数の結果の最大長。"
 
-#: ../drizzled/drizzled.cc:1179
+#: ../drizzled/drizzled.cc:1180
 msgid "The size of the buffer that is used for full joins."
 msgstr "FULL JOIN実行時に利用されるバッファのサイズ。"
 
-#: ../drizzled/drizzled.cc:1185
+#: ../drizzled/drizzled.cc:1186
 msgid "Max packetlength to send/receive from to server."
 msgstr "このサーバが送信/受信する最大のパケット長。"
 
-#: ../drizzled/drizzled.cc:1190
+#: ../drizzled/drizzled.cc:1191
 msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
@@ -1119,15 +1119,15 @@ msgstr ""
 "このオプションで指定される回数よりも多く特定のホストからの接続が切れてしまっ"
 "た場合には、そのホストからの接続を遮断する。"
 
-#: ../drizzled/drizzled.cc:1195
+#: ../drizzled/drizzled.cc:1196
 msgid "Max number of errors/warnings to store for a statement."
 msgstr "SQLステートメント実行時に発生するエラーまたは警告の最大保存数。"
 
-#: ../drizzled/drizzled.cc:1200
+#: ../drizzled/drizzled.cc:1201
 msgid "Don't allow creation of heap tables bigger than this."
 msgstr "この値よりも大きなMEMORYテーブルを作成出来ないようにする。"
 
-#: ../drizzled/drizzled.cc:1206
+#: ../drizzled/drizzled.cc:1207
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
@@ -1135,17 +1135,17 @@ msgstr ""
 "max_join_size行よりも多くの行が読み込まれる可能性のあるJOINがエラーを返すよう"
 "にする。"
 
-#: ../drizzled/drizzled.cc:1212
+#: ../drizzled/drizzled.cc:1213
 msgid "Max number of bytes in sorted records."
 msgstr "ソートされたレコードの最大サイズ（単位はバイト）"
 
-#: ../drizzled/drizzled.cc:1217
+#: ../drizzled/drizzled.cc:1218
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
 "キーに基づいてルックアップを実行する際に実行される最大のシーク回数の仮想的な"
 "制限値。"
 
-#: ../drizzled/drizzled.cc:1222
+#: ../drizzled/drizzled.cc:1223
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
@@ -1153,13 +1153,13 @@ msgstr ""
 "BLOBまたはTEXT型の値をソートする際に利用されるバイト数。（先頭の"
 "max_sort_lengthバイトだけが利用され、残りは無視される。）"
 
-#: ../drizzled/drizzled.cc:1229
+#: ../drizzled/drizzled.cc:1230
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
 "Writeロックがこの回数だけ行われると、次のWriteロックがかけられるまでReadロッ"
 "クを数回実行できる。"
 
-#: ../drizzled/drizzled.cc:1233
+#: ../drizzled/drizzled.cc:1234
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
@@ -1167,7 +1167,7 @@ msgstr ""
 "テーブルからフェッチされた行数がmin_examined_row_limitより少ない場合はスロー"
 "クエリログに記録しない。"
 
-#: ../drizzled/drizzled.cc:1239
+#: ../drizzled/drizzled.cc:1240
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
 "promising partial plans from the optimizer search space. Meaning: false - do "
@@ -1175,7 +1175,7 @@ msgid ""
 "based on number of retrieved rows."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1247
+#: ../drizzled/drizzled.cc:1248
 msgid ""
 "Maximum depth of search performed by the query optimizer. Values larger than "
 "the number of relations in a query result in better query plans, but take "
@@ -1192,11 +1192,11 @@ msgstr ""
 "適切な値を使用します; もしMAX_TABLES+2にセットすると，オプティマイザはオリジ"
 "ナルのfind_bestになります（テストや比較に使われます）"
 
-#: ../drizzled/drizzled.cc:1259
+#: ../drizzled/drizzled.cc:1260
 msgid "Directory for plugins."
 msgstr "プラグイン用ディレクトリ"
 
-#: ../drizzled/drizzled.cc:1263
+#: ../drizzled/drizzled.cc:1264
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
@@ -1204,82 +1204,82 @@ msgstr ""
 "デフォルトのプラグインに加えてスタートアップ時にロードされる，オプショナルな"
 "プラグインのカンマ区切りリスト"
 
-#: ../drizzled/drizzled.cc:1269
+#: ../drizzled/drizzled.cc:1270
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
 "removes a plugin from the list of plugins to be loaded. [for example: --"
 "plugin_remove=crc32,logger_gearman]"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1275
+#: ../drizzled/drizzled.cc:1276
 msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1281
+#: ../drizzled/drizzled.cc:1282
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr "インデックスのプレロード時に割り当てられるバッファのサイズ"
 
-#: ../drizzled/drizzled.cc:1286
+#: ../drizzled/drizzled.cc:1287
 msgid "Allocation block size for query parsing and execution"
 msgstr "クエリのパースや実行のための割り当てブロックサイズ"
 
-#: ../drizzled/drizzled.cc:1291
+#: ../drizzled/drizzled.cc:1292
 msgid "Persistent buffer for query parsing and execution"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1297
+#: ../drizzled/drizzled.cc:1298
 msgid "Allocation block size for storing ranges during optimization"
 msgstr "最適化中にレンジを保存する割り当てブロックサイズ"
 
-#: ../drizzled/drizzled.cc:1303
+#: ../drizzled/drizzled.cc:1304
 msgid ""
 "Each thread that does a sequential scan allocates a buffer of this size for "
 "each table it scans. If you do many sequential scans, you may want to "
 "increase this value."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1311
+#: ../drizzled/drizzled.cc:1312
 msgid ""
 "When reading rows in sorted order after a sort, the rows are read through "
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
 "record_buffer."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1319
+#: ../drizzled/drizzled.cc:1320
 msgid "Select scheduler to be used (by default multi-thread)."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1324
+#: ../drizzled/drizzled.cc:1325
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1330
+#: ../drizzled/drizzled.cc:1331
 msgid "The number of cached table definitions."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1334
+#: ../drizzled/drizzled.cc:1335
 msgid "The number of cached open tables."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1338
+#: ../drizzled/drizzled.cc:1339
 msgid ""
 "Timeout in seconds to wait for a table level lock before returning an error. "
 "Used only if the connection has active cursors."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1343
+#: ../drizzled/drizzled.cc:1344
 msgid "The stack size for each thread."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1349
+#: ../drizzled/drizzled.cc:1350
 msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1375
+#: ../drizzled/drizzled.cc:1376
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -1288,23 +1288,23 @@ msgid ""
 "Starts the Drizzle database server\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1382
+#: ../drizzled/drizzled.cc:1383
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1506
+#: ../drizzled/drizzled.cc:1507
 #, c-format
 msgid ""
 "Ignoring user change to '%s' because the user was set to '%s' earlier on the "
 "command line\n"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1549
+#: ../drizzled/drizzled.cc:1550
 msgid "Can't start server: cannot resolve hostname!"
 msgstr ""
 
-#: ../drizzled/drizzled.cc:1555
+#: ../drizzled/drizzled.cc:1556
 msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
 
@@ -4830,13 +4830,13 @@ msgstr ""
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr ""
 
-#: ../drizzled/identifier/schema.cc:56 ../drizzled/identifier/table.cc:232
+#: ../drizzled/identifier/schema.cc:56 ../drizzled/identifier/table.cc:234
 msgid ""
 "Schema name cannot be encoded and fit within filesystem name length "
 "restrictions."
 msgstr ""
 
-#: ../drizzled/identifier/table.cc:222
+#: ../drizzled/identifier/table.cc:224
 msgid ""
 "Table name cannot be encoded and fit within filesystem name length "
 "restrictions."
@@ -4955,58 +4955,58 @@ msgstr ""
 msgid "Plugin '%s' init function returned error.\n"
 msgstr ""
 
-#: ../drizzled/module/loader.cc:539
+#: ../drizzled/module/loader.cc:534
 #, c-format
 msgid "Couldn't load plugin library named '%s'.\n"
 msgstr ""
 
-#: ../drizzled/module/loader.cc:549
+#: ../drizzled/module/loader.cc:544
 #, c-format
 msgid "Couldn't load plugin named '%s'.\n"
 msgstr ""
 
-#: ../drizzled/module/loader.cc:778
+#: ../drizzled/module/loader.cc:773
 msgid "Out of memory."
 msgstr ""
 
-#: ../drizzled/module/loader.cc:1501 ../drizzled/module/loader.cc:1552
+#: ../drizzled/module/loader.cc:1496 ../drizzled/module/loader.cc:1547
 #, c-format
 msgid "Unknown variable type code 0x%x in plugin '%s'."
 msgstr ""
 
-#: ../drizzled/module/loader.cc:1544
+#: ../drizzled/module/loader.cc:1539
 #, c-format
 msgid ""
 "Server variable %s of plugin %s was forced to be read-only: string variable "
 "without update_func and PLUGIN_VAR_MEMALLOC flag"
 msgstr ""
 
-#: ../drizzled/module/loader.cc:1563
+#: ../drizzled/module/loader.cc:1558
 #, c-format
 msgid "Missing variable name in plugin '%s'."
 msgstr ""
 
-#: ../drizzled/module/loader.cc:1580
+#: ../drizzled/module/loader.cc:1575
 #, c-format
 msgid "Thread local variable '%s' not allocated in plugin '%s'."
 msgstr ""
 
-#: ../drizzled/module/loader.cc:1700
+#: ../drizzled/module/loader.cc:1697
 #, c-format
 msgid "Out of memory for plugin '%s'."
 msgstr ""
 
-#: ../drizzled/module/loader.cc:1709
+#: ../drizzled/module/loader.cc:1706
 #, c-format
 msgid "Bad options for plugin '%s'."
 msgstr ""
 
-#: ../drizzled/module/loader.cc:1722
+#: ../drizzled/module/loader.cc:1719
 #, c-format
 msgid "Parsing options for plugin '%s' failed."
 msgstr ""
 
-#: ../drizzled/module/loader.cc:1775
+#: ../drizzled/module/loader.cc:1772
 #, c-format
 msgid "Plugin '%s' has conflicting system variables"
 msgstr ""
@@ -5105,12 +5105,12 @@ msgstr ""
 msgid "EventIterate event handler '%s' failed for event '%s'"
 msgstr ""
 
-#: ../drizzled/plugin/function.cc:45
+#: ../drizzled/plugin/function.cc:44
 #, c-format
 msgid "A function named %s already exists!\n"
 msgstr ""
 
-#: ../drizzled/plugin/function.cc:54
+#: ../drizzled/plugin/function.cc:53
 msgid "Could not add Function!\n"
 msgstr ""
 
@@ -5427,44 +5427,44 @@ msgstr ""
 msgid "Writing a core file\n"
 msgstr "コアファイルを書き込み中です。\n"
 
-#: ../drizzled/sql_base.cc:1517
+#: ../drizzled/sql_base.cc:1526
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
 msgstr ""
 
-#: ../drizzled/sql_table.cc:1952
+#: ../drizzled/sql_table.cc:1948
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr ""
 
-#: ../drizzled/statement/alter_table.cc:1441
+#: ../drizzled/statement/alter_table.cc:1428
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
 "table '%-.192s'"
 msgstr ""
 
-#: ../drizzled/table.cc:1977
+#: ../drizzled/table.cc:1971
 #, c-format
 msgid "Got error %d when reading table '%s'"
 msgstr ""
 
-#: ../drizzled/table_share.cc:918
+#: ../drizzled/table_share.cc:883
 #, c-format
 msgid "Table %s has invalid/unknown collation: %d,%s"
 msgstr ""
 
-#: ../drizzled/table_share.cc:1193
+#: ../drizzled/table_share.cc:1158
 #, c-format
 msgid "ENUM column %s has greater than %d possible values"
 msgstr ""
 
-#: ../drizzled/table_share.cc:2113
+#: ../drizzled/table_share.cc:2069
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr ""
 
-#: ../drizzled/table_share.cc:2120
+#: ../drizzled/table_share.cc:2076
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
@@ -5985,21 +5985,21 @@ msgstr ""
 msgid "Error Messages to stderr"
 msgstr ""
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:604
-#: ../plugin/filtered_replicator/filtered_replicator.cc:613
+#: ../plugin/filtered_replicator/filtered_replicator.cc:603
+#: ../plugin/filtered_replicator/filtered_replicator.cc:612
 msgid "List of schemas to filter"
 msgstr ""
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:607
-#: ../plugin/filtered_replicator/filtered_replicator.cc:620
+#: ../plugin/filtered_replicator/filtered_replicator.cc:606
+#: ../plugin/filtered_replicator/filtered_replicator.cc:619
 msgid "List of tables to filter"
 msgstr ""
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:627
+#: ../plugin/filtered_replicator/filtered_replicator.cc:626
 msgid "Regular expression to apply to schemas to filter"
 msgstr ""
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:634
+#: ../plugin/filtered_replicator/filtered_replicator.cc:633
 msgid "Regular expression to apply to tables to filter"
 msgstr ""
 
