@@ -16,7 +16,10 @@
 #include "config.h"
 #include <plugin/multi_thread/multi_thread.h>
 #include "drizzled/pthread_globals.h"
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 
+namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
@@ -89,6 +92,17 @@ MultiThreadScheduler::~MultiThreadScheduler()
   
 static int init(drizzled::module::Context &context)
 {
+  
+  const module::option_map &vm= context.getOptions();
+  if (vm.count("max-threads"))
+  {
+    if (max_threads > 4096 || max_threads < 1)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-threads\n"));
+      exit(-1);
+    }
+  }
+
   scheduler= new MultiThreadScheduler("multi_thread");
   context.add(scheduler);
 
@@ -99,6 +113,13 @@ static DRIZZLE_SYSVAR_UINT(max_threads, max_threads,
                            PLUGIN_VAR_RQCMDARG,
                            N_("Maximum number of user threads available."),
                            NULL, NULL, 2048, 1, 4096, 0);
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("max-threads",
+          po::value<uint32_t>(&max_threads)->default_value(2048),
+          N_("Maximum number of user threads available."));
+}
 
 static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(max_threads),
@@ -115,6 +136,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   init, /* Plugin Init */
   sys_variables,   /* system variables */
-  NULL    /* config options */
+  init_options    /* config options */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
