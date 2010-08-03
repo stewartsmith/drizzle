@@ -291,7 +291,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
         (mblen= my_ismbchar(default_charset_info, pos, end)))
     {
       res->append(pos, mblen);
-      pos+= mblen;
+      pos+= mblen - 1;
       if (pos >= end)
         break;
       continue;
