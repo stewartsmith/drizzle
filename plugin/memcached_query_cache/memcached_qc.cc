@@ -119,6 +119,7 @@ bool Memcached_Qc::doSendCachedResultset(Session *session)
   char buff[MAX_FIELD_WIDTH];
   String str(buff, sizeof(buff), &my_charset_bin);
   size_t y;
+  session->limit_found_rows= 0; 
   for ( int j= 0; j < data.record_size(); j++)
   {
     message::SelectRecord record= data.record(j);
@@ -126,9 +127,12 @@ bool Memcached_Qc::doSendCachedResultset(Session *session)
     {
       string value=record.record_value(y);
       str.set(value.c_str(), value.length(), system_charset_info);
-      session->client->store(value);
+      session->client->store(value.c_str(),value.size());
     }
+    session->client->flush();
+    session->limit_found_rows++;
   }
+  session->my_eof();
   session->query_cache_key= "";
   return false;
 }
