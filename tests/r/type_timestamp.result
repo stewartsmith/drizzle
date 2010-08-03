@@ -174,7 +174,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	TIMESTAMP	YES	NOW()	YES	
+t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	
 t2	DATETIME	YES		YES	
 t3	TIMESTAMP	YES		YES	
 drop table t1;
@@ -200,7 +200,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	TIMESTAMP	YES	2003-01-01 00:00:00	NO	NOW()
+t1	TIMESTAMP	YES	2003-01-01 00:00:00	NO	CURRENT_TIMESTAMP
 t2	DATETIME	YES		YES	
 drop table t1;
 create table t1 (t1 timestamp default now() on update now(), t2 datetime);
@@ -225,7 +225,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	TIMESTAMP	YES	NOW()	YES	NOW()
+t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
 t2	DATETIME	YES		YES	
 drop table t1;
 create table t1 (t1 timestamp, t2 datetime, t3 timestamp);
@@ -277,7 +277,7 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-t1	TIMESTAMP	YES	NOW()	YES	NOW()
+t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
 t2	DATETIME	YES		YES	
 truncate table t1;
 insert into t1 values ('2004-04-01 00:00:00', '2004-04-01 00:00:00');
@@ -441,7 +441,7 @@ show fields from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 id	INTEGER	NO		NO	
 username	VARCHAR	NO		NO	
-posted_on	TIMESTAMP	NO	NOW()	NO	
+posted_on	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	
 select is_nullable from data_dictionary.columns where TABLE_NAME='t1' and COLUMN_NAME='posted_on';
 is_nullable
 NO

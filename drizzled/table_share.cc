@@ -1223,10 +1223,10 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
     if (pfield.has_options() &&
         pfield.options().has_default_expression() &&
-        pfield.options().default_expression().compare("NOW()") == 0)
+        pfield.options().default_expression().compare("CURRENT_TIMESTAMP") == 0)
     {
       if (pfield.options().has_update_expression() &&
-          pfield.options().update_expression().compare("NOW()") == 0)
+          pfield.options().update_expression().compare("CURRENT_TIMESTAMP") == 0)
       {
         unireg_type= Field::TIMESTAMP_DNUN_FIELD;
       }
@@ -1239,7 +1239,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     }
     else if (pfield.has_options() &&
              pfield.options().has_update_expression() &&
-             pfield.options().update_expression().compare("NOW()") == 0)
+             pfield.options().update_expression().compare("CURRENT_TIMESTAMP") == 0)
     {
       unireg_type= Field::TIMESTAMP_UN_FIELD;
     }
