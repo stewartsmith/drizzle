@@ -7,131 +7,130 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-07-25 20:16-0700\n"
-"PO-Revision-Date: 2010-05-27 21:20+0000\n"
+"POT-Creation-Date: 2010-08-03 10:16-0400\n"
+"PO-Revision-Date: 2010-07-26 20:28+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-05-28 03:38+0000\n"
+"X-Launchpad-Export-Date: 2010-07-27 03:57+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
-#: ../client/drizzle.cc:463
+#: ../client/drizzle.cc:464
 msgid "Synonym for `help'."
 msgstr "Synoniem voor 'help'."
 
-#: ../client/drizzle.cc:464
+#: ../client/drizzle.cc:465
 msgid "Clear command."
 msgstr "Opdracht wissen."
 
-#: ../client/drizzle.cc:466
+#: ../client/drizzle.cc:467
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr "Opnieuw verbinden met de server. Optionele argumenten zijn db en host."
 
-#: ../client/drizzle.cc:468
+#: ../client/drizzle.cc:469
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
 "Statement delimiter instellen. Opmerking : Dit gebruikt de rest van de lijn "
 "als nieuwe delimiter."
 
-#: ../client/drizzle.cc:470
+#: ../client/drizzle.cc:471
 msgid "Send command to drizzle server, display result vertically."
 msgstr "Verstuur opdracht naar de drizzle server, toon het resultaat verticaal"
 
-#: ../client/drizzle.cc:471
+#: ../client/drizzle.cc:472
 msgid "Exit drizzle. Same as quit."
 msgstr "Verlaat drizzle. Hetzelfde als quit"
 
-#: ../client/drizzle.cc:472
+#: ../client/drizzle.cc:473
 msgid "Send command to drizzle server."
 msgstr "Verstuur opdracht naar de drizzle server."
 
-#: ../client/drizzle.cc:473
+#: ../client/drizzle.cc:474
 msgid "Display this help."
 msgstr "Toon deze hulp."
 
-#: ../client/drizzle.cc:474
+#: ../client/drizzle.cc:475
 msgid "Disable pager, print to stdout."
 msgstr "Pager uitschakelen, afdrukken op standaarduitvoer."
 
-#: ../client/drizzle.cc:475
+#: ../client/drizzle.cc:476
 msgid "Don't write into outfile."
 msgstr "Niet naar uitvoerbestand schrijven."
 
-#: ../client/drizzle.cc:477
+#: ../client/drizzle.cc:478
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr "PAGER [to_pager] instellen. Druk de query resultaten via PAGER."
 
-#: ../client/drizzle.cc:478
+#: ../client/drizzle.cc:479
 msgid "Print current command."
 msgstr "Huidige opdracht afdrukken."
 
-#: ../client/drizzle.cc:479
+#: ../client/drizzle.cc:480
 msgid "Change your drizzle prompt."
 msgstr "Wijzig je drizzle prompt."
 
-#: ../client/drizzle.cc:480
+#: ../client/drizzle.cc:481
 msgid "Quit drizzle."
 msgstr "Verlaat drizzle."
 
-#: ../client/drizzle.cc:481
+#: ../client/drizzle.cc:482
 msgid "Rebuild completion hash."
 msgstr "Herbouw volledigheids hash"
 
-#: ../client/drizzle.cc:483
+#: ../client/drizzle.cc:484
 msgid "Execute an SQL script file. Takes a file name as an argument."
 msgstr "Voer een SQL script bestand uit. Neemt een bestandsnaam als argument."
 
-#: ../client/drizzle.cc:484
+#: ../client/drizzle.cc:485
 msgid "Get status information from the server."
 msgstr "Vraag status informatie aan de server."
 
-#: ../client/drizzle.cc:486
+#: ../client/drizzle.cc:487
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
 "Uitvoerbestand [to_outfile] instellen. Voeg alles toe aan het opgegeven "
 "uitvoerbestand."
 
-#: ../client/drizzle.cc:488
+#: ../client/drizzle.cc:489
 msgid "Use another database. Takes database name as argument."
 msgstr "Gebruik een andere databank. Neemt een databank naam als argument."
 
-#: ../client/drizzle.cc:490 ../client/drizzle.cc:1404
+#: ../client/drizzle.cc:491 ../client/drizzle.cc:1405
 msgid "Show warnings after every statement."
 msgstr "Toon waarschuwingen na elk statement."
 
-#: ../client/drizzle.cc:492
+#: ../client/drizzle.cc:493
 msgid "Don't show warnings after every statement."
 msgstr "Toon geen waarschuwingen na elk statement."
 
-#: ../client/drizzle.cc:1331
+#: ../client/drizzle.cc:1332
 msgid "Error: Invalid Value for connect_timeout"
-msgstr ""
+msgstr "Fout: Ongeldige waarde voor connect_timeout"
 
-#: ../client/drizzle.cc:1342
+#: ../client/drizzle.cc:1343
 msgid "Error: Invalid Value for max_input_line"
-msgstr ""
-
-#: ../client/drizzle.cc:1363
-#, fuzzy
-msgid "Displays this help and exit."
-msgstr "Toon deze hulp en sluit af."
+msgstr "Fout: Ongeldige waarde voor max_input_line"
 
 #: ../client/drizzle.cc:1364
+msgid "Displays this help and exit."
+msgstr "Toont deze help en verlaat het programma."
+
+#: ../client/drizzle.cc:1365
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
 "Gebruik het geschiedenisbestand niet. Schakel interactief gedrag uit. "
 "(Activeert --silent)"
 
-#: ../client/drizzle.cc:1366
+#: ../client/drizzle.cc:1367
 msgid "Display column type information."
 msgstr "Toon kolomtype informatie."
 
-#: ../client/drizzle.cc:1368
+#: ../client/drizzle.cc:1369
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
@@ -139,19 +138,19 @@ msgstr ""
 "Bewaar commentaren. Stuur commentaren naar de server. De standaard is --skip-"
 "comments (commentaren weggooien), inschakelen met --comments"
 
-#: ../client/drizzle.cc:1370
+#: ../client/drizzle.cc:1371
 msgid "Use compression in server/client protocol."
 msgstr "Gebruik compressie in het server/client protocol."
 
-#: ../client/drizzle.cc:1372
+#: ../client/drizzle.cc:1373
 msgid "Print the output of a query (rows) vertically."
 msgstr "Drukt de uitvoer van een query (rijen) verticaal af."
 
-#: ../client/drizzle.cc:1374
+#: ../client/drizzle.cc:1375
 msgid "Continue even if we get an sql error."
 msgstr "Verdergaan, ook wanneer we een sql fout tegenkomen."
 
-#: ../client/drizzle.cc:1376
+#: ../client/drizzle.cc:1377
 msgid ""
 "Enable named commands. Named commands mean this program's internal commands; "
 "see drizzle> help . When enabled, the named commands can be used from any "
@@ -164,7 +163,7 @@ msgstr ""
 "lijn, voor enter. Uitschakelen met --disable-named-commands. Deze optie is "
 "standdard uitgeschakeld."
 
-#: ../client/drizzle.cc:1378
+#: ../client/drizzle.cc:1379
 msgid ""
 "Named commands are disabled. Use \\* form only, or use named commands only "
 "in the beginning of a line ending with a semicolon (;) Since version 10.9 "
@@ -179,19 +178,19 @@ msgstr ""
 "vanop de eerste lijn. WAARSCHUWING: optie wordt afgeraden; gebruik --disable-"
 "named-commands."
 
-#: ../client/drizzle.cc:1379
+#: ../client/drizzle.cc:1380
 msgid "Ignore space after function names."
 msgstr "Negeer spaties na functienamen."
 
-#: ../client/drizzle.cc:1381
+#: ../client/drizzle.cc:1382
 msgid "Turn off beep on error."
 msgstr "Schakel piepen bij fout uit."
 
-#: ../client/drizzle.cc:1383
+#: ../client/drizzle.cc:1384
 msgid "Write line numbers for errors."
 msgstr "Schrijf lijnnummers bij fouten."
 
-#: ../client/drizzle.cc:1385
+#: ../client/drizzle.cc:1386
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
@@ -199,11 +198,11 @@ msgstr ""
 "Schrijf geen lijnnummers bij fouten. Waarschuwing: -L wordt afgeraden, "
 "gebruik de lange versie van deze optie."
 
-#: ../client/drizzle.cc:1387
+#: ../client/drizzle.cc:1388
 msgid "Write column names in results."
 msgstr "Schrijf kolomnamen in de resultaten."
 
-#: ../client/drizzle.cc:1389
+#: ../client/drizzle.cc:1390
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
@@ -211,7 +210,7 @@ msgstr ""
 "Schrijf geen kolomnamen in de resultaten. Waarschuwing: -N wordt afgeraden, "
 "gebruik de lange versie van deze optie."
 
-#: ../client/drizzle.cc:1391
+#: ../client/drizzle.cc:1392
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
@@ -220,47 +219,49 @@ msgstr ""
 "afgeraden wordt; je kan variabelen rechtstreeks wijzigen met --variable-"
 "name=waarde."
 
-#: ../client/drizzle.cc:1393
+#: ../client/drizzle.cc:1394
 msgid "Output in table format."
 msgstr "Uitvoer in tabel formaat."
 
-#: ../client/drizzle.cc:1395
+#: ../client/drizzle.cc:1396
 msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr ""
 "Enkel UPDATE en DELETE toelaten wanneer er sleutelvelden gebruikt worden."
 
-#: ../client/drizzle.cc:1397
+#: ../client/drizzle.cc:1398
 msgid "Synonym for option --safe-updates, -U."
 msgstr "Synoniem voor optie --safe-updates, -U."
 
-#: ../client/drizzle.cc:1399
+#: ../client/drizzle.cc:1400
 msgid "-v vvv implies that verbose= 3, Used to specify verbose"
-msgstr ""
+msgstr "-v vvv betekent verbose= 3, gebruikt om verbose modus te specifiëren"
 
-#: ../client/drizzle.cc:1400 ../drizzled/drizzled.cc:1152
+#: ../client/drizzle.cc:1401 ../drizzled/drizzled.cc:1153
 msgid "Output version information and exit."
 msgstr "Voer versie informatie uit en sluit af."
 
-#: ../client/drizzle.cc:1402
+#: ../client/drizzle.cc:1403
 msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Weiger verbinding met een server indien die het oude (pre-4.1.1) protocol "
 "gebruikt."
 
-#: ../client/drizzle.cc:1406
+#: ../client/drizzle.cc:1407
 msgid "Number of lines before each import progress report."
 msgstr "Aantal lijnen voor elk voortgangsrapport over de import."
 
-#: ../client/drizzle.cc:1408
+#: ../client/drizzle.cc:1409
 msgid "Ping the server to check if it's alive."
 msgstr ""
 "Stuur een ping-signaal naar de server om te controleren of hij reageert."
 
-#: ../client/drizzle.cc:1410
+#: ../client/drizzle.cc:1411
 msgid "Configuration file defaults are not used if no-defaults is set"
 msgstr ""
+"Standaardwaarden uit het configuratie-bestand worden niet gebruikt wanneer "
+"no-defaults ingesteld werd"
 
-#: ../client/drizzle.cc:1416
+#: ../client/drizzle.cc:1417
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
 "and field completion, but startup and reconnecting may take a longer time. "
@@ -270,7 +271,7 @@ msgstr ""
 "tabellen en velden af te maken, maar opstarten en opnieuw verbinden kunnen "
 "langer duren. Zet uit met --disable-auto-rehash."
 
-#: ../client/drizzle.cc:1417
+#: ../client/drizzle.cc:1418
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of drizzle_st and disables rehashing "
@@ -281,7 +282,7 @@ msgstr ""
 "en schakelt rehashing bij herverbinden uit. WAARSCHUWING: optie wordt "
 "afgeraden; gebruik --disable-auto-rehash."
 
-#: ../client/drizzle.cc:1419
+#: ../client/drizzle.cc:1420
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
@@ -289,37 +290,37 @@ msgstr ""
 "Schakel automatisch naar verticale uitvoer modus als het resultaat breder is "
 "dan de breedte van het uitvoervenster."
 
-#: ../client/drizzle.cc:1421
+#: ../client/drizzle.cc:1422
 msgid "Database to use."
 msgstr "Te gebruiken databank"
 
-#: ../client/drizzle.cc:1423
+#: ../client/drizzle.cc:1424
 msgid "(not used)"
 msgstr "(niet gebruikt)"
 
-#: ../client/drizzle.cc:1425
+#: ../client/drizzle.cc:1426
 msgid "Delimiter to be used."
 msgstr "Te gebruiken delimiter."
 
-#: ../client/drizzle.cc:1427
+#: ../client/drizzle.cc:1428
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
 "Voer de opdracht uit en sluit af. (Schakelt --force en geschiedenisbestand "
 "uit)"
 
-#: ../client/drizzle.cc:1429
+#: ../client/drizzle.cc:1430
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
 msgstr "Schakel LOAD DATA LOCAL INFILE in/uit."
 
-#: ../client/drizzle.cc:1431
+#: ../client/drizzle.cc:1432
 msgid "Flush buffer after each query."
 msgstr "Maak de buffer leeg na de query."
 
-#: ../client/drizzle.cc:1433
+#: ../client/drizzle.cc:1434
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "Negeer SIGINT (CTRL-C)"
 
-#: ../client/drizzle.cc:1435
+#: ../client/drizzle.cc:1436
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
@@ -327,7 +328,7 @@ msgstr ""
 "Enkel updates op de de standaard databank. Dit is nuttig om updates op "
 "andere databases in de update log over te slaan."
 
-#: ../client/drizzle.cc:1437
+#: ../client/drizzle.cc:1438
 msgid ""
 "Pager to use to display results. If you don't supply an option the default "
 "pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
@@ -341,18 +342,16 @@ msgstr ""
 "de interactieve hulp (\\h). Deze optiei werkt niet in batch mode. Schakel "
 "uit met --disable-pager. Deze optie is standaard uitgeschakeld"
 
-#: ../client/drizzle.cc:1439
-#, fuzzy
+#: ../client/drizzle.cc:1440
 msgid "Disable pager and print to stdout. See interactive help (\\h) also."
 msgstr ""
-"Pager uitschakelen en afdrukken naar standaarduitvoer. Zie ook interactieve "
-"help (\\h). WAARSCHUWING: optie wordt afgeraden; gebruik --disable-pager."
+"Schakel pager uit en druk af naar to stdout. Zie ook interactieve help (\\h)."
 
-#: ../client/drizzle.cc:1441
+#: ../client/drizzle.cc:1442
 msgid "Set the drizzle prompt to this value."
 msgstr "Stel de drizzle prompt in op deze waarde."
 
-#: ../client/drizzle.cc:1443
+#: ../client/drizzle.cc:1444
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
@@ -361,11 +360,11 @@ msgstr ""
 "server vertragen indien de uitvoer opgehouden wordt. Gebruikt het "
 "geschiedenisbestand niet."
 
-#: ../client/drizzle.cc:1445
+#: ../client/drizzle.cc:1446
 msgid "Write fields without conversion. Used with --batch."
 msgstr "Schrijf velden zonder conversie. Gebruikt met --batch."
 
-#: ../client/drizzle.cc:1447
+#: ../client/drizzle.cc:1448
 msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
@@ -373,19 +372,18 @@ msgstr ""
 "Opnieuw verbinden wanneer de verbinding verloren ging. Schakel dit uit met --"
 "disable-reconnect. Deze optie is standaard ingeschakeld."
 
-#: ../client/drizzle.cc:1449
-#, fuzzy
-msgid "Shutdown the server"
-msgstr "Schakel de server uit."
-
 #: ../client/drizzle.cc:1450
+msgid "Shutdown the server"
+msgstr "Schakel de server uit"
+
+#: ../client/drizzle.cc:1451
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
 "Wees stiller. Druk resultaten met een tab als separator, elke rij op een "
 "nieuwe lijn."
 
-#: ../client/drizzle.cc:1452
+#: ../client/drizzle.cc:1453
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
@@ -395,47 +393,43 @@ msgstr ""
 "Dit werkt niet in batch modus. Uitshakelen met --disable-tee. Deze optie is "
 "standaard uitgeschakeld."
 
-#: ../client/drizzle.cc:1454
-#, fuzzy
-msgid "Disable outfile. See interactive help (\\h) also."
-msgstr ""
-"Schakel uitvoerbestand uit. Zie ook de interactieve hulp (\\h). WAARCHUWING: "
-"deze optie wordt afgeraden; gebruik --disable-tee"
-
 #: ../client/drizzle.cc:1455
+msgid "Disable outfile. See interactive help (\\h) also."
+msgstr "Schakel outfile uit. Zie ook interactieve help (\\h)."
+
+#: ../client/drizzle.cc:1456
 msgid "Wait and retry if connection is down."
 msgstr "Wacht en probeer opnieuw indin de verbinding weggevallen is."
 
-#: ../client/drizzle.cc:1457
+#: ../client/drizzle.cc:1458
 msgid "Number of seconds before connection timeout."
 msgstr "Aantal seconden voor het vervallen van de verbinding."
 
-#: ../client/drizzle.cc:1459
+#: ../client/drizzle.cc:1460
 msgid "Max length of input line"
 msgstr "Maximale lenge van de invoerlijn"
 
-#: ../client/drizzle.cc:1461
+#: ../client/drizzle.cc:1462
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr "Automatische limiet voor SELECT indien --safe-updates gebruikt wordt"
 
-#: ../client/drizzle.cc:1463
+#: ../client/drizzle.cc:1464
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 "Automatische limiet voor rijen in een join indien --safe-updates gebruikt "
 "wordt"
 
-#: ../client/drizzle.cc:1469 ../client/drizzledump.cc:2564
+#: ../client/drizzle.cc:1470 ../client/drizzledump.cc:2564
 #: ../client/drizzleimport.cc:451 ../client/drizzleslap.cc:962
 #: ../client/drizzletest.cc:5456
 msgid "Use MySQL Protocol."
 msgstr "Gebruik het MySQL Protocol."
 
-#: ../client/drizzle.cc:1471
-#, fuzzy
+#: ../client/drizzle.cc:1472
 msgid "Connect to host"
-msgstr "Verbind met host."
+msgstr "Verbind met host"
 
-#: ../client/drizzle.cc:1473
+#: ../client/drizzle.cc:1474
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
@@ -443,46 +437,47 @@ msgstr ""
 "Paswoord om te gebruiken wanneer verbonden wordt met de server. Indien het "
 "paswoord niet ingevuld is wordt het gevraagd vanaf de tty."
 
-#: ../client/drizzle.cc:1475
-#, fuzzy
+#: ../client/drizzle.cc:1476
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"
 msgstr ""
-"Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen op, "
-"in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT,built-in default ("
+"Poortnummer om te gebruiken voor de verbinding of 0 om, in volgorde van "
+"voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT of de ingebouwde standdardwaarde te "
+"gebruiken"
 
-#: ../client/drizzle.cc:1477
+#: ../client/drizzle.cc:1478
 msgid "User for login if not current user."
 msgstr "Gebruiker voor login indien niet de huidige gebruiker."
 
-#: ../client/drizzle.cc:1479
+#: ../client/drizzle.cc:1480
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
-msgstr ""
+msgstr "Het protocol voor de verbinding (tcp,socket,pipe,memory)."
 
-#: ../client/drizzle.cc:1521 ../client/drizzle.cc:1528
+#: ../client/drizzle.cc:1530 ../client/drizzle.cc:1537
 #, c-format
 msgid "Memory allocation error while constructing initial prompt. Aborting.\n"
 msgstr ""
 "Geheugentoewijzingsfout tijdens het aanmaken van de initiële prompt. Breekt "
 "af.\n"
 
-#: ../client/drizzle.cc:1579
+#: ../client/drizzle.cc:1588
 msgid "DELIMITER cannot contain a backslash character"
 msgstr "DELIMITER mag geen backslash karakter bevatten"
 
-#: ../client/drizzle.cc:1656
-#, fuzzy, c-format
+#: ../client/drizzle.cc:1665
+#, c-format
 msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
-msgstr "Waarde opgegeven voor poort is niet geldig.\n"
+msgstr "Fout: Waarde %<PRIu32> opgegeven voor poort is ongeldig.\n"
 
-#: ../client/drizzle.cc:1701 ../client/drizzle.cc:1711
-#: ../client/drizzle.cc:4083
-#, fuzzy, c-format
+#: ../client/drizzle.cc:1710 ../client/drizzle.cc:1720
+#: ../client/drizzle.cc:4092
+#, c-format
 msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
-msgstr "%s  Ver %s Distrib %s, voor %s-%s (%s) gebruik makend van %s %s\n"
+msgstr ""
+"drizzle  Ver %s Distrib %s, voor %s-%s (%s) gebruik makend van readline %s\n"
 
-#: ../client/drizzle.cc:1715
+#: ../client/drizzle.cc:1724
 #, c-format
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
@@ -493,16 +488,16 @@ msgstr ""
 "Deze software heeft ABSOLUUT GEEN GARANTIE. Het is vrije software,\n"
 "en het staat je vrij ze te wijzignen en herverdelen onder de GPL licentie\n"
 
-#: ../client/drizzle.cc:1720
-#, fuzzy, c-format
+#: ../client/drizzle.cc:1729
+#, c-format
 msgid "Usage: drizzle [OPTIONS] [database]\n"
-msgstr "Gebruik: %s [OPTIES] [databank]\n"
+msgstr "Gebruik: drizzle [OPTIES] [databank]\n"
 
-#: ../client/drizzle.cc:1771
+#: ../client/drizzle.cc:1780
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Welkom bij de drizzle client. Opdrachten eindigen met ; of \\g"
 
-#: ../client/drizzle.cc:1781
+#: ../client/drizzle.cc:1790
 #, c-format
 msgid ""
 "Your Drizzle connection id is %u\n"
@@ -511,48 +506,48 @@ msgstr ""
 "Je Drizzle connection id is %u\n"
 "Server versie: %s\n"
 
-#: ../client/drizzle.cc:1813
+#: ../client/drizzle.cc:1822
 #, c-format
 msgid "Reading history-file %s\n"
 msgstr "Leest geschiedenis-bestand %s\n"
 
-#: ../client/drizzle.cc:1817
+#: ../client/drizzle.cc:1826
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
 msgstr "Kon geen geheugen toewijzen voor tijdelijk geschiedenisbestand !\n"
 
-#: ../client/drizzle.cc:1824
+#: ../client/drizzle.cc:1833
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
 "Type 'help;' of '\\h' voor hulp. Type '\\c' om de buffer leeg te maken.\n"
 
-#: ../client/drizzle.cc:1847
+#: ../client/drizzle.cc:1856
 #, c-format
 msgid "Writing history-file %s\n"
 msgstr "Schrijft geschiedenisbestand %s\n"
 
-#: ../client/drizzle.cc:1855
+#: ../client/drizzle.cc:1864
 msgid "Aborted"
 msgstr "Afgebroken"
 
-#: ../client/drizzle.cc:1855
+#: ../client/drizzle.cc:1864
 msgid "Bye"
 msgstr "Tot ziens"
 
-#: ../client/drizzle.cc:1907
+#: ../client/drizzle.cc:1916
 msgid "Query aborted by Ctrl+C\n"
 msgstr "Query afgebroken door Ctrl+C\n"
 
-#: ../client/drizzle.cc:1991
+#: ../client/drizzle.cc:2000
 #, c-format
 msgid "Processing line: %<PRIu32>\n"
 msgstr "Verwerkt lijn: %<PRIu32>\n"
 
-#: ../client/drizzle.cc:2209
+#: ../client/drizzle.cc:2218
 msgid "Unknown command: "
 msgstr "Onbekende opdracht: "
 
-#: ../client/drizzle.cc:2623
+#: ../client/drizzle.cc:2632
 msgid ""
 "Reading table information for completion of table and column names\n"
 "You can turn off this feature to get a quicker startup with -A\n"
@@ -562,48 +557,48 @@ msgstr ""
 "Je kan deze functionaliteit uitschakelen met -A om sneller op te starten\n"
 "\n"
 
-#: ../client/drizzle.cc:2689
+#: ../client/drizzle.cc:2698
 msgid "No connection. Trying to reconnect..."
 msgstr "Geen verbinding. Probeert te verbinden..."
 
-#: ../client/drizzle.cc:2695
+#: ../client/drizzle.cc:2704
 msgid "Can't connect to the server\n"
 msgstr "Kan niet verbinden met de server\n"
 
-#: ../client/drizzle.cc:2773
+#: ../client/drizzle.cc:2782
 msgid "List of all Drizzle commands:"
 msgstr "Lijst van alle Drizzle opdrachten:"
 
-#: ../client/drizzle.cc:2775
+#: ../client/drizzle.cc:2784
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
 "Houd er rekening mee dat alle opdrachten vooraan op de regel moeten beginnen "
 "en eindigen met ';'"
 
-#: ../client/drizzle.cc:2830
+#: ../client/drizzle.cc:2839
 msgid "No query specified\n"
 msgstr "Geen query opgegeven\n"
 
-#: ../client/drizzle.cc:2845
+#: ../client/drizzle.cc:2854
 msgid "Ignoring query to other database"
 msgstr "Negeert query naar een andere databank"
 
-#: ../client/drizzle.cc:2895
+#: ../client/drizzle.cc:2904
 msgid "Empty set"
 msgstr "Lege set"
 
-#: ../client/drizzle.cc:2908
+#: ../client/drizzle.cc:2917
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] "%ld rij in de set"
 msgstr[1] "%ld rijen in de set"
 
-#: ../client/drizzle.cc:2917
+#: ../client/drizzle.cc:2926
 msgid "Query OK"
 msgstr "Query OK"
 
-#: ../client/drizzle.cc:2919
+#: ../client/drizzle.cc:2928
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
@@ -802,23 +797,23 @@ msgstr "Fout: Niet genoeg geheugen om de ORDER BY clausule op te slaan\n"
 msgid "Number of rows before each output progress report (requires --verbose)."
 msgstr "Aantal rijen voor elk uitvoer voortgangsrapport (vereist --verbose)"
 
-#: ../client/drizzledump.cc:2625 ../client/drizzledump.cc:2712
+#: ../client/drizzledump.cc:2633 ../client/drizzledump.cc:2720
 #, c-format
 msgid "Usage: %s [OPTIONS] database [tables]\n"
 msgstr "Gebruik: %s [OPTIES] databank [tabellen]\n"
 
-#: ../client/drizzledump.cc:2626 ../client/drizzledump.cc:2713
+#: ../client/drizzledump.cc:2634 ../client/drizzledump.cc:2721
 #, c-format
 msgid "OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"
 msgstr "OF     %s [OPTIES] --databanken [OPTIES] DB1 [DB2 DB3...]\n"
 
-#: ../client/drizzledump.cc:2628 ../client/drizzledump.cc:2715
+#: ../client/drizzledump.cc:2636 ../client/drizzledump.cc:2723
 #, c-format
 msgid "OR     %s [OPTIONS] --all-databases [OPTIONS]\n"
 msgstr "OF     %s [OPTIES] --all-databases [OPTIES]\n"
 
-#: ../client/drizzledump.cc:2640 ../client/drizzleimport.cc:497
-#: ../client/drizzleslap.cc:1028 ../client/drizzletest.cc:5588
+#: ../client/drizzledump.cc:2648 ../client/drizzleimport.cc:506
+#: ../client/drizzleslap.cc:1036 ../client/drizzletest.cc:5596
 #, c-format
 msgid "Value supplied for port is not valid.\n"
 msgstr "Waarde opgegeven voor poort is niet geldig.\n"
@@ -829,17 +824,17 @@ msgstr "Waarde opgegeven voor poort is niet geldig.\n"
 #. a crash even if the input destination buffer is large enough
 #. to hold the output.
 #.
-#: ../client/drizzledump.cc:2687
+#: ../client/drizzledump.cc:2695
 #, c-format
 msgid "Input filename too long: %s"
 msgstr "Invoer bestandsnaam te lang: %s"
 
-#: ../client/drizzledump.cc:2694 ../client/drizzledump.cc:2706
+#: ../client/drizzledump.cc:2702 ../client/drizzledump.cc:2714
 #, c-format
 msgid "%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"
 msgstr "%s  Drizzle %s libdrizzle %s, voor %s-%s (%s)\n"
 
-#: ../client/drizzledump.cc:2709
+#: ../client/drizzledump.cc:2717
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
@@ -847,38 +842,38 @@ msgstr ""
 "Deze software komt ABSOLUUT ZONDER GARANTIE. Dit is gratis software,\n"
 "en het is toegestaan ze te wijzigen en te verdelen onder de GPL licentie\n"
 
-#: ../client/drizzledump.cc:2710
+#: ../client/drizzledump.cc:2718
 msgid "Dumps definitions and data from a Drizzle database server"
 msgstr "Dumpt definities en data van een Drizzle database server"
 
-#: ../client/drizzledump.cc:2746
+#: ../client/drizzledump.cc:2754
 #, c-format
 msgid "Illegal use of option --ignore-table=<database>.<table>\n"
 msgstr "Fout gebruik van optie --ignore-table=<databank>.<tabel>\n"
 
-#: ../client/drizzledump.cc:2789
+#: ../client/drizzledump.cc:2797
 #, c-format
 msgid "Invalid mode to --compatible: %s\n"
 msgstr "Ongeldige modus bij --compatible: %s\n"
 
 #: ../client/drizzletest.cc:5363
 msgid "Error: Invalid Value for opt_max_connect_retries"
-msgstr ""
+msgstr "Fout: Ongeldige waarde voor opt_max_connect_retries"
 
 #: ../client/drizzletest.cc:5373
 msgid "Error: Invalid Value for opt_tail_lines"
-msgstr ""
+msgstr "Fout: Ongeldige waarde voor opt_tail_lines"
 
 #: ../client/drizzletest.cc:5383
 msgid "Error: Invalid Value for opt_sleep"
-msgstr ""
+msgstr "Fout: Ongeldige waarde voor opt_sleep"
 
-#: ../client/drizzletest.cc:5556
+#: ../client/drizzletest.cc:5564
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
 msgstr "Kon '%s' niet openen om te lezen: errno = %d"
 
-#: ../client/drizzletest.cc:5561 ../drizzled/drizzled.cc:857
+#: ../client/drizzletest.cc:5569 ../drizzled/drizzled.cc:857
 #, c-format
 msgid "Out of memory"
 msgstr "Te weinig geheugen"
@@ -924,11 +919,11 @@ msgstr "Onbekende locale: '%s'"
 msgid "Can't create thread-keys"
 msgstr "Kan geen thread-keys aanmaken"
 
-#: ../drizzled/drizzled.cc:867
+#: ../drizzled/drizzled.cc:866
 msgid "Failed to initialize plugins."
 msgstr "Initialiseren van plugins mislukte."
 
-#: ../drizzled/drizzled.cc:888
+#: ../drizzled/drizzled.cc:887
 #, c-format
 msgid ""
 "%s: Too many arguments (first extra is '%s').\n"
@@ -937,28 +932,28 @@ msgstr ""
 "%s: Te veel argumenten (eerste extra is '%s').\n"
 "Gebruik --verbose --help voor een lijst van beschikbaare opties\n"
 
-#: ../drizzled/drizzled.cc:911
+#: ../drizzled/drizzled.cc:912
 msgid "No scheduler found, cannot continue!\n"
 msgstr "Geen planner gevonden, kan niet verdergaan!\n"
 
-#: ../drizzled/drizzled.cc:935
+#: ../drizzled/drizzled.cc:936
 #, c-format
 msgid "Unknown/unsupported storage engine: %s"
 msgstr "Onbekend/niet-ondersteund storage engine: %s"
 
-#: ../drizzled/drizzled.cc:1026
+#: ../drizzled/drizzled.cc:1027
 msgid "Display this help and exit."
 msgstr "Toon deze hulp en sluit af."
 
-#: ../drizzled/drizzled.cc:1030
+#: ../drizzled/drizzled.cc:1031
 msgid "Display this help and exit after initializing plugins."
 msgstr "Toon deze help en sluit af na het initialiseren van de plugins."
 
-#: ../drizzled/drizzled.cc:1034
+#: ../drizzled/drizzled.cc:1035
 msgid "Auto-increment columns are incremented by this"
 msgstr "Auto-increment kolommen worden hiermee verhoogd"
 
-#: ../drizzled/drizzled.cc:1039
+#: ../drizzled/drizzled.cc:1040
 msgid ""
 "Offset added to Auto-increment columns. Used when auto-increment-increment !"
 "= 1"
@@ -966,7 +961,7 @@ msgstr ""
 "Offset toegevoegd aan Auto-increment kolommen. Gebruikt wanneer auto-"
 "increment-increment != 1"
 
-#: ../drizzled/drizzled.cc:1045
+#: ../drizzled/drizzled.cc:1046
 msgid ""
 "Path to installation directory. All paths are usually resolved relative to "
 "this."
@@ -974,59 +969,59 @@ msgstr ""
 "Path naar installatie directory. Paden worden gewoonlijk relatief bekeken "
 "ten opzichte hiervan."
 
-#: ../drizzled/drizzled.cc:1050
+#: ../drizzled/drizzled.cc:1051
 msgid "Chroot drizzled daemon during startup."
 msgstr "Chroot drizzled daemon tijdens het opstarten."
 
-#: ../drizzled/drizzled.cc:1054
+#: ../drizzled/drizzled.cc:1055
 msgid "Set the default collation."
 msgstr "Stel de standaard collation in."
 
-#: ../drizzled/drizzled.cc:1058
+#: ../drizzled/drizzled.cc:1059
 msgid "Default completion type."
 msgstr "Standaard completion type."
 
-#: ../drizzled/drizzled.cc:1063
+#: ../drizzled/drizzled.cc:1064
 msgid "Write core on errors."
 msgstr "Schrijf core bij fouten"
 
-#: ../drizzled/drizzled.cc:1067
+#: ../drizzled/drizzled.cc:1068
 msgid "Path to the database root."
 msgstr "Pad naar de database root."
 
-#: ../drizzled/drizzled.cc:1071
+#: ../drizzled/drizzled.cc:1072
 msgid "Set the default storage engine (table type) for tables."
 msgstr "Stel het standaard storage engine (tabel type) voor tabellen in."
 
-#: ../drizzled/drizzled.cc:1075
+#: ../drizzled/drizzled.cc:1076
 msgid "Set the default time zone."
 msgstr "Stel de standaard tijdzone in."
 
-#: ../drizzled/drizzled.cc:1080
+#: ../drizzled/drizzled.cc:1081
 msgid "Used for debugging;  Use at your own risk!"
 msgstr "Gebruikt voor debugging;  Gebruik op eigen risico!"
 
-#: ../drizzled/drizzled.cc:1085
+#: ../drizzled/drizzled.cc:1086
 msgid "Set up signals usable for debugging"
 msgstr "Stel signalen voor debugging in"
 
-#: ../drizzled/drizzled.cc:1089
+#: ../drizzled/drizzled.cc:1090
 msgid "(IGNORED)"
 msgstr "(GENEGEERD)"
 
-#: ../drizzled/drizzled.cc:1093
+#: ../drizzled/drizzled.cc:1094
 msgid "Set the language used for the month names and the days of the week."
 msgstr "Stel de taal in voor de namen van maanden en weekdagen."
 
-#: ../drizzled/drizzled.cc:1098
+#: ../drizzled/drizzled.cc:1099
 msgid "Log some not critical warnings to the log file."
 msgstr "Schrijf enkele niet-kritische waarschuwingen naar het log bestand."
 
-#: ../drizzled/drizzled.cc:1103
+#: ../drizzled/drizzled.cc:1104
 msgid "Pid file used by safe_mysqld."
 msgstr "Pid bestand gebruikt door safe_mysqld"
 
-#: ../drizzled/drizzled.cc:1107
+#: ../drizzled/drizzled.cc:1108
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
@@ -1034,7 +1029,7 @@ msgstr ""
 "Maximale tijd in seconden om te wachten tot de poort vrij komt. (Standaard: "
 "niet wachten)"
 
-#: ../drizzled/drizzled.cc:1112
+#: ../drizzled/drizzled.cc:1113
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
 "specified directory"
@@ -1042,7 +1037,7 @@ msgstr ""
 "Beperk LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() tot bestanden in de "
 "opgegeven directory"
 
-#: ../drizzled/drizzled.cc:1117
+#: ../drizzled/drizzled.cc:1118
 msgid ""
 "Uniquely identifies the server instance in the community of replication "
 "partners."
@@ -1050,34 +1045,34 @@ msgstr ""
 "Identifieert de server instance uniek in de gemeenschap van replicatie "
 "partners."
 
-#: ../drizzled/drizzled.cc:1122
+#: ../drizzled/drizzled.cc:1123
 msgid "Don't print a stack trace on failure."
 msgstr "Druk geen stack trace bij fouten."
 
-#: ../drizzled/drizzled.cc:1126
+#: ../drizzled/drizzled.cc:1127
 msgid "Enable symbolic link support."
 msgstr "Schakel symbolic link ondersteuning in."
 
-#: ../drizzled/drizzled.cc:1135
+#: ../drizzled/drizzled.cc:1136
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
 msgstr ""
 "Specifieert of  mutexen getimed moeten worden (enkel InnoDB mutexen zijn "
 "momenteel ondersteund)"
 
-#: ../drizzled/drizzled.cc:1140
+#: ../drizzled/drizzled.cc:1141
 msgid "Path for temporary files."
 msgstr "Pad voor tijdelijke bestanden."
 
-#: ../drizzled/drizzled.cc:1144
+#: ../drizzled/drizzled.cc:1145
 msgid "Default transaction isolation level."
 msgstr "Standaard transactie isolatie niveau."
 
-#: ../drizzled/drizzled.cc:1148
+#: ../drizzled/drizzled.cc:1149
 msgid "Run drizzled daemon as user."
 msgstr "Voer drizzled daemon uit als user."
 
-#: ../drizzled/drizzled.cc:1156
+#: ../drizzled/drizzled.cc:1157
 msgid ""
 "The number of outstanding connection requests Drizzle can have. This comes "
 "into play when the main Drizzle thread gets very many connection requests in "
@@ -1087,7 +1082,7 @@ msgstr ""
 "belangrijk wanneer de hoofdthread van Drizzle heel veel verbindingsaanvragen "
 "krijgt binnen een zeer klein tijdsinterval."
 
-#: ../drizzled/drizzled.cc:1162
+#: ../drizzled/drizzled.cc:1163
 msgid ""
 "Size of tree cache used in bulk insert optimization. Note that this is a "
 "limit per thread!"
@@ -1095,26 +1090,26 @@ msgstr ""
 "Grootte van tree cache gebruikt bij de optimalisering van bulk inserts. Denk "
 "eraan dat dit een limiet per thread is!"
 
-#: ../drizzled/drizzled.cc:1168
+#: ../drizzled/drizzled.cc:1169
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
 msgstr ""
 "Precisie van het resultaat van de '/' operator zal verhoogd worden bij deze "
 "waarde."
 
-#: ../drizzled/drizzled.cc:1174
+#: ../drizzled/drizzled.cc:1175
 msgid "The maximum length of the result of function  group_concat."
 msgstr "De maximale lengte van het resultaat van de group_concat functie."
 
-#: ../drizzled/drizzled.cc:1179
+#: ../drizzled/drizzled.cc:1180
 msgid "The size of the buffer that is used for full joins."
 msgstr "De grootte van de buffer die gebruikt wordt voor full joins."
 
-#: ../drizzled/drizzled.cc:1185
+#: ../drizzled/drizzled.cc:1186
 msgid "Max packetlength to send/receive from to server."
 msgstr "Maximale pakketlengte voor verzending naar /ontvangst van de server."
 
-#: ../drizzled/drizzled.cc:1190
+#: ../drizzled/drizzled.cc:1191
 msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
@@ -1122,16 +1117,16 @@ msgstr ""
 "Indien er meer onderbroken verbindingen van een host zijn dan deze waarde, "
 "dan wordt deze host geblokkeerd voor verdere verbindingen."
 
-#: ../drizzled/drizzled.cc:1195
+#: ../drizzled/drizzled.cc:1196
 msgid "Max number of errors/warnings to store for a statement."
 msgstr ""
 "Maximaal aantal fouten/waarschuwingen bij te houden voor een statement."
 
-#: ../drizzled/drizzled.cc:1200
+#: ../drizzled/drizzled.cc:1201
 msgid "Don't allow creation of heap tables bigger than this."
 msgstr "Sta de aanmaak van grotere heap tabellen niet toe."
 
-#: ../drizzled/drizzled.cc:1206
+#: ../drizzled/drizzled.cc:1207
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
@@ -1139,17 +1134,17 @@ msgstr ""
 "Joins die meer waarschijnlijk meer dan  max_join_size records zullen lezen "
 "geven een fout terug."
 
-#: ../drizzled/drizzled.cc:1212
+#: ../drizzled/drizzled.cc:1213
 msgid "Max number of bytes in sorted records."
 msgstr "Maximaal aantal bytes in gesorteerde records."
 
-#: ../drizzled/drizzled.cc:1217
+#: ../drizzled/drizzled.cc:1218
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
 "Beperk het verwachte maximaal aantal zoekoperaties indien rijen opgezocht "
 "worden op basis van een sleutel."
 
-#: ../drizzled/drizzled.cc:1222
+#: ../drizzled/drizzled.cc:1223
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
@@ -1157,13 +1152,13 @@ msgstr ""
 "Het aantal bytes te gebruiken voor het sorteren van BLOB en TEXT waarden "
 "(enkel de eerste max_sort_length bytes van elke waarde worden gebruikt)."
 
-#: ../drizzled/drizzled.cc:1229
+#: ../drizzled/drizzled.cc:1230
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
 "Sta de uitvoering van enkele leesvergrendelingen toe na zoveel "
 "schrijfvergrendelingen."
 
-#: ../drizzled/drizzled.cc:1233
+#: ../drizzled/drizzled.cc:1234
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
@@ -1171,7 +1166,7 @@ msgstr ""
 "Log geen queries die minder dan min_examined_row_limit rijen onderzoeken "
 "naar een bestand."
 
-#: ../drizzled/drizzled.cc:1239
+#: ../drizzled/drizzled.cc:1240
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
 "promising partial plans from the optimizer search space. Meaning: false - do "
@@ -1184,7 +1179,7 @@ msgstr ""
 "uitgebreide zoekopdracht; true - schrap plannen op basis van het aantal "
 "opgehaalde rijen."
 
-#: ../drizzled/drizzled.cc:1247
+#: ../drizzled/drizzled.cc:1248
 msgid ""
 "Maximum depth of search performed by the query optimizer. Values larger than "
 "the number of relations in a query result in better query plans, but take "
@@ -1203,11 +1198,11 @@ msgstr ""
 "optimizer overschakelennaar de originele waarde (gebruikt voor testen/"
 "vergelijken)."
 
-#: ../drizzled/drizzled.cc:1259
+#: ../drizzled/drizzled.cc:1260
 msgid "Directory for plugins."
 msgstr "Directory voor plugins"
 
-#: ../drizzled/drizzled.cc:1263
+#: ../drizzled/drizzled.cc:1264
 msgid ""
 "Optional comma separated list of plugins to load at startup in addition to "
 "the default list of plugins. [for example: --plugin_add=crc32,logger_gearman]"
@@ -1216,7 +1211,7 @@ msgstr ""
 "opstarten, als toevoeging aan de standaardlijst met plugins. [bijvoorbeeld: "
 "--plugin_add=crc32,logger_gearman]"
 
-#: ../drizzled/drizzled.cc:1269
+#: ../drizzled/drizzled.cc:1270
 msgid ""
 "Optional comma separated list of plugins to not load at startup. Effectively "
 "removes a plugin from the list of plugins to be loaded. [for example: --"
@@ -1226,7 +1221,7 @@ msgstr ""
 "worden bij het opstarten. Dit verwijdert een plugin effectief van de lijst "
 "met te laden plugins. [bijvoorbeeld: --plugin_remove=crc32,logger_gearman]"
 
-#: ../drizzled/drizzled.cc:1275
+#: ../drizzled/drizzled.cc:1276
 msgid ""
 "Optional comma separated list of plugins to load at starup instead of the "
 "default plugin load list. [for example: --plugin_load=crc32,logger_gearman]"
@@ -1235,26 +1230,26 @@ msgstr ""
 "opstarten, in plaats van de standaardlijst met plugins. [bijvoorbeeld: --"
 "plugin_load=crc32,logger_gearman]"
 
-#: ../drizzled/drizzled.cc:1281
+#: ../drizzled/drizzled.cc:1282
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
 "De grootte van de buffer die toegewezen wordt bij het voorladen van indexen."
 
-#: ../drizzled/drizzled.cc:1286
+#: ../drizzled/drizzled.cc:1287
 msgid "Allocation block size for query parsing and execution"
 msgstr "Grootte van toegewezen blokken voor query parsing en uitvoering"
 
-#: ../drizzled/drizzled.cc:1291
+#: ../drizzled/drizzled.cc:1292
 msgid "Persistent buffer for query parsing and execution"
 msgstr "Blijvende buffer voor query parsing en uitvoering"
 
-#: ../drizzled/drizzled.cc:1297
+#: ../drizzled/drizzled.cc:1298
 msgid "Allocation block size for storing ranges during optimization"
 msgstr ""
 "Grootte van toegewezen blokken voor opslag van bereiken tijdens de "
 "optimalisering"
 
-#: ../drizzled/drizzled.cc:1303
+#: ../drizzled/drizzled.cc:1304
 msgid ""
 "Each thread that does a sequential scan allocates a buffer of this size for "
 "each table it scans. If you do many sequential scans, you may want to "
@@ -1264,7 +1259,7 @@ msgstr ""
 "toe voor elke gescande tabel. Indien je veel sequentiële scans doet, zou het "
 "kunnen dat je deze waarde wil verhogen."
 
-#: ../drizzled/drizzled.cc:1311
+#: ../drizzled/drizzled.cc:1312
 msgid ""
 "When reading rows in sorted order after a sort, the rows are read through "
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
@@ -1274,23 +1269,23 @@ msgstr ""
 "worden de records gelezen via deze buffer om zoeken op schijf te vermijden. "
 "Indien niet ingesteld, wordt de waarde van record_buffer gebruikt."
 
-#: ../drizzled/drizzled.cc:1319
+#: ../drizzled/drizzled.cc:1320
 msgid "Select scheduler to be used (by default multi-thread)."
 msgstr "Kies de te gebruiken planner (standaard: multi-thread)."
 
-#: ../drizzled/drizzled.cc:1324
+#: ../drizzled/drizzled.cc:1325
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
 msgstr "Elke thread die moet sorteren wijst een buffer van deze grootte toe."
 
-#: ../drizzled/drizzled.cc:1330
+#: ../drizzled/drizzled.cc:1331
 msgid "The number of cached table definitions."
 msgstr "Het aantal tabeldefinities in de cache."
 
-#: ../drizzled/drizzled.cc:1334
+#: ../drizzled/drizzled.cc:1335
 msgid "The number of cached open tables."
 msgstr "Het aantal open tabellen in de cache."
 
-#: ../drizzled/drizzled.cc:1338
+#: ../drizzled/drizzled.cc:1339
 msgid ""
 "Timeout in seconds to wait for a table level lock before returning an error. "
 "Used only if the connection has active cursors."
@@ -1299,11 +1294,11 @@ msgstr ""
 "voordat een fout teruggegeven wordt. Enkel gebruikt indien de verbinding "
 "actieve cursors heeft."
 
-#: ../drizzled/drizzled.cc:1343
+#: ../drizzled/drizzled.cc:1344
 msgid "The stack size for each thread."
 msgstr "De grootte van de stack voor elke thread."
 
-#: ../drizzled/drizzled.cc:1349
+#: ../drizzled/drizzled.cc:1350
 msgid ""
 "If an internal in-memory temporary table exceeds this size, Drizzle will "
 "automatically convert it to an on-disk MyISAM table."
@@ -1311,7 +1306,7 @@ msgstr ""
 "Indien een interne in-memory tijdelijke tabel deze grootte overschrijdt zal "
 "Drizzle ze automatisch omvormen in een on-disk MyISAM tabel."
 
-#: ../drizzled/drizzled.cc:1375
+#: ../drizzled/drizzled.cc:1376
 msgid ""
 "Copyright (C) 2008 Sun Microsystems\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -1326,12 +1321,12 @@ msgstr ""
 "\n"
 "Start de Drizzle databank server\n"
 
-#: ../drizzled/drizzled.cc:1382
+#: ../drizzled/drizzled.cc:1383
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
 msgstr "Gebruik: %s [OPTIES]\n"
 
-#: ../drizzled/drizzled.cc:1506
+#: ../drizzled/drizzled.cc:1507
 #, c-format
 msgid ""
 "Ignoring user change to '%s' because the user was set to '%s' earlier on the "
@@ -1340,11 +1335,11 @@ msgstr ""
 "Negeert instellen van gebruiker op '%s' omdat de gebruiker op '%s' ingesteld "
 "werd via de commandolijn\n"
 
-#: ../drizzled/drizzled.cc:1549
+#: ../drizzled/drizzled.cc:1550
 msgid "Can't start server: cannot resolve hostname!"
 msgstr "Kan de server niet starten: kan de hostnaam niet oplossen!"
 
-#: ../drizzled/drizzled.cc:1555
+#: ../drizzled/drizzled.cc:1556
 msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
 "Kan de server niet starten: het verbindingsadres verwijst naar meerdere "
@@ -2746,13 +2741,14 @@ msgid "Slave already has been stopped"
 msgstr "Slave is reeds gestopt"
 
 #: ../drizzled/error.cc:472
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Uncompressed data size too large; the maximum size is %d (based on "
 "max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
-"Omvang van de niet-samengedrukte data is te groot; the maximum size is %d "
-"(waarschijnlijk was de lengte van de niet-samengedrukte data corrupt)"
+"Ongecomprimeerde datalengte te groot; de maximale lengte is %d (gebaseerd op "
+"max_allowed_packet). De lengte van ongecomprimeerde data kan ook corrupt "
+"zijn."
 
 #: ../drizzled/error.cc:473
 msgid "ZLIB: Not enough memory"
@@ -5139,9 +5135,9 @@ msgid "Corrupt or invalid table definition: %s"
 msgstr "Corrupte of ongeldige tabel definitie: %s"
 
 #: ../drizzled/error.cc:909
-#, fuzzy, c-format
+#, c-format
 msgid "Corrupt or invalid schema definition for %s : %s"
-msgstr "Corrupte of ongeldige tabel definitie: %s"
+msgstr "Corrupte of ongeldige schema definitie voor %s : %s"
 
 #: ../drizzled/error.cc:910
 #, c-format
@@ -5174,7 +5170,7 @@ msgstr "Onbekende schema engine optie sleutel/paar %s = %s."
 
 #: ../drizzled/error.cc:916
 msgid "Implicit cartesian join attempted."
-msgstr ""
+msgstr "Poging tot impliciete cartesiaanse join."
 
 #: ../drizzled/error.cc:918
 #, c-format
@@ -5255,13 +5251,13 @@ msgstr ""
 msgid "File '%s' (fileno: %d) was not closed"
 msgstr "Bestand '%s' (fileno: %d) werd niet afgesloten"
 
-#: ../drizzled/identifier/schema.cc:56 ../drizzled/identifier/table.cc:232
+#: ../drizzled/identifier/schema.cc:56 ../drizzled/identifier/table.cc:234
 msgid ""
 "Schema name cannot be encoded and fit within filesystem name length "
 "restrictions."
 msgstr ""
 
-#: ../drizzled/identifier/table.cc:222
+#: ../drizzled/identifier/table.cc:224
 msgid ""
 "Table name cannot be encoded and fit within filesystem name length "
 "restrictions."
@@ -5388,26 +5384,26 @@ msgstr ""
 msgid "Plugin '%s' init function returned error.\n"
 msgstr "Plugin '%s' init functie gaf een fout terug.\n"
 
-#: ../drizzled/module/loader.cc:539
+#: ../drizzled/module/loader.cc:534
 #, c-format
 msgid "Couldn't load plugin library named '%s'.\n"
 msgstr "Kon plugin bibliotheek met de naam '%s' niet vinden.\n"
 
-#: ../drizzled/module/loader.cc:549
+#: ../drizzled/module/loader.cc:544
 #, c-format
 msgid "Couldn't load plugin named '%s'.\n"
 msgstr "Kon plugin bibliotheek met de naam '%s' niet laden.\n"
 
-#: ../drizzled/module/loader.cc:778
+#: ../drizzled/module/loader.cc:773
 msgid "Out of memory."
 msgstr "Geheugen opgebruikt."
 
-#: ../drizzled/module/loader.cc:1501 ../drizzled/module/loader.cc:1552
+#: ../drizzled/module/loader.cc:1496 ../drizzled/module/loader.cc:1547
 #, c-format
 msgid "Unknown variable type code 0x%x in plugin '%s'."
 msgstr "Onbekende variabele type code 0x%x in plugin '%s'."
 
-#: ../drizzled/module/loader.cc:1544
+#: ../drizzled/module/loader.cc:1539
 #, c-format
 msgid ""
 "Server variable %s of plugin %s was forced to be read-only: string variable "
@@ -5416,32 +5412,32 @@ msgstr ""
 "Server variabele %s van plugin %s werd geforceerd read-only: string "
 "variabele zonder update_func en PLUGIN_VAR_MEMALLOC vlag"
 
-#: ../drizzled/module/loader.cc:1563
+#: ../drizzled/module/loader.cc:1558
 #, c-format
 msgid "Missing variable name in plugin '%s'."
 msgstr "Ontbrekende variabele naam in plugin '%s'."
 
-#: ../drizzled/module/loader.cc:1580
+#: ../drizzled/module/loader.cc:1575
 #, c-format
 msgid "Thread local variable '%s' not allocated in plugin '%s'."
 msgstr "Locale thread variabele '%s' niet toegewezen in plugin '%s'."
 
-#: ../drizzled/module/loader.cc:1700
+#: ../drizzled/module/loader.cc:1697
 #, c-format
 msgid "Out of memory for plugin '%s'."
 msgstr "Geheugen tekort in plugin '%s'."
 
-#: ../drizzled/module/loader.cc:1709
+#: ../drizzled/module/loader.cc:1706
 #, c-format
 msgid "Bad options for plugin '%s'."
 msgstr "Slechte opties voor plugin '%s'."
 
-#: ../drizzled/module/loader.cc:1722
+#: ../drizzled/module/loader.cc:1719
 #, c-format
 msgid "Parsing options for plugin '%s' failed."
 msgstr "Interpreteren van opties voor plugin '%s' mislukt."
 
-#: ../drizzled/module/loader.cc:1775
+#: ../drizzled/module/loader.cc:1772
 #, c-format
 msgid "Plugin '%s' has conflicting system variables"
 msgstr "Plugin '%s' heeft conflicterende systeem variabelen"
@@ -5544,12 +5540,12 @@ msgstr ""
 msgid "EventIterate event handler '%s' failed for event '%s'"
 msgstr ""
 
-#: ../drizzled/plugin/function.cc:45
+#: ../drizzled/plugin/function.cc:44
 #, c-format
 msgid "A function named %s already exists!\n"
 msgstr "Een functie met de naam %s bestaat reeds!\n"
 
-#: ../drizzled/plugin/function.cc:54
+#: ../drizzled/plugin/function.cc:53
 msgid "Could not add Function!\n"
 msgstr "Kon Functie niet toevoegen!\n"
 
@@ -5608,24 +5604,23 @@ msgid "setsockopt(TCP_NODELAY) failed with errno %d"
 msgstr "setsockopt(TCP_NODELAY) mislukte met foutnummer %d"
 
 #: ../drizzled/plugin/listen_tcp.cc:196
-#, fuzzy, c-format
+#, c-format
 msgid "Retrying bind() on %u\n"
-msgstr "Probeert opnieuw bind() on %u"
+msgstr "Probeert bind() op %u opnieuw\n"
 
 #: ../drizzled/plugin/listen_tcp.cc:203
-#, fuzzy, c-format
+#, c-format
 msgid "bind() failed with errno: %d\n"
-msgstr "bind() mislukte met foutnummer: %d"
+msgstr "bind() mislukte met foutnummer: %d\n"
 
 #: ../drizzled/plugin/listen_tcp.cc:206
-#, fuzzy
 msgid "Do you already have another drizzled running?\n"
-msgstr "Heb je reeds een andere drizzled lopen?"
+msgstr "Heb je al een andere drizzled lopen?\n"
 
 #: ../drizzled/plugin/listen_tcp.cc:213
-#, fuzzy, c-format
+#, c-format
 msgid "listen() failed with errno %d\n"
-msgstr "listen() mislukte met foutnummer %d"
+msgstr "listen()mislukte met foutnummer: %d\n"
 
 #: ../drizzled/plugin/listen_tcp.cc:219
 #, c-format
@@ -5875,17 +5870,17 @@ msgstr ""
 msgid "Writing a core file\n"
 msgstr "Schrijft core bestand\n"
 
-#: ../drizzled/sql_base.cc:1517
+#: ../drizzled/sql_base.cc:1526
 #, c-format
 msgid "Table %s had a open data Cursor in reopen_table"
 msgstr "Tabel %s had een open data Cursor in reopen_table"
 
-#: ../drizzled/sql_table.cc:1952
+#: ../drizzled/sql_table.cc:1948
 #, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "Onbekende interne fout %d tijdens de bewerking"
 
-#: ../drizzled/statement/alter_table.cc:1441
+#: ../drizzled/statement/alter_table.cc:1428
 #, c-format
 msgid ""
 "order_st BY ignored because there is a user-defined clustered index in the "
@@ -5894,27 +5889,27 @@ msgstr ""
 "order_st BY genegeerd omdat er een gebruikers-gedefinieerde clustered index "
 "is in tabel '%-.192s'"
 
-#: ../drizzled/table.cc:1977
+#: ../drizzled/table.cc:1971
 #, c-format
 msgid "Got error %d when reading table '%s'"
 msgstr "Kreeg fout %d bij het lezen van tabel '%s'"
 
-#: ../drizzled/table_share.cc:918
+#: ../drizzled/table_share.cc:883
 #, c-format
 msgid "Table %s has invalid/unknown collation: %d,%s"
-msgstr ""
+msgstr "Tabel %s heeft een ongeldige/onbekende collation: %d,%s"
 
-#: ../drizzled/table_share.cc:1193
+#: ../drizzled/table_share.cc:1158
 #, c-format
 msgid "ENUM column %s has greater than %d possible values"
-msgstr ""
+msgstr "ENUM kolom %s heeft meer dan %d mogelijke waarden"
 
-#: ../drizzled/table_share.cc:2113
+#: ../drizzled/table_share.cc:2069
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr "Onbekende collation '%s' in definitie van tabel '%-.64s'"
 
-#: ../drizzled/table_share.cc:2120
+#: ../drizzled/table_share.cc:2076
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of Drizzle and cannot be "
@@ -6068,35 +6063,32 @@ msgstr "Standaard te gebruiken databank."
 
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:824
 #: ../plugin/mysql_protocol/mysql_protocol.cc:899
-#, fuzzy
 msgid "Invalid value of port\n"
-msgstr "Ongeldig gebruik van null pointer"
+msgstr "Ongeldige waarde voor poort\n"
 
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:833
 #: ../plugin/mysql_protocol/mysql_protocol.cc:908
-#, fuzzy
 msgid "Invalid value for connect_timeout\n"
-msgstr "Foutief gebruik van group functie"
+msgstr "Ongeldige waarde voor connect_timeout\n"
 
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:842
 #: ../plugin/mysql_protocol/mysql_protocol.cc:917
 msgid "Invalid value for read_timeout\n"
-msgstr ""
+msgstr "Ongeldige waarde voor read_timeout\n"
 
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:851
 #: ../plugin/mysql_protocol/mysql_protocol.cc:926
 msgid "Invalid value for write_timeout\n"
-msgstr ""
+msgstr "Ongeldige waarde voor write_timeout\n"
 
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:860
-#, fuzzy
 msgid "Invalid value for retry_count\n"
-msgstr "Foutief gebruik van group functie"
+msgstr "Ongeldige waarde voor retry_count\n"
 
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:869
 #: ../plugin/mysql_protocol/mysql_protocol.cc:944
 msgid "Invalid value for buffer_length\n"
-msgstr ""
+msgstr "Ongeldige waarde voor buffer_length\n"
 
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:889
 #: ../plugin/drizzle_protocol/drizzle_protocol.cc:913
@@ -6463,34 +6455,34 @@ msgstr "Versturen van foutbericht aan libnotify mislukt\n"
 msgid "Error Messages to stderr"
 msgstr "Foutboodschappen naar stderr"
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:604
-#: ../plugin/filtered_replicator/filtered_replicator.cc:613
+#: ../plugin/filtered_replicator/filtered_replicator.cc:603
+#: ../plugin/filtered_replicator/filtered_replicator.cc:612
 msgid "List of schemas to filter"
 msgstr "Lijst van te filteren schemas"
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:607
-#: ../plugin/filtered_replicator/filtered_replicator.cc:620
+#: ../plugin/filtered_replicator/filtered_replicator.cc:606
+#: ../plugin/filtered_replicator/filtered_replicator.cc:619
 msgid "List of tables to filter"
 msgstr "Lijst van te filteren tabellen"
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:627
+#: ../plugin/filtered_replicator/filtered_replicator.cc:626
 msgid "Regular expression to apply to schemas to filter"
 msgstr "Reguliere expressie toe te passen op de te filteren schema's"
 
-#: ../plugin/filtered_replicator/filtered_replicator.cc:634
+#: ../plugin/filtered_replicator/filtered_replicator.cc:633
 msgid "Regular expression to apply to tables to filter"
 msgstr "Reguliere expressie toe te passen op de te filteren tabellen"
 
 #: ../plugin/hello_events/hello_events.cc:294
 #, fuzzy
 msgid "Invalid value of before-write-position\n"
-msgstr "Ongeldig gebruik van null pointer"
+msgstr "Ongeldige waarde voor write_timeout\n"
 
 #: ../plugin/hello_events/hello_events.cc:303
 #: ../plugin/hello_events/hello_events.cc:312
 #, fuzzy
 msgid "Invalid value of before-update-position\n"
-msgstr "Ongeldig gebruik van null pointer"
+msgstr "Ongeldige waarde voor poort\n"
 
 #: ../plugin/hello_events/hello_events.cc:352
 #: ../plugin/hello_events/hello_events.cc:355
@@ -6566,15 +6558,15 @@ msgstr "mislukt open() fn=%s er=%s\n"
 
 #: ../plugin/logging_query/logging_query.cc:313
 msgid "Invalid value for threshold-slow"
-msgstr ""
+msgstr "Ongeldige waarde voor threshold-slow"
 
 #: ../plugin/logging_query/logging_query.cc:322
 msgid "Invalid value for threshold-big-resultset"
-msgstr ""
+msgstr "Ongeldige waarde voor threshold-big-resultset"
 
 #: ../plugin/logging_query/logging_query.cc:331
 msgid "Invalid value for threshold-big-examined"
-msgstr ""
+msgstr "Ongeldige waarde voor threshold-big-examined"
 
 #: ../plugin/logging_query/logging_query.cc:345
 #: ../plugin/logging_query/logging_query.cc:361
@@ -6625,7 +6617,7 @@ msgstr ""
 #: ../plugin/logging_stats/logging_stats.cc:356
 #, fuzzy
 msgid "Enable Logging Statistics Collection"
-msgstr "Schakel loggen naar syslog in"
+msgstr "Schakel logging naar CSV bestand in"
 
 #: ../plugin/logging_stats/logging_stats.cc:375
 msgid "User Statistics as DATA_DICTIONARY tables"
@@ -6989,9 +6981,8 @@ msgid "Tablespace not empty"
 msgstr "Tablespace is niet leeg"
 
 #: ../plugin/mysql_protocol/mysql_protocol.cc:935
-#, fuzzy
 msgid "Invalid value for retry_count"
-msgstr "Foutief gebruik van group functie"
+msgstr "Ongeldige waarde voor retry_count"
 
 #: ../plugin/mysql_protocol/mysql_protocol.cc:969
 #: ../plugin/mysql_protocol/mysql_protocol.cc:991
@@ -7111,9 +7102,9 @@ msgid "syslog facility \"%s\" not known, using \"local0\""
 msgstr "syslog mogelijkheid \"%s\" onbekend, gebruikt \"local0\""
 
 #: ../plugin/syslog/errmsg.cc:49
-#, fuzzy, c-format
+#, c-format
 msgid "syslog priority \"%s\" not known, using \"warn\""
-msgstr "syslog prioriteit \"%s\" onbekend, gebruikt \"info\""
+msgstr "syslog prioriteit \"%s\" onbekend, gebruikt \"warn\""
 
 #: ../plugin/syslog/logging.cc:72
 #, c-format
@@ -7122,31 +7113,29 @@ msgstr "syslog prioriteit \"%s\" onbekend, gebruikt \"info\""
 
 #: ../plugin/syslog/module.cc:59
 msgid "Syslog Ident"
-msgstr "Syslog Ident"
+msgstr ""
 
 #: ../plugin/syslog/module.cc:68
 msgid "Syslog Facility"
-msgstr "Syslog Facility"
+msgstr ""
 
 #: ../plugin/syslog/module.cc:77
 #, fuzzy
 msgid "Enable logging to syslog of the query log"
-msgstr "Schakel loggen naar syslog in"
+msgstr "Schakel logging naar CSV bestand in"
 
 #: ../plugin/syslog/module.cc:86
-#, fuzzy
 msgid "Syslog Priority of query logging"
-msgstr "Syslog Priority"
+msgstr ""
 
 #: ../plugin/syslog/module.cc:131
 #, fuzzy
 msgid "Enable logging to syslog of the error messages"
-msgstr "Schakel loggen naar syslog in"
+msgstr "Schakel logging naar een gearman server in"
 
 #: ../plugin/syslog/module.cc:140
-#, fuzzy
 msgid "Syslog Priority of error messages"
-msgstr "Syslog Priority"
+msgstr ""
 
 #: ../plugin/transaction_log/background_worker.cc:74
 #, c-format
@@ -7255,69 +7244,8 @@ msgstr ""
 msgid "Failed to sync log file. Got error: %s\n"
 msgstr "Sync log file mislukt. Kreeg fout: %s\n"
 
-#~ msgid ""
-#~ "'%s' had no or invalid character set, and default character set is multi-"
-#~ "byte, so character column sizes may have changed"
-#~ msgstr ""
-#~ "'%s' heeft geen of een ongeldige karakterset, en de standaard karakterset "
-#~ "is multi-byte, dus de groottes van de karakter kolommen kunnen gewijzigd "
-#~ "zijn"
-
 #~ msgid "Synonym for -?"
 #~ msgstr "Synoniem voor -?"
-
-#~ msgid ""
-#~ "Port number to use for connection or 0 for default to, in order of "
-#~ "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-#~ msgstr ""
-#~ "Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen "
-#~ "op, in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT, "
-
-#~ msgid "built-in default"
-#~ msgstr "ingebouwde standaardwaarde"
-
-#~ msgid "Write more. (-v -v -v gives the table output format)."
-#~ msgstr "Schrijf meer. (-v -v -v geeft het tabel uitvoer formaat)"
-
-#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-#~ msgstr "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-tee.\n"
-
-#~ msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-#~ msgstr ""
-#~ "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-pager.\n"
-
-#~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
-#~ msgstr ""
-#~ "WAARSCHUWING: --server-arg optie wordt niet ondersteund in deze "
-#~ "configuratie.\n"
-
-#~ msgid ""
-#~ "Non-integer value supplied for port.  If you are trying to enter a "
-#~ "password please use --password instead."
-#~ msgstr ""
-#~ "Niet-integer waarde opgegeven als poort. Indien je probeert een paswoord "
-#~ "in te voeren, gebruik dan --password."
-
-#~ msgid "Value supplied for port is not valid."
-#~ msgstr "Waarde opgegeven voor poort is niet geldig."
-
-#~ msgid "For more options, use %s --help\n"
-#~ msgstr "Voor meer opties, gebruik %s --help\n"
-
-#~ msgid ""
-#~ "Non-integer value supplied for port.  If you are trying to enter a "
-#~ "password please use --password instead.\n"
-#~ msgstr ""
-#~ "Niet-integer waarde opgegeven als poort. Indien je probeert een paswoord "
-#~ "in te voeren, gebruik dan --password.\n"
-
-#~ msgid "Memory allocation error while copying password. Aborting.\n"
-#~ msgstr ""
-#~ "Geheugentoewijzingsfout tijdens het kopiëren van het paswoord. Breekt "
-#~ "af.\n"
-
-#~ msgid "Log to syslog"
-#~ msgstr "Log naar syslog"
 
 #~ msgid "Set the default character set."
 #~ msgstr "Stel de standaard karakterset in."
@@ -7328,11 +7256,50 @@ msgstr "Sync log file mislukt. Kreeg fout: %s\n"
 #~ msgid "Print some debug info at exit."
 #~ msgstr "Druk wat debug infrmatie bij afsluiten"
 
+#~ msgid "Connect to host."
+#~ msgstr "Verbind met host."
+
+#~ msgid ""
+#~ "Disable pager and print to stdout. See interactive help (\\h) also. "
+#~ "WARNING: option deprecated; use --disable-pager instead."
+#~ msgstr ""
+#~ "Pager uitschakelen en afdrukken naar standaarduitvoer. Zie ook "
+#~ "interactieve help (\\h). WAARSCHUWING: optie wordt afgeraden; gebruik --"
+#~ "disable-pager."
+
+#~ msgid "built-in default"
+#~ msgstr "ingebouwde standaardwaarde"
+
+#~ msgid "Write more. (-v -v -v gives the table output format)."
+#~ msgstr "Schrijf meer. (-v -v -v geeft het tabel uitvoer formaat)"
+
 #~ msgid "Socket file to use for connection."
 #~ msgstr "Socket bestand om te gebruiken voor de verbinding."
 
+#~ msgid ""
+#~ "Disable outfile. See interactive help (\\h) also. WARNING: option "
+#~ "deprecated; use --disable-tee instead"
+#~ msgstr ""
+#~ "Schakel uitvoerbestand uit. Zie ook de interactieve hulp (\\h). "
+#~ "WAARCHUWING: deze optie wordt afgeraden; gebruik --disable-tee"
+
 #~ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 #~ msgstr "%s Ver %s Distrib %s, voor %s (%s) gebruik makend van %s %s\n"
+
+#~ msgid "Usage: %s [OPTIONS] [database]\n"
+#~ msgstr "Gebruik: %s [OPTIES] [databank]\n"
+
+#~ msgid "WARNING: --server-arg option not supported in this configuration.\n"
+#~ msgstr ""
+#~ "WAARSCHUWING: --server-arg optie wordt niet ondersteund in deze "
+#~ "configuratie.\n"
+
+#~ msgid "WARNING: option deprecated; use --disable-pager instead.\n"
+#~ msgstr ""
+#~ "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-pager.\n"
+
+#~ msgid "WARNING: option deprecated; use --disable-tee instead.\n"
+#~ msgstr "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-tee.\n"
 
 #~ msgid ""
 #~ "Reading table information for completion of table and column names\n"
@@ -7597,6 +7564,13 @@ msgstr "Sync log file mislukt. Kreeg fout: %s\n"
 #~ msgid "No paths allowed for shared library"
 #~ msgstr "Geen paden toegestaan voor een gedeelde library"
 
+#~ msgid ""
+#~ "Uncompressed data size too large; the maximum size is %d (probably, "
+#~ "length of uncompressed data was corrupted)"
+#~ msgstr ""
+#~ "Omvang van de niet-samengedrukte data is te groot; the maximum size is %d "
+#~ "(waarschijnlijk was de lengte van de niet-samengedrukte data corrupt)"
+
 #~ msgid "File '%-.192s' has unknown type '%-.64s' in its header"
 #~ msgstr "Bestand '%-.192s' heeft onbekend type '%-.64s' in zijn hoofding"
 
@@ -7651,6 +7625,14 @@ msgstr "Sync log file mislukt. Kreeg fout: %s\n"
 #~ msgstr "Kon tabel %s.%s niet openen na hernoemen\n"
 
 #~ msgid ""
+#~ "'%s' had no or invalid character set, and default character set is multi-"
+#~ "byte, so character column sizes may have changed"
+#~ msgstr ""
+#~ "'%s' heeft geen of een ongeldige karakterset, en de standaard karakterset "
+#~ "is multi-byte, dus de groottes van de karakter kolommen kunnen gewijzigd "
+#~ "zijn"
+
+#~ msgid ""
 #~ "Incorrect definition of table %s.%s: expected column '%s' at position %d "
 #~ "to have type %s  but the column is not found."
 #~ msgstr ""
@@ -7695,3 +7677,18 @@ msgstr "Sync log file mislukt. Kreeg fout: %s\n"
 
 #~ msgid "Enable logging"
 #~ msgstr "Loggen activeren"
+
+#~ msgid ""
+#~ "Port number to use for connection or 0 for default to, in order of "
+#~ "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+#~ msgstr ""
+#~ "Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen "
+#~ "op, in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT, "
+
+#~ msgid ""
+#~ "Port number to use for connection or 0 for default to, in order of "
+#~ "preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default ("
+#~ msgstr ""
+#~ "Poortnummer te gebruiken voor verbinding of 0 om standaard in te stellen "
+#~ "op, in volgorde van voorkeur, drizzle.cnf, $DRIZZLE_TCP_PORT,built-in "
+#~ "default ("
