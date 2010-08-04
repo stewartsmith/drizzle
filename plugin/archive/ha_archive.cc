@@ -92,7 +92,7 @@ using namespace drizzled;
 */
 
 /* Variables for archive share methods */
-pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
 
 /* When the engine starts up set the first version */
 static uint64_t global_version= 1;
@@ -291,7 +291,6 @@ ArchiveShare::~ArchiveShare()
   */
   if (archive_write_open == true)
     (void)azclose(&archive_write);
-  pthread_mutex_destroy(&archive_mutex);
 }
 
 bool ArchiveShare::prime(uint64_t *auto_increment)
