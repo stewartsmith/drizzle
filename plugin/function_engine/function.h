@@ -56,8 +56,7 @@ public:
     return EPERM; 
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table,
-                                   drizzled::memory::Root *mem_root);
+  virtual drizzled::Cursor *create(drizzled::TableShare &table);
 
   const char **bas_ext() const 
   {

@@ -5517,6 +5517,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     s->needed_reg.reset();
     table_vector[i]=s->table=table=tables->table;
     table->pos_in_table_list= tables;
+    assert(table->cursor);
     error= table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
     if (error)
     {

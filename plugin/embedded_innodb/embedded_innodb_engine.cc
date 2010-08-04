@@ -139,10 +139,9 @@ public:
 
   ~EmbeddedInnoDBEngine();
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) EmbeddedInnoDBCursor(*this, table);
+    return new EmbeddedInnoDBCursor(*this, table);
   }
 
   const char **bas_ext() const {

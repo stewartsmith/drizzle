@@ -114,7 +114,7 @@ public:
 	int doStartTransaction(Session *session, start_transaction_option_t options);
 	int doCommit(Session *, bool);
 	int doRollback(Session *, bool);
-	Cursor *create(TableShare& table, memory::Root *mem_root);
+	Cursor *create(TableShare& table);
 	bool doDropSchema(const drizzled::SchemaIdentifier&);
 	
 	/*
@@ -257,10 +257,10 @@ static int pbms_close_connection(handlerton *hton, THD* thd)
 
 
 #ifdef DRIZZLED
-Cursor *PBMSStorageEngine::create(TableShare& table, memory::Root *mem_root)
+Cursor *PBMSStorageEngine::create(TableShare& table)
 {
 	PBMSStorageEngine * const hton = this;
-	return new (mem_root) ha_pbms(hton, table);
+	return new ha_pbms(hton, table);
 }
 #else
 static handler *pbms_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root)

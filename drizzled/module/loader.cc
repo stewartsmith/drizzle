@@ -299,9 +299,7 @@ static void delete_module(module::Module *module)
   /* Free allocated strings before deleting the plugin. */
   plugin_vars_free_values(module->system_vars);
   module->isInited= false;
-  pthread_rwlock_wrlock(&LOCK_system_variables_hash);
   mysql_del_sys_var_chain(module->system_vars);
-  pthread_rwlock_unlock(&LOCK_system_variables_hash);
   delete module;
 }
 
@@ -787,11 +785,9 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
   sys_var_pluginvar *pi= NULL;
   module::Module *module;
 
-  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   if ((var= intern_find_sys_var(str, length, false)) &&
       (pi= var->cast_pluginvar()))
   {
-    pthread_rwlock_unlock(&LOCK_system_variables_hash);
     if (!(module= pi->plugin))
       var= NULL; /* failed to lock it, it must be uninstalling */
     else if (module->isInited == false)
@@ -799,8 +795,6 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
       var= NULL;
     }
   }
-  else
-    pthread_rwlock_unlock(&LOCK_system_variables_hash);
 
   /*
     If the variable exists but the plugin it is associated with is not ready
@@ -976,8 +970,6 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
   {
     uint32_t idx;
 
-    pthread_rwlock_rdlock(&LOCK_system_variables_hash);
-
     char *tmpptr= NULL;
     if (!(tmpptr= (char *)realloc(session->variables.dynamic_variables_ptr,
                                   global_variables_dynamic_size)))
@@ -1036,8 +1028,6 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
            global_system_variables.dynamic_variables_head;
     session->variables.dynamic_variables_size=
            global_system_variables.dynamic_variables_size;
-
-    pthread_rwlock_unlock(&LOCK_system_variables_hash);
   }
   return (unsigned char*)session->variables.dynamic_variables_ptr + offset;
 }
@@ -1105,10 +1095,8 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
   sys_var_pluginvar *pivar;
   sys_var *var;
   int flags;
-  uint32_t idx;
 
-  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
-  for (idx= 0; idx < bookmark_hash.records; idx++)
+  for (uint32_t idx= 0; idx < bookmark_hash.records; idx++)
   {
     v= (st_bookmark*) hash_element(&bookmark_hash, idx);
     if (v->version > vars->dynamic_variables_version ||
@@ -1127,7 +1115,6 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
       *ptr= NULL;
     }
   }
-  pthread_rwlock_unlock(&LOCK_system_variables_hash);
 
   assert(vars->storage_engine == NULL);
 

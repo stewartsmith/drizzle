@@ -101,10 +101,9 @@ public:
     mi_panic(HA_PANIC_CLOSE);
   }
 
-  virtual Cursor *create(TableShare &table,
-                         memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_myisam(*this, table);
+    return new ha_myisam(*this, table);
   }
 
   const char **bas_ext() const {
