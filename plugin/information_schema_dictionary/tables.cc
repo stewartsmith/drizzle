@@ -27,43 +27,45 @@ using namespace drizzled;
 Tables::Tables() :
   InformationSchema("TABLES")
 {
-  add_field("TABLE_CATALOG");
-  add_field("TABLE_SCHEMA");
-  add_field("TABLE_NAME");
-  add_field("TABLE_TYPE");
-}
-
-void Tables::Generator::fill()
-{
-}
-
-bool Tables::Generator::nextCore()
-{
-  return false;
-}
-
-bool Tables::Generator::next()
-{
-  while (not nextCore())
-  {
-    return false;
-  }
-
-  return true;
+  add_field("TABLE_CATALOG", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_SCHEMA", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_NAME", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
+  add_field("TABLE_TYPE", plugin::TableFunction::STRING, MAXIMUM_IDENTIFIER_LENGTH, false);
 }
 
 Tables::Generator::Generator(drizzled::Field **arg) :
   InformationSchema::Generator(arg),
-  is_primed(false)
+  generator(getSession())
 {
 }
 
 bool Tables::Generator::populate()
 {
-  if (not next())
-    return false;
+  const drizzled::TableIdentifier *identifier;
 
-  fill();
+  while ((identifier= generator))
+  {
+    /* TABLE_CATALOG */
+    push(identifier->getCatalogName());
 
-  return true;
+    /* TABLE_SCHEMA */
+    push(identifier->getSchemaName());
+
+    /* TABLE_NAME */
+    push(identifier->getTableName());
+
+    /* TABLE_TYPE */
+    if (identifier->isView())
+    {
+      push("VIEW");
+    }
+    else
+    {
+      push("BASE");
+    }
+
+    return true;
+  }
+
+  return false;
 }

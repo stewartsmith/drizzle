@@ -93,4 +93,4 @@ static int init(Context &context)
 
 } /* namespace rot13 */
 
-DRIZZLE_PLUGIN(rot13::init, NULL);
+DRIZZLE_PLUGIN(rot13::init, NULL, NULL);

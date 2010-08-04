@@ -54,7 +54,7 @@ void Item_func_min_max::fix_length_and_dec()
     agg_arg_charsets(collation, args, arg_count, MY_COLL_CMP_CONV, 1);
     if (datetime_found)
     {
-      session= current_session;
+      session= getSessionPtr();
       compare_as_dates= true;
     }
   }

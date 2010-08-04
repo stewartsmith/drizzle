@@ -585,7 +585,13 @@ CREATE TABLE t3 LIKE t1;
 SELECT t1.* FROM t1 AS t0, { OJ t2 INNER JOIN t1 ON (t1.a1=t2.a1) } WHERE t0.a3=2;
 SELECT t1.*,t2.* FROM { OJ ((t1 INNER JOIN t2 ON (t1.a1=t2.a2)) LEFT OUTER JOIN t3 ON t3.a3=t2.a1)};
 SELECT t1.*,t2.* FROM { OJ ((t1 LEFT OUTER JOIN t2 ON t1.a3=t2.a2) INNER JOIN t3 ON (t3.a1=t2.a2))};
+#
+# MySQL didn't follow the SQL standard on CROSS. INNER requires ON, but
+# CROSS does not make use of ON.
+#
+--error 1064 
 SELECT t1.*,t2.* FROM { OJ (t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a2) CROSS JOIN t3 ON (t3.a2=t2.a3)};
+SELECT t1.*,t2.* FROM { OJ (t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a2) INNER JOIN t3 ON (t3.a2=t2.a3)};
 SELECT * FROM {oj t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a3} WHERE t1.a2 > 10;
 SELECT {fn CONCAT(a1,a2)} FROM t1;
 UPDATE t3 SET a4={d '1789-07-14'} WHERE a1=0;

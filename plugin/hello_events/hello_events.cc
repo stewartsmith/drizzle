@@ -34,10 +34,11 @@ set global hello_events_watch_tables = "x,y";
 #include "config.h"
 #include <string>
 #include <cstdio>
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include "drizzled/session.h"
 #include "hello_events.h"
-
+namespace po= boost::program_options;
 using namespace drizzled;
 using namespace plugin;
 using namespace std;
@@ -285,6 +286,53 @@ static void set_table_list(Session *,
 
 static int init(module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+  if (vm.count("before-write-position"))
+  { 
+    if (sysvar_before_write_position < 1 || sysvar_before_write_position > INT32_MAX -1)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of before-write-position\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("before-update-position"))
+  { 
+    if (sysvar_before_update_position < 1 || sysvar_before_update_position > INT32_MAX -1)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of before-update-position\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("post-drop-db-position"))
+  { 
+    if (sysvar_post_drop_db_position > -1 || sysvar_post_drop_db_position < INT32_MIN+1)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of before-update-position\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("watch-databases"))
+  {
+    sysvar_db_list= strdup(vm["watch-databases"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_db_list= (char *)"";
+  }
+
+  if (vm.count("watch-tables"))
+  {
+    sysvar_table_list= strdup(vm["watch-tables"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_table_list= (char *)"";
+  }
   hello_events= new HelloEvents(PLUGIN_NAME);
 
   context.add(hello_events);
@@ -295,6 +343,28 @@ static int init(module::Context &context)
   }
 
   return 0;
+}
+
+static void init_options(drizzled::module::option_context &context)
+{
+  context("watch-databases",
+          po::value<string>(),
+          N_("A comma delimited list of databases to watch"));
+  context("watch-tables",
+          po::value<string>(),
+          N_("A comma delimited list of databases to watch"));
+  context("enable",
+          po::value<bool>(&sysvar_hello_events_enabled)->default_value(false)->zero_tokens(),
+          N_("Enable Example Events Plugin"));
+  context("before-write-position",
+          po::value<int32_t>(&sysvar_before_write_position)->default_value(1),
+          N_("Before write row event observer call position"));
+  context("before-update-position",
+          po::value<int32_t>(&sysvar_before_update_position)->default_value(1),
+          N_("Before update row event observer call position"));
+  context("post-drop-db-position",
+          po::value<int32_t>(&sysvar_post_drop_db_position)->default_value(-1),
+          N_("After drop database event observer call position"));
 }
 
 static DRIZZLE_SYSVAR_STR(watch_databases,
@@ -374,6 +444,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
   system_var, /* system variables */
-  NULL    /* config options   */
+  init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -1650,7 +1650,7 @@ ERROR HY000: Corrupt or invalid table definition:
 create table t1 (a enum(0xC3A4, '1', '2') not null default 0xC3A4);
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	ENUM	FALSE	ä	FALSE	
+a	ENUM	NO	ä	NO	
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (

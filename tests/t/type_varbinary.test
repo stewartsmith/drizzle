@@ -54,6 +54,7 @@ insert into t1 values(0x412020, 0x412020);
 drop table t1;
 create table t1 (c char(2), vc varchar(2));
 insert into t1 values(0x4120, 0x4120);
+--error 1406
 insert into t1 values(0x412020, 0x412020);
 drop table t1;
 

@@ -19,7 +19,6 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include <iostream>
 #include <string>
 using namespace std;
@@ -111,9 +110,10 @@ try
   {
     printf("%s  Ver %s, for %s-%s (%s)\n", internal::my_progname, SHOW_VERSION,
         HOST_VENDOR, HOST_OS, HOST_CPU);
-    puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
-       \nand you are welcome to modify and redistribute it under the GPL \
-       license\n");
+    puts("This software comes with ABSOLUTELY NO WARRANTY. This is free "
+         "software,\n"
+         "and you are welcome to modify and redistribute it under the GPL "
+         "license\n");
     puts("Read and modify Archive files directly\n");
     printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", internal::my_progname);
     internal::print_defaults("drizzle", load_default_groups);
