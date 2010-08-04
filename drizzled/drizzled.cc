@@ -845,7 +845,6 @@ int init_server_components(module::Registry &plugins)
   TableShare::cacheStart();
 
   setup_fpu();
-  init_thr_lock();
 
   /* Setup logs */
 
