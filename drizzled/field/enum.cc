@@ -60,7 +60,7 @@ void Field_enum::store_type(uint64_t value)
   case 1: ptr[0]= (unsigned char) value;  break;
   case 2:
 #ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
+  if (getTable()->s->db_low_byte_first)
   {
     int2store(ptr,(unsigned short) value);
   }
@@ -159,7 +159,7 @@ int64_t Field_enum::val_int(void)
   {
     uint16_t tmp;
 #ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
+    if (getTable()->s->db_low_byte_first)
       tmp=sint2korr(ptr);
     else
 #endif

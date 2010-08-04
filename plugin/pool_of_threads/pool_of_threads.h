@@ -29,7 +29,7 @@
 #include "session_scheduler.h"
 #include <string>
 #include <queue>
-#include <drizzled/unordered_set.h>
+#include <boost/unordered_set.hpp>
 #include <event.h>
 
 
@@ -60,7 +60,7 @@ private:
    * promising to encounter an io event earlier than another; so no order
    * indeed!
    */
-  drizzled::unordered_set<drizzled::Session *> sessions_waiting_for_io;
+  boost::unordered_set<drizzled::Session *> sessions_waiting_for_io;
 
 public:
   PoolOfThreadsScheduler(const char *name_arg);

@@ -672,313 +672,313 @@ workspace	CREATE TABLE `workspace` (
 ) ENGINE=InnoDB
 show columns from branch;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-branch_id	INTEGER	FALSE	0	FALSE	
-project_id	INTEGER	FALSE	0	FALSE	
+branch_id	INTEGER	NO	0	NO	
+project_id	INTEGER	NO	0	NO	
 show columns from container;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-container_id	INTEGER	FALSE		FALSE	
-context	BLOB	TRUE		TRUE	
-parent_container	INTEGER	TRUE		TRUE	
+container_id	INTEGER	NO		NO	
+context	BLOB	YES		YES	
+parent_container	INTEGER	YES		YES	
 show columns from document;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-document_id	INTEGER	FALSE		FALSE	
-doctext	BLOB	TRUE		TRUE	
+document_id	INTEGER	NO		NO	
+doctext	BLOB	YES		YES	
 show columns from genstats_attributes;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-genstats_attributes_id	INTEGER	FALSE	0	FALSE	
-predicates	BLOB	FALSE		FALSE	
-attributes	BLOB	FALSE		FALSE	
+genstats_attributes_id	INTEGER	NO	0	NO	
+predicates	BLOB	NO		NO	
+attributes	BLOB	NO		NO	
 show columns from htmlcode;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-htmlcode_id	INTEGER	FALSE		FALSE	
-code	BLOB	TRUE		TRUE	
+htmlcode_id	INTEGER	NO		NO	
+code	BLOB	YES		YES	
 show columns from htmlpage;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-htmlpage_id	INTEGER	FALSE		FALSE	
-pagetype_nodetype	INTEGER	TRUE		TRUE	
-displaytype	VARCHAR	TRUE		TRUE	
-page	BLOB	TRUE		TRUE	
-parent_container	INTEGER	TRUE		TRUE	
-ownedby_theme	INTEGER	FALSE	0	FALSE	
-permissionneeded	VARCHAR	FALSE	r	FALSE	
-MIMEtype	VARCHAR	FALSE	text/html	FALSE	
+htmlpage_id	INTEGER	NO		NO	
+pagetype_nodetype	INTEGER	YES		YES	
+displaytype	VARCHAR	YES		YES	
+page	BLOB	YES		YES	
+parent_container	INTEGER	YES		YES	
+ownedby_theme	INTEGER	NO	0	NO	
+permissionneeded	VARCHAR	NO	r	NO	
+MIMEtype	VARCHAR	NO	text/html	NO	
 show columns from image;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-image_id	INTEGER	FALSE		FALSE	
-src	VARCHAR	TRUE		TRUE	
-alt	VARCHAR	TRUE		TRUE	
-thumbsrc	VARCHAR	TRUE		TRUE	
-description	BLOB	TRUE		TRUE	
+image_id	INTEGER	NO		NO	
+src	VARCHAR	YES		YES	
+alt	VARCHAR	YES		YES	
+thumbsrc	VARCHAR	YES		YES	
+description	BLOB	YES		YES	
 show columns from javascript;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-javascript_id	INTEGER	FALSE	0	FALSE	
-code	BLOB	FALSE		FALSE	
-comment	BLOB	FALSE		FALSE	
-dynamic	INTEGER	FALSE	0	FALSE	
+javascript_id	INTEGER	NO	0	NO	
+code	BLOB	NO		NO	
+comment	BLOB	NO		NO	
+dynamic	INTEGER	NO	0	NO	
 show columns from knowledge_item;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-knowledge_item_id	INTEGER	FALSE	0	FALSE	
-item	BLOB	FALSE		FALSE	
-question	INTEGER	FALSE	0	FALSE	
+knowledge_item_id	INTEGER	NO	0	NO	
+item	BLOB	NO		NO	
+question	INTEGER	NO	0	NO	
 show columns from links;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-from_node	INTEGER	FALSE	0	FALSE	
-to_node	INTEGER	FALSE	0	FALSE	
-linktype	INTEGER	FALSE	0	FALSE	
-hits	INTEGER	TRUE	0	FALSE	
-food	INTEGER	TRUE	0	FALSE	
+from_node	INTEGER	NO	0	NO	
+to_node	INTEGER	NO	0	NO	
+linktype	INTEGER	NO	0	NO	
+hits	INTEGER	YES	0	NO	
+food	INTEGER	YES	0	NO	
 show columns from mail;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-mail_id	INTEGER	FALSE	0	FALSE	
-from_address	VARCHAR	FALSE		FALSE	
-attachment_file	INTEGER	FALSE	0	FALSE	
+mail_id	INTEGER	NO	0	NO	
+from_address	VARCHAR	NO		NO	
+attachment_file	INTEGER	NO	0	NO	
 show columns from node;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-node_id	INTEGER	FALSE		FALSE	
-type_nodetype	INTEGER	FALSE	0	FALSE	
-title	VARCHAR	FALSE		FALSE	
-author_user	INTEGER	FALSE	0	FALSE	
-createtime	DATETIME	FALSE		FALSE	
-modified	DATETIME	FALSE		FALSE	
-hits	INTEGER	TRUE	0	FALSE	
-loc_location	INTEGER	TRUE	0	FALSE	
-reputation	INTEGER	FALSE	0	FALSE	
-lockedby_user	INTEGER	FALSE	0	FALSE	
-locktime	DATETIME	FALSE		FALSE	
-authoraccess	VARCHAR	FALSE	iiii	FALSE	
-groupaccess	VARCHAR	FALSE	iiiii	FALSE	
-otheraccess	VARCHAR	FALSE	iiiii	FALSE	
-guestaccess	VARCHAR	FALSE	iiiii	FALSE	
-dynamicauthor_permission	INTEGER	FALSE	-1	FALSE	
-dynamicgroup_permission	INTEGER	FALSE	-1	FALSE	
-dynamicother_permission	INTEGER	FALSE	-1	FALSE	
-dynamicguest_permission	INTEGER	FALSE	-1	FALSE	
-group_usergroup	INTEGER	FALSE	-1	FALSE	
+node_id	INTEGER	NO		NO	
+type_nodetype	INTEGER	NO	0	NO	
+title	VARCHAR	NO		NO	
+author_user	INTEGER	NO	0	NO	
+createtime	DATETIME	NO		NO	
+modified	DATETIME	NO		NO	
+hits	INTEGER	YES	0	NO	
+loc_location	INTEGER	YES	0	NO	
+reputation	INTEGER	NO	0	NO	
+lockedby_user	INTEGER	NO	0	NO	
+locktime	DATETIME	NO		NO	
+authoraccess	VARCHAR	NO	iiii	NO	
+groupaccess	VARCHAR	NO	iiiii	NO	
+otheraccess	VARCHAR	NO	iiiii	NO	
+guestaccess	VARCHAR	NO	iiiii	NO	
+dynamicauthor_permission	INTEGER	NO	-1	NO	
+dynamicgroup_permission	INTEGER	NO	-1	NO	
+dynamicother_permission	INTEGER	NO	-1	NO	
+dynamicguest_permission	INTEGER	NO	-1	NO	
+group_usergroup	INTEGER	NO	-1	NO	
 show columns from nodegroup;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-nodegroup_id	INTEGER	FALSE		FALSE	
-rank	INTEGER	FALSE	0	FALSE	
-node_id	INTEGER	FALSE	0	FALSE	
-orderby	INTEGER	TRUE		TRUE	
+nodegroup_id	INTEGER	NO		NO	
+rank	INTEGER	NO	0	NO	
+node_id	INTEGER	NO	0	NO	
+orderby	INTEGER	YES		YES	
 show columns from nodelet;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-nodelet_id	INTEGER	FALSE		FALSE	
-nltext	BLOB	TRUE		TRUE	
-nlcode	BLOB	TRUE		TRUE	
-nlgoto	INTEGER	TRUE		TRUE	
-parent_container	INTEGER	TRUE		TRUE	
-lastupdate	INTEGER	FALSE	0	FALSE	
-updateinterval	INTEGER	FALSE	0	FALSE	
-mini_nodelet	INTEGER	FALSE	0	FALSE	
+nodelet_id	INTEGER	NO		NO	
+nltext	BLOB	YES		YES	
+nlcode	BLOB	YES		YES	
+nlgoto	INTEGER	YES		YES	
+parent_container	INTEGER	YES		YES	
+lastupdate	INTEGER	NO	0	NO	
+updateinterval	INTEGER	NO	0	NO	
+mini_nodelet	INTEGER	NO	0	NO	
 show columns from nodemethod;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-nodemethod_id	INTEGER	FALSE	0	FALSE	
-supports_nodetype	INTEGER	FALSE	0	FALSE	
-code	BLOB	FALSE		FALSE	
+nodemethod_id	INTEGER	NO	0	NO	
+supports_nodetype	INTEGER	NO	0	NO	
+code	BLOB	NO		NO	
 show columns from nodetype;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-nodetype_id	INTEGER	FALSE		FALSE	
-restrict_nodetype	INTEGER	TRUE	0	FALSE	
-extends_nodetype	INTEGER	TRUE	0	FALSE	
-restrictdupes	INTEGER	TRUE	0	FALSE	
-sqltable	VARCHAR	TRUE		TRUE	
-grouptable	VARCHAR	TRUE		FALSE	
-defaultauthoraccess	VARCHAR	FALSE	iiii	FALSE	
-defaultgroupaccess	VARCHAR	FALSE	iiiii	FALSE	
-defaultotheraccess	VARCHAR	FALSE	iiiii	FALSE	
-defaultguestaccess	VARCHAR	FALSE	iiiii	FALSE	
-defaultgroup_usergroup	INTEGER	FALSE	-1	FALSE	
-defaultauthor_permission	INTEGER	FALSE	-1	FALSE	
-defaultgroup_permission	INTEGER	FALSE	-1	FALSE	
-defaultother_permission	INTEGER	FALSE	-1	FALSE	
-defaultguest_permission	INTEGER	FALSE	-1	FALSE	
-maxrevisions	INTEGER	FALSE	-1	FALSE	
-canworkspace	INTEGER	FALSE	-1	FALSE	
+nodetype_id	INTEGER	NO		NO	
+restrict_nodetype	INTEGER	YES	0	NO	
+extends_nodetype	INTEGER	YES	0	NO	
+restrictdupes	INTEGER	YES	0	NO	
+sqltable	VARCHAR	YES		YES	
+grouptable	VARCHAR	YES		NO	
+defaultauthoraccess	VARCHAR	NO	iiii	NO	
+defaultgroupaccess	VARCHAR	NO	iiiii	NO	
+defaultotheraccess	VARCHAR	NO	iiiii	NO	
+defaultguestaccess	VARCHAR	NO	iiiii	NO	
+defaultgroup_usergroup	INTEGER	NO	-1	NO	
+defaultauthor_permission	INTEGER	NO	-1	NO	
+defaultgroup_permission	INTEGER	NO	-1	NO	
+defaultother_permission	INTEGER	NO	-1	NO	
+defaultguest_permission	INTEGER	NO	-1	NO	
+maxrevisions	INTEGER	NO	-1	NO	
+canworkspace	INTEGER	NO	-1	NO	
 show columns from project;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-project_id	INTEGER	FALSE	0	FALSE	
-description	BLOB	FALSE		FALSE	
-last_update	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
-short_description	VARCHAR	FALSE		FALSE	
-url_cvs	VARCHAR	FALSE		FALSE	
-url_faq	VARCHAR	FALSE		FALSE	
-long_description	BLOB	FALSE		FALSE	
+project_id	INTEGER	NO	0	NO	
+description	BLOB	NO		NO	
+last_update	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
+short_description	VARCHAR	NO		NO	
+url_cvs	VARCHAR	NO		NO	
+url_faq	VARCHAR	NO		NO	
+long_description	BLOB	NO		NO	
 show columns from project_document;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-project_document_id	INTEGER	FALSE	0	FALSE	
-project_id	INTEGER	FALSE	0	FALSE	
+project_document_id	INTEGER	NO	0	NO	
+project_id	INTEGER	NO	0	NO	
 show columns from question;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-question_id	INTEGER	FALSE	0	FALSE	
-faq_id	INTEGER	FALSE	0	FALSE	
-project_id	INTEGER	FALSE	0	FALSE	
-rank	INTEGER	FALSE	0	FALSE	
-orderby	INTEGER	FALSE	0	FALSE	
-description	BLOB	FALSE		FALSE	
+question_id	INTEGER	NO	0	NO	
+faq_id	INTEGER	NO	0	NO	
+project_id	INTEGER	NO	0	NO	
+rank	INTEGER	NO	0	NO	
+orderby	INTEGER	NO	0	NO	
+description	BLOB	NO		NO	
 show columns from redirects;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-redirects_id	INTEGER	FALSE	0	FALSE	
-url	BLOB	FALSE		FALSE	
+redirects_id	INTEGER	NO	0	NO	
+url	BLOB	NO		NO	
 show columns from releases;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-releases_id	INTEGER	FALSE	0	FALSE	
-branch_id	INTEGER	FALSE	0	FALSE	
-description	BLOB	TRUE		TRUE	
-url_targz	VARCHAR	FALSE		FALSE	
-url_osx	VARCHAR	FALSE		FALSE	
-url_rpm	VARCHAR	FALSE		FALSE	
-project_id	INTEGER	FALSE	0	FALSE	
-version	VARCHAR	FALSE	latest	FALSE	
-created	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
-url_source_rpm	VARCHAR	FALSE		FALSE	
+releases_id	INTEGER	NO	0	NO	
+branch_id	INTEGER	NO	0	NO	
+description	BLOB	YES		YES	
+url_targz	VARCHAR	NO		NO	
+url_osx	VARCHAR	NO		NO	
+url_rpm	VARCHAR	NO		NO	
+project_id	INTEGER	NO	0	NO	
+version	VARCHAR	NO	latest	NO	
+created	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
+url_source_rpm	VARCHAR	NO		NO	
 show columns from revision;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-node_id	INTEGER	FALSE	0	FALSE	
-inside_workspace	INTEGER	FALSE	0	FALSE	
-revision_id	INTEGER	FALSE	0	FALSE	
-xml	BLOB	FALSE		FALSE	
-tstamp	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
+node_id	INTEGER	NO	0	NO	
+inside_workspace	INTEGER	NO	0	NO	
+revision_id	INTEGER	NO	0	NO	
+xml	BLOB	NO		NO	
+tstamp	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
 show columns from setting;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-setting_id	INTEGER	FALSE		FALSE	
-vars	BLOB	FALSE		FALSE	
+setting_id	INTEGER	NO		NO	
+vars	BLOB	NO		NO	
 show columns from symlink;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-symlink_id	INTEGER	FALSE	0	FALSE	
-symlink_node	INTEGER	FALSE	0	FALSE	
+symlink_id	INTEGER	NO	0	NO	
+symlink_node	INTEGER	NO	0	NO	
 show columns from themesetting;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-themesetting_id	INTEGER	FALSE	0	FALSE	
-parent_theme	INTEGER	FALSE	0	FALSE	
+themesetting_id	INTEGER	NO	0	NO	
+parent_theme	INTEGER	NO	0	NO	
 show columns from typeversion;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-typeversion_id	INTEGER	FALSE	0	FALSE	
-version	INTEGER	FALSE	0	FALSE	
+typeversion_id	INTEGER	NO	0	NO	
+version	INTEGER	NO	0	NO	
 show columns from user;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-user_id	INTEGER	FALSE		FALSE	
-nick	VARCHAR	TRUE		TRUE	
-passwd	VARCHAR	TRUE		TRUE	
-realname	VARCHAR	TRUE		TRUE	
-email	VARCHAR	TRUE		TRUE	
-lasttime	DATETIME	TRUE		TRUE	
-karma	INTEGER	TRUE	0	FALSE	
-inside_workspace	INTEGER	FALSE	0	FALSE	
+user_id	INTEGER	NO		NO	
+nick	VARCHAR	YES		YES	
+passwd	VARCHAR	YES		YES	
+realname	VARCHAR	YES		YES	
+email	VARCHAR	YES		YES	
+lasttime	DATETIME	YES		YES	
+karma	INTEGER	YES	0	NO	
+inside_workspace	INTEGER	NO	0	NO	
 show columns from version;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-version_id	INTEGER	FALSE	0	FALSE	
-version	INTEGER	FALSE	1	FALSE	
+version_id	INTEGER	NO	0	NO	
+version	INTEGER	NO	1	NO	
 show columns from weblog;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-tstamp	TIMESTAMP	FALSE	NOW()	FALSE	NOW()
-linkedby_user	INTEGER	FALSE	0	FALSE	
-removedby_user	INTEGER	FALSE	0	FALSE	
-linkedtime	DATETIME	FALSE		FALSE	
-weblog_id	INTEGER	FALSE	0	FALSE	
-to_node	INTEGER	FALSE	0	FALSE	
-entry_id	INTEGER	FALSE		FALSE	
+tstamp	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
+linkedby_user	INTEGER	NO	0	NO	
+removedby_user	INTEGER	NO	0	NO	
+linkedtime	DATETIME	NO		NO	
+weblog_id	INTEGER	NO	0	NO	
+to_node	INTEGER	NO	0	NO	
+entry_id	INTEGER	NO		NO	
 show columns from workspace;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-workspace_id	INTEGER	FALSE	0	FALSE	
+workspace_id	INTEGER	NO	0	NO	
 show indexes from branch;
 Table	Unique	Key_name	Seq_in_index	Column_name
-branch	TRUE	PRIMARY	1	branch_id
+branch	YES	PRIMARY	1	branch_id
 show indexes from container;
 Table	Unique	Key_name	Seq_in_index	Column_name
-container	TRUE	PRIMARY	1	container_id
+container	YES	PRIMARY	1	container_id
 show indexes from document;
 Table	Unique	Key_name	Seq_in_index	Column_name
-document	TRUE	PRIMARY	1	document_id
+document	YES	PRIMARY	1	document_id
 show indexes from genstats_attributes;
 Table	Unique	Key_name	Seq_in_index	Column_name
-genstats_attributes	TRUE	PRIMARY	1	genstats_attributes_id
+genstats_attributes	YES	PRIMARY	1	genstats_attributes_id
 show indexes from htmlcode;
 Table	Unique	Key_name	Seq_in_index	Column_name
-htmlcode	TRUE	PRIMARY	1	htmlcode_id
+htmlcode	YES	PRIMARY	1	htmlcode_id
 show indexes from htmlpage;
 Table	Unique	Key_name	Seq_in_index	Column_name
-htmlpage	TRUE	PRIMARY	1	htmlpage_id
+htmlpage	YES	PRIMARY	1	htmlpage_id
 show indexes from image;
 Table	Unique	Key_name	Seq_in_index	Column_name
-image	TRUE	PRIMARY	1	image_id
+image	YES	PRIMARY	1	image_id
 show indexes from javascript;
 Table	Unique	Key_name	Seq_in_index	Column_name
-javascript	TRUE	PRIMARY	1	javascript_id
+javascript	YES	PRIMARY	1	javascript_id
 show indexes from knowledge_item;
 Table	Unique	Key_name	Seq_in_index	Column_name
-knowledge_item	TRUE	PRIMARY	1	knowledge_item_id
+knowledge_item	YES	PRIMARY	1	knowledge_item_id
 show indexes from links;
 Table	Unique	Key_name	Seq_in_index	Column_name
-links	TRUE	PRIMARY	1	from_node
-links	TRUE	PRIMARY	2	to_node
-links	TRUE	PRIMARY	3	linktype
+links	YES	PRIMARY	1	from_node
+links	YES	PRIMARY	2	to_node
+links	YES	PRIMARY	3	linktype
 show indexes from mail;
 Table	Unique	Key_name	Seq_in_index	Column_name
-mail	TRUE	PRIMARY	1	mail_id
+mail	YES	PRIMARY	1	mail_id
 show indexes from node;
 Table	Unique	Key_name	Seq_in_index	Column_name
-node	TRUE	PRIMARY	1	node_id
-node	FALSE	title	1	title
-node	FALSE	title	2	type_nodetype
-node	FALSE	author	1	author_user
-node	FALSE	type	1	type_nodetype
+node	YES	PRIMARY	1	node_id
+node	NO	title	1	title
+node	NO	title	2	type_nodetype
+node	NO	author	1	author_user
+node	NO	type	1	type_nodetype
 show indexes from nodegroup;
 Table	Unique	Key_name	Seq_in_index	Column_name
-nodegroup	TRUE	PRIMARY	1	nodegroup_id
-nodegroup	TRUE	PRIMARY	2	rank
+nodegroup	YES	PRIMARY	1	nodegroup_id
+nodegroup	YES	PRIMARY	2	rank
 show indexes from nodelet;
 Table	Unique	Key_name	Seq_in_index	Column_name
-nodelet	TRUE	PRIMARY	1	nodelet_id
+nodelet	YES	PRIMARY	1	nodelet_id
 show indexes from nodemethod;
 Table	Unique	Key_name	Seq_in_index	Column_name
-nodemethod	TRUE	PRIMARY	1	nodemethod_id
+nodemethod	YES	PRIMARY	1	nodemethod_id
 show indexes from nodetype;
 Table	Unique	Key_name	Seq_in_index	Column_name
-nodetype	TRUE	PRIMARY	1	nodetype_id
+nodetype	YES	PRIMARY	1	nodetype_id
 show indexes from project;
 Table	Unique	Key_name	Seq_in_index	Column_name
-project	TRUE	PRIMARY	1	project_id
+project	YES	PRIMARY	1	project_id
 show indexes from project_document;
 Table	Unique	Key_name	Seq_in_index	Column_name
-project_document	TRUE	PRIMARY	1	project_document_id
+project_document	YES	PRIMARY	1	project_document_id
 show indexes from question;
 Table	Unique	Key_name	Seq_in_index	Column_name
-question	TRUE	PRIMARY	1	question_id
-question	TRUE	PRIMARY	2	rank
+question	YES	PRIMARY	1	question_id
+question	YES	PRIMARY	2	rank
 show indexes from redirects;
 Table	Unique	Key_name	Seq_in_index	Column_name
-redirects	TRUE	PRIMARY	1	redirects_id
+redirects	YES	PRIMARY	1	redirects_id
 show indexes from releases;
 Table	Unique	Key_name	Seq_in_index	Column_name
-releases	TRUE	PRIMARY	1	releases_id
+releases	YES	PRIMARY	1	releases_id
 show indexes from revision;
 Table	Unique	Key_name	Seq_in_index	Column_name
-revision	TRUE	PRIMARY	1	node_id
-revision	TRUE	PRIMARY	2	inside_workspace
-revision	TRUE	PRIMARY	3	revision_id
+revision	YES	PRIMARY	1	node_id
+revision	YES	PRIMARY	2	inside_workspace
+revision	YES	PRIMARY	3	revision_id
 show indexes from setting;
 Table	Unique	Key_name	Seq_in_index	Column_name
-setting	TRUE	PRIMARY	1	setting_id
+setting	YES	PRIMARY	1	setting_id
 show indexes from symlink;
 Table	Unique	Key_name	Seq_in_index	Column_name
-symlink	TRUE	PRIMARY	1	symlink_id
+symlink	YES	PRIMARY	1	symlink_id
 show indexes from themesetting;
 Table	Unique	Key_name	Seq_in_index	Column_name
-themesetting	TRUE	PRIMARY	1	themesetting_id
+themesetting	YES	PRIMARY	1	themesetting_id
 show indexes from typeversion;
 Table	Unique	Key_name	Seq_in_index	Column_name
-typeversion	TRUE	PRIMARY	1	typeversion_id
+typeversion	YES	PRIMARY	1	typeversion_id
 show indexes from user;
 Table	Unique	Key_name	Seq_in_index	Column_name
-user	TRUE	PRIMARY	1	user_id
+user	YES	PRIMARY	1	user_id
 show indexes from version;
 Table	Unique	Key_name	Seq_in_index	Column_name
-version	TRUE	PRIMARY	1	version_id
+version	YES	PRIMARY	1	version_id
 show indexes from weblog;
 Table	Unique	Key_name	Seq_in_index	Column_name
-weblog	TRUE	PRIMARY	1	entry_id
-weblog	FALSE	tstamp	1	tstamp
+weblog	YES	PRIMARY	1	entry_id
+weblog	NO	tstamp	1	tstamp
 show indexes from workspace;
 Table	Unique	Key_name	Seq_in_index	Column_name
-workspace	TRUE	PRIMARY	1	workspace_id
+workspace	YES	PRIMARY	1	workspace_id
 drop schema everything;

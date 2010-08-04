@@ -184,6 +184,8 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
           condition, so that we can give a better error message -
           ER_WRONG_FIELD_WITH_GROUP, instead of the less informative
           ER_BAD_FIELD_ERROR which we produce now.
+
+          @todo determine if this is valid.
         */
         if ((place != IN_HAVING ||
              (!select->with_sum_func &&
@@ -244,7 +246,7 @@ bool Item_ref::fix_fields(Session *session, Item **reference)
               } while (outer_context && outer_context->select_lex &&
                        cached_table->select_lex != outer_context->select_lex);
             }
-            prev_subselect_item->used_tables_cache|= from_field->table->map;
+            prev_subselect_item->used_tables_cache|= from_field->getTable()->map;
             prev_subselect_item->const_item_cache= 0;
             break;
           }

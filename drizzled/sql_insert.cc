@@ -328,10 +328,8 @@ bool mysql_insert(Session *session,TableList *table_list,
     For single line insert, generate an error if try to set a NOT NULL field
     to NULL.
   */
-  session->count_cuted_fields= ((values_list.elements == 1 &&
-                                 !ignore) ?
-                                CHECK_FIELD_ERROR_FOR_NULL :
-                                CHECK_FIELD_WARN);
+  session->count_cuted_fields= ignore ? CHECK_FIELD_WARN : CHECK_FIELD_ERROR_FOR_NULL;
+
   session->cuted_fields = 0L;
   table->next_number_field=table->found_next_number_field;
 
@@ -475,6 +473,7 @@ bool mysql_insert(Session *session,TableList *table_list,
     session->my_ok((ulong) session->row_count_func,
                    info.copied + info.deleted + info.touched, id, buff);
   }
+  session->status_var.inserted_row_count+= session->row_count_func;
   session->abort_on_warning= 0;
   DRIZZLE_INSERT_DONE(0, session->row_count_func);
   return false;
@@ -729,7 +728,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 
   if (info->handle_duplicates == DUP_REPLACE || info->handle_duplicates == DUP_UPDATE)
   {
-    while ((error=table->cursor->insertRecord(table->record[0])))
+    while ((error=table->cursor->insertRecord(table->getInsertRecord())))
     {
       uint32_t key_nr;
       /*
@@ -777,7 +776,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 	goto err;
       if (table->cursor->getEngine()->check_flag(HTON_BIT_DUPLICATE_POS))
       {
-	if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
+	if (table->cursor->rnd_pos(table->getUpdateRecord(),table->cursor->dup_ref))
 	  goto err;
       }
       else
@@ -796,8 +795,8 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
 	    goto err;
 	  }
 	}
-	key_copy((unsigned char*) key,table->record[0],table->key_info+key_nr,0);
-	if ((error=(table->cursor->index_read_idx_map(table->record[1],key_nr,
+	key_copy((unsigned char*) key,table->getInsertRecord(),table->key_info+key_nr,0);
+	if ((error=(table->cursor->index_read_idx_map(table->getUpdateRecord(),key_nr,
                                                     (unsigned char*) key, HA_WHOLE_KEY,
                                                     HA_READ_KEY_EXACT))))
 	  goto err;
@@ -809,7 +808,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
           that matches, is updated. If update causes a conflict again,
           an error is returned
         */
-	assert(table->insert_values != NULL);
+	assert(table->insert_values.size());
         table->storeRecordAsInsert();
         table->restoreRecord();
         assert(info->update_fields->elements ==
@@ -828,8 +827,8 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
              !bitmap_is_subset(table->write_set, table->read_set)) ||
             table->compare_record())
         {
-          if ((error=table->cursor->updateRecord(table->record[1],
-                                                table->record[0])) &&
+          if ((error=table->cursor->updateRecord(table->getUpdateRecord(),
+                                                table->getInsertRecord())) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
           {
             if (info->ignore &&
@@ -883,8 +882,8 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
             (table->timestamp_field_type == TIMESTAMP_NO_AUTO_SET ||
              table->timestamp_field_type == TIMESTAMP_AUTO_SET_ON_BOTH))
         {
-          if ((error=table->cursor->updateRecord(table->record[1],
-					        table->record[0])) &&
+          if ((error=table->cursor->updateRecord(table->getUpdateRecord(),
+					        table->getInsertRecord())) &&
               error != HA_ERR_RECORD_IS_THE_SAME)
             goto err;
           if (error != HA_ERR_RECORD_IS_THE_SAME)
@@ -900,7 +899,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         }
         else
         {
-          if ((error=table->cursor->deleteRecord(table->record[1])))
+          if ((error=table->cursor->deleteRecord(table->getUpdateRecord())))
             goto err;
           info->deleted++;
           if (!table->cursor->has_transactions())
@@ -918,7 +917,7 @@ int write_record(Session *session, Table *table,COPY_INFO *info)
         table->write_set != save_write_set)
       table->column_bitmaps_set(save_read_set, save_write_set);
   }
-  else if ((error=table->cursor->insertRecord(table->record[0])))
+  else if ((error=table->cursor->insertRecord(table->getInsertRecord())))
   {
     if (!info->ignore ||
         table->cursor->is_fatal_error(error, HA_CHECK_DUP))
@@ -1366,6 +1365,7 @@ bool select_insert::send_eof()
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   session->my_ok((ulong) session->row_count_func,
                  info.copied + info.deleted + info.touched, id, buff);
+  session->status_var.inserted_row_count+= session->row_count_func; 
   DRIZZLE_INSERT_SELECT_DONE(0, session->row_count_func);
   return 0;
 }
@@ -1496,7 +1496,6 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
     return NULL;
   }
 
-  tmp_table.alias= 0;
   tmp_table.timestamp_field= 0;
   tmp_table.setShare(&share);
 

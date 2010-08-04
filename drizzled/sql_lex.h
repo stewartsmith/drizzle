@@ -514,6 +514,7 @@ public:
           defined as SUM_FUNC_USED.
   */
   std::bitset<2> full_group_by_flag;
+
   void init_query();
   void init_select();
   Select_Lex_Unit* master_unit();
@@ -929,6 +930,7 @@ public:
     }
     return false;
   }
+  bool is_cross; // CROSS keyword was used
 };
 
 extern void lex_start(Session *session);

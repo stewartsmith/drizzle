@@ -31,7 +31,12 @@ void table_cache_free(void);
 bool table_cache_init(void);
 uint32_t cached_open_tables(void);
 uint32_t cached_table_definitions(void);
-HASH *get_open_cache();
+
+typedef boost::unordered_multimap< TableIdentifier::Key, Table *> TableOpenCache;
+typedef std::pair< TableOpenCache::const_iterator, TableOpenCache::const_iterator > TableOpenCacheRange;
+
+TableOpenCache &get_open_cache();
+void remove_table(Table *arg);
 
 void kill_drizzle(void);
 
@@ -130,7 +135,7 @@ TableList *find_table_in_list(TableList *table,
                                const char *table_name);
 TableList *unique_table(TableList *table, TableList *table_list,
                         bool check_alias= false);
-void remove_db_from_cache(SchemaIdentifier &schema_identifier);
+void remove_db_from_cache(const SchemaIdentifier &schema_identifier);
 
 /* bits for last argument to remove_table_from_cache() */
 #define RTFC_NO_FLAG                0x0000

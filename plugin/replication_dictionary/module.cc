@@ -53,4 +53,4 @@ static int init(module::Context &context)
   }
 }
 
-DRIZZLE_PLUGIN(init, NULL);
+DRIZZLE_PLUGIN(init, NULL, NULL);

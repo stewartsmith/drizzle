@@ -1,0 +1,42 @@
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a int) ENGINE=FILESYSTEM,FILE="../filesystem_ln/select_meminfo.data",FORMAT="KEY_VALUE",COL_SEPARATOR=": ";
+SELECT * FROM t1;
+Active	AnonPages	Bounce	Buffers	Cached	CommitLimit	Committed_AS	DirectMap2M	DirectMap4k	Dirty	HugePages_Free	HugePages_Rsvd	HugePages_Surp	HugePages_Total	Hugepagesize	Inactive	Mapped	MemFree	MemTotal	NFS_Unstable	PageTables	SReclaimable	SUnreclaim	Slab	SwapCached	SwapFree	SwapTotal	VmallocChunk	VmallocTotal	VmallocUsed	Writeback	WritebackTmp
+1526364	198768	0	221004	2829356	2600136	495728	4186112	7040	1916	0	0	0	0	2048	1722772	51064	502844	4059680	0	27124	198000	12076	210076	0	570296	570296	34359655499	34359738367	82808	0	0
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `Active` varchar(8) DEFAULT NULL,
+  `AnonPages` varchar(7) DEFAULT NULL,
+  `Bounce` varchar(2) DEFAULT NULL,
+  `Buffers` varchar(7) DEFAULT NULL,
+  `Cached` varchar(8) DEFAULT NULL,
+  `CommitLimit` varchar(8) DEFAULT NULL,
+  `Committed_AS` varchar(7) DEFAULT NULL,
+  `DirectMap2M` varchar(8) DEFAULT NULL,
+  `DirectMap4k` varchar(5) DEFAULT NULL,
+  `Dirty` varchar(5) DEFAULT NULL,
+  `HugePages_Free` varchar(2) DEFAULT NULL,
+  `HugePages_Rsvd` varchar(2) DEFAULT NULL,
+  `HugePages_Surp` varchar(2) DEFAULT NULL,
+  `HugePages_Total` varchar(2) DEFAULT NULL,
+  `Hugepagesize` varchar(5) DEFAULT NULL,
+  `Inactive` varchar(8) DEFAULT NULL,
+  `Mapped` varchar(6) DEFAULT NULL,
+  `MemFree` varchar(7) DEFAULT NULL,
+  `MemTotal` varchar(8) DEFAULT NULL,
+  `NFS_Unstable` varchar(2) DEFAULT NULL,
+  `PageTables` varchar(6) DEFAULT NULL,
+  `SReclaimable` varchar(7) DEFAULT NULL,
+  `SUnreclaim` varchar(6) DEFAULT NULL,
+  `Slab` varchar(7) DEFAULT NULL,
+  `SwapCached` varchar(2) DEFAULT NULL,
+  `SwapFree` varchar(7) DEFAULT NULL,
+  `SwapTotal` varchar(7) DEFAULT NULL,
+  `VmallocChunk` varchar(12) DEFAULT NULL,
+  `VmallocTotal` varchar(12) DEFAULT NULL,
+  `VmallocUsed` varchar(6) DEFAULT NULL,
+  `Writeback` varchar(2) DEFAULT NULL,
+  `WritebackTmp` varchar(2) DEFAULT NULL
+) ENGINE=FILESYSTEM FILE='../filesystem_ln/select_meminfo.data' FORMAT='KEY_VALUE' COL_SEPARATOR=': '
+DROP TABLE t1;

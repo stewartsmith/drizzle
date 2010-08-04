@@ -27,14 +27,14 @@ test.t1	check	status	OK
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def	data_dictionary	show_indexes	SHOW_INDEXES	Table	Table	8	1024	2	N	1	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	8	20	5	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	8	20	3	N	1	0	45
 def	data_dictionary	show_indexes	SHOW_INDEXES	Key_name	Key_name	8	1024	7	N	1	0	45
 def	data_dictionary	show_indexes	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
 def	data_dictionary	show_indexes	SHOW_INDEXES	Column_name	Column_name	8	1024	1	N	1	0	45
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	a
-t1	FALSE	b	1	b
-t1	FALSE	b	2	c
+t1	YES	PRIMARY	1	a
+t1	NO	b	1	b
+t1	NO	b	2	c
 insert into t1 values (5,5,5);
 ERROR 23000: Duplicate entry '5' for key 'PRIMARY'
 -- Here we enable metadata just to check that the collation of the
@@ -104,16 +104,16 @@ Table	Op	Msg_type	Msg_text
 test.t1	analyze	status	OK
 show index from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	f1
-t1	TRUE	PRIMARY	2	f2
-t1	TRUE	PRIMARY	3	f3
-t1	TRUE	PRIMARY	4	f4
+t1	YES	PRIMARY	1	f1
+t1	YES	PRIMARY	2	f2
+t1	YES	PRIMARY	3	f3
+t1	YES	PRIMARY	4	f4
 show index from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	f1
-t1	TRUE	PRIMARY	2	f2
-t1	TRUE	PRIMARY	3	f3
-t1	TRUE	PRIMARY	4	f4
+t1	YES	PRIMARY	1	f1
+t1	YES	PRIMARY	2	f2
+t1	YES	PRIMARY	3	f3
+t1	YES	PRIMARY	4	f4
 drop table t1;
 create temporary table t1 (a int not null);
 show create table t1;
@@ -144,10 +144,10 @@ t1	CREATE TABLE `t1` (
 ) ENGINE=DEFAULT COMMENT='it''s a table'
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-name	VARCHAR	TRUE	O'Brien	FALSE	
-c	INTEGER	FALSE		FALSE	
-c-b	INTEGER	TRUE		TRUE	
-space 2	INTEGER	TRUE		TRUE	
+name	VARCHAR	YES	O'Brien	NO	
+c	INTEGER	NO		NO	
+c-b	INTEGER	YES		YES	
+space 2	INTEGER	YES		YES	
 drop table t1;
 create table t1 (a int not null, unique aa (a));
 show create table t1;
@@ -193,20 +193,20 @@ drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	DECIMAL	TRUE		TRUE	
-b	DECIMAL	TRUE		TRUE	
-e	DOUBLE	TRUE		TRUE	
-f	DOUBLE	TRUE		TRUE	
-h	DOUBLE	TRUE		TRUE	
-i	DOUBLE	TRUE		TRUE	
+a	DECIMAL	YES		YES	
+b	DECIMAL	YES		YES	
+e	DOUBLE	YES		YES	
+f	DOUBLE	YES		YES	
+h	DOUBLE	YES		YES	
+i	DOUBLE	YES		YES	
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	DECIMAL	TRUE		TRUE	
-b	DECIMAL	TRUE		TRUE	
-e	DOUBLE	TRUE		TRUE	
-f	DOUBLE	TRUE		TRUE	
-h	DOUBLE	TRUE		TRUE	
-i	DOUBLE	TRUE		TRUE	
+a	DECIMAL	YES		YES	
+b	DECIMAL	YES		YES	
+e	DOUBLE	YES		YES	
+f	DOUBLE	YES		YES	
+h	DOUBLE	YES		YES	
+i	DOUBLE	YES		YES	
 drop table t1;
 create temporary table t1 (
 type_int int,
@@ -251,22 +251,22 @@ create table t1 (a int not null);
 create table t2 select max(a) from t1;
 show columns from t2;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-max(a)	INTEGER	TRUE		TRUE	
+max(a)	INTEGER	YES		YES	
 drop table t1,t2;
 create table t1 (c decimal, d double, f float, r real);
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-c	DECIMAL	TRUE		TRUE	
-d	DOUBLE	TRUE		TRUE	
-f	DOUBLE	TRUE		TRUE	
-r	DOUBLE	TRUE		TRUE	
+c	DECIMAL	YES		YES	
+d	DOUBLE	YES		YES	
+f	DOUBLE	YES		YES	
+r	DOUBLE	YES		YES	
 drop table t1;
 create table t1 (c decimal(3,3), d double(3,3), f float(3,3));
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-c	DECIMAL	TRUE		TRUE	
-d	DOUBLE	TRUE		TRUE	
-f	DOUBLE	TRUE		TRUE	
+c	DECIMAL	YES		YES	
+d	DOUBLE	YES		YES	
+f	DOUBLE	YES		YES	
 drop table t1;
 CREATE TABLE ```ab``cd``` (i INT);
 SHOW CREATE TABLE ```ab``cd```;
@@ -447,12 +447,12 @@ PRIMARY KEY(field1(180))
 show index from t1;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
 def	data_dictionary	show_indexes	SHOW_INDEXES	Table	Table	8	1024	2	N	1	0	45
-def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	8	20	4	N	1	0	45
+def	data_dictionary	show_indexes	SHOW_INDEXES	Unique	Unique	8	20	3	N	1	0	45
 def	data_dictionary	show_indexes	SHOW_INDEXES	Key_name	Key_name	8	1024	7	N	1	0	45
 def	data_dictionary	show_indexes	SHOW_INDEXES	Seq_in_index	Seq_in_index	5	20	1	N	32769	0	63
 def	data_dictionary	show_indexes	SHOW_INDEXES	Column_name	Column_name	8	1024	6	N	1	0	45
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	field1
+t1	YES	PRIMARY	1	field1
 drop table t1;
 create table t1 (
 c1 int NOT NULL,
@@ -486,10 +486,10 @@ Tables_in_mysqlttest\1
 a\b
 show fields from `mysqlttest\1`.`a\b`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	TRUE		TRUE	
+a	INTEGER	YES		YES	
 show columns from `a\b` from `mysqlttest\1`;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	TRUE		TRUE	
+a	INTEGER	YES		YES	
 show keys from `mysqlttest\1`.`a\b`;
 Table	Unique	Key_name	Seq_in_index	Column_name
 drop table `mysqlttest\1`.`a\b`;
