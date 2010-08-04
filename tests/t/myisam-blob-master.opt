@@ -1,1 +1,1 @@
---max-allowed-packet=24M --myisam-key-cache-size=1M
+--max-allowed-packet=24M
