@@ -67,10 +67,9 @@ public:
     pthread_mutex_destroy(&blackhole_mutex);
   }
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_blackhole(*this, table);
+    return new ha_blackhole(*this, table);
   }
 
   const char **bas_ext() const {

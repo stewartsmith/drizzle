@@ -1528,9 +1528,9 @@ static int pbxt_rollback(handlerton *hton, THD *thd, bool all)
 	return 0;
 }
 
-Cursor *PBXTStorageEngine::create(TableShare& table, memory::Root *mem_root)
+Cursor *PBXTStorageEngine::create(TableShare& table)
 {
-	return new (mem_root) ha_pbxt(*this, table);
+	return new ha_pbxt(*this, table);
 }
 
 /*

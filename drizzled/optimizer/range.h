@@ -39,8 +39,6 @@ namespace internal
 typedef struct st_io_cache IO_CACHE;
 }
 
-typedef struct st_handler_buffer HANDLER_BUFFER;
-
 typedef struct st_key_part
 {
   uint16_t key;
