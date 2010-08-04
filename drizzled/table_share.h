@@ -228,9 +228,20 @@ public:
 private:
   std::vector<TYPELIB> intervals;			/* pointer to interval info */
 
-public:
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
+
+public:
+
+  void lock()
+  {
+    pthread_mutex_lock(&mutex);
+  }
+
+  void unlock()
+  {
+    pthread_mutex_unlock(&mutex);
+  }
 
 private:
   std::vector<unsigned char> default_values;		/* row with default values */

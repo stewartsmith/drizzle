@@ -1219,9 +1219,6 @@ int ha_myisam::info(uint32_t flag)
     share->db_options_in_use= misam_info.options;
     stats.block_size= myisam_key_cache_block_size;        /* record block size */
 
-    /* Update share */
-    if (share->getType() == message::Table::STANDARD)
-      pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->sizeKeys());
     /*
      * Due to bug 394932 (32-bit solaris build failure), we need
@@ -1274,8 +1271,7 @@ int ha_myisam::info(uint32_t flag)
       memcpy(table->key_info[0].rec_per_key,
 	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
-    if (share->getType() == message::Table::STANDARD)
-      pthread_mutex_unlock(&share->mutex);
+    assert(share->getType() != message::Table::STANDARD);
 
    /*
      Set data_file_name and index_file_name to point at the symlink value
