@@ -30,7 +30,7 @@ using namespace std;
 ShowTableStatus::ShowTableStatus() :
   plugin::TableFunction("DATA_DICTIONARY", "SHOW_TABLE_STATUS")
 {
-  add_field("Session", plugin::TableFunction::NUMBER);
+  add_field("Session", plugin::TableFunction::NUMBER, 0, false);
   add_field("Schema");
   add_field("Name");
   add_field("Type");
@@ -59,20 +59,20 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
   {
     pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
 
-    drizzled::HASH *open_cache=
-      get_open_cache();
+    TableOpenCache &open_cache(get_open_cache());
 
-    for (uint32_t idx= 0; idx < open_cache->records; idx++ )
+    for (TableOpenCache::const_iterator iter= open_cache.begin();
+         iter != open_cache.end();
+         iter++)
     {
-      table= (Table*) hash_element(open_cache, idx);
-      table_list.push_back(table);
+      table_list.push_back((*iter).second);
     }
 
-    for (table= getSession().temporary_tables; table; table= table->getNext())
+    for (drizzled::Table *tmp_table= getSession().temporary_tables; tmp_table; tmp_table= tmp_table->getNext())
     {
-      if (table->getShare())
+      if (tmp_table->getShare())
       {
-        table_list.push_back(table);
+        table_list.push_back(tmp_table);
       }
     }
     std::sort(table_list.begin(), table_list.end(), Table::compare);

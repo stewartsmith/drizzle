@@ -63,7 +63,6 @@ bool statement::DropIndex::execute()
 
   memset(&create_info, 0, sizeof(create_info));
   create_info.db_type= 0;
-  create_info.row_type= ROW_TYPE_NOT_USED;
 
   bool res;
   if (original_table_message.type() == message::Table::STANDARD )

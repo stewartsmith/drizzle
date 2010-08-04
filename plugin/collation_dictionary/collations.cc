@@ -31,10 +31,10 @@ CollationsTool::CollationsTool() :
   add_field("CHARACTER_SET_NAME");
   add_field("COLLATION_NAME");
   add_field("DESCRIPTION");
-  add_field("ID", plugin::TableFunction::NUMBER);
+  add_field("ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("IS_DEFAULT", plugin::TableFunction::BOOLEAN);
   add_field("IS_COMPILED", plugin::TableFunction::BOOLEAN);
-  add_field("SORTLEN", plugin::TableFunction::NUMBER);
+  add_field("SORTLEN", plugin::TableFunction::NUMBER, 0, false);
 }
 
 CollationsTool::Generator::Generator(Field **arg) :

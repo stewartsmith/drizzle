@@ -128,17 +128,17 @@ public:
 
   int doCreateTable(Session &,
                     Table &table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
   int doGetTableDefinition(Session& session,
-                           TableIdentifier &identifier,
+                           const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
   /* Temp only engine, so do not return values. */
-  void doGetTableNames(drizzled::CachedDirectory &, SchemaIdentifier&, set<string>&) { };
+  void doGetTableNames(drizzled::CachedDirectory &, const SchemaIdentifier&, set<string>&) { };
 
-  int doDropTable(Session&, TableIdentifier &identifier);
+  int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
   TinaShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, TinaShare *);
   void deleteOpenTable(const string &table_name);
@@ -147,22 +147,22 @@ public:
   uint32_t max_keys()          const { return 0; }
   uint32_t max_key_parts()     const { return 0; }
   uint32_t max_key_length()    const { return 0; }
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
-  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
+  int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 void Tina::doGetTableIdentifiers(drizzled::CachedDirectory&,
-                                 drizzled::SchemaIdentifier&,
+                                 const drizzled::SchemaIdentifier&,
                                  drizzled::TableIdentifiers&)
 {
 }
 
 int Tina::doRenameTable(Session &session,
-                        TableIdentifier &from, TableIdentifier &to)
+                        const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
 {
   int error= 0;
   for (const char **ext= bas_ext(); *ext ; ext++)
@@ -180,14 +180,14 @@ int Tina::doRenameTable(Session &session,
   return error;
 }
 
-bool Tina::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool Tina::doDoesTableExist(Session &session, const drizzled::TableIdentifier &identifier)
 {
   return session.doesTableMessageExist(identifier);
 }
 
 
 int Tina::doDropTable(Session &session,
-                      TableIdentifier &identifier)
+                      const drizzled::TableIdentifier &identifier)
 {
   int error= 0;
   int enoent_or_zero= ENOENT;                   // Error if no file was deleted
@@ -235,7 +235,7 @@ void Tina::deleteOpenTable(const string &table_name)
 
 
 int Tina::doGetTableDefinition(Session &session,
-                               drizzled::TableIdentifier &identifier,
+                               const drizzled::TableIdentifier &identifier,
                                drizzled::message::Table &table_message)
 {
   if (session.getTableMessage(identifier, table_message))
@@ -852,9 +852,9 @@ void ha_tina::update_status()
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_tina::open(const char *name, int, uint32_t)
+int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
-  if (!(share= get_share(name)))
+  if (!(share= get_share(identifier.getPath().c_str())))
     return(ENOENT);
 
   if (share->crashed)
@@ -882,7 +882,6 @@ int ha_tina::open(const char *name, int, uint32_t)
   return(0);
 }
 
-
 /*
   Close a database file. We remove ourselves from the shared strucutre.
   If it is empty we destroy it.
@@ -905,8 +904,6 @@ int ha_tina::doInsertRecord(unsigned char * buf)
 
   if (share->crashed)
       return(HA_ERR_CRASHED_ON_USAGE);
-
-  ha_statistic_increment(&system_status_var::ha_write_count);
 
   size= encode_quote(buf);
 
@@ -964,8 +961,6 @@ int ha_tina::doUpdateRecord(const unsigned char *, unsigned char * new_data)
   int size;
   int rc= -1;
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   size= encode_quote(new_data);
 
   /*
@@ -1003,7 +998,6 @@ err:
 */
 int ha_tina::doDeleteRecord(const unsigned char *)
 {
-  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (chain_append())
     return(-1);
@@ -1352,7 +1346,7 @@ int ha_tina::delete_all_rows()
 
 int Tina::doCreateTable(Session &session,
                         Table& table_arg,
-                        drizzled::TableIdentifier &identifier,
+                        const drizzled::TableIdentifier &identifier,
                         drizzled::message::Table &create_proto)
 {
   char name_buff[FN_REFLEN];

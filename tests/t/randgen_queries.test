@@ -45,26 +45,56 @@ key (`col_text_key`  (255)),
 key (`col_enum_key` )) ENGINE=innodb;
 set AUTOCOMMIT=OFF;
 
-#
-select table_schema, 
+# bookkeeping query in Executor/Drizzle.pm in randgen
+select SQL_BIG_RESULT table_schema, 
        table_name, 
        CASE WHEN table_type = 'STANDARD' THEN 'table' 
             WHEN table_type = 'FUNCTION' then 'function' 
        ELSE 'misc' END, 
        column_name,
-       CASE WHEN IS_USED_IN_PRIMARY = 'TRUE' THEN 'primary' 
-             WHEN IS_INDEXED = 'TRUE' THEN 'indexed' 
+       CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary' 
+             WHEN IS_INDEXED = 'YES' THEN 'indexed' 
        ELSE 'indexed' END 
        FROM data_dictionary.tables INNER JOIN
-            data_dictionary.columns USING(table_schema, table_name) limit 20;
+            data_dictionary.columns USING(table_schema, table_name) ORDER BY table_schema, table_name limit 20;
+# end bookkeeping test
+
+# bookkeeping query in Executor/Drizzle.pm in randgen - variant 1
+# test of non-DATA_DICTIONARY / INFORMATION_SCHEMA tables
+CREATE SCHEMA randgen_query_test;
+USE randgen_query_test;
+CREATE TABLE t1 (a INT);
+CREATE TABLE t2 LIKE t1;
+CREATE TABLE t3 LIKE t1;
+CREATE TABLE t4 (b CHAR(500));
+CREATE TABLE t5 LIKE t4;
+
+select SQL_BIG_RESULT table_schema,
+       table_name,
+       CASE WHEN table_type = 'STANDARD' THEN 'table'
+            WHEN table_type = 'FUNCTION' then 'function'
+       ELSE 'misc' END,
+       column_name,
+       CASE WHEN IS_USED_IN_PRIMARY = 'YES' THEN 'primary'
+             WHEN IS_INDEXED = 'YES' THEN 'indexed'
+       ELSE 'indexed' END
+       FROM data_dictionary.tables INNER JOIN
+            data_dictionary.columns USING(table_schema, table_name) WHERE table_schema NOT IN ('DATA_DICTIONARY','INFORMATION_SCHEMA')
+       ORDER BY table_schema, table_name limit 20;
+
+DROP SCHEMA randgen_query_test;
+USE test;
+# end bookkeeping test
 
 
 select AVG(`col_int_key`) + AVG(`col_int`) AS average1,
                         (SUM(`col_int_key`) + SUM(`col_int`)) / COUNT(*) AS average2,
                         COUNT(*) AS count FROM t1;
 
+--sorted_result
 select collation_name,character_set_name FROM data_dictionary.collations;
 --replace_column 1 ####.##.####
+--sorted_result
 select COUNT(*) from data_dictionary.tables;
 
 DROP TABLE t1;

@@ -58,7 +58,7 @@ buffer pool; the latter method is used for very big heaps */
 					ORed to MEM_HEAP_BUFFER, in which
 					case heap->free_block is used in
 					some cases for memory allocations,
-					and if it's NULL, the memory
+					and if NULL, the memory
 					allocation functions can return
 					NULL. */
 

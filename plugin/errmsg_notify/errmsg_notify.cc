@@ -103,4 +103,4 @@ static int plugin_init(module::Context &context)
   return 0;
 }
 
-DRIZZLE_PLUGIN(plugin_init, NULL);
+DRIZZLE_PLUGIN(plugin_init, NULL, NULL);
