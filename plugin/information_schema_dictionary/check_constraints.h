@@ -21,6 +21,10 @@
 #ifndef PLUGIN_INFORMATION_SCHEMA_DICTIONARY_CHECK_CONSTRAINTS_H
 #define PLUGIN_INFORMATION_SCHEMA_DICTIONARY_CHECK_CONSTRAINTS_H
 
+/*
+  @note if implemented this should only provide information based on the current user.
+*/
+
 class CheckConstraints : public InformationSchema
 {
 public:

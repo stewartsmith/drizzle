@@ -22,7 +22,7 @@ Smart ALTER TABLE
 *******************************************************/
 
 /*************************************************************//**
-Copies an InnoDB record to table->record[0]. */
+Copies an InnoDB record to table->getInsertRecord(). */
 UNIV_INTERN
 void
 innobase_rec_to_mysql(
@@ -34,7 +34,7 @@ innobase_rec_to_mysql(
 						rec, index, ...) */
 
 /*************************************************************//**
-Resets table->record[0]. */
+Resets table->getInsertRecord(). */
 UNIV_INTERN
 void
 innobase_rec_reset(

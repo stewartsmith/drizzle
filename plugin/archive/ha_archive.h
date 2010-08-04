@@ -97,6 +97,7 @@ public:
 			 uint32_t key_len,
                          drizzled::ha_rkey_function find_flag);
   int index_next(unsigned char * buf);
+  int doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked);
   int open(const char *name, int mode, uint32_t test_if_locked);
   int close(void);
   int doInsertRecord(unsigned char * buf);
@@ -121,10 +122,7 @@ private:
 public:
   void start_bulk_insert(drizzled::ha_rows rows);
   int end_bulk_insert();
-  enum drizzled::row_type get_row_type() const
-  {
-    return drizzled::ROW_TYPE_COMPRESSED;
-  }
+
   drizzled::THR_LOCK_DATA **store_lock(drizzled::Session *session,
                                        drizzled::THR_LOCK_DATA **to,
                                        drizzled::thr_lock_type lock_type);

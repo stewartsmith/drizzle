@@ -2456,7 +2456,7 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
  		doStartIndexScan(TS(table)->next_number_index, 0);
 		if (!TS(table)->next_number_key_offset) {
 			// Autoincrement at key-start
-			err = index_last(table->record[1]);
+			err = index_last(table->getUpdateRecord());
 			if (!err && !table->next_number_field->is_null(TS(table)->rec_buff_length)) {
 				/* {PRE-INC} */
 				nr = (xtWord8) table->next_number_field->val_int_offset(TS(table)->rec_buff_length);
@@ -2469,13 +2469,13 @@ void ha_pbxt::init_auto_increment(xtWord8 min_auto_inc)
 			 */
 			xtWord8 val;
 
-			err = index_first(table->record[1]);
+			err = index_first(table->getUpdateRecord());
 			while (!err) {
 				/* {PRE-INC} */
 				val = (xtWord8) table->next_number_field->val_int_offset(TS(table)->rec_buff_length);
 				if (val > nr)
 					nr = val;
-				err = index_next(table->record[1]);
+				err = index_next(table->getUpdateRecord());
 			}
 		}
 
@@ -2676,7 +2676,7 @@ int ha_pbxt::doInsertRecord(byte *buf)
 			pb_import_row_count++;
 	}
 
-	if (table->next_number_field && buf == table->record[0]) {
+	if (table->next_number_field && buf == table->getInsertRecord()) {
 		int update_err = update_auto_increment();
 		if (update_err) {
 			ha_log_pbxt_thread_error_for_mysql(pb_ignore_dup_key);
@@ -2799,7 +2799,7 @@ int ha_pbxt::doUpdateRecord(const byte * old_data, byte * new_data)
 	 * update t1 set a=2 where a=1;
 	 * insert into t1 (val) values (1);
 	 */
-	if (table->found_next_number_field && new_data == table->record[0]) {
+	if (table->found_next_number_field && new_data == table->getInsertRecord()) {
 		MX_LONGLONG_T	nr;
 		my_bitmap_map	*old_map;
 
@@ -3553,7 +3553,7 @@ int ha_pbxt::index_first(byte * buf)
 	 *
      * if (!table->file->inited)
      *    table->file->startIndexScan(tab->index, tab->sorted);
-     *  if ((error=tab->table->file->index_first(tab->table->record[0])))
+     *  if ((error=tab->table->file->index_first(tab->table->getInsertRecord())))
 	 */
 	if (active_index == MAX_KEY) {
 		err = HA_ERR_WRONG_INDEX;
@@ -3961,7 +3961,7 @@ int ha_pbxt::info(uint flag)
 			stats.block_size = XT_INDEX_PAGE_SIZE;
 
 #ifdef DRIZZLED
-			if (share->tmp_table == message::Table::STANDARD)
+			if (share->getType() == message::Table::STANDARD)
 #else
 			if (share->tmp_table == NO_TMP_TABLE)
 #endif
@@ -4017,7 +4017,7 @@ int ha_pbxt::info(uint flag)
 	 				table->key_info[i].rec_per_key[j] = (ulong) rec_per_key;
 			}
 #ifdef DRIZZLED
-			if (share->tmp_table == message::Table::STANDARD)
+			if (share->getType() == message::Table::STANDARD)
 #else
 			if (share->tmp_table == NO_TMP_TABLE)
 #endif
@@ -5252,7 +5252,7 @@ THR_LOCK_DATA **ha_pbxt::store_lock(THD *thd, THR_LOCK_DATA **to, enum thr_lock_
  * the storage engine.
 */
 #ifdef DRIZZLED
-int PBXTStorageEngine::doDropTable(Session &, TableIdentifier& ident)
+int PBXTStorageEngine::doDropTable(Session &, const TableIdentifier& ident)
 {
 	const std::string& path = ident.getPath();
 	const char *table_path = path.c_str();
@@ -5404,8 +5404,8 @@ int ha_pbxt::delete_system_table(const char *table_path)
  */
 #ifdef DRIZZLED
 int PBXTStorageEngine::doRenameTable(Session&,
-                                     TableIdentifier& from_ident,
-                                     TableIdentifier& to_ident)
+                                     const TableIdentifier& from_ident,
+                                     const TableIdentifier& to_ident)
 {
 	const char *from = from_ident.getPath().c_str();
 	const char *to = to_ident.getPath().c_str();
@@ -5596,7 +5596,7 @@ ha_rows ha_pbxt::records_in_range(uint inx, key_range *min_key, key_range *max_k
 */
 int PBXTStorageEngine::doCreateTable(Session&, 
                                      Table& table_arg, 
-                                     TableIdentifier& ident,
+                                     const TableIdentifier& ident,
 				     drizzled::message::Table& proto)
 {
 	const std::string& path = ident.getPath();
@@ -5857,7 +5857,7 @@ void PBXTStorageEngine::doGetTableNames(
 }
 #endif
 
-bool PBXTStorageEngine::doDoesTableExist(Session&, TableIdentifier &identifier)
+bool PBXTStorageEngine::doDoesTableExist(Session&, const TableIdentifier &identifier)
 {
   std::string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);

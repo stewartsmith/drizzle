@@ -45,13 +45,13 @@ public:
 
   int doCreateTable(drizzled::Session&,
                     drizzled::Table&,
-                    drizzled::TableIdentifier &,
+                    const drizzled::TableIdentifier &,
                     drizzled::message::Table&)
   {
     return EPERM;
   }
 
-  int doDropTable(drizzled::Session&, drizzled::TableIdentifier&)
+  int doDropTable(drizzled::Session&, const drizzled::TableIdentifier&)
   { 
     return EPERM; 
   }
@@ -69,30 +69,30 @@ public:
     return drizzled::plugin::TableFunction::getFunction(path);
   }
 
-  bool doCanCreateTable(drizzled::TableIdentifier &identifier);
+  bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 
 
   void doGetTableNames(drizzled::CachedDirectory&, 
-                       drizzled::SchemaIdentifier &schema_identifier,
+                       const drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string> &set_of_names);
 
   int doGetTableDefinition(drizzled::Session &session,
-                           drizzled::TableIdentifier &identifier,
+                           const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::SchemaIdentifierList&);
+  void doGetSchemaIdentifiers(drizzled::SchemaIdentifiers&);
 
-  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
 
-  bool doGetSchemaDefinition(drizzled::SchemaIdentifier &schema, drizzled::message::Schema &schema_message);
+  bool doGetSchemaDefinition(const drizzled::SchemaIdentifier &schema, drizzled::message::Schema &schema_message);
 
-  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &, drizzled::TableIdentifier &)
+  int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &, const drizzled::TableIdentifier &)
   {
     return EPERM;
   }
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 

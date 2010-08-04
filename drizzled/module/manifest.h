@@ -27,6 +27,7 @@
  */
 
 #include "drizzled/module/context.h"
+#include "drizzled/module/option_context.h"
 
 namespace drizzled
 {
@@ -48,6 +49,7 @@ namespace module
 {
 
 typedef int (*initialize_func_t)(::drizzled::module::Context &);
+typedef void (*options_func_t)(::drizzled::module::option_context &);
 
 /**
  * Plugin Manfiest
@@ -67,7 +69,7 @@ struct Manifest
   plugin_license_type license; /* plugin license (PLUGIN_LICENSE_XXX)          */
   initialize_func_t init;     /* function to invoke when plugin is loaded     */
   drizzle_sys_var **system_vars;
-  void *reserved1;           /* reserved for dependency checking             */
+  options_func_t init_options; /* register command line options              */
 };
 
 } /* namespace module */

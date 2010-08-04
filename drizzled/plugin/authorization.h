@@ -25,7 +25,7 @@
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/security_context.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 
 #include <string>
 #include <set>
@@ -102,7 +102,7 @@ public:
    * to a set of schema names (for use in the context of getSchemaNames
    */
   static void pruneSchemaNames(const SecurityContext &user_ctx,
-                               SchemaIdentifierList &set_of_schemas);
+                               SchemaIdentifiers &set_of_schemas);
   
   /**
    * Standard plugin system registration hooks
