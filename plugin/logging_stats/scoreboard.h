@@ -56,18 +56,6 @@ public:
   ScoreboardSlot* findScoreboardSlotToLog(drizzled::Session *session);
 
   /**
-   * Resets the ScoreboardSlot this session was using. The pointer
-   * returned is a copy of the ScoreboardSlot that has now been
-   * reclaimed. This must be deallocated by the caller, when the caller
-   * is finished. This allows cumulative collection of statistics.  
-   * 
-   * @param Pointer to the session
-   * @return Pointer to a copy of the ScoreboardSlot that has been
-   *   reclaimed
-   */
-  ScoreboardSlot* findAndResetScoreboardSlot(drizzled::Session *session);
-
-  /**
    * Finds the ScoreboardSlot for a given session. This function differs
    * from findAndResetScoreboardSlot() as it returns the actual pointer
    * rather then a copy. Its possible that values could be changed in 

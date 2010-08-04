@@ -38,11 +38,11 @@ namespace plugin
 class AddSchemaNames : 
   public unary_function<StorageEngine *, void>
 {
-  SchemaIdentifierList &schemas;
+  SchemaIdentifiers &schemas;
 
 public:
 
-  AddSchemaNames(SchemaIdentifierList &of_names) :
+  AddSchemaNames(SchemaIdentifiers &of_names) :
     schemas(of_names)
   {
   }
@@ -53,7 +53,7 @@ public:
   }
 };
 
-void StorageEngine::getSchemaIdentifiers(Session &session, SchemaIdentifierList &schemas)
+void StorageEngine::getIdentifiers(Session &session, SchemaIdentifiers &schemas)
 {
   // Add hook here for engines to register schema.
   for_each(StorageEngine::getSchemaEngines().begin(), StorageEngine::getSchemaEngines().end(),
@@ -64,11 +64,11 @@ void StorageEngine::getSchemaIdentifiers(Session &session, SchemaIdentifierList 
 
 class StorageEngineGetSchemaDefinition: public unary_function<StorageEngine *, bool>
 {
-  SchemaIdentifier &identifier;
+  const SchemaIdentifier &identifier;
   message::Schema &schema_proto;
 
 public:
-  StorageEngineGetSchemaDefinition(SchemaIdentifier &identifier_arg,
+  StorageEngineGetSchemaDefinition(const SchemaIdentifier &identifier_arg,
                                    message::Schema &schema_proto_arg) :
     identifier(identifier_arg),
     schema_proto(schema_proto_arg) 
@@ -84,12 +84,12 @@ public:
 /*
   Return value is "if parsed"
 */
-bool StorageEngine::getSchemaDefinition(TableIdentifier &identifier, message::Schema &proto)
+bool StorageEngine::getSchemaDefinition(const drizzled::TableIdentifier &identifier, message::Schema &proto)
 {
   return StorageEngine::getSchemaDefinition(identifier, proto);
 }
 
-bool StorageEngine::getSchemaDefinition(SchemaIdentifier &identifier, message::Schema &proto)
+bool StorageEngine::getSchemaDefinition(const SchemaIdentifier &identifier, message::Schema &proto)
 {
   proto.Clear();
 
@@ -105,7 +105,7 @@ bool StorageEngine::getSchemaDefinition(SchemaIdentifier &identifier, message::S
   return false;
 }
 
-bool StorageEngine::doesSchemaExist(SchemaIdentifier &identifier)
+bool StorageEngine::doesSchemaExist(const SchemaIdentifier &identifier)
 {
   message::Schema proto;
 
@@ -113,7 +113,7 @@ bool StorageEngine::doesSchemaExist(SchemaIdentifier &identifier)
 }
 
 
-const CHARSET_INFO *StorageEngine::getSchemaCollation(SchemaIdentifier &identifier)
+const CHARSET_INFO *StorageEngine::getSchemaCollation(const SchemaIdentifier &identifier)
 {
   message::Schema schmema_proto;
   bool found;
@@ -128,7 +128,7 @@ const CHARSET_INFO *StorageEngine::getSchemaCollation(SchemaIdentifier &identifi
     if (not cs)
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
-                    _("Error while loading database options: '%s':"), identifier.getSQLPath().c_str());
+                    _("Error while loading database options: '%s':"), const_cast<SchemaIdentifier &>(identifier).getSQLPath().c_str());
       errmsg_printf(ERRMSG_LVL_ERROR, ER(ER_UNKNOWN_COLLATION), buffer.c_str());
 
       return default_charset_info;
@@ -172,11 +172,11 @@ class DropSchema :
   public unary_function<StorageEngine *, void>
 {
   uint64_t &success_count;
-  SchemaIdentifier &identifier;
+  const SchemaIdentifier &identifier;
 
 public:
 
-  DropSchema(SchemaIdentifier &arg, uint64_t &count_arg) :
+  DropSchema(const SchemaIdentifier &arg, uint64_t &count_arg) :
     success_count(count_arg),
     identifier(arg)
   {
@@ -192,7 +192,7 @@ public:
   }
 };
 
-bool StorageEngine::dropSchema(SchemaIdentifier &identifier)
+bool StorageEngine::dropSchema(const SchemaIdentifier &identifier)
 {
   uint64_t counter= 0;
   // Add hook here for engines to register schema.

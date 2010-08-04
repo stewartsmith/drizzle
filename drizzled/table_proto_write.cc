@@ -36,6 +36,8 @@
 
 #include <drizzled/table_proto.h>
 
+#include "drizzled/function/time/typecast.h"
+
 using namespace std;
 
 namespace drizzled {
@@ -219,7 +221,7 @@ static int fill_table_proto(message::Table &table_proto,
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
-      field_options->set_default_value("NOW()");
+      field_options->set_default_expression("CURRENT_TIMESTAMP");
     }
 
     if (field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
@@ -227,7 +229,7 @@ static int fill_table_proto(message::Table &table_proto,
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
-      field_options->set_update_value("NOW()");
+      field_options->set_update_expression("CURRENT_TIMESTAMP");
     }
 
     if (field_arg->def == NULL  && attribute->constraints().is_nullable())
@@ -262,6 +264,43 @@ static int fill_table_proto(message::Table &table_proto,
 	  return 1;
 	}
 
+        if (field_arg->sql_type == DRIZZLE_TYPE_DATE
+            || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
+            || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
+        {
+          DRIZZLE_TIME ltime;
+
+          if (field_arg->def->get_date(&ltime, TIME_FUZZY_DATE))
+          {
+            my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR),
+                     default_value->c_str());
+            return 1;
+          }
+
+          /* We now do the casting down to the appropriate type.
+
+             Yes, this implicit casting is balls.
+             It was previously done on reading the proto back in,
+             but we really shouldn't store the bogus things in the proto,
+             and instead do the casting behaviour here.
+
+             the timestamp errors are taken care of elsewhere.
+          */
+
+          if (field_arg->sql_type == DRIZZLE_TYPE_DATETIME)
+          {
+            Item *typecast= new Item_datetime_typecast(field_arg->def);
+            typecast->quick_fix_field();
+            typecast->val_str(default_value);
+          }
+          else if (field_arg->sql_type == DRIZZLE_TYPE_DATE)
+          {
+            Item *typecast= new Item_date_typecast(field_arg->def);
+            typecast->quick_fix_field();
+            typecast->val_str(default_value);
+          }
+        }
+
 	if ((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
 	    && field_arg->charset==&my_charset_bin)
 	   || (field_arg->sql_type==DRIZZLE_TYPE_BLOB
@@ -291,6 +330,9 @@ static int fill_table_proto(message::Table &table_proto,
 
   if (create_info->table_options & HA_OPTION_PACK_RECORD)
     table_options->set_pack_record(true);
+
+  if (table_options->has_comment() && table_options->comment().length() == 0)
+    table_options->clear_comment();
 
   if (table_options->has_comment())
   {

@@ -24,7 +24,7 @@
 
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/security_context.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 #include "drizzled/error.h"
 #include "drizzled/session.h"
 #include "drizzled/gettext.h"
@@ -233,7 +233,7 @@ bool plugin::Authorization::isAuthorized(const SecurityContext &user_ctx,
 }
 
 void plugin::Authorization::pruneSchemaNames(const SecurityContext &user_ctx,
-                                             SchemaIdentifierList &set_of_schemas)
+                                             SchemaIdentifiers &set_of_schemas)
 {
   /* If we never loaded any authorization plugins, just return true */
   if (authorization_plugins.empty())
