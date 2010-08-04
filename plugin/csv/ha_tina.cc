@@ -116,10 +116,9 @@ public:
     pthread_mutex_destroy(&tina_mutex);
   }
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_tina(*this, table);
+    return new ha_tina(*this, table);
   }
 
   const char **bas_ext() const {

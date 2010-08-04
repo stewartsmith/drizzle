@@ -51,7 +51,7 @@ void TableFunctionContainer::getNames(const string &predicate,
 
     if (predicate.length())
     {
-      if (not predicate.compare(tool->getSchemaHome()))
+      if (boost::iequals(predicate, tool->getSchemaHome()))
       {
         set_of_names.insert(tool->getTableLabel());
       }
