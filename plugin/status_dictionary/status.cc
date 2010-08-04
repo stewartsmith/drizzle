@@ -49,12 +49,10 @@ StateTool::Generator::Generator(Field **arg, sql_var_t option_arg,
   option_type(option_arg),
   variables(variables_args)
 {
-  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
 }
 
 StateTool::Generator::~Generator()
 {
-  pthread_rwlock_unlock(&LOCK_system_variables_hash);
 }
 
 bool StateTool::Generator::populate()

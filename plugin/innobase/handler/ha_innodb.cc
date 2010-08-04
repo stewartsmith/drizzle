@@ -368,10 +368,9 @@ public:
         /* out: 0 or error number */
     ::drizzled::XID *xid);  /* in: X/Open XA transaction identification */
 
-  virtual Cursor *create(TableShare &table,
-                         memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_innobase(*this, table);
+    return new ha_innobase(*this, table);
   }
 
   /*********************************************************************

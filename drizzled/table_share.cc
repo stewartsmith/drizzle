@@ -1841,7 +1841,7 @@ int TableShare::open_table_from_share(Session *session,
     goto err;
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= db_type()->getCursor(*this, outparam.getMemRoot())))
+  if (not (outparam.cursor= db_type()->getCursor(*this)))
     goto err;
 
   local_error= 4;
