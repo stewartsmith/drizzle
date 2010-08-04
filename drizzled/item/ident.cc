@@ -191,7 +191,7 @@ void Item_ident_for_show::make_field(SendField *tmp_field)
   tmp_field->charsetnr= field->charset()->number;
   tmp_field->length=field->field_length;
   tmp_field->type=field->type();
-  tmp_field->flags= field->table->maybe_null ?
+  tmp_field->flags= field->getTable()->maybe_null ?
     (field->flags & ~NOT_NULL_FLAG) : field->flags;
   tmp_field->decimals= field->decimals();
 }

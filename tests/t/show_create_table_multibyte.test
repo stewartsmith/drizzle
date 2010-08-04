@@ -1,0 +1,3 @@
+create table `чем` (a int comment 'чем');
+show create table `чем`;
+drop table `чем`;

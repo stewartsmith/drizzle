@@ -41,7 +41,7 @@ public:
     if (drizzled::internal::my_thread_init())
     {
       session->disconnect(drizzled::ER_OUT_OF_RESOURCES, true);
-      status_var_increment(drizzled::current_global_counters.aborted_connects);
+      status_var_increment(session->status_var.aborted_connects); 
       return true;
     }
 

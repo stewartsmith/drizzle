@@ -25,6 +25,8 @@
 #include "config.h"
 #include "client/get_password.h"
 
+#include <string>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +46,11 @@
 #    define TERMIO	struct sgttyb
 #  endif
 #endif
+
+using namespace std;
+
+bool tty_password= false;
+const std::string PASSWORD_SENTINEL("\0\0\0\0\0", 5);
 
 /*
   Can't use fgets, because readline will get confused
@@ -133,3 +140,31 @@ char *client_get_tty_password(const char *opt_message)
 
   return strdup(buff);
 }
+
+pair<string, string> parse_password_arg(string s)
+{
+  if (s.find("--password") == 0)
+  {
+    if (s == "--password")
+    {
+      tty_password= true;
+      //check if no argument is passed.
+      return make_pair("password", PASSWORD_SENTINEL);
+    }
+
+    if (s.substr(10,3) == "=\"\"" || s.substr(10,3) == "=''")
+    {
+      // Check if --password="" or --password=''
+      return make_pair("password", PASSWORD_SENTINEL);
+    }
+    
+    if(s.substr(10) == "=" && s.length() == 11)
+    {
+      // check if --password= and return a default value
+      return make_pair("password", PASSWORD_SENTINEL);
+    }
+  }
+
+  return make_pair(string(""), string(""));
+}
+

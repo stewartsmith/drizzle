@@ -562,7 +562,7 @@ key_name will hold the name of the key, or 0 if not found.
   {
     char *ptr, *end;
 
-    ptr= strrchr(cur_arg + 1, '.'); /* Skip the first character */
+    ptr= NULL; //Options with '.' are now supported.
     end= strrchr(cur_arg, '=');
 
     /*

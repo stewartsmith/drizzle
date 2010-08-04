@@ -27,10 +27,17 @@ namespace drizzled
 
 class Item_func_insert :public Item_str_func
 {
+  Session &session;
   String tmp_value;
 public:
-  Item_func_insert(Item *org,Item *start,Item *length,Item *new_str)
-    :Item_str_func(org,start,length,new_str) {}
+  Item_func_insert(Session &session_arg,
+                   Item *org,
+                   Item *start,
+                   Item *length,
+                   Item *new_str) :
+    Item_str_func(org,start,length,new_str),
+    session(session_arg)
+  {}
   String *val_str(String *);
   void fix_length_and_dec();
   const char *func_name() const { return "insert"; }

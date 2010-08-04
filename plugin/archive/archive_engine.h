@@ -83,16 +83,16 @@ public:
 
   int doCreateTable(drizzled::Session &session,
                     drizzled::Table &table_arg,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table& proto);
 
   int doGetTableDefinition(drizzled::Session& session,
-                           drizzled::TableIdentifier &identifier,
+                           const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetTableNames(drizzled::CachedDirectory &directory, drizzled::SchemaIdentifier&, std::set<std::string>& set_of_names);
+  void doGetTableNames(drizzled::CachedDirectory &directory, const drizzled::SchemaIdentifier&, std::set<std::string>& set_of_names);
 
-  int doDropTable(drizzled::Session&, drizzled::TableIdentifier &identifier);
+  int doDropTable(drizzled::Session&, const drizzled::TableIdentifier &identifier);
 
   ArchiveShare *findOpenTable(const std::string table_name);
   void addOpenTable(const std::string &table_name, ArchiveShare *);
@@ -107,11 +107,11 @@ public:
     return HA_ONLY_WHOLE_INDEX;
   }
 
-  bool doDoesTableExist(drizzled::Session&, drizzled::TableIdentifier &identifier);
-  int doRenameTable(drizzled::Session&, drizzled::TableIdentifier &from, drizzled::TableIdentifier &to);
+  bool doDoesTableExist(drizzled::Session&, const drizzled::TableIdentifier &identifier);
+  int doRenameTable(drizzled::Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 

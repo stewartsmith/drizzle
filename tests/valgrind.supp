@@ -82,6 +82,13 @@
 }
 {
    InnoDB Insert Row
+   Memcheck:Value4
+   ...
+   fun:row_insert_for_mysql
+   ...
+}
+{
+   InnoDB Insert Row
    Memcheck:Value8
    ...
    fun:row_insert_for_mysql
@@ -239,9 +246,9 @@
    This whole codebase is going away, so suppress this annoyance.
    Memcheck:Cond
    fun:_ZN8drizzledL17construct_optionsEPNS_6memory4RootEPNS_6module6ModuleEPNS_6optionE
-   fun:_ZN8drizzledL19test_plugin_optionsEPNS_6memory4RootEPNS_6module6ModuleEPiPPc
-   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEEb
-   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcb
+   fun:_ZN8drizzledL19test_plugin_optionsEPNS_6memory4RootEPNS_6module6ModuleEPiPPcRN5boost15program_options19options_descriptionE
+   fun:_ZN8drizzledL16plugin_load_listERNS_6module8RegistryEPNS_6memory4RootEPiPPcRKSt3setISsSt4lessISsESaISsEERN5boost15program_options19options_descriptionEb
+   fun:_ZN8drizzled11plugin_initERNS_6module8RegistryEPiPPcRN5boost15program_options19options_descriptionE
    fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
    fun:main
 }
@@ -279,6 +286,16 @@
    fun:_ZN8drizzled8internal8my_writeEiPKhmi
    ...
    fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEmbPm
+   ...
+}
+{
+   Bug 582495 - Syscall param write(buf) points to uninitialised byte(s)
+   Memcheck:Param
+   write(buf)
+   ...
+   fun:_ZN8drizzled8internal8my_writeEiPKhmi
+   ...
+   fun:_ZN8drizzled8filesortEPNS_7SessionEPNS_5TableEPNS_13st_sort_fieldEjPNS_9optimizer9SqlSelectEybPy
    ...
 }
 

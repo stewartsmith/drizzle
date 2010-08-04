@@ -134,7 +134,7 @@ static int pbms_discover_handler(handlerton *hton, THD* thd, const char *db, con
 static void xt_my_set_notnull_in_record(Field *field, char *record)
 {
 	if (field->null_ptr)
-		record[(uint) (field->null_ptr - (uchar *) field->table->record[0])] &= (uchar) ~field->null_bit;
+		record[(uint) (field->null_ptr - (uchar *) field->getTable()->getInsertRecord())] &= (uchar) ~field->null_bit;
 }
 
 /*
@@ -244,7 +244,7 @@ bool XTLocationTable::seqScanNext(char *buf, bool *eof)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'A':
@@ -358,14 +358,14 @@ void XTLocationTable::loadRow(char *buf, xtWord4 row_id)
 
 	tp_ptr = *((XTTablePathPtr *) xt_sl_item_at(ost_db->db_table_paths, row_id));
 
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'P':
@@ -469,14 +469,14 @@ void XTStatisticsTable::loadRow(char *buf, xtWord4 rec_id)
 	stat_name = xt_get_stat_meta_data(rec_id)->sm_name;
 	stat_value = xt_get_statistic(&tt_statistics, ost_db, rec_id);
 
- 	for (Field **field=table->field ; *field ; field++) {
+ 	for (Field **field=table->getFields() ; *field ; field++) {
  		curr_field = *field;
 
 		save = curr_field->ptr;
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'I':

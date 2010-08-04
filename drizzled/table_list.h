@@ -94,7 +94,6 @@ public:
     straight(false),
     force_index(false),
     ignore_leaves(false),
-    create(false),
     join_using_fields(NULL),
     join_columns(NULL),
     next_name_resolution_table(NULL),
@@ -105,7 +104,6 @@ public:
     select_lex(NULL),
     next_leaf(NULL),
     outer_join(0),
-    shared(0),
     db_length(0),
     table_name_length(0),
     dep_tables(0),
@@ -117,8 +115,7 @@ public:
     internal_tmp_table(false),
     is_alias(false),
     is_fqtn(false),
-    has_db_lookup_value(false),
-    has_table_lookup_value(false)
+    create(false)
   {}
 
   /**
@@ -131,7 +128,6 @@ public:
   /** link in a global list of all queries tables */
   TableList *next_global; 
   TableList **prev_global;
-
   char *db;
   const char *alias;
   char *table_name;
@@ -169,12 +165,10 @@ public:
   bool force_index; ///< prefer index over table scan
   bool ignore_leaves; ///< preload only non-leaf nodes
 
-  /**
-   * This TableList object corresponds to the table to be created
-   * so it is possible that it does not exist (used in CREATE TABLE
-   * ... SELECT implementation).
-   */
-  bool create;
+  /*
+    is the table a cartesian join, assumption is yes unless "solved"
+  */
+  bool isCartesian() const;
 
   /** Field names in a USING clause for JOIN ... USING. */
   List<String> *join_using_fields;
@@ -211,27 +205,8 @@ public:
   TableList *next_leaf;
   thr_lock_type lock_type;
   uint32_t outer_join; ///< Which join type
-  uint32_t shared; ///<Used in multi-upd
   size_t db_length;
   size_t table_name_length;
-  table_map dep_tables; ///< tables the table depends on
-  table_map on_expr_dep_tables; ///< tables on expression depends on
-  nested_join_st *nested_join; ///< if the element is a nested join
-  TableList *embedding; ///< nested join containing the table
-  List<TableList> *join_list; ///< join list the table belongs to
-  plugin::StorageEngine *db_type; ///< table_type for handler
-  char timestamp_buffer[20]; ///< buffer for timestamp (19+1)
-  bool internal_tmp_table;
-  /** true if an alias for this table was specified in the SQL. */
-  bool is_alias;
-  /** 
-   * true if the table is referred to in the statement using a fully
-   * qualified name (<db_name>.<table_name>).
-   */
-  bool is_fqtn;
-
-  bool has_db_lookup_value;
-  bool has_table_lookup_value;
 
   void set_underlying_merge();
   bool setup_underlying(Session *session);
@@ -405,6 +380,161 @@ public:
    *  Length of key
    */
   uint32_t create_table_def_key(char *key);
+
+  friend std::ostream& operator<<(std::ostream& output, const TableList &list)
+  {
+    output << "TableList:(";
+    output << list.db;
+    output << ", ";
+    output << list.table_name;
+    output << ", ";
+    output << list.alias;
+    output << ", ";
+    output << "is_natural_join:" << list.is_natural_join;
+    output << ", ";
+    output << "is_join_columns_complete:" << list.is_join_columns_complete;
+    output << ", ";
+    output << "straight:" << list.straight;
+    output << ", ";
+    output << "force_index" << list.force_index;
+    output << ", ";
+    output << "ignore_leaves:" << list.ignore_leaves;
+    output << ", ";
+    output << "create:" << list.create;
+    output << ", ";
+    output << "outer_join:" << list.outer_join;
+    output << ", ";
+    output << "nested_join:" << list.nested_join;
+    output << ")";
+
+    return output;  // for multiple << operators.
+  }
+
+  void setIsAlias(bool in_is_alias)
+  {
+    is_alias= in_is_alias;
+  }
+
+  void setIsFqtn(bool in_is_fqtn)
+  {
+    is_fqtn= in_is_fqtn;
+  }
+
+  void setCreate(bool in_create)
+  {
+    create= in_create;
+  }
+
+  void setInternalTmpTable(bool in_internal_tmp_table)
+  {
+    internal_tmp_table= in_internal_tmp_table;
+  }
+
+  void setDbType(plugin::StorageEngine *in_db_type)
+  {
+    db_type= in_db_type;
+  }
+
+  void setJoinList(List<TableList> *in_join_list)
+  {
+    join_list= in_join_list;
+  }
+
+  void setEmbedding(TableList *in_embedding)
+  {
+    embedding= in_embedding;
+  }
+
+  void setNestedJoin(nested_join_st *in_nested_join)
+  {
+    nested_join= in_nested_join;
+  }
+
+  void setDepTables(table_map in_dep_tables)
+  {
+    dep_tables= in_dep_tables;
+  }
+
+  void setOnExprDepTables(table_map in_on_expr_dep_tables)
+  {
+    on_expr_dep_tables= in_on_expr_dep_tables;
+  }
+
+  bool getIsAlias() const
+  {
+    return is_alias;
+  }
+
+  bool getIsFqtn() const
+  {
+    return is_fqtn;
+  }
+
+  bool isCreate() const
+  {
+    return create;
+  }
+
+  bool getInternalTmpTable() const
+  {
+    return internal_tmp_table;
+  }
+
+  plugin::StorageEngine *getDbType() const
+  {
+    return db_type;
+  }
+
+  TableList *getEmbedding() const
+  {
+    return embedding;
+  }
+
+  List<TableList> *getJoinList() const
+  {
+    return join_list;
+  }
+
+  nested_join_st *getNestedJoin() const
+  {
+    return nested_join;
+  }
+
+  table_map getDepTables() const
+  {
+    return dep_tables;
+  }
+
+  table_map getOnExprDepTables() const
+  {
+    return on_expr_dep_tables;
+  }
+
+private:
+
+  table_map dep_tables; ///< tables the table depends on
+  table_map on_expr_dep_tables; ///< tables on expression depends on
+  nested_join_st *nested_join; ///< if the element is a nested join
+  TableList *embedding; ///< nested join containing the table
+  List<TableList> *join_list; ///< join list the table belongs to
+  plugin::StorageEngine *db_type; ///< table_type for handler
+  char timestamp_buffer[20]; ///< buffer for timestamp (19+1)
+  bool internal_tmp_table;
+  /** true if an alias for this table was specified in the SQL. */
+  bool is_alias;
+
+  /** 
+   * true if the table is referred to in the statement using a fully
+   * qualified name (<db_name>.<table_name>).
+   */
+  bool is_fqtn;
+  /**
+   * This TableList object corresponds to the table to be created
+   * so it is possible that it does not exist (used in CREATE TABLE
+   * ... SELECT implementation).
+   */
+  bool create;
+
 };
 
 void close_thread_tables(Session *session);

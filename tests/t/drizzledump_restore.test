@@ -83,6 +83,52 @@ INSERT INTO `t1` VALUES (0x602010000280100005E71A);
 let $table_name = test.t1;
 --source include/drizzledump.inc
 
+--echo #
+--echo # Bug#550091 in Drizzle: "drizzledump dumps data_dictionary"
+--echo #
+# We create a table in the test database
+# We create an additional database and create a table there
+# We dump all, then attempt to recreate and do some basic queries against
+# our previously created tables
+#
+# We don't explicitly check the dumpfile for data_dictionary or
+# information_schema output, but this test was failing on
+# the unpatched drizzledump during dumping of data_dictionary
+# information
+
+
+CREATE TABLE t1 (a char(100), b int);
+INSERT INTO t1 values ('a',100);
+INSERT INTO t1 values ('b',200);
+
+CREATE SCHEMA drizzledump_test;
+USE drizzledump_test;
+CREATE TABLE t1 (a int, b char(100));
+INSERT INTO t1 VALUES (1, 'abbazabba');
+
+# dump all databases here
+--exec $DRIZZLE_DUMP --skip-comments --compact -A > $drizzledumpfile
+
+--echo DROP original schemas
+DROP DATABASE test;
+DROP DATABASE drizzledump_test;
+
+--echo Ensure we don't have those tables (verify we restored something)
+--ERROR 1146
+SELECT * FROM test.t1;
+--ERROR 1146
+SELECT * FROM drizzledump_test.t1;
+
+--echo Restoring from dumpfile
+--exec $DRIZZLE < $drizzledumpfile
+
+USE test;
+SELECT * FROM t1;
+SELECT * FROM drizzledump_test.t1;
+--echo Cleanup
+DROP DATABASE drizzledump_test;
+DROP TABLE t1;
+
 --echo # End tests
 
 --echo # Cleanup
