@@ -242,7 +242,7 @@ CREATE TABLE table_25930_a ( blah INT );
 CREATE TABLE table_25930_b SELECT "blah" - 1 FROM table_25930_a;
 desc table_25930_b;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-"blah" - 1	DOUBLE	FALSE		FALSE	
+"blah" - 1	DOUBLE	NO		NO	
 DROP TABLE table_25930_a;
 DROP TABLE table_25930_b;
 select pi(3.14);
@@ -461,6 +461,8 @@ a1	a2	a3	a4	a1	a2	a3	a4
 SELECT t1.*,t2.* FROM { OJ ((t1 LEFT OUTER JOIN t2 ON t1.a3=t2.a2) INNER JOIN t3 ON (t3.a1=t2.a2))};
 a1	a2	a3	a4	a1	a2	a3	a4
 SELECT t1.*,t2.* FROM { OJ (t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a2) CROSS JOIN t3 ON (t3.a2=t2.a3)};
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'ON (t3.a2=t2.a3)}' at line 1
+SELECT t1.*,t2.* FROM { OJ (t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a2) INNER JOIN t3 ON (t3.a2=t2.a3)};
 a1	a2	a3	a4	a1	a2	a3	a4
 SELECT * FROM {oj t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a3} WHERE t1.a2 > 10;
 a1	a2	a3	a4	a1	a2	a3	a4

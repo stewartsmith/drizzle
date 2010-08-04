@@ -55,7 +55,6 @@ typedef struct st_ha_create_information
   uint64_t auto_increment_value;
   uint32_t table_options;
   uint32_t used_fields;
-  enum row_type row_type;
   plugin::StorageEngine *db_type;
   bool table_existed;			/* 1 in create if table existed */
 } HA_CREATE_INFO;

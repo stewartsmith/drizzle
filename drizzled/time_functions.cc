@@ -131,8 +131,8 @@ str_to_datetime_with_warn(const char *str,
                           uint32_t flags)
 {
   int was_cut;
-  Session *session= current_session;
   enum enum_drizzle_timestamp_type ts_type;
+  Session *session= current_session;
 
   ts_type= str_to_datetime(str, length, l_time,
                            (flags | (session->variables.sql_mode &
@@ -140,7 +140,7 @@ str_to_datetime_with_warn(const char *str,
                                       MODE_NO_ZERO_DATE))),
                            &was_cut);
   if (was_cut || ts_type <= DRIZZLE_TIMESTAMP_ERROR)
-    make_truncated_value_warning(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, ts_type,  NULL);
   return ts_type;
 }

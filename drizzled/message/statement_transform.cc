@@ -323,7 +323,14 @@ transformInsertRecordToSql(const InsertHeader &header,
 
     const FieldMetadata &field_metadata= header.field_metadata(x);
 
-    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    if (record.is_null(x))
+    {
+      should_quote_field_value= false;
+    }
+    else 
+    {
+      should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    }
 
     if (should_quote_field_value)
       destination.push_back('\'');
@@ -341,7 +348,14 @@ transformInsertRecordToSql(const InsertHeader &header,
     }
     else
     {
-      destination.append(record.insert_value(x));
+      if (record.is_null(x))
+      {
+        destination.append("NULL");
+      }
+      else 
+      {
+        destination.append(record.insert_value(x));
+      } 
     }
 
     if (should_quote_field_value)
@@ -468,7 +482,14 @@ transformUpdateRecordToSql(const UpdateHeader &header,
     destination.push_back(quoted_identifier);
     destination.push_back('=');
 
-    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    if (record.is_null(x))
+    {
+      should_quote_field_value= false;
+    }
+    else 
+    {
+      should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    }    
 
     if (should_quote_field_value)
       destination.push_back('\'');
@@ -486,7 +507,14 @@ transformUpdateRecordToSql(const UpdateHeader &header,
     }
     else
     {
-      destination.append(record.after_value(x));
+      if (record.is_null(x))
+      {
+        destination.append("NULL");
+      }
+      else
+      {
+        destination.append(record.after_value(x));
+      }
     }
 
     if (should_quote_field_value)
@@ -932,14 +960,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     destination.append(ss.str());
     ss.clear();
   }
-  
-  if (options.has_row_type())
-  {
-    ss << options.row_type();
-    destination.append("\nROW_TYPE = ", 12);
-    destination.append(ss.str());
-    ss.clear();
-  }
 
   if (options.has_data_file_name())
   {
@@ -1197,10 +1217,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.type() == Table::Field::TIMESTAMP)
-    if (field.timestamp_options().has_auto_updates() &&
-        field.timestamp_options().auto_updates())
-      destination.append(" ON UPDATE CURRENT_TIMESTAMP", 28);
+  if (field.has_options() && field.options().has_update_value())
+  {
+    destination.append(" ON UPDATE ", 11);
+    destination.append(field.options().update_value());
+  }
 
   if (field.has_comment())
   {

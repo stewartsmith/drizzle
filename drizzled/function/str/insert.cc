@@ -58,12 +58,12 @@ String *Item_func_insert::val_str(String *str)
     length= res->length() - start;
 
   if ((uint64_t) (res->length() - length + res2->length()) >
-      (uint64_t) current_session->variables.max_allowed_packet)
+      (uint64_t) session.variables.max_allowed_packet)
   {
-    push_warning_printf(current_session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(&session, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
 			ER(ER_WARN_ALLOWED_PACKET_OVERFLOWED),
-			func_name(), current_session->variables.max_allowed_packet);
+			func_name(), session.variables.max_allowed_packet);
     goto null;
   }
   res=copy_if_not_alloced(str,res,res->length());

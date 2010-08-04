@@ -17,6 +17,7 @@ FOREIGN KEY (id, t2_id) REFERENCES t2(t1_id, id)  ON DELETE CASCADE) ENGINE=INNO
 
 #select * from information_schema.OLD_TABLE_CONSTRAINTS where
 #TABLE_SCHEMA= "test";
+--sorted_result
 select * from data_dictionary.indexes where TABLE_SCHEMA= "test";
 
 drop table t3, t2, t1;

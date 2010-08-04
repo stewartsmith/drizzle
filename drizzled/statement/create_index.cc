@@ -59,8 +59,6 @@ bool statement::CreateIndex::execute()
     return true;
   }
 
-  create_info.row_type= ROW_TYPE_NOT_USED;
-
   bool res;
   if (original_table_message.type() == message::Table::STANDARD )
   {

@@ -40,21 +40,21 @@ drop table t1;
 i	j	k
 NULL	1	NULL
 Field	Type	Null	Default	Default_is_NULL	On_Update
-i	INTEGER	TRUE		TRUE	
-j	INTEGER	FALSE		FALSE	
-k	INTEGER	TRUE		TRUE	
+i	INTEGER	YES		YES	
+j	INTEGER	NO		NO	
+k	INTEGER	YES		YES	
 +------+---+------+
 | i    | j | k    |
 +------+---+------+
 | NULL | 1 | NULL | 
 +------+---+------+
-+-------+---------+-------+---------+-----------------+-----------+
-| Field | Type    | Null  | Default | Default_is_NULL | On_Update |
-+-------+---------+-------+---------+-----------------+-----------+
-| i     | INTEGER | TRUE  |         | TRUE            |           | 
-| j     | INTEGER | FALSE |         | FALSE           |           | 
-| k     | INTEGER | TRUE  |         | TRUE            |           | 
-+-------+---------+-------+---------+-----------------+-----------+
++-------+---------+------+---------+-----------------+-----------+
+| Field | Type    | Null | Default | Default_is_NULL | On_Update |
++-------+---------+------+---------+-----------------+-----------+
+| i     | INTEGER | YES  |         | YES             |           | 
+| j     | INTEGER | NO   |         | NO              |           | 
+| k     | INTEGER | YES  |         | YES             |           | 
++-------+---------+------+---------+-----------------+-----------+
 i	s1
 1	x
 2	NULL
@@ -75,13 +75,13 @@ NULL
 +-------------+
 create table t1(a int, b varchar(255), c int);
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	TRUE		TRUE	
-b	VARCHAR	TRUE		TRUE	
-c	INTEGER	TRUE		TRUE	
+a	INTEGER	YES		YES	
+b	VARCHAR	YES		YES	
+c	INTEGER	YES		YES	
 Field	Type	Null	Default	Default_is_NULL	On_Update
-a	INTEGER	TRUE		TRUE	
-b	VARCHAR	TRUE		TRUE	
-c	INTEGER	TRUE		TRUE	
+a	INTEGER	YES		YES	
+b	VARCHAR	YES		YES	
+c	INTEGER	YES		YES	
 drop table t1;
 1
 1
