@@ -140,7 +140,7 @@ static int init(drizzled::module::Context &context)
 
   else
   {
-    sysvar_transaction_log_file= strdup(DEFAULT_LOG_FILE_PATH);
+    sysvar_transaction_log_file= (char *)DEFAULT_LOG_FILE_PATH;
   }
 
   if (vm.count("use-replicator"))
@@ -150,7 +150,7 @@ static int init(drizzled::module::Context &context)
 
   else
   {
-    sysvar_transaction_log_use_replicator= strdup(DEFAULT_USE_REPLICATOR);
+    sysvar_transaction_log_use_replicator= (char *)DEFAULT_USE_REPLICATOR;
   }
 
   /* Create and initialize the transaction log itself */
