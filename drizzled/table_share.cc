@@ -1317,7 +1317,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     Item *default_value= NULL;
 
     if (pfield.options().has_default_value() ||
-        pfield.options().has_default_null()  ||
+        pfield.options().default_null()  ||
         pfield.options().has_default_bin_value())
     {
       default_value= default_value_item(field_type,
