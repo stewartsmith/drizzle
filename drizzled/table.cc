@@ -291,7 +291,7 @@ void append_unescaped(String *res, const char *pos, uint32_t length)
         (mblen= my_ismbchar(default_charset_info, pos, end)))
     {
       res->append(pos, mblen);
-      pos+= mblen;
+      pos+= mblen - 1;
       if (pos >= end)
         break;
       continue;
@@ -1069,7 +1069,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
       (select_options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) == OPTION_BIG_TABLES)
   {
     share->storage_engine= myisam_engine;
-    table->cursor= share->db_type()->getCursor(*share, table->getMemRoot());
+    table->cursor= share->db_type()->getCursor(*share);
     if (group &&
 	(param->group_parts > table->cursor->getEngine()->max_key_parts() ||
 	 param->group_length > table->cursor->getEngine()->max_key_length()))
@@ -1080,7 +1080,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   else
   {
     share->storage_engine= heap_engine;
-    table->cursor= share->db_type()->getCursor(*share, table->getMemRoot());
+    table->cursor= share->db_type()->getCursor(*share);
   }
   if (! table->cursor)
     goto err;

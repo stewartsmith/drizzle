@@ -41,9 +41,9 @@ Function::Function(const std::string &name_arg) :
 }
 
 
-Cursor *Function::create(TableShare &table, memory::Root *mem_root)
+Cursor *Function::create(TableShare &table)
 {
-  return new (mem_root) FunctionCursor(*this, table);
+  return new FunctionCursor(*this, table);
 }
 
 int Function::doGetTableDefinition(Session &,
