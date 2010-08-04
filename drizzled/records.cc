@@ -56,7 +56,7 @@ void ReadRecord::init_read_record_idx(Session *,
   memset(this, 0, sizeof(*this));
   table= table_arg;
   cursor=  table->cursor;
-  record= table->record[0];
+  record= table->getInsertRecord();
   print_error= print_error_arg;
 
   table->status=0;			/* And it's always found */
@@ -89,7 +89,7 @@ void ReadRecord::init_read_record(Session *session_arg,
   else
   {
     table->emptyRecord();
-    record= table->record[0];
+    record= table->getInsertRecord();
     ref_length= table->cursor->ref_length;
   }
   select= select_arg;

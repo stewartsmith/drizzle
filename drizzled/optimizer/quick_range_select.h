@@ -123,7 +123,7 @@ public:
    * QuickRangeSelect::get_next()
    *
    * NOTES
-   * Record is read into table->record[0]
+   * Record is read into table->getInsertRecord()
    *
    * RETURN
    * @retval 0			Found row

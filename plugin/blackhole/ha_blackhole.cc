@@ -79,21 +79,21 @@ public:
 
   int doCreateTable(Session&,
                     Table&,
-                    drizzled::TableIdentifier &identifier,
+                    const drizzled::TableIdentifier &identifier,
                     drizzled::message::Table&);
 
-  int doDropTable(Session&, TableIdentifier &identifier);
+  int doDropTable(Session&, const drizzled::TableIdentifier &identifier);
 
   BlackholeShare *findOpenTable(const string table_name);
   void addOpenTable(const string &table_name, BlackholeShare *);
   void deleteOpenTable(const string &table_name);
 
   int doGetTableDefinition(Session& session,
-                           TableIdentifier &identifier,
+                           const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-		       SchemaIdentifier &,
+		       const SchemaIdentifier &,
                        set<string>& set_of_names)
   {
     drizzled::CachedDirectory::Entries entries= directory.getEntries();
@@ -138,16 +138,16 @@ public:
             HA_KEYREAD_ONLY);
   }
 
-  bool doDoesTableExist(Session& session, TableIdentifier &identifier);
-  int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
+  bool doDoesTableExist(Session& session, const drizzled::TableIdentifier &identifier);
+  int doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to);
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
 };
 
 
 void BlackholeEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                            drizzled::SchemaIdentifier &schema_identifier,
+                                            const drizzled::SchemaIdentifier &schema_identifier,
                                             drizzled::TableIdentifiers &set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
@@ -179,7 +179,7 @@ void BlackholeEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory
   }
 }
 
-int BlackholeEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+int BlackholeEngine::doRenameTable(Session&, const drizzled::TableIdentifier &from, const drizzled::TableIdentifier &to)
 {
   int error= 0;
 
@@ -244,7 +244,7 @@ int ha_blackhole::close(void)
 
 int BlackholeEngine::doCreateTable(Session&,
                                    Table&,
-                                   drizzled::TableIdentifier &identifier,
+                                   const drizzled::TableIdentifier &identifier,
                                    drizzled::message::Table& proto)
 {
   string serialized_proto;
@@ -270,7 +270,7 @@ int BlackholeEngine::doCreateTable(Session&,
 
 
 int BlackholeEngine::doDropTable(Session&,
-                                 TableIdentifier &identifier)
+                                 const drizzled::TableIdentifier &identifier)
 {
   string new_path(identifier.getPath());
 
@@ -288,7 +288,7 @@ int BlackholeEngine::doDropTable(Session&,
 
 
 bool BlackholeEngine::doDoesTableExist(Session&,
-                                       TableIdentifier &identifier)
+                                       const drizzled::TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(BLACKHOLE_EXT);
@@ -303,7 +303,7 @@ bool BlackholeEngine::doDoesTableExist(Session&,
 
 
 int BlackholeEngine::doGetTableDefinition(Session&,
-                                          TableIdentifier &identifier,
+                                          const drizzled::TableIdentifier &identifier,
                                           drizzled::message::Table &table_proto)
 {
   string new_path;

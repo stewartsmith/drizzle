@@ -816,14 +816,11 @@ static bool internal_alter_table(Session *session,
                                  order_st *order,
                                  bool ignore)
 {
-  Table *new_table= NULL;
   int error= 0;
   char tmp_name[80];
   char old_name[32];
   ha_rows copied= 0;
   ha_rows deleted= 0;
-
-  message::Table *original_table_definition= table->getMutableShare()->getTableProto();
 
   session->set_proc_info("init");
 
@@ -863,15 +860,6 @@ static bool internal_alter_table(Session *session,
     my_error(ER_ILLEGAL_HA, MYF(0), new_table_identifier.getSQLPath().c_str());
 
     return true;
-  }
-
-  if (create_info->row_type == ROW_TYPE_NOT_USED)
-  {
-    message::Table::TableOptions *table_options;
-    table_options= create_proto.mutable_options();
-
-    create_info->row_type= table->getShare()->row_type;
-    table_options->set_row_type(original_table_definition->options().row_type());
   }
 
   session->set_proc_info("setup");
@@ -927,7 +915,7 @@ static bool internal_alter_table(Session *session,
         error= 0;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->alias);
+                            table->getAlias());
       }
 
       pthread_mutex_lock(&LOCK_open); /* Lock to remove all instances of table from table cache before ALTER */
@@ -975,7 +963,7 @@ static bool internal_alter_table(Session *session,
         error= 0;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->alias);
+                            table->getAlias());
       }
 
       if (error == 0)
@@ -1029,7 +1017,8 @@ static bool internal_alter_table(Session *session,
   }
 
   /* Open the table so we need to copy the data to it. */
-  new_table= open_alter_table(session, table, new_table_as_temporary);
+  Table *new_table= open_alter_table(session, table, new_table_as_temporary);
+
 
   if (not new_table)
   {
@@ -1039,7 +1028,8 @@ static bool internal_alter_table(Session *session,
 
   /* Copy the data if necessary. */
   {
-    session->count_cuted_fields= CHECK_FIELD_WARN;	// calc cuted fields
+    /* We must not ignore bad input! */
+    session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;	// calc cuted fields
     session->cuted_fields= 0L;
     session->set_proc_info("copy to tmp table");
     copied= deleted= 0;
@@ -1060,7 +1050,7 @@ static bool internal_alter_table(Session *session,
                                     alter_info->error_if_not_empty);
 
     /* We must not ignore bad input! */
-    session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;
+    assert(session->count_cuted_fields == CHECK_FIELD_ERROR_FOR_NULL);
   }
 
   /* Now we need to resolve what just happened with the data copy. */
@@ -1126,12 +1116,11 @@ static bool internal_alter_table(Session *session,
         new_table->intern_close_table();
         if (new_table->hasShare())
         {
-          assert(new_table->getShare()->newed);
           delete new_table->s;
           new_table->s= NULL;
         }
 
-        free(new_table);
+        delete new_table;
       }
 
       pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
@@ -1178,12 +1167,11 @@ static bool internal_alter_table(Session *session,
 
       if (new_table->hasShare())
       {
-        assert(new_table->getShare()->newed);
         delete new_table->s;
         new_table->s= NULL;
       }
 
-      free(new_table);
+      delete new_table;
     }
 
     pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
