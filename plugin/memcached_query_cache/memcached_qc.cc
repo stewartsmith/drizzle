@@ -95,17 +95,16 @@ bool Memcached_Qc::doSendCachedResultset(Session *session)
   * and didn't finish the work
   */ 
   
-  /*LEX *lex= session->lex;
+  LEX *lex= session->lex;
   register Select_Lex *select_lex= &lex->select_lex;
   select_result *result=lex->result;
   if (!result && !(result= new select_send()))
     return true;
-  Select_Lex_Unit *unit= &lex->unit;
-  unit->set_limit(unit->global_parameters);
+  //Select_Lex_Unit *unit= &lex->unit;
+  //unit->set_limit(unit->global_parameters);
     
-  result->prepare(select_lex->item_list, unit);
-  
-  result->send_data(QueryCacheService::previousItem);*/
+  result->prepare(select_lex->item_list, select_lex->master_unit());
+ 
   // if (result->prepare(fields_list, select_lex->master_unit()))   /* select_lex.master = lex->unit :D */
 
 
@@ -113,26 +112,37 @@ bool Memcached_Qc::doSendCachedResultset(Session *session)
   map<string, message::Resultset>::iterator it= QueryCacheService::cache.find(session->query_cache_key);
   // must handle the wrong key case !
   message::Resultset resultset_message= it->second;
+  List<Item> item_list;
+
+  /* Send the fields */
   message::SelectHeader header= resultset_message.select_header();
   size_t num_fields= header.field_meta_size();
+  for (size_t y= 0; y < num_fields; y++)
+  {
+    message::FieldMeta field= header.field_meta(y);
+    string value=field.field_alias();
+    item_list.push_back(new Item_string(value.c_str(), value.length(), system_charset_info));
+  }
+  result->send_fields(item_list);
+  item_list.empty();
+
+  /* Send the Data */
   message::SelectData data= resultset_message.select_data();
-  char buff[MAX_FIELD_WIDTH];
-  String str(buff, sizeof(buff), &my_charset_bin);
-  size_t y;
   session->limit_found_rows= 0; 
-  for ( int j= 0; j < data.record_size(); j++)
+  for (int j= 0; j < data.record_size(); j++)
   {
     message::SelectRecord record= data.record(j);
-    for ( y= 0; y < num_fields; y++)
+    for (size_t y= 0; y < num_fields; y++)
     {
       string value=record.record_value(y);
-      str.set(value.c_str(), value.length(), system_charset_info);
-      session->client->store(value.c_str(),value.size());
+      item_list.push_back(new Item_string(value.c_str(), value.length(), system_charset_info));
     }
-    session->client->flush();
-    session->limit_found_rows++;
+    result->send_data(item_list);
+    item_list.empty();
   }
-  session->my_eof();
+  /* Send End of file */
+  result->send_eof();
+  /* reset the cache key at the session level */
   session->query_cache_key= "";
   return false;
 }
