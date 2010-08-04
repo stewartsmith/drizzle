@@ -44,15 +44,15 @@ if test -n "$1"; then
     [INTLTOOL_APPLIED_VERSION_AS_INT=`echo $INTLTOOL_APPLIED_VERSION | awk -F. '{ print $ 1 * 1000 + $ 2 * 100 + $ 3; }'`
     ]
     AC_MSG_RESULT([$INTLTOOL_APPLIED_VERSION found])
-    test "$INTLTOOL_APPLIED_VERSION_AS_INT" -ge "$INTLTOOL_REQUIRED_VERSION_AS_INT" ||
-	AC_MSG_ERROR([Your intltool is too old.  You need intltool $1 or later.])
+    test "$INTLTOOL_APPLIED_VERSION_AS_INT" -ge "$INTLTOOL_REQUIRED_VERSION_AS_INT" || AC_MSG_WARN([Your intltool is too old.  You need intltool $1 or later.])
 fi
 
 AC_PATH_PROG(INTLTOOL_UPDATE, [intltool-update])
 AC_PATH_PROG(INTLTOOL_MERGE, [intltool-merge])
 AC_PATH_PROG(INTLTOOL_EXTRACT, [intltool-extract])
 if test -z "$INTLTOOL_UPDATE" -o -z "$INTLTOOL_MERGE" -o -z "$INTLTOOL_EXTRACT"; then
-    AC_MSG_ERROR([The intltool scripts were not found. Please install intltool.])
+    AC_MSG_WARN([The intltool scripts were not found. Please install intltool.])
+    AC_MSG_WARN([On Debian: apt-get install intltool. On Redhat: yum install intltool])
 fi
 
   INTLTOOL_DESKTOP_RULE='%.desktop:   %.desktop.in   $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) -d -u -c $(top_builddir)/po/.intltool-merge-cache $(top_srcdir)/po $< [$]@' 
@@ -101,23 +101,23 @@ AC_PATH_PROG(MSGMERGE, msgmerge)
 AC_PATH_PROG(MSGFMT, msgfmt)
 AC_PATH_PROG(GMSGFMT, gmsgfmt, $MSGFMT)
 if test -z "$XGETTEXT" -o -z "$MSGMERGE" -o -z "$MSGFMT"; then
-    AC_MSG_ERROR([GNU gettext tools not found; required for intltool])
+    AC_MSG_WARN([GNU gettext tools not found; required for intltool])
 fi
 xgversion="`$XGETTEXT --version|grep '(GNU ' 2> /dev/null`"
 mmversion="`$MSGMERGE --version|grep '(GNU ' 2> /dev/null`"
 mfversion="`$MSGFMT --version|grep '(GNU ' 2> /dev/null`"
 if test -z "$xgversion" -o -z "$mmversion" -o -z "$mfversion"; then
-    AC_MSG_ERROR([GNU gettext tools not found; required for intltool])
+    AC_MSG_WARN([GNU gettext tools not found; required for intltool])
 fi
 
 AC_PATH_PROG(INTLTOOL_PERL, perl)
 if test -z "$INTLTOOL_PERL"; then
-   AC_MSG_ERROR([perl not found])
+   AC_MSG_WARN([perl not found])
 fi
 AC_MSG_CHECKING([for perl >= 5.8.1])
 $INTLTOOL_PERL -e "use 5.8.1;" > /dev/null 2>&1
 if test $? -ne 0; then
-   AC_MSG_ERROR([perl 5.8.1 is required for intltool])
+   AC_MSG_WARN([perl 5.8.1 is required for intltool])
 else
    IT_PERL_VERSION="`$INTLTOOL_PERL -e \"printf '%vd', $^V\"`"
    AC_MSG_RESULT([$IT_PERL_VERSION])
@@ -127,7 +127,7 @@ if test "x$2" != "xno-xml"; then
    if `$INTLTOOL_PERL -e "require XML::Parser" 2>/dev/null`; then
        AC_MSG_RESULT([ok])
    else
-       AC_MSG_ERROR([XML::Parser perl module is required for intltool])
+       AC_MSG_WARN([XML::Parser perl module is required for intltool])
    fi
 fi
 
@@ -160,7 +160,6 @@ fi
 AC_SUBST(DATADIRNAME)
 
 IT_PO_SUBDIR([po])
-
 ])
 
 
