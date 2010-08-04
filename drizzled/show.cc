@@ -156,7 +156,7 @@ bool drizzled_show_create(Session *session, TableList *table_list, bool is_if_no
   if (session->client->sendFields(&field_list))
     return true;
   {
-    session->client->store(table_list->table->alias);
+    session->client->store(table_list->table->getAlias());
   }
 
   session->client->store(buffer.ptr(), buffer.length());
@@ -471,9 +471,7 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
 
   key_info= table->key_info;
   memset(&create_info, 0, sizeof(create_info));
-  /* Allow update_create_info to update row type */
-  create_info.row_type= table->getShare()->row_type;
-  cursor->update_create_info(&create_info);
+
   primary_key= table->getShare()->getPrimaryKey();
 
   for (uint32_t i=0 ; i < table->getShare()->sizeKeys() ; i++,key_info++)
@@ -560,13 +558,6 @@ int store_create_info(TableList *table_list, String *packet, bool is_if_not_exis
       append_unescaped(packet, option.state().c_str(), option.state().length());
     }
 
-#if 0
-    if (create_info.row_type != ROW_TYPE_DEFAULT)
-    {
-      packet->append(STRING_WITH_LEN(" ROW_FORMAT="));
-      packet->append(ha_row_type[(uint32_t) create_info.row_type]);
-    }
-#endif
     if (table->getShare()->block_size)
     {
       packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));

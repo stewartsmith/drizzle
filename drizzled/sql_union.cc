@@ -63,7 +63,7 @@ bool select_union::send_data(List<Item> &values)
   if (session->is_error())
     return 1;
 
-  if ((error= table->cursor->insertRecord(table->record[0])))
+  if ((error= table->cursor->insertRecord(table->getInsertRecord())))
   {
     /* create_myisam_from_heap will generate error if needed */
     if (table->cursor->is_fatal_error(error, HA_CHECK_DUP))

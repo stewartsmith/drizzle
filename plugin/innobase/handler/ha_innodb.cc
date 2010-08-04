@@ -380,7 +380,7 @@ public:
   doDropSchema(
   /*===================*/
         /* out: error number */
-    SchemaIdentifier  &identifier); /* in: database path; inside InnoDB the name
+    const SchemaIdentifier  &identifier); /* in: database path; inside InnoDB the name
         of the last directory in the path is used as
         the database name: for example, in 'mysql/data/test'
         the database name is 'test' */
@@ -419,10 +419,10 @@ public:
 
   UNIV_INTERN int doCreateTable(Session &session,
                                 Table &form,
-                                drizzled::TableIdentifier &identifier,
+                                const TableIdentifier &identifier,
                                 message::Table&);
-  UNIV_INTERN int doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to);
-  UNIV_INTERN int doDropTable(Session &session, TableIdentifier &identifier);
+  UNIV_INTERN int doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to);
+  UNIV_INTERN int doDropTable(Session &session, const TableIdentifier &identifier);
 
   UNIV_INTERN virtual bool get_error_message(int error, String *buf);
 
@@ -441,17 +441,17 @@ public:
   }
 
   int doGetTableDefinition(drizzled::Session& session,
-                           drizzled::TableIdentifier &identifier,
+                           const TableIdentifier &identifier,
                            drizzled::message::Table &table_proto);
 
   void doGetTableNames(drizzled::CachedDirectory &directory,
-           drizzled::SchemaIdentifier &schema_identifier,
+                       const drizzled::SchemaIdentifier &schema_identifier,
                        std::set<std::string> &set_of_names);
 
-  bool doDoesTableExist(drizzled::Session& session, drizzled::TableIdentifier &identifier);
+  bool doDoesTableExist(drizzled::Session& session, const TableIdentifier &identifier);
 
   void doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                             drizzled::SchemaIdentifier &schema_identifier,
+                             const drizzled::SchemaIdentifier &schema_identifier,
                              drizzled::TableIdentifiers &set_of_identifiers);
   bool validateCreateTableOption(const std::string &key, const std::string &state);
   void dropTemporarySchema();
@@ -480,7 +480,7 @@ bool InnobaseEngine::validateCreateTableOption(const std::string &key, const std
 }
 
 void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                           drizzled::SchemaIdentifier &schema_identifier,
+                                           const drizzled::SchemaIdentifier &schema_identifier,
                                            drizzled::TableIdentifiers &set_of_identifiers)
 {
   CachedDirectory::Entries entries= directory.getEntries();
@@ -512,7 +512,7 @@ void InnobaseEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
   }
 }
 
-bool InnobaseEngine::doDoesTableExist(Session &session, TableIdentifier &identifier)
+bool InnobaseEngine::doDoesTableExist(Session &session, const TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(DEFAULT_FILE_EXTENSION);
@@ -529,7 +529,7 @@ bool InnobaseEngine::doDoesTableExist(Session &session, TableIdentifier &identif
 }
 
 int InnobaseEngine::doGetTableDefinition(Session &session,
-                                         drizzled::TableIdentifier &identifier,
+                                         const TableIdentifier &identifier,
                                          message::Table &table_proto)
 {
   string proto_path(identifier.getPath());
@@ -550,7 +550,7 @@ int InnobaseEngine::doGetTableDefinition(Session &session,
   return ENOENT;
 }
 
-void InnobaseEngine::doGetTableNames(CachedDirectory &directory, SchemaIdentifier&, set<string>& set_of_names)
+void InnobaseEngine::doGetTableNames(CachedDirectory &directory, const SchemaIdentifier&, set<string>& set_of_names)
 {
   CachedDirectory::Entries entries= directory.getEntries();
 
@@ -2517,43 +2517,6 @@ InnobaseEngine::close_connection(
 *****************************************************************************/
 
 /****************************************************************//**
-Get the record format from the data dictionary.
-@return one of ROW_TYPE_REDUNDANT, ROW_TYPE_COMPACT,
-ROW_TYPE_COMPRESSED, ROW_TYPE_DYNAMIC */
-UNIV_INTERN
-enum row_type
-ha_innobase::get_row_type() const
-/*=============================*/
-{
-  if (prebuilt && prebuilt->table) {
-    const ulint flags = prebuilt->table->flags;
-
-    if (UNIV_UNLIKELY(!flags)) {
-      return(ROW_TYPE_REDUNDANT);
-    }
-
-    ut_ad(flags & DICT_TF_COMPACT);
-
-    switch (flags & DICT_TF_FORMAT_MASK) {
-    case DICT_TF_FORMAT_51 << DICT_TF_FORMAT_SHIFT:
-      return(ROW_TYPE_COMPACT);
-    case DICT_TF_FORMAT_ZIP << DICT_TF_FORMAT_SHIFT:
-      if (flags & DICT_TF_ZSSIZE_MASK) {
-        return(ROW_TYPE_COMPRESSED);
-      } else {
-        return(ROW_TYPE_DYNAMIC);
-      }
-#if DICT_TF_FORMAT_ZIP != DICT_TF_FORMAT_MAX
-# error "DICT_TF_FORMAT_ZIP != DICT_TF_FORMAT_MAX"
-#endif
-    }
-  }
-  ut_ad(0);
-  return(ROW_TYPE_NOT_USED);
-}
-
-
-/****************************************************************//**
 Returns the index type. */
 UNIV_INTERN
 const char*
@@ -2721,11 +2684,9 @@ database.
 @return 1 if error, 0 if success */
 UNIV_INTERN
 int
-ha_innobase::open(
-/*==============*/
-  const char* name,   /*!< in: table name */
-  int   mode,   /*!< in: not used */
-  uint    test_if_locked) /*!< in: not used */
+ha_innobase::doOpen(const TableIdentifier &identifier,
+                    int   mode,   /*!< in: not used */
+                    uint    test_if_locked) /*!< in: not used */
 {
   dict_table_t* ib_table;
   char    norm_name[FN_REFLEN];
@@ -2743,11 +2704,11 @@ ha_innobase::open(
     getTransactionalEngine()->releaseTemporaryLatches(session);
   }
 
-  normalize_table_name(norm_name, name);
+  normalize_table_name(norm_name, identifier.getPath().c_str());
 
   user_session = NULL;
 
-  if (!(share=get_share(name))) {
+  if (!(share=get_share(identifier.getPath().c_str()))) {
 
     return(1);
   }
@@ -2840,7 +2801,7 @@ ha_innobase::open(
   if (!row_table_got_default_clust_index(ib_table)) {
     if (primary_key >= MAX_KEY) {
       errmsg_printf(ERRMSG_LVL_ERROR, "Table %s has a primary key in InnoDB data "
-          "dictionary, but not in MySQL!", name);
+          "dictionary, but not in MySQL!", identifier.getTableName().c_str());
     }
 
     prebuilt->clust_index_was_generated = FALSE;
@@ -2862,7 +2823,7 @@ ha_innobase::open(
           "columns, then MySQL internally treats that "
           "key as the primary key. You can fix this "
           "error by dump + DROP + CREATE + reimport "
-          "of the table.", name);
+          "of the table.", identifier.getTableName().c_str());
     }
 
     prebuilt->clust_index_was_generated = TRUE;
@@ -2881,7 +2842,7 @@ ha_innobase::open(
       errmsg_printf(ERRMSG_LVL_WARN, 
         "Table %s key_used_on_scan is %lu even "
         "though there is no primary key inside "
-        "InnoDB.", name, (ulong) key_used_on_scan);
+        "InnoDB.", identifier.getTableName().c_str(), (ulong) key_used_on_scan);
     }
   }
 
@@ -2972,7 +2933,7 @@ get_field_offset(
   Table*  table,  /*!< in: MySQL table object */
   Field*  field)  /*!< in: MySQL field object */
 {
-  return((uint) (field->ptr - table->record[0]));
+  return((uint) (field->ptr - table->getInsertRecord()));
 }
 
 /**************************************************************//**
@@ -2995,7 +2956,7 @@ field_in_record_is_null(
   }
 
   null_offset = (uint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
   if (record[null_offset] & field->null_bit) {
 
@@ -3019,7 +2980,7 @@ set_field_in_record_to_null(
   int null_offset;
 
   null_offset = (uint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
   record[null_offset] = record[null_offset] | field->null_bit;
 }
@@ -3613,7 +3574,7 @@ include_field:
     if (field->null_ptr) {
       templ->mysql_null_byte_offset =
         (ulint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
       templ->mysql_null_bit_mask = (ulint) field->null_bit;
     } else {
@@ -3793,8 +3754,6 @@ ha_innobase::doInsertRecord(
     ut_error;
   }
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
-
   sql_command = session_sql_command(user_session);
 
   if ((sql_command == SQLCOM_ALTER_TABLE
@@ -3863,7 +3822,7 @@ no_commit:
   num_write_row++;
 
   /* This is the case where the table has an auto-increment column */
-  if (table->next_number_field && record == table->record[0]) {
+  if (table->next_number_field && record == table->getInsertRecord()) {
 
     /* Reset the error code before calling
     innobase_get_auto_increment(). */
@@ -4161,8 +4120,6 @@ ha_innobase::doUpdateRecord(
 
   ut_a(prebuilt->trx == trx);
 
-  ha_statistic_increment(&system_status_var::ha_update_count);
-
   if (prebuilt->upd_node) {
     uvect = prebuilt->upd_node->update;
   } else {
@@ -4229,7 +4186,7 @@ ha_innobase::doUpdateRecord(
 
   if (error == DB_SUCCESS
       && table->next_number_field
-      && new_row == table->record[0]
+      && new_row == table->getInsertRecord()
       && session_sql_command(user_session) == SQLCOM_INSERT
       && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
     == TRX_DUP_IGNORE)  {
@@ -4296,8 +4253,6 @@ ha_innobase::doDeleteRecord(
   trx_t*    trx = session_to_trx(user_session);
 
   ut_a(prebuilt->trx == trx);
-
-  ha_statistic_increment(&system_status_var::ha_delete_count);
 
   if (!prebuilt->upd_node) {
     row_get_prebuilt_update_vector(prebuilt);
@@ -5397,7 +5352,7 @@ InnobaseEngine::doCreateTable(
 /*================*/
   Session         &session, /*!< in: Session */
   Table&    form,   /*!< in: information on table columns and indexes */
-        drizzled::TableIdentifier &identifier,
+        const TableIdentifier &identifier,
         message::Table& create_proto)
 {
   int   error;
@@ -5743,7 +5698,7 @@ int
 InnobaseEngine::doDropTable(
 /*======================*/
         Session &session,
-        TableIdentifier &identifier)
+        const TableIdentifier &identifier)
 {
   int error;
   trx_t*  parent_trx;
@@ -5832,7 +5787,7 @@ Removes all tables in the named database inside InnoDB. */
 bool
 InnobaseEngine::doDropSchema(
 /*===================*/
-                             SchemaIdentifier &identifier)
+                             const SchemaIdentifier &identifier)
     /*!< in: database path; inside InnoDB the name
       of the last directory in the path is used as
       the database name: for example, in 'mysql/data/test'
@@ -5969,7 +5924,7 @@ innobase_rename_table(
 /*********************************************************************//**
 Renames an InnoDB table.
 @return 0 or error code */
-UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, TableIdentifier &from, TableIdentifier &to)
+UNIV_INTERN int InnobaseEngine::doRenameTable(Session &session, const TableIdentifier &from, const TableIdentifier &to)
 {
   // A temp table alter table/rename is a shallow rename and only the
   // definition needs to be updated.
@@ -7862,7 +7817,7 @@ InnobaseEngine::doStartStatement(
   trx->detailed_error[0]= '\0';
 
   /* Set the isolation level of the transaction. */
-  trx->isolation_level= innobase_map_isolation_level((enum_tx_isolation) session_tx_isolation(session));
+  trx->isolation_level= innobase_map_isolation_level(session_tx_isolation(session));
 }
 
 void

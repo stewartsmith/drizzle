@@ -1,0 +1,208 @@
+Bug#592473 
+- Crash/segfault in drizzled::subselect_single_select_engine::exec (this=0x19a7008) at drizzled/item/subselect.cc:2204  
+DROP TABLE IF EXISTS `aa`;
+DROP TABLE IF EXISTS `bb`;
+DROP TABLE IF EXISTS `cc`;
+CREATE TABLE `aa` (
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_char_not_null_key` varchar(1) NOT NULL,
+`col_int` int DEFAULT NULL,
+`col_bigint` bigint DEFAULT NULL,
+`col_bigint_key` bigint DEFAULT NULL,
+`col_int_not_null` int NOT NULL,
+`col_text_not_null` text NOT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_char_not_null_key` (`col_char_not_null_key`),
+KEY `col_bigint_key` (`col_bigint_key`)
+) ENGINE=InnoDB;
+INSERT INTO `aa` VALUES (1,'a',NULL,2125417549142163456,1747959605373173760,9,''),(2,'n',733020160,5329728684016271360,-3664522721796030464,-2059927552,''),(3,'o',1023148032,4418875659380588544,9,1967128576,''),(4,'r',NULL,NULL,2,6,''),(5,'k',-15728640,6,-421930990089273344,-704249856,''),(6,'p',NULL,NULL,-2842897264777625600,90570752,''),(7,'t',2,-4747356957201924096,-4702602435904929792,1734213632,''),(8,'d',3,-7567454748865986560,NULL,9,''),(9,'t',1505558528,NULL,-5726608401178296320,-1584463872,''),(10,'q',NULL,NULL,541839330168012800,0,'');
+CREATE TABLE `bb` (
+`col_int_key` int DEFAULT NULL,
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_char` varchar(1) DEFAULT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+INSERT INTO `bb` VALUES (-622067712,1,'h'),(858587136,2,'p'),(-1110966272,3,'w'),(2,4,'f'),(546701312,5,'k'),(4,6,'m'),(6,7,'z'),(NULL,8,'h'),(2,9,'y'),(NULL,10,'t');
+CREATE TABLE `cc` (
+`col_char` varchar(1) DEFAULT NULL,
+`pk` int NOT NULL AUTO_INCREMENT,
+PRIMARY KEY (`pk`)
+) ENGINE=InnoDB;
+INSERT INTO `cc` VALUES ('h',1),('m',2),('m',3),('c',4),('h',5),('w',6),('a',7),('I',8),('i',9),('n',10),('s',11),('m',12),('e',13),('f',14),('u',15),('I',16),('v',17),('j',18),('h',19),('l',20),('y',21),('w',22),('n',23),('t',24),('t',25),('f',26),('f',27),('w',28),('y',29),('t',30),('j',31),('i',32),('j',33),('q',34),('s',35),('o',36),('b',37),('s',38),('h',39),('w',40),('g',41),('t',42),('o',43),('h',44),('n',45),('i',46),('y',47),('e',48),('t',49),('n',50),('b',51),('k',52),('h',53),('k',54),('x',55),('f',56),('h',57),('q',58),('b',59),('i',60),('w',61),('c',62),('r',63),('n',64),('v',65),('g',66),('t',67),('e',68),('w',69),('b',70),('y',71),('n',72),('p',73),('r',74),('o',75),('w',76),('y',77),('p',78),('o',79),('w',80),('t',81),('j',82),('o',83),('m',84),('g',85),('x',86),('v',87),('w',88),('m',89),('o',90),('o',91),('w',92),('f',93),('p',94),('I',95),('c',96),('t',97),('a',98),('w',99),('s',100);
+SELECT DISTINCT MIN(DISTINCT OUTR . `col_bigint_key` ) AS X FROM `aa` AS OUTR WHERE ( OUTR . `col_bigint` , OUTR . `col_int_not_null` ) IN ( SELECT DISTINCT INNR . `pk` AS X , INNR . `col_int_key` AS Y FROM `cc` AS INNR2 LEFT JOIN `bb` AS INNR ON ( INNR2 . `col_char` <> INNR . `col_char` ) WHERE OUTR . `col_char_not_null_key` IS NULL ) AND OUTR . `col_int` IS NULL XOR OUTR . `col_char_not_null_key` IS NOT NULL HAVING X >= '2000-03-23 22:49:30' ORDER BY OUTR . `col_text_not_null` , OUTR . `pk` ;
+X
+Warnings:
+Warning	1292	Truncated incorrect DOUBLE value: '2000-03-23 22:49:30'
+DROP TABLE `aa`;
+DROP TABLE `bb`;
+DROP TABLE `cc`;
+End Bug#592473 test
+
+Bug#600664 
+- Crash / segfault in drizzled::optimizer::add_key_part (keyuse_array=<value optimized out>, key_field=0x2d0dc28) at drizzled/optimizer/key_field.cc:63
+DROP TABLE IF EXISTS `bb`, `cc`;
+CREATE TABLE `bb` (
+`col_text_not_null` text NOT NULL,
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_int_not_null` int NOT NULL,
+`col_bigint` bigint DEFAULT NULL,
+`col_char_not_null_key` varchar(1) NOT NULL,
+`col_text` text,
+`col_text_key` text,
+PRIMARY KEY (`pk`),
+KEY `col_char_not_null_key` (`col_char_not_null_key`),
+KEY `col_text_key` (`col_text_key`(255))
+) ENGINE=InnoDB;
+INSERT INTO `bb` VALUES ('',1,-247005184,4657847914607935488,'q',NULL,NULL),('',2,9,6580884955495137280,'d',NULL,NULL),('',3,9,6,'o',NULL,NULL),('',4,8,NULL,'j',NULL,NULL),('',5,575668224,-7027022793581527040,'c',NULL,NULL),('',6,9,8,'o',NULL,NULL),('',7,1,NULL,'a',NULL,NULL),('',8,7,616430198996336640,'o',NULL,NULL),('',9,1,NULL,'u',NULL,NULL),('',10,130416640,6244803833302614016,'y',NULL,NULL);
+CREATE TABLE `cc` (
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_char_not_null_key` varchar(1) NOT NULL,
+`col_int_key` int DEFAULT NULL,
+`col_text_key` text,
+PRIMARY KEY (`pk`),
+KEY `col_char_not_null_key` (`col_char_not_null_key`),
+KEY `col_int_key` (`col_int_key`),
+KEY `col_text_key` (`col_text_key`(255))
+) ENGINE=InnoDB;
+INSERT INTO `cc` VALUES (1,'k',-1711407104,NULL),(2,'k',-1837629440,NULL),(3,'g',2,NULL),(4,'f',5,NULL),(5,'t',-173408256,NULL),(6,'s',-2063663104,NULL),(7,'l',4,NULL),(8,'q',NULL,NULL),(9,'h',-858587136,NULL),(10,'r',-1040056320,NULL),(11,'l',-1812332544,NULL),(12,'o',NULL,NULL),(13,'e',NULL,NULL),(14,'k',4,NULL),(15,'p',456261632,NULL),(16,'j',NULL,NULL),(17,'b',NULL,NULL),(18,'i',4,NULL),(19,'n',NULL,NULL),(20,'n',4,NULL),(21,'m',7,NULL),(22,'i',NULL,NULL),(23,'l',4,NULL),(24,'x',4,NULL),(25,'w',NULL,NULL),(26,'s',4,NULL),(27,'s',6,NULL),(28,'i',NULL,NULL),(29,'j',NULL,NULL),(30,'z',0,NULL),(31,'d',-84738048,NULL),(32,'s',-1456209920,NULL),(33,'o',-1366818816,NULL),(34,'t',2,NULL),(35,'t',3,NULL),(36,'o',5,NULL),(37,'i',NULL,NULL),(38,'v',779943936,NULL),(39,'w',NULL,NULL),(40,'f',7,NULL),(41,'n',1658912768,NULL),(42,'u',NULL,NULL),(43,'g',NULL,NULL),(44,'a',4,NULL),(45,'o',1,NULL),(46,'h',NULL,NULL),(47,'y',892862464,NULL),(48,'m',NULL,NULL),(49,'w',NULL,NULL),(50,'a',9,NULL),(51,'c',NULL,NULL),(52,'r',1758330880,NULL),(53,'s',7,NULL),(54,'n',3,NULL),(55,'e',1,NULL),(56,'c',NULL,NULL),(57,'i',1,NULL),(58,'h',NULL,NULL),(59,'n',1441005568,NULL),(60,'b',9,NULL),(61,'a',8,NULL),(62,'o',1389690880,NULL),(63,'c',2,NULL),(64,'g',7,NULL),(65,'r',0,NULL),(66,'i',2,NULL),(67,'w',NULL,NULL),(68,'s',NULL,NULL),(69,'f',NULL,NULL),(70,'l',1,NULL),(71,'t',-1545666560,NULL),(72,'f',NULL,NULL),(73,'y',1729363968,NULL),(74,'m',-39583744,NULL),(75,'m',5,NULL),(76,'r',-33554432,NULL),(77,'a',7,NULL),(78,'q',1687748608,NULL),(79,'h',NULL,NULL),(80,'x',524877824,NULL),(81,'t',NULL,NULL),(82,'o',NULL,NULL),(83,'a',NULL,NULL),(84,'j',4,NULL),(85,'o',0,NULL),(86,'l',1818296320,NULL),(87,'l',1,NULL),(88,'q',1346699264,NULL),(89,'t',NULL,NULL),(90,'f',1,NULL),(91,'g',584253440,NULL),(92,'s',670564352,NULL),(93,'t',5,NULL),(94,'a',-687013888,NULL),(95,'I',-1482424320,NULL),(96,'d',NULL,NULL),(97,'b',547291136,NULL),(98,'r',779091968,NULL),(99,'j',1062928384,NULL),(100,'s',NULL,NULL);
+SELECT DISTINCT AVG(DISTINCT OUTR . `col_int_not_null` ) AS X FROM `bb` AS OUTR2 LEFT JOIN `bb` AS OUTR ON ( OUTR2 . `col_text` <= OUTR . `col_text_key` ) WHERE ( OUTR . `col_text_not_null` , OUTR . `col_char_not_null_key` ) IN ( SELECT DISTINCT INNR . `col_text_key` AS X , INNR . `col_char_not_null_key` AS Y FROM `cc` AS INNR WHERE INNR . `col_int_key` IS NULL ) AND OUTR . `pk` IS NULL OR NOT OUTR . `col_bigint` = 9 ORDER BY OUTR . `pk` , OUTR . `pk` ;
+X
+NULL
+DROP TABLE `bb`, `cc`;
+End Bug#600664 test
+Bug#595305
+- Assertion failed - exec_method != MATERIALIZATION || (exec_method == MATERIALIZATION && engine->engine_type() == subselect_engine::HASH_SJ_ENGINE)", file=<value optimized out>, line=318, function=0x84fae0 "virtual bool drizzled::Item_in_subselect::exec()
+DROP TABLE IF EXISTS `bb`;
+CREATE TABLE `bb` (
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_text_not_null` text NOT NULL,
+`col_bigint_key` bigint DEFAULT NULL,
+`col_int` int DEFAULT NULL,
+`col_char` varchar(1) DEFAULT NULL,
+`col_text` text,
+`col_text_not_null_key` text NOT NULL,
+`col_char_not_null` varchar(1) NOT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_bigint_key` (`col_bigint_key`),
+KEY `col_text_not_null_key` (`col_text_not_null_key`(255))
+) ENGINE=InnoDB;
+ALTER TABLE `bb` DISABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'bb' doesn't have this option
+INSERT INTO `bb` VALUES (1,'',NULL,NULL,'h',NULL,'','f'),(2,'',NULL,1756299264,'p',NULL,'','w'),(3,'',6,-1990000640,'w',NULL,'','w'),(4,'',NULL,NULL,'f',NULL,'','k'),(5,'',NULL,NULL,'k',NULL,'','t'),(6,'',9,NULL,'m',NULL,'','c'),(7,'',6451687941184946176,0,'z',NULL,'','f'),(8,'',8960474408607023104,1805844480,'h',NULL,'','k'),(9,'',8,7,'y',NULL,'','m'),(10,'',NULL,-415629312,'t',NULL,'','h');
+ALTER TABLE `bb` ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'bb' doesn't have this option
+SELECT DISTINCT OUTR . `col_text` AS X FROM BB AS OUTR2 LEFT JOIN BB AS OUTR ON ( OUTR2 . `col_char` <> OUTR . `col_text` ) WHERE OUTR . `col_bigint_key` IN ( SELECT INNR . `pk` AS Y FROM BB AS INNR WHERE INNR . `col_bigint_key` > INNR . `col_int` AND INNR . `col_text_not_null_key` >= INNR . `col_char_not_null` ) AND OUTR . `col_bigint_key` = 9 ORDER BY OUTR . `col_text_not_null` , OUTR . `pk`;
+X
+DROP TABLE BB;
+End Bug#595305 test
+Bug#592444 
+- Segfault - operator= (join=0x1fd0fd8, tables=<value optimized out>, conds=<value optimized out>, keyuse_array=<value optimized out>) at ./drizzled/join_table.h:73
+DROP TABLE IF EXISTS `a`;
+DROP TABLE IF EXISTS `d`;
+DROP TABLE IF EXISTS `h`;
+DROP TABLE IF EXISTS `k`;
+DROP TABLE IF EXISTS `n`;
+DROP TABLE IF EXISTS `p`;
+CREATE TABLE `p` (
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_int_key` int DEFAULT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+ALTER TABLE `p` DISABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'p' doesn't have this option
+INSERT INTO `p` VALUES (1,NULL),(2,261947392),(3,-1761017856),(4,NULL),(5,NULL),(6,NULL),(7,1941635072),(8,-610992128),(9,NULL),(10,-1486618624),(11,1047199744),(12,5),(13,2),(14,NULL),(15,NULL),(16,-828899328),(17,5),(18,NULL),(19,-1573322752),(20,NULL),(21,1),(22,1080360960),(23,NULL),(24,9),(25,243335168),(26,NULL),(27,2),(28,351469568),(29,NULL),(30,0),(31,1626865664),(32,NULL),(33,NULL),(34,6),(35,NULL),(36,6),(37,NULL),(38,838598656),(39,-1732706304),(40,-120061952),(41,NULL),(42,3),(43,2),(44,8),(45,-1234436096),(46,4),(47,-1542324224),(48,NULL),(49,1607073792),(50,0),(51,9),(52,NULL),(53,NULL),(54,-921174016),(55,-184877056),(56,NULL),(57,-1291059200),(58,0),(59,NULL),(60,565379072),(61,NULL),(62,506855424),(63,NULL),(64,NULL),(65,NULL),(66,5),(67,5),(68,5),(69,2),(70,6),(71,NULL),(72,9),(73,7),(74,-2108555264),(75,6),(76,1057095680),(77,8),(78,-409468928),(79,-438960128),(80,-939393024),(81,-927203328),(82,NULL),(83,-1834680320),(84,NULL),(85,1984561152),(86,8),(87,NULL),(88,8),(89,-326500352),(90,NULL),(91,4),(92,NULL),(93,NULL),(94,-1369833472),(95,NULL),(96,0),(97,31260672),(98,NULL),(99,NULL),(100,0);
+ALTER TABLE `p` ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'p' doesn't have this option
+DROP TABLE IF EXISTS `n`;
+Warnings:
+Note	1051	Unknown table 'n'
+CREATE TABLE `n` (
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_varchar_10_key` varchar(10) DEFAULT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_varchar_10_key` (`col_varchar_10_key`)
+) ENGINE=InnoDB;
+ALTER TABLE `n` DISABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'n' doesn't have this option
+INSERT INTO `n` VALUES (1,'rdtxodtcmi'),(2,'corrdtxodt'),(3,'v'),(4,'dcorrdtxod'),(5,'s'),(6,'my'),(7,'e'),(8,'qxszmrdcor'),(9,'bqxszmrdco'),(10,'wbqxszmrdc'),(11,'v'),(12,'kywbqxszmr'),(13,'v'),(14,'lngrakywbq'),(15,'umtlngraky'),(16,'could'),(17,'peiywumtln'),(18,'will'),(19,'tell'),(20,'w'),(21,'jenpeiywum'),(22,'cejenpeiyw'),(23,'x'),(24,'vxcejenpei');
+ALTER TABLE `n` ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'n' doesn't have this option
+CREATE TABLE `d` (
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_varchar_10` varchar(10) DEFAULT NULL,
+PRIMARY KEY (`pk`)
+) ENGINE=InnoDB;
+ALTER TABLE `d` DISABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'd' doesn't have this option
+INSERT INTO `d` VALUES (1,'f'),(2,'zdvoleqxer'),(3,'i'),(4,'u'),(5,'q');
+ALTER TABLE `d` ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'd' doesn't have this option
+CREATE TABLE `h` (
+`col_varchar_10` varchar(10) DEFAULT NULL,
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_varchar_10_key` varchar(10) DEFAULT NULL,
+`col_int_key` int DEFAULT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_varchar_10_key` (`col_varchar_10_key`),
+KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+ALTER TABLE `h` DISABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'h' doesn't have this option
+INSERT INTO `h` VALUES ('n',1,'rshrrbmsyd',4),('h',2,'okay',NULL),('ok',3,'i',-802095104),('just',4,'z',6),('hfnrshrrbm',5,'his',8),('f',6,'xhfnrshrrb',1),('h',7,'wxhfnrshrr',7),('wtwxhfnrsh',8,'v',7),('of',9,'cwtwxhfnrs',-1258487808);
+ALTER TABLE `h` ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'h' doesn't have this option
+CREATE TABLE `a` (
+`pk` int NOT NULL AUTO_INCREMENT,
+PRIMARY KEY (`pk`)
+) ENGINE=InnoDB;
+CREATE TABLE `k` (
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_varchar_10` varchar(10) DEFAULT NULL,
+`col_varchar_10_key` varchar(10) DEFAULT NULL,
+`col_int_key` int DEFAULT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_varchar_10_key` (`col_varchar_10_key`),
+KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+ALTER TABLE `k` DISABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'k' doesn't have this option
+INSERT INTO `k` VALUES (1,'bwylrhande','hbwylrhand',-522452992),(2,'how','about',2098200576),(3,'ephbwylrha','pephbwylrh',904331264),(4,'okay','ipephbwylr',-1176633344),(5,'but','one',-1177288704),(6,'tnwkipephb','j',5),(7,'hqtnwkipep','a',9),(8,'with','wdhqtnwkip',NULL),(9,'eyxwdhqtnw','jeyxwdhqtn',2),(10,'right','something',3),(11,'z','ujeyxwdhqt',5),(12,'yyujeyxwdh','we',NULL),(13,'can','syyujeyxwd',0),(14,'s','oh',21037056),(15,'ngvsyyujey','something',1224867840),(16,'gngvsyyuje','qgngvsyyuj',1),(17,'this','really',4),(18,'p','bbuqgngvsy',1865023488),(19,'okay','from',1),(20,'dmbbuqgngv','but',9),(21,'one','rdmbbuqgng',0);
+ALTER TABLE `k` ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 'k' doesn't have this option
+SELECT
+table2 . `pk` AS field4
+FROM p AS table1 LEFT JOIN
+n AS table2 LEFT JOIN
+d AS table3
+ON table2 . `pk` = table3 . `pk`
+RIGHT OUTER JOIN h AS table4
+LEFT OUTER JOIN a AS table5
+ON table4 . `pk` = table5 . `pk`
+ON table2 . `col_varchar_10_key` = table4 . `col_varchar_10_key`
+ON table1 . `col_int_key` = table5 . `pk`
+LEFT JOIN h AS table6
+LEFT JOIN k AS table7
+ON table6 . `col_int_key` = table7 . `col_int_key`
+LEFT OUTER JOIN h AS table8
+ON table7 . `col_varchar_10_key` = table8 . `col_varchar_10`
+ON table3 . `col_varchar_10` = table7 . `col_varchar_10`
+WHERE (
+( table3 . `pk` IN (6) )
+OR table7 . `col_int_key` IN (1, 1, 1, 2) ) ;
+field4
+DROP TABLE a, d, h, k, n , p ;
+End Bug#592444 test

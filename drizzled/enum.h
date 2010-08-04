@@ -21,8 +21,6 @@
 #ifndef DRIZZLED_ENUM_H
 #define DRIZZLED_ENUM_H
 
-#include "drizzled/message/table.pb.h"
-
 namespace drizzled
 {
 
@@ -107,18 +105,6 @@ enum sql_var_t
   OPT_DEFAULT= 0,
   OPT_SESSION,
   OPT_GLOBAL
-};
-
-enum row_type
-{
-  ROW_TYPE_NOT_USED=-1,
-  ROW_TYPE_DEFAULT,
-  ROW_TYPE_FIXED,
-  ROW_TYPE_DYNAMIC,
-  ROW_TYPE_COMPRESSED,
-  ROW_TYPE_REDUNDANT,
-  ROW_TYPE_COMPACT,
-  ROW_TYPE_PAGE
 };
 
 enum column_format_type
@@ -1060,7 +1046,8 @@ enum drizzled_error_code {
   ER_UNKNOWN_SCHEMA_OPTION,
   ER_EVENT_OBSERVER_PLUGIN,
   ER_CORRUPT_SCHEMA_DEFINITION,
-  ER_ERROR_LAST= ER_CORRUPT_SCHEMA_DEFINITION
+  ER_CARTESIAN_JOIN_ATTEMPTED,
+  ER_ERROR_LAST= ER_CARTESIAN_JOIN_ATTEMPTED
 };
 
 enum drizzle_exit_codes {

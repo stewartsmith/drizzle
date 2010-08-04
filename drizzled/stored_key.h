@@ -62,12 +62,12 @@ public:
                                     null,
                                     1,
                                     field_arg->field_name,
-                                    field_arg->table->getMutableShare(),
+                                    field_arg->getTable()->getMutableShare(),
                                     field_arg->charset());
-      to_field->init(field_arg->table);
+      to_field->init(field_arg->getTable());
     }
     else
-      to_field= field_arg->new_key_field(session->mem_root, field_arg->table,
+      to_field= field_arg->new_key_field(session->mem_root, field_arg->getTable(),
                                         ptr, null, 1);
 
     to_field->setWriteSet();
@@ -84,7 +84,7 @@ public:
   enum store_key_result copy()
   {
     enum store_key_result result;
-    Session *session= to_field->table->in_use;
+    Session *session= to_field->getTable()->in_use;
     enum_check_fields saved_count_cuted_fields= session->count_cuted_fields;
     session->count_cuted_fields= CHECK_FIELD_IGNORE;
     result= copy_inner();

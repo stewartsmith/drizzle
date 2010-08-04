@@ -7,7 +7,7 @@ Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_incr
 #	test	t1	TEMPORARY	MEMORY	#	#	#	#	#
 show keys from t1;
 Table	Unique	Key_name	Seq_in_index	Column_name
-t1	TRUE	PRIMARY	1	a
+t1	YES	PRIMARY	1	a
 select * from t1;
 a	b
 2	2
@@ -252,13 +252,16 @@ create temporary table t1 (v varchar(10), c char(10), t varchar(50));
 insert into t1 values('+ ', '+ ', '+ ');
 set @a=repeat(' ',20);
 insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
-Warnings:
-Note	1265	Data truncated for column 'v' at row 1
-Note	1265	Data truncated for column 'c' at row 1
+ERROR 22001: Data too long for column 'v' at row 1
+set @a=repeat(' ',10);
+insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
+ERROR 22001: Data too long for column 'v' at row 1
+set @a=repeat(' ',9);
+insert into t1 values (concat('+',@a),concat('+',@a),concat('+',@a));
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
-*+         *+         *+                    *
+*+         *+         *+         *
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
@@ -309,7 +312,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
-*+         *+         *+                    *
+*+         *+         *+         *
 drop table t1,t2,t3;
 create temporary table t1 (v varchar(10), c char(10), t varchar(50), key(v), key(c), key(t(10)));
 show create table t1;
@@ -528,7 +531,7 @@ ERROR 23000: Duplicate entry 'a ' for key 'a'
 insert into t1 values ('a     ');
 ERROR 23000: Duplicate entry 'a     ' for key 'a'
 insert into t1 values ('a          ');
-ERROR 23000: Duplicate entry 'a         ' for key 'a'
+ERROR 22001: Data too long for column 'a' at row 1
 insert into t1 values ('a ');
 ERROR 23000: Duplicate entry 'a ' for key 'a'
 update t1 set a='a      ' where a like 'a ';
@@ -619,7 +622,7 @@ ERROR 23000: Duplicate entry 'a ' for key 'a'
 insert into t1 values ('a     ');
 ERROR 23000: Duplicate entry 'a     ' for key 'a'
 insert into t1 values ('a          ');
-ERROR 23000: Duplicate entry 'a         ' for key 'a'
+ERROR 22001: Data too long for column 'a' at row 1
 insert into t1 values ('a ');
 ERROR 23000: Duplicate entry 'a ' for key 'a'
 update t1 set a='a      ' where a like 'a ';

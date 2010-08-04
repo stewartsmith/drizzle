@@ -18,18 +18,15 @@ CREATE TEMPORARY TABLE `Ｔ８` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = M
 CREATE TEMPORARY TABLE `Ｔ９` (`Ｃ１` char(20), INDEX(`Ｃ１`))  engine = MEMORY;
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ１`;
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ２`;
-Warnings:
-Note	1265	Data truncated for column 'Ｃ１' at row 30
+ERROR 22001: Data too long for column 'Ｃ１' at row 30
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ３`;
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ４`;
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ５`;
-Warnings:
-Note	1265	Data truncated for column 'Ｃ１' at row 30
+ERROR 22001: Data too long for column 'Ｃ１' at row 30
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ６`;
 LOAD DATA INFILE '../std_data_ln/jisx0201_utf8.dat' INTO TABLE `Ｔ７`;
 LOAD DATA INFILE '../std_data_ln/jisx0208_utf8.dat' INTO TABLE `Ｔ８`;
-Warnings:
-Note	1265	Data truncated for column 'Ｃ１' at row 30
+ERROR 22001: Data too long for column 'Ｃ１' at row 30
 LOAD DATA INFILE '../std_data_ln/jisx0212_utf8.dat' INTO TABLE `Ｔ９`;
 SELECT * FROM `Ｔ１` WHERE `Ｃ１` LIKE ' %';
 Ｃ１
@@ -65,32 +62,22 @@ SELECT * FROM `Ｔ１` WHERE `Ｃ１` LIKE '%ｰｱｲｳｴｵｶｷｸｹｺ�
 ｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿ
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE '　%';
 Ｃ１
-　　、。，．・：；？！゛゜´｀¨＾￣＿ヽ
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE '%　%';
 Ｃ１
-　　、。，．・：；？！゛゜´｀¨＾￣＿ヽ
-・・Å‰♯♭♪†‡¶・・・・◯・・・・　
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE '%　';
 Ｃ１
-・・Å‰♯♭♪†‡¶・・・・◯・・・・　
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE 'と%';
 Ｃ１
-とどなにぬねのはばぱひびぴふぶぷへべぺほ
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE '%あ%';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE '%わ';
 Ｃ１
-ぼぽまみむめもゃやゅゆょよらりるれろゎわ
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE '・ぁあぃいぅうぇえぉおかがきぎくぐけげこ%';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE '%・ぁあぃいぅうぇえぉおかがきぎくぐけげこ%';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ２` WHERE `Ｃ１` LIKE '%・ぁあぃいぅうぇえぉおかがきぎくぐけげこ';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ３` WHERE `Ｃ１` LIKE '鼫%';
 Ｃ１
 鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃齄齅齆齇齓齕齖
@@ -147,28 +134,20 @@ SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE '　%';
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE '%　%';
 Ｃ１
 　　、。，．・：；？！゛゜´｀¨＾￣＿ヽ
-・・Å‰♯♭♪†‡¶・・・・◯・・・・　
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE '%　';
 Ｃ１
-・・Å‰♯♭♪†‡¶・・・・◯・・・・　
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE 'と%';
 Ｃ１
-とどなにぬねのはばぱひびぴふぶぷへべぺほ
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE '%あ%';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE '%わ';
 Ｃ１
-ぼぽまみむめもゃやゅゆょよらりるれろゎわ
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE '・ぁあぃいぅうぇえぉおかがきぎくぐけげこ%';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE '%・ぁあぃいぅうぇえぉおかがきぎくぐけげこ%';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ５` WHERE `Ｃ１` LIKE '%・ぁあぃいぅうぇえぉおかがきぎくぐけげこ';
 Ｃ１
-・ぁあぃいぅうぇえぉおかがきぎくぐけげこ
 SELECT * FROM `Ｔ６` WHERE `Ｃ１` LIKE '鼫%';
 Ｃ１
 鼫鼯鼱鼲鼴鼷鼹鼺鼼鼽鼿齁齃齄齅齆齇齓齕齖
