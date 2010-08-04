@@ -21,6 +21,10 @@
 #ifndef PLUGIN_INFORMATION_SCHEMA_DICTIONARY_CONSTRAINT_TABLE_USAGE_H
 #define PLUGIN_INFORMATION_SCHEMA_DICTIONARY_CONSTRAINT_TABLE_USAGE_H
 
+/*
+  @note if implemented, this should only return the tables that were owned by the user.
+*/
+
 class ConstraintTableUsage : public InformationSchema
 {
 public:

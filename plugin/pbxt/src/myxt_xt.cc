@@ -25,6 +25,7 @@
  */
 
 #include "xt_config.h"
+#include "xt_defs.h"
 
 #ifdef DRIZZLED
 #include <drizzled/plugin.h>
@@ -608,11 +609,11 @@ static void mx_set_notnull_in_record(STRUCT_TABLE *table, Field *field, char *re
 {
 #ifdef DRIZZLED
 	if (field->null_ptr)
-		record[(uint) (field->null_ptr - (uchar *) table->default_values)] &= (uchar) ~field->null_bit;
+		record[(uint) (field->null_ptr - (uchar *) table->getDefaultValues())] &= (uchar) ~field->null_bit;
 #else
 	ASSERT(table == field->table);
 	if (field->null_ptr)
-		record[(uint) (field->null_ptr - (uchar *) table->record[0])] &= (uchar) ~field->null_bit;
+		record[(uint) (field->null_ptr - (uchar *) table->getInsertRecord())] &= (uchar) ~field->null_bit;
 #endif
 }
 
@@ -620,11 +621,11 @@ static xtBool mx_is_null_in_record(STRUCT_TABLE *table, Field *field, char *reco
 {
 	if (field->null_ptr) {
 #ifdef DRIZZLED
-		if (record[(uint) (field->null_ptr - (uchar *) table->default_values)] & (uchar) field->null_bit)
+		if (record[(uint) (field->null_ptr - (uchar *) table->getDefaultValues())] & (uchar) field->null_bit)
 			return TRUE;
 #else
 		ASSERT(table == field->table);
-		if (record[(uint) (field->null_ptr - (uchar *) table->record[0])] & (uchar) field->null_bit)
+		if (record[(uint) (field->null_ptr - (uchar *) table->getInsertRecord())] & (uchar) field->null_bit)
 			return TRUE;
 #endif
 	}
@@ -641,10 +642,10 @@ static char *mx_get_length_and_data(STRUCT_TABLE *table, Field *field, char *des
 	char *from;
 	
 #ifdef DRIZZLED
-	from = dest + field->offset(table->default_values);
+	from = dest + field->offset(table->getDefaultValues());
 #else
 	ASSERT(table == field->table);
-	from = dest + field->offset(table->record[0]);
+	from = dest + field->offset(table->getInsertRecord());
 #endif
 	switch (field->real_type()) {
 #ifndef DRIZZLED
@@ -764,10 +765,10 @@ static void mx_set_length_and_data(STRUCT_TABLE *table, Field *field, char *dest
 	char *from;
 	
 #ifdef DRIZZLED
-	from = dest + field->offset(table->default_values);
+	from = dest + field->offset(table->getDefaultValues());
 #else
 	ASSERT(table == field->table);
-	from = dest + field->offset(table->record[0]);
+	from = dest + field->offset(table->getInsertRecord());
 #endif
 	switch (field->real_type()) {
 #ifndef DRIZZLED
@@ -890,10 +891,10 @@ xtPublic void myxt_set_default_row_from_key(XTOpenTablePtr ot, XTIndexPtr ind, x
 		Field *field = GET_TABLE_FIELDS(table)[col_idx];
 		byte  *field_save = field->ptr;
 
-		field->ptr = GET_TABLE_SHARE(table)->default_values + keyseg->start;
+		field->ptr = GET_TABLE_SHARE(table)->getDefaultValues() + keyseg->start;
 		memcpy(record + keyseg->start, field->ptr, field->pack_length());
 		record[keyseg->null_pos] &= ~keyseg->null_bit;
-		record[keyseg->null_pos] |= GET_TABLE_SHARE(table)->default_values[keyseg->null_pos] & keyseg->null_bit;
+		record[keyseg->null_pos] |= GET_TABLE_SHARE(table)->getDefaultValues()[keyseg->null_pos] & keyseg->null_bit;
 
 		field->ptr = field_save;
 	}
@@ -1584,7 +1585,7 @@ xtPublic xtWord4 myxt_store_row_length(XTOpenTablePtr ot, char *rec_buff)
 	xtWord4			item_size;
 	xtWord4			row_size = 0;
 
- 	for (Field **field=GET_TABLE_FIELDS(table); *field ; field++) {
+ 	for (Field* const *field=GET_TABLE_FIELDS(table); *field ; field++) {
 		if ((*field)->is_null_in_record((const uchar *) rec_buff)) {
  			sdata = NULL;
  			dlen = 0;
@@ -1621,7 +1622,7 @@ xtPublic xtWord4 myxt_store_row_data(XTOpenTablePtr ot, xtWord4 row_size, char *
 	xtWord4			dlen;
 	xtWord4			item_size;
 
- 	for (Field **field=GET_TABLE_FIELDS(table); *field; field++) {
+ 	for (Field * const* field=GET_TABLE_FIELDS(table); *field; field++) {
 		if (mx_is_null_in_record(table, *field, rec_buff)) {
  			sdata = NULL;
  			dlen = 0;
@@ -1762,7 +1763,7 @@ xtPublic xtWord4 myxt_load_row_data(XTOpenTablePtr ot, xtWord1 *source_buf, xtWo
 	 * is a nullable column with a non-NULL value".
 	 */
 	memset(dest_buff, 0xFF, GET_TABLE_SHARE(table)->null_bytes);
- 	for (Field **field=GET_TABLE_FIELDS(table); *field && (!col_cnt || i<col_cnt); field++, i++) {
+ 	for (Field * const *field=GET_TABLE_FIELDS(table); *field && (!col_cnt || i<col_cnt); field++, i++) {
 		curr_field = *field;
  		is_null = FALSE;
  		switch (*source_buf) {
@@ -1813,7 +1814,7 @@ xtPublic xtBool myxt_find_column(XTOpenTablePtr ot, u_int *col_idx, const char *
 	STRUCT_TABLE	*table = ot->ot_table->tab_dic.dic_my_table;
 	u_int			i=0;
 
-	for (Field **field=GET_TABLE_FIELDS(table); *field; field++, i++) {
+	for (Field * const *field=GET_TABLE_FIELDS(table); *field; field++, i++) {
 		if (!my_strcasecmp(system_charset_info, (*field)->field_name, col_name)) {
 			*col_idx = i;
 			return OK;
@@ -1855,9 +1856,9 @@ xtPublic void myxt_get_column_as_string(XTOpenTablePtr ot, char *buffer, u_int c
 		xt_lock_mutex(self, &tab->tab_dic_field_lock);
 		pushr_(xt_unlock_mutex, &tab->tab_dic_field_lock);
 #ifdef DRIZZLED
-		field->ptr = (byte *) buffer + field->offset(table->default_values);
+		field->ptr = (byte *) buffer + field->offset(table->getDefaultValues());
 #else
-		field->ptr = (byte *) buffer + field->offset(field->table->record[0]);
+		field->ptr = (byte *) buffer + field->offset(field->table->getInsertRecord());
 #endif
 		field->val_str(&val);
 		field->ptr = save;					// Restore org row pointer
@@ -1887,9 +1888,9 @@ xtPublic xtBool myxt_set_column(XTOpenTablePtr ot, char *buffer, u_int col_idx, 
 	xt_lock_mutex(self, &tab->tab_dic_field_lock);
 	pushr_(xt_unlock_mutex, &tab->tab_dic_field_lock);
 #ifdef DRIZZLED
-	field->ptr = (byte *) buffer + field->offset(table->default_values);
+	field->ptr = (byte *) buffer + field->offset(table->getDefaultValues());
 #else
-	field->ptr = (byte *) buffer + field->offset(field->table->record[0]);
+	field->ptr = (byte *) buffer + field->offset(field->table->getInsertRecord());
 #endif
 	error = field->store(value, len, &my_charset_utf8_general_ci);
 	field->ptr = save;					// Restore org row pointer
@@ -2035,7 +2036,7 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 		return NULL;
 
 	tab_file_name = xt_last_name_of_path(tab_path->ps_path);
-	tab_name_len = filename_to_tablename(tab_file_name, tab_name, XT_IDENTIFIER_NAME_SIZE);
+	tab_name_len = TableIdentifier::filename_to_tablename(tab_file_name, tab_name, XT_IDENTIFIER_NAME_SIZE);
 
 	xt_2nd_last_name_of_path(XT_IDENTIFIER_NAME_SIZE, database_name, tab_path->ps_path);
 
@@ -2063,8 +2064,7 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 		ident = new TableIdentifier(database_name, tab_name, n);
 	}
 	
-	share = new TableShare();
-	share->init();
+	share = new TableShare(message::Table::STANDARD);
 	if ((error = share->open_table_def(*thd, *ident))) {
           xt_throw_sulxterr(XT_CONTEXT, XT_ERR_LOADING_MYSQL_DIC, tab_path->ps_path, (u_long) error);
           delete ident;
@@ -2161,7 +2161,7 @@ static STRUCT_TABLE *my_open_table(XTThreadPtr self, XTDatabaseHPtr XT_UNUSED(db
 #ifdef DRIZZLED
 	char		tab_name[XT_IDENTIFIER_NAME_SIZE];
 
-	uint32_t tab_name_len = filename_to_tablename(name, tab_name, XT_IDENTIFIER_NAME_SIZE);	
+	uint32_t tab_name_len = TableIdentifier::filename_to_tablename(name, tab_name, XT_IDENTIFIER_NAME_SIZE);	
 	
 	TableIdentifier *ident = NULL;
 	if (table_type == XT_TABLE_TYPE_TEMPORARY) {
@@ -2418,9 +2418,9 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 			seg->flag |= HA_NULL_PART;
 			seg->null_bit = field->null_bit;
 #ifdef DRIZZLED
-			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->default_values);
+			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->getDefaultValues());
 #else
-			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->record[0]);
+			seg->null_pos = (uint) (field->null_ptr - (uchar*) table_arg->getInsertRecord());
 #endif
 		}
 		else {
@@ -2452,7 +2452,7 @@ static XTIndexPtr my_create_index(XTThreadPtr self, STRUCT_TABLE *table_arg, u_i
 		else if (field->type() == MYSQL_TYPE_BIT) {
 			seg->bit_length = ((Field_bit *) field)->bit_len;
 			seg->bit_start = ((Field_bit *) field)->bit_ofs;
-			seg->bit_pos = (uint) (((Field_bit *) field)->bit_ptr - (uchar*) table_arg->record[0]);
+			seg->bit_pos = (uint) (((Field_bit *) field)->bit_ptr - (uchar*) table_arg->getInsertRecord());
 		}
 #else
 		/* Drizzle uses HA_KEYTYPE_ULONG_INT keys for enums > 1 byte, which is not consistent with MySQL, so we fix it here  */
@@ -2624,7 +2624,7 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 	u_int	dic_rec_size;
 	xtBool	dic_rec_fixed;
 	Field	*curr_field;
-	Field	**field;
+        Field * const *field;
 
 	/* How many columns are required for all indexes. */
 	KeyInfo				*index;
@@ -2637,7 +2637,7 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 
 	dic->dic_ind_cols_req = 0;
 	for (uint i=0; i<GET_TABLE_SHARE(my_tab)->keys; i++) {
-		index = &my_tab->key_info[i];
+		index = &my_tab->getKeyInfo(i);
 
 		key_part_end = index->key_part + index->key_parts;
 		for (key_part = index->key_part; key_part != key_part_end; key_part++) {
@@ -2762,10 +2762,10 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 
 	if (dic->dic_def_ave_row_size) {
 		/* The average row size has been set: */
-		dic_rec_size = offsetof(XTTabRecFix, rf_data) + GET_TABLE_SHARE(my_tab)->reclength;
+		dic_rec_size = offsetof(XTTabRecFix, rf_data) + GET_TABLE_SHARE(my_tab)->getRecordLength();
 
 		/* The conditions for a fixed record are: */
-		if (dic->dic_def_ave_row_size >= (xtWord8) GET_TABLE_SHARE(my_tab)->reclength &&
+		if (dic->dic_def_ave_row_size >= (xtWord8) GET_TABLE_SHARE(my_tab)->getRecordLength() &&
 			dic_rec_size <= XT_TAB_MAX_FIX_REC_LENGTH &&
 			!blob_field_count) {
 			dic_rec_fixed = TRUE;
@@ -2791,7 +2791,7 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 		 * we handle these rows as fixed size rows.
 		 * Fixed size rows use the internal MySQL format.
 		 */
-		dic_rec_size = offsetof(XTTabRecFix, rf_data) + GET_TABLE_SHARE(my_tab)->reclength;
+		dic_rec_size = offsetof(XTTabRecFix, rf_data) + GET_TABLE_SHARE(my_tab)->getRecordLength();
 		/* Fixed length records must be less than 16K in size,
 		 * have an average size which is very close (20%) to the maximum size or
 		 * be less than a minimum size,
@@ -2862,15 +2862,15 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 		 * index columns!
 		 */		 
 		if (field_count == dic->dic_ind_cols_req)
-			dic->dic_ind_rec_len = GET_TABLE_SHARE(my_tab)->reclength;
+			dic->dic_ind_rec_len = GET_TABLE_SHARE(my_tab)->getRecordLength();
 		else {
 			field=GET_TABLE_FIELDS(my_tab);
 			
 			curr_field = field[dic->dic_ind_cols_req];
 #ifdef DRIZZLED
-			dic->dic_ind_rec_len = curr_field->offset(my_tab->default_values);
+			dic->dic_ind_rec_len = curr_field->offset(my_tab->getDefaultValues());
 #else
-			dic->dic_ind_rec_len = curr_field->offset(my_tab->record[0]);
+			dic->dic_ind_rec_len = curr_field->offset(my_tab->getInsertRecord());
 #endif
 		}
 	}
@@ -2886,7 +2886,7 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 	if (!dic_rec_fixed) {
 		xtWord8 max_rec_size = offsetof(XTTabRecExt, re_data);
 
-		for (Field **f=GET_TABLE_FIELDS(my_tab); (curr_field = *f); f++) {
+		for (Field * const *f=GET_TABLE_FIELDS(my_tab); (curr_field = *f); f++) {
 			max_data_size = curr_field->key_length();
 			enum_field_types tno = curr_field->type();
 			if (tno == MYSQL_TYPE_BLOB)
@@ -2908,7 +2908,7 @@ xtPublic void myxt_setup_dictionary(XTThreadPtr self, XTDictionaryPtr dic)
 
  	dic->dic_key_count = GET_TABLE_SHARE(my_tab)->keys;
 	dic->dic_mysql_buf_size = GET_TABLE_SHARE(my_tab)->rec_buff_length;
-	dic->dic_mysql_rec_size = GET_TABLE_SHARE(my_tab)->reclength;
+	dic->dic_mysql_rec_size = GET_TABLE_SHARE(my_tab)->getRecordLength();
 }
 
 static u_int my_get_best_superset(XTThreadPtr XT_UNUSED(self), XTDictionaryPtr dic, XTIndexPtr ind)
@@ -2951,7 +2951,7 @@ xtPublic xtBool myxt_load_dictionary(XTThreadPtr self, XTDictionaryPtr dic, XTDa
 	myxt_setup_dictionary(self, dic);
 	dic->dic_keys = (XTIndexPtr *) xt_calloc(self, sizeof(XTIndexPtr) * GET_TABLE_SHARE(my_tab)->keys);
 	for (uint i=0; i<GET_TABLE_SHARE(my_tab)->keys; i++)
-		dic->dic_keys[i] = my_create_index(self, my_tab, i, &my_tab->key_info[i]);
+		dic->dic_keys[i] = my_create_index(self, my_tab, i, &my_tab->getKeyInfo(i));
 
 	/* Check if any key is a subset of another: */
 	for (u_int i=0; i<dic->dic_key_count; i++)
@@ -3134,7 +3134,7 @@ xtPublic XTDDTable *myxt_create_table_from_table(XTThreadPtr self, STRUCT_TABLE 
 	dd_tab->init(self);
 	pushr_(my_free_dd_table, dd_tab);
 
- 	for (Field **field=GET_TABLE_FIELDS(my_tab); (curr_field = *field); field++) {
+ 	for (Field * const *field=GET_TABLE_FIELDS(my_tab); (curr_field = *field); field++) {
 		col = XTDDColumnFactory::createFromMySQLField(self, my_tab, curr_field);
 		dd_tab->dt_cols.append(self, col);
 	}
@@ -3145,7 +3145,7 @@ xtPublic XTDDTable *myxt_create_table_from_table(XTThreadPtr self, STRUCT_TABLE 
 		dd_tab->dt_indexes.append(self, ind);
 		ind->co_table = dd_tab;
 		ind->in_index = i;
-		ha_create_dd_index(self, ind, &my_tab->key_info[i]);
+		ha_create_dd_index(self, ind, &my_tab->getKeyInfo(i));
 	}
 
 	popr_(); // my_free_dd_table(dd_tab)
@@ -3237,7 +3237,7 @@ xtPublic void myxt_static_convert_table_name(XTThreadPtr XT_UNUSED(self), char *
 
 xtPublic void myxt_static_convert_file_name(char *from, char *to, size_t to_len)
 {
-	filename_to_tablename(from, to, to_len);
+  TableIdentifier::filename_to_tablename(from, to, to_len);
 }
 
 xtPublic int myxt_strcasecmp(char * a, char *b)

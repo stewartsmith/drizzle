@@ -1,7 +1,7 @@
 # we are assuming the memcached binary is contained in PATH or
 # common directories we might expect it to be in
---exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh stop
---exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh start
+--exec sh $TOP_BUILDDIR/plugin/memcached_functions/start_mc.sh stop
+--exec sh $TOP_BUILDDIR/plugin/memcached_functions/start_mc.sh start
 
 DROP TABLE IF EXISTS `t1`;
 --replace_result $MC_PORT MC_A_PORT
@@ -193,5 +193,5 @@ select memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', 5);
 select memc_behavior_get('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK');
 select memc_behavior_set('MEMCACHED_BEHAVIOR_IO_BYTES_WATERMARK', @size);
 
---exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh stop
+--exec sh $TOP_BUILDDIR/plugin/memcached_functions/start_mc.sh stop
 

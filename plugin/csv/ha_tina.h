@@ -113,7 +113,8 @@ public:
   */
   drizzled::ha_rows estimate_rows_upper_bound() { return HA_POS_ERROR; }
 
-  int open(const char *name, int mode, uint32_t open_options);
+  int doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked);
+  int open(const char *, int , uint32_t ) { assert(0); return -1; }
   int close(void);
   int doInsertRecord(unsigned char * buf);
   int doUpdateRecord(const unsigned char * old_data, unsigned char * new_data);

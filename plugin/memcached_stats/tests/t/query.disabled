@@ -3,8 +3,8 @@
 # memcached related system variable has been set. Both of these queries
 # should return 0 rows
 #
---exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh stop
---exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh start
+--exec sh $TOP_BUILDDIR/plugin/memcached_functions/start_mc.sh stop
+--exec sh $TOP_BUILDDIR/plugin/memcached_functions/start_mc.sh start
 
 --disable_warnings
 create schema if not exists data_dictionary;
@@ -43,4 +43,4 @@ from data_dictionary.memcached_stats;
 # memcached, we will actually start up an embedded server and perform some
 # queries on it here...
 #
---exec sh $MYSQLTEST_VARDIR/../../plugin/memcached_functions/start_mc.sh stop
+--exec sh $TOP_BUILDDIR/plugin/memcached_functions/start_mc.sh stop

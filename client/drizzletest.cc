@@ -60,7 +60,7 @@
 #include PCRE_HEADER
 
 #include <stdarg.h>
-#include <drizzled/unordered_map.h>
+#include <boost/unordered_map.hpp>
 
 #include "errname.h"
 
@@ -103,7 +103,6 @@ const char *unix_sock= NULL;
 static uint32_t opt_port= 0;
 static uint32_t opt_max_connect_retries;
 static bool silent= false, verbose= false;
-static bool tty_password= false;
 static bool opt_mark_progress= false;
 static bool parsing_disabled= false;
 static bool display_result_vertically= false,
@@ -115,7 +114,6 @@ static bool abort_on_error= true;
 static bool server_initialized= false;
 static bool is_windows= false;
 static bool opt_mysql= false;
-const string PASSWORD_SENTINEL("\0\0\0\0\0", 5);
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
 std::string opt_basedir,
@@ -217,7 +215,7 @@ typedef struct st_var
 VAR var_reg[10];
 
 
-unordered_map<string, VAR *> var_hash;
+boost::unordered_map<string, VAR *> var_hash;
 
 struct st_connection
 {
@@ -1711,7 +1709,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    unordered_map<string, VAR*>::iterator iter=
+    boost::unordered_map<string, VAR*>::iterator iter=
       var_hash.find(save_var_name_str);
     if (iter == var_hash.end())
     {
@@ -1749,7 +1747,7 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  unordered_map<string, VAR*>::iterator iter=
+  boost::unordered_map<string, VAR*>::iterator iter=
     var_hash.find(var_name);
   if (iter != var_hash.end())
     return (*iter).second;
@@ -5382,49 +5380,10 @@ static void check_sleep(int32_t in_opt_sleep)
 {
   if (in_opt_sleep < -1)
   {
-    cout<<N_("Error: Invalid Value for opt_sleep"); 
+    cout << N_("Error: Invalid Value for opt_sleep"); 
     exit(-1);
   }
   opt_sleep= in_opt_sleep;
-}
-
-static pair<string, string> parse_password_arg(std::string s)
-{
-  if (s.find("--password") == 0)
-  {
-    if (s == "--password")
-    {
-      tty_password= true;
-      //check if no argument is passed.
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-
-    if (s.substr(10,3) == "=\"\"" || s.substr(10,3) == "=''")
-    {
-      // Check if --password="" or --password=''
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-    
-    if(s.substr(10) == "=" && s.length() == 11)
-    {
-      // check if --password= and return a default value
-      return make_pair("password", PASSWORD_SENTINEL);
-    }
-
-    if(s.length()>12 && (s[10] == '"' || s[10] == '\''))
-    {
-      // check if --password has quotes, remove quotes and return the value
-      return make_pair("password", s.substr(11,s.length()-1));
-    }
-
-    // if all above are false, it implies that --password=value, return value.
-    return make_pair("password", s.substr(11));
-  }
-
-  else
-  {
-    return make_pair(string(""), string(""));
-  } 
 }
 
 int main(int argc, char **argv)
@@ -5438,6 +5397,8 @@ try
   struct stat res_info;
 
   TMPDIR[0]= 0;
+
+  internal::my_init();
 
   po::options_description commandline_options("Options used only in command line");
   commandline_options.add_options()
@@ -5515,6 +5476,8 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
 
+  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
   po::variables_map vm;
 
   po::store(po::command_line_parser(argc, argv).options(long_options).
@@ -5522,15 +5485,21 @@ try
 
   if (! vm["no-defaults"].as<bool>())
   {
-    ifstream user_test_ifs("~/.drizzle/drizzletest.cnf");
+    std::string user_config_dir_test(user_config_dir);
+    user_config_dir_test.append("/drizzle/drizzletest.cnf"); 
+
+    std::string user_config_dir_client(user_config_dir);
+    user_config_dir_client.append("/drizzle/client.cnf");
+
+    ifstream user_test_ifs(user_config_dir_test.c_str());
     po::store(parse_config_file(user_test_ifs, test_options), vm);
- 
+
+    ifstream user_client_ifs(user_config_dir_client.c_str());
+    po::store(parse_config_file(user_client_ifs, client_options), vm);
+
     ifstream system_test_ifs(system_config_dir_test.c_str());
     store(parse_config_file(system_test_ifs, test_options), vm);
 
-    ifstream user_client_ifs("~/.drizzle/client.cnf");
-    po::store(parse_config_file(user_client_ifs, client_options), vm);
- 
     ifstream system_client_ifs(system_config_dir_client.c_str());
     po::store(parse_config_file(system_client_ifs, client_options), vm);
   }
@@ -5629,7 +5598,7 @@ try
     }
   }
 
-  if (vm.count("password"))
+  if( vm.count("password") )
   {
     if (!opt_password.empty())
       opt_password.erase();
@@ -5641,17 +5610,6 @@ try
     {
       opt_password= password;
       tty_password= false;
-    }
-    char *start= (char *)password.c_str();
-    char *temp_pass= (char *)password.c_str();
-    while (*temp_pass)
-    {
-        /* Overwriting password with 'x' */
-        *temp_pass++= 'x';
-    }
-    if (*start)
-    {
-      start[1]= 0;
     }
   }
   else

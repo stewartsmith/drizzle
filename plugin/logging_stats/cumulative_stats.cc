@@ -65,10 +65,9 @@ CumulativeStats::~CumulativeStats()
   delete global_status_vars;
 }
 
-void CumulativeStats::logUserStats(ScoreboardSlot *scoreboard_slot)
+void CumulativeStats::logUserStats(ScoreboardSlot *scoreboard_slot, bool reserveSlot)
 {
   vector<ScoreboardSlot *>::iterator cumulative_it= cumulative_stats_by_user_vector->begin();
-  bool found= false;
 
   /* Search if this is a pre-existing user */
 
@@ -85,14 +84,14 @@ void CumulativeStats::logUserStats(ScoreboardSlot *scoreboard_slot)
     string user= cumulative_scoreboard_slot->getUser();
     if (user.compare(scoreboard_slot->getUser()) == 0)
     {
-      found= true;
+      reserveSlot= false;
       cumulative_scoreboard_slot->merge(scoreboard_slot);
       break;
     }
     ++cumulative_it;
   }
-
-  if (! found)
+  
+  if (reserveSlot)
   {
     /* the user was not found */
     /* its possible multiple simultaneous connections with the same user

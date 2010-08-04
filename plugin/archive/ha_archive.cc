@@ -133,7 +133,7 @@ void ArchiveEngine::deleteOpenTable(const string &table_name)
 
 
 void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory, 
-				    SchemaIdentifier&,
+				    const SchemaIdentifier&,
                                     set<string>& set_of_names)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();
@@ -165,7 +165,7 @@ void ArchiveEngine::doGetTableNames(drizzled::CachedDirectory &directory,
 }
 
 
-int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
+int ArchiveEngine::doDropTable(Session&, const TableIdentifier &identifier)
 {
   string new_path(identifier.getPath());
 
@@ -182,7 +182,7 @@ int ArchiveEngine::doDropTable(Session&, TableIdentifier &identifier)
 }
 
 int ArchiveEngine::doGetTableDefinition(Session&,
-                                        TableIdentifier &identifier,
+                                        const TableIdentifier &identifier,
                                         drizzled::message::Table &table_proto)
 {
   struct stat stat_info;
@@ -220,6 +220,12 @@ int ArchiveEngine::doGetTableDefinition(Session&,
     azclose(&proto_stream);
     free(proto_string);
   }
+
+  /* We set the name from what we've asked for as in RENAME TABLE for ARCHIVE
+     we do not rewrite the table proto (as it's wedged in the file header)
+  */
+  table_proto.set_schema(identifier.getSchemaName());
+  table_proto.set_name(identifier.getTableName());
 
   return error;
 }
@@ -443,10 +449,10 @@ int ha_archive::init_archive_reader()
   Init out lock.
   We open the file we will read from.
 */
-int ha_archive::open(const char *name, int, uint32_t)
+int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 {
   int rc= 0;
-  share= get_share(name, &rc);
+  share= get_share(identifier.getPath().c_str(), &rc);
 
   /** 
     We either fix it ourselves, or we just take it offline 
@@ -479,6 +485,13 @@ int ha_archive::open(const char *name, int, uint32_t)
   thr_lock_data_init(&share->lock, &lock, NULL);
 
   return(rc);
+}
+
+// Should never be called
+int ha_archive::open(const char *, int, uint32_t)
+{
+  assert(0);
+  return -1;
 }
 
 
@@ -529,7 +542,7 @@ int ha_archive::close(void)
 
 int ArchiveEngine::doCreateTable(Session &,
                                  Table& table_arg,
-                                 drizzled::TableIdentifier &identifier,
+                                 const drizzled::TableIdentifier &identifier,
                                  drizzled::message::Table& proto)
 {
   char name_buff[FN_REFLEN];
@@ -705,12 +718,11 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   int rc;
   unsigned char *read_buf= NULL;
   uint64_t temp_auto;
-  unsigned char *record=  table->record[0];
+  unsigned char *record=  table->getInsertRecord();
 
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  ha_statistic_increment(&system_status_var::ha_write_count);
   pthread_mutex_lock(&share->mutex);
 
   if (share->archive_write_open == false)
@@ -718,7 +730,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
       return(HA_ERR_CRASHED_ON_USAGE);
 
 
-  if (table->next_number_field && record == table->record[0])
+  if (table->next_number_field && record == table->getInsertRecord())
   {
     update_auto_increment();
     temp_auto= table->next_number_field->val_int();
@@ -902,7 +914,7 @@ int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
   {
     if (!((*field)->is_null()))
     {
-      ptr= (*field)->unpack(record + (*field)->offset(table->record[0]), ptr);
+      ptr= (*field)->unpack(record + (*field)->offset(table->getInsertRecord()), ptr);
     }
   }
   return(0);
@@ -1059,12 +1071,12 @@ int ha_archive::optimize()
 
       for (x= 0; x < rows_restored ; x++)
       {
-        rc= get_row(&archive, table->record[0]);
+        rc= get_row(&archive, table->getInsertRecord());
 
         if (rc != 0)
           break;
 
-        real_write_row(table->record[0], &writer);
+        real_write_row(table->getInsertRecord(), &writer);
         /*
           Long term it should be possible to optimize this so that
           it is not called on each row.
@@ -1077,8 +1089,8 @@ int ha_archive::optimize()
           field->setReadSet();
 
           uint64_t auto_value=
-            (uint64_t) field->val_int(table->record[0] +
-                                       field->offset(table->record[0]));
+            (uint64_t) field->val_int(table->getInsertRecord() +
+                                       field->offset(table->getInsertRecord()));
           if (share->archive_write.auto_increment < auto_value)
             stats.auto_increment_value=
               (share->archive_write.auto_increment= auto_value) + 1;
@@ -1275,7 +1287,7 @@ int ha_archive::check(Session* session)
   read_data_header(&archive);
   for (x= 0; x < share->archive_write.rows; x++)
   {
-    rc= get_row(&archive, table->record[0]);
+    rc= get_row(&archive, table->getInsertRecord());
 
     if (rc != 0)
       break;
@@ -1319,7 +1331,7 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   return;
 }
 
-int ArchiveEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifier &to)
+int ArchiveEngine::doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to)
 {
   int error= 0;
 
@@ -1337,7 +1349,7 @@ int ArchiveEngine::doRenameTable(Session&, TableIdentifier &from, TableIdentifie
 }
 
 bool ArchiveEngine::doDoesTableExist(Session&,
-                                     TableIdentifier &identifier)
+                                     const TableIdentifier &identifier)
 {
   string proto_path(identifier.getPath());
   proto_path.append(ARZ);
@@ -1351,7 +1363,7 @@ bool ArchiveEngine::doDoesTableExist(Session&,
 }
 
 void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
-                                          drizzled::SchemaIdentifier &schema_identifier,
+                                          const drizzled::SchemaIdentifier &schema_identifier,
                                           drizzled::TableIdentifiers &set_of_identifiers)
 {
   drizzled::CachedDirectory::Entries entries= directory.getEntries();

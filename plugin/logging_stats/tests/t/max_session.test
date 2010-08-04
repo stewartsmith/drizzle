@@ -49,6 +49,13 @@ disconnect con11;
 disconnect con12;
 disconnect con13;
 
+#A sleep is needed here because on disconnect a scoreboard slot is marked 
+#as being done in the session destructor. The client would have already
+#been disconnected before the scoreboard slot is marked as being done. So
+#its possible that the connect below could fail to reserve a slot in this
+#test as the scoreboard would be full.  
+--sleep 1
+
 connect (con14, localhost, drizzle_test,,);
 INSERT INTO b VALUES (14);
 

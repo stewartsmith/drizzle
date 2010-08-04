@@ -358,7 +358,6 @@ using namespace drizzled;
   enum drizzled::sql_var_t var_type;
   drizzled::Key::Keytype key_type;
   enum drizzled::ha_key_alg key_alg;
-  enum drizzled::row_type row_type;
   enum drizzled::column_format_type column_format_type;
   enum drizzled::ha_rkey_function ha_rkey_mode;
   enum drizzled::enum_tx_isolation tx_isolation;
@@ -2124,7 +2123,6 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TableList*) lex->select_lex.table_list.first)->db;
-            statement->create_info.row_type= ROW_TYPE_NOT_USED;
             statement->alter_info.build_method= $2;
           }
           alter_commands
@@ -3013,7 +3011,7 @@ function_call_keyword:
         | HOUR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_hour($3); }
         | INSERT '(' expr ',' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_insert($3,$5,$7,$9); }
+          { $$= new (YYSession->mem_root) Item_func_insert(*YYSession, $3, $5, $7, $9); }
         | INTERVAL_SYM '(' expr ',' expr ')' %prec INTERVAL_SYM
           {
             Session *session= YYSession;
@@ -3208,9 +3206,9 @@ function_call_conflict:
         | QUARTER_SYM '(' expr ')'
           { $$ = new (YYSession->mem_root) Item_func_quarter($3); }
         | REPEAT_SYM '(' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_repeat($3,$5); }
+          { $$= new (YYSession->mem_root) Item_func_repeat(*YYSession, $3, $5); }
         | REPLACE '(' expr ',' expr ',' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_replace($3,$5,$7); }
+          { $$= new (YYSession->mem_root) Item_func_replace(*YYSession, $3, $5, $7); }
         | REVERSE_SYM '(' expr ')'
           {
             std::string reverse_str("reverse");
@@ -3389,7 +3387,7 @@ variable_aux:
           }
         | ident_or_text
           {
-            $$= new Item_func_get_user_var($1);
+            $$= new Item_func_get_user_var(*YYSession, $1);
           }
         | '@' opt_var_ident_type ident_or_text opt_component
           {
@@ -3555,13 +3553,19 @@ join_table:
             left-associative joins.
           */
           table_ref normal_join table_ref %prec TABLE_REF_PRIORITY
-          { DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); }
+          { 
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3));
+            Lex->is_cross= false;
+          }
         | table_ref STRAIGHT_JOIN table_factor
-          { DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; }
+          { 
+            DRIZZLE_YYABORT_UNLESS($1 && ($$=$3)); $3->straight=1; 
+          }
         | table_ref normal_join table_ref
           ON
           {
             DRIZZLE_YYABORT_UNLESS($1 && $3);
+            DRIZZLE_YYABORT_UNLESS( not Lex->is_cross );
             /* Change the current name resolution context to a local context. */
             if (push_new_name_resolution_context(YYSession, $1, $3))
               DRIZZLE_YYABORT;
@@ -3681,7 +3685,7 @@ join_table:
 normal_join:
           JOIN_SYM {}
         | INNER_SYM JOIN_SYM {}
-        | CROSS JOIN_SYM {}
+        | CROSS JOIN_SYM { Lex->is_cross= true; }
         ;
 
 /*
@@ -3752,7 +3756,7 @@ table_factor:
             /* Use $2 instead of Lex->current_select as derived table will
                alter value of Lex->current_select. */
             if (!($3 || $5) && $2->embedding &&
-                !$2->embedding->nested_join->join_list.elements)
+                !$2->embedding->getNestedJoin()->join_list.elements)
             {
               /* we have a derived table ($3 == NULL) but no alias,
                  Since we are nested in further parentheses so we
@@ -3916,7 +3920,7 @@ select_derived_init:
             }
             embedding= Lex->current_select->embedding;
             $$= embedding &&
-                !embedding->nested_join->join_list.elements;
+                !embedding->getNestedJoin()->join_list.elements;
             /* return true if we are deeply nested */
           }
         ;
@@ -4770,6 +4774,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TABLES opt_db show_wild
            {
@@ -4827,6 +4834,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TEMPORARY_SYM TABLES show_wild
            {

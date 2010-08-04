@@ -41,7 +41,7 @@ public:
   Cursor *clone(drizzled::memory::Root *mem_root);
 
   const char *index_type(uint32_t inx);
-  drizzled::row_type get_row_type() const;
+
   const drizzled::key_map *keys_to_use_for_scanning() { return &btree_keys; }
   double scan_time()
   { return (double) (stats.records+stats.deleted) / 20.0+10; }
