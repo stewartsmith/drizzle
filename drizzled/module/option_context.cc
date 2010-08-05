@@ -85,6 +85,8 @@ std::string option_context::prepend_name(std::string module_name,
   module_name.push_back('.');
   std::transform(module_name.begin(), module_name.end(),
                  module_name.begin(), SwapUnderscores());
+  std::transform(module_name.begin(), module_name.end(),
+                 module_name.begin(), ::tolower);
   module_name.append(name_in);
   return module_name;
 }

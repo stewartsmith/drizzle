@@ -391,7 +391,11 @@ static int rm_table_part2(Session *session, TableList *tables)
       continue;
     case -1:
       error= 1;
-      goto err_with_placeholders;
+      unlock_table_names(tables, NULL);
+      pthread_mutex_unlock(&LOCK_open);
+      session->no_warnings_for_error= 0;
+
+      return(error);
     default:
       // temporary table not found
       error= 0;
@@ -417,7 +421,11 @@ static int rm_table_part2(Session *session, TableList *tables)
       if (session->killed)
       {
         error= -1;
-        goto err_with_placeholders;
+        unlock_table_names(tables, NULL);
+        pthread_mutex_unlock(&LOCK_open);
+        session->no_warnings_for_error= 0;
+
+        return(error);
       }
     }
     identifier.getPath();
@@ -475,7 +483,6 @@ static int rm_table_part2(Session *session, TableList *tables)
   }
 
   pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
-err_with_placeholders:
   unlock_table_names(tables, NULL);
   pthread_mutex_unlock(&LOCK_open);
   session->no_warnings_for_error= 0;
