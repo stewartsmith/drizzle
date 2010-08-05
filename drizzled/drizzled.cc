@@ -338,7 +338,6 @@ pthread_mutex_t LOCK_status;
 pthread_mutex_t LOCK_global_read_lock;
 pthread_mutex_t LOCK_global_system_variables;
 
-pthread_rwlock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
 pthread_cond_t  COND_server_end;
@@ -544,7 +543,6 @@ void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_global_system_variables);
-  (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
   (void) pthread_mutex_destroy(&LOCK_global_read_lock);
   (void) pthread_cond_destroy(&COND_thread_count);
   (void) pthread_cond_destroy(&COND_server_end);
@@ -818,7 +816,6 @@ int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_global_system_variables, &attr);
 
   (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
-  (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
   (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_server_end,NULL);
@@ -848,7 +845,6 @@ int init_server_components(module::Registry &plugins)
   TableShare::cacheStart();
 
   setup_fpu();
-  init_thr_lock();
 
   /* Setup logs */
 
