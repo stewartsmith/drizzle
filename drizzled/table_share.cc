@@ -138,7 +138,7 @@ void TableShare::release(TableShare *share)
   bool to_be_deleted= false;
   safe_mutex_assert_owner(&LOCK_open);
 
-  pthread_mutex_lock(&share->mutex);
+  share->lock();
   if (!--share->ref_count)
   {
     to_be_deleted= true;
@@ -157,7 +157,7 @@ void TableShare::release(TableShare *share)
     }
     return;
   }
-  pthread_mutex_unlock(&share->mutex);
+  share->unlock();
 }
 
 void TableShare::release(TableIdentifier &identifier)
@@ -169,7 +169,7 @@ void TableShare::release(TableIdentifier &identifier)
     share->version= 0;                          // Mark for delete
     if (share->ref_count == 0)
     {
-      pthread_mutex_lock(&share->mutex);
+      share->lock();
       plugin::EventObserver::deregisterTableEvents(*share);
       table_def_cache.erase(identifier.getKey());
       delete share;
@@ -186,18 +186,18 @@ static TableShare *foundTableShare(TableShare *share)
   */
 
   /* We must do a lock to ensure that the structure is initialized */
-  (void) pthread_mutex_lock(&share->mutex);
+  share->lock();
   if (share->error)
   {
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
-    (void) pthread_mutex_unlock(&share->mutex);
+    share->unlock();
 
     return NULL;
   }
 
   share->incrementTableCount();
-  (void) pthread_mutex_unlock(&share->mutex);
+  share->unlock();
 
   return share;
 }
@@ -250,7 +250,7 @@ TableShare *TableShare::getShareCreate(Session *session,
     Lock mutex to be able to read table definition from file without
     conflicts
   */
-  (void) pthread_mutex_lock(&share->mutex);
+  share->lock();
 
   /**
    * @TODO: we need to eject something if we exceed table_def_size
@@ -276,7 +276,7 @@ TableShare *TableShare::getShareCreate(Session *session,
   
   plugin::EventObserver::registerTableEvents(*share);
   
-  (void) pthread_mutex_unlock(&share->mutex);
+  share->unlock();
 
   return share;
 }
