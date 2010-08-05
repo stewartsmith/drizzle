@@ -31,6 +31,9 @@
 #include <unistd.h>
 #include <zlib.h>
 
+#include <boost/unordered_map.hpp>
+#include "drizzled/util/string.h"
+
 #include "azio.h"
 #include "plugin/archive/ha_archive.h"
 
@@ -58,7 +61,7 @@ static const char *ha_archive_exts[] = {
 
 class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
-  typedef std::map<std::string, ArchiveShare*> ArchiveMap;
+  typedef boost::unordered_map<std::string, ArchiveShare *, drizzled::util::insensitive_hash, drizzled::util::insensitive_equal_to> ArchiveMap;
   ArchiveMap archive_open_tables;
 
   /* Variables for archive share methods */
