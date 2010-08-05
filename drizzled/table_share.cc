@@ -186,18 +186,15 @@ static TableShare *foundTableShare(TableShare *share)
   */
 
   /* We must do a lock to ensure that the structure is initialized */
-  share->lock();
   if (share->error)
   {
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
-    share->unlock();
 
     return NULL;
   }
 
   share->incrementTableCount();
-  share->unlock();
 
   return share;
 }

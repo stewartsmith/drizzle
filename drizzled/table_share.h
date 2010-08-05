@@ -231,7 +231,6 @@ private:
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
 
-public:
 
   void lock()
   {
@@ -242,6 +241,7 @@ public:
   {
     pthread_mutex_unlock(&mutex);
   }
+public:
 
 private:
   std::vector<unsigned char> default_values;		/* row with default values */
@@ -493,7 +493,9 @@ public:
 
   void incrementTableCount()
   {
+    lock();
     ref_count++;
+    unlock();
   }
 
   uint32_t null_bytes;
