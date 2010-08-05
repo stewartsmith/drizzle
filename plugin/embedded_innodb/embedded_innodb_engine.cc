@@ -140,10 +140,9 @@ public:
 
   ~EmbeddedInnoDBEngine();
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) EmbeddedInnoDBCursor(*this, table);
+    return new EmbeddedInnoDBCursor(*this, table);
   }
 
   const char **bas_ext() const {
@@ -750,7 +749,7 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 
   int rc;
   share= get_share(name, has_hidden_primary_key, &rc);
-  thr_lock_data_init(&share->lock, &lock, NULL);
+  thr_lock_data_init(&share->lock, &lock);
 
 
   if (table->getShare()->getPrimaryKey() != MAX_KEY)
@@ -2981,8 +2980,8 @@ static void innodb_file_format_name_update(Session*, drizzle_sys_var*,
   format= *static_cast<const char*const*>(save);
 
   /* Format is already set in validate */
-    strncpy(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
+  memmove(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
+  innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
 
   *static_cast<const char**>(var_ptr)= innodb_file_format_name_storage;
 }
