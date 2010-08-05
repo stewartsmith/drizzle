@@ -34,7 +34,7 @@ public:
   char data_file_name[FN_REFLEN];
   uint32_t use_count;
   pthread_mutex_t mutex;
-  drizzled::THR_LOCK lock;
+  drizzled::THR_LOCK _lock;
   azio_stream archive_write;     /* Archive file we are working with */
   bool archive_write_open;
   bool dirty;               /* Flag for if a flush should occur */

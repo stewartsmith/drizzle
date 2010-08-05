@@ -280,7 +280,7 @@ ArchiveShare::ArchiveShare(const char *name):
 
 ArchiveShare::~ArchiveShare()
 {
-  thr_lock_delete(&lock);
+  thr_lock_delete(&_lock);
   pthread_mutex_destroy(&mutex);
   /*
     We need to make sure we don't reset the crashed state.
@@ -356,7 +356,7 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
     }
 
     a_engine->addOpenTable(share->table_name, share);
-    thr_lock_init(&share->lock);
+    thr_lock_init(&share->_lock);
   }
   share->use_count++;
 
@@ -474,7 +474,7 @@ int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 
   record_buffer.resize(table->getShare()->getRecordLength() + ARCHIVE_ROW_HEADER_SIZE);
 
-  thr_lock_data_init(&share->lock, &lock);
+  thr_lock_data_init(&share->_lock, &lock);
 
   return(rc);
 }
@@ -1042,7 +1042,6 @@ int ha_archive::optimize()
     */
     if (!rc)
     {
-      uint64_t x;
       uint64_t rows_restored;
       share->rows_recorded= 0;
       stats.auto_increment_value= 1;
@@ -1050,7 +1049,7 @@ int ha_archive::optimize()
 
       rows_restored= archive.rows;
 
-      for (x= 0; x < rows_restored ; x++)
+      for (uint64_t x= 0; x < rows_restored ; x++)
       {
         rc= get_row(&archive, table->getInsertRecord());
 
