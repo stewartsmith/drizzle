@@ -3991,7 +3991,7 @@ int ha_pbxt::info(uint flag)
 #ifdef MY_PTHREAD_FASTMUTEX
 				my_pthread_fastmutex_lock(&share->WHICH_MUTEX);
 #else
-				pthread_mutex_lock(&share->WHICH_MUTEX);
+                                share->lock();
 #endif
 
 #endif // SAFE_MUTEX
@@ -4027,7 +4027,7 @@ int ha_pbxt::info(uint flag)
 #ifdef MY_PTHREAD_FASTMUTEX
 				pthread_mutex_unlock(&share->WHICH_MUTEX.mutex);
 #else
-				pthread_mutex_unlock(&share->WHICH_MUTEX);
+                                share->unlock();
 #endif
 #endif
 	  		/*

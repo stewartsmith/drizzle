@@ -35,6 +35,7 @@
 #include <google/protobuf/message.h>
 
 #include <drizzled/table_proto.h>
+#include <drizzled/charset.h>
 
 #include "drizzled/function/time/typecast.h"
 
@@ -454,12 +455,29 @@ static int fill_table_proto(message::Table &table_proto,
     for(unsigned int j=0; j< key_info[i].key_parts; j++)
     {
       message::Table::Index::IndexPart *idxpart;
+      const int fieldnr= key_info[i].key_part[j].fieldnr;
+      int mbmaxlen= 1;
 
       idxpart= idx->add_index_part();
 
-      idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr);
+      idxpart->set_fieldnr(fieldnr);
 
-      idxpart->set_compare_length(key_info[i].key_part[j].length);
+      if (table_proto.field(fieldnr).type() == message::Table::Field::VARCHAR
+          || table_proto.field(fieldnr).type() == message::Table::Field::BLOB)
+      {
+        uint32_t collation_id;
+
+        if (table_proto.field(fieldnr).string_options().has_collation_id())
+          collation_id= table_proto.field(fieldnr).string_options().collation_id();
+        else
+          collation_id= table_proto.options().collation_id();
+
+        const CHARSET_INFO *cs= get_charset(collation_id);
+
+        mbmaxlen= cs->mbmaxlen;
+      }
+
+      idxpart->set_compare_length(key_info[i].key_part[j].length / mbmaxlen);
     }
   }
 
