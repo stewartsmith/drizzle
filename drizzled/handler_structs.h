@@ -117,20 +117,6 @@ typedef struct st_range_seq_if
   uint32_t (*next) (range_seq_t seq, KEY_MULTI_RANGE *range);
 } RANGE_SEQ_IF;
 
-/*
-  This is a buffer area that the handler can use to store rows.
-  'end_of_used_area' should be kept updated after calls to
-  read-functions so that other parts of the code can use the
-  remaining area (until next read calls is issued).
-*/
-
-typedef struct st_handler_buffer
-{
-  unsigned char *buffer;         /* Buffer one can start using */
-  unsigned char *buffer_end;     /* End of buffer */
-  unsigned char *end_of_used_area;     /* End of area that was used by handler */
-} HANDLER_BUFFER;
-
 } /* namespace drizzled */
 
 #endif /* DRIZZLED_HANDLER_STRUCTS_H */

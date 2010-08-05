@@ -1317,7 +1317,7 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
     Item *default_value= NULL;
 
     if (pfield.options().has_default_value() ||
-        pfield.options().has_default_null()  ||
+        pfield.options().default_null()  ||
         pfield.options().has_default_bin_value())
     {
       default_value= default_value_item(field_type,
@@ -1841,7 +1841,7 @@ int TableShare::open_table_from_share(Session *session,
     goto err;
 
   /* Allocate Cursor */
-  if (not (outparam.cursor= db_type()->getCursor(*this, outparam.getMemRoot())))
+  if (not (outparam.cursor= db_type()->getCursor(*this)))
     goto err;
 
   local_error= 4;
