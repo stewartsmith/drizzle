@@ -472,14 +472,7 @@ int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 
   assert(share);
 
-  record_buffer= create_record_buffer(table->getShare()->getRecordLength() +
-                                      ARCHIVE_ROW_HEADER_SIZE);
-
-  if (!record_buffer)
-  {
-    free_share();
-    return(HA_ERR_OUT_OF_MEM);
-  }
+  record_buffer.resize(table->getShare()->getRecordLength() + ARCHIVE_ROW_HEADER_SIZE);
 
   thr_lock_data_init(&share->lock, &lock);
 
@@ -515,7 +508,7 @@ int ha_archive::close(void)
 {
   int rc= 0;
 
-  destroy_record_buffer(record_buffer);
+  record_buffer.clear();
 
   /* First close stream */
   if (archive_reader_open == true)
@@ -647,7 +640,7 @@ int ha_archive::real_write_row(unsigned char *buf, azio_stream *writer)
   /* We pack the row for writing */
   r_pack_length= pack_row(buf);
 
-  written= azwrite_row(writer, record_buffer->buffer, r_pack_length);
+  written= azwrite_row(writer, &record_buffer[0], r_pack_length);
   if (written != r_pack_length)
   {
     return(-1);
@@ -690,8 +683,8 @@ unsigned int ha_archive::pack_row(unsigned char *record)
     return(HA_ERR_OUT_OF_MEM);
 
   /* Copy null bits */
-  memcpy(record_buffer->buffer, record, table->getShare()->null_bytes);
-  ptr= record_buffer->buffer + table->getShare()->null_bytes;
+  memcpy(&record_buffer[0], record, table->getShare()->null_bytes);
+  ptr= &record_buffer[0] + table->getShare()->null_bytes;
 
   for (Field **field=table->getFields() ; *field ; field++)
   {
@@ -699,7 +692,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
       ptr= (*field)->pack(ptr, record + (*field)->offset(record));
   }
 
-  return((unsigned int) (ptr - record_buffer->buffer));
+  return((unsigned int) (ptr - &record_buffer[0]));
 }
 
 
@@ -876,20 +869,9 @@ int ha_archive::get_row(azio_stream *file_to_read, unsigned char *buf)
 /* Reallocate buffer if needed */
 bool ha_archive::fix_rec_buff(unsigned int length)
 {
-  assert(record_buffer->buffer);
+  record_buffer.resize(length);
 
-  if (length > record_buffer->length)
-  {
-    unsigned char *newptr;
-    if (!(newptr= (unsigned char *)realloc(record_buffer->buffer, length)))
-      return(1);
-    record_buffer->buffer= newptr;
-    record_buffer->length= length;
-  }
-
-  assert(length <= record_buffer->length);
-
-  return(0);
+  return false;
 }
 
 int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
@@ -1303,31 +1285,6 @@ int ha_archive::check(Session* session)
   {
     return(HA_ADMIN_OK);
   }
-}
-
-archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
-{
-  archive_record_buffer *r;
-  if (!(r= (archive_record_buffer*) malloc(sizeof(archive_record_buffer))))
-  {
-    return(NULL);
-  }
-  r->length= (int)length;
-
-  if (!(r->buffer= (unsigned char*) malloc(r->length)))
-  {
-    free((char*) r);
-    return(NULL);
-  }
-
-  return(r);
-}
-
-void ha_archive::destroy_record_buffer(archive_record_buffer *r)
-{
-  free((char*) r->buffer);
-  free((char*) r);
-  return;
 }
 
 int ArchiveEngine::doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to)

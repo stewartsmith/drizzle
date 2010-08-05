@@ -22,12 +22,6 @@
   ha_example.h.
 */
 
-typedef struct st_archive_record_buffer {
-  unsigned char *buffer;
-  uint32_t length;
-} archive_record_buffer;
-
-
 class ArchiveShare {
 public:
   ArchiveShare();
@@ -75,11 +69,8 @@ class ha_archive: public drizzled::Cursor
   const unsigned char *current_key;
   uint32_t current_key_len;
   uint32_t current_k_offset;
-  archive_record_buffer *record_buffer;
+  std::vector <unsigned char> record_buffer;
   bool archive_reader_open;
-
-  archive_record_buffer *create_record_buffer(unsigned int length);
-  void destroy_record_buffer(archive_record_buffer *r);
 
 public:
   ha_archive(drizzled::plugin::StorageEngine &engine_arg,
