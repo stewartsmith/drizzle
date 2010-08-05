@@ -482,7 +482,7 @@ int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
     return(HA_ERR_OUT_OF_MEM);
   }
 
-  thr_lock_data_init(&share->lock, &lock, NULL);
+  thr_lock_data_init(&share->lock, &lock);
 
   return(rc);
 }
