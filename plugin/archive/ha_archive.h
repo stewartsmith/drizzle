@@ -33,7 +33,7 @@ public:
   std::string table_name;
   char data_file_name[FN_REFLEN];
   uint32_t use_count;
-  pthread_mutex_t mutex;
+  pthread_mutex_t _mutex;
   drizzled::THR_LOCK _lock;
   azio_stream archive_write;     /* Archive file we are working with */
   bool archive_write_open;
@@ -44,6 +44,11 @@ public:
   uint64_t  version;
   drizzled::ha_rows rows_recorded;    /* Number of rows in tables */
   drizzled::ha_rows version_rows;
+
+  pthread_mutex_t &mutex()
+  {
+    return _mutex;
+  }
 };
 
 /*

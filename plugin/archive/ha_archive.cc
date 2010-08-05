@@ -272,13 +272,13 @@ ArchiveShare::ArchiveShare(const char *name):
   /*
     We will use this lock for rows.
   */
-  pthread_mutex_init(&mutex,MY_MUTEX_INIT_FAST);
+  pthread_mutex_init(&_mutex,MY_MUTEX_INIT_FAST);
 }
 
 ArchiveShare::~ArchiveShare()
 {
   thr_lock_delete(&_lock);
-  pthread_mutex_destroy(&mutex);
+  pthread_mutex_destroy(&_mutex);
   /*
     We need to make sure we don't reset the crashed state.
     If we open a crashed file, wee need to close it as crashed unless
@@ -714,7 +714,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  pthread_mutex_lock(&share->mutex);
+  pthread_mutex_lock(&share->mutex());
 
   if (share->archive_write_open == false)
     if (init_archive_writer())
@@ -751,7 +751,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   share->rows_recorded++;
   rc= real_write_row(buf,  &(share->archive_write));
 error:
-  pthread_mutex_unlock(&share->mutex);
+  pthread_mutex_unlock(&share->mutex());
   if (read_buf)
     free((unsigned char*) read_buf);
 
@@ -1152,7 +1152,7 @@ int ha_archive::info(uint32_t flag)
     If dirty, we lock, and then reset/flush the data.
     I found that just calling azflush() doesn't always work.
   */
-  pthread_mutex_lock(&share->mutex);
+  pthread_mutex_lock(&share->mutex());
   if (share->dirty == true)
   {
     azflush(&(share->archive_write), Z_SYNC_FLUSH);
@@ -1171,7 +1171,7 @@ int ha_archive::info(uint32_t flag)
     cause the number to be inaccurate.
   */
   stats.records= share->rows_recorded;
-  pthread_mutex_unlock(&share->mutex);
+  pthread_mutex_unlock(&share->mutex());
 
   scan_rows= stats.records;
   stats.deleted= 0;
@@ -1195,9 +1195,9 @@ int ha_archive::info(uint32_t flag)
   if (flag & HA_STATUS_AUTO)
   {
     init_archive_reader();
-    pthread_mutex_lock(&share->mutex);
+    pthread_mutex_lock(&share->mutex());
     azflush(&archive, Z_SYNC_FLUSH);
-    pthread_mutex_unlock(&share->mutex);
+    pthread_mutex_unlock(&share->mutex());
     stats.auto_increment_value= archive.auto_increment + 1;
   }
 
@@ -1252,9 +1252,9 @@ int ha_archive::check(Session* session)
   old_proc_info= get_session_proc_info(session);
   set_session_proc_info(session, "Checking table");
   /* Flush any waiting data */
-  pthread_mutex_lock(&share->mutex);
+  pthread_mutex_lock(&share->mutex());
   azflush(&(share->archive_write), Z_SYNC_FLUSH);
-  pthread_mutex_unlock(&share->mutex);
+  pthread_mutex_unlock(&share->mutex());
 
   /*
     Now we will rewind the archive file so that we are positioned at the
