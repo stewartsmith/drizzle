@@ -553,9 +553,9 @@ int StorageEngine::createTable(Session &session,
   return(error != 0);
 }
 
-Cursor *StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
+Cursor *StorageEngine::getCursor(TableShare &share)
 {
-  return create(share, alloc);
+  return create(share);
 }
 
 class AddTableIdentifier : 

@@ -5,6 +5,6 @@ count(*)
 show create table replication_streams;
 Table	Create Table
 replication_streams	CREATE TABLE `replication_streams` (
-  `REPLICATOR` varchar(256) NOT NULL DEFAULT '',
-  `APPLIER` varchar(256) NOT NULL DEFAULT ''
+  `REPLICATOR` varchar(256) NOT NULL,
+  `APPLIER` varchar(256) NOT NULL
 ) ENGINE=FunctionEngine
