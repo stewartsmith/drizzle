@@ -91,9 +91,6 @@ using namespace drizzled;
     -Brian
 */
 
-/* Variables for archive share methods */
-static pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
-
 /* When the engine starts up set the first version */
 static uint64_t global_version= 1;
 
@@ -330,9 +327,10 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
 */
 ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 {
-  pthread_mutex_lock(&archive_mutex);
-
   ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+
+  pthread_mutex_lock(&a_engine->mutex());
+
   share= a_engine->findOpenTable(table_name);
 
   if (!share)
@@ -341,14 +339,14 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 
     if (share == NULL)
     {
-      pthread_mutex_unlock(&archive_mutex);
+      pthread_mutex_unlock(&a_engine->mutex());
       *rc= HA_ERR_OUT_OF_MEM;
       return(NULL);
     }
 
     if (share->prime(&stats.auto_increment_value) == false)
     {
-      pthread_mutex_unlock(&archive_mutex);
+      pthread_mutex_unlock(&a_engine->mutex());
       *rc= HA_ERR_CRASHED_ON_REPAIR;
       delete share;
 
@@ -362,7 +360,7 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 
   if (share->crashed)
     *rc= HA_ERR_CRASHED_ON_USAGE;
-  pthread_mutex_unlock(&archive_mutex);
+  pthread_mutex_unlock(&a_engine->mutex());
 
   return(share);
 }
@@ -374,14 +372,15 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 */
 int ha_archive::free_share()
 {
-  pthread_mutex_lock(&archive_mutex);
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+
+  pthread_mutex_lock(&a_engine->mutex());
   if (!--share->use_count)
   {
-    ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
     a_engine->deleteOpenTable(share->table_name);
     delete share;
   }
-  pthread_mutex_unlock(&archive_mutex);
+  pthread_mutex_unlock(&a_engine->mutex());
 
   return 0;
 }

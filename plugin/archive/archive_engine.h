@@ -61,6 +61,9 @@ class ArchiveEngine : public drizzled::plugin::StorageEngine
   typedef std::map<std::string, ArchiveShare*> ArchiveMap;
   ArchiveMap archive_open_tables;
 
+  /* Variables for archive share methods */
+  pthread_mutex_t _mutex;
+
 public:
   ArchiveEngine() :
     drizzled::plugin::StorageEngine("ARCHIVE",
@@ -68,7 +71,17 @@ public:
                                     drizzled::HTON_HAS_RECORDS),
     archive_open_tables()
   {
+    pthread_mutex_init(&_mutex, NULL);
     table_definition_ext= ARZ;
+  }
+  ~ArchiveEngine()
+  {
+    pthread_mutex_destroy(&_mutex);
+  }
+
+  pthread_mutex_t &mutex()
+  {
+    return _mutex;
   }
 
   virtual drizzled::Cursor *create(drizzled::TableShare &table)
