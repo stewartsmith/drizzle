@@ -67,10 +67,9 @@ public:
     pthread_mutex_destroy(&blackhole_mutex);
   }
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_blackhole(*this, table);
+    return new ha_blackhole(*this, table);
   }
 
   const char **bas_ext() const {
@@ -232,7 +231,7 @@ int ha_blackhole::open(const char *name, int, uint32_t)
   if (!(share= get_share(name)))
     return(HA_ERR_OUT_OF_MEM);
 
-  thr_lock_data_init(&share->lock, &lock, NULL);
+  thr_lock_data_init(&share->lock, &lock);
   return(0);
 }
 

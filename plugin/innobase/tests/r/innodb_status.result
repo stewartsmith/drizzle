@@ -5,6 +5,6 @@ count(*)
 show create table INNODB_STATUS;
 Table	Create Table
 INNODB_STATUS	CREATE TABLE `innodb_status` (
-  `VARIABLE_NAME` varchar(256) NOT NULL DEFAULT '',
-  `VARIABLE_VALUE` varchar(256) NOT NULL DEFAULT ''
+  `VARIABLE_NAME` varchar(256) NOT NULL,
+  `VARIABLE_VALUE` varchar(256) NOT NULL
 ) ENGINE=FunctionEngine

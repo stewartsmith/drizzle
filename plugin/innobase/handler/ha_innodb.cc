@@ -368,10 +368,9 @@ public:
         /* out: 0 or error number */
     ::drizzled::XID *xid);  /* in: X/Open XA transaction identification */
 
-  virtual Cursor *create(TableShare &table,
-                         memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_innobase(*this, table);
+    return new ha_innobase(*this, table);
   }
 
   /*********************************************************************
@@ -2850,7 +2849,7 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
   stats.block_size = 16 * 1024;
 
   /* Init table lock structure */
-  thr_lock_data_init(&share->lock,&lock,(void*) 0);
+  thr_lock_data_init(&share->lock, &lock);
 
   if (prebuilt->table) {
     /* We update the highest file format in the system table
