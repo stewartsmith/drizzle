@@ -704,11 +704,6 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 			   const unsigned char *record, drizzled::internal::my_off_t pos);
 int mi_unique_comp(MI_UNIQUEDEF *def, const unsigned char *a, const unsigned char *b,
 		   bool null_are_equal);
-void mi_get_status(void* param, int concurrent_insert);
-void mi_update_status(void* param);
-void mi_restore_status(void* param);
-void mi_copy_status(void* to,void *from);
-bool mi_check_status(void* param);
 
 extern MI_INFO *test_if_reopen(char *filename);
 bool check_table_is_closed(const char *name, const char *where);
