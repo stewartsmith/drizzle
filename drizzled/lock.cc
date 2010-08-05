@@ -488,7 +488,7 @@ void mysql_lock_abort(Session *session, Table *table)
                              &write_lock_used)))
   {
     for (uint32_t x= 0; x < locked->lock_count; x++)
-      thr_abort_locks(locked->locks[x]->lock);
+      locked->locks[x]->lock->abort_locks();
     free((unsigned char*) locked);
   }
 }
@@ -515,10 +515,9 @@ bool mysql_lock_abort_for_thread(Session *session, Table *table)
   if ((locked= get_lock_data(session, &table, 1, false,
                              &write_lock_used)))
   {
-    for (uint32_t i=0; i < locked->lock_count; i++)
+    for (uint32_t i= 0; i < locked->lock_count; i++)
     {
-      if (thr_abort_locks_for_thread(locked->locks[i]->lock,
-                                     table->in_use->thread_id))
+      if (locked->locks[i]->lock->abort_locks_for_thread(table->in_use->thread_id))
         result= true;
     }
     free((unsigned char*) locked);
