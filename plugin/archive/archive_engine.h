@@ -71,10 +71,9 @@ public:
     table_definition_ext= ARZ;
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table,
-                                   drizzled::memory::Root *mem_root)
+  virtual drizzled::Cursor *create(drizzled::TableShare &table)
   {
-    return new (mem_root) ha_archive(*this, table);
+    return new ha_archive(*this, table);
   }
 
   const char **bas_ext() const {
