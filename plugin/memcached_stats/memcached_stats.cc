@@ -30,7 +30,8 @@
 #include "config.h"
 #include "drizzled/show.h"
 #include "drizzled/gettext.h"
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include "stats_table.h"
 #include "analysis_table.h"
 #include "sysvar_holder.h"
@@ -38,6 +39,7 @@
 #include <string>
 #include <map>
 
+namespace po=boost::program_options;
 using namespace std;
 using namespace drizzled;
 
@@ -61,6 +63,17 @@ static char *sysvar_memcached_servers= NULL;
  */
 static int init(module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+
+  if(vm.count("servers"))
+  {
+    sysvar_memcached_servers= strdup(vm["servers"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_memcached_servers= "";
+  }
 
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
   sysvar_holder.setServersString(sysvar_memcached_servers);
@@ -116,6 +129,13 @@ static DRIZZLE_SYSVAR_STR(servers,
                           set_memc_servers, /* update func */
                           ""); /* default value */
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("servers",
+          po::value<string>(),
+          N_("List of memcached servers."));
+}
+
 static drizzle_sys_var *system_variables[]=
 {
   DRIZZLE_SYSVAR(servers),
@@ -132,6 +152,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
   system_variables, /* system variables */
-  NULL    /* config options   */
+  init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -114,7 +114,7 @@ public:
 	int doStartTransaction(Session *session, start_transaction_option_t options);
 	int doCommit(Session *, bool);
 	int doRollback(Session *, bool);
-	Cursor *create(TableShare& table, memory::Root *mem_root);
+	Cursor *create(TableShare& table);
 	bool doDropSchema(const drizzled::SchemaIdentifier&);
 	
 	/*
@@ -257,10 +257,10 @@ static int pbms_close_connection(handlerton *hton, THD* thd)
 
 
 #ifdef DRIZZLED
-Cursor *PBMSStorageEngine::create(TableShare& table, memory::Root *mem_root)
+Cursor *PBMSStorageEngine::create(TableShare& table)
 {
 	PBMSStorageEngine * const hton = this;
-	return new (mem_root) ha_pbms(hton, table);
+	return new ha_pbms(hton, table);
 }
 #else
 static handler *pbms_create_handler(handlerton *hton, TABLE_SHARE *table, MEM_ROOT *mem_root)
@@ -697,7 +697,7 @@ int ha_pbms::open(const char *table_path, int , uint )
 	inner_();
 	try_(a) {
 		ha_open_tab = MSSystemTableShare::openSystemTable(table_path, table);
-		thr_lock_data_init(&ha_open_tab->myShare->myThrLock, &ha_lock, NULL);
+		thr_lock_data_init(&ha_open_tab->myShare->myThrLock, &ha_lock);
 		ref_length = ha_open_tab->getRefLen();
 	}
 	catch_(a) {
