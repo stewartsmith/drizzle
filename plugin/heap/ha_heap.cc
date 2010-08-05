@@ -61,10 +61,9 @@ public:
     pthread_mutex_destroy(&THR_LOCK_heap);
   }
 
-  virtual Cursor *create(TableShare &table,
-                          memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_heap(*this, table);
+    return new ha_heap(*this, table);
   }
 
   const char **bas_ext() const {
@@ -249,9 +248,9 @@ int ha_heap::close(void)
     with '\'-delimited path.
 */
 
-Cursor *ha_heap::clone(memory::Root *mem_root)
+Cursor *ha_heap::clone(memory::Root *)
 {
-  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*(table->getMutableShare()), mem_root);
+  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*(table->getMutableShare()));
   TableIdentifier identifier(table->getShare()->getSchemaName(),
                              table->getShare()->getTableName(),
                              table->getShare()->getPath());

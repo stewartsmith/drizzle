@@ -394,12 +394,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     for (i=0; i<keys; i++)
       pthread_rwlock_init(&share->key_root_lock[i], NULL);
     pthread_rwlock_init(&share->mmap_lock, NULL);
-    if (!thr_lock_inited)
-    {
-      /* Probably a single threaded program; Don't use concurrent inserts */
-      myisam_concurrent_insert=0;
-    }
-    else if (myisam_concurrent_insert)
+    if (myisam_concurrent_insert)
     {
       share->concurrent_insert=
 	((share->options & (HA_OPTION_READ_ONLY_DATA | HA_OPTION_TMP_TABLE |
@@ -408,11 +403,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	 (open_flags & HA_OPEN_TMP_TABLE) || have_rtree) ? 0 : 1;
       if (share->concurrent_insert)
       {
-	share->lock.get_status= mi_get_status;
-	share->lock.copy_status= mi_copy_status;
-	share->lock.update_status= mi_update_status;
-        share->lock.restore_status= mi_restore_status;
-	share->lock.check_status= mi_check_status;
+        assert(0);
       }
     }
   }

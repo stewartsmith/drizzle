@@ -145,8 +145,8 @@ int mi_write(MI_INFO *info, unsigned char *record)
     not critical to use outdated share->is_log_table value (2) locking
     mutex here for every write is too expensive.
   */
-  if (share->is_log_table)
-    mi_update_status((void*) info);
+  if (share->is_log_table) // Log table do not exist in Drizzle
+    assert(0);
 
   return(0);
 
