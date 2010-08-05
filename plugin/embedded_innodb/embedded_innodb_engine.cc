@@ -628,7 +628,7 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 
   int rc;
   share= get_share(name, has_hidden_primary_key, &rc);
-  thr_lock_data_init(&share->lock, &lock, NULL);
+  thr_lock_data_init(&share->lock, &lock);
 
 
   if (table->getShare()->getPrimaryKey() != MAX_KEY)
