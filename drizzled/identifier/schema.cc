@@ -135,15 +135,11 @@ static bool tablename_to_filename(const string &from, string &to)
 
 SchemaIdentifier::SchemaIdentifier(const std::string &db_arg) :
   db(db_arg),
-  db_path(""),
-  lower_db(db_arg)
+  db_path("")
 { 
-  std::transform(lower_db.begin(), lower_db.end(),
-                 lower_db.begin(), ::tolower);
-
-  if (not lower_db.empty())
+  if (not db_arg.empty())
   {
-    drizzled::build_schema_filename(db_path, lower_db);
+    drizzled::build_schema_filename(db_path, db);
     assert(db_path.length()); // TODO throw exception, this is a possibility
   }
 }

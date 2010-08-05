@@ -680,7 +680,7 @@ static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_iden
       the previous database name, we should do it explicitly.
     */
 
-    session->set_db(schema_identifier.getLower());
+    session->set_db(schema_identifier.getSchemaName());
   }
 }
 

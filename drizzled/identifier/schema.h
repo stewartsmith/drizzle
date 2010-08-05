@@ -45,6 +45,7 @@
 #include <functional>
 #include <iostream>
 
+#include <boost/algorithm/string.hpp>
 
 namespace drizzled {
 
@@ -54,17 +55,11 @@ class SchemaIdentifier
 {
   std::string db;
   std::string db_path;
-  std::string lower_db;
 
 
   // @note this should be changed to protected once Session contains an
   // identifier for current db.
 public:
-
-  const std::string &getLower() const
-  {
-    return lower_db;
-  }
 
 public:
   SchemaIdentifier(const std::string &db_arg);
@@ -90,7 +85,7 @@ public:
 
   friend bool operator<(const SchemaIdentifier &left, const SchemaIdentifier &right)
   {
-    return left.lower_db < right.lower_db;
+    return  boost::algorithm::to_upper_copy(left.getSchemaName()) < boost::algorithm::to_upper_copy(right.getSchemaName());
   }
 
   friend std::ostream& operator<<(std::ostream& output,
@@ -108,12 +103,7 @@ public:
   friend bool operator==(const SchemaIdentifier &left,
                          const SchemaIdentifier &right)
   {
-    if (left.lower_db == right.lower_db)
-    {
-      return true;
-    }
-
-    return false;
+    return boost::iequals(left.getSchemaName(), right.getSchemaName());
   }
 
 };
