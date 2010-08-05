@@ -79,7 +79,7 @@ Cursor::~Cursor(void)
  */
 Cursor *Cursor::clone(memory::Root *mem_root)
 {
-  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare(), mem_root);
+  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*table->getMutableShare());
 
   /*
     Allocate Cursor->ref here because otherwise ha_open will allocate it

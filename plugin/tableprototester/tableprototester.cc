@@ -57,10 +57,9 @@ public:
     table_definition_ext= TABLEPROTOTESTER_EXT;
   }
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) TableProtoTesterCursor(*this, table);
+    return new TableProtoTesterCursor(*this, table);
   }
 
   const char **bas_ext() const {
