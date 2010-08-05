@@ -86,7 +86,7 @@ public:
   }
 
   bool isValid() const;
-  bool compare(std::string arg) const;
+  bool compare(const std::string &arg) const;
 
   friend bool operator<(const SchemaIdentifier &left, const SchemaIdentifier &right)
   {

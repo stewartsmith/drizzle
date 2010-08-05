@@ -32,6 +32,8 @@
 #include <sstream>
 #include <cstdio>
 
+#include <boost/algorithm/string/compare.hpp>
+
 using namespace std;
 
 namespace drizzled
@@ -96,12 +98,11 @@ static bool tablename_to_filename(const string &from, string &to)
   for (; iter != from.end(); ++iter)
   {
     if ((*iter >= '0' && *iter <= '9') ||
-        (*iter >= 'A' && *iter <= 'Z') ||
         (*iter >= 'a' && *iter <= 'z') ||
-/* OSX defines an extra set of high-bit and multi-byte characters
-   that cannot be used on the filesystem. Instead of trying to sort
-   those out, we'll just escape encode all high-bit-set chars on OSX.
-   It won't really hurt anything - it'll just make some filenames ugly. */
+        /* OSX defines an extra set of high-bit and multi-byte characters
+          that cannot be used on the filesystem. Instead of trying to sort
+          those out, we'll just escape encode all high-bit-set chars on OSX.
+          It won't really hurt anything - it'll just make some filenames ugly. */
 #if !defined(TARGET_OS_OSX)
         ((unsigned char)*iter >= 128) ||
 #endif
@@ -110,6 +111,12 @@ static bool tablename_to_filename(const string &from, string &to)
         (*iter == '-'))
     {
       to.push_back(*iter);
+      continue;
+    }
+
+    if ((*iter >= 'A' && *iter <= 'Z'))
+    {
+      to.push_back(tolower(*iter));
       continue;
     }
    
@@ -151,38 +158,35 @@ const std::string &SchemaIdentifier::getPath() const
   return db_path;
 }
 
-bool SchemaIdentifier::compare(std::string arg) const
+bool SchemaIdentifier::compare(const std::string &arg) const
 {
-  std::transform(arg.begin(), arg.end(),
-                 arg.begin(), ::tolower);
-
-  return arg == lower_db;
+  return boost::iequals(arg, db);
 }
 
 bool SchemaIdentifier::isValid() const
 {
-  if (lower_db.empty())
+  if (db.empty())
     return false;
 
-  if (lower_db.size() > NAME_LEN)
+  if (db.size() > NAME_LEN)
     return false;
 
-  if (lower_db.at(lower_db.length() -1) == ' ')
+  if (db.at(db.length() -1) == ' ')
     return false;
 
   const CHARSET_INFO * const cs= &my_charset_utf8mb4_general_ci;
 
   int well_formed_error;
-  uint32_t res= cs->cset->well_formed_len(cs, lower_db.c_str(), lower_db.c_str() + lower_db.length(),
+  uint32_t res= cs->cset->well_formed_len(cs, db.c_str(), db.c_str() + db.length(),
                                           NAME_CHAR_LEN, &well_formed_error);
 
   if (well_formed_error)
   {
-    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", lower_db.c_str());
+    my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", db.c_str());
     return false;
   }
 
-  if (lower_db.length() != res)
+  if (db.length() != res)
     return false;
 
   return true;
