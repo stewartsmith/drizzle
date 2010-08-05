@@ -18,7 +18,7 @@
  */
 
 #include "config.h"
-
+#include <iostream>
 #include <cstdio>
 #include <cerrno>
 
@@ -26,7 +26,10 @@
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/option.h"
+#include <boost/program_options.hpp>
 
+using namespace std;
+namespace po= boost::program_options;
 using namespace drizzled;
 
 #define INIT_SYM_TABLE  4096
@@ -42,52 +45,11 @@ typedef struct sym_entry
 } SYM_ENTRY;
 
 
-static char* dump_fname = 0, *sym_fname = 0;
+std::string dump_fname, sym_fname;
 static DYNAMIC_ARRAY sym_table; /* how do you like this , static DYNAMIC ? */
 static FILE* fp_dump, *fp_sym = 0, *fp_out;
 
-static struct option my_long_options[] =
-{
-  {"help", 'h', "Display this help and exit.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"version", 'V', "Output version information and exit.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"symbols-file", 's', "Use specified symbols file.", (char**) &sym_fname,
-   (char**) &sym_fname, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"numeric-dump-file", 'n', "Read the dump from specified file.",
-   (char**) &dump_fname, (char**) &dump_fname, 0, GET_STR, REQUIRED_ARG,
-   0, 0, 0, 0, 0, 0},
-  { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
-};
-
-
 static void verify_sort(void);
-
-static void print_version(void)
-{
-  printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname,DUMP_VERSION,
-	 VERSION,HOST_VENDOR,HOST_OS,HOST_CPU);
-}
-
-
-static void usage(void)
-{
-  print_version();
-  printf("MySQL AB, by Sasha Pachev\n");
-  printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
-  printf("Resolve numeric stack strace dump into symbols.\n\n");
-  printf("Usage: %s [OPTIONS] symbols-file [numeric-dump-file]\n",
-	 internal::my_progname);
-  my_print_help(my_long_options);
-  my_print_variables(my_long_options);
-  printf("\n"
-         "The symbols-file should include the output from: \n"
-         "  'nm --numeric-sort drizzled'.\n"
-         "The numeric-dump-file should contain a numeric stack trace "
-         "from drizzled.\n"
-         "If the numeric-dump-file is not given, the stack trace is "
-         "read from stdin.\n");
-}
 
 static void die(const char* fmt, ...)
 {
@@ -100,73 +62,20 @@ static void die(const char* fmt, ...)
   exit(1);
 }
 
-
-static int get_one_option(int optid, const struct option *, char *)
-{
-  switch(optid) {
-  case 'V':
-    print_version();
-    exit(0);
-  case '?':
-    usage();
-    exit(0);
-  }
-  return 0;
-}
-
-
-static int parse_args(int argc, char **argv)
-{
-  int ho_error;
-
-  if ((ho_error= handle_options(&argc, &argv, my_long_options, get_one_option)))
-    exit(ho_error);
-
-  /*
-    The following code is to make the command compatible with the old
-    version that required one to use the -n and -s options
-  */
-
-  if (argc == 2)
-  {
-    sym_fname= argv[0];
-    dump_fname= argv[1];
-  }
-  else if (argc == 1)
-  {
-    if (!sym_fname)
-      sym_fname = argv[0];
-    else if (!dump_fname)
-      dump_fname = argv[0];
-    else
-    {
-      usage();
-      exit(1);
-    }
-  }
-  else if (argc != 0 || !sym_fname)
-  {
-    usage();
-    exit(1);
-  }
-  return 0;
-}
-
-
 static void open_files(void)
 {
   fp_out = stdout;
   fp_dump = stdin;
 
-  if (dump_fname && !(fp_dump= fopen(dump_fname, "r")))
-      die("Could not open %s", dump_fname);
+  if (! dump_fname.empty() && !(fp_dump= fopen(dump_fname.c_str(), "r")))
+      die("Could not open %s", dump_fname.c_str());
   /* if name not given, assume stdin*/
 
-  if (!sym_fname)
+  if (sym_fname.empty())
     die("Please run nm --numeric-sort on drizzled binary that produced stack "
         "trace dump and specify the path to it with -s or --symbols-file");
-  if (!(fp_sym= fopen(sym_fname, "r")))
-    die("Could not open %s", sym_fname);
+  if (!(fp_sym= fopen(sym_fname.c_str(), "r")))
+    die("Could not open %s", sym_fname.c_str());
 
 }
 
@@ -312,11 +221,75 @@ static void do_resolve(void)
 
 int main(int argc, char** argv)
 {
+try
+{
   MY_INIT(argv[0]);
-  parse_args(argc, argv);
+
+  po::options_description commandline_options("Options specific to the commandline");
+  commandline_options.add_options()
+  ("help,h", "Display this help and exit.")
+  ("version,V", "Output version information and exit.") 
+  ;
+
+  po::options_description positional_options("Positional Options");
+  positional_options.add_options()
+  ("symbols-file,s", po::value<string>(),
+  "Use specified symbols file.")
+  ("numeric-dump-file,n", po::value<string>(),
+  "Read the dump from specified file.")
+  ;
+
+  po::options_description long_options("Allowed Options");
+  long_options.add(commandline_options).add(positional_options);
+
+  po::positional_options_description p;
+  p.add("symbols-file,s", 1);
+  p.add("numeric-dump-file,n",1);
+
+  po::variables_map vm;
+  po::store(po::command_line_parser(argc, argv).options(long_options).positional(p).run(), vm);
+  po::notify(vm);
+
+  if (vm.count("help"))
+  {
+    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname,DUMP_VERSION,
+	 VERSION,HOST_VENDOR,HOST_OS,HOST_CPU);
+    printf("MySQL AB, by Sasha Pachev\n");
+    printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
+    printf("Resolve numeric stack strace dump into symbols.\n\n");
+    printf("Usage: %s [OPTIONS] symbols-file [numeric-dump-file]\n",
+	  internal::my_progname);
+    cout << long_options << endl;
+    printf("\n"
+         "The symbols-file should include the output from: \n"
+         "  'nm --numeric-sort drizzled'.\n"
+         "The numeric-dump-file should contain a numeric stack trace "
+         "from drizzled.\n"
+         "If the numeric-dump-file is not given, the stack trace is "
+         "read from stdin.\n");
+  }
+    
+  if (vm.count("version"))
+  {
+    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname,DUMP_VERSION,
+	 VERSION,HOST_VENDOR,HOST_OS,HOST_CPU);
+  }
+    
+  if (vm.count("symbols-file") && vm.count("numeric-file-dump"))
+  {
+    sym_fname= vm["symbols-file"].as<string>();
+    dump_fname= vm["numeric-dump-file"].as<string>();
+  }
+
   open_files();
   init_sym_table();
   do_resolve();
   clean_up();
-  return 0;
+}
+  catch(exception &err)
+  {
+    cerr << err.what() << endl;
+  }
+ 
+   return 0;
 }
