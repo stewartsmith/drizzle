@@ -1249,7 +1249,6 @@ int ha_archive::check(Session* session)
 {
   int rc= 0;
   const char *old_proc_info;
-  uint64_t x;
 
   old_proc_info= get_session_proc_info(session);
   set_session_proc_info(session, "Checking table");
@@ -1265,7 +1264,7 @@ int ha_archive::check(Session* session)
   init_archive_reader();
   azflush(&archive, Z_SYNC_FLUSH);
   read_data_header(&archive);
-  for (x= 0; x < share->archive_write.rows; x++)
+  for (uint64_t x= 0; x < share->archive_write.rows; x++)
   {
     rc= get_row(&archive, table->getInsertRecord());
 
