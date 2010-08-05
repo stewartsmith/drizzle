@@ -91,9 +91,11 @@
 #include "logging_stats.h"
 #include "status_tool.h"
 #include "stats_schema.h"
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include <drizzled/session.h>
 
+namespace po= boost::program_options;
 using namespace drizzled;
 using namespace plugin;
 using namespace std;
@@ -291,8 +293,37 @@ static bool initTable()
   return false;
 }
 
-static int init(module::Context &context)
+static int init(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+  if (vm.count("max-user-count"))
+  {
+    if (sysvar_logging_stats_max_user_count < 100 || sysvar_logging_stats_max_user_count > 50000)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-user-count\n"));
+      exit(-1);
+    }
+  }
+  if (vm.count("bucket-count"))
+  {
+    if (sysvar_logging_stats_bucket_count < 5 || sysvar_logging_stats_bucket_count > 500)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for bucket-count\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("scoreboard-size"))
+  {
+    if (sysvar_logging_stats_scoreboard_size < 10 || sysvar_logging_stats_scoreboard_size > 50000)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for scoreboard-size\n"));
+      exit(-1);
+    }
+    else
+      sysvar_logging_stats_scoreboard_size= vm["scoreboard-size"].as<uint32_t>(); 
+  }
+
   logging_stats= new LoggingStats("logging_stats");
 
   if (initTable())
@@ -358,6 +389,22 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            enable, /* update func */
                            true /* default */);
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("max-user-count",
+          po::value<uint32_t>(&sysvar_logging_stats_max_user_count)->default_value(500),
+          N_("Max number of users that will be logged"));
+  context("bucket-count",
+          po::value<uint32_t>(&sysvar_logging_stats_bucket_count)->default_value(10),
+          N_("Max number of vector buckets to construct for logging"));
+  context("scoreboard-size",
+          po::value<uint32_t>(&sysvar_logging_stats_scoreboard_size)->default_value(2000),
+          N_("Max number of concurrent sessions that will be logged"));
+  context("enable",
+          po::value<bool>(&sysvar_logging_stats_enabled)->default_value(true)->zero_tokens(),
+          N_("Enable Logging Statistics Collection"));
+}
+
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(max_user_count),
   DRIZZLE_SYSVAR(bucket_count),
@@ -376,6 +423,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
   system_var, /* system variables */
-  NULL    /* config options   */
+  init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

@@ -1528,9 +1528,9 @@ static int pbxt_rollback(handlerton *hton, THD *thd, bool all)
 	return 0;
 }
 
-Cursor *PBXTStorageEngine::create(TableShare& table, memory::Root *mem_root)
+Cursor *PBXTStorageEngine::create(TableShare& table)
 {
-	return new (mem_root) ha_pbxt(*this, table);
+	return new ha_pbxt(*this, table);
 }
 
 /*
@@ -2315,7 +2315,7 @@ int ha_pbxt::open(const char *table_path, int XT_UNUSED(mode), uint XT_UNUSED(te
 
 		ha_open_share(self, pb_share);
 
-		thr_lock_data_init(&pb_share->sh_lock, &pb_lock, NULL);
+		thr_lock_data_init(&pb_share->sh_lock, &pb_lock);
 		if (!(pb_open_tab = xt_db_open_table_using_tab(pb_share->sh_table, self)))
 			xt_throw(self);
 		pb_open_tab->ot_thread = self;

@@ -1495,7 +1495,7 @@ static struct option *find_option(struct option *opt, const char *name)
 int mysql_add_sys_var_chain(sys_var *first, struct option *long_options)
 {
   sys_var *var;
-  /* A write lock should be held on LOCK_system_variables_hash */
+  /* @todo for future A write lock should be held on LOCK_system_variables_hash */
 
   for (var= first; var; var= var->getNext())
   {
