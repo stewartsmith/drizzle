@@ -55,6 +55,8 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
 
+#include <boost/algorithm/string/compare.hpp>
+
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
 using namespace std;
@@ -68,6 +70,7 @@ namespace plugin
 static EngineVector vector_of_engines;
 static EngineVector vector_of_schema_engines;
 
+const std::string DEFAULT_STRING("default");
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
 
@@ -190,33 +193,25 @@ void StorageEngine::removePlugin(StorageEngine *)
 class FindEngineByName
   : public unary_function<StorageEngine *, bool>
 {
-  const string &target;
+  const string &predicate;
 
 public:
   explicit FindEngineByName(const string &target_arg) :
-    target(target_arg)
+    predicate(target_arg)
   {
   }
+
   result_type operator() (argument_type engine)
   {
-    string engine_name(engine->getName());
-
-    transform(engine_name.begin(), engine_name.end(),
-              engine_name.begin(), ::tolower);
-    return engine_name == target;
+    return boost::iequals(engine->getName(), predicate);
   }
 };
 
-StorageEngine *StorageEngine::findByName(const string &find_str)
+StorageEngine *StorageEngine::findByName(const string &predicate)
 {
-  string search_string(find_str);
-  transform(search_string.begin(), search_string.end(),
-            search_string.begin(), ::tolower);
-
-  
   EngineVector::iterator iter= find_if(vector_of_engines.begin(),
                                        vector_of_engines.end(),
-                                       FindEngineByName(search_string));
+                                       FindEngineByName(predicate));
   if (iter != vector_of_engines.end())
   {
     StorageEngine *engine= *iter;
@@ -227,18 +222,14 @@ StorageEngine *StorageEngine::findByName(const string &find_str)
   return NULL;
 }
 
-StorageEngine *StorageEngine::findByName(Session& session, const string &find_str)
+StorageEngine *StorageEngine::findByName(Session& session, const string &predicate)
 {
-  string search_string(find_str);
-  transform(search_string.begin(), search_string.end(),
-            search_string.begin(), ::tolower);
-
-  if (search_string.compare("default") == 0)
+  if (boost::iequals(predicate, DEFAULT_STRING))
     return session.getDefaultStorageEngine();
 
   EngineVector::iterator iter= find_if(vector_of_engines.begin(),
                                        vector_of_engines.end(),
-                                       FindEngineByName(search_string));
+                                       FindEngineByName(predicate));
   if (iter != vector_of_engines.end())
   {
     StorageEngine *engine= *iter;
