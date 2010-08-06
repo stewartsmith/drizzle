@@ -277,7 +277,6 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
   for (; *from  && length < to_length; length++, from++)
   {
     if ((*from >= '0' && *from <= '9') ||
-        (*from >= 'A' && *from <= 'Z') ||
         (*from >= 'a' && *from <= 'z') ||
 /* OSX defines an extra set of high-bit and multi-byte characters
    that cannot be used on the filesystem. Instead of trying to sort
@@ -289,6 +288,12 @@ static bool tablename_to_filename(const char *from, char *to, size_t to_length)
         (*from == '_') ||
         (*from == ' ') ||
         (*from == '-'))
+    {
+      to[length]= tolower(*from);
+      continue;
+    }
+
+    if ((*from >= 'A' && *from <= 'Z'))
     {
       to[length]= tolower(*from);
       continue;
@@ -325,19 +330,15 @@ TableIdentifier::TableIdentifier(const drizzled::Table &table) :
 
 void TableIdentifier::init()
 {
-  std::string lower_table_name(table_name);
-  std::transform(lower_table_name.begin(), lower_table_name.end(),
-                 lower_table_name.begin(), ::tolower);
-
   switch (type) {
   case message::Table::FUNCTION:
   case message::Table::STANDARD:
     assert(path.size() == 0);
-    build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), false);
+    build_table_filename(path, getSchemaName().c_str(), table_name.c_str(), false);
     break;
   case message::Table::INTERNAL:
     assert(path.size() == 0);
-    build_table_filename(path, getLower().c_str(), lower_table_name.c_str(), true);
+    build_table_filename(path, getSchemaName().c_str(), table_name.c_str(), true);
     break;
   case message::Table::TEMPORARY:
     if (path.empty())
@@ -362,14 +363,14 @@ const std::string &TableIdentifier::getPath() const
   return path;
 }
 
-const std::string &TableIdentifier::getSQLPath()
+const std::string &TableIdentifier::getSQLPath()  // @todo this is just used for errors, we should find a way to optimize it
 {
   if (sql_path.empty())
   {
     switch (type) {
     case message::Table::FUNCTION:
     case message::Table::STANDARD:
-      sql_path.append(getLower());
+      sql_path.append(getSchemaName());
       sql_path.append(".");
       sql_path.append(table_name);
       break;
@@ -378,7 +379,7 @@ const std::string &TableIdentifier::getSQLPath()
       sql_path.append(table_name);
       break;
     case message::Table::TEMPORARY:
-      sql_path.append(getLower());
+      sql_path.append(getSchemaName());
       sql_path.append(".#");
       sql_path.append(table_name);
       break;
