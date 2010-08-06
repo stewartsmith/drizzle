@@ -1061,18 +1061,11 @@ transformIndexDefinitionToSql(const Table::Index &index,
     {
       if (part.has_compare_length())
       {
-        size_t compare_length_in_chars= part.compare_length();
-        
-        /* hack: compare_length() is bytes, not chars, but
-         * only for VARCHAR. Ass. */
-        if (field.type() == Table::Field::VARCHAR)
-          compare_length_in_chars/= 4;
-
-        if (compare_length_in_chars != field.string_options().length())
+        if (part.compare_length() != field.string_options().length())
         {
           stringstream ss;
           destination.push_back('(');
-          ss << compare_length_in_chars;
+          ss << part.compare_length();
           destination.append(ss.str());
           destination.push_back(')');
         }

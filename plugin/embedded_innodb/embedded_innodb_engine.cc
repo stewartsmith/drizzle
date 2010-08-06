@@ -103,6 +103,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/enum.h"
 #include <drizzled/session.h>
 
+#include <boost/algorithm/string.hpp>
+
 using namespace std;
 using namespace google;
 using namespace drizzled;
@@ -1427,7 +1429,12 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
-  string search_string(schema.getLower());
+  /* 
+    Why not use getPath()?
+  */
+  string search_string(schema.getSchemaName());
+
+  boost::algorithm::to_lower(search_string);
 
   search_string.append("/");
 
@@ -1473,7 +1480,7 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
       if (set_of_names)
         set_of_names->insert(just_table_name);
       if (identifiers)
-        identifiers->push_back(TableIdentifier(schema.getLower(), just_table_name));
+        identifiers->push_back(TableIdentifier(schema.getSchemaName(), just_table_name));
     }
 
 

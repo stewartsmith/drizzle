@@ -22,12 +22,6 @@
   ha_example.h.
 */
 
-typedef struct st_archive_record_buffer {
-  unsigned char *buffer;
-  uint32_t length;
-} archive_record_buffer;
-
-
 class ArchiveShare {
 public:
   ArchiveShare();
@@ -39,8 +33,8 @@ public:
   std::string table_name;
   char data_file_name[FN_REFLEN];
   uint32_t use_count;
-  pthread_mutex_t mutex;
-  drizzled::THR_LOCK lock;
+  pthread_mutex_t _mutex;
+  drizzled::THR_LOCK _lock;
   azio_stream archive_write;     /* Archive file we are working with */
   bool archive_write_open;
   bool dirty;               /* Flag for if a flush should occur */
@@ -50,6 +44,11 @@ public:
   uint64_t  version;
   drizzled::ha_rows rows_recorded;    /* Number of rows in tables */
   drizzled::ha_rows version_rows;
+
+  pthread_mutex_t &mutex()
+  {
+    return _mutex;
+  }
 };
 
 /*
@@ -75,11 +74,8 @@ class ha_archive: public drizzled::Cursor
   const unsigned char *current_key;
   uint32_t current_key_len;
   uint32_t current_k_offset;
-  archive_record_buffer *record_buffer;
+  std::vector <unsigned char> record_buffer;
   bool archive_reader_open;
-
-  archive_record_buffer *create_record_buffer(unsigned int length);
-  void destroy_record_buffer(archive_record_buffer *r);
 
 public:
   ha_archive(drizzled::plugin::StorageEngine &engine_arg,
