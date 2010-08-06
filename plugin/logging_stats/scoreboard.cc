@@ -146,7 +146,6 @@ ScoreboardSlot* Scoreboard::findScoreboardSlotToLog(Session *session)
   if (session_scoreboard_slot == -1)
   {
     boost::shared_mutex* LOCK_scoreboard_vector= vector_of_scoreboard_locks.at(bucket_number);
-   
     LOCK_scoreboard_vector->lock();
  
     ScoreboardSlot *scoreboard_slot= NULL;
