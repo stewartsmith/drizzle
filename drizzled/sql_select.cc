@@ -4267,8 +4267,7 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
   @return
     1 if right_item used is a removable reference key on left_item
     0 otherwise.
-*****************************************************************************/
-*/
+****************************************************************************/
 bool test_if_ref(Item_field *left_item,Item *right_item)
 {
   Field *field=left_item->field;
