@@ -641,7 +641,6 @@ public:
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
   static void cacheStart(void);
-  static void cacheStop(void);
   static void release(TableShare *share);
   static void release(TableIdentifier &identifier);
   static const TableDefinitionCache &getCache();
