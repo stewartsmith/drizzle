@@ -4264,11 +4264,10 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
   outer join table.
   We can't remove tests that are made against columns which are stored
   in sorted order.
-*****************************************************************************/
-
-/**
   @return
-    1 if right_item is used removable reference key on left_item
+    1 if right_item used is a removable reference key on left_item
+    0 otherwise.
+*****************************************************************************/
 */
 bool test_if_ref(Item_field *left_item,Item *right_item)
 {
@@ -4470,9 +4469,16 @@ static Item *part_of_refkey(Table *table,Field *field)
     }
 
     for (part=0 ; part < ref_parts ; part++,key_part++)
+    {
       if (field->eq(key_part->field) &&
-	  !(key_part->key_part_flag & HA_PART_KEY_SEG))
+	  !(key_part->key_part_flag & HA_PART_KEY_SEG) &&
+          //If field can be NULL, we should not remove this predicate, as
+          //it may lead to non-rejection of NULL values. 
+          !(field->real_maybe_null()))
+      {
 	return table->reginfo.join_tab->ref.items[part];
+      }
+    }
   }
   return (Item*) 0;
 }

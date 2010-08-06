@@ -206,3 +206,38 @@ OR table7 . `col_int_key` IN (1, 1, 1, 2) ) ;
 field4
 DROP TABLE a, d, h, k, n , p ;
 End Bug#592444 test
+Bug#586051 start
+-Server allowing JOIN on NULL values in certain cases if query includes ORDER BY clause
+DROP TABLE IF EXISTS `i`;
+CREATE TABLE `i` (
+`col_int_key` int DEFAULT NULL,
+`pk` int NOT NULL AUTO_INCREMENT,
+PRIMARY KEY (`pk`),
+KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+ALTER TABLE `i` DISABLE KEYS;
+INSERT INTO `i` VALUES (-480247808,1),(-1066663936,2),(NULL,3),(NULL,4),(-1583808512,5),(NULL,6),(NULL,7),(NULL,8),(0,9),(-219152384,10);
+ALTER TABLE `i` ENABLE KEYS;
+DROP TABLE IF EXISTS `b`;
+CREATE TABLE `b` (
+`col_int_key` int DEFAULT NULL,
+`col_int` int DEFAULT NULL,
+`pk` int NOT NULL AUTO_INCREMENT,
+PRIMARY KEY (`pk`),
+KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+ALTER TABLE `b` DISABLE KEYS;
+INSERT INTO `b` VALUES (NULL,7,1);
+ALTER TABLE `b` ENABLE KEYS;
+SELECT table2 .`col_int` field3
+FROM i table1 JOIN b table2 ON table1 .`col_int_key` = table2 .`col_int_key`
+WHERE table1 .`pk` IN ( 4 ) 
+ORDER BY field3 ;
+field3
+SELECT table2 .`col_int` field3
+FROM i table1 JOIN b table2 ON table1 .`col_int_key` = table2 .`col_int_key`
+WHERE table1 .`pk` IN ( 4 ) /* TRANSFORM_OUTCOME_UNORDERED_MATCH */ ;
+field3
+DROP TABLE i;
+DROP TABLE b;
+End Bug#586051 test

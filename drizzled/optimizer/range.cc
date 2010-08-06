@@ -3161,6 +3161,18 @@ get_mm_leaf(optimizer::RangeParameter *param,
     tree= &optimizer::null_element;                        // cmp with NULL is never true
     goto end;
   }
+
+  /*
+    Any predicate except "<=>"(null-safe equality operator) involving NULL as a
+    constant is always FALSE
+    Put IMPOSSIBLE Tree(null_element) here.
+  */  
+  if (type != Item_func::EQUAL_FUNC && field->is_real_null())
+  {
+    tree= &optimizer::null_element;
+    goto end;
+  }
+
   str= (unsigned char*) alloc->alloc_root(key_part->store_length+1);
   if (!str)
     goto end;
