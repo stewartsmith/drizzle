@@ -25,7 +25,6 @@
 namespace drizzled
 {
 
-extern pthread_mutex_t LOCK_create_db;
 extern pthread_mutex_t LOCK_open;
 extern pthread_mutex_t LOCK_thread_count;
 extern pthread_mutex_t LOCK_status;

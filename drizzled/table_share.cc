@@ -81,18 +81,15 @@ namespace drizzled
 
 extern size_t table_def_size;
 static TableDefinitionCache table_def_cache;
-static pthread_mutex_t LOCK_table_share;
-bool table_def_inited= false;
 
 /*****************************************************************************
   Functions to handle table definition cach (TableShare)
  *****************************************************************************/
 
 
+// @todo switch this a boost::thread one only call.
 void TableShare::cacheStart(void)
 {
-  pthread_mutex_init(&LOCK_table_share, MY_MUTEX_INIT_FAST);
-  table_def_inited= true;
   /* 
    * This is going to overalloc a bit - as rehash sets the number of
    * buckets, not the number of elements. BUT, it'll allow us to not need
@@ -102,18 +99,8 @@ void TableShare::cacheStart(void)
 }
 
 
-void TableShare::cacheStop(void)
-{
-  if (table_def_inited)
-  {
-    table_def_inited= false;
-    pthread_mutex_destroy(&LOCK_table_share);
-  }
-}
-
-
 /**
- * @TODO: This should return size_t
+ * @TODO This should return size_t
  */
 uint32_t cached_table_definitions(void)
 {
@@ -186,18 +173,15 @@ static TableShare *foundTableShare(TableShare *share)
   */
 
   /* We must do a lock to ensure that the structure is initialized */
-  share->lock();
   if (share->error)
   {
     /* Table definition contained an error */
     share->open_table_error(share->error, share->open_errno, share->errarg);
-    share->unlock();
 
     return NULL;
   }
 
   share->incrementTableCount();
-  share->unlock();
 
   return share;
 }

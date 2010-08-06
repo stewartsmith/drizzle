@@ -50,7 +50,6 @@ namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
-extern pthread_mutex_t LOCK_global_system_variables;
 static const string engine_name("MyISAM");
 
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
