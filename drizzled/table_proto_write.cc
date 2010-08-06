@@ -35,6 +35,7 @@
 #include <google/protobuf/message.h>
 
 #include <drizzled/table_proto.h>
+#include <drizzled/charset.h>
 
 #include "drizzled/function/time/typecast.h"
 
@@ -43,7 +44,6 @@ using namespace std;
 namespace drizzled {
 
 static int fill_table_proto(message::Table &table_proto,
-                            const std::string &table_name,
                             List<CreateField> &create_fields,
                             HA_CREATE_INFO *create_info,
                             uint32_t keys,
@@ -61,8 +61,6 @@ static int fill_table_proto(message::Table &table_proto,
 
   assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
-
-  assert(table_proto.name() == table_name);
 
   int field_number= 0;
   bool use_existing_fields= table_proto.field_size() > 0;
@@ -454,12 +452,29 @@ static int fill_table_proto(message::Table &table_proto,
     for(unsigned int j=0; j< key_info[i].key_parts; j++)
     {
       message::Table::Index::IndexPart *idxpart;
+      const int fieldnr= key_info[i].key_part[j].fieldnr;
+      int mbmaxlen= 1;
 
       idxpart= idx->add_index_part();
 
-      idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr);
+      idxpart->set_fieldnr(fieldnr);
 
-      idxpart->set_compare_length(key_info[i].key_part[j].length);
+      if (table_proto.field(fieldnr).type() == message::Table::Field::VARCHAR
+          || table_proto.field(fieldnr).type() == message::Table::Field::BLOB)
+      {
+        uint32_t collation_id;
+
+        if (table_proto.field(fieldnr).string_options().has_collation_id())
+          collation_id= table_proto.field(fieldnr).string_options().collation_id();
+        else
+          collation_id= table_proto.options().collation_id();
+
+        const CHARSET_INFO *cs= get_charset(collation_id);
+
+        mbmaxlen= cs->mbmaxlen;
+      }
+
+      idxpart->set_compare_length(key_info[i].key_part[j].length / mbmaxlen);
     }
   }
 
@@ -518,9 +533,12 @@ bool rea_create_table(Session *session,
                       List<CreateField> &create_fields,
                       uint32_t keys, KeyInfo *key_info)
 {
-  if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
+  assert(table_proto.has_name());
+  if (fill_table_proto(table_proto, create_fields, create_info,
                        keys, key_info))
     return false;
+
+  assert(table_proto.name() == identifier.getTableName());
 
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,
