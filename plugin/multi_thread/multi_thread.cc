@@ -61,7 +61,7 @@ bool MultiThreadScheduler::addSession(Session *session)
   {
     errmsg_printf(ERRMSG_LVL_ERROR,
                   _("Unable to set thread stack size to %" PRId64 "\n"),
-                  static_cast<int64_t>(getThreadStackSize()));
+                  static_cast<uint64_t>(getThreadStackSize()));
     return true;
   }
 
