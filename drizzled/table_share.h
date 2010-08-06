@@ -228,9 +228,20 @@ public:
 private:
   std::vector<TYPELIB> intervals;			/* pointer to interval info */
 
-public:
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
+
+
+  void lock()
+  {
+    pthread_mutex_lock(&mutex);
+  }
+
+  void unlock()
+  {
+    pthread_mutex_unlock(&mutex);
+  }
+public:
 
 private:
   std::vector<unsigned char> default_values;		/* row with default values */
@@ -482,7 +493,9 @@ public:
 
   void incrementTableCount()
   {
+    lock();
     ref_count++;
+    unlock();
   }
 
   uint32_t null_bytes;
@@ -628,7 +641,6 @@ public:
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
   static void cacheStart(void);
-  static void cacheStop(void);
   static void release(TableShare *share);
   static void release(TableIdentifier &identifier);
   static const TableDefinitionCache &getCache();

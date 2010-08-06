@@ -42,11 +42,14 @@
 #include <sstream>
 #include <map>
 #include <algorithm>
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
+
+namespace po= boost::program_options;
 
 using namespace std;
 using namespace drizzled;
 
-extern pthread_mutex_t LOCK_global_system_variables;
 static const string engine_name("MyISAM");
 
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
@@ -1219,9 +1222,6 @@ int ha_myisam::info(uint32_t flag)
     share->db_options_in_use= misam_info.options;
     stats.block_size= myisam_key_cache_block_size;        /* record block size */
 
-    /* Update share */
-    if (share->getType() == message::Table::STANDARD)
-      pthread_mutex_lock(&share->mutex);
     set_prefix(share->keys_in_use, share->sizeKeys());
     /*
      * Due to bug 394932 (32-bit solaris build failure), we need
@@ -1274,8 +1274,7 @@ int ha_myisam::info(uint32_t flag)
       memcpy(table->key_info[0].rec_per_key,
 	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
-    if (share->getType() == message::Table::STANDARD)
-      pthread_mutex_unlock(&share->mutex);
+    assert(share->getType() != message::Table::STANDARD);
 
    /*
      Set data_file_name and index_file_name to point at the symlink value
@@ -1489,7 +1488,75 @@ uint32_t ha_myisam::checksum() const
 static MyisamEngine *engine= NULL;
 
 static int myisam_init(module::Context &context)
-{
+{ 
+  const module::option_map &vm= context.getOptions();
+
+  if (vm.count("key-cache-block-size"))
+  {
+    if (myisam_key_cache_block_size < 512 || myisam_key_cache_block_size > 16*1024)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for key-cache-block-size\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("key-cache-age-threshold"))
+  {
+    if (myisam_key_cache_age_threshold < 100 || myisam_key_cache_age_threshold > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for key-cache-age-threshold\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("key-cache-division-limit"))
+  {
+    if (myisam_key_cache_division_limit < 1 || myisam_key_cache_division_limit > 100)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for key-cache-division-limit\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("key-cache-size"))
+  {
+    if (myisam_key_cache_size < 1 * 1024 * 1024 || myisam_key_cache_size > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for key-cache-size\n"));
+      exit(-1);
+    }
+
+    myisam_key_cache_size/= IO_SIZE;
+    myisam_key_cache_size*= IO_SIZE;
+  }
+
+  if (vm.count("repair-threads"))
+  {
+    if (repair_threads < 1 || repair_threads > UINT32_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for repair-threads\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("max-sort-file-size"))
+  {
+    if (max_sort_file_size > UINT64_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-sort-file-size\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("sort-buffer-size"))
+  {
+    if (sort_buffer_size < 1024 || sort_buffer_size > SIZE_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for sort-buffer-size\n"));
+      exit(-1);
+    }
+  }
+
   engine= new MyisamEngine(engine_name);
   context.add(engine);
 
@@ -1676,6 +1743,34 @@ static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
                             N_("Default pointer size to be used for MyISAM tables."),
                             NULL, NULL, 6, 2, 7, 0);
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("key-cache-block-size", 
+          po::value<uint32_t>(&myisam_key_cache_block_size)->default_value(KEY_CACHE_BLOCK_SIZE),
+          N_("Block size to be used for MyISAM index pages."));
+  context("key-cache-age-threshold",
+          po::value<uint32_t>(&myisam_key_cache_age_threshold)->default_value(300),
+          N_("This characterizes the number of hits a hot block has to be untouched until it is considered aged enough to be downgraded to a warm block. This specifies the percentage ratio of that number of hits to the total number of blocks in key cache"));
+  context("key-cache-division-limit",
+          po::value<uint32_t>(&myisam_key_cache_division_limit)->default_value(100),
+          N_("The minimum percentage of warm blocks in key cache"));
+  context("key-cache-size",
+          po::value<uint32_t>(&myisam_key_cache_size)->default_value(KEY_CACHE_SIZE),
+          N_("The size of the buffer used for index blocks for MyISAM tables. Increase this to get better index handling (for all reads and multiple writes) to as much as you can afford;"));
+  context("repair-threads",
+          po::value<uint32_t>(&repair_threads)->default_value(1),
+          N_("Number of threads to use when repairing MyISAM tables. The value of 1 disables parallel repair."));
+  context("max-sort-file-size",
+          po::value<uint64_t>(&max_sort_file_size)->default_value(INT32_MAX),
+          N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
+  context("sort-buffer-size",
+          po::value<uint64_t>(&sort_buffer_size)->default_value(8192*1024),
+          N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
+  context("data-pointer-size",
+          po::value<uint32_t>(&data_pointer_size)->default_value(6),
+          N_("Default pointer size to be used for MyISAM tables."));
+}
+
 static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(key_cache_block_size),
   DRIZZLE_SYSVAR(key_cache_size),
@@ -1699,6 +1794,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
   sys_variables,           /* system variables */
-  NULL                        /* config options                  */
+  init_options                        /* config options                  */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
