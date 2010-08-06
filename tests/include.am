@@ -27,7 +27,7 @@ noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr
 noinst_PROGRAMS += 	tests/resolve_stack_dump
 tests_resolve_stack_dump_SOURCES = tests/resolve_stack_dump.cc
-tests_resolve_stack_dump_LDADD = ${TEST_LDADD}
+tests_resolve_stack_dump_LDADD = ${TEST_LDADD} ${BOOST_LIBS}
 
 TEST_LDADD=		drizzled/internal/libinternal.la \
 			$(LIBINTL)
