@@ -336,10 +336,9 @@ pthread_key_t THR_Session;
 pthread_mutex_t LOCK_open;
 pthread_mutex_t LOCK_thread_count;
 pthread_mutex_t LOCK_status;
-pthread_mutex_t LOCK_global_read_lock;
 boost::recursive_mutex LOCK_global_system_variables;
 
-pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
+pthread_cond_t COND_refresh, COND_thread_count;
 pthread_t signal_thread;
 pthread_cond_t  COND_server_end;
 
@@ -541,11 +540,9 @@ void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_mutex_destroy(&LOCK_global_read_lock);
   (void) pthread_cond_destroy(&COND_thread_count);
   (void) pthread_cond_destroy(&COND_server_end);
   (void) pthread_cond_destroy(&COND_refresh);
-  (void) pthread_cond_destroy(&COND_global_read_lock);
 }
 
 
@@ -812,11 +809,9 @@ int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_thread_count, &attr);
 
   (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_server_end,NULL);
   (void) pthread_cond_init(&COND_refresh,NULL);
-  (void) pthread_cond_init(&COND_global_read_lock,NULL);
 
   pthread_mutexattr_destroy(&attr);
 

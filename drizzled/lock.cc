@@ -88,10 +88,16 @@
 #include <algorithm>
 #include <functional>
 
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
+
 using namespace std;
 
 namespace drizzled
 {
+
+static boost::mutex LOCK_global_read_lock;
+static boost::condition_variable COND_global_read_lock;
 
 /**
   @defgroup Locking Locking
@@ -999,13 +1005,13 @@ bool lock_global_read_lock(Session *session)
   if (!session->global_read_lock)
   {
     const char *old_message;
-    (void) pthread_mutex_lock(&LOCK_global_read_lock);
-    old_message=session->enter_cond(&COND_global_read_lock, &LOCK_global_read_lock,
+    LOCK_global_read_lock.lock();
+    old_message=session->enter_cond(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle(),
                                 "Waiting to get readlock");
 
     waiting_for_read_lock++;
     while (protect_against_global_read_lock && !session->killed)
-      pthread_cond_wait(&COND_global_read_lock, &LOCK_global_read_lock);
+      pthread_cond_wait(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle());
     waiting_for_read_lock--;
     if (session->killed)
     {
@@ -1032,15 +1038,15 @@ void unlock_global_read_lock(Session *session)
 {
   uint32_t tmp;
 
-  pthread_mutex_lock(&LOCK_global_read_lock);
+  LOCK_global_read_lock.lock();
   tmp= --global_read_lock;
   if (session->global_read_lock == MADE_GLOBAL_READ_LOCK_BLOCK_COMMIT)
     --global_read_lock_blocks_commit;
-  pthread_mutex_unlock(&LOCK_global_read_lock);
+  LOCK_global_read_lock.unlock();
   /* Send the signal outside the mutex to avoid a context switch */
   if (!tmp)
   {
-    pthread_cond_broadcast(&COND_global_read_lock);
+    COND_global_read_lock.notify_all();
   }
   session->global_read_lock= 0;
 }
@@ -1065,7 +1071,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
   */
   safe_mutex_assert_not_owner(&LOCK_open);
 
-  (void) pthread_mutex_lock(&LOCK_global_read_lock);
+  LOCK_global_read_lock.lock();
   if ((need_exit_cond= must_wait(is_not_commit)))
   {
     if (session->global_read_lock)		// This thread had the read locks
@@ -1073,7 +1079,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
       if (is_not_commit)
         my_message(ER_CANT_UPDATE_WITH_READLOCK,
                    ER(ER_CANT_UPDATE_WITH_READLOCK), MYF(0));
-      (void) pthread_mutex_unlock(&LOCK_global_read_lock);
+      LOCK_global_read_lock.unlock();
       /*
         We allow FLUSHer to COMMIT; we assume FLUSHer knows what it does.
         This allowance is needed to not break existing versions of innobackup
@@ -1081,12 +1087,12 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
       */
       return is_not_commit;
     }
-    old_message=session->enter_cond(&COND_global_read_lock, &LOCK_global_read_lock,
+    old_message=session->enter_cond(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle(),
 				"Waiting for release of readlock");
     while (must_wait(is_not_commit) && ! session->killed &&
 	   (!abort_on_refresh || session->version == refresh_version))
     {
-      (void) pthread_cond_wait(&COND_global_read_lock, &LOCK_global_read_lock);
+      (void) pthread_cond_wait(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle());
     }
     if (session->killed)
       result=1;
@@ -1100,7 +1106,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
   if (unlikely(need_exit_cond))
     session->exit_cond(old_message); // this unlocks LOCK_global_read_lock
   else
-    pthread_mutex_unlock(&LOCK_global_read_lock);
+    LOCK_global_read_lock.unlock();
   return result;
 }
 
@@ -1110,12 +1116,12 @@ void start_waiting_global_read_lock(Session *session)
   bool tmp;
   if (unlikely(session->global_read_lock))
     return;
-  (void) pthread_mutex_lock(&LOCK_global_read_lock);
+  LOCK_global_read_lock.lock();
   tmp= (!--protect_against_global_read_lock &&
         (waiting_for_read_lock || global_read_lock_blocks_commit));
-  (void) pthread_mutex_unlock(&LOCK_global_read_lock);
+  LOCK_global_read_lock.unlock();
   if (tmp)
-    pthread_cond_broadcast(&COND_global_read_lock);
+    COND_global_read_lock.notify_all();
   return;
 }
 
@@ -1130,13 +1136,13 @@ bool make_global_read_lock_block_commit(Session *session)
   */
   if (session->global_read_lock != GOT_GLOBAL_READ_LOCK)
     return false;
-  pthread_mutex_lock(&LOCK_global_read_lock);
+  LOCK_global_read_lock.lock();
   /* increment this BEFORE waiting on cond (otherwise race cond) */
   global_read_lock_blocks_commit++;
-  old_message= session->enter_cond(&COND_global_read_lock, &LOCK_global_read_lock,
+  old_message= session->enter_cond(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle(),
                                "Waiting for all running commits to finish");
   while (protect_against_global_read_lock && !session->killed)
-    pthread_cond_wait(&COND_global_read_lock, &LOCK_global_read_lock);
+    pthread_cond_wait(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle());
   if ((error= test(session->killed)))
     global_read_lock_blocks_commit--; // undo what we did
   else
@@ -1168,7 +1174,7 @@ bool make_global_read_lock_block_commit(Session *session)
 void broadcast_refresh(void)
 {
   pthread_cond_broadcast(&COND_refresh);
-  pthread_cond_broadcast(&COND_global_read_lock);
+  COND_global_read_lock.notify_all();
 }
 
 
