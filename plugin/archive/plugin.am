@@ -17,6 +17,7 @@
 test_archive_LDADD = \
 			$(top_builddir)/plugin/archive/libazio.la \
 			$(LDADD) \
+			$(BOOST_LIBS) \
 			$(LIBINTL) \
 			$(LTLIBZ)
 
