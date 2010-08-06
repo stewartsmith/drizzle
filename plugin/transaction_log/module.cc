@@ -326,15 +326,15 @@ static DRIZZLE_SYSVAR_UINT(num_write_buffers,
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("enable",
-          po::value<bool>(&sysvar_transaction_log_enabled)->default_value(false)->zero_tokens(),
-          N_("Enable transaction log"));
   context("truncate-debug",
           po::value<bool>(&sysvar_transaction_log_truncate_debug)->default_value(false)->zero_tokens(),
           N_("DEBUGGING - Truncate transaction log"));
   context("enable-checksum",
           po::value<bool>(&sysvar_transaction_log_checksum_enabled)->default_value(false)->zero_tokens(),
           N_("Enable CRC32 Checksumming of each written transaction log entry"));  
+  context("enable",
+          po::value<bool>(&sysvar_transaction_log_enabled)->default_value(false)->zero_tokens(),
+          N_("Enable transaction log"));
   context("file",
           po::value<string>(),
           N_("Path to the file to use for transaction log"));
