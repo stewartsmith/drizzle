@@ -764,7 +764,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
 {
   bool result= false;
 
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
 
   while (locked_named_table(table_list))
   {
@@ -773,8 +773,8 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
       result=1;
       break;
     }
-    session->wait_for_condition(&LOCK_open, COND_refresh.native_handle());
-    pthread_mutex_lock(&LOCK_open); /* Wait for a table to unlock and then lock it */
+    session->wait_for_condition(LOCK_open.native_handle(), COND_refresh.native_handle());
+    LOCK_open.lock(); /* Wait for a table to unlock and then lock it */
   }
   return result;
 }
@@ -1069,7 +1069,7 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
     threads could not close their tables. This would make a pretty
     deadlock.
   */
-  safe_mutex_assert_not_owner(&LOCK_open);
+  safe_mutex_assert_not_owner(LOCK_open.native_handle());
 
   LOCK_global_read_lock.lock();
   if ((need_exit_cond= must_wait(is_not_commit)))
