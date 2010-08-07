@@ -324,9 +324,6 @@ int main(int argc, char **argv)
       Session::unlink(session);
   }
 
-  /* (void) pthread_attr_destroy(&connection_attrib); */
-
-
   LOCK_thread_count.lock();
   select_thread_in_use=0;			// For close_connections
   LOCK_thread_count.unlock();
