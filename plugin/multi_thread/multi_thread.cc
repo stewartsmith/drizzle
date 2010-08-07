@@ -90,13 +90,13 @@ void MultiThreadScheduler::killSessionNow(Session *session)
 
 MultiThreadScheduler::~MultiThreadScheduler()
 {
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
   while (thread_count)
   {
-    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
+    pthread_cond_wait(COND_thread_count.native_handle(), LOCK_thread_count.native_handle());
   }
 
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
   (void) pthread_attr_destroy(&attr);
 }
 
