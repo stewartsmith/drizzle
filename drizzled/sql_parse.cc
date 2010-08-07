@@ -1417,7 +1417,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
-  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+  LOCK_thread_count.lock(); // For unlink from list
   
   for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
@@ -1428,7 +1428,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
       break;
     }
   }
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
   if (tmp)
   {
 

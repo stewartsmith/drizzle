@@ -523,9 +523,9 @@ bool Session::schedule()
 
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
-  pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
   getSessionList().push_back(this);
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
 
   if (scheduler->addSession(this))
   {
@@ -1588,7 +1588,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
   /* Close out our connection to the client */
   if (should_lock)
-    (void) pthread_mutex_lock(&LOCK_thread_count);
+    LOCK_thread_count.lock();
   killed= Session::KILL_CONNECTION;
   if (client->isConnected())
   {
@@ -1600,7 +1600,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     client->close();
   }
   if (should_lock)
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    (void) LOCK_thread_count.unlock();
 }
 
 void Session::reset_for_next_command()

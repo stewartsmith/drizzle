@@ -327,20 +327,19 @@ int main(int argc, char **argv)
   /* (void) pthread_attr_destroy(&connection_attrib); */
 
 
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
   select_thread_in_use=0;			// For close_connections
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
   COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
   while (!ready_to_exit)
-    pthread_cond_wait(COND_server_end.native_handle(), &LOCK_thread_count);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+    pthread_cond_wait(COND_server_end.native_handle(), LOCK_thread_count.native_handle());
+  LOCK_thread_count.unlock();
 
   clean_up(1);
   module::Registry::shutdown();
-  clean_up_mutexes();
   internal::my_end();
   return 0;
 }
