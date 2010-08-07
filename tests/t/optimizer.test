@@ -267,3 +267,100 @@ DROP TABLE i;
 DROP TABLE b;
 
 --echo End Bug#586051 test
+
+
+--echo Bug#585628
+--echo - Adding STRAIGHT_JOIN to certain queries results in loss of returned rows
+--disable_warnings
+DROP TABLE IF EXISTS `g`;
+CREATE TABLE `g` (
+  `pk` int NOT NULL AUTO_INCREMENT,
+  `col_int` int DEFAULT NULL,
+  PRIMARY KEY (`pk`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `g` DISABLE KEYS;
+INSERT INTO `g` VALUES (1,NULL),(2,1607860224),(3,NULL),(4,822673408),(5,1907556352),(6,NULL),(7,NULL),(8,NULL);
+ALTER TABLE `g` ENABLE KEYS;
+
+DROP TABLE IF EXISTS `e`;
+CREATE TABLE `e` (
+  `col_int_key` int DEFAULT NULL,
+  `pk` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`pk`),
+  KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `e` DISABLE KEYS;
+INSERT INTO `e` VALUES (NULL,1),(1862205440,2),(1,3),(-517472256,4),(1341587456,5),(5,6);
+ALTER TABLE `e` ENABLE KEYS;
+
+DROP TABLE IF EXISTS `m`;
+CREATE TABLE `m` (
+  `col_int` int DEFAULT NULL,
+  `pk` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`pk`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `m` DISABLE KEYS;
+INSERT INTO `m` VALUES (1,1),(NULL,2),(NULL,3),(-207224832,4),(714801152,5),(-1265106944,6),(2023948288,7),(865599488,8),(1,9),(-1895301120,10),(3,11),(9,12),(5,13),(NULL,14),(NULL,15),(1,16),(-224657408,17),(2,18),(-1219493888,19),(7,20),(1,21),(NULL,22),(NULL,23);
+ALTER TABLE `m` ENABLE KEYS;
+
+DROP TABLE IF EXISTS `a`;
+CREATE TABLE `a` (
+  `col_int_key` int DEFAULT NULL,
+  `pk` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`pk`),
+  KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `a` DISABLE KEYS;
+ALTER TABLE `a` ENABLE KEYS;
+--enable_warnings
+
+SELECT COUNT(table1 .`col_int`)
+FROM g table1 RIGHT JOIN e table2 LEFT JOIN m table3 LEFT JOIN a table5 ON table5 .`col_int_key` ON table2 .`col_int_key` = table3 .`col_int` ON table2 .`pk` ;
+
+SELECT STRAIGHT_JOIN COUNT(table1 .`col_int`)
+FROM g table1 RIGHT JOIN e table2 LEFT JOIN m table3 LEFT JOIN a table5 ON table5 .`col_int_key` ON table2 .`col_int_key` = table3 .`col_int` ON table2 .`pk` /* TRANSFORM_OUTCOME_UNORDERED_MATCH */;
+
+--echo End Bug#585628 test
+
+
+--echo Bug#585644
+--echo - Adding STRAIGHT_JOIN to certain queries results in a large number of duplicate rows
+--disable_warnings
+DROP TABLE IF EXISTS `m`;
+CREATE TABLE `m` (
+  `col_int` int DEFAULT NULL,
+  `pk` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`pk`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `m` DISABLE KEYS;
+INSERT INTO `m` VALUES (1,1),(NULL,2),(NULL,3),(-207224832,4),(714801152,5),(-1265106944,6),(2023948288,7),(865599488,8),(1,9),(-1895301120,10),(3,11),(9,12),(5,13),(NULL,14),(NULL,15),(1,16),(-224657408,17),(2,18),(-1219493888,19),(7,20),(1,21),(NULL,22),(NULL,23);
+ALTER TABLE `m` ENABLE KEYS;
+
+DROP TABLE IF EXISTS `o`;
+CREATE TABLE `o` (
+  `col_int_key` int DEFAULT NULL,
+  `pk` int NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`pk`),
+  KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+
+ALTER TABLE `o` DISABLE KEYS;
+INSERT INTO `o` VALUES (4,1),(-867368960,2),(655032320,3),(1,4),(NULL,5),(-118751232,6),(7,7),(1,8),(3,9),(-518324224,10),(7,11),(1129709568,12),(-2081357824,13),(6,14),(NULL,15),(NULL,16),(NULL,17);
+ALTER TABLE `o` ENABLE KEYS;
+
+#/* Begin test case for query 0 */
+
+SELECT COUNT(table1 .`pk`)
+FROM m table1 RIGHT JOIN o JOIN o table3 ON table3 .`col_int_key` ON table1 .`col_int` = table3 .`col_int_key` ;
+
+SELECT STRAIGHT_JOIN COUNT(table1 .`pk`)
+FROM m table1 RIGHT JOIN o JOIN o table3 ON table3 .`col_int_key` ON table1 .`col_int` = table3 .`col_int_key` /* TRANSFORM_OUTCOME_UNORDERED_MATCH */;
+
+DROP TABLE m;
+DROP TABLE o;
+--echo End Bug#585644 test
