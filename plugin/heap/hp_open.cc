@@ -39,7 +39,7 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
   }
   memset(info, 0, sizeof(HP_INFO) + 2 * share->max_key_length);
   share->open_count++;
-  thr_lock_data_init(&share->lock,&info->lock,NULL);
+  thr_lock_data_init(&share->lock, &info->lock);
   info->s= share;
   info->lastkey= (unsigned char*) (info + 1);
   info->recbuf= (unsigned char*) (info->lastkey + share->max_key_length);

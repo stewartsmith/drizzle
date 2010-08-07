@@ -1449,14 +1449,14 @@ create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ID` bigint NOT NULL DEFAULT '0',
-  `USER` varchar(16) NOT NULL DEFAULT '',
-  `HOST` varchar(1025) NOT NULL DEFAULT '',
-  `DB` varchar(256) NOT NULL DEFAULT '',
-  `COMMAND` varchar(16) NOT NULL DEFAULT '',
-  `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(256) NOT NULL DEFAULT '',
-  `INFO` varchar(100) NOT NULL DEFAULT ''
+  `ID` bigint NOT NULL,
+  `USER` varchar(16) NOT NULL,
+  `HOST` varchar(1025) NOT NULL,
+  `DB` varchar(256) NOT NULL,
+  `COMMAND` varchar(16) NOT NULL,
+  `TIME` bigint NOT NULL,
+  `STATE` varchar(256) NOT NULL,
+  `INFO` varchar(100) NOT NULL
 ) ENGINE=InnoDB
 drop table t1;
 create temporary table t1 like data_dictionary.processlist;
@@ -1465,14 +1465,14 @@ create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `ID` bigint NOT NULL DEFAULT '0',
-  `USER` varchar(16) NOT NULL DEFAULT '',
-  `HOST` varchar(1025) NOT NULL DEFAULT '',
-  `DB` varchar(256) NOT NULL DEFAULT '',
-  `COMMAND` varchar(16) NOT NULL DEFAULT '',
-  `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(256) NOT NULL DEFAULT '',
-  `INFO` varchar(100) NOT NULL DEFAULT ''
+  `ID` bigint NOT NULL,
+  `USER` varchar(16) NOT NULL,
+  `HOST` varchar(1025) NOT NULL,
+  `DB` varchar(256) NOT NULL,
+  `COMMAND` varchar(16) NOT NULL,
+  `TIME` bigint NOT NULL,
+  `STATE` varchar(256) NOT NULL,
+  `INFO` varchar(100) NOT NULL
 ) ENGINE=MyISAM
 drop table t1;
 

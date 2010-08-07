@@ -331,7 +331,6 @@ SHOW_COMP_OPTION have_symlink;
 
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
-pthread_mutex_t LOCK_create_db;
 pthread_mutex_t LOCK_open;
 pthread_mutex_t LOCK_thread_count;
 pthread_mutex_t LOCK_status;
@@ -502,7 +501,6 @@ void clean_up(bool print_message)
     return;
 
   table_cache_free();
-  TableShare::cacheStop();
   set_var_free();
   free_charsets();
   module::Registry &modules= module::Registry::singleton();
@@ -538,7 +536,6 @@ void clean_up(bool print_message)
 
 void clean_up_mutexes()
 {
-  (void) pthread_mutex_destroy(&LOCK_create_db);
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
@@ -808,7 +805,6 @@ int init_thread_environment()
    pthread_mutexattr_t attr; 
    pthread_mutexattr_init(&attr);
 
-  (void) pthread_mutex_init(&LOCK_create_db, NULL);
   (void) pthread_mutex_init(&LOCK_open, NULL);
 
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
@@ -845,7 +841,6 @@ int init_server_components(module::Registry &plugins)
   TableShare::cacheStart();
 
   setup_fpu();
-  init_thr_lock();
 
   /* Setup logs */
 

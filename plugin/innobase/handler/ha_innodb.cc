@@ -2849,7 +2849,7 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
   stats.block_size = 16 * 1024;
 
   /* Init table lock structure */
-  thr_lock_data_init(&share->lock,&lock,(void*) 0);
+  thr_lock_data_init(&share->lock, &lock);
 
   if (prebuilt->table) {
     /* We update the highest file format in the system table
