@@ -265,7 +265,7 @@ Session::Session(plugin::Client *client_arg) :
 	    (hash_free_key) free_user_var, 0);
 
   substitute_null_with_insert_id = false;
-  thr_lock_info_init(&lock_info); /* safety: will be reset after start */
+  lock_info.init(); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
 
   m_internal_handler= NULL;
@@ -454,7 +454,8 @@ bool Session::storeGlobals()
     We have to call thr_lock_info_init() again here as Session may have been
     created in another thread
   */
-  thr_lock_info_init(&lock_info);
+  lock_info.init();
+
   return false;
 }
 

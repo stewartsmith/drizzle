@@ -81,6 +81,8 @@ struct THR_LOCK_INFO
     n_cursors(0)
   { }
 
+  void init();
+
 };
 
 /*

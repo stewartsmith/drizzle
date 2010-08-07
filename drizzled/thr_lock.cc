@@ -114,12 +114,12 @@ void thr_lock_init(THR_LOCK *lock)
 }
 
 
-void thr_lock_info_init(THR_LOCK_INFO *info)
+void THR_LOCK_INFO::init()
 {
   internal::st_my_thread_var *tmp= my_thread_var;
-  info->thread= tmp->pthread_self;
-  info->thread_id= tmp->id;
-  info->n_cursors= 0;
+  thread= tmp->pthread_self;
+  thread_id= tmp->id;
+  n_cursors= 0;
 }
 
 	/* Initialize a lock instance */
