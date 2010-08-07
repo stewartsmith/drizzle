@@ -977,7 +977,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
     session->variables.dynamic_variables_ptr= tmpptr;
 
     if (global_lock)
-      pthread_mutex_lock(&LOCK_global_system_variables);
+      LOCK_global_system_variables.lock();
 
     //safe_mutex_assert_owner(&LOCK_global_system_variables);
 
@@ -1020,7 +1020,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
     }
 
     if (global_lock)
-      pthread_mutex_unlock(&LOCK_global_system_variables);
+      LOCK_global_system_variables.unlock();
 
     session->variables.dynamic_variables_version=
            global_system_variables.dynamic_variables_version;
@@ -1262,7 +1262,7 @@ void sys_var_pluginvar::set_default(Session *session, sql_var_t type)
   if (is_readonly())
     return;
 
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   tgt= real_value_ptr(session, type);
   src= ((void **) (plugin_var + 1) + 1);
 
@@ -1299,11 +1299,11 @@ void sys_var_pluginvar::set_default(Session *session, sql_var_t type)
   if (!(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) || type == OPT_GLOBAL)
   {
     plugin_var->update(session, plugin_var, tgt, src);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
   {
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     plugin_var->update(session, plugin_var, tgt, src);
   }
 }
@@ -1322,18 +1322,18 @@ bool sys_var_pluginvar::update(Session *session, set_var *var)
   if (is_readonly())
     return 1;
 
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   tgt= real_value_ptr(session, var->type);
 
   if (!(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) || var->type == OPT_GLOBAL)
   {
     /* variable we are updating has global scope, so we unlock after updating */
     plugin_var->update(session, plugin_var, tgt, &var->save_result);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
   {
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     plugin_var->update(session, plugin_var, tgt, &var->save_result);
   }
  return 0;

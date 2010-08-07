@@ -21,6 +21,8 @@
 #define DRIZZLED_PTHREAD_GLOBALS_H
 
 #include <pthread.h>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/mutex.hpp>
 
 namespace drizzled
 {
@@ -29,7 +31,7 @@ extern pthread_mutex_t LOCK_open;
 extern pthread_mutex_t LOCK_thread_count;
 extern pthread_mutex_t LOCK_status;
 extern pthread_mutex_t LOCK_global_read_lock;
-extern pthread_mutex_t LOCK_global_system_variables;
+extern boost::recursive_mutex LOCK_global_system_variables;
 
 extern pthread_cond_t COND_refresh;
 extern pthread_cond_t COND_thread_count;
