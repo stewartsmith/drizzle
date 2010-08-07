@@ -81,7 +81,8 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
 ShowTableStatus::Generator::~Generator()
 {
-  LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
+  if (not schema_predicate.empty())
+    LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool ShowTableStatus::Generator::nextCore()
