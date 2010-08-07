@@ -182,7 +182,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   /* Increase id and count all other statements. */
   default:
-    statistic_increment(session->status_var.questions, &LOCK_status);
+    statistic_increment(session->status_var.questions, NULL);
     query_id.next();
   }
 

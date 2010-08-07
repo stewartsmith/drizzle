@@ -30,7 +30,7 @@ namespace drizzled
 
 extern pthread_mutex_t LOCK_open;
 extern pthread_mutex_t LOCK_thread_count;
-extern pthread_mutex_t LOCK_status;
+extern boost::mutex LOCK_status;
 extern boost::recursive_mutex LOCK_global_system_variables;
 
 extern boost::condition_variable COND_refresh;

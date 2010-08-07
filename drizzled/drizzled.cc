@@ -336,7 +336,7 @@ pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
 pthread_mutex_t LOCK_open;
 pthread_mutex_t LOCK_thread_count;
-pthread_mutex_t LOCK_status;
+boost::mutex LOCK_status;
 boost::recursive_mutex LOCK_global_system_variables;
 
 boost::condition_variable COND_refresh;
@@ -541,7 +541,6 @@ void clean_up_mutexes()
 {
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
-  (void) pthread_mutex_destroy(&LOCK_status);
 }
 
 
@@ -806,8 +805,6 @@ int init_thread_environment()
 
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
   (void) pthread_mutex_init(&LOCK_thread_count, &attr);
-
-  (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
 
   pthread_mutexattr_destroy(&attr);
 
