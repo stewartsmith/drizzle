@@ -773,7 +773,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
       result=1;
       break;
     }
-    session->wait_for_condition(&LOCK_open, &COND_refresh);
+    session->wait_for_condition(&LOCK_open, COND_refresh.native_handle());
     pthread_mutex_lock(&LOCK_open); /* Wait for a table to unlock and then lock it */
   }
   return result;
@@ -1173,7 +1173,7 @@ bool make_global_read_lock_block_commit(Session *session)
 
 void broadcast_refresh(void)
 {
-  pthread_cond_broadcast(&COND_refresh);
+  pthread_cond_broadcast(COND_refresh.native_handle());
   COND_global_read_lock.notify_all();
 }
 

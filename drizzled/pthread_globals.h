@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 namespace drizzled
 {
@@ -32,7 +33,7 @@ extern pthread_mutex_t LOCK_thread_count;
 extern pthread_mutex_t LOCK_status;
 extern boost::recursive_mutex LOCK_global_system_variables;
 
-extern pthread_cond_t COND_refresh;
+extern boost::condition_variable COND_refresh;
 extern pthread_cond_t COND_thread_count;
 extern pthread_cond_t  COND_server_end;
 extern pthread_attr_t connection_attrib;

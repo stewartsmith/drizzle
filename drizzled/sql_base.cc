@@ -423,7 +423,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       this is closed (or this thread is killed) before returning
     */
     session->mysys_var->current_mutex= &LOCK_open;
-    session->mysys_var->current_cond= &COND_refresh;
+    session->mysys_var->current_cond= COND_refresh.native_handle();
     session->set_proc_info("Flushing tables");
 
     session->close_old_data_files();
@@ -459,7 +459,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
                                                    (table->open_placeholder && wait_for_placeholders)))
         {
           found= true;
-          pthread_cond_wait(&COND_refresh,&LOCK_open);
+          pthread_cond_wait(COND_refresh.native_handle(),&LOCK_open);
           break;
         }
       }
@@ -1372,7 +1372,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       if (table->in_use != this)
       {
         /* wait_for_conditionwill unlock LOCK_open for us */
-        wait_for_condition(&LOCK_open, &COND_refresh);
+        wait_for_condition(&LOCK_open, COND_refresh.native_handle());
       }
       else
       {
@@ -1866,7 +1866,7 @@ bool wait_for_tables(Session *session)
     session->close_old_data_files(false, dropping_tables != 0);
     if (!table_is_used(session->open_tables, 1))
       break;
-    (void) pthread_cond_wait(&COND_refresh,&LOCK_open);
+    (void) pthread_cond_wait(COND_refresh.native_handle(),&LOCK_open);
   }
   if (session->killed)
     result= true;					// aborted
@@ -4600,7 +4600,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
       {
         dropping_tables++;
         if (likely(signalled))
-          (void) pthread_cond_wait(&COND_refresh, &LOCK_open);
+          (void) pthread_cond_wait(COND_refresh.native_handle(), &LOCK_open);
         else
         {
           struct timespec abstime;
@@ -4615,7 +4615,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
             remove_table_from_cache routine.
           */
           set_timespec(abstime, 10);
-          pthread_cond_timedwait(&COND_refresh, &LOCK_open, &abstime);
+          pthread_cond_timedwait(COND_refresh.native_handle(), &LOCK_open, &abstime);
         }
         dropping_tables--;
         continue;

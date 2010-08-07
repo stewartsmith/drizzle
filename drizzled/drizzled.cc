@@ -31,6 +31,7 @@
 #include <boost/program_options.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
@@ -338,7 +339,8 @@ pthread_mutex_t LOCK_thread_count;
 pthread_mutex_t LOCK_status;
 boost::recursive_mutex LOCK_global_system_variables;
 
-pthread_cond_t COND_refresh, COND_thread_count;
+boost::condition_variable COND_refresh;
+pthread_cond_t COND_thread_count;
 pthread_t signal_thread;
 pthread_cond_t  COND_server_end;
 
@@ -542,7 +544,6 @@ void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_cond_destroy(&COND_thread_count);
   (void) pthread_cond_destroy(&COND_server_end);
-  (void) pthread_cond_destroy(&COND_refresh);
 }
 
 
@@ -811,7 +812,6 @@ int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_thread_count,NULL);
   (void) pthread_cond_init(&COND_server_end,NULL);
-  (void) pthread_cond_init(&COND_refresh,NULL);
 
   pthread_mutexattr_destroy(&attr);
 
