@@ -34,6 +34,7 @@
 #include <boost/thread/condition_variable.hpp>
 
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
 #include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>

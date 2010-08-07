@@ -52,6 +52,7 @@
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/internal/thread_var.h"
 #include "drizzled/plugin/event_observer.h"
 
 #include <fcntl.h>

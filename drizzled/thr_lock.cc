@@ -54,6 +54,7 @@ TL_WRITE_CONCURRENT_INSERT lock at the same time as multiple read locks.
 
 #include "config.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
 #include "drizzled/statistics_variables.h"
 
 #include "thr_lock.h"
