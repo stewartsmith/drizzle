@@ -342,7 +342,7 @@ boost::recursive_mutex LOCK_global_system_variables;
 boost::condition_variable COND_refresh;
 pthread_cond_t COND_thread_count;
 pthread_t signal_thread;
-pthread_cond_t  COND_server_end;
+boost::condition_variable COND_server_end;
 
 /* Static variables */
 
@@ -527,7 +527,7 @@ void clean_up(bool print_message)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   ready_to_exit=1;
   /* do the broadcast inside the lock to ensure that my_end() is not called */
-  (void) pthread_cond_broadcast(&COND_server_end);
+  COND_server_end.notify_all();
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   /*
@@ -543,7 +543,6 @@ void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_cond_destroy(&COND_thread_count);
-  (void) pthread_cond_destroy(&COND_server_end);
 }
 
 
@@ -811,7 +810,6 @@ int init_thread_environment()
 
   (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_thread_count,NULL);
-  (void) pthread_cond_init(&COND_server_end,NULL);
 
   pthread_mutexattr_destroy(&attr);
 

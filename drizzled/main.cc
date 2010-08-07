@@ -335,7 +335,7 @@ int main(int argc, char **argv)
   /* Wait until cleanup is done */
   (void) pthread_mutex_lock(&LOCK_thread_count);
   while (!ready_to_exit)
-    pthread_cond_wait(&COND_server_end,&LOCK_thread_count);
+    pthread_cond_wait(COND_server_end.native_handle(), &LOCK_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   clean_up(1);
