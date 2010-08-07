@@ -18,6 +18,7 @@
 #include "drizzled/pthread_globals.h"
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
+#include <drizzled/errmsg_print.h>
 
 namespace po= boost::program_options;
 using namespace std;
@@ -53,6 +54,16 @@ bool MultiThreadScheduler::addSession(Session *session)
 {
   if (thread_count >= max_threads)
     return true;
+
+  int err= pthread_attr_setstacksize(&attr, getThreadStackSize());
+
+  if (err != 0)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR,
+                  _("Unable to set thread stack size to %" PRId64 "\n"),
+                  static_cast<uint64_t>(getThreadStackSize()));
+    return true;
+  }
 
   thread_count.increment();
 
