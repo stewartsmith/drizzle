@@ -82,7 +82,7 @@ MultiThreadScheduler::~MultiThreadScheduler()
   (void) pthread_mutex_lock(&LOCK_thread_count);
   while (thread_count)
   {
-    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
+    pthread_cond_wait(COND_thread_count.native_handle(), &LOCK_thread_count);
   }
 
   (void) pthread_mutex_unlock(&LOCK_thread_count);

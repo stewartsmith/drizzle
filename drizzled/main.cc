@@ -330,7 +330,7 @@ int main(int argc, char **argv)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   select_thread_in_use=0;			// For close_connections
   (void) pthread_mutex_unlock(&LOCK_thread_count);
-  (void) pthread_cond_broadcast(&COND_thread_count);
+  COND_thread_count.notify_all();
 
   /* Wait until cleanup is done */
   (void) pthread_mutex_lock(&LOCK_thread_count);

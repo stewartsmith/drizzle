@@ -340,7 +340,7 @@ pthread_mutex_t LOCK_status;
 boost::recursive_mutex LOCK_global_system_variables;
 
 boost::condition_variable COND_refresh;
-pthread_cond_t COND_thread_count;
+boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
 boost::condition_variable COND_server_end;
 
@@ -400,7 +400,7 @@ void close_connections(void)
     set_timespec(abstime, 2);
     for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
     {
-      error=pthread_cond_timedwait(&COND_thread_count,&LOCK_thread_count, &abstime);
+      error= pthread_cond_timedwait(COND_thread_count.native_handle(),&LOCK_thread_count, &abstime);
       if (error != EINTR)
         break;
     }
@@ -542,7 +542,6 @@ void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
   (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_cond_destroy(&COND_thread_count);
 }
 
 
@@ -809,7 +808,6 @@ int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_thread_count, &attr);
 
   (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
-  (void) pthread_cond_init(&COND_thread_count,NULL);
 
   pthread_mutexattr_destroy(&attr);
 

@@ -325,7 +325,8 @@ void *PoolOfThreadsScheduler::mainLoop()
   (void) pthread_mutex_lock(&LOCK_thread_count);
   created_threads++;
   if (created_threads == pool_size)
-    (void) pthread_cond_signal(&COND_thread_count);
+    COND_thread_count.notify_one();
+
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
   for (;;)
@@ -399,7 +400,7 @@ void *PoolOfThreadsScheduler::mainLoop()
 thread_exit:
   (void) pthread_mutex_lock(&LOCK_thread_count);
   created_threads--;
-  pthread_cond_broadcast(&COND_thread_count);
+  COND_thread_count.notify_all();
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   internal::my_thread_end();
   pthread_exit(0);
@@ -515,7 +516,7 @@ PoolOfThreadsScheduler::~PoolOfThreadsScheduler()
     size_t written= write(session_add_pipe[1], &c, sizeof(c));
     assert(written == sizeof(c));
 
-    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
+    pthread_cond_wait(COND_thread_count.native_handle(), &LOCK_thread_count);
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
@@ -625,7 +626,7 @@ bool PoolOfThreadsScheduler::libevent_init(void)
 
   /* Wait until all threads are created */
   while (created_threads != pool_size)
-    pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
+    pthread_cond_wait(COND_thread_count.native_handle(),&LOCK_thread_count);
   pthread_mutex_unlock(&LOCK_thread_count);
 
   return false;
