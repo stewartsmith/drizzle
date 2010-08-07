@@ -71,6 +71,11 @@ public:
   static bool setPlugin(const std::string& name);
   static Scheduler *getScheduler();
 
+  /**
+   * Return the thread stack size that should be used for all threads.
+   */
+  size_t getThreadStackSize() const;
+
 };
 
 } /* namespace plugin */
