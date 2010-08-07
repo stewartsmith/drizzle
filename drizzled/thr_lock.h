@@ -131,7 +131,9 @@ struct st_lock_list {
 };
 
 struct THR_LOCK {
+private:
   pthread_mutex_t mutex;
+public:
   struct st_lock_list read_wait;
   struct st_lock_list read;
   struct st_lock_list write_wait;
@@ -181,7 +183,6 @@ struct THR_LOCK {
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)
 void thr_lock_info_init(THR_LOCK_INFO *info);
 void thr_lock_init(THR_LOCK *lock);
-void thr_lock_delete(THR_LOCK *lock);
 void thr_lock_data_init(THR_LOCK *lock,THR_LOCK_DATA *data,
                         void *status_param= NULL);
 enum enum_thr_lock_result thr_multi_lock(THR_LOCK_DATA **data,

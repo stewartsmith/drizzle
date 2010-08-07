@@ -266,7 +266,7 @@ TinaShare::TinaShare(const char *table_name_arg)
 
 TinaShare::~TinaShare()
 {
-  thr_lock_delete(&lock);
+  lock.deinit();
   pthread_mutex_destroy(&mutex);
 }
 

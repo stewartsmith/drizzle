@@ -390,7 +390,7 @@ static void ha_cleanup_share(XTThreadPtr self, XTSharePtr share)
 	}
 
 	if (share->sh_ex_cond) {
-		thr_lock_delete(&share->sh_lock);
+		share->sh_lock.unlock();
 		xt_delete_cond(self, (xt_cond_type *) share->sh_ex_cond);
 		share->sh_ex_cond = NULL;
 	}

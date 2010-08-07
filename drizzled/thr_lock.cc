@@ -106,17 +106,11 @@ thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 
 void thr_lock_init(THR_LOCK *lock)
 {
-  pthread_mutex_init(&lock->mutex,MY_MUTEX_INIT_FAST);
+  lock->init();
   lock->read.last= &lock->read.data;
   lock->read_wait.last= &lock->read_wait.data;
   lock->write_wait.last= &lock->write_wait.data;
   lock->write.last= &lock->write.data;
-}
-
-
-void thr_lock_delete(THR_LOCK *lock)
-{
-  pthread_mutex_destroy(&lock->mutex);
 }
 
 
@@ -172,7 +166,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   status_var_increment(current_global_counters.locks_waited);
 
   /* Set up control struct to allow others to abort locks */
-  thread_var->current_mutex= &data->lock->mutex;
+  thread_var->current_mutex= data->lock->native_handle();
   thread_var->current_cond=  cond;
   data->cond= cond;
 
@@ -181,9 +175,9 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   while (!thread_var->abort || in_wait_list)
   {
     int rc= (can_deadlock ?
-             pthread_cond_timedwait(cond, &data->lock->mutex,
+             pthread_cond_timedwait(cond, data->lock->native_handle(),
                                     &wait_timeout) :
-             pthread_cond_wait(cond, &data->lock->mutex));
+             pthread_cond_wait(cond, data->lock->native_handle()));
     /*
       We must break the wait if one of the following occurs:
       - the connection has been aborted (!thread_var->abort), but
@@ -223,7 +217,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
   {
     result= THR_LOCK_SUCCESS;
   }
-  pthread_mutex_unlock(&data->lock->mutex);
+  data->lock->unlock();
 
   /* The following must be done after unlock of lock->mutex */
   pthread_mutex_lock(&thread_var->mutex);
@@ -245,7 +239,7 @@ static enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *o
   data->cond=0;					/* safety */
   data->type=lock_type;
   data->owner= owner;                           /* Must be reset ! */
-  pthread_mutex_lock(&lock->mutex);
+  lock->lock();
   if ((int) lock_type <= (int) TL_READ_NO_INSERT)
   {
     /* Request for READ lock */
@@ -380,10 +374,12 @@ static enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *o
     result= THR_LOCK_DEADLOCK;
     goto end;
   }
+
   /* Can't get lock yet;  Wait for it */
   return(wait_for_lock(wait_queue, data, 0));
 end:
-  pthread_mutex_unlock(&lock->mutex);
+  lock->unlock();
+
   return(result);
 }
 
@@ -436,7 +432,7 @@ static void thr_unlock(THR_LOCK_DATA *data)
 {
   THR_LOCK *lock=data->lock;
   enum thr_lock_type lock_type=data->type;
-  pthread_mutex_lock(&lock->mutex);
+  lock->lock();
 
   if (((*data->prev)=data->next))		/* remove from lock-list */
     data->next->prev= data->prev;
@@ -452,7 +448,7 @@ static void thr_unlock(THR_LOCK_DATA *data)
     lock->read_no_write_count--;
   data->type=TL_UNLOCK;				/* Mark unlocked */
   wake_up_waiters(lock);
-  pthread_mutex_unlock(&lock->mutex);
+  lock->unlock();
 }
 
 

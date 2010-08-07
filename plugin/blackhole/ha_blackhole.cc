@@ -475,7 +475,7 @@ BlackholeShare::BlackholeShare(const string table_name_arg)
 
 BlackholeShare::~BlackholeShare()
 {
-  thr_lock_delete(&lock);
+  lock.deinit();
 }
 
 

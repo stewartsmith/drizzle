@@ -7292,7 +7292,7 @@ static void free_share(INNOBASE_SHARE* share)
 
     HASH_DELETE(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
-    thr_lock_delete(&share->lock);
+    share->lock.deinit();
     free(share);
 
     /* TODO: invoke HASH_MIGRATE if innobase_open_tables

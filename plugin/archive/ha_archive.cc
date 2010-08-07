@@ -277,7 +277,7 @@ ArchiveShare::ArchiveShare(const char *name):
 
 ArchiveShare::~ArchiveShare()
 {
-  thr_lock_delete(&_lock);
+  _lock.deinit();
   pthread_mutex_destroy(&_mutex);
   /*
     We need to make sure we don't reset the crashed state.
