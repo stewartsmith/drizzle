@@ -5335,7 +5335,8 @@ static COND *simplify_joins(Join *join, List<TableList> *join_list, COND *conds,
     {
       //If this is straight join, set prev table to be dependent on all tables
       //from this nested join, so that correct join order is selected.
-      if (test(join->select_options & SELECT_STRAIGHT_JOIN))
+      if ((test(join->select_options & SELECT_STRAIGHT_JOIN)) ||
+          prev_table->straight)
         prev_table->setDepTables(prev_table->getDepTables() | used_tables);
       if (prev_table->on_expr)
       {
