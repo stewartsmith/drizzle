@@ -1419,7 +1419,7 @@ public:
   Table *table_cache_insert_placeholder(const char *db_name, const char *table_name);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
-  typedef boost::unordered_map<std::string, message::Table> TableMessageCache;
+  typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
   TableMessageCache table_message_cache;
 
   bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
