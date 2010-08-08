@@ -62,6 +62,15 @@ static uint32_t myisam_key_cache_age_threshold;
 static uint64_t max_sort_file_size;
 static uint64_t sort_buffer_size;
 
+void st_mi_isam_share::setKeyCache()
+{
+  (void)init_key_cache(&key_cache,
+                       myisam_key_cache_block_size,
+                       myisam_key_cache_size,
+                       myisam_key_cache_division_limit, 
+                       myisam_key_cache_age_threshold);
+}
+
 /*****************************************************************************
 ** MyISAM tables
 *****************************************************************************/
