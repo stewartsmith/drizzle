@@ -58,12 +58,12 @@ HP_INFO *heap_open_from_share_and_register(HP_SHARE *share, int mode)
 {
   HP_INFO *info;
 
-  pthread_mutex_lock(&THR_LOCK_heap);
+  THR_LOCK_heap.lock();
   if ((info= heap_open_from_share(share, mode)))
   {
     heap_open_list.push_front(info);
   }
-  pthread_mutex_unlock(&THR_LOCK_heap);
+  THR_LOCK_heap.unlock();
   return(info);
 }
 
@@ -81,18 +81,18 @@ HP_INFO *heap_open(const char *name, int mode)
   HP_INFO *info;
   HP_SHARE *share;
 
-  pthread_mutex_lock(&THR_LOCK_heap);
+  THR_LOCK_heap.lock();
   if (!(share= hp_find_named_heap(name)))
   {
     errno= ENOENT;
-    pthread_mutex_unlock(&THR_LOCK_heap);
+    THR_LOCK_heap.unlock();
     return(0);
   }
   if ((info= heap_open_from_share(share, mode)))
   {
     heap_open_list.push_front(info);
   }
-  pthread_mutex_unlock(&THR_LOCK_heap);
+  THR_LOCK_heap.unlock();
   return(info);
 }
 
