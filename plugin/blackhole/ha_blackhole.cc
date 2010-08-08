@@ -231,8 +231,8 @@ int ha_blackhole::open(const char *name, int, uint32_t)
   if (!(share= get_share(name)))
     return(HA_ERR_OUT_OF_MEM);
 
-  thr_lock_data_init(&share->lock, &lock);
-  return(0);
+  lock.init(&share->lock);
+  return 0;
 }
 
 int ha_blackhole::close(void)

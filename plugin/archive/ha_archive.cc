@@ -473,7 +473,7 @@ int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 
   record_buffer.resize(table->getShare()->getRecordLength() + ARCHIVE_ROW_HEADER_SIZE);
 
-  thr_lock_data_init(&share->_lock, &lock);
+  lock.init(&share->_lock);
 
   return(rc);
 }

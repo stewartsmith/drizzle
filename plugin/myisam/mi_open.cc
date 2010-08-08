@@ -499,7 +499,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   memset(info.rec_buff, 0, mi_get_rec_buff_len(&info, info.rec_buff));
 
   *m_info=info;
-  thr_lock_data_init(&share->lock,&m_info->lock,(void*) m_info);
+  m_info->lock.init(&share->lock, (void*) m_info);
   myisam_open_list.push_front(m_info);
 
   pthread_mutex_unlock(&THR_LOCK_myisam);

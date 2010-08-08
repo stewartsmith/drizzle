@@ -799,7 +799,7 @@ int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
     so that they could save/update local_saved_data_file_length value
     during locking. This is needed to enable concurrent inserts.
   */
-  thr_lock_data_init(&share->lock, &lock);
+  lock.init(&share->lock);
   ref_length=sizeof(off_t);
 
   return(0);

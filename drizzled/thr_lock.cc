@@ -124,13 +124,13 @@ void THR_LOCK_INFO::init()
 
 	/* Initialize a lock instance */
 
-void thr_lock_data_init(THR_LOCK *lock,THR_LOCK_DATA *data, void *param_arg)
+void THR_LOCK_DATA::init(THR_LOCK *lock_arg, void *param_arg)
 {
-  data->lock= lock;
-  data->type= TL_UNLOCK;
-  data->owner= NULL;                               /* no owner yet */
-  data->status_param= param_arg;
-  data->cond= NULL;
+  lock= lock_arg;
+  type= TL_UNLOCK;
+  owner= NULL;                               /* no owner yet */
+  status_param= param_arg;
+  cond= NULL;
 }
 
 
