@@ -321,3 +321,78 @@ COUNT(table1 .`pk`)
 DROP TABLE m;
 DROP TABLE o;
 End Bug#585644 test
+Bug#608416
+Crash / assertion failed -
+"void drizzled::Select_Lex::print(drizzled::Session*, drizzled::String*, drizzled::enum_query_type)") at assert.c:81
+#3 0x00000000006282fb in drizzled::Select_Lex::print
+(this=0x3911418, session=0x0, str=0x7f26b77fd7c0, query_type=drizzled::QT_ORDINARY) at drizzled/sql_select.cc:6592
+DROP TABLE IF EXISTS `aa`,`bb`,`dd`;
+DROP TABLE IF EXISTS `aa`;
+Warnings:
+Note	1051	Unknown table 'aa'
+CREATE TABLE `aa` (
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_enum_not_null_key` enum('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+`col_int_not_null_key` int NOT NULL,
+`col_char_10_not_null_key` varchar(10) NOT NULL,
+`col_int_key` int DEFAULT NULL,
+`col_text_not_null` text NOT NULL,
+`col_char_1024_key` varchar(1024) DEFAULT NULL,
+`col_bigint_key` bigint DEFAULT NULL,
+`col_int_not_null` int NOT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+KEY `col_int_not_null_key` (`col_int_not_null_key`),
+KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+KEY `col_int_key` (`col_int_key`),
+KEY `col_char_1024_key` (`col_char_1024_key`(255)),
+KEY `col_bigint_key` (`col_bigint_key`)
+) ENGINE=InnoDB;
+INSERT INTO `aa` VALUES (1,'s',-523436032,'at',2071265280,'','LPUJD',NULL,-1974206464),(2,'p',1,'VDMDI',1,'','don\'t',NULL,3),(3,'n',621543424,'WPTIG',NULL,'','think',-2842897264777625600,-274595840),(4,'o',880148480,'your',1734213632,'','on',NULL,295501824),(5,'b',1963982848,'q',1505558528,'','YTUNQ',3557843705622691840,9),(6,'c',8,'OOQXU',8,'','o',-4628011567076605952,2),(7,'p',1445462016,'RDODX',NULL,'','so',-5755881798756204544,-1601306624),(8,'i',0,'e',-1685520384,'','get',NULL,-1770323968),(9,'f',-747241472,'FEKXH',NULL,'','l',NULL,256311296),(10,'p',6,'GTHOM',-1431502848,'','h',-5719290051783819264,4);
+CREATE TABLE `bb` (
+`col_enum_not_null_key` enum('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+`col_text_not_null` text NOT NULL,
+`col_char_10_not_null_key` varchar(10) NOT NULL,
+`col_bigint_key` bigint DEFAULT NULL,
+`col_char_1024_key` varchar(1024) DEFAULT NULL,
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_int_not_null_key` int NOT NULL,
+`col_int_key` int DEFAULT NULL,
+`col_int_not_null` int NOT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+KEY `col_bigint_key` (`col_bigint_key`),
+KEY `col_char_1024_key` (`col_char_1024_key`(255)),
+KEY `col_int_not_null_key` (`col_int_not_null_key`),
+KEY `col_int_key` (`col_int_key`)
+) ENGINE=InnoDB;
+INSERT INTO `bb` VALUES ('r','','DCJRX',NULL,'ANVSO',1,1,NULL,763953152),('a','','x',NULL,'JBJPT',2,1,4,-132513792),('s','','ZMHDL',-647673921411219456,'KAHJT',3,-1536425984,-628359168,3),('i','','SJGHS',-5702401553181179904,'q',4,-1443495936,-2114322432,-1349844992),('w','','his',NULL,'l',5,2,105971712,-2019688448),('v','','m',4,'ULWFL',6,0,2,-38207488),('d','','i',NULL,'YOIXU',7,8,NULL,3),('f','','d',8,'that\'s',8,476315648,NULL,8),('y','','from',NULL,'ZPPIG',9,5,-607322112,-1129054208),('o','','h',NULL,'like',10,5,0,-415629312);
+CREATE TABLE `dd` (
+`col_int_not_null` int NOT NULL,
+`col_int_key` int DEFAULT NULL,
+`col_enum_not_null_key` enum('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') NOT NULL,
+`col_bigint_key` bigint DEFAULT NULL,
+`col_char_10_not_null_key` varchar(10) NOT NULL,
+`col_int_not_null_key` int NOT NULL,
+`col_text_not_null` text NOT NULL,
+`pk` int NOT NULL AUTO_INCREMENT,
+`col_char_1024_key` varchar(1024) DEFAULT NULL,
+PRIMARY KEY (`pk`),
+KEY `col_int_key` (`col_int_key`),
+KEY `col_enum_not_null_key` (`col_enum_not_null_key`),
+KEY `col_bigint_key` (`col_bigint_key`),
+KEY `col_char_10_not_null_key` (`col_char_10_not_null_key`),
+KEY `col_int_not_null_key` (`col_int_not_null_key`),
+KEY `col_char_1024_key` (`col_char_1024_key`(255))
+) ENGINE=InnoDB;
+INSERT INTO `dd` VALUES (1777795072,NULL,'g',0,'was',-1866203136,'',1,'g');
+EXPLAIN EXTENDED SELECT
+table2 . `col_enum_not_null_key` AS field1 ,
+table1 . `col_char_1024_key` AS field2
+FROM ( ( SELECT SUBQUERY1_t1 . * FROM ( BB AS SUBQUERY1_t1 RIGHT JOIN AA AS SUBQUERY1_t2 ON (SUBQUERY1_t2 . `col_int_not_null_key` = SUBQUERY1_t1 . `col_int_key` ) ) ) AS table1 INNER JOIN ( ( DD AS table2 STRAIGHT_JOIN BB AS table3 ON (table3 . `col_char_10_not_null_key` = table2 . `col_char_key` ) ) ) ON (table3 . `col_char_key` = table2 . `col_text_not_null` ) ) WHERE ( ( SELECT MIN( SUBQUERY2_t2 . `col_char_10_not_null_key` ) AS SUBQUERY2_field1 FROM AA AS SUBQUERY2_t1 WHERE ( EXISTS ( ( SELECT CHILD_SUBQUERY1_t2 . `col_char_10_not_null_key` AS CHILD_SUBQUERY1_field1 FROM ( BB AS CHILD_SUBQUERY1_t1 INNER JOIN AA AS CHILD_SUBQUERY1_t2 ON (CHILD_SUBQUERY1_t2 . `col_int_key` = CHILD_SUBQUERY1_t1 . `pk` ) ) WHERE ( CHILD_SUBQUERY1_t2 . `col_char_10_not_null_key` > 'y' AND CHILD_SUBQUERY1_t1 . `col_int_not_null_key` = CHILD_SUBQUERY1_t1 . `col_int_not_null` ) HAVING CHILD_SUBQUERY1_t2 . `col_bigint_key` >= 3) ) AND SUBQUERY2_t1 . `col_int_key` != 8 ) ) IS NOT NULL ) AND ( table1 . `col_int_key` = 160 AND table1 . `col_int_key` = 197 ) AND table3 . `col_text_not_null` >= 'g' GROUP BY field1, field2;
+ERROR 42S22: Unknown column 'SUBQUERY2_t2.col_char_10_not_null_key' in 'field list'
+DROP TABLE `aa`;
+DROP TABLE `bb`;
+DROP TABLE `dd`;
+End Bug#608416

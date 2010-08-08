@@ -6594,7 +6594,9 @@ void print_join(Session *session, String *str,
 void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
 {
   /* QQ: session may not be set for sub queries, but this should be fixed */
-  assert(session);
+  if (!session)
+    session = current_session;
+
 
   str->append(STRING_WITH_LEN("select "));
 
