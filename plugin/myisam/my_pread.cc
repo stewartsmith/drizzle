@@ -15,6 +15,7 @@
 
 #include "myisam_priv.h"
 #include "drizzled/error.h"
+#include "drizzled/internal/thread_var.h"
 #include <cerrno>
 #include <unistd.h>
 
