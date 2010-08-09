@@ -895,6 +895,44 @@ select count(*) from t1;
 count(*)
 0
 drop table t1;
+create table t1 (a varchar(32), index(a)) engine = blitzdb;
+insert into t1 values ('ccc'), ('bbb'), ('aaa');
+insert into t1 values ('eee'), ('ddd'), ('fff');
+select * from t1;
+a
+aaa
+bbb
+ccc
+ddd
+eee
+fff
+select * from t1 where a = 'aaa';
+a
+aaa
+select * from t1 where a = 'bbb';
+a
+bbb
+select * from t1 where a = 'ccc';
+a
+ccc
+select * from t1 where a = 'ddd';
+a
+ddd
+select * from t1 where a = 'eee';
+a
+eee
+delete from t1 where a = 'ddd';
+delete from t1 where a = 'eee';
+select * from t1;
+a
+aaa
+bbb
+ccc
+fff
+select count(*) from t1;
+count(*)
+4
+drop table t1;
 create table t1 (a int, b int, unique index(a)) engine = blitzdb;
 insert into t1 values (NULL, 1), (NULL, 2), (NULL, 3), (NULL, 4);
 select * from t1;

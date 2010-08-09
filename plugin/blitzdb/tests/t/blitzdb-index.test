@@ -476,6 +476,25 @@ select * from t1 where a = 4;
 select count(*) from t1;
 drop table t1;
 
+# +-----------------+
+# | INDEX: VARTEXT1 |
+# +-----------------+
+create table t1 (a varchar(32), index(a)) engine = blitzdb;
+insert into t1 values ('ccc'), ('bbb'), ('aaa');
+insert into t1 values ('eee'), ('ddd'), ('fff');
+--sorted_result
+select * from t1;
+select * from t1 where a = 'aaa';
+select * from t1 where a = 'bbb';
+select * from t1 where a = 'ccc';
+select * from t1 where a = 'ddd';
+select * from t1 where a = 'eee';
+delete from t1 where a = 'ddd';
+delete from t1 where a = 'eee';
+select * from t1;
+select count(*) from t1;
+drop table t1;
+
 # +------------------------------+
 # | UNIQUE INDEX: DUPLICATE NULL |
 # +------------------------------+
