@@ -2801,8 +2801,8 @@ static void innodb_file_format_name_update(Session*, drizzle_sys_var*,
   format= *static_cast<const char*const*>(save);
 
   /* Format is already set in validate */
-    strncpy(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
+  memmove(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
+  innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
 
   *static_cast<const char**>(var_ptr)= innodb_file_format_name_storage;
 }

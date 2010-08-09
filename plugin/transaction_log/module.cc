@@ -44,7 +44,10 @@
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
 #include <drizzled/gettext.h>
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 
+namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
@@ -110,6 +113,46 @@ extern plugin::Create_function<HexdumpTransactionMessageFunction> *hexdump_trans
 
 static int init(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+
+  if (vm.count("sync-method"))
+  {
+    if (sysvar_transaction_log_sync_method > 2)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for sync-method\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("num-write-buffers"))
+  {
+    if (sysvar_transaction_log_num_write_buffers < 4 || sysvar_transaction_log_num_write_buffers > 8192)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for num-write-buffers\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("file"))
+  {
+    sysvar_transaction_log_file= strdup(vm["file"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_transaction_log_file= strdup(DEFAULT_LOG_FILE_PATH);
+  }
+
+  if (vm.count("use-replicator"))
+  {
+    sysvar_transaction_log_use_replicator= strdup(vm["use-replicator"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_transaction_log_use_replicator= strdup(DEFAULT_USE_REPLICATOR);
+  }
+
   /* Create and initialize the transaction log itself */
   if (sysvar_transaction_log_enabled)
   {
@@ -281,6 +324,31 @@ static DRIZZLE_SYSVAR_UINT(num_write_buffers,
                            8192,
                            0);
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("truncate-debug",
+          po::value<bool>(&sysvar_transaction_log_truncate_debug)->default_value(false)->zero_tokens(),
+          N_("DEBUGGING - Truncate transaction log"));
+  context("enable-checksum",
+          po::value<bool>(&sysvar_transaction_log_checksum_enabled)->default_value(false)->zero_tokens(),
+          N_("Enable CRC32 Checksumming of each written transaction log entry"));  
+  context("enable",
+          po::value<bool>(&sysvar_transaction_log_enabled)->default_value(false)->zero_tokens(),
+          N_("Enable transaction log"));
+  context("file",
+          po::value<string>(),
+          N_("Path to the file to use for transaction log"));
+  context("use-replicator",
+          po::value<string>(),
+          N_("Name of the replicator plugin to use (default='default_replicator')")); 
+  context("sync-method",
+          po::value<uint32_t>(&sysvar_transaction_log_sync_method)->default_value(0),
+          N_("0 == rely on operating system to sync log file (default), 1 == sync file at each transaction write, 2 == sync log file once per second"));
+  context("num-write-buffers",
+          po::value<uint32_t>(&sysvar_transaction_log_num_write_buffers)->default_value(8),
+          N_("Number of slots for in-memory write buffers (default=8)."));
+}
+
 static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(truncate_debug),
@@ -292,4 +360,4 @@ static drizzle_sys_var* sys_variables[]= {
   NULL
 };
 
-DRIZZLE_PLUGIN(init, sys_variables, NULL);
+DRIZZLE_PLUGIN(init, sys_variables, init_options);

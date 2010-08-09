@@ -1151,7 +1151,7 @@ innobase_mysql_prepare_print_arbitrary_thd(void)
 /*============================================*/
 {
   ut_ad(!mutex_own(&kernel_mutex));
-  pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
 }
 
 /*************************************************************//**
@@ -1169,7 +1169,7 @@ innobase_mysql_end_print_arbitrary_thd(void)
 /*========================================*/
 {
   ut_ad(!mutex_own(&kernel_mutex));
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
 }
 
 /*************************************************************//**
