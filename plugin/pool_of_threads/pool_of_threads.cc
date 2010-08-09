@@ -322,11 +322,12 @@ void *PoolOfThreadsScheduler::mainLoop()
    Signal libevent_init() when all threads has been created and are ready
    to receive events.
   */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  (void) LOCK_thread_count.lock();
   created_threads++;
   if (created_threads == pool_size)
-    (void) pthread_cond_signal(&COND_thread_count);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+    COND_thread_count.notify_one();
+
+  (void) LOCK_thread_count.unlock();
 
   for (;;)
   {
@@ -397,10 +398,10 @@ void *PoolOfThreadsScheduler::mainLoop()
   }
 
 thread_exit:
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  (void) LOCK_thread_count.lock();
   created_threads--;
-  pthread_cond_broadcast(&COND_thread_count);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  COND_thread_count.notify_all();
+  (void) LOCK_thread_count.unlock();
   internal::my_thread_end();
   pthread_exit(0);
 
@@ -503,7 +504,7 @@ PoolOfThreadsScheduler::PoolOfThreadsScheduler(const char *name_arg)
 
 PoolOfThreadsScheduler::~PoolOfThreadsScheduler()
 {
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  (void) LOCK_thread_count.lock();
 
   kill_pool_threads= true;
   while (created_threads)
@@ -515,9 +516,9 @@ PoolOfThreadsScheduler::~PoolOfThreadsScheduler()
     size_t written= write(session_add_pipe[1], &c, sizeof(c));
     assert(written == sizeof(c));
 
-    pthread_cond_wait(&COND_thread_count, &LOCK_thread_count);
+    pthread_cond_wait(COND_thread_count.native_handle(), LOCK_thread_count.native_handle());
   }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  (void) LOCK_thread_count.unlock();
 
   event_del(&session_add_event);
   close(session_add_pipe[0]);
@@ -608,7 +609,7 @@ bool PoolOfThreadsScheduler::libevent_init(void)
 
   }
   /* Set up the thread pool */
-  pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
 
   for (x= 0; x < pool_size; x++)
   {
@@ -618,15 +619,15 @@ bool PoolOfThreadsScheduler::libevent_init(void)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Can't create completion port thread (error %d)"),
                     error);
-      pthread_mutex_unlock(&LOCK_thread_count);
+      LOCK_thread_count.unlock();
       return true;
     }
   }
 
   /* Wait until all threads are created */
   while (created_threads != pool_size)
-    pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-  pthread_mutex_unlock(&LOCK_thread_count);
+    pthread_cond_wait(COND_thread_count.native_handle(), LOCK_thread_count.native_handle());
+  LOCK_thread_count.unlock();
 
   return false;
 }

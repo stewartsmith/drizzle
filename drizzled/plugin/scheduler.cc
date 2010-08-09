@@ -31,6 +31,8 @@ using namespace std;
 namespace drizzled
 {
 
+extern size_t my_thread_stack_size;
+
 vector<plugin::Scheduler *> all_schedulers;
 
 /* Globals (TBK) */
@@ -105,6 +107,11 @@ bool plugin::Scheduler::setPlugin(const string& name)
 plugin::Scheduler *plugin::Scheduler::getScheduler()
 {
   return scheduler;
+}
+
+size_t plugin::Scheduler::getThreadStackSize() const
+{
+  return my_thread_stack_size;
 }
 
 } /* namespace drizzled */

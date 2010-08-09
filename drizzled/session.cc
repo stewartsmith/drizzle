@@ -52,6 +52,7 @@
 
 #include "plugin/myisam/myisam.h"
 #include "drizzled/internal/iocache.h"
+#include "drizzled/internal/thread_var.h"
 #include "drizzled/plugin/event_observer.h"
 
 #include <fcntl.h>
@@ -264,7 +265,7 @@ Session::Session(plugin::Client *client_arg) :
 	    (hash_free_key) free_user_var, 0);
 
   substitute_null_with_insert_id = false;
-  thr_lock_info_init(&lock_info); /* safety: will be reset after start */
+  lock_info.init(); /* safety: will be reset after start */
   thr_lock_owner_init(&main_lock_id, &lock_info);
 
   m_internal_handler= NULL;
@@ -453,7 +454,8 @@ bool Session::storeGlobals()
     We have to call thr_lock_info_init() again here as Session may have been
     created in another thread
   */
-  thr_lock_info_init(&lock_info);
+  lock_info.init();
+
   return false;
 }
 
@@ -523,9 +525,9 @@ bool Session::schedule()
 
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
-  pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
   getSessionList().push_back(this);
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
 
   if (scheduler->addSession(this))
   {
@@ -1588,7 +1590,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
 
   /* Close out our connection to the client */
   if (should_lock)
-    (void) pthread_mutex_lock(&LOCK_thread_count);
+    LOCK_thread_count.lock();
   killed= Session::KILL_CONNECTION;
   if (client->isConnected())
   {
@@ -1600,7 +1602,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
     client->close();
   }
   if (should_lock)
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    (void) LOCK_thread_count.unlock();
 }
 
 void Session::reset_for_next_command()
@@ -1705,7 +1707,7 @@ extern time_t flush_status_time;
 
 void Session::refresh_status()
 {
-  pthread_mutex_lock(&LOCK_status);
+  LOCK_status.lock();
 
   /* Reset thread's status variables */
   memset(&status_var, 0, sizeof(status_var));
@@ -1714,7 +1716,7 @@ void Session::refresh_status()
   reset_key_cache_counters();
   flush_status_time= time((time_t*) 0);
   current_global_counters.max_used_connections= 1; /* We set it to one, because we know we exist */
-  pthread_mutex_unlock(&LOCK_status);
+  LOCK_status.unlock();
 }
 
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
