@@ -46,7 +46,7 @@
 using namespace drizzled;
 using namespace std;
 
-static char* memcached_servers= NULL;
+static char* sysvar_memcached_servers= NULL;
 static ulong expiry_time;
 memcache::Memcache* MemcachedQueryCache::client;
 
@@ -57,40 +57,24 @@ static DRIZZLE_SessionVAR_BOOL(enable,
                                /* update_func */ NULL,
                                /* default */ false);
 
-static int check_memc_servers(Session *,
-                              drizzle_sys_var *,
-                              void *save,
-                              drizzle_value *value)
-{
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  int len= sizeof(buff);
-  const char *input= value->val_str(value, buff, &len);
-
-  if (input)
-  {
-    memcached_servers= strdup(input);
-    return 0;
-  }
-  *static_cast<const char**>(save)= NULL;
-  return 1;
-}
-
 static void set_memc_servers(Session *,
                              drizzle_sys_var *,
-                             void *,
+                             void *var_ptr,
                              const void *save)
 {
   if (save)
   {
-    MemcachedQueryCache::getClient()->setServers(memcached_servers);
+    MemcachedQueryCache::setServers(*(const char **) save);
+    *(const char **) var_ptr= MemcachedQueryCache::getServers();
   }
 }
 
+
 static DRIZZLE_SYSVAR_STR(servers,
-                          memcached_servers,
+                          sysvar_memcached_servers,
                           PLUGIN_VAR_OPCMDARG,
                           N_("List of memcached servers."),
-                          check_memc_servers, /* check func */
+                          NULL, /* check func */
                           set_memc_servers, /* update func */
                           "server"); /* default value */
 
@@ -325,7 +309,7 @@ static QueryCacheStatusTool *query_cache_status;
 
 static int init(module::Context &context)
 {
-  MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", memcached_servers);
+  MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", sysvar_memcached_servers);
   context.add(memc);
 
   /* Setup the module's UDFs */
@@ -368,7 +352,7 @@ bool QueryCacheStatusTool::Generator::populate()
     if (strcmp((**status_var_ptr).name, "enable") == 0)
       return_value= SessionVAR(&(getSession()), enable) ? "ON" : "OFF";
     if (strcmp((**status_var_ptr).name, "servers") == 0) 
-      return_value= memcached_servers;
+      return_value= MemcachedQueryCache::getServers();
     if (strcmp((**status_var_ptr).name, "expiry") == 0)
     {
       oss << expiry_time;

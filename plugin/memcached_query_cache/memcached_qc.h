@@ -47,6 +47,8 @@ private:
   pthread_mutex_t mutex;  
   drizzled::QueryCacheService queryCacheService;
   static memcache::Memcache* client;
+  static std::string memecached_servers;
+
 public:
   
   explicit MemcachedQueryCache(std::string name_arg, std::string servers_arg): drizzled::plugin::QueryCache(name_arg)
@@ -67,5 +69,15 @@ public:
   {
     return client;
   }
+  static const char *getServers()
+  {
+    return memcached_servers.c_str();
+  }
+  static void setServers(const char *server_list)
+  {
+    memcached_servers.assign(server_list);
+    getClient()->setServers(memcached_servers);
+  }
+
 };
 #endif /* MEMCACHED_QC_h */
