@@ -71,10 +71,10 @@ bool statement::RenameTable::renameTables(TableList *table_list)
   if (wait_if_global_read_lock(session, 0, 1))
     return true;
 
-  pthread_mutex_lock(&LOCK_open); /* Rename table lock for exclusive access */
+  LOCK_open.lock(); /* Rename table lock for exclusive access */
   if (lock_table_names_exclusively(session, table_list))
   {
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
     goto err;
   }
 
@@ -105,7 +105,7 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     higher concurrency - query_cache_invalidate can take minutes to
     complete.
   */
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
 
   /* Lets hope this doesn't fail as the result will be messy */
   if (! error)
@@ -114,9 +114,9 @@ bool statement::RenameTable::renameTables(TableList *table_list)
     session->my_ok();
   }
 
-  pthread_mutex_lock(&LOCK_open); /* unlock all tables held */
+  LOCK_open.lock(); /* unlock all tables held */
   unlock_table_names(table_list, NULL);
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
 
 err:
   start_waiting_global_read_lock(session);
