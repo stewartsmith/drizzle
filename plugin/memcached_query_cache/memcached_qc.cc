@@ -30,9 +30,8 @@
 
 
 #include "config.h"
-#include "memcached_qc.h"
-#include "print_query_cache_meta.h"
-#include "data_dictionary_schema.h"
+
+#include "drizzled/plugin.h"
 #include "drizzled/session.h"
 #include "drizzled/select_send.h"
 
@@ -40,10 +39,68 @@
 #include <iostream>
 #include <vector>
 
+#include "memcached_qc.h"
+#include "print_query_cache_meta.h"
+#include "data_dictionary_schema.h"
+
 using namespace drizzled;
 using namespace std;
 
-bool Memcached_Qc::isSelect(string query)
+static char* memcached_servers= NULL;
+static ulong expiry_time;
+memcache::Memcache* MemcachedQueryCache::client;
+
+static DRIZZLE_SessionVAR_BOOL(enable, 
+                               PLUGIN_VAR_SessionLOCAL,
+                               "Enable Memcached Query Cache",
+                               /* check_func */ NULL, 
+                               /* update_func */ NULL,
+                               /* default */ false);
+
+static int check_memc_servers(Session *,
+                              drizzle_sys_var *,
+                              void *save,
+                              drizzle_value *value)
+{
+  char buff[STRING_BUFFER_USUAL_SIZE];
+  int len= sizeof(buff);
+  const char *input= value->val_str(value, buff, &len);
+
+  if (input)
+  {
+    memcached_servers= strdup(input);
+    return 0;
+  }
+  *static_cast<const char**>(save)= NULL;
+  return 1;
+}
+
+static void set_memc_servers(Session *,
+                             drizzle_sys_var *,
+                             void *,
+                             const void *save)
+{
+  if (save)
+  {
+    MemcachedQueryCache::getClient()->setServers(memcached_servers);
+  }
+}
+
+static DRIZZLE_SYSVAR_STR(servers,
+                          memcached_servers,
+                          PLUGIN_VAR_OPCMDARG,
+                          N_("List of memcached servers."),
+                          check_memc_servers, /* check func */
+                          set_memc_servers, /* update func */
+                          "server"); /* default value */
+
+static DRIZZLE_SYSVAR_ULONG(expiry, 
+                            expiry_time,
+                            PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+                            "Expiry time of memcached entries",
+                             NULL, NULL, 1000, 0, ~0L, 0);
+
+bool MemcachedQueryCache::isSelect(string query)																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																															
 {
   uint i= 0;
   /*
@@ -70,9 +127,9 @@ bool Memcached_Qc::isSelect(string query)
   return true;
 }
 
-bool Memcached_Qc::doIsCached(Session *session)
+bool MemcachedQueryCache::doIsCached(Session *session)
 {
-  if (isSelect(session->query))
+  if (SessionVAR(session, enable) && isSelect(session->query))
   {
     /* ToDo: Check against the cache content */
     string query= session->query+session->db;
@@ -86,10 +143,8 @@ bool Memcached_Qc::doIsCached(Session *session)
   return false;
 }
 
-bool Memcached_Qc::doSendCachedResultset(Session *session)
+bool MemcachedQueryCache::doSendCachedResultset(Session *session)
 {
-  /* TODO implement the send resultset functionality */
-  //(void) session;
   /** TODO: pay attention to the case where the cache value is empty
   * ie: there is a session in the process of caching the query
   * and didn't finish the work
@@ -150,63 +205,71 @@ bool Memcached_Qc::doSendCachedResultset(Session *session)
 /* init the current resultset in the session
  * set the header message (hashkey= sql + schema)
  */
-bool Memcached_Qc::doPrepareResultset(Session *session)
+bool MemcachedQueryCache::doPrepareResultset(Session *session)
 {		
-  /* Prepare and set the key for the session */
-  string query= session->query+session->db;
-  char* key= md5_key(query.c_str());
-
-  /* make sure only one thread will cache the query 
-   * if executed concurently
-   */
-  pthread_mutex_lock(&mutex);
-
-  if(not queryCacheService.isCached(key))
+  /* Check if the Query is Cacheable */
+  if (SessionVAR(session, enable))
   {
-    session->query_cache_key= key;
+    /* Prepare and set the key for the session */
+    string query= session->query+session->db;
+    char* key= md5_key(query.c_str());
 
-    /* create the Resultset */
-    message::Resultset &resultset= queryCacheService.getCurrentResultsetMessage(session);
+    /* make sure only one thread will cache the query 
+     * if executed concurently
+     */
+    pthread_mutex_lock(&mutex);
+
+    if(not queryCacheService.isCached(key))
+    {
+      session->query_cache_key= key;
   
-    /* setting the resultset infos */
-    resultset.set_key(key);
-    resultset.set_schema(session->db);
-    resultset.set_sql(session->query);
+      /* create the Resultset */
+      message::Resultset &resultset= queryCacheService.getCurrentResultsetMessage(session);
+  
+      /* setting the resultset infos */
+      resultset.set_key(key);
+      resultset.set_schema(session->db);
+      resultset.set_sql(session->query);
+      pthread_mutex_unlock(&mutex);
+      return true;
+    }
     pthread_mutex_unlock(&mutex);
-    return true;
   }
-  pthread_mutex_unlock(&mutex);
   return false;
 }
 
 /* Send the current resultset to memcached
  * Reset the current resultset of the session
  */
-bool Memcached_Qc::doSetResultset(Session *session)
+bool MemcachedQueryCache::doSetResultset(Session *session)
 {		
   message::Resultset *resultset= session->getResultsetMessage();
-  if (resultset != NULL)
+  if (SessionVAR(session, enable) && resultset != NULL)
   {
     /* serialize the Resultset Message */
     std::string output;
     resultset->SerializeToString(&output);
 
     /* setting to memecahced */
-    time_t expiry= 0;  // ToDo: add a user defined expiry
+    time_t expiry= expiry_time;  // ToDo: add a user defined expiry
     uint32_t flags= 0;
     std::vector<char> raw(output.size());
-    memcpy(&raw[0], &output, output.size());
-    client->set(session->query_cache_key, raw, expiry, flags);
+    memcpy(&raw[0], output.c_str(), output.size());
+    if(not client->set(session->query_cache_key, raw, expiry, flags))
+    {
+      std::cout << "Tentative to cache in Memc failed" << std::endl;
+      session->setResultsetMessage(NULL);
+      return false;
+    }
 
     /* Generate the final Header 
      * and clear the Selectdata from the Resultset to be localy cached
      */
     queryCacheService.setResultsetHeader(*resultset, session, session->lex->query_tables);
-    //resultset->clear_select_data();
+    //resultset->clear_select_data(); // comment if the keeping the data in the header is needed
 
     /* add the Resultset (including the header) to the hash 
-     * This is done before the final set (this can be a problem)
-     * ToDo: fix that
+     * This is done after the memcached set
      */
     queryCacheService.cache[session->query_cache_key]= *resultset;
     /* endup the current statement */
@@ -218,13 +281,17 @@ bool Memcached_Qc::doSetResultset(Session *session)
 
 /* Adds a record (List<Item>) to the current Resultset.SelectData
  */
-bool Memcached_Qc::doInsertRecord(Session *session, List<Item> &list)
+bool MemcachedQueryCache::doInsertRecord(Session *session, List<Item> &list)
 {		
-  queryCacheService.addRecord(session, list);
-  return true;
+  if(SessionVAR(session, enable))
+  {
+    queryCacheService.addRecord(session, list);
+    return true;
+  }
+  return false;
 }
 
-char* Memcached_Qc::md5_key(const char *str)
+char* MemcachedQueryCache::md5_key(const char *str)
 {
   int msg_len= strlen(str);
   /* Length of resulting sha1 hash - gcry_md_get_algo_dlen
@@ -249,15 +316,16 @@ char* Memcached_Qc::md5_key(const char *str)
   return out;
 }
 
-/** UDF **/
+/** User Defined Function print_query_cache_meta **/
 extern plugin::Create_function<PrintQueryCacheMetaFunction> *print_query_cache_meta_func_factory;
 
-/** DATA_DICTIONARY view */
+/** DATA_DICTIONARY views */
 static QueryCacheTool *query_cache_tool;
+static QueryCacheStatusTool *query_cache_status;
 
 static int init(module::Context &context)
 {
-  Memcached_Qc* memc= new Memcached_Qc("memcached_qc");
+  MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", memcached_servers);
   context.add(memc);
 
   /* Setup the module's UDFs */
@@ -265,23 +333,70 @@ static int init(module::Context &context)
     new plugin::Create_function<PrintQueryCacheMetaFunction>("print_query_cache_meta");
   context.add(print_query_cache_meta_func_factory);
 
-  /* Setup the module's UDFs */
+  /* Setup the module Data dict and status infos */
   query_cache_tool= new (nothrow) QueryCacheTool();
   context.add(query_cache_tool);
-
+  query_cache_status= new (nothrow) QueryCacheStatusTool();
+  context.add(query_cache_status);
+  
   return 0;
+}
+
+
+static drizzle_sys_var* vars[]= {
+  DRIZZLE_SYSVAR(enable),
+  DRIZZLE_SYSVAR(servers),
+  DRIZZLE_SYSVAR(expiry),
+  NULL
+};
+
+QueryCacheStatusTool::Generator::Generator(drizzled::Field **fields) :
+  plugin::TableFunction::Generator(fields)
+{ 
+  status_var_ptr= vars;
+}
+
+bool QueryCacheStatusTool::Generator::populate()
+{
+  if (*status_var_ptr)
+  {
+    std::ostringstream oss;
+    string return_value;
+
+    /* VARIABLE_NAME */
+    push((*status_var_ptr)->name);
+    if (strcmp((**status_var_ptr).name, "enable") == 0)
+      return_value= SessionVAR(&(getSession()), enable) ? "ON" : "OFF";
+    if (strcmp((**status_var_ptr).name, "servers") == 0) 
+      return_value= memcached_servers;
+    if (strcmp((**status_var_ptr).name, "expiry") == 0)
+    {
+      oss << expiry_time;
+      return_value= oss.str();
+    }
+    /* VARIABLE_VALUE */
+    if (return_value.length())
+      push(return_value);
+    else 
+      push(" ");
+
+    status_var_ptr++;
+
+    return true;
+  }
+  return false;
 }
 
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
-  "memcached_qc",
-  "0.2",
+  "Query_Cache",
+  "0.3",
   "Djellel Eddine Difallah",
-  "Cache of Select Data into memcached",
+  "Caches Select resultsets in Memcached",
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
-  NULL, /* system variables */
+  vars, /* system variables */
   NULL    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

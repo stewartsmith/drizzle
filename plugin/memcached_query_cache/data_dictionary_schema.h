@@ -58,5 +58,30 @@ public:
     return new Generator(arg);
   }
 };
+class QueryCacheStatusTool : public drizzled::plugin::TableFunction
+{
+public:
+  QueryCacheStatusTool() :
+    plugin::TableFunction("DATA_DICTIONARY", "QUERY_CACHE_STATUS")
+  {
+    add_field("VARIABLE_NAME");
+    add_field("VARIABLE_VALUE");
+  }
+
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    drizzled::drizzle_sys_var **status_var_ptr;
+
+  public:
+    Generator(drizzled::Field **fields);
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
 }
 #endif /* PLUGIN_MEMCACHED_QUERY_CACHE_DATA_DICTIONARY_SCHEMA_H */
