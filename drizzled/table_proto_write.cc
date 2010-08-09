@@ -35,13 +35,15 @@
 #include <google/protobuf/message.h>
 
 #include <drizzled/table_proto.h>
+#include <drizzled/charset.h>
+
+#include "drizzled/function/time/typecast.h"
 
 using namespace std;
 
 namespace drizzled {
 
 static int fill_table_proto(message::Table &table_proto,
-                            const std::string &table_name,
                             List<CreateField> &create_fields,
                             HA_CREATE_INFO *create_info,
                             uint32_t keys,
@@ -59,8 +61,6 @@ static int fill_table_proto(message::Table &table_proto,
 
   assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
-
-  assert(table_proto.name() == table_name);
 
   int field_number= 0;
   bool use_existing_fields= table_proto.field_size() > 0;
@@ -219,7 +219,7 @@ static int fill_table_proto(message::Table &table_proto,
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
-      field_options->set_default_value("NOW()");
+      field_options->set_default_expression("CURRENT_TIMESTAMP");
     }
 
     if (field_arg->unireg_check == Field::TIMESTAMP_UN_FIELD
@@ -227,7 +227,7 @@ static int fill_table_proto(message::Table &table_proto,
     {
       message::Table::Field::FieldOptions *field_options;
       field_options= attribute->mutable_options();
-      field_options->set_update_value("NOW()");
+      field_options->set_update_expression("CURRENT_TIMESTAMP");
     }
 
     if (field_arg->def == NULL  && attribute->constraints().is_nullable())
@@ -262,6 +262,43 @@ static int fill_table_proto(message::Table &table_proto,
 	  return 1;
 	}
 
+        if (field_arg->sql_type == DRIZZLE_TYPE_DATE
+            || field_arg->sql_type == DRIZZLE_TYPE_DATETIME
+            || field_arg->sql_type == DRIZZLE_TYPE_TIMESTAMP)
+        {
+          DRIZZLE_TIME ltime;
+
+          if (field_arg->def->get_date(&ltime, TIME_FUZZY_DATE))
+          {
+            my_error(ER_INVALID_DATETIME_VALUE, MYF(ME_FATALERROR),
+                     default_value->c_str());
+            return 1;
+          }
+
+          /* We now do the casting down to the appropriate type.
+
+             Yes, this implicit casting is balls.
+             It was previously done on reading the proto back in,
+             but we really shouldn't store the bogus things in the proto,
+             and instead do the casting behaviour here.
+
+             the timestamp errors are taken care of elsewhere.
+          */
+
+          if (field_arg->sql_type == DRIZZLE_TYPE_DATETIME)
+          {
+            Item *typecast= new Item_datetime_typecast(field_arg->def);
+            typecast->quick_fix_field();
+            typecast->val_str(default_value);
+          }
+          else if (field_arg->sql_type == DRIZZLE_TYPE_DATE)
+          {
+            Item *typecast= new Item_date_typecast(field_arg->def);
+            typecast->quick_fix_field();
+            typecast->val_str(default_value);
+          }
+        }
+
 	if ((field_arg->sql_type==DRIZZLE_TYPE_VARCHAR
 	    && field_arg->charset==&my_charset_bin)
 	   || (field_arg->sql_type==DRIZZLE_TYPE_BLOB
@@ -291,6 +328,9 @@ static int fill_table_proto(message::Table &table_proto,
 
   if (create_info->table_options & HA_OPTION_PACK_RECORD)
     table_options->set_pack_record(true);
+
+  if (table_options->has_comment() && table_options->comment().length() == 0)
+    table_options->clear_comment();
 
   if (table_options->has_comment())
   {
@@ -412,12 +452,29 @@ static int fill_table_proto(message::Table &table_proto,
     for(unsigned int j=0; j< key_info[i].key_parts; j++)
     {
       message::Table::Index::IndexPart *idxpart;
+      const int fieldnr= key_info[i].key_part[j].fieldnr;
+      int mbmaxlen= 1;
 
       idxpart= idx->add_index_part();
 
-      idxpart->set_fieldnr(key_info[i].key_part[j].fieldnr);
+      idxpart->set_fieldnr(fieldnr);
 
-      idxpart->set_compare_length(key_info[i].key_part[j].length);
+      if (table_proto.field(fieldnr).type() == message::Table::Field::VARCHAR
+          || table_proto.field(fieldnr).type() == message::Table::Field::BLOB)
+      {
+        uint32_t collation_id;
+
+        if (table_proto.field(fieldnr).string_options().has_collation_id())
+          collation_id= table_proto.field(fieldnr).string_options().collation_id();
+        else
+          collation_id= table_proto.options().collation_id();
+
+        const CHARSET_INFO *cs= get_charset(collation_id);
+
+        mbmaxlen= cs->mbmaxlen;
+      }
+
+      idxpart->set_compare_length(key_info[i].key_part[j].length / mbmaxlen);
     }
   }
 
@@ -476,9 +533,12 @@ bool rea_create_table(Session *session,
                       List<CreateField> &create_fields,
                       uint32_t keys, KeyInfo *key_info)
 {
-  if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
+  assert(table_proto.has_name());
+  if (fill_table_proto(table_proto, create_fields, create_info,
                        keys, key_info))
     return false;
+
+  assert(table_proto.name() == identifier.getTableName());
 
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,

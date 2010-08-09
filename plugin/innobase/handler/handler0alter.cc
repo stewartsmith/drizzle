@@ -129,7 +129,7 @@ innobase_col_to_mysql(
 }
 
 /*************************************************************//**
-Copies an InnoDB record to table->record[0]. */
+Copies an InnoDB record to table->getInsertRecord(). */
 extern "C" UNIV_INTERN
 void
 innobase_rec_to_mysql(
@@ -179,7 +179,7 @@ null_field:
 }
 
 /*************************************************************//**
-Resets table->record[0]. */
+Resets table->getInsertRecord(). */
 extern "C" UNIV_INTERN
 void
 innobase_rec_reset(

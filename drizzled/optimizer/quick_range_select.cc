@@ -49,7 +49,6 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
     last_range(NULL),
     qr_traversal_ctx(),
     mrr_buf_size(0),
-    mrr_buf_desc(NULL),
     key_parts(NULL),
     dont_free(false),
     mrr_flags(0),
@@ -65,7 +64,6 @@ optimizer::QuickRangeSelect::QuickRangeSelect(Session *session,
 
   /* 'session' is not accessible in QuickRangeSelect::reset(). */
   mrr_buf_size= session->variables.read_rnd_buff_size;
-  mrr_buf_desc= NULL;
 
   if (! no_alloc && ! parent_alloc)
   {
@@ -140,11 +138,6 @@ optimizer::QuickRangeSelect::~QuickRangeSelect()
     alloc.free_root(MYF(0));
   }
   head->column_bitmaps_set(save_read_set, save_write_set);
-  assert(mrr_buf_desc == NULL);
-  if (mrr_buf_desc)
-  {
-    free(mrr_buf_desc);
-  }
 }
 
 
@@ -268,7 +261,7 @@ int optimizer::QuickRangeSelect::reset()
     There is a later assert in th code that hoped to catch random free() that might
     have done this.
   */
-  assert(not (mrr_buf_size && ! mrr_buf_desc));
+  assert(not (mrr_buf_size));
 
   if (sorted)
   {

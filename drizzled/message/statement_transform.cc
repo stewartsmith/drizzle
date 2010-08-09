@@ -960,14 +960,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     destination.append(ss.str());
     ss.clear();
   }
-  
-  if (options.has_row_type())
-  {
-    ss << options.row_type();
-    destination.append("\nROW_TYPE = ", 12);
-    destination.append(ss.str());
-    ss.clear();
-  }
 
   if (options.has_data_file_name())
   {
@@ -1069,18 +1061,11 @@ transformIndexDefinitionToSql(const Table::Index &index,
     {
       if (part.has_compare_length())
       {
-        size_t compare_length_in_chars= part.compare_length();
-        
-        /* hack: compare_length() is bytes, not chars, but
-         * only for VARCHAR. Ass. */
-        if (field.type() == Table::Field::VARCHAR)
-          compare_length_in_chars/= 4;
-
-        if (compare_length_in_chars != field.string_options().length())
+        if (part.compare_length() != field.string_options().length())
         {
           stringstream ss;
           destination.push_back('(');
-          ss << compare_length_in_chars;
+          ss << part.compare_length();
           destination.append(ss.str());
           destination.push_back(')');
         }
@@ -1225,10 +1210,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.type() == Table::Field::TIMESTAMP)
-    if (field.timestamp_options().has_auto_updates() &&
-        field.timestamp_options().auto_updates())
-      destination.append(" ON UPDATE CURRENT_TIMESTAMP", 28);
+  if (field.has_options() && field.options().has_update_value())
+  {
+    destination.append(" ON UPDATE ", 11);
+    destination.append(field.options().update_value());
+  }
 
   if (field.has_comment())
   {

@@ -368,10 +368,9 @@ public:
         /* out: 0 or error number */
     ::drizzled::XID *xid);  /* in: X/Open XA transaction identification */
 
-  virtual Cursor *create(TableShare &table,
-                         memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_innobase(*this, table);
+    return new ha_innobase(*this, table);
   }
 
   /*********************************************************************
@@ -1152,7 +1151,7 @@ innobase_mysql_prepare_print_arbitrary_thd(void)
 /*============================================*/
 {
   ut_ad(!mutex_own(&kernel_mutex));
-  pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
 }
 
 /*************************************************************//**
@@ -1170,7 +1169,7 @@ innobase_mysql_end_print_arbitrary_thd(void)
 /*========================================*/
 {
   ut_ad(!mutex_own(&kernel_mutex));
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
 }
 
 /*************************************************************//**
@@ -2517,43 +2516,6 @@ InnobaseEngine::close_connection(
 *****************************************************************************/
 
 /****************************************************************//**
-Get the record format from the data dictionary.
-@return one of ROW_TYPE_REDUNDANT, ROW_TYPE_COMPACT,
-ROW_TYPE_COMPRESSED, ROW_TYPE_DYNAMIC */
-UNIV_INTERN
-enum row_type
-ha_innobase::get_row_type() const
-/*=============================*/
-{
-  if (prebuilt && prebuilt->table) {
-    const ulint flags = prebuilt->table->flags;
-
-    if (UNIV_UNLIKELY(!flags)) {
-      return(ROW_TYPE_REDUNDANT);
-    }
-
-    ut_ad(flags & DICT_TF_COMPACT);
-
-    switch (flags & DICT_TF_FORMAT_MASK) {
-    case DICT_TF_FORMAT_51 << DICT_TF_FORMAT_SHIFT:
-      return(ROW_TYPE_COMPACT);
-    case DICT_TF_FORMAT_ZIP << DICT_TF_FORMAT_SHIFT:
-      if (flags & DICT_TF_ZSSIZE_MASK) {
-        return(ROW_TYPE_COMPRESSED);
-      } else {
-        return(ROW_TYPE_DYNAMIC);
-      }
-#if DICT_TF_FORMAT_ZIP != DICT_TF_FORMAT_MAX
-# error "DICT_TF_FORMAT_ZIP != DICT_TF_FORMAT_MAX"
-#endif
-    }
-  }
-  ut_ad(0);
-  return(ROW_TYPE_NOT_USED);
-}
-
-
-/****************************************************************//**
 Returns the index type. */
 UNIV_INTERN
 const char*
@@ -2887,7 +2849,7 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
   stats.block_size = 16 * 1024;
 
   /* Init table lock structure */
-  thr_lock_data_init(&share->lock,&lock,(void*) 0);
+  thr_lock_data_init(&share->lock, &lock);
 
   if (prebuilt->table) {
     /* We update the highest file format in the system table
@@ -2970,7 +2932,7 @@ get_field_offset(
   Table*  table,  /*!< in: MySQL table object */
   Field*  field)  /*!< in: MySQL field object */
 {
-  return((uint) (field->ptr - table->record[0]));
+  return((uint) (field->ptr - table->getInsertRecord()));
 }
 
 /**************************************************************//**
@@ -2993,7 +2955,7 @@ field_in_record_is_null(
   }
 
   null_offset = (uint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
   if (record[null_offset] & field->null_bit) {
 
@@ -3017,7 +2979,7 @@ set_field_in_record_to_null(
   int null_offset;
 
   null_offset = (uint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
   record[null_offset] = record[null_offset] | field->null_bit;
 }
@@ -3611,7 +3573,7 @@ include_field:
     if (field->null_ptr) {
       templ->mysql_null_byte_offset =
         (ulint) ((char*) field->null_ptr
-          - (char*) table->record[0]);
+          - (char*) table->getInsertRecord());
 
       templ->mysql_null_bit_mask = (ulint) field->null_bit;
     } else {
@@ -3859,7 +3821,7 @@ no_commit:
   num_write_row++;
 
   /* This is the case where the table has an auto-increment column */
-  if (table->next_number_field && record == table->record[0]) {
+  if (table->next_number_field && record == table->getInsertRecord()) {
 
     /* Reset the error code before calling
     innobase_get_auto_increment(). */
@@ -4223,7 +4185,7 @@ ha_innobase::doUpdateRecord(
 
   if (error == DB_SUCCESS
       && table->next_number_field
-      && new_row == table->record[0]
+      && new_row == table->getInsertRecord()
       && session_sql_command(user_session) == SQLCOM_INSERT
       && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
     == TRX_DUP_IGNORE)  {

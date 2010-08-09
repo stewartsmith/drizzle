@@ -19,9 +19,10 @@
  */
 
 #include "config.h"
-#include CSTDINT_H
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <drizzled/configmake.h>
 using namespace std;
 #include <boost/program_options.hpp>
 namespace po= boost::program_options;
@@ -41,8 +42,6 @@ using namespace drizzled;
 
 string opt_tmpdir;
 uint64_t new_auto_increment_value;
-static const char *load_default_groups[]= { "archive_reader", 0 };
-static char **default_argv;
 bool opt_check, 
   opt_force,
   opt_backup, 
@@ -56,68 +55,90 @@ int main(int argc, char *argv[])
 {
 try
 {
-  po::options_description long_options("Allowed Options");
-  long_options.add_options()
-  ("back_up,b",po::value<bool>(&opt_backup)->default_value(false)->zero_tokens(),
+  po::options_description commandline_options("Options used only in command line");
+  commandline_options.add_options()
+  ("force,f",po::value<bool>(&opt_force)->default_value(false)->zero_tokens(),
+  "Restart with -r if there are any errors in the table")
+  ("help,?","Display this help and exit")
+  ("version,V","Print version and exit")
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
+  "Configuration file defaults are not used if no-defaults is set")
+  ;
+
+  po::options_description archive_reader_options("Options specific to the archive reader");
+  archive_reader_options.add_options()
+  ("tmpdir,t",po::value<string>(&opt_tmpdir)->default_value(""),
+  "Path for temporary files.") 
+  ("set-auto-increment,A",po::value<uint64_t>(&new_auto_increment_value)->default_value(0),
+  "Force auto_increment to start at this or higher value. If no value is given, then sets the next auto_increment value to the highest used value for the auto key + 1.")
+  ("silent,s",po::value<bool>(&opt_silent)->default_value(false)->zero_tokens(),
+  "Only print errors. One can use two -s to make archive_reader very silent.")
+  ("quick,q",po::value<bool>(&opt_quick)->default_value(false)->zero_tokens(),
+  "Faster repair but not modifying the data")
+  ("repair,r",po::value<bool>(&opt_quick)->default_value(false)->zero_tokens(),
+  "Repair a damaged Archive version 3 or above file.")
+  ("back-up,b",po::value<bool>(&opt_backup)->default_value(false)->zero_tokens(),
   "Make a backup of an archive table.")
   ("check,c",po::value<bool>(&opt_check)->default_value(false)->zero_tokens(),
   "Check table for errors")
   ("extract-table-message,e",po::value<bool>(&opt_extract_table_message)->default_value(false)->zero_tokens(),
   "Extract the table protobuf message.")
-  ("force,f",po::value<bool>(&opt_force)->default_value(false)->zero_tokens(),
-  "Restart with -r if there are any errors in the table")
-  ("help,?","Display this help and exit")
-  ("quick,q",po::value<bool>(&opt_quick)->default_value(false)->zero_tokens(),
-  "Faster repair but not modifying the data")
-  ("repair,r",po::value<bool>(&opt_quick)->default_value(false)->zero_tokens(),
-  "Repair a damaged Archive version 3 or above file.")
-  ("set-auto-increment,A",po::value<uint64_t>(&new_auto_increment_value)->default_value(0),
-  "Force auto_increment to start at this or higher value. If no value is given, then sets the next auto_increment value to the highest used value for the auto key + 1.")
-  ("silent,s",po::value<bool>(&opt_silent)->default_value(false)->zero_tokens(),
-  "Only print errors. One can use two -s to make archive_reader very silent.")
-  ("tmpdir,t",po::value<string>(&opt_tmpdir)->default_value(""),
-  "Path for temporary files.") 
-  ("version,V","Print version and exit")
   ;
 
   unsigned int ret;
   azio_stream reader_handle;
 
-  internal::my_init();
-  MY_INIT(argv[0]);
-  internal::load_defaults("drizzle", load_default_groups, &argc, &argv);
-  default_argv= argv;
+  std::string system_config_dir_archive_reader(SYSCONFDIR); 
+  system_config_dir_archive_reader.append("/drizzle/archive_reader.cnf");
+
+  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
   
+  po::options_description long_options("Allowed Options");
+  long_options.add(commandline_options).add(archive_reader_options);
+
   po::variables_map vm;
   po::store(po::parse_command_line(argc,argv,long_options),vm);
+
+  if (! vm["no-defaults"].as<bool>())
+  {
+    std::string user_config_dir_archive_reader(user_config_dir);
+    user_config_dir_archive_reader.append("/drizzle/archive_reader.cnf");
+  
+    ifstream user_archive_reader_ifs(user_config_dir_archive_reader.c_str());
+    po::store(parse_config_file(user_archive_reader_ifs, archive_reader_options), vm);
+
+    ifstream system_archive_reader_ifs(system_config_dir_archive_reader.c_str());
+    store(parse_config_file(system_archive_reader_ifs, archive_reader_options), vm);
+
+  }
   po::notify(vm);
 
-  if(vm.count("force")||vm.count("quiet")||vm.count("tmpdir"))
-    cout<<"Not implemented yet";
+  if (vm.count("force") || vm.count("quiet") || vm.count("tmpdir"))
+    cout << "Not implemented yet";
 
-  if(vm.count("version"))
+  if (vm.count("version"))
   {
     printf("%s  Ver %s, for %s-%s (%s)\n", internal::my_progname, SHOW_VERSION,
         HOST_VENDOR, HOST_OS, HOST_CPU);
     exit(0);
   }
   
-  if(vm.count("set-auto-increment"))
+  if (vm.count("set-auto-increment"))
   {
     opt_autoincrement= true;
   }
 
-  if(vm.count("help")||argc == 0)
+  if (vm.count("help") || argc == 0)
   {
     printf("%s  Ver %s, for %s-%s (%s)\n", internal::my_progname, SHOW_VERSION,
         HOST_VENDOR, HOST_OS, HOST_CPU);
-    puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
-       \nand you are welcome to modify and redistribute it under the GPL \
-       license\n");
+    puts("This software comes with ABSOLUTELY NO WARRANTY. This is free "
+         "software,\n"
+         "and you are welcome to modify and redistribute it under the GPL "
+         "license\n");
     puts("Read and modify Archive files directly\n");
     printf("Usage: %s [OPTIONS] file_to_be_looked_at [file_for_backup]\n", internal::my_progname);
-    internal::print_defaults("drizzle", load_default_groups);
-    cout<<long_options<<endl;    
+    cout << long_options << endl;    
     exit(0); 
   }
   

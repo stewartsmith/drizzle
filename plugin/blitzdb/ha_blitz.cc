@@ -54,9 +54,8 @@ public:
     tcmapdel(blitz_table_cache);
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table,
-                                   drizzled::memory::Root *mem_root) {
-    return new (mem_root) ha_blitz(*this, table);
+  virtual drizzled::Cursor *create(drizzled::TableShare &table) {
+    return new ha_blitz(*this, table);
   }
 
   const char **bas_ext() const {
@@ -828,7 +827,7 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
   ha_statistic_increment(&system_status_var::ha_write_count);
 
   /* Prepare Auto Increment field if one exists. */
-  if (table->next_number_field && drizzle_row == table->record[0]) {
+  if (table->next_number_field && drizzle_row == table->getInsertRecord()) {
     pthread_mutex_lock(&blitz_utility_mutex);
     if ((rv = update_auto_increment()) != 0) {
       pthread_mutex_unlock(&blitz_utility_mutex);
@@ -1310,7 +1309,7 @@ bool ha_blitz::unpack_row(unsigned char *to, const char *from,
   /* Unpack all fields in the provided row. */
   for (Field **field = table->getFields(); *field; field++) {
     if (!((*field)->is_null())) {
-      pos = (*field)->unpack(to + (*field)->offset(table->record[0]), pos);
+      pos = (*field)->unpack(to + (*field)->offset(table->getInsertRecord()), pos);
     }
   }
 
@@ -1387,7 +1386,7 @@ BlitzShare *ha_blitz::get_share(const char *name) {
       if (f->null_ptr) {
         share_ptr->btrees[i].parts[j].null_bitmask = f->null_bit;
         share_ptr->btrees[i].parts[j].null_pos
-          = (uint32_t)(f->null_ptr - (unsigned char *)table->record[0]);
+          = (uint32_t)(f->null_ptr - (unsigned char *)table->getInsertRecord());
       }
 
       share_ptr->btrees[i].parts[j].flag = curr->key_part[j].key_part_flag;

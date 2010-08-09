@@ -49,12 +49,10 @@ StateTool::Generator::Generator(Field **arg, sql_var_t option_arg,
   option_type(option_arg),
   variables(variables_args)
 {
-  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
 }
 
 StateTool::Generator::~Generator()
 {
-  pthread_rwlock_unlock(&LOCK_system_variables_hash);
 }
 
 bool StateTool::Generator::populate()
@@ -97,7 +95,7 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
   std::ostringstream oss;
   std::string return_value;
 
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
 
   if (show_type == SHOW_SYS)
   {
@@ -108,7 +106,7 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
 
   return_value= StatusHelper::fillHelper(NULL, value, show_type); 
 
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.unlock();
   push(name);
   if (return_value.length())
     push(return_value);

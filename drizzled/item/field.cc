@@ -116,7 +116,7 @@ bool Item_field::register_field_in_read_map(unsigned char *arg)
 
 
 Item_field::Item_field(Field *f)
-  :Item_ident(0, NULL, *f->table_name, f->field_name),
+  :Item_ident(0, NULL, f->getTable()->getAlias(), f->field_name),
    item_equal(0), no_const_subst(0),
    have_privileges(0), any_privileges(0)
 {
@@ -141,7 +141,7 @@ Item_field::Item_field(Session *,
                        Field *f) :
   Item_ident(context_arg,
              f->getTable()->getShare()->getSchemaName(),
-             *f->table_name,
+             f->getTable()->getAlias(),
              f->field_name),
    item_equal(0),
    no_const_subst(0),
@@ -192,7 +192,7 @@ void Item_field::set_field(Field *field_par)
   maybe_null=field->maybe_null();
   decimals= field->decimals();
   max_length= field_par->max_display_length();
-  table_name= *field_par->table_name;
+  table_name= field_par->getTable()->getAlias();
   field_name= field_par->field_name;
   db_name= field_par->getTable()->getShare()->getSchemaName();
   alias_name_used= field_par->getTable()->alias_name_used;

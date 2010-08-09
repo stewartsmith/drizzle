@@ -182,7 +182,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   /* Increase id and count all other statements. */
   default:
-    statistic_increment(session->status_var.questions, &LOCK_status);
+    statistic_increment(session->status_var.questions, NULL);
     query_id.next();
   }
 
@@ -930,6 +930,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
     return NULL;
+
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
@@ -1107,7 +1108,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
   List<TableList> *embedded_list;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
+                                          sizeof(nested_join_st))))
     return NULL;
   ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
@@ -1416,7 +1417,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
-  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+  LOCK_thread_count.lock(); // For unlink from list
   
   for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
@@ -1427,7 +1428,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
       break;
     }
   }
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
   if (tmp)
   {
 
