@@ -293,7 +293,7 @@ static int check_k_link(MI_CHECK *param, register MI_INFO *info, uint32_t nr)
       If the key cache block size is smaller than block_size, we can so
       avoid unecessary eviction of cache block.
     */
-    if (!(buff=key_cache_read(info->s->key_cache,
+    if (!(buff=key_cache_read(info->s->getKeyCache(),
                               info->s->kfile, next_link, DFLT_INIT_HITS,
                               (unsigned char*) info->buff, MI_MIN_KEY_BLOCK_LENGTH,
                               MI_MIN_KEY_BLOCK_LENGTH, 1)))
@@ -328,7 +328,7 @@ int chk_size(MI_CHECK *param, register MI_INFO *info)
   if (!(param->testflag & T_SILENT)) puts("- check file-size");
 
   /* The following is needed if called externally (not from myisamchk) */
-  flush_key_blocks(info->s->key_cache,
+  flush_key_blocks(info->s->getKeyCache(),
 		   info->s->kfile, FLUSH_FORCE_WRITE);
 
   size= lseek(info->s->kfile, 0, SEEK_END);
@@ -1362,7 +1362,7 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
         Flush dirty blocks of this index file from key cache and remove
         all blocks of this index file from key cache.
       */
-      error= flush_key_blocks(share->key_cache, share->kfile,
+      error= flush_key_blocks(share->getKeyCache(), share->kfile,
                               FLUSH_FORCE_WRITE);
       goto end;
     }
@@ -1375,7 +1375,7 @@ static int mi_drop_all_indexes(MI_CHECK *param, MI_INFO *info, bool force)
   }
 
   /* Remove all key blocks of this index file from key cache. */
-  if ((error= flush_key_blocks(share->key_cache, share->kfile,
+  if ((error= flush_key_blocks(share->getKeyCache(), share->kfile,
                                FLUSH_IGNORE_CHANGED)))
     goto end;
 
@@ -1645,7 +1645,7 @@ err:
   end_io_cache(&param->read_cache);
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
   end_io_cache(&info->rec_cache);
-  got_error|=flush_blocks(param, share->key_cache, share->kfile);
+  got_error|= flush_blocks(param, share->getKeyCache(), share->kfile);
   if (!got_error && param->testflag & T_UNPACK)
   {
     share->state.header.options[0]&= (unsigned char) ~HA_OPTION_COMPRESS_RECORD;
@@ -1825,7 +1825,7 @@ int mi_sort_index(MI_CHECK *param, register MI_INFO *info, char * name)
   }
 
   /* Flush key cache for this file if we are calling this outside myisamchk */
-  flush_key_blocks(share->key_cache,share->kfile, FLUSH_IGNORE_CHANGED);
+  flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_IGNORE_CHANGED);
 
   share->state.version=(ulong) time((time_t*) 0);
   old_state= share->state;			/* save state if not stored */
@@ -2293,7 +2293,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
     memcpy( &share->state.state, info->state, sizeof(*info->state));
 
 err:
-  got_error|= flush_blocks(param, share->key_cache, share->kfile);
+  got_error|= flush_blocks(param, share->getKeyCache(), share->kfile);
   end_io_cache(&info->rec_cache);
   if (!got_error)
   {

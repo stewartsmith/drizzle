@@ -44,7 +44,6 @@ using namespace std;
 namespace drizzled {
 
 static int fill_table_proto(message::Table &table_proto,
-                            const std::string &table_name,
                             List<CreateField> &create_fields,
                             HA_CREATE_INFO *create_info,
                             uint32_t keys,
@@ -62,8 +61,6 @@ static int fill_table_proto(message::Table &table_proto,
 
   assert(strcmp(table_proto.engine().name().c_str(),
 		create_info->db_type->getName().c_str())==0);
-
-  assert(table_proto.name() == table_name);
 
   int field_number= 0;
   bool use_existing_fields= table_proto.field_size() > 0;
@@ -536,9 +533,12 @@ bool rea_create_table(Session *session,
                       List<CreateField> &create_fields,
                       uint32_t keys, KeyInfo *key_info)
 {
-  if (fill_table_proto(table_proto, identifier.getTableName(), create_fields, create_info,
+  assert(table_proto.has_name());
+  if (fill_table_proto(table_proto, create_fields, create_info,
                        keys, key_info))
     return false;
+
+  assert(table_proto.name() == identifier.getTableName());
 
   if (plugin::StorageEngine::createTable(*session,
                                          identifier,
