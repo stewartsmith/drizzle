@@ -113,9 +113,6 @@
 
 using namespace drizzled;
 
-static void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
-                            uint32_t age_threshold);
-
 /*
   Some compilation flags have been added specifically for this module
   to control the following:
@@ -130,17 +127,10 @@ static void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
     accessing it;
     to set this number equal to <N> add
       #define MAX_THREADS <N>
-  - to substitute calls of pthread_cond_wait for calls of
-    pthread_cond_timedwait (wait with timeout set up);
-    this setting should be used only when you want to trap a deadlock
-    situation, which theoretically should not happen;
-    to set timeout equal to <T> seconds add
-      #define KEYCACHE_TIMEOUT <T>
 
   Example of the settings:
     #define SERIALIZED_READ_FROM_CACHE
     #define MAX_THREADS   100
-    #define KEYCACHE_TIMEOUT  1
 */
 
 #define STRUCT_PTR(TYPE, MEMBER, a)                                           \
@@ -211,7 +201,6 @@ struct st_block_link
 
 #define FLUSH_CACHE         2000            /* sort this many blocks at once */
 
-static int flush_all_key_blocks(KEY_CACHE *keycache);
 static void wait_on_queue(KEYCACHE_WQUEUE *wqueue,
                           pthread_mutex_t *mutex);
 static void release_whole_queue(KEYCACHE_WQUEUE *wqueue);
@@ -223,12 +212,7 @@ static void free_block(KEY_CACHE *keycache, BLOCK_LINK *block);
 #define FILE_HASH(f)                 ((uint) (f) & (CHANGED_BLOCKS_HASH-1))
 
 
-#ifdef KEYCACHE_TIMEOUT
-static int keycache_pthread_cond_wait(pthread_cond_t *cond,
-                                      pthread_mutex_t *mutex);
-#else
 #define  keycache_pthread_cond_wait pthread_cond_wait
-#endif
 
 #define keycache_pthread_mutex_lock pthread_mutex_lock
 #define keycache_pthread_mutex_unlock pthread_mutex_unlock
@@ -415,130 +399,6 @@ err:
 
 
 /*
-  Resize a key cache
-
-  SYNOPSIS
-    resize_key_cache()
-    keycache     	        pointer to a key cache data structure
-    key_cache_block_size        size of blocks to keep cached data
-    use_mem			total memory to use for the new key cache
-    division_limit		new division limit (if not zero)
-    age_threshold		new age threshold (if not zero)
-
-  RETURN VALUE
-    number of blocks in the key cache, if successful,
-    0 - otherwise.
-
-  NOTES.
-    The function first compares the memory size and the block size parameters
-    with the key cache values.
-
-    If they differ the function free the the memory allocated for the
-    old key cache blocks by calling the end_key_cache function and
-    then rebuilds the key cache with new blocks by calling
-    init_key_cache.
-
-    The function starts the operation only when all other threads
-    performing operations with the key cache let her to proceed
-    (when cnt_for_resize=0).
-*/
-
-int resize_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
-		     size_t use_mem, uint32_t division_limit,
-		     uint32_t age_threshold)
-{
-  int blocks;
-
-  if (!keycache->key_cache_inited)
-    return(keycache->disk_blocks);
-
-  if(key_cache_block_size == keycache->key_cache_block_size &&
-     use_mem == keycache->key_cache_mem_size)
-  {
-    change_key_cache_param(keycache, division_limit, age_threshold);
-    return(keycache->disk_blocks);
-  }
-
-  keycache_pthread_mutex_lock(&keycache->cache_lock);
-
-  /*
-    We may need to wait for another thread which is doing a resize
-    already. This cannot happen in the MySQL server though. It allows
-    one resizer only. In set_var.cc keycache->in_init is used to block
-    multiple attempts.
-  */
-  while (keycache->in_resize)
-  {
-    wait_on_queue(&keycache->resize_queue, &keycache->cache_lock);
-  }
-
-  /*
-    Mark the operation in progress. This blocks other threads from doing
-    a resize in parallel. It prohibits new blocks to enter the cache.
-    Read/write requests can bypass the cache during the flush phase.
-  */
-  keycache->in_resize= 1;
-
-  /* Need to flush only if keycache is enabled. */
-  if (keycache->can_be_used)
-  {
-    /* Start the flush phase. */
-    keycache->resize_in_flush= 1;
-
-    if (flush_all_key_blocks(keycache))
-    {
-      /* TODO: if this happens, we should write a warning in the log file ! */
-      keycache->resize_in_flush= 0;
-      blocks= 0;
-      keycache->can_be_used= 0;
-      goto finish;
-    }
-
-    /* End the flush phase. */
-    keycache->resize_in_flush= 0;
-  }
-
-  /*
-    Some direct read/write operations (bypassing the cache) may still be
-    unfinished. Wait until they are done. If the key cache can be used,
-    direct I/O is done in increments of key_cache_block_size. That is,
-    every block is checked if it is in the cache. We need to wait for
-    pending I/O before re-initializing the cache, because we may change
-    the block size. Otherwise they could check for blocks at file
-    positions where the new block division has none. We do also want to
-    wait for I/O done when (if) the cache was disabled. It must not
-    run in parallel with normal cache operation.
-  */
-  while (keycache->cnt_for_resize_op)
-    wait_on_queue(&keycache->waiting_for_resize_cnt, &keycache->cache_lock);
-
-  /*
-    Free old cache structures, allocate new structures, and initialize
-    them. Note that the cache_lock mutex and the resize_queue are left
-    untouched. We do not lose the cache_lock and will release it only at
-    the end of this function.
-  */
-  end_key_cache(keycache, 0);			/* Don't free mutex */
-  /* The following will work even if use_mem is 0 */
-  blocks= init_key_cache(keycache, key_cache_block_size, use_mem,
-			 division_limit, age_threshold);
-
-finish:
-  /*
-    Mark the resize finished. This allows other threads to start a
-    resize or to request new cache blocks.
-  */
-  keycache->in_resize= 0;
-
-  /* Signal waiting threads. */
-  release_whole_queue(&keycache->resize_queue);
-
-  keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  return(blocks);
-}
-
-
-/*
   Increment counter blocking resize key cache operation
 */
 static inline void inc_counter_for_resize_op(KEY_CACHE *keycache)
@@ -555,38 +415,6 @@ static inline void dec_counter_for_resize_op(KEY_CACHE *keycache)
 {
   if (!--keycache->cnt_for_resize_op)
     release_whole_queue(&keycache->waiting_for_resize_cnt);
-}
-
-/*
-  Change the key cache parameters
-
-  SYNOPSIS
-    change_key_cache_param()
-    keycache			pointer to a key cache data structure
-    division_limit		new division limit (if not zero)
-    age_threshold		new age threshold (if not zero)
-
-  RETURN VALUE
-    none
-
-  NOTES.
-    Presently the function resets the key cache parameters
-    concerning midpoint insertion strategy - division_limit and
-    age_threshold.
-*/
-
-static void change_key_cache_param(KEY_CACHE *keycache, uint32_t division_limit,
-			    uint32_t age_threshold)
-{
-  keycache_pthread_mutex_lock(&keycache->cache_lock);
-  if (division_limit)
-    keycache->min_warm_blocks= (keycache->disk_blocks *
-				division_limit / 100 + 1);
-  if (age_threshold)
-    keycache->age_threshold=   (keycache->disk_blocks *
-				age_threshold / 100);
-  keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  return;
 }
 
 
@@ -3610,269 +3438,3 @@ int flush_key_blocks(KEY_CACHE *keycache,
   keycache_pthread_mutex_unlock(&keycache->cache_lock);
   return(res);
 }
-
-
-/*
-  Flush all blocks in the key cache to disk.
-
-  SYNOPSIS
-    flush_all_key_blocks()
-      keycache                  pointer to key cache root structure
-
-  DESCRIPTION
-
-    Flushing of the whole key cache is done in two phases.
-
-    1. Flush all changed blocks, waiting for them if necessary. Loop
-    until there is no changed block left in the cache.
-
-    2. Free all clean blocks. Normally this means free all blocks. The
-    changed blocks were flushed in phase 1 and became clean. However we
-    may need to wait for blocks that are read by other threads. While we
-    wait, a clean block could become changed if that operation started
-    before the resize operation started. To be safe we must restart at
-    phase 1.
-
-    When we can run through the changed_blocks and file_blocks hashes
-    without finding a block any more, then we are done.
-
-    Note that we hold keycache->cache_lock all the time unless we need
-    to wait for something.
-
-  RETURN
-    0           OK
-    != 0        Error
-*/
-
-static int flush_all_key_blocks(KEY_CACHE *keycache)
-{
-  BLOCK_LINK    *block;
-  uint32_t          total_found;
-  uint32_t          found;
-  uint32_t          idx;
-
-  do
-  {
-    safe_mutex_assert_owner(&keycache->cache_lock);
-    total_found= 0;
-
-    /*
-      Phase1: Flush all changed blocks, waiting for them if necessary.
-      Loop until there is no changed block left in the cache.
-    */
-    do
-    {
-      found= 0;
-      /* Step over the whole changed_blocks hash array. */
-      for (idx= 0; idx < CHANGED_BLOCKS_HASH; idx++)
-      {
-        /*
-          If an array element is non-empty, use the first block from its
-          chain to find a file for flush. All changed blocks for this
-          file are flushed. So the same block will not appear at this
-          place again with the next iteration. New writes for blocks are
-          not accepted during the flush. If multiple files share the
-          same hash bucket, one of them will be flushed per iteration
-          of the outer loop of phase 1.
-        */
-        if ((block= keycache->changed_blocks[idx]))
-        {
-          found++;
-          /*
-            Flush dirty blocks but do not free them yet. They can be used
-            for reading until all other blocks are flushed too.
-          */
-          if (flush_key_blocks_int(keycache, block->hash_link->file,
-                                   FLUSH_FORCE_WRITE))
-            return(1);
-        }
-      }
-
-    } while (found);
-
-    /*
-      Phase 2: Free all clean blocks. Normally this means free all
-      blocks. The changed blocks were flushed in phase 1 and became
-      clean. However we may need to wait for blocks that are read by
-      other threads. While we wait, a clean block could become changed
-      if that operation started before the resize operation started. To
-      be safe we must restart at phase 1.
-    */
-    do
-    {
-      found= 0;
-      /* Step over the whole file_blocks hash array. */
-      for (idx= 0; idx < CHANGED_BLOCKS_HASH; idx++)
-      {
-        /*
-          If an array element is non-empty, use the first block from its
-          chain to find a file for flush. All blocks for this file are
-          freed. So the same block will not appear at this place again
-          with the next iteration. If multiple files share the
-          same hash bucket, one of them will be flushed per iteration
-          of the outer loop of phase 2.
-        */
-        if ((block= keycache->file_blocks[idx]))
-        {
-          total_found++;
-          found++;
-          if (flush_key_blocks_int(keycache, block->hash_link->file,
-                                   FLUSH_RELEASE))
-            return(1);
-        }
-      }
-
-    } while (found);
-
-    /*
-      If any clean block has been found, we may have waited for it to
-      become free. In this case it could be possible that another clean
-      block became dirty. This is possible if the write request existed
-      before the resize started (BLOCK_FOR_UPDATE). Re-check the hashes.
-    */
-  } while (total_found);
-  return(0);
-}
-
-
-#if defined(KEYCACHE_TIMEOUT)
-
-
-static inline
-unsigned int hash_link_number(HASH_LINK *hash_link, KEY_CACHE *keycache)
-{
-  return ((unsigned int) (((char*)hash_link-(char *) keycache->hash_link_root)/
-		  sizeof(HASH_LINK)));
-}
-
-static inline
-unsigned int block_number(BLOCK_LINK *block, KEY_CACHE *keycache)
-{
-  return ((unsigned int) (((char*)block-(char *)keycache->block_root)/
-		  sizeof(BLOCK_LINK)));
-}
-
-
-#define KEYCACHE_DUMP_FILE  "keycache_dump.txt"
-#define MAX_QUEUE_LEN  100
-
-
-static void keycache_dump(KEY_CACHE *keycache)
-{
-  FILE *keycache_dump_file=fopen(KEYCACHE_DUMP_FILE, "w");
-  internal::st_my_thread_var *last;
-  internal::st_my_thread_var *thread;
-  BLOCK_LINK *block;
-  HASH_LINK *hash_link;
-  KEYCACHE_PAGE *page;
-  uint32_t i;
-
-  fprintf(keycache_dump_file, "thread:%u\n", thread->id);
-
-  i=0;
-  thread=last=waiting_for_hash_link.last_thread;
-  fprintf(keycache_dump_file, "queue of threads waiting for hash link\n");
-  if (thread)
-    do
-    {
-      thread=thread->next;
-      page= (KEYCACHE_PAGE *) thread->opt_info;
-      fprintf(keycache_dump_file,
-              "thread:%u, (file,filepos)=(%u,%lu)\n",
-              thread->id,(uint) page->file,(uint32_t) page->filepos);
-      if (++i == MAX_QUEUE_LEN)
-        break;
-    }
-    while (thread != last);
-
-  i=0;
-  thread=last=waiting_for_block.last_thread;
-  fprintf(keycache_dump_file, "queue of threads waiting for block\n");
-  if (thread)
-    do
-    {
-      thread=thread->next;
-      hash_link= (HASH_LINK *) thread->opt_info;
-      fprintf(keycache_dump_file,
-	      "thread:%u hash_link:%u (file,filepos)=(%u,%u)\n",
-	      thread->id, (uint) hash_link_number(hash_link, keycache),
-	      (uint) hash_link->file,(uint32_t) hash_link->diskpos);
-      if (++i == MAX_QUEUE_LEN)
-        break;
-    }
-    while (thread != last);
-
-  for (i=0 ; i< keycache->blocks_used ; i++)
-  {
-    int j;
-    block= &keycache->block_root[i];
-    hash_link= block->hash_link;
-    fprintf(keycache_dump_file,
-	    "block:%u hash_link:%d status:%x #requests=%u "
-	    "waiting_for_readers:%d\n",
-	    i, (int) (hash_link ? hash_link_number(hash_link, keycache) : -1),
-	    block->status, block->requests, block->condvar ? 1 : 0);
-    for (j=0 ; j < 2; j++)
-    {
-      KEYCACHE_WQUEUE *wqueue=&block->wqueue[j];
-      thread= last= wqueue->last_thread;
-      fprintf(keycache_dump_file, "queue #%d\n", j);
-      if (thread)
-      {
-        do
-        {
-          thread=thread->next;
-          fprintf(keycache_dump_file,
-                  "thread:%u\n", thread->id);
-          if (++i == MAX_QUEUE_LEN)
-            break;
-        }
-        while (thread != last);
-      }
-    }
-  }
-  fprintf(keycache_dump_file, "LRU chain:");
-  block= keycache= used_last;
-  if (block)
-  {
-    do
-    {
-      block= block->next_used;
-      fprintf(keycache_dump_file,
-	      "block:%u, ", block_number(block, keycache));
-    }
-    while (block != keycache->used_last);
-  }
-  fprintf(keycache_dump_file, "\n");
-
-  fclose(keycache_dump_file);
-}
-
-static int keycache_pthread_cond_wait(pthread_cond_t *cond,
-                                      pthread_mutex_t *mutex)
-{
-  int rc;
-  struct timeval  now;            /* time when we started waiting        */
-  struct timespec timeout;        /* timeout value for the wait function */
-  struct timezone tz;
-
-  /* Get current time */
-  gettimeofday(&now, &tz);
-  /* Prepare timeout value */
-  timeout.tv_sec= now.tv_sec + KEYCACHE_TIMEOUT;
- /*
-   timeval uses microseconds.
-   timespec uses nanoseconds.
-   1 nanosecond = 1000 micro seconds
- */
-  timeout.tv_nsec= now.tv_usec * 1000;
-  rc= pthread_cond_timedwait(cond, mutex, &timeout);
-  if (rc == ETIMEDOUT || rc == ETIME)
-  {
-    keycache_dump();
-  }
-
-  assert(rc != ETIMEDOUT);
-  return rc;
-}
-#endif /* defined(KEYCACHE_TIMEOUT) */
