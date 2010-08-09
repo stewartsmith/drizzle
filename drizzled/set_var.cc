@@ -504,7 +504,7 @@ bool sys_var_uint32_t_ptr::check(Session *, set_var *var)
 bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
 {
   uint32_t tmp= var->save_result.uint32_t_value;
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   if (option_limits)
   {
     uint32_t newvalue= (uint32_t) fix_unsigned(session, tmp, option_limits);
@@ -513,7 +513,7 @@ bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
   }
   else
     *value= (uint32_t) tmp;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.unlock();
   return 0;
 }
 
@@ -521,17 +521,17 @@ bool sys_var_uint32_t_ptr::update(Session *session, set_var *var)
 void sys_var_uint32_t_ptr::set_default(Session *, sql_var_t)
 {
   bool not_used;
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   *value= (uint32_t)getopt_ull_limit_value((uint32_t) option_limits->def_value,
                                            option_limits, &not_used);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.unlock();
 }
 
 
 bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
 {
   uint64_t tmp= var->save_result.uint64_t_value;
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   if (option_limits)
   {
     uint64_t newvalue= (uint64_t) fix_unsigned(session, tmp, option_limits);
@@ -540,7 +540,7 @@ bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
   }
   else
     *value= (uint64_t) tmp;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.unlock();
   return 0;
 }
 
@@ -548,22 +548,22 @@ bool sys_var_uint64_t_ptr::update(Session *session, set_var *var)
 void sys_var_uint64_t_ptr::set_default(Session *, sql_var_t)
 {
   bool not_used;
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
                                  option_limits, &not_used);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.unlock();
 }
 
 
 bool sys_var_size_t_ptr::update(Session *session, set_var *var)
 {
   size_t tmp= var->save_result.size_t_value;
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   if (option_limits)
     *value= fix_size_t(session, tmp, option_limits);
   else
     *value= tmp;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.unlock();
   return 0;
 }
 
@@ -571,10 +571,10 @@ bool sys_var_size_t_ptr::update(Session *session, set_var *var)
 void sys_var_size_t_ptr::set_default(Session *, sql_var_t)
 {
   bool not_used;
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   *value= (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
                                          option_limits, &not_used);
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.unlock();
 }
 
 bool sys_var_bool_ptr::update(Session *, set_var *var)
@@ -665,9 +665,9 @@ bool sys_var_session_ha_rows::update(Session *session, set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     global_system_variables.*offset= (ha_rows) tmp;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= (ha_rows) tmp;
@@ -681,11 +681,11 @@ void sys_var_session_ha_rows::set_default(Session *session, sql_var_t type)
   {
     bool not_used;
     /* We will not come here if option_limits is not set */
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     global_system_variables.*offset=
       (ha_rows) getopt_ull_limit_value((ha_rows) option_limits->def_value,
                                        option_limits, &not_used);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= global_system_variables.*offset;
@@ -722,9 +722,9 @@ bool sys_var_session_uint64_t::update(Session *session,  set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     global_system_variables.*offset= (uint64_t) tmp;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= (uint64_t) tmp;
@@ -737,11 +737,11 @@ void sys_var_session_uint64_t::set_default(Session *session, sql_var_t type)
   if (type == OPT_GLOBAL)
   {
     bool not_used;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     global_system_variables.*offset=
       getopt_ull_limit_value((uint64_t) option_limits->def_value,
                              option_limits, &not_used);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= global_system_variables.*offset;
@@ -775,9 +775,9 @@ bool sys_var_session_size_t::update(Session *session,  set_var *var)
   if (var->type == OPT_GLOBAL)
   {
     /* Lock is needed to make things safe on 32 bit systems */
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     global_system_variables.*offset= tmp;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= tmp;
@@ -790,11 +790,11 @@ void sys_var_session_size_t::set_default(Session *session, sql_var_t type)
   if (type == OPT_GLOBAL)
   {
     bool not_used;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     global_system_variables.*offset=
       (size_t)getopt_ull_limit_value((size_t) option_limits->def_value,
                                      option_limits, &not_used);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= global_system_variables.*offset;
@@ -904,56 +904,56 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
   case SHOW_INT:
   {
     uint32_t value;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     value= *(uint*) value_ptr(session, var_type, base);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     return new Item_uint((uint64_t) value);
   }
   case SHOW_LONGLONG:
   {
     int64_t value;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     value= *(int64_t*) value_ptr(session, var_type, base);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     return new Item_int(value);
   }
   case SHOW_DOUBLE:
   {
     double value;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     value= *(double*) value_ptr(session, var_type, base);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     /* 6, as this is for now only used with microseconds */
     return new Item_float(value, 6);
   }
   case SHOW_HA_ROWS:
   {
     ha_rows value;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     value= *(ha_rows*) value_ptr(session, var_type, base);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     return new Item_int((uint64_t) value);
   }
   case SHOW_SIZE:
   {
     size_t value;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     value= *(size_t*) value_ptr(session, var_type, base);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     return new Item_int((uint64_t) value);
   }
   case SHOW_MY_BOOL:
   {
     int32_t value;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     value= *(bool*) value_ptr(session, var_type, base);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     return new Item_int(value,1);
   }
   case SHOW_CHAR_PTR:
   {
     Item *tmp;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     char *str= *(char**) value_ptr(session, var_type, base);
     if (str)
     {
@@ -966,13 +966,13 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
       tmp= new Item_null();
       tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     }
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     return tmp;
   }
   case SHOW_CHAR:
   {
     Item *tmp;
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     char *str= (char*) value_ptr(session, var_type, base);
     if (str)
       tmp= new Item_string(str, strlen(str),
@@ -982,7 +982,7 @@ Item *sys_var::item(Session *session, sql_var_t var_type, const LEX_STRING *base
       tmp= new Item_null();
       tmp->collation.set(system_charset_info, DERIVATION_SYSCONST);
     }
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     return tmp;
   }
   default:
@@ -1185,9 +1185,9 @@ bool sys_var_session_time_zone::update(Session *session, set_var *var)
   /* We are using Time_zone object found during check() phase. */
   if (var->type == OPT_GLOBAL)
   {
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     global_system_variables.time_zone= var->save_result.time_zone;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.time_zone= var->save_result.time_zone;
@@ -1222,7 +1222,7 @@ unsigned char *sys_var_session_time_zone::value_ptr(Session *session,
 
 void sys_var_session_time_zone::set_default(Session *session, sql_var_t type)
 {
- pthread_mutex_lock(&LOCK_global_system_variables);
+ LOCK_global_system_variables.lock();
  if (type == OPT_GLOBAL)
  {
    if (default_tz_name)
@@ -1239,7 +1239,7 @@ void sys_var_session_time_zone::set_default(Session *session, sql_var_t type)
  }
  else
    session->variables.time_zone= global_system_variables.time_zone;
- pthread_mutex_unlock(&LOCK_global_system_variables);
+ LOCK_global_system_variables.unlock();
 }
 
 
@@ -1328,9 +1328,9 @@ bool sys_var_microseconds::update(Session *session, set_var *var)
   microseconds= (int64_t) (num * 1000000.0 + 0.5);
   if (var->type == OPT_GLOBAL)
   {
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     (global_system_variables.*offset)= microseconds;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= microseconds;
@@ -1343,9 +1343,9 @@ void sys_var_microseconds::set_default(Session *session, sql_var_t type)
   int64_t microseconds= (int64_t) (option_limits->def_value * 1000000.0);
   if (type == OPT_GLOBAL)
   {
-    pthread_mutex_lock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.lock();
     global_system_variables.*offset= microseconds;
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
     session->variables.*offset= microseconds;

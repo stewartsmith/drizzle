@@ -398,7 +398,6 @@ public:
   inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; } /* Portable row format */
   inline bool isNameLock() const { return s->isNameLock(); }
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
-  inline bool isWaitingOnCondition() const { return s->isWaitingOnCondition(); } /* Protection against free */
 
   uint32_t index_flags(uint32_t idx) const
   {
