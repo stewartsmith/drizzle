@@ -77,7 +77,7 @@ public:
 	/* override */ int close_connection(Session *);
 	/* override */ int commit(Session *, bool);
 	/* override */ int rollback(Session *, bool);
-	/* override */ Cursor *create(TableShare&, memory::Root *);
+	/* override */ Cursor *create(TableShare&);
 	/* override */ void drop_database(char *);
 	/* override */ bool show_status(Session *, stat_print_fn *, enum ha_stat_type);
         /* override */ const char **bas_ext() const;

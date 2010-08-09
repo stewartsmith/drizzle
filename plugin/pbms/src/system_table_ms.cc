@@ -676,7 +676,7 @@ void PBMSSystemTables::restoreSystemTables(MSDatabase *db, const char *data, siz
 void MSOpenSystemTable::setNotNullInRecord(Field *field, char *record)
 {
 	if (field->null_ptr)
-		record[(uint) (field->null_ptr - (uchar *) field->getTable()->record[0])] &= (uchar) ~field->null_bit;
+		record[(uint) (field->null_ptr - (uchar *) field->getTable()->getInsertRecord())] &= (uchar) ~field->null_bit;
 }
 
 /*
@@ -967,7 +967,7 @@ bool MSRepositoryTable::returnRow(MSBlobHeadPtr	blob, char *buf)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'A':
@@ -1129,7 +1129,7 @@ bool MSBlobDataTable::returnRow(MSBlobHeadPtr blob, char *buf)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'R':
@@ -1219,7 +1219,7 @@ bool MSBlobAliasTable::returnRow(MSBlobHeadPtr blob, char *buf)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'R':
@@ -1572,7 +1572,7 @@ void MSReferenceTable::returnRow(MSRefDataPtr ref_data, char *buf)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'B':
@@ -1929,7 +1929,7 @@ void MSMetaDataTable::returnRow(char *name, char *value, char *buf)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'R':
@@ -2300,7 +2300,7 @@ iOpenCount(0)
 
 MSSystemTableShare::~MSSystemTableShare()
 {
-	thr_lock_delete(&myThrLock);
+	myThrLock.unlock();
 	if (myTablePath) {
 		myTablePath->release();
 		myTablePath = NULL;

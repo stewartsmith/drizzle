@@ -33,6 +33,7 @@
 
 #include "scoreboard_slot.h"
 #include <drizzled/session.h>
+#include <boost/thread/shared_mutex.hpp>
 
 #include <vector>
 
@@ -70,7 +71,7 @@ public:
     return number_buckets;
   }
 
-  std::vector<pthread_rwlock_t* >* getVectorOfScoreboardLocks()
+  std::vector<boost::shared_mutex* >* getVectorOfScoreboardLocks()
   {
     return &vector_of_scoreboard_locks;
   }
@@ -84,7 +85,7 @@ private:
   uint32_t number_sessions;
   uint32_t number_buckets;
   std::vector<std::vector<ScoreboardSlot* >* > vector_of_scoreboard_vectors;
-  std::vector<pthread_rwlock_t* > vector_of_scoreboard_locks;
+  std::vector<boost::shared_mutex* > vector_of_scoreboard_locks;
 
   ScoreboardSlot* claimOpenScoreboardSlot(drizzled::Session *session); 
 };

@@ -1150,9 +1150,18 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
 
   while ((current_field= *table_fields++) != NULL) 
   {
-    string_value= current_field->val_str(string_value);
-    record->add_insert_value(string_value->c_ptr(), string_value->length());
-    string_value->free();
+    if (current_field->is_null())
+    {
+      record->add_is_null(true);
+      record->add_insert_value("", 0);
+    } 
+    else 
+    {
+      string_value= current_field->val_str(string_value);
+      record->add_is_null(false);
+      record->add_insert_value(string_value->c_ptr(), string_value->length());
+      string_value->free();
+    }
   }
   return false;
 }
@@ -1256,8 +1265,8 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
      * we do this crazy pointer fiddling to figure out if the current field
      * has been updated in the supplied record raw byte pointers.
      */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
+    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
 
     uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
 
@@ -1308,8 +1317,8 @@ void TransactionServices::updateRecord(Session *in_session,
      * we do this crazy pointer fiddling to figure out if the current field
      * has been updated in the supplied record raw byte pointers.
      */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
+    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
 
     uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
 
@@ -1330,7 +1339,16 @@ void TransactionServices::updateRecord(Session *in_session,
        */
       current_field->setReadSet(is_read_set);
 
-      record->add_after_value(string_value->c_ptr(), string_value->length());
+      if (current_field->is_null())
+      {
+        record->add_is_null(true);
+        record->add_after_value("", 0);
+      }
+      else
+      {
+        record->add_is_null(false);
+        record->add_after_value(string_value->c_ptr(), string_value->length());
+      }
       string_value->free();
     }
 

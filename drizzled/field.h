@@ -117,7 +117,6 @@ public:
   }
 
   Table *orig_table; /**< Pointer to the original Table. @TODO What is "the original table"? */
-  const char **table_name; /**< Pointer to the name of the table. @TODO This is redundant with Table::table_name. */
   const char *field_name; /**< Name of the field */
   LEX_STRING comment; /**< A comment about the field */
 

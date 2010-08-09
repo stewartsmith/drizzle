@@ -32,8 +32,6 @@
 #include "drizzled/cached_directory.h"
 #include "drizzled/plugin/monitored_in_transaction.h"
 
-#include <drizzled/unordered_map.h>
-
 #include <bitset>
 #include <string>
 #include <vector>
@@ -119,7 +117,6 @@ class NamedSavepoint;
 namespace plugin
 {
 
-typedef unordered_map<std::string, StorageEngine *> EngineMap;
 typedef std::vector<StorageEngine *> EngineVector;
 
 typedef std::set<std::string> TableNameList;
@@ -255,7 +252,7 @@ public:
   {
     return 0;
   }
-  virtual Cursor *create(TableShare &, memory::Root *)= 0;
+  virtual Cursor *create(TableShare &)= 0;
   /* args: path */
   virtual bool flush_logs() { return false; }
   virtual bool show_status(Session *, stat_print_fn *, enum ha_stat_type)
@@ -374,7 +371,7 @@ public:
 
   static void removeLostTemporaryTables(Session &session, const char *directory);
 
-  Cursor *getCursor(TableShare &share, memory::Root *alloc);
+  Cursor *getCursor(TableShare &share);
 
   uint32_t max_record_length() const
   { return std::min((unsigned int)HA_MAX_REC_LENGTH, max_supported_record_length()); }

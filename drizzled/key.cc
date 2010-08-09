@@ -208,14 +208,14 @@ void key_restore(unsigned char *to_record, unsigned char *from_key, KeyInfo *key
       field->setReadSet();
       from_key+= HA_KEY_BLOB_LENGTH;
       key_length-= HA_KEY_BLOB_LENGTH;
-      field->set_ptr_offset(to_record - field->getTable()->record[0],
+      field->set_ptr_offset(to_record - field->getTable()->getInsertRecord(),
                             (ulong) blob_length, from_key);
       length= key_part->length;
     }
     else if (key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       Field *field= key_part->field;
-      ptrdiff_t ptrdiff= to_record - field->getTable()->record[0];
+      ptrdiff_t ptrdiff= to_record - field->getTable()->getInsertRecord();
 
       field->setReadSet();
       field->setWriteSet();
@@ -274,7 +274,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
 
     if (key_part->null_bit)
     {
-      if (*key != test(table->record[0][key_part->null_offset] &
+      if (*key != test(table->getInsertRecord()[key_part->null_offset] &
 		       key_part->null_bit))
 	return 1;
       if (*key)
@@ -294,7 +294,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
     {
       const CHARSET_INFO * const cs= key_part->field->charset();
       uint32_t char_length= key_part->length / cs->mbmaxlen;
-      const unsigned char *pos= table->record[0] + key_part->offset;
+      const unsigned char *pos= table->getInsertRecord() + key_part->offset;
       if (length > char_length)
       {
         char_length= my_charpos(cs, pos, pos + length, char_length);
@@ -306,7 +306,7 @@ bool key_cmp_if_same(Table *table,const unsigned char *key,uint32_t idx,uint32_t
         return 1;
       continue;
     }
-    if (memcmp(key,table->record[0]+key_part->offset,length))
+    if (memcmp(key,table->getInsertRecord()+key_part->offset,length))
       return 1;
   }
   return 0;
@@ -342,7 +342,7 @@ void key_unpack(String *to, Table *table, uint32_t idx)
       to->append('-');
     if (key_part->null_bit)
     {
-      if (table->record[0][key_part->null_offset] & key_part->null_bit)
+      if (table->getInsertRecord()[key_part->null_offset] & key_part->null_bit)
       {
 	to->append(STRING_WITH_LEN("NULL"));
 	continue;
@@ -423,7 +423,7 @@ bool is_key_used(Table *table, uint32_t idx, const MyBitmap *fields)
   Compare key in row to a given key.
 
   @param key_part		Key part handler
-  @param key			Key to compare to value in table->record[0]
+  @param key			Key to compare to value in table->getInsertRecord()
   @param key_length		length of 'key'
 
   @return

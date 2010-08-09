@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <drizzled/plugin/storage_engine.h>
 #include <drizzled/data_home.h>
-#include <drizzled/unordered_map.h>
+#include <boost/unordered_map.hpp>
 
 #include <pthread.h>
 
@@ -41,7 +41,7 @@ class Schema : public drizzled::plugin::StorageEngine
 
   void prime();
 
-  typedef drizzled::unordered_map<std::string, drizzled::message::Schema> SchemaCache;
+  typedef boost::unordered_map<std::string, drizzled::message::Schema> SchemaCache;
   SchemaCache schema_cache;
   bool schema_cache_filled;
 
@@ -55,8 +55,7 @@ public:
 
   bool doCanCreateTable(const drizzled::TableIdentifier &identifier);
 
-  drizzled::Cursor *create(drizzled::TableShare &,
-                           drizzled::memory::Root *)
+  drizzled::Cursor *create(drizzled::TableShare &)
   {
     return NULL;
   }

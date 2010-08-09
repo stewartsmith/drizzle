@@ -110,7 +110,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
-    share_buff.key_cache= dflt_key_cache;
+    share_buff.setKeyCache();
 
     if ((kfile=internal::my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
@@ -394,12 +394,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     for (i=0; i<keys; i++)
       pthread_rwlock_init(&share->key_root_lock[i], NULL);
     pthread_rwlock_init(&share->mmap_lock, NULL);
-    if (!thr_lock_inited)
-    {
-      /* Probably a single threaded program; Don't use concurrent inserts */
-      myisam_concurrent_insert=0;
-    }
-    else if (myisam_concurrent_insert)
+    if (myisam_concurrent_insert)
     {
       share->concurrent_insert=
 	((share->options & (HA_OPTION_READ_ONLY_DATA | HA_OPTION_TMP_TABLE |
@@ -408,11 +403,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 	 (open_flags & HA_OPEN_TMP_TABLE) || have_rtree) ? 0 : 1;
       if (share->concurrent_insert)
       {
-	share->lock.get_status= mi_get_status;
-	share->lock.copy_status= mi_copy_status;
-	share->lock.update_status= mi_update_status;
-        share->lock.restore_status= mi_restore_status;
-	share->lock.check_status= mi_check_status;
+        assert(0);
       }
     }
   }
@@ -508,7 +499,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   memset(info.rec_buff, 0, mi_get_rec_buff_len(&info, info.rec_buff));
 
   *m_info=info;
-  thr_lock_data_init(&share->lock,&m_info->lock,(void*) m_info);
+  m_info->lock.init(&share->lock, (void*) m_info);
   myisam_open_list.push_front(m_info);
 
   pthread_mutex_unlock(&THR_LOCK_myisam);

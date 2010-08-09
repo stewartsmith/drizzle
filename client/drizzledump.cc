@@ -36,7 +36,7 @@
 #include "drizzled/internal/m_string.h"
 #include "drizzled/charset_info.h"
 #include <stdarg.h>
-#include <drizzled/unordered_set.h>
+#include <boost/unordered_set.hpp>
 #include <algorithm>
 #include <fstream>
 #include <drizzled/gettext.h>
@@ -155,7 +155,7 @@ static const char *compatible_mode_names[]=
 static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
   "", compatible_mode_names, NULL};
 
-unordered_set<string> ignore_table;
+boost::unordered_set<string> ignore_table;
 
 static void maybe_exit(int error);
 static void die(int error, const char* reason, ...);
@@ -1964,7 +1964,7 @@ static int init_dumping(char *database, int init_func(char*))
 static bool include_table(const char *hash_key, size_t key_size)
 {
   string match(hash_key, key_size);
-  unordered_set<string>::iterator iter= ignore_table.find(match);
+  boost::unordered_set<string>::iterator iter= ignore_table.find(match);
   return (iter == ignore_table.end());
 }
 
@@ -2590,6 +2590,8 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
 
+  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
   po::positional_options_description p;
   p.add("database-used", 1);
   p.add("Table-used",-1);
@@ -2605,15 +2607,21 @@ try
 
   if (! vm.count("no-defaults"))
   {
-    ifstream user_dump_ifs("~/.drizzle/drizzledump.cnf");
-    po::store(parse_config_file(user_dump_ifs, dump_options), vm);
- 
-    ifstream system_dump_ifs(system_config_dir_dump.c_str());
-    store(parse_config_file(system_dump_ifs, dump_options), vm);
+    std::string user_config_dir_dump(user_config_dir);
+    user_config_dir_dump.append("/drizzle/drizzledump.cnf"); 
 
-    ifstream user_client_ifs("~/.drizzle/client.cnf");
+    std::string user_config_dir_client(user_config_dir);
+    user_config_dir_client.append("/drizzle/client.cnf");
+
+    ifstream user_dump_ifs(user_config_dir_dump.c_str());
+    po::store(parse_config_file(user_dump_ifs, dump_options), vm);
+
+    ifstream user_client_ifs(user_config_dir_client.c_str());
     po::store(parse_config_file(user_client_ifs, client_options), vm);
- 
+
+    ifstream system_dump_ifs(system_config_dir_dump.c_str());
+    po::store(parse_config_file(system_dump_ifs, dump_options), vm);
+
     ifstream system_client_ifs(system_config_dir_client.c_str());
     po::store(parse_config_file(system_client_ifs, client_options), vm);
   }

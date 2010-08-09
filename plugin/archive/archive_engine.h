@@ -31,6 +31,9 @@
 #include <unistd.h>
 #include <zlib.h>
 
+#include <boost/unordered_map.hpp>
+#include "drizzled/util/string.h"
+
 #include "azio.h"
 #include "plugin/archive/ha_archive.h"
 
@@ -58,8 +61,11 @@ static const char *ha_archive_exts[] = {
 
 class ArchiveEngine : public drizzled::plugin::StorageEngine
 {
-  typedef std::map<std::string, ArchiveShare*> ArchiveMap;
+  typedef boost::unordered_map<std::string, ArchiveShare *, drizzled::util::insensitive_hash, drizzled::util::insensitive_equal_to> ArchiveMap;
   ArchiveMap archive_open_tables;
+
+  /* Variables for archive share methods */
+  pthread_mutex_t _mutex;
 
 public:
   ArchiveEngine() :
@@ -68,13 +74,22 @@ public:
                                     drizzled::HTON_HAS_RECORDS),
     archive_open_tables()
   {
+    pthread_mutex_init(&_mutex, NULL);
     table_definition_ext= ARZ;
   }
-
-  virtual drizzled::Cursor *create(drizzled::TableShare &table,
-                                   drizzled::memory::Root *mem_root)
+  ~ArchiveEngine()
   {
-    return new (mem_root) ha_archive(*this, table);
+    pthread_mutex_destroy(&_mutex);
+  }
+
+  pthread_mutex_t &mutex()
+  {
+    return _mutex;
+  }
+
+  virtual drizzled::Cursor *create(drizzled::TableShare &table)
+  {
+    return new ha_archive(*this, table);
   }
 
   const char **bas_ext() const {

@@ -23,9 +23,6 @@
 using namespace std;
 using namespace drizzled;
 
-#define BLITZ_TC_EXTRA_MMAP_SIZE (1024 * 1024 * 256)
-#define BLITZ_TC_BUCKET_NUM 1000000
-
 int BlitzData::startup(const char *path) {
   int rv = 0;
 
@@ -49,27 +46,57 @@ int BlitzData::shutdown() {
   return rv;
 }
 
-/* Similar to UNIX touch(1) but generates a TCHDB file. */
+/* Similar to UNIX touch(1) but generates a tuned TCHDB file. */
 int BlitzData::create_data_table(drizzled::message::Table &proto,
                                  drizzled::Table &table_info,
                                  const drizzled::TableIdentifier &identifier) {
-  uint64_t autoinc = 0;
-  int mode = (HDBOWRITER | HDBOCREAT);
-  int rv;
 
-  if ((rv = open_data_table(identifier.getPath().c_str(), mode)) != 0)
-    return rv;
+  std::string path = identifier.getPath() + BLITZ_DATA_EXT;
 
-  autoinc = (proto.options().has_auto_increment_value())
-            ? proto.options().auto_increment_value() - 1 : 0;
+  uint64_t autoinc = (proto.options().has_auto_increment_value())
+                     ? proto.options().auto_increment_value() - 1 : 0;
 
+  uint64_t hash_buckets = (blitz_estimated_rows == 0) ? BLITZ_TC_BUCKETS
+                                                      : blitz_estimated_rows;
+  int n_options = proto.engine().options_size();
+
+  for (int i = 0; i < n_options; i++) {
+    if (proto.engine().options(i).name() == "estimated_rows" ||
+        proto.engine().options(i).name() == "ESTIMATED_ROWS") {
+      std::istringstream stream(proto.engine().options(i).state());
+      stream >> hash_buckets;
+
+      if (hash_buckets <= 0)
+        hash_buckets = BLITZ_TC_BUCKETS;
+    }
+  }
+
+  if (data_table != NULL)
+    return HA_ERR_GENERIC;
+
+  if ((data_table = tchdbnew()) == NULL)
+    return HA_ERR_OUT_OF_MEM;
+
+  if (!tchdbtune(data_table, hash_buckets, -1, -1, 0)) {
+    tchdbdel(data_table);
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  if (!tchdbopen(data_table, path.c_str(), (HDBOWRITER | HDBOCREAT))) {
+    tchdbdel(data_table);
+    return HA_ERR_CRASHED_ON_USAGE;
+  }
+
+  /* Write the Meta Data for this Table. */
+  tc_meta_buffer = tchdbopaque(data_table);
   write_meta_autoinc(autoinc);
   write_meta_keycount(table_info.s->keys);
 
-  if ((rv = close_data_table()) != 0)
+  /* We're Done. */
+  if (close_data_table() != 0)
     return HA_ERR_CRASHED_ON_USAGE;
 
-  return rv;
+  return 0;
 }
 
 int BlitzData::open_data_table(const char *path, const int mode) {
@@ -79,11 +106,6 @@ int BlitzData::open_data_table(const char *path, const int mode) {
     return HA_ERR_OUT_OF_MEM;
 
   if (!tchdbsetmutex(data_table)) {
-    tchdbdel(data_table);
-    return HA_ERR_CRASHED_ON_USAGE;
-  }
-
-  if (!tchdbtune(data_table, BLITZ_TC_BUCKET_NUM, -1, -1, 0)) {
     tchdbdel(data_table);
     return HA_ERR_CRASHED_ON_USAGE;
   }
@@ -132,6 +154,8 @@ int BlitzData::close_data_table(void) {
   }
 
   tchdbdel(data_table);
+  data_table = NULL;
+  tc_meta_buffer = NULL;
   return 0;
 }
 

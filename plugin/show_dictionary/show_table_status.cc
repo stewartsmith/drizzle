@@ -57,19 +57,22 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
   if (not schema_predicate.empty())
   {
-    pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+    LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
-    for (uint32_t idx= 0; idx < get_open_cache().records; idx++ )
+    TableOpenCache &open_cache(get_open_cache());
+
+    for (TableOpenCache::const_iterator iter= open_cache.begin();
+         iter != open_cache.end();
+         iter++)
     {
-      table= (Table*) hash_element(&get_open_cache(), idx);
-      table_list.push_back(table);
+      table_list.push_back((*iter).second);
     }
 
-    for (table= getSession().temporary_tables; table; table= table->getNext())
+    for (drizzled::Table *tmp_table= getSession().temporary_tables; tmp_table; tmp_table= tmp_table->getNext())
     {
-      if (table->getShare())
+      if (tmp_table->getShare())
       {
-        table_list.push_back(table);
+        table_list.push_back(tmp_table);
       }
     }
     std::sort(table_list.begin(), table_list.end(), Table::compare);
@@ -78,7 +81,8 @@ ShowTableStatus::Generator::Generator(drizzled::Field **arg) :
 
 ShowTableStatus::Generator::~Generator()
 {
-  pthread_mutex_unlock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+  if (not schema_predicate.empty())
+    LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool ShowTableStatus::Generator::nextCore()

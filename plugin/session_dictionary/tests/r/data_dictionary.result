@@ -2,14 +2,14 @@ use data_dictionary;
 show create table PROCESSLIST ;
 Table	Create Table
 PROCESSLIST	CREATE TABLE `processlist` (
-  `ID` bigint NOT NULL DEFAULT '0',
-  `USER` varchar(16) NOT NULL DEFAULT '',
-  `HOST` varchar(1025) NOT NULL DEFAULT '',
-  `DB` varchar(256) NOT NULL DEFAULT '',
-  `COMMAND` varchar(16) NOT NULL DEFAULT '',
-  `TIME` bigint NOT NULL DEFAULT '0',
-  `STATE` varchar(256) NOT NULL DEFAULT '',
-  `INFO` varchar(100) NOT NULL DEFAULT ''
+  `ID` bigint NOT NULL,
+  `USER` varchar(16) NOT NULL,
+  `HOST` varchar(1025) NOT NULL,
+  `DB` varchar(256) NOT NULL,
+  `COMMAND` varchar(16) NOT NULL,
+  `TIME` bigint NOT NULL,
+  `STATE` varchar(256) NOT NULL,
+  `INFO` varchar(100) NOT NULL
 ) ENGINE=FunctionEngine
 SELECT ID FROM processlist;
 ID

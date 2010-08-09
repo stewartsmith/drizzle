@@ -145,7 +145,7 @@ inline key_part_map make_prev_keypart_map(T a)
   If a blob column has NULL value, then its length and blob data pointer
   must be set to 0.
 */
-class Cursor :public memory::SqlAlloc
+class Cursor
 {
 protected:
   TableShare *table_share;   /* The table definition */
@@ -170,7 +170,7 @@ public:
   /** MultiRangeRead-related members: */
   range_seq_t mrr_iter;    /* Interator to traverse the range sequence */
   RANGE_SEQ_IF mrr_funcs;  /* Range sequence traversal functions */
-  HANDLER_BUFFER *multi_range_buffer; /* MRR buffer info */
+
   uint32_t ranges_in_seq; /* Total number of ranges in the traversed sequence */
   /* true <=> source MRR ranges and the output are ordered */
   bool mrr_is_output_sorted;
@@ -319,12 +319,6 @@ public:
   */
   virtual ha_rows estimate_rows_upper_bound()
   { return stats.records+EXTRA_RECORDS; }
-
-  /**
-    Get the row type from the storage engine.  If this method returns
-    ROW_TYPE_NOT_USED, the information in HA_CREATE_INFO should be used.
-  */
-  virtual enum row_type get_row_type() const { return ROW_TYPE_NOT_USED; }
 
   virtual const char *index_type(uint32_t)
   { assert(0); return "";}
@@ -728,8 +722,8 @@ bool reopen_tables(Session *session,bool get_locks,bool in_refresh);
 void close_handle_and_leave_table_as_lock(Table *table);
 bool wait_for_tables(Session *session);
 bool table_is_used(Table *table, bool wait_for_name_lock);
-Table *drop_locked_tables(Session *session,const char *db, const char *table_name);
-void abort_locked_tables(Session *session,const char *db, const char *table_name);
+Table *drop_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
+void abort_locked_tables(Session *session, const drizzled::TableIdentifier &identifier);
 extern Field *not_found_field;
 extern Field *view_ref_found;
 

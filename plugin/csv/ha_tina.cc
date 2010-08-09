@@ -78,10 +78,6 @@ using namespace drizzled;
 static int read_meta_file(int meta_file, ha_rows *rows);
 static int write_meta_file(int meta_file, ha_rows rows, bool dirty);
 
-void tina_get_status(void* param, int concurrent_insert);
-void tina_update_status(void* param);
-bool tina_check_status(void* param);
-
 /* Stuff for shares */
 pthread_mutex_t tina_mutex;
 
@@ -116,10 +112,9 @@ public:
     pthread_mutex_destroy(&tina_mutex);
   }
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_tina(*this, table);
+    return new ha_tina(*this, table);
   }
 
   const char **bas_ext() const {
@@ -271,7 +266,7 @@ TinaShare::TinaShare(const char *table_name_arg)
 
 TinaShare::~TinaShare()
 {
-  thr_lock_delete(&lock);
+  lock.deinit();
   pthread_mutex_destroy(&mutex);
 }
 
@@ -780,74 +775,6 @@ err:
 }
 
 /*
-  Three functions below are needed to enable concurrent insert functionality
-  for CSV engine. For more details see mysys/thr_lock.c
-*/
-
-void tina_get_status(void* param, int)
-{
-  ha_tina *tina= (ha_tina*) param;
-  tina->get_status();
-}
-
-void tina_update_status(void* param)
-{
-  ha_tina *tina= (ha_tina*) param;
-  tina->update_status();
-}
-
-/* this should exist and return 0 for concurrent insert to work */
-bool tina_check_status(void *)
-{
-  return 0;
-}
-
-/*
-  Save the state of the table
-
-  SYNOPSIS
-    get_status()
-
-  DESCRIPTION
-    This function is used to retrieve the file length. During the lock
-    phase of concurrent insert. For more details see comment to
-    ha_tina::update_status below.
-*/
-
-void ha_tina::get_status()
-{
-  local_saved_data_file_length= share->saved_data_file_length;
-}
-
-
-/*
-  Correct the state of the table. Called by unlock routines
-  before the write lock is released.
-
-  SYNOPSIS
-    update_status()
-
-  DESCRIPTION
-    When we employ concurrent insert lock, we save current length of the file
-    during the lock phase. We do not read further saved value, as we don't
-    want to interfere with undergoing concurrent insert. Writers update file
-    length info during unlock with update_status().
-
-  NOTE
-    For log tables concurrent insert works different. The reason is that
-    log tables are always opened and locked. And as they do not unlock
-    tables, the file length after writes should be updated in a different
-    way.
-*/
-
-void ha_tina::update_status()
-{
-  /* correct local_saved_data_file_length for writers */
-  share->saved_data_file_length= local_saved_data_file_length;
-}
-
-
-/*
   Open a database file. Keep in mind that tables are caches, so
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
@@ -872,12 +799,8 @@ int ha_tina::doOpen(const TableIdentifier &identifier, int , uint32_t )
     so that they could save/update local_saved_data_file_length value
     during locking. This is needed to enable concurrent inserts.
   */
-  thr_lock_data_init(&share->lock, &lock, (void*) this);
+  lock.init(&share->lock);
   ref_length=sizeof(off_t);
-
-  share->lock.get_status= tina_get_status;
-  share->lock.update_status= tina_update_status;
-  share->lock.check_status= tina_check_status;
 
   return(0);
 }

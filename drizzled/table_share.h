@@ -31,9 +31,9 @@
 #include <boost/unordered_map.hpp>
 
 #include "drizzled/typelib.h"
-#include "drizzled/my_hash.h"
 #include "drizzled/memory/root.h"
 #include "drizzled/message/table.pb.h"
+#include "drizzled/util/string.h"
 
 namespace drizzled
 {
@@ -143,7 +143,26 @@ public:
   std::vector<uint>	blob_field;			/* Index to blobs in Field arrray*/
 
   /* hash of field names (contains pointers to elements of field array) */
-  HASH	name_hash;			/* hash of field names */
+private:
+  typedef boost::unordered_map < std::string, Field **, util::insensitive_hash, util::insensitive_equal_to> FieldMap;
+  typedef std::pair< std::string, Field ** > FieldMapPair;
+  FieldMap name_hash; /* hash of field names */
+public:
+  size_t getNamedFieldSize() const
+  {
+    return name_hash.size();
+  }
+
+  Field **getNamedField(const std::string &arg)
+  {
+    FieldMap::iterator iter= name_hash.find(arg);
+
+    if (iter == name_hash.end())
+        return 0;
+
+    return (*iter).second;
+  }
+
 private:
   memory::Root mem_root;
 public:
@@ -209,9 +228,20 @@ public:
 private:
   std::vector<TYPELIB> intervals;			/* pointer to interval info */
 
-public:
   pthread_mutex_t mutex;                /* For locking the share  */
   pthread_cond_t cond;			/* To signal that share is ready */
+
+
+  void lock()
+  {
+    pthread_mutex_lock(&mutex);
+  }
+
+  void unlock()
+  {
+    pthread_mutex_unlock(&mutex);
+  }
+public:
 
 private:
   std::vector<unsigned char> default_values;		/* row with default values */
@@ -340,7 +370,6 @@ private:
   uint32_t   reclength;			/* Recordlength */
 public:
   uint32_t   stored_rec_length;         /* Stored record length*/
-  enum row_type row_type;		/* How rows are stored */
 
   uint32_t getRecordLength() const
   {
@@ -464,7 +493,9 @@ public:
 
   void incrementTableCount()
   {
+    lock();
     ref_count++;
+    unlock();
   }
 
   uint32_t null_bytes;
@@ -610,7 +641,6 @@ public:
   void open_table_error(int pass_error, int db_errno, int pass_errarg);
 
   static void cacheStart(void);
-  static void cacheStop(void);
   static void release(TableShare *share);
   static void release(TableIdentifier &identifier);
   static const TableDefinitionCache &getCache();
@@ -633,8 +663,6 @@ public:
 
     return output;  // for multiple << operators.
   }
-
-  bool newed;
 
   Field *make_field(unsigned char *ptr,
                     uint32_t field_length,

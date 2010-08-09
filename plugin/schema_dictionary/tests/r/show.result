@@ -798,7 +798,7 @@ show columns from project;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 project_id	INTEGER	NO	0	NO	
 description	BLOB	NO		NO	
-last_update	TIMESTAMP	NO	NOW()	NO	NOW()
+last_update	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
 short_description	VARCHAR	NO		NO	
 url_cvs	VARCHAR	NO		NO	
 url_faq	VARCHAR	NO		NO	
@@ -829,7 +829,7 @@ url_osx	VARCHAR	NO		NO
 url_rpm	VARCHAR	NO		NO	
 project_id	INTEGER	NO	0	NO	
 version	VARCHAR	NO	latest	NO	
-created	TIMESTAMP	NO	NOW()	NO	NOW()
+created	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
 url_source_rpm	VARCHAR	NO		NO	
 show columns from revision;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -837,7 +837,7 @@ node_id	INTEGER	NO	0	NO
 inside_workspace	INTEGER	NO	0	NO	
 revision_id	INTEGER	NO	0	NO	
 xml	BLOB	NO		NO	
-tstamp	TIMESTAMP	NO	NOW()	NO	NOW()
+tstamp	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
 show columns from setting;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 setting_id	INTEGER	NO		NO	
@@ -870,7 +870,7 @@ version_id	INTEGER	NO	0	NO
 version	INTEGER	NO	1	NO	
 show columns from weblog;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-tstamp	TIMESTAMP	NO	NOW()	NO	NOW()
+tstamp	TIMESTAMP	NO	CURRENT_TIMESTAMP	NO	CURRENT_TIMESTAMP
 linkedby_user	INTEGER	NO	0	NO	
 removedby_user	INTEGER	NO	0	NO	
 linkedtime	DATETIME	NO		NO	

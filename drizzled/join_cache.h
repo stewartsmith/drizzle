@@ -33,7 +33,7 @@ typedef JoinTable JoinTable;
 struct CacheField {
   /*
     Where source data is located (i.e. this points to somewhere in
-    tableX->record[0])
+    tableX->getInsertRecord())
   */
   unsigned char *str;
   uint32_t length; /* Length of data at *str, in bytes */

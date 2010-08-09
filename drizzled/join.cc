@@ -2373,7 +2373,7 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
           item->save_in_result_field(1);
       }
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
-      if ((write_error= table_arg->cursor->insertRecord(table_arg->record[0])))
+      if ((write_error= table_arg->cursor->insertRecord(table_arg->getInsertRecord())))
       {
         my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
         return 1;
@@ -2834,7 +2834,7 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
     {
       int error;
       join->found_records++;
-      if ((error=table->cursor->insertRecord(table->record[0])))
+      if ((error=table->cursor->insertRecord(table->getInsertRecord())))
       {
         if (!table->cursor->is_fatal_error(error, HA_CHECK_DUP))
           goto end;
@@ -2882,15 +2882,15 @@ enum_nested_loop_state end_update(Join *join, JoinTable *, bool end_of_records)
     if (item->maybe_null)
       group->buff[-1]= (char) group->field->is_null();
   }
-  if (!table->cursor->index_read_map(table->record[1],
+  if (!table->cursor->index_read_map(table->getUpdateRecord(),
                                    join->tmp_table_param.group_buff,
                                    HA_WHOLE_KEY,
                                    HA_READ_KEY_EXACT))
   {						/* Update old record */
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
-    if ((error= table->cursor->updateRecord(table->record[1],
-                                          table->record[0])))
+    if ((error= table->cursor->updateRecord(table->getUpdateRecord(),
+                                          table->getInsertRecord())))
     {
       table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
@@ -2909,11 +2909,11 @@ enum_nested_loop_state end_update(Join *join, JoinTable *, bool end_of_records)
        group=group->next,key_part++)
   {
     if (key_part->null_bit)
-      memcpy(table->record[0]+key_part->offset, group->buff, 1);
+      memcpy(table->getInsertRecord()+key_part->offset, group->buff, 1);
   }
   init_tmptable_sum_functions(join->sum_funcs);
   copy_funcs(join->tmp_table_param.items_to_copy);
-  if ((error=table->cursor->insertRecord(table->record[0])))
+  if ((error=table->cursor->insertRecord(table->getInsertRecord())))
   {
     my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
     return NESTED_LOOP_ERROR;        // Table is_full error
@@ -2940,7 +2940,7 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
   copy_fields(&join->tmp_table_param);		// Groups are copied twice.
   copy_funcs(join->tmp_table_param.items_to_copy);
 
-  if (!(error= table->cursor->insertRecord(table->record[0])))
+  if (!(error= table->cursor->insertRecord(table->getInsertRecord())))
     join->send_records++;			// New group
   else
   {
@@ -2949,15 +2949,15 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
       table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
-    if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
+    if (table->cursor->rnd_pos(table->getUpdateRecord(),table->cursor->dup_ref))
     {
       table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
-    if ((error= table->cursor->updateRecord(table->record[1],
-                                          table->record[0])))
+    if ((error= table->cursor->updateRecord(table->getUpdateRecord(),
+                                          table->getInsertRecord())))
     {
       table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
@@ -5404,7 +5404,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
   }
   Field **first_field=entry->getFields() + entry->getShare()->sizeFields() - field_count;
   offset= (field_count ?
-           entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->record[0]) : 0);
+           entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->getInsertRecord()) : 0);
   reclength= entry->getShare()->getRecordLength() - offset;
 
   entry->free_io_cache();				// Safety
@@ -5517,6 +5517,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     s->needed_reg.reset();
     table_vector[i]=s->table=table=tables->table;
     table->pos_in_table_list= tables;
+    assert(table->cursor);
     error= table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
     if (error)
     {
