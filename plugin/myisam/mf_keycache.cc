@@ -209,9 +209,6 @@ struct st_block_link
   KEYCACHE_CONDVAR *condvar; /* condition variable for 'no readers' event    */
 };
 
-KEY_CACHE dflt_key_cache_var;
-KEY_CACHE *dflt_key_cache= &dflt_key_cache_var;
-
 #define FLUSH_CACHE         2000            /* sort this many blocks at once */
 
 static int flush_all_key_blocks(KEY_CACHE *keycache);
@@ -3737,28 +3734,6 @@ static int flush_all_key_blocks(KEY_CACHE *keycache)
   return(0);
 }
 
-
-/*
-  Reset the counters of a key cache.
-
-  SYNOPSIS
-    reset_key_cache_counters()
-
-  DESCRIPTION
-   This procedure is used by process_key_caches() to reset the key_cache.
-
-  RETURN
-    0 on success (always because it can't fail)
-*/
-
-void reset_key_cache_counters()
-{
-  dflt_key_cache->global_blocks_changed= 0;   /* Key_blocks_not_flushed */
-  dflt_key_cache->global_cache_r_requests= 0; /* Key_read_requests */
-  dflt_key_cache->global_cache_read= 0;       /* Key_reads */
-  dflt_key_cache->global_cache_w_requests= 0; /* Key_write_requests */
-  dflt_key_cache->global_cache_write= 0;      /* Key_writes */
-}
 
 #if defined(KEYCACHE_TIMEOUT)
 

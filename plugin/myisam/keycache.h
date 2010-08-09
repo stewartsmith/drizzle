@@ -126,8 +126,6 @@ typedef struct st_key_cache
 } /* namespace drizzled */
 
 /* The default key cache */
-extern drizzled::KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
-
 extern int init_key_cache(drizzled::KEY_CACHE *keycache, uint32_t key_cache_block_size,
 			  size_t use_mem, uint32_t division_limit,
 			  uint32_t age_threshold);
@@ -148,8 +146,6 @@ extern int key_cache_write(drizzled::KEY_CACHE *keycache,
 extern int flush_key_blocks(drizzled::KEY_CACHE *keycache,
                             int file, enum flush_type type);
 extern void end_key_cache(drizzled::KEY_CACHE *keycache, bool cleanup);
-
-extern void reset_key_cache_counters();
 
 /*
   Next highest power of two

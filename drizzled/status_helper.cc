@@ -59,8 +59,6 @@ static st_show_var_func_container show_flushstatustime_cont_new= { &show_flushst
 
 static st_show_var_func_container show_connection_count_cont_new= { &show_connection_count_new };
 
-extern drizzled::KEY_CACHE dflt_key_cache_var, *dflt_key_cache;
-
 string StatusHelper::fillHelper(system_status_var *status_var, char *value, SHOW_TYPE show_type)
 {
   ostringstream oss;
@@ -120,14 +118,10 @@ string StatusHelper::fillHelper(system_status_var *status_var, char *value, SHOW
       break;
     }
   case SHOW_KEY_CACHE_LONG:
-    value= (char*) dflt_key_cache + (unsigned long)value;
-    oss << *(long*) value;
-    return_value= oss.str();
+    value= 0;
     break;
   case SHOW_KEY_CACHE_LONGLONG:
-    value= (char*) dflt_key_cache + (unsigned long)value;
-    oss << *(int64_t*) value;
-    return_value= oss.str();
+    value= 0;
     break;
   case SHOW_UNDEF:
     break;                                        // Return empty string
