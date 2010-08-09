@@ -1147,7 +1147,7 @@ static bool mysql_create_table_no_lock(THD *thd,
     goto err;
   }
 
-  pthread_mutex_lock(&LOCK_open);
+  LOCK_open.lock;
   if (!internal_tmp_table && !(create_info->options & HA_LEX_CREATE_TMP_TABLE))
   {
     if (!access(path,F_OK))
@@ -1261,7 +1261,7 @@ static bool mysql_create_table_no_lock(THD *thd,
    */
   error= FALSE;
 unlock_and_end:
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock;
 
 err:
   thd_proc_info(thd, "After create");

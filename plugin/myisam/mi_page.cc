@@ -28,7 +28,7 @@ unsigned char *_mi_fetch_keypage(register MI_INFO *info, MI_KEYDEF *keyinfo,
   unsigned char *tmp;
   uint32_t page_size;
 
-  tmp=(unsigned char*) key_cache_read(info->s->key_cache,
+  tmp=(unsigned char*) key_cache_read(info->s->getKeyCache(),
                              info->s->kfile, page, level, (unsigned char*) buff,
 			     (uint) keyinfo->block_length,
 			     (uint) keyinfo->block_length,
@@ -82,7 +82,7 @@ int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     length=keyinfo->block_length;
   }
 #endif
-  return((key_cache_write(info->s->key_cache,
+  return((key_cache_write(info->s->getKeyCache(),
                          info->s->kfile,page, level, (unsigned char*) buff,length,
 			 (uint) keyinfo->block_length,
 			 (int) ((info->lock_type != F_UNLCK) ||
@@ -102,7 +102,7 @@ int _mi_dispose(register MI_INFO *info, MI_KEYDEF *keyinfo, internal::my_off_t p
   info->s->state.key_del[keyinfo->block_size_index]= pos;
   mi_sizestore(buff,old_link);
   info->s->state.changed|= STATE_NOT_SORTED_PAGES;
-  return(key_cache_write(info->s->key_cache,
+  return(key_cache_write(info->s->getKeyCache(),
                               info->s->kfile, pos , level, buff,
 			      sizeof(buff),
 			      (uint) keyinfo->block_length,
@@ -131,7 +131,7 @@ internal::my_off_t _mi_new(register MI_INFO *info, MI_KEYDEF *keyinfo, int level
   }
   else
   {
-    if (!key_cache_read(info->s->key_cache,
+    if (!key_cache_read(info->s->getKeyCache(),
                         info->s->kfile, pos, level,
 			buff,
 			(uint) sizeof(buff),
