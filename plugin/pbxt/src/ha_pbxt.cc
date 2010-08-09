@@ -390,7 +390,7 @@ static void ha_cleanup_share(XTThreadPtr self, XTSharePtr share)
 	}
 
 	if (share->sh_ex_cond) {
-		thr_lock_delete(&share->sh_lock);
+		share->sh_lock.unlock();
 		xt_delete_cond(self, (xt_cond_type *) share->sh_ex_cond);
 		share->sh_ex_cond = NULL;
 	}
@@ -2315,7 +2315,7 @@ int ha_pbxt::open(const char *table_path, int XT_UNUSED(mode), uint XT_UNUSED(te
 
 		ha_open_share(self, pb_share);
 
-		thr_lock_data_init(&pb_share->sh_lock, &pb_lock);
+		pb_lock.init(&pb_share->sh_lock);
 		if (!(pb_open_tab = xt_db_open_table_using_tab(pb_share->sh_table, self)))
 			xt_throw(self);
 		pb_open_tab->ot_thread = self;
@@ -3948,6 +3948,7 @@ int ha_pbxt::info(uint flag)
 			stats.mean_rec_length = (ulong) ot->ot_rec_size;
 		}
 
+#if 0 // Commented out, I am pretty sure this will blow up on someone since the global share should be treated as being non-mutable
 		if (flag & HA_STATUS_CONST) {
 			ha_rows		rec_per_key;
 			XTIndexPtr	ind;
@@ -3991,7 +3992,7 @@ int ha_pbxt::info(uint flag)
 #ifdef MY_PTHREAD_FASTMUTEX
 				my_pthread_fastmutex_lock(&share->WHICH_MUTEX);
 #else
-				pthread_mutex_lock(&share->WHICH_MUTEX);
+                                share->lock();
 #endif
 
 #endif // SAFE_MUTEX
@@ -4027,7 +4028,7 @@ int ha_pbxt::info(uint flag)
 #ifdef MY_PTHREAD_FASTMUTEX
 				pthread_mutex_unlock(&share->WHICH_MUTEX.mutex);
 #else
-				pthread_mutex_unlock(&share->WHICH_MUTEX);
+                                share->unlock();
 #endif
 #endif
 	  		/*
@@ -4044,6 +4045,7 @@ int ha_pbxt::info(uint flag)
 				index_file_name = info.index_file_name;
 			*/
 		}
+#endif  // if(0)
 
  		if (flag & HA_STATUS_ERRKEY)
 	 		errkey = ot->ot_err_index_no;

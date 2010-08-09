@@ -40,12 +40,12 @@ table_cache_dictionary::TableDefinitionCache::Generator::Generator(drizzled::Fie
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false)
 {
-  pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+  LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 table_cache_dictionary::TableDefinitionCache::Generator::~Generator()
 {
-  pthread_mutex_unlock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+  LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool table_cache_dictionary::TableDefinitionCache::Generator::nextCore()

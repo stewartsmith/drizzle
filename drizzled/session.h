@@ -233,9 +233,6 @@ namespace drizzled
 
 void mark_transaction_to_rollback(Session *session, bool all);
 
-extern pthread_mutex_t LOCK_xid_cache;
-extern HASH xid_cache;
-
 /**
   Storage engine specific thread local data.
 */

@@ -147,9 +147,9 @@ pthread_handler_t signal_hand(void *)
     (Asked MontyW over the phone about this.) -Brian
 
   */
-  if (pthread_mutex_lock(&LOCK_thread_count) == 0)
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
-  (void) pthread_cond_broadcast(&COND_thread_count);
+  LOCK_thread_count.lock();
+  LOCK_thread_count.unlock();
+  COND_thread_count.notify_all();
 
   (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
   for (;;)
@@ -226,7 +226,8 @@ public:
     pthread_attr_setstacksize(&thr_attr, my_thread_stack_size);
 #endif
 
-    (void) pthread_mutex_lock(&LOCK_thread_count);
+    // @todo fix spurious wakeup issue
+    (void) LOCK_thread_count.lock();
     if ((error=pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -234,8 +235,8 @@ public:
                     error,errno);
       exit(1);
     }
-    (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-    pthread_mutex_unlock(&LOCK_thread_count);
+    pthread_cond_wait(COND_thread_count.native_handle(), LOCK_thread_count.native_handle());
+    LOCK_thread_count.unlock();
 
     (void) pthread_attr_destroy(&thr_attr);
   }
