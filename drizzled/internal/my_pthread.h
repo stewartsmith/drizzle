@@ -194,25 +194,6 @@ extern uint32_t thd_lib_detected;
         (pthread_mutex_lock((L)), (V)-=(C), pthread_mutex_unlock((L)))
 #endif
 
-/*
-  statistics_xxx functions are for non critical statistic,
-  maintained in global variables.
-  - race conditions can occur, making the result slightly inaccurate.
-  - the lock given is not honored.
-*/
-#define statistic_decrement(V,L) (V)--
-#define statistic_increment(V,L) (V)++
-#define statistic_add(V,C,L)     (V)+=(C)
-#define statistic_sub(V,C,L)     (V)-=(C)
-
-/*
-  No locking needed, the counter is owned by the thread
-*/
-#define status_var_increment(V) (V)++
-#define status_var_decrement(V) (V)--
-#define status_var_add(V,C)     (V)+=(C)
-#define status_var_sub(V,C)     (V)-=(C)
-
 } /* namespace internal */
 } /* namespace drizzled */
 
