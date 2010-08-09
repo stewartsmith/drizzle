@@ -541,8 +541,8 @@ void XTSystemTableShare::startUp(XTThreadPtr XT_UNUSED(self))
 void XTSystemTableShare::shutDown(XTThreadPtr XT_UNUSED(self))
 {
 	if (sys_lock_inited) {
-		thr_lock_delete(&sys_location_lock);
-		thr_lock_delete(&sys_statistics_lock);
+		sys_location_lock.deinit();
+		sys_statistics_lock.deinit();
 		sys_lock_inited = FALSE;
 	}
 }
