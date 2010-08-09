@@ -654,7 +654,7 @@ void Session::unlink(Session *session)
   session->cleanup();
 
   LOCK_thread_count.lock();
-  pthread_mutex_lock(&session->LOCK_delete);
+  session->lockForDelete();
 
   getSessionList().erase(remove(getSessionList().begin(),
                          getSessionList().end(),
