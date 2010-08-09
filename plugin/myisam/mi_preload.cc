@@ -67,7 +67,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
     }
   }
   else
-    block_length= share->key_cache->key_cache_block_size;
+    block_length= share->getKeyCache()->key_cache_block_size;
 
   length= info->preload_buff_size/block_length * block_length;
   set_if_bigger(length, block_length);
@@ -75,7 +75,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
   if (!(buff= (unsigned char *) malloc(length)))
     return(errno= HA_ERR_OUT_OF_MEM);
 
-  if (flush_key_blocks(share->key_cache,share->kfile, FLUSH_RELEASE))
+  if (flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_RELEASE))
     goto err;
 
   do
@@ -93,7 +93,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
       {
         if (mi_test_if_nod(buff))
         {
-          if (key_cache_insert(share->key_cache,
+          if (key_cache_insert(share->getKeyCache(),
                                share->kfile, pos, DFLT_INIT_HITS,
                               (unsigned char*) buff, block_length))
 	    goto err;
@@ -105,7 +105,7 @@ int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
     }
     else
     {
-      if (key_cache_insert(share->key_cache,
+      if (key_cache_insert(share->getKeyCache(),
                            share->kfile, pos, DFLT_INIT_HITS,
                            (unsigned char*) buff, length))
 	goto err;

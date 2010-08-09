@@ -267,7 +267,7 @@ void CurrentCommandsTool::Generator::setVectorIteratorsAndLock(uint32_t bucket_n
 
   scoreboard_vector_it= scoreboard_vector->begin();
   scoreboard_vector_end= scoreboard_vector->end();
-  pthread_rwlock_rdlock(current_lock);
+  current_lock->lock_shared();
 }
 
 bool CurrentCommandsTool::Generator::populate()
@@ -302,7 +302,7 @@ bool CurrentCommandsTool::Generator::populate()
     }
     
     ++vector_of_scoreboard_vectors_it;
-    pthread_rwlock_unlock(current_lock); 
+    current_lock->unlock_shared();
     ++current_bucket;
     if (vector_of_scoreboard_vectors_it != vector_of_scoreboard_vectors_end)
     {

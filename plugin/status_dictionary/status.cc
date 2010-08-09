@@ -95,7 +95,7 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
   std::ostringstream oss;
   std::string return_value;
 
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
 
   if (show_type == SHOW_SYS)
   {
@@ -106,7 +106,7 @@ void StateTool::Generator::fill(const std::string &name, char *value, SHOW_TYPE 
 
   return_value= StatusHelper::fillHelper(NULL, value, show_type); 
 
-  pthread_mutex_unlock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.unlock();
   push(name);
   if (return_value.length())
     push(return_value);

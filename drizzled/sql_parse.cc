@@ -54,6 +54,7 @@
 #include <algorithm>
 
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
 
 using namespace std;
 
@@ -182,7 +183,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   /* Increase id and count all other statements. */
   default:
-    statistic_increment(session->status_var.questions, &LOCK_status);
+    statistic_increment(session->status_var.questions, NULL);
     query_id.next();
   }
 
@@ -1417,7 +1418,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
-  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+  LOCK_thread_count.lock(); // For unlink from list
   
   for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
@@ -1428,7 +1429,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
       break;
     }
   }
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
   if (tmp)
   {
 

@@ -271,9 +271,9 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     }
     else
     {
-      pthread_mutex_lock(&LOCK_open); /* After deleting database, remove all cache entries related to schema */
+      LOCK_open.lock(); /* After deleting database, remove all cache entries related to schema */
       remove_db_from_cache(schema_identifier);
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
 
 
       error= -1;
@@ -356,7 +356,7 @@ static int rm_table_part2(Session *session, TableList *tables)
   int error= 0;
   bool foreign_key_error= false;
 
-  pthread_mutex_lock(&LOCK_open); /* Part 2 of rm a table */
+  LOCK_open.lock(); /* Part 2 of rm a table */
 
   /*
     If we have the table in the definition cache, we don't have to check the
@@ -377,7 +377,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   if (lock_table_names_exclusively(session, tables))
   {
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
     return 1;
   }
 
@@ -398,7 +398,7 @@ static int rm_table_part2(Session *session, TableList *tables)
     case -1:
       error= 1;
       unlock_table_names(tables, NULL);
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
       session->no_warnings_for_error= 0;
 
       return(error);
@@ -428,7 +428,7 @@ static int rm_table_part2(Session *session, TableList *tables)
       {
         error= -1;
         unlock_table_names(tables, NULL);
-        pthread_mutex_unlock(&LOCK_open);
+        LOCK_open.unlock();
         session->no_warnings_for_error= 0;
 
         return(error);
@@ -474,7 +474,7 @@ static int rm_table_part2(Session *session, TableList *tables)
     It's safe to unlock LOCK_open: we have an exclusive lock
     on the table name.
   */
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
   error= 0;
   if (wrong_tables.length())
   {
@@ -488,9 +488,9 @@ static int rm_table_part2(Session *session, TableList *tables)
     error= 1;
   }
 
-  pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
+  LOCK_open.lock(); /* final bit in rm table lock */
   unlock_table_names(tables, NULL);
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
   session->no_warnings_for_error= 0;
 
   return(error);

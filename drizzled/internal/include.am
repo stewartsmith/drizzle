@@ -25,7 +25,8 @@ noinst_HEADERS+= \
 		drizzled/internal/my_pthread.h \
 		drizzled/internal/my_static.h \
 		drizzled/internal/my_sys.h \
-		drizzled/internal/t_ctype.h
+		drizzled/internal/t_ctype.h \
+		drizzled/internal/thread_var.h
 
 drizzled_internal_libinternal_la_LIBADD= \
 					 ${BOOST_LIBS} \
