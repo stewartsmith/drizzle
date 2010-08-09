@@ -3196,7 +3196,7 @@ static DRIZZLE_SYSVAR_LONGLONG(log_files_in_group, innodb_log_files_in_group,
 static DRIZZLE_SYSVAR_ULONG(lock_wait_timeout, innobase_lock_wait_timeout,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.",
-  NULL, NULL, 50, 1, 1024 * 1024 * 1024, 0);
+  NULL, NULL, 5, 1, 1024 * 1024 * 1024, 0);
 
 static DRIZZLE_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -3331,7 +3331,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<int64_t>(&innodb_log_files_in_group)->default_value(2),
           N_("Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here."));
   context("lock-wait-timeout",
-          po::value<unsigned long>(&innobase_lock_wait_timeout)->default_value(50)->multitoken()->composing(),
+          po::value<unsigned long>(&innobase_lock_wait_timeout)->default_value(5),
           N_("Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout."));
   context("log-buffer-size",
         po::value<long>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
