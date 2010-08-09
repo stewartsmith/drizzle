@@ -2594,8 +2594,6 @@ sub mysqld_arguments ($$$$) {
     mtr_add_arg($args,
       "%s--innodb.data-file-path=ibdata1:20M:autoextend", $prefix);
 
-    mtr_add_arg($args, "%s--innodb.lock-wait-timeout=5", $prefix);
-
   }
   else
   {

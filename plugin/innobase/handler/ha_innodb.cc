@@ -1961,14 +1961,14 @@ innobase_init(
 
   if (vm.count("additional-mem-pool-size"))
   {
-    if (innobase_additional_mem_pool_size < 512*1024L || innobase_additional_mem_pool_size > (long)INT64_MAX)
+    if (innobase_additional_mem_pool_size < 512*1024L || innobase_additional_mem_pool_size > LONG_MAX)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for additional-mem-pool-size\n"));
       exit(-1);
     }
 
-    innobase_additional_mem_pool_size/= 1024*1024L;
-    innobase_additional_mem_pool_size*= 1024*1024L;
+    innobase_additional_mem_pool_size/= 1024;
+    innobase_additional_mem_pool_size*= 1024;
   }
 
   if (vm.count("commit-concurrency"))
@@ -2149,6 +2149,32 @@ innobase_init(
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read-ahead-threshold\n"));
       exit(-1);
     }
+  }
+
+  if (vm.count("support-xa"))
+  {
+    (SessionVAR(NULL,support_xa))= vm["support-xa"].as<bool>();
+  }
+
+  if (vm.count("table-locks"))
+  {
+    (SessionVAR(NULL,table_locks))= vm["table-locks"].as<bool>();
+  }
+
+  if (vm.count("strict-mode"))
+  {
+    (SessionVAR(NULL,strict_mode))= vm["strict-mode"].as<bool>();
+  }
+
+  if (vm.count("lock-wait-timeout"))
+  {
+    if (vm["strict-mode"].as<unsigned long>() < 1 || vm["strict-mode"].as<unsigned long>() > 1024*1024*1024)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for io-capacity\n"));
+      exit(-1);
+    }
+
+    (SessionVAR(NULL,strict_mode))= vm["strict-mode"].as<unsigned long>();
   }
 
   innodb_engine_ptr= actuall_engine_ptr= new InnobaseEngine(innobase_engine_name);
@@ -9036,6 +9062,18 @@ static void init_options(drizzled::module::option_context &context)
   context("read-ahead-threshold",
           po::value<unsigned long>(&srv_read_ahead_threshold)->default_value(56),
           "Number of pages that must be accessed sequentially for InnoDB to trigger a readahead.");
+  context("support-xa",
+          po::value<bool>()->default_value(true)->zero_tokens(),
+          "Enable InnoDB support for the XA two-phase commit");
+  context("table-locks",
+          po::value<bool>()->default_value(true)->zero_tokens(),
+          "Enable InnoDB locking in LOCK TABLES");
+  context("strict-mode",
+          po::value<bool>()->default_value(false)->zero_tokens(),
+          "Use strict mode when evaluating create options.");
+  context("lock-wait-timeout",
+          po::value<unsigned long>()->default_value(50),
+          "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.");
 }
 
 static drizzle_sys_var* innobase_system_variables[]= {
