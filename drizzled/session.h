@@ -54,6 +54,7 @@
 #include <drizzled/plugin/authorization.h>
 
 #include <boost/unordered_map.hpp>
+#include <boost/thread/mutex.hpp>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -395,7 +396,19 @@ public:
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
-  pthread_mutex_t LOCK_delete; /**< Locked before session is deleted */
+private:
+  boost::mutex LOCK_delete; /**< Locked before session is deleted */
+public:
+
+  void lockForDelete()
+  {
+    LOCK_delete.lock();
+  }
+
+  void unlockForDelete()
+  {
+    LOCK_delete.unlock();
+  }
 
   /**
    * A peek into the query string for the session. This is a best effort

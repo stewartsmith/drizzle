@@ -212,7 +212,6 @@ Session::Session(plugin::Client *client_arg) :
   scoreboard_index= -1;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
-  pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
   proc_info="login";
@@ -369,8 +368,7 @@ Session::~Session()
   plugin::EventObserver::deregisterSessionEvents(*this); 
 
   /* Ensure that no one is using Session */
-  pthread_mutex_unlock(&LOCK_delete);
-  pthread_mutex_destroy(&LOCK_delete);
+  LOCK_delete.unlock();
 }
 
 void Session::awake(Session::killed_state state_to_set)

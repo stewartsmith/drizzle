@@ -1424,7 +1424,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
     if ((*it)->thread_id == id)
     {
       tmp= *it;
-      pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
+      tmp->lockForDelete();
       break;
     }
   }
@@ -1438,7 +1438,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
       error= 0;
     }
 
-    pthread_mutex_unlock(&tmp->LOCK_delete);
+    tmp->unlockForDelete();
   }
   return(error);
 }
