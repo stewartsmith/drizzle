@@ -106,12 +106,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/module/option_map.h>
 #include <iostream>
 
-<<<<<<< TREE
 namespace po= boost::program_options;
-=======
 #include <boost/algorithm/string.hpp>
 
->>>>>>> MERGE-SOURCE
 using namespace std;
 using namespace google;
 using namespace drizzled;
@@ -2573,7 +2570,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_additional_mem_pool_size > LONG_MAX || innobase_additional_mem_pool_size < 512*1024L)
     {
-      cout << "Invalid value of additional-mem-pool-size";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of additional-mem-pool-size"));
       exit(-1);
     }
     innobase_additional_mem_pool_size/= 1024;
@@ -2584,7 +2581,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (srv_auto_extend_increment > 1000L || srv_auto_extend_increment < 1L)
     {
-      cout << "Invalid value of autoextend-increment";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of autoextend-increment"));
       exit(-1);
     }
   }
@@ -2593,7 +2590,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_buffer_pool_size > INT64_MAX || innobase_buffer_pool_size < 5*1024*1024L)
     {
-      cout << "Invalid value of buffer-pool-size";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of buffer-pool-size"));
       exit(-1);
     }
     innobase_buffer_pool_size/= 1024*1024L;
@@ -2604,7 +2601,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (srv_io_capacity > (unsigned long)~0L || srv_io_capacity < 100)
     {
-      cout << "Invalid value of io-capacity";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of io-capacity"));
       exit(-1);
     }
   }
@@ -2613,7 +2610,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_fast_shutdown > 2)
     {
-      cout << "Invalid value of fast-shutdown";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of fast-shutdown"));
       exit(-1);
     }
   }
@@ -2622,7 +2619,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (srv_flush_log_at_trx_commit > 2)
     {
-      cout << "Invalid value of flush-log-at-trx-commit";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of flush-log-at-trx-commit"));
       exit(-1);
     }
   }
@@ -2631,7 +2628,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_force_recovery > 6)
     {
-      cout << "Invalid value of force-recovery";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of force-recovery"));
       exit(-1);
     }
   }
@@ -2640,7 +2637,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innodb_log_file_size > INT64_MAX || innodb_log_file_size < 1*1024*1024L)
     {
-      cout << "Invalid value of log-file-size";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-file-size"));
       exit(-1);
     }
     innodb_log_file_size/= 1024*1024L;
@@ -2651,16 +2648,16 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innodb_log_files_in_group > 100 || innodb_log_files_in_group < 2)
     {
-      cout << "Invalid value of log-files-in-group";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-files-in-group"));
       exit(-1);
     }
   }
 
   if (vm.count("lock-wait-timeout"))
   { 
-    if (innobase_lock_wait_timeout > 1024*1024*1024)
+    if (innobase_lock_wait_timeout > 1024*1024*1024 || innobase_lock_wait_timeout < 1)
     {
-      cout << "Invalid value of lock-wait-timeout";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lock-wait-timeout"));
       exit(-1);
     }
   }
@@ -2669,7 +2666,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_log_buffer_size > LONG_MAX || innobase_log_buffer_size < 256*1024L)
     {
-      cout << "Invalid value of log-buffer-size";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of log-buffer-size"));
       exit(-1);
     }
     innobase_log_buffer_size/= 1024;
@@ -2680,7 +2677,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_lru_old_blocks_pct > 95 || innobase_lru_old_blocks_pct < 5)
     {
-      cout << "Invalid value of lru-old-blocks-pct";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-old-blocks-pct"));
       exit(-1);
     }
   }
@@ -2689,7 +2686,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_lru_block_access_recency > ULONG_MAX)
     {
-      cout << "Invalid value of lru-block-access-recency";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of lru-block-access-recency"));
       exit(-1);
     }
   }
@@ -2698,7 +2695,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (srv_max_buf_pool_modified_pct > 99)
     {
-      cout << "Invalid value of max-dirty-pages-pct";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-dirty-pages-pct"));
       exit(-1);
     }
   }
@@ -2707,7 +2704,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (srv_max_purge_lag > (unsigned long)~0L)
     {
-      cout << "Invalid value of max-purge-lag";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of max-purge-lag"));
       exit(-1);
     }
   }
@@ -2716,7 +2713,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_open_files > LONG_MAX || innobase_open_files < 10L)
     {
-      cout << "Invalid value of open-files";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of open-files"));
       exit(-1);
     }
   }
@@ -2725,7 +2722,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (innobase_read_io_threads > 64 || innobase_read_io_threads < 1)
     {
-      cout << "Invalid value of read-io-threads";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of read-io-threads"));
       exit(-1);
     }
   }
@@ -2734,7 +2731,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
   { 
     if (srv_n_spin_wait_rounds > (unsigned long)~0L)
     {
-      cout << "Invalid value of sync_spin_loops";
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of sync_spin_loops"));
       exit(-1);
     }
   }
@@ -3328,7 +3325,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>(),
           N_("Path to InnoDB log files."));
   context("log-file-size",
-          po::value<int64_t>(&innodb_log_file_size)->default_value(5*1024*1024L),
+          po::value<int64_t>(&innodb_log_file_size)->default_value(20*1024*1024L),
           N_("Size of each log file in a log group."));
   context("innodb-log-files-in-group",
           po::value<int64_t>(&innodb_log_files_in_group)->default_value(2),
