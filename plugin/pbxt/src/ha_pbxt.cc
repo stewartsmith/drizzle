@@ -390,7 +390,7 @@ static void ha_cleanup_share(XTThreadPtr self, XTSharePtr share)
 	}
 
 	if (share->sh_ex_cond) {
-		thr_lock_delete(&share->sh_lock);
+		share->sh_lock.unlock();
 		xt_delete_cond(self, (xt_cond_type *) share->sh_ex_cond);
 		share->sh_ex_cond = NULL;
 	}
@@ -2315,7 +2315,7 @@ int ha_pbxt::open(const char *table_path, int XT_UNUSED(mode), uint XT_UNUSED(te
 
 		ha_open_share(self, pb_share);
 
-		thr_lock_data_init(&pb_share->sh_lock, &pb_lock);
+		pb_lock.init(&pb_share->sh_lock);
 		if (!(pb_open_tab = xt_db_open_table_using_tab(pb_share->sh_table, self)))
 			xt_throw(self);
 		pb_open_tab->ot_thread = self;
