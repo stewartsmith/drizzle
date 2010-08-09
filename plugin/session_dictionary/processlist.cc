@@ -28,6 +28,7 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
 
 #include <set>
 
@@ -52,13 +53,13 @@ ProcesslistTool::Generator::Generator(Field **arg) :
 {
   now= time(NULL);
 
-  pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
   it= getSessionList().begin();
 }
 
 ProcesslistTool::Generator::~Generator()
 {
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
 }
 
 bool ProcesslistTool::Generator::populate()

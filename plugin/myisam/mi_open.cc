@@ -110,7 +110,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
-    share_buff.key_cache= dflt_key_cache;
+    share_buff.setKeyCache();
 
     if ((kfile=internal::my_open(name_buff,(open_mode=O_RDWR),MYF(0))) < 0)
     {
@@ -499,7 +499,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   memset(info.rec_buff, 0, mi_get_rec_buff_len(&info, info.rec_buff));
 
   *m_info=info;
-  thr_lock_data_init(&share->lock,&m_info->lock,(void*) m_info);
+  m_info->lock.init(&share->lock, (void*) m_info);
   myisam_open_list.push_front(m_info);
 
   pthread_mutex_unlock(&THR_LOCK_myisam);

@@ -26,6 +26,7 @@
 #include <event.h>
 #include "session_scheduler.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
 
 /* Prototype */
 extern "C"

@@ -462,7 +462,7 @@ void hp_free(HP_SHARE *share)
 {
   heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
-  thr_lock_delete(&share->lock);
+  share->lock.deinit();
   pthread_mutex_destroy(&share->intern_lock);
   if (share->keydef && share->keydef->seg)
     free(share->keydef->seg);
