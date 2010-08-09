@@ -69,7 +69,7 @@ void drizzled_end_thread_signal(int )
   Session *session=current_session;
   if (session)
   {
-    statistic_increment(killed_threads, &LOCK_status);
+    statistic_increment(killed_threads, NULL);
     session->scheduler->killSessionNow(session);
     DRIZZLE_CONNECTION_DONE(session->thread_id);
   }

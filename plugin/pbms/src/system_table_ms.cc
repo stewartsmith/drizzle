@@ -2300,7 +2300,7 @@ iOpenCount(0)
 
 MSSystemTableShare::~MSSystemTableShare()
 {
-	thr_lock_delete(&myThrLock);
+	myThrLock.unlock();
 	if (myTablePath) {
 		myTablePath->release();
 		myTablePath = NULL;
