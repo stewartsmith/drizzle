@@ -353,8 +353,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     my_message(ER_FILSORT_ABORT, ER(ER_FILSORT_ABORT),
                MYF(ME_ERROR+ME_WAITTANG));
   else
-    statistic_add(session->status_var.filesort_rows,
-		  (uint32_t) records, &LOCK_status);
+    statistic_add(session->status_var.filesort_rows, (uint32_t) records, NULL);
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
   DRIZZLE_FILESORT_DONE(error, records);

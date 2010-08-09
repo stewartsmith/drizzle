@@ -123,7 +123,7 @@ uint32_t cached_table_definitions(void)
 void TableShare::release(TableShare *share)
 {
   bool to_be_deleted= false;
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle);
 
   share->lock();
   if (!--share->ref_count)
@@ -280,7 +280,7 @@ TableShare *TableShare::getShareCreate(Session *session,
 */
 TableShare *TableShare::getShare(TableIdentifier &identifier)
 {
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle);
 
   TableDefinitionCache::iterator iter= table_def_cache.find(identifier.getKey());
   if (iter != table_def_cache.end())
