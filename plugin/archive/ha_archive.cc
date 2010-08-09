@@ -277,7 +277,7 @@ ArchiveShare::ArchiveShare(const char *name):
 
 ArchiveShare::~ArchiveShare()
 {
-  thr_lock_delete(&_lock);
+  _lock.deinit();
   pthread_mutex_destroy(&_mutex);
   /*
     We need to make sure we don't reset the crashed state.
@@ -473,7 +473,7 @@ int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 
   record_buffer.resize(table->getShare()->getRecordLength() + ARCHIVE_ROW_HEADER_SIZE);
 
-  thr_lock_data_init(&share->_lock, &lock);
+  lock.init(&share->_lock);
 
   return(rc);
 }
