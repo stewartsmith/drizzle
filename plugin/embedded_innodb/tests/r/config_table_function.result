@@ -46,7 +46,7 @@ status_file	BOOL
 sync_spin_loops	ULONG
 use_sys_malloc	BOOL
 version	TEXT
-SELECT * FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
+SELECT * FROM DATA_DICTIONARY.INNODB_CONFIGURATION where NAME NOT IN ("VERSION");
 NAME	TYPE	VALUE
 adaptive_hash_index	BOOL	true
 adaptive_flushing	BOOL	true
@@ -83,7 +83,6 @@ stats_sample_pages	ULINT	8
 status_file	BOOL	false
 sync_spin_loops	ULONG	30
 use_sys_malloc	BOOL	true
-version	TEXT	1.0.6.6750
 SELECT NAME,VALUE FROM DATA_DICTIONARY.INNODB_CONFIGURATION WHERE NAME IN ("data_file_path", "data_home_dir");
 NAME	VALUE
 data_file_path	NULL
