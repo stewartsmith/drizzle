@@ -219,8 +219,10 @@ static char*  innobase_unix_file_flush_method   = NULL;
 values */
 
 static ulong  innobase_fast_shutdown      = 1;
+#ifdef UNIV_LOG_ARCHIVE
 static my_bool  innobase_log_archive      = FALSE;
 static char*  innobase_log_arch_dir     = NULL;
+#endif /* UNIV_LOG_ARCHIVE */
 static my_bool  innobase_use_doublewrite    = TRUE;
 static my_bool  innobase_use_checksums      = TRUE;
 static my_bool  innobase_rollback_on_timeout    = FALSE;
@@ -1903,6 +1905,7 @@ innobase_init(
     innobase_unix_file_flush_method= NULL;
   }
 
+#ifdef UNIV_LOG_ARCHIVE
   if (vm.count("log-arch-dir"))
   {
     innobase_log_arch_dir= strdup(vm["log-arch-dir"].as<string>().c_str());
@@ -1912,6 +1915,7 @@ innobase_init(
   {
     innobase_log_arch_dir= NULL;
   }
+#endif /* UNIV_LOG_ARCHIVE */
 
   if (vm.count("max-dirty-pages-pct"))
   {
@@ -8960,12 +8964,14 @@ static void init_options(drizzled::module::option_context &context)
   context("flush-method",
           po::value<string>(),
           "With which method to flush data.");
+#ifdef UNIV_LOG_ARCHIVE
   context("log-arch-dir",
           po::value<string>(),
           "Where full logs should be archived.");
   context("log-archive",
           po::value<bool>(&innobase_log_archive)->default_value(false)->zero_tokens(),
           "Set to 1 if you want to have logs archived.");
+#endif /* UNIV_LOG_ARCHIVE */
   context("log-group-home-dir",
           po::value<string>(),
           "Path to InnoDB log files.");
