@@ -86,11 +86,6 @@ static enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
 uint64_t max_write_lock_count= ~(uint64_t) 0L;
 
-static inline pthread_cond_t *get_cond(void)
-{
-  return &my_thread_var->suspend;
-}
-
 /*
 ** For the future (now the thread specific cond is alloced by my_pthread.c)
 */
