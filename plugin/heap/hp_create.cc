@@ -251,11 +251,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
           keyinfo->get_key_length= hp_rb_key_length;
       }
     }
-    share= NULL;
-    if (!(share= (HP_SHARE*) malloc(sizeof(HP_SHARE))))
-      goto err;
-
-    memset(share, 0, sizeof(HP_SHARE));
+    share= new HP_SHARE;
 
     if (keys && !(share->keydef= (HP_KEYDEF*) malloc(keys*sizeof(HP_KEYDEF))))
       goto err;
@@ -449,14 +445,6 @@ int heap_delete_table(const char *name)
 }
 
 
-void heap_drop_table(HP_INFO *info)
-{
-  THR_LOCK_heap.lock();
-  heap_try_free(info->getShare());
-  THR_LOCK_heap.unlock();
-}
-
-
 void hp_free(HP_SHARE *share)
 {
   heap_share_list.remove(share);        /* If not internal table */
@@ -469,5 +457,5 @@ void hp_free(HP_SHARE *share)
     free(share->keydef);
   free(share->column_defs);
   free((unsigned char*) share->name);
-  free((unsigned char*) share);
+  delete share;
 }
