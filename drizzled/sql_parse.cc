@@ -183,7 +183,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   /* Increase id and count all other statements. */
   default:
-    statistic_increment(session->status_var.questions, NULL);
+    session->status_var.questions++;
     query_id.next();
   }
 
@@ -232,7 +232,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   case COM_SHUTDOWN:
   {
-    status_var_increment(session->status_var.com_other);
+    session->status_var.com_other++;
     session->my_eof();
     session->close_thread_tables();			// Free before kill
     kill_drizzle();
@@ -240,7 +240,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   }
   case COM_PING:
-    status_var_increment(session->status_var.com_other);
+    session->status_var.com_other++;
     session->my_ok();				// Tell client we are alive
     break;
   case COM_SLEEP:
