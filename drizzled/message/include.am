@@ -22,9 +22,7 @@ MESSAGE_LDADD= \
 	       ${LIBUUID} \
 	       ${LTLIBINTL} \
 	       $(GCOV_LIBS) \
-	       ${top_builddir}/gnulib/libgnu.la \
-		drizzled/libcharset.la \
-		drizzled/internal/libinternal.la
+	       ${top_builddir}/gnulib/libgnu.la
 
 MESSAGE_AM_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
 
@@ -42,7 +40,10 @@ lib_LTLIBRARIES += drizzled/message/libdrizzledmessage.la
 drizzled_message_libdrizzledmessage_la_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS} ${NO_WERROR}
 
 drizzled_message_libdrizzledmessage_la_SOURCES = drizzled/message/statement_transform.cc
-drizzled_message_libdrizzledmessage_la_LIBADD= ${LTLIBPROTOBUF} $(GCOV_LIBS)
+drizzled_message_libdrizzledmessage_la_LIBADD= ${LTLIBPROTOBUF} $(GCOV_LIBS) \
+					drizzled/libcharset.la \
+					drizzled/internal/libinternal.la
+
 
 nobase_dist_include_HEADERS+= drizzled/message/statement_transform.h
 
