@@ -1,5 +1,4 @@
 drop table if exists t1,t2;
-set @my_myisam_key_cache_size           =@@global.myisam_key_cache_size;
 set @my_max_connect_errors        =@@global.max_connect_errors;
 set @my_max_heap_table_size       =@@global.max_heap_table_size;
 set @my_max_join_size             =@@global.max_join_size;
@@ -320,35 +319,6 @@ set tmp_table_size=100;
 Warnings:
 Error	1292	Truncated incorrect tmp_table_size value: '100'
 set tx_isolation="READ-COMMITTED";
-create temporary table t1 (a int not null auto_increment, primary key(a));
-create temporary table t2 (a int not null auto_increment, primary key(a));
-insert into t1 values(null),(null),(null);
-insert into t2 values(null),(null),(null);
-set global myisam_key_cache_size=100000;
-Warnings:
-Error	1292	Truncated incorrect key_cache_size value: '100000'
-select @@myisam_key_cache_size;
-@@myisam_key_cache_size
-1048576
-select * from t1 where a=2;
-a
-2
-select * from t2 where a=3;
-a
-3
-check table t1,t2;
-Table	Op	Msg_type	Msg_text
-test.t1	check	status	OK
-test.t2	check	status	OK
-select max(a) +1, max(a) +2 into @xx,@yy from t1;
-drop table t1,t2;
-select @@xxxxxxxxxx;
-ERROR HY000: Unknown system variable 'xxxxxxxxxx'
-select 1;
-1
-1
-select @@session.myisam_key_cache_size;
-ERROR HY000: Variable 'myisam_key_cache_size' is a GLOBAL variable
 set global myisam_max_sort_file_size=4294967296;
 show global variables like 'myisam_max_sort_file_size';
 Variable_name	Value
@@ -357,16 +327,6 @@ select * from data_dictionary.global_variables where variable_name like 'myisam_
 VARIABLE_NAME	VARIABLE_VALUE
 myisam_max_sort_file_size	MAX_FILE_SIZE
 set global myisam_max_sort_file_size=default;
-set @@global.global.myisam_key_cache_size= 1;
-ERROR HY000: Unknown system variable 'global'
-set GLOBAL global.myisam_key_cache_size= 1;
-ERROR HY000: Unknown system variable 'global'
-SELECT @@global.global.myisam_key_cache_size;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'myisam_key_cache_size' at line 1
-SELECT @@global.session.myisam_key_cache_size;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'myisam_key_cache_size' at line 1
-SELECT @@global.local.myisam_key_cache_size;
-ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'myisam_key_cache_size' at line 1
 create temporary table t1 (
 c1 int,
 c2 int,
@@ -573,7 +533,6 @@ hostname	#
 End of 5.0 tests
 set global flush_time                =@my_flush_time;
 ERROR HY000: Unknown system variable 'flush_time'
-set global myisam_key_cache_size           =@my_myisam_key_cache_size;
 set global max_connect_errors        =@my_max_connect_errors;
 set global max_heap_table_size       =@my_max_heap_table_size;
 set global max_join_size             =@my_max_join_size;
