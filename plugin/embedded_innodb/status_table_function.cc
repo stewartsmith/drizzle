@@ -19,7 +19,11 @@
 #include "config.h"
 #include "drizzled/plugin/table_function.h"
 
-#include "embedded_innodb-1.0/innodb.h"
+#if defined(HAVE_HAILDB_H)
+# include <haildb.h>
+#else
+# include <embedded_innodb-1.0/innodb.h>
+#endif /* HAVE_HAILDB_H */
 
 #include "status_table_function.h"
 
