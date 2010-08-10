@@ -176,7 +176,7 @@ alter table t1 rename t2;
 alter table t2 rename t1, add c char(10) comment "no comment";
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-i	INTEGER	NO	0	NO	
+i	INTEGER	NO		NO	
 c	VARCHAR	YES		YES	
 drop table t1;
 create table t1 (a int, b int);

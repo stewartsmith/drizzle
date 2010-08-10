@@ -94,7 +94,8 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
   def= 0;
   char_length= length;
 
-  if (!(flags & (NO_DEFAULT_VALUE_FLAG )) &&
+  if (!(flags & (NO_DEFAULT_VALUE_FLAG)) &&
+      !(flags & AUTO_INCREMENT_FLAG) &&
       old_field->ptr && orig_field &&
       (sql_type != DRIZZLE_TYPE_TIMESTAMP ||                /* set def only if */
        old_field->getTable()->timestamp_field != old_field ||  /* timestamp field */
