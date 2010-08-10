@@ -2168,13 +2168,13 @@ innobase_init(
 
   if (vm.count("lock-wait-timeout"))
   {
-    if (vm["strict-mode"].as<unsigned long>() < 1 || vm["strict-mode"].as<unsigned long>() > 1024*1024*1024)
+    if (vm["lock-wait-timeout"].as<unsigned long>() < 1 || vm["lock-wait-timeout"].as<unsigned long>() > 1024*1024*1024)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for io-capacity\n"));
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for lock-wait-timeout\n"));
       exit(-1);
     }
 
-    (SessionVAR(NULL,strict_mode))= vm["strict-mode"].as<unsigned long>();
+    (SessionVAR(NULL,lock_wait_timeout))= vm["lock-wait-timeout"].as<unsigned long>();
   }
 
   innodb_engine_ptr= actuall_engine_ptr= new InnobaseEngine(innobase_engine_name);
@@ -8985,7 +8985,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<bool>(&innobase_stats_on_metadata)->default_value(true)->zero_tokens(),
           "Enable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)");
   context("stats-sample-pages",
-          po::value<unsigned long long>(&srv_stats_sample_pages)->default_value(8),
+          po::value<uint64_t>(&srv_stats_sample_pages)->default_value(8),
           "The number of index pages to sample when calculating statistics (default 8)");
   context("adaptive-hash-index",
           po::value<bool>(&btr_search_enabled)->default_value(true)->zero_tokens(),
@@ -9000,7 +9000,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<uint32_t>(&srv_auto_extend_increment)->default_value(8L),
           "Data file autoextend increment in megabytes");
   context("buffer-pool-size",
-          po::value<long long>(&innobase_buffer_pool_size)->default_value(8*1024*1024L),
+          po::value<int64_t>(&innobase_buffer_pool_size)->default_value(8*1024*1024L),
           "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.");
   context("commit-concurrency",
           po::value<unsigned long>(&innobase_commit_concurrency)->default_value(0),
@@ -9014,8 +9014,8 @@ static void init_options(drizzled::module::option_context &context)
   context("read-io-threads",
           po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
           "Number of background read I/O threads in InnoDB.");
-  context("read-io-threads",
-          po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
+  context("write-io-threads",
+          po::value<unsigned long>(&innobase_write_io_threads)->default_value(4),
           "Number of background write I/O threads in InnoDB.");
   context("force-recovery",
           po::value<long>(&innobase_force_recovery)->default_value(0),
@@ -9024,7 +9024,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<long>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-file-size",
-          po::value<long long>(&innobase_log_file_size)->default_value(20*1024*1024L),
+          po::value<int64_t>(&innobase_log_file_size)->default_value(20*1024*1024L),
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-files-in-group",
           po::value<long>(&innobase_log_files_in_group)->default_value(2),
