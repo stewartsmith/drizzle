@@ -10,7 +10,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice,
  *     this list of conditions and the following disclaimer in the documentation
  *     and/or other materials provided with the distribution.
- *   * Neither the name of Padraig O'Sullivan nor the names of its contributors
+ *   * Neither the name of Djellel Eddine Difallah nor the names of its contributors
  *     may be used to endorse or promote products derived from this software
  *     without specific prior written permission.
  *
@@ -47,6 +47,8 @@ private:
   pthread_mutex_t mutex;  
   drizzled::QueryCacheService queryCacheService;
   static memcache::Memcache* client;
+  static std::string memcached_servers;
+
 public:
   
   explicit MemcachedQueryCache(std::string name_arg, std::string servers_arg): drizzled::plugin::QueryCache(name_arg)
@@ -67,5 +69,15 @@ public:
   {
     return client;
   }
+  static const char *getServers()
+  {
+    return memcached_servers.c_str();
+  }
+  static void setServers(const char *server_list)
+  {
+    memcached_servers.assign(server_list);
+    getClient()->setServers(memcached_servers);
+  }
+
 };
 #endif /* MEMCACHED_QC_h */

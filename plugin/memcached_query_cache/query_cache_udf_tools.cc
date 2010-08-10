@@ -10,7 +10,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice,
  *     this list of conditions and the following disclaimer in the documentation
  *     and/or other materials provided with the distribution.
- *   * Neither the name of Padraig O'Sullivan nor the names of its contributors
+ *   * Neither the name of Djellel Eddine Difallah nor the names of its contributors
  *     may be used to endorse or promote products derived from this software
  *     without specific prior written permission.
  *
@@ -30,7 +30,7 @@
 /**
  * @file
  *
- * Implements the PRINT_QUERY_CACHE_META(key) UDF.
+ * Implements the PRINT_QUERY_CACHE_META(key) and QUERY_CACHE_FLUSH(expiry_time) UDFs.
  */
 
 #include "config.h"
@@ -43,8 +43,9 @@
 
 #include <fcntl.h>
 
-#include "print_query_cache_meta.h"
+#include "query_cache_udf_tools.h"
 #include "query_cache_service.h"
+#include "memcached_qc.h"
 
 #include <drizzled/message/resultset.pb.h>
 #include <google/protobuf/io/zero_copy_stream.h>
@@ -107,4 +108,33 @@ String *PrintQueryCacheMetaFunction::val_str(String *str)
   strncpy(str->ptr(), resultset_text.c_str(), resultset_text.length());
 
   return str;
+}
+
+int64_t QueryCacheFlushFunction::val_int()
+{
+  bool res;
+  time_t expiration= 0;
+  null_value= false;
+
+  if ((arg_count != 0 && arg_count != 1) ||!MemcachedQueryCache::getClient())
+  {
+    return 0;
+  }
+
+  if (arg_count == 1)
+  {
+    String *tmp_exp= args[0]->val_str(&value);
+
+    expiration= (time_t)atoi(tmp_exp->c_ptr());
+  }
+
+  res= MemcachedQueryCache::getClient()->flush(expiration);
+  QueryCacheService::cache.clear();
+
+  if (!res)
+  {
+    return 0;
+  }
+
+  return 1;
 }

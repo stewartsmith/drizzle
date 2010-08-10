@@ -10,7 +10,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice,
  *     this list of conditions and the following disclaimer in the documentation
  *     and/or other materials provided with the distribution.
- *   * Neither the name of Padraig O'Sullivan nor the names of its contributors
+ *   * Neither the name of Djellel Eddine Difallah nor the names of its contributors
  *     may be used to endorse or promote products derived from this software
  *     without specific prior written permission.
  *
@@ -63,6 +63,37 @@ public:
   {
     return (n == 1);
   }
+};
+class QueryCacheFlushFunction: public drizzled::Item_int_func
+{
+  drizzled::String value;
+  drizzled::String failure_buff;
+public:
+  QueryCacheFlushFunction()
+    :
+      Item_int_func(),
+      failure_buff("0", &drizzled::my_charset_bin)
+  {}
+
+  const char *func_name() const
+  {
+    return "memc_add";
+  }
+
+  int64_t val_int();
+
+  void fix_length_and_dec()
+  {
+    max_length= 32;
+  }
+/*
+ * memc_add takes 2 or 3 arguments
+*/
+  bool check_argument_count(int n)
+  {
+    return ((n == 1)||(n == 0));
+  }
+
 };
 
 #endif /* PLUGIN_MEMCACHED_QUERY_CACHE_PRINT_CACHE_META_H */

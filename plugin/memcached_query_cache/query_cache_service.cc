@@ -10,7 +10,7 @@
  *   * Redistributions in binary form must reproduce the above copyright notice,
  *     this list of conditions and the following disclaimer in the documentation
  *     and/or other materials provided with the distribution.
- *   * Neither the name of Padraig O'Sullivan nor the names of its contributors
+ *   * Neither the name of Djellel Eddine Difallah nor the names of its contributors
  *     may be used to endorse or promote products derived from this software
  *     without specific prior written permission.
  *
@@ -79,7 +79,7 @@ void QueryCacheService::setResultsetHeader(message::Resultset &resultset,
   } 
 
   /* Extract the returned fields 
-   * and add the fieldeta to the SelectHeader
+   * and add the field data to the SelectHeader
    */
   List_iterator_fast<Item> it(in_session->lex->select_lex.item_list);
   Item *item;
