@@ -26,9 +26,10 @@ using namespace std;
 int heap_close(HP_INFO *info)
 {
   int tmp;
-  pthread_mutex_lock(&THR_LOCK_heap);
+  THR_LOCK_heap.lock();
   tmp= hp_close(info);
-  pthread_mutex_unlock(&THR_LOCK_heap);
+  THR_LOCK_heap.unlock();
+
   return(tmp);
 }
 
