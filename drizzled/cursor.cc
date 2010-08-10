@@ -194,7 +194,7 @@ bool Cursor::has_transactions()
 
 void Cursor::ha_statistic_increment(uint64_t system_status_var::*offset) const
 {
-  status_var_increment(table->in_use->status_var.*offset);
+  (table->in_use->status_var.*offset)++;
 }
 
 void **Cursor::ha_data(Session *session) const

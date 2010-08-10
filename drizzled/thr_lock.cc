@@ -163,7 +163,7 @@ static enum enum_thr_lock_result wait_for_lock(struct st_lock_list *wait, THR_LO
     wait->last= &data->next;
   }
 
-  status_var_increment(current_global_counters.locks_waited);
+  current_global_counters.locks_waited++;
 
   /* Set up control struct to allow others to abort locks */
   thread_var->current_mutex= data->lock->native_handle();
@@ -265,7 +265,7 @@ static enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *o
 	lock->read.last= &data->next;
 	if (lock_type == TL_READ_NO_INSERT)
 	  lock->read_no_write_count++;
-        status_var_increment(current_global_counters.locks_immediate);
+        current_global_counters.locks_immediate++;
 	goto end;
       }
       if (lock->write.data->type == TL_WRITE_ONLY)
@@ -285,7 +285,7 @@ static enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *o
       lock->read.last= &data->next;
       if (lock_type == TL_READ_NO_INSERT)
 	lock->read_no_write_count++;
-      status_var_increment(current_global_counters.locks_immediate);
+      current_global_counters.locks_immediate++;
       goto end;
     }
     /*
@@ -332,7 +332,7 @@ static enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *o
 	(*lock->write.last)=data;	/* Add to running fifo */
 	data->prev=lock->write.last;
 	lock->write.last= &data->next;
-        status_var_increment(current_global_counters.locks_immediate);
+        current_global_counters.locks_immediate++;
 	goto end;
       }
     }
@@ -355,7 +355,7 @@ static enum enum_thr_lock_result thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *o
 	  (*lock->write.last)=data;		/* Add as current write lock */
 	  data->prev=lock->write.last;
 	  lock->write.last= &data->next;
-          status_var_increment(current_global_counters.locks_immediate);
+          current_global_counters.locks_immediate++;
 	  goto end;
 	}
       }
