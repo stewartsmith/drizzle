@@ -54,6 +54,7 @@
 #include <algorithm>
 
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
 
 using namespace std;
 

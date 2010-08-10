@@ -2849,7 +2849,7 @@ ha_innobase::doOpen(const TableIdentifier &identifier,
   stats.block_size = 16 * 1024;
 
   /* Init table lock structure */
-  thr_lock_data_init(&share->lock, &lock);
+  lock.init(&share->lock);
 
   if (prebuilt->table) {
     /* We update the highest file format in the system table
@@ -7292,7 +7292,7 @@ static void free_share(INNOBASE_SHARE* share)
 
     HASH_DELETE(INNOBASE_SHARE, table_name_hash,
           innobase_open_tables, fold, share);
-    thr_lock_delete(&share->lock);
+    share->lock.deinit();
     free(share);
 
     /* TODO: invoke HASH_MIGRATE if innobase_open_tables

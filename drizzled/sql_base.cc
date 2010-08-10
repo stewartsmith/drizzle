@@ -31,6 +31,7 @@
 # endif
 #endif
 #include "drizzled/internal/my_pthread.h"
+#include "drizzled/internal/thread_var.h"
 
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>

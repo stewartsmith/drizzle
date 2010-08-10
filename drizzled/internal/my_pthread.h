@@ -113,22 +113,6 @@ extern const char *my_thread_name(void);
 */
 #define DEFAULT_THREAD_STACK	(256*INT32_C(1024))
 
-struct st_my_thread_var
-{
-  pthread_cond_t suspend;
-  pthread_mutex_t mutex;
-  pthread_mutex_t * volatile current_mutex;
-  pthread_cond_t * volatile current_cond;
-  pthread_t pthread_self;
-  uint64_t id;
-  int volatile abort;
-  bool init;
-  struct st_my_thread_var *next,**prev;
-  void *opt_info;
-};
-
-extern struct st_my_thread_var *_my_thread_var(void);
-#define my_thread_var (::drizzled::internal::_my_thread_var())
 /*
   Keep track of shutdown,signal, and main threads so that my_end() will not
   report errors with them
