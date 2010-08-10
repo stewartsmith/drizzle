@@ -452,9 +452,8 @@ int heap_delete_table(const char *name)
 void heap_drop_table(HP_INFO *info)
 {
   THR_LOCK_heap.lock();
-  heap_try_free(info->s);
+  heap_try_free(info->getShare());
   THR_LOCK_heap.unlock();
-  return;
 }
 
 
@@ -471,5 +470,4 @@ void hp_free(HP_SHARE *share)
   free(share->column_defs);
   free((unsigned char*) share->name);
   free((unsigned char*) share);
-  return;
 }

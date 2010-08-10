@@ -34,7 +34,7 @@ int heap_write(HP_INFO *info, const unsigned char *record)
 {
   HP_KEYDEF *keydef, *end;
   unsigned char *pos;
-  HP_SHARE *share=info->s;
+  HP_SHARE *share=info->getShare();
   uint32_t rec_length, chunk_count;
 
   if ((share->records >= share->max_records && share->max_records) ||
@@ -121,7 +121,7 @@ int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *reco
     errno= HA_ERR_FOUND_DUPP_KEY;
     return 1;
   }
-  info->s->index_length+= (keyinfo->rb_tree.allocated-old_allocated);
+  info->getShare()->index_length+= (keyinfo->rb_tree.allocated-old_allocated);
   return 0;
 }
 
@@ -153,7 +153,7 @@ int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *reco
 int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 		 const unsigned char *record, unsigned char *recpos)
 {
-  HP_SHARE *share = info->s;
+  HP_SHARE *share = info->getShare();
   int flag;
   uint32_t halfbuff,hashnr,first_index;
   unsigned char *ptr_to_rec= NULL,*ptr_to_rec2= NULL;

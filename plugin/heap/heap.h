@@ -181,7 +181,20 @@ struct st_hp_hash_info;
 
 typedef struct st_heap_info
 {
+private:
   HP_SHARE *s;
+public:
+
+  HP_SHARE *getShare()
+  {
+    return s;
+  }
+
+  void setShare(HP_SHARE *s_arg)
+  {
+    s= s_arg;
+  }
+
   unsigned char *current_ptr;
   struct st_hp_hash_info *current_hash_ptr;
   uint32_t current_record,next_block;

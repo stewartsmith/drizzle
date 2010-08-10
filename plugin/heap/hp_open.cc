@@ -40,7 +40,7 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
   memset(info, 0, sizeof(HP_INFO) + 2 * share->max_key_length);
   share->open_count++;
   info->lock.init(&share->lock);
-  info->s= share;
+  info->setShare(share);
   info->lastkey= (unsigned char*) (info + 1);
   info->recbuf= (unsigned char*) (info->lastkey + share->max_key_length);
   info->mode= mode;

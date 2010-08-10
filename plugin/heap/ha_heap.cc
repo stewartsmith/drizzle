@@ -224,7 +224,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
       ha_heap::info(), which is always called before key statistics are
       used.
     */
-    key_stat_version= file->s->key_stat_version - 1;
+    key_stat_version= file->getShare()->key_stat_version - 1;
   }
   return (file ? 0 : 1);
 }
@@ -252,7 +252,7 @@ Cursor *ha_heap::clone(memory::Root *)
                              table->getShare()->getTableName(),
                              table->getShare()->getPath());
 
-  if (new_handler && !new_handler->ha_open(identifier, table, file->s->name, table->db_stat,
+  if (new_handler && !new_handler->ha_open(identifier, table, file->getShare()->name, table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
@@ -306,8 +306,8 @@ void ha_heap::update_key_stats()
         key->rec_per_key[key->key_parts-1]= 1;
       else
       {
-        ha_rows hash_buckets= file->s->keydef[i].hash_buckets;
-        uint32_t no_records= hash_buckets ? (uint) (file->s->records/hash_buckets) : 2;
+        ha_rows hash_buckets= file->getShare()->keydef[i].hash_buckets;
+        uint32_t no_records= hash_buckets ? (uint) (file->getShare()->records/hash_buckets) : 2;
         if (no_records < 2)
           no_records= 2;
         key->rec_per_key[key->key_parts-1]= no_records;
@@ -316,7 +316,7 @@ void ha_heap::update_key_stats()
   }
   records_changed= 0;
   /* At the end of update_key_stats() we can proudly claim they are OK. */
-  key_stat_version= file->s->key_stat_version;
+  key_stat_version= file->getShare()->key_stat_version;
 }
 
 
@@ -330,13 +330,13 @@ int ha_heap::doInsertRecord(unsigned char * buf)
   }
   res= heap_write(file,buf);
   if (!res && (++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
-               file->s->records))
+               file->getShare()->records))
   {
     /*
        We can perform this safely since only one writer at the time is
        allowed on the table.
     */
-    file->s->key_stat_version++;
+    file->getShare()->key_stat_version++;
   }
   return res;
 }
@@ -347,13 +347,13 @@ int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_
 
   res= heap_update(file,old_data,new_data);
   if (!res && ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
-              file->s->records)
+              file->getShare()->records)
   {
     /*
        We can perform this safely since only one writer at the time is
        allowed on the table.
     */
-    file->s->key_stat_version++;
+    file->getShare()->key_stat_version++;
   }
   return res;
 }
@@ -364,13 +364,13 @@ int ha_heap::doDeleteRecord(const unsigned char * buf)
 
   res= heap_delete(file,buf);
   if (!res && table->getShare()->getType() == message::Table::STANDARD &&
-      ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)
+      ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->getShare()->records)
   {
     /*
        We can perform this safely since only one writer at the time is
        allowed on the table.
     */
-    file->s->key_stat_version++;
+    file->getShare()->key_stat_version++;
   }
   return res;
 }
@@ -492,7 +492,7 @@ int ha_heap::info(uint32_t flag)
     have to update the key statistics. Hoping that a table lock is now
     in place.
   */
-  if (key_stat_version != file->s->key_stat_version)
+  if (key_stat_version != file->getShare()->key_stat_version)
     update_key_stats();
   return 0;
 }
@@ -518,7 +518,7 @@ int ha_heap::delete_all_rows()
        We can perform this safely since only one writer at the time is
        allowed on the table.
     */
-    file->s->key_stat_version++;
+    file->getShare()->key_stat_version++;
   }
   return 0;
 }
@@ -632,7 +632,7 @@ int ha_heap::indexes_are_disabled(void)
 
 void ha_heap::drop_table(const char *)
 {
-  file->s->delete_on_close= 1;
+  file->getShare()->delete_on_close= 1;
   close();
 }
 
@@ -662,7 +662,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
     return stats.records;
 
   /* Assert that info() did run. We need current statistics here. */
-  assert(key_stat_version == file->s->key_stat_version);
+  assert(key_stat_version == file->getShare()->key_stat_version);
   return key->rec_per_key[key->key_parts-1];
 }
 

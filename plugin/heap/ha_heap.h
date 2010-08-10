@@ -91,7 +91,7 @@ public:
   int cmp_ref(const unsigned char *ref1, const unsigned char *ref2);
   int reset_auto_increment(uint64_t value)
   {
-    file->s->auto_increment= value;
+    file->getShare()->auto_increment= value;
     return 0;
   }
 private:
