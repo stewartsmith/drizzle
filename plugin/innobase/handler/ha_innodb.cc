@@ -8945,7 +8945,7 @@ static void init_options(drizzled::module::option_context &context)
           "Number of IOPs the server can do. Tunes the background IO rate");
   context("fast-shutdown",
           po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1), 
-          "Speeds up the shutdown process of the InnoDB storage engine. Possible values are(faster) or 2 (fastest - crash-like).");
+          "Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like).");
   context("file-per-table",
           po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
           "Stores each InnoDB table to an .ibd file in the database dir.");
