@@ -70,7 +70,7 @@ bool optimizer::Scan::getStats(Table *table,
     join_tab->read_first_record= join_init_quick_read_record;
     if (statistics)
     {
-      status_var_increment(join->session->status_var.select_range_check_count);
+      join->session->status_var.select_range_check_count++;
     }
   }
   else
@@ -82,7 +82,7 @@ bool optimizer::Scan::getStats(Table *table,
       {
         if (statistics)
         {
-          status_var_increment(join->session->status_var.select_range_count);
+          join->session->status_var.select_range_count++;
         }
       }
       else
@@ -90,7 +90,7 @@ bool optimizer::Scan::getStats(Table *table,
         join->session->server_status|= SERVER_QUERY_NO_INDEX_USED;
         if (statistics)
         {
-          status_var_increment(join->session->status_var.select_scan_count);
+          join->session->status_var.select_scan_count++;
         }
       }
     }
@@ -100,7 +100,7 @@ bool optimizer::Scan::getStats(Table *table,
       {
         if (statistics)
         {
-          status_var_increment(join->session->status_var.select_full_range_join_count);
+          join->session->status_var.select_full_range_join_count++;
         }
       }
       else
@@ -108,7 +108,7 @@ bool optimizer::Scan::getStats(Table *table,
         join->session->server_status|= SERVER_QUERY_NO_INDEX_USED;
         if (statistics)
         {
-          status_var_increment(join->session->status_var.select_full_join_count);
+          join->session->status_var.select_full_join_count++;
         }
       }
     }

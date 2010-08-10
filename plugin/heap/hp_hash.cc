@@ -26,6 +26,7 @@
 #include <cassert>
 
 using namespace drizzled;
+using namespace std;
 
 static uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const unsigned char *key);
 static int hp_key_cmp(HP_KEYDEF *keydef, const unsigned char *rec, const unsigned char *key);
