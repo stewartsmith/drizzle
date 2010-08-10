@@ -37,6 +37,8 @@
 #include "drizzled/named_savepoint.h"
 #include "drizzled/transaction_context.h"
 
+#include "drizzled/my_hash.h"
+
 #include <netdb.h>
 #include <map>
 #include <string>
@@ -50,6 +52,9 @@
 #include <drizzled/diagnostics_area.h>
 
 #include <drizzled/plugin/authorization.h>
+
+#include <boost/unordered_map.hpp>
+#include <boost/thread/mutex.hpp>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -230,9 +235,6 @@ namespace drizzled
 
 void mark_transaction_to_rollback(Session *session, bool all);
 
-extern pthread_mutex_t LOCK_xid_cache;
-extern HASH xid_cache;
-
 /**
   Storage engine specific thread local data.
 */
@@ -382,14 +384,30 @@ public:
   plugin::Client *client; /**< Pointer to client object */
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
-  HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
+private:
+  typedef boost::unordered_map< std::string, user_var_entry *, util::insensitive_hash, util::insensitive_equal_to> UserVars;
+  typedef std::pair< UserVars::iterator, UserVars::iterator > UserVarsRange;
+  UserVars user_vars; /**< Hash of user variables defined during the session's lifetime */
+
+public:
   struct system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
-  struct system_status_var *initial_status_var; /* used by show status */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
-  pthread_mutex_t LOCK_delete; /**< Locked before session is deleted */
+private:
+  boost::mutex LOCK_delete; /**< Locked before session is deleted */
+public:
+
+  void lockForDelete()
+  {
+    LOCK_delete.lock();
+  }
+
+  void unlockForDelete()
+  {
+    LOCK_delete.unlock();
+  }
 
   /**
    * A peek into the query string for the session. This is a best effort
@@ -1432,12 +1450,10 @@ public:
   void close_cached_table(Table *table);
 
   /* Create a lock in the cache */
-  Table *table_cache_insert_placeholder(const char *db_name, const char *table_name, const char *key, uint32_t key_length);
+  Table *table_cache_insert_placeholder(const char *db_name, const char *table_name);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
-  bool lock_table_name_if_not_cached(const char *db,
-                                     const char *table_name, Table **table);
 
-  typedef unordered_map<std::string, message::Table> TableMessageCache;
+  typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
   TableMessageCache table_message_cache;
 
   bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);

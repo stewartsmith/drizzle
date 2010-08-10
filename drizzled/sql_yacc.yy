@@ -358,7 +358,6 @@ using namespace drizzled;
   enum drizzled::sql_var_t var_type;
   drizzled::Key::Keytype key_type;
   enum drizzled::ha_key_alg key_alg;
-  enum drizzled::row_type row_type;
   enum drizzled::column_format_type column_format_type;
   enum drizzled::ha_rkey_function ha_rkey_mode;
   enum drizzled::enum_tx_isolation tx_isolation;
@@ -2124,7 +2123,6 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TableList*) lex->select_lex.table_list.first)->db;
-            statement->create_info.row_type= ROW_TYPE_NOT_USED;
             statement->alter_info.build_method= $2;
           }
           alter_commands
@@ -4776,6 +4774,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TABLES opt_db show_wild
            {
@@ -4833,6 +4834,9 @@ show_param:
 
              if (session->add_item_to_list(my_field))
                DRIZZLE_YYABORT;
+
+              if (session->add_order_to_list(my_field, true))
+                DRIZZLE_YYABORT;
            }
          | TEMPORARY_SYM TABLES show_wild
            {

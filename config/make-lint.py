@@ -126,7 +126,8 @@ def should_lint(path):
     # Let's not lint emacs autosave files
     if (os.path.split(path)[-1].startswith('.#')):
         return False
-    for exclude in ['innobase', 'pbxt', 'gnulib', '.pb.', 'bak-header', 'm4',
+    # We need to figure out how to better express this
+    for exclude in ['innobase', 'pbxt', 'pbms', 'gnulib', '.pb.', 'bak-header', 'm4',
         'sql_yacc', 'gperf', 'drizzled/probes.h',
         'drizzled/function_hash.h', 'drizzled/symbol_hash.h',
         'util/dummy.cc', 'drizzled/sql_yacc.h', 'drizzled/configmake.h',

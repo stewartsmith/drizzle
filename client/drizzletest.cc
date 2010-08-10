@@ -60,7 +60,7 @@
 #include PCRE_HEADER
 
 #include <stdarg.h>
-#include <drizzled/unordered_map.h>
+#include <boost/unordered_map.hpp>
 
 #include "errname.h"
 
@@ -215,7 +215,7 @@ typedef struct st_var
 VAR var_reg[10];
 
 
-unordered_map<string, VAR *> var_hash;
+boost::unordered_map<string, VAR *> var_hash;
 
 struct st_connection
 {
@@ -1709,7 +1709,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    unordered_map<string, VAR*>::iterator iter=
+    boost::unordered_map<string, VAR*>::iterator iter=
       var_hash.find(save_var_name_str);
     if (iter == var_hash.end())
     {
@@ -1747,7 +1747,7 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  unordered_map<string, VAR*>::iterator iter=
+  boost::unordered_map<string, VAR*>::iterator iter=
     var_hash.find(var_name);
   if (iter != var_hash.end())
     return (*iter).second;
@@ -5380,7 +5380,7 @@ static void check_sleep(int32_t in_opt_sleep)
 {
   if (in_opt_sleep < -1)
   {
-    cout<<N_("Error: Invalid Value for opt_sleep"); 
+    cout << N_("Error: Invalid Value for opt_sleep"); 
     exit(-1);
   }
   opt_sleep= in_opt_sleep;
@@ -5397,6 +5397,8 @@ try
   struct stat res_info;
 
   TMPDIR[0]= 0;
+
+  internal::my_init();
 
   po::options_description commandline_options("Options used only in command line");
   commandline_options.add_options()
@@ -5474,6 +5476,8 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
 
+  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
+
   po::variables_map vm;
 
   po::store(po::command_line_parser(argc, argv).options(long_options).
@@ -5481,15 +5485,21 @@ try
 
   if (! vm["no-defaults"].as<bool>())
   {
-    ifstream user_test_ifs("~/.drizzle/drizzletest.cnf");
+    std::string user_config_dir_test(user_config_dir);
+    user_config_dir_test.append("/drizzle/drizzletest.cnf"); 
+
+    std::string user_config_dir_client(user_config_dir);
+    user_config_dir_client.append("/drizzle/client.cnf");
+
+    ifstream user_test_ifs(user_config_dir_test.c_str());
     po::store(parse_config_file(user_test_ifs, test_options), vm);
- 
+
+    ifstream user_client_ifs(user_config_dir_client.c_str());
+    po::store(parse_config_file(user_client_ifs, client_options), vm);
+
     ifstream system_test_ifs(system_config_dir_test.c_str());
     store(parse_config_file(system_test_ifs, test_options), vm);
 
-    ifstream user_client_ifs("~/.drizzle/client.cnf");
-    po::store(parse_config_file(user_client_ifs, client_options), vm);
- 
     ifstream system_client_ifs(system_config_dir_client.c_str());
     po::store(parse_config_file(system_client_ifs, client_options), vm);
   }

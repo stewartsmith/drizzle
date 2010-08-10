@@ -107,7 +107,7 @@ void Field_blob::store_length(unsigned char *i_ptr,
 void Field_blob::store_length(unsigned char *i_ptr, uint32_t i_packlength,
                   uint32_t i_number)
 {
-  store_length(i_ptr, i_packlength, i_number, table->getShare()->db_low_byte_first);
+  store_length(i_ptr, i_packlength, i_number, getTable()->getShare()->db_low_byte_first);
 }
 
 
@@ -160,13 +160,13 @@ uint32_t Field_blob::get_packed_size(const unsigned char *ptr_arg,
 uint32_t Field_blob::get_length(uint32_t row_offset)
 {
   return get_length(ptr+row_offset, this->packlength,
-                    table->getShare()->db_low_byte_first);
+                    getTable()->getShare()->db_low_byte_first);
 }
 
 
 uint32_t Field_blob::get_length(const unsigned char *ptr_arg)
 {
-  return get_length(ptr_arg, this->packlength, table->getShare()->db_low_byte_first);
+  return get_length(ptr_arg, this->packlength, getTable()->getShare()->db_low_byte_first);
 }
 
 
@@ -531,7 +531,7 @@ void Field_blob::sort_string(unsigned char *to,uint32_t length)
 
 uint32_t Field_blob::pack_length() const
 {
-  return (uint32_t) (packlength+table->getShare()->blob_ptr_size);
+  return (uint32_t) (packlength + getTable()->getShare()->blob_ptr_size);
 }
 
 void Field_blob::sql_type(String &res) const
@@ -594,7 +594,7 @@ const unsigned char *Field_blob::unpack(unsigned char *,
   uint32_t const master_packlength=
     param_data > 0 ? param_data & 0xFF : packlength;
   uint32_t const length= get_length(from, master_packlength, low_byte_first);
-  table->setWriteSet(field_index);
+  getTable()->setWriteSet(field_index);
   store(reinterpret_cast<const char*>(from) + master_packlength,
         length, field_charset);
   return(from + master_packlength + length);

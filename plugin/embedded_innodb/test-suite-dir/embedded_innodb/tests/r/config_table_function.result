@@ -1,8 +1,8 @@
 SHOW CREATE TABLE DATA_DICTIONARY.INNODB_CONFIGURATION;
 Table	Create Table
 INNODB_CONFIGURATION	CREATE TABLE `innodb_configuration` (
-  `NAME` varchar(256) NOT NULL DEFAULT '',
-  `TYPE` varchar(256) NOT NULL DEFAULT '',
+  `NAME` varchar(256) NOT NULL,
+  `TYPE` varchar(256) NOT NULL,
   `VALUE` varchar(64) DEFAULT NULL
 ) ENGINE=FunctionEngine
 SELECT COUNT(*) FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
@@ -66,7 +66,7 @@ force_recovery	ULINT	0
 io_capacity	ULONG	200
 lock_wait_timeout	ULINT	5
 log_buffer_size	ULINT	512
-log_file_size	ULINT	320
+log_file_size	ULINT	1280
 log_files_in_group	ULINT	2
 log_group_home_dir	TEXT	NULL
 max_dirty_pages_pct	ULONG	75

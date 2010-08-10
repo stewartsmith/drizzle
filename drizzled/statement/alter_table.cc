@@ -749,9 +749,9 @@ static bool lockTableIfDifferent(Session &session,
         /* Table will be closed by Session::executeCommand() */
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_table_identifier.getSQLPath().c_str());
 
-        pthread_mutex_lock(&LOCK_open); /* ALTER TABLe */
+        LOCK_open.lock(); /* ALTER TABLe */
         session.unlink_open_table(name_lock);
-        pthread_mutex_unlock(&LOCK_open);
+        LOCK_open.unlock();
 
         return false;
       }
@@ -816,14 +816,11 @@ static bool internal_alter_table(Session *session,
                                  order_st *order,
                                  bool ignore)
 {
-  Table *new_table= NULL;
   int error= 0;
   char tmp_name[80];
   char old_name[32];
   ha_rows copied= 0;
   ha_rows deleted= 0;
-
-  message::Table *original_table_definition= table->getMutableShare()->getTableProto();
 
   session->set_proc_info("init");
 
@@ -865,15 +862,6 @@ static bool internal_alter_table(Session *session,
     return true;
   }
 
-  if (create_info->row_type == ROW_TYPE_NOT_USED)
-  {
-    message::Table::TableOptions *table_options;
-    table_options= create_proto.mutable_options();
-
-    create_info->row_type= table->getShare()->row_type;
-    table_options->set_row_type(original_table_definition->options().row_type());
-  }
-
   session->set_proc_info("setup");
 
   /*
@@ -903,16 +891,16 @@ static bool internal_alter_table(Session *session,
           while the fact that the table is still open gives us protection
           from concurrent DDL statements.
         */
-        pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
+        LOCK_open.lock(); /* DDL wait for/blocker */
         wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        pthread_mutex_unlock(&LOCK_open);
+        LOCK_open.unlock();
         error= table->cursor->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
         /* COND_refresh will be signaled in close_thread_tables() */
         break;
       case DISABLE:
-        pthread_mutex_lock(&LOCK_open); /* DDL wait for/blocker */
+        LOCK_open.lock(); /* DDL wait for/blocker */
         wait_while_table_is_used(session, table, HA_EXTRA_FORCE_REOPEN);
-        pthread_mutex_unlock(&LOCK_open);
+        LOCK_open.unlock();
         error=table->cursor->ha_disable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
         /* COND_refresh will be signaled in close_thread_tables() */
         break;
@@ -927,10 +915,10 @@ static bool internal_alter_table(Session *session,
         error= 0;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->alias);
+                            table->getAlias());
       }
 
-      pthread_mutex_lock(&LOCK_open); /* Lock to remove all instances of table from table cache before ALTER */
+      LOCK_open.lock(); /* Lock to remove all instances of table from table cache before ALTER */
       /*
         Unlike to the above case close_cached_table() below will remove ALL
         instances of Table from table cache (it will also remove table lock
@@ -975,7 +963,7 @@ static bool internal_alter_table(Session *session,
         error= 0;
         push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
-                            table->alias);
+                            table->getAlias());
       }
 
       if (error == 0)
@@ -989,7 +977,7 @@ static bool internal_alter_table(Session *session,
         error= -1;
       }
 
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
       table_list->table= NULL;
 
       return error;
@@ -1029,7 +1017,8 @@ static bool internal_alter_table(Session *session,
   }
 
   /* Open the table so we need to copy the data to it. */
-  new_table= open_alter_table(session, table, new_table_as_temporary);
+  Table *new_table= open_alter_table(session, table, new_table_as_temporary);
+
 
   if (not new_table)
   {
@@ -1127,18 +1116,17 @@ static bool internal_alter_table(Session *session,
         new_table->intern_close_table();
         if (new_table->hasShare())
         {
-          assert(new_table->getShare()->newed);
           delete new_table->s;
           new_table->s= NULL;
         }
 
-        free(new_table);
+        delete new_table;
       }
 
-      pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
+      LOCK_open.lock(); /* ALTER TABLE */
 
       quick_rm_table(*session, new_table_as_temporary);
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
 
       return true;
     }
@@ -1179,15 +1167,14 @@ static bool internal_alter_table(Session *session,
 
       if (new_table->hasShare())
       {
-        assert(new_table->getShare()->newed);
         delete new_table->s;
         new_table->s= NULL;
       }
 
-      free(new_table);
+      delete new_table;
     }
 
-    pthread_mutex_lock(&LOCK_open); /* ALTER TABLE */
+    LOCK_open.lock(); /* ALTER TABLE */
 
     /*
       Data is copied. Now we:
@@ -1260,12 +1247,12 @@ static bool internal_alter_table(Session *session,
         from list of open tables list and table cache.
       */
       session->unlink_open_table(table);
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
 
       return true;
     }
 
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
 
     session->set_proc_info("end");
 
@@ -1348,9 +1335,9 @@ bool alter_table(Session *session,
 
     if (name_lock)
     {
-      pthread_mutex_lock(&LOCK_open); /* ALTER TABLe */
+      LOCK_open.lock(); /* ALTER TABLe */
       session->unlink_open_table(name_lock);
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
     }
   }
 

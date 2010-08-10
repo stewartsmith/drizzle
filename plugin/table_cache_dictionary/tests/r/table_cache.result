@@ -1,15 +1,15 @@
 show create table data_dictionary.TABLE_CACHE;
 Table	Create Table
 TABLE_CACHE	CREATE TABLE `table_cache` (
-  `SESSION_ID` bigint NOT NULL DEFAULT '0',
-  `TABLE_SCHEMA` varchar(256) NOT NULL DEFAULT '',
-  `TABLE_NAME` varchar(256) NOT NULL DEFAULT '',
-  `VERSION` bigint NOT NULL DEFAULT '0',
-  `IS_NAME_LOCKED` varchar(5) NOT NULL DEFAULT '',
-  `ROWS` bigint NOT NULL DEFAULT '0',
-  `AVG_ROW_LENGTH` bigint NOT NULL DEFAULT '0',
-  `TABLE_SIZE` bigint NOT NULL DEFAULT '0',
-  `AUTO_INCREMENT` bigint NOT NULL DEFAULT '0'
+  `SESSION_ID` bigint NOT NULL,
+  `TABLE_SCHEMA` varchar(256) NOT NULL,
+  `TABLE_NAME` varchar(256) NOT NULL,
+  `VERSION` bigint NOT NULL,
+  `IS_NAME_LOCKED` varchar(5) NOT NULL,
+  `ROWS` bigint NOT NULL,
+  `AVG_ROW_LENGTH` bigint NOT NULL,
+  `TABLE_SIZE` bigint NOT NULL,
+  `AUTO_INCREMENT` bigint NOT NULL
 ) ENGINE=FunctionEngine
 select count(*) FROM data_dictionary.TABLE_CACHE;
 count(*)

@@ -31,21 +31,21 @@ table_cache_dictionary::TableDefinitionCache::TableDefinitionCache() :
 {
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
-  add_field("VERSION", plugin::TableFunction::NUMBER);
-  add_field("TABLE_COUNT", plugin::TableFunction::NUMBER);
-  add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN);
+  add_field("VERSION", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TABLE_COUNT", plugin::TableFunction::NUMBER, 0, false);
+  add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN, 0, false);
 }
 
 table_cache_dictionary::TableDefinitionCache::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false)
 {
-  pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+  LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 table_cache_dictionary::TableDefinitionCache::Generator::~Generator()
 {
-  pthread_mutex_unlock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+  LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool table_cache_dictionary::TableDefinitionCache::Generator::nextCore()

@@ -44,6 +44,10 @@
 #include "drizzled/pthread_globals.h"
 #include "drizzled/charset.h"
 
+#include <boost/thread/mutex.hpp>
+
+boost::mutex LOCK_create_db;
+
 #include "drizzled/internal/my_sys.h"
 
 #define MAX_DROP_TABLE_Q_LEN      1024
@@ -55,7 +59,7 @@ namespace drizzled
 
 static long drop_tables_via_filenames(Session *session,
                                  SchemaIdentifier &schema_identifier,
-                                 plugin::TableNameList &dropped_tables);
+                                 TableIdentifiers &dropped_tables);
 static void mysql_change_db_impl(Session *session);
 static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_identifier);
 
@@ -106,37 +110,37 @@ bool mysql_create_db(Session *session, const message::Schema &schema_message, co
   assert(schema_message.has_collation());
 
   // @todo push this lock down into the engine
-  pthread_mutex_lock(&LOCK_create_db);
-
-  // Check to see if it exists already.  
-  SchemaIdentifier schema_identifier(schema_message.name());
-  if (plugin::StorageEngine::doesSchemaExist(schema_identifier))
   {
-    if (not is_if_not_exists)
+    boost::mutex::scoped_lock scopedLock(LOCK_create_db);
+
+    // Check to see if it exists already.  
+    SchemaIdentifier schema_identifier(schema_message.name());
+    if (plugin::StorageEngine::doesSchemaExist(schema_identifier))
     {
-      my_error(ER_DB_CREATE_EXISTS, MYF(0), schema_message.name().c_str());
+      if (not is_if_not_exists)
+      {
+        my_error(ER_DB_CREATE_EXISTS, MYF(0), schema_message.name().c_str());
+        error= true;
+      }
+      else
+      {
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
+                            schema_message.name().c_str());
+        session->my_ok();
+      }
+    }
+    else if (not plugin::StorageEngine::createSchema(schema_message)) // Try to create it 
+    {
+      my_error(ER_CANT_CREATE_DB, MYF(0), schema_message.name().c_str(), errno);
       error= true;
     }
-    else
+    else // Created !
     {
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-                          ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS),
-                          schema_message.name().c_str());
-      session->my_ok();
+      transaction_services.createSchema(session, schema_message);
+      session->my_ok(1);
     }
   }
-  else if (not plugin::StorageEngine::createSchema(schema_message)) // Try to create it 
-  {
-    my_error(ER_CANT_CREATE_DB, MYF(0), schema_message.name().c_str(), errno);
-    error= true;
-  }
-  else // Created !
-  {
-    transaction_services.createSchema(session, schema_message);
-    session->my_ok(1);
-  }
-
-  pthread_mutex_unlock(&LOCK_create_db);
   start_waiting_global_read_lock(session);
 
   return error;
@@ -164,29 +168,30 @@ bool mysql_alter_db(Session *session, const message::Schema &schema_message)
   if ((wait_if_global_read_lock(session, 0, 1)))
     return false;
 
-  pthread_mutex_lock(&LOCK_create_db);
-
-  SchemaIdentifier schema_idenifier(schema_message.name());
-  if (not plugin::StorageEngine::doesSchemaExist(schema_idenifier))
+  bool success;
   {
-    my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), schema_message.name().c_str());
-    return false;
-  }
+    boost::mutex::scoped_lock scopedLock(LOCK_create_db);
 
-  /* Change options if current database is being altered. */
-  bool success= plugin::StorageEngine::alterSchema(schema_message);
+    SchemaIdentifier schema_idenifier(schema_message.name());
+    if (not plugin::StorageEngine::doesSchemaExist(schema_idenifier))
+    {
+      my_error(ER_SCHEMA_DOES_NOT_EXIST, MYF(0), schema_message.name().c_str());
+      return false;
+    }
 
-  if (success)
-  {
-    transaction_services.rawStatement(session, session->getQueryString());
-    session->my_ok(1);
-  }
-  else
-  {
-    my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
-  }
+    /* Change options if current database is being altered. */
+    success= plugin::StorageEngine::alterSchema(schema_message);
 
-  pthread_mutex_unlock(&LOCK_create_db);
+    if (success)
+    {
+      transaction_services.rawStatement(session, session->getQueryString());
+      session->my_ok(1);
+    }
+    else
+    {
+      my_error(ER_ALTER_SCHEMA, MYF(0), schema_message.name().c_str());
+    }
+  }
   start_waiting_global_read_lock(session);
 
   return success;
@@ -214,7 +219,7 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
 {
   long deleted=0;
   int error= false;
-  plugin::TableNameList dropped_tables;
+  TableIdentifiers dropped_tables;
   message::Schema schema_proto;
 
   /*
@@ -245,98 +250,99 @@ bool mysql_rm_db(Session *session, SchemaIdentifier &schema_identifier, const bo
     session->close_temporary_table(table);
   }
 
-  pthread_mutex_lock(&LOCK_create_db);
-
-
-  /* See if the schema exists */
-  if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
   {
-    if (if_exists)
+    boost::mutex::scoped_lock scopedLock(LOCK_create_db);
+
+    /* See if the schema exists */
+    if (not plugin::StorageEngine::doesSchemaExist(schema_identifier))
     {
-      push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
-			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
-                          schema_identifier.getSQLPath().c_str());
+      if (if_exists)
+      {
+        push_warning_printf(session, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                            ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS),
+                            schema_identifier.getSQLPath().c_str());
+      }
+      else
+      {
+        error= -1;
+        my_error(ER_DB_DROP_EXISTS, MYF(0), schema_identifier.getSQLPath().c_str());
+        goto exit;
+      }
     }
     else
     {
+      LOCK_open.lock(); /* After deleting database, remove all cache entries related to schema */
+      remove_db_from_cache(schema_identifier);
+      LOCK_open.unlock();
+
+
       error= -1;
-      my_error(ER_DB_DROP_EXISTS, MYF(0), schema_identifier.getSQLPath().c_str());
-      goto exit;
+      deleted= drop_tables_via_filenames(session, schema_identifier, dropped_tables);
+      if (deleted >= 0)
+      {
+        error= 0;
+      }
     }
-  }
-  else
-  {
-    pthread_mutex_lock(&LOCK_open); /* After deleting database, remove all cache entries related to schema */
-    remove_db_from_cache(schema_identifier);
-    pthread_mutex_unlock(&LOCK_open);
-
-
-    error= -1;
-    deleted= drop_tables_via_filenames(session, schema_identifier, dropped_tables);
     if (deleted >= 0)
     {
-      error= 0;
+      assert(! session->query.empty());
+
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      transaction_services.dropSchema(session, schema_identifier.getSchemaName());
+      session->clear_error();
+      session->server_status|= SERVER_STATUS_DB_DROPPED;
+      session->my_ok((uint32_t) deleted);
+      session->server_status&= ~SERVER_STATUS_DB_DROPPED;
     }
-  }
-  if (deleted >= 0)
-  {
-    assert(! session->query.empty());
-
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    transaction_services.dropSchema(session, schema_identifier.getSchemaName());
-    session->clear_error();
-    session->server_status|= SERVER_STATUS_DB_DROPPED;
-    session->my_ok((uint32_t) deleted);
-    session->server_status&= ~SERVER_STATUS_DB_DROPPED;
-  }
-  else
-  {
-    char *query, *query_pos, *query_end, *query_data_start;
-
-    if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
-      goto exit; /* not much else we can do */
-    query_pos= query_data_start= strcpy(query,"drop table ")+11;
-    query_end= query + MAX_DROP_TABLE_Q_LEN;
-
-    TransactionServices &transaction_services= TransactionServices::singleton();
-    for (plugin::TableNameList::iterator it= dropped_tables.begin();
-         it != dropped_tables.end();
-         it++)
+    else
     {
-      uint32_t tbl_name_len;
+      char *query, *query_pos, *query_end, *query_data_start;
 
-      /* 3 for the quotes and the comma*/
-      tbl_name_len= (*it).length() + 3;
-      if (query_pos + tbl_name_len + 1 >= query_end)
+      if (!(query= (char*) session->alloc(MAX_DROP_TABLE_Q_LEN)))
+        goto exit; /* not much else we can do */
+      query_pos= query_data_start= strcpy(query,"drop table ")+11;
+      query_end= query + MAX_DROP_TABLE_Q_LEN;
+
+      TransactionServices &transaction_services= TransactionServices::singleton();
+      for (TableIdentifiers::iterator it= dropped_tables.begin();
+           it != dropped_tables.end();
+           it++)
+      {
+        uint32_t tbl_name_len;
+
+        /* 3 for the quotes and the comma*/
+        tbl_name_len= (*it).getTableName().length() + 3;
+        if (query_pos + tbl_name_len + 1 >= query_end)
+        {
+          /* These DDL methods and logging protected with LOCK_create_db */
+          transaction_services.rawStatement(session, query);
+          query_pos= query_data_start;
+        }
+
+        *query_pos++ = '`';
+        query_pos= strcpy(query_pos, (*it).getTableName().c_str()) + (tbl_name_len-3);
+        *query_pos++ = '`';
+        *query_pos++ = ',';
+      }
+
+      if (query_pos != query_data_start)
       {
         /* These DDL methods and logging protected with LOCK_create_db */
         transaction_services.rawStatement(session, query);
-        query_pos= query_data_start;
       }
-
-      *query_pos++ = '`';
-      query_pos= strcpy(query_pos, (*it).c_str()) + (tbl_name_len-3);
-      *query_pos++ = '`';
-      *query_pos++ = ',';
     }
-
-    if (query_pos != query_data_start)
-    {
-      /* These DDL methods and logging protected with LOCK_create_db */
-      transaction_services.rawStatement(session, query);
-    }
-  }
 
 exit:
-  /*
-    If this database was the client's selected database, we silently
-    change the client's selected database to nothing (to have an empty
-    SELECT DATABASE() in the future). For this we free() session->db and set
-    it to 0.
-  */
-  if (schema_identifier.compare(session->db))
-    mysql_change_db_impl(session);
-  pthread_mutex_unlock(&LOCK_create_db);
+    /*
+      If this database was the client's selected database, we silently
+      change the client's selected database to nothing (to have an empty
+      SELECT DATABASE() in the future). For this we free() session->db and set
+      it to 0.
+    */
+    if (schema_identifier.compare(session->db))
+      mysql_change_db_impl(session);
+  }
+
   start_waiting_global_read_lock(session);
 
   return error;
@@ -350,7 +356,7 @@ static int rm_table_part2(Session *session, TableList *tables)
   int error= 0;
   bool foreign_key_error= false;
 
-  pthread_mutex_lock(&LOCK_open); /* Part 2 of rm a table */
+  LOCK_open.lock(); /* Part 2 of rm a table */
 
   /*
     If we have the table in the definition cache, we don't have to check the
@@ -371,7 +377,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
   if (lock_table_names_exclusively(session, tables))
   {
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
     return 1;
   }
 
@@ -391,7 +397,11 @@ static int rm_table_part2(Session *session, TableList *tables)
       continue;
     case -1:
       error= 1;
-      goto err_with_placeholders;
+      unlock_table_names(tables, NULL);
+      LOCK_open.unlock();
+      session->no_warnings_for_error= 0;
+
+      return(error);
     default:
       // temporary table not found
       error= 0;
@@ -403,7 +413,7 @@ static int rm_table_part2(Session *session, TableList *tables)
 
     {
       Table *locked_table;
-      abort_locked_tables(session, db, table->table_name);
+      abort_locked_tables(session, identifier);
       remove_table_from_cache(session, identifier,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
@@ -411,13 +421,17 @@ static int rm_table_part2(Session *session, TableList *tables)
         If the table was used in lock tables, remember it so that
         unlock_table_names can free it
       */
-      if ((locked_table= drop_locked_tables(session, db, table->table_name)))
+      if ((locked_table= drop_locked_tables(session, identifier)))
         table->table= locked_table;
 
       if (session->killed)
       {
         error= -1;
-        goto err_with_placeholders;
+        unlock_table_names(tables, NULL);
+        LOCK_open.unlock();
+        session->no_warnings_for_error= 0;
+
+        return(error);
       }
     }
     identifier.getPath();
@@ -460,7 +474,7 @@ static int rm_table_part2(Session *session, TableList *tables)
     It's safe to unlock LOCK_open: we have an exclusive lock
     on the table name.
   */
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
   error= 0;
   if (wrong_tables.length())
   {
@@ -474,10 +488,9 @@ static int rm_table_part2(Session *session, TableList *tables)
     error= 1;
   }
 
-  pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
-err_with_placeholders:
+  LOCK_open.lock(); /* final bit in rm table lock */
   unlock_table_names(tables, NULL);
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
   session->no_warnings_for_error= 0;
 
   return(error);
@@ -490,16 +503,16 @@ err_with_placeholders:
 
 static long drop_tables_via_filenames(Session *session,
                                       SchemaIdentifier &schema_identifier,
-                                      plugin::TableNameList &dropped_tables)
+                                      TableIdentifiers &dropped_tables)
 {
   long deleted= 0;
   TableList *tot_list= NULL, **tot_list_next;
 
   tot_list_next= &tot_list;
 
-  plugin::StorageEngine::getTableNames(*session, schema_identifier, dropped_tables);
+  plugin::StorageEngine::getIdentifiers(*session, schema_identifier, dropped_tables);
 
-  for (plugin::TableNameList::iterator it= dropped_tables.begin();
+  for (TableIdentifiers::iterator it= dropped_tables.begin();
        it != dropped_tables.end();
        it++)
   {
@@ -509,16 +522,16 @@ static long drop_tables_via_filenames(Session *session,
     TableList *table_list=(TableList*)
       session->calloc(sizeof(*table_list) +
                       db_len + 1 +
-                      (*it).length() + 1);
+                      (*it).getTableName().length() + 1);
 
     if (not table_list)
       return -1;
 
     table_list->db= (char*) (table_list+1);
     table_list->table_name= strcpy(table_list->db, schema_identifier.getSchemaName().c_str()) + db_len + 1;
-    TableIdentifier::filename_to_tablename((*it).c_str(), table_list->table_name, (*it).size() + 1);
+    TableIdentifier::filename_to_tablename((*it).getTableName().c_str(), table_list->table_name, (*it).getTableName().size() + 1);
     table_list->alias= table_list->table_name;  // If lower_case_table_names=2
-    table_list->setInternalTmpTable((strncmp((*it).c_str(),
+    table_list->setInternalTmpTable((strncmp((*it).getTableName().c_str(),
                                              TMP_FILE_PREFIX,
                                              strlen(TMP_FILE_PREFIX)) == 0));
     /* Link into list */
@@ -673,7 +686,7 @@ static void mysql_change_db_impl(Session *session, SchemaIdentifier &schema_iden
       the previous database name, we should do it explicitly.
     */
 
-    session->set_db(schema_identifier.getLower());
+    session->set_db(schema_identifier.getSchemaName());
   }
 }
 

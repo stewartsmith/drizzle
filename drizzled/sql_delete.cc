@@ -247,7 +247,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     // session->is_error() is tested to disallow delete row on error
     if (!(select && select->skip_record())&& ! session->is_error() )
     {
-      if (!(error= table->cursor->deleteRecord(table->record[0])))
+      if (!(error= table->cursor->deleteRecord(table->getInsertRecord())))
       {
 	deleted++;
 	if (!--limit && using_limit)
@@ -324,6 +324,7 @@ cleanup:
     session->main_da.reset_diagnostics_area();    
     session->my_ok((ha_rows) session->row_count_func);
   }
+  session->status_var.deleted_row_count+= deleted;
   return (error >= 0 || session->is_error());
 
 err:

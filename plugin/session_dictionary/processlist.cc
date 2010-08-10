@@ -28,6 +28,7 @@
 #include "drizzled/plugin/client.h"
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
 
 #include <set>
 
@@ -37,12 +38,12 @@ using namespace drizzled;
 ProcesslistTool::ProcesslistTool() :
   plugin::TableFunction("DATA_DICTIONARY", "PROCESSLIST")
 {
-  add_field("ID", plugin::TableFunction::NUMBER);
+  add_field("ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("USER", 16);
   add_field("HOST", NI_MAXHOST);
   add_field("DB");
   add_field("COMMAND", 16);
-  add_field("TIME", plugin::TableFunction::NUMBER);
+  add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
   add_field("STATE");
   add_field("INFO", PROCESS_LIST_WIDTH);
 }
@@ -52,13 +53,13 @@ ProcesslistTool::Generator::Generator(Field **arg) :
 {
   now= time(NULL);
 
-  pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
   it= getSessionList().begin();
 }
 
 ProcesslistTool::Generator::~Generator()
 {
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
 }
 
 bool ProcesslistTool::Generator::populate()

@@ -31,6 +31,10 @@
 #include <drizzled/plugin.h>
 #include <stdint.h>
 #include "rabbitmq_handler.h"
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
+
+namespace po= boost::program_options;
 
 using namespace std;
 using namespace drizzled;
@@ -250,6 +254,13 @@ static DRIZZLE_SYSVAR_STR(use_replicator,
                           NULL, /* update func*/
                           DEFAULT_USE_REPLICATOR /* default */);
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context ("enable",
+           po::value<bool>(&sysvar_rabbitmq_log_enabled)->default_value(false)->zero_tokens(),
+           N_("Enable rabbitmq log"));
+}
+
 static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(enable),
   DRIZZLE_SYSVAR(hostname),
@@ -263,5 +274,5 @@ static drizzle_sys_var* system_variables[]= {
   NULL
 };
 
-DRIZZLE_PLUGIN(init, system_variables);
+DRIZZLE_PLUGIN(init, system_variables, init_options);
 

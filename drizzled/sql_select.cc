@@ -555,7 +555,7 @@ bool update_ref_and_keys(Session *session,
                          Select_Lex *select_lex,
                          vector<optimizer::SargableParam> &sargables)
 {
-  uint	and_level,i,found_eq_constant;
+  uint	and_level,found_eq_constant;
   optimizer::KeyField *key_fields, *end, *field;
   uint32_t sz;
   uint32_t m= max(select_lex->max_equal_elems,(uint32_t)1);
@@ -578,7 +578,7 @@ bool update_ref_and_keys(Session *session,
     substitutions.
   */
   sz= sizeof(optimizer::KeyField) *
-      (((session->lex->current_select->cond_count+1) +
+      (((session->lex->current_select->cond_count+1)*2 +
 	session->lex->current_select->between_count)*m+1);
   if (! (key_fields= (optimizer::KeyField*) session->alloc(sz)))
     return true;
@@ -598,11 +598,11 @@ bool update_ref_and_keys(Session *session,
       if (field->getValue()->type() == Item::NULL_ITEM &&
 	  ! field->getField()->real_maybe_null())
       {
-	field->getField()->table->reginfo.not_exists_optimize= 1;
+	field->getField()->getTable()->reginfo.not_exists_optimize= 1;
       }
     }
   }
-  for (i= 0; i < tables; i++)
+  for (uint32_t i= 0; i < tables; i++)
   {
     /*
       Block the creation of keys for inner tables of outer joins.
@@ -657,35 +657,39 @@ bool update_ref_and_keys(Session *session,
     use= save_pos= dynamic_element(keyuse, 0, optimizer::KeyUse*);
     prev= &key_end;
     found_eq_constant= 0;
-    for (i= 0; i < keyuse->elements-1; i++, use++)
     {
-      if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
-        use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
-      if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
+      uint32_t i;
+
+      for (i= 0; i < keyuse->elements-1; i++, use++)
       {
-        if (prev->getKeypart() + 1 < use->getKeypart() || 
-            ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
-          continue;				/* remove */
-      }
-      else if (use->getKeypart() != 0)		// First found must be 0
-        continue;
+        if (! use->getUsedTables() && use->getOptimizeFlags() != KEY_OPTIMIZE_REF_OR_NULL)
+          use->getTable()->const_key_parts[use->getKey()]|= use->getKeypartMap();
+        if (use->getKey() == prev->getKey() && use->getTable() == prev->getTable())
+        {
+          if (prev->getKeypart() + 1 < use->getKeypart() || 
+              ((prev->getKeypart() == use->getKeypart()) && found_eq_constant))
+            continue;				/* remove */
+        }
+        else if (use->getKeypart() != 0)		// First found must be 0
+          continue;
 
 #ifdef HAVE_purify
-      /* Valgrind complains about overlapped memcpy when save_pos==use. */
-      if (save_pos != use)
+        /* Valgrind complains about overlapped memcpy when save_pos==use. */
+        if (save_pos != use)
 #endif
-        *save_pos= *use;
-      prev=use;
-      found_eq_constant= ! use->getUsedTables();
-      /* Save ptr to first use */
-      if (! use->getTable()->reginfo.join_tab->keyuse)
-        use->getTable()->reginfo.join_tab->keyuse= save_pos;
-      use->getTable()->reginfo.join_tab->checked_keys.set(use->getKey());
-      save_pos++;
+          *save_pos= *use;
+        prev=use;
+        found_eq_constant= ! use->getUsedTables();
+        /* Save ptr to first use */
+        if (! use->getTable()->reginfo.join_tab->keyuse)
+          use->getTable()->reginfo.join_tab->keyuse= save_pos;
+        use->getTable()->reginfo.join_tab->checked_keys.set(use->getKey());
+        save_pos++;
+      }
+      i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
+      set_dynamic(keyuse, (unsigned char*) &key_end, i);
+      keyuse->elements= i;
     }
-    i= (uint32_t) (save_pos - (optimizer::KeyUse*) keyuse->buffer);
-    set_dynamic(keyuse, (unsigned char*) &key_end, i);
-    keyuse->elements= i;
   }
   return false;
 }
@@ -929,7 +933,7 @@ StoredKey *get_store_key(Session *session,
 bool store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
 {
   bool error;
-  Table *table= field->table;
+  Table *table= field->getTable();
   Session *session= table->in_use;
   ha_rows cuted_fields=session->cuted_fields;
 
@@ -1155,7 +1159,7 @@ void add_not_null_conds(Join *join)
           Item *notnull;
           assert(item->type() == Item::FIELD_ITEM);
           Item_field *not_null_item= (Item_field*)item;
-          JoinTable *referred_tab= not_null_item->field->table->reginfo.join_tab;
+          JoinTable *referred_tab= not_null_item->field->getTable()->reginfo.join_tab;
           /*
             For UPDATE queries such as:
             UPDATE t1 SET t1.f2=(SELECT MAX(t2.f4) FROM t2 WHERE t2.f3=t1.f1);
@@ -1284,7 +1288,7 @@ static bool uses_index_fields_only(Item *item, Table *tbl, uint32_t keyno, bool 
   case Item::FIELD_ITEM:
     {
       Item_field *item_field= (Item_field*)item;
-      if (item_field->field->table != tbl)
+      if (item_field->field->getTable() != tbl)
         return true;
       return item_field->field->part_of_key.test(keyno);
     }
@@ -2320,7 +2324,7 @@ static int compare_fields_by_table_order(Item_field *field1,
   if (outer_ref)
     return cmp;
   JoinTable **idx= (JoinTable **) table_join_idx;
-  cmp= idx[field2->field->table->tablenr]-idx[field1->field->table->tablenr];
+  cmp= idx[field2->field->getTable()->tablenr]-idx[field1->field->getTable()->tablenr];
   return cmp < 0 ? -1 : (cmp ? 1 : 0);
 }
 
@@ -2567,9 +2571,9 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
       while ((item_field= it++))
       {
         Field *field= item_field->field;
-        JoinTable *stat= field->table->reginfo.join_tab;
+        JoinTable *stat= field->getTable()->reginfo.join_tab;
         key_map possible_keys= field->key_start;
-        possible_keys&= field->table->keys_in_use_for_query;
+        possible_keys&= field->getTable()->keys_in_use_for_query;
         stat[0].const_keys|= possible_keys;
 
         /*
@@ -2579,7 +2583,7 @@ static void update_const_equal_items(COND *cond, JoinTable *tab)
         */
         if (possible_keys.any())
         {
-          Table *field_tab= field->table;
+          Table *field_tab= field->getTable();
           optimizer::KeyUse *use;
           for (use= stat->keyuse; use && use->getTable() == field_tab; use++)
             if (possible_keys.test(use->getKey()) &&
@@ -2846,8 +2850,6 @@ static void propagate_cond_constants(Session *session,
   @endverbatim
 
   @param join       Join being processed
-  @param last_tab   Last table in current partial join order (this function is
-                    not called for empty partial join orders)
   @param next_tab   Table we're going to extend the current partial join with
 
   @retval
@@ -2856,10 +2858,10 @@ static void propagate_cond_constants(Session *session,
   @retval
     true   Requested join order extension not allowed.
 */
-bool check_interleaving_with_nj(JoinTable *last_tab, JoinTable *next_tab)
+bool check_interleaving_with_nj(JoinTable *next_tab)
 {
   TableList *next_emb= next_tab->table->pos_in_table_list->getEmbedding();
-  Join *join= last_tab->join;
+  Join *join= next_tab->join;
 
   if ((join->cur_embedding_map & ~next_tab->embedding_map).any())
   {
@@ -3023,7 +3025,7 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
     {
       Field *field= ((Item_field*) args[0])->field;
       if (field->flags & AUTO_INCREMENT_FLAG 
-          && ! field->table->maybe_null 
+          && ! field->getTable()->maybe_null 
           && session->options & OPTION_AUTO_IS_NULL
           && (
             session->first_successful_insert_id_in_prev_stmt > 0 
@@ -3081,12 +3083,12 @@ COND *remove_eq_conds(Session *session, COND *cond, Item::cond_result *cond_valu
   /*
     TODO:
     Excluding all expensive functions is too restritive we should exclude only
-    materialized IN because it is created later than this phase, and cannot be
-    evaluated at this point.
-    The condition should be something as (need to fix member access):
-      !(cond->type() == Item::FUNC_ITEM &&
-        ((Item_func*)cond)->func_name() == "<in_optimizer>" &&
-        ((Item_in_optimizer*)cond)->is_expensive()))
+    materialized IN subquery predicates because they can't yet be evaluated
+    here (they need additional initialization that is done later on).
+
+    The proper way to exclude the subqueries would be to walk the cond tree and
+    check for materialized subqueries there.
+
   */
   {
     *cond_value= eval_const_cond(cond) ? Item::COND_TRUE : Item::COND_FALSE;
@@ -3587,7 +3589,7 @@ int safe_index_read(JoinTable *tab)
 {
   int error;
   Table *table= tab->table;
-  if ((error=table->cursor->index_read_map(table->record[0],
+  if ((error=table->cursor->index_read_map(table->getInsertRecord(),
                                          tab->ref.key_buff,
                                          make_prev_keypart_map(tab->ref.key_parts),
                                          HA_READ_KEY_EXACT)))
@@ -3679,7 +3681,7 @@ int join_read_system(JoinTable *tab)
   int error;
   if (table->status & STATUS_GARBAGE)		// If first read
   {
-    if ((error=table->cursor->read_first_row(table->record[0],
+    if ((error=table->cursor->read_first_row(table->getInsertRecord(),
 					   table->getShare()->getPrimaryKey())))
     {
       if (error != HA_ERR_END_OF_FILE)
@@ -3719,7 +3721,7 @@ int join_read_const(JoinTable *tab)
       error= HA_ERR_KEY_NOT_FOUND;
     else
     {
-      error=table->cursor->index_read_idx_map(table->record[0],tab->ref.key,
+      error=table->cursor->index_read_idx_map(table->getInsertRecord(),tab->ref.key,
                                             (unsigned char*) tab->ref.key_buff,
                                             make_prev_keypart_map(tab->ref.key_parts),
                                             HA_READ_KEY_EXACT);
@@ -3779,7 +3781,7 @@ int join_read_key(JoinTable *tab)
       table->status=STATUS_NOT_FOUND;
       return -1;
     }
-    error=table->cursor->index_read_map(table->record[0],
+    error=table->cursor->index_read_map(table->getInsertRecord(),
                                       tab->ref.key_buff,
                                       make_prev_keypart_map(tab->ref.key_parts),
                                       HA_READ_KEY_EXACT);
@@ -3826,7 +3828,7 @@ int join_read_always_key(JoinTable *tab)
 
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
-  if ((error=table->cursor->index_read_map(table->record[0],
+  if ((error=table->cursor->index_read_map(table->getInsertRecord(),
                                          tab->ref.key_buff,
                                          make_prev_keypart_map(tab->ref.key_parts),
                                          HA_READ_KEY_EXACT)))
@@ -3852,7 +3854,7 @@ int join_read_last_key(JoinTable *tab)
     table->cursor->startIndexScan(tab->ref.key, tab->sorted);
   if (cp_buffer_from_ref(tab->join->session, &tab->ref))
     return -1;
-  if ((error=table->cursor->index_read_last_map(table->record[0],
+  if ((error=table->cursor->index_read_last_map(table->getInsertRecord(),
                                               tab->ref.key_buff,
                                               make_prev_keypart_map(tab->ref.key_parts))))
   {
@@ -3881,7 +3883,7 @@ int join_read_next_same_diff(ReadRecord *info)
       /* Save index tuple from record to the buffer */
       key_copy(tab->insideout_buf, info->record, key, 0);
 
-      if ((error=table->cursor->index_next_same(table->record[0],
+      if ((error=table->cursor->index_next_same(table->getInsertRecord(),
                                               tab->ref.key_buff,
                                               tab->ref.key_length)))
       {
@@ -3905,7 +3907,7 @@ int join_read_next_same(ReadRecord *info)
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
 
-  if ((error=table->cursor->index_next_same(table->record[0],
+  if ((error=table->cursor->index_next_same(table->getInsertRecord(),
 					  tab->ref.key_buff,
 					  tab->ref.key_length)))
   {
@@ -3924,7 +3926,7 @@ int join_read_prev_same(ReadRecord *info)
   Table *table= info->table;
   JoinTable *tab=table->reginfo.join_tab;
 
-  if ((error=table->cursor->index_prev(table->record[0])))
+  if ((error=table->cursor->index_prev(table->getInsertRecord())))
     return table->report_error(error);
   if (key_cmp_if_same(table, tab->ref.key_buff, tab->ref.key,
                       tab->ref.key_length))
@@ -3983,7 +3985,7 @@ int join_read_first(JoinTable *tab)
   tab->read_record.table=table;
   tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
-  tab->read_record.record=table->record[0];
+  tab->read_record.record=table->getInsertRecord();
   if (tab->insideout_match_tab)
   {
     tab->read_record.do_insideout_scan= tab;
@@ -3998,7 +4000,7 @@ int join_read_first(JoinTable *tab)
 
   if (!table->cursor->inited)
     table->cursor->startIndexScan(tab->index, tab->sorted);
-  if ((error=tab->table->cursor->index_first(tab->table->record[0])))
+  if ((error=tab->table->cursor->index_first(tab->table->getInsertRecord())))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
       table->report_error(error);
@@ -4054,10 +4056,10 @@ int join_read_last(JoinTable *tab)
   tab->read_record.table=table;
   tab->read_record.cursor=table->cursor;
   tab->read_record.index=tab->index;
-  tab->read_record.record=table->record[0];
+  tab->read_record.record=table->getInsertRecord();
   if (!table->cursor->inited)
     table->cursor->startIndexScan(tab->index, 1);
-  if ((error= tab->table->cursor->index_last(tab->table->record[0])))
+  if ((error= tab->table->cursor->index_last(tab->table->getInsertRecord())))
     return table->report_error(error);
 
   return 0;
@@ -4218,7 +4220,7 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
         copy_sum_funcs(join->sum_funcs, join->sum_funcs_end[send_group_parts]);
         if (!join->having || join->having->val_int())
         {
-          int error= table->cursor->insertRecord(table->record[0]);
+          int error= table->cursor->insertRecord(table->getInsertRecord());
 
           if (error)
           {
@@ -4272,9 +4274,9 @@ bool test_if_ref(Item_field *left_item,Item *right_item)
 {
   Field *field=left_item->field;
   // No need to change const test. We also have to keep tests on LEFT JOIN
-  if (!field->table->const_table && !field->table->maybe_null)
+  if (not field->getTable()->const_table && !field->getTable()->maybe_null)
   {
-    Item *ref_item=part_of_refkey(field->table,field);
+    Item *ref_item=part_of_refkey(field->getTable(),field);
     if (ref_item && ref_item->eq(right_item,1))
     {
       right_item= right_item->real_item();
@@ -5324,8 +5326,8 @@ int remove_dup_with_compare(Session *session, Table *table, Field **first_field,
   int error;
   uint32_t reclength= table->getShare()->getRecordLength() - offset;
 
-  org_record=(char*) (record=table->record[0])+offset;
-  new_record=(char*) table->record[1]+offset;
+  org_record=(char*) (record=table->getInsertRecord())+offset;
+  new_record=(char*) table->getUpdateRecord()+offset;
 
   cursor->startTableScan(1);
   error=cursor->rnd_next(record);
@@ -5411,7 +5413,7 @@ int remove_dup_with_hash_index(Session *session,
                                uint32_t key_length,
                                Item *having)
 {
-  unsigned char *key_pos, *record=table->record[0];
+  unsigned char *key_pos, *record=table->getInsertRecord();
   int error;
   Cursor *cursor= table->cursor;
   uint32_t extra_length= ALIGN_SIZE(key_length)-key_length;
@@ -6141,7 +6143,7 @@ bool setup_copy_fields(Session *session,
           saved value
         */
         field= item->field;
-        item->result_field=field->new_field(session->mem_root,field->table, 1);
+        item->result_field=field->new_field(session->mem_root,field->getTable(), 1);
               /*
                 We need to allocate one extra byte for null handling and
                 another extra byte to not get warnings from purify in
@@ -6274,7 +6276,7 @@ bool change_to_use_tmp_fields(Session *session,
       }
       else if ((field= item->get_tmp_table_field()))
       {
-        if (item->type() == Item::SUM_FUNC_ITEM && field->table->group)
+        if (item->type() == Item::SUM_FUNC_ITEM && field->getTable()->group)
           item_field= ((Item_sum*) item)->result_item(field);
         else
           item_field= (Item*) new Item_field(field);

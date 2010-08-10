@@ -1,1 +1,1 @@
---plugin-add=logging_stats --logging_stats_enable --logging_stats_scoreboard_size=10 --logging_stats_bucket_count=5 --logging_stats_max_user_count=502
+--plugin-add=logging_stats --logging-stats.enable --logging-stats.scoreboard-size=10 --logging-stats.bucket-count=5 --logging-stats.max-user-count=502

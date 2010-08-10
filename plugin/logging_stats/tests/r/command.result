@@ -22,8 +22,8 @@ set global logging_stats_enable=true;
 SHOW CREATE TABLE data_dictionary.SESSION_STATEMENTS;
 Table	Create Table
 SESSION_STATEMENTS	CREATE TABLE `session_statements` (
-  `VARIABLE_NAME` varchar(256) NOT NULL DEFAULT '',
-  `VARIABLE_VALUE` varchar(1024) NOT NULL DEFAULT ''
+  `VARIABLE_NAME` varchar(256) NOT NULL,
+  `VARIABLE_VALUE` varchar(1024) NOT NULL
 ) ENGINE=FunctionEngine
 SELECT count(*) FROM data_dictionary.SESSION_STATEMENTS;
 count(*)

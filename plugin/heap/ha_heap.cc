@@ -21,6 +21,8 @@
 #include <drizzled/field/varstring.h>
 #include "drizzled/plugin/daemon.h"
 
+#include <boost/thread/mutex.hpp>
+
 #include "heap.h"
 #include "ha_heap.h"
 
@@ -32,7 +34,7 @@ using namespace std;
 
 static const string engine_name("MEMORY");
 
-pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
+boost::mutex THR_LOCK_heap;
 
 static const char *ha_heap_exts[] = {
   NULL
@@ -51,20 +53,16 @@ public:
                           HTON_SKIP_STORE_LOCK |
                           HTON_TEMPORARY_ONLY)
   {
-    pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
   }
 
   virtual ~HeapEngine()
   {
     hp_panic(HA_PANIC_CLOSE);
-
-    pthread_mutex_destroy(&THR_LOCK_heap);
   }
 
-  virtual Cursor *create(TableShare &table,
-                          memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) ha_heap(*this, table);
+    return new ha_heap(*this, table);
   }
 
   const char **bas_ext() const {
@@ -191,9 +189,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
 {
   if ((test_if_locked & HA_OPEN_INTERNAL_TABLE) || (!(file= heap_open(name, mode)) && errno == ENOENT))
   {
-    HA_CREATE_INFO create_info;
     internal_table= test(test_if_locked & HA_OPEN_INTERNAL_TABLE);
-    memset(&create_info, 0, sizeof(create_info));
     file= 0;
     HP_SHARE *internal_share= NULL;
     message::Table create_proto;
@@ -209,9 +205,9 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
       if (!file)
       {
          /* Couldn't open table; Remove the newly created table */
-        pthread_mutex_lock(&THR_LOCK_heap);
+        THR_LOCK_heap.lock();
         hp_free(internal_share);
-        pthread_mutex_unlock(&THR_LOCK_heap);
+        THR_LOCK_heap.unlock();
       }
     }
   }
@@ -249,9 +245,9 @@ int ha_heap::close(void)
     with '\'-delimited path.
 */
 
-Cursor *ha_heap::clone(memory::Root *mem_root)
+Cursor *ha_heap::clone(memory::Root *)
 {
-  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*(table->getMutableShare()), mem_root);
+  Cursor *new_handler= table->getMutableShare()->db_type()->getCursor(*(table->getMutableShare()));
   TableIdentifier identifier(table->getShare()->getSchemaName(),
                              table->getShare()->getTableName(),
                              table->getShare()->getPath());
@@ -327,7 +323,7 @@ void ha_heap::update_key_stats()
 int ha_heap::doInsertRecord(unsigned char * buf)
 {
   int res;
-  if (table->next_number_field && buf == table->record[0])
+  if (table->next_number_field && buf == table->getInsertRecord())
   {
     if ((res= update_auto_increment()))
       return res;
@@ -499,15 +495,6 @@ int ha_heap::info(uint32_t flag)
   if (key_stat_version != file->s->key_stat_version)
     update_key_stats();
   return 0;
-}
-
-
-enum row_type ha_heap::get_row_type() const
-{
-  if (file->s->recordspace.is_variable_size)
-    return ROW_TYPE_DYNAMIC;
-
-  return ROW_TYPE_FIXED;
 }
 
 int ha_heap::extra(enum ha_extra_function operation)
@@ -738,12 +725,12 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
     HP_COLUMNDEF* column= columndef + column_idx;
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();
-    column->offset= field->offset(field->table->record[0]);
+    column->offset= field->offset(field->getTable()->getInsertRecord());
 
     if (field->null_bit)
     {
       column->null_bit= field->null_bit;
-      column->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->record[0]);
+      column->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->getInsertRecord());
     }
     else
     {
@@ -832,7 +819,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
       if (field->null_ptr)
       {
 	seg->null_bit= field->null_bit;
-	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->record[0]);
+	seg->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->getInsertRecord());
       }
       else
       {
@@ -880,7 +867,7 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= table_arg->getShare()->block_size;
-  hp_create_info.is_dynamic= (table_arg->getShare()->row_type == ROW_TYPE_DYNAMIC);
+  hp_create_info.is_dynamic= false;
 
   error= heap_create(internal::fn_format(buff,table_name,"","",
                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),

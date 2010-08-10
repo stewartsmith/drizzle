@@ -36,7 +36,7 @@ option_context::option_context(const std::string &module_name_in,
 option_context& option_context::operator()(const char* name,
                                            const char* description)
 {
-  const std::string new_name(prepend_name(name));
+  const std::string new_name(prepend_name(module_name, name));
   po_options(new_name.c_str(), description);
   return *this;
 }
@@ -45,7 +45,7 @@ option_context& option_context::operator()(const char* name,
 option_context& option_context::operator()(const char* name,
                                            const po::value_semantic* s)
 {
-  const std::string new_name(prepend_name(name));
+  const std::string new_name(prepend_name(module_name, name));
   po_options(new_name.c_str(), s);
   return *this;
 }
@@ -55,9 +55,40 @@ option_context& option_context::operator()(const char* name,
                              const po::value_semantic* s,
                              const char* description)
 {
-  const std::string new_name(prepend_name(name));
+  const std::string new_name(prepend_name(module_name, name));
   po_options(new_name.c_str(), s, description);
   return *this;
+}
+
+namespace
+{
+
+class SwapUnderscores
+{
+public:
+  char operator()(char a) const
+  {
+    if (a == '_')
+      return '-';
+    return a;
+  }
+};
+
+} /* namespace */
+
+/*
+ * Private methods.
+ */
+std::string option_context::prepend_name(std::string module_name,
+                                         const char *name_in)
+{
+  module_name.push_back('.');
+  std::transform(module_name.begin(), module_name.end(),
+                 module_name.begin(), SwapUnderscores());
+  std::transform(module_name.begin(), module_name.end(),
+                 module_name.begin(), ::tolower);
+  module_name.append(name_in);
+  return module_name;
 }
 
 

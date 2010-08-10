@@ -56,8 +56,7 @@ public:
     return EPERM; 
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table,
-                                   drizzled::memory::Root *mem_root);
+  virtual drizzled::Cursor *create(drizzled::TableShare &table);
 
   const char **bas_ext() const 
   {
@@ -80,7 +79,7 @@ public:
                            const drizzled::TableIdentifier &identifier,
                            drizzled::message::Table &table_message);
 
-  void doGetSchemaIdentifiers(drizzled::SchemaIdentifierList&);
+  void doGetSchemaIdentifiers(drizzled::SchemaIdentifiers&);
 
   bool doDoesTableExist(drizzled::Session& session, const drizzled::TableIdentifier &identifier);
 

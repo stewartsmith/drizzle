@@ -1497,7 +1497,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
   $ENV{'MC_PORT'}=            $opt_memc_myport;
-  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'drizzle-protocol-port'};
+  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'drizzle-protocol.port'};
 
   $ENV{'MTR_BUILD_THREAD'}=      $opt_mtr_build_thread;
 
@@ -1862,6 +1862,9 @@ sub setup_vardir() {
   symlink(collapse_path("$glob_mysql_test_dir/std_data"),
           "$opt_vardir/std_data_ln");
 
+  symlink(collapse_path("$glob_suite_path/filesystem_engine/tests/t"),
+          "$opt_vardir/filesystem_ln");
+
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
   {
@@ -1869,6 +1872,8 @@ sub setup_vardir() {
   }
   system("chmod -R ugo+r $opt_vardir");
   system("chmod -R ugo+r $opt_vardir/std_data_ln/*");
+  system("chmod -R ugo+rw $opt_vardir/filesystem_ln/*");
+  system("chmod -R ugo+w $glob_suite_path/filesystem_engine/tests/t");
 }
 
 
@@ -2558,7 +2563,7 @@ sub mysqld_arguments ($$$$) {
   # Increase default connect_timeout to avoid intermittent
   # disconnects when test servers are put under load
   # see BUG#28359
-  mtr_add_arg($args, "%s--mysql-protocol-connect-timeout=60", $prefix);
+  mtr_add_arg($args, "%s--mysql-protocol.connect-timeout=60", $prefix);
 
 
   # When mysqld is run by a root user(euid is 0), it will fail
@@ -2571,10 +2576,10 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--pid-file=%s", $prefix,
 	      $mysqld->{'path_pid'});
 
-  mtr_add_arg($args, "%s--mysql-protocol-port=%d", $prefix,
+  mtr_add_arg($args, "%s--mysql-protocol.port=%d", $prefix,
               $mysqld->{'port'});
 
-  mtr_add_arg($args, "%s--drizzle-protocol-port=%d", $prefix,
+  mtr_add_arg($args, "%s--drizzle-protocol.port=%d", $prefix,
               $mysqld->{'secondary_port'});
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
@@ -2623,7 +2628,7 @@ sub mysqld_arguments ($$$$) {
                 $prefix, $path_vardir_trace, $mysqld->{'type'}, $sidx);
   }
 
-  mtr_add_arg($args, "%s--myisam_key_cache_size=1M", $prefix);
+  mtr_add_arg($args, "%s--myisam.key-cache-size=1048576", $prefix);
   mtr_add_arg($args, "%s--sort_buffer=256K", $prefix);
   mtr_add_arg($args, "%s--max_heap_table_size=1M", $prefix);
 
@@ -2739,6 +2744,7 @@ sub mysqld_start ($$$) {
 
   if ( defined $exe )
   {
+    mtr_verbose("running Drizzle with: $exe @$args");
     $pid= mtr_spawn($exe, $args, "",
 		    $mysqld->{'path_myerr'},
 		    $mysqld->{'path_myerr'},

@@ -55,6 +55,7 @@
 #include <algorithm>
 
 #include "drizzled/internal/my_sys.h"
+#include "drizzled/internal/thread_var.h"
 
 using namespace std;
 
@@ -183,7 +184,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   /* Increase id and count all other statements. */
   default:
-    statistic_increment(session->status_var.questions, &LOCK_status);
+    statistic_increment(session->status_var.questions, NULL);
     query_id.next();
   }
 
@@ -716,6 +717,7 @@ void create_select_for_variable(const char *var_name)
 
 void mysql_parse(Session *session, const char *inBuf, uint32_t length)
 {
+  uint64_t start_time= my_getsystime();
   lex_start(session);
   session->reset_for_next_command();
   /* Check if the Query is Cached if and return true if yes
@@ -764,6 +766,7 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   session->set_proc_info("freeing items");
   session->end_statement();
   session->cleanup_after_query();
+  session->status_var.execution_time_nsec+= my_getsystime() - start_time;
 }
 
 
@@ -939,6 +942,7 @@ TableList *Select_Lex::add_table_to_list(Session *session,
   }
   if (!(ptr = (TableList *) session->calloc(sizeof(TableList))))
     return NULL;
+
   if (table->db.str)
   {
     ptr->setIsFqtn(true);
@@ -1116,7 +1120,7 @@ TableList *Select_Lex::nest_last_join(Session *session)
   List<TableList> *embedded_list;
 
   if (!(ptr= (TableList*) session->calloc(ALIGN_SIZE(sizeof(TableList))+
-                                       sizeof(nested_join_st))))
+                                          sizeof(nested_join_st))))
     return NULL;
   ptr->setNestedJoin(((nested_join_st*) ((unsigned char*) ptr + ALIGN_SIZE(sizeof(TableList)))));
   nested_join= ptr->getNestedJoin();
@@ -1425,18 +1429,18 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
 {
   Session *tmp= NULL;
   uint32_t error= ER_NO_SUCH_THREAD;
-  pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+  LOCK_thread_count.lock(); // For unlink from list
   
   for (SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
     if ((*it)->thread_id == id)
     {
       tmp= *it;
-      pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
+      tmp->lockForDelete();
       break;
     }
   }
-  pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
   if (tmp)
   {
 
@@ -1446,7 +1450,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
       error= 0;
     }
 
-    pthread_mutex_unlock(&tmp->LOCK_delete);
+    tmp->unlockForDelete();
   }
   return(error);
 }

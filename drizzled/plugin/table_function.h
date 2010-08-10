@@ -26,7 +26,7 @@
 #include <drizzled/definitions.h>
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/plugin.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 #include "drizzled/message/table.pb.h"
 #include "drizzled/charset.h"
 #include "drizzled/field.h"
@@ -68,8 +68,6 @@ class TableFunction : public Plugin
   message::Table proto;
   TableIdentifier identifier;
   std::string local_path;
-  std::string local_schema;
-  std::string local_table_name;
   std::string original_table_label;
 
   void setName(); // init name
@@ -153,38 +151,17 @@ public:
 
   const std::string &getIdentifierTableName()
   { 
-    if (local_table_name.empty())
-    {
-      local_table_name= identifier.getTableName();
-      std::transform(local_table_name.begin(), local_table_name.end(),
-                     local_table_name.begin(), ::tolower);
-    }
-
-    return local_table_name;
+    return identifier.getTableName();
   }
 
   const std::string &getSchemaHome()
   { 
-    if (local_schema.empty())
-    {
-      local_schema= identifier.getSchemaName();
-      std::transform(local_schema.begin(), local_schema.end(),
-                     local_schema.begin(), ::tolower);
-    }
-
-    return local_schema;
+    return identifier.getSchemaName();
   }
 
   const std::string &getPath()
   { 
-    if (local_path.empty())
-    {
-      local_path= identifier.getPath();
-      std::transform(local_path.begin(), local_path.end(),
-                     local_path.begin(), ::tolower);
-    }
-
-    return local_path;
+    return identifier.getPath();
   }
 
   virtual Generator *generator(Field **arg);

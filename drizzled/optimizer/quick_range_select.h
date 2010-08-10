@@ -58,7 +58,6 @@ protected:
   /** Members needed to use the MRR interface */
   QuickRangeSequenceContext qr_traversal_ctx;
   uint32_t mrr_buf_size; /**< copy from session->variables.read_rnd_buff_size */
-  HANDLER_BUFFER *mrr_buf_desc; /**< the Cursor buffer */
 
   /** Info about index we're scanning */
   KEY_PART *key_parts;
@@ -123,7 +122,7 @@ public:
    * QuickRangeSelect::get_next()
    *
    * NOTES
-   * Record is read into table->record[0]
+   * Record is read into table->getInsertRecord()
    *
    * RETURN
    * @retval 0			Found row
@@ -223,7 +222,6 @@ private:
       Use default MRR implementation for reverse scans. No table engine
       currently can do an MRR scan with output in reverse index order.
     */
-    mrr_buf_desc= NULL;
     mrr_flags|= HA_MRR_USE_DEFAULT_IMPL;
     mrr_buf_size= 0;
   }

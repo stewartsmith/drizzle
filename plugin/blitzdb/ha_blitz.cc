@@ -32,6 +32,9 @@ static const char *ha_blitz_exts[] = {
   NULL
 };
 
+/* Global Variables for Startup Options */
+uint64_t blitz_estimated_rows;
+
 class BlitzEngine : public drizzled::plugin::StorageEngine {
 private:
   TCMAP *blitz_table_cache;
@@ -51,9 +54,8 @@ public:
     tcmapdel(blitz_table_cache);
   }
 
-  virtual drizzled::Cursor *create(drizzled::TableShare &table,
-                                   drizzled::memory::Root *mem_root) {
-    return new (mem_root) ha_blitz(*this, table);
+  virtual drizzled::Cursor *create(drizzled::TableShare &table) {
+    return new ha_blitz(*this, table);
   }
 
   const char **bas_ext() const {
@@ -87,6 +89,9 @@ public:
   bool doDoesTableExist(drizzled::Session &session,
                         const drizzled::TableIdentifier &identifier);
 
+  bool validateCreateTableOption(const std::string &key,
+                                 const std::string &state);
+
   bool doCreateTableCache(void);
 
   BlitzShare *getTableShare(const std::string &name);
@@ -114,6 +119,8 @@ public:
    the dictionary key by calculating the offset. */
 static char *skip_btree_key(const char *key, const size_t skip_len,
                             int *return_klen);
+
+static bool str_is_numeric(const std::string &str);
 
 int BlitzEngine::doCreateTable(drizzled::Session &,
                                drizzled::Table &table,
@@ -351,6 +358,15 @@ bool BlitzEngine::doDoesTableExist(drizzled::Session &,
   return (access(proto_path.c_str(), F_OK)) ? false : true;
 }
 
+bool BlitzEngine::validateCreateTableOption(const std::string &key,
+                                            const std::string &state) {
+  if (key == "ESTIMATED_ROWS" || key == "estimated_rows") {
+    if (str_is_numeric(state))
+      return true;
+  }
+  return false;
+}
+
 bool BlitzEngine::doCreateTableCache(void) {
   return ((blitz_table_cache = tcmapnew()) == NULL) ? false : true;
 }
@@ -482,7 +498,7 @@ int ha_blitz::doStartTableScan(bool scan) {
   table_based = true;
 
   /* Obtain the most suitable lock for the given statement type. */
-  critical_section_enter();
+  blitz_optimal_lock();
 
   /* Get the first record from TCHDB. Let the scanner take
      care of checking return value errors. */
@@ -554,7 +570,7 @@ int ha_blitz::doEndTableScan() {
   table_based = false;
 
   if (thread_locked)
-    critical_section_exit();
+    blitz_optimal_unlock();
 
   return 0;
 }
@@ -609,9 +625,9 @@ int ha_blitz::doStartIndexScan(uint32_t key_num, bool) {
      sure that this thread will get the most appropriate lock for
      the current statement. */
   if (thread_locked)
-    critical_section_exit();
+    blitz_optimal_unlock();
 
-  critical_section_enter();
+  blitz_optimal_lock();
   return 0;
 }
 
@@ -783,7 +799,7 @@ int ha_blitz::doEndIndexScan(void) {
   btree_cursor[active_index].moved = false;
 
   if (thread_locked)
-    critical_section_exit();
+    blitz_optimal_unlock();
 
   return 0;
 }
@@ -811,7 +827,7 @@ int ha_blitz::doInsertRecord(unsigned char *drizzle_row) {
   ha_statistic_increment(&system_status_var::ha_write_count);
 
   /* Prepare Auto Increment field if one exists. */
-  if (table->next_number_field && drizzle_row == table->record[0]) {
+  if (table->next_number_field && drizzle_row == table->getInsertRecord()) {
     pthread_mutex_lock(&blitz_utility_mutex);
     if ((rv = update_auto_increment()) != 0) {
       pthread_mutex_unlock(&blitz_utility_mutex);
@@ -1293,7 +1309,7 @@ bool ha_blitz::unpack_row(unsigned char *to, const char *from,
   /* Unpack all fields in the provided row. */
   for (Field **field = table->getFields(); *field; field++) {
     if (!((*field)->is_null())) {
-      pos = (*field)->unpack(to + (*field)->offset(table->record[0]), pos);
+      pos = (*field)->unpack(to + (*field)->offset(table->getInsertRecord()), pos);
     }
   }
 
@@ -1315,8 +1331,8 @@ unsigned char *ha_blitz::get_pack_buffer(const size_t size) {
 
       secondary_row_buffer_size = size;
       secondary_row_buffer = (unsigned char *)new_ptr;
-      buf = secondary_row_buffer;
     }
+    buf = secondary_row_buffer;
   }
   return buf;
 }
@@ -1370,7 +1386,7 @@ BlitzShare *ha_blitz::get_share(const char *name) {
       if (f->null_ptr) {
         share_ptr->btrees[i].parts[j].null_bitmask = f->null_bit;
         share_ptr->btrees[i].parts[j].null_pos
-          = (uint32_t)(f->null_ptr - (unsigned char *)table->record[0]);
+          = (uint32_t)(f->null_ptr - (unsigned char *)table->getInsertRecord());
       }
 
       share_ptr->btrees[i].parts[j].flag = curr->key_part[j].key_part_flag;
@@ -1457,4 +1473,30 @@ static char *skip_btree_key(const char *key, const size_t skip_len,
   return pos + skip_len + sizeof(uint16_t);
 }
 
-DRIZZLE_PLUGIN(blitz_init, NULL);
+static bool str_is_numeric(const std::string &str) {
+  for (uint32_t i = 0; i < str.length(); i++) {
+    if (!std::isdigit(str[i]))
+      return false;
+  }
+  return true;
+}
+
+static DRIZZLE_SYSVAR_ULONGLONG (
+  estimated_rows,
+  blitz_estimated_rows,
+  PLUGIN_VAR_RQCMDARG,
+  "Estimated number of rows that a BlitzDB table will store.",
+  NULL,
+  NULL,
+  0,
+  0,
+  UINT64_MAX,
+  0
+);
+
+static drizzle_sys_var *blitz_system_variables[] = {
+  DRIZZLE_SYSVAR(estimated_rows),
+  NULL
+};
+
+DRIZZLE_PLUGIN(blitz_init, blitz_system_variables, NULL);

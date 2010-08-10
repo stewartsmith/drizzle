@@ -30,34 +30,35 @@ using namespace std;
 table_cache_dictionary::TableCache::TableCache() :
   plugin::TableFunction("DATA_DICTIONARY", "TABLE_CACHE")
 {
-  add_field("SESSION_ID", plugin::TableFunction::NUMBER);
+  add_field("SESSION_ID", plugin::TableFunction::NUMBER, 0, false);
   add_field("TABLE_SCHEMA");
   add_field("TABLE_NAME");
-  add_field("VERSION", plugin::TableFunction::NUMBER);
-  add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN);
-  add_field("ROWS", plugin::TableFunction::NUMBER);
-  add_field("AVG_ROW_LENGTH", plugin::TableFunction::NUMBER);
-  add_field("TABLE_SIZE", plugin::TableFunction::NUMBER);
-  add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER);
+  add_field("VERSION", plugin::TableFunction::NUMBER, 0, false);
+  add_field("IS_NAME_LOCKED", plugin::TableFunction::BOOLEAN, 0, false);
+  add_field("ROWS", plugin::TableFunction::NUMBER, 0, false);
+  add_field("AVG_ROW_LENGTH", plugin::TableFunction::NUMBER, 0, false);
+  add_field("TABLE_SIZE", plugin::TableFunction::NUMBER, 0, false);
+  add_field("AUTO_INCREMENT", plugin::TableFunction::NUMBER, 0, false);
 }
 
 table_cache_dictionary::TableCache::Generator::Generator(drizzled::Field **arg) :
   drizzled::plugin::TableFunction::Generator(arg),
   is_primed(false)
 {
-  pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+  LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
-  for (uint32_t idx= 0; idx < get_open_cache().records; idx++ )
-  {
-    table= (Table*) hash_element(&get_open_cache(), idx);
-    table_list.push_back(table);
+  for (TableOpenCache::const_iterator iter= get_open_cache().begin();
+       iter != get_open_cache().end();
+       iter++)
+   {
+    table_list.push_back((*iter).second);
   }
   std::sort(table_list.begin(), table_list.end(), Table::compare);
 }
 
 table_cache_dictionary::TableCache::Generator::~Generator()
 {
-  pthread_mutex_unlock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+  LOCK_open.unlock(); /* Optionally lock for remove tables from open_cahe if not in use */
 }
 
 bool table_cache_dictionary::TableCache::Generator::nextCore()

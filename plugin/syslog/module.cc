@@ -28,7 +28,12 @@
 #include "logging.h"
 #include "errmsg.h"
 #include "function.h"
+#include <iostream>
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 
+namespace po= boost::program_options;
+using namespace std;
 using namespace drizzled;
 
 namespace syslog_module
@@ -46,6 +51,75 @@ char* sysvar_errmsg_priority;
 
 static int init(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+
+  if (vm.count("logging_threshold-slow"))
+  {
+    if (sysvar_logging_threshold_slow > ULONG_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for logging-threshold-slow\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("logging-threshold-big-resultset"))
+  {
+    if (sysvar_logging_threshold_big_resultset > 2)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for logging-threshold-big-resultset\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("logging-threshold-big-examined"))
+  {
+    if (sysvar_logging_threshold_big_examined > 2)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for logging-threshold-big-examined\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("ident"))
+  {
+    sysvar_ident= strdup(vm["ident"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_ident= strdup("drizzled");
+  }
+
+  if (vm.count("facility"))
+  {
+    sysvar_facility= strdup(vm["facility"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_facility= strdup("local0");
+  }
+
+  if (vm.count("logging-priority"))
+  {
+    sysvar_logging_priority= strdup(vm["logging-priority"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_logging_priority= strdup("info");
+  }
+
+  if (vm.count("errmsg-priority"))
+  {
+    sysvar_errmsg_priority= strdup(vm["errmsg-priority"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_errmsg_priority= strdup("warning");
+  }
+
   context.add(new Logging_syslog());
   context.add(new ErrorMessage_syslog());
   context.add(new plugin::Create_function<Function_syslog>("syslog"));
@@ -142,6 +216,37 @@ static DRIZZLE_SYSVAR_STR(
   NULL, /* update func*/
   "warning" /* default */);
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("ident",
+          po::value<string>(),
+          N_("Syslog Ident"));
+  context("facility",
+          po::value<string>(),
+          N_("Syslog Facility"));
+  context("logging-enable",
+          po::value<bool>(&sysvar_logging_enable)->default_value(false)->zero_tokens(),
+          N_("Enable logging to syslog of the query log"));
+  context("logging-priority",
+          po::value<string>(),
+          N_("Syslog Priority of query logging"));
+  context("logging-threshold-slow",
+          po::value<unsigned long>(&sysvar_logging_threshold_slow)->default_value(0),
+          N_("Threshold for logging slow queries, in microseconds"));
+  context("logging-threshold-big-resultset",
+          po::value<unsigned long>(&sysvar_logging_threshold_big_resultset)->default_value(0),
+          N_("Threshold for logging big queries, for rows returned"));
+  context("logging-threshold-big-examined",
+          po::value<unsigned long>(&sysvar_logging_threshold_big_examined)->default_value(0),
+          N_("Threshold for logging big queries, for rows examined"));
+  context("errmsg-enable",
+          po::value<bool>(&sysvar_errmsg_enable)->default_value(false)->zero_tokens(),
+          N_("Enable logging to syslog of the error messages"));
+  context("errmsg-priority",
+          po::value<string>(),
+          N_("Syslog Priority of error messages"));
+}
+
 static drizzle_sys_var* system_variables[]= {
   DRIZZLE_SYSVAR(ident),
   DRIZZLE_SYSVAR(facility),
@@ -157,4 +262,4 @@ static drizzle_sys_var* system_variables[]= {
 
 } // namespace syslog_module
 
-DRIZZLE_PLUGIN(syslog_module::init, syslog_module::system_variables);
+DRIZZLE_PLUGIN(syslog_module::init, syslog_module::system_variables, syslog_module::init_options);

@@ -41,20 +41,16 @@ Function::Function(const std::string &name_arg) :
 }
 
 
-Cursor *Function::create(TableShare &table, memory::Root *mem_root)
+Cursor *Function::create(TableShare &table)
 {
-  return new (mem_root) FunctionCursor(*this, table);
+  return new FunctionCursor(*this, table);
 }
 
 int Function::doGetTableDefinition(Session &,
                                    const TableIdentifier &identifier,
                                    message::Table &table_proto)
 {
-  string tab_name(identifier.getPath());
-  transform(tab_name.begin(), tab_name.end(),
-            tab_name.begin(), ::tolower);
-
-  drizzled::plugin::TableFunction *function= getFunction(tab_name);
+  drizzled::plugin::TableFunction *function= getFunction(identifier.getPath());
 
   if (not function)
   {
@@ -71,10 +67,10 @@ void Function::doGetTableNames(drizzled::CachedDirectory&,
                                const drizzled::SchemaIdentifier &schema_identifier,
                                set<string> &set_of_names)
 {
-  drizzled::plugin::TableFunction::getNames(schema_identifier.getSchemaName(), set_of_names);
+  drizzled::plugin::TableFunction::getNames(schema_identifier.getPath(), set_of_names);
 }
 
-void Function::doGetSchemaIdentifiers(SchemaIdentifierList& schemas)
+void Function::doGetSchemaIdentifiers(SchemaIdentifiers& schemas)
 {
   schemas.push_back(INFORMATION_SCHEMA_IDENTIFIER);
   schemas.push_back(DATA_DICTIONARY_IDENTIFIER);
@@ -135,7 +131,7 @@ void Function::doGetTableIdentifiers(drizzled::CachedDirectory&,
 
   for (set<string>::iterator iter= set_of_names.begin(); iter != set_of_names.end(); iter++)
   {
-    set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter));
+    set_of_identifiers.push_back(TableIdentifier(schema_identifier, *iter, drizzled::message::Table::FUNCTION));
   }
 }
 

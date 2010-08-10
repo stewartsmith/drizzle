@@ -55,6 +55,8 @@
 #include <drizzled/table_proto.h>
 #include <drizzled/plugin/event_observer.h>
 
+#include <boost/algorithm/string/compare.hpp>
+
 static bool shutdown_has_begun= false; // Once we put in the container for the vector/etc for engines this will go away.
 
 using namespace std;
@@ -68,6 +70,7 @@ namespace plugin
 static EngineVector vector_of_engines;
 static EngineVector vector_of_schema_engines;
 
+const std::string DEFAULT_STRING("default");
 const std::string UNKNOWN_STRING("UNKNOWN");
 const std::string DEFAULT_DEFINITION_FILE_EXT(".dfe");
 
@@ -190,33 +193,25 @@ void StorageEngine::removePlugin(StorageEngine *)
 class FindEngineByName
   : public unary_function<StorageEngine *, bool>
 {
-  const string &target;
+  const string &predicate;
 
 public:
   explicit FindEngineByName(const string &target_arg) :
-    target(target_arg)
+    predicate(target_arg)
   {
   }
+
   result_type operator() (argument_type engine)
   {
-    string engine_name(engine->getName());
-
-    transform(engine_name.begin(), engine_name.end(),
-              engine_name.begin(), ::tolower);
-    return engine_name == target;
+    return boost::iequals(engine->getName(), predicate);
   }
 };
 
-StorageEngine *StorageEngine::findByName(const string &find_str)
+StorageEngine *StorageEngine::findByName(const string &predicate)
 {
-  string search_string(find_str);
-  transform(search_string.begin(), search_string.end(),
-            search_string.begin(), ::tolower);
-
-  
   EngineVector::iterator iter= find_if(vector_of_engines.begin(),
                                        vector_of_engines.end(),
-                                       FindEngineByName(search_string));
+                                       FindEngineByName(predicate));
   if (iter != vector_of_engines.end())
   {
     StorageEngine *engine= *iter;
@@ -227,18 +222,14 @@ StorageEngine *StorageEngine::findByName(const string &find_str)
   return NULL;
 }
 
-StorageEngine *StorageEngine::findByName(Session& session, const string &find_str)
+StorageEngine *StorageEngine::findByName(Session& session, const string &predicate)
 {
-  string search_string(find_str);
-  transform(search_string.begin(), search_string.end(),
-            search_string.begin(), ::tolower);
-
-  if (search_string.compare("default") == 0)
+  if (boost::iequals(predicate, DEFAULT_STRING))
     return session.getDefaultStorageEngine();
 
   EngineVector::iterator iter= find_if(vector_of_engines.begin(),
                                        vector_of_engines.end(),
-                                       FindEngineByName(search_string));
+                                       FindEngineByName(predicate));
   if (iter != vector_of_engines.end())
   {
     StorageEngine *engine= *iter;
@@ -547,38 +538,16 @@ int StorageEngine::createTable(Session &session,
       my_error(ER_CANT_CREATE_TABLE, MYF(ME_BELL+ME_WAITTANG), const_cast<TableIdentifier &>(identifier).getSQLPath().c_str(), error);
     }
 
-    table.delete_table(false);
+    table.delete_table();
   }
 
   return(error != 0);
 }
 
-Cursor *StorageEngine::getCursor(TableShare &share, memory::Root *alloc)
+Cursor *StorageEngine::getCursor(TableShare &share)
 {
-  return create(share, alloc);
+  return create(share);
 }
-
-class AddTableName : 
-  public unary_function<StorageEngine *, void>
-{
-  CachedDirectory &directory;
-  const SchemaIdentifier &identifier;
-  TableNameList &set_of_names;
-
-public:
-
-  AddTableName(CachedDirectory &directory_arg, const SchemaIdentifier &identifier_arg, set<string>& of_names) :
-    directory(directory_arg),
-    identifier(identifier_arg),
-    set_of_names(of_names)
-  {
-  }
-
-  result_type operator() (argument_type engine)
-  {
-    engine->doGetTableNames(directory, identifier, set_of_names);
-  }
-};
 
 class AddTableIdentifier : 
   public unary_function<StorageEngine *, void>
@@ -606,34 +575,7 @@ public:
 static SchemaIdentifier INFORMATION_SCHEMA_IDENTIFIER("information_schema");
 static SchemaIdentifier DATA_DICTIONARY_IDENTIFIER("data_dictionary");
 
-void StorageEngine::getTableNames(Session &session, const SchemaIdentifier &schema_identifier, TableNameList &set_of_names)
-{
-  CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
-
-  if (schema_identifier == INFORMATION_SCHEMA_IDENTIFIER)
-  { }
-  else if (schema_identifier == DATA_DICTIONARY_IDENTIFIER)
-  { }
-  else
-  {
-    if (directory.fail())
-    {
-      errno= directory.getError();
-      if (errno == ENOENT)
-        my_error(ER_BAD_DB_ERROR, MYF(ME_BELL+ME_WAITTANG), const_cast<SchemaIdentifier &>(schema_identifier).getSQLPath().c_str());
-      else
-        my_error(ER_CANT_READ_DIR, MYF(ME_BELL+ME_WAITTANG), directory.getPath(), errno);
-      return;
-    }
-  }
-
-  for_each(vector_of_engines.begin(), vector_of_engines.end(),
-           AddTableName(directory, schema_identifier, set_of_names));
-
-  session.doGetTableNames(directory, schema_identifier, set_of_names);
-}
-
-void StorageEngine::getTableIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
+void StorageEngine::getIdentifiers(Session &session, const SchemaIdentifier &schema_identifier, TableIdentifiers &set_of_identifiers)
 {
   CachedDirectory directory(schema_identifier.getPath(), set_of_table_definition_ext);
 
@@ -682,11 +624,11 @@ public:
 class DropTables: public unary_function<StorageEngine *, void>
 {
   Session &session;
-  TableIdentifierList &table_identifiers;
+  TableIdentifiers &table_identifiers;
 
 public:
 
-  DropTables(Session &session_arg, TableIdentifierList &table_identifiers_arg) :
+  DropTables(Session &session_arg, TableIdentifiers &table_identifiers_arg) :
     session(session_arg),
     table_identifiers(table_identifiers_arg)
   { }
@@ -710,7 +652,7 @@ public:
 void StorageEngine::removeLostTemporaryTables(Session &session, const char *directory)
 {
   CachedDirectory dir(directory, set_of_table_definition_ext);
-  TableIdentifierList table_identifiers;
+  TableIdentifiers table_identifiers;
 
   if (dir.fail())
   {

@@ -299,9 +299,7 @@ static void delete_module(module::Module *module)
   /* Free allocated strings before deleting the plugin. */
   plugin_vars_free_values(module->system_vars);
   module->isInited= false;
-  pthread_rwlock_wrlock(&LOCK_system_variables_hash);
   mysql_del_sys_var_chain(module->system_vars);
-  pthread_rwlock_unlock(&LOCK_system_variables_hash);
   delete module;
 }
 
@@ -383,10 +381,8 @@ static unsigned char *get_bookmark_hash_key(const unsigned char *buff,
 */
 bool plugin_init(module::Registry &registry,
                  int *argc, char **argv,
-                 bool skip_init,
                  po::options_description &long_options)
 {
-  module::Module *module;
   memory::Root tmp_root(4096);
 
   if (initialized)
@@ -453,11 +449,13 @@ bool plugin_init(module::Registry &registry,
     return true;
   }
 
-  if (skip_init)
-  {
-    tmp_root.free_root(MYF(0));
-    return false;
-  }
+  tmp_root.free_root(MYF(0));
+
+  return false;
+}
+
+void plugin_finalize(module::Registry &registry)
+{
 
   /*
     Now we initialize all remaining plugins
@@ -467,7 +465,7 @@ bool plugin_init(module::Registry &registry,
     
   while (modules != registry.getModulesMap().end())
   {
-    module= (*modules).second;
+    module::Module *module= (*modules).second;
     ++modules;
     if (module->isInited == false)
     {
@@ -477,11 +475,6 @@ bool plugin_init(module::Registry &registry,
         delete_module(module);
     }
   }
-
-
-  tmp_root.free_root(MYF(0));
-
-  return false;
 }
 
 class PrunePlugin :
@@ -792,11 +785,9 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
   sys_var_pluginvar *pi= NULL;
   module::Module *module;
 
-  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
   if ((var= intern_find_sys_var(str, length, false)) &&
       (pi= var->cast_pluginvar()))
   {
-    pthread_rwlock_unlock(&LOCK_system_variables_hash);
     if (!(module= pi->plugin))
       var= NULL; /* failed to lock it, it must be uninstalling */
     else if (module->isInited == false)
@@ -804,8 +795,6 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
       var= NULL;
     }
   }
-  else
-    pthread_rwlock_unlock(&LOCK_system_variables_hash);
 
   /*
     If the variable exists but the plugin it is associated with is not ready
@@ -981,8 +970,6 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
   {
     uint32_t idx;
 
-    pthread_rwlock_rdlock(&LOCK_system_variables_hash);
-
     char *tmpptr= NULL;
     if (!(tmpptr= (char *)realloc(session->variables.dynamic_variables_ptr,
                                   global_variables_dynamic_size)))
@@ -990,7 +977,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
     session->variables.dynamic_variables_ptr= tmpptr;
 
     if (global_lock)
-      pthread_mutex_lock(&LOCK_global_system_variables);
+      LOCK_global_system_variables.lock();
 
     //safe_mutex_assert_owner(&LOCK_global_system_variables);
 
@@ -1033,7 +1020,7 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
     }
 
     if (global_lock)
-      pthread_mutex_unlock(&LOCK_global_system_variables);
+      LOCK_global_system_variables.unlock();
 
     session->variables.dynamic_variables_version=
            global_system_variables.dynamic_variables_version;
@@ -1041,8 +1028,6 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
            global_system_variables.dynamic_variables_head;
     session->variables.dynamic_variables_size=
            global_system_variables.dynamic_variables_size;
-
-    pthread_rwlock_unlock(&LOCK_system_variables_hash);
   }
   return (unsigned char*)session->variables.dynamic_variables_ptr + offset;
 }
@@ -1110,10 +1095,8 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
   sys_var_pluginvar *pivar;
   sys_var *var;
   int flags;
-  uint32_t idx;
 
-  pthread_rwlock_rdlock(&LOCK_system_variables_hash);
-  for (idx= 0; idx < bookmark_hash.records; idx++)
+  for (uint32_t idx= 0; idx < bookmark_hash.records; idx++)
   {
     v= (st_bookmark*) hash_element(&bookmark_hash, idx);
     if (v->version > vars->dynamic_variables_version ||
@@ -1132,7 +1115,6 @@ static void cleanup_variables(Session *session, struct system_variables *vars)
       *ptr= NULL;
     }
   }
-  pthread_rwlock_unlock(&LOCK_system_variables_hash);
 
   assert(vars->storage_engine == NULL);
 
@@ -1280,7 +1262,7 @@ void sys_var_pluginvar::set_default(Session *session, sql_var_t type)
   if (is_readonly())
     return;
 
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   tgt= real_value_ptr(session, type);
   src= ((void **) (plugin_var + 1) + 1);
 
@@ -1317,11 +1299,11 @@ void sys_var_pluginvar::set_default(Session *session, sql_var_t type)
   if (!(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) || type == OPT_GLOBAL)
   {
     plugin_var->update(session, plugin_var, tgt, src);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
   {
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     plugin_var->update(session, plugin_var, tgt, src);
   }
 }
@@ -1340,18 +1322,18 @@ bool sys_var_pluginvar::update(Session *session, set_var *var)
   if (is_readonly())
     return 1;
 
-  pthread_mutex_lock(&LOCK_global_system_variables);
+  LOCK_global_system_variables.lock();
   tgt= real_value_ptr(session, var->type);
 
   if (!(plugin_var->flags & PLUGIN_VAR_SessionLOCAL) || var->type == OPT_GLOBAL)
   {
     /* variable we are updating has global scope, so we unlock after updating */
     plugin_var->update(session, plugin_var, tgt, &var->save_result);
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
   }
   else
   {
-    pthread_mutex_unlock(&LOCK_global_system_variables);
+    LOCK_global_system_variables.unlock();
     plugin_var->update(session, plugin_var, tgt, &var->save_result);
   }
  return 0;
@@ -1679,40 +1661,42 @@ static int test_plugin_options(memory::Root *module_root,
 
   if (test_module->getManifest().init_options != NULL)
   {
-    po::options_description module_options("Options used by plugins");
+    string plugin_section_title("Options used by ");
+    plugin_section_title.append(test_module->getName());
+    po::options_description module_options(plugin_section_title);
     module::option_context opt_ctx(test_module->getName(),
                                    module_options.add_options());
     test_module->getManifest().init_options(opt_ctx);
     long_options.add(module_options);
 
   }
-  else
-  {
 
-    for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
+  for (opt= test_module->getManifest().system_vars; opt && *opt; opt++)
+  {
+    count++;
+  }
+
+  if (count > EXTRA_OPTIONS || (*argc > 1))
+  {
+    if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
     {
-      count++;
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Out of memory for plugin '%s'."),
+                    test_module->getName().c_str());
+      return(-1);
+    }
+    memset(opts, 0, sizeof(option) * count);
+
+    if (construct_options(module_root, test_module, opts))
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Bad options for plugin '%s'."),
+                    test_module->getName().c_str());
+      return(-1);
     }
 
-    if (count > EXTRA_OPTIONS || (*argc > 1))
+    if (test_module->getManifest().init_options == NULL)
     {
-      if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Out of memory for plugin '%s'."),
-                      test_module->getName().c_str());
-        return(-1);
-      }
-      memset(opts, 0, sizeof(option) * count);
-
-      if (construct_options(module_root, test_module, opts))
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Bad options for plugin '%s'."),
-                      test_module->getName().c_str());
-        return(-1);
-      }
-
       error= handle_options(argc, &argv, opts, get_one_plugin_option);
       (*argc)++; /* add back one for the program name */
 

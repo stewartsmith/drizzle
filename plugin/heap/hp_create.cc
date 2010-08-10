@@ -52,7 +52,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 
   if (!create_info->internal_table)
   {
-    pthread_mutex_lock(&THR_LOCK_heap);
+    THR_LOCK_heap.lock();
     if ((share= hp_find_named_heap(name)) && share->open_count == 0)
     {
       hp_free(share);
@@ -78,7 +78,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
         /* Eventual chunk_size cannot be smaller than key data,
            which allows all keys to fit into the first chunk */
         my_error(ER_CANT_USE_OPTION_HERE, MYF(0), "block_size");
-        pthread_mutex_unlock(&THR_LOCK_heap);
+        THR_LOCK_heap.unlock();
         return(ER_CANT_USE_OPTION_HERE);
       }
 
@@ -364,7 +364,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       share->delete_on_close= 1;
   }
   if (!create_info->internal_table)
-    pthread_mutex_unlock(&THR_LOCK_heap);
+    THR_LOCK_heap.unlock();
 
   *res= share;
   return(0);
@@ -379,7 +379,7 @@ err:
   if(share)
     free(share);
   if (!create_info->internal_table)
-    pthread_mutex_unlock(&THR_LOCK_heap);
+    THR_LOCK_heap.unlock();
   return(1);
 } /* heap_create */
 
@@ -434,7 +434,7 @@ int heap_delete_table(const char *name)
   int result;
   register HP_SHARE *share;
 
-  pthread_mutex_lock(&THR_LOCK_heap);
+  THR_LOCK_heap.lock();
   if ((share= hp_find_named_heap(name)))
   {
     heap_try_free(share);
@@ -444,16 +444,16 @@ int heap_delete_table(const char *name)
   {
     result= errno=ENOENT;
   }
-  pthread_mutex_unlock(&THR_LOCK_heap);
+  THR_LOCK_heap.unlock();
   return(result);
 }
 
 
 void heap_drop_table(HP_INFO *info)
 {
-  pthread_mutex_lock(&THR_LOCK_heap);
+  THR_LOCK_heap.lock();
   heap_try_free(info->s);
-  pthread_mutex_unlock(&THR_LOCK_heap);
+  THR_LOCK_heap.unlock();
   return;
 }
 
@@ -462,7 +462,7 @@ void hp_free(HP_SHARE *share)
 {
   heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
-  thr_lock_delete(&share->lock);
+  share->lock.deinit();
   pthread_mutex_destroy(&share->intern_lock);
   if (share->keydef && share->keydef->seg)
     free(share->keydef->seg);
