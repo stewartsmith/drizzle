@@ -50,13 +50,6 @@ Handler_savepoint	#
 Handler_savepoint_rollback	#
 Handler_update	#
 Handler_write	#
-Key_blocks_not_flushed	#
-Key_blocks_unused	#
-Key_blocks_used	#
-Key_read_requests	#
-Key_reads	#
-Key_write_requests	#
-Key_writes	#
 Last_query_cost	#
 Max_used_connections	#
 Questions	#

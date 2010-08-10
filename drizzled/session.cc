@@ -1703,7 +1703,6 @@ void Session::refresh_status()
   memset(&status_var, 0, sizeof(status_var));
 
   /* Reset the counters of all key caches (default and named). */
-  reset_key_cache_counters();
   flush_status_time= time((time_t*) 0);
   current_global_counters.max_used_connections= 1; /* We set it to one, because we know we exist */
   LOCK_status.unlock();
