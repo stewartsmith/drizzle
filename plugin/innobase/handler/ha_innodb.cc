@@ -8702,8 +8702,7 @@ innodb_change_buffering_update(
 /* plugin options */
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB checksums validation (enabled by default). "
-  "Disable with --skip-innodb-checksums.",
+  "Enable InnoDB checksums validation (enabled by default). ",
   NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
@@ -8713,8 +8712,7 @@ static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
 
 static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB doublewrite buffer (enabled by default). "
-  "Disable with --skip-innodb-doublewrite.",
+  "Enable InnoDB doublewrite buffer (enabled by default). ",
   NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
@@ -8805,8 +8803,7 @@ static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
 
 static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, btr_search_enabled,
   PLUGIN_VAR_OPCMDARG,
-  "Enable InnoDB adaptive hash index (enabled by default).  "
-  "Disable with --skip-innodb-adaptive-hash-index.",
+  "Enable InnoDB adaptive hash index (enabled by default).",
   NULL, innodb_adaptive_hash_index_update, TRUE);
 
 static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
@@ -8936,13 +8933,13 @@ static void init_options(drizzled::module::option_context &context)
 {
   context("checksums",
           po::value<bool>(&innobase_use_checksums)->default_value(true)->zero_tokens(),
-          "Enable InnoDB checksums validation (enabled by default). Disable with --skip-innodb-checksums.");
+          "Enable InnoDB checksums validation.");
   context("data-home-dir",
           po::value<string>(),
           "The common part for InnoDB table spaces.");
   context("doublewrite",
           po::value<bool>(&innobase_use_doublewrite)->default_value(true)->zero_tokens(),
-          "Enable InnoDB doublewrite buffer (enabled by default). Disable with --skip-innodb-doublewrite.");
+          "Enable InnoDB doublewrite buffer.");
   context("io-capacity",
           po::value<unsigned long>(&srv_io_capacity)->default_value(200),
           "Number of IOPs the server can do. Tunes the background IO rate");
