@@ -1213,7 +1213,8 @@ static bool internal_alter_table(Session *session,
       compare_table(). Then, we need one additional call to
     */
     TableIdentifier original_table_to_drop(original_table_identifier.getSchemaName(),
-                                           old_name, message::Table::TEMPORARY);
+                                           old_name, create_proto.type() != message::Table::TEMPORARY ? message::Table::INTERNAL :
+                                         message::Table::TEMPORARY);
 
     if (mysql_rename_table(*session, original_engine, original_table_identifier, original_table_to_drop))
     {

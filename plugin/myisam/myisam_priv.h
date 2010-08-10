@@ -178,17 +178,14 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
         *index_file_name;
   unsigned char *file_map;			/* mem-map of file if possible */
 private:
-  drizzled::KEY_CACHE *key_cache;			/* ref to the current key cache */
+  drizzled::KEY_CACHE key_cache;			/* ref to the current key cache */
 public:
   drizzled::KEY_CACHE *getKeyCache()
   {
-    return key_cache;
+    return &key_cache;
   }
 
-  void setKeyCache()
-  {
-    key_cache= dflt_key_cache;
-  }
+  void setKeyCache();
 
   MI_DECODE_TREE *decode_trees;
   uint16_t *decode_tables;
