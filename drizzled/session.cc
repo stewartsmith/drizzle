@@ -74,21 +74,6 @@ const char * const Session::DEFAULT_WHERE= "field list";
 extern pthread_key_t THR_Session;
 extern pthread_key_t THR_Mem_root;
 
-
-/****************************************************************************
-** User variables
-****************************************************************************/
-static unsigned char *get_var_key(user_var_entry *entry, size_t *length, bool)
-{
-  *length= entry->name.length;
-  return (unsigned char*) entry->name.str;
-}
-
-static void free_user_var(user_var_entry *entry)
-{
-  delete entry;
-}
-
 bool Key_part_spec::operator==(const Key_part_spec& other) const
 {
   return length == other.length &&
@@ -228,7 +213,6 @@ Session::Session(plugin::Client *client_arg) :
   scoreboard_index= -1;
   dbug_sentry=Session_SENTRY_MAGIC;
   cleanup_done= abort_on_warning= no_warnings_for_error= false;
-  pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
 
   /* Variables with default values */
   proc_info="login";
@@ -260,9 +244,6 @@ Session::Session(plugin::Client *client_arg) :
 
   /* Initialize sub structures */
   memory::init_sql_alloc(&warn_root, WARN_ALLOC_BLOCK_SIZE, WARN_ALLOC_PREALLOC_SIZE);
-  hash_init(&user_vars, system_charset_info, USER_VARS_HASH_SIZE, 0, 0,
-	    (hash_get_key) get_var_key,
-	    (hash_free_key) free_user_var, 0);
 
   substitute_null_with_insert_id = false;
   lock_info.init(); /* safety: will be reset after start */
@@ -334,7 +315,17 @@ void Session::cleanup(void)
     transaction_services.rollbackTransaction(this, true);
     xid_cache_delete(&transaction.xid_state);
   }
-  hash_free(&user_vars);
+
+  for (UserVars::iterator iter= user_vars.begin();
+       iter != user_vars.end();
+       iter++)
+  {
+    user_var_entry *entry= (*iter).second;
+    delete entry;
+  }
+  user_vars.clear();
+
+
   close_temporary_tables();
 
   if (global_read_lock)
@@ -378,8 +369,7 @@ Session::~Session()
   plugin::EventObserver::deregisterSessionEvents(*this); 
 
   /* Ensure that no one is using Session */
-  pthread_mutex_unlock(&LOCK_delete);
-  pthread_mutex_destroy(&LOCK_delete);
+  LOCK_delete.unlock();
 }
 
 void Session::awake(Session::killed_state state_to_set)
@@ -1722,25 +1712,28 @@ void Session::refresh_status()
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
 {
   user_var_entry *entry= NULL;
+  UserVarsRange ppp= user_vars.equal_range(std::string(name.str, name.length));
 
-  entry= (user_var_entry*) hash_search(&user_vars, (unsigned char*) name.str, name.length);
+  for (UserVars::iterator iter= ppp.first;
+         iter != ppp.second; ++iter)
+  {
+    entry= (*iter).second;
+  }
 
   if ((entry == NULL) && create_if_not_exists)
   {
-    if (!hash_inited(&user_vars))
-      return NULL;
     entry= new (nothrow) user_var_entry(name.str, query_id);
 
     if (entry == NULL)
       return NULL;
 
-    if (my_hash_insert(&user_vars, (unsigned char*) entry))
-    {
-      assert(1);
-      delete entry;
-      return 0;
-    }
+    std::pair<UserVars::iterator, bool> returnable= user_vars.insert(make_pair(std::string(name.str, name.length), entry));
 
+    if (not returnable.second)
+    {
+      delete entry;
+      return NULL;
+    }
   }
 
   return entry;

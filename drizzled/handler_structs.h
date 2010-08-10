@@ -57,6 +57,17 @@ typedef struct st_ha_create_information
   uint32_t used_fields;
   plugin::StorageEngine *db_type;
   bool table_existed;			/* 1 in create if table existed */
+
+  st_ha_create_information() :
+    table_charset(0),
+    default_table_charset(0),
+    alias(0),
+    auto_increment_value(0),
+    table_options(0),
+    used_fields(0),
+    db_type(0),
+    table_existed(0)
+  { }
 } HA_CREATE_INFO;
 
 typedef struct st_ha_alter_information
