@@ -818,7 +818,7 @@ create_tmp_table(Session *session,Tmp_Table_Param *param,List<Item> &fields,
   bool force_copy_fields= param->force_copy_fields;
   uint64_t max_rows= 0;
 
-  status_var_increment(session->status_var.created_tmp_tables);
+  session->status_var.created_tmp_tables++;
 
   if (group)
   {
@@ -1706,7 +1706,7 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
     db_stat= 0;
     goto err;
   }
-  status_var_increment(in_use->status_var.created_tmp_disk_tables);
+  in_use->status_var.created_tmp_disk_tables++;
   share->db_record_offset= 1;
   return false;
  err:

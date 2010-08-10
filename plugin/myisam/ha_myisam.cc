@@ -62,6 +62,15 @@ static uint32_t myisam_key_cache_age_threshold;
 static uint64_t max_sort_file_size;
 static uint64_t sort_buffer_size;
 
+void st_mi_isam_share::setKeyCache()
+{
+  (void)init_key_cache(&key_cache,
+                       myisam_key_cache_block_size,
+                       myisam_key_cache_size,
+                       myisam_key_cache_division_limit, 
+                       myisam_key_cache_age_threshold);
+}
+
 /*****************************************************************************
 ** MyISAM tables
 *****************************************************************************/
@@ -95,7 +104,6 @@ public:
   virtual ~MyisamEngine()
   { 
     pthread_mutex_destroy(&THR_LOCK_myisam);
-    end_key_cache(dflt_key_cache, 1);		// Can never fail
 
     mi_panic(HA_PANIC_CLOSE);
   }
@@ -1560,16 +1568,6 @@ static int myisam_init(module::Context &context)
   engine= new MyisamEngine(engine_name);
   context.add(engine);
 
-  /* call ha_init_key_cache() on all key caches to init them */
-  int error= init_key_cache(dflt_key_cache,
-                            myisam_key_cache_block_size,
-                            myisam_key_cache_size,
-                            myisam_key_cache_division_limit, 
-                            myisam_key_cache_age_threshold);
-
-  if (error == 0)
-    exit(1); /* Memory Allocation Failure */
-
   return 0;
 }
 
@@ -1577,101 +1575,36 @@ static int myisam_init(module::Context &context)
 static void sys_var_key_cache_size_update(Session *session, drizzle_sys_var *var, void *, const void *save)
 {
   uint32_t tmp= *static_cast<const uint32_t *>(save);
-  bool error= 0;
 
 	struct option option_limits;
   plugin_opt_set_limits(&option_limits, var);
 	option_limits.name= "myisam_key_cache_size";
 
-  if (dflt_key_cache->in_init)
-    return;
-
   myisam_key_cache_size= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
 
-  /* If key cache didn't existed initialize it, else resize it */
-  dflt_key_cache->in_init= 1;
-
-  error= ! resize_key_cache(dflt_key_cache,
-														myisam_key_cache_block_size,
-                            myisam_key_cache_size,
-                            myisam_key_cache_division_limit,
-													  myisam_key_cache_age_threshold);
-  dflt_key_cache->in_init= 0;
 }
 
-static void sys_var_key_cache_block_size_update(Session *session, drizzle_sys_var *var, void *, const void *save)
+static void sys_var_key_cache_block_size_update(Session *, drizzle_sys_var *var, void *, const void *)
 {
-  uint32_t tmp= *static_cast<const uint32_t *>(save);
-  bool error= 0;
-
 	struct option option_limits;
   plugin_opt_set_limits(&option_limits, var);
 	option_limits.name= "myisam_key_cache_block_size";
 
-  if (dflt_key_cache->in_init)
-    return;
-
-  myisam_key_cache_block_size= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
-
-  dflt_key_cache->in_init= 1;
-
-  error= ! resize_key_cache(dflt_key_cache,
-														myisam_key_cache_block_size,
-                            myisam_key_cache_size,
-                            myisam_key_cache_division_limit,
-													  myisam_key_cache_age_threshold);
-
-  dflt_key_cache->in_init= 0;
 }
 
-static void sys_var_key_cache_division_limit_update(Session *session, drizzle_sys_var *var, void *, const void *save)
+static void sys_var_key_cache_division_limit_update(Session *, drizzle_sys_var *var, void *, const void *)
 {
-  uint32_t tmp= *static_cast<const uint32_t *>(save);
-  bool error= 0;
-
 	struct option option_limits;
   plugin_opt_set_limits(&option_limits, var);
 	option_limits.name= "myisam_key_cache_division_limit";
 
-  if (dflt_key_cache->in_init)
-    return;
-
-  myisam_key_cache_division_limit= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
-
-  dflt_key_cache->in_init= 1;
-
-  error= ! resize_key_cache(dflt_key_cache,
-														myisam_key_cache_block_size,
-                            myisam_key_cache_size,
-                            myisam_key_cache_division_limit,
-													  myisam_key_cache_age_threshold);
-
-  dflt_key_cache->in_init= 0;
 }
 
-static void sys_var_key_cache_age_threshold_update(Session *session, drizzle_sys_var *var, void *, const void *save)
+static void sys_var_key_cache_age_threshold_update(Session *, drizzle_sys_var *var, void *, const void *)
 {
-  uint32_t tmp= *static_cast<const uint32_t *>(save);
-  bool error= 0;
-
-	struct option option_limits;
+  struct option option_limits;
   plugin_opt_set_limits(&option_limits, var);
-	option_limits.name= "myisam_key_cache_age_threshold";
-
-  if (dflt_key_cache->in_init)
-    return;
-
-  myisam_key_cache_age_threshold= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
-
-  dflt_key_cache->in_init= 1;
-
-  error= ! resize_key_cache(dflt_key_cache,
-														myisam_key_cache_block_size,
-                            myisam_key_cache_size,
-                            myisam_key_cache_division_limit,
-													  myisam_key_cache_age_threshold);
-
-  dflt_key_cache->in_init= 0;
+  option_limits.name= "myisam_key_cache_age_threshold";
 }
 
 static DRIZZLE_SYSVAR_UINT(key_cache_block_size,

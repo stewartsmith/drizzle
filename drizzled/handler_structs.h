@@ -40,9 +40,6 @@
 namespace drizzled
 {
 
-typedef struct st_key_cache KEY_CACHE;
-
-
 namespace plugin
 {
 class StorageEngine;
