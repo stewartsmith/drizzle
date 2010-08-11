@@ -259,15 +259,6 @@ int init_key_cache(KEY_CACHE *keycache, uint32_t key_cache_block_size,
 
 
 /*
-  Increment counter blocking resize key cache operation
-*/
-static inline void inc_counter_for_resize_op(KEY_CACHE *keycache)
-{
-  keycache->cnt_for_resize_op++;
-}
-
-
-/*
   Remove key_cache from memory
 
   SYNOPSIS
@@ -341,11 +332,6 @@ unsigned char *key_cache_read(KEY_CACHE *keycache,
   unsigned char *start= buff;
 
   assert (! keycache->key_cache_inited);
-
-  /* Key cache is not used */
-
-  keycache->global_cache_r_requests++;
-  keycache->global_cache_read++;
 
   if (!pread(file, (unsigned char*) buff, length, filepos))
     error= 1;
@@ -431,8 +417,6 @@ int key_cache_write(KEY_CACHE *keycache,
   {
     /* Not used in the server. */
     /* Force writing from buff into disk. */
-    keycache->global_cache_w_requests++;
-    keycache->global_cache_write++;
     if (pwrite(file, buff, length, filepos) == 0)
       return(1);
   }
@@ -443,8 +427,6 @@ int key_cache_write(KEY_CACHE *keycache,
   if (dont_write)
   {
     /* Used in the server. */
-    keycache->global_cache_w_requests++;
-    keycache->global_cache_write++;
     if (pwrite(file, (unsigned char*) buff, length, filepos) == 0)
       error=1;
   }
