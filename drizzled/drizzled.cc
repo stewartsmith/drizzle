@@ -34,7 +34,6 @@
 #include <boost/thread/condition_variable.hpp>
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/thread_var.h"
 #include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
@@ -425,18 +424,7 @@ void close_connections(void)
     tmp->killed= Session::KILL_CONNECTION;
     tmp->scheduler->killSession(tmp);
     DRIZZLE_CONNECTION_DONE(tmp->thread_id);
-    if (tmp->mysys_var)
-    {
-      tmp->mysys_var->abort=1;
-      pthread_mutex_lock(&tmp->mysys_var->mutex);
-      if (tmp->mysys_var->current_cond)
-      {
-        pthread_mutex_lock(tmp->mysys_var->current_mutex);
-        pthread_cond_broadcast(tmp->mysys_var->current_cond);
-        pthread_mutex_unlock(tmp->mysys_var->current_mutex);
-      }
-      pthread_mutex_unlock(&tmp->mysys_var->mutex);
-    }
+    tmp->lockOnSys();
   }
   LOCK_thread_count.unlock(); // For unlink from list
 
