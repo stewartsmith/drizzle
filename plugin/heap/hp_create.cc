@@ -251,24 +251,14 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
           keyinfo->get_key_length= hp_rb_key_length;
       }
     }
-    share= NULL;
-    if (!(share= (HP_SHARE*) malloc(sizeof(HP_SHARE))))
+    share= new HP_SHARE;
+
+    if (keys && !(share->keydef= new HP_KEYDEF[keys]))
       goto err;
-
-    memset(share, 0, sizeof(HP_SHARE));
-
-    if (keys && !(share->keydef= (HP_KEYDEF*) malloc(keys*sizeof(HP_KEYDEF))))
+    if (keys && !(share->keydef->seg= new HA_KEYSEG[key_segs]))
       goto err;
-
-    memset(share->keydef, 0, keys*sizeof(HP_KEYDEF));
-
-    if (keys && !(share->keydef->seg= (HA_KEYSEG*) malloc(key_segs*sizeof(HA_KEYSEG))))
+    if (!(share->column_defs= new HP_COLUMNDEF[columns]))
       goto err;
-    if (!(share->column_defs= (HP_COLUMNDEF*)
-	  malloc(columns*sizeof(HP_COLUMNDEF))))
-      goto err;
-
-    memset(share->column_defs, 0, columns*sizeof(HP_COLUMNDEF));
 
     /*
        Max_records is used for estimating block sizes and for enforcement.
@@ -280,7 +270,9 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     max_records = ((max_records && max_records < max_rows_for_stated_memory) ?
                       max_records : max_rows_for_stated_memory);
 
+#if 0
     memcpy(share->column_defs, columndef, (size_t) (sizeof(columndef[0]) * columns));
+#endif
 
     share->key_stat_version= 1;
     keyseg= keys ? share->keydef->seg : NULL;
@@ -370,15 +362,15 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
   return(0);
 
 err:
-  if(share && share->keydef && share->keydef->seg)
-    free(share->keydef->seg);
-  if(share && share->keydef)
-    free(share->keydef);
-  if(share && share->column_defs)
-    free(share->column_defs);
-  if(share)
-    free(share);
-  if (!create_info->internal_table)
+  if (share && share->keydef && share->keydef->seg)
+    delete [] share->keydef->seg;
+  if (share && share->keydef)
+    delete [] share->keydef;
+  if (share && share->column_defs)
+    delete [] share->column_defs;
+  if (share)
+    delete share;
+  if (not create_info->internal_table)
     THR_LOCK_heap.unlock();
   return(1);
 } /* heap_create */
@@ -449,15 +441,6 @@ int heap_delete_table(const char *name)
 }
 
 
-void heap_drop_table(HP_INFO *info)
-{
-  THR_LOCK_heap.lock();
-  heap_try_free(info->s);
-  THR_LOCK_heap.unlock();
-  return;
-}
-
-
 void hp_free(HP_SHARE *share)
 {
   heap_share_list.remove(share);        /* If not internal table */
@@ -465,11 +448,10 @@ void hp_free(HP_SHARE *share)
   share->lock.deinit();
   pthread_mutex_destroy(&share->intern_lock);
   if (share->keydef && share->keydef->seg)
-    free(share->keydef->seg);
+    delete [] share->keydef->seg;
   if (share->keydef)
-    free(share->keydef);
-  free(share->column_defs);
+    delete [] share->keydef;
+  delete [] share->column_defs;
   free((unsigned char*) share->name);
-  free((unsigned char*) share);
-  return;
+  delete share;
 }

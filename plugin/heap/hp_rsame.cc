@@ -27,7 +27,7 @@
 
 int heap_rsame(register HP_INFO *info, unsigned char *record, int inx)
 {
-  HP_SHARE *share=info->s;
+  HP_SHARE *share= info->getShare();
 
   test_active(info);
   if (get_chunk_status(&share->recordspace, info->current_ptr) == CHUNK_STATUS_ACTIVE)

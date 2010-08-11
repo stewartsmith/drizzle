@@ -29,26 +29,26 @@ unsigned char *heap_position(HP_INFO *info)
 
 int heap_info(register HP_INFO *info, register HEAPINFO *x, int flag )
 {
-  x->records         = info->s->records;
-  x->deleted         = info->s->recordspace.del_chunk_count;
+  x->records         = info->getShare()->records;
+  x->deleted         = info->getShare()->recordspace.del_chunk_count;
 
-  if (info->s->recordspace.is_variable_size)
+  if (info->getShare()->recordspace.is_variable_size)
   {
-    if (info->s->records)
-      x->reclength   = (uint)(info->s->recordspace.total_data_length / (uint64_t)info->s->records);
+    if (info->getShare()->records)
+      x->reclength   = (uint)(info->getShare()->recordspace.total_data_length / (uint64_t)info->getShare()->records);
     else
-      x->reclength   = info->s->recordspace.chunk_length;
+      x->reclength   = info->getShare()->recordspace.chunk_length;
   }
   else
   {
-    x->reclength     = info->s->recordspace.chunk_dataspace_length;
+    x->reclength     = info->getShare()->recordspace.chunk_dataspace_length;
   }
 
-  x->data_length     = info->s->recordspace.total_data_length;
-  x->index_length    = info->s->index_length;
-  x->max_records     = info->s->max_records;
+  x->data_length     = info->getShare()->recordspace.total_data_length;
+  x->index_length    = info->getShare()->index_length;
+  x->max_records     = info->getShare()->max_records;
   x->errkey          = info->errkey;
   if (flag & HA_STATUS_AUTO)
-    x->auto_increment= info->s->auto_increment + 1;
+    x->auto_increment= info->getShare()->auto_increment + 1;
   return(0);
 } /* heap_info */
