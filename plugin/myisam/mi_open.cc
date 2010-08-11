@@ -247,7 +247,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
            &share->state.key_root,keys*sizeof(uint64_t),
            &share->state.key_del,
            (share->state.header.max_block_size_index*sizeof(uint64_t)),
-           &share->mmap_lock,sizeof(pthread_rwlock_t),
            NULL))
       goto err;
     errpos=4;
@@ -389,7 +388,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     mi_setup_functions(share);
     share->is_log_table= false;
     thr_lock_init(&share->lock);
-    pthread_rwlock_init(&share->mmap_lock, NULL);
     if (myisam_concurrent_insert)
     {
       share->concurrent_insert=

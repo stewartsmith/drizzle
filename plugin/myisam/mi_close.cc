@@ -87,13 +87,6 @@ int mi_close(MI_INFO *info)
       free((unsigned char*) share->decode_tables);
     }
     share->lock.deinit();
-    {
-      int keys= share->state.header.keys;
-      pthread_rwlock_destroy(&share->mmap_lock);
-      for (int i= 0; i < keys; i++)
-      {
-      }
-    }
     delete info->s->in_use;
     free((unsigned char*) info->s);
   }

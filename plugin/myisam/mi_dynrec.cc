@@ -142,9 +142,6 @@ void mi_remap_file(MI_INFO *info, internal::my_off_t size)
 size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
                     size_t Count, internal::my_off_t offset, myf MyFlags)
 {
-  if (info->s->concurrent_insert)
-    pthread_rwlock_rdlock(&info->s->mmap_lock);
-
   /*
     The following test may fail in the following cases:
     - We failed to remap a memory area (fragmented memory?)
@@ -155,14 +152,10 @@ size_t mi_mmap_pread(MI_INFO *info, unsigned char *Buffer,
   if (info->s->mmaped_length >= offset + Count)
   {
     memcpy(Buffer, info->s->file_map + offset, Count);
-    if (info->s->concurrent_insert)
-      pthread_rwlock_unlock(&info->s->mmap_lock);
     return 0;
   }
   else
   {
-    if (info->s->concurrent_insert)
-      pthread_rwlock_unlock(&info->s->mmap_lock);
     return my_pread(info->dfile, Buffer, Count, offset, MyFlags);
   }
 }
@@ -196,8 +189,6 @@ size_t mi_nommap_pread(MI_INFO *info, unsigned char *Buffer,
 size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
                       size_t Count, internal::my_off_t offset, myf MyFlags)
 {
-  if (info->s->concurrent_insert)
-    pthread_rwlock_rdlock(&info->s->mmap_lock);
 
   /*
     The following test may fail in the following cases:
@@ -209,15 +200,11 @@ size_t mi_mmap_pwrite(MI_INFO *info, const unsigned char *Buffer,
   if (info->s->mmaped_length >= offset + Count)
   {
     memcpy(info->s->file_map + offset, Buffer, Count);
-    if (info->s->concurrent_insert)
-      pthread_rwlock_unlock(&info->s->mmap_lock);
     return 0;
   }
   else
   {
     info->s->nonmmaped_inserts++;
-    if (info->s->concurrent_insert)
-      pthread_rwlock_unlock(&info->s->mmap_lock);
     return my_pwrite(info->dfile, Buffer, Count, offset, MyFlags);
   }
 

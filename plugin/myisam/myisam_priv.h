@@ -236,7 +236,6 @@ public:
   drizzled::internal::my_off_t mmaped_length;
   uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */
-  pthread_rwlock_t mmap_lock;
 } MYISAM_SHARE;
 
 
