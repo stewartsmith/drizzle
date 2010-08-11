@@ -233,8 +233,6 @@ public:
     temporary,delay_key_write,
     concurrent_insert;
   drizzled::THR_LOCK lock;
-  pthread_mutex_t intern_lock;		/* Locking for use with _locking */
-  pthread_rwlock_t *key_root_lock;
   drizzled::internal::my_off_t mmaped_length;
   uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */

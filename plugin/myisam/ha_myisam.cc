@@ -533,7 +533,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
                         const char *sfile, uint32_t sline)
 {
   Session *cur_session;
-  pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_session= file->in_use))
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
                     cur_session->thread_id,
@@ -548,7 +547,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
     errmsg_printf(ERRMSG_LVL_ERROR, "%s", _("Unknown thread accessing table"));
     ++it;
   }
-  pthread_mutex_unlock(&file->s->intern_lock);
 }
 
 ha_myisam::ha_myisam(plugin::StorageEngine &engine_arg,

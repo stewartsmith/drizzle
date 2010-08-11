@@ -249,7 +249,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     share->last_version= 0L;			/* Impossible version */
 #ifdef __WIN__REMOVE_OBSOLETE_WORKAROUND
     /* Close the isam and data files as Win32 can't drop an open table */
-    pthread_mutex_lock(&share->intern_lock);
     if (flush_key_blocks(share->key_cache, share->kfile,
 			 (function == HA_EXTRA_FORCE_REOPEN ?
 			  FLUSH_RELEASE : FLUSH_IGNORE_CHANGED)))
@@ -290,7 +289,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       }
     }
     share->kfile= -1;				/* Files aren't open anymore */
-    pthread_mutex_unlock(&share->intern_lock);
 #endif
     pthread_mutex_unlock(&THR_LOCK_myisam);
     break;

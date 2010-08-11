@@ -36,13 +36,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   MYISAM_SHARE *share=info->s;
   uint32_t flag;
 
-  pthread_mutex_lock(&share->intern_lock);
   if (!info->s->in_use)
     info->s->in_use= new list<Session *>;
 
   if (lock_type == F_EXTRA_LCK)                 /* Used by TMP tables */
   {
-    pthread_mutex_unlock(&share->intern_lock);
     ++share->w_locks;
     ++share->tot_locks;
     info->lock_type= lock_type;
@@ -213,7 +211,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
     }
   }
 #endif
-  pthread_mutex_unlock(&share->intern_lock);
 #if defined(FULL_LOG) || defined(_lint)
   lock_type|=(int) (flag << 8);		/* Set bit to set if real lock */
   myisam_log_command(MI_LOG_LOCK,info,(unsigned char*) &lock_type,sizeof(lock_type),
