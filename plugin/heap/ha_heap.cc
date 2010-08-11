@@ -695,13 +695,13 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
-  uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->getShare()->sizeKeys();
+  uint32_t key, parts, mem_per_row_keys= 0;
+  uint32_t keys= table_arg->getShare()->sizeKeys();
   uint32_t auto_key= 0, auto_key_type= 0;
   uint32_t max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
-  uint32_t column_idx, column_count= table_arg->getShare()->sizeFields();
-  HP_COLUMNDEF *columndef;
-  HP_KEYDEF *keydef;
-  HA_KEYSEG *seg;
+  uint32_t column_count= table_arg->getShare()->sizeFields();
+  std::vector<HP_COLUMNDEF> columndef;
+  std::vector<HP_KEYDEF> keydef;
   char buff[FN_REFLEN];
   int error;
   bool found_real_auto_increment= 0;
@@ -716,13 +716,12 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   if (num_rows > UINT32_MAX)
     return -1;
 
-  if (!(columndef= (HP_COLUMNDEF*) malloc(column_count * sizeof(HP_COLUMNDEF))))
-    return errno;
+  columndef.resize(column_count);
 
-  for (column_idx= 0; column_idx < column_count; column_idx++)
+  for (uint32_t column_idx= 0; column_idx < column_count; column_idx++)
   {
     Field* field= *(table_arg->getFields() + column_idx);
-    HP_COLUMNDEF* column= columndef + column_idx;
+    HP_COLUMNDEF* column= &columndef[column_idx];
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();
     column->offset= field->offset(field->getTable()->getInsertRecord());
@@ -751,14 +750,11 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   for (key= parts= 0; key < keys; key++)
     parts+= table_arg->key_info[key].key_parts;
 
-  if (!(keydef= (HP_KEYDEF*) malloc(keys * sizeof(HP_KEYDEF) +
-				    parts * sizeof(HA_KEYSEG))))
-  {
-    free((void *) columndef);
-    return errno;
-  }
+  keydef.resize(keys);
+  std::vector<HA_KEYSEG> seg_buffer;
+  seg_buffer.resize(parts);
+  HA_KEYSEG *seg= &seg_buffer[0];
 
-  seg= reinterpret_cast<HA_KEYSEG*> (keydef + keys);
   for (key= 0; key < keys; key++)
   {
     KeyInfo *pos= &table_arg->key_info[key];
@@ -788,7 +784,9 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
       Field *field= key_part->field;
 
       if (pos->algorithm == HA_KEY_ALG_BTREE)
+      {
 	seg->type= field->key_type();
+      }
       else
       {
         if ((seg->type = field->key_type()) != (int) HA_KEYTYPE_TEXT &&
@@ -871,16 +869,13 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
 
   error= heap_create(internal::fn_format(buff,table_name,"","",
                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),
-                    keys, keydef,
-                    column_count, columndef,
+                    keys, &keydef[0],
+                    column_count, &columndef[0],
                     max_key_fieldnr, key_part_size,
                     table_arg->getShare()->getRecordLength(), mem_per_row_keys,
                     static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
                     0, // Factor out MIN
                     &hp_create_info, internal_share);
-
-  free((unsigned char*) keydef);
-  free((void *) columndef);
 
   return (error);
 }
