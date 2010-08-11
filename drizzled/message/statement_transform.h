@@ -436,6 +436,26 @@ transformIndexDefinitionToSql(const Table::Index &index,
 
 /**
  * Appends to the supplied string an SQL expression
+ * representing the foreign key attributes.  The built string
+ * corresponds to the SQL in a CREATE TABLE statement.
+ *
+ * @param[in]   Foreign Key Constraint message
+ * @param[in]   Table containing this foregin key (used to get field names...)
+ * @param[out]  String to append to
+ *
+ * @retval
+ *  NONE if successful transformation
+ * @retval
+ *  Error code (see enum TransformSqlError definition) if failure
+ */
+enum TransformSqlError
+transformForeignKeyConstraintDefinitionToSql(const Table::ForeignKeyConstraint &fkey,
+                                             const Table &table,
+                                             std::string &destination,
+                                             enum TransformSqlVariant sql_variant = DRIZZLE);
+
+/**
+ * Appends to the supplied string an SQL expression
  * representing the field's attributes.  The built string
  * corresponds to the SQL in a CREATE TABLE statement.
  *
