@@ -64,63 +64,22 @@ typedef struct st_keycache_wqueue
 typedef struct st_key_cache
 {
   bool key_cache_inited;
-  bool in_resize;             /* true during resize operation             */
-  bool resize_in_flush;       /* true during flush of resize operation    */
   bool can_be_used;           /* usage of cache for read/write is allowed */
-  uint32_t hash_entries;             /* max number of entries in the hash table  */
-  uint32_t key_cache_mem_size;      /* specified size of the cache memory       */
+
   uint32_t key_cache_block_size;     /* size of the page buffer of a cache block */
-  int disk_blocks;               /* max number of blocks in the cache        */
-  ulong min_warm_blocks;         /* min number of warm blocks;               */
-  ulong age_threshold;           /* age threshold for hot blocks             */
-  uint64_t keycache_time;       /* total number of block link operations    */
-  int hash_links;                /* max number of hash links                 */
-  int hash_links_used;           /* number of hash links currently used      */
-  ulong blocks_used; /* maximum number of concurrently used blocks */
-  ulong blocks_unused; /* number of currently unused blocks */
-  ulong blocks_changed;          /* number of currently dirty blocks         */
-  ulong warm_blocks;             /* number of blocks in warm sub-chain       */
-  ulong cnt_for_resize_op;       /* counter to block resize operation        */
-  long blocks_available;      /* number of blocks available in the LRU chain */
-  HASH_LINK **hash_root;         /* arr. of entries into hash table buckets  */
-  HASH_LINK *hash_link_root;     /* memory for hash table links              */
-  HASH_LINK *free_hash_list;     /* list of free hash links                  */
-  BLOCK_LINK *free_block_list;   /* list of free blocks */
-  BLOCK_LINK *block_root;        /* memory for block links                   */
-  unsigned char *block_mem;     /* memory for block buffers                 */
-  BLOCK_LINK *used_last;         /* ptr to the last block of the LRU chain   */
-  BLOCK_LINK *used_ins;          /* ptr to the insertion block in LRU chain  */
-  pthread_mutex_t cache_lock;    /* to lock access to the cache structure    */
-  KEYCACHE_WQUEUE resize_queue;  /* threads waiting during resize operation  */
-  /*
-    Waiting for a zero resize count. Using a queue for symmetry though
-    only one thread can wait here.
-  */
-  KEYCACHE_WQUEUE waiting_for_resize_cnt;
-  KEYCACHE_WQUEUE waiting_for_hash_link; /* waiting for a free hash link     */
-  KEYCACHE_WQUEUE waiting_for_block;    /* requests waiting for a free block */
-  BLOCK_LINK *changed_blocks[CHANGED_BLOCKS_HASH]; /* hash for dirty file bl.*/
-  BLOCK_LINK *file_blocks[CHANGED_BLOCKS_HASH];    /* hash for other file bl.*/
-
-  /*
-    The following variables are and variables used to hold parameters for
-    initializing the key cache.
-  */
-
-  uint32_t param_buff_size;    /* size the memory allocated for the cache  */
-  uint32_t param_block_size;   /* size of the blocks in the key cache      */
-  uint32_t param_division_limit; /* min. percentage of warm blocks           */
-  uint32_t param_age_threshold;    /* determines when hot block is downgraded  */
 
   int blocks;                   /* max number of blocks in the cache        */
-  /* Statistics variables. These are reset in reset_key_cache_counters(). */
-  ulong global_blocks_changed;	/* number of currently dirty blocks         */
-  uint64_t global_cache_w_requests;/* number of write requests (write hits) */
-  uint64_t global_cache_write;     /* number of writes from cache to files  */
-  uint64_t global_cache_r_requests;/* number of read requests (read hits)   */
-  uint64_t global_cache_read;      /* number of reads from files to cache   */
 
   bool in_init;		/* Set to 1 in MySQL during init/resize     */
+
+  st_key_cache():
+    key_cache_inited(false),
+    can_be_used(false),
+    key_cache_block_size(0),
+    blocks(0),
+    in_init(0)
+  { }
+
 } KEY_CACHE;
 
 } /* namespace drizzled */
