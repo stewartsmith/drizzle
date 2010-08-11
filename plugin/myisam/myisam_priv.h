@@ -35,6 +35,12 @@
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
 #endif
 
+/* Typical key cash */
+static const uint32_t KEY_CACHE_SIZE= 8*1024*1024;
+
+/* Default size of a key cache block  */
+static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
+
 typedef struct st_mi_status_info
 {
   drizzled::ha_rows records;			/* Rows in table */
