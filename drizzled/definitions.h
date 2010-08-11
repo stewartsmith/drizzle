@@ -483,11 +483,6 @@ template <class T> void set_if_smaller(T &a, const T &b)
 static const uint32_t ONCE_ALLOC_INIT= 4096;
 /* Typical record cash */
 static const uint32_t RECORD_CACHE_SIZE= 64*1024;
-/* Typical key cash */
-static const uint32_t KEY_CACHE_SIZE= 8*1024*1024;
-
-/* Default size of a key cache block  */
-static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
 
 
 /* Some things that this system doesn't have */
