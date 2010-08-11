@@ -253,18 +253,12 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     }
     share= new HP_SHARE;
 
-    if (keys && !(share->keydef= (HP_KEYDEF*) malloc(keys*sizeof(HP_KEYDEF))))
+    if (keys && !(share->keydef= new HP_KEYDEF[keys]))
       goto err;
-
-    memset(share->keydef, 0, keys*sizeof(HP_KEYDEF));
-
-    if (keys && !(share->keydef->seg= (HA_KEYSEG*) malloc(key_segs*sizeof(HA_KEYSEG))))
+    if (keys && !(share->keydef->seg= new HA_KEYSEG[key_segs]))
       goto err;
-    if (!(share->column_defs= (HP_COLUMNDEF*)
-	  malloc(columns*sizeof(HP_COLUMNDEF))))
+    if (!(share->column_defs= new HP_COLUMNDEF[columns]))
       goto err;
-
-    memset(share->column_defs, 0, columns*sizeof(HP_COLUMNDEF));
 
     /*
        Max_records is used for estimating block sizes and for enforcement.
@@ -276,7 +270,9 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     max_records = ((max_records && max_records < max_rows_for_stated_memory) ?
                       max_records : max_rows_for_stated_memory);
 
+#if 0
     memcpy(share->column_defs, columndef, (size_t) (sizeof(columndef[0]) * columns));
+#endif
 
     share->key_stat_version= 1;
     keyseg= keys ? share->keydef->seg : NULL;
@@ -366,15 +362,15 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
   return(0);
 
 err:
-  if(share && share->keydef && share->keydef->seg)
-    free(share->keydef->seg);
-  if(share && share->keydef)
-    free(share->keydef);
-  if(share && share->column_defs)
-    free(share->column_defs);
-  if(share)
-    free(share);
-  if (!create_info->internal_table)
+  if (share && share->keydef && share->keydef->seg)
+    delete [] share->keydef->seg;
+  if (share && share->keydef)
+    delete [] share->keydef;
+  if (share && share->column_defs)
+    delete [] share->column_defs;
+  if (share)
+    delete share;
+  if (not create_info->internal_table)
     THR_LOCK_heap.unlock();
   return(1);
 } /* heap_create */
@@ -452,10 +448,10 @@ void hp_free(HP_SHARE *share)
   share->lock.deinit();
   pthread_mutex_destroy(&share->intern_lock);
   if (share->keydef && share->keydef->seg)
-    free(share->keydef->seg);
+    delete [] share->keydef->seg;
   if (share->keydef)
-    free(share->keydef);
-  free(share->column_defs);
+    delete [] share->keydef;
+  delete [] share->column_defs;
   free((unsigned char*) share->name);
   delete share;
 }
