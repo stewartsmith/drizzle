@@ -54,8 +54,7 @@ static const string engine_name("MyISAM");
 
 pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
 
-static uint32_t repair_threads;
-static uint32_t myisam_key_cache_block_size;
+static uint32_t myisam_key_cache_block_size= KEY_CACHE_BLOCK_SIZE;
 static uint32_t myisam_key_cache_size;
 static uint32_t myisam_key_cache_division_limit;
 static uint32_t myisam_key_cache_age_threshold;
@@ -1499,54 +1498,6 @@ static int myisam_init(module::Context &context)
 { 
   const module::option_map &vm= context.getOptions();
 
-  if (vm.count("key-cache-block-size"))
-  {
-    if (myisam_key_cache_block_size < 512 || myisam_key_cache_block_size > 16*1024)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for key-cache-block-size\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("key-cache-age-threshold"))
-  {
-    if (myisam_key_cache_age_threshold < 100 || myisam_key_cache_age_threshold > UINT32_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for key-cache-age-threshold\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("key-cache-division-limit"))
-  {
-    if (myisam_key_cache_division_limit < 1 || myisam_key_cache_division_limit > 100)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for key-cache-division-limit\n"));
-      exit(-1);
-    }
-  }
-
-  if (vm.count("key-cache-size"))
-  {
-    if (myisam_key_cache_size < 1 * 1024 * 1024 || myisam_key_cache_size > UINT32_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for key-cache-size\n"));
-      exit(-1);
-    }
-
-    myisam_key_cache_size/= IO_SIZE;
-    myisam_key_cache_size*= IO_SIZE;
-  }
-
-  if (vm.count("repair-threads"))
-  {
-    if (repair_threads < 1 || repair_threads > UINT32_MAX)
-    {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for repair-threads\n"));
-      exit(-1);
-    }
-  }
-
   if (vm.count("max-sort-file-size"))
   {
     if (max_sort_file_size > UINT64_MAX)
@@ -1572,94 +1523,6 @@ static int myisam_init(module::Context &context)
 }
 
 
-static void sys_var_key_cache_size_update(Session *session, drizzle_sys_var *var, void *, const void *save)
-{
-  uint32_t tmp= *static_cast<const uint32_t *>(save);
-
-	struct option option_limits;
-  plugin_opt_set_limits(&option_limits, var);
-	option_limits.name= "myisam_key_cache_size";
-
-  myisam_key_cache_size= static_cast<uint32_t>(fix_unsigned(session, static_cast<uint64_t>(tmp), &option_limits));
-
-}
-
-static void sys_var_key_cache_block_size_update(Session *, drizzle_sys_var *var, void *, const void *)
-{
-	struct option option_limits;
-  plugin_opt_set_limits(&option_limits, var);
-	option_limits.name= "myisam_key_cache_block_size";
-
-}
-
-static void sys_var_key_cache_division_limit_update(Session *, drizzle_sys_var *var, void *, const void *)
-{
-	struct option option_limits;
-  plugin_opt_set_limits(&option_limits, var);
-	option_limits.name= "myisam_key_cache_division_limit";
-
-}
-
-static void sys_var_key_cache_age_threshold_update(Session *, drizzle_sys_var *var, void *, const void *)
-{
-  struct option option_limits;
-  plugin_opt_set_limits(&option_limits, var);
-  option_limits.name= "myisam_key_cache_age_threshold";
-}
-
-static DRIZZLE_SYSVAR_UINT(key_cache_block_size,
-                            myisam_key_cache_block_size,
-                            PLUGIN_VAR_RQCMDARG,
-                            N_("Block size to be used for MyISAM index pages."),
-                            NULL,
-                            sys_var_key_cache_block_size_update,
-                            KEY_CACHE_BLOCK_SIZE,
-                            512, 
-                            16 * 1024,
-                            0);
-
-static DRIZZLE_SYSVAR_UINT(key_cache_age_threshold, myisam_key_cache_age_threshold,
-                            PLUGIN_VAR_RQCMDARG,
-                            N_("This characterizes the number of hits a hot block has to be untouched "
-                            "until it is considered aged enough to be downgraded to a warm block. "
-                            "This specifies the percentage ratio of that number of hits to the "
-                            "total number of blocks in key cache"),
-                            NULL,
-                            sys_var_key_cache_age_threshold_update,
-                            300,
-                            100, 
-                            UINT32_MAX,
-                            0);
-
-static DRIZZLE_SYSVAR_UINT(key_cache_division_limit, myisam_key_cache_division_limit,
-                            PLUGIN_VAR_RQCMDARG,
-                            N_("The minimum percentage of warm blocks in key cache"),
-                            NULL,
-                            sys_var_key_cache_division_limit_update,
-                            100,
-                            1, 
-                            100,
-                            0);
-
-static DRIZZLE_SYSVAR_UINT(key_cache_size,
-                            myisam_key_cache_size,
-                            PLUGIN_VAR_RQCMDARG,
-                            N_("The size of the buffer used for index blocks for MyISAM tables. "
-                            "Increase this to get better index handling (for all reads and multiple "
-                            "writes) to as much as you can afford;"),
-                            NULL,
-                            sys_var_key_cache_size_update,
-                            KEY_CACHE_SIZE,
-                            1 * 1024 * 1024, 
-                            UINT32_MAX,
-                            IO_SIZE);
-
-static DRIZZLE_SYSVAR_UINT(repair_threads, repair_threads,
-                            PLUGIN_VAR_RQCMDARG,
-                            N_("Number of threads to use when repairing MyISAM tables. The value of "
-                            "1 disables parallel repair."),
-                            NULL, NULL, 1, 1, UINT32_MAX, 0);
-
 static DRIZZLE_SYSVAR_ULONGLONG(max_sort_file_size, max_sort_file_size,
                                 PLUGIN_VAR_RQCMDARG,
                                 N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."),
@@ -1678,21 +1541,6 @@ static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
 
 static void init_options(drizzled::module::option_context &context)
 {
-  context("key-cache-block-size", 
-          po::value<uint32_t>(&myisam_key_cache_block_size)->default_value(KEY_CACHE_BLOCK_SIZE),
-          N_("Block size to be used for MyISAM index pages."));
-  context("key-cache-age-threshold",
-          po::value<uint32_t>(&myisam_key_cache_age_threshold)->default_value(300),
-          N_("This characterizes the number of hits a hot block has to be untouched until it is considered aged enough to be downgraded to a warm block. This specifies the percentage ratio of that number of hits to the total number of blocks in key cache"));
-  context("key-cache-division-limit",
-          po::value<uint32_t>(&myisam_key_cache_division_limit)->default_value(100),
-          N_("The minimum percentage of warm blocks in key cache"));
-  context("key-cache-size",
-          po::value<uint32_t>(&myisam_key_cache_size)->default_value(KEY_CACHE_SIZE),
-          N_("The size of the buffer used for index blocks for MyISAM tables. Increase this to get better index handling (for all reads and multiple writes) to as much as you can afford;"));
-  context("repair-threads",
-          po::value<uint32_t>(&repair_threads)->default_value(1),
-          N_("Number of threads to use when repairing MyISAM tables. The value of 1 disables parallel repair."));
   context("max-sort-file-size",
           po::value<uint64_t>(&max_sort_file_size)->default_value(INT32_MAX),
           N_("Don't use the fast sort index method to created index if the temporary file would get bigger than this."));
@@ -1705,11 +1553,6 @@ static void init_options(drizzled::module::option_context &context)
 }
 
 static drizzle_sys_var* sys_variables[]= {
-  DRIZZLE_SYSVAR(key_cache_block_size),
-  DRIZZLE_SYSVAR(key_cache_size),
-  DRIZZLE_SYSVAR(key_cache_division_limit),
-  DRIZZLE_SYSVAR(key_cache_age_threshold),
-  DRIZZLE_SYSVAR(repair_threads),
   DRIZZLE_SYSVAR(max_sort_file_size),
   DRIZZLE_SYSVAR(sort_buffer_size),
   DRIZZLE_SYSVAR(data_pointer_size),
@@ -1721,7 +1564,7 @@ DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
   "MyISAM",
-  "1.0",
+  "2.0",
   "MySQL AB",
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,

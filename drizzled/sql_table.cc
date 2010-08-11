@@ -888,6 +888,30 @@ static int mysql_prepare_create_table(Session *session,
                  ER(ER_KEY_REF_DO_NOT_MATCH_TABLE_REF));
 	return(true);
       }
+
+      message::Table::ForeignKeyConstraint *pfkey= create_proto.add_fk_constraint();
+      if (fk_key->name.str)
+        pfkey->set_name(fk_key->name.str);
+
+      pfkey->set_match(fk_key->match_opt);
+      pfkey->set_update_option(fk_key->update_opt);
+      pfkey->set_delete_option(fk_key->delete_opt);
+
+      pfkey->set_references_table_name(fk_key->ref_table->table.str);
+
+      Key_part_spec *keypart;
+      List_iterator<Key_part_spec> col_it(fk_key->columns);
+      while ((keypart= col_it++))
+      {
+        pfkey->add_column_names(keypart->field_name.str);
+      }
+
+      List_iterator<Key_part_spec> ref_it(fk_key->ref_columns);
+      while ((keypart= ref_it++))
+      {
+        pfkey->add_references_columns(keypart->field_name.str);
+      }
+
       continue;
     }
     (*key_count)++;
