@@ -23,7 +23,7 @@ using namespace drizzled;
 
 int hp_panic(enum ha_panic_function flag)
 {
-  pthread_mutex_lock(&THR_LOCK_heap);
+  THR_LOCK_heap.lock();
   list<HP_INFO *>::iterator info_it= heap_open_list.begin();
   while (info_it != heap_open_list.end())
   {
@@ -53,6 +53,6 @@ int hp_panic(enum ha_panic_function flag)
     }
     ++share_it;
   }
-  pthread_mutex_unlock(&THR_LOCK_heap);
+  THR_LOCK_heap.unlock();
   return(0);
 } /* hp_panic */

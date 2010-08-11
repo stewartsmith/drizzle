@@ -21,6 +21,8 @@
 #include <drizzled/field/varstring.h>
 #include "drizzled/plugin/daemon.h"
 
+#include <boost/thread/mutex.hpp>
+
 #include "heap.h"
 #include "ha_heap.h"
 
@@ -32,7 +34,7 @@ using namespace std;
 
 static const string engine_name("MEMORY");
 
-pthread_mutex_t THR_LOCK_heap= PTHREAD_MUTEX_INITIALIZER;
+boost::mutex THR_LOCK_heap;
 
 static const char *ha_heap_exts[] = {
   NULL
@@ -51,14 +53,11 @@ public:
                           HTON_SKIP_STORE_LOCK |
                           HTON_TEMPORARY_ONLY)
   {
-    pthread_mutex_init(&THR_LOCK_heap, MY_MUTEX_INIT_FAST);
   }
 
   virtual ~HeapEngine()
   {
     hp_panic(HA_PANIC_CLOSE);
-
-    pthread_mutex_destroy(&THR_LOCK_heap);
   }
 
   virtual Cursor *create(TableShare &table)
@@ -190,9 +189,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
 {
   if ((test_if_locked & HA_OPEN_INTERNAL_TABLE) || (!(file= heap_open(name, mode)) && errno == ENOENT))
   {
-    HA_CREATE_INFO create_info;
     internal_table= test(test_if_locked & HA_OPEN_INTERNAL_TABLE);
-    memset(&create_info, 0, sizeof(create_info));
     file= 0;
     HP_SHARE *internal_share= NULL;
     message::Table create_proto;
@@ -208,9 +205,9 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
       if (!file)
       {
          /* Couldn't open table; Remove the newly created table */
-        pthread_mutex_lock(&THR_LOCK_heap);
+        THR_LOCK_heap.lock();
         hp_free(internal_share);
-        pthread_mutex_unlock(&THR_LOCK_heap);
+        THR_LOCK_heap.unlock();
       }
     }
   }

@@ -654,7 +654,7 @@ void Session::unlink(Session *session)
   session->cleanup();
 
   LOCK_thread_count.lock();
-  pthread_mutex_lock(&session->LOCK_delete);
+  session->lockForDelete();
 
   getSessionList().erase(remove(getSessionList().begin(),
                          getSessionList().end(),
@@ -791,13 +791,6 @@ int init_common_variables(const char *conf_file_name, int argc,
 
 int init_thread_environment()
 {
-   pthread_mutexattr_t attr; 
-   pthread_mutexattr_init(&attr);
-
-  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
-
-  pthread_mutexattr_destroy(&attr);
-
   if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_Mem_root,NULL))
   {
@@ -942,8 +935,6 @@ enum options_drizzled
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
   OPT_JOIN_BUFF_SIZE,
-  OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
-  OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
   OPT_MAX_ALLOWED_PACKET,
   OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,

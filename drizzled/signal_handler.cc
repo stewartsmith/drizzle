@@ -116,8 +116,6 @@ void drizzled_handle_segfault(int sig)
                     "will hopefully help diagnose\n"
                     "the problem, but since we have already crashed, "
                     "something is definitely wrong\nand this may fail.\n\n"));
-  fprintf(stderr, "key_buffer_size=%u\n",
-          (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
   fprintf(stderr, "max_used_connections=%"PRIu64"\n", current_global_counters.max_used_connections);
   fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));

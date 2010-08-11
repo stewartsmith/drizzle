@@ -1432,8 +1432,7 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
     param->testflag|=T_CALC_CHECKSUM;
 
   if (!param->using_global_keycache)
-    init_key_cache(dflt_key_cache, param->key_cache_block_size,
-                   (size_t)param->use_buffers, 0, 0);
+    assert(0);
 
   if (init_io_cache(&param->read_cache,info->dfile,
 		    (uint) param->read_buffer_length,

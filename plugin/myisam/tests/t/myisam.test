@@ -596,9 +596,6 @@ DROP TABLE t1;
 #
 # Bug#8283 - OPTIMIZE TABLE causes data loss
 #
-SET GLOBAL myisam_repair_threads=2;
-SHOW VARIABLES LIKE 'myisam_repair%';
-#
 # Test OPTIMIZE. This creates a new data file.
 CREATE TEMPORARY TABLE t1 (
   `_id` int NOT NULL default '0',
@@ -640,9 +637,6 @@ CHECK TABLE t1;
 show table status LIKE 't1';
 SELECT _id FROM t1;
 DROP TABLE t1;
-#
-SET GLOBAL myisam_repair_threads=1;
-SHOW VARIABLES LIKE 'myisam_repair%';
 
 #
 # Bug#24607 - MyISAM pointer size determined incorrectly
@@ -881,10 +875,8 @@ show table status like 't1';
 #--exec myisamchk -dvv var/master-data/test/t1.MYI
 #--exec myisamchk -iev var/master-data/test/t1.MYI
 --echo # Enable keys with parallel repair
-SET GLOBAL myisam_repair_threads=2;
 ALTER TABLE t1 DISABLE KEYS;
 ALTER TABLE t1 ENABLE KEYS;
-SET GLOBAL myisam_repair_threads=1;
 CHECK TABLE t1;
 DROP TABLE t1;
 
