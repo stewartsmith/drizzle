@@ -305,6 +305,27 @@ bool Session::handle_error(uint32_t sql_errno, const char *message,
   return false;                                 // 'false', as per coding style
 }
 
+void Session::setAbort(bool arg)
+{
+  mysys_var->abort= arg;
+}
+
+void Session::lockOnSys()
+{
+  if (not mysys_var)
+    return;
+
+  setAbort(true);
+  pthread_mutex_lock(&mysys_var->mutex);
+  if (mysys_var->current_cond)
+  {
+    pthread_mutex_lock(mysys_var->current_mutex);
+    pthread_cond_broadcast(mysys_var->current_cond);
+    pthread_mutex_unlock(mysys_var->current_mutex);
+  }
+  pthread_mutex_unlock(&mysys_var->mutex);
+}
+
 void Session::pop_internal_handler()
 {
   assert(m_internal_handler != NULL);
