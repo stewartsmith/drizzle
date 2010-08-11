@@ -1026,14 +1026,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     destination.append(options.collation());
   }
 
-  if (options.has_auto_increment())
-  {
-    ss << options.auto_increment();
-    destination.append("\nAUTOINCREMENT_OFFSET = ", 24);
-    destination.append(ss.str());
-    ss.clear();
-  }
-
   if (options.has_data_file_name())
   {
     destination.append("\nDATA_FILE_NAME = '", 19);
