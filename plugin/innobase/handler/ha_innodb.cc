@@ -307,14 +307,9 @@ public:
     free(innobase_change_buffering);
     free(innobase_data_file_path);
     free(innobase_data_home_dir);
-    free(innobase_file_format_check);
     free(innobase_file_format_name);
-#ifdef UNIV_LOG_ARCHIVE
-    free(innobase_log_arch_dir);
-#endif
     free(innobase_log_group_home_dir);
     free(innobase_unix_file_flush_method);
-    free(innodb_version_str);
 
   }
 
@@ -1892,12 +1887,11 @@ innobase_init(
 
   if (vm.count("file-format-check"))
   {
-    innobase_file_format_check= strdup(vm["file-format-check"].as<string>().c_str());
+    innobase_file_format_check= const_cast<char *>(vm["file-format-check"].as<string>().c_str());
   }
-
   else
   {
-    innobase_file_format_check= strdup("on");
+    innobase_file_format_check= const_cast<char *>("on");
   }
 
   if (vm.count("flush-log-at-trx-commit"))
@@ -1922,7 +1916,7 @@ innobase_init(
 #ifdef UNIV_LOG_ARCHIVE
   if (vm.count("log-arch-dir"))
   {
-    innobase_log_arch_dir= strdup(vm["log-arch-dir"].as<string>().c_str());
+    innobase_log_arch_dir= const_cast<char *>(vm["log-arch-dir"].as<string>().c_str());
   }
 
   else
@@ -2142,22 +2136,7 @@ innobase_init(
 
   if (vm.count("version"))
   {
-    innodb_version_str= strdup(vm["version"].as<string>().c_str());
-  }
-
-  else
-  {
-    innodb_version_str= strdup(INNODB_VERSION_STR);
-  }
-
-  if (vm.count("change-buffering"))
-  {
-    innobase_change_buffering= strdup(vm["change-buffering"].as<string>().c_str());
-  }
-
-  else
-  {
-    innobase_change_buffering= NULL;
+    innodb_version_str= const_cast<char *>(vm["version"].as<string>().c_str());
   }
 
   if (vm.count("read-ahead-threshold"))
@@ -2371,14 +2350,15 @@ innodb_log_group_home_dir: */
     }
   }
 
-  if (innobase_change_buffering) {
+  if (vm.count("change-buffering"))
+  {
     ulint use;
 
     for (use = 0;
          use < UT_ARR_SIZE(innobase_change_buffering_values);
          use++) {
       if (!innobase_strcasecmp(
-                               innobase_change_buffering,
+                               vm["change-buffering"].as<string>().c_str(),
                                innobase_change_buffering_values[use])) {
         ibuf_use = (ibuf_use_t) use;
         goto innobase_change_buffering_inited_ok;
@@ -2388,7 +2368,7 @@ innodb_log_group_home_dir: */
     errmsg_printf(ERRMSG_LVL_ERROR,
                   "InnoDB: invalid value "
                   "innodb_file_format_check=%s",
-                  innobase_change_buffering);
+                  vm["change-buffering"].as<string>().c_str());
     goto mem_free_and_error;
   }
 

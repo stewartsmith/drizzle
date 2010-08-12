@@ -145,8 +145,6 @@ FilteredReplicator::~FilteredReplicator()
   /* These are strdup'd from vm[] */
   free(sysvar_filtered_replicator_sch_filters);
   free(sysvar_filtered_replicator_tab_filters);
-  free(sysvar_filtered_replicator_sch_regex);
-  free(sysvar_filtered_replicator_tab_regex);
 
 }
 
@@ -529,7 +527,7 @@ static int init(module::Context &context)
 
   else
   {
-    sysvar_filtered_replicator_sch_filters= (char *)"";
+    sysvar_filtered_replicator_sch_filters= strdup("");
   }
 
   if (vm.count("filteredtables"))
@@ -539,7 +537,7 @@ static int init(module::Context &context)
 
   else
   {
-    sysvar_filtered_replicator_tab_filters= (char *)"";
+    sysvar_filtered_replicator_tab_filters= strdup("");
   }
 
   filtered_replicator= new(std::nothrow) 

@@ -808,37 +808,6 @@ int init_thread_environment()
   return 0;
 }
 
-static uint64_t convert_number_with_suffix(const string& value)
-{
-  size_t size_suffix_pos= value.find_last_of("kmgKMG");
-  if (size_suffix_pos == value.size()-1)
-  {
-    char suffix= value[size_suffix_pos];
-    string size_val(value.substr(0, size_suffix_pos));
-
-    uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
-    uint64_t new_size= 0;
-
-    switch (suffix)
-    {
-    case 'K':
-    case 'k':
-      new_size= base_size * 1024;
-      break;
-    case 'M':
-    case 'm':
-      new_size= base_size * 1024 * 1024;
-      break;
-    case 'G':
-    case 'g':
-      new_size= base_size * 1024 * 1024 * 1024;
-      break;
-    }
-    return new_size;
-  }
-  throw new exception;
-}
-
 static pair<string, string> parse_size_suffixes(string s)
 {
   size_t equal_pos= s.find("=");
@@ -849,8 +818,33 @@ static pair<string, string> parse_size_suffixes(string s)
 
     try
     {
+      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
+      if (size_suffix_pos == arg_val.size()-1)
+      {
+        char suffix= arg_val[size_suffix_pos];
+        string size_val(arg_val.substr(0, size_suffix_pos));
+
+        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
+        uint64_t new_size= 0;
+
+        switch (suffix)
+        {
+        case 'K':
+        case 'k':
+          new_size= base_size * 1024;
+          break;
+        case 'M':
+        case 'm':
+          new_size= base_size * 1024 * 1024;
+          break;
+        case 'G':
+        case 'g':
+          new_size= base_size * 1024 * 1024 * 1024;
+          break;
+        }
         return make_pair(arg_key,
-                         boost::lexical_cast<string>(convert_number_with_suffix(arg_val)));
+                         boost::lexical_cast<string>(new_size));
+      }
     }
     catch (...)
     {
