@@ -773,7 +773,7 @@ bool wait_for_locked_table_names(Session *session, TableList *table_list)
       result=1;
       break;
     }
-    session->wait_for_condition(LOCK_open.native_handle(), COND_refresh.native_handle());
+    session->wait_for_condition(LOCK_open, COND_refresh);
     LOCK_open.lock(); /* Wait for a table to unlock and then lock it */
   }
   return result;
@@ -1006,7 +1006,7 @@ bool lock_global_read_lock(Session *session)
   {
     const char *old_message;
     LOCK_global_read_lock.lock();
-    old_message=session->enter_cond(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle(),
+    old_message=session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
                                 "Waiting to get readlock");
 
     waiting_for_read_lock++;
@@ -1087,8 +1087,8 @@ bool wait_if_global_read_lock(Session *session, bool abort_on_refresh,
       */
       return is_not_commit;
     }
-    old_message=session->enter_cond(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle(),
-				"Waiting for release of readlock");
+    old_message=session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
+                                    "Waiting for release of readlock");
     while (must_wait(is_not_commit) && ! session->killed &&
 	   (!abort_on_refresh || session->version == refresh_version))
     {
@@ -1139,8 +1139,8 @@ bool make_global_read_lock_block_commit(Session *session)
   LOCK_global_read_lock.lock();
   /* increment this BEFORE waiting on cond (otherwise race cond) */
   global_read_lock_blocks_commit++;
-  old_message= session->enter_cond(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle(),
-                               "Waiting for all running commits to finish");
+  old_message= session->enter_cond(COND_global_read_lock, LOCK_global_read_lock,
+                                   "Waiting for all running commits to finish");
   while (protect_against_global_read_lock && !session->killed)
     pthread_cond_wait(COND_global_read_lock.native_handle(), LOCK_global_read_lock.native_handle());
   if ((error= test(session->killed)))
