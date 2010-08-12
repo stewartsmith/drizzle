@@ -208,7 +208,7 @@ typedef struct st_heap_share
   uint32_t open_count;
 
 
-  char * name;			/* Name of "memory-file" */
+  std::string name;			/* Name of "memory-file" */
   drizzled::THR_LOCK lock;
   bool delete_on_close;
   uint32_t auto_key;
@@ -233,7 +233,6 @@ typedef struct st_heap_share
     column_count(0),
     currently_disabled_keys(0),
     open_count(0),
-    name(0),
     delete_on_close(0),
     auto_key(0),
     auto_key_type(0),

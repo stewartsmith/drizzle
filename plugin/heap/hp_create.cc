@@ -342,10 +342,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     }
 
     /* Must be allocated separately for rename to work */
-    if (!(share->name= strdup(name)))
-    {
-      goto err;
-    }
+    share->name.append(name);
     thr_lock_init(&share->lock);
     if (!create_info->internal_table)
     {
@@ -450,6 +447,5 @@ void hp_free(HP_SHARE *share)
   if (share->keydef)
     delete [] share->keydef;
   delete [] share->column_defs;
-  free((unsigned char*) share->name);
   delete share;
 }

@@ -99,7 +99,7 @@ HP_SHARE *hp_find_named_heap(const char *name)
   list<HP_SHARE *>::iterator it= heap_share_list.begin();
   while (it != heap_share_list.end())
   {
-    if (!strcmp(name, (*it)->name))
+    if (not (*it)->name.compare(name))
     {
       return (*it);
     }
