@@ -36,6 +36,7 @@
 #include "drizzled/select_send.h"
 
 #include <gcrypt.h>
+#include <string.h>
 #include <iostream>
 #include <vector>
 
@@ -185,13 +186,30 @@ bool MemcachedQueryCache::doSendCachedResultset(Session *session)
   return false;
 }
 
+/* Check if the tables in the query do not contain
+ * Data_dictionary
+ */
+bool MemcachedQueryCache::checkTables(TableList* in_table)
+{
+  for (TableList* tmp_table= in_table; tmp_table; tmp_table= tmp_table->next_global)
+  {
+    if (strcasecmp(tmp_table->db, "DATA_DICTIONARY") == 0)
+      return true;
+  } 
+  return false;
+}
+
 /* init the current resultset in the session
  * set the header message (hashkey= sql + schema)
  */
 bool MemcachedQueryCache::doPrepareResultset(Session *session)
 {		
   /* Check if the Query is Cacheable */
-  if (SessionVAR(session, enable))
+  if(checkTables(session->lex->query_tables) || (strcasecmp(session->db.c_str(), "DATA_DICTIONARY")==0))
+    session->lex->setCacheable(false);
+  if (not session->lex->isCacheable())
+    cout << "uncacheable query : " << session->query << endl;
+  if (SessionVAR(session, enable) && session->lex->isCacheable())
   {
     /* Prepare and set the key for the session */
     string query= session->query+session->db;
@@ -227,7 +245,7 @@ bool MemcachedQueryCache::doPrepareResultset(Session *session)
 bool MemcachedQueryCache::doSetResultset(Session *session)
 {		
   message::Resultset *resultset= session->getResultsetMessage();
-  if (SessionVAR(session, enable) && resultset != NULL)
+  if (SessionVAR(session, enable) && (not session->is_error()) && resultset != NULL && session->lex->isCacheable())
   {
     /* Generate the final Header */
     queryCacheService.setResultsetHeader(*resultset, session, session->lex->query_tables);
@@ -256,7 +274,7 @@ bool MemcachedQueryCache::doSetResultset(Session *session)
      * This is done after the memcached set
      */
     queryCacheService.cache[session->query_cache_key]= *resultset;
-
+    cout << "Results cached for query : " << session->query << endl;
     /* endup the current statement */
     session->setResultsetMessage(NULL);
     return true;

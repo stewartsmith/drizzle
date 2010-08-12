@@ -212,15 +212,12 @@ Session::Session(plugin::Client *client_arg) :
   mysys_var= 0;
   scoreboard_index= -1;
   dbug_sentry=Session_SENTRY_MAGIC;
-  cleanup_done= abort_on_warning= no_warnings_for_error= false;
-<<<<<<< TREE
-  pthread_mutex_init(&LOCK_delete, MY_MUTEX_INIT_FAST);
+  cleanup_done= abort_on_warning= no_warnings_for_error= false;  
+
   /* query_cache init */
   query_cache_key= "";
   resultset= NULL;
-=======
 
->>>>>>> MERGE-SOURCE
   /* Variables with default values */
   proc_info="login";
   where= Session::DEFAULT_WHERE;

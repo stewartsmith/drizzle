@@ -40,6 +40,7 @@ namespace drizzled
   class Session;
   class select_result;
   class String;
+  class TableList;
 }
 class MemcachedQueryCache : public drizzled::plugin::QueryCache
 {
@@ -64,6 +65,7 @@ public:
   bool doInsertRecord(drizzled::Session *session, drizzled::List<drizzled::Item> &item);
   bool doSetResultset(drizzled::Session *session);
   char* md5_key(const char* str);
+  bool checkTables(drizzled::TableList* in_table);
   bool isSelect(std::string query);
   static memcache::Memcache* getClient()
   {

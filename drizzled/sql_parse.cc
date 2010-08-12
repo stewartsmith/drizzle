@@ -727,11 +727,13 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   bool res= true;
   if (plugin::QueryCache::isCached(session))
   {
-    cout << "Results are cached" << endl;
     res= plugin::QueryCache::sendCachedResultset(session);
   }
   if (not res)
+  {
+    cout << "results retrived from cache for the query : " << session->query << endl;
     return;
+  }
   LEX *lex= session->lex;
   Lex_input_stream lip(session, inBuf, length);
   bool err= parse_sql(session, &lip);
