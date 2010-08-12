@@ -47,7 +47,6 @@ EXTRA_DIST= \
 	    extra/clean_source.sh \
 	    extra/cpplint.py \
 	    extra/run_cpplint.sh \
-	    m4/gnulib-cache.m4 \
 	    ${top_srcdir}/m4/pandora*m4
 
 
