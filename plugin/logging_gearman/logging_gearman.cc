@@ -193,8 +193,10 @@ public:
 
     if (gearman_client_create(&gearman_client) == NULL)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, _("fail gearman_client_create(): %s"),
-                    strerror(errno));
+                    errmsg);
       return;
     }
 

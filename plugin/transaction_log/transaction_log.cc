@@ -109,10 +109,12 @@ TransactionLog::TransactionLog(const string in_log_file_path,
   log_file= open(log_file_path.c_str(), O_APPEND|O_CREAT|O_SYNC|O_WRONLY, S_IRWXU);
   if (log_file == -1)
   {
+    char errmsg[STRERROR_MAX];
+    strerror_r(errno, errmsg, sizeof(errmsg));
     error_message.assign(_("Failed to open transaction log file "));
     error_message.append(log_file_path);
     error_message.append("  Got error: ");
-    error_message.append(strerror(errno));
+    error_message.append(errmsg);
     error_message.push_back('\n');
     has_error= true;
     return;
@@ -216,13 +218,15 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
 
   if (unlikely(written != static_cast<ssize_t>(data_length)))
   {
+    char errmsg[STRERROR_MAX];
+    strerror_r(errno, errmsg, sizeof(errmsg));
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to write full size of log entry.  Tried to write %" PRId64
                     " bytes at offset %" PRId64 ", but only wrote %" PRId32 " bytes.  Error: %s\n"), 
                   static_cast<int64_t>(data_length),
                   static_cast<int64_t>(cur_offset),
                   static_cast<int64_t>(written), 
-                  strerror(errno));
+                  errmsg);
     state= CRASHED;
     /* 
      * Reset the log's offset in case we want to produce a decent error message including
@@ -235,9 +239,11 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
 
   if (unlikely(error_code != 0))
   {
+    char errmsg[STRERROR_MAX];
+    strerror_r(errno, errmsg, sizeof(errmsg));
     errmsg_printf(ERRMSG_LVL_ERROR, 
                   _("Failed to sync log file. Got error: %s\n"), 
-                  strerror(errno));
+                  errmsg);
   }
   return cur_offset;
 }

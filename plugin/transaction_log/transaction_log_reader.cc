@@ -91,10 +91,12 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
 
     if (log_file == -1)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, 
                     _("Failed to open transaction log file %s.  Got error: %s\n"),
                     log_filename_to_read.c_str(),
-                    strerror(errno));
+                    errmsg);
       return false;
     }
 
@@ -145,8 +147,10 @@ bool TransactionLogReader::read(const ReplicationServices::GlobalTransactionId &
       result= coded_input->ReadRaw(buffer, length);
       if (result == false)
       {
+        char errmsg[STRERROR_MAX];
+        strerror_r(errno, errmsg, sizeof(errmsg));
         fprintf(stderr, _("Could not read transaction message.\n"));
-        fprintf(stderr, _("GPB ERROR: %s.\n"), strerror(errno));
+        fprintf(stderr, _("GPB ERROR: %s.\n"), errmsg);
         fprintf(stderr, _("Raw buffer read: %s.\n"), buffer);
         break;
       }

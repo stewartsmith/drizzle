@@ -59,7 +59,7 @@
 #include "config.h"
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
-
+#include <drizzled/definitions.h>
 
 #include "transaction_log.h"
 #include "background_worker.h"
@@ -70,10 +70,12 @@ bool initTransactionLogBackgroundWorker()
   int error;
   if ((error= pthread_create(&thread, NULL, collectTransactionLogStats, 0)))
   {
+    char errmsg[STRERROR_MAX];
+    strerror_r(errno, errmsg, sizeof(errmsg));
     drizzled::errmsg_printf(ERRMSG_LVL_ERROR,
                             _("Unable to create background worker thread. "
                               "Got error %s.\n"),
-                  strerror(error));
+                  errmsg);
     return true;
   }
   return false;
