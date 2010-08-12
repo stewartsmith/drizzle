@@ -1697,15 +1697,11 @@ extern time_t flush_status_time;
 
 void Session::refresh_status()
 {
-  LOCK_status.lock();
-
   /* Reset thread's status variables */
   memset(&status_var, 0, sizeof(status_var));
 
-  /* Reset the counters of all key caches (default and named). */
   flush_status_time= time((time_t*) 0);
   current_global_counters.max_used_connections= 1; /* We set it to one, because we know we exist */
-  LOCK_status.unlock();
 }
 
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)

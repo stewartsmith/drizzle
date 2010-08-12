@@ -336,7 +336,6 @@ SHOW_COMP_OPTION have_symlink;
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
 boost::mutex LOCK_open;
-boost::mutex LOCK_status;
 boost::recursive_mutex LOCK_global_system_variables;
 boost::recursive_mutex LOCK_thread_count;
 
