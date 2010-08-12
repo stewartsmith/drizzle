@@ -86,6 +86,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
     gl_EARLY
+  ],[
+    PANDORA_EXTENSIONS 
   ])
   
   AC_REQUIRE([AC_PROG_CC])

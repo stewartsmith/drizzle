@@ -22,7 +22,6 @@ MESSAGE_LDADD= \
 	       ${LIBUUID} \
 	       ${LTLIBINTL} \
 	       $(GCOV_LIBS) \
-	       ${top_builddir}/gnulib/libgnu.la \
 		drizzled/internal/libinternal.la
 
 MESSAGE_AM_CXXFLAGS = ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
@@ -79,7 +78,7 @@ drizzled_message_table_raw_reader_LDADD = ${MESSAGE_LDADD}
 drizzled_message_table_raw_reader_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS}
 
 drizzled_message_table_writer_SOURCES =  drizzled/message/table_writer.cc
-drizzled_message_table_writer_LDADD = ${MESSAGE_LDADD}
+drizzled_message_table_writer_LDADD = ${MESSAGE_LDADD} ${BOOST_LIBS}
 drizzled_message_table_writer_CXXFLAGS = ${MESSAGE_AM_CXXFLAGS}
 
 drizzled_message_transaction_writer_SOURCES =  drizzled/message/transaction_writer.cc

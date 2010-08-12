@@ -7,7 +7,6 @@ CLIENT_LDADD= \
 	      $(LIBDRIZZLE) \
 	      $(LIBINTL) \
 	      $(LIBZ) \
-	      gnulib/libgnu.la \
 	      client/libgetpassword.la
 
 noinst_LTLIBRARIES+= \
@@ -44,7 +43,6 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				$(LIBDRIZZLE) \
 				$(LIBINTL) \
 				$(LIBZ) \
-				gnulib/libgnu.la \
 				client/libgetpassword.la
 
 client_drizzledump_SOURCES=	client/drizzledump.cc

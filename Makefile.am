@@ -31,7 +31,6 @@ noinst_PROGRAMS =
 VERSION=$(PANDORA_RELEASE_VERSION)
 
 SUBDIRS = po \
-	  gnulib \
 	  .
 
 DIST_SUBDIRS = ${SUBDIRS} tests
