@@ -210,11 +210,11 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 
   if (select && select->quick)
   {
-    status_var_increment(session->status_var.filesort_range_count);
+    session->status_var.filesort_range_count++;
   }
   else
   {
-    status_var_increment(session->status_var.filesort_scan_count);
+    session->status_var.filesort_scan_count++;
   }
 #ifdef CAN_TRUST_RANGE
   if (select && select->quick && select->quick->records > 0L)
@@ -350,11 +350,14 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     }
   }
   if (error)
+  {
     my_message(ER_FILSORT_ABORT, ER(ER_FILSORT_ABORT),
                MYF(ME_ERROR+ME_WAITTANG));
+  }
   else
-    statistic_add(session->status_var.filesort_rows,
-		  (uint32_t) records, &LOCK_status);
+  {
+    session->status_var.filesort_rows+= (uint32_t) records;
+  }
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
   DRIZZLE_FILESORT_DONE(error, records);
@@ -542,7 +545,7 @@ static ha_rows find_all_keys(Session *session,
         error= HA_ERR_END_OF_FILE;
         break;
       }
-      file->position(sort_form->record[0]);
+      file->position(sort_form->getInsertRecord());
     }
     else					/* Not quick-select */
     {
@@ -553,11 +556,11 @@ static ha_rows find_all_keys(Session *session,
 	  error= errno ? errno : -1;		/* Abort */
 	  break;
 	}
-	error=file->rnd_pos(sort_form->record[0],next_pos);
+	error=file->rnd_pos(sort_form->getInsertRecord(),next_pos);
       }
       else
       {
-	error=file->rnd_next(sort_form->record[0]);
+	error=file->rnd_next(sort_form->getInsertRecord());
 
 	if (!flag)
 	{
@@ -565,7 +568,7 @@ static ha_rows find_all_keys(Session *session,
 	  record+= sort_form->getShare()->db_record_offset;
 	}
 	else if (!error)
-	  file->position(sort_form->record[0]);
+	  file->position(sort_form->getInsertRecord());
       }
       if (error && error != HA_ERR_RECORD_DELETED)
 	break;
@@ -961,7 +964,7 @@ static void register_used_fields(SORTPARAM *param)
     Field *field;
     if ((field= sort_field->field))
     {
-      if (field->table == table)
+      if (field->getTable() == table)
         table->setReadSet(field->field_index);
     }
     else
@@ -1140,7 +1143,7 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
   volatile Session::killed_state *killed= &current_session->killed;
   Session::killed_state not_killable;
 
-  status_var_increment(current_session->status_var.filesort_merge_passes);
+  current_session->status_var.filesort_merge_passes++;
   if (param->not_killable)
   {
     killed= &not_killable;

@@ -143,22 +143,6 @@ extern const char *my_thread_name(void);
 */
 #define DEFAULT_THREAD_STACK	(256*INT32_C(1024))
 
-struct st_my_thread_var
-{
-  pthread_cond_t suspend;
-  pthread_mutex_t mutex;
-  pthread_mutex_t * volatile current_mutex;
-  pthread_cond_t * volatile current_cond;
-  pthread_t pthread_self;
-  uint64_t id;
-  int volatile abort;
-  bool init;
-  struct st_my_thread_var *next,**prev;
-  void *opt_info;
-};
-
-extern struct st_my_thread_var *_my_thread_var(void);
-#define my_thread_var (::drizzled::internal::_my_thread_var())
 /*
   Keep track of shutdown,signal, and main threads so that my_end() will not
   report errors with them
@@ -193,25 +177,6 @@ extern uint32_t thd_lib_detected;
 #define thread_safe_sub(V,C,L) \
         (pthread_mutex_lock((L)), (V)-=(C), pthread_mutex_unlock((L)))
 #endif
-
-/*
-  statistics_xxx functions are for non critical statistic,
-  maintained in global variables.
-  - race conditions can occur, making the result slightly inaccurate.
-  - the lock given is not honored.
-*/
-#define statistic_decrement(V,L) (V)--
-#define statistic_increment(V,L) (V)++
-#define statistic_add(V,C,L)     (V)+=(C)
-#define statistic_sub(V,C,L)     (V)-=(C)
-
-/*
-  No locking needed, the counter is owned by the thread
-*/
-#define status_var_increment(V) (V)++
-#define status_var_decrement(V) (V)--
-#define status_var_add(V,C)     (V)+=(C)
-#define status_var_sub(V,C)     (V)-=(C)
 
 } /* namespace internal */
 } /* namespace drizzled */

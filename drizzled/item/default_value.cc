@@ -69,7 +69,7 @@ bool Item_default_value::fix_fields(Session *session, Item **)
     goto error;
   memcpy(def_field, field_arg->field, field_arg->field->size_of());
   def_field->move_field_offset((ptrdiff_t)
-                               (def_field->table->getDefaultValues() - def_field->table->record[0]));
+                               (def_field->getTable()->getDefaultValues() - def_field->getTable()->record[0]));
   set_field(def_field);
   return false;
 
@@ -106,7 +106,7 @@ int Item_default_value::save_in_field(Field *field_arg, bool no_conversions)
       }
 
       {
-        push_warning_printf(field_arg->table->in_use,
+        push_warning_printf(field_arg->getTable()->in_use,
                             DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_NO_DEFAULT_FOR_FIELD,
                             ER(ER_NO_DEFAULT_FOR_FIELD),

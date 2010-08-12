@@ -91,9 +91,11 @@
 #include "logging_stats.h"
 #include "status_tool.h"
 #include "stats_schema.h"
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include <drizzled/session.h>
 
+namespace po= boost::program_options;
 using namespace drizzled;
 using namespace plugin;
 using namespace std;
@@ -160,15 +162,41 @@ bool LoggingStats::postEnd(Session *session)
     return false;
   }
 
-  ScoreboardSlot *scoreboard_slot= current_scoreboard->findAndResetScoreboardSlot(session);
+  bool isInScoreboard= false;
+  ScoreboardSlot *scoreboard_slot= current_scoreboard->findOurScoreboardSlot(session);
 
   if (scoreboard_slot)
   {
-    cumulative_stats->logUserStats(scoreboard_slot);
-    cumulative_stats->logGlobalStats(scoreboard_slot);
-    cumulative_stats->logGlobalStatusVars(scoreboard_slot);
-    delete scoreboard_slot;
+    isInScoreboard= true;
+  } 
+  else 
+  { 
+    /* the session did not have a slot reserved, that could be because the scoreboard was
+       full, but most likely its a failed authentication so post() is never called where
+       the slot is assigned. Log the global status values below, and if the user has a slot
+       log to it, but do not reserve a new slot for a user. If it was a failed authentication
+       the scoreboard would be filled up quickly with invalid users. 
+    */
+    scoreboard_slot= new ScoreboardSlot();
+    scoreboard_slot->setUser(session->getSecurityContext().getUser());
+    scoreboard_slot->setIp(session->getSecurityContext().getIp());
   }
+
+  scoreboard_slot->getStatusVars()->logStatusVar(session);
+  scoreboard_slot->getStatusVars()->getStatusVarCounters()->connection_time= time(NULL) - session->start_time; 
+
+  cumulative_stats->logUserStats(scoreboard_slot, isInScoreboard);
+  cumulative_stats->logGlobalStats(scoreboard_slot);
+  cumulative_stats->logGlobalStatusVars(scoreboard_slot);
+
+  if (isInScoreboard)
+  {
+    scoreboard_slot->reset();
+  } 
+  else 
+  {
+    delete scoreboard_slot;
+  } 
 
   return false;
 }
@@ -188,6 +216,8 @@ static SessionStatementsTool *session_statements_tool= NULL;
 static StatusTool *global_status_tool= NULL;
 
 static StatusTool *session_status_tool= NULL;
+
+static CumulativeUserStatsTool *cumulative_user_stats_tool= NULL;
 
 static void enable(Session *,
                    drizzle_sys_var *,
@@ -253,11 +283,47 @@ static bool initTable()
     return true;
   }
 
+  cumulative_user_stats_tool= new(nothrow)CumulativeUserStatsTool(logging_stats);
+
+  if (! cumulative_user_stats_tool)
+  {
+    return true;
+  }
+
   return false;
 }
 
-static int init(module::Context &context)
+static int init(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+  if (vm.count("max-user-count"))
+  {
+    if (sysvar_logging_stats_max_user_count < 100 || sysvar_logging_stats_max_user_count > 50000)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-user-count\n"));
+      exit(-1);
+    }
+  }
+  if (vm.count("bucket-count"))
+  {
+    if (sysvar_logging_stats_bucket_count < 5 || sysvar_logging_stats_bucket_count > 500)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for bucket-count\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("scoreboard-size"))
+  {
+    if (sysvar_logging_stats_scoreboard_size < 10 || sysvar_logging_stats_scoreboard_size > 50000)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for scoreboard-size\n"));
+      exit(-1);
+    }
+    else
+      sysvar_logging_stats_scoreboard_size= vm["scoreboard-size"].as<uint32_t>(); 
+  }
+
   logging_stats= new LoggingStats("logging_stats");
 
   if (initTable())
@@ -272,6 +338,7 @@ static int init(module::Context &context)
   context.add(session_statements_tool);
   context.add(session_status_tool);
   context.add(global_status_tool);
+  context.add(cumulative_user_stats_tool);
 
   if (sysvar_logging_stats_enabled)
   {
@@ -322,6 +389,22 @@ static DRIZZLE_SYSVAR_BOOL(enable,
                            enable, /* update func */
                            true /* default */);
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("max-user-count",
+          po::value<uint32_t>(&sysvar_logging_stats_max_user_count)->default_value(500),
+          N_("Max number of users that will be logged"));
+  context("bucket-count",
+          po::value<uint32_t>(&sysvar_logging_stats_bucket_count)->default_value(10),
+          N_("Max number of vector buckets to construct for logging"));
+  context("scoreboard-size",
+          po::value<uint32_t>(&sysvar_logging_stats_scoreboard_size)->default_value(2000),
+          N_("Max number of concurrent sessions that will be logged"));
+  context("enable",
+          po::value<bool>(&sysvar_logging_stats_enabled)->default_value(true)->zero_tokens(),
+          N_("Enable Logging Statistics Collection"));
+}
+
 static drizzle_sys_var* system_var[]= {
   DRIZZLE_SYSVAR(max_user_count),
   DRIZZLE_SYSVAR(bucket_count),
@@ -340,6 +423,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
   system_var, /* system variables */
-  NULL    /* config options   */
+  init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;

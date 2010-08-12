@@ -57,10 +57,9 @@ public:
     table_definition_ext= TABLEPROTOTESTER_EXT;
   }
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) TableProtoTesterCursor(*this, table);
+    return new TableProtoTesterCursor(*this, table);
   }
 
   const char **bas_ext() const {
@@ -121,14 +120,17 @@ void TableProtoTesterEngine::doGetTableIdentifiers(drizzled::CachedDirectory&,
   {
     set_of_identifiers.push_back(TableIdentifier(schema_identifier, "t1"));
     set_of_identifiers.push_back(TableIdentifier(schema_identifier, "too_many_enum_values"));
+    set_of_identifiers.push_back(TableIdentifier(schema_identifier, "invalid_table_collation"));
   }
 }
 
 bool TableProtoTesterEngine::doDoesTableExist(Session&, const drizzled::TableIdentifier &identifier)
 {
-  if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
+  if (not identifier.getPath().compare("./test/t1"))
     return true;
-  if (strcmp(identifier.getPath().c_str(), "./test/too_many_enum_values") == 0)
+  if (not identifier.getPath().compare("./test/too_many_enum_values"))
+    return true;
+  if (not identifier.getPath().compare("./test/invalid_table_collation"))
     return true;
 
   return false;
@@ -193,10 +195,11 @@ static void fill_table_too_many_enum_values(message::Table &table)
   table.mutable_engine()->set_name("tableprototester");
   table.set_creation_timestamp(0);
   table.set_update_timestamp(0);
-  
 
   tableopts= table.mutable_options();
   tableopts->set_comment("Table with too many enum options");
+  tableopts->set_collation("utf8_general_ci");
+  tableopts->set_collation_id(45);
 
   {
     field= table.add_field();
@@ -214,19 +217,49 @@ static void fill_table_too_many_enum_values(message::Table &table)
 
 }
 
+static void fill_table_invalid_table_collation(message::Table &table)
+{
+  message::Table::Field *field;
+  message::Table::TableOptions *tableopts;
+
+  table.set_name("invalid_table_collation");
+  table.set_type(message::Table::STANDARD);
+  table.set_schema("test");
+  table.set_creation_timestamp(0);
+  table.set_update_timestamp(0);
+  table.mutable_engine()->set_name("tableprototester");
+
+  tableopts= table.mutable_options();
+  tableopts->set_comment("Invalid table collation ");
+
+  {
+    field= table.add_field();
+    field->set_name("number");
+    field->set_type(message::Table::Field::INTEGER);
+  }
+
+  tableopts->set_collation("pi_pi_pi");
+  tableopts->set_collation_id(123456);
+
+}
 
 int TableProtoTesterEngine::doGetTableDefinition(Session&,
                                                  const drizzled::TableIdentifier &identifier,
                                                  drizzled::message::Table &table_proto)
 {
-  if (strcmp(identifier.getPath().c_str(), "./test/t1") == 0)
+  if (not identifier.getPath().compare("./test/t1"))
   {
     fill_table1(table_proto);
     return EEXIST;
   }
-  else if (strcmp(identifier.getPath().c_str(), "./test/too_many_enum_values")==0)
+  else if (not identifier.getPath().compare("./test/too_many_enum_values"))
   {
     fill_table_too_many_enum_values(table_proto);
+    return EEXIST;
+  }
+  else if (not identifier.getPath().compare("./test/invalid_table_collation"))
+  {
+    fill_table_invalid_table_collation(table_proto);
     return EEXIST;
   }
   return ENOENT;

@@ -166,7 +166,7 @@ bool MSDumpTable::returnDumpRow(char *record, uint64_t record_size, char *buf)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'D':
@@ -426,7 +426,7 @@ void MSDumpTable::insertRow(char *buf)
 	field = (Field_blob *)GET_FIELD(table, 0);
 	
     /* Get the blob record: */
-    blob_rec= buf + field->offset(table->record[0]);
+    blob_rec= buf + field->offset(table->getInsertRecord());
     packlength= field->pack_length() - table->s->blob_ptr_size;
 
     memcpy(&blob_ptr, blob_rec +packlength, sizeof(char*));

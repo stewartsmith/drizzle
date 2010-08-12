@@ -22,7 +22,7 @@ INSERT INTO t1 VALUES ("1\""), ("\"2");
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="test">
 	<table_structure name="t1">
-		<field Field="a&quot;b&quot;" Type="VARCHAR" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
+		<field Field="a&quot;b&quot;" Type="VARCHAR" Null="YES" Default="" Default_is_NULL="YES" On_Update="" />
 	</table_structure>
 	<table_data name="t1">
 	<row>
@@ -923,10 +923,10 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="mysqldump_test_db">
 	<table_structure name="t1">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
+		<field Field="a" Type="INTEGER" Null="YES" Default="" Default_is_NULL="YES" On_Update="" />
 	</table_structure>
 	<table_structure name="t2">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
+		<field Field="a" Type="INTEGER" Null="YES" Default="" Default_is_NULL="YES" On_Update="" />
 	</table_structure>
 </database>
 </drizzledump>
@@ -934,10 +934,10 @@ SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 <drizzledump xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <database name="mysqldump_test_db">
 	<table_structure name="t1">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
+		<field Field="a" Type="INTEGER" Null="YES" Default="" Default_is_NULL="YES" On_Update="" />
 	</table_structure>
 	<table_structure name="t2">
-		<field Field="a" Type="INTEGER" Null="TRUE" Default="" Default_is_NULL="TRUE" On_Update="" />
+		<field Field="a" Type="INTEGER" Null="YES" Default="" Default_is_NULL="YES" On_Update="" />
 	</table_structure>
 </database>
 </drizzledump>

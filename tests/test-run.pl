@@ -1640,18 +1640,6 @@ sub environment_setup () {
     ($lib_example_plugin ? "--plugin_dir=" . dirname($lib_example_plugin) : "");
 
   # ----------------------------------------------------
-  # Setup env so childs can execute myisampack and myisamchk
-  # ----------------------------------------------------
-#  $ENV{'MYISAMCHK'}= mtr_native_path(mtr_exe_exists(
-#                       "$path_client_bindir/myisamchk",
-#                       "$glob_basedir/storage/myisam/myisamchk",
-#                       "$glob_basedir/myisam/myisamchk"));
-#  $ENV{'MYISAMPACK'}= mtr_native_path(mtr_exe_exists(
-#                        "$path_client_bindir/myisampack",
-#                        "$glob_basedir/storage/myisam/myisampack",
-#                        "$glob_basedir/myisam/myisampack"));
-
-  # ----------------------------------------------------
   # We are nice and report a bit about our settings
   # ----------------------------------------------------
   if (!$opt_extern)
@@ -1862,6 +1850,9 @@ sub setup_vardir() {
   symlink(collapse_path("$glob_mysql_test_dir/std_data"),
           "$opt_vardir/std_data_ln");
 
+  symlink(collapse_path("$glob_suite_path/filesystem_engine/tests/t"),
+          "$opt_vardir/filesystem_ln");
+
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
   {
@@ -1869,6 +1860,8 @@ sub setup_vardir() {
   }
   system("chmod -R ugo+r $opt_vardir");
   system("chmod -R ugo+r $opt_vardir/std_data_ln/*");
+  system("chmod -R ugo+rw $opt_vardir/filesystem_ln/*");
+  system("chmod -R ugo+w $glob_suite_path/filesystem_engine/tests/t");
 }
 
 
@@ -2623,7 +2616,6 @@ sub mysqld_arguments ($$$$) {
                 $prefix, $path_vardir_trace, $mysqld->{'type'}, $sidx);
   }
 
-  mtr_add_arg($args, "%s--myisam_key_cache_size=1M", $prefix);
   mtr_add_arg($args, "%s--sort_buffer=256K", $prefix);
   mtr_add_arg($args, "%s--max_heap_table_size=1M", $prefix);
 

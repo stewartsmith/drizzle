@@ -70,7 +70,7 @@ QuickGroupMinMaxSelect(Table *table,
   cursor= head->cursor;
   index= use_index;
   record= head->record[0];
-  tmp_record= head->record[1];
+  tmp_record= head->getUpdateRecord();
   read_time= read_cost_arg;
   records= records_arg;
   used_key_parts= used_key_parts_arg;

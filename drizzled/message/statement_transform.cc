@@ -34,6 +34,9 @@
 #include "drizzled/message/statement_transform.h"
 #include "drizzled/message/transaction.pb.h"
 #include "drizzled/message/table.pb.h"
+#include "drizzled/charset.h"
+#include "drizzled/charset_info.h"
+#include "drizzled/global_charset_info.h"
 
 #include <string>
 #include <vector>
@@ -47,6 +50,57 @@ namespace drizzled
 
 namespace message
 {
+
+/* Incredibly similar to append_unescaped() in table.cc, but for std::string */
+static void append_escaped_string(std::string *res, const std::string &input, const char quote='\'')
+{
+  const char *pos= input.c_str();
+  const char *end= input.c_str()+input.length();
+  res->push_back(quote);
+
+  for (; pos != end ; pos++)
+  {
+    uint32_t mblen;
+    if (use_mb(default_charset_info) &&
+        (mblen= my_ismbchar(default_charset_info, pos, end)))
+    {
+      res->append(pos, mblen);
+      pos+= mblen - 1;
+      if (pos >= end)
+        break;
+      continue;
+    }
+
+    switch (*pos) {
+    case 0:				/* Must be escaped for 'mysql' */
+      res->push_back('\\');
+      res->push_back('0');
+      break;
+    case '\n':				/* Must be escaped for logs */
+      res->push_back('\\');
+      res->push_back('n');
+      break;
+    case '\r':
+      res->push_back('\\');		/* This gives better readability */
+      res->push_back('r');
+      break;
+    case '\\':
+      res->push_back('\\');		/* Because of the sql syntax */
+      res->push_back('\\');
+      break;
+    default:
+      if (*pos == quote) /* SQL syntax for quoting a quote */
+      {
+        res->push_back(quote);
+        res->push_back(quote);
+      }
+      else
+        res->push_back(*pos);
+      break;
+    }
+  }
+  res->push_back(quote);
+}
 
 enum TransformSqlError
 transformStatementToSql(const Statement &source,
@@ -323,7 +377,14 @@ transformInsertRecordToSql(const InsertHeader &header,
 
     const FieldMetadata &field_metadata= header.field_metadata(x);
 
-    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    if (record.is_null(x))
+    {
+      should_quote_field_value= false;
+    }
+    else 
+    {
+      should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    }
 
     if (should_quote_field_value)
       destination.push_back('\'');
@@ -341,7 +402,14 @@ transformInsertRecordToSql(const InsertHeader &header,
     }
     else
     {
-      destination.append(record.insert_value(x));
+      if (record.is_null(x))
+      {
+        destination.append("NULL");
+      }
+      else 
+      {
+        destination.append(record.insert_value(x));
+      } 
     }
 
     if (should_quote_field_value)
@@ -468,7 +536,14 @@ transformUpdateRecordToSql(const UpdateHeader &header,
     destination.push_back(quoted_identifier);
     destination.push_back('=');
 
-    should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    if (record.is_null(x))
+    {
+      should_quote_field_value= false;
+    }
+    else 
+    {
+      should_quote_field_value= shouldQuoteFieldValue(field_metadata.type());
+    }    
 
     if (should_quote_field_value)
       destination.push_back('\'');
@@ -486,7 +561,14 @@ transformUpdateRecordToSql(const UpdateHeader &header,
     }
     else
     {
-      destination.append(record.after_value(x));
+      if (record.is_null(x))
+      {
+        destination.append("NULL");
+      }
+      else
+      {
+        destination.append(record.after_value(x));
+      }
     }
 
     if (should_quote_field_value)
@@ -876,6 +958,25 @@ transformTableDefinitionToSql(const Table &table,
     if (result != NONE)
       return result;
   }
+
+  size_t num_foreign_keys= table.fk_constraint_size();
+
+  if (num_foreign_keys > 0)
+    destination.append(",\n", 2);
+
+  for (size_t x= 0; x < num_foreign_keys; ++x)
+  {
+    const message::Table::ForeignKeyConstraint &fkey= table.fk_constraint(x);
+
+    if (x != 0)
+      destination.append(",\n", 2);
+
+    result= transformForeignKeyConstraintDefinitionToSql(fkey, table, destination, sql_variant);
+
+    if (result != NONE)
+      return result;
+  }
+
   destination.append("\n)", 2);
 
   /* Add ENGINE = " clause */
@@ -929,14 +1030,6 @@ transformTableOptionsToSql(const Table::TableOptions &options,
   {
     ss << options.auto_increment();
     destination.append("\nAUTOINCREMENT_OFFSET = ", 24);
-    destination.append(ss.str());
-    ss.clear();
-  }
-  
-  if (options.has_row_type())
-  {
-    ss << options.row_type();
-    destination.append("\nROW_TYPE = ", 12);
     destination.append(ss.str());
     ss.clear();
   }
@@ -1041,18 +1134,11 @@ transformIndexDefinitionToSql(const Table::Index &index,
     {
       if (part.has_compare_length())
       {
-        size_t compare_length_in_chars= part.compare_length();
-        
-        /* hack: compare_length() is bytes, not chars, but
-         * only for VARCHAR. Ass. */
-        if (field.type() == Table::Field::VARCHAR)
-          compare_length_in_chars/= 4;
-
-        if (compare_length_in_chars != field.string_options().length())
+        if (part.compare_length() != field.string_options().length())
         {
           stringstream ss;
           destination.push_back('(');
-          ss << compare_length_in_chars;
+          ss << part.compare_length();
           destination.append(ss.str());
           destination.push_back(')');
         }
@@ -1060,6 +1146,92 @@ transformIndexDefinitionToSql(const Table::Index &index,
     }
   }
   destination.push_back(')');
+
+  return NONE;
+}
+
+static void transformForeignKeyOptionToSql(Table::ForeignKeyConstraint::ForeignKeyOption opt, string &destination)
+{
+  switch (opt)
+  {
+  case Table::ForeignKeyConstraint::OPTION_UNDEF:
+    break;
+  case Table::ForeignKeyConstraint::OPTION_RESTRICT:
+    destination.append("RESTRICT");
+    break;
+  case Table::ForeignKeyConstraint::OPTION_CASCADE:
+    destination.append("CASCADE");
+    break;
+  case Table::ForeignKeyConstraint::OPTION_SET_NULL:
+    destination.append("SET NULL");
+    break;
+  case Table::ForeignKeyConstraint::OPTION_NO_ACTION:
+    destination.append("NO ACTION");
+    break;
+  case Table::ForeignKeyConstraint::OPTION_DEFAULT:
+    destination.append("SET DEFAULT");
+    break;
+  }
+}
+
+enum TransformSqlError
+transformForeignKeyConstraintDefinitionToSql(const Table::ForeignKeyConstraint &fkey,
+                                             const Table &,
+                                             string &destination,
+                                             enum TransformSqlVariant sql_variant)
+{
+  char quoted_identifier= '`';
+  if (sql_variant == ANSI)
+    quoted_identifier= '"';
+
+  destination.append("  ", 2);
+
+  if (fkey.has_name())
+  {
+    destination.append("CONSTRAINT ", 11);
+    append_escaped_string(&destination, fkey.name(), quoted_identifier);
+    destination.append(" ", 1);
+  }
+
+  destination.append("FOREIGN KEY (", 13);
+
+  for (ssize_t x= 0; x < fkey.column_names_size(); ++x)
+  {
+    if (x != 0)
+      destination.push_back(',');
+
+    append_escaped_string(&destination, fkey.column_names(x),
+                          quoted_identifier);
+  }
+
+  destination.append(") REFERENCES ", 13);
+
+  append_escaped_string(&destination, fkey.references_table_name(),
+                        quoted_identifier);
+  destination.append(" (", 2);
+
+  for (ssize_t x= 0; x < fkey.references_columns_size(); ++x)
+  {
+    if (x != 0)
+      destination.push_back(',');
+
+    append_escaped_string(&destination, fkey.references_columns(x),
+                          quoted_identifier);
+  }
+
+  destination.push_back(')');
+
+  if (fkey.update_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
+  {
+    destination.append(" ON UPDATE ", 11);
+    transformForeignKeyOptionToSql(fkey.update_option(), destination);
+  }
+
+  if (fkey.delete_option() != Table::ForeignKeyConstraint::OPTION_UNDEF)
+  {
+    destination.append(" ON DELETE ", 11);
+    transformForeignKeyOptionToSql(fkey.delete_option(), destination);
+  }
 
   return NONE;
 }
@@ -1197,10 +1369,11 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.type() == Table::Field::TIMESTAMP)
-    if (field.timestamp_options().has_auto_updates() &&
-        field.timestamp_options().auto_updates())
-      destination.append(" ON UPDATE CURRENT_TIMESTAMP", 28);
+  if (field.has_options() && field.options().has_update_value())
+  {
+    destination.append(" ON UPDATE ", 11);
+    destination.append(field.options().update_value());
+  }
 
   if (field.has_comment())
   {

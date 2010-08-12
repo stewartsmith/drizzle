@@ -40,9 +40,6 @@
 namespace drizzled
 {
 
-typedef struct st_key_cache KEY_CACHE;
-
-
 namespace plugin
 {
 class StorageEngine;
@@ -55,9 +52,19 @@ typedef struct st_ha_create_information
   uint64_t auto_increment_value;
   uint32_t table_options;
   uint32_t used_fields;
-  enum row_type row_type;
   plugin::StorageEngine *db_type;
   bool table_existed;			/* 1 in create if table existed */
+
+  st_ha_create_information() :
+    table_charset(0),
+    default_table_charset(0),
+    alias(0),
+    auto_increment_value(0),
+    table_options(0),
+    used_fields(0),
+    db_type(0),
+    table_existed(0)
+  { }
 } HA_CREATE_INFO;
 
 typedef struct st_ha_alter_information
@@ -117,20 +124,6 @@ typedef struct st_range_seq_if
   */
   uint32_t (*next) (range_seq_t seq, KEY_MULTI_RANGE *range);
 } RANGE_SEQ_IF;
-
-/*
-  This is a buffer area that the handler can use to store rows.
-  'end_of_used_area' should be kept updated after calls to
-  read-functions so that other parts of the code can use the
-  remaining area (until next read calls is issued).
-*/
-
-typedef struct st_handler_buffer
-{
-  unsigned char *buffer;         /* Buffer one can start using */
-  unsigned char *buffer_end;     /* End of buffer */
-  unsigned char *end_of_used_area;     /* End of area that was used by handler */
-} HANDLER_BUFFER;
 
 } /* namespace drizzled */
 

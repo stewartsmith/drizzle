@@ -501,7 +501,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
           }
           else
           {
-            status_var_increment(session->status_var.ha_prepare_count);
+            session->status_var.ha_prepare_count++;
           }
         }
       }
@@ -560,7 +560,7 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
         }
         else if (normal_transaction)
         {
-          status_var_increment(session->status_var.ha_commit_count);
+          session->status_var.ha_commit_count++;
         }
       }
       else if (resource->participatesInSqlTransaction())
@@ -572,7 +572,7 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
         }
         else if (normal_transaction)
         {
-          status_var_increment(session->status_var.ha_commit_count);
+          session->status_var.ha_commit_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
@@ -626,7 +626,7 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
         }
         else if (normal_transaction)
         {
-          status_var_increment(session->status_var.ha_rollback_count);
+          session->status_var.ha_rollback_count++;
         }
       }
       else if (resource->participatesInSqlTransaction())
@@ -638,7 +638,7 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
         }
         else if (normal_transaction)
         {
-          status_var_increment(session->status_var.ha_rollback_count);
+          session->status_var.ha_rollback_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
@@ -751,7 +751,7 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
       }
       else
       {
-        status_var_increment(session->status_var.ha_savepoint_rollback_count);
+        session->status_var.ha_savepoint_rollback_count++;
       }
     }
     trans->no_2pc|= not resource->participatesInXaTransaction();
@@ -808,7 +808,7 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
         }
         else
         {
-          status_var_increment(session->status_var.ha_rollback_count);
+          session->status_var.ha_rollback_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
@@ -850,7 +850,7 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
         }
         else
         {
-          status_var_increment(session->status_var.ha_savepoint_count);
+          session->status_var.ha_savepoint_count++;
         }
       }
     }
@@ -1032,17 +1032,32 @@ message::Statement &TransactionServices::getInsertStatement(Session *in_session,
                                                                  Table *in_table)
 {
   message::Statement *statement= in_session->getStatementMessage();
-  /*
-   * We check to see if the current Statement message is of type INSERT.
-   * If it is not, we finalize the current Statement and ensure a new
-   * InsertStatement is created.
+
+  /* 
+   * Check the type for the current Statement message, if it is anything
+   * other then INSERT we need to call finalize, this will ensure a 
+   * new InsertStatement is created. If it is of type INSERT check
+   * what table the INSERT belongs to, if it is a different table
+   * call finalize, so a new InsertStatement can be created. 
    */
-  if (statement != NULL &&
-      statement->type() != message::Statement::INSERT)
+  if (statement != NULL && statement->type() != message::Statement::INSERT)
   {
     finalizeStatementMessage(*statement, in_session);
     statement= in_session->getStatementMessage();
-  }
+  } 
+  else if (statement != NULL)
+  {
+    const message::InsertHeader &insert_header= statement->insert_header();
+    string old_table_name= insert_header.table_metadata().table_name();
+     
+    string current_table_name;
+    (void) in_table->getShare()->getTableName(current_table_name);
+    if (current_table_name.compare(old_table_name))
+    {
+      finalizeStatementMessage(*statement, in_session);
+      statement= in_session->getStatementMessage();
+    }
+  } 
 
   if (statement == NULL)
   {
@@ -1135,9 +1150,18 @@ bool TransactionServices::insertRecord(Session *in_session, Table *in_table)
 
   while ((current_field= *table_fields++) != NULL) 
   {
-    string_value= current_field->val_str(string_value);
-    record->add_insert_value(string_value->c_ptr(), string_value->length());
-    string_value->free();
+    if (current_field->is_null())
+    {
+      record->add_is_null(true);
+      record->add_insert_value("", 0);
+    } 
+    else 
+    {
+      string_value= current_field->val_str(string_value);
+      record->add_is_null(false);
+      record->add_insert_value(string_value->c_ptr(), string_value->length());
+      string_value->free();
+    }
   }
   return false;
 }
@@ -1148,16 +1172,31 @@ message::Statement &TransactionServices::getUpdateStatement(Session *in_session,
                                                             const unsigned char *new_record)
 {
   message::Statement *statement= in_session->getStatementMessage();
+
   /*
-   * We check to see if the current Statement message is of type UPDATE.
-   * If it is not, we finalize the current Statement and ensure a new
-   * UpdateStatement is created.
+   * Check the type for the current Statement message, if it is anything
+   * other then UPDATE we need to call finalize, this will ensure a
+   * new UpdateStatement is created. If it is of type UPDATE check
+   * what table the UPDATE belongs to, if it is a different table
+   * call finalize, so a new UpdateStatement can be created.
    */
-  if (statement != NULL &&
-      statement->type() != message::Statement::UPDATE)
+  if (statement != NULL && statement->type() != message::Statement::UPDATE)
   {
     finalizeStatementMessage(*statement, in_session);
     statement= in_session->getStatementMessage();
+  }
+  else if (statement != NULL)
+  {
+    const message::UpdateHeader &update_header= statement->update_header();
+    string old_table_name= update_header.table_metadata().table_name();
+
+    string current_table_name;
+    (void) in_table->getShare()->getTableName(current_table_name);
+    if (current_table_name.compare(old_table_name))
+    {
+      finalizeStatementMessage(*statement, in_session);
+      statement= in_session->getStatementMessage();
+    }
   }
 
   if (statement == NULL)
@@ -1226,8 +1265,8 @@ void TransactionServices::setUpdateHeader(message::Statement &statement,
      * we do this crazy pointer fiddling to figure out if the current field
      * has been updated in the supplied record raw byte pointers.
      */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
+    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
 
     uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
 
@@ -1278,8 +1317,8 @@ void TransactionServices::updateRecord(Session *in_session,
      * we do this crazy pointer fiddling to figure out if the current field
      * has been updated in the supplied record raw byte pointers.
      */
-    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
-    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->record[0]); 
+    const unsigned char *old_ptr= (const unsigned char *) old_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
+    const unsigned char *new_ptr= (const unsigned char *) new_record + (ptrdiff_t) (current_field->ptr - in_table->getInsertRecord()); 
 
     uint32_t field_length= current_field->pack_length(); /** @TODO This isn't always correct...check varchar diffs. */
 
@@ -1300,7 +1339,16 @@ void TransactionServices::updateRecord(Session *in_session,
        */
       current_field->setReadSet(is_read_set);
 
-      record->add_after_value(string_value->c_ptr(), string_value->length());
+      if (current_field->is_null())
+      {
+        record->add_is_null(true);
+        record->add_after_value("", 0);
+      }
+      else
+      {
+        record->add_is_null(false);
+        record->add_after_value(string_value->c_ptr(), string_value->length());
+      }
       string_value->free();
     }
 
@@ -1330,16 +1378,31 @@ message::Statement &TransactionServices::getDeleteStatement(Session *in_session,
                                                             Table *in_table)
 {
   message::Statement *statement= in_session->getStatementMessage();
+
   /*
-   * We check to see if the current Statement message is of type DELETE.
-   * If it is not, we finalize the current Statement and ensure a new
-   * DeleteStatement is created.
+   * Check the type for the current Statement message, if it is anything
+   * other then DELETE we need to call finalize, this will ensure a
+   * new DeleteStatement is created. If it is of type DELETE check
+   * what table the DELETE belongs to, if it is a different table
+   * call finalize, so a new DeleteStatement can be created.
    */
-  if (statement != NULL &&
-      statement->type() != message::Statement::DELETE)
+  if (statement != NULL && statement->type() != message::Statement::DELETE)
   {
     finalizeStatementMessage(*statement, in_session);
     statement= in_session->getStatementMessage();
+  }
+  else if (statement != NULL)
+  {
+    const message::DeleteHeader &delete_header= statement->delete_header();
+    string old_table_name= delete_header.table_metadata().table_name();
+
+    string current_table_name;
+    (void) in_table->getShare()->getTableName(current_table_name);
+    if (current_table_name.compare(old_table_name))
+    {
+      finalizeStatementMessage(*statement, in_session);
+      statement= in_session->getStatementMessage();
+    }
   }
 
   if (statement == NULL)

@@ -29,6 +29,9 @@
 #include <limits.h>
 
 #include <boost/program_options.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/internal/my_bit.h"
@@ -331,17 +334,15 @@ SHOW_COMP_OPTION have_symlink;
 
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
-pthread_mutex_t LOCK_create_db;
-pthread_mutex_t LOCK_open;
-pthread_mutex_t LOCK_thread_count;
-pthread_mutex_t LOCK_status;
-pthread_mutex_t LOCK_global_read_lock;
-pthread_mutex_t LOCK_global_system_variables;
+boost::mutex LOCK_open;
+boost::mutex LOCK_status;
+boost::recursive_mutex LOCK_global_system_variables;
+boost::recursive_mutex LOCK_thread_count;
 
-pthread_rwlock_t	LOCK_system_variables_hash;
-pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
+boost::condition_variable COND_refresh;
+boost::condition_variable COND_thread_count;
 pthread_t signal_thread;
-pthread_cond_t  COND_server_end;
+boost::condition_variable COND_server_end;
 
 /* Static variables */
 
@@ -352,10 +353,6 @@ static char **defaults_argv;
 
 passwd *user_info;
 
-/**
-  Number of currently active user connections. The variable is protected by
-  LOCK_thread_count.
-*/
 atomic<uint32_t> connection_count;
 
 /** 
@@ -393,7 +390,7 @@ void close_connections(void)
   plugin::Listen::shutdown();
 
   /* kill connection thread */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
 
   while (select_thread_in_use)
   {
@@ -403,12 +400,12 @@ void close_connections(void)
     set_timespec(abstime, 2);
     for (uint32_t tmp=0 ; tmp < 10 && select_thread_in_use; tmp++)
     {
-      error=pthread_cond_timedwait(&COND_thread_count,&LOCK_thread_count, &abstime);
+      error= pthread_cond_timedwait(COND_thread_count.native_handle(),LOCK_thread_count.native_handle(), &abstime);
       if (error != EINTR)
         break;
     }
   }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
 
 
   /*
@@ -419,7 +416,7 @@ void close_connections(void)
 
   Session *tmp;
 
-  (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+  LOCK_thread_count.lock(); // For unlink from list
 
   for( SessionList::iterator it= getSessionList().begin(); it != getSessionList().end(); ++it )
   {
@@ -427,20 +424,9 @@ void close_connections(void)
     tmp->killed= Session::KILL_CONNECTION;
     tmp->scheduler->killSession(tmp);
     DRIZZLE_CONNECTION_DONE(tmp->thread_id);
-    if (tmp->mysys_var)
-    {
-      tmp->mysys_var->abort=1;
-      pthread_mutex_lock(&tmp->mysys_var->mutex);
-      if (tmp->mysys_var->current_cond)
-      {
-        pthread_mutex_lock(tmp->mysys_var->current_mutex);
-        pthread_cond_broadcast(tmp->mysys_var->current_cond);
-        pthread_mutex_unlock(tmp->mysys_var->current_mutex);
-      }
-      pthread_mutex_unlock(&tmp->mysys_var->mutex);
-    }
+    tmp->lockOnSys();
   }
-  (void) pthread_mutex_unlock(&LOCK_thread_count); // For unlink from list
+  LOCK_thread_count.unlock(); // For unlink from list
 
   if (connection_count)
     sleep(2);                                   // Give threads time to die
@@ -452,16 +438,16 @@ void close_connections(void)
   */
   for (;;)
   {
-    (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
+    LOCK_thread_count.lock(); // For unlink from list
     if (getSessionList().empty())
     {
-      (void) pthread_mutex_unlock(&LOCK_thread_count);
+      LOCK_thread_count.unlock();
       break;
     }
     tmp= getSessionList().front();
     /* Close before unlock, avoiding crash. See LP bug#436685 */
     tmp->client->close();
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
+    LOCK_thread_count.unlock();
   }
 }
 
@@ -495,7 +481,6 @@ void unireg_abort(int exit_code)
   else if (opt_help || opt_help_extended)
     usage();
   clean_up(!opt_help && (exit_code));
-  clean_up_mutexes();
   internal::my_end();
   exit(exit_code);
 }
@@ -507,7 +492,6 @@ void clean_up(bool print_message)
     return;
 
   table_cache_free();
-  TableShare::cacheStop();
   set_var_free();
   free_charsets();
   module::Registry &modules= module::Registry::singleton();
@@ -528,33 +512,17 @@ void clean_up(bool print_message)
 
   if (print_message && server_start_time)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_SHUTDOWN_COMPLETE)),internal::my_progname);
-  (void) pthread_mutex_lock(&LOCK_thread_count);
+  LOCK_thread_count.lock();
   ready_to_exit=1;
   /* do the broadcast inside the lock to ensure that my_end() is not called */
-  (void) pthread_cond_broadcast(&COND_server_end);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  COND_server_end.notify_all();
+  LOCK_thread_count.unlock();
 
   /*
     The following lines may never be executed as the main thread may have
     killed us
   */
 } /* clean_up */
-
-
-void clean_up_mutexes()
-{
-  (void) pthread_mutex_destroy(&LOCK_create_db);
-  (void) pthread_mutex_destroy(&LOCK_open);
-  (void) pthread_mutex_destroy(&LOCK_thread_count);
-  (void) pthread_mutex_destroy(&LOCK_status);
-  (void) pthread_mutex_destroy(&LOCK_global_system_variables);
-  (void) pthread_rwlock_destroy(&LOCK_system_variables_hash);
-  (void) pthread_mutex_destroy(&LOCK_global_read_lock);
-  (void) pthread_cond_destroy(&COND_thread_count);
-  (void) pthread_cond_destroy(&COND_server_end);
-  (void) pthread_cond_destroy(&COND_refresh);
-  (void) pthread_cond_destroy(&COND_global_read_lock);
-}
 
 
 /* Change to run as another user if started with --user */
@@ -673,15 +641,15 @@ void Session::unlink(Session *session)
 
   session->cleanup();
 
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  pthread_mutex_lock(&session->LOCK_delete);
+  LOCK_thread_count.lock();
+  session->lockForDelete();
 
   getSessionList().erase(remove(getSessionList().begin(),
                          getSessionList().end(),
                          session));
 
   delete session;
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
+  LOCK_thread_count.unlock();
 
   return;
 }
@@ -822,20 +790,7 @@ int init_thread_environment()
    pthread_mutexattr_t attr; 
    pthread_mutexattr_init(&attr);
 
-  (void) pthread_mutex_init(&LOCK_create_db, NULL);
-  (void) pthread_mutex_init(&LOCK_open, NULL);
-
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
-  (void) pthread_mutex_init(&LOCK_thread_count, &attr);
-  (void) pthread_mutex_init(&LOCK_global_system_variables, &attr);
-
-  (void) pthread_mutex_init(&LOCK_status, MY_MUTEX_INIT_FAST);
-  (void) pthread_rwlock_init(&LOCK_system_variables_hash, NULL);
-  (void) pthread_mutex_init(&LOCK_global_read_lock, MY_MUTEX_INIT_FAST);
-  (void) pthread_cond_init(&COND_thread_count,NULL);
-  (void) pthread_cond_init(&COND_server_end,NULL);
-  (void) pthread_cond_init(&COND_refresh,NULL);
-  (void) pthread_cond_init(&COND_global_read_lock,NULL);
 
   pthread_mutexattr_destroy(&attr);
 
@@ -860,7 +815,6 @@ int init_server_components(module::Registry &plugins)
   TableShare::cacheStart();
 
   setup_fpu();
-  init_thr_lock();
 
   /* Setup logs */
 
@@ -873,8 +827,7 @@ int init_server_components(module::Registry &plugins)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-  if (plugin_init(plugins, &defaults_argc, defaults_argv,
-                  ((opt_help) ? true : false), long_options))
+  if (plugin_init(plugins, &defaults_argc, defaults_argv, long_options))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
     unireg_abort(1);
@@ -905,6 +858,8 @@ int init_server_components(module::Registry &plugins)
 
   po::store(parsed, vm);
   po::notify(vm);
+
+  plugin_finalize(plugins);
 
   string scheduler_name;
   if (opt_scheduler)
@@ -983,8 +938,6 @@ enum options_drizzled
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
   OPT_JOIN_BUFF_SIZE,
-  OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
-  OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
   OPT_MAX_ALLOWED_PACKET,
   OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,

@@ -1,0 +1,153 @@
+drop table if exists t1, t2, t3;
+SET @save_myisam_key_cache_size=@@myisam_key_cache_size;
+SET @save_myisam_key_cache_block_size=@@myisam_key_cache_block_size;
+SET @save_myisam_key_cache_division_limit=@@myisam_key_cache_division_limit;
+SET @save_myisam_key_cache_age_threshold=@@myisam_key_cache_age_threshold;
+SELECT @@myisam_key_cache_size;
+@@myisam_key_cache_size
+1048576
+SELECT @@myisam_key_cache_block_size;
+@@myisam_key_cache_block_size
+1024
+SELECT @@myisam_key_cache_division_limit;
+@@myisam_key_cache_division_limit
+100
+SELECT @@myisam_key_cache_age_threshold;
+@@myisam_key_cache_age_threshold
+300
+SET @@global.myisam_key_cache_size=16*1024*1024;
+SET @@global.myisam_key_cache_size=0;
+Warnings:
+Error	1292	Truncated incorrect key_cache_size value: '0'
+SET @@global.myisam_key_cache_size=0;
+Warnings:
+Error	1292	Truncated incorrect key_cache_size value: '0'
+SET @@global.myisam_key_cache_size=16*1024*1024;
+SHOW VARIABLES like "myisam_key_cache_size";
+Variable_name	Value
+myisam_key_cache_size	16777216
+SELECT @@myisam_key_cache_size;
+@@myisam_key_cache_size
+16777216
+SELECT @@global.myisam_key_cache_size;
+@@global.myisam_key_cache_size
+16777216
+SELECT @@global.myisam_key_cache_size;
+@@global.myisam_key_cache_size
+16777216
+SELECT @@global.`myisam_key_cache_size`;
+@@global.`myisam_key_cache_size`
+16777216
+SELECT @@global.`myisam_key_cache_size`;
+@@global.`myisam_key_cache_size`
+16777216
+SELECT @@myisam_key_cache_size;
+@@myisam_key_cache_size
+16777216
+SET @@global.myisam_key_cache_size=@save_myisam_key_cache_size;
+SELECT @@myisam_key_cache_size;
+@@myisam_key_cache_size
+1048576
+SELECT @@skr.storage_engine="test";
+ERROR HY000: Variable 'storage_engine' is not a variable component (can't be used as XXXX.variable_name)
+select @@keycache1.myisam_key_cache_block_size;
+ERROR HY000: Variable 'myisam_key_cache_block_size' is not a variable component (can't be used as XXXX.variable_name)
+show status like 'key_blocks_used';
+Variable_name	Value
+set global myisam_key_cache_size=100;
+Warnings:
+Error	1292	Truncated incorrect key_cache_size value: '100'
+CREATE temporary TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=MYISAM;
+SET GLOBAL myisam_key_cache_block_size=1536;
+INSERT INTO t1 VALUES (1);
+SELECT @@myisam_key_cache_block_size;
+@@myisam_key_cache_block_size
+1024
+CHECK TABLE t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+DROP TABLE t1;
+CREATE TEMPORARY TABLE t1(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
+CREATE TEMPORARY TABLE t2(a int NOT NULL AUTO_INCREMENT PRIMARY KEY, b int) ENGINE=MYISAM;
+SET GLOBAL myisam_key_cache_block_size=1536;
+INSERT INTO t1 VALUES (1,0);
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+INSERT INTO t2(b) SELECT b FROM t1;
+INSERT INTO t1(b) SELECT b FROM t2;
+SELECT COUNT(*) FROM t1;
+COUNT(*)
+4181
+SELECT @@myisam_key_cache_block_size;
+@@myisam_key_cache_block_size
+1024
+CHECK TABLE t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+DROP TABLE t1,t2;
+set global myisam_key_cache_block_size= @save_myisam_key_cache_block_size;
+SET GLOBAL myisam_key_cache_block_size= 1536;
+CREATE TEMPORARY TABLE t1 (
+id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+c1 CHAR(50),
+c2 CHAR(50),
+c3 CHAR(50),
+KEY(c1, c2, c3)
+) ENGINE= MyISAM;
+INSERT INTO t1 (c1, c2, c3) VALUES
+('a', 'b', 'c'), ('b', 'c', 'd'), ('c', 'd', 'e'), ('d', 'e', 'f'),
+('e', 'f', 'g'), ('f', 'g', 'h'), ('g', 'h', 'i'), ('h', 'i', 'j'),
+('i', 'j', 'k'), ('j', 'k', 'l'), ('k', 'l', 'm'), ('l', 'm', 'n'),
+('m', 'n', 'o'), ('n', 'o', 'p'), ('o', 'p', 'q'), ('p', 'q', 'r'),
+('q', 'r', 's'), ('r', 's', 't'), ('s', 't', 'u'), ('t', 'u', 'v'),
+('u', 'v', 'w'), ('v', 'w', 'x'), ('w', 'x', 'y'), ('x', 'y', 'z');
+CREATE TABLE t2 AS SELECT * FROM t1;
+INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
+INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
+INSERT INTO t1 (c1, c2, c3) SELECT c1, c2, c3 from t2;
+CHECK TABLE t1;
+Table	Op	Msg_type	Msg_text
+test.t1	check	status	OK
+SHOW VARIABLES LIKE 'myisam_key_cache_block_size';
+Variable_name	Value
+myisam_key_cache_block_size	1024
+SET GLOBAL myisam_key_cache_block_size= @save_myisam_key_cache_block_size;
+DROP TABLE t1,t2;
+SET GLOBAL myisam_key_cache_division_limit= 0;
+Warnings:
+Error	1292	Truncated incorrect key_cache_division_limit value: '0'
+SELECT @@myisam_key_cache_division_limit;
+@@myisam_key_cache_division_limit
+100
+SET GLOBAL myisam_key_cache_division_limit= 101;
+Warnings:
+Error	1292	Truncated incorrect key_cache_division_limit value: '101'
+SELECT @@myisam_key_cache_division_limit;
+@@myisam_key_cache_division_limit
+100
+SET GLOBAL myisam_key_cache_age_threshold= 98;
+Warnings:
+Error	1292	Truncated incorrect key_cache_age_threshold value: '98'
+SELECT @@myisam_key_cache_age_threshold;
+@@myisam_key_cache_age_threshold
+300
+SET GLOBAL myisam_key_cache_age_threshold= 5000000000;
+Warnings:
+Error	1292	Truncated incorrect key_cache_age_threshold value: '5000000000'
+SELECT @@myisam_key_cache_age_threshold;
+@@myisam_key_cache_age_threshold
+300

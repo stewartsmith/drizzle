@@ -358,7 +358,6 @@ using namespace drizzled;
   enum drizzled::sql_var_t var_type;
   drizzled::Key::Keytype key_type;
   enum drizzled::ha_key_alg key_alg;
-  enum drizzled::row_type row_type;
   enum drizzled::column_format_type column_format_type;
   enum drizzled::ha_rkey_function ha_rkey_mode;
   enum drizzled::enum_tx_isolation tx_isolation;
@@ -373,7 +372,7 @@ using namespace drizzled;
   enum drizzled::index_hint_type index_hint;
   enum drizzled::enum_filetype filetype;
   enum drizzled::ha_build_method build_method;
-  enum drizzled::Foreign_key::fk_option m_fk_option;
+  drizzled::message::Table::ForeignKeyConstraint::ForeignKeyOption m_fk_option;
 }
 
 %{
@@ -1946,29 +1945,29 @@ ref_list:
 
 opt_match_clause:
           /* empty */
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_UNDEF; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_UNDEFINED; }
         | MATCH FULL
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_FULL; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_FULL; }
         | MATCH PARTIAL
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_PARTIAL; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_PARTIAL; }
         | MATCH SIMPLE_SYM
-          { ((statement::CreateTable *)Lex->statement)->fk_match_option= Foreign_key::FK_MATCH_SIMPLE; }
+          { ((statement::CreateTable *)Lex->statement)->fk_match_option= drizzled::message::Table::ForeignKeyConstraint::MATCH_SIMPLE; }
         ;
 
 opt_on_update_delete:
           /* empty */
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON UPDATE_SYM delete_option
           {
             ((statement::CreateTable *)Lex->statement)->fk_update_opt= $3;
-            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_delete_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
           }
         | ON DELETE_SYM delete_option
           {
-            ((statement::CreateTable *)Lex->statement)->fk_update_opt= Foreign_key::FK_OPTION_UNDEF;
+            ((statement::CreateTable *)Lex->statement)->fk_update_opt= drizzled::message::Table::ForeignKeyConstraint::OPTION_UNDEF;
             ((statement::CreateTable *)Lex->statement)->fk_delete_opt= $3;
           }
         | ON UPDATE_SYM delete_option
@@ -1986,11 +1985,11 @@ opt_on_update_delete:
         ;
 
 delete_option:
-          RESTRICT      { $$= Foreign_key::FK_OPTION_RESTRICT; }
-        | CASCADE       { $$= Foreign_key::FK_OPTION_CASCADE; }
-        | SET NULL_SYM  { $$= Foreign_key::FK_OPTION_SET_NULL; }
-        | NO_SYM ACTION { $$= Foreign_key::FK_OPTION_NO_ACTION; }
-        | SET DEFAULT   { $$= Foreign_key::FK_OPTION_DEFAULT;  }
+          RESTRICT      { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_RESTRICT; }
+        | CASCADE       { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_CASCADE; }
+        | SET NULL_SYM  { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_SET_NULL; }
+        | NO_SYM ACTION { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_NO_ACTION; }
+        | SET DEFAULT   { $$= drizzled::message::Table::ForeignKeyConstraint::OPTION_DEFAULT;  }
         ;
 
 key_type:
@@ -2124,7 +2123,6 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TableList*) lex->select_lex.table_list.first)->db;
-            statement->create_info.row_type= ROW_TYPE_NOT_USED;
             statement->alter_info.build_method= $2;
           }
           alter_commands

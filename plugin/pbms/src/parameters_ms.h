@@ -47,8 +47,8 @@ class PBMSParameters {
 	
 	static uint32_t getMaxKeepAlive();
 	
-	static uint64_t getBackupDatabaseID();
-	static void setBackupDatabaseID(uint64_t id);
+	static uint32_t getBackupDatabaseID();
+	static void setBackupDatabaseID(uint32_t id);
 	
 	static const char *getDefaultMetaDataHeaders();
 	

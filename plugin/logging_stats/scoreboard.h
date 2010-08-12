@@ -33,6 +33,7 @@
 
 #include "scoreboard_slot.h"
 #include <drizzled/session.h>
+#include <boost/thread/shared_mutex.hpp>
 
 #include <vector>
 
@@ -56,18 +57,6 @@ public:
   ScoreboardSlot* findScoreboardSlotToLog(drizzled::Session *session);
 
   /**
-   * Resets the ScoreboardSlot this session was using. The pointer
-   * returned is a copy of the ScoreboardSlot that has now been
-   * reclaimed. This must be deallocated by the caller, when the caller
-   * is finished. This allows cumulative collection of statistics.  
-   * 
-   * @param Pointer to the session
-   * @return Pointer to a copy of the ScoreboardSlot that has been
-   *   reclaimed
-   */
-  ScoreboardSlot* findAndResetScoreboardSlot(drizzled::Session *session);
-
-  /**
    * Finds the ScoreboardSlot for a given session. This function differs
    * from findAndResetScoreboardSlot() as it returns the actual pointer
    * rather then a copy. Its possible that values could be changed in 
@@ -82,7 +71,7 @@ public:
     return number_buckets;
   }
 
-  std::vector<pthread_rwlock_t* >* getVectorOfScoreboardLocks()
+  std::vector<boost::shared_mutex* >* getVectorOfScoreboardLocks()
   {
     return &vector_of_scoreboard_locks;
   }
@@ -96,7 +85,7 @@ private:
   uint32_t number_sessions;
   uint32_t number_buckets;
   std::vector<std::vector<ScoreboardSlot* >* > vector_of_scoreboard_vectors;
-  std::vector<pthread_rwlock_t* > vector_of_scoreboard_locks;
+  std::vector<boost::shared_mutex* > vector_of_scoreboard_locks;
 
   ScoreboardSlot* claimOpenScoreboardSlot(drizzled::Session *session); 
 };

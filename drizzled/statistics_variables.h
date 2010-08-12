@@ -32,8 +32,6 @@ extern struct global_counters current_global_counters;
  */
 typedef struct global_counters
 {
-  uint64_t aborted_threads;
-  uint64_t aborted_connects;
   uint64_t max_used_connections;
   uint64_t locks_immediate;
   uint64_t locks_waited;
@@ -46,6 +44,9 @@ typedef struct global_counters
  */
 typedef struct system_status_var
 {
+  uint64_t aborted_connects;
+  uint64_t aborted_threads;
+  uint64_t access_denied;
   uint64_t bytes_received;
   uint64_t bytes_sent;
   uint64_t com_other;
@@ -67,15 +68,6 @@ typedef struct system_status_var
   uint64_t ha_savepoint_count;
   uint64_t ha_savepoint_rollback_count;
 
-  /* KEY_CACHE parts. These are copies of the original */
-  uint64_t key_blocks_changed;
-  uint64_t key_blocks_used;
-  uint64_t key_cache_r_requests;
-  uint64_t key_cache_read;
-  uint64_t key_cache_w_requests;
-  uint64_t key_cache_write;
-  /* END OF KEY_CACHE parts */
-
   uint64_t select_full_join_count;
   uint64_t select_full_range_join_count;
   uint64_t select_range_count;
@@ -86,6 +78,11 @@ typedef struct system_status_var
   uint64_t filesort_range_count;
   uint64_t filesort_rows;
   uint64_t filesort_scan_count;
+  uint64_t connection_time;
+  uint64_t execution_time_nsec;
+  uint64_t updated_row_count;
+  uint64_t deleted_row_count;
+  uint64_t inserted_row_count;
   /*
     Number of statements sent from the client
   */

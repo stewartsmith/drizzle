@@ -31,25 +31,33 @@ message Table {
     optional bool checksum = 17;
     optional bool page_checksum = 18;
     optional bool delay_key_write = 19;
-
-    enum RowType {
-    	 ROW_TYPE_DEFAULT = 0;
-	 ROW_TYPE_FIXED = 1;
-	 ROW_TYPE_DYNAMIC = 2;
-      	 ROW_TYPE_COMPRESSED = 3;
-         ROW_TYPE_REDUNDANT = 4;
-	 ROW_TYPE_COMPACT = 5;
-	 ROW_TYPE_PAGE = 6;
-    }
-
-    optional RowType row_type = 20;
   }
 
   message ForeignKeyConstraint {
-    required string name = 1;
-    required Field dependent = 2;
-    required Field parent = 3;
-    /** @TODO Finish this off... */
+    optional string name = 1;
+    repeated string column_names = 2;
+    required string references_table_name = 3;
+    repeated string references_columns = 4;
+
+    enum ForeignKeyMatchOption {
+      MATCH_UNDEFINED = 0;
+      MATCH_FULL = 1;
+      MATCH_PARTIAL = 2;
+      MATCH_SIMPLE = 3;
+    }
+    required ForeignKeyMatchOption match = 5;
+
+    enum ForeignKeyOption {
+      OPTION_UNDEF = 0;
+      OPTION_RESTRICT = 1;
+      OPTION_CASCADE = 2;
+      OPTION_SET_NULL = 3;
+      OPTION_NO_ACTION = 4;
+      OPTION_DEFAULT = 5;
+    }
+
+    required ForeignKeyOption update_option = 6 [ default = OPTION_UNDEF ];
+    required ForeignKeyOption delete_option = 7 [ default = OPTION_UNDEF ];
   }
 
   message Field {
@@ -72,10 +80,8 @@ message Table {
       optional string update_value = 2;
       optional bool default_null = 3 [default = false];
       optional bytes default_bin_value = 4;
-    }
-
-    message TimestampFieldOptions {
-      optional bool auto_updates = 1 [default = false];
+      optional string default_expression = 5;
+      optional string update_expression = 6;
     }
 
     message FieldConstraints {
@@ -112,7 +118,6 @@ message Table {
 
     optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
     optional EnumerationValues enumeration_values = 17;
-    optional TimestampFieldOptions timestamp_options = 18;
   }
 
   message Index {

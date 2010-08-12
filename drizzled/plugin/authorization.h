@@ -25,7 +25,7 @@
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/plugin.h"
 #include "drizzled/security_context.h"
-#include "drizzled/table_identifier.h"
+#include "drizzled/identifier.h"
 
 #include <string>
 #include <set>

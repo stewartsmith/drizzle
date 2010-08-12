@@ -208,11 +208,11 @@ void plugin::TableFunction::Generator::push(bool arg)
 {
   if (arg)
   {
-    (*columns_iterator)->store("TRUE", 4, scs);
+    (*columns_iterator)->store("YES", 3, scs);
   }
   else
   {
-    (*columns_iterator)->store("FALSE", 5, scs);
+    (*columns_iterator)->store("NO", 2, scs);
   }
 
   columns_iterator++;

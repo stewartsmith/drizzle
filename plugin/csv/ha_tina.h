@@ -136,13 +136,6 @@ public:
                           uint64_t *)
   {}
 
-  /*
-    These functions used to get/update status of the Cursor.
-    Needed to enable concurrent inserts.
-  */
-  void get_status();
-  void update_status();
-
   /* The following methods were added just for TINA */
   int encode_quote(unsigned char *buf);
   int find_current_row(unsigned char *buf);

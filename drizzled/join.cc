@@ -2373,7 +2373,7 @@ int Join::rollup_write_data(uint32_t idx, Table *table_arg)
           item->save_in_result_field(1);
       }
       copy_sum_funcs(sum_funcs_end[i+1], sum_funcs_end[i]);
-      if ((write_error= table_arg->cursor->insertRecord(table_arg->record[0])))
+      if ((write_error= table_arg->cursor->insertRecord(table_arg->getInsertRecord())))
       {
         my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
         return 1;
@@ -2834,7 +2834,7 @@ enum_nested_loop_state end_write(Join *join, JoinTable *, bool end_of_records)
     {
       int error;
       join->found_records++;
-      if ((error=table->cursor->insertRecord(table->record[0])))
+      if ((error=table->cursor->insertRecord(table->getInsertRecord())))
       {
         if (!table->cursor->is_fatal_error(error, HA_CHECK_DUP))
           goto end;
@@ -2882,15 +2882,15 @@ enum_nested_loop_state end_update(Join *join, JoinTable *, bool end_of_records)
     if (item->maybe_null)
       group->buff[-1]= (char) group->field->is_null();
   }
-  if (!table->cursor->index_read_map(table->record[1],
+  if (!table->cursor->index_read_map(table->getUpdateRecord(),
                                    join->tmp_table_param.group_buff,
                                    HA_WHOLE_KEY,
                                    HA_READ_KEY_EXACT))
   {						/* Update old record */
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
-    if ((error= table->cursor->updateRecord(table->record[1],
-                                          table->record[0])))
+    if ((error= table->cursor->updateRecord(table->getUpdateRecord(),
+                                          table->getInsertRecord())))
     {
       table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
@@ -2909,11 +2909,11 @@ enum_nested_loop_state end_update(Join *join, JoinTable *, bool end_of_records)
        group=group->next,key_part++)
   {
     if (key_part->null_bit)
-      memcpy(table->record[0]+key_part->offset, group->buff, 1);
+      memcpy(table->getInsertRecord()+key_part->offset, group->buff, 1);
   }
   init_tmptable_sum_functions(join->sum_funcs);
   copy_funcs(join->tmp_table_param.items_to_copy);
-  if ((error=table->cursor->insertRecord(table->record[0])))
+  if ((error=table->cursor->insertRecord(table->getInsertRecord())))
   {
     my_error(ER_USE_SQL_BIG_RESULT, MYF(0));
     return NESTED_LOOP_ERROR;        // Table is_full error
@@ -2940,7 +2940,7 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
   copy_fields(&join->tmp_table_param);		// Groups are copied twice.
   copy_funcs(join->tmp_table_param.items_to_copy);
 
-  if (!(error= table->cursor->insertRecord(table->record[0])))
+  if (!(error= table->cursor->insertRecord(table->getInsertRecord())))
     join->send_records++;			// New group
   else
   {
@@ -2949,15 +2949,15 @@ enum_nested_loop_state end_unique_update(Join *join, JoinTable *, bool end_of_re
       table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
-    if (table->cursor->rnd_pos(table->record[1],table->cursor->dup_ref))
+    if (table->cursor->rnd_pos(table->getUpdateRecord(),table->cursor->dup_ref))
     {
       table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
     }
     table->restoreRecord();
     update_tmptable_sum_func(join->sum_funcs,table);
-    if ((error= table->cursor->updateRecord(table->record[1],
-                                          table->record[0])))
+    if ((error= table->cursor->updateRecord(table->getUpdateRecord(),
+                                          table->getInsertRecord())))
     {
       table->print_error(error,MYF(0));
       return NESTED_LOOP_ERROR;
@@ -4040,6 +4040,15 @@ static bool greedy_search(Join      *join,
     */
     join->setPosInPartialPlan(idx, best_pos);
 
+    /*
+      We need to make best_extension_by_limited_search aware of the fact
+      that it's not starting from top level, but from a rather specific
+      position in the list of nested joins.
+    */
+    check_interleaving_with_nj (best_table);
+    
+      
+
     /* find the position of 'best_table' in 'join->best_ref' */
     best_idx= idx;
     JoinTable *pos= join->best_ref[best_idx];
@@ -4201,13 +4210,9 @@ static bool best_extension_by_limited_search(Join *join,
   for (JoinTable **pos= join->best_ref + idx ; (s= *pos) ; pos++)
   {
     table_map real_table_bit= s->table->map;
-    if (idx)
-    {
-      partial_pos= join->getPosFromPartialPlan(idx - 1);
-    }
     if ((remaining_tables & real_table_bit) &&
         ! (remaining_tables & s->dependent) &&
-        (! idx || ! check_interleaving_with_nj(partial_pos.getJoinTable(), s)))
+        (! idx || ! check_interleaving_with_nj(s)))
     {
       double current_record_count, current_read_time;
 
@@ -5399,7 +5404,7 @@ static int remove_duplicates(Join *join, Table *entry,List<Item> &fields, Item *
   }
   Field **first_field=entry->getFields() + entry->getShare()->sizeFields() - field_count;
   offset= (field_count ?
-           entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->record[0]) : 0);
+           entry->getField(entry->getShare()->sizeFields() - field_count)->offset(entry->getInsertRecord()) : 0);
   reclength= entry->getShare()->getRecordLength() - offset;
 
   entry->free_io_cache();				// Safety
@@ -5512,6 +5517,7 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     s->needed_reg.reset();
     table_vector[i]=s->table=table=tables->table;
     table->pos_in_table_list= tables;
+    assert(table->cursor);
     error= table->cursor->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
     if (error)
     {
@@ -5779,9 +5785,9 @@ static bool make_join_statistics(Join *join, TableList *tables, COND *conds, DYN
     while (iter != sargables.end())
     {
       Field *field= (*iter).getField();
-      JoinTable *join_tab= field->table->reginfo.join_tab;
+      JoinTable *join_tab= field->getTable()->reginfo.join_tab;
       key_map possible_keys= field->key_start;
-      possible_keys&= field->table->keys_in_use_for_query;
+      possible_keys&= field->getTable()->keys_in_use_for_query;
       bool is_const= true;
       for (uint32_t j= 0; j < (*iter).getNumValues(); j++)
         is_const&= (*iter).isConstItem(j);
@@ -6014,34 +6020,74 @@ static bool test_if_subpart(order_st *a,order_st *b)
 /**
   Nested joins perspective: Remove the last table from the join order.
 
+  The algorithm is the reciprocal of check_interleaving_with_nj(), hence
+  parent join nest nodes are updated only when the last table in its child
+  node is removed. The ASCII graphic below will clarify.
+
+  %A table nesting such as <tt> t1 x [ ( t2 x t3 ) x ( t4 x t5 ) ] </tt>is
+  represented by the below join nest tree.
+
+  @verbatim
+                     NJ1
+                  _/ /  \
+                _/  /    NJ2
+              _/   /     / \ 
+             /    /     /   \
+   t1 x [ (t2 x t3) x (t4 x t5) ]
+  @endverbatim
+
+  At the point in time when check_interleaving_with_nj() adds the table t5 to
+  the query execution plan, QEP, it also directs the node named NJ2 to mark
+  the table as covered. NJ2 does so by incrementing its @c counter
+  member. Since all of NJ2's tables are now covered by the QEP, the algorithm
+  proceeds up the tree to NJ1, incrementing its counter as well. All join
+  nests are now completely covered by the QEP.
+
+  restore_prev_nj_state() does the above in reverse. As seen above, the node
+  NJ1 contains the nodes t2, t3, and NJ2. Its counter being equal to 3 means
+  that the plan covers t2, t3, and NJ2, @e and that the sub-plan (t4 x t5)
+  completely covers NJ2. The removal of t5 from the partial plan will first
+  decrement NJ2's counter to 1. It will then detect that NJ2 went from being
+  completely to partially covered, and hence the algorithm must continue
+  upwards to NJ1 and decrement its counter to 2. %A subsequent removal of t4
+  will however not influence NJ1 since it did not un-cover the last table in
+  NJ2.
+
+  SYNOPSIS
+    restore_prev_nj_state()
+      last  join table to remove, it is assumed to be the last in current 
+            partial join order.
+     
+  DESCRIPTION
+
     Remove the last table from the partial join order and update the nested
-    joins counters and join->cur_embedding_map. It is ok to call this
-    function for the first table in join order (for which
+    joins counters and join->cur_embedding_map. It is ok to call this 
+    function for the first table in join order (for which 
     check_interleaving_with_nj has not been called)
 
   @param last  join table to remove, it is assumed to be the last in current
                partial join order.
 */
+
 static void restore_prev_nj_state(JoinTable *last)
 {
   TableList *last_emb= last->table->pos_in_table_list->getEmbedding();
   Join *join= last->join;
-  while (last_emb)
+  for (;last_emb != NULL; last_emb= last_emb->getEmbedding())
   {
-    if (last_emb->on_expr)
-    {
-      if (!(--last_emb->getNestedJoin()->counter_))
-        join->cur_embedding_map&= ~last_emb->getNestedJoin()->nj_map;
-      else if (last_emb->getNestedJoin()->join_list.elements-1 ==
-               last_emb->getNestedJoin()->counter_)
-        join->cur_embedding_map|= last_emb->getNestedJoin()->nj_map;
-      else
-        break;
-    }
-    last_emb= last_emb->getEmbedding();
+    nested_join_st *nest= last_emb->getNestedJoin();
+    
+    bool was_fully_covered= nest->is_fully_covered();
+    
+    if (--nest->counter_ == 0)
+      join->cur_embedding_map&= ~nest->nj_map;
+    
+    if (!was_fully_covered)
+      break;
+    
+    join->cur_embedding_map|= nest->nj_map;
   }
 }
-
 
 /**
   Create a condition for a const reference and add this to the

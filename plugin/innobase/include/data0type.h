@@ -117,7 +117,7 @@ columns, and for them the precise type is usually not used at all.
 
 #define DATA_ENGLISH	4	/* English language character string: this
 				is a relic from pre-MySQL time and only used
-				for InnoDB's own system tables */
+				for InnoDBs own system tables */
 #define DATA_ERROR	111	/* another relic from pre-MySQL time */
 
 #define DATA_MYSQL_TYPE_MASK 255 /* AND with this mask to extract the MySQL

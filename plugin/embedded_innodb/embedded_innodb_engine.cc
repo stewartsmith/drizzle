@@ -80,6 +80,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <fcntl.h>
 
 #include <string>
+#include <boost/algorithm/string.hpp>
 #include <map>
 #include <fstream>
 #include <drizzled/message/table.pb.h>
@@ -101,6 +102,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/field/blob.h"
 #include "drizzled/field/enum.h"
 #include <drizzled/session.h>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace google;
@@ -139,15 +142,17 @@ public:
 
   ~EmbeddedInnoDBEngine();
 
-  virtual Cursor *create(TableShare &table,
-                         drizzled::memory::Root *mem_root)
+  virtual Cursor *create(TableShare &table)
   {
-    return new (mem_root) EmbeddedInnoDBCursor(*this, table);
+    return new EmbeddedInnoDBCursor(*this, table);
   }
 
   const char **bas_ext() const {
     return EmbeddedInnoDBCursor_exts;
   }
+
+  bool validateCreateTableOption(const std::string &key,
+                                 const std::string &state);
 
   int doCreateTable(Session&,
                     Table& table_arg,
@@ -410,15 +415,15 @@ uint64_t EmbeddedInnoDBCursor::getInitialAutoIncrementValue()
   doStartIndexScan(table->getShare()->next_number_index, 1);
   if (table->getShare()->next_number_keypart == 0)
   {						// Autoincrement at key-start
-    error=index_last(table->record[1]);
+    error=index_last(table->getUpdateRecord());
   }
   else
   {
     unsigned char key[MAX_KEY_LENGTH];
-    key_copy(key, table->record[0],
+    key_copy(key, table->getInsertRecord(),
              table->key_info + table->getShare()->next_number_index,
              table->getShare()->next_number_key_offset);
-    error= index_read_map(table->record[1], key,
+    error= index_read_map(table->getUpdateRecord(), key,
                           make_prev_keypart_map(table->getShare()->next_number_keypart),
                           HA_READ_PREFIX_LAST);
   }
@@ -629,7 +634,7 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
 
   int rc;
   share= get_share(name, has_hidden_primary_key, &rc);
-  thr_lock_data_init(&share->lock, &lock, NULL);
+  lock.init(&share->lock);
 
 
   if (table->getShare()->getPrimaryKey() != MAX_KEY)
@@ -779,6 +784,41 @@ cleanup:
   return err;
 }
 
+bool EmbeddedInnoDBEngine::validateCreateTableOption(const std::string &key,
+                                                     const std::string &state)
+{
+  if (boost::iequals(key, "ROW_FORMAT"))
+  {
+    if (boost::iequals(state, "COMPRESSED"))
+      return true;
+
+    if (boost::iequals(state, "COMPACT"))
+      return true;
+
+    if (boost::iequals(state, "DYNAMIC"))
+      return true;
+
+    if (boost::iequals(state, "REDUNDANT"))
+      return true;
+  }
+
+  return false;
+}
+
+static ib_tbl_fmt_t parse_ib_table_format(const std::string &value)
+{
+  if (boost::iequals(value, "REDUNDANT"))
+    return IB_TBL_REDUNDANT;
+  else if (boost::iequals(value, "COMPACT"))
+    return IB_TBL_COMPACT;
+  else if (boost::iequals(value, "DYNAMIC"))
+    return IB_TBL_DYNAMIC;
+  else if (boost::iequals(value, "COMPRESSED"))
+    return IB_TBL_COMPRESSED;
+
+  assert(false); /* You need to add possible table formats here */
+  return IB_TBL_COMPACT;
+}
 
 int EmbeddedInnoDBEngine::doCreateTable(Session &session,
                                         Table& table_obj,
@@ -797,8 +837,21 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
   TableIdentifier_to_innodb_name(identifier, &innodb_table_name);
 
+  ib_tbl_fmt_t innodb_table_format= IB_TBL_COMPACT;
+
+  const size_t num_engine_options= table_message.engine().options_size();
+  for (size_t x= 0; x < num_engine_options; x++)
+  {
+    const message::Engine::Option &engine_option= table_message.engine().options(x);
+    if (boost::iequals(engine_option.name(), "ROW_FORMAT"))
+    {
+      innodb_table_format= parse_ib_table_format(engine_option.state());
+    }
+  }
+
   innodb_err= ib_table_schema_create(innodb_table_name.c_str(),
-                                     &innodb_table_schema, IB_TBL_COMPACT, 0);
+                                     &innodb_table_schema,
+                                     innodb_table_format, 0);
 
   if (innodb_err != DB_SUCCESS)
   {
@@ -1222,7 +1275,12 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
 {
   ib_trx_t   transaction;
   ib_crsr_t  cursor;
-  string search_string(schema.getLower());
+  /* 
+    Why not use getPath()?
+  */
+  string search_string(schema.getSchemaName());
+
+  boost::algorithm::to_lower(search_string);
 
   search_string.append("/");
 
@@ -1268,7 +1326,7 @@ void EmbeddedInnoDBEngine::getTableNamesInSchemaFromInnoDB(
       if (set_of_names)
         set_of_names->insert(just_table_name);
       if (identifiers)
-        identifiers->push_back(TableIdentifier(schema.getLower(), just_table_name));
+        identifiers->push_back(TableIdentifier(schema.getSchemaName(), just_table_name));
     }
 
 
@@ -1802,7 +1860,7 @@ int EmbeddedInnoDBCursor::doStartTableScan(bool)
 int read_row_from_innodb(unsigned char* buf, ib_crsr_t cursor, ib_tpl_t tuple, Table* table, bool has_hidden_primary_key, uint64_t *hidden_pkey, drizzled::memory::Root **blobroot)
 {
   ib_err_t err;
-  ptrdiff_t row_offset= buf - table->record[0];
+  ptrdiff_t row_offset= buf - table->getInsertRecord();
 
   err= ib_cursor_read_row(cursor, tuple);
 
@@ -2743,8 +2801,8 @@ static void innodb_file_format_name_update(Session*, drizzle_sys_var*,
   format= *static_cast<const char*const*>(save);
 
   /* Format is already set in validate */
-    strncpy(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
-    innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
+  memmove(innodb_file_format_name_storage, format, sizeof(innodb_file_format_name_storage));;
+  innodb_file_format_name_storage[sizeof(innodb_file_format_name_storage)-1]= 0;
 
   *static_cast<const char**>(var_ptr)= innodb_file_format_name_storage;
 }

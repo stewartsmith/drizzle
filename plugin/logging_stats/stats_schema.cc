@@ -82,6 +82,25 @@
  * | COUNT_DROP     | BIGINT  | FALSE |         | FALSE           |           |
  * | COUNT_ADMIN    | BIGINT  | FALSE |         | FALSE           |           |
  * +----------------+---------+-------+---------+-----------------+-----------+
+ *
+ * drizzle> describe CUMULATIVE_USER_STATS;
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ * | Field               | Type    | Null  | Default | Default_is_NULL | On_Update |
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ * | USER                | VARCHAR | FALSE |         | FALSE           |           | 
+ * | BYTES_RECEIVED      | VARCHAR | FALSE |         | FALSE           |           | 
+ * | BYTES_SENT          | VARCHAR | FALSE |         | FALSE           |           | 
+ * | DENIED_CONNECTIONS  | VARCHAR | FALSE |         | FALSE           |           | 
+ * | LOST_CONNECTIONS    | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ACCESS_DENIED       | VARCHAR | FALSE |         | FALSE           |           | 
+ * | CONNECTED_TIME_SEC  | VARCHAR | FALSE |         | FALSE           |           | 
+ * | EXECUTION_TIME_NSEC | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_FETCHED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_UPDATED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_DELETED        | VARCHAR | FALSE |         | FALSE           |           | 
+ * | ROWS_INSERTED       | VARCHAR | FALSE |         | FALSE           |           | 
+ * +---------------------+---------+-------+---------+-----------------+-----------+
+ *
  */
 
 #include <config.h>
@@ -248,7 +267,7 @@ void CurrentCommandsTool::Generator::setVectorIteratorsAndLock(uint32_t bucket_n
 
   scoreboard_vector_it= scoreboard_vector->begin();
   scoreboard_vector_end= scoreboard_vector->end();
-  pthread_rwlock_rdlock(current_lock);
+  current_lock->lock_shared();
 }
 
 bool CurrentCommandsTool::Generator::populate()
@@ -283,7 +302,7 @@ bool CurrentCommandsTool::Generator::populate()
     }
     
     ++vector_of_scoreboard_vectors_it;
-    pthread_rwlock_unlock(current_lock); 
+    current_lock->unlock_shared();
     ++current_bucket;
     if (vector_of_scoreboard_vectors_it != vector_of_scoreboard_vectors_end)
     {
@@ -352,6 +371,82 @@ bool CumulativeCommandsTool::Generator::populate()
       return true;
     } 
     else 
+    {
+      ++record_number;
+    }
+  }
+
+  return false;
+}
+
+CumulativeUserStatsTool::CumulativeUserStatsTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "CUMULATIVE_USER_STATS")
+{
+  outer_logging_stats= logging_stats;
+
+  add_field("USER");
+  add_field("BYTES_RECEIVED");
+  add_field("BYTES_SENT");
+  add_field("DENIED_CONNECTIONS");
+  add_field("LOST_CONNECTIONS");
+  add_field("ACCESS_DENIED");
+  add_field("CONNECTED_TIME_SEC");
+  add_field("EXECUTION_TIME_NSEC");
+  add_field("ROWS_FETCHED");
+  add_field("ROWS_UPDATED");
+  add_field("ROWS_DELETED");
+  add_field("ROWS_INSERTED");
+}
+
+CumulativeUserStatsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  inner_logging_stats= logging_stats;
+  record_number= 0;
+
+  if (inner_logging_stats->isEnabled())
+  {
+    last_valid_index= inner_logging_stats->getCumulativeStats()->getCumulativeStatsLastValidIndex();
+  }
+  else
+  {
+    last_valid_index= INVALID_INDEX;
+  }
+}
+
+bool CumulativeUserStatsTool::Generator::populate()
+{
+  if ((record_number > last_valid_index) || (last_valid_index == INVALID_INDEX))
+  {
+    return false;
+  }
+
+  while (record_number <= last_valid_index)
+  {
+    ScoreboardSlot *cumulative_scoreboard_slot=
+      inner_logging_stats->getCumulativeStats()->getCumulativeStatsByUserVector()->at(record_number);
+
+    if (cumulative_scoreboard_slot->isInUse())
+    {
+      StatusVars *status_vars= cumulative_scoreboard_slot->getStatusVars();
+      push(cumulative_scoreboard_slot->getUser());
+
+      push(status_vars->getStatusVarCounters()->bytes_received);
+      push(status_vars->getStatusVarCounters()->bytes_sent);
+      push(status_vars->getStatusVarCounters()->aborted_connects);
+      push(status_vars->getStatusVarCounters()->aborted_threads);
+      push(status_vars->getStatusVarCounters()->access_denied);
+      push(status_vars->getStatusVarCounters()->connection_time);
+      push(status_vars->getStatusVarCounters()->execution_time_nsec);
+      push(status_vars->sent_row_count);
+      push(status_vars->getStatusVarCounters()->updated_row_count);
+      push(status_vars->getStatusVarCounters()->deleted_row_count);
+      push(status_vars->getStatusVarCounters()->inserted_row_count);
+
+      ++record_number;
+      return true;
+    }
+    else
     {
       ++record_number;
     }

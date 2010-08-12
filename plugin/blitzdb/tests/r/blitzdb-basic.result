@@ -393,3 +393,15 @@ a	b	c
 7	seven	NULL
 8	eight	NULL
 drop table t1;
+create table t1 (a int, b varchar(2048)) engine = blitzdb;
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+insert into t1 values (1, 'abcdefghijklmn');
+select * from t1;
+a	b
+1	abcdefghijklmn
+1	abcdefghijklmn
+1	abcdefghijklmn
+1	abcdefghijklmn
+drop table t1;

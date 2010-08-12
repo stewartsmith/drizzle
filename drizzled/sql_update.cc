@@ -42,7 +42,7 @@ namespace drizzled
 
   If we got a duplicate key error, we want to write an error
   message containing the value of the duplicate key. If we do not have
-  all fields of the key value in record[0], we need to re-read the
+  all fields of the key value in getInsertRecord(), we need to re-read the
   record with a proper read_set.
 
   @param[in] error   error number
@@ -89,11 +89,11 @@ static void prepare_record_for_error_message(int error, Table *table)
     return;
 
   /* Get identifier of last read record into table->cursor->ref. */
-  table->cursor->position(table->record[0]);
+  table->cursor->position(table->getInsertRecord());
   /* Add all fields used by unique index to read_set. */
   bitmap_union(table->read_set, &unique_map);
   /* Read record that is identified by table->cursor->ref. */
-  (void) table->cursor->rnd_pos(table->record[1], table->cursor->ref);
+  (void) table->cursor->rnd_pos(table->getUpdateRecord(), table->cursor->ref);
   /* Copy the newly read columns into the new record. */
   for (field_p= table->getFields(); (field= *field_p); field_p++)
   {
@@ -368,7 +368,7 @@ int mysql_update(Session *session, TableList *table_list,
           if (table->cursor->was_semi_consistent_read())
 	    continue;  /* repeat the read of the same row if it still exists */
 
-	  table->cursor->position(table->record[0]);
+	  table->cursor->position(table->getInsertRecord());
 	  if (my_b_write(&tempfile,table->cursor->ref,
 			 table->cursor->ref_length))
 	  {
@@ -470,8 +470,8 @@ int mysql_update(Session *session, TableList *table_list,
       if (!can_compare_record || table->compare_record())
       {
         /* Non-batched update */
-        error= table->cursor->updateRecord(table->record[1],
-                                            table->record[0]);
+        error= table->cursor->updateRecord(table->getUpdateRecord(),
+                                            table->getInsertRecord());
 
         table->auto_increment_field_not_null= false;
 
@@ -568,6 +568,7 @@ int mysql_update(Session *session, TableList *table_list,
      */
     session->main_da.reset_diagnostics_area();
     session->my_ok((ulong) session->row_count_func, found, id, buff);
+    session->status_var.updated_row_count+= session->row_count_func;
   }
   session->count_cuted_fields= CHECK_FIELD_ERROR_FOR_NULL;		/* calc cuted fields */
   session->abort_on_warning= 0;

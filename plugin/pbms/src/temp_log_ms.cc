@@ -303,11 +303,12 @@ bool MSTempLogThread::doWork()
 			/* We have a record: */
 			int		type;
 			uint32_t tab_id;
-			volatile uint64_t blob_id;
+			uint64_t blob_id= 0;
 			uint32_t auth_code;
 			uint32_t then;
 			time_t	now;
 
+			CLOBBER_PROTECT(blob_id);
 			/*
 			 * Items in the temp log are never updated.
 			 * If a temp operation is canceled then the object 
@@ -352,7 +353,7 @@ bool MSTempLogThread::doWork()
 						}
 						else {
 							ASSERT(type == MS_TL_TABLE_REF);
-							if (otab->deleteReferences(iTempLogFile->myTempLogID, iLogOffset, &myMustQuit)) {
+							if ((type == MS_TL_TABLE_REF) && otab->deleteReferences(iTempLogFile->myTempLogID, iLogOffset, &myMustQuit)) {
 								/* Delete the file now... */
 								MSTable			*tab;
 								CSPath			*from_path;

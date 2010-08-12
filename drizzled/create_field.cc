@@ -69,7 +69,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
 
   /* Fix if the original table had 4 byte pointer blobs */
   if (flags & BLOB_FLAG)
-    pack_length= (pack_length - old_field->table->getShare()->blob_ptr_size + portable_sizeof_char_ptr);
+    pack_length= (pack_length - old_field->getTable()->getShare()->blob_ptr_size + portable_sizeof_char_ptr);
 
   switch (sql_type) 
   {
@@ -97,13 +97,13 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
   if (!(flags & (NO_DEFAULT_VALUE_FLAG )) &&
       old_field->ptr && orig_field &&
       (sql_type != DRIZZLE_TYPE_TIMESTAMP ||                /* set def only if */
-       old_field->table->timestamp_field != old_field ||  /* timestamp field */
+       old_field->getTable()->timestamp_field != old_field ||  /* timestamp field */
        unireg_check == Field::TIMESTAMP_UN_FIELD))        /* has default val */
   {
     ptrdiff_t diff;
 
     /* Get the value from default_values */
-    diff= (ptrdiff_t) (orig_field->table->getDefaultValues() - orig_field->table->record[0]);
+    diff= (ptrdiff_t) (orig_field->getTable()->getDefaultValues() - orig_field->getTable()->getInsertRecord());
     orig_field->move_field_offset(diff);	// Points now at default_values
     if (! orig_field->is_real_null())
     {
@@ -113,7 +113,7 @@ CreateField::CreateField(Field *old_field, Field *orig_field)
       pos= (char*) memory::sql_strmake(res->ptr(), res->length());
       def= new Item_string(pos, res->length(), charset);
     }
-    orig_field->move_field_offset(-diff);	// Back to record[0]
+    orig_field->move_field_offset(-diff);	// Back to getInsertRecord()
   }
 }
 

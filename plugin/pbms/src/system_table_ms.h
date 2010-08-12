@@ -133,10 +133,12 @@ public:
 		Field *assumed_str_field = GET_FIELD(mySQLTable, column_index);
 		unsigned char *old_ptr = assumed_str_field->ptr;
 		
-		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->record[0]);
+		assumed_str_field->ptr = (unsigned char *)row + assumed_str_field->offset(mySQLTable->getInsertRecord());
 
 #ifdef DRIZZLED
 		assumed_str_field->setReadSet();
+#else
+		assumed_str_field->table->use_all_columns();
 #endif
 		value = assumed_str_field->val_str(value);
 		
@@ -148,10 +150,12 @@ public:
 		Field *assumed_int_field = GET_FIELD(mySQLTable, column_index);
 		unsigned char *old_ptr = assumed_int_field->ptr;
 
-		assumed_int_field->ptr = (unsigned char *)row + assumed_int_field->offset(mySQLTable->record[0]);
+		assumed_int_field->ptr = (unsigned char *)row + assumed_int_field->offset(mySQLTable->getInsertRecord());
 
 #ifdef DRIZZLED
 		assumed_int_field->setReadSet();
+#else
+		assumed_int_field->table->use_all_columns();
 #endif
 		*value = assumed_int_field->val_int();
 		

@@ -88,7 +88,7 @@ enum enum_mysql_show_type
 {
   SHOW_UNDEF, SHOW_BOOL, SHOW_INT, SHOW_LONG,
   SHOW_LONGLONG, SHOW_CHAR, SHOW_CHAR_PTR,
-  SHOW_FUNC, SHOW_KEY_CACHE_LONG, SHOW_KEY_CACHE_LONGLONG,
+  SHOW_FUNC,
   SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS,
   SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_INT_NOFLUSH,
   SHOW_LONGLONG_STATUS, SHOW_DOUBLE, SHOW_SIZE
@@ -374,8 +374,8 @@ struct drizzle_value
 
 extern bool plugin_init(module::Registry &registry,
                         int *argc, char **argv,
-                        bool skip_init,
                         boost::program_options::options_description &long_options);
+extern void plugin_finalize(module::Registry &registry);
 extern void my_print_help_inc_plugins(option *options,
                                       boost::program_options::options_description &long_options);
 extern bool plugin_is_ready(const LEX_STRING *name, int type);
@@ -389,7 +389,7 @@ void set_session_proc_info(Session *session, const char *info);
 const char *get_session_proc_info(Session *session);
 int64_t session_test_options(const Session *session, int64_t test_options);
 int session_sql_command(const Session *session);
-int session_tx_isolation(const Session *session);
+enum_tx_isolation session_tx_isolation(const Session *session);
 
 
 

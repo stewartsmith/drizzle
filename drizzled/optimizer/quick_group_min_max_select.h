@@ -217,14 +217,14 @@ private:
    * DESCRIPTION
    * The method iterates through all MIN functions and updates the result value
    * of each function by calling Item_sum::reset(), which in turn picks the new
-   * result value from this->head->record[0], previously updated by
+   * result value from this->head->getInsertRecord(), previously updated by
    * next_min(). The updated value is stored in a member variable of each of the
    * Item_sum objects, depending on the value type.
    *
    * IMPLEMENTATION
    * The update must be done separately for MIN and MAX, immediately after
    * next_min() was called and before next_max() is called, because both MIN and
-   * MAX take their result value from the same buffer this->head->record[0]
+   * MAX take their result value from the same buffer this->head->getInsertRecord()
    * (i.e.  this->record).
    *
    * RETURN
@@ -241,14 +241,14 @@ private:
    * DESCRIPTION
    * The method iterates through all MAX functions and updates the result value
    * of each function by calling Item_sum::reset(), which in turn picks the new
-   * result value from this->head->record[0], previously updated by
+   * result value from this->head->getInsertRecord(), previously updated by
    * next_max(). The updated value is stored in a member variable of each of the
    * Item_sum objects, depending on the value type.
    *
    * IMPLEMENTATION
    * The update must be done separately for MIN and MAX, immediately after
    * next_max() was called, because both MIN and MAX take their result value
-   * from the same buffer this->head->record[0] (i.e.  this->record).
+   * from the same buffer this->head->getInsertRecord() (i.e.  this->record).
    *
    * RETURN
    * None

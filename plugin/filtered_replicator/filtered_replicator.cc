@@ -43,10 +43,11 @@
 #include <drizzled/plugin.h>
 
 #include "filtered_replicator.h"
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 #include <vector>
 #include <string>
-
+namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
@@ -208,7 +209,6 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
   string table_name;
 
   size_t num_statements= to_replicate.statement_size();
-  size_t x;
 
   /* 
    * We build a new transaction message containing only Statement
@@ -220,7 +220,7 @@ FilteredReplicator::replicate(plugin::TransactionApplier *in_applier,
    */
   message::Transaction filtered_transaction;
 
-  for (x= 0; x < num_statements; ++x)
+  for (size_t x= 0; x < num_statements; ++x)
   {
     schema_name.clear();
     table_name.clear();
@@ -496,6 +496,28 @@ static FilteredReplicator *filtered_replicator= NULL; /* The singleton replicato
 
 static int init(module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+  
+  if (vm.count("filteredschemas"))
+  {
+    sysvar_filtered_replicator_sch_filters= strdup(vm["filteredschemas"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_filtered_replicator_sch_filters= (char *)"";
+  }
+
+  if (vm.count("filteredtables"))
+  {
+    sysvar_filtered_replicator_tab_filters= strdup(vm["filteredtables"].as<string>().c_str());
+  }
+
+  else
+  {
+    sysvar_filtered_replicator_tab_filters= (char *)"";
+  }
+
   filtered_replicator= new(std::nothrow) 
     FilteredReplicator("filtered_replicator",
                        sysvar_filtered_replicator_sch_filters,
@@ -574,6 +596,16 @@ static void set_filtered_tables(Session *,
   }
 }
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("filteredschemas",
+          po::value<string>(),
+          N_("List of schemas to filter"));
+  context("filteredtables", 
+          po::value<string>(),
+          N_("List of tables to filter"));
+}
+
 static DRIZZLE_SYSVAR_STR(filteredschemas,
                           sysvar_filtered_replicator_sch_filters,
                           PLUGIN_VAR_OPCMDARG,
@@ -611,4 +643,4 @@ static drizzle_sys_var* filtered_replicator_system_variables[]= {
   NULL
 };
 
-DRIZZLE_PLUGIN(init, filtered_replicator_system_variables, NULL);
+DRIZZLE_PLUGIN(init, filtered_replicator_system_variables, init_options);

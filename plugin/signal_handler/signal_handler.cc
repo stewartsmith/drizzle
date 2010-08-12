@@ -147,9 +147,9 @@ pthread_handler_t signal_hand(void *)
     (Asked MontyW over the phone about this.) -Brian
 
   */
-  if (pthread_mutex_lock(&LOCK_thread_count) == 0)
-    (void) pthread_mutex_unlock(&LOCK_thread_count);
-  (void) pthread_cond_broadcast(&COND_thread_count);
+  LOCK_thread_count.lock();
+  LOCK_thread_count.unlock();
+  COND_thread_count.notify_all();
 
   (void) pthread_sigmask(SIG_BLOCK,&set,NULL);
   for (;;)
@@ -226,7 +226,8 @@ public:
     pthread_attr_setstacksize(&thr_attr, my_thread_stack_size);
 #endif
 
-    (void) pthread_mutex_lock(&LOCK_thread_count);
+    // @todo fix spurious wakeup issue
+    (void) LOCK_thread_count.lock();
     if ((error=pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -234,8 +235,8 @@ public:
                     error,errno);
       exit(1);
     }
-    (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-    pthread_mutex_unlock(&LOCK_thread_count);
+    pthread_cond_wait(COND_thread_count.native_handle(), LOCK_thread_count.native_handle());
+    LOCK_thread_count.unlock();
 
     (void) pthread_attr_destroy(&thr_attr);
   }
@@ -246,16 +247,20 @@ public:
   */
   ~SignalHandler()
   {
-    uint32_t i;
     /*
-      Wait up to 10 seconds for signal thread to die. We use this mainly to
+      Wait up to 100000 micro-seconds for signal thread to die. We use this mainly to
       avoid getting warnings that internal::my_thread_end has not been called
     */
-    for (i= 0 ; i < 100 && signal_thread_in_use; i++)
+    for (uint32_t i= 0 ; i < 100 && signal_thread_in_use; i++)
     {
       if (pthread_kill(signal_thread, SIGTERM) != ESRCH)
         break;
-      usleep(100);				// Give it time to die
+
+      struct timespec tm;
+      tm.tv_sec= 0;
+      tm.tv_nsec= 100000;
+
+      nanosleep(&tm, NULL);				// Give it time to die
     }
 
   }

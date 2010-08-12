@@ -134,7 +134,7 @@ static int pbms_discover_handler(handlerton *hton, THD* thd, const char *db, con
 static void xt_my_set_notnull_in_record(Field *field, char *record)
 {
 	if (field->null_ptr)
-		record[(uint) (field->null_ptr - (uchar *) field->table->record[0])] &= (uchar) ~field->null_bit;
+		record[(uint) (field->null_ptr - (uchar *) field->getTable()->getInsertRecord())] &= (uchar) ~field->null_bit;
 }
 
 /*
@@ -244,7 +244,7 @@ bool XTLocationTable::seqScanNext(char *buf, bool *eof)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'A':
@@ -365,7 +365,7 @@ void XTLocationTable::loadRow(char *buf, xtWord4 row_id)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'P':
@@ -476,7 +476,7 @@ void XTStatisticsTable::loadRow(char *buf, xtWord4 rec_id)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'I':
@@ -541,8 +541,8 @@ void XTSystemTableShare::startUp(XTThreadPtr XT_UNUSED(self))
 void XTSystemTableShare::shutDown(XTThreadPtr XT_UNUSED(self))
 {
 	if (sys_lock_inited) {
-		thr_lock_delete(&sys_location_lock);
-		thr_lock_delete(&sys_statistics_lock);
+		sys_location_lock.deinit();
+		sys_statistics_lock.deinit();
 		sys_lock_inited = FALSE;
 	}
 }

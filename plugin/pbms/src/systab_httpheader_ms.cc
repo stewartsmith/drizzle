@@ -351,7 +351,7 @@ bool MSHTTPHeaderTable::seqScanNext(char *buf)
 #if MYSQL_VERSION_ID < 50114
 		curr_field->ptr = (byte *) buf + curr_field->offset();
 #else
-		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->table->record[0]);
+		curr_field->ptr = (byte *) buf + curr_field->offset(curr_field->getTable()->getInsertRecord());
 #endif
 		switch (curr_field->field_name[0]) {
 			case 'N':
