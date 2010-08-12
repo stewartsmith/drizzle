@@ -1329,7 +1329,7 @@ static void check_timeout_value(uint32_t in_connect_timeout)
   opt_connect_timeout= 0;
   if (in_connect_timeout > 3600*12)
   {
-    cout<<N_("Error: Invalid Value for connect_timeout"); 
+    cout << N_("Error: Invalid Value for connect_timeout"); 
     exit(-1);
   }
   opt_connect_timeout= in_connect_timeout;
@@ -1338,13 +1338,12 @@ static void check_timeout_value(uint32_t in_connect_timeout)
 static void check_max_input_line(uint32_t in_max_input_line)
 {
   opt_max_input_line= 0;
-  if (in_max_input_line<4096 || in_max_input_line>(int64_t)2*1024L*1024L*1024L)
+  if (in_max_input_line < 4096 || in_max_input_line > (int64_t)2*1024L*1024L*1024L)
   {
-    cout<<N_("Error: Invalid Value for max_input_line");
+    cout << N_("Error: Invalid Value for max_input_line");
     exit(-1);
   }
-  opt_max_input_line= in_max_input_line/1024;
-  opt_max_input_line*=1024;
+  opt_max_input_line= in_max_input_line - (in_max_input_line % 1024);
 }
 
 int main(int argc,char *argv[])
