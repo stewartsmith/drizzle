@@ -13,9 +13,9 @@
  * @brief Tests for drizzle_st Structures
  */
 
-#include <assert.h>
+#include "common.h"
 
-#include "tests/common.h"
+#include <assert.h>
 
 #define DRIZZLE_TEST_PORT 12399
 

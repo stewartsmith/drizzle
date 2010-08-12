@@ -13,6 +13,8 @@
  * @brief Includes and macros for tests
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

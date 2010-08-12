@@ -13,7 +13,7 @@
  * @brief drizzle_query_st tests
  */
 
-#include "tests/common.h"
+#include "common.h"
 
 int main(void)
 {

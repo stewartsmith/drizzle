@@ -39,7 +39,6 @@ DIST_SUBDIRS = ${SUBDIRS} tests
 BUILT_SOURCES=
 EXTRA_DIST= \
 	    DRIZZLE.FAQ \
-	    Doxyfile \
 	    EXCEPTIONS-CLIENT \
 	    config/config.rpath \
 	    config/make-lint.py \

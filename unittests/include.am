@@ -45,3 +45,9 @@ unittests_unittests_SOURCES = \
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
   ${drizzled_drizzled_LDADD} ${LTLIBGTEST} ${BOOST_LIBS}
+unittests_drizzle_st_LDADD= libdrizzle/libdrizzle.la
+unittests_drizzle_con_st_LDADD= libdrizzle/libdrizzle.la
+unittests_drizzle_query_st_LDADD= libdrizzle/libdrizzle.la
+unittests_drizzle_result_st_LDADD= libdrizzle/libdrizzle.la
+unittests_drizzle_column_st_LDADD= libdrizzle/libdrizzle.la
+unittests_client_server_LDADD= libdrizzle/libdrizzle.la
