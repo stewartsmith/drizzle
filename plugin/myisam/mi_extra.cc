@@ -300,17 +300,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 #endif
     if (share->not_flushed)
     {
-      share->not_flushed=0;
-      if (internal::my_sync(share->kfile, MYF(0)))
-	error= errno;
-      if (internal::my_sync(info->dfile, MYF(0)))
-	error= errno;
-      if (error)
-      {
-	share->changed=1;
-        mi_print_error(info->s, HA_ERR_CRASHED);
-	mi_mark_crashed(info);			/* Fatal error found */
-      }
+      share->not_flushed= false;
     }
     if (share->base.blobs)
       mi_alloc_rec_buff(info, -1, &info->rec_buff);
