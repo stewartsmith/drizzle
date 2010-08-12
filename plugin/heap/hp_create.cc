@@ -347,7 +347,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       goto err;
     }
     thr_lock_init(&share->lock);
-    pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
     if (!create_info->internal_table)
     {
       heap_share_list.push_front(share);
@@ -446,7 +445,6 @@ void hp_free(HP_SHARE *share)
   heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
   share->lock.deinit();
-  pthread_mutex_destroy(&share->intern_lock);
   if (share->keydef && share->keydef->seg)
     delete [] share->keydef->seg;
   if (share->keydef)

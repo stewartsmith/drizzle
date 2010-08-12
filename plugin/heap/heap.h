@@ -210,7 +210,6 @@ typedef struct st_heap_share
 
   char * name;			/* Name of "memory-file" */
   drizzled::THR_LOCK lock;
-  pthread_mutex_t intern_lock;		/* Locking for use with _locking */
   bool delete_on_close;
   uint32_t auto_key;
   uint32_t auto_key_type;			/* real type of the auto key segment */
