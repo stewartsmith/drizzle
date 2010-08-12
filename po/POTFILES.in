@@ -50,8 +50,6 @@ drizzled/table.cc
 drizzled/table_share.cc
 drizzled/transaction_services.cc
 drizzled/tztime.cc
-gnulib/getopt.c
-gnulib/gettext.h
 plugin/auth_file/auth_file.cc
 plugin/auth_http/auth_http.cc
 plugin/auth_ldap/auth_ldap.cc
