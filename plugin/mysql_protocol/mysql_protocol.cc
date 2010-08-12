@@ -56,6 +56,12 @@ static uint32_t random_seed2;
 static const uint32_t random_max= 0x3FFFFFFF;
 static const double random_max_double= (double)0x3FFFFFFF;
 
+ListenMySQLProtocol::~ListenMySQLProtocol()
+{
+  /* This is strdup'd from the options */
+  free(bind_address);
+}
+
 const char* ListenMySQLProtocol::getHost(void) const
 {
   return bind_address;

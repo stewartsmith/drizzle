@@ -302,6 +302,20 @@ public:
       pthread_mutex_destroy(&commit_cond_m);
       pthread_cond_destroy(&commit_cond);
     }
+    
+    /* These get strdup'd from vm variables */
+    free(innobase_change_buffering);
+    free(innobase_data_file_path);
+    free(innobase_data_home_dir);
+    free(innobase_file_format_check);
+    free(innobase_file_format_name);
+#ifdef UNIV_LOG_ARCHIVE
+    free(innobase_log_arch_dir);
+#endif
+    free(innobase_log_group_home_dir);
+    free(innobase_unix_file_flush_method);
+    free(innodb_version_str);
+
   }
 
 private:
@@ -1849,7 +1863,7 @@ innobase_init(
 
   if (vm.count("data-home-dir"))
   {
-    innobase_data_home_dir= const_cast<char *>(vm["data-home-dir"].as<string>().c_str());
+    innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
   }
 
   else
@@ -1868,22 +1882,22 @@ innobase_init(
 
   if (vm.count("file-format"))
   {
-    innobase_file_format_name= const_cast<char *>(vm["file-format"].as<string>().c_str());
+    innobase_file_format_name= strdup(vm["file-format"].as<string>().c_str());
   }
 
   else
   {
-    innobase_file_format_name= const_cast<char *>("Antelope");
+    innobase_file_format_name= strdup("Antelope");
   }
 
   if (vm.count("file-format-check"))
   {
-    innobase_file_format_check= const_cast<char *>(vm["file-format-check"].as<string>().c_str());
+    innobase_file_format_check= strdup(vm["file-format-check"].as<string>().c_str());
   }
 
   else
   {
-    innobase_file_format_check= const_cast<char *>("on");
+    innobase_file_format_check= strdup("on");
   }
 
   if (vm.count("flush-log-at-trx-commit"))
@@ -1897,7 +1911,7 @@ innobase_init(
 
   if (vm.count("flush-method"))
   {
-    innobase_unix_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
+    innobase_unix_file_flush_method= strdup(vm["flush-method"].as<string>().c_str());
   }
 
   else
@@ -1908,7 +1922,7 @@ innobase_init(
 #ifdef UNIV_LOG_ARCHIVE
   if (vm.count("log-arch-dir"))
   {
-    innobase_log_arch_dir= const_cast<char *>(vm["log-arch-dir"].as<string>().c_str());
+    innobase_log_arch_dir= strdup(vm["log-arch-dir"].as<string>().c_str());
   }
 
   else
@@ -1937,7 +1951,7 @@ innobase_init(
 
   if (vm.count("log-group-home-dir"))
   {
-    innobase_log_group_home_dir= const_cast<char *>(vm["log-group-home-dir"].as<string>().c_str());
+    innobase_log_group_home_dir= strdup(vm["log-group-home-dir"].as<string>().c_str());
   }
 
   else
@@ -2118,7 +2132,7 @@ innobase_init(
 
   if (vm.count("data-file-path"))
   {
-    innobase_data_file_path= const_cast<char *>(vm["data-file-path"].as<string>().c_str());
+    innobase_data_file_path= strdup(vm["data-file-path"].as<string>().c_str());
   }
 
   else
@@ -2128,17 +2142,17 @@ innobase_init(
 
   if (vm.count("version"))
   {
-    innodb_version_str= const_cast<char *>(vm["version"].as<string>().c_str());
+    innodb_version_str= strdup(vm["version"].as<string>().c_str());
   }
 
   else
   {
-    innodb_version_str= const_cast<char *>(INNODB_VERSION_STR);
+    innodb_version_str= strdup(INNODB_VERSION_STR);
   }
 
   if (vm.count("change-buffering"))
   {
-    innobase_change_buffering= const_cast<char *>(vm["change-buffering"].as<string>().c_str());
+    innobase_change_buffering= strdup(vm["change-buffering"].as<string>().c_str());
   }
 
   else

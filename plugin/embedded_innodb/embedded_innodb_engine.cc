@@ -2742,7 +2742,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 
   if (vm.count("data-home-dir"))
   {
-    innobase_data_home_dir= const_cast<char *>(vm["data-home-dir"].as<string>().c_str());
+    innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
   }
 
   else
@@ -2752,17 +2752,17 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 
   if (vm.count("file-format"))
   {
-    innobase_file_format_name= const_cast<char *>(vm["file-format"].as<string>().c_str());
+    innobase_file_format_name= strdup(vm["file-format"].as<string>().c_str());
   }
 
   else
   {
-    innobase_file_format_name= (char *)"Barracuda";
+    innobase_file_format_name= strdup("Barracuda");
   }
 
   if (vm.count("log-group-home-dir"))
   {
-    innobase_log_group_home_dir= const_cast<char *>(vm["log-group-home-dir"].as<string>().c_str());
+    innobase_log_group_home_dir= strdup(vm["log-group-home-dir"].as<string>().c_str());
   }
 
   else
@@ -2772,7 +2772,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 
   if (vm.count("flush-method"))
   {
-    innobase_unix_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
+    innobase_unix_file_flush_method= strdup(vm["flush-method"].as<string>().c_str());
   }
 
   else
@@ -2782,7 +2782,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 
   if (vm.count("data-file-path"))
   {
-    innodb_data_file_path= const_cast<char *>(vm["data-file-path"].as<string>().c_str());
+    innodb_data_file_path= strdup(vm["data-file-path"].as<string>().c_str());
   }
 
   else
@@ -2792,7 +2792,7 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 
   if (vm.count("data-home-dir"))
   {
-    innobase_data_home_dir= const_cast<char *>(vm["data-home-dir"].as<string>().c_str());
+    innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
   }
 
   else
@@ -2996,6 +2996,14 @@ EmbeddedInnoDBEngine::~EmbeddedInnoDBEngine()
   {
     fprintf(stderr,"Error %d shutting down Embedded InnoDB!\n", err);
   }
+
+  /* These get strdup'd from vm variables */
+  free(innodb_data_file_path);
+  free(innobase_data_home_dir);
+  free(innobase_file_format_name);
+  free(innobase_log_group_home_dir);
+  free(innobase_unix_file_flush_method);
+
 }
 
 static char innodb_file_format_name_storage[100];

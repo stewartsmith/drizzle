@@ -34,6 +34,7 @@ class HelloEvents: public EventObserver
 public:
 
   HelloEvents(std::string name_arg): EventObserver(name_arg), is_enabled(false), db_list(""), table_list(""){}
+  ~HelloEvents();
 
   void registerTableEventsDo(TableShare &table_share, EventObserverList &observers);
   void registerSchemaEventsDo(const std::string &db, EventObserverList &observers);

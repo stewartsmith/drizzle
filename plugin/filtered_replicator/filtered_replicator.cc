@@ -126,6 +126,30 @@ FilteredReplicator::FilteredReplicator(string name_arg,
   pthread_mutex_init(&sysvar_tab_lock, NULL);
 }
 
+FilteredReplicator::~FilteredReplicator()
+{
+  if (sch_re)
+  {
+    pcre_free(sch_re);
+  }
+  if (tab_re)
+  {
+    pcre_free(tab_re);
+  }
+
+  pthread_mutex_destroy(&sch_vector_lock);
+  pthread_mutex_destroy(&tab_vector_lock);
+  pthread_mutex_destroy(&sysvar_sch_lock);
+  pthread_mutex_destroy(&sysvar_tab_lock);
+
+  /* These are strdup'd from vm[] */
+  free(sysvar_filtered_replicator_sch_filters);
+  free(sysvar_filtered_replicator_tab_filters);
+  free(sysvar_filtered_replicator_sch_regex);
+  free(sysvar_filtered_replicator_tab_regex);
+
+}
+
 void FilteredReplicator::parseStatementTableMetadata(const message::Statement &in_statement,
                                                      string &in_schema_name,
                                                      string &in_table_name) const
