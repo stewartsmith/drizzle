@@ -5,3 +5,5 @@
 
 extra_my_print_defaults_SOURCES= extra/my_print_defaults.cc
 extra_my_print_defaults_LDADD= $(CLIENT_LDADD)
+
+extra_mysql_password_hash_LDADD= libdrizzle/libdrizzle.la

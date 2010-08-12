@@ -50,6 +50,7 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   # and defines HAVE_LIBM etc
   #--------------------------------------------------------------------
   
+  AC_CHECK_FUNC(inet_ntoa, [], [AC_CHECK_LIB(nsl, inet_ntoa)])
     # For the sched_yield() function on Solaris
   AC_CHECK_FUNC(sched_yield, [],
     [AC_CHECK_LIB(posix4, [sched_yield],

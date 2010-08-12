@@ -3,10 +3,17 @@
 # All paths should be given relative to the root
 
 if HAVE_LIBGTEST
-check_PROGRAMS += unittests/unittests
+check_PROGRAMS += unittests/unittests \
+		  unittests/drizzle_st \
+		  unittests/drizzle_con_st \
+		  unittests/drizzle_query_st \
+		  unittests/drizzle_result_st \
+		  unittests/drizzle_column_st \
+		  unittests/client_server
 endif
 
 noinst_HEADERS += \
+		  unittests/common.h \
 		  unittests/plugin/plugin_stubs.h \
 		  unittests/temporal_generator.h
 

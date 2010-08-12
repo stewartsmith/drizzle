@@ -74,7 +74,9 @@ EXTRA_DIST+=	${man_MANS}
 
 
 doxygen:
-	doxygen Doxyfile
+	${DOXYGEN} docs/Doxyfile.api
+	${DOXYGEN} docs/Doxyfile.dev
+	${DOXYGEN} docs/Doxyfile.drizzled
 
 indent:
 	for f in `find ${top_srcdir} -type f | grep -v innobase |\
@@ -128,6 +130,7 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
+	-rm -rf docs/api docs/dev
 
 distclean-local:
 	rm -r -f unittests/.libs
@@ -144,6 +147,7 @@ include extra/include.am
 include support-files/include.am
 include tests/include.am
 include unittests/include.am
+include libdrizzle/include.am
 
 TESTS += ${check_PROGRAMS}
 
