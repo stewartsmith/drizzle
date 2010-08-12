@@ -304,12 +304,8 @@ public:
     }
     
     /* These get strdup'd from vm variables */
-    free(innobase_change_buffering);
     free(innobase_data_file_path);
     free(innobase_data_home_dir);
-    free(innobase_file_format_name);
-    free(innobase_log_group_home_dir);
-    free(innobase_unix_file_flush_method);
 
   }
 
@@ -1875,16 +1871,6 @@ innobase_init(
     }
   }
 
-  if (vm.count("file-format"))
-  {
-    innobase_file_format_name= strdup(vm["file-format"].as<string>().c_str());
-  }
-
-  else
-  {
-    innobase_file_format_name= strdup("Antelope");
-  }
-
   if (vm.count("file-format-check"))
   {
     innobase_file_format_check= const_cast<char *>(vm["file-format-check"].as<string>().c_str());
@@ -1905,9 +1891,8 @@ innobase_init(
 
   if (vm.count("flush-method"))
   {
-    innobase_unix_file_flush_method= strdup(vm["flush-method"].as<string>().c_str());
+    innobase_unix_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
   }
-
   else
   {
     innobase_unix_file_flush_method= NULL;
@@ -1941,16 +1926,6 @@ innobase_init(
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-purge-lag\n"));
       exit(-1);
     }
-  }
-
-  if (vm.count("log-group-home-dir"))
-  {
-    innobase_log_group_home_dir= strdup(vm["log-group-home-dir"].as<string>().c_str());
-  }
-
-  else
-  {
-    innobase_log_group_home_dir= NULL;
   }
 
   if (vm.count("stats-sample-pages"))
@@ -2273,7 +2248,12 @@ mem_free_and_error:
 
   /* The default dir for log files is the datadir of MySQL */
 
-  if (!innobase_log_group_home_dir) {
+  if (vm.count("log-group-home-dir"))
+  {
+    innobase_log_group_home_dir= const_cast<char *>(vm["log-group-home-dir"].as<string>().c_str());
+  }
+  else
+  {
     innobase_log_group_home_dir = default_path;
   }
 
@@ -2297,11 +2277,12 @@ innodb_log_group_home_dir: */
     goto mem_free_and_error;
   }
 
-  /* Validate the file format by animal name */
-  if (innobase_file_format_name != NULL) {
 
+  /* Validate the file format by animal name */
+  if (vm.count("file-format"))
+  {
     format_id = innobase_file_format_name_lookup(
-                                                 innobase_file_format_name);
+                                                 vm["file-format"].as<string>().c_str());
 
     if (format_id > DICT_TF_FORMAT_MAX) {
 
@@ -2310,8 +2291,7 @@ innodb_log_group_home_dir: */
       goto mem_free_and_error;
     }
   } else {
-    /* Set it to the default file format id. Though this
-      should never happen. */
+    /* Set it to the default file format id.*/
     format_id = 0;
   }
 
