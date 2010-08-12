@@ -1056,19 +1056,9 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
       const message::Table::Field::FieldType part_type= table_message.field(part.fieldnr()).type();
       uint64_t compare_length= 0;
 
-      if (part_type == message::Table::Field::BLOB)
+      if (part_type == message::Table::Field::BLOB
+          || part_type == message::Table::Field::VARCHAR)
         compare_length= part.compare_length();
-      else if (part_type == message::Table::Field::VARCHAR)
-      {
-        const message::Table::Field::StringFieldOptions field_options= table_message.field(part.fieldnr()).string_options();
-
-        const CHARSET_INFO *cs= get_charset(field_options.has_collation_id() ?
-                                            field_options.collation_id() : 0);
-        if (! cs)
-          cs= default_charset_info;
-
-        compare_length= part.compare_length() / cs->mbmaxlen;
-      }
 
       innodb_err= ib_index_schema_add_col(innodb_index,
                             table_message.field(part.fieldnr()).name().c_str(),
