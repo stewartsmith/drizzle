@@ -1173,7 +1173,7 @@ bool make_global_read_lock_block_commit(Session *session)
 
 void broadcast_refresh(void)
 {
-  pthread_cond_broadcast(COND_refresh.native_handle());
+  COND_refresh.notify_all();
   COND_global_read_lock.notify_all();
 }
 
