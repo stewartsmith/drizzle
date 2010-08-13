@@ -45,7 +45,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     uint32_t max_records, uint32_t min_records,
     HP_CREATE_INFO *create_info, HP_SHARE **res)
 {
-  uint32_t i, j, key_segs, max_length, length;
+  uint32_t i, key_segs, max_length, length;
   uint32_t max_rows_for_stated_memory;
   HP_SHARE *share= 0;
   HA_KEYSEG *keyseg;
@@ -186,7 +186,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     {
       memset(&keyinfo->block, 0, sizeof(keyinfo->block));
       memset(&keyinfo->rb_tree , 0, sizeof(keyinfo->rb_tree));
-      for (j= length= 0; j < keyinfo->keysegs; j++)
+      for (uint32_t j= length= 0; j < keyinfo->keysegs; j++)
       {
 	length+= keyinfo->seg[j].length;
 	if (keyinfo->seg[j].null_bit)
@@ -269,10 +269,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       (keys_memory_size + chunk_length));
     max_records = ((max_records && max_records < max_rows_for_stated_memory) ?
                       max_records : max_rows_for_stated_memory);
-
-#if 0
-    memcpy(share->column_defs, columndef, (size_t) (sizeof(columndef[0]) * columns));
-#endif
 
     share->key_stat_version= 1;
     keyseg= keys ? share->keydef->seg : NULL;
@@ -382,7 +378,7 @@ static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char
 static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_records,
 		       uint32_t max_records)
 {
-  uint32_t i,recbuffer,records_in_block;
+  uint32_t recbuffer,records_in_block;
 
   max_records= max(min_records,max_records);
   if (!max_records)
@@ -401,10 +397,12 @@ static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_reco
   block->recbuffer= recbuffer;
   block->last_allocated= 0L;
 
-  for (i= 0; i <= HP_MAX_LEVELS; i++)
+  for (uint32_t i= 0; i <= HP_MAX_LEVELS; i++)
+  {
     block->level_info[i].records_under_level=
       (!i ? 1 : i == 1 ? records_in_block :
        HP_PTRS_IN_NOD * block->level_info[i - 1].records_under_level);
+  }
 }
 
 
@@ -442,10 +440,9 @@ void hp_free(HP_SHARE *share)
   heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
   share->lock.deinit();
-  if (share->keydef && share->keydef->seg)
-    delete [] share->keydef->seg;
   if (share->keydef)
-    delete [] share->keydef;
+    delete [] share->keydef->seg;
+  delete [] share->keydef;
   delete [] share->column_defs;
   delete share;
 }
