@@ -29,7 +29,6 @@ namespace drizzled
 {
 
 extern boost::mutex LOCK_open;
-extern boost::mutex LOCK_status;
 extern boost::recursive_mutex LOCK_global_system_variables;
 extern boost::recursive_mutex LOCK_thread_count;
 

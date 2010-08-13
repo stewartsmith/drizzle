@@ -286,6 +286,27 @@ bool Session::handle_error(uint32_t sql_errno, const char *message,
   return false;                                 // 'false', as per coding style
 }
 
+void Session::setAbort(bool arg)
+{
+  mysys_var->abort= arg;
+}
+
+void Session::lockOnSys()
+{
+  if (not mysys_var)
+    return;
+
+  setAbort(true);
+  pthread_mutex_lock(&mysys_var->mutex);
+  if (mysys_var->current_cond)
+  {
+    pthread_mutex_lock(mysys_var->current_mutex);
+    pthread_cond_broadcast(mysys_var->current_cond);
+    pthread_mutex_unlock(mysys_var->current_mutex);
+  }
+  pthread_mutex_unlock(&mysys_var->mutex);
+}
+
 void Session::pop_internal_handler()
 {
   assert(m_internal_handler != NULL);
@@ -476,7 +497,7 @@ bool Session::initGlobals()
   if (storeGlobals())
   {
     disconnect(ER_OUT_OF_RESOURCES, true);
-    status_var_increment(status_var.aborted_connects); 
+    status_var.aborted_connects++;
     return true;
   }
   return false;
@@ -526,7 +547,7 @@ bool Session::schedule()
 
     killed= Session::KILL_CONNECTION;
 
-    status_var_increment(status_var.aborted_connects);
+    status_var.aborted_connects++;
 
     /* Can't use my_error() since store_globals has not been called. */
     /* TODO replace will better error message */
@@ -574,7 +595,7 @@ bool Session::authenticate()
   if (client->authenticate())
     return false;
 
-  status_var_increment(status_var.aborted_connects); 
+  status_var.aborted_connects++;
 
   return true;
 }
@@ -588,7 +609,7 @@ bool Session::checkUser(const char *passwd, uint32_t passwd_len, const char *in_
 
   if (is_authenticated != true)
   {
-    status_var_increment(status_var.access_denied);
+    status_var.access_denied++;
     /* isAuthenticated has pushed the error message */
     return false;
   }
@@ -1560,7 +1581,7 @@ void Session::disconnect(uint32_t errcode, bool should_lock)
   /* If necessary, log any aborted or unauthorized connections */
   if (killed || client->wasAborted())
   {
-    status_var_increment(status_var.aborted_threads);
+    status_var.aborted_threads++;
   }
 
   if (client->wasAborted())
@@ -1697,16 +1718,11 @@ extern time_t flush_status_time;
 
 void Session::refresh_status()
 {
-  LOCK_status.lock();
-
   /* Reset thread's status variables */
   memset(&status_var, 0, sizeof(status_var));
 
-  /* Reset the counters of all key caches (default and named). */
-  reset_key_cache_counters();
   flush_status_time= time((time_t*) 0);
   current_global_counters.max_used_connections= 1; /* We set it to one, because we know we exist */
-  LOCK_status.unlock();
 }
 
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)

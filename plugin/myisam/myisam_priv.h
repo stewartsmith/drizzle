@@ -35,6 +35,12 @@
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
 #endif
 
+/* Typical key cash */
+static const uint32_t KEY_CACHE_SIZE= 8*1024*1024;
+
+/* Default size of a key cache block  */
+static const uint32_t KEY_CACHE_BLOCK_SIZE= 1024;
+
 typedef struct st_mi_status_info
 {
   drizzled::ha_rows records;			/* Rows in table */
@@ -178,17 +184,14 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
         *index_file_name;
   unsigned char *file_map;			/* mem-map of file if possible */
 private:
-  drizzled::KEY_CACHE *key_cache;			/* ref to the current key cache */
+  drizzled::KEY_CACHE key_cache;			/* ref to the current key cache */
 public:
   drizzled::KEY_CACHE *getKeyCache()
   {
-    return key_cache;
+    return &key_cache;
   }
 
-  void setKeyCache()
-  {
-    key_cache= dflt_key_cache;
-  }
+  void setKeyCache();
 
   MI_DECODE_TREE *decode_trees;
   uint16_t *decode_tables;
@@ -230,12 +233,9 @@ public:
     temporary,delay_key_write,
     concurrent_insert;
   drizzled::THR_LOCK lock;
-  pthread_mutex_t intern_lock;		/* Locking for use with _locking */
-  pthread_rwlock_t *key_root_lock;
   drizzled::internal::my_off_t mmaped_length;
   uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */
-  pthread_rwlock_t mmap_lock;
 } MYISAM_SHARE;
 
 

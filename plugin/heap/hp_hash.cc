@@ -61,7 +61,7 @@ ha_rows hp_rb_records_in_range(HP_INFO *info, int inx,  key_range *min_key,
                                key_range *max_key)
 {
   ha_rows start_pos, end_pos;
-  HP_KEYDEF *keyinfo= info->s->keydef + inx;
+  HP_KEYDEF *keyinfo= info->getShare()->keydef + inx;
   TREE *rb_tree = &keyinfo->rb_tree;
   heap_rb_param custom_arg;
 
@@ -111,7 +111,7 @@ unsigned char *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char 
   register HASH_INFO *pos,*prev_ptr;
   int flag;
   uint32_t old_nextflag;
-  HP_SHARE *share=info->s;
+  HP_SHARE *share=info->getShare();
   old_nextflag=nextflag;
   flag=1;
   prev_ptr=0;
@@ -797,10 +797,10 @@ void heap_update_auto_increment(HP_INFO *info, const unsigned char *record)
   uint64_t value= 0;			/* Store unsigned values here */
   int64_t s_value= 0;			/* Store signed values here */
 
-  HA_KEYSEG *keyseg= info->s->keydef[info->s->auto_key - 1].seg;
+  HA_KEYSEG *keyseg= info->getShare()->keydef[info->getShare()->auto_key - 1].seg;
   const unsigned char *key=  (unsigned char*) record + keyseg->start;
 
-  switch (info->s->auto_key_type) {
+  switch (info->getShare()->auto_key_type) {
   case HA_KEYTYPE_BINARY:
     value=(uint64_t)  *(unsigned char*) key;
     break;
@@ -838,6 +838,6 @@ void heap_update_auto_increment(HP_INFO *info, const unsigned char *record)
     and if s_value == 0 then value will contain either s_value or the
     correct value.
   */
-  set_if_bigger(info->s->auto_increment,
+  set_if_bigger(info->getShare()->auto_increment,
                 (s_value > 0) ? (uint64_t) s_value : value);
 }

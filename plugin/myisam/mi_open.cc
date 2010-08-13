@@ -247,8 +247,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
            &share->state.key_root,keys*sizeof(uint64_t),
            &share->state.key_del,
            (share->state.header.max_block_size_index*sizeof(uint64_t)),
-           &share->key_root_lock,sizeof(pthread_rwlock_t)*keys,
-           &share->mmap_lock,sizeof(pthread_rwlock_t),
            NULL))
       goto err;
     errpos=4;
@@ -390,10 +388,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     mi_setup_functions(share);
     share->is_log_table= false;
     thr_lock_init(&share->lock);
-    pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
-    for (i=0; i<keys; i++)
-      pthread_rwlock_init(&share->key_root_lock[i], NULL);
-    pthread_rwlock_init(&share->mmap_lock, NULL);
     if (myisam_concurrent_insert)
     {
       share->concurrent_insert=
@@ -459,7 +453,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   info.bulk_insert=0;
   info.errkey= -1;
   info.page_changed=1;
-  pthread_mutex_lock(&share->intern_lock);
   info.read_record=share->read_record;
   share->reopen++;
   share->write_flag=MYF(MY_NABP | MY_WAIT_IF_FULL);
@@ -489,7 +482,6 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
 
   share->delay_key_write= 1;
   info.state= &share->state.state;	/* Change global values by default */
-  pthread_mutex_unlock(&share->intern_lock);
 
   /* Allocate buffer for one record */
 

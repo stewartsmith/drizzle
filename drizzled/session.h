@@ -1073,6 +1073,9 @@ public:
   {
     return (abort_on_warning);
   }
+
+  void setAbort(bool arg);
+  void lockOnSys();
   void set_status_var_init();
 
   /**

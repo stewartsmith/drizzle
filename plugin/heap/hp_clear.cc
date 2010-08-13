@@ -27,7 +27,7 @@ static void hp_clear_keys(HP_SHARE *info);
 
 void heap_clear(HP_INFO *info)
 {
-  hp_clear(info->s);
+  hp_clear(info->getShare());
 }
 
 void hp_clear(HP_SHARE *info)
@@ -96,7 +96,7 @@ static void hp_clear_keys(HP_SHARE *info)
 
 int heap_disable_indexes(HP_INFO *info)
 {
-  HP_SHARE *share= info->s;
+  HP_SHARE *share= info->getShare();
 
   if (share->keys)
   {
@@ -130,7 +130,7 @@ int heap_disable_indexes(HP_INFO *info)
 int heap_enable_indexes(HP_INFO *info)
 {
   int error= 0;
-  HP_SHARE *share= info->s;
+  HP_SHARE *share= info->getShare();
 
   if (share->recordspace.total_data_length || share->index_length)
     error= HA_ERR_CRASHED;
@@ -162,7 +162,7 @@ int heap_enable_indexes(HP_INFO *info)
 
 int heap_indexes_are_disabled(HP_INFO *info)
 {
-  HP_SHARE *share= info->s;
+  HP_SHARE *share= info->getShare();
 
   return (! share->keys && share->currently_disabled_keys);
 }
