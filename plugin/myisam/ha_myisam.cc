@@ -1528,12 +1528,6 @@ static DRIZZLE_SYSVAR_ULONGLONG(sort_buffer_size, sort_buffer_size,
                                 N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
                                 NULL, NULL, 8192*1024, 1024, SIZE_MAX, 0);
 
-extern uint32_t data_pointer_size;
-static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
-                            PLUGIN_VAR_RQCMDARG,
-                            N_("Default pointer size to be used for MyISAM tables."),
-                            NULL, NULL, 6, 2, 7, 0);
-
 static void init_options(drizzled::module::option_context &context)
 {
   context("max-sort-file-size",
@@ -1542,15 +1536,11 @@ static void init_options(drizzled::module::option_context &context)
   context("sort-buffer-size",
           po::value<uint64_t>(&sort_buffer_size)->default_value(8192*1024),
           N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
-  context("data-pointer-size",
-          po::value<uint32_t>(&data_pointer_size)->default_value(6),
-          N_("Default pointer size to be used for MyISAM tables."));
 }
 
 static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(max_sort_file_size),
   DRIZZLE_SYSVAR(sort_buffer_size),
-  DRIZZLE_SYSVAR(data_pointer_size),
   NULL
 };
 
