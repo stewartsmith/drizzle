@@ -133,6 +133,8 @@ clean-local:
 
 distclean-local:
 	rm -r -f unittests/.libs
+	rm -r -f extra/.libs
+	rm -r -f examples/.libs
 
 include config/lint-source.am
 
