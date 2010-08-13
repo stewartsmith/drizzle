@@ -721,17 +721,16 @@ EmbeddedInnoDBCursor::EmbeddedInnoDBCursor(drizzled::plugin::StorageEngine &engi
    blobroot(NULL)
 { }
 
-static unsigned int get_first_unique_index(drizzled::Table *table)
+static unsigned int get_first_unique_index(drizzled::Table &table)
 {
-  unsigned int k;
-  for (k=0; k < table->getShare()->keys; k++)
+  for (uint32_t k= 0; k < table.getShare()->keys; k++)
   {
-    if (table->key_info[k].flags & HA_NOSAME)
+    if (table.key_info[k].flags & HA_NOSAME)
     {
       return k;
     }
   }
-  assert(k < table->getShare()->keys);
+
   return 0;
 }
 
@@ -761,7 +760,7 @@ int EmbeddedInnoDBCursor::open(const char *name, int, uint32_t)
     ref_length= sizeof(uint64_t);
   else
   {
-    unsigned int keynr= get_first_unique_index(table);
+    unsigned int keynr= get_first_unique_index(*table);
     ref_length= table->key_info[keynr].key_length;
   }
 
@@ -2165,7 +2164,7 @@ int EmbeddedInnoDBCursor::rnd_pos(unsigned char *buf, unsigned char *pos)
     if (table->getShare()->getPrimaryKey() != MAX_KEY)
       keynr= table->getShare()->getPrimaryKey();
     else
-      keynr= get_first_unique_index(table);
+      keynr= get_first_unique_index(*table);
 
     fill_ib_search_tpl_from_drizzle_key(search_tuple,
                                         table->key_info + keynr,
@@ -2258,7 +2257,7 @@ void EmbeddedInnoDBCursor::position(const unsigned char *record)
     if (table->getShare()->getPrimaryKey() != MAX_KEY)
       keynr= table->getShare()->getPrimaryKey();
     else
-      keynr= get_first_unique_index(table);
+      keynr= get_first_unique_index(*table);
 
     store_key_value_from_innodb(table->key_info + keynr,
                                 ref, ref_length, record);
