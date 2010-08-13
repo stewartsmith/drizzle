@@ -52,7 +52,7 @@ using namespace drizzled;
 
 static const string engine_name("MyISAM");
 
-pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
+boost::mutex THR_LOCK_myisam;
 
 static uint32_t myisam_key_cache_block_size= KEY_CACHE_BLOCK_SIZE;
 static uint32_t myisam_key_cache_size;
@@ -97,13 +97,10 @@ public:
                           HTON_AUTO_PART_KEY |
                           HTON_SKIP_STORE_LOCK)
   {
-    pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
   }
 
   virtual ~MyisamEngine()
   { 
-    pthread_mutex_destroy(&THR_LOCK_myisam);
-
     mi_panic(HA_PANIC_CLOSE);
   }
 

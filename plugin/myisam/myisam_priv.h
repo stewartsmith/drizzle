@@ -31,6 +31,8 @@
 #include <string.h>
 #include <list>
 
+#include <boost/thread/mutex.hpp>
+
 #if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
 #endif
@@ -471,7 +473,7 @@ typedef struct st_mi_sort_param
 #define MI_UNIQUE_HASH_TYPE	HA_KEYTYPE_ULONG_INT
 #define mi_unique_store(A,B)    mi_int4store((A),(B))
 
-extern pthread_mutex_t THR_LOCK_myisam;
+extern boost::mutex THR_LOCK_myisam;
 
 	/* Some extern variables */
 
