@@ -332,7 +332,6 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
               drizzled::key_part_map keypart_map,
               enum drizzled::ha_rkey_function find_flag);
 extern unsigned char * heap_find(HP_INFO *info,int inx,const unsigned char *key);
-extern int heap_check_heap(HP_INFO *info, bool print_status);
 extern unsigned char *heap_position(HP_INFO *info);
 
 /* The following is for programs that uses the old HEAP interface where
