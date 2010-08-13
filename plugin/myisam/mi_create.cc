@@ -468,7 +468,7 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
   if (! (flags & HA_DONT_TOUCH_DATA))
     share.state.create_time= (long) time((time_t*) 0);
 
-  pthread_mutex_lock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.lock();
 
   /*
     NOTE: For test_if_reopen() we need a real path name. Hence we need
@@ -671,14 +671,14 @@ int mi_create(const char *name,uint32_t keys,MI_KEYDEF *keydefs,
       goto err;
   }
   errpos=0;
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
   if (internal::my_close(file,MYF(0)))
     goto err;
   free((char*) rec_per_key_part);
   return(0);
 
 err:
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
   save_errno=errno;
   switch (errpos) {
   case 3:
