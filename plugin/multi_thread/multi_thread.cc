@@ -30,6 +30,8 @@ static uint32_t max_threads;
 /* Global's (TBR) */
 static MultiThreadScheduler *scheduler= NULL;
 
+extern size_t drizzled::my_thread_stack_size;
+
 /**
  * Function to be run as a thread for each session.
  */
@@ -55,14 +57,30 @@ bool MultiThreadScheduler::addSession(Session *session)
   if (thread_count >= max_threads)
     return true;
 
-  int err= pthread_attr_setstacksize(&attr, getThreadStackSize());
-
-  if (err != 0)
+  /* Thread stack size of zero means just use the OS default */
+  if (my_thread_stack_size != 0)
   {
-    errmsg_printf(ERRMSG_LVL_ERROR,
-                  _("Unable to set thread stack size to %" PRId64 "\n"),
-                  static_cast<uint64_t>(getThreadStackSize()));
-    return true;
+    int err= pthread_attr_setstacksize(&attr, my_thread_stack_size);
+
+    if (err != 0)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR,
+                    _("Unable to set thread stack size to %" PRId64 "\n"),
+                    static_cast<uint64_t>(my_thread_stack_size));
+      return true;
+    }
+  }
+  else
+  {
+    /* Get the thread stack size that the OS will use and make sure
+       that we update our global variable. */
+    int err= pthread_attr_getstacksize(&attr, &my_thread_stack_size);
+
+    if (err != 0)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unable to get thread stack size\n"));
+      return true;
+    }
   }
 
   thread_count.increment();
