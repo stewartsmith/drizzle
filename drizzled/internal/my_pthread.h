@@ -44,14 +44,6 @@ namespace internal
 #define pthread_handler_t void *
 typedef void *(* pthread_handler)(void *);
 
-#ifndef my_pthread_attr_setprio
-#ifdef HAVE_PTHREAD_ATTR_SETPRIO
-#define my_pthread_attr_setprio(A,B) pthread_attr_setprio((A),(B))
-#else
-extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
-#endif
-#endif
-
 #if !defined(HAVE_PTHREAD_YIELD_ONE_ARG) && !defined(HAVE_PTHREAD_YIELD_ZERO_ARG)
 /* no pthread_yield() available */
 #ifdef HAVE_SCHED_YIELD
@@ -83,28 +75,6 @@ extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
   (ABSTIME).tv_nsec= (long) (now % 10000000UL * 100 + ((NSEC) % 100)); \
 }
 #endif /* !set_timespec_nsec */
-
-	/* safe_mutex adds checking to mutex for easier debugging */
-
-typedef struct st_safe_mutex_t
-{
-  pthread_mutex_t global,mutex;
-  const char *file;
-  uint32_t line,count;
-  pthread_t thread;
-} safe_mutex_t;
-
-int safe_mutex_init(safe_mutex_t *mp, const pthread_mutexattr_t *attr,
-                    const char *file, uint32_t line);
-int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint32_t line);
-int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint32_t line);
-int safe_mutex_destroy(safe_mutex_t *mp,const char *file, uint32_t line);
-int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp,const char *file,
-		   uint32_t line);
-int safe_cond_timedwait(pthread_cond_t *cond, safe_mutex_t *mp,
-			struct timespec *abstime, const char *file, uint32_t line);
-void safe_mutex_global_init(void);
-void safe_mutex_end(void);
 
 	/* Wrappers if safe mutex is actually used */
 #define safe_mutex_assert_owner(mp)
@@ -155,28 +125,6 @@ extern const char *my_thread_name(void);
 #define THD_LIB_LT    4
 
 extern uint32_t thd_lib_detected;
-
-/*
-  thread_safe_xxx functions are for critical statistic or counters.
-  The implementation is guaranteed to be thread safe, on all platforms.
-  Note that the calling code should *not* assume the counter is protected
-  by the mutex given, as the implementation of these helpers may change
-  to use my_atomic operations instead.
-*/
-
-#ifndef thread_safe_increment
-#define thread_safe_increment(V,L) \
-        (pthread_mutex_lock((L)), (V)++, pthread_mutex_unlock((L)))
-#define thread_safe_decrement(V,L) \
-        (pthread_mutex_lock((L)), (V)--, pthread_mutex_unlock((L)))
-#endif
-
-#ifndef thread_safe_add
-#define thread_safe_add(V,C,L) \
-        (pthread_mutex_lock((L)), (V)+=(C), pthread_mutex_unlock((L)))
-#define thread_safe_sub(V,C,L) \
-        (pthread_mutex_lock((L)), (V)-=(C), pthread_mutex_unlock((L)))
-#endif
 
 } /* namespace internal */
 } /* namespace drizzled */

@@ -779,13 +779,6 @@ int init_common_variables(const char *conf_file_name, int argc,
 
 int init_thread_environment()
 {
-   pthread_mutexattr_t attr; 
-   pthread_mutexattr_init(&attr);
-
-  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
-
-  pthread_mutexattr_destroy(&attr);
-
   if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_Mem_root,NULL))
   {
