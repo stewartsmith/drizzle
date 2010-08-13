@@ -34,7 +34,6 @@
 #include <boost/thread/condition_variable.hpp>
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/thread_var.h"
 #include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
@@ -336,7 +335,6 @@ SHOW_COMP_OPTION have_symlink;
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
 boost::mutex LOCK_open;
-boost::mutex LOCK_status;
 boost::recursive_mutex LOCK_global_system_variables;
 boost::recursive_mutex LOCK_thread_count;
 
@@ -425,18 +423,7 @@ void close_connections(void)
     tmp->killed= Session::KILL_CONNECTION;
     tmp->scheduler->killSession(tmp);
     DRIZZLE_CONNECTION_DONE(tmp->thread_id);
-    if (tmp->mysys_var)
-    {
-      tmp->mysys_var->abort=1;
-      pthread_mutex_lock(&tmp->mysys_var->mutex);
-      if (tmp->mysys_var->current_cond)
-      {
-        pthread_mutex_lock(tmp->mysys_var->current_mutex);
-        pthread_cond_broadcast(tmp->mysys_var->current_cond);
-        pthread_mutex_unlock(tmp->mysys_var->current_mutex);
-      }
-      pthread_mutex_unlock(&tmp->mysys_var->mutex);
-    }
+    tmp->lockOnSys();
   }
   LOCK_thread_count.unlock(); // For unlink from list
 
@@ -791,13 +778,6 @@ int init_common_variables(const char *conf_file_name, int argc,
 
 int init_thread_environment()
 {
-   pthread_mutexattr_t attr; 
-   pthread_mutexattr_init(&attr);
-
-  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
-
-  pthread_mutexattr_destroy(&attr);
-
   if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_Mem_root,NULL))
   {

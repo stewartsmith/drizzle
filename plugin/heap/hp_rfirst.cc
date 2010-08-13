@@ -24,7 +24,7 @@ using namespace drizzled;
 
 int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
 {
-  HP_SHARE *share = info->s;
+  HP_SHARE *share = info->getShare();
   HP_KEYDEF *keyinfo = share->keydef + inx;
 
   info->lastinx= inx;
@@ -63,7 +63,7 @@ int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
   }
   else
   {
-    if (!(info->s->records))
+    if (!(info->getShare()->records))
     {
       errno=HA_ERR_END_OF_FILE;
       return(errno);

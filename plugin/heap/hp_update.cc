@@ -24,7 +24,7 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
   HP_KEYDEF *keydef, *end, *p_lastinx;
   unsigned char *pos;
   bool auto_key_changed= 0;
-  HP_SHARE *share= info->s;
+  HP_SHARE *share= info->getShare();
   uint32_t old_length, new_length;
   uint32_t old_chunk_count, new_chunk_count;
 

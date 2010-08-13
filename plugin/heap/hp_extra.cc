@@ -67,16 +67,14 @@ int heap_reset(HP_INFO *info)
 static void heap_extra_keyflag(register HP_INFO *info,
                                enum ha_extra_function function)
 {
-  uint32_t  idx;
-
-  for (idx= 0; idx< info->s->keys; idx++)
+  for (uint32_t idx= 0; idx< info->getShare()->keys; idx++)
   {
     switch (function) {
     case HA_EXTRA_CHANGE_KEY_TO_UNIQUE:
-      info->s->keydef[idx].flag|= HA_NOSAME;
+      info->getShare()->keydef[idx].flag|= HA_NOSAME;
       break;
     case HA_EXTRA_CHANGE_KEY_TO_DUP:
-      info->s->keydef[idx].flag&= ~(HA_NOSAME);
+      info->getShare()->keydef[idx].flag&= ~(HA_NOSAME);
       break;
     default:
       break;

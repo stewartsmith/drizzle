@@ -20,7 +20,7 @@
 int heap_delete(HP_INFO *info, const unsigned char *record)
 {
   unsigned char *pos;
-  HP_SHARE *share=info->s;
+  HP_SHARE *share=info->getShare();
   HP_KEYDEF *keydef, *end, *p_lastinx;
   uint32_t rec_length, chunk_count;
 
@@ -75,7 +75,7 @@ int hp_rb_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
   old_allocated= keyinfo->rb_tree.allocated;
   res= tree_delete(&keyinfo->rb_tree, info->recbuf, custom_arg.key_length,
                    &custom_arg);
-  info->s->index_length-= (old_allocated - keyinfo->rb_tree.allocated);
+  info->getShare()->index_length-= (old_allocated - keyinfo->rb_tree.allocated);
   return res;
 }
 
@@ -101,7 +101,7 @@ int hp_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
 {
   uint32_t blength,pos2,pos_hashnr,lastpos_hashnr;
   HASH_INFO *lastpos,*gpos,*pos,*pos3,*empty,*last_ptr;
-  HP_SHARE *share=info->s;
+  HP_SHARE *share=info->getShare();
 
   blength=share->blength;
   if (share->records+1 == blength)

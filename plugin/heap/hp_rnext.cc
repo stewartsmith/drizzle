@@ -24,7 +24,7 @@ using namespace drizzled;
 int heap_rnext(HP_INFO *info, unsigned char *record)
 {
   unsigned char *pos;
-  HP_SHARE *share=info->s;
+  HP_SHARE *share=info->getShare();
   HP_KEYDEF *keyinfo;
 
   if (info->lastinx < 0)
