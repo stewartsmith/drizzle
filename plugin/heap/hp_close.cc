@@ -41,8 +41,6 @@ int hp_close(HP_INFO *info)
   heap_open_list.remove(info);
   if (!--info->getShare()->open_count && info->getShare()->delete_on_close)
     hp_free(info->getShare());				/* Table was deleted */
-  delete [] info->lastkey;
-  delete [] info->recbuf;
   delete info;
   return(error);
 }

@@ -194,7 +194,7 @@ void hp_clear_dataspace(HP_DATASPACE *info)
 static unsigned char *hp_allocate_variable_chunkset(HP_DATASPACE *info,
                                            uint32_t chunk_count, unsigned char* existing_set)
 {
-  int alloc_count= chunk_count, i;
+  int alloc_count= chunk_count;
   unsigned char *first_chunk= 0, *curr_chunk= 0, *prev_chunk= 0, *last_existing_chunk= 0;
 
   assert(alloc_count);
@@ -228,7 +228,7 @@ static unsigned char *hp_allocate_variable_chunkset(HP_DATASPACE *info,
 
   /* We can reach this point only if we're allocating new chunkset or more chunks in existing set */
 
-  for (i=0; i<alloc_count; i++)
+  for (int i= 0; i<alloc_count; i++)
   {
       curr_chunk= hp_allocate_one_chunk(info);
       if (!curr_chunk)
