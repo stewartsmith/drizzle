@@ -39,7 +39,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
 
     custom_arg.keyseg= info->getShare()->keydef[inx].seg;
     custom_arg.key_length= info->lastkey_len=
-      hp_rb_pack_key(keyinfo, (unsigned char*) info->lastkey,
+      hp_rb_pack_key(keyinfo, &info->lastkey[0],
 		     (unsigned char*) key, keypart_map);
     custom_arg.search_flag= SEARCH_FIND | SEARCH_SAME;
     /* for next rkey() after deletion */
@@ -50,7 +50,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
     else
       info->last_find_flag= find_flag;
     if (!(pos= (unsigned char *)tree_search_key(&keyinfo->rb_tree,
-                                                info->lastkey, info->parents,
+                                                &info->lastkey[0], info->parents,
 			                        &info->last_pos,
                                                 find_flag, &custom_arg)))
     {
@@ -68,7 +68,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
       return(errno);
     }
     if (!(keyinfo->flag & HA_NOSAME))
-      memcpy(info->lastkey, key, (size_t) keyinfo->length);
+      memcpy(&info->lastkey[0], key, (size_t) keyinfo->length);
   }
   hp_extract_record(share, record, pos);
   info->update= HA_STATE_AKTIV;

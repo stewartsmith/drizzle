@@ -27,6 +27,8 @@
 #include <plugin/myisam/my_handler.h>
 #include "drizzled/tree.h"
 
+#include <vector>
+
 	/* defines used by heap-funktions */
 
 #define HP_MAX_LEVELS	4		/* 128^5 records is enough */
@@ -265,8 +267,8 @@ public:
   int lastinx,errkey;
   int  mode;				/* Mode of file (READONLY..) */
   uint32_t opt_flag,update;
-  unsigned char *lastkey;			/* Last used key with rkey */
-  unsigned char *recbuf;                         /* Record buffer for rb-tree keys */
+  std::vector <unsigned char> lastkey;			/* Last used key with rkey */
+  std::vector <unsigned char> recbuf;                         /* Record buffer for rb-tree keys */
   enum drizzled::ha_rkey_function last_find_flag;
   drizzled::TREE_ELEMENT *parents[drizzled::MAX_TREE_HEIGHT+1];
   drizzled::TREE_ELEMENT **last_pos;
