@@ -3,17 +3,10 @@
 # All paths should be given relative to the root
 
 if HAVE_LIBGTEST
-check_PROGRAMS += unittests/unittests \
-		  unittests/drizzle_st \
-		  unittests/drizzle_con_st \
-		  unittests/drizzle_query_st \
-		  unittests/drizzle_result_st \
-		  unittests/drizzle_column_st \
-		  unittests/client_server
+check_PROGRAMS += unittests/unittests
 endif
 
 noinst_HEADERS += \
-		  unittests/common.h \
 		  unittests/plugin/plugin_stubs.h \
 		  unittests/temporal_generator.h
 
@@ -45,9 +38,3 @@ unittests_unittests_SOURCES = \
 unittests_unittests_LDADD= \
   $(filter-out drizzled/main.$(OBJEXT), ${am_drizzled_drizzled_OBJECTS}) \
   ${drizzled_drizzled_LDADD} ${LTLIBGTEST} ${BOOST_LIBS}
-unittests_drizzle_st_LDADD= libdrizzle/libdrizzle.la
-unittests_drizzle_con_st_LDADD= libdrizzle/libdrizzle.la
-unittests_drizzle_query_st_LDADD= libdrizzle/libdrizzle.la
-unittests_drizzle_result_st_LDADD= libdrizzle/libdrizzle.la
-unittests_drizzle_column_st_LDADD= libdrizzle/libdrizzle.la
-unittests_client_server_LDADD= libdrizzle/libdrizzle.la

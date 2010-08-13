@@ -105,8 +105,7 @@ noinst_HEADERS+= \
 	libdrizzle/conn_local.h \
 	libdrizzle/pack.h \
 	libdrizzle/state.h \
-	libdrizzle/sha1.h \
-	unittests/common.h
+	libdrizzle/sha1.h
 
 CLEANFILES+= \
 	doxerr.log \
