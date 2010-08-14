@@ -46,22 +46,7 @@ public:
                      const char *in_tab_filters);
 
   /** Destructor */
-  ~FilteredReplicator() 
-  {
-    if (sch_re)
-    {
-      pcre_free(sch_re);
-    }
-    if (tab_re)
-    {
-      pcre_free(tab_re);
-    }
-
-    pthread_mutex_destroy(&sch_vector_lock);
-    pthread_mutex_destroy(&tab_vector_lock);
-    pthread_mutex_destroy(&sysvar_sch_lock);
-    pthread_mutex_destroy(&sysvar_tab_lock);
-  }
+  ~FilteredReplicator();
 
   /**
    * Replicate a Transaction message to an Applier.

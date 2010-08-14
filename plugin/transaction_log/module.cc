@@ -111,6 +111,19 @@ extern TransactionLogApplier *transaction_log_applier;
 extern plugin::Create_function<PrintTransactionMessageFunction> *print_transaction_message_func_factory;
 extern plugin::Create_function<HexdumpTransactionMessageFunction> *hexdump_transaction_message_func_factory;
 
+TransactionLog::~TransactionLog()
+{
+  /* Clear up any resources we've consumed */
+  if (log_file != -1)
+  {
+    (void) close(log_file);
+  }
+
+  /* These get strdup'd below */
+  free(sysvar_transaction_log_file);
+  free(sysvar_transaction_log_use_replicator);
+}
+
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();

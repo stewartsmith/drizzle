@@ -88,6 +88,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <drizzled/transaction_services.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
+#include <iostream>
+
+namespace po= boost::program_options;
+using namespace std;
 
 /** @file ha_innodb.cc */
 
@@ -296,6 +302,11 @@ public:
       pthread_mutex_destroy(&commit_cond_m);
       pthread_cond_destroy(&commit_cond);
     }
+    
+    /* These get strdup'd from vm variables */
+    free(innobase_data_file_path);
+    free(innobase_data_home_dir);
+
   }
 
 private:
@@ -1830,6 +1841,313 @@ innobase_init(
   char    *default_path;
   uint    format_id;
   InnobaseEngine *actuall_engine_ptr;
+  const module::option_map &vm= context.getOptions();
+
+  if (vm.count("io-capacity"))
+  {
+    if (srv_io_capacity < 100 || srv_io_capacity > (unsigned long)~0L)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for io-capacity\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("data-home-dir"))
+  {
+    innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
+  }
+
+  else
+  {
+    innobase_data_home_dir= NULL;
+  }
+
+  if (vm.count("fast-shutdown"))
+  {
+    if (innobase_fast_shutdown > 2)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for fast-shutdown\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("file-format-check"))
+  {
+    innobase_file_format_check= const_cast<char *>(vm["file-format-check"].as<string>().c_str());
+  }
+  else
+  {
+    innobase_file_format_check= const_cast<char *>("on");
+  }
+
+  if (vm.count("flush-log-at-trx-commit"))
+  {
+    if (srv_flush_log_at_trx_commit > 2)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for flush-log-at-trx-commit\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("flush-method"))
+  {
+    innobase_unix_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
+  }
+  else
+  {
+    innobase_unix_file_flush_method= NULL;
+  }
+
+#ifdef UNIV_LOG_ARCHIVE
+  if (vm.count("log-arch-dir"))
+  {
+    innobase_log_arch_dir= const_cast<char *>(vm["log-arch-dir"].as<string>().c_str());
+  }
+
+  else
+  {
+    innobase_log_arch_dir= NULL;
+  }
+#endif /* UNIV_LOG_ARCHIVE */
+
+  if (vm.count("max-dirty-pages-pct"))
+  {
+    if (srv_max_buf_pool_modified_pct > 99)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-dirty-pages-pct\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("max-purge-lag"))
+  {
+    if (srv_max_purge_lag > (unsigned long)~0L)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for max-purge-lag\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("stats-sample-pages"))
+  {
+    if (srv_stats_sample_pages < 8 || srv_stats_sample_pages > (unsigned long long)~0ULL)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for stats-sample-pages\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("replication-delay"))
+  {
+    if (srv_replication_delay > (unsigned long)~0UL)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for replication-delay\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("additional-mem-pool-size"))
+  {
+    if (innobase_additional_mem_pool_size < 512*1024L || innobase_additional_mem_pool_size > LONG_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for additional-mem-pool-size\n"));
+      exit(-1);
+    }
+
+    innobase_additional_mem_pool_size/= 1024;
+    innobase_additional_mem_pool_size*= 1024;
+  }
+
+  if (vm.count("commit-concurrency"))
+  {
+    if (srv_replication_delay > 1000)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for commit-concurrency\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("concurrency-tickets"))
+  {
+    if (srv_n_free_tickets_to_enter < 1L || srv_n_free_tickets_to_enter > (unsigned long)~0L)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for concurrency-tickets\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("file-io-threads"))
+  {
+    if (innobase_file_io_threads < 4 || innobase_file_io_threads > 64)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for file-io-threads\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("read-io-threads"))
+  {
+    if (innobase_read_io_threads < 1 || innobase_read_io_threads > 64)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read-io-threads\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("write-io-threads"))
+  {
+    if (innobase_write_io_threads < 1 || innobase_write_io_threads > 64)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for write-io-threads\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("force-recovery"))
+  {
+    if (innobase_force_recovery > 6)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for force-recovery\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("log-buffer-size"))
+  {
+    if (innobase_log_buffer_size < 256*1024L || innobase_log_buffer_size > LONG_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-file-size\n"));
+      exit(-1);
+    }
+
+    innobase_log_buffer_size/= 1024;
+    innobase_log_buffer_size*= 1024;
+  }
+
+  if (vm.count("log-file-size"))
+  {
+    if (innobase_log_file_size < 1*1024*1024L || innobase_log_file_size > INT64_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-file-size\n"));
+      exit(-1);
+    }
+
+    innobase_log_file_size/= 1024*1024L;
+    innobase_log_file_size*= 1024*1024L;
+  }
+
+  if (vm.count("log-files-in-group"))
+  {
+    if (innobase_log_files_in_group < 2 || innobase_log_files_in_group > 100)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for log-files-in-group\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("mirrored-log-groups"))
+  {
+    if (innobase_mirrored_log_groups < 1 || innobase_mirrored_log_groups > 10)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for mirrored-log-groups\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("open-files"))
+  {
+    if (innobase_open_files < 10L || innobase_open_files > LONG_MAX)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for open-files\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("sync-spin-loops"))
+  {
+    if (srv_n_spin_wait_rounds > (unsigned long)~0L)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for sync-spin-loops\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("spin-wait-delay"))
+  {
+    if (srv_spin_wait_delay > (unsigned long)~0L)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for spin-wait-delay\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("thread-concurrency"))
+  {
+    if (srv_thread_concurrency > 1000)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for thread-concurrency\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("thread-sleep-delay"))
+  {
+    if (srv_thread_sleep_delay > (unsigned long)~0L)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for thread-sleep-delay\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("data-file-path"))
+  {
+    innobase_data_file_path= strdup(vm["data-file-path"].as<string>().c_str());
+  }
+
+  else
+  {
+    innobase_data_file_path= NULL;
+  }
+
+  if (vm.count("version"))
+  {
+    innodb_version_str= const_cast<char *>(vm["version"].as<string>().c_str());
+  }
+
+  if (vm.count("read-ahead-threshold"))
+  {
+    if (srv_read_ahead_threshold > 64)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for read-ahead-threshold\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("support-xa"))
+  {
+    (SessionVAR(NULL,support_xa))= vm["support-xa"].as<bool>();
+  }
+
+  if (vm.count("table-locks"))
+  {
+    (SessionVAR(NULL,table_locks))= vm["table-locks"].as<bool>();
+  }
+
+  if (vm.count("strict-mode"))
+  {
+    (SessionVAR(NULL,strict_mode))= vm["strict-mode"].as<bool>();
+  }
+
+  if (vm.count("lock-wait-timeout"))
+  {
+    if (vm["lock-wait-timeout"].as<unsigned long>() < 1 || vm["lock-wait-timeout"].as<unsigned long>() > 1024*1024*1024)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for lock-wait-timeout\n"));
+      exit(-1);
+    }
+
+    (SessionVAR(NULL,lock_wait_timeout))= vm["lock-wait-timeout"].as<unsigned long>();
+  }
 
   innodb_engine_ptr= actuall_engine_ptr= new InnobaseEngine(innobase_engine_name);
 
@@ -1930,7 +2248,12 @@ mem_free_and_error:
 
   /* The default dir for log files is the datadir of MySQL */
 
-  if (!innobase_log_group_home_dir) {
+  if (vm.count("log-group-home-dir"))
+  {
+    innobase_log_group_home_dir= const_cast<char *>(vm["log-group-home-dir"].as<string>().c_str());
+  }
+  else
+  {
     innobase_log_group_home_dir = default_path;
   }
 
@@ -1954,11 +2277,12 @@ innodb_log_group_home_dir: */
     goto mem_free_and_error;
   }
 
-  /* Validate the file format by animal name */
-  if (innobase_file_format_name != NULL) {
 
+  /* Validate the file format by animal name */
+  if (vm.count("file-format"))
+  {
     format_id = innobase_file_format_name_lookup(
-                                                 innobase_file_format_name);
+                                                 vm["file-format"].as<string>().c_str());
 
     if (format_id > DICT_TF_FORMAT_MAX) {
 
@@ -1967,8 +2291,7 @@ innodb_log_group_home_dir: */
       goto mem_free_and_error;
     }
   } else {
-    /* Set it to the default file format id. Though this
-      should never happen. */
+    /* Set it to the default file format id.*/
     format_id = 0;
   }
 
@@ -2007,14 +2330,15 @@ innodb_log_group_home_dir: */
     }
   }
 
-  if (innobase_change_buffering) {
+  if (vm.count("change-buffering"))
+  {
     ulint use;
 
     for (use = 0;
          use < UT_ARR_SIZE(innobase_change_buffering_values);
          use++) {
       if (!innobase_strcasecmp(
-                               innobase_change_buffering,
+                               vm["change-buffering"].as<string>().c_str(),
                                innobase_change_buffering_values[use])) {
         ibuf_use = (ibuf_use_t) use;
         goto innobase_change_buffering_inited_ok;
@@ -2024,7 +2348,7 @@ innodb_log_group_home_dir: */
     errmsg_printf(ERRMSG_LVL_ERROR,
                   "InnoDB: invalid value "
                   "innodb_file_format_check=%s",
-                  innobase_change_buffering);
+                  vm["change-buffering"].as<string>().c_str());
     goto mem_free_and_error;
   }
 
@@ -8352,8 +8676,7 @@ innodb_change_buffering_update(
 /* plugin options */
 static DRIZZLE_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB checksums validation (enabled by default). "
-  "Disable with --skip-innodb-checksums.",
+  "Enable InnoDB checksums validation (enabled by default). ",
   NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
@@ -8363,8 +8686,7 @@ static DRIZZLE_SYSVAR_STR(data_home_dir, innobase_data_home_dir,
 
 static DRIZZLE_SYSVAR_BOOL(doublewrite, innobase_use_doublewrite,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
-  "Enable InnoDB doublewrite buffer (enabled by default). "
-  "Disable with --skip-innodb-doublewrite.",
+  "Enable InnoDB doublewrite buffer (enabled by default). ",
   NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_ULONG(io_capacity, srv_io_capacity,
@@ -8455,8 +8777,7 @@ static DRIZZLE_SYSVAR_ULONGLONG(stats_sample_pages, srv_stats_sample_pages,
 
 static DRIZZLE_SYSVAR_BOOL(adaptive_hash_index, btr_search_enabled,
   PLUGIN_VAR_OPCMDARG,
-  "Enable InnoDB adaptive hash index (enabled by default).  "
-  "Disable with --skip-innodb-adaptive-hash-index.",
+  "Enable InnoDB adaptive hash index (enabled by default).",
   NULL, innodb_adaptive_hash_index_update, TRUE);
 
 static DRIZZLE_SYSVAR_ULONG(replication_delay, srv_replication_delay,
@@ -8582,6 +8903,156 @@ static DRIZZLE_SYSVAR_ULONG(read_ahead_threshold, srv_read_ahead_threshold,
   "trigger a readahead.",
   NULL, NULL, 56, 0, 64, 0);
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("checksums",
+          po::value<bool>(&innobase_use_checksums)->default_value(true)->zero_tokens(),
+          "Enable InnoDB checksums validation.");
+  context("data-home-dir",
+          po::value<string>(),
+          "The common part for InnoDB table spaces.");
+  context("doublewrite",
+          po::value<bool>(&innobase_use_doublewrite)->default_value(true)->zero_tokens(),
+          "Enable InnoDB doublewrite buffer.");
+  context("io-capacity",
+          po::value<unsigned long>(&srv_io_capacity)->default_value(200),
+          "Number of IOPs the server can do. Tunes the background IO rate");
+  context("fast-shutdown",
+          po::value<unsigned long>(&innobase_fast_shutdown)->default_value(1), 
+          "Speeds up the shutdown process of the InnoDB storage engine. Possible values are 0, 1 (faster) or 2 (fastest - crash-like).");
+  context("file-per-table",
+          po::value<bool>(&srv_file_per_table)->default_value(false)->zero_tokens(),
+          "Stores each InnoDB table to an .ibd file in the database dir.");
+  context("file-format",
+          po::value<string>(),
+          "File format to use for new tables in .ibd files.");
+  context("file-format-check",
+          po::value<string>(),
+          "The highest file format in the tablespace.");
+  context("flush-log-at-trx-commit",
+          po::value<unsigned long>(&srv_flush_log_at_trx_commit)->default_value(1),
+          "Set to 0 (write and flush once per second), 1 (write and flush at each commit) or 2 (write at commit, flush once per second).");
+  context("flush-method",
+          po::value<string>(),
+          "With which method to flush data.");
+#ifdef UNIV_LOG_ARCHIVE
+  context("log-arch-dir",
+          po::value<string>(),
+          "Where full logs should be archived.");
+  context("log-archive",
+          po::value<bool>(&innobase_log_archive)->default_value(false)->zero_tokens(),
+          "Set to 1 if you want to have logs archived.");
+#endif /* UNIV_LOG_ARCHIVE */
+  context("log-group-home-dir",
+          po::value<string>(),
+          "Path to InnoDB log files.");
+  context("max-dirty-pages-pct",
+          po::value<unsigned long>(&srv_max_buf_pool_modified_pct)->default_value(75),
+          "Percentage of dirty pages allowed in bufferpool.");
+  context("adaptive-flushing",
+          po::value<bool>(&srv_adaptive_flushing)->default_value(true)->zero_tokens(),
+          "Attempt flushing dirty pages to avoid IO bursts at checkpoints.");
+  context("max-purge-lag",
+          po::value<unsigned long>(&srv_max_purge_lag)->default_value(0),
+          "Desired maximum length of the purge queue (0 = no limit)");
+  context("status-file",
+          po::value<bool>(&innobase_create_status_file)->default_value(false)->zero_tokens(),
+          "Enable SHOW INNODB STATUS output in the innodb_status.<pid> file");
+  context("stats-on-metadata",
+          po::value<bool>(&innobase_stats_on_metadata)->default_value(true)->zero_tokens(),
+          "Enable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)");
+  context("stats-sample-pages",
+          po::value<uint64_t>(&srv_stats_sample_pages)->default_value(8),
+          "The number of index pages to sample when calculating statistics (default 8)");
+  context("adaptive-hash-index",
+          po::value<bool>(&btr_search_enabled)->default_value(true)->zero_tokens(),
+          "Enable InnoDB adaptive hash index (enabled by default)");
+  context("replication-delay",
+          po::value<unsigned long>(&srv_replication_delay)->default_value(0),
+          "Replication thread delay (ms) on the slave server if innodb_thread_concurrency is reached (0 by default)");
+  context("additional-mem-pool-size",
+          po::value<long>(&innobase_additional_mem_pool_size)->default_value(8*1024*1024L),
+          "Size of a memory pool InnoDB uses to store data dictionary information and other internal data structures.");
+  context("autoextend-increment",
+          po::value<uint32_t>(&srv_auto_extend_increment)->default_value(8L),
+          "Data file autoextend increment in megabytes");
+  context("buffer-pool-size",
+          po::value<int64_t>(&innobase_buffer_pool_size)->default_value(8*1024*1024L),
+          "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.");
+  context("commit-concurrency",
+          po::value<unsigned long>(&innobase_commit_concurrency)->default_value(0),
+          "Helps in performance tuning in heavily concurrent environments.");
+  context("concurrency-tickets",
+          po::value<unsigned long>(&srv_n_free_tickets_to_enter)->default_value(500L),
+          "Number of times a thread is allowed to enter InnoDB within the same SQL query after it has once got the ticket");
+  context("file-io-threads",
+          po::value<long>(&innobase_file_io_threads)->default_value(4),
+          "Number of file I/O threads in InnoDB.");
+  context("read-io-threads",
+          po::value<unsigned long>(&innobase_read_io_threads)->default_value(4),
+          "Number of background read I/O threads in InnoDB.");
+  context("write-io-threads",
+          po::value<unsigned long>(&innobase_write_io_threads)->default_value(4),
+          "Number of background write I/O threads in InnoDB.");
+  context("force-recovery",
+          po::value<long>(&innobase_force_recovery)->default_value(0),
+          "Helps to save your data in case the disk image of the database becomes corrupt.");
+  context("log-buffer-size",
+          po::value<long>(&innobase_log_buffer_size)->default_value(8*1024*1024L),
+          "The size of the buffer which InnoDB uses to write log to the log files on disk.");
+  context("log-file-size",
+          po::value<int64_t>(&innobase_log_file_size)->default_value(20*1024*1024L),
+          "The size of the buffer which InnoDB uses to write log to the log files on disk.");
+  context("log-files-in-group",
+          po::value<long>(&innobase_log_files_in_group)->default_value(2),
+          "Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here.");
+  context("mirrored-log-groups",
+          po::value<long>(&innobase_mirrored_log_groups)->default_value(1),
+          "Number of identical copies of log groups we keep for the database. Currently this should be set to 1.");
+  context("open-files",
+          po::value<long>(&innobase_open_files)->default_value(300L),
+          "How many files at the maximum InnoDB keeps open at the same time.");
+  context("sync-spin-loops",
+          po::value<unsigned long>(&srv_n_spin_wait_rounds)->default_value(30L),
+          "Count of spin-loop rounds in InnoDB mutexes (30 by default)");
+  context("spin-wait-delay",
+          po::value<unsigned long>(&srv_spin_wait_delay)->default_value(6L),
+          "Maximum delay between polling for a spin lock (6 by default)");
+  context("thread-concurrency",
+          po::value<unsigned long>(&srv_thread_concurrency)->default_value(0),
+          "Helps in performance tuning in heavily concurrent environments. Sets the maximum number of threads allowed inside InnoDB. Value 0 will disable the thread throttling.");
+  context("thread-sleep-delay",
+          po::value<unsigned long>(&srv_thread_sleep_delay)->default_value(10000L),
+          "Time of innodb thread sleeping before joining InnoDB queue (usec). Value 0 disable a sleep");
+  context("data-file-path",
+          po::value<string>(),
+          "Path to individual files and their sizes.");
+  context("version",
+          po::value<string>(),
+          "InnoDB version");
+  context("use-sys-malloc",
+          po::value<bool>(&srv_use_sys_malloc)->default_value(true)->zero_tokens(),
+          "Use OS memory allocator instead of InnoDB's internal memory allocator");
+  context("change-buffering",
+          po::value<string>(),
+          "Buffer changes to reduce random access: OFF, ON, inserting, deleting, changing, or purging.");
+  context("read-ahead-threshold",
+          po::value<unsigned long>(&srv_read_ahead_threshold)->default_value(56),
+          "Number of pages that must be accessed sequentially for InnoDB to trigger a readahead.");
+  context("support-xa",
+          po::value<bool>()->default_value(true)->zero_tokens(),
+          "Enable InnoDB support for the XA two-phase commit");
+  context("table-locks",
+          po::value<bool>()->default_value(true)->zero_tokens(),
+          "Enable InnoDB locking in LOCK TABLES");
+  context("strict-mode",
+          po::value<bool>()->default_value(false)->zero_tokens(),
+          "Use strict mode when evaluating create options.");
+  context("lock-wait-timeout",
+          po::value<unsigned long>()->default_value(50),
+          "Timeout in seconds an InnoDB transaction may wait for a lock before being rolled back. Values above 100000000 disable the timeout.");
+}
+
 static drizzle_sys_var* innobase_system_variables[]= {
   DRIZZLE_SYSVAR(additional_mem_pool_size),
   DRIZZLE_SYSVAR(autoextend_increment),
@@ -8646,7 +9117,7 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   innobase_system_variables, /* system variables */
-  NULL /* reserved */
+  init_options /* reserved */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
 

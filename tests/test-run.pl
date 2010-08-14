@@ -2580,9 +2580,7 @@ sub mysqld_arguments ($$$$) {
 	       $idx > 0 ? $idx + 101 : 1);
 
     mtr_add_arg($args,
-      "%s--loose-innodb_data_file_path=ibdata1:20M:autoextend", $prefix);
-
-    mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
+      "%s--innodb.data-file-path=ibdata1:20M:autoextend", $prefix);
 
   }
   else

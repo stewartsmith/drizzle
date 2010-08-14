@@ -66,16 +66,23 @@ public:
     return servers_string;
   }
 
+  void setMemoryPtr(void *mem_ptr_in)
+  {
+    memory_ptr= mem_ptr_in;
+  }
+
 private:
 
   pthread_mutex_t mutex;
 
   std::string servers_string;
+  void *memory_ptr;
 
   SysvarHolder()
     :
       mutex(),
       servers_string()
+      memory_ptr(NULL)
   {
     pthread_mutex_init(&mutex, NULL);
   }
@@ -83,6 +90,7 @@ private:
   ~SysvarHolder()
   {
     pthread_mutex_destroy(&mutex);
+    free(memory_ptr);
   }
 
   SysvarHolder(const SysvarHolder&);
