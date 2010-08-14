@@ -52,7 +52,7 @@ using namespace drizzled;
 
 static const string engine_name("MyISAM");
 
-pthread_mutex_t THR_LOCK_myisam= PTHREAD_MUTEX_INITIALIZER;
+boost::mutex THR_LOCK_myisam;
 
 static uint32_t myisam_key_cache_block_size= KEY_CACHE_BLOCK_SIZE;
 static uint32_t myisam_key_cache_size;
@@ -97,13 +97,10 @@ public:
                           HTON_AUTO_PART_KEY |
                           HTON_SKIP_STORE_LOCK)
   {
-    pthread_mutex_init(&THR_LOCK_myisam,MY_MUTEX_INIT_FAST);
   }
 
   virtual ~MyisamEngine()
   { 
-    pthread_mutex_destroy(&THR_LOCK_myisam);
-
     mi_panic(HA_PANIC_CLOSE);
   }
 
@@ -533,7 +530,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
                         const char *sfile, uint32_t sline)
 {
   Session *cur_session;
-  pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_session= file->in_use))
     errmsg_printf(ERRMSG_LVL_ERROR, _("Got an error from thread_id=%"PRIu64", %s:%d"),
                     cur_session->thread_id,
@@ -548,7 +544,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
     errmsg_printf(ERRMSG_LVL_ERROR, "%s", _("Unknown thread accessing table"));
     ++it;
   }
-  pthread_mutex_unlock(&file->s->intern_lock);
 }
 
 ha_myisam::ha_myisam(plugin::StorageEngine &engine_arg,
@@ -1533,12 +1528,6 @@ static DRIZZLE_SYSVAR_ULONGLONG(sort_buffer_size, sort_buffer_size,
                                 N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
                                 NULL, NULL, 8192*1024, 1024, SIZE_MAX, 0);
 
-extern uint32_t data_pointer_size;
-static DRIZZLE_SYSVAR_UINT(data_pointer_size, data_pointer_size,
-                            PLUGIN_VAR_RQCMDARG,
-                            N_("Default pointer size to be used for MyISAM tables."),
-                            NULL, NULL, 6, 2, 7, 0);
-
 static void init_options(drizzled::module::option_context &context)
 {
   context("max-sort-file-size",
@@ -1547,15 +1536,11 @@ static void init_options(drizzled::module::option_context &context)
   context("sort-buffer-size",
           po::value<uint64_t>(&sort_buffer_size)->default_value(8192*1024),
           N_("The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."));
-  context("data-pointer-size",
-          po::value<uint32_t>(&data_pointer_size)->default_value(6),
-          N_("Default pointer size to be used for MyISAM tables."));
 }
 
 static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(max_sort_file_size),
   DRIZZLE_SYSVAR(sort_buffer_size),
-  DRIZZLE_SYSVAR(data_pointer_size),
   NULL
 };
 

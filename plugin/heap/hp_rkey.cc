@@ -23,7 +23,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
               key_part_map keypart_map, enum ha_rkey_function find_flag)
 {
   unsigned char *pos;
-  HP_SHARE *share= info->s;
+  HP_SHARE *share= info->getShare();
   HP_KEYDEF *keyinfo= share->keydef + inx;
 
   if ((uint) inx >= share->keys)
@@ -37,9 +37,9 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
   {
     heap_rb_param custom_arg;
 
-    custom_arg.keyseg= info->s->keydef[inx].seg;
+    custom_arg.keyseg= info->getShare()->keydef[inx].seg;
     custom_arg.key_length= info->lastkey_len=
-      hp_rb_pack_key(keyinfo, (unsigned char*) info->lastkey,
+      hp_rb_pack_key(keyinfo, &info->lastkey[0],
 		     (unsigned char*) key, keypart_map);
     custom_arg.search_flag= SEARCH_FIND | SEARCH_SAME;
     /* for next rkey() after deletion */
@@ -50,7 +50,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
     else
       info->last_find_flag= find_flag;
     if (!(pos= (unsigned char *)tree_search_key(&keyinfo->rb_tree,
-                                                info->lastkey, info->parents,
+                                                &info->lastkey[0], info->parents,
 			                        &info->last_pos,
                                                 find_flag, &custom_arg)))
     {
@@ -68,7 +68,7 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
       return(errno);
     }
     if (!(keyinfo->flag & HA_NOSAME))
-      memcpy(info->lastkey, key, (size_t) keyinfo->length);
+      memcpy(&info->lastkey[0], key, (size_t) keyinfo->length);
   }
   hp_extract_record(share, record, pos);
   info->update= HA_STATE_AKTIV;
@@ -80,5 +80,5 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
 
 unsigned char* heap_find(HP_INFO *info, int inx, const unsigned char *key)
 {
-  return hp_search(info, info->s->keydef + inx, key, 0);
+  return hp_search(info, info->getShare()->keydef + inx, key, 0);
 }

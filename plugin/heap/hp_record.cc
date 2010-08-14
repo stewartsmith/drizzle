@@ -41,9 +41,7 @@ using namespace drizzled;
 
 uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uint32_t *chunk_count)
 {
-  uint32_t i, dst_offset;
-
-  dst_offset= info->fixed_data_length;
+  uint32_t dst_offset= info->fixed_data_length;
 
   if (!info->recordspace.is_variable_size)
   {
@@ -52,7 +50,7 @@ uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record,
     return dst_offset;
   }
 
-  for (i= info->fixed_column_count; i < info->column_count; i++)
+  for (uint32_t i= info->fixed_column_count; i < info->column_count; i++)
   {
     uint32_t src_offset, length;
 
@@ -92,25 +90,6 @@ uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record,
 }
 
 
-/*static void dump_chunk(HP_SHARE *info, const unsigned char* curr_chunk)
-{
-  uint32_t i;
-  fprintf(stdout, "Chunk dump at 0x%lx: ", (long)curr_chunk);
-  for (i= 0; i < info->chunk_dataspace_length; i++)
-  {
-    uint32_t b= *((unsigned char*)(curr_chunk + i));
-    if (b < 0x10)
-    {
-      fprintf(stdout, "0");
-    }
-    fprintf(stdout, "%lx ", (long)b);
-  }
-  fprintf(stdout, ". Next = 0x%lx, Status = %d\n",
-    (long)(*((unsigned char**) (curr_chunk + info->offset_link))),
-    (uint)(*((unsigned char*) (curr_chunk + info->offset_status))));
-}*/
-
-
 /**
   Encodes or compares record
 
@@ -130,7 +109,7 @@ uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record,
 uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record,
                                       unsigned char *pos, uint32_t is_compare)
 {
-  uint32_t i, dst_offset;
+  uint32_t dst_offset;
   unsigned char* curr_chunk= pos;
 
   if (is_compare)
@@ -153,7 +132,7 @@ uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char 
 
   dst_offset= info->fixed_data_length;
 
-  for (i= info->fixed_column_count; i < info->column_count; i++)
+  for (uint32_t i= info->fixed_column_count; i < info->column_count; i++)
   {
     uint32_t src_offset, length;
 
@@ -266,7 +245,7 @@ void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record
 
 void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned char *pos)
 {
-  uint32_t i, src_offset;
+  uint32_t src_offset;
   const unsigned char* curr_chunk= pos;
 
 
@@ -277,7 +256,7 @@ void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned cha
 
   memcpy(record, curr_chunk, (size_t) info->fixed_data_length);
 
-  if (!info->recordspace.is_variable_size)
+  if (not info->recordspace.is_variable_size)
   {
     /* Nothing more to copy */
     return;
@@ -285,7 +264,7 @@ void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned cha
 
   src_offset= info->fixed_data_length;
 
-  for (i= info->fixed_column_count; i < info->column_count; i++)
+  for (uint32_t i= info->fixed_column_count; i < info->column_count; i++)
   {
     uint32_t dst_offset, length, is_null = 0;
 
@@ -370,6 +349,4 @@ void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned cha
       length-= to_copy;
     }
   }
-
-  return;
 }

@@ -52,7 +52,7 @@ if (!(info->update & HA_STATE_AKTIV))\
 #define hp_find_hash(A,B) ((HASH_INFO*) hp_find_block((A),(B)))
 
 	/* Find pos for record and update it in info->current_ptr */
-#define hp_find_record(info,pos) (info)->current_ptr= hp_find_block(&(info)->s->recordspace.block,pos)
+#define hp_find_record(info,pos) (info)->current_ptr= hp_find_block(&(info)->getShare()->recordspace.block,pos)
 
 #define get_chunk_status(info,ptr) (ptr[(info)->offset_status])
 

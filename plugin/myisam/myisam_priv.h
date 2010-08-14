@@ -31,6 +31,8 @@
 #include <string.h>
 #include <list>
 
+#include <boost/thread/mutex.hpp>
+
 #if defined(my_write)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
 #endif
@@ -233,12 +235,9 @@ public:
     temporary,delay_key_write,
     concurrent_insert;
   drizzled::THR_LOCK lock;
-  pthread_mutex_t intern_lock;		/* Locking for use with _locking */
-  pthread_rwlock_t *key_root_lock;
   drizzled::internal::my_off_t mmaped_length;
   uint32_t     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */
-  pthread_rwlock_t mmap_lock;
 } MYISAM_SHARE;
 
 
@@ -474,7 +473,7 @@ typedef struct st_mi_sort_param
 #define MI_UNIQUE_HASH_TYPE	HA_KEYTYPE_ULONG_INT
 #define mi_unique_store(A,B)    mi_int4store((A),(B))
 
-extern pthread_mutex_t THR_LOCK_myisam;
+extern boost::mutex THR_LOCK_myisam;
 
 	/* Some extern variables */
 

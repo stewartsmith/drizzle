@@ -472,8 +472,6 @@ set global max_heap_table_size       =@my_max_heap_table_size;
 set global max_join_size             =@my_max_join_size;
 # No default
 set global max_write_lock_count      =default;
---error 1232
-set global myisam_data_pointer_size  =@my_myisam_data_pointer_size;
 set global mysql_protocol_buffer_length= @my_mysql_protocol_buffer_length;
 set global server_id                 =@my_server_id;
 set global storage_engine            =@my_storage_engine;

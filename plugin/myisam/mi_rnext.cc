@@ -38,8 +38,6 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
 
   if (fast_mi_readinfo(info))
     return(errno);
-  if (info->s->concurrent_insert)
-    pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
   changed=_mi_test_if_changed(info);
   if (!flag)
   {
@@ -83,17 +81,12 @@ int mi_rnext(MI_INFO *info, unsigned char *buf, int inx)
     }
     if (!error && res == 2)
     {
-      if (info->s->concurrent_insert)
-        pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
       info->lastpos= HA_OFFSET_ERROR;
       return(errno= HA_ERR_END_OF_FILE);
     }
   }
 
-  if (info->s->concurrent_insert)
-    pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
-
-	/* Don't clear if database-changed */
+  /* Don't clear if database-changed */
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
   info->update|= HA_STATE_NEXT_FOUND;
 
