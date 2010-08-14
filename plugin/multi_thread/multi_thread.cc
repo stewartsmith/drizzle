@@ -30,7 +30,10 @@ static uint32_t max_threads;
 /* Global's (TBR) */
 static MultiThreadScheduler *scheduler= NULL;
 
-extern size_t drizzled::my_thread_stack_size;
+namespace drizzled
+{
+  extern size_t my_thread_stack_size;
+}
 
 /**
  * Function to be run as a thread for each session.
