@@ -46,7 +46,7 @@ int heap_rprev(HP_INFO *info, unsigned char *record)
       custom_arg.key_length = keyinfo->length;
       custom_arg.search_flag = SEARCH_SAME;
       pos = (unsigned char *)tree_search_key(&keyinfo->rb_tree,
-                                             info->lastkey, info->parents,
+                                             &info->lastkey[0], info->parents,
                                              &info->last_pos,
                                              info->last_find_flag,
                                              &custom_arg);
@@ -67,9 +67,9 @@ int heap_rprev(HP_INFO *info, unsigned char *record)
     if (info->current_ptr || (info->update & HA_STATE_NEXT_FOUND))
     {
       if ((info->update & HA_STATE_DELETED))
-        pos= hp_search(info, share->keydef + info->lastinx, info->lastkey, 3);
+        pos= hp_search(info, share->keydef + info->lastinx, &info->lastkey[0], 3);
       else
-        pos= hp_search(info, share->keydef + info->lastinx, info->lastkey, 2);
+        pos= hp_search(info, share->keydef + info->lastinx, &info->lastkey[0], 2);
     }
     else
     {

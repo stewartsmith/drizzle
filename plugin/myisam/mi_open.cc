@@ -102,7 +102,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
     internal::my_load_path(rp_buff,org_name, NULL);
   rp_buff[FN_REFLEN-1]= '\0';
   strcpy(name_buff,rp_buff);
-  pthread_mutex_lock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.lock();
   if (!(old_info=test_if_reopen(name_buff)))
   {
     share= &share_buff;
@@ -494,7 +494,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   m_info->lock.init(&share->lock, (void*) m_info);
   myisam_open_list.push_front(m_info);
 
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
   return(m_info);
 
 err:
@@ -526,7 +526,7 @@ err:
   default:
     break;
   }
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
   errno=save_errno;
   return (NULL);
 } /* mi_open */

@@ -23,19 +23,13 @@
 
 int heap_rename(const char *old_name, const char *new_name)
 {
-  register HP_SHARE *info;
-  char *name_buff;
+  HP_SHARE *info;
 
   THR_LOCK_heap.lock();
   if ((info = hp_find_named_heap(old_name)))
   {
-    if (!(name_buff=(char*) strdup(new_name)))
-    {
-      THR_LOCK_heap.unlock();
-      return(errno);
-    }
-    free(info->name);
-    info->name=name_buff;
+    info->name.clear();
+    info->name.append(new_name);
   }
   THR_LOCK_heap.unlock();
   return(0);

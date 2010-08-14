@@ -30,10 +30,10 @@
 
 unsigned char *hp_find_block(HP_BLOCK *block, uint32_t pos)
 {
-  register int i;
-  register HP_PTRS *ptr; /* block base ptr */
+  int i;
+  HP_PTRS *ptr; /* block base ptr */
 
-  for (i=block->levels-1, ptr=block->root ; i > 0 ; i--)
+  for (i= block->levels-1, ptr=block->root ; i > 0 ; i--)
   {
     ptr=(HP_PTRS*)ptr->blocks[pos/block->level_info[i].records_under_level];
     pos%=block->level_info[i].records_under_level;
@@ -58,7 +58,7 @@ unsigned char *hp_find_block(HP_BLOCK *block, uint32_t pos)
 
 int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
 {
-  register uint32_t i,j;
+  uint32_t i;
   HP_PTRS *root;
 
   for (i=0 ; i < block->levels ; i++)
@@ -106,7 +106,7 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
 	(unsigned char*) root;
 
     /* Add a block subtree with each node having one left-most child */
-    for (j=i-1 ; j >0 ; j--)
+    for (uint32_t j= i-1 ; j >0 ; j--)
     {
       block->level_info[j].last_blocks= root++;
       block->level_info[j].last_blocks->blocks[0]=(unsigned char*) root;
@@ -127,11 +127,13 @@ int hp_get_new_block(HP_BLOCK *block, size_t *alloc_length)
 
 unsigned char *hp_free_level(HP_BLOCK *block, uint32_t level, HP_PTRS *pos, unsigned char *last_pos)
 {
-  int i,max_pos;
+  int max_pos;
   unsigned char *next_ptr;
 
   if (level == 1)
+  {
     next_ptr=(unsigned char*) pos+block->recbuffer;
+  }
   else
   {
     max_pos= (block->level_info[level-1].last_blocks == pos) ?
@@ -139,10 +141,11 @@ unsigned char *hp_free_level(HP_BLOCK *block, uint32_t level, HP_PTRS *pos, unsi
     HP_PTRS_IN_NOD;
 
     next_ptr=(unsigned char*) (pos+1);
-    for (i=0 ; i < max_pos ; i++)
+    for (int i= 0; i < max_pos ; i++)
       next_ptr=hp_free_level(block,level-1,
 			      (HP_PTRS*) pos->blocks[i],next_ptr);
   }
+
   if ((unsigned char*) pos != last_pos)
   {
     free((unsigned char*) pos);

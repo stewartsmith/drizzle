@@ -27,6 +27,8 @@
 #include <plugin/myisam/my_handler.h>
 #include "drizzled/tree.h"
 
+#include <vector>
+
 	/* defines used by heap-funktions */
 
 #define HP_MAX_LEVELS	4		/* 128^5 records is enough */
@@ -208,9 +210,8 @@ typedef struct st_heap_share
   uint32_t open_count;
 
 
-  char * name;			/* Name of "memory-file" */
+  std::string name;			/* Name of "memory-file" */
   drizzled::THR_LOCK lock;
-  pthread_mutex_t intern_lock;		/* Locking for use with _locking */
   bool delete_on_close;
   uint32_t auto_key;
   uint32_t auto_key_type;			/* real type of the auto key segment */
@@ -234,7 +235,6 @@ typedef struct st_heap_share
     column_count(0),
     currently_disabled_keys(0),
     open_count(0),
-    name(0),
     delete_on_close(0),
     auto_key(0),
     auto_key_type(0),
@@ -267,8 +267,8 @@ public:
   int lastinx,errkey;
   int  mode;				/* Mode of file (READONLY..) */
   uint32_t opt_flag,update;
-  unsigned char *lastkey;			/* Last used key with rkey */
-  unsigned char *recbuf;                         /* Record buffer for rb-tree keys */
+  std::vector <unsigned char> lastkey;			/* Last used key with rkey */
+  std::vector <unsigned char> recbuf;                         /* Record buffer for rb-tree keys */
   enum drizzled::ha_rkey_function last_find_flag;
   drizzled::TREE_ELEMENT *parents[drizzled::MAX_TREE_HEIGHT+1];
   drizzled::TREE_ELEMENT **last_pos;
@@ -332,7 +332,6 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
               drizzled::key_part_map keypart_map,
               enum drizzled::ha_rkey_function find_flag);
 extern unsigned char * heap_find(HP_INFO *info,int inx,const unsigned char *key);
-extern int heap_check_heap(HP_INFO *info, bool print_status);
 extern unsigned char *heap_position(HP_INFO *info);
 
 /* The following is for programs that uses the old HEAP interface where

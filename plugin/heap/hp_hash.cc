@@ -70,10 +70,10 @@ ha_rows hp_rb_records_in_range(HP_INFO *info, int inx,  key_range *min_key,
   custom_arg.search_flag= SEARCH_FIND | SEARCH_SAME;
   if (min_key)
   {
-    custom_arg.key_length= hp_rb_pack_key(keyinfo, (unsigned char*) info->recbuf,
+    custom_arg.key_length= hp_rb_pack_key(keyinfo, &info->recbuf[0],
 					  (unsigned char*) min_key->key,
 					  min_key->keypart_map);
-    start_pos= tree_record_pos(rb_tree, info->recbuf, min_key->flag,
+    start_pos= tree_record_pos(rb_tree, &info->recbuf[0], min_key->flag,
 			       &custom_arg);
   }
   else
@@ -83,10 +83,10 @@ ha_rows hp_rb_records_in_range(HP_INFO *info, int inx,  key_range *min_key,
 
   if (max_key)
   {
-    custom_arg.key_length= hp_rb_pack_key(keyinfo, (unsigned char*) info->recbuf,
+    custom_arg.key_length= hp_rb_pack_key(keyinfo, &info->recbuf[0],
 					  (unsigned char*) max_key->key,
                                           max_key->keypart_map);
-    end_pos= tree_record_pos(rb_tree, info->recbuf, max_key->flag,
+    end_pos= tree_record_pos(rb_tree, &info->recbuf[0], max_key->flag,
 			     &custom_arg);
   }
   else

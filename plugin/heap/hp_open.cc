@@ -36,8 +36,8 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
   share->open_count++;
   info->lock.init(&share->lock);
   info->setShare(share);
-  info->lastkey= new unsigned char[share->max_key_length];
-  info->recbuf= new unsigned char[share->max_key_length];
+  info->lastkey.resize(share->max_key_length);
+  info->recbuf.resize(share->max_key_length);
   info->mode= mode;
   info->current_record= UINT32_MAX;		/* No current record */
   info->lastinx= info->errkey= -1;
@@ -99,7 +99,7 @@ HP_SHARE *hp_find_named_heap(const char *name)
   list<HP_SHARE *>::iterator it= heap_share_list.begin();
   while (it != heap_share_list.end())
   {
-    if (!strcmp(name, (*it)->name))
+    if (not (*it)->name.compare(name))
     {
       return (*it);
     }

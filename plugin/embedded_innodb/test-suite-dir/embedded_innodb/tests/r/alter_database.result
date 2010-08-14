@@ -1,0 +1,13 @@
+create database foo;
+show create database foo;
+Database	Create Database
+foo	CREATE DATABASE `foo` COLLATE = utf8_general_ci
+alter database foo collate = utf8_bin;
+show create database foo;
+Database	Create Database
+foo	CREATE DATABASE `foo` COLLATE = utf8_bin
+alter database foo collate = utf8_esperanto_ci;
+show create database foo;
+Database	Create Database
+foo	CREATE DATABASE `foo` COLLATE = utf8_esperanto_ci
+drop database foo;

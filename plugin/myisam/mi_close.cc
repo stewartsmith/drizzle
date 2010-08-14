@@ -30,7 +30,7 @@ int mi_close(MI_INFO *info)
   int error=0,flag;
   MYISAM_SHARE *share=info->s;
 
-  pthread_mutex_lock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.lock();
   if (info->lock_type == F_EXTRA_LCK)
     info->lock_type=F_UNLCK;			/* HA_EXTRA_NO_USER_CHANGE */
 
@@ -90,7 +90,7 @@ int mi_close(MI_INFO *info)
     delete info->s->in_use;
     free((unsigned char*) info->s);
   }
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
 
   if (info->dfile >= 0 && internal::my_close(info->dfile,MYF(0)))
     error = errno;

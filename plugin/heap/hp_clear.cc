@@ -56,9 +56,7 @@ void hp_clear(HP_SHARE *info)
 
 static void hp_clear_keys(HP_SHARE *info)
 {
-  uint32_t key;
-
-  for (key=0 ; key < info->keys ; key++)
+  for (uint32_t key=0 ; key < info->keys ; key++)
   {
     HP_KEYDEF *keyinfo = info->keydef + key;
     if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
@@ -76,7 +74,6 @@ static void hp_clear_keys(HP_SHARE *info)
     }
   }
   info->index_length=0;
-  return;
 }
 
 

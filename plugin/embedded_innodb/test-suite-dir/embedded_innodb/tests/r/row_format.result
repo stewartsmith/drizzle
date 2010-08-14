@@ -1,10 +1,10 @@
 CREATE TABLE t1 (a int) ENGINE=INNODB ROW_FORMAT=COMPRESSED;
-ERROR HY000: Can't create table 'test.t1' (errno: 168)
+ERROR HY000: Can't create table 'test.t1' (errno: 138)
 SHOW WARNINGS;
 Level	Code	Message
 Error	1005	Cannot create table test/t1. InnoDB Error 48 (Unsupported)
 
-Error	1005	Can't create table 'test.t1' (errno: 168)
+Error	1005	Can't create table 'test.t1' (errno: 138)
 CREATE TABLE t2 (a int) ENGINE=INNODB ROW_FORMAT=COMPACT;
 CREATE TABLE t3 (a int) ENGINE=INNODB ROW_FORMAT=DYNAMIC;
 CREATE TABLE t4 (a int) ENGINE=INNODB ROW_FORMAT=REDUNDANT;
