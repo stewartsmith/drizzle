@@ -121,8 +121,6 @@ pthread_mutex_t timer_alarm_mutex;
 pthread_cond_t timer_alarm_threshold;
 
 std::vector < std::string > primary_keys;
-/* This gets passed to malloc, so lets set it to an arch-dependant size */
-size_t primary_keys_number_of;
 
 static string host, 
   opt_password, 
@@ -2194,7 +2192,6 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
   if (opt_only_print || (engine_stmt &&
                          strstr(engine_stmt->getString(), "blackhole")))
   {
-    primary_keys_number_of= 1;
     /* Yes, we strdup a const string to simplify the interface */
     primary_keys.push_back("796c4422-1d94-102a-9d6d-00e0812d");
   }
@@ -2213,6 +2210,7 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
       fprintf(stderr, "More primary keys than than architecture supports\n");
       exit(1);
     }
+    size_t primary_keys_number_of;
     primary_keys_number_of= (size_t)num_rows_ret;
 
     /* So why check this? Blackhole :) */
@@ -2593,10 +2591,10 @@ limit_not_met:
         Just in case someone runs this under an experimental engine we don't
         want a crash so the if() is placed here.
       */
-      assert(primary_keys_number_of);
-      if (primary_keys_number_of)
+      assert(primary_keys.size());
+      if (primary_keys.size())
       {
-        key_val= (unsigned int)(random() % primary_keys_number_of);
+        key_val= (unsigned int)(random() % primary_keys.size());
         const char *key;
         key= primary_keys[key_val].c_str();
 
