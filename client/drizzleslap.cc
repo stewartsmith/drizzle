@@ -194,7 +194,7 @@ static uint32_t opt_drizzle_port= 0;
 
 
 /* Types */
-typedef enum {
+enum slap_query_t {
   SELECT_TYPE= 0,
   UPDATE_TYPE= 1,
   INSERT_TYPE= 2,
@@ -202,7 +202,7 @@ typedef enum {
   CREATE_TABLE_TYPE= 4,
   SELECT_TYPE_REQUIRES_PREFIX= 5,
   DELETE_TYPE_REQUIRES_PREFIX= 6
-} slap_query_type;
+};
 
 class Statement;
 
@@ -211,7 +211,7 @@ class Statement
 public:
   Statement(char *in_string,
             size_t in_length,
-            slap_query_type in_type,
+            slap_query_t in_type,
             char *in_option,
             size_t in_option_length,
             Statement *in_next) :
@@ -248,7 +248,7 @@ public:
     return length;
   }
 
-  slap_query_type getType() const
+  slap_query_t getType() const
   {
     return type;
   }
@@ -273,6 +273,12 @@ public:
     string= in_string;
   }
 
+  void setString(size_t length_arg)
+  {
+    string= (char *)calloc(length_arg + 1, sizeof(char));
+    length= length_arg;
+  }
+
   void setString(size_t in_length, char in_char)
   {
     string[in_length]= in_char;
@@ -283,7 +289,7 @@ public:
     length= in_length;
   }
 
-  void setType(slap_query_type in_type)
+  void setType(slap_query_t in_type)
   {
     type= in_type;
   }
@@ -306,7 +312,7 @@ public:
 private:
   char *string;
   size_t length;
-  slap_query_type type;
+  slap_query_t type;
   char *option;
   size_t option_length;
   Statement *next;
@@ -1402,14 +1408,12 @@ build_table_string(void)
 
   table_string.append(")");
   ptr= new Statement;
-  ptr->setString((char *)malloc(table_string.length()+1));
+  ptr->setString(table_string.length());
   if (ptr->getString()==NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating table\n");
     exit(1);
   }
-  memset(ptr->getString(), 0, table_string.length()+1);
-  ptr->setLength(table_string.length()+1);
   ptr->setType(CREATE_TABLE_TYPE);
   strcpy(ptr->getString(), table_string.c_str());
   return(ptr);
@@ -1473,14 +1477,12 @@ build_update_string(void)
 
   ptr= new Statement;
 
-  ptr->setLength(update_string.length()+1);
-  ptr->setString((char *)malloc(ptr->getLength()));
+  ptr->setString(update_string.length());
   if (ptr->getString() == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating update\n");
     exit(1);
   }
-  memset(ptr->getString(), 0, ptr->getLength());
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->setType(UPDATE_TYPE_REQUIRES_PREFIX);
   else
@@ -1611,14 +1613,12 @@ build_insert_string(void)
   insert_string.append(")", 1);
 
   ptr= new Statement;
-  ptr->setLength(insert_string.length()+1);
-  ptr->setString((char *)malloc(ptr->getLength()));
+  ptr->setString(insert_string.length());
   if (ptr->getString()==NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr->getString(), 0, ptr->getLength());
   ptr->setType(INSERT_TYPE);
   strcpy(ptr->getString(), insert_string.c_str());
   return(ptr);
@@ -1697,14 +1697,12 @@ build_select_string(bool key)
     query_string.append(" WHERE id = ");
 
   ptr= new Statement;
-  ptr->setLength(query_string.length()+1);
-  ptr->setString((char *)malloc(ptr->getLength()));
+  ptr->setString(query_string.length());
   if (ptr->getString() == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr->getString(), 0, ptr->getLength());
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     ptr->setType(SELECT_TYPE_REQUIRES_PREFIX);
@@ -2855,9 +2853,9 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
   uint32_t length= strlen(script);
   uint32_t count= 0; /* We know that there is always one */
 
-  for (tmp= *sptr= (Statement *)calloc(1, sizeof(Statement));
+  for (tmp= *sptr= new Statement;
        (retstr= strchr(ptr, delm));
-       tmp->setNext((Statement *)calloc(1, sizeof(Statement))),
+       tmp->setNext(new Statement),
        tmp= tmp->getNext())
   {
     if (tmp == NULL)
@@ -2867,8 +2865,7 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
     }
 
     count++;
-    tmp->setLength((size_t)(retstr - ptr));
-    tmp->setString((char *)malloc(tmp->getLength() + 1));
+    tmp->setString((size_t)(retstr - ptr));
 
     if (tmp->getString() == NULL)
     {
@@ -2877,7 +2874,6 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
     }
 
     memcpy(tmp->getString(), ptr, tmp->getLength());
-    tmp->setString(tmp->getLength(), 0);
     ptr+= retstr - ptr + 1;
     if (isspace(*ptr))
       ptr++;
@@ -2885,15 +2881,13 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
 
   if (ptr != script+length)
   {
-    tmp->setLength((size_t)((script + length) - ptr));
-    tmp->setString((char *)malloc(tmp->getLength() + 1));
+    tmp->setString((size_t)((script + length) - ptr));
     if (tmp->getString() == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
       exit(1);
     }
     memcpy(tmp->getString(), ptr, tmp->getLength());
-    tmp->setString(tmp->getLength(),0);
     count++;
   }
 
