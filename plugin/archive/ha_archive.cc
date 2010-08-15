@@ -91,9 +91,6 @@ using namespace drizzled;
     -Brian
 */
 
-/* Variables for archive share methods */
-pthread_mutex_t archive_mutex= PTHREAD_MUTEX_INITIALIZER;
-
 /* When the engine starts up set the first version */
 static uint64_t global_version= 1;
 
@@ -275,13 +272,13 @@ ArchiveShare::ArchiveShare(const char *name):
   /*
     We will use this lock for rows.
   */
-  pthread_mutex_init(&mutex,MY_MUTEX_INIT_FAST);
+  pthread_mutex_init(&_mutex,MY_MUTEX_INIT_FAST);
 }
 
 ArchiveShare::~ArchiveShare()
 {
-  thr_lock_delete(&lock);
-  pthread_mutex_destroy(&mutex);
+  _lock.deinit();
+  pthread_mutex_destroy(&_mutex);
   /*
     We need to make sure we don't reset the crashed state.
     If we open a crashed file, wee need to close it as crashed unless
@@ -291,7 +288,6 @@ ArchiveShare::~ArchiveShare()
   */
   if (archive_write_open == true)
     (void)azclose(&archive_write);
-  pthread_mutex_destroy(&archive_mutex);
 }
 
 bool ArchiveShare::prime(uint64_t *auto_increment)
@@ -331,9 +327,10 @@ bool ArchiveShare::prime(uint64_t *auto_increment)
 */
 ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 {
-  pthread_mutex_lock(&archive_mutex);
-
   ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+
+  pthread_mutex_lock(&a_engine->mutex());
+
   share= a_engine->findOpenTable(table_name);
 
   if (!share)
@@ -342,14 +339,14 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 
     if (share == NULL)
     {
-      pthread_mutex_unlock(&archive_mutex);
+      pthread_mutex_unlock(&a_engine->mutex());
       *rc= HA_ERR_OUT_OF_MEM;
       return(NULL);
     }
 
     if (share->prime(&stats.auto_increment_value) == false)
     {
-      pthread_mutex_unlock(&archive_mutex);
+      pthread_mutex_unlock(&a_engine->mutex());
       *rc= HA_ERR_CRASHED_ON_REPAIR;
       delete share;
 
@@ -357,13 +354,13 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
     }
 
     a_engine->addOpenTable(share->table_name, share);
-    thr_lock_init(&share->lock);
+    thr_lock_init(&share->_lock);
   }
   share->use_count++;
 
   if (share->crashed)
     *rc= HA_ERR_CRASHED_ON_USAGE;
-  pthread_mutex_unlock(&archive_mutex);
+  pthread_mutex_unlock(&a_engine->mutex());
 
   return(share);
 }
@@ -375,14 +372,15 @@ ArchiveShare *ha_archive::get_share(const char *table_name, int *rc)
 */
 int ha_archive::free_share()
 {
-  pthread_mutex_lock(&archive_mutex);
+  ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
+
+  pthread_mutex_lock(&a_engine->mutex());
   if (!--share->use_count)
   {
-    ArchiveEngine *a_engine= static_cast<ArchiveEngine *>(engine);
     a_engine->deleteOpenTable(share->table_name);
     delete share;
   }
-  pthread_mutex_unlock(&archive_mutex);
+  pthread_mutex_unlock(&a_engine->mutex());
 
   return 0;
 }
@@ -473,16 +471,9 @@ int ha_archive::doOpen(const TableIdentifier &identifier, int , uint32_t )
 
   assert(share);
 
-  record_buffer= create_record_buffer(table->getShare()->getRecordLength() +
-                                      ARCHIVE_ROW_HEADER_SIZE);
+  record_buffer.resize(table->getShare()->getRecordLength() + ARCHIVE_ROW_HEADER_SIZE);
 
-  if (!record_buffer)
-  {
-    free_share();
-    return(HA_ERR_OUT_OF_MEM);
-  }
-
-  thr_lock_data_init(&share->lock, &lock);
+  lock.init(&share->_lock);
 
   return(rc);
 }
@@ -516,7 +507,7 @@ int ha_archive::close(void)
 {
   int rc= 0;
 
-  destroy_record_buffer(record_buffer);
+  record_buffer.clear();
 
   /* First close stream */
   if (archive_reader_open == true)
@@ -648,7 +639,7 @@ int ha_archive::real_write_row(unsigned char *buf, azio_stream *writer)
   /* We pack the row for writing */
   r_pack_length= pack_row(buf);
 
-  written= azwrite_row(writer, record_buffer->buffer, r_pack_length);
+  written= azwrite_row(writer, &record_buffer[0], r_pack_length);
   if (written != r_pack_length)
   {
     return(-1);
@@ -691,8 +682,8 @@ unsigned int ha_archive::pack_row(unsigned char *record)
     return(HA_ERR_OUT_OF_MEM);
 
   /* Copy null bits */
-  memcpy(record_buffer->buffer, record, table->getShare()->null_bytes);
-  ptr= record_buffer->buffer + table->getShare()->null_bytes;
+  memcpy(&record_buffer[0], record, table->getShare()->null_bytes);
+  ptr= &record_buffer[0] + table->getShare()->null_bytes;
 
   for (Field **field=table->getFields() ; *field ; field++)
   {
@@ -700,7 +691,7 @@ unsigned int ha_archive::pack_row(unsigned char *record)
       ptr= (*field)->pack(ptr, record + (*field)->offset(record));
   }
 
-  return((unsigned int) (ptr - record_buffer->buffer));
+  return((unsigned int) (ptr - &record_buffer[0]));
 }
 
 
@@ -723,7 +714,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   if (share->crashed)
     return(HA_ERR_CRASHED_ON_USAGE);
 
-  pthread_mutex_lock(&share->mutex);
+  pthread_mutex_lock(&share->mutex());
 
   if (share->archive_write_open == false)
     if (init_archive_writer())
@@ -760,7 +751,7 @@ int ha_archive::doInsertRecord(unsigned char *buf)
   share->rows_recorded++;
   rc= real_write_row(buf,  &(share->archive_write));
 error:
-  pthread_mutex_unlock(&share->mutex);
+  pthread_mutex_unlock(&share->mutex());
   if (read_buf)
     free((unsigned char*) read_buf);
 
@@ -877,20 +868,9 @@ int ha_archive::get_row(azio_stream *file_to_read, unsigned char *buf)
 /* Reallocate buffer if needed */
 bool ha_archive::fix_rec_buff(unsigned int length)
 {
-  assert(record_buffer->buffer);
+  record_buffer.resize(length);
 
-  if (length > record_buffer->length)
-  {
-    unsigned char *newptr;
-    if (!(newptr= (unsigned char *)realloc(record_buffer->buffer, length)))
-      return(1);
-    record_buffer->buffer= newptr;
-    record_buffer->length= length;
-  }
-
-  assert(length <= record_buffer->length);
-
-  return(0);
+  return false;
 }
 
 int ha_archive::unpack_row(azio_stream *file_to_read, unsigned char *record)
@@ -1061,7 +1041,6 @@ int ha_archive::optimize()
     */
     if (!rc)
     {
-      uint64_t x;
       uint64_t rows_restored;
       share->rows_recorded= 0;
       stats.auto_increment_value= 1;
@@ -1069,7 +1048,7 @@ int ha_archive::optimize()
 
       rows_restored= archive.rows;
 
-      for (x= 0; x < rows_restored ; x++)
+      for (uint64_t x= 0; x < rows_restored ; x++)
       {
         rc= get_row(&archive, table->getInsertRecord());
 
@@ -1173,7 +1152,7 @@ int ha_archive::info(uint32_t flag)
     If dirty, we lock, and then reset/flush the data.
     I found that just calling azflush() doesn't always work.
   */
-  pthread_mutex_lock(&share->mutex);
+  pthread_mutex_lock(&share->mutex());
   if (share->dirty == true)
   {
     azflush(&(share->archive_write), Z_SYNC_FLUSH);
@@ -1192,7 +1171,7 @@ int ha_archive::info(uint32_t flag)
     cause the number to be inaccurate.
   */
   stats.records= share->rows_recorded;
-  pthread_mutex_unlock(&share->mutex);
+  pthread_mutex_unlock(&share->mutex());
 
   scan_rows= stats.records;
   stats.deleted= 0;
@@ -1216,9 +1195,9 @@ int ha_archive::info(uint32_t flag)
   if (flag & HA_STATUS_AUTO)
   {
     init_archive_reader();
-    pthread_mutex_lock(&share->mutex);
+    pthread_mutex_lock(&share->mutex());
     azflush(&archive, Z_SYNC_FLUSH);
-    pthread_mutex_unlock(&share->mutex);
+    pthread_mutex_unlock(&share->mutex());
     stats.auto_increment_value= archive.auto_increment + 1;
   }
 
@@ -1269,14 +1248,13 @@ int ha_archive::check(Session* session)
 {
   int rc= 0;
   const char *old_proc_info;
-  uint64_t x;
 
   old_proc_info= get_session_proc_info(session);
   set_session_proc_info(session, "Checking table");
   /* Flush any waiting data */
-  pthread_mutex_lock(&share->mutex);
+  pthread_mutex_lock(&share->mutex());
   azflush(&(share->archive_write), Z_SYNC_FLUSH);
-  pthread_mutex_unlock(&share->mutex);
+  pthread_mutex_unlock(&share->mutex());
 
   /*
     Now we will rewind the archive file so that we are positioned at the
@@ -1285,7 +1263,7 @@ int ha_archive::check(Session* session)
   init_archive_reader();
   azflush(&archive, Z_SYNC_FLUSH);
   read_data_header(&archive);
-  for (x= 0; x < share->archive_write.rows; x++)
+  for (uint64_t x= 0; x < share->archive_write.rows; x++)
   {
     rc= get_row(&archive, table->getInsertRecord());
 
@@ -1304,31 +1282,6 @@ int ha_archive::check(Session* session)
   {
     return(HA_ADMIN_OK);
   }
-}
-
-archive_record_buffer *ha_archive::create_record_buffer(unsigned int length)
-{
-  archive_record_buffer *r;
-  if (!(r= (archive_record_buffer*) malloc(sizeof(archive_record_buffer))))
-  {
-    return(NULL);
-  }
-  r->length= (int)length;
-
-  if (!(r->buffer= (unsigned char*) malloc(r->length)))
-  {
-    free((char*) r);
-    return(NULL);
-  }
-
-  return(r);
-}
-
-void ha_archive::destroy_record_buffer(archive_record_buffer *r)
-{
-  free((char*) r->buffer);
-  free((char*) r);
-  return;
 }
 
 int ArchiveEngine::doRenameTable(Session&, const TableIdentifier &from, const TableIdentifier &to)

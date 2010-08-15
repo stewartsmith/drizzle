@@ -24,7 +24,7 @@ using namespace drizzled;
 int heap_rnext(HP_INFO *info, unsigned char *record)
 {
   unsigned char *pos;
-  HP_SHARE *share=info->s;
+  HP_SHARE *share=info->getShare();
   HP_KEYDEF *keyinfo;
 
   if (info->lastinx < 0)
@@ -76,7 +76,7 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
       custom_arg.key_length = info->lastkey_len;
       custom_arg.search_flag = SEARCH_SAME | SEARCH_FIND;
       pos = (unsigned char *)tree_search_key(&keyinfo->rb_tree,
-                                             info->lastkey, info->parents,
+                                             &info->lastkey[0], info->parents,
                                              &info->last_pos,
                                              info->last_find_flag,
                                              &custom_arg);
@@ -95,7 +95,7 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
   else
   {
     if (info->current_hash_ptr)
-      pos= hp_search_next(info, keyinfo, info->lastkey,
+      pos= hp_search_next(info, keyinfo, &info->lastkey[0],
 			   info->current_hash_ptr);
     else
     {
@@ -105,9 +105,9 @@ int heap_rnext(HP_INFO *info, unsigned char *record)
 	errno=HA_ERR_KEY_NOT_FOUND;
       }
       else if (!info->current_ptr)		/* Deleted or first call */
-	pos= hp_search(info, keyinfo, info->lastkey, 0);
+	pos= hp_search(info, keyinfo, &info->lastkey[0], 0);
       else
-	pos= hp_search(info, keyinfo, info->lastkey, 1);
+	pos= hp_search(info, keyinfo, &info->lastkey[0], 1);
     }
   }
   if (!pos)

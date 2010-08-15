@@ -30,7 +30,7 @@ int mi_close(MI_INFO *info)
   int error=0,flag;
   MYISAM_SHARE *share=info->s;
 
-  pthread_mutex_lock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.lock();
   if (info->lock_type == F_EXTRA_LCK)
     info->lock_type=F_UNLCK;			/* HA_EXTRA_NO_USER_CHANGE */
 
@@ -42,7 +42,6 @@ int mi_close(MI_INFO *info)
     if (mi_lock_database(info,F_UNLCK))
       error=errno;
   }
-  pthread_mutex_lock(&share->intern_lock);
 
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
@@ -57,7 +56,6 @@ int mi_close(MI_INFO *info)
   }
   flag= !--share->reopen;
   myisam_open_list.remove(info);
-  pthread_mutex_unlock(&share->intern_lock);
 
   void * rec_buff_ptr= mi_get_rec_buff_ptr(info, info->rec_buff);
   if (rec_buff_ptr != NULL)
@@ -65,10 +63,11 @@ int mi_close(MI_INFO *info)
   if (flag)
   {
     if (share->kfile >= 0 &&
-	flush_key_blocks(share->key_cache, share->kfile,
+	flush_key_blocks(share->getKeyCache(), share->kfile,
 			 share->temporary ? FLUSH_IGNORE_CHANGED :
 			 FLUSH_RELEASE))
       error=errno;
+    end_key_cache(share->getKeyCache(), true);
     if (share->kfile >= 0)
     {
       /*
@@ -87,20 +86,11 @@ int mi_close(MI_INFO *info)
       free((unsigned char*) share->decode_trees);
       free((unsigned char*) share->decode_tables);
     }
-    thr_lock_delete(&share->lock);
-    pthread_mutex_destroy(&share->intern_lock);
-    {
-      int i,keys;
-      keys = share->state.header.keys;
-      pthread_rwlock_destroy(&share->mmap_lock);
-      for(i=0; i<keys; i++) {
-	pthread_rwlock_destroy(&share->key_root_lock[i]);
-      }
-    }
+    share->lock.deinit();
     delete info->s->in_use;
     free((unsigned char*) info->s);
   }
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
 
   if (info->dfile >= 0 && internal::my_close(info->dfile,MYF(0)))
     error = errno;

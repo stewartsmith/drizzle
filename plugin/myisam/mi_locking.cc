@@ -36,13 +36,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   MYISAM_SHARE *share=info->s;
   uint32_t flag;
 
-  pthread_mutex_lock(&share->intern_lock);
   if (!info->s->in_use)
     info->s->in_use= new list<Session *>;
 
   if (lock_type == F_EXTRA_LCK)                 /* Used by TMP tables */
   {
-    pthread_mutex_unlock(&share->intern_lock);
     ++share->w_locks;
     ++share->tot_locks;
     info->lock_type= lock_type;
@@ -61,7 +59,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	count= --share->w_locks;
       --share->tot_locks;
       if (info->lock_type == F_WRLCK && !share->w_locks &&
-	  !share->delay_key_write && flush_key_blocks(share->key_cache,
+	  !share->delay_key_write && flush_key_blocks(share->getKeyCache(),
 						      share->kfile,FLUSH_KEEP))
       {
 	error=errno;
@@ -84,12 +82,8 @@ int mi_lock_database(MI_INFO *info, int lock_type)
     if ((info->s->mmaped_length != info->s->state.state.data_file_length) &&
         (info->s->nonmmaped_inserts > MAX_NONMAPPED_INSERTS))
     {
-      if (info->s->concurrent_insert)
-        pthread_rwlock_wrlock(&info->s->mmap_lock);
       mi_remap_file(info, info->s->state.state.data_file_length);
       info->s->nonmmaped_inserts= 0;
-      if (info->s->concurrent_insert)
-        pthread_rwlock_unlock(&info->s->mmap_lock);
     }
 	  share->state.process= share->last_process=share->this_process;
 	  share->state.unique=   info->last_unique=  info->this_unique;
@@ -213,7 +207,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
     }
   }
 #endif
-  pthread_mutex_unlock(&share->intern_lock);
 #if defined(FULL_LOG) || defined(_lint)
   lock_type|=(int) (flag << 8);		/* Set bit to set if real lock */
   myisam_log_command(MI_LOG_LOCK,info,(unsigned char*) &lock_type,sizeof(lock_type),
@@ -294,7 +287,7 @@ int _mi_test_if_changed(register MI_INFO *info)
       share->state.update_count != info->last_loop)
   {						/* Keyfile has changed */
     if (share->state.process != share->this_process)
-      flush_key_blocks(share->key_cache, share->kfile, FLUSH_RELEASE);
+      flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_RELEASE);
     share->last_process=share->state.process;
     info->last_unique=	share->state.unique;
     info->last_loop=	share->state.update_count;

@@ -38,3 +38,10 @@ ASC LIMIT 1;
 
 drop table t1;
 
+# and again with a unique key that becomes the clustered key
+
+create table t1 (a int, b int, c int);
+
+alter table t1 add unique(a,b);
+
+drop table t1;

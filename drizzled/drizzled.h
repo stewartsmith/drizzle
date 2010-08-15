@@ -60,7 +60,6 @@ int init_common_variables(const char *conf_file_name, int argc,
 passwd *check_user(const char *user);
 void set_user(const char *user, passwd *user_info_arg);
 void clean_up(bool print_message);
-void clean_up_mutexes(void);
 bool drizzle_rm_tmp_tables();
 
 } /* namespace drizzled */

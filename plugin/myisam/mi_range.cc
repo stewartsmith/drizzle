@@ -56,8 +56,6 @@ ha_rows mi_records_in_range(MI_INFO *info, int inx,
   if (fast_mi_readinfo(info))
     return(HA_POS_ERROR);
   info->update&= (HA_STATE_CHANGED+HA_STATE_ROW_CHANGED);
-  if (info->s->concurrent_insert)
-    pthread_rwlock_rdlock(&info->s->key_root_lock[inx]);
 
   switch(info->s->keyinfo[inx].key_alg){
   case HA_KEY_ALG_BTREE:
@@ -74,8 +72,6 @@ ha_rows mi_records_in_range(MI_INFO *info, int inx,
       res=HA_POS_ERROR;
   }
 
-  if (info->s->concurrent_insert)
-    pthread_rwlock_unlock(&info->s->key_root_lock[inx]);
   fast_mi_writeinfo(info);
 
   return(res);

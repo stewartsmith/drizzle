@@ -171,7 +171,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
   int error= 0;
   bool foreign_key_error= false;
 
-  pthread_mutex_lock(&LOCK_open); /* Part 2 of rm a table */
+  LOCK_open.lock(); /* Part 2 of rm a table */
 
   /*
     If we have the table in the definition cache, we don't have to check the
@@ -193,7 +193,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
 
   if (not drop_temporary && lock_table_names_exclusively(session, tables))
   {
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
     return 1;
   }
 
@@ -285,7 +285,7 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     It's safe to unlock LOCK_open: we have an exclusive lock
     on the table name.
   */
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
   error= 0;
 
   if (wrong_tables.length())
@@ -302,11 +302,11 @@ int mysql_rm_table_part2(Session *session, TableList *tables, bool if_exists,
     error= 1;
   }
 
-  pthread_mutex_lock(&LOCK_open); /* final bit in rm table lock */
+  LOCK_open.lock(); /* final bit in rm table lock */
 
 err_with_placeholders:
   unlock_table_names(tables, NULL);
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
   session->no_warnings_for_error= 0;
 
   return error;
@@ -888,6 +888,30 @@ static int mysql_prepare_create_table(Session *session,
                  ER(ER_KEY_REF_DO_NOT_MATCH_TABLE_REF));
 	return(true);
       }
+
+      message::Table::ForeignKeyConstraint *pfkey= create_proto.add_fk_constraint();
+      if (fk_key->name.str)
+        pfkey->set_name(fk_key->name.str);
+
+      pfkey->set_match(fk_key->match_opt);
+      pfkey->set_update_option(fk_key->update_opt);
+      pfkey->set_delete_option(fk_key->delete_opt);
+
+      pfkey->set_references_table_name(fk_key->ref_table->table.str);
+
+      Key_part_spec *keypart;
+      List_iterator<Key_part_spec> col_it(fk_key->columns);
+      while ((keypart= col_it++))
+      {
+        pfkey->add_column_names(keypart->field_name.str);
+      }
+
+      List_iterator<Key_part_spec> ref_it(fk_key->ref_columns);
+      while ((keypart= ref_it++))
+      {
+        pfkey->add_references_columns(keypart->field_name.str);
+      }
+
       continue;
     }
     (*key_count)++;
@@ -1475,7 +1499,7 @@ bool mysql_create_table_no_lock(Session *session,
                                  &key_info_buffer, &key_count,
                                  select_field_count))
   {
-    pthread_mutex_lock(&LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
+    LOCK_open.lock(); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
                                identifier,
                                create_info,
@@ -1485,7 +1509,7 @@ bool mysql_create_table_no_lock(Session *session,
                                internal_tmp_table,
                                db_options, key_count,
                                key_info_buffer);
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
   }
 
   session->set_proc_info("After create");
@@ -1542,9 +1566,9 @@ static bool drizzle_create_table(Session *session,
 
   if (name_lock)
   {
-    pthread_mutex_lock(&LOCK_open); /* Lock for removing name_lock during table create */
+    LOCK_open.lock(); /* Lock for removing name_lock during table create */
     session->unlink_open_table(name_lock);
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
   }
 
   return(result);
@@ -1705,7 +1729,7 @@ void wait_while_table_is_used(Session *session, Table *table,
                               enum ha_extra_function function)
 {
 
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
 
   table->cursor->extra(function);
   /* Mark all tables that are in use as 'old' */
@@ -1860,9 +1884,9 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     /* Close all instances of the table to allow repair to rename files */
     if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
-      pthread_mutex_lock(&LOCK_open); /* Lock type is TL_WRITE and we lock to repair the table */
-      const char *old_message=session->enter_cond(&COND_refresh, &LOCK_open,
-					      "Waiting to get writelock");
+      LOCK_open.lock(); /* Lock type is TL_WRITE and we lock to repair the table */
+      const char *old_message=session->enter_cond(COND_refresh, LOCK_open,
+                                                  "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
       TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
       remove_table_from_cache(session, identifier,
@@ -1967,10 +1991,10 @@ send_result:
         }
         else
         {
-          pthread_mutex_lock(&LOCK_open);
+          LOCK_open.lock();
 	  TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
           remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
-          pthread_mutex_unlock(&LOCK_open);
+          LOCK_open.unlock();
         }
       }
     }
@@ -2155,9 +2179,9 @@ bool mysql_create_like_table(Session* session,
     {
       if (name_lock)
       {
-        pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
+        LOCK_open.lock(); /* unlink open tables for create table like*/
         session->unlink_open_table(name_lock);
-        pthread_mutex_unlock(&LOCK_open);
+        LOCK_open.unlock();
       }
 
       return res;
@@ -2173,10 +2197,10 @@ bool mysql_create_like_table(Session* session,
     }
     else // Otherwise we create the table
     {
-      pthread_mutex_lock(&LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+      LOCK_open.lock(); /* We lock for CREATE TABLE LIKE to copy table definition */
       bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
                                              src_identifier, is_engine_set);
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
 
       // So we blew the creation of the table, and we scramble to clean up
       // anything that might have been created (read... it is a hack)
@@ -2192,9 +2216,9 @@ bool mysql_create_like_table(Session* session,
 
     if (name_lock)
     {
-      pthread_mutex_lock(&LOCK_open); /* unlink open tables for create table like*/
+      LOCK_open.lock(); /* unlink open tables for create table like*/
       session->unlink_open_table(name_lock);
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
     }
   }
 

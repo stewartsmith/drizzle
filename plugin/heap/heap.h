@@ -27,6 +27,8 @@
 #include <plugin/myisam/my_handler.h>
 #include "drizzled/tree.h"
 
+#include <vector>
+
 	/* defines used by heap-funktions */
 
 #define HP_MAX_LEVELS	4		/* 128^5 records is enough */
@@ -44,6 +46,18 @@ typedef struct st_heapinfo		/* Struct from heap_info */
   uint32_t reclength;			/* Length of one record */
   int errkey;
   uint64_t auto_increment;
+
+  st_heapinfo():
+    records(0),
+    deleted(0),
+    max_records(),
+    data_length(0),
+    index_length(0),
+    reclength(0),
+    errkey(0),
+    auto_increment(0)
+  { }
+
 } HEAPINFO;
 
 
@@ -71,6 +85,12 @@ struct st_level_info
     level.
   */
   HP_PTRS *last_blocks;
+
+  st_level_info():
+    free_ptrs_in_block(0),
+    records_under_level(0),
+    last_blocks(0)
+  { }
 };
 
 
@@ -98,6 +118,15 @@ typedef struct st_heap_block
   uint32_t records_in_block;		/* Records in one heap-block */
   uint32_t recbuffer;			/* Length of one saved record */
   uint32_t last_allocated; /* number of records there is allocated space for */
+
+  st_heap_block() :
+    root(NULL),
+    levels(0),
+    records_in_block(0),
+    recbuffer(0),
+    last_allocated(0)
+  {
+  }
 } HP_BLOCK;
 
 struct st_heap_info;			/* For referense */
@@ -145,6 +174,19 @@ typedef struct st_heap_dataspace   /* control data for data space */
   uint32_t offset_link;             /* Offset of the linking pointer relative to the chunk start */
   uint32_t is_variable_size;          /* Test whether records have variable size and so "next" pointer */
   uint64_t total_data_length;  /* Total size allocated within this data space */
+
+  st_heap_dataspace() :
+    chunk_count(0),
+    del_chunk_count(0),
+    del_link(0),
+    chunk_length(0),
+    chunk_dataspace_length(0),
+    offset_status(0),
+    offset_link(0),
+    is_variable_size(0),
+    total_data_length(0)
+  { }
+
 } HP_DATASPACE;
 
 
@@ -168,28 +210,65 @@ typedef struct st_heap_share
   uint32_t open_count;
 
 
-  char * name;			/* Name of "memory-file" */
+  std::string name;			/* Name of "memory-file" */
   drizzled::THR_LOCK lock;
-  pthread_mutex_t intern_lock;		/* Locking for use with _locking */
   bool delete_on_close;
   uint32_t auto_key;
   uint32_t auto_key_type;			/* real type of the auto key segment */
   uint64_t auto_increment;
+
+  st_heap_share() :
+    keydef(0),
+    column_defs(0),
+    min_records(0),
+    max_records(0),
+    index_length(0),
+    max_table_size(0),
+    key_stat_version(0),
+    records(0),
+    blength(0),
+    fixed_data_length(0),
+    fixed_column_count(0),
+    changed(0),
+    keys(0),
+    max_key_length(0),
+    column_count(0),
+    currently_disabled_keys(0),
+    open_count(0),
+    delete_on_close(0),
+    auto_key(0),
+    auto_key_type(0),
+    auto_increment(0)
+  { }
+
 } HP_SHARE;
 
 struct st_hp_hash_info;
 
 typedef struct st_heap_info
 {
+private:
   HP_SHARE *s;
+public:
+
+  HP_SHARE *getShare()
+  {
+    return s;
+  }
+
+  void setShare(HP_SHARE *s_arg)
+  {
+    s= s_arg;
+  }
+
   unsigned char *current_ptr;
   struct st_hp_hash_info *current_hash_ptr;
   uint32_t current_record,next_block;
   int lastinx,errkey;
   int  mode;				/* Mode of file (READONLY..) */
   uint32_t opt_flag,update;
-  unsigned char *lastkey;			/* Last used key with rkey */
-  unsigned char *recbuf;                         /* Record buffer for rb-tree keys */
+  std::vector <unsigned char> lastkey;			/* Last used key with rkey */
+  std::vector <unsigned char> recbuf;                         /* Record buffer for rb-tree keys */
   enum drizzled::ha_rkey_function last_find_flag;
   drizzled::TREE_ELEMENT *parents[drizzled::MAX_TREE_HEIGHT+1];
   drizzled::TREE_ELEMENT **last_pos;
@@ -231,7 +310,6 @@ extern int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
            HP_CREATE_INFO *create_info, HP_SHARE **share);
 
 extern int heap_delete_table(const char *name);
-extern void heap_drop_table(HP_INFO *info);
 extern int heap_extra(HP_INFO *info,enum drizzled::ha_extra_function function);
 extern int heap_reset(HP_INFO *info);
 extern int heap_rename(const char *old_name,const char *new_name);
@@ -254,7 +332,6 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
               drizzled::key_part_map keypart_map,
               enum drizzled::ha_rkey_function find_flag);
 extern unsigned char * heap_find(HP_INFO *info,int inx,const unsigned char *key);
-extern int heap_check_heap(HP_INFO *info, bool print_status);
 extern unsigned char *heap_position(HP_INFO *info);
 
 /* The following is for programs that uses the old HEAP interface where

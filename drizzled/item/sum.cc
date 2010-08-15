@@ -953,6 +953,7 @@ void Item_sum_distinct::fix_length_and_dec()
 {
   assert(args[0]->fixed);
 
+  null_value= maybe_null= true;
   table_field_type= args[0]->field_type();
 
   /* Adjust tmp table type according to the chosen aggregation type */

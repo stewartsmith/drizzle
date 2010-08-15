@@ -116,8 +116,6 @@ size_t my_pwrite(int Filedes, const unsigned char *Buffer, size_t Count,
       offset+=writenbytes;
     }
 #ifndef NO_BACKGROUND
-    if (my_thread_var->abort)
-      MyFlags&= ~ MY_WAIT_IF_FULL;		/* End if aborted by user */
     if ((errno == ENOSPC || errno == EDQUOT) &&
         (MyFlags & MY_WAIT_IF_FULL))
     {

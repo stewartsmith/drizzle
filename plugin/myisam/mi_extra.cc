@@ -240,16 +240,15 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     }
     break;
   case HA_EXTRA_FORCE_REOPEN:
-    pthread_mutex_lock(&THR_LOCK_myisam);
+    THR_LOCK_myisam.lock();
     share->last_version= 0L;			/* Impossible version */
-    pthread_mutex_unlock(&THR_LOCK_myisam);
+    THR_LOCK_myisam.unlock();
     break;
   case HA_EXTRA_PREPARE_FOR_DROP:
-    pthread_mutex_lock(&THR_LOCK_myisam);
+    THR_LOCK_myisam.lock();
     share->last_version= 0L;			/* Impossible version */
 #ifdef __WIN__REMOVE_OBSOLETE_WORKAROUND
     /* Close the isam and data files as Win32 can't drop an open table */
-    pthread_mutex_lock(&share->intern_lock);
     if (flush_key_blocks(share->key_cache, share->kfile,
 			 (function == HA_EXTRA_FORCE_REOPEN ?
 			  FLUSH_RELEASE : FLUSH_IGNORE_CHANGED)))
@@ -290,29 +289,18 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       }
     }
     share->kfile= -1;				/* Files aren't open anymore */
-    pthread_mutex_unlock(&share->intern_lock);
 #endif
-    pthread_mutex_unlock(&THR_LOCK_myisam);
+    THR_LOCK_myisam.unlock();
     break;
   case HA_EXTRA_FLUSH:
     if (!share->temporary)
-      flush_key_blocks(share->key_cache, share->kfile, FLUSH_KEEP);
+      flush_key_blocks(share->getKeyCache(), share->kfile, FLUSH_KEEP);
 #ifdef HAVE_PWRITE
     _mi_decrement_open_count(info);
 #endif
     if (share->not_flushed)
     {
-      share->not_flushed=0;
-      if (internal::my_sync(share->kfile, MYF(0)))
-	error= errno;
-      if (internal::my_sync(info->dfile, MYF(0)))
-	error= errno;
-      if (error)
-      {
-	share->changed=1;
-        mi_print_error(info->s, HA_ERR_CRASHED);
-	mi_mark_crashed(info);			/* Fatal error found */
-      }
+      share->not_flushed= false;
     }
     if (share->base.blobs)
       mi_alloc_rec_buff(info, -1, &info->rec_buff);

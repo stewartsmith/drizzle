@@ -31,6 +31,7 @@
 # endif
 #endif
 #include "drizzled/internal/my_pthread.h"
+#include "drizzled/internal/thread_var.h"
 
 #include <drizzled/sql_select.h>
 #include <drizzled/error.h>
@@ -343,7 +344,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
   bool result= false;
   Session *session= this;
 
-  pthread_mutex_lock(&LOCK_open); /* Optionally lock for remove tables from open_cahe if not in use */
+  LOCK_open.lock(); /* Optionally lock for remove tables from open_cahe if not in use */
 
   if (tables == NULL)
   {
@@ -422,8 +423,8 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
       If there is any table that has a lower refresh_version, wait until
       this is closed (or this thread is killed) before returning
     */
-    session->mysys_var->current_mutex= &LOCK_open;
-    session->mysys_var->current_cond= &COND_refresh;
+    session->mysys_var->current_mutex= LOCK_open.native_handle();
+    session->mysys_var->current_cond= COND_refresh.native_handle();
     session->set_proc_info("Flushing tables");
 
     session->close_old_data_files();
@@ -459,7 +460,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
                                                    (table->open_placeholder && wait_for_placeholders)))
         {
           found= true;
-          pthread_cond_wait(&COND_refresh,&LOCK_open);
+          pthread_cond_wait(COND_refresh.native_handle(),LOCK_open.native_handle());
           break;
         }
       }
@@ -483,7 +484,7 @@ bool Session::close_cached_tables(TableList *tables, bool wait_for_refresh, bool
     }
   }
 
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
 
   if (wait_for_refresh)
   {
@@ -507,7 +508,7 @@ bool Session::free_cached_table()
   bool found_old_table= false;
   Table *table= open_tables;
 
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
   assert(table->key_read == 0);
   assert(!table->cursor || table->cursor->inited == Cursor::NONE);
 
@@ -550,9 +551,9 @@ void Session::close_open_tables()
 {
   bool found_old_table= false;
 
-  safe_mutex_assert_not_owner(&LOCK_open);
+  safe_mutex_assert_not_owner(LOCK_open.native_handle());
 
-  pthread_mutex_lock(&LOCK_open); /* Close all open tables on Session */
+  LOCK_open.lock(); /* Close all open tables on Session */
 
   while (open_tables)
   {
@@ -566,7 +567,7 @@ void Session::close_open_tables()
     broadcast_refresh();
   }
 
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
 }
 
 /*
@@ -859,7 +860,7 @@ void Session::unlink_open_table(Table *find)
   char key[MAX_DBKEY_LENGTH];
   uint32_t key_length= find->getShare()->getCacheKeySize();
   Table *list, **prev;
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
 
   memcpy(key, &find->getMutableShare()->getCacheKey()[0], key_length);
   /*
@@ -921,14 +922,14 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   }
   else
   {
-    pthread_mutex_lock(&LOCK_open); /* Close and drop a table (AUX routine) */
+    LOCK_open.lock(); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
     */
     unlink_open_table(table);
     quick_rm_table(*this, identifier);
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
   }
 }
 
@@ -944,16 +945,16 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   cond	Condition to wait for
 */
 
-void Session::wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond)
+void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond)
 {
   /* Wait until the current table is up to date */
   const char *saved_proc_info;
-  mysys_var->current_mutex= mutex;
-  mysys_var->current_cond= cond;
+  mysys_var->current_mutex= mutex.native_handle();
+  mysys_var->current_cond= cond.native_handle();
   saved_proc_info= get_proc_info();
   set_proc_info("Waiting for table");
   if (!killed)
-    (void) pthread_cond_wait(cond, mutex);
+    (void) pthread_cond_wait(cond.native_handle(), mutex.native_handle());
 
   /*
     We must unlock mutex first to avoid deadlock becasue conditions are
@@ -966,7 +967,7 @@ void Session::wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond)
     mutex is unlocked
   */
 
-  pthread_mutex_unlock(mutex);
+  pthread_mutex_unlock(mutex.native_handle());
   pthread_mutex_lock(&mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
@@ -1005,7 +1006,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
   char *table_name= table_list->table_name;
   Table orig_table;
 
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
 
   if (killed || !table)
     return true;
@@ -1079,7 +1080,7 @@ bool Session::reopen_name_locked_table(TableList* table_list, bool link_in)
 
 Table *Session::table_cache_insert_placeholder(const char *db_name, const char *table_name)
 {
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
 
   /*
     Create a table entry with the right key and with an old refresh version
@@ -1125,7 +1126,7 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 {
   const TableIdentifier::Key &key(identifier.getKey());
 
-  pthread_mutex_lock(&LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
+  LOCK_open.lock(); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
   TableOpenCache::iterator iter;
 
@@ -1133,20 +1134,20 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 
   if (iter != get_open_cache().end())
   {
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
     *table= 0;
     return false;
   }
 
   if (not (*table= table_cache_insert_placeholder(identifier.getSchemaName().c_str(), identifier.getTableName().c_str())))
   {
-    pthread_mutex_unlock(&LOCK_open);
+    LOCK_open.unlock();
     return true;
   }
   (*table)->open_placeholder= true;
   (*table)->setNext(open_tables);
   open_tables= *table;
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
 
   return false;
 }
@@ -1286,7 +1287,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     on disk.
   */
 
-  pthread_mutex_lock(&LOCK_open); /* Lock for FLUSH TABLES for open table */
+  LOCK_open.lock(); /* Lock for FLUSH TABLES for open table */
 
   /*
     Actually try to find the table in the open_cache.
@@ -1338,7 +1339,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       /* Avoid self-deadlocks by detecting self-dependencies. */
       if (table->open_placeholder && table->in_use == this)
       {
-        pthread_mutex_unlock(&LOCK_open);
+        LOCK_open.unlock();
         my_error(ER_UPDATE_TABLE_USED, MYF(0), table->getMutableShare()->getTableName());
         return NULL;
       }
@@ -1372,11 +1373,11 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       if (table->in_use != this)
       {
         /* wait_for_conditionwill unlock LOCK_open for us */
-        wait_for_condition(&LOCK_open, &COND_refresh);
+        wait_for_condition(LOCK_open, COND_refresh);
       }
       else
       {
-        pthread_mutex_unlock(&LOCK_open);
+        LOCK_open.unlock();
       }
       /*
         There is a refresh in progress for this table.
@@ -1410,7 +1411,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         */
         if (!(table= table_cache_insert_placeholder(table_list->db, table_list->table_name)))
         {
-          pthread_mutex_unlock(&LOCK_open);
+          LOCK_open.unlock();
           return NULL;
         }
         /*
@@ -1421,7 +1422,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
         table->open_placeholder= true;
         table->setNext(open_tables);
         open_tables= table;
-        pthread_mutex_unlock(&LOCK_open);
+        LOCK_open.unlock();
 
         return table ;
       }
@@ -1432,7 +1433,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     table= new Table;
     if (table == NULL)
     {
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
       return NULL;
     }
 
@@ -1440,13 +1441,13 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
     if (error != 0)
     {
       delete table;
-      pthread_mutex_unlock(&LOCK_open);
+      LOCK_open.unlock();
       return NULL;
     }
     (void)add_table(table);
   }
 
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
   if (refresh)
   {
     table->setNext(open_tables); /* Link into simple list */
@@ -1602,7 +1603,7 @@ end:
 
 void Session::close_data_files_and_morph_locks(TableIdentifier &identifier)
 {
-  safe_mutex_assert_owner(&LOCK_open); /* Adjust locks at the end of ALTER TABLEL */
+  safe_mutex_assert_owner(LOCK_open.native_handle()); /* Adjust locks at the end of ALTER TABLEL */
 
   if (lock)
   {
@@ -1662,7 +1663,7 @@ bool Session::reopen_tables(bool get_locks, bool)
   if (open_tables == NULL)
     return false;
 
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
   if (get_locks)
   {
     /*
@@ -1859,14 +1860,14 @@ bool wait_for_tables(Session *session)
   bool result;
 
   session->set_proc_info("Waiting for tables");
-  pthread_mutex_lock(&LOCK_open); /* Lock for all tables to be refreshed */
+  LOCK_open.lock(); /* Lock for all tables to be refreshed */
   while (!session->killed)
   {
     session->some_tables_deleted= false;
     session->close_old_data_files(false, dropping_tables != 0);
     if (!table_is_used(session->open_tables, 1))
       break;
-    (void) pthread_cond_wait(&COND_refresh,&LOCK_open);
+    (void) pthread_cond_wait(COND_refresh.native_handle(),LOCK_open.native_handle());
   }
   if (session->killed)
     result= true;					// aborted
@@ -1877,7 +1878,7 @@ bool wait_for_tables(Session *session)
     session->version= refresh_version;
     result= session->reopen_tables(false, false);
   }
-  pthread_mutex_unlock(&LOCK_open);
+  LOCK_open.unlock();
   session->set_proc_info(0);
 
   return result;
@@ -2007,7 +2008,7 @@ static int open_unireg_entry(Session *session,
   TableShare *share;
   uint32_t discover_retry_count= 0;
 
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
 retry:
   if (not (share= TableShare::getShareCreate(session,
                                              identifier,
@@ -4464,7 +4465,7 @@ bool drizzle_rm_tmp_tables()
 
   plugin::StorageEngine::removeLostTemporaryTables(*session, drizzle_tmpdir.c_str());
 
-  pthread_mutex_lock(&session->LOCK_delete);
+  session->lockForDelete();
   delete session;
 
   return false;
@@ -4491,7 +4492,7 @@ and afterwards delete those marked unused.
 
 void remove_db_from_cache(const SchemaIdentifier &schema_identifier)
 {
-  safe_mutex_assert_owner(&LOCK_open);
+  safe_mutex_assert_owner(LOCK_open.native_handle());
 
   for (TableOpenCache::const_iterator iter= get_open_cache().begin();
        iter != get_open_cache().end();
@@ -4600,7 +4601,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
       {
         dropping_tables++;
         if (likely(signalled))
-          (void) pthread_cond_wait(&COND_refresh, &LOCK_open);
+          (void) pthread_cond_wait(COND_refresh.native_handle(), LOCK_open.native_handle());
         else
         {
           struct timespec abstime;
@@ -4615,7 +4616,7 @@ bool remove_table_from_cache(Session *session, TableIdentifier &identifier, uint
             remove_table_from_cache routine.
           */
           set_timespec(abstime, 10);
-          pthread_cond_timedwait(&COND_refresh, &LOCK_open, &abstime);
+          pthread_cond_timedwait(COND_refresh.native_handle(), LOCK_open.native_handle(), &abstime);
         }
         dropping_tables--;
         continue;
