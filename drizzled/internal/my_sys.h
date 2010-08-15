@@ -27,7 +27,6 @@
 # include <stdio.h>
 #endif
 
-#include "config.h"
 #include <errno.h>
 
 #include "drizzled/internal/my_pthread.h"
