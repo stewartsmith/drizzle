@@ -37,7 +37,8 @@ using namespace std;
 namespace drizzled
 {
 
-std::map<std::string, drizzled::message::Resultset> QueryCacheService::cache;
+QueryCacheService::CacheEntries QueryCacheService::cache;
+QueryCacheService::CachedTablesEntries QueryCacheService::cachedTables;
 
 message::Resultset &QueryCacheService::getCurrentResultsetMessage(Session *in_session)
 {
@@ -58,6 +59,7 @@ message::Resultset &QueryCacheService::getCurrentResultsetMessage(Session *in_se
   }
   return *resultset;
 }
+
 void QueryCacheService::setResultsetHeader(message::Resultset &resultset,
                                           Session *in_session,
                                           TableList *in_table)
@@ -76,6 +78,8 @@ void QueryCacheService::setResultsetHeader(message::Resultset &resultset,
     message::TableMeta *table_meta= header->add_table_meta();
     table_meta->set_schema_name(tmp_table->db, strlen(tmp_table->db));
     table_meta->set_table_name(tmp_table->table_name, strlen(tmp_table->table_name));
+    /* Populate the cached tables hash */
+    QueryCacheService::cachedTables[strcat(tmp_table->db, tmp_table->table_name)].push_back(in_session->query_cache_key);
   } 
 
   /* Extract the returned fields 
@@ -112,16 +116,21 @@ bool QueryCacheService::addRecord(Session *in_session, List<Item> &list)
 
     String *string_value= new (in_session->mem_root) String(QueryCacheService::DEFAULT_RECORD_SIZE);
     string_value->set_charset(system_charset_info);
-    Item *item;
-    while ((item=li++))
+    Item *current_field;
+    while ((current_field= li++))
     {
-      string_value= item->val_str(string_value);
-      if (string_value)
-      {
-        string s= String_to_std_string(*string_value); 
-        record->add_record_value(s.c_str(), s.length());
-        string_value->free();
-      }
+    if (current_field->is_null())
+    {
+      record->add_is_null(true);
+      record->add_record_value("", 0);
+    } 
+    else 
+    {
+      string_value= current_field->val_str(string_value);
+      record->add_is_null(false);
+      record->add_record_value(string_value->c_ptr(), string_value->length());
+      string_value->free();
+    }
     }
     return false;
   }
@@ -130,7 +139,7 @@ bool QueryCacheService::addRecord(Session *in_session, List<Item> &list)
 
 bool QueryCacheService::isCached(string query)
 {
-  Entries::iterator it= QueryCacheService::cache.find(query);
+  CacheEntries::iterator it= QueryCacheService::cache.find(query);
   if (it != QueryCacheService::cache.end())
      return true;
   return false;

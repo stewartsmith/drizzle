@@ -731,7 +731,6 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   }
   if (not res)
   {
-    cout << "results retrived from cache for the query : " << session->query << endl;
     return;
   }
   LEX *lex= session->lex;

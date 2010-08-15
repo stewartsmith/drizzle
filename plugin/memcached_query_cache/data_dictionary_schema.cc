@@ -80,7 +80,7 @@ bool QueryCacheTool::Generator::populate()
     return false;
   } 
 
-  QueryCacheService::Entry &entry= *it;
+  QueryCacheService::CacheEntry &entry= *it;
 
   push(entry.first);
   push(entry.second.schema());
@@ -88,5 +88,46 @@ bool QueryCacheTool::Generator::populate()
 
   it++;
 
+  return true;
+}
+
+/*
+ *
+ * Query_Cache_Cached_Tables view
+ *
+ */
+
+CachedTables::CachedTables() :
+  plugin::TableFunction("DATA_DICTIONARY", "QUERY_CACHED_TABLES")
+{
+  add_field("Table");
+  add_field("Cache_Keys");
+}
+
+CachedTables::Generator::Generator(Field **arg) :
+  plugin::TableFunction::Generator(arg)
+{
+  it= QueryCacheService::cachedTables.begin();
+  end= QueryCacheService::cachedTables.end(); 
+}
+
+bool CachedTables::Generator::populate()
+{
+  if (it == end)
+  { 
+    return false;
+  } 
+
+  QueryCacheService::CachedTablesEntry &entry= *it;
+
+  push(entry.first);
+  string list_keys;
+  vector<string>::iterator tmp;
+  for(tmp= entry.second.begin(); tmp != entry.second.end(); tmp++)
+  {
+    list_keys+= "::"+ *tmp;
+  }
+  push(list_keys);
+  it++;
   return true;
 }

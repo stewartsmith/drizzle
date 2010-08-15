@@ -49,8 +49,8 @@ public:
     Generator(drizzled::Field **arg);
     bool populate();
   private:
-    QueryCacheService::Entries::iterator it;
-    QueryCacheService::Entries::iterator end;
+    QueryCacheService::CacheEntries::iterator it;
+    QueryCacheService::CacheEntries::iterator end;
   };
 
   Generator *generator(drizzled::Field **arg)
@@ -58,6 +58,29 @@ public:
     return new Generator(arg);
   }
 };
+
+class CachedTables : public drizzled::plugin::TableFunction
+{
+public:
+
+  CachedTables();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator
+  {
+  public:
+    Generator(drizzled::Field **arg);
+    bool populate();
+  private:
+    QueryCacheService::CachedTablesEntries::iterator it;
+    QueryCacheService::CachedTablesEntries::iterator end;
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
 class QueryCacheStatusTool : public drizzled::plugin::TableFunction
 {
 public:

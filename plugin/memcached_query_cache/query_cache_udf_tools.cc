@@ -130,6 +130,7 @@ int64_t QueryCacheFlushFunction::val_int()
 
   res= MemcachedQueryCache::getClient()->flush(expiration);
   QueryCacheService::cache.clear();
+  QueryCacheService::cachedTables.clear();
 
   if (!res)
   {

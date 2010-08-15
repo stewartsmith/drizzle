@@ -43,6 +43,7 @@ message TableMeta
 message SelectRecord
 {
   repeated bytes record_value = 1;
+  repeated bool is_null = 2;
 }
 
 message SelectHeader

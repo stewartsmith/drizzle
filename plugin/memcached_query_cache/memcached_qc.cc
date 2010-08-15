@@ -34,6 +34,7 @@
 #include "drizzled/plugin.h"
 #include "drizzled/session.h"
 #include "drizzled/select_send.h"
+#include "drizzled/item/null.h"
 
 #include <gcrypt.h>
 #include <string.h>
@@ -43,6 +44,8 @@
 #include "memcached_qc.h"
 #include "query_cache_udf_tools.h"
 #include "data_dictionary_schema.h"
+#include "invalidator.h"
+
 
 using namespace drizzled;
 using namespace std;
@@ -173,8 +176,15 @@ bool MemcachedQueryCache::doSendCachedResultset(Session *session)
     message::SelectRecord record= data.record(j);
     for (size_t y= 0; y < num_fields; y++)
     {
-      string value=record.record_value(y);
-      item_list.push_back(new Item_string(value.c_str(), value.length(), system_charset_info));
+      if(record.is_null(y))
+      {
+        item_list.push_back(new Item_null());
+      }
+      else
+      {
+        string value=record.record_value(y);
+        item_list.push_back(new Item_string(value.c_str(), value.length(), system_charset_info));
+      }
     }
     result->send_data(item_list);
     item_list.empty();
@@ -189,14 +199,16 @@ bool MemcachedQueryCache::doSendCachedResultset(Session *session)
 /* Check if the tables in the query do not contain
  * Data_dictionary
  */
-bool MemcachedQueryCache::checkTables(TableList* in_table)
+void MemcachedQueryCache::checkTables(Session *session, TableList* in_table)
 {
   for (TableList* tmp_table= in_table; tmp_table; tmp_table= tmp_table->next_global)
   {
     if (strcasecmp(tmp_table->db, "DATA_DICTIONARY") == 0)
-      return true;
+    {
+      session->lex->setCacheable(false);
+      break;
+    }
   } 
-  return false;
 }
 
 /* init the current resultset in the session
@@ -204,11 +216,7 @@ bool MemcachedQueryCache::checkTables(TableList* in_table)
  */
 bool MemcachedQueryCache::doPrepareResultset(Session *session)
 {		
-  /* Check if the Query is Cacheable */
-  if(checkTables(session->lex->query_tables) || (strcasecmp(session->db.c_str(), "DATA_DICTIONARY")==0))
-    session->lex->setCacheable(false);
-  if (not session->lex->isCacheable())
-    cout << "uncacheable query : " << session->query << endl;
+  checkTables(session, session->lex->query_tables);
   if (SessionVAR(session, enable) && session->lex->isCacheable())
   {
     /* Prepare and set the key for the session */
@@ -260,21 +268,20 @@ bool MemcachedQueryCache::doSetResultset(Session *session)
     memcpy(&raw[0], output.c_str(), output.size());
     if(not client->set(session->query_cache_key, raw, expiry, flags))
     {
-      std::cout << "Tentative to cache in Memc failed" << std::endl;
       session->setResultsetMessage(NULL);
       return false;
     }
-
     
-     /* Clear the Selectdata from the Resultset to be localy cached
+    /* Clear the Selectdata from the Resultset to be localy cached
+     * Comment if Keeping the data in the header is needed
      */
-    resultset->clear_select_data(); // comment if the keeping the data in the header is needed
+    resultset->clear_select_data();
 
     /* add the Resultset (including the header) to the hash 
      * This is done after the memcached set
      */
     queryCacheService.cache[session->query_cache_key]= *resultset;
-    cout << "Results cached for query : " << session->query << endl;
+
     /* endup the current statement */
     session->setResultsetMessage(NULL);
     return true;
@@ -326,12 +333,18 @@ plugin::Create_function<QueryCacheFlushFunction> *query_cache_flush_func= NULL;
 /** DATA_DICTIONARY views */
 static QueryCacheTool *query_cache_tool;
 static QueryCacheStatusTool *query_cache_status;
+static CachedTables *query_cached_tables;
 
 static int init(module::Context &context)
 {
-  MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", "localhost:11211");
+  MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", sysvar_memcached_servers);
   context.add(memc);
-
+  Invalidator* invalidator= new Invalidator("Memcached_Query_Cache_Invalidator");
+  context.add(invalidator);
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  string replicator_name("default_replicator");
+  replication_services.attachApplier(invalidator, replicator_name);
+  
   /* Setup the module's UDFs */
   print_query_cache_meta_func_factory=
     new plugin::Create_function<PrintQueryCacheMetaFunction>("print_query_cache_meta");
@@ -345,6 +358,8 @@ static int init(module::Context &context)
   context.add(query_cache_tool);
   query_cache_status= new (nothrow) QueryCacheStatusTool();
   context.add(query_cache_status);
+  query_cached_tables= new (nothrow) CachedTables();
+  context.add(query_cached_tables);
   
   return 0;
 }

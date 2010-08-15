@@ -5,6 +5,7 @@
 
 --disable_warnings
 DROP TABLE IF EXISTS `t1`;
+DROP TABLE IF EXISTS `t2`;
 --enable_warnings
 
 --replace_result $MC_PORT MC_A_PORT

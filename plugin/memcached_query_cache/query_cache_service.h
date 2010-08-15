@@ -32,6 +32,7 @@
 #include "drizzled/message/resultset.pb.h"
 #include <drizzled/sql_list.h>
 #include <map>
+#include <vector>
 
 namespace drizzled
 {
@@ -46,11 +47,15 @@ class Resultset;
 class QueryCacheService
 {
 public:
-  typedef std::map<std::string, drizzled::message::Resultset> Entries;
-  typedef std::pair<const std::string, drizzled::message::Resultset> Entry;
+
+  typedef std::map<std::string, drizzled::message::Resultset> CacheEntries;
+  typedef std::pair<const std::string, drizzled::message::Resultset> CacheEntry;
+  typedef std::map<std::string, std::vector<std::string>> CachedTablesEntries;
+  typedef std::pair<const std::string, std::vector<std::string>> CachedTablesEntry;
+
   static const size_t DEFAULT_RECORD_SIZE= 100;
-  static Entries cache; // ToDo: make private
-  List<Item> previousItem;  //ToDo: remove
+  static CacheEntries cache;
+  static CachedTablesEntries cachedTables;
 
   /**
    * Singleton method

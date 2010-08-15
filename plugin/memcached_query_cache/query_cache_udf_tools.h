@@ -77,7 +77,7 @@ public:
 
   const char *func_name() const
   {
-    return "memc_add";
+    return "query_cache_flush";
   }
 
   int64_t val_int();
@@ -86,9 +86,9 @@ public:
   {
     max_length= 32;
   }
-/*
- * memc_add takes 2 or 3 arguments
-*/
+  /*
+   * query_cache_flush takes 0 or 1 arguments
+   */
   bool check_argument_count(int n)
   {
     return ((n == 1)||(n == 0));

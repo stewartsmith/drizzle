@@ -26,61 +26,68 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef MEMCACHED_QC_H
-#define MEMCACHED_QC_H
 
-#include "drizzled/plugin/query_cache.h"
-#include "query_cache_service.h"
-#include "drizzled/atomics.h"
-#include <libmemcached/memcached.hpp>
+#ifndef QUERY_CACHE_INVALIDATOR_H
+#define QUERY_CACHE_INVALIDATOR_H
 
-namespace drizzled 
+#include <drizzled/replication_services.h>
+
+#include <drizzled/plugin/transaction_replicator.h>
+#include <drizzled/plugin/transaction_applier.h>
+#include <drizzled/message/transaction.pb.h>
+
+#include <string>
+
+namespace drizzled
 {
   class Session;
-  class select_result;
-  class String;
-  class TableList;
 }
-class MemcachedQueryCache : public drizzled::plugin::QueryCache
+class Invalidator : public drizzled::plugin::TransactionApplier 
 {
-private:
-  pthread_mutex_t mutex;  
-  drizzled::QueryCacheService queryCacheService;
-  static memcache::Memcache* client;
-  static std::string memcached_servers;
-
 public:
+
+  Invalidator(std::string name_arg);
+
+  /** Destructor */
+  ~Invalidator() {}
+
+  /**
+   * Does something with the transaction message
+   *
+   * @param transaction message to be invalidated if present in the cache
+   */
+  drizzled::plugin::ReplicationReturnCode
+  apply(drizzled::Session &in_session,
+        const drizzled::message::Transaction &to_apply);
   
-  explicit MemcachedQueryCache(std::string name_arg, std::string servers_arg): drizzled::plugin::QueryCache(name_arg)
-  {
-    client= new memcache::Memcache(servers_arg);
-    queryCacheService= drizzled::QueryCacheService::singleton();
-  }
-  ~MemcachedQueryCache()
-  {
-    free(client);
-  };
-  bool doIsCached(drizzled::Session *session);
-  bool doSendCachedResultset(drizzled::Session *session);
-  bool doPrepareResultset(drizzled::Session *session);
-  bool doInsertRecord(drizzled::Session *session, drizzled::List<drizzled::Item> &item);
-  bool doSetResultset(drizzled::Session *session);
-  char* md5_key(const char* str);
-  void checkTables(drizzled::Session *session, drizzled::TableList* in_table);
-  bool isSelect(std::string query);
-  static memcache::Memcache* getClient()
-  {
-    return client;
-  }
-  static const char *getServers()
-  {
-    return memcached_servers.c_str();
-  }
-  static void setServers(const char *server_list)
-  {
-    memcached_servers.assign(server_list);
-    getClient()->setServers(memcached_servers);
-  }
+
+private:
+
+  /**
+   * Given a supplied Statement message, parse out the table
+   * and schema name from the various metadata and header 
+   * pieces for the different Statement types.
+   *
+   * @param[in] Statement to parse
+   * @param[out] Schema name
+   * @param[out] Table name
+   */
+  void parseStatementTableMetadata(const drizzled::message::Statement &in_statement,
+                                   std::string &in_schema_name,
+                                   std::string &in_table_name) const;
+
+  /**
+   * Given a schema name and table name, delete all the entries
+   * of the table from the cache.
+   *
+   * @param[in] stmt The statement message
+   * @param[in] Schema name
+   * @param[in] Table name
+   */
+  void invalidateByTableName(const std::string &in_schema_name,
+                             const std::string &in_table_name) const;
+
 
 };
-#endif /* MEMCACHED_QC_h */
+
+#endif /* QUERY_CACHE_INVALIDATOR_H */
