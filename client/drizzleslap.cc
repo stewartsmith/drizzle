@@ -371,16 +371,12 @@ public:
   void setString(char *in_string)
   {
     string= in_string;
+    length= strlen(in_string);
   }
 
   void setOptionLength(size_t in_option_length)
   {
     option_length= in_option_length;
-  }
-
-  void setLength(size_t in_length)
-  {
-    length= in_length;
   }
 
   void setOption(char *in_option)
@@ -1715,7 +1711,6 @@ build_select_string(bool key)
 static int
 process_options(void)
 {
-  char *tmp_string;
   struct stat sbuf;
   OptionString *sql_type;
   unsigned int sql_type_count= 0;
@@ -1973,6 +1968,7 @@ process_options(void)
     if (!create_string.empty() && !stat(create_string.c_str(), &sbuf))
     {
       int data_file;
+      std::vector<char> tmp_string;
       if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: Create file was not a regular file\n",
@@ -1989,23 +1985,15 @@ process_options(void)
         fprintf(stderr, "Request for more memory than architecture supports\n");
         exit(1);
       }
-      tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
-      if (tmp_string == NULL)
-      {
-        fprintf(stderr, "Memory Allocation error in option processing\n");
-        exit(1);
-      }
-      memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-      bytes_read= read(data_file, (unsigned char*) tmp_string,
+      tmp_string.resize(sbuf.st_size + 1);
+      bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
                        (size_t)sbuf.st_size);
-      tmp_string[sbuf.st_size]= '\0';
       close(data_file);
       if (bytes_read != sbuf.st_size)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
       }
-      parse_delimiter(tmp_string, &create_statements, delimiter[0]);
-      free(tmp_string);
+      parse_delimiter(&tmp_string[0], &create_statements, delimiter[0]);
     }
     else if (!create_string.empty())
     {
@@ -2030,6 +2018,8 @@ process_options(void)
     if (!user_supplied_query.empty() && !stat(user_supplied_query.c_str(), &sbuf))
     {
       int data_file;
+      std::vector<char> tmp_string;
+
       if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: User query supplied file was not a regular file\n",
@@ -2046,25 +2036,17 @@ process_options(void)
         fprintf(stderr, "Request for more memory than architecture supports\n");
         exit(1);
       }
-      tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
-      if (tmp_string == NULL)
-      {
-        fprintf(stderr, "Memory Allocation error in option processing\n");
-        exit(1);
-      }
-      memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-      bytes_read= read(data_file, (unsigned char*) tmp_string,
+      tmp_string.resize((size_t)(sbuf.st_size + 1));
+      bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
                        (size_t)sbuf.st_size);
-      tmp_string[sbuf.st_size]= '\0';
       close(data_file);
       if (bytes_read != sbuf.st_size)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
       }
       if (!user_supplied_query.empty())
-        actual_queries= parse_delimiter(tmp_string, &query_statements[0],
+        actual_queries= parse_delimiter(&tmp_string[0], &query_statements[0],
                                         delimiter[0]);
-      free(tmp_string);
     }
     else if (!user_supplied_query.empty())
     {
@@ -2077,6 +2059,8 @@ process_options(void)
       && !stat(user_supplied_pre_statements.c_str(), &sbuf))
   {
     int data_file;
+    std::vector<char> tmp_string;
+
     if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
@@ -2093,25 +2077,17 @@ process_options(void)
       fprintf(stderr, "Request for more memory than architecture supports\n");
       exit(1);
     }
-    tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
-    if (tmp_string == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in option processing\n");
-      exit(1);
-    }
-    memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-    bytes_read= read(data_file, (unsigned char*) tmp_string,
+    tmp_string.resize((size_t)(sbuf.st_size + 1));
+    bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
                      (size_t)sbuf.st_size);
-    tmp_string[sbuf.st_size]= '\0';
     close(data_file);
     if (bytes_read != sbuf.st_size)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
     }
     if (!user_supplied_pre_statements.empty())
-      (void)parse_delimiter(tmp_string, &pre_statements,
+      (void)parse_delimiter(&tmp_string[0], &pre_statements,
                             delimiter[0]);
-    free(tmp_string);
   }
   else if (!user_supplied_pre_statements.empty())
   {
@@ -2124,6 +2100,8 @@ process_options(void)
       && !stat(user_supplied_post_statements.c_str(), &sbuf))
   {
     int data_file;
+    std::vector<char> tmp_string;
+
     if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
@@ -2141,26 +2119,18 @@ process_options(void)
       fprintf(stderr, "Request for more memory than architecture supports\n");
       exit(1);
     }
-    tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
-    if (tmp_string == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in option processing\n");
-      exit(1);
-    }
-    memset(tmp_string, 0, (size_t)(sbuf.st_size+1));
+    tmp_string.resize((size_t)(sbuf.st_size + 1));
 
-    bytes_read= read(data_file, (unsigned char*) tmp_string,
+    bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
                      (size_t)(sbuf.st_size));
-    tmp_string[sbuf.st_size]= '\0';
     close(data_file);
     if (bytes_read != sbuf.st_size)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
     }
     if (!user_supplied_post_statements.empty())
-      (void)parse_delimiter(tmp_string, &post_statements,
+      (void)parse_delimiter(&tmp_string[0], &post_statements,
                             delimiter[0]);
-    free(tmp_string);
   }
   else if (!user_supplied_post_statements.empty())
   {
@@ -2809,7 +2779,6 @@ parse_option(const char *origin, OptionString **stmt, char delm)
       tmp->setOption(tmp->getOptionLength(),0); 
     }
 
-    tmp->setLength(strlen(buffer));
     tmp->setString(strdup(buffer));
     if (tmp->getString() == NULL)
     {
