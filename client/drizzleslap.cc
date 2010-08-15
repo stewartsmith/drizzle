@@ -181,7 +181,7 @@ static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
 string concurrency_str;
 string create_string;
-uint32_t *concurrency;
+std::vector <uint32_t> concurrency;
 
 const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 std::string opt_csv_str;
@@ -785,7 +785,7 @@ static unsigned int query_statements_count;
 void print_conclusions(Conclusions *con);
 void print_conclusions_csv(Conclusions *con);
 void generate_stats(Conclusions *con, OptionString *eng, Stats *sptr);
-uint32_t parse_comma(const char *string, uint32_t **range);
+uint32_t parse_comma(const char *string, std::vector <uint32_t> &range);
 uint32_t parse_delimiter(const char *script, Statement **stmt, char delm);
 uint32_t parse_option(const char *origin, OptionString **stmt, char delm);
 static int drop_schema(drizzle_con_st *con, const char *db);
@@ -1103,9 +1103,9 @@ burnin:
       if (verbose >= 2)
         printf("Starting Concurrency Test\n");
 
-      if (*concurrency)
+      if (concurrency.size())
       {
-        for (current= concurrency; current && *current; current++)
+        for (current= &concurrency[0]; current && *current; current++)
           concurrency_loop(&con, *current, eptr);
       }
       else
@@ -1138,7 +1138,7 @@ burnin:
     if (!opt_password.empty())
       opt_password.erase();
 
-    free(concurrency);
+    concurrency.clear();
 
     statement_cleanup(create_statements);
     for (x= 0; x < query_statements_count; x++)
@@ -1747,7 +1747,7 @@ process_options(void)
     exit(1);
   }
 
-  parse_comma(!concurrency_str.empty() ? concurrency_str.c_str() : "1", &concurrency);
+  parse_comma(!concurrency_str.empty() ? concurrency_str.c_str() : "1", concurrency);
 
   if (!opt_csv_str.empty())
   {
@@ -2824,7 +2824,7 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
   In restrospect, this is a lousy name from this function.
 */
 uint
-parse_comma(const char *string, uint32_t **range)
+parse_comma(const char *string, std::vector <uint32_t> &range)
 {
   unsigned int count= 1,x; /* We know that there is always one */
   char *retstr;
@@ -2835,8 +2835,8 @@ parse_comma(const char *string, uint32_t **range)
     if (*ptr == ',') count++;
 
   /* One extra spot for the NULL */
-  nptr= *range= (uint32_t *)malloc(sizeof(unsigned int) * (count + 1));
-  memset(nptr, 0, sizeof(unsigned int) * (count + 1));
+  range.resize(count +1);
+  nptr= &range[0];
 
   ptr= (char *)string;
   x= 0;
