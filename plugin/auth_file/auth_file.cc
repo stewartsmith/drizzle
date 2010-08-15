@@ -28,7 +28,11 @@
 #include "drizzled/security_context.h"
 #include "drizzled/util/convert.h"
 #include "drizzled/algorithm/sha1.h"
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
+#include <iostream>
 
+namespace po= boost::program_options;
 using namespace std;
 using namespace drizzled;
 
@@ -208,6 +212,13 @@ bool AuthFile::authenticate(const SecurityContext &sctx, const string &password)
 
 static int init(module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+
+  if (vm.count("users"))
+  {
+    users_file= const_cast<char *>(vm["users"].as<string>().c_str());
+  }
+
   AuthFile *auth_file = new AuthFile("auth_file");
   if (!auth_file->loadFile())
   {
@@ -235,6 +246,13 @@ static drizzle_sys_var* sys_variables[]=
   NULL
 };
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("users", 
+          po::value<string>()->default_value(DEFAULT_USERS_FILE),
+          N_("File to load for usernames and passwords"));
+}
+
 } /* namespace auth_file */
 
-DRIZZLE_PLUGIN(auth_file::init, auth_file::sys_variables, NULL);
+DRIZZLE_PLUGIN(auth_file::init, auth_file::sys_variables, auth_file::init_options);
