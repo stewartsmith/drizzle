@@ -224,7 +224,7 @@ int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
       ha_heap::info(), which is always called before key statistics are
       used.
     */
-    key_stat_version= file->s->key_stat_version - 1;
+    key_stat_version= file->getShare()->key_stat_version - 1;
   }
   return (file ? 0 : 1);
 }
@@ -252,7 +252,7 @@ Cursor *ha_heap::clone(memory::Root *)
                              table->getShare()->getTableName(),
                              table->getShare()->getPath());
 
-  if (new_handler && !new_handler->ha_open(identifier, table, file->s->name, table->db_stat,
+  if (new_handler && !new_handler->ha_open(identifier, table, file->getShare()->name.c_str(), table->db_stat,
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
@@ -306,8 +306,8 @@ void ha_heap::update_key_stats()
         key->rec_per_key[key->key_parts-1]= 1;
       else
       {
-        ha_rows hash_buckets= file->s->keydef[i].hash_buckets;
-        uint32_t no_records= hash_buckets ? (uint) (file->s->records/hash_buckets) : 2;
+        ha_rows hash_buckets= file->getShare()->keydef[i].hash_buckets;
+        uint32_t no_records= hash_buckets ? (uint) (file->getShare()->records/hash_buckets) : 2;
         if (no_records < 2)
           no_records= 2;
         key->rec_per_key[key->key_parts-1]= no_records;
@@ -316,7 +316,7 @@ void ha_heap::update_key_stats()
   }
   records_changed= 0;
   /* At the end of update_key_stats() we can proudly claim they are OK. */
-  key_stat_version= file->s->key_stat_version;
+  key_stat_version= file->getShare()->key_stat_version;
 }
 
 
@@ -330,13 +330,13 @@ int ha_heap::doInsertRecord(unsigned char * buf)
   }
   res= heap_write(file,buf);
   if (!res && (++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
-               file->s->records))
+               file->getShare()->records))
   {
     /*
        We can perform this safely since only one writer at the time is
        allowed on the table.
     */
-    file->s->key_stat_version++;
+    file->getShare()->key_stat_version++;
   }
   return res;
 }
@@ -347,13 +347,13 @@ int ha_heap::doUpdateRecord(const unsigned char * old_data, unsigned char * new_
 
   res= heap_update(file,old_data,new_data);
   if (!res && ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD >
-              file->s->records)
+              file->getShare()->records)
   {
     /*
        We can perform this safely since only one writer at the time is
        allowed on the table.
     */
-    file->s->key_stat_version++;
+    file->getShare()->key_stat_version++;
   }
   return res;
 }
@@ -364,13 +364,13 @@ int ha_heap::doDeleteRecord(const unsigned char * buf)
 
   res= heap_delete(file,buf);
   if (!res && table->getShare()->getType() == message::Table::STANDARD &&
-      ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->s->records)
+      ++records_changed*MEMORY_STATS_UPDATE_THRESHOLD > file->getShare()->records)
   {
     /*
        We can perform this safely since only one writer at the time is
        allowed on the table.
     */
-    file->s->key_stat_version++;
+    file->getShare()->key_stat_version++;
   }
   return res;
 }
@@ -492,7 +492,7 @@ int ha_heap::info(uint32_t flag)
     have to update the key statistics. Hoping that a table lock is now
     in place.
   */
-  if (key_stat_version != file->s->key_stat_version)
+  if (key_stat_version != file->getShare()->key_stat_version)
     update_key_stats();
   return 0;
 }
@@ -518,7 +518,7 @@ int ha_heap::delete_all_rows()
        We can perform this safely since only one writer at the time is
        allowed on the table.
     */
-    file->s->key_stat_version++;
+    file->getShare()->key_stat_version++;
   }
   return 0;
 }
@@ -632,7 +632,7 @@ int ha_heap::indexes_are_disabled(void)
 
 void ha_heap::drop_table(const char *)
 {
-  file->s->delete_on_close= 1;
+  file->getShare()->delete_on_close= 1;
   close();
 }
 
@@ -662,7 +662,7 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
     return stats.records;
 
   /* Assert that info() did run. We need current statistics here. */
-  assert(key_stat_version == file->s->key_stat_version);
+  assert(key_stat_version == file->getShare()->key_stat_version);
   return key->rec_per_key[key->key_parts-1];
 }
 
@@ -695,13 +695,13 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
                                   message::Table &create_proto,
                                   HP_SHARE **internal_share)
 {
-  uint32_t key, parts, mem_per_row_keys= 0, keys= table_arg->getShare()->sizeKeys();
+  uint32_t key, parts, mem_per_row_keys= 0;
+  uint32_t keys= table_arg->getShare()->sizeKeys();
   uint32_t auto_key= 0, auto_key_type= 0;
   uint32_t max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
-  uint32_t column_idx, column_count= table_arg->getShare()->sizeFields();
-  HP_COLUMNDEF *columndef;
-  HP_KEYDEF *keydef;
-  HA_KEYSEG *seg;
+  uint32_t column_count= table_arg->getShare()->sizeFields();
+  std::vector<HP_COLUMNDEF> columndef;
+  std::vector<HP_KEYDEF> keydef;
   char buff[FN_REFLEN];
   int error;
   bool found_real_auto_increment= 0;
@@ -716,13 +716,12 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   if (num_rows > UINT32_MAX)
     return -1;
 
-  if (!(columndef= (HP_COLUMNDEF*) malloc(column_count * sizeof(HP_COLUMNDEF))))
-    return errno;
+  columndef.resize(column_count);
 
-  for (column_idx= 0; column_idx < column_count; column_idx++)
+  for (uint32_t column_idx= 0; column_idx < column_count; column_idx++)
   {
     Field* field= *(table_arg->getFields() + column_idx);
-    HP_COLUMNDEF* column= columndef + column_idx;
+    HP_COLUMNDEF* column= &columndef[column_idx];
     column->type= (uint16_t)field->type();
     column->length= field->pack_length();
     column->offset= field->offset(field->getTable()->getInsertRecord());
@@ -751,14 +750,11 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   for (key= parts= 0; key < keys; key++)
     parts+= table_arg->key_info[key].key_parts;
 
-  if (!(keydef= (HP_KEYDEF*) malloc(keys * sizeof(HP_KEYDEF) +
-				    parts * sizeof(HA_KEYSEG))))
-  {
-    free((void *) columndef);
-    return errno;
-  }
+  keydef.resize(keys);
+  std::vector<HA_KEYSEG> seg_buffer;
+  seg_buffer.resize(parts);
+  HA_KEYSEG *seg= &seg_buffer[0];
 
-  seg= reinterpret_cast<HA_KEYSEG*> (keydef + keys);
   for (key= 0; key < keys; key++)
   {
     KeyInfo *pos= &table_arg->key_info[key];
@@ -788,7 +784,9 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
       Field *field= key_part->field;
 
       if (pos->algorithm == HA_KEY_ALG_BTREE)
+      {
 	seg->type= field->key_type();
+      }
       else
       {
         if ((seg->type = field->key_type()) != (int) HA_KEYTYPE_TEXT &&
@@ -871,16 +869,13 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
 
   error= heap_create(internal::fn_format(buff,table_name,"","",
                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),
-                    keys, keydef,
-                    column_count, columndef,
+                    keys, &keydef[0],
+                    column_count, &columndef[0],
                     max_key_fieldnr, key_part_size,
                     table_arg->getShare()->getRecordLength(), mem_per_row_keys,
                     static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
                     0, // Factor out MIN
                     &hp_create_info, internal_share);
-
-  free((unsigned char*) keydef);
-  free((void *) columndef);
 
   return (error);
 }

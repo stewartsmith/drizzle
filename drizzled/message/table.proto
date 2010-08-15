@@ -34,10 +34,30 @@ message Table {
   }
 
   message ForeignKeyConstraint {
-    required string name = 1;
-    required Field dependent = 2;
-    required Field parent = 3;
-    /** @TODO Finish this off... */
+    optional string name = 1;
+    repeated string column_names = 2;
+    required string references_table_name = 3;
+    repeated string references_columns = 4;
+
+    enum ForeignKeyMatchOption {
+      MATCH_UNDEFINED = 0;
+      MATCH_FULL = 1;
+      MATCH_PARTIAL = 2;
+      MATCH_SIMPLE = 3;
+    }
+    required ForeignKeyMatchOption match = 5;
+
+    enum ForeignKeyOption {
+      OPTION_UNDEF = 0;
+      OPTION_RESTRICT = 1;
+      OPTION_CASCADE = 2;
+      OPTION_SET_NULL = 3;
+      OPTION_NO_ACTION = 4;
+      OPTION_DEFAULT = 5;
+    }
+
+    required ForeignKeyOption update_option = 6 [ default = OPTION_UNDEF ];
+    required ForeignKeyOption delete_option = 7 [ default = OPTION_UNDEF ];
   }
 
   message Field {

@@ -23,7 +23,7 @@ using namespace drizzled;
 
 int heap_rlast(HP_INFO *info, unsigned char *record, int inx)
 {
-  HP_SHARE *share=    info->s;
+  HP_SHARE *share=    info->getShare();
   HP_KEYDEF *keyinfo= share->keydef + inx;
 
   info->lastinx= inx;

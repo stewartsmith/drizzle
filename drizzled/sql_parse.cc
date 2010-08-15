@@ -54,7 +54,6 @@
 #include <algorithm>
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/thread_var.h"
 
 using namespace std;
 
@@ -269,7 +268,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   if (session->killed == Session::KILL_QUERY || session->killed == Session::KILL_BAD_DATA)
   {
     session->killed= Session::NOT_KILLED;
-    session->mysys_var->abort= 0;
+    session->setAbort(false);
   }
 
   /* Can not be true, but do not take chances in production. */

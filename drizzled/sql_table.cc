@@ -888,6 +888,30 @@ static int mysql_prepare_create_table(Session *session,
                  ER(ER_KEY_REF_DO_NOT_MATCH_TABLE_REF));
 	return(true);
       }
+
+      message::Table::ForeignKeyConstraint *pfkey= create_proto.add_fk_constraint();
+      if (fk_key->name.str)
+        pfkey->set_name(fk_key->name.str);
+
+      pfkey->set_match(fk_key->match_opt);
+      pfkey->set_update_option(fk_key->update_opt);
+      pfkey->set_delete_option(fk_key->delete_opt);
+
+      pfkey->set_references_table_name(fk_key->ref_table->table.str);
+
+      Key_part_spec *keypart;
+      List_iterator<Key_part_spec> col_it(fk_key->columns);
+      while ((keypart= col_it++))
+      {
+        pfkey->add_column_names(keypart->field_name.str);
+      }
+
+      List_iterator<Key_part_spec> ref_it(fk_key->ref_columns);
+      while ((keypart= ref_it++))
+      {
+        pfkey->add_references_columns(keypart->field_name.str);
+      }
+
       continue;
     }
     (*key_count)++;
@@ -1861,8 +1885,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
       LOCK_open.lock(); /* Lock type is TL_WRITE and we lock to repair the table */
-      const char *old_message=session->enter_cond(COND_refresh.native_handle(), LOCK_open.native_handle(),
-					      "Waiting to get writelock");
+      const char *old_message=session->enter_cond(COND_refresh, LOCK_open,
+                                                  "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
       TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
       remove_table_from_cache(session, identifier,

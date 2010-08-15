@@ -107,7 +107,6 @@
 #include "keycache.h"
 #include "drizzled/internal/m_string.h"
 #include "drizzled/internal/my_bit.h"
-#include "drizzled/internal/thread_var.h"
 #include <errno.h>
 #include <stdarg.h>
 

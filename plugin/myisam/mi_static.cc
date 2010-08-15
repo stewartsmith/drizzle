@@ -31,7 +31,7 @@ uint	myisam_quick_table_bits=9;
 uint32_t myisam_block_size= MI_KEY_BLOCK_LENGTH;		/* Best by test */
 uint32_t myisam_concurrent_insert= 2;
 uint32_t myisam_bulk_insert_tree_size=8192*1024;
-uint32_t data_pointer_size=4;
+uint32_t data_pointer_size= 6;
 
 /*
   read_vec[] is used for converting between P_READ_KEY.. and SEARCH_

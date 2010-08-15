@@ -42,10 +42,8 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint32_t flag)
     return(0);				/* Compatible with ISAM */
   if (!(flag & HA_STATUS_NO_LOCK))
   {
-    pthread_mutex_lock(&share->intern_lock);
     _mi_readinfo(info,F_RDLCK,0);
     fast_mi_writeinfo(info);
-    pthread_mutex_unlock(&share->intern_lock);
   }
   if (flag & HA_STATUS_VARIABLE)
   {

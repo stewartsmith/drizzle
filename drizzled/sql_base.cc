@@ -945,16 +945,16 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   cond	Condition to wait for
 */
 
-void Session::wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond)
+void Session::wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond)
 {
   /* Wait until the current table is up to date */
   const char *saved_proc_info;
-  mysys_var->current_mutex= mutex;
-  mysys_var->current_cond= cond;
+  mysys_var->current_mutex= mutex.native_handle();
+  mysys_var->current_cond= cond.native_handle();
   saved_proc_info= get_proc_info();
   set_proc_info("Waiting for table");
   if (!killed)
-    (void) pthread_cond_wait(cond, mutex);
+    (void) pthread_cond_wait(cond.native_handle(), mutex.native_handle());
 
   /*
     We must unlock mutex first to avoid deadlock becasue conditions are
@@ -967,7 +967,7 @@ void Session::wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond)
     mutex is unlocked
   */
 
-  pthread_mutex_unlock(mutex);
+  pthread_mutex_unlock(mutex.native_handle());
   pthread_mutex_lock(&mysys_var->mutex);
   mysys_var->current_mutex= 0;
   mysys_var->current_cond= 0;
@@ -1373,7 +1373,7 @@ Table *Session::openTable(TableList *table_list, bool *refresh, uint32_t flags)
       if (table->in_use != this)
       {
         /* wait_for_conditionwill unlock LOCK_open for us */
-        wait_for_condition(LOCK_open.native_handle(), COND_refresh.native_handle());
+        wait_for_condition(LOCK_open, COND_refresh);
       }
       else
       {

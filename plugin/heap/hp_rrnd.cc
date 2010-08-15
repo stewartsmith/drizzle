@@ -26,7 +26,7 @@
 
 int heap_rrnd(register HP_INFO *info, unsigned char *record, unsigned char *pos)
 {
-  HP_SHARE *share=info->s;
+  HP_SHARE *share=info->getShare();
 
   info->lastinx= -1;
   if (!(info->current_ptr= pos))
