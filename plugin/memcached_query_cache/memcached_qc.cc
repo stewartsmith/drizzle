@@ -37,7 +37,7 @@
 #include "drizzled/item/null.h"
 
 #include <gcrypt.h>
-#include <string.h>
+#include <string>
 #include <iostream>
 #include <vector>
 
@@ -45,12 +45,14 @@
 #include "query_cache_udf_tools.h"
 #include "data_dictionary_schema.h"
 #include "invalidator.h"
-
+#include <boost/program_options.hpp>
+#include <drizzled/module/option_map.h>
 
 using namespace drizzled;
 using namespace std;
+namespace po= boost::program_options;
 
-static char* sysvar_memcached_servers= NULL;
+static char* sysvar_memcached_servers;
 static ulong expiry_time;
 
 memcache::Memcache* MemcachedQueryCache::client;
@@ -337,6 +339,27 @@ static CachedTables *query_cached_tables;
 
 static int init(module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+
+  if (vm.count("expiry"))
+  { 
+    if (expiry_time > (ulong)~0L)
+    {
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value of expiry\n"));
+      exit(-1);
+    }
+  }
+
+  if (vm.count("servers"))
+  {
+    sysvar_memcached_servers= strdup(vm["servers"].as<string>().c_str());
+  }
+
+  if (vm.count("enable"))
+  {
+    (SessionVAR(NULL,enable))= vm["enable"].as<bool>();
+  }
+
   MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", sysvar_memcached_servers);
   context.add(memc);
   Invalidator* invalidator= new Invalidator("Memcached_Query_Cache_Invalidator");
@@ -409,6 +432,19 @@ bool QueryCacheStatusTool::Generator::populate()
   return false;
 }
 
+static void init_options(drizzled::module::option_context &context)
+{
+  context("servers",
+          po::value<string>()->default_value("127.0.0.1:11211"),
+          N_("List of memcached servers."));
+  context("expiry",
+          po::value<ulong>(&expiry_time)->default_value(1000),
+          N_("Expiry time of memcached entries"));
+  context("enable",
+          po::value<bool>()->default_value(false)->zero_tokens(),
+          N_("Enable Memcached Query Cache"));
+}
+
 DRIZZLE_DECLARE_PLUGIN
 {
   DRIZZLE_VERSION_ID,
@@ -419,6 +455,6 @@ DRIZZLE_DECLARE_PLUGIN
   PLUGIN_LICENSE_BSD,
   init,   /* Plugin Init      */
   vars, /* system variables */
-  NULL    /* config options   */
+  init_options    /* config options   */
 }
 DRIZZLE_DECLARE_PLUGIN_END;
