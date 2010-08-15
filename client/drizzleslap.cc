@@ -120,7 +120,7 @@ static bool timer_alarm= false;
 pthread_mutex_t timer_alarm_mutex;
 pthread_cond_t timer_alarm_threshold;
 
-char **primary_keys;
+std::vector < std::string > primary_keys;
 /* This gets passed to malloc, so lets set it to an arch-dependant size */
 size_t primary_keys_number_of;
 
@@ -797,7 +797,6 @@ static Statement *build_insert_string(void);
 static Statement *build_update_string(void);
 static Statement * build_select_string(bool key);
 static int generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt);
-static int drop_primary_key_list(void);
 static int create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
                          OptionString *engine_stmt, Stats *sptr);
 static int run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur,
@@ -1245,7 +1244,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
 
     /* We are finished with this run */
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
-      drop_primary_key_list();
+      primary_keys.clear();
   }
 
   if (verbose >= 2)
@@ -2196,22 +2195,8 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
                          strstr(engine_stmt->getString(), "blackhole")))
   {
     primary_keys_number_of= 1;
-    primary_keys= (char **)malloc((sizeof(char *) *
-                                  primary_keys_number_of));
-    if (primary_keys == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in option processing\n");
-      exit(1);
-    }
-    
-    memset(primary_keys, 0, (sizeof(char *) * primary_keys_number_of));
     /* Yes, we strdup a const string to simplify the interface */
-    primary_keys[0]= strdup("796c4422-1d94-102a-9d6d-00e0812d");
-    if (primary_keys[0] == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in option processing\n");
-      exit(1);
-    }
+    primary_keys.push_back("796c4422-1d94-102a-9d6d-00e0812d");
   }
   else
   {
@@ -2236,24 +2221,11 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
       /*
         We create the structure and loop and create the items.
       */
-      primary_keys= (char **)malloc(sizeof(char *) *
-                                    primary_keys_number_of);
-      if (primary_keys == NULL)
-      {
-        fprintf(stderr, "Memory Allocation error in option processing\n");
-        exit(1);
-      }
-      memset(primary_keys, 0, (size_t)(sizeof(char *) * primary_keys_number_of));
       row= drizzle_row_next(&result);
       for (counter= 0; counter < primary_keys_number_of;
            counter++, row= drizzle_row_next(&result))
       {
-        primary_keys[counter]= strdup(row[0]);
-        if (primary_keys[counter] == NULL)
-        {
-          fprintf(stderr, "Memory Allocation error in option processing\n");
-          exit(1);
-        }
+        primary_keys.push_back(row[0]);
       }
     }
 
@@ -2261,22 +2233,6 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
   }
 
   return(0);
-}
-
-static int
-drop_primary_key_list(void)
-{
-  uint64_t counter;
-
-  if (primary_keys_number_of)
-  {
-    for (counter= 0; counter < primary_keys_number_of; counter++)
-      free(primary_keys[counter]);
-
-    free(primary_keys);
-  }
-
-  return 0;
 }
 
 static int
@@ -2628,7 +2584,6 @@ limit_not_met:
     {
       int length;
       unsigned int key_val;
-      char *key;
       char buffer[HUGE_STRING_LENGTH];
 
       /*
@@ -2642,7 +2597,8 @@ limit_not_met:
       if (primary_keys_number_of)
       {
         key_val= (unsigned int)(random() % primary_keys_number_of);
-        key= primary_keys[key_val];
+        const char *key;
+        key= primary_keys[key_val].c_str();
 
         assert(key);
 
