@@ -1,7 +1,7 @@
 # we are assuming the memcached binary is contained in PATH or
 # common directories we might expect it to be in
---exec sh /home/brook/repos/drizzle/query-cache-soc/plugin/memcached_query_cache/start_mc.sh stop
---exec sh /home/brook/repos/drizzle/query-cache-soc/plugin/memcached_query_cache/start_mc.sh start
+--exec sh ../plugin/memcached_query_cache/start_mc.sh stop
+--exec sh ../plugin/memcached_query_cache/start_mc.sh start
 
 --disable_warnings
 DROP TABLE IF EXISTS `t1`;
@@ -27,5 +27,5 @@ select count(*) from data_dictionary.query_cache_entries d;
 select d.schema, d.sql from data_dictionary.query_cache_entries d where d.sql like "select * from t1";
 
 
---exec sh  /home/brook/repos/drizzle/query-cache-soc/plugin/memcached_query_cache/start_mc.sh stop
+--exec sh  ../plugin/memcached_query_cache/start_mc.sh stop
 
