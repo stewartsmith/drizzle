@@ -60,7 +60,7 @@
   --iterations=5 --query=query.sql --create=create.sql \
   --delimiter=";"
 
-  TODO:
+  @todo
   Add language for better tests
   String length for files and those put on the command line are not
   setup to handle binary data.
@@ -214,25 +214,29 @@ public:
             slap_query_type in_type,
             char *in_option,
             size_t in_option_length,
-            Statement *in_next)
-    :
+            Statement *in_next) :
     string(in_string),
     length(in_length),
     type(in_type),
     option(in_option),
     option_length(in_option_length),
     next(in_next)
-    {}
+  { }
 
-  Statement()
-    :
+  Statement() :
     string(NULL),
     length(0),
     type(),
     option(NULL),
     option_length(0),
     next(NULL)
-    {}
+  { }
+
+  ~Statement()
+  {
+    if (string)
+      free(string);
+  }
    
   char *getString() const
   {
@@ -317,23 +321,21 @@ public:
                size_t in_length,
                char *in_option,
                size_t in_option_length,
-               OptionString *in_next)
-    :
+               OptionString *in_next) :
     string(in_string),
     length(in_length),
     option(in_option),
     option_length(in_option_length),
     next(in_next)
-    {}  
+  { }  
 
-  OptionString()
-    :
+  OptionString() :
     string(NULL),
     length(0),
     option(NULL),
     option_length(0),
     next(NULL)
-    {}
+  { }
 
   char *getString() const
   {
@@ -1159,6 +1161,10 @@ burnin:
   {
     cerr<<"Error:"<<err.what()<<endl;
   }
+
+  if (csv_file != fileno(stdout))
+    close(csv_file);
+
   return 0;
 }
 
@@ -1170,15 +1176,12 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
   Conclusions conclusion;
   uint64_t client_limit;
 
-  head_sptr= (Stats *)malloc(sizeof(Stats) * iterations);
+  head_sptr= new Stats[iterations];
   if (head_sptr == NULL)
   {
     fprintf(stderr,"Error allocating memory in concurrency_loop\n");
     exit(1);
   }
-  memset(head_sptr, 0, sizeof(Stats) * iterations);
-
-  memset(&conclusion, 0, sizeof(Conclusions));
 
   if (auto_actual_queries)
     client_limit= auto_actual_queries;
@@ -1398,13 +1401,7 @@ build_table_string(void)
     }
 
   table_string.append(")");
-  ptr= (Statement *)malloc(sizeof(Statement));
-  if (ptr == NULL)
-  {
-    fprintf(stderr, "Memory Allocation error in creating table\n");
-    exit(1);
-  }
-  memset(ptr, 0, sizeof(Statement));
+  ptr= new Statement;
   ptr->setString((char *)malloc(table_string.length()+1));
   if (ptr->getString()==NULL)
   {
@@ -1474,13 +1471,7 @@ build_update_string(void)
     update_string.append(" WHERE id = ");
 
 
-  ptr= (Statement *)malloc(sizeof(Statement));
-  if (ptr == NULL)
-  {
-    fprintf(stderr, "Memory Allocation error in creating update\n");
-    exit(1);
-  }
-  memset(ptr, 0, sizeof(Statement));
+  ptr= new Statement;
 
   ptr->setLength(update_string.length()+1);
   ptr->setString((char *)malloc(ptr->getLength()));
@@ -1619,12 +1610,7 @@ build_insert_string(void)
 
   insert_string.append(")", 1);
 
-  if (!(ptr= (Statement *)malloc(sizeof(Statement))))
-  {
-    fprintf(stderr, "Memory Allocation error in creating select\n");
-    exit(1);
-  }
-  memset(ptr, 0, sizeof(Statement));
+  ptr= new Statement;
   ptr->setLength(insert_string.length()+1);
   ptr->setString((char *)malloc(ptr->getLength()));
   if (ptr->getString()==NULL)
@@ -1710,13 +1696,7 @@ build_select_string(bool key)
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     query_string.append(" WHERE id = ");
 
-  ptr= (Statement *)malloc(sizeof(Statement));
-  if (ptr == NULL)
-  {
-    fprintf(stderr, "Memory Allocation error in creating select\n");
-    exit(1);
-  }
-  memset(ptr, 0, sizeof(Statement));
+  ptr= new Statement;
   ptr->setLength(query_string.length()+1);
   ptr->setString((char *)malloc(ptr->getLength()));
   if (ptr->getString() == NULL)
@@ -2992,7 +2972,7 @@ print_conclusions_csv(Conclusions *con)
   size_t string_len;
   const char *temp_label= opt_label.c_str();
 
-  memset(label_buffer, 0, HUGE_STRING_LENGTH);
+  memset(label_buffer, 0, sizeof(label_buffer));
 
   if (!opt_label.empty())
   {
@@ -3019,7 +2999,9 @@ print_conclusions_csv(Conclusions *con)
     }
   }
   else
+  {
     snprintf(label_buffer, HUGE_STRING_LENGTH, "query");
+  }
 
   snprintf(buffer, HUGE_STRING_LENGTH,
            "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,"
@@ -3036,7 +3018,7 @@ print_conclusions_csv(Conclusions *con)
            con->getRealUsers(), /* Children used max_timing */
            con->getAvgRows()  /* Queries run */
            );
-  internal::my_write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer), MYF(0));
+  write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer));
 }
 
 void
@@ -3123,9 +3105,7 @@ statement_cleanup(Statement *stmt)
   for (ptr= stmt; ptr; ptr= nptr)
   {
     nptr= ptr->getNext();
-    if (ptr->getString())
-      free(ptr->getString());
-    free(ptr);
+    delete ptr;
   }
 }
 
