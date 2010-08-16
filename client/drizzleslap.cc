@@ -341,6 +341,14 @@ public:
     next(NULL)
   { }
 
+  ~OptionString()
+  {
+    if (getString())
+      free(getString());
+    if (getOption())
+      free(getOption());
+  }
+
   char *getString() const
   {
     return string;
@@ -410,25 +418,23 @@ public:
         uint32_t in_real_users,
         uint32_t in_rows,
         long int in_create_timing,
-        uint64_t in_create_count)
-    :
+        uint64_t in_create_count) :
     timing(in_timing),
     users(in_users),
     real_users(in_real_users),
     rows(in_rows),
     create_timing(in_create_timing),
     create_count(in_create_count)
-    {}
+  { }
 
-  Stats()
-    :
+  Stats() :
     timing(0),
     users(0),
     real_users(0),
     rows(0),
     create_timing(0),
     create_count(0)
-    {}
+  { }
 
   long int getTiming() const
   {
@@ -505,17 +511,15 @@ class ThreadContext
 {
 public:
   ThreadContext(Statement *in_stmt,
-                uint64_t in_limit)
-    :
+                uint64_t in_limit) :
     stmt(in_stmt),
     limit(in_limit)
-    {}
+  { }
 
-  ThreadContext()
-    :
+  ThreadContext() :
     stmt(),
     limit(0)
-    {}
+  { }
 
   Statement *getStmt() const
   {
@@ -562,8 +566,7 @@ public:
               long int in_create_min_timing,
               uint64_t in_create_count,
               uint64_t in_max_rows,
-              uint64_t in_min_rows)
-    :
+              uint64_t in_min_rows) :
     engine(in_engine),
     avg_timing(in_avg_timing),
     max_timing(in_max_timing),
@@ -579,10 +582,9 @@ public:
     create_count(in_create_count),
     max_rows(in_max_rows),
     min_rows(in_min_rows)
-    {}
+  { }
 
-  Conclusions()
-    :
+  Conclusions() :
     engine(NULL),
     avg_timing(0),
     max_timing(0),
@@ -598,7 +600,7 @@ public:
     create_count(0),
     max_rows(0),
     min_rows(0)
-    {}
+  { }
 
   char *getEngine() const
   {
@@ -2375,12 +2377,10 @@ run_statements(drizzle_con_st *con, Statement *stmt)
 static int
 run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
 {
-  uint32_t x;
   uint32_t y;
   unsigned int real_concurrency;
   struct timeval start_time, end_time;
   OptionString *sql_type;
-  ThreadContext *con;
   pthread_t mainthread;            /* Thread descriptor */
   pthread_attr_t attr;          /* Thread attributes */
 
@@ -2412,9 +2412,11 @@ run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
     }
 
     while (options_loop--)
-      for (x= 0; x < concur; x++)
+    {
+      for (uint32_t x= 0; x < concur; x++)
       {
-        con= (ThreadContext *)malloc(sizeof(ThreadContext));
+        ThreadContext *con;
+        con= new ThreadContext;
         if (con == NULL)
         {
           fprintf(stderr, "Memory Allocation error in scheduler\n");
@@ -2433,6 +2435,7 @@ run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
         }
         thread_counter++;
       }
+    }
   }
 
   /*
@@ -2645,7 +2648,7 @@ end:
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
 
-  free(ctx);
+  delete ctx;
 
   return(0);
 }
@@ -2968,16 +2971,12 @@ void
 option_cleanup(OptionString *stmt)
 {
   OptionString *ptr, *nptr;
-  if (!stmt)
+  if (not stmt)
     return;
 
   for (ptr= stmt; ptr; ptr= nptr)
   {
     nptr= ptr->getNext();
-    if (ptr->getString())
-      free(ptr->getString());
-    if (ptr->getOption())
-      free(ptr->getOption());
     delete ptr;
   }
 }
