@@ -1461,7 +1461,7 @@ void Session::end_statement()
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex_end(lex);
   query_cache_key= ""; // reset the cache key
-  resultset= NULL;
+  resetResultsetMessage();
 }
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)

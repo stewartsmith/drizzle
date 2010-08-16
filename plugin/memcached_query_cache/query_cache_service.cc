@@ -40,7 +40,7 @@ namespace drizzled
 QueryCacheService::CacheEntries QueryCacheService::cache;
 QueryCacheService::CachedTablesEntries QueryCacheService::cachedTables;
 
-message::Resultset &QueryCacheService::getCurrentResultsetMessage(Session *in_session)
+message::Resultset *QueryCacheService::setCurrentResultsetMessage(Session *in_session)
 {
   message::Resultset *resultset= in_session->getResultsetMessage();
 
@@ -57,7 +57,7 @@ message::Resultset &QueryCacheService::getCurrentResultsetMessage(Session *in_se
      */
     cache[in_session->query_cache_key]= message::Resultset();
   }
-  return *resultset;
+  return resultset;
 }
 
 void QueryCacheService::setResultsetHeader(message::Resultset &resultset,
@@ -103,34 +103,35 @@ void QueryCacheService::setResultsetHeader(message::Resultset &resultset,
 
 bool QueryCacheService::addRecord(Session *in_session, List<Item> &list)
 {
-  message::Resultset &resultset= *in_session->getResultsetMessage();
+  message::Resultset *resultset= in_session->getResultsetMessage();
   
-  if (&resultset != NULL)
+  if (resultset != NULL)
   {
-    message::SelectData *data= resultset.mutable_select_data();
+    message::SelectData *data= resultset->mutable_select_data();
     data->set_segment_id(1);
     data->set_end_segment(true);
     message::SelectRecord *record= data->add_record();
 
     List_iterator_fast<Item> li(list);
-
-    String *string_value= new (in_session->mem_root) String(QueryCacheService::DEFAULT_RECORD_SIZE);
-    string_value->set_charset(system_charset_info);
+    
+    char buff[MAX_FIELD_WIDTH];
+    String buffer(buff, sizeof(buff), &my_charset_bin);
+    
     Item *current_field;
     while ((current_field= li++))
     {
-    if (current_field->is_null())
-    {
-      record->add_is_null(true);
-      record->add_record_value("", 0);
-    } 
-    else 
-    {
-      string_value= current_field->val_str(string_value);
-      record->add_is_null(false);
-      record->add_record_value(string_value->c_ptr(), string_value->length());
-      string_value->free();
-    }
+      if (current_field->is_null())
+      {
+        record->add_is_null(true);
+        record->add_record_value("", 0);
+      } 
+      else 
+      {
+        String *string_value= current_field->val_str(&buffer);
+        record->add_is_null(false);
+        record->add_record_value(string_value->c_ptr(), string_value->length());
+        string_value->free();
+      }
     }
     return false;
   }

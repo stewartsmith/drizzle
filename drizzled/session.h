@@ -1237,6 +1237,15 @@ public:
   {
     resultset= in_message;
   }
+  /**
+   * reset the active Resultset message used by the Query Cache
+   * plugin.
+   */
+
+  void resetResultsetMessage()
+  { 
+    resultset= NULL;
+  }
 
 private:
   /** Pointers to memory managed by the ReplicationServices component */

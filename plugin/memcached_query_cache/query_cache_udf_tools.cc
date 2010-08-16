@@ -132,7 +132,7 @@ int64_t QueryCacheFlushFunction::val_int()
   QueryCacheService::cache.clear();
   QueryCacheService::cachedTables.clear();
 
-  if (!res)
+  if (not res)
   {
     return 0;
   }

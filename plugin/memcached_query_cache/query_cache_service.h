@@ -74,7 +74,7 @@ public:
    *
    * @param The session processing the Select
    */
-  drizzled::message::Resultset &getCurrentResultsetMessage(drizzled::Session *in_session);
+  drizzled::message::Resultset *setCurrentResultsetMessage(drizzled::Session *in_session);
 
   /**
    * Helper method which initializes the header message for

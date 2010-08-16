@@ -71,7 +71,7 @@ static void set_memc_servers(Session *,
                              const void *save)
 {
   if (save)
-  {
+  { 
     MemcachedQueryCache::setServers(*(const char **) save);
     *(const char **) var_ptr= MemcachedQueryCache::getServers();
   }
@@ -127,9 +127,11 @@ bool MemcachedQueryCache::doIsCached(Session *session)
     char* key= md5_key(query.c_str());
     if(queryCacheService.isCached(key))
     {
-     session->query_cache_key= key;
+     session->query_cache_key.assign(key);
+     free(key);
      return true;
     }
+    free(key);
   }
   return false;
 }
@@ -144,7 +146,7 @@ bool MemcachedQueryCache::doSendCachedResultset(Session *session)
   LEX *lex= session->lex;
   register Select_Lex *select_lex= &lex->select_lex;
   select_result *result=lex->result;
-  if (!result && !(result= new select_send()))
+  if (not result && not (result= new select_send()))
     return true;
   result->prepare(select_lex->item_list, select_lex->master_unit());
 
@@ -154,7 +156,7 @@ bool MemcachedQueryCache::doSendCachedResultset(Session *session)
   if(raw_resultset.empty())
     return false;
   message::Resultset resultset_message;
-  if (!resultset_message.ParseFromString(string(raw_resultset.begin(),raw_resultset.end())))
+  if (not resultset_message.ParseFromString(string(raw_resultset.begin(),raw_resultset.end())))
     return false;
   List<Item> item_list;
 
@@ -232,19 +234,22 @@ bool MemcachedQueryCache::doPrepareResultset(Session *session)
 
     if(not queryCacheService.isCached(key))
     {
-      session->query_cache_key= key;
-  
+      session->query_cache_key.assign(key);
+      free(key);
+    
       /* create the Resultset */
-      message::Resultset &resultset= queryCacheService.getCurrentResultsetMessage(session);
+      message::Resultset *resultset= queryCacheService.setCurrentResultsetMessage(session);
   
       /* setting the resultset infos */
-      resultset.set_key(key);
-      resultset.set_schema(session->db);
-      resultset.set_sql(session->query);
+      resultset->set_key(session->query_cache_key);
+      resultset->set_schema(session->db);
+      resultset->set_sql(session->query);
       pthread_mutex_unlock(&mutex);
+      
       return true;
     }
     pthread_mutex_unlock(&mutex);
+    free(key);
   }
   return false;
 }
@@ -270,7 +275,8 @@ bool MemcachedQueryCache::doSetResultset(Session *session)
     memcpy(&raw[0], output.c_str(), output.size());
     if(not client->set(session->query_cache_key, raw, expiry, flags))
     {
-      session->setResultsetMessage(NULL);
+      delete resultset;
+      session->resetResultsetMessage();
       return false;
     }
     
@@ -285,7 +291,8 @@ bool MemcachedQueryCache::doSetResultset(Session *session)
     queryCacheService.cache[session->query_cache_key]= *resultset;
 
     /* endup the current statement */
-    session->setResultsetMessage(NULL);
+    delete resultset;
+    session->resetResultsetMessage();
     return true;
   }
   return false;
@@ -325,6 +332,7 @@ char* MemcachedQueryCache::md5_key(const char *str)
   {
     snprintf ( p, 3, "%02x", hash[i] );
   }
+  free(hash);
   return out;
 }
 
@@ -352,7 +360,7 @@ static int init(module::Context &context)
 
   if (vm.count("servers"))
   {
-    sysvar_memcached_servers= strdup(vm["servers"].as<string>().c_str());
+    sysvar_memcached_servers= const_cast<char *>(vm["servers"].as<string>().c_str());
   }
 
   if (vm.count("enable"))
@@ -386,7 +394,6 @@ static int init(module::Context &context)
   
   return 0;
 }
-
 
 static drizzle_sys_var* vars[]= {
   DRIZZLE_SYSVAR(enable),

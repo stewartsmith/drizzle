@@ -54,11 +54,13 @@ public:
   explicit MemcachedQueryCache(std::string name_arg, std::string servers_arg): drizzled::plugin::QueryCache(name_arg)
   {
     client= new memcache::Memcache(servers_arg);
+    pthread_mutex_init(&mutex, NULL);
     queryCacheService= drizzled::QueryCacheService::singleton();
   }
   ~MemcachedQueryCache()
   {
-    free(client);
+    delete client;
+    pthread_mutex_destroy(&mutex);
   };
   bool doIsCached(drizzled::Session *session);
   bool doSendCachedResultset(drizzled::Session *session);
