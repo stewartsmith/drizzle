@@ -8978,7 +8978,7 @@ static void init_options(drizzled::module::option_context &context)
           "The size of the buffer which InnoDB uses to write log to the log files on disk.");
   context("log-files-in-group",
           po::value<long>(&innobase_log_files_in_group)->default_value(2),
-          "Number of log files in the log group. InnoDB writes to the files in a circular fashion. Value 3 is recommended here.");
+          "Number of log files in the log group. InnoDB writes to the files in a circular fashion.");
   context("mirrored-log-groups",
           po::value<long>(&innobase_mirrored_log_groups)->default_value(1),
           "Number of identical copies of log groups we keep for the database. Currently this should be set to 1.");
@@ -9001,7 +9001,7 @@ static void init_options(drizzled::module::option_context &context)
           po::value<string>(),
           "Path to individual files and their sizes.");
   context("version",
-          po::value<string>(),
+          po::value<string>()->default_value(INNODB_VERSION_STR),
           "InnoDB version");
   context("use-sys-malloc",
           po::value<bool>(&srv_use_sys_malloc)->default_value(true)->zero_tokens(),
