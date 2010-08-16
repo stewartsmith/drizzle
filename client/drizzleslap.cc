@@ -1170,7 +1170,6 @@ burnin:
 
 void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
 {
-  unsigned int x;
   Stats *head_sptr;
   Stats *sptr;
   Conclusions conclusion;
@@ -1190,6 +1189,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
   else
     client_limit= actual_queries;
 
+  uint32_t x;
   for (x= 0, sptr= head_sptr; x < iterations; x++, sptr++)
   {
     /*
@@ -1260,14 +1260,12 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
 }
 
 
-
 uint
 get_random_string(char *buf, size_t size)
 {
   char *buf_ptr= buf;
-  size_t x;
 
-  for (x= size; x > 0; x--)
+  for (size_t x= size; x > 0; x--)
     *buf_ptr++= ALPHANUMERICS[random() % ALPHANUMERICS_SIZE];
   return(buf_ptr - buf);
 }
@@ -2996,7 +2994,7 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
 {
   /* Connect to server */
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
-  int x, connect_error= 1;
+  int connect_error= 1;
   drizzle_return_t ret;
   drizzle_st *drizzle;
 
@@ -3016,7 +3014,7 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
     exit(1);
   }
 
-  for (x= 0; x < 10; x++)
+  for (uint32_t x= 0; x < 10; x++)
   {
     if ((ret= drizzle_con_connect(con)) == DRIZZLE_RETURN_OK)
     {
