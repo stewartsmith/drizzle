@@ -352,19 +352,10 @@ public:
     length= strlen(in_string);
   }
 
-  void setOptionLength(size_t in_option_length)
-  {
-    option_length= in_option_length;
-  }
-
   void setOption(char *in_option)
   {
-    option= in_option;
-  }
-
-  void setOption(size_t in_option_length, char in_char)
-  {
-    option[in_option_length]= in_char;
+    option= strdup(in_option);
+    option_length= strlen(in_option);
   }
 
   void setNext(OptionString *in_next)
@@ -2658,15 +2649,7 @@ parse_option(const char *origin, OptionString **stmt, char delm)
       buffer_ptr++;
 
       /* Move past the : and the first string */
-      tmp->setOptionLength(strlen(buffer_ptr));
-      tmp->setOption((char *)malloc(tmp->getOptionLength() + 1));
-      if (tmp->getOption() == NULL)
-      {
-        fprintf(stderr,"Error allocating memory while parsing options\n");
-        exit(1);
-      }
-      memcpy(tmp->getOption(), buffer_ptr, tmp->getOptionLength());
-      tmp->setOption(tmp->getOptionLength(),0); 
+      tmp->setOption(buffer_ptr);
     }
 
     tmp->setString(strdup(buffer));
