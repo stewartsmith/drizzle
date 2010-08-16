@@ -60,6 +60,20 @@ bool MultiThreadScheduler::addSession(Session *session)
   if (thread_count >= max_threads)
     return true;
 
+#ifdef __sun
+  /*
+   * Solaris will return zero for the stack size in a call to
+   * pthread_attr_getstacksize() to indicate that the OS default stack
+   * size is used. We need an actual value in my_thread_stack_size so that
+   * check_stack_overrun() will work. The Solaris man page for the
+   * pthread_attr_getstacksize() function says that 2M is used for 64-bit
+   * processes. We'll explicitly set it here to make sure that is what
+   * will be used.
+   */
+  if (my_thread_stack_size == 0)
+    my_thread_stack_size= 2 * 1024 * 1024;
+#endif
+
   /* Thread stack size of zero means just use the OS default */
   if (my_thread_stack_size != 0)
   {
