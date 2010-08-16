@@ -1,1 +1,1 @@
---plugin_add=embedded_innodb --plugin_remove=innobase --innodb_lock_wait_timeout=1
+--plugin_add=embedded_innodb --plugin_remove=innobase --innodb.lock-wait-timeout=1

@@ -2728,7 +2728,7 @@ static bool innobase_print_verbose_log;
 static bool innobase_rollback_on_timeout;
 static bool innobase_create_status_file;
 static bool srv_use_sys_malloc;
-static char*  innobase_file_format_name   = NULL;
+static char*  innobase_file_format_name   = const_cast<char *>("Barracuda");
 static char*  innobase_unix_file_flush_method   = NULL;
 static unsigned long srv_flush_log_at_trx_commit;
 static unsigned long srv_max_buf_pool_modified_pct;
@@ -2927,62 +2927,27 @@ static int embedded_innodb_init(drizzled::module::Context &context)
 
   if (vm.count("data-home-dir"))
   {
-    innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
-  }
-
-  else
-  {
-    innobase_data_home_dir= NULL;
+    innobase_data_home_dir= const_cast<char *>(vm["data-home-dir"].as<string>().c_str());
   }
 
   if (vm.count("file-format"))
   {
-    innobase_file_format_name= strdup(vm["file-format"].as<string>().c_str());
-  }
-
-  else
-  {
-    innobase_file_format_name= strdup("Barracuda");
+    innobase_file_format_name= const_cast<char *>(vm["file-format"].as<string>().c_str());
   }
 
   if (vm.count("log-group-home-dir"))
   {
-    innobase_log_group_home_dir= strdup(vm["log-group-home-dir"].as<string>().c_str());
-  }
-
-  else
-  {
-    innobase_log_group_home_dir= NULL;
+    innobase_log_group_home_dir= const_cast<char *>(vm["log-group-home-dir"].as<string>().c_str());
   }
 
   if (vm.count("flush-method"))
   {
-    innobase_unix_file_flush_method= strdup(vm["flush-method"].as<string>().c_str());
-  }
-
-  else
-  {
-    innobase_unix_file_flush_method= NULL;
+    innobase_unix_file_flush_method= const_cast<char *>(vm["flush-method"].as<string>().c_str());
   }
 
   if (vm.count("data-file-path"))
   {
-    innodb_data_file_path= strdup(vm["data-file-path"].as<string>().c_str());
-  }
-
-  else
-  {
-    innodb_data_file_path= NULL;
-  }
-
-  if (vm.count("data-home-dir"))
-  {
-    innobase_data_home_dir= strdup(vm["data-home-dir"].as<string>().c_str());
-  }
-
-  else
-  {
-    innobase_data_home_dir= NULL;
+    innodb_data_file_path= const_cast<char *>(vm["data-file-path"].as<string>().c_str());
   }
 
   ib_err_t err;
@@ -3181,13 +3146,6 @@ EmbeddedInnoDBEngine::~EmbeddedInnoDBEngine()
   {
     fprintf(stderr,"Error %d shutting down Embedded InnoDB!\n", err);
   }
-
-  /* These get strdup'd from vm variables */
-  free(innodb_data_file_path);
-  free(innobase_data_home_dir);
-  free(innobase_file_format_name);
-  free(innobase_log_group_home_dir);
-  free(innobase_unix_file_flush_method);
 
 }
 
