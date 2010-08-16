@@ -29,6 +29,64 @@
   ...
 }
 
+{
+  dlpreload memory leak
+  Memcheck:Leak
+  ...
+  fun:do_preload
+  fun:dl_main
+  ...
+}
+
+{
+  dl_main issue
+  Memcheck:Cond
+  ...
+  fun:dl_main
+  ...
+}
+
+# Masking an issue in system tzset call
+{
+  tzset() on debian reports issues
+  Memcheck:Cond
+  ...
+  fun:tzset
+  fun:_ZN8drizzled21init_common_variablesEPKciPPcPS1_
+  ...
+}
+{
+  tzset() on debian reports issues
+  Memcheck:Addr8
+  ...
+  fun:tzset
+  fun:_ZN8drizzled21init_common_variablesEPKciPPcPS1_
+  ...
+}
+{
+  tzset() on debian reports issues
+  Memcheck:Addr4
+  ...
+  fun:tzset
+  fun:_ZN8drizzled21init_common_variablesEPKciPPcPS1_
+  ...
+}
+{
+  tzset() on debian reports issues
+  Memcheck:Addr8
+  ...
+  fun:_ZN8drizzled21init_common_variablesEPKciPPcPS1_
+  fun:main
+}
+{
+  tzset() on debian reports issues
+  Memcheck:Addr4
+  ...
+  fun:_ZN8drizzled21init_common_variablesEPKciPPcPS1_
+  fun:main
+}
+
+
 
 # Masking static allocation issues in InnoDB
 {
