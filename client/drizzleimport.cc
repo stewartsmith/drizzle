@@ -39,6 +39,8 @@ extern "C" void * worker_thread(void *arg);
 
 int exitcode= 0;
 
+const char *program_name= "drizzlesimport";
+
 /* Global Thread counter */
 uint32_t counter;
 pthread_mutex_t counter_mutex;
@@ -101,7 +103,7 @@ static int write_to_table(char *filename, drizzle_con_st *con)
   drizzle_return_t ret;
 
   internal::fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
-  if (!opt_local_file)
+  if (not opt_local_file)
     strcpy(hard_path,filename);
   else
     internal::my_load_path(hard_path, filename, NULL); /* filename includes the path */
@@ -242,16 +244,16 @@ static void db_error(drizzle_con_st *con, drizzle_result_st *result,
 {
   if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
-    my_printf_error(0,"Error: %d, %s%s%s", MYF(0),
-                    drizzle_result_error_code(result),
-                    drizzle_result_error(result),
-                    table ? ", when using table: " : "", table ? table : "");
+    fprintf(stdout, "Error: %d, %s%s%s",
+            drizzle_result_error_code(result),
+            drizzle_result_error(result),
+            table ? ", when using table: " : "", table ? table : "");
     drizzle_result_free(result);
   }
   else
   {
-    my_printf_error(0,"Error: %d, %s%s%s", MYF(0), ret, drizzle_con_error(con),
-                    table ? ", when using table: " : "", table ? table : "");
+    fprintf(stdout, "Error: %d, %s%s%s", ret, drizzle_con_error(con),
+            table ? ", when using table: " : "", table ? table : "");
   }
 
   safe_exit(1, con);
@@ -481,13 +483,13 @@ try
 
   if (vm.count("version"))
   {
-    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,internal::my_progname,
+    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n", program_name,
     IMPORT_VERSION, drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
   }
   
   if (vm.count("help") || argc < 2)
   {
-    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,internal::my_progname,
+    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n", program_name,
     IMPORT_VERSION, drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
     puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
     printf("\
@@ -497,7 +499,7 @@ try
     read the text file directly. In other cases the client will open the text\n\
     file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
 
-    printf("\nUsage: %s [OPTIONS] database textfile...",internal::my_progname);
+    printf("\nUsage: %s [OPTIONS] database textfile...", program_name);
     cout<<long_options;
     exit(0);
   }
@@ -542,8 +544,7 @@ try
         pthread_mutex_lock(&counter_mutex);
         counter--;
         pthread_mutex_unlock(&counter_mutex);
-        fprintf(stderr,"%s: Could not create thread\n",
-                internal::my_progname);
+        fprintf(stderr,"%s: Could not create thread\n", program_name);
       }
     }
 
