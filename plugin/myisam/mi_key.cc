@@ -23,6 +23,9 @@
 #include <math.h>
 #include <cassert>
 
+using namespace drizzled;
+using namespace std;
+
 #define CHECK_KEYS                              /* Enable safety checks */
 
 #define FIX_LENGTH(cs, pos, length, char_length)                            \
