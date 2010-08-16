@@ -210,14 +210,10 @@ public:
   Statement(char *in_string,
             size_t in_length,
             slap_query_t in_type,
-            char *in_option,
-            size_t in_option_length,
             Statement *in_next) :
     string(in_string),
     length(in_length),
     type(in_type),
-    option(in_option),
-    option_length(in_option_length),
     next(in_next)
   { }
 
@@ -225,8 +221,6 @@ public:
     string(NULL),
     length(0),
     type(),
-    option(NULL),
-    option_length(0),
     next(NULL)
   { }
 
@@ -249,16 +243,6 @@ public:
   slap_query_t getType() const
   {
     return type;
-  }
-
-  char *getOption() const
-  {
-    return option;
-  }
-
-  size_t getOptionLength() const
-  {
-    return option_length;
   }
 
   Statement *getNext() const
@@ -292,16 +276,6 @@ public:
     type= in_type;
   }
 
-  void setOption(char *in_option)
-  {
-    option= in_option;
-  }
-
-   void setOptionLength(size_t in_option_length)
-  {
-    option_length= in_option_length;
-  }
-
   void setNext(Statement *in_next)
   {
     next= in_next;
@@ -311,8 +285,6 @@ private:
   char *string;
   size_t length;
   slap_query_t type;
-  char *option;
-  size_t option_length;
   Statement *next;
 };
 
