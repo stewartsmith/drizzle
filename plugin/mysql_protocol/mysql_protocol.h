@@ -35,6 +35,7 @@ public:
    drizzled::plugin::ListenTcp(name_arg),
    using_mysql41_protocol(using_mysql41_protocol_arg)
   { }
+  virtual ~ListenMySQLProtocol();
   virtual const char* getHost(void) const;
   virtual in_port_t getPort(void) const;
   virtual drizzled::plugin::Client *getClient(int fd);

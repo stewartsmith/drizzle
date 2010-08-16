@@ -1,0 +1,1 @@
+--plugin_add=embedded_innodb --plugin_remove=innobase --innodb.flush-log-at-trx-commit=1

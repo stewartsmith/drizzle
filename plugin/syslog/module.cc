@@ -49,6 +49,7 @@ unsigned long sysvar_logging_threshold_big_examined;
 bool sysvar_errmsg_enable;
 char* sysvar_errmsg_priority;
 
+
 static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
@@ -82,42 +83,39 @@ static int init(drizzled::module::Context &context)
 
   if (vm.count("ident"))
   {
-    sysvar_ident= strdup(vm["ident"].as<string>().c_str());
+    sysvar_ident= const_cast<char *>(vm["ident"].as<string>().c_str());
   }
-
   else
   {
-    sysvar_ident= strdup("drizzled");
+    sysvar_ident= const_cast<char *>("drizzled");
   }
 
   if (vm.count("facility"))
   {
-    sysvar_facility= strdup(vm["facility"].as<string>().c_str());
+    sysvar_facility= const_cast<char *>(vm["facility"].as<string>().c_str());
   }
-
   else
   {
-    sysvar_facility= strdup("local0");
+    sysvar_facility= const_cast<char *>("local0");
   }
 
   if (vm.count("logging-priority"))
   {
-    sysvar_logging_priority= strdup(vm["logging-priority"].as<string>().c_str());
+    sysvar_logging_priority= const_cast<char *>(vm["logging-priority"].as<string>().c_str());
   }
-
   else
   {
-    sysvar_logging_priority= strdup("info");
+    sysvar_logging_priority= const_cast<char *>("info");
   }
 
   if (vm.count("errmsg-priority"))
   {
-    sysvar_errmsg_priority= strdup(vm["errmsg-priority"].as<string>().c_str());
+    sysvar_errmsg_priority= const_cast<char *>(vm["errmsg-priority"].as<string>().c_str());
   }
 
   else
   {
-    sysvar_errmsg_priority= strdup("warning");
+    sysvar_errmsg_priority= const_cast<char *>("warning");
   }
 
   context.add(new Logging_syslog());

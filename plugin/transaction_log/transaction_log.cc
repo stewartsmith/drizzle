@@ -138,15 +138,6 @@ TransactionLog::TransactionLog(const string in_log_file_path,
   state= ONLINE;
 }
 
-TransactionLog::~TransactionLog()
-{
-  /* Clear up any resources we've consumed */
-  if (log_file != -1)
-  {
-    (void) close(log_file);
-  }
-}
-
 uint8_t *TransactionLog::packTransactionIntoLogEntry(const message::Transaction &trx,
                                                      uint8_t *buffer,
                                                      uint32_t *checksum_out)

@@ -56,7 +56,13 @@ static uint32_t read_timeout;
 static uint32_t write_timeout;
 static uint32_t retry_count;
 static uint32_t buffer_length;
-static char* bind_address;
+static char* bind_address= NULL;
+
+ListenDrizzleProtocol::~ListenDrizzleProtocol()
+{
+  /* This is strdup'd from the options */
+  free(bind_address);
+}
 
 const char* ListenDrizzleProtocol::getHost(void) const
 {

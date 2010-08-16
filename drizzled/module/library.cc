@@ -88,7 +88,7 @@ module::Library *module::Library::loadLibrary(const string &plugin_name, bool bu
   if (builtin)
   {
     dlpath.assign("<builtin>");
-    handle= dlopen(NULL, RTLD_NOW|RTLD_GLOBAL);
+    handle= dlopen(NULL, RTLD_NOW|RTLD_LOCAL);
     if (handle == NULL)
     {
       const char *errmsg= dlerror();
