@@ -52,7 +52,7 @@ using namespace drizzled;
 using namespace std;
 namespace po= boost::program_options;
 
-static char* sysvar_memcached_servers;
+static char* sysvar_memcached_servers= NULL;
 static ulong expiry_time;
 
 memcache::Memcache* MemcachedQueryCache::client;
@@ -65,14 +65,33 @@ static DRIZZLE_SessionVAR_BOOL(enable,
                                /* update_func */ NULL,
                                /* default */ false);
 
+static int check_memc_servers(Session *,
+                              drizzle_sys_var *,
+                              void *save,
+                              drizzle_value *value)
+{
+  char buff[STRING_BUFFER_USUAL_SIZE];
+  int len= sizeof(buff);
+  const char *input= value->val_str(value, buff, &len);
+
+  if (input)
+  {
+    MemcachedQueryCache::setServers(input);
+    *(bool *) save= (bool) true;
+    return 0;
+  }
+
+  *(bool *) save= (bool) false;
+  return 1;
+}
+
 static void set_memc_servers(Session *,
                              drizzle_sys_var *,
                              void *var_ptr,
                              const void *save)
 {
-  if (save)
-  { 
-    MemcachedQueryCache::setServers(*(const char **) save);
+  if (*(bool *) save != false)
+  {
     *(const char **) var_ptr= MemcachedQueryCache::getServers();
   }
 }
@@ -81,7 +100,7 @@ static DRIZZLE_SYSVAR_STR(servers,
                           sysvar_memcached_servers,
                           PLUGIN_VAR_OPCMDARG,
                           N_("List of memcached servers."),
-                          NULL, /* check func */
+                          check_memc_servers, /* check func */
                           set_memc_servers, /* update func */
                           "127.0.0.1:11211"); /* default value */
 
@@ -370,6 +389,7 @@ static int init(module::Context &context)
 
   MemcachedQueryCache* memc= new MemcachedQueryCache("Memcached_Query_Cache", sysvar_memcached_servers);
   context.add(memc);
+
   Invalidator* invalidator= new Invalidator("Memcached_Query_Cache_Invalidator");
   context.add(invalidator);
   ReplicationServices &replication_services= ReplicationServices::singleton();

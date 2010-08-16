@@ -26,8 +26,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef MEMCACHED_QC_H
-#define MEMCACHED_QC_H
+#ifndef PLUGIN_MEMCACHED_QUERY_CACHE_MEMCACHED_QC_H
+#define PLUGIN_MEMCACHED_QUERY_CACHE_MEMCACHED_QC_H
 
 #include "drizzled/plugin/query_cache.h"
 #include "query_cache_service.h"
@@ -51,7 +51,7 @@ private:
 
 public:
   
-  explicit MemcachedQueryCache(std::string name_arg, std::string servers_arg): drizzled::plugin::QueryCache(name_arg)
+  explicit MemcachedQueryCache(std::string name_arg, const std::string &servers_arg): drizzled::plugin::QueryCache(name_arg)
   {
     client= new memcache::Memcache(servers_arg);
     pthread_mutex_init(&mutex, NULL);
@@ -78,11 +78,11 @@ public:
   {
     return memcached_servers.c_str();
   }
-  static void setServers(const char *server_list)
+  static void setServers(const std::string &server_list)
   {
     memcached_servers.assign(server_list);
-    getClient()->setServers(memcached_servers);
+    //getClient()->setServers(server_list);
   }
 
 };
-#endif /* MEMCACHED_QC_h */
+#endif /* PLUGIN_MEMCACHED_QUERY_CACHE_MEMCACHED_QC_H */
