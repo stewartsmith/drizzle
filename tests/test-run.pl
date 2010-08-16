@@ -1538,6 +1538,7 @@ sub environment_setup () {
   if ( $exe_drizzleslap )
   {
     my $cmdline_drizzleslap=
+    "$glob_basedir/libtool --mode=execute valgrind --log-file=$opt_vardir/log/drizzleslap-valgrind.log " .
       mtr_native_path($exe_drizzleslap) .
       " -uroot " .
       "--port=$master->[0]->{'port'} ";
