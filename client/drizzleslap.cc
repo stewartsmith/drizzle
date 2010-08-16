@@ -1562,22 +1562,9 @@ build_insert_string(void)
 
   if (num_blob_cols)
   {
-    char *blob_ptr;
+    vector <char> blob_ptr;
 
-    if (num_blob_cols_size > HUGE_STRING_LENGTH)
-    {
-      blob_ptr= (char *)malloc(sizeof(char)*num_blob_cols_size);
-      if (!blob_ptr)
-      {
-        fprintf(stderr, "Memory Allocation error in creating select\n");
-        exit(1);
-      }
-      memset(blob_ptr, 0, sizeof(char)*num_blob_cols_size);
-    }
-    else
-    {
-      blob_ptr= buf;
-    }
+    blob_ptr.resize(num_blob_cols_size);
 
     for (col_count= 1; col_count <= num_blob_cols; col_count++)
     {
@@ -1588,18 +1575,15 @@ build_insert_string(void)
       size= difference ? (num_blob_cols_size_min + (random() % difference)) :
         num_blob_cols_size;
 
-      buf_len= get_random_string(blob_ptr, size);
+      buf_len= get_random_string(&blob_ptr[0], size);
 
       insert_string.append("'", 1);
-      insert_string.append(blob_ptr, buf_len);
+      insert_string.append(&blob_ptr[0], buf_len);
       insert_string.append("'", 1);
 
       if (col_count < num_blob_cols)
         insert_string.append(",", 1);
     }
-
-    if (num_blob_cols_size > HUGE_STRING_LENGTH)
-      free(blob_ptr);
   }
 
   insert_string.append(")", 1);
@@ -2676,20 +2660,13 @@ parse_option(const char *origin, OptionString **stmt, char delm)
   char *string;
   char *begin_ptr;
   char *end_ptr;
-  OptionString **sptr= stmt;
-  OptionString *tmp;
   uint32_t length= strlen(origin);
   uint32_t count= 0; /* We know that there is always one */
 
   end_ptr= (char *)origin + length;
 
-  tmp= *sptr= (OptionString *)malloc(sizeof(OptionString));
-  if (tmp == NULL)
-  {
-    fprintf(stderr,"Error allocating memory while parsing options\n");
-    exit(1);
-  }
-  memset(tmp, 0, sizeof(OptionString));
+  OptionString *tmp;
+  *stmt= tmp= new OptionString;
 
   for (begin_ptr= (char *)origin;
        begin_ptr != end_ptr;
@@ -2746,13 +2723,7 @@ parse_option(const char *origin, OptionString **stmt, char delm)
 
     if (begin_ptr != end_ptr)
     {
-      tmp->setNext((OptionString *)malloc(sizeof(OptionString)));
-      if (tmp->getNext() == NULL)
-      {
-        fprintf(stderr,"Error allocating memory while parsing options\n");
-        exit(1);
-      }
-      memset(tmp->getNext(), 0, sizeof(OptionString));
+      tmp->setNext( new OptionString);
     }
     
   }
@@ -3007,7 +2978,7 @@ option_cleanup(OptionString *stmt)
       free(ptr->getString());
     if (ptr->getOption())
       free(ptr->getOption());
-    free(ptr);
+    delete ptr;
   }
 }
 
