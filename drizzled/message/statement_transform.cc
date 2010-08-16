@@ -1056,7 +1056,8 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     ss.clear();
   }
 
-  if (options.has_auto_increment_value())
+  if (options.has_user_set_auto_increment_value()
+      && options.has_auto_increment_value())
   {
     ss << options.auto_increment_value();
     destination.append(" AUTO_INCREMENT=", 16);

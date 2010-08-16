@@ -267,6 +267,8 @@ static bool mysql_prepare_alter_table(Session *session,
     /* Table has an autoincrement, copy value to new table */
     table->cursor->info(HA_STATUS_AUTO);
     create_info->auto_increment_value= table->cursor->stats.auto_increment_value;
+    if (create_info->auto_increment_value != original_proto.options().auto_increment_value())
+      table_options->set_has_user_set_auto_increment_value(false);
   }
   table->restoreRecordAsDefault(); /* Empty record for DEFAULT */
   CreateField *def;

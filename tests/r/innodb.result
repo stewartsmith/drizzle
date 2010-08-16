@@ -1269,7 +1269,7 @@ t2	CREATE TABLE `t2` (
   KEY `id_test` (`id`),
   KEY `id_test2` (`id`,`id2`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t2;
 create table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign key (id2,id) references t1 (id)) engine = innodb;
 ERROR 42000: Incorrect foreign key definition for 't1_id_fk': Key reference and table reference don't match
@@ -2653,9 +2653,9 @@ t2	CREATE TABLE `t2` (
   `f` int NOT NULL,
   PRIMARY KEY (`id`),
   KEY `f` (`f`),
-  CONSTRAINT `t2_ibfk_1` FOREIGN KEY (`f`) REFERENCES `t1` (`f`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `t2_t1` FOREIGN KEY (`id`) REFERENCES `t1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB
+  CONSTRAINT `t2_t1` FOREIGN KEY (`id`) REFERENCES `t1` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `t2_ibfk_2` FOREIGN KEY (`f`) REFERENCES `t1` (`f`) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t2, t1;
 CREATE TABLE t1 (a INT, INDEX(a)) ENGINE=InnoDB;
 CREATE TABLE t2 (a INT, INDEX(a)) ENGINE=InnoDB;
@@ -2698,7 +2698,7 @@ t1	CREATE TABLE `t1` (
   `id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`),
   CONSTRAINT `t1_t2` FOREIGN KEY (`id`) REFERENCES `t2` (`id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t1,t2;
 DROP TABLE IF EXISTS t1;
 Warnings:
