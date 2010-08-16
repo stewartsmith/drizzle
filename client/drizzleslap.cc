@@ -779,7 +779,7 @@ static Statement *pre_statements= NULL;
 static Statement *post_statements= NULL;
 static Statement *create_statements= NULL;
 
-static Statement **query_statements= NULL;
+static std::vector <Statement *> query_statements;
 static unsigned int query_statements_count;
 
 
@@ -987,7 +987,6 @@ int main(int argc, char **argv)
     uint64_t temp_drizzle_port= 0;
     drizzle_con_st con;
     OptionString *eptr;
-    uint32_t x;
 
 
     po::variables_map vm;
@@ -1143,9 +1142,9 @@ burnin:
     concurrency.clear();
 
     statement_cleanup(create_statements);
-    for (x= 0; x < query_statements_count; x++)
+    for (uint32_t x= 0; x < query_statements_count; x++)
       statement_cleanup(query_statements[x]);
-    free(query_statements);
+    query_statements.clear();
     statement_cleanup(pre_statements);
     statement_cleanup(post_statements);
     option_cleanup(engine_options);
@@ -1231,7 +1230,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
     if (pre_statements)
       run_statements(con, pre_statements);
 
-    run_scheduler(sptr, query_statements, current, client_limit);
+    run_scheduler(sptr, &query_statements[0], current, client_limit);
 
     if (post_statements)
       run_statements(con, post_statements);
@@ -1835,13 +1834,7 @@ process_options(void)
     query_statements_count=
       parse_option(opt_auto_generate_sql_type.c_str(), &query_options, ',');
 
-    query_statements= (Statement **)malloc(sizeof(Statement *) * query_statements_count);
-    if (query_statements == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in Building Query Statements\n");
-      exit(1);
-    }
-    memset(query_statements, 0, sizeof(Statement *) * query_statements_count);
+    query_statements.resize(query_statements_count);
 
     sql_type= query_options;
     do
@@ -1988,13 +1981,7 @@ process_options(void)
       query_statements_count=
         parse_option("default", &query_options, ',');
 
-      query_statements= (Statement **)malloc(sizeof(Statement *) * query_statements_count);
-      if (query_statements == NULL)
-      {
-        fprintf(stderr, "Memory Allocation error in option processing\n");
-        exit(1);
-      }
-      memset(query_statements, 0, sizeof(Statement *) * query_statements_count); 
+      query_statements.resize(query_statements_count);
     }
 
     if (!user_supplied_query.empty() && !stat(user_supplied_query.c_str(), &sbuf))
