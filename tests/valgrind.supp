@@ -218,6 +218,13 @@
    fun:main
 }
 
+{
+   HailDB Inherited some issues from InnoDB
+   Memcheck:Cond
+   fun:rw_lock_x_lock_func
+   ...
+}
+
 
 # Masking Leaks in System Libraries
 {
