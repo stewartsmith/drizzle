@@ -85,12 +85,12 @@ public:
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
 };
 
-static int read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
+static int read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                              List<Item> &fields_vars, List<Item> &set_fields,
                              List<Item> &set_values, READ_INFO &read_info,
 			     uint32_t skip_lines,
 			     bool ignore_check_option_errors);
-static int read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
+static int read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                           List<Item> &fields_vars, List<Item> &set_fields,
                           List<Item> &set_values, READ_INFO &read_info,
 			  String &enclosed, uint32_t skip_lines,
@@ -302,7 +302,7 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     }
   }
 
-  COPY_INFO info;
+  CopyInfo info;
   memset(&info, 0, sizeof(info));
   info.ignore= ignore;
   info.handle_duplicates=handle_duplicates;
@@ -411,7 +411,7 @@ err:
 ****************************************************************************/
 
 static int
-read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
+read_fixed_length(Session *session, CopyInfo &info, TableList *table_list,
                   List<Item> &fields_vars, List<Item> &set_fields,
                   List<Item> &set_values, READ_INFO &read_info,
                   uint32_t skip_lines, bool ignore_check_option_errors)
@@ -530,7 +530,7 @@ read_fixed_length(Session *session, COPY_INFO &info, TableList *table_list,
 
 
 static int
-read_sep_field(Session *session, COPY_INFO &info, TableList *table_list,
+read_sep_field(Session *session, CopyInfo &info, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
 	       String &enclosed, uint32_t skip_lines,

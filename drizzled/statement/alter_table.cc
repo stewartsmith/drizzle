@@ -1361,7 +1361,7 @@ copy_data_between_tables(Session *session,
   CopyField *copy,*copy_end;
   ulong found_count,delete_count;
   uint32_t length= 0;
-  SORT_FIELD *sortorder;
+  SortField *sortorder;
   ReadRecord info;
   TableList   tables;
   List<Item>   fields;

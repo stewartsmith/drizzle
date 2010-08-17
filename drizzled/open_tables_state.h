@@ -63,14 +63,14 @@ public:
     the 'LOCK_TABLES' chapter of the MySQL manual.
     See also lock_tables() for details.
   */
-  DRIZZLE_LOCK *lock;
+  DrizzleLock *lock;
 
   /*
     CREATE-SELECT keeps an extra lock for the table being
     created. This field is used to keep the extra lock available for
     lower level routines, which would otherwise miss that lock.
    */
-  DRIZZLE_LOCK *extra_lock;
+  DrizzleLock *extra_lock;
 
   uint64_t version;
   uint32_t current_tablenr;

@@ -104,9 +104,9 @@ static boost::condition_variable COND_global_read_lock;
   @{
 */
 
-static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table,
-                                   uint32_t count,
-                                   bool should_lock, Table **write_locked);
+static DrizzleLock *get_lock_data(Session *session, Table **table,
+                                  uint32_t count,
+                                  bool should_lock, Table **write_locked);
 static int lock_external(Session *session, Table **table,uint32_t count);
 static int unlock_external(Session *session, Table **table,uint32_t count);
 static void print_lock_error(int error, const char *);
@@ -160,9 +160,9 @@ static int thr_lock_errno_to_mysql[]=
         lock request will set its lock type properly.
 */
 
-static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
+static void reset_lock_data_and_free(DrizzleLock **mysql_lock)
 {
-  DRIZZLE_LOCK *sql_lock= *mysql_lock;
+  DrizzleLock *sql_lock= *mysql_lock;
   THR_LOCK_DATA **ldata, **ldata_end;
 
   /* Clear the lock type of all lock data to avoid reusage. */
@@ -178,10 +178,10 @@ static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
 }
 
 
-DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
+DrizzleLock *mysql_lock_tables(Session *session, Table **tables, uint32_t count,
                                 uint32_t flags, bool *need_reopen)
 {
-  DRIZZLE_LOCK *sql_lock;
+  DrizzleLock *sql_lock;
   Table *write_lock_used;
   vector<plugin::StorageEngine *> involved_engines;
   int rc;
@@ -371,7 +371,7 @@ static int lock_external(Session *session, Table **tables, uint32_t count)
 }
 
 
-void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock)
+void mysql_unlock_tables(Session *session, DrizzleLock *sql_lock)
 {
   if (sql_lock->lock_count)
     thr_multi_unlock(sql_lock->locks,sql_lock->lock_count);
@@ -389,7 +389,7 @@ void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock)
 
 void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count)
 {
-  DRIZZLE_LOCK *sql_lock;
+  DrizzleLock *sql_lock;
   Table *write_lock_used;
   if ((sql_lock= get_lock_data(session, table, count, false,
                                &write_lock_used)))
@@ -401,7 +401,7 @@ void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count)
   unlock all tables locked for read.
 */
 
-void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock)
+void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock)
 {
   uint32_t i,found;
 
@@ -487,7 +487,7 @@ void mysql_lock_remove(Session *session, Table *table)
 
 void mysql_lock_abort(Session *session, Table *table)
 {
-  DRIZZLE_LOCK *locked;
+  DrizzleLock *locked;
   Table *write_lock_used;
 
   if ((locked= get_lock_data(session, &table, 1, false,
@@ -514,7 +514,7 @@ void mysql_lock_abort(Session *session, Table *table)
 
 bool mysql_lock_abort_for_thread(Session *session, Table *table)
 {
-  DRIZZLE_LOCK *locked;
+  DrizzleLock *locked;
   Table *write_lock_used;
   bool result= false;
 
@@ -566,11 +566,11 @@ static int unlock_external(Session *session, Table **table,uint32_t count)
   @param write_lock_used   Store pointer to last table with WRITE_ALLOW_WRITE
 */
 
-static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t count,
+static DrizzleLock *get_lock_data(Session *session, Table **table_ptr, uint32_t count,
 				 bool should_lock, Table **write_lock_used)
 {
   uint32_t i,tables,lock_count;
-  DRIZZLE_LOCK *sql_lock;
+  DrizzleLock *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
   Table **to, **table_buf;
 
@@ -592,7 +592,7 @@ static DRIZZLE_LOCK *get_lock_data(Session *session, Table **table_ptr, uint32_t
     update the table values. So the second part of the array is copied
     from the first part immediately before calling thr_multi_lock().
   */
-  if (!(sql_lock= (DRIZZLE_LOCK*)
+  if (!(sql_lock= (DrizzleLock*)
 	malloc(sizeof(*sql_lock) +
                sizeof(THR_LOCK_DATA*) * tables * 2 +
                sizeof(table_ptr) * lock_count)))

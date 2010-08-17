@@ -337,7 +337,7 @@ pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
 boost::mutex LOCK_open;
 boost::recursive_mutex LOCK_global_system_variables;
-boost::recursive_mutex LOCK_thread_count;
+boost::mutex LOCK_thread_count;
 
 boost::condition_variable COND_refresh;
 boost::condition_variable COND_thread_count;
