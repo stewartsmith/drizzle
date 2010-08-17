@@ -453,7 +453,6 @@ drizzled_drizzled_LDADD= \
 				drizzled/internal/libinternal.la \
 				drizzled/message/libdrizzledmessage.la \
 				drizzled/libtemporal.la \
-				gnulib/libgnu.la \
 				$(LIBZ) \
 				$(LIBINTL) \
 				${LIBC_P} \
@@ -819,7 +818,6 @@ drizzled_libtemporal_la_SOURCES= \
 				 drizzled/temporal.cc \
 				 drizzled/temporal_format.cc \
 				 drizzled/temporal_interval.cc
-drizzled_libtemporal_la_LIBADD= gnulib/libgnu.la
 drizzled_libtypelib_la_SOURCES = drizzled/typelib.cc
 drizzled_libserialutil_la_SOURCES = drizzled/db.cc drizzled/table_proto_write.cc
 drizzled_libserialutil_la_CXXFLAGS= ${AM_CXXFLAGS} ${PROTOSKIP_WARNINGS}
