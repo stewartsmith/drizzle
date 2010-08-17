@@ -5360,7 +5360,7 @@ static void check_retries(uint32_t in_opt_max_connect_retries)
 {
   if (in_opt_max_connect_retries > 10000 || opt_max_connect_retries<1)
   {
-    cout<<N_("Error: Invalid Value for opt_max_connect_retries"); 
+    cout << N_("Error: Invalid Value for opt_max_connect_retries"); 
     exit(-1);
   }
   opt_max_connect_retries= in_opt_max_connect_retries;
@@ -5370,7 +5370,7 @@ static void check_tail_lines(uint32_t in_opt_tail_lines)
 {
   if (in_opt_tail_lines > 10000)
   {
-    cout<<N_("Error: Invalid Value for opt_tail_lines"); 
+    cout << N_("Error: Invalid Value for opt_tail_lines"); 
     exit(-1);
   }
   opt_tail_lines= in_opt_tail_lines;

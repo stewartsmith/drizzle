@@ -27,6 +27,8 @@
 #include "drizzled/tree.h"
 #include <list>
 
+#include <boost/thread/mutex.hpp>
+
 /*
   When allocating keys /rows in the internal block structure, do it
   within the following boundaries.
@@ -50,7 +52,7 @@ if (!(info->update & HA_STATE_AKTIV))\
 #define hp_find_hash(A,B) ((HASH_INFO*) hp_find_block((A),(B)))
 
 	/* Find pos for record and update it in info->current_ptr */
-#define hp_find_record(info,pos) (info)->current_ptr= hp_find_block(&(info)->s->recordspace.block,pos)
+#define hp_find_record(info,pos) (info)->current_ptr= hp_find_block(&(info)->getShare()->recordspace.block,pos)
 
 #define get_chunk_status(info,ptr) (ptr[(info)->offset_status])
 
@@ -122,8 +124,6 @@ extern void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char 
 extern void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned char *pos);
 extern uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos, uint32_t is_compare);
 
-
-
-extern pthread_mutex_t THR_LOCK_heap;
+extern boost::mutex THR_LOCK_heap;
 
 #endif /* PLUGIN_HEAP_HEAP_PRIV_H */

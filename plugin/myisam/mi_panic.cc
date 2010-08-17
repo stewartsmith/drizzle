@@ -31,17 +31,17 @@ int mi_panic(enum ha_panic_function flag)
   int error=0;
   MI_INFO *info;
 
-  pthread_mutex_lock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.lock();
   list<MI_INFO *>::iterator it= myisam_open_list.begin();
   while (it != myisam_open_list.end())
   {
     info= *it;
     switch (flag) {
     case HA_PANIC_CLOSE:
-      pthread_mutex_unlock(&THR_LOCK_myisam);	/* Not exactly right... */
+      THR_LOCK_myisam.unlock();	/* Not exactly right... */
       if (mi_close(info))
 	error=errno;
-      pthread_mutex_lock(&THR_LOCK_myisam);
+      THR_LOCK_myisam.lock();
       break;
     case HA_PANIC_WRITE:		/* Do this to free databases */
 #ifdef CANT_OPEN_FILES_TWICE
@@ -103,7 +103,7 @@ int mi_panic(enum ha_panic_function flag)
     }
     ++it;
   }
-  pthread_mutex_unlock(&THR_LOCK_myisam);
+  THR_LOCK_myisam.unlock();
   if (!error)
     return(0);
   return(errno=error);

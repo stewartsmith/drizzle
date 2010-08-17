@@ -557,10 +557,6 @@ SELECT MAX(a) FROM t1 IGNORE INDEX(a);
 MAX(a)
 1
 DROP TABLE t1;
-SET GLOBAL myisam_repair_threads=2;
-SHOW VARIABLES LIKE 'myisam_repair%';
-Variable_name	Value
-myisam_repair_threads	2
 CREATE TEMPORARY TABLE t1 (
 `_id` int NOT NULL default '0',
 `url` text,
@@ -618,10 +614,6 @@ _id
 8
 9
 DROP TABLE t1;
-SET GLOBAL myisam_repair_threads=1;
-SHOW VARIABLES LIKE 'myisam_repair%';
-Variable_name	Value
-myisam_repair_threads	1
 CREATE TEMPORARY TABLE t1 (c1 TEXT) ENGINE=MyISAM;
 show table status like 't1';
 Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
@@ -1426,10 +1418,8 @@ show table status like 't1';
 Session	Schema	Name	Type	Engine	Version	Rows	Avg_row_length	Table_size	Auto_increment
 #	test	t1	TEMPORARY	MyISAM	#	#	#	#	#
 # Enable keys with parallel repair
-SET GLOBAL myisam_repair_threads=2;
 ALTER TABLE t1 DISABLE KEYS;
 ALTER TABLE t1 ENABLE KEYS;
-SET GLOBAL myisam_repair_threads=1;
 CHECK TABLE t1;
 Table	Op	Msg_type	Msg_text
 test.t1	check	status	OK

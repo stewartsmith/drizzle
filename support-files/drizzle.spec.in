@@ -510,10 +510,14 @@ you will need to install %{name}-devel.
 %{_libdir}/drizzle/libdefault_replicator_plugin.so
 %{_libdir}/drizzle/liberrmsg_stderr_plugin.la
 %{_libdir}/drizzle/liberrmsg_stderr_plugin.so
+%{_libdir}/drizzle/libfilesystem_engine_plugin.la
+%{_libdir}/drizzle/libfilesystem_engine_plugin.so
 %{_libdir}/drizzle/libfiltered_replicator_plugin.la
 %{_libdir}/drizzle/libfiltered_replicator_plugin.so
 %{_libdir}/drizzle/libhello_world_plugin.la
 %{_libdir}/drizzle/libhello_world_plugin.so
+%{_libdir}/drizzle/libinnobase_plugin.la
+%{_libdir}/drizzle/libinnobase_plugin.so
 %{_libdir}/drizzle/libinfo_schema_plugin.la
 %{_libdir}/drizzle/libinfo_schema_plugin.so
 %{_libdir}/drizzle/libinformation_engine_plugin.la

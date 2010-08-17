@@ -26,9 +26,10 @@ using namespace std;
 int heap_close(HP_INFO *info)
 {
   int tmp;
-  pthread_mutex_lock(&THR_LOCK_heap);
+  THR_LOCK_heap.lock();
   tmp= hp_close(info);
-  pthread_mutex_unlock(&THR_LOCK_heap);
+  THR_LOCK_heap.unlock();
+
   return(tmp);
 }
 
@@ -36,10 +37,10 @@ int heap_close(HP_INFO *info)
 int hp_close(HP_INFO *info)
 {
   int error=0;
-  info->s->changed=0;
+  info->getShare()->changed=0;
   heap_open_list.remove(info);
-  if (!--info->s->open_count && info->s->delete_on_close)
-    hp_free(info->s);				/* Table was deleted */
-  free((unsigned char*) info);
+  if (!--info->getShare()->open_count && info->getShare()->delete_on_close)
+    hp_free(info->getShare());				/* Table was deleted */
+  delete info;
   return(error);
 }

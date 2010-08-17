@@ -135,6 +135,13 @@ static void observeAfterDropDatabase(AfterDropDatabaseEventData &data)
   fprintf(stderr, PLUGIN_NAME" EVENT observeAfterDropDatabase(%s) err = %d\n", data.db.c_str(), data.err);
 }
 
+HelloEvents::~HelloEvents()
+{
+  /* These are strdup'd in option processing */
+  free(sysvar_table_list);
+  free(sysvar_db_list);
+}
+
 //==================================
 /* This is where I register which table events my pluggin is interested in.*/
 void HelloEvents::registerTableEventsDo(TableShare &table_share, EventObserverList &observers)

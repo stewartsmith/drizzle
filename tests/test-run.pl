@@ -1640,18 +1640,6 @@ sub environment_setup () {
     ($lib_example_plugin ? "--plugin_dir=" . dirname($lib_example_plugin) : "");
 
   # ----------------------------------------------------
-  # Setup env so childs can execute myisampack and myisamchk
-  # ----------------------------------------------------
-#  $ENV{'MYISAMCHK'}= mtr_native_path(mtr_exe_exists(
-#                       "$path_client_bindir/myisamchk",
-#                       "$glob_basedir/storage/myisam/myisamchk",
-#                       "$glob_basedir/myisam/myisamchk"));
-#  $ENV{'MYISAMPACK'}= mtr_native_path(mtr_exe_exists(
-#                        "$path_client_bindir/myisampack",
-#                        "$glob_basedir/storage/myisam/myisampack",
-#                        "$glob_basedir/myisam/myisampack"));
-
-  # ----------------------------------------------------
   # We are nice and report a bit about our settings
   # ----------------------------------------------------
   if (!$opt_extern)
@@ -2592,9 +2580,7 @@ sub mysqld_arguments ($$$$) {
 	       $idx > 0 ? $idx + 101 : 1);
 
     mtr_add_arg($args,
-      "%s--loose-innodb_data_file_path=ibdata1:20M:autoextend", $prefix);
-
-    mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
+      "%s--innodb.data-file-path=ibdata1:20M:autoextend", $prefix);
 
   }
   else
@@ -2628,7 +2614,6 @@ sub mysqld_arguments ($$$$) {
                 $prefix, $path_vardir_trace, $mysqld->{'type'}, $sidx);
   }
 
-  mtr_add_arg($args, "%s--myisam.key-cache-size=1048576", $prefix);
   mtr_add_arg($args, "%s--sort_buffer=256K", $prefix);
   mtr_add_arg($args, "%s--max_heap_table_size=1M", $prefix);
 

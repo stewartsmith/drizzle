@@ -45,14 +45,14 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     uint32_t max_records, uint32_t min_records,
     HP_CREATE_INFO *create_info, HP_SHARE **res)
 {
-  uint32_t i, j, key_segs, max_length, length;
+  uint32_t i, key_segs, max_length, length;
   uint32_t max_rows_for_stated_memory;
   HP_SHARE *share= 0;
   HA_KEYSEG *keyseg;
 
   if (!create_info->internal_table)
   {
-    pthread_mutex_lock(&THR_LOCK_heap);
+    THR_LOCK_heap.lock();
     if ((share= hp_find_named_heap(name)) && share->open_count == 0)
     {
       hp_free(share);
@@ -78,7 +78,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
         /* Eventual chunk_size cannot be smaller than key data,
            which allows all keys to fit into the first chunk */
         my_error(ER_CANT_USE_OPTION_HERE, MYF(0), "block_size");
-        pthread_mutex_unlock(&THR_LOCK_heap);
+        THR_LOCK_heap.unlock();
         return(ER_CANT_USE_OPTION_HERE);
       }
 
@@ -186,7 +186,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     {
       memset(&keyinfo->block, 0, sizeof(keyinfo->block));
       memset(&keyinfo->rb_tree , 0, sizeof(keyinfo->rb_tree));
-      for (j= length= 0; j < keyinfo->keysegs; j++)
+      for (uint32_t j= length= 0; j < keyinfo->keysegs; j++)
       {
 	length+= keyinfo->seg[j].length;
 	if (keyinfo->seg[j].null_bit)
@@ -251,24 +251,14 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
           keyinfo->get_key_length= hp_rb_key_length;
       }
     }
-    share= NULL;
-    if (!(share= (HP_SHARE*) malloc(sizeof(HP_SHARE))))
+    share= new HP_SHARE;
+
+    if (keys && !(share->keydef= new HP_KEYDEF[keys]))
       goto err;
-
-    memset(share, 0, sizeof(HP_SHARE));
-
-    if (keys && !(share->keydef= (HP_KEYDEF*) malloc(keys*sizeof(HP_KEYDEF))))
+    if (keys && !(share->keydef->seg= new HA_KEYSEG[key_segs]))
       goto err;
-
-    memset(share->keydef, 0, keys*sizeof(HP_KEYDEF));
-
-    if (keys && !(share->keydef->seg= (HA_KEYSEG*) malloc(key_segs*sizeof(HA_KEYSEG))))
+    if (!(share->column_defs= new HP_COLUMNDEF[columns]))
       goto err;
-    if (!(share->column_defs= (HP_COLUMNDEF*)
-	  malloc(columns*sizeof(HP_COLUMNDEF))))
-      goto err;
-
-    memset(share->column_defs, 0, columns*sizeof(HP_COLUMNDEF));
 
     /*
        Max_records is used for estimating block sizes and for enforcement.
@@ -279,8 +269,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       (keys_memory_size + chunk_length));
     max_records = ((max_records && max_records < max_rows_for_stated_memory) ?
                       max_records : max_rows_for_stated_memory);
-
-    memcpy(share->column_defs, columndef, (size_t) (sizeof(columndef[0]) * columns));
 
     share->key_stat_version= 1;
     keyseg= keys ? share->keydef->seg : NULL;
@@ -350,12 +338,8 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     }
 
     /* Must be allocated separately for rename to work */
-    if (!(share->name= strdup(name)))
-    {
-      goto err;
-    }
+    share->name.append(name);
     thr_lock_init(&share->lock);
-    pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST);
     if (!create_info->internal_table)
     {
       heap_share_list.push_front(share);
@@ -364,22 +348,22 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       share->delete_on_close= 1;
   }
   if (!create_info->internal_table)
-    pthread_mutex_unlock(&THR_LOCK_heap);
+    THR_LOCK_heap.unlock();
 
   *res= share;
   return(0);
 
 err:
-  if(share && share->keydef && share->keydef->seg)
-    free(share->keydef->seg);
-  if(share && share->keydef)
-    free(share->keydef);
-  if(share && share->column_defs)
-    free(share->column_defs);
-  if(share)
-    free(share);
-  if (!create_info->internal_table)
-    pthread_mutex_unlock(&THR_LOCK_heap);
+  if (share && share->keydef && share->keydef->seg)
+    delete [] share->keydef->seg;
+  if (share && share->keydef)
+    delete [] share->keydef;
+  if (share && share->column_defs)
+    delete [] share->column_defs;
+  if (share)
+    delete share;
+  if (not create_info->internal_table)
+    THR_LOCK_heap.unlock();
   return(1);
 } /* heap_create */
 
@@ -394,7 +378,7 @@ static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char
 static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_records,
 		       uint32_t max_records)
 {
-  uint32_t i,recbuffer,records_in_block;
+  uint32_t recbuffer,records_in_block;
 
   max_records= max(min_records,max_records);
   if (!max_records)
@@ -413,10 +397,12 @@ static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_reco
   block->recbuffer= recbuffer;
   block->last_allocated= 0L;
 
-  for (i= 0; i <= HP_MAX_LEVELS; i++)
+  for (uint32_t i= 0; i <= HP_MAX_LEVELS; i++)
+  {
     block->level_info[i].records_under_level=
       (!i ? 1 : i == 1 ? records_in_block :
        HP_PTRS_IN_NOD * block->level_info[i - 1].records_under_level);
+  }
 }
 
 
@@ -434,7 +420,7 @@ int heap_delete_table(const char *name)
   int result;
   register HP_SHARE *share;
 
-  pthread_mutex_lock(&THR_LOCK_heap);
+  THR_LOCK_heap.lock();
   if ((share= hp_find_named_heap(name)))
   {
     heap_try_free(share);
@@ -444,17 +430,8 @@ int heap_delete_table(const char *name)
   {
     result= errno=ENOENT;
   }
-  pthread_mutex_unlock(&THR_LOCK_heap);
+  THR_LOCK_heap.unlock();
   return(result);
-}
-
-
-void heap_drop_table(HP_INFO *info)
-{
-  pthread_mutex_lock(&THR_LOCK_heap);
-  heap_try_free(info->s);
-  pthread_mutex_unlock(&THR_LOCK_heap);
-  return;
 }
 
 
@@ -463,13 +440,9 @@ void hp_free(HP_SHARE *share)
   heap_share_list.remove(share);        /* If not internal table */
   hp_clear(share);			/* Remove blocks from memory */
   share->lock.deinit();
-  pthread_mutex_destroy(&share->intern_lock);
-  if (share->keydef && share->keydef->seg)
-    free(share->keydef->seg);
   if (share->keydef)
-    free(share->keydef);
-  free(share->column_defs);
-  free((unsigned char*) share->name);
-  free((unsigned char*) share);
-  return;
+    delete [] share->keydef->seg;
+  delete [] share->keydef;
+  delete [] share->column_defs;
+  delete share;
 }

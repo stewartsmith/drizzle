@@ -126,6 +126,24 @@ FilteredReplicator::FilteredReplicator(string name_arg,
   pthread_mutex_init(&sysvar_tab_lock, NULL);
 }
 
+FilteredReplicator::~FilteredReplicator()
+{
+  if (sch_re)
+  {
+    pcre_free(sch_re);
+  }
+  if (tab_re)
+  {
+    pcre_free(tab_re);
+  }
+
+  pthread_mutex_destroy(&sch_vector_lock);
+  pthread_mutex_destroy(&tab_vector_lock);
+  pthread_mutex_destroy(&sysvar_sch_lock);
+  pthread_mutex_destroy(&sysvar_tab_lock);
+
+}
+
 void FilteredReplicator::parseStatementTableMetadata(const message::Statement &in_statement,
                                                      string &in_schema_name,
                                                      string &in_table_name) const
@@ -500,22 +518,22 @@ static int init(module::Context &context)
   
   if (vm.count("filteredschemas"))
   {
-    sysvar_filtered_replicator_sch_filters= strdup(vm["filteredschemas"].as<string>().c_str());
+    sysvar_filtered_replicator_sch_filters= const_cast<char *>(vm["filteredschemas"].as<string>().c_str());
   }
 
   else
   {
-    sysvar_filtered_replicator_sch_filters= (char *)"";
+    sysvar_filtered_replicator_sch_filters= const_cast<char *>("");
   }
 
   if (vm.count("filteredtables"))
   {
-    sysvar_filtered_replicator_tab_filters= strdup(vm["filteredtables"].as<string>().c_str());
+    sysvar_filtered_replicator_tab_filters= const_cast<char *>(vm["filteredtables"].as<string>().c_str());
   }
 
   else
   {
-    sysvar_filtered_replicator_tab_filters= (char *)"";
+    sysvar_filtered_replicator_tab_filters= const_cast<char *>("");
   }
 
   filtered_replicator= new(std::nothrow) 

@@ -210,11 +210,11 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
 
   if (select && select->quick)
   {
-    status_var_increment(session->status_var.filesort_range_count);
+    session->status_var.filesort_range_count++;
   }
   else
   {
-    status_var_increment(session->status_var.filesort_scan_count);
+    session->status_var.filesort_scan_count++;
   }
 #ifdef CAN_TRUST_RANGE
   if (select && select->quick && select->quick->records > 0L)
@@ -350,10 +350,14 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
     }
   }
   if (error)
+  {
     my_message(ER_FILSORT_ABORT, ER(ER_FILSORT_ABORT),
                MYF(ME_ERROR+ME_WAITTANG));
+  }
   else
-    statistic_add(session->status_var.filesort_rows, (uint32_t) records, NULL);
+  {
+    session->status_var.filesort_rows+= (uint32_t) records;
+  }
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
   DRIZZLE_FILESORT_DONE(error, records);
@@ -1139,7 +1143,7 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
   volatile Session::killed_state *killed= &current_session->killed;
   Session::killed_state not_killable;
 
-  status_var_increment(current_session->status_var.filesort_merge_passes);
+  current_session->status_var.filesort_merge_passes++;
   if (param->not_killable)
   {
     killed= &not_killable;

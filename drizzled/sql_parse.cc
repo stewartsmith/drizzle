@@ -54,7 +54,6 @@
 #include <algorithm>
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/thread_var.h"
 
 using namespace std;
 
@@ -183,7 +182,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   /* Increase id and count all other statements. */
   default:
-    statistic_increment(session->status_var.questions, NULL);
+    session->status_var.questions++;
     query_id.next();
   }
 
@@ -232,7 +231,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   case COM_SHUTDOWN:
   {
-    status_var_increment(session->status_var.com_other);
+    session->status_var.com_other++;
     session->my_eof();
     session->close_thread_tables();			// Free before kill
     kill_drizzle();
@@ -240,7 +239,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
     break;
   }
   case COM_PING:
-    status_var_increment(session->status_var.com_other);
+    session->status_var.com_other++;
     session->my_ok();				// Tell client we are alive
     break;
   case COM_SLEEP:
@@ -269,7 +268,7 @@ bool dispatch_command(enum enum_server_command command, Session *session,
   if (session->killed == Session::KILL_QUERY || session->killed == Session::KILL_BAD_DATA)
   {
     session->killed= Session::NOT_KILLED;
-    session->mysys_var->abort= 0;
+    session->setAbort(false);
   }
 
   /* Can not be true, but do not take chances in production. */
@@ -1425,7 +1424,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
     if ((*it)->thread_id == id)
     {
       tmp= *it;
-      pthread_mutex_lock(&tmp->LOCK_delete);	// Lock from delete
+      tmp->lockForDelete();
       break;
     }
   }
@@ -1439,7 +1438,7 @@ kill_one_thread(Session *, ulong id, bool only_kill_query)
       error= 0;
     }
 
-    pthread_mutex_unlock(&tmp->LOCK_delete);
+    tmp->unlockForDelete();
   }
   return(error);
 }

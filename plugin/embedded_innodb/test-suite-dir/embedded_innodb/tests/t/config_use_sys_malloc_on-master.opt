@@ -1,1 +1,1 @@
---plugin_add=embedded_innodb --plugin_remove=innobase --innodb-use-sys-malloc=1
+--plugin_add=embedded_innodb --plugin_remove=innobase --innodb.use-sys-malloc=1

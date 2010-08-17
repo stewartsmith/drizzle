@@ -501,7 +501,7 @@ int TransactionServices::commitTransaction(Session *session, bool normal_transac
           }
           else
           {
-            status_var_increment(session->status_var.ha_prepare_count);
+            session->status_var.ha_prepare_count++;
           }
         }
       }
@@ -560,7 +560,7 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
         }
         else if (normal_transaction)
         {
-          status_var_increment(session->status_var.ha_commit_count);
+          session->status_var.ha_commit_count++;
         }
       }
       else if (resource->participatesInSqlTransaction())
@@ -572,7 +572,7 @@ int TransactionServices::commitPhaseOne(Session *session, bool normal_transactio
         }
         else if (normal_transaction)
         {
-          status_var_increment(session->status_var.ha_commit_count);
+          session->status_var.ha_commit_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
@@ -626,7 +626,7 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
         }
         else if (normal_transaction)
         {
-          status_var_increment(session->status_var.ha_rollback_count);
+          session->status_var.ha_rollback_count++;
         }
       }
       else if (resource->participatesInSqlTransaction())
@@ -638,7 +638,7 @@ int TransactionServices::rollbackTransaction(Session *session, bool normal_trans
         }
         else if (normal_transaction)
         {
-          status_var_increment(session->status_var.ha_rollback_count);
+          session->status_var.ha_rollback_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
@@ -751,7 +751,7 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
       }
       else
       {
-        status_var_increment(session->status_var.ha_savepoint_rollback_count);
+        session->status_var.ha_savepoint_rollback_count++;
       }
     }
     trans->no_2pc|= not resource->participatesInXaTransaction();
@@ -808,7 +808,7 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
         }
         else
         {
-          status_var_increment(session->status_var.ha_rollback_count);
+          session->status_var.ha_rollback_count++;
         }
       }
       resource_context->reset(); /* keep it conveniently zero-filled */
@@ -850,7 +850,7 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
         }
         else
         {
-          status_var_increment(session->status_var.ha_savepoint_count);
+          session->status_var.ha_savepoint_count++;
         }
       }
     }

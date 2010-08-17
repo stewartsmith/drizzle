@@ -72,11 +72,12 @@ static int init(module::Context &context)
 
   else
   {
-    sysvar_memcached_servers= "";
+    sysvar_memcached_servers= strdup("");
   }
 
   SysvarHolder &sysvar_holder= SysvarHolder::singleton();
   sysvar_holder.setServersString(sysvar_memcached_servers);
+  sysvar_holder.setMemoryPtr(sysvar_memcached_servers);
 
   /* we are good to go */
   stats_table_tool= new(std::nothrow)StatsTableTool; 

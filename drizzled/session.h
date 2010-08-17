@@ -54,6 +54,8 @@
 #include <drizzled/plugin/authorization.h>
 
 #include <boost/unordered_map.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -381,13 +383,30 @@ public:
   plugin::Client *client; /**< Pointer to client object */
   plugin::Scheduler *scheduler; /**< Pointer to scheduler object */
   void *scheduler_arg; /**< Pointer to the optional scheduler argument */
-  HASH user_vars; /**< Hash of user variables defined during the session's lifetime */
+private:
+  typedef boost::unordered_map< std::string, user_var_entry *, util::insensitive_hash, util::insensitive_equal_to> UserVars;
+  typedef std::pair< UserVars::iterator, UserVars::iterator > UserVarsRange;
+  UserVars user_vars; /**< Hash of user variables defined during the session's lifetime */
+
+public:
   struct system_variables variables; /**< Mutable local variables local to the session */
   struct system_status_var status_var; /**< Session-local status counters */
   THR_LOCK_INFO lock_info; /**< Locking information for this session */
   THR_LOCK_OWNER main_lock_id; /**< To use for conventional queries */
   THR_LOCK_OWNER *lock_id; /**< If not main_lock_id, points to the lock_id of a cursor. */
-  pthread_mutex_t LOCK_delete; /**< Locked before session is deleted */
+private:
+  boost::mutex LOCK_delete; /**< Locked before session is deleted */
+public:
+
+  void lockForDelete()
+  {
+    LOCK_delete.lock();
+  }
+
+  void unlockForDelete()
+  {
+    LOCK_delete.unlock();
+  }
 
   /**
    * A peek into the query string for the session. This is a best effort
@@ -941,7 +960,7 @@ public:
     enter_cond(); this mutex is then released by exit_cond().
     Usage must be: lock mutex; enter_cond(); your code; exit_cond().
   */
-  const char* enter_cond(pthread_cond_t *cond, pthread_mutex_t* mutex, const char* msg);
+  const char* enter_cond(boost::condition_variable &cond, boost::mutex &mutex, const char* msg);
   void exit_cond(const char* old_msg);
 
   inline time_t query_start() { return start_time; }
@@ -1055,6 +1074,9 @@ public:
   {
     return (abort_on_warning);
   }
+
+  void setAbort(bool arg);
+  void lockOnSys();
   void set_status_var_init();
 
   /**
@@ -1411,7 +1433,7 @@ public:
   Table *table_cache_insert_placeholder(const char *db_name, const char *table_name);
   bool lock_table_name_if_not_cached(TableIdentifier &identifier, Table **table);
 
-  typedef boost::unordered_map<std::string, message::Table> TableMessageCache;
+  typedef boost::unordered_map<std::string, message::Table, util::insensitive_hash, util::insensitive_equal_to> TableMessageCache;
   TableMessageCache table_message_cache;
 
   bool storeTableMessage(const TableIdentifier &identifier, message::Table &table_message);
@@ -1461,7 +1483,7 @@ public:
   bool reopen_name_locked_table(TableList* table_list, bool link_in);
   bool close_cached_tables(TableList *tables, bool wait_for_refresh, bool wait_for_placeholders);
 
-  void wait_for_condition(pthread_mutex_t *mutex, pthread_cond_t *cond);
+  void wait_for_condition(boost::mutex &mutex, boost::condition_variable &cond);
   int setup_conds(TableList *leaves, COND **conds);
   int lock_tables(TableList *tables, uint32_t count, bool *need_reopen);
 

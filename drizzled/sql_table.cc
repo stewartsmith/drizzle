@@ -1872,8 +1872,8 @@ static bool mysql_admin_table(Session* session, TableList* tables,
     if (lock_type == TL_WRITE && table->table->getShare()->getVersion())
     {
       LOCK_open.lock(); /* Lock type is TL_WRITE and we lock to repair the table */
-      const char *old_message=session->enter_cond(COND_refresh.native_handle(), LOCK_open.native_handle(),
-					      "Waiting to get writelock");
+      const char *old_message=session->enter_cond(COND_refresh, LOCK_open,
+                                                  "Waiting to get writelock");
       mysql_lock_abort(session,table->table);
       TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
       remove_table_from_cache(session, identifier,

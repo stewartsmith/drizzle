@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <signal.h>
 #include <limits.h>
+#include <stdexcept>
 
 #include <boost/program_options.hpp>
 #include <boost/thread/recursive_mutex.hpp>
@@ -34,7 +35,6 @@
 #include <boost/thread/condition_variable.hpp>
 
 #include "drizzled/internal/my_sys.h"
-#include "drizzled/internal/thread_var.h"
 #include "drizzled/internal/my_bit.h"
 #include <drizzled/my_hash.h>
 #include <drizzled/error.h>
@@ -336,7 +336,6 @@ SHOW_COMP_OPTION have_symlink;
 pthread_key_t THR_Mem_root;
 pthread_key_t THR_Session;
 boost::mutex LOCK_open;
-boost::mutex LOCK_status;
 boost::recursive_mutex LOCK_global_system_variables;
 boost::recursive_mutex LOCK_thread_count;
 
@@ -425,18 +424,7 @@ void close_connections(void)
     tmp->killed= Session::KILL_CONNECTION;
     tmp->scheduler->killSession(tmp);
     DRIZZLE_CONNECTION_DONE(tmp->thread_id);
-    if (tmp->mysys_var)
-    {
-      tmp->mysys_var->abort=1;
-      pthread_mutex_lock(&tmp->mysys_var->mutex);
-      if (tmp->mysys_var->current_cond)
-      {
-        pthread_mutex_lock(tmp->mysys_var->current_mutex);
-        pthread_cond_broadcast(tmp->mysys_var->current_cond);
-        pthread_mutex_unlock(tmp->mysys_var->current_mutex);
-      }
-      pthread_mutex_unlock(&tmp->mysys_var->mutex);
-    }
+    tmp->lockOnSys();
   }
   LOCK_thread_count.unlock(); // For unlink from list
 
@@ -654,7 +642,7 @@ void Session::unlink(Session *session)
   session->cleanup();
 
   LOCK_thread_count.lock();
-  pthread_mutex_lock(&session->LOCK_delete);
+  session->lockForDelete();
 
   getSessionList().erase(remove(getSessionList().begin(),
                          getSessionList().end(),
@@ -791,13 +779,6 @@ int init_common_variables(const char *conf_file_name, int argc,
 
 int init_thread_environment()
 {
-   pthread_mutexattr_t attr; 
-   pthread_mutexattr_init(&attr);
-
-  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); 
-
-  pthread_mutexattr_destroy(&attr);
-
   if (pthread_key_create(&THR_Session,NULL) ||
       pthread_key_create(&THR_Mem_root,NULL))
   {
@@ -807,6 +788,61 @@ int init_thread_environment()
   return 0;
 }
 
+static pair<string, string> parse_size_suffixes(string s)
+{
+  size_t equal_pos= s.find("=");
+  if (equal_pos != string::npos)
+  {
+    string arg_key(s.substr(0, equal_pos));
+    string arg_val(s.substr(equal_pos+1));
+
+    try
+    {
+      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
+      if (size_suffix_pos == arg_val.size()-1)
+      {
+        char suffix= arg_val[size_suffix_pos];
+        string size_val(arg_val.substr(0, size_suffix_pos));
+
+        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
+        uint64_t new_size= 0;
+
+        switch (suffix)
+        {
+        case 'K':
+        case 'k':
+          new_size= base_size * 1024;
+          break;
+        case 'M':
+        case 'm':
+          new_size= base_size * 1024 * 1024;
+          break;
+        case 'G':
+        case 'g':
+          new_size= base_size * 1024 * 1024 * 1024;
+          break;
+        }
+        return make_pair(arg_key,
+                         boost::lexical_cast<string>(new_size));
+      }
+    }
+    catch (...)
+    {
+      /* Screw it, let the normal parser take over */
+    }
+  }
+
+  return make_pair(string(""), string(""));
+}
+
+static pair<string, string> parse_size_arg(string s)
+{
+  if (s.find("--") == 0)
+  {
+    return parse_size_suffixes(s.substr(2));
+  }
+  return make_pair(string(""), string(""));
+}
 
 int init_server_components(module::Registry &plugins)
 {
@@ -843,7 +879,8 @@ int init_server_components(module::Registry &plugins)
 
   po::parsed_options parsed= po::command_line_parser(defaults_argc,
                                                      defaults_argv).
-    options(long_options).allow_unregistered().run();
+    options(long_options).extra_parser(parse_size_arg).
+    allow_unregistered().run();
 
   vector<string> unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
@@ -942,8 +979,6 @@ enum options_drizzled
   OPT_LOCAL_INFILE,
   OPT_BACK_LOG,
   OPT_JOIN_BUFF_SIZE,
-  OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
-  OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
   OPT_MAX_ALLOWED_PACKET,
   OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
