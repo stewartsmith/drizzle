@@ -31,15 +31,14 @@ class TableList;
 class file_exchange;
 class Session;
 class Table;
-
-typedef struct st_copy_info COPY_INFO;
+class CopyInfo;
 
 int mysql_load(Session *session, file_exchange *ex, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values_list,
                enum enum_duplicates handle_duplicates, bool ignore);
     
-int write_record(Session *session, Table *table, COPY_INFO *info);
+int write_record(Session *session, Table *table, CopyInfo *info);
 
 } /* namespace drizzled */
 

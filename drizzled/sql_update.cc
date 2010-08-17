@@ -300,7 +300,7 @@ int mysql_update(Session *session, TableList *table_list,
         NOTE: filesort will call table->prepare_for_position()
       */
       uint32_t         length= 0;
-      SORT_FIELD  *sortorder;
+      SortField  *sortorder;
       ha_rows examined_rows;
 
       table->sort.io_cache = new internal::IO_CACHE;

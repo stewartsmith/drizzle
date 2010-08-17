@@ -177,7 +177,7 @@ public:
   uint64_t select_options;
   select_result *result;
   Tmp_Table_Param tmp_table_param;
-  DRIZZLE_LOCK *lock;
+  DrizzleLock *lock;
 
   Join *tmp_join; /**< copy of this Join to be used with temporary tables */
   ROLLUP rollup;				/**< Used with rollup */
@@ -219,7 +219,7 @@ public:
     allocations that occur in repetition at execution time will result in
     excessive memory usage.
   */
-  SORT_FIELD *sortorder;                        // make_unireg_sortorder()
+  SortField *sortorder;                        // make_unireg_sortorder()
   Table **table_reexec;                         // make_simple_join()
   JoinTable *join_tab_reexec;                    // make_simple_join()
   /* end of allocation caching storage */

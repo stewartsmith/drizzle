@@ -33,9 +33,9 @@ namespace internal
 typedef struct st_io_cache IO_CACHE;
 }
 
-typedef struct st_sort_field SORT_FIELD;
 class Field;
 class Table;
+class SortField;
 
 
 /* Defines used by filesort and uniques */
@@ -44,7 +44,7 @@ class Table;
 #define MERGEBUFF2		15
 
 /*
-   The structure SORT_ADDON_FIELD describes a fixed layout
+   The structure sort_addon_field_st describes a fixed layout
    for field values appended to sorted values in records to be sorted
    in the sort buffer.
    Only fixed layout is supported now.
@@ -59,21 +59,41 @@ class Table;
    the callback function 'unpack_addon_fields'.
 */
 
-typedef struct st_sort_addon_field {  /* Sort addon packed field */
+struct sort_addon_field_st {  /* Sort addon packed field */
   Field *field;          /* Original field */
   uint32_t   offset;         /* Offset from the last sorted field */
   uint32_t   null_offset;    /* Offset to to null bit from the last sorted field */
   uint32_t   length;         /* Length in the sort buffer */
   uint8_t  null_bit;       /* Null bit mask for the field */
-} SORT_ADDON_FIELD;
 
-typedef struct st_buffpek {		/* Struktur om sorteringsbuffrarna */
+  sort_addon_field_st() :
+    field(NULL),
+    offset(0),
+    null_offset(0),
+    length(0),
+    null_bit(0)
+  { }
+
+};
+
+struct buffpek_st {		/* Struktur om sorteringsbuffrarna */
   off_t file_pos;			/* Where we are in the sort file */
-  unsigned char *base,*key;			/* key pointers */
+  unsigned char *base;			/* key pointers */
+  unsigned char *key;			/* key pointers */
   ha_rows count;			/* Number of rows in table */
   size_t mem_count;			/* numbers of keys in memory */
   size_t max_keys;			/* Max keys in buffert */
-} BUFFPEK;
+
+  buffpek_st() :
+    file_pos(0),
+    base(0),
+    key(0),
+    count(0),
+    mem_count(0),
+    max_keys(0)
+  { }
+
+};
 
 struct BUFFPEK_COMPARE_CONTEXT
 {
@@ -90,9 +110,9 @@ struct st_sort_param {
   uint32_t keys;				/* Max keys / buffer */
   ha_rows max_rows,examined_rows;
   Table *sort_form;			/* For quicker make_sortkey */
-  SORT_FIELD *local_sortorder;
-  SORT_FIELD *end;
-  SORT_ADDON_FIELD *addon_field; /* Descriptors for companion fields */
+  SortField *local_sortorder;
+  SortField *end;
+  sort_addon_field_st *addon_field; /* Descriptors for companion fields */
   unsigned char *unique_buff;
   bool not_killable;
   char* tmp_buffer;
@@ -105,14 +125,17 @@ typedef struct st_sort_param SORTPARAM;
 
 
 int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
-		    BUFFPEK *buffpek,
-		    uint32_t *maxbuffer, internal::IO_CACHE *t_file);
-uint32_t read_to_buffer(internal::IO_CACHE *fromfile,BUFFPEK *buffpek,
-		    uint32_t sort_length);
+                    buffpek_st *buffpek,
+                    uint32_t *maxbuffer, internal::IO_CACHE *t_file);
+
+uint32_t read_to_buffer(internal::IO_CACHE *fromfile, buffpek_st *buffpek,
+                        uint32_t sort_length);
+
 int merge_buffers(SORTPARAM *param,internal::IO_CACHE *from_file,
-		  internal::IO_CACHE *to_file, unsigned char *sort_buffer,
-		  BUFFPEK *lastbuff,BUFFPEK *Fb,
-		  BUFFPEK *Tb,int flag);
+                  internal::IO_CACHE *to_file, unsigned char *sort_buffer,
+                  buffpek_st *lastbuff,
+                  buffpek_st *Fb,
+                  buffpek_st *Tb,int flag);
 
 } /* namespace drizzled */
 

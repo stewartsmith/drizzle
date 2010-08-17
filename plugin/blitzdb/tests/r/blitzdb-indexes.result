@@ -64,7 +64,7 @@ c
 800
 explain select c from t1 where b = 3;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	b	b	5	const	4	
+1	SIMPLE	t1	ref	b	b	5	const	4	Using where
 select c from t1 where b = 3;
 c
 300

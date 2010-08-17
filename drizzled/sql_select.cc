@@ -4264,12 +4264,10 @@ enum_nested_loop_state end_write_group(Join *join, JoinTable *, bool end_of_reco
   outer join table.
   We can't remove tests that are made against columns which are stored
   in sorted order.
-*****************************************************************************/
-
-/**
   @return
-    1 if right_item is used removable reference key on left_item
-*/
+    1 if right_item used is a removable reference key on left_item
+    0 otherwise.
+****************************************************************************/
 bool test_if_ref(Item_field *left_item,Item *right_item)
 {
   Field *field=left_item->field;
@@ -4470,9 +4468,16 @@ static Item *part_of_refkey(Table *table,Field *field)
     }
 
     for (part=0 ; part < ref_parts ; part++,key_part++)
+    {
       if (field->eq(key_part->field) &&
-	  !(key_part->key_part_flag & HA_PART_KEY_SEG))
+	  !(key_part->key_part_flag & HA_PART_KEY_SEG) &&
+          //If field can be NULL, we should not remove this predicate, as
+          //it may lead to non-rejection of NULL values. 
+          !(field->real_maybe_null()))
+      {
 	return table->reginfo.join_tab->ref.items[part];
+      }
+    }
   }
   return (Item*) 0;
 }
@@ -5505,16 +5510,16 @@ err:
   return(1);
 }
 
-SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length, SORT_FIELD *sortorder)
+SortField *make_unireg_sortorder(order_st *order, uint32_t *length, SortField *sortorder)
 {
   uint32_t count;
-  SORT_FIELD *sort,*pos;
+  SortField *sort,*pos;
 
   count=0;
   for (order_st *tmp = order; tmp; tmp=tmp->next)
     count++;
   if (!sortorder)
-    sortorder= (SORT_FIELD*) memory::sql_alloc(sizeof(SORT_FIELD) *
+    sortorder= (SortField*) memory::sql_alloc(sizeof(SortField) *
                                        (max(count, *length) + 1));
   pos= sort= sortorder;
 
@@ -6589,7 +6594,9 @@ void print_join(Session *session, String *str,
 void Select_Lex::print(Session *session, String *str, enum_query_type query_type)
 {
   /* QQ: session may not be set for sub queries, but this should be fixed */
-  assert(session);
+  if(not session)
+    session= current_session;
+
 
   str->append(STRING_WITH_LEN("select "));
 
