@@ -5505,16 +5505,16 @@ err:
   return(1);
 }
 
-SORT_FIELD *make_unireg_sortorder(order_st *order, uint32_t *length, SORT_FIELD *sortorder)
+SortField *make_unireg_sortorder(order_st *order, uint32_t *length, SortField *sortorder)
 {
   uint32_t count;
-  SORT_FIELD *sort,*pos;
+  SortField *sort,*pos;
 
   count=0;
   for (order_st *tmp = order; tmp; tmp=tmp->next)
     count++;
   if (!sortorder)
-    sortorder= (SORT_FIELD*) memory::sql_alloc(sizeof(SORT_FIELD) *
+    sortorder= (SortField*) memory::sql_alloc(sizeof(SortField) *
                                        (max(count, *length) + 1));
   pos= sort= sortorder;
 

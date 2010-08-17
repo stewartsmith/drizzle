@@ -238,7 +238,7 @@ bool mysql_insert(Session *session,TableList *table_list,
   uint32_t value_count;
   ulong counter = 1;
   uint64_t id;
-  COPY_INFO info;
+  CopyInfo info;
   Table *table= 0;
   List_iterator_fast<List_item> its(values_list);
   List_item *values;
@@ -694,7 +694,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
      write_record()
       session   - thread context
       table - table to which record should be written
-      info  - COPY_INFO structure describing handling of duplicates
+      info  - CopyInfo structure describing handling of duplicates
               and which is used for counting number of records inserted
               and deleted.
 
@@ -713,7 +713,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
 */
 
 
-int write_record(Session *session, Table *table,COPY_INFO *info)
+int write_record(Session *session, Table *table,CopyInfo *info)
 {
   int error;
   char *key=0;
@@ -1435,7 +1435,7 @@ void select_insert::abort() {
       items        in     List of items which should be used to produce rest
                           of fields for the table (corresponding fields will
                           be added to the end of alter_info->create_list)
-      lock         out    Pointer to the DRIZZLE_LOCK object for table created
+      lock         out    Pointer to the DrizzleLock object for table created
                           (or open temporary table) will be returned in this
                           parameter. Since this table is not included in
                           Session::lock caller is responsible for explicitly
@@ -1467,7 +1467,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
                                       AlterInfo *alter_info,
                                       List<Item> *items,
                                       bool is_if_not_exists,
-                                      DRIZZLE_LOCK **lock,
+                                      DrizzleLock **lock,
 				      TableIdentifier &identifier)
 {
   Table tmp_table;		// Used during 'CreateField()'
@@ -1613,7 +1613,7 @@ static Table *create_table_from_items(Session *session, HA_CREATE_INFO *create_i
 int
 select_create::prepare(List<Item> &values, Select_Lex_Unit *u)
 {
-  DRIZZLE_LOCK *extra_lock= NULL;
+  DrizzleLock *extra_lock= NULL;
   /*
     For replication, the CREATE-SELECT statement is written
     in two pieces: the first transaction messsage contains 

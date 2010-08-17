@@ -81,7 +81,7 @@ Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
   init_tree(&tree, (ulong) (max_in_memory_size / 16), 0, size, comp_func, false,
             NULL, comp_func_fixed_arg);
   /* If the following fail's the next add will also fail */
-  my_init_dynamic_array(&file_ptrs, sizeof(BUFFPEK), 16, 16);
+  my_init_dynamic_array(&file_ptrs, sizeof(buffpek_st), 16, 16);
   /*
     If you change the following, change it in get_max_elements function, too.
   */
@@ -340,7 +340,7 @@ Unique::~Unique()
     /* Write tree to disk; clear tree */
 bool Unique::flush()
 {
-  BUFFPEK file_ptr;
+  buffpek_st file_ptr;
   elements+= tree.elements_in_tree;
   file_ptr.count=tree.elements_in_tree;
   file_ptr.file_pos=my_b_tell(file);
@@ -381,7 +381,7 @@ Unique::reset()
   The comparison function, passed to queue_init() in merge_walk() and in
   merge_buffers() when the latter is called from Uniques::get() must
   use comparison function of Uniques::tree, but compare members of struct
-  BUFFPEK.
+  buffpek_st.
 */
 
 static int buffpek_compare(void *arg, unsigned char *key_ptr1, unsigned char *key_ptr2)
@@ -403,7 +403,7 @@ class buffpek_compare_functor
   public:
   buffpek_compare_functor(qsort_cmp2 in_key_compare, void *in_compare_arg)
     : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
-  inline bool operator()(const BUFFPEK *i, const BUFFPEK *j)
+  inline bool operator()(const buffpek_st *i, const buffpek_st *j)
   {
     return key_compare(key_compare_arg,
                     i->key, j->key);
@@ -426,10 +426,10 @@ class buffpek_compare_functor
                        key_length
     key_length         size of tree element; key_length * (end - begin)
                        must be less or equal than merge_buffer_size.
-    begin              pointer to BUFFPEK struct for the first tree.
-    end                pointer to BUFFPEK struct for the last tree;
+    begin              pointer to buffpek_st struct for the first tree.
+    end                pointer to buffpek_st struct for the last tree;
                        end > begin and [begin, end) form a consecutive
-                       range. BUFFPEKs structs in that range are used and
+                       range. buffpek_sts structs in that range are used and
                        overwritten in merge_walk().
     walk_action        element visitor. Action is called for each unique
                        key.
@@ -445,7 +445,7 @@ class buffpek_compare_functor
 */
 
 static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
-                       uint32_t key_length, BUFFPEK *begin, BUFFPEK *end,
+                       uint32_t key_length, buffpek_st *begin, buffpek_st *end,
                        tree_walk_action walk_action, void *walk_action_arg,
                        qsort_cmp2 compare, void *compare_arg,
                        internal::IO_CACHE *file)
@@ -453,7 +453,7 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
   if (end <= begin ||
       merge_buffer_size < (ulong) (key_length * (end - begin + 1))) 
     return 1;
-  priority_queue<BUFFPEK *, vector<BUFFPEK *>, buffpek_compare_functor >
+  priority_queue<buffpek_st *, vector<buffpek_st *>, buffpek_compare_functor >
     queue(buffpek_compare_functor(compare, compare_arg));
   /* we need space for one key when a piece of merge buffer is re-read */
   merge_buffer_size-= key_length;
@@ -463,7 +463,7 @@ static bool merge_walk(unsigned char *merge_buffer, ulong merge_buffer_size,
   /* if piece_size is aligned reuse_freed_buffer will always hit */
   uint32_t piece_size= max_key_count_per_piece * key_length;
   uint32_t bytes_read;               /* to hold return value of read_to_buffer */
-  BUFFPEK *top;
+  buffpek_st *top;
   int res= 1;
   /*
     Invariant: queue must contain top element from each tree, until a tree
@@ -601,8 +601,8 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
   }
 
   res= merge_walk(&merge_buffer[0], (ulong) max_in_memory_size, size,
-                  (BUFFPEK *) file_ptrs.buffer,
-                  (BUFFPEK *) file_ptrs.buffer + file_ptrs.elements,
+                  (buffpek_st *) file_ptrs.buffer,
+                  (buffpek_st *) file_ptrs.buffer + file_ptrs.elements,
                   action, walk_action_arg,
                   tree.compare, tree.custom_arg, file);
 
@@ -635,7 +635,7 @@ bool Unique::get(Table *table)
     return 1;
 
   internal::IO_CACHE *outfile=table->sort.io_cache;
-  BUFFPEK *file_ptr= (BUFFPEK*) file_ptrs.buffer;
+  buffpek_st *file_ptr= (buffpek_st*) file_ptrs.buffer;
   uint32_t maxbuffer= file_ptrs.elements - 1;
   unsigned char *sort_buffer;
   internal::my_off_t save_pos;

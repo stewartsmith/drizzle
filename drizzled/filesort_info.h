@@ -32,8 +32,8 @@ struct filesort_info_st
   uint32_t      buffpek_len;        /* Max number of buffpeks in the buffer */
   unsigned char     *addon_buf;         /* Pointer to a buffer if sorted with fields */
   size_t    addon_length;       /* Length of the buffer */
-  struct st_sort_addon_field *addon_field;     /* Pointer to the fields info */
-  void    (*unpack)(struct st_sort_addon_field *, unsigned char *); /* To unpack back */
+  struct sort_addon_field_st *addon_field;     /* Pointer to the fields info */
+  void    (*unpack)(struct sort_addon_field_st *, unsigned char *); /* To unpack back */
   unsigned char     *record_pointers;    /* If sorted in memory */
   ha_rows   found_records;      /* How many records in sort */
 };

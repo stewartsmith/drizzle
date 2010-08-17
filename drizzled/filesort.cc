@@ -76,7 +76,7 @@ static void make_sortkey(SORTPARAM *param,
 static void register_used_fields(SORTPARAM *param);
 static int merge_index(SORTPARAM *param,
                        unsigned char *sort_buffer,
-		       BUFFPEK *buffpek,
+		       buffpek_st *buffpek,
 		       uint32_t maxbuffer,
                        internal::IO_CACHE *tempfile,
 		       internal::IO_CACHE *outfile);
@@ -86,14 +86,14 @@ static bool save_index(SORTPARAM *param,
                        filesort_info_st *table_sort);
 static uint32_t suffix_length(uint32_t string_length);
 static uint32_t sortlength(Session *session,
-                           SORT_FIELD *sortorder,
+                           SortField *sortorder,
                            uint32_t s_length,
                            bool *multi_byte_charset);
-static SORT_ADDON_FIELD *get_addon_fields(Session *session,
-                                          Field **ptabfield,
-                                          uint32_t sortlength,
-                                          uint32_t *plength);
-static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
+static sort_addon_field_st *get_addon_fields(Session *session,
+                                             Field **ptabfield,
+                                             uint32_t sortlength,
+                                             uint32_t *plength);
+static void unpack_addon_fields(sort_addon_field_st *addon_field,
                                 unsigned char *buff);
 /**
   Sort a table.
@@ -131,14 +131,14 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
     examined_rows	will be set to number of examined rows
 */
 
-ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t s_length,
+ha_rows filesort(Session *session, Table *table, SortField *sortorder, uint32_t s_length,
 		 optimizer::SqlSelect *select, ha_rows max_rows,
                  bool sort_positions, ha_rows *examined_rows)
 {
   int error;
   uint32_t memavl, min_sort_memory;
   uint32_t maxbuffer;
-  BUFFPEK *buffpek;
+  buffpek_st *buffpek;
   ha_rows records= HA_POS_ERROR;
   unsigned char **sort_keys= 0;
   internal::IO_CACHE tempfile, buffpek_pointers, *selected_records_file, *outfile;
@@ -291,7 +291,7 @@ ha_rows filesort(Session *session, Table *table, SORT_FIELD *sortorder, uint32_t
           (unsigned char *) read_buffpek_from_file(&buffpek_pointers, maxbuffer,
                                  table_sort.buffpek)))
       goto err;
-    buffpek= (BUFFPEK *) table_sort.buffpek;
+    buffpek= (buffpek_st *) table_sort.buffpek;
     table_sort.buffpek_len= maxbuffer;
     close_cached_file(&buffpek_pointers);
 	/* Open cached file if it isn't open */
@@ -421,10 +421,10 @@ static char **make_char_array(char **old_pos, register uint32_t fields,
 static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffpek_pointers, uint32_t count,
                                      unsigned char *buf)
 {
-  uint32_t length= sizeof(BUFFPEK)*count;
+  uint32_t length= sizeof(buffpek_st)*count;
   unsigned char *tmp= buf;
-  if (count > UINT_MAX/sizeof(BUFFPEK))
-    return 0; /* sizeof(BUFFPEK)*count will overflow */
+  if (count > UINT_MAX/sizeof(buffpek_st))
+    return 0; /* sizeof(buffpek_st)*count will overflow */
   if (!tmp)
     tmp= (unsigned char *)malloc(length);
   if (tmp)
@@ -447,7 +447,7 @@ static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffpek_pointer
   @param param             Sorting parameter
   @param select            Use this to get source data
   @param sort_keys         Array of pointers to sort key + addon buffers.
-  @param buffpek_pointers  File to write BUFFPEKs describing sorted segments
+  @param buffpek_pointers  File to write buffpek_sts describing sorted segments
                            in tempfile.
   @param tempfile          File to write sorted sequences of sortkeys to.
   @param indexfile         If !NULL, use it for source data (contains rowids)
@@ -461,7 +461,7 @@ static unsigned char *read_buffpek_from_file(internal::IO_CACHE *buffpek_pointer
        {
          sort sort_keys buffer;
          dump sorted sequence to 'tempfile';
-         dump BUFFPEK describing sequence location into 'buffpek_pointers';
+         dump buffpek_st describing sequence location into 'buffpek_pointers';
        }
        put sort key into 'sort_keys';
      }
@@ -641,15 +641,15 @@ static ha_rows find_all_keys(Session *session,
   @details
   Sort the buffer and write:
   -# the sorted sequence to tempfile
-  -# a BUFFPEK describing the sorted sequence position to buffpek_pointers
+  -# a buffpek_st describing the sorted sequence position to buffpek_pointers
 
     (was: Skriver en buffert med nycklar till filen)
 
   @param param             Sort parameters
   @param sort_keys         Array of pointers to keys to sort
   @param count             Number of elements in sort_keys array
-  @param buffpek_pointers  One 'BUFFPEK' struct will be written into this file.
-                           The BUFFPEK::{file_pos, count} will indicate where
+  @param buffpek_pointers  One 'buffpek_st' struct will be written into this file.
+                           The buffpek_st::{file_pos, count} will indicate where
                            the sorted data was stored.
   @param tempfile          The sorted sequence will be written into this file.
 
@@ -665,7 +665,7 @@ write_keys(SORTPARAM *param, register unsigned char **sort_keys, uint32_t count,
 {
   size_t sort_length, rec_length;
   unsigned char **end;
-  BUFFPEK buffpek;
+  buffpek_st buffpek;
 
   sort_length= param->sort_length;
   rec_length= param->rec_length;
@@ -675,7 +675,7 @@ write_keys(SORTPARAM *param, register unsigned char **sort_keys, uint32_t count,
                        MYF(MY_WME)))
     goto err;
   /* check we won't have more buffpeks than we can possibly keep in memory */
-  if (my_b_tell(buffpek_pointers) + sizeof(BUFFPEK) > (uint64_t)UINT_MAX)
+  if (my_b_tell(buffpek_pointers) + sizeof(buffpek_st) > (uint64_t)UINT_MAX)
     goto err;
   buffpek.file_pos= my_b_tell(tempfile);
   if ((ha_rows) count > param->max_rows)
@@ -721,8 +721,8 @@ static inline void store_length(unsigned char *to, uint32_t length, uint32_t pac
 static void make_sortkey(register SORTPARAM *param,
 			 register unsigned char *to, unsigned char *ref_pos)
 {
-  register Field *field;
-  register SORT_FIELD *sort_field;
+  Field *field;
+  SortField *sort_field;
   size_t length;
 
   for (sort_field=param->local_sortorder ;
@@ -910,7 +910,7 @@ static void make_sortkey(register SORTPARAM *param,
       In this implementation we use fixed layout for field values -
       the same for all records.
     */
-    SORT_ADDON_FIELD *addonf= param->addon_field;
+    sort_addon_field_st *addonf= param->addon_field;
     unsigned char *nulls= to;
     assert(addonf != 0);
     memset(nulls, 0, addonf->offset);
@@ -954,7 +954,7 @@ static void make_sortkey(register SORTPARAM *param,
 
 static void register_used_fields(SORTPARAM *param)
 {
-  register SORT_FIELD *sort_field;
+  SortField *sort_field;
   Table *table=param->sort_form;
 
   for (sort_field= param->local_sortorder ;
@@ -976,7 +976,7 @@ static void register_used_fields(SORTPARAM *param)
 
   if (param->addon_field)
   {
-    SORT_ADDON_FIELD *addonf= param->addon_field;
+    sort_addon_field_st *addonf= param->addon_field;
     Field *field;
     for ( ; (field= addonf->field) ; addonf++)
       table->setReadSet(field->field_index);
@@ -1015,11 +1015,11 @@ static bool save_index(SORTPARAM *param, unsigned char **sort_keys, uint32_t cou
 /** Merge buffers to make < MERGEBUFF2 buffers. */
 
 int merge_many_buff(SORTPARAM *param, unsigned char *sort_buffer,
-		    BUFFPEK *buffpek, uint32_t *maxbuffer, internal::IO_CACHE *t_file)
+		    buffpek_st *buffpek, uint32_t *maxbuffer, internal::IO_CACHE *t_file)
 {
   register uint32_t i;
   internal::IO_CACHE t_file2,*from_file,*to_file,*temp;
-  BUFFPEK *lastbuff;
+  buffpek_st *lastbuff;
 
   if (*maxbuffer < MERGEBUFF2)
     return(0);
@@ -1071,7 +1071,7 @@ cleanup:
     (uint32_t)-1 if something goes wrong
 */
 
-uint32_t read_to_buffer(internal::IO_CACHE *fromfile, BUFFPEK *buffpek,
+uint32_t read_to_buffer(internal::IO_CACHE *fromfile, buffpek_st *buffpek,
                         uint32_t rec_length)
 {
   register uint32_t count;
@@ -1098,7 +1098,7 @@ class compare_functor
   public:
   compare_functor(qsort2_cmp in_key_compare, void *in_compare_arg)
     : key_compare(in_key_compare), key_compare_arg(in_compare_arg) { }
-  inline bool operator()(const BUFFPEK *i, const BUFFPEK *j) const
+  inline bool operator()(const buffpek_st *i, const buffpek_st *j) const
   {
     int val= key_compare(key_compare_arg,
                       &i->key, &j->key);
@@ -1111,12 +1111,12 @@ class compare_functor
   Merge buffers to one buffer.
 
   @param param        Sort parameter
-  @param from_file    File with source data (BUFFPEKs point to this file)
+  @param from_file    File with source data (buffpek_sts point to this file)
   @param to_file      File to write the sorted result data.
   @param sort_buffer  Buffer for data to store up to MERGEBUFF2 sort keys.
-  @param lastbuff     OUT Store here BUFFPEK describing data written to to_file
-  @param Fb           First element in source BUFFPEKs array
-  @param Tb           Last element in source BUFFPEKs array
+  @param lastbuff     OUT Store here buffpek_st describing data written to to_file
+  @param Fb           First element in source buffpek_sts array
+  @param Tb           Last element in source buffpek_sts array
   @param flag
 
   @retval
@@ -1127,7 +1127,7 @@ class compare_functor
 
 int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
                   internal::IO_CACHE *to_file, unsigned char *sort_buffer,
-                  BUFFPEK *lastbuff, BUFFPEK *Fb, BUFFPEK *Tb,
+                  buffpek_st *lastbuff, buffpek_st *Fb, buffpek_st *Tb,
                   int flag)
 {
   int error;
@@ -1137,7 +1137,7 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
   ha_rows max_rows,org_max_rows;
   internal::my_off_t to_start_filepos;
   unsigned char *strpos;
-  BUFFPEK *buffpek;
+  buffpek_st *buffpek;
   qsort2_cmp cmp;
   void *first_cmp_arg;
   volatile Session::killed_state *killed= &current_session->killed;
@@ -1173,7 +1173,7 @@ int merge_buffers(SORTPARAM *param, internal::IO_CACHE *from_file,
     cmp= internal::get_ptr_compare(sort_length);
     first_cmp_arg= (void*) &sort_length;
   }
-  priority_queue<BUFFPEK *, vector<BUFFPEK *>, compare_functor > 
+  priority_queue<buffpek_st *, vector<buffpek_st *>, compare_functor > 
     queue(compare_functor(cmp, first_cmp_arg));
   for (buffpek= Fb ; buffpek <= Tb ; buffpek++)
   {
@@ -1333,7 +1333,7 @@ err:
 	/* Do a merge to output-file (save only positions) */
 
 static int merge_index(SORTPARAM *param, unsigned char *sort_buffer,
-		       BUFFPEK *buffpek, uint32_t maxbuffer,
+		       buffpek_st *buffpek, uint32_t maxbuffer,
 		       internal::IO_CACHE *tempfile, internal::IO_CACHE *outfile)
 {
   if (merge_buffers(param,tempfile,outfile,sort_buffer,buffpek,buffpek,
@@ -1375,7 +1375,7 @@ static uint32_t suffix_length(uint32_t string_length)
 */
 
 static uint32_t
-sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
+sortlength(Session *session, SortField *sortorder, uint32_t s_length,
            bool *multi_byte_charset)
 {
   register uint32_t length;
@@ -1481,12 +1481,12 @@ sortlength(Session *session, SORT_FIELD *sortorder, uint32_t s_length,
     NULL   if we do not store field values with sort data.
 */
 
-static SORT_ADDON_FIELD *
+static sort_addon_field_st *
 get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint32_t *plength)
 {
   Field **pfield;
   Field *field;
-  SORT_ADDON_FIELD *addonf;
+  sort_addon_field_st *addonf;
   uint32_t length= 0;
   uint32_t fields= 0;
   uint32_t null_fields= 0;
@@ -1518,7 +1518,7 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
   length+= (null_fields+7)/8;
 
   if (length+sortlength > session->variables.max_length_for_sort_data ||
-      !(addonf= (SORT_ADDON_FIELD *) malloc(sizeof(SORT_ADDON_FIELD)*
+      !(addonf= (sort_addon_field_st *) malloc(sizeof(sort_addon_field_st)*
                                             (fields+1))))
     return 0;
 
@@ -1568,10 +1568,10 @@ get_addon_fields(Session *session, Field **ptabfield, uint32_t sortlength, uint3
 */
 
 static void
-unpack_addon_fields(struct st_sort_addon_field *addon_field, unsigned char *buff)
+unpack_addon_fields(struct sort_addon_field_st *addon_field, unsigned char *buff)
 {
   Field *field;
-  SORT_ADDON_FIELD *addonf= addon_field;
+  sort_addon_field_st *addonf= addon_field;
 
   for ( ; (field= addonf->field) ; addonf++)
   {
