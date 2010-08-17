@@ -86,6 +86,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "drizzled/named_savepoint.h"
 
 #include <drizzled/transaction_services.h>
+#include "drizzled/message/statement_transform.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -5532,8 +5533,20 @@ InnobaseEngine::doCreateTable(
   }
 
   if (trx->mysql_query_str) {
+    string generated_create_table;
+    const char *query= trx->mysql_query_str;
+
+    if (session_sql_command(&session) == SQLCOM_CREATE_TABLE)
+    {
+      message::transformTableDefinitionToSql(create_proto,
+                                             generated_create_table,
+                                             message::DRIZZLE, true);
+      query= generated_create_table.c_str();
+    }
+
     error = row_table_add_foreign_constraints(trx,
-                                              trx->mysql_query_str, norm_name,
+                                              query,
+                                              norm_name,
                                               lex_identified_temp_table);
 
     error = convert_error_code_to_mysql(error, iflags, NULL);
