@@ -2848,7 +2848,15 @@ print_conclusions_csv(Conclusions *con)
            con->getRealUsers(), /* Children used max_timing */
            con->getAvgRows()  /* Queries run */
            );
-  write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer));
+  size_t buff_len= strlen(buffer);
+  ssize_t write_ret= write(csv_file, (unsigned char*) buffer, buff_len);
+  if (write_ret != (ssize_t)buff_len)
+  {
+    fprintf(stderr, _("Unable to fully write %"PRIu64" bytes. "
+                      "Could only write %"PRId64"."), (uint64_t)write_ret,
+                      (int64_t)buff_len);
+    exit(-1);
+  }
 }
 
 void
