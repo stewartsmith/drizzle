@@ -60,7 +60,7 @@
   --iterations=5 --query=query.sql --create=create.sql \
   --delimiter=";"
 
-  TODO:
+  @todo
   Add language for better tests
   String length for files and those put on the command line are not
   setup to handle binary data.
@@ -120,9 +120,7 @@ static bool timer_alarm= false;
 pthread_mutex_t timer_alarm_mutex;
 pthread_cond_t timer_alarm_threshold;
 
-char **primary_keys;
-/* This gets passed to malloc, so lets set it to an arch-dependant size */
-size_t primary_keys_number_of;
+std::vector < std::string > primary_keys;
 
 static string host, 
   opt_password, 
@@ -183,7 +181,7 @@ static uint64_t num_of_query;
 static uint64_t auto_generate_sql_number;
 string concurrency_str;
 string create_string;
-uint32_t *concurrency;
+std::vector <uint32_t> concurrency;
 
 const char *default_dbug_option= "d:t:o,/tmp/drizzleslap.trace";
 std::string opt_csv_str;
@@ -194,7 +192,7 @@ static uint32_t opt_drizzle_port= 0;
 
 
 /* Types */
-typedef enum {
+enum slap_query_t {
   SELECT_TYPE= 0,
   UPDATE_TYPE= 1,
   INSERT_TYPE= 2,
@@ -202,7 +200,7 @@ typedef enum {
   CREATE_TABLE_TYPE= 4,
   SELECT_TYPE_REQUIRES_PREFIX= 5,
   DELETE_TYPE_REQUIRES_PREFIX= 6
-} slap_query_type;
+};
 
 class Statement;
 
@@ -211,28 +209,26 @@ class Statement
 public:
   Statement(char *in_string,
             size_t in_length,
-            slap_query_type in_type,
-            char *in_option,
-            size_t in_option_length,
-            Statement *in_next)
-    :
+            slap_query_t in_type,
+            Statement *in_next) :
     string(in_string),
     length(in_length),
     type(in_type),
-    option(in_option),
-    option_length(in_option_length),
     next(in_next)
-    {}
+  { }
 
-  Statement()
-    :
+  Statement() :
     string(NULL),
     length(0),
     type(),
-    option(NULL),
-    option_length(0),
     next(NULL)
-    {}
+  { }
+
+  ~Statement()
+  {
+    if (string)
+      free(string);
+  }
    
   char *getString() const
   {
@@ -244,19 +240,9 @@ public:
     return length;
   }
 
-  slap_query_type getType() const
+  slap_query_t getType() const
   {
     return type;
-  }
-
-  char *getOption() const
-  {
-    return option;
-  }
-
-  size_t getOptionLength() const
-  {
-    return option_length;
   }
 
   Statement *getNext() const
@@ -269,6 +255,12 @@ public:
     string= in_string;
   }
 
+  void setString(size_t length_arg)
+  {
+    string= (char *)calloc(length_arg + 1, sizeof(char));
+    length= length_arg;
+  }
+
   void setString(size_t in_length, char in_char)
   {
     string[in_length]= in_char;
@@ -279,19 +271,9 @@ public:
     length= in_length;
   }
 
-  void setType(slap_query_type in_type)
+  void setType(slap_query_t in_type)
   {
     type= in_type;
-  }
-
-  void setOption(char *in_option)
-  {
-    option= in_option;
-  }
-
-   void setOptionLength(size_t in_option_length)
-  {
-    option_length= in_option_length;
   }
 
   void setNext(Statement *in_next)
@@ -302,9 +284,7 @@ public:
 private:
   char *string;
   size_t length;
-  slap_query_type type;
-  char *option;
-  size_t option_length;
+  slap_query_t type;
   Statement *next;
 };
 
@@ -317,23 +297,29 @@ public:
                size_t in_length,
                char *in_option,
                size_t in_option_length,
-               OptionString *in_next)
-    :
+               OptionString *in_next) :
     string(in_string),
     length(in_length),
     option(in_option),
     option_length(in_option_length),
     next(in_next)
-    {}  
+  { }  
 
-  OptionString()
-    :
+  OptionString() :
     string(NULL),
     length(0),
     option(NULL),
     option_length(0),
     next(NULL)
-    {}
+  { }
+
+  ~OptionString()
+  {
+    if (getString())
+      free(getString());
+    if (getOption())
+      free(getOption());
+  }
 
   char *getString() const
   {
@@ -363,26 +349,13 @@ public:
   void setString(char *in_string)
   {
     string= in_string;
-  }
-
-  void setOptionLength(size_t in_option_length)
-  {
-    option_length= in_option_length;
-  }
-
-  void setLength(size_t in_length)
-  {
-    length= in_length;
+    length= strlen(in_string);
   }
 
   void setOption(char *in_option)
   {
-    option= in_option;
-  }
-
-  void setOption(size_t in_option_length, char in_char)
-  {
-    option[in_option_length]= in_char;
+    option= strdup(in_option);
+    option_length= strlen(in_option);
   }
 
   void setNext(OptionString *in_next)
@@ -408,25 +381,23 @@ public:
         uint32_t in_real_users,
         uint32_t in_rows,
         long int in_create_timing,
-        uint64_t in_create_count)
-    :
+        uint64_t in_create_count) :
     timing(in_timing),
     users(in_users),
     real_users(in_real_users),
     rows(in_rows),
     create_timing(in_create_timing),
     create_count(in_create_count)
-    {}
+  { }
 
-  Stats()
-    :
+  Stats() :
     timing(0),
     users(0),
     real_users(0),
     rows(0),
     create_timing(0),
     create_count(0)
-    {}
+  { }
 
   long int getTiming() const
   {
@@ -503,17 +474,15 @@ class ThreadContext
 {
 public:
   ThreadContext(Statement *in_stmt,
-                uint64_t in_limit)
-    :
+                uint64_t in_limit) :
     stmt(in_stmt),
     limit(in_limit)
-    {}
+  { }
 
-  ThreadContext()
-    :
+  ThreadContext() :
     stmt(),
     limit(0)
-    {}
+  { }
 
   Statement *getStmt() const
   {
@@ -560,8 +529,7 @@ public:
               long int in_create_min_timing,
               uint64_t in_create_count,
               uint64_t in_max_rows,
-              uint64_t in_min_rows)
-    :
+              uint64_t in_min_rows) :
     engine(in_engine),
     avg_timing(in_avg_timing),
     max_timing(in_max_timing),
@@ -577,10 +545,9 @@ public:
     create_count(in_create_count),
     max_rows(in_max_rows),
     min_rows(in_min_rows)
-    {}
+  { }
 
-  Conclusions()
-    :
+  Conclusions() :
     engine(NULL),
     avg_timing(0),
     max_timing(0),
@@ -596,7 +563,7 @@ public:
     create_count(0),
     max_rows(0),
     min_rows(0)
-    {}
+  { }
 
   char *getEngine() const
   {
@@ -775,7 +742,7 @@ static Statement *pre_statements= NULL;
 static Statement *post_statements= NULL;
 static Statement *create_statements= NULL;
 
-static Statement **query_statements= NULL;
+static std::vector <Statement *> query_statements;
 static unsigned int query_statements_count;
 
 
@@ -783,7 +750,7 @@ static unsigned int query_statements_count;
 void print_conclusions(Conclusions *con);
 void print_conclusions_csv(Conclusions *con);
 void generate_stats(Conclusions *con, OptionString *eng, Stats *sptr);
-uint32_t parse_comma(const char *string, uint32_t **range);
+uint32_t parse_comma(const char *string, std::vector <uint32_t> &range);
 uint32_t parse_delimiter(const char *script, Statement **stmt, char delm);
 uint32_t parse_option(const char *origin, OptionString **stmt, char delm);
 static int drop_schema(drizzle_con_st *con, const char *db);
@@ -793,7 +760,6 @@ static Statement *build_insert_string(void);
 static Statement *build_update_string(void);
 static Statement * build_select_string(bool key);
 static int generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt);
-static int drop_primary_key_list(void);
 static int create_schema(drizzle_con_st *con, const char *db, Statement *stmt,
                          OptionString *engine_stmt, Stats *sptr);
 static int run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur,
@@ -984,7 +950,6 @@ int main(int argc, char **argv)
     uint64_t temp_drizzle_port= 0;
     drizzle_con_st con;
     OptionString *eptr;
-    uint32_t x;
 
 
     po::variables_map vm;
@@ -1102,9 +1067,9 @@ burnin:
       if (verbose >= 2)
         printf("Starting Concurrency Test\n");
 
-      if (*concurrency)
+      if (concurrency.size())
       {
-        for (current= concurrency; current && *current; current++)
+        for (current= &concurrency[0]; current && *current; current++)
           concurrency_loop(&con, *current, eptr);
       }
       else
@@ -1137,12 +1102,12 @@ burnin:
     if (!opt_password.empty())
       opt_password.erase();
 
-    free(concurrency);
+    concurrency.clear();
 
     statement_cleanup(create_statements);
-    for (x= 0; x < query_statements_count; x++)
+    for (uint32_t x= 0; x < query_statements_count; x++)
       statement_cleanup(query_statements[x]);
-    free(query_statements);
+    query_statements.clear();
     statement_cleanup(pre_statements);
     statement_cleanup(post_statements);
     option_cleanup(engine_options);
@@ -1159,26 +1124,26 @@ burnin:
   {
     cerr<<"Error:"<<err.what()<<endl;
   }
+
+  if (csv_file != fileno(stdout))
+    close(csv_file);
+
   return 0;
 }
 
 void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
 {
-  unsigned int x;
   Stats *head_sptr;
   Stats *sptr;
   Conclusions conclusion;
   uint64_t client_limit;
 
-  head_sptr= (Stats *)malloc(sizeof(Stats) * iterations);
+  head_sptr= new Stats[iterations];
   if (head_sptr == NULL)
   {
     fprintf(stderr,"Error allocating memory in concurrency_loop\n");
     exit(1);
   }
-  memset(head_sptr, 0, sizeof(Stats) * iterations);
-
-  memset(&conclusion, 0, sizeof(Conclusions));
 
   if (auto_actual_queries)
     client_limit= auto_actual_queries;
@@ -1187,6 +1152,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
   else
     client_limit= actual_queries;
 
+  uint32_t x;
   for (x= 0, sptr= head_sptr; x < iterations; x++, sptr++)
   {
     /*
@@ -1227,7 +1193,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
     if (pre_statements)
       run_statements(con, pre_statements);
 
-    run_scheduler(sptr, query_statements, current, client_limit);
+    run_scheduler(sptr, &query_statements[0], current, client_limit);
 
     if (post_statements)
       run_statements(con, post_statements);
@@ -1240,7 +1206,7 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
 
     /* We are finished with this run */
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
-      drop_primary_key_list();
+      primary_keys.clear();
   }
 
   if (verbose >= 2)
@@ -1253,19 +1219,16 @@ void concurrency_loop(drizzle_con_st *con, uint32_t current, OptionString *eptr)
   if (!opt_csv_str.empty())
     print_conclusions_csv(&conclusion);
 
-  free(head_sptr);
-
+  delete [] head_sptr;
 }
-
 
 
 uint
 get_random_string(char *buf, size_t size)
 {
   char *buf_ptr= buf;
-  size_t x;
 
-  for (x= size; x > 0; x--)
+  for (size_t x= size; x > 0; x--)
     *buf_ptr++= ALPHANUMERICS[random() % ALPHANUMERICS_SIZE];
   return(buf_ptr - buf);
 }
@@ -1398,21 +1361,13 @@ build_table_string(void)
     }
 
   table_string.append(")");
-  ptr= (Statement *)malloc(sizeof(Statement));
-  if (ptr == NULL)
-  {
-    fprintf(stderr, "Memory Allocation error in creating table\n");
-    exit(1);
-  }
-  memset(ptr, 0, sizeof(Statement));
-  ptr->setString((char *)malloc(table_string.length()+1));
+  ptr= new Statement;
+  ptr->setString(table_string.length());
   if (ptr->getString()==NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating table\n");
     exit(1);
   }
-  memset(ptr->getString(), 0, table_string.length()+1);
-  ptr->setLength(table_string.length()+1);
   ptr->setType(CREATE_TABLE_TYPE);
   strcpy(ptr->getString(), table_string.c_str());
   return(ptr);
@@ -1474,22 +1429,14 @@ build_update_string(void)
     update_string.append(" WHERE id = ");
 
 
-  ptr= (Statement *)malloc(sizeof(Statement));
-  if (ptr == NULL)
-  {
-    fprintf(stderr, "Memory Allocation error in creating update\n");
-    exit(1);
-  }
-  memset(ptr, 0, sizeof(Statement));
+  ptr= new Statement;
 
-  ptr->setLength(update_string.length()+1);
-  ptr->setString((char *)malloc(ptr->getLength()));
+  ptr->setString(update_string.length());
   if (ptr->getString() == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating update\n");
     exit(1);
   }
-  memset(ptr->getString(), 0, ptr->getLength());
   if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
     ptr->setType(UPDATE_TYPE_REQUIRES_PREFIX);
   else
@@ -1577,22 +1524,9 @@ build_insert_string(void)
 
   if (num_blob_cols)
   {
-    char *blob_ptr;
+    vector <char> blob_ptr;
 
-    if (num_blob_cols_size > HUGE_STRING_LENGTH)
-    {
-      blob_ptr= (char *)malloc(sizeof(char)*num_blob_cols_size);
-      if (!blob_ptr)
-      {
-        fprintf(stderr, "Memory Allocation error in creating select\n");
-        exit(1);
-      }
-      memset(blob_ptr, 0, sizeof(char)*num_blob_cols_size);
-    }
-    else
-    {
-      blob_ptr= buf;
-    }
+    blob_ptr.resize(num_blob_cols_size);
 
     for (col_count= 1; col_count <= num_blob_cols; col_count++)
     {
@@ -1603,36 +1537,26 @@ build_insert_string(void)
       size= difference ? (num_blob_cols_size_min + (random() % difference)) :
         num_blob_cols_size;
 
-      buf_len= get_random_string(blob_ptr, size);
+      buf_len= get_random_string(&blob_ptr[0], size);
 
       insert_string.append("'", 1);
-      insert_string.append(blob_ptr, buf_len);
+      insert_string.append(&blob_ptr[0], buf_len);
       insert_string.append("'", 1);
 
       if (col_count < num_blob_cols)
         insert_string.append(",", 1);
     }
-
-    if (num_blob_cols_size > HUGE_STRING_LENGTH)
-      free(blob_ptr);
   }
 
   insert_string.append(")", 1);
 
-  if (!(ptr= (Statement *)malloc(sizeof(Statement))))
-  {
-    fprintf(stderr, "Memory Allocation error in creating select\n");
-    exit(1);
-  }
-  memset(ptr, 0, sizeof(Statement));
-  ptr->setLength(insert_string.length()+1);
-  ptr->setString((char *)malloc(ptr->getLength()));
+  ptr= new Statement;
+  ptr->setString(insert_string.length());
   if (ptr->getString()==NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr->getString(), 0, ptr->getLength());
   ptr->setType(INSERT_TYPE);
   strcpy(ptr->getString(), insert_string.c_str());
   return(ptr);
@@ -1710,21 +1634,13 @@ build_select_string(bool key)
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     query_string.append(" WHERE id = ");
 
-  ptr= (Statement *)malloc(sizeof(Statement));
-  if (ptr == NULL)
-  {
-    fprintf(stderr, "Memory Allocation error in creating select\n");
-    exit(1);
-  }
-  memset(ptr, 0, sizeof(Statement));
-  ptr->setLength(query_string.length()+1);
-  ptr->setString((char *)malloc(ptr->getLength()));
+  ptr= new Statement;
+  ptr->setString(query_string.length());
   if (ptr->getString() == NULL)
   {
     fprintf(stderr, "Memory Allocation error in creating select\n");
     exit(1);
   }
-  memset(ptr->getString(), 0, ptr->getLength());
   if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     ptr->setType(SELECT_TYPE_REQUIRES_PREFIX);
@@ -1737,7 +1653,6 @@ build_select_string(bool key)
 static int
 process_options(void)
 {
-  char *tmp_string;
   struct stat sbuf;
   OptionString *sql_type;
   unsigned int sql_type_count= 0;
@@ -1777,7 +1692,7 @@ process_options(void)
     exit(1);
   }
 
-  parse_comma(!concurrency_str.empty() ? concurrency_str.c_str() : "1", &concurrency);
+  parse_comma(!concurrency_str.empty() ? concurrency_str.c_str() : "1", concurrency);
 
   if (!opt_csv_str.empty())
   {
@@ -1880,13 +1795,7 @@ process_options(void)
     query_statements_count=
       parse_option(opt_auto_generate_sql_type.c_str(), &query_options, ',');
 
-    query_statements= (Statement **)malloc(sizeof(Statement *) * query_statements_count);
-    if (query_statements == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in Building Query Statements\n");
-      exit(1);
-    }
-    memset(query_statements, 0, sizeof(Statement *) * query_statements_count);
+    query_statements.resize(query_statements_count);
 
     sql_type= query_options;
     do
@@ -1995,6 +1904,7 @@ process_options(void)
     if (!create_string.empty() && !stat(create_string.c_str(), &sbuf))
     {
       int data_file;
+      std::vector<char> tmp_string;
       if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: Create file was not a regular file\n",
@@ -2011,23 +1921,15 @@ process_options(void)
         fprintf(stderr, "Request for more memory than architecture supports\n");
         exit(1);
       }
-      tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
-      if (tmp_string == NULL)
-      {
-        fprintf(stderr, "Memory Allocation error in option processing\n");
-        exit(1);
-      }
-      memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-      bytes_read= read(data_file, (unsigned char*) tmp_string,
+      tmp_string.resize(sbuf.st_size + 1);
+      bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
                        (size_t)sbuf.st_size);
-      tmp_string[sbuf.st_size]= '\0';
       close(data_file);
       if (bytes_read != sbuf.st_size)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
       }
-      parse_delimiter(tmp_string, &create_statements, delimiter[0]);
-      free(tmp_string);
+      parse_delimiter(&tmp_string[0], &create_statements, delimiter[0]);
     }
     else if (!create_string.empty())
     {
@@ -2040,18 +1942,14 @@ process_options(void)
       query_statements_count=
         parse_option("default", &query_options, ',');
 
-      query_statements= (Statement **)malloc(sizeof(Statement *) * query_statements_count);
-      if (query_statements == NULL)
-      {
-        fprintf(stderr, "Memory Allocation error in option processing\n");
-        exit(1);
-      }
-      memset(query_statements, 0, sizeof(Statement *) * query_statements_count); 
+      query_statements.resize(query_statements_count);
     }
 
     if (!user_supplied_query.empty() && !stat(user_supplied_query.c_str(), &sbuf))
     {
       int data_file;
+      std::vector<char> tmp_string;
+
       if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: User query supplied file was not a regular file\n",
@@ -2068,25 +1966,17 @@ process_options(void)
         fprintf(stderr, "Request for more memory than architecture supports\n");
         exit(1);
       }
-      tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
-      if (tmp_string == NULL)
-      {
-        fprintf(stderr, "Memory Allocation error in option processing\n");
-        exit(1);
-      }
-      memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-      bytes_read= read(data_file, (unsigned char*) tmp_string,
+      tmp_string.resize((size_t)(sbuf.st_size + 1));
+      bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
                        (size_t)sbuf.st_size);
-      tmp_string[sbuf.st_size]= '\0';
       close(data_file);
       if (bytes_read != sbuf.st_size)
       {
         fprintf(stderr, "Problem reading file: read less bytes than requested\n");
       }
       if (!user_supplied_query.empty())
-        actual_queries= parse_delimiter(tmp_string, &query_statements[0],
+        actual_queries= parse_delimiter(&tmp_string[0], &query_statements[0],
                                         delimiter[0]);
-      free(tmp_string);
     }
     else if (!user_supplied_query.empty())
     {
@@ -2099,6 +1989,8 @@ process_options(void)
       && !stat(user_supplied_pre_statements.c_str(), &sbuf))
   {
     int data_file;
+    std::vector<char> tmp_string;
+
     if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
@@ -2115,25 +2007,17 @@ process_options(void)
       fprintf(stderr, "Request for more memory than architecture supports\n");
       exit(1);
     }
-    tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
-    if (tmp_string == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in option processing\n");
-      exit(1);
-    }
-    memset(tmp_string, 0, (size_t)(sbuf.st_size + 1));
-    bytes_read= read(data_file, (unsigned char*) tmp_string,
+    tmp_string.resize((size_t)(sbuf.st_size + 1));
+    bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
                      (size_t)sbuf.st_size);
-    tmp_string[sbuf.st_size]= '\0';
     close(data_file);
     if (bytes_read != sbuf.st_size)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
     }
     if (!user_supplied_pre_statements.empty())
-      (void)parse_delimiter(tmp_string, &pre_statements,
+      (void)parse_delimiter(&tmp_string[0], &pre_statements,
                             delimiter[0]);
-    free(tmp_string);
   }
   else if (!user_supplied_pre_statements.empty())
   {
@@ -2146,6 +2030,8 @@ process_options(void)
       && !stat(user_supplied_post_statements.c_str(), &sbuf))
   {
     int data_file;
+    std::vector<char> tmp_string;
+
     if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
@@ -2163,26 +2049,18 @@ process_options(void)
       fprintf(stderr, "Request for more memory than architecture supports\n");
       exit(1);
     }
-    tmp_string= (char *)malloc((size_t)(sbuf.st_size + 1));
-    if (tmp_string == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in option processing\n");
-      exit(1);
-    }
-    memset(tmp_string, 0, (size_t)(sbuf.st_size+1));
+    tmp_string.resize((size_t)(sbuf.st_size + 1));
 
-    bytes_read= read(data_file, (unsigned char*) tmp_string,
+    bytes_read= read(data_file, (unsigned char*) &tmp_string[0],
                      (size_t)(sbuf.st_size));
-    tmp_string[sbuf.st_size]= '\0';
     close(data_file);
     if (bytes_read != sbuf.st_size)
     {
       fprintf(stderr, "Problem reading file: read less bytes than requested\n");
     }
     if (!user_supplied_post_statements.empty())
-      (void)parse_delimiter(tmp_string, &post_statements,
+      (void)parse_delimiter(&tmp_string[0], &post_statements,
                             delimiter[0]);
-    free(tmp_string);
   }
   else if (!user_supplied_post_statements.empty())
   {
@@ -2247,23 +2125,8 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
   if (opt_only_print || (engine_stmt &&
                          strstr(engine_stmt->getString(), "blackhole")))
   {
-    primary_keys_number_of= 1;
-    primary_keys= (char **)malloc((sizeof(char *) *
-                                  primary_keys_number_of));
-    if (primary_keys == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in option processing\n");
-      exit(1);
-    }
-    
-    memset(primary_keys, 0, (sizeof(char *) * primary_keys_number_of));
     /* Yes, we strdup a const string to simplify the interface */
-    primary_keys[0]= strdup("796c4422-1d94-102a-9d6d-00e0812d");
-    if (primary_keys[0] == NULL)
-    {
-      fprintf(stderr, "Memory Allocation error in option processing\n");
-      exit(1);
-    }
+    primary_keys.push_back("796c4422-1d94-102a-9d6d-00e0812d");
   }
   else
   {
@@ -2280,6 +2143,7 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
       fprintf(stderr, "More primary keys than than architecture supports\n");
       exit(1);
     }
+    size_t primary_keys_number_of;
     primary_keys_number_of= (size_t)num_rows_ret;
 
     /* So why check this? Blackhole :) */
@@ -2288,24 +2152,11 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
       /*
         We create the structure and loop and create the items.
       */
-      primary_keys= (char **)malloc(sizeof(char *) *
-                                    primary_keys_number_of);
-      if (primary_keys == NULL)
-      {
-        fprintf(stderr, "Memory Allocation error in option processing\n");
-        exit(1);
-      }
-      memset(primary_keys, 0, (size_t)(sizeof(char *) * primary_keys_number_of));
       row= drizzle_row_next(&result);
       for (counter= 0; counter < primary_keys_number_of;
            counter++, row= drizzle_row_next(&result))
       {
-        primary_keys[counter]= strdup(row[0]);
-        if (primary_keys[counter] == NULL)
-        {
-          fprintf(stderr, "Memory Allocation error in option processing\n");
-          exit(1);
-        }
+        primary_keys.push_back(row[0]);
       }
     }
 
@@ -2313,22 +2164,6 @@ generate_primary_key_list(drizzle_con_st *con, OptionString *engine_stmt)
   }
 
   return(0);
-}
-
-static int
-drop_primary_key_list(void)
-{
-  uint64_t counter;
-
-  if (primary_keys_number_of)
-  {
-    for (counter= 0; counter < primary_keys_number_of; counter++)
-      free(primary_keys[counter]);
-
-    free(primary_keys);
-  }
-
-  return 0;
 }
 
 static int
@@ -2490,12 +2325,10 @@ run_statements(drizzle_con_st *con, Statement *stmt)
 static int
 run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
 {
-  uint32_t x;
   uint32_t y;
   unsigned int real_concurrency;
   struct timeval start_time, end_time;
   OptionString *sql_type;
-  ThreadContext *con;
   pthread_t mainthread;            /* Thread descriptor */
   pthread_attr_t attr;          /* Thread attributes */
 
@@ -2527,9 +2360,11 @@ run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
     }
 
     while (options_loop--)
-      for (x= 0; x < concur; x++)
+    {
+      for (uint32_t x= 0; x < concur; x++)
       {
-        con= (ThreadContext *)malloc(sizeof(ThreadContext));
+        ThreadContext *con;
+        con= new ThreadContext;
         if (con == NULL)
         {
           fprintf(stderr, "Memory Allocation error in scheduler\n");
@@ -2548,6 +2383,7 @@ run_scheduler(Stats *sptr, Statement **stmts, uint32_t concur, uint64_t limit)
         }
         thread_counter++;
       }
+    }
   }
 
   /*
@@ -2680,7 +2516,6 @@ limit_not_met:
     {
       int length;
       unsigned int key_val;
-      char *key;
       char buffer[HUGE_STRING_LENGTH];
 
       /*
@@ -2690,11 +2525,12 @@ limit_not_met:
         Just in case someone runs this under an experimental engine we don't
         want a crash so the if() is placed here.
       */
-      assert(primary_keys_number_of);
-      if (primary_keys_number_of)
+      assert(primary_keys.size());
+      if (primary_keys.size())
       {
-        key_val= (unsigned int)(random() % primary_keys_number_of);
-        key= primary_keys[key_val];
+        key_val= (unsigned int)(random() % primary_keys.size());
+        const char *key;
+        key= primary_keys[key_val].c_str();
 
         assert(key);
 
@@ -2760,7 +2596,7 @@ end:
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
 
-  free(ctx);
+  delete ctx;
 
   return(0);
 }
@@ -2775,20 +2611,13 @@ parse_option(const char *origin, OptionString **stmt, char delm)
   char *string;
   char *begin_ptr;
   char *end_ptr;
-  OptionString **sptr= stmt;
-  OptionString *tmp;
   uint32_t length= strlen(origin);
   uint32_t count= 0; /* We know that there is always one */
 
   end_ptr= (char *)origin + length;
 
-  tmp= *sptr= (OptionString *)malloc(sizeof(OptionString));
-  if (tmp == NULL)
-  {
-    fprintf(stderr,"Error allocating memory while parsing options\n");
-    exit(1);
-  }
-  memset(tmp, 0, sizeof(OptionString));
+  OptionString *tmp;
+  *stmt= tmp= new OptionString;
 
   for (begin_ptr= (char *)origin;
        begin_ptr != end_ptr;
@@ -2820,18 +2649,9 @@ parse_option(const char *origin, OptionString **stmt, char delm)
       buffer_ptr++;
 
       /* Move past the : and the first string */
-      tmp->setOptionLength(strlen(buffer_ptr));
-      tmp->setOption((char *)malloc(tmp->getOptionLength() + 1));
-      if (tmp->getOption() == NULL)
-      {
-        fprintf(stderr,"Error allocating memory while parsing options\n");
-        exit(1);
-      }
-      memcpy(tmp->getOption(), buffer_ptr, tmp->getOptionLength());
-      tmp->setOption(tmp->getOptionLength(),0); 
+      tmp->setOption(buffer_ptr);
     }
 
-    tmp->setLength(strlen(buffer));
     tmp->setString(strdup(buffer));
     if (tmp->getString() == NULL)
     {
@@ -2846,13 +2666,7 @@ parse_option(const char *origin, OptionString **stmt, char delm)
 
     if (begin_ptr != end_ptr)
     {
-      tmp->setNext((OptionString *)malloc(sizeof(OptionString)));
-      if (tmp->getNext() == NULL)
-      {
-        fprintf(stderr,"Error allocating memory while parsing options\n");
-        exit(1);
-      }
-      memset(tmp->getNext(), 0, sizeof(OptionString));
+      tmp->setNext( new OptionString);
     }
     
   }
@@ -2875,9 +2689,9 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
   uint32_t length= strlen(script);
   uint32_t count= 0; /* We know that there is always one */
 
-  for (tmp= *sptr= (Statement *)calloc(1, sizeof(Statement));
+  for (tmp= *sptr= new Statement;
        (retstr= strchr(ptr, delm));
-       tmp->setNext((Statement *)calloc(1, sizeof(Statement))),
+       tmp->setNext(new Statement),
        tmp= tmp->getNext())
   {
     if (tmp == NULL)
@@ -2887,8 +2701,7 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
     }
 
     count++;
-    tmp->setLength((size_t)(retstr - ptr));
-    tmp->setString((char *)malloc(tmp->getLength() + 1));
+    tmp->setString((size_t)(retstr - ptr));
 
     if (tmp->getString() == NULL)
     {
@@ -2897,7 +2710,6 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
     }
 
     memcpy(tmp->getString(), ptr, tmp->getLength());
-    tmp->setString(tmp->getLength(), 0);
     ptr+= retstr - ptr + 1;
     if (isspace(*ptr))
       ptr++;
@@ -2905,15 +2717,13 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
 
   if (ptr != script+length)
   {
-    tmp->setLength((size_t)((script + length) - ptr));
-    tmp->setString((char *)malloc(tmp->getLength() + 1));
+    tmp->setString((size_t)((script + length) - ptr));
     if (tmp->getString() == NULL)
     {
       fprintf(stderr,"Error allocating memory while parsing delimiter\n");
       exit(1);
     }
     memcpy(tmp->getString(), ptr, tmp->getLength());
-    tmp->setString(tmp->getLength(),0);
     count++;
   }
 
@@ -2927,7 +2737,7 @@ parse_delimiter(const char *script, Statement **stmt, char delm)
   In restrospect, this is a lousy name from this function.
 */
 uint
-parse_comma(const char *string, uint32_t **range)
+parse_comma(const char *string, std::vector <uint32_t> &range)
 {
   unsigned int count= 1,x; /* We know that there is always one */
   char *retstr;
@@ -2938,8 +2748,8 @@ parse_comma(const char *string, uint32_t **range)
     if (*ptr == ',') count++;
 
   /* One extra spot for the NULL */
-  nptr= *range= (uint32_t *)malloc(sizeof(unsigned int) * (count + 1));
-  memset(nptr, 0, sizeof(unsigned int) * (count + 1));
+  range.resize(count +1);
+  nptr= &range[0];
 
   ptr= (char *)string;
   x= 0;
@@ -2992,7 +2802,7 @@ print_conclusions_csv(Conclusions *con)
   size_t string_len;
   const char *temp_label= opt_label.c_str();
 
-  memset(label_buffer, 0, HUGE_STRING_LENGTH);
+  memset(label_buffer, 0, sizeof(label_buffer));
 
   if (!opt_label.empty())
   {
@@ -3019,7 +2829,9 @@ print_conclusions_csv(Conclusions *con)
     }
   }
   else
+  {
     snprintf(label_buffer, HUGE_STRING_LENGTH, "query");
+  }
 
   snprintf(buffer, HUGE_STRING_LENGTH,
            "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,"
@@ -3036,7 +2848,7 @@ print_conclusions_csv(Conclusions *con)
            con->getRealUsers(), /* Children used max_timing */
            con->getAvgRows()  /* Queries run */
            );
-  internal::my_write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer), MYF(0));
+  write(csv_file, (unsigned char*) buffer, (uint32_t)strlen(buffer));
 }
 
 void
@@ -3099,17 +2911,13 @@ void
 option_cleanup(OptionString *stmt)
 {
   OptionString *ptr, *nptr;
-  if (!stmt)
+  if (not stmt)
     return;
 
   for (ptr= stmt; ptr; ptr= nptr)
   {
     nptr= ptr->getNext();
-    if (ptr->getString())
-      free(ptr->getString());
-    if (ptr->getOption())
-      free(ptr->getOption());
-    free(ptr);
+    delete ptr;
   }
 }
 
@@ -3123,9 +2931,7 @@ statement_cleanup(Statement *stmt)
   for (ptr= stmt; ptr; ptr= nptr)
   {
     nptr= ptr->getNext();
-    if (ptr->getString())
-      free(ptr->getString());
-    free(ptr);
+    delete ptr;
   }
 }
 
@@ -3143,7 +2949,7 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
 {
   /* Connect to server */
   static uint32_t connection_retry_sleep= 100000; /* Microseconds */
-  int x, connect_error= 1;
+  int connect_error= 1;
   drizzle_return_t ret;
   drizzle_st *drizzle;
 
@@ -3163,7 +2969,7 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
     exit(1);
   }
 
-  for (x= 0; x < 10; x++)
+  for (uint32_t x= 0; x < 10; x++)
   {
     if ((ret= drizzle_con_connect(con)) == DRIZZLE_RETURN_OK)
     {
