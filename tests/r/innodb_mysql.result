@@ -1274,7 +1274,7 @@ drop table t1;
 CREATE TABLE t1 (a INT NOT NULL, b INT NOT NULL, PRIMARY KEY (a,b)) engine=innodb;
 CREATE TABLE t2 (c INT NOT NULL, d INT NOT NULL, PRIMARY KEY (c,d),
 CONSTRAINT c2 FOREIGN KEY f2 (c) REFERENCES t1 (a,b) ON UPDATE NO ACTION) engine=innodb;
-ERROR 42000: Incorrect foreign key definition for 'f2': Key reference and table reference don't match
+ERROR 42000: Incorrect foreign key definition for 'c2': Key reference and table reference don't match
 CREATE TABLE t2 (c INT NOT NULL, d INT NOT NULL, PRIMARY KEY (c,d),
 CONSTRAINT c2 FOREIGN KEY (c) REFERENCES t1 (a,b) ON UPDATE NO ACTION) engine=innodb;
 ERROR 42000: Incorrect foreign key definition for 'c2': Key reference and table reference don't match
@@ -1302,9 +1302,9 @@ t2	CREATE TABLE `t2` (
   PRIMARY KEY (`c`,`d`),
   CONSTRAINT `c1` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON DELETE NO ACTION,
   CONSTRAINT `c2` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,
-  CONSTRAINT `t2_ibfk_1` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,
-  CONSTRAINT `t2_ibfk_2` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION
-) ENGINE=InnoDB
+  CONSTRAINT `f3` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,
+  CONSTRAINT `t2_ibfk_4` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t2;
 DROP TABLE t1;
 create table t1 (a int auto_increment primary key) engine=innodb;

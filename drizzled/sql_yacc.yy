@@ -1395,7 +1395,7 @@ key_def:
           {
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Foreign_key($4.str ? $4 : $1, lex->col_list,
+            Key *key= new Foreign_key($1.str ? $1 : $4, lex->col_list,
                                       $8,
                                       lex->ref_list,
                                       statement->fk_delete_opt,
