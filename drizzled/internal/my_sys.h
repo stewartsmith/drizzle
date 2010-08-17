@@ -49,7 +49,9 @@ extern int errno;			/* declare errno */
 
 #include <drizzled/dynamic_array.h>
 
+#ifdef HAVE_SYS_MMAN_H 
 #include <sys/mman.h>
+#endif
 
 #include "drizzled/qsort_cmp.h"
 
