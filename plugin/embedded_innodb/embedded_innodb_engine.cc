@@ -194,9 +194,9 @@ public:
                              drizzled::TableIdentifiers &identifiers);
 
   /* The following defines can be increased if necessary */
-  uint32_t max_supported_keys()          const { return 64; }
-  uint32_t max_supported_key_length()    const { return 1000; }
-  uint32_t max_supported_key_part_length() const { return 1000; }
+  uint32_t max_supported_keys()          const { return 1000; }
+  uint32_t max_supported_key_length()    const { return 3500; }
+  uint32_t max_supported_key_part_length() const { return 767; }
 
   uint32_t index_flags(enum  ha_key_alg) const
   {
