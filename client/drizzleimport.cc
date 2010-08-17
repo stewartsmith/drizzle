@@ -1,5 +1,6 @@
 /* 
   Copyright (C) 2010 Vijay Samuel
+  Copyright (C) 2010 Brian Aker
   Copyright (C) 2000-2006 MySQL AB
   Copyright (C) 2008-2009 Sun Microsystems, Inc
 
@@ -16,18 +17,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/*
-**     drizzleimport.c  - Imports all given files
-**          into a table(s).
-**
-**         *************************
-**         *         *
-**         * AUTHOR: Monty & Jani  *
-**         * DATE:   June 24, 1997 *
-**         *         *
-**         *************************
-*/
-#define IMPORT_VERSION "3.7"
+#define IMPORT_VERSION "4.0"
 
 #include "client_priv.h"
 #include <string>
@@ -49,6 +39,8 @@ extern "C" void * worker_thread(void *arg);
 
 int exitcode= 0;
 
+const char *program_name= "drizzlesimport";
+
 /* Global Thread counter */
 uint32_t counter;
 pthread_mutex_t counter_mutex;
@@ -60,12 +52,12 @@ static char *field_escape(char *to,const char *from,uint32_t length);
 static char *add_load_option(char *ptr,const char *object,
            const char *statement);
 
-static bool verbose= false, lock_tables= false, ignore_errors= false,
+static bool verbose= false, ignore_errors= false,
             opt_delete= false, opt_replace= false, silent= false,
             ignore_unique= false, opt_low_priority= false,
             opt_mysql= false, opt_local_file;
 
-static uint32_t opt_use_threads= 0;
+static uint32_t opt_use_threads;
 static uint32_t opt_drizzle_port= 0;
 static int64_t opt_ignore_lines= -1;
 
@@ -111,7 +103,7 @@ static int write_to_table(char *filename, drizzle_con_st *con)
   drizzle_return_t ret;
 
   internal::fn_format(tablename, filename, "", "", 1 | 2); /* removes path & ext. */
-  if (!opt_local_file)
+  if (not opt_local_file)
     strcpy(hard_path,filename);
   else
     internal::my_load_path(hard_path, filename, NULL); /* filename includes the path */
@@ -196,35 +188,6 @@ static int write_to_table(char *filename, drizzle_con_st *con)
 }
 
 
-static void lock_table(drizzle_con_st *con, int tablecount, char **raw_tablename)
-{
-  string query;
-  int i;
-  char tablename[FN_REFLEN];
-  drizzle_result_st result;
-  drizzle_return_t ret;
-
-  if (verbose)
-    fprintf(stdout, "Locking tables for write\n");
-  query.append("LOCK TABLES ");
-  for (i=0 ; i < tablecount ; i++)
-  {
-    internal::fn_format(tablename, raw_tablename[i], "", "", 1 | 2);
-    query.append(tablename);
-    query.append(" WRITE,");
-  }
-  if (drizzle_query(con, &result, query.c_str(), query.length()-1,
-                    &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    db_error(con, &result, ret, NULL);
-    /* We shall countinue here, if --force was given */
-    return;
-  }
-  drizzle_result_free(&result);
-}
-
-
 static drizzle_con_st *db_connect(const string host, const string database,
                                   const string user, const string passwd)
 {
@@ -281,16 +244,16 @@ static void db_error(drizzle_con_st *con, drizzle_result_st *result,
 {
   if (ret == DRIZZLE_RETURN_ERROR_CODE)
   {
-    my_printf_error(0,"Error: %d, %s%s%s", MYF(0),
-                    drizzle_result_error_code(result),
-                    drizzle_result_error(result),
-                    table ? ", when using table: " : "", table ? table : "");
+    fprintf(stdout, "Error: %d, %s%s%s",
+            drizzle_result_error_code(result),
+            drizzle_result_error(result),
+            table ? ", when using table: " : "", table ? table : "");
     drizzle_result_free(result);
   }
   else
   {
-    my_printf_error(0,"Error: %d, %s%s%s", MYF(0), ret, drizzle_con_error(con),
-                    table ? ", when using table: " : "", table ? table : "");
+    fprintf(stdout, "Error: %d, %s%s%s", ret, drizzle_con_error(con),
+            table ? ", when using table: " : "", table ? table : "");
   }
 
   safe_exit(1, con);
@@ -350,41 +313,33 @@ void * worker_thread(void *arg)
 {
   int error;
   char *raw_table_name= (char *)arg;
-  drizzle_con_st *con= NULL;
-  drizzle_result_st result;
-  drizzle_return_t ret;
+  drizzle_con_st *con;
 
   if (!(con= db_connect(current_host,current_db,current_user,opt_password)))
   {
-    goto error;
-  }
-
-  if (drizzle_query_str(con, &result,
-                        "/*!40101 set @@character_set_database=binary */;",
-                        &ret) == NULL ||
-      ret != DRIZZLE_RETURN_OK)
-  {
-    db_error(con, &result, ret, NULL);
-    /* We shall countinue here, if --force was given */
-    goto error;
+    return 0;
   }
 
   /*
     We are not currently catching the error here.
   */
-  if((error= write_to_table(raw_table_name, con)))
+  if ((error= write_to_table(raw_table_name, con)))
+  {
     if (exitcode == 0)
+    {
       exitcode= error;
+    }
+  }
 
-error:
   if (con)
+  {
     db_disconnect(current_host, con);
+  }
 
   pthread_mutex_lock(&counter_mutex);
   counter--;
   pthread_cond_signal(&count_threshhold);
   pthread_mutex_unlock(&counter_mutex);
-  internal::my_thread_end();
 
   return 0;
 }
@@ -406,8 +361,6 @@ try
   ("help,?", "Displays this help and exits.")
   ("ignore,i", po::value<bool>(&ignore_unique)->default_value(false)->zero_tokens(),
   "If duplicate unique key was found, keep old row.")
-  ("lock-tables,l", po::value<bool>(&lock_tables)->default_value(false)->zero_tokens(),
-  "Lock all tables for write (this disables threads).")
   ("low-priority", po::value<bool>(&opt_low_priority)->default_value(false)->zero_tokens(),
   "Use LOW_PRIORITY when updating the table.")
   ("replace,r", po::value<bool>(&opt_replace)->default_value(false)->zero_tokens(),
@@ -439,8 +392,8 @@ try
   "Read all files through the client.")
   ("silent,s", po::value<bool>(&silent)->default_value(false)->zero_tokens(),
   "Be more silent.")
-  ("use-threads", po::value<uint32_t>(&opt_use_threads)->default_value(0),
-  "Load files in parallel. The argument is the number of threads to use for loading data.")
+  ("use-threads", po::value<uint32_t>(&opt_use_threads)->default_value(4),
+  "Load files in parallel. The argument is the number of threads to use for loading data (default is 4.")
   ;
 
   po::options_description client_options("Options specific to the client");
@@ -530,13 +483,13 @@ try
 
   if (vm.count("version"))
   {
-    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,internal::my_progname,
+    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n", program_name,
     IMPORT_VERSION, drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
   }
   
   if (vm.count("help") || argc < 2)
   {
-    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n" ,internal::my_progname,
+    printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n", program_name,
     IMPORT_VERSION, drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
     puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
     printf("\
@@ -546,7 +499,7 @@ try
     read the text file directly. In other cases the client will open the text\n\
     file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
 
-    printf("\nUsage: %s [OPTIONS] database textfile...",internal::my_progname);
+    printf("\nUsage: %s [OPTIONS] database textfile...", program_name);
     cout<<long_options;
     exit(0);
   }
@@ -560,8 +513,7 @@ try
   current_db= (*argv)++;
   argc--;
 
-#ifdef HAVE_LIBPTHREAD
-  if (opt_use_threads && !lock_tables)
+  if (opt_use_threads)
   {
     pthread_t mainthread;            /* Thread descriptor */
     pthread_attr_t attr;          /* Thread attributes */
@@ -592,8 +544,7 @@ try
         pthread_mutex_lock(&counter_mutex);
         counter--;
         pthread_mutex_unlock(&counter_mutex);
-        fprintf(stderr,"%s: Could not create thread\n",
-                internal::my_progname);
+        fprintf(stderr,"%s: Could not create thread\n", program_name);
       }
     }
 
@@ -614,30 +565,14 @@ try
     pthread_attr_destroy(&attr);
   }
   else
-#endif
   {
-    drizzle_con_st *con= 0;
-    drizzle_result_st result;
-    drizzle_return_t ret;
+    drizzle_con_st *con;
+
     if (!(con= db_connect(current_host,current_db,current_user,opt_password)))
     {
       return(1);
     }
 
-    if (drizzle_query_str(con, &result,
-                          "/*!40101 set @@character_set_database=binary */;",
-                          &ret) == NULL ||
-        ret != DRIZZLE_RETURN_OK)
-    {
-      db_error(con, &result, ret, NULL);
-      /* We shall countinue here, if --force was given */
-      return(1);
-    }
-
-    drizzle_result_free(&result);
-
-    if (lock_tables)
-      lock_table(con, argc, argv);
     for (; *argv != NULL; argv++)
       if ((error= write_to_table(*argv, con)))
         if (exitcode == 0)
