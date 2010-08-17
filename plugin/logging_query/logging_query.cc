@@ -32,6 +32,7 @@
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <cstdio>
+#include <cerrno>
 
 namespace po= boost::program_options;
 using namespace drizzled;

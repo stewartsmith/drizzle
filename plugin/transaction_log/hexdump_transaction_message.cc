@@ -38,6 +38,7 @@
 #include "drizzled/charset.h"
 
 #include <fcntl.h>
+#include <errno.h>
 
 #include "transaction_log.h"
 #include "hexdump_transaction_message.h"

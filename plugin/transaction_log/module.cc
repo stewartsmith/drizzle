@@ -40,6 +40,8 @@
 #include "hexdump_transaction_message.h"
 #include "background_worker.h"
 
+#include <errno.h>
+
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>

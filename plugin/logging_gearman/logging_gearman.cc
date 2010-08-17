@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cstdio>
+#include <cerrno>
 
 using namespace drizzled;
 namespace po= boost::program_options;

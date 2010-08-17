@@ -60,6 +60,7 @@
 #include <drizzled/gettext.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/definitions.h>
+#include <errno.h>
 
 #include "transaction_log.h"
 #include "background_worker.h"
