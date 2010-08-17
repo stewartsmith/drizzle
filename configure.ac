@@ -111,7 +111,6 @@ dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile dnl
- gnulib/Makefile dnl
  po/Makefile.in dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl

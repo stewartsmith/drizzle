@@ -109,6 +109,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <iostream>
+#include <drizzled/charset.h>
 
 namespace po= boost::program_options;
 #include <boost/algorithm/string.hpp>
@@ -194,9 +195,9 @@ public:
                              drizzled::TableIdentifiers &identifiers);
 
   /* The following defines can be increased if necessary */
-  uint32_t max_supported_keys()          const { return 64; }
-  uint32_t max_supported_key_length()    const { return 1000; }
-  uint32_t max_supported_key_part_length() const { return 1000; }
+  uint32_t max_supported_keys()          const { return 1000; }
+  uint32_t max_supported_key_length()    const { return 3500; }
+  uint32_t max_supported_key_part_length() const { return 767; }
 
   uint32_t index_flags(enum  ha_key_alg) const
   {
@@ -1058,9 +1059,17 @@ int EmbeddedInnoDBEngine::doCreateTable(Session &session,
 
     for (int partnr= 0; partnr < index->index_part_size(); partnr++)
     {
-      /* TODO: Index prefix lengths */
       const message::Table::Index::IndexPart part= index->index_part(partnr);
-      innodb_err= ib_index_schema_add_col(innodb_index, table_message.field(part.fieldnr()).name().c_str(), 0);
+      const message::Table::Field::FieldType part_type= table_message.field(part.fieldnr()).type();
+      uint64_t compare_length= 0;
+
+      if (part_type == message::Table::Field::BLOB
+          || part_type == message::Table::Field::VARCHAR)
+        compare_length= part.compare_length();
+
+      innodb_err= ib_index_schema_add_col(innodb_index,
+                            table_message.field(part.fieldnr()).name().c_str(),
+                                          compare_length);
       if (innodb_err != DB_SUCCESS)
         goto schema_error;
     }

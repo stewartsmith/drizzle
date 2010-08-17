@@ -81,6 +81,44 @@ uint64_t Temporal::_cumulative_seconds_in_time() const
       + _seconds);
 }
 
+#if defined(TARGET_OS_SOLARIS)
+/* @TODO: Replace this with Boost.DateTime */
+static time_t timegm(struct tm *my_time)
+{
+	time_t local_secs, gm_secs;
+	struct tm gm__rec, *gm_time;
+
+	// Interpret 't' as the local time and convert it to seconds since the Epoch
+	local_secs = mktime(my_time);
+	if (local_secs == -1)
+  {
+		my_time->tm_hour--;
+		local_secs = mktime (my_time);
+		if (local_secs == -1)
+			return -1; 
+		local_secs += 3600;
+	}
+	
+	// Get the gmtime based on the local seconds since the Epoch
+	gm_time = gmtime_r(&local_secs, &gm__rec);
+	gm_time->tm_isdst = 0;
+	
+	// Interpret gmtime as the local time and convert it to seconds since the Epoch
+	gm_secs = mktime (gm_time);
+	if (gm_secs == -1)
+  {
+		gm_time->tm_hour--;
+		gm_secs = mktime (gm_time);
+		if (gm_secs == -1)
+			return -1; 
+		gm_secs += 3600;
+	}
+	
+	// Return the local time adjusted by the difference from GM time.
+	return (local_secs - (gm_secs - local_secs));
+}
+#endif
+
 void Temporal::set_epoch_seconds()
 {
   /* 

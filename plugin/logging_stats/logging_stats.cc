@@ -362,7 +362,7 @@ static DRIZZLE_SYSVAR_UINT(max_user_count,
 static DRIZZLE_SYSVAR_UINT(bucket_count,
                            sysvar_logging_stats_bucket_count,
                            PLUGIN_VAR_RQCMDARG,
-                           N_("Max number of vector buckets to construct for logging"),
+                           N_("Max number of range locks to use for Scoreboard"),
                            NULL, /* check func */
                            NULL, /* update func */
                            10, /* default */
@@ -396,7 +396,7 @@ static void init_options(drizzled::module::option_context &context)
           N_("Max number of users that will be logged"));
   context("bucket-count",
           po::value<uint32_t>(&sysvar_logging_stats_bucket_count)->default_value(10),
-          N_("Max number of vector buckets to construct for logging"));
+          N_("Max number of range locks to use for Scoreboard"));
   context("scoreboard-size",
           po::value<uint32_t>(&sysvar_logging_stats_scoreboard_size)->default_value(2000),
           N_("Max number of concurrent sessions that will be logged"));

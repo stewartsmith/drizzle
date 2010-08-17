@@ -91,7 +91,7 @@ bool ProcesslistTool::Generator::populate()
   if (not tmp_sctx->getUser().empty())
     push(tmp_sctx->getUser());
   else 
-    push("unauthenticated user");
+    push(_("no user"));
 
   /* HOST */
   push(tmp_sctx->getIp());

@@ -140,6 +140,23 @@ static RabbitMQHandler* rabbitmqHandler; ///< the rabbitmq handler
  */
 static int init(drizzled::module::Context &context)
 {
+  const module::option_map &vm= context.getOptions();
+  
+  if (vm.count("username"))
+  {
+    sysvar_rabbitmq_username= const_cast<char *>(vm["username"].as<string>().c_str());
+  }
+
+  if (vm.count("password"))
+  {
+    sysvar_rabbitmq_password= const_cast<char *>(vm["password"].as<string>().c_str());
+  }
+
+  if (vm.count("host"))
+  {
+    sysvar_rabbitmq_host= const_cast<char *>(vm["host"].as<string>().c_str());
+  }
+
   if(sysvar_rabbitmq_log_enabled)
   {
     try 
@@ -259,6 +276,15 @@ static void init_options(drizzled::module::option_context &context)
   context ("enable",
            po::value<bool>(&sysvar_rabbitmq_log_enabled)->default_value(false)->zero_tokens(),
            N_("Enable rabbitmq log"));
+  context("host", 
+          po::value<string>()->default_value("localhost"),
+          N_("Host name to connect to"));
+  context("username",
+          po::value<string>()->default_value("guest"),
+          N_("RabbitMQ username"));
+  context("password",
+          po::value<string>()->default_value("guest"),
+          N_("RabbitMQ password"));
 }
 
 static drizzle_sys_var* system_variables[]= {
