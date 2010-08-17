@@ -206,6 +206,24 @@
 }
 
 
+{
+   HailDB Inherited some issues from InnoDB
+   Memcheck:Cond
+   fun:rw_lock_x_lock_func
+   ...
+   fun:innobase_start_or_create
+   fun:_ZL20embedded_innodb_initRN8drizzled6module7ContextE
+   fun:_ZN8drizzled15plugin_finalizeERNS_6module8RegistryE
+   fun:_ZN8drizzled22init_server_componentsERNS_6module8RegistryE
+   fun:main
+}
+
+{
+   HailDB Inherited some issues from InnoDB
+   Memcheck:Cond
+   fun:rw_lock_x_lock_func
+   ...
+}
 
 
 # Masking Leaks in System Libraries
