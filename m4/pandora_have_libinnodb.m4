@@ -26,7 +26,7 @@ AC_DEFUN([_PANDORA_SEARCH_LIBINNODB],[
     ])
     AS_IF([test "x${ac_cv_libhaildb}" = "xyes"],[
       AC_DEFINE([HAVE_HAILDB_H],[1],[Do we have haildb.h])
-      INNODB_LIBS=${LTLIBHAILDB}
+      INNODB_LIBS="${LTLIBHAILDB}"
       ac_cv_have_innodb=yes
     ],[
       AC_LIB_HAVE_LINKFLAGS(innodb,,[
@@ -37,7 +37,7 @@ AC_DEFUN([_PANDORA_SEARCH_LIBINNODB],[
       ])
       AS_IF([test "x{ac_cv_libinnodb}" = "xyes"],[
         AC_DEFINE([HAVE_INNODB_H],[1],[Do we have innodb.h])
-        INNODB_LIBS=${LTLIBINNODB}
+        INNODB_LIBS="${LTLIBINNODB}"
         ac_cv_have_innodb=yes
       ])
     ])
@@ -46,33 +46,6 @@ AC_DEFUN([_PANDORA_SEARCH_LIBINNODB],[
     ac_cv_libinnodb="no"
   ])
   AC_SUBST([INNODB_LIBS])
-
-  AC_CACHE_CHECK([if libinnodb is recent enough],
-    [ac_cv_recent_innodb_h],[
-      save_LIBS=${LIBS}
-      LIBS="${LIBS} ${INNODB_LIBS}"
-      AC_LINK_IFELSE(
-          [AC_LANG_PROGRAM([[
-#ifdef HAVE_HAILDB_H
-# include <haildb.h>
-#else
-# include <embedded_innodb-1.0/innodb.h>
-#endif
-        ]],[[
-      /* Make sure we have the two-arg version */
-      ib_table_drop(NULL, "nothing");
-        ]])],[
-        ac_cv_recent_innodb_h=yes
-      ],[
-        ac_cv_recent_innodb_h=no
-      ])
-      LIBS="${save_LIBS}"
-    ])
-  AS_IF([test "x${ac_cv_recent_innodb_h}" = "xno"],[
-    AC_MSG_WARN([${PACKAGE} requires at least version 1.0.6 of Embedded InnoDB])
-    ac_cv_libinnodb=no
-  ])
-        
   AM_CONDITIONAL(HAVE_LIBINNODB, [test "x${ac_cv_have_innodb}" = "xyes"])
 ])
 
