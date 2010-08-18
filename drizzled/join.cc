@@ -4409,10 +4409,11 @@ static bool make_simple_join(Join *join,Table *tmp_table)
   join_tab->read_first_record= join_init_read_record;
   join_tab->join=join;
   join_tab->ref.key_parts= 0;
-  memset(&join_tab->read_record, 0, sizeof(join_tab->read_record));
+  join_tab->read_record.init();
   tmp_table->status=0;
   tmp_table->null_row=0;
-  return(false);
+
+  return false;
 }
 
 /**

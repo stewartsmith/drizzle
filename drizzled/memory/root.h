@@ -64,15 +64,25 @@ class Root
 {
 public:
 
-  Root() { }
+  Root() :
+    free(0),
+    used(0),
+    pre_alloc(0),
+    min_malloc(0),
+    block_size(0),
+    block_num(0),
+    first_block_usage(0),
+    error_handler(0)
+  { }
+
   Root(size_t block_size_arg)
   {
     free= used= pre_alloc= 0;
     min_malloc= 32;
     block_size= block_size_arg - memory::ROOT_MIN_BLOCK_SIZE;
-    error_handler= 0;
     block_num= 4;			/* We shift this with >>2 */
     first_block_usage= 0;
+    error_handler= 0;
   }
 
   /**
@@ -119,7 +129,6 @@ public:
   }
   void free_root(myf MyFLAGS);
   void *multi_alloc_root(int unused, ...);
-
 };
 
 } /* namespace memory */

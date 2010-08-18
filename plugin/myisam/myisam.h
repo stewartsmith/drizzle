@@ -162,6 +162,20 @@ typedef struct st_mi_create_info
   uint32_t old_options;
   uint8_t language;
   bool with_auto_increment;
+
+  st_mi_create_info():
+    index_file_name(0),
+    data_file_name(0),
+    max_rows(0),
+    reloc_rows(0),
+    auto_increment(0),
+    data_file_length(0),
+    key_file_length(0),
+    old_options(0),
+    language(0),
+    with_auto_increment(0)
+  { }
+
 } MI_CREATE_INFO;
 
 struct st_myisam_info;			/* For referense */

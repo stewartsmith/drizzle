@@ -36,6 +36,19 @@ struct filesort_info_st
   void    (*unpack)(struct sort_addon_field_st *, unsigned char *); /* To unpack back */
   unsigned char     *record_pointers;    /* If sorted in memory */
   ha_rows   found_records;      /* How many records in sort */
+
+  filesort_info_st() :
+    io_cache(0),
+    sort_keys(0),
+    buffpek(0),
+    buffpek_len(0),
+    addon_buf(0),
+    addon_length(0),
+    addon_field(0),
+    unpack(0),
+    record_pointers(0),
+    found_records()
+  { }
 };
 
 } /* namespace drizzled */

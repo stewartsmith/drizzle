@@ -82,6 +82,34 @@ public:
   {
   }
 
+  void init()
+  {
+    table= NULL;
+    cursor= NULL;
+    forms= 0;
+    read_record= 0;
+    session= 0;
+    select= 0;
+    cache_records= 0;
+    ref_length= 0;
+    struct_length= 0;
+    reclength= 0;
+    rec_cache_size= 0;
+    error_offset= 0;
+    index= 0;
+    ref_pos= 0;
+    record= 0;
+    rec_buf= 0;
+    cache= 0;
+    cache_pos= 0;
+    cache_end= 0;
+    read_positions= 0;
+    io_cache= 0;
+    print_error= 0;
+    ignore_not_found_rows= 0;
+    do_insideout_scan= 0;
+  }
+
   virtual ~ReadRecord()
   { }
 
