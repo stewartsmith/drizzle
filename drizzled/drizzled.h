@@ -38,7 +38,6 @@ class Registry;
 
 extern std::bitset<12> test_flags;
 extern atomic<uint32_t> connection_count;
-extern bool calling_initgroups;
 extern const char *load_default_groups[];
 extern bool volatile select_thread_in_use;
 extern bool volatile abort_loop;

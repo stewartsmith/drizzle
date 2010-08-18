@@ -113,19 +113,6 @@ extern const char *my_thread_name(void);
 */
 #define DEFAULT_THREAD_STACK	(256*INT32_C(1024))
 
-/*
-  Keep track of shutdown,signal, and main threads so that my_end() will not
-  report errors with them
-*/
-
-/* Which kind of thread library is in use */
-
-#define THD_LIB_OTHER 1
-#define THD_LIB_NPTL  2
-#define THD_LIB_LT    4
-
-extern uint32_t thd_lib_detected;
-
 } /* namespace internal */
 } /* namespace drizzled */
 

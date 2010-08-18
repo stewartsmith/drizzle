@@ -117,8 +117,7 @@ pthread_handler_t signal_hand(void *)
   internal::my_thread_init();				// Init new thread
   signal_thread_in_use= true;
 
-  if (internal::thd_lib_detected != THD_LIB_LT && 
-      (test_flags.test(TEST_SIGINT)))
+  if ((test_flags.test(TEST_SIGINT)))
   {
     (void) sigemptyset(&set);			// Setup up SIGINT for debug
     (void) sigaddset(&set,SIGINT);		// For debugging
@@ -228,7 +227,7 @@ public:
 
     // @todo fix spurious wakeup issue
     (void) LOCK_thread_count.lock();
-    if ((error=pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
+    if ((error= pthread_create(&signal_thread, &thr_attr, signal_hand, 0)))
     {
       errmsg_printf(ERRMSG_LVL_ERROR,
                     _("Can't create interrupt-thread (error %d, errno: %d)"),

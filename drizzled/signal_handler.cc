@@ -76,6 +76,25 @@ void drizzled_end_thread_signal(int )
   return;
 }
 
+static void write_core(int sig)
+{
+  signal(sig, SIG_DFL);
+#ifdef HAVE_gcov
+  /*
+    For GCOV build, crashing will prevent the writing of code coverage
+    information from this process, causing gcov output to be incomplete.
+    So we force the writing of coverage information here before terminating.
+  */
+  extern void __gcov_flush(void);
+  __gcov_flush();
+#endif
+  pthread_kill(pthread_self(), sig);
+#if defined(P_MYID) && !defined(SCO)
+  /* On Solaris, the above kill is not enough */
+  sigsend(P_PID,P_MYID,sig);
+#endif
+}
+
 void drizzled_handle_segfault(int sig)
 {
   time_t curr_time;
@@ -125,84 +144,7 @@ void drizzled_handle_segfault(int sig)
                     "bytes of memory\n"
                     "Hope that's ok; if not, decrease some variables in the "
                     "equation.\n\n"));
-
-#ifdef HAVE_STACKTRACE
-  Session *session= current_session;
-
-  if (! (test_flags.test(TEST_NO_STACKTRACE)))
-  {
-    fprintf(stderr,"session: 0x%lx\n",(long) session);
-    fprintf(stderr,_("Attempting backtrace. You can use the following "
-                     "information to find out\n"
-                     "where drizzled died. If you see no messages after this, "
-                     "something went\n"
-                     "terribly wrong...\n"));
-    print_stacktrace(session ? (unsigned char*) session->thread_stack : (unsigned char*) 0,
-                     my_thread_stack_size);
-  }
-  if (session)
-  {
-    const char *kreason= "UNKNOWN";
-    switch (session->killed) {
-    case Session::NOT_KILLED:
-      kreason= "NOT_KILLED";
-      break;
-    case Session::KILL_BAD_DATA:
-      kreason= "KILL_BAD_DATA";
-      break;
-    case Session::KILL_CONNECTION:
-      kreason= "KILL_CONNECTION";
-      break;
-    case Session::KILL_QUERY:
-      kreason= "KILL_QUERY";
-      break;
-    case Session::KILLED_NO_VALUE:
-      kreason= "KILLED_NO_VALUE";
-      break;
-    }
-    fprintf(stderr, _("Trying to get some variables.\n"
-                      "Some pointers may be invalid and cause the "
-                      "dump to abort...\n"));
-    safe_print_str("session->query", session->query, 1024);
-    fprintf(stderr, "session->thread_id=%"PRIu32"\n", (uint32_t) session->thread_id);
-    fprintf(stderr, "session->killed=%s\n", kreason);
-  }
-  fflush(stderr);
-#endif /* HAVE_STACKTRACE */
-
-  if (calling_initgroups)
-    fprintf(stderr, _("\nThis crash occurred while the server was calling "
-                      "initgroups(). This is\n"
-                      "often due to the use of a drizzled that is statically "
-                      "linked against glibc\n"
-                      "and configured to use LDAP in /etc/nsswitch.conf. "
-                      "You will need to either\n"
-                      "upgrade to a version of glibc that does not have this "
-                      "problem (2.3.4 or\n"
-                      "later when used with nscd), disable LDAP in your "
-                      "nsswitch.conf, or use a\n"
-                      "drizzled that is not statically linked.\n"));
-
-  if (internal::thd_lib_detected == THD_LIB_LT && !getenv("LD_ASSUME_KERNEL"))
-    fprintf(stderr,
-            _("\nYou are running a statically-linked LinuxThreads binary "
-              "on an NPTL system.\n"
-              "This can result in crashes on some distributions due "
-              "to LT/NPTL conflicts.\n"
-              "You should either build a dynamically-linked binary, or force "
-              "LinuxThreads\n"
-              "to be used with the LD_ASSUME_KERNEL environment variable. "
-              "Please consult\n"
-              "the documentation for your distribution on how to do that.\n"));
-
-#ifdef HAVE_WRITE_CORE
-  if (test_flags.test(TEST_CORE_ON_SIGNAL))
-  {
-    fprintf(stderr, _("Writing a core file\n"));
-    fflush(stderr);
-    write_core(sig);
-  }
-#endif
+  write_core(sig);
 
   exit(1);
 }

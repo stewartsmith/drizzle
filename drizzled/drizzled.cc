@@ -589,15 +589,7 @@ err:
 void set_user(const char *user, passwd *user_info_arg)
 {
   assert(user_info_arg != 0);
-  /*
-    We can get a SIGSEGV when calling initgroups() on some systems when NSS
-    is configured to use LDAP and the server is statically linked.  We set
-    calling_initgroups as a flag to the SIGSEGV handler that is then used to
-    output a specific message to help the user resolve this problem.
-  */
-  calling_initgroups= true;
   initgroups((char*) user, user_info_arg->pw_gid);
-  calling_initgroups= false;
   if (setgid(user_info_arg->pw_gid) == -1)
   {
     sql_perror("setgid");

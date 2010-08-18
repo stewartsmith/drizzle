@@ -44,8 +44,6 @@ namespace drizzled
 namespace internal
 {
 
-uint32_t thd_lib_detected= 0;
-
 pthread_key_t THR_KEY_mysys;
 pthread_mutex_t THR_LOCK_lock;
 pthread_mutex_t THR_LOCK_threads;
@@ -55,8 +53,6 @@ static uint32_t my_thread_end_wait_time= 5;
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
 pthread_mutexattr_t my_fast_mutexattr;
 #endif
-
-static uint32_t get_thread_lib(void);
 
 /*
   initialize thread environment
@@ -72,7 +68,6 @@ static uint32_t get_thread_lib(void);
 bool my_thread_global_init(void)
 {
   int pth_ret;
-  thd_lib_detected= get_thread_lib();
 
   if ((pth_ret= pthread_key_create(&THR_KEY_mysys, NULL)) != 0)
   {
@@ -248,21 +243,6 @@ struct st_my_thread_var *_my_thread_var(void)
 {
   struct st_my_thread_var *tmp= (struct st_my_thread_var*)pthread_getspecific(THR_KEY_mysys);
   return tmp;
-}
-
-static uint32_t get_thread_lib(void)
-{
-#ifdef _CS_GNU_LIBPTHREAD_VERSION
-  char buff[64];
-
-  confstr(_CS_GNU_LIBPTHREAD_VERSION, buff, sizeof(buff));
-
-  if (!strncasecmp(buff, "NPTL", 4))
-    return THD_LIB_NPTL;
-  if (!strncasecmp(buff, "linuxthreads", 12))
-    return THD_LIB_LT;
-#endif
-  return THD_LIB_OTHER;
 }
 
 } /* namespace internal */

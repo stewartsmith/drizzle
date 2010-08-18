@@ -25,12 +25,6 @@ PLUGIN_TESTS =		$(pandora_plugin_test_list)
 ALL_TESTS =		main,big,$(PLUGIN_TESTS)
 noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES += 		$(GENSCRIPTS) tests/mtr
-noinst_PROGRAMS += 	tests/resolve_stack_dump
-tests_resolve_stack_dump_SOURCES = tests/resolve_stack_dump.cc
-tests_resolve_stack_dump_LDADD = ${TEST_LDADD} ${BOOST_LIBS}
-
-TEST_LDADD=		drizzled/internal/libinternal.la \
-			$(LIBINTL)
 
 TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 		../${top_srcdir}/tests/test-run.pl \
@@ -44,7 +38,6 @@ TEST_RUN= $(PERL) -I../$(top_srcdir)/tests/lib \
 EXTRA_DIST += \
 	$(EXTRA_SCRIPTS) \
 	${srcdir}/tests/README.stress \
-	${srcdir}/tests/resolve-stack \
 	${srcdir}/tests/suite \
 	${srcdir}/tests/t \
 	${srcdir}/tests/include/*.inc \
