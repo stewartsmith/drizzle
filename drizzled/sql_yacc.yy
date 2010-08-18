@@ -696,7 +696,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
-%token  SHUTDOWN
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SNAPSHOT_SYM
 %token  SPECIFIC_SYM                  /* SQL-2003-R */
@@ -5939,7 +5938,6 @@ keyword_sp:
         | SESSION_SYM              {}
         | SIMPLE_SYM               {}
         | SHARE_SYM                {}
-        | SHUTDOWN                 {}
         | SNAPSHOT_SYM             {}
         | SQL_BUFFER_RESULT        {}
         | STATUS_SYM               {}
