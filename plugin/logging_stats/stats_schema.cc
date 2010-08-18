@@ -454,3 +454,41 @@ bool CumulativeUserStatsTool::Generator::populate()
 
   return false;
 }
+
+ScoreboardStatsTool::ScoreboardStatsTool(LoggingStats *logging_stats) :
+  plugin::TableFunction("DATA_DICTIONARY", "SCOREBOARD_STATISTICS")
+{
+  outer_logging_stats= logging_stats;
+
+  add_field("SCOREBOARD_SIZE", TableFunction::NUMBER);
+  add_field("NUMBER_OF_RANGE_LOCKS", TableFunction::NUMBER);
+  add_field("MAX_USERS_LOGGED", TableFunction::NUMBER);
+  add_field("MEMORY_USAGE_BYTES", TableFunction::NUMBER);
+}
+
+ScoreboardStatsTool::Generator::Generator(Field **arg, LoggingStats *logging_stats) :
+  plugin::TableFunction::Generator(arg)
+{
+  inner_logging_stats= logging_stats;
+  is_last_record= false; 
+}
+
+bool ScoreboardStatsTool::Generator::populate()
+{
+  if (is_last_record)
+  {
+    return false;
+  }
+
+  Scoreboard *scoreboard= inner_logging_stats->getCurrentScoreboard();
+  CumulativeStats *cumulativeStats= inner_logging_stats->getCumulativeStats();
+
+  push(static_cast<uint64_t>(scoreboard->getNumberPerBucket() * scoreboard->getNumberBuckets()));
+  push(static_cast<uint64_t>(scoreboard->getNumberBuckets()));
+  push(static_cast<uint64_t>(cumulativeStats->getCumulativeStatsByUserMax()));
+  push(cumulativeStats->getCumulativeSizeBytes() + scoreboard->getScoreboardSizeBytes()); 
+  
+  is_last_record= true;
+
+  return true;
+}

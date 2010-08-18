@@ -71,6 +71,11 @@ public:
     return number_buckets;
   }
 
+  uint32_t getNumberPerBucket()
+  {
+    return number_per_bucket;
+  }
+
   uint64_t getScoreboardSizeBytes()
   {
     return scoreboard_size_bytes;
@@ -88,6 +93,7 @@ public:
 
 private:
   uint32_t number_sessions;
+  uint32_t number_per_bucket;
   uint32_t number_buckets;
   uint64_t scoreboard_size_bytes;
   std::vector<std::vector<ScoreboardSlot* >* > vector_of_scoreboard_vectors;
