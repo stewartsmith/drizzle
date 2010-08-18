@@ -28,7 +28,11 @@
 #include "drizzled/probes.h"
 #include "drizzled/plugin.h"
 #include "drizzled/plugin/scheduler.h"
-#include "plugin/myisam/keycache.h"
+
+#ifdef __GNUC__
+#include <execinfo.h>
+#include <cxxabi.h>
+#endif // __GNUC__
 
 using namespace drizzled;
 
@@ -95,6 +99,7 @@ static void write_core(int sig)
 #endif
 }
 
+#define BACKTRACE_STACK_SIZE 50
 void drizzled_handle_segfault(int sig)
 {
   time_t curr_time;
@@ -139,11 +144,69 @@ void drizzled_handle_segfault(int sig)
   fprintf(stderr, "max_used_connections=%"PRIu64"\n", current_global_counters.max_used_connections);
   fprintf(stderr, "connection_count=%u\n", uint32_t(connection_count));
   fprintf(stderr, _("It is possible that drizzled could use up to \n"
-                    "key_buffer_size + (read_buffer_size + "
-                    "sort_buffer_size)*thread_count\n"
+                    "(read_buffer_size + sort_buffer_size)*thread_count\n"
                     "bytes of memory\n"
                     "Hope that's ok; if not, decrease some variables in the "
                     "equation.\n\n"));
+
+#ifdef __GNUC__
+  {
+    void *array[BACKTRACE_STACK_SIZE];
+    size_t size;
+    char **strings;
+
+    size= backtrace (array, BACKTRACE_STACK_SIZE);
+    strings= backtrace_symbols (array, size);
+
+    std::cerr << "Number of stack frames obtained: " << size <<  std::endl;
+
+    for (size_t x= 1; x < size; x++) 
+    {
+      size_t sz= 200;
+      char *function= (char *)malloc(sz);
+      char *begin= 0;
+      char *end= 0;
+
+      for (char *j = strings[x]; *j; ++j)
+      {
+        if (*j == '(') {
+          begin = j;
+        }
+        else if (*j == '+') {
+          end = j;
+        }
+      }
+      if (begin && end)
+      {
+        begin++;
+        *end= NULL;
+
+        int status;
+        char *ret = abi::__cxa_demangle(begin, function, &sz, &status);
+        if (ret) 
+        {
+          function= ret;
+        }
+        else
+        {
+          std::strncpy(function, begin, sz);
+          std::strncat(function, "()", sz);
+          function[sz-1] = NULL;
+        }
+        std::cerr << function << std::endl;
+      }
+      else
+      {
+        std::cerr << strings[x] << std::endl;
+      }
+      free(function);
+    }
+
+
+    free (strings);
+  }
+#endif // __GNUC__
+
   write_core(sig);
 
   exit(1);
