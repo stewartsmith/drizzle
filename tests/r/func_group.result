@@ -581,12 +581,6 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	index	k2	PRIMARY	14	NULL	7	Using where
 1	SIMPLE	t1	index	NULL	PRIMARY	14	NULL	15	Using index; Using join buffer
 drop table t1, t2;
-create table t1 (a char(10));
-insert into t1 values ('a'),('b'),('c');
-select coercibility(max(a)) from t1;
-coercibility(max(a))
-2
-drop table t1;
 create table t1 (a char);
 insert into t1 values ('a'),('b');
 show create table t1;
