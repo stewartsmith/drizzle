@@ -1,0 +1,21 @@
+# Test coercibility function
+--source include/have_coercibility_function.inc
+
+# Should be 0
+select coercibility('hello' collate utf8_roman_ci);
+
+# Should be 1
+# Can't figure out any way of doing this without an error (probably as it should be)
+
+# Should be 2
+set @a='hello';
+select coercibility(@a);
+
+# Should be 3
+select coercibility(user());
+
+# Should be 4
+select coercibility('hello');
+
+# Should be 5
+select coercibility(NULL);
