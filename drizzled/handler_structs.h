@@ -76,6 +76,17 @@ typedef struct st_ha_alter_information
   uint32_t index_add_count;
   uint32_t *index_add_buffer;
   void *data;
+
+  st_ha_alter_information() :
+    key_info_buffer(0),
+    key_count(0),
+    index_drop_count(0),
+    index_drop_buffer(0),
+    index_add_count(0),
+    index_add_buffer(0),
+    data(0)
+  { }
+
 } HA_ALTER_INFO;
 
 

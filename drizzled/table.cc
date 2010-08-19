@@ -196,7 +196,6 @@ void Table::resetTable(Session *session,
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
 
   memory::init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
-  memset(&sort, 0, sizeof(filesort_info_st));
 }
 
 
@@ -1622,8 +1621,8 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
   {						// Get keys for ni_create
     bool using_unique_constraint= false;
     HA_KEYSEG *seg= (HA_KEYSEG*) this->mem_root.alloc_root(sizeof(*seg) * keyinfo->key_parts);
-    if (!seg)
-      goto err;
+    if (not seg)
+      return true;
 
     memset(seg, 0, sizeof(*seg) * keyinfo->key_parts);
     if (keyinfo->key_length >= cursor->getEngine()->max_key_length() ||
@@ -1689,28 +1688,26 @@ bool Table::create_myisam_tmp_table(KeyInfo *keyinfo,
     }
   }
   MI_CREATE_INFO create_info;
-  memset(&create_info, 0, sizeof(create_info));
 
   if ((options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) ==
       OPTION_BIG_TABLES)
     create_info.data_file_length= ~(uint64_t) 0;
 
-  if ((error=mi_create(share->getTableName(), share->sizeKeys(), &keydef,
-		       (uint32_t) (*recinfo-start_recinfo),
-		       start_recinfo,
-		       share->uniques, &uniquedef,
-		       &create_info,
-		       HA_CREATE_TMP_TABLE)))
+  if ((error= mi_create(share->getTableName(), share->sizeKeys(), &keydef,
+                        (uint32_t) (*recinfo-start_recinfo),
+                        start_recinfo,
+                        share->uniques, &uniquedef,
+                        &create_info,
+                        HA_CREATE_TMP_TABLE)))
   {
     print_error(error, MYF(0));
     db_stat= 0;
-    goto err;
+
+    return true;
   }
   in_use->status_var.created_tmp_disk_tables++;
   share->db_record_offset= 1;
   return false;
- err:
-  return true;
 }
 
 
@@ -1944,9 +1941,6 @@ Table::Table() :
 
   memset(quick_key_parts, 0, sizeof(unsigned int) * MAX_KEY);
   memset(quick_n_ranges, 0, sizeof(unsigned int) * MAX_KEY);
-
-  memset(&mem_root, 0, sizeof(memory::Root));
-  memset(&sort, 0, sizeof(filesort_info_st));
 }
 
 /*****************************************************************************

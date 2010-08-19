@@ -41,6 +41,9 @@ AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 ])
 
+# libexecinfo provides backtrace_symbols on FreeBSD
+AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
+
 PANDORA_RUN_CPPLINT
 
 PANDORA_REQUIRE_LIBPROTOBUF

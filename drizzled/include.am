@@ -372,7 +372,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/sql_string.h \
 			      drizzled/sql_table.h \
 			      drizzled/sql_union.h \
-			      drizzled/stacktrace.h \
 			      drizzled/statement.h \
 			      drizzled/statement/alter_schema.h \
 			      drizzled/statement/alter_table.h \
@@ -733,7 +732,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/sql_union.cc \
 				 drizzled/sql_update.cc \
 				 drizzled/sql_yacc.yy \
-				 drizzled/stacktrace.cc \
 				 drizzled/statement/alter_schema.cc \
 				 drizzled/statement/alter_table.cc \
 				 drizzled/statement/analyze.cc \
