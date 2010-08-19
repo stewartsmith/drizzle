@@ -232,7 +232,7 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     GETTEXT_PACKAGE=$PACKAGE
     AC_CHECK_LIB(intl, libintl_gettext)
     AC_SUBST([GETTEXT_PACKAGE])
-    AS_IF([test "x${USE_NLS}" = "xyes"],
+    AS_IF([test "x${USE_NLS}" = "xyes" -a "x${pandora_have_intltool}" = "xyes"],
           [AC_DEFINE([ENABLE_NLS],[1],[Turn on language support])])
   ])
 

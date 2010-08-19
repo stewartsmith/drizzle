@@ -44,7 +44,12 @@ if test -n "$1"; then
     [INTLTOOL_APPLIED_VERSION_AS_INT=`echo $INTLTOOL_APPLIED_VERSION | awk -F. '{ print $ 1 * 1000 + $ 2 * 100 + $ 3; }'`
     ]
     AC_MSG_RESULT([$INTLTOOL_APPLIED_VERSION found])
-    test "$INTLTOOL_APPLIED_VERSION_AS_INT" -ge "$INTLTOOL_REQUIRED_VERSION_AS_INT" || AC_MSG_WARN([Your intltool is too old.  You need intltool $1 or later.])
+    AS_IF([test "$INTLTOOL_APPLIED_VERSION_AS_INT" -ge "$INTLTOOL_REQUIRED_VERSION_AS_INT"],[
+      pandora_have_intltool=yes
+    ],[
+      pandora_have_intltool=no
+      AC_MSG_WARN([Your intltool is too old.  You need intltool $1 or later.])
+    ])
 fi
 
 AC_PATH_PROG(INTLTOOL_UPDATE, [intltool-update])
