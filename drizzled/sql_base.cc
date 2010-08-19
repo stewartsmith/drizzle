@@ -553,7 +553,7 @@ void Session::close_open_tables()
 
   safe_mutex_assert_not_owner(LOCK_open.native_handle());
 
-  LOCK_open.lock(); /* Close all open tables on Session */
+  boost::mutex::scoped_lock scoped_lock(LOCK_open); /* Close all open tables on Session */
 
   while (open_tables)
   {
@@ -566,8 +566,6 @@ void Session::close_open_tables()
     /* Tell threads waiting for refresh that something has happened */
     broadcast_refresh();
   }
-
-  LOCK_open.unlock();
 }
 
 /*
@@ -922,14 +920,13 @@ void Session::drop_open_table(Table *table, TableIdentifier &identifier)
   }
   else
   {
-    LOCK_open.lock(); /* Close and drop a table (AUX routine) */
+    boost::mutex::scoped_lock scoped_lock(LOCK_open); /* Close and drop a table (AUX routine) */
     /*
       unlink_open_table() also tells threads waiting for refresh or close
       that something has happened.
     */
     unlink_open_table(table);
     quick_rm_table(*this, identifier);
-    LOCK_open.unlock();
   }
 }
 
@@ -1126,7 +1123,7 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 {
   const TableIdentifier::Key &key(identifier.getKey());
 
-  LOCK_open.lock(); /* Obtain a name lock even though table is not in cache (like for create table)  */
+  boost::mutex::scoped_lock scope_lock(LOCK_open); /* Obtain a name lock even though table is not in cache (like for create table)  */
 
   TableOpenCache::iterator iter;
 
@@ -1134,20 +1131,17 @@ bool Session::lock_table_name_if_not_cached(TableIdentifier &identifier, Table *
 
   if (iter != get_open_cache().end())
   {
-    LOCK_open.unlock();
     *table= 0;
     return false;
   }
 
   if (not (*table= table_cache_insert_placeholder(identifier.getSchemaName().c_str(), identifier.getTableName().c_str())))
   {
-    LOCK_open.unlock();
     return true;
   }
   (*table)->open_placeholder= true;
   (*table)->setNext(open_tables);
   open_tables= *table;
-  LOCK_open.unlock();
 
   return false;
 }
@@ -1860,25 +1854,26 @@ bool wait_for_tables(Session *session)
   bool result;
 
   session->set_proc_info("Waiting for tables");
-  LOCK_open.lock(); /* Lock for all tables to be refreshed */
-  while (!session->killed)
   {
-    session->some_tables_deleted= false;
-    session->close_old_data_files(false, dropping_tables != 0);
-    if (!table_is_used(session->open_tables, 1))
-      break;
-    (void) pthread_cond_wait(COND_refresh.native_handle(),LOCK_open.native_handle());
+    boost::mutex::scoped_lock lock(LOCK_open);
+    while (!session->killed)
+    {
+      session->some_tables_deleted= false;
+      session->close_old_data_files(false, dropping_tables != 0);
+      if (!table_is_used(session->open_tables, 1))
+        break;
+      COND_refresh.wait(lock);
+    }
+    if (session->killed)
+      result= true;					// aborted
+    else
+    {
+      /* Now we can open all tables without any interference */
+      session->set_proc_info("Reopen tables");
+      session->version= refresh_version;
+      result= session->reopen_tables(false, false);
+    }
   }
-  if (session->killed)
-    result= true;					// aborted
-  else
-  {
-    /* Now we can open all tables without any interference */
-    session->set_proc_info("Reopen tables");
-    session->version= refresh_version;
-    result= session->reopen_tables(false, false);
-  }
-  LOCK_open.unlock();
   session->set_proc_info(0);
 
   return result;

@@ -1499,7 +1499,7 @@ bool mysql_create_table_no_lock(Session *session,
                                  &key_info_buffer, &key_count,
                                  select_field_count))
   {
-    LOCK_open.lock(); /* CREATE TABLE (some confussion on naming, double check) */
+    boost::mutex::scoped_lock lock(LOCK_open); /* CREATE TABLE (some confussion on naming, double check) */
     error= locked_create_event(session,
                                identifier,
                                create_info,
@@ -1509,7 +1509,6 @@ bool mysql_create_table_no_lock(Session *session,
                                internal_tmp_table,
                                db_options, key_count,
                                key_info_buffer);
-    LOCK_open.unlock();
   }
 
   session->set_proc_info("After create");
@@ -1566,9 +1565,8 @@ static bool drizzle_create_table(Session *session,
 
   if (name_lock)
   {
-    LOCK_open.lock(); /* Lock for removing name_lock during table create */
+    boost::mutex::scoped_lock lock(LOCK_open); /* Lock for removing name_lock during table create */
     session->unlink_open_table(name_lock);
-    LOCK_open.unlock();
   }
 
   return(result);
@@ -1991,10 +1989,9 @@ send_result:
         }
         else
         {
-          LOCK_open.lock();
+          boost::mutex::scoped_lock lock(LOCK_open);
 	  TableIdentifier identifier(table->table->getMutableShare()->getSchemaName(), table->table->getMutableShare()->getTableName());
           remove_table_from_cache(session, identifier, RTFC_NO_FLAG);
-          LOCK_open.unlock();
         }
       }
     }
@@ -2179,9 +2176,8 @@ bool mysql_create_like_table(Session* session,
     {
       if (name_lock)
       {
-        LOCK_open.lock(); /* unlink open tables for create table like*/
+        boost::mutex::scoped_lock lock(LOCK_open); /* unlink open tables for create table like*/
         session->unlink_open_table(name_lock);
-        LOCK_open.unlock();
       }
 
       return res;
@@ -2197,10 +2193,12 @@ bool mysql_create_like_table(Session* session,
     }
     else // Otherwise we create the table
     {
-      LOCK_open.lock(); /* We lock for CREATE TABLE LIKE to copy table definition */
-      bool was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
-                                             src_identifier, is_engine_set);
-      LOCK_open.unlock();
+      bool was_created;
+      {
+        boost::mutex::scoped_lock lock(LOCK_open); /* We lock for CREATE TABLE LIKE to copy table definition */
+        was_created= create_table_wrapper(*session, create_table_proto, destination_identifier,
+                                               src_identifier, is_engine_set);
+      }
 
       // So we blew the creation of the table, and we scramble to clean up
       // anything that might have been created (read... it is a hack)
@@ -2216,9 +2214,8 @@ bool mysql_create_like_table(Session* session,
 
     if (name_lock)
     {
-      LOCK_open.lock(); /* unlink open tables for create table like*/
+      boost::mutex::scoped_lock lock(LOCK_open); /* unlink open tables for create table like*/
       session->unlink_open_table(name_lock);
-      LOCK_open.unlock();
     }
   }
 
