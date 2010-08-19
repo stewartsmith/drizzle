@@ -28,18 +28,18 @@ namespace drizzled
 class Session;
 class Table;
 class TableList;
-typedef struct drizzled_lock_st DRIZZLE_LOCK;
+class DrizzleLock;
 
-DRIZZLE_LOCK *mysql_lock_tables(Session *session, Table **table, uint32_t count,
-                                uint32_t flags, bool *need_reopen);
+DrizzleLock *mysql_lock_tables(Session *session, Table **table, uint32_t count,
+                               uint32_t flags, bool *need_reopen);
 /* mysql_lock_tables() and open_table() flags bits */
 #define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK      0x0001
 #define DRIZZLE_LOCK_IGNORE_FLUSH                 0x0002
 #define DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        0x0004
 #define DRIZZLE_OPEN_TEMPORARY_ONLY               0x0008
 
-void mysql_unlock_tables(Session *session, DRIZZLE_LOCK *sql_lock);
-void mysql_unlock_read_tables(Session *session, DRIZZLE_LOCK *sql_lock);
+void mysql_unlock_tables(Session *session, DrizzleLock *sql_lock);
+void mysql_unlock_read_tables(Session *session, DrizzleLock *sql_lock);
 void mysql_unlock_some_tables(Session *session, Table **table, uint32_t count);
 void mysql_lock_remove(Session *session, Table *table);
 void mysql_lock_abort(Session *session, Table *table);

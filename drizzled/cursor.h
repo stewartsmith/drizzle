@@ -67,7 +67,6 @@ class select_result;
 class CreateField;
 class sys_var_str;
 class Item_ident;
-typedef struct st_sort_field SORT_FIELD;
 
 typedef List<Item> List_item;
 extern KEY_CREATE_INFO default_key_create_info;
@@ -640,8 +639,9 @@ extern const char *ha_row_type[];
 /* basic stuff */
 void ha_init_errors(void);
 
-SORT_FIELD * make_unireg_sortorder(order_st *order, uint32_t *length,
-                                   SORT_FIELD *sortorder);
+class SortField;
+SortField *make_unireg_sortorder(order_st *order, uint32_t *length,
+                                 SortField *sortorder);
 int setup_order(Session *session, Item **ref_pointer_array, TableList *tables,
                 List<Item> &fields, List <Item> &all_fields, order_st *order);
 int setup_group(Session *session, Item **ref_pointer_array, TableList *tables,

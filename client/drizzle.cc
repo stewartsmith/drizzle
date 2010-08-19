@@ -1329,7 +1329,7 @@ static void check_timeout_value(uint32_t in_connect_timeout)
   opt_connect_timeout= 0;
   if (in_connect_timeout > 3600*12)
   {
-    cout<<N_("Error: Invalid Value for connect_timeout"); 
+    cout << N_("Error: Invalid Value for connect_timeout"); 
     exit(-1);
   }
   opt_connect_timeout= in_connect_timeout;
@@ -1338,13 +1338,12 @@ static void check_timeout_value(uint32_t in_connect_timeout)
 static void check_max_input_line(uint32_t in_max_input_line)
 {
   opt_max_input_line= 0;
-  if (in_max_input_line<4096 || in_max_input_line>(int64_t)2*1024L*1024L*1024L)
+  if (in_max_input_line < 4096 || in_max_input_line > (int64_t)2*1024L*1024L*1024L)
   {
-    cout<<N_("Error: Invalid Value for max_input_line");
+    cout << N_("Error: Invalid Value for max_input_line");
     exit(-1);
   }
-  opt_max_input_line= in_max_input_line/1024;
-  opt_max_input_line*=1024;
+  opt_max_input_line= in_max_input_line - (in_max_input_line % 1024);
 }
 
 int main(int argc,char *argv[])
@@ -1783,14 +1782,13 @@ try
   glob_buffer= new string();
   glob_buffer->reserve(512);
 
-  char * output_buff= (char *)malloc(512);
-  memset(output_buff, '\0', 512);
-
-  sprintf(output_buff,
+  std::vector<char> output_buff;
+  output_buff.resize(512);
+  snprintf(&output_buff[0], output_buff.size(),
           _("Your Drizzle connection id is %u\nServer version: %s\n"),
           drizzle_con_thread_id(&con),
           server_version_string(&con));
-  put_info(output_buff, INFO_INFO, 0, 0);
+  put_info(&output_buff[0], INFO_INFO, 0, 0);
 
   initialize_readline((char *)current_prompt.c_str());
   if (!status.getBatch() && !quick)
@@ -3137,12 +3135,12 @@ print_table_data(drizzle_result_st *result)
   drizzle_row_t cur;
   drizzle_return_t ret;
   drizzle_column_st *field;
-  bool *num_flag;
+  std::vector<bool> num_flag;
   string separator;
 
   separator.reserve(256);
 
-  num_flag=(bool*) malloc(sizeof(bool)*drizzle_result_column_count(result));
+  num_flag.resize(drizzle_result_column_count(result));
   if (column_types_flag)
   {
     print_field_types(result);
@@ -3283,7 +3281,6 @@ print_table_data(drizzle_result_st *result)
       drizzle_row_free(result, cur);
   }
   tee_puts(separator.c_str(), PAGER);
-  free(num_flag);
 }
 
 /**

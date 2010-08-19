@@ -188,7 +188,7 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
   if (order && order->elements)
   {
     uint32_t         length= 0;
-    SORT_FIELD  *sortorder;
+    SortField  *sortorder;
     ha_rows examined_rows;
 
     if ((!select || table->quick_keys.none()) && limit != HA_POS_ERROR)

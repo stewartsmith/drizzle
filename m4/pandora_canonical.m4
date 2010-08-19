@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.141])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.146])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -77,15 +77,17 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_CANONICAL_TARGET
   
   m4_if(PCT_DONT_SUPRESS_INCLUDE,yes,[
-    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability subdir-objects foreign)
+    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability subdir-objects foreign tar-ustar)
   ],[
-    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability nostdinc subdir-objects foreign)
+    AM_INIT_AUTOMAKE(-Wall -Werror -Wno-portability nostdinc subdir-objects foreign tar-ustar)
   ])
 
   m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
   m4_if(m4_substr(m4_esyscmd(test -d gnulib && echo 0),0,1),0,[
     gl_EARLY
+  ],[
+    PANDORA_EXTENSIONS 
   ])
   
   AC_REQUIRE([AC_PROG_CC])

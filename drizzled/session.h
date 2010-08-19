@@ -114,7 +114,7 @@ typedef std::map <std::string, message::Table> ProtoCache;
       of the INSERT ... ON DUPLICATE KEY UPDATE no matter whether the row
       was actually changed or not.
 */
-typedef struct st_copy_info 
+struct CopyInfo 
 {
   ha_rows records; /**< Number of processed records */
   ha_rows deleted; /**< Number of deleted records */
@@ -129,15 +129,38 @@ typedef struct st_copy_info
   List<Item> *update_fields;
   List<Item> *update_values;
   /* for VIEW ... WITH CHECK OPTION */
-} COPY_INFO;
 
-typedef struct drizzled_lock_st
+  CopyInfo() :
+    records(0),
+    deleted(0),
+    updated(0),
+    copied(0),
+    error_count(0),
+    touched(0),
+    escape_char(0),
+    last_errno(0),
+    ignore(0),
+    update_fields(0),
+    update_values(0)
+  { }
+
+};
+
+struct DrizzleLock
 {
   Table **table;
   uint32_t table_count;
   uint32_t lock_count;
   THR_LOCK_DATA **locks;
-} DRIZZLE_LOCK;
+
+  DrizzleLock() :
+    table(0),
+    table_count(0),
+    lock_count(0),
+    locks(0)
+  { }
+
+};
 
 } /* namespace drizzled */
 
@@ -1543,7 +1566,7 @@ namespace drizzled
  * A structure used to describe sort information
  * for a field or item used in ORDER BY.
  */
-typedef struct st_sort_field 
+struct SortField 
 {
   Field *field;	/**< Field to sort */
   Item	*item; /**< Item if not sorting fields */
@@ -1552,16 +1575,18 @@ typedef struct st_sort_field
   Item_result result_type; /**< Type of item */
   bool reverse; /**< if descending sort */
   bool need_strxnfrm;	/**< If we have to use strxnfrm() */
-} SORT_FIELD;
 
-typedef struct st_sort_buffer 
-{
-  uint32_t index;	/* 0 or 1 */
-  uint32_t sort_orders;
-  uint32_t change_pos; /* If sort-fields changed */
-  char **buff;
-  SORT_FIELD *sortorder;
-} SORT_BUFFER;
+  SortField() :
+    field(0),
+    item(0),
+    length(0),
+    suffix_length(0),
+    result_type(STRING_RESULT),
+    reverse(0),
+    need_strxnfrm(0)
+  { }
+
+};
 
 } /* namespace drizzled */
 

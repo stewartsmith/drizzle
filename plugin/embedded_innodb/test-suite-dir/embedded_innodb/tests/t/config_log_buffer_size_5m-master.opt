@@ -1,1 +1,1 @@
---plugin_add=embedded_innodb --plugin_remove=innobase  --innodb-log-buffer-size=5m
+--plugin_add=embedded_innodb --plugin_remove=innobase  --innodb.log-buffer-size=5242880

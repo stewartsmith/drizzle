@@ -1696,7 +1696,7 @@ bool Session::reopen_tables(bool get_locks, bool)
   *prev=0;
   if (tables != tables_ptr)			// Should we get back old locks
   {
-    DRIZZLE_LOCK *local_lock;
+    DrizzleLock *local_lock;
     /*
       We should always get these locks. Anyway, we must not go into
       wait_for_tables() as it tries to acquire LOCK_open, which is

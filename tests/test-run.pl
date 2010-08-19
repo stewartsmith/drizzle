@@ -245,6 +245,7 @@ our $opt_user;
 my $opt_valgrind= 0;
 my $opt_valgrind_mysqld= 0;
 my $opt_valgrind_drizzletest= 0;
+my $opt_valgrind_drizzleslap= 0;
 my @default_valgrind_args= ("--show-reachable=yes --malloc-fill=0xDEADBEEF --free-fill=0xDEADBEEF");
 my @valgrind_args;
 my $opt_valgrind_path;
@@ -530,6 +531,7 @@ sub command_line_setup () {
              'gprof'                    => \$opt_gprof,
              'valgrind|valgrind-all'    => \$opt_valgrind,
              'valgrind-drizzletest'       => \$opt_valgrind_drizzletest,
+             'valgrind-drizzleslap'       => \$opt_valgrind_drizzleslap,
              'valgrind-mysqld'          => \$opt_valgrind_mysqld,
              'valgrind-options=s'       => sub {
 	       my ($opt, $value)= @_;
@@ -882,6 +884,11 @@ sub command_line_setup () {
   elsif ( $opt_valgrind_drizzletest )
   {
     mtr_report("Turning on valgrind for drizzletest and drizzle_client_test only");
+    $opt_valgrind= 1;
+  }
+  elsif ( $opt_valgrind_drizzleslap )
+  {
+    mtr_report("Turning on valgrind for drizzleslap only");
     $opt_valgrind= 1;
   }
 
@@ -1537,7 +1544,13 @@ sub environment_setup () {
   # ----------------------------------------------------
   if ( $exe_drizzleslap )
   {
-    my $cmdline_drizzleslap=
+    my $cmdline_drizzleslap;
+
+    if ( $opt_valgrind_drizzleslap )
+    {
+      $cmdline_drizzleslap= "$glob_basedir/libtool --mode=execute valgrind --log-file=$opt_vardir/log/drizzleslap-valgrind.log ";
+    }
+    $cmdline_drizzleslap .=
       mtr_native_path($exe_drizzleslap) .
       " -uroot " .
       "--port=$master->[0]->{'port'} ";
@@ -2580,9 +2593,7 @@ sub mysqld_arguments ($$$$) {
 	       $idx > 0 ? $idx + 101 : 1);
 
     mtr_add_arg($args,
-      "%s--loose-innodb_data_file_path=ibdata1:20M:autoextend", $prefix);
-
-    mtr_add_arg($args, "%s--loose-innodb-lock-wait-timeout=5", $prefix);
+      "%s--innodb.data-file-path=ibdata1:20M:autoextend", $prefix);
 
   }
   else
@@ -3711,7 +3722,8 @@ Options for coverage, profiling etc
   valgrind              Run the "drizzletest" and "mysqld" executables using
                         valgrind with default options
   valgrind-all          Synonym for --valgrind
-  valgrind-drizzletest    Run the "drizzletest" and "drizzle_client_test" executable
+  valgrind-drizzleslap  Run "drizzleslap" with valgrind.
+  valgrind-drizzletest  Run the "drizzletest" and "drizzle_client_test" executable
                         with valgrind
   valgrind-mysqld       Run the "mysqld" executable with valgrind
   valgrind-options=ARGS Deprecated, use --valgrind-option

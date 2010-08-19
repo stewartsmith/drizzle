@@ -22,11 +22,14 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <getopt.h>
 #include <drizzled/message/table.pb.h>
+
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace drizzled;
+
+namespace po=boost::program_options;
 
 /*
   Written from Google proto example
@@ -213,38 +216,29 @@ static void fill_table1(message::Table *table)
 
 }
 
-static void usage(char *argv0)
-{
-  cerr << "Usage:  " << argv0 << " [-t N] TABLE_NAME.dfe" << endl;
-  cerr << endl;
-  cerr << "-t N\tTable Number" << endl;
-  cerr << "\t0 - default" << endl;
-  cerr << endl;
-}
 
 int main(int argc, char* argv[])
 {
-  int opt;
   int table_number= 0;
 
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-  while ((opt= getopt(argc, argv, "t:")) != -1)
-  {
-    switch (opt)
-    {
-    case 't':
-      table_number= atoi(optarg);
-      break;
-    default:
-      usage(argv[0]);
-      exit(EXIT_FAILURE);
-    }
-  }
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help", "produce help message")
+    ("table-number,t", po::value<int>(&table_number)->default_value(0), "Table Number");
 
-  if (optind >= argc) {
+  po::variables_map vm;
+  po::positional_options_description p;
+  p.add("table-name", 1);
+
+  po::store(po::command_line_parser(argc, argv).options(desc).
+            positional(p).run(), vm);
+
+  if (not vm.count("table-name"))
+  {
     fprintf(stderr, "Expected Table name argument\n\n");
-    usage(argv[0]);
+    cerr << desc << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -260,11 +254,12 @@ int main(int argc, char* argv[])
     break;
   default:
     fprintf(stderr, "Invalid table number.\n\n");
-    usage(argv[0]);
+    cerr << desc << endl;
     exit(EXIT_FAILURE);
   }
 
-  fstream output(argv[optind], ios::out | ios::trunc | ios::binary);
+  fstream output(vm["table-name"].as<string>().c_str(),
+                 ios::out | ios::trunc | ios::binary);
   if (!table.SerializeToOstream(&output))
   {
     cerr << "Failed to write schema." << endl;

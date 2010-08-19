@@ -852,7 +852,7 @@ namespace optimizer { class SqlSelect; }
 
 ha_rows filesort(Session *session,
                  Table *form,
-                 st_sort_field *sortorder,
+                 SortField *sortorder,
                  uint32_t s_length,
                  optimizer::SqlSelect *select,
                  ha_rows max_rows,

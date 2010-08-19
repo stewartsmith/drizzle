@@ -33,9 +33,9 @@ class select_create: public select_insert {
   AlterInfo *alter_info;
   Field **field;
   /* lock data for tmp table */
-  DRIZZLE_LOCK *m_lock;
+  DrizzleLock *m_lock;
   /* m_lock or session->extra_lock */
-  DRIZZLE_LOCK **m_plock;
+  DrizzleLock **m_plock;
   TableIdentifier &identifier;
 
 public:

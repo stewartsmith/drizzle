@@ -849,7 +849,7 @@ a
 4
 explain select * from t1 where a = 1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	a	a	5	const	4	Using index
+1	SIMPLE	t1	ref	a	a	5	const	4	Using where; Using index
 select * from t1 where a = 1;
 a
 1

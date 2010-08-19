@@ -31,24 +31,25 @@ noinst_PROGRAMS =
 VERSION=$(PANDORA_RELEASE_VERSION)
 
 SUBDIRS = po \
-	  gnulib \
 	  .
 
 DIST_SUBDIRS = ${SUBDIRS} tests
 
 BUILT_SOURCES=
 EXTRA_DIST= \
+	    .quickly \
 	    DRIZZLE.FAQ \
 	    Doxyfile \
 	    EXCEPTIONS-CLIENT \
+	    config/autorun.sh \
 	    config/config.rpath \
 	    config/make-lint.py \
 	    config/pandora_vc_revinfo \
+	    config/pre_hook.sh \
 	    config/uncrustify.cfg \
 	    extra/clean_source.sh \
 	    extra/cpplint.py \
 	    extra/run_cpplint.sh \
-	    m4/gnulib-cache.m4 \
 	    ${top_srcdir}/m4/pandora*m4
 
 

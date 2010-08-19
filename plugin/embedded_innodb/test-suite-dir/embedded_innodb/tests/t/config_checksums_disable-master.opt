@@ -1,1 +1,1 @@
---plugin_add=embedded_innodb --plugin_remove=innobase --skip-innodb-checksums
+--plugin_add=embedded_innodb --plugin_remove=innobase --innodb.checksums=false

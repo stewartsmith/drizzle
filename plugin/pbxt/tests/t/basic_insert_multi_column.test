@@ -1,0 +1,4 @@
+create table t1 (a int primary key, b varchar(10));
+insert into t1 (a,b) values (1, 'hello');
+select * from t1;
+drop table t1;
