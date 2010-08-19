@@ -372,7 +372,7 @@ branch	CREATE TABLE `branch` (
   `branch_id` int NOT NULL DEFAULT '0',
   `project_id` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`branch_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table container;
 Table	Create Table
 container	CREATE TABLE `container` (
@@ -380,14 +380,14 @@ container	CREATE TABLE `container` (
   `context` text,
   `parent_container` int DEFAULT NULL,
   PRIMARY KEY (`container_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=312
 show create table document;
 Table	Create Table
 document	CREATE TABLE `document` (
   `document_id` int NOT NULL AUTO_INCREMENT,
   `doctext` text,
   PRIMARY KEY (`document_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=623
 show create table genstats_attributes;
 Table	Create Table
 genstats_attributes	CREATE TABLE `genstats_attributes` (
@@ -395,14 +395,14 @@ genstats_attributes	CREATE TABLE `genstats_attributes` (
   `predicates` text NOT NULL,
   `attributes` text NOT NULL,
   PRIMARY KEY (`genstats_attributes_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table htmlcode;
 Table	Create Table
 htmlcode	CREATE TABLE `htmlcode` (
   `htmlcode_id` int NOT NULL AUTO_INCREMENT,
   `code` text,
   PRIMARY KEY (`htmlcode_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=516
 show create table htmlpage;
 Table	Create Table
 htmlpage	CREATE TABLE `htmlpage` (
@@ -415,7 +415,7 @@ htmlpage	CREATE TABLE `htmlpage` (
   `permissionneeded` varchar(1) NOT NULL DEFAULT 'r',
   `MIMEtype` varchar(255) NOT NULL DEFAULT 'text/html',
   PRIMARY KEY (`htmlpage_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=564
 show create table image;
 Table	Create Table
 image	CREATE TABLE `image` (
@@ -425,7 +425,7 @@ image	CREATE TABLE `image` (
   `thumbsrc` varchar(255) DEFAULT NULL,
   `description` text,
   PRIMARY KEY (`image_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=138
 show create table javascript;
 Table	Create Table
 javascript	CREATE TABLE `javascript` (
@@ -434,7 +434,7 @@ javascript	CREATE TABLE `javascript` (
   `comment` text NOT NULL,
   `dynamic` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`javascript_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table knowledge_item;
 Table	Create Table
 knowledge_item	CREATE TABLE `knowledge_item` (
@@ -442,7 +442,7 @@ knowledge_item	CREATE TABLE `knowledge_item` (
   `item` text NOT NULL,
   `question` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`knowledge_item_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table links;
 Table	Create Table
 links	CREATE TABLE `links` (
@@ -452,7 +452,7 @@ links	CREATE TABLE `links` (
   `hits` int DEFAULT '0',
   `food` int DEFAULT '0',
   PRIMARY KEY (`from_node`,`to_node`,`linktype`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table mail;
 Table	Create Table
 mail	CREATE TABLE `mail` (
@@ -460,7 +460,7 @@ mail	CREATE TABLE `mail` (
   `from_address` varchar(80) NOT NULL DEFAULT '',
   `attachment_file` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`mail_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table node;
 Table	Create Table
 node	CREATE TABLE `node` (
@@ -488,7 +488,7 @@ node	CREATE TABLE `node` (
   KEY `title` (`title`,`type_nodetype`),
   KEY `author` (`author_user`),
   KEY `type` (`type_nodetype`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=641
 show create table nodegroup;
 Table	Create Table
 nodegroup	CREATE TABLE `nodegroup` (
@@ -497,7 +497,7 @@ nodegroup	CREATE TABLE `nodegroup` (
   `node_id` int NOT NULL DEFAULT '0',
   `orderby` int DEFAULT NULL,
   PRIMARY KEY (`nodegroup_id`,`rank`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=624
 show create table nodelet;
 Table	Create Table
 nodelet	CREATE TABLE `nodelet` (
@@ -510,7 +510,7 @@ nodelet	CREATE TABLE `nodelet` (
   `updateinterval` int NOT NULL DEFAULT '0',
   `mini_nodelet` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`nodelet_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=495
 show create table nodemethod;
 Table	Create Table
 nodemethod	CREATE TABLE `nodemethod` (
@@ -518,7 +518,7 @@ nodemethod	CREATE TABLE `nodemethod` (
   `supports_nodetype` int NOT NULL DEFAULT '0',
   `code` text NOT NULL,
   PRIMARY KEY (`nodemethod_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table nodetype;
 Table	Create Table
 nodetype	CREATE TABLE `nodetype` (
@@ -540,7 +540,7 @@ nodetype	CREATE TABLE `nodetype` (
   `maxrevisions` int NOT NULL DEFAULT '-1',
   `canworkspace` int NOT NULL DEFAULT '-1',
   PRIMARY KEY (`nodetype_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=561
 show create table project;
 Table	Create Table
 project	CREATE TABLE `project` (
@@ -552,14 +552,14 @@ project	CREATE TABLE `project` (
   `url_faq` varchar(250) NOT NULL DEFAULT '',
   `long_description` text NOT NULL,
   PRIMARY KEY (`project_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table project_document;
 Table	Create Table
 project_document	CREATE TABLE `project_document` (
   `project_document_id` int NOT NULL DEFAULT '0',
   `project_id` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`project_document_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table question;
 Table	Create Table
 question	CREATE TABLE `question` (
@@ -570,14 +570,14 @@ question	CREATE TABLE `question` (
   `orderby` int NOT NULL DEFAULT '0',
   `description` text NOT NULL,
   PRIMARY KEY (`question_id`,`rank`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table redirects;
 Table	Create Table
 redirects	CREATE TABLE `redirects` (
   `redirects_id` int NOT NULL DEFAULT '0',
   `url` text NOT NULL,
   PRIMARY KEY (`redirects_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table releases;
 Table	Create Table
 releases	CREATE TABLE `releases` (
@@ -592,7 +592,7 @@ releases	CREATE TABLE `releases` (
   `created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `url_source_rpm` varchar(250) NOT NULL,
   PRIMARY KEY (`releases_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table revision;
 Table	Create Table
 revision	CREATE TABLE `revision` (
@@ -602,35 +602,35 @@ revision	CREATE TABLE `revision` (
   `xml` text NOT NULL,
   `tstamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`node_id`,`inside_workspace`,`revision_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table setting;
 Table	Create Table
 setting	CREATE TABLE `setting` (
   `setting_id` int NOT NULL AUTO_INCREMENT,
   `vars` text NOT NULL,
   PRIMARY KEY (`setting_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=623
 show create table symlink;
 Table	Create Table
 symlink	CREATE TABLE `symlink` (
   `symlink_id` int NOT NULL DEFAULT '0',
   `symlink_node` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`symlink_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table themesetting;
 Table	Create Table
 themesetting	CREATE TABLE `themesetting` (
   `themesetting_id` int NOT NULL DEFAULT '0',
   `parent_theme` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`themesetting_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table typeversion;
 Table	Create Table
 typeversion	CREATE TABLE `typeversion` (
   `typeversion_id` int NOT NULL DEFAULT '0',
   `version` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`typeversion_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table user;
 Table	Create Table
 user	CREATE TABLE `user` (
@@ -643,14 +643,14 @@ user	CREATE TABLE `user` (
   `karma` int DEFAULT '0',
   `inside_workspace` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=623
 show create table version;
 Table	Create Table
 version	CREATE TABLE `version` (
   `version_id` int NOT NULL DEFAULT '0',
   `version` int NOT NULL DEFAULT '1',
   PRIMARY KEY (`version_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table weblog;
 Table	Create Table
 weblog	CREATE TABLE `weblog` (
@@ -663,13 +663,13 @@ weblog	CREATE TABLE `weblog` (
   `entry_id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`entry_id`),
   KEY `tstamp` (`tstamp`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table workspace;
 Table	Create Table
 workspace	CREATE TABLE `workspace` (
   `workspace_id` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`workspace_id`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 show columns from branch;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 branch_id	INTEGER	NO	0	NO	

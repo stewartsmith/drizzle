@@ -7,7 +7,7 @@ count(*)
 #
 show create table MODULES ;
 Table	Create Table
-MODULES	CREATE TABLE `modules` (
+MODULES	CREATE TABLE `MODULES` (
   `MODULE_NAME` varchar(256) NOT NULL,
   `MODULE_VERSION` varchar(20) NOT NULL,
   `MODULE_AUTHOR` varchar(256) NOT NULL,
@@ -15,12 +15,12 @@ MODULES	CREATE TABLE `modules` (
   `MODULE_LIBRARY` varchar(254) NOT NULL,
   `MODULE_DESCRIPTION` varchar(254) NOT NULL,
   `MODULE_LICENSE` varchar(80) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 show create table PLUGINS ;
 Table	Create Table
-PLUGINS	CREATE TABLE `plugins` (
+PLUGINS	CREATE TABLE `PLUGINS` (
   `PLUGIN_NAME` varchar(256) NOT NULL,
   `PLUGIN_TYPE` varchar(256) NOT NULL,
   `IS_ACTIVE` varchar(5) NOT NULL,
   `MODULE_NAME` varchar(256) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci

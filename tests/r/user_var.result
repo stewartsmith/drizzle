@@ -217,7 +217,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `@first_var` blob
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var= cast(NULL as integer);
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your Drizzle server version for the right syntax to use near 'integer)' at line 1
@@ -227,7 +227,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `@first_var` blob
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var= concat(NULL);
 create table t1 select @first_var;
@@ -235,7 +235,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `@first_var` blob
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var=1;
 set @first_var= cast(NULL as CHAR);
@@ -244,7 +244,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `@first_var` text
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @a=18446744071710965857;
 select @a;

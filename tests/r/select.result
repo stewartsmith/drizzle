@@ -3253,7 +3253,7 @@ t1	CREATE TABLE `t1` (
   `i` decimal(19,0) NOT NULL,
   `c` decimal(19,0) NOT NULL,
   `co` decimal(19,0) NOT NULL
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 select 
 if(1, 1111111111111111111, 1) i,

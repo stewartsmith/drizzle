@@ -1,12 +1,12 @@
 show create table data_dictionary.TABLE_DEFINITION_CACHE;
 Table	Create Table
-TABLE_DEFINITION_CACHE	CREATE TABLE `table_definition_cache` (
+TABLE_DEFINITION_CACHE	CREATE TABLE `TABLE_DEFINITION_CACHE` (
   `TABLE_SCHEMA` varchar(256) NOT NULL,
   `TABLE_NAME` varchar(256) NOT NULL,
   `VERSION` bigint NOT NULL,
   `TABLE_COUNT` bigint NOT NULL,
   `IS_NAME_LOCKED` varchar(5) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 select count(*) FROM data_dictionary.TABLE_DEFINITION_CACHE;
 count(*)
 #

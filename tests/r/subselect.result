@@ -993,7 +993,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL DEFAULT '0',
   `(SELECT 1)` int NOT NULL DEFAULT '0'
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 CREATE TEMPORARY TABLE t1 ENGINE=MyISAM SELECT * FROM (SELECT 1 as a,(SELECT a)) a;
 SHOW CREATE TABLE t1;
@@ -1001,7 +1001,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL DEFAULT '0',
   `(SELECT a)` int NOT NULL DEFAULT '0'
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 CREATE TEMPORARY TABLE t1 ENGINE=MyISAM SELECT * FROM (SELECT 1 as a,(SELECT a+0)) a;
 SHOW CREATE TABLE t1;
@@ -1009,7 +1009,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL DEFAULT '0',
   `(SELECT a+0)` int NOT NULL DEFAULT '0'
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 CREATE TEMPORARY TABLE t1 ENGINE=MyISAM SELECT (SELECT 1 as a UNION SELECT 1+1 limit 1,1) as a;
 select * from t1;
@@ -1019,7 +1019,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` bigint NOT NULL
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a int);
 insert into t1 values (1), (2), (3);
@@ -2967,13 +2967,13 @@ SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
   `sub_a` datetime DEFAULT NULL
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 CREATE TEMPORARY TABLE t3 ENGINE=MyISAM AS (SELECT a FROM t1 WHERE a < '2000-01-01') UNION (SELECT a FROM t1 WHERE a > '2000-01-01');
 SHOW CREATE TABLE t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
   `a` datetime DEFAULT NULL
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 DROP TABLE t1,t2,t3;
 #
 # Bug 24653: sorting by expressions containing subselects

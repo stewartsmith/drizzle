@@ -1,0 +1,22 @@
+CREATE TABLE t1 (a varbinary(4) default '');
+show create table t1;
+drop table t1;
+
+create table t2 (a varbinary(4) default 'foo');
+show create table t2;
+drop table t2;
+
+create table t3 (a varbinary(4) default 0x01020304);
+show create table t3;
+drop table t3;
+
+create table t4 (a varbinary(4) default '\n');
+show create table t4;
+drop table t4;
+
+CREATE TABLE `t4` (
+  `a` varbinary(4) DEFAULT 0x0A
+) ENGINE=InnoDB;
+SHOW CREATE TABLE t4;
+DROP TABLE t4;
+

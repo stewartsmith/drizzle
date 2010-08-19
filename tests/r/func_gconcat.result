@@ -459,7 +459,7 @@ show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` varchar(100) DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select collation(group_concat(a,b)) from t1;
 collation(group_concat(a,b))
 utf8_general_ci

@@ -1,7 +1,7 @@
 use data_dictionary;
 show create table PROCESSLIST ;
 Table	Create Table
-PROCESSLIST	CREATE TABLE `processlist` (
+PROCESSLIST	CREATE TABLE `PROCESSLIST` (
   `ID` bigint NOT NULL,
   `USER` varchar(16) NOT NULL,
   `HOST` varchar(1025) NOT NULL,
@@ -10,7 +10,7 @@ PROCESSLIST	CREATE TABLE `processlist` (
   `TIME` bigint NOT NULL,
   `STATE` varchar(256) NOT NULL,
   `INFO` varchar(100) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 SELECT ID FROM processlist;
 ID
 #

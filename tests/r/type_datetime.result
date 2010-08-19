@@ -181,7 +181,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `da` date DEFAULT '1962-03-03',
   `dt` datetime DEFAULT '1962-03-03 00:00:00'
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
@@ -451,7 +451,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `da` date DEFAULT '1962-03-03',
   `dt` datetime DEFAULT '1962-03-03 00:00:00'
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 values ('2007-03-23 13:49:38','2007-03-23 13:49:38');

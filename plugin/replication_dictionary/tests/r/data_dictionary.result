@@ -4,7 +4,7 @@ count(*)
 #
 show create table replication_streams;
 Table	Create Table
-replication_streams	CREATE TABLE `replication_streams` (
+replication_streams	CREATE TABLE `REPLICATION_STREAMS` (
   `REPLICATOR` varchar(256) NOT NULL,
   `APPLIER` varchar(256) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci

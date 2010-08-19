@@ -38,7 +38,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `uuid()` varchar(36) DEFAULT NULL,
   `length(uuid())` int DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 End of 5.0 tests
 select connection_id() > 0;
