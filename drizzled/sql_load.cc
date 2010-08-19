@@ -388,8 +388,8 @@ int mysql_load(Session *session,file_exchange *ex,TableList *table_list,
     error= -1;				// Error on read
     goto err;
   }
-  snprintf(name, sizeof(name), ER(ER_LOAD_INFO), (uint32_t) info.records, (uint32_t) info.deleted,
-	  (uint32_t) (info.records - info.copied), (uint32_t) session->cuted_fields);
+  snprintf(name, sizeof(name), ER(ER_LOAD_INFO), info.records, info.deleted,
+	   (info.records - info.copied), session->cuted_fields);
 
   if (session->transaction.stmt.hasModifiedNonTransData())
     session->transaction.all.markModifiedNonTransData();
