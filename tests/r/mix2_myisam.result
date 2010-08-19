@@ -633,7 +633,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` varchar(20) DEFAULT NULL,
   KEY `a` (`a`(5))
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 (a int not null auto_increment, primary key(a)) engine=MyISAM;
 insert into t1 values (NULL),(NULL),(NULL);
@@ -903,7 +903,7 @@ show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `a` int DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1,t2;
 flush status;
 show status like "binlog_cache_use";
@@ -1039,7 +1039,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` text
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 create TEMPORARY table t2 like t1;
 show create table t2;
 Table	Create Table
@@ -1047,7 +1047,7 @@ t2	CREATE TEMPORARY TABLE `t2` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` text
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 create TEMPORARY table t3 select * from t1;
 show create table t3;
 Table	Create Table
@@ -1055,7 +1055,7 @@ t3	CREATE TEMPORARY TABLE `t3` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` text
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 alter table t1 modify c varchar(10);
 show create table t1;
 Table	Create Table
@@ -1063,7 +1063,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` text
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 alter table t1 modify v char(10);
 show create table t1;
 Table	Create Table
@@ -1071,7 +1071,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` text
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 alter table t1 modify t varchar(10);
 show create table t1;
 Table	Create Table
@@ -1079,7 +1079,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` varchar(10) DEFAULT NULL
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
@@ -1095,7 +1095,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   KEY `v` (`v`),
   KEY `c` (`c`),
   KEY `t` (`t`(10))
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
 270
@@ -1314,7 +1314,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`)
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 select count(*) from t1 where v='a';
 count(*)
 10
@@ -1394,7 +1394,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`(30))
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 select count(*) from t1 where v='a';
 count(*)
 10
@@ -1476,7 +1476,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`(333))
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 select v,count(*) from t1 group by v limit 10;
 v	count(*)
 a	1
@@ -1554,14 +1554,14 @@ t1	CREATE TEMPORARY TABLE `t1` (
   KEY `v` (`v`(5)),
   KEY `c` (`c`(5)),
   KEY `t` (`t`(5))
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 create TEMPORARY table t1 (v char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 create TEMPORARY table t1 (v varchar(10), c char(10));
 show create table t1;
@@ -1569,7 +1569,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
 concat('*',v,'*',c,'*')

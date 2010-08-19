@@ -120,13 +120,13 @@ show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 alter table t1 rename t2;
 show create table t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
   `a` int NOT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t2;
 create table t1 (
 name char(20) default 'O''Brien' comment 'O''Brien as default',
@@ -141,7 +141,7 @@ t1	CREATE TABLE `t1` (
   `c` int NOT NULL COMMENT 'int column',
   `c-b` int DEFAULT NULL COMMENT 'name with a minus',
   `space 2` int DEFAULT NULL COMMENT 'name with a space'
-) ENGINE=DEFAULT COMMENT='it''s a table'
+) ENGINE=DEFAULT COMMENT='it''s a table' COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 name	VARCHAR	YES	O'Brien	NO	
@@ -155,7 +155,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
   UNIQUE KEY `aa` (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a int not null, primary key (a));
 show create table t1;
@@ -163,7 +163,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 (a int not null, b VARCHAR(10), INDEX (b) ) COMMENT="test" ENGINE=MYISAM ROW_FORMAT=fixed;
 show create table t1;
@@ -172,7 +172,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL,
   `b` varchar(10) DEFAULT NULL,
   KEY `b` (`b`)
-) ENGINE=MyISAM ROW_FORMAT='fixed' COMMENT='test'
+) ENGINE=MyISAM ROW_FORMAT='fixed' COMMENT='test' COLLATE = utf8_general_ci
 alter table t1 ROW_FORMAT=dynamic;
 show create table t1;
 Table	Create Table
@@ -180,7 +180,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL,
   `b` varchar(10) DEFAULT NULL,
   KEY `b` (`b`)
-) ENGINE=MyISAM ROW_FORMAT='dynamic' COMMENT='test'
+) ENGINE=MyISAM ROW_FORMAT='dynamic' COMMENT='test' COLLATE = utf8_general_ci
 ALTER TABLE t1 COMMENT="", ROW_FORMAT='default';
 show create table t1;
 Table	Create Table
@@ -188,7 +188,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `a` int NOT NULL,
   `b` varchar(10) DEFAULT NULL,
   KEY `b` (`b`)
-) ENGINE=MyISAM ROW_FORMAT='default'
+) ENGINE=MyISAM ROW_FORMAT='default' COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a decimal(9,2), b decimal (9,0), e double(9,2), f double(5,0), h float(3,2), i float(3,0));
 show columns from t1;
@@ -241,7 +241,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `type_set` enum('red','green','blue') DEFAULT NULL,
   `type_blob` blob,
   KEY `type_int` (`type_int`)
-) ENGINE=MyISAM ROW_FORMAT='fixed' COMMENT='test'
+) ENGINE=MyISAM ROW_FORMAT='fixed' COMMENT='test' COLLATE = utf8_general_ci
 insert into t1 (type_timestamp) values ("2003-02-07 10:00:01");
 select * from t1;
 type_int	type_bigint	type_decimal	type_numeric	empty_char	type_char	type_varchar	type_timestamp	type_date	type_datetime	type_enum	type_set	type_blob
@@ -273,28 +273,28 @@ SHOW CREATE TABLE ```ab``cd```;
 Table	Create Table
 `ab`cd`	CREATE TABLE ```ab``cd``` (
   `i` int DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE ```ab``cd```;
 CREATE TABLE ```ab````cd``` (i INT);
 SHOW CREATE TABLE ```ab````cd```;
 Table	Create Table
 `ab``cd`	CREATE TABLE ```ab````cd``` (
   `i` int DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE ```ab````cd```;
 CREATE TABLE ```a` (i INT);
 SHOW CREATE TABLE ```a`;
 Table	Create Table
 `a	CREATE TABLE ```a` (
   `i` int DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE ```a`;
 CREATE TABLE `a.1` (i INT);
 SHOW CREATE TABLE `a.1`;
 Table	Create Table
 a.1	CREATE TABLE `a.1` (
   `i` int DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE `a.1`;
 select @@max_heap_table_size;
 @@max_heap_table_size
@@ -376,7 +376,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`)
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY USING HASH (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
@@ -384,7 +384,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`) USING HASH
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
@@ -392,7 +392,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`) USING BTREE
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY (i)) ENGINE=MyISAM;
 SHOW CREATE TABLE t1;
@@ -400,7 +400,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`)
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MyISAM;
 SHOW CREATE TABLE t1;
@@ -408,7 +408,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`) USING BTREE
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY (i)) ENGINE=MyISAM;
 SHOW CREATE TABLE t1;
@@ -416,14 +416,14 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`)
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 ALTER TABLE t1 ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`)
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TEMPORARY TABLE t1 (i int, KEY USING BTREE (i)) ENGINE=MyISAM;
 SHOW CREATE TABLE t1;
@@ -431,14 +431,14 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`) USING BTREE
-) ENGINE=MyISAM
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 ALTER TABLE t1 ENGINE=MEMORY;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `i` int DEFAULT NULL,
   KEY `i` (`i`) USING BTREE
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 DROP TABLE t1;
 CREATE TABLE t1(
 field1 text NOT NULL,
@@ -467,7 +467,7 @@ t1	CREATE TABLE `t1` (
   `c2` int NOT NULL,
   PRIMARY KEY (`c1`) USING HASH,
   KEY `c2` (`c2`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE t1;
 SHOW TABLES FROM non_existing_database;
 ERROR 42000: Unknown database 'non_existing_database'

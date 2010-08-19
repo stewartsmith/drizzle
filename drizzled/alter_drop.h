@@ -34,7 +34,8 @@ public:
   enum drop_type
   {
     KEY,
-    COLUMN
+    COLUMN,
+    FOREIGN_KEY
   };
   const char *name;
   enum drop_type type;

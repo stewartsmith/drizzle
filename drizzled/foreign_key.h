@@ -36,6 +36,17 @@ class Table_ident;
 
 namespace memory { class Root; }
 
+void add_foreign_key_to_table_message(
+    message::Table *table_message,
+    const char* fkey_name,
+    List<Key_part_spec> &cols,
+    Table_ident *table,
+    List<Key_part_spec> &ref_cols,
+    message::Table::ForeignKeyConstraint::ForeignKeyOption delete_opt_arg,
+    message::Table::ForeignKeyConstraint::ForeignKeyOption update_opt_arg,
+    message::Table::ForeignKeyConstraint::ForeignKeyMatchOption match_opt_arg);
+
+
 class Foreign_key: public Key 
 {
 public:

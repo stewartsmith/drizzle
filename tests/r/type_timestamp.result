@@ -147,7 +147,7 @@ t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT '2003-01-01 00:00:00',
   `t2` datetime DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	2003-01-01 00:00:00	NO	
@@ -171,7 +171,7 @@ t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `t2` datetime DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	
@@ -197,7 +197,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT '2003-01-01 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
   `t2` datetime DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	2003-01-01 00:00:00	NO	CURRENT_TIMESTAMP
@@ -222,7 +222,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `t2` datetime DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
@@ -248,7 +248,7 @@ t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT NULL,
   `t2` datetime DEFAULT NULL,
   `t3` timestamp NULL DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES		YES	
@@ -274,7 +274,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `t2` datetime DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
@@ -329,7 +329,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT NULL,
   `b` timestamp NULL DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (NULL, NULL);
 SET TIMESTAMP=1000000017;
 insert into t1 values ();
@@ -344,7 +344,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `b` timestamp NULL DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (NULL, NULL);
 SET TIMESTAMP=1000000018;
 insert into t1 values ();
@@ -359,7 +359,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` timestamp NULL DEFAULT NULL,
   `b` timestamp NULL DEFAULT '2003-01-01 00:00:00'
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (NULL, NULL);
 insert into t1 values (DEFAULT, DEFAULT);
 select * from t1;

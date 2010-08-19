@@ -16,7 +16,7 @@ message Table {
   }
 
   message TableOptions {
-    optional uint64 auto_increment = 1;
+    optional bool has_user_set_auto_increment_value = 1;
     optional string collation = 2;
     optional uint32 collation_id = 3;
     optional string data_file_name = 5;

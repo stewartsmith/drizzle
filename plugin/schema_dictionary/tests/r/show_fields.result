@@ -7,7 +7,7 @@ Table	Create Table
 a	CREATE TABLE `a` (
   `a` bigint NOT NULL AUTO_INCREMENT,
   UNIQUE KEY `a` (`a`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 create table b ( b int);
 show fields from b;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -16,7 +16,7 @@ show create table b;
 Table	Create Table
 b	CREATE TABLE `b` (
   `b` int DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 create table c ( b int NOT NULL);
 show fields from c;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -25,7 +25,7 @@ show create table c;
 Table	Create Table
 c	CREATE TABLE `c` (
   `b` int NOT NULL
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 create table d ( b int NOT NULL DEFAULT 10);
 show fields from d;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -34,7 +34,7 @@ show create table d;
 Table	Create Table
 d	CREATE TABLE `d` (
   `b` int NOT NULL DEFAULT '10'
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 create table e ( b int DEFAULT NULL);
 show fields from e;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -43,5 +43,5 @@ show create table e;
 Table	Create Table
 e	CREATE TABLE `e` (
   `b` int DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop tables a,b,c,d,e;

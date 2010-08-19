@@ -357,6 +357,11 @@ static int fill_table_proto(message::Table &table_proto,
     table_options->set_collation(create_info->default_table_charset->name);
   }
 
+  if (create_info->used_fields & HA_CREATE_USED_AUTO)
+    table_options->set_has_user_set_auto_increment_value(true);
+  else
+    table_options->set_has_user_set_auto_increment_value(false);
+
   if (create_info->auto_increment_value)
     table_options->set_auto_increment_value(create_info->auto_increment_value);
 
