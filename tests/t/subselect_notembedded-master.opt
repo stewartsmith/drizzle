@@ -1,1 +1,1 @@
---thread_stack=1048576
+--thread-stack=1048576
