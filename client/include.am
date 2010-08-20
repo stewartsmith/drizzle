@@ -13,8 +13,7 @@ noinst_LTLIBRARIES+= \
 		     client/libgetpassword.la
 
 noinst_PROGRAMS+= \
-		  client/drizzletest \
-		  extra/my_print_defaults
+		  client/drizzletest
 
 bin_PROGRAMS= \
 	      client/drizzle \

@@ -134,11 +134,6 @@ clean-local:
 	find . -name '*.gcno' | xargs rm -f 
 	-rm -rf docs/api docs/dev
 
-distclean-local:
-	rm -r -f unittests/.libs
-	rm -r -f extra/.libs
-	rm -r -f examples/.libs
-
 include config/lint-source.am
 
 include drizzled/message/include.am
