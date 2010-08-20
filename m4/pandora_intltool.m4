@@ -52,7 +52,7 @@ if test -n "$1"; then
     ])
 fi
 AC_CHECK_HEADERS([intltool.h])
-AS_IF([test "x${ac_cv_header_intltool_h}" = "xfalse"],[
+AS_IF([test "x${ac_cv_header_intltool_h}" = "xfalse" -o "x${ac_cv_header_intltool_h}" = "xno"],[
   pandora_have_intltool=no
 ])
 
