@@ -4,7 +4,7 @@ INNODB_CONFIGURATION	CREATE TABLE `innodb_configuration` (
   `NAME` varchar(256) NOT NULL,
   `TYPE` varchar(256) NOT NULL,
   `VALUE` varchar(64) DEFAULT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 SELECT COUNT(*) FROM DATA_DICTIONARY.INNODB_CONFIGURATION;
 COUNT(*)
 36
