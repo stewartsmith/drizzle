@@ -149,7 +149,7 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	2003-01-01 00:00:00	NO	
@@ -176,7 +176,7 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	
@@ -205,7 +205,7 @@ t1	CREATE TABLE `t1` (
   `t2` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	2003-01-01 00:00:00	NO	CURRENT_TIMESTAMP
@@ -233,7 +233,7 @@ t1	CREATE TABLE `t1` (
   `t2` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
@@ -262,7 +262,7 @@ t1	CREATE TABLE `t1` (
   `t3` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES		YES	
@@ -291,7 +291,7 @@ t1	CREATE TABLE `t1` (
   `t2` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
 t1	TIMESTAMP	YES	CURRENT_TIMESTAMP	YES	CURRENT_TIMESTAMP
@@ -349,7 +349,7 @@ t1	CREATE TABLE `t1` (
   `b` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 (a,b) values (NULL, NULL);
 SET TIMESTAMP=1000000017;
 insert into t1 values ();
@@ -366,7 +366,7 @@ t1	CREATE TABLE `t1` (
   `b` timestamp NULL DEFAULT NULL,
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 (a,b) values (NULL, NULL);
 SET TIMESTAMP=1000000018;
 insert into t1 values  ();
@@ -383,7 +383,7 @@ t1	CREATE TABLE `t1` (
   `b` timestamp NULL DEFAULT '2003-01-01 00:00:00',
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 (a,b) values (NULL, NULL);
 insert into t1 (a,b) values (DEFAULT, DEFAULT);
 select * from t1;
