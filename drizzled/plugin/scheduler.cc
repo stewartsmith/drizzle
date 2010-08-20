@@ -109,9 +109,4 @@ plugin::Scheduler *plugin::Scheduler::getScheduler()
   return scheduler;
 }
 
-size_t plugin::Scheduler::getThreadStackSize() const
-{
-  return my_thread_stack_size;
-}
-
 } /* namespace drizzled */
