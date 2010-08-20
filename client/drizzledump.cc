@@ -2628,13 +2628,23 @@ try
 
   po::notify(vm);  
   
-  if ( ! vm.count("database-used") && ! vm.count("Table-used") && ! opt_alldbs && path.empty())
+  if ((not vm.count("database-used") && not vm.count("Table-used") 
+    && not opt_alldbs && path.empty())  || (vm.count("help")))
   {
+    printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), internal::my_progname,
+      VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
+    puts("");
+    puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
+    puts(_("Dumps definitions and data from a Drizzle database server"));
     printf(_("Usage: %s [OPTIONS] database [tables]\n"), internal::my_progname);
     printf(_("OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"),
           internal::my_progname);
     printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), internal::my_progname);
-    exit(1);
+    cout << long_options;
+    if (vm.count("help"))
+      exit(0);
+    else
+      exit(1);
   }
 
   if (vm.count("port"))
@@ -2707,21 +2717,6 @@ try
   { 
     opt_xml= 1;
     extended_insert= opt_drop= opt_disable_keys= opt_autocommit= opt_create_db= 0;
-  }
-
-  if (vm.count("help"))
-  {
-    printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), internal::my_progname,
-      VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
-    puts("");
-    puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
-    puts(_("Dumps definitions and data from a Drizzle database server"));
-    cout << long_options;
-    printf(_("Usage: %s [OPTIONS] database [tables]\n"), internal::my_progname);
-    printf(_("OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"),
-          internal::my_progname);
-    printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), internal::my_progname);
-    exit(1);
   }
   
   if (vm.count("skip-opt"))
