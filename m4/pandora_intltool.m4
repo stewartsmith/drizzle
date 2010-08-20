@@ -51,6 +51,10 @@ if test -n "$1"; then
       AC_MSG_WARN([Your intltool is too old.  You need intltool $1 or later.])
     ])
 fi
+AC_CHECK_HEADERS([intltool.h])
+AS_IF([test "x${ac_cv_header_intltool_h}" = "xfalse"],[
+  pandora_have_intltool=no
+])
 
 AC_PATH_PROG(INTLTOOL_UPDATE, [intltool-update])
 AC_PATH_PROG(INTLTOOL_MERGE, [intltool-merge])
@@ -181,23 +185,24 @@ dnl of config.status.
 AC_CONFIG_COMMANDS_PRE([
   AC_CONFIG_COMMANDS([$1/stamp-it], [
     if [ ! grep "^# INTLTOOL_MAKEFILE$" "$1/Makefile.in" > /dev/null ]; then
-       AC_MSG_ERROR([$1/Makefile.in.in was not created by intltoolize.])
+       AC_MSG_WARN([$1/Makefile.in.in was not created by intltoolize.])
+    else
+	    rm -f "$1/stamp-it" "$1/stamp-it.tmp" "$1/POTFILES" "$1/Makefile.tmp"
+	    >"$1/stamp-it.tmp"
+	    [sed '/^#/d
+		 s/^[[].*] *//
+		 /^[ 	]*$/d
+		'"s|^|	$ac_top_srcdir/|" \
+	      "$srcdir/$1/POTFILES.in" | sed '$!s/$/ \\/' >"$1/POTFILES"
+	    ]
+	    [sed '/^POTFILES =/,/[^\\]$/ {
+			/^POTFILES =/!d
+			r $1/POTFILES
+		  }
+		 ' "$1/Makefile.in" >"$1/Makefile"]
+	    rm -f "$1/Makefile.tmp"
+	    mv "$1/stamp-it.tmp" "$1/stamp-it"
     fi
-    rm -f "$1/stamp-it" "$1/stamp-it.tmp" "$1/POTFILES" "$1/Makefile.tmp"
-    >"$1/stamp-it.tmp"
-    [sed '/^#/d
-	 s/^[[].*] *//
-	 /^[ 	]*$/d
-	'"s|^|	$ac_top_srcdir/|" \
-      "$srcdir/$1/POTFILES.in" | sed '$!s/$/ \\/' >"$1/POTFILES"
-    ]
-    [sed '/^POTFILES =/,/[^\\]$/ {
-		/^POTFILES =/!d
-		r $1/POTFILES
-	  }
-	 ' "$1/Makefile.in" >"$1/Makefile"]
-    rm -f "$1/Makefile.tmp"
-    mv "$1/stamp-it.tmp" "$1/stamp-it"
   ])
 ])dnl
 ])
