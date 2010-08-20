@@ -33,8 +33,8 @@ using namespace std;
 
 namespace drizzled
 {
-
-vector<plugin::QueryCache *> all_query_cache;
+typedef vector<plugin::QueryCache *> QueryCaches;
+QueryCaches all_query_cache;
 
 /* Namespaces are here to prevent global symbol clashes with these classes */
 
@@ -56,7 +56,7 @@ public:
 bool plugin::QueryCache::isCached(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
+  QueryCaches::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
             IsCachedIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
@@ -84,7 +84,7 @@ public:
 bool plugin::QueryCache::sendCachedResultset(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
+  QueryCaches::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
             SendCachedResultsetIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
@@ -110,7 +110,7 @@ public:
 bool plugin::QueryCache::prepareResultset(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
+  QueryCaches::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
             PrepareResultsetIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
@@ -138,7 +138,7 @@ public:
 bool plugin::QueryCache::setResultset(Session *session)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
+  QueryCaches::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
             SetResultsetIterate(session));
   /* If iter is == end() here, that means that all of the plugins returned
@@ -166,7 +166,7 @@ public:
 bool plugin::QueryCache::insertRecord(Session *session, List<Item> &items)
 {
   /* Use find_if instead of foreach so that we can collect return codes */
-  vector<plugin::QueryCache *>::iterator iter=
+  QueryCaches::iterator iter=
     find_if(all_query_cache.begin(), all_query_cache.end(),
             InsertRecordIterate(session, items));
   /* If iter is == end() here, that means that all of the plugins returned
