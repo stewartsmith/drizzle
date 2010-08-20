@@ -229,7 +229,7 @@ bool volatile shutdown_in_progress;
 char *opt_scheduler_default;
 char *opt_scheduler= NULL;
 
-size_t my_thread_stack_size= 65536;
+size_t my_thread_stack_size= 0;
 
 /*
   Legacy global plugin::StorageEngine. These will be removed (please do not add more).

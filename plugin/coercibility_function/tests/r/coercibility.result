@@ -1,0 +1,75 @@
+select coercibility('hello' collate utf8_roman_ci);
+coercibility('hello' collate utf8_roman_ci)
+0
+set @a='hello';
+select coercibility(@a);
+coercibility(@a)
+2
+select coercibility(user());
+coercibility(user())
+3
+select coercibility('hello');
+coercibility('hello')
+4
+select coercibility(NULL);
+coercibility(NULL)
+5
+create table t1 (a char(10));
+insert into t1 values ('a'),('b'),('c');
+select coercibility(max(a)) from t1;
+coercibility(max(a))
+2
+drop table t1;
+explain extended select coercibility(conv(130,16,10));
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
+Warnings:
+Note	1003	select coercibility(conv(130,16,10)) AS `coercibility(conv(130,16,10))`
+set @a='test';
+select collation(@a),coercibility(@a);
+collation(@a)	coercibility(@a)
+utf8_general_ci	2
+select @a='TEST';
+@a='TEST'
+1
+select @a='TEST' collate utf8_bin;
+@a='TEST' collate utf8_bin
+0
+set @a='test' collate utf8_general_ci;
+select collation(@a),coercibility(@a);
+collation(@a)	coercibility(@a)
+utf8_general_ci	2
+select @a='TEST';
+@a='TEST'
+1
+select @a='TEST' collate utf8_bin;
+@a='TEST' collate utf8_bin
+0
+select collation(@a:='test');
+collation(@a:='test')
+utf8_general_ci
+select coercibility(@a:='test');
+coercibility(@a:='test')
+2
+select collation(@a:='test' collate utf8_bin);
+collation(@a:='test' collate utf8_bin)
+utf8_bin
+select coercibility(@a:='test' collate utf8_bin);
+coercibility(@a:='test' collate utf8_bin)
+2
+select (@a:='test' collate utf8_bin) = 'TEST';
+(@a:='test' collate utf8_bin) = 'TEST'
+0
+select collation(@a),coercibility(@a);
+collation(@a)	coercibility(@a)
+utf8_bin	2
+select (@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci;
+(@a:='test' collate utf8_bin) = 'TEST' collate utf8_general_ci
+1
+select @v, coercibility(@v);
+@v	coercibility(@v)
+NULL	2
+set @v1=null, @v2=1, @v3=1.1, @v4=now();
+select coercibility(@v1),coercibility(@v2),coercibility(@v3),coercibility(@v4);
+coercibility(@v1)	coercibility(@v2)	coercibility(@v3)	coercibility(@v4)
+2	2	2	2
