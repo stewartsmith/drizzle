@@ -20,7 +20,6 @@
 
 #include "config.h"
 
-#include "drizzled/my_hash.h"
 #include "drizzled/cached_directory.h"
 
 #include <drizzled/definitions.h>

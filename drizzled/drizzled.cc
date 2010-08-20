@@ -939,7 +939,7 @@ int init_server_components(module::Registry &plugins)
     global_system_variables.storage_engine= engine;
   }
 
-  if (plugin::XaResourceManager::recoverAllXids(0))
+  if (plugin::XaResourceManager::recoverAllXids())
   {
     unireg_abort(1);
   }
