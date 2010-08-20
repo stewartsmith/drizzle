@@ -20,12 +20,12 @@ Table	Create Table
 t3	CREATE TABLE `t3` (
   `a` int DEFAULT NULL,
   `b` int DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show create TABLE t4;
 Table	Create Table
 t4	CREATE TABLE `t4` (
   `c` varchar(16383) NOT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1,t2,t3,t4;
 CREATE TABLE t1 (a blob default "hello");
 ERROR 42000: BLOB/TEXT column 'a' can't have a default value
@@ -344,7 +344,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` text,
   KEY `a` (`a`(191)) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (
 t1_id bigint NOT NULL auto_increment,
@@ -592,7 +592,7 @@ t1	CREATE TABLE `t1` (
   `e` int DEFAULT NULL,
   PRIMARY KEY (`a`,`b`,`c`(255),`d`) USING BTREE,
   KEY `a` (`a`,`b`,`d`,`e`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 CREATE table t1 (a blob);
 insert into t1 values ('b'),('a\0'),('a'),('a '),('aa'),(NULL);
@@ -652,7 +652,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` text
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (default);
 select * from t1;
 a

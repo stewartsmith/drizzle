@@ -4,7 +4,7 @@ innodb_table_definitions	CREATE TABLE `innodb_table_definitions` (
   `table_name` varbinary(192) DEFAULT NULL,
   `message` blob,
   PRIMARY KEY (`table_name`) USING BTREE
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 select * from data_dictionary.innodb_table_definitions;
 table_name	message
 use data_dictionary;
