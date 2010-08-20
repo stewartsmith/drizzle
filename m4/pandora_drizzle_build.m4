@@ -36,7 +36,7 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   AC_CHECK_HEADERS(sys/types.h sys/fpu.h fpu_control.h ieeefp.h)
   AC_CHECK_HEADERS(select.h sys/select.h)
   AC_CHECK_HEADERS(utime.h sys/utime.h )
-  AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h)
+  AC_CHECK_HEADERS(synch.h sys/mman.h)
   AC_CHECK_HEADERS(sched.h)
   AC_CHECK_HEADERS(sys/prctl.h)
   AC_CHECK_HEADERS(execinfo.h)
@@ -72,40 +72,4 @@ AC_DEFUN([PANDORA_DRIZZLE_BUILD],[
   PANDORA_REQUIRE_BOOST_THREAD
 
 
-  AH_TOP([
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
-
-#include "config/top.h"
-])
-  mkdir -p config
-  cat > config/top.h.stamp <<EOF_CONFIG_TOP
-
-#if defined(i386) && !defined(__i386__)
-#define __i386__
-#endif
-
-#if defined(_FILE_OFFSET_BITS)
-# undef _FILE_OFFSET_BITS
-#endif
-EOF_CONFIG_TOP
-  diff config/top.h.stamp config/top.h >/dev/null 2>&1 || mv config/top.h.stamp config/top.h
-  rm -f config/top.h.stamp
-
-
-  AH_BOTTOM([
-#if defined(__cplusplus)
-# include CSTDINT_H
-# include CINTTYPES_H
-#else
-# include <stdint.h>
-# include <inttypes.h>
-#endif
-
-#if !defined(HAVE_ULONG) && !defined(__USE_MISC)
-typedef unsigned long int ulong;
-#endif
-
-#endif /* __CONFIG_H__ */
-  ])
 ])

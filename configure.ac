@@ -24,7 +24,30 @@ AC_INIT([drizzle],[7],[http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR([config])
 
-PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42, skip-visibility, version-from-vc)
+PANDORA_CANONICAL_TARGET(less-warnings, warnings-always-on, require-cxx, force-gcc42, version-from-vc, skip-visibility)
+
+LIBDRIZZLE_LIBRARY_VERSION=0:8:0
+#                          | | |
+#                   +------+ | +---+
+#                   |        |     |
+#                current:revision:age
+#                   |        |     |
+#                   |        |     +- increment if interfaces have been
+added
+#                   |        |        set to zero if interfaces have been
+#                   |        |        removed or changed
+#                   |        +- increment if source code has changed
+#                   |           set to zero if current is incremented
+#                   +- increment if interfaces have been added, removed or
+#                      changed
+AC_SUBST(LIBDRIZZLE_LIBRARY_VERSION)
+
+# libdrizzle versioning when linked with GNU ld.
+AS_IF([test "$lt_cv_prog_gnu_ld" = "yes"],[
+  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
+  ])
+AC_SUBST(LD_VERSION_SCRIPT)
+
 
 dnl Set the default datadir location to /usr/local/var/drizzle. If a
 dnl localstatedir is explicitly given, just use that.
@@ -53,7 +76,6 @@ PANDORA_REQUIRE_PROTOC
 AC_LANG_PUSH(C++)
 PANDORA_REQUIRE_PTHREAD
 PANDORA_REQUIRE_LIBUUID
-PANDORA_REQUIRE_LIBDRIZZLE
 PANDORA_REQUIRE_LIBZ
 PANDORA_REQUIRE_LIBPCRE
 PANDORA_REQUIRE_LIBREADLINE
@@ -67,6 +89,10 @@ AC_DEFINE([BUILDING_DRIZZLED],[1],
           [Define indicating we are building and not consuming drizzle.])
 
 PANDORA_HAVE_LIBGTEST
+PANDORA_HAVE_LIBSQLITE3
+
+AC_CHECK_FUNC(inet_ntoa, [], [AC_CHECK_LIB(nsl, inet_ntoa)])
+
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -114,9 +140,9 @@ dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile dnl
- po/Makefile.in dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
+ support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate
  support-files/smf/install.sh dnl
  support-files/drizzle.spec dnl

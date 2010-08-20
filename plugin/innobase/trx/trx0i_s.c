@@ -28,6 +28,8 @@ table cache" for later retrieval.
 Created July 17, 2007 Vasil Dimov
 *******************************************************/
 
+#include "config.h"
+
 #if !defined(BUILD_DRIZZLE)
 # include <mysql/plugin.h>
 #endif

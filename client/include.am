@@ -4,7 +4,7 @@
 
 CLIENT_LDADD= \
 	      drizzled/internal/libinternal.la \
-	      $(LIBDRIZZLE) \
+	      libdrizzle/libdrizzle.la \
 	      $(LIBINTL) \
 	      $(LIBZ) \
 	      client/libgetpassword.la
@@ -40,7 +40,7 @@ noinst_HEADERS+= \
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
-				$(LIBDRIZZLE) \
+				libdrizzle/libdrizzle.la \
 				$(LIBINTL) \
 				$(LIBZ) \
 				client/libgetpassword.la
