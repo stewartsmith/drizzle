@@ -49,10 +49,6 @@ libdrizzle_libdrizzle_la_SOURCES= \
 	libdrizzle/state.c \
 	libdrizzle/sha1.c
 
-if BUILD_WIN32
-libdrizzle_libdrizzle_la_SOURCES+= win32/poll.c
-endif
-
 examples_server_CFLAGS= $(AM_CFLAGS)
 examples_server_SOURCES= examples/server.c
 examples_server_LDADD= libdrizzle/libdrizzle.la
