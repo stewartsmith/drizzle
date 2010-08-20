@@ -41,6 +41,9 @@ AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
 ])
 
+# libexecinfo provides backtrace_symbols on FreeBSD
+AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
+
 PANDORA_RUN_CPPLINT
 
 PANDORA_REQUIRE_LIBPROTOBUF
@@ -111,7 +114,6 @@ dnl AM_CONDITIONAL([BUILD_GCC_PCH],[test "$GCC" = "yes"])
 AM_CONDITIONAL([BUILD_GCC_PCH],[test "no" = "yes"])
 
 AC_CONFIG_FILES(Makefile dnl
- po/Makefile.in dnl
  tests/Makefile dnl
  drizzled/plugin/version.h dnl
  support-files/drizzle.server support-files/drizzle-log-rotate

@@ -1,6 +1,6 @@
 show create table data_dictionary.TABLE_CACHE;
 Table	Create Table
-TABLE_CACHE	CREATE TABLE `table_cache` (
+TABLE_CACHE	CREATE TABLE `TABLE_CACHE` (
   `SESSION_ID` bigint NOT NULL,
   `TABLE_SCHEMA` varchar(256) NOT NULL,
   `TABLE_NAME` varchar(256) NOT NULL,
@@ -10,7 +10,7 @@ TABLE_CACHE	CREATE TABLE `table_cache` (
   `AVG_ROW_LENGTH` bigint NOT NULL,
   `TABLE_SIZE` bigint NOT NULL,
   `AUTO_INCREMENT` bigint NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 select count(*) FROM data_dictionary.TABLE_CACHE;
 count(*)
 #

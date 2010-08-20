@@ -402,7 +402,6 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/sql_string.h
 %{_includedir}/drizzled/sql_table.h
 %{_includedir}/drizzled/sql_union.h
-%{_includedir}/drizzled/stacktrace.h
 %{_includedir}/drizzled/statement.h
 %{_includedir}/drizzled/statement/alter_schema.h
 %{_includedir}/drizzled/statement/alter_table.h

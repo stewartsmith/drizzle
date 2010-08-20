@@ -130,7 +130,7 @@ create table t2 select * from t1;
 update t2 set string="changed" where auto=16;
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-auto	INTEGER	NO	0	NO	
+auto	INTEGER	NO		NO	
 string	VARCHAR	YES	hello	NO	
 tiny	INTEGER	NO	0	NO	
 short	INTEGER	NO	1	NO	

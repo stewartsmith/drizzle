@@ -30,8 +30,10 @@ noinst_PROGRAMS =
 
 VERSION=$(PANDORA_RELEASE_VERSION)
 
-SUBDIRS = po \
-	  .
+SUBDIRS = .
+if BUILD_PO
+SUBDIRS += po
+endif
 
 DIST_SUBDIRS = ${SUBDIRS} tests
 

@@ -118,7 +118,7 @@ t1	CREATE TABLE `t1` (
   `c10` double NOT NULL,
   `c11` double NOT NULL,
   `c12` varbinary(5) NOT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE t1;
 SELECT CASE 
 WHEN 1 
@@ -163,7 +163,7 @@ t1	CREATE TABLE `t1` (
   `COALESCE(1,'1')` varbinary(4) NOT NULL,
   `COALESCE(1.1,'1')` varbinary(4) NOT NULL,
   `COALESCE('a' COLLATE utf8_bin,'b')` varchar(1) COLLATE utf8_bin DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLE t1;
 SELECT 'case+union+test'
 UNION 

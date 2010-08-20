@@ -44,7 +44,6 @@ drizzled/sql_base.cc
 drizzled/sql_select.cc
 drizzled/sql_table.cc
 drizzled/sql_yacc.cc
-drizzled/stacktrace.cc
 drizzled/statement/alter_table.cc
 drizzled/table.cc
 drizzled/table_share.cc

@@ -9920,7 +9920,7 @@ t2	CREATE TABLE `t2` (
   `fld3` varchar(30) NOT NULL DEFAULT '',
   `fld4` varchar(35) NOT NULL DEFAULT '',
   `fld5` varchar(35) NOT NULL DEFAULT ''
-) ENGINE=ARCHIVE
+) ENGINE=ARCHIVE COLLATE = utf8_general_ci
 SELECT * FROM t2 WHERE auto != 100000;
 auto	fld1	companynr	fld3	fld4	fld5
 1	1	0	Omaha	teethe	neat
@@ -11441,7 +11441,7 @@ t6	CREATE TABLE `t6` (
   `b` blob,
   `c` int DEFAULT NULL,
   KEY `a` (`a`)
-) ENGINE=ARCHIVE
+) ENGINE=ARCHIVE COLLATE = utf8_general_ci
 DROP TABLE t1, t2, t4, t5, t6;
 create table t1(a blob) engine=archive;
 insert into t1 set a='';

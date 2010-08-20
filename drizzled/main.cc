@@ -46,7 +46,6 @@
 #include "drizzled/session.h"
 #include "drizzled/internal/my_sys.h"
 #include "drizzled/unireg.h"
-#include "drizzled/stacktrace.h"
 #include "drizzled/drizzled.h"
 #include "drizzled/errmsg_print.h"
 #include "drizzled/data_home.h"
@@ -131,7 +130,6 @@ static void init_signals(void)
     sigemptyset(&sa.sa_mask);
     sigprocmask(SIG_SETMASK,&sa.sa_mask,NULL);
 
-    init_stacktrace();
     sa.sa_handler= drizzled_handle_segfault;
     sigaction(SIGSEGV, &sa, NULL);
     sigaction(SIGABRT, &sa, NULL);
@@ -227,11 +225,7 @@ int main(int argc, char **argv)
   /* nothing should come before this line ^^^ */
 
   /* Set signal used to kill Drizzle */
-#if defined(SIGUSR2)
-  thr_kill_signal= internal::thd_lib_detected == THD_LIB_LT ? SIGINT : SIGUSR2;
-#else
   thr_kill_signal= SIGINT;
-#endif
 
   google::protobuf::SetLogHandler(&GoogleProtoErrorThrower);
 

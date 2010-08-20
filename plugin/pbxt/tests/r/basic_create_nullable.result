@@ -8,7 +8,7 @@ t1	CREATE TABLE `t1` (
   `d` int NOT NULL,
   `pk` int NOT NULL,
   PRIMARY KEY (`pk`)
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 insert into t1 values (0,0, 0, 0,0);
 insert into t1 values (NULL, NULL, NULL, NULL, 1);
 ERROR 23000: Column 'b' cannot be null

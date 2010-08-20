@@ -354,14 +354,14 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `d` decimal(5,0) DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (d decimal);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `d` decimal(10,0) DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (d decimal(66,0));
 ERROR 42000: Too big precision 66 specified for column 'd'. Maximum is 65.
@@ -530,7 +530,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` decimal(10,0) DEFAULT NULL,
   `b` int DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select round(a,b) as c from t1 order by c;
 c
 1234567890

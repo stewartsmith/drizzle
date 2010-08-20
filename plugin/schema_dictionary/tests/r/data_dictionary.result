@@ -510,7 +510,7 @@ count(*)
 0
 show create table COLUMNS ;
 Table	Create Table
-COLUMNS	CREATE TABLE `columns` (
+COLUMNS	CREATE TABLE `COLUMNS` (
   `TABLE_SCHEMA` varchar(256) NOT NULL,
   `TABLE_NAME` varchar(256) NOT NULL,
   `COLUMN_NAME` varchar(256) NOT NULL,
@@ -533,10 +533,10 @@ COLUMNS	CREATE TABLE `columns` (
   `NUMERIC_SCALE` bigint DEFAULT NULL,
   `COLLATION_NAME` varchar(256) NOT NULL,
   `COLUMN_COMMENT` varchar(1024) DEFAULT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 show create table INDEXES ;
 Table	Create Table
-INDEXES	CREATE TABLE `indexes` (
+INDEXES	CREATE TABLE `INDEXES` (
   `TABLE_SCHEMA` varchar(256) NOT NULL,
   `TABLE_NAME` varchar(256) NOT NULL,
   `INDEX_NAME` varchar(256) NOT NULL,
@@ -546,10 +546,10 @@ INDEXES	CREATE TABLE `indexes` (
   `KEY_LENGTH` bigint NOT NULL,
   `INDEX_TYPE` varchar(256) NOT NULL,
   `INDEX_COMMENT` varchar(1024) DEFAULT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 show create table INDEX_PARTS ;
 Table	Create Table
-INDEX_PARTS	CREATE TABLE `index_parts` (
+INDEX_PARTS	CREATE TABLE `INDEX_PARTS` (
   `TABLE_SCHEMA` varchar(256) NOT NULL,
   `TABLE_NAME` varchar(256) NOT NULL,
   `INDEX_NAME` varchar(256) NOT NULL,
@@ -561,10 +561,10 @@ INDEX_PARTS	CREATE TABLE `index_parts` (
   `IS_USED_IN_PRIMARY` varchar(5) NOT NULL,
   `IS_UNIQUE` varchar(5) NOT NULL,
   `IS_NULLABLE` varchar(5) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 show create table REFERENTIAL_CONSTRAINTS ;
 Table	Create Table
-REFERENTIAL_CONSTRAINTS	CREATE TABLE `referential_constraints` (
+REFERENTIAL_CONSTRAINTS	CREATE TABLE `REFERENTIAL_CONSTRAINTS` (
   `CONSTRAINT_SCHEMA` varchar(256) NOT NULL,
   `CONSTRAINT_NAME` varchar(256) NOT NULL,
   `UNIQUE_CONSTRAINT_SCHEMA` varchar(256) NOT NULL,
@@ -574,18 +574,18 @@ REFERENTIAL_CONSTRAINTS	CREATE TABLE `referential_constraints` (
   `DELETE_RULE` varchar(256) NOT NULL,
   `TABLE_NAME` varchar(256) NOT NULL,
   `REFERENCED_TABLE_NAME` varchar(256) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 show create table SCHEMAS ;
 Table	Create Table
-SCHEMAS	CREATE TABLE `schemas` (
+SCHEMAS	CREATE TABLE `SCHEMAS` (
   `SCHEMA_NAME` varchar(256) NOT NULL,
   `DEFAULT_COLLATION_NAME` varchar(256) NOT NULL,
   `SCHEMA_CREATION_TIME` varchar(256) NOT NULL,
   `SCHEMA_UPDATE_TIME` varchar(256) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 show create table TABLES ;
 Table	Create Table
-TABLES	CREATE TABLE `tables` (
+TABLES	CREATE TABLE `TABLES` (
   `TABLE_SCHEMA` varchar(256) NOT NULL,
   `TABLE_NAME` varchar(256) NOT NULL,
   `TABLE_TYPE` varchar(256) NOT NULL,
@@ -595,16 +595,16 @@ TABLES	CREATE TABLE `tables` (
   `TABLE_CREATION_TIME` varchar(256) NOT NULL,
   `TABLE_UPDATE_TIME` varchar(256) NOT NULL,
   `TABLE_COMMENT` varchar(2048) DEFAULT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 show create table TABLE_CONSTRAINTS ;
 Table	Create Table
-TABLE_CONSTRAINTS	CREATE TABLE `table_constraints` (
+TABLE_CONSTRAINTS	CREATE TABLE `TABLE_CONSTRAINTS` (
   `CONSTRAINT_SCHEMA` varchar(256) NOT NULL,
   `CONSTRAINT_NAME` varchar(256) NOT NULL,
   `TABLE_SCHEMA` varchar(256) NOT NULL,
   `TABLE_NAME` varchar(256) NOT NULL,
   `CONSTRAINT_TYPE` varchar(256) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci
 CREATE SCHEMA A;
 use A;
 create table A (a int);
