@@ -16,6 +16,8 @@
 #ifndef __DRIZZLE_STRUCTS_H
 #define __DRIZZLE_STRUCTS_H
 
+#include <netdb.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

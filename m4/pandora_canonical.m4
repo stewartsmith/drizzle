@@ -260,7 +260,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#ifdef _SYS_FEATURE_TESTS_H
+/* _SYS_FEATURE_TESTS_H is Solaris, _FEATURES_H is GCC */
+#if defined( _SYS_FEATURE_TESTS_H) || defined(_FEATURES_H)
 #error "You should include config.h as your first include file"
 #endif
 
