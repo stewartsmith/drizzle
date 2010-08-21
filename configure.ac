@@ -32,8 +32,7 @@ LIBDRIZZLE_LIBRARY_VERSION=0:8:0
 #                   |        |     |
 #                current:revision:age
 #                   |        |     |
-#                   |        |     +- increment if interfaces have been
-added
+#                   |        |     +- increment if interfaces have been added
 #                   |        |        set to zero if interfaces have been
 #                   |        |        removed or changed
 #                   |        +- increment if source code has changed
