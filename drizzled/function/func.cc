@@ -63,6 +63,7 @@ Item_func::Item_func(List<Item> &list) :
   _session(*current_session),
   allowed_arg_cols(1)
 {
+  collation.set(DERIVATION_SYSCONST);
   set_arguments(list);
 }
 
@@ -86,6 +87,7 @@ Item_func::Item_func(Session *session, Item_func *item) :
     }
     memcpy(args, item->args, sizeof(Item*)*arg_count);
   }
+  collation.set(DERIVATION_SYSCONST);
 }
 
 

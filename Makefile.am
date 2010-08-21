@@ -41,7 +41,6 @@ BUILT_SOURCES=
 EXTRA_DIST= \
 	    .quickly \
 	    DRIZZLE.FAQ \
-	    Doxyfile \
 	    EXCEPTIONS-CLIENT \
 	    config/autorun.sh \
 	    config/config.rpath \
@@ -77,7 +76,9 @@ EXTRA_DIST+=	${man_MANS}
 
 
 doxygen:
-	doxygen Doxyfile
+	${DOXYGEN} docs/Doxyfile.api
+	${DOXYGEN} docs/Doxyfile.dev
+	${DOXYGEN} docs/Doxyfile.drizzled
 
 indent:
 	for f in `find ${top_srcdir} -type f | grep -v innobase |\
@@ -131,9 +132,7 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
-
-distclean-local:
-	rm -r -f unittests/.libs
+	-rm -rf docs/api docs/dev
 
 include config/lint-source.am
 
@@ -147,6 +146,8 @@ include extra/include.am
 include support-files/include.am
 include tests/include.am
 include unittests/include.am
+include libdrizzle/include.am
+include win32/include.am
 
 TESTS += ${check_PROGRAMS}
 

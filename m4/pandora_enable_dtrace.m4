@@ -15,7 +15,9 @@ AC_DEFUN([PANDORA_ENABLE_DTRACE],[
 
   AS_IF([test "$ac_cv_enable_dtrace" = "yes"],[
     AC_CHECK_PROGS([DTRACE], [dtrace])
-    AS_IF([test "x$ac_cv_prog_DTRACE" = "xdtrace"],[
+    AC_CHECK_HEADERS(sys/sdt.h)
+
+    AS_IF([test "x$ac_cv_prog_DTRACE" = "xdtrace" -a "x${ac_cv_header_sys_sdt_h}" = "xyes"],[
 
       AC_CACHE_CHECK([if dtrace works],[ac_cv_dtrace_works],[
         cat >conftest.d <<_ACEOF
