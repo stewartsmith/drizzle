@@ -556,6 +556,7 @@ INSERT INTO t1 VALUES
  'd8c4177d09f8b11f5.52725521');
 
 --replace_column 3 # 8 # 9 #
+--sorted_result
 EXPLAIN
 SELECT s.oxid FROM t1 v, t1 s 
   WHERE s.oxrootid = 'd8c4177d09f8b11f5.52725521' AND

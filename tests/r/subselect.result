@@ -4526,8 +4526,8 @@ ERROR 42000: You have an error in your SQL syntax; check the manual that corresp
 SELECT * FROM t1 JOIN  (t1 t1a)  ON 1;
 a	a
 1	1
-2	1
 1	2
+2	1
 2	2
 SELECT * FROM t1 JOIN ((t1 t1a)) ON 1;
 a	a
