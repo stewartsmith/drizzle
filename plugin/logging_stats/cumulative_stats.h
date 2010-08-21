@@ -73,6 +73,11 @@ public:
     return cumulative_stats_by_user_max; 
   }
 
+  uint64_t getCumulativeSizeBytes()
+  {
+    return cumulative_size_bytes;
+  }
+
   int32_t getCumulativeStatsLastValidIndex();
 
   bool hasOpenUserSlots()
@@ -88,6 +93,7 @@ private:
   std::vector<ScoreboardSlot* > *cumulative_stats_by_user_vector;
   GlobalStats *global_stats; 
   StatusVars *global_status_vars;
+  uint64_t cumulative_size_bytes;
   int32_t cumulative_stats_by_user_max;
   drizzled::atomic<int32_t> last_valid_index;
   bool isOpenUserSlots;
