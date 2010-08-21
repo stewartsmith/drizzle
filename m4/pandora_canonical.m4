@@ -204,12 +204,12 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_HAVE_GCC_ATOMICS
 
+  save_CFLAGS="${CFLAGS}"
+  CFLAGS="${CFLAGS} -Werror"
+  PANDORA_CHECK_VISIBILITY
+  CFLAGS="${save_CFLAGS}"
   m4_if(PCT_USE_VISIBILITY,[yes],[
-    dnl We need to inject error into the cflags to test if visibility works or not
-    save_CFLAGS="${CFLAGS}"
-    CFLAGS="${CFLAGS} -Werror"
-    PANDORA_VISIBILITY
-    CFLAGS="${save_CFLAGS}"
+    PANDORA_ENABLE_VISIBILITY
   ])
 
   PANDORA_HEADER_ASSERT
