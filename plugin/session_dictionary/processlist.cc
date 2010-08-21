@@ -44,8 +44,8 @@ ProcesslistTool::ProcesslistTool() :
   add_field("DB");
   add_field("COMMAND", 16);
   add_field("TIME", plugin::TableFunction::NUMBER, 0, false);
-  add_field("STATE");
-  add_field("INFO", PROCESS_LIST_WIDTH);
+  add_field("STATE", plugin::TableFunction::STRING, 50, true);
+  add_field("INFO", plugin::TableFunction::STRING, PROCESS_LIST_WIDTH, true);
 }
 
 ProcesslistTool::Generator::Generator(Field **arg) :
