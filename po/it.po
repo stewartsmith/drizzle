@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-07-20 10:59+0000\n"
-"Last-Translator: MeltingShell <Unknown>\n"
+"PO-Revision-Date: 2010-08-20 13:17+0000\n"
+"Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2010-07-21 03:41+0000\n"
+"X-Launchpad-Export-Date: 2010-08-21 03:54+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -709,13 +709,13 @@ msgid "Invalid mode to --compatible: %s\n"
 msgstr "Modalità non valida per --compatible: %s\n"
 
 msgid "Error: Invalid Value for opt_max_connect_retries"
-msgstr ""
+msgstr "Errore: Valore non valido per opt_max_connect_retries"
 
 msgid "Error: Invalid Value for opt_tail_lines"
-msgstr ""
+msgstr "Errore: Valore non valido per opt_tail_lines"
 
 msgid "Error: Invalid Value for opt_sleep"
-msgstr ""
+msgstr "Errore: Valore non valido per opt_sleep"
 
 #, c-format
 msgid "Could not open '%s' for reading: errno = %d"
@@ -2268,6 +2268,9 @@ msgid ""
 "Uncompressed data size too large; the maximum size is %d (based on "
 "max_allowed_packet). The length of uncompressed data may also be corrupted."
 msgstr ""
+"Dimensione dei dati non compressi troppo grande; la dimensione massima è %d "
+"(basata su max_allowed_packet). La lunghezza dei dati non compressi può "
+"anche essere corrotta."
 
 msgid "ZLIB: Not enough memory"
 msgstr "ZLIB: Memoria insufficiente"
@@ -2415,6 +2418,8 @@ msgid ""
 "Drizzle is started in --skip-name-resolve mode; you must restart it without "
 "this switch for this grant to work"
 msgstr ""
+"Drizzle è avviato nella modalità --skip-name-resolve; devi riavviarlo senza "
+"questo scambio per la sua garanzia di lavoro"
 
 #, c-format
 msgid "Unknown table engine '%s'"
@@ -2928,6 +2933,8 @@ msgid ""
 "%s: ready for connections.\n"
 "Version: '%s' %s\n"
 msgstr ""
+"%s: pronto per le connessioni.\n"
+"Versione: '%s' %s\n"
 
 msgid "Can't load value from file with fixed size rows to variable"
 msgstr ""
@@ -4237,7 +4244,7 @@ msgstr "Ricevuto un formato di stringa non valido '%s' per un valore di ora."
 
 #, c-format
 msgid "Received an invalid value '%s' for a UNIX timestamp."
-msgstr ""
+msgstr "Ricevuto un valore non valido '%s' per un timestamp di tipo UNIX."
 
 #, c-format
 msgid "Received an invalid datetime value '%s'."
@@ -4265,38 +4272,40 @@ msgid "Received an invalid enum value '%s'."
 msgstr "Ricevuto un valore di numerazione non valido '%s'."
 
 msgid "Tables which are replicated require a primary key."
-msgstr ""
+msgstr "Le tabelle replicate richiedono una chiave primaria."
 
 #, c-format
 msgid "Corrupt or invalid table definition: %s"
-msgstr ""
+msgstr "Definizione di tabella corrotta o non valida: %s"
 
 #, c-format
 msgid "Corrupt or invalid schema definition for %s : %s"
-msgstr ""
+msgstr "Definizione di schema per %s corrotta o non valida: %s"
 
 #, c-format
 msgid "Schema does not exist: %s"
-msgstr ""
+msgstr "Lo schema non esiste: %s"
 
 #, c-format
 msgid "Error altering schema: %s"
-msgstr ""
+msgstr "Errore durante l'alterazione dello schema: %s"
 
 #, c-format
 msgid "Error droppping Schema : %s"
 msgstr ""
 
 msgid "Temporary table too large, rerun with SQL_BIG_RESULT."
-msgstr ""
+msgstr "Tabella temporanea troppo grande, riesegui con SQL_BIG_RESULT."
 
 #, c-format
 msgid "Unknown table engine option key/pair %s = %s."
 msgstr ""
+"Chiave/coppia delle opzioni del motore della tabella %s sconosciuta = %s."
 
 #, c-format
 msgid "Unknown schema engine option key/pair %s = %s."
 msgstr ""
+"Chiave/coppia delle opzioni del motore dello schema %s sconosciuta = %s."
 
 msgid "Implicit cartesian join attempted."
 msgstr ""
@@ -4370,7 +4379,7 @@ msgstr "File '%s' (filenum: %d) non è stato chiuso"
 
 #, c-format
 msgid "error: could not open directory: %s\n"
-msgstr ""
+msgstr "errore: non è stato possibile aprire la directory: %s\n"
 
 msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
@@ -4381,35 +4390,39 @@ msgstr ""
 
 #, c-format
 msgid "Data directory %s does not exist\n"
-msgstr ""
+msgstr "La directory di dati %s non esiste\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG [--checksum] \n"
-msgstr ""
+msgstr "Utilizzo: %s TRANSACTION_LOG [--checksum] \n"
 
 #, c-format
 msgid "Cannot open file: %s\n"
-msgstr ""
+msgstr "Impossibile aprire il file: %s\n"
 
 #, c-format
 msgid "Found a non-transaction message in log.  Currently, not supported.\n"
 msgstr ""
+"Trovato un messaggio non di transazione nel registro. Al momento non è "
+"supportato.\n"
 
 #, c-format
 msgid "Attempted to read record bigger than INT_MAX\n"
-msgstr ""
+msgstr "Provato a leggere un record più grande di INT_MAX\n"
 
 #, c-format
 msgid "Memory allocation failure trying to allocate %<PRIu64> bytes.\n"
 msgstr ""
+"Fallimento dell'allocazione di memoria durante l'allocazione di %<PRIu64> "
+"byte.\n"
 
 #, c-format
 msgid "Could not read transaction message.\n"
-msgstr ""
+msgstr "Non è stato possibile leggere il messaggio di transazione.\n"
 
 #, c-format
 msgid "GPB ERROR: %s.\n"
-msgstr ""
+msgstr "ERRORE GPB: %s.\n"
 
 #, c-format
 msgid ""
@@ -4417,6 +4430,9 @@ msgid ""
 "\n"
 "%s\n"
 msgstr ""
+"HEXDUMP:\n"
+"\n"
+"%s\n"
 
 #, c-format
 msgid "Unable to parse command. Got error: %s.\n"
@@ -4424,29 +4440,33 @@ msgstr ""
 
 #, c-format
 msgid "Checksum failed. Wanted %<PRIu32> got %<PRIu32>\n"
-msgstr ""
+msgstr "Checksum fallito. Richiesto %<PRIu32> ottenuto %<PRIu32>\n"
 
 #, c-format
 msgid "Usage: %s TRANSACTION_LOG\n"
-msgstr ""
+msgstr "Utilizzo: %s TRANSACTION_LOG\n"
 
 #, c-format
 msgid ""
 "Plugin '%s' contains the name '%s' in its manifest, which has already been "
 "registered.\n"
 msgstr ""
+"Il plugin '%s' contiene il nome '%s' nel suo manifesto, che è già stato "
+"registrato.\n"
 
 #, c-format
 msgid "Plugin '%s' init function returned error.\n"
 msgstr ""
+"La funzione di inizializzazione del plugin '%s' ha riportato un errore.\n"
 
 #, c-format
 msgid "Couldn't load plugin library named '%s'.\n"
 msgstr ""
+"Non è stato possibile caricare una libreria di plugin chiamata '%s'.\n"
 
 #, c-format
 msgid "Couldn't load plugin named '%s'.\n"
-msgstr ""
+msgstr "Non è stato possibile caricare un plugin chiamato '%s'.\n"
 
 msgid "Out of memory."
 msgstr "Memoria esaurita."
@@ -4490,10 +4510,11 @@ msgstr "Il plugin '%s' ha variabili di sistema conflittuali"
 #, c-format
 msgid "Loading plugin %s failed: a plugin by that name already exists.\n"
 msgstr ""
+"Caricamento del plugin %s fallito: esiste già un plugin con quel nome.\n"
 
 #, c-format
 msgid "Fatal error: Failed initializing %s plugin.\n"
-msgstr ""
+msgstr "Errore fatale: Fallita l'inizializzazione del plugin %s.\n"
 
 msgid "Warning: "
 msgstr "Attenzione: "
@@ -4559,72 +4580,72 @@ msgstr "il plugin errmsg '%s' errmsg() ha fallito"
 
 #, c-format
 msgid "A function named %s already exists!\n"
-msgstr ""
+msgstr "Esiste già una funzione chiamata %s!\n"
 
 msgid "Could not add Function!\n"
-msgstr ""
+msgstr "Non è stato possibile aggiungere la funzione!\n"
 
 msgid "No sockets could be bound for listening"
 msgstr ""
 
 #, c-format
 msgid "pipe() failed with errno %d"
-msgstr ""
+msgstr "pipe() ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "poll() failed with errno %d"
-msgstr ""
+msgstr "poll() ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "accept() failed with errno %d"
-msgstr ""
+msgstr "accept() ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "getaddrinfo() failed with error %s"
-msgstr ""
+msgstr "getaddrinfo() ha fallito con l'errore %s"
 
 #, c-format
 msgid "setsockopt(IPV6_V6ONLY) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(IPV6_V6ONLY) ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "fcntl(FD_CLOEXEC) failed with errno %d"
-msgstr ""
+msgstr "fcntl(FD_CLOEXEC) ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "setsockopt(SO_REUSEADDR) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_REUSEADDR) ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "setsockopt(SO_KEEPALIVE) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_KEEPALIVE) ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "setsockopt(SO_LINGER) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(SO_LINGER) ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "setsockopt(TCP_NODELAY) failed with errno %d"
-msgstr ""
+msgstr "setsockopt(TCP_NODELAY) ha fallito con il numero di errore %d"
 
 #, c-format
 msgid "Retrying bind() on %u\n"
-msgstr ""
+msgstr "Riprovando bind() su %u\n"
 
 #, c-format
 msgid "bind() failed with errno: %d\n"
-msgstr ""
+msgstr "bind() ha fallito con il numero di errore: %d\n"
 
 msgid "Do you already have another drizzled running?\n"
-msgstr ""
+msgstr "Hai già un altro drizzled in esecuzione?\n"
 
 #, c-format
 msgid "listen() failed with errno %d\n"
-msgstr ""
+msgstr "listen() ha fallito con il numero di errore %d\n"
 
 #, c-format
 msgid "Listening on %s:%s\n"
-msgstr ""
+msgstr "Ascoltando su %s:%s\n"
 
 #, c-format
 msgid "logging '%s' pre() failed"
@@ -4636,7 +4657,7 @@ msgstr "accesso '%s' a post() fallito"
 
 #, c-format
 msgid "logging '%s' postEnd() failed"
-msgstr ""
+msgstr "registranzione di postEnd() '%s' fallita"
 
 #, c-format
 msgid "qcache plugin '%s' try_fetch_and_send() failed"
