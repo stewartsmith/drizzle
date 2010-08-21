@@ -219,6 +219,8 @@ static StatusTool *session_status_tool= NULL;
 
 static CumulativeUserStatsTool *cumulative_user_stats_tool= NULL;
 
+static ScoreboardStatsTool *scoreboard_stats_tool= NULL;
+
 static void enable(Session *,
                    drizzle_sys_var *,
                    void *var_ptr,
@@ -290,6 +292,13 @@ static bool initTable()
     return true;
   }
 
+  scoreboard_stats_tool= new(nothrow)ScoreboardStatsTool(logging_stats);
+  
+  if (! scoreboard_stats_tool)
+  {
+    return true;
+  }
+
   return false;
 }
 
@@ -339,6 +348,7 @@ static int init(drizzled::module::Context &context)
   context.add(session_status_tool);
   context.add(global_status_tool);
   context.add(cumulative_user_stats_tool);
+  context.add(scoreboard_stats_tool);
 
   if (sysvar_logging_stats_enabled)
   {

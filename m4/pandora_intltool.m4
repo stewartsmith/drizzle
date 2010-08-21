@@ -51,8 +51,8 @@ if test -n "$1"; then
       AC_MSG_WARN([Your intltool is too old.  You need intltool $1 or later.])
     ])
 fi
-AC_CHECK_HEADERS([intltool.h])
-AS_IF([test "x${ac_cv_header_intltool_h}" = "xfalse" -o "x${ac_cv_header_intltool_h}" = "xno"],[
+AC_CHECK_HEADERS([libintl.h])
+AS_IF([test "x${ac_cv_header_libintl_h}" = "xfalse" -o "x${ac_cv_header_libintl_h}" = "xno"],[
   pandora_have_intltool=no
 ])
 
