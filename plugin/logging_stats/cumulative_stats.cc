@@ -31,6 +31,7 @@
 #include "cumulative_stats.h"
 
 using namespace std;
+using namespace drizzled;
 
 CumulativeStats::CumulativeStats(uint32_t in_cumulative_stats_by_user_max) 
     :
@@ -50,6 +51,12 @@ CumulativeStats::CumulativeStats(uint32_t in_cumulative_stats_by_user_max)
   isOpenUserSlots= true;
   global_stats= new GlobalStats();
   global_status_vars= new StatusVars();
+
+  /* calculate the approximate memory allocation for the cumulative statistics */
+  size_t statusVarsSize= sizeof(StatusVars) + sizeof(system_status_var);
+  size_t userCommandsSize= sizeof(UserCommands) + sizeof(uint64_t) * SQLCOM_END;
+
+  cumulative_size_bytes= (statusVarsSize + userCommandsSize) * cumulative_stats_by_user_max; 
 }
 
 CumulativeStats::~CumulativeStats()

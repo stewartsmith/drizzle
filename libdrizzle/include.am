@@ -27,6 +27,7 @@ noinst_PROGRAMS+= \
 
 libdrizzle_libdrizzle_la_CFLAGS= \
 	${AM_CFLAGS} \
+        ${CFLAG_VISIBILITY} \
 	-DBUILDING_LIBDRIZZLE
 
 libdrizzle_libdrizzle_la_LDFLAGS= \
