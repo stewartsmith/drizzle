@@ -70,6 +70,7 @@ public:
     allowed_arg_cols(1), arg_count(0)
   {
     with_sum_func= 0;
+    collation.set(DERIVATION_SYSCONST);
   }
 
   Item_func(Item *a):
@@ -79,6 +80,7 @@ public:
     args= tmp_arg;
     args[0]= a;
     with_sum_func= a->with_sum_func;
+    collation.set(DERIVATION_SYSCONST);
   }
   
   Item_func(Item *a,Item *b):
@@ -88,6 +90,7 @@ public:
     args= tmp_arg;
     args[0]= a; args[1]= b;
     with_sum_func= a->with_sum_func || b->with_sum_func;
+    collation.set(DERIVATION_SYSCONST);
   }
   
   Item_func(Item *a,Item *b,Item *c):
@@ -101,6 +104,7 @@ public:
       args[0]= a; args[1]= b; args[2]= c;
       with_sum_func= a->with_sum_func || b->with_sum_func || c->with_sum_func;
     }
+    collation.set(DERIVATION_SYSCONST);
   }
   
   Item_func(Item *a,Item *b,Item *c,Item *d):
@@ -115,6 +119,7 @@ public:
       with_sum_func= a->with_sum_func || b->with_sum_func ||
         c->with_sum_func || d->with_sum_func;
     }
+    collation.set(DERIVATION_SYSCONST);
   }
   
   Item_func(Item *a,Item *b,Item *c,Item *d,Item* e):
@@ -128,6 +133,7 @@ public:
       with_sum_func= a->with_sum_func || b->with_sum_func ||
         c->with_sum_func || d->with_sum_func || e->with_sum_func ;
     }
+    collation.set(DERIVATION_SYSCONST);
   }
   
   Item_func(List<Item> &list);
