@@ -42,6 +42,7 @@ static pthread_mutex_t blackhole_mutex;
 
 
 static const char *ha_blackhole_exts[] = {
+  BLACKHOLE_EXT,
   NULL
 };
 
