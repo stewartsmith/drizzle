@@ -647,6 +647,9 @@ bool Session::executeStatement()
   if (client->readCommand(&l_packet, &packet_length) == false)
     return false;
 
+  if (killed == KILL_CONNECTION)
+    return false;
+
   if (packet_length == 0)
     return true;
 
