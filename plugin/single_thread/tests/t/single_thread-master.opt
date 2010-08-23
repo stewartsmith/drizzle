@@ -1,1 +1,1 @@
---plugin_add=single_thread --scheduler=single_thread
+--plugin-add=single_thread --scheduler=single_thread

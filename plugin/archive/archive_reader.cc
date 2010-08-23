@@ -34,7 +34,6 @@ namespace po= boost::program_options;
 #include <fcntl.h>
 #include "drizzled/charset_info.h"
 #include "drizzled/internal/m_string.h"
-#include "drizzled/option.h"
 
 #define SHOW_VERSION "0.1"
 

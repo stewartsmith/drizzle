@@ -1,1 +1,1 @@
---plugin_add=embedded_innodb --plugin_remove=innobase --innodb.print-verbose-log=true
+--plugin-add=embedded_innodb --plugin-remove=innobase --innodb.print-verbose-log=true
