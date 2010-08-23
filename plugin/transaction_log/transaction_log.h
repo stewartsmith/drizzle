@@ -61,12 +61,12 @@ public:
     ONLINE,
     WRITING
   };
-  static const uint32_t SYNC_METHOD_OS= 0; ///< Rely on operating system to sync log file
-  static const uint32_t SYNC_METHOD_EVERY_WRITE= 1; //< Sync on every write to the log file
-  static const uint32_t SYNC_METHOD_EVERY_SECOND= 2; ///< Sync no more than once a second
+  static const uint32_t FLUSH_FREQUENCY_OS= 0; ///< Rely on operating system to sync log file
+  static const uint32_t FLUSH_FREQUENCY_EVERY_WRITE= 1; //< Sync on every write to the log file
+  static const uint32_t FLUSH_FREQUENCY_EVERY_SECOND= 2; ///< Sync no more than once a second
 public:
   TransactionLog(const std::string in_log_file_path,
-                 uint32_t in_sync_method,
+                 uint32_t in_flush_frequency,
                  bool in_do_checksum);
 
   /** Destructor */
@@ -189,7 +189,7 @@ private:
   void clearError();
   /**
    * Helper method which synchronizes/flushes the transaction log file
-   * according to the transaction_log_sync_method system variable
+   * according to the transaction_log_flush_frequency system variable
    *
    * @retval
    *   0 == Success
@@ -205,8 +205,8 @@ private:
   drizzled::atomic<off_t> log_offset; ///< Offset in log file where log will write next command
   bool has_error; ///< Is the log in error?
   std::string error_message; ///< Current error message
-  uint32_t sync_method; ///< Determines behaviour of syncing log file
-  time_t last_sync_time; ///< Last time the log file was synced (only set in SYNC_METHOD_EVERY_SECOND)
+  uint32_t flush_frequency; ///< Determines behaviour of syncing log file
+  time_t last_sync_time; ///< Last time the log file was synced (only set in FLUSH_FREQUENCY_EVERY_SECOND)
   bool do_checksum; ///< Do a CRC32 checksum when writing Transaction message to log?
 };
 
