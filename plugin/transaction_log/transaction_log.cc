@@ -96,13 +96,13 @@ using namespace google;
 TransactionLog *transaction_log= NULL; /* The singleton transaction log */
 
 TransactionLog::TransactionLog(const string in_log_file_path,
-                               uint32_t in_sync_method,
+                               uint32_t in_flush_frequency,
                                bool in_do_checksum) : 
     state(OFFLINE),
     log_file_path(in_log_file_path),
     has_error(false),
     error_message(),
-    sync_method(in_sync_method),
+    flush_frequency(in_flush_frequency),
     do_checksum(in_do_checksum)
 {
   /* Setup our log file and determine the next write offset... */
@@ -241,11 +241,11 @@ off_t TransactionLog::writeEntry(const uint8_t *data, size_t data_length)
 
 int TransactionLog::syncLogFile()
 {
-  switch (sync_method)
+  switch (flush_frequency)
   {
-  case SYNC_METHOD_EVERY_WRITE:
+  case FLUSH_FREQUENCY_EVERY_WRITE:
     return internal::my_sync(log_file, 0);
-  case SYNC_METHOD_EVERY_SECOND:
+  case FLUSH_FREQUENCY_EVERY_SECOND:
     {
       time_t now_time= time(NULL);
       if (last_sync_time <= (now_time - 1))
@@ -255,7 +255,7 @@ int TransactionLog::syncLogFile()
       }
       return 0;
     }
-  case SYNC_METHOD_OS:
+  case FLUSH_FREQUENCY_OS:
   default:
     return 0;
   }
