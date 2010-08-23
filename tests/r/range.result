@@ -694,8 +694,8 @@ WHERE s.oxrootid = 'd8c4177d09f8b11f5.52725521' AND
 v.oxrootid ='d8c4177d09f8b11f5.52725521' AND
 s.oxleft > v.oxleft AND s.oxleft < v.oxright;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	#	ALL	OXLEFT,OXRIGHT,OXROOTID	NULL	NULL	#	#	Using where
 1	SIMPLE	#	ALL	OXLEFT	NULL	NULL	#	#	Range checked for each record (index map: 0x4)
+1	SIMPLE	#	ALL	OXLEFT,OXRIGHT,OXROOTID	NULL	NULL	#	#	Using where
 SELECT s.oxid FROM t1 v, t1 s 
 WHERE s.oxrootid = 'd8c4177d09f8b11f5.52725521' AND
 v.oxrootid ='d8c4177d09f8b11f5.52725521' AND
