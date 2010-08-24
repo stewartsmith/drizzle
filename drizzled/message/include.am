@@ -48,12 +48,14 @@ nodist_drizzled_message_libdrizzledmessage_la_SOURCES = \
 							drizzled/message/engine.pb.cc \
 							drizzled/message/transaction.pb.cc \
 							drizzled/message/schema.pb.cc \
+                                                        drizzled/message/resultset.pb.cc \
 							drizzled/message/table.pb.cc
 
 nobase_nodist_include_HEADERS+= \
 				drizzled/message/engine.pb.h \
 				drizzled/message/transaction.pb.h \
 				drizzled/message/schema.pb.h \
+                                drizzled/message/resultset.pb.h \
 				drizzled/message/table.pb.h 
 
 noinst_HEADERS+= \
@@ -93,12 +95,14 @@ EXTRA_DIST += \
 		${MESSAGE_DIR}/engine.proto \
 		${MESSAGE_DIR}/schema.proto \
 		${MESSAGE_DIR}/table.proto \
+                ${MESSAGE_DIR}/resultset.proto \
 		${MESSAGE_DIR}/transaction.proto
 
 BUILT_SOURCES += \
 		${MESSAGE_DIR}/engine.pb.h \
 		${MESSAGE_DIR}/schema.pb.h \
 		${MESSAGE_DIR}/table.pb.h \
+                ${MESSAGE_DIR}/resultset.pb.h \
 		${MESSAGE_DIR}/transaction.pb.h
 
 CLEANFILES += \
@@ -108,6 +112,8 @@ CLEANFILES += \
 	    ${MESSAGE_DIR}/schema.pb.cc \
 	    ${MESSAGE_DIR}/table.pb.h \
 	    ${MESSAGE_DIR}/table.pb.cc \
+            ${MESSAGE_DIR}/resultset.pb.h \
+            ${MESSAGE_DIR}/resultset.pb.cc \
 	    ${MESSAGE_DIR}/transaction.pb.h \
 	    ${MESSAGE_DIR}/transaction.pb.cc
 
