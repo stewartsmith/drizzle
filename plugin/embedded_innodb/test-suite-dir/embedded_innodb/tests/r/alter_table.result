@@ -176,7 +176,7 @@ alter table t1 rename t2;
 alter table t2 rename t1, add c char(10) comment "no comment";
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-i	INTEGER	NO		NO
+i	INTEGER	NO		NO	
 c	VARCHAR	YES		YES	
 drop table t1;
 create table t1 (a int, b int);
@@ -527,13 +527,13 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int DEFAULT NULL,
   KEY `i1` (`a`) USING BTREE
-) ENGINE=DEFAULT COLLATE = utf8_general_ci ROW_FORMAT='COMPACT'
+) ENGINE=DEFAULT ROW_FORMAT='COMPACT' COLLATE = utf8_general_ci
 DROP INDEX i1 ON t1;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int DEFAULT NULL
-) ENGINE=DEFAULT COLLATE = utf8_general_ci ROW_FORMAT='COMPACT'
+) ENGINE=DEFAULT ROW_FORMAT='COMPACT' COLLATE = utf8_general_ci
 DROP TABLE t1;
 DROP TABLE IF EXISTS bug24219;
 DROP TABLE IF EXISTS bug24219_2;
