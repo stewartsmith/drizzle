@@ -651,7 +651,7 @@ create table t1 (a text default '');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` text
+  `a` text DEFAULT ''
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (default);
 select * from t1;

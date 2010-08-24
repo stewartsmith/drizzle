@@ -20,7 +20,6 @@
 
 #include "config.h"
 
-#include "drizzled/my_hash.h"
 #include "drizzled/cached_directory.h"
 
 #include <drizzled/definitions.h>
@@ -69,26 +68,28 @@ int XaResourceManager::commitOrRollbackXID(XID *xid, bool commit)
   @note
     there are three modes of operation:
     - automatic recover after a crash
-    in this case commit_list != 0, tc_heuristic_recover==0
+    in this case commit_list.size() != 0, tc_heuristic_recover==0
     all xids from commit_list are committed, others are rolled back
     - manual (heuristic) recover
-    in this case commit_list==0, tc_heuristic_recover != 0
+    in this case commit_list.size()==0, tc_heuristic_recover != 0
     DBA has explicitly specified that all prepared transactions should
     be committed (or rolled back).
-    - no recovery (MySQL did not detect a crash)
-    in this case commit_list==0, tc_heuristic_recover == 0
+    - no recovery (Drizzle did not detect a crash)
+    in this case commit_list.size()==0, tc_heuristic_recover == 0
     there should be no prepared transactions in this case.
 */
 class XaRecover : unary_function<XaResourceManager *, void>
 {
+private:
   int trans_len, found_foreign_xids, found_my_xids;
   bool result;
   XID *trans_list;
-  HASH *commit_list;
+  const XaResourceManager::commit_list_set &commit_list;
   bool dry_run;
 public:
   XaRecover(XID *trans_list_arg, int trans_len_arg,
-            HASH *commit_list_arg, bool dry_run_arg) 
+            const XaResourceManager::commit_list_set& commit_list_arg,
+            bool dry_run_arg) 
     : trans_len(trans_len_arg), found_foreign_xids(0), found_my_xids(0),
       result(false),
       trans_list(trans_list_arg), commit_list(commit_list_arg),
@@ -130,8 +131,8 @@ public:
           continue;
         }
         // recovery mode
-        if (commit_list ?
-            hash_search(commit_list, (unsigned char *)&x, sizeof(x)) != 0 :
+        if (commit_list.size() ?
+            commit_list.find(x) != commit_list.end() :
             tc_heuristic_recover == TC_HEURISTIC_RECOVER_COMMIT)
         {
           resource_manager->xaCommitXid(trans_list+i);
@@ -147,15 +148,21 @@ public:
   }
 };
 
-int XaResourceManager::recoverAllXids(HASH *commit_list)
+int XaResourceManager::recoverAllXids()
+{
+  const XaResourceManager::commit_list_set empty_commit_set;
+  return recoverAllXids(empty_commit_set);
+}
+
+int XaResourceManager::recoverAllXids(const XaResourceManager::commit_list_set &commit_list)
 {
   XID *trans_list= NULL;
   int trans_len= 0;
 
-  bool dry_run= (commit_list==0 && tc_heuristic_recover==0);
+  bool dry_run= (commit_list.size() == 0 && tc_heuristic_recover==0);
 
   /* commit_list and tc_heuristic_recover cannot be set both */
-  assert(commit_list==0 || tc_heuristic_recover==0);
+  assert(commit_list.size() == 0 || tc_heuristic_recover == 0);
 
   if (xa_resource_managers.size() <= 1)
     return 0;
@@ -173,7 +180,7 @@ int XaResourceManager::recoverAllXids(HASH *commit_list)
     return(1);
   }
 
-  if (commit_list)
+  if (commit_list.size())
     errmsg_printf(ERRMSG_LVL_INFO, _("Starting crash recovery..."));
 
   XaRecover recover_func(trans_list, trans_len, commit_list, dry_run);
@@ -198,7 +205,7 @@ int XaResourceManager::recoverAllXids(HASH *commit_list)
                     recover_func.getMyXIDs(), opt_tc_log_file);
     return(1);
   }
-  if (commit_list)
+  if (commit_list.size())
     errmsg_printf(ERRMSG_LVL_INFO, _("Crash recovery finished."));
   return(0);
 }
