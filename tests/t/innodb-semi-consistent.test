@@ -48,5 +48,5 @@ disconnect a;
 disconnect b;
 
 
-SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 
