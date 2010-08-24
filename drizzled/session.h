@@ -73,6 +73,7 @@ namespace message
 {
 class Transaction;
 class Statement;
+class Resultset;
 }
 namespace internal
 {
@@ -393,7 +394,8 @@ public:
     only responsible for freeing this member.
   */
   std::string db;
-
+  /* current cache key */
+  std::string query_cache_key;
   /**
     Constant for Session::where initialization in the beginning of every query.
 
@@ -1221,7 +1223,15 @@ public:
   {
     return statement_message;
   }
-
+  
+  /**
+   * Returns a pointer to the current Resulset message for this
+   * Session, or NULL if no active message.
+   */
+  message::Resultset *getResultsetMessage() const
+  {
+    return resultset;
+  }
   /**
    * Sets the active transaction message used by the ReplicationServices
    * component.
@@ -1243,10 +1253,33 @@ public:
   {
     statement_message= in_message;
   }
+
+  /**
+   * Sets the active Resultset message used by the Query Cache
+   * plugin.
+   *
+   * @param[in] Pointer to the message
+   */
+  void setResultsetMessage(message::Resultset *in_message)
+  {
+    resultset= in_message;
+  }
+  /**
+   * reset the active Resultset message used by the Query Cache
+   * plugin.
+   */
+
+  void resetResultsetMessage()
+  { 
+    resultset= NULL;
+  }
+
 private:
   /** Pointers to memory managed by the ReplicationServices component */
   message::Transaction *transaction_message;
   message::Statement *statement_message;
+  /* Pointer to the current resultset of Select query */
+  message::Resultset *resultset;
   plugin::EventObserverList *session_event_observers;
   
   /* Schema observers are mapped to databases. */
