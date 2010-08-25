@@ -1,1 +1,1 @@
---plugin_add=memcached_query_cache
+--plugin-add=memcached_query_cache
