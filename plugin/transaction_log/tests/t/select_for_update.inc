@@ -4,6 +4,10 @@
 # times out. 
 # 
 
+SET @orig_lock_wait_timeout= @@innodb_lock_wait_timeout;
+SELECT @orig_lock_wait_timeout;
+SET GLOBAL innodb_lock_wait_timeout=2;
+
 --disable_warnings
 DROP TABLE IF EXISTS t1;
 --enable_warnings
@@ -34,4 +38,9 @@ connection conn1;
 UPDATE t1 SET id=id + 1;
 COMMIT;
 
+connection default;
+disconnect conn1;
+disconnect conn2;
 DROP TABLE t1;
+
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
