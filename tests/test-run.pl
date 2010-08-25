@@ -3366,6 +3366,18 @@ sub gdb_arguments {
   my $args= shift;
   my $exe=  shift;
   my $type= shift;
+  # We add needed, extra lines to gdbinit on OS X
+  my $extra_gdb_init = '' ;
+  if ($^O eq 'darwin')
+  {
+    $extra_gdb_init= "set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib\n".
+                 "set env MallocStackLogging 1\n".
+                 "set env MallocScribble 1\n".
+                 "set env MallocPreScribble 1\n".
+                 "set env MallocStackLogging 1\n".
+                 "set env MallocStackLoggingNoCompact 1\n".
+                 "set env MallocGuardEdges 1\n" ;
+  }
 
   # Write $args to gdb init file
   my $str= join(" ", @$$args);
@@ -3379,6 +3391,7 @@ sub gdb_arguments {
     # write init file for client
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
+               "$extra_gdb_init" .
 	       "break main\n");
   }
   else
@@ -3386,6 +3399,7 @@ sub gdb_arguments {
     # write init file for mysqld
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
+               "$extra_gdb_init" .
                "set breakpoint pending on\n" .
 	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .

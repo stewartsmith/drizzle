@@ -4,8 +4,10 @@
 drop table if exists t1;
 --enable_warnings
 
-# basic tests of semi-consistent reads
+SET @orig_lock_wait_timeout= @@innodb_lock_wait_timeout; 
+SET GLOBAL innodb_lock_wait_timeout=2;
 
+# basic tests of semi-consistent reads
 connect (a,localhost,root,,);
 connect (b,localhost,root,,);
 connection a;
@@ -41,7 +43,10 @@ commit;
 connection a;
 select * from t1;
 drop table t1;
-
 connection default;
 disconnect a;
 disconnect b;
+
+
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
+
