@@ -1,14 +1,14 @@
 create table t1 (a int not null, b int, primary key (a));
 insert into t1 values (1,1);
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 create table if not exists t1 select 2;
 select * from t1;
 drop table t1;
 
 create table t1 select 1,2,3;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 create table if not exists t1 select 1,2;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 create table if not exists t1 select 1;
 
 select * from t1;

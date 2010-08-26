@@ -30,7 +30,7 @@ drop table t1;
 #
 
 create table t1 (a enum ('0','1'));
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 insert into t1 set a='foobar';
 select * from t1;
 update t1 set a = replace(a,'x','y');
@@ -41,7 +41,7 @@ drop table t1;
 # Bug #2077
 # Drizzle -> We only handle UTF-8 for ENUM names.
 #
---error 1693
+--error ER_CORRUPT_TABLE_DEFINITION
 create table t1 (a enum(0xE4, '1', '2') not null default 0xE4);
 
 # and now with what it's meant to be doing (from looking at mysql result)
@@ -56,7 +56,7 @@ drop table t1;
 #
 # Drizzle -> We only handle UTF-8 for ENUM names.
 #
---error 1693
+--error ER_CORRUPT_TABLE_DEFINITION
 CREATE TABLE t1 (
   a INT  default 1,
   b ENUM('value','öäü_value','ÊÃÕ') NOT NULL
@@ -65,13 +65,13 @@ CREATE TABLE t1 (
 # in utf8 land we don't convert ä into ae to store in latin1 encoding.
 # I think this is correct.
 CREATE TABLE t1 (c enum('ae','oe','ue','ss') collate utf8_unicode_ci);
---error 1691
+--error ER_INVALID_ENUM_VALUE
 INSERT INTO t1 VALUES ('ä');
---error 1691
+--error ER_INVALID_ENUM_VALUE
 INSERT INTO t1 values ('ö');
---error 1691
+--error ER_INVALID_ENUM_VALUE
 INSERT INTO t1 values ('ü');
---error 1691
+--error ER_INVALID_ENUM_VALUE
 INSERT INTO t1 values ('ß');
 SELECT * FROM t1;
 DROP TABLE t1;
@@ -83,7 +83,7 @@ DROP TABLE t1;
 #
 # Drizzle -> We only handle UTF-8 for ENUM names.
 #
---error 1693
+--error ER_CORRUPT_TABLE_DEFINITION
 CREATE TABLE t1 (
   a ENUM('ä','ö','ü') default 'ü'
 );
@@ -130,7 +130,7 @@ drop table t1;
 #
 # Drizzle -> We only handle UTF-8 for ENUM names.
 #
---error 1693
+--error ER_CORRUPT_TABLE_DEFINITION
 create table t1(russian enum('E','F','EÿF','FÿE') NOT NULL DEFAULT'E');
 
 #
@@ -140,7 +140,7 @@ drop table t1;
 #
 # Drizzle -> We only handle UTF-8 for ENUM names.
 #
---error 1693
+--error ER_CORRUPT_TABLE_DEFINITION
 create table t1(russian_deviant enum('E','F','EÿF','F,E') NOT NULL DEFAULT'E');
 
 #
@@ -152,14 +152,14 @@ CREATE TABLE t1 (
   id INT AUTO_INCREMENT PRIMARY KEY,
   c1 ENUM('a', '', 'b')
 );
---error 1691 # 0 is not valid way to insert.  Must use 1-based index of key.
+--error ER_INVALID_ENUM_VALUE # 0 is not valid way to insert.  Must use 1-based index of key.
 INSERT INTO t1 (c1) VALUES (0), ('a'), (''), ('b');
---error 1691 # 0 is not valid way to insert.  Must use 1-based index of key.
+--error ER_INVALID_ENUM_VALUE # 0 is not valid way to insert.  Must use 1-based index of key.
 INSERT INTO t1 (c1) VALUES (0), ('a'), (''), ('b');
 INSERT INTO t1 (c1) VALUES ('a'), ('b');
 SELECT id, c1 + 0, c1 FROM t1;
 
---error 1691 # Bad en
+--error ER_INVALID_ENUM_VALUE # Bad en
 ALTER TABLE t1 CHANGE c1 c1 ENUM('a', '') NOT NULL;
 # Below works because '' was not inserted in any statement above...
 ALTER TABLE t1 CHANGE c1 c1 ENUM('a', 'b') NOT NULL;
@@ -173,9 +173,9 @@ DROP TABLE t1;
 # Bug#28729: Field_enum wrongly reported an error while storing an empty string.
 #
 create table t1(f1 enum('a','b'), index(f1));
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 insert into t1 values(''),(''),('a'),('b');
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 select * from t1 where f1='';
 drop table t1;
 
@@ -187,7 +187,7 @@ drop table t1;
 CREATE TABLE t1 (c1 ENUM('a', '', 'b'));
 INSERT INTO t1 (c1) VALUES ('b');
 INSERT INTO t1 (c1) VALUES ('');
---error 1691 # Bad enum 0
+--error ER_INVALID_ENUM_VALUE # Bad enum 0
 INSERT INTO t1 (c1) VALUES (0);
 INSERT INTO t1 (c1) VALUES ('a');
 
@@ -203,7 +203,7 @@ DROP TABLE t1,t2;
 #
 
 CREATE TABLE t1(a enum('a','b','c','d'));
---error 1691 # Bad enum 0
+--error ER_INVALID_ENUM_VALUE # Bad enum 0
 INSERT INTO t1 VALUES (4),(1),(0),(3);
 INSERT INTO t1 VALUES (4),(1),(2),(3);
 
@@ -222,9 +222,9 @@ SELECT a FROM t1 WHERE a=0;
 
 ALTER TABLE t1 ADD PRIMARY KEY (a);
 
---error 1691 # Bad enum 0
+--error ER_INVALID_ENUM_VALUE # Bad enum 0
 EXPLAIN SELECT a FROM t1 WHERE a=0;
---error 1691 # Bad enum 0
+--error ER_INVALID_ENUM_VALUE # Bad enum 0
 SELECT a FROM t1 WHERE a=0;
 
 DROP TABLE t1;

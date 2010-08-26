@@ -106,7 +106,7 @@ truncate table t1;
 load data infile '../std_data_ln/loaddata5.dat' into table t1 fields terminated by '' enclosed by '' (a, b) set c=concat(a,"+",b,"+",@c,"+",b,"+",if(c is null,"NIL",c));
 select * from t1;
 # and this should bark
---error 1409 
+--error ER_LOAD_FROM_FIXED_SIZE_ROWS_TO_VAR 
 load data infile '../std_data_ln/loaddata5.dat' into table t1 fields terminated by '' enclosed by '' (a, @b);
 
 # Now let us test LOAD DATA with subselect
@@ -125,13 +125,13 @@ select * from t1;
 show variables like "secure_file_pri%";
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 select @@secure_file_priv;
---error 1238
+--error ER_INCORRECT_GLOBAL_LOCAL_VAR
 set @@secure_file_priv= 0;
 
 # Test "load data"
 truncate table t1;
 --replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
---error 1290
+--error ER_OPTION_PREVENTS_STATEMENT
 eval load data infile '$DRIZZLE_TEST_DIR/t/loaddata.test' into table t1;
 select * from t1;
 
@@ -151,7 +151,7 @@ create table t2(f1 int);
 insert into t2 values(1),(2);
 disable_query_log;
 eval select * into outfile '$MYSQLTEST_VARDIR/tmp/t2' from t2;
---error 1261
+--error ER_WARN_TOO_FEW_RECORDS
 eval load data infile '$MYSQLTEST_VARDIR/tmp/t2' into table t1;
 enable_query_log;
 select f1 from t1 where f2 IS NOT NULL order by f1;
@@ -161,7 +161,7 @@ disable_query_log;
 eval SELECT * INTO OUTFILE '$MYSQLTEST_VARDIR/tmp/t2'
 FIELDS TERMINATED BY '' OPTIONALLY ENCLOSED BY '' LINES TERMINATED BY '\r\n'
 FROM t2;
---error 1261
+--error ER_WARN_TOO_FEW_RECORDS
 eval load data infile '$MYSQLTEST_VARDIR/tmp/t2' into table t1
 FIELDS TERMINATED BY '' OPTIONALLY ENCLOSED BY '' LINES TERMINATED BY '\r\n';
 enable_query_log;

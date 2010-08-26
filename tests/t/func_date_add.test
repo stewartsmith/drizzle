@@ -55,9 +55,9 @@ insert into t1 values (date_add(NULL, INTERVAL 1 DAY));
 insert into t1 values (date_add('2000-01-04', INTERVAL NULL DAY));
 # These will all work now, and we'll end up with some NULL entries in the
 # table and some warnings.
---error 1441
+--error ER_DATETIME_FUNCTION_OVERFLOW
 insert into t1 (d) select date_sub('2000-01-01', INTERVAL 2001 YEAR);
---error 1441
+--error ER_DATETIME_FUNCTION_OVERFLOW
 insert into t1 (d) select date_add('2000-01-01',interval 8000 year);
 insert into t1 values (date_add(NULL, INTERVAL 1 DAY));
 insert into t1 values (date_add('2000-01-04', INTERVAL NULL DAY));

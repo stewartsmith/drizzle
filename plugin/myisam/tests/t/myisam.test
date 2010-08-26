@@ -329,10 +329,10 @@ drop table t1;
 # Test of creating table with too long key
 #
 
---error 1071
+--error ER_TOO_LONG_KEY
 CREATE TEMPORARY TABLE t1 (a varchar(300), b varchar(300), c varchar(300), d varchar(300), e varchar(300), KEY t1 (a, b, c, d, e)) ENGINE=MyISAM;
 CREATE TEMPORARY TABLE t1 (a varchar(300), b varchar(300), c varchar(300), d varchar(300), e varchar(300)) ENGINE=MyISAM;
---error 1071
+--error ER_TOO_LONG_KEY
 ALTER TABLE t1 ADD INDEX t1 (a, b, c, d, e);
 DROP TABLE t1;
 
@@ -805,15 +805,15 @@ source include/varchar.inc;
 # Some errors/warnings on create
 #
 
---error 1074
+--error ER_TOO_BIG_FIELDLENGTH
 create temporary table t1 (v varchar(65530), key(v));
---error 1074
+--error ER_TOO_BIG_FIELDLENGTH
 create temporary table t1 (v varchar(65536));
---error 1074
+--error ER_TOO_BIG_FIELDLENGTH
 create temporary table t1 (v varchar(65530));
 
 # MyISAM specific varchar tests
---error 1074
+--error ER_TOO_BIG_FIELDLENGTH
 create temporary table t1 (v varchar(65535));
 
 eval set storage_engine=$default;

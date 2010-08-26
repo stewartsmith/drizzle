@@ -207,7 +207,7 @@ select count(*) from t1 group by col1 having col1 = 10;
 select count(*) as count_col1 from t1 group by col1 having col1 = 10;
 select count(*) as count_col1 from t1 as tmp1 group by col1 having col1 = 10;
 select count(*) from t1 group by col2 having col2 = 'hello';
---error 1054
+--error ER_BAD_FIELD_ERROR
 select count(*) from t1 group by col2 having col1 = 10;
 select col1 as count_col1 from t1 as tmp1 group by col1 having col1 = 10;
 select col1 as count_col1 from t1 as tmp1 group by col1 having count_col1 = 10;
@@ -221,10 +221,10 @@ select col1 as count_col1,col2 from t1 as tmp1 group by col1,col2 having col1 = 
 select col1 as count_col1,col2 from t1 as tmp1 group by col1,col2 having count_col1 = 10;
 select col1 as count_col1,col2 from t1 as tmp1 group by col1,col2 having col2 = 'hello';
 select col1 as count_col1,col2 as group_col2 from t1 as tmp1 group by col1,col2 having group_col2 = 'hello';
---error 1064
+--error ER_PARSE_ERROR
 select sum(col1) as co12 from t1 group by col2 having col2 10; 
 select sum(col1) as co2, count(col2) as cc from t1 group by col1 having col1 =10; 
---error 1054
+--error ER_BAD_FIELD_ERROR
 select t2.col2 from t2 group by t2.col1, t2.col2 having t1.col1 <= 10;
 
 
@@ -273,7 +273,7 @@ having (select col_t1 from t2 where col_t1 = col_t2 order by col_t2 limit 1);
 
 # nested queries with HAVING, inner having column resolved in outer FROM clause
 # the outer having column is not referenced in GROUP BY which results in an error
---error 1054
+--error ER_BAD_FIELD_ERROR
 select t1.col1 from t1
 where t1.col2 in 
       (select t2.col2 from t2 
@@ -302,7 +302,7 @@ having col_t1 > 10 and
 # correlated subqueries - inner having column 't1.col2' resolves to
 # the outer FROM clause, which cannot be used because the outer query
 # is grouped
---error 1054
+--error ER_BAD_FIELD_ERROR
 select sum(col1) from t1
 group by col_t1
 having col_t1 in (select sum(t2.col1) from t2
@@ -318,11 +318,11 @@ having col_t1 in (select sum(t2.col1) from t2
 #
 # queries with joins and ambiguous column names
 #
---error 1052
+--error ER_NON_UNIQ_ERROR
 select t1.col1, t2.col1 from t1, t2 where t1.col1 = t2.col1
 group by t1.col1, t2.col1 having col1 = 2;
 
---error 1052
+--error ER_NON_UNIQ_ERROR
 select t1.col1*10+t2.col1 from t1,t2 where t1.col1=t2.col1
 group by t1.col1, t2.col1 having col1 = 2;
 

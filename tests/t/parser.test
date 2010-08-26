@@ -589,7 +589,7 @@ SELECT t1.*,t2.* FROM { OJ ((t1 LEFT OUTER JOIN t2 ON t1.a3=t2.a2) INNER JOIN t3
 # MySQL didn't follow the SQL standard on CROSS. INNER requires ON, but
 # CROSS does not make use of ON.
 #
---error 1064 
+--error ER_PARSE_ERROR 
 SELECT t1.*,t2.* FROM { OJ (t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a2) CROSS JOIN t3 ON (t3.a2=t2.a3)};
 SELECT t1.*,t2.* FROM { OJ (t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a2) INNER JOIN t3 ON (t3.a2=t2.a3)};
 SELECT * FROM {oj t1 LEFT OUTER JOIN t2 ON t1.a1=t2.a3} WHERE t1.a2 > 10;

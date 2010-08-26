@@ -3,7 +3,7 @@
 drop table if exists t1,t2;
 --enable_warnings
 
---error 1054
+--error ER_BAD_FIELD_ERROR
 set @a := foo;
 set @a := connection_id() + 3;
 select @a - connection_id();
@@ -86,7 +86,7 @@ select FIELD( @var,'1it','Hit') as my_column;
 #
 # Bug #9286  SESSION/GLOBAL should be disallowed for user variables
 #
---error 1064
+--error ER_PARSE_ERROR
 set session @honk=99;
 
 #
@@ -120,7 +120,7 @@ show create table t1;
 drop table t1;
 
 # This is not supported by Drizzle
---error 1064
+--error ER_PARSE_ERROR
 set @first_var= cast(NULL as integer);
 #create table t1 select @first_var;
 #--replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
@@ -193,7 +193,7 @@ drop table t1;
 #
 # Bug#19024 - SHOW COUNT(*) WARNINGS not return Errors 
 #
---error 1064
+--error ER_PARSE_ERROR
 insert into city 'blah';
 SHOW COUNT(*) WARNINGS;
 SHOW COUNT(*) ERRORS;

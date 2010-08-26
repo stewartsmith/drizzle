@@ -1472,22 +1472,22 @@ drop table t1;
 # Bug #31473: does not work with NULL value in datetime field
 #
 create temporary table t1(a datetime not null) engine=csv;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 insert into t1 values();
 select * from t1;
 drop table t1;
 create temporary table t1(a varchar(32) not null) engine=csv;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 insert into t1 values();
 select * from t1;
 drop table t1;
 create temporary table t1(a int not null) engine=csv;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 insert into t1 values();
 select * from t1;
 drop table t1;
 create temporary table t1(a blob not null) engine=csv;
---error 1364
+--error ER_NO_DEFAULT_FOR_FIELD
 insert into t1 values();
 select * from t1;
 drop table t1;
