@@ -1340,7 +1340,7 @@ static bool log_row_for_replication(Table* table,
      */
     if (after_record == NULL)
     {
-      transaction_services.deleteRecord(session, table);
+      transaction_services.deleteRecord(session, table, true);
       /* 
        * We set the "current" statement message to NULL.  This triggers
        * the replication services component to generate a new statement
