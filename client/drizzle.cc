@@ -66,6 +66,7 @@
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
 #include "drizzled/utf8/utf8.h"
+#include "drizzled/internal/my_sys.h"
 #include <cstdlib>
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
@@ -1222,9 +1223,9 @@ static bool server_shutdown(void)
 
   if (verbose)
   {
-    printf("shutting down drizzled");
+    printf(_("shutting down drizzled"));
     if (opt_drizzle_port > 0)
-      printf(" on port %d", opt_drizzle_port);
+      printf(_(" on port %d"), opt_drizzle_port);
     printf("... ");
   }
 
@@ -1233,13 +1234,13 @@ static bool server_shutdown(void)
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      fprintf(stderr, "shutdown failed; error: '%s'",
+      fprintf(stderr, _("shutdown failed; error: '%s'"),
               drizzle_result_error(&result));
       drizzle_result_free(&result);
     }
     else
     {
-      fprintf(stderr, "shutdown failed; error: '%s'",
+      fprintf(stderr, _("shutdown failed; error: '%s'"),
               drizzle_con_error(&con));
     }
     return false;
@@ -1248,7 +1249,7 @@ static bool server_shutdown(void)
   drizzle_result_free(&result);
 
   if (verbose)
-    printf("done\n");
+    printf(_("done\n"));
 
   return true;
 }
@@ -1269,19 +1270,19 @@ static bool server_ping(void)
   if (drizzle_ping(&con, &result, &ret) != NULL && ret == DRIZZLE_RETURN_OK)
   {
     if (opt_silent < 2)
-      printf("drizzled is alive\n");
+      printf(_("drizzled is alive\n"));
   }
   else
   {
     if (ret == DRIZZLE_RETURN_ERROR_CODE)
     {
-      fprintf(stderr, "ping failed; error: '%s'",
+      fprintf(stderr, _("ping failed; error: '%s'"),
               drizzle_result_error(&result));
       drizzle_result_free(&result);
     }
     else
     {
-      fprintf(stderr, "drizzled won't answer to ping, error: '%s'",
+      fprintf(stderr, _("drizzled won't answer to ping, error: '%s'"),
               drizzle_con_error(&con));
     }
     return false;
@@ -1330,7 +1331,7 @@ static void check_timeout_value(uint32_t in_connect_timeout)
   opt_connect_timeout= 0;
   if (in_connect_timeout > 3600*12)
   {
-    cout << N_("Error: Invalid Value for connect_timeout"); 
+    cout << _("Error: Invalid Value for connect_timeout"); 
     exit(-1);
   }
   opt_connect_timeout= in_connect_timeout;
@@ -1341,7 +1342,7 @@ static void check_max_input_line(uint32_t in_max_input_line)
   opt_max_input_line= 0;
   if (in_max_input_line < 4096 || in_max_input_line > (int64_t)2*1024L*1024L*1024L)
   {
-    cout << N_("Error: Invalid Value for max_input_line");
+    cout << _("Error: Invalid Value for max_input_line");
     exit(-1);
   }
   opt_max_input_line= in_max_input_line - (in_max_input_line % 1024);
@@ -1351,6 +1352,9 @@ int main(int argc,char *argv[])
 {
 try
 {
+
+  MY_INIT("drizzle");
+
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1359,7 +1363,7 @@ try
   textdomain("drizzle");
 #endif
 
-  po::options_description commandline_options("Options used only in command line");
+  po::options_description commandline_options(N_("Options used only in command line"));
   commandline_options.add_options()
   ("help,?",N_("Displays this help and exit."))
   ("batch,B",N_("Don't use history file. Disable interactive behavior. (Enables --silent)"))
@@ -1411,7 +1415,7 @@ try
   N_("Configuration file defaults are not used if no-defaults is set"))
   ;
 
-  po::options_description drizzle_options("Options specific to the drizzle client");
+  po::options_description drizzle_options(N_("Options specific to the drizzle client"));
   drizzle_options.add_options()
   ("auto-rehash", po::value<bool>(&opt_rehash)->default_value(true)->zero_tokens(),
   N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."))
@@ -1464,7 +1468,7 @@ try
   N_("Automatic limit for rows in a join when using --safe-updates"))
   ;
 
-  po::options_description client_options("Options specific to the client");
+  po::options_description client_options(N_("Options specific to the client"));
   client_options.add_options()
   ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
   N_("Use MySQL Protocol."))
@@ -1480,7 +1484,7 @@ try
   N_("The protocol of connection (tcp,socket,pipe,memory)."))
   ;
 
-  po::options_description long_options("Allowed Options");
+  po::options_description long_options(N_("Allowed Options"));
   long_options.add(commandline_options).add(drizzle_options).add(client_options);
 
   std::string system_config_dir_drizzle(SYSCONFDIR); 
@@ -1705,29 +1709,22 @@ try
   {
     opt_silent++;
   }
-  if (vm.count("version"))
-  {
-    printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-           VER.c_str(), drizzle_version(),
-           HOST_VENDOR, HOST_OS, HOST_CPU,
-           rl_library_version);
-
-    exit(0);
-  }
   
-  if (vm.count("help"))
+  if (vm.count("help") || vm.count("version"))
   {
-    printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-           VER.c_str(), drizzle_version(),
-           HOST_VENDOR, HOST_OS, HOST_CPU,
+    printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s) using readline %s\n"),
+           drizzled::internal::my_progname, VERSION, drizzle_version(),
+           HOST_VENDOR, HOST_OS,
            rl_library_version);
+    if (vm.count("version"))
+      exit(0);
     printf(_("Copyright (C) 2008 Sun Microsystems\n"
            "This software comes with ABSOLUTELY NO WARRANTY. "
            "This is free software,\n"
            "and you are welcome to modify and redistribute it "
            "under the GPL license\n"));
     printf(_("Usage: drizzle [OPTIONS] [database]\n"));
-    cout<<long_options;
+    cout << long_options;
     exit(0);
   }
  
@@ -1842,7 +1839,7 @@ try
 
   catch(exception &err)
   {
-  cerr<<"Error:"<<err.what()<<endl;
+    cerr << _("Error:") << err.what() << endl;
   }
   return(0);        // Keep compiler happy
 }
@@ -3006,7 +3003,7 @@ static void init_pager()
   {
     if (!(PAGER= popen(pager.c_str(), "w")))
     {
-      tee_fprintf(stdout, "popen() failed! defaulting PAGER to stdout!\n");
+      tee_fprintf(stdout,_( "popen() failed! defaulting PAGER to stdout!\n"));
       PAGER= stdout;
     }
   }
@@ -3028,12 +3025,12 @@ static void init_tee(const char *file_name)
     end_tee();
   if (!(new_outfile= fopen(file_name, "a")))
   {
-    tee_fprintf(stdout, "Error logging to file '%s'\n", file_name);
+    tee_fprintf(stdout, _("Error logging to file '%s'\n"), file_name);
     return;
   }
   OUTFILE = new_outfile;
   outfile.assign(file_name);
-  tee_fprintf(stdout, "Logging to file '%s'\n", file_name);
+  tee_fprintf(stdout, _("Logging to file '%s'\n"), file_name);
   opt_outfile= 1;
 
   return;
@@ -3117,7 +3114,7 @@ print_field_types(drizzle_result_st *result)
 
   while ((field = drizzle_column_next(result)))
   {
-    tee_fprintf(PAGER, "Field %3u:  `%s`\n"
+    tee_fprintf(PAGER, _("Field %3u:  `%s`\n"
                 "Catalog:    `%s`\n"
                 "Database:   `%s`\n"
                 "Table:      `%s`\n"
@@ -3127,7 +3124,7 @@ print_field_types(drizzle_result_st *result)
                 "Length:     %lu\n"
                 "Max_length: %lu\n"
                 "Decimals:   %u\n"
-                "Flags:      %s\n\n",
+                "Flags:      %s\n\n"),
                 ++i,
                 drizzle_column_name(field), drizzle_column_catalog(field),
                 drizzle_column_db(field), drizzle_column_table(field),
@@ -3584,12 +3581,12 @@ com_tee(string *, const char *line )
   {
     if (outfile.empty())
     {
-      printf("No previous outfile available, you must give a filename!\n");
+      printf(_("No previous outfile available, you must give a filename!\n"));
       return 0;
     }
     else if (opt_outfile)
     {
-      tee_fprintf(stdout, "Currently logging to file '%s'\n", outfile.c_str());
+      tee_fprintf(stdout, _("Currently logging to file '%s'\n"), outfile.c_str());
       return 0;
     }
     else
@@ -3609,7 +3606,7 @@ com_tee(string *, const char *line )
   end[0]= 0;
   if (end == file_name)
   {
-    printf("No outfile specified!\n");
+    printf(_("No outfile specified!\n"));
     return 0;
   }
   init_tee(file_name);
@@ -3622,7 +3619,7 @@ com_notee(string *, const char *)
 {
   if (opt_outfile)
     end_tee();
-  tee_fprintf(stdout, "Outfile disabled.\n");
+  tee_fprintf(stdout, _("Outfile disabled.\n"));
   return 0;
 }
 
@@ -3649,7 +3646,7 @@ com_pager(string *, const char *line)
   {
     if (!default_pager_set)
     {
-      tee_fprintf(stdout, "Default pager wasn't set, using stdout.\n");
+      tee_fprintf(stdout, _("Default pager wasn't set, using stdout.\n"));
       opt_nopager=1;
       pager.assign("stdout");
       PAGER= stdout;
@@ -3669,7 +3666,7 @@ com_pager(string *, const char *line)
     default_pager.assign(pager_name);
   }
   opt_nopager=0;
-  tee_fprintf(stdout, "PAGER set to '%s'\n", pager.c_str());
+  tee_fprintf(stdout, _("PAGER set to '%s'\n"), pager.c_str());
   return 0;
 }
 
@@ -3680,7 +3677,7 @@ com_nopager(string *, const char *)
   pager.assign("stdout");
   opt_nopager=1;
   PAGER= stdout;
-  tee_fprintf(stdout, "PAGER set to stdout\n");
+  tee_fprintf(stdout, _("PAGER set to stdout\n"));
   return 0;
 }
 
@@ -3763,10 +3760,10 @@ com_connect(string *buffer, const char *line)
 
   if (connected)
   {
-    sprintf(buff,"Connection id:    %u",drizzle_con_thread_id(&con));
+    sprintf(buff, _("Connection id:    %u"), drizzle_con_thread_id(&con));
     put_info(buff,INFO_INFO,0,0);
-    sprintf(buff,"Current database: %.128s\n",
-            !current_db.empty() ? current_db.c_str() : "*** NONE ***");
+    sprintf(buff, _("Current database: %.128s\n"),
+            !current_db.empty() ? current_db.c_str() : _("*** NONE ***"));
     put_info(buff,INFO_INFO,0,0);
   }
   return error;
@@ -3786,7 +3783,7 @@ static int com_source(string *, const char *line)
   while (isspace(*line))
     line++;
   if (!(param = strchr(line, ' ')))    // Skip command name
-    return put_info("Usage: \\. <filename> | source <filename>",
+    return put_info(_("Usage: \\. <filename> | source <filename>"),
                     INFO_ERROR, 0,0);
   while (isspace(*param))
     param++;
@@ -3801,7 +3798,7 @@ static int com_source(string *, const char *line)
   if (!(sql_file = fopen(source_name, "r")))
   {
     char buff[FN_REFLEN+60];
-    sprintf(buff,"Failed to open file '%s', error: %d", source_name,errno);
+    sprintf(buff, _("Failed to open file '%s', error: %d"), source_name,errno);
     return put_info(buff, INFO_ERROR, 0 ,0);
   }
 
@@ -3809,7 +3806,7 @@ static int com_source(string *, const char *line)
   if (line_buff == NULL)
   {
     fclose(sql_file);
-    return put_info("Can't initialize LineBuffer", INFO_ERROR, 0, 0);
+    return put_info(_("Can't initialize LineBuffer"), INFO_ERROR, 0, 0);
   }
 
   /* Save old status */
@@ -3845,7 +3842,7 @@ com_delimiter(string *, const char *line)
 
   if (!tmp || !*tmp)
   {
-    put_info("DELIMITER must be followed by a 'delimiter' character or string",
+    put_info(_("DELIMITER must be followed by a 'delimiter' character or string"),
              INFO_ERROR, 0, 0);
     return 0;
   }
@@ -3853,7 +3850,7 @@ com_delimiter(string *, const char *line)
   {
     if (strstr(tmp, "\\"))
     {
-      put_info("DELIMITER cannot contain a backslash character",
+      put_info(_("DELIMITER cannot contain a backslash character"),
                INFO_ERROR, 0, 0);
       return 0;
     }
@@ -3878,7 +3875,7 @@ com_use(string *, const char *line)
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
   {
-    put_info("USE must be followed by a database name", INFO_ERROR, 0, 0);
+    put_info(_("USE must be followed by a database name"), INFO_ERROR, 0, 0);
     return 0;
   }
   /*
@@ -3946,7 +3943,7 @@ com_use(string *, const char *line)
       build_completion_hash(opt_rehash, 1);
   }
 
-  put_info("Database changed",INFO_INFO, 0, 0);
+  put_info(_("Database changed"),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -3954,7 +3951,7 @@ static int
 com_warnings(string *, const char *)
 {
   show_warnings = 1;
-  put_info("Show warnings enabled.",INFO_INFO, 0, 0);
+  put_info(_("Show warnings enabled."),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -3962,7 +3959,7 @@ static int
 com_nowarnings(string *, const char *)
 {
   show_warnings = 0;
-  put_info("Show warnings disabled.",INFO_INFO, 0, 0);
+  put_info(_("Show warnings disabled."),INFO_INFO, 0, 0);
   return 0;
 }
 
@@ -4097,15 +4094,14 @@ com_status(string *, const char *)
   drizzle_return_t ret;
 
   tee_puts("--------------", stdout);
-  printf(_("drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"),
-  VER.c_str(), drizzle_version(),
-  HOST_VENDOR, HOST_OS, HOST_CPU,
-  rl_library_version);          /* Print version */
-
+  printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s) using readline %s\n"),
+         drizzled::internal::my_progname, VERSION, drizzle_version(),
+         HOST_VENDOR, HOST_OS,
+         rl_library_version);
 
   if (connected)
   {
-    tee_fprintf(stdout, "\nConnection id:\t\t%lu\n",drizzle_con_thread_id(&con));
+    tee_fprintf(stdout, _("\nConnection id:\t\t%lu\n"),drizzle_con_thread_id(&con));
     /*
       Don't remove "limit 1",
       it is protection againts SQL_SELECT_LIMIT=0
@@ -4117,54 +4113,54 @@ com_status(string *, const char *)
       drizzle_row_t cur=drizzle_row_next(&result);
       if (cur)
       {
-        tee_fprintf(stdout, "Current database:\t%s\n", cur[0] ? cur[0] : "");
-        tee_fprintf(stdout, "Current user:\t\t%s\n", cur[1]);
+        tee_fprintf(stdout, _("Current database:\t%s\n"), cur[0] ? cur[0] : "");
+        tee_fprintf(stdout, _("Current user:\t\t%s\n"), cur[1]);
       }
       drizzle_result_free(&result);
     }
     else if (ret == DRIZZLE_RETURN_ERROR_CODE)
       drizzle_result_free(&result);
-    tee_puts("SSL:\t\t\tNot in use", stdout);
+    tee_puts(_("SSL:\t\t\tNot in use"), stdout);
   }
   else
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, "\nNo connection\n");
+    tee_fprintf(stdout, _("\nNo connection\n"));
     vidattr(A_NORMAL);
     return 0;
   }
   if (skip_updates)
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, "\nAll updates ignored to this database\n");
+    tee_fprintf(stdout, _("\nAll updates ignored to this database\n"));
     vidattr(A_NORMAL);
   }
-  tee_fprintf(stdout, "Current pager:\t\t%s\n", pager.c_str());
-  tee_fprintf(stdout, "Using outfile:\t\t'%s'\n", opt_outfile ? outfile.c_str() : "");
-  tee_fprintf(stdout, "Using delimiter:\t%s\n", delimiter);
-  tee_fprintf(stdout, "Server version:\t\t%s\n", server_version_string(&con));
-  tee_fprintf(stdout, "Protocol version:\t%d\n", drizzle_con_protocol_version(&con));
-  tee_fprintf(stdout, "Connection:\t\t%s\n", drizzle_con_host(&con));
+  tee_fprintf(stdout, _("Current pager:\t\t%s\n"), pager.c_str());
+  tee_fprintf(stdout, _("Using outfile:\t\t'%s'\n"), opt_outfile ? outfile.c_str() : "");
+  tee_fprintf(stdout, _("Using delimiter:\t%s\n"), delimiter);
+  tee_fprintf(stdout, _("Server version:\t\t%s\n"), server_version_string(&con));
+  tee_fprintf(stdout, _("Protocol version:\t%d\n"), drizzle_con_protocol_version(&con));
+  tee_fprintf(stdout, _("Connection:\t\t%s\n"), drizzle_con_host(&con));
 /* XXX need to save this from result
   if ((id= drizzleclient_insert_id(&drizzle)))
     tee_fprintf(stdout, "Insert id:\t\t%s\n", internal::llstr(id, buff));
 */
 
   if (drizzle_con_uds(&con))
-    tee_fprintf(stdout, "UNIX socket:\t\t%s\n", drizzle_con_uds(&con));
+    tee_fprintf(stdout, _("UNIX socket:\t\t%s\n"), drizzle_con_uds(&con));
   else
-    tee_fprintf(stdout, "TCP port:\t\t%d\n", drizzle_con_port(&con));
+    tee_fprintf(stdout, _("TCP port:\t\t%d\n"), drizzle_con_port(&con));
 
   if (safe_updates)
   {
     vidattr(A_BOLD);
-    tee_fprintf(stdout, "\nNote that you are running in safe_update_mode:\n");
+    tee_fprintf(stdout, _("\nNote that you are running in safe_update_mode:\n"));
     vidattr(A_NORMAL);
-    tee_fprintf(stdout, "\
+    tee_fprintf(stdout, _("\
 UPDATEs and DELETEs that don't use a key in the WHERE clause are not allowed.\n\
 (One can force an UPDATE/DELETE by adding LIMIT # at the end of the command.)\n \
 SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n             \
-Max number of examined row combination in a join is set to: %lu\n\n",
+Max number of examined row combination in a join is set to: %lu\n\n"),
                 select_limit, max_join_size);
   }
   tee_puts("--------------\n", stdout);
@@ -4222,7 +4218,7 @@ put_info(const char *str,INFO_TYPE info_type, uint32_t error, const char *sqlsta
     if (info_type == INFO_ERROR)
     {
       (void) fflush(file);
-      fprintf(file,"ERROR");
+      fprintf(file,_("ERROR"));
       if (error)
       {
         if (sqlstate)
@@ -4265,12 +4261,12 @@ put_info(const char *str,INFO_TYPE info_type, uint32_t error, const char *sqlsta
       if (error)
       {
         if (sqlstate)
-          (void) tee_fprintf(file, "ERROR %d (%s): ", error, sqlstate);
+          (void) tee_fprintf(file, _("ERROR %d (%s): "), error, sqlstate);
         else
-          (void) tee_fprintf(file, "ERROR %d: ", error);
+          (void) tee_fprintf(file, _("ERROR %d: "), error);
       }
       else
-        tee_puts("ERROR: ", file);
+        tee_puts(_("ERROR: "), file);
     }
     else
       vidattr(A_BOLD);
@@ -4403,21 +4399,21 @@ static void nice_time(double sec,char *buff,bool part_second)
     tmp_buff_str << tmp;
 
     if (tmp > 1)
-      tmp_buff_str << " hours ";
+      tmp_buff_str << _(" hours ");
     else
-      tmp_buff_str << " hour ";
+      tmp_buff_str << _(" hour ");
   }
   if (sec >= 60.0)
   {
     tmp=(uint32_t) floor(sec/60.0);
     sec-=60.0*tmp;
-    tmp_buff_str << tmp << " min ";
+    tmp_buff_str << tmp << _(" min ");
   }
   if (part_second)
     tmp_buff_str.precision(2);
   else
     tmp_buff_str.precision(0);
-  tmp_buff_str << sec << " sec";
+  tmp_buff_str << sec << _(" sec");
   strcpy(buff, tmp_buff_str.str().c_str());
 }
 
@@ -4518,7 +4514,7 @@ static const char * construct_prompt()
         if (!full_username)
           init_username();
         processed_prompt->append(part_username ? part_username :
-                                 (!current_user.empty() ?  current_user : "(unknown)"));
+                                 (!current_user.empty() ?  current_user : _("(unknown)")));
         break;
       case PROMPT_CHAR:
         {
@@ -4638,17 +4634,17 @@ static int com_prompt(string *, const char *line)
 {
   const char *ptr=strchr(line, ' ');
   if (ptr == NULL)
-    tee_fprintf(stdout, "Returning to default PROMPT of %s\n",
+    tee_fprintf(stdout, _("Returning to default PROMPT of %s\n"),
                 default_prompt);
   prompt_counter = 0;
   char * tmpptr= strdup(ptr ? ptr+1 : default_prompt);
   if (tmpptr == NULL)
-    tee_fprintf(stdout, "Memory allocation error. Not changing prompt\n");
+    tee_fprintf(stdout, _("Memory allocation error. Not changing prompt\n"));
   else
   {
     current_prompt.erase();
     current_prompt= tmpptr;
-    tee_fprintf(stdout, "PROMPT set to '%s'\n", current_prompt.c_str());
+    tee_fprintf(stdout, _("PROMPT set to '%s'\n"), current_prompt.c_str());
   }
   return 0;
 }
