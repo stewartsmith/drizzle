@@ -31,13 +31,13 @@ drop table t1,t2,t3,t4;
 # Check errors with blob
 #
 
---error 1101
+--error ER_BLOB_CANT_HAVE_DEFAULT
 CREATE TABLE t1 (a blob default "hello");
 CREATE TABLE t2 (a varchar(256));
 drop table t2;
---error 1074
+--error ER_TOO_BIG_FIELDLENGTH
 CREATE TABLE t1 (a varchar(70000) default "hello");
---error 1101
+--error ER_BLOB_CANT_HAVE_DEFAULT
 CREATE TABLE t2 (a blob default "hello");
 
 # Safety to be able to continue with other tests if above fails

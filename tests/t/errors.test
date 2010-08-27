@@ -5,28 +5,28 @@
 --disable_warnings
 drop table if exists t1;
 --enable_warnings
---error 1146
+--error ER_NO_SUCH_TABLE
 insert into t1 values(1);
---error 1146
+--error ER_NO_SUCH_TABLE
 delete from t1;
---error 1146
+--error ER_NO_SUCH_TABLE
 update t1 set a=1;
 create table t1 (a int);
---error 1054
+--error ER_BAD_FIELD_ERROR
 select count(test.t1.b) from t1;
---error 1054
+--error ER_BAD_FIELD_ERROR
 select count(not_existing_database.t1) from t1;
---error 1054
+--error ER_BAD_FIELD_ERROR
 select count(not_existing_database.t1.a) from t1;
---error 1044,1146
+--error ER_DBACCESS_DENIED_ERROR, ER_NO_SUCH_TABLE
 select count(not_existing_database.t1.a) from not_existing_database.t1;
---error 1054
+--error ER_BAD_FIELD_ERROR
 select 1 from t1 order by 2;
---error 1054
+--error ER_BAD_FIELD_ERROR
 select 1 from t1 group by 2;
---error 1054
+--error ER_BAD_FIELD_ERROR
 select 1 from t1 order by t1.b;
---error 1054
+--error ER_BAD_FIELD_ERROR
 select count(*),b from t1;
 drop table t1;
 
@@ -35,9 +35,9 @@ drop table t1;
 #
 # Bug #6080: Error message for a field with a display width that is too long
 #
---error 1064
+--error ER_PARSE_ERROR
 create table t1 (a int(256));
---error 1074
+--error ER_TOO_BIG_FIELDLENGTH
 create table t1 (a varchar(66000));
 
 #

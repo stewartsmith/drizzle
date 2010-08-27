@@ -1333,14 +1333,14 @@ SELECT * FROM t2;
 #
 # For bug #12836
 # Delete was allowing all rows to be removed
---error 1031
+--error ER_ILLEGAL_HA
 DELETE FROM t2;
 SELECT * FROM t2;
 INSERT INTO t2 VALUES (2,011401,37,'breaking','dreaded','Steinberg','W');
 INSERT INTO t2 VALUES (3,011402,37,'Romans','scholastics','jarring','');
 INSERT INTO t2 VALUES (4,011403,37,'intercepted','audiology','tinily','');
 SELECT * FROM t2;
---error 1031
+--error ER_ILLEGAL_HA
 TRUNCATE TABLE t2;
 SELECT * FROM t2;
 
@@ -1370,11 +1370,11 @@ INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (32, "foo");
---error 1022
+--error ER_DUP_KEY
 INSERT INTO t5 VALUES (23, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
---error 1022
+--error ER_DUP_KEY
 INSERT INTO t5 VALUES (3, "foo");
 INSERT INTO t5 VALUES (NULL, "foo");
 SELECT * FROM t5;

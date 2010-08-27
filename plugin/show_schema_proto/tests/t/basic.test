@@ -10,7 +10,7 @@
 #
 #
 ##SELECT SHOW_SCHEMA_PROTO('test');
---error 1049
+--error ER_BAD_DB_ERROR
 SELECT SHOW_SCHEMA_PROTO('not_exists');
 #CREATE DATABASE foobar COLLATE = utf8_bin;
 #SELECT SHOW_SCHEMA_PROTO('foobar');

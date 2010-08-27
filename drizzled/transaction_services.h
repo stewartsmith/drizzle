@@ -239,10 +239,11 @@ public:
    * Creates a new DeleteRecord GPB message and pushes it to
    * replicators.
    *
-   * @param Pointer to the Session which has deleted a record
-   * @param Pointer to the Table containing delete information
+   * @param in_session Pointer to the Session which has deleted a record
+   * @param in_table Pointer to the Table containing delete information
+   * @param use_update_record If true, uses the values from the update row instead
    */
-  void deleteRecord(Session *in_session, Table *in_table);
+  void deleteRecord(Session *in_session, Table *in_table, bool use_update_record= false);
   /**
    * Creates a CreateSchema Statement GPB message and adds it
    * to the Session's active Transaction GPB message for pushing

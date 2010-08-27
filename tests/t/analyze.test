@@ -64,9 +64,9 @@ drop table t1;
 # Bug #30495: optimize table t1,t2,t3 extended errors
 #
 #create table t1(a int);
-#--error 1064
+#--error ER_PARSE_ERROR
 #analyze table t1 extended;
-#--error 1064
+#--error ER_PARSE_ERROR
 #optimize table t1 extended;
 #drop table t1;
 
