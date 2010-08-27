@@ -1,3 +1,8 @@
+SET @orig_lock_wait_timeout= @@innodb_lock_wait_timeout;
+SELECT @orig_lock_wait_timeout;
+@orig_lock_wait_timeout
+50
+SET GLOBAL innodb_lock_wait_timeout=2;
 DROP TABLE IF EXISTS t1;
 CREATE TABLE t1 (
 id INT NOT NULL
@@ -18,6 +23,7 @@ ERROR HY000: Lock wait timeout exceeded; try restarting transaction
 UPDATE t1 SET id=id + 1;
 COMMIT;
 DROP TABLE t1;
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 START TRANSACTION;
 DROP TABLE IF EXISTS `test`.`t1`;
 COMMIT;
