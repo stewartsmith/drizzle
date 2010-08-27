@@ -32,6 +32,7 @@
 #include <boost/program_options.hpp>
 #include <drizzled/module/option_map.h>
 #include <cstdio>
+#include <cerrno>
 
 namespace po= boost::program_options;
 using namespace drizzled;
@@ -186,9 +187,11 @@ public:
              S_IRUSR|S_IWUSR);
     if (fd < 0)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, _("fail open() fn=%s er=%s\n"),
                     sysvar_logging_query_filename,
-                    strerror(errno));
+                    errmsg);
       return;
     }
 

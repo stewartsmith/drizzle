@@ -1,6 +1,8 @@
 set global innodb_support_xa=default;
 set session innodb_support_xa=default;
 SET SESSION STORAGE_ENGINE = InnoDB;
+SET @orig_lock_wait_timeout= @@innodb_lock_wait_timeout;
+SET GLOBAL innodb_lock_wait_timeout=2;
 drop table if exists t1,t2,t3,t1m,t1i,t2m,t2i,t4;
 create table t1 (
 c_id int not null default '0',
@@ -483,7 +485,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int DEFAULT NULL
-) ENGINE=InnoDB COMMENT='123'
+) ENGINE=InnoDB COMMENT='123' COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (a CHAR(2), KEY (a)) ENGINE = InnoDB;
 INSERT INTO t1 VALUES ('uk'),('bg');
@@ -941,7 +943,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` text,
   KEY `a` (`a`(255))
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (
 a INT,
@@ -1154,7 +1156,7 @@ t1	CREATE TABLE `t1` (
   `b` varchar(4) NOT NULL,
   UNIQUE KEY `bb` (`b`),
   UNIQUE KEY `aa` (`a`(1))
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (id int, type char(6), d int, INDEX idx(id,d)) ENGINE=InnoDB;
 INSERT INTO t1 VALUES 
@@ -1274,7 +1276,7 @@ drop table t1;
 CREATE TABLE t1 (a INT NOT NULL, b INT NOT NULL, PRIMARY KEY (a,b)) engine=innodb;
 CREATE TABLE t2 (c INT NOT NULL, d INT NOT NULL, PRIMARY KEY (c,d),
 CONSTRAINT c2 FOREIGN KEY f2 (c) REFERENCES t1 (a,b) ON UPDATE NO ACTION) engine=innodb;
-ERROR 42000: Incorrect foreign key definition for 'f2': Key reference and table reference don't match
+ERROR 42000: Incorrect foreign key definition for 'c2': Key reference and table reference don't match
 CREATE TABLE t2 (c INT NOT NULL, d INT NOT NULL, PRIMARY KEY (c,d),
 CONSTRAINT c2 FOREIGN KEY (c) REFERENCES t1 (a,b) ON UPDATE NO ACTION) engine=innodb;
 ERROR 42000: Incorrect foreign key definition for 'c2': Key reference and table reference don't match
@@ -1302,9 +1304,9 @@ t2	CREATE TABLE `t2` (
   PRIMARY KEY (`c`,`d`),
   CONSTRAINT `c1` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON DELETE NO ACTION,
   CONSTRAINT `c2` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,
-  CONSTRAINT `t2_ibfk_1` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,
-  CONSTRAINT `t2_ibfk_2` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION
-) ENGINE=InnoDB
+  CONSTRAINT `f3` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,
+  CONSTRAINT `t2_ibfk_4` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t2;
 DROP TABLE t1;
 create table t1 (a int auto_increment primary key) engine=innodb;
@@ -1349,4 +1351,5 @@ ALTER TABLE t1 CHANGE id id2 INT;
 
 DROP TABLE t2;
 DROP TABLE t1;
+SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 End of 5.1 tests

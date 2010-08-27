@@ -252,7 +252,6 @@ explain extended select conv(130,16,10);
 explain extended select hex(130);
 explain extended select binary 'HE';
 explain extended select collation(conv(130,16,10));
-explain extended select coercibility(conv(130,16,10));
 explain extended select length('\n\t\r\b\0\_\%\\');
 explain extended select concat('monty',' was here ','again');
 explain extended select length('hello');

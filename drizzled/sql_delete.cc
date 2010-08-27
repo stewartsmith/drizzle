@@ -80,7 +80,6 @@ bool mysql_delete(Session *session, TableList *table_list, COND *conds,
     List<Item>   fields;
     List<Item>   all_fields;
 
-    memset(&tables, 0, sizeof(tables));
     tables.table = table;
     tables.alias = table_list->alias;
 

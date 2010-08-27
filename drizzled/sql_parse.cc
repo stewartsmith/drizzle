@@ -44,6 +44,7 @@
 
 #include "drizzled/plugin/logging.h"
 #include "drizzled/plugin/query_rewrite.h"
+#include "drizzled/plugin/query_cache.h"
 #include "drizzled/plugin/authorization.h"
 #include "drizzled/optimizer/explain_plan.h"
 #include "drizzled/pthread_globals.h"
@@ -476,9 +477,7 @@ mysql_execute_command(Session *session)
 
   /* now we are ready to execute the statement */
   res= lex->statement->execute();
-
   session->set_proc_info("query end");
-
   /*
     The return value for ROW_COUNT() is "implementation dependent" if the
     statement is not DELETE, INSERT or UPDATE, but -1 is what JDBC and ODBC
@@ -492,7 +491,6 @@ mysql_execute_command(Session *session)
 
   return (res || session->is_error());
 }
-
 bool execute_sqlcom_select(Session *session, TableList *all_tables)
 {
   LEX	*lex= session->lex;
@@ -540,7 +538,13 @@ bool execute_sqlcom_select(Session *session, TableList *all_tables)
     {
       if (!result && !(result= new select_send()))
         return true;
+
+      /* Init the Query Cache plugin */
+      plugin::QueryCache::prepareResultset(session); 
       res= handle_select(session, lex, result, 0);
+      /* Send the Resultset to the cache */
+      plugin::QueryCache::setResultset(session); 
+
       if (result != lex->result)
         delete result;
     }
@@ -715,13 +719,22 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   uint64_t start_time= my_getsystime();
   lex_start(session);
   session->reset_for_next_command();
-
+  /* Check if the Query is Cached if and return true if yes
+   * TODO the plugin has to make sure that the query is cacheble
+   * by setting the query_safe_cache param to TRUE
+   */
+  bool res= true;
+  if (plugin::QueryCache::isCached(session))
+  {
+    res= plugin::QueryCache::sendCachedResultset(session);
+  }
+  if (not res)
+  {
+    return;
+  }
   LEX *lex= session->lex;
-
   Lex_input_stream lip(session, inBuf, length);
-
   bool err= parse_sql(session, &lip);
-
   if (!err)
   {
     {
@@ -731,9 +744,9 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
                                  session->thread_id,
                                  const_cast<const char *>(session->db.empty() ? "" : session->db.c_str()));
         // Implement Views here --Brian
-
         /* Actually execute the query */
-        try {
+        try 
+        {
           mysql_execute_command(session);
         }
         catch (...)
@@ -749,7 +762,6 @@ void mysql_parse(Session *session, const char *inBuf, uint32_t length)
   {
     assert(session->is_error());
   }
-
   lex->unit.cleanup();
   session->set_proc_info("freeing items");
   session->end_statement();

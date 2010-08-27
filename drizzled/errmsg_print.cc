@@ -24,6 +24,7 @@
 
 #include "config.h"
 
+#include <drizzled/definitions.h>
 #include <drizzled/errmsg_print.h>
 #include <drizzled/plugin/error_message.h>
 
@@ -35,8 +36,9 @@ namespace drizzled
 
 void sql_perror(const char *message)
 {
-  // is stderr threadsafe?
-  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s", message, strerror(errno));
+  char errmsg[STRERROR_MAX];
+  strerror_r(errno, errmsg, sizeof(errmsg));
+  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s", message, errmsg);
 }
 
 bool errmsg_printf (int priority, char const *format, ...)

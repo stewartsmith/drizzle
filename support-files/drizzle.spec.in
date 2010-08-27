@@ -133,7 +133,6 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/filesort_info.h
 %{_includedir}/drizzled/foreign_key.h
 %{_includedir}/drizzled/function/additive_op.h
-%{_includedir}/drizzled/function/coercibility.h
 %{_includedir}/drizzled/function/field.h
 %{_includedir}/drizzled/function/find_in_set.h
 %{_includedir}/drizzled/function/found_rows.h
@@ -402,7 +401,6 @@ you will need to install %{name}-devel.
 %{_includedir}/drizzled/sql_string.h
 %{_includedir}/drizzled/sql_table.h
 %{_includedir}/drizzled/sql_union.h
-%{_includedir}/drizzled/stacktrace.h
 %{_includedir}/drizzled/statement.h
 %{_includedir}/drizzled/statement/alter_schema.h
 %{_includedir}/drizzled/statement/alter_table.h

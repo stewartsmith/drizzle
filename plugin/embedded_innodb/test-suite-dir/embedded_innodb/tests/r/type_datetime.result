@@ -183,7 +183,7 @@ t1	CREATE TABLE `t1` (
   `dt` datetime DEFAULT '1962-03-03 00:00:00',
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
 insert into t1 (da, dt) values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 (da, dt) values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
@@ -394,7 +394,7 @@ t1	CREATE TABLE `t1` (
   `dt` datetime DEFAULT '1962-03-03 00:00:00',
   `pk` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
 insert into t1 (da, dt) values ('2007-03-23 13:49:38','2007-03-23 13:49:38');
 insert into t1 (da, dt) values ('2007-03-23 13:49:38','2007-03-23 13:49:38');

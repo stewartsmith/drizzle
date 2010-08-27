@@ -88,7 +88,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/filesort_info.h \
 			      drizzled/foreign_key.h \
 			      drizzled/function/additive_op.h \
-			      drizzled/function/coercibility.h \
 			      drizzled/function/field.h \
 			      drizzled/function/find_in_set.h \
 			      drizzled/function/found_rows.h \
@@ -372,7 +371,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/sql_string.h \
 			      drizzled/sql_table.h \
 			      drizzled/sql_union.h \
-			      drizzled/stacktrace.h \
 			      drizzled/statement.h \
 			      drizzled/statement/alter_schema.h \
 			      drizzled/statement/alter_table.h \
@@ -507,7 +505,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/filesort.cc \
 				 drizzled/foreign_key.cc \
 				 drizzled/function/additive_op.cc \
-				 drizzled/function/coercibility.cc \
 				 drizzled/function/field.cc \
 				 drizzled/function/find_in_set.cc \
 				 drizzled/function/found_rows.cc \
@@ -733,7 +730,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/sql_union.cc \
 				 drizzled/sql_update.cc \
 				 drizzled/sql_yacc.yy \
-				 drizzled/stacktrace.cc \
 				 drizzled/statement/alter_schema.cc \
 				 drizzled/statement/alter_table.cc \
 				 drizzled/statement/analyze.cc \

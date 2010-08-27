@@ -320,7 +320,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `col1` int NOT NULL DEFAULT '99',
   `col2` varchar(6) NOT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 INSERT INTO t1 VALUES (1, 'hello');
 INSERT INTO t1 (col2) VALUES ('hello2');
 INSERT INTO t1 (col2) VALUES (NULL);
@@ -427,7 +427,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` bigint NOT NULL,
   `b` date NOT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1(a int, b timestamp);
 alter table t1 add primary key(a);
@@ -437,7 +437,7 @@ t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
   `b` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1(a int, b timestamp default 20050102030405);
 alter table t1 add primary key(a);
@@ -447,7 +447,7 @@ t1	CREATE TABLE `t1` (
   `a` int NOT NULL,
   `b` timestamp NULL DEFAULT '2005-01-02 03:04:05',
   PRIMARY KEY (`a`)
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (date date not null);
 create table t2 select date from t1;
@@ -455,7 +455,7 @@ show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
   `date` date NOT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t2,t1;
 create table t1 (i int)
 comment='123456789*123456789*123456789*123456789*123456789*123456789*';
@@ -463,7 +463,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `i` int DEFAULT NULL
-) ENGINE=DEFAULT COMMENT='123456789*123456789*123456789*123456789*123456789*123456789*'
+) ENGINE=DEFAULT COMMENT='123456789*123456789*123456789*123456789*123456789*123456789*' COLLATE = utf8_general_ci
 drop table t1;
 create table t1(col1 int, col2 int, 
 col3 int, col4 int,

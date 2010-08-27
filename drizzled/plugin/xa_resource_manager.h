@@ -21,6 +21,8 @@
 #ifndef DRIZZLED_PLUGIN_XA_RESOURCE_MANAGER_H
 #define DRIZZLED_PLUGIN_XA_RESOURCE_MANAGER_H
 
+#include <boost/unordered_set.hpp>
+
 namespace drizzled
 {
 
@@ -69,12 +71,14 @@ public:
     return doXaRecover(append_to, len);
   }
 
+  typedef ::boost::unordered_set<my_xid> commit_list_set;
   /** 
    * The below static class methods wrap the interaction
    * of the vector of registered XA storage engines.
    */
   static int commitOrRollbackXID(XID *xid, bool commit);
-  static int recoverAllXids(HASH *commit_list);
+  static int recoverAllXids();
+  static int recoverAllXids(const commit_list_set& commit_list);
 
   /* Class Methods for operating on plugin */
   static bool addPlugin(plugin::XaResourceManager *manager);

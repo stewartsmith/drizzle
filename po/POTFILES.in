@@ -44,7 +44,6 @@ drizzled/sql_base.cc
 drizzled/sql_select.cc
 drizzled/sql_table.cc
 drizzled/sql_yacc.cc
-drizzled/stacktrace.cc
 drizzled/statement/alter_table.cc
 drizzled/table.cc
 drizzled/table_share.cc
@@ -70,6 +69,7 @@ plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_stats/logging_stats.cc
 plugin/md5/md5.cc
+plugin/memcached_query_cache/memcached_qc.cc
 plugin/memcached_stats/analysis_table.cc
 plugin/memcached_stats/memcached_stats.cc
 plugin/memcached_stats/stats_table.cc

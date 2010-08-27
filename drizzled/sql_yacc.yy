@@ -696,7 +696,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SET_VAR
 %token  SHARE_SYM
 %token  SHOW
-%token  SHUTDOWN
 %token  SIMPLE_SYM                    /* SQL-2003-N */
 %token  SNAPSHOT_SYM
 %token  SPECIFIC_SYM                  /* SQL-2003-R */
@@ -1395,12 +1394,13 @@ key_def:
           {
             LEX *lex=Lex;
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-            Key *key= new Foreign_key($4.str ? $4 : $1, lex->col_list,
+            Key *key= new Foreign_key($1.str ? $1 : $4, lex->col_list,
                                       $8,
                                       lex->ref_list,
                                       statement->fk_delete_opt,
                                       statement->fk_update_opt,
                                       statement->fk_match_option);
+
             statement->alter_info.key_list.push_back(key);
             key= new Key(Key::MULTIPLE, $1.str ? $1 : $4,
                          &default_key_create_info, 1,
@@ -2256,7 +2256,8 @@ alter_list_item:
         | DROP FOREIGN KEY_SYM opt_ident
           {
             statement::AlterTable *statement= (statement::AlterTable *)Lex->statement;
-
+            statement->alter_info.drop_list.push_back(new AlterDrop(AlterDrop::FOREIGN_KEY,
+                                                                    $4.str));
             statement->alter_info.flags.set(ALTER_DROP_INDEX);
             statement->alter_info.flags.set(ALTER_FOREIGN_KEY);
           }
@@ -3003,6 +3004,7 @@ function_call_keyword:
             {
               DRIZZLE_YYABORT;
             }
+            Lex->setCacheable(false);
           }
         | DATE_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_date_typecast($3); }
@@ -3064,6 +3066,7 @@ function_call_keyword:
             {
               DRIZZLE_YYABORT;
             }
+            Lex->setCacheable(false);
           }
         | YEAR_SYM '(' expr ')'
           { $$= new (YYSession->mem_root) Item_func_year($3); }
@@ -3091,6 +3094,7 @@ function_call_nonkeyword:
         | CURDATE optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_local();
+            Lex->setCacheable(false);
           }
         | DATE_ADD_INTERVAL '(' expr ',' INTERVAL_SYM expr interval ')' %prec INTERVAL_SYM
           { $$= new (YYSession->mem_root) Item_date_add_interval($3,$6,$7,0); }
@@ -3101,10 +3105,12 @@ function_call_nonkeyword:
         | NOW_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_now_local();
+            Lex->setCacheable(false);
           }
         | NOW_SYM '(' expr ')'
           {
             $$= new (YYSession->mem_root) Item_func_now_local($3);
+            Lex->setCacheable(false);
           }
         | POSITION_SYM '(' bit_expr IN_SYM expr ')'
           { $$ = new (YYSession->mem_root) Item_func_locate($5,$3); }
@@ -3162,9 +3168,15 @@ function_call_nonkeyword:
             }
           }
         | SYSDATE optional_braces
-          { $$= new (YYSession->mem_root) Item_func_sysdate_local(); }
+          { 
+            $$= new (YYSession->mem_root) Item_func_sysdate_local(); 
+            Lex->setCacheable(false);
+          }
         | SYSDATE '(' expr ')'
-          { $$= new (YYSession->mem_root) Item_func_sysdate_local($3); }
+          { 
+            $$= new (YYSession->mem_root) Item_func_sysdate_local($3); 
+            Lex->setCacheable(false);
+          }
         | TIMESTAMP_ADD '(' interval_time_stamp ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_date_add_interval($7,$5,$3,0); }
         | TIMESTAMP_DIFF '(' interval_time_stamp ',' expr ',' expr ')'
@@ -3172,10 +3184,12 @@ function_call_nonkeyword:
         | UTC_DATE_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_curdate_utc();
+            Lex->setCacheable(false);
           }
         | UTC_TIMESTAMP_SYM optional_braces
           {
             $$= new (YYSession->mem_root) Item_func_now_utc();
+            Lex->setCacheable(false);
           }
         ;
 
@@ -3196,6 +3210,7 @@ function_call_conflict:
             {
               DRIZZLE_YYABORT;
             }
+            Lex->setCacheable(false);
 	  }
         | IF '(' expr ',' expr ',' expr ')'
           { $$= new (YYSession->mem_root) Item_func_if($3,$5,$7); }
@@ -3276,6 +3291,7 @@ function_call_generic:
             {
               DRIZZLE_YYABORT;
             }
+            Lex->setCacheable(false);
           }
         ;
 
@@ -3384,10 +3400,12 @@ variable_aux:
           ident_or_text SET_VAR expr
           {
             $$= new Item_func_set_user_var($1, $3);
+            Lex->setCacheable(false);
           }
         | ident_or_text
           {
             $$= new Item_func_get_user_var(*YYSession, $1);
+            Lex->setCacheable(false);
           }
         | '@' opt_var_ident_type ident_or_text opt_component
           {
@@ -4355,6 +4373,7 @@ into_destination:
           OUTFILE TEXT_STRING_filesystem
           {
             LEX *lex= Lex;
+            lex->setCacheable(false);
             if (!(lex->exchange= new file_exchange($2.str, 0)) ||
                 !(lex->result= new select_export(lex->exchange)))
               DRIZZLE_YYABORT;
@@ -4365,6 +4384,7 @@ into_destination:
             LEX *lex=Lex;
             if (!lex->describe)
             {
+              lex->setCacheable(false);
               if (!(lex->exchange= new file_exchange($2.str,1)))
                 DRIZZLE_YYABORT;
               if (!(lex->result= new select_dump(lex->exchange)))
@@ -4372,7 +4392,7 @@ into_destination:
             }
           }
         | select_var_list_init
-          { }
+          {Lex->setCacheable(false);}
         ;
 
 /*
@@ -5939,7 +5959,6 @@ keyword_sp:
         | SESSION_SYM              {}
         | SIMPLE_SYM               {}
         | SHARE_SYM                {}
-        | SHUTDOWN                 {}
         | SNAPSHOT_SYM             {}
         | SQL_BUFFER_RESULT        {}
         | STATUS_SYM               {}

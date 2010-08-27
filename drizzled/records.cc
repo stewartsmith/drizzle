@@ -53,7 +53,6 @@ void ReadRecord::init_read_record_idx(Session *,
                                       uint32_t idx)
 {
   table_arg->emptyRecord();
-  memset(this, 0, sizeof(*this));
   table= table_arg;
   cursor=  table->cursor;
   record= table->getInsertRecord();
@@ -75,7 +74,6 @@ void ReadRecord::init_read_record(Session *session_arg,
 {
   internal::IO_CACHE *tempfile;
 
-  memset(this, 0, sizeof(*this));
   session= session_arg;
   table= table_arg;
   cursor= table->cursor;

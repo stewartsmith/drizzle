@@ -99,15 +99,9 @@ public:
   uint32_t max_supported_keys()          const { return MAX_KEY; }
   uint32_t max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
 
-  uint32_t index_flags(enum  ha_key_alg algorithm) const
+  uint32_t index_flags(enum  ha_key_alg ) const
   {
-    return ((algorithm == HA_KEY_ALG_BTREE) ?
-            HA_READ_NEXT |
-            HA_READ_PREV |
-            HA_READ_ORDER |
-            HA_READ_RANGE :
-            HA_ONLY_WHOLE_INDEX |
-            HA_KEY_SCAN_NOT_ROR);
+    return ( HA_ONLY_WHOLE_INDEX | HA_KEY_SCAN_NOT_ROR);
   }
 
   bool doDoesTableExist(Session& session, const TableIdentifier &identifier);
@@ -259,10 +253,9 @@ Cursor *ha_heap::clone(memory::Root *)
 }
 
 
-const char *ha_heap::index_type(uint32_t inx)
+const char *ha_heap::index_type(uint32_t )
 {
-  return ((table_share->getKeyInfo(inx).algorithm == HA_KEY_ALG_BTREE) ?
-          "BTREE" : "HASH");
+  return ("HASH");
 }
 
 
@@ -285,11 +278,6 @@ const char *ha_heap::index_type(uint32_t inx)
 void ha_heap::set_keys_for_scanning(void)
 {
   btree_keys.reset();
-  for (uint32_t i= 0 ; i < table->getShare()->sizeKeys() ; i++)
-  {
-    if (table->key_info[i].algorithm == HA_KEY_ALG_BTREE)
-      btree_keys.set(i);
-  }
 }
 
 
@@ -298,9 +286,10 @@ void ha_heap::update_key_stats()
   for (uint32_t i= 0; i < table->getShare()->sizeKeys(); i++)
   {
     KeyInfo *key= &table->key_info[i];
+
     if (!key->rec_per_key)
       continue;
-    if (key->algorithm != HA_KEY_ALG_BTREE)
+
     {
       if (key->flags & HA_NOSAME)
         key->rec_per_key[key->key_parts-1]= 1;
@@ -648,8 +637,6 @@ ha_rows ha_heap::records_in_range(uint32_t inx, key_range *min_key,
                                   key_range *max_key)
 {
   KeyInfo *key= &table->key_info[inx];
-  if (key->algorithm == HA_KEY_ALG_BTREE)
-    return hp_rb_records_in_range(file, inx, min_key, max_key);
 
   if (!min_key || !max_key ||
       min_key->length != max_key->length ||
@@ -765,29 +752,14 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
     keydef[key].flag=      (pos->flags & (HA_NOSAME | HA_NULL_ARE_EQUAL));
     keydef[key].seg=       seg;
 
-    switch (pos->algorithm) {
-    case HA_KEY_ALG_UNDEF:
-    case HA_KEY_ALG_HASH:
-      keydef[key].algorithm= HA_KEY_ALG_HASH;
-      mem_per_row_keys+= sizeof(char*) * 2; // = sizeof(HASH_INFO)
-      break;
-    case HA_KEY_ALG_BTREE:
-      keydef[key].algorithm= HA_KEY_ALG_BTREE;
-      mem_per_row_keys+=sizeof(TREE_ELEMENT)+pos->key_length+sizeof(char*);
-      break;
-    default:
-      assert(0); // cannot happen
-    }
+    // case HA_KEY_ALG_HASH:
+    keydef[key].algorithm= HA_KEY_ALG_HASH;
+    mem_per_row_keys+= sizeof(char*) * 2; // = sizeof(HASH_INFO)
 
     for (; key_part != key_part_end; key_part++, seg++)
     {
       Field *field= key_part->field;
 
-      if (pos->algorithm == HA_KEY_ALG_BTREE)
-      {
-	seg->type= field->key_type();
-      }
-      else
       {
         if ((seg->type = field->key_type()) != (int) HA_KEYTYPE_TEXT &&
             seg->type != HA_KEYTYPE_VARTEXT1 &&

@@ -12,5 +12,5 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` int DEFAULT NULL
-) ENGINE=FILESYSTEM FILE='../filesystem_ln/basic_create_table.data'
+) ENGINE=FILESYSTEM FILE='../filesystem_ln/basic_create_table.data' COLLATE = utf8_general_ci
 DROP TABLE t1;

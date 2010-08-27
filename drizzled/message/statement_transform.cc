@@ -916,14 +916,10 @@ transformTableDefinitionToSql(const Table &table,
   destination.append("TABLE ", 6);
   if (with_schema)
   {
-    destination.push_back(quoted_identifier);
-    destination.append(table.schema());
-    destination.push_back(quoted_identifier);
+    append_escaped_string(&destination, table.schema(), quoted_identifier);
     destination.push_back('.');
   }
-  destination.push_back(quoted_identifier);
-  destination.append(table.name());
-  destination.push_back(quoted_identifier);
+  append_escaped_string(&destination, table.name(), quoted_identifier);
   destination.append(" (\n", 3);
 
   enum TransformSqlError result= NONE;
@@ -935,8 +931,10 @@ transformTableDefinitionToSql(const Table &table,
     if (x != 0)
       destination.append(",\n", 2);
 
+    destination.append("  ");
+
     result= transformFieldDefinitionToSql(field, destination, sql_variant);
-    
+
     if (result != NONE)
       return result;
   }
@@ -982,18 +980,21 @@ transformTableDefinitionToSql(const Table &table,
   /* Add ENGINE = " clause */
   if (table.has_engine())
   {
-    destination.append("\nENGINE = ", 10);
+    destination.append(" ENGINE=", 8);
     destination.append(table.engine().name());
 
     size_t num_engine_options= table.engine().options_size();
+    if (num_engine_options > 0)
+      destination.append(" ", 1);
     for (size_t x= 0; x < num_engine_options; ++x)
     {
       const Engine::Option &option= table.engine().options(x);
-      destination.push_back('\n');
       destination.append(option.name());
-      destination.append(" = ", 3);
+      destination.append("='", 2);
       destination.append(option.state());
-      destination.push_back('\n');
+      destination.append("'", 1);
+      if(x != num_engine_options-1)
+        destination.append(", ", 2);
     }
   }
 
@@ -1015,23 +1016,14 @@ transformTableOptionsToSql(const Table::TableOptions &options,
 
   if (options.has_comment())
   {
-    destination.append("\nCOMMENT = '", 12);
-    destination.append(options.comment());
-    destination.push_back('\'');
+    destination.append(" COMMENT=", 9);
+    append_escaped_string(&destination, options.comment());
   }
 
   if (options.has_collation())
   {
-    destination.append("\nCOLLATE = ", 11);
+    destination.append(" COLLATE = ", 11);
     destination.append(options.collation());
-  }
-
-  if (options.has_auto_increment())
-  {
-    ss << options.auto_increment();
-    destination.append("\nAUTOINCREMENT_OFFSET = ", 24);
-    destination.append(ss.str());
-    ss.clear();
   }
 
   if (options.has_data_file_name())
@@ -1064,10 +1056,11 @@ transformTableOptionsToSql(const Table::TableOptions &options,
     ss.clear();
   }
 
-  if (options.has_auto_increment_value())
+  if (options.has_user_set_auto_increment_value()
+      && options.has_auto_increment_value())
   {
     ss << options.auto_increment_value();
-    destination.append("\nAUTO_INCREMENT = ", 18);
+    destination.append(" AUTO_INCREMENT=", 16);
     destination.append(ss.str());
     ss.clear();
   }
@@ -1100,17 +1093,24 @@ transformIndexDefinitionToSql(const Table::Index &index,
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
+  destination.append("  ", 2);
+
   if (index.is_primary())
     destination.append("PRIMARY ", 8);
   else if (index.is_unique())
     destination.append("UNIQUE ", 7);
 
   destination.append("KEY ", 4);
-  destination.push_back(quoted_identifier);
-  destination.append(index.name());
-  destination.push_back(quoted_identifier);
-  destination.append(" (", 2);
-  
+  if (! (index.is_primary() && index.name().compare("PRIMARY")==0))
+  {
+    destination.push_back(quoted_identifier);
+    destination.append(index.name());
+    destination.push_back(quoted_identifier);
+    destination.append(" (", 2);
+  }
+  else
+    destination.append("(", 1);
+
   size_t num_parts= index.index_part_size();
   for (size_t x= 0; x < num_parts; ++x)
   {
@@ -1146,6 +1146,30 @@ transformIndexDefinitionToSql(const Table::Index &index,
     }
   }
   destination.push_back(')');
+
+  switch (index.type())
+  {
+  case Table::Index::UNKNOWN_INDEX:
+    break;
+  case Table::Index::BTREE:
+    destination.append(" USING BTREE", 12);
+    break;
+  case Table::Index::RTREE:
+    destination.append(" USING RTREE", 12);
+    break;
+  case Table::Index::HASH:
+    destination.append(" USING HASH", 11);
+    break;
+  case Table::Index::FULLTEXT:
+    destination.append(" USING FULLTEXT", 15);
+    break;
+  }
+
+  if (index.has_comment())
+  {
+    destination.append(" COMMENT ", 9);
+    append_escaped_string(&destination, index.comment());
+  }
 
   return NONE;
 }
@@ -1198,7 +1222,7 @@ transformForeignKeyConstraintDefinitionToSql(const Table::ForeignKeyConstraint &
   for (ssize_t x= 0; x < fkey.column_names_size(); ++x)
   {
     if (x != 0)
-      destination.push_back(',');
+      destination.append(", ");
 
     append_escaped_string(&destination, fkey.column_names(x),
                           quoted_identifier);
@@ -1213,7 +1237,7 @@ transformForeignKeyConstraintDefinitionToSql(const Table::ForeignKeyConstraint &
   for (ssize_t x= 0; x < fkey.references_columns_size(); ++x)
   {
     if (x != 0)
-      destination.push_back(',');
+      destination.append(", ");
 
     append_escaped_string(&destination, fkey.references_columns(x),
                           quoted_identifier);
@@ -1242,35 +1266,59 @@ transformFieldDefinitionToSql(const Table::Field &field,
                               enum TransformSqlVariant sql_variant)
 {
   char quoted_identifier= '`';
+  char quoted_default;
+
   if (sql_variant == ANSI)
     quoted_identifier= '"';
 
-  destination.push_back(quoted_identifier);
-  destination.append(field.name());
-  destination.push_back(quoted_identifier);
+  if (sql_variant == DRIZZLE)
+    quoted_default= '\'';
+  else
+    quoted_default= quoted_identifier;
+
+  append_escaped_string(&destination, field.name(), quoted_identifier);
 
   Table::Field::FieldType field_type= field.type();
 
   switch (field_type)
   {
     case Table::Field::DOUBLE:
-    destination.append(" DOUBLE", 7);
+    destination.append(" double", 7);
+    if (field.has_numeric_options()
+        && field.numeric_options().has_precision())
+    {
+      stringstream ss;
+      ss << "(" << field.numeric_options().precision() << ",";
+      ss << field.numeric_options().scale() << ")";
+      destination.append(ss.str());
+    }
     break;
   case Table::Field::VARCHAR:
     {
-      destination.append(" VARCHAR(", 9);
+      if (field.string_options().has_collation()
+          && field.string_options().collation().compare("binary") == 0)
+        destination.append(" varbinary(", 11);
+      else
+        destination.append(" varchar(", 9);
+
       stringstream ss;
       ss << field.string_options().length() << ")";
       destination.append(ss.str());
     }
     break;
   case Table::Field::BLOB:
-    destination.append(" BLOB", 5);
+    {
+      if (field.string_options().has_collation()
+          && field.string_options().collation().compare("binary") == 0)
+        destination.append(" blob", 5);
+      else
+        destination.append(" text", 5);
+    }
     break;
   case Table::Field::ENUM:
     {
       size_t num_field_values= field.enumeration_values().field_value_size();
-      destination.append(" ENUM(", 6);
+      destination.append(" enum(", 6);
       for (size_t x= 0; x < num_field_values; ++x)
       {
         const string &type= field.enumeration_values().field_value(x);
@@ -1286,14 +1334,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
       break;
     }
   case Table::Field::INTEGER:
-    destination.append(" INT", 4);
+    destination.append(" int", 4);
     break;
   case Table::Field::BIGINT:
-    destination.append(" BIGINT", 7);
+    destination.append(" bigint", 7);
     break;
   case Table::Field::DECIMAL:
     {
-      destination.append(" DECIMAL(", 9);
+      destination.append(" decimal(", 9);
       stringstream ss;
       ss << field.numeric_options().precision() << ",";
       ss << field.numeric_options().scale() << ")";
@@ -1301,13 +1349,13 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
     break;
   case Table::Field::DATE:
-    destination.append(" DATE", 5);
+    destination.append(" date", 5);
     break;
   case Table::Field::TIMESTAMP:
-    destination.append(" TIMESTAMP",  10);
+    destination.append(" timestamp",  10);
     break;
   case Table::Field::DATETIME:
-    destination.append(" DATETIME",  9);
+    destination.append(" datetime",  9);
     break;
   }
 
@@ -1322,13 +1370,25 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-
-  if (! (field.has_constraints() &&
-         field.constraints().is_nullable()))
+  if (field.type() == Table::Field::BLOB ||
+      field.type() == Table::Field::VARCHAR)
   {
-    destination.append(" NOT", 4);
+    if (field.string_options().has_collation()
+        && (field.string_options().collation().compare("binary")
+            && field.string_options().collation().compare("utf8_general_ci")))
+    {
+      destination.append(" COLLATE ", 9);
+      destination.append(field.string_options().collation());
+    }
   }
-  destination.append(" NULL", 5);
+
+  if (field.has_constraints() &&
+      ! field.constraints().is_nullable())
+  {
+    destination.append(" NOT NULL", 9);
+  }
+  else if (field.type() == Table::Field::TIMESTAMP)
+    destination.append(" NULL", 5);
 
   if (field.type() == Table::Field::INTEGER || 
       field.type() == Table::Field::BIGINT)
@@ -1341,46 +1401,49 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
   }
 
-  if (field.type() == Table::Field::BLOB ||
-      field.type() == Table::Field::VARCHAR)
-  {
-    if (field.string_options().has_collation())
-    {
-      destination.append(" COLLATE ", 9);
-      destination.append(field.string_options().collation());
-    }
-  }
-
   if (field.options().has_default_value())
   {
     destination.append(" DEFAULT ", 9);
-    destination.push_back(quoted_identifier);
-    destination.append(field.options().default_value());
-    destination.push_back(quoted_identifier);
+    append_escaped_string(&destination, field.options().default_value());
   }
-
-  if (field.options().has_default_bin_value())
+  else if (field.options().has_default_expression())
+  {
+    destination.append(" DEFAULT ", 9);
+    destination.append(field.options().default_expression());
+  }
+  else if (field.options().has_default_bin_value())
   {
     const string &v= field.options().default_bin_value();
-    destination.append(" DEFAULT 0x", 11);
-    for (size_t x= 0; x < v.length(); x++)
+    if (v.length() == 0)
+      destination.append(" DEFAULT ''", 11);
+    else
     {
-      printf("%.2x", *(v.c_str() + x));
+      destination.append(" DEFAULT 0x", 11);
+      for (size_t x= 0; x < v.length(); x++)
+      {
+        char hex[3];
+        snprintf(hex, sizeof(hex), "%.2X", *(v.c_str() + x));
+        destination.append(hex, 2);
+      }
     }
   }
+  else if (field.options().has_default_null()
+           && field.options().default_null()
+           && field.type() != Table::Field::BLOB)
+  {
+    destination.append(" DEFAULT NULL", 13);
+  }
 
-  if (field.has_options() && field.options().has_update_value())
+  if (field.has_options() && field.options().has_update_expression())
   {
     destination.append(" ON UPDATE ", 11);
-    destination.append(field.options().update_value());
+    destination.append(field.options().update_expression());
   }
 
   if (field.has_comment())
   {
     destination.append(" COMMENT ", 9);
-    destination.push_back(quoted_identifier);
-    destination.append(field.comment());
-    destination.push_back(quoted_identifier);
+    append_escaped_string(&destination, field.comment(), quoted_default);
   }
   return NONE;
 }

@@ -51,7 +51,7 @@ bool statement::CreateTable::execute()
     if (create_info.db_type == NULL)
     {
       my_error(ER_UNKNOWN_STORAGE_ENGINE, MYF(0), 
-               create_table_message.name().c_str());
+               create_table_message.engine().name().c_str());
 
       return true;
     }

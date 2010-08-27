@@ -1627,14 +1627,14 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` enum(' ','a','b') NOT NULL
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a enum (' ','a','b ') not null default 'b ');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` enum(' ','a','b') NOT NULL DEFAULT 'b'
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (a enum ('0','1'));
 insert into t1 set a='foobar';
@@ -1655,7 +1655,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` enum('ä','1','2') NOT NULL DEFAULT 'ä'
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (
 a INT  default 1,
@@ -1686,7 +1686,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `a` enum('ä','ö','ü') DEFAULT 'ü'
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 select a from t1 order by a;
 a
 ä
@@ -1710,7 +1710,7 @@ Table	Create Table
 t1	CREATE TABLE `t1` (
   `f1` int DEFAULT NULL,
   `f2` enum('Y','N') DEFAULT NULL
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1(russian enum('E','F','E�F','F�E') NOT NULL DEFAULT'E');
 ERROR HY000: Corrupt or invalid table definition: 
@@ -1719,7 +1719,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `denormal` enum('E','F','E,F','F,E') NOT NULL DEFAULT 'E'
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1(russian_deviant enum('E','F','E�F','F,E') NOT NULL DEFAULT'E');
 ERROR HY000: Corrupt or invalid table definition: 

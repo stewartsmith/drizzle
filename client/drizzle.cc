@@ -1,6 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
+ *  Copyright (C) 2010 Vijay Samuel
  *  Copyright (C) 2008 MySQL
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -1775,15 +1776,18 @@ try
   /* call the SIGWINCH handler to get the default term width */
   window_resize(0);
 #endif
+  std::vector<char> output_buff;
+  output_buff.resize(512);
 
-  put_info(_("Welcome to the Drizzle client..  Commands end with ; or \\g."),
-           INFO_INFO,0,0);
+  snprintf(&output_buff[0], output_buff.size(), 
+           _("Welcome to the Drizzle client..  Commands end with %s or \\g."), 
+           delimiter);
+
+  put_info(&output_buff[0], INFO_INFO, 0, 0);
 
   glob_buffer= new string();
   glob_buffer->reserve(512);
 
-  std::vector<char> output_buff;
-  output_buff.resize(512);
   snprintf(&output_buff[0], output_buff.size(),
           _("Your Drizzle connection id is %u\nServer version: %s\n"),
           drizzle_con_thread_id(&con),
@@ -2776,10 +2780,17 @@ com_help(string *buffer, const char *)
 {
   register int i, j;
   char buff[32], *end;
+  std::vector<char> output_buff;
+  output_buff.resize(512);
 
   put_info(_("List of all Drizzle commands:"), INFO_INFO,0,0);
   if (!named_cmds)
-    put_info(_("Note that all text commands must be first on line and end with ';'"),INFO_INFO,0,0);
+  {
+    snprintf(&output_buff[0], output_buff.size(),
+             _("Note that all text commands must be first on line and end with '%s' or \\g"),
+             delimiter);
+    put_info(&output_buff[0], INFO_INFO, 0, 0);
+  }
   for (i = 0; commands[i].getName(); i++)
   {
     end= strcpy(buff, commands[i].getName());

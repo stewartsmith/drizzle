@@ -107,24 +107,11 @@ extern const char *my_thread_name(void);
 
 /* All thread specific variables are in the following struct */
 
-/*
-  Drizzle can survive with 32K, but some glibc libraries require > 128K stack
-  to resolve hostnames. Also recursive stored procedures needs stack.
-*/
-#define DEFAULT_THREAD_STACK	(256*INT32_C(1024))
-
-/*
-  Keep track of shutdown,signal, and main threads so that my_end() will not
-  report errors with them
-*/
-
-/* Which kind of thread library is in use */
-
-#define THD_LIB_OTHER 1
-#define THD_LIB_NPTL  2
-#define THD_LIB_LT    4
-
-extern uint32_t thd_lib_detected;
+/**
+  A default thread stack size of zero means that we are going to use
+  the OS defined thread stack size (this varies from OS to OS).
+ */
+#define DEFAULT_THREAD_STACK	0
 
 } /* namespace internal */
 } /* namespace drizzled */

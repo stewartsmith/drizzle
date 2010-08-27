@@ -229,7 +229,7 @@ bool volatile shutdown_in_progress;
 char *opt_scheduler_default;
 char *opt_scheduler= NULL;
 
-size_t my_thread_stack_size= 65536;
+size_t my_thread_stack_size= 0;
 
 /*
   Legacy global plugin::StorageEngine. These will be removed (please do not add more).
@@ -590,15 +590,7 @@ err:
 void set_user(const char *user, passwd *user_info_arg)
 {
   assert(user_info_arg != 0);
-  /*
-    We can get a SIGSEGV when calling initgroups() on some systems when NSS
-    is configured to use LDAP and the server is statically linked.  We set
-    calling_initgroups as a flag to the SIGSEGV handler that is then used to
-    output a specific message to help the user resolve this problem.
-  */
-  calling_initgroups= true;
   initgroups((char*) user, user_info_arg->pw_gid);
-  calling_initgroups= false;
   if (setgid(user_info_arg->pw_gid) == -1)
   {
     sql_perror("setgid");
@@ -947,7 +939,7 @@ int init_server_components(module::Registry &plugins)
     global_system_variables.storage_engine= engine;
   }
 
-  if (plugin::XaResourceManager::recoverAllXids(0))
+  if (plugin::XaResourceManager::recoverAllXids())
   {
     unireg_abort(1);
   }

@@ -26,6 +26,9 @@
 #
 
 eval SET SESSION STORAGE_ENGINE = $engine_type;
+SET @orig_lock_wait_timeout= @@innodb_lock_wait_timeout; 
+SET GLOBAL innodb_lock_wait_timeout=2;
+
 
 --disable_warnings
 drop table if exists t1,t2,t3,t1m,t1i,t2m,t2i,t4;
@@ -1090,5 +1093,7 @@ ALTER TABLE t1 CHANGE id id2 INT;
 
 DROP TABLE t2;
 DROP TABLE t1;
+
+SET innodb_lock_wait_timeout=@orig_lock_wait_timeout ;
 
 --echo End of 5.1 tests

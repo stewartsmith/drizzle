@@ -276,6 +276,7 @@ void lex_end(LEX *lex)
   delete lex->result;
 
   lex->result= 0;
+  lex->setCacheable(true);
 
   if (lex->statement) 
     delete lex->statement;
@@ -1867,7 +1868,8 @@ LEX::LEX()
     charset(NULL),
     sql_command(SQLCOM_END), 
     option_type(OPT_DEFAULT), 
-    is_lex_started(0)
+    is_lex_started(0),
+    cacheable(true)
 {
   reset_query_tables_list(true);
   statement= NULL;

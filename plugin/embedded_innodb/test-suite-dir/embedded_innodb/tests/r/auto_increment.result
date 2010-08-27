@@ -159,7 +159,7 @@ t1	CREATE TABLE `t1` (
   `a` int NOT NULL AUTO_INCREMENT,
   `b` int DEFAULT NULL,
   PRIMARY KEY (`a`) USING BTREE
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 update t1 set a=0 where b=5;
 select * from t1 order by b;
 a	b
@@ -312,7 +312,7 @@ t1	CREATE TABLE `t1` (
   `t1_id` int NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`t1_id`) USING BTREE,
   KEY `t1_name` (`t1_name`(191)) USING BTREE
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=1000
 DROP TABLE `t1`;
 create table t1(a int not null auto_increment primary key);
 create table t2(a int not null auto_increment primary key, t1a int);

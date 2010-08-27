@@ -219,7 +219,7 @@ t1	CREATE TABLE `t1` (
   `c36` varchar(3) DEFAULT NULL,
   `c37` varchar(10) DEFAULT NULL,
   `c38` varchar(10) DEFAULT NULL
-) ENGINE=DEFAULT
+) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 select 
 case 'str' when 'STR' then 'str' when null then 'null' end as c01,

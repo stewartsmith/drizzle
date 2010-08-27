@@ -4,7 +4,7 @@ count(*)
 43
 show create table INNODB_STATUS;
 Table	Create Table
-INNODB_STATUS	CREATE TABLE `innodb_status` (
+INNODB_STATUS	CREATE TABLE `INNODB_STATUS` (
   `VARIABLE_NAME` varchar(256) NOT NULL,
   `VARIABLE_VALUE` varchar(256) NOT NULL
-) ENGINE=FunctionEngine
+) ENGINE=FunctionEngine COLLATE = utf8_general_ci

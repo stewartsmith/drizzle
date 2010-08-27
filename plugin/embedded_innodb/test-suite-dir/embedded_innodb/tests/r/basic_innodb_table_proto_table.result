@@ -1,10 +1,10 @@
 show create table data_dictionary.innodb_table_definitions;
 Table	Create Table
 innodb_table_definitions	CREATE TABLE `innodb_table_definitions` (
-  `table_name` varbinary(192) DEFAULT NULL,
+  `table_name` varbinary(192),
   `message` blob,
   PRIMARY KEY (`table_name`) USING BTREE
-) ENGINE=InnoDB
+) ENGINE=InnoDB COLLATE = binary
 select * from data_dictionary.innodb_table_definitions;
 table_name	message
 use data_dictionary;

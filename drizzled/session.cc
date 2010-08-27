@@ -212,7 +212,11 @@ Session::Session(plugin::Client *client_arg) :
   mysys_var= 0;
   scoreboard_index= -1;
   dbug_sentry=Session_SENTRY_MAGIC;
-  cleanup_done= abort_on_warning= no_warnings_for_error= false;
+  cleanup_done= abort_on_warning= no_warnings_for_error= false;  
+
+  /* query_cache init */
+  query_cache_key= "";
+  resultset= NULL;
 
   /* Variables with default values */
   proc_info="login";
@@ -645,6 +649,9 @@ bool Session::executeStatement()
   main_da.reset_diagnostics_area();
 
   if (client->readCommand(&l_packet, &packet_length) == false)
+    return false;
+
+  if (killed == KILL_CONNECTION)
     return false;
 
   if (packet_length == 0)
@@ -1475,6 +1482,8 @@ void Session::end_statement()
 {
   /* Cleanup SQL processing state to reuse this statement in next query. */
   lex_end(lex);
+  query_cache_key= ""; // reset the cache key
+  resetResultsetMessage();
 }
 
 bool Session::copy_db_to(char **p_db, size_t *p_db_length)

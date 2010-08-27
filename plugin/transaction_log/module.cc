@@ -40,6 +40,8 @@
 #include "hexdump_transaction_message.h"
 #include "background_worker.h"
 
+#include <errno.h>
+
 #include <drizzled/plugin/plugin.h>
 #include <drizzled/session.h>
 #include <drizzled/set_var.h>
@@ -78,11 +80,11 @@ static bool sysvar_transaction_log_checksum_enabled= false;
  * Numeric option controlling the sync/flush behaviour of the transaction
  * log.  Options are:
  *
- * TransactionLog::SYNC_METHOD_OS == 0            ... let OS do sync'ing
- * TransactionLog::SYNC_METHOD_EVERY_WRITE == 1   ... sync on every write
- * TransactionLog::SYNC_METHOD_EVERY_SECOND == 2  ... sync at most once a second
+ * TransactionLog::FLUSH_FREQUENCY_OS == 0            ... let OS do sync'ing
+ * TransactionLog::FLUSH_FREQUENCY_EVERY_WRITE == 1   ... sync on every write
+ * TransactionLog::FLUSH_FREQUENCY_EVERY_SECOND == 2  ... sync at most once a second
  */
-static uint32_t sysvar_transaction_log_sync_method= 0;
+static uint32_t sysvar_transaction_log_flush_frequency= 0;
 /**
  * Transaction Log plugin system variable - Number of slots to create
  * for managing write buffers
@@ -128,9 +130,9 @@ static int init(drizzled::module::Context &context)
 {
   const module::option_map &vm= context.getOptions();
 
-  if (vm.count("sync-method"))
+  if (vm.count("flush-frequency"))
   {
-    if (sysvar_transaction_log_sync_method > 2)
+    if (sysvar_transaction_log_flush_frequency > 2)
     {
       errmsg_printf(ERRMSG_LVL_ERROR, _("Invalid value for sync-method\n"));
       exit(-1);
@@ -170,13 +172,15 @@ static int init(drizzled::module::Context &context)
   if (sysvar_transaction_log_enabled)
   {
     transaction_log= new (nothrow) TransactionLog(string(sysvar_transaction_log_file),
-                                                  sysvar_transaction_log_sync_method,
+                                                  sysvar_transaction_log_flush_frequency,
                                                   sysvar_transaction_log_checksum_enabled);
 
     if (transaction_log == NULL)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLog instance.  Got error: %s\n"), 
-                    strerror(errno));
+                    errmsg);
       return 1;
     }
     else
@@ -194,8 +198,10 @@ static int init(drizzled::module::Context &context)
     transaction_log_index= new (nothrow) TransactionLogIndex(*transaction_log);
     if (transaction_log_index == NULL)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogIndex instance.  Got error: %s\n"), 
-                    strerror(errno));
+                    errmsg);
       return 1;
     }
     else
@@ -216,8 +222,10 @@ static int init(drizzled::module::Context &context)
                                                                  sysvar_transaction_log_num_write_buffers);
     if (transaction_log_applier == NULL)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to allocate the TransactionLogApplier instance.  Got error: %s\n"), 
-                    strerror(errno));
+                    errmsg);
       return 1;
     }
     context.add(transaction_log_applier);
@@ -313,8 +321,8 @@ static DRIZZLE_SYSVAR_BOOL(enable_checksum,
                            NULL, /* update func */
                            false /* default */);
 
-static DRIZZLE_SYSVAR_UINT(sync_method,
-                           sysvar_transaction_log_sync_method,
+static DRIZZLE_SYSVAR_UINT(flush_frequency,
+                           sysvar_transaction_log_flush_frequency,
                            PLUGIN_VAR_OPCMDARG,
                            N_("0 == rely on operating system to sync log file (default), "
                               "1 == sync file at each transaction write, "
@@ -354,8 +362,8 @@ static void init_options(drizzled::module::option_context &context)
   context("use-replicator",
           po::value<string>(),
           N_("Name of the replicator plugin to use (default='default_replicator')")); 
-  context("sync-method",
-          po::value<uint32_t>(&sysvar_transaction_log_sync_method)->default_value(0),
+  context("flush-frequency",
+          po::value<uint32_t>(&sysvar_transaction_log_flush_frequency)->default_value(0),
           N_("0 == rely on operating system to sync log file (default), 1 == sync file at each transaction write, 2 == sync log file once per second"));
   context("num-write-buffers",
           po::value<uint32_t>(&sysvar_transaction_log_num_write_buffers)->default_value(8),
@@ -367,7 +375,7 @@ static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(truncate_debug),
   DRIZZLE_SYSVAR(file),
   DRIZZLE_SYSVAR(enable_checksum),
-  DRIZZLE_SYSVAR(sync_method),
+  DRIZZLE_SYSVAR(flush_frequency),
   DRIZZLE_SYSVAR(num_write_buffers),
   DRIZZLE_SYSVAR(use_replicator),
   NULL

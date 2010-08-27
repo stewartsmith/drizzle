@@ -3237,7 +3237,10 @@ xtPublic void myxt_static_convert_table_name(XTThreadPtr XT_UNUSED(self), char *
 
 xtPublic void myxt_static_convert_file_name(char *from, char *to, size_t to_len)
 {
-  TableIdentifier::filename_to_tablename(from, to, to_len);
+	uint32_t len = TableIdentifier::filename_to_tablename(from, to, to_len);
+	if (len >= to_len)
+		len = to_len-1;
+	to[len] = 0;
 }
 
 xtPublic int myxt_strcasecmp(char * a, char *b)

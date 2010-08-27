@@ -22,6 +22,7 @@
  */
 
 #include "config.h"
+#include <drizzled/definitions.h>
 #include <drizzled/gettext.h>
 #include <drizzled/replication_services.h>
 #include <drizzled/algorithm/crc32.h>
@@ -250,8 +251,10 @@ int main(int argc, char* argv[])
     result= coded_input->ReadRaw(buffer, (int) length);
     if (result == false)
     {
+      char errmsg[STRERROR_MAX];
+      strerror_r(errno, errmsg, sizeof(errmsg));
       fprintf(stderr, _("Could not read transaction message.\n"));
-      fprintf(stderr, _("GPB ERROR: %s.\n"), strerror(errno));
+      fprintf(stderr, _("GPB ERROR: %s.\n"), errmsg);
       string hexdump;
       hexdump.reserve(length * 4);
       bytesToHexdumpFormat(hexdump, reinterpret_cast<const unsigned char *>(buffer), length);

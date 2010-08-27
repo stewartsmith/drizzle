@@ -4,7 +4,7 @@ dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl Which version of the canonical setup we're using
-AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.146])
+AC_DEFUN([PANDORA_CANONICAL_VERSION],[0.150])
 
 AC_DEFUN([PANDORA_FORCE_DEPEND_TRACKING],[
   AC_ARG_ENABLE([fat-binaries],
@@ -146,6 +146,8 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_SYS_LARGEFILE
   PANDORA_CLOCK_GETTIME
 
+  AC_CHECK_HEADERS(sys/socket.h)
+
   # off_t is not a builtin type
   AC_CHECK_SIZEOF(off_t, 4)
   AS_IF([test "$ac_cv_sizeof_off_t" -eq 0],[
@@ -202,12 +204,12 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_HAVE_GCC_ATOMICS
 
+  save_CFLAGS="${CFLAGS}"
+  CFLAGS="${CFLAGS} -Werror"
+  PANDORA_CHECK_VISIBILITY
+  CFLAGS="${save_CFLAGS}"
   m4_if(PCT_USE_VISIBILITY,[yes],[
-    dnl We need to inject error into the cflags to test if visibility works or not
-    save_CFLAGS="${CFLAGS}"
-    CFLAGS="${CFLAGS} -Werror"
-    PANDORA_VISIBILITY
-    CFLAGS="${save_CFLAGS}"
+    PANDORA_ENABLE_VISIBILITY
   ])
 
   PANDORA_HEADER_ASSERT
@@ -232,9 +234,12 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
     GETTEXT_PACKAGE=$PACKAGE
     AC_CHECK_LIB(intl, libintl_gettext)
     AC_SUBST([GETTEXT_PACKAGE])
-    AS_IF([test "x${USE_NLS}" = "xyes"],
-          [AC_DEFINE([ENABLE_NLS],[1],[Turn on language support])])
+    AS_IF([test "x${USE_NLS}" = "xyes" -a "x${pandora_have_intltool}" = "xyes"],
+          [AC_DEFINE([ENABLE_NLS],[1],[Turn on language support])
+           AC_CONFIG_FILES([po/Makefile.in])
+      ])
   ])
+  AM_CONDITIONAL(BUILD_PO,[test "x${USE_NLS}" = "xyes" -a "x${pandora_have_intltool}" = "xyes"])
 
   AS_IF([test "x${gl_LIBOBJS}" != "x"],[
     AS_IF([test "$GCC" = "yes"],[
@@ -251,6 +256,65 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
 
   PANDORA_USE_PIPE
 
+  AH_TOP([
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+/* _SYS_FEATURE_TESTS_H is Solaris, _FEATURES_H is GCC */
+#if defined( _SYS_FEATURE_TESTS_H) || defined(_FEATURES_H)
+#error "You should include config.h as your first include file"
+#endif
+
+#include "config/top.h"
+])
+  mkdir -p config
+  cat > config/top.h.stamp <<EOF_CONFIG_TOP
+
+#if defined(i386) && !defined(__i386__)
+#define __i386__
+#endif
+
+#if defined(_FILE_OFFSET_BITS)
+# undef _FILE_OFFSET_BITS
+#endif
+EOF_CONFIG_TOP
+
+  diff config/top.h.stamp config/top.h >/dev/null 2>&1 || mv config/top.h.stamp config/top.h
+  rm -f config/top.h.stamp
+
+  AH_BOTTOM([
+#if defined(__cplusplus)
+# include CSTDINT_H
+# include CINTTYPES_H
+#else
+# include <stdint.h>
+# include <inttypes.h>
+#endif
+
+#if !defined(HAVE_ULONG) && !defined(__USE_MISC)
+typedef unsigned long int ulong;
+#endif
+
+/* To hide the platform differences between MS Windows and Unix, I am
+ * going to use the Microsoft way and #define the Microsoft-specific
+ * functions to the unix way. Microsoft use a separate subsystem for sockets,
+ * but Unix normally just use a filedescriptor on the same functions. It is
+ * a lot easier to map back to the unix way with macros than going the other
+ * way without side effect ;-)
+ */
+#ifdef TARGET_OS_WINDOWS
+#define random() rand()
+#define srandom(a) srand(a)
+#define get_socket_errno() WSAGetLastError()
+#else
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define closesocket(a) close(a)
+#define get_socket_errno() errno
+#endif
+
+#endif /* __CONFIG_H__ */
+  ])
 
   AM_CFLAGS="${AM_CFLAGS} ${CC_WARNINGS} ${CC_PROFILING} ${CC_COVERAGE}"
   AM_CXXFLAGS="${AM_CXXFLAGS} ${CXX_WARNINGS} ${CC_PROFILING} ${CC_COVERAGE}"

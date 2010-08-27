@@ -168,7 +168,7 @@ show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
   `round(1, 6)` int NOT NULL
-) ENGINE=X
+) ENGINE=X COLLATE = utf8_general_ci
 select * from t1;
 round(1, 6)
 1

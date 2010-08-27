@@ -268,7 +268,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 create temporary table t2 like t1;
 show create table t2;
 Table	Create Table
@@ -276,7 +276,7 @@ t2	CREATE TEMPORARY TABLE `t2` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 create temporary table t3 select * from t1;
 show create table t3;
 Table	Create Table
@@ -284,7 +284,7 @@ t3	CREATE TEMPORARY TABLE `t3` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify c varchar(10);
 show create table t1;
 Table	Create Table
@@ -292,7 +292,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify v char(10);
 show create table t1;
 Table	Create Table
@@ -300,7 +300,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify t varchar(50);
 show create table t1;
 Table	Create Table
@@ -308,7 +308,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(10) DEFAULT NULL,
   `c` varchar(10) DEFAULT NULL,
   `t` varchar(50) DEFAULT NULL
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
 *+ *+ *+ *
@@ -324,7 +324,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   KEY `v` (`v`),
   KEY `c` (`c`),
   KEY `t` (`t`(10))
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
 270
@@ -547,7 +547,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   KEY `v` (`v`) USING BTREE,
   KEY `c` (`c`) USING BTREE,
   KEY `t` (`t`(10)) USING BTREE
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
 270
@@ -587,7 +587,7 @@ id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	t	t	43	const	#	Using where
 explain select count(*) from t1 where v like 'a%';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	v	v	43	NULL	#	Using where
+1	SIMPLE	t1	ALL	v	NULL	NULL	NULL	#	Using where
 explain select count(*) from t1 where v between 'a' and 'a ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ref	v	v	43	const	#	Using where
@@ -638,7 +638,7 @@ t1	CREATE TEMPORARY TABLE `t1` (
   KEY `v` (`v`(5)),
   KEY `c` (`c`(5)),
   KEY `t` (`t`(5))
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 (v varchar(16383), key(v(10)));
 show create table t1;
@@ -646,7 +646,7 @@ Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
   `v` varchar(16383) DEFAULT NULL,
   KEY `v` (`v`(10))
-) ENGINE=MEMORY
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 insert into t1 values(repeat('a',16383));
 select length(v) from t1 where v=repeat('a',16383);
 length(v)
