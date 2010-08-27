@@ -23,9 +23,9 @@ CREATE TABLE `t1` (
   primary key (pk)
 ) ENGINE=blitzdb ;
 
---error 1112
+--error ER_UNSUPPORTED_EXTENSION
 ALTER TABLE `t1` DISABLE KEYS;
---error 1112
+--error ER_UNSUPPORTED_EXTENSION
 ALTER TABLE `t1` ENABLE KEYS;
 
 DROP TABLE `t1`;

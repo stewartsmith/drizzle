@@ -183,7 +183,7 @@ drop table t1;
 #
 
 CREATE TABLE t1 (c VARCHAR(10) NOT NULL,i INT PRIMARY KEY NOT NULL AUTO_INCREMENT, UNIQUE (c,i));
---error 1048
+--error ER_BAD_NULL_ERROR
 INSERT INTO t1 (c) VALUES (NULL),(NULL);
 SELECT * FROM t1;
 INSERT INTO t1 (c) VALUES ('a'),('a');
@@ -286,29 +286,29 @@ drop table t1;
 # create dedicated error code for this and
 # and change my_printf_error() to my_error
 
---error 1391
+--error ER_KEY_PART_0
 create table t1 (c char(10), index (c(0)));
 
 #
 # Bug #6126: Duplicate columns in keys should fail
 # Bug #6252: (dup)
 #
---error 1060
+--error ER_DUP_FIELDNAME
 create table t1 (c char(10), index (c,c));
---error 1060
+--error ER_DUP_FIELDNAME
 create table t1 (c1 char(10), c2 char(10), index (c1,c2,c1));
---error 1060
+--error ER_DUP_FIELDNAME
 create table t1 (c1 char(10), c2 char(10), index (c1,c1,c2));
---error 1060
+--error ER_DUP_FIELDNAME
 create table t1 (c1 char(10), c2 char(10), index (c2,c1,c1));
 create table t1 (c1 char(10), c2 char(10));
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c2,c1,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c2,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c1,c2);
 drop table t1;
 
@@ -416,7 +416,7 @@ alter table t1 drop index c2, add index (c2(4),c3(7));
 alter table t1 add primary key (c1, c2), drop primary key;
 alter table t1 drop primary key;
 # Drop is checked first. Primary key must exist.
---error 1091
+--error ER_CANT_DROP_FIELD_OR_KEY
 alter table t1 add primary key (c1, c2), drop primary key;
 show create table t1;
 # Insert non-unique values.
