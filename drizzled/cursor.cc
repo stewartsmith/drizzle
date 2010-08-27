@@ -1358,6 +1358,7 @@ static bool log_row_for_replication(Table* table,
     break;
   case SQLCOM_INSERT:
   case SQLCOM_INSERT_SELECT:
+  case SQLCOM_LOAD:
     /*
      * The else block below represents an 
      * INSERT ... ON DUPLICATE KEY UPDATE that

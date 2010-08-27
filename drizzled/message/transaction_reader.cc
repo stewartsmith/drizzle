@@ -94,20 +94,74 @@ static void printStatement(const message::Statement &statement)
   }
 }
 
+static bool isEndStatement(const message::Statement &statement)
+{
+  switch (statement.type())
+  {
+    case (message::Statement::INSERT):
+    {
+      const message::InsertData &data= statement.insert_data();
+      if (not data.end_segment())
+        return false;
+      break;
+    }
+    case (message::Statement::UPDATE):
+    {
+      const message::UpdateData &data= statement.update_data();
+      if (not data.end_segment())
+        return false;
+      break;
+    }
+    case (message::Statement::DELETE):
+    {
+      const message::DeleteData &data= statement.delete_data();
+      if (not data.end_segment())
+        return false;
+      break;
+    }
+    default:
+      return true;
+  }
+  return true;
+}
+
 static void printTransaction(const message::Transaction &transaction)
 {
+  static uint64_t last_trx_id= 0;
+  bool should_commit= true;
   const message::TransactionContext trx= transaction.transaction_context();
 
   size_t num_statements= transaction.statement_size();
   size_t x;
 
-  cout << "START TRANSACTION;" << endl;
+  /*
+   * One way to determine when a new transaction begins is when the
+   * transaction id changes. We check that here.
+   */
+  if (trx.transaction_id() != last_trx_id)
+    cout << "START TRANSACTION;" << endl;
+
+  last_trx_id= trx.transaction_id();
+
   for (x= 0; x < num_statements; ++x)
   {
     const message::Statement &statement= transaction.statement(x);
+
+    if (should_commit)
+      should_commit= isEndStatement(statement);
+
     printStatement(statement);
   }
-  cout << "COMMIT;" << endl;
+
+  /*
+   * If ALL Statements are end segments, we can commit this Transaction.
+   * We can also check to see if the transaction_id changed, but this
+   * wouldn't work for the last Transaction in the transaction log since
+   * we don't have another Transaction to compare to. Checking for all
+   * end segments (like we do above) covers this case.
+   */
+  if (should_commit)
+    cout << "COMMIT;" << endl;
 }
 
 int main(int argc, char* argv[])
