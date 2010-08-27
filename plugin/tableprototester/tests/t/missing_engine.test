@@ -1,5 +1,5 @@
 
 SHOW TABLES like 't1';
 
---error 1693
+--error ER_CORRUPT_TABLE_DEFINITION
 SHOW CREATE TABLE t1;

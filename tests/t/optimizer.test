@@ -421,7 +421,7 @@ CREATE TABLE `dd` (
 
 INSERT INTO `dd` VALUES (1777795072,NULL,'g',0,'was',-1866203136,'',1,'g');
 
---error 1054
+--error ER_BAD_FIELD_ERROR
 EXPLAIN EXTENDED SELECT
 table2 . `col_enum_not_null_key` AS field1 ,
  table1 . `col_char_1024_key` AS field2

@@ -18,17 +18,17 @@ insert into t1 values (13, 13, 13), (14, 14, 14), (15, 15, 15), (16, 16, 16);
 explain select count (*) from t1;
 
 # overflow
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (2147483648, 1, 1);
 
 # duplicates 
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (1, 0, 0);
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (2, 0, 0);
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (3, 0, 0);
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (4, 0, 0);
 
 # needle in a haystack 
@@ -42,7 +42,7 @@ update t1 set a = 80 where id = 8;
 select * from t1 order by id;
 
 # update the key
---error 1062
+--error ER_DUP_ENTRY
 update t1 set id = 2 where id = 1;
 
 update t1 set id = 17 where id = 1;
@@ -53,7 +53,7 @@ update t1 set id = 21 where id = 5;
 update t1 set id = 22 where id = 6;
 update t1 set id = 23 where id = 7;
 
---error 1062
+--error ER_DUP_ENTRY
 update t1 set id = 20 where id = 8;
 
 # TODO: This is using filesort. Investigate why.
@@ -100,12 +100,12 @@ insert into t1 values (2147483647, 1);
 insert into t1 values (1.8e+18, 2);
 
 # overflow
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (1.8e+19, 3);
 
 insert into t1 values (1,1), (2,2), (3,3), (4,4);
 
---error 1062
+--error ER_DUP_ENTRY
 update t1 set id = 4 where id = 1;
 
 update t1 set id = 10 where id = 1;
@@ -183,9 +183,9 @@ insert into t1 values (2.222, 7);
 insert into t1 values (2.2222, 8);
 select * from t1;
 
---error 1062
+--error ER_DUP_ENTRY
 update t1 set id = 1.11 where id = 1.1;
---error 1062
+--error ER_DUP_ENTRY
 update t1 set id = 2.22 where id = 2.2;
 
 update t1 set id = 3.3 where id = 1.1;
@@ -194,7 +194,7 @@ update t1 set id = 3.333 where id = 1.111;
 update t1 set id = 3.3333 where id = 1.1111;
 select * from t1 order by id;
 
---error 1062
+--error ER_DUP_ENTRY
 update t1 set id = 2.2 where id = 3.3;
 
 delete from t1 where id = 3.3;
@@ -225,7 +225,7 @@ select country from t1 where id = 'fukuoka';
 select country from t1 where id = 'budapest';
 select count (id) from t1;
 
---error 1062
+--error ER_DUP_ENTRY
 update t1 set id = 'dublin' where id = 'geneva';
 update t1 set id = 'berlin', country = 'germany' where id = 'budapest';
 update t1 set id = 'london', country = 'england' where id = 'copenhagen';
@@ -263,9 +263,9 @@ delete from t1 where a = 'ggg';
 delete from t1 where a = 'hhh';
 select * from t1;
 
---error 1062
+--error ER_DUP_ENTRY
 update t1 set a = 'ddd' where a = 'aaa';
---error 1062
+--error ER_DUP_ENTRY
 update t1 set a = 'ccc' where a = 'bbb';
 
 update t1 set a = 'zzz' where a = 'fff';
@@ -289,9 +289,9 @@ select * from t1 where a = '1984-09-23';
 select * from t1 where a = '1984-09-24';
 select * from t1 where a = '1984-09-25';
 
---error 1062
+--error ER_DUP_ENTRY
 update t1 set a = '1984-09-22' where a = '1984-09-25';
---error 1062
+--error ER_DUP_ENTRY
 update t1 set a = '19840922' where a = '1984-09-25';
 
 update t1 set a = '2010-03-10' where a = '1984-09-22';
@@ -384,9 +384,9 @@ drop table t1;
 create table t1 (a int, unique index(a)) engine = blitzdb;
 insert into t1 values (1), (2);
 
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (1);
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (2);
 
 insert into t1 values (NULL);
@@ -404,11 +404,11 @@ drop table t1;
 create table t1 (a varchar(32), unique index(a)) engine = blitzdb;
 insert into t1 values ('a'), ('b'), ('c');
 
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values ('a');
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values ('b');
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values ('c');
 
 insert into t1 values ('f'), ('e'), ('d');
@@ -484,7 +484,7 @@ insert into t1 values (NULL, 1), (NULL, 2), (NULL, 3), (NULL, 4);
 select * from t1;
 select * from t1 where a is NULL;
 insert into t1 values (1, 5), (2, 6);
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (1, 7), (1, 8);
 select * from t1 where a is not NULL;
 delete from t1 where a is NULL;
@@ -522,17 +522,17 @@ drop table t1;
 # | COMPOSITE INDEX CHECK |
 # +-----------------------+
 
---error 1005
+--error ER_CANT_CREATE_TABLE
 create table t1 (a int, b int, c int, d int, primary key(a, b)) engine = blitzdb;
---error 1005
+--error ER_CANT_CREATE_TABLE
 create table t1 (a int, b int, c int, d int, primary key(a, b, c)) engine = blitzdb;
---error 1005
+--error ER_CANT_CREATE_TABLE
 create table t1 (a int, b int, c int, d int, index(a, b)) engine = blitzdb;
---error 1005
+--error ER_CANT_CREATE_TABLE
 create table t1 (a int, b int, c int, d int, index(a, b, c)) engine = blitzdb;
---error 1005
+--error ER_CANT_CREATE_TABLE
 create table t1 (a int, b int, c int, d int, unique(a, b)) engine = blitzdb;
---error 1005
+--error ER_CANT_CREATE_TABLE
 create table t1 (a int, b int, c int, d int, unique(a, b, c)) engine = blitzdb;
 
 # +------------------------------------------+

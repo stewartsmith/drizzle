@@ -31,7 +31,7 @@ drop table t1;
 #
 
 create table t1 (a enum ('0','1') primary key);
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 insert into t1 set a='foobar';
 select * from t1;
 update t1 set a = replace(a,'x','y');
@@ -142,14 +142,14 @@ CREATE TABLE t1 (
   id INT AUTO_INCREMENT PRIMARY KEY,
   c1 ENUM('a', '', 'b')
 );
---error 1691 # 0 is not valid way to insert.  Must use 1-based index of key.
+--error ER_INVALID_ENUM_VALUE # 0 is not valid way to insert.  Must use 1-based index of key.
 INSERT INTO t1 (c1) VALUES (0), ('a'), (''), ('b');
---error 1691 # 0 is not valid way to insert.  Must use 1-based index of key.
+--error ER_INVALID_ENUM_VALUE # 0 is not valid way to insert.  Must use 1-based index of key.
 INSERT INTO t1 (c1) VALUES (0), ('a'), (''), ('b');
 INSERT INTO t1 (c1) VALUES ('a'), ('b');
 SELECT id, c1 + 0, c1 FROM t1;
 
---error 1691 # Bad en
+--error ER_INVALID_ENUM_VALUE # Bad en
 ALTER TABLE t1 CHANGE c1 c1 ENUM('a', '') NOT NULL;
 # Below works because '' was not inserted in any statement above...
 ALTER TABLE t1 CHANGE c1 c1 ENUM('a', 'b') NOT NULL;
@@ -163,9 +163,9 @@ DROP TABLE t1;
 # Bug#28729: Field_enum wrongly reported an error while storing an empty string.
 #
 create table t1(f1 enum('a','b') primary key);
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 insert into t1 values(''),(''),('a'),('b');
---error 1691 # Bad enum
+--error ER_INVALID_ENUM_VALUE # Bad enum
 select * from t1 where f1='';
 drop table t1;
 
@@ -177,7 +177,7 @@ drop table t1;
 CREATE TABLE t1 (c1 ENUM('a', '', 'b') primary key);
 INSERT INTO t1 (c1) VALUES ('b');
 INSERT INTO t1 (c1) VALUES ('');
---error 1691 # Bad enum 0
+--error ER_INVALID_ENUM_VALUE # Bad enum 0
 INSERT INTO t1 (c1) VALUES (0);
 INSERT INTO t1 (c1) VALUES ('a');
 
@@ -193,7 +193,7 @@ DROP TABLE t1,t2;
 #
 
 CREATE TABLE t1(a enum('a','b','c','d'), pk int auto_increment primary key);
---error 1691 # Bad enum 0
+--error ER_INVALID_ENUM_VALUE # Bad enum 0
 INSERT INTO t1 (a) VALUES (4),(1),(0),(3);
 INSERT INTO t1 (a) VALUES (4),(1),(2),(3);
 
@@ -212,9 +212,9 @@ SELECT a FROM t1 WHERE a=0;
 
 ALTER TABLE t1 drop column pk, ADD PRIMARY KEY (a);
 
---error 1691 # Bad enum 0
+--error ER_INVALID_ENUM_VALUE # Bad enum 0
 EXPLAIN SELECT a FROM t1 WHERE a=0;
---error 1691 # Bad enum 0
+--error ER_INVALID_ENUM_VALUE # Bad enum 0
 SELECT a FROM t1 WHERE a=0;
 
 DROP TABLE t1;

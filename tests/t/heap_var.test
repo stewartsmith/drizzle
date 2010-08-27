@@ -51,7 +51,7 @@ enable_query_log;
 
 select count(*) from t1;
 
---error 1062
+--error ER_DUP_ENTRY
 insert into t1 values (100000,100000,NULL,'0123'), (100000,100000,NULL,'0123');
 
 --replace_column 1 #  6 # 7 # 8 # 9 # 10 #

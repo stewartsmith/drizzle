@@ -18,19 +18,19 @@ drop table t1;
 # Test the max number of possible digits
 create table t2 (a decimal(65,0)) engine = blitzdb;
 insert into t2 select repeat(1, 65);
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t2 select repeat(1, 66);
 select * from t2;
 drop table t2;
 
 create table t2 (a decimal(65,8)) engine = blitzdb;
 insert into t2 select repeat(1, 57);
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t2 select repeat(1, 58);
 
 delete from t2;
 
---error 1264 # Out of Range
+--error ER_WARN_DATA_OUT_OF_RANGE # Out of Range
 insert into t2 values (
   -1111111111111111111111111111111111111111111111111111111111
 );
@@ -39,7 +39,7 @@ insert into t2 values (
   1111111111111111111111111111111111111111111111111.11111111
 );
 
---error 1265 # Truncated
+--error ER_WARN_DATA_TRUNCATED # Truncated
 insert into t2 values (
   111111111111111111111111111111111111111111111111.111111111
 );
@@ -94,11 +94,11 @@ drop table t1;
 
 # Exponent overflow bug
 create table t1 (a decimal(10,0)) engine = blitzdb;
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e4294967295");
 select * from t1;
 delete from t1;
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values("1e4294967297");
 select * from t1;
 drop table t1;
