@@ -175,15 +175,15 @@ drop table t1;
 --error ER_PARSE_ERROR
 alter database data_dictionary;
 use data_dictionary;
-#--error 1044
+#--error ER_DBACCESS_DENIED_ERROR
 #drop table tables;
-#--error 1044
+#--error ER_DBACCESS_DENIED_ERROR
 #alter table tables;
 #
 # Bug #9683 INFORMATION_SCH: Creation of temporary table allowed in Information_schema DB
 #
 use data_dictionary;
---error 1044
+--error ER_DBACCESS_DENIED_ERROR
 create temporary table schemas(f1 char(10));
 #
 #
@@ -370,9 +370,9 @@ drop table t1;
 #
 # Bug#30079 A check for "hidden" I_S tables is flawed
 #
-#--error 1109
+#--error ER_UNKNOWN_TABLE
 #show fields from data_dictionary.table_names;
-#--error 1109
+#--error ER_UNKNOWN_TABLE
 #show keys from data_dictionary.table_names;
 
 SET max_heap_table_size = DEFAULT;

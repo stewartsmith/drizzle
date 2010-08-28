@@ -294,9 +294,9 @@ drop table t1, t2;
 #
 
 create table t1 (c1 INT, c2 INT);
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values ('21474836461','21474836461');
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values ('-21474836461','-21474836461');
 select * from t1;
 drop table t1;
@@ -335,7 +335,7 @@ CREATE TEMPORARY TABLE t1 (
   PRIMARY KEY  (id)
 ) ENGINE=MyISAM;
 
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 INSERT INTO t1 VALUES ('0','16307858876001849059');
 
 SELECT CONV('e251273eb74a8ee3', 16, 10);

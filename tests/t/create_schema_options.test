@@ -1,12 +1,12 @@
---error 1699
+--error ER_UNKNOWN_SCHEMA_OPTION
 CREATE DATABASE foo unknown_key=value;
---error 1699
+--error ER_UNKNOWN_SCHEMA_OPTION
 CREATE DATABASE foo unknown_key=value, anotheR_unknown_key;
 SHOW WARNINGS;
---error 1699
+--error ER_UNKNOWN_SCHEMA_OPTION
 CREATE DATABASE foo unknown_key=42;
 
---error 1699
+--error ER_UNKNOWN_SCHEMA_OPTION
 CREATE DATABASE foo unknown_key;
 
 # These will require us to define schema engines

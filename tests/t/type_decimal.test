@@ -174,29 +174,29 @@ insert into t1 values (".1");
 insert into t1 values ("00000000000001");
 insert into t1 values ("+0000000000001");
 insert into t1 values ("-0000000000001");
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ("+111111111.11"),("111111111.11"),("-11111111.11");
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ("-111111111.11"),("+1111111111.11"),("1111111111.11");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e+1000");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e-1000");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("-1e+1000");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e+4294967296");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e-4294967296");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e+18446744073709551615");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e+18446744073709551616");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e-9223372036854775807");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e-9223372036854775809");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("123.4e"),("123.4e+2"),("123.4e-2"),("123e1"),("123e+0");
 select * from t1;
 drop  table t1;
@@ -205,13 +205,13 @@ create table t1 (a decimal(10,2));
 insert into t1 values ("0.0"),("-0.0"),("+0.0"),("01.0"),("+01.0"),("-01.0");
 insert into t1 values ("-.1"),("+.1"),(".1");
 insert into t1 values ("00000000000001"),("+0000000000001"),("-0000000000001");
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ("+111111111.11"),("111111111.11"),("-11111111.11");
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ("-111111111.11"),("+1111111111.11"),("1111111111.11");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e+1000"),("1e-1000"),("-1e+1000");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("123.4e"),("123.4e+2"),("123.4e-2"),("123e1"),("123e+0");
 select * from t1;
 drop  table t1;
@@ -220,13 +220,13 @@ create table t1 (a decimal(10,2));
 insert into t1 values ("0.0"),("-0.0"),("+0.0"),("01.0"),("+01.0"),("-01.0");
 insert into t1 values ("-.1"),("+.1"),(".1");
 insert into t1 values ("00000000000001"),("+0000000000001"),("-0000000000001");
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ("+111111111.11"),("111111111.11"),("-11111111.11");
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ("-111111111.11"),("+1111111111.11"),("1111111111.11");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e+1000"),("1e-1000"),("-1e+1000");
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("123.4e"),("123.4e+2"),("123.4e-2"),("123e1"),("123e+0");
 select * from t1;
 drop  table t1;
@@ -237,18 +237,18 @@ create table t1 (a decimal(10,2));
 insert into t1 values (0.0),("-0.0"),(+0.0),(01.0),(+01.0),(-01.0);
 insert into t1 values (-.1),(+.1),(.1);
 insert into t1 values (00000000000001),(+0000000000001),(-0000000000001);
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values (+111111111.11),(111111111.11),(-11111111.11);
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values (-111111111.11),(+1111111111.11),(1111111111.11);
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values (1e+100),(1e-100),(-1e+100);
 insert into t1 values (123.4e0);
 insert into t1 values (123.4e+2);
 # This INSERT statement will give an error since truncation of a
 # decimal number in Drizzle is an error. See bug#337038 for further
 # details.
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 insert into t1 values (123.4e-2);
 insert into t1 values (123e1);
 insert into t1 values (123e+0);
@@ -263,33 +263,33 @@ drop  table t1;
 #
 
 create table t1 (a decimal);
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values (-99999999999999),(-1),('+1'),('01'),('+00000000000001'),('+12345678901'),(99999999999999);
 select * from t1;
 drop  table t1;
 create table t1 (a decimal);
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values (-99999999999999),(-1),('+1'),('01'),('+00000000000001'),('+1234567890'),(99999999999999);
 select * from t1;
 drop  table t1;
 create table t1 (a decimal);
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values (-99999999999999),(-1),('+1'),('01'),('+00000000000001'),('+1234567890'),(99999999999999);
 select * from t1;
 drop  table t1;
 create table t1 (a decimal);
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values (-99999999999999),(-1),('+1'),('01'),('+00000000000001'),('+1234567890'),(99999999999999);
 select * from t1;
 drop  table t1;
 
 #  Exponent overflow bug
 create table t1(a decimal(10,0));
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values ("1e4294967295");
 select * from t1;
 delete from t1;
---error 1366 incorrect decimal value
+--error ER_TRUNCATED_WRONG_VALUE_FOR_FIELD incorrect decimal value
 insert into t1 values("1e4294967297");
 select * from t1;
 drop table t1;
@@ -298,13 +298,13 @@ drop table t1;
 # Test of wrong decimal type
 #
 
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (a_dec DECIMAL(-1,0));
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (a_dec DECIMAL(-2,1));
---error 1064
+--error ER_PARSE_ERROR
 CREATE TABLE t1 (a_dec DECIMAL(-1,1));
---error 1427
+--error ER_M_BIGGER_THAN_D
 CREATE TABLE t1 (a_dec DECIMAL(0,11));
 
 #
@@ -312,17 +312,17 @@ CREATE TABLE t1 (a_dec DECIMAL(0,11));
 #
 --disable_warnings
 create table t1(a decimal(7,3));
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ('1'),('+1'),('-1'),('0000000001'),('+0000000001'),('-0000000001'),('10'),('+10'),('-10'),('0000000010'),('+0000000010'),('-0000000010'),('100'),('+100'),('-100'),('0000000100'),('+0000000100'),('-0000000100'),('1000'),('+1000'),('-1000'),('0000001000'),('+0000001000'),('-0000001000'),('10000'),('+10000'),('-10000'),('0000010000'),('+0000010000'),('-0000010000'),('100000'),('+100000'),('-100000'),('0000100000'),('+0000100000'),('-0000100000'),('1000000'),('+1000000'),('-1000000'),('0001000000'),('+0001000000'),('-0001000000'),('10000000'),('+10000000'),('-10000000'),('0010000000'),('+0010000000'),('-0010000000'),('100000000'),('+100000000'),('-100000000'),('0100000000'),('+0100000000'),('-0100000000'),('1000000000'),('+1000000000'),('-1000000000'),('1000000000'),('+1000000000'),('-1000000000');
 select * from t1;
 drop table t1;
 create table t1(a decimal(7,3));
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ('1'),('+1'),('-1'),('0000000001'),('+0000000001'),('-0000000001'),('10'),('+10'),('-10'),('0000000010'),('+0000000010'),('-0000000010'),('100'),('+100'),('-100'),('0000000100'),('+0000000100'),('-0000000100'),('1000'),('+1000'),('-1000'),('0000001000'),('+0000001000'),('-0000001000'),('10000'),('+10000'),('-10000'),('0000010000'),('+0000010000'),('-0000010000'),('100000'),('+100000'),('-100000'),('0000100000'),('+0000100000'),('-0000100000'),('1000000'),('+1000000'),('-1000000'),('0001000000'),('+0001000000'),('-0001000000'),('10000000'),('+10000000'),('-10000000'),('0010000000'),('+0010000000'),('-0010000000'),('100000000'),('+100000000'),('-100000000'),('0100000000'),('+0100000000'),('-0100000000'),('1000000000'),('+1000000000'),('-1000000000'),('1000000000'),('+1000000000'),('-1000000000');
 select * from t1;
 drop table t1;
 create table t1(a decimal(7,3));
---error 1264 out of range value
+--error ER_WARN_DATA_OUT_OF_RANGE out of range value
 insert into t1 values ('1'),('+1'),('-1'),('0000000001'),('+0000000001'),('-0000000001'),('10'),('+10'),('-10'),('0000000010'),('+0000000010'),('-0000000010'),('100'),('+100'),('-100'),('0000000100'),('+0000000100'),('-0000000100'),('1000'),('+1000'),('-1000'),('0000001000'),('+0000001000'),('-0000001000'),('10000'),('+10000'),('-10000'),('0000010000'),('+0000010000'),('-0000010000'),('100000'),('+100000'),('-100000'),('0000100000'),('+0000100000'),('-0000100000'),('1000000'),('+1000000'),('-1000000'),('0001000000'),('+0001000000'),('-0001000000'),('10000000'),('+10000000'),('-10000000'),('0010000000'),('+0010000000'),('-0010000000'),('100000000'),('+100000000'),('-100000000'),('0100000000'),('+0100000000'),('-0100000000'),('1000000000'),('+1000000000'),('-1000000000'),('1000000000'),('+1000000000'),('-1000000000');
 --enable_warnings
 select * from t1;
@@ -374,7 +374,7 @@ create table t1 (d decimal);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
---error 1426
+--error ER_TOO_BIG_PRECISION
 create table t1 (d decimal(66,0));
 
 #
@@ -447,7 +447,7 @@ drop table t1;
 #
 # Bug#22183: Unhandled NULL caused server crash
 #
---error 1689 # 1 is not a valid Julian Day Number for SQL date range
+--error ER_ARGUMENT_OUT_OF_RANGE # 1 is not a valid Julian Day Number for SQL date range
 create table t1 as
  select from_days(s) as date,t
  from (select 1 as s,'t' as t union select null, null ) as sub1;
@@ -548,7 +548,7 @@ INSERT INTO t1 VALUES (1234567890, 20);
 # This INSERT statement will give an error since truncation of a
 # decimal number in Drizzle is an error. See bug#337038 for further
 # details.
---error 1265
+--error ER_WARN_DATA_TRUNCATED
 INSERT INTO t1 VALUES (999.99, 5);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;

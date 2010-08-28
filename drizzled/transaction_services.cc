@@ -1594,7 +1594,7 @@ void TransactionServices::setDeleteHeader(message::Statement &statement,
   }
 }
 
-void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
+void TransactionServices::deleteRecord(Session *in_session, Table *in_table, bool use_update_record)
 {
   ReplicationServices &replication_services= ReplicationServices::singleton();
   if (! replication_services.isActive())
@@ -1622,11 +1622,28 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table)
      */
     if (in_table->getShare()->fieldInPrimaryKey(current_field))
     {
-      string_value= current_field->val_str(string_value);
+      if (use_update_record)
+      {
+        /*
+         * Temporarily point to the update record to get its value.
+         * This is pretty much a hack in order to get the PK value from
+         * the update record rather than the insert record. Field::val_str()
+         * should not change anything in Field::ptr, so this should be safe.
+         * We are careful not to change anything in old_ptr.
+         */
+        const unsigned char *old_ptr= current_field->ptr;
+        current_field->ptr= in_table->getUpdateRecord() + static_cast<ptrdiff_t>(old_ptr - in_table->getInsertRecord());
+        string_value= current_field->val_str(string_value);
+        current_field->ptr= const_cast<unsigned char *>(old_ptr);
+      }
+      else
+      {
+        string_value= current_field->val_str(string_value);
+        /**
+         * @TODO Store optional old record value in the before data member
+         */
+      }
       record->add_key_value(string_value->c_ptr(), string_value->length());
-      /**
-       * @TODO Store optional old record value in the before data member
-       */
       string_value->free();
     }
   }

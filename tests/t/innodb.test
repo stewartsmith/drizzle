@@ -157,12 +157,12 @@ insert into t1 values (3);
 select n from t1;
 savepoint savept3;
 rollback to savepoint savept2;
---error 1305
+--error ER_SP_DOES_NOT_EXIST
 rollback to savepoint savept3;
 rollback to savepoint savept2;
 release savepoint `my_savepoint`;
 select n from t1;
--- error 1305
+--error 1305
 rollback to savepoint `my_savepoint`;
 rollback to savepoint savept2;
 insert into t1 values (8);
@@ -184,7 +184,7 @@ insert into t1 values (4);
 flush tables with read lock;
 #
 # Current code can't handle a read lock in middle of transaction
-#--error 1223;
+#--error ER_CANT_UPDATE_WITH_READLOCK
 commit;
 unlock tables;
 commit;
@@ -540,7 +540,7 @@ insert into mysqltest.t3 values(1);
 commit;
 drop database mysqltest;
 # Don't check error message
---error 1049
+--error ER_BAD_DB_ERROR
 show tables from mysqltest;
 
 #
@@ -869,7 +869,7 @@ show create table t2;
 create index id2 on t2 (id);
 show create table t2;
 drop index id2 on t2;
---error 1025,1025
+--error ER_ERROR_ON_RENAME, ER_ERROR_ON_RENAME
 drop index id on t2;
 show create table t2;
 drop table t2;
@@ -923,22 +923,22 @@ drop table t2, t1;
 #
 # Bug #6126: Duplicate columns in keys gives misleading error message
 #
---error 1060
+--error ER_DUP_FIELDNAME
 create table t1 (c char(10), index (c,c)) engine=innodb;
---error 1060
+--error ER_DUP_FIELDNAME
 create table t1 (c1 char(10), c2 char(10), index (c1,c2,c1)) engine=innodb;
---error 1060
+--error ER_DUP_FIELDNAME
 create table t1 (c1 char(10), c2 char(10), index (c1,c1,c2)) engine=innodb;
---error 1060
+--error ER_DUP_FIELDNAME
 create table t1 (c1 char(10), c2 char(10), index (c2,c1,c1)) engine=innodb;
 create table t1 (c1 char(10), c2 char(10)) engine=innodb;
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c2,c1,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c2,c1);
---error 1060
+--error ER_DUP_FIELDNAME
 alter table t1 add key (c1,c1,c2);
 drop table t1;
 
@@ -1197,7 +1197,7 @@ CREATE TABLE t1
  id INT PRIMARY KEY
 ) ENGINE=InnoDB;
 
---error 1005,1005
+--error ER_CANT_CREATE_TABLE, ER_CANT_CREATE_TABLE
 CREATE TEMPORARY TABLE t2
 (
  id INT NOT NULL PRIMARY KEY,
@@ -1251,16 +1251,16 @@ show create table t1;
 drop table t1, t2, t3, t4;
 
 # these should be refused
---error 1071
+--error ER_TOO_LONG_KEY
 create table t1 (col1 varchar(768) primary key)
  engine = innodb;
---error 1071
+--error ER_TOO_LONG_KEY
 create table t2 (col1 varbinary(1024) primary key)
  engine = innodb;
---error 1071
+--error ER_TOO_LONG_KEY
 create table t3 (col1 text, primary key(col1(768)))
  engine = innodb;
---error 1071
+--error ER_TOO_LONG_KEY
 create table t4 (col1 blob, primary key(col1(1024)))
  engine = innodb;
 
@@ -1279,23 +1279,23 @@ CREATE TABLE t2
  CONSTRAINT c1 FOREIGN KEY (v) REFERENCES t1(id)
 ) ENGINE=InnoDB;
 
---error 1452
+--error ER_NO_REFERENCED_ROW_2
 INSERT INTO t2 VALUES(2);
 
 INSERT INTO t1 VALUES(1);
 INSERT INTO t2 VALUES(1);
 
---error 1451
+--error ER_ROW_IS_REFERENCED_2
 DELETE FROM t1 WHERE id = 1;
 
---error 1217
+--error ER_ROW_IS_REFERENCED
 DROP TABLE t1;
 
 SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE t1;
 SET FOREIGN_KEY_CHECKS=1;
 
---error 1452
+--error ER_NO_REFERENCED_ROW_2
 INSERT INTO t2 VALUES(3);
 
 DROP TABLE t2;
@@ -1580,12 +1580,12 @@ set autocommit = 0;
 #
 # S-lock to records (2,2),(4,2), and (6,2) should not be released in a update
 #
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 select * from t1 where a = 2 and b = 2 for update;
 #
 # X-lock to record (1,1),(3,1),(5,1) should not be released in a update
 #
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 connection a;
 commit;
 connection b;
@@ -1715,39 +1715,39 @@ SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
 create table t10(a int not null, b int, primary key(a)) engine=innodb select * from t2 for update;
 
 connection b;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection c;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection d;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection e;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection f;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection g;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection h;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection i;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection j;
---error 1205
+--error ER_LOCK_WAIT_TIMEOUT
 reap;
 
 connection a;
@@ -1767,7 +1767,7 @@ disconnect j;
 drop table t1, t2, t3, t5, t6, t8, t9;
 
 # bug 18934, "InnoDB crashes when table uses column names like DB_ROW_ID"
---error 1005
+--error ER_CANT_CREATE_TABLE
 CREATE TABLE t1 (DB_ROW_ID int) engine=innodb;
 
 #
@@ -1844,7 +1844,7 @@ ALTER TABLE t2 ADD FOREIGN KEY (a) REFERENCES t1 (a) ON DELETE SET NULL;
 --replace_regex /'[^']*test\/#sql-[0-9a-f_]*'/'#sql-temporary'/
 # Embedded server doesn't chdir to data directory
 --replace_result $MYSQLTEST_VARDIR . master-data/ ''
---error 1025
+--error ER_ERROR_ON_RENAME
 ALTER TABLE t2 MODIFY a INT NOT NULL;
 DELETE FROM t1;
 DROP TABLE t2,t1;

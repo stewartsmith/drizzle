@@ -5,7 +5,7 @@
 select 1+2/*hello*/+3;
 select 1 /* long
 multi line comment */;
---error 1065
+--error ER_EMPTY_QUERY
  ;
 select 1 /*!32301 +1 */;
 select 1 /*!72301 +1 */;

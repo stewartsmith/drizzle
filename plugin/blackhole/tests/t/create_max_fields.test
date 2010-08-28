@@ -4104,7 +4104,7 @@ f4096 int
 SHOW CREATE TABLE t1;
 DROP TABLE t1;
 --echo Now, MAX_FIELDS. This fails.
---error 1117
+--error ER_TOO_MANY_FIELDS
 CREATE TABLE t1 (
 f0 int,
 f1 int,

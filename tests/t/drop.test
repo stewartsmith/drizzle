@@ -6,13 +6,13 @@ drop database if exists mysqltest;
 drop database if exists client_test_db;
 --enable_warnings
 
---error 1051
+--error ER_BAD_TABLE_ERROR
 drop table t1;
 create table t1(n int);
 insert into t1 values(1);
 create temporary table t1( n int);
 insert into t1 values(2);
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create table t1(n int);
 drop table t1;
 select * from t1;
@@ -37,14 +37,14 @@ create database mysqltest;
 # (tableN instead on tN)
 #
 use mysqltest;
---error 1051
+--error ER_BAD_TABLE_ERROR
 drop table table1, table2, table3, table4, table5, table6,
 table7, table8, table9, table10, table11, table12, table13,
 table14, table15, table16, table17, table18, table19, table20,
 table21, table22, table23, table24, table25, table26, table27,
 table28;
 
---error 1051
+--error ER_BAD_TABLE_ERROR
 drop table table1, table2, table3, table4, table5, table6,
 table7, table8, table9, table10, table11, table12, table13,
 table14, table15, table16, table17, table18, table19, table20,
@@ -56,24 +56,24 @@ drop database mysqltest;
 
 # test drop/create database and FLUSH TABLES WITH READ LOCK
 flush tables with read lock;
---error 1209,1223
+--error ER_DROP_DB_WITH_READ_LOCK, ER_CANT_UPDATE_WITH_READLOCK
 create database mysqltest;
 unlock tables;
 create database mysqltest;
 show databases;
 flush tables with read lock;
---error 1208,1223
+--error ER_DROP_DB_WITH_READ_LOCK, ER_CANT_UPDATE_WITH_READLOCK
 drop database mysqltest;
 unlock tables;
 drop database mysqltest;
 show databases;
---error 1008
+--error ER_DB_DROP_EXISTS
 drop database mysqltest;
 
 # test create table and FLUSH TABLES WITH READ LOCK
 drop table t1;
 flush tables with read lock;
---error 1223
+--error ER_CANT_UPDATE_WITH_READLOCK
 create table t1(n int);
 unlock tables;
 create table t1(n int);
