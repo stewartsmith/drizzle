@@ -32,7 +32,6 @@
 
 
 static bool kill_in_progress= false;
-//static bool volatile signal_thread_in_use= false;
 extern "C" pthread_handler_t signal_hand(void *);
 
 namespace drizzled
