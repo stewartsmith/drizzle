@@ -125,6 +125,8 @@ static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file= 0;
 
+const string progname= "drizzledump";
+
 string password,
   enclosed,
   escaped,
@@ -277,26 +279,26 @@ static int get_options(void)
                 ! fields_terminated.empty()))
   {
     fprintf(stderr,
-            _("%s: You must use option --tab with --fields-...\n"), internal::my_progname);
+            _("%s: You must use option --tab with --fields-...\n"), progname.c_str());
     return(EX_USAGE);
   }
 
   if (opt_single_transaction && opt_lock_all_tables)
   {
     fprintf(stderr, _("%s: You can't use --single-transaction and "
-                      "--lock-all-tables at the same time.\n"), internal::my_progname);
+                      "--lock-all-tables at the same time.\n"), progname.c_str());
     return(EX_USAGE);
   }
   if (! enclosed.empty() && ! opt_enclosed.empty())
   {
-    fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), internal::my_progname);
+    fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), progname.c_str());
     return(EX_USAGE);
   }
   if ((opt_databases || opt_alldbs) && ! path.empty())
   {
     fprintf(stderr,
             _("%s: --databases or --all-databases can't be used with --tab.\n"),
-            internal::my_progname);
+            progname.c_str());
     return(EX_USAGE);
   }
 
@@ -349,7 +351,7 @@ static void die(int error_num, const char* fmt_reason, ...)
   vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
   va_end(args);
 
-  fprintf(stderr, "%s: %s\n", internal::my_progname, buffer);
+  fprintf(stderr, "%s: %s\n", progname.c_str(), buffer);
   fflush(stderr);
 
   ignore_errors= 0; /* force the exit */
@@ -383,7 +385,7 @@ static void maybe_die(int error_num, const char* fmt_reason, ...)
   vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
   va_end(args);
 
-  fprintf(stderr, "%s: %s\n", internal::my_progname, buffer);
+  fprintf(stderr, "%s: %s\n", progname.c_str(), buffer);
   fflush(stderr);
 
   maybe_exit(error_num);
@@ -1006,7 +1008,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
   else
   {
     verbose_msg(_("%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"),
-                internal::my_progname, drizzle_con_error(&dcon));
+                progname.c_str(), drizzle_con_error(&dcon));
 
     snprintf(query_buff, sizeof(query_buff), "show fields from %s",
              result_table);
@@ -1113,7 +1115,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       if (drizzleclient_query_with_error_report(&dcon, &result, buff, false))
       {
         fprintf(stderr, _("%s: Can't get keys for table %s\n"),
-                internal::my_progname, result_table);
+                progname.c_str(), result_table);
         if (! path.empty())
           fclose(sql_file);
         return false;
@@ -1477,7 +1479,7 @@ static void dump_table(char *table, char *db)
     if (drizzle_result_column_count(&result) != num_fields)
     {
       fprintf(stderr,_("%s: Error in field count for table: %s !  Aborting.\n"),
-              internal::my_progname, result_table);
+              progname.c_str(), result_table);
       error= EX_CONSCHECK;
       drizzle_result_free(&result);
       goto err;
@@ -1521,7 +1523,7 @@ static void dump_table(char *table, char *db)
         {
           fprintf(stderr,
                   _("%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"),
-                  internal::my_progname, result_table, ret, drizzle_con_error(&dcon));
+                  progname.c_str(), result_table, ret, drizzle_con_error(&dcon));
           drizzle_result_free(&result);
           goto err;
         }
@@ -2389,7 +2391,6 @@ int main(int argc, char **argv)
 try
 {
   int exit_code;
-  MY_INIT("drizzledump");
   drizzle_result_st result;
 
   po::options_description commandline_options(N_("Options used only in command line"));
@@ -2566,17 +2567,20 @@ try
   po::notify(vm);  
   
   if ((not vm.count("database-used") && not vm.count("Table-used") 
-    && not opt_alldbs && path.empty())  || (vm.count("help")))
+    && not opt_alldbs && path.empty())
+    || (vm.count("help")) || vm.count("version"))
   {
-    printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), internal::my_progname,
-      VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
+    printf(_("Drizzledump %s build %s, for %s-%s (%s)\n"),
+      drizzle_version(), VERSION, HOST_VENDOR, HOST_OS, HOST_CPU);
+    if (vm.count("version"))
+      exit(0);
     puts("");
     puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
     puts(_("Dumps definitions and data from a Drizzle database server"));
-    printf(_("Usage: %s [OPTIONS] database [tables]\n"), internal::my_progname);
+    printf(_("Usage: %s [OPTIONS] database [tables]\n"), progname.c_str());
     printf(_("OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"),
-          internal::my_progname);
-    printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), internal::my_progname);
+          progname.c_str());
+    printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), progname.c_str());
     cout << long_options;
     if (vm.count("help"))
       exit(0);
@@ -2644,12 +2648,6 @@ try
     }
   }
 
-  if (vm.count("version"))
-  {
-     printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), internal::my_progname,
-       VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
-  }
- 
   if (vm.count("xml"))
   { 
     opt_xml= 1;

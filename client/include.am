@@ -39,9 +39,10 @@ noinst_HEADERS+= \
 
 client_drizzle_SOURCES=		client/drizzle.cc client/linebuffer.cc
 client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
-				${CLIENT_LDADD} \
+				libdrizzle/libdrizzle.la \
 				$(LIBINTL) \
-				$(LIBZ)
+				$(LIBZ) \
+				client/libgetpassword.la
 
 client_drizzledump_SOURCES=	client/drizzledump.cc
 client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}

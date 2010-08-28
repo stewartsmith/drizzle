@@ -66,7 +66,6 @@
 #include <sys/ioctl.h>
 #include <drizzled/configmake.h>
 #include "drizzled/utf8/utf8.h"
-#include "drizzled/internal/my_sys.h"
 #include <cstdlib>
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
@@ -163,7 +162,6 @@ typedef Function drizzle_compentry_func_t;
 using namespace std;
 namespace po=boost::program_options;
 
-const string VER("14.14");
 /* Don't try to make a nice table if the data is too big */
 const uint32_t MAX_COLUMN_LENGTH= 1024;
 
@@ -1353,8 +1351,6 @@ int main(int argc,char *argv[])
 try
 {
 
-  MY_INIT("drizzle");
-
 #if defined(ENABLE_NLS)
 # if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
@@ -1712,9 +1708,9 @@ try
   
   if (vm.count("help") || vm.count("version"))
   {
-    printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s) using readline %s\n"),
-           drizzled::internal::my_progname, VERSION, drizzle_version(),
-           HOST_VENDOR, HOST_OS,
+    printf(_("Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"),
+           drizzle_version(), VERSION,
+           HOST_VENDOR, HOST_OS, HOST_CPU,
            rl_library_version);
     if (vm.count("version"))
       exit(0);
@@ -4094,8 +4090,8 @@ com_status(string *, const char *)
   drizzle_return_t ret;
 
   tee_puts("--------------", stdout);
-  printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s) using readline %s\n"),
-         drizzled::internal::my_progname, VERSION, drizzle_version(),
+  printf(_("Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"),
+         drizzle_version(), VERSION,
          HOST_VENDOR, HOST_OS,
          rl_library_version);
 
