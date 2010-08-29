@@ -710,7 +710,15 @@ int init_common_variables(const char *conf_file_name, int argc,
   internal::load_defaults(conf_file_name, groups, &argc, &argv);
   defaults_argv=argv;
   defaults_argc=argc;
+  string progname(argv[0]);
   get_options(&defaults_argc, defaults_argv);
+
+  if ((user_info= check_user(drizzled_user)))
+  {
+    set_user(drizzled_user, user_info);
+  }
+
+  fix_paths(progname);
 
   current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
@@ -1603,8 +1611,6 @@ static void get_options(int *argc,char **argv)
 
   my_getopt_error_reporter= option_error_reporter;
 
-  string progname(argv[0]);
-
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
 
@@ -1635,7 +1641,6 @@ static void get_options(int *argc,char **argv)
 
   if (drizzled_chroot)
     set_root(drizzled_chroot);
-  fix_paths(progname);
 
   /*
     Set some global variables from the global_system_variables
