@@ -115,7 +115,6 @@ our $path_timefile;
 our $path_snapshot;
 our $path_drizzletest_log;
 our $path_current_test_log;
-our $path_my_basedir;
 
 our $opt_vardir;                 # A path but set directly on cmd line
 our $opt_top_srcdir;
@@ -671,13 +670,10 @@ sub command_line_setup () {
   $glob_mysql_bench_dir= undef
     unless -d $glob_mysql_bench_dir;
 
-  $path_my_basedir=
-    $source_dist ? $glob_mysql_test_dir : $glob_basedir;
-
   $glob_timers= mtr_init_timers();
 
   #
-  # Find the mysqld executable to be able to find the mysqld version
+  # Find the drizzled executable to be able to find the drizzled version
   # number as early as possible
   #
 
@@ -695,7 +691,7 @@ sub command_line_setup () {
 				       "$glob_basedir/sbin/drizzled",
                                        "$glob_builddir/drizzled/drizzled");
 
-    # Use the mysqld found above to find out what features are available
+    # Use the drizzled found above to find out what features are available
     collect_mysqld_features();
   }
   else
@@ -2544,9 +2540,6 @@ sub mysqld_arguments ($$$$) {
   my $prefix= "";               # If drizzletest server arg
 
   mtr_add_arg($args, "%s--no-defaults", $prefix);
-
-  $path_my_basedir= collapse_path($path_my_basedir);
-  mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
 
   if ($opt_engine)
   {

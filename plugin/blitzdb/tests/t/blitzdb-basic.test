@@ -8,13 +8,13 @@ drop table if exists t1, t2;
 create table t1 (a int, b double, c float) engine = blitzdb;
 create table t2 (a int, b text, c blob) engine = blitzdb;
 
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create table t1 (a int, b double, c float) engine = blitzdb;
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create table t2 (a int, b text, c blob) engine = blitzdb;
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create table t1 (a int) engine = blitzdb;
---error 1050
+--error ER_TABLE_EXISTS_ERROR
 create table t2 (a int) engine = blitzdb;
 
 show tables;
@@ -136,7 +136,7 @@ create table t1 (a int not null, b int) engine = blitzdb;
 insert into t1 values (1, NULL), (2, NULL), (3, NULL), (4, NULL);
 insert into t1 values (5, NULL), (6, NULL), (7, NULL), (8, NULL);
 
---error 1048 # NOT NULL Violation
+--error ER_BAD_NULL_ERROR # NOT NULL Violation
 insert into t1 values (NULL, 1);
 
 select * from t1;
@@ -162,9 +162,9 @@ drop table t1;
 
 # Test(12): Boundary Check
 create table t1 (a int) engine = blitzdb;
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values(2147483649);
---error 1264
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values(-2147483649);
 insert into t1 values(2147483647);
 select * from t1;
@@ -177,13 +177,13 @@ insert into t1 select repeat('x', 6);
 insert into t1 select repeat('x', 8);
 insert into t1 select repeat('x', 16);
 insert into t1 select repeat('x', 32);
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 select repeat('x', 33);
 select * from t1;
 
 create table t2 (a varchar(16383)) engine = blitzdb; # Theoretical Max
 insert into t2 select repeat('x', 16383);
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t2 select repeat('x', 16384);
 select count(*) from t2;
 drop table t1, t2;
@@ -192,13 +192,13 @@ drop table t1, t2;
 create table t1 (a varchar(32)) engine = blitzdb; 
 insert into t1 select repeat('あ', 8);
 insert into t1 select repeat('あ', 32);
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t1 select repeat('あ', 33);
 select * from t1;
 
 create table t2 (a varchar(16383)) engine = blitzdb;
 insert into t2 select repeat('値', 16383);
---error 1406
+--error ER_DATA_TOO_LONG
 insert into t2 select repeat('値', 16384);
 select count(*) from t2;
 drop table t1, t2;
