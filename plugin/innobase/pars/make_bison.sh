@@ -20,7 +20,7 @@ set -eu
 TMPFILE=pars0grm.tab.c
 OUTFILE=pars0grm.c
 
-bison -d pars0grm.y
+( cd ../../..; bison -y -d plugin/innobase/pars/pars0grm.y -o plugin/innobase/pars/pars0grm.tab.c )
 mv pars0grm.tab.h ../include/pars0grm.h
 
 sed -e '

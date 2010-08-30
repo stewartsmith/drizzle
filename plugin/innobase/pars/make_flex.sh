@@ -18,10 +18,12 @@
 
 set -eu
 
-TMPFILE=_flex_tmp.c
-OUTFILE=lexyy.c
+cd ../../..
 
-flex -o $TMPFILE pars0lex.l
+TMPFILE=plugin/innobase/pars/_flex_tmp.c
+OUTFILE=plugin/innobase/pars/lexyy.c
+
+flex -o $TMPFILE plugin/innobase/pars/pars0lex.l
 
 # AIX needs its includes done in a certain order, so include "univ.i" first
 # to be sure we get it right.
@@ -30,7 +32,7 @@ echo '#include "univ.i"' > $OUTFILE
 # flex assigns a pointer to an int in one place without a cast, resulting in
 # a warning on Win64.  Add the cast.  Also define some symbols as static.
 sed -e '
-s/'"$TMPFILE"'/'"$OUTFILE"'/;
+s/'`basename $TMPFILE`'/'`basename $OUTFILE`'/;
 s/\(int offset = \)\((yy_c_buf_p) - (yytext_ptr)\);/\1(int)(\2);/;
 s/\(void yy\(restart\|_\(delete\|flush\)_buffer\)\)/static \1/;
 s/\(void yy_switch_to_buffer\)/__attribute__((unused)) static \1/;
