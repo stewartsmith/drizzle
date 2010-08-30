@@ -24,8 +24,4 @@ X	2	1	X	X	1	0
 X	3	1	X	X	1	0
 X	4	1	X	X	1	0
 X	5	1	X	X	1	0
-SET GLOBAL transaction_log_enable= false;
-SHOW VARIABLES LIKE 'transaction_log_enable';
-Variable_name	Value
-transaction_log_enable	ON
 SET GLOBAL transaction_log_truncate_debug= true;

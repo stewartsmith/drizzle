@@ -20,9 +20,5 @@ SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
 --replace_column 1 X 4 X 5 X
 SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
 
-# Verify that the transaction_log_enable sysvar can not be modified
-SET GLOBAL transaction_log_enable= false;
-SHOW VARIABLES LIKE 'transaction_log_enable';
-
 # Truncate the log file to reset for the next test
 --source ../plugin/transaction_log/tests/t/truncate_log.inc

@@ -279,20 +279,12 @@ static void set_truncate_debug(Session *,
   }
 }
 
-static void set_enable(Session *,
-                       drizzle_sys_var *,
-                       void *,
-                       const void *)
-{
-  /* This is a no-op as the transaction log currently can not be enabled/disabled at runtime */
-}
-
 static DRIZZLE_SYSVAR_BOOL(enable,
                            sysvar_transaction_log_enabled,
-                           PLUGIN_VAR_NOCMDARG,
+                           PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
                            N_("Enable transaction log"),
                            NULL, /* check func */
-                           set_enable, /* update func */
+                           NULL, /* update func */
                            false /* default */);
 
 static DRIZZLE_SYSVAR_BOOL(truncate_debug,
