@@ -451,7 +451,10 @@ void plugin_finalize(module::Registry &registry)
       plugin_initialize_vars(module);
 
       if (plugin_initialize(registry, module))
+      {
+        registry.remove(module);
         delete_module(module);
+      }
     }
   }
 }
