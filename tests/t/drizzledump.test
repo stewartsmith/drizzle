@@ -26,16 +26,6 @@ INSERT INTO t1 VALUES ("1\""), ("\"2");
 DROP TABLE t1;
 
 --echo #
---echo # Bug #2634
---echo #
-
-CREATE TABLE t1 (a int);
-INSERT INTO t1 VALUES (1), (2);
---exec $DRIZZLE_DUMP --skip-comments --compatible=mysql40 test t1
---exec $DRIZZLE_DUMP --skip-comments --compatible=mysql323 test t1
-DROP TABLE t1;
-
---echo #
 --echo # Bug #2592 'mysqldump doesn't quote "tricky" names correctly'
 --echo #
 
