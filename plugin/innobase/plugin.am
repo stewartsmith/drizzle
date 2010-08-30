@@ -315,6 +315,7 @@ plugin_innobase_libinnobase_la_SOURCES= \
 # lexyy.c has lots of redundant decls, but it's generated anyway 
 plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_UNREACHED} \
 			${NO_REDUNDANT_DECLS} ${INNOBASE_SKIP_WARNINGS} \
+			-Wno-unused-function -Wno-undef \
 			-I$(top_srcdir)/plugin/innobase/include \
 			-DBUILD_DRIZZLE
 plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/lexyy.c \
