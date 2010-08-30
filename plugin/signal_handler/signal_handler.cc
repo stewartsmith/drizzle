@@ -25,12 +25,13 @@
 #include "drizzled/plugin/daemon.h"
 #include "drizzled/signal_handler.h"
 
+#include "drizzled/drizzled.h"
+
 #include <sys/stat.h>
 #include <fcntl.h>
 
 
 static bool kill_in_progress= false;
-static bool volatile signal_thread_in_use= false;
 extern "C" pthread_handler_t signal_hand(void *);
 
 namespace drizzled
@@ -73,12 +74,8 @@ static void kill_server(void *sig_ptr)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
   else
     errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
-
   close_connections();
-  if (sig != SIGTERM && sig != 0)
-    unireg_abort(1);
-  else
-    unireg_end();
+  clean_up(1);
 }
 
 /**
