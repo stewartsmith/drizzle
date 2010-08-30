@@ -2107,6 +2107,7 @@ sub copy_install_db ($$) {
   my $data_dir=  shift;
 
   mtr_report("Installing \u$type Database");
+  mtr_report("Type: $type data_dir: $data_dir");
 
   # Just copy the installed db from first master
   mtr_copy_dir($master->[0]->{'path_myddir'}, $data_dir);
