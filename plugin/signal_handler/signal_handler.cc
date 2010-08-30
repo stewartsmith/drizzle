@@ -74,8 +74,8 @@ static void kill_server(void *sig_ptr)
     errmsg_printf(ERRMSG_LVL_INFO, _(ER(ER_NORMAL_SHUTDOWN)),internal::my_progname);
   else
     errmsg_printf(ERRMSG_LVL_ERROR, _(ER(ER_GOT_SIGNAL)),internal::my_progname,sig);
-  ready_to_exit= true;
   close_connections();
+  clean_up(1);
 }
 
 /**
