@@ -135,6 +135,7 @@ clean-local:
 	-rm -rf docs/api docs/dev
 
 include config/lint-source.am
+include config/lcov.am
 
 include drizzled/message/include.am
 include drizzled/include.am

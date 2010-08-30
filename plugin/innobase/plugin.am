@@ -315,6 +315,7 @@ plugin_innobase_libinnobase_la_SOURCES= \
 # lexyy.c has lots of redundant decls, but it's generated anyway 
 plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_UNREACHED} \
 			${NO_REDUNDANT_DECLS} ${INNOBASE_SKIP_WARNINGS} \
+			-Wno-unused-function -Wno-undef \
 			-I$(top_srcdir)/plugin/innobase/include \
 			-DBUILD_DRIZZLE
 plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/lexyy.c \
@@ -322,10 +323,37 @@ plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/lexyy.c \
 
 plugin_innobase_libinnobase_la_LIBADD=	plugin/innobase/libpars.la
 
+plugin/innobase/pars/pars0grm.c: plugin/innobase/pars/pars0grm.y
+	@$(YACC) -d plugin/innobase/pars/pars0grm.y -o plugin/innobase/pars/pars0grm.tab.c
+	@mv plugin/innobase/pars/pars0grm.tab.h plugin/innobase/include/pars0grm.h
+	@sed -e 's/pars0grm.tab.c/pars0grm.c/; s/^\(\(YYSTYPE\|int\) yy\(char\|nerrs\)\)/static \1/; s/\(\(YYSTYPE\|int\) yy\(lval\|parse\)\)/UNIV_INTERN \1/;' < plugin/innobase/pars/pars0grm.tab.c > plugin/innobase/pars/pars0grm.c
+	@rm plugin/innobase/pars/pars0grm.tab.c
+
+plugin/innobase/pars/lexyy.c: plugin/innobase/pars/pars0lex.l
+	@$(LEX) -o plugin/innobase/pars/_flex_tmp.c $<
+# AIX needs its includes done in a certain order, so include "univ.i" first
+# to be sure we get it right.
+	@echo '#include "univ.i"' > $@
+# flex assigns a pointer to an int in one place without a cast, resulting in
+# a warning on Win64.  Add the cast.  Also define some symbols as static.
+	@sed -e 's/_flex_tmp.c/'`basename $@`'/' \
+	     -e 's/\(int offset = \)\((yy_c_buf_p) - (yytext_ptr)\);/\1(int)(\2);/' \
+	     -e 's/\(void yy\(restart\|_\(delete\|flush\)_buffer\)\)/static \1/' \
+	     -e 's/\(void yy_switch_to_buffer\)/__attribute__((unused)) static \1/' \
+	     -e 's/\(void yy\(push\|pop\)_buffer_state\)/__attribute__((unused)) static \1/' \
+	     -e 's/\(YY_BUFFER_STATE yy_create_buffer\)/static \1/' \
+	     -e 's/\(\(int\|void\) yy[gs]et_\)/__attribute__((unused)) static \1/' \
+	     -e 's/\(void \*\?yy\(\(re\)\?alloc\|free\)\)/static \1/' \
+	     -e 's/\(extern \)\?\(int yy\(leng\|lineno\|_flex_debug\)\)/static \2/' \
+	     -e 's/\(int yylex_destroy\)/__attribute__((unused)) static \1/' \
+	     -e 's/\(extern \)\?\(int yylex \)/UNIV_INTERN \2/' \
+	     -e 's/^\(\(FILE\|char\) *\* *yyget\)/__attribute__((unused)) static \1/' \
+	     -e 's/^\(extern \)\?\(\(FILE\|char\) *\* *yy\)/static \2/' \
+              < plugin/innobase/pars/_flex_tmp.c >> $@
+	@rm plugin/innobase/pars/_flex_tmp.c
+
 EXTRA_DIST+= \
              plugin/innobase/CMakeLists.txt \
-             plugin/innobase/pars/make_bison.sh \
-             plugin/innobase/pars/make_flex.sh \
              plugin/innobase/pars/pars0grm.y \
              plugin/innobase/pars/pars0lex.l \
              plugin/innobase/ut/ut0auxconf_atomic_pthread_t_gcc.c \
