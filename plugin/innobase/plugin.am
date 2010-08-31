@@ -312,25 +312,26 @@ plugin_innobase_libinnobase_la_SOURCES= \
                                         plugin/innobase/ut/ut0vec.c \
                                         plugin/innobase/ut/ut0wqueue.c
 
-# lexyy.c has lots of redundant decls, but it's generated anyway 
+# pars0lex.c and pars0grm.c have lots of redundant decls 
+# and unused/undefeind stuf, but are generated anyway 
 plugin_innobase_libpars_la_CFLAGS=	${AM_CFLAGS} ${NO_UNREACHED} \
 			${NO_REDUNDANT_DECLS} ${INNOBASE_SKIP_WARNINGS} \
 			-Wno-unused-function -Wno-undef \
 			-I$(top_srcdir)/plugin/innobase/include \
 			-DBUILD_DRIZZLE
-plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/lexyy.c \
+plugin_innobase_libpars_la_SOURCES= 	plugin/innobase/pars/pars0lex.c \
 			plugin/innobase/pars/pars0grm.c
 
 plugin_innobase_libinnobase_la_LIBADD=	plugin/innobase/libpars.la
 
 plugin/innobase/pars/pars0grm.c: plugin/innobase/pars/pars0grm.y
-	@$(YACC) -d plugin/innobase/pars/pars0grm.y -o plugin/innobase/pars/pars0grm.tab.c
+	$(AM_V_GEN) $(YACC) -d plugin/innobase/pars/pars0grm.y -o plugin/innobase/pars/pars0grm.tab.c
 	@mv plugin/innobase/pars/pars0grm.tab.h plugin/innobase/include/pars0grm.h
 	@sed -e 's/pars0grm.tab.c/pars0grm.c/; s/^\(\(YYSTYPE\|int\) yy\(char\|nerrs\)\)/static \1/; s/\(\(YYSTYPE\|int\) yy\(lval\|parse\)\)/UNIV_INTERN \1/;' < plugin/innobase/pars/pars0grm.tab.c > plugin/innobase/pars/pars0grm.c
 	@rm plugin/innobase/pars/pars0grm.tab.c
 
-plugin/innobase/pars/lexyy.c: plugin/innobase/pars/pars0lex.l
-	@$(LEX) -o plugin/innobase/pars/_flex_tmp.c $<
+plugin/innobase/pars/pars0lex.c: plugin/innobase/pars/pars0lex.l
+	$(AM_V_GEN)$(LEX) -o plugin/innobase/pars/_flex_tmp.c $<
 # AIX needs its includes done in a certain order, so include "univ.i" first
 # to be sure we get it right.
 	@echo '#include "univ.i"' > $@

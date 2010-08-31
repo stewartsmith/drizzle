@@ -722,24 +722,11 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 /******************************************************
 SQL parser lexical analyzer: input file for the GNU Flex lexer generator
 
-The InnoDB parser is frozen because MySQL takes care of SQL parsing.
-Therefore we normally keep the InnoDB parser C files as they are, and do
-not automatically generate them from pars0grm.y and pars0lex.l.
-
-How to make the InnoDB parser and lexer C files:
-
-1. Run ./make_flex.sh to generate lexer files.
-
-2. Run ./make_bison.sh to generate parser files.
-
-These instructions seem to work at least with bison-1.875d and flex-2.5.31 on
-Linux.
-
 Created 12/14/1997 Heikki Tuuri
 *******************************************************/
 #define YY_NO_INPUT 1
 #define YY_NO_UNISTD_H 1
-#line 53 "plugin/innobase/pars/pars0lex.l"
+#line 40 "plugin/innobase/pars/pars0lex.l"
 #define YYSTYPE que_node_t*
 
 #include "univ.i"
@@ -787,7 +774,7 @@ string_append(
 
 
 
-#line 790 "plugin/innobase/pars/lexyy.c"
+#line 777 "plugin/innobase/pars/lexyy.c"
 
 #define INITIAL 0
 #define comment 1
@@ -975,10 +962,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 107 "plugin/innobase/pars/pars0lex.l"
+#line 94 "plugin/innobase/pars/pars0lex.l"
 
 
-#line 981 "plugin/innobase/pars/lexyy.c"
+#line 968 "plugin/innobase/pars/lexyy.c"
 
 	if ( !(yy_init) )
 		{
@@ -1059,7 +1046,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 109 "plugin/innobase/pars/pars0lex.l"
+#line 96 "plugin/innobase/pars/pars0lex.l"
 {
 			yylval = sym_tab_add_int_lit(pars_sym_tab_global,
 								atoi(yytext));
@@ -1068,7 +1055,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 115 "plugin/innobase/pars/pars0lex.l"
+#line 102 "plugin/innobase/pars/pars0lex.l"
 {
 			ut_error;	/* not implemented */
 
@@ -1077,7 +1064,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 121 "plugin/innobase/pars/pars0lex.l"
+#line 108 "plugin/innobase/pars/pars0lex.l"
 {
 			ulint	type;
 
@@ -1089,7 +1076,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 130 "plugin/innobase/pars/pars0lex.l"
+#line 117 "plugin/innobase/pars/pars0lex.l"
 {
 			yylval = sym_tab_add_bound_id(pars_sym_tab_global,
 				yytext + 1);
@@ -1099,7 +1086,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 137 "plugin/innobase/pars/pars0lex.l"
+#line 124 "plugin/innobase/pars/pars0lex.l"
 {
 /* Quoted character string literals are handled in an explicit
 start state 'quoted'.  This state is entered and the buffer for
@@ -1113,7 +1100,7 @@ In the state 'quoted', only two actions are possible (defined below). */
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 146 "plugin/innobase/pars/pars0lex.l"
+#line 133 "plugin/innobase/pars/pars0lex.l"
 {
 			/* Got a sequence of characters other than "'":
 			append to string buffer */
@@ -1122,7 +1109,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 151 "plugin/innobase/pars/pars0lex.l"
+#line 138 "plugin/innobase/pars/pars0lex.l"
 {
 			/* Got a sequence of "'" characters:
 			append half of them to string buffer,
@@ -1149,7 +1136,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 175 "plugin/innobase/pars/pars0lex.l"
+#line 162 "plugin/innobase/pars/pars0lex.l"
 {
 /* Quoted identifiers are handled in an explicit start state 'id'.
 This state is entered and the buffer for the scanned string is emptied
@@ -1163,7 +1150,7 @@ In the state 'id', only two actions are possible (defined below). */
 case 9:
 /* rule 9 can match eol */
 YY_RULE_SETUP
-#line 184 "plugin/innobase/pars/pars0lex.l"
+#line 171 "plugin/innobase/pars/pars0lex.l"
 {
 			/* Got a sequence of characters other than '"':
 			append to string buffer */
@@ -1172,7 +1159,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 189 "plugin/innobase/pars/pars0lex.l"
+#line 176 "plugin/innobase/pars/pars0lex.l"
 {
 			/* Got a sequence of '"' characters:
 			append half of them to string buffer,
@@ -1200,7 +1187,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 214 "plugin/innobase/pars/pars0lex.l"
+#line 201 "plugin/innobase/pars/pars0lex.l"
 {
 			yylval = sym_tab_add_null_lit(pars_sym_tab_global);
 
@@ -1209,7 +1196,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 220 "plugin/innobase/pars/pars0lex.l"
+#line 207 "plugin/innobase/pars/pars0lex.l"
 {
 			/* Implicit cursor name */
 			yylval = sym_tab_add_str_lit(pars_sym_tab_global,
@@ -1219,560 +1206,560 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 227 "plugin/innobase/pars/pars0lex.l"
+#line 214 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_AND_TOKEN);
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 231 "plugin/innobase/pars/pars0lex.l"
+#line 218 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_OR_TOKEN);
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 235 "plugin/innobase/pars/pars0lex.l"
+#line 222 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_NOT_TOKEN);
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 239 "plugin/innobase/pars/pars0lex.l"
+#line 226 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_PROCEDURE_TOKEN);
 }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 243 "plugin/innobase/pars/pars0lex.l"
+#line 230 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_IN_TOKEN);
 }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 247 "plugin/innobase/pars/pars0lex.l"
+#line 234 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_OUT_TOKEN);
 }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 251 "plugin/innobase/pars/pars0lex.l"
+#line 238 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_BINARY_TOKEN);
 }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 255 "plugin/innobase/pars/pars0lex.l"
+#line 242 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_BLOB_TOKEN);
 }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 259 "plugin/innobase/pars/pars0lex.l"
+#line 246 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_INT_TOKEN);
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 263 "plugin/innobase/pars/pars0lex.l"
+#line 250 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_INT_TOKEN);
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 267 "plugin/innobase/pars/pars0lex.l"
+#line 254 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_FLOAT_TOKEN);
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 271 "plugin/innobase/pars/pars0lex.l"
+#line 258 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_CHAR_TOKEN);
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 275 "plugin/innobase/pars/pars0lex.l"
+#line 262 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_IS_TOKEN);
 }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 279 "plugin/innobase/pars/pars0lex.l"
+#line 266 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_BEGIN_TOKEN);
 }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 283 "plugin/innobase/pars/pars0lex.l"
+#line 270 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_END_TOKEN);
 }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 287 "plugin/innobase/pars/pars0lex.l"
+#line 274 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_IF_TOKEN);
 }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 291 "plugin/innobase/pars/pars0lex.l"
+#line 278 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_THEN_TOKEN);
 }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 295 "plugin/innobase/pars/pars0lex.l"
+#line 282 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_ELSE_TOKEN);
 }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 299 "plugin/innobase/pars/pars0lex.l"
+#line 286 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_ELSIF_TOKEN);
 }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 303 "plugin/innobase/pars/pars0lex.l"
+#line 290 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_LOOP_TOKEN);
 }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 307 "plugin/innobase/pars/pars0lex.l"
+#line 294 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_WHILE_TOKEN);
 }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 311 "plugin/innobase/pars/pars0lex.l"
+#line 298 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_RETURN_TOKEN);
 }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 315 "plugin/innobase/pars/pars0lex.l"
+#line 302 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_SELECT_TOKEN);
 }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 319 "plugin/innobase/pars/pars0lex.l"
+#line 306 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_SUM_TOKEN);
 }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 323 "plugin/innobase/pars/pars0lex.l"
+#line 310 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_COUNT_TOKEN);
 }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 327 "plugin/innobase/pars/pars0lex.l"
+#line 314 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_DISTINCT_TOKEN);
 }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 331 "plugin/innobase/pars/pars0lex.l"
+#line 318 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_FROM_TOKEN);
 }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 335 "plugin/innobase/pars/pars0lex.l"
+#line 322 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_WHERE_TOKEN);
 }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 339 "plugin/innobase/pars/pars0lex.l"
+#line 326 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_FOR_TOKEN);
 }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 343 "plugin/innobase/pars/pars0lex.l"
+#line 330 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_READ_TOKEN);
 }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 347 "plugin/innobase/pars/pars0lex.l"
+#line 334 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_ORDER_TOKEN);
 }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 351 "plugin/innobase/pars/pars0lex.l"
+#line 338 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_BY_TOKEN);
 }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 355 "plugin/innobase/pars/pars0lex.l"
+#line 342 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_ASC_TOKEN);
 }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 359 "plugin/innobase/pars/pars0lex.l"
+#line 346 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_DESC_TOKEN);
 }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 363 "plugin/innobase/pars/pars0lex.l"
+#line 350 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_INSERT_TOKEN);
 }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 367 "plugin/innobase/pars/pars0lex.l"
+#line 354 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_INTO_TOKEN);
 }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 371 "plugin/innobase/pars/pars0lex.l"
+#line 358 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_VALUES_TOKEN);
 }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 375 "plugin/innobase/pars/pars0lex.l"
+#line 362 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_UPDATE_TOKEN);
 }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 379 "plugin/innobase/pars/pars0lex.l"
+#line 366 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_SET_TOKEN);
 }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 383 "plugin/innobase/pars/pars0lex.l"
+#line 370 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_DELETE_TOKEN);
 }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 387 "plugin/innobase/pars/pars0lex.l"
+#line 374 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_CURRENT_TOKEN);
 }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 391 "plugin/innobase/pars/pars0lex.l"
+#line 378 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_OF_TOKEN);
 }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 395 "plugin/innobase/pars/pars0lex.l"
+#line 382 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_CREATE_TOKEN);
 }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 399 "plugin/innobase/pars/pars0lex.l"
+#line 386 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_TABLE_TOKEN);
 }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 403 "plugin/innobase/pars/pars0lex.l"
+#line 390 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_INDEX_TOKEN);
 }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 407 "plugin/innobase/pars/pars0lex.l"
+#line 394 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_UNIQUE_TOKEN);
 }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 411 "plugin/innobase/pars/pars0lex.l"
+#line 398 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_CLUSTERED_TOKEN);
 }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 415 "plugin/innobase/pars/pars0lex.l"
+#line 402 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_DOES_NOT_FIT_IN_MEM_TOKEN);
 }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 419 "plugin/innobase/pars/pars0lex.l"
+#line 406 "plugin/innobase/pars/pars0lex.l"
 {
 	 		return(PARS_ON_TOKEN);
 }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 423 "plugin/innobase/pars/pars0lex.l"
+#line 410 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_DECLARE_TOKEN);
 }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 427 "plugin/innobase/pars/pars0lex.l"
+#line 414 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_CURSOR_TOKEN);
 }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 431 "plugin/innobase/pars/pars0lex.l"
+#line 418 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_OPEN_TOKEN);
 }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 435 "plugin/innobase/pars/pars0lex.l"
+#line 422 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_FETCH_TOKEN);
 }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 439 "plugin/innobase/pars/pars0lex.l"
+#line 426 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_CLOSE_TOKEN);
 }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 443 "plugin/innobase/pars/pars0lex.l"
+#line 430 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_NOTFOUND_TOKEN);
 }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 447 "plugin/innobase/pars/pars0lex.l"
+#line 434 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_TO_CHAR_TOKEN);
 }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 451 "plugin/innobase/pars/pars0lex.l"
+#line 438 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_TO_NUMBER_TOKEN);
 }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 455 "plugin/innobase/pars/pars0lex.l"
+#line 442 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_TO_BINARY_TOKEN);
 }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 459 "plugin/innobase/pars/pars0lex.l"
+#line 446 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_BINARY_TO_NUMBER_TOKEN);
 }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 463 "plugin/innobase/pars/pars0lex.l"
+#line 450 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_SUBSTR_TOKEN);
 }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 467 "plugin/innobase/pars/pars0lex.l"
+#line 454 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_REPLSTR_TOKEN);
 }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 471 "plugin/innobase/pars/pars0lex.l"
+#line 458 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_CONCAT_TOKEN);
 }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 475 "plugin/innobase/pars/pars0lex.l"
+#line 462 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_INSTR_TOKEN);
 }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 479 "plugin/innobase/pars/pars0lex.l"
+#line 466 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_LENGTH_TOKEN);
 }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 483 "plugin/innobase/pars/pars0lex.l"
+#line 470 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_SYSDATE_TOKEN);
 }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 487 "plugin/innobase/pars/pars0lex.l"
+#line 474 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_PRINTF_TOKEN);
 }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 491 "plugin/innobase/pars/pars0lex.l"
+#line 478 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_ASSERT_TOKEN);
 }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 495 "plugin/innobase/pars/pars0lex.l"
+#line 482 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_RND_TOKEN);
 }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 499 "plugin/innobase/pars/pars0lex.l"
+#line 486 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_RND_STR_TOKEN);
 }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 503 "plugin/innobase/pars/pars0lex.l"
+#line 490 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_ROW_PRINTF_TOKEN);
 }
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 507 "plugin/innobase/pars/pars0lex.l"
+#line 494 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_COMMIT_TOKEN);
 }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 511 "plugin/innobase/pars/pars0lex.l"
+#line 498 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_ROLLBACK_TOKEN);
 }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 515 "plugin/innobase/pars/pars0lex.l"
+#line 502 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_WORK_TOKEN);
 }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 519 "plugin/innobase/pars/pars0lex.l"
+#line 506 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_UNSIGNED_TOKEN);
 }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 523 "plugin/innobase/pars/pars0lex.l"
+#line 510 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_EXIT_TOKEN);
 }
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 527 "plugin/innobase/pars/pars0lex.l"
+#line 514 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_FUNCTION_TOKEN);
 }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 531 "plugin/innobase/pars/pars0lex.l"
+#line 518 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_LOCK_TOKEN);
 }
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 535 "plugin/innobase/pars/pars0lex.l"
+#line 522 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_SHARE_TOKEN);
 }
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 539 "plugin/innobase/pars/pars0lex.l"
+#line 526 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_MODE_TOKEN);
 }
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 543 "plugin/innobase/pars/pars0lex.l"
+#line 530 "plugin/innobase/pars/pars0lex.l"
 {
 			yylval = sym_tab_add_id(pars_sym_tab_global,
 							(byte*)yytext,
@@ -1782,42 +1769,42 @@ YY_RULE_SETUP
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 550 "plugin/innobase/pars/pars0lex.l"
+#line 537 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_DDOT_TOKEN);
 }
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 554 "plugin/innobase/pars/pars0lex.l"
+#line 541 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_ASSIGN_TOKEN);
 }
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 558 "plugin/innobase/pars/pars0lex.l"
+#line 545 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_LE_TOKEN);
 }
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 562 "plugin/innobase/pars/pars0lex.l"
+#line 549 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_GE_TOKEN);
 }
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 566 "plugin/innobase/pars/pars0lex.l"
+#line 553 "plugin/innobase/pars/pars0lex.l"
 {
 			return(PARS_NE_TOKEN);
 }
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 570 "plugin/innobase/pars/pars0lex.l"
+#line 557 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1825,7 +1812,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 575 "plugin/innobase/pars/pars0lex.l"
+#line 562 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1833,7 +1820,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 580 "plugin/innobase/pars/pars0lex.l"
+#line 567 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1841,7 +1828,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 585 "plugin/innobase/pars/pars0lex.l"
+#line 572 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1849,7 +1836,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 590 "plugin/innobase/pars/pars0lex.l"
+#line 577 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1857,7 +1844,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 595 "plugin/innobase/pars/pars0lex.l"
+#line 582 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1865,7 +1852,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 600 "plugin/innobase/pars/pars0lex.l"
+#line 587 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1873,7 +1860,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 605 "plugin/innobase/pars/pars0lex.l"
+#line 592 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1881,7 +1868,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 610 "plugin/innobase/pars/pars0lex.l"
+#line 597 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1889,7 +1876,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 615 "plugin/innobase/pars/pars0lex.l"
+#line 602 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1897,7 +1884,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 620 "plugin/innobase/pars/pars0lex.l"
+#line 607 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1905,7 +1892,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 625 "plugin/innobase/pars/pars0lex.l"
+#line 612 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1913,7 +1900,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 630 "plugin/innobase/pars/pars0lex.l"
+#line 617 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1921,7 +1908,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 635 "plugin/innobase/pars/pars0lex.l"
+#line 622 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1929,7 +1916,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 640 "plugin/innobase/pars/pars0lex.l"
+#line 627 "plugin/innobase/pars/pars0lex.l"
 {
 
 			return((int)(*yytext));
@@ -1937,35 +1924,35 @@ YY_RULE_SETUP
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 645 "plugin/innobase/pars/pars0lex.l"
+#line 632 "plugin/innobase/pars/pars0lex.l"
 BEGIN(comment); /* eat up comment */
 	YY_BREAK
 case 114:
 /* rule 114 can match eol */
 YY_RULE_SETUP
-#line 647 "plugin/innobase/pars/pars0lex.l"
+#line 634 "plugin/innobase/pars/pars0lex.l"
 
 	YY_BREAK
 case 115:
 /* rule 115 can match eol */
 YY_RULE_SETUP
-#line 648 "plugin/innobase/pars/pars0lex.l"
+#line 635 "plugin/innobase/pars/pars0lex.l"
 
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 649 "plugin/innobase/pars/pars0lex.l"
+#line 636 "plugin/innobase/pars/pars0lex.l"
 BEGIN(INITIAL);
 	YY_BREAK
 case 117:
 /* rule 117 can match eol */
 YY_RULE_SETUP
-#line 651 "plugin/innobase/pars/pars0lex.l"
+#line 638 "plugin/innobase/pars/pars0lex.l"
 /* eat up whitespace */
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 654 "plugin/innobase/pars/pars0lex.l"
+#line 641 "plugin/innobase/pars/pars0lex.l"
 {
 			fprintf(stderr,"Unrecognized character: %02x\n",
 				*yytext);
@@ -1977,10 +1964,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 663 "plugin/innobase/pars/pars0lex.l"
+#line 650 "plugin/innobase/pars/pars0lex.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1983 "plugin/innobase/pars/lexyy.c"
+#line 1970 "plugin/innobase/pars/lexyy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(quoted):
@@ -2855,7 +2842,7 @@ static void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 663 "plugin/innobase/pars/pars0lex.l"
+#line 650 "plugin/innobase/pars/pars0lex.l"
 
 
 
