@@ -19,19 +19,6 @@ Place, Suite 330, Boston, MA 02111-1307 USA
 /******************************************************
 SQL parser lexical analyzer: input file for the GNU Flex lexer generator
 
-The InnoDB parser is frozen because MySQL takes care of SQL parsing.
-Therefore we normally keep the InnoDB parser C files as they are, and do
-not automatically generate them from pars0grm.y and pars0lex.l.
-
-How to make the InnoDB parser and lexer C files:
-
-1. Run ./make_flex.sh to generate lexer files.
-
-2. Run ./make_bison.sh to generate parser files.
-
-These instructions seem to work at least with bison-1.875d and flex-2.5.31 on
-Linux.
-
 Created 12/14/1997 Heikki Tuuri
 *******************************************************/
 
