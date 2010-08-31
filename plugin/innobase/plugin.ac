@@ -15,7 +15,7 @@
 #
 
 AC_DEFUN([AC_INNODB_ACTIONS],[
-  AC_CHECK_PROGS(LEX, ['flex -l'])
+  AC_CHECK_PROGS(LEX, ['flex'])
   AS_IF([test "x$LEX" = "x" -a "$pandora_building_from_bzr" = "yes"],[
      AC_MSG_ERROR(["flex is required for Drizzle to build from a bzr branch"])
   ])
