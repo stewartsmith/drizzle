@@ -62,12 +62,13 @@ AC_PATH_PROG(LCOV, lcov)
 AC_PATH_PROG(LCOV_GENHTML, genhtml)
 
 AC_CHECK_PROGS(YACC, ['bison -y'])
-dnl AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
-dnl   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
-dnl ])
+AS_IF([test "x$YACC" = "x" -a "$pandora_building_from_bzr" = "yes"],[
+   AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
+])
 AS_IF([test "x$YACC" = "x"],[
   YACC='if test -f "$@"; then echo "WARNING: no proper bison binary found, ignoring changes to $<"; exit 0; else echo "ERROR: no proper bison binary found"; exit 1; fi;'
 ])
+
 # libexecinfo provides backtrace_symbols on FreeBSD
 AC_SEARCH_LIBS(backtrace_symbols, [execinfo])
 
