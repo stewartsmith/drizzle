@@ -1822,7 +1822,6 @@ void my_print_help_inc_plugins(option *main_options,
 
   my_print_help(&*(all_options.begin()));
   cout << long_options << endl;
-  my_print_variables(&*(all_options.begin()));
 
   mem_root.free_root(MYF(0));
 }
