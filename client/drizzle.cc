@@ -1465,7 +1465,7 @@ try
 
   po::options_description client_options("Options specific to the client");
   client_options.add_options()
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
+  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true),
   N_("Use MySQL Protocol."))
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
   N_("Connect to host"))
@@ -1901,7 +1901,7 @@ void handle_sigint(int sig)
 
   if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host.c_str(),
                           opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
-                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_EXPERIMENTAL) == NULL)
   {
     goto err;
   }
@@ -4040,7 +4040,7 @@ sql_connect(const string &host, const string &database, const string &user, cons
   }
   drizzle_create(&drizzle);
   if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(), opt_drizzle_port, (char *)user.c_str(),
-                          (char *)password.c_str(), (char *)database.c_str(), opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+                          (char *)password.c_str(), (char *)database.c_str(), opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_EXPERIMENTAL) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
