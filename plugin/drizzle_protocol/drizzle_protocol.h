@@ -22,6 +22,8 @@
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/atomics.h>
+#include "drizzled/plugin/table_function.h"
 
 #include "net_serv.h"
 
@@ -59,6 +61,10 @@ private:
 public:
   ClientDrizzleProtocol(int fd, bool using_mysql41_protocol_arg);
   virtual ~ClientDrizzleProtocol();
+
+  static drizzled::atomic<uint64_t> connectionCount;
+  static drizzled::atomic<uint64_t> failedConnections;
+  static drizzled::atomic<uint64_t> connected;
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();

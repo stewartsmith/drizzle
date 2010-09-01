@@ -57,7 +57,7 @@ static uint32_t random_seed2;
 static const uint32_t random_max= 0x3FFFFFFF;
 static const double random_max_double= (double)0x3FFFFFFF;
 
-static plugin::TableFunction* status_table_function_ptr= NULL;
+static plugin::TableFunction* mysql_status_table_function_ptr= NULL;
 
 ListenMySQLProtocol::~ListenMySQLProtocol()
 {
@@ -902,9 +902,9 @@ plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
 static int init(drizzled::module::Context &context)
 {  
-  status_table_function_ptr= new MysqlProtocolStatus;
+  mysql_status_table_function_ptr= new MysqlProtocolStatus;
 
-  context.add(status_table_function_ptr);
+  context.add(mysql_status_table_function_ptr);
   /* Initialize random seeds for the MySQL algorithm with minimal changes. */
   time_t seed_time= time(NULL);
   random_seed1= seed_time % random_max;

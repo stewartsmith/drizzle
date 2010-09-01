@@ -33,6 +33,7 @@
 #include "errmsg.h"
 #include "drizzle_protocol.h"
 #include "options.h"
+#include "table_function.h"
 
 #define PROTOCOL_VERSION 10
 
@@ -57,6 +58,8 @@ static uint32_t write_timeout;
 static uint32_t retry_count;
 static uint32_t buffer_length;
 static char* bind_address= NULL;
+
+static plugin::TableFunction* drizzle_status_table_function_ptr= NULL;
 
 ListenDrizzleProtocol::~ListenDrizzleProtocol()
 {
@@ -95,6 +98,10 @@ plugin::Client *ListenDrizzleProtocol::getClient(int fd)
 
   return new (nothrow) ClientDrizzleProtocol(new_fd, using_mysql41_protocol);
 }
+
+drizzled::atomic<uint64_t> ClientDrizzleProtocol::connectionCount;
+drizzled::atomic<uint64_t> ClientDrizzleProtocol::failedConnections;
+drizzled::atomic<uint64_t> ClientDrizzleProtocol::connected;
 
 ClientDrizzleProtocol::ClientDrizzleProtocol(int fd, bool using_mysql41_protocol_arg):
   using_mysql41_protocol(using_mysql41_protocol_arg)
@@ -154,12 +161,16 @@ void ClientDrizzleProtocol::close(void)
   { 
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
+    connected.decrement();
   }
 }
 
 bool ClientDrizzleProtocol::authenticate()
 {
   bool connection_is_valid;
+
+  connectionCount.increment();
+  connected.increment();
 
   /* Use "connect_timeout" value during connection phase */
   drizzleclient_net_set_read_timeout(&net, connect_timeout);
@@ -172,6 +183,7 @@ bool ClientDrizzleProtocol::authenticate()
   else
   {
     sendError(session->main_da.sql_errno(), session->main_da.message());
+    failedConnections.increment();
     return false;
   }
 
@@ -822,6 +834,10 @@ void ClientDrizzleProtocol::writeEOFPacket(uint32_t server_status,
 
 static int init(module::Context &context)
 {
+  drizzle_status_table_function_ptr= new DrizzleProtocolStatus;
+
+  context.add(drizzle_status_table_function_ptr);
+
   const module::option_map &vm= context.getOptions();
   if (vm.count("port"))
   { 
@@ -950,6 +966,103 @@ static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(bind_address),
   NULL
 };
+
+static int drizzle_protocol_connection_count_func(drizzle_show_var *var, char *buff)
+{
+  var->type= SHOW_LONGLONG;
+  var->value= buff;
+  *((uint64_t *)buff)= ClientDrizzleProtocol::connectionCount;
+  return 0;
+}
+
+static int drizzle_protocol_connected_count_func(drizzle_show_var *var, char *buff)
+{
+  var->type= SHOW_LONGLONG;
+  var->value= buff;
+  *((uint64_t *)buff)= ClientDrizzleProtocol::connected;
+  return 0;
+}
+
+static int drizzle_protocol_failed_count_func(drizzle_show_var *var, char *buff)
+{
+  var->type= SHOW_LONGLONG;
+  var->value= buff;
+  *((uint64_t *)buff)= ClientDrizzleProtocol::failedConnections;
+  return 0;
+}
+
+static st_show_var_func_container drizzle_protocol_connection_count=
+  { &drizzle_protocol_connection_count_func };
+
+static st_show_var_func_container drizzle_protocol_connected_count=
+  { &drizzle_protocol_connected_count_func };
+
+static st_show_var_func_container drizzle_protocol_failed_count=
+  { &drizzle_protocol_failed_count_func };
+
+static drizzle_show_var drizzle_protocol_status_variables[]= {
+  {"Connections",
+  (char*) &drizzle_protocol_connection_count, SHOW_FUNC},
+  {"Connected",
+  (char*) &drizzle_protocol_connected_count, SHOW_FUNC},
+  {"Failed_connections",
+  (char*) &drizzle_protocol_failed_count, SHOW_FUNC},
+  {NULL, NULL, SHOW_LONGLONG}
+};
+
+DrizzleProtocolStatus::Generator::Generator(drizzled::Field **fields) :
+  plugin::TableFunction::Generator(fields)
+{
+  status_var_ptr= drizzle_protocol_status_variables;
+}
+
+bool DrizzleProtocolStatus::Generator::populate()
+{
+  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
+  char * const buff= (char *) &buff_data;
+  drizzle_show_var tmp;
+
+  if (status_var_ptr->name)
+  {
+    std::ostringstream oss;
+    string return_value;
+    const char *value;
+    int type;
+
+    push(status_var_ptr->name);
+
+    if (status_var_ptr->type == SHOW_FUNC)
+    {
+      ((mysql_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
+      value= buff;
+      type= tmp.type;
+    }
+    else
+    {
+      value= status_var_ptr->value;
+      type= status_var_ptr->type;
+    }
+
+    switch(type)
+    {
+    case SHOW_LONGLONG:
+      oss << *(uint64_t*) value;
+      return_value= oss.str();
+      break;
+    default:
+      assert(0);
+    }
+    if (return_value.length())
+      push(return_value);
+    else
+      push(" ");
+
+    status_var_ptr++;
+
+    return true;
+  }
+  return false;
+}
 
 } /* namespace drizzle_protocol */
 
