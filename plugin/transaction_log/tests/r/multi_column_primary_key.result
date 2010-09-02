@@ -18,7 +18,7 @@ START TRANSACTION;
 DROP TABLE IF EXISTS `test`.`t1`;
 COMMIT;
 START TRANSACTION;
-CREATE TABLE `test`.`t1` (   `k1` int NOT NULL,   `k2` int NOT NULL,   `padding` varchar(200) NOT NULL,   PRIMARY KEY (`k1`,`k2`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
+CREATE TABLE `test`.`t1` (   `k1` INT NOT NULL,   `k2` INT NOT NULL,   `padding` VARCHAR(200) COLLATE utf8_general_ci NOT NULL,   PRIMARY KEY (`k1`,`k2`) ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 COMMIT;
 START TRANSACTION;
 INSERT INTO `test`.`t1` (`k1`,`k2`,`padding`) VALUES (1,1,'I love testing.');

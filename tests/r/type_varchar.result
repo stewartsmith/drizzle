@@ -3,10 +3,10 @@ create table t1 (v varchar(30), c char(3), e enum('abc','def','ghi'), t text);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(30) DEFAULT NULL,
-  `c` varchar(3) DEFAULT NULL,
-  `e` enum('abc','def','ghi') DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(30) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(3) COLLATE utf8_general_ci DEFAULT NULL,
+  `e` ENUM('abc','def','ghi') DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ('abc', 'de', 'ghi', 'jkl');
 insert into t1 values ('abc ', 'de ', 'ghi', 'jkl ');
@@ -371,21 +371,21 @@ create index index1 on t1(f1(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f1` varchar(6500) DEFAULT NULL,
+  `f1` VARCHAR(6500) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `index1` (`f1`(10))
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 alter table t1 modify f1 varchar(255);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f1` varchar(255) DEFAULT NULL,
+  `f1` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `index1` (`f1`(10))
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 alter table t1 modify f1 tinytext;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f1` text,
+  `f1` TEXT COLLATE utf8_general_ci,
   KEY `index1` (`f1`(10))
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;

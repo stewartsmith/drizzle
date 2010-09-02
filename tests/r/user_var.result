@@ -168,7 +168,7 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` blob
+  `@first_var` BLOB
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var= cast(NULL as integer);
@@ -178,7 +178,7 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` blob
+  `@first_var` BLOB
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var= concat(NULL);
@@ -186,7 +186,7 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` blob
+  `@first_var` BLOB
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @first_var=1;
@@ -195,7 +195,7 @@ create table t1 select @first_var;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `@first_var` text
+  `@first_var` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 set @a=18446744071710965857;
