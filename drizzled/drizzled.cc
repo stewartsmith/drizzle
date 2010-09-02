@@ -593,12 +593,12 @@ void set_user(const char *user, passwd *user_info_arg)
   initgroups((char*) user, user_info_arg->pw_gid);
   if (setgid(user_info_arg->pw_gid) == -1)
   {
-    sql_perror("setgid");
+    sql_perror(N_("Set process group ID failed"));
     unireg_abort(1);
   }
   if (setuid(user_info_arg->pw_uid) == -1)
   {
-    sql_perror("setuid");
+    sql_perror(N_("Set process user ID failed"));
     unireg_abort(1);
   }
 }
@@ -610,7 +610,7 @@ static void set_root(const char *path)
 {
   if ((chroot(path) == -1) || !chdir("/"))
   {
-    sql_perror("chroot");
+    sql_perror(N_("Process chroot failed"));
     unireg_abort(1);
   }
 }
@@ -734,6 +734,7 @@ int init_common_variables(const char *conf_file_name, int argc,
   if (!(default_charset_info=
         get_charset_by_csname(default_character_set_name, MY_CS_PRIMARY)))
   {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error getting default charset"));
     return 1;                           // Eof of the list
   }
 
@@ -759,7 +760,10 @@ int init_common_variables(const char *conf_file_name, int argc,
 
   if (not (character_set_filesystem=
            get_charset_by_csname(character_set_filesystem_name, MY_CS_PRIMARY)))
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Error setting collation"));
     return 1;
+  }
   global_system_variables.character_set_filesystem= character_set_filesystem;
 
   if (!(my_default_lc_time_names=
@@ -851,7 +855,10 @@ int init_server_components(module::Registry &plugins)
     all things are initialized so that unireg_abort() doesn't fail
   */
   if (table_cache_init())
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Could not initialize table cache\n"));
     unireg_abort(1);
+  }
   TableShare::cacheStart();
 
   setup_fpu();
@@ -860,7 +867,7 @@ int init_server_components(module::Registry &plugins)
 
   if (xid_cache_init())
   {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Out of memory"));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("XA cache initialization failed: Out of memory\n"));
     unireg_abort(1);
   }
 
@@ -869,7 +876,7 @@ int init_server_components(module::Registry &plugins)
 
   if (plugin_init(plugins, &defaults_argc, defaults_argv, long_options))
   {
-    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins."));
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
     unireg_abort(1);
   }
 
@@ -890,8 +897,8 @@ int init_server_components(module::Registry &plugins)
     exception here */
   if (unknown_options.size() > 0)
   {
-     fprintf(stderr,
-            _("%s: Too many arguments (first extra is '%s').\n"
+     errmsg_printf(ERRMSG_LVL_ERROR,
+            _("%s: Unknown options give (first unknown is '%s').\n"
               "Use --verbose --help to get a list of available options\n"),
             internal::my_progname, unknown_options[0].c_str());
       unireg_abort(1);
@@ -940,7 +947,7 @@ int init_server_components(module::Registry &plugins)
     engine= plugin::StorageEngine::findByName(name);
     if (engine == NULL)
     {
-      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s"),
+      errmsg_printf(ERRMSG_LVL_ERROR, _("Unknown/unsupported storage engine: %s\n"),
                     default_storage_engine_str);
       unireg_abort(1);
     }
@@ -949,6 +956,7 @@ int init_server_components(module::Registry &plugins)
 
   if (plugin::XaResourceManager::recoverAllXids())
   {
+    /* This function alredy generates error messages */
     unireg_abort(1);
   }
 
