@@ -91,6 +91,14 @@ void module::Registry::add(module::Module *handle)
   module_map[add_str]= handle;
 }
 
+void module::Registry::remove(module::Module *handle)
+{
+  string remove_str(handle->getName());
+  transform(remove_str.begin(), remove_str.end(),
+            remove_str.begin(), ::tolower);
+
+  module_map.erase(remove_str);
+}
 
 vector<module::Module *> module::Registry::getList(bool active)
 {

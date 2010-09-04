@@ -25,7 +25,6 @@
 using namespace std;
 using namespace drizzled;
 
-
 int main(int argc, char* argv[])
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -48,6 +47,7 @@ int main(int argc, char* argv[])
   schema.mutable_engine()->set_name("filesystem");
   schema.set_creation_timestamp(time(NULL));
   schema.set_update_timestamp(time(NULL));
+  schema.set_collation("utf8_general_ci");
 
   fstream output(file_name.c_str(), ios::out | ios::trunc | ios::binary);
 

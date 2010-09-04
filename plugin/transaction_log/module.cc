@@ -55,8 +55,6 @@ using namespace drizzled;
 
 /** 
  * Transaction Log plugin system variable - Is the log enabled? Only used on init().  
- * The enable() and disable() methods of the TransactionLog class control online
- * disabling.
  */
 static bool sysvar_transaction_log_enabled= false;
 /** Transaction Log plugin system variable - The path to the log file used */
@@ -283,7 +281,7 @@ static void set_truncate_debug(Session *,
 
 static DRIZZLE_SYSVAR_BOOL(enable,
                            sysvar_transaction_log_enabled,
-                           PLUGIN_VAR_NOCMDARG,
+                           PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
                            N_("Enable transaction log"),
                            NULL, /* check func */
                            NULL, /* update func */

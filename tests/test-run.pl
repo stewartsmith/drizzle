@@ -1177,7 +1177,7 @@ sub collect_mysqld_features () {
   #
   # --datadir must exist, mysqld will chdir into it
   #
-  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --skip-grant-tables --verbose --help`;
+  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --skip-grant-tables --print-defaults`;
 
   foreach my $line (split('\n', $list))
   {
