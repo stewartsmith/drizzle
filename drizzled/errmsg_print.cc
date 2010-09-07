@@ -38,7 +38,7 @@ void sql_perror(const char *message)
 {
   char errmsg[STRERROR_MAX];
   strerror_r(errno, errmsg, sizeof(errmsg));
-  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s", message, errmsg);
+  errmsg_printf(ERRMSG_LVL_ERROR, "%s: %s\n", message, errmsg);
 }
 
 bool errmsg_printf (int priority, char const *format, ...)
