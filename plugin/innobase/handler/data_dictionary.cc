@@ -164,7 +164,7 @@ InnodbTrxTool::InnodbTrxTool(const char* in_table_name) :
     add_field("TRX_WAIT_STARTED", plugin::TableFunction::NUMBER, 0, false);
     add_field("TRX_WEIGHT", plugin::TableFunction::NUMBER, 0, false);
     add_field("TRX_DRIZZLE_THREAD_ID", plugin::TableFunction::NUMBER, 0, false);
-    add_field("TRX_QUERY");
+    add_field("TRX_QUERY", plugin::TableFunction::STRING, TRX_I_S_TRX_QUERY_MAX_LEN, true);
   }
   else if (innobase_strcasecmp(table_name, "INNODB_LOCKS") == 0)
   {
@@ -331,7 +331,14 @@ void InnodbTrxTool::Generator::populate_innodb_trx()
 
     push(static_cast<int64_t>(row->trx_weight));
     push(static_cast<uint64_t>(row->trx_mysql_thread_id));
-    push(row->trx_query);
+    if (row->trx_query)
+    {
+      push(row->trx_query);
+    }
+    else
+    {
+      push();
+    }
 }
 
 void InnodbTrxTool::Generator::populate_innodb_lock_waits()
