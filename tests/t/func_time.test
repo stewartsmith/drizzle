@@ -14,7 +14,7 @@ select date_format("1997-01-02 03:04:05", "%M %W %D %Y %y %m %d %h %i %s %w");
 select date_format("1997-01-02", concat("%M %W %D ","%Y %y %m %d %h %i %s %w"));
 select dayofmonth("1997-01-02"),dayofmonth(19970323);
 select month("1997-01-02"),year("98-02-03"),dayofyear("1997-12-31");
---error 1686 # No more bad dates!
+--error ER_INVALID_DATETIME_VALUE # No more bad dates!
 select month("2001-02-00"),year("2001-01-01");
 select DAYOFYEAR("1997-03-03"), QUARTER(980303);
 select HOUR("1997-03-03 23:03:22"), MINUTE("23:03:22"), SECOND(230322);
@@ -92,10 +92,10 @@ select extract(YEAR_MONTH FROM "1999-01-02");
 select extract(DAY FROM "1999-01-02");
 select extract(DAY_HOUR FROM "1999-01-02 10:11:12");
 # The following is an interval, not a time!
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 select extract(DAY_MINUTE FROM "02 10:11:12");
 # The following is an interval, not a time!
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 select extract(DAY_SECOND FROM "225 10:11:12");
 select extract(HOUR FROM "1999-01-02 10:11:12");
 select extract(HOUR_MINUTE FROM "10:11:12");
@@ -103,7 +103,7 @@ select extract(HOUR_SECOND FROM "10:11:12");
 select extract(MINUTE FROM "10:11:12");
 select extract(MINUTE_SECOND FROM "10:11:12");
 select extract(SECOND FROM "1999-01-02 10:11:12");
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 select extract(MONTH FROM "2001-02-00");
 
 #
@@ -160,9 +160,9 @@ drop table t1,t2;
 
 CREATE TEMPORARY TABLE t1 (updated text) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ('');
---error 1686 # "" is not a date!
+--error ER_INVALID_DATETIME_VALUE # "" is not a date!
 SELECT month(updated) from t1;
---error 1686 # "" is not a date for pete's sake.
+--error ER_INVALID_DATETIME_VALUE # "" is not a date for pete's sake.
 SELECT year(updated) from t1;
 drop table t1;
 
@@ -173,21 +173,21 @@ drop table t1;
 
 create table t1 (d date, dt datetime, t timestamp, c char(10));
 insert into t1 values (null, null, null, null);
---error 1686 # Bad dates...
+--error ER_INVALID_DATETIME_VALUE # Bad dates...
 insert into t1 values ("0000-00-00", "0000-00-00", "0000-00-00", "0000-00-00");
---error 1686 # 0000-00-00 is a bad date
+--error ER_INVALID_DATETIME_VALUE # 0000-00-00 is a bad date
 select dayofyear("0000-00-00"),dayofyear(d),dayofyear(dt),dayofyear(t),dayofyear(c) from t1;
---error 1686 # 0000-00-00 is a bad date
+--error ER_INVALID_DATETIME_VALUE # 0000-00-00 is a bad date
 select dayofmonth("0000-00-00"),dayofmonth(d),dayofmonth(dt),dayofmonth(t),dayofmonth(c) from t1;
---error 1686 # 0000-00-00 is not a damn date.
+--error ER_INVALID_DATETIME_VALUE # 0000-00-00 is not a damn date.
 select month("0000-00-00"),month(d),month(dt),month(t),month(c) from t1;
---error 1686 # 0000-00-00 not a date
+--error ER_INVALID_DATETIME_VALUE # 0000-00-00 not a date
 select quarter("0000-00-00"),quarter(d),quarter(dt),quarter(t),quarter(c) from t1;
---error 1686 # Argh.  0000-00-00 is not a date.
+--error ER_INVALID_DATETIME_VALUE # Argh.  0000-00-00 is not a date.
 select year("0000-00-00"),year(d),year(dt),year(t),year(c) from t1;
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 select to_days("0000-00-00"),to_days(d),to_days(dt),to_days(c) from t1;
---error 1686 # Ugh. bad datetime
+--error ER_INVALID_DATETIME_VALUE # Ugh. bad datetime
 select extract(MONTH FROM "0000-00-00"),extract(MONTH FROM d),extract(MONTH FROM dt),extract(MONTH FROM t),extract(MONTH FROM c) from t1;
 drop table t1;
 
@@ -243,19 +243,19 @@ select unix_timestamp(from_unixtime(2147483648));
 # check for invalid dates
 
 # bad year
---error 1685 # Bad timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('2039-01-20 01:00:00');
---error 1685 # Bad timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1968-01-20 01:00:00');
 # bad month
---error 1685 # Bad timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('2038-02-10 01:00:00');
---error 1685 # Bad timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1969-11-20 01:00:00');
 # bad day
---error 1685 # Bad timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('2038-01-20 01:00:00');
---error 1685 # Bad timestamp
+--error ER_INVALID_UNIX_TIMESTAMP_VALUE # Bad timestamp
 select unix_timestamp('1969-12-30 01:00:00');
 
 #
@@ -358,7 +358,7 @@ drop table t1;
 # test for last_day
 select last_day('2000-02-05');
 select last_day('2002-12-31');
---error 1686 # Bad date
+--error ER_INVALID_DATETIME_VALUE # Bad date
 select last_day('2003-03-32');
 select last_day('2003-04-01');
 select last_day('2001-01-01 01:01:01');
@@ -399,11 +399,11 @@ DROP TABLE t1;
 # Bug #10568
 #
 
---error 1686 # Bad date
+--error ER_INVALID_DATETIME_VALUE # Bad date
 select last_day('2005-00-00');
---error 1686 # Bad date
+--error ER_INVALID_DATETIME_VALUE # Bad date
 select last_day('2005-00-01');
---error 1686 # Bad date
+--error ER_INVALID_DATETIME_VALUE # Bad date
 select last_day('2005-01-00');
 
 #
@@ -426,7 +426,7 @@ select f1 from t1 where makedate(2006,2) between date(f1) and date(f3);
 drop table t1;
 
 # check if EXTRACT() handles out-of-range values correctly
---error 1686 # Bad datetime
+--error ER_INVALID_DATETIME_VALUE # Bad datetime
 SELECT EXTRACT(HOUR FROM '100000:02:03');
 
 #
@@ -447,7 +447,7 @@ DROP TABLE testBug8868;
 # Bug #23653: crash if last_day('0000-00-00')
 #
 
---error 1686 # Bad date
+--error ER_INVALID_DATETIME_VALUE # Bad date
 select last_day('0000-00-00');
 
 --echo End of 4.1 tests
@@ -498,9 +498,11 @@ INSERT INTO t1 VALUES
 INSERT INTO t2 VALUES
   (1, '2005-08-01'), (2, '2005-06-15'), (3, '2005-07-15');
 
+--sorted_result
 SELECT * FROM t1, t2 
   WHERE t1.day BETWEEN 
                '2005.09.01' - INTERVAL 6 MONTH AND t2.day;
+--sorted_result
 SELECT * FROM t1, t2 
   WHERE CAST(t1.day AS DATE) BETWEEN 
                              '2005.09.01' - INTERVAL 6 MONTH AND t2.day;

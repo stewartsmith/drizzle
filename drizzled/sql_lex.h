@@ -931,6 +931,16 @@ public:
     return false;
   }
   bool is_cross; // CROSS keyword was used
+  bool isCacheable()
+  {
+    return cacheable;
+  }
+  void setCacheable(bool val)
+  {
+    cacheable= val;
+  }
+private: 
+  bool cacheable;
 };
 
 extern void lex_start(Session *session);

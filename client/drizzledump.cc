@@ -1,4 +1,5 @@
 /* Copyright 2000-2008 MySQL AB, 2008, 2009 Sun Microsystems, Inc.
+ * Copyright (C) 2010 Vijay Samuel
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -77,14 +78,12 @@ namespace po= boost::program_options;
 
 static void add_load_option(string &str, const char *option,
                             const string &option_value);
-static uint32_t find_set(TYPELIB *lib, const char *x, uint32_t length,
-                         char **err_pos, uint32_t *err_len);
 
 static void field_escape(string &in, const string &from);
 static bool  verbose= false;
 static bool opt_no_create_info;
 static bool opt_no_data= false;
-static bool opt_mysql= false;
+static bool use_drizzle_protocol= false;
 static bool quick= true;
 static bool extended_insert= true;
 static bool ignore_errors= false;
@@ -113,7 +112,6 @@ static bool opt_ignore= false;
 static bool opt_complete_insert= false;
 static bool opt_drop_database;
 static bool opt_replace_into= false;
-static bool opt_routines= false;
 static bool opt_alltspcs= false;
 static uint32_t show_progress_size= 0;
 static uint64_t total_rows= 0;
@@ -121,17 +119,15 @@ static drizzle_st drizzle;
 static drizzle_con_st dcon;
 static string insert_pat;
 static char *order_by= NULL;
-static char *err_ptr= NULL;
-static char compatible_mode_normal_str[255];
-static uint32_t opt_compatible_mode= 0;
 static uint32_t opt_drizzle_port= 0;
 static int first_error= 0;
 static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file= 0;
 
+const string progname= "drizzledump";
+
 string password,
-  opt_compatible_mode_str,
   enclosed,
   escaped,
   current_host,
@@ -141,19 +137,10 @@ string password,
   lines_terminated,
   current_user,
   opt_password,
+  opt_protocol,
   where;
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
-
-static const char *compatible_mode_names[]=
-{
-  "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
-  "MAXDB", "NO_KEY_OPTIONS", "NO_TABLE_OPTIONS", "NO_FIELD_OPTIONS",
-  "ANSI",
-  NULL
-};
-static TYPELIB compatible_mode_typelib= {array_elements(compatible_mode_names) - 1,
-  "", compatible_mode_names, NULL};
 
 boost::unordered_set<string> ignore_table;
 
@@ -293,26 +280,26 @@ static int get_options(void)
                 ! fields_terminated.empty()))
   {
     fprintf(stderr,
-            _("%s: You must use option --tab with --fields-...\n"), internal::my_progname);
+            _("%s: You must use option --tab with --fields-...\n"), progname.c_str());
     return(EX_USAGE);
   }
 
   if (opt_single_transaction && opt_lock_all_tables)
   {
     fprintf(stderr, _("%s: You can't use --single-transaction and "
-                      "--lock-all-tables at the same time.\n"), internal::my_progname);
+                      "--lock-all-tables at the same time.\n"), progname.c_str());
     return(EX_USAGE);
   }
   if (! enclosed.empty() && ! opt_enclosed.empty())
   {
-    fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), internal::my_progname);
+    fprintf(stderr, _("%s: You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n"), progname.c_str());
     return(EX_USAGE);
   }
   if ((opt_databases || opt_alldbs) && ! path.empty())
   {
     fprintf(stderr,
             _("%s: --databases or --all-databases can't be used with --tab.\n"),
-            internal::my_progname);
+            progname.c_str());
     return(EX_USAGE);
   }
 
@@ -365,7 +352,7 @@ static void die(int error_num, const char* fmt_reason, ...)
   vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
   va_end(args);
 
-  fprintf(stderr, "%s: %s\n", internal::my_progname, buffer);
+  fprintf(stderr, "%s: %s\n", progname.c_str(), buffer);
   fflush(stderr);
 
   ignore_errors= 0; /* force the exit */
@@ -399,7 +386,7 @@ static void maybe_die(int error_num, const char* fmt_reason, ...)
   vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
   va_end(args);
 
-  fprintf(stderr, "%s: %s\n", internal::my_progname, buffer);
+  fprintf(stderr, "%s: %s\n", progname.c_str(), buffer);
   fflush(stderr);
 
   maybe_exit(error_num);
@@ -515,13 +502,12 @@ static int connect_to_db(string host, string user,string passwd)
 {
   drizzle_return_t ret;
 
-  verbose_msg(_("-- Connecting to %s...\n"), ! host.empty() ? (char *)host.c_str() : "localhost");
+  verbose_msg(_("-- Connecting to %s, using protocol %s...\n"), ! host.empty() ? (char *)host.c_str() : "localhost", opt_protocol.c_str());
   drizzle_create(&drizzle);
   drizzle_con_create(&drizzle, &dcon);
   drizzle_con_set_tcp(&dcon, (char *)host.c_str(), opt_drizzle_port);
   drizzle_con_set_auth(&dcon, (char *)user.c_str(), (char *)passwd.c_str());
-  if (opt_mysql)
-    drizzle_con_add_options(&dcon, DRIZZLE_CON_MYSQL);
+  drizzle_con_add_options(&dcon, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
   ret= drizzle_con_connect(&dcon);
   if (ret != DRIZZLE_RETURN_OK)
   {
@@ -1022,7 +1008,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
   else
   {
     verbose_msg(_("%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n"),
-                internal::my_progname, drizzle_con_error(&dcon));
+                progname.c_str(), drizzle_con_error(&dcon));
 
     snprintf(query_buff, sizeof(query_buff), "show fields from %s",
              result_table);
@@ -1129,7 +1115,7 @@ static bool get_table_structure(char *table, char *db, char *table_type,
       if (drizzleclient_query_with_error_report(&dcon, &result, buff, false))
       {
         fprintf(stderr, _("%s: Can't get keys for table %s\n"),
-                internal::my_progname, result_table);
+                progname.c_str(), result_table);
         if (! path.empty())
           fclose(sql_file);
         return false;
@@ -1493,7 +1479,7 @@ static void dump_table(char *table, char *db)
     if (drizzle_result_column_count(&result) != num_fields)
     {
       fprintf(stderr,_("%s: Error in field count for table: %s !  Aborting.\n"),
-              internal::my_progname, result_table);
+              progname.c_str(), result_table);
       error= EX_CONSCHECK;
       drizzle_result_free(&result);
       goto err;
@@ -1537,7 +1523,7 @@ static void dump_table(char *table, char *db)
         {
           fprintf(stderr,
                   _("%s: Error reading rows for table: %s (%d:%s) ! Aborting.\n"),
-                  internal::my_progname, result_table, ret, drizzle_con_error(&dcon));
+                  progname.c_str(), result_table, ret, drizzle_con_error(&dcon));
           drizzle_result_free(&result);
           goto err;
         }
@@ -2162,47 +2148,6 @@ static int start_transaction(drizzle_con_st *drizzle_con)
 }
 
 
-static uint32_t find_set(TYPELIB *lib, const char *x, uint32_t length,
-                         char **err_pos, uint32_t *err_len)
-{
-  const char *end= x + length;
-  uint32_t found= 0;
-  uint32_t find;
-  char buff[255];
-
-  *err_pos= 0;                  /* No error yet */
-  while (end > x && my_isspace(charset_info, end[-1]))
-    end--;
-
-  *err_len= 0;
-  if (x != end)
-  {
-    const char *start= x;
-    for (;;)
-    {
-      const char *pos= start;
-      uint32_t var_len;
-
-      for (; pos != end && *pos != ','; pos++) ;
-      var_len= (uint32_t) (pos - start);
-      strncpy(buff, start, min((uint32_t)sizeof(buff), var_len+1));
-      find= find_type(buff, lib, var_len);
-      if (!find)
-      {
-        *err_pos= (char*) start;
-        *err_len= var_len;
-      }
-      else
-        found|= (uint32_t)((int64_t) 1 << (find - 1));
-      if (pos == end)
-        break;
-      start= pos + 1;
-    }
-  }
-  return found;
-}
-
-
 /* Print a value with a prefix on file */
 static void print_value(FILE *file, drizzle_result_st  *result, drizzle_row_t row,
                         const char *prefix, const char *name,
@@ -2446,142 +2391,135 @@ int main(int argc, char **argv)
 try
 {
   int exit_code;
-  MY_INIT("drizzledump");
   drizzle_result_st result;
 
-  po::options_description commandline_options("Options used only in command line");
+  po::options_description commandline_options(N_("Options used only in command line"));
   commandline_options.add_options()
   ("all-databases,A", po::value<bool>(&opt_alldbs)->default_value(false)->zero_tokens(),
-  "Dump all the databases. This will be same as --databases with all databases selected.")
+  N_("Dump all the databases. This will be same as --databases with all databases selected."))
   ("all-tablespaces,Y", po::value<bool>(&opt_alltspcs)->default_value(false)->zero_tokens(),
-  "Dump all the tablespaces.")
+  N_("Dump all the tablespaces."))
   ("complete-insert,c", po::value<bool>(&opt_complete_insert)->default_value(false)->zero_tokens(),
-  "Use complete insert statements.")
+  N_("Use complete insert statements."))
   ("compress,C", po::value<bool>(&opt_compress)->default_value(false)->zero_tokens(),
-  "Use compression in server/client protocol.")
+  N_("Use compression in server/client protocol."))
   ("flush-logs,F", po::value<bool>(&flush_logs)->default_value(false)->zero_tokens(),
-  "Flush logs file in server before starting dump. Note that if you dump many databases at once (using the option --databases= or --all-databases), the logs will be flushed for each database dumped. The exception is when using --lock-all-tables in this case the logs will be flushed only once, corresponding to the moment all tables are locked. So if you want your dump and the log flush to happen at the same exact moment you should use --lock-all-tables or --flush-logs")
+  N_("Flush logs file in server before starting dump. Note that if you dump many databases at once (using the option --databases= or --all-databases), the logs will be flushed for each database dumped. The exception is when using --lock-all-tables in this case the logs will be flushed only once, corresponding to the moment all tables are locked. So if you want your dump and the log flush to happen at the same exact moment you should use --lock-all-tables or --flush-logs"))
   ("force,f", po::value<bool>(&ignore_errors)->default_value(false)->zero_tokens(),
-  "Continue even if we get an sql-error.")
-  ("help,?", "Display this help message and exit.")
+  N_("Continue even if we get an sql-error."))
+  ("help,?", N_("Display this help message and exit."))
   ("lock-all-tables,x", po::value<bool>(&opt_lock_all_tables)->default_value(false)->zero_tokens(),
-  "Locks all tables across all databases. This is achieved by taking a global read lock for the duration of the whole dump. Automatically turns --single-transaction and --lock-tables off.")
+  N_("Locks all tables across all databases. This is achieved by taking a global read lock for the duration of the whole dump. Automatically turns --single-transaction and --lock-tables off."))
   ("order-by-primary", po::value<bool>(&opt_order_by_primary)->default_value(false)->zero_tokens(),
-  "Sorts each table's rows by primary key, or first unique key, if such a key exists.  Useful when dumping a MyISAM table to be loaded into an InnoDB table, but will make the dump itself take considerably longer.")
-  ("routines,R", po::value<bool>(&opt_routines)->default_value(false)->zero_tokens(),
-  "Dump stored routines (functions and procedures).")
+  N_("Sorts each table's rows by primary key, or first unique key, if such a key exists.  Useful when dumping a MyISAM table to be loaded into an InnoDB table, but will make the dump itself take considerably longer."))
   ("single-transaction", po::value<bool>(&opt_single_transaction)->default_value(false)->zero_tokens(),
-  "Creates a consistent snapshot by dumping all tables in a single transaction. Works ONLY for tables stored in storage engines which support multiversioning (currently only InnoDB does); the dump is NOT guaranteed to be consistent for other storage engines. While a --single-transaction dump is in process, to ensure a valid dump file (correct table contents), no other connection should use the following statements: ALTER TABLE, DROP TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not isolated from them. Option automatically turns off --lock-tables.")
-  ("opt", "Same as --add-drop-table, --add-locks, --create-options, --quick, --extended-insert, --lock-tables, --set-charset, and --disable-keys. Enabled by default, disable with --skip-opt.") 
+  N_("Creates a consistent snapshot by dumping all tables in a single transaction. Works ONLY for tables stored in storage engines which support multiversioning (currently only InnoDB does); the dump is NOT guaranteed to be consistent for other storage engines. While a --single-transaction dump is in process, to ensure a valid dump file (correct table contents), no other connection should use the following statements: ALTER TABLE, DROP TABLE, RENAME TABLE, TRUNCATE TABLE, as consistent snapshot is not isolated from them. Option automatically turns off --lock-tables."))
+  ("opt", N_("Same as --add-drop-table, --add-locks, --create-options, --quick, --extended-insert, --lock-tables, --set-charset, and --disable-keys. Enabled by default, disable with --skip-opt.")) 
   ("skip-opt", 
-  "Disable --opt. Disables --add-drop-table, --add-locks, --create-options, --quick, --extended-insert, --lock-tables, --set-charset, and --disable-keys.")    
-  ("tables", "Overrides option --databases (-B).")
+  N_("Disable --opt. Disables --add-drop-table, --add-locks, --create-options, --quick, --extended-insert, --lock-tables, --set-charset, and --disable-keys."))    
+  ("tables", N_("Overrides option --databases (-B)."))
   ("show-progress-size", po::value<uint32_t>(&show_progress_size)->default_value(10000),
   N_("Number of rows before each output progress report (requires --verbose)."))
   ("verbose,v", po::value<bool>(&verbose)->default_value(false)->zero_tokens(),
-  "Print info about the various stages.")
-  ("version,V", "Output version information and exit.")
-  ("xml,X", "Dump a database as well formed XML.")
-  ("skip-comments", "Turn off Comments")
-  ("skip-create", "Turn off create-options")
-  ("skip-extended-insert", "Turn off extended-insert") 
-  ("skip-dump-date", "Turn off dump-date")
-  ("no-defaults", "Do not read from the configuration files")
+  N_("Print info about the various stages."))
+  ("version,V", N_("Output version information and exit."))
+  ("xml,X", N_("Dump a database as well formed XML."))
+  ("skip-comments", N_("Turn off Comments"))
+  ("skip-create", N_("Turn off create-options"))
+  ("skip-extended-insert", N_("Turn off extended-insert"))
+  ("skip-dump-date",N_( "Turn off dump-date"))
+  ("no-defaults", N_("Do not read from the configuration files"))
   ;
 
-  po::options_description dump_options("Options specific to the drizzle client");
+  po::options_description dump_options(N_("Options specific to the drizzle client"));
   dump_options.add_options()
   ("add-drop-database", po::value<bool>(&opt_drop_database)->default_value(false)->zero_tokens(),
-  "Add a 'DROP DATABASE' before each create.")
+  N_("Add a 'DROP DATABASE' before each create."))
   ("add-drop-table", po::value<bool>(&opt_drop)->default_value(true)->zero_tokens(),
-  "Add a 'drop table' before each create.")
+  N_("Add a 'drop table' before each create."))
   ("allow-keywords", po::value<bool>(&opt_keywords)->default_value(false)->zero_tokens(),
-  "Allow creation of column names that are keywords.")
+  N_("Allow creation of column names that are keywords."))
   ("comments,i", po::value<bool>(&opt_comments)->default_value(true)->zero_tokens(),
-  "Write additional information.")
-  ("compatible", po::value<string>(&opt_compatible_mode_str)->default_value(""),
-  "Change the dump to be compatible with a given mode. By default tables are dumped in a format optimized for MySQL. Legal modes are: ansi, mysql323, mysql40, postgresql, oracle, mssql, db2, maxdb, no_key_options, no_table_options, no_field_options. One can use several modes separated by commas. Note: Requires DRIZZLE server version 4.1.0 or higher. This option is ignored with earlier server versions.")
+  N_("Write additional information."))
   ("compact", po::value<bool>(&opt_compact)->default_value(false)->zero_tokens(),
-  "Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys --skip-add-locks")
+  N_("Give less verbose output (useful for debugging). Disables structure comments and header/footer constructs.  Enables options --skip-add-drop-table --no-set-names --skip-disable-keys --skip-add-locks"))
   ("create-options", po::value<bool>(&create_options)->default_value(true)->zero_tokens(),
-  "Include all DRIZZLE specific create options.")
+  N_("Include all DRIZZLE specific create options."))
   ("dump-date", po::value<bool>(&opt_dump_date)->default_value(true)->zero_tokens(),
-  "Put a dump date to the end of the output.")
+  N_("Put a dump date to the end of the output."))
   ("databases,B", po::value<bool>(&opt_databases)->default_value(false)->zero_tokens(),
-  "To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output.")
+  N_("To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output."))
   ("delayed-insert", po::value<bool>(&opt_delayed)->default_value(false)->zero_tokens(),
-  "Insert rows with INSERT DELAYED; ")
+  N_("Insert rows with INSERT DELAYED;"))
   ("disable-keys,K", po::value<bool>(&opt_disable_keys)->default_value(true)->zero_tokens(),
-  "'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will be put in the output.")
+  N_("'ALTER TABLE tb_name DISABLE KEYS; and 'ALTER TABLE tb_name ENABLE KEYS; will be put in the output."))
   ("extended-insert,e", po::value<bool>(&extended_insert)->default_value(true)->zero_tokens(),
-  "Allows utilization of the new, much faster INSERT syntax.")
+  N_("Allows utilization of the new, much faster INSERT syntax."))
   ("fields-terminated-by", po::value<string>(&fields_terminated)->default_value(""),
-  "Fields in the textfile are terminated by ...")
+  N_("Fields in the textfile are terminated by ..."))
   ("fields-enclosed-by", po::value<string>(&enclosed)->default_value(""),
-  "Fields in the importfile are enclosed by ...")
+  N_("Fields in the importfile are enclosed by ..."))
   ("fields-optionally-enclosed-by", po::value<string>(&opt_enclosed)->default_value(""),
-  "Fields in the i.file are opt. enclosed by ...")
+  N_("Fields in the i.file are opt. enclosed by ..."))
   ("fields-escaped-by", po::value<string>(&escaped)->default_value(""),
-  "Fields in the i.file are escaped by ...")
+  N_("Fields in the i.file are escaped by ..."))
   ("hex-blob", po::value<bool>(&opt_hex_blob)->default_value(false)->zero_tokens(),
   "Dump binary strings (BINARY, VARBINARY, BLOB) in hexadecimal format.")
   ("ignore-table", po::value<string>(),
-  "Do not dump the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table.  Each table must be specified with both database and table names, e.g. --ignore-table=database.table")
+  N_("Do not dump the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table.  Each table must be specified with both database and table names, e.g. --ignore-table=database.table"))
   ("insert-ignore", po::value<bool>(&opt_ignore)->default_value(false)->zero_tokens(),
-  "Insert rows with INSERT IGNORE.")
+  N_("Insert rows with INSERT IGNORE."))
   ("lines-terminated-by", po::value<string>(&lines_terminated)->default_value(""),
-  "Lines in the i.file are terminated by ...")
+  N_("Lines in the i.file are terminated by ..."))
   ("no-autocommit", po::value<bool>(&opt_autocommit)->default_value(false)->zero_tokens(),
-  "Wrap tables with autocommit/commit statements.")
+  N_("Wrap tables with autocommit/commit statements."))
   ("no-create-db,n", po::value<bool>(&opt_create_db)->default_value(false)->zero_tokens(),
-  "'CREATE DATABASE IF NOT EXISTS db_name;' will not be put in the output. The above line will be added otherwise, if --databases or --all-databases option was given.}.")
+  N_("'CREATE DATABASE IF NOT EXISTS db_name;' will not be put in the output. The above line will be added otherwise, if --databases or --all-databases option was given."))
   ("no-create-info,t", po::value<bool>(&opt_no_create_info)->default_value(false)->zero_tokens(),
-  "Don't write table creation info.")
+  N_("Don't write table creation info."))
   ("no-data,d", po::value<bool>(&opt_no_data)->default_value(false)->zero_tokens(),
-  "No row information.")
-  ("no-set-names,N", "Deprecated. Use --skip-set-charset instead.")
+  N_("No row information."))
+  ("no-set-names,N", N_("Deprecated. Use --skip-set-charset instead."))
   ("set-charset", po::value<bool>(&opt_set_charset)->default_value(false)->zero_tokens(),
-  "Enable set-name")
+  N_("Enable set-name"))
   ("quick,q", po::value<bool>(&quick)->default_value(true)->zero_tokens(),
-  "Don't buffer query, dump directly to stdout.")
+  N_("Don't buffer query, dump directly to stdout."))
   ("quote-names,Q", po::value<bool>(&opt_quoted)->default_value(true)->zero_tokens(),
-  "Quote table and column names with backticks (`).")
+  N_("Quote table and column names with backticks (`)."))
   ("replace", po::value<bool>(&opt_replace_into)->default_value(false)->zero_tokens(),
-  "Use REPLACE INTO instead of INSERT INTO.")
+  N_("Use REPLACE INTO instead of INSERT INTO."))
   ("result-file,r", po::value<string>(),
-  "Direct output to a given file. This option should be used in MSDOS, because it prevents new line '\\n' from being converted to '\\r\\n' (carriage return + line feed).")  
+  N_("Direct output to a given file. This option should be used in MSDOS, because it prevents new line '\\n' from being converted to '\\r\\n' (carriage return + line feed)."))
   ("tab,T", po::value<string>(&path)->default_value(""),
-  "Creates tab separated textfile for each table to given path. (creates .sql and .txt files). NOTE: This only works if drizzledump is run on the same machine as the drizzled daemon.")
+  N_("Creates tab separated textfile for each table to given path. (creates .sql and .txt files). NOTE: This only works if drizzledump is run on the same machine as the drizzled daemon."))
   ("where,w", po::value<string>(&where)->default_value(""),
-  "Dump only selected records; QUOTES mandatory!")
+  N_("Dump only selected records; QUOTES mandatory!"))
   ;
 
-  po::options_description client_options("Options specific to the client");
+  po::options_description client_options(N_("Options specific to the client"));
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
-  "Connect to host.")
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-  N_("Use MySQL Protocol."))
+  N_("Connect to host."))
   ("password,P", po::value<string>(&password)->default_value(PASSWORD_SENTINEL),
-  "Password to use when connecting to server. If password is not given it's solicited on the tty.")
+  N_("Password to use when connecting to server. If password is not given it's solicited on the tty."))
   ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
-  "Port number to use for connection.")
+  N_("Port number to use for connection."))
   ("user,u", po::value<string>(&current_user)->default_value(""),
-  "User for login if not current user.")
-  ("protocol",po::value<string>(),
-  "The protocol of connection (tcp,socket,pipe,memory).")
+  N_("User for login if not current user."))
+  ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
+  N_("The protocol of connection (mysql or drizzle)."))
   ;
 
-  po::options_description hidden_options("Hidden Options");
+  po::options_description hidden_options(N_("Hidden Options"));
   hidden_options.add_options()
-  ("database-used", po::value<vector<string> >(), "Used to select the database")
-  ("Table-used", po::value<vector<string> >(), "Used to select the tables")
+  ("database-used", po::value<vector<string> >(), N_("Used to select the database"))
+  ("Table-used", po::value<vector<string> >(), N_("Used to select the tables"))
   ;
 
-  po::options_description all_options("Allowed Options + Hidden Options");
+  po::options_description all_options(N_("Allowed Options + Hidden Options"));
   all_options.add(commandline_options).add(dump_options).add(client_options).add(hidden_options);
 
-  po::options_description long_options("Allowed Options");
+  po::options_description long_options(N_("Allowed Options"));
   long_options.add(commandline_options).add(dump_options).add(client_options);
 
   std::string system_config_dir_dump(SYSCONFDIR); 
@@ -2596,8 +2534,6 @@ try
   p.add("database-used", 1);
   p.add("Table-used",-1);
 
-  compatible_mode_normal_str[0]= 0;
-  
   md_result_file= stdout;
 
   po::variables_map vm;
@@ -2629,22 +2565,41 @@ try
   po::notify(vm);  
   
   if ((not vm.count("database-used") && not vm.count("Table-used") 
-    && not opt_alldbs && path.empty())  || (vm.count("help")))
+    && not opt_alldbs && path.empty())
+    || (vm.count("help")) || vm.count("version"))
   {
-    printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), internal::my_progname,
-      VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
+    printf(_("Drizzledump %s build %s, for %s-%s (%s)\n"),
+      drizzle_version(), VERSION, HOST_VENDOR, HOST_OS, HOST_CPU);
+    if (vm.count("version"))
+      exit(0);
     puts("");
     puts(_("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n"));
     puts(_("Dumps definitions and data from a Drizzle database server"));
-    printf(_("Usage: %s [OPTIONS] database [tables]\n"), internal::my_progname);
+    printf(_("Usage: %s [OPTIONS] database [tables]\n"), progname.c_str());
     printf(_("OR     %s [OPTIONS] --databases [OPTIONS] DB1 [DB2 DB3...]\n"),
-          internal::my_progname);
-    printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), internal::my_progname);
+          progname.c_str());
+    printf(_("OR     %s [OPTIONS] --all-databases [OPTIONS]\n"), progname.c_str());
     cout << long_options;
     if (vm.count("help"))
       exit(0);
     else
       exit(1);
+  }
+
+  if (vm.count("protocol"))
+  {
+    std::transform(opt_protocol.begin(), opt_protocol.end(),
+      opt_protocol.begin(), ::tolower);
+
+    if (not opt_protocol.compare("mysql"))
+      use_drizzle_protocol=false;
+    else if (not opt_protocol.compare("drizzle"))
+      use_drizzle_protocol=true;
+    else
+    {
+      cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
+      exit(-1);
+    }
   }
 
   if (vm.count("port"))
@@ -2707,12 +2662,6 @@ try
     }
   }
 
-  if (vm.count("version"))
-  {
-     printf(_("%s  Drizzle %s libdrizzle %s, for %s-%s (%s)\n"), internal::my_progname,
-       VERSION, drizzle_version(), HOST_VENDOR, HOST_OS, HOST_CPU);
-  }
- 
   if (vm.count("xml"))
   { 
     opt_xml= 1;
@@ -2772,40 +2721,6 @@ try
   {
     opt_dump_date= false; 
   } 
-
-  if (! opt_compatible_mode_str.empty())
-  {
-    char buff[255];
-    char *end= compatible_mode_normal_str;
-    uint32_t i;
-    uint32_t mode;
-    uint32_t error_len;
-
-    opt_quoted= 1;
-    opt_set_charset= 0;
-    opt_compatible_mode= find_set(&compatible_mode_typelib,
-                                            opt_compatible_mode_str.c_str(), opt_compatible_mode_str.length(),
-                                            &err_ptr, &error_len);
-    if (error_len)
-    {
-      strncpy(buff, err_ptr, min((uint32_t)sizeof(buff), error_len+1));
-      fprintf(stderr, _("Invalid mode to --compatible: %s\n"), buff);
-      exit(EXIT_ARGUMENT_INVALID);
-    }
-    mode= opt_compatible_mode;
-    for (i= 0, mode= opt_compatible_mode; mode; mode>>= 1, i++)
-    {
-      if (mode & 1)
-      {
-        uint32_t len = strlen(compatible_mode_names[i]);
-        end= strcpy(end, compatible_mode_names[i]) + len;
-        end= strcpy(end, ",")+1;
-      }
-    }
-    if (end!=compatible_mode_normal_str)
-      end[-1]= 0;
-  }
- 
 
   exit_code= get_options();
   if (exit_code)

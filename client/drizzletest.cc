@@ -1,6 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
- *
+ * 
+ *  Copyright (C) 2010 Vijay Samuel
  *  Copyright (C) 2008 MySQL
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -113,7 +114,7 @@ static bool disable_info= true;
 static bool abort_on_error= true;
 static bool server_initialized= false;
 static bool is_windows= false;
-static bool opt_mysql= false;
+static bool use_drizzle_protocol= false;
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
 std::string opt_basedir,
@@ -126,7 +127,8 @@ std::string opt_basedir,
   password,
   opt_password,
   result_file_name,
-  opt_user;
+  opt_user,
+  opt_protocol;
 
 static uint32_t start_lineno= 0; /* Start line of current command */
 
@@ -3937,8 +3939,7 @@ static void do_connect(struct st_command *command)
     die("Failed on drizzle_create()");
   if (!drizzle_con_create(con_slot->drizzle, &con_slot->con))
     die("Failed on drizzle_con_create()");
-  if (opt_mysql)
-    drizzle_con_add_options(&con_slot->con, DRIZZLE_CON_MYSQL);
+  drizzle_con_add_options(&con_slot->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -5452,14 +5453,12 @@ try
 
   ("host,h", po::value<string>(&opt_host)->default_value("localhost"),
   "Connect to host.")
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-  N_("Use MySQL Protocol."))
   ("password,P", po::value<string>(&password)->default_value("PASSWORD_SENTINEL"),
   "Password to use when connecting to server.")
   ("port,p", po::value<uint32_t>(&opt_port)->default_value(0),
   "Port number to use for connection or 0 for default")
-  ("protocol", po::value<string>(),
-  "The protocol of connection (tcp,socket,pipe,memory).")
+  ("protocol", po::value<string>(&opt_protocol),
+  "The protocol of connection (mysql or drizzle).")
   ("user,u", po::value<string>(&opt_user)->default_value(""),
   "User for login.")
   ;
@@ -5586,6 +5585,22 @@ try
     unlink(timer_file);       /* Ignore error, may not exist */
   }
 
+  if (vm.count("protocol"))
+  {
+    std::transform(opt_protocol.begin(), opt_protocol.end(),
+      opt_protocol.begin(), ::tolower);
+
+    if (not opt_protocol.compare("mysql"))
+      use_drizzle_protocol=false;
+    else if (not opt_protocol.compare("drizzle"))
+      use_drizzle_protocol=true;
+    else
+    {
+      cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
+      exit(-1);
+    }
+  }
+
   if (vm.count("port"))
   {
     /* If the port number is > 65535 it is not a valid port
@@ -5660,8 +5675,7 @@ try
     die("Failed in drizzle_create()");
   if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
     die("Failed in drizzle_con_create()");
-  if (opt_mysql)
-    drizzle_con_add_options(&cur_con->con, DRIZZLE_CON_MYSQL);
+  drizzle_con_add_options(&cur_con->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");

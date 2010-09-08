@@ -1327,7 +1327,7 @@ static bool log_row_for_replication(Table* table,
      * called.  If it fails, then a call to deleteRecord()
      * is called, followed by a repeat of the original
      * call to insertRecord().  So, log_row_for_replication
-     * could be called either once or twice for a REPLACE
+     * could be called multiple times for a REPLACE
      * statement.  The below looks at the values of before_record
      * and after_record to determine which call to this
      * function is for the delete or the insert, since NULL
@@ -1340,7 +1340,12 @@ static bool log_row_for_replication(Table* table,
      */
     if (after_record == NULL)
     {
-      transaction_services.deleteRecord(session, table);
+      /*
+       * The storage engine is passed the record in table->record[1]
+       * as the row to delete (this is the conflicting row), so
+       * we need to notify TransactionService to use that row.
+       */
+      transaction_services.deleteRecord(session, table, true);
       /* 
        * We set the "current" statement message to NULL.  This triggers
        * the replication services component to generate a new statement
@@ -1358,6 +1363,7 @@ static bool log_row_for_replication(Table* table,
     break;
   case SQLCOM_INSERT:
   case SQLCOM_INSERT_SELECT:
+  case SQLCOM_LOAD:
     /*
      * The else block below represents an 
      * INSERT ... ON DUPLICATE KEY UPDATE that

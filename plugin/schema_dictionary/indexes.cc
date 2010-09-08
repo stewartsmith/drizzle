@@ -142,7 +142,8 @@ void IndexesTool::Generator::fill()
       length= sizeof("FULLTEXT");
       break;
     }
-    push(str, length);
+    /* Subtract 1 here, because sizeof gives us the wrong amount */
+    push(str, length - 1);
   }
 
  /* "INDEX_COMMENT" */

@@ -1,3 +1,5 @@
+SET @orig_lock_wait_timeout= @@innodb_lock_wait_timeout;
+SET GLOBAL innodb_lock_wait_timeout=2;
 drop table if exists t1,t2,t3,t4;
 drop database if exists mysqltest;
 create table t1 (id int not null auto_increment, code int not null, name char(20) not null, primary key (id), key (code), unique (name)) engine=innodb;
@@ -773,7 +775,7 @@ create table t1 (a char(20), index (a(5))) engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(20) DEFAULT NULL,
+  `a` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `a` (`a`(5))
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
@@ -1150,14 +1152,14 @@ create table t2 (id int not null, constraint t1_id_fk foreign key ( id ) referen
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `id` int NOT NULL,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL,
+  `id2` INT NOT NULL,
   UNIQUE KEY `id` (`id`,`id2`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
+  `id` INT NOT NULL,
   KEY `t1_id_fk` (`id`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -1165,7 +1167,7 @@ create index id on t2 (id);
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
+  `id` INT NOT NULL,
   KEY `id` (`id`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -1173,7 +1175,7 @@ create index id2 on t2 (id);
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
+  `id` INT NOT NULL,
   KEY `id` (`id`),
   KEY `id2` (`id`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
@@ -1184,7 +1186,7 @@ Got one of the listed errors
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
+  `id` INT NOT NULL,
   KEY `id` (`id`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -1193,8 +1195,8 @@ create table t2 (id int not null, id2 int not null, constraint t1_id_fk foreign 
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL,
+  `id2` INT NOT NULL,
   KEY `t1_id_fk` (`id`,`id2`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`, `id2`) REFERENCES `t1` (`id`, `id2`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -1202,8 +1204,8 @@ create unique index id on t2 (id,id2);
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL,
+  `id2` INT NOT NULL,
   UNIQUE KEY `id` (`id`,`id2`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`, `id2`) REFERENCES `t1` (`id`, `id2`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -1212,8 +1214,8 @@ create table t2 (id int not null, id2 int not null, unique (id,id2),constraint t
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL,
+  `id2` INT NOT NULL,
   UNIQUE KEY `id` (`id`,`id2`),
   KEY `t1_id_fk` (`id2`,`id`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id2`, `id`) REFERENCES `t1` (`id`, `id2`)
@@ -1223,8 +1225,8 @@ create table t2 (id int not null, id2 int not null, unique (id,id2), constraint 
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL,
+  `id2` INT NOT NULL,
   UNIQUE KEY `id` (`id`,`id2`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -1233,8 +1235,8 @@ create table t2 (id int not null, id2 int not null, unique (id,id2),constraint t
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL,
+  `id2` INT NOT NULL,
   UNIQUE KEY `id` (`id`,`id2`),
   KEY `t1_id_fk` (`id2`,`id`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id2`, `id`) REFERENCES `t1` (`id`, `id2`)
@@ -1244,8 +1246,8 @@ create table t2 (id int not null auto_increment, id2 int not null, constraint t1
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id2` INT NOT NULL,
   PRIMARY KEY (`id`),
   KEY `id` (`id`,`id2`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
@@ -1255,8 +1257,8 @@ create table t2 (id int not null auto_increment, id2 int not null, constraint t1
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id2` INT NOT NULL,
   KEY `t1_id_fk` (`id`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -1264,8 +1266,8 @@ alter table t2 add index id_test (id), add index id_test2 (id,id2);
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `id2` int NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id2` INT NOT NULL,
   KEY `id_test` (`id`),
   KEY `id_test2` (`id`,`id2`),
   CONSTRAINT `t1_id_fk` FOREIGN KEY (`id`) REFERENCES `t1` (`id`)
@@ -1277,8 +1279,8 @@ create table t2 (a int auto_increment primary key, b int, index(b), foreign key 
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` int NOT NULL AUTO_INCREMENT,
-  `b` int DEFAULT NULL,
+  `a` INT NOT NULL AUTO_INCREMENT,
+  `b` INT DEFAULT NULL,
   PRIMARY KEY (`a`),
   UNIQUE KEY `b_2` (`b`),
   KEY `b` (`b`),
@@ -1289,8 +1291,8 @@ create table t2 (a int auto_increment primary key, b int, foreign key (b) refere
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` int NOT NULL AUTO_INCREMENT,
-  `b` int DEFAULT NULL,
+  `a` INT NOT NULL AUTO_INCREMENT,
+  `b` INT DEFAULT NULL,
   PRIMARY KEY (`a`),
   UNIQUE KEY `b` (`b`),
   CONSTRAINT `t2_ibfk_1` FOREIGN KEY (`b`) REFERENCES `t1` (`id`),
@@ -1509,49 +1511,49 @@ concat('*',v,'*',c,'*',t,'*')
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 create  table t2 like t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 create  table t3 select * from t1;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 alter table t1 modify c varchar(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 alter table t1 modify v char(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 alter table t1 modify t varchar(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(10) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
@@ -1562,9 +1564,9 @@ create  table t1 (v varchar(10), c char(10), t text, key(v), key(c), key(t(10)))
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `v` (`v`),
   KEY `c` (`c`),
   KEY `t` (`t`(10))
@@ -1783,9 +1785,9 @@ Warning	1071	Specified key was too long; max key length is 1023 bytes
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(300) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(300) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`(255))
@@ -1863,9 +1865,9 @@ alter table t1 drop key v, add key v (v(30));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(300) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(300) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`(30))
@@ -1945,9 +1947,9 @@ Warning	1071	Specified key was too long; max key length is 1023 bytes
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(600) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(600) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`(255))
@@ -2023,9 +2025,9 @@ create  table t1 (v varchar(10), c char(10), t text, key(v(5)), key(c(5)), key(t
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `v` (`v`(5)),
   KEY `c` (`c`(5)),
   KEY `t` (`t`(5))
@@ -2035,15 +2037,15 @@ create  table t1 (v char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create  table t1 (v varchar(10), c char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;
@@ -2068,14 +2070,14 @@ create table t1 (v varchar(16383));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(16383) DEFAULT NULL
+  `v` VARCHAR(16383) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (v varchar(16383));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `v` varchar(16383) DEFAULT NULL
+  `v` VARCHAR(16383) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 set storage_engine=InnoDB;
@@ -2192,8 +2194,8 @@ Warning	1071	Specified key was too long; max key length is 1023 bytes
 show create table t9;
 Table	Create Table
 t9	CREATE TABLE `t9` (
-  `col1` varchar(512) DEFAULT NULL,
-  `col2` varchar(512) DEFAULT NULL,
+  `col1` VARCHAR(512) COLLATE utf8_general_ci DEFAULT NULL,
+  `col2` VARCHAR(512) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `col1` (`col1`(255),`col2`(255))
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1, t2, t4, t5, t6, t7, t8, t9;
@@ -2212,7 +2214,7 @@ engine = innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `col1` varchar(768) DEFAULT NULL,
+  `col1` VARCHAR(768) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `col1` (`col1`(255))
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1, t2, t3, t4;
@@ -2411,7 +2413,7 @@ ALTER TABLE t2 DROP FOREIGN KEY t2_ibfk_0;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` int DEFAULT NULL,
+  `a` INT DEFAULT NULL,
   KEY `t2_ibfk_0` (`a`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE t2,t1;
@@ -2448,8 +2450,8 @@ references t2(c1) on delete cascade;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` bigint NOT NULL,
-  `c2` bigint NOT NULL,
+  `c1` BIGINT NOT NULL,
+  `c2` BIGINT NOT NULL,
   PRIMARY KEY (`c1`),
   UNIQUE KEY `c2` (`c2`),
   CONSTRAINT `c2_fk` FOREIGN KEY (`c2`) REFERENCES `t2` (`c1`) ON DELETE CASCADE
@@ -2458,8 +2460,8 @@ alter table t1 drop foreign key c2_fk;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` bigint NOT NULL,
-  `c2` bigint NOT NULL,
+  `c1` BIGINT NOT NULL,
+  `c2` BIGINT NOT NULL,
   PRIMARY KEY (`c1`),
   UNIQUE KEY `c2` (`c2`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -2649,8 +2651,8 @@ DELETE CASCADE ON UPDATE CASCADE;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
-  `f` int NOT NULL,
+  `id` INT NOT NULL,
+  `f` INT NOT NULL,
   PRIMARY KEY (`id`),
   KEY `f` (`f`),
   CONSTRAINT `t2_t1` FOREIGN KEY (`id`) REFERENCES `t1` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -2686,7 +2688,7 @@ id
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=42
 CREATE TABLE t2 (id int PRIMARY KEY) ENGINE=InnoDB;
@@ -2695,7 +2697,7 @@ ALTER TABLE t1 ADD CONSTRAINT t1_t2 FOREIGN KEY (id) REFERENCES t2(id);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`),
   CONSTRAINT `t1_t2` FOREIGN KEY (`id`) REFERENCES `t2` (`id`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -2716,3 +2718,4 @@ id
 -10
 1
 DROP TABLE t1;
+SET GLOBAL innodb_lock_wait_timeout=@orig_lock_wait_timeout ;

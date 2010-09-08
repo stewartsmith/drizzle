@@ -115,7 +115,6 @@ our $path_timefile;
 our $path_snapshot;
 our $path_drizzletest_log;
 our $path_current_test_log;
-our $path_my_basedir;
 
 our $opt_vardir;                 # A path but set directly on cmd line
 our $opt_top_srcdir;
@@ -671,13 +670,10 @@ sub command_line_setup () {
   $glob_mysql_bench_dir= undef
     unless -d $glob_mysql_bench_dir;
 
-  $path_my_basedir=
-    $source_dist ? $glob_mysql_test_dir : $glob_basedir;
-
   $glob_timers= mtr_init_timers();
 
   #
-  # Find the mysqld executable to be able to find the mysqld version
+  # Find the drizzled executable to be able to find the drizzled version
   # number as early as possible
   #
 
@@ -695,7 +691,7 @@ sub command_line_setup () {
 				       "$glob_basedir/sbin/drizzled",
                                        "$glob_builddir/drizzled/drizzled");
 
-    # Use the mysqld found above to find out what features are available
+    # Use the drizzled found above to find out what features are available
     collect_mysqld_features();
   }
   else
@@ -1181,7 +1177,7 @@ sub collect_mysqld_features () {
   #
   # --datadir must exist, mysqld will chdir into it
   #
-  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --skip-grant-tables --verbose --help`;
+  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --skip-grant-tables --print-defaults`;
 
   foreach my $line (split('\n', $list))
   {
@@ -2545,9 +2541,6 @@ sub mysqld_arguments ($$$$) {
 
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
-  $path_my_basedir= collapse_path($path_my_basedir);
-  mtr_add_arg($args, "%s--basedir=%s", $prefix, $path_my_basedir);
-
   if ($opt_engine)
   {
     mtr_add_arg($args, "%s--default-storage-engine=%s", $prefix, $opt_engine);
@@ -3366,6 +3359,18 @@ sub gdb_arguments {
   my $args= shift;
   my $exe=  shift;
   my $type= shift;
+  # We add needed, extra lines to gdbinit on OS X
+  my $extra_gdb_init = '' ;
+  if ($^O eq 'darwin')
+  {
+    $extra_gdb_init= "set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib\n".
+                 "set env MallocStackLogging 1\n".
+                 "set env MallocScribble 1\n".
+                 "set env MallocPreScribble 1\n".
+                 "set env MallocStackLogging 1\n".
+                 "set env MallocStackLoggingNoCompact 1\n".
+                 "set env MallocGuardEdges 1\n" ;
+  }
 
   # Write $args to gdb init file
   my $str= join(" ", @$$args);
@@ -3379,6 +3384,7 @@ sub gdb_arguments {
     # write init file for client
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
+               "$extra_gdb_init" .
 	       "break main\n");
   }
   else
@@ -3386,6 +3392,7 @@ sub gdb_arguments {
     # write init file for mysqld
     mtr_tofile($gdb_init_file,
 	       "set args $str\n" .
+               "$extra_gdb_init" .
                "set breakpoint pending on\n" .
 	       "break drizzled::mysql_parse\n" .
 	       "commands 1\n" .

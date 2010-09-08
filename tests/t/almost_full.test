@@ -21,11 +21,11 @@ commit;
 
 #DELETE FROM t1 WHERE a=1 or a=5;
 
-#--error 1114
+#--error ER_RECORD_FILE_FULL
 #INSERT INTO t1 SET b=repeat('a',600);
 #CHECK TABLE t1 EXTENDED;
 
-#--error 1114
+#--error ER_RECORD_FILE_FULL
 #UPDATE t1 SET b=repeat('a', 800) where a=10;
 #CHECK TABLE t1 EXTENDED;
 

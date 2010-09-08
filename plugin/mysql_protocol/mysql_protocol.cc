@@ -39,11 +39,6 @@ using namespace drizzled;
 
 #define PROTOCOL_VERSION 10
 
-namespace drizzled
-{
-extern uint32_t global_thread_id;
-}
-
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 static uint32_t port;
 static uint32_t connect_timeout;
@@ -678,7 +673,7 @@ bool ClientMySQLProtocol::checkConnection(void)
     *end= 0;
     end++;
 
-    int4store((unsigned char*) end, global_thread_id);
+    int4store((unsigned char*) end, session->variables.pseudo_thread_id);
     end+= 4;
 
     /* We don't use scramble anymore. */
@@ -887,7 +882,7 @@ void ClientMySQLProtocol::makeScramble(char *scramble)
   uint32_t pointer_seed;
   memcpy(&pointer_seed, &pointer, 4);
   uint32_t random1= (seed + pointer_seed) % random_max;
-  uint32_t random2= (seed + global_thread_id + net.vio->sd) % random_max;
+  uint32_t random2= (seed + session->variables.pseudo_thread_id + net.vio->sd) % random_max;
 
   for (char *end= scramble + SCRAMBLE_LENGTH; scramble != end; scramble++)
   {

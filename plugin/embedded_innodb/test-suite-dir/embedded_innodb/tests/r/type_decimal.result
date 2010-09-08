@@ -353,14 +353,14 @@ create table t1 (d decimal(5));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `d` decimal(5,0) DEFAULT NULL
+  `d` DECIMAL(5,0) DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (d decimal);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `d` decimal(10,0) DEFAULT NULL
+  `d` DECIMAL(10,0) DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (d decimal(66,0));
@@ -528,8 +528,8 @@ ERROR 01000: Data truncated for column 'a' at row 1
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` decimal(10,0) DEFAULT NULL,
-  `b` int DEFAULT NULL
+  `a` DECIMAL(10,0) DEFAULT NULL,
+  `b` INT DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select round(a,b) as c from t1 order by c;
 c

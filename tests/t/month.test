@@ -16,11 +16,11 @@ SELECT MONTH(NULL);
 # Test improper argument list 
 #
 # 1 arg is required.
---error 1064 
+--error ER_PARSE_ERROR 
 # Wrong parameter count...but unfortunately produces 1064 Syntax Error due to limitations of 
 # the SQL parser, which considers MONTH a keyword before being a function symbol
 SELECT MONTH();
---error 1064
+--error ER_PARSE_ERROR
 # Wrong parameter count...but unfortunately produces 1064 Syntax Error due to limitations of 
 # the SQL parser, which considers MONTH a keyword before being a function symbol
 SELECT MONTH(1, 0);
@@ -30,23 +30,23 @@ SELECT MONTH(1, 0);
 # produce an error, not a NULL or anything
 # else...
 #
---error 1686
+--error ER_INVALID_DATETIME_VALUE
 SELECT MONTH("xxx");
 
 # Indy, bad dates!
---error 1686
+--error ER_INVALID_DATETIME_VALUE
 SELECT MONTH("0000-00-00"); # No 0000-00-00 dates!...
---error 1686
+--error ER_INVALID_DATETIME_VALUE
 SELECT MONTH("0000-01-01"); # No zero year parts
---error 1686
+--error ER_INVALID_DATETIME_VALUE
 SELECT MONTH("0001-00-01"); # No zero month parts
---error 1686
+--error ER_INVALID_DATETIME_VALUE
 SELECT MONTH("0001-01-00"); # No zero day parts
---error 1686
+--error ER_INVALID_DATETIME_VALUE
 SELECT MONTH("2000-02-30"); # No Feb 30th!
---error 1686
+--error ER_INVALID_DATETIME_VALUE
 SELECT MONTH("1900-02-29"); # Not a leap MONTH since not divisible evenly by 400...
---error 1686
+--error ER_INVALID_DATETIME_VALUE
 SELECT MONTH('1976-15-15'); # No 15th month!
 
 # A good date, which should output 1

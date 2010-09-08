@@ -399,7 +399,6 @@ int load_defaults(const char *conf_file, const char **groups,
 {
   DYNAMIC_ARRAY args;
   TYPELIB group;
-  bool found_print_defaults= 0;
   uint32_t args_used= 0;
   int error= 0;
   memory::Root alloc(512);
@@ -464,12 +463,6 @@ int load_defaults(const char *conf_file, const char **groups,
     Check if we wan't to see the new argument list
     This options must always be the last of the default options
   */
-  if (*argc >= 2 && !strcmp(argv[0][1],"--print-defaults"))
-  {
-    found_print_defaults=1;
-    --*argc; ++*argv;				/* skip argument */
-  }
-
   if (*argc)
     memcpy(res+1+args.elements, *argv + 1, (*argc-1)*sizeof(char*));
   res[args.elements+ *argc]=0;			/* last null */
@@ -478,16 +471,7 @@ int load_defaults(const char *conf_file, const char **groups,
   *argv= static_cast<char**>(res);
   *(memory::Root*) ptr= alloc;			/* Save alloc root for free */
   delete_dynamic(&args);
-  if (found_print_defaults)
-  {
-    int i;
-    printf("%s would have been started with the following arguments:\n",
-	   **argv);
-    for (i=1 ; i < *argc ; i++)
-      printf("%s ", (*argv)[i]);
-    puts("");
-    exit(0);
-  }
+
   return(error);
 
  err:
@@ -952,7 +936,6 @@ void print_defaults(const char *conf_file, const char **groups)
     }
   }
   puts("\nThe following options may be given as the first argument:\n\
-  --print-defaults	Print the program argument list and exit\n\
   --no-defaults		Don't read default options from any options file\n\
   --defaults-file=#	Only read default options from the given file #\n\
   --defaults-extra-file=# Read this file after the global files are read");

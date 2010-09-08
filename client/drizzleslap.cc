@@ -1,6 +1,7 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
+ *  Copyright (C) 2010 Vijay Samuel
  *  Copyright (C) 2008 MySQL
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -134,11 +135,12 @@ static string host,
 
 static vector<string> user_supplied_queries;
 static string opt_verbose;
+std::string opt_protocol;
 string delimiter;
 
 string create_schema_string;
 
-static bool opt_mysql;
+static bool use_drizzle_protocol= false;
 static bool opt_preserve= true;
 static bool opt_only_print;
 static bool opt_burnin;
@@ -924,14 +926,12 @@ int main(int argc, char **argv)
 
     po::options_description client_options("Options specific to the client");
     client_options.add_options()
-      ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-       N_("Use MySQL Protocol."))
       ("host,h",po::value<string>(&host)->default_value("localhost"),"Connect to the host")
       ("password,P",po::value<char *>(&password),
        "Password to use when connecting to server. If password is not given it's asked from the tty")
       ("port,p",po::value<uint32_t>(), "Port number to use for connection")
-      ("protocol",po::value<string>(),
-       "The protocol of connection (tcp,socket,pipe,memory).")
+      ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
+       "The protocol of connection (mysql or drizzle).")
       ("user,u",po::value<string>(&user)->default_value(""),
        "User for login if not current user")  
       ;
@@ -992,6 +992,21 @@ int main(int argc, char **argv)
       exit(0);
     }   
 
+    if (vm.count("protocol"))
+    {
+      std::transform(opt_protocol.begin(), opt_protocol.end(),
+        opt_protocol.begin(), ::tolower);
+
+      if (not opt_protocol.compare("mysql"))
+        use_drizzle_protocol=false;
+      else if (not opt_protocol.compare("drizzle"))
+        use_drizzle_protocol=true;
+      else
+      {
+        cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
+        exit(-1);
+      }
+    }
     if (vm.count("port")) 
     {
       temp_drizzle_port= vm["port"].as<uint32_t>();
@@ -2968,10 +2983,11 @@ slap_connect(drizzle_con_st *con, bool connect_to_schema)
     usleep(random()%opt_delayed_start);
 
   if ((drizzle= drizzle_create(NULL)) == NULL ||
-      drizzle_con_add_tcp(drizzle, con, host.c_str(), opt_drizzle_port, user.c_str(),
-                          opt_password.c_str(),
-                          connect_to_schema ? create_schema_string.c_str() : NULL,
-                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+      drizzle_con_add_tcp(drizzle, con, host.c_str(), opt_drizzle_port,
+        user.c_str(),
+        opt_password.c_str(),
+        connect_to_schema ? create_schema_string.c_str() : NULL,
+        use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
     fprintf(stderr,"%s: Error creating drizzle object\n", internal::my_progname);
     exit(1);

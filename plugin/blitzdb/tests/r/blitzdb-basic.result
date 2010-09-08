@@ -98,9 +98,9 @@ engine = blitzdb (select * from t1);
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` int DEFAULT NULL,
-  `b` int DEFAULT NULL,
-  `c` varchar(255) DEFAULT NULL
+  `a` INT DEFAULT NULL,
+  `b` INT DEFAULT NULL,
+  `c` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=BLITZDB COLLATE = utf8_general_ci
 select count(*) from t2;
 count(*)

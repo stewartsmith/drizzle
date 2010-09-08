@@ -192,10 +192,10 @@ insert into t2 values('AAA', 10, 0.5);
 insert into t2 values('BBB', 20, 1.0);
 select t1.a1, t1.a2, t2.a1, t2.a2 from t1,t2;
 a1	a2	a1	a2
-10	aaa	AAA	10
-10	aaa	BBB	20
 10	NULL	AAA	10
 10	NULL	BBB	20
+10	aaa	AAA	10
+10	aaa	BBB	20
 10	bbb	AAA	10
 10	bbb	BBB	20
 20	zzz	AAA	10
@@ -586,21 +586,21 @@ insert into t1 values ('a'),('b');
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) DEFAULT NULL
+  `a` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 create table t2 select max(a),min(a) from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `max(a)` varchar(1) DEFAULT NULL,
-  `min(a)` varchar(1) DEFAULT NULL
+  `max(a)` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
+  `min(a)` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t2;
 create table t2 select concat(a) from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `concat(a)` varchar(1) DEFAULT NULL
+  `concat(a)` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t2,t1;
 create table t1 (a int);
@@ -672,7 +672,7 @@ create table t2 select MAX(b) from t1 group by a;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `MAX(b)` datetime DEFAULT NULL
+  `MAX(b)` DATETIME DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
 create table t1(f1 datetime);
@@ -898,14 +898,14 @@ create table t1 select variance(0);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `variance(0)` double(8,4) DEFAULT NULL
+  `variance(0)` DOUBLE(8,4) DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 select stddev(0);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `stddev(0)` double(8,4) DEFAULT NULL
+  `stddev(0)` DOUBLE(8,4) DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table bug22555 (i int primary key auto_increment, s1 int, s2 int, e decimal(30,10), o double);

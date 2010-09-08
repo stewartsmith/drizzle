@@ -37,10 +37,6 @@
 
 #define PROTOCOL_VERSION 10
 
-namespace drizzled
-{
-extern uint32_t global_thread_id;
-}
 namespace po= boost::program_options;
 using namespace drizzled;
 using namespace std;
@@ -690,7 +686,7 @@ bool ClientDrizzleProtocol::checkConnection(void)
     *end= 0;
     end++;
 
-    int4store((unsigned char*) end, global_thread_id);
+    int4store((unsigned char*) end, session->variables.pseudo_thread_id);
     end+= 4;
 
     /* We don't use scramble anymore. */

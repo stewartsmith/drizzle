@@ -88,7 +88,7 @@ create table t1 (a char);
 --replace_regex /ENGINE=[a-zA-Z]+/ENGINE=DEFAULT/
 show create table t1;
 drop table t1;
---error 1064
+--error ER_PARSE_ERROR
 create table t2 (a varbinary);
 
 # End of 4.1 tests

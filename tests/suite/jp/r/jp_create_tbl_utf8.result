@@ -94,78 +94,78 @@ Field	Type	Null	Default	Default_is_NULL	On_Update
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TABLE `ｱｱｱ` (
-  `ｶｶｶ` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `ｶｶｶ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｲｲｲ`;
 Table	Create Table
 ｲｲｲ	CREATE TABLE `ｲｲｲ` (
-  `ｷｷｷ` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `ｷｷｷ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｳｳｳ`;
 Table	Create Table
 ｳｳｳ	CREATE TABLE `ｳｳｳ` (
-  `ｸｸｸ` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `ｸｸｸ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｴｴｴ`;
 Table	Create Table
 ｴｴｴ	CREATE TEMPORARY TABLE `ｴｴｴ` (
-  `ｹｹｹ` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `ｹｹｹ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｵｵｵ`;
 Table	Create Table
 ｵｵｵ	CREATE TEMPORARY TABLE `ｵｵｵ` (
-  `ｺｺｺ` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `ｺｺｺ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TABLE `あああ` (
-  `かかか` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `かかか` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `いいい`;
 Table	Create Table
 いいい	CREATE TABLE `いいい` (
-  `ききき` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `ききき` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ううう`;
 Table	Create Table
 ううう	CREATE TABLE `ううう` (
-  `くくく` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `くくく` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `えええ`;
 Table	Create Table
 えええ	CREATE TEMPORARY TABLE `えええ` (
-  `けけけ` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `けけけ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `おおお`;
 Table	Create Table
 おおお	CREATE TEMPORARY TABLE `おおお` (
-  `こここ` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `こここ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TABLE `龖龖龖` (
-  `丂丂丂` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `丂丂丂` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龗龗龗`;
 Table	Create Table
 龗龗龗	CREATE TABLE `龗龗龗` (
-  `丄丄丄` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `丄丄丄` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龞龞龞`;
 Table	Create Table
 龞龞龞	CREATE TABLE `龞龞龞` (
-  `丅丅丅` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `丅丅丅` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龡龡龡`;
 Table	Create Table
 龡龡龡	CREATE TEMPORARY TABLE `龡龡龡` (
-  `丌丌丌` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `丌丌丌` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龢龢龢`;
 Table	Create Table
 龢龢龢	CREATE TEMPORARY TABLE `龢龢龢` (
-  `丒丒丒` varchar(1) DEFAULT NULL
-) ENGINE=InnoDB
+  `丒丒丒` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=InnoDB COLLATE = utf8_general_ci
 DROP TABLE `ｱｱｱ`;
 DROP TABLE `ｲｲｲ`;
 DROP TABLE `ｳｳｳ`;
@@ -262,78 +262,78 @@ Field	Type	Null	Default	Default_is_NULL	On_Update
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
-  `ｶｶｶ` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `ｶｶｶ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｲｲｲ`;
 Table	Create Table
 ｲｲｲ	CREATE TEMPORARY TABLE `ｲｲｲ` (
-  `ｷｷｷ` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `ｷｷｷ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｳｳｳ`;
 Table	Create Table
 ｳｳｳ	CREATE TEMPORARY TABLE `ｳｳｳ` (
-  `ｸｸｸ` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `ｸｸｸ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｴｴｴ`;
 Table	Create Table
 ｴｴｴ	CREATE TEMPORARY TABLE `ｴｴｴ` (
-  `ｹｹｹ` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `ｹｹｹ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｵｵｵ`;
 Table	Create Table
 ｵｵｵ	CREATE TEMPORARY TABLE `ｵｵｵ` (
-  `ｺｺｺ` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `ｺｺｺ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
-  `かかか` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `かかか` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `いいい`;
 Table	Create Table
 いいい	CREATE TEMPORARY TABLE `いいい` (
-  `ききき` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `ききき` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ううう`;
 Table	Create Table
 ううう	CREATE TEMPORARY TABLE `ううう` (
-  `くくく` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `くくく` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `えええ`;
 Table	Create Table
 えええ	CREATE TEMPORARY TABLE `えええ` (
-  `けけけ` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `けけけ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `おおお`;
 Table	Create Table
 おおお	CREATE TEMPORARY TABLE `おおお` (
-  `こここ` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `こここ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
-  `丂丂丂` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `丂丂丂` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龗龗龗`;
 Table	Create Table
 龗龗龗	CREATE TEMPORARY TABLE `龗龗龗` (
-  `丄丄丄` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `丄丄丄` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龞龞龞`;
 Table	Create Table
 龞龞龞	CREATE TEMPORARY TABLE `龞龞龞` (
-  `丅丅丅` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `丅丅丅` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龡龡龡`;
 Table	Create Table
 龡龡龡	CREATE TEMPORARY TABLE `龡龡龡` (
-  `丌丌丌` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `丌丌丌` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龢龢龢`;
 Table	Create Table
 龢龢龢	CREATE TEMPORARY TABLE `龢龢龢` (
-  `丒丒丒` varchar(1) DEFAULT NULL
-) ENGINE=MyISAM
+  `丒丒丒` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MyISAM COLLATE = utf8_general_ci
 DROP TABLE `ｱｱｱ`;
 DROP TABLE `ｲｲｲ`;
 DROP TABLE `ｳｳｳ`;
@@ -430,78 +430,78 @@ Field	Type	Null	Default	Default_is_NULL	On_Update
 SHOW CREATE TABLE `ｱｱｱ`;
 Table	Create Table
 ｱｱｱ	CREATE TEMPORARY TABLE `ｱｱｱ` (
-  `ｶｶｶ` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `ｶｶｶ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｲｲｲ`;
 Table	Create Table
 ｲｲｲ	CREATE TEMPORARY TABLE `ｲｲｲ` (
-  `ｷｷｷ` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `ｷｷｷ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｳｳｳ`;
 Table	Create Table
 ｳｳｳ	CREATE TEMPORARY TABLE `ｳｳｳ` (
-  `ｸｸｸ` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `ｸｸｸ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｴｴｴ`;
 Table	Create Table
 ｴｴｴ	CREATE TEMPORARY TABLE `ｴｴｴ` (
-  `ｹｹｹ` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `ｹｹｹ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ｵｵｵ`;
 Table	Create Table
 ｵｵｵ	CREATE TEMPORARY TABLE `ｵｵｵ` (
-  `ｺｺｺ` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `ｺｺｺ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `あああ`;
 Table	Create Table
 あああ	CREATE TEMPORARY TABLE `あああ` (
-  `かかか` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `かかか` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `いいい`;
 Table	Create Table
 いいい	CREATE TEMPORARY TABLE `いいい` (
-  `ききき` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `ききき` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `ううう`;
 Table	Create Table
 ううう	CREATE TEMPORARY TABLE `ううう` (
-  `くくく` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `くくく` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `えええ`;
 Table	Create Table
 えええ	CREATE TEMPORARY TABLE `えええ` (
-  `けけけ` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `けけけ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `おおお`;
 Table	Create Table
 おおお	CREATE TEMPORARY TABLE `おおお` (
-  `こここ` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `こここ` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龖龖龖`;
 Table	Create Table
 龖龖龖	CREATE TEMPORARY TABLE `龖龖龖` (
-  `丂丂丂` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `丂丂丂` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龗龗龗`;
 Table	Create Table
 龗龗龗	CREATE TEMPORARY TABLE `龗龗龗` (
-  `丄丄丄` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `丄丄丄` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龞龞龞`;
 Table	Create Table
 龞龞龞	CREATE TEMPORARY TABLE `龞龞龞` (
-  `丅丅丅` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `丅丅丅` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龡龡龡`;
 Table	Create Table
 龡龡龡	CREATE TEMPORARY TABLE `龡龡龡` (
-  `丌丌丌` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `丌丌丌` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 SHOW CREATE TABLE `龢龢龢`;
 Table	Create Table
 龢龢龢	CREATE TEMPORARY TABLE `龢龢龢` (
-  `丒丒丒` varchar(1) DEFAULT NULL
-) ENGINE=MEMORY
+  `丒丒丒` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
+) ENGINE=MEMORY COLLATE = utf8_general_ci
 DROP TABLE `ｱｱｱ`;
 DROP TABLE `ｲｲｲ`;
 DROP TABLE `ｳｳｳ`;

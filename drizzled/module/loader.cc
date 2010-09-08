@@ -27,7 +27,6 @@
 #include <boost/program_options.hpp>
 
 #include "drizzled/option.h"
-#include "drizzled/my_hash.h"
 #include "drizzled/internal/m_string.h"
 
 #include "drizzled/plugin.h"
@@ -80,6 +79,8 @@ char opt_plugin_dir[FN_REFLEN];
 const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
 
+extern bool opt_print_defaults;
+
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
 */
@@ -95,7 +96,6 @@ static bool reap_needed= false;
 */
 static memory::Root plugin_mem_root(4096);
 static uint32_t global_variables_dynamic_size= 0;
-static HASH bookmark_hash;
 
 
 /*
@@ -107,25 +107,23 @@ struct st_item_value_holder : public drizzle_value
   Item *item;
 };
 
-
-/*
-  stored in bookmark_hash, this structure is never removed from the
-  hash and is used to mark a single offset for a session local variable
-  even if plugins have been uninstalled and reinstalled, repeatedly.
-  This structure is allocated from plugin_mem_root.
-
-  The key format is as follows:
-    1 byte         - variable type code
-    name_len bytes - variable name
-    '\0'           - end of key
-*/
-struct st_bookmark
+class Bookmark
 {
-  uint32_t name_len;
+public:
+  Bookmark() :
+    type_code(0),
+    offset(0),
+    version(0),
+    key("")
+  {}
+  uint8_t type_code;
   int offset;
   uint32_t version;
-  char key[1];
+  string key;
 };
+
+typedef boost::unordered_map<string, Bookmark> bookmark_unordered_map;
+static bookmark_unordered_map bookmark_hash;
 
 
 /*
@@ -363,15 +361,6 @@ static bool plugin_initialize(module::Registry &registry,
 }
 
 
-static unsigned char *get_bookmark_hash_key(const unsigned char *buff,
-                                            size_t *length, bool)
-{
-  struct st_bookmark *var= (st_bookmark *)buff;
-  *length= var->name_len + 1;
-  return (unsigned char*) var->key;
-}
-
-
 /*
   The logic is that we first load and initialize all compiled in plugins.
   From there we load up the dynamic types (assuming we have not been told to
@@ -387,14 +376,6 @@ bool plugin_init(module::Registry &registry,
 
   if (initialized)
     return false;
-
-  if (hash_init(&bookmark_hash, &my_charset_bin, 16, 0, 0,
-                  get_bookmark_hash_key, NULL, HASH_UNIQUE))
-  {
-    tmp_root.free_root(MYF(0));
-    return true;
-  }
-
 
   initialized= 1;
 
@@ -472,7 +453,10 @@ void plugin_finalize(module::Registry &registry)
       plugin_initialize_vars(module);
 
       if (plugin_initialize(registry, module))
+      {
+        registry.remove(module);
         delete_module(module);
+      }
     }
   }
 }
@@ -567,8 +551,6 @@ void module_shutdown(module::Registry &registry)
   }
 
   /* Dispose of the memory */
-
-  hash_free(&bookmark_hash);
   plugin_mem_root.free_root(MYF(0));
 
   global_variables_dynamic_size= 0;
@@ -805,11 +787,9 @@ sys_var *find_sys_var(Session *, const char *str, uint32_t length)
   return(var);
 }
 
-static const string make_bookmark_name(const string &plugin, const char *name, int flags)
+static const string make_bookmark_name(const string &plugin, const char *name)
 {
-  /* Embed the flags into the first char of the string */
-  string varname(1, static_cast<char>(flags & PLUGIN_VAR_TYPEMASK));
-  varname.append(plugin);
+  string varname(plugin);
   varname.push_back('_');
   varname.append(name);
 
@@ -828,20 +808,19 @@ static const string make_bookmark_name(const string &plugin, const char *name, i
   Returns the 'bookmark' for the named variable.
   LOCK_system_variables_hash should be at least read locked
 */
-static st_bookmark *find_bookmark(const string &plugin, const char *name, int flags)
+static Bookmark *find_bookmark(const string &plugin, const char *name, int flags)
 {
-  st_bookmark *result= NULL;
-
   if (!(flags & PLUGIN_VAR_SessionLOCAL))
     return NULL;
 
-  const string varname(make_bookmark_name(plugin, name, flags));
+  const string varname(make_bookmark_name(plugin, name));
 
-
-  result= (st_bookmark*) hash_search(&bookmark_hash,
-                                     (const unsigned char*) varname.c_str(), varname.size() - 1);
-
-  return result;
+  bookmark_unordered_map::iterator iter= bookmark_hash.find(varname);
+  if (iter != bookmark_hash.end())
+  {
+    return &((*iter).second);
+  }
+  return NULL;
 }
 
 
@@ -850,14 +829,14 @@ static st_bookmark *find_bookmark(const string &plugin, const char *name, int fl
   returns null for non session-local variables.
   Requires that a write lock is obtained on LOCK_system_variables_hash
 */
-static st_bookmark *register_var(const string &plugin, const char *name,
+static Bookmark *register_var(const string &plugin, const char *name,
                                  int flags)
 {
   if (!(flags & PLUGIN_VAR_SessionLOCAL))
     return NULL;
 
   uint32_t size= 0, offset, new_size;
-  st_bookmark *result;
+  Bookmark *result= NULL;
 
   switch (flags & PLUGIN_VAR_TYPEMASK) {
   case PLUGIN_VAR_BOOL:
@@ -883,19 +862,17 @@ static st_bookmark *register_var(const string &plugin, const char *name,
 
   if (!(result= find_bookmark(plugin, name, flags)))
   {
-    const string varname(make_bookmark_name(plugin, name, flags));
+    const string varname(make_bookmark_name(plugin, name));
 
-    result= static_cast<st_bookmark*>(plugin_mem_root.alloc_root(sizeof(struct st_bookmark) + varname.size() + 1));
-    memset(result->key, 0, varname.size()+1);
-    memcpy(result->key, varname.c_str(), varname.size());
-    result->name_len= varname.size() - 2;
-    result->offset= -1;
+    Bookmark new_bookmark;
+    new_bookmark.key= varname;
+    new_bookmark.offset= -1;
 
     assert(size && !(size & (size-1))); /* must be power of 2 */
 
     offset= global_system_variables.dynamic_variables_size;
     offset= (offset + size - 1) & ~(size - 1);
-    result->offset= (int) offset;
+    new_bookmark.offset= (int) offset;
 
     new_size= (offset + size + 63) & ~63;
 
@@ -935,14 +912,12 @@ static st_bookmark *register_var(const string &plugin, const char *name,
     global_system_variables.dynamic_variables_version++;
     max_system_variables.dynamic_variables_version++;
 
-    result->version= global_system_variables.dynamic_variables_version;
+    new_bookmark.version= global_system_variables.dynamic_variables_version;
+    new_bookmark.type_code= flags;
 
     /* this should succeed because we have already checked if a dup exists */
-    if (my_hash_insert(&bookmark_hash, (unsigned char*) result))
-    {
-      fprintf(stderr, "failed to add placeholder to hash");
-      assert(0);
-    }
+    bookmark_hash.insert(make_pair(varname, new_bookmark));
+    result= find_bookmark(plugin, name, flags);
   }
   return result;
 }
@@ -968,8 +943,6 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
   if (!session->variables.dynamic_variables_ptr ||
       (uint32_t)offset > session->variables.dynamic_variables_head)
   {
-    uint32_t idx;
-
     char *tmpptr= NULL;
     if (!(tmpptr= (char *)realloc(session->variables.dynamic_variables_ptr,
                                   global_variables_dynamic_size)))
@@ -992,16 +965,18 @@ static unsigned char *intern_sys_var_ptr(Session* session, int offset, bool glob
       now we need to iterate through any newly copied 'defaults'
       and if it is a string type with MEMALLOC flag, we need to strdup
     */
-    for (idx= 0; idx < bookmark_hash.records; idx++)
+    bookmark_unordered_map::iterator iter= bookmark_hash.begin();
+    for (; iter != bookmark_hash.end() ; ++iter)
     {
       sys_var_pluginvar *pi;
       sys_var *var;
-      st_bookmark *v= (st_bookmark*) hash_element(&bookmark_hash,idx);
+      const Bookmark &v= (*iter).second;
+      const string var_name((*iter).first);
 
-      if (v->version <= session->variables.dynamic_variables_version ||
-          !(var= intern_find_sys_var(v->key + 1, v->name_len, true)) ||
+      if (v.version <= session->variables.dynamic_variables_version ||
+          !(var= intern_find_sys_var(var_name.c_str(), var_name.size(), true)) ||
           !(pi= var->cast_pluginvar()) ||
-          v->key[0] != (pi->plugin_var->flags & PLUGIN_VAR_TYPEMASK))
+          v.type_code != (pi->plugin_var->flags & PLUGIN_VAR_TYPEMASK))
         continue;
 
       /* Here we do anything special that may be required of the data types */
@@ -1091,18 +1066,19 @@ static void unlock_variables(Session *, struct system_variables *vars)
 */
 static void cleanup_variables(Session *session, struct system_variables *vars)
 {
-  st_bookmark *v;
   sys_var_pluginvar *pivar;
   sys_var *var;
   int flags;
 
-  for (uint32_t idx= 0; idx < bookmark_hash.records; idx++)
+  bookmark_unordered_map::iterator iter= bookmark_hash.begin();
+  for (; iter != bookmark_hash.end() ; ++iter)
   {
-    v= (st_bookmark*) hash_element(&bookmark_hash, idx);
-    if (v->version > vars->dynamic_variables_version ||
-        !(var= intern_find_sys_var(v->key + 1, v->name_len, true)) ||
+    const Bookmark &v= (*iter).second;
+    const string key_name((*iter).first);
+    if (v.version > vars->dynamic_variables_version ||
+        !(var= intern_find_sys_var(key_name.c_str(), key_name.size(), true)) ||
         !(pivar= var->cast_pluginvar()) ||
-        v->key[0] != (pivar->plugin_var->flags & PLUGIN_VAR_TYPEMASK))
+        v.type_code != (pivar->plugin_var->flags & PLUGIN_VAR_TYPEMASK))
       continue;
 
     flags= pivar->plugin_var->flags;
@@ -1439,7 +1415,7 @@ static int construct_options(memory::Root *mem_root, module::Module *tmp,
   char *optname, *p;
   int index= 0, offset= 0;
   drizzle_sys_var *opt, **plugin_option;
-  st_bookmark *v;
+  Bookmark *v;
 
   string name(plugin_name);
   transform(name.begin(), name.end(), name.begin(), ::tolower);
@@ -1569,7 +1545,7 @@ static int construct_options(memory::Root *mem_root, module::Module *tmp,
       if (opt->flags & PLUGIN_VAR_NOCMDOPT)
         continue;
 
-      optname= (char*) mem_root->memdup_root(v->key + 1, (optnamelen= v->name_len) + 1);
+      optname= (char*) mem_root->memdup_root(v->key.c_str(), (optnamelen= v->key.size()) + 1);
     }
 
     /* convert '_' to '-' */
@@ -1656,7 +1632,7 @@ static int test_plugin_options(memory::Root *module_root,
   option *opts= NULL;
   int error;
   drizzle_sys_var *o;
-  struct st_bookmark *var;
+  Bookmark *var;
   uint32_t len, count= EXTRA_OPTIONS;
 
   if (test_module->getManifest().init_options != NULL)
@@ -1721,7 +1697,7 @@ static int test_plugin_options(memory::Root *module_root,
 
       if ((var= find_bookmark(test_module->getName(), o->name, o->flags)))
       {
-        v= new sys_var_pluginvar(var->key + 1, o);
+        v= new sys_var_pluginvar(var->key.c_str(), o);
       }
       else
       {
@@ -1846,9 +1822,15 @@ void my_print_help_inc_plugins(option *main_options,
   /* main_options now points to the empty option terminator */
   all_options.push_back(*main_options);
 
-  my_print_help(&*(all_options.begin()));
-  cout << long_options << endl;
-  my_print_variables(&*(all_options.begin()));
+  if (!opt_print_defaults)
+  {
+    my_print_help(&*(all_options.begin()));
+    cout << long_options << endl;
+  }
+  else
+  {
+    my_print_variables(&*(all_options.begin()));
+  }
 
   mem_root.free_root(MYF(0));
 }

@@ -13,11 +13,11 @@ update t1 set a=a+100 where a > 0;
 
 # Some strange updates to test some otherwise unused code
 update t1 set a=a+100 where a=1 and a=2;
---error 1054
+--error ER_BAD_FIELD_ERROR
 update t1 set a=b+100 where a=1 and a=2; 
---error 1054
+--error ER_BAD_FIELD_ERROR
 update t1 set a=b+100 where c=1 and a=2; 
---error 1054
+--error ER_BAD_FIELD_ERROR
 update t1 set d=a+100 where a=1;
 select * from t1;
 drop table t1;
@@ -152,10 +152,10 @@ drop table t1,t2;
 #
 create table t1(f1 int);
 select DATABASE();
---error 1111
+--error ER_INVALID_GROUP_FUNC_USE
 update t1 set f1=1 where count(*)=1;
 select DATABASE();
---error 1111
+--error ER_INVALID_GROUP_FUNC_USE
 delete from t1 where count(*)=1;
 drop table t1;
 
@@ -233,7 +233,7 @@ drop table t1;
 # Bug#25126: Wrongly resolved field leads to a crash
 #
 create table t1(f1 int);
---error 1054
+--error ER_BAD_FIELD_ERROR
 update t1 set f2=1 order by f2;
 drop table t1;
 # End of 4.1 tests

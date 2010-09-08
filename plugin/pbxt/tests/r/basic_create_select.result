@@ -10,7 +10,7 @@ d
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `d` int NOT NULL,
+  `d` INT NOT NULL,
   PRIMARY KEY (`d`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2, t3;
