@@ -75,10 +75,10 @@ col1	col2	col3	col4
 show create table t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
-  `col1` double DEFAULT NULL,
-  `col2` double(22,5) NOT NULL,
-  `col3` double NOT NULL,
-  `col4` double DEFAULT NULL
+  `col1` DOUBLE DEFAULT NULL,
+  `col2` DOUBLE(22,5) NOT NULL,
+  `col3` DOUBLE NOT NULL,
+  `col4` DOUBLE DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1,t2;
 create table t1 (a float primary key);
@@ -159,7 +159,7 @@ d
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `d` double NOT NULL,
+  `d` DOUBLE NOT NULL,
   PRIMARY KEY (`d`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2, t3;
