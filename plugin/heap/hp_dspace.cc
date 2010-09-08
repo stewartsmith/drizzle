@@ -204,26 +204,6 @@ unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint32_t )
 
 
 /**
-  Reallocate an existing chunkset in the dataspace
-
-  Attempts to change the size of an existing chunkset
-
-  @param  info            the hosting dataspace
-  @param  chunk_count     the number of chunks that we expect as the result
-  @param  pos             pointer to the existing chunkset
-
-  @return  Error code or zero if successful
-*/
-
-int hp_reallocate_chunkset(HP_DATASPACE *, uint32_t , unsigned char* )
-{
-  /* Update should never change chunk_count in fixed-size mode */
-  errno=HA_ERR_WRONG_COMMAND;
-  return errno;
-}
-
-
-/**
   Allocate a single chunk in the dataspace
 
   Attempts to allocate a new chunk or reuse one from deleted list

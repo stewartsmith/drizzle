@@ -38,11 +38,11 @@ static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_recor
 /* Create a heap table */
 
 int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
-    uint32_t columns, HP_COLUMNDEF *,
-    uint32_t , uint32_t key_part_size,
-    uint32_t reclength, uint32_t keys_memory_size,
-    uint32_t max_records, uint32_t min_records,
-    HP_CREATE_INFO *create_info, HP_SHARE **res)
+                uint32_t columns,
+                uint32_t key_part_size,
+                uint32_t reclength, uint32_t keys_memory_size,
+                uint32_t max_records, uint32_t min_records,
+                HP_CREATE_INFO *create_info, HP_SHARE **res)
 {
   uint32_t i, key_segs, max_length, length;
   uint32_t max_rows_for_stated_memory;
@@ -170,8 +170,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       goto err;
     if (keys && !(share->keydef->seg= new HA_KEYSEG[key_segs]))
       goto err;
-    if (!(share->column_defs= new HP_COLUMNDEF[columns]))
-      goto err;
 
     /*
        Max_records is used for estimating block sizes and for enforcement.
@@ -249,8 +247,6 @@ err:
     delete [] share->keydef->seg;
   if (share && share->keydef)
     delete [] share->keydef;
-  if (share && share->column_defs)
-    delete [] share->column_defs;
   if (share)
     delete share;
   if (not create_info->internal_table)
@@ -327,6 +323,5 @@ void hp_free(HP_SHARE *share)
   if (share->keydef)
     delete [] share->keydef->seg;
   delete [] share->keydef;
-  delete [] share->column_defs;
   delete share;
 }

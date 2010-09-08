@@ -147,16 +147,6 @@ typedef struct st_hp_keydef		/* Key definition with open */
   drizzled::ha_rows hash_buckets;
 } HP_KEYDEF;
 
-typedef struct st_heap_columndef              /* column information */
-{
-  int16_t  type;                                /* en_fieldtype */
-  uint32_t length;                      /* length of field */
-  uint32_t offset;                      /* Offset to position in row */
-  uint8_t  null_bit;                    /* If column may be 0 */
-  uint16_t null_pos;                    /* position for null marker */
-  uint8_t  length_bytes;  /* length of the size, 1 o 2 bytes */
-} HP_COLUMNDEF;
-
 typedef struct st_heap_dataspace   /* control data for data space */
 {
   HP_BLOCK block;
@@ -188,7 +178,6 @@ typedef struct st_heap_dataspace   /* control data for data space */
 typedef struct st_heap_share
 {
   HP_KEYDEF  *keydef;
-  HP_COLUMNDEF *column_defs;
   HP_DATASPACE recordspace;  /* Describes "block", which contains actual records */
 
   uint32_t min_records,max_records;	/* Params to open */
@@ -214,7 +203,6 @@ typedef struct st_heap_share
 
   st_heap_share() :
     keydef(0),
-    column_defs(0),
     min_records(0),
     max_records(0),
     index_length(0),
@@ -297,8 +285,8 @@ extern int heap_scan(register HP_INFO *info, unsigned char *record);
 extern int heap_delete(HP_INFO *info,const unsigned char *buff);
 extern int heap_info(HP_INFO *info,HEAPINFO *x,int flag);
 extern int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
-           uint32_t columns, HP_COLUMNDEF *columndef,
-           uint32_t max_key_fieldnr, uint32_t key_part_size,
+           uint32_t columns, 
+           uint32_t key_part_size,
            uint32_t reclength, uint32_t keys_memory_size,
            uint32_t max_records, uint32_t min_records,
            HP_CREATE_INFO *create_info, HP_SHARE **share);

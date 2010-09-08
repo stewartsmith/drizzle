@@ -97,7 +97,6 @@ extern void hp_clear(HP_SHARE *info);
    /* Chunkset management (alloc/free/encode/decode) functions */
 
 extern unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count);
-extern int hp_reallocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count, unsigned char* pos);
 extern void hp_free_chunks(HP_DATASPACE *info, unsigned char *pos);
 extern void hp_clear_dataspace(HP_DATASPACE *info);
 
