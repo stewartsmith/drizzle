@@ -791,49 +791,49 @@ concat('*',v,'*',c,'*',t,'*')
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 create TEMPORARY table t2 like t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 create TEMPORARY table t3 select * from t1;
 show create table t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 alter table t1 modify c varchar(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 alter table t1 modify v char(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 alter table t1 modify t varchar(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(10) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
@@ -844,9 +844,9 @@ create TEMPORARY table t1 (v varchar(10), c char(10), t text, key(v), key(c), ke
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `v` (`v`),
   KEY `c` (`c`),
   KEY `t` (`t`(10))
@@ -1063,9 +1063,9 @@ alter table t1 modify v varchar(300), drop key v, drop key v_2, add key v (v);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(300) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(300) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`)
@@ -1143,9 +1143,9 @@ alter table t1 drop key v, add key v (v(30));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(300) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(300) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`(30))
@@ -1225,9 +1225,9 @@ Warning	1071	Specified key was too long; max key length is 1332 bytes
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(600) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(600) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `c` (`c`),
   KEY `t` (`t`(10)),
   KEY `v` (`v`(333))
@@ -1303,9 +1303,9 @@ create TEMPORARY table t1 (v varchar(10), c char(10), t text, key(v(5)), key(c(5
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` text,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   KEY `v` (`v`(5)),
   KEY `c` (`c`(5)),
   KEY `t` (`t`(5))
@@ -1315,15 +1315,15 @@ create TEMPORARY table t1 (v char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 create TEMPORARY table t1 (v varchar(10), c char(10));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 insert into t1 values('a','a'),('a ','a ');
 select concat('*',v,'*',c,'*') from t1;

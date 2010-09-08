@@ -19,9 +19,9 @@ create table t1 (version char(60)) select database(), user(), version() as 'vers
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `database()` varbinary(136) DEFAULT NULL,
-  `user()` varbinary(308) DEFAULT NULL,
-  `version` varchar(60) DEFAULT NULL
+  `database()` VARBINARY(136) DEFAULT NULL,
+  `user()` VARBINARY(308) DEFAULT NULL,
+  `version` VARCHAR(60) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 select TRUE,FALSE,NULL;

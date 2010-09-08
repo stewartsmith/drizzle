@@ -265,49 +265,49 @@ concat('*',v,'*',c,'*',t,'*')
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 create temporary table t2 like t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 create temporary table t3 select * from t1;
 show create table t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify c varchar(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify v char(10);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 alter table t1 modify t varchar(50);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 select concat('*',v,'*',c,'*',t,'*') from t1;
 concat('*',v,'*',c,'*',t,'*')
@@ -318,9 +318,9 @@ create temporary table t1 (v varchar(10), c char(10), t varchar(50), key(v), key
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `v` (`v`),
   KEY `c` (`c`),
   KEY `t` (`t`(10))
@@ -541,9 +541,9 @@ create temporary table t1 (v varchar(10), c char(10), t varchar(50), key using b
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `v` (`v`) USING BTREE,
   KEY `c` (`c`) USING BTREE,
   KEY `t` (`t`(10)) USING BTREE
@@ -632,9 +632,9 @@ create temporary table t1 (v varchar(10), c char(10), t varchar(50), key(v(5)), 
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(10) DEFAULT NULL,
-  `c` varchar(10) DEFAULT NULL,
-  `t` varchar(50) DEFAULT NULL,
+  `v` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` VARCHAR(50) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `v` (`v`(5)),
   KEY `c` (`c`(5)),
   KEY `t` (`t`(5))
@@ -644,7 +644,7 @@ create temporary table t1 (v varchar(16383), key(v(10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `v` varchar(16383) DEFAULT NULL,
+  `v` VARCHAR(16383) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `v` (`v`(10))
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 insert into t1 values(repeat('a',16383));
