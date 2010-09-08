@@ -157,7 +157,6 @@ typedef struct st_heap_dataspace   /* control data for data space */
   uint32_t chunk_dataspace_length;  /* Length of payload that will be placed into one chunk */
   uint32_t offset_status;           /* Offset of the status flag relative to the chunk start */
   uint32_t offset_link;             /* Offset of the linking pointer relative to the chunk start */
-  uint32_t is_variable_size;          /* Test whether records have variable size and so "next" pointer */
   uint64_t total_data_length;  /* Total size allocated within this data space */
 
   st_heap_dataspace() :
@@ -168,7 +167,6 @@ typedef struct st_heap_dataspace   /* control data for data space */
     chunk_dataspace_length(0),
     offset_status(0),
     offset_link(0),
-    is_variable_size(0),
     total_data_length(0)
   { }
 
@@ -253,8 +251,6 @@ public:
   std::vector <unsigned char> lastkey;			/* Last used key with rkey */
   std::vector <unsigned char> recbuf;                         /* Record buffer for rb-tree keys */
   enum drizzled::ha_rkey_function last_find_flag;
-  drizzled::TREE_ELEMENT *parents[drizzled::MAX_TREE_HEIGHT+1];
-  drizzled::TREE_ELEMENT **last_pos;
   uint32_t lastkey_len;
   drizzled::THR_LOCK_DATA lock;
 } HP_INFO;

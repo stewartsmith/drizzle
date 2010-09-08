@@ -262,21 +262,12 @@ void hp_free_chunks(HP_DATASPACE *info, unsigned char *pos)
 {
   unsigned char* curr_chunk= pos;
 
-  while (curr_chunk) 
+  if (curr_chunk) 
   {
     info->del_chunk_count++;
     *((unsigned char**) curr_chunk)= info->del_link;
     info->del_link= curr_chunk;
 
     curr_chunk[info->offset_status]= CHUNK_STATUS_DELETED;
-
-
-    if (!info->is_variable_size)
-    {
-      break;
-    }
-
-    /* Delete next chunk in this chunkset */
-    curr_chunk= *((unsigned char**)(curr_chunk + info->offset_link));
   }
 }
