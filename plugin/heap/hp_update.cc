@@ -75,17 +75,6 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
   if (errno == HA_ERR_FOUND_DUPP_KEY)
   {
     info->errkey = (int) (keydef - share->keydef);
-    if (keydef->algorithm == HA_KEY_ALG_BTREE)
-    {
-      /* we don't need to delete non-inserted key from rb-tree */
-      if ((*keydef->write_key)(info, keydef, old_record, pos))
-      {
-        if (++(share->records) == share->blength)
-	  share->blength+= share->blength;
-        return(errno);
-      }
-      keydef--;
-    }
     while (keydef >= share->keydef)
     {
       if (hp_rec_key_cmp(keydef, old_record, new_record, 0))

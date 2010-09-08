@@ -81,10 +81,6 @@ extern unsigned char *hp_free_level(HP_BLOCK *block,uint32_t level,HP_PTRS *pos,
 			   unsigned char *last_pos);
 extern int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 			const unsigned char *record, unsigned char *recpos);
-extern int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
-			   const unsigned char *record, unsigned char *recpos);
-extern int hp_rb_delete_key(HP_INFO *info,HP_KEYDEF *keyinfo,
-			    const unsigned char *record,unsigned char *recpos,int flag);
 extern int hp_delete_key(HP_INFO *info,HP_KEYDEF *keyinfo,
 			 const unsigned char *record,unsigned char *recpos,int flag);
 extern HASH_INFO *_heap_find_hash(HP_BLOCK *block,uint32_t pos);

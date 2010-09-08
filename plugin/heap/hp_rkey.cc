@@ -20,7 +20,7 @@
 using namespace drizzled;
 
 int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key,
-              key_part_map keypart_map, enum ha_rkey_function find_flag)
+              key_part_map , enum ha_rkey_function )
 {
   unsigned char *pos;
   HP_SHARE *share= info->getShare();
@@ -32,35 +32,6 @@ int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char
   }
   info->lastinx= inx;
   info->current_record= UINT32_MAX;		/* For heap_rrnd() */
-
-  if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
-  {
-    heap_rb_param custom_arg;
-
-    custom_arg.keyseg= info->getShare()->keydef[inx].seg;
-    custom_arg.key_length= info->lastkey_len=
-      hp_rb_pack_key(keyinfo, &info->lastkey[0],
-		     (unsigned char*) key, keypart_map);
-    custom_arg.search_flag= SEARCH_FIND | SEARCH_SAME;
-    /* for next rkey() after deletion */
-    if (find_flag == HA_READ_AFTER_KEY)
-      info->last_find_flag= HA_READ_KEY_OR_NEXT;
-    else if (find_flag == HA_READ_BEFORE_KEY)
-      info->last_find_flag= HA_READ_KEY_OR_PREV;
-    else
-      info->last_find_flag= find_flag;
-    if (!(pos= (unsigned char *)tree_search_key(&keyinfo->rb_tree,
-                                                &info->lastkey[0], info->parents,
-			                        &info->last_pos,
-                                                find_flag, &custom_arg)))
-    {
-      info->update= 0;
-      return(errno= HA_ERR_KEY_NOT_FOUND);
-    }
-    memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), sizeof(unsigned char*));
-    info->current_ptr= pos;
-  }
-  else
   {
     if (!(pos= hp_search(info, share->keydef + inx, key, 0)))
     {

@@ -324,9 +324,6 @@ extern int heap_disable_indexes(HP_INFO *info);
 extern int heap_enable_indexes(HP_INFO *info);
 extern int heap_indexes_are_disabled(HP_INFO *info);
 extern void heap_update_auto_increment(HP_INFO *info, const unsigned char *record);
-drizzled::ha_rows hp_rb_records_in_range(HP_INFO *info,
-                                         int inx, drizzled::key_range *min_key,
-                                         drizzled::key_range *max_key);
 int hp_panic(enum drizzled::ha_panic_function flag);
 int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key,
               drizzled::key_part_map keypart_map,

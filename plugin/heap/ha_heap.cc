@@ -277,7 +277,6 @@ const char *ha_heap::index_type(uint32_t )
 
 void ha_heap::set_keys_for_scanning(void)
 {
-  btree_keys.reset();
 }
 
 

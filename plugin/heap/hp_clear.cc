@@ -59,11 +59,6 @@ static void hp_clear_keys(HP_SHARE *info)
   for (uint32_t key=0 ; key < info->keys ; key++)
   {
     HP_KEYDEF *keyinfo = info->keydef + key;
-    if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
-    {
-      delete_tree(&keyinfo->rb_tree);
-    }
-    else
     {
       HP_BLOCK *block= &keyinfo->block;
       if (block->levels)

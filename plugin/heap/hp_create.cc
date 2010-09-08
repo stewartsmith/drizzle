@@ -24,7 +24,6 @@
 using namespace std;
 using namespace drizzled;
 
-static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
 static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_records,
                         uint32_t max_records);
 
@@ -194,8 +193,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	  length++;
 	  if (!(keyinfo->flag & HA_NULL_ARE_EQUAL))
 	    keyinfo->flag|= HA_NULL_PART_KEY;
-	  if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
-	    keyinfo->rb_tree.size_of_element++;
 	}
 	switch (keyinfo->seg[j].type) {
 	case HA_KEYTYPE_LONG_INT:
@@ -235,21 +232,10 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	}
       }
       keyinfo->length= length;
-      length+= keyinfo->rb_tree.size_of_element +
-	       ((keyinfo->algorithm == HA_KEY_ALG_BTREE) ? sizeof(unsigned char*) : 0);
+      length+= keyinfo->rb_tree.size_of_element;
       if (length > max_length)
 	max_length= length;
       key_segs+= keyinfo->keysegs;
-      if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
-      {
-        key_segs++; /* additional HA_KEYTYPE_END segment */
-        if (keyinfo->flag & HA_VAR_LENGTH_KEY)
-          keyinfo->get_key_length= hp_rb_var_key_length;
-        else if (keyinfo->flag & HA_NULL_PART_KEY)
-          keyinfo->get_key_length= hp_rb_null_key_length;
-        else
-          keyinfo->get_key_length= hp_rb_key_length;
-      }
     }
     share= new HP_SHARE;
 
@@ -282,22 +268,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       memcpy(keyseg, keydef[i].seg,
 	     (size_t) (sizeof(keyseg[0]) * keydef[i].keysegs));
       keyseg+= keydef[i].keysegs;
-
-      if (keydef[i].algorithm == HA_KEY_ALG_BTREE)
-      {
-	/* additional HA_KEYTYPE_END keyseg */
-	keyseg->type=     HA_KEYTYPE_END;
-	keyseg->length=   sizeof(unsigned char*);
-	keyseg->flag=     0;
-	keyseg->null_bit= 0;
-	keyseg++;
-
-	init_tree(&keyinfo->rb_tree, 0, 0, sizeof(unsigned char*),
-		  (qsort_cmp2)keys_compare, true, NULL, NULL);
-	keyinfo->delete_key= hp_rb_delete_key;
-	keyinfo->write_key= hp_rb_write_key;
-      }
-      else
       {
 	init_block(&keyinfo->block, sizeof(HASH_INFO), min_records,
 		   max_records);
@@ -367,13 +337,6 @@ err:
   return(1);
 } /* heap_create */
 
-
-static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2)
-{
-  uint32_t not_used[2];
-  return ha_key_cmp(param->keyseg, key1, key2, param->key_length,
-		    param->search_flag, not_used);
-}
 
 static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_records,
 		       uint32_t max_records)
