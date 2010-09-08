@@ -208,8 +208,8 @@ create temporary table t1 (c varchar(30), t text, unique (c(2)), unique (t(3))) 
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `c` varchar(30) DEFAULT NULL,
-  `t` text,
+  `c` VARCHAR(30) COLLATE utf8_general_ci DEFAULT NULL,
+  `t` TEXT COLLATE utf8_general_ci,
   UNIQUE KEY `c` (`c`(2)),
   UNIQUE KEY `t` (`t`(3))
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
@@ -307,8 +307,8 @@ i2	INTEGER	NO		NO
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i1` int NOT NULL,
-  `i2` int NOT NULL,
+  `i1` INT NOT NULL,
+  `i2` INT NOT NULL,
   UNIQUE KEY `i1idx` (`i1`),
   UNIQUE KEY `i2idx` (`i2`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -334,24 +334,24 @@ create table t1 (a varchar(10), b varchar(10), key(a(10),b(10)));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10) DEFAULT NULL,
-  `b` varchar(10) DEFAULT NULL,
+  `a` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `b` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `a` (`a`,`b`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 alter table t1 modify b varchar(20);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10) DEFAULT NULL,
-  `b` varchar(20) DEFAULT NULL,
+  `a` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
+  `b` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `a` (`a`,`b`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 alter table t1 modify a varchar(20);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(20) DEFAULT NULL,
-  `b` varchar(20) DEFAULT NULL,
+  `a` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
+  `b` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL,
   KEY `a` (`a`,`b`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
@@ -396,10 +396,10 @@ index (c2, c4));
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` varchar(12) NOT NULL,
-  `c3` varchar(123) NOT NULL,
-  `c4` timestamp NULL DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` VARCHAR(12) COLLATE utf8_general_ci NOT NULL,
+  `c3` VARCHAR(123) COLLATE utf8_general_ci NOT NULL,
+  `c4` TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`c2`,`c3`),
   UNIQUE KEY `i4` (`c4`),
   KEY `c1` (`c1`),
@@ -429,10 +429,10 @@ ERROR 42000: Can't DROP 'PRIMARY'; check that column/key exists
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int NOT NULL,
-  `c2` varchar(12) NOT NULL,
-  `c3` varchar(123) NOT NULL,
-  `c4` timestamp NULL DEFAULT NULL,
+  `c1` INT NOT NULL,
+  `c2` VARCHAR(12) COLLATE utf8_general_ci NOT NULL,
+  `c3` VARCHAR(123) COLLATE utf8_general_ci NOT NULL,
+  `c4` TIMESTAMP NULL DEFAULT NULL,
   KEY `i1` (`c1`),
   KEY `i5` (`c1`,`c2`,`c3`,`c4`),
   KEY `c1` (`c1`),
@@ -500,9 +500,9 @@ c	VARCHAR	NO		NO
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` varchar(10) NOT NULL,
-  `c` varchar(4) NOT NULL,
+  `a` INT NOT NULL,
+  `b` VARCHAR(10) COLLATE utf8_general_ci NOT NULL,
+  `c` VARCHAR(4) COLLATE utf8_general_ci NOT NULL,
   UNIQUE KEY `cc` (`c`),
   UNIQUE KEY `bb` (`b`(1)),
   KEY `aa` (`a`)
@@ -525,9 +525,9 @@ c	VARCHAR	NO		NO
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` varchar(10) NOT NULL,
-  `c` varchar(4) NOT NULL,
+  `a` INT NOT NULL,
+  `b` VARCHAR(10) COLLATE utf8_general_ci NOT NULL,
+  `c` VARCHAR(4) COLLATE utf8_general_ci NOT NULL,
   UNIQUE KEY `cc` (`c`),
   UNIQUE KEY `bb` (`b`(1)),
   KEY `aa` (`a`)

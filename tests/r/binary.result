@@ -91,7 +91,7 @@ create table t1 (a char);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) DEFAULT NULL
+  `a` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t2 (a varbinary);

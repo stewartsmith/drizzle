@@ -111,7 +111,7 @@ create table t1 select date_format("2004-01-19 10:10:10", "%Y-%m-%d");
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `date_format("2004-01-19 10:10:10", "%Y-%m-%d")` varchar(10) DEFAULT NULL
+  `date_format("2004-01-19 10:10:10", "%Y-%m-%d")` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 select * from t1;
 date_format("2004-01-19 10:10:10", "%Y-%m-%d")
@@ -307,7 +307,7 @@ unique key a using btree (c(2))
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `c` varchar(10) DEFAULT NULL,
+  `c` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL,
   UNIQUE KEY `a` (`c`(2)) USING BTREE
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 insert into t1 values ('1'),('2'),('3'),('4'),('x'),('y'),('z');
@@ -486,7 +486,7 @@ create table t2 select concat(a,'') as a from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` varchar(1) DEFAULT NULL
+  `a` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t2;
 drop table t1;
