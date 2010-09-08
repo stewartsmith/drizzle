@@ -295,7 +295,7 @@ static bool ignore_errors= false, quick= false,
   default_pager_set= false, opt_sigint_ignore= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
-  opt_mysql= false, opt_local_infile;
+  use_drizzle_protocol= false, opt_local_infile;
 static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
@@ -320,7 +320,8 @@ std::string current_db,
   current_user,
   opt_verbose,
   current_password,
-  opt_password;
+  opt_password,
+  opt_protocol;
 // TODO: Need to i18n these
 static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
@@ -1466,8 +1467,6 @@ try
 
   po::options_description client_options(N_("Options specific to the client"));
   client_options.add_options()
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-  N_("Use MySQL Protocol."))
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
   N_("Connect to host"))
   ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
@@ -1476,8 +1475,8 @@ try
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
   ("user,u", po::value<string>(&current_user)->default_value(""),
   N_("User for login if not current user."))
-  ("protocol",po::value<string>(),
-  N_("The protocol of connection (tcp,socket,pipe,memory)."))
+  ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
+  N_("The protocol of connection (mysql or drizzle)."))
   ;
 
   po::options_description long_options(N_("Allowed Options"));
@@ -1652,7 +1651,23 @@ try
 
   if (one_database)
     skip_updates= true;
-  
+
+  if (vm.count("protocol"))
+  {
+    std::transform(opt_protocol.begin(), opt_protocol.end(), 
+      opt_protocol.begin(), ::tolower);
+
+    if (not opt_protocol.compare("mysql"))
+      use_drizzle_protocol=false;
+    else if (not opt_protocol.compare("drizzle"))
+      use_drizzle_protocol=true;
+    else
+    {
+      cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
+      exit(-1);
+    }
+  }
+ 
   if (vm.count("port"))
   {
     opt_drizzle_port= vm["port"].as<uint32_t>();
@@ -1782,10 +1797,12 @@ try
   glob_buffer->reserve(512);
 
   snprintf(&output_buff[0], output_buff.size(),
-          _("Your Drizzle connection id is %u\nServer version: %s\n"),
+          _("Your Drizzle connection id is %u\nConnection protocol: %s\nServer version: %s\n"),
           drizzle_con_thread_id(&con),
+          opt_protocol.c_str(),
           server_version_string(&con));
   put_info(&output_buff[0], INFO_INFO, 0, 0);
+
 
   initialize_readline((char *)current_prompt.c_str());
   if (!status.getBatch() && !quick)
@@ -1894,8 +1911,8 @@ void handle_sigint(int sig)
   }
 
   if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host.c_str(),
-                          opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
-                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+    opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
+    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
     goto err;
   }
@@ -2764,7 +2781,11 @@ int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
     return 0;
 
   if (drizzle_con_error(&con)[0])
-    return put_error(&con, result);
+  {
+    int ret= put_error(&con, result);
+    drizzle_result_free(result);
+    return ret;
+  }
   return 0;
 }
 
@@ -4033,8 +4054,10 @@ sql_connect(const string &host, const string &database, const string &user, cons
     drizzle_free(&drizzle);
   }
   drizzle_create(&drizzle);
-  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(), opt_drizzle_port, (char *)user.c_str(),
-                          (char *)password.c_str(), (char *)database.c_str(), opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
+    opt_drizzle_port, (char *)user.c_str(),
+    (char *)password.c_str(), (char *)database.c_str(),
+    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
@@ -4092,7 +4115,7 @@ com_status(string *, const char *)
   tee_puts("--------------", stdout);
   printf(_("Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"),
          drizzle_version(), VERSION,
-         HOST_VENDOR, HOST_OS,
+         HOST_VENDOR, HOST_OS, HOST_CPU,
          rl_library_version);
 
   if (connected)
@@ -4135,6 +4158,7 @@ com_status(string *, const char *)
   tee_fprintf(stdout, _("Using outfile:\t\t'%s'\n"), opt_outfile ? outfile.c_str() : "");
   tee_fprintf(stdout, _("Using delimiter:\t%s\n"), delimiter);
   tee_fprintf(stdout, _("Server version:\t\t%s\n"), server_version_string(&con));
+  tee_fprintf(stdout, _("Protocol:\t\t%s\n"), opt_protocol.c_str());
   tee_fprintf(stdout, _("Protocol version:\t%d\n"), drizzle_con_protocol_version(&con));
   tee_fprintf(stdout, _("Connection:\t\t%s\n"), drizzle_con_host(&con));
 /* XXX need to save this from result

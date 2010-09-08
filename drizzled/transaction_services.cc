@@ -1600,7 +1600,7 @@ void TransactionServices::deleteRecord(Session *in_session, Table *in_table, boo
   if (! replication_services.isActive())
     return;
 
-  uint32_t next_segment_id;
+  uint32_t next_segment_id= 1;
   message::Statement &statement= getDeleteStatement(in_session, in_table, &next_segment_id);
 
   message::DeleteData *data= statement.mutable_delete_data();

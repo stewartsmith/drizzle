@@ -11,6 +11,6 @@ ERROR 42S01: Table 'test.t1' already exists
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int DEFAULT NULL
+  `a` INT DEFAULT NULL
 ) ENGINE=FILESYSTEM FILE='../filesystem_ln/basic_create_table.data' COLLATE = utf8_general_ci
 DROP TABLE t1;

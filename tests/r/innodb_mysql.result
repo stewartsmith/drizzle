@@ -484,7 +484,7 @@ alter table t1 comment='123';
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int DEFAULT NULL
+  `a` INT DEFAULT NULL
 ) ENGINE=InnoDB COMMENT='123' COLLATE = utf8_general_ci
 drop table t1;
 CREATE TABLE t1 (a CHAR(2), KEY (a)) ENGINE = InnoDB;
@@ -941,7 +941,7 @@ Warning	1071	Specified key was too long; max key length is 1023 bytes
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` text,
+  `a` TEXT COLLATE utf8_general_ci,
   KEY `a` (`a`(255))
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
@@ -1152,8 +1152,8 @@ b	VARCHAR	NO		NO
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(10) NOT NULL,
-  `b` varchar(4) NOT NULL,
+  `a` VARCHAR(10) COLLATE utf8_general_ci NOT NULL,
+  `b` VARCHAR(4) COLLATE utf8_general_ci NOT NULL,
   UNIQUE KEY `bb` (`b`),
   UNIQUE KEY `aa` (`a`(1))
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
@@ -1299,8 +1299,8 @@ FOREIGN KEY (c) REFERENCES t1 (a) ON UPDATE NO ACTION) engine=innodb;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `c` int NOT NULL,
-  `d` int NOT NULL,
+  `c` INT NOT NULL,
+  `d` INT NOT NULL,
   PRIMARY KEY (`c`,`d`),
   CONSTRAINT `c1` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON DELETE NO ACTION,
   CONSTRAINT `c2` FOREIGN KEY (`c`) REFERENCES `t1` (`a`) ON UPDATE NO ACTION,

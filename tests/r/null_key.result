@@ -77,8 +77,8 @@ create temporary table t2 like t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TEMPORARY TABLE `t2` (
-  `a` int DEFAULT NULL,
-  `b` int NOT NULL,
+  `a` INT DEFAULT NULL,
+  `b` INT NOT NULL,
   UNIQUE KEY `a` (`a`,`b`),
   KEY `b` (`b`)
 ) ENGINE=MyISAM COLLATE = utf8_general_ci

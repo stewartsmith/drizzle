@@ -168,14 +168,14 @@ create table t1 select 1 as 'a';
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL
+  `a` INT NOT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 select 9223372036854775809 as 'a';
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` bigint NOT NULL
+  `a` BIGINT NOT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t1;
 a
