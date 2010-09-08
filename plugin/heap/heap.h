@@ -1,4 +1,6 @@
-/* Copyright (C) 2000,2004 MySQL AB
+/* 
+  Copyright (C) Brian Aker
+    Copyright (C) 2000,2004 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -136,7 +138,6 @@ typedef struct st_hp_keydef		/* Key definition with open */
   uint32_t flag;				/* HA_NOSAME | HA_NULL_PART_KEY */
   uint32_t keysegs;				/* Number of key-segment */
   uint32_t length;				/* Length of key (automatic) */
-  uint8_t algorithm;			/* HASH / BTREE */
   HA_KEYSEG *seg;
   HP_BLOCK block;			/* Where keys are saved */
   /*
@@ -144,12 +145,6 @@ typedef struct st_hp_keydef		/* Key definition with open */
     #records estimates for heap key scans.
   */
   drizzled::ha_rows hash_buckets;
-  drizzled::TREE rb_tree;
-  int (*write_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
-		   const unsigned char *record, unsigned char *recpos);
-  int (*delete_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
-		   const unsigned char *record, unsigned char *recpos, int flag);
-  uint32_t (*get_key_length)(struct st_hp_keydef *keydef, const unsigned char *key);
 } HP_KEYDEF;
 
 typedef struct st_heap_columndef              /* column information */

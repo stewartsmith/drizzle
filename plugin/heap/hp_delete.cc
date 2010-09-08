@@ -39,7 +39,7 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
   for (keydef = share->keydef, end = keydef + share->keys; keydef < end;
        keydef++)
   {
-    if ((*keydef->delete_key)(info, keydef, record, pos, keydef == p_lastinx))
+    if (hp_delete_key(info, keydef, record, pos, keydef == p_lastinx))
       goto err;
   }
 

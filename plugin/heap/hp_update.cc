@@ -52,9 +52,11 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
   {
     if (hp_rec_key_cmp(keydef, old_record, new_record, 0))
     {
-      if ((*keydef->delete_key)(info, keydef, old_record, pos, keydef == p_lastinx) ||
-          (*keydef->write_key)(info, keydef, new_record, pos))
+      if (hp_delete_key(info, keydef, old_record, pos, keydef == p_lastinx) ||
+          hp_write_key(info, keydef, new_record, pos))
+      {
         goto err;
+      }
       if (share->auto_key == (uint) (keydef - share->keydef + 1))
         auto_key_changed= 1;
     }
@@ -79,8 +81,8 @@ int heap_update(HP_INFO *info, const unsigned char *old_record, const unsigned c
     {
       if (hp_rec_key_cmp(keydef, old_record, new_record, 0))
       {
-	if ((*keydef->delete_key)(info, keydef, new_record, pos, 0) ||
-	    (*keydef->write_key)(info, keydef, old_record, pos))
+	if (hp_delete_key(info, keydef, new_record, pos, 0) ||
+	    hp_write_key(info, keydef, old_record, pos))
 	  break;
       }
       keydef--;

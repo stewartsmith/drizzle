@@ -751,8 +751,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
     keydef[key].flag=      (pos->flags & (HA_NOSAME | HA_NULL_ARE_EQUAL));
     keydef[key].seg=       seg;
 
-    // case HA_KEY_ALG_HASH:
-    keydef[key].algorithm= HA_KEY_ALG_HASH;
     mem_per_row_keys+= sizeof(char*) * 2; // = sizeof(HASH_INFO)
 
     for (; key_part != key_part_end; key_part++, seg++)

@@ -184,7 +184,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     for (i= key_segs= max_length= 0, keyinfo= keydef; i < keys; i++, keyinfo++)
     {
       memset(&keyinfo->block, 0, sizeof(keyinfo->block));
-      memset(&keyinfo->rb_tree , 0, sizeof(keyinfo->rb_tree));
       for (uint32_t j= length= 0; j < keyinfo->keysegs; j++)
       {
 	length+= keyinfo->seg[j].length;
@@ -232,7 +231,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	}
       }
       keyinfo->length= length;
-      length+= keyinfo->rb_tree.size_of_element;
       if (length > max_length)
 	max_length= length;
       key_segs+= keyinfo->keysegs;
@@ -271,8 +269,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       {
 	init_block(&keyinfo->block, sizeof(HASH_INFO), min_records,
 		   max_records);
-	keyinfo->delete_key= hp_delete_key;
-	keyinfo->write_key= hp_write_key;
         keyinfo->hash_buckets= 0;
       }
       if ((keyinfo->flag & HA_AUTO_KEY) && create_info->with_auto_increment)

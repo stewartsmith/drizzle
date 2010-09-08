@@ -52,7 +52,7 @@ int heap_write(HP_INFO *info, const unsigned char *record)
   for (keydef = share->keydef, end = keydef + share->keys; keydef < end;
        keydef++)
   {
-    if ((*keydef->write_key)(info, keydef, record, pos))
+    if (hp_write_key(info, keydef, record, pos))
       goto err;
   }
 
@@ -72,7 +72,7 @@ err:
   info->errkey= keydef - share->keydef;
   while (keydef >= share->keydef)
   {
-    if ((*keydef->delete_key)(info, keydef, record, pos, 0))
+    if (hp_delete_key(info, keydef, record, pos, 0))
       break;
     keydef--;
   }
