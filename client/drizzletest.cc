@@ -1,7 +1,6 @@
 /* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
- * 
- *  Copyright (C) 2010 Vijay Samuel
+ *
  *  Copyright (C) 2008 MySQL
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -61,7 +60,7 @@
 #include PCRE_HEADER
 
 #include <stdarg.h>
-#include <boost/unordered_map.hpp>
+#include <drizzled/unordered_map.h>
 
 #include "errname.h"
 
@@ -114,7 +113,7 @@ static bool disable_info= true;
 static bool abort_on_error= true;
 static bool server_initialized= false;
 static bool is_windows= false;
-static bool use_drizzle_protocol= false;
+static bool opt_mysql= false;
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
 std::string opt_basedir,
@@ -127,8 +126,7 @@ std::string opt_basedir,
   password,
   opt_password,
   result_file_name,
-  opt_user,
-  opt_protocol;
+  opt_user;
 
 static uint32_t start_lineno= 0; /* Start line of current command */
 
@@ -217,7 +215,7 @@ typedef struct st_var
 VAR var_reg[10];
 
 
-boost::unordered_map<string, VAR *> var_hash;
+unordered_map<string, VAR *> var_hash;
 
 struct st_connection
 {
@@ -1711,7 +1709,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       die("Too long variable name: %s", save_var_name);
 
     string save_var_name_str(save_var_name, length);
-    boost::unordered_map<string, VAR*>::iterator iter=
+    unordered_map<string, VAR*>::iterator iter=
       var_hash.find(save_var_name_str);
     if (iter == var_hash.end())
     {
@@ -1749,7 +1747,7 @@ err:
 static VAR *var_obtain(const char *name, int len)
 {
   string var_name(name, len);
-  boost::unordered_map<string, VAR*>::iterator iter=
+  unordered_map<string, VAR*>::iterator iter=
     var_hash.find(var_name);
   if (iter != var_hash.end())
     return (*iter).second;
@@ -3939,7 +3937,8 @@ static void do_connect(struct st_command *command)
     die("Failed on drizzle_create()");
   if (!drizzle_con_create(con_slot->drizzle, &con_slot->con))
     die("Failed on drizzle_con_create()");
-  drizzle_con_add_options(&con_slot->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  if (opt_mysql)
+    drizzle_con_add_options(&con_slot->con, DRIZZLE_CON_MYSQL);
 
   /* Use default db name */
   if (ds_database.length() == 0)
@@ -5361,7 +5360,7 @@ static void check_retries(uint32_t in_opt_max_connect_retries)
 {
   if (in_opt_max_connect_retries > 10000 || opt_max_connect_retries<1)
   {
-    cout << N_("Error: Invalid Value for opt_max_connect_retries"); 
+    cout<<N_("Error: Invalid Value for opt_max_connect_retries"); 
     exit(-1);
   }
   opt_max_connect_retries= in_opt_max_connect_retries;
@@ -5371,7 +5370,7 @@ static void check_tail_lines(uint32_t in_opt_tail_lines)
 {
   if (in_opt_tail_lines > 10000)
   {
-    cout << N_("Error: Invalid Value for opt_tail_lines"); 
+    cout<<N_("Error: Invalid Value for opt_tail_lines"); 
     exit(-1);
   }
   opt_tail_lines= in_opt_tail_lines;
@@ -5381,7 +5380,7 @@ static void check_sleep(int32_t in_opt_sleep)
 {
   if (in_opt_sleep < -1)
   {
-    cout << N_("Error: Invalid Value for opt_sleep"); 
+    cout<<N_("Error: Invalid Value for opt_sleep"); 
     exit(-1);
   }
   opt_sleep= in_opt_sleep;
@@ -5453,12 +5452,14 @@ try
 
   ("host,h", po::value<string>(&opt_host)->default_value("localhost"),
   "Connect to host.")
+  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
+  N_("Use MySQL Protocol."))
   ("password,P", po::value<string>(&password)->default_value("PASSWORD_SENTINEL"),
   "Password to use when connecting to server.")
   ("port,p", po::value<uint32_t>(&opt_port)->default_value(0),
   "Port number to use for connection or 0 for default")
-  ("protocol", po::value<string>(&opt_protocol),
-  "The protocol of connection (mysql or drizzle).")
+  ("protocol", po::value<string>(),
+  "The protocol of connection (tcp,socket,pipe,memory).")
   ("user,u", po::value<string>(&opt_user)->default_value(""),
   "User for login.")
   ;
@@ -5475,8 +5476,6 @@ try
   std::string system_config_dir_client(SYSCONFDIR); 
   system_config_dir_client.append("/drizzle/client.cnf");
 
-  std::string user_config_dir((getenv("XDG_CONFIG_HOME")? getenv("XDG_CONFIG_HOME"):"~/.config"));
-
   po::variables_map vm;
 
   po::store(po::command_line_parser(argc, argv).options(long_options).
@@ -5484,21 +5483,15 @@ try
 
   if (! vm["no-defaults"].as<bool>())
   {
-    std::string user_config_dir_test(user_config_dir);
-    user_config_dir_test.append("/drizzle/drizzletest.cnf"); 
-
-    std::string user_config_dir_client(user_config_dir);
-    user_config_dir_client.append("/drizzle/client.cnf");
-
-    ifstream user_test_ifs(user_config_dir_test.c_str());
+    ifstream user_test_ifs("~/.drizzle/drizzletest.cnf");
     po::store(parse_config_file(user_test_ifs, test_options), vm);
-
-    ifstream user_client_ifs(user_config_dir_client.c_str());
-    po::store(parse_config_file(user_client_ifs, client_options), vm);
-
+ 
     ifstream system_test_ifs(system_config_dir_test.c_str());
     store(parse_config_file(system_test_ifs, test_options), vm);
 
+    ifstream user_client_ifs("~/.drizzle/client.cnf");
+    po::store(parse_config_file(user_client_ifs, client_options), vm);
+ 
     ifstream system_client_ifs(system_config_dir_client.c_str());
     po::store(parse_config_file(system_client_ifs, client_options), vm);
   }
@@ -5585,22 +5578,6 @@ try
     unlink(timer_file);       /* Ignore error, may not exist */
   }
 
-  if (vm.count("protocol"))
-  {
-    std::transform(opt_protocol.begin(), opt_protocol.end(),
-      opt_protocol.begin(), ::tolower);
-
-    if (not opt_protocol.compare("mysql"))
-      use_drizzle_protocol=false;
-    else if (not opt_protocol.compare("drizzle"))
-      use_drizzle_protocol=true;
-    else
-    {
-      cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
-      exit(-1);
-    }
-  }
-
   if (vm.count("port"))
   {
     /* If the port number is > 65535 it is not a valid port
@@ -5675,7 +5652,8 @@ try
     die("Failed in drizzle_create()");
   if (!( drizzle_con_create(cur_con->drizzle, &cur_con->con)))
     die("Failed in drizzle_con_create()");
-  drizzle_con_add_options(&cur_con->con, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
+  if (opt_mysql)
+    drizzle_con_add_options(&cur_con->con, DRIZZLE_CON_MYSQL);
 
   if (!(cur_con->name = strdup("default")))
     die("Out of memory");
@@ -6642,14 +6620,23 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
     /* Repeatedly replace the string with the matched regex */
     string subject(in_string);
     size_t replace_length= strlen(replace);
+    size_t length_of_replacement= strlen(replace);
     size_t current_position= 0;
     int rc= 0;
-    while(0 >= (rc= pcre_exec(re, NULL, subject.c_str() + current_position, subject.length() - current_position,
-                      0, 0, ovector, 3)))
+
+    while (true) 
     {
+      rc= pcre_exec(re, NULL, subject.c_str(), subject.length(), 
+                    current_position, 0, ovector, 3);
+      if (rc < 0)
+      {
+        break;
+      }
+
       current_position= static_cast<size_t>(ovector[0]);
       replace_length= static_cast<size_t>(ovector[1] - ovector[0]);
-      subject.replace(current_position, replace_length, replace, replace_length);
+      subject.replace(current_position, replace_length, replace, length_of_replacement);
+      current_position= current_position + length_of_replacement;
     }
 
     char *new_buf = (char *) malloc(subject.length() + 1);

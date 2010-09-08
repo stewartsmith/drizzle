@@ -1,0 +1,4951 @@
+DROP TABLE IF EXISTS t1;
+++ Begin INT tests ++ 
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b INT, PRIMARY KEY(a));
+Testing MIN INT
+INSERT INTO t1 (b) VALUES(-2147483648);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	431	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	171
+321	TRANSACTION	110
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+321	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "-2147483648"
+    }
+  }
+}
+
+
+
+Testing MAX INT
+INSERT INTO t1 (b) VALUES(2147483647);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	540	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	171
+321	TRANSACTION	110
+431	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+321	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "2147483647"
+    }
+  }
+}
+
+
+
+Testing MIN-1 INT
+INSERT INTO t1 (b) VALUES(-2147483649);
+ERROR 22003: Out of range value for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	540	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	171
+321	TRANSACTION	110
+431	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+321	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "2147483647"
+    }
+  }
+}
+
+
+
+Testing MAX+1 INT
+INSERT INTO t1 (b) VALUES(2147483648);
+ERROR 22003: Out of range value for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	540	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	171
+321	TRANSACTION	110
+431	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+321	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "2147483647"
+    }
+  }
+}
+
+
+
+Testing NULL INT
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	640	6	6	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	171
+321	TRANSACTION	110
+431	TRANSACTION	109
+540	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+321	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+540	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 8
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT INT1
+INSERT INTO t1 (b) VALUES('abbazabba');
+ERROR HY000: Incorrect integer value: 'abbazabba' for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	640	6	6	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	171
+321	TRANSACTION	110
+431	TRANSACTION	109
+540	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+321	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+540	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 8
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "0"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT INT2
+INSERT INTO t1 (b) VALUES('a');
+ERROR HY000: Incorrect integer value: 'a' for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	640	6	6	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	171
+321	TRANSACTION	110
+431	TRANSACTION	109
+540	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+321	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+540	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 8
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "0"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+++ End INT tests ++
+++ Begin BIGINT tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b BIGINT, PRIMARY KEY(a));
+Testing MIN BIGINT
+INSERT INTO t1 (b) VALUES(-9223372036854775808);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	365	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	119
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "-9223372036854775808"
+    }
+  }
+}
+
+
+
+Testing MAX BIGINT
+INSERT INTO t1 (b) VALUES(9223372036854775807);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	483	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	119
+365	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+365	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9223372036854775807"
+    }
+  }
+}
+
+
+
+Testing MIN-1 BIGINT
+INSERT INTO t1 (b) VALUES(-9223372036854775809);
+ERROR 22003: Out of range value for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	483	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	119
+365	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+365	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9223372036854775807"
+    }
+  }
+}
+
+
+
+Testing MAX+1 BIGINT
+NOTE: Bug#316221 - 2**63 incorrectly inserted into bigint
+INSERT INTO t1 (b) VALUES(9223372036854775808);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	602	5	5	1	6	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	119
+365	TRANSACTION	118
+483	TRANSACTION	119
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+365	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+483	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 6
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "-9223372036854775808"
+    }
+  }
+}
+
+
+
+Testing NULL BIGINT
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	702	6	6	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	119
+365	TRANSACTION	118
+483	TRANSACTION	119
+602	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+365	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+483	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+602	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT BIGINT1
+INSERT INTO t1 (b) VALUES('abbazabba');
+ERROR HY000: Incorrect integer value: 'abbazabba' for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	702	6	6	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	119
+365	TRANSACTION	118
+483	TRANSACTION	119
+602	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+365	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+483	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+602	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "0"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT BIGINT2
+INSERT INTO t1 (b) VALUES('a');
+ERROR HY000: Incorrect integer value: 'a' for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	702	6	6	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	119
+365	TRANSACTION	118
+483	TRANSACTION	119
+602	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+365	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+483	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+602	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BIGINT
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "0"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+++ End BIGINT tests ++
+++ Begin DECIMAL simple tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b DECIMAL(5,2), PRIMARY KEY(a));
+Testing MIN DECIMAL simple 
+INSERT INTO t1 (b) VALUES(-999.99);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	358	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "-999.99"
+    }
+  }
+}
+
+
+
+Testing MAX DECIMAL simple 
+INSERT INTO t1 (b) VALUES(999.99);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	463	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "999.99"
+    }
+  }
+}
+
+
+
+Testing MIN-1 DECIMAL simple 
+INSERT INTO t1 (b) VALUES(-1000);
+ERROR 22003: Out of range value for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	463	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "999.99"
+    }
+  }
+}
+
+
+
+Testing MAX+1 DECIMAL simple 
+INSERT INTO t1 (b) VALUES(1000);
+ERROR 22003: Out of range value for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	463	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "999.99"
+    }
+  }
+}
+
+
+
+Testing NULL DECIMAL simple 
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	566	5	5	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+463	TRANSACTION	103
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+463	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT DECIMAL simple 
+INSERT INTO t1 (b) VALUES('abbazabba');
+ERROR HY000: Incorrect decimal value: 'abbazabba' for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	566	5	5	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+463	TRANSACTION	103
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+463	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "0.00"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT DECIMAL simple2 
+INSERT INTO t1 (b) VALUES('a');
+ERROR HY000: Incorrect decimal value: 'a' for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	566	5	5	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+463	TRANSACTION	103
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+463	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "0.00"
+    }
+  }
+}
+
+
+
+Testing misc DECIMAL simple
+INSERT INTO t1 (b) VALUES(100);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	671	6	6	1	10	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+463	TRANSACTION	103
+566	TRANSACTION	105
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+463	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+566	10	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 10
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "100.00"
+    }
+  }
+}
+
+
+
+Testing misc DECIMAL simple2
+INSERT INTO t1 (b) VALUES(.0898);
+ERROR 01000: Data truncated for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	671	6	6	1	10	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+463	TRANSACTION	103
+566	TRANSACTION	105
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+463	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+566	10	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 10
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "100.00"
+    }
+  }
+}
+
+
+
+Testing misc DECIMAL simple3
+INSERT INTO t1 (b) VALUES(.1);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	774	7	7	1	12	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+463	TRANSACTION	103
+566	TRANSACTION	105
+671	TRANSACTION	103
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+463	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+566	10	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+671	12	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 12
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DECIMAL
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "0.10"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+++ End DECIMAL simple tests ++
+++ Begin FLOAT simple tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b FLOAT(5,2), PRIMARY KEY(a));
+Testing MIN FLOAT simple
+INSERT INTO t1 (b) VALUES(-999.99);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	358	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DOUBLE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "-999.99"
+    }
+  }
+}
+
+
+
+Testing MAX FLOAT simple
+INSERT INTO t1 (b) VALUES(999.99);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	463	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DOUBLE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "999.99"
+    }
+  }
+}
+
+
+
+Testing MIN-1 FLOAT simple
+INSERT INTO t1 (b) VALUES(-1000);
+ERROR 22003: Out of range value for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	463	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DOUBLE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "999.99"
+    }
+  }
+}
+
+
+
+Testing MAX+1 FLOAT simple
+INSERT INTO t1 (b) VALUES(1000);
+ERROR 22003: Out of range value for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	463	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DOUBLE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "999.99"
+    }
+  }
+}
+
+
+
+Testing NULL FLOAT simple
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	566	5	5	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+463	TRANSACTION	103
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+463	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DOUBLE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT FLOAT simple
+INSERT INTO t1 (b) VALUES('abbazabba');
+ERROR 01000: Data truncated for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	566	5	5	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	177
+252	TRANSACTION	106
+358	TRANSACTION	105
+463	TRANSACTION	103
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+252	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+358	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+463	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DOUBLE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "0.00"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+++ End FLOAT simple tests ++
+++ Begin CHAR simple tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b CHAR(10), PRIMARY KEY(a));
+Testing MIN CHAR simple
+INSERT INTO t1 (b) VALUES("");
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	370	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	196
+271	TRANSACTION	99
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+271	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: ""
+    }
+  }
+}
+
+
+
+Testing MAX CHAR simple
+INSERT INTO t1 (b) VALUES("zzzzzzzzzz");
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	479	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	196
+271	TRANSACTION	99
+370	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+271	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+370	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "zzzzzzzzzz"
+    }
+  }
+}
+
+
+
+Testing MAX+1 CHAR simple
+INSERT INTO t1 (b) VALUES('zzzzzzzzzzz');
+ERROR 22001: Data too long for column 'b' at row 1
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	479	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	196
+271	TRANSACTION	99
+370	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+271	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+370	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "zzzzzzzzzz"
+    }
+  }
+}
+
+
+
+Testing NULL CHAR simple
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	578	5	5	1	6	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	196
+271	TRANSACTION	99
+370	TRANSACTION	109
+479	TRANSACTION	99
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+271	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+370	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+479	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 6
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing NUMERIC INPUT CHAR simple
+INSERT INTO t1 (b) VALUES(1000000);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	684	6	6	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	196
+271	TRANSACTION	99
+370	TRANSACTION	109
+479	TRANSACTION	99
+578	TRANSACTION	106
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+271	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+370	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+479	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+578	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "1000000"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+++ End CHAR simple tests ++
+++ Begin ENUM simple tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b ENUM('1','2','3','4','5'), PRIMARY KEY(a));
+Testing MIN ENUM simple
+INSERT INTO t1 (b) VALUES(1);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	385	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	210
+285	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+285	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: ENUM
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "1"
+    }
+  }
+}
+
+
+
+Testing MAX ENUM simple
+INSERT INTO t1 (b) VALUES(5);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	485	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	210
+285	TRANSACTION	100
+385	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+285	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+385	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: ENUM
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "5"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT ENUM simple
+INSERT INTO t1 (b) VALUES(6);
+ERROR HY000: Received an invalid enum value '6'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	485	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	210
+285	TRANSACTION	100
+385	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+285	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+385	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: ENUM
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "5"
+    }
+  }
+}
+
+
+
+Testing NULL ENUM simple
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	585	5	5	1	6	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	210
+285	TRANSACTION	100
+385	TRANSACTION	100
+485	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+285	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+385	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+485	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 6
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: ENUM
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+++ End ENUM simple tests ++
+++ Begin DATE tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b DATE, PRIMARY KEY(a));
+Testing MIN DATE
+INSERT INTO t1 (b) VALUES('0001-01-01');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	355	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "0001-01-01"
+    }
+  }
+}
+
+
+
+Testing MAX DATE
+INSERT INTO t1 (b) VALUES('9999-12-31');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	464	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+355	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+355	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9999-12-31"
+    }
+  }
+}
+
+
+
+Testing MIN-1 DATE
+INSERT INTO t1 (b) VALUES('0000-12-31');
+ERROR HY000: Received an invalid datetime value '0000-12-31'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	464	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+355	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+355	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9999-12-31"
+    }
+  }
+}
+
+
+
+Testing MAX+1 DATE
+INSERT INTO t1 (b) VALUES('10000-01-01');
+ERROR HY000: Received an invalid datetime value '10000-01-01'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	464	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+355	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+355	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9999-12-31"
+    }
+  }
+}
+
+
+
+Testing Alternate input format DATE1
+INSERT INTO t1 (b) VALUES('20000101');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	573	5	5	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+355	TRANSACTION	109
+464	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+355	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+464	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "2000-01-01"
+    }
+  }
+}
+
+
+
+Testing Alternate input formate DATE2
+INSERT INTO t1 (b) VALUES('990601');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	682	6	6	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+355	TRANSACTION	109
+464	TRANSACTION	109
+573	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+355	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+464	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+573	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 8
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "1999-06-01"
+    }
+  }
+}
+
+
+
+Testing NULL DATE
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	791	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+355	TRANSACTION	109
+464	TRANSACTION	109
+573	TRANSACTION	109
+682	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+355	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+464	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+573	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+682	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT DATE1
+INSERT INTO t1 (b) VALUES('abbazabba');
+ERROR HY000: Received an invalid datetime value 'abbazabba'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	791	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+355	TRANSACTION	109
+464	TRANSACTION	109
+573	TRANSACTION	109
+682	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+355	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+464	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+573	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+682	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "0000-00-00"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT DATE2
+INSERT INTO t1 (b) VALUES('a');
+ERROR HY000: Received an invalid datetime value 'a'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	791	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	109
+355	TRANSACTION	109
+464	TRANSACTION	109
+573	TRANSACTION	109
+682	TRANSACTION	109
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+355	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+464	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+573	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+682	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATE
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "0000-00-00"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+++ End DATE tests ++
+++ Begin DATETIME tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b DATETIME, PRIMARY KEY(a));
+Testing MIN DATETIME
+INSERT INTO t1 (b) VALUES('0001-01-01 00:00:00');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	364	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "0001-01-01 00:00:00"
+    }
+  }
+}
+
+
+
+Testing MAX DATETIME
+INSERT INTO t1 (b) VALUES('9999-12-31 23:59:59');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	482	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9999-12-31 23:59:59"
+    }
+  }
+}
+
+
+
+Testing MIN-1 DATETIME
+INSERT INTO t1 (b) VALUES('0000-01-01');
+ERROR HY000: Received an invalid datetime value '0000-01-01'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	482	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9999-12-31 23:59:59"
+    }
+  }
+}
+
+
+
+Testing MAX+1 DATETIME
+INSERT INTO t1 (b) VALUES('10000-01-01');
+ERROR HY000: Received an invalid datetime value '10000-01-01'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	482	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "9999-12-31 23:59:59"
+    }
+  }
+}
+
+
+
+Testing Alternate input format DATETIME1
+INSERT INTO t1 (b) VALUES(20000101121559);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	600	5	5	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "2000-01-01 12:15:59"
+    }
+  }
+}
+
+
+
+Testing Alternate input formate DATETIME2
+INSERT INTO t1 (b) VALUES('19990601121547');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	718	6	6	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 8
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "1999-06-01 12:15:47"
+    }
+  }
+}
+
+
+
+Testing NULL DATETIME
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	836	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+718	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+718	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT DATETIME1
+INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
+ERROR HY000: Received an invalid datetime value '2000-01-01 25:00:00'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	836	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+718	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+718	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "0000-00-00 00:00:00"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT DATETIME2
+INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
+ERROR HY000: Received an invalid datetime value '2000-01-01 12:60:00'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	836	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+718	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+718	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "0000-00-00 00:00:00"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT DATETIME3
+INSERT INTO t1 (b) VALUES('2000-01-01 12:00:70');
+ERROR HY000: Received an invalid datetime value '2000-01-01 12:00:70'.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	836	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+718	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+718	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: DATETIME
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "0000-00-00 00:00:00"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+++ End DATETIME tests ++
+++ Begin TIMESTAMP tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b TIMESTAMP, PRIMARY KEY(a));
+Testing MIN TIMESTAMP
+INSERT INTO t1 (b) VALUES('1970-01-01 00:00:00');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	364	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "1970-01-01 00:00:00"
+    }
+  }
+}
+
+
+
+Testing MAX TIMESTAMP
+INSERT INTO t1 (b) VALUES('2038-01-19 03:14:07');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	482	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "2038-01-19 03:14:07"
+    }
+  }
+}
+
+
+
+Testing MIN-1 TIMESTAMP
+INSERT INTO t1 (b) VALUES('1969-12-31 23:59:59');
+ERROR HY000: Received an invalid value '1969-12-31 23:59:59' for a UNIX timestamp.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	482	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "2038-01-19 03:14:07"
+    }
+  }
+}
+
+
+
+Testing MAX+1 TIMESTAMP
+INSERT INTO t1 (b) VALUES('2038-01-19 03:14:08');
+ERROR HY000: Received an invalid value '2038-01-19 03:14:08' for a UNIX timestamp.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	482	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "2038-01-19 03:14:07"
+    }
+  }
+}
+
+
+
+Testing Alternate input format TIMESTAMP1
+INSERT INTO t1 (b) VALUES(20000101121559);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	600	5	5	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "2000-01-01 12:15:59"
+    }
+  }
+}
+
+
+
+Testing Alternate input formate TIMESTAMP2
+INSERT INTO t1 (b) VALUES(19990601121547);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	718	6	6	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 8
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "1999-06-01 12:15:47"
+    }
+  }
+}
+
+
+
+Testing NULL TIMESTAMP
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	836	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+718	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+718	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT TIMESTAMP1
+INSERT INTO t1 (b) VALUES('2000-01-01 25:00:00');
+ERROR HY000: Received an invalid value '2000-01-01 25:00:00' for a UNIX timestamp.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	836	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+718	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+718	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "1970-01-01 00:00:00"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT TIMESTAMP2
+INSERT INTO t1 (b) VALUES('2000-01-01 12:60:00');
+ERROR HY000: Received an invalid value '2000-01-01 12:60:00' for a UNIX timestamp.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	836	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+718	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+718	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "1970-01-01 00:00:00"
+    }
+  }
+}
+
+
+
+Testing BAD INPUT TIMESTAMP3
+INSERT INTO t1 (b) VALUES('2000-01-01 12:00:65');
+ERROR HY000: Received an invalid value '2000-01-01 12:00:65' for a UNIX timestamp.
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	836	7	7	1	9	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	171
+246	TRANSACTION	118
+364	TRANSACTION	118
+482	TRANSACTION	118
+600	TRANSACTION	118
+718	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+246	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+364	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+482	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+600	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+718	9	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 9
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: TIMESTAMP
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: "1970-01-01 00:00:00"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+++ End TIMESTAMP tests ++
+++ Begin BLOB simple tests ++
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b BLOB, PRIMARY KEY(a));
+Testing BLOB simple1
+INSERT INTO t1 (b) VALUES("This is a string that will go into a BLOB column.  Let's see how it works");
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	431	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	183
+258	TRANSACTION	173
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+258	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BLOB
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "This is a string that will go into a BLOB column.  Let\'s see how it works"
+    }
+  }
+}
+
+
+
+Testing BLOB simple2
+INSERT INTO t1 (b) VALUES("this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string");
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	3033	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	183
+258	TRANSACTION	173
+431	TRANSACTION	2602
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+258	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BLOB
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: "this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string this_is_a_longish_string"
+    }
+  }
+}
+
+
+
+Testing NULL BLOB simple
+INSERT INTO t1 (b) VALUES(NULL);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	3132	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	183
+258	TRANSACTION	173
+431	TRANSACTION	2602
+3033	TRANSACTION	99
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+258	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3033	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BLOB
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "3"
+      insert_value: "**NULL**"
+    }
+  }
+}
+
+
+
+Testing INPUT BLOB simple1
+INSERT INTO t1 (b) VALUES(100);
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	3234	6	6	1	6	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	183
+258	TRANSACTION	173
+431	TRANSACTION	2602
+3033	TRANSACTION	99
+3132	TRANSACTION	102
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+258	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3033	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3132	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 6
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BLOB
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "4"
+      insert_value: "100"
+    }
+  }
+}
+
+
+
+Testing INPUT BLOB simple2
+INSERT INTO t1 (b) VALUES("");
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	3333	7	7	1	7	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	183
+258	TRANSACTION	173
+431	TRANSACTION	2602
+3033	TRANSACTION	99
+3132	TRANSACTION	102
+3234	TRANSACTION	99
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+258	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3033	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3132	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3234	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BLOB
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "5"
+      insert_value: ""
+    }
+  }
+}
+
+
+
+Testing INPUT BLOB simple3
+INSERT INTO t1 (b) VALUES('2000-01-01 12:00:70');
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	3451	8	8	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	183
+258	TRANSACTION	173
+431	TRANSACTION	2602
+3033	TRANSACTION	99
+3132	TRANSACTION	102
+3234	TRANSACTION	99
+3333	TRANSACTION	118
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+258	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+431	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3033	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3132	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3234	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+3333	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 8
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: BLOB
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "6"
+      insert_value: "2000-01-01 12:00:70"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+# Bug#594873 - transaction log incorrectly records NULL INSERT into an ENUM as the first permissible value
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL, b ENUM ('1','2'), PRIMARY KEY(a));
+INSERT INTO t1 VALUES (1,NULL);
+We check how the NULL was recorded
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	372	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	197
+272	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+272	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: ENUM
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: "1"
+    }
+  }
+}
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+#Bug#594876 - transaction log not diffentiating NULL values and empty string for char columns
+DROP TABLE IF EXISTS t1;
+CREATE TABLE t1 (a INT NOT NULL, b CHAR(1000), PRIMARY KEY (a));
+INSERT INTO t1 VALUES (1,NULL);
+We check how the NULL was recorded in the log 
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	367	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	193
+268	TRANSACTION	99
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+268	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "1"
+      insert_value: ""
+    }
+  }
+}
+
+
+INSERT INTO t1 VALUES (2,"");
+We check how the empty string was recorded in the log 
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	466	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	193
+268	TRANSACTION	99
+367	TRANSACTION	99
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+268	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+367	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: INSERT
+  START_TIMESTAMP
+  END_TIMESTAMP
+  insert_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+    field_metadata {
+      type: VARCHAR
+      name: "b"
+    }
+  }
+  insert_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      insert_value: "2"
+      insert_value: ""
+    }
+  }
+}
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;

@@ -1,0 +1,330 @@
+Simple CREATE / DROP test
+Testing simple CREATE SCHEMA 
+CREATE SCHEMA my_test_schema;
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	121	1	1	1	1	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	121
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 1
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: CREATE_SCHEMA
+  START_TIMESTAMP
+  END_TIMESTAMP
+  create_schema_statement {
+    schema {
+      name: "my_test_schema"
+      collation: "utf8_general_ci"
+      engine {
+        name: "filesystem"
+      }
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+    }
+  }
+}
+
+
+
+Testing simple DROP SCHEMA
+DROP SCHEMA my_test_schema;
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	197	2	2	1	2	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	121
+121	TRANSACTION	76
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+121	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 2
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_SCHEMA
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_schema_statement {
+    schema_name: "my_test_schema"
+  }
+}
+
+
+
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing DROP SCHEMA on non-empty schema
+CREATE SCHEMA my_test_schema;
+CREATE TABLE my_test_schema.t1 (a int not null, primary key(a));
+CREATE TABLE my_test_schema.t2 LIKE my_test_schema.t1;
+CREATE TABLE my_test_schema.t3 LIKE my_test_schema.t2;
+DROP SCHEMA my_test_schema;
+Checking t1 DROP
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 5));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 5))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: RAW_SQL
+  START_TIMESTAMP
+  END_TIMESTAMP
+  sql: "DROP TABLE IF EXISTS `my_test_schema`.`t1`"
+}
+
+Checking t2 DROP
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 6));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 6))
+transaction_context {
+  server_id: 1
+  transaction_id: 6
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: RAW_SQL
+  START_TIMESTAMP
+  END_TIMESTAMP
+  sql: "DROP TABLE IF EXISTS `my_test_schema`.`t2`"
+}
+
+Checking t3 DROP
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 7));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 7))
+transaction_context {
+  server_id: 1
+  transaction_id: 7
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: RAW_SQL
+  START_TIMESTAMP
+  END_TIMESTAMP
+  sql: "DROP TABLE IF EXISTS `my_test_schema`.`t3`"
+}
+
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	1004	8	8	1	8	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	121
+121	TRANSACTION	165
+286	TRANSACTION	168
+454	TRANSACTION	168
+622	TRANSACTION	102
+724	TRANSACTION	102
+826	TRANSACTION	102
+928	TRANSACTION	76
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+121	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+286	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+454	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+622	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+724	6	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+826	7	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+928	8	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 8
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DROP_SCHEMA
+  START_TIMESTAMP
+  END_TIMESTAMP
+  drop_schema_statement {
+    schema_name: "my_test_schema"
+  }
+}
+
+
+
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing simple CREATE SCHEMA
+CREATE SCHEMA my_test_schema;
+USE my_test_schema;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b CHAR(50), PRIMARY KEY(a));
+ALTER SCHEMA my_test_schema COLLATE utf8_turkish_ci;
+SHOW CREATE TABLE t1;
+Table	Create Table
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL AUTO_INCREMENT,
+  `b` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`a`)
+) ENGINE=InnoDB
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	438	3	3	1	3	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	121
+121	TRANSACTION	206
+327	TRANSACTION	111
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+121	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+327	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 3
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: RAW_SQL
+  START_TIMESTAMP
+  END_TIMESTAMP
+  sql: "ALTER SCHEMA my_test_schema COLLATE utf8_turkish_ci"
+}
+
+
+
+CREATE TABLE t2 LIKE t1;
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	646	4	4	1	4	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	121
+121	TRANSACTION	206
+327	TRANSACTION	111
+438	TRANSACTION	208
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+121	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+327	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+438	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 4
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: CREATE_TABLE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  create_table_statement {
+    table {
+      name: "t2"
+      engine {
+        name: "InnoDB"
+      }
+      field {
+        name: "a"
+        type: INTEGER
+        constraints {
+          is_nullable: false
+        }
+        numeric_options {
+          is_autoincrement: true
+        }
+      }
+      field {
+        name: "b"
+        type: VARCHAR
+        options {
+          default_null: true
+        }
+        string_options {
+          length: 50
+          collation_id: 45
+          collation: "utf8_general_ci"
+        }
+      }
+      indexes {
+        name: "PRIMARY"
+        is_primary: true
+        is_unique: true
+        type: UNKNOWN_INDEX
+        key_length: 4
+        index_part {
+          fieldnr: 0
+          compare_length: 4
+        }
+        options {
+        }
+      }
+      type: STANDARD
+      schema: "my_test_schema"
+      options {
+        collation: "utf8_general_ci"
+        collation_id: 45
+      }
+      CREATE_TIMESTAMP
+      UPDATE_TIMESTAMP
+      catalog: ""
+    }
+  }
+}
+
+
+
+DROP SCHEMA my_test_schema;
+SET GLOBAL transaction_log_truncate_debug= true;
+

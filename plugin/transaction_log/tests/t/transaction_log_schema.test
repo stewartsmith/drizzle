@@ -1,0 +1,66 @@
+# transaction_log_schema
+# Test of CREATE / DROP /ALTER SCHEMA statements and how the transaction log
+# captures / represents them
+
+--echo Simple CREATE / DROP test
+--echo Testing simple CREATE SCHEMA 
+CREATE SCHEMA my_test_schema;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+--echo Testing simple DROP SCHEMA
+DROP SCHEMA my_test_schema;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+--echo Testing DROP SCHEMA on non-empty schema
+CREATE SCHEMA my_test_schema;
+CREATE TABLE my_test_schema.t1 (a int not null, primary key(a));
+CREATE TABLE my_test_schema.t2 LIKE my_test_schema.t1;
+CREATE TABLE my_test_schema.t3 LIKE my_test_schema.t2;
+DROP SCHEMA my_test_schema;
+# We check to see that t1,t2,t3 are DROPped as well
+--echo Checking t1 DROP
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/  /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 5));
+--echo Checking t2 DROP
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/  /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 6));
+--echo Checking t3 DROP
+--replace_regex /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /start_timestamp: [0-9]+/START_TIMESTAMP/  /end_timestamp: [0-9]+/END_TIMESTAMP/ /creation_timestamp: [0-9]+/CREATE_TIMESTAMP/  /update_timestamp: [0-9]+/UPDATE_TIMESTAMP/
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(SELECT entry_offset FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS WHERE TRANSACTION_ID = 7));
+
+
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+
+--echo Testing simple CREATE SCHEMA
+CREATE SCHEMA my_test_schema;
+USE my_test_schema;
+CREATE TABLE t1 (a INT NOT NULL AUTO_INCREMENT, b CHAR(50), PRIMARY KEY(a));
+ALTER SCHEMA my_test_schema COLLATE utf8_turkish_ci; 
+SHOW CREATE TABLE t1;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+CREATE TABLE t2 LIKE t1;
+--source ../plugin/transaction_log/tests/t/check_transaction_log.inc
+--echo
+DROP SCHEMA my_test_schema;
+
+# Truncate the log file to reset for the next test
+--source ../plugin/transaction_log/tests/t/truncate_log.inc
+--echo
+
+
+
+
+

@@ -1,0 +1,347 @@
+Testing DELETE basic 
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1(a INT NOT NULL AUTO_INCREMENT, b INT NOT NULL, PRIMARY KEY(a), KEY b_key1 (b));
+INSERT INTO t1 (b) VALUES (10),(20),(30),(40),(50),(60);
+DELETE FROM t1;
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	610	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	199
+349	TRANSACTION	146
+495	TRANSACTION	115
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+349	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+495	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DELETE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  delete_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+  }
+  delete_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "1"
+    }
+    record {
+      key_value: "2"
+    }
+    record {
+      key_value: "3"
+    }
+    record {
+      key_value: "4"
+    }
+    record {
+      key_value: "5"
+    }
+    record {
+      key_value: "6"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing simple DELETE with WHERE 
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1(a INT NOT NULL AUTO_INCREMENT, b INT NOT NULL, c CHAR(100), PRIMARY KEY(a));
+INSERT INTO t1 (b,c) VALUES (10,'a'),(20,'b'),(30,'c'),(40,'d'),(50,'e'),(60,'f');
+DELETE FROM t1 WHERE a%2=0 ;
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	629	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	207
+357	TRANSACTION	172
+529	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+357	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+529	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DELETE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  delete_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+  }
+  delete_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "2"
+    }
+    record {
+      key_value: "4"
+    }
+    record {
+      key_value: "6"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing simple DELETE with WHERE + LIMIT
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1(a INT NOT NULL AUTO_INCREMENT, b INT NOT NULL, c CHAR(100), PRIMARY KEY(a));
+INSERT INTO t1 (b,c) VALUES (10,'a'),(20,'b'),(30,'c'),(40,'d'),(50,'e'),(60,'f');
+DELETE FROM t1 WHERE a%2=0 LIMIT 1;
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	619	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	207
+357	TRANSACTION	172
+529	TRANSACTION	90
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+357	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+529	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DELETE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  delete_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+  }
+  delete_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "2"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing simple DELETE with WHERE + LIMIT + ORDER BY1 
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1(a INT NOT NULL AUTO_INCREMENT, b INT NOT NULL, c CHAR(100), PRIMARY KEY(a));
+INSERT INTO t1 (b,c) VALUES (10,'a'),(20,'b'),(30,'c'),(40,'d'),(50,'e'),(60,'f');
+DELETE FROM t1 WHERE a%2=0 ORDER BY a DESC LIMIT 1;
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	619	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	207
+357	TRANSACTION	172
+529	TRANSACTION	90
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+357	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+529	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DELETE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  delete_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+  }
+  delete_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "6"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
+Testing simple DELETE with WHERE + LIMIT + ORDER BY2
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1(a INT NOT NULL AUTO_INCREMENT, b INT NOT NULL, c CHAR(100), PRIMARY KEY(a));
+INSERT INTO t1 (b,c) VALUES (10,'a'),(20,'b'),(30,'c'),(40,'d'),(50,'e'),(60,'f');
+DELETE FROM t1 WHERE a%2=0 ORDER BY a DESC LIMIT 10000;
+# check transaction_log
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG;
+FILE_NAME	FILE_LENGTH	NUM_LOG_ENTRIES	NUM_TRANSACTIONS	MIN_TRANSACTION_ID	MAX_TRANSACTION_ID	MIN_END_TIMESTAMP	MAX_END_TIMESTAMP	INDEX_SIZE_IN_BYTES
+transaction.log	629	5	5	1	5	START_TIMESTAMP	END_TIMESTAMP	73736
+
+Check transaction_log_entries
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_ENTRIES;
+ENTRY_OFFSET	ENTRY_TYPE	ENTRY_LENGTH
+0	TRANSACTION	75
+75	TRANSACTION	75
+150	TRANSACTION	207
+357	TRANSACTION	172
+529	TRANSACTION	100
+
+Check transaction_log_transactions
+SELECT * FROM DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS;
+ENTRY_OFFSET	TRANSACTION_ID	SERVER_ID	START_TIMESTAMP	END_TIMESTAMP	NUM_STATEMENTS	CHECKSUM
+0	1	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+75	2	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+150	3	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+357	4	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+529	5	1	START_TIMESTAMP	END_TIMESTAMP	1	0
+Check transaction log contents
+SELECT PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS));
+PRINT_TRANSACTION_MESSAGE('transaction.log',(select max(entry_offset) from DATA_DICTIONARY.TRANSACTION_LOG_TRANSACTIONS))
+transaction_context {
+  server_id: 1
+  transaction_id: 5
+  START_TIMESTAMP
+  END_TIMESTAMP
+}
+statement {
+  type: DELETE
+  START_TIMESTAMP
+  END_TIMESTAMP
+  delete_header {
+    table_metadata {
+      schema_name: "test"
+      table_name: "t1"
+    }
+    key_field_metadata {
+      type: INTEGER
+      name: "a"
+    }
+  }
+  delete_data {
+    segment_id: 1
+    end_segment: true
+    record {
+      key_value: "6"
+    }
+    record {
+      key_value: "4"
+    }
+    record {
+      key_value: "2"
+    }
+  }
+}
+
+
+
+DROP TABLE t1;
+SET GLOBAL transaction_log_truncate_debug= true;
+
