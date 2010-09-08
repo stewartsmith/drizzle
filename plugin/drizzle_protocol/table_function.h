@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_DRIZZLE_PROTOCOL_STATUS_FUNCTION_H
-#define PLUGIN_DRIZZLE_PROTOCOL_STATUS_FUNCTION_H
+#ifndef PLUGIN_DRIZZLE_PROTOCOL_TABLE_FUNCTION_H
+#define PLUGIN_DRIZZLE_PROTOCOL_TABLE_FUNCTION_H
 
 #include "drizzled/plugin/table_function.h"
 namespace drizzle_protocol
@@ -54,4 +54,4 @@ public:
 
 }
 
-#endif /* PLUGIN_DRIZZLE_PROTOCOL_STATUS_FUNCTION_H */
+#endif /* PLUGIN_DRIZZLE_PROTOCOL_TABLE_FUNCTION_H */
