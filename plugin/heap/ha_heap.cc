@@ -834,7 +834,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= table_arg->getShare()->block_size;
-  hp_create_info.is_dynamic= false;
 
   error= heap_create(internal::fn_format(buff,table_name,"","",
                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),

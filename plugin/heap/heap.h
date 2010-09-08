@@ -277,7 +277,6 @@ typedef struct st_heap_create_info
   uint32_t auto_key;                        /* keynr [1 - maxkey] for auto key */
   uint32_t auto_key_type;
   uint32_t max_chunk_size;
-  uint32_t is_dynamic;
   uint64_t max_table_size;
   uint64_t auto_increment;
   bool with_auto_increment;
