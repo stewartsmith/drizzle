@@ -1405,7 +1405,8 @@ bool DateTime::is_valid() const
 bool Timestamp::is_valid() const
 {
   return DateTime::is_valid() 
-      && in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds);
+      && in_unix_epoch_range(_years, _months, _days, _hours, _minutes, _seconds)
+      && (_seconds <= 59);
 }
 
 bool MicroTimestamp::is_valid() const

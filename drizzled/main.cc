@@ -235,7 +235,7 @@ int main(int argc, char **argv)
   */
   error_handler_hook= my_message_sql;
 
-
+  /* Function generates error messages before abort */
   if (init_common_variables(DRIZZLE_CONFIG_NAME,
 			    argc, argv, load_default_groups))
     unireg_abort(1);				// Will do exit
