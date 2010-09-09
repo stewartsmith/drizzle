@@ -49,7 +49,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
   HP_SHARE *share= 0;
   HA_KEYSEG *keyseg;
 
-  if (!create_info->internal_table)
+  if (not create_info->internal_table)
   {
     THR_LOCK_heap.lock();
     if ((share= hp_find_named_heap(name)) && share->open_count == 0)

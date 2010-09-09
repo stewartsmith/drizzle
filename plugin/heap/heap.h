@@ -249,7 +249,6 @@ public:
   int  mode;				/* Mode of file (READONLY..) */
   uint32_t opt_flag,update;
   std::vector <unsigned char> lastkey;			/* Last used key with rkey */
-  std::vector <unsigned char> recbuf;                         /* Record buffer for rb-tree keys */
   enum drizzled::ha_rkey_function last_find_flag;
   uint32_t lastkey_len;
   drizzled::THR_LOCK_DATA lock;
