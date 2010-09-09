@@ -103,7 +103,7 @@ extern void hp_clear_dataspace(HP_DATASPACE *info);
 extern uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uint32_t *chunk_count);
 extern void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos);
 extern void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned char *pos);
-extern uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos, uint32_t is_compare);
+extern bool hp_compare_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos);
 
 extern boost::mutex THR_LOCK_heap;
 

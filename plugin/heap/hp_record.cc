@@ -48,44 +48,17 @@ uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *, uint3
   return dst_offset;
 }
 
-
-/**
-  Encodes or compares record
-
-  Copies data from original unpacked record into the preallocated chunkset,
-  or performs data comparison
-
-  @param  info         the hosting table
-  @param  record       the record in standard unpacked format
-  @param  pos          the target chunkset
-  @param  is_compare   flag indicating whether we should compare data or store it
-
-  @return  Status of comparison
-    @retval  non-zero  if comparison fond data differences
-    @retval  zero      otherwise
-*/
-
-uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record,
-                                      unsigned char *pos, uint32_t is_compare)
+bool hp_compare_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos)
 {
   unsigned char* curr_chunk= pos;
 
-  if (is_compare)
+  if (memcmp(curr_chunk, record, (size_t) info->fixed_data_length))
   {
-    if (memcmp(curr_chunk, record, (size_t) info->fixed_data_length))
-    {
-      return 1;
-    }
-  }
-  else
-  {
-    memcpy(curr_chunk, record, (size_t) info->fixed_data_length);
+    return 1;
   }
 
-  /* Nothing more to copy */
   return 0;
 }
-
 
 /**
   Stores record in the heap table chunks
@@ -99,10 +72,9 @@ uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char 
 
 void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos)
 {
+  unsigned char* curr_chunk= pos;
 
-  hp_process_record_data_to_chunkset(info, record, pos, 0);
-
-  return;
+  memcpy(curr_chunk, record, (size_t) info->fixed_data_length);
 }
 
 

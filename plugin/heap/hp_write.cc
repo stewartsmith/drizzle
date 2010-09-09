@@ -35,7 +35,6 @@ int heap_write(HP_INFO *info, const unsigned char *record)
   HP_KEYDEF *keydef, *end;
   unsigned char *pos;
   HP_SHARE *share=info->getShare();
-  uint32_t rec_length, chunk_count;
 
   if ((share->records >= share->max_records && share->max_records) ||
     (share->recordspace.total_data_length + share->index_length >= share->max_table_size))
@@ -43,9 +42,7 @@ int heap_write(HP_INFO *info, const unsigned char *record)
     return(errno=HA_ERR_RECORD_FILE_FULL);
   }
 
-  rec_length = hp_get_encoded_data_length(share, record, &chunk_count);
-
-  if (!(pos=hp_allocate_chunkset(&share->recordspace, chunk_count)))
+  if (!(pos=hp_allocate_chunkset(&share->recordspace, 1)))
     return(errno);
   share->changed=1;
 

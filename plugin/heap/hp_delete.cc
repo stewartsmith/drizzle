@@ -22,15 +22,12 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
   unsigned char *pos;
   HP_SHARE *share=info->getShare();
   HP_KEYDEF *keydef, *end, *p_lastinx;
-  uint32_t rec_length, chunk_count;
 
   test_active(info);
 
   if (info->opt_flag & READ_CHECK_USED)
     return(errno);			/* Record changed */
   share->changed=1;
-
-  rec_length = hp_get_encoded_data_length(share, record, &chunk_count);
 
   if ( --(share->records) < share->blength >> 1) share->blength>>=1;
   pos=info->current_ptr;
