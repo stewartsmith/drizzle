@@ -241,7 +241,7 @@ static unsigned char *hp_allocate_one_chunk(HP_DATASPACE *info)
 
   info->chunk_count++;
   curr_chunk= ((unsigned char*) info->block.level_info[0].last_blocks +
-    block_pos * info->block.recbuffer);
+               block_pos * info->block.recbuffer);
 
 
   return curr_chunk;
