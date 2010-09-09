@@ -22,6 +22,8 @@
 
 #include <drizzled/plugin/listen_tcp.h>
 #include <drizzled/plugin/client.h>
+#include <drizzled/atomics.h>
+#include "drizzled/plugin/table_function.h"
 
 #include "net_serv.h"
 
@@ -29,6 +31,7 @@ class ListenMySQLProtocol: public drizzled::plugin::ListenTcp
 {
 private:
   bool using_mysql41_protocol;
+  static drizzled::plugin::TableFunction* status_table_function_ptr;
 
 public:
   ListenMySQLProtocol(std::string name_arg, bool using_mysql41_protocol_arg):
@@ -58,6 +61,10 @@ private:
 public:
   ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg);
   virtual ~ClientMySQLProtocol();
+
+  static drizzled::atomic<uint64_t> connectionCount;
+  static drizzled::atomic<uint64_t> failedConnections;
+  static drizzled::atomic<uint64_t> connected;
 
   virtual int getFileDescriptor(void);
   virtual bool isConnected();

@@ -538,6 +538,7 @@ bool Session::schedule()
     current_global_counters.max_used_connections= connection_count;
   }
 
+  current_global_counters.connections++;
   thread_id= variables.pseudo_thread_id= global_thread_id++;
 
   LOCK_thread_count.lock();
@@ -1730,6 +1731,7 @@ void Session::refresh_status()
 
   flush_status_time= time((time_t*) 0);
   current_global_counters.max_used_connections= 1; /* We set it to one, because we know we exist */
+  current_global_counters.connections= 0;
 }
 
 user_var_entry *Session::getVariable(LEX_STRING &name, bool create_if_not_exists)
