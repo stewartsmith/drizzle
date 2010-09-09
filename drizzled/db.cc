@@ -351,6 +351,8 @@ exit:
 
 static int rm_table_part2(Session *session, TableList *tables)
 {
+  TransactionServices &transaction_services= TransactionServices::singleton();
+
   TableList *table;
   String wrong_tables;
   int error= 0;
@@ -461,7 +463,9 @@ static int rm_table_part2(Session *session, TableList *tables)
     }
 
     if (error == 0 || (foreign_key_error == false))
-        write_bin_log_drop_table(session, true, db, table->table_name);
+    {
+      transaction_services.dropTable(session, string(db), string(table->table_name), true);
+    }
 
     if (error)
     {
