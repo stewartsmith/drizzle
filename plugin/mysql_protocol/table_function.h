@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_MYSQL_PROTOCOL_STATUS_FUNCTION_H
-#define PLUGIN_MYSQL_PROTOCOL_STATUS_FUNCTION_H
+#ifndef PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H
+#define PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H
 
 #include "drizzled/plugin/table_function.h"
 
@@ -49,4 +49,4 @@ public:
   }
 };
 
-#endif /* PLUGIN_MYSQL_PROTOCOL_STATUS_FUNCTION_H */
+#endif /* PLUGIN_MYSQL_PROTOCOL_TABLE_FUNCTION_H */
