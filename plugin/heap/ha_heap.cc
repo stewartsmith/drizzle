@@ -277,7 +277,6 @@ const char *ha_heap::index_type(uint32_t )
 
 void ha_heap::set_keys_for_scanning(void)
 {
-  btree_keys.reset();
 }
 
 
@@ -687,7 +686,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   uint32_t auto_key= 0, auto_key_type= 0;
   uint32_t max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
   uint32_t column_count= table_arg->getShare()->sizeFields();
-  std::vector<HP_COLUMNDEF> columndef;
   std::vector<HP_KEYDEF> keydef;
   char buff[FN_REFLEN];
   int error;
@@ -702,37 +700,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   uint64_t num_rows= table_arg->getShare()->getMaxRows();
   if (num_rows > UINT32_MAX)
     return -1;
-
-  columndef.resize(column_count);
-
-  for (uint32_t column_idx= 0; column_idx < column_count; column_idx++)
-  {
-    Field* field= *(table_arg->getFields() + column_idx);
-    HP_COLUMNDEF* column= &columndef[column_idx];
-    column->type= (uint16_t)field->type();
-    column->length= field->pack_length();
-    column->offset= field->offset(field->getTable()->getInsertRecord());
-
-    if (field->null_bit)
-    {
-      column->null_bit= field->null_bit;
-      column->null_pos= (uint) (field->null_ptr - (unsigned char*) table_arg->getInsertRecord());
-    }
-    else
-    {
-      column->null_bit= 0;
-      column->null_pos= 0;
-    }
-
-    if (field->type() == DRIZZLE_TYPE_VARCHAR)
-    {
-      column->length_bytes= (uint8_t)(((Field_varstring*)field)->length_bytes);
-    }
-    else
-    {
-      column->length_bytes= 0;
-    }
-  }
 
   for (key= parts= 0; key < keys; key++)
     parts+= table_arg->key_info[key].key_parts;
@@ -752,8 +719,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
     keydef[key].flag=      (pos->flags & (HA_NOSAME | HA_NULL_ARE_EQUAL));
     keydef[key].seg=       seg;
 
-    // case HA_KEY_ALG_HASH:
-    keydef[key].algorithm= HA_KEY_ALG_HASH;
     mem_per_row_keys+= sizeof(char*) * 2; // = sizeof(HASH_INFO)
 
     for (; key_part != key_part_end; key_part++, seg++)
@@ -837,13 +802,12 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.with_auto_increment= found_real_auto_increment;
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= table_arg->getShare()->block_size;
-  hp_create_info.is_dynamic= false;
 
   error= heap_create(internal::fn_format(buff,table_name,"","",
                               MY_REPLACE_EXT|MY_UNPACK_FILENAME),
                     keys, &keydef[0],
-                    column_count, &columndef[0],
-                    max_key_fieldnr, key_part_size,
+                    column_count,
+                    key_part_size,
                     table_arg->getShare()->getRecordLength(), mem_per_row_keys,
                     static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
                     0, // Factor out MIN

@@ -30,7 +30,6 @@ typedef unsigned char *HEAP_PTR;
 class ha_heap: public drizzled::Cursor
 {
   HP_INFO *file;
-  drizzled::key_map btree_keys;
   /* number of records changed since last statistics update */
   uint32_t    records_changed;
   uint32_t    key_stat_version;
@@ -42,7 +41,6 @@ public:
 
   const char *index_type(uint32_t inx);
 
-  const drizzled::key_map *keys_to_use_for_scanning() { return &btree_keys; }
   double scan_time()
   { return (double) (stats.records+stats.deleted) / 20.0+10; }
   double read_time(uint32_t, uint32_t,
