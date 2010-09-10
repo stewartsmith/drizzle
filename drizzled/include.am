@@ -777,7 +777,7 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/transaction_services.cc \
 				 drizzled/tree.cc \
 				 drizzled/tztime.cc \
-				 drizzled/uniques.cc \
+				 drizzled/unique.cc \
 				 drizzled/user_var_entry.cc \
 				 drizzled/version.cc \
 				 drizzled/xid.cc
