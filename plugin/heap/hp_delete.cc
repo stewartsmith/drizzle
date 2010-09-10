@@ -22,15 +22,12 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
   unsigned char *pos;
   HP_SHARE *share=info->getShare();
   HP_KEYDEF *keydef, *end, *p_lastinx;
-  uint32_t rec_length, chunk_count;
 
   test_active(info);
 
   if (info->opt_flag & READ_CHECK_USED)
     return(errno);			/* Record changed */
   share->changed=1;
-
-  rec_length = hp_get_encoded_data_length(share, record, &chunk_count);
 
   if ( --(share->records) < share->blength >> 1) share->blength>>=1;
   pos=info->current_ptr;
@@ -39,7 +36,7 @@ int heap_delete(HP_INFO *info, const unsigned char *record)
   for (keydef = share->keydef, end = keydef + share->keys; keydef < end;
        keydef++)
   {
-    if ((*keydef->delete_key)(info, keydef, record, pos, keydef == p_lastinx))
+    if (hp_delete_key(info, keydef, record, pos, keydef == p_lastinx))
       goto err;
   }
 
@@ -52,31 +49,6 @@ err:
   if (++(share->records) == share->blength)
     share->blength+= share->blength;
   return(errno);
-}
-
-
-/*
-  Remove one key from rb-tree
-*/
-
-int hp_rb_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
-		   const unsigned char *record, unsigned char *recpos, int flag)
-{
-  heap_rb_param custom_arg;
-  uint32_t old_allocated;
-  int res;
-
-  if (flag)
-    info->last_pos= NULL; /* For heap_rnext/heap_rprev */
-
-  custom_arg.keyseg= keyinfo->seg;
-  custom_arg.key_length= hp_rb_make_key(keyinfo, &info->recbuf[0], record, recpos);
-  custom_arg.search_flag= SEARCH_SAME;
-  old_allocated= keyinfo->rb_tree.allocated;
-  res= tree_delete(&keyinfo->rb_tree, &info->recbuf[0], custom_arg.key_length,
-                   &custom_arg);
-  info->getShare()->index_length-= (old_allocated - keyinfo->rb_tree.allocated);
-  return res;
 }
 
 

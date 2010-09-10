@@ -37,7 +37,6 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
   info->lock.init(&share->lock);
   info->setShare(share);
   info->lastkey.resize(share->max_key_length);
-  info->recbuf.resize(share->max_key_length);
   info->mode= mode;
   info->current_record= UINT32_MAX;		/* No current record */
   info->lastinx= info->errkey= -1;

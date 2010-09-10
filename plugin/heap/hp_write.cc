@@ -35,7 +35,6 @@ int heap_write(HP_INFO *info, const unsigned char *record)
   HP_KEYDEF *keydef, *end;
   unsigned char *pos;
   HP_SHARE *share=info->getShare();
-  uint32_t rec_length, chunk_count;
 
   if ((share->records >= share->max_records && share->max_records) ||
     (share->recordspace.total_data_length + share->index_length >= share->max_table_size))
@@ -43,16 +42,14 @@ int heap_write(HP_INFO *info, const unsigned char *record)
     return(errno=HA_ERR_RECORD_FILE_FULL);
   }
 
-  rec_length = hp_get_encoded_data_length(share, record, &chunk_count);
-
-  if (!(pos=hp_allocate_chunkset(&share->recordspace, chunk_count)))
+  if (!(pos=hp_allocate_chunkset(&share->recordspace, 1)))
     return(errno);
   share->changed=1;
 
   for (keydef = share->keydef, end = keydef + share->keys; keydef < end;
        keydef++)
   {
-    if ((*keydef->write_key)(info, keydef, record, pos))
+    if (hp_write_key(info, keydef, record, pos))
       goto err;
   }
 
@@ -70,19 +67,9 @@ int heap_write(HP_INFO *info, const unsigned char *record)
 
 err:
   info->errkey= keydef - share->keydef;
-  /*
-    We don't need to delete non-inserted key from rb-tree.  Also, if
-    we got ENOMEM, the key wasn't inserted, so don't try to delete it
-    either.  Otherwise for HASH index on HA_ERR_FOUND_DUPP_KEY the key
-    was inserted and we have to delete it.
-  */
-  if (keydef->algorithm == HA_KEY_ALG_BTREE || errno == ENOMEM)
-  {
-    keydef--;
-  }
   while (keydef >= share->keydef)
   {
-    if ((*keydef->delete_key)(info, keydef, record, pos, 0))
+    if (hp_delete_key(info, keydef, record, pos, 0))
       break;
     keydef--;
   }
@@ -91,39 +78,6 @@ err:
 
   return(errno);
 } /* heap_write */
-
-/*
-  Write a key to rb_tree-index
-*/
-
-int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo, const unsigned char *record,
-		    unsigned char *recpos)
-{
-  heap_rb_param custom_arg;
-  uint32_t old_allocated;
-
-  custom_arg.keyseg= keyinfo->seg;
-  custom_arg.key_length= hp_rb_make_key(keyinfo, &info->recbuf[0], record, recpos);
-  if (keyinfo->flag & HA_NOSAME)
-  {
-    custom_arg.search_flag= SEARCH_FIND | SEARCH_UPDATE;
-    keyinfo->rb_tree.flag= TREE_NO_DUPS;
-  }
-  else
-  {
-    custom_arg.search_flag= SEARCH_SAME;
-    keyinfo->rb_tree.flag= 0;
-  }
-  old_allocated= keyinfo->rb_tree.allocated;
-  if (!tree_insert(&keyinfo->rb_tree, &info->recbuf[0],
-		   custom_arg.key_length, &custom_arg))
-  {
-    errno= HA_ERR_FOUND_DUPP_KEY;
-    return 1;
-  }
-  info->getShare()->index_length+= (keyinfo->rb_tree.allocated-old_allocated);
-  return 0;
-}
 
 /*
   Write a hash-key to the hash-index

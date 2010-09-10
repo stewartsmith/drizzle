@@ -1,4 +1,6 @@
-/* Copyright (C) 2000,2004 MySQL AB
+/* 
+  Copyright (C) Brian Aker
+    Copyright (C) 2000,2004 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -136,7 +138,6 @@ typedef struct st_hp_keydef		/* Key definition with open */
   uint32_t flag;				/* HA_NOSAME | HA_NULL_PART_KEY */
   uint32_t keysegs;				/* Number of key-segment */
   uint32_t length;				/* Length of key (automatic) */
-  uint8_t algorithm;			/* HASH / BTREE */
   HA_KEYSEG *seg;
   HP_BLOCK block;			/* Where keys are saved */
   /*
@@ -144,23 +145,7 @@ typedef struct st_hp_keydef		/* Key definition with open */
     #records estimates for heap key scans.
   */
   drizzled::ha_rows hash_buckets;
-  drizzled::TREE rb_tree;
-  int (*write_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
-		   const unsigned char *record, unsigned char *recpos);
-  int (*delete_key)(struct st_heap_info *info, struct st_hp_keydef *keyinfo,
-		   const unsigned char *record, unsigned char *recpos, int flag);
-  uint32_t (*get_key_length)(struct st_hp_keydef *keydef, const unsigned char *key);
 } HP_KEYDEF;
-
-typedef struct st_heap_columndef              /* column information */
-{
-  int16_t  type;                                /* en_fieldtype */
-  uint32_t length;                      /* length of field */
-  uint32_t offset;                      /* Offset to position in row */
-  uint8_t  null_bit;                    /* If column may be 0 */
-  uint16_t null_pos;                    /* position for null marker */
-  uint8_t  length_bytes;  /* length of the size, 1 o 2 bytes */
-} HP_COLUMNDEF;
 
 typedef struct st_heap_dataspace   /* control data for data space */
 {
@@ -172,7 +157,6 @@ typedef struct st_heap_dataspace   /* control data for data space */
   uint32_t chunk_dataspace_length;  /* Length of payload that will be placed into one chunk */
   uint32_t offset_status;           /* Offset of the status flag relative to the chunk start */
   uint32_t offset_link;             /* Offset of the linking pointer relative to the chunk start */
-  uint32_t is_variable_size;          /* Test whether records have variable size and so "next" pointer */
   uint64_t total_data_length;  /* Total size allocated within this data space */
 
   st_heap_dataspace() :
@@ -183,7 +167,6 @@ typedef struct st_heap_dataspace   /* control data for data space */
     chunk_dataspace_length(0),
     offset_status(0),
     offset_link(0),
-    is_variable_size(0),
     total_data_length(0)
   { }
 
@@ -193,7 +176,6 @@ typedef struct st_heap_dataspace   /* control data for data space */
 typedef struct st_heap_share
 {
   HP_KEYDEF  *keydef;
-  HP_COLUMNDEF *column_defs;
   HP_DATASPACE recordspace;  /* Describes "block", which contains actual records */
 
   uint32_t min_records,max_records;	/* Params to open */
@@ -219,7 +201,6 @@ typedef struct st_heap_share
 
   st_heap_share() :
     keydef(0),
-    column_defs(0),
     min_records(0),
     max_records(0),
     index_length(0),
@@ -268,10 +249,7 @@ public:
   int  mode;				/* Mode of file (READONLY..) */
   uint32_t opt_flag,update;
   std::vector <unsigned char> lastkey;			/* Last used key with rkey */
-  std::vector <unsigned char> recbuf;                         /* Record buffer for rb-tree keys */
   enum drizzled::ha_rkey_function last_find_flag;
-  drizzled::TREE_ELEMENT *parents[drizzled::MAX_TREE_HEIGHT+1];
-  drizzled::TREE_ELEMENT **last_pos;
   uint32_t lastkey_len;
   drizzled::THR_LOCK_DATA lock;
 } HP_INFO;
@@ -282,7 +260,6 @@ typedef struct st_heap_create_info
   uint32_t auto_key;                        /* keynr [1 - maxkey] for auto key */
   uint32_t auto_key_type;
   uint32_t max_chunk_size;
-  uint32_t is_dynamic;
   uint64_t max_table_size;
   uint64_t auto_increment;
   bool with_auto_increment;
@@ -303,8 +280,8 @@ extern int heap_scan(register HP_INFO *info, unsigned char *record);
 extern int heap_delete(HP_INFO *info,const unsigned char *buff);
 extern int heap_info(HP_INFO *info,HEAPINFO *x,int flag);
 extern int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
-           uint32_t columns, HP_COLUMNDEF *columndef,
-           uint32_t max_key_fieldnr, uint32_t key_part_size,
+           uint32_t columns, 
+           uint32_t key_part_size,
            uint32_t reclength, uint32_t keys_memory_size,
            uint32_t max_records, uint32_t min_records,
            HP_CREATE_INFO *create_info, HP_SHARE **share);
@@ -324,9 +301,6 @@ extern int heap_disable_indexes(HP_INFO *info);
 extern int heap_enable_indexes(HP_INFO *info);
 extern int heap_indexes_are_disabled(HP_INFO *info);
 extern void heap_update_auto_increment(HP_INFO *info, const unsigned char *record);
-drizzled::ha_rows hp_rb_records_in_range(HP_INFO *info,
-                                         int inx, drizzled::key_range *min_key,
-                                         drizzled::key_range *max_key);
 int hp_panic(enum drizzled::ha_panic_function flag);
 int heap_rkey(HP_INFO *info, unsigned char *record, int inx, const unsigned char *key,
               drizzled::key_part_map keypart_map,
