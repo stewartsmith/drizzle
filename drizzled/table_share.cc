@@ -1331,7 +1331,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
 
     Table temp_table; /* Use this so that BLOB DEFAULT '' works */
-    memset(&temp_table, 0, sizeof(temp_table));
     temp_table.setShare(this);
     temp_table.in_use= &session;
     temp_table.getMutableShare()->db_low_byte_first= true; //Cursor->low_byte_first();
