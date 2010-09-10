@@ -317,7 +317,6 @@ bool mysql_insert(Session *session,TableList *table_list,
   /*
     Fill in the given fields and dump it to the table cursor
   */
-  memset(&info, 0, sizeof(info));
   info.ignore= ignore;
   info.handle_duplicates=duplic;
   info.update_fields= &update_fields;
@@ -1050,12 +1049,11 @@ select_insert::select_insert(TableList *table_list_par, Table *table_par,
                              List<Item> *update_fields,
                              List<Item> *update_values,
                              enum_duplicates duplic,
-                             bool ignore_check_option_errors)
-  :table_list(table_list_par), table(table_par), fields(fields_par),
-   autoinc_value_of_last_inserted_row(0),
-   insert_into_view(table_list_par && 0 != 0)
+                             bool ignore_check_option_errors) :
+  table_list(table_list_par), table(table_par), fields(fields_par),
+  autoinc_value_of_last_inserted_row(0),
+  insert_into_view(table_list_par && 0 != 0)
 {
-  memset(&info, 0, sizeof(info));
   info.handle_duplicates= duplic;
   info.ignore= ignore_check_option_errors;
   info.update_fields= update_fields;
