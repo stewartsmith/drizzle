@@ -44,6 +44,7 @@
 #include <drizzled/configmake.h>
 #include <drizzled/error.h>
 #include <boost/program_options.hpp>
+#include PCRE_HEADER
 
 using namespace std;
 using namespace drizzled;
@@ -162,6 +163,13 @@ static int dump_all_databases(void);
 static char *quote_name(const char *name, char *buff, bool force);
 char check_if_ignore_table(const char *table_name, char *table_type);
 static char *primary_key_fields(const char *table_name);
+int get_server_type();
+
+enum server_type {
+  SERVER_MYSQL_FOUND,
+  SERVER_DRIZZLE_FOUND,
+  SERVER_UNKNOWN_FOUND
+};
 
 /*
   Print the supplied message if in verbose mode
@@ -513,6 +521,21 @@ static int connect_to_db(string host, string user,string passwd)
   {
     DB_error(NULL, ret, "when trying to connect");
     return(1);
+  }
+
+  int found= get_server_type();
+
+  switch (found)
+  {
+    case SERVER_MYSQL_FOUND:
+     /* MySQL server found */
+     break;
+    case SERVER_DRIZZLE_FOUND:
+     /* Drizzle server found */
+     break;
+    default:
+     /* Unknown server found */
+     break;
   }
 
   return(0);
@@ -2384,6 +2407,42 @@ static char *primary_key_fields(const char *table_name)
 
   drizzle_result_free(&res);
   return result;
+}
+
+int get_server_type()
+{
+  const char *pcre_error;
+  int32_t pcre_error_offset;
+  int ovector[9];
+  int pcre_match;
+
+  pcre *mysql_regex= pcre_compile("5\\.[0-9]+\\.[0-9]+", 0, &pcre_error, &pcre_error_offset, NULL);
+  if (!mysql_regex)
+  {
+    fprintf(stderr, _("Error compiling regex (offset: %d), %s\n"));
+    exit(-1);
+  }
+
+  pcre *drizzle_regex= pcre_compile("20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+", 0, &pcre_error, &pcre_error_offset, NULL);
+  if (!drizzle_regex)
+  {
+    fprintf(stderr, _("Error compiling regex (offset: %d), %s\n"));
+    exit(-1);
+  }
+
+  std::string version(drizzle_con_server_version(&dcon));
+
+  pcre_match= pcre_exec(mysql_regex, 0, version.c_str(), version.length(), 0, 0, ovector, 9);
+
+  if (pcre_match >= 0)
+    return SERVER_MYSQL_FOUND;
+  
+  pcre_match= pcre_exec(drizzle_regex, 0, version.c_str(), version.length(), 0, 0, ovector, 9);
+
+  if (pcre_match >= 0)
+    return SERVER_DRIZZLE_FOUND;
+
+  return SERVER_UNKNOWN_FOUND;
 }
 
 int main(int argc, char **argv)

@@ -45,7 +45,7 @@ client_drizzle_LDADD=		${READLINE_LIBS} ${BOOST_LIBS} \
 				client/libgetpassword.la
 
 client_drizzledump_SOURCES=	client/drizzledump.cc
-client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
+client_drizzledump_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS} ${LIBPCRE}
 
 client_drizzleimport_SOURCES=	client/drizzleimport.cc
 client_drizzleimport_LDADD=	${CLIENT_LDADD} ${BOOST_LIBS}
