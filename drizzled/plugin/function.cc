@@ -33,8 +33,12 @@ using namespace std;
 namespace drizzled
 {
 
-typedef boost::unordered_map<string, const plugin::Function *, util::insensitive_hash, util::insensitive_equal_to> UdfMap;
-static UdfMap udf_registry;
+static plugin::Function::UdfMap udf_registry;
+
+const plugin::Function::UdfMap &plugin::Function::getMap()
+{
+  return udf_registry;
+}
 
 bool plugin::Function::addPlugin(const plugin::Function *udf)
 {
