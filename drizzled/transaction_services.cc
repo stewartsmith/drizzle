@@ -819,8 +819,7 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
   }
   trans->setResourceContexts(sv_resource_contexts);
 
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (replication_services.isActive())
+  if (shouldConstructMessages())
   {
     cleanupTransactionMessage(getActiveTransactionMessage(session), session);
     message::Transaction *savepoint_transaction= sv.getTransactionSavepoint();
@@ -893,8 +892,7 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
   */
   sv.setResourceContexts(resource_contexts);
 
-  ReplicationServices &replication_services= ReplicationServices::singleton();
-  if (replication_services.isActive())
+  if (shouldConstructMessages())
   {
     message::Transaction *transaction_savepoint= new message::Transaction(*session->getTransactionMessage());
     sv.setTransactionSavepoint(transaction_savepoint);
@@ -927,8 +925,8 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
       }
     }
   }
-
-  if (replication_services.isActive())
+  
+  if (shouldConstructMessages())
   {
     delete sv.getTransactionSavepoint();
     sv.setTransactionSavepoint(NULL);

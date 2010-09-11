@@ -33,6 +33,14 @@ INSERT INTO t1 VALUES (2, "I hate testing.");
 
 ROLLBACK;
 
+START TRANSACTION;
+
+INSERT INTO t1 VALUES (1, "I love testing.");
+SAVEPOINT `savept1`;
+INSERT INTO t1 VALUES (2, "I hate testing.");
+ROLLBACK TO SAVEPOINT savept1;
+COMMIT;
+
 DROP TABLE t1;
 
 # The transaction log at this point should not
