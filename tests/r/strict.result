@@ -318,8 +318,8 @@ CREATE TABLE t1 (col1 INT NOT NULL default 99, col2 CHAR(6) NOT NULL);
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `col1` int NOT NULL DEFAULT '99',
-  `col2` varchar(6) NOT NULL
+  `col1` INT NOT NULL DEFAULT '99',
+  `col2` VARCHAR(6) COLLATE utf8_general_ci NOT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 INSERT INTO t1 VALUES (1, 'hello');
 INSERT INTO t1 (col2) VALUES ('hello2');
@@ -425,8 +425,8 @@ alter table t1 modify a bigint not null;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` bigint NOT NULL,
-  `b` date NOT NULL
+  `a` BIGINT NOT NULL,
+  `b` DATE NOT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1(a int, b timestamp);
@@ -434,8 +434,8 @@ alter table t1 add primary key(a);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` timestamp NULL DEFAULT NULL,
+  `a` INT NOT NULL,
+  `b` TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
@@ -444,8 +444,8 @@ alter table t1 add primary key(a);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` timestamp NULL DEFAULT '2005-01-02 03:04:05',
+  `a` INT NOT NULL,
+  `b` TIMESTAMP NULL DEFAULT '2005-01-02 03:04:05',
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
@@ -454,7 +454,7 @@ create table t2 select date from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `date` date NOT NULL
+  `date` DATE NOT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t2,t1;
 create table t1 (i int)
@@ -462,7 +462,7 @@ comment='123456789*123456789*123456789*123456789*123456789*123456789*';
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` int DEFAULT NULL
+  `i` INT DEFAULT NULL
 ) ENGINE=DEFAULT COMMENT='123456789*123456789*123456789*123456789*123456789*123456789*' COLLATE = utf8_general_ci
 drop table t1;
 create table t1(col1 int, col2 int, 

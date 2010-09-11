@@ -32,17 +32,7 @@ int heap_info(register HP_INFO *info, register HEAPINFO *x, int flag )
   x->records         = info->getShare()->records;
   x->deleted         = info->getShare()->recordspace.del_chunk_count;
 
-  if (info->getShare()->recordspace.is_variable_size)
-  {
-    if (info->getShare()->records)
-      x->reclength   = (uint)(info->getShare()->recordspace.total_data_length / (uint64_t)info->getShare()->records);
-    else
-      x->reclength   = info->getShare()->recordspace.chunk_length;
-  }
-  else
-  {
-    x->reclength     = info->getShare()->recordspace.chunk_dataspace_length;
-  }
+  x->reclength     = info->getShare()->recordspace.chunk_dataspace_length;
 
   x->data_length     = info->getShare()->recordspace.total_data_length;
   x->index_length    = info->getShare()->index_length;

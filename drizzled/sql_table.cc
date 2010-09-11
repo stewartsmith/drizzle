@@ -112,30 +112,6 @@ void write_bin_log(Session *session,
   transaction_services.rawStatement(session, query);
 }
 
-
-/* Should should be refactored to go away */
-void write_bin_log_drop_table(Session *session, bool if_exists, const char *db_name, const char *table_name)
-{
-  TransactionServices &transaction_services= TransactionServices::singleton();
-  string built_query;
-
-  if (if_exists)
-    built_query.append("DROP TABLE IF EXISTS ");
-  else
-    built_query.append("DROP TABLE ");
-
-  built_query.append("`");
-  if (session->db.empty() || strcmp(db_name, session->db.c_str()) != 0)
-  {
-    built_query.append(db_name);
-    built_query.append("`.`");
-  }
-
-  built_query.append(table_name);
-  built_query.append("`");
-  transaction_services.rawStatement(session, built_query);
-}
-
 /*
   Execute the drop of a normal or temporary table
 

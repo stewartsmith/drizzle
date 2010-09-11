@@ -7,8 +7,8 @@ primary key (_id)
 show create table `about:text`;
 Table	Create Table
 about:text	CREATE TEMPORARY TABLE `about:text` (
-  `_id` int NOT NULL AUTO_INCREMENT,
-  `about:text` varchar(255) NOT NULL DEFAULT '',
+  `_id` INT NOT NULL AUTO_INCREMENT,
+  `about:text` VARCHAR(255) COLLATE utf8_general_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`_id`)
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table `about:text`;

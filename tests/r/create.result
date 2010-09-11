@@ -41,18 +41,18 @@ create table `a/a` (a int);
 show create table `a/a`;
 Table	Create Table
 a/a	CREATE TABLE `a/a` (
-  `a` int DEFAULT NULL
+  `a` INT DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 create table t1 like `a/a`;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int DEFAULT NULL
+  `a` INT DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show create table `t1`;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int DEFAULT NULL
+  `a` INT DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table `a/a`;
 drop table `t1`;
@@ -176,8 +176,8 @@ create table t1 (a int not null, b int, primary key(a), key (b), key (b), key (b
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int NOT NULL,
-  `b` int DEFAULT NULL,
+  `a` INT NOT NULL,
+  `b` INT DEFAULT NULL,
   PRIMARY KEY (`a`),
   KEY `b` (`b`),
   KEY `b_2` (`b`),
@@ -227,7 +227,7 @@ CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL
+  `a` INT NOT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 drop table t1;
 SET SESSION storage_engine="gemini";
@@ -239,7 +239,7 @@ CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL
+  `a` INT NOT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 SET SESSION storage_engine=default;
 drop table t1;
@@ -314,8 +314,8 @@ create table t3 like t1;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `id` int NOT NULL,
-  `name` varchar(20) DEFAULT NULL
+  `id` INT NOT NULL,
+  `name` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t3;
 id	name
@@ -329,7 +329,7 @@ create temporary table t3 like t2;
 show create table t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
-  `id` int NOT NULL
+  `id` INT NOT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t3;
 id
@@ -337,8 +337,8 @@ drop table t3;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `id` int NOT NULL,
-  `name` varchar(20) DEFAULT NULL
+  `id` INT NOT NULL,
+  `name` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t3;
 id	name
@@ -349,15 +349,15 @@ create temporary table t3 like mysqltest.t3;
 show create table t3;
 Table	Create Table
 t3	CREATE TEMPORARY TABLE `t3` (
-  `id` int NOT NULL,
-  `name` varchar(20) DEFAULT NULL
+  `id` INT NOT NULL,
+  `name` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 create table t2 like t3;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `id` int NOT NULL,
-  `name` varchar(20) DEFAULT NULL
+  `id` INT NOT NULL,
+  `name` VARCHAR(20) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select * from t2;
 id	name
@@ -381,7 +381,7 @@ CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL
+  `a` INT NOT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 drop table t1;
 SET SESSION storage_engine="gemini";
@@ -393,7 +393,7 @@ CREATE TEMPORARY TABLE t1 (a int not null);
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `a` int NOT NULL
+  `a` INT NOT NULL
 ) ENGINE=MEMORY COLLATE = utf8_general_ci
 SET SESSION storage_engine=default;
 drop table t1;
@@ -445,18 +445,18 @@ create table t2 select ifnull(a,a), ifnull(b,b), ifnull(d,d), ifnull(e,e), ifnul
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `ifnull(a,a)` int DEFAULT NULL,
-  `ifnull(b,b)` int DEFAULT NULL,
-  `ifnull(d,d)` int DEFAULT NULL,
-  `ifnull(e,e)` bigint DEFAULT NULL,
-  `ifnull(f,f)` double(3,2) DEFAULT NULL,
-  `ifnull(g,g)` double(4,3) DEFAULT NULL,
-  `ifnull(h,h)` decimal(5,4) DEFAULT NULL,
-  `ifnull(j,j)` date DEFAULT NULL,
-  `ifnull(k,k)` timestamp NULL DEFAULT NULL,
-  `ifnull(l,l)` datetime DEFAULT NULL,
-  `ifnull(m,m)` varchar(1) DEFAULT NULL,
-  `ifnull(o,o)` varchar(10) DEFAULT NULL
+  `ifnull(a,a)` INT DEFAULT NULL,
+  `ifnull(b,b)` INT DEFAULT NULL,
+  `ifnull(d,d)` INT DEFAULT NULL,
+  `ifnull(e,e)` BIGINT DEFAULT NULL,
+  `ifnull(f,f)` DOUBLE(3,2) DEFAULT NULL,
+  `ifnull(g,g)` DOUBLE(4,3) DEFAULT NULL,
+  `ifnull(h,h)` DECIMAL(5,4) DEFAULT NULL,
+  `ifnull(j,j)` DATE DEFAULT NULL,
+  `ifnull(k,k)` TIMESTAMP NULL DEFAULT NULL,
+  `ifnull(l,l)` DATETIME DEFAULT NULL,
+  `ifnull(m,m)` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
+  `ifnull(o,o)` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1,t2;
 create table t1(str varchar(10) default 'def',strnull varchar(10),intg int default '10',rel double default '3.14');
@@ -566,7 +566,7 @@ primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(112) COLLATE utf8_bin NOT NULL,
+  `a` VARCHAR(112) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
@@ -581,8 +581,8 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) COLLATE utf8_bin NOT NULL,
-  `b` int NOT NULL,
+  `a` VARCHAR(12) COLLATE utf8_bin NOT NULL,
+  `b` INT NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
@@ -598,9 +598,9 @@ b int null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `b` int DEFAULT NULL,
-  `a` varchar(12) COLLATE utf8_bin NOT NULL,
-  `c` int NOT NULL,
+  `b` INT DEFAULT NULL,
+  `a` VARCHAR(12) COLLATE utf8_bin NOT NULL,
+  `c` INT NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
@@ -611,8 +611,8 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) COLLATE utf8_bin NOT NULL,
-  `b` int NOT NULL,
+  `a` VARCHAR(12) COLLATE utf8_bin NOT NULL,
+  `b` INT NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
@@ -623,8 +623,8 @@ b int not null, primary key (a)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(12) COLLATE utf8_bin NOT NULL,
-  `b` int NOT NULL,
+  `a` VARCHAR(12) COLLATE utf8_bin NOT NULL,
+  `b` INT NOT NULL,
   PRIMARY KEY (`a`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
@@ -659,10 +659,10 @@ select a1,a2 from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` int DEFAULT '3',
-  `b` int DEFAULT '3',
-  `a1` int DEFAULT NULL,
-  `a2` int DEFAULT NULL
+  `a` INT DEFAULT '3',
+  `b` INT DEFAULT '3',
+  `a1` INT DEFAULT NULL,
+  `a2` INT DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
 create table t1 select * from t2;
@@ -834,22 +834,22 @@ c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16)
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -919,22 +919,22 @@ flush tables;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -1135,22 +1135,22 @@ c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -1220,22 +1220,22 @@ flush tables;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
   KEY `a001_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a002_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
   KEY `a003_long_123456789_123456789_123456789_123456789_123456789_1234` (`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,`c11`,`c12`,`c13`,`c14`,`c15`,`c16`),
@@ -1318,23 +1318,23 @@ ERROR 42000: Identifier name 'a001_long_123456789_123456789_123456789_123456789_
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT NULL,
-  `c2` int DEFAULT NULL,
-  `c3` int DEFAULT NULL,
-  `c4` int DEFAULT NULL,
-  `c5` int DEFAULT NULL,
-  `c6` int DEFAULT NULL,
-  `c7` int DEFAULT NULL,
-  `c8` int DEFAULT NULL,
-  `c9` int DEFAULT NULL,
-  `c10` int DEFAULT NULL,
-  `c11` int DEFAULT NULL,
-  `c12` int DEFAULT NULL,
-  `c13` int DEFAULT NULL,
-  `c14` int DEFAULT NULL,
-  `c15` int DEFAULT NULL,
-  `c16` int DEFAULT NULL,
-  `c17` int DEFAULT NULL
+  `c1` INT DEFAULT NULL,
+  `c2` INT DEFAULT NULL,
+  `c3` INT DEFAULT NULL,
+  `c4` INT DEFAULT NULL,
+  `c5` INT DEFAULT NULL,
+  `c6` INT DEFAULT NULL,
+  `c7` INT DEFAULT NULL,
+  `c8` INT DEFAULT NULL,
+  `c9` INT DEFAULT NULL,
+  `c10` INT DEFAULT NULL,
+  `c11` INT DEFAULT NULL,
+  `c12` INT DEFAULT NULL,
+  `c13` INT DEFAULT NULL,
+  `c14` INT DEFAULT NULL,
+  `c15` INT DEFAULT NULL,
+  `c16` INT DEFAULT NULL,
+  `c17` INT DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 
@@ -1439,7 +1439,7 @@ INDEX_NAME
 show create table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
 Table	Create Table
 имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48	CREATE TABLE `имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48` (
-  `имя_поля_в_кодировке_утф8_длиной_больше_чем_45` int DEFAULT NULL,
+  `имя_поля_в_кодировке_утф8_длиной_больше_чем_45` INT DEFAULT NULL,
   KEY `имя_индекса_в_кодировке_утф8_длиной_больше_чем_48` (`имя_поля_в_кодировке_утф8_длиной_больше_чем_45`)
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table имя_таблицы_в_кодировке_утф8_длиной_больше_чем_48;
@@ -1449,14 +1449,14 @@ create table t1 like data_dictionary.processlist engine=innodb;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ID` bigint NOT NULL,
-  `USER` varchar(16) NOT NULL,
-  `HOST` varchar(1025) NOT NULL,
-  `DB` varchar(256) NOT NULL,
-  `COMMAND` varchar(16) NOT NULL,
-  `TIME` bigint NOT NULL,
-  `STATE` varchar(256) NOT NULL,
-  `INFO` varchar(100) NOT NULL
+  `ID` BIGINT NOT NULL,
+  `USER` VARCHAR(16) NOT NULL,
+  `HOST` VARCHAR(1025) NOT NULL,
+  `DB` VARCHAR(256) NOT NULL,
+  `COMMAND` VARCHAR(16) NOT NULL,
+  `TIME` BIGINT NOT NULL,
+  `STATE` VARCHAR(256) DEFAULT NULL,
+  `INFO` VARCHAR(100) DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 drop table t1;
 create temporary table t1 like data_dictionary.processlist;
@@ -1465,14 +1465,14 @@ create temporary table t1 like data_dictionary.processlist engine=myisam;
 show create table t1;
 Table	Create Table
 t1	CREATE TEMPORARY TABLE `t1` (
-  `ID` bigint NOT NULL,
-  `USER` varchar(16) NOT NULL,
-  `HOST` varchar(1025) NOT NULL,
-  `DB` varchar(256) NOT NULL,
-  `COMMAND` varchar(16) NOT NULL,
-  `TIME` bigint NOT NULL,
-  `STATE` varchar(256) NOT NULL,
-  `INFO` varchar(100) NOT NULL
+  `ID` BIGINT NOT NULL,
+  `USER` VARCHAR(16) NOT NULL,
+  `HOST` VARCHAR(1025) NOT NULL,
+  `DB` VARCHAR(256) NOT NULL,
+  `COMMAND` VARCHAR(16) NOT NULL,
+  `TIME` BIGINT NOT NULL,
+  `STATE` VARCHAR(256) DEFAULT NULL,
+  `INFO` VARCHAR(100) DEFAULT NULL
 ) ENGINE=MyISAM COLLATE = utf8_general_ci
 drop table t1;
 
@@ -1496,12 +1496,12 @@ COLLATE=utf8_bin;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `c1` int DEFAULT '12' COMMENT 'column1',
-  `c2` int DEFAULT NULL COMMENT 'column2',
-  `c3` int NOT NULL COMMENT 'column3',
-  `c4` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
-  `c5` varchar(255) COLLATE utf8_unicode_ci DEFAULT 'b',
-  `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
+  `c1` INT DEFAULT '12' COMMENT 'column1',
+  `c2` INT DEFAULT NULL COMMENT 'column2',
+  `c3` INT NOT NULL COMMENT 'column3',
+  `c4` VARCHAR(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
+  `c5` VARCHAR(255) COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c6` VARCHAR(255) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_bin
 
 CREATE TABLE t2 AS SELECT * FROM t1;
@@ -1509,12 +1509,12 @@ CREATE TABLE t2 AS SELECT * FROM t1;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `c1` int DEFAULT '12' COMMENT 'column1',
-  `c2` int DEFAULT NULL COMMENT 'column2',
-  `c3` int NOT NULL COMMENT 'column3',
-  `c4` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
-  `c5` varchar(255) COLLATE utf8_unicode_ci DEFAULT 'b',
-  `c6` varchar(255) COLLATE utf8_bin DEFAULT NULL
+  `c1` INT DEFAULT '12' COMMENT 'column1',
+  `c2` INT DEFAULT NULL COMMENT 'column2',
+  `c3` INT NOT NULL COMMENT 'column3',
+  `c4` VARCHAR(255) COLLATE utf8_bin NOT NULL DEFAULT 'a',
+  `c5` VARCHAR(255) COLLATE utf8_unicode_ci DEFAULT 'b',
+  `c6` VARCHAR(255) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 
 DROP TABLE t2;

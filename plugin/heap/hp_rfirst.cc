@@ -24,44 +24,7 @@ using namespace drizzled;
 
 int heap_rfirst(HP_INFO *info, unsigned char *record, int inx)
 {
-  HP_SHARE *share = info->getShare();
-  HP_KEYDEF *keyinfo = share->keydef + inx;
-
   info->lastinx= inx;
-  if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
-  {
-    unsigned char *pos;
-
-    if ((pos = (unsigned char *)tree_search_edge(&keyinfo->rb_tree,
-                                                 info->parents,
-                                                 &info->last_pos,
-                                                 offsetof(TREE_ELEMENT, left))))
-    {
-      memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos),
-	     sizeof(unsigned char*));
-      info->current_ptr = pos;
-      hp_extract_record(share, record, pos);
-      /*
-        If we're performing index_first on a table that was taken from
-        table cache, info->lastkey_len is initialized to previous query.
-        Thus we set info->lastkey_len to proper value for subsequent
-        heap_rnext() calls.
-        This is needed for DELETE queries only, otherwise this variable is
-        not used.
-        Note that the same workaround may be needed for heap_rlast(), but
-        for now heap_rlast() is never used for DELETE queries.
-      */
-      info->lastkey_len= 0;
-      info->update = HA_STATE_AKTIV;
-    }
-    else
-    {
-      errno = HA_ERR_END_OF_FILE;
-      return(errno);
-    }
-    return(0);
-  }
-  else
   {
     if (!(info->getShare()->records))
     {

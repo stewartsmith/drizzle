@@ -83,7 +83,7 @@ static void field_escape(string &in, const string &from);
 static bool  verbose= false;
 static bool opt_no_create_info;
 static bool opt_no_data= false;
-static bool opt_mysql= false;
+static bool use_drizzle_protocol= false;
 static bool quick= true;
 static bool extended_insert= true;
 static bool ignore_errors= false;
@@ -137,6 +137,7 @@ string password,
   lines_terminated,
   current_user,
   opt_password,
+  opt_protocol,
   where;
 
 static const CHARSET_INFO *charset_info= &my_charset_utf8_general_ci;
@@ -501,13 +502,12 @@ static int connect_to_db(string host, string user,string passwd)
 {
   drizzle_return_t ret;
 
-  verbose_msg(_("-- Connecting to %s...\n"), ! host.empty() ? (char *)host.c_str() : "localhost");
+  verbose_msg(_("-- Connecting to %s, using protocol %s...\n"), ! host.empty() ? (char *)host.c_str() : "localhost", opt_protocol.c_str());
   drizzle_create(&drizzle);
   drizzle_con_create(&drizzle, &dcon);
   drizzle_con_set_tcp(&dcon, (char *)host.c_str(), opt_drizzle_port);
   drizzle_con_set_auth(&dcon, (char *)user.c_str(), (char *)passwd.c_str());
-  if (opt_mysql)
-    drizzle_con_add_options(&dcon, DRIZZLE_CON_MYSQL);
+  drizzle_con_add_options(&dcon, use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL);
   ret= drizzle_con_connect(&dcon);
   if (ret != DRIZZLE_RETURN_OK)
   {
@@ -2500,16 +2500,14 @@ try
   client_options.add_options()
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
   N_("Connect to host."))
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-  N_("Use MySQL Protocol."))
   ("password,P", po::value<string>(&password)->default_value(PASSWORD_SENTINEL),
   N_("Password to use when connecting to server. If password is not given it's solicited on the tty."))
   ("port,p", po::value<uint32_t>(&opt_drizzle_port)->default_value(0),
   N_("Port number to use for connection."))
   ("user,u", po::value<string>(&current_user)->default_value(""),
   N_("User for login if not current user."))
-  ("protocol",po::value<string>(),
-  N_("The protocol of connection (tcp,socket,pipe,memory)."))
+  ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
+  N_("The protocol of connection (mysql or drizzle)."))
   ;
 
   po::options_description hidden_options(N_("Hidden Options"));
@@ -2586,6 +2584,22 @@ try
       exit(0);
     else
       exit(1);
+  }
+
+  if (vm.count("protocol"))
+  {
+    std::transform(opt_protocol.begin(), opt_protocol.end(),
+      opt_protocol.begin(), ::tolower);
+
+    if (not opt_protocol.compare("mysql"))
+      use_drizzle_protocol=false;
+    else if (not opt_protocol.compare("drizzle"))
+      use_drizzle_protocol=true;
+    else
+    {
+      cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
+      exit(-1);
+    }
   }
 
   if (vm.count("port"))

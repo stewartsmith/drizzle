@@ -72,8 +72,8 @@ CREATE DATABASE IF NOT EXISTS `test` COLLATE = utf8_general_ci;
 USE `test`;
 DROP TABLE IF EXISTS `t1`;
 CREATE TABLE `t1` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
+  `id` INT DEFAULT NULL,
+  `name` VARCHAR(32) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 
 ALTER TABLE `t1` DISABLE KEYS;
@@ -81,8 +81,8 @@ INSERT  IGNORE INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first va
 ALTER TABLE `t1` ENABLE KEYS;
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
+  `id` INT DEFAULT NULL,
+  `name` VARCHAR(32) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=ARCHIVE COLLATE = utf8_general_ci;
 
 ALTER TABLE `t2` DISABLE KEYS;
@@ -90,8 +90,8 @@ INSERT  IGNORE INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first va
 ALTER TABLE `t2` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
+  `id` INT DEFAULT NULL,
+  `name` VARCHAR(32) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 
 ALTER TABLE `t6` DISABLE KEYS;
@@ -107,8 +107,8 @@ CREATE DATABASE IF NOT EXISTS `test` COLLATE = utf8_general_ci;
 USE `test`;
 DROP TABLE IF EXISTS `t1`;
 CREATE TABLE `t1` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
+  `id` INT DEFAULT NULL,
+  `name` VARCHAR(32) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 
 ALTER TABLE `t1` DISABLE KEYS;
@@ -116,8 +116,8 @@ INSERT INTO `t1` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4
 ALTER TABLE `t1` ENABLE KEYS;
 DROP TABLE IF EXISTS `t2`;
 CREATE TABLE `t2` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
+  `id` INT DEFAULT NULL,
+  `name` VARCHAR(32) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=ARCHIVE COLLATE = utf8_general_ci;
 
 ALTER TABLE `t2` DISABLE KEYS;
@@ -125,8 +125,8 @@ INSERT INTO `t2` VALUES (1,'first value'),(2,'first value'),(3,'first value'),(4
 ALTER TABLE `t2` ENABLE KEYS;
 DROP TABLE IF EXISTS `t6`;
 CREATE TABLE `t6` (
-  `id` int DEFAULT NULL,
-  `name` varchar(32) DEFAULT NULL
+  `id` INT DEFAULT NULL,
+  `name` VARCHAR(32) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=InnoDB COLLATE = utf8_general_ci;
 
 ALTER TABLE `t6` DISABLE KEYS;

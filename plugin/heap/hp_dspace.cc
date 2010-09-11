@@ -179,106 +179,6 @@ void hp_clear_dataspace(HP_DATASPACE *info)
 
 
 /**
-  Allocate or reallocate a chunkset in the dataspace
-
-  Attempts to allocate a new chunkset or change the size of an existing chunkset
-
-  @param  info            the hosting dataspace
-  @param  chunk_count     the number of chunks that we expect as the result
-  @param  existing_set    non-null value asks function to resize existing chunkset,
-                          return value would point to this set
-
-  @return  Pointer to the first chunk in the new or updated chunkset, or NULL if unsuccessful
-*/
-
-static unsigned char *hp_allocate_variable_chunkset(HP_DATASPACE *info,
-                                           uint32_t chunk_count, unsigned char* existing_set)
-{
-  int alloc_count= chunk_count;
-  unsigned char *first_chunk= 0, *curr_chunk= 0, *prev_chunk= 0, *last_existing_chunk= 0;
-
-  assert(alloc_count);
-
-  if (existing_set)
-  {
-    first_chunk= existing_set;
-
-    curr_chunk= existing_set;
-    while (curr_chunk && alloc_count)
-    {
-      prev_chunk= curr_chunk;
-      curr_chunk= *((unsigned char**)(curr_chunk + info->offset_link));
-      alloc_count--;
-    }
-
-    if (!alloc_count)
-    {
-      if (curr_chunk)
-      {
-        /* We came through all chunks and there is more left, let's truncate the list */
-        *((unsigned char**)(prev_chunk + info->offset_link)) = NULL;
-        hp_free_chunks(info, curr_chunk);
-      }
-
-      return first_chunk;
-    }
-
-    last_existing_chunk = prev_chunk;
-  }
-
-  /* We can reach this point only if we're allocating new chunkset or more chunks in existing set */
-
-  for (int i= 0; i<alloc_count; i++)
-  {
-      curr_chunk= hp_allocate_one_chunk(info);
-      if (!curr_chunk)
-      {
-        /* no space in the current block */
-
-        if (last_existing_chunk)
-        {
-          /* Truncate whatever was added at the end of the existing chunkset */
-          prev_chunk= last_existing_chunk;
-          curr_chunk= *((unsigned char**)(prev_chunk + info->offset_link));
-          *((unsigned char**)(prev_chunk + info->offset_link)) = NULL;
-          hp_free_chunks(info, curr_chunk);
-        }
-        else if (first_chunk)
-        {
-          /* free any chunks previously allocated */
-          hp_free_chunks(info, first_chunk);
-        }
-
-        return NULL;
-      }
-
-      /* mark as if this chunk is last in the chunkset */
-      *((unsigned char**) (curr_chunk + info->offset_link))= 0;
-
-      if (prev_chunk)
-      {
-        /* tie them into a linked list */
-        *((unsigned char**) (prev_chunk + info->offset_link))= curr_chunk;
-        curr_chunk[info->offset_status]= CHUNK_STATUS_LINKED;			/* Record linked from active */
-      }
-      else
-      {
-        curr_chunk[info->offset_status]= CHUNK_STATUS_ACTIVE;			  /* Record active */
-      }
-
-      if (!first_chunk)
-      {
-        first_chunk= curr_chunk;
-      }
-
-      prev_chunk= curr_chunk;
-  }
-
-  return first_chunk;
-}
-
-
-/**
   Allocate a new chunkset in the dataspace
 
   Attempts to allocate a new chunkset
@@ -289,57 +189,17 @@ static unsigned char *hp_allocate_variable_chunkset(HP_DATASPACE *info,
   @return  Pointer to the first chunk in the new or updated chunkset, or NULL if unsuccessful
 */
 
-unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count)
+unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint32_t )
 {
   unsigned char* result;
 
-
-  if (info->is_variable_size)
+  result= hp_allocate_one_chunk(info);
+  if (result)
   {
-    result = hp_allocate_variable_chunkset(info, chunk_count, NULL);
-  }
-  else
-  {
-    result= hp_allocate_one_chunk(info);
-    if (result)
-    {
-      result[info->offset_status]= CHUNK_STATUS_ACTIVE;
-    }
-
-    return(result);
+    result[info->offset_status]= CHUNK_STATUS_ACTIVE;
   }
 
   return(result);
-}
-
-
-/**
-  Reallocate an existing chunkset in the dataspace
-
-  Attempts to change the size of an existing chunkset
-
-  @param  info            the hosting dataspace
-  @param  chunk_count     the number of chunks that we expect as the result
-  @param  pos             pointer to the existing chunkset
-
-  @return  Error code or zero if successful
-*/
-
-int hp_reallocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count, unsigned char* pos)
-{
-
-  if (!info->is_variable_size)
-  {
-    /* Update should never change chunk_count in fixed-size mode */
-    errno=HA_ERR_WRONG_COMMAND;
-    return errno;
-  }
-
-  /* Reallocate never moves the first chunk */
-  if (!hp_allocate_variable_chunkset(info, chunk_count, pos))
-    return(errno);
-
-  return(0);
 }
 
 
@@ -381,7 +241,7 @@ static unsigned char *hp_allocate_one_chunk(HP_DATASPACE *info)
 
   info->chunk_count++;
   curr_chunk= ((unsigned char*) info->block.level_info[0].last_blocks +
-    block_pos * info->block.recbuffer);
+               block_pos * info->block.recbuffer);
 
 
   return curr_chunk;
@@ -402,20 +262,12 @@ void hp_free_chunks(HP_DATASPACE *info, unsigned char *pos)
 {
   unsigned char* curr_chunk= pos;
 
-  while (curr_chunk) {
+  if (curr_chunk) 
+  {
     info->del_chunk_count++;
     *((unsigned char**) curr_chunk)= info->del_link;
     info->del_link= curr_chunk;
 
     curr_chunk[info->offset_status]= CHUNK_STATUS_DELETED;
-
-
-    if (!info->is_variable_size)
-    {
-      break;
-    }
-
-    /* Delete next chunk in this chunkset */
-    curr_chunk= *((unsigned char**)(curr_chunk + info->offset_link));
   }
 }

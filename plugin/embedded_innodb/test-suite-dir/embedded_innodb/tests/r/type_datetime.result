@@ -179,9 +179,9 @@ create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '196
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `da` date DEFAULT '1962-03-03',
-  `dt` datetime DEFAULT '1962-03-03 00:00:00',
-  `pk` int NOT NULL AUTO_INCREMENT,
+  `da` DATE DEFAULT '1962-03-03',
+  `dt` DATETIME DEFAULT '1962-03-03 00:00:00',
+  `pk` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();
@@ -390,9 +390,9 @@ create table t1 (da date default '1962-03-03 23:33:34', dt datetime default '196
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `da` date DEFAULT '1962-03-03',
-  `dt` datetime DEFAULT '1962-03-03 00:00:00',
-  `pk` int NOT NULL AUTO_INCREMENT,
+  `da` DATE DEFAULT '1962-03-03',
+  `dt` DATETIME DEFAULT '1962-03-03 00:00:00',
+  `pk` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`pk`) USING BTREE
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values ();

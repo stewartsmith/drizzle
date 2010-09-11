@@ -288,8 +288,8 @@ MySQL	1002
 SHOW CREATE TABLE `t1`;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `t1_name` varchar(255) DEFAULT NULL,
-  `t1_id` int NOT NULL AUTO_INCREMENT,
+  `t1_name` VARCHAR(255) COLLATE utf8_general_ci DEFAULT NULL,
+  `t1_id` INT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`t1_id`),
   KEY `t1_name` (`t1_name`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci AUTO_INCREMENT=1000

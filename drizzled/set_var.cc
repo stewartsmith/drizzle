@@ -1630,7 +1630,7 @@ int set_var_init()
   return(0);
 
 error:
-  fprintf(stderr, "failed to initialize system variables");
+   errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize system variables"));
   return(1);
 }
 
