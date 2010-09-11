@@ -818,6 +818,36 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
     }
   }
   trans->setResourceContexts(sv_resource_contexts);
+
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (replication_services.isActive())
+  {
+    cleanupTransactionMessage(getActiveTransactionMessage(session), session);
+    message::Transaction *savepoint_transaction= sv.getTransactionSavepoint();
+
+    google::protobuf::RepeatedPtrField< message::Statement> *statements= 
+      savepoint_transaction->mutable_statement();
+
+    /* A iterator is used here rather then the other GPB functions as there needs
+       to be a check for the case where there are no statements */
+    if (statements != NULL)
+    {
+      google::protobuf::RepeatedPtrField< message::Statement>::iterator it= 
+        statements->begin();
+      google::protobuf::RepeatedPtrField< message::Statement>::iterator end_it= 
+        statements->end();
+ 
+      message::Statement *new_statement= NULL;
+      
+      for (; it != end_it; ++it)
+      {
+        new_statement= &*it;
+      }
+
+      session->setTransactionMessage(savepoint_transaction);
+      session->setStatementMessage(new_statement);
+    }
+  }
   return error;
 }
 
@@ -862,6 +892,14 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
     Remember the list of registered storage engines.
   */
   sv.setResourceContexts(resource_contexts);
+
+  ReplicationServices &replication_services= ReplicationServices::singleton();
+  if (replication_services.isActive())
+  {
+    message::Transaction *transaction_savepoint= new message::Transaction(*session->getTransactionMessage());
+    sv.setTransactionSavepoint(transaction_savepoint);
+  } 
+
   return error;
 }
 
@@ -889,6 +927,8 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
       }
     }
   }
+  sv.setTransactionSavepoint(NULL);
+
   return error;
 }
 
