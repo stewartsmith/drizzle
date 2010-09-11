@@ -2610,7 +2610,6 @@ int item_create_init()
   for (func= func_array; func->builder != NULL; func++)
   {
     func_name.assign(func->name.str, func->name.length);
-    transform(func_name.begin(), func_name.end(), func_name.begin(), ::tolower);
 
     FunctionContainer::getMap()[func_name]= func;
   }
@@ -2626,7 +2625,6 @@ find_native_function_builder(LEX_STRING name)
   Create_func *builder= NULL;
 
   string func_name(name.str, name.length);
-  transform(func_name.begin(), func_name.end(), func_name.begin(), ::tolower);
 
   NativeFunctionsMap::iterator func_iter=
     FunctionContainer::getMap().find(func_name);

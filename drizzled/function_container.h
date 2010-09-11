@@ -22,14 +22,13 @@
 #define DRIZZLED_FUNCTION_CONTAINER_H
 
 #include <set>
-#include <map>
 #include <boost/unordered_map.hpp>
 #include "drizzled/util/string.h"
 
 namespace drizzled {
 
 struct Native_func_registry;
-typedef std::map<std::string, Native_func_registry *> NativeFunctionsMap;
+typedef boost::unordered_map<std::string, Native_func_registry *, util::insensitive_hash, util::insensitive_equal_to> NativeFunctionsMap;
 
 class FunctionContainer {
 public:
