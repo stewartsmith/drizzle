@@ -224,8 +224,10 @@ AC_DEFUN([PANDORA_CANONICAL_TARGET],[
   AC_CHECK_PROGS([DOXYGEN], [doxygen])
   AC_CHECK_PROGS([PERL], [perl])
   AC_CHECK_PROGS([DPKG_GENSYMBOLS], [dpkg-gensymbols], [:])
+  AC_CHECK_PROGS([SPHINXBUILD], [sphinx-build], [:])
 
   AM_CONDITIONAL(HAVE_DPKG_GENSYMBOLS,[test "x${DPKG_GENSYMBOLS}" != "x:"])
+  AM_CONDITIONAL(HAVE_SPHINX,[test "x${SPHINXBUILD}" != "x:"])
 
   m4_if(m4_substr(m4_esyscmd(test -d po && echo 0),0,1),0, [
     AM_PO_SUBDIRS
