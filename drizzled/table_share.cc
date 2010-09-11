@@ -742,9 +742,7 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
     TableIdentifier::build_table_filename(_path, db.str, table_name.str, false);
   }
 
-  if (mem_root.multi_alloc_root(0,
-                                &path_buff, _path.length() + 1,
-                                NULL))
+  if ((path_buff= (char *)mem_root.alloc_root(_path.length() + 1)))
   {
     setPath(path_buff, _path.length());
     strcpy(path_buff, _path.c_str());
