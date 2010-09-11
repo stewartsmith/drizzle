@@ -894,8 +894,14 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
 
   if (shouldConstructMessages())
   {
-    message::Transaction *transaction_savepoint= new message::Transaction(*session->getTransactionMessage());
-    sv.setTransactionSavepoint(transaction_savepoint);
+    message::Transaction *transaction= session->getTransactionMessage();
+                  
+    if (transaction != NULL)
+    {
+      message::Transaction *transaction_savepoint= 
+        new message::Transaction(*transaction);
+      sv.setTransactionSavepoint(transaction_savepoint);
+    }
   } 
 
   return error;

@@ -42,7 +42,8 @@ public:
    */
   NamedSavepoint(const char *in_name, size_t in_name_length) :
     name(in_name, in_name_length),
-    resource_contexts()
+    resource_contexts(),
+    transaction_savepoint(NULL)
   {}
   ~NamedSavepoint()
   {}
