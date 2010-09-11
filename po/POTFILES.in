@@ -65,6 +65,7 @@ plugin/hello_events/hello_events.cc
 plugin/innobase/handler/data_dictionary.cc
 plugin/innobase/handler/ha_innodb.cc
 plugin/innobase/ut/ut0auxconf_pause.c
+plugin/innobase/pars/pars0grm.c
 plugin/logging_gearman/logging_gearman.cc
 plugin/logging_query/logging_query.cc
 plugin/logging_stats/logging_stats.cc
