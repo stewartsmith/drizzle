@@ -829,7 +829,7 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
       savepoint_transaction->mutable_statement();
 
     /* A iterator is used here rather then the other GPB functions as there needs
-       to be a check for the case where there are no statements */
+       to be a check for the case where there are no statements (a NULL value) */
     if (statements != NULL)
     {
       google::protobuf::RepeatedPtrField< message::Statement>::iterator it= 
@@ -927,7 +927,12 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
       }
     }
   }
-  sv.setTransactionSavepoint(NULL);
+
+  if (replication_services.isActive())
+  {
+    delete sv.getTransactionSavepoint();
+    sv.setTransactionSavepoint(NULL);
+  }
 
   return error;
 }
