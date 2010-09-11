@@ -716,7 +716,7 @@ static int last_uniq_key(Table *table,uint32_t keynr)
 int write_record(Session *session, Table *table,CopyInfo *info)
 {
   int error;
-  char *key=0;
+  std::vector<unsigned char> key;
   MyBitmap *save_read_set, *save_write_set;
   uint64_t prev_insert_id= table->cursor->next_insert_id;
   uint64_t insert_id_for_cur_row= 0;
@@ -787,17 +787,13 @@ int write_record(Session *session, Table *table,CopyInfo *info)
 	  goto err;
 	}
 
-	if (!key)
+	if (not key.size())
 	{
-	  if (!(key=(char*) malloc(table->getShare()->max_unique_length)))
-	  {
-	    error=ENOMEM;
-	    goto err;
-	  }
+          key.resize(table->getShare()->max_unique_length);
 	}
-	key_copy((unsigned char*) key,table->getInsertRecord(),table->key_info+key_nr,0);
+	key_copy(&key[0], table->getInsertRecord(), table->key_info+key_nr, 0);
 	if ((error=(table->cursor->index_read_idx_map(table->getUpdateRecord(),key_nr,
-                                                    (unsigned char*) key, HA_WHOLE_KEY,
+                                                    &key[0], HA_WHOLE_KEY,
                                                     HA_READ_KEY_EXACT))))
 	  goto err;
       }
@@ -931,8 +927,6 @@ after_n_copied_inc:
   session->record_first_successful_insert_id_in_cur_stmt(table->cursor->insert_id_for_cur_row);
 
 gok_or_after_err:
-  if (key)
-    free(key);
   if (!table->cursor->has_transactions())
     session->transaction.stmt.markModifiedNonTransData();
   return(0);
@@ -946,8 +940,6 @@ err:
 
 before_err:
   table->cursor->restore_auto_increment(prev_insert_id);
-  if (key)
-    free(key);
   table->column_bitmaps_set(save_read_set, save_write_set);
   return(1);
 }
