@@ -232,8 +232,7 @@ int main(int argc, char **argv)
   /* Function generates error messages before abort */
   /* init_common_variables must get basic settings such as data_home_dir
      and plugin_load_list. */
-  if (init_common_variables(DRIZZLE_CONFIG_NAME,
-                            argc, argv, load_default_groups))
+  if (init_common_variables(argc, argv))
     unireg_abort(1);				// Will do exit
 
   init_signals();
@@ -257,7 +256,7 @@ int main(int argc, char **argv)
     server_id= 1;
   }
 
-  if (init_server_components(modules))
+  if (init_server_components(modules, argc, argv))
     unireg_abort(1);
 
   /**

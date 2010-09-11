@@ -663,8 +663,7 @@ const char *load_default_groups[]=
   DRIZZLE_CONFIG_NAME, "server", 0, 0
 };
 
-int init_common_variables(const char *conf_file_name, int argc,
-                          char **argv, const char **groups)
+int init_common_variables(int argc, char **argv)
 {
   time_t curr_time;
   umask(((~internal::my_umask) & 0666));
@@ -708,7 +707,9 @@ int init_common_variables(const char *conf_file_name, int argc,
     strncpy(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
   strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
 
-  internal::load_defaults(conf_file_name, groups, &argc, &argv);
+
+
+  internal::load_defaults("drizzled", load_default_groups, &argc, &argv);
   defaults_argv=argv;
   defaults_argc=argc;
   string progname(argv[0]);
@@ -849,7 +850,7 @@ static pair<string, string> parse_size_arg(string s)
   return make_pair(string(""), string(""));
 }
 
-int init_server_components(module::Registry &plugins)
+int init_server_components(module::Registry &plugins, int, char**)
 {
   /*
     We need to call each of these following functions to ensure that
