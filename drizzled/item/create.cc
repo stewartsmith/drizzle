@@ -25,6 +25,8 @@
 #include <drizzled/item/func.h>
 #include <drizzled/error.h>
 
+#include "drizzled/function_container.h"
+
 #include <drizzled/function/str/binary.h>
 #include <drizzled/function/str/concat.h>
 #include <drizzled/function/str/conv.h>
@@ -97,8 +99,6 @@
 #include <drizzled/function/str/quote.h>
 #include <drizzled/function/math/tan.h>
 #include <drizzled/function/units.h>
-
-#include <map>
 
 using namespace std;
 
@@ -2596,8 +2596,6 @@ static Native_func_registry func_array[] =
   { {0, 0}, NULL}
 };
 
-static map<string, Native_func_registry *> native_functions_map;
-
 /*
   Load the hash table for native functions.
   Note: this code is not thread safe, and is intended to be used at server
@@ -2614,7 +2612,7 @@ int item_create_init()
     func_name.assign(func->name.str, func->name.length);
     transform(func_name.begin(), func_name.end(), func_name.begin(), ::tolower);
 
-    native_functions_map[func_name]= func;
+    FunctionContainer::getMap()[func_name]= func;
   }
 
   return 0;
@@ -2630,10 +2628,10 @@ find_native_function_builder(LEX_STRING name)
   string func_name(name.str, name.length);
   transform(func_name.begin(), func_name.end(), func_name.begin(), ::tolower);
 
-  map<string, Native_func_registry *>::iterator func_iter=
-    native_functions_map.find(func_name);
+  NativeFunctionsMap::iterator func_iter=
+    FunctionContainer::getMap().find(func_name);
 
-  if (func_iter != native_functions_map.end())
+  if (func_iter != FunctionContainer::getMap().end())
   {
     func= (*func_iter).second;
     builder= func->builder;
