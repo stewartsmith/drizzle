@@ -42,6 +42,8 @@ int
 yylex(void);
 %}
 
+%expect 27
+
 %token PARS_INT_LIT
 %token PARS_FLOAT_LIT
 %token PARS_STR_LIT
