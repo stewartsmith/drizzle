@@ -132,10 +132,11 @@ drizzled/configmake.h: ${top_srcdir}/Makefile.in
 
 clean-local:
 	find . -name '*.gcno' | xargs rm -f 
-	-rm -rf docs/api docs/dev
+	-rm -rf docs/api docs/dev docs/_build
 
 include config/lint-source.am
 
+include docs/include.am
 include drizzled/message/include.am
 include drizzled/include.am
 include drizzled/internal/include.am
