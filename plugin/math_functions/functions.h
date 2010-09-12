@@ -23,4 +23,4 @@
 
 #include "drizzled/plugin/table_function.h"
 
-#endif /* PLUGIN_MATH_FUNCTIONS_H */
+#endif /* PLUGIN_MATH_FUNCTIONS_FUNCTIONS_H */
