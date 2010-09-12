@@ -45,7 +45,7 @@ bool utility_dictionary::RandomNumber::Generator::populate()
 
   if (getSession().getLex()->current_select->explicit_limit or count == 0)
   {
-    push(random());
+    push(static_cast<int64_t>(random()));
   }
   else
   {
