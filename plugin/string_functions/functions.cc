@@ -19,7 +19,7 @@
  */
 
 #include "config.h"
-#include "plugin/math_functions/functions.h"
+#include "plugin/string_functions/functions.h"
 
 using namespace drizzled;
 
