@@ -25,10 +25,14 @@
 #define DRIZZLED_NAMED_SAVEPOINT_H
 
 #include "drizzled/transaction_context.h" /* for TransactionContext::ResourceContexts */
-#include "drizzled/transaction_services.h"
 
 namespace drizzled
 {
+
+namespace message
+{
+  class Transaction;
+}
 
 /**
  * This is a class which stores information about
