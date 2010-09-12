@@ -31,7 +31,7 @@ namespace drizzled
 
 namespace message
 {
-  class Transaction;
+class Transaction;
 }
 
 /**
