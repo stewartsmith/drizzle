@@ -1565,7 +1565,6 @@ bool Table::open_tmp_table()
   TableIdentifier identifier(s->getSchemaName(), s->getTableName(), s->getPath());
   if ((error=cursor->ha_open(identifier,
                              this,
-                             s->getTableName(),
                              O_RDWR,
                              HA_OPEN_TMP_TABLE | HA_OPEN_INTERNAL_TABLE)))
   {

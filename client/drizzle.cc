@@ -295,7 +295,7 @@ static bool ignore_errors= false, quick= false,
   default_pager_set= false, opt_sigint_ignore= false,
   auto_vertical_output= false,
   show_warnings= false, executing_query= false, interrupted_query= false,
-  opt_mysql= false, opt_local_infile;
+  use_drizzle_protocol= false, opt_local_infile;
 static uint32_t show_progress_size= 0;
 static bool column_types_flag;
 static bool preserve_comments= false;
@@ -320,7 +320,8 @@ std::string current_db,
   current_user,
   opt_verbose,
   current_password,
-  opt_password;
+  opt_password,
+  opt_protocol;
 // TODO: Need to i18n these
 static const char *day_names[]= {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]= {"Jan","Feb","Mar","Apr","May","Jun","Jul",
@@ -522,15 +523,11 @@ static Commands commands[] = {
   Commands( "AUTO_INCREMENT", 0, 0, 0, ""),
   Commands( "AVG", 0, 0, 0, ""),
   Commands( "AVG_ROW_LENGTH", 0, 0, 0, ""),
-  Commands( "BACKUP", 0, 0, 0, ""),
-  Commands( "BDB", 0, 0, 0, ""),
   Commands( "BEFORE", 0, 0, 0, ""),
   Commands( "BEGIN", 0, 0, 0, ""),
-  Commands( "BERKELEYDB", 0, 0, 0, ""),
   Commands( "BETWEEN", 0, 0, 0, ""),
   Commands( "BIGINT", 0, 0, 0, ""),
   Commands( "BINARY", 0, 0, 0, ""),
-  Commands( "BINLOG", 0, 0, 0, ""),
   Commands( "BIT", 0, 0, 0, ""),
   Commands( "BLOB", 0, 0, 0, ""),
   Commands( "BOOL", 0, 0, 0, ""),
@@ -549,13 +546,10 @@ static Commands commands[] = {
   Commands( "CHANGED", 0, 0, 0, ""),
   Commands( "CHAR", 0, 0, 0, ""),
   Commands( "CHARACTER", 0, 0, 0, ""),
-  Commands( "CHARSET", 0, 0, 0, ""),
   Commands( "CHECK", 0, 0, 0, ""),
   Commands( "CHECKSUM", 0, 0, 0, ""),
-  Commands( "CIPHER", 0, 0, 0, ""),
   Commands( "CLIENT", 0, 0, 0, ""),
   Commands( "CLOSE", 0, 0, 0, ""),
-  Commands( "CODE", 0, 0, 0, ""),
   Commands( "COLLATE", 0, 0, 0, ""),
   Commands( "COLLATION", 0, 0, 0, ""),
   Commands( "COLUMN", 0, 0, 0, ""),
@@ -597,22 +591,17 @@ static Commands commands[] = {
   Commands( "DEFAULT", 0, 0, 0, ""),
   Commands( "DEFINER", 0, 0, 0, ""),
   Commands( "DELAYED", 0, 0, 0, ""),
-  Commands( "DELAY_KEY_WRITE", 0, 0, 0, ""),
   Commands( "DELETE", 0, 0, 0, ""),
   Commands( "DESC", 0, 0, 0, ""),
   Commands( "DESCRIBE", 0, 0, 0, ""),
-  Commands( "DES_KEY_FILE", 0, 0, 0, ""),
   Commands( "DETERMINISTIC", 0, 0, 0, ""),
-  Commands( "DIRECTORY", 0, 0, 0, ""),
   Commands( "DISABLE", 0, 0, 0, ""),
   Commands( "DISCARD", 0, 0, 0, ""),
   Commands( "DISTINCT", 0, 0, 0, ""),
   Commands( "DISTINCTROW", 0, 0, 0, ""),
   Commands( "DIV", 0, 0, 0, ""),
-  Commands( "DO", 0, 0, 0, ""),
   Commands( "DOUBLE", 0, 0, 0, ""),
   Commands( "DROP", 0, 0, 0, ""),
-  Commands( "DUAL", 0, 0, 0, ""),
   Commands( "DUMPFILE", 0, 0, 0, ""),
   Commands( "DUPLICATE", 0, 0, 0, ""),
   Commands( "DYNAMIC", 0, 0, 0, ""),
@@ -628,11 +617,8 @@ static Commands commands[] = {
   Commands( "ERRORS", 0, 0, 0, ""),
   Commands( "ESCAPE", 0, 0, 0, ""),
   Commands( "ESCAPED", 0, 0, 0, ""),
-  Commands( "EVENTS", 0, 0, 0, ""),
-  Commands( "EXECUTE", 0, 0, 0, ""),
   Commands( "EXISTS", 0, 0, 0, ""),
   Commands( "EXIT", 0, 0, 0, ""),
-  Commands( "EXPANSION", 0, 0, 0, ""),
   Commands( "EXPLAIN", 0, 0, 0, ""),
   Commands( "EXTENDED", 0, 0, 0, ""),
   Commands( "FALSE", 0, 0, 0, ""),
@@ -653,7 +639,6 @@ static Commands commands[] = {
   Commands( "FRAC_SECOND", 0, 0, 0, ""),
   Commands( "FROM", 0, 0, 0, ""),
   Commands( "FULL", 0, 0, 0, ""),
-  Commands( "FULLTEXT", 0, 0, 0, ""),
   Commands( "FUNCTION", 0, 0, 0, ""),
   Commands( "GLOBAL", 0, 0, 0, ""),
   Commands( "GRANT", 0, 0, 0, ""),
@@ -721,24 +706,7 @@ static Commands commands[] = {
   Commands( "LOCKS", 0, 0, 0, ""),
   Commands( "LOGS", 0, 0, 0, ""),
   Commands( "LONG", 0, 0, 0, ""),
-  Commands( "LONGTEXT", 0, 0, 0, ""),
   Commands( "LOOP", 0, 0, 0, ""),
-  Commands( "LOW_PRIORITY", 0, 0, 0, ""),
-  Commands( "MASTER", 0, 0, 0, ""),
-  Commands( "MASTER_CONNECT_RETRY", 0, 0, 0, ""),
-  Commands( "MASTER_HOST", 0, 0, 0, ""),
-  Commands( "MASTER_LOG_FILE", 0, 0, 0, ""),
-  Commands( "MASTER_LOG_POS", 0, 0, 0, ""),
-  Commands( "MASTER_PASSWORD", 0, 0, 0, ""),
-  Commands( "MASTER_PORT", 0, 0, 0, ""),
-  Commands( "MASTER_SERVER_ID", 0, 0, 0, ""),
-  Commands( "MASTER_SSL", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CA", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CAPATH", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CERT", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_CIPHER", 0, 0, 0, ""),
-  Commands( "MASTER_SSL_KEY", 0, 0, 0, ""),
-  Commands( "MASTER_USER", 0, 0, 0, ""),
   Commands( "MATCH", 0, 0, 0, ""),
   Commands( "MAX_CONNECTIONS_PER_HOUR", 0, 0, 0, ""),
   Commands( "MAX_QUERIES_PER_HOUR", 0, 0, 0, ""),
@@ -746,10 +714,8 @@ static Commands commands[] = {
   Commands( "MAX_UPDATES_PER_HOUR", 0, 0, 0, ""),
   Commands( "MAX_USER_CONNECTIONS", 0, 0, 0, ""),
   Commands( "MEDIUM", 0, 0, 0, ""),
-  Commands( "MEDIUMTEXT", 0, 0, 0, ""),
   Commands( "MERGE", 0, 0, 0, ""),
   Commands( "MICROSECOND", 0, 0, 0, ""),
-  Commands( "MIDDLEINT", 0, 0, 0, ""),
   Commands( "MIGRATE", 0, 0, 0, ""),
   Commands( "MINUTE", 0, 0, 0, ""),
   Commands( "MINUTE_MICROSECOND", 0, 0, 0, ""),
@@ -768,20 +734,16 @@ static Commands commands[] = {
   Commands( "NAMES", 0, 0, 0, ""),
   Commands( "NATIONAL", 0, 0, 0, ""),
   Commands( "NATURAL", 0, 0, 0, ""),
-  Commands( "NDB", 0, 0, 0, ""),
-  Commands( "NDBCLUSTER", 0, 0, 0, ""),
   Commands( "NCHAR", 0, 0, 0, ""),
   Commands( "NEW", 0, 0, 0, ""),
   Commands( "NEXT", 0, 0, 0, ""),
   Commands( "NO", 0, 0, 0, ""),
   Commands( "NONE", 0, 0, 0, ""),
   Commands( "NOT", 0, 0, 0, ""),
-  Commands( "NO_WRITE_TO_BINLOG", 0, 0, 0, ""),
   Commands( "NULL", 0, 0, 0, ""),
   Commands( "NUMERIC", 0, 0, 0, ""),
   Commands( "NVARCHAR", 0, 0, 0, ""),
   Commands( "OFFSET", 0, 0, 0, ""),
-  Commands( "OLD_PASSWORD", 0, 0, 0, ""),
   Commands( "ON", 0, 0, 0, ""),
   Commands( "ONE", 0, 0, 0, ""),
   Commands( "ONE_SHOT", 0, 0, 0, ""),
@@ -798,8 +760,6 @@ static Commands commands[] = {
   Commands( "PARTIAL", 0, 0, 0, ""),
   Commands( "PASSWORD", 0, 0, 0, ""),
   Commands( "PHASE", 0, 0, 0, ""),
-  Commands( "POINT", 0, 0, 0, ""),
-  Commands( "POLYGON", 0, 0, 0, ""),
   Commands( "PRECISION", 0, 0, 0, ""),
   Commands( "PREPARE", 0, 0, 0, ""),
   Commands( "PREV", 0, 0, 0, ""),
@@ -819,16 +779,12 @@ static Commands commands[] = {
   Commands( "REDUNDANT", 0, 0, 0, ""),
   Commands( "REFERENCES", 0, 0, 0, ""),
   Commands( "REGEXP", 0, 0, 0, ""),
-  Commands( "RELAY_LOG_FILE", 0, 0, 0, ""),
-  Commands( "RELAY_LOG_POS", 0, 0, 0, ""),
-  Commands( "RELAY_THREAD", 0, 0, 0, ""),
   Commands( "RELEASE", 0, 0, 0, ""),
   Commands( "RELOAD", 0, 0, 0, ""),
   Commands( "RENAME", 0, 0, 0, ""),
   Commands( "REPAIR", 0, 0, 0, ""),
   Commands( "REPEATABLE", 0, 0, 0, ""),
   Commands( "REPLACE", 0, 0, 0, ""),
-  Commands( "REPLICATION", 0, 0, 0, ""),
   Commands( "REPEAT", 0, 0, 0, ""),
   Commands( "REQUIRE", 0, 0, 0, ""),
   Commands( "RESET", 0, 0, 0, ""),
@@ -867,7 +823,6 @@ static Commands commands[] = {
   Commands( "SIMPLE", 0, 0, 0, ""),
   Commands( "SLAVE", 0, 0, 0, ""),
   Commands( "SNAPSHOT", 0, 0, 0, ""),
-  Commands( "SMALLINT", 0, 0, 0, ""),
   Commands( "SOME", 0, 0, 0, ""),
   Commands( "SONAME", 0, 0, 0, ""),
   Commands( "SOUNDS", 0, 0, 0, ""),
@@ -916,12 +871,9 @@ static Commands commands[] = {
   Commands( "TIMESTAMP", 0, 0, 0, ""),
   Commands( "TIMESTAMPADD", 0, 0, 0, ""),
   Commands( "TIMESTAMPDIFF", 0, 0, 0, ""),
-  Commands( "TINYTEXT", 0, 0, 0, ""),
   Commands( "TO", 0, 0, 0, ""),
   Commands( "TRAILING", 0, 0, 0, ""),
   Commands( "TRANSACTION", 0, 0, 0, ""),
-  Commands( "TRIGGER", 0, 0, 0, ""),
-  Commands( "TRIGGERS", 0, 0, 0, ""),
   Commands( "TRUE", 0, 0, 0, ""),
   Commands( "TRUNCATE", 0, 0, 0, ""),
   Commands( "TYPE", 0, 0, 0, ""),
@@ -934,7 +886,6 @@ static Commands commands[] = {
   Commands( "UNIQUE", 0, 0, 0, ""),
   Commands( "UNKNOWN", 0, 0, 0, ""),
   Commands( "UNLOCK", 0, 0, 0, ""),
-  Commands( "UNSIGNED", 0, 0, 0, ""),
   Commands( "UNTIL", 0, 0, 0, ""),
   Commands( "UPDATE", 0, 0, 0, ""),
   Commands( "UPGRADE", 0, 0, 0, ""),
@@ -942,7 +893,6 @@ static Commands commands[] = {
   Commands( "USE", 0, 0, 0, ""),
   Commands( "USER", 0, 0, 0, ""),
   Commands( "USER_RESOURCES", 0, 0, 0, ""),
-  Commands( "USE_FRM", 0, 0, 0, ""),
   Commands( "USING", 0, 0, 0, ""),
   Commands( "UTC_DATE", 0, 0, 0, ""),
   Commands( "UTC_TIMESTAMP", 0, 0, 0, ""),
@@ -962,7 +912,6 @@ static Commands commands[] = {
   Commands( "WITH", 0, 0, 0, ""),
   Commands( "WORK", 0, 0, 0, ""),
   Commands( "WRITE", 0, 0, 0, ""),
-  Commands( "X509", 0, 0, 0, ""),
   Commands( "XOR", 0, 0, 0, ""),
   Commands( "XA", 0, 0, 0, ""),
   Commands( "YEAR", 0, 0, 0, ""),
@@ -971,14 +920,10 @@ static Commands commands[] = {
   Commands( "ABS", 0, 0, 0, ""),
   Commands( "ACOS", 0, 0, 0, ""),
   Commands( "ADDDATE", 0, 0, 0, ""),
-  Commands( "AES_ENCRYPT", 0, 0, 0, ""),
-  Commands( "AES_DECRYPT", 0, 0, 0, ""),
   Commands( "AREA", 0, 0, 0, ""),
   Commands( "ASIN", 0, 0, 0, ""),
   Commands( "ASBINARY", 0, 0, 0, ""),
   Commands( "ASTEXT", 0, 0, 0, ""),
-  Commands( "ASWKB", 0, 0, 0, ""),
-  Commands( "ASWKT", 0, 0, 0, ""),
   Commands( "ATAN", 0, 0, 0, ""),
   Commands( "ATAN2", 0, 0, 0, ""),
   Commands( "BENCHMARK", 0, 0, 0, ""),
@@ -1044,8 +989,6 @@ static Commands commands[] = {
   Commands( "GROUP_UNIQUE_USERS", 0, 0, 0, ""),
   Commands( "HEX", 0, 0, 0, ""),
   Commands( "IFNULL", 0, 0, 0, ""),
-  Commands( "INET_ATON", 0, 0, 0, ""),
-  Commands( "INET_NTOA", 0, 0, 0, ""),
   Commands( "INSTR", 0, 0, 0, ""),
   Commands( "INTERIORRINGN", 0, 0, 0, ""),
   Commands( "INTERSECTS", 0, 0, 0, ""),
@@ -1061,10 +1004,6 @@ static Commands commands[] = {
   Commands( "LEAST", 0, 0, 0, ""),
   Commands( "LENGTH", 0, 0, 0, ""),
   Commands( "LN", 0, 0, 0, ""),
-  Commands( "LINEFROMTEXT", 0, 0, 0, ""),
-  Commands( "LINEFROMWKB", 0, 0, 0, ""),
-  Commands( "LINESTRINGFROMTEXT", 0, 0, 0, ""),
-  Commands( "LINESTRINGFROMWKB", 0, 0, 0, ""),
   Commands( "LOAD_FILE", 0, 0, 0, ""),
   Commands( "LOCATE", 0, 0, 0, ""),
   Commands( "LOG", 0, 0, 0, ""),
@@ -1087,23 +1026,10 @@ static Commands commands[] = {
   Commands( "MD5", 0, 0, 0, ""),
   Commands( "MID", 0, 0, 0, ""),
   Commands( "MIN", 0, 0, 0, ""),
-  Commands( "MLINEFROMTEXT", 0, 0, 0, ""),
-  Commands( "MLINEFROMWKB", 0, 0, 0, ""),
-  Commands( "MPOINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "MPOINTFROMWKB", 0, 0, 0, ""),
-  Commands( "MPOLYFROMTEXT", 0, 0, 0, ""),
-  Commands( "MPOLYFROMWKB", 0, 0, 0, ""),
   Commands( "MONTHNAME", 0, 0, 0, ""),
-  Commands( "MULTILINESTRINGFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTILINESTRINGFROMWKB", 0, 0, 0, ""),
-  Commands( "MULTIPOINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTIPOINTFROMWKB", 0, 0, 0, ""),
-  Commands( "MULTIPOLYGONFROMTEXT", 0, 0, 0, ""),
-  Commands( "MULTIPOLYGONFROMWKB", 0, 0, 0, ""),
   Commands( "NAME_CONST", 0, 0, 0, ""),
   Commands( "NOW", 0, 0, 0, ""),
   Commands( "NULLIF", 0, 0, 0, ""),
-  Commands( "NUMINTERIORRINGS", 0, 0, 0, ""),
   Commands( "NUMPOINTS", 0, 0, 0, ""),
   Commands( "OCTET_LENGTH", 0, 0, 0, ""),
   Commands( "OCT", 0, 0, 0, ""),
@@ -1112,13 +1038,7 @@ static Commands commands[] = {
   Commands( "PERIOD_ADD", 0, 0, 0, ""),
   Commands( "PERIOD_DIFF", 0, 0, 0, ""),
   Commands( "PI", 0, 0, 0, ""),
-  Commands( "POINTFROMTEXT", 0, 0, 0, ""),
-  Commands( "POINTFROMWKB", 0, 0, 0, ""),
   Commands( "POINTN", 0, 0, 0, ""),
-  Commands( "POLYFROMTEXT", 0, 0, 0, ""),
-  Commands( "POLYFROMWKB", 0, 0, 0, ""),
-  Commands( "POLYGONFROMTEXT", 0, 0, 0, ""),
-  Commands( "POLYGONFROMWKB", 0, 0, 0, ""),
   Commands( "POSITION", 0, 0, 0, ""),
   Commands( "POW", 0, 0, 0, ""),
   Commands( "POWER", 0, 0, 0, ""),
@@ -1466,8 +1386,6 @@ try
 
   po::options_description client_options(N_("Options specific to the client"));
   client_options.add_options()
-  ("mysql,m", po::value<bool>(&opt_mysql)->default_value(true)->zero_tokens(),
-  N_("Use MySQL Protocol."))
   ("host,h", po::value<string>(&current_host)->default_value("localhost"),
   N_("Connect to host"))
   ("password,P", po::value<string>(&current_password)->default_value(PASSWORD_SENTINEL),
@@ -1476,8 +1394,8 @@ try
   N_("Port number to use for connection or 0 for default to, in order of preference, drizzle.cnf, $DRIZZLE_TCP_PORT, built-in default"))
   ("user,u", po::value<string>(&current_user)->default_value(""),
   N_("User for login if not current user."))
-  ("protocol",po::value<string>(),
-  N_("The protocol of connection (tcp,socket,pipe,memory)."))
+  ("protocol",po::value<string>(&opt_protocol)->default_value("mysql"),
+  N_("The protocol of connection (mysql or drizzle)."))
   ;
 
   po::options_description long_options(N_("Allowed Options"));
@@ -1652,7 +1570,23 @@ try
 
   if (one_database)
     skip_updates= true;
-  
+
+  if (vm.count("protocol"))
+  {
+    std::transform(opt_protocol.begin(), opt_protocol.end(), 
+      opt_protocol.begin(), ::tolower);
+
+    if (not opt_protocol.compare("mysql"))
+      use_drizzle_protocol=false;
+    else if (not opt_protocol.compare("drizzle"))
+      use_drizzle_protocol=true;
+    else
+    {
+      cout << _("Error: Unknown protocol") << " '" << opt_protocol << "'" << endl;
+      exit(-1);
+    }
+  }
+ 
   if (vm.count("port"))
   {
     opt_drizzle_port= vm["port"].as<uint32_t>();
@@ -1782,10 +1716,12 @@ try
   glob_buffer->reserve(512);
 
   snprintf(&output_buff[0], output_buff.size(),
-          _("Your Drizzle connection id is %u\nServer version: %s\n"),
+          _("Your Drizzle connection id is %u\nConnection protocol: %s\nServer version: %s\n"),
           drizzle_con_thread_id(&con),
+          opt_protocol.c_str(),
           server_version_string(&con));
   put_info(&output_buff[0], INFO_INFO, 0, 0);
+
 
   initialize_readline((char *)current_prompt.c_str());
   if (!status.getBatch() && !quick)
@@ -1894,8 +1830,8 @@ void handle_sigint(int sig)
   }
 
   if (drizzle_con_add_tcp(&drizzle, &kill_drizzle, current_host.c_str(),
-                          opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
-                          opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+    opt_drizzle_port, current_user.c_str(), opt_password.c_str(), NULL,
+    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
     goto err;
   }
@@ -2764,7 +2700,11 @@ int drizzleclient_store_result_for_lazy(drizzle_result_st *result)
     return 0;
 
   if (drizzle_con_error(&con)[0])
-    return put_error(&con, result);
+  {
+    int ret= put_error(&con, result);
+    drizzle_result_free(result);
+    return ret;
+  }
   return 0;
 }
 
@@ -4033,8 +3973,10 @@ sql_connect(const string &host, const string &database, const string &user, cons
     drizzle_free(&drizzle);
   }
   drizzle_create(&drizzle);
-  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(), opt_drizzle_port, (char *)user.c_str(),
-                          (char *)password.c_str(), (char *)database.c_str(), opt_mysql ? DRIZZLE_CON_MYSQL : DRIZZLE_CON_NONE) == NULL)
+  if (drizzle_con_add_tcp(&drizzle, &con, (char *)host.c_str(),
+    opt_drizzle_port, (char *)user.c_str(),
+    (char *)password.c_str(), (char *)database.c_str(),
+    use_drizzle_protocol ? DRIZZLE_CON_EXPERIMENTAL : DRIZZLE_CON_MYSQL) == NULL)
   {
     (void) put_error(&con, NULL);
     (void) fflush(stdout);
@@ -4092,7 +4034,7 @@ com_status(string *, const char *)
   tee_puts("--------------", stdout);
   printf(_("Drizzle client %s build %s, for %s-%s (%s) using readline %s\n"),
          drizzle_version(), VERSION,
-         HOST_VENDOR, HOST_OS,
+         HOST_VENDOR, HOST_OS, HOST_CPU,
          rl_library_version);
 
   if (connected)
@@ -4135,6 +4077,7 @@ com_status(string *, const char *)
   tee_fprintf(stdout, _("Using outfile:\t\t'%s'\n"), opt_outfile ? outfile.c_str() : "");
   tee_fprintf(stdout, _("Using delimiter:\t%s\n"), delimiter);
   tee_fprintf(stdout, _("Server version:\t\t%s\n"), server_version_string(&con));
+  tee_fprintf(stdout, _("Protocol:\t\t%s\n"), opt_protocol.c_str());
   tee_fprintf(stdout, _("Protocol version:\t%d\n"), drizzle_con_protocol_version(&con));
   tee_fprintf(stdout, _("Connection:\t\t%s\n"), drizzle_con_host(&con));
 /* XXX need to save this from result

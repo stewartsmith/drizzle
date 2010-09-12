@@ -542,7 +542,7 @@ a
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) NOT NULL DEFAULT ''
+  `a` VARCHAR(1) COLLATE utf8_general_ci NOT NULL DEFAULT ''
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT 12 as a UNION select "aa" as a;
@@ -553,7 +553,7 @@ aa
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varbinary(4) NOT NULL DEFAULT ''
+  `a` VARBINARY(4) NOT NULL DEFAULT ''
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT 12 as a UNION select 12.2 as a;
@@ -564,7 +564,7 @@ a
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` decimal(3,1) NOT NULL DEFAULT '0.0'
+  `a` DECIMAL(3,1) NOT NULL DEFAULT '0.0'
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t2 (it1 int, it2 int not null, i int not null, ib int, f float, d double, da date, dt datetime, sc char(10), sv varchar(10), b blob, tx text);
@@ -577,7 +577,7 @@ NULL
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `it2` int DEFAULT NULL
+  `it2` INT DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT it2 from t2 UNION select i from t2;
@@ -588,7 +588,7 @@ it2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `it2` int NOT NULL DEFAULT '0'
+  `it2` INT NOT NULL DEFAULT '0'
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT i from t2 UNION select f from t2;
@@ -599,7 +599,7 @@ i
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` double DEFAULT NULL
+  `i` DOUBLE DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT f from t2 UNION select d from t2;
@@ -610,7 +610,7 @@ f
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f` double DEFAULT NULL
+  `f` DOUBLE DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT ib from t2 UNION select f from t2;
@@ -621,7 +621,7 @@ ib
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ib` double DEFAULT NULL
+  `ib` DOUBLE DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT ib from t2 UNION select d from t2;
@@ -632,7 +632,7 @@ ib
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `ib` double DEFAULT NULL
+  `ib` DOUBLE DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT f from t2 UNION select da from t2;
@@ -643,7 +643,7 @@ f
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `f` varbinary(22) DEFAULT NULL
+  `f` VARBINARY(22) DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT da from t2 UNION select dt from t2;
@@ -654,7 +654,7 @@ da
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `da` datetime DEFAULT NULL
+  `da` DATETIME DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT dt from t2 UNION select trim(sc) from t2;
@@ -665,7 +665,7 @@ testc
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `dt` varbinary(19) DEFAULT NULL
+  `dt` VARBINARY(19) DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT dt from t2 UNION select sv from t2;
@@ -676,7 +676,7 @@ testv
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `dt` varbinary(40) DEFAULT NULL
+  `dt` VARBINARY(40) DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT sc from t2 UNION select sv from t2;
@@ -687,7 +687,7 @@ testv
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `sc` varchar(10) DEFAULT NULL
+  `sc` VARCHAR(10) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT dt from t2 UNION select b from t2;
@@ -698,7 +698,7 @@ tetetetetest
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `dt` blob
+  `dt` BLOB
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT sv from t2 UNION select b from t2;
@@ -709,7 +709,7 @@ tetetetetest
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `sv` blob
+  `sv` BLOB
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT i from t2 UNION select d from t2 UNION select b from t2;
@@ -721,7 +721,7 @@ tetetetetest
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `i` blob
+  `i` BLOB
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT sv from t2 UNION select tx from t2;
@@ -732,7 +732,7 @@ teeeeeeeeeeeest
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `sv` text
+  `sv` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 SELECT b from t2 UNION select tx from t2;
@@ -743,7 +743,7 @@ teeeeeeeeeeeest
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `b` blob
+  `b` BLOB
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1,t2;
 create table t1 select 1 union select -1;
@@ -754,7 +754,7 @@ select * from t1;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `1` bigint NOT NULL DEFAULT '0'
+  `1` BIGINT NOT NULL DEFAULT '0'
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 select _latin1"test" union select _latin1"testt" ;
@@ -765,7 +765,7 @@ create table t1 select "test" union select "testt" ;
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) NOT NULL DEFAULT ''
+  `test` VARCHAR(4) COLLATE utf8_general_ci NOT NULL DEFAULT ''
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 (s char(200));
@@ -1008,7 +1008,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) NOT NULL DEFAULT ''
+  `test` VARCHAR(4) COLLATE utf8_general_ci NOT NULL DEFAULT ''
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
@@ -1021,7 +1021,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `'test' collate utf8_bin` varchar(4) COLLATE utf8_bin DEFAULT NULL
+  `'test' collate utf8_bin` VARCHAR(4) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
@@ -1034,7 +1034,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) COLLATE utf8_bin DEFAULT NULL
+  `test` VARCHAR(4) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
@@ -1047,7 +1047,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `test` varchar(4) COLLATE utf8_bin DEFAULT NULL
+  `test` VARCHAR(4) COLLATE utf8_bin DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select count(*) from t1;
 count(*)
@@ -1075,7 +1075,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) COLLATE utf8_swedish_ci DEFAULT NULL
+  `a` VARCHAR(1) COLLATE utf8_swedish_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 create table t1 as
@@ -1085,7 +1085,7 @@ create table t1 as
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` varchar(1) COLLATE utf8_spanish_ci DEFAULT NULL
+  `a` VARCHAR(1) COLLATE utf8_spanish_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1;
 drop table t2;
@@ -1195,7 +1195,7 @@ create table t2 select * from t1 union select 'abcdefghijkl';
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` varchar(5) DEFAULT NULL
+  `a` VARCHAR(5) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 select row_format from data_dictionary.TABLES where table_schema="test" and table_name="t2";
 row_format
@@ -1203,7 +1203,7 @@ DEFAULT
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` varchar(5) DEFAULT NULL
+  `a` VARCHAR(5) COLLATE utf8_general_ci DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1,t2;
 CREATE TABLE t1 (a mediumtext);
@@ -1217,7 +1217,7 @@ create table t3 SELECT left(a,100000000) FROM t1 UNION  SELECT b FROM t2;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `left(a,100000000)` text
+  `left(a,100000000)` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop tables t1,t2,t3;
 CREATE TABLE t1 (a longtext);
@@ -1231,7 +1231,7 @@ create table t3 SELECT left(a,100000000) FROM t1 UNION  SELECT b FROM t2;
 show create table t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `left(a,100000000)` text
+  `left(a,100000000)` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop tables t1,t2,t3;
 SELECT @tmp_max:= @@max_allowed_packet;
@@ -1245,7 +1245,7 @@ CREATE TABLE t3 SELECT REPEAT(a,20000000) AS a FROM t1 UNION SELECT b FROM t2;
 SHOW CREATE TABLE t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `a` text
+  `a` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLES t1,t3;
 CREATE TABLE t1 (a tinytext);
@@ -1254,7 +1254,7 @@ CREATE TABLE t3 SELECT REPEAT(a,2) AS a FROM t1 UNION SELECT b FROM t2;
 SHOW CREATE TABLE t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `a` text
+  `a` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLES t1,t3;
 CREATE TABLE t1 (a mediumtext);
@@ -1263,7 +1263,7 @@ CREATE TABLE t3 SELECT REPEAT(a,2) AS a FROM t1 UNION SELECT b FROM t2;
 SHOW CREATE TABLE t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `a` text
+  `a` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLES t1,t3;
 CREATE TABLE t1 (a tinyblob);
@@ -1272,7 +1272,7 @@ CREATE TABLE t3 SELECT REPEAT(a,2) AS a FROM t1 UNION SELECT b FROM t2;
 SHOW CREATE TABLE t3;
 Table	Create Table
 t3	CREATE TABLE `t3` (
-  `a` blob
+  `a` BLOB
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 DROP TABLES t1,t2,t3;
 SET max_allowed_packet:= @tmp_max;
@@ -1300,14 +1300,14 @@ create table t2 as select *, f6 as f8 from t1 union select *, f7 from t1;
 show create table t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `f1` varchar(1) DEFAULT NULL,
-  `f2` varchar(5) DEFAULT NULL,
-  `f3` blob,
-  `f4` blob,
-  `f5` timestamp NULL DEFAULT NULL,
-  `f6` varchar(1) DEFAULT NULL,
-  `f7` text,
-  `f8` text
+  `f1` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
+  `f2` VARCHAR(5) COLLATE utf8_general_ci DEFAULT NULL,
+  `f3` BLOB,
+  `f4` BLOB,
+  `f5` TIMESTAMP NULL DEFAULT NULL,
+  `f6` VARCHAR(1) COLLATE utf8_general_ci DEFAULT NULL,
+  `f7` TEXT COLLATE utf8_general_ci,
+  `f8` TEXT COLLATE utf8_general_ci
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 drop table t1, t2;
 (select avg(1)) union (select avg(1)) union (select avg(1)) union
@@ -1441,11 +1441,11 @@ a	INTEGER	YES		YES
 CREATE TABLE t4 SELECT NULL;
 DESC t4;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-NULL	VARCHAR	YES		YES	
+NULL	VARBINARY	YES		YES	
 CREATE TABLE t5 SELECT NULL UNION SELECT NULL;
 DESC t5;
 Field	Type	Null	Default	Default_is_NULL	On_Update
-NULL	VARCHAR	YES		YES	
+NULL	VARBINARY	YES		YES	
 CREATE TABLE t6 
 SELECT * FROM (SELECT * FROM (SELECT NULL)a) b UNION SELECT a FROM t1;
 DESC t6;

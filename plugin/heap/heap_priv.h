@@ -64,12 +64,6 @@ typedef struct st_hp_hash_info
   unsigned char *ptr_to_rec;
 } HASH_INFO;
 
-typedef struct {
-  HA_KEYSEG *keyseg;
-  uint32_t key_length;
-  uint32_t search_flag;
-} heap_rb_param;
-
 	/* Prototypes for intern functions */
 
 extern HP_SHARE *hp_find_named_heap(const char *name);
@@ -78,13 +72,9 @@ extern unsigned char *hp_find_block(HP_BLOCK *info,uint32_t pos);
 extern int hp_get_new_block(HP_BLOCK *info, size_t* alloc_length);
 extern void hp_free(HP_SHARE *info);
 extern unsigned char *hp_free_level(HP_BLOCK *block,uint32_t level,HP_PTRS *pos,
-			   unsigned char *last_pos);
+                                    unsigned char *last_pos);
 extern int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 			const unsigned char *record, unsigned char *recpos);
-extern int hp_rb_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
-			   const unsigned char *record, unsigned char *recpos);
-extern int hp_rb_delete_key(HP_INFO *info,HP_KEYDEF *keyinfo,
-			    const unsigned char *record,unsigned char *recpos,int flag);
 extern int hp_delete_key(HP_INFO *info,HP_KEYDEF *keyinfo,
 			 const unsigned char *record,unsigned char *recpos,int flag);
 extern HASH_INFO *_heap_find_hash(HP_BLOCK *block,uint32_t pos);
@@ -100,29 +90,20 @@ extern int hp_rec_key_cmp(HP_KEYDEF *keydef,const unsigned char *rec1,
 			  const unsigned char *rec2,
                           bool diff_if_only_endspace_difference);
 extern void hp_make_key(HP_KEYDEF *keydef,unsigned char *key,const unsigned char *rec);
-extern uint32_t hp_rb_make_key(HP_KEYDEF *keydef, unsigned char *key,
-			   const unsigned char *rec, unsigned char *recpos);
-extern uint32_t hp_rb_key_length(HP_KEYDEF *keydef, const unsigned char *key);
-extern uint32_t hp_rb_null_key_length(HP_KEYDEF *keydef, const unsigned char *key);
-extern uint32_t hp_rb_var_key_length(HP_KEYDEF *keydef, const unsigned char *key);
 extern bool hp_if_null_in_key(HP_KEYDEF *keyinfo, const unsigned char *record);
 extern int hp_close(HP_INFO *info);
 extern void hp_clear(HP_SHARE *info);
-extern uint32_t hp_rb_pack_key(HP_KEYDEF *keydef,
-                               unsigned char *key, const unsigned char *old,
-                               drizzled::key_part_map keypart_map);
 
    /* Chunkset management (alloc/free/encode/decode) functions */
 
 extern unsigned char *hp_allocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count);
-extern int hp_reallocate_chunkset(HP_DATASPACE *info, uint32_t chunk_count, unsigned char* pos);
 extern void hp_free_chunks(HP_DATASPACE *info, unsigned char *pos);
 extern void hp_clear_dataspace(HP_DATASPACE *info);
 
 extern uint32_t hp_get_encoded_data_length(HP_SHARE *info, const unsigned char *record, uint32_t *chunk_count);
 extern void hp_copy_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos);
 extern void hp_extract_record(HP_SHARE *info, unsigned char *record, const unsigned char *pos);
-extern uint32_t hp_process_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos, uint32_t is_compare);
+extern bool hp_compare_record_data_to_chunkset(HP_SHARE *info, const unsigned char *record, unsigned char *pos);
 
 extern boost::mutex THR_LOCK_heap;
 

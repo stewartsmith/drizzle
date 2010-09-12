@@ -144,9 +144,9 @@ t1	t2	t3
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `t1` timestamp NULL DEFAULT '2003-01-01 00:00:00',
-  `t2` datetime DEFAULT NULL,
-  `t3` timestamp NULL DEFAULT NULL
+  `t1` TIMESTAMP NULL DEFAULT '2003-01-01 00:00:00',
+  `t2` DATETIME DEFAULT NULL,
+  `t3` TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -168,9 +168,9 @@ t1	t2	t3
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `t2` datetime DEFAULT NULL,
-  `t3` timestamp NULL DEFAULT NULL
+  `t1` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  `t2` DATETIME DEFAULT NULL,
+  `t3` TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -195,8 +195,8 @@ t1	t2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `t1` timestamp NULL DEFAULT '2003-01-01 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-  `t2` datetime DEFAULT NULL
+  `t1` TIMESTAMP NULL DEFAULT '2003-01-01 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `t2` DATETIME DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -220,8 +220,8 @@ t1	t2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `t2` datetime DEFAULT NULL
+  `t1` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `t2` DATETIME DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -245,9 +245,9 @@ NULL	NULL	NULL
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `t1` timestamp NULL DEFAULT NULL,
-  `t2` datetime DEFAULT NULL,
-  `t3` timestamp NULL DEFAULT NULL
+  `t1` TIMESTAMP NULL DEFAULT NULL,
+  `t2` DATETIME DEFAULT NULL,
+  `t3` TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -272,8 +272,8 @@ t1	t2
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `t1` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `t2` datetime DEFAULT NULL
+  `t1` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `t2` DATETIME DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 show columns from t1;
 Field	Type	Null	Default	Default_is_NULL	On_Update
@@ -327,8 +327,8 @@ create table t1 (a timestamp null, b timestamp null);
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` timestamp NULL DEFAULT NULL,
-  `b` timestamp NULL DEFAULT NULL
+  `a` TIMESTAMP NULL DEFAULT NULL,
+  `b` TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (NULL, NULL);
 SET TIMESTAMP=1000000017;
@@ -342,8 +342,8 @@ create table t1 (a timestamp null default current_timestamp on update current_ti
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `b` timestamp NULL DEFAULT NULL
+  `a` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `b` TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (NULL, NULL);
 SET TIMESTAMP=1000000018;
@@ -357,8 +357,8 @@ create table t1 (a timestamp null default null, b timestamp null default '2003-0
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` timestamp NULL DEFAULT NULL,
-  `b` timestamp NULL DEFAULT '2003-01-01 00:00:00'
+  `a` TIMESTAMP NULL DEFAULT NULL,
+  `b` TIMESTAMP NULL DEFAULT '2003-01-01 00:00:00'
 ) ENGINE=DEFAULT COLLATE = utf8_general_ci
 insert into t1 values (NULL, NULL);
 insert into t1 values (DEFAULT, DEFAULT);

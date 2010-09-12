@@ -95,7 +95,6 @@ Cursor *Cursor::clone(memory::Root *mem_root)
 
   if (new_handler && !new_handler->ha_open(identifier,
                                            table,
-                                           table->getMutableShare()->getNormalizedPath(),
                                            table->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
@@ -229,7 +228,8 @@ int Cursor::doOpen(const TableIdentifier &identifier, int mode, uint32_t test_if
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
 int Cursor::ha_open(const TableIdentifier &identifier,
-                    Table *table_arg, const char *name, int mode,
+                    Table *table_arg,
+                    int mode,
                     int test_if_locked)
 {
   int error;
@@ -237,7 +237,6 @@ int Cursor::ha_open(const TableIdentifier &identifier,
   table= table_arg;
   assert(table->getShare() == table_share);
 
-  assert(identifier.getPath().compare(name) == 0);
   if ((error= doOpen(identifier, mode, test_if_locked)))
   {
     if ((error == EACCES || error == EROFS) && mode == O_RDWR &&

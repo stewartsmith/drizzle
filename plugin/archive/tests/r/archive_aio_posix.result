@@ -9914,12 +9914,12 @@ ALTER TABLE t2 DROP COLUMN fld6;
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `auto` int DEFAULT NULL,
-  `fld1` int NOT NULL DEFAULT '0',
-  `companynr` int NOT NULL DEFAULT '0',
-  `fld3` varchar(30) NOT NULL DEFAULT '',
-  `fld4` varchar(35) NOT NULL DEFAULT '',
-  `fld5` varchar(35) NOT NULL DEFAULT ''
+  `auto` INT DEFAULT NULL,
+  `fld1` INT NOT NULL DEFAULT '0',
+  `companynr` INT NOT NULL DEFAULT '0',
+  `fld3` VARCHAR(30) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `fld4` VARCHAR(35) COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `fld5` VARCHAR(35) COLLATE utf8_general_ci NOT NULL DEFAULT ''
 ) ENGINE=ARCHIVE COLLATE = utf8_general_ci
 SELECT * FROM t2;
 auto	fld1	companynr	fld3	fld4	fld5
@@ -11437,9 +11437,9 @@ a	b	c
 SHOW CREATE TABLE t6;
 Table	Create Table
 t6	CREATE TABLE `t6` (
-  `a` int NOT NULL AUTO_INCREMENT,
-  `b` blob,
-  `c` int DEFAULT NULL,
+  `a` INT NOT NULL AUTO_INCREMENT,
+  `b` BLOB,
+  `c` INT DEFAULT NULL,
   KEY `a` (`a`)
 ) ENGINE=ARCHIVE COLLATE = utf8_general_ci
 DROP TABLE t1, t2, t4, t5, t6;

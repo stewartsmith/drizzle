@@ -1331,7 +1331,6 @@ int TableShare::inner_parse_table_proto(Session& session, message::Table &table)
 
 
     Table temp_table; /* Use this so that BLOB DEFAULT '' works */
-    memset(&temp_table, 0, sizeof(temp_table));
     temp_table.setShare(this);
     temp_table.in_use= &session;
     temp_table.getMutableShare()->db_low_byte_first= true; //Cursor->low_byte_first();
@@ -1978,7 +1977,7 @@ int TableShare::open_table_from_share(Session *session,
     assert(!(db_stat & HA_WAIT_IF_LOCKED));
     int ha_err;
 
-    if ((ha_err= (outparam.cursor->ha_open(identifier, &outparam, getNormalizedPath(),
+    if ((ha_err= (outparam.cursor->ha_open(identifier, &outparam,
                           (db_stat & HA_READ_ONLY ? O_RDONLY : O_RDWR),
                           (db_stat & HA_OPEN_TEMPORARY ? HA_OPEN_TMP_TABLE : HA_OPEN_IGNORE_IF_LOCKED) | ha_open_flags))))
     {

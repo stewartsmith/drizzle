@@ -24,7 +24,6 @@
 using namespace std;
 using namespace drizzled;
 
-static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2);
 static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_records,
                         uint32_t max_records);
 
@@ -39,18 +38,18 @@ static void init_block(HP_BLOCK *block,uint32_t chunk_length, uint32_t min_recor
 /* Create a heap table */
 
 int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
-    uint32_t columns, HP_COLUMNDEF *columndef,
-    uint32_t max_key_fieldnr, uint32_t key_part_size,
-    uint32_t reclength, uint32_t keys_memory_size,
-    uint32_t max_records, uint32_t min_records,
-    HP_CREATE_INFO *create_info, HP_SHARE **res)
+                uint32_t columns,
+                uint32_t key_part_size,
+                uint32_t reclength, uint32_t keys_memory_size,
+                uint32_t max_records, uint32_t min_records,
+                HP_CREATE_INFO *create_info, HP_SHARE **res)
 {
   uint32_t i, key_segs, max_length, length;
   uint32_t max_rows_for_stated_memory;
   HP_SHARE *share= 0;
   HA_KEYSEG *keyseg;
 
-  if (!create_info->internal_table)
+  if (not create_info->internal_table)
   {
     THR_LOCK_heap.lock();
     if ((share= hp_find_named_heap(name)) && share->open_count == 0)
@@ -63,7 +62,7 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
   if (!share)
   {
     size_t chunk_dataspace_length;
-    uint32_t chunk_length, is_variable_size;
+    uint32_t chunk_length;
     uint32_t fixed_data_length, fixed_column_count;
     HP_KEYDEF *keyinfo;
 
@@ -76,87 +75,21 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       if (configured_chunk_size < key_part_size)
       {
         /* Eventual chunk_size cannot be smaller than key data,
-           which allows all keys to fit into the first chunk */
+          which allows all keys to fit into the first chunk */
         my_error(ER_CANT_USE_OPTION_HERE, MYF(0), "block_size");
         THR_LOCK_heap.unlock();
         return(ER_CANT_USE_OPTION_HERE);
       }
 
-      if ((reclength - configured_chunk_size) >= VARIABLE_MIN_CHUNK_SIZE<<1)
-      {
-        /* Allow variable size only if we're saving at least two smallest chunks */
-        /* There has to be at least one field after indexed fields */
-        /* Note that NULL bits are already included in key_part_size */
-        is_variable_size= 1;
-        chunk_dataspace_length= configured_chunk_size;
-      }
-      else
-      {
-        /* max_chunk_size is near the full reclength, let's use fixed size */
-        is_variable_size= 0;
-        chunk_dataspace_length= reclength;
-      }
-    }
-    else if (create_info->is_dynamic)
-    {
-      /* User asked for dynamic records - use 256 as the chunk size */
-      if ((key_part_size + VARIABLE_REC_OVERHEAD) > 256)
-        chunk_dataspace_length= key_part_size;
-      else
-        chunk_dataspace_length= 256 - VARIABLE_REC_OVERHEAD;
-
-      is_variable_size= 1;
+      /* max_chunk_size is near the full reclength, let's use fixed size */
+      chunk_dataspace_length= reclength;
     }
     else
     {
       /* if max_chunk_size is not specified, put the whole record in one chunk */
-      is_variable_size= 0;
       chunk_dataspace_length= reclength;
     }
 
-    if (is_variable_size)
-    {
-      /* Check whether we have any variable size records past key data */
-      uint32_t has_variable_fields= 0;
-
-      fixed_data_length= key_part_size;
-      fixed_column_count= max_key_fieldnr;
-
-      for (i= max_key_fieldnr; i < columns; i++)
-      {
-        HP_COLUMNDEF* column= columndef + i;
-        if (column->type == DRIZZLE_TYPE_VARCHAR && column->length >= 32)
-        {
-            /* The field has to be >= 5.0.3 true VARCHAR and have substantial length */
-            /* TODO: do we want to calculate minimum length? */
-            has_variable_fields= 1;
-            break;
-        }
-
-        if (has_variable_fields)
-        {
-          break;
-        }
-
-        if ((column->offset + column->length) <= chunk_dataspace_length)
-        {
-          /* Still no variable-size columns, add one fixed-length */
-          fixed_column_count= i + 1;
-          fixed_data_length= column->offset + column->length;
-        }
-      }
-
-      if (!has_variable_fields)
-      {
-        /* There is no need to use variable-size records without variable-size columns */
-        /* Reset sizes if it's not variable size anymore */
-        is_variable_size= 0;
-        chunk_dataspace_length= reclength;
-        fixed_data_length= reclength;
-        fixed_column_count= columns;
-      }
-    }
-    else
     {
       fixed_data_length= reclength;
       fixed_column_count= columns;
@@ -168,11 +101,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     */
     set_if_bigger(chunk_dataspace_length, sizeof (unsigned char**));
 
-    if (is_variable_size)
-    {
-      chunk_length= chunk_dataspace_length + VARIABLE_REC_OVERHEAD;
-    }
-    else
     {
       chunk_length= chunk_dataspace_length + FIXED_REC_OVERHEAD;
     }
@@ -185,7 +113,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
     for (i= key_segs= max_length= 0, keyinfo= keydef; i < keys; i++, keyinfo++)
     {
       memset(&keyinfo->block, 0, sizeof(keyinfo->block));
-      memset(&keyinfo->rb_tree , 0, sizeof(keyinfo->rb_tree));
       for (uint32_t j= length= 0; j < keyinfo->keysegs; j++)
       {
 	length+= keyinfo->seg[j].length;
@@ -194,8 +121,6 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	  length++;
 	  if (!(keyinfo->flag & HA_NULL_ARE_EQUAL))
 	    keyinfo->flag|= HA_NULL_PART_KEY;
-	  if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
-	    keyinfo->rb_tree.size_of_element++;
 	}
 	switch (keyinfo->seg[j].type) {
 	case HA_KEYTYPE_LONG_INT:
@@ -235,29 +160,15 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 	}
       }
       keyinfo->length= length;
-      length+= keyinfo->rb_tree.size_of_element +
-	       ((keyinfo->algorithm == HA_KEY_ALG_BTREE) ? sizeof(unsigned char*) : 0);
       if (length > max_length)
 	max_length= length;
       key_segs+= keyinfo->keysegs;
-      if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
-      {
-        key_segs++; /* additional HA_KEYTYPE_END segment */
-        if (keyinfo->flag & HA_VAR_LENGTH_KEY)
-          keyinfo->get_key_length= hp_rb_var_key_length;
-        else if (keyinfo->flag & HA_NULL_PART_KEY)
-          keyinfo->get_key_length= hp_rb_null_key_length;
-        else
-          keyinfo->get_key_length= hp_rb_key_length;
-      }
     }
     share= new HP_SHARE;
 
     if (keys && !(share->keydef= new HP_KEYDEF[keys]))
       goto err;
     if (keys && !(share->keydef->seg= new HA_KEYSEG[key_segs]))
-      goto err;
-    if (!(share->column_defs= new HP_COLUMNDEF[columns]))
       goto err;
 
     /*
@@ -282,27 +193,9 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
       memcpy(keyseg, keydef[i].seg,
 	     (size_t) (sizeof(keyseg[0]) * keydef[i].keysegs));
       keyseg+= keydef[i].keysegs;
-
-      if (keydef[i].algorithm == HA_KEY_ALG_BTREE)
-      {
-	/* additional HA_KEYTYPE_END keyseg */
-	keyseg->type=     HA_KEYTYPE_END;
-	keyseg->length=   sizeof(unsigned char*);
-	keyseg->flag=     0;
-	keyseg->null_bit= 0;
-	keyseg++;
-
-	init_tree(&keyinfo->rb_tree, 0, 0, sizeof(unsigned char*),
-		  (qsort_cmp2)keys_compare, true, NULL, NULL);
-	keyinfo->delete_key= hp_rb_delete_key;
-	keyinfo->write_key= hp_rb_write_key;
-      }
-      else
       {
 	init_block(&keyinfo->block, sizeof(HASH_INFO), min_records,
 		   max_records);
-	keyinfo->delete_key= hp_delete_key;
-	keyinfo->write_key= hp_write_key;
         keyinfo->hash_buckets= 0;
       }
       if ((keyinfo->flag & HA_AUTO_KEY) && create_info->with_auto_increment)
@@ -326,13 +219,9 @@ int heap_create(const char *name, uint32_t keys, HP_KEYDEF *keydef,
 
     share->recordspace.chunk_length= chunk_length;
     share->recordspace.chunk_dataspace_length= chunk_dataspace_length;
-    share->recordspace.is_variable_size= is_variable_size;
     share->recordspace.total_data_length= 0;
 
-    if (is_variable_size) {
-      share->recordspace.offset_link= chunk_dataspace_length;
-      share->recordspace.offset_status= share->recordspace.offset_link + sizeof(unsigned char**);
-    } else {
+    {
       share->recordspace.offset_link= 1<<22; /* Make it likely to fail if anyone uses this offset */
       share->recordspace.offset_status= chunk_dataspace_length;
     }
@@ -358,8 +247,6 @@ err:
     delete [] share->keydef->seg;
   if (share && share->keydef)
     delete [] share->keydef;
-  if (share && share->column_defs)
-    delete [] share->column_defs;
   if (share)
     delete share;
   if (not create_info->internal_table)
@@ -367,13 +254,6 @@ err:
   return(1);
 } /* heap_create */
 
-
-static int keys_compare(heap_rb_param *param, unsigned char *key1, unsigned char *key2)
-{
-  uint32_t not_used[2];
-  return ha_key_cmp(param->keyseg, key1, key2, param->key_length,
-		    param->search_flag, not_used);
-}
 
 static void init_block(HP_BLOCK *block, uint32_t chunk_length, uint32_t min_records,
 		       uint32_t max_records)
@@ -443,6 +323,5 @@ void hp_free(HP_SHARE *share)
   if (share->keydef)
     delete [] share->keydef->seg;
   delete [] share->keydef;
-  delete [] share->column_defs;
   delete share;
 }

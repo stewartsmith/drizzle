@@ -31,6 +31,7 @@
 #include "mysql_protocol.h"
 #include "mysql_password.h"
 #include "options.h"
+#include "table_function.h"
 
 namespace po= boost::program_options;
 using namespace std;
@@ -50,6 +51,8 @@ static uint32_t random_seed1;
 static uint32_t random_seed2;
 static const uint32_t random_max= 0x3FFFFFFF;
 static const double random_max_double= (double)0x3FFFFFFF;
+
+static plugin::TableFunction* mysql_status_table_function_ptr= NULL;
 
 ListenMySQLProtocol::~ListenMySQLProtocol()
 {
@@ -76,6 +79,10 @@ plugin::Client *ListenMySQLProtocol::getClient(int fd)
 
   return new (nothrow) ClientMySQLProtocol(new_fd, using_mysql41_protocol);
 }
+
+drizzled::atomic<uint64_t> ClientMySQLProtocol::connectionCount;
+drizzled::atomic<uint64_t> ClientMySQLProtocol::failedConnections;
+drizzled::atomic<uint64_t> ClientMySQLProtocol::connected;
 
 ClientMySQLProtocol::ClientMySQLProtocol(int fd, bool using_mysql41_protocol_arg):
   using_mysql41_protocol(using_mysql41_protocol_arg)
@@ -135,12 +142,16 @@ void ClientMySQLProtocol::close(void)
   { 
     drizzleclient_net_close(&net);
     drizzleclient_net_end(&net);
+    connected.decrement();
   }
 }
 
 bool ClientMySQLProtocol::authenticate()
 {
   bool connection_is_valid;
+
+  connectionCount.increment();
+  connected.increment();
 
   /* Use "connect_timeout" value during connection phase */
   drizzleclient_net_set_read_timeout(&net, connect_timeout);
@@ -153,9 +164,9 @@ bool ClientMySQLProtocol::authenticate()
   else
   {
     sendError(session->main_da.sql_errno(), session->main_da.message());
+    failedConnections.increment();
     return false;
   }
-
   /* Connect completed, set read/write timeouts back to default */
   drizzleclient_net_set_read_timeout(&net, read_timeout);
   drizzleclient_net_set_write_timeout(&net, write_timeout);
@@ -886,7 +897,9 @@ plugin::Create_function<MySQLPassword> *mysql_password= NULL;
 
 static int init(drizzled::module::Context &context)
 {  
+  mysql_status_table_function_ptr= new MysqlProtocolStatus;
 
+  context.add(mysql_status_table_function_ptr);
   /* Initialize random seeds for the MySQL algorithm with minimal changes. */
   time_t seed_time= time(NULL);
   random_seed1= seed_time % random_max;
@@ -1021,6 +1034,103 @@ static drizzle_sys_var* sys_variables[]= {
   DRIZZLE_SYSVAR(bind_address),
   NULL
 };
+
+static int mysql_protocol_connection_count_func(drizzle_show_var *var, char *buff)
+{
+  var->type= SHOW_LONGLONG;
+  var->value= buff;
+  *((uint64_t *)buff)= ClientMySQLProtocol::connectionCount;
+  return 0;
+}
+
+static int mysql_protocol_connected_count_func(drizzle_show_var *var, char *buff)
+{
+  var->type= SHOW_LONGLONG;
+  var->value= buff;
+  *((uint64_t *)buff)= ClientMySQLProtocol::connected;
+  return 0;
+}
+
+static int mysql_protocol_failed_count_func(drizzle_show_var *var, char *buff)
+{
+  var->type= SHOW_LONGLONG;
+  var->value= buff;
+  *((uint64_t *)buff)= ClientMySQLProtocol::failedConnections;
+  return 0;
+}
+
+static st_show_var_func_container mysql_protocol_connection_count=
+  { &mysql_protocol_connection_count_func };
+
+static st_show_var_func_container mysql_protocol_connected_count=
+  { &mysql_protocol_connected_count_func };
+
+static st_show_var_func_container mysql_protocol_failed_count=
+  { &mysql_protocol_failed_count_func };
+
+static drizzle_show_var mysql_protocol_status_variables[]= {
+  {"Connections",
+  (char*) &mysql_protocol_connection_count, SHOW_FUNC},
+  {"Connected",
+  (char*) &mysql_protocol_connected_count, SHOW_FUNC},
+  {"Failed_connections",
+  (char*) &mysql_protocol_failed_count, SHOW_FUNC},
+  {NULL, NULL, SHOW_LONGLONG}
+};
+
+MysqlProtocolStatus::Generator::Generator(drizzled::Field **fields) :
+  plugin::TableFunction::Generator(fields)
+{
+  status_var_ptr= mysql_protocol_status_variables;
+}
+
+bool MysqlProtocolStatus::Generator::populate()
+{
+  MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, int64_t);
+  char * const buff= (char *) &buff_data;
+  drizzle_show_var tmp;
+
+  if (status_var_ptr->name)
+  {
+    std::ostringstream oss;
+    string return_value;
+    const char *value;
+    int type;
+
+    push(status_var_ptr->name);
+
+    if (status_var_ptr->type == SHOW_FUNC)
+    {
+      ((mysql_show_var_func)((st_show_var_func_container *)status_var_ptr->value)->func)(&tmp, buff);
+      value= buff;
+      type= tmp.type;
+    }
+    else
+    {
+      value= status_var_ptr->value;
+      type= status_var_ptr->type;
+    }
+
+    switch(type)
+    {
+    case SHOW_LONGLONG:
+      oss << *(uint64_t*) value;
+      return_value= oss.str();
+      break;
+    default:
+      assert(0);
+    }
+    if (return_value.length())
+      push(return_value);
+    else
+      push(" ");
+
+    status_var_ptr++;
+
+    return true;
+  }
+  return false;
+}
 
 DRIZZLE_DECLARE_PLUGIN
 {

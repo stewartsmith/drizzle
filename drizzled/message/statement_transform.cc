@@ -1283,7 +1283,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
   switch (field_type)
   {
     case Table::Field::DOUBLE:
-    destination.append(" double", 7);
+    destination.append(" DOUBLE", 7);
     if (field.has_numeric_options()
         && field.numeric_options().has_precision())
     {
@@ -1297,9 +1297,9 @@ transformFieldDefinitionToSql(const Table::Field &field,
     {
       if (field.string_options().has_collation()
           && field.string_options().collation().compare("binary") == 0)
-        destination.append(" varbinary(", 11);
+        destination.append(" VARBINARY(", 11);
       else
-        destination.append(" varchar(", 9);
+        destination.append(" VARCHAR(", 9);
 
       stringstream ss;
       ss << field.string_options().length() << ")";
@@ -1310,15 +1310,15 @@ transformFieldDefinitionToSql(const Table::Field &field,
     {
       if (field.string_options().has_collation()
           && field.string_options().collation().compare("binary") == 0)
-        destination.append(" blob", 5);
+        destination.append(" BLOB", 5);
       else
-        destination.append(" text", 5);
+        destination.append(" TEXT", 5);
     }
     break;
   case Table::Field::ENUM:
     {
       size_t num_field_values= field.enumeration_values().field_value_size();
-      destination.append(" enum(", 6);
+      destination.append(" ENUM(", 6);
       for (size_t x= 0; x < num_field_values; ++x)
       {
         const string &type= field.enumeration_values().field_value(x);
@@ -1334,14 +1334,14 @@ transformFieldDefinitionToSql(const Table::Field &field,
       break;
     }
   case Table::Field::INTEGER:
-    destination.append(" int", 4);
+    destination.append(" INT", 4);
     break;
   case Table::Field::BIGINT:
-    destination.append(" bigint", 7);
+    destination.append(" BIGINT", 7);
     break;
   case Table::Field::DECIMAL:
     {
-      destination.append(" decimal(", 9);
+      destination.append(" DECIMAL(", 9);
       stringstream ss;
       ss << field.numeric_options().precision() << ",";
       ss << field.numeric_options().scale() << ")";
@@ -1349,13 +1349,13 @@ transformFieldDefinitionToSql(const Table::Field &field,
     }
     break;
   case Table::Field::DATE:
-    destination.append(" date", 5);
+    destination.append(" DATE", 5);
     break;
   case Table::Field::TIMESTAMP:
-    destination.append(" timestamp",  10);
+    destination.append(" TIMESTAMP",  10);
     break;
   case Table::Field::DATETIME:
-    destination.append(" datetime",  9);
+    destination.append(" DATETIME",  9);
     break;
   }
 
@@ -1374,8 +1374,7 @@ transformFieldDefinitionToSql(const Table::Field &field,
       field.type() == Table::Field::VARCHAR)
   {
     if (field.string_options().has_collation()
-        && (field.string_options().collation().compare("binary")
-            && field.string_options().collation().compare("utf8_general_ci")))
+        && field.string_options().collation().compare("binary"))
     {
       destination.append(" COLLATE ", 9);
       destination.append(field.string_options().collation());

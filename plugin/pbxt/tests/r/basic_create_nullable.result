@@ -2,11 +2,11 @@ create table t1 (a int, b int not null, c int null, d int not null, pk int prima
 show create table t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` int DEFAULT NULL,
-  `b` int NOT NULL,
-  `c` int DEFAULT NULL,
-  `d` int NOT NULL,
-  `pk` int NOT NULL,
+  `a` INT DEFAULT NULL,
+  `b` INT NOT NULL,
+  `c` INT DEFAULT NULL,
+  `d` INT NOT NULL,
+  `pk` INT NOT NULL,
   PRIMARY KEY (`pk`)
 ) ENGINE=InnoDB COLLATE = utf8_general_ci
 insert into t1 values (0,0, 0, 0,0);
