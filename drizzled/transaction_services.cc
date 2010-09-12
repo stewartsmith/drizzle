@@ -818,6 +818,35 @@ int TransactionServices::rollbackToSavepoint(Session *session, NamedSavepoint &s
     }
   }
   trans->setResourceContexts(sv_resource_contexts);
+
+  if (shouldConstructMessages())
+  {
+    cleanupTransactionMessage(getActiveTransactionMessage(session), session);
+    message::Transaction *savepoint_transaction= sv.getTransactionSavepoint();
+
+    google::protobuf::RepeatedPtrField< message::Statement> *statements= 
+      savepoint_transaction->mutable_statement();
+
+    /* A iterator is used here rather then the other GPB functions as there needs
+       to be a check for the case where there are no statements (a NULL value) */
+    if (statements != NULL)
+    {
+      google::protobuf::RepeatedPtrField< message::Statement>::iterator it= 
+        statements->begin();
+      google::protobuf::RepeatedPtrField< message::Statement>::iterator end_it= 
+        statements->end();
+ 
+      message::Statement *new_statement= NULL;
+      
+      for (; it != end_it; ++it)
+      {
+        new_statement= &*it;
+      }
+
+      session->setTransactionMessage(savepoint_transaction);
+      session->setStatementMessage(new_statement);
+    }
+  }
   return error;
 }
 
@@ -862,6 +891,19 @@ int TransactionServices::setSavepoint(Session *session, NamedSavepoint &sv)
     Remember the list of registered storage engines.
   */
   sv.setResourceContexts(resource_contexts);
+
+  if (shouldConstructMessages())
+  {
+    message::Transaction *transaction= session->getTransactionMessage();
+                  
+    if (transaction != NULL)
+    {
+      message::Transaction *transaction_savepoint= 
+        new message::Transaction(*transaction);
+      sv.setTransactionSavepoint(transaction_savepoint);
+    }
+  } 
+
   return error;
 }
 
@@ -889,6 +931,13 @@ int TransactionServices::releaseSavepoint(Session *session, NamedSavepoint &sv)
       }
     }
   }
+  
+  if (shouldConstructMessages())
+  {
+    delete sv.getTransactionSavepoint();
+    sv.setTransactionSavepoint(NULL);
+  }
+
   return error;
 }
 
