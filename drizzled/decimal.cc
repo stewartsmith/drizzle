@@ -182,7 +182,7 @@ int decimal_operation_results(int result)
   @param[in]   filler      what char to pad with (ZEROFILL et al.)
   @param[out]  *str        where to store the resulting string
 
-  @return error coce
+  @return error code
     @retval E_DEC_OK
     @retval E_DEC_TRUNCATED
     @retval E_DEC_OVERFLOW
@@ -218,25 +218,23 @@ int my_decimal2string(uint32_t mask, const my_decimal *d,
 }
 
 
-/*
-  Convert from decimal to binary representation
+/**
+  @brief  Convert from decimal to binary representation
 
-  SYNOPSIS
-    my_decimal2binary()
-    mask        error processing mask
-    d           number for conversion
-    bin         pointer to buffer where to write result
-    prec        overall number of decimal digits
-    scale       number of decimal digits after decimal point
+  @param[in]   mask        error processing mask
+  @param[in]   d           number for conversion
+  @param[out]  bin         pointer to buffer where to write result
+  @param[in]   prec        overall number of decimal digits
+  @param[in]   scale       number of decimal digits after decimal point
 
-  NOTE
+  @note
     Before conversion we round number if it need but produce truncation
     error in this case
 
-  RETURN
-    E_DEC_OK
-    E_DEC_TRUNCATED
-    E_DEC_OVERFLOW
+  @return error code
+   @retval E_DEC_OK
+   @retval E_DEC_TRUNCATED
+   @retval E_DEC_OVERFLOW
 */
 
 int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, int prec,
@@ -259,23 +257,21 @@ int my_decimal2binary(uint32_t mask, const my_decimal *d, unsigned char *bin, in
 }
 
 
-/*
-  Convert string for decimal when string can be in some multibyte charset
+/**
+  @brief Convert string for decimal when string can be in some multibyte charset
 
-  SYNOPSIS
-    str2my_decimal()
-    mask            error processing mask
-    from            string to process
-    length          length of given string
-    charset         charset of given string
-    decimal_value   buffer for result storing
+  @param  mask            error processing mask
+  @param  from            string to process
+  @param  length          length of given string
+  @param  charset         charset of given string
+  @param  decimal_value   buffer for result storing
 
-  RESULT
-    E_DEC_OK
-    E_DEC_TRUNCATED
-    E_DEC_OVERFLOW
-    E_DEC_BAD_NUM
-    E_DEC_OOM
+  @return Error code
+   @retval E_DEC_OK
+   @retval E_DEC_TRUNCATED
+   @retval E_DEC_OVERFLOW
+   @retval E_DEC_BAD_NUM
+   @retval E_DEC_OOM
 */
 
 int str2my_decimal(uint32_t mask, const char *from, uint32_t length,
