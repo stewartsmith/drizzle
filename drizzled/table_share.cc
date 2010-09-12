@@ -749,9 +749,6 @@ TableShare::TableShare(TableIdentifier::Type type_arg,
     setNormalizedPath(path_buff, _path.length());
 
     version= refresh_version;
-
-    pthread_mutex_init(&mutex, MY_MUTEX_INIT_FAST);
-    pthread_cond_init(&cond, NULL);
   }
   else
   {
@@ -787,13 +784,11 @@ TableShare::~TableShare()
     /* share->mutex is locked in release_table_share() */
     while (waiting_on_cond)
     {
-      pthread_cond_broadcast(&cond);
-      pthread_cond_wait(&cond, &mutex);
+      cond.notify_all();
+      pthread_cond_wait(cond.native_handle(), mutex.native_handle());
     }
     /* No thread refers to this anymore */
-    pthread_mutex_unlock(&mutex);
-    pthread_mutex_destroy(&mutex);
-    pthread_cond_destroy(&cond);
+    mutex.unlock();
   }
 
   storage_engine= NULL;
