@@ -1,15 +1,15 @@
 SELECT value from data_dictionary.random_number LIMIT 10;
 value
-1804289383
-846930886
-1681692777
-1714636915
-1957747793
-424238335
-719885386
-1649760492
-596516649
-1189641421
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 CREATE TABLE t1 SELECT value from data_dictionary.random_number LIMIT 20;
 SELECT count(*) from t1;
 count(*)
@@ -20,8 +20,8 @@ count(*)
 30
 SELECT value from data_dictionary.random_number GROUP BY value LIMIT 10;
 value
-1131176229
+#
 select count(value) from data_dictionary.random_number;
 count(value)
-1
+#
 DROP TABLE t1;
