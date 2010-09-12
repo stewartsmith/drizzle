@@ -13,11 +13,17 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+/** @file
+ *
+ * @brief  SQL standard-compliant decimal number handling
+ *
+ * @note
+ * This library implements SQL standard "exact numeric" type
+ * and is not at all generic, but rather intentinally crippled to
+ * follow the standard :) 
+ */
+
 /*
-=======================================================================
-  NOTE: this library implements SQL standard "exact numeric" type
-  and is not at all generic, but rather intentinally crippled to
-  follow the standard :)
 =======================================================================
   Quoting the standard
   (SQL:2003, Part 2 Foundations, aka ISO/IEC 9075-2:2003)
