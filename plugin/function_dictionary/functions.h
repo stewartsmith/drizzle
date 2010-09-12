@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef PLUGIN_FUNCTION_DICTIONARY_RANDOM_NUMBER_H
-#define PLUGIN_FUNCTION_DICTIONARY_RANDOM_NUMBER_H
+#ifndef PLUGIN_FUNCTION_DICTIONARY_FUNCTIONS_H
+#define PLUGIN_FUNCTION_DICTIONARY_FUNCTIONS_H
 
 #include "drizzled/generator/functions.h"
 
@@ -51,4 +51,4 @@ public:
 
 } /* namespace function_dictionary */
 
-#endif /* PLUGIN_FUNCTION_DICTIONARY_RANDOM_NUMBER_H */
+#endif /* PLUGIN_FUNCTION_DICTIONARY_FUNCTIONS_H */
