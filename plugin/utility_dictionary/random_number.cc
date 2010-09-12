@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,15 +18,41 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#include "config.h"
 
-#include "drizzled/session.h"
+#include "plugin/utility_dictionary/dictionary.h"
 
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
+#include <drizzled/atomics.h>
+#include <drizzled/session.h>
 
-#endif /* DRIZZLED_GENERATOR_H */
+
+using namespace drizzled;
+using namespace std;
+
+utility_dictionary::RandomNumber::RandomNumber() :
+  plugin::TableFunction("DATA_DICTIONARY", "RANDOM_NUMBER")
+{
+  add_field("VALUE", plugin::TableFunction::NUMBER, 0, false);
+}
+
+bool utility_dictionary::RandomNumber::Generator::populate()
+{
+  if (getSession().getLex()->isSumExprUsed() && count > 0)
+    return false;
+
+  if (getSession().getLex()->current_select->group_list.elements && count > 0)
+    return false;
+
+  if (getSession().getLex()->current_select->explicit_limit or count == 0)
+  {
+    push(random());
+  }
+  else
+  {
+    return false;
+  }
+
+  count++;
+
+  return true;
+}
