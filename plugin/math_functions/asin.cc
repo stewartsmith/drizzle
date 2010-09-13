@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/asin.h>
+#include "asin.h"
 
 namespace drizzled
 {

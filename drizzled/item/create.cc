@@ -64,7 +64,6 @@
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/additive_op.h>
-#include <drizzled/function/math/asin.h>
 #include <drizzled/function/math/atan.h>
 #include <drizzled/function/math/ceiling.h>
 #include <drizzled/function/math/cos.h>
@@ -254,21 +253,6 @@ protected:
   Please keep this list sorted in alphabetical order,
   it helps to compare code between versions, and helps with merges conflicts.
 */
-
-
-class Create_func_asin : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_asin s_singleton;
-
-protected:
-  Create_func_asin() {}
-  virtual ~Create_func_asin() {}
-};
 
 
 class Create_func_atan : public Create_native_func
@@ -1480,15 +1464,6 @@ Create_func_arg3::create(Session *session, LEX_STRING name, List<Item> *item_lis
   return create(session, param_1, param_2, param_3);
 }
 
-Create_func_asin Create_func_asin::s_singleton;
-
-Item*
-Create_func_asin::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_asin(arg1);
-}
-
-
 Create_func_atan Create_func_atan::s_singleton;
 
 Item*
@@ -2468,7 +2443,6 @@ struct Native_func_registry
 
 static Native_func_registry func_array[] =
 {
-  { { C_STRING_WITH_LEN("ASIN") }, BUILDER(Create_func_asin)},
   { { C_STRING_WITH_LEN("ATAN") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("ATAN2") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
