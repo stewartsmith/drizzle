@@ -18,15 +18,37 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#ifndef DRIZZLED_GENERATOR_FUNCTIONS_H
+#define DRIZZLED_GENERATOR_FUNCTIONS_H
 
-#include "drizzled/session.h"
+#include "drizzled/plugin/function.h"
 
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
+namespace drizzled {
+namespace generator {
 
-#endif /* DRIZZLED_GENERATOR_H */
+class Functions
+{
+  Session &session;
+  std::string function_name;
+  plugin::Function::UdfMap::const_iterator udf_iter;
+
+public:
+
+  Functions(Session &arg);
+
+  operator std::string*()
+  {
+    if (udf_iter == plugin::Function::getMap().end())
+      return NULL;
+
+    function_name= (*udf_iter).first;
+    udf_iter++;
+
+    return &function_name;
+  }
+};
+
+} /* namespace generator */
+} /* namespace drizzled */
+
+#endif /* DRIZZLED_GENERATOR_FUNCTIONS_H */
