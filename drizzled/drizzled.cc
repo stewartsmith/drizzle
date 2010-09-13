@@ -667,7 +667,7 @@ const char *load_default_groups[]=
 
 static void check_limits_aii(uint64_t in_auto_increment_increment)
 {
-  global_system_variables.auto_increment_increment= 0;
+  global_system_variables.auto_increment_increment= 1;
   if (in_auto_increment_increment < 1 || in_auto_increment_increment > UINT64_MAX)
   {
     cout << N_("Error: Invalid Value for auto_increment_increment");
@@ -678,7 +678,7 @@ static void check_limits_aii(uint64_t in_auto_increment_increment)
 
 static void check_limits_aio(uint64_t in_auto_increment_offset)
 {
-  global_system_variables.auto_increment_offset= 0;
+  global_system_variables.auto_increment_offset= 1;
   if (in_auto_increment_offset < 1 || in_auto_increment_offset > UINT64_MAX)
   {
     cout << N_("Error: Invalid Value for auto_increment_offset");
@@ -700,7 +700,7 @@ static void check_limits_completion_type(uint32_t in_completion_type)
 
 static void check_limits_back_log(uint32_t in_back_log)
 {
-  back_log= 0;
+  back_log= 50;
   if (in_back_log < 1 || in_back_log > 65535)
   {
     cout << N_("Error: Invalid Value for back_log");
@@ -711,7 +711,7 @@ static void check_limits_back_log(uint32_t in_back_log)
 
 static void check_limits_dpi(uint32_t in_div_precincrement)
 {
-  global_system_variables.div_precincrement= 0;
+  global_system_variables.div_precincrement= 4;
   if (in_div_precincrement > DECIMAL_MAX_SCALE)
   {
     cout << N_("Error: Invalid Value for div-precision-increment");
@@ -722,7 +722,7 @@ static void check_limits_dpi(uint32_t in_div_precincrement)
 
 static void check_limits_gcml(uint64_t in_group_concat_max_len)
 {
-  global_system_variables.group_concat_max_len= 0;
+  global_system_variables.group_concat_max_len= 1024;
   if (in_group_concat_max_len > ULONG_MAX || in_group_concat_max_len < 4)
   {
     cout << N_("Error: Invalid Value for group_concat_max_len");
@@ -733,7 +733,7 @@ static void check_limits_gcml(uint64_t in_group_concat_max_len)
 
 static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
 {
-  global_system_variables.join_buff_size= 0;
+  global_system_variables.join_buff_size= (128*1024L);
   if (in_join_buffer_size < IO_SIZE*2 || in_join_buffer_size > ULONG_MAX)
   {
     cout << N_("Error: Invalid Value for join_buffer_size");
@@ -744,7 +744,7 @@ static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
 
 static void check_limits_map(uint32_t in_max_allowed_packet)
 {
-  global_system_variables.max_allowed_packet= 0;
+  global_system_variables.max_allowed_packet= (1024*1024L);
   if (in_max_allowed_packet < 1024 || in_max_allowed_packet > 1024*1024L*1024L)
   {
     cout << N_("Error: Invalid Value for max_allowed_packet");
@@ -755,7 +755,7 @@ static void check_limits_map(uint32_t in_max_allowed_packet)
 
 static void check_limits_mce(uint64_t in_max_connect_errors)
 {
-  max_connect_errors= 0;
+  max_connect_errors= MAX_CONNECT_ERRORS;
   if (in_max_connect_errors < 1 || in_max_connect_errors > ULONG_MAX)
   {
     cout << N_("Error: Invalid Value for max_connect_errors");
@@ -766,7 +766,7 @@ static void check_limits_mce(uint64_t in_max_connect_errors)
 
 static void check_limits_max_err_cnt(uint64_t in_max_error_count)
 {
-  global_system_variables.max_error_count= 0;
+  global_system_variables.max_error_count= DEFAULT_ERROR_COUNT;
   if (in_max_error_count > 65535)
   {
     cout << N_("Error: Invalid Value for max_error_count");
@@ -777,7 +777,7 @@ static void check_limits_max_err_cnt(uint64_t in_max_error_count)
 
 static void check_limits_mhts(uint64_t in_max_heap_table_size)
 {
-  global_system_variables.max_heap_table_size= 0;
+  global_system_variables.max_heap_table_size= (16*1024*1024L);
   if (in_max_heap_table_size < 16384 || in_max_heap_table_size > MAX_MEM_TABLE_SIZE)
   {
     cout << N_("Error: Invalid Value for max_heap_table_size");
@@ -799,7 +799,7 @@ static void check_limits_merl(uint64_t in_min_examined_row_limit)
 
 static void check_limits_max_join_size(drizzled::ha_rows in_max_join_size)
 {
-  global_system_variables.max_join_size= 0;
+  global_system_variables.max_join_size= INT32_MAX;
   if ((uint64_t)in_max_join_size < 1 || (uint64_t)in_max_join_size > INT32_MAX)
   {
     cout << N_("Error: Invalid Value for max_join_size");
@@ -810,7 +810,7 @@ static void check_limits_max_join_size(drizzled::ha_rows in_max_join_size)
 
 static void check_limits_mlfsd(int64_t in_max_length_for_sort_data)
 {
-  global_system_variables.max_length_for_sort_data= 0;
+  global_system_variables.max_length_for_sort_data= 1024;
   if (in_max_length_for_sort_data < 4 || in_max_length_for_sort_data > 8192*1024L)
   {
     cout << N_("Error: Invalid Value for max_length_for_sort_data");
@@ -821,7 +821,7 @@ static void check_limits_mlfsd(int64_t in_max_length_for_sort_data)
 
 static void check_limits_msfk(uint64_t in_max_seeks_for_key)
 {
-  global_system_variables.max_seeks_for_key= 0;
+  global_system_variables.max_seeks_for_key= ULONG_MAX;
   if (in_max_seeks_for_key < 1 || in_max_seeks_for_key > ULONG_MAX)
   {
     cout << N_("Error: Invalid Value for max_seeks_for_key");
@@ -832,7 +832,7 @@ static void check_limits_msfk(uint64_t in_max_seeks_for_key)
 
 static void check_limits_max_sort_length(size_t in_max_sort_length)
 {
-  global_system_variables.max_sort_length= 0;
+  global_system_variables.max_sort_length= 1024;
   if ((int64_t)in_max_sort_length < 4 || (int64_t)in_max_sort_length > 8192*1024L)
   {
     cout << N_("Error: Invalid Value for max_sort_length");
@@ -843,7 +843,7 @@ static void check_limits_max_sort_length(size_t in_max_sort_length)
 
 static void check_limits_mwlc(uint64_t in_min_examined_row_limit)
 {
-  global_system_variables.min_examined_row_limit= 0;
+  global_system_variables.min_examined_row_limit= ULONG_MAX;
   if (in_min_examined_row_limit > ULONG_MAX)
   {
     cout << N_("Error: Invalid Value for min_examined_row_limit");
@@ -865,7 +865,7 @@ static void check_limits_osd(uint32_t in_optimizer_search_depth)
 
 static void check_limits_pbs(uint64_t in_preload_buff_size)
 {
-  global_system_variables.preload_buff_size= 0;
+  global_system_variables.preload_buff_size= (32*1024L);
   if (in_preload_buff_size < 1024 || in_preload_buff_size > 1024*1024*1024L)
   {
     cout << N_("Error: Invalid Value for preload_buff_size");
@@ -876,7 +876,7 @@ static void check_limits_pbs(uint64_t in_preload_buff_size)
 
 static void check_limits_qabs(uint32_t in_query_alloc_block_size)
 {
-  global_system_variables.query_alloc_block_size= 0;
+  global_system_variables.query_alloc_block_size= QUERY_ALLOC_BLOCK_SIZE;
   if (in_query_alloc_block_size < 1024)
   {
     cout << N_("Error: Invalid Value for query_alloc_block_size");
@@ -887,7 +887,7 @@ static void check_limits_qabs(uint32_t in_query_alloc_block_size)
 
 static void check_limits_qps(uint32_t in_query_prealloc_size)
 {
-  global_system_variables.query_prealloc_size= 0;
+  global_system_variables.query_prealloc_size= QUERY_ALLOC_PREALLOC_SIZE;
   if (in_query_prealloc_size < QUERY_ALLOC_PREALLOC_SIZE)
   {
     cout << N_("Error: Invalid Value for query_prealloc_size");
@@ -898,7 +898,7 @@ static void check_limits_qps(uint32_t in_query_prealloc_size)
 
 static void check_limits_rabs(size_t in_range_alloc_block_size)
 {
-  global_system_variables.range_alloc_block_size= 0;
+  global_system_variables.range_alloc_block_size= RANGE_ALLOC_BLOCK_SIZE;
   if (in_range_alloc_block_size < RANGE_ALLOC_BLOCK_SIZE)
   {
     cout << N_("Error: Invalid Value for range_alloc_block_size");
@@ -909,7 +909,7 @@ static void check_limits_rabs(size_t in_range_alloc_block_size)
 
 static void check_limits_read_buffer_size(int32_t in_read_buff_size)
 {
-  global_system_variables.read_buff_size= 0;
+  global_system_variables.read_buff_size= (128*1024L);
   if (in_read_buff_size < IO_SIZE*2 || in_read_buff_size > INT32_MAX)
   {
     cout << N_("Error: Invalid Value for read_buff_size");
@@ -920,7 +920,7 @@ static void check_limits_read_buffer_size(int32_t in_read_buff_size)
 
 static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
 {
-  global_system_variables.read_rnd_buff_size= 0;
+  global_system_variables.read_rnd_buff_size= (256*1024L);
   if (in_read_rnd_buff_size < 64 || in_read_rnd_buff_size > UINT32_MAX)
   {
     cout << N_("Error: Invalid Value for read_rnd_buff_size");
@@ -931,7 +931,7 @@ static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
 
 static void check_limits_sort_buffer_size(size_t in_sortbuff_size)
 {
-  global_system_variables.sortbuff_size= 0;
+  global_system_variables.sortbuff_size= MAX_SORT_MEMORY;
   if ((uint32_t)in_sortbuff_size < MIN_SORT_MEMORY)
   {
     cout << N_("Error: Invalid Value for sort_buff_size");
@@ -942,7 +942,7 @@ static void check_limits_sort_buffer_size(size_t in_sortbuff_size)
 
 static void check_limits_tdc(uint32_t in_table_def_size)
 {
-  table_def_size= 0;
+  table_def_size= 128;
   if (in_table_def_size < 1 || in_table_def_size > 512*1024L)
   {
     cout << N_("Error: Invalid Value for table_def_size");
@@ -953,7 +953,7 @@ static void check_limits_tdc(uint32_t in_table_def_size)
 
 static void check_limits_toc(uint32_t in_table_cache_size)
 {
-  table_cache_size= 0;
+  table_cache_size= TABLE_OPEN_CACHE_DEFAULT;
   if (in_table_cache_size < TABLE_OPEN_CACHE_MIN || in_table_cache_size > 512*1024L)
   {
     cout << N_("Error: Invalid Value for table_cache_size");
@@ -964,7 +964,7 @@ static void check_limits_toc(uint32_t in_table_cache_size)
 
 static void check_limits_tlwt(uint64_t in_table_lock_wait_timeout)
 {
-  table_lock_wait_timeout= 0;
+  table_lock_wait_timeout= 50;
   if (in_table_lock_wait_timeout < 1 || in_table_lock_wait_timeout > 1024*1024*1024)
   {
     cout << N_("Error: Invalid Value for table_lock_wait_timeout");
@@ -980,7 +980,7 @@ static void check_limits_thread_stack(uint32_t in_my_thread_stack_size)
 
 static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
 {
-  global_system_variables.tmp_table_size= 0;
+  global_system_variables.tmp_table_size= 16*1024*1024L;
   if (in_tmp_table_size < 1024 || in_tmp_table_size > MAX_MEM_TABLE_SIZE)
   {
     cout << N_("Error: Invalid Value for table_lock_wait_timeout");
