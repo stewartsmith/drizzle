@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2010-07-20 16:06+0000\n"
-"PO-Revision-Date: 2010-08-27 19:07+0000\n"
+"PO-Revision-Date: 2010-09-12 14:27+0000\n"
 "Last-Translator: Matheus de Araújo <Unknown>\n"
 "Language-Team: Brazilian Portuguese <pt_BR@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Launchpad-Export-Date: 2010-08-28 03:39+0000\n"
+"X-Launchpad-Export-Date: 2010-09-13 05:02+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 msgid "Synonym for `help'."
@@ -99,7 +99,7 @@ msgid "Error: Invalid Value for max_input_line"
 msgstr "Erro: Valor Inválido para max_input_line"
 
 msgid "Displays this help and exit."
-msgstr ""
+msgstr "Mostra essa ajuda e sai."
 
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
@@ -367,11 +367,13 @@ msgstr "DELIMITER não pode conter barra-invertida."
 
 #, c-format
 msgid "Error: Value of %<PRIu32> supplied for port is not valid.\n"
-msgstr ""
+msgstr "Erro: O valor de %<PRIu32> necessário para a porta é inválido.\n"
 
 #, c-format
 msgid "drizzle  Ver %s Distrib %s, for %s-%s (%s) using readline %s\n"
 msgstr ""
+"drizzle  Versão %s Distribuição %s, para %s-%s (%s) usando linha de comando "
+"%s\n"
 
 #, c-format
 msgid ""
@@ -385,7 +387,7 @@ msgstr ""
 
 #, c-format
 msgid "Usage: drizzle [OPTIONS] [database]\n"
-msgstr ""
+msgstr "Uso: drizzle [OPÇÕES] [banco de dados]\n"
 
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr "Bem-vindo ao cliente Drizzle. Comandos ecerram com ; or /g."
