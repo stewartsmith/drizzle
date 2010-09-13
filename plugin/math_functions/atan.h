@@ -29,10 +29,10 @@ namespace drizzled
 class Item_func_atan :public Item_dec_func
 {
 public:
-  Item_func_atan(Item *a) :Item_dec_func(a) {}
-  Item_func_atan(Item *a,Item *b) :Item_dec_func(a,b) {}
+  Item_func_atan() :Item_dec_func() {}
   double val_real();
   const char *func_name() const { return "atan"; }
+  bool check_argument_count(int n) { return n == 1 || n == 2; }
 };
 
 } /* namespace drizzled */

@@ -64,7 +64,6 @@
 
 #include <drizzled/function/func.h>
 #include <drizzled/function/additive_op.h>
-#include <drizzled/function/math/atan.h>
 #include <drizzled/function/math/ceiling.h>
 #include <drizzled/function/math/cos.h>
 #include <drizzled/function/math/dec.h>
@@ -254,18 +253,6 @@ protected:
   it helps to compare code between versions, and helps with merges conflicts.
 */
 
-
-class Create_func_atan : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_atan s_singleton;
-
-protected:
-  Create_func_atan() {}
-  virtual ~Create_func_atan() {}
-};
 
 class Create_func_bin : public Create_func_arg1
 {
@@ -1464,42 +1451,6 @@ Create_func_arg3::create(Session *session, LEX_STRING name, List<Item> *item_lis
   return create(session, param_1, param_2, param_3);
 }
 
-Create_func_atan Create_func_atan::s_singleton;
-
-Item*
-Create_func_atan::create_native(Session *session, LEX_STRING name,
-                                List<Item> *item_list)
-{
-  Item* func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  switch (arg_count) {
-  case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (session->mem_root) Item_func_atan(param_1);
-    break;
-  }
-  case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    func= new (session->mem_root) Item_func_atan(param_1, param_2);
-    break;
-  }
-  default:
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
-  }
-  }
-
-  return func;
-}
-
 Create_func_bin Create_func_bin::s_singleton;
 
 Item*
@@ -2443,8 +2394,6 @@ struct Native_func_registry
 
 static Native_func_registry func_array[] =
 {
-  { { C_STRING_WITH_LEN("ATAN") }, BUILDER(Create_func_atan)},
-  { { C_STRING_WITH_LEN("ATAN2") }, BUILDER(Create_func_atan)},
   { { C_STRING_WITH_LEN("BIN") }, BUILDER(Create_func_bin)},
   { { C_STRING_WITH_LEN("CEIL") }, BUILDER(Create_func_ceiling)},
   { { C_STRING_WITH_LEN("CEILING") }, BUILDER(Create_func_ceiling)},

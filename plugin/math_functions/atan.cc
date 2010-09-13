@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/atan.h>
+#include "atan.h"
 
 namespace drizzled
 {
