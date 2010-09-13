@@ -1314,4 +1314,3 @@ void ArchiveEngine::doGetTableIdentifiers(drizzled::CachedDirectory &directory,
     }
   }
 }
-

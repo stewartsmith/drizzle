@@ -176,19 +176,21 @@ ha_heap::ha_heap(plugin::StorageEngine &engine_arg,
 */
 #define MEMORY_STATS_UPDATE_THRESHOLD 10
 
-int ha_heap::open(const char *name, int mode, uint32_t test_if_locked)
+int ha_heap::doOpen(const drizzled::TableIdentifier &identifier, int mode, uint32_t test_if_locked)
 {
-  if ((test_if_locked & HA_OPEN_INTERNAL_TABLE) || (!(file= heap_open(name, mode)) && errno == ENOENT))
+  if ((test_if_locked & HA_OPEN_INTERNAL_TABLE) || (!(file= heap_open(identifier.getPath().c_str(), mode)) && errno == ENOENT))
   {
     internal_table= test(test_if_locked & HA_OPEN_INTERNAL_TABLE);
     file= 0;
     HP_SHARE *internal_share= NULL;
     message::Table create_proto;
 
-    if (!heap_storage_engine->heap_create_table(table->in_use, name, table,
-                                                internal_table,
-                                                create_proto,
-                                                &internal_share))
+    if (not heap_storage_engine->heap_create_table(table->in_use,
+                                                   identifier.getPath().c_str(),
+                                                   table,
+                                                   internal_table,
+                                                   create_proto,
+                                                   &internal_share))
     {
         file= internal_table ?
           heap_open_from_share(internal_share, mode) :
@@ -684,7 +686,6 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   uint32_t max_key_fieldnr = 0, key_part_size = 0, next_field_pos = 0;
   uint32_t column_count= table_arg->getShare()->sizeFields();
   std::vector<HP_KEYDEF> keydef;
-  char buff[FN_REFLEN];
   int error;
   bool found_real_auto_increment= 0;
 
@@ -800,15 +801,14 @@ int HeapEngine::heap_create_table(Session *session, const char *table_name,
   hp_create_info.internal_table= internal_table;
   hp_create_info.max_chunk_size= table_arg->getShare()->block_size;
 
-  error= heap_create(internal::fn_format(buff,table_name,"","",
-                              MY_REPLACE_EXT|MY_UNPACK_FILENAME),
-                    keys, &keydef[0],
-                    column_count,
-                    key_part_size,
-                    table_arg->getShare()->getRecordLength(), mem_per_row_keys,
-                    static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
-                    0, // Factor out MIN
-                    &hp_create_info, internal_share);
+  error= heap_create(table_name,
+                     keys, &keydef[0],
+                     column_count,
+                     key_part_size,
+                     table_arg->getShare()->getRecordLength(), mem_per_row_keys,
+                     static_cast<uint32_t>(num_rows), /* We check for overflow above, so cast is fine here. */
+                     0, // Factor out MIN
+                     &hp_create_info, internal_share);
 
   return (error);
 }
