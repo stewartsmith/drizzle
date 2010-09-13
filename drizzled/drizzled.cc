@@ -129,6 +129,9 @@
 #endif
 
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
+#include <iostream>
+#include <fstream>
+
 
 using namespace std;
 namespace po=boost::program_options;
@@ -662,6 +665,387 @@ const char *load_default_groups[]=
   DRIZZLE_CONFIG_NAME, "server", 0, 0
 };
 
+static void check_limits_aii(uint64_t in_auto_increment_increment)
+{
+  global_system_variables.auto_increment_increment= 0;
+  if (in_auto_increment_increment < 1 || in_auto_increment_increment > UINT64_MAX)
+  {
+    cout << N_("Error: Invalid Value for auto_increment_increment");
+    exit(-1);
+  }
+  global_system_variables.auto_increment_increment= in_auto_increment_increment;
+}
+
+static void check_limits_aio(uint64_t in_auto_increment_offset)
+{
+  global_system_variables.auto_increment_offset= 0;
+  if (in_auto_increment_offset < 1 || in_auto_increment_offset > UINT64_MAX)
+  {
+    cout << N_("Error: Invalid Value for auto_increment_offset");
+    exit(-1);
+  }
+  global_system_variables.auto_increment_offset= in_auto_increment_offset;
+}
+
+static void check_limits_completion_type(uint32_t in_completion_type)
+{
+  global_system_variables.completion_type= 0;
+  if (in_completion_type > 2)
+  {
+    cout << N_("Error: Invalid Value for completion_type");
+    exit(-1);
+  }
+  global_system_variables.completion_type= in_completion_type;
+}
+
+static void check_limits_back_log(uint32_t in_back_log)
+{
+  back_log= 0;
+  if (in_back_log < 1 || in_back_log > 65535)
+  {
+    cout << N_("Error: Invalid Value for back_log");
+    exit(-1);
+  }
+  back_log= in_back_log;
+}
+
+static void check_limits_dpi(uint32_t in_div_precincrement)
+{
+  global_system_variables.div_precincrement= 0;
+  if (in_div_precincrement > DECIMAL_MAX_SCALE)
+  {
+    cout << N_("Error: Invalid Value for div-precision-increment");
+    exit(-1);
+  }
+  global_system_variables.div_precincrement= in_div_precincrement;
+}
+
+static void check_limits_gcml(uint64_t in_group_concat_max_len)
+{
+  global_system_variables.group_concat_max_len= 0;
+  if (in_group_concat_max_len > ULONG_MAX || in_group_concat_max_len < 4)
+  {
+    cout << N_("Error: Invalid Value for group_concat_max_len");
+    exit(-1);
+  }
+  global_system_variables.group_concat_max_len= in_group_concat_max_len;
+}
+
+static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
+{
+  global_system_variables.join_buff_size= 0;
+  if (in_join_buffer_size < IO_SIZE*2 || in_join_buffer_size > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for join_buffer_size");
+    exit(-1);
+  }
+  global_system_variables.join_buff_size-= in_join_buffer_size % IO_SIZE;
+}
+
+static void check_limits_map(uint32_t in_max_allowed_packet)
+{
+  global_system_variables.max_allowed_packet= 0;
+  if (in_max_allowed_packet < 1024 || in_max_allowed_packet > 1024*1024L*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_allowed_packet");
+    exit(-1);
+  }
+  global_system_variables.max_allowed_packet-= in_max_allowed_packet % 1024;
+}
+
+static void check_limits_mce(uint64_t in_max_connect_errors)
+{
+  max_connect_errors= 0;
+  if (in_max_connect_errors < 1 || in_max_connect_errors > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_connect_errors");
+    exit(-1);
+  }
+  max_connect_errors= in_max_connect_errors;
+}
+
+static void check_limits_max_err_cnt(uint64_t in_max_error_count)
+{
+  global_system_variables.max_error_count= 0;
+  if (in_max_error_count > 65535)
+  {
+    cout << N_("Error: Invalid Value for max_error_count");
+    exit(-1);
+  }
+  global_system_variables.max_error_count= in_max_error_count;
+}
+
+static void check_limits_mhts(uint64_t in_max_heap_table_size)
+{
+  global_system_variables.max_heap_table_size= 0;
+  if (in_max_heap_table_size < 16384 || in_max_heap_table_size > MAX_MEM_TABLE_SIZE)
+  {
+    cout << N_("Error: Invalid Value for max_heap_table_size");
+    exit(-1);
+  }
+  global_system_variables.max_heap_table_size-= in_max_heap_table_size % 1024;
+}
+
+static void check_limits_merl(uint64_t in_min_examined_row_limit)
+{
+  global_system_variables.min_examined_row_limit= 0;
+  if (in_min_examined_row_limit > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_heap_table_size");
+    exit(-1);
+  }
+  global_system_variables.min_examined_row_limit-= in_min_examined_row_limit % 1L;
+}
+
+static void check_limits_max_join_size(drizzled::ha_rows in_max_join_size)
+{
+  global_system_variables.max_join_size= 0;
+  if ((uint64_t)in_max_join_size < 1 || (uint64_t)in_max_join_size > INT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_join_size");
+    exit(-1);
+  }
+  global_system_variables.max_join_size= in_max_join_size;
+}
+
+static void check_limits_mlfsd(int64_t in_max_length_for_sort_data)
+{
+  global_system_variables.max_length_for_sort_data= 0;
+  if (in_max_length_for_sort_data < 4 || in_max_length_for_sort_data > 8192*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_length_for_sort_data");
+    exit(-1);
+  }
+  global_system_variables.max_length_for_sort_data= in_max_length_for_sort_data;
+}
+
+static void check_limits_msfk(uint64_t in_max_seeks_for_key)
+{
+  global_system_variables.max_seeks_for_key= 0;
+  if (in_max_seeks_for_key < 1 || in_max_seeks_for_key > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_seeks_for_key");
+    exit(-1);
+  }
+  global_system_variables.max_seeks_for_key= in_max_seeks_for_key;
+}
+
+static void check_limits_max_sort_length(size_t in_max_sort_length)
+{
+  global_system_variables.max_sort_length= 0;
+  if ((int64_t)in_max_sort_length < 4 || (int64_t)in_max_sort_length > 8192*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_sort_length");
+    exit(-1);
+  }
+  global_system_variables.max_sort_length= in_max_sort_length;
+}
+
+static void check_limits_mwlc(uint64_t in_min_examined_row_limit)
+{
+  global_system_variables.min_examined_row_limit= 0;
+  if (in_min_examined_row_limit > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for min_examined_row_limit");
+    exit(-1);
+  }
+  global_system_variables.min_examined_row_limit-= in_min_examined_row_limit % 1L;
+}
+
+static void check_limits_osd(uint32_t in_optimizer_search_depth)
+{
+  global_system_variables.optimizer_search_depth= 0;
+  if (in_optimizer_search_depth > MAX_TABLES + 2)
+  {
+    cout << N_("Error: Invalid Value for optimizer_search_depth");
+    exit(-1);
+  }
+  global_system_variables.optimizer_search_depth= in_optimizer_search_depth;
+}
+
+static void check_limits_pbs(uint64_t in_preload_buff_size)
+{
+  global_system_variables.preload_buff_size= 0;
+  if (in_preload_buff_size < 1024 || in_preload_buff_size > 1024*1024*1024L)
+  {
+    cout << N_("Error: Invalid Value for preload_buff_size");
+    exit(-1);
+  }
+  global_system_variables.preload_buff_size= in_preload_buff_size;
+}
+
+static void check_limits_qabs(uint32_t in_query_alloc_block_size)
+{
+  global_system_variables.query_alloc_block_size= 0;
+  if (in_query_alloc_block_size < 1024)
+  {
+    cout << N_("Error: Invalid Value for query_alloc_block_size");
+    exit(-1);
+  }
+  global_system_variables.query_alloc_block_size-= in_query_alloc_block_size % 1024;
+}
+
+static void check_limits_qps(uint32_t in_query_prealloc_size)
+{
+  global_system_variables.query_prealloc_size= 0;
+  if (in_query_prealloc_size < QUERY_ALLOC_PREALLOC_SIZE)
+  {
+    cout << N_("Error: Invalid Value for query_prealloc_size");
+    exit(-1);
+  }
+  global_system_variables.query_prealloc_size-= in_query_prealloc_size % 1024;
+}
+
+static void check_limits_rabs(size_t in_range_alloc_block_size)
+{
+  global_system_variables.range_alloc_block_size= 0;
+  if (in_range_alloc_block_size < RANGE_ALLOC_BLOCK_SIZE)
+  {
+    cout << N_("Error: Invalid Value for range_alloc_block_size");
+    exit(-1);
+  }
+  global_system_variables.range_alloc_block_size-= in_range_alloc_block_size % 1024;
+}
+
+static void check_limits_read_buffer_size(int32_t in_read_buff_size)
+{
+  global_system_variables.read_buff_size= 0;
+  if (in_read_buff_size < IO_SIZE*2 || in_read_buff_size > INT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for read_buff_size");
+    exit(-1);
+  }
+  global_system_variables.read_buff_size-= in_read_buff_size % IO_SIZE;
+}
+
+static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
+{
+  global_system_variables.read_rnd_buff_size= 0;
+  if (in_read_rnd_buff_size < 64 || in_read_rnd_buff_size > UINT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for read_rnd_buff_size");
+    exit(-1);
+  }
+  global_system_variables.read_rnd_buff_size-= in_read_rnd_buff_size;
+}
+
+static void check_limits_sort_buffer_size(size_t in_sortbuff_size)
+{
+  global_system_variables.sortbuff_size= 0;
+  if ((uint32_t)in_sortbuff_size < MIN_SORT_MEMORY)
+  {
+    cout << N_("Error: Invalid Value for sort_buff_size");
+    exit(-1);
+  }
+  global_system_variables.sortbuff_size= in_sortbuff_size;
+}
+
+static void check_limits_tdc(uint32_t in_table_def_size)
+{
+  table_def_size= 0;
+  if (in_table_def_size < 1 || in_table_def_size > 512*1024L)
+  {
+    cout << N_("Error: Invalid Value for table_def_size");
+    exit(-1);
+  }
+  table_def_size= in_table_def_size;
+}
+
+static void check_limits_toc(uint32_t in_table_cache_size)
+{
+  table_cache_size= 0;
+  if (in_table_cache_size < TABLE_OPEN_CACHE_MIN || in_table_cache_size > 512*1024L)
+  {
+    cout << N_("Error: Invalid Value for table_cache_size");
+    exit(-1);
+  }
+  table_cache_size= in_table_cache_size;
+}
+
+static void check_limits_tlwt(uint64_t in_table_lock_wait_timeout)
+{
+  table_lock_wait_timeout= 0;
+  if (in_table_lock_wait_timeout < 1 || in_table_lock_wait_timeout > 1024*1024*1024)
+  {
+    cout << N_("Error: Invalid Value for table_lock_wait_timeout");
+    exit(-1);
+  }
+  table_lock_wait_timeout= in_table_lock_wait_timeout;
+}
+
+static void check_limits_thread_stack(uint32_t in_my_thread_stack_size)
+{
+  my_thread_stack_size= in_my_thread_stack_size - (in_my_thread_stack_size % 1024);
+}
+
+static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
+{
+  global_system_variables.tmp_table_size= 0;
+  if (in_tmp_table_size < 1024 || in_tmp_table_size > MAX_MEM_TABLE_SIZE)
+  {
+    cout << N_("Error: Invalid Value for table_lock_wait_timeout");
+    exit(-1);
+  }
+  global_system_variables.tmp_table_size= in_tmp_table_size;
+}
+
+static pair<string, string> parse_size_suffixes(string s)
+{
+  size_t equal_pos= s.find("=");
+  if (equal_pos != string::npos)
+  {
+    string arg_key(s.substr(0, equal_pos));
+    string arg_val(s.substr(equal_pos+1));
+
+    try
+    {
+      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
+      if (size_suffix_pos == arg_val.size()-1)
+      {
+        char suffix= arg_val[size_suffix_pos];
+        string size_val(arg_val.substr(0, size_suffix_pos));
+
+        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
+        uint64_t new_size= 0;
+
+        switch (suffix)
+        {
+        case 'K':
+        case 'k':
+          new_size= base_size * 1024;
+          break;
+        case 'M':
+        case 'm':
+          new_size= base_size * 1024 * 1024;
+          break;
+        case 'G':
+        case 'g':
+          new_size= base_size * 1024 * 1024 * 1024;
+          break;
+        }
+        return make_pair(arg_key,
+                         boost::lexical_cast<string>(new_size));
+      }
+    }
+    catch (...)
+    {
+      /* Screw it, let the normal parser take over */
+    }
+  }
+
+  return make_pair(string(""), string(""));
+}
+
+static pair<string, string> parse_size_arg(string s)
+{
+  if (s.find("--") == 0)
+  {
+    return parse_size_suffixes(s.substr(2));
+  }
+  return make_pair(string(""), string(""));
+}
+
+
 int init_common_variables(int argc, char **argv)
 {
   time_t curr_time;
@@ -707,6 +1091,199 @@ int init_common_variables(int argc, char **argv)
   strcpy(internal::fn_ext(pidfile_name),".pid");		// Add proper extension
 
 
+
+
+  std::string system_config_dir_drizzle(SYSCONFDIR);
+  system_config_dir_drizzle.append("/drizzle/drizzle.cnf");
+
+  long_options.add_options()
+  ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false)->zero_tokens(),
+  N_("Display this help and exit after initializing plugins."))
+  ("help,?", po::value<bool>(&opt_help)->default_value(false)->zero_tokens(),
+  N_("Display this help and exit."))
+  ("auto-increment-increment", po::value<uint64_t>(&global_system_variables.auto_increment_increment)->default_value(1)->notifier(&check_limits_aii),
+  N_("Auto-increment columns are incremented by this"))
+  ("auto-increment-offset", po::value<uint64_t>(&global_system_variables.auto_increment_offset)->default_value(1)->notifier(&check_limits_aio),
+  N_("Offset added to Auto-increment columns. Used when auto-increment-increment != 1"))
+  ("basedir,b", po::value<string>(),
+  N_("Path to installation directory. All paths are usually resolved "
+     "relative to this."))
+  ("chroot,r", po::value<string>(),
+  N_("Chroot drizzled daemon during startup."))
+  ("collation-server", po::value<string>(),
+  N_("Set the default collation."))      
+  ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
+  N_("Default completion type."))
+  ("core-file",  N_("Write core on errors."))
+  ("datadir,h", po::value<string>(),
+  N_("Path to the database root."))
+  ("default-storage-engine", po::value<string>(),
+  N_("Set the default storage engine (table type) for tables."))
+  ("default-time-zone", po::value<string>(),
+  N_("Set the default time zone."))
+  ("exit-info,T", po::value<long>(),
+  N_("Used for debugging;  Use at your own risk!"))
+  ("gdb", po::value<bool>(&opt_debugging)->default_value(false)->zero_tokens(),
+  N_("Set up signals usable for debugging"))
+  ("language,L", po::value<string>(),
+  N_("(IGNORED)"))  
+  ("lc-time-name", po::value<string>(),
+  N_("Set the language used for the month names and the days of the week."))
+  ("log-warnings,W", po::value<string>(),
+  N_("Log some not critical warnings to the log file."))  
+  ("pid-file", po::value<string>(),
+  N_("Pid file used by safe_mysqld."))
+  ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
+  N_("Maximum time in seconds to wait for the port to become free. "
+     "(Default: no wait)"))
+  ("secure-file-priv", po::value<string>(),
+  N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
+     "within specified directory"))
+  ("server-id", po::value<uint32_t>(&server_id)->default_value(0),
+  N_("Uniquely identifies the server instance in the community of "
+     "replication partners."))
+  ("skip-stack-trace",  
+  N_("Don't print a stack trace on failure."))
+  ("symbolic-links,s", po::value<bool>(&internal::my_use_symdir)->default_value(IF_PURIFY(0,1))->zero_tokens(),
+  N_("Enable symbolic link support."))
+  ("timed-mutexes", po::value<bool>(&internal::timed_mutexes)->default_value(false)->zero_tokens(),
+  N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
+     "supported)")) 
+  ("tmpdir,t", po::value<string>(),
+  N_("Path for temporary files."))
+  ("transaction-isolation", po::value<string>(),
+  N_("Default transaction isolation level."))
+  ("user,u", po::value<string>(),
+  N_("Run drizzled daemon as user."))  
+  ("version,V", 
+  N_("Output version information and exit."))
+  ("back-log", po::value<uint32_t>(&back_log)->default_value(50)->notifier(&check_limits_back_log),
+  N_("The number of outstanding connection requests Drizzle can have. This "
+     "comes into play when the main Drizzle thread gets very many connection "
+     "requests in a very short time."))
+  ("bulk-insert-buffer-size", 
+  po::value<uint64_t>(&global_system_variables.bulk_insert_buff_size)->default_value(8192*1024),
+  N_("Size of tree cache used in bulk insert optimization. Note that this is "
+     "a limit per thread!"))
+  ("div-precision-increment",  po::value<uint32_t>(&global_system_variables.div_precincrement)->default_value(4)->notifier(&check_limits_dpi),
+  N_("Precision of the result of '/' operator will be increased on that "
+     "value."))
+  ("group-concat-max-len", po::value<uint64_t>(&global_system_variables.group_concat_max_len)->default_value(1024)->notifier(&check_limits_gcml),
+  N_("The maximum length of the result of function  group_concat."))
+  ("join-buffer-size", po::value<uint64_t>(&global_system_variables.join_buff_size)->default_value(128*1024L)->notifier(&check_limits_join_buffer_size),
+  N_("The size of the buffer that is used for full joins."))
+  ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(1024*1024L)->notifier(&check_limits_map),
+  N_("Max packetlength to send/receive from to server."))
+  ("max-connect-errors", po::value<uint64_t>(&max_connect_errors)->default_value(MAX_CONNECT_ERRORS)->notifier(&check_limits_mce),
+  N_("If there is more than this number of interrupted connections from a "
+     "host this host will be blocked from further connections."))
+  ("max-error-count", po::value<uint64_t>(&global_system_variables.max_error_count)->default_value(DEFAULT_ERROR_COUNT)->notifier(&check_limits_max_err_cnt),
+  N_("Max number of errors/warnings to store for a statement."))
+  ("max-heap-table-size", po::value<uint64_t>(&global_system_variables.max_heap_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_mhts),
+  N_("Don't allow creation of heap tables bigger than this."))
+  ("max-join-size", po::value<drizzled::ha_rows>(&global_system_variables.max_join_size)->default_value(INT32_MAX)->notifier(&check_limits_max_join_size),
+  N_("Joins that are probably going to read more than max_join_size records "
+     "return an error."))
+  ("max-length-for-sort-data", po::value<uint64_t>(&global_system_variables.max_length_for_sort_data)->default_value(1024)->notifier(&check_limits_mlfsd),
+  N_("Max number of bytes in sorted records."))
+  ("max-seeks-for-key", po::value<uint64_t>(&global_system_variables.max_seeks_for_key)->default_value(ULONG_MAX)->notifier(&check_limits_msfk),
+  N_("Limit assumed max number of seeks when looking up rows based on a key"))
+  ("max-sort-length", po::value<size_t>(&global_system_variables.max_sort_length)->default_value(1024)->notifier(&check_limits_max_sort_length),  
+  N_("The number of bytes to use when sorting BLOB or TEXT values "
+     "(only the first max_sort_length bytes of each value are used; the "
+     "rest are ignored)."))
+  ("max-write-lock-count", po::value<uint64_t>(&max_write_lock_count)->default_value(ULONG_MAX)->notifier(&check_limits_mwlc),
+  N_("After this many write locks, allow some read locks to run in between."))
+  ("min-examined-row-limit", po::value<uint64_t>(&global_system_variables.min_examined_row_limit)->default_value(0)->notifier(&check_limits_merl),
+  N_("Don't log queries which examine less than min_examined_row_limit "
+     "rows to file."))
+  ("optimizer-prune-level", po::value<bool>(&global_system_variables.optimizer_prune_level)->default_value(true),
+  N_("Controls the heuristic(s) applied during query optimization to prune "
+     "less-promising partial plans from the optimizer search space. Meaning: "
+     "false - do not apply any heuristic, thus perform exhaustive search; "
+     "true - prune plans based on number of retrieved rows."))
+  ("optimizer-search-depth", po::value<uint32_t>(&global_system_variables.optimizer_search_depth)->default_value(0)->notifier(&check_limits_osd),
+  N_("Maximum depth of search performed by the query optimizer. Values "
+     "larger than the number of relations in a query result in better query "
+     "plans, but take longer to compile a query. Smaller values than the "
+     "number of tables in a relation result in faster optimization, but may "
+     "produce very bad query plans. If set to 0, the system will "
+     "automatically pick a reasonable value; if set to MAX_TABLES+2, the "
+     "optimizer will switch to the original find_best (used for "
+     "testing/comparison)."))
+  ("plugin-dir", po::value<string>(),
+  N_("Directory for plugins."))
+  ("plugin-add", po::value<string>(),
+  N_("Optional comma separated list of plugins to load at startup in addition "
+     "to the default list of plugins. "
+     "[for example: --plugin_add=crc32,logger_gearman]"))    
+  ("plugin-remove", po::value<string>(),
+  N_("Optional comma separated list of plugins to not load at startup. Effectively "
+     "removes a plugin from the list of plugins to be loaded. "
+     "[for example: --plugin_remove=crc32,logger_gearman]"))
+  ("plugin-load", po::value<string>(),
+  N_("Optional comma separated list of plugins to load at starup instead of "
+     "the default plugin load list. "
+     "[for example: --plugin_load=crc32,logger_gearman]"))  
+  ("preload-buffer-size", po::value<uint64_t>(&global_system_variables.preload_buff_size)->default_value(32*1024L)->notifier(&check_limits_pbs),
+  N_("The size of the buffer that is allocated when preloading indexes"))
+  ("query-alloc-block-size", 
+  po::value<uint32_t>(&global_system_variables.query_alloc_block_size)->default_value(QUERY_ALLOC_BLOCK_SIZE)->notifier(&check_limits_qabs),
+  N_("Allocation block size for query parsing and execution"))
+  ("query-prealloc-size",
+  po::value<uint32_t>(&global_system_variables.query_prealloc_size)->default_value(QUERY_ALLOC_PREALLOC_SIZE)->notifier(&check_limits_qps),
+  N_("Persistent buffer for query parsing and execution"))
+  ("range-alloc-block-size",
+  po::value<size_t>(&global_system_variables.range_alloc_block_size)->default_value(RANGE_ALLOC_BLOCK_SIZE)->notifier(&check_limits_rabs),
+  N_("Allocation block size for storing ranges during optimization"))
+  ("read-buffer-size",
+  po::value<uint32_t>(&global_system_variables.read_buff_size)->default_value(128*1024L)->notifier(&check_limits_read_buffer_size),
+  N_("Each thread that does a sequential scan allocates a buffer of this "
+      "size for each table it scans. If you do many sequential scans, you may "
+      "want to increase this value."))
+  ("read-rnd-buffer-size",
+  po::value<uint32_t>(&global_system_variables.read_rnd_buff_size)->default_value(256*1024L)->notifier(&check_limits_read_rnd_buffer_size),
+  N_("When reading rows in sorted order after a sort, the rows are read "
+     "through this buffer to avoid a disk seeks. If not set, then it's set "
+     "to the value of record_buffer."))
+  ("scheduler", po::value<string>(),
+  N_("Select scheduler to be used (by default multi-thread)."))
+  ("sort-buffer-size",
+  po::value<size_t>(&global_system_variables.sortbuff_size)->default_value(MAX_SORT_MEMORY)->notifier(&check_limits_sort_buffer_size),
+  N_("Each thread that needs to do a sort allocates a buffer of this size."))
+  ("table-definition-cache", po::value<size_t>(&table_def_size)->default_value(128)->notifier(&check_limits_tdc),
+  N_("The number of cached table definitions."))
+  ("table-open-cache", po::value<uint64_t>(&table_cache_size)->default_value(TABLE_OPEN_CACHE_DEFAULT)->notifier(&check_limits_toc),
+  N_("The number of cached open tables."))
+  ("table-lock-wait-timeout", po::value<uint64_t>(&table_lock_wait_timeout)->default_value(50)->notifier(&check_limits_tlwt),
+  N_("Timeout in seconds to wait for a table level lock before returning an "
+     "error. Used only if the connection has active cursors."))
+  ("thread-stack", po::value<size_t>(&my_thread_stack_size)->default_value(DEFAULT_THREAD_STACK)->notifier(&check_limits_thread_stack),
+  N_("The stack size for each thread."))
+  ("tmp-table-size", 
+  po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
+  N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
+     " automatically convert it to an on-disk MyISAM table."))
+  ("no-defaults", po::value<bool>()->default_value(false)->zero_tokens(),
+  N_("Configuration file defaults are not used if no-defaults is set"))
+  ("defaults-file", po::value<string>()->default_value(system_config_dir_drizzle),
+   N_("Configuration file to use"))
+  ;
+
+  po::parsed_options parsed= po::command_line_parser(argc, argv).
+    options(long_options).allow_unregistered().extra_parser(parse_size_arg).run();
+  vector<string> unknown_options=
+    po::collect_unrecognized(parsed.options, po::include_positional);
+
+  po::store(parsed, vm);
+
+  if (! vm["no-defaults"].as<bool>())
+  {
+    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
+    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+  }
+
+  po::notify(vm);
 
   internal::load_defaults("drizzled", load_default_groups, &argc, &argv);
   defaults_argv=argv;
@@ -790,62 +1367,6 @@ int init_thread_environment()
     return 1;
   }
   return 0;
-}
-
-static pair<string, string> parse_size_suffixes(string s)
-{
-  size_t equal_pos= s.find("=");
-  if (equal_pos != string::npos)
-  {
-    string arg_key(s.substr(0, equal_pos));
-    string arg_val(s.substr(equal_pos+1));
-
-    try
-    {
-      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
-      if (size_suffix_pos == arg_val.size()-1)
-      {
-        char suffix= arg_val[size_suffix_pos];
-        string size_val(arg_val.substr(0, size_suffix_pos));
-
-        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
-        uint64_t new_size= 0;
-
-        switch (suffix)
-        {
-        case 'K':
-        case 'k':
-          new_size= base_size * 1024;
-          break;
-        case 'M':
-        case 'm':
-          new_size= base_size * 1024 * 1024;
-          break;
-        case 'G':
-        case 'g':
-          new_size= base_size * 1024 * 1024 * 1024;
-          break;
-        }
-        return make_pair(arg_key,
-                         boost::lexical_cast<string>(new_size));
-      }
-    }
-    catch (...)
-    {
-      /* Screw it, let the normal parser take over */
-    }
-  }
-
-  return make_pair(string(""), string(""));
-}
-
-static pair<string, string> parse_size_arg(string s)
-{
-  if (s.find("--") == 0)
-  {
-    return parse_size_suffixes(s.substr(2));
-  }
-  return make_pair(string(""), string(""));
 }
 
 int init_server_components(module::Registry &plugins, int, char**)
