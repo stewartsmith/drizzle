@@ -19,14 +19,20 @@
  */
 
 #include "config.h"
+#include <drizzled/plugin/function.h>
 #include "plugin/math_functions/functions.h"
+#include "plugin/math_functions/abs.h"
 
 using namespace drizzled;
 
+plugin::Create_function<drizzled::Item_func_abs> *abs_function= NULL;
+
 static int init(drizzled::module::Context &context)
 {
-  (void)context;
-  
+  abs_function= new plugin::Create_function<Item_func_abs>("abs");
+
+  context.add(abs_function);
+
   return 0;
 }
 

@@ -97,7 +97,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/get_user_var.h \
 			      drizzled/function/last_insert.h \
 			      drizzled/function/locate.h \
-			      drizzled/function/math/abs.h \
 			      drizzled/function/math/acos.h \
 			      drizzled/function/math/asin.h \
 			      drizzled/function/math/atan.h \
@@ -516,7 +515,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/get_user_var.cc \
 				 drizzled/function/last_insert.cc \
 				 drizzled/function/locate.cc \
-				 drizzled/function/math/abs.cc \
 				 drizzled/function/math/acos.cc \
 				 drizzled/function/math/asin.cc \
 				 drizzled/function/math/atan.cc \

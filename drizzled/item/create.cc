@@ -63,7 +63,6 @@
 /* Function declarations */
 
 #include <drizzled/function/func.h>
-#include <drizzled/function/math/abs.h>
 #include <drizzled/function/math/acos.h>
 #include <drizzled/function/additive_op.h>
 #include <drizzled/function/math/asin.h>
@@ -256,20 +255,6 @@ protected:
   Please keep this list sorted in alphabetical order,
   it helps to compare code between versions, and helps with merges conflicts.
 */
-
-class Create_func_abs : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_abs s_singleton;
-
-protected:
-  Create_func_abs() {}
-  virtual ~Create_func_abs() {}
-};
 
 
 class Create_func_acos : public Create_func_arg1
@@ -1511,15 +1496,6 @@ Create_func_arg3::create(Session *session, LEX_STRING name, List<Item> *item_lis
 }
 
 
-Create_func_abs Create_func_abs::s_singleton;
-
-Item*
-Create_func_abs::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_abs(arg1);
-}
-
-
 Create_func_acos Create_func_acos::s_singleton;
 
 Item*
@@ -2516,7 +2492,6 @@ struct Native_func_registry
 
 static Native_func_registry func_array[] =
 {
-  { { C_STRING_WITH_LEN("ABS") }, BUILDER(Create_func_abs)},
   { { C_STRING_WITH_LEN("ACOS") }, BUILDER(Create_func_acos)},
   { { C_STRING_WITH_LEN("ASIN") }, BUILDER(Create_func_asin)},
   { { C_STRING_WITH_LEN("ATAN") }, BUILDER(Create_func_atan)},

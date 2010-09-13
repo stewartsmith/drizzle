@@ -440,19 +440,17 @@ select round(1, 2, 3);
 # Bug#24736: UDF functions parsed as Stored Functions
 #
 
+# This used to do this:
 # Verify that the syntax for calling UDF : foo(expr AS param, ...)
 # can not be used when calling native functions
-
-# Native function with 1 argument
+#
+# but that's all nuts, so we allow named parameters now - although the names are
+# currently just ignored.
 
 select abs(3);
--- error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
 select abs(3 AS three);
--- error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
 select abs(3 three);
--- error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
 select abs(3 AS "three");
--- error ER_WRONG_PARAMETERS_TO_NATIVE_FCT
 select abs(3 "three");
 
 # Native function with 2 arguments

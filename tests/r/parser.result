@@ -322,13 +322,17 @@ select abs(3);
 abs(3)
 3
 select abs(3 AS three);
-ERROR 42000: Incorrect parameters in the call to native function 'abs'
+abs(3 AS three)
+3
 select abs(3 three);
-ERROR 42000: Incorrect parameters in the call to native function 'abs'
+abs(3 three)
+3
 select abs(3 AS "three");
-ERROR 42000: Incorrect parameters in the call to native function 'abs'
+abs(3 AS "three")
+3
 select abs(3 "three");
-ERROR 42000: Incorrect parameters in the call to native function 'abs'
+abs(3 "three")
+3
 set @bar="bar";
 set @foobar="foobar";
 select instr("foobar", "bar");
