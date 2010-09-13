@@ -174,17 +174,6 @@ inline void setup_fpu()
 extern "C" int gethostname(char *name, int namelen);
 #endif
 
-/* Constants */
-static const char *tc_heuristic_recover_names[]=
-{
-  "COMMIT", "ROLLBACK", NULL
-};
-static TYPELIB tc_heuristic_recover_typelib=
-{
-  array_elements(tc_heuristic_recover_names)-1,"",
-  tc_heuristic_recover_names, NULL
-};
-
 const char *first_keyword= "first";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
 #define GET_HA_ROWS GET_ULL
@@ -366,7 +355,6 @@ bool drizzle_rm_tmp_tables();
 
 static void drizzle_init_variables(void);
 static void get_options();
-int drizzled_get_one_option(int, const struct option *, char *);
 static const char *get_relative_path(const char *path);
 static void fix_paths(string progname);
 
@@ -2003,109 +1991,6 @@ static void drizzle_init_variables(void)
   (void) strncpy(drizzle_home, tmpenv, sizeof(drizzle_home)-1);
   
   connection_count= 0;
-}
-
-
-int drizzled_get_one_option(int optid, const struct option *opt,
-                             char *argument)
-{
-  switch(optid) {
-  case 'a':
-    global_system_variables.tx_isolation= ISO_SERIALIZABLE;
-    break;
-  case 'b':
-    strncpy(drizzle_home,argument,sizeof(drizzle_home)-1);
-    break;
-  case 'C':
-    if (default_collation_name == compiled_default_collation_name)
-      default_collation_name= 0;
-    break;
-  case 'h':
-    strncpy(data_home_real,argument, sizeof(data_home_real)-1);
-    /* Correct pointer set by my_getopt (for embedded library) */
-    data_home= data_home_real;
-    data_home_len= strlen(data_home);
-    break;
-  case 'u':
-    if (!drizzled_user || !strcmp(drizzled_user, argument))
-      drizzled_user= argument;
-    else
-      errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
-                          "set to '%s' earlier on the command line\n"),
-                        argument, drizzled_user);
-    break;
-  case 'L':
-    strncpy(language, argument, sizeof(language)-1);
-    break;
-  case 'V':
-    print_version();
-    exit(0);
-  case 'W':
-    if (!argument)
-      global_system_variables.log_warnings++;
-    else if (argument == disabled_my_option)
-      global_system_variables.log_warnings= 0L;
-    else
-      global_system_variables.log_warnings= atoi(argument);
-    break;
-  case 'T':
-    if (argument)
-    {
-      test_flags.set((uint32_t) atoi(argument));
-    }
-    break;
-  case (int) OPT_WANT_CORE:
-    test_flags.set(TEST_CORE_ON_SIGNAL);
-    break;
-  case (int) OPT_SKIP_STACK_TRACE:
-    test_flags.set(TEST_NO_STACKTRACE);
-    break;
-  case (int) OPT_SKIP_SYMLINKS:
-    internal::my_use_symdir=0;
-    break;
-  case (int) OPT_BIND_ADDRESS:
-    {
-      struct addrinfo *res_lst, hints;
-
-      memset(&hints, 0, sizeof(struct addrinfo));
-      hints.ai_socktype= SOCK_STREAM;
-      hints.ai_protocol= IPPROTO_TCP;
-
-      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
-      {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: cannot resolve hostname!"));
-        return EXIT_ARGUMENT_INVALID;
-      }
-
-      if (res_lst->ai_next)
-      {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: bind-address refers to "
-                          "multiple interfaces!"));
-        return EXIT_ARGUMENT_INVALID;
-      }
-      freeaddrinfo(res_lst);
-    }
-    break;
-  case (int) OPT_PID_FILE:
-    strncpy(pidfile_name, argument, sizeof(pidfile_name)-1);
-    break;
-  case OPT_SERVER_ID:
-    break;
-  case OPT_TX_ISOLATION:
-    {
-      int type;
-      type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
-      global_system_variables.tx_isolation= (type-1);
-      break;
-    }
-  case OPT_TC_HEURISTIC_RECOVER:
-    tc_heuristic_recover= find_type_or_exit(argument,
-                                            &tc_heuristic_recover_typelib,
-                                            opt->name);
-    break;
-  }
-
-  return 0;
 }
 
 
