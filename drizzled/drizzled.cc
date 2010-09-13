@@ -1268,7 +1268,16 @@ int init_common_variables(int argc, char **argv)
   unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
 
-  po::store(parsed, vm);
+  try
+  {
+    po::store(parsed, vm);
+  }
+  catch (...)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    unireg_abort(1);
+  }
+
 
   if (! vm["no-defaults"].as<bool>())
   {
@@ -1414,7 +1423,15 @@ int init_server_components(module::Registry &plugins)
       unireg_abort(1);
   }
 
-  po::store(parsed, vm);
+  try
+  {
+    po::store(parsed, vm);
+  }
+  catch (...)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    unireg_abort(1);
+  }
 
   if (not vm["no-defaults"].as<bool>())
   {
@@ -2049,7 +2066,6 @@ static void get_options()
 
   if (vm.count("datadir"))
   {
-    cout << "In datadir" << endl;
     strncpy(data_home_real,vm["datadir"].as<string>().c_str(), sizeof(data_home_real)-1);
     /* Correct pointer set by my_getopt (for embedded library) */
     data_home= data_home_real;
