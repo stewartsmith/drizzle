@@ -149,7 +149,6 @@ our $exe_drizzleimport;
 our $exe_drizzle_fix_system_tables;
 our $exe_drizzletest;
 our $exe_slave_mysqld;
-our $exe_my_print_defaults;
 our $exe_perror;
 our $lib_udf_example;
 our $lib_example_plugin;
@@ -1251,13 +1250,6 @@ sub executable_setup () {
     }
   }
 
-# Look for my_print_defaults
-  $exe_my_print_defaults=
-    mtr_exe_exists(
-        "$path_client_bindir/my_print_defaults",
-        "$glob_basedir/extra/my_print_defaults",
-        "$glob_builddir/extra/my_print_defaults");
-
 # Look for perror
   $exe_perror= "perror";
 
@@ -1585,11 +1577,6 @@ sub environment_setup () {
     $ENV{'DRIZZLE_FIX_SYSTEM_TABLES'}=  $cmdline_mysql_fix_system_tables;
 
   }
-
-  # ----------------------------------------------------
-  # Setup env so childs can execute my_print_defaults
-  # ----------------------------------------------------
-  $ENV{'DRIZZLE_MY_PRINT_DEFAULTS'}= mtr_native_path($exe_my_print_defaults);
 
   # ----------------------------------------------------
   # Setup env so childs can shutdown the server
