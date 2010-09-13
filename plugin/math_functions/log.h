@@ -29,27 +29,29 @@ namespace drizzled
 class Item_func_log :public Item_dec_func
 {
 public:
-  Item_func_log(Item *a) :Item_dec_func(a) {}
-  Item_func_log(Item *a,Item *b) :Item_dec_func(a,b) {}
+  Item_func_log() :Item_dec_func() {}
   double val_real();
   const char *func_name() const { return "log"; }
+  bool check_argument_count(int n) { return n == 1 || n == 2; }
 };
 
 class Item_func_log2 :public Item_dec_func
 {
 public:
-  Item_func_log2(Item *a) :Item_dec_func(a) {}
+  Item_func_log2() :Item_dec_func() {}
   double val_real();
   const char *func_name() const { return "log2"; }
+  bool check_argument_count(int n) { return n == 1; }
 };
 
 
 class Item_func_log10 :public Item_dec_func
 {
 public:
-  Item_func_log10(Item *a) :Item_dec_func(a) {}
+  Item_func_log10() :Item_dec_func() {}
   double val_real();
   const char *func_name() const { return "log10"; }
+  bool check_argument_count(int n) { return n == 1; }
 };
 
 } /* namespace drizzled */

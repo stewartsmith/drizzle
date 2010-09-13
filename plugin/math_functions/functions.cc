@@ -26,6 +26,7 @@
 #include "plugin/math_functions/asin.h"
 #include "plugin/math_functions/atan.h"
 #include "plugin/math_functions/cos.h"
+#include "plugin/math_functions/log.h"
 
 using namespace drizzled;
 
@@ -35,6 +36,9 @@ plugin::Create_function<drizzled::Item_func_asin> *asin_function= NULL;
 plugin::Create_function<drizzled::Item_func_atan> *atan_function= NULL;
 plugin::Create_function<drizzled::Item_func_atan> *atan2_function= NULL;
 plugin::Create_function<drizzled::Item_func_cos> *cos_function= NULL;
+plugin::Create_function<drizzled::Item_func_log> *log_function= NULL;
+plugin::Create_function<drizzled::Item_func_log2> *log2_function= NULL;
+plugin::Create_function<drizzled::Item_func_log10> *log10_function= NULL;
 
 static int init(drizzled::module::Context &context)
 {
@@ -44,6 +48,9 @@ static int init(drizzled::module::Context &context)
   atan_function= new plugin::Create_function<Item_func_atan>("atan");
   atan2_function= new plugin::Create_function<Item_func_atan>("atan2");
   cos_function= new plugin::Create_function<Item_func_cos>("cos");
+  log_function= new plugin::Create_function<Item_func_log>("log");
+  log2_function= new plugin::Create_function<Item_func_log2>("log2");
+  log10_function= new plugin::Create_function<Item_func_log10>("log10");
 
   context.add(abs_function);
   context.add(acos_function);
@@ -51,6 +58,9 @@ static int init(drizzled::module::Context &context)
   context.add(atan_function);
   context.add(atan2_function);
   context.add(cos_function);
+  context.add(log_function);
+  context.add(log2_function);
+  context.add(log10_function);
 
   return 0;
 }

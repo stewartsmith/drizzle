@@ -78,7 +78,6 @@
 #include <drizzled/function/last_insert.h>
 #include <drizzled/function/math/ln.h>
 #include <drizzled/function/locate.h>
-#include <drizzled/function/math/log.h>
 #include <drizzled/function/min_max.h>
 #include <drizzled/function/num1.h>
 #include <drizzled/function/num_op.h>
@@ -752,49 +751,6 @@ public:
 protected:
   Create_func_locate() {}
   virtual ~Create_func_locate() {}
-};
-
-
-class Create_func_log : public Create_native_func
-{
-public:
-  virtual Item *create_native(Session *session, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_log s_singleton;
-
-protected:
-  Create_func_log() {}
-  virtual ~Create_func_log() {}
-};
-
-
-class Create_func_log10 : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_log10 s_singleton;
-
-protected:
-  Create_func_log10() {}
-  virtual ~Create_func_log10() {}
-};
-
-
-class Create_func_log2 : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_log2 s_singleton;
-
-protected:
-  Create_func_log2() {}
-  virtual ~Create_func_log2() {}
 };
 
 
@@ -1947,62 +1903,6 @@ Create_func_locate::create_native(Session *session, LEX_STRING name,
   return func;
 }
 
-
-Create_func_log Create_func_log::s_singleton;
-
-Item*
-Create_func_log::create_native(Session *session, LEX_STRING name,
-                               List<Item> *item_list)
-{
-  Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  switch (arg_count) {
-  case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (session->mem_root) Item_func_log(param_1);
-    break;
-  }
-  case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    func= new (session->mem_root) Item_func_log(param_1, param_2);
-    break;
-  }
-  default:
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_FUNCTION, MYF(0), name.str);
-    break;
-  }
-  }
-
-  return func;
-}
-
-
-Create_func_log10 Create_func_log10::s_singleton;
-
-Item*
-Create_func_log10::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_log10(arg1);
-}
-
-
-Create_func_log2 Create_func_log2::s_singleton;
-
-Item*
-Create_func_log2::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_log2(arg1);
-}
-
-
 Create_func_lpad Create_func_lpad::s_singleton;
 
 Item*
@@ -2402,9 +2302,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("LN") }, BUILDER(Create_func_ln)},
   { { C_STRING_WITH_LEN("LOAD_FILE") }, BUILDER(Create_func_load_file)},
   { { C_STRING_WITH_LEN("LOCATE") }, BUILDER(Create_func_locate)},
-  { { C_STRING_WITH_LEN("LOG") }, BUILDER(Create_func_log)},
-  { { C_STRING_WITH_LEN("LOG10") }, BUILDER(Create_func_log10)},
-  { { C_STRING_WITH_LEN("LOG2") }, BUILDER(Create_func_log2)},
   { { C_STRING_WITH_LEN("LOWER") }, BUILDER(Create_func_lcase)},
   { { C_STRING_WITH_LEN("LPAD") }, BUILDER(Create_func_lpad)},
   { { C_STRING_WITH_LEN("LTRIM") }, BUILDER(Create_func_ltrim)},

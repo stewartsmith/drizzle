@@ -108,7 +108,6 @@ nobase_dist_include_HEADERS+= \
 			      drizzled/function/math/int_val.h \
 			      drizzled/function/math/integer.h \
 			      drizzled/function/math/ln.h \
-			      drizzled/function/math/log.h \
 			      drizzled/function/math/minus.h \
 			      drizzled/function/math/mod.h \
 			      drizzled/function/math/multiply.h \
@@ -521,7 +520,6 @@ drizzled_drizzled_SOURCES= \
 				 drizzled/function/math/int_val.cc \
 				 drizzled/function/math/integer.cc \
 				 drizzled/function/math/ln.cc \
-				 drizzled/function/math/log.cc \
 				 drizzled/function/math/minus.cc \
 				 drizzled/function/math/mod.cc \
 				 drizzled/function/math/multiply.cc \
