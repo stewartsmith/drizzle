@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,15 +18,36 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#ifndef PLUGIN_UTILITY_DICTIONARY_RANDOM_NUMBER_H
+#define PLUGIN_UTILITY_DICTIONARY_RANDOM_NUMBER_H
 
-#include "drizzled/session.h"
+namespace utility_dictionary {
 
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
+class RandomNumber : public  drizzled::plugin::TableFunction
+{
 
-#endif /* DRIZZLED_GENERATOR_H */
+public:
+  RandomNumber();
+
+  class Generator : public drizzled::plugin::TableFunction::Generator 
+  {
+    uint64_t count;
+
+  public:
+    Generator(drizzled::Field **arg) :
+      drizzled::plugin::TableFunction::Generator(arg),
+      count(0)
+    { }
+
+    bool populate();
+  };
+
+  Generator *generator(drizzled::Field **arg)
+  {
+    return new Generator(arg);
+  }
+};
+
+} /* namespace utility_dictionary */
+
+#endif /* PLUGIN_UTILITY_DICTIONARY_RANDOM_NUMBER_H */

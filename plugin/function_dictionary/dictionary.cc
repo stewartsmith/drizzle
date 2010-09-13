@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,15 +18,29 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#include "config.h"
+#include "plugin/function_dictionary/dictionary.h"
 
-#include "drizzled/session.h"
+using namespace drizzled;
 
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
+static int init(drizzled::module::Context &context)
+{
+  (void)context;
+  context.add(new function_dictionary::Functions);
+  
+  return 0;
+}
 
-#endif /* DRIZZLED_GENERATOR_H */
+DRIZZLE_DECLARE_PLUGIN
+{
+  DRIZZLE_VERSION_ID,
+  "Function Dictionary",
+  "1.0",
+  "Brian Aker",
+  "Data Dictionary for functions.",
+  PLUGIN_LICENSE_GPL,
+  init,
+  NULL,
+  NULL
+}
+DRIZZLE_DECLARE_PLUGIN_END;

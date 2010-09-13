@@ -1,7 +1,7 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
- *  Copyright (C) 2010 Brian Aker
+ *  Copyright (C) 2010 Sun Microsystems
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,15 +18,23 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#ifndef DRIZZLED_FUNCTION_CONTAINER_H
+#define DRIZZLED_FUNCTION_CONTAINER_H
 
-#include "drizzled/session.h"
+#include <set>
+#include <boost/unordered_map.hpp>
+#include "drizzled/util/string.h"
 
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
+namespace drizzled {
 
-#endif /* DRIZZLED_GENERATOR_H */
+struct Native_func_registry;
+typedef boost::unordered_map<std::string, Native_func_registry *, util::insensitive_hash, util::insensitive_equal_to> NativeFunctionsMap;
+
+class FunctionContainer {
+public:
+  static NativeFunctionsMap &getMap();
+};
+
+} /* namepsace drizzled */
+
+#endif /* DRIZZLED_FUNCTION_CONTAINER_H */

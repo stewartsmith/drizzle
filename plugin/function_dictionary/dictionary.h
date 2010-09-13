@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,15 +18,10 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#ifndef PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H
+#define PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H
 
-#include "drizzled/session.h"
+#include "drizzled/plugin/table_function.h"
+#include "plugin/function_dictionary/functions.h"
 
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
-
-#endif /* DRIZZLED_GENERATOR_H */
+#endif /* PLUGIN_FUNCTION_DICTIONARY_DICTIONARY_H */

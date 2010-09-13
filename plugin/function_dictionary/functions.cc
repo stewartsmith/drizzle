@@ -1,4 +1,4 @@
-/* -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
  *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
  *
  *  Copyright (C) 2010 Brian Aker
@@ -18,15 +18,34 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef DRIZZLED_GENERATOR_H
-#define DRIZZLED_GENERATOR_H
+#include "config.h"
 
-#include "drizzled/session.h"
+#include "plugin/function_dictionary/dictionary.h"
 
-#include "drizzled/generator/functions.h"
-#include "drizzled/generator/schema.h"
-#include "drizzled/generator/table.h"
-#include "drizzled/generator/all_tables.h"
-#include "drizzled/generator/all_fields.h"
+#include <drizzled/atomics.h>
+#include <drizzled/session.h>
 
-#endif /* DRIZZLED_GENERATOR_H */
+
+using namespace drizzled;
+using namespace std;
+
+#define FUNCTION_NAME_LEN 64
+
+function_dictionary::Functions::Functions() :
+  plugin::TableFunction("DATA_DICTIONARY", "FUNCTIONS")
+{
+  add_field("FUNCTION_NAME", plugin::TableFunction::STRING, FUNCTION_NAME_LEN, false);
+}
+
+bool function_dictionary::Functions::Generator::populate()
+{
+  std::string *name_ptr;
+
+  while ((name_ptr= functions))
+  {
+    push(*name_ptr);
+    return true;
+  }
+
+  return false;
+}
