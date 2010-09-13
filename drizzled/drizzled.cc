@@ -2123,6 +2123,19 @@ static void get_options()
     global_system_variables.tx_isolation= (type-1);
   }
 
+  /* @TODO Make this all strings */
+  if (vm.count("plugin-remove"))
+  {
+    opt_plugin_remove= (char *)vm["plugin-remove"].as<string>().c_str();
+  }
+  if (vm.count("plugin-add"))
+  {
+    opt_plugin_add= (char *)vm["plugin-add"].as<string>().c_str();
+  }
+  if (vm.count("plugin-load"))
+  {
+    opt_plugin_load= (char *)vm["plugin-load"].as<string>().c_str();
+  }
 
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
