@@ -2268,18 +2268,19 @@ static void fix_paths(string progname)
 
   if (not opt_help and not opt_help_extended)
   {
-    char *tmp_string;
+    const char *tmp_string= getenv("TMPDIR") ? getenv("TMPDIR") : NULL;
     struct stat buf;
+    drizzle_tmpdir.clear();
 
-    tmp_string= getenv("TMPDIR");
-
-    if (opt_drizzle_tmpdir)
+    if (vm.count("tmpdir"))
     {
-      drizzle_tmpdir.append(opt_drizzle_tmpdir);
+      drizzle_tmpdir.append(vm["tmpdir"].as<string>());
     }
     else if (tmp_string == NULL)
     {
       drizzle_tmpdir.append(data_home);
+      drizzle_tmpdir.push_back(FN_LIBCHAR);
+      drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
     }
     else
     {
@@ -2293,8 +2294,6 @@ static void fix_paths(string progname)
       exit(1);
     }
 
-    drizzle_tmpdir.append(FN_ROOTDIR);
-    drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
 
     if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
     {
@@ -2316,9 +2315,9 @@ static void fix_paths(string progname)
     Convert the secure-file-priv option to system format, allowing
     a quick strcmp to check if read or write is in an allowed dir
    */
-  if (opt_secure_file_priv)
+  if (vm.count("secure-file-priv"))
   {
-    internal::convert_dirname(buff, opt_secure_file_priv, NULL);
+    internal::convert_dirname(buff, vm["secure-file-priv"].as<string>().c_str(), NULL);
     free(opt_secure_file_priv);
     opt_secure_file_priv= strdup(buff);
     if (opt_secure_file_priv == NULL)
