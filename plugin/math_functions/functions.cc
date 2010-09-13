@@ -22,16 +22,20 @@
 #include <drizzled/plugin/function.h>
 #include "plugin/math_functions/functions.h"
 #include "plugin/math_functions/abs.h"
+#include "plugin/math_functions/acos.h"
 
 using namespace drizzled;
 
 plugin::Create_function<drizzled::Item_func_abs> *abs_function= NULL;
+plugin::Create_function<drizzled::Item_func_acos> *acos_function= NULL;
 
 static int init(drizzled::module::Context &context)
 {
   abs_function= new plugin::Create_function<Item_func_abs>("abs");
+  acos_function= new plugin::Create_function<Item_func_acos>("acos");
 
   context.add(abs_function);
+  context.add(acos_function);
 
   return 0;
 }

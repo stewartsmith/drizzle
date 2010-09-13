@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/acos.h>
+#include "acos.h"
 
 namespace drizzled
 {
