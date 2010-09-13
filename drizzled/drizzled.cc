@@ -351,8 +351,6 @@ boost::condition_variable COND_server_end;
 
 int cleanup_done;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
-static int defaults_argc;
-static char **defaults_argv;
 
 passwd *user_info;
 
@@ -367,7 +365,7 @@ uint64_t refresh_version;  /* Increments on each reload */
 bool drizzle_rm_tmp_tables();
 
 static void drizzle_init_variables(void);
-static void get_options(int *argc,char **argv);
+static void get_options();
 int drizzled_get_one_option(int, const struct option *, char *);
 static const char *get_relative_path(const char *path);
 static void fix_paths(string progname);
@@ -375,7 +373,9 @@ static void fix_paths(string progname);
 static void usage(void);
 void close_connections(void);
 
-po::options_description long_options("Allowed Options");
+po::options_description long_options("Kernel Options");
+po::options_description plugin_options("Plugin Options");
+vector<string> unknown_options;
 po::variables_map vm;
 
 po::variables_map &getVariablesMap()
@@ -500,8 +500,6 @@ void clean_up(bool print_message)
   module::Registry &modules= module::Registry::singleton();
   modules.shutdownModules();
   xid_cache_free();
-  if (defaults_argv)
-    internal::free_defaults(defaults_argv);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
 
@@ -1272,7 +1270,7 @@ int init_common_variables(int argc, char **argv)
 
   po::parsed_options parsed= po::command_line_parser(argc, argv).
     options(long_options).allow_unregistered().extra_parser(parse_size_arg).run();
-  vector<string> unknown_options=
+  unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
 
   po::store(parsed, vm);
@@ -1285,10 +1283,7 @@ int init_common_variables(int argc, char **argv)
 
   po::notify(vm);
 
-  internal::load_defaults("drizzled", load_default_groups, &argc, &argv);
-  defaults_argv=argv;
-  defaults_argc=argc;
-  get_options(&defaults_argc, defaults_argv);
+  get_options();
 
   if ((user_info= check_user(drizzled_user)))
   {
@@ -1369,7 +1364,7 @@ int init_thread_environment()
   return 0;
 }
 
-int init_server_components(module::Registry &plugins, int, char**)
+int init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -1395,7 +1390,7 @@ int init_server_components(module::Registry &plugins, int, char**)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-  if (plugin_init(plugins, &defaults_argc, defaults_argv, long_options))
+  if (plugin_init(plugins, plugin_options))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
     unireg_abort(1);
@@ -1405,22 +1400,21 @@ int init_server_components(module::Registry &plugins, int, char**)
   if (opt_help || opt_help_extended)
     unireg_abort(0);
 
-  po::parsed_options parsed= po::command_line_parser(defaults_argc,
-                                                     defaults_argv).
-    options(long_options).extra_parser(parse_size_arg).
+  po::parsed_options parsed= po::command_line_parser(unknown_options).
+    options(plugin_options).extra_parser(parse_size_arg).
     allow_unregistered().run();
 
-  vector<string> unknown_options=
+  vector<string> final_unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
 
   /* we do want to exit if there are any other unknown options */
   /** @TODO: We should perhaps remove allowed_unregistered() and catch the
     exception here */
-  if (unknown_options.size() > 0)
+  if (final_unknown_options.size() > 0)
   {
      errmsg_printf(ERRMSG_LVL_ERROR,
-            _("%s: Unknown options give (first unknown is '%s').\n"
-              "Use --verbose --help to get a list of available options\n"),
+            _("%s: Unknown options given (first unknown is '%s').\n"
+              "Use --help to get a list of available options\n"),
             internal::my_progname, unknown_options[0].c_str());
       unireg_abort(1);
   }
@@ -1917,10 +1911,11 @@ static void usage(void)
 
  
   printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
-  /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options);
 
-  cout << long_options << endl;
+  po::options_description all_options("Drizzled Options");
+  all_options.add(long_options);
+  all_options.add(plugin_options);
+  cout << all_options << endl;
 
 }
 
@@ -1947,8 +1942,6 @@ static void drizzle_init_variables(void)
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
   cleanup_done= 0;
-  defaults_argc= 0;
-  defaults_argv= 0;
   dropping_tables= ha_open_options=0;
   test_flags.reset();
   wake_thread=0;
@@ -2115,38 +2108,99 @@ int drizzled_get_one_option(int optid, const struct option *opt,
   return 0;
 }
 
-static void option_error_reporter(enum loglevel level, const char *format, ...)
-{
-  va_list args;
-  va_start(args, format);
-
-  /* Don't print warnings for --loose options during bootstrap */
-  if (level == ERROR_LEVEL || global_system_variables.log_warnings)
-  {
-    plugin::ErrorMessage::vprintf(NULL, ERROR_LEVEL, format, args);
-  }
-  va_end(args);
-}
-
 
 /**
   @todo
   - FIXME add EXIT_TOO_MANY_ARGUMENTS to "drizzled/error.h" and return that code?
 */
-static void get_options(int *argc,char **argv)
+static void get_options()
 {
-  int ho_error;
 
-  my_getopt_error_reporter= option_error_reporter;
+  if (vm.count("base-dir"))
+  {
+    strncpy(drizzle_home,vm["base-dir"].as<string>().c_str(),sizeof(drizzle_home)-1);
+  }
+
+  if (vm.count("datadir"))
+  {
+    cout << "In datadir" << endl;
+    strncpy(data_home_real,vm["datadir"].as<string>().c_str(), sizeof(data_home_real)-1);
+    /* Correct pointer set by my_getopt (for embedded library) */
+    data_home= data_home_real;
+    data_home_len= strlen(data_home);
+  }
+
+  if (vm.count("user"))
+  {
+    if (! drizzled_user || ! strcmp(drizzled_user, vm["user"].as<string>().c_str()))
+      drizzled_user= (char *)vm["user"].as<string>().c_str();
+
+    else
+      errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
+                                       "set to '%s' earlier on the command line\n"),
+                    vm["user"].as<string>().c_str(), drizzled_user);
+  }
+
+  if (vm.count("language"))
+  {
+    strncpy(language, vm["language"].as<string>().c_str(), sizeof(language)-1);
+  }
+
+  if (vm.count("version"))
+  {
+    print_version();
+    exit(0);
+  }
+
+  if (vm.count("log-warnings"))
+  {
+    if (vm["log-warnings"].as<string>().empty())
+      global_system_variables.log_warnings++;
+    else if (vm["log-warnings"].as<string>().compare("0"))
+      global_system_variables.log_warnings= 0L;
+    else
+      global_system_variables.log_warnings= atoi(vm["log-warnings"].as<string>().c_str());
+  }
+
+  if (vm.count("exit-info"))
+  {
+    if (vm["exit-info"].as<long>())
+    {
+      test_flags.set((uint32_t) vm["exit-info"].as<long>());
+    }
+  }
+
+  if (vm.count("want-core"))
+  {
+    test_flags.set(TEST_CORE_ON_SIGNAL);
+  }
+
+  if (vm.count("skip-stack-trace"))
+  {
+    test_flags.set(TEST_NO_STACKTRACE);
+  }
+
+  if (vm.count("skip-symlinks"))
+  {
+    internal::my_use_symdir=0;
+  }
+
+  if (vm.count("pid-file"))
+  {
+    strncpy(pidfile_name, vm["pid-file"].as<string>().c_str(), sizeof(pidfile_name)-1);
+  }
+
+  if (vm.count("transaction-isolation"))
+  {
+    int type;
+    type= find_type_or_exit((char *)vm["transaction-isolation"].as<string>().c_str(), &tx_isolation_typelib, "transaction-isolation");
+    global_system_variables.tx_isolation= (type-1);
+  }
+
 
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
 
-  if ((ho_error= handle_options(argc, &argv, my_long_options,
-                                drizzled_get_one_option)))
-    exit(ho_error);
-  (*argc)++; /* add back one for the progname handle_options removes */
-             /* no need to do this for argv as we are discarding it. */
 
 #if defined(HAVE_BROKEN_REALPATH)
   internal::my_use_symdir=0;

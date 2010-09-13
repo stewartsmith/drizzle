@@ -158,12 +158,11 @@ public:
 static void plugin_prune_list(vector<string> &plugin_list,
                               const vector<string> &plugins_to_remove);
 static bool plugin_load_list(module::Registry &registry,
-                             memory::Root *tmp_root, int *argc, char **argv,
+                             memory::Root *tmp_root,
                              const set<string> &plugin_list,
                              po::options_description &long_options,
                              bool builtin= false);
 static int test_plugin_options(memory::Root *, module::Module *,
-                               int *, char **,
                                po::options_description &long_options);
 static void unlock_variables(Session *session, struct system_variables *vars);
 static void cleanup_variables(Session *session, struct system_variables *vars);
@@ -248,7 +247,6 @@ static int item_val_real(drizzle_value *value, double *buf)
 */
 static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
                        module::Library *library,
-                       int *argc, char **argv,
                        po::options_description &long_options)
 {
   if (! initialized)
@@ -279,7 +277,7 @@ static bool plugin_add(module::Registry &registry, memory::Root *tmp_root,
   if (tmp == NULL)
     return true;
 
-  if (!test_plugin_options(tmp_root, tmp, argc, argv, long_options))
+  if (!test_plugin_options(tmp_root, tmp, long_options))
   {
     registry.add(tmp);
     return false;
@@ -367,7 +365,6 @@ static bool plugin_initialize(module::Registry &registry,
   Finally we initialize everything, aka the dynamic that have yet to initialize.
 */
 bool plugin_init(module::Registry &registry,
-                 int *argc, char **argv,
                  po::options_description &long_options)
 {
   memory::Root tmp_root(4096);
@@ -408,7 +405,7 @@ bool plugin_init(module::Registry &registry,
     First we register builtin plugins
   */
   const set<string> builtin_list_set(builtin_list.begin(), builtin_list.end());
-  load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+  load_failed= plugin_load_list(registry, &tmp_root,
                                 builtin_list_set, long_options, true);
   if (load_failed)
   {
@@ -420,7 +417,7 @@ bool plugin_init(module::Registry &registry,
   const set<string> plugin_list_set(plugin_list.begin(), plugin_list.end());
   
   /* Register all dynamic plugins */
-  load_failed= plugin_load_list(registry, &tmp_root, argc, argv,
+  load_failed= plugin_load_list(registry, &tmp_root,
                                 plugin_list_set, long_options);
   if (load_failed)
   {
@@ -494,7 +491,7 @@ static void plugin_prune_list(vector<string> &plugin_list,
   called only by plugin_init()
 */
 static bool plugin_load_list(module::Registry &registry,
-                             memory::Root *tmp_root, int *argc, char **argv,
+                             memory::Root *tmp_root,
                              const set<string> &plugin_list,
                              po::options_description &long_options,
                              bool builtin)
@@ -517,7 +514,7 @@ static bool plugin_load_list(module::Registry &registry,
     }
 
     tmp_root->free_root(MYF(memory::MARK_BLOCKS_FREE));
-    if (plugin_add(registry, tmp_root, library, argc, argv, long_options))
+    if (plugin_add(registry, tmp_root, library, long_options))
     {
       registry.removeLibrary(plugin_name);
       errmsg_printf(ERRMSG_LVL_ERROR,
@@ -1395,12 +1392,6 @@ void plugin_opt_set_limits(struct option *options,
     options->arg_type= OPT_ARG;
 }
 
-static int get_one_plugin_option(int, const struct option *, char *)
-{
-  return 0;
-}
-
-
 static int construct_options(memory::Root *mem_root, module::Module *tmp,
                              option *options)
 {
@@ -1612,8 +1603,6 @@ void drizzle_del_plugin_sysvar()
     test_plugin_options()
     tmp_root                    temporary scratch space
     plugin                      internal plugin structure
-    argc                        user supplied arguments
-    argv                        user supplied arguments
     default_enabled             default plugin enable status
   RETURNS:
     0 SUCCESS - plugin should be enabled/loaded
@@ -1622,7 +1611,6 @@ void drizzle_del_plugin_sysvar()
 */
 static int test_plugin_options(memory::Root *module_root,
                                module::Module *test_module,
-                               int *argc, char **argv,
                                po::options_description &long_options)
 {
   struct sys_var_chain chain= { NULL, NULL };
@@ -1650,7 +1638,7 @@ static int test_plugin_options(memory::Root *module_root,
     count++;
   }
 
-  if (count > EXTRA_OPTIONS || (*argc > 1))
+  if (count > EXTRA_OPTIONS)
   {
     if (!(opts= (option*) module_root->alloc_root(sizeof(option) * count)))
     {
@@ -1669,19 +1657,6 @@ static int test_plugin_options(memory::Root *module_root,
       return(-1);
     }
 
-    if (test_module->getManifest().init_options == NULL)
-    {
-      error= handle_options(argc, &argv, opts, get_one_plugin_option);
-      (*argc)++; /* add back one for the program name */
-
-      if (error)
-      {
-        errmsg_printf(ERRMSG_LVL_ERROR,
-                      _("Parsing options for plugin '%s' failed."),
-                      test_module->getName().c_str());
-        goto err;
-      }
-    }
   }
 
   error= 1;
