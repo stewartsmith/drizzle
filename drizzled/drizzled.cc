@@ -2136,6 +2136,10 @@ static void get_options()
   {
     opt_plugin_load= (char *)vm["plugin-load"].as<string>().c_str();
   }
+  if (vm.count("default-storage-engine"))
+  {
+    default_storage_engine_str= (char *)vm["default-storage-engine"].as<string>().c_str();
+  }
 
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
