@@ -198,7 +198,6 @@ TYPELIB tx_isolation_typelib= {array_elements(tx_isolation_names)-1,"",
 */
 bool opt_help= false;
 bool opt_help_extended= false;
-bool opt_print_defaults= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -368,7 +367,7 @@ static void drizzle_init_variables(void);
 static void get_options(int *argc,char **argv);
 int drizzled_get_one_option(int, const struct option *, char *);
 static const char *get_relative_path(const char *path);
-static void fix_paths(string &progname);
+static void fix_paths(string progname);
 
 static void usage(void);
 void close_connections(void);
@@ -479,7 +478,7 @@ void unireg_abort(int exit_code)
 
   if (exit_code)
     errmsg_printf(ERRMSG_LVL_ERROR, _("Aborting\n"));
-  else if (opt_help || opt_help_extended || opt_print_defaults)
+  else if (opt_help || opt_help_extended)
     usage();
   clean_up(!opt_help && (exit_code));
   internal::my_end();
@@ -712,7 +711,6 @@ int init_common_variables(int argc, char **argv)
   internal::load_defaults("drizzled", load_default_groups, &argc, &argv);
   defaults_argv=argv;
   defaults_argc=argc;
-  string progname(argv[0]);
   get_options(&defaults_argc, defaults_argv);
 
   if ((user_info= check_user(drizzled_user)))
@@ -720,7 +718,7 @@ int init_common_variables(int argc, char **argv)
     set_user(drizzled_user, user_info);
   }
 
-  fix_paths(progname);
+  fix_paths(argv[0]);
 
   current_pid= getpid();		/* Save for later ref */
   init_time();				/* Init time-functions (read zone) */
@@ -883,7 +881,7 @@ int init_server_components(module::Registry &plugins, int, char**)
   }
 
 
-  if (opt_help || opt_help_extended || opt_print_defaults)
+  if (opt_help || opt_help_extended)
     unireg_abort(0);
 
   po::parsed_options parsed= po::command_line_parser(defaults_argc,
@@ -1048,10 +1046,6 @@ struct option my_long_options[] =
    N_("Display this help and exit after initializing plugins."),
    (char**) &opt_help_extended, (char**) &opt_help_extended,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"print-defaults", OPT_PRINT_DEFAULTS,
-   N_("Print the default settings and exit"),
-   (char**) &opt_print_defaults, (char**) &opt_print_defaults, 0, GET_BOOL,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
@@ -1400,16 +1394,12 @@ static void usage(void)
          "and you are welcome to modify and redistribute it under the GPL "
          "license\n\n"));
 
-  if (!opt_print_defaults)
-  {
-    printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
-
-    internal::print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
-    puts("");
-  }
  
+  printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
   /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options, long_options);
+  my_print_help_inc_plugins(my_long_options);
+
+  cout << long_options << endl;
 
 }
 
@@ -1682,7 +1672,7 @@ static const char *get_relative_path(const char *path)
 }
 
 
-static void fix_paths(string &progname)
+static void fix_paths(string progname)
 {
   char buff[FN_REFLEN],*pos,rp_buff[PATH_MAX];
   internal::convert_dirname(drizzle_home,drizzle_home,NULL);
@@ -1775,7 +1765,7 @@ static void fix_paths(string &progname)
   internal::convert_dirname(buff,buff,NULL);
   (void) internal::my_load_path(language,language,buff);
 
-  if (not opt_help and not opt_help_extended and not opt_print_defaults)
+  if (not opt_help and not opt_help_extended)
   {
     char *tmp_string;
     struct stat buf;

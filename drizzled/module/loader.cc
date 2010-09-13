@@ -79,8 +79,6 @@ char opt_plugin_dir[FN_REFLEN];
 const char *opt_plugin_load_default= PANDORA_PLUGIN_LIST;
 const char *builtin_plugins= PANDORA_BUILTIN_LIST;
 
-extern bool opt_print_defaults;
-
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
 */
@@ -1762,8 +1760,7 @@ public:
 };
 
 
-void my_print_help_inc_plugins(option *main_options,
-                               po::options_description &long_options)
+void my_print_help_inc_plugins(option *main_options)
 {
   module::Registry &registry= module::Registry::singleton();
   vector<option> all_options;
@@ -1822,15 +1819,7 @@ void my_print_help_inc_plugins(option *main_options,
   /* main_options now points to the empty option terminator */
   all_options.push_back(*main_options);
 
-  if (!opt_print_defaults)
-  {
-    my_print_help(&*(all_options.begin()));
-    cout << long_options << endl;
-  }
-  else
-  {
-    my_print_variables(&*(all_options.begin()));
-  }
+  my_print_help(&*(all_options.begin()));
 
   mem_root.free_root(MYF(0));
 }

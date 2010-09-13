@@ -1169,15 +1169,13 @@ sub collect_mysqld_features () {
   my $tmpdir= tempdir(CLEANUP => 0); # Directory removed by this function
 
   #
-  # Execute "mysqld --help --verbose" to get a list
+  # Execute "drizzled --help" to get a list
   # list of all features and settings
   #
-  # --no-defaults and --skip-grant-tables are to avoid loading
+  # --no-defaults are to avoid loading
   # system-wide configs and plugins
   #
-  # --datadir must exist, mysqld will chdir into it
-  #
-  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --skip-grant-tables --print-defaults`;
+  my $list= `$exe_drizzled --no-defaults --help`;
 
   foreach my $line (split('\n', $list))
   {
@@ -1195,46 +1193,9 @@ sub collect_mysqld_features () {
 	mtr_report("Drizzle Version $1.$2.$3");
       }
     }
-    else
-    {
-      if (!$found_variable_list_start)
-      {
-	# Look for start of variables list
-	if ( $line =~ /[\-]+\s[\-]+/ )
-	{
-	  $found_variable_list_start= 1;
-	}
-      }
-      else
-      {
-	# Put variables into hash
-	if ( $line =~ /^([\S]+)[ \t]+(.*?)\r?$/ )
-	{
-	  # print "$1=\"$2\"\n";
-	  $mysqld_variables{$1}= $2;
-	}
-	else
-	{
-	  # The variable list is ended with a blank line
-	  if ( $line =~ /^[\s]*$/ )
-	  {
-	    last;
-	  }
-	  else
-	  {
-	    # Send out a warning, we should fix the variables that has no
-	    # space between variable name and it's value
-	    # or should it be fixed width column parsing? It does not
-	    # look like that in function my_print_variables in my_getopt.c
-	    mtr_warning("Could not parse variable list line : $line");
-	  }
-	}
-      }
-    }
   }
   rmtree($tmpdir);
   mtr_error("Could not find version of Drizzle") unless $drizzle_version_id;
-  mtr_error("Could not find variabes list") unless $found_variable_list_start;
 
 }
 
