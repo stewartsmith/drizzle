@@ -725,7 +725,8 @@ static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
     cout << N_("Error: Invalid Value for join_buffer_size");
     exit(-1);
   }
-  global_system_variables.join_buff_size-= in_join_buffer_size % IO_SIZE;
+  in_join_buffer_size-= in_join_buffer_size % IO_SIZE;
+  global_system_variables.join_buff_size= in_join_buffer_size;
 }
 
 static void check_limits_map(uint32_t in_max_allowed_packet)
@@ -736,7 +737,8 @@ static void check_limits_map(uint32_t in_max_allowed_packet)
     cout << N_("Error: Invalid Value for max_allowed_packet");
     exit(-1);
   }
-  global_system_variables.max_allowed_packet-= in_max_allowed_packet % 1024;
+  in_max_allowed_packet-= in_max_allowed_packet % 1024;
+  global_system_variables.max_allowed_packet= in_max_allowed_packet;
 }
 
 static void check_limits_mce(uint64_t in_max_connect_errors)
@@ -769,7 +771,8 @@ static void check_limits_mhts(uint64_t in_max_heap_table_size)
     cout << N_("Error: Invalid Value for max_heap_table_size");
     exit(-1);
   }
-  global_system_variables.max_heap_table_size-= in_max_heap_table_size % 1024;
+  in_max_heap_table_size-= in_max_heap_table_size % 1024;
+  global_system_variables.max_heap_table_size= in_max_heap_table_size;
 }
 
 static void check_limits_merl(uint64_t in_min_examined_row_limit)
@@ -777,10 +780,10 @@ static void check_limits_merl(uint64_t in_min_examined_row_limit)
   global_system_variables.min_examined_row_limit= 0;
   if (in_min_examined_row_limit > ULONG_MAX)
   {
-    cout << N_("Error: Invalid Value for max_heap_table_size");
+    cout << N_("Error: Invalid Value for min_examined_row_limit");
     exit(-1);
   }
-  global_system_variables.min_examined_row_limit-= in_min_examined_row_limit % 1L;
+  global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
 }
 
 static void check_limits_max_join_size(drizzled::ha_rows in_max_join_size)
@@ -835,7 +838,7 @@ static void check_limits_mwlc(uint64_t in_min_examined_row_limit)
     cout << N_("Error: Invalid Value for min_examined_row_limit");
     exit(-1);
   }
-  global_system_variables.min_examined_row_limit-= in_min_examined_row_limit % 1L;
+  global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
 }
 
 static void check_limits_osd(uint32_t in_optimizer_search_depth)
@@ -868,7 +871,8 @@ static void check_limits_qabs(uint32_t in_query_alloc_block_size)
     cout << N_("Error: Invalid Value for query_alloc_block_size");
     exit(-1);
   }
-  global_system_variables.query_alloc_block_size-= in_query_alloc_block_size % 1024;
+  in_query_alloc_block_size-= in_query_alloc_block_size % 1024;
+  global_system_variables.query_alloc_block_size= in_query_alloc_block_size;
 }
 
 static void check_limits_qps(uint32_t in_query_prealloc_size)
@@ -879,7 +883,8 @@ static void check_limits_qps(uint32_t in_query_prealloc_size)
     cout << N_("Error: Invalid Value for query_prealloc_size");
     exit(-1);
   }
-  global_system_variables.query_prealloc_size-= in_query_prealloc_size % 1024;
+  in_query_prealloc_size-= in_query_prealloc_size % 1024;
+  global_system_variables.query_prealloc_size= in_query_prealloc_size;
 }
 
 static void check_limits_rabs(size_t in_range_alloc_block_size)
@@ -890,7 +895,8 @@ static void check_limits_rabs(size_t in_range_alloc_block_size)
     cout << N_("Error: Invalid Value for range_alloc_block_size");
     exit(-1);
   }
-  global_system_variables.range_alloc_block_size-= in_range_alloc_block_size % 1024;
+  in_range_alloc_block_size-= in_range_alloc_block_size % 1024;
+  global_system_variables.range_alloc_block_size= in_range_alloc_block_size;
 }
 
 static void check_limits_read_buffer_size(int32_t in_read_buff_size)
@@ -901,7 +907,8 @@ static void check_limits_read_buffer_size(int32_t in_read_buff_size)
     cout << N_("Error: Invalid Value for read_buff_size");
     exit(-1);
   }
-  global_system_variables.read_buff_size-= in_read_buff_size % IO_SIZE;
+  in_read_buff_size-= in_read_buff_size % IO_SIZE;
+  global_system_variables.read_buff_size= in_read_buff_size;
 }
 
 static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
@@ -912,7 +919,7 @@ static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
     cout << N_("Error: Invalid Value for read_rnd_buff_size");
     exit(-1);
   }
-  global_system_variables.read_rnd_buff_size-= in_read_rnd_buff_size;
+  global_system_variables.read_rnd_buff_size= in_read_rnd_buff_size;
 }
 
 static void check_limits_sort_buffer_size(size_t in_sortbuff_size)
