@@ -29,6 +29,7 @@
 #include <string>
 
 #include <boost/unordered_map.hpp>
+#include <boost/thread/condition_variable.hpp>
 
 #include "drizzled/typelib.h"
 #include "drizzled/memory/root.h"
@@ -228,18 +229,18 @@ public:
 private:
   std::vector<TYPELIB> intervals;			/* pointer to interval info */
 
-  pthread_mutex_t mutex;                /* For locking the share  */
-  pthread_cond_t cond;			/* To signal that share is ready */
+  boost::mutex mutex;                /* For locking the share  */
+  boost::condition_variable cond;			/* To signal that share is ready */
 
 
   void lock()
   {
-    pthread_mutex_lock(&mutex);
+    mutex.lock();
   }
 
   void unlock()
   {
-    pthread_mutex_unlock(&mutex);
+    mutex.unlock();
   }
 public:
 
