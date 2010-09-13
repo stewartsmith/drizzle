@@ -17,21 +17,24 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "config.h"
-#include <math.h>
-#include <drizzled/function/math/sin.h>
+#ifndef DRIZZLED_FUNCTION_MATH_SIN_H
+#define DRIZZLED_FUNCTION_MATH_SIN_H
+
+#include <drizzled/function/func.h>
+#include <drizzled/function/math/dec.h>
 
 namespace drizzled
 {
 
-double Item_func_sin::val_real()
+class Item_func_sin :public Item_dec_func
 {
-  assert(fixed == 1);
-  double value= args[0]->val_real();
-  if ((null_value=args[0]->null_value))
-    return 0.0;
-  return sin(value);
-}
-
+public:
+  Item_func_sin() :Item_dec_func() {}
+  double val_real();
+  const char *func_name() const { return "sin"; }
+  bool check_argument_count(int n) { return n == 1; }
+};
 
 } /* namespace drizzled */
+
+#endif /* DRIZZLED_FUNCTION_MATH_SIN_H */

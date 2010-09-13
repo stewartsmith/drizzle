@@ -27,6 +27,7 @@
 #include "plugin/math_functions/atan.h"
 #include "plugin/math_functions/cos.h"
 #include "plugin/math_functions/log.h"
+#include "plugin/math_functions/sin.h"
 
 using namespace drizzled;
 
@@ -39,6 +40,7 @@ plugin::Create_function<drizzled::Item_func_cos> *cos_function= NULL;
 plugin::Create_function<drizzled::Item_func_log> *log_function= NULL;
 plugin::Create_function<drizzled::Item_func_log2> *log2_function= NULL;
 plugin::Create_function<drizzled::Item_func_log10> *log10_function= NULL;
+plugin::Create_function<drizzled::Item_func_sin> *sin_function= NULL;
 
 static int init(drizzled::module::Context &context)
 {
@@ -51,6 +53,7 @@ static int init(drizzled::module::Context &context)
   log_function= new plugin::Create_function<Item_func_log>("log");
   log2_function= new plugin::Create_function<Item_func_log2>("log2");
   log10_function= new plugin::Create_function<Item_func_log10>("log10");
+  sin_function= new plugin::Create_function<Item_func_sin>("sin");
 
   context.add(abs_function);
   context.add(acos_function);
@@ -61,6 +64,7 @@ static int init(drizzled::module::Context &context)
   context.add(log_function);
   context.add(log2_function);
   context.add(log10_function);
+  context.add(sin_function);
 
   return 0;
 }

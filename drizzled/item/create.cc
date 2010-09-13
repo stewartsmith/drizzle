@@ -88,7 +88,6 @@
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
 #include <drizzled/function/sign.h>
-#include <drizzled/function/math/sin.h>
 #include <drizzled/function/math/sqrt.h>
 #include <drizzled/function/str/quote.h>
 #include <drizzled/function/math/tan.h>
@@ -1046,22 +1045,6 @@ protected:
   Create_func_sign() {}
   virtual ~Create_func_sign() {}
 };
-
-
-class Create_func_sin : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_sin s_singleton;
-
-protected:
-  Create_func_sin() {}
-  virtual ~Create_func_sin() {}
-};
-
 
 class Create_func_space : public Create_func_arg1
 {
@@ -2117,16 +2100,6 @@ Create_func_sign::create(Session *session, Item *arg1)
   return new (session->mem_root) Item_func_sign(arg1);
 }
 
-
-Create_func_sin Create_func_sin::s_singleton;
-
-Item*
-Create_func_sin::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_sin(arg1);
-}
-
-
 Create_func_space Create_func_space::s_singleton;
 
 Item*
@@ -2323,7 +2296,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("RPAD") }, BUILDER(Create_func_rpad)},
   { { C_STRING_WITH_LEN("RTRIM") }, BUILDER(Create_func_rtrim)},
   { { C_STRING_WITH_LEN("SIGN") }, BUILDER(Create_func_sign)},
-  { { C_STRING_WITH_LEN("SIN") }, BUILDER(Create_func_sin)},
   { { C_STRING_WITH_LEN("SPACE") }, BUILDER(Create_func_space)},
   { { C_STRING_WITH_LEN("SQRT") }, BUILDER(Create_func_sqrt)},
   { { C_STRING_WITH_LEN("STRCMP") }, BUILDER(Create_func_strcmp)},
