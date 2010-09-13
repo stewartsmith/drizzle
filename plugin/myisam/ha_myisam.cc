@@ -126,9 +126,6 @@ public:
                            const TableIdentifier &identifier,
                            message::Table &table_message);
 
-  /* Temp only engine, so do not return values. */
-  void doGetTableNames(CachedDirectory &, const SchemaIdentifier &, set<string>&) { };
-
   uint32_t max_supported_keys()          const { return MI_MAX_KEY; }
   uint32_t max_supported_key_length()    const { return MI_MAX_KEY_LENGTH; }
   uint32_t max_supported_key_part_length() const { return MI_MAX_KEY_LENGTH; }

@@ -78,13 +78,6 @@ public:
     return ENOENT;
   }
 
-
-  void doGetTableNames(drizzled::CachedDirectory&,
-                       const drizzled::SchemaIdentifier&,
-                       std::set<std::string>&)
-  {
-  }
-
   bool doDoesTableExist(drizzled::Session&, const drizzled::TableIdentifier&)
   {
     return false;
