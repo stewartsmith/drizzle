@@ -25,6 +25,7 @@
 #include "plugin/math_functions/acos.h"
 #include "plugin/math_functions/asin.h"
 #include "plugin/math_functions/atan.h"
+#include "plugin/math_functions/cos.h"
 
 using namespace drizzled;
 
@@ -33,6 +34,7 @@ plugin::Create_function<drizzled::Item_func_acos> *acos_function= NULL;
 plugin::Create_function<drizzled::Item_func_asin> *asin_function= NULL;
 plugin::Create_function<drizzled::Item_func_atan> *atan_function= NULL;
 plugin::Create_function<drizzled::Item_func_atan> *atan2_function= NULL;
+plugin::Create_function<drizzled::Item_func_cos> *cos_function= NULL;
 
 static int init(drizzled::module::Context &context)
 {
@@ -41,12 +43,14 @@ static int init(drizzled::module::Context &context)
   asin_function= new plugin::Create_function<Item_func_asin>("asin");
   atan_function= new plugin::Create_function<Item_func_atan>("atan");
   atan2_function= new plugin::Create_function<Item_func_atan>("atan2");
+  cos_function= new plugin::Create_function<Item_func_cos>("cos");
 
   context.add(abs_function);
   context.add(acos_function);
   context.add(asin_function);
   context.add(atan_function);
   context.add(atan2_function);
+  context.add(cos_function);
 
   return 0;
 }

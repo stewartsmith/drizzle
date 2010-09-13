@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/cos.h>
+#include "cos.h"
 
 namespace drizzled
 {

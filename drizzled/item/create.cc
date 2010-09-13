@@ -65,7 +65,6 @@
 #include <drizzled/function/func.h>
 #include <drizzled/function/additive_op.h>
 #include <drizzled/function/math/ceiling.h>
-#include <drizzled/function/math/cos.h>
 #include <drizzled/function/math/dec.h>
 #include <drizzled/function/math/decimal_typecast.h>
 #include <drizzled/function/math/exp.h>
@@ -322,22 +321,6 @@ protected:
   Create_func_conv() {}
   virtual ~Create_func_conv() {}
 };
-
-
-class Create_func_cos : public Create_func_arg1
-{
-public:
-  using Create_func_arg1::create;
-
-  virtual Item *create(Session *session, Item *arg1);
-
-  static Create_func_cos s_singleton;
-
-protected:
-  Create_func_cos() {}
-  virtual ~Create_func_cos() {}
-};
-
 
 class Create_func_cot : public Create_func_arg1
 {
@@ -1521,16 +1504,6 @@ Create_func_conv::create(Session *session, Item *arg1, Item *arg2, Item *arg3)
   return new (session->mem_root) Item_func_conv(arg1, arg2, arg3);
 }
 
-
-Create_func_cos Create_func_cos::s_singleton;
-
-Item*
-Create_func_cos::create(Session *session, Item *arg1)
-{
-  return new (session->mem_root) Item_func_cos(arg1);
-}
-
-
 Create_func_cot Create_func_cot::s_singleton;
 
 Item*
@@ -2400,7 +2373,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("CONCAT") }, BUILDER(Create_func_concat)},
   { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
   { { C_STRING_WITH_LEN("CONV") }, BUILDER(Create_func_conv)},
-  { { C_STRING_WITH_LEN("COS") }, BUILDER(Create_func_cos)},
   { { C_STRING_WITH_LEN("COT") }, BUILDER(Create_func_cot)},
   { { C_STRING_WITH_LEN("DATEDIFF") }, BUILDER(Create_func_datediff)},
   { { C_STRING_WITH_LEN("DATE_FORMAT") }, BUILDER(Create_func_date_format)},

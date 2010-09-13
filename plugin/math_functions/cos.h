@@ -29,9 +29,10 @@ namespace drizzled
 class Item_func_cos :public Item_dec_func
 {
 public:
-  Item_func_cos(Item *a) :Item_dec_func(a) {}
+  Item_func_cos() :Item_dec_func() {}
   double val_real();
   const char *func_name() const { return "cos"; }
+  bool check_argument_count(int n) { return n == 1; }
 };
 
 } /* namespace drizzled */
