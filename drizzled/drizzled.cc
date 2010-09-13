@@ -1408,6 +1408,13 @@ int init_server_components(module::Registry &plugins)
   }
 
   po::store(parsed, vm);
+
+  if (not vm["no-defaults"].as<bool>())
+  {
+    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
+    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+  }
+
   po::notify(vm);
 
   plugin_finalize(plugins);
@@ -1976,6 +1983,33 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
+  max_system_variables.auto_increment_increment= UINT64_MAX;
+  max_system_variables.auto_increment_offset= UINT64_MAX;
+  max_system_variables.completion_type= 2;
+  max_system_variables.log_warnings= 1;
+  max_system_variables.bulk_insert_buff_size= ULONG_MAX;
+  max_system_variables.div_precincrement= DECIMAL_MAX_SCALE;
+  max_system_variables.group_concat_max_len= ULONG_MAX;
+  max_system_variables.join_buff_size= ULONG_MAX;
+  max_system_variables.max_allowed_packet= 1024L*1024L*1024L;
+  max_system_variables.max_error_count= 65535;
+  max_system_variables.max_heap_table_size= MAX_MEM_TABLE_SIZE;
+  max_system_variables.max_join_size= INT32_MAX;
+  max_system_variables.max_length_for_sort_data= 8192*1024L;
+  max_system_variables.max_seeks_for_key= ULONG_MAX;
+  max_system_variables.max_sort_length= 8192*1024L;
+  max_system_variables.min_examined_row_limit= ULONG_MAX;
+  max_system_variables.optimizer_prune_level= 1;
+  max_system_variables.optimizer_search_depth= MAX_TABLES+2;
+  max_system_variables.preload_buff_size= 1024*1024*1024L;
+  max_system_variables.query_alloc_block_size= UINT32_MAX;
+  max_system_variables.query_prealloc_size= UINT32_MAX;
+  max_system_variables.range_alloc_block_size= SIZE_MAX;
+  max_system_variables.read_buff_size= INT32_MAX;
+  max_system_variables.read_rnd_buff_size= UINT32_MAX;
+  max_system_variables.sortbuff_size= SIZE_MAX;
+  max_system_variables.tmp_table_size= MAX_MEM_TABLE_SIZE;
+
   opt_scheduler_default= (char*) "multi_thread";
 
   /* Variables that depends on compile options */
