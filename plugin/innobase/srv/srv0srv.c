@@ -415,9 +415,6 @@ UNIV_INTERN ib_uint64_t	srv_stats_sample_pages = 8;
 UNIV_INTERN ibool	srv_use_doublewrite_buf	= TRUE;
 UNIV_INTERN ibool	srv_use_checksums = TRUE;
 
-UNIV_INTERN ibool	srv_set_thread_priorities = TRUE;
-UNIV_INTERN int	srv_query_thread_priority = 0;
-
 UNIV_INTERN ulong	srv_replication_delay		= 0;
 
 /*-------------------------------------------*/

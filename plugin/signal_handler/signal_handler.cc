@@ -205,13 +205,6 @@ public:
     (void) pthread_attr_init(&thr_attr);
     pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
     (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
-    {
-      struct sched_param tmp_sched_param;
-
-      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-      tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
-      (void)pthread_attr_setschedparam(&thr_attr, &tmp_sched_param);
-    }
 #if defined(__ia64__) || defined(__ia64)
     /*
       Peculiar things with ia64 platforms - it seems we only have half the
