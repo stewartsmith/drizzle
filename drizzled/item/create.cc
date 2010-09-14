@@ -83,7 +83,6 @@
 #include <drizzled/function/num_op.h>
 #include <drizzled/function/numhybrid.h>
 #include <drizzled/function/math/ord.h>
-#include <drizzled/function/math/pow.h>
 #include <drizzled/function/math/real.h>
 #include <drizzled/function/row_count.h>
 #include <drizzled/function/set_user_var.h>
@@ -928,22 +927,6 @@ protected:
   Create_func_pi() {}
   virtual ~Create_func_pi() {}
 };
-
-
-class Create_func_pow : public Create_func_arg2
-{
-public:
-  using Create_func_arg2::create;
-
-  virtual Item *create(Session *session, Item *arg1, Item *arg2);
-
-  static Create_func_pow s_singleton;
-
-protected:
-  Create_func_pow() {}
-  virtual ~Create_func_pow() {}
-};
-
 
 class Create_func_quote : public Create_func_arg1
 {
@@ -2000,15 +1983,6 @@ Create_func_pi::create(Session *session)
 }
 
 
-Create_func_pow Create_func_pow::s_singleton;
-
-Item*
-Create_func_pow::create(Session *session, Item *arg1, Item *arg2)
-{
-  return new (session->mem_root) Item_func_pow(arg1, arg2);
-}
-
-
 Create_func_quote Create_func_quote::s_singleton;
 
 Item*
@@ -2287,8 +2261,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("PERIOD_ADD") }, BUILDER(Create_func_period_add)},
   { { C_STRING_WITH_LEN("PERIOD_DIFF") }, BUILDER(Create_func_period_diff)},
   { { C_STRING_WITH_LEN("PI") }, BUILDER(Create_func_pi)},
-  { { C_STRING_WITH_LEN("POW") }, BUILDER(Create_func_pow)},
-  { { C_STRING_WITH_LEN("POWER") }, BUILDER(Create_func_pow)},
   { { C_STRING_WITH_LEN("QUOTE") }, BUILDER(Create_func_quote)},
   { { C_STRING_WITH_LEN("RADIANS") }, BUILDER(Create_func_radians)},
   { { C_STRING_WITH_LEN("ROUND") }, BUILDER(Create_func_round)},

@@ -28,6 +28,7 @@
 #include "plugin/math_functions/cos.h"
 #include "plugin/math_functions/log.h"
 #include "plugin/math_functions/sin.h"
+#include "plugin/math_functions/pow.h"
 
 using namespace drizzled;
 
@@ -41,6 +42,8 @@ plugin::Create_function<drizzled::Item_func_log> *log_function= NULL;
 plugin::Create_function<drizzled::Item_func_log2> *log2_function= NULL;
 plugin::Create_function<drizzled::Item_func_log10> *log10_function= NULL;
 plugin::Create_function<drizzled::Item_func_sin> *sin_function= NULL;
+plugin::Create_function<drizzled::Item_func_pow> *pow_function= NULL;
+plugin::Create_function<drizzled::Item_func_pow> *power_function= NULL;
 
 static int init(drizzled::module::Context &context)
 {
@@ -54,6 +57,8 @@ static int init(drizzled::module::Context &context)
   log2_function= new plugin::Create_function<Item_func_log2>("log2");
   log10_function= new plugin::Create_function<Item_func_log10>("log10");
   sin_function= new plugin::Create_function<Item_func_sin>("sin");
+  pow_function= new plugin::Create_function<Item_func_pow>("pow");
+  power_function= new plugin::Create_function<Item_func_pow>("power");
 
   context.add(abs_function);
   context.add(acos_function);
@@ -65,6 +70,8 @@ static int init(drizzled::module::Context &context)
   context.add(log2_function);
   context.add(log10_function);
   context.add(sin_function);
+  context.add(pow_function);
+  context.add(power_function);
 
   return 0;
 }

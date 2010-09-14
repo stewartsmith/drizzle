@@ -29,9 +29,10 @@ namespace drizzled
 class Item_func_pow :public Item_dec_func
 {
 public:
-  Item_func_pow(Item *a,Item *b) :Item_dec_func(a,b) {}
+  Item_func_pow() :Item_dec_func() {}
   double val_real();
   const char *func_name() const { return "pow"; }
+  bool check_argument_count(int n) { return n == 2; }
 };
 
 } /* namespace drizzled */

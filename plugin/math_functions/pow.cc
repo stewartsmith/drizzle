@@ -19,7 +19,7 @@
 
 #include "config.h"
 #include <math.h>
-#include <drizzled/function/math/pow.h>
+#include "pow.h"
 
 namespace drizzled
 {
