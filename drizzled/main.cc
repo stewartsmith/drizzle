@@ -256,7 +256,7 @@ int main(int argc, char **argv)
     server_id= 1;
   }
 
-  if (init_server_components(modules, argc, argv))
+  if (init_server_components(modules))
     unireg_abort(1);
 
   /**

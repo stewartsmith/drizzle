@@ -129,6 +129,9 @@
 #endif
 
 #define MAX_MEM_TABLE_SIZE SIZE_MAX
+#include <iostream>
+#include <fstream>
+
 
 using namespace std;
 namespace po=boost::program_options;
@@ -170,17 +173,6 @@ inline void setup_fpu()
 #ifdef SOLARIS
 extern "C" int gethostname(char *name, int namelen);
 #endif
-
-/* Constants */
-static const char *tc_heuristic_recover_names[]=
-{
-  "COMMIT", "ROLLBACK", NULL
-};
-static TYPELIB tc_heuristic_recover_typelib=
-{
-  array_elements(tc_heuristic_recover_names)-1,"",
-  tc_heuristic_recover_names, NULL
-};
 
 const char *first_keyword= "first";
 const char * const DRIZZLE_CONFIG_NAME= "drizzled";
@@ -348,8 +340,6 @@ boost::condition_variable COND_server_end;
 
 int cleanup_done;
 static char *drizzle_home_ptr, *pidfile_name_ptr;
-static int defaults_argc;
-static char **defaults_argv;
 
 passwd *user_info;
 
@@ -364,15 +354,16 @@ uint64_t refresh_version;  /* Increments on each reload */
 bool drizzle_rm_tmp_tables();
 
 static void drizzle_init_variables(void);
-static void get_options(int *argc,char **argv);
-int drizzled_get_one_option(int, const struct option *, char *);
+static void get_options();
 static const char *get_relative_path(const char *path);
 static void fix_paths(string progname);
 
 static void usage(void);
 void close_connections(void);
 
-po::options_description long_options("Allowed Options");
+po::options_description long_options("Kernel Options");
+po::options_description plugin_options("Plugin Options");
+vector<string> unknown_options;
 po::variables_map vm;
 
 po::variables_map &getVariablesMap()
@@ -498,8 +489,6 @@ void clean_up(bool print_message)
   module::Registry &modules= module::Registry::singleton();
   modules.shutdownModules();
   xid_cache_free();
-  if (defaults_argv)
-    internal::free_defaults(defaults_argv);
   if (opt_secure_file_priv)
     free(opt_secure_file_priv);
 
@@ -663,6 +652,394 @@ const char *load_default_groups[]=
   DRIZZLE_CONFIG_NAME, "server", 0, 0
 };
 
+static void check_limits_aii(uint64_t in_auto_increment_increment)
+{
+  global_system_variables.auto_increment_increment= 1;
+  if (in_auto_increment_increment < 1 || in_auto_increment_increment > UINT64_MAX)
+  {
+    cout << N_("Error: Invalid Value for auto_increment_increment");
+    exit(-1);
+  }
+  global_system_variables.auto_increment_increment= in_auto_increment_increment;
+}
+
+static void check_limits_aio(uint64_t in_auto_increment_offset)
+{
+  global_system_variables.auto_increment_offset= 1;
+  if (in_auto_increment_offset < 1 || in_auto_increment_offset > UINT64_MAX)
+  {
+    cout << N_("Error: Invalid Value for auto_increment_offset");
+    exit(-1);
+  }
+  global_system_variables.auto_increment_offset= in_auto_increment_offset;
+}
+
+static void check_limits_completion_type(uint32_t in_completion_type)
+{
+  global_system_variables.completion_type= 0;
+  if (in_completion_type > 2)
+  {
+    cout << N_("Error: Invalid Value for completion_type");
+    exit(-1);
+  }
+  global_system_variables.completion_type= in_completion_type;
+}
+
+static void check_limits_back_log(uint32_t in_back_log)
+{
+  back_log= 50;
+  if (in_back_log < 1 || in_back_log > 65535)
+  {
+    cout << N_("Error: Invalid Value for back_log");
+    exit(-1);
+  }
+  back_log= in_back_log;
+}
+
+static void check_limits_dpi(uint32_t in_div_precincrement)
+{
+  global_system_variables.div_precincrement= 4;
+  if (in_div_precincrement > DECIMAL_MAX_SCALE)
+  {
+    cout << N_("Error: Invalid Value for div-precision-increment");
+    exit(-1);
+  }
+  global_system_variables.div_precincrement= in_div_precincrement;
+}
+
+static void check_limits_gcml(uint64_t in_group_concat_max_len)
+{
+  global_system_variables.group_concat_max_len= 1024;
+  if (in_group_concat_max_len > ULONG_MAX || in_group_concat_max_len < 4)
+  {
+    cout << N_("Error: Invalid Value for group_concat_max_len");
+    exit(-1);
+  }
+  global_system_variables.group_concat_max_len= in_group_concat_max_len;
+}
+
+static void check_limits_join_buffer_size(uint64_t in_join_buffer_size)
+{
+  global_system_variables.join_buff_size= (128*1024L);
+  if (in_join_buffer_size < IO_SIZE*2 || in_join_buffer_size > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for join_buffer_size");
+    exit(-1);
+  }
+  in_join_buffer_size-= in_join_buffer_size % IO_SIZE;
+  global_system_variables.join_buff_size= in_join_buffer_size;
+}
+
+static void check_limits_map(uint32_t in_max_allowed_packet)
+{
+  global_system_variables.max_allowed_packet= (1024*1024L);
+  if (in_max_allowed_packet < 1024 || in_max_allowed_packet > 1024*1024L*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_allowed_packet");
+    exit(-1);
+  }
+  in_max_allowed_packet-= in_max_allowed_packet % 1024;
+  global_system_variables.max_allowed_packet= in_max_allowed_packet;
+}
+
+static void check_limits_mce(uint64_t in_max_connect_errors)
+{
+  max_connect_errors= MAX_CONNECT_ERRORS;
+  if (in_max_connect_errors < 1 || in_max_connect_errors > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_connect_errors");
+    exit(-1);
+  }
+  max_connect_errors= in_max_connect_errors;
+}
+
+static void check_limits_max_err_cnt(uint64_t in_max_error_count)
+{
+  global_system_variables.max_error_count= DEFAULT_ERROR_COUNT;
+  if (in_max_error_count > 65535)
+  {
+    cout << N_("Error: Invalid Value for max_error_count");
+    exit(-1);
+  }
+  global_system_variables.max_error_count= in_max_error_count;
+}
+
+static void check_limits_mhts(uint64_t in_max_heap_table_size)
+{
+  global_system_variables.max_heap_table_size= (16*1024*1024L);
+  if (in_max_heap_table_size < 16384 || in_max_heap_table_size > MAX_MEM_TABLE_SIZE)
+  {
+    cout << N_("Error: Invalid Value for max_heap_table_size");
+    exit(-1);
+  }
+  in_max_heap_table_size-= in_max_heap_table_size % 1024;
+  global_system_variables.max_heap_table_size= in_max_heap_table_size;
+}
+
+static void check_limits_merl(uint64_t in_min_examined_row_limit)
+{
+  global_system_variables.min_examined_row_limit= 0;
+  if (in_min_examined_row_limit > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for min_examined_row_limit");
+    exit(-1);
+  }
+  global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
+}
+
+static void check_limits_max_join_size(drizzled::ha_rows in_max_join_size)
+{
+  global_system_variables.max_join_size= INT32_MAX;
+  if ((uint64_t)in_max_join_size < 1 || (uint64_t)in_max_join_size > INT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_join_size");
+    exit(-1);
+  }
+  global_system_variables.max_join_size= in_max_join_size;
+}
+
+static void check_limits_mlfsd(int64_t in_max_length_for_sort_data)
+{
+  global_system_variables.max_length_for_sort_data= 1024;
+  if (in_max_length_for_sort_data < 4 || in_max_length_for_sort_data > 8192*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_length_for_sort_data");
+    exit(-1);
+  }
+  global_system_variables.max_length_for_sort_data= in_max_length_for_sort_data;
+}
+
+static void check_limits_msfk(uint64_t in_max_seeks_for_key)
+{
+  global_system_variables.max_seeks_for_key= ULONG_MAX;
+  if (in_max_seeks_for_key < 1 || in_max_seeks_for_key > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for max_seeks_for_key");
+    exit(-1);
+  }
+  global_system_variables.max_seeks_for_key= in_max_seeks_for_key;
+}
+
+static void check_limits_max_sort_length(size_t in_max_sort_length)
+{
+  global_system_variables.max_sort_length= 1024;
+  if ((int64_t)in_max_sort_length < 4 || (int64_t)in_max_sort_length > 8192*1024L)
+  {
+    cout << N_("Error: Invalid Value for max_sort_length");
+    exit(-1);
+  }
+  global_system_variables.max_sort_length= in_max_sort_length;
+}
+
+static void check_limits_mwlc(uint64_t in_min_examined_row_limit)
+{
+  global_system_variables.min_examined_row_limit= ULONG_MAX;
+  if (in_min_examined_row_limit > ULONG_MAX)
+  {
+    cout << N_("Error: Invalid Value for min_examined_row_limit");
+    exit(-1);
+  }
+  global_system_variables.min_examined_row_limit= in_min_examined_row_limit;
+}
+
+static void check_limits_osd(uint32_t in_optimizer_search_depth)
+{
+  global_system_variables.optimizer_search_depth= 0;
+  if (in_optimizer_search_depth > MAX_TABLES + 2)
+  {
+    cout << N_("Error: Invalid Value for optimizer_search_depth");
+    exit(-1);
+  }
+  global_system_variables.optimizer_search_depth= in_optimizer_search_depth;
+}
+
+static void check_limits_pbs(uint64_t in_preload_buff_size)
+{
+  global_system_variables.preload_buff_size= (32*1024L);
+  if (in_preload_buff_size < 1024 || in_preload_buff_size > 1024*1024*1024L)
+  {
+    cout << N_("Error: Invalid Value for preload_buff_size");
+    exit(-1);
+  }
+  global_system_variables.preload_buff_size= in_preload_buff_size;
+}
+
+static void check_limits_qabs(uint32_t in_query_alloc_block_size)
+{
+  global_system_variables.query_alloc_block_size= QUERY_ALLOC_BLOCK_SIZE;
+  if (in_query_alloc_block_size < 1024)
+  {
+    cout << N_("Error: Invalid Value for query_alloc_block_size");
+    exit(-1);
+  }
+  in_query_alloc_block_size-= in_query_alloc_block_size % 1024;
+  global_system_variables.query_alloc_block_size= in_query_alloc_block_size;
+}
+
+static void check_limits_qps(uint32_t in_query_prealloc_size)
+{
+  global_system_variables.query_prealloc_size= QUERY_ALLOC_PREALLOC_SIZE;
+  if (in_query_prealloc_size < QUERY_ALLOC_PREALLOC_SIZE)
+  {
+    cout << N_("Error: Invalid Value for query_prealloc_size");
+    exit(-1);
+  }
+  in_query_prealloc_size-= in_query_prealloc_size % 1024;
+  global_system_variables.query_prealloc_size= in_query_prealloc_size;
+}
+
+static void check_limits_rabs(size_t in_range_alloc_block_size)
+{
+  global_system_variables.range_alloc_block_size= RANGE_ALLOC_BLOCK_SIZE;
+  if (in_range_alloc_block_size < RANGE_ALLOC_BLOCK_SIZE)
+  {
+    cout << N_("Error: Invalid Value for range_alloc_block_size");
+    exit(-1);
+  }
+  in_range_alloc_block_size-= in_range_alloc_block_size % 1024;
+  global_system_variables.range_alloc_block_size= in_range_alloc_block_size;
+}
+
+static void check_limits_read_buffer_size(int32_t in_read_buff_size)
+{
+  global_system_variables.read_buff_size= (128*1024L);
+  if (in_read_buff_size < IO_SIZE*2 || in_read_buff_size > INT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for read_buff_size");
+    exit(-1);
+  }
+  in_read_buff_size-= in_read_buff_size % IO_SIZE;
+  global_system_variables.read_buff_size= in_read_buff_size;
+}
+
+static void check_limits_read_rnd_buffer_size(uint32_t in_read_rnd_buff_size)
+{
+  global_system_variables.read_rnd_buff_size= (256*1024L);
+  if (in_read_rnd_buff_size < 64 || in_read_rnd_buff_size > UINT32_MAX)
+  {
+    cout << N_("Error: Invalid Value for read_rnd_buff_size");
+    exit(-1);
+  }
+  global_system_variables.read_rnd_buff_size= in_read_rnd_buff_size;
+}
+
+static void check_limits_sort_buffer_size(size_t in_sortbuff_size)
+{
+  global_system_variables.sortbuff_size= MAX_SORT_MEMORY;
+  if ((uint32_t)in_sortbuff_size < MIN_SORT_MEMORY)
+  {
+    cout << N_("Error: Invalid Value for sort_buff_size");
+    exit(-1);
+  }
+  global_system_variables.sortbuff_size= in_sortbuff_size;
+}
+
+static void check_limits_tdc(uint32_t in_table_def_size)
+{
+  table_def_size= 128;
+  if (in_table_def_size < 1 || in_table_def_size > 512*1024L)
+  {
+    cout << N_("Error: Invalid Value for table_def_size");
+    exit(-1);
+  }
+  table_def_size= in_table_def_size;
+}
+
+static void check_limits_toc(uint32_t in_table_cache_size)
+{
+  table_cache_size= TABLE_OPEN_CACHE_DEFAULT;
+  if (in_table_cache_size < TABLE_OPEN_CACHE_MIN || in_table_cache_size > 512*1024L)
+  {
+    cout << N_("Error: Invalid Value for table_cache_size");
+    exit(-1);
+  }
+  table_cache_size= in_table_cache_size;
+}
+
+static void check_limits_tlwt(uint64_t in_table_lock_wait_timeout)
+{
+  table_lock_wait_timeout= 50;
+  if (in_table_lock_wait_timeout < 1 || in_table_lock_wait_timeout > 1024*1024*1024)
+  {
+    cout << N_("Error: Invalid Value for table_lock_wait_timeout");
+    exit(-1);
+  }
+  table_lock_wait_timeout= in_table_lock_wait_timeout;
+}
+
+static void check_limits_thread_stack(uint32_t in_my_thread_stack_size)
+{
+  my_thread_stack_size= in_my_thread_stack_size - (in_my_thread_stack_size % 1024);
+}
+
+static void check_limits_tmp_table_size(uint64_t in_tmp_table_size)
+{
+  global_system_variables.tmp_table_size= 16*1024*1024L;
+  if (in_tmp_table_size < 1024 || in_tmp_table_size > MAX_MEM_TABLE_SIZE)
+  {
+    cout << N_("Error: Invalid Value for table_lock_wait_timeout");
+    exit(-1);
+  }
+  global_system_variables.tmp_table_size= in_tmp_table_size;
+}
+
+static pair<string, string> parse_size_suffixes(string s)
+{
+  size_t equal_pos= s.find("=");
+  if (equal_pos != string::npos)
+  {
+    string arg_key(s.substr(0, equal_pos));
+    string arg_val(s.substr(equal_pos+1));
+
+    try
+    {
+      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
+      if (size_suffix_pos == arg_val.size()-1)
+      {
+        char suffix= arg_val[size_suffix_pos];
+        string size_val(arg_val.substr(0, size_suffix_pos));
+
+        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
+        uint64_t new_size= 0;
+
+        switch (suffix)
+        {
+        case 'K':
+        case 'k':
+          new_size= base_size * 1024;
+          break;
+        case 'M':
+        case 'm':
+          new_size= base_size * 1024 * 1024;
+          break;
+        case 'G':
+        case 'g':
+          new_size= base_size * 1024 * 1024 * 1024;
+          break;
+        }
+        return make_pair(arg_key,
+                         boost::lexical_cast<string>(new_size));
+      }
+    }
+    catch (...)
+    {
+      /* Screw it, let the normal parser take over */
+    }
+  }
+
+  return make_pair(string(""), string(""));
+}
+
+static pair<string, string> parse_size_arg(string s)
+{
+  if (s.find("--") == 0)
+  {
+    return parse_size_suffixes(s.substr(2));
+  }
+  return make_pair(string(""), string(""));
+}
+
+
 int init_common_variables(int argc, char **argv)
 {
   time_t curr_time;
@@ -709,10 +1086,209 @@ int init_common_variables(int argc, char **argv)
 
 
 
-  internal::load_defaults("drizzled", load_default_groups, &argc, &argv);
-  defaults_argv=argv;
-  defaults_argc=argc;
-  get_options(&defaults_argc, defaults_argv);
+
+  std::string system_config_dir_drizzle(SYSCONFDIR);
+  system_config_dir_drizzle.append("/drizzle/drizzle.cnf");
+
+  long_options.add_options()
+  ("help-extended", po::value<bool>(&opt_help_extended)->default_value(false, "false")->zero_tokens()->multitoken(),
+  N_("Display this help and exit after initializing plugins."))
+  ("help,?", po::value<bool>(&opt_help)->default_value(false, "false")->zero_tokens()->multitoken(),
+  N_("Display this help and exit."))
+  ("auto-increment-increment", po::value<uint64_t>(&global_system_variables.auto_increment_increment)->default_value(1)->notifier(&check_limits_aii),
+  N_("Auto-increment columns are incremented by this"))
+  ("auto-increment-offset", po::value<uint64_t>(&global_system_variables.auto_increment_offset)->default_value(1)->notifier(&check_limits_aio),
+  N_("Offset added to Auto-increment columns. Used when auto-increment-increment != 1"))
+  ("basedir,b", po::value<string>(),
+  N_("Path to installation directory. All paths are usually resolved "
+     "relative to this."))
+  ("chroot,r", po::value<string>(),
+  N_("Chroot drizzled daemon during startup."))
+  ("collation-server", po::value<string>(),
+  N_("Set the default collation."))      
+  ("completion-type", po::value<uint32_t>(&global_system_variables.completion_type)->default_value(0)->notifier(&check_limits_completion_type),
+  N_("Default completion type."))
+  ("core-file",  N_("Write core on errors."))
+  ("datadir,h", po::value<string>(),
+  N_("Path to the database root."))
+  ("default-storage-engine", po::value<string>(),
+  N_("Set the default storage engine (table type) for tables."))
+  ("default-time-zone", po::value<string>(),
+  N_("Set the default time zone."))
+  ("exit-info,T", po::value<long>(),
+  N_("Used for debugging;  Use at your own risk!"))
+  ("gdb", po::value<bool>(&opt_debugging)->default_value(false, "false")->zero_tokens()->multitoken(),
+  N_("Set up signals usable for debugging"))
+  ("language,L", po::value<string>(),
+  N_("(IGNORED)"))  
+  ("lc-time-name", po::value<string>(),
+  N_("Set the language used for the month names and the days of the week."))
+  ("log-warnings,W", po::value<string>(),
+  N_("Log some not critical warnings to the log file."))  
+  ("pid-file", po::value<string>(),
+  N_("Pid file used by safe_mysqld."))
+  ("port-open-timeout", po::value<uint32_t>(&drizzled_bind_timeout)->default_value(0),
+  N_("Maximum time in seconds to wait for the port to become free. "
+     "(Default: no wait)"))
+  ("secure-file-priv", po::value<string>(),
+  N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
+     "within specified directory"))
+  ("server-id", po::value<uint32_t>(&server_id)->default_value(0),
+  N_("Uniquely identifies the server instance in the community of "
+     "replication partners."))
+  ("skip-stack-trace",  
+  N_("Don't print a stack trace on failure."))
+  ("symbolic-links,s", po::value<bool>(&internal::my_use_symdir)->default_value(IF_PURIFY(0,1), IF_PURIFY("false", "true"))->zero_tokens()->multitoken(),
+  N_("Enable symbolic link support."))
+  ("timed-mutexes", po::value<bool>(&internal::timed_mutexes)->default_value(false, "false")->zero_tokens()->multitoken(),
+  N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
+     "supported)")) 
+  ("tmpdir,t", po::value<string>(),
+  N_("Path for temporary files."))
+  ("transaction-isolation", po::value<string>(),
+  N_("Default transaction isolation level."))
+  ("user,u", po::value<string>(),
+  N_("Run drizzled daemon as user."))  
+  ("version,V", 
+  N_("Output version information and exit."))
+  ("back-log", po::value<uint32_t>(&back_log)->default_value(50)->notifier(&check_limits_back_log),
+  N_("The number of outstanding connection requests Drizzle can have. This "
+     "comes into play when the main Drizzle thread gets very many connection "
+     "requests in a very short time."))
+  ("bulk-insert-buffer-size", 
+  po::value<uint64_t>(&global_system_variables.bulk_insert_buff_size)->default_value(8192*1024),
+  N_("Size of tree cache used in bulk insert optimization. Note that this is "
+     "a limit per thread!"))
+  ("div-precision-increment",  po::value<uint32_t>(&global_system_variables.div_precincrement)->default_value(4)->notifier(&check_limits_dpi),
+  N_("Precision of the result of '/' operator will be increased on that "
+     "value."))
+  ("group-concat-max-len", po::value<uint64_t>(&global_system_variables.group_concat_max_len)->default_value(1024)->notifier(&check_limits_gcml),
+  N_("The maximum length of the result of function  group_concat."))
+  ("join-buffer-size", po::value<uint64_t>(&global_system_variables.join_buff_size)->default_value(128*1024L)->notifier(&check_limits_join_buffer_size),
+  N_("The size of the buffer that is used for full joins."))
+  ("max-allowed-packet", po::value<uint32_t>(&global_system_variables.max_allowed_packet)->default_value(1024*1024L)->notifier(&check_limits_map),
+  N_("Max packetlength to send/receive from to server."))
+  ("max-connect-errors", po::value<uint64_t>(&max_connect_errors)->default_value(MAX_CONNECT_ERRORS)->notifier(&check_limits_mce),
+  N_("If there is more than this number of interrupted connections from a "
+     "host this host will be blocked from further connections."))
+  ("max-error-count", po::value<uint64_t>(&global_system_variables.max_error_count)->default_value(DEFAULT_ERROR_COUNT)->notifier(&check_limits_max_err_cnt),
+  N_("Max number of errors/warnings to store for a statement."))
+  ("max-heap-table-size", po::value<uint64_t>(&global_system_variables.max_heap_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_mhts),
+  N_("Don't allow creation of heap tables bigger than this."))
+  ("max-join-size", po::value<drizzled::ha_rows>(&global_system_variables.max_join_size)->default_value(INT32_MAX)->notifier(&check_limits_max_join_size),
+  N_("Joins that are probably going to read more than max_join_size records "
+     "return an error."))
+  ("max-length-for-sort-data", po::value<uint64_t>(&global_system_variables.max_length_for_sort_data)->default_value(1024)->notifier(&check_limits_mlfsd),
+  N_("Max number of bytes in sorted records."))
+  ("max-seeks-for-key", po::value<uint64_t>(&global_system_variables.max_seeks_for_key)->default_value(ULONG_MAX)->notifier(&check_limits_msfk),
+  N_("Limit assumed max number of seeks when looking up rows based on a key"))
+  ("max-sort-length", po::value<size_t>(&global_system_variables.max_sort_length)->default_value(1024)->notifier(&check_limits_max_sort_length),  
+  N_("The number of bytes to use when sorting BLOB or TEXT values "
+     "(only the first max_sort_length bytes of each value are used; the "
+     "rest are ignored)."))
+  ("max-write-lock-count", po::value<uint64_t>(&max_write_lock_count)->default_value(ULONG_MAX)->notifier(&check_limits_mwlc),
+  N_("After this many write locks, allow some read locks to run in between."))
+  ("min-examined-row-limit", po::value<uint64_t>(&global_system_variables.min_examined_row_limit)->default_value(0)->notifier(&check_limits_merl),
+  N_("Don't log queries which examine less than min_examined_row_limit "
+     "rows to file."))
+  ("optimizer-prune-level", po::value<bool>(&global_system_variables.optimizer_prune_level)->default_value(true, "true")->zero_tokens()->multitoken(),
+  N_("Controls the heuristic(s) applied during query optimization to prune "
+     "less-promising partial plans from the optimizer search space. Meaning: "
+     "false - do not apply any heuristic, thus perform exhaustive search; "
+     "true - prune plans based on number of retrieved rows."))
+  ("optimizer-search-depth", po::value<uint32_t>(&global_system_variables.optimizer_search_depth)->default_value(0)->notifier(&check_limits_osd),
+  N_("Maximum depth of search performed by the query optimizer. Values "
+     "larger than the number of relations in a query result in better query "
+     "plans, but take longer to compile a query. Smaller values than the "
+     "number of tables in a relation result in faster optimization, but may "
+     "produce very bad query plans. If set to 0, the system will "
+     "automatically pick a reasonable value; if set to MAX_TABLES+2, the "
+     "optimizer will switch to the original find_best (used for "
+     "testing/comparison)."))
+  ("plugin-dir", po::value<string>(),
+  N_("Directory for plugins."))
+  ("plugin-add", po::value<string>(),
+  N_("Optional comma separated list of plugins to load at startup in addition "
+     "to the default list of plugins. "
+     "[for example: --plugin_add=crc32,logger_gearman]"))    
+  ("plugin-remove", po::value<string>(),
+  N_("Optional comma separated list of plugins to not load at startup. Effectively "
+     "removes a plugin from the list of plugins to be loaded. "
+     "[for example: --plugin_remove=crc32,logger_gearman]"))
+  ("plugin-load", po::value<string>(),
+  N_("Optional comma separated list of plugins to load at starup instead of "
+     "the default plugin load list. "
+     "[for example: --plugin_load=crc32,logger_gearman]"))  
+  ("preload-buffer-size", po::value<uint64_t>(&global_system_variables.preload_buff_size)->default_value(32*1024L)->notifier(&check_limits_pbs),
+  N_("The size of the buffer that is allocated when preloading indexes"))
+  ("query-alloc-block-size", 
+  po::value<uint32_t>(&global_system_variables.query_alloc_block_size)->default_value(QUERY_ALLOC_BLOCK_SIZE)->notifier(&check_limits_qabs),
+  N_("Allocation block size for query parsing and execution"))
+  ("query-prealloc-size",
+  po::value<uint32_t>(&global_system_variables.query_prealloc_size)->default_value(QUERY_ALLOC_PREALLOC_SIZE)->notifier(&check_limits_qps),
+  N_("Persistent buffer for query parsing and execution"))
+  ("range-alloc-block-size",
+  po::value<size_t>(&global_system_variables.range_alloc_block_size)->default_value(RANGE_ALLOC_BLOCK_SIZE)->notifier(&check_limits_rabs),
+  N_("Allocation block size for storing ranges during optimization"))
+  ("read-buffer-size",
+  po::value<uint32_t>(&global_system_variables.read_buff_size)->default_value(128*1024L)->notifier(&check_limits_read_buffer_size),
+  N_("Each thread that does a sequential scan allocates a buffer of this "
+      "size for each table it scans. If you do many sequential scans, you may "
+      "want to increase this value."))
+  ("read-rnd-buffer-size",
+  po::value<uint32_t>(&global_system_variables.read_rnd_buff_size)->default_value(256*1024L)->notifier(&check_limits_read_rnd_buffer_size),
+  N_("When reading rows in sorted order after a sort, the rows are read "
+     "through this buffer to avoid a disk seeks. If not set, then it's set "
+     "to the value of record_buffer."))
+  ("scheduler", po::value<string>(),
+  N_("Select scheduler to be used (by default multi-thread)."))
+  ("sort-buffer-size",
+  po::value<size_t>(&global_system_variables.sortbuff_size)->default_value(MAX_SORT_MEMORY)->notifier(&check_limits_sort_buffer_size),
+  N_("Each thread that needs to do a sort allocates a buffer of this size."))
+  ("table-definition-cache", po::value<size_t>(&table_def_size)->default_value(128)->notifier(&check_limits_tdc),
+  N_("The number of cached table definitions."))
+  ("table-open-cache", po::value<uint64_t>(&table_cache_size)->default_value(TABLE_OPEN_CACHE_DEFAULT)->notifier(&check_limits_toc),
+  N_("The number of cached open tables."))
+  ("table-lock-wait-timeout", po::value<uint64_t>(&table_lock_wait_timeout)->default_value(50)->notifier(&check_limits_tlwt),
+  N_("Timeout in seconds to wait for a table level lock before returning an "
+     "error. Used only if the connection has active cursors."))
+  ("thread-stack", po::value<size_t>(&my_thread_stack_size)->default_value(DEFAULT_THREAD_STACK)->notifier(&check_limits_thread_stack),
+  N_("The stack size for each thread."))
+  ("tmp-table-size", 
+  po::value<uint64_t>(&global_system_variables.tmp_table_size)->default_value(16*1024*1024L)->notifier(&check_limits_tmp_table_size),
+  N_("If an internal in-memory temporary table exceeds this size, Drizzle will"
+     " automatically convert it to an on-disk MyISAM table."))
+  ("no-defaults", po::value<bool>()->default_value(false, "false")->zero_tokens()->multitoken(),
+  N_("Configuration file defaults are not used if no-defaults is set"))
+  ("defaults-file", po::value<string>()->default_value(system_config_dir_drizzle),
+   N_("Configuration file to use"))
+  ;
+
+  po::parsed_options parsed= po::command_line_parser(argc, argv).
+    options(long_options).allow_unregistered().extra_parser(parse_size_arg).run();
+  unknown_options=
+    po::collect_unrecognized(parsed.options, po::include_positional);
+
+  try
+  {
+    po::store(parsed, vm);
+  }
+  catch (...)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    unireg_abort(1);
+  }
+
+
+  if (! vm["no-defaults"].as<bool>())
+  {
+    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
+    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+  }
+
+  po::notify(vm);
+
+  get_options();
 
   if ((user_info= check_user(drizzled_user)))
   {
@@ -793,63 +1369,7 @@ int init_thread_environment()
   return 0;
 }
 
-static pair<string, string> parse_size_suffixes(string s)
-{
-  size_t equal_pos= s.find("=");
-  if (equal_pos != string::npos)
-  {
-    string arg_key(s.substr(0, equal_pos));
-    string arg_val(s.substr(equal_pos+1));
-
-    try
-    {
-      size_t size_suffix_pos= arg_val.find_last_of("kmgKMG");
-      if (size_suffix_pos == arg_val.size()-1)
-      {
-        char suffix= arg_val[size_suffix_pos];
-        string size_val(arg_val.substr(0, size_suffix_pos));
-
-        uint64_t base_size= boost::lexical_cast<uint64_t>(size_val);
-        uint64_t new_size= 0;
-
-        switch (suffix)
-        {
-        case 'K':
-        case 'k':
-          new_size= base_size * 1024;
-          break;
-        case 'M':
-        case 'm':
-          new_size= base_size * 1024 * 1024;
-          break;
-        case 'G':
-        case 'g':
-          new_size= base_size * 1024 * 1024 * 1024;
-          break;
-        }
-        return make_pair(arg_key,
-                         boost::lexical_cast<string>(new_size));
-      }
-    }
-    catch (...)
-    {
-      /* Screw it, let the normal parser take over */
-    }
-  }
-
-  return make_pair(string(""), string(""));
-}
-
-static pair<string, string> parse_size_arg(string s)
-{
-  if (s.find("--") == 0)
-  {
-    return parse_size_suffixes(s.substr(2));
-  }
-  return make_pair(string(""), string(""));
-}
-
-int init_server_components(module::Registry &plugins, int, char**)
+int init_server_components(module::Registry &plugins)
 {
   /*
     We need to call each of these following functions to ensure that
@@ -875,7 +1395,7 @@ int init_server_components(module::Registry &plugins, int, char**)
   /* Allow storage engine to give real error messages */
   ha_init_errors();
 
-  if (plugin_init(plugins, &defaults_argc, defaults_argv, long_options))
+  if (plugin_init(plugins, plugin_options))
   {
     errmsg_printf(ERRMSG_LVL_ERROR, _("Failed to initialize plugins\n"));
     unireg_abort(1);
@@ -885,27 +1405,41 @@ int init_server_components(module::Registry &plugins, int, char**)
   if (opt_help || opt_help_extended)
     unireg_abort(0);
 
-  po::parsed_options parsed= po::command_line_parser(defaults_argc,
-                                                     defaults_argv).
-    options(long_options).extra_parser(parse_size_arg).
+  po::parsed_options parsed= po::command_line_parser(unknown_options).
+    options(plugin_options).extra_parser(parse_size_arg).
     allow_unregistered().run();
 
-  vector<string> unknown_options=
+  vector<string> final_unknown_options=
     po::collect_unrecognized(parsed.options, po::include_positional);
 
   /* we do want to exit if there are any other unknown options */
   /** @TODO: We should perhaps remove allowed_unregistered() and catch the
     exception here */
-  if (unknown_options.size() > 0)
+  if (final_unknown_options.size() > 0)
   {
      errmsg_printf(ERRMSG_LVL_ERROR,
-            _("%s: Unknown options give (first unknown is '%s').\n"
-              "Use --verbose --help to get a list of available options\n"),
+            _("%s: Unknown options given (first unknown is '%s').\n"
+              "Use --help to get a list of available options\n"),
             internal::my_progname, unknown_options[0].c_str());
       unireg_abort(1);
   }
 
-  po::store(parsed, vm);
+  try
+  {
+    po::store(parsed, vm);
+  }
+  catch (...)
+  {
+    errmsg_printf(ERRMSG_LVL_ERROR, _("Duplicate entry for command line option\n"));
+    unireg_abort(1);
+  }
+
+  if (not vm["no-defaults"].as<bool>())
+  {
+    ifstream system_drizzle_ifs(vm["defaults-file"].as<string>().c_str());
+    store(po::parse_config_file(system_drizzle_ifs, long_options), vm);
+  }
+
   po::notify(vm);
 
   plugin_finalize(plugins);
@@ -1397,10 +1931,11 @@ static void usage(void)
 
  
   printf(_("Usage: %s [OPTIONS]\n"), internal::my_progname);
-  /* Print out all the options including plugin supplied options */
-  my_print_help_inc_plugins(my_long_options);
 
-  cout << long_options << endl;
+  po::options_description all_options("Drizzled Options");
+  all_options.add(long_options);
+  all_options.add(plugin_options);
+  cout << all_options << endl;
 
 }
 
@@ -1427,8 +1962,6 @@ static void drizzle_init_variables(void)
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_file_priv= 0;
   cleanup_done= 0;
-  defaults_argc= 0;
-  defaults_argv= 0;
   dropping_tables= ha_open_options=0;
   test_flags.reset();
   wake_thread=0;
@@ -1475,6 +2008,33 @@ static void drizzle_init_variables(void)
   max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
   global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
   max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
+  max_system_variables.auto_increment_increment= UINT64_MAX;
+  max_system_variables.auto_increment_offset= UINT64_MAX;
+  max_system_variables.completion_type= 2;
+  max_system_variables.log_warnings= 1;
+  max_system_variables.bulk_insert_buff_size= ULONG_MAX;
+  max_system_variables.div_precincrement= DECIMAL_MAX_SCALE;
+  max_system_variables.group_concat_max_len= ULONG_MAX;
+  max_system_variables.join_buff_size= ULONG_MAX;
+  max_system_variables.max_allowed_packet= 1024L*1024L*1024L;
+  max_system_variables.max_error_count= 65535;
+  max_system_variables.max_heap_table_size= MAX_MEM_TABLE_SIZE;
+  max_system_variables.max_join_size= INT32_MAX;
+  max_system_variables.max_length_for_sort_data= 8192*1024L;
+  max_system_variables.max_seeks_for_key= ULONG_MAX;
+  max_system_variables.max_sort_length= 8192*1024L;
+  max_system_variables.min_examined_row_limit= ULONG_MAX;
+  max_system_variables.optimizer_prune_level= 1;
+  max_system_variables.optimizer_search_depth= MAX_TABLES+2;
+  max_system_variables.preload_buff_size= 1024*1024*1024L;
+  max_system_variables.query_alloc_block_size= UINT32_MAX;
+  max_system_variables.query_prealloc_size= UINT32_MAX;
+  max_system_variables.range_alloc_block_size= SIZE_MAX;
+  max_system_variables.read_buff_size= INT32_MAX;
+  max_system_variables.read_rnd_buff_size= UINT32_MAX;
+  max_system_variables.sortbuff_size= SIZE_MAX;
+  max_system_variables.tmp_table_size= MAX_MEM_TABLE_SIZE;
+
   opt_scheduler_default= (char*) "multi_thread";
 
   /* Variables that depends on compile options */
@@ -1493,140 +2053,114 @@ static void drizzle_init_variables(void)
 }
 
 
-int drizzled_get_one_option(int optid, const struct option *opt,
-                             char *argument)
-{
-  switch(optid) {
-  case 'a':
-    global_system_variables.tx_isolation= ISO_SERIALIZABLE;
-    break;
-  case 'b':
-    strncpy(drizzle_home,argument,sizeof(drizzle_home)-1);
-    break;
-  case 'C':
-    if (default_collation_name == compiled_default_collation_name)
-      default_collation_name= 0;
-    break;
-  case 'h':
-    strncpy(data_home_real,argument, sizeof(data_home_real)-1);
-    /* Correct pointer set by my_getopt (for embedded library) */
-    data_home= data_home_real;
-    data_home_len= strlen(data_home);
-    break;
-  case 'u':
-    if (!drizzled_user || !strcmp(drizzled_user, argument))
-      drizzled_user= argument;
-    else
-      errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
-                          "set to '%s' earlier on the command line\n"),
-                        argument, drizzled_user);
-    break;
-  case 'L':
-    strncpy(language, argument, sizeof(language)-1);
-    break;
-  case 'V':
-    print_version();
-    exit(0);
-  case 'W':
-    if (!argument)
-      global_system_variables.log_warnings++;
-    else if (argument == disabled_my_option)
-      global_system_variables.log_warnings= 0L;
-    else
-      global_system_variables.log_warnings= atoi(argument);
-    break;
-  case 'T':
-    if (argument)
-    {
-      test_flags.set((uint32_t) atoi(argument));
-    }
-    break;
-  case (int) OPT_WANT_CORE:
-    test_flags.set(TEST_CORE_ON_SIGNAL);
-    break;
-  case (int) OPT_SKIP_STACK_TRACE:
-    test_flags.set(TEST_NO_STACKTRACE);
-    break;
-  case (int) OPT_SKIP_SYMLINKS:
-    internal::my_use_symdir=0;
-    break;
-  case (int) OPT_BIND_ADDRESS:
-    {
-      struct addrinfo *res_lst, hints;
-
-      memset(&hints, 0, sizeof(struct addrinfo));
-      hints.ai_socktype= SOCK_STREAM;
-      hints.ai_protocol= IPPROTO_TCP;
-
-      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
-      {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: cannot resolve hostname!"));
-        return EXIT_ARGUMENT_INVALID;
-      }
-
-      if (res_lst->ai_next)
-      {
-          errmsg_printf(ERRMSG_LVL_ERROR, _("Can't start server: bind-address refers to "
-                          "multiple interfaces!"));
-        return EXIT_ARGUMENT_INVALID;
-      }
-      freeaddrinfo(res_lst);
-    }
-    break;
-  case (int) OPT_PID_FILE:
-    strncpy(pidfile_name, argument, sizeof(pidfile_name)-1);
-    break;
-  case OPT_SERVER_ID:
-    break;
-  case OPT_TX_ISOLATION:
-    {
-      int type;
-      type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
-      global_system_variables.tx_isolation= (type-1);
-      break;
-    }
-  case OPT_TC_HEURISTIC_RECOVER:
-    tc_heuristic_recover= find_type_or_exit(argument,
-                                            &tc_heuristic_recover_typelib,
-                                            opt->name);
-    break;
-  }
-
-  return 0;
-}
-
-static void option_error_reporter(enum loglevel level, const char *format, ...)
-{
-  va_list args;
-  va_start(args, format);
-
-  /* Don't print warnings for --loose options during bootstrap */
-  if (level == ERROR_LEVEL || global_system_variables.log_warnings)
-  {
-    plugin::ErrorMessage::vprintf(NULL, ERROR_LEVEL, format, args);
-  }
-  va_end(args);
-}
-
-
 /**
   @todo
   - FIXME add EXIT_TOO_MANY_ARGUMENTS to "drizzled/error.h" and return that code?
 */
-static void get_options(int *argc,char **argv)
+static void get_options()
 {
-  int ho_error;
 
-  my_getopt_error_reporter= option_error_reporter;
+  if (vm.count("base-dir"))
+  {
+    strncpy(drizzle_home,vm["base-dir"].as<string>().c_str(),sizeof(drizzle_home)-1);
+  }
+
+  if (vm.count("datadir"))
+  {
+    strncpy(data_home_real,vm["datadir"].as<string>().c_str(), sizeof(data_home_real)-1);
+    /* Correct pointer set by my_getopt (for embedded library) */
+    data_home= data_home_real;
+    data_home_len= strlen(data_home);
+  }
+
+  if (vm.count("user"))
+  {
+    if (! drizzled_user || ! strcmp(drizzled_user, vm["user"].as<string>().c_str()))
+      drizzled_user= (char *)vm["user"].as<string>().c_str();
+
+    else
+      errmsg_printf(ERRMSG_LVL_WARN, _("Ignoring user change to '%s' because the user was "
+                                       "set to '%s' earlier on the command line\n"),
+                    vm["user"].as<string>().c_str(), drizzled_user);
+  }
+
+  if (vm.count("language"))
+  {
+    strncpy(language, vm["language"].as<string>().c_str(), sizeof(language)-1);
+  }
+
+  if (vm.count("version"))
+  {
+    print_version();
+    exit(0);
+  }
+
+  if (vm.count("log-warnings"))
+  {
+    if (vm["log-warnings"].as<string>().empty())
+      global_system_variables.log_warnings++;
+    else if (vm["log-warnings"].as<string>().compare("0"))
+      global_system_variables.log_warnings= 0L;
+    else
+      global_system_variables.log_warnings= atoi(vm["log-warnings"].as<string>().c_str());
+  }
+
+  if (vm.count("exit-info"))
+  {
+    if (vm["exit-info"].as<long>())
+    {
+      test_flags.set((uint32_t) vm["exit-info"].as<long>());
+    }
+  }
+
+  if (vm.count("want-core"))
+  {
+    test_flags.set(TEST_CORE_ON_SIGNAL);
+  }
+
+  if (vm.count("skip-stack-trace"))
+  {
+    test_flags.set(TEST_NO_STACKTRACE);
+  }
+
+  if (vm.count("skip-symlinks"))
+  {
+    internal::my_use_symdir=0;
+  }
+
+  if (vm.count("pid-file"))
+  {
+    strncpy(pidfile_name, vm["pid-file"].as<string>().c_str(), sizeof(pidfile_name)-1);
+  }
+
+  if (vm.count("transaction-isolation"))
+  {
+    int type;
+    type= find_type_or_exit((char *)vm["transaction-isolation"].as<string>().c_str(), &tx_isolation_typelib, "transaction-isolation");
+    global_system_variables.tx_isolation= (type-1);
+  }
+
+  /* @TODO Make this all strings */
+  if (vm.count("plugin-remove"))
+  {
+    opt_plugin_remove= (char *)vm["plugin-remove"].as<string>().c_str();
+  }
+  if (vm.count("plugin-add"))
+  {
+    opt_plugin_add= (char *)vm["plugin-add"].as<string>().c_str();
+  }
+  if (vm.count("plugin-load"))
+  {
+    opt_plugin_load= (char *)vm["plugin-load"].as<string>().c_str();
+  }
+  if (vm.count("default-storage-engine"))
+  {
+    default_storage_engine_str= (char *)vm["default-storage-engine"].as<string>().c_str();
+  }
 
   /* Skip unknown options so that they may be processed later by plugins */
   my_getopt_skip_unknown= true;
 
-  if ((ho_error= handle_options(argc, &argv, my_long_options,
-                                drizzled_get_one_option)))
-    exit(ho_error);
-  (*argc)++; /* add back one for the progname handle_options removes */
-             /* no need to do this for argv as we are discarding it. */
 
 #if defined(HAVE_BROKEN_REALPATH)
   internal::my_use_symdir=0;
@@ -1768,18 +2302,19 @@ static void fix_paths(string progname)
 
   if (not opt_help and not opt_help_extended)
   {
-    char *tmp_string;
+    const char *tmp_string= getenv("TMPDIR") ? getenv("TMPDIR") : NULL;
     struct stat buf;
+    drizzle_tmpdir.clear();
 
-    tmp_string= getenv("TMPDIR");
-
-    if (opt_drizzle_tmpdir)
+    if (vm.count("tmpdir"))
     {
-      drizzle_tmpdir.append(opt_drizzle_tmpdir);
+      drizzle_tmpdir.append(vm["tmpdir"].as<string>());
     }
     else if (tmp_string == NULL)
     {
       drizzle_tmpdir.append(data_home);
+      drizzle_tmpdir.push_back(FN_LIBCHAR);
+      drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
     }
     else
     {
@@ -1793,8 +2328,6 @@ static void fix_paths(string progname)
       exit(1);
     }
 
-    drizzle_tmpdir.append(FN_ROOTDIR);
-    drizzle_tmpdir.append(GLOBAL_TEMPORARY_EXT);
 
     if (mkdir(drizzle_tmpdir.c_str(), 0777) == -1)
     {
@@ -1816,9 +2349,9 @@ static void fix_paths(string progname)
     Convert the secure-file-priv option to system format, allowing
     a quick strcmp to check if read or write is in an allowed dir
    */
-  if (opt_secure_file_priv)
+  if (vm.count("secure-file-priv"))
   {
-    internal::convert_dirname(buff, opt_secure_file_priv, NULL);
+    internal::convert_dirname(buff, vm["secure-file-priv"].as<string>().c_str(), NULL);
     free(opt_secure_file_priv);
     opt_secure_file_priv= strdup(buff);
     if (opt_secure_file_priv == NULL)

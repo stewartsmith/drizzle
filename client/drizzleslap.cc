@@ -984,9 +984,10 @@ int main(int argc, char **argv)
       printf("%s  Ver %s Distrib %s, for %s-%s (%s)\n",internal::my_progname, SLAP_VERSION,
           drizzle_version(),HOST_VENDOR,HOST_OS,HOST_CPU);
       puts("Copyright (C) 2008 Sun Microsystems");
-      puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
-          \nand you are welcome to modify and redistribute it under the GPL \
-          license\n");
+      puts("This software comes with ABSOLUTELY NO WARRANTY. "
+           "This is free software,\n"
+           "and you are welcome to modify and redistribute it under the GPL "
+           "license\n");
       puts("Run a query multiple times against the server\n");
       cout << long_options << endl;
       exit(0);
