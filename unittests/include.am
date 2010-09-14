@@ -24,6 +24,7 @@ unit: unittests/unittests
 unittests_unittests_SOURCES = \
 			      unittests/atomics_test.cc \
 			      unittests/calendar_test.cc \
+			      unittests/constrained_value.cc \
 			      unittests/date_test.cc \
 			      unittests/date_time_test.cc \
 			      unittests/generators.cc \
