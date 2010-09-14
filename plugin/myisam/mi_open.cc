@@ -76,7 +76,7 @@ MI_INFO *test_if_reopen(char *filename)
   have an open count of 0.
 ******************************************************************************/
 
-MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
+MI_INFO *mi_open(const drizzled::TableIdentifier &identifier, int mode, uint32_t open_flags)
 {
   int lock_error,kfile,open_mode,save_errno,have_rtree=0;
   uint32_t i,j,len,errpos,head_length,base_pos,offset,info_length,keys,
@@ -97,7 +97,11 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   head_length=sizeof(share_buff.state.header);
   memset(&info, 0, sizeof(info));
 
-  (void)internal::fn_format(org_name,name,"",MI_NAME_IEXT, MY_UNPACK_FILENAME);
+  (void)internal::fn_format(org_name,
+                            identifier.getPath().c_str(), 
+                            "",
+                            MI_NAME_IEXT,
+                            MY_UNPACK_FILENAME);
   if (!realpath(org_name,rp_buff))
     internal::my_load_path(rp_buff,org_name, NULL);
   rp_buff[FN_REFLEN-1]= '\0';
@@ -423,7 +427,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
                      share->base.max_key_length),
          &info.lastkey,share->base.max_key_length*3+1,
          &info.first_mbr_key, share->base.max_key_length,
-         &info.filename,strlen(name)+1,
+         &info.filename, identifier.getPath().length()+1,
          &info.rtree_recursion_state,have_rtree ? 1024 : 0,
          NULL))
     goto err;
@@ -432,7 +436,7 @@ MI_INFO *mi_open(const char *name, int mode, uint32_t open_flags)
   if (!have_rtree)
     info.rtree_recursion_state= NULL;
 
-  strcpy(info.filename,name);
+  strcpy(info.filename, identifier.getPath().c_str());
   memcpy(info.blobs,share->blobs,sizeof(MI_BLOB)*share->base.blobs);
   info.lastkey2=info.lastkey+share->base.max_key_length;
 
@@ -504,7 +508,7 @@ err:
   if ((save_errno == HA_ERR_CRASHED) ||
       (save_errno == HA_ERR_CRASHED_ON_USAGE) ||
       (save_errno == HA_ERR_CRASHED_ON_REPAIR))
-    mi_report_error(save_errno, name);
+    mi_report_error(save_errno, identifier.getPath().c_str());
   switch (errpos) {
   case 6:
     free((unsigned char*) m_info);
