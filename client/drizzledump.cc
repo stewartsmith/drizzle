@@ -44,7 +44,7 @@
 #include <drizzled/configmake.h>
 #include <drizzled/error.h>
 #include <boost/program_options.hpp>
-#include PCRE_HEADER
+#include <boost/regex.hpp>
 
 using namespace std;
 using namespace drizzled;
@@ -2411,35 +2411,17 @@ static char *primary_key_fields(const char *table_name)
 
 int get_server_type()
 {
-  const char *pcre_error;
-  int32_t pcre_error_offset;
-  int ovector[9];
-  int pcre_match;
+  boost::match_flag_type flags = boost::match_default; 
 
-  pcre *mysql_regex= pcre_compile("5\\.[0-9]+\\.[0-9]+", 0, &pcre_error, &pcre_error_offset, NULL);
-  if (!mysql_regex)
-  {
-    fprintf(stderr, _("Error compiling regex (offset: %d), %s\n"));
-    exit(-1);
-  }
-
-  pcre *drizzle_regex= pcre_compile("20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+", 0, &pcre_error, &pcre_error_offset, NULL);
-  if (!drizzle_regex)
-  {
-    fprintf(stderr, _("Error compiling regex (offset: %d), %s\n"));
-    exit(-1);
-  }
+  boost::regex mysql_regex("(5\\.[0-9]+\\.[0-9]+)");
+  boost::regex drizzle_regex("(20[0-9]{2}\\.(0[1-9]|1[012])\\.[0-9]+)");
 
   std::string version(drizzle_con_server_version(&dcon));
 
-  pcre_match= pcre_exec(mysql_regex, 0, version.c_str(), version.length(), 0, 0, ovector, 9);
-
-  if (pcre_match >= 0)
+  if (regex_search(version, mysql_regex, flags))
     return SERVER_MYSQL_FOUND;
   
-  pcre_match= pcre_exec(drizzle_regex, 0, version.c_str(), version.length(), 0, 0, ovector, 9);
-
-  if (pcre_match >= 0)
+  if (regex_search(version, drizzle_regex, flags))
     return SERVER_DRIZZLE_FOUND;
 
   return SERVER_UNKNOWN_FOUND;
